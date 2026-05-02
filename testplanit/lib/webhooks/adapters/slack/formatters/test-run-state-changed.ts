@@ -1,10 +1,5 @@
 import type { FormattedHttpRequest, OutboundEnvelope } from "../../types";
-import {
-  buildBody,
-  projectNameOf,
-  titleAndProject,
-  url,
-} from "./_shared";
+import { buildBody, projectNameOf, titleAndProject, url } from "./_shared";
 
 interface TestRunStateChangedData {
   runId: number;

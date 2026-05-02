@@ -27,10 +27,9 @@ interface TestRunResultAddedData {
 }
 
 /**
- * D-13 — `test_run.result_added` is volume-warned (per-case execution).
- * Compact format, color bar driven by the result's pass/fail flags so an
- * admin scanning a busy channel can see at a glance which results need
- * attention.
+ * `test_run.result_added` is volume-warned (per-case execution). Compact
+ * format, color bar driven by the result's pass/fail flags so an admin
+ * scanning a busy channel can see at a glance which results need attention.
  */
 export function formatTestRunResultAddedBlocks(
   envelope: OutboundEnvelope
@@ -47,11 +46,7 @@ export function formatTestRunResultAddedBlocks(
   // pass/fail meaningfully.
   const color =
     data.statusColor ??
-    (data.isSuccess
-      ? COLOR_GREEN
-      : data.isFailure
-        ? COLOR_RED
-        : COLOR_YELLOW);
+    (data.isSuccess ? COLOR_GREEN : data.isFailure ? COLOR_RED : COLOR_YELLOW);
 
   return buildBody({
     text: `Result: ${statusName} — ${caseName}`,
@@ -76,8 +71,7 @@ export function formatTestRunResultAddedBlocks(
         type: "section",
         text: {
           type: "mrkdwn",
-          text:
-            `${emojiForStatus(data)} *${statusName}* — ${caseName}${attemptSuffix}`,
+          text: `${emojiForStatus(data)} *${statusName}* — ${caseName}${attemptSuffix}`,
         },
       },
     ],

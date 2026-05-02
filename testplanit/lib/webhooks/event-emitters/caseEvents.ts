@@ -4,23 +4,22 @@ import { computeObjectDiff } from "~/lib/webhooks/diff";
 import { webhookEvents } from "~/lib/webhooks/events";
 
 /**
- * D-12 / OUT-17 / OUT-18 — emit per-mutation outbound webhook events for the
- * RepositoryCases (test case) model.
+ * Emit per-mutation outbound webhook events for the RepositoryCases (test
+ * case) model.
  *
- * Catalog (D-12): case.created / case.updated / case.deleted.
+ * Catalog: case.created / case.updated / case.deleted.
  *
  * Payload contracts:
- *   - case.created ships the FULL case structure (OUT-17): caseFieldValues
- *     and steps included. This is a deliberate trade-off vs the
- *     "id-only + refetch" Qase pattern: the inbox formatter (Slack) needs
- *     more than just an id to render a meaningful card, and pushing the
- *     payload at emit-time avoids a per-event GET that would need its own
- *     auth path. Trust boundary documented in the plan's threat register.
- *   - case.updated carries a generic diff (OUT-18). No-op updates are
- *     skipped so we don't spam destinations on policy-pass paths.
+ *   - case.created ships the FULL case structure: caseFieldValues and steps
+ *     included. This is a deliberate trade-off vs the "id-only + refetch"
+ *     Qase pattern: the inbox formatter (Slack) needs more than just an id
+ *     to render a meaningful card, and pushing the payload at emit-time
+ *     avoids a per-event GET that would need its own auth path.
+ *   - case.updated carries a generic diff. No-op updates are skipped so we
+ *     don't spam destinations on policy-pass paths.
  *   - case.deleted carries the pre-delete snapshot (id + name).
  *
- * Alias-limit caveat: the OUT-17 fetch joins repositoryCase ->
+ * Alias-limit caveat: the create-event fetch joins repositoryCase ->
  * caseFieldValues + steps. If the ZenStack v3 alias-limit issue surfaces,
  * fall back to two separate findMany calls (the same workaround used at
  * many call sites in the codebase per ZenStack v3 migration learnings).
@@ -54,8 +53,8 @@ export async function emitCaseCreated(
   tx: Prisma.TransactionClient,
   opts: EmitOptions = {}
 ): Promise<void> {
-  // OUT-17 — fetch the full case structure (fields + steps) so the consumer
-  // can render a self-contained card without a refetch.
+  // Fetch the full case structure (fields + steps) so the consumer can
+  // render a self-contained card without a refetch.
   const fullCase = await tx.repositoryCases.findUnique({
     where: { id: row.id },
     select: {

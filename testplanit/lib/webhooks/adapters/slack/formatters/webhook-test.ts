@@ -8,8 +8,8 @@ interface WebhookTestData {
 
 /**
  * Synthetic `webhook.test` event — produced by the "Send test event"
- * button (Plan 02-06's sendTestOutboundWebhook server action). Confirms
- * full pipeline health to the destination, so it gets a green color bar.
+ * button (the sendTestOutboundWebhook server action). Confirms full
+ * pipeline health to the destination, so it gets a green color bar.
  */
 export function formatWebhookTestBlocks(
   envelope: OutboundEnvelope

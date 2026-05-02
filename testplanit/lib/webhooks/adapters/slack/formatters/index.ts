@@ -10,11 +10,13 @@ import { formatCaseCreatedBlocks } from "./case-created";
 import { formatWebhookTestBlocks } from "./webhook-test";
 import { formatGenericBlocks } from "./generic";
 
-export type SlackFormatter = (envelope: OutboundEnvelope) => FormattedHttpRequest;
+export type SlackFormatter = (
+  envelope: OutboundEnvelope
+) => FormattedHttpRequest;
 
 /**
- * D-17 — per-event Slack formatter dispatch table. Event names not in the
- * table fall through to formatGenericBlocks (no event is unsupported; the
+ * Per-event Slack formatter dispatch table. Event names not in the table
+ * fall through to formatGenericBlocks (no event is unsupported; the
  * generic fallback produces a readable diagnostic block).
  */
 export const SLACK_FORMATTERS: Record<string, SlackFormatter> = {

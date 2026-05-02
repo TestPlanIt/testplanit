@@ -4,13 +4,13 @@ import { getTestRunSummary } from "~/lib/services/testRunSummary";
 import { webhookEvents } from "~/lib/webhooks/events";
 
 /**
- * D-09 / OUT-11..14 — emit per-mutation outbound webhook events for TestRuns
- * lifecycle. Detection logic for state transitions and the
- * "transitioned-into-completed" sub-case lives here so the lib/prisma.ts
- * `$extends` middleware can stay generic.
+ * Emit per-mutation outbound webhook events for TestRuns lifecycle.
+ * Detection logic for state transitions and the "transitioned-into-
+ * completed" sub-case lives here so the lib/prisma.ts `$extends`
+ * middleware can stay generic.
  *
- * Every emit is bound to the caller's tx (Plan 02-02 webhookEvents.emit
- * requires tx) so the outbox row commits with the producing entity write.
+ * Every emit is bound to the caller's tx (webhookEvents.emit requires tx)
+ * so the outbox row commits with the producing entity write.
  */
 
 /** Minimal shape we read from a TestRuns row to assemble payloads. */
@@ -70,8 +70,8 @@ export async function emitTestRunUpdateEvents(
 ): Promise<void> {
   if (!oldRow) return;
 
-  // D-09 — two INDEPENDENT lifecycle transitions on TestRuns. Either, both,
-  // or neither can fire on a given update:
+  // Two INDEPENDENT lifecycle transitions on TestRuns. Either, both, or
+  // neither can fire on a given update:
   //   - state_changed: stateId changed
   //   - completed:     isCompleted flipped false → true
   // isCompleted is the canonical "this run is done" signal on TestRuns —
@@ -137,10 +137,10 @@ export async function emitTestRunUpdateEvents(
   }
 
   if (completedTransition) {
-    // D-15 — payload is the full TestRunSummaryData shape used by the
-    // in-app summary UI, enriched with run identity + deep-link so Slack
-    // (and any other consumer) can render a self-contained message
-    // without an API round-trip.
+    // Payload is the full TestRunSummaryData shape used by the in-app
+    // summary UI, enriched with run identity + deep-link so Slack (and
+    // any other consumer) can render a self-contained message without
+    // an API round-trip.
     const summary = await getTestRunSummary(newRow.id, { client: tx });
     const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
     // Locale-less path; next-intl resolves the recipient's preferred locale at request time.

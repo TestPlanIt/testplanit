@@ -26,9 +26,9 @@ function valueDisplay(v: unknown): string {
 }
 
 /**
- * OUT-18 — render `data.diff.changedFields` as compact "field: before →
- * after" rows, one per visual line. Informational event — no color bar.
- * Caps at 6 rows + "and N more" footer when overflow.
+ * Render `data.diff.changedFields` as compact "field: before → after" rows,
+ * one per visual line. Informational event — no color bar. Caps at 6 rows
+ * + "and N more" footer when overflow.
  */
 export function formatIssueUpdatedBlocks(
   envelope: OutboundEnvelope

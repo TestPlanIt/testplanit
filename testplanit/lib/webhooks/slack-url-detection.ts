@@ -1,5 +1,5 @@
 /**
- * D-29 — Slack incoming-webhook URL hostname detector.
+ * Slack incoming-webhook URL hostname detector.
  *
  * Used by:
  *  - app/actions/webhook-config.ts createOutboundWebhook — auto-set

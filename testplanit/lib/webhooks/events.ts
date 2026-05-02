@@ -4,19 +4,17 @@ import type { Prisma } from "@prisma/client";
 import { getAuditContext, SYSTEM_ACTOR_ID } from "~/lib/auditContext";
 
 /**
- * D-35 / D-01 / OUT-05 / OUT-20 — outbox emit seam.
+ * Outbox emit seam.
  *
  * Called from:
- *  - lib/prisma.ts $extends middleware hooks (Plan 02-05) for testRuns,
- *    sessions, issue, repositoryCases, testRunResult, sessionResults —
- *    every emission site is alongside an existing auditCreate/Update/Delete
- *    call. Plan 02-05's middleware constructs an explicit
- *    `prisma.$transaction(async (tx) => ...)` that wraps the entity
- *    mutation AND this emit() call so both writes commit-or-rollback
- *    atomically (D-01 crash safety).
- *  - app/actions/webhook-config.ts sendTestOutboundWebhook (Plan 02-06)
- *    for the synthetic `webhook.test` event — also wrapped in
- *    prisma.$transaction.
+ *  - lib/prisma.ts $extends middleware hooks for testRuns, sessions,
+ *    issue, repositoryCases, testRunResult, sessionResults — every emission
+ *    site is alongside an existing auditCreate/Update/Delete call. The
+ *    middleware constructs an explicit `prisma.$transaction(async (tx) => ...)`
+ *    that wraps the entity mutation AND this emit() call so both writes
+ *    commit-or-rollback atomically (crash safety).
+ *  - app/actions/webhook-config.ts sendTestOutboundWebhook for the
+ *    synthetic `webhook.test` event — also wrapped in prisma.$transaction.
  *
  * Crash safety: writes are MANDATORILY inside the caller's tx. The
  * outbox row commits with the entity change in the same DB transaction;
@@ -27,9 +25,9 @@ import { getAuditContext, SYSTEM_ACTOR_ID } from "~/lib/auditContext";
  * via AsyncLocalStorage in v5/v6. The existing audit/ES sync hooks in
  * lib/prisma.ts work despite calling the singleton because they enqueue
  * to BullMQ (audit) or fire-and-forget promises (ES sync) — neither is
- * transactionally bound to the producing entity write. Phase 2's outbox
- * row MUST commit in the same tx as the entity (D-01); therefore the
- * caller MUST construct the tx explicitly and thread it here.
+ * transactionally bound to the producing entity write. The outbox row MUST
+ * commit in the same tx as the entity; therefore the caller MUST construct
+ * the tx explicitly and thread it here.
  *
  * Suppression: callers who don't want emission (backfill scripts,
  * migrations) call inside `runWithAuditContext({ suppressWebhooks: true }, ...)`.
@@ -63,7 +61,7 @@ export interface WebhookEventEmitOptions {
 }
 
 export interface EmitResult {
-  /** The `evt_<uuid-v4>` identifier persisted on this row. Stable across all WebhookDelivery retries (OUT-05). */
+  /** The `evt_<uuid-v4>` identifier persisted on this row. Stable across all WebhookDelivery retries. */
   eventId: string;
   /** The DB row id (cuid) — useful for correlating in tests. */
   outboxRowId: string;
@@ -82,13 +80,11 @@ export const webhookEvents = {
   ): Promise<EmitResult | null> {
     // Runtime guard — catches `as any` bypasses of the TypeScript contract.
     if (!opts || !opts.tx) {
-      throw new Error(
-        "webhookEvents.emit requires a Prisma.TransactionClient — see Plan 02-05 for transactional wiring"
-      );
+      throw new Error("webhookEvents.emit requires a Prisma.TransactionClient");
     }
     const ctx = getAuditContext();
     if (ctx?.suppressWebhooks === true) {
-      // D-01a — suppression hatch
+      // Suppression hatch
       return null;
     }
     const resolvedActorUserId =

@@ -185,7 +185,7 @@ function healthBadgeVariant(
  * Per-card scoping uses `data-testid="webhook-inbound-card-{slug}"` on the
  * Card root; inner action testids are stable across all cards
  * (webhook-url, webhook-secret, webhook-send-test-button, webhook-test-result,
- * webhook-rotate-button, webhook-delete-button) so Phase 1's E2E spec keeps
+ * webhook-rotate-button, webhook-delete-button) so E2E spec keeps
  * passing without modification.
  */
 export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
@@ -209,7 +209,6 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
       token: true,
       isActive: true,
       lastReceivedAt: true,
-      // Phase 4 / Plan 04-07 — health badge + Delivery activity surface.
       endpointHealth: true,
       consecutiveFailureCount: true,
       lastDispatchedAt: true,
@@ -415,8 +414,6 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
 
   async function handleToggleActive(config: InboundConfig, next: boolean) {
     try {
-      // POSITIONAL call site (Path 2 lock — matches Phase 1 server-action
-      // signature at app/actions/webhook-config.ts:405-408).
       const result = await setWebhookActive(config.id, next);
       if (!result.success) {
         toast.error(result.error ?? t("saveError"));

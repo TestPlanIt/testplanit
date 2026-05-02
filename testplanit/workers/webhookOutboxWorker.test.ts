@@ -71,7 +71,7 @@ describe("webhookOutboxWorker.pollOnce", () => {
     expect(n).toBe(2);
   });
 
-  it("4. for each row, fanoutToConfigs is called and queue.add(\"dispatch\", { outboxEventId, webhookConfigId, attempt: 1 }) is called once per config", async () => {
+  it('4. for each row, fanoutToConfigs is called and queue.add("dispatch", { outboxEventId, webhookConfigId, attempt: 1 }) is called once per config', async () => {
     mockClaim.mockResolvedValue([sampleRow]);
     mockFanout.mockResolvedValue(["c1", "c2"]);
     const addSpy = vi.fn();

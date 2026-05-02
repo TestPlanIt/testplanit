@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
- * v0.23.0 Phase 4 Plan 04-04 — webhook retention worker unit tests.
+ * webhook retention worker unit tests.
  *
  * TDD RED scaffold. Mocks:
- *   - prisma.$executeRaw — driven per-table via mockImplementationOnce chains
- *     so we can simulate the LIMIT 1000 batch loop (n, n, ..., 0).
- *   - captureAuditEvent — assert exactly ONE call per purgeOnce() with the
- *     totals + durationMs metadata.
+ * - prisma.$executeRaw — driven per-table via mockImplementationOnce chains
+ * so we can simulate the LIMIT 1000 batch loop (n, n,..., 0).
+ * - captureAuditEvent — assert exactly ONE call per purgeOnce() with the
+ * totals + durationMs metadata.
  *
  * Clock is locked via vi.useFakeTimers() + vi.setSystemTime() so the cutoff
  * derivation is deterministic across cases (case 8 asserts the exact
@@ -150,7 +150,7 @@ describe("workers/webhookRetentionWorker.purgeOnce", () => {
     expect(result.webhookOutboxEventRows).toBe(89);
   });
 
-  it("4. batches deletes with LIMIT 1000 and loops until rowsAffected === 0 (D-27 + warning-5 lock)", async () => {
+  it("4. batches deletes with LIMIT 1000 and loops until rowsAffected === 0 (+ warning-5 lock)", async () => {
     setupTableQueues({
       WebhookDelivery: [1000, 1000, 1000, 247, 0],
       WebhookEventDedup: [0],

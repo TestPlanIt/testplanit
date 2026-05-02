@@ -3,7 +3,7 @@ import { SYSTEM_ACTOR_ID } from "../lib/auditContext";
 import { captureAuditEvent } from "../lib/services/auditLog";
 
 /**
- * v0.23.0 Phase 4 (DEL-02 + DEL-03 / CONTEXT D-25..D-29) — webhook retention worker.
+ * webhook retention worker.
  *
  * Polled-loop standalone process. Wakes once per day, calls purgeOnce(),
  * sleeps until the next scheduled hour. Three purges per pass:

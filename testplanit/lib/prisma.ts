@@ -75,12 +75,14 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           return await baseClient.$transaction(async (tx) => {
             const result = await query(args);
             if (result?.id) {
-              syncRepositoryCaseToElasticsearch(result.id).catch((error: any) => {
-                console.error(
-                  `Failed to sync repository case ${result.id} to Elasticsearch:`,
-                  error
-                );
-              });
+              syncRepositoryCaseToElasticsearch(result.id).catch(
+                (error: any) => {
+                  console.error(
+                    `Failed to sync repository case ${result.id} to Elasticsearch:`,
+                    error
+                  );
+                }
+              );
               await auditCreate("RepositoryCases", result, result.projectId);
               if (result.projectId !== undefined) {
                 await emitCaseCreated(result, tx);
@@ -97,12 +99,14 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               : null;
             const result = await query(args);
             if (result?.id) {
-              syncRepositoryCaseToElasticsearch(result.id).catch((error: any) => {
-                console.error(
-                  `Failed to sync repository case ${result.id} to Elasticsearch:`,
-                  error
-                );
-              });
+              syncRepositoryCaseToElasticsearch(result.id).catch(
+                (error: any) => {
+                  console.error(
+                    `Failed to sync repository case ${result.id} to Elasticsearch:`,
+                    error
+                  );
+                }
+              );
               await auditUpdate(
                 "RepositoryCases",
                 oldEntity,
@@ -123,12 +127,14 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               : null;
             const result = await query(args);
             if (result?.id) {
-              syncRepositoryCaseToElasticsearch(result.id).catch((error: any) => {
-                console.error(
-                  `Failed to sync repository case ${result.id} to Elasticsearch:`,
-                  error
-                );
-              });
+              syncRepositoryCaseToElasticsearch(result.id).catch(
+                (error: any) => {
+                  console.error(
+                    `Failed to sync repository case ${result.id} to Elasticsearch:`,
+                    error
+                  );
+                }
+              );
               if (oldEntity) {
                 await auditUpdate(
                   "RepositoryCases",
@@ -156,12 +162,14 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               : null;
             const result = await query(args);
             if (result?.id) {
-              syncRepositoryCaseToElasticsearch(result.id).catch((error: any) => {
-                console.error(
-                  `Failed to sync repository case ${result.id} to Elasticsearch after delete:`,
-                  error
-                );
-              });
+              syncRepositoryCaseToElasticsearch(result.id).catch(
+                (error: any) => {
+                  console.error(
+                    `Failed to sync repository case ${result.id} to Elasticsearch after delete:`,
+                    error
+                  );
+                }
+              );
             }
             if (oldEntity) {
               await auditDelete(
@@ -248,7 +256,12 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                   error
                 );
               });
-              await auditUpdate("TestRuns", oldEntity, result, result.projectId);
+              await auditUpdate(
+                "TestRuns",
+                oldEntity,
+                result,
+                result.projectId
+              );
               if (result.projectId !== undefined) {
                 await emitTestRunUpdateEvents(oldEntity, result, tx);
               }
@@ -328,7 +341,12 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                   error
                 );
               });
-              await auditUpdate("Sessions", oldEntity, result, result.projectId);
+              await auditUpdate(
+                "Sessions",
+                oldEntity,
+                result,
+                result.projectId
+              );
               if (result.projectId !== undefined) {
                 await emitSessionUpdateEvents(oldEntity, result, tx);
               }
@@ -530,12 +548,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
                 );
               });
               if (oldEntity) {
-                await auditUpdate(
-                  "Issue",
-                  oldEntity,
-                  result,
-                  result.projectId
-                );
+                await auditUpdate("Issue", oldEntity, result, result.projectId);
                 if (result.projectId !== undefined) {
                   await emitIssueUpdated(oldEntity, result, tx);
                 }
@@ -985,7 +998,7 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
         },
       },
       // Plan 02-05 Warning-9 fix — NEW hook block for SessionResults. The
-      // model had no $extends entry today (no audit was wired in Phase 64).
+      // model had no $extends entry today.
       // We add only the webhook emit here; audit can slot in later as a
       // sibling line if SessionResults coverage is desired.
       sessionResults: {

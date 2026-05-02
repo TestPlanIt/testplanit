@@ -6,30 +6,28 @@ import { getWebhookDispatchQueue } from "~/lib/queues";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 
 /**
- * v0.23.0 Phase 4 (ADMIN-02..05 / CONTEXT D-04..D-09, D-17, D-17a, D-17b,
- * D-17c, D-23) — webhook replay service.
+ * Webhook replay service.
  *
- * OUTBOUND-ONLY. Inbound replay is deferred to a future release per D-17a:
- *   - Phase 1 stores `payloadDigest` (a hash) on inbound `WebhookDelivery`
- *     rows, not the raw body.
+ * OUTBOUND-ONLY. Inbound replay is deferred to a future release:
+ *   - We store `payloadDigest` (a hash) on inbound `WebhookDelivery` rows,
+ *     not the raw body.
  *   - Competitor research showed neither Qase nor TestRail offer replay UI;
  *     Stripe + GitHub offer outbound replay only.
  *
- * Used by the admin replay UI (Plan 04-07) via server actions (Plan 04-06).
+ * Used by the admin replay UI via server actions.
  *
  * Outbound chain: load `WebhookDelivery` → if INBOUND, reject; if OUTBOUND,
- * load the original `WebhookOutboxEvent` via the (Plan 04-01-added)
+ * load the original `WebhookOutboxEvent` via the
  * `WebhookDelivery.eventId → WebhookOutboxEvent.eventId @unique` link →
  * enqueue a fresh `webhookDispatchQueue` job with the original payload +
  * `replayedFromDeliveryId` threaded into job data. The dispatch worker
- * (existing Phase 2 plumbing; Plan 04-05 wires the new replay-aware fields)
  * writes the new delivery row at attempt-completion time.
  */
 
-export const BULK_REPLAY_HARD_CAP = 100; // CONTEXT D-08
+export const BULK_REPLAY_HARD_CAP = 100;
 
 export type ReplayRejectionReason =
-  | "inbound_replay_not_supported" // D-17a — inbound rejected at helper boundary
+  | "inbound_replay_not_supported" // inbound rejected at helper boundary
   | "delivery_not_found"
   | "outbox_purged" // outbound delivery's eventId points at a purged WebhookOutboxEvent (or null eventId on legacy rows)
   | "config_deleted" // delivery row is an orphaned audit record — its WebhookConfig was hard-deleted (schema.zmodel: webhookConfig SetNull)
@@ -75,20 +73,20 @@ export async function replayDelivery(
     return { outcome: "rejected", reason: "config_deleted" };
   }
 
-  // 3. D-17a — inbound is rejected at the helper boundary. No audit, no
-  //    stub row, no service call. The admin UI (Plan 04-07) renders a
-  //    gray info banner for inbound rows instead of a Replay button.
+  // 3. Inbound is rejected at the helper boundary. No audit, no stub row,
+  //    no service call. The admin UI renders a gray info banner for
+  //    inbound rows instead of a Replay button.
   if (delivery.direction === "INBOUND") {
     return { outcome: "rejected", reason: "inbound_replay_not_supported" };
   }
 
   // 4. OUTBOUND path. Load the source WebhookOutboxEvent by eventId so we
   //    can re-enqueue dispatch with the original payload. The link relies
-  //    on Plan 04-01's @unique on WebhookOutboxEvent.eventId.
+  //    on the @unique on WebhookOutboxEvent.eventId.
   if (!delivery.eventId) {
-    // Defensive: legacy rows from before Plan 04-01 / Plan 04-05 wired
-    // eventId-threading. Surfaced as outbox_purged so the admin sees a
-    // consistent rejection reason in the UI rather than a separate sentinel.
+    // Defensive: legacy rows from before eventId-threading. Surfaced as
+    // outbox_purged so the admin sees a consistent rejection reason in the
+    // UI rather than a separate sentinel.
     return { outcome: "rejected", reason: "outbox_purged" };
   }
 
@@ -117,11 +115,11 @@ export async function replayDelivery(
     { jobId }
   );
 
-  // 6. Audit per D-23. Outbound success path only — inbound rejection
-  //    above already returned without emitting. The new replay row is
-  //    written by the dispatch worker at attempt-completion time, so
-  //    `replayDeliveryId` is null at this point; the worker's own
-  //    WEBHOOK_DISPATCHED audit ties the chain together via metadata.
+  // 6. Audit. Outbound success path only — inbound rejection above already
+  //    returned without emitting. The new replay row is written by the
+  //    dispatch worker at attempt-completion time, so `replayDeliveryId`
+  //    is null at this point; the worker's own WEBHOOK_DISPATCHED audit
+  //    ties the chain together via metadata.
   await captureAuditEvent({
     action: "WEBHOOK_REPLAYED",
     entityType: "WebhookDelivery",
@@ -150,10 +148,10 @@ export interface BulkReplayResult {
 }
 
 /**
- * Bulk replay wrapper. The Plan 04-06 server action is the primary inbound
- * filter — it pre-filters the SELECT to `direction = "OUTBOUND"` so this
- * helper rarely sees inbound IDs in the bulk path. `skippedInboundCount` is
- * the defense-in-depth signal for cases where the filter is bypassed.
+ * Bulk replay wrapper. The server action is the primary inbound filter —
+ * it pre-filters the SELECT to `direction = "OUTBOUND"` so this helper
+ * rarely sees inbound IDs in the bulk path. `skippedInboundCount` is the
+ * defense-in-depth signal for cases where the filter is bypassed.
  */
 export async function bulkReplayDeliveries(
   deliveryIds: string[],

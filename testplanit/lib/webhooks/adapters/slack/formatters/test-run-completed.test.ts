@@ -202,9 +202,7 @@ describe("formatTestRunCompletedBlocks", () => {
 
   it("summary line collapses completion + cases + elapsed (24 cases all completed → 100%)", () => {
     const blocks = getBlocks(baseEnvelope);
-    expect(blocks[2].text.text).toBe(
-      "*100% complete* · 24 cases · 10 minutes"
-    );
+    expect(blocks[2].text.text).toBe("*100% complete* · 24 cases · 10 minutes");
   });
 
   it("renders each status row individually with admin-defined names (matches in-app TestRunCasesSummary)", () => {

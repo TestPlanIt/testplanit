@@ -50,9 +50,9 @@ vi.mock("~/lib/prisma", () => ({
   },
 }));
 
-// Plan 04-06 — replay service is mocked so server-action tests never spin up
+// replay service is mocked so server-action tests never spin up
 // BullMQ. The 4 new actions delegate to replayDelivery / bulkReplayDeliveries
-// (Plan 04-03) for the outbound enqueue side; the action's job is just the
+// for the outbound enqueue side; the action's job is just the
 // auth gate, the inbound rejection, and the bulk SELECT-with-cap.
 const mockReplayDelivery = vi.fn();
 const mockBulkReplayDeliveries = vi.fn();
@@ -63,7 +63,7 @@ vi.mock("~/lib/webhooks/replay", () => ({
   BULK_REPLAY_HARD_CAP: 100,
 }));
 
-// Plan 04-06 — captureAuditEvent is mocked so reEnableWebhookConfig's
+// captureAuditEvent is mocked so reEnableWebhookConfig's
 // WEBHOOK_HEALTH_CHANGED audit can be asserted by metadata shape.
 const mockCaptureAuditEvent = vi.fn();
 vi.mock("~/lib/services/auditLog", () => ({
@@ -86,7 +86,7 @@ vi.mock("~/utils/encryption", () => ({
   decrypt: (...args: unknown[]) => mockDecrypt(...args),
 }));
 
-// Phase 2 — webhookEvents.emit is called by sendTestOutboundWebhook to fire
+// webhookEvents.emit is called by sendTestOutboundWebhook to fire
 // the synthetic webhook.test event into the outbox.
 const mockWebhookEventsEmit = vi.fn();
 vi.mock("~/lib/webhooks/events", () => ({
@@ -110,11 +110,11 @@ import {
 // The byte-identical synthetic payload literal — copy of the constant in the
 // source file. Test #8 asserts byte-equality between two calls' fetch bodies
 // AND that the body equals this literal. If the source ever drifts (e.g.,
-// someone adds Date.now()), the unit tests fail BEFORE the SC#5 demo runs.
+// someone adds Date.now()), the unit tests fail BEFORE the demo runs.
 const EXPECTED_SYNTHETIC_PAYLOAD = JSON.stringify({
   webhookEvent: "jira:issue_updated",
   issue: {
-    // HI-02: synthetic intent is bound to the sentinel issue.key — no
+    // synthetic intent is bound to the sentinel issue.key — no
     // wire-controllable `metadata.synthetic` boolean. A real Jira can't
     // legitimately produce this key, so the synthetic path is reachable
     // only via the server-side self-loop.
@@ -141,7 +141,7 @@ describe("webhook-config server actions", () => {
       s.startsWith("enc:") ? s.slice(4) : s
     );
 
-    // Plan 04-06 — sane defaults so the *.not.toHaveBeenCalled() assertions
+    // sane defaults so the *.not.toHaveBeenCalled() assertions
     // in early-exit tests remain meaningful.
     mockReplayDelivery.mockReset();
     mockBulkReplayDeliveries.mockReset();
@@ -179,7 +179,7 @@ describe("webhook-config server actions", () => {
 
       expect(result.success).toBe(true);
       expect(result.configId).toBe("cfg-new-1");
-      // URL contains whk_ + 64 hex chars (D-05 token shape).
+      // URL contains whk_ + 64 hex chars (token shape).
       expect(result.url).toMatch(
         /^https:\/\/app\.example\.test\/api\/webhooks\/whk_[0-9a-f]{64}$/
       );
@@ -203,7 +203,7 @@ describe("webhook-config server actions", () => {
     });
 
     // ─── Test 3: createOrRotate — rotate existing ─────────────────────────
-    it("Test 3: rotates existing row (D-07 hard cutover — old token NOT preserved)", async () => {
+    it("Test 3: rotates existing row (hard cutover — old token NOT preserved)", async () => {
       mockWebhookConfigFindFirst.mockResolvedValue({ id: "cfg-existing" });
       mockWebhookConfigUpdate.mockResolvedValue({ id: "cfg-existing" });
 
@@ -223,7 +223,7 @@ describe("webhook-config server actions", () => {
       });
     });
 
-    it("Test 3b (HI-05/ME-03): concurrent-create race — P2002 on first INSERT triggers a single retry via the rotate path", async () => {
+    it("Test 3b: concurrent-create race — P2002 on first INSERT triggers a single retry via the rotate path", async () => {
       // Two admins click 'Configure Jira webhook' simultaneously: both
       // findFirst() return null, both attempt create(), one wins and the
       // loser hits P2002. The loser should fall through to the
@@ -308,11 +308,11 @@ describe("webhook-config server actions", () => {
   });
 
   // =========================================================================
-  // Phase 3 / Plan 03-06 / Task 6.1 — generalize createOrRotate + delete
+  // generalize createOrRotate + delete
   // for all 3 inbound adapters (JIRA / GITHUB / AZURE_DEVOPS).
   // =========================================================================
 
-  describe("createOrRotateInboundWebhook (Phase 3)", () => {
+  describe("createOrRotateInboundWebhook", () => {
     it("creates a GITHUB config when no row exists; mints HMAC secret + adapterType=GITHUB", async () => {
       mockWebhookConfigFindFirst.mockResolvedValue(null);
       mockWebhookConfigCreate.mockResolvedValue({ id: "cfg-gh-1" });
@@ -345,7 +345,7 @@ describe("webhook-config server actions", () => {
       });
     });
 
-    it("creates an AZURE_DEVOPS config with JSON-encoded {username, password} secret (D-09)", async () => {
+    it("creates an AZURE_DEVOPS config with JSON-encoded {username, password} secret", async () => {
       mockWebhookConfigFindFirst.mockResolvedValue(null);
       mockWebhookConfigCreate.mockResolvedValue({ id: "cfg-ado-1" });
 
@@ -364,7 +364,7 @@ describe("webhook-config server actions", () => {
       // ADO does NOT return a server-minted secret; admin already typed it.
       expect(result.secret).toBeUndefined();
 
-      // Encryption helper invoked with the JSON-encoded credential blob (D-09).
+      // Encryption helper invoked with the JSON-encoded credential blob.
       const expectedJson = JSON.stringify({
         username: "tpi",
         password: "s3cret",
@@ -417,8 +417,8 @@ describe("webhook-config server actions", () => {
     });
 
     it("Q8 RESOLVED: encrypt(JSON.stringify({username,password})) round-trips via decrypt+JSON.parse", async () => {
-      // Verifies Phase 1's encryption helper handles arbitrary string content
-      // (mirrors Phase 2's Slack-URL-as-credential precedent). Mock encrypt
+      // Verifies the encryption helper handles arbitrary string content
+      // (mirrors the Slack-URL-as-credential precedent). Mock encrypt
       // to a passthrough so we can assert decrypt+parse recovers structural
       // equality of the credentials object.
       mockEncrypt.mockImplementationOnce(async (s: string) => `enc:${s}`);
@@ -432,7 +432,7 @@ describe("webhook-config server actions", () => {
       expect(parsed).toEqual(creds);
     });
 
-    it("Phase 1 alias createOrRotateJiraWebhook still routes through the new function", async () => {
+    it("alias createOrRotateJiraWebhook still routes through the new function", async () => {
       mockWebhookConfigFindFirst.mockResolvedValue(null);
       mockWebhookConfigCreate.mockResolvedValue({ id: "cfg-jira-via-alias" });
 
@@ -455,7 +455,7 @@ describe("webhook-config server actions", () => {
       });
     });
 
-    it("rotate path: GITHUB existing row → update (D-07 hard cutover, fresh token+secret)", async () => {
+    it("rotate path: GITHUB existing row → update (hard cutover, fresh token+secret)", async () => {
       mockWebhookConfigFindFirst.mockResolvedValue({ id: "cfg-gh-exist" });
       mockWebhookConfigUpdate.mockResolvedValue({ id: "cfg-gh-exist" });
 
@@ -479,7 +479,7 @@ describe("webhook-config server actions", () => {
     });
   });
 
-  describe("deleteInboundWebhook (Phase 3)", () => {
+  describe("deleteInboundWebhook", () => {
     it("happy path: tenant-scopes by projectId + direction=INBOUND", async () => {
       mockWebhookConfigFindUnique.mockResolvedValue({
         projectId: 42,
@@ -695,12 +695,12 @@ describe("webhook-config server actions", () => {
           "x-hub-signature-256": expectedSignature(),
         },
       });
-      // Body bytes EQUAL the literal synthetic payload (BLOCKER #5).
+      // Body bytes EQUAL the literal synthetic payload.
       expect(init.body).toBe(EXPECTED_SYNTHETIC_PAYLOAD);
     });
 
-    // ─── Test 8: SC#5 demo lock — second call body byte-identical ─────────
-    it("Test 8 (SC#5 demo lock): two consecutive calls produce BYTE-IDENTICAL fetch bodies; second forwards 'duplicate'", async () => {
+    // ─── Test 8: demo lock — second call body byte-identical ─────────
+    it("Test 8 (demo lock): two consecutive calls produce BYTE-IDENTICAL fetch bodies; second forwards 'duplicate'", async () => {
       mockWebhookConfigFindUnique.mockResolvedValue({
         token: FIXTURE_TOKEN,
         secret: FIXTURE_SECRET_ENC,
@@ -729,7 +729,7 @@ describe("webhook-config server actions", () => {
       const callOneBody = fetchSpy.mock.calls[0][1].body as string;
       const callTwoBody = fetchSpy.mock.calls[1][1].body as string;
 
-      // BLOCKER #5: byte-identical across clicks. If a Date.now/nonce/random ever
+      // Byte-identical across clicks. If a Date.now/nonce/random ever
       // sneaks into SYNTHETIC_PAYLOAD, this assertion catches it before demo day.
       expect(callOneBody).toBe(callTwoBody);
       expect(callOneBody).toBe(EXPECTED_SYNTHETIC_PAYLOAD);
@@ -745,8 +745,8 @@ describe("webhook-config server actions", () => {
       expect(sig1).toBe(expectedSignature());
     });
 
-    // ─── Test 9: HI-02 sentinel issue.key in synthetic payload ───────────
-    it("Test 9 (HI-02): synthetic payload uses sentinel issue.key='__synthetic__' and contains NO wire-supplied metadata.synthetic boolean", async () => {
+    // ─── Test 9: sentinel issue.key in synthetic payload ───────────
+    it("Test 9: synthetic payload uses sentinel issue.key='__synthetic__' and contains NO wire-supplied metadata.synthetic boolean", async () => {
       mockWebhookConfigFindUnique.mockResolvedValue({
         token: FIXTURE_TOKEN,
         secret: FIXTURE_SECRET_ENC,
@@ -765,7 +765,7 @@ describe("webhook-config server actions", () => {
       const parsed = JSON.parse(body);
       // Synthetic intent is bound to the issue.key sentinel.
       expect(parsed.issue.key).toBe("__synthetic__");
-      // The wire-controllable metadata.synthetic boolean MUST NOT be present —
+      // The wire-controllable metadata.synthetic boolean MUST NOT be present
       // the receiver-side adapter ignores it for non-sentinel keys, and we
       // don't want a misleading marker on the wire that could confuse log
       // analysis or external observers.
@@ -790,13 +790,13 @@ describe("webhook-config server actions", () => {
     });
 
     // ─────────────────────────────────────────────────────────────────────
-    // Phase 3 / Plan 03-06 / Task 6.2 — adapter-aware sendTestWebhook
+    // adapter-aware sendTestWebhook
     // (GitHub HMAC + ADO Basic Auth) with module-level synthetic payloads.
     // ─────────────────────────────────────────────────────────────────────
 
     // The module-level constants from webhook-config.ts (copies here for
     // byte-identity assertion). If the source ever drifts, these tests fail
-    // BEFORE the SC#5 demo runs — same guard as Phase 1's EXPECTED_SYNTHETIC_PAYLOAD.
+    // BEFORE the test runs — same guard as the JIRA EXPECTED_SYNTHETIC_PAYLOAD.
     const EXPECTED_GITHUB_PAYLOAD = JSON.stringify({
       action: "opened",
       issue: { number: 0, state: "open", title: "Synthetic test" },
@@ -850,13 +850,13 @@ describe("webhook-config server actions", () => {
         "x-github-event": "issues",
       });
 
-      // HI-02 sentinel binding: __synthetic__/__synthetic__ + issue.number === 0
+      // sentinel binding: __synthetic__/__synthetic__ + issue.number === 0
       const parsed = JSON.parse(init.body);
       expect(parsed.repository.full_name).toBe("__synthetic__/__synthetic__");
       expect(parsed.issue.number).toBe(0);
     });
 
-    it("Test 12 (GITHUB SC#5 dedup invariant): two consecutive calls produce BYTE-IDENTICAL bodies", async () => {
+    it("Test 12 (GITHUB dedup invariant): two consecutive calls produce BYTE-IDENTICAL bodies", async () => {
       mockWebhookConfigFindUnique.mockResolvedValue({
         token: FIXTURE_TOKEN,
         secret: FIXTURE_SECRET_ENC,
@@ -883,7 +883,7 @@ describe("webhook-config server actions", () => {
 
       const body1 = fetchSpy.mock.calls[0][1].body as string;
       const body2 = fetchSpy.mock.calls[1][1].body as string;
-      // SC#5 invariant: byte-identity → identical payloadDigest → dedup hits
+      // invariant: byte-identity → identical payloadDigest → dedup hits
       // duplicate path on the second call. Module-level const guarantees this.
       expect(body1).toBe(body2);
       expect(body1).toBe(EXPECTED_GITHUB_PAYLOAD);
@@ -899,7 +899,7 @@ describe("webhook-config server actions", () => {
     });
 
     it("Test 13 (AZURE_DEVOPS): posts Authorization: Basic <base64> with synthetic workitem.updated payload", async () => {
-      // ADO secret is JSON-encoded {username, password} per D-09.
+      // ADO secret is JSON-encoded {username, password}.
       const adoCreds = JSON.stringify({ username: "tpi", password: "s3cret" });
       mockWebhookConfigFindUnique.mockResolvedValue({
         token: FIXTURE_TOKEN,
@@ -937,7 +937,7 @@ describe("webhook-config server actions", () => {
         authorization: "Basic dHBpOnMzY3JldA==",
       });
 
-      // HI-02 sentinel binding: resource.id === 0 (real ADO IDs are ≥ 1)
+      // sentinel binding: resource.id === 0 (real ADO IDs are ≥ 1)
       const parsed = JSON.parse(init.body);
       expect(parsed.resource.id).toBe(0);
       expect(parsed.eventType).toBe("workitem.updated");
@@ -960,7 +960,7 @@ describe("webhook-config server actions", () => {
       expect(fetchSpy).not.toHaveBeenCalled();
     });
 
-    it("Test 15 (AZURE_DEVOPS SC#5 dedup invariant): two consecutive calls produce BYTE-IDENTICAL bodies", async () => {
+    it("Test 15 (AZURE_DEVOPS dedup invariant): two consecutive calls produce BYTE-IDENTICAL bodies", async () => {
       const adoCreds = JSON.stringify({ username: "tpi", password: "s3cret" });
       mockWebhookConfigFindUnique.mockResolvedValue({
         token: FIXTURE_TOKEN,
@@ -1013,10 +1013,10 @@ describe("webhook-config server actions", () => {
   });
 
   // =========================================================================
-  // v0.23.0 Phase 2 — Outbound webhook server actions (Plan 02-06)
+  // Outbound webhook server actions
   // =========================================================================
 
-  describe("createOutboundWebhook (Phase 2)", () => {
+  describe("createOutboundWebhook", () => {
     beforeEach(() => {
       delete process.env.WEBHOOK_OUTBOUND_ALLOW_HTTP;
     });
@@ -1035,7 +1035,7 @@ describe("webhook-config server actions", () => {
       expect(mockWebhookConfigCreate).not.toHaveBeenCalled();
     });
 
-    it("Blocker 4: rejects when name is empty/whitespace with 'Name is required'", async () => {
+    it("rejects when name is empty/whitespace with 'Name is required'", async () => {
       const { createOutboundWebhook } = await import("./webhook-config");
 
       const r1 = await createOutboundWebhook({
@@ -1123,7 +1123,7 @@ describe("webhook-config server actions", () => {
       delete process.env.WEBHOOK_OUTBOUND_ALLOW_HTTP;
     });
 
-    it("Slack URL: auto-detects adapterType=SLACK, sets secret='', NO WebhookConfigSecret row, persists name+url (Blocker 4)", async () => {
+    it("Slack URL: auto-detects adapterType=SLACK, sets secret='', NO WebhookConfigSecret row, persists name+url", async () => {
       mockWebhookConfigCreate.mockResolvedValue({ id: "cfg-slack" });
       const { createOutboundWebhook } = await import("./webhook-config");
 
@@ -1143,7 +1143,7 @@ describe("webhook-config server actions", () => {
         projectId: 42,
         adapterType: "SLACK",
         direction: "OUTBOUND",
-        secret: "", // Slack URL is the credential (D-18)
+        secret: "", // Slack URL is the credential
         name: "Team Slack", // trimmed
         url: "https://hooks.slack.com/services/T000/B000/abc",
         isActive: true,
@@ -1181,7 +1181,7 @@ describe("webhook-config server actions", () => {
       });
     });
 
-    it("Generic-HMAC URL: detects GENERIC_HMAC, creates WebhookConfigSecret row, returns plaintext secret, persists name+url (Blocker 4)", async () => {
+    it("Generic-HMAC URL: detects GENERIC_HMAC, creates WebhookConfigSecret row, returns plaintext secret, persists name+url", async () => {
       // Arrange: $transaction calls back with a tx client mock.
       mockTransaction.mockImplementation(async (fn: any) =>
         fn({
@@ -1209,7 +1209,7 @@ describe("webhook-config server actions", () => {
       // Plaintext, not encrypted blob
       expect(result.secret!.startsWith("enc:")).toBe(false);
 
-      // Config create payload — Blocker 4 — name and url persisted into columns.
+      // Config create payload — — name and url persisted into columns.
       const cfgCallArg = mockWebhookConfigCreate.mock.calls[0][0];
       expect(cfgCallArg.data).toMatchObject({
         projectId: 42,
@@ -1247,7 +1247,7 @@ describe("webhook-config server actions", () => {
     });
   });
 
-  describe("deleteOutboundWebhook (Phase 2)", () => {
+  describe("deleteOutboundWebhook", () => {
     it("returns Unauthorized when session missing", async () => {
       mockGetServerAuthSession.mockResolvedValue(null);
       const { deleteOutboundWebhook } = await import("./webhook-config");
@@ -1301,7 +1301,7 @@ describe("webhook-config server actions", () => {
     });
   });
 
-  describe("updateOutboundSubscriptions (Phase 2)", () => {
+  describe("updateOutboundSubscriptions", () => {
     it("returns Unauthorized when session missing", async () => {
       mockGetServerAuthSession.mockResolvedValue(null);
       const { updateOutboundSubscriptions } = await import("./webhook-config");
@@ -1343,10 +1343,10 @@ describe("webhook-config server actions", () => {
   });
 
   // =========================================================================
-  // v0.23.0 Phase 2 / Task 6.2 — Two-secret rotation lifecycle (D-04..D-06)
+  // Two-secret rotation lifecycle (..)
   // =========================================================================
 
-  describe("rotateOutboundSecret (Phase 2)", () => {
+  describe("rotateOutboundSecret", () => {
     function buildTxMock() {
       return {
         webhookConfigSecret: {
@@ -1488,7 +1488,7 @@ describe("webhook-config server actions", () => {
     });
   });
 
-  describe("retireOutboundSecretNow (Phase 2)", () => {
+  describe("retireOutboundSecretNow", () => {
     it("returns Unauthorized when session missing", async () => {
       mockGetServerAuthSession.mockResolvedValue(null);
       const { retireOutboundSecretNow } = await import("./webhook-config");
@@ -1551,7 +1551,7 @@ describe("webhook-config server actions", () => {
     });
   });
 
-  describe("extendRetiringSecret (Phase 2)", () => {
+  describe("extendRetiringSecret", () => {
     it("returns Unauthorized when session missing", async () => {
       mockGetServerAuthSession.mockResolvedValue(null);
       const { extendRetiringSecret } = await import("./webhook-config");
@@ -1605,10 +1605,10 @@ describe("webhook-config server actions", () => {
   });
 
   // =========================================================================
-  // v0.23.0 Phase 2 / Task 6.3 — sendTestOutboundWebhook (synthetic emit)
+  // sendTestOutboundWebhook (synthetic emit)
   // =========================================================================
 
-  describe("sendTestOutboundWebhook (Phase 2)", () => {
+  describe("sendTestOutboundWebhook", () => {
     function buildEmitTxMock() {
       // Pass-through: $transaction(async (tx) => fn(tx)). The mock just runs
       // the closure with a stub client that webhookEvents.emit will receive,
@@ -1723,10 +1723,10 @@ describe("webhook-config server actions", () => {
   });
 
   // ===========================================================================
-  // v0.23.0 Phase 4 / Plan 04-06 — replay + bulk replay + re-enable + batch status
+  // replay + bulk replay + re-enable + batch status
   // ===========================================================================
 
-  describe("replayWebhookDelivery (Plan 04-06)", () => {
+  describe("replayWebhookDelivery", () => {
     it("returns Unauthorized when session is missing", async () => {
       mockGetServerAuthSession.mockResolvedValue(null);
       const { replayWebhookDelivery } = await import("./webhook-config");
@@ -1761,7 +1761,7 @@ describe("webhook-config server actions", () => {
       expect(mockReplayDelivery).not.toHaveBeenCalled();
     });
 
-    it("rejects INBOUND deliveries with typed reason inbound_replay_not_supported (D-17a)", async () => {
+    it("rejects INBOUND deliveries with typed reason inbound_replay_not_supported", async () => {
       mockWebhookDeliveryFindUnique.mockResolvedValue({
         direction: "INBOUND",
         webhookConfig: { projectId: 1 },
@@ -1775,7 +1775,7 @@ describe("webhook-config server actions", () => {
         ok: false,
         reason: "inbound_replay_not_supported",
       });
-      // Per D-17a: rejected at action boundary, no service call, no audit.
+      // Per rejected at action boundary, no service call, no audit.
       expect(mockReplayDelivery).not.toHaveBeenCalled();
       expect(mockCaptureAuditEvent).not.toHaveBeenCalled();
     });
@@ -1805,7 +1805,7 @@ describe("webhook-config server actions", () => {
     });
   });
 
-  describe("bulkReplayFailedDeliveries (Plan 04-06)", () => {
+  describe("bulkReplayFailedDeliveries", () => {
     it("returns Unauthorized when session is missing", async () => {
       mockGetServerAuthSession.mockResolvedValue(null);
       const { bulkReplayFailedDeliveries } = await import("./webhook-config");
@@ -1834,7 +1834,7 @@ describe("webhook-config server actions", () => {
       expect(mockBulkReplayDeliveries).not.toHaveBeenCalled();
     });
 
-    it("filters to direction:OUTBOUND with error:not-null and take = BULK_REPLAY_HARD_CAP+1 (D-17a)", async () => {
+    it("filters to direction:OUTBOUND with error:not-null and take = BULK_REPLAY_HARD_CAP+1", async () => {
       mockWebhookConfigFindUnique.mockResolvedValue({ projectId: 1 });
       mockCanManageWebhookConfig.mockResolvedValue(true);
       const fortySeven = Array.from({ length: 47 }, (_, i) => ({
@@ -1980,7 +1980,7 @@ describe("webhook-config server actions", () => {
     });
   });
 
-  describe("reEnableWebhookConfig (Plan 04-06)", () => {
+  describe("reEnableWebhookConfig", () => {
     it("returns Unauthorized when session is missing", async () => {
       mockGetServerAuthSession.mockResolvedValue(null);
       const { reEnableWebhookConfig } = await import("./webhook-config");
@@ -2029,7 +2029,7 @@ describe("webhook-config server actions", () => {
       expect(mockWebhookConfigUpdate).not.toHaveBeenCalled();
     });
 
-    it("happy path: sets endpointHealth=HEALTHY + consecutiveFailureCount=0 and emits manual_reenable audit (D-24)", async () => {
+    it("happy path: sets endpointHealth=HEALTHY + consecutiveFailureCount=0 and emits manual_reenable audit", async () => {
       mockWebhookConfigFindUnique.mockResolvedValue({
         projectId: 1,
         endpointHealth: "DISABLED",
@@ -2066,7 +2066,7 @@ describe("webhook-config server actions", () => {
       });
     });
 
-    it("manual_reenable uses actorUserId from session, NOT __system__ (D-24)", async () => {
+    it("manual_reenable uses actorUserId from session, NOT __system__", async () => {
       mockWebhookConfigFindUnique.mockResolvedValue({
         projectId: 1,
         endpointHealth: "DISABLED",
@@ -2085,7 +2085,7 @@ describe("webhook-config server actions", () => {
     });
   });
 
-  describe("getReplayBatchStatus (Plan 04-06)", () => {
+  describe("getReplayBatchStatus", () => {
     it("returns Unauthorized when session is missing", async () => {
       mockGetServerAuthSession.mockResolvedValue(null);
       const { getReplayBatchStatus } = await import("./webhook-config");

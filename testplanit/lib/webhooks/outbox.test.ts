@@ -7,7 +7,7 @@ import {
 } from "./outbox";
 
 /**
- * D-02 / D-33 — outbound webhook outbox helpers.
+ * outbound webhook outbox helpers.
  *
  * claimOutboxBatch issues a Postgres CTE with FOR UPDATE SKIP LOCKED that
  * marks dispatchedAt = NOW() in the same statement. fanoutToConfigs uses
@@ -220,7 +220,14 @@ describe("fanoutToConfigs", () => {
         findMany: vi.fn(),
       },
     } as any;
-    for (const payload of [null, undefined, {}, { configId: 42 }, [], "string"]) {
+    for (const payload of [
+      null,
+      undefined,
+      {},
+      { configId: 42 },
+      [],
+      "string",
+    ]) {
       const result = await fanoutToConfigs(
         {
           projectId: 7,

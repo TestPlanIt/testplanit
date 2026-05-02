@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { redactToken, redactWebhookUrl } from "./redaction";
 
 /**
- * Behaviour suite for D-08 token redaction. These helpers exist solely so token
- * values never appear cleartext in server logs (see plan 01-04, WARNING #12 on
+ * Behaviour suite for token redaction. These helpers exist solely so token
+ * values never appear cleartext in server logs (see plan 01-04, on
  * the absence of a structured logger). Redacted form keeps the prefix +
  * first 8 hex chars so operators can correlate log lines without seeing the
  * full secret.
@@ -20,7 +20,7 @@ describe("redactToken", () => {
     expect(redactToken("whk_short")).toBe("whk_…[redacted]");
   });
 
-  it("sanitizes and truncates non-whk_ inputs (ME-06 log-injection prevention)", () => {
+  it("sanitizes and truncates non-whk_ inputs (log-injection prevention)", () => {
     // Long non-whk_ input: keep first 16 chars, append redacted marker.
     expect(redactToken("not-a-webhook-token")).toBe(
       "not-a-webhook-to…[redacted]"

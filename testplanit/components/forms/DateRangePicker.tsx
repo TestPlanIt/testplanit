@@ -299,28 +299,30 @@ export function DateRangePicker({
               <DropdownMenuItem onClick={() => setSelectedPreset("custom")}>
                 {tReports("dateRange.custom")}
               </DropdownMenuItem>
-              {Object.entries(rangeCategories).map(([categoryKey, category]) => (
-                <DropdownMenuSub key={categoryKey}>
-                  <DropdownMenuSubTrigger>
-                    {category.label}
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    {Object.entries(category.ranges).map(
-                      ([rangeKey, range]) => (
-                        <DropdownMenuItem
-                          key={rangeKey}
-                          onClick={() => {
-                            setSelectedPreset(rangeKey);
-                            onChange(range.getValue());
-                          }}
-                        >
-                          {range.label}
-                        </DropdownMenuItem>
-                      )
-                    )}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-              ))}
+              {Object.entries(rangeCategories).map(
+                ([categoryKey, category]) => (
+                  <DropdownMenuSub key={categoryKey}>
+                    <DropdownMenuSubTrigger>
+                      {category.label}
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
+                      {Object.entries(category.ranges).map(
+                        ([rangeKey, range]) => (
+                          <DropdownMenuItem
+                            key={rangeKey}
+                            onClick={() => {
+                              setSelectedPreset(rangeKey);
+                              onChange(range.getValue());
+                            }}
+                          >
+                            {range.label}
+                          </DropdownMenuItem>
+                        )
+                      )}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                )
+              )}
               <DropdownMenuItem
                 onClick={() => {
                   setSelectedPreset("allTime");

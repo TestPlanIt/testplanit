@@ -8,7 +8,7 @@ import {
 } from "./sessionEvents";
 
 /**
- * Plan 02-05 Task 5.2 — sessionEvents emitter contract.
+ * sessionEvents emitter contract.
  *
  * Mirrors testRunEvents 1:1 except for the session.completed payload
  * asymmetry (no getSessionSummary equivalent yet — minimal payload with
@@ -42,11 +42,18 @@ interface TxStub {
 function makeTx(overrides: Partial<TxStub> = {}): TxStub {
   return {
     workflows: {
-      findUnique: vi.fn(async () => ({ name: "default", workflowType: "IN_PROGRESS" })),
+      findUnique: vi.fn(async () => ({
+        name: "default",
+        workflowType: "IN_PROGRESS",
+      })),
       ...(overrides.workflows ?? {}),
     },
     sessions: {
-      findUnique: vi.fn(async () => ({ id: 1, name: "Session 1", projectId: 7 })),
+      findUnique: vi.fn(async () => ({
+        id: 1,
+        name: "Session 1",
+        projectId: 7,
+      })),
       ...(overrides.sessions ?? {}),
     },
     sessionResults: {
@@ -56,7 +63,11 @@ function makeTx(overrides: Partial<TxStub> = {}): TxStub {
       ...(overrides.sessionResults ?? {}),
     },
     status: {
-      findUnique: vi.fn(async () => ({ id: 5, name: "Passed", isCompleted: true })),
+      findUnique: vi.fn(async () => ({
+        id: 5,
+        name: "Passed",
+        isCompleted: true,
+      })),
       ...(overrides.status ?? {}),
     },
   };
@@ -70,11 +81,20 @@ describe("emitSessionCreated", () => {
   it("emits session.created and forwards tx", async () => {
     const tx = makeTx({
       workflows: {
-        findUnique: vi.fn(async () => ({ name: "Open", workflowType: "NOT_STARTED" })),
+        findUnique: vi.fn(async () => ({
+          name: "Open",
+          workflowType: "NOT_STARTED",
+        })),
       },
     });
     await emitSessionCreated(
-      { id: 1, projectId: 7, name: "Session 1", stateId: 100, isCompleted: false },
+      {
+        id: 1,
+        projectId: 7,
+        name: "Session 1",
+        stateId: 100,
+        isCompleted: false,
+      },
       tx as never
     );
     expect(emitMock).toHaveBeenCalledTimes(1);
@@ -92,14 +112,20 @@ describe("emitSessionCreated", () => {
   });
 });
 
-describe("emitSessionUpdateEvents — D-10 lifecycle policy", () => {
+describe("emitSessionUpdateEvents — lifecycle policy", () => {
   beforeEach(() => {
     emitMock.mockClear();
   });
 
   it("emits NOTHING when neither stateId nor isCompleted changed", async () => {
     const tx = makeTx();
-    const row = { id: 1, projectId: 7, name: "Session 1", stateId: 100, isCompleted: false };
+    const row = {
+      id: 1,
+      projectId: 7,
+      name: "Session 1",
+      stateId: 100,
+      isCompleted: false,
+    };
     await emitSessionUpdateEvents(row, row, tx as never);
     expect(emitMock).not.toHaveBeenCalled();
   });
@@ -107,8 +133,20 @@ describe("emitSessionUpdateEvents — D-10 lifecycle policy", () => {
   it("emits ONLY session.completed when isCompleted flips false→true without a stateId change (admin marked complete in place)", async () => {
     const tx = makeTx();
     await emitSessionUpdateEvents(
-      { id: 1, projectId: 7, name: "Session 1", stateId: 100, isCompleted: false },
-      { id: 1, projectId: 7, name: "Session 1", stateId: 100, isCompleted: true },
+      {
+        id: 1,
+        projectId: 7,
+        name: "Session 1",
+        stateId: 100,
+        isCompleted: false,
+      },
+      {
+        id: 1,
+        projectId: 7,
+        name: "Session 1",
+        stateId: 100,
+        isCompleted: true,
+      },
       tx as never
     );
     expect(emitMock).toHaveBeenCalledTimes(1);
@@ -121,12 +159,27 @@ describe("emitSessionUpdateEvents — D-10 lifecycle policy", () => {
         findUnique: vi
           .fn()
           .mockResolvedValueOnce({ name: "Open", workflowType: "NOT_STARTED" })
-          .mockResolvedValueOnce({ name: "In Progress", workflowType: "IN_PROGRESS" }),
+          .mockResolvedValueOnce({
+            name: "In Progress",
+            workflowType: "IN_PROGRESS",
+          }),
       },
     });
     await emitSessionUpdateEvents(
-      { id: 1, projectId: 7, name: "Session 1", stateId: 100, isCompleted: false },
-      { id: 1, projectId: 7, name: "Session 1", stateId: 200, isCompleted: false },
+      {
+        id: 1,
+        projectId: 7,
+        name: "Session 1",
+        stateId: 100,
+        isCompleted: false,
+      },
+      {
+        id: 1,
+        projectId: 7,
+        name: "Session 1",
+        stateId: 200,
+        isCompleted: false,
+      },
       tx as never
     );
     expect(emitMock).toHaveBeenCalledTimes(1);
@@ -141,7 +194,10 @@ describe("emitSessionUpdateEvents — D-10 lifecycle policy", () => {
       workflows: {
         findUnique: vi
           .fn()
-          .mockResolvedValueOnce({ name: "In Progress", workflowType: "IN_PROGRESS" })
+          .mockResolvedValueOnce({
+            name: "In Progress",
+            workflowType: "IN_PROGRESS",
+          })
           .mockResolvedValueOnce({ name: "Done", workflowType: "DONE" }),
       },
       sessionResults: {
@@ -176,8 +232,20 @@ describe("emitSessionUpdateEvents — D-10 lifecycle policy", () => {
       },
     });
     await emitSessionUpdateEvents(
-      { id: 1, projectId: 7, name: "Session 1", stateId: 100, isCompleted: false },
-      { id: 1, projectId: 7, name: "Session 1", stateId: 200, isCompleted: true },
+      {
+        id: 1,
+        projectId: 7,
+        name: "Session 1",
+        stateId: 100,
+        isCompleted: false,
+      },
+      {
+        id: 1,
+        projectId: 7,
+        name: "Session 1",
+        stateId: 200,
+        isCompleted: true,
+      },
       tx as never
     );
     expect(emitMock).toHaveBeenCalledTimes(2);
@@ -207,10 +275,18 @@ describe("emitSessionResultAdded", () => {
     const createdAt = new Date("2026-01-01T00:00:00Z");
     const tx = makeTx({
       sessions: {
-        findUnique: vi.fn(async () => ({ id: 1, name: "Session 1", projectId: 7 })),
+        findUnique: vi.fn(async () => ({
+          id: 1,
+          name: "Session 1",
+          projectId: 7,
+        })),
       },
       status: {
-        findUnique: vi.fn(async () => ({ id: 5, name: "Passed", isCompleted: true })),
+        findUnique: vi.fn(async () => ({
+          id: 5,
+          name: "Passed",
+          isCompleted: true,
+        })),
       },
     });
     await emitSessionResultAdded(

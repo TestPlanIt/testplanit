@@ -1,5 +1,5 @@
 /**
- * Webhook token redaction (D-08).
+ * Webhook token redaction.
  *
  * Tokens have shape `whk_<hex>` (32 random bytes → 64 hex chars). The prefix
  * plus the first 8 hex chars are retained for log correlation; the remaining
@@ -7,9 +7,8 @@
  * synchronous so they can be wrapped around any console.* argument without
  * altering control flow.
  *
- * Phase 1 ships with redacted `console.*` because the codebase has no
- * structured logger today; promotion to a Pino redaction config is a captured
- * follow-up rather than a Phase 1 blocker.
+ * Ships with redacted `console.*` because the codebase has no structured
+ * logger today; promotion to a Pino redaction config is a captured follow-up.
  */
 
 const TOKEN_PREFIX = "whk_";
@@ -23,7 +22,7 @@ const PREVIEW_MAX = 16;
  *
  * Sanitizes any non-`[A-Za-z0-9_-]` characters before logging so an attacker
  * who hits `/api/webhooks/<arbitrary>` with newlines or control chars can't
- * inject fake log entries (ME-06 — log-injection prevention). For valid
+ * inject fake log entries (log-injection prevention). For valid
  * `whk_<hex>` tokens, retains the prefix plus the first 8 hex chars for
  * log correlation; for any other input, returns a sanitized truncated
  * preview so the receiver can log "no active config for token" without

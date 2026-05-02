@@ -6,7 +6,7 @@ import {
 } from "./slack-url-detection";
 
 /**
- * D-29 — Slack incoming-webhook URL hostname detector.
+ * Slack incoming-webhook URL hostname detector.
  *
  * Auto-detect rule: hostname is exactly `hooks.slack.com`. Workspace
  * subdomains (e.g. `acme.slack.com`) are NOT incoming webhooks.
@@ -26,12 +26,13 @@ describe("isSlackWebhookUrl", () => {
     {
       url: "https://hooks.slack.com/services/",
       expected: true,
-      label: "path-agnostic — only hostname matters (D-29)",
+      label: "path-agnostic — only hostname matters",
     },
     {
       url: "http://hooks.slack.com/services/T/B/C",
       expected: true,
-      label: "scheme-agnostic — HTTP-vs-HTTPS validation is the server action's job",
+      label:
+        "scheme-agnostic — HTTP-vs-HTTPS validation is the server action's job",
     },
     {
       url: "https://Hooks.SLACK.com/services/T/B/C",

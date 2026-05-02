@@ -1,10 +1,5 @@
 import type { FormattedHttpRequest, OutboundEnvelope } from "../../types";
-import {
-  buildBody,
-  projectNameOf,
-  titleAndProject,
-  url,
-} from "./_shared";
+import { buildBody, projectNameOf, titleAndProject, url } from "./_shared";
 
 interface CaseCreatedData {
   id: number;
@@ -24,7 +19,7 @@ function truncate(s: string, n: number): string {
 }
 
 /**
- * OUT-17 — `case.created` payload ships the full case structure on the
+ * `case.created` payload ships the full case structure on the
  * generic-HMAC adapter; Slack only renders a summary block.
  * Informational event — no color bar.
  */

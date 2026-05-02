@@ -48,7 +48,6 @@ interface StepDuplicateResultsTableProps {
   onRowClick?: (row: StepDuplicateRow) => void;
 }
 
-
 export function StepDuplicateResultsTable({
   projectId,
   onRowClick,

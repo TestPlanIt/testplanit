@@ -99,9 +99,7 @@ describe("canManageWebhookConfig (CR-02 helper)", () => {
     expect(ok).toBe(true);
     const where = mockProjectsFindFirst.mock.calls[0][0].where;
     expect(where.OR).toEqual(
-      expect.arrayContaining([
-        { assignedUsers: { some: { userId: "pa-1" } } },
-      ])
+      expect.arrayContaining([{ assignedUsers: { some: { userId: "pa-1" } } }])
     );
   });
 

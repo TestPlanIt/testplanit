@@ -66,11 +66,6 @@ const AUTO_INJECT_USER_FIELDS: Record<string, string[]> = {
   issue: ["createdBy"],
 };
 
-// Plan 02-08 — models whose mutations emit outbound webhook events. Mirrors
-// the models with $extends emit hooks in lib/prisma.ts (Plan 02-05) so the
-// route.ts shim is the canonical emission seam for ZenStack RPC mutations.
-// `sharedStepGroups` is intentionally absent — it has audit/ES sync hooks but
-// no webhook events in the Phase 2 catalog.
 const WEBHOOK_EMIT_MODELS = new Set([
   "testRuns",
   "sessions",
@@ -80,10 +75,6 @@ const WEBHOOK_EMIT_MODELS = new Set([
   "sessionResults",
 ]);
 
-// Plan 02-08 — extract the entity primary key from a ZenStack RPC mutation
-// body. Update/upsert wrap the where clause inside `data: { where, data }`;
-// delete uses a top-level `where`. Returns null when the body shape doesn't
-// expose a numeric/string id (the shim then skips pre-snapshot capture).
 function extractEntityIdFromBody(body: any): number | string | null {
   if (!body) return null;
   const candidate =
@@ -187,12 +178,6 @@ async function getPrisma() {
     userName = currentApiAuth.name;
   }
 
-  // Phase 64 D-01/B1: withAuditContext (below) already established an ALS
-  // frame with ipAddress/userAgent/requestId from the request headers.
-  // For Bearer-authed requests the NextAuth session callback does NOT fire,
-  // so enrich identity here explicitly. For session-authed requests the
-  // callback already ran — enrichFromApiAuth is idempotent on the same ALS
-  // frame.
   if (userId) {
     enrichFromApiAuth({
       userId: userId,
@@ -736,16 +721,16 @@ async function innerHandler(
       }
     }
 
-    // Plan 02-08 — webhook-emit shim. Mirrors the ES-sync shim pattern above:
+    // webhook-emit shim. Mirrors the ES-sync shim pattern above:
     // ZenStack's enhance() doesn't preserve $extends middleware reliably for
     // RPC mutations because it injects `select: { id: true }` into args and
     // refetches inside the tx see pre-update state. We emit canonically here
     // using the post-mutation refetch + the pre-mutation snapshot captured
     // before rpcHandler ran. The $extends emission was suppressed via
     // auditContext.suppressWebhooks during the rpc call (D-01a) so this is
-    // the only emission seam for UI-driven mutations. Plan 02-05's
-    // $extends emission still fires for direct-prisma callers (Phase 2
-    // server actions) where suppressWebhooks is false.
+    // the only emission seam for UI-driven mutations.
+    // $extends emission still fires for direct-prisma callers where
+    // suppressWebhooks is false.
     if (
       response.ok &&
       isWebhookEmittingMutation &&
@@ -951,7 +936,6 @@ async function innerHandler(
               },
             };
 
-            // Capture audit event — helper is guaranteed not to throw (Phase 63).
             // Awaiting ensures the event is enqueued before the response ships,
             // which Next.js would otherwise drop via floating-promise handling.
             await captureAuditEvent(event);
@@ -967,9 +951,6 @@ async function innerHandler(
   });
 }
 
-// Per Phase 64 D-01: every exported HTTP verb is wrapped with withAuditContext
-// so each handler invocation establishes its own ALS frame before any code path
-// (including the Bearer-token branch inside innerHandler) can emit audit events.
 export const GET = withAuditContext(innerHandler);
 export const POST = withAuditContext(innerHandler);
 export const PUT = withAuditContext(innerHandler);

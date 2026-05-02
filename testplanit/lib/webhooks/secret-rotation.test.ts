@@ -13,7 +13,7 @@ vi.mock("~/lib/prisma", () => ({
 
 import { retireExpiredSecrets } from "./secret-rotation";
 
-describe("retireExpiredSecrets (Plan 02-06 / D-04 daily auto-retire)", () => {
+describe("retireExpiredSecrets (/ daily auto-retire)", () => {
   beforeEach(() => {
     mockUpdateMany.mockReset();
   });

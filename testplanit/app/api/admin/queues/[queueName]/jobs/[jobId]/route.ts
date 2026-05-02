@@ -31,9 +31,7 @@ async function checkAdminAuth(
     }
     userId = apiAuth.userId;
     userAccess = apiAuth.access;
-    // Phase 64 B1: NextAuth session callback doesn't fire for Bearer-authed
-    // requests — explicitly enrich ALS with resolved identity so downstream
-    // audit emissions carry complete user context.
+
     if (apiAuth.userId) {
       enrichFromApiAuth({ userId: apiAuth.userId });
     }

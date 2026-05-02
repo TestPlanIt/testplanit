@@ -3,7 +3,7 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 import { prisma as defaultPrisma } from "~/lib/prisma";
 
 /**
- * Plan 02-06 / Task 6.3 — D-04 daily auto-retire helper.
+ * Daily auto-retire helper.
  *
  * Updates all `WebhookConfigSecret` rows where `retiredAt IS NULL` AND
  * `autoRetireAt < NOW()` to `retiredAt = NOW()`. Idempotent — running again

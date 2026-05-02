@@ -12,10 +12,10 @@ vi.mock("../lib/webhooks/dispatch", () => ({
   dispatchWebhook: vi.fn(),
 }));
 
-// Plan 04-05 / Task 5.3 — health state machine seam invoked from BullMQ
+// health state machine seam invoked from BullMQ
 // worker hooks. The dispatcher does NOT increment the failure counter
 // (locked seam); the worker is responsible for calling health.transition()
-// on completed (success) and on terminal failure (per CONTEXT D-10).
+// on completed (success) and on terminal failure (per).
 const mockHealthTransition = vi.fn().mockResolvedValue({
   from: "HEALTHY",
   to: "HEALTHY",
@@ -25,7 +25,7 @@ vi.mock("../lib/webhooks/health", () => ({
   transition: (...args: unknown[]) => mockHealthTransition(...args),
 }));
 
-// Phase 2 / Plan 02-06 — daily auto-retire helper invoked when the cron
+// daily auto-retire helper invoked when the cron
 // schedules a job named "retire-expired-secrets" onto this worker's queue.
 const mockRetireExpiredSecrets = vi.fn();
 vi.mock("../lib/webhooks/secret-rotation", () => ({
@@ -162,7 +162,7 @@ describe("webhookDispatchWorker.processor", () => {
     expect(typeof processor).toBe("function");
   });
 
-  it("6. Blocker 2 — first attempt: attemptsMade=0 → dispatchWebhook called with attempt:1", async () => {
+  it("6. — first attempt: attemptsMade=0 → dispatchWebhook called with attempt:1", async () => {
     mockedDispatch.mockResolvedValue({
       outcome: "success",
       statusCode: 200,
@@ -179,7 +179,7 @@ describe("webhookDispatchWorker.processor", () => {
     expect(calledData.attempt).toBe(1);
   });
 
-  it("7. Blocker 2 — retry 1: attemptsMade=1 + stale data.attempt=1 → dispatchWebhook called with attempt:2", async () => {
+  it("7. — retry 1: attemptsMade=1 + stale data.attempt=1 → dispatchWebhook called with attempt:2", async () => {
     mockedDispatch.mockResolvedValue({
       outcome: "success",
       statusCode: 200,
@@ -196,7 +196,7 @@ describe("webhookDispatchWorker.processor", () => {
     expect(calledData.attempt).toBe(2);
   });
 
-  it("8. Blocker 2 — retry 2: attemptsMade=2 + stale data.attempt=1 → dispatchWebhook called with attempt:3", async () => {
+  it("8. — retry 2: attemptsMade=2 + stale data.attempt=1 → dispatchWebhook called with attempt:3", async () => {
     mockedDispatch.mockResolvedValue({
       outcome: "success",
       statusCode: 200,
@@ -213,7 +213,7 @@ describe("webhookDispatchWorker.processor", () => {
     expect(calledData.attempt).toBe(3);
   });
 
-  it("9. Blocker 2 — attempt threading does NOT mutate the original job.data (defensive: BullMQ persistence reads job.data on retries)", async () => {
+  it("9. — attempt threading does NOT mutate the original job.data (defensive: BullMQ persistence reads job.data on retries)", async () => {
     mockedDispatch.mockResolvedValue({
       outcome: "success",
       statusCode: 200,
@@ -237,10 +237,10 @@ describe("webhookDispatchWorker.processor", () => {
   });
 
   // ──────────────────────────────────────────────────────────────────────
-  // Plan 02-06 / Task 6.3 — daily auto-retire cron job dispatch
+  // daily auto-retire cron job dispatch
   // ──────────────────────────────────────────────────────────────────────
 
-  it("10. Phase 2 — job.name='retire-expired-secrets' calls retireExpiredSecrets and skips dispatchWebhook", async () => {
+  it("10. job.name='retire-expired-secrets' calls retireExpiredSecrets and skips dispatchWebhook", async () => {
     mockRetireExpiredSecrets.mockResolvedValue({ retiredCount: 3 });
     const job = {
       id: "cron-1",
@@ -258,7 +258,7 @@ describe("webhookDispatchWorker.processor", () => {
     expect(mockedValidate).not.toHaveBeenCalled();
   });
 
-  it("11. Phase 2 — cron path passes the tenant-scoped prisma client", async () => {
+  it("11. cron path passes the tenant-scoped prisma client", async () => {
     mockRetireExpiredSecrets.mockResolvedValue({ retiredCount: 0 });
     const job = {
       id: "cron-2",
@@ -276,18 +276,18 @@ describe("webhookDispatchWorker.processor", () => {
 });
 
 // ──────────────────────────────────────────────────────────────────────────
-// Plan 04-05 / Task 5.3 — BullMQ worker hook → health.transition() seam
+// BullMQ worker hook → health.transition() seam
 //
 // The dispatcher writes per-attempt timestamps + DISABLED gate stub rows but
 // does NOT touch the failure counter. The worker hook is the event-level
 // seam: on('completed') always calls transition(success); on('failed') calls
 // transition(failure) ONLY when BullMQ has exhausted all retries (terminal
-// failure: job.attemptsMade + 1 >= job.opts.attempts). Per CONTEXT D-10 the
-// 10-distinct-event auto-disable threshold (DEL-06) only fires on terminal
+// failure: job.attemptsMade + 1 >= job.opts.attempts). Per the
+// 10-distinct-event auto-disable threshold only fires on terminal
 // failure — transient retries don't tick the counter.
 // ──────────────────────────────────────────────────────────────────────────
 
-describe("webhookDispatchWorker — health hooks (Plan 04-05 / Task 5.3)", () => {
+describe("webhookDispatchWorker — health hooks (/)", () => {
   beforeEach(() => {
     mockHealthTransition.mockClear();
   });
@@ -313,7 +313,7 @@ describe("webhookDispatchWorker — health hooks (Plan 04-05 / Task 5.3)", () =>
     );
   });
 
-  it("H2. on('failed') non-terminal — attemptsMade=3 + maxAttempts=7 → does NOT call health.transition (retry pending; CONTEXT D-10 event-level only)", async () => {
+  it("H2. on('failed') non-terminal — attemptsMade=3 + maxAttempts=7 → does NOT call health.transition (retry pending; event-level only)", async () => {
     const job = {
       id: "job-fail-retry",
       attemptsMade: 3,

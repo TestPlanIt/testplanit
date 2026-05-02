@@ -37,7 +37,7 @@ describe("genericHmacAdapter", () => {
     expect(header).toMatch(/^t=\d{10},v1=[0-9a-f]{64}$/);
   });
 
-  it("sign() with active + retiring emits two v1 entries (D-06 rotation overlap)", () => {
+  it("sign() with active + retiring emits two v1 entries (rotation overlap)", () => {
     const sig = genericHmacAdapter.sign!("body", {
       active: "A",
       retiring: "B",

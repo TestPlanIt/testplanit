@@ -1,17 +1,16 @@
 /**
- * D-36 / OUT-18 — generic Object diff applied to outbound `*.updated` events.
+ * Generic Object diff applied to outbound `*.updated` events.
  *
  * The helper computes a top-level field-by-field diff and produces the
  * `{changedFields, before, after}` payload shape that Slack formatters
  * (lib/webhooks/adapters/slack/formatters/) consume to render
- * "Title changed: X → Y" without an API round-trip (OUT-18).
+ * "Title changed: X → Y" without an API round-trip.
  *
  * SCOPE — what this helper IS:
  *  - A top-level shallow comparison: each property key on the union of
  *    `before` and `after` is compared via deep equality.
- *  - Array reorder is treated as unchanged (per D-16: cases array fields
- *    like `tags` should not surface as a change when the user only
- *    rearranged them).
+ *  - Array reorder is treated as unchanged (cases array fields like `tags`
+ *    should not surface as a change when the user only rearranged them).
  *  - Date instances compare by `getTime()`.
  *  - Nested objects are compared deeply (via JSON-shaped equality), but
  *    `changedFields` only contains TOP-LEVEL keys. Slack formatters that
@@ -78,7 +77,7 @@ function isEqual(a: unknown, b: unknown): boolean {
 
 function arraysEqualUnordered(a: unknown[], b: unknown[]): boolean {
   if (a.length !== b.length) return false;
-  // Convert to JSON-stringified, sorted comparison (D-16: array reorder = unchanged).
+  // Convert to JSON-stringified, sorted comparison (array reorder = unchanged).
   // Stable for primitive arrays; object arrays compared by JSON shape.
   const ka = a.map((v) => JSON.stringify(v)).sort();
   const kb = b.map((v) => JSON.stringify(v)).sort();

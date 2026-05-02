@@ -593,7 +593,6 @@ export function getGenerateFromUrlQueue(): Queue | null {
 }
 
 /**
- * v0.23.0 Phase 2 (OUT-10) — outbound webhook dispatch queue.
  *
  * Configured for OUT-01's 7-attempt schedule (1 initial + 6 retries, ~21h
  * total). The retry curve itself lives at `lib/webhooks/retry-delay.ts` and
@@ -605,7 +604,7 @@ export function getGenerateFromUrlQueue(): Queue | null {
  * WEBHOOK_DISPATCH_CONCURRENCY env var on the Worker.
  *
  * Retention: 7 days for completed jobs (sufficient for ad-hoc debugging),
- * 30 days for failed jobs (admin replay UI lands in Phase 4).
+ * 30 days for failed jobs.
  */
 export function getWebhookDispatchQueue(): Queue | null {
   if (_webhookDispatchQueue) return _webhookDispatchQueue;

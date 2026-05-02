@@ -66,13 +66,21 @@ export function formatIssueCreatedBlocks(
   if (refs) {
     const counts: string[] = [];
     if (refs.testRunIds?.length)
-      counts.push(`${refs.testRunIds.length} run${refs.testRunIds.length === 1 ? "" : "s"}`);
+      counts.push(
+        `${refs.testRunIds.length} run${refs.testRunIds.length === 1 ? "" : "s"}`
+      );
     if (refs.testRunResultIds?.length)
-      counts.push(`${refs.testRunResultIds.length} result${refs.testRunResultIds.length === 1 ? "" : "s"}`);
+      counts.push(
+        `${refs.testRunResultIds.length} result${refs.testRunResultIds.length === 1 ? "" : "s"}`
+      );
     if (refs.repositoryCaseIds?.length)
-      counts.push(`${refs.repositoryCaseIds.length} case${refs.repositoryCaseIds.length === 1 ? "" : "s"}`);
+      counts.push(
+        `${refs.repositoryCaseIds.length} case${refs.repositoryCaseIds.length === 1 ? "" : "s"}`
+      );
     if (refs.sessionIds?.length)
-      counts.push(`${refs.sessionIds.length} session${refs.sessionIds.length === 1 ? "" : "s"}`);
+      counts.push(
+        `${refs.sessionIds.length} session${refs.sessionIds.length === 1 ? "" : "s"}`
+      );
     if (counts.length > 0) {
       blocks.push({
         type: "section",

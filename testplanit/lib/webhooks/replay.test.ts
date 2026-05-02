@@ -140,7 +140,7 @@ describe("lib/webhooks/replay", () => {
     expect(auditCall.metadata.batchId).toBeUndefined();
   });
 
-  it("2. inbound-replay-returns-rejected: NO queue, NO audit, NO row write (D-17a)", async () => {
+  it("2. inbound-replay-returns-rejected: NO queue, NO audit, NO row write", async () => {
     const prisma = buildPrismaMock({
       deliveriesById: { orig_inbound: baseInboundDelivery() },
     });
@@ -179,7 +179,7 @@ describe("lib/webhooks/replay", () => {
     expect(meta.batchId).toBe("bat_xyz");
   });
 
-  it("4. outbound-replay-of-replay-allowed (D-17): replays of replays succeed; jobData.replayedFromDeliveryId points to THIS row", async () => {
+  it("4. outbound-replay-of-replay-allowed: replays of replays succeed; jobData.replayedFromDeliveryId points to THIS row", async () => {
     const prisma = buildPrismaMock({
       deliveriesById: {
         replay_of_orig: baseOutboundDelivery({
@@ -277,7 +277,7 @@ describe("lib/webhooks/replay", () => {
     expect(mockedCaptureAudit).not.toHaveBeenCalled();
   });
 
-  it("9. bulkReplayDeliveries-mixed-input-skips-inbound (D-17a integration): 3 outbound + 2 inbound → 3 enqueues + 3 audits + skippedInboundCount=2", async () => {
+  it("9. bulkReplayDeliveries-mixed-input-skips-inbound (integration): 3 outbound + 2 inbound → 3 enqueues + 3 audits + skippedInboundCount=2", async () => {
     const deliveriesById: Record<string, unknown> = {
       o1: baseOutboundDelivery({ id: "o1", eventId: "evt_o1" }),
       o2: baseOutboundDelivery({ id: "o2", eventId: "evt_o2" }),
@@ -387,8 +387,8 @@ describe("lib/webhooks/replay", () => {
     expect(BULK_REPLAY_HARD_CAP).toBe(100);
   });
 
-  it("12. orphaned-row-replay-rejects (Plan 04-08): webhookConfigId === null returns config_deleted; NO queue, NO audit", async () => {
-    // Plan 04-08 — when the WebhookConfig was hard-deleted (admin Delete in
+  it("12. orphaned-row-replay-rejects: webhookConfigId === null returns config_deleted; NO queue, NO audit", async () => {
+    // when the WebhookConfig was hard-deleted (admin Delete in
     // the UI), the FK SetNull leaves the delivery row in place as an
     // orphaned audit record. Replay against an orphan must reject with a
     // typed reason BEFORE any direction or outbox lookup so admins see a

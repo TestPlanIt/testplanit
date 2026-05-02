@@ -14,8 +14,7 @@ import { authOptions } from "~/server/auth";
  *
  * NOT wrapped in withActionAuditContext — this action does not emit
  * audit events (no direct prisma.auditLog.create, no hooked-model
- * mutations). Per Phase 64 D-06, only audit-emitting actions need the
- * ALS frame.
+ * mutations). Only audit-emitting actions need the ALS frame.
  */
 export async function prepareShareLinkData(data: { password?: string | null }) {
   const shareKey = generateShareKey();
@@ -35,13 +34,12 @@ export async function prepareShareLinkData(data: { password?: string | null }) {
  * Server action to create audit log for share link creation
  * Called after successful ZenStack creation.
  *
- * Wrapped in withActionAuditContext (Phase 64 D-05) so the direct
+ * Wrapped in withActionAuditContext so the direct
  * prisma.auditLog.create below runs inside an AsyncLocalStorage frame
  * seeded with ipAddress/userAgent/requestId from next/headers. Identity
  * fields (userId/userEmail/userName) flow from the NextAuth session
- * callback (Plan 01 Task 3) triggered by the getServerSession call in
- * the body. Together these give CTX-02-complete actor context on every
- * SHARE_LINK_CREATED audit row.
+ * callback triggered by the getServerSession call in the body. Together
+ * these give complete actor context on every SHARE_LINK_CREATED audit row.
  */
 export const auditShareLinkCreation = withActionAuditContext(
   async (shareLink: {
@@ -87,7 +85,7 @@ export const auditShareLinkCreation = withActionAuditContext(
 /**
  * Server action to revoke a share link and create audit log.
  *
- * Wrapped in withActionAuditContext (Phase 64 D-05) — same rationale as
+ * Wrapped in withActionAuditContext — same rationale as
  * auditShareLinkCreation. The direct prisma.auditLog.create for
  * SHARE_LINK_REVOKED now runs inside a fully populated AuditContext.
  */

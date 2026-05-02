@@ -1,13 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { emitCaseCreated, emitCaseDeleted, emitCaseUpdated } from "./caseEvents";
+import {
+  emitCaseCreated,
+  emitCaseDeleted,
+  emitCaseUpdated,
+} from "./caseEvents";
 
 /**
- * Plan 02-05 Task 5.3 — caseEvents emitter contract.
+ * caseEvents emitter contract.
  *
- * D-12 catalog: case.created / case.updated / case.deleted.
- * OUT-17: case.created ships full case structure (caseFieldValues + steps).
- * OUT-18: case.updated carries computeObjectDiff result.
+ * catalog: case.created / case.updated / case.deleted.
+ * case.created ships full case structure (caseFieldValues + steps).
+ * case.updated carries computeObjectDiff result.
  */
 
 vi.mock("~/lib/webhooks/events", () => ({
@@ -55,7 +59,7 @@ function makeTx(
 describe("emitCaseCreated", () => {
   beforeEach(() => emitMock.mockClear());
 
-  it("emits case.created with full structure (fields + steps) — OUT-17", async () => {
+  it("emits case.created with full structure (fields + steps)", async () => {
     const tx = makeTx(
       [{ id: 1, value: "Severity: high" }],
       [
@@ -99,7 +103,7 @@ describe("emitCaseUpdated", () => {
     expect(emitMock).not.toHaveBeenCalled();
   });
 
-  it("emits case.updated with diff.changedFields populated — OUT-18", async () => {
+  it("emits case.updated with diff.changedFields populated", async () => {
     const tx = makeTx();
     await emitCaseUpdated(
       { ...baseCase, name: "Old name" },

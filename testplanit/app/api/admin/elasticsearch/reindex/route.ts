@@ -32,9 +32,7 @@ async function checkAdminAuth(
     }
     userId = apiAuth.userId;
     userAccess = apiAuth.access;
-    // Phase 64 B1 / Plan 02 pattern: enrich ALS with Bearer-token identity.
-    // authenticateApiToken returns only userId (no email/name), so pass
-    // userId alone; email/name are filled elsewhere (e.g. session path).
+
     if (apiAuth.userId) {
       enrichFromApiAuth({ userId: apiAuth.userId });
     }
@@ -66,9 +64,6 @@ async function checkAdminAuth(
   return { userId };
 }
 
-// Phase 64 Plan 04 Rule 3: wrapped with withAuditContext so
-// enqueueWithAuditContext below has an ALS frame (user context propagates
-// to the elasticsearchReindexWorker via job.data.actorContext per D-11).
 export const POST = withAuditContext(async (request: NextRequest) => {
   try {
     const auth = await checkAdminAuth(request);

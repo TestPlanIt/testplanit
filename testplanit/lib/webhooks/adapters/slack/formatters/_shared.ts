@@ -94,7 +94,10 @@ export function buildBody(args: {
   color?: string;
 }): FormattedHttpRequest {
   const payload = args.color
-    ? { text: args.text, attachments: [{ color: args.color, blocks: args.blocks }] }
+    ? {
+        text: args.text,
+        attachments: [{ color: args.color, blocks: args.blocks }],
+      }
     : { text: args.text, blocks: args.blocks };
   return {
     body: JSON.stringify(payload),

@@ -120,7 +120,7 @@ describe("jiraAdapter", () => {
     });
   });
 
-  it("Test 7a (HI-02): synthetic flag is bound to issue.key === '__synthetic__', NOT to wire metadata", () => {
+  it("Test 7a: synthetic flag is bound to issue.key === '__synthetic__', NOT to wire metadata", () => {
     // The self-loop server action sends issue.key='__synthetic__'; the adapter
     // detects that exact key and sets payload.synthetic=true. A real Jira can't
     // legitimately produce this key, so external callers cannot forge synthetic.
@@ -142,7 +142,7 @@ describe("jiraAdapter", () => {
     }
   });
 
-  it("Test 7b (HI-02): wire-supplied metadata.synthetic=true is IGNORED for non-sentinel issue keys", () => {
+  it("Test 7b: wire-supplied metadata.synthetic=true is IGNORED for non-sentinel issue keys", () => {
     // A real Jira instance (or anyone with the secret) attempting to forge
     // synthetic via the metadata field MUST NOT succeed. The adapter binds
     // synthetic to the issue.key sentinel, never to wire-supplied metadata.
@@ -191,7 +191,7 @@ describe("jiraAdapter", () => {
   });
 });
 
-describe("jiraAdapter — Phase 3 widened interface", () => {
+describe("jiraAdapter — widened interface", () => {
   it("extractLinkedIssueRef: returns { externalKey, externalSystem: 'JIRA' } for canonical payload", () => {
     const payload = { issue: { key: "DEMO-42" } };
     expect(jiraAdapter.extractLinkedIssueRef(payload)).toEqual({

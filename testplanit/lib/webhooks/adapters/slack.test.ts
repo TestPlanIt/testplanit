@@ -99,7 +99,7 @@ describe("slackAdapter", () => {
     expect(slackAdapter.adapterType).toBe("SLACK");
   });
 
-  it("does NOT define a sign function (D-18: URL is the credential)", () => {
+  it("does NOT define a sign function (URL is the credential)", () => {
     expect(slackAdapter.sign).toBeUndefined();
   });
 

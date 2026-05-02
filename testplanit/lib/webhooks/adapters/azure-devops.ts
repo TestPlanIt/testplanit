@@ -10,12 +10,11 @@ const AUTH_HEADER = "authorization";
 const BASIC_PREFIX = "Basic ";
 
 /**
- * HI-02 sentinel (D-03 synthetic binding for ADO): the self-loop server
- * action emits resource.id === 0 in its synthetic workitem.updated payload.
- * Real Azure DevOps work-item IDs are positive integers (≥ 1), so a
- * resource.id of 0 cannot be legitimately produced by ADO — even by a
- * caller holding valid Basic Auth credentials, the synthetic flag is
- * non-forgeable from the wire.
+ * Synthetic binding sentinel for ADO: the self-loop server action emits
+ * resource.id === 0 in its synthetic workitem.updated payload. Real Azure
+ * DevOps work-item IDs are positive integers (≥ 1), so a resource.id of 0
+ * cannot be legitimately produced by ADO — even by a caller holding valid
+ * Basic Auth credentials, the synthetic flag is non-forgeable from the wire.
  */
 const SYNTHETIC_RESOURCE_ID = 0;
 
@@ -37,7 +36,7 @@ interface AdoWorkItemPayload {
  * 32-byte sha256 buffers BEFORE timingSafeEqual — sidesteps the throw-on-
  * unequal-length behavior of timingSafeEqual and prevents length-leak side
  * channels. Pattern source: simonwillison.net TIL on constant-time string
- * compare (see 03-RESEARCH.md Pattern 2).
+ * compare.
  */
 function safeEqualUtf8(a: string, b: string): boolean {
   const ab = createHash("sha256").update(a, "utf8").digest();

@@ -1,10 +1,10 @@
 /**
  * Shared types for the webhooks/services layer.
  *
- * Owns the contract between the receiver (plan 01-04 — `app/api/webhooks/[token]/route.ts`)
- * and the domain service (`applyInboundIssueUpdate` — renamed from `applyJiraIssueUpdate`
- * in Phase 3 P-02). The closed-set `DeliveryOutcome` values are mapped by the receiver
- * to HTTP responses; tests assert against them directly. Adding a new branch later
+ * Owns the contract between the receiver (`app/api/webhooks/[token]/route.ts`)
+ * and the domain service (`applyInboundIssueUpdate`). The closed-set
+ * `DeliveryOutcome` values are mapped by the receiver to HTTP responses;
+ * tests assert against them directly. Adding a new branch later
  * (e.g. retry-after) requires deliberate type widening.
  */
 
@@ -13,20 +13,19 @@ import type { AdapterType } from "@prisma/client";
 import type { ParsedWebhookPayload } from "~/lib/webhooks/adapters/types";
 
 // Re-export so callers using `~/lib/webhooks/services/types` keep working;
-// the adapter file is the canonical source of truth (D-22..D-24).
+// the adapter file is the canonical source of truth.
 export type { ParsedWebhookPayload };
 
 /**
- * D-03 / WBHK-10 — informational external system reference written into audit
- * metadata. NOT used as a DB filter for Issue lookup (D-22: no
- * `Issue.externalSystem` column exists).
+ * Informational external system reference written into audit metadata.
+ * NOT used as a DB filter for Issue lookup (no `Issue.externalSystem` column exists).
  */
 export interface LinkedIssueRef {
   /** External system key (Jira: "TP-123"; GitHub: "owner/repo#42"; ADO: "123"). */
   externalKey: string;
   /**
    * Informational adapter source — written into audit metadata.
-   * NOT used as a DB filter for Issue lookup (D-22: no Issue.externalSystem column exists).
+   * NOT used as a DB filter for Issue lookup (no Issue.externalSystem column exists).
    */
   externalSystem: AdapterType;
 }
@@ -36,8 +35,7 @@ export interface LinkedIssueRef {
  *
  * The service receives the verified `payload` plus `adapterType` + `eventType`
  * from the receiver and itself calls `getAdapter(adapterType).extractLinkedIssueRef(payload)`
- * + `.extractExternalStatus(payload, eventType)` (Phase 3 P-02 — service-side
- * extractor delegation per RESEARCH.md Q2 RESOLVED). The receiver does NOT
+ * + `.extractExternalStatus(payload, eventType)`. The receiver does NOT
  * re-parse `rawBody`; the adapter's `verify()` is the single point of body parsing.
  */
 export interface ApplyInboundIssueUpdateInput {
@@ -64,11 +62,11 @@ export interface ApplyInboundIssueUpdateInput {
  * Closed-set outcome enum. Receiver maps these to HTTP responses; tests assert on this.
  */
 export type DeliveryOutcome =
-  | "updated" // linked Issue found, status applied (D-09)
-  | "no-link" // no linked Issue, delivery row written, no Issue mutation, dedup row never written (D-14)
-  | "no_handler" // adapter returned null externalStatus (e.g. GitHub `push`); delivery row written, no dedup, no Issue mutation (D-15)
-  | "duplicate" // dedup row pre-existed for this payloadDigest (WBHK-06)
-  | "synthetic" // self-test ping (D-20) — short-circuited inside synthetic branch (writes dedup so SC#5 second click → duplicate)
+  | "updated" // linked Issue found, status applied
+  | "no-link" // no linked Issue, delivery row written, no Issue mutation, dedup row never written
+  | "no_handler" // adapter returned null externalStatus (e.g. GitHub `push`); delivery row written, no dedup, no Issue mutation
+  | "duplicate" // dedup row pre-existed for this payloadDigest
+  | "synthetic" // self-test ping — short-circuited inside synthetic branch (writes dedup so a second click → duplicate)
   | "error"; // unexpected DB error during processing — receiver returns 500
 
 /**
@@ -83,17 +81,3 @@ export interface ApplyInboundIssueUpdateResult {
   /** Human-readable error/skip reason mirroring the WebhookDelivery.error column. */
   reason?: string;
 }
-
-/**
- * @deprecated Phase 3 P-02 renamed the service to `applyInboundIssueUpdate`.
- * Use `ApplyInboundIssueUpdateInput`. P-05 removes this alias once the
- * receiver call site in `app/api/webhooks/[token]/route.ts` is updated.
- */
-export type ApplyJiraIssueUpdateInput = ApplyInboundIssueUpdateInput;
-
-/**
- * @deprecated Phase 3 P-02 renamed the service to `applyInboundIssueUpdate`.
- * Use `ApplyInboundIssueUpdateResult`. P-05 removes this alias once the
- * receiver call site in `app/api/webhooks/[token]/route.ts` is updated.
- */
-export type ApplyJiraIssueUpdateResult = ApplyInboundIssueUpdateResult;

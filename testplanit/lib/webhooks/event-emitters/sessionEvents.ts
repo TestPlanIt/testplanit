@@ -3,12 +3,12 @@ import type { Prisma } from "@prisma/client";
 import { webhookEvents } from "~/lib/webhooks/events";
 
 /**
- * D-10 / OUT-11..14 (sessions parallel) — emit per-mutation outbound webhook
- * events for Sessions lifecycle. Mirrors testRunEvents 1:1 except:
- *  - session.completed payload is minimal (no getSessionSummary equivalent
- *    exists; documented as a Phase 2 follow-up asymmetry)
+ * Emit per-mutation outbound webhook events for Sessions lifecycle.
+ * Mirrors testRunEvents 1:1 except:
+ *  - session.completed payload is minimal – no getSessionSummary equivalent
+ *    exists
  *  - emitSessionDuplicated is exported but NOT called from the $extends
- *    middleware in Phase 2 (Sync Point #2 — needs a duplicatedFrom marker).
+ *    middleware — needs a duplicatedFrom marker).
  */
 
 export interface SessionRow {
@@ -65,10 +65,10 @@ export async function emitSessionUpdateEvents(
 ): Promise<void> {
   if (!oldRow) return;
 
-  // D-10 — two INDEPENDENT lifecycle transitions on Sessions. Either,
-  // both, or neither can fire. isCompleted is the canonical "this
-  // session is done" signal — admins can mark a session completed
-  // without changing stateId, and conversely.
+  // Two INDEPENDENT lifecycle transitions on Sessions. Either, both, or
+  // neither can fire. isCompleted is the canonical "this session is done"
+  // signal — admins can mark a session completed without changing stateId,
+  // and conversely.
   const stateChanged = oldRow.stateId !== newRow.stateId;
   const completedTransition =
     oldRow.isCompleted !== true && newRow.isCompleted === true;
@@ -140,10 +140,7 @@ export async function emitSessionUpdateEvents(
     });
 
     const totalResults = results.length;
-    const totalElapsed = results.reduce(
-      (sum, r) => sum + (r.elapsed ?? 0),
-      0
-    );
+    const totalElapsed = results.reduce((sum, r) => sum + (r.elapsed ?? 0), 0);
 
     // Group by statusId for breakdown rendering.
     const statusCountsMap = new Map<

@@ -33,7 +33,7 @@ describe("azureDevopsAdapter", () => {
       const result = azureDevopsAdapter.verify(
         bodyOf(CANONICAL_PAYLOAD),
         headersOf({}),
-        ADO_SECRET,
+        ADO_SECRET
       );
       expect(result).toEqual({ valid: false, reason: "missing-auth" });
     });
@@ -42,7 +42,7 @@ describe("azureDevopsAdapter", () => {
       const result = azureDevopsAdapter.verify(
         bodyOf(CANONICAL_PAYLOAD),
         headersOf({ authorization: "Bearer xyz" }),
-        ADO_SECRET,
+        ADO_SECRET
       );
       expect(result).toEqual({ valid: false, reason: "missing-auth" });
     });
@@ -51,7 +51,7 @@ describe("azureDevopsAdapter", () => {
       const result = azureDevopsAdapter.verify(
         bodyOf(CANONICAL_PAYLOAD),
         headersOf({ Authorization: basicAuthHeader("tpi", "s3cret") }),
-        ADO_SECRET,
+        ADO_SECRET
       );
       expect(result.valid).toBe(true);
     });
@@ -60,7 +60,7 @@ describe("azureDevopsAdapter", () => {
       const result = azureDevopsAdapter.verify(
         bodyOf(CANONICAL_PAYLOAD),
         headersOf({ authorization: basicAuthHeader("wrong", "s3cret") }),
-        ADO_SECRET,
+        ADO_SECRET
       );
       expect(result).toEqual({ valid: false, reason: "auth-mismatch" });
     });
@@ -69,7 +69,7 @@ describe("azureDevopsAdapter", () => {
       const result = azureDevopsAdapter.verify(
         bodyOf(CANONICAL_PAYLOAD),
         headersOf({ authorization: basicAuthHeader("tpi", "wrong") }),
-        ADO_SECRET,
+        ADO_SECRET
       );
       expect(result).toEqual({ valid: false, reason: "auth-mismatch" });
     });
@@ -78,7 +78,7 @@ describe("azureDevopsAdapter", () => {
       const result = azureDevopsAdapter.verify(
         bodyOf(CANONICAL_PAYLOAD),
         headersOf({ authorization: basicAuthHeader("tpi", "s3cret") }),
-        "not-json{[",
+        "not-json{["
       );
       expect(result).toEqual({ valid: false, reason: "auth-mismatch" });
     });
@@ -87,7 +87,7 @@ describe("azureDevopsAdapter", () => {
       const result = azureDevopsAdapter.verify(
         bodyOf(CANONICAL_PAYLOAD),
         headersOf({ authorization: basicAuthHeader("tpi", "s3cret") }),
-        JSON.stringify({ password: "only" }),
+        JSON.stringify({ password: "only" })
       );
       expect(result).toEqual({ valid: false, reason: "auth-mismatch" });
     });
@@ -96,7 +96,7 @@ describe("azureDevopsAdapter", () => {
       const result = azureDevopsAdapter.verify(
         bodyOf(CANONICAL_PAYLOAD),
         headersOf({ authorization: basicAuthHeader("tpi", "s3cret") }),
-        JSON.stringify({ username: "only" }),
+        JSON.stringify({ username: "only" })
       );
       expect(result).toEqual({ valid: false, reason: "auth-mismatch" });
     });
@@ -107,7 +107,7 @@ describe("azureDevopsAdapter", () => {
       const result = azureDevopsAdapter.verify(
         bodyOf(CANONICAL_PAYLOAD),
         headersOf({ authorization: malformed }),
-        ADO_SECRET,
+        ADO_SECRET
       );
       expect(result).toEqual({ valid: false, reason: "auth-mismatch" });
     });
@@ -122,7 +122,7 @@ describe("azureDevopsAdapter", () => {
         headersOf({
           authorization: basicAuthHeader("a-very-long-username", "x"),
         }),
-        ADO_SECRET,
+        ADO_SECRET
       );
       expect(result).toEqual({ valid: false, reason: "auth-mismatch" });
     });
@@ -136,7 +136,7 @@ describe("azureDevopsAdapter", () => {
       const result = azureDevopsAdapter.verify(
         bodyOf(CANONICAL_PAYLOAD),
         headersOf({ authorization: basicAuthHeader("tpi", passWithColon) }),
-        secret,
+        secret
       );
       expect(result.valid).toBe(true);
     });
@@ -145,7 +145,7 @@ describe("azureDevopsAdapter", () => {
       const result = azureDevopsAdapter.verify(
         Buffer.from("not-json{[", "utf8"),
         headersOf({ authorization: basicAuthHeader("tpi", "s3cret") }),
-        ADO_SECRET,
+        ADO_SECRET
       );
       expect(result).toEqual({ valid: false, reason: "unparseable-body" });
     });
@@ -154,25 +154,31 @@ describe("azureDevopsAdapter", () => {
       const result = azureDevopsAdapter.verify(
         bodyOf({ resource: { id: 1 } }),
         headersOf({ authorization: basicAuthHeader("tpi", "s3cret") }),
-        ADO_SECRET,
+        ADO_SECRET
       );
-      expect(result).toEqual({ valid: false, reason: "missing-required-field" });
+      expect(result).toEqual({
+        valid: false,
+        reason: "missing-required-field",
+      });
     });
 
     it("Test 4b: valid auth + JSON with non-string eventType → missing-required-field", () => {
       const result = azureDevopsAdapter.verify(
         bodyOf({ eventType: 42, resource: { id: 1 } }),
         headersOf({ authorization: basicAuthHeader("tpi", "s3cret") }),
-        ADO_SECRET,
+        ADO_SECRET
       );
-      expect(result).toEqual({ valid: false, reason: "missing-required-field" });
+      expect(result).toEqual({
+        valid: false,
+        reason: "missing-required-field",
+      });
     });
 
     it("Test 5: happy path — valid auth + canonical workitem.updated payload", () => {
       const result = azureDevopsAdapter.verify(
         bodyOf(CANONICAL_PAYLOAD),
         headersOf({ authorization: basicAuthHeader("tpi", "s3cret") }),
-        ADO_SECRET,
+        ADO_SECRET
       );
       expect(result.valid).toBe(true);
       if (result.valid) {
@@ -195,7 +201,7 @@ describe("azureDevopsAdapter", () => {
       const result = azureDevopsAdapter.verify(
         bodyOf(v1Payload),
         headersOf({ authorization: basicAuthHeader("tpi", "s3cret") }),
-        ADO_SECRET,
+        ADO_SECRET
       );
       expect(result.valid).toBe(true);
       if (result.valid) {
@@ -216,7 +222,7 @@ describe("azureDevopsAdapter", () => {
       const result = azureDevopsAdapter.verify(
         bodyOf(v2Payload),
         headersOf({ authorization: basicAuthHeader("tpi", "s3cret") }),
-        ADO_SECRET,
+        ADO_SECRET
       );
       expect(result.valid).toBe(true);
       if (result.valid) {
@@ -235,7 +241,7 @@ describe("azureDevopsAdapter", () => {
       const result = azureDevopsAdapter.verify(
         bodyOf(synth),
         headersOf({ authorization: basicAuthHeader("tpi", "s3cret") }),
-        ADO_SECRET,
+        ADO_SECRET
       );
       expect(result.valid).toBe(true);
       if (result.valid) {
@@ -248,7 +254,7 @@ describe("azureDevopsAdapter", () => {
       const result = azureDevopsAdapter.verify(
         bodyOf(CANONICAL_PAYLOAD),
         headersOf({ authorization: basicAuthHeader("tpi", "s3cret") }),
-        ADO_SECRET,
+        ADO_SECRET
       );
       expect(result.valid).toBe(true);
       if (result.valid) expect(result.payload.synthetic).toBe(false);
@@ -258,7 +264,7 @@ describe("azureDevopsAdapter", () => {
   describe("extractLinkedIssueRef()", () => {
     it("Test 7: returns String(resource.id) for canonical payload", () => {
       expect(
-        azureDevopsAdapter.extractLinkedIssueRef(CANONICAL_PAYLOAD),
+        azureDevopsAdapter.extractLinkedIssueRef(CANONICAL_PAYLOAD)
       ).toEqual({
         externalKey: "297",
         externalSystem: "AZURE_DEVOPS",
@@ -267,7 +273,7 @@ describe("azureDevopsAdapter", () => {
 
     it("Test 7b: returns null when resource.id is not a number (string)", () => {
       expect(
-        azureDevopsAdapter.extractLinkedIssueRef({ resource: { id: "297" } }),
+        azureDevopsAdapter.extractLinkedIssueRef({ resource: { id: "297" } })
       ).toBeNull();
     });
 
@@ -277,7 +283,7 @@ describe("azureDevopsAdapter", () => {
 
     it("Test 7d: returns null when resource.id is missing", () => {
       expect(
-        azureDevopsAdapter.extractLinkedIssueRef({ resource: {} }),
+        azureDevopsAdapter.extractLinkedIssueRef({ resource: {} })
       ).toBeNull();
     });
   });
@@ -287,8 +293,8 @@ describe("azureDevopsAdapter", () => {
       expect(
         azureDevopsAdapter.extractExternalStatus(
           CANONICAL_PAYLOAD,
-          "workitem.updated",
-        ),
+          "workitem.updated"
+        )
       ).toBe("Closed");
     });
 
@@ -296,26 +302,26 @@ describe("azureDevopsAdapter", () => {
       expect(
         azureDevopsAdapter.extractExternalStatus(
           CANONICAL_PAYLOAD,
-          "build.complete",
-        ),
+          "build.complete"
+        )
       ).toBeNull();
     });
 
-    it("Test 8c: returns null for workitem.created (no_handler in Phase 3)", () => {
+    it("Test 8c: returns null for workitem.created (no_handler in)", () => {
       expect(
         azureDevopsAdapter.extractExternalStatus(
           CANONICAL_PAYLOAD,
-          "workitem.created",
-        ),
+          "workitem.created"
+        )
       ).toBeNull();
     });
 
-    it("Test 8d: returns null for workitem.deleted (no_handler in Phase 3)", () => {
+    it("Test 8d: returns null for workitem.deleted (no_handler in)", () => {
       expect(
         azureDevopsAdapter.extractExternalStatus(
           CANONICAL_PAYLOAD,
-          "workitem.deleted",
-        ),
+          "workitem.deleted"
+        )
       ).toBeNull();
     });
 
@@ -323,8 +329,8 @@ describe("azureDevopsAdapter", () => {
       expect(
         azureDevopsAdapter.extractExternalStatus(
           { resource: { id: 1, fields: {} } },
-          "workitem.updated",
-        ),
+          "workitem.updated"
+        )
       ).toBeNull();
     });
 
@@ -332,8 +338,8 @@ describe("azureDevopsAdapter", () => {
       expect(
         azureDevopsAdapter.extractExternalStatus(
           { resource: { id: 1, fields: { "System.State": 42 } } },
-          "workitem.updated",
-        ),
+          "workitem.updated"
+        )
       ).toBeNull();
     });
   });
@@ -351,7 +357,9 @@ describe("azureDevopsAdapter", () => {
       expect(result.valid).toBe(true);
       if (!result.valid) return;
 
-      const linkedRef = azureDevopsAdapter.extractLinkedIssueRef(result.payload);
+      const linkedRef = azureDevopsAdapter.extractLinkedIssueRef(
+        result.payload
+      );
       expect(linkedRef).toEqual({
         externalKey: "297",
         externalSystem: "AZURE_DEVOPS",
@@ -359,7 +367,7 @@ describe("azureDevopsAdapter", () => {
 
       const status = azureDevopsAdapter.extractExternalStatus(
         result.payload,
-        result.payload.eventType,
+        result.payload.eventType
       );
       expect(status).toBe("Closed");
     });

@@ -4,22 +4,21 @@ import { computeObjectDiff } from "~/lib/webhooks/diff";
 import { webhookEvents } from "~/lib/webhooks/events";
 
 /**
- * D-11 / OUT-15 / OUT-18 — emit per-mutation outbound webhook events for the
- * Issue model.
+ * Emit per-mutation outbound webhook events for the Issue model.
  *
- * Catalog (D-11): issue.created / issue.updated / issue.deleted ONLY. There
- * is intentionally NO dedicated resolution event in Phase 2 — consumers
- * detect resolution by filtering `issue.updated` payloads where
+ * Catalog: issue.created / issue.updated / issue.deleted ONLY. There is
+ * intentionally NO dedicated resolution event — consumers detect resolution
+ * by filtering `issue.updated` payloads where
  * `diff.changedFields.includes("status")`.
  *
  * Payload contracts:
  *   - issue.created carries `linkedRefs` with the IDs of the related
  *     repositoryCases / testRuns / testRunResults / testRunStepResults /
- *     sessions / sessionResults (OUT-15 / Blocker 5 fix). IDs only — keeps
+ *     sessions / sessionResults. IDs only — keeps
  *     the payload compact; consumers refetch full details via authenticated
  *     channels if they need them.
- *   - issue.updated carries a generic top-level diff via computeObjectDiff
- *     (OUT-18). No-op updates (changedFields.length === 0) are skipped.
+ *   - issue.updated carries a generic top-level diff via computeObjectDiff.
+ *  No-op updates (changedFields.length === 0) are skipped.
  *   - issue.deleted carries the pre-delete snapshot (id + title).
  */
 
@@ -55,10 +54,10 @@ export async function emitIssueCreated(
   // without a project context have no destination to fan out to.
   if (row.projectId == null) return;
 
-  // OUT-15 / Blocker 5 — fetch linkable refs (just IDs to keep payload small).
-  // The Issue model has six related collections at trust boundaries; we
-  // ship them here so consumers (Slack/Jira) see the full impact set
-  // without an extra round-trip.
+  // Fetch linkable refs (just IDs to keep payload small). The Issue model
+  // has six related collections at trust boundaries; we ship them here so
+  // consumers (Slack/Jira) see the full impact set without an extra
+  // round-trip.
   const linked = await tx.issue.findUnique({
     where: { id: row.id },
     select: {
@@ -119,7 +118,7 @@ export async function emitIssueUpdated(
     oldRow as unknown as Record<string, unknown>,
     newRow as unknown as Record<string, unknown>
   );
-  // OUT-18 — skip no-op updates (e.g. ZenStack policy-pass with no field change).
+  // Skip no-op updates (e.g. ZenStack policy-pass with no field change).
   if (diff.changedFields.length === 0) return;
 
   await webhookEvents.emit(

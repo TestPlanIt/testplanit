@@ -85,9 +85,9 @@ const eslintConfig = [
       "@typescript-eslint/no-unused-expressions": "off",
       "@typescript-eslint/no-non-null-asserted-optional-chain": "off",
 
-      // Lock in REL-01: audit helpers return Promise<void>; unawaited audit calls
+      // Audit helpers return Promise<void>; unawaited audit calls
       // get flagged here. Also catches unrelated floating-promise bugs across the
-      // codebase (Phase 63 D-04/D-06). Override to "off" for test files below
+      // codebase. Override to "off" for test files below
       // where promise-chaining patterns are common in Playwright/Vitest.
       "@typescript-eslint/no-floating-promises": [
         "error",

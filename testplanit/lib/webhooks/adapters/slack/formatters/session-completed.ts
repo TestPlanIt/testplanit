@@ -41,7 +41,9 @@ interface SessionCompletedData {
  * Color rule for a session: any failure → red; all-passed → green; mixed
  * with non-pass non-fail → yellow. Computed from result statuses.
  */
-function colorForSession(statusCounts: SessionCompletedData["statusCounts"] = []): string {
+function colorForSession(
+  statusCounts: SessionCompletedData["statusCounts"] = []
+): string {
   let hasFailure = false;
   let hasNonPass = false;
   for (const sc of statusCounts) {
@@ -73,7 +75,9 @@ export function formatSessionCompletedBlocks(
   // summary line entirely.
   const summaryParts: string[] = [];
   if (totalResults > 0) {
-    summaryParts.push(`${totalResults} ${totalResults === 1 ? "result" : "results"}`);
+    summaryParts.push(
+      `${totalResults} ${totalResults === 1 ? "result" : "results"}`
+    );
   }
   if (elapsedDisplay) summaryParts.push(elapsedDisplay);
   const summaryLine = summaryParts.length > 0 ? summaryParts.join(" · ") : null;
@@ -110,7 +114,10 @@ export function formatSessionCompletedBlocks(
       .map((sc) => `${emojiForStatus(sc)} *${sc.statusName}:* ${sc.count}`)
       .join("\n");
     blocks.push({ type: "divider" });
-    blocks.push({ type: "section", text: { type: "mrkdwn", text: statusLines } });
+    blocks.push({
+      type: "section",
+      text: { type: "mrkdwn", text: statusLines },
+    });
   }
 
   return buildBody({

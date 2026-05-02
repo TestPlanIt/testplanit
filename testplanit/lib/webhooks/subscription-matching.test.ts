@@ -3,11 +3,10 @@ import { describe, expect, it } from "vitest";
 import { matchesSubscription } from "./subscription-matching";
 
 /**
- * D-33 / OUT-19 — outbound subscription filter.
+ * outbound subscription filter.
  *
- * Empty array (or null/undefined) = subscribe-all (back-compat with
- * Phase 1's implicit "all events"). Non-empty array filters by exact
- * string match. NO wildcards in Phase 2.
+ * Empty array (or null/undefined) = subscribe-all. Non-empty array filters
+ * by exact string match. NO wildcards.
  */
 describe("matchesSubscription", () => {
   it.each([
@@ -39,7 +38,7 @@ describe("matchesSubscription", () => {
       eventName: "test_run.completed",
       subs: ["test_run.*"],
       expected: false,
-      label: "wildcard pattern test_run.* NOT supported (D-33)",
+      label: "wildcard pattern test_run.* NOT supported",
     },
     {
       eventName: "test_run.completed",

@@ -1661,22 +1661,6 @@ export class ApiHelper {
     }
   }
 
-  /**
-   * Phase 2 E2E support (Plan 02-08) — completes a test run by transitioning
-   * its `stateId` to a workflow with `workflowType: "DONE"`. This triggers the
-   * lib/prisma.ts `$extends` middleware to emit `test_run.state_changed` AND
-   * `test_run.completed` (D-09 lifecycle policy).
-   *
-   * The Workflows table is admin-defined per project. This helper queries the
-   * ZenStack RPC for the first workflow assigned to the project whose
-   * `workflowType === "DONE"` and PATCHes the test run to it via the same
-   * /api/model/testRuns/update pathway the in-app UI uses. If no such workflow
-   * exists for the project, throws.
-   *
-   * Note: the schema models "completion" via `Workflows.workflowType === "DONE"`
-   * (the "isCompleted" semantic is derived from this enum at the
-   * event-emitter layer — see testRunEvents.ts line 88-90).
-   */
   async completeTestRunViaStateChange(
     testRunId: number,
     projectId: number
@@ -1706,7 +1690,7 @@ export class ApiHelper {
     if (!completedStateId) {
       throw new Error(
         `No DONE workflow assigned to project ${projectId}. ` +
-          `The Phase 2 E2E requires the project to have at least one Workflows ` +
+          `The E2E test requires the project to have at least one Workflows ` +
           `row with workflowType="DONE" assigned via ProjectWorkflowAssignment ` +
           `(prisma/seed.ts seeds these for every project).`
       );

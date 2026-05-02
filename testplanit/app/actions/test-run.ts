@@ -16,7 +16,7 @@ export type GetMaxOrderResponse =
  * @returns The maximum order value, or 0 if no cases exist or have an order.
  *
  * NOT wrapped in withActionAuditContext — read-only aggregate, emits
- * no audit events. Per Phase 64 D-06.
+ * no audit events.
  */
 export async function getMaxOrderInTestRun(
   testRunId: number
@@ -45,14 +45,13 @@ export async function getMaxOrderInTestRun(
  * @param order - The order for the new test case
  * @returns The created test run case
  *
- * Wrapped in withActionAuditContext (Phase 64 D-05): the
+ * Wrapped in withActionAuditContext: the
  * prisma.testRunCases.create call below triggers the TestRunCases
  * extension hook at lib/prisma.ts:1060 which emits auditCreate(
  * "TestRunCases", result). Without the wrapper that audit row would
  * have null ipAddress/userAgent/requestId; with the wrapper plus the
  * NextAuth session callback enrichment (Plan 01 Task 3) triggered by
  * getServerAuthSession below, the row carries complete actor context
- * (CTX-02).
  */
 export const addToTestRun = withActionAuditContext(
   async (testRunId: number, repositoryCaseId: number, order: number) => {

@@ -6,16 +6,18 @@ import { toHumanReadable } from "~/utils/duration";
 import type { FormattedHttpRequest, OutboundEnvelope } from "../../types";
 
 /**
- * D-15 — `test_run.completed` payload locked to TestRunSummaryData. The
- * Slack formatter renders a stable subset; consumers of the generic-HMAC
- * adapter receive the full payload.
+ * `test_run.completed` payload locked to TestRunSummaryData. The Slack
+ * formatter renders a stable subset; consumers of the generic-HMAC adapter
+ * receive the full payload.
  *
  * Pass/Fail/Pending math comes from the shared `aggregateRunCounts`
  * helper (lib/services/testRunSummary.ts) so the in-app summary
  * component and this formatter never disagree on what "completed" means.
  */
-interface TestRunCompletedData
-  extends Pick<TestRunSummaryData, "statusCounts"> {
+interface TestRunCompletedData extends Pick<
+  TestRunSummaryData,
+  "statusCounts"
+> {
   runId: number;
   runTitle: string;
   /** Deep-link to the run in the TestPlanIt UI; rendered as a markdown link in Slack. */
@@ -70,7 +72,7 @@ function emojiForStatus(sc: {
 }
 
 /**
- * D-17 — Slack formatter for `test_run.completed`. Produces both `text`
+ * Slack formatter for `test_run.completed`. Produces both `text`
  * (single-line notification preview / legacy fallback) and `attachments`
  * with `blocks` inside (so the message gets a left-edge color bar that
  * signals pass/fail/pending at a glance — green/red/yellow).
@@ -82,11 +84,10 @@ export function formatTestRunCompletedBlocks(
   envelope: OutboundEnvelope
 ): FormattedHttpRequest {
   const data = envelope.data as unknown as TestRunCompletedData;
-  const { totalCases, failed, pending, completionPct } =
-    aggregateRunCounts({
-      totalCases: data.totalCases,
-      statusCounts: data.statusCounts ?? [],
-    });
+  const { totalCases, failed, pending, completionPct } = aggregateRunCounts({
+    totalCases: data.totalCases,
+    statusCounts: data.statusCounts ?? [],
+  });
   const elapsedSeconds = data.totalElapsed ?? 0;
   const elapsedDisplay =
     elapsedSeconds > 0
@@ -142,7 +143,10 @@ export function formatTestRunCompletedBlocks(
       .map((sc) => `${emojiForStatus(sc)} *${sc.statusName}:* ${sc.count}`)
       .join("\n");
     blocks.push({ type: "divider" });
-    blocks.push({ type: "section", text: { type: "mrkdwn", text: statusLines } });
+    blocks.push({
+      type: "section",
+      text: { type: "mrkdwn", text: statusLines },
+    });
   }
 
   // Wrap in `attachments` (not top-level `blocks`) so Slack renders the

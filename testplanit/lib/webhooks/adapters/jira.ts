@@ -38,13 +38,13 @@ interface JiraWebhookPayload {
     key?: string;
     fields?: { status?: { name?: string } };
   };
-  // NOTE: `metadata.synthetic` is intentionally NOT modeled here. HI-02:
-  // any caller with a valid HMAC could otherwise set `metadata.synthetic`
-  // to `true` and silently suppress production Issue updates.
+  // NOTE: `metadata.synthetic` is intentionally NOT modeled here. Any
+  // caller with a valid HMAC could otherwise set `metadata.synthetic` to
+  // `true` and silently suppress production Issue updates.
 }
 
 /**
- * HI-02 sentinel: the self-loop server action emits this exact issue.key
+ * Synthetic sentinel: the self-loop server action emits this exact issue.key
  * in its synthetic Jira-shaped payload. The receiver detects this key and
  * short-circuits the linked-Issue step. A real Jira instance — or anyone
  * with the secret — cannot trigger the synthetic path because it would
@@ -71,12 +71,12 @@ function buildPayload(p: JiraWebhookPayload): ParsedWebhookPayload | null {
     eventType,
     issueKey,
     externalStatus,
-    // HI-02: `synthetic` is bound to the sentinel issue.key, NOT to any
+    // `synthetic` is bound to the sentinel issue.key, NOT to any
     // wire-controllable metadata field. This is the only way for the
     // receiver to learn "this came from the self-loop" without trusting
     // attacker-supplied JSON.
     synthetic: issueKey === SYNTHETIC_ISSUE_KEY,
-    // Raw parsed body for Phase 3 extractors that read original Jira shape.
+    // Raw parsed body for extractors that read original Jira shape.
     data: p,
   };
 }

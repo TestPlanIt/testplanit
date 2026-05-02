@@ -21,17 +21,17 @@ import { decrypt, encrypt } from "~/utils/encryption";
 import { getServerAuthSession } from "~/server/auth";
 
 /**
- * D-20 / BLOCKER #5 / HI-02 — byte-identical synthetic payload across clicks.
+ * Byte-identical synthetic payload across clicks.
  *
- * The two-click SC#5 demo determinism depends on this payload being LITERALLY
+ * The two-click test determinism depends on this payload being LITERALLY
  * the same bytes every time `sendTestWebhook` runs. A `Date.now`, a `nonce`,
  * or a fresh `randomUUID` here would produce a new `payloadDigest` per click,
- * which would skip the dedup-INSERT P2002 path that the demo relies on.
+ * which would skip the dedup-INSERT path that the flow relies on.
  *
  * Static literal → identical SHA-256 digest → second click of `sendTestWebhook`
- * deterministically returns `outcome='duplicate'` from the receiver. SC#5 demo lock.
+ * deterministically returns `outcome='duplicate'` from the receiver.
  *
- * HI-02: synthetic intent is bound to `issue.key === SYNTHETIC_ISSUE_KEY` (the
+ * Synthetic intent is bound to `issue.key === SYNTHETIC_ISSUE_KEY` (the
  * sentinel `__synthetic__`). The receiver-side adapter detects that exact key
  * to short-circuit; we no longer use a wire-controllable `metadata.synthetic`
  * boolean (which any HMAC-valid sender could forge). A real Jira instance
@@ -47,17 +47,17 @@ const SYNTHETIC_PAYLOAD = JSON.stringify({
 });
 
 /**
- * Phase 3 SC#5 demo lock — byte-identical synthetic payloads per adapter.
+ * Byte-identical synthetic payloads per adapter.
  *
  * Each constant is `JSON.stringify`'d ONCE at module load and reused across
  * all `sendTestWebhook` calls, so two consecutive clicks produce byte-
  * identical request bodies → byte-identical `payloadDigest` → second click
  * deterministically returns `outcome='duplicate'` from the receiver. Same
- * invariant Phase 1 established for the JIRA `SYNTHETIC_PAYLOAD` above.
+ * invariant established for the JIRA `SYNTHETIC_PAYLOAD` above.
  *
- * HI-02 sentinel binding: each payload uses values an external caller
- * cannot legitimately produce (GitHub: `__synthetic__/__synthetic__` repo
- * + issue.number === 0; ADO: resource.id === 0). The receiver-side adapter
+ * Sentinel binding: each payload uses values an external caller cannot
+ * legitimately produce (GitHub: `__synthetic__/__synthetic__` repo +
+ * issue.number === 0; ADO: resource.id === 0). The receiver-side adapter
  * detects the sentinel and short-circuits to the `synthetic` outcome.
  */
 const SYNTHETIC_GITHUB_PAYLOAD = JSON.stringify({
@@ -72,7 +72,7 @@ const SYNTHETIC_ADO_PAYLOAD = JSON.stringify({
 });
 
 function generateToken(): string {
-  // 32 random bytes → 64 hex chars; "whk_" prefix per D-05.
+  // 32 random bytes → 64 hex chars with "whk_" prefix.
   return `whk_${randomBytes(32).toString("hex")}`;
 }
 
@@ -84,19 +84,19 @@ function generateSecret(): string {
 export interface CreateOrRotateResult {
   success: boolean;
   configId?: string;
-  url?: string; // full URL with token visible — show ONCE on creation/rotation (D-19)
-  secret?: string; // plaintext secret — show ONCE on creation/rotation (D-06)
+  url?: string; // full URL with token visible — show ONCE on creation/rotation
+  secret?: string; // plaintext secret — show ONCE on creation/rotation
   error?: string;
 }
 
 /**
- * Plan 03-06 — adapter-specific secret input for inbound webhook create/rotate.
+ * Adapter-specific secret input for inbound webhook create/rotate.
  *
  * - JIRA / GITHUB: server mints a random HMAC secret. `secretInput` is unused.
  * - AZURE_DEVOPS: admin types a Basic-Auth credential pair. The action
  *   JSON-encodes `{ username, password }` and stores the JSON string as the
- *   encrypted secret (D-09 — overloads `secret` semantics, mirrors Phase 2's
- *   Slack-URL-as-credential precedent). `secretInput` is REQUIRED for ADO.
+ *   encrypted secret (overloads `secret` semantics, mirroring the Slack-URL-
+ *   as-credential precedent). `secretInput` is REQUIRED for ADO.
  */
 export type AdapterSecretInput =
   | { kind: "JIRA" }
@@ -104,18 +104,17 @@ export type AdapterSecretInput =
   | { kind: "AZURE_DEVOPS"; username: string; password: string };
 
 /**
- * Plan 03-06 — generalize Phase 1's createOrRotateJiraWebhook to all 3 inbound
- * adapter types (JIRA / GITHUB / AZURE_DEVOPS).
+ * Create or rotate an inbound `WebhookConfig` for the (project, adapterType)
+ * pair across all 3 inbound adapter types (JIRA / GITHUB / AZURE_DEVOPS).
  *
- * Creates a new inbound `WebhookConfig` for the (project, adapterType) pair,
- * or rotates the token + secret of the existing one (D-07: hard cutover, no
- * grace period). The schema's `@@unique([projectId, adapterType, direction])`
- * constraint allows one Jira + one GitHub + one ADO inbound config per project.
+ * Rotation is a hard cutover with no grace period. The schema's
+ * `@@unique([projectId, adapterType, direction])` constraint allows one
+ * Jira + one GitHub + one ADO inbound config per project.
  *
  * For JIRA/GITHUB the server mints a random HMAC secret and returns it
- * plaintext (admin must capture it before the form re-renders — D-06). For
+ * plaintext (admin must capture it before the form re-renders). For
  * AZURE_DEVOPS the admin supplies `secretInput` containing a username +
- * password pair; the action JSON-encodes the pair (D-09) and does NOT return
+ * password pair; the action JSON-encodes the pair and does NOT return
  * a `secret` field on the response (the admin already typed it; nothing to
  * reveal).
  */
@@ -131,7 +130,7 @@ export async function createOrRotateInboundWebhook(input: {
     return { success: false, error: "Unauthorized" };
   }
 
-  // CR-02: schema denies all client writes; this server action authorizes the
+  // Schema denies all client writes; this server action authorizes the
   // caller explicitly (mirroring the prior @@allow policy) and writes via raw
   // `prisma` to bypass the deny.
   let authorized: boolean;
@@ -169,8 +168,8 @@ export async function createOrRotateInboundWebhook(input: {
       );
       return { success: false, error: "Failed to save webhook configuration" };
     }
-    // D-09: JSON-encode the {username, password} pair; the ADO adapter
-    // JSON.parses on the receiver side. Phase 2's Slack-URL-as-credential
+    // JSON-encode the {username, password} pair; the ADO adapter
+    // JSON.parses on the receiver side. The Slack-URL-as-credential pattern
     // sets the precedent for overloading `WebhookConfig.secret`.
     plaintextToEncrypt = JSON.stringify({
       username: secretInput.username,
@@ -214,7 +213,7 @@ export async function createOrRotateInboundWebhook(input: {
 
     let config: { id: string };
     if (existing) {
-      // D-07: rotation overwrites — old token immediately invalid.
+      // Rotation overwrites — old token immediately invalid.
       config = await prisma.webhookConfig.update({
         where: { id: existing.id },
         data: { token, secret: encryptedSecret, isActive: true },
@@ -236,11 +235,10 @@ export async function createOrRotateInboundWebhook(input: {
 
     return buildResult(config.id);
   } catch (err) {
-    // ME-03 / HI-05: defensive concurrent-create race fallback. The
-    // schema-level @@unique was dropped to allow multiple OUTBOUND configs
-    // per (project, adapter), so this retry path is dormant in normal
-    // operation. Kept as a safety net in case a future migration adds a
-    // partial unique index on INBOUND rows.
+    // Defensive concurrent-create race fallback. The schema-level @@unique
+    // was dropped to allow multiple OUTBOUND configs per (project, adapter),
+    // so this retry path is dormant in normal operation. Kept as a safety net
+    // in case a future migration adds a partial unique index on INBOUND rows.
     if (isUniqueConstraintError(err)) {
       console.warn(
         "[webhook-config] createOrRotate hit concurrent-create race; retrying via rotate path"
@@ -271,10 +269,10 @@ export async function createOrRotateInboundWebhook(input: {
 }
 
 /**
- * @deprecated Phase 1 alias — use `createOrRotateInboundWebhook({ adapterType: "JIRA" })`.
+ * @deprecated Use `createOrRotateInboundWebhook({ adapterType: "JIRA" })`.
  *
  * Preserves the positional `(projectId)` call shape so existing UI / E2E
- * call sites compile until P-07 lands the multi-adapter form rewrite.
+ * call sites compile until the multi-adapter form rewrite lands.
  */
 export async function createOrRotateJiraWebhook(
   projectId: number
@@ -288,16 +286,16 @@ export interface DeleteResult {
 }
 
 /**
- * Plan 03-06 — generalize Phase 1's deleteJiraWebhook to all 3 inbound
- * adapter types. Hard-deletes the inbound webhook config row.
+ * Hard-deletes the inbound webhook config row across all 3 inbound adapter
+ * types.
  *
  * Tenant-scoped: filters by `id`, `projectId`, AND `direction === "INBOUND"`
  * so a caller cannot trick this action into deleting an OUTBOUND config nor
  * a config from another tenant by guessing IDs.
  *
- * The schema does NOT carry an `isDeleted` field on `WebhookConfig` (verified
- * vs plan 01-01 SUMMARY) so `feedback_soft_delete` does not apply —
- * admin-only configuration entity, not user data.
+ * The schema does NOT carry an `isDeleted` field on `WebhookConfig`, so the
+ * soft-delete convention does not apply — admin-only configuration entity,
+ * not user data.
  */
 export async function deleteInboundWebhook(input: {
   webhookConfigId: string;
@@ -310,7 +308,7 @@ export async function deleteInboundWebhook(input: {
     return { success: false, error: "Unauthorized" };
   }
 
-  // CR-02: authorize before raw write. Look up the config to verify both
+  // Authorize before raw write. Look up the config to verify both
   // tenant scope (projectId match) AND direction (INBOUND only) before any
   // canManageWebhookConfig probe — a cross-tenant or wrong-direction
   // attempt looks identical to a not-found from the outside.
@@ -331,7 +329,7 @@ export async function deleteInboundWebhook(input: {
     return { success: false, error: "Not found" };
   }
   // Only refuse OUTBOUND when the field is present (existing tests mock
-  // findUnique without `direction` — undefined falls through to allow Phase 1
+  // findUnique without `direction` — undefined falls through to allow legacy
   // call sites that pre-date the field check).
   if (config.direction && config.direction !== "INBOUND") {
     return { success: false, error: "Not found" };
@@ -358,13 +356,13 @@ export async function deleteInboundWebhook(input: {
 }
 
 /**
- * @deprecated Phase 1 alias — use `deleteInboundWebhook({ webhookConfigId, projectId })`.
+ * @deprecated Use `deleteInboundWebhook({ webhookConfigId, projectId })`.
  *
  * Preserves the positional `(configId)` call shape so existing UI / E2E
- * call sites compile until P-07 lands the multi-adapter form rewrite. The
- * alias performs an extra findUnique to discover the projectId before
- * delegating; this is a one-time cost paid only by Phase 1 callers and goes
- * away when the form switches to the new signature.
+ * call sites compile until the multi-adapter form rewrite lands. The alias
+ * performs an extra findUnique to discover the projectId before delegating;
+ * this is a one-time cost paid only by legacy callers and goes away when
+ * the form switches to the new signature.
  */
 export async function deleteJiraWebhook(
   configId: string
@@ -401,8 +399,8 @@ export interface SetActiveResult {
 }
 
 /**
- * CR-02: replaces the form's previous `useUpdateWebhookConfig` ZenStack RPC
- * call. Toggles `isActive` only — no other field is mutable here. Schema
+ * Replaces the form's previous `useUpdateWebhookConfig` ZenStack RPC call.
+ * Toggles `isActive` only — no other field is mutable here. Schema
  * `@@deny('create, update, delete', true)` blocks any client-side write,
  * so this server action is the sole `isActive` mutation surface.
  */
@@ -461,7 +459,7 @@ export interface SendTestWebhookResult {
 }
 
 /**
- * D-20 / WARNING #8 — sends a synthetic webhook through the full pipeline self-loop.
+ * Sends a synthetic webhook through the full pipeline self-loop.
  *
  * Replaces the previous `/api/webhooks/test` route concept. Server actions are
  * the project's idiomatic non-CRUD seam (CLAUDE.md: "Strongly prefer ZenStack
@@ -472,14 +470,14 @@ export interface SendTestWebhookResult {
  * `/api/webhooks/{token}`, and returns ONLY `{ ok, statusCode, outcome }` to
  * the caller.
  *
- * Plan 03-06 / D-19 — branches by `config.adapterType`:
+ * Branches by `config.adapterType`:
  *   - JIRA: HMAC-SHA256 over SYNTHETIC_PAYLOAD; `x-hub-signature-256` header.
  *   - GITHUB: HMAC-SHA256 over SYNTHETIC_GITHUB_PAYLOAD; `x-hub-signature-256`
  *     + `x-github-event: issues` headers.
  *   - AZURE_DEVOPS: Basic Auth from JSON-decoded {username, password};
  *     `authorization: Basic <base64>` header; SYNTHETIC_ADO_PAYLOAD body.
  *
- * SC#5 demo lock invariant: each adapter's synthetic payload is a module-level
+ * Determinism invariant: each adapter's synthetic payload is a module-level
  * `const` (declared once, JSON.stringify'd once). Two consecutive calls
  * produce byte-identical request bodies → byte-identical `payloadDigest` →
  * second call deterministically returns `outcome='duplicate'` from the
@@ -493,7 +491,7 @@ export async function sendTestWebhook(
     return { ok: false, statusCode: 401, error: "Unauthorized" };
   }
 
-  // CR-02: read via raw prisma (the schema's @@allow('read', ...) clause is
+  // Read via raw prisma (the schema's @@allow('read', ...) clause is
   // bypassed here, but we authorize through `canManageWebhookConfig` below
   // before exposing anything sensitive).
   let config: {
@@ -539,9 +537,9 @@ export async function sendTestWebhook(
   try {
     plainSecret = await decrypt(config.secret);
   } catch (err) {
-    // CR-02 mitigation context: a project admin who bypassed the server
-    // action and wrote a non-encrypted blob into `secret` would surface here.
-    // After Cluster 3 CR-02 fix this becomes effectively unreachable.
+    // A project admin who bypassed the server action and wrote a
+    // non-encrypted blob into `secret` would surface here. After the
+    // schema-deny lockdown this becomes effectively unreachable.
     console.error("[webhook-config] decrypt failed (sendTest)", err);
     return {
       ok: false,
@@ -555,7 +553,7 @@ export async function sendTestWebhook(
 
   // Build adapter-specific request init (headers + body) before the
   // network fetch. Each adapter's synthetic payload is a module-level const,
-  // so two clicks produce byte-identical bytes (SC#5 demo lock invariant).
+  // so two clicks produce byte-identical bytes (determinism invariant).
   let requestInit: RequestInit;
   if (config.adapterType === "JIRA") {
     const sig =
@@ -585,7 +583,7 @@ export async function sendTestWebhook(
       body: SYNTHETIC_GITHUB_PAYLOAD,
     };
   } else if (config.adapterType === "AZURE_DEVOPS") {
-    // D-09: secret is JSON-encoded {username, password} for ADO. Decoded
+    // Secret is JSON-encoded {username, password} for ADO. Decoded
     // creds drive the Basic-Auth header on the synthetic request.
     let creds: { username: string; password: string };
     try {
@@ -647,7 +645,7 @@ export async function sendTestWebhook(
   } catch (err) {
     // Network/fetch failure (target unreachable, DNS, TLS, etc). The error
     // text is genuinely useful diagnostically for admins debugging connectivity
-    // — keep it through to the UI (ME-02 i18n template will surface it).
+    // — keep it through to the UI (the i18n template will surface it).
     console.error("[webhook-config] fetch failed (sendTest)", err);
     return {
       ok: false,
@@ -658,16 +656,16 @@ export async function sendTestWebhook(
 }
 
 // =============================================================================
-// v0.23.0 Phase 2 — outbound webhook server actions (Plan 02-06)
+// Outbound webhook server actions
 // =============================================================================
 
 const DEFAULT_OUTBOUND_PRESET: string[] = [];
 
 /**
- * E2E HTTP override (Plan 02-08): when WEBHOOK_OUTBOUND_ALLOW_HTTP=true,
- * skip the HTTPS-only check on outbound URLs. Production deploys NEVER set
- * this var; it exists ONLY so the E2E can point at a local node:http stub
- * server. Documented inline rather than tucked away in env.example.
+ * E2E HTTP override: when WEBHOOK_OUTBOUND_ALLOW_HTTP=true, skip the HTTPS-only
+ * check on outbound URLs. Production deploys NEVER set this var; it exists
+ * ONLY so the E2E can point at a local node:http stub server. Documented
+ * inline rather than tucked away in env.example.
  *
  * Read at function-call time (not module load) so tests + integration
  * environments can flip the flag without re-importing.
@@ -679,20 +677,19 @@ function isHttpOutboundAllowed(): boolean {
 export interface CreateOutboundResult {
   success: boolean;
   configId?: string;
-  /** Plaintext secret — show ONCE on creation (D-06). Only set for GENERIC_HMAC. */
+  /** Plaintext secret — show ONCE on creation. Only set for GENERIC_HMAC. */
   secret?: string;
   error?: string;
 }
 
 /**
- * Plan 02-06 / Task 6.1 — create an OUTBOUND WebhookConfig for the project.
+ * Create an OUTBOUND WebhookConfig for the project.
  *
- * Auto-detects adapterType from the URL hostname (D-29):
+ * Auto-detects adapterType from the URL hostname:
  *  - hooks.slack.com → SLACK   (no signing secret; URL is the credential)
  *  - everything else → GENERIC_HMAC (seeds an initial WebhookConfigSecret)
  *
- * Both `name` and `url` are persisted into the new WebhookConfig columns
- * added in Plan 02-01 (Blocker 4 fix).
+ * Both `name` and `url` are persisted into the WebhookConfig columns.
  */
 export async function createOutboundWebhook(input: {
   projectId: number;
@@ -705,9 +702,9 @@ export async function createOutboundWebhook(input: {
     return { success: false, error: "Unauthorized" };
   }
 
-  // Blocker 4: name column is nullable on the schema for back-compat with
-  // INBOUND configs that don't carry an admin label, but OUTBOUND requires
-  // it per D-28. Validate trim-non-empty up front.
+  // The name column is nullable on the schema for back-compat with INBOUND
+  // configs that don't carry an admin label, but OUTBOUND requires it.
+  // Validate trim-non-empty up front.
   const trimmedName = input.name?.trim() ?? "";
   if (trimmedName.length === 0) {
     return { success: false, error: "Name is required" };
@@ -743,7 +740,7 @@ export async function createOutboundWebhook(input: {
   const token = generateToken();
 
   if (adapterType === "SLACK") {
-    // D-18: Slack URL is the credential — no HMAC signing secret needed.
+    // Slack URL is the credential — no HMAC signing secret needed.
     try {
       const config = await prisma.webhookConfig.create({
         data: {
@@ -754,8 +751,8 @@ export async function createOutboundWebhook(input: {
           secret: "", // Slack URL is the credential
           subscribedEvents,
           isActive: true,
-          name: trimmedName, // Blocker 4 — Plan 02-01 column
-          url: input.url, // Blocker 4 — Plan 02-01 column
+          name: trimmedName,
+          url: input.url,
         },
         select: { id: true },
       });
@@ -788,14 +785,14 @@ export async function createOutboundWebhook(input: {
           adapterType: "GENERIC_HMAC",
           direction: "OUTBOUND",
           token,
-          // Phase 1 column kept in sync with the active WebhookConfigSecret —
-          // the rotation flow keeps this lockstep so legacy code paths that
-          // read `WebhookConfig.secret` directly still see the current key.
+          // Column kept in sync with the active WebhookConfigSecret — the
+          // rotation flow keeps this lockstep so legacy code paths that read
+          // `WebhookConfig.secret` directly still see the current key.
           secret: encryptedSecret,
           subscribedEvents,
           isActive: true,
-          name: trimmedName, // Blocker 4
-          url: input.url, // Blocker 4
+          name: trimmedName,
+          url: input.url,
         },
         select: { id: true },
       });
@@ -820,7 +817,7 @@ export async function createOutboundWebhook(input: {
 }
 
 /**
- * Plan 02-06 / Task 6.1 — hard-delete an OUTBOUND webhook config.
+ * Hard-delete an OUTBOUND webhook config.
  *
  * Cascades to WebhookDelivery + WebhookEventDedup + WebhookConfigSecret rows
  * via `onDelete: Cascade` on the FK relations.
@@ -861,11 +858,11 @@ export async function deleteOutboundWebhook(
 }
 
 /**
- * Plan 02-06 / Task 6.1 — atomic update of `WebhookConfig.subscribedEvents`.
+ * Atomic update of `WebhookConfig.subscribedEvents`.
  *
- * Defensive runtime check on the array shape (matches Phase 1 pattern) — the
- * type system catches most callers but server-action arguments deserialize
- * from the wire and could in principle arrive as a non-array.
+ * Defensive runtime check on the array shape — the type system catches most
+ * callers but server-action arguments deserialize from the wire and could in
+ * principle arrive as a non-array.
  */
 export async function updateOutboundSubscriptions(
   configId: string,
@@ -909,20 +906,20 @@ export async function updateOutboundSubscriptions(
 }
 
 // =============================================================================
-// v0.23.0 Phase 2 / Task 6.2 — Two-secret rotation lifecycle (D-04..D-06)
+// Two-secret rotation lifecycle
 // =============================================================================
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 export interface RotateResult {
   success: boolean;
-  /** Plaintext NEW secret — show ONCE on rotation (D-06). */
+  /** Plaintext NEW secret — show ONCE on rotation. */
   secret?: string;
   error?: string;
 }
 
 /**
- * Plan 02-06 / Task 6.2 — D-04..D-06 hybrid rotation flow.
+ * Hybrid two-secret rotation flow.
  *
  * Steady-state semantics:
  *   1. The unique current active row (`retiredAt IS NULL AND autoRetireAt IS NULL`)
@@ -930,7 +927,7 @@ export interface RotateResult {
  *      keys during the overlap window so consumers can verify with either.
  *   2. A new active row is created: `secret = enc(plaintext)`, `activatedAt = NOW()`,
  *      no autoRetireAt set.
- *   3. `WebhookConfig.secret` (Phase 1 column) is updated to the new encrypted
+ *   3. `WebhookConfig.secret` (legacy column) is updated to the new encrypted
  *      secret so legacy read paths stay in lockstep.
  *
  * Corrupt-state branches:
@@ -1007,7 +1004,6 @@ export async function rotateOutboundSecret(
           activatedAt: new Date(),
         },
       });
-      // Keep the Phase 1 column in lockstep with the canonical active.
       await tx.webhookConfig.update({
         where: { id: configId },
         data: { secret: encryptedSecret },
@@ -1027,7 +1023,7 @@ export async function rotateOutboundSecret(
 }
 
 /**
- * Plan 02-06 / Task 6.2 — manual immediate retire (admin override).
+ * Manual immediate retire (admin override).
  *
  * Rejects retiring the current active row (callers must rotate first to
  * avoid bricking the dispatcher) and idempotently rejects already-retired rows.
@@ -1081,7 +1077,7 @@ export async function retireOutboundSecretNow(
 }
 
 /**
- * Plan 02-06 / Task 6.2 — extend the auto-retire window by 7 more days.
+ * Extend the auto-retire window by 7 more days.
  *
  * Additive: each call adds 7 days to the existing `autoRetireAt` (so a
  * second click within the window pushes it 14 days from the original
@@ -1138,19 +1134,17 @@ export async function extendRetiringSecret(
 }
 
 // =============================================================================
-// v0.23.0 Phase 2 / Task 6.3 — synthetic webhook.test emission
+// Synthetic webhook.test emission
 // =============================================================================
 
 /**
- * Plan 02-06 / Task 6.3 — fire a synthetic `webhook.test` event through the
- * full outbound pipeline.
+ * Fire a synthetic `webhook.test` event through the full outbound pipeline.
  *
  * Architecture: this action ONLY writes the outbox row. The poller picks it
  * up async, the dispatch worker delivers it to the configured URL. The
  * subscription bypass for `webhook.test` (so the test fires regardless of
  * the admin's subscribedEvents preset) lives in `lib/webhooks/dispatch.ts`
- * (Plan 02-04 Task 4.2 / Blocker 6) — NOT here. Plan 02-06 ships only the
- * emit-side of the pipeline kick.
+ * — NOT here.
  *
  * The returned `eventId` is what the admin form polls against the
  * WebhookDelivery table (via the existing receivedAt/outcome columns) to
@@ -1208,18 +1202,18 @@ export async function sendTestOutboundWebhook(
 }
 
 // =============================================================================
-// v0.23.0 Phase 4 / Plan 04-06 — replay + bulk replay + re-enable + batch status
+// Replay + bulk replay + re-enable + batch status
 // =============================================================================
 
 /**
- * Plan 04-06 — single-row replay (ADMIN-02, amended outbound-only per D-17b).
+ * Single-row replay (outbound-only).
  *
  * Auth-gates via `canManageWebhookConfig` BEFORE any service call. Inbound
  * deliveries are rejected at the action boundary with a typed `reason`
- * (`inbound_replay_not_supported`) so the admin UI (Plan 04-07) can render
- * the inbound banner instead of a Replay button. Outbound delegates to
- * `replayDelivery` (Plan 04-03) with `source: "single"`; the helper handles
- * outbox lookup, queue enqueue, and the WEBHOOK_REPLAYED audit (D-23).
+ * (`inbound_replay_not_supported`) so the admin UI can render the inbound
+ * banner instead of a Replay button. Outbound delegates to `replayDelivery`
+ * with `source: "single"`; the helper handles outbox lookup, queue enqueue,
+ * and the WEBHOOK_REPLAYED audit.
  */
 export async function replayWebhookDelivery(
   deliveryId: string
@@ -1265,9 +1259,9 @@ export async function replayWebhookDelivery(
   }
   if (!authorized) return { ok: false, error: "Forbidden" };
 
-  // D-17a / D-17b: inbound replay is not supported in v0.23.0. The auth gate
-  // above ensures only project admins (who already see the direction in the
-  // deliveries list) can probe; rejection is surfaced via toast in the UI.
+  // Inbound replay is not supported. The auth gate above ensures only
+  // project admins (who already see the direction in the deliveries list)
+  // can probe; rejection is surfaced via toast in the UI.
   if (direction === "INBOUND") {
     return { ok: false, reason: "inbound_replay_not_supported" };
   }
@@ -1288,13 +1282,12 @@ export async function replayWebhookDelivery(
 }
 
 /**
- * Plan 04-06 — bulk replay all failed OUTBOUND deliveries since a timestamp
- * (ADMIN-03, amended outbound-only per D-17a).
+ * Bulk replay all failed OUTBOUND deliveries since a timestamp.
  *
  * The SELECT pre-filters to `direction: "OUTBOUND"` so the 100-row hard cap
- * (BULK_REPLAY_HARD_CAP, D-08) is computed against outbound-only count —
- * inbound failures don't compete for the same 100 slots. Over-cap returns
- * `exceeds_cap` BEFORE any enqueue (T-04-06-05 mitigation).
+ * (BULK_REPLAY_HARD_CAP) is computed against outbound-only count — inbound
+ * failures don't compete for the same 100 slots. Over-cap returns
+ * `exceeds_cap` BEFORE any enqueue.
  */
 export async function bulkReplayFailedDeliveries(input: {
   webhookConfigId: string;
@@ -1342,7 +1335,7 @@ export async function bulkReplayFailedDeliveries(input: {
   }
 
   try {
-    // D-17a outbound-only filter — hard cap applies against outbound count.
+    // Outbound-only filter — hard cap applies against outbound count.
     const failedDeliveries = await prisma.webhookDelivery.findMany({
       where: {
         webhookConfigId: input.webhookConfigId,
@@ -1381,15 +1374,14 @@ export async function bulkReplayFailedDeliveries(input: {
 }
 
 /**
- * Plan 04-06 — manual re-enable of a DISABLED webhook (ADMIN-07, D-14).
+ * Manual re-enable of a DISABLED webhook.
  *
  * Rejects when `endpointHealth !== "DISABLED"` — DEGRADED auto-clears on
- * the next successful dispatch (D-15) and HEALTHY has nothing to re-enable.
- * On re-enable, sets `endpointHealth = HEALTHY` + resets the failure counter
+ * the next successful dispatch and HEALTHY has nothing to re-enable. On
+ * re-enable, sets `endpointHealth = HEALTHY` + resets the failure counter
  * to 0 in a single `update`, then emits `WEBHOOK_HEALTH_CHANGED` directly
  * (NOT through `health.transition`) because the reason value differs:
- * `manual_reenable` vs the auto-machine's `auto_threshold`. Audit metadata
- * shape locked by D-24.
+ * `manual_reenable` vs the auto-machine's `auto_threshold`.
  */
 export async function reEnableWebhookConfig(
   webhookConfigId: string
@@ -1415,9 +1407,9 @@ export async function reEnableWebhookConfig(
     return { ok: false, error: "Failed to re-enable webhook" };
   }
 
-  // T-04-06-06: only DISABLED is re-enable-able. DEGRADED auto-clears,
-  // HEALTHY has nothing to do. Reject before the auth probe so an attacker
-  // cannot use this action to discover health state of arbitrary configs.
+  // Only DISABLED is re-enable-able. DEGRADED auto-clears, HEALTHY has
+  // nothing to do. Reject before the auth probe so an attacker cannot use
+  // this action to discover health state of arbitrary configs.
   if (endpointHealth !== "DISABLED") {
     return { ok: false, error: "Not disabled" };
   }
@@ -1444,7 +1436,7 @@ export async function reEnableWebhookConfig(
     return { ok: false, error: "Failed to re-enable webhook" };
   }
 
-  // D-24: actor is the human admin (`actorUserId`), NOT `__system__`.
+  // Actor is the human admin (`actorUserId`), NOT `__system__`.
   await captureAuditEvent({
     action: "WEBHOOK_HEALTH_CHANGED",
     entityType: "WebhookConfig",
@@ -1464,9 +1456,9 @@ export async function reEnableWebhookConfig(
 }
 
 /**
- * Plan 04-06 — progress polling for a bulk-replay batch (D-09).
+ * Progress polling for a bulk-replay batch.
  *
- * Strategy LOCKED (Warning 7 fix):
+ * Strategy:
  *   1. Find all WEBHOOK_REPLAYED audit rows whose metadata.batchId matches.
  *   2. Pull `originalDeliveryId` out of each audit row's metadata → ids[].
  *   3. Query WebhookDelivery rows whose `replayedFromDeliveryId` IS IN ids[].
@@ -1476,8 +1468,8 @@ export async function reEnableWebhookConfig(
  *      - originalId not in any returned row → queued (worker hasn't run yet)
  *
  * Authorizes via `canManageWebhookConfig` using the projectId pulled from
- * the first audit row (T-04-06-04 — cross-project batchId probes return
- * Forbidden, not the count).
+ * the first audit row — cross-project batchId probes return Forbidden, not
+ * the count.
  */
 export async function getReplayBatchStatus(
   batchId: string

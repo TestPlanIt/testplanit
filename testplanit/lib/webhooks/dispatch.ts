@@ -13,16 +13,16 @@ import type {
 import { matchesSubscription } from "./subscription-matching";
 
 /**
- * v0.23.0 Phase 2 (OUT-10) — outbound webhook dispatch service.
+ * Outbound webhook dispatch service.
  *
- * Single async entry point that the dispatch worker (Task 4.4) calls per job.
- * Loads outbox event + WebhookConfig + active/retiring secrets, picks the
- * adapter via getOutboundAdapter, formats body, signs (if applicable), HTTPs
- * out with a 10s AbortSignal timeout, writes a WebhookDelivery row carrying
+ * Single async entry point that the dispatch worker calls per job. Loads
+ * outbox event + WebhookConfig + active/retiring secrets, picks the adapter
+ * via getOutboundAdapter, formats body, signs (if applicable), HTTPs out
+ * with a 10s AbortSignal timeout, writes a WebhookDelivery row carrying
  * attempt + statusCode + latencyMs + payloadDigest + error sentinel, and
- * emits a WEBHOOK_DISPATCHED audit event on every attempt (D-25).
+ * emits a WEBHOOK_DISPATCHED audit event on every attempt.
  *
- * Error mapping (RESEARCH Pattern 5):
+ * Error mapping:
  *   - HTTP 2xx           → outcome="success"; no throw
  *   - non-2xx            → error="<status>_<truncated_body>"; THROWS so BullMQ retries
  *   - AbortSignal timeout (DOMException name="TimeoutError") → "TIMEOUT"; THROWS
@@ -31,16 +31,16 @@ import { matchesSubscription } from "./subscription-matching";
  *   - cause.code starts with "ERR_TLS_"  → "TLS_ERROR"; THROWS
  *   - other Error         → truncated err.message; THROWS
  *
- * Subscription gate (Blocker 6 / D-28): the dispatcher is the single policy
- * enforcement point for "should this event reach this destination". For all
- * real events, matchesSubscription decides. For the synthetic diagnostic
- * event "webhook.test" (fired by Plan 02-06's sendTestOutboundWebhook server
- * action), the bypass forces dispatch regardless of subscriptions.
+ * Subscription gate: the dispatcher is the single policy enforcement point
+ * for "should this event reach this destination". For all real events,
+ * matchesSubscription decides. For the synthetic diagnostic event
+ * "webhook.test" (fired by the sendTestOutboundWebhook server action), the
+ * bypass forces dispatch regardless of subscriptions.
  *
  * Attempt threading: jobData.attempt is treated as authoritative. The Worker
- * processor (Task 4.4) is responsible for setting attempt = job.attemptsMade + 1
- * before invoking this function so each WebhookDelivery row carries the
- * correct 1-indexed attempt number per OUT-03 (Blocker 2 fix).
+ * processor is responsible for setting attempt = job.attemptsMade + 1 before
+ * invoking this function so each WebhookDelivery row carries the correct
+ * 1-indexed attempt number.
  */
 
 export interface DispatchJobData {
@@ -51,10 +51,10 @@ export interface DispatchJobData {
   // withTenantContext shape (lib/tenantContext.ts) — both expect
   // `tenantId?: string`. Single-tenant deployments simply omit this.
   tenantId?: string;
-  // Plan 04-05 / ADMIN-02 — when this dispatch is a replay of an older
-  // WebhookDelivery row, the replay service (lib/webhooks/replay.ts) sets
-  // this to the original delivery's id. Threaded onto the new
-  // WebhookDelivery row so admins can chain replay history in the UI.
+  // When this dispatch is a replay of an older WebhookDelivery row, the
+  // replay service (lib/webhooks/replay.ts) sets this to the original
+  // delivery's id. Threaded onto the new WebhookDelivery row so admins
+  // can chain replay history in the UI.
   replayedFromDeliveryId?: string | null;
 }
 
@@ -69,10 +69,10 @@ export type DispatchOutcome =
   | { outcome: "skipped_unsubscribed" }
   | { outcome: "skipped_inactive" };
 
-const HTTP_TIMEOUT_MS = 10_000; // OUT-04
+const HTTP_TIMEOUT_MS = 10_000;
 const MAX_ERROR_LEN = 1024;
 
-/** D-28 / Blocker 6 — synthetic event from sendTestOutboundWebhook bypasses subscription matching. */
+/** Synthetic event from sendTestOutboundWebhook bypasses subscription matching. */
 const DIAGNOSTIC_EVENT_NAME = "webhook.test" as const;
 
 export async function dispatchWebhook(
@@ -100,7 +100,7 @@ export async function dispatchWebhook(
   }
   if (!config) return { outcome: "skipped_inactive" };
   if (!config.isActive) return { outcome: "skipped_inactive" };
-  // L-05 / tenancy invariant — soft-deleted projects MUST NOT fan webhooks
+  // Tenancy invariant — soft-deleted projects MUST NOT fan webhooks
   // out to external systems. The `Projects.isDeleted` flag is the canonical
   // signal that a project has been removed from the admin UI; without this
   // gate, an in-flight outbox event whose row was committed BEFORE the
@@ -116,15 +116,14 @@ export async function dispatchWebhook(
     // inactive rather than crash.
     return { outcome: "skipped_inactive" };
   }
-  // Plan 04-05 / DEL-05 — DISABLED gate. When the health state machine has
-  // auto-disabled the endpoint (DEL-06: 10 consecutive event-level
-  // failures) we MUST NOT fire the HTTP request, but we still write a
-  // delivery row with error="endpoint_disabled" + emit a WEBHOOK_DISPATCHED
-  // failure audit so the admin's Deliveries tab surfaces the rejection
-  // (D-16: rejection reasons inline on the new row, no parallel error
-  // model). Replay-against-disabled paths land here too — jobData.
-  // replayedFromDeliveryId still threads onto the stub row so the chain is
-  // visible (Test R3).
+  // DISABLED gate. When the health state machine has auto-disabled the
+  // endpoint (10 consecutive event-level failures) we MUST NOT fire the
+  // HTTP request, but we still write a delivery row with
+  // error="endpoint_disabled" + emit a WEBHOOK_DISPATCHED failure audit so
+  // the admin's Deliveries tab surfaces the rejection (rejection reasons
+  // inline on the new row, no parallel error model). Replay-against-
+  // disabled paths land here too — jobData.replayedFromDeliveryId still
+  // threads onto the stub row so the chain is visible.
   if (config.endpointHealth === "DISABLED") {
     const stubDigest = createHash("sha256")
       .update(JSON.stringify(outboxEvent.payload))
@@ -162,8 +161,8 @@ export async function dispatchWebhook(
       deliveryId: delivery.id,
     };
   }
-  // Subscription gate (Blocker 6 — webhook.test bypasses the gate so admin
-  // diagnostics always reach the destination regardless of subscription state).
+  // Subscription gate — webhook.test bypasses the gate so admin diagnostics
+  // always reach the destination regardless of subscription state.
   if (
     outboxEvent.eventName !== DIAGNOSTIC_EVENT_NAME &&
     !matchesSubscription(outboxEvent.eventName, config.subscribedEvents)
@@ -171,7 +170,7 @@ export async function dispatchWebhook(
     return { outcome: "skipped_unsubscribed" };
   }
 
-  // 2. Build envelope (OUT-20 / D-14).
+  // 2. Build envelope.
   const envelope: OutboundEnvelope = {
     eventId: outboxEvent.eventId,
     eventName: outboxEvent.eventName,
@@ -268,10 +267,9 @@ export async function dispatchWebhook(
   }
   const latencyMs = Date.now() - startedAt;
 
-  // 6. Write delivery row. Plan 04-05 / DEL-01 — eventId is stamped on
-  // every outbound delivery row so admins can group by event in the
-  // Deliveries tab and Plan 04-03's outbound replay path can find the
-  // source outbox row by `delivery.eventId`. Plan 04-05 / ADMIN-02 —
+  // 6. Write delivery row. eventId is stamped on every outbound delivery
+  // row so admins can group by event in the Deliveries tab and the outbound
+  // replay path can find the source outbox row by `delivery.eventId`.
   // replayedFromDeliveryId threads from BullMQ job data when this dispatch
   // is itself a replay (lib/webhooks/replay.ts enqueues the field).
   const delivery = await prisma.webhookDelivery.create({
@@ -290,14 +288,14 @@ export async function dispatchWebhook(
     },
   });
 
-  // 7. Per-attempt timestamps (Plan 04-05 / DEL-08). One bundled UPDATE
-  // per attempt: lastDispatchedAt always; lastSuccessAt on 2xx;
-  // lastFailureAt on non-2xx / network error. The dispatcher writes
-  // ONLY these timestamps on WebhookConfig — the health-state seam
-  // (failure-counter + endpointHealth flip) is owned by the BullMQ
-  // worker hook (workers/webhookDispatchWorker.ts) which calls
-  // health.transition() on terminal `failed` / `completed`. CONTEXT
-  // D-10 locks the event-level (not per-attempt) counter contract.
+  // 7. Per-attempt timestamps. One bundled UPDATE per attempt:
+  // lastDispatchedAt always; lastSuccessAt on 2xx; lastFailureAt on
+  // non-2xx / network error. The dispatcher writes ONLY these timestamps
+  // on WebhookConfig — the health-state seam (failure-counter +
+  // endpointHealth flip) is owned by the BullMQ worker hook
+  // (workers/webhookDispatchWorker.ts) which calls health.transition()
+  // on terminal `failed` / `completed`. The contract is event-level
+  // (not per-attempt) for the failure counter.
   const now = new Date();
   const timestampUpdate: Prisma.WebhookConfigUncheckedUpdateInput = {
     lastDispatchedAt: now,
@@ -312,7 +310,7 @@ export async function dispatchWebhook(
     data: timestampUpdate,
   });
 
-  // 8. Audit on every attempt (D-25).
+  // 8. Audit on every attempt.
   await emitAudit({
     deliveryId: delivery.id,
     projectId: config.projectId,
@@ -371,9 +369,9 @@ async function emitAudit(args: {
   attempt: number;
   statusCode: number | null;
   outcome: "success" | "failure";
-  // Plan 04-05 / DEL-05 — optional error sentinel surfaced in audit
-  // metadata. Currently used for the DISABLED gate ("endpoint_disabled");
-  // future error-flavored audit metadata can flow through this same field.
+  // Optional error sentinel surfaced in audit metadata. Currently used for
+  // the DISABLED gate ("endpoint_disabled"); future error-flavored audit
+  // metadata can flow through this same field.
   error?: string;
 }): Promise<void> {
   const metadata: Record<string, unknown> = {

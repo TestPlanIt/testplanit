@@ -80,10 +80,10 @@ interface WebhookOutboundFormProps {
 }
 
 /**
- * Phase 2 event catalog (D-09..D-13). Three sections; the UI groups events
- * under section headers per D-08, with a per-section "Select all" toggle.
+ * Three sections; the UI groups events under section headers,
+ * with a per-section "Select all" toggle.
  *
- * Reserved verbs (D-13): created, updated, deleted, state_changed, completed,
+ * Reserved verbs: created, updated, deleted, state_changed, completed,
  * duplicated, result_added.
  */
 const EVENT_CATALOG = {
@@ -177,7 +177,7 @@ function eventVerbI18nPath(eventName: string): string {
 }
 
 /**
- * Project admin form for OUTBOUND webhook configs (Phase 2 / Plan 02-07).
+ * Project admin form for OUTBOUND webhook configs
  *
  * Renders a list of zero-to-N outbound configs (typically Slack URL +
  * generic-HMAC URL = a normal setup) with per-config Card showing the admin
@@ -581,9 +581,7 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
                       <WebhookAdapterIcon adapterType="SLACK" />
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent>
-                    {t("outboundDetectedSlack")}
-                  </TooltipContent>
+                  <TooltipContent>{t("outboundDetectedSlack")}</TooltipContent>
                 </Tooltip>
               )}
             </div>
@@ -653,12 +651,12 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
                         onCheckedChange={() => toggleEvent(eventName)}
                       />
                       <span>
-                                {tGlobal(
-                                  eventVerbI18nPath(
-                                    eventName
-                                  ) as Parameters<typeof tGlobal>[0]
-                                )}
-                              </span>
+                        {tGlobal(
+                          eventVerbI18nPath(eventName) as Parameters<
+                            typeof tGlobal
+                          >[0]
+                        )}
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -855,9 +853,7 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
                     {t(healthLabelKey)}
                   </Badge>
                 </TooltipTrigger>
-                <TooltipContent>
-                  {renderHealthTooltip(config)}
-                </TooltipContent>
+                <TooltipContent>{renderHealthTooltip(config)}</TooltipContent>
               </Tooltip>
             </div>
           </div>
@@ -865,9 +861,7 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
         <CardContent className="space-y-4">
           <div className={isSlack ? undefined : "grid gap-4 sm:grid-cols-2"}>
             <div className="space-y-2">
-              <h4 className="text-sm font-semibold">
-                {t("outboundUrlLabel")}
-              </h4>
+              <h4 className="text-sm font-semibold">{t("outboundUrlLabel")}</h4>
               <code
                 data-testid={`webhook-outbound-url-${config.id}`}
                 className="block break-all text-xs"
@@ -946,7 +940,9 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
                         variant="outline"
                         size="sm"
                         data-testid={`webhook-outbound-retire-now-button-${retiringSecret.id}`}
-                        onClick={() => setRetireDialogSecretId(retiringSecret.id)}
+                        onClick={() =>
+                          setRetireDialogSecretId(retiringSecret.id)
+                        }
                       >
                         <Archive className="h-4 w-4" />
                         <span>{t("outboundHmacRetireNowButton")}</span>
@@ -994,9 +990,9 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
                           const next = allSelected
                             ? config.subscribedEvents.filter(
                                 (e) =>
-                                  !(sectionEvents as readonly string[]).includes(
-                                    e
-                                  )
+                                  !(
+                                    sectionEvents as readonly string[]
+                                  ).includes(e)
                               )
                             : Array.from(
                                 new Set([
@@ -1041,14 +1037,12 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
                             />
                             <span>
                               {tGlobal(
-                                eventVerbI18nPath(
-                                  eventName
-                                ) as Parameters<typeof tGlobal>[0]
+                                eventVerbI18nPath(eventName) as Parameters<
+                                  typeof tGlobal
+                                >[0]
                               )}
                             </span>
-                            {savedFlashes.has(
-                              `${config.id}:${eventName}`
-                            ) && (
+                            {savedFlashes.has(`${config.id}:${eventName}`) && (
                               <Check
                                 className="h-3.5 w-3.5 text-success"
                                 aria-hidden="true"

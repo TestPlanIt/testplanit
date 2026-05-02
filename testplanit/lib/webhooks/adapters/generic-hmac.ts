@@ -12,13 +12,13 @@ import type {
 export const OUTBOUND_SIGNATURE_HEADER = "X-TestPlanIt-Signature" as const;
 
 /**
- * D-19 / D-06 / OUT-06 / OUT-08 — Stripe-style HMAC-SHA256 signature with
- * 5-minute replay-tolerance window enforced by the consumer.
+ * Stripe-style HMAC-SHA256 signature with 5-minute replay-tolerance window
+ * enforced by the consumer.
  *
  * Wire format (steady state):
  *   X-TestPlanIt-Signature: t=1714234567,v1=<hex_active>
  *
- * Wire format (during 7-day rotation overlap — D-06):
+ * Wire format (during 7-day rotation overlap):
  *   X-TestPlanIt-Signature: t=1714234567,v1=<hex_active>,v1=<hex_retiring>
  *
  * Receivers iterate v1= entries until one matches their stored secret. Both
@@ -49,8 +49,8 @@ export function signGenericHmac(
 }
 
 /**
- * D-19 / OUT-06 — generic-HMAC outbound adapter. Emits the OUT-20 envelope
- * verbatim as the wire body and signs with HMAC-SHA256 over `<unix_ts>.<body>`.
+ * Generic-HMAC outbound adapter. Emits the canonical envelope verbatim as
+ * the wire body and signs with HMAC-SHA256 over `<unix_ts>.<body>`.
  */
 export const genericHmacAdapter: OutboundWebhookAdapter = {
   adapterType: "GENERIC_HMAC" satisfies AdapterType,

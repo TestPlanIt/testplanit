@@ -7,7 +7,7 @@ import type { ApplyInboundIssueUpdateInput } from "./types";
 
 /**
  * Hoisted mocks for `prisma`, `captureAuditEvent`, `isUniqueConstraintError`,
- * and `getAdapter` (P-02 — service-side extractor delegation).
+ * and `getAdapter` (service-side extractor delegation).
  *
  * Each test mutates the per-call return values via `mocks.tx.*` setters; the same
  * `tx` object is yielded from every `prisma.$transaction(fn)` invocation so we can
@@ -192,7 +192,7 @@ describe("applyInboundIssueUpdate", () => {
     // Issue lookup MUST NOT be called when synthetic.
     expect(mocks.tx.issue.findFirst).not.toHaveBeenCalled();
     expect(mocks.tx.issue.update).not.toHaveBeenCalled();
-    // Dedup INSERT IS called (so SC#5 second click can collide).
+    // Dedup INSERT IS called (so a second click can collide).
     expect(mocks.tx.webhookEventDedup.create).toHaveBeenCalledTimes(1);
     expect(mocks.tx.webhookEventDedup.create).toHaveBeenCalledWith({
       data: {
@@ -228,7 +228,7 @@ describe("applyInboundIssueUpdate", () => {
     );
   });
 
-  it("Test 1b: synthetic-then-synthetic = duplicate (SC#5 demo lock)", async () => {
+  it("Test 1b: synthetic-then-synthetic = duplicate", async () => {
     const applyInboundIssueUpdate = await importSut();
     const input = baseInput({
       payload: {
@@ -319,8 +319,8 @@ describe("applyInboundIssueUpdate", () => {
   });
 
   it("Test 3: linked-but-missing Issue triggers auto-create — dedup INSERTED, outcome 'updated' with wasAutoCreated metadata, post-commit sync called with createIfMissing", async () => {
-    // The legacy D-14 "no-link skip-dedup, retry-after-manual-link"
-    // semantics retired in favor of auto-create. When the adapter extracts
+    // The legacy "no-link skip-dedup, retry-after-manual-link" semantics
+    // retired in favor of auto-create. When the adapter extracts
     // a linkedRef and the local Issue lookup misses, the receiver now
     // creates the Issue row from upstream state on this first receipt.
     const applyInboundIssueUpdate = await importSut();
@@ -371,7 +371,7 @@ describe("applyInboundIssueUpdate", () => {
     );
   });
 
-  it("Test 4: happy path (D-09 / WBHK-04) — Issue lookup uses externalKey+projectId+isDeleted (NO externalSystem filter — D-22), getAdapter called with adapterType, all six writes present", async () => {
+  it("Test 4: happy path — Issue lookup uses externalKey+projectId+isDeleted (NO externalSystem filter), getAdapter called with adapterType, all six writes present", async () => {
     const applyInboundIssueUpdate = await importSut();
     const input = baseInput();
     mocks.tx.issue.findFirst.mockResolvedValue({ id: 100 });
@@ -394,7 +394,7 @@ describe("applyInboundIssueUpdate", () => {
     );
     // 1. Delivery row created.
     expect(mocks.tx.webhookDelivery.create).toHaveBeenCalledTimes(1);
-    // 2. Linked Issue lookup with tenant scope — D-22: NO externalSystem filter.
+    // 2. Linked Issue lookup with tenant scope — NO externalSystem filter.
     expect(mocks.tx.issue.findFirst).toHaveBeenCalledWith({
       where: {
         externalKey: "DEMO-42",
@@ -435,7 +435,7 @@ describe("applyInboundIssueUpdate", () => {
     });
   });
 
-  it("Test 5: atomicity (D-11) — dedup INSERT throws → tx rolls back, no audit, returns error", async () => {
+  it("Test 5: atomicity — dedup INSERT throws → tx rolls back, no audit, returns error", async () => {
     // The Issue mutation moved to the post-commit sync path (see
     // applyInboundIssueUpdate.ts). The remaining write that can fail INSIDE
     // the tx for the linked-Issue happy path is `webhookEventDedup.create`
@@ -461,8 +461,8 @@ describe("applyInboundIssueUpdate", () => {
   });
 
   it("Test 6: post-commit sync triggers for the 'updated' outcome — calls performIssueRefreshSystem with webhook freshness window", async () => {
-    // D-10 retired: the inbound handler no longer caps the apply at
-    // externalStatus + lastSyncedAt. It now delegates the local Issue
+    // The inbound handler no longer caps the apply at externalStatus +
+    // lastSyncedAt. It now delegates the local Issue
     // mutation to `performIssueRefreshSystem`, which pulls full upstream
     // state and applies the integration's field mappings (matches the
     // manual sync click). Test that the trigger fires with the right
@@ -485,7 +485,7 @@ describe("applyInboundIssueUpdate", () => {
     );
   });
 
-  it("Test 7: D-17 audit metadata shape — WEBHOOK_RECEIVED with full metadata, adapterType comes from input (not hardcoded)", async () => {
+  it("Test 7: audit metadata shape — WEBHOOK_RECEIVED with full metadata, adapterType comes from input (not hardcoded)", async () => {
     const applyInboundIssueUpdate = await importSut();
     const input = baseInput();
     mocks.tx.issue.findFirst.mockResolvedValue({ id: 100 });
@@ -511,7 +511,7 @@ describe("applyInboundIssueUpdate", () => {
     );
   });
 
-  it("Test 8: audit emission is awaited (Phase 63 REL-01) — service waits for captureAuditEvent before resolving", async () => {
+  it("Test 8: audit emission is awaited — service waits for captureAuditEvent before resolving", async () => {
     const applyInboundIssueUpdate = await importSut();
     const input = baseInput();
     mocks.tx.issue.findFirst.mockResolvedValue({ id: 100 });
@@ -559,7 +559,7 @@ describe("applyInboundIssueUpdate", () => {
     );
   });
 
-  it("Test 10: WBHK-07 — delivery row column completeness (direction, adapterType, eventType, payloadDigest)", async () => {
+  it("Test 10: delivery row column completeness (direction, adapterType, eventType, payloadDigest)", async () => {
     const applyInboundIssueUpdate = await importSut();
     const input = baseInput();
     mocks.tx.issue.findFirst.mockResolvedValue({ id: 100 });
@@ -599,7 +599,7 @@ describe("applyInboundIssueUpdate", () => {
     // Auto-create writes the dedup row on the first receipt. A redelivery
     // of the SAME payload (Jira/GitHub retry on transient 5xx, or admin
     // re-firing the same event) must NOT spawn a second Issue — the dedup
-    // SELECT catches it and returns 'duplicate'. The original D-14
+    // SELECT catches it and returns 'duplicate'. The original
     // skip-dedup behavior (which existed precisely so a retry-after-link
     // would re-apply) is no longer needed: auto-create resolves the link
     // on the first receipt.
@@ -625,10 +625,6 @@ describe("applyInboundIssueUpdate", () => {
     expect(mocks.tx.webhookEventDedup.create).toHaveBeenCalledTimes(1);
     expect(mocks.tx.issue.update).not.toHaveBeenCalled();
   });
-
-  // =========================================================================
-  // Phase 3 — P-02 multi-adapter parametrization tests
-  // =========================================================================
 
   it("Test 14: GitHub adapter happy path — adapterType + audit metadata parametrized via input.adapterType", async () => {
     const applyInboundIssueUpdate = await importSut();
@@ -757,11 +753,11 @@ describe("applyInboundIssueUpdate", () => {
     // No Issue lookup, no Issue mutation.
     expect(mocks.tx.issue.findFirst).not.toHaveBeenCalled();
     expect(mocks.tx.issue.update).not.toHaveBeenCalled();
-    // Dedup table NEVER touched (D-15 mirrors no-link precedent).
+    // Dedup table NEVER touched (mirrors no-link precedent).
     expect(mocks.tx.webhookEventDedup.findFirst).not.toHaveBeenCalled();
     expect(mocks.tx.webhookEventDedup.create).not.toHaveBeenCalled();
     expect(mocks.tx.webhookEventDedup.delete).not.toHaveBeenCalled();
-    // lastReceivedAt still bumped (ME-01 — every accepted receipt counts).
+    // lastReceivedAt still bumped — every accepted receipt counts.
     expect(mocks.tx.webhookConfig.update).toHaveBeenCalledWith({
       where: { id: input.webhookConfigId },
       data: { lastReceivedAt: input.receivedAt },

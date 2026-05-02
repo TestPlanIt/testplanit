@@ -1,5 +1,5 @@
 /**
- * OUT-01 / OUT-02 / D-21 — Stripe-style outbound webhook retry curve.
+ * Stripe-style outbound webhook retry curve.
  *
  * Schedule: 0s, 30s, 5m, 30m, 2h, 6h, 12h. Six retries after the initial
  * attempt = 7 total attempts, ~21h total. The function MUST be a pure

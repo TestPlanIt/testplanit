@@ -422,14 +422,11 @@ export async function getJUnitRunSummary(
               : "rgb(34, 197, 94)"),
         count: Number(agg.count),
         // Status-table flags when joined; fall back to JUnit `type` for unmapped junit results.
-        isCompleted: agg.isCompleted ?? (agg.type != null),
-        isSuccess:
-          agg.isSuccess ?? (agg.type === "PASSED" ? true : undefined),
+        isCompleted: agg.isCompleted ?? agg.type != null,
+        isSuccess: agg.isSuccess ?? (agg.type === "PASSED" ? true : undefined),
         isFailure:
           agg.isFailure ??
-          (agg.type === "FAILURE" || agg.type === "ERROR"
-            ? true
-            : undefined),
+          (agg.type === "FAILURE" || agg.type === "ERROR" ? true : undefined),
       });
     }
   });

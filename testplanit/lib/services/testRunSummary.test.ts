@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  getTestRunSummary,
-  TestRunNotFoundError,
-} from "./testRunSummary";
+import { getTestRunSummary, TestRunNotFoundError } from "./testRunSummary";
 
 /**
  * Plan 02-05 Task 5.1 — smoke tests for the testRunSummary service.
@@ -140,9 +137,7 @@ function makeFakeClient(opts: FakeClientOptions) {
       testRunType: opts.testRunType ?? "REGULAR",
       forecastManual: opts.forecastManual ?? null,
       projectId: 42,
-      state: opts.workflowType
-        ? { workflowType: opts.workflowType }
-        : null,
+      state: opts.workflowType ? { workflowType: opts.workflowType } : null,
       issues: opts.issues ?? [],
     };
   });

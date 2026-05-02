@@ -3,19 +3,14 @@ import { getWebhookDispatchQueue } from "../lib/queues";
 import { claimOutboxBatch, fanoutToConfigs } from "../lib/webhooks/outbox";
 
 /**
- * v0.23.0 Phase 2 (D-02) — outbound webhook outbox poller.
+ * outbound webhook outbox poller.
  *
  * Single-process polled loop (NOT a BullMQ Worker — claims its own work
  * directly from Postgres via FOR UPDATE SKIP LOCKED). Multiple replicas
  * can run concurrently without double-claiming.
- *
- * Single-tenant only in Phase 2: the multi-tenant variant requires a
- * different sharding strategy (one poller per tenant DB) and is left for
- * Phase 4's polish work. Single-tenant deployments (the demo target) are
- * served by this poller verbatim.
- *
+ * *
  * Note on `attempt: 1` in the enqueued job: this is the INITIAL attempt
- * value. The dispatch worker (Task 4.4) overrides this on every processor
+ * value. The dispatch worker overrides this on every processor
  * invocation with `job.attemptsMade + 1` so retry rows have the correct
  * 1-indexed attempt number. We could omit `attempt` here entirely and let
  * the processor compute it from scratch, but keeping `attempt: 1` makes

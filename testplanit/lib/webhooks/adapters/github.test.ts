@@ -41,7 +41,7 @@ describe("githubAdapter", () => {
     const result = githubAdapter.verify(
       body,
       headersOf({ "x-github-event": "issues" }),
-      SECRET,
+      SECRET
     );
     expect(result).toEqual({ valid: false, reason: "missing-signature" });
   });
@@ -54,7 +54,7 @@ describe("githubAdapter", () => {
         "x-hub-signature-256": "deadbeef".padEnd(64, "0"),
         "x-github-event": "issues",
       }),
-      SECRET,
+      SECRET
     );
     expect(result).toEqual({ valid: false, reason: "malformed-signature" });
   });
@@ -67,7 +67,7 @@ describe("githubAdapter", () => {
         "x-hub-signature-256": "sha256=zzzzzzzz",
         "x-github-event": "issues",
       }),
-      SECRET,
+      SECRET
     );
     expect(result).toEqual({ valid: false, reason: "malformed-signature" });
   });
@@ -81,7 +81,7 @@ describe("githubAdapter", () => {
         "x-hub-signature-256": wrongSig,
         "x-github-event": "issues",
       }),
-      SECRET,
+      SECRET
     );
     expect(result).toEqual({ valid: false, reason: "signature-mismatch" });
   });
@@ -95,7 +95,7 @@ describe("githubAdapter", () => {
         "x-hub-signature-256": sig,
         "x-github-event": "issues",
       }),
-      SECRET,
+      SECRET
     );
     expect(result).toEqual({ valid: false, reason: "unparseable-body" });
   });
@@ -106,7 +106,7 @@ describe("githubAdapter", () => {
     const result = githubAdapter.verify(
       body,
       headersOf({ "x-hub-signature-256": sig }),
-      SECRET,
+      SECRET
     );
     expect(result).toEqual({
       valid: false,
@@ -123,7 +123,7 @@ describe("githubAdapter", () => {
         "x-hub-signature-256": sig,
         "x-github-event": "issues",
       }),
-      SECRET,
+      SECRET
     );
     expect(result.valid).toBe(true);
     if (result.valid) {
@@ -134,7 +134,7 @@ describe("githubAdapter", () => {
     }
   });
 
-  it("Test 7a (HI-02 sentinel): synthetic flag bound to '__synthetic__/__synthetic__' AND issue.number === 0 → synthetic=true", () => {
+  it("Test 7a (sentinel): synthetic flag bound to '__synthetic__/__synthetic__' AND issue.number === 0 → synthetic=true", () => {
     const synth = {
       action: "opened",
       issue: { number: 0, state: "open", title: "Synthetic test" },
@@ -148,7 +148,7 @@ describe("githubAdapter", () => {
         "x-hub-signature-256": sig,
         "x-github-event": "issues",
       }),
-      SECRET,
+      SECRET
     );
     expect(result.valid).toBe(true);
     if (result.valid) {
@@ -157,7 +157,7 @@ describe("githubAdapter", () => {
     }
   });
 
-  it("Test 7b (HI-02 sentinel): real repo + issue.number=0 → synthetic=false (sentinel requires BOTH)", () => {
+  it("Test 7b (sentinel): real repo + issue.number=0 → synthetic=false (sentinel requires BOTH)", () => {
     const notQuiteSynth = {
       action: "opened",
       issue: { number: 0, state: "open" },
@@ -171,7 +171,7 @@ describe("githubAdapter", () => {
         "x-hub-signature-256": sig,
         "x-github-event": "issues",
       }),
-      SECRET,
+      SECRET
     );
     expect(result.valid).toBe(true);
     if (result.valid) {
@@ -179,7 +179,7 @@ describe("githubAdapter", () => {
     }
   });
 
-  it("Test 7c (HI-02 sentinel): synthetic-named repo + non-zero issue.number → synthetic=false (sentinel requires BOTH)", () => {
+  it("Test 7c (sentinel): synthetic-named repo + non-zero issue.number → synthetic=false (sentinel requires BOTH)", () => {
     const notQuiteSynth = {
       action: "opened",
       issue: { number: 5, state: "open" },
@@ -193,7 +193,7 @@ describe("githubAdapter", () => {
         "x-hub-signature-256": sig,
         "x-github-event": "issues",
       }),
-      SECRET,
+      SECRET
     );
     expect(result.valid).toBe(true);
     if (result.valid) {
@@ -210,7 +210,7 @@ describe("githubAdapter", () => {
         "X-Hub-Signature-256": sig,
         "X-GitHub-Event": "issues",
       }),
-      SECRET,
+      SECRET
     );
     expect(result.valid).toBe(true);
   });
@@ -224,12 +224,12 @@ describe("githubAdapter", () => {
         "x-hub-signature-256": sig,
         "x-github-event": "issues",
       }),
-      SECRET,
+      SECRET
     );
     expect(result.valid).toBe(true);
   });
 
-  it("Test 9b (no SHA-1 fallback): legacy x-hub-signature header is NOT accepted (D-04 — GitHub deprecated SHA-1 in 2020)", () => {
+  it("Test 9b (no SHA-1 fallback): legacy x-hub-signature header is NOT accepted (GitHub deprecated SHA-1 in 2020)", () => {
     const body = bodyOf(CANONICAL_PAYLOAD);
     const sig = signBody(body, SECRET);
     const result = githubAdapter.verify(
@@ -238,7 +238,7 @@ describe("githubAdapter", () => {
         "x-hub-signature": sig,
         "x-github-event": "issues",
       }),
-      SECRET,
+      SECRET
     );
     expect(result).toEqual({ valid: false, reason: "missing-signature" });
   });
@@ -287,7 +287,7 @@ describe("githubAdapter — extractLinkedIssueRef", () => {
 describe("githubAdapter — extractExternalStatus", () => {
   it("returns 'closed' for canonical issues payload + eventType 'issues'", () => {
     expect(
-      githubAdapter.extractExternalStatus(CANONICAL_PAYLOAD, "issues"),
+      githubAdapter.extractExternalStatus(CANONICAL_PAYLOAD, "issues")
     ).toBe("closed");
   });
 
@@ -297,31 +297,31 @@ describe("githubAdapter — extractExternalStatus", () => {
       repository: { full_name: "octocat/Hello-World" },
     };
     expect(githubAdapter.extractExternalStatus(openPayload, "issues")).toBe(
-      "open",
+      "open"
     );
   });
 
-  it("returns null for eventType 'push' (D-06: only `issues` is handled in Phase 3)", () => {
+  it("returns null for eventType 'push' (only `issues` is handled in)", () => {
     expect(
-      githubAdapter.extractExternalStatus(CANONICAL_PAYLOAD, "push"),
+      githubAdapter.extractExternalStatus(CANONICAL_PAYLOAD, "push")
     ).toBeNull();
   });
 
-  it("returns null for eventType 'release' (D-06: only `issues` is handled in Phase 3)", () => {
+  it("returns null for eventType 'release' (only `issues` is handled in)", () => {
     expect(
-      githubAdapter.extractExternalStatus(CANONICAL_PAYLOAD, "release"),
+      githubAdapter.extractExternalStatus(CANONICAL_PAYLOAD, "release")
     ).toBeNull();
   });
 
-  it("returns null for eventType 'pull_request' (D-06: PR events deferred)", () => {
+  it("returns null for eventType 'pull_request' (PR events deferred)", () => {
     expect(
-      githubAdapter.extractExternalStatus(CANONICAL_PAYLOAD, "pull_request"),
+      githubAdapter.extractExternalStatus(CANONICAL_PAYLOAD, "pull_request")
     ).toBeNull();
   });
 
-  it("returns null for eventType 'issue_comment' (D-06: comment events deferred)", () => {
+  it("returns null for eventType 'issue_comment' (comment events deferred)", () => {
     expect(
-      githubAdapter.extractExternalStatus(CANONICAL_PAYLOAD, "issue_comment"),
+      githubAdapter.extractExternalStatus(CANONICAL_PAYLOAD, "issue_comment")
     ).toBeNull();
   });
 
@@ -368,7 +368,7 @@ describe("githubAdapter — extractExternalStatus", () => {
 
     const status = githubAdapter.extractExternalStatus(
       result.payload,
-      result.payload.eventType,
+      result.payload.eventType
     );
     expect(status).toBe("closed");
   });

@@ -12,12 +12,12 @@ const SIGNATURE_PREFIX = "sha256=";
 const HEX_64_RE = /^[0-9a-f]{64}$/;
 
 /**
- * HI-02 sentinel (D-03 synthetic binding): the self-loop server action
- * emits this exact (repository.full_name, issue.number) combination in its
- * synthetic GitHub-shaped payload. Real GitHub instances cannot legitimately
- * produce a repo with double-underscore segments AND issue.number === 0
- * (GitHub issue numbers are positive integers ≥ 1), so the synthetic flag
- * is non-forgeable from the wire even by a caller holding a valid HMAC.
+ * Synthetic binding sentinel: the self-loop server action emits this exact
+ * (repository.full_name, issue.number) combination in its synthetic
+ * GitHub-shaped payload. Real GitHub instances cannot legitimately produce
+ * a repo with double-underscore segments AND issue.number === 0 (GitHub
+ * issue numbers are positive integers ≥ 1), so the synthetic flag is
+ * non-forgeable from the wire even by a caller holding a valid HMAC.
  */
 const SYNTHETIC_REPO_FULL_NAME = "__synthetic__/__synthetic__";
 const SYNTHETIC_ISSUE_NUMBER = 0;
@@ -54,9 +54,7 @@ export const githubAdapter: WebhookAdapter = {
     if (!HEX_64_RE.test(provided)) {
       return { valid: false, reason: "malformed-signature" };
     }
-    const expected = createHmac("sha256", secret)
-      .update(rawBody)
-      .digest("hex");
+    const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
     if (!constantTimeEqualHex(provided, expected)) {
       return { valid: false, reason: "signature-mismatch" };
     }

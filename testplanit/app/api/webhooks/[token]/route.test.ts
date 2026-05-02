@@ -9,10 +9,10 @@ import type { VerifyResult } from "~/lib/webhooks/adapters/types";
  * `lib/services/auditLog.test.ts` and `lib/webhooks/services/applyInboundIssueUpdate.test.ts`.
  *
  * Each test mutates the per-call return values:
- *   - prisma.webhookConfig.findUnique → controls 404 vs valid-config
- *   - getAdapter().verify              → controls 401 vs success
- *   - applyInboundIssueUpdate          → controls 200 outcome / 500 error
- *   - decrypt                           → returns the plaintext secret
+ * - prisma.webhookConfig.findUnique → controls 404 vs valid-config
+ * - getAdapter().verify → controls 401 vs success
+ * - applyInboundIssueUpdate → controls 200 outcome / 500 error
+ * - decrypt → returns the plaintext secret
  */
 const mocks = vi.hoisted(() => {
   const adapter = {
@@ -95,7 +95,7 @@ describe("POST /api/webhooks/[token]", () => {
     mocks.getAdapter.mockReturnValue(mocks.adapter);
   });
 
-  it("Test 1 — returns 404 with no DB writes when the token is unknown (D-13)", async () => {
+  it("Test 1 — returns 404 with no DB writes when the token is unknown", async () => {
     mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(null);
     const { req, params } = makeRequest("{}", FULL_TOKEN);
 
@@ -122,7 +122,7 @@ describe("POST /api/webhooks/[token]", () => {
     expect(mocks.applyInboundIssueUpdate).not.toHaveBeenCalled();
   });
 
-  it("Test 3 — returns 401 with no DB writes on missing-signature (WBHK-02)", async () => {
+  it("Test 3 — returns 401 with no DB writes on missing-signature", async () => {
     mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: false,
@@ -167,7 +167,7 @@ describe("POST /api/webhooks/[token]", () => {
     expect(mocks.applyInboundIssueUpdate).not.toHaveBeenCalled();
   });
 
-  it("Test 5b (HI-03) — returns 400 on unparseable-body (client bug, not auth)", async () => {
+  it("Test 5b — returns 400 on unparseable-body (client bug, not auth)", async () => {
     // HMAC succeeded but the body wasn't valid JSON. Senders should NOT retry
     // a 400 — the bug is on their side; retrying won't fix it.
     mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
@@ -184,7 +184,7 @@ describe("POST /api/webhooks/[token]", () => {
     expect(mocks.applyInboundIssueUpdate).not.toHaveBeenCalled();
   });
 
-  it("Test 5c (HI-03) — returns 200 on missing-required-field (HMAC valid, event non-actionable)", async () => {
+  it("Test 5c — returns 200 on missing-required-field (HMAC valid, event non-actionable)", async () => {
     // HMAC succeeded and the JSON parsed, but the payload lacks issue.key or
     // status — typical for jira:issue_deleted, comment-only events, etc.
     // 200 prevents Jira from retry-storming a non-actionable event forever.
@@ -202,7 +202,7 @@ describe("POST /api/webhooks/[token]", () => {
     expect(mocks.applyInboundIssueUpdate).not.toHaveBeenCalled();
   });
 
-  it("Test 6 — happy path: verifies, computes payloadDigest, returns 200 (WBHK-01/04/07)", async () => {
+  it("Test 6 — happy path: verifies, computes payloadDigest, returns 200 (/04/07)", async () => {
     mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: true,
@@ -223,10 +223,10 @@ describe("POST /api/webhooks/[token]", () => {
 
     expect(mocks.applyInboundIssueUpdate).toHaveBeenCalledTimes(1);
     const call = mocks.applyInboundIssueUpdate.mock.calls[0]?.[0];
-    // P-05 service-call-shape change: receiver passes adapterType (from
-    // verified WebhookConfig — T-03-22 mitigation, NOT body-controlled) +
+    // service-call-shape change: receiver passes adapterType (from
+    // verified WebhookConfig — mitigation, NOT body-controlled) +
     // eventType (from verify.payload) so the service can call extractors
-    // itself per RESEARCH.md Q2 RESOLVED. Receiver MUST NOT pass linkedRef
+    // itself per. Receiver MUST NOT pass linkedRef
     // or externalStatus — extractor delegation lives in the service.
     expect(call).toMatchObject({
       webhookConfigId: "cfg-id-1",
@@ -246,7 +246,7 @@ describe("POST /api/webhooks/[token]", () => {
     expect(call.receivedAt).toBeInstanceOf(Date);
   });
 
-  it("Test 7 — no-link outcome still returns 200 (D-14)", async () => {
+  it("Test 7 — no-link outcome still returns 200", async () => {
     mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: true,
@@ -265,7 +265,7 @@ describe("POST /api/webhooks/[token]", () => {
     expect(await res.json()).toEqual({ ok: true, outcome: "no-link" });
   });
 
-  it("Test 8 — duplicate outcome still returns 200 (D-15)", async () => {
+  it("Test 8 — duplicate outcome still returns 200", async () => {
     mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: true,
@@ -284,7 +284,7 @@ describe("POST /api/webhooks/[token]", () => {
     expect(await res.json()).toEqual({ ok: true, outcome: "duplicate" });
   });
 
-  it("Test 9 — synthetic outcome still returns 200 (D-20)", async () => {
+  it("Test 9 — synthetic outcome still returns 200", async () => {
     mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: true,
@@ -303,7 +303,7 @@ describe("POST /api/webhooks/[token]", () => {
     expect(await res.json()).toEqual({ ok: true, outcome: "synthetic" });
   });
 
-  it("Test 9b — no_handler outcome returns 200 (D-15 / Phase 3 P-05 — eventType not handled by adapter)", async () => {
+  it("Test 9b — no_handler outcome returns 200 (eventType not handled by adapter)", async () => {
     mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(VALID_CONFIG);
     mocks.adapter.verify.mockReturnValueOnce({
       valid: true,
@@ -409,7 +409,7 @@ describe("POST /api/webhooks/[token]", () => {
     expect(call.latencyMs).toBeLessThan(5000);
   });
 
-  it("Test 14 — decrypts WebhookConfig.secret before passing plaintext to adapter.verify (D-02 + D-06)", async () => {
+  it("Test 14 — decrypts WebhookConfig.secret before passing plaintext to adapter.verify (+)", async () => {
     // Encrypted form is the prefix-mocked "enc:..." string; plaintext follows the prefix.
     mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce({
       ...VALID_CONFIG,
@@ -433,7 +433,7 @@ describe("POST /api/webhooks/[token]", () => {
     expect(secret).toBe("test-secret-123");
   });
 
-  // T-04-01 mitigation: 401 and 404 bodies are byte-identical so callers can't enumerate.
+  // mitigation: 401 and 404 bodies are byte-identical so callers can't enumerate.
   it("Body equality — 401 and 404 share the exact same JSON body shape", async () => {
     mocks.prisma.webhookConfig.findUnique.mockResolvedValueOnce(null);
     const a = makeRequest("{}", FULL_TOKEN);
@@ -454,12 +454,12 @@ describe("POST /api/webhooks/[token]", () => {
 });
 
 /**
- * Phase 3 P-05 / D-12 / WBHK-11 — body cap raised from 1 MiB to 5 MB.
+ * body cap raised from 1 MiB to 5 MB.
  *
  * Two enforcement points in the receiver: a Content-Length pre-check (fast,
  * before any buffering) and a post-buffer Buffer.byteLength check (catches
  * missing or chunked-transfer-encoded payloads where Content-Length lies).
- * Both fire at the same constant. T-03-04 / T-03-21 mitigations.
+ * Both fire at the same constant. mitigations.
  *
  * The over-cap test verifies the route rejects bodies > 5_242_880 bytes with
  * HTTP 413 and the service is never invoked. The at-cap test verifies the
@@ -467,7 +467,7 @@ describe("POST /api/webhooks/[token]", () => {
  * the body-cap gates and reaches verify() (mocked here so the test is
  * isolated from real signature math).
  */
-describe("MAX_WEBHOOK_BYTES (Phase 3 P-05 / D-12 / WBHK-11 — 5 MB cap)", () => {
+describe("MAX_WEBHOOK_BYTES (5 MB cap)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.decrypt.mockImplementation(async (input: string) =>

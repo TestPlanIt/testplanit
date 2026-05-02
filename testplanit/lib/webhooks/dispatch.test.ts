@@ -37,8 +37,8 @@ function buildPrismaMock(opts: {
     },
     webhookConfig: {
       findUnique: vi.fn().mockResolvedValue(opts.config),
-      // Plan 04-05: dispatch.ts updates lastDispatchedAt + lastSuccessAt | lastFailureAt
-      // per attempt (DEL-08). Tests assert on .mock.calls[*][0].data shape.
+      // dispatch.ts updates lastDispatchedAt + lastSuccessAt | lastFailureAt
+      // per attempt. Tests assert on .mock.calls[*][0].data shape.
       update: vi.fn().mockImplementation(async (args: any) => ({
         id: opts.config?.id ?? "cfg-1",
         ...opts.config,
@@ -137,7 +137,7 @@ describe("dispatchWebhook", () => {
   });
 
   it("2a. returns skipped_inactive when project.isDeleted === true (L-05 tenancy gate, no fetch, no delivery)", async () => {
-    // Soft-deleted projects must not fan webhooks out to external systems —
+    // Soft-deleted projects must not fan webhooks out to external systems
     // an outbox row that committed BEFORE the project was deleted would
     // otherwise leak events for a tenant the admin has already removed.
     // The dispatcher treats the soft-deleted project as functionally
@@ -158,7 +158,7 @@ describe("dispatchWebhook", () => {
     expect(prismaMock.webhookDelivery.create).not.toHaveBeenCalled();
   });
 
-  it("3. returns skipped_unsubscribed when subscribedEvents excludes eventName (OUT-19, no delivery row)", async () => {
+  it("3. returns skipped_unsubscribed when subscribedEvents excludes eventName (, no delivery row)", async () => {
     const fetchSpy = vi.fn();
     globalThis.fetch = fetchSpy as any;
     const prismaMock = buildPrismaMock({
@@ -190,7 +190,7 @@ describe("dispatchWebhook", () => {
     expect(prismaMock.webhookDelivery.create).toHaveBeenCalledTimes(1);
   });
 
-  it("5. webhook.test bypass: non-empty subscribedEvents that excludes 'webhook.test' → dispatch STILL proceeds (Blocker 6)", async () => {
+  it("5. webhook.test bypass: non-empty subscribedEvents that excludes 'webhook.test' → dispatch STILL proceeds ()", async () => {
     const fetchSpy = vi
       .fn()
       .mockResolvedValue(new Response("", { status: 200 }));
@@ -432,7 +432,7 @@ describe("dispatchWebhook", () => {
     );
   });
 
-  it("15. Attempt threading: jobData.attempt=2 produces delivery.attempt=2; jobData.attempt=3 produces delivery.attempt=3 (Blocker 2)", async () => {
+  it("15. Attempt threading: jobData.attempt=2 produces delivery.attempt=2; jobData.attempt=3 produces delivery.attempt=3 ()", async () => {
     for (const attempt of [2, 3]) {
       const fetchSpy = vi
         .fn()
@@ -484,20 +484,20 @@ describe("dispatchWebhook", () => {
 });
 
 // ──────────────────────────────────────────────────────────────────────────
-// Plan 04-05 — DISABLED gate (DEL-05) + per-attempt timestamps (DEL-08) +
-// replay/eventId threading (ADMIN-02 + DEL-01). The dispatcher now:
-//   1. Short-circuits on endpointHealth === "DISABLED" with a stub delivery
-//      row (error="endpoint_disabled") and no HTTP call.
-//   2. Updates lastDispatchedAt + lastSuccessAt | lastFailureAt on every
-//      attempt's WebhookConfig.update call. Does NOT touch
-//      consecutiveFailureCount — that's the worker hook's responsibility.
-//   3. Stamps WebhookOutboxEvent.eventId onto every WebhookDelivery row
-//      (success row, failure row, AND the DISABLED stub).
-//   4. Threads jobData.replayedFromDeliveryId from BullMQ job data into
-//      the WebhookDelivery row when present.
+// DISABLED gate + per-attempt timestamps +
+// replay/eventId threading (+). The dispatcher now:
+// 1. Short-circuits on endpointHealth === "DISABLED" with a stub delivery
+// row (error="endpoint_disabled") and no HTTP call.
+// 2. Updates lastDispatchedAt + lastSuccessAt | lastFailureAt on every
+// attempt's WebhookConfig.update call. Does NOT touch
+// consecutiveFailureCount — that's the worker hook's responsibility.
+// 3. Stamps WebhookOutboxEvent.eventId onto every WebhookDelivery row
+// (success row, failure row, AND the DISABLED stub).
+// 4. Threads jobData.replayedFromDeliveryId from BullMQ job data into
+// the WebhookDelivery row when present.
 // ──────────────────────────────────────────────────────────────────────────
 
-describe("dispatchWebhook — endpoint_disabled gate (Plan 04-05 / DEL-05)", () => {
+describe("dispatchWebhook — endpoint_disabled gate ( / )", () => {
   let originalFetch: typeof globalThis.fetch;
 
   beforeEach(() => {
@@ -601,7 +601,7 @@ describe("dispatchWebhook — endpoint_disabled gate (Plan 04-05 / DEL-05)", () 
   });
 });
 
-describe("dispatchWebhook — per-attempt timestamps (Plan 04-05 / DEL-08)", () => {
+describe("dispatchWebhook — per-attempt timestamps ( / )", () => {
   let originalFetch: typeof globalThis.fetch;
 
   beforeEach(() => {
@@ -689,7 +689,7 @@ describe("dispatchWebhook — per-attempt timestamps (Plan 04-05 / DEL-08)", () 
   });
 });
 
-describe("dispatchWebhook — replay + eventId threading (Plan 04-05 / ADMIN-02 + DEL-01)", () => {
+describe("dispatchWebhook — replay + eventId threading ( / + )", () => {
   let originalFetch: typeof globalThis.fetch;
 
   beforeEach(() => {
@@ -764,7 +764,7 @@ describe("dispatchWebhook — replay + eventId threading (Plan 04-05 / ADMIN-02 
     expect(createCall.data.eventId).toBe("evt_disabled");
   });
 
-  it("R4. eventId is stamped on the success delivery row (DEL-01 outbound correlation)", async () => {
+  it("R4. eventId is stamped on the success delivery row ( outbound correlation)", async () => {
     const fetchSpy = vi
       .fn()
       .mockResolvedValue(new Response("", { status: 200 }));
@@ -780,7 +780,7 @@ describe("dispatchWebhook — replay + eventId threading (Plan 04-05 / ADMIN-02 
     expect(createCall.data.eventId).toBe("evt_success");
   });
 
-  it("R5. eventId is stamped on the non-2xx failure delivery row (DEL-01)", async () => {
+  it("R5. eventId is stamped on the non-2xx failure delivery row", async () => {
     const fetchSpy = vi
       .fn()
       .mockResolvedValue(new Response("server fire", { status: 500 }));

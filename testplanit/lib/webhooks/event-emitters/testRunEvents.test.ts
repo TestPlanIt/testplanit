@@ -8,19 +8,19 @@ import {
 } from "./testRunEvents";
 
 /**
- * Plan 02-05 Task 5.2 — testRunEvents emitter contract.
+ * testRunEvents emitter contract.
  *
- * D-09 lifecycle policy:
- *   - state UNCHANGED on update -> no emission at all
- *   - state CHANGED -> emit test_run.state_changed with the from/to envelope
- *   - state CHANGED INTO an isCompleted state (workflowType==="DONE") -> ALSO emit
- *     test_run.completed with the TestRunSummaryData payload (D-15)
+ * lifecycle policy:
+ * - state UNCHANGED on update -> no emission at all
+ * - state CHANGED -> emit test_run.state_changed with the from/to envelope
+ * - state CHANGED INTO an isCompleted state (workflowType==="DONE") -> ALSO emit
+ * test_run.completed with the TestRunSummaryData payload
  *
  * The webhookEvents.emit helper and getTestRunSummary are mocked so the test
  * focuses on the detection + payload-assembly logic. The Prisma transaction
  * client `tx` is a stubbed object whose findUnique calls return canned
  * responses; we additionally assert that the SAME `tx` object is forwarded
- * through to webhookEvents.emit (Blocker 3 wiring).
+ * through to webhookEvents.emit (wiring).
  */
 
 vi.mock("~/lib/webhooks/events", () => ({
@@ -62,7 +62,10 @@ interface TxStub {
 function makeTx(overrides: Partial<TxStub> = {}): TxStub {
   return {
     workflows: {
-      findUnique: vi.fn(async () => ({ name: "default", workflowType: "IN_PROGRESS" })),
+      findUnique: vi.fn(async () => ({
+        name: "default",
+        workflowType: "IN_PROGRESS",
+      })),
       ...(overrides.workflows ?? {}),
     },
     testRuns: {
@@ -70,11 +73,17 @@ function makeTx(overrides: Partial<TxStub> = {}): TxStub {
       ...(overrides.testRuns ?? {}),
     },
     testRunCases: {
-      findUnique: vi.fn(async () => ({ repositoryCase: { id: 11, name: "Case 11" } })),
+      findUnique: vi.fn(async () => ({
+        repositoryCase: { id: 11, name: "Case 11" },
+      })),
       ...(overrides.testRunCases ?? {}),
     },
     status: {
-      findUnique: vi.fn(async () => ({ id: 5, name: "Passed", isCompleted: true })),
+      findUnique: vi.fn(async () => ({
+        id: 5,
+        name: "Passed",
+        isCompleted: true,
+      })),
       ...(overrides.status ?? {}),
     },
   };
@@ -89,7 +98,10 @@ describe("emitTestRunCreated", () => {
   it("emits test_run.created with the expected payload shape and forwards tx", async () => {
     const tx = makeTx({
       workflows: {
-        findUnique: vi.fn(async () => ({ name: "Open", workflowType: "NOT_STARTED" })),
+        findUnique: vi.fn(async () => ({
+          name: "Open",
+          workflowType: "NOT_STARTED",
+        })),
       },
     });
     await emitTestRunCreated(
@@ -112,7 +124,7 @@ describe("emitTestRunCreated", () => {
   });
 });
 
-describe("emitTestRunUpdateEvents — D-09 lifecycle policy", () => {
+describe("emitTestRunUpdateEvents — lifecycle policy", () => {
   beforeEach(() => {
     emitMock.mockClear();
     summaryMock.mockClear();
@@ -120,7 +132,13 @@ describe("emitTestRunUpdateEvents — D-09 lifecycle policy", () => {
 
   it("emits NOTHING when neither stateId nor isCompleted changed", async () => {
     const tx = makeTx();
-    const row = { id: 1, projectId: 7, name: "Run 1", stateId: 100, isCompleted: false };
+    const row = {
+      id: 1,
+      projectId: 7,
+      name: "Run 1",
+      stateId: 100,
+      isCompleted: false,
+    };
     await emitTestRunUpdateEvents(row, row, tx as never);
     expect(emitMock).not.toHaveBeenCalled();
   });
@@ -162,7 +180,10 @@ describe("emitTestRunUpdateEvents — D-09 lifecycle policy", () => {
         findUnique: vi
           .fn()
           .mockResolvedValueOnce({ name: "Open", workflowType: "NOT_STARTED" })
-          .mockResolvedValueOnce({ name: "In Progress", workflowType: "IN_PROGRESS" }),
+          .mockResolvedValueOnce({
+            name: "In Progress",
+            workflowType: "IN_PROGRESS",
+          }),
       },
     });
     await emitTestRunUpdateEvents(
@@ -186,7 +207,10 @@ describe("emitTestRunUpdateEvents — D-09 lifecycle policy", () => {
       workflows: {
         findUnique: vi
           .fn()
-          .mockResolvedValueOnce({ name: "In Progress", workflowType: "IN_PROGRESS" })
+          .mockResolvedValueOnce({
+            name: "In Progress",
+            workflowType: "IN_PROGRESS",
+          })
           .mockResolvedValueOnce({ name: "Done", workflowType: "DONE" }),
       },
     });
@@ -201,11 +225,10 @@ describe("emitTestRunUpdateEvents — D-09 lifecycle policy", () => {
       isCompletedTransition: true,
     });
     expect(emitMock.mock.calls[1][0]).toBe("test_run.completed");
-    // D-15 — payload comes from getTestRunSummary
+    // payload comes from getTestRunSummary
     expect(summaryMock).toHaveBeenCalledWith(1, { client: tx });
     expect(emitMock.mock.calls[1][1]).toMatchObject({ workflowType: "DONE" });
   });
-
 });
 
 describe("emitTestRunResultAdded", () => {
@@ -220,7 +243,11 @@ describe("emitTestRunResultAdded", () => {
         findUnique: vi.fn(async () => ({ id: 1, name: "Run 1", projectId: 7 })),
       },
       status: {
-        findUnique: vi.fn(async () => ({ id: 5, name: "Passed", isCompleted: true })),
+        findUnique: vi.fn(async () => ({
+          id: 5,
+          name: "Passed",
+          isCompleted: true,
+        })),
       },
       testRunCases: {
         findUnique: vi.fn(async () => ({
@@ -280,7 +307,11 @@ describe("emitTestRunDuplicated", () => {
   it("emits test_run.duplicated with sourceRunId and newRunId", async () => {
     const tx = makeTx({
       testRuns: {
-        findUnique: vi.fn(async () => ({ id: 2, name: "Copy of Run 1", projectId: 7 })),
+        findUnique: vi.fn(async () => ({
+          id: 2,
+          name: "Copy of Run 1",
+          projectId: 7,
+        })),
       },
     });
     await emitTestRunDuplicated(2, 1, tx as never, { projectId: 7 });

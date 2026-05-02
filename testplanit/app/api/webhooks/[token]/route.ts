@@ -12,12 +12,12 @@ import { applyInboundIssueUpdate } from "~/lib/webhooks/services/applyInboundIss
 import { decrypt } from "~/utils/encryption";
 
 /**
- * Inbound webhook receiver — Pattern B (opaque-token routing) per D-05.
+ * Inbound webhook receiver — opaque-token routing.
  *
  * Token = the routing/lookup key (public-but-secret string in the URL).
  * Secret = the HMAC verification key (separate field, encrypted at rest).
  *
- * Failure-mode posture (D-12 / D-13 / T-04-01):
+ * Failure-mode posture:
  *   - Unknown token       → 404 { ok: false }, no DB writes, no audit
  *   - Inactive config     → 404 (same body as unknown — callers can't enumerate)
  *   - HMAC fail           → 401 { ok: false }, no DB writes, no audit
@@ -25,34 +25,32 @@ import { decrypt } from "~/utils/encryption";
  *   - All success outcomes (updated / no-link / duplicate / synthetic) → 200,
  *     since Jira does not retry 2xx responses.
  *
- * Architectural Directive 1: registry dispatch via getAdapter — the receiver
- * never branches on the adapter discriminator inline. The route file holds
- * zero Jira-specific logic.
+ * Registry dispatch via getAdapter — the receiver never branches on the
+ * adapter discriminator inline. The route file holds zero Jira-specific logic.
  *
- * Logging note (WARNING #12 follow-up): the codebase has no structured logger
- * today; we use console.{warn,error} with token-redacted strings. Promotion to
- * Pino with a redaction config is a captured follow-up post-demo.
+ * Logging note: the codebase has no structured logger today; we use
+ * console.{warn,error} with token-redacted strings. Promotion to Pino with a
+ * redaction config is a captured follow-up.
  */
 /**
  * Maximum body size accepted by the receiver. Real Jira webhook payloads cap
  * around 50 KiB; GitHub caps inbound deliveries at 25 MiB, ADO at ~25 KiB. The
- * 5 MB ceiling (Phase 3 P-05 / D-12 / WBHK-11 — raised from 1 MiB) gives
- * comfortable headroom over Jira/ADO with a generous-but-bounded safety margin
- * for GitHub `issues` events on long-bodied issues, while preventing
- * unauthenticated callers from buffering multi-GB POSTs and OOM'ing the pod
- * before token/HMAC validation can short-circuit them. Next.js App Router has
- * no default body-size limit on raw route handlers (the `serverActions`
- * `bodySizeLimit` config does NOT apply here).
+ * 5 MB ceiling gives comfortable headroom over Jira/ADO with a generous-but-
+ * bounded safety margin for GitHub `issues` events on long-bodied issues,
+ * while preventing unauthenticated callers from buffering multi-GB POSTs and
+ * OOM'ing the pod before token/HMAC validation can short-circuit them.
+ * Next.js App Router has no default body-size limit on raw route handlers
+ * (the `serverActions` `bodySizeLimit` config does NOT apply here).
  */
 const MAX_WEBHOOK_BYTES = 5_242_880;
 
 /**
  * The webhook receiver runs without a user session — `__system__` is the
- * audit actor (Phase 64 D-13). `withAuditContext` (ME-05) seeds the ALS
- * frame with ipAddress (sender's address — useful for forensics and rate-
- * limiting investigations), userAgent (typically "JIRA Webhooks"), and a
- * per-request requestId. The downstream `captureAuditEvent` call inside
- * `applyInboundIssueUpdate` picks these up automatically.
+ * audit actor. `withAuditContext` seeds the ALS frame with ipAddress
+ * (sender's address — useful for forensics and rate-limiting investigations),
+ * userAgent (typically "JIRA Webhooks"), and a per-request requestId. The
+ * downstream `captureAuditEvent` call inside `applyInboundIssueUpdate` picks
+ * these up automatically.
  */
 async function handleWebhookReceive(
   req: NextRequest,
@@ -110,12 +108,13 @@ async function handleWebhookReceive(
   }
 
   if (!webhookConfig || !webhookConfig.isActive) {
-    // D-13 / T-04-01: 404 with the same body for "unknown" and "inactive".
+    // 404 with the same body for "unknown" and "inactive" so callers can't
+    // enumerate active tokens.
     console.warn("[webhooks] no active config for token", redactToken(token));
     return NextResponse.json({ ok: false }, { status: 404 });
   }
 
-  // 3. Decrypt the per-config HMAC secret (D-02 — secrets encrypted at rest).
+  // 3. Decrypt the per-config HMAC secret (encrypted at rest).
   let plainSecret: string;
   try {
     plainSecret = await decrypt(webhookConfig.secret);
@@ -128,16 +127,16 @@ async function handleWebhookReceive(
     return NextResponse.json({ ok: false }, { status: 500 });
   }
 
-  // 4. Resolve the adapter via the registry — Architectural Directive 1.
-  //    Phase 3 P-05: JIRA + GITHUB + AZURE_DEVOPS are all wired. SLACK +
-  //    GENERIC_HMAC remain OUTBOUND-only and throw if encountered here.
+  // 4. Resolve the adapter via the registry. JIRA + GITHUB + AZURE_DEVOPS
+  //    are all wired. SLACK + GENERIC_HMAC remain OUTBOUND-only and throw
+  //    if encountered here.
   let adapter;
   try {
     adapter = getAdapter(webhookConfig.adapterType);
   } catch (err) {
     // OUTBOUND-only adapter on an INBOUND config (admin form prevents this in
-    // practice) or unknown adapter type. Return 501 (ME-04) so the sender does
-    // NOT retry — a missing adapter is a config mismatch, not a transient fault.
+    // practice) or unknown adapter type. Return 501 so the sender does NOT
+    // retry — a missing adapter is a config mismatch, not a transient fault.
     console.error(
       "[webhooks] no adapter registered for token",
       redactToken(token),
@@ -149,7 +148,7 @@ async function handleWebhookReceive(
   }
 
   // 5. Adapter-specific authentication: HMAC for JIRA/GITHUB, HTTP Basic Auth
-  //    for AZURE_DEVOPS (D-08). Pure function, no I/O.
+  //    for AZURE_DEVOPS. Pure function, no I/O.
   const verify: VerifyResult = adapter.verify(
     rawBody,
     req.headers,
@@ -162,10 +161,10 @@ async function handleWebhookReceive(
       "reason=",
       verify.reason
     );
-    // HI-03: map VerifyFail.reason to the right HTTP status so senders
+    // Map VerifyFail.reason to the right HTTP status so senders
     // (Jira / GitHub / ADO) take the right retry posture.
     //   - missing- / malformed- / signature-mismatch → 401 (genuine auth fail)
-    //   - missing-auth / auth-mismatch (ADO Basic Auth — D-11) → 401
+    //   - missing-auth / auth-mismatch (ADO Basic Auth) → 401
     //   - unparseable-body → 400 (client bug; do not retry)
     //   - missing-required-field → 200 (auth succeeded but the event is
     //     non-actionable, e.g., jira:issue_deleted without a status field;
@@ -186,18 +185,17 @@ async function handleWebhookReceive(
     return NextResponse.json({ ok: false }, { status });
   }
 
-  // 6. Compute payloadDigest over the EXACT raw bytes (D-04 idempotency key).
+  // 6. Compute payloadDigest over the EXACT raw bytes (idempotency key).
   const payloadDigest = createHash("sha256").update(rawBody).digest("hex");
   const latencyMs = Date.now() - startMs;
 
   // 7. Delegate to the domain service for all DB writes + audit emission.
   //    The service maps to one of the closed-set DeliveryOutcomes.
-  //    Phase 3 P-05: pass adapterType (sourced from the verified WebhookConfig
-  //    row — T-03-22 mitigation, NOT body-controlled) and eventType (from the
-  //    parsed payload). Per RESEARCH.md Q2 RESOLVED, the service itself looks
-  //    up the adapter and runs the linked-ref + external-status extractors —
-  //    the receiver shell stays adapter-agnostic and does NOT call extractors
-  //    directly.
+  //    Pass adapterType (sourced from the verified WebhookConfig row, NOT
+  //    body-controlled) and eventType (from the parsed payload). The service
+  //    itself looks up the adapter and runs the linked-ref + external-status
+  //    extractors — the receiver shell stays adapter-agnostic and does NOT
+  //    call extractors directly.
   const result = await applyInboundIssueUpdate({
     webhookConfigId: webhookConfig.id,
     projectId: webhookConfig.projectId,
@@ -229,9 +227,9 @@ async function handleWebhookReceive(
   );
 }
 
-// ME-05: wrap with `withAuditContext` so the inbound webhook handler runs
-// inside an AsyncLocalStorage frame seeded with ipAddress/userAgent/requestId.
+// Wrap with `withAuditContext` so the inbound webhook handler runs inside an
+// AsyncLocalStorage frame seeded with ipAddress/userAgent/requestId.
 // `captureAuditEvent` in the downstream sync service picks these up
 // automatically — same posture as the v0.22.1 actor-context completeness
-// pattern (Phase 64), even though the receiver has no user session.
+// pattern, even though the receiver has no user session.
 export const POST = withAuditContext(handleWebhookReceive);

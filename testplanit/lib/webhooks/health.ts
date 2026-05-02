@@ -5,15 +5,15 @@ import { prisma as defaultPrisma } from "~/lib/prisma";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 
 /**
- * v0.23.0 Phase 4 (DEL-04..07 / CONTEXT D-10..D-15) — endpoint health state machine.
+ * Endpoint health state machine.
  *
- * Called by the BullMQ dispatch worker hook (Plan 04-05) on terminal failure
- * and on completed; the consecutiveFailureCount counter increments only at
- * the event-level (BullMQ "failed" after retries exhausted). Per-attempt
+ * Called by the BullMQ dispatch worker hook on terminal failure and on
+ * completed; the consecutiveFailureCount counter increments only at the
+ * event-level (BullMQ "failed" after retries exhausted). Per-attempt
  * timestamps (lastDispatchedAt) are updated by dispatch.ts; this helper
  * owns lastFailureAt + lastSuccessAt + the state-counter seam.
  *
- * State table (D-11, D-15, locked by health.test.ts):
+ * State table (locked by health.test.ts):
  *
  *   | Current health        | Outcome | Next health | Next counter | Audit |
  *   | --------------------- | ------- | ----------- | ------------ | ----- |
@@ -27,12 +27,12 @@ import { captureAuditEvent } from "~/lib/services/auditLog";
  *   | DISABLED              | success | HEALTHY     | 0            | yes   |
  *
  * Audit reason for ALL transitions emitted by this helper is "auto_threshold".
- * The "manual_reenable" reason is reserved for Plan 04-06's reEnableWebhookConfig
+ * The "manual_reenable" reason is reserved for the reEnableWebhookConfig
  * action (passes actorUserId, not SYSTEM_ACTOR_ID).
  */
 
-const DEGRADED_THRESHOLD = 5; // CONTEXT D-11
-const DISABLED_THRESHOLD = 10; // DEL-06 / CONTEXT D-11
+const DEGRADED_THRESHOLD = 5;
+const DISABLED_THRESHOLD = 10;
 
 export type HealthTransitionOutcome = "success" | "failure";
 

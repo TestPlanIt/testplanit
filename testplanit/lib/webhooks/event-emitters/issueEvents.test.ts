@@ -7,15 +7,15 @@ import {
 } from "./issueEvents";
 
 /**
- * Plan 02-05 Task 5.3 — issueEvents emitter contract.
+ * issueEvents emitter contract.
  *
- * D-11 catalog: issue.created / issue.updated / issue.deleted ONLY.
- * NO dedicated resolution event in Phase 2 — consumers detect resolution
- * by filtering issue.updated.diff.changedFields.includes("status").
+ * Catalog: issue.created / issue.updated / issue.deleted ONLY. NO dedicated
+ * resolution event — consumers detect resolution by filtering
+ * issue.updated.diff.changedFields.includes("status").
  *
- * Blocker 5 / OUT-15: issue.created payload MUST carry `linkedRefs` with
- * the IDs of all six related collections. Tests assert presence of every
- * key, even when relations are empty.
+ * issue.created payload MUST carry `linkedRefs` with the IDs of all six
+ * related collections. Tests assert presence of every key, even when
+ * relations are empty.
  */
 
 vi.mock("~/lib/webhooks/events", () => ({
@@ -35,14 +35,16 @@ interface TxStub {
   issue: { findUnique: ReturnType<typeof vi.fn> };
 }
 
-function makeTx(linked: Partial<{
-  repositoryCases: Array<{ id: number }>;
-  testRuns: Array<{ id: number }>;
-  testRunResults: Array<{ id: number }>;
-  testRunStepResults: Array<{ id: number }>;
-  sessions: Array<{ id: number }>;
-  sessionResults: Array<{ id: number }>;
-}> = {}): TxStub {
+function makeTx(
+  linked: Partial<{
+    repositoryCases: Array<{ id: number }>;
+    testRuns: Array<{ id: number }>;
+    testRunResults: Array<{ id: number }>;
+    testRunStepResults: Array<{ id: number }>;
+    sessions: Array<{ id: number }>;
+    sessionResults: Array<{ id: number }>;
+  }> = {}
+): TxStub {
   return {
     issue: {
       findUnique: vi.fn(async () => ({
@@ -90,7 +92,7 @@ describe("emitIssueCreated", () => {
     });
   });
 
-  it("Blocker 5 — payload includes linkedRefs with IDs of all six related collections", async () => {
+  it("payload includes linkedRefs with IDs of all six related collections", async () => {
     const tx = makeTx({
       repositoryCases: [{ id: 100 }, { id: 101 }],
       testRuns: [{ id: 200 }],
@@ -113,11 +115,12 @@ describe("emitIssueCreated", () => {
     });
   });
 
-  it("Blocker 5 — linkedRefs has all six array keys even when relations are empty", async () => {
+  it("linkedRefs has all six array keys even when relations are empty", async () => {
     const tx = makeTx(); // all empty
     await emitIssueCreated(baseIssue, tx as never);
     const [, payload] = emitMock.mock.calls[0];
-    const refs = (payload as { linkedRefs: Record<string, number[]> }).linkedRefs;
+    const refs = (payload as { linkedRefs: Record<string, number[]> })
+      .linkedRefs;
     expect(Object.keys(refs).sort()).toEqual([
       "repositoryCaseIds",
       "sessionIds",
@@ -133,10 +136,7 @@ describe("emitIssueCreated", () => {
 
   it("returns silently when projectId is null (integration-only issue)", async () => {
     const tx = makeTx();
-    await emitIssueCreated(
-      { ...baseIssue, projectId: null },
-      tx as never
-    );
+    await emitIssueCreated({ ...baseIssue, projectId: null }, tx as never);
     expect(emitMock).not.toHaveBeenCalled();
   });
 });
@@ -164,14 +164,16 @@ describe("emitIssueUpdated", () => {
     expect(diff.changedFields).toContain("status");
   });
 
-  it("status change is detectable by the consumer-side `changedFields.includes(\"status\")` pattern (D-11 resolution detection)", async () => {
+  it('status change is detectable by the consumer-side `changedFields.includes("status")` pattern (resolution detection)', async () => {
     const tx = makeTx();
     await emitIssueUpdated(
       { ...baseIssue, status: "open" },
       { ...baseIssue, status: "resolved" },
       tx as never
     );
-    const diff = (emitMock.mock.calls[0][1] as { diff: { changedFields: string[] } }).diff;
+    const diff = (
+      emitMock.mock.calls[0][1] as { diff: { changedFields: string[] } }
+    ).diff;
     expect(diff.changedFields.includes("status")).toBe(true);
   });
 

@@ -77,10 +77,9 @@ async function triggerSystemSyncForInboundEvent(args: {
     return;
   }
 
-  // Single active integration per project (enforced in app code, see
-  // memory note `project_single_active_integration`). Filter by provider
-  // so a project with a Jira integration but a GitHub webhook (cross-
-  // tenant misconfiguration) doesn't trigger the wrong adapter.
+  // Single active integration per project (enforced in app code). Filter
+  // by provider so a project with a Jira integration but a GitHub webhook
+  // (cross-tenant misconfiguration) doesn't trigger the wrong adapter.
   const projectIntegration = await prisma.projectIntegration.findFirst({
     where: {
       projectId: args.projectId,
@@ -128,24 +127,22 @@ function truncate(s: string): string {
 /**
  * Domain entry point for the inbound webhook receiver — adapter-agnostic.
  *
- * Renamed in Phase 3 P-02 from `applyJiraIssueUpdate` per CONTEXT D-01.
- * The service is now parametrized by `adapterType` and is the single owner
- * of the adapter→extractor relationship for inbound flows: the receiver
- * hands over `{ adapterType, eventType, payload, ... }` and this service
- * itself calls `getAdapter(adapterType).extractLinkedIssueRef(payload)` +
- * `.extractExternalStatus(payload, eventType)` (RESEARCH.md Q2 RESOLVED —
- * service-side delegation; the route handler does NOT re-parse rawBody and
- * does NOT call adapter extractors directly).
+ * The service is parametrized by `adapterType` and is the single owner of
+ * the adapter→extractor relationship for inbound flows: the receiver hands
+ * over `{ adapterType, eventType, payload, ... }` and this service itself
+ * calls `getAdapter(adapterType).extractLinkedIssueRef(payload)` +
+ * `.extractExternalStatus(payload, eventType)`. The route handler does NOT
+ * re-parse rawBody and does NOT call adapter extractors directly.
  *
- * 3-model architecture (BLOCKER #1 / D-03 REVISED / D-04 REVISED):
+ * 3-model architecture:
  *   - WebhookDelivery: every HTTP receive gets a row (delivery LOG).
  *   - WebhookEventDedup: idempotency tracker; @@unique([webhookConfigId, payloadDigest]).
  *
  * Dedup is written ONLY when the payload would actually be applied (synthetic
  * short-circuit OR linked-Issue branch). The no-link, no_handler, and
  * no-link-upfront branches never touch the dedup table — no INSERT, no DELETE
- * — which preserves D-14 retry-after-link semantics without serializing on
- * the dedup row during the no-link lifetime.
+ * — which preserves retry-after-link semantics without serializing on the
+ * dedup row during the no-link lifetime.
  *
  * Idempotency check pattern: a pre-INSERT SELECT against `WebhookEventDedup`
  * detects duplicates without relying on catch-after-throw inside the transaction.
@@ -162,36 +159,36 @@ function truncate(s: string): string {
  *   1. Resolve adapter once via getAdapter(input.adapterType) BEFORE the tx.
  *   2. Compute linkedRef + externalStatus by calling adapter extractors.
  *   3. ALWAYS INSERT a WebhookDelivery row (delivery log entry).
- *   4. If externalStatus === null → no_handler skip (D-15): finalize delivery
+ *   4. If externalStatus === null → no_handler skip: finalize delivery
  *      row with error='no_handler', bump lastReceivedAt, return 'no_handler'.
  *      Dedup never touched. Issue lookup never performed.
  *   5. If linkedRef === null → no-link-upfront skip: finalize delivery row
  *      with error='no-link', bump lastReceivedAt, return 'no-link'. Dedup
  *      never touched. Issue lookup never performed.
  *   6. SELECT WebhookEventDedup to detect a prior application of this payload.
- *   7. If payload.synthetic (D-20):
+ *   7. If payload.synthetic:
  *        - Existing dedup row → finalize delivery error='duplicate',
- *          return 'duplicate'. (SC#5 demo lock: second synthetic click.)
+ *          return 'duplicate' (second synthetic click).
  *        - No prior row → INSERT dedup, finalize delivery error='synthetic',
  *          return 'synthetic'.
- *   8. Otherwise look up linked Issue (tenant-scoped to projectId — T-03-01).
- *      D-22 invariant: where clause filters by externalKey + projectId +
- *      isDeleted=false ONLY. NO `externalSystem` filter — Issue.externalSystem
- *      is NOT a DB column; linkedRef.externalSystem is informational metadata.
- *   9. No linked Issue (D-14) → finalize delivery error='no-link', return
+ *   8. Otherwise look up linked Issue (tenant-scoped to projectId).
+ *      Where clause filters by externalKey + projectId + isDeleted=false ONLY.
+ *      NO `externalSystem` filter — Issue.externalSystem is NOT a DB column;
+ *      linkedRef.externalSystem is informational metadata.
+ *   9. No linked Issue → finalize delivery error='no-link', return
  *      'no-link'. Dedup never touched.
  *  10. Linked Issue:
  *        - Existing dedup row → finalize delivery error='duplicate',
- *          return 'duplicate' (WBHK-06). No Issue mutation.
+ *          return 'duplicate'. No Issue mutation.
  *        - No prior row → INSERT dedup, update Issue.externalStatus +
  *          Issue.lastSyncedAt, finalize delivery error=null, return 'updated'.
  *
  * Shared tail (every accepted receipt): bump WebhookConfig.lastReceivedAt
- * (ME-01 — every accepted receipt counts, including duplicates).
+ * — every accepted receipt counts, including duplicates.
  *
- * After tx commit: emit WEBHOOK_RECEIVED audit (D-16, D-17). actor='__system__'.
- * Audit emission is awaited (Phase 63 REL-01 — no fire-and-forget) — the
- * captureAuditEvent helper enqueues onto BullMQ and returns quickly.
+ * After tx commit: emit WEBHOOK_RECEIVED audit. actor='__system__'.
+ * Audit emission is awaited – the captureAuditEvent helper enqueues onto BullMQ
+ * and returns quickly.
  */
 export async function applyInboundIssueUpdate(
   input: ApplyInboundIssueUpdateInput
@@ -208,10 +205,9 @@ export async function applyInboundIssueUpdate(
     statusCode,
   } = input;
 
-  // T-03-14 mitigation: adapter is resolved from `input.adapterType` (sourced
-  // by the receiver from the verified WebhookConfig row), NOT from any
-  // wire-controlled body field. An attacker cannot smuggle an adapter
-  // selection in the request body.
+  // Adapter is resolved from `input.adapterType` (sourced by the receiver
+  // from the verified WebhookConfig row), NOT from any wire-controlled body
+  // field. An attacker cannot smuggle an adapter selection in the request body.
   const adapter = getAdapter(adapterType);
   const linkedRef = adapter.extractLinkedIssueRef(payload);
   const externalStatus = adapter.extractExternalStatus(payload, eventType);
@@ -252,10 +248,10 @@ export async function applyInboundIssueUpdate(
         },
       });
 
-      // Step 2: D-15 no_handler skip — adapter declined to extract a status
-      // for this eventType (e.g. GitHub `push`, ADO `build.complete`). Write
+      // Step 2: no_handler skip — adapter declined to extract a status for
+      // this eventType (e.g. GitHub `push`, ADO `build.complete`). Write
       // the delivery row with error='no_handler', skip dedup + Issue lookup
-      // entirely. T-03-12 mitigation: minimal DB work for unsupported events.
+      // entirely. Minimal DB work for unsupported events.
       if (externalStatus === null) {
         await tx.webhookDelivery.update({
           where: { id: delivery.id },
@@ -301,13 +297,13 @@ export async function applyInboundIssueUpdate(
       // Outcome is computed via the branch logic below; the SHARED tail at
       // the bottom of the tx finalizes the delivery row + bumps
       // WebhookConfig.lastReceivedAt unconditionally so the admin UI's
-      // "last received" timestamp is honest during replay storms (ME-01 —
-      // every accepted receipt counts, including duplicates).
+      // "last received" timestamp is honest during replay storms — every
+      // accepted receipt counts, including duplicates.
       let outcome: TxOutcome;
       let deliveryError: string | null = null;
 
-      // Step 5: Synthetic short-circuit (D-20). Dedup is written INSIDE this
-      // branch so two synthetic clicks demonstrate the duplicate path (SC#5).
+      // Step 5: Synthetic short-circuit. Dedup is written INSIDE this branch
+      // so two synthetic clicks demonstrate the duplicate path.
       if (payload.synthetic) {
         if (priorDedup) {
           deliveryError = "duplicate";
@@ -324,10 +320,10 @@ export async function applyInboundIssueUpdate(
           outcome = { outcome: "synthetic", deliveryId: delivery.id };
         }
       } else {
-        // Step 6: Linked-Issue lookup (tenant-scoped — T-03-01).
-        // D-22 invariant: NO `externalSystem` filter — Issue.externalSystem is
-        // not a DB column. linkedRef.externalSystem is informational only and
-        // surfaces in audit metadata (T-03-13).
+        // Step 6: Linked-Issue lookup (tenant-scoped). NO `externalSystem`
+        // filter — Issue.externalSystem is not a DB column.
+        // linkedRef.externalSystem is informational only and surfaces in
+        // audit metadata.
         const linkedIssue = await tx.issue.findFirst({
           where: {
             externalKey: linkedRef.externalKey,
@@ -345,12 +341,12 @@ export async function applyInboundIssueUpdate(
           // `performIssueRefreshSystem({ createIfMissing: { projectId } })`
           // which pulls full upstream state and INSERTs a new Issue row.
           //
-          // Dedup IS written here (in contrast to the original D-14 no-link
-          // skip-dedup behavior): the auto-create acts on this payload, so
-          // a redelivery should resolve as 'duplicate' rather than create
-          // again. Failure of the post-commit create logs but does not
-          // roll back the dedup row — the next webhook event for the same
-          // issue (different digest) will reattempt and reconcile.
+          // Dedup IS written here (in contrast to the no-link skip-dedup
+          // behavior): the auto-create acts on this payload, so a redelivery
+          // should resolve as 'duplicate' rather than create again. Failure
+          // of the post-commit create logs but does not roll back the dedup
+          // row — the next webhook event for the same issue (different
+          // digest) will reattempt and reconcile.
           if (priorDedup) {
             deliveryError = "duplicate";
             outcome = { outcome: "duplicate", deliveryId: delivery.id };
@@ -373,7 +369,7 @@ export async function applyInboundIssueUpdate(
             };
           }
         } else if (priorDedup) {
-          // Step 8a: Already-applied payload — no double-update (WBHK-06).
+          // Step 8a: Already-applied payload — no double-update.
           deliveryError = "duplicate";
           outcome = { outcome: "duplicate", deliveryId: delivery.id };
         } else {
@@ -410,8 +406,8 @@ export async function applyInboundIssueUpdate(
       }
 
       // Shared tail: finalize delivery row + bump lastReceivedAt for ALL
-      // outcomes (ME-01). lastReceivedAt reflects every successful HTTP
-      // receipt, not just the non-duplicate first-time applies.
+      // outcomes. lastReceivedAt reflects every successful HTTP receipt,
+      // not just the non-duplicate first-time applies.
       await tx.webhookDelivery.update({
         where: { id: delivery.id },
         data: { statusCode, latencyMs, error: deliveryError },
@@ -423,17 +419,17 @@ export async function applyInboundIssueUpdate(
       return outcome;
     });
   } catch (err) {
-    // D-11: any throw inside the transaction rolls back. No delivery, no dedup, no audit.
+    // Any throw inside the transaction rolls back. No delivery, no dedup, no audit.
     return {
       outcome: "error",
       reason: truncate(err instanceof Error ? err.message : String(err)),
     };
   }
 
-  // Audit emission AFTER tx commits (D-11). Awaited (Phase 63 REL-01 — no fire-and-forget).
-  // T-03-13 mitigation: adapterType in audit metadata is the parametrized value,
-  // not a hardcoded literal — every accepted receipt is forensically attributable
-  // to the resolved adapter regardless of source system.
+  // Audit emission AFTER tx commits. Awaited — no fire-and-forget.
+  // adapterType in audit metadata is the parametrized value, not a hardcoded
+  // literal — every accepted receipt is forensically attributable to the
+  // resolved adapter regardless of source system.
   const baseMetadata: Record<string, unknown> = {
     adapterType: adapterType,
     eventType: eventType,

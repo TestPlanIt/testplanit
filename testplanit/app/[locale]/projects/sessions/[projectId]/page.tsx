@@ -1024,7 +1024,9 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                                     ? completedSessionsPageSize
                                     : "All"
                                 }
-                                pageSizeOptions={completedSessionsPageSizeOptions}
+                                pageSizeOptions={
+                                  completedSessionsPageSizeOptions
+                                }
                                 handlePageSizeChange={(size) =>
                                   setCompletedSessionsPageSize(size)
                                 }

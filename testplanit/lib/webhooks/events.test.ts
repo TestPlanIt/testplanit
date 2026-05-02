@@ -1,14 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  runWithAuditContext,
-  SYSTEM_ACTOR_ID,
-} from "~/lib/auditContext";
+import { runWithAuditContext, SYSTEM_ACTOR_ID } from "~/lib/auditContext";
 
 import { webhookEvents } from "./events";
 
 /**
- * D-35 / D-01 / OUT-05 / OUT-20 — webhookEvents.emit contract.
+ * webhookEvents.emit contract.
  *
  * The emit helper writes ONE WebhookOutboxEvent row inside the caller's
  * Prisma.TransactionClient. The tx parameter is REQUIRED at compile time
@@ -106,7 +103,7 @@ describe("webhookEvents.emit", () => {
     expect(createSpy.mock.calls[0][0].data.actorUserId).toBeNull();
   });
 
-  it("returns null and does NOT call tx.webhookOutboxEvent.create when auditContext.suppressWebhooks=true (D-01a)", async () => {
+  it("returns null and does NOT call tx.webhookOutboxEvent.create when auditContext.suppressWebhooks=true", async () => {
     const result = await runWithAuditContext(
       { userId: "u", suppressWebhooks: true },
       async () =>

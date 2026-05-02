@@ -26,15 +26,6 @@ import { WebhookOutboundForm } from "./webhook-outbound-form";
  *
  * Webhooks are a transport-layer concern that crosses many features
  * (issue-tracker inbound sync, outbound event dispatch to Slack/etc).
- * Phase 1 mistakenly nested the webhook config form under Issue
- * Integrations; this page corrects that placement before Phases 2-4
- * add outbound dispatch and additional inbound adapters that have
- * nothing to do with issue trackers.
- *
- * Phase 2 wraps the original Phase 1 form in a `<Tabs>` primitive (D-27)
- * with an "Outbound" sibling tab containing `WebhookOutboundForm`. Tab
- * state lives in the URL `?tab=` query param so reload + share preserve
- * the active tab.
  *
  * Access: same project-admin policy as the rest of project settings —
  * the page-level gate is `session.user.access ∈ {ADMIN, PROJECTADMIN}`,
@@ -53,8 +44,6 @@ export default function ProjectWebhooksPage() {
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
 
-  // Tab state via URL query param so a reload (or shared link) preserves the
-  // active tab. Default 'inbound' matches Phase 1 single-form behavior.
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();

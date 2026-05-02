@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { computeObjectDiff } from "./diff";
 
 /**
- * D-36 / OUT-18 — generic Object diff for outbound `*.updated` events.
+ * generic Object diff for outbound `*.updated` events.
  *
  * The helper is used uniformly at the payload layer; Slack formatters
  * drill into the {before, after} maps as needed for rich block rendering.
@@ -42,7 +42,7 @@ describe("computeObjectDiff", () => {
     });
   });
 
-  it("treats array reorder as unchanged (D-16)", () => {
+  it("treats array reorder as unchanged", () => {
     expect(
       computeObjectDiff({ tags: ["a", "b"] }, { tags: ["b", "a"] })
     ).toEqual({

@@ -33,7 +33,7 @@ interface CopyMoveJobDataCore extends MultiTenantJobData {
   folderTree?: FolderTreeNode[];
 }
 
-// Phase 64 D-10: payload now carries actorContext so the worker ALS frame
+// payload now carries actorContext so the worker ALS frame
 // can be re-established in the processor body.
 export type CopyMoveJobData = ActorContextJobData<CopyMoveJobDataCore>;
 
@@ -274,7 +274,7 @@ async function fetchTemplateFields(
 
 // ─── Processor ──────────────────────────────────────────────────────────────
 
-// Phase 64 D-10: re-establish the ALS frame from job.data.actorContext so
+// re-establish the ALS frame from job.data.actorContext so
 // downstream captureAuditEvent calls at L778 / L796 pick up the originating
 // user's context. systemReason (if upstream was system-stamped) rides along
 // via W5 Option A — no per-worker systemReason handling.

@@ -41,7 +41,7 @@ describe("getAdapter / ADAPTER_REGISTRY", () => {
     expect(typeof adapter.verify).toBe("function");
   });
 
-  it("returns the GitHub adapter for AdapterType.GITHUB (Phase 3 P-05 — registry slot filled)", () => {
+  it("returns the GitHub adapter for AdapterType.GITHUB (registry slot filled)", () => {
     const adapter = getAdapter("GITHUB");
     expect(adapter).toBeDefined();
     expect(adapter.adapterType).toBe("GITHUB");
@@ -50,7 +50,7 @@ describe("getAdapter / ADAPTER_REGISTRY", () => {
     expect(typeof adapter.extractExternalStatus).toBe("function");
   });
 
-  it("returns the Azure DevOps adapter for AdapterType.AZURE_DEVOPS (Phase 3 P-05 — registry slot filled)", () => {
+  it("returns the Azure DevOps adapter for AdapterType.AZURE_DEVOPS (registry slot filled)", () => {
     const adapter = getAdapter("AZURE_DEVOPS");
     expect(adapter).toBeDefined();
     expect(adapter.adapterType).toBe("AZURE_DEVOPS");
@@ -59,11 +59,11 @@ describe("getAdapter / ADAPTER_REGISTRY", () => {
     expect(typeof adapter.extractExternalStatus).toBe("function");
   });
 
-  it("throws an error containing 'OUTBOUND-only' for AdapterType.SLACK (Phase 2 outbound-only — must never reach inbound receiver)", () => {
+  it("throws an error containing 'OUTBOUND-only' for AdapterType.SLACK (outbound-only — must never reach inbound receiver)", () => {
     expect(() => getAdapter("SLACK")).toThrowError(/OUTBOUND-only/);
   });
 
-  it("throws an error containing 'OUTBOUND-only' for AdapterType.GENERIC_HMAC (Phase 2 outbound-only — must never reach inbound receiver)", () => {
+  it("throws an error containing 'OUTBOUND-only' for AdapterType.GENERIC_HMAC (outbound-only — must never reach inbound receiver)", () => {
     expect(() => getAdapter("GENERIC_HMAC")).toThrowError(/OUTBOUND-only/);
   });
 
@@ -79,12 +79,12 @@ describe("getAdapter / ADAPTER_REGISTRY", () => {
     expect(registry).toBeDefined();
     expect(registry.JIRA).toBeDefined();
     expect(registry.JIRA?.adapterType).toBe("JIRA");
-    // Phase 3 P-05: GITHUB + AZURE_DEVOPS are now real adapters (no longer null placeholders).
+    // GITHUB + AZURE_DEVOPS are now real adapters (no longer null placeholders).
     expect(registry.GITHUB).toBeDefined();
     expect(registry.GITHUB?.adapterType).toBe("GITHUB");
     expect(registry.AZURE_DEVOPS).toBeDefined();
     expect(registry.AZURE_DEVOPS?.adapterType).toBe("AZURE_DEVOPS");
-    // Phase 2 outbound-only adapters: null in the inbound registry; outbound
+    // outbound-only adapters: null in the inbound registry; outbound
     // dispatch lives in workers/webhook-dispatch-worker.ts, not here.
     expect(registry.SLACK).toBeNull();
     expect(registry.GENERIC_HMAC).toBeNull();
