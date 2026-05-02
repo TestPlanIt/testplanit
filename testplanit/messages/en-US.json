@@ -1135,12 +1135,15 @@
         }
       },
       "webhooks": {
-        "description": "Configure inbound webhooks for Jira, GitHub, and Azure DevOps to keep linked issues in sync.",
-        "inboundDescription": "Configure inbound webhooks for Jira, GitHub, and Azure DevOps to keep linked issues in sync.",
+        "description": "Configure inbound webhooks to keep linked issues in sync.",
+        "inboundDescription": "Configure inbound webhooks to keep linked issues in sync.",
         "outboundDescription": "Configure outbound webhooks to send TestPlanIt events to Slack or any HMAC-signed URL.",
         "directionInbound": "Inbound",
         "directionOutbound": "Outbound",
-        "inboundAddButtonAllConfigured": "All inbound adapters are already configured. Delete one to add a different adapter.",
+        "inboundAddButtonAllConfigured": "Inbound adapter is already configured.",
+        "inboundAddButtonNoIntegration": "Assign an Issue Integration to this project before adding an inbound webhook.",
+        "inboundEmptyWithIntegration": "No inbound webhooks configured. <link>Add one</link> to receive issue updates from your assigned Issue Integration.",
+        "inboundEmptyNoIntegration": "An <link>Issue Integration</link> is required to receive inbound issue updates. Assign one to your project to get started.",
         "deliveriesEmptyNoConfigs": "No webhook deliveries yet — create an inbound or outbound webhook on the other tabs to start receiving them.",
         "noConfig": "No webhook configured",
         "createButton": "Create webhook",

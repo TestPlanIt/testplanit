@@ -11,6 +11,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // ─── Hoisted mock refs ───────────────────────────────────────────────────
 const {
   mockFindManyWebhookConfig,
+  mockFindFirstProjectIntegration,
   mockSetWebhookActive,
   mockCreateOrRotateInbound,
   mockDeleteInbound,
@@ -20,6 +21,7 @@ const {
   mockToastError,
 } = vi.hoisted(() => ({
   mockFindManyWebhookConfig: vi.fn(),
+  mockFindFirstProjectIntegration: vi.fn(),
   mockSetWebhookActive: vi.fn(),
   mockCreateOrRotateInbound: vi.fn(),
   mockDeleteInbound: vi.fn(),
@@ -32,6 +34,19 @@ const {
 vi.mock("~/lib/hooks", () => ({
   useFindManyWebhookConfig: (...args: any[]) =>
     mockFindManyWebhookConfig(...args),
+  useFindFirstProjectIntegration: (...args: any[]) =>
+    mockFindFirstProjectIntegration(...args),
+}));
+
+// `~/lib/navigation` wraps `next-intl`'s `createNavigation` which probes
+// `next/navigation` at module load. Stub the wrapper's `Link` directly
+// so the form's empty-state link renders as a plain `<a>` for testing.
+vi.mock("~/lib/navigation", () => ({
+  Link: ({ children, href, ...rest }: any) => (
+    <a href={typeof href === "string" ? href : "#"} {...rest}>
+      {children}
+    </a>
+  ),
 }));
 
 vi.mock("~/app/actions/webhook-config", () => ({
@@ -71,9 +86,25 @@ vi.mock("next-intl", () => {
       }
       return result;
     };
-    // `t.rich(key, tags)` returns the key as plain text — sufficient for
-    // tests that only assert on the key/text, not on the rich element tree.
-    (t as any).rich = (key: string) => KEY_TEMPLATES[key] ?? key;
+    // `t.rich(key, tags)` renders any registered tags by invoking each
+    // chunk function with the tag name. Empty-state copy uses a `<link>`
+    // tag whose chunk is the inline link element — tests need that
+    // element rendered to assert wiring/testids.
+    (t as any).rich = (
+      key: string,
+      tags?: Record<string, (chunks: React.ReactNode) => React.ReactNode>
+    ) => {
+      const text = KEY_TEMPLATES[key] ?? key;
+      if (!tags) return text;
+      return (
+        <>
+          {text}
+          {Object.entries(tags).map(([tagName, render]) => (
+            <React.Fragment key={tagName}>{render(tagName)}</React.Fragment>
+          ))}
+        </>
+      );
+    };
     return t;
   }
   return {
@@ -329,6 +360,22 @@ function setConfigs(configs: ConfigFixture[]) {
   });
 }
 
+/**
+ * Set the project's active issue integration. The Add-inbound button
+ * is gated on this — passing `null` simulates a project with no
+ * integration (button disabled, "no-integration" empty-state copy).
+ * Default in beforeEach mirrors a Jira-integrated project so existing
+ * tests keep passing without each one having to re-set it.
+ */
+function setActiveIntegrationProvider(
+  provider: "JIRA" | "GITHUB" | "AZURE_DEVOPS" | "SIMPLE_URL" | null
+) {
+  mockFindFirstProjectIntegration.mockReturnValue({
+    data: provider ? { integration: { id: 1, provider } } : null,
+    isLoading: false,
+  });
+}
+
 describe("WebhookConfigForm (multi-adapter)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -337,6 +384,7 @@ describe("WebhookConfigForm (multi-adapter)", () => {
       value: { origin: "https://app.example.test" },
     });
     setConfigs([]);
+    setActiveIntegrationProvider("JIRA");
   });
 
   // ─── Empty state + add-button visibility ─────────────────────────────
@@ -347,28 +395,35 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     expect(
       screen.getByTestId("webhook-inbound-add-button")
     ).toBeInTheDocument();
-    // Empty-state copy from the inboundEmpty key
-    expect(screen.getByText("inboundEmpty")).toBeInTheDocument();
+    // beforeEach sets the active integration to JIRA, so the
+    // "with integration" empty-state variant renders.
+    expect(screen.getByText("inboundEmptyWithIntegration")).toBeInTheDocument();
+    // The "Add one" inline link in the empty state must be present
+    // and trigger the same flow as the Add button.
+    expect(
+      screen.getByTestId("webhook-inbound-empty-add-link")
+    ).toBeInTheDocument();
   });
 
-  it("Test 2: add-button stays enabled when at least one adapter is unconfigured", () => {
-    setConfigs([jiraConfig]); // GITHUB + ADO still available
+  it("Test 2: add-button enabled when integration's adapter has no config", () => {
+    // 1:1 gating: button is enabled iff the project's active integration
+    // adapter is not yet configured. JIRA integration + zero configs =
+    // enabled.
+    setConfigs([]);
+    setActiveIntegrationProvider("JIRA");
     render(<WebhookConfigForm projectId={42} />);
     const addBtn = screen.getByTestId("webhook-inbound-add-button");
-    expect(addBtn).toBeInTheDocument();
     expect(addBtn).not.toBeDisabled();
   });
 
-  it("Test 3: add-button is hidden or disabled when all 3 adapters are configured", () => {
-    setConfigs([jiraConfig, githubConfig, adoConfig]);
+  it("Test 3: add-button is disabled when integration's adapter is already configured", () => {
+    // 1:1 gating: project has JIRA integration AND a Jira inbound config —
+    // there's nothing more to add.
+    setConfigs([jiraConfig]);
+    setActiveIntegrationProvider("JIRA");
     render(<WebhookConfigForm projectId={42} />);
-    const addBtn = screen.queryByTestId("webhook-inbound-add-button");
-    // Either not rendered, or rendered-but-disabled — both satisfy the gate
-    if (addBtn) {
-      expect(addBtn).toBeDisabled();
-    } else {
-      expect(addBtn).not.toBeInTheDocument();
-    }
+    const addBtn = screen.getByTestId("webhook-inbound-add-button");
+    expect(addBtn).toBeDisabled();
   });
 
   // ─── Per-card render + per-card root testid scheme ───────────────────
@@ -378,7 +433,7 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     render(<WebhookConfigForm projectId={42} />);
     const card = screen.getByTestId("webhook-inbound-card-jira");
     expect(card).toBeInTheDocument();
-    // Stable inner testids preserved from Phase 1
+
     expect(within(card).getByTestId("webhook-url")).toBeInTheDocument();
     expect(within(card).getByTestId("webhook-secret")).toBeInTheDocument();
     expect(
@@ -414,42 +469,19 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     expect(screen.getByTestId("webhook-inbound-card-ado")).toBeInTheDocument();
   });
 
-  // ─── Adapter chooser ─────────────────────────────────────────────────
+  // ─── Adapter chooser (dormant) ───────────────────────────────────────
+  // The chooser surface (`webhook-inbound-chooser-*` testids) is preserved
+  // in source for future non-issue-tracker inbound adapters. Today the
+  // Add button skips the chooser entirely and routes to whichever adapter
+  // matches the project's active issue integration. Tests 7 and 8
+  // (chooser visibility + per-adapter disable state) are retired since
+  // those interactions are no longer reachable from the product UI.
 
-  it("Test 7: chooser opens on add-button click; shows all 3 radio options", () => {
+  it("Test 9: ADO project lands directly on the credentials form (chooser skipped)", () => {
     setConfigs([]);
+    setActiveIntegrationProvider("AZURE_DEVOPS");
     render(<WebhookConfigForm projectId={42} />);
     fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
-    expect(
-      screen.getByTestId("webhook-inbound-chooser-jira")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByTestId("webhook-inbound-chooser-github")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByTestId("webhook-inbound-chooser-ado")
-    ).toBeInTheDocument();
-  });
-
-  it("Test 8: chooser disables JIRA radio when JIRA config already exists", () => {
-    setConfigs([jiraConfig]);
-    render(<WebhookConfigForm projectId={42} />);
-    fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
-    expect(screen.getByTestId("webhook-inbound-chooser-jira")).toBeDisabled();
-    expect(
-      screen.getByTestId("webhook-inbound-chooser-github")
-    ).not.toBeDisabled();
-    expect(
-      screen.getByTestId("webhook-inbound-chooser-ado")
-    ).not.toBeDisabled();
-  });
-
-  it("Test 9: chooser shows ADO username + password inputs after submitting AZURE_DEVOPS selection", () => {
-    setConfigs([]);
-    render(<WebhookConfigForm projectId={42} />);
-    fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
-    fireEvent.click(screen.getByTestId("webhook-inbound-chooser-ado"));
-    fireEvent.click(screen.getByTestId("webhook-inbound-chooser-submit"));
     expect(
       screen.getByTestId("webhook-inbound-ado-username-input")
     ).toBeInTheDocument();
@@ -460,10 +492,9 @@ describe("WebhookConfigForm (multi-adapter)", () => {
 
   it("Test 10: ADO scope hint is visible on the ADO create form", () => {
     setConfigs([]);
+    setActiveIntegrationProvider("AZURE_DEVOPS");
     render(<WebhookConfigForm projectId={42} />);
     fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
-    fireEvent.click(screen.getByTestId("webhook-inbound-chooser-ado"));
-    fireEvent.click(screen.getByTestId("webhook-inbound-chooser-submit"));
     expect(screen.getByText("inboundAdoScopeHint")).toBeInTheDocument();
   });
 
@@ -477,8 +508,9 @@ describe("WebhookConfigForm (multi-adapter)", () => {
 
   // ─── Create flow per adapter ─────────────────────────────────────────
 
-  it("Test 12: JIRA create flow calls createOrRotateInboundWebhook with adapterType=JIRA and reveals secret", async () => {
+  it("Test 12: Jira-integrated project — Add button creates inline (chooser skipped)", async () => {
     setConfigs([]);
+    setActiveIntegrationProvider("JIRA");
     mockCreateOrRotateInbound.mockResolvedValue({
       success: true,
       configId: "cfg-jira-new",
@@ -487,9 +519,6 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     });
     render(<WebhookConfigForm projectId={42} />);
     fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
-    fireEvent.click(screen.getByTestId("webhook-inbound-chooser-jira"));
-    // Jira chooser-submit creates inline (no separate create form).
-    fireEvent.click(screen.getByTestId("webhook-inbound-chooser-submit"));
     await waitFor(() => {
       expect(mockCreateOrRotateInbound).toHaveBeenCalledWith({
         projectId: 42,
@@ -498,8 +527,9 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     });
   });
 
-  it("Test 13: GITHUB create flow calls createOrRotateInboundWebhook with adapterType=GITHUB", async () => {
+  it("Test 13: GitHub-integrated project — Add button creates inline (chooser skipped)", async () => {
     setConfigs([]);
+    setActiveIntegrationProvider("GITHUB");
     mockCreateOrRotateInbound.mockResolvedValue({
       success: true,
       configId: "cfg-github-new",
@@ -508,9 +538,6 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     });
     render(<WebhookConfigForm projectId={42} />);
     fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
-    fireEvent.click(screen.getByTestId("webhook-inbound-chooser-github"));
-    // GitHub chooser-submit creates inline (no separate create form).
-    fireEvent.click(screen.getByTestId("webhook-inbound-chooser-submit"));
     await waitFor(() => {
       expect(mockCreateOrRotateInbound).toHaveBeenCalledWith({
         projectId: 42,
@@ -519,8 +546,9 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     });
   });
 
-  it("Test 14a: ADO create flow reveals URL with no secret field when server returns {url, configId} without secret (M-05 — admin needs full URL once)", async () => {
+  it("Test 14a: ADO create flow reveals URL with no secret field when server returns {url, configId} without secret", async () => {
     setConfigs([]);
+    setActiveIntegrationProvider("AZURE_DEVOPS");
     // ADO server action returns NO `secret` field — admin already typed
     // the credentials, so there's nothing to reveal. The reveal box must
     // still render so the admin can copy the FULL URL once before reload.
@@ -534,8 +562,6 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     });
     render(<WebhookConfigForm projectId={42} />);
     fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
-    fireEvent.click(screen.getByTestId("webhook-inbound-chooser-ado"));
-    fireEvent.click(screen.getByTestId("webhook-inbound-chooser-submit"));
 
     fireEvent.change(screen.getByTestId("webhook-inbound-ado-username-input"), {
       target: { value: "tpi" },
@@ -574,6 +600,7 @@ describe("WebhookConfigForm (multi-adapter)", () => {
 
   it("Test 14: ADO create flow JSON-encodes credentials via createOrRotateInboundWebhook", async () => {
     setConfigs([]);
+    setActiveIntegrationProvider("AZURE_DEVOPS");
     mockCreateOrRotateInbound.mockResolvedValue({
       success: true,
       configId: "cfg-ado-new",
@@ -581,8 +608,6 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     });
     render(<WebhookConfigForm projectId={42} />);
     fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
-    fireEvent.click(screen.getByTestId("webhook-inbound-chooser-ado"));
-    fireEvent.click(screen.getByTestId("webhook-inbound-chooser-submit"));
 
     const userInput = screen.getByTestId(
       "webhook-inbound-ado-username-input"
@@ -746,14 +771,11 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     });
   });
 
-  // ─── Existing-config-state surface (regression coverage for Phase 1
-  //     stable inner testids) ──────────────────────────────────────────
-
-  it("Test 22: existing Jira config renders masked secret + stable inner testids (Phase 1 regression gate)", () => {
+  it("Test 22: existing Jira config renders masked secret + stable inner testids", () => {
     setConfigs([jiraConfig]);
     render(<WebhookConfigForm projectId={42} />);
     const card = screen.getByTestId("webhook-inbound-card-jira");
-    // Stable inner testids — the very ones Phase 1's E2E spec relies on
+
     expect(within(card).getByTestId("webhook-url")).toBeInTheDocument();
     expect(within(card).getByTestId("webhook-secret")).toBeInTheDocument();
     expect(
@@ -770,8 +792,6 @@ describe("WebhookConfigForm (multi-adapter)", () => {
       "secretMasked"
     );
   });
-
-  // ─── Phase 4 / Plan 04-07 — health badge + delivery activity + reenable ─
 
   it("Test 23: health badge renders HEALTHY with default variant on healthy config", () => {
     setConfigs([jiraConfig]);

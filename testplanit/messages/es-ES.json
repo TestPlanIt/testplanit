@@ -1135,12 +1135,15 @@
         }
       },
       "webhooks": {
-        "description": "Configure webhooks entrantes para Jira, GitHub y Azure DevOps para mantener sincronizados los problemas vinculados.",
-        "inboundDescription": "Configure webhooks entrantes para Jira, GitHub y Azure DevOps para mantener sincronizados los problemas vinculados.",
+        "description": "Configure los webhooks entrantes para mantener sincronizados los problemas vinculados.",
+        "inboundDescription": "Configure los webhooks entrantes para mantener sincronizados los problemas vinculados.",
         "outboundDescription": "Configure los webhooks salientes para enviar eventos de TestPlanIt a Slack o a cualquier URL firmada con HMAC.",
         "directionInbound": "Entrante",
         "directionOutbound": "Salida",
-        "inboundAddButtonAllConfigured": "Todos los adaptadores de entrada ya están configurados. Elimine uno para agregar un adaptador diferente.",
+        "inboundAddButtonAllConfigured": "El adaptador de entrada ya está configurado.",
+        "inboundAddButtonNoIntegration": "Asigne una integración de incidencias a este proyecto antes de agregar un webhook entrante.",
+        "inboundEmptyWithIntegration": "No hay webhooks entrantes configurados. <link>Agregue uno</link> para recibir actualizaciones de incidencias de su integración de incidencias asignada.",
+        "inboundEmptyNoIntegration": "Se requiere una integración de incidencias <link></link> para recibir actualizaciones de incidencias entrantes. Asigne una a su proyecto para comenzar.",
         "deliveriesEmptyNoConfigs": "Aún no se han realizado entregas mediante webhook; para empezar a recibirlas, cree un webhook de entrada o de salida en las otras pestañas.",
         "noConfig": "No se ha configurado ningún webhook.",
         "createButton": "Crear webhook",

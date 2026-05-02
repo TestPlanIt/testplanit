@@ -58,7 +58,11 @@ import {
   sendTestWebhook,
   setWebhookActive,
 } from "~/app/actions/webhook-config";
-import { useFindManyWebhookConfig } from "~/lib/hooks";
+import {
+  useFindFirstProjectIntegration,
+  useFindManyWebhookConfig,
+} from "~/lib/hooks";
+import { Link } from "~/lib/navigation";
 import { redactWebhookUrl } from "~/lib/webhooks/redaction";
 
 interface WebhookConfigFormProps {
@@ -66,6 +70,20 @@ interface WebhookConfigFormProps {
 }
 
 type InboundAdapterType = "JIRA" | "GITHUB" | "AZURE_DEVOPS";
+
+// Inbound webhooks today are 1:1 with the project's active issue integration:
+// the only inbound consumer is `applyInboundIssueUpdate`, and a project has
+// at most one active issue integration. Map the integration provider to the
+// matching inbound adapter; returns null when no supported inbound adapter
+// exists for the provider (e.g. SIMPLE_URL — link-only, no webhook surface).
+function inboundAdapterForProvider(
+  provider: string | null | undefined
+): InboundAdapterType | null {
+  if (provider === "JIRA") return "JIRA";
+  if (provider === "GITHUB") return "GITHUB";
+  if (provider === "AZURE_DEVOPS") return "AZURE_DEVOPS";
+  return null;
+}
 
 type EndpointHealth = "HEALTHY" | "DEGRADED" | "DISABLED";
 
@@ -152,7 +170,7 @@ function healthBadgeVariant(
 }
 
 /**
- * Project admin form for INBOUND webhook configs (Phase 3 / D-16..D-21).
+ * Project admin form for INBOUND webhook configs
  *
  * Multi-card layout: one Card per `WebhookConfig` row where direction is
  * INBOUND. Add-button opens an adapter chooser (Jira / GitHub / Azure DevOps);
@@ -206,9 +224,26 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
   const usedAdapters = new Set<InboundAdapterType>(
     configs.map((c) => c.adapterType)
   );
-  const allConfigured = ADAPTER_OPTIONS.every((opt) =>
-    usedAdapters.has(opt.value)
-  );
+
+  // The project's active issue integration drives which inbound adapter
+  // can be added. `null` here means either no active integration exists
+  // OR the active integration's provider isn't a supported inbound
+  // adapter (e.g. SIMPLE_URL — link-only, no webhook surface).
+  const { data: activeIntegration } = useFindFirstProjectIntegration({
+    where: {
+      projectId,
+      isActive: true,
+      integration: { isDeleted: false },
+    },
+    select: {
+      integration: { select: { id: true, provider: true } },
+    },
+  });
+  const activeProvider = activeIntegration?.integration?.provider ?? null;
+  const adapterFromIntegration = inboundAdapterForProvider(activeProvider);
+  const inboundExistsForActiveAdapter =
+    adapterFromIntegration !== null && usedAdapters.has(adapterFromIntegration);
+  const integrationsAdminHref = `/projects/settings/${projectId}/integrations`;
 
   // ─── Chooser + create form state ─────────────────────────────────────
   const [chooserOpen, setChooserOpen] = useState(false);
@@ -250,12 +285,32 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
     setAdoPassword("");
   }
 
-  async function handleCreate() {
-    if (!chosenAdapter) return;
+  // Skip the chooser step — inbound adapters are 1:1 with the project's
+  // active issue integration. The chooser surface is preserved for
+  // future non-issue-tracker inbound adapters.
+  function startAddInboundFlow() {
+    if (!adapterFromIntegration) return;
+    if (adapterFromIntegration === "AZURE_DEVOPS") {
+      // ADO needs the admin to type credentials before we can call the
+      // server action — render the inline credentials form.
+      setChooserOpen(false);
+      setChosenAdapter("AZURE_DEVOPS");
+      return;
+    }
+    // Jira/GitHub: no further input needed. Don't set chosenAdapter
+    // (which would briefly render the create form before resetCreateState
+    // clears it post-success — visible flash). Pass the adapter
+    // explicitly since React batches state updates.
+    void handleCreate(adapterFromIntegration);
+  }
+
+  async function handleCreate(adapterOverride?: InboundAdapterType) {
+    const adapter = adapterOverride ?? chosenAdapter;
+    if (!adapter) return;
     setIsCreating(true);
     try {
       const input: Parameters<typeof createOrRotateInboundWebhook>[0] =
-        chosenAdapter === "AZURE_DEVOPS"
+        adapter === "AZURE_DEVOPS"
           ? {
               projectId,
               adapterType: "AZURE_DEVOPS",
@@ -265,7 +320,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
                 password: adoPassword,
               },
             }
-          : { projectId, adapterType: chosenAdapter };
+          : { projectId, adapterType: adapter };
       const result = await createOrRotateInboundWebhook(input);
       if (!result.success) {
         toast.error(result.error ?? t("saveError"));
@@ -548,7 +603,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
             <Button
               type="button"
               data-testid="webhook-create-button"
-              onClick={handleCreate}
+              onClick={() => handleCreate()}
               disabled={
                 isCreating ||
                 (chosenAdapter === "AZURE_DEVOPS" &&
@@ -602,7 +657,6 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
         <div className="text-xs font-medium">{t("setupStepsTitle")}</div>
         <ol className="list-decimal space-y-1 pl-5 text-xs text-muted-foreground">
           {stepKeys[adapterType].map((k) => (
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             <li key={k}>{t(k as any)}</li>
           ))}
         </ol>
@@ -623,10 +677,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
           role="alert"
           className="flex items-start gap-2 rounded-md bg-destructive px-3 py-2 text-xs font-medium text-destructive-foreground"
         >
-          <AlertTriangle
-            className="h-4 w-4 shrink-0"
-            aria-hidden="true"
-          />
+          <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span>{t("revealedShownOnceWarning")}</span>
         </div>
         {renderSetupSteps(adapterType)}
@@ -809,9 +860,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
                     {t(healthLabelKey)}
                   </Badge>
                 </TooltipTrigger>
-                <TooltipContent>
-                  {renderHealthTooltip(config)}
-                </TooltipContent>
+                <TooltipContent>{renderHealthTooltip(config)}</TooltipContent>
               </Tooltip>
             </div>
           </div>
@@ -969,6 +1018,17 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
   const deleteConfig = configs.find((c) => c.id === deleteDialogConfigId);
   const reenableConfig = configs.find((c) => c.id === reenableDialogConfigId);
 
+  // Add-button gating: disabled when the project has no supported issue
+  // integration to map an inbound adapter to, or when the integration's
+  // adapter is already configured (1:1 model — only one inbound adapter
+  // per project's active integration).
+  const addButtonDisabledReason: "no-integration" | "all-configured" | null =
+    !adapterFromIntegration
+      ? "no-integration"
+      : inboundExistsForActiveAdapter
+        ? "all-configured"
+        : null;
+
   return (
     <div className="space-y-4" data-testid="webhook-config-form">
       <div className="flex items-center justify-between">
@@ -976,7 +1036,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
           {t("inboundDescription")}
         </p>
         {!inCreateFlow &&
-          (allConfigured ? (
+          (addButtonDisabledReason !== null ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <span>
@@ -991,17 +1051,16 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                {t("inboundAddButtonAllConfigured")}
+                {addButtonDisabledReason === "no-integration"
+                  ? t("inboundAddButtonNoIntegration")
+                  : t("inboundAddButtonAllConfigured")}
               </TooltipContent>
             </Tooltip>
           ) : (
             <Button
               type="button"
               data-testid="webhook-inbound-add-button"
-              onClick={() => {
-                setChooserOpen(true);
-                setChosenAdapter(null);
-              }}
+              onClick={startAddInboundFlow}
             >
               <CirclePlus className="h-4 w-4" />
               <span>{t("inboundAddButton")}</span>
@@ -1017,7 +1076,29 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
           data-testid="webhook-inbound-empty"
           className="rounded-md border p-6 text-center text-sm text-muted-foreground"
         >
-          {t("inboundEmpty")}
+          {adapterFromIntegration
+            ? t.rich("inboundEmptyWithIntegration", {
+                link: (chunks) => (
+                  <button
+                    type="button"
+                    data-testid="webhook-inbound-empty-add-link"
+                    onClick={startAddInboundFlow}
+                    className="underline underline-offset-2 hover:text-foreground"
+                  >
+                    {chunks}
+                  </button>
+                ),
+              })
+            : t.rich("inboundEmptyNoIntegration", {
+                link: (chunks) => (
+                  <Link
+                    href={integrationsAdminHref}
+                    className="underline underline-offset-2 hover:text-foreground"
+                  >
+                    {chunks}
+                  </Link>
+                ),
+              })}
         </div>
       ) : (
         <div className="space-y-4">{configs.map(renderConfigCard)}</div>
