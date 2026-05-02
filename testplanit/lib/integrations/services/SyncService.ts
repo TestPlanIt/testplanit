@@ -6,6 +6,7 @@ import { enqueueWithAuditContext } from "../../auditContextEnqueue";
 import { getCurrentTenantId } from "../../multiTenantPrisma";
 import { getSyncQueue } from "../../queues";
 import valkeyConnection from "../../valkey";
+import { projectIssueUpdateChannel } from "../../webhooks/issueUpdateChannels";
 import type { IssueAdapter, IssueData } from "../adapters/IssueAdapter";
 import { issueCache } from "../cache/IssueCache";
 import { integrationManager } from "../IntegrationManager";
@@ -110,6 +111,42 @@ async function releaseIssueSyncLock(
 ): Promise<void> {
   if (!valkeyConnection) return;
   await valkeyConnection.del(issueSyncLockKey(integrationId, externalId));
+}
+
+/**
+ * Best-effort SSE wake-up for the project-scoped issue-update channel.
+ *
+ * Mirrors the notifications worker pattern (workers/notificationWorker.ts):
+ * the payload is just a "something changed; refetch" signal — the consumer
+ * is responsible for the authorized re-read. SSE pub/sub is untrusted
+ * plumbing (Architectural Directive 2); access control fires at the
+ * React Query / ZenStack hook layer when the client refetches.
+ *
+ * Failures are logged and swallowed — the DB row commit is the source of
+ * truth, the SSE event is opportunistic. A missed event means at-most a
+ * stale UI until the next manual refresh / next event.
+ */
+async function publishIssueUpdate(args: {
+  projectId: number;
+  issueId: number;
+  event: "issue-updated" | "issue-created";
+  tenantId: string;
+}): Promise<void> {
+  if (!valkeyConnection) return;
+  try {
+    const channel = projectIssueUpdateChannel(args.tenantId, args.projectId);
+    const payload = JSON.stringify({
+      event: args.event,
+      issueId: args.issueId,
+      projectId: args.projectId,
+    });
+    await valkeyConnection.publish(channel, payload);
+  } catch (err) {
+    console.warn(
+      `[SyncService] SSE publish failed for issue ${args.issueId}:`,
+      err instanceof Error ? err.message : err
+    );
+  }
 }
 
 export interface SyncOptions {
@@ -1146,6 +1183,15 @@ export class SyncService {
         error
       );
     });
+
+    // SSE wake-up for any subscriber currently watching this project's
+    // issues view. Best-effort — same posture as the Elasticsearch index.
+    await publishIssueUpdate({
+      projectId,
+      issueId: created.id,
+      event: "issue-created",
+      tenantId: getCurrentTenantId() ?? "default",
+    });
   }
 
   /**
@@ -1250,6 +1296,20 @@ export class SyncService {
         `Failed to emit issue.updated webhook for issue ${existingIssue.id}:`,
         error
       );
+    }
+
+    // SSE wake-up for any subscriber watching this project's issues view.
+    // Mirrors the create path — best-effort, swallowed errors. The
+    // existingIssue row already carries projectId from the findFirst
+    // above (no select projection); guard is for the rare schema-time
+    // null-projectId case.
+    if (existingIssue.projectId != null) {
+      await publishIssueUpdate({
+        projectId: existingIssue.projectId,
+        issueId: existingIssue.id,
+        event: "issue-updated",
+        tenantId: getCurrentTenantId() ?? "default",
+      });
     }
   }
 }

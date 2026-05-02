@@ -31,6 +31,7 @@ import {
   usePagination,
 } from "~/lib/contexts/PaginationContext";
 import { usePageSizeOptions } from "~/lib/hooks/usePageSizeOptions";
+import { useIssueUpdateStream } from "~/lib/hooks/useIssueUpdateStream";
 import {
   useCountIssue,
   useFindFirstProjects,
@@ -59,6 +60,11 @@ function ProjectIssues() {
   const searchParams = useSearchParams();
   const projectId = params.projectId ? Number(params.projectId) : null;
   const targetIssueId = searchParams.get("issueId");
+
+  // Live updates: subscribe to inbound webhook → SyncService publish events
+  // for this project so issue creations/updates from upstream Jira/GitHub/ADO
+  // propagate without a manual refresh. No-op when projectId isn't set.
+  useIssueUpdateStream(projectId);
   const scrollAttempts = useRef(0);
   const maxScrollAttempts = 10;
   const scrollInterval = useRef<NodeJS.Timeout | null>(null);

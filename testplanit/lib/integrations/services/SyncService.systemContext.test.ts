@@ -75,29 +75,33 @@ vi.mock("../../auditContextEnqueue", () => ({
   enqueueWithAuditContext: vi.fn(),
 }));
 
-const { mockValkeyStore, mockValkeySet, mockValkeyDel } = vi.hoisted(() => {
-  const store = new Map<string, string>();
-  return {
-    mockValkeyStore: store,
-    mockValkeySet: vi.fn(
-      async (key: string, _val: string, ..._opts: unknown[]) => {
-        if (store.has(key)) return null;
-        store.set(key, "1");
-        return "OK";
-      }
-    ),
-    mockValkeyDel: vi.fn(async (key: string) => {
-      store.delete(key);
-      return 1;
-    }),
-  };
-});
+const { mockValkeyStore, mockValkeySet, mockValkeyDel, mockValkeyPublish } =
+  vi.hoisted(() => {
+    const store = new Map<string, string>();
+    return {
+      mockValkeyStore: store,
+      mockValkeySet: vi.fn(
+        async (key: string, _val: string, ..._opts: unknown[]) => {
+          if (store.has(key)) return null;
+          store.set(key, "1");
+          return "OK";
+        }
+      ),
+      mockValkeyDel: vi.fn(async (key: string) => {
+        store.delete(key);
+        return 1;
+      }),
+      mockValkeyPublish: vi.fn(async (_channel: string, _payload: string) => 1),
+    };
+  });
 
 vi.mock("../../valkey", () => ({
   default: {
     set: (key: string, val: string, ...opts: unknown[]) =>
       mockValkeySet(key, val, ...opts),
     del: (key: string) => mockValkeyDel(key),
+    publish: (channel: string, payload: string) =>
+      mockValkeyPublish(channel, payload),
   },
 }));
 
@@ -124,6 +128,20 @@ const FRESH_ISSUE_DATA = {
 beforeEach(() => {
   vi.clearAllMocks();
   mockValkeyStore.clear();
+  // `vi.clearAllMocks()` calls `mockClear` (clears call history) but
+  // does NOT drain the `mockResolvedValueOnce` queue. Tests upstream
+  // that set one-shot rejections / nulls would otherwise leak through
+  // to subsequent tests. Reset every shared mock fully here, then
+  // re-establish the default implementations below.
+  mockIssueFindFirst.mockReset();
+  mockIntegrationFindUnique.mockReset();
+  mockUserFindUnique.mockReset();
+  mockProjectsFindUnique.mockReset();
+  mockIssueCreate.mockReset();
+  mockIssueUpdate.mockReset();
+  mockSyncIssue.mockReset();
+  mockValkeyPublish.mockReset();
+  mockValkeyPublish.mockImplementation(async () => 1);
   mockSyncIssue.mockResolvedValue(FRESH_ISSUE_DATA);
   mockIssueFindFirst.mockResolvedValue({
     id: 1,
@@ -514,5 +532,107 @@ describe("performIssueRefreshSystem — GitHub repo context", () => {
         createdById: "user-creator-1",
       }),
     });
+  });
+});
+
+describe("performIssueRefreshSystem — SSE wake-up publish", () => {
+  it("auto-create publishes 'issue-created' on the project-scoped channel", async () => {
+    mockIntegrationFindUnique.mockResolvedValueOnce({
+      id: 1,
+      authType: "PERSONAL_ACCESS_TOKEN",
+      credentials: { token: "x" },
+      provider: "JIRA",
+    });
+    mockIssueFindFirst.mockResolvedValue(null);
+    mockIssueCreate.mockResolvedValueOnce({ id: 99 });
+
+    await syncService.performIssueRefreshSystem(1, "JIRA-1", {
+      createIfMissing: { projectId: 7 },
+    });
+
+    expect(mockValkeyPublish).toHaveBeenCalledWith(
+      "issue-updates:tenant:default:project:7",
+      expect.stringContaining('"event":"issue-created"')
+    );
+    const payload = JSON.parse(mockValkeyPublish.mock.calls[0]![1] as string);
+    expect(payload).toMatchObject({
+      event: "issue-created",
+      issueId: 99,
+      projectId: 7,
+    });
+  });
+
+  it("update path publishes 'issue-updated' with the existing issue's projectId", async () => {
+    mockIntegrationFindUnique.mockResolvedValueOnce({
+      id: 1,
+      authType: "PERSONAL_ACCESS_TOKEN",
+      credentials: { token: "x" },
+      provider: "JIRA",
+    });
+    // Both findFirst calls return an existing Issue: first is the
+    // existence-check inside `_executeSyncWithAdapter`, second is the
+    // lookup inside `updateExistingIssue` itself.
+    mockIssueFindFirst.mockResolvedValue({
+      id: 55,
+      projectId: 13,
+      integrationId: 1,
+      externalId: "JIRA-1",
+      lastSyncedAt: null,
+    });
+
+    await syncService.performIssueRefreshSystem(1, "JIRA-1");
+
+    expect(mockValkeyPublish).toHaveBeenCalledWith(
+      "issue-updates:tenant:default:project:13",
+      expect.stringContaining('"event":"issue-updated"')
+    );
+    const payload = JSON.parse(mockValkeyPublish.mock.calls[0]![1] as string);
+    expect(payload).toMatchObject({
+      event: "issue-updated",
+      issueId: 55,
+      projectId: 13,
+    });
+  });
+
+  it("does NOT publish when sync is short-circuited by freshness gate (cached)", async () => {
+    mockIssueFindFirst.mockResolvedValueOnce({
+      id: 1,
+      lastSyncedAt: new Date(Date.now() - 5_000), // 5s old
+    });
+    mockIntegrationFindUnique.mockResolvedValueOnce({
+      id: 1,
+      authType: "PERSONAL_ACCESS_TOKEN",
+      credentials: { token: "x" },
+      provider: "JIRA",
+    });
+
+    const result = await syncService.performIssueRefreshSystem(1, "JIRA-1", {
+      minFreshnessSeconds: 15,
+    });
+
+    expect(result).toEqual({ success: true, cached: true });
+    expect(mockValkeyPublish).not.toHaveBeenCalled();
+  });
+
+  it("update path swallows publish errors — sync still resolves successfully", async () => {
+    mockIntegrationFindUnique.mockResolvedValueOnce({
+      id: 1,
+      authType: "PERSONAL_ACCESS_TOKEN",
+      credentials: { token: "x" },
+      provider: "JIRA",
+    });
+    mockIssueFindFirst.mockResolvedValue({
+      id: 55,
+      projectId: 13,
+      integrationId: 1,
+      externalId: "JIRA-1",
+      lastSyncedAt: null,
+    });
+    mockValkeyPublish.mockRejectedValueOnce(new Error("valkey unreachable"));
+
+    const result = await syncService.performIssueRefreshSystem(1, "JIRA-1");
+
+    // SSE is opportunistic; the DB row is the source of truth.
+    expect(result.success).toBe(true);
   });
 });
