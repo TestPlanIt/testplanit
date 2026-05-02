@@ -21,7 +21,7 @@ import { AlertCircle, XIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { usePageSizeOptions } from "~/lib/hooks/usePageSizeOptions";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { IconName } from "~/types/globals";
 import { toHumanReadable } from "~/utils/duration";
 

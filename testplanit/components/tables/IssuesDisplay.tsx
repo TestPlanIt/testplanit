@@ -16,7 +16,7 @@ import DOMPurify from "dompurify";
 import { ExternalLink, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";
-import { useIssueUpdateStream } from "~/lib/hooks/useIssueUpdateStream";
+import { useIssueUpdateStream } from "~/hooks/useIssueUpdateStream";
 import { Link } from "~/lib/navigation";
 import { IssueTypeIcon } from "~/utils/issueTypeIcons";
 

@@ -44,9 +44,7 @@ export function subscribeToProjectIssueUpdates(
 
   let entry = streams.get(projectId);
   if (!entry) {
-    const es = new EventSource(
-      `/api/issues/stream?projectId=${projectId}`
-    );
+    const es = new EventSource(`/api/issues/stream?projectId=${projectId}`);
     const created: StreamEntry = { es, listeners: new Set() };
     es.onmessage = (ev) => {
       // The SSE route emits a `{event:"sync"}` envelope as its first byte

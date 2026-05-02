@@ -15,7 +15,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ExternalLink, MessageSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
-import { usePageSizeOptions } from "~/lib/hooks/usePageSizeOptions";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useCountCommentMention, useFindManyCommentMention } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { createMentionExtension } from "~/lib/tiptap/mentionExtension";

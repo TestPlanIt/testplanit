@@ -21,7 +21,7 @@ import { ColumnDef, VisibilityState } from "@tanstack/react-table";
 import { AlertTriangle, UndoDot } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { usePageSizeOptions } from "~/lib/hooks/usePageSizeOptions";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { cn } from "~/utils";
 
 // Item type is now generic, but we ensure 'id' for actions

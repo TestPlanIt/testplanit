@@ -37,7 +37,7 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { usePageSizeOptions } from "~/lib/hooks/usePageSizeOptions";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import type { EntityType } from "~/lib/llm/services/auto-tag/types";
 import { cn } from "~/utils";
 import { invalidateModelQueries } from "~/utils/optimistic-updates";

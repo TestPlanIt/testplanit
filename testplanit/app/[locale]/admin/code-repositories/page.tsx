@@ -35,7 +35,7 @@ import {
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/lib/hooks/usePageSizeOptions";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import {
   useFindManyCodeRepository,
   useUpdateCodeRepository,

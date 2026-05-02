@@ -15,7 +15,7 @@ import {
   useFindManyStepSequenceMatch,
   useUpdateStepSequenceMatch,
 } from "~/lib/hooks/step-sequence-match";
-import { usePageSizeOptions } from "~/lib/hooks/usePageSizeOptions";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { type StepDuplicateRow, getColumns } from "./stepDuplicateColumns";
 import { StepDuplicateConversionDialog } from "./StepDuplicateConversionDialog";

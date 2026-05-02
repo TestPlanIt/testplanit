@@ -11,7 +11,7 @@ import { CopyX, Link2, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { usePageSizeOptions } from "~/lib/hooks/usePageSizeOptions";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { type DuplicateCandidateRow, getColumns } from "./duplicateColumns";
 import { DuplicateComparisonDialog } from "./DuplicateComparisonDialog";
 

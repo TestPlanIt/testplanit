@@ -67,7 +67,7 @@ import { FormProvider } from "react-hook-form";
 import LoadingSpinnerAlert from "~/components/LoadingSpinnerAlert";
 import { TestRunCasesSummary } from "~/components/TestRunCasesSummary";
 import { usePagination } from "~/lib/contexts/PaginationContext";
-import { usePageSizeOptions } from "~/lib/hooks/usePageSizeOptions";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useFindManyJUnitTestResult } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";

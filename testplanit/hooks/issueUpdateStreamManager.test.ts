@@ -49,7 +49,8 @@ beforeEach(() => {
   constructed.length = 0;
   // Install fake. globalThis.EventSource normally only exists in browsers;
   // we attach it for the duration of the test.
-  (globalThis as any).EventSource = FakeEventSource as unknown as typeof EventSource;
+  (globalThis as any).EventSource =
+    FakeEventSource as unknown as typeof EventSource;
 });
 
 afterEach(() => {
@@ -86,7 +87,9 @@ describe("subscribeToProjectIssueUpdates", () => {
     subscribeToProjectIssueUpdates(7, a);
     subscribeToProjectIssueUpdates(7, b);
 
-    constructed[0]!.__fire('{"event":"issue-updated","issueId":1,"projectId":7}');
+    constructed[0]!.__fire(
+      '{"event":"issue-updated","issueId":1,"projectId":7}'
+    );
 
     expect(a).toHaveBeenCalledTimes(1);
     expect(b).toHaveBeenCalledTimes(1);
@@ -98,7 +101,9 @@ describe("subscribeToProjectIssueUpdates", () => {
     subscribeToProjectIssueUpdates(7, sevenSub);
     subscribeToProjectIssueUpdates(8, eightSub);
 
-    constructed[0]!.__fire('{"event":"issue-updated","issueId":1,"projectId":7}');
+    constructed[0]!.__fire(
+      '{"event":"issue-updated","issueId":1,"projectId":7}'
+    );
 
     expect(sevenSub).toHaveBeenCalledTimes(1);
     expect(eightSub).not.toHaveBeenCalled();
