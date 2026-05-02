@@ -61,6 +61,13 @@ async function triggerSystemSyncForInboundEvent(args: {
   projectId: number;
   adapterType: AdapterType;
   externalKey: string;
+  /**
+   * When true, the post-commit sync creates a fresh local Issue row if
+   * one doesn't already exist (auto-create on linked-but-missing). When
+   * false (default), the sync only updates an existing row and throws
+   * if missing — matching the legacy manual-sync contract.
+   */
+  createIfMissing?: boolean;
 }): Promise<void> {
   const provider = inboundProviderForAdapter(args.adapterType);
   if (!provider) {
@@ -93,7 +100,16 @@ async function triggerSystemSyncForInboundEvent(args: {
   const result = await syncService.performIssueRefreshSystem(
     projectIntegration.integration.id,
     args.externalKey,
-    { minFreshnessSeconds: WEBHOOK_SYNC_FRESHNESS_SECONDS }
+    {
+      minFreshnessSeconds: WEBHOOK_SYNC_FRESHNESS_SECONDS,
+      // Only the auto-create branch threads `createIfMissing` through —
+      // the regular update branch is fine throwing on missing (it would
+      // mean an Issue was deleted between the dedup INSERT and this call,
+      // which is a real anomaly worth surfacing).
+      ...(args.createIfMissing
+        ? { createIfMissing: { projectId: args.projectId } }
+        : {}),
+    }
   );
 
   if (!result.success) {
@@ -201,7 +217,16 @@ export async function applyInboundIssueUpdate(
   const externalStatus = adapter.extractExternalStatus(payload, eventType);
 
   type TxOutcome =
-    | { outcome: "updated"; deliveryId: string; issueId: number }
+    // `issueId` is nullable for the auto-create variant: at tx-commit
+    // time the local Issue doesn't exist yet, so the post-commit sync
+    // is what mints it. `wasAutoCreated` distinguishes this case in the
+    // audit metadata without needing a separate public outcome value.
+    | {
+        outcome: "updated";
+        deliveryId: string;
+        issueId: number | null;
+        wasAutoCreated?: boolean;
+      }
     | { outcome: "no-link"; deliveryId: string }
     | { outcome: "no_handler"; deliveryId: string }
     | { outcome: "duplicate"; deliveryId: string }
@@ -313,11 +338,40 @@ export async function applyInboundIssueUpdate(
         });
 
         if (!linkedIssue) {
-          // Step 7: No-link path (D-14). Dedup table is NEVER touched in this
-          // branch — no INSERT, no DELETE — so a future receipt of the same
-          // payload (after a link is created) can be applied normally.
-          deliveryError = "no-link";
-          outcome = { outcome: "no-link", deliveryId: delivery.id };
+          // Step 7: Linked-via-payload but no local Issue yet — auto-create
+          // path. The webhook carries enough info (externalKey + upstream
+          // signal that the issue exists) for us to mirror it locally
+          // instead of requiring manual import. The post-commit sync calls
+          // `performIssueRefreshSystem({ createIfMissing: { projectId } })`
+          // which pulls full upstream state and INSERTs a new Issue row.
+          //
+          // Dedup IS written here (in contrast to the original D-14 no-link
+          // skip-dedup behavior): the auto-create acts on this payload, so
+          // a redelivery should resolve as 'duplicate' rather than create
+          // again. Failure of the post-commit create logs but does not
+          // roll back the dedup row — the next webhook event for the same
+          // issue (different digest) will reattempt and reconcile.
+          if (priorDedup) {
+            deliveryError = "duplicate";
+            outcome = { outcome: "duplicate", deliveryId: delivery.id };
+          } else {
+            await tx.webhookEventDedup.create({
+              data: {
+                webhookConfigId,
+                payloadDigest,
+                processedAt: receivedAt,
+              },
+            });
+            deliveryError = null;
+            // Auto-create variant: no local Issue at tx-commit time. The
+            // post-commit sync mints it; audit records `wasAutoCreated`.
+            outcome = {
+              outcome: "updated",
+              deliveryId: delivery.id,
+              issueId: null,
+              wasAutoCreated: true,
+            };
+          }
         } else if (priorDedup) {
           // Step 8a: Already-applied payload — no double-update (WBHK-06).
           deliveryError = "duplicate";
@@ -388,7 +442,16 @@ export async function applyInboundIssueUpdate(
     outcome: txResult.outcome,
   };
   if (txResult.outcome === "updated") {
-    baseMetadata.issueId = txResult.issueId;
+    if (txResult.issueId !== null) {
+      baseMetadata.issueId = txResult.issueId;
+    }
+    if (txResult.wasAutoCreated) {
+      baseMetadata.wasAutoCreated = true;
+      // Auto-create cases don't yet have a local issueId at audit time;
+      // the externalKey is the only stable identifier until the post-
+      // commit sync mints the row.
+      baseMetadata.issueKey = linkedRef!.externalKey;
+    }
   } else if (txResult.outcome === "no-link" && linkedRef) {
     baseMetadata.issueKey = linkedRef.externalKey;
   }
@@ -407,11 +470,16 @@ export async function applyInboundIssueUpdate(
   // dedup row was just written, signalling intent to apply upstream
   // changes. Other outcomes (no-link, no_handler, duplicate, synthetic)
   // explicitly skip syncing.
+  //
+  // Auto-create variant: if the local Issue doesn't exist yet (`wasAutoCreated`
+  // flag), the sync uses `createIfMissing: { projectId }` so the system path
+  // INSERTs a new Issue row populated from upstream state.
   if (txResult.outcome === "updated" && linkedRef) {
     await triggerSystemSyncForInboundEvent({
       projectId,
       adapterType,
       externalKey: linkedRef.externalKey,
+      createIfMissing: txResult.wasAutoCreated === true,
     });
   }
 
@@ -421,7 +489,9 @@ export async function applyInboundIssueUpdate(
       return {
         outcome: "updated",
         deliveryId: txResult.deliveryId,
-        issueId: txResult.issueId,
+        // Auto-create case: issueId is null at audit time (the Issue was
+        // minted post-commit). The public type allows omitting it.
+        ...(txResult.issueId !== null ? { issueId: txResult.issueId } : {}),
       };
     case "no-link":
       return {

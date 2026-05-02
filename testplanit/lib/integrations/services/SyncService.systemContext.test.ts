@@ -16,6 +16,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ─── Mocks ────────────────────────────────────────────────────────────────
 const mockIssueFindFirst = vi.fn();
+const mockIssueUpdate = vi.fn();
+const mockIssueCreate = vi.fn();
 const mockIntegrationFindUnique = vi.fn();
 const mockUserFindUnique = vi.fn();
 
@@ -23,7 +25,8 @@ vi.mock("@/lib/prismaBase", () => ({
   prisma: {
     issue: {
       findFirst: (...args: any[]) => mockIssueFindFirst(...args),
-      update: vi.fn().mockResolvedValue({ id: 1 }),
+      update: (...args: any[]) => mockIssueUpdate(...args),
+      create: (...args: any[]) => mockIssueCreate(...args),
     },
     user: {
       // `_performIssueRefreshInnerSystem` MUST NOT call this — assertion
@@ -122,6 +125,8 @@ beforeEach(() => {
     externalId: "JIRA-1",
     lastSyncedAt: null,
   });
+  mockIssueUpdate.mockResolvedValue({ id: 1 });
+  mockIssueCreate.mockResolvedValue({ id: 1 });
 });
 
 describe("performIssueRefreshSystem — auth + wiring", () => {
@@ -258,5 +263,145 @@ describe("performIssueRefreshSystem — gate + lock parity with user path", () =
     expect(result).toEqual({ success: true, locked: true });
     expect(mockSyncIssue).not.toHaveBeenCalled();
     expect(mockIntegrationFindUnique).not.toHaveBeenCalled();
+  });
+});
+
+describe("performIssueRefreshSystem — createIfMissing (auto-create)", () => {
+  it("creates a new Issue row when no local match exists and createIfMissing is set", async () => {
+    mockIntegrationFindUnique.mockResolvedValueOnce({
+      id: 1,
+      authType: "PERSONAL_ACCESS_TOKEN",
+      credentials: { token: "x" },
+      provider: "JIRA",
+    });
+    // Local lookup misses — no Issue row matches.
+    mockIssueFindFirst.mockResolvedValue(null);
+
+    const result = await syncService.performIssueRefreshSystem(1, "JIRA-1", {
+      createIfMissing: { projectId: 7 },
+    });
+
+    expect(result.success).toBe(true);
+    expect(mockIssueCreate).toHaveBeenCalledTimes(1);
+    expect(mockIssueCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        externalId: "JIRA-1",
+        externalKey: undefined, // FRESH_ISSUE_DATA has no .key
+        title: "Test issue",
+        externalStatus: "Open",
+        integrationId: 1,
+        projectId: 7,
+      }),
+    });
+    expect(mockIssueUpdate).not.toHaveBeenCalled();
+  });
+
+  it("falls back to update path when an existing Issue row matches, even with createIfMissing set", async () => {
+    mockIntegrationFindUnique.mockResolvedValueOnce({
+      id: 1,
+      authType: "PERSONAL_ACCESS_TOKEN",
+      credentials: { token: "x" },
+      provider: "JIRA",
+    });
+    // Existing Issue row found — update path takes over.
+    mockIssueFindFirst.mockResolvedValue({
+      id: 99,
+      integrationId: 1,
+      externalId: "JIRA-1",
+      lastSyncedAt: null,
+    });
+
+    const result = await syncService.performIssueRefreshSystem(1, "JIRA-1", {
+      createIfMissing: { projectId: 7 },
+    });
+
+    expect(result.success).toBe(true);
+    expect(mockIssueCreate).not.toHaveBeenCalled();
+    expect(mockIssueUpdate).toHaveBeenCalledTimes(1);
+  });
+
+  it("throws when missing AND createIfMissing is NOT set (legacy manual-sync contract preserved)", async () => {
+    mockIntegrationFindUnique.mockResolvedValueOnce({
+      id: 1,
+      authType: "PERSONAL_ACCESS_TOKEN",
+      credentials: { token: "x" },
+      provider: "JIRA",
+    });
+    mockIssueFindFirst.mockResolvedValue(null);
+
+    const result = await syncService.performIssueRefreshSystem(1, "JIRA-1");
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/not found in local database/i);
+    expect(mockIssueCreate).not.toHaveBeenCalled();
+    expect(mockIssueUpdate).not.toHaveBeenCalled();
+  });
+});
+
+describe("performIssueRefreshSystem — GitHub repo context", () => {
+  it("short-circuits the GitHub owner/repo lookup when externalIssueId is already in compound form", async () => {
+    mockIntegrationFindUnique.mockResolvedValueOnce({
+      id: 1,
+      authType: "PERSONAL_ACCESS_TOKEN",
+      credentials: { token: "x" },
+      provider: "GITHUB",
+    });
+    // Found via direct lookup — no need to look up a stored Issue for
+    // owner/repo since the externalIssueId is already compound.
+    mockIssueFindFirst.mockResolvedValue({
+      id: 50,
+      integrationId: 1,
+      externalKey: "octocat/Hello-World#42",
+      lastSyncedAt: null,
+    });
+
+    const result = await syncService.performIssueRefreshSystem(
+      1,
+      "octocat/Hello-World#42"
+    );
+
+    expect(result.success).toBe(true);
+    // Adapter receives the compound id verbatim — no double-encoding.
+    expect(mockSyncIssue).toHaveBeenCalledWith("octocat/Hello-World#42");
+    // findFirst is called exactly twice: once by `_executeSyncWithAdapter`
+    // for the existing-vs-create branch decision, then once inside
+    // `updateExistingIssue` for its own lookup. The legacy
+    // "stored-issue-to-derive-owner/repo" lookup is BYPASSED — that's
+    // the contract this test guards.
+    expect(mockIssueFindFirst).toHaveBeenCalledTimes(2);
+  });
+
+  it("auto-creates a GitHub Issue when given a compound id with no local match", async () => {
+    mockIntegrationFindUnique.mockResolvedValueOnce({
+      id: 1,
+      authType: "PERSONAL_ACCESS_TOKEN",
+      credentials: { token: "x" },
+      provider: "GITHUB",
+    });
+    mockIssueFindFirst.mockResolvedValue(null);
+    mockSyncIssue.mockResolvedValueOnce({
+      ...FRESH_ISSUE_DATA,
+      id: "octocat/Hello-World#42",
+      key: "#42",
+      title: "Auto-created from GitHub",
+    });
+
+    const result = await syncService.performIssueRefreshSystem(
+      1,
+      "octocat/Hello-World#42",
+      { createIfMissing: { projectId: 11 } }
+    );
+
+    expect(result.success).toBe(true);
+    expect(mockSyncIssue).toHaveBeenCalledWith("octocat/Hello-World#42");
+    expect(mockIssueCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        externalId: "octocat/Hello-World#42",
+        externalKey: "#42",
+        title: "Auto-created from GitHub",
+        integrationId: 1,
+        projectId: 11,
+      }),
+    });
   });
 });

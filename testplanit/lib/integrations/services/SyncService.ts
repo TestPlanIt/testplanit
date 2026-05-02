@@ -43,6 +43,21 @@ export interface SyncServiceOptions {
    * upstream API is not contacted.
    */
   minFreshnessSeconds?: number;
+  /**
+   * If set, the sync creates a fresh local Issue row when no matching one
+   * exists (instead of throwing). Used by inbound webhook handlers so the
+   * receiver can mirror upstream issues that admins haven't manually
+   * imported yet — the report layer can then show every upstream issue
+   * regardless of whether testing is associated with it.
+   *
+   * `projectId` is required because Issues join to Projects directly; the
+   * webhook handler resolves it from the WebhookConfig.
+   *
+   * Manual sync paths leave this unset — clicking Sync on an already-known
+   * issue must NOT silently mint a row in a different project, and the
+   * legacy throw surfaces the misconfiguration loudly.
+   */
+  createIfMissing?: { projectId: number };
 }
 
 /**
@@ -878,7 +893,8 @@ export class SyncService {
       return await this._executeSyncWithAdapter(
         prisma,
         integration,
-        externalIssueId
+        externalIssueId,
+        serviceOptions.createIfMissing
       );
     } catch (error: any) {
       console.error(
@@ -898,7 +914,8 @@ export class SyncService {
   private async _executeSyncWithAdapter(
     prisma: PrismaClient,
     integration: { id: number; provider: string },
-    externalIssueId: string
+    externalIssueId: string,
+    createIfMissing?: { projectId: number }
   ): Promise<{ success: boolean; error?: string }> {
     const integrationId = integration.id;
 
@@ -918,56 +935,164 @@ export class SyncService {
       );
     }
 
-    // GitHub issues need the owner/repo context resolved from the stored
-    // Issue row — the upstream adapter expects a compound `owner/repo#N`.
+    // GitHub issues need the owner/repo context resolved into a compound
+    // `owner/repo#N` for `adapter.syncIssue`. If the caller already provides
+    // the compound form (webhook adapters do — `extractLinkedIssueRef`
+    // returns `${repo}#${number}`), use it as-is. Otherwise fall back to
+    // looking up the stored Issue and extracting owner/repo from its
+    // externalData / externalUrl.
     let issueIdForSync = externalIssueId;
     if (integration.provider === "GITHUB") {
-      const storedIssue = await prisma.issue.findFirst({
-        where: {
-          integrationId,
-          OR: [
-            { externalId: externalIssueId },
-            { externalKey: externalIssueId },
-          ],
-        },
-      });
-
-      let owner: string | undefined;
-      let repo: string | undefined;
-
-      if (storedIssue?.externalData) {
-        const externalData = storedIssue.externalData as Record<string, any>;
-        if (externalData._github_owner && externalData._github_repo) {
-          owner = externalData._github_owner;
-          repo = externalData._github_repo;
-        }
-      }
-
-      if ((!owner || !repo) && storedIssue?.externalUrl) {
-        const urlMatch = storedIssue.externalUrl.match(
-          /github\.com\/([^/]+)\/([^/]+)\/issues/
-        );
-        if (urlMatch) {
-          owner = urlMatch[1];
-          repo = urlMatch[2];
-        }
-      }
-
-      if (owner && repo) {
-        const issueNumber = externalIssueId.replace(/^#/, "");
-        issueIdForSync = `${owner}/${repo}#${issueNumber}`;
-      } else {
-        throw new Error(
-          `Cannot determine GitHub repository for issue ${externalIssueId}. ` +
-            `Issue data is missing repository context.`
-        );
-      }
+      issueIdForSync = await this._resolveGitHubIssueIdForSync(
+        prisma,
+        integrationId,
+        externalIssueId
+      );
     }
 
     const issueData = await adapter.syncIssue(issueIdForSync);
     await issueCache.set(integrationId, issueData.id, issueData);
-    await this.updateExistingIssue(prisma, integrationId, issueData);
-    return { success: true };
+
+    // Find existing local issue. The lookup OR-set covers historical
+    // mismatches between externalId / externalKey storage conventions —
+    // matches `updateExistingIssue`'s behaviour exactly.
+    const existingIssue = await prisma.issue.findFirst({
+      where: {
+        integrationId,
+        OR: [
+          { externalId: issueData.id },
+          { externalId: issueData.key },
+          { externalKey: issueData.key },
+          { externalKey: issueData.id },
+        ],
+      },
+    });
+
+    if (existingIssue) {
+      await this.updateExistingIssue(prisma, integrationId, issueData);
+      return { success: true };
+    }
+
+    // No local issue — caller must have opted into create-if-missing
+    // (inbound webhook handler does, manual sync button does not).
+    if (createIfMissing) {
+      await this._createIssueFromExternal(
+        prisma,
+        integrationId,
+        createIfMissing.projectId,
+        issueData
+      );
+      return { success: true };
+    }
+
+    throw new Error(
+      `Issue ${issueData.key || issueData.id} not found in local database. Issues must be created through the UI before they can be synced.`
+    );
+  }
+
+  /**
+   * Compose the compound `owner/repo#N` form GitHub adapters expect.
+   * Short-circuits when externalIssueId is already in that form (webhook
+   * receivers always pass it that way via `extractLinkedIssueRef`).
+   */
+  private async _resolveGitHubIssueIdForSync(
+    prisma: PrismaClient,
+    integrationId: number,
+    externalIssueId: string
+  ): Promise<string> {
+    // Already compound? Use as-is. Pattern: owner/repo#N where owner and
+    // repo are GitHub-name-charset and N is digits.
+    if (/^[\w.-]+\/[\w.-]+#\d+$/.test(externalIssueId)) {
+      return externalIssueId;
+    }
+
+    // Fall back to the legacy lookup path: find a stored Issue and harvest
+    // owner/repo from its externalData or externalUrl. Used by manual sync
+    // when the caller has only the bare issue number/key.
+    const storedIssue = await prisma.issue.findFirst({
+      where: {
+        integrationId,
+        OR: [{ externalId: externalIssueId }, { externalKey: externalIssueId }],
+      },
+    });
+
+    let owner: string | undefined;
+    let repo: string | undefined;
+
+    if (storedIssue?.externalData) {
+      const externalData = storedIssue.externalData as Record<string, any>;
+      if (externalData._github_owner && externalData._github_repo) {
+        owner = externalData._github_owner;
+        repo = externalData._github_repo;
+      }
+    }
+
+    if ((!owner || !repo) && storedIssue?.externalUrl) {
+      const urlMatch = storedIssue.externalUrl.match(
+        /github\.com\/([^/]+)\/([^/]+)\/issues/
+      );
+      if (urlMatch) {
+        owner = urlMatch[1];
+        repo = urlMatch[2];
+      }
+    }
+
+    if (!owner || !repo) {
+      throw new Error(
+        `Cannot determine GitHub repository for issue ${externalIssueId}. ` +
+          `Issue data is missing repository context.`
+      );
+    }
+
+    const issueNumber = externalIssueId.replace(/^#/, "");
+    return `${owner}/${repo}#${issueNumber}`;
+  }
+
+  /**
+   * Insert a fresh Issue row from upstream data — used by inbound webhook
+   * handlers that opt into auto-create when the linked issue doesn't yet
+   * exist locally. Mirrors `updateExistingIssue`'s field mapping so a
+   * subsequent update sync produces the identical row state.
+   *
+   * Project membership is REQUIRED (the Issue model joins to Projects via
+   * `projectId`); the webhook handler resolves the project from the
+   * WebhookConfig and passes it through.
+   */
+  private async _createIssueFromExternal(
+    db: any,
+    integrationId: number,
+    projectId: number,
+    issueData: IssueData
+  ): Promise<void> {
+    const created = await db.issue.create({
+      data: {
+        name: issueData.key || issueData.id,
+        title: issueData.title,
+        description: issueData.description || "",
+        status: issueData.status,
+        priority: issueData.priority || "medium",
+        externalId: issueData.id,
+        externalKey: issueData.key,
+        externalUrl: issueData.url,
+        externalStatus: issueData.status,
+        externalData: issueData.customFields || {},
+        issueTypeId: issueData.issueType?.id,
+        issueTypeName: issueData.issueType?.name,
+        issueTypeIconUrl: issueData.issueType?.iconUrl,
+        lastSyncedAt: new Date(),
+        integrationId,
+        projectId,
+      },
+    });
+
+    // Index newly-created issues just like manual import does. Best-effort
+    // — search index drift is recoverable, the row commit isn't.
+    await syncIssueToElasticsearch(created.id).catch((error: any) => {
+      console.error(
+        `Failed to sync newly created issue ${created.id} to Elasticsearch:`,
+        error
+      );
+    });
   }
 
   /**

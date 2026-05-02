@@ -318,36 +318,55 @@ describe("applyInboundIssueUpdate", () => {
     );
   });
 
-  it("Test 3 + Test 11: no-link path leaves dedup table untouched (no INSERT, no DELETE)", async () => {
+  it("Test 3: linked-but-missing Issue triggers auto-create — dedup INSERTED, outcome 'updated' with wasAutoCreated metadata, post-commit sync called with createIfMissing", async () => {
+    // The legacy D-14 "no-link skip-dedup, retry-after-manual-link"
+    // semantics retired in favor of auto-create. When the adapter extracts
+    // a linkedRef and the local Issue lookup misses, the receiver now
+    // creates the Issue row from upstream state on this first receipt.
     const applyInboundIssueUpdate = await importSut();
     const input = baseInput();
+    // Tx-side lookup returns null (Issue doesn't exist locally).
     mocks.tx.issue.findFirst.mockResolvedValue(null);
+    mocks.projectIntegrationFindFirst.mockResolvedValueOnce({
+      integrationId: 42,
+      integration: { id: 42 },
+    } as any);
 
     const result = await applyInboundIssueUpdate(input);
 
-    expect(result.outcome).toBe("no-link");
-    // T-03-09 / T-03-10: dedup table NEVER touched.
-    expect(mocks.tx.webhookEventDedup.create).not.toHaveBeenCalled();
+    expect(result.outcome).toBe("updated");
+    // Dedup IS written so the next redelivery of the same payload
+    // resolves as 'duplicate' rather than re-creating.
+    expect(mocks.tx.webhookEventDedup.create).toHaveBeenCalledTimes(1);
     expect(mocks.tx.webhookEventDedup.delete).not.toHaveBeenCalled();
-    expect(mocks.tx.issue.update).not.toHaveBeenCalled();
+    // Delivery row finalized with error=null (apply succeeded).
     expect(mocks.tx.webhookDelivery.update).toHaveBeenCalledWith({
       where: { id: "del_1" },
       data: {
         statusCode: input.statusCode,
         latencyMs: input.latencyMs,
-        error: "no-link",
+        error: null,
       },
     });
-    expect(mocks.tx.webhookConfig.update).toHaveBeenCalledWith({
-      where: { id: input.webhookConfigId },
-      data: { lastReceivedAt: input.receivedAt },
-    });
-    // Audit emitted with no-link outcome (D-16).
+    // Audit metadata records the auto-create distinction so the
+    // Deliveries tab / report layer can differentiate later.
     expect(mocks.captureAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "WEBHOOK_RECEIVED",
-        userId: "__system__",
-        metadata: expect.objectContaining({ outcome: "no-link" }),
+        metadata: expect.objectContaining({
+          outcome: "updated",
+          wasAutoCreated: true,
+          issueKey: "DEMO-42",
+        }),
+      })
+    );
+    // Post-commit sync called with createIfMissing scoped to the project.
+    expect(mocks.performIssueRefreshSystem).toHaveBeenCalledWith(
+      42,
+      "DEMO-42",
+      expect.objectContaining({
+        minFreshnessSeconds: 15,
+        createIfMissing: { projectId: input.projectId },
       })
     );
   });
@@ -576,26 +595,33 @@ describe("applyInboundIssueUpdate", () => {
     expect(mocks.captureAuditEvent).not.toHaveBeenCalled();
   });
 
-  it("Test 13: post-link retry succeeds — D-14 retry semantics without any DELETE", async () => {
+  it("Test 13: redelivery of an auto-created issue's first payload resolves as 'duplicate' (not a second auto-create)", async () => {
+    // Auto-create writes the dedup row on the first receipt. A redelivery
+    // of the SAME payload (Jira/GitHub retry on transient 5xx, or admin
+    // re-firing the same event) must NOT spawn a second Issue — the dedup
+    // SELECT catches it and returns 'duplicate'. The original D-14
+    // skip-dedup behavior (which existed precisely so a retry-after-link
+    // would re-apply) is no longer needed: auto-create resolves the link
+    // on the first receipt.
     const applyInboundIssueUpdate = await importSut();
     const input = baseInput();
-    // First call: no linked Issue → outcome 'no-link', dedup never touched.
+
+    // First call — linked-but-missing → auto-create.
     mocks.tx.issue.findFirst.mockResolvedValueOnce(null);
     const first = await applyInboundIssueUpdate(input);
-    expect(first.outcome).toBe("no-link");
-    expect(mocks.tx.webhookEventDedup.create).not.toHaveBeenCalled();
-    expect(mocks.tx.webhookEventDedup.delete).not.toHaveBeenCalled();
+    expect(first.outcome).toBe("updated");
+    expect(mocks.tx.webhookEventDedup.create).toHaveBeenCalledTimes(1);
 
-    // Second call: link is now created (mock returns a real Issue row);
-    // dedup INSERT succeeds (no prior row blocking it) → outcome 'updated'.
+    // Second call — same payloadDigest, dedup row from the first call is
+    // now present → 'duplicate' outcome, no second dedup INSERT, no second
+    // post-commit sync.
     mocks.tx.webhookDelivery.create.mockResolvedValueOnce({ id: "del_2" });
+    mocks.tx.webhookEventDedup.findFirst.mockResolvedValueOnce({
+      id: "dedup_existing",
+    });
     mocks.tx.issue.findFirst.mockResolvedValueOnce({ id: 200 });
     const second = await applyInboundIssueUpdate(input);
-    expect(second.outcome).toBe("updated");
-    expect(second.issueId).toBe(200);
-    // Dedup INSERT happened on second call (and only second call). The
-    // Issue mutation itself moved to the post-commit system sync path —
-    // see Test 6 for trigger semantics.
+    expect(second.outcome).toBe("duplicate");
     expect(mocks.tx.webhookEventDedup.create).toHaveBeenCalledTimes(1);
     expect(mocks.tx.issue.update).not.toHaveBeenCalled();
   });
@@ -904,7 +930,7 @@ describe("applyInboundIssueUpdate", () => {
     mocks.performIssueRefreshSystem.mockResolvedValueOnce({
       success: false,
       error: "upstream 502",
-    });
+    } as any);
 
     const result = await applyInboundIssueUpdate(input);
 
