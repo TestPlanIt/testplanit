@@ -1,10 +1,16 @@
 ---
 sidebar_position: 10
+title: SSE Notifications and Live Updates
 ---
 
-# SSE Notifications
+# SSE Notifications and Live Updates
 
-TestPlanIt's in-app notification bell uses [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events) with [Valkey](https://valkey.io/) (or Redis) pub/sub fan-out to push updates to clients in near-real time. This page documents how it works, the ingress/proxy configuration required to make long-lived streams reliable behind a load balancer, and the tuning knobs available to operators.
+TestPlanIt uses [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events) with [Valkey](https://valkey.io/) (or Redis) pub/sub fan-out to push updates to clients in near-real time. Two long-lived streams share this transport:
+
+- **`/api/notifications/stream`** — powers the in-app notification bell. One connection per signed-in user.
+- **`/api/issues/stream?projectId=<id>`** — powers live issue updates driven by inbound webhooks. One connection per project per browser, regardless of how many components on the page are watching that project.
+
+Both streams have the same ingress/proxy requirements (no buffering, long idle timeouts) and the same observability surface; the differences are limited to the connection caps each route applies. This page documents how the transport works, the ingress/proxy configuration required to make long-lived streams reliable behind a load balancer, and the tuning knobs available to operators.
 
 ## What it is and how it works
 
@@ -21,6 +27,12 @@ The current architecture replaces that with:
 The pub/sub layer is treated as untrusted plumbing: even if a wake-up arrives wrongly, the read path cannot leak data because `getEnhancedDb` re-applies the tenant filter and access policy. Tenant context for both publish and subscribe is resolved server-side via `getCurrentTenantId()` (`testplanit/lib/multiTenantPrisma.ts`), which reads `INSTANCE_TENANT_ID` from the environment — never from client input.
 
 A single shared Valkey instance handles fan-out for every tenant; isolation is by channel-key prefix, not by separate Valkey deployments. The Valkey already provisioned for BullMQ is reused.
+
+### Issue updates stream
+
+The `/api/issues/stream` route follows the same publish/subscribe model with project-scoped channels (`issues:tenant:<tenantId>:project:<projectId>`). Inbound webhook handlers publish a small `{event, issueId, projectId}` envelope after applying the upstream change to the linked `Issue` row. Authentication and project-access enforcement happen at subscribe time — the route refuses to subscribe a user who cannot read the project, mirroring the policy gate that the notification bell relies on for tenant isolation.
+
+In the browser, the React client uses a refcounted singleton EventSource per project: the first component that subscribes to a project opens the connection, additional subscribers share it, and the connection closes when the last subscriber unmounts. This keeps file-descriptor pressure low — a page with twenty issue badges, a list, and a detail popover for the same project still uses one EventSource. The route's per-user cap therefore bounds the number of distinct projects a user can watch concurrently from one browser, not the number of components on the page.
 
 ## Ingress and proxy configuration
 
@@ -94,10 +106,10 @@ HTTP/2 is enabled by default on ALB v2; no extra configuration needed. SSE multi
 
 ### Plain nginx (non-ingress)
 
-For deployments that put TestPlanIt behind a manually configured nginx (e.g. on a single docker-compose host), add a location block matching `/api/notifications/stream`:
+For deployments that put TestPlanIt behind a manually configured nginx (e.g. on a single docker-compose host), add a location block for each stream. Both routes need the same directives, so a regex location is the most compact way to cover both:
 
 ```nginx
-location /api/notifications/stream {
+location ~ ^/api/(notifications|issues)/stream {
   proxy_pass http://testplanit_upstream;
   proxy_http_version 1.1;
   proxy_set_header Connection "";
@@ -111,14 +123,23 @@ location /api/notifications/stream {
 
 ## Tuning knobs
 
-Two environment variables tune the route's connection caps:
+Each route has its own per-tenant and per-user connection caps so a misbehaving issue-stream pod cannot starve the notification bell, and vice versa.
+
+### Notifications stream
 
 | Variable             | Default | Purpose                                                                                                                                                                                                                                                                                            |
 | -------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `SSE_PER_TENANT_CAP` | `1000`  | Maximum concurrent SSE connections per tenant per pod. The Nth+1 connection receives HTTP `503 Service Unavailable` with a `Retry-After: 30` header. With N replicas, a tenant can hold up to N × cap connections cluster-wide; the per-pod cap is intentional fd-exhaustion / runaway protection. |
 | `SSE_PER_USER_CAP`   | `4`     | Maximum concurrent SSE connections per user per pod. The 5th connection is accepted; the oldest connection for that user is closed (LRU). This is a fairness mechanism — it prevents a single user with many tabs from monopolizing tenant capacity.                                               |
 
-Both variables are read once at module load. Restart the application pods after changing them.
+### Issue updates stream caps
+
+| Variable                    | Default | Purpose                                                                                                                                                                                                                                                                                                                                              |
+| --------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SSE_ISSUES_PER_TENANT_CAP` | `1000`  | Same semantics as `SSE_PER_TENANT_CAP`, applied to the issue-update stream.                                                                                                                                                                                                                                                                          |
+| `SSE_ISSUES_PER_USER_CAP`   | `8`     | Maximum concurrent issue-update connections per user per pod. Higher than the notifications cap because the singleton EventSource manager opens one connection per project the user is watching, and a project switcher / multi-project workflow can legitimately need more open project streams than notification streams (which are user-scoped). |
+
+All four variables are read once at module load. Restart the application pods after changing them.
 
 ## Observability
 
