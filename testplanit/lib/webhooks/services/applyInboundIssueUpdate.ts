@@ -474,13 +474,29 @@ export async function applyInboundIssueUpdate(
   // Auto-create variant: if the local Issue doesn't exist yet (`wasAutoCreated`
   // flag), the sync uses `createIfMissing: { projectId }` so the system path
   // INSERTs a new Issue row populated from upstream state.
+  //
+  // Defensive try/catch: the dedup row is already committed at this point.
+  // Any throw here would propagate to the route handler and surface as a
+  // 500 to the upstream sender (Jira / GitHub / ADO), which would then
+  // retry — and the retry would hit the dedup row and resolve as
+  // 'duplicate' without re-attempting the sync. That leaves the local
+  // Issue permanently un-created. Better to log + drop the throw; the
+  // next webhook event for this issue (different payloadDigest) will
+  // retry the sync naturally.
   if (txResult.outcome === "updated" && linkedRef) {
-    await triggerSystemSyncForInboundEvent({
-      projectId,
-      adapterType,
-      externalKey: linkedRef.externalKey,
-      createIfMissing: txResult.wasAutoCreated === true,
-    });
+    try {
+      await triggerSystemSyncForInboundEvent({
+        projectId,
+        adapterType,
+        externalKey: linkedRef.externalKey,
+        createIfMissing: txResult.wasAutoCreated === true,
+      });
+    } catch (err) {
+      console.error(
+        `[applyInboundIssueUpdate] post-commit sync trigger threw for ${linkedRef.externalKey}:`,
+        err
+      );
+    }
   }
 
   // Map TxOutcome to public ApplyInboundIssueUpdateResult.

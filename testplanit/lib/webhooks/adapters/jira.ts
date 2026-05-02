@@ -94,9 +94,7 @@ export const jiraAdapter: WebhookAdapter = {
     if (!HEX_64_RE.test(provided)) {
       return { valid: false, reason: "malformed-signature" };
     }
-    const expected = createHmac("sha256", secret)
-      .update(rawBody)
-      .digest("hex");
+    const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
     if (!constantTimeEqualHex(provided, expected)) {
       return { valid: false, reason: "signature-mismatch" };
     }
@@ -120,7 +118,20 @@ export const jiraAdapter: WebhookAdapter = {
   },
 
   extractExternalStatus(payload, eventType) {
-    if (eventType !== "jira:issue_updated") return null;
+    // `jira:issue_created` and `jira:issue_updated` both carry the full
+    // issue object with `fields.status.name`. Auto-create relies on this
+    // returning non-null on creation events so the inbound apply path
+    // doesn't short-circuit as `no_handler`.
+    //
+    // `jira:issue_deleted` is intentionally excluded — even if Jira's
+    // payload includes a status at deletion time, we don't want auto-
+    // create or system sync firing for an issue Jira just removed.
+    if (
+      eventType !== "jira:issue_updated" &&
+      eventType !== "jira:issue_created"
+    ) {
+      return null;
+    }
     const raw = (payload as ParsedWebhookPayload).data ?? payload;
     const p = raw as {
       issue?: { fields?: { status?: { name?: unknown } } };

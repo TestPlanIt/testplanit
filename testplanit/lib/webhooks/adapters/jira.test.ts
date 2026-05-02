@@ -215,21 +215,54 @@ describe("jiraAdapter — Phase 3 widened interface", () => {
       issue: { fields: { status: { name: "In Progress" } } },
     };
     expect(
-      jiraAdapter.extractExternalStatus(payload, "jira:issue_updated"),
+      jiraAdapter.extractExternalStatus(payload, "jira:issue_updated")
     ).toBe("In Progress");
   });
 
-  it("extractExternalStatus: returns null for a non-issue_updated event", () => {
+  it("extractExternalStatus: returns the status name for a jira:issue_created event (enables auto-create)", () => {
+    // Auto-create relies on extractExternalStatus returning non-null for
+    // creation events so the inbound apply path doesn't short-circuit
+    // as `no_handler` and the post-commit system sync fires with
+    // `createIfMissing: { projectId }`.
+    const payload = {
+      issue: { fields: { status: { name: "To Do" } } },
+    };
+    expect(
+      jiraAdapter.extractExternalStatus(payload, "jira:issue_created")
+    ).toBe("To Do");
+  });
+
+  it("extractExternalStatus: returns null for jira:issue_deleted (deletion events do NOT trigger auto-create)", () => {
+    // Even though Jira's deletion payload still carries a status, we
+    // shouldn't try to auto-create or system-sync an issue the upstream
+    // just removed (sync would 404). Excluded from the eventType filter.
+    const payload = {
+      issue: { fields: { status: { name: "Done" } } },
+    };
+    expect(
+      jiraAdapter.extractExternalStatus(payload, "jira:issue_deleted")
+    ).toBeNull();
+  });
+
+  it("extractExternalStatus: returns null for unrelated events (e.g. comment/worklog/attachment)", () => {
     const payload = {
       issue: { fields: { status: { name: "In Progress" } } },
     };
     expect(jiraAdapter.extractExternalStatus(payload, "jira:other")).toBeNull();
+    expect(
+      jiraAdapter.extractExternalStatus(
+        payload,
+        "comment_created" as Parameters<
+          typeof jiraAdapter.extractExternalStatus
+        >[1]
+      )
+    ).toBeNull();
   });
 
   it("extractExternalStatus: returns null when payload.issue.fields.status.name is missing", () => {
     const payload = { issue: { fields: {} } };
     expect(
-      jiraAdapter.extractExternalStatus(payload, "jira:issue_updated"),
+      jiraAdapter.extractExternalStatus(payload, "jira:issue_updated")
     ).toBeNull();
   });
 
@@ -262,7 +295,7 @@ describe("jiraAdapter — Phase 3 widened interface", () => {
 
     const status = jiraAdapter.extractExternalStatus(
       result.payload,
-      result.payload.eventType,
+      result.payload.eventType
     );
     expect(status).toBe("In Review");
   });
