@@ -143,13 +143,16 @@ async function testJiraConnection(
     // Search scope probe — issue lookup uses Jira's enhanced JQL search.
     // Calls `/rest/api/3/search/jql` (the JiraAdapter's production
     // endpoint, post the Atlassian deprecation of `/rest/api/3/search`
-    // — see Atlassian changelog CHANGE-2046). A minimal `ORDER BY
-    // created DESC` clause keeps the query valid without filtering to
-    // a project the credential might not have access to. A 403 here
-    // surfaces a missing "browse projects" / search permission before
-    // TestPlanIt would otherwise hit it on first hover/sync.
+    // — see Atlassian changelog CHANGE-2046). The new endpoint rejects
+    // unbounded JQL with HTTP 400, so we use a minimal bounded clause
+    // (`created >= -1d`) — same shape JiraAdapter uses for incremental
+    // syncs, just a smaller window. The probe doesn't care whether
+    // any issues match; a 200 with `issues: []` still proves the
+    // credential has search scope. A 403 here surfaces a missing
+    // "browse projects" / search permission before TestPlanIt would
+    // otherwise hit it on first hover/sync.
     const searchJqlParams = new URLSearchParams({
-      jql: "ORDER BY created DESC",
+      jql: "created >= -1d ORDER BY created DESC",
       maxResults: "1",
       fields: "summary",
     });
