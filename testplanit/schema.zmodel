@@ -3498,7 +3498,11 @@ model WebhookConfig {
     eventDedups     WebhookEventDedup[]
     secrets         WebhookConfigSecret[] // v0.23.0 Phase 2 — two-secret overlap rotation (D-04)
 
-    @@unique([projectId, adapterType, direction]) // one config per (project, adapter, direction)
+    // INBOUND: one config per (project, adapter) — enforced in
+    // createOrRotateInboundWebhook via findFirst-then-update-or-create.
+    // OUTBOUND: multiple configs per (project, adapter) allowed so a team
+    // can fire different events to multiple Slack channels / HMAC URLs.
+    @@index([projectId, adapterType, direction])
     @@index([projectId])
     @@index([token])
 

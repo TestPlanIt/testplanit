@@ -6805,9 +6805,6 @@ const metadata: ModelMeta = {
                 }, token: {
                     name: "token",
                     fields: ["token"]
-                }, projectId_adapterType_direction: {
-                    name: "projectId_adapterType_direction",
-                    fields: ["projectId", "adapterType", "direction"]
                 },
             },
         },

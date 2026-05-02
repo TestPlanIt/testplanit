@@ -1901,7 +1901,7 @@ model WebhookConfig {
   eventDedups             WebhookEventDedup[]
   secrets                 WebhookConfigSecret[]
 
-  @@unique([projectId, adapterType, direction])
+  @@index([projectId, adapterType, direction])
   @@index([projectId])
   @@index([token])
 }
