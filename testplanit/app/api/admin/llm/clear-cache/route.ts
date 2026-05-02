@@ -5,7 +5,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { authOptions } from "~/server/auth";
 
 export async function POST(request: NextRequest) {
-  // Audit: intentionally-skipped (Phase 62 / D-03).
   // This endpoint clears the LLM available-models cache — a cache-hygiene
   // operation with no business-object state mutation. Admin-only. Matches
   // the lastActiveAt session-keep-alive precedent at lib/prisma.ts:693-701:

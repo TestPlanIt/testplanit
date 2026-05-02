@@ -9,10 +9,6 @@ import {
 } from "~/lib/rate-limit";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 
-// NOTE: This is the only Phase 62 auth callsite that audits failures
-// (D-05). Failed password attempts are the brute-force detection
-// signal; DO NOT "optimize" the failure audit out.
-
 export const dynamic = "force-dynamic";
 
 /**

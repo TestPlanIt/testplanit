@@ -175,7 +175,6 @@ export function ManageSimpleUrlIssues({
                 data={issue.data}
                 integrationProvider="SIMPLE_URL"
                 integrationId={issue.integrationId ?? undefined}
-                lastSyncedAt={issue.lastSyncedAt}
                 issueTypeName={issue.issueTypeName}
                 issueTypeIconUrl={issue.issueTypeIconUrl}
               />

@@ -10,14 +10,14 @@ import { getServerAuthSession } from "~/server/auth";
  * Check for upgrade notifications and create a batched notification if needed.
  * Updates the user's lastSeenVersion after processing.
  *
- * Wrapped in withActionAuditContext (Phase 64 D-05): the two
+ * Wrapped in withActionAuditContext: the two
  * prisma.user.update({ data: { lastSeenVersion } }) writes below trigger
  * the User extension hook at lib/prisma.ts:558-588. That hook's
  * skip-guard only fires when `args.data` is `lastActiveAt`-only, so
  * lastSeenVersion writes DO emit auditUpdate("User", ...). With the
  * wrapper plus the NextAuth session callback enrichment (Plan 01 Task
  * 3) triggered by getServerAuthSession, those audit rows carry complete
- * actor context (CTX-02).
+ * actor context.
  */
 export const checkUpgradeNotifications = withActionAuditContext(
   async (): Promise<{

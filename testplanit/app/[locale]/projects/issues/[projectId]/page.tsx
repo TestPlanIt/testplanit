@@ -30,6 +30,7 @@ import {
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import {
   useCountIssue,
   useFindFirstProjects,
@@ -39,8 +40,6 @@ import {
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { ExtendedIssues, useIssueColumns } from "./columns";
-
-type PageSizeOption = number | "All";
 
 export default function ProjectIssueList() {
   return (
@@ -58,6 +57,10 @@ function ProjectIssues() {
   const searchParams = useSearchParams();
   const projectId = params.projectId ? Number(params.projectId) : null;
   const targetIssueId = searchParams.get("issueId");
+  // Live issue updates are subscribed at the IssuesDisplay component
+  // level — every issue badge on this page registers a refcounted
+  // listener via the singleton SSE manager, so every page that renders
+  // issues gets live refresh "for free."
   const scrollAttempts = useRef(0);
   const maxScrollAttempts = 10;
   const scrollInterval = useRef<NodeJS.Timeout | null>(null);
@@ -513,16 +516,7 @@ function ProjectIssues() {
     return mappedIssues;
   }, [mappedIssues, needsClientSideSorting, skip, effectivePageSize]);
 
-  const pageSizeOptions: PageSizeOption[] = useMemo(() => {
-    if (totalItems <= 10) {
-      return ["All"];
-    }
-    const options: PageSizeOption[] = [10, 25, 50, 100, 250].filter(
-      (size) => size < totalItems || totalItems === 0
-    );
-    options.push("All");
-    return options;
-  }, [totalItems]);
+  const pageSizeOptions = usePageSizeOptions(totalItems);
 
   // Calculate and set the correct page IMMEDIATELY when allIssues load and we have a target
   useEffect(() => {

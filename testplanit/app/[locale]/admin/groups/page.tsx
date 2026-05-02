@@ -7,6 +7,7 @@ import {
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
@@ -30,8 +31,6 @@ import { CirclePlus } from "lucide-react";
 import { AddGroup } from "./AddGroup";
 import { DeleteGroup } from "./DeleteGroup";
 import { EditGroup } from "./EditGroup";
-
-type PageSizeOption = number | "All";
 
 export default function GroupListPage() {
   return (
@@ -160,16 +159,7 @@ function GroupList() {
 
   const groups = data as ExtendedGroups[];
 
-  const pageSizeOptions: PageSizeOption[] = useMemo(() => {
-    if (totalItems <= 10) {
-      return ["All"];
-    }
-    const options: PageSizeOption[] = [10, 25, 50, 100, 250].filter(
-      (size) => size < totalItems || totalItems === 0
-    );
-    options.push("All");
-    return options;
-  }, [totalItems]);
+  const pageSizeOptions = usePageSizeOptions(totalItems);
 
   // Reset to first page when search changes
   useEffect(() => {

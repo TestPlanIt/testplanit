@@ -12,8 +12,7 @@ import { SYSTEM_ACTOR_ID } from "~/lib/auditContext";
  * `@prisma/client` AuditLog type lets a single helper cover both
  * capture modes — direct spy on `prisma.auditLog.create(data)` AND the
  * synthesized `{ ...event, ...context }` shape used by the Plan 05 mock
- * for `captureAuditEvent`. Phase 64 D-17 locked the assertion semantics
- * (six fields non-null or __system__ + systemReason); the parameter
+ * for `captureAuditEvent`. the parameter
  * shape stays permissive so every test helper call-site compiles.
  */
 export interface AuditRowLike {
@@ -27,8 +26,6 @@ export interface AuditRowLike {
 }
 
 /**
- * Phase 64 D-17 / SC#4 enforcement helper.
- *
  * Assert that an emitted audit row carries a complete actor context.
  * Every audit-emitting test — current and future — calls this helper
  * on the row(s) it triggers.

@@ -363,7 +363,7 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
             }
           }
 
-          // Phase 64 D-03: enrich audit-context ALS frame with resolved
+          // enrich audit-context ALS frame with resolved
           // identity so every downstream audit emission in this request
           // picks up userId/userEmail/userName without per-route
           // boilerplate. No-op when the request is not wrapped in
@@ -704,7 +704,7 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
-        // Phase 64 D-03: enrich audit-context ALS frame with resolved
+        // enrich audit-context ALS frame with resolved
         // identity so every downstream audit emission in this request
         // picks up userId/userEmail/userName without per-route
         // boilerplate. No-op when the request is not wrapped in
@@ -1187,7 +1187,6 @@ function authorize(prisma: PrismaClient) {
         );
         if (new Date() > expiresAt) {
           // Password has expired — set mustChangePassword flag
-          // Phase 67 will implement the force-change-password redirect flow
           await prisma.user.update({
             where: { id: maybeUser.id },
             data: { mustChangePassword: true },

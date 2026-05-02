@@ -12,7 +12,6 @@ interface RouteParams {
 }
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
-  // Audit: intentionally-skipped (Phase 62 / D-03).
   // This endpoint refreshes the code-repository metadata cache (file
   // listings, branch state) — cache hygiene with no business-object
   // state mutation. Admin/project-admin surface. Matches the lastActiveAt

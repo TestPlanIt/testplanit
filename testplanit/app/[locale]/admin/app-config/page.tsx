@@ -14,14 +14,13 @@ import {
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useFindManyAppConfig } from "~/lib/hooks";
 import { AddAppConfig } from "./AddAppConfig";
 import { getColumns } from "./columns";
 import { DeleteAppConfig } from "./DeleteAppConfig";
 import { EditAppConfig } from "./EditAppConfig";
 import { AppConfigRow } from "./types";
-
-type PageSizeOption = number | "All";
 
 export default function AppConfigsPage() {
   return (
@@ -106,16 +105,7 @@ function AppConfigs() {
     totalItems
   );
 
-  const pageSizeOptions: PageSizeOption[] = useMemo(() => {
-    if (totalItems <= 10) {
-      return ["All"];
-    }
-    const options: PageSizeOption[] = [10, 25, 50, 100, 250].filter(
-      (size) => size < totalItems || totalItems === 0
-    );
-    options.push("All");
-    return options;
-  }, [totalItems]);
+  const pageSizeOptions = usePageSizeOptions(totalItems);
 
   const handleSortChange = (column: string) => {
     const direction =

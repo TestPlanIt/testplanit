@@ -5,6 +5,8 @@ import { syncIssueToElasticsearch } from "~/services/issueSearch";
 import { enqueueWithAuditContext } from "../../auditContextEnqueue";
 import { getCurrentTenantId } from "../../multiTenantPrisma";
 import { getSyncQueue } from "../../queues";
+import valkeyConnection from "../../valkey";
+import { projectIssueUpdateChannel } from "../../webhooks/issueUpdateChannels";
 import type { IssueAdapter, IssueData } from "../adapters/IssueAdapter";
 import { issueCache } from "../cache/IssueCache";
 import { integrationManager } from "../IntegrationManager";
@@ -31,6 +33,120 @@ export interface SyncJobData {
 
 export interface SyncServiceOptions {
   prismaClient?: PrismaClient; // Optional: use provided client for multi-tenant support
+  /**
+   * Skip the upstream API call if `Issue.lastSyncedAt` is fresher than this
+   * many seconds. Caller's choice based on the trigger context:
+   *   • manual sync button   → 0    (always fetch — user explicitly asked)
+   *   • hover/passive prefetch → 300 (5 min — dedupes tabs/refreshes)
+   *   • inbound webhook       → 15   (debounces Jira event bursts; tail-end
+   *                                   change at most 15s lag)
+   * When the gate triggers, the call resolves with `cached: true` and the
+   * upstream API is not contacted.
+   */
+  minFreshnessSeconds?: number;
+  /**
+   * If set, the sync creates a fresh local Issue row when no matching one
+   * exists (instead of throwing). Used by inbound webhook handlers so the
+   * receiver can mirror upstream issues that admins haven't manually
+   * imported yet — the report layer can then show every upstream issue
+   * regardless of whether testing is associated with it.
+   *
+   * `projectId` is required because Issues join to Projects directly; the
+   * webhook handler resolves it from the WebhookConfig.
+   *
+   * Manual sync paths leave this unset — clicking Sync on an already-known
+   * issue must NOT silently mint a row in a different project, and the
+   * legacy throw surfaces the misconfiguration loudly.
+   */
+  createIfMissing?: { projectId: number };
+}
+
+/**
+ * Result envelope shared by both user-context and system-context issue
+ * refresh paths. `cached` and `locked` are the two short-circuit reasons —
+ * either the local row was within the caller's freshness window or another
+ * sync was already in flight for this issue. Both indicate "no upstream
+ * API call was made"; callers can use them to skip a refetch.
+ */
+export interface IssueRefreshResult {
+  success: boolean;
+  error?: string;
+  cached?: boolean;
+  locked?: boolean;
+}
+
+/**
+ * Per-issue Redis lock for `performIssueRefresh` — prevents two concurrent
+ * syncs from the same issue from each pulling Jira's API. The TTL is the
+ * safety release: if the holder crashes mid-sync, the next caller can
+ * acquire after 60s.
+ */
+const ISSUE_SYNC_LOCK_TTL_SECONDS = 60;
+
+function issueSyncLockKey(integrationId: number, externalId: string): string {
+  return `sync-lock:issue:${integrationId}:${externalId}`;
+}
+
+async function acquireIssueSyncLock(
+  integrationId: number,
+  externalId: string
+): Promise<boolean> {
+  // Fail-open if Valkey isn't connected — better availability than blocking
+  // sync entirely on cache infra.
+  if (!valkeyConnection) return true;
+  const key = issueSyncLockKey(integrationId, externalId);
+  const result = await valkeyConnection.set(
+    key,
+    "1",
+    "EX",
+    ISSUE_SYNC_LOCK_TTL_SECONDS,
+    "NX"
+  );
+  return result === "OK";
+}
+
+async function releaseIssueSyncLock(
+  integrationId: number,
+  externalId: string
+): Promise<void> {
+  if (!valkeyConnection) return;
+  await valkeyConnection.del(issueSyncLockKey(integrationId, externalId));
+}
+
+/**
+ * Best-effort SSE wake-up for the project-scoped issue-update channel.
+ *
+ * Mirrors the notifications worker pattern (workers/notificationWorker.ts):
+ * the payload is just a "something changed; refetch" signal — the consumer
+ * is responsible for the authorized re-read. SSE pub/sub is untrusted
+ * plumbing (Architectural Directive 2); access control fires at the
+ * React Query / ZenStack hook layer when the client refetches.
+ *
+ * Failures are logged and swallowed — the DB row commit is the source of
+ * truth, the SSE event is opportunistic. A missed event means at-most a
+ * stale UI until the next manual refresh / next event.
+ */
+async function publishIssueUpdate(args: {
+  projectId: number;
+  issueId: number;
+  event: "issue-updated" | "issue-created";
+  tenantId: string;
+}): Promise<void> {
+  if (!valkeyConnection) return;
+  try {
+    const channel = projectIssueUpdateChannel(args.tenantId, args.projectId);
+    const payload = JSON.stringify({
+      event: args.event,
+      issueId: args.issueId,
+      projectId: args.projectId,
+    });
+    await valkeyConnection.publish(channel, payload);
+  } catch (err) {
+    console.warn(
+      `[SyncService] SSE publish failed for issue ${args.issueId}:`,
+      err instanceof Error ? err.message : err
+    );
+  }
 }
 
 export interface SyncOptions {
@@ -574,9 +690,129 @@ export class SyncService {
   }
 
   /**
-   * Refresh a single issue from the external system
+   * Refresh a single issue from the external system.
+   *
+   * Caller passes `minFreshnessSeconds` via `serviceOptions` to control
+   * whether to actually hit the upstream API:
+   *   • 0 / unset → always fetch (manual sync button)
+   *   • 300       → skip if synced < 5 min ago (hover prefetch)
+   *   • 15        → skip if synced < 15 s ago  (inbound webhook debounce)
+   * A per-issue Valkey lock additionally serializes concurrent fetches —
+   * the second caller resolves with `locked: true` without queueing.
    */
   async performIssueRefresh(
+    userId: string,
+    integrationId: number,
+    externalIssueId: string,
+    serviceOptions: SyncServiceOptions = {}
+  ): Promise<IssueRefreshResult> {
+    return this._withGateAndLock(
+      integrationId,
+      externalIssueId,
+      serviceOptions,
+      () =>
+        this._performIssueRefreshInner(
+          userId,
+          integrationId,
+          externalIssueId,
+          serviceOptions
+        )
+    );
+  }
+
+  /**
+   * System-context counterpart of `performIssueRefresh` — used by inbound
+   * webhook handlers, schedulers, and any other server-triggered sync that
+   * has no user session.
+   *
+   * Differences from the user-context path:
+   *   • No `userId` / no user lookup. Audit attribution is the integration
+   *     itself; downstream `WebhookDelivery` rows already record the source.
+   *   • OAUTH2 integrations are rejected (their credentials are user-tied
+   *     and require token refresh logic that doesn't exist server-side).
+   *   • Auth check is purely "Integration.credentials present?".
+   *
+   * Same freshness gate + per-issue lock as the user path. Same
+   * `IssueRefreshResult` shape so callers can branch on `cached`/`locked`.
+   */
+  async performIssueRefreshSystem(
+    integrationId: number,
+    externalIssueId: string,
+    serviceOptions: SyncServiceOptions = {}
+  ): Promise<IssueRefreshResult> {
+    return this._withGateAndLock(
+      integrationId,
+      externalIssueId,
+      serviceOptions,
+      () =>
+        this._performIssueRefreshInnerSystem(
+          integrationId,
+          externalIssueId,
+          serviceOptions
+        )
+    );
+  }
+
+  /**
+   * Shared gate + lock around any inner sync. Splits the freshness check
+   * (cheap DB read) and lock acquisition from the actual sync work, and
+   * makes both `performIssueRefresh` and `performIssueRefreshSystem`
+   * thin wrappers.
+   */
+  private async _withGateAndLock(
+    integrationId: number,
+    externalIssueId: string,
+    serviceOptions: SyncServiceOptions,
+    inner: () => Promise<{ success: boolean; error?: string }>
+  ): Promise<IssueRefreshResult> {
+    const prisma = serviceOptions.prismaClient || defaultPrisma;
+    const minFreshnessSeconds = serviceOptions.minFreshnessSeconds ?? 0;
+    try {
+      // Freshness gate — read the local `Issue.lastSyncedAt`; if it's
+      // within the caller's tolerance, skip the upstream fetch.
+      if (minFreshnessSeconds > 0) {
+        const stored = await prisma.issue.findFirst({
+          where: {
+            integrationId,
+            OR: [
+              { externalId: externalIssueId },
+              { externalKey: externalIssueId },
+            ],
+          },
+          select: { lastSyncedAt: true },
+        });
+        if (stored?.lastSyncedAt) {
+          const ageMs = Date.now() - stored.lastSyncedAt.getTime();
+          if (ageMs < minFreshnessSeconds * 1000) {
+            return { success: true, cached: true };
+          }
+        }
+      }
+
+      // Per-issue lock — prevents two concurrent syncs against the same
+      // issue from both pulling the API. Skipping (not waiting) is the
+      // right call: the in-flight sync will write the latest state to the
+      // DB anyway.
+      const acquired = await acquireIssueSyncLock(
+        integrationId,
+        externalIssueId
+      );
+      if (!acquired) {
+        return { success: true, locked: true };
+      }
+
+      try {
+        return await inner();
+      } finally {
+        await releaseIssueSyncLock(integrationId, externalIssueId);
+      }
+    } catch (error: any) {
+      console.error(`Failed to refresh issue ${externalIssueId}:`, error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  private async _performIssueRefreshInner(
     userId: string,
     integrationId: number,
     externalIssueId: string,
@@ -647,87 +883,315 @@ export class SyncService {
         }
       }
 
-      // Get the adapter
-      const adapter = await integrationManager.getAdapter(
-        String(integrationId),
-        prisma
+      return await this._executeSyncWithAdapter(
+        prisma,
+        integration,
+        externalIssueId
       );
-
-      if (!adapter) {
-        throw new Error("Invalid adapter for issue synchronization");
-      }
-
-      // Check if adapter supports sync
-      const capabilities = adapter.getCapabilities();
-      if (!capabilities.syncIssue) {
-        throw new Error(
-          "This integration does not support syncing individual issues"
-        );
-      }
-
-      // For GitHub issues, we need to get the repo context from the stored issue data
-      let issueIdForSync = externalIssueId;
-      if (integration.provider === "GITHUB") {
-        // Fetch the stored issue to get the repo context
-        const storedIssue = await prisma.issue.findFirst({
-          where: {
-            integrationId,
-            OR: [
-              { externalId: externalIssueId },
-              { externalKey: externalIssueId },
-            ],
-          },
-        });
-
-        let owner: string | undefined;
-        let repo: string | undefined;
-
-        // Try to get owner/repo from externalData first
-        if (storedIssue?.externalData) {
-          const externalData = storedIssue.externalData as Record<string, any>;
-          if (externalData._github_owner && externalData._github_repo) {
-            owner = externalData._github_owner;
-            repo = externalData._github_repo;
-          }
-        }
-
-        // Fallback: Extract owner/repo from externalUrl if not in customFields
-        if ((!owner || !repo) && storedIssue?.externalUrl) {
-          const urlMatch = storedIssue.externalUrl.match(
-            /github\.com\/([^/]+)\/([^/]+)\/issues/
-          );
-          if (urlMatch) {
-            owner = urlMatch[1];
-            repo = urlMatch[2];
-          }
-        }
-
-        // Construct compound ID if we have owner/repo
-        if (owner && repo) {
-          const issueNumber = externalIssueId.replace(/^#/, "");
-          issueIdForSync = `${owner}/${repo}#${issueNumber}`;
-        } else {
-          throw new Error(
-            `Cannot determine GitHub repository for issue ${externalIssueId}. ` +
-              `Issue data is missing repository context.`
-          );
-        }
-      }
-
-      // Fetch fresh issue data from external system
-      const issueData = await adapter.syncIssue(issueIdForSync);
-
-      // Update cache
-      await issueCache.set(integrationId, issueData.id, issueData);
-
-      // Update local database
-      await this.updateExistingIssue(prisma, integrationId, issueData);
-
-      return { success: true };
     } catch (error: any) {
       console.error(`Failed to refresh issue ${externalIssueId}:`, error);
       return { success: false, error: error.message };
     }
+  }
+
+  /**
+   * System-context inner — used by `performIssueRefreshSystem`.
+   *
+   * Auth strategy depends on the Integration's `authType`:
+   *   • API_KEY / PERSONAL_ACCESS_TOKEN → use `Integration.credentials`
+   *     directly (e.g., GitHub PAT, Jira Cloud user-API-token, ADO PAT).
+   *   • OAUTH2 → reuse the most-recently-active `UserIntegrationAuth`.
+   *     Atlassian's preferred Jira integration path is OAuth 2.0 (3LO),
+   *     which is per-user, but for system-triggered sync we treat the
+   *     latest active OAuth as the integration's effective service
+   *     account — same row `IntegrationManager.getAdapter` picks for the
+   *     manual-sync path. If that user revokes access or their refresh
+   *     token expires, sync fails loudly and an admin re-auths; same
+   *     failure mode as today's manual-sync OAuth flow, just visible in
+   *     the WebhookDelivery error column instead of an inline UI toast.
+   *   • NONE → no auth, pass through.
+   */
+  private async _performIssueRefreshInnerSystem(
+    integrationId: number,
+    externalIssueId: string,
+    serviceOptions: SyncServiceOptions = {}
+  ): Promise<{ success: boolean; error?: string }> {
+    const prisma = serviceOptions.prismaClient || defaultPrisma;
+    try {
+      const integration = await prisma.integration.findUnique({
+        where: { id: integrationId },
+        include: {
+          userIntegrationAuths: {
+            where: { isActive: true },
+            orderBy: { updatedAt: "desc" },
+            take: 1,
+          },
+        },
+      });
+
+      if (!integration) {
+        throw new Error("Integration not found");
+      }
+
+      if (integration.authType === "OAUTH2") {
+        // Need at least one active UserIntegrationAuth to act as the
+        // service-account surrogate. Fail fast with a clear message so
+        // the WebhookDelivery row's error column points at the fix
+        // (an admin needs to re-auth in TestPlanIt's integration UI).
+        const oauthAuth = integration.userIntegrationAuths[0];
+        if (!oauthAuth) {
+          throw new Error(
+            "OAuth integration has no active user authentication; an admin must (re)authenticate in TestPlanIt's integration settings"
+          );
+        }
+        if (
+          oauthAuth.tokenExpiresAt &&
+          oauthAuth.tokenExpiresAt < new Date() &&
+          !oauthAuth.refreshToken
+        ) {
+          throw new Error(
+            "OAuth access token has expired and no refresh token is on record; an admin must re-authenticate"
+          );
+        }
+      } else if (integration.authType !== "NONE" && !integration.credentials) {
+        // API_KEY / PERSONAL_ACCESS_TOKEN / other paired-credential types
+        // need Integration.credentials populated.
+        throw new Error("Integration is missing credentials");
+      }
+
+      return await this._executeSyncWithAdapter(
+        prisma,
+        integration,
+        externalIssueId,
+        serviceOptions.createIfMissing
+      );
+    } catch (error: any) {
+      console.error(
+        `Failed to refresh issue (system) ${externalIssueId}:`,
+        error
+      );
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Post-auth tail of `_performIssueRefreshInner` — assumes the integration
+   * is loaded and authentication has already been validated. Resolves the
+   * adapter, normalizes the GitHub repo context, calls `adapter.syncIssue`,
+   * updates the Redis cache, and writes the local Issue row.
+   */
+  private async _executeSyncWithAdapter(
+    prisma: PrismaClient,
+    integration: { id: number; provider: string },
+    externalIssueId: string,
+    createIfMissing?: { projectId: number }
+  ): Promise<{ success: boolean; error?: string }> {
+    const integrationId = integration.id;
+
+    const adapter = await integrationManager.getAdapter(
+      String(integrationId),
+      prisma
+    );
+
+    if (!adapter) {
+      throw new Error("Invalid adapter for issue synchronization");
+    }
+
+    const capabilities = adapter.getCapabilities();
+    if (!capabilities.syncIssue) {
+      throw new Error(
+        "This integration does not support syncing individual issues"
+      );
+    }
+
+    // GitHub issues need the owner/repo context resolved into a compound
+    // `owner/repo#N` for `adapter.syncIssue`. If the caller already provides
+    // the compound form (webhook adapters do — `extractLinkedIssueRef`
+    // returns `${repo}#${number}`), use it as-is. Otherwise fall back to
+    // looking up the stored Issue and extracting owner/repo from its
+    // externalData / externalUrl.
+    let issueIdForSync = externalIssueId;
+    if (integration.provider === "GITHUB") {
+      issueIdForSync = await this._resolveGitHubIssueIdForSync(
+        prisma,
+        integrationId,
+        externalIssueId
+      );
+    }
+
+    const issueData = await adapter.syncIssue(issueIdForSync);
+    await issueCache.set(integrationId, issueData.id, issueData);
+
+    // Find existing local issue. The lookup OR-set covers historical
+    // mismatches between externalId / externalKey storage conventions —
+    // matches `updateExistingIssue`'s behaviour exactly.
+    const existingIssue = await prisma.issue.findFirst({
+      where: {
+        integrationId,
+        OR: [
+          { externalId: issueData.id },
+          { externalId: issueData.key },
+          { externalKey: issueData.key },
+          { externalKey: issueData.id },
+        ],
+      },
+    });
+
+    if (existingIssue) {
+      await this.updateExistingIssue(prisma, integrationId, issueData);
+      return { success: true };
+    }
+
+    // No local issue — caller must have opted into create-if-missing
+    // (inbound webhook handler does, manual sync button does not).
+    if (createIfMissing) {
+      await this._createIssueFromExternal(
+        prisma,
+        integrationId,
+        createIfMissing.projectId,
+        issueData
+      );
+      return { success: true };
+    }
+
+    throw new Error(
+      `Issue ${issueData.key || issueData.id} not found in local database. Issues must be created through the UI before they can be synced.`
+    );
+  }
+
+  /**
+   * Compose the compound `owner/repo#N` form GitHub adapters expect.
+   * Short-circuits when externalIssueId is already in that form (webhook
+   * receivers always pass it that way via `extractLinkedIssueRef`).
+   */
+  private async _resolveGitHubIssueIdForSync(
+    prisma: PrismaClient,
+    integrationId: number,
+    externalIssueId: string
+  ): Promise<string> {
+    // Already compound? Use as-is. Pattern: owner/repo#N where owner and
+    // repo are GitHub-name-charset and N is digits.
+    if (/^[\w.-]+\/[\w.-]+#\d+$/.test(externalIssueId)) {
+      return externalIssueId;
+    }
+
+    // Fall back to the legacy lookup path: find a stored Issue and harvest
+    // owner/repo from its externalData or externalUrl. Used by manual sync
+    // when the caller has only the bare issue number/key.
+    const storedIssue = await prisma.issue.findFirst({
+      where: {
+        integrationId,
+        OR: [{ externalId: externalIssueId }, { externalKey: externalIssueId }],
+      },
+    });
+
+    let owner: string | undefined;
+    let repo: string | undefined;
+
+    if (storedIssue?.externalData) {
+      const externalData = storedIssue.externalData as Record<string, any>;
+      if (externalData._github_owner && externalData._github_repo) {
+        owner = externalData._github_owner;
+        repo = externalData._github_repo;
+      }
+    }
+
+    if ((!owner || !repo) && storedIssue?.externalUrl) {
+      const urlMatch = storedIssue.externalUrl.match(
+        /github\.com\/([^/]+)\/([^/]+)\/issues/
+      );
+      if (urlMatch) {
+        owner = urlMatch[1];
+        repo = urlMatch[2];
+      }
+    }
+
+    if (!owner || !repo) {
+      throw new Error(
+        `Cannot determine GitHub repository for issue ${externalIssueId}. ` +
+          `Issue data is missing repository context.`
+      );
+    }
+
+    const issueNumber = externalIssueId.replace(/^#/, "");
+    return `${owner}/${repo}#${issueNumber}`;
+  }
+
+  /**
+   * Insert a fresh Issue row from upstream data — used by inbound webhook
+   * handlers that opt into auto-create when the linked issue doesn't yet
+   * exist locally. Mirrors `updateExistingIssue`'s field mapping so a
+   * subsequent update sync produces the identical row state.
+   *
+   * Project membership is REQUIRED (the Issue model joins to Projects via
+   * `projectId`); the webhook handler resolves the project from the
+   * WebhookConfig and passes it through.
+   *
+   * `Issue.createdById` is REQUIRED by the schema. Webhooks have no user
+   * session, so we attribute the row to the **project's creator** — a
+   * stable, always-present user with implicit authority over the project
+   * (the same user who could have manually imported this issue). This
+   * matches the audit attribution model: WEBHOOK_RECEIVED audit rows
+   * already use `__system__` for `userId`; here `createdById` needs to
+   * point at a real User row, so the project creator is the right surrogate.
+   */
+  private async _createIssueFromExternal(
+    db: any,
+    integrationId: number,
+    projectId: number,
+    issueData: IssueData
+  ): Promise<void> {
+    // `Projects.createdBy` is the User.id string; the `creator` relation
+    // joins to the User row. We just need the FK value here.
+    const project = await db.projects.findUnique({
+      where: { id: projectId },
+      select: { createdBy: true },
+    });
+    if (!project?.createdBy) {
+      throw new Error(
+        `Cannot auto-create issue ${issueData.key || issueData.id}: project ${projectId} has no creator on record (required for Issue.createdById)`
+      );
+    }
+
+    const created = await db.issue.create({
+      data: {
+        name: issueData.key || issueData.id,
+        title: issueData.title,
+        description: issueData.description || "",
+        status: issueData.status,
+        priority: issueData.priority || "medium",
+        externalId: issueData.id,
+        externalKey: issueData.key,
+        externalUrl: issueData.url,
+        externalStatus: issueData.status,
+        externalData: issueData.customFields || {},
+        issueTypeId: issueData.issueType?.id,
+        issueTypeName: issueData.issueType?.name,
+        issueTypeIconUrl: issueData.issueType?.iconUrl,
+        lastSyncedAt: new Date(),
+        integrationId,
+        projectId,
+        createdById: project.createdBy,
+      },
+    });
+
+    // Index newly-created issues just like manual import does. Best-effort
+    // — search index drift is recoverable, the row commit isn't.
+    await syncIssueToElasticsearch(created.id).catch((error: any) => {
+      console.error(
+        `Failed to sync newly created issue ${created.id} to Elasticsearch:`,
+        error
+      );
+    });
+
+    // SSE wake-up for any subscriber currently watching this project's
+    // issues view. Best-effort — same posture as the Elasticsearch index.
+    await publishIssueUpdate({
+      projectId,
+      issueId: created.id,
+      event: "issue-created",
+      tenantId: getCurrentTenantId() ?? "default",
+    });
   }
 
   /**
@@ -807,6 +1271,46 @@ export class SyncService {
         error
       );
     });
+
+    // Manually emit issue.updated for the same reason — the enhanced
+    // Prisma client bypasses the $extends middleware where the
+    // emitIssueUpdated hook normally fires. Refetch via the un-enhanced
+    // client to get the full post-update row, then emit through the
+    // extended client's $transaction (so we have a Prisma.TransactionClient
+    // for webhookEvents.emit). Best-effort: a failure here must not roll
+    // back the sync — wrap in try/catch.
+    try {
+      const updatedIssue = await defaultPrisma.issue.findUnique({
+        where: { id: existingIssue.id },
+      });
+      if (updatedIssue && updatedIssue.projectId != null) {
+        const { prisma: extendedPrisma } = await import("@/lib/prisma");
+        const { emitIssueUpdated } =
+          await import("~/lib/webhooks/event-emitters/issueEvents");
+        await extendedPrisma.$transaction(async (tx) => {
+          await emitIssueUpdated(existingIssue as any, updatedIssue as any, tx);
+        });
+      }
+    } catch (error) {
+      console.error(
+        `Failed to emit issue.updated webhook for issue ${existingIssue.id}:`,
+        error
+      );
+    }
+
+    // SSE wake-up for any subscriber watching this project's issues view.
+    // Mirrors the create path — best-effort, swallowed errors. The
+    // existingIssue row already carries projectId from the findFirst
+    // above (no select projection); guard is for the rare schema-time
+    // null-projectId case.
+    if (existingIssue.projectId != null) {
+      await publishIssueUpdate({
+        projectId: existingIssue.projectId,
+        issueId: existingIssue.id,
+        event: "issue-updated",
+        tenantId: getCurrentTenantId() ?? "default",
+      });
+    }
   }
 }
 

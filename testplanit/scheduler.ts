@@ -4,8 +4,10 @@ import {
   getForecastQueue,
   getNotificationQueue,
   getRepoCacheQueue,
+  getWebhookDispatchQueue,
   NOTIFICATION_QUEUE_NAME,
   REPO_CACHE_QUEUE_NAME,
+  WEBHOOK_DISPATCH_QUEUE_NAME,
 } from "./lib/queues";
 import {
   JOB_AUTO_COMPLETE_MILESTONES,
@@ -21,6 +23,8 @@ const CRON_SCHEDULE_DAILY_3AM = "0 3 * * *";
 const CRON_SCHEDULE_DAILY_6AM = "0 6 * * *"; // For milestone auto-completion and notifications
 const CRON_SCHEDULE_DAILY_8AM = "0 8 * * *"; // For daily digest emails
 const CRON_SCHEDULE_DAILY_4AM = "0 4 * * *"; // For code repository cache refresh
+const CRON_SCHEDULE_DAILY_2AM = "0 2 * * *"; // Plan 02-06 / D-04 — auto-retire expired WebhookConfigSecret rows
+const JOB_RETIRE_EXPIRED_SECRETS = "retire-expired-secrets";
 
 async function scheduleJobs() {
   console.log("Attempting to schedule jobs...");
@@ -141,6 +145,33 @@ async function scheduleJobs() {
         `Upserted job scheduler "${JOB_REFRESH_EXPIRED_CACHES}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_4AM}" on queue "${REPO_CACHE_QUEUE_NAME}".`
       );
     }
+
+    // Plan 02-06 / Task 6.3 — daily auto-retire of expired WebhookConfigSecret
+    // rows. Runs at 02:00 server time on each tenant; the dispatch worker has
+    // a job-name short-circuit that calls retireExpiredSecrets directly.
+    const webhookDispatchQueue = getWebhookDispatchQueue();
+    if (webhookDispatchQueue) {
+      for (const tenantId of tenantIds) {
+        const jobId = tenantId
+          ? `${JOB_RETIRE_EXPIRED_SECRETS}-${tenantId}`
+          : JOB_RETIRE_EXPIRED_SECRETS;
+        await webhookDispatchQueue.upsertJobScheduler(
+          jobId,
+          { pattern: CRON_SCHEDULE_DAILY_2AM },
+          {
+            name: JOB_RETIRE_EXPIRED_SECRETS,
+            data: { tenantId },
+          }
+        );
+        console.log(
+          `Upserted job scheduler "${JOB_RETIRE_EXPIRED_SECRETS}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_2AM}" on queue "${WEBHOOK_DISPATCH_QUEUE_NAME}".`
+        );
+      }
+    } else {
+      console.warn(
+        `[scheduler] webhookDispatchQueue unavailable — auto-retire cron NOT registered`
+      );
+    }
   } catch (error) {
     console.error("Error scheduling jobs:", error);
     process.exit(1); // Exit if scheduling fails
@@ -159,10 +190,12 @@ if (require.main === module) {
       const forecastQueue = getForecastQueue();
       const notificationQueue = getNotificationQueue();
       const repoCacheQueue = getRepoCacheQueue();
+      const webhookDispatchQueue = getWebhookDispatchQueue();
       await Promise.all([
         forecastQueue?.close(),
         notificationQueue?.close(),
         repoCacheQueue?.close(),
+        webhookDispatchQueue?.close(),
       ]);
       console.log("All queues closed.");
       process.exit(0);

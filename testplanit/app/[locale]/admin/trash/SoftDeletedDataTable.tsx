@@ -21,6 +21,7 @@ import { ColumnDef, VisibilityState } from "@tanstack/react-table";
 import { AlertTriangle, UndoDot } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { cn } from "~/utils";
 
 // Item type is now generic, but we ensure 'id' for actions
@@ -281,14 +282,7 @@ export default function SoftDeletedDataTable({
     ];
   }, [data, tActions, isLoading]);
 
-  const pageSizeOptions: Array<number | "All"> = useMemo(() => {
-    if (totalItems <= DEFAULT_PAGE_SIZE && totalItems > 0) return ["All"];
-    const options: Array<number | "All"> = [10, 25, 50, 100, 250].filter(
-      (size) => size < totalItems || totalItems === 0
-    );
-    if (totalItems > 0) options.push("All");
-    return options.length > 0 ? options : [DEFAULT_PAGE_SIZE, "All"];
-  }, [totalItems]);
+  const pageSizeOptions = usePageSizeOptions(totalItems);
 
   let tableContent;
   if (isLoading && data.length === 0 && !error) {

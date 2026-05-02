@@ -7482,8 +7482,8 @@ async function processImportMode(
           userId: importJob.createdById,
           tenantId,
         };
-        // Phase 64 D-11 / Plan 04 Pattern G: worker-to-worker fan-out.
-        // Task 3 wraps this processor in runWithAuditContext(
+        // worker-to-worker fan-out.
+        // Wrap this processor in runWithAuditContext(
         // job.data.actorContext, ...), so ALS is populated at enqueue-time
         // here and the upstream user's (or upstream systemReason) rides
         // along automatically. No systemReason passed — inherit from upstream.
@@ -7558,7 +7558,7 @@ type TestmoImportJobData = ActorContextJobData<
   { jobId: string; mode?: TestmoQueueMode } & MultiTenantJobData
 >;
 
-// Phase 64 D-10: public processor re-establishes the ALS frame from
+// public processor re-establishes the ALS frame from
 // job.data.actorContext so downstream captureAuditEvent calls (L7079
 // IMPORT_COMPLETED / BULK_CREATE) and the elasticsearch fan-out at L7109
 // pick up the originating user's context. systemReason rides along via

@@ -34,6 +34,7 @@ import {
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import {
   useCountTags,
   useFindManyProjects,
@@ -42,8 +43,6 @@ import {
 import { useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
 import { getColumns } from "./columns";
-
-type PageSizeOption = number | "All";
 
 export default function TagList() {
   return (
@@ -356,16 +355,7 @@ function Tags() {
     return mappedTags;
   }, [mappedTags, sortConfig.column, skip, effectivePageSize]);
 
-  const pageSizeOptions: PageSizeOption[] = useMemo(() => {
-    if (totalItems <= 10) {
-      return ["All"];
-    }
-    const options: PageSizeOption[] = [10, 25, 50, 100, 250].filter(
-      (size) => size < totalItems || totalItems === 0
-    );
-    options.push("All");
-    return options;
-  }, [totalItems]);
+  const pageSizeOptions = usePageSizeOptions(totalItems);
 
   useEffect(() => {
     setCurrentPage(1);

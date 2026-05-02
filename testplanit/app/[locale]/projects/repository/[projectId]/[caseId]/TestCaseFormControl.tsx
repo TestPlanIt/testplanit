@@ -336,7 +336,6 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                         integrationId={
                           issue.integrationId || issue.integration?.id
                         }
-                        lastSyncedAt={issue.lastSyncedAt}
                         issueTypeName={issue.issueTypeName}
                         issueTypeIconUrl={issue.issueTypeIconUrl}
                       />

@@ -27,11 +27,10 @@ import {
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useCountIssue, useFindManyIssue, useGroupByIssue } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { ExtendedIssues, useIssueColumns } from "./columns";
-
-type PageSizeOption = number | "All";
 
 export default function IssueList() {
   return (
@@ -499,16 +498,7 @@ function Issues() {
     return mappedIssues;
   }, [mappedIssues, needsClientSideSorting, skip, effectivePageSize]);
 
-  const pageSizeOptions: PageSizeOption[] = useMemo(() => {
-    if (totalItems <= 10) {
-      return ["All"];
-    }
-    const options: PageSizeOption[] = [10, 25, 50, 100, 250].filter(
-      (size) => size < totalItems || totalItems === 0
-    );
-    options.push("All");
-    return options;
-  }, [totalItems]);
+  const pageSizeOptions = usePageSizeOptions(totalItems);
 
   useEffect(() => {
     setCurrentPage(1);

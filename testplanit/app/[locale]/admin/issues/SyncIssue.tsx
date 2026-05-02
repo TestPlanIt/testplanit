@@ -38,9 +38,10 @@ export function SyncIssue({ issue }: SyncIssueProps) {
     setIsSyncing(true);
 
     try {
-      const response = await fetch(`/api/issues/${issue.id}/sync`, {
-        method: "POST",
-      });
+      const response = await fetch(
+        `/api/issues/${issue.id}/sync?trigger=manual`,
+        { method: "POST" }
+      );
 
       const data = await response.json();
 

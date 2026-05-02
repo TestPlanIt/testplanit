@@ -12,7 +12,6 @@ import type { EntityType } from "~/lib/llm/services/auto-tag/types";
 
 // Use vi.hoisted() for stable mock refs to prevent OOM infinite useEffect loops
 // when hook return values are used as React dependency arrays.
-// (Phase 13 / Phase 16 decision: new array/object instances per render trigger infinite re-renders)
 const fetchMock = vi.hoisted(() => vi.fn());
 
 vi.stubGlobal("fetch", fetchMock);

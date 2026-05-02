@@ -90,6 +90,7 @@ const sidebars: SidebarsConfig = {
               ],
             },
             'user-guide/integrations', // Issue integrations administration page
+            'user-guide/webhooks', // Inbound and outbound webhooks
             {
               type: 'category',
               label: 'AI Models',

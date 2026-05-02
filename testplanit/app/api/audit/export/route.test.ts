@@ -1,15 +1,13 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Phase 64 Plan 05 Task 2 Test 1 — CTX-01 representative test.
-//
 // Proves that the wrapped POST /api/audit/export handler emits an
 // audit row whose actor context is fully populated: ipAddress/userAgent/
-// requestId come from `withAuditContext` (Plan 01 Task 2) extracting
+// requestId come from `withAuditContext` extracting
 // them from req.headers, while userId/userEmail/userName come from the
-// mocked session-callback effect (Plan 01 Task 3 pattern).
+// mocked session-callback effect.
 //
-// The helper `expectAuditRowComplete` (Plan 05 Task 1) asserts all six
+// The helper `expectAuditRowComplete` asserts all six
 // non-null fields.
 
 // Shared captured-row ref — mutated by the auditDataExport mock.

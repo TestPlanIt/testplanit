@@ -37,7 +37,7 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { defaultPageSizeOptions } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import type { EntityType } from "~/lib/llm/services/auto-tag/types";
 import { cn } from "~/utils";
 import { invalidateModelQueries } from "~/utils/optimistic-updates";
@@ -641,6 +641,7 @@ export function AutoTagWizardDialog({
 
   const effectivePageSize =
     reviewPageSize === "All" ? filteredReviewRows.length : reviewPageSize;
+  const reviewPageSizeOptions = usePageSizeOptions(filteredReviewRows.length);
   const totalFilteredPages =
     effectivePageSize > 0
       ? Math.ceil(filteredReviewRows.length / effectivePageSize)
@@ -1170,7 +1171,7 @@ export function AutoTagWizardDialog({
                       totalRows={filteredReviewRows.length}
                       searchString={debouncedSearch}
                       pageSize={reviewPageSize}
-                      pageSizeOptions={defaultPageSizeOptions}
+                      pageSizeOptions={reviewPageSizeOptions}
                       handlePageSizeChange={(size) => {
                         setReviewPageSize(size);
                         setReviewPage(1);

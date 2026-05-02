@@ -5,6 +5,7 @@ import { AsyncLocalStorage } from "async_hooks";
 import { NextRequest, NextResponse } from "next/server";
 import { tryFastPathCreate } from "~/lib/access-fast-path";
 import { authenticateApiToken, extractBearerToken } from "~/lib/api-token-auth";
+import { getAuditContext, runWithAuditContext } from "~/lib/auditContext";
 import {
   enrichFromApiAuth,
   withAuditContext,
@@ -12,6 +13,26 @@ import {
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import { prisma } from "~/lib/prisma";
 import { captureAuditEvent, type AuditEvent } from "~/lib/services/auditLog";
+import {
+  emitCaseCreated,
+  emitCaseDeleted,
+  emitCaseUpdated,
+} from "~/lib/webhooks/event-emitters/caseEvents";
+import {
+  emitIssueCreated,
+  emitIssueDeleted,
+  emitIssueUpdated,
+} from "~/lib/webhooks/event-emitters/issueEvents";
+import {
+  emitSessionCreated,
+  emitSessionResultAdded,
+  emitSessionUpdateEvents,
+} from "~/lib/webhooks/event-emitters/sessionEvents";
+import {
+  emitTestRunCreated,
+  emitTestRunResultAdded,
+  emitTestRunUpdateEvents,
+} from "~/lib/webhooks/event-emitters/testRunEvents";
 import { getServerAuthSession } from "~/server/auth";
 import { syncIssueToElasticsearch } from "~/services/issueSearch";
 import { syncMilestoneToElasticsearch } from "~/services/milestoneSearch";
@@ -44,6 +65,25 @@ const AUTO_INJECT_USER_FIELDS: Record<string, string[]> = {
   jUnitTestResult: ["createdBy"],
   issue: ["createdBy"],
 };
+
+const WEBHOOK_EMIT_MODELS = new Set([
+  "testRuns",
+  "sessions",
+  "issue",
+  "repositoryCases",
+  "testRunResults",
+  "sessionResults",
+]);
+
+function extractEntityIdFromBody(body: any): number | string | null {
+  if (!body) return null;
+  const candidate =
+    body?.data?.where?.id ?? body?.where?.id ?? body?.data?.id ?? null;
+  if (typeof candidate === "number" || typeof candidate === "string") {
+    return candidate;
+  }
+  return null;
+}
 
 // Entity types we want to audit
 const AUDITED_ENTITIES = new Set([
@@ -138,12 +178,6 @@ async function getPrisma() {
     userName = currentApiAuth.name;
   }
 
-  // Phase 64 D-01/B1: withAuditContext (below) already established an ALS
-  // frame with ipAddress/userAgent/requestId from the request headers.
-  // For Bearer-authed requests the NextAuth session callback does NOT fire,
-  // so enrich identity here explicitly. For session-authed requests the
-  // callback already ran — enrichFromApiAuth is idempotent on the same ALS
-  // frame.
   if (userId) {
     enrichFromApiAuth({
       userId: userId,
@@ -327,21 +361,66 @@ async function innerHandler(
       }
     }
 
+    // Plan 02-08 webhook-emit shim — pre-mutation snapshot capture.
+    // For UPDATE / UPSERT / DELETE on emission-eligible models we need the
+    // pre-mutation row state to compute state-transition diffs and pass
+    // oldRow into the testRun/session/issue/case emitters. Captured BEFORE
+    // the rpcHandler runs so it's not affected by transaction isolation.
+    // The post-mutation `lib/prisma.ts` `$extends` middleware emission is
+    // suppressed via auditContext.suppressWebhooks (Plan 02-02 D-01a) to
+    // prevent double-emission; this shim is the canonical RPC-path emitter.
+    let webhookPreSnapshot: any = null;
+    const isWebhookEmittingMutation =
+      isMutation &&
+      parsedPath !== null &&
+      WEBHOOK_EMIT_MODELS.has(parsedPath.model);
+    if (
+      isWebhookEmittingMutation &&
+      ["update", "upsert", "delete"].includes(parsedPath!.operation)
+    ) {
+      try {
+        const whereId = extractEntityIdFromBody(requestBody);
+        if (whereId !== null) {
+          webhookPreSnapshot = await (prisma as any)[
+            parsedPath!.model
+          ].findUnique({ where: { id: whereId } });
+        }
+      } catch (e) {
+        console.error("[Webhooks] Failed to capture pre-snapshot:", e);
+      }
+    }
+
     // Fast path: bypass ZenStack's policy engine for project-scoped creates
     // where the user's cached access manifest already answers the question.
     // Returns null when the fast path doesn't apply (wrong model/op, missing
     // projectId, etc.), in which case we fall through to the regular handler.
-    let response = await tryFastPathCreate({
-      parsedPath,
-      requestBody,
-      userId: authenticatedUserId ?? null,
-    });
-
-    if (!response) {
-      response = await baseHandler(modifiedReq, {
-        params: Promise.resolve(params),
-      });
-    }
+    //
+    // Plan 02-08 — wrap the RPC handler call (and the fast-path) in a nested
+    // ALS frame that adds suppressWebhooks=true. The lib/prisma.ts $extends
+    // middleware emission is unreliable for ZenStack RPC mutations because
+    // RPC injects `select: { id: true }` into args, leaving the middleware
+    // with a partial row that can't compute the state-changed diff. We
+    // suppress that emission here and let the post-rpc shim below emit
+    // canonically using the response data + pre-snapshot. The nested frame
+    // copies the parent's identity/correlation fields so they remain visible
+    // to audit code paths inside the RPC handler.
+    const parentAuditCtx = getAuditContext() ?? {};
+    let response = await runWithAuditContext(
+      { ...parentAuditCtx, suppressWebhooks: true },
+      async () => {
+        let r = await tryFastPathCreate({
+          parsedPath,
+          requestBody,
+          userId: authenticatedUserId ?? null,
+        });
+        if (!r) {
+          r = await baseHandler(modifiedReq, {
+            params: Promise.resolve(params),
+          });
+        }
+        return r;
+      }
+    );
 
     // Clone the response to add headers (NextResponse is immutable)
     const responseBody = await response.clone().text();
@@ -642,6 +721,134 @@ async function innerHandler(
       }
     }
 
+    // webhook-emit shim. Mirrors the ES-sync shim pattern above:
+    // ZenStack's enhance() doesn't preserve $extends middleware reliably for
+    // RPC mutations because it injects `select: { id: true }` into args and
+    // refetches inside the tx see pre-update state. We emit canonically here
+    // using the post-mutation refetch + the pre-mutation snapshot captured
+    // before rpcHandler ran. The $extends emission was suppressed via
+    // auditContext.suppressWebhooks during the rpc call (D-01a) so this is
+    // the only emission seam for UI-driven mutations.
+    // $extends emission still fires for direct-prisma callers where
+    // suppressWebhooks is false.
+    if (
+      response.ok &&
+      isWebhookEmittingMutation &&
+      parsedPath &&
+      requestBody !== null
+    ) {
+      try {
+        const result = responseBody ? JSON.parse(responseBody) : null;
+        const data = result?.data;
+        const entityId =
+          (typeof data?.id === "number" || typeof data?.id === "string"
+            ? data.id
+            : null) ?? extractEntityIdFromBody(requestBody);
+
+        if (entityId !== null) {
+          // Refetch the post-mutation row so we have the FULL set of fields
+          // the emitters need (the RPC response may have been narrowed via
+          // `select: { id: true }`). For deletes we use the pre-snapshot
+          // since the row is gone post-commit.
+          const postRow =
+            parsedPath.operation === "delete"
+              ? null
+              : await (prisma as any)[parsedPath.model]
+                  .findUnique({ where: { id: entityId } })
+                  .catch(() => null);
+
+          // Open our own transaction — webhookEvents.emit requires a tx
+          // (Plan 02-02). The atomicity compromise vs Plan 02-05's
+          // entity+emit-in-one-tx is documented in Plan 02-08 CONTEXT D-01a:
+          // the entity write committed first, the outbox row is emitted in
+          // a separate tx that runs in the same request lifecycle. Same
+          // post-commit pattern the route uses for ES sync + audit log.
+          await prisma.$transaction(async (tx) => {
+            switch (parsedPath.model) {
+              case "testRuns": {
+                if (parsedPath.operation === "create" && postRow) {
+                  await emitTestRunCreated(postRow, tx);
+                } else if (
+                  ["update", "upsert"].includes(parsedPath.operation) &&
+                  postRow
+                ) {
+                  await emitTestRunUpdateEvents(
+                    webhookPreSnapshot,
+                    postRow,
+                    tx
+                  );
+                }
+                break;
+              }
+              case "sessions": {
+                if (parsedPath.operation === "create" && postRow) {
+                  await emitSessionCreated(postRow, tx);
+                } else if (
+                  ["update", "upsert"].includes(parsedPath.operation) &&
+                  postRow
+                ) {
+                  await emitSessionUpdateEvents(
+                    webhookPreSnapshot,
+                    postRow,
+                    tx
+                  );
+                }
+                break;
+              }
+              case "issue": {
+                if (parsedPath.operation === "create" && postRow) {
+                  await emitIssueCreated(postRow, tx);
+                } else if (
+                  ["update", "upsert"].includes(parsedPath.operation) &&
+                  postRow
+                ) {
+                  await emitIssueUpdated(webhookPreSnapshot, postRow, tx);
+                } else if (
+                  parsedPath.operation === "delete" &&
+                  webhookPreSnapshot
+                ) {
+                  await emitIssueDeleted(webhookPreSnapshot, tx);
+                }
+                break;
+              }
+              case "repositoryCases": {
+                if (parsedPath.operation === "create" && postRow) {
+                  await emitCaseCreated(postRow, tx);
+                } else if (
+                  ["update", "upsert"].includes(parsedPath.operation) &&
+                  postRow
+                ) {
+                  await emitCaseUpdated(webhookPreSnapshot, postRow, tx);
+                } else if (
+                  parsedPath.operation === "delete" &&
+                  webhookPreSnapshot
+                ) {
+                  await emitCaseDeleted(webhookPreSnapshot, tx);
+                }
+                break;
+              }
+              case "testRunResults": {
+                if (parsedPath.operation === "create" && postRow) {
+                  await emitTestRunResultAdded(postRow, tx);
+                }
+                break;
+              }
+              case "sessionResults": {
+                if (parsedPath.operation === "create" && postRow) {
+                  await emitSessionResultAdded(postRow, tx);
+                }
+                break;
+              }
+            }
+          });
+        }
+      } catch (e) {
+        // Best-effort, like the ES-sync shims. Logged but never bubbled up
+        // since the entity write already committed.
+        console.error("[Webhooks] Error emitting outbox event from shim:", e);
+      }
+    }
+
     // Prevent caching of API responses - this is critical to avoid stale 410/error responses
     newResponse.headers.set(
       "Cache-Control",
@@ -729,7 +936,6 @@ async function innerHandler(
               },
             };
 
-            // Capture audit event — helper is guaranteed not to throw (Phase 63).
             // Awaiting ensures the event is enqueued before the response ships,
             // which Next.js would otherwise drop via floating-promise handling.
             await captureAuditEvent(event);
@@ -745,9 +951,6 @@ async function innerHandler(
   });
 }
 
-// Per Phase 64 D-01: every exported HTTP verb is wrapped with withAuditContext
-// so each handler invocation establishes its own ALS frame before any code path
-// (including the Bearer-token branch inside innerHandler) can emit audit events.
 export const GET = withAuditContext(innerHandler);
 export const POST = withAuditContext(innerHandler);
 export const PUT = withAuditContext(innerHandler);
