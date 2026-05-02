@@ -146,9 +146,33 @@ describe("subscribeToProjectIssueUpdates", () => {
     subscribeToProjectIssueUpdates(7, bad);
     subscribeToProjectIssueUpdates(7, good);
 
-    constructed[0]!.__fire('{"event":"issue-updated"}');
+    constructed[0]!.__fire('{"event":"issue-updated","issueId":42}');
 
     expect(bad).toHaveBeenCalledTimes(1);
     expect(good).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores the server's `{event:'sync'}` connection handshake (no issueId) — prevents thundering-herd loops", async () => {
+    const listener = vi.fn();
+    subscribeToProjectIssueUpdates(7, listener);
+
+    // Server's first-byte sync envelope after subscribe completes.
+    constructed[0]!.__fire('{"event":"sync"}');
+
+    expect(listener).not.toHaveBeenCalled();
+
+    // Real update with issueId still fans out.
+    constructed[0]!.__fire(
+      '{"event":"issue-updated","issueId":1,"projectId":7}'
+    );
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores malformed JSON without throwing", () => {
+    const listener = vi.fn();
+    subscribeToProjectIssueUpdates(7, listener);
+
+    expect(() => constructed[0]!.__fire("not json {[")).not.toThrow();
+    expect(listener).not.toHaveBeenCalled();
   });
 });

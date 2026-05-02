@@ -48,7 +48,25 @@ export function subscribeToProjectIssueUpdates(
       `/api/issues/stream?projectId=${projectId}`
     );
     const created: StreamEntry = { es, listeners: new Set() };
-    es.onmessage = () => {
+    es.onmessage = (ev) => {
+      // The SSE route emits a `{event:"sync"}` envelope as its first byte
+      // after subscribe completes — a connection-ready handshake the
+      // notifications bell uses to coalesce refetch on reconnect. For
+      // issue updates, broad cache invalidation on the sync handshake
+      // creates a thundering herd: invalidate → refetch → parent
+      // rerender flips children to skeleton → IssuesDisplay unmounts →
+      // last subscriber leaves → EventSource closes → next render
+      // re-mounts → reconnects → sync → loop. Skip the sync envelope
+      // here; real update events carry `issueId` and pass through.
+      let parsed: { event?: string; issueId?: number } | null = null;
+      try {
+        parsed = JSON.parse(ev.data);
+      } catch {
+        return;
+      }
+      if (!parsed || typeof parsed.issueId !== "number") {
+        return;
+      }
       // Snapshot the listener set so a listener that triggers another
       // subscribe/unsubscribe (e.g., re-renders that re-mount badges)
       // doesn't mutate what we're iterating.
@@ -56,10 +74,7 @@ export function subscribeToProjectIssueUpdates(
         try {
           listener();
         } catch (err) {
-          console.warn(
-            "[issueUpdateStreamManager] listener threw",
-            err
-          );
+          console.warn("[issueUpdateStreamManager] listener threw", err);
         }
       }
     };

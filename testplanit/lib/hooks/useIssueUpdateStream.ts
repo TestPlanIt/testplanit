@@ -51,16 +51,28 @@ export function useIssueUpdateStream(
   useEffect(() => {
     if (depKey === "") return;
     const onUpdate = () => {
-      // Invalidate any active query whose key contains the literal
-      // `"Issue"` segment. ZenStack's queryKey shape uses the model
-      // name as one of the segments — this catches `useFindManyIssue`,
-      // `useFindUniqueIssue`, `useCountIssue`, etc. without coupling
-      // to the exact key positions.
+      // ZenStack's queryKey shape is `["zenstack", model, operation, args,
+      // options]` (verified against the v2.22 / v3.6 runtimes). React
+      // Query treats a partial key as a prefix, so `["zenstack"]` matches
+      // every ZenStack-issued query on the page — `useFindManyIssue`,
+      // `useFindUniqueIssue`, AND every parent-model query that may
+      // include Issue data via a relation (e.g.
+      // `useFindManyRepositoryCaseVersions` with `include: { issues }`,
+      // `useFindManySessions` w/ included issues, etc.).
+      //
+      // Why so broad: an Issue update changes data the user sees in many
+      // shapes — the issue badge title, a row showing "linked issues
+      // count", a popover of related sessions, a test run's failure
+      // panel. Tracking every consumer's queryKey shape is brittle; the
+      // alternative is "anything fetched via ZenStack might be affected,
+      // refetch the active ones." React Query's invalidation is cheap
+      // (refetch only fires on queries with active observers — i.e.
+      // queries actually mounted on the current page).
+      //
+      // Non-ZenStack queries (REST calls from `app/api/...` routes etc.)
+      // are NOT touched — their keys don't start with "zenstack".
       void queryClient.invalidateQueries({
-        predicate: (query) =>
-          query.queryKey.some(
-            (segment) => typeof segment === "string" && segment === "Issue"
-          ),
+        queryKey: ["zenstack"],
       });
     };
 
