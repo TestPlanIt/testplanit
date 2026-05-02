@@ -40,6 +40,45 @@ interface TestConnectionResult {
   };
 }
 
+/**
+ * Build a top-level error summary from a set of capability probes. The
+ * summary names exactly which probe(s) failed and includes the upstream
+ * error text the probe captured, so an admin reading the toast knows
+ * both *what* TestPlanIt couldn't do with the credential and *why* the
+ * provider rejected it. When the upstream returned a JSON body we
+ * already extracted its `message` / `errorMessages[0]` / `error` field
+ * inside `probe()`, so the human-readable reason is already in
+ * `probe.error`.
+ *
+ * Examples:
+ *   "Search issues failed (Jira): HTTP 403: Issue does not exist or you
+ *    do not have permission to see it"
+ *   "Search issues failed (GitHub): HTTP 422: Validation Failed; Read
+ *    issue failed (GitHub): HTTP 403: Resource not accessible by
+ *    personal access token"
+ */
+function summarizeProbeFailures(
+  providerLabel: string,
+  probes: Record<string, CapabilityProbe | undefined>
+): string | undefined {
+  const failed: string[] = [];
+  for (const [name, p] of Object.entries(probes)) {
+    if (p && !p.ok) {
+      // Map internal probe names → admin-facing labels.
+      const friendly =
+        name === "connection"
+          ? "Authentication"
+          : name === "searchIssues"
+            ? "Search issues"
+            : name === "readIssue"
+              ? "Read issue"
+              : name;
+      failed.push(`${friendly} failed (${providerLabel}): ${p.error}`);
+    }
+  }
+  return failed.length > 0 ? failed.join("; ") : undefined;
+}
+
 async function probe(url: string, init: RequestInit): Promise<CapabilityProbe> {
   try {
     const response = await fetch(url, init);
@@ -96,17 +135,26 @@ async function testJiraConnection(
     if (!connection.ok) {
       return {
         success: false,
-        error: `Jira authentication failed: ${connection.error}`,
+        error: summarizeProbeFailures("Jira", { connection }),
         capabilities: { connection },
       };
     }
 
     // Search scope probe — issue lookup uses Jira's enhanced JQL search.
-    // An empty JQL is valid and returns the user's most-recent issues; a
-    // 403 here surfaces a missing "browse projects" / search permission
-    // before TestPlanIt would otherwise hit it on first hover/sync.
+    // Calls `/rest/api/3/search/jql` (the JiraAdapter's production
+    // endpoint, post the Atlassian deprecation of `/rest/api/3/search`
+    // — see Atlassian changelog CHANGE-2046). A minimal `ORDER BY
+    // created DESC` clause keeps the query valid without filtering to
+    // a project the credential might not have access to. A 403 here
+    // surfaces a missing "browse projects" / search permission before
+    // TestPlanIt would otherwise hit it on first hover/sync.
+    const searchJqlParams = new URLSearchParams({
+      jql: "ORDER BY created DESC",
+      maxResults: "1",
+      fields: "summary",
+    });
     const searchIssues = await probe(
-      `${baseUrl}/rest/api/3/search?jql=&maxResults=1`,
+      `${baseUrl}/rest/api/3/search/jql?${searchJqlParams.toString()}`,
       { headers }
     );
 
@@ -124,7 +172,11 @@ async function testJiraConnection(
       success,
       error: success
         ? undefined
-        : "Jira credentials are missing one or more required scopes",
+        : summarizeProbeFailures("Jira", {
+            connection,
+            searchIssues,
+            readIssue,
+          }),
       capabilities: { connection, searchIssues, readIssue },
     };
   }
@@ -173,7 +225,7 @@ async function testGithubConnection(
   if (!connection.ok) {
     return {
       success: false,
-      error: `GitHub authentication failed: ${connection.error}`,
+      error: summarizeProbeFailures("GitHub", { connection }),
       capabilities: { connection },
     };
   }
@@ -203,7 +255,11 @@ async function testGithubConnection(
     success,
     error: success
       ? undefined
-      : "GitHub credentials are missing one or more required scopes",
+      : summarizeProbeFailures("GitHub", {
+          connection,
+          searchIssues,
+          readIssue,
+        }),
     capabilities: { connection, searchIssues, readIssue },
   };
 }
@@ -233,7 +289,7 @@ async function testAzureDevOpsConnection(
   if (!connection.ok) {
     return {
       success: false,
-      error: `Azure DevOps authentication failed: ${connection.error}`,
+      error: summarizeProbeFailures("Azure DevOps", { connection }),
       capabilities: { connection },
     };
   }
@@ -274,7 +330,11 @@ async function testAzureDevOpsConnection(
     success,
     error: success
       ? undefined
-      : "Azure DevOps credentials are missing one or more required scopes",
+      : summarizeProbeFailures("Azure DevOps", {
+          connection,
+          searchIssues,
+          readIssue,
+        }),
     capabilities: { connection, searchIssues, readIssue },
   };
 }
