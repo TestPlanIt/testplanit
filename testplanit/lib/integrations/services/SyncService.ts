@@ -1057,6 +1057,14 @@ export class SyncService {
    * Project membership is REQUIRED (the Issue model joins to Projects via
    * `projectId`); the webhook handler resolves the project from the
    * WebhookConfig and passes it through.
+   *
+   * `Issue.createdById` is REQUIRED by the schema. Webhooks have no user
+   * session, so we attribute the row to the **project's creator** — a
+   * stable, always-present user with implicit authority over the project
+   * (the same user who could have manually imported this issue). This
+   * matches the audit attribution model: WEBHOOK_RECEIVED audit rows
+   * already use `__system__` for `userId`; here `createdById` needs to
+   * point at a real User row, so the project creator is the right surrogate.
    */
   private async _createIssueFromExternal(
     db: any,
@@ -1064,6 +1072,18 @@ export class SyncService {
     projectId: number,
     issueData: IssueData
   ): Promise<void> {
+    // `Projects.createdBy` is the User.id string; the `creator` relation
+    // joins to the User row. We just need the FK value here.
+    const project = await db.projects.findUnique({
+      where: { id: projectId },
+      select: { createdBy: true },
+    });
+    if (!project?.createdBy) {
+      throw new Error(
+        `Cannot auto-create issue ${issueData.key || issueData.id}: project ${projectId} has no creator on record (required for Issue.createdById)`
+      );
+    }
+
     const created = await db.issue.create({
       data: {
         name: issueData.key || issueData.id,
@@ -1082,6 +1102,7 @@ export class SyncService {
         lastSyncedAt: new Date(),
         integrationId,
         projectId,
+        createdById: project.createdBy,
       },
     });
 

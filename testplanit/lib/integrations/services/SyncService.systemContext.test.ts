@@ -20,6 +20,7 @@ const mockIssueUpdate = vi.fn();
 const mockIssueCreate = vi.fn();
 const mockIntegrationFindUnique = vi.fn();
 const mockUserFindUnique = vi.fn();
+const mockProjectsFindUnique = vi.fn();
 
 vi.mock("@/lib/prismaBase", () => ({
   prisma: {
@@ -35,6 +36,11 @@ vi.mock("@/lib/prismaBase", () => ({
     },
     integration: {
       findUnique: (...args: any[]) => mockIntegrationFindUnique(...args),
+    },
+    projects: {
+      // Auto-create looks up the project's creator to populate
+      // Issue.createdById (required FK; webhooks have no user session).
+      findUnique: (...args: any[]) => mockProjectsFindUnique(...args),
     },
   },
 }));
@@ -127,6 +133,9 @@ beforeEach(() => {
   });
   mockIssueUpdate.mockResolvedValue({ id: 1 });
   mockIssueCreate.mockResolvedValue({ id: 1 });
+  // Default: project's creator is "user-creator-1" — used by auto-create
+  // to populate Issue.createdById. Tests override per-case.
+  mockProjectsFindUnique.mockResolvedValue({ createdBy: "user-creator-1" });
 });
 
 describe("performIssueRefreshSystem — auth + wiring", () => {
@@ -291,9 +300,29 @@ describe("performIssueRefreshSystem — createIfMissing (auto-create)", () => {
         externalStatus: "Open",
         integrationId: 1,
         projectId: 7,
+        createdById: "user-creator-1", // Project creator surrogate.
       }),
     });
     expect(mockIssueUpdate).not.toHaveBeenCalled();
+  });
+
+  it("auto-create fails gracefully when project has no creator on record (required for Issue.createdById)", async () => {
+    mockIntegrationFindUnique.mockResolvedValueOnce({
+      id: 1,
+      authType: "PERSONAL_ACCESS_TOKEN",
+      credentials: { token: "x" },
+      provider: "JIRA",
+    });
+    mockIssueFindFirst.mockResolvedValue(null);
+    mockProjectsFindUnique.mockResolvedValueOnce(null); // project missing
+
+    const result = await syncService.performIssueRefreshSystem(1, "JIRA-1", {
+      createIfMissing: { projectId: 7 },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/no creator on record/i);
+    expect(mockIssueCreate).not.toHaveBeenCalled();
   });
 
   it("falls back to update path when an existing Issue row matches, even with createIfMissing set", async () => {
@@ -401,6 +430,7 @@ describe("performIssueRefreshSystem — GitHub repo context", () => {
         title: "Auto-created from GitHub",
         integrationId: 1,
         projectId: 11,
+        createdById: "user-creator-1",
       }),
     });
   });
