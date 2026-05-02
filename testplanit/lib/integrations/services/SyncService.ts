@@ -858,10 +858,21 @@ export class SyncService {
   }
 
   /**
-   * System-context inner — used by `performIssueRefreshSystem`. Reuses
-   * `Integration.credentials` directly without any user lookup. OAUTH2
-   * integrations are rejected because their tokens require user-bound
-   * refresh logic that doesn't apply to a webhook-driven sync.
+   * System-context inner — used by `performIssueRefreshSystem`.
+   *
+   * Auth strategy depends on the Integration's `authType`:
+   *   • API_KEY / PERSONAL_ACCESS_TOKEN → use `Integration.credentials`
+   *     directly (e.g., GitHub PAT, Jira Cloud user-API-token, ADO PAT).
+   *   • OAUTH2 → reuse the most-recently-active `UserIntegrationAuth`.
+   *     Atlassian's preferred Jira integration path is OAuth 2.0 (3LO),
+   *     which is per-user, but for system-triggered sync we treat the
+   *     latest active OAuth as the integration's effective service
+   *     account — same row `IntegrationManager.getAdapter` picks for the
+   *     manual-sync path. If that user revokes access or their refresh
+   *     token expires, sync fails loudly and an admin re-auths; same
+   *     failure mode as today's manual-sync OAuth flow, just visible in
+   *     the WebhookDelivery error column instead of an inline UI toast.
+   *   • NONE → no auth, pass through.
    */
   private async _performIssueRefreshInnerSystem(
     integrationId: number,
@@ -872,6 +883,13 @@ export class SyncService {
     try {
       const integration = await prisma.integration.findUnique({
         where: { id: integrationId },
+        include: {
+          userIntegrationAuths: {
+            where: { isActive: true },
+            orderBy: { updatedAt: "desc" },
+            take: 1,
+          },
+        },
       });
 
       if (!integration) {
@@ -879,14 +897,28 @@ export class SyncService {
       }
 
       if (integration.authType === "OAUTH2") {
-        throw new Error(
-          "System-context sync is not supported for OAUTH2 integrations — tokens are user-bound"
-        );
-      }
-
-      // For every other auth type, the integration-level `credentials`
-      // field is the credential surface. NONE skips this check.
-      if (integration.authType !== "NONE" && !integration.credentials) {
+        // Need at least one active UserIntegrationAuth to act as the
+        // service-account surrogate. Fail fast with a clear message so
+        // the WebhookDelivery row's error column points at the fix
+        // (an admin needs to re-auth in TestPlanIt's integration UI).
+        const oauthAuth = integration.userIntegrationAuths[0];
+        if (!oauthAuth) {
+          throw new Error(
+            "OAuth integration has no active user authentication; an admin must (re)authenticate in TestPlanIt's integration settings"
+          );
+        }
+        if (
+          oauthAuth.tokenExpiresAt &&
+          oauthAuth.tokenExpiresAt < new Date() &&
+          !oauthAuth.refreshToken
+        ) {
+          throw new Error(
+            "OAuth access token has expired and no refresh token is on record; an admin must re-authenticate"
+          );
+        }
+      } else if (integration.authType !== "NONE" && !integration.credentials) {
+        // API_KEY / PERSONAL_ACCESS_TOKEN / other paired-credential types
+        // need Integration.credentials populated.
         throw new Error("Integration is missing credentials");
       }
 

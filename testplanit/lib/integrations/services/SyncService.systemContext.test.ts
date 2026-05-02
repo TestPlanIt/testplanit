@@ -168,19 +168,100 @@ describe("performIssueRefreshSystem — auth + wiring", () => {
     expect(mockSyncIssue).toHaveBeenCalledTimes(1);
   });
 
-  it("OAUTH2 integration is rejected — system can't refresh user-tied tokens", async () => {
+  it("OAUTH2 with at least one active UserIntegrationAuth succeeds — Atlassian-preferred path for Jira", async () => {
+    // Atlassian pushes OAuth 2.0 (3LO) for Jira integrations. The system
+    // sync path treats the most-recently-active UserIntegrationAuth as
+    // the effective service-account credential.
     mockIntegrationFindUnique.mockResolvedValueOnce({
       id: 1,
       authType: "OAUTH2",
-      credentials: { accessToken: "x" },
+      credentials: null,
       provider: "JIRA",
+      userIntegrationAuths: [
+        {
+          id: "uia_1",
+          isActive: true,
+          accessToken: "encrypted-token",
+          refreshToken: "encrypted-refresh",
+          tokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000), // +1h
+        },
+      ],
+    });
+
+    const result = await syncService.performIssueRefreshSystem(1, "JIRA-1");
+
+    expect(result.success).toBe(true);
+    expect(mockSyncIssue).toHaveBeenCalledTimes(1);
+    expect(mockUserFindUnique).not.toHaveBeenCalled();
+  });
+
+  it("OAUTH2 with NO active UserIntegrationAuth fails fast with a re-auth message", async () => {
+    mockIntegrationFindUnique.mockResolvedValueOnce({
+      id: 1,
+      authType: "OAUTH2",
+      credentials: null,
+      provider: "JIRA",
+      userIntegrationAuths: [],
     });
 
     const result = await syncService.performIssueRefreshSystem(1, "JIRA-1");
 
     expect(result.success).toBe(false);
-    expect(result.error).toMatch(/OAUTH2|user-bound/i);
+    expect(result.error).toMatch(
+      /no active user authentication|re.authenticate/i
+    );
     expect(mockSyncIssue).not.toHaveBeenCalled();
+  });
+
+  it("OAUTH2 with expired token AND no refresh token fails with a re-auth message (admin recovery loud)", async () => {
+    mockIntegrationFindUnique.mockResolvedValueOnce({
+      id: 1,
+      authType: "OAUTH2",
+      credentials: null,
+      provider: "JIRA",
+      userIntegrationAuths: [
+        {
+          id: "uia_1",
+          isActive: true,
+          accessToken: "encrypted-token",
+          refreshToken: null,
+          tokenExpiresAt: new Date(Date.now() - 60 * 60 * 1000), // -1h
+        },
+      ],
+    });
+
+    const result = await syncService.performIssueRefreshSystem(1, "JIRA-1");
+
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/expired|re.authenticate/i);
+    expect(mockSyncIssue).not.toHaveBeenCalled();
+  });
+
+  it("OAUTH2 with expired token but valid refresh token proceeds (adapter handles refresh)", async () => {
+    // The adapter is responsible for refreshing — JiraAdapter has a
+    // refreshTokens() method. The service layer just gates entry; if the
+    // refresh fails downstream, the API call returns an error and is
+    // handled by the standard sync-failure path.
+    mockIntegrationFindUnique.mockResolvedValueOnce({
+      id: 1,
+      authType: "OAUTH2",
+      credentials: null,
+      provider: "JIRA",
+      userIntegrationAuths: [
+        {
+          id: "uia_1",
+          isActive: true,
+          accessToken: "encrypted-token",
+          refreshToken: "encrypted-refresh",
+          tokenExpiresAt: new Date(Date.now() - 60 * 60 * 1000), // -1h
+        },
+      ],
+    });
+
+    const result = await syncService.performIssueRefreshSystem(1, "JIRA-1");
+
+    expect(result.success).toBe(true);
+    expect(mockSyncIssue).toHaveBeenCalledTimes(1);
   });
 
   it("PAT integration without credentials fails fast", async () => {
