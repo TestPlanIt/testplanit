@@ -4938,7 +4938,8 @@
     "noTeamsAvailable": "Aucune équipe disponible",
     "filterAll": "Tous",
     "fanOutPartialFailure": "Impossible d'accéder au(x) projet(s) {count} . Affichage des résultats du/des projet(s) {successCount}.",
-    "projectSelectorLabel": "Projet"
+    "projectSelectorLabel": "Projet",
+    "searchFailedTitle": "La recherche a échoué."
   },
   "Pages": {
     "Issues": {

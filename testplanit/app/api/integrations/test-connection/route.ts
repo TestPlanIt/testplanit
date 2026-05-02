@@ -14,165 +14,275 @@ interface TestConnectionRequest {
   settings?: Record<string, string>;
 }
 
-async function testJiraConnection(
-  credentials: Record<string, string>,
-  settings: Record<string, string>,
-  authType?: string
-): Promise<{ success: boolean; error?: string }> {
+interface CapabilityProbe {
+  ok: boolean;
+  status?: number;
+  error?: string;
+}
+
+interface TestConnectionResult {
+  /** True only when every probe succeeded (auth + read scopes). */
+  success: boolean;
+  /** Top-level error message — set when a required field is missing or
+   *  when the auth probe itself failed (so capability probes were not
+   *  attempted). For partial-capability failures the per-probe `error`
+   *  is the source of truth and `success` is false. */
+  error?: string;
+  capabilities?: {
+    /** Auth handshake (Jira /myself, GitHub /user, ADO /projects). */
+    connection: CapabilityProbe;
+    /** Search probe — proves the credential can call the search API
+     *  TestPlanIt uses for issue lookup (manual link, hover prefetch). */
+    searchIssues?: CapabilityProbe;
+    /** Read probe — proves the credential can fetch a single issue
+     *  (manual sync, webhook-triggered auto-create / refresh). */
+    readIssue?: CapabilityProbe;
+  };
+}
+
+async function probe(url: string, init: RequestInit): Promise<CapabilityProbe> {
   try {
-    // Check for API key auth
-    const { email, apiToken, clientId, clientSecret } = credentials;
-    const { baseUrl, cloudId } = settings;
-
-    if (authType === "API_KEY" || (email && apiToken)) {
-      // API Key authentication
-      if (!email || !apiToken || !baseUrl) {
-        return {
-          success: false,
-          error:
-            "Missing required Jira API key configuration (email, apiToken, baseUrl)",
-        };
+    const response = await fetch(url, init);
+    if (!response.ok) {
+      // Try to extract the upstream error body so the admin sees the
+      // actual reason (e.g. Jira's error messages, GitHub validation
+      // failures, ADO PAT-policy text) instead of a bare status code.
+      let detail = response.statusText;
+      try {
+        const body = await response.json();
+        if (typeof body?.message === "string") detail = body.message;
+        else if (Array.isArray(body?.errorMessages) && body.errorMessages[0])
+          detail = String(body.errorMessages[0]);
+        else if (typeof body?.error === "string") detail = body.error;
+      } catch {
+        /* non-JSON body — keep statusText */
       }
-
-      // Test connection using API key
-      const response = await fetch(`${baseUrl}/rest/api/3/myself`, {
-        headers: {
-          Authorization: `Basic ${Buffer.from(`${email}:${apiToken}`).toString("base64")}`,
-          Accept: "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        return {
-          success: false,
-          error: `Jira API returned ${response.status}: ${response.statusText}`,
-        };
-      }
-
-      return { success: true };
-    } else {
-      // OAuth2 authentication
-      if (!clientId || !clientSecret || !cloudId) {
-        return {
-          success: false,
-          error: "Missing required Jira OAuth2 configuration",
-        };
-      }
-
-      // Test basic connectivity to Jira API
-      // This is a placeholder - in production, you'd use proper OAuth flow
-      const response = await fetch(
-        `https://api.atlassian.com/oauth/token/accessible-resources`,
-        {
-          headers: {
-            Authorization: `Bearer ${clientSecret}`, // This would be the actual OAuth token
-            Accept: "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        return {
-          success: false,
-          error: `Jira API returned ${response.status}: ${response.statusText}`,
-        };
-      }
-
-      return { success: true };
+      return {
+        ok: false,
+        status: response.status,
+        error: `HTTP ${response.status}: ${detail}`,
+      };
     }
-  } catch (error) {
+    return { ok: true, status: response.status };
+  } catch (err) {
     return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+      ok: false,
+      error: err instanceof Error ? err.message : "Network error",
     };
   }
 }
 
-async function testGithubConnection(
-  credentials: Record<string, string>
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const { personalAccessToken } = credentials;
+async function testJiraConnection(
+  credentials: Record<string, string>,
+  settings: Record<string, string>,
+  authType?: string
+): Promise<TestConnectionResult> {
+  const { email, apiToken, clientId, clientSecret } = credentials;
+  const { baseUrl, cloudId } = settings;
 
-    if (!personalAccessToken) {
+  if (authType === "API_KEY" || (email && apiToken)) {
+    if (!email || !apiToken || !baseUrl) {
       return {
         success: false,
-        error: "Missing personal access token",
+        error:
+          "Missing required Jira API key configuration (email, apiToken, baseUrl)",
       };
     }
 
-    // Test GitHub API connection
-    const response = await fetch("https://api.github.com/user", {
-      headers: {
-        Authorization: `token ${personalAccessToken}`,
-        Accept: "application/vnd.github.v3+json",
-      },
-    });
+    const auth = `Basic ${Buffer.from(`${email}:${apiToken}`).toString("base64")}`;
+    const headers = { Authorization: auth, Accept: "application/json" };
 
-    if (!response.ok) {
+    const connection = await probe(`${baseUrl}/rest/api/3/myself`, { headers });
+    if (!connection.ok) {
       return {
         success: false,
-        error: `GitHub API returned ${response.status}: ${response.statusText}`,
+        error: `Jira authentication failed: ${connection.error}`,
+        capabilities: { connection },
       };
     }
 
-    return { success: true };
-  } catch (error) {
+    // Search scope probe — issue lookup uses Jira's enhanced JQL search.
+    // An empty JQL is valid and returns the user's most-recent issues; a
+    // 403 here surfaces a missing "browse projects" / search permission
+    // before TestPlanIt would otherwise hit it on first hover/sync.
+    const searchIssues = await probe(
+      `${baseUrl}/rest/api/3/search?jql=&maxResults=1`,
+      { headers }
+    );
+
+    // Read-issue scope probe — Jira's `/issue/picker` endpoint is the
+    // lightest read-permission check that doesn't require knowing a
+    // real issue key, while still failing on credentials without
+    // issue-read scope.
+    const readIssue = await probe(
+      `${baseUrl}/rest/api/3/issue/picker?currentJQL=&showSubTasks=false&showSubTaskParent=false`,
+      { headers }
+    );
+
+    const success = connection.ok && searchIssues.ok && readIssue.ok;
     return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+      success,
+      error: success
+        ? undefined
+        : "Jira credentials are missing one or more required scopes",
+      capabilities: { connection, searchIssues, readIssue },
     };
   }
+
+  // OAuth2 path — stay close to the existing behavior; OAuth tokens
+  // expire and the per-user dance is exercised via the OAuth flow rather
+  // than this admin-side test.
+  if (!clientId || !clientSecret || !cloudId) {
+    return {
+      success: false,
+      error: "Missing required Jira OAuth2 configuration",
+    };
+  }
+  const connection = await probe(
+    "https://api.atlassian.com/oauth/token/accessible-resources",
+    {
+      headers: {
+        Authorization: `Bearer ${clientSecret}`,
+        Accept: "application/json",
+      },
+    }
+  );
+  return {
+    success: connection.ok,
+    error: connection.ok
+      ? undefined
+      : `Jira OAuth check failed: ${connection.error}`,
+    capabilities: { connection },
+  };
+}
+
+async function testGithubConnection(
+  credentials: Record<string, string>
+): Promise<TestConnectionResult> {
+  const { personalAccessToken } = credentials;
+  if (!personalAccessToken) {
+    return { success: false, error: "Missing personal access token" };
+  }
+
+  const headers = {
+    Authorization: `token ${personalAccessToken}`,
+    Accept: "application/vnd.github.v3+json",
+  };
+
+  const connection = await probe("https://api.github.com/user", { headers });
+  if (!connection.ok) {
+    return {
+      success: false,
+      error: `GitHub authentication failed: ${connection.error}`,
+      capabilities: { connection },
+    };
+  }
+
+  // Search scope probe — `/search/issues` is the exact endpoint
+  // TestPlanIt's GitHub adapter calls for issue lookup, and it is the
+  // one that returns 422 ("Validation Failed — listed users and
+  // repositories cannot be searched") on a PAT scoped only to specific
+  // resources. Catching it here surfaces the misconfiguration before
+  // first hover / first webhook receipt instead of after.
+  const searchIssues = await probe(
+    "https://api.github.com/search/issues?q=is:issue&per_page=1",
+    { headers }
+  );
+
+  // Read-issue scope probe — listing the authenticated user's issues
+  // is a minimal proof of issue read scope without needing to know a
+  // public repo + number. Returns 200 with an array on success; 403
+  // surfaces token-policy issues (e.g. PAT lifetime > org max).
+  const readIssue = await probe(
+    "https://api.github.com/issues?per_page=1&filter=all&state=open",
+    { headers }
+  );
+
+  const success = connection.ok && searchIssues.ok && readIssue.ok;
+  return {
+    success,
+    error: success
+      ? undefined
+      : "GitHub credentials are missing one or more required scopes",
+    capabilities: { connection, searchIssues, readIssue },
+  };
 }
 
 async function testAzureDevOpsConnection(
   credentials: Record<string, string>,
   settings: Record<string, string>
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const { personalAccessToken } = credentials;
-    const { organizationUrl } = settings;
-
-    if (!personalAccessToken || !organizationUrl) {
-      return {
-        success: false,
-        error: "Missing required Azure DevOps configuration",
-      };
-    }
-
-    // Test Azure DevOps API connection
-    const response = await fetch(
-      `${organizationUrl}/_apis/projects?api-version=6.0`,
-      {
-        headers: {
-          Authorization: `Basic ${Buffer.from(
-            `:${personalAccessToken}`
-          ).toString("base64")}`,
-          Accept: "application/json",
-        },
-      }
-    );
-
-    if (!response.ok) {
-      return {
-        success: false,
-        error: `Azure DevOps API returned ${response.status}: ${response.statusText}`,
-      };
-    }
-
-    return { success: true };
-  } catch (error) {
+): Promise<TestConnectionResult> {
+  const { personalAccessToken } = credentials;
+  const { organizationUrl } = settings;
+  if (!personalAccessToken || !organizationUrl) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: "Missing required Azure DevOps configuration",
     };
   }
+
+  const headers = {
+    Authorization: `Basic ${Buffer.from(`:${personalAccessToken}`).toString("base64")}`,
+    Accept: "application/json",
+  };
+
+  const connection = await probe(
+    `${organizationUrl}/_apis/projects?api-version=6.0`,
+    { headers }
+  );
+  if (!connection.ok) {
+    return {
+      success: false,
+      error: `Azure DevOps authentication failed: ${connection.error}`,
+      capabilities: { connection },
+    };
+  }
+
+  // Search scope probe — WIQL POST is the work-item search endpoint
+  // TestPlanIt's ADO adapter uses for issue lookup. A benign empty WHERE
+  // returns the org's recent work items; 403 here means the PAT is
+  // missing the "Work Items (Read)" scope.
+  const searchIssues = await probe(
+    `${organizationUrl}/_apis/wit/wiql?api-version=6.0&$top=1`,
+    {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: "SELECT [System.Id] FROM WorkItems",
+      }),
+    }
+  );
+
+  // Read-issue scope probe — `/wit/workitems` (without an id param)
+  // returns an empty list on success and 403 when the PAT lacks the
+  // work-item read permission. Lighter than searching first, picking
+  // an id, then GETting it.
+  const readIssue = await probe(
+    `${organizationUrl}/_apis/wit/workitems?ids=1&api-version=6.0`,
+    { headers }
+  );
+  // ADO returns 404 if id=1 doesn't exist, which still proves the
+  // credential could read if it existed. Treat 404 as a passing read
+  // probe; only auth/scope errors (401/403) are real failures here.
+  if (!readIssue.ok && readIssue.status === 404) {
+    readIssue.ok = true;
+    readIssue.error = undefined;
+  }
+
+  const success = connection.ok && searchIssues.ok && readIssue.ok;
+  return {
+    success,
+    error: success
+      ? undefined
+      : "Azure DevOps credentials are missing one or more required scopes",
+    capabilities: { connection, searchIssues, readIssue },
+  };
 }
 
 async function testSimpleUrlConnection(
   credentials: Record<string, string>,
   settings: Record<string, string>
-): Promise<{ success: boolean; error?: string }> {
+): Promise<TestConnectionResult> {
   try {
     const { baseUrl } = settings;
 
@@ -302,7 +412,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     }
 
     // Test connection based on provider
-    let result: { success: boolean; error?: string };
+    let result: TestConnectionResult;
 
     switch (testProvider) {
       case IntegrationProvider.JIRA:

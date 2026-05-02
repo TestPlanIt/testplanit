@@ -147,9 +147,28 @@ export function IntegrationModal({
         });
         setTestPassed(true);
       } else {
-        toast.error(t("testFailed"), {
-          description: data.error || t("testFailedDescription"),
-        });
+        // The route returns a `capabilities` object describing each
+        // probe it ran (connection / searchIssues / readIssue). When
+        // present, surface the SPECIFIC failed probe so the admin
+        // knows whether to fix the credential, the auth scope, or
+        // the org-level token policy. Falls back to the top-level
+        // `error` for missing-config / unsupported-provider responses.
+        const caps = data.capabilities ?? {};
+        const failed: string[] = [];
+        if (caps.connection?.ok === false) {
+          failed.push(`Connection: ${caps.connection.error}`);
+        }
+        if (caps.searchIssues?.ok === false) {
+          failed.push(`Search issues: ${caps.searchIssues.error}`);
+        }
+        if (caps.readIssue?.ok === false) {
+          failed.push(`Read issue: ${caps.readIssue.error}`);
+        }
+        const description =
+          failed.length > 0
+            ? failed.join("\n")
+            : data.error || t("testFailedDescription");
+        toast.error(t("testFailed"), { description });
         setTestPassed(false);
       }
     } catch {
