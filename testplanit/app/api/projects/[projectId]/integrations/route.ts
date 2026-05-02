@@ -189,12 +189,13 @@ export async function POST(
       priorActiveProjectIntegration?.integration?.provider ?? null;
 
     // Check if this integration was previously assigned to the project
-    const existingProjectIntegration = await prisma.projectIntegration.findFirst({
-      where: {
-        projectId,
-        integrationId: validatedData.integrationId,
-      },
-    });
+    const existingProjectIntegration =
+      await prisma.projectIntegration.findFirst({
+        where: {
+          projectId,
+          integrationId: validatedData.integrationId,
+        },
+      });
 
     let projectIntegration;
 

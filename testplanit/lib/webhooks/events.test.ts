@@ -127,21 +127,16 @@ describe("webhookEvents.emit", () => {
 
   it("forwards payload as-is to tx.webhookOutboxEvent.create", async () => {
     const data = { runId: 5, statusCounts: [{ id: 1 }] };
-    await webhookEvents.emit(
-      "test_run.completed",
-      data,
-      { projectId: 7, tx: tx as any }
-    );
+    await webhookEvents.emit("test_run.completed", data, {
+      projectId: 7,
+      tx: tx as any,
+    });
     expect(createSpy.mock.calls[0][0].data.payload).toBe(data);
   });
 
   it("throws a clear error when called with tx: undefined (runtime guard against `as any` bypass)", async () => {
     await expect(
-      webhookEvents.emit(
-        "foo",
-        {},
-        { projectId: 1, tx: undefined as any }
-      )
+      webhookEvents.emit("foo", {}, { projectId: 1, tx: undefined as any })
     ).rejects.toThrow(/Prisma\.TransactionClient/);
     expect(createSpy).not.toHaveBeenCalled();
   });

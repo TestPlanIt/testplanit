@@ -7,6 +7,7 @@ import type {
   WebhookDirection,
 } from "@prisma/client";
 
+import { isSlackWebhookUrl } from "../../lib/webhooks/slack-url-detection";
 import { encrypt } from "../../utils/encryption";
 
 /**
@@ -116,7 +117,7 @@ export async function seedOutboundConfig(
 ): Promise<SeededOutboundConfig> {
   const adapterType: OutboundAdapter =
     args.adapterType ??
-    (args.url.includes("hooks.slack.com") ? "SLACK" : "GENERIC_HMAC");
+    (isSlackWebhookUrl(args.url) ? "SLACK" : "GENERIC_HMAC");
   const token = generateToken();
   const subscribedEvents = args.events ?? [];
   const name = args.name ?? "E2E Seed Outbound";
