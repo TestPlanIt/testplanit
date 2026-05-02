@@ -160,7 +160,7 @@ export async function POST(
     const validatedData = createProjectIntegrationSchema.parse(body);
 
     // Check if integration exists and is active
-    const integration = await db.integration.findFirst({
+    const integration = await prisma.integration.findFirst({
       where: {
         id: validatedData.integrationId,
         status: "ACTIVE",
@@ -189,7 +189,7 @@ export async function POST(
       priorActiveProjectIntegration?.integration?.provider ?? null;
 
     // Check if this integration was previously assigned to the project
-    const existingProjectIntegration = await db.projectIntegration.findFirst({
+    const existingProjectIntegration = await prisma.projectIntegration.findFirst({
       where: {
         projectId,
         integrationId: validatedData.integrationId,
@@ -200,7 +200,7 @@ export async function POST(
 
     if (existingProjectIntegration) {
       // Deactivate other project integrations
-      await db.projectIntegration.updateMany({
+      await prisma.projectIntegration.updateMany({
         where: {
           projectId,
           isActive: true,
@@ -214,7 +214,7 @@ export async function POST(
       });
 
       // Reactivate the existing integration
-      projectIntegration = await db.projectIntegration.update({
+      projectIntegration = await prisma.projectIntegration.update({
         where: {
           id: existingProjectIntegration.id,
         },
@@ -229,7 +229,7 @@ export async function POST(
       });
     } else {
       // Deactivate existing project integrations
-      await db.projectIntegration.updateMany({
+      await prisma.projectIntegration.updateMany({
         where: {
           projectId,
           isActive: true,
@@ -240,7 +240,7 @@ export async function POST(
       });
 
       // Create new project integration
-      projectIntegration = await db.projectIntegration.create({
+      projectIntegration = await prisma.projectIntegration.create({
         data: {
           projectId,
           integrationId: validatedData.integrationId,
