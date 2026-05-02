@@ -89,6 +89,7 @@ interface DataTableProps<TData extends DataRow, TValue> {
   itemType?: string;
   getSubRows?: (originalRow: TData, index: number) => TData[] | undefined;
   subRowColumns?: ColumnDef<any, any>[];
+  rowTestIdPrefix?: string;
 }
 
 interface CustomColumnMeta {
@@ -148,6 +149,7 @@ export function DataTable<TData extends DataRow, TValue>({
   itemType,
   getSubRows,
   subRowColumns: _subRowColumns,
+  rowTestIdPrefix = "case-row",
 }: DataTableProps<TData, TValue>) {
   const t = useTranslations("common.table");
   const tLabels = useTranslations("common.labels");
@@ -847,7 +849,7 @@ export function DataTable<TData extends DataRow, TValue>({
                           : "hover:bg-muted/50"
                   }`}
                   data-row-id={row.original.id}
-                  data-testid={`case-row-${row.original.id}`}
+                  data-testid={`${rowTestIdPrefix}-${row.original.id}`}
                   onClick={() => {
                     if (onTestCaseClick && !isGrouped) {
                       onTestCaseClick(row.original.id);

@@ -6,6 +6,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const {
   mockFindManyWebhookDelivery,
   mockFindManyWebhookConfig,
+  mockCountWebhookDelivery,
+  mockFindUniqueWebhookDelivery,
   mockReplayWebhookDelivery,
   mockBulkReplayFailedDeliveries,
   mockToastSuccess,
@@ -15,6 +17,8 @@ const {
 } = vi.hoisted(() => ({
   mockFindManyWebhookDelivery: vi.fn(),
   mockFindManyWebhookConfig: vi.fn(),
+  mockCountWebhookDelivery: vi.fn(),
+  mockFindUniqueWebhookDelivery: vi.fn(),
   mockReplayWebhookDelivery: vi.fn(),
   mockBulkReplayFailedDeliveries: vi.fn(),
   mockToastSuccess: vi.fn(),
@@ -28,6 +32,15 @@ vi.mock("~/lib/hooks", () => ({
     mockFindManyWebhookDelivery(...args),
   useFindManyWebhookConfig: (...args: any[]) =>
     mockFindManyWebhookConfig(...args),
+  useCountWebhookDelivery: (...args: any[]) =>
+    mockCountWebhookDelivery(...args),
+  useFindUniqueWebhookDelivery: (...args: any[]) =>
+    mockFindUniqueWebhookDelivery(...args),
+}));
+
+// PaginationProvider depends on next-auth/react; stub session.
+vi.mock("next-auth/react", () => ({
+  useSession: () => ({ data: { user: { preferences: {} } } }),
 }));
 
 vi.mock("~/app/actions/webhook-config", () => ({
@@ -141,24 +154,87 @@ vi.mock("@/components/ui/table", () => ({
   TableCell: ({ children, ...rest }: any) => <td {...rest}>{children}</td>,
 }));
 
-// Sheet stub: render content unconditionally when open=true so RTL can find it.
-const SheetTestContext = React.createContext<{
+// Dialog stub: drawer was migrated from Sheet to Dialog with lazy-loading.
+// Render content only when open=true so RTL can find it.
+const DialogTestContext = React.createContext<{
   onOpenChange: (open: boolean) => void;
 }>({ onOpenChange: () => {} });
 
-vi.mock("@/components/ui/sheet", () => ({
-  Sheet: ({ children, open, onOpenChange }: any) =>
+vi.mock("@/components/ui/dialog", () => ({
+  Dialog: ({ children, open, onOpenChange }: any) =>
     open ? (
-      <SheetTestContext.Provider value={{ onOpenChange }}>
+      <DialogTestContext.Provider value={{ onOpenChange }}>
         <div>{children}</div>
-      </SheetTestContext.Provider>
+      </DialogTestContext.Provider>
     ) : null,
-  SheetContent: ({ children, ...rest }: any) => <div {...rest}>{children}</div>,
-  SheetHeader: ({ children }: any) => <div>{children}</div>,
-  SheetTitle: ({ children }: any) => <h2>{children}</h2>,
-  SheetDescription: ({ children }: any) => <p>{children}</p>,
-  SheetFooter: ({ children }: any) => <div>{children}</div>,
-  SheetClose: ({ children }: any) => <span>{children}</span>,
+  DialogContent: ({ children, ...rest }: any) => (
+    <div {...rest}>{children}</div>
+  ),
+  DialogHeader: ({ children }: any) => <div>{children}</div>,
+  DialogTitle: ({ children }: any) => <h2>{children}</h2>,
+  DialogDescription: ({ children }: any) => <p>{children}</p>,
+  DialogFooter: ({ children }: any) => <div>{children}</div>,
+}));
+
+// DataTable stub: emits row testids + invokes each column's cell renderer
+// so the new "actions" Eye-icon column is exercisable in tests.
+vi.mock("@/components/tables/DataTable", () => ({
+  DataTable: ({ data, columns, onTestCaseClick }: any) => (
+    <table data-testid="webhook-deliveries-datatable">
+      <tbody>
+        {data.map((row: any) => (
+          <tr
+            key={row.id}
+            data-testid={`webhook-delivery-row-${row.id}`}
+            onClick={
+              onTestCaseClick ? () => onTestCaseClick(row.id) : undefined
+            }
+          >
+            {columns.map((col: any, idx: number) => {
+              const content = col.cell
+                ? col.cell({ row: { original: row } })
+                : row[col.accessorKey];
+              return <td key={col.id ?? idx}>{content}</td>;
+            })}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  ),
+}));
+
+// DateRangePicker stub: a single trigger button — none of the tests
+// interact with the calendar itself.
+vi.mock("@/components/forms/DateRangePicker", () => ({
+  DateRangePicker: ({ buttonTestId }: any) => (
+    <button type="button" data-testid={buttonTestId}>
+      date-range
+    </button>
+  ),
+}));
+
+vi.mock("@/components/tables/ColumnSelection", () => ({
+  ColumnSelection: () => <div data-testid="column-selection-stub" />,
+}));
+
+vi.mock("@/components/tables/Pagination", () => ({
+  PaginationComponent: ({ currentPage, totalPages }: any) => (
+    <div data-testid="webhook-deliveries-paginator">
+      page {currentPage} of {totalPages}
+    </div>
+  ),
+}));
+
+vi.mock("@/components/tables/PaginationControls", () => ({
+  PaginationInfo: () => <div data-testid="webhook-deliveries-page-info" />,
+}));
+
+vi.mock("@/components/DateFormatter", () => ({
+  DateFormatter: ({ date }: any) => (
+    <span>
+      {date instanceof Date ? date.toISOString() : String(date ?? "")}
+    </span>
+  ),
 }));
 
 // Select stub: walk the JSX tree (pre-render) to extract SelectItem value
@@ -354,11 +430,22 @@ const inboundDelivery = {
   replayedFromDeliveryId: null,
 };
 
-function setDeliveries(rows: unknown[]) {
+function setDeliveries(rows: any[]) {
   mockFindManyWebhookDelivery.mockReturnValue({
     data: rows,
     isLoading: false,
     refetch: vi.fn().mockResolvedValue({ data: rows }),
+  });
+  mockCountWebhookDelivery.mockReturnValue({
+    data: rows.length,
+    isLoading: false,
+  });
+  // The drawer lazy-loads the full record by id when opened. The tests
+  // assert against fields on the seeded delivery rows, so mirror them.
+  mockFindUniqueWebhookDelivery.mockImplementation((args: any) => {
+    const id = args?.where?.id;
+    const match = rows.find((r) => r.id === id) ?? null;
+    return { data: match, isLoading: false };
   });
 }
 
@@ -408,10 +495,12 @@ describe("WebhookDeliveriesTab", () => {
     expect(screen.getByTestId("webhook-delivery-row-d3")).toBeInTheDocument();
   });
 
-  it("Test 4: clicking an OUTBOUND row opens drawer with eventId and Replay button", () => {
+  it("Test 4: clicking the details icon on an OUTBOUND row opens drawer with eventId and Replay button", () => {
     setDeliveries([outboundFailedDelivery]);
     render(<WebhookDeliveriesTab projectId={42} />);
-    fireEvent.click(screen.getByTestId("webhook-delivery-row-d_outbound_1"));
+    fireEvent.click(
+      screen.getByTestId("webhook-delivery-view-details-d_outbound_1")
+    );
     expect(screen.getByTestId("webhook-delivery-drawer")).toBeInTheDocument();
     expect(
       screen.getByTestId("webhook-drawer-replay-button")
@@ -421,10 +510,12 @@ describe("WebhookDeliveriesTab", () => {
     );
   });
 
-  it("Test 5: clicking an INBOUND row opens drawer with payloadDigest, banner, and NO Replay button", () => {
+  it("Test 5: clicking the details icon on an INBOUND row opens drawer with payloadDigest, banner, and NO Replay button", () => {
     setDeliveries([inboundDelivery]);
     render(<WebhookDeliveriesTab projectId={42} />);
-    fireEvent.click(screen.getByTestId("webhook-delivery-row-d_inbound_1"));
+    fireEvent.click(
+      screen.getByTestId("webhook-delivery-view-details-d_inbound_1")
+    );
     expect(screen.getByTestId("webhook-delivery-drawer")).toBeInTheDocument();
     expect(
       screen.getByTestId("webhook-delivery-replay-not-supported")
@@ -440,7 +531,9 @@ describe("WebhookDeliveriesTab", () => {
   it("Test 6: drawer surfaces statusCode, latency, error, attempt, receivedAt fields", () => {
     setDeliveries([outboundFailedDelivery]);
     render(<WebhookDeliveriesTab projectId={42} />);
-    fireEvent.click(screen.getByTestId("webhook-delivery-row-d_outbound_1"));
+    fireEvent.click(
+      screen.getByTestId("webhook-delivery-view-details-d_outbound_1")
+    );
     expect(
       screen.getByTestId("webhook-drawer-status-code").textContent
     ).toContain("500");
@@ -461,7 +554,9 @@ describe("WebhookDeliveriesTab", () => {
   it("Test 7: OUTBOUND replay button opens AlertDialog with confirm + cancel", () => {
     setDeliveries([outboundFailedDelivery]);
     render(<WebhookDeliveriesTab projectId={42} />);
-    fireEvent.click(screen.getByTestId("webhook-delivery-row-d_outbound_1"));
+    fireEvent.click(
+      screen.getByTestId("webhook-delivery-view-details-d_outbound_1")
+    );
     fireEvent.click(screen.getByTestId("webhook-drawer-replay-button"));
     expect(screen.getByTestId("webhook-replay-dialog")).toBeInTheDocument();
     expect(
@@ -476,7 +571,9 @@ describe("WebhookDeliveriesTab", () => {
     setDeliveries([outboundFailedDelivery]);
     mockReplayWebhookDelivery.mockResolvedValue({ ok: true });
     render(<WebhookDeliveriesTab projectId={42} />);
-    fireEvent.click(screen.getByTestId("webhook-delivery-row-d_outbound_1"));
+    fireEvent.click(
+      screen.getByTestId("webhook-delivery-view-details-d_outbound_1")
+    );
     fireEvent.click(screen.getByTestId("webhook-drawer-replay-button"));
     fireEvent.click(screen.getByTestId("webhook-replay-dialog-confirm"));
     await waitFor(() => {
@@ -487,7 +584,7 @@ describe("WebhookDeliveriesTab", () => {
     });
   });
 
-  it("Test 9: filter bar surfaces config + status + since + until controls", () => {
+  it("Test 9: filter bar surfaces config + status + date-range controls", () => {
     setDeliveries([]);
     render(<WebhookDeliveriesTab projectId={42} />);
     expect(
@@ -496,11 +593,9 @@ describe("WebhookDeliveriesTab", () => {
     expect(
       screen.getByTestId("webhook-deliveries-filter-status")
     ).toBeInTheDocument();
+    // Single date-range picker replaced separate since/until popovers.
     expect(
-      screen.getByTestId("webhook-deliveries-filter-since-trigger")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByTestId("webhook-deliveries-filter-until-trigger")
+      screen.getByTestId("webhook-deliveries-filter-date-range-trigger")
     ).toBeInTheDocument();
   });
 
@@ -601,15 +696,16 @@ describe("WebhookDeliveriesTab", () => {
     });
   });
 
-  it("Test 15: load-more button visible when page has 50 rows", () => {
+  it("Test 15: paginator visible when there are rows (replaces old load-more)", () => {
     const fifty = Array.from({ length: 50 }, (_, i) => ({
       ...outboundFailedDelivery,
       id: `d_${i}`,
     }));
     setDeliveries(fifty);
     render(<WebhookDeliveriesTab projectId={42} />);
+    // Cursor "load more" was replaced by server-side paginator (D-35 follow-up).
     expect(
-      screen.getByTestId("webhook-deliveries-load-more")
+      screen.getByTestId("webhook-deliveries-paginator")
     ).toBeInTheDocument();
   });
 
@@ -630,7 +726,9 @@ describe("WebhookDeliveriesTab", () => {
       reason: "inbound_replay_not_supported",
     });
     render(<WebhookDeliveriesTab projectId={42} />);
-    fireEvent.click(screen.getByTestId("webhook-delivery-row-d_outbound_1"));
+    fireEvent.click(
+      screen.getByTestId("webhook-delivery-view-details-d_outbound_1")
+    );
     fireEvent.click(screen.getByTestId("webhook-drawer-replay-button"));
     fireEvent.click(screen.getByTestId("webhook-replay-dialog-confirm"));
     await waitFor(() => {

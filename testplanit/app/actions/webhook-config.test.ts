@@ -1148,15 +1148,19 @@ describe("webhook-config server actions", () => {
         url: "https://hooks.slack.com/services/T000/B000/abc",
         isActive: true,
       });
-      expect(callArg.data.subscribedEvents).toEqual([
-        "test_run.completed",
-        "issue.created",
-      ]);
+      // Default preset is empty — admins explicitly opt in via the form's
+      // subscription checkboxes (the @@unique([projectId, adapterType,
+      // direction]) constraint was dropped, so multiple Slack outbounds
+      // per project are now allowed and the action no longer pre-fills).
+      expect(callArg.data.subscribedEvents).toEqual([]);
       // No secret row for Slack
       expect(mockWebhookConfigSecretCreate).not.toHaveBeenCalled();
     });
 
-    it("Slack URL: maps unique-constraint error to friendly message", async () => {
+    it("Slack URL: any create-time DB error returns a generic save-failure message", async () => {
+      // The schema-level @@unique([projectId, adapterType, direction]) was
+      // dropped, so the dedicated "already exists" branch is gone — any
+      // unexpected DB error now surfaces as the generic save-failure error.
       const Prisma = await import("@prisma/client");
       const p2002 = new Prisma.Prisma.PrismaClientKnownRequestError(
         "Unique constraint failed",
@@ -1173,7 +1177,7 @@ describe("webhook-config server actions", () => {
 
       expect(result).toEqual({
         success: false,
-        error: "An outbound Slack webhook for this project already exists",
+        error: "Failed to save webhook configuration",
       });
     });
 

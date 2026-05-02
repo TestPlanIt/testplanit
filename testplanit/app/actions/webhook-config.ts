@@ -236,16 +236,11 @@ export async function createOrRotateInboundWebhook(input: {
 
     return buildResult(config.id);
   } catch (err) {
-    // ME-03 / HI-05: discriminate the concurrent-create race using the
-    // shared `isUniqueConstraintError` helper. If two admins click
-    // 'Configure {adapter} webhook' simultaneously, both findFirst() return
-    // null, both attempt create(), one wins and the loser hits P2002 on
-    // the @@unique([projectId, adapterType, direction]) constraint. The
-    // loser falls back to a single retry that takes the rotate-existing
-    // branch — yielding the same end-state as the winner: one config row,
-    // a fresh URL/secret pair returned. (Server actions are
-    // non-recursive so we cap at one retry; if that also fails we
-    // surface the friendly error.)
+    // ME-03 / HI-05: defensive concurrent-create race fallback. The
+    // schema-level @@unique was dropped to allow multiple OUTBOUND configs
+    // per (project, adapter), so this retry path is dormant in normal
+    // operation. Kept as a safety net in case a future migration adds a
+    // partial unique index on INBOUND rows.
     if (isUniqueConstraintError(err)) {
       console.warn(
         "[webhook-config] createOrRotate hit concurrent-create race; retrying via rotate path"
@@ -666,10 +661,7 @@ export async function sendTestWebhook(
 // v0.23.0 Phase 2 — outbound webhook server actions (Plan 02-06)
 // =============================================================================
 
-const DEFAULT_OUTBOUND_PRESET: string[] = [
-  "test_run.completed",
-  "issue.created",
-];
+const DEFAULT_OUTBOUND_PRESET: string[] = [];
 
 /**
  * E2E HTTP override (Plan 02-08): when WEBHOOK_OUTBOUND_ALLOW_HTTP=true,
@@ -773,12 +765,6 @@ export async function createOutboundWebhook(input: {
         "[webhook-config] createOutboundWebhook (Slack) failed",
         err
       );
-      if (isUniqueConstraintError(err)) {
-        return {
-          success: false,
-          error: "An outbound Slack webhook for this project already exists",
-        };
-      }
       return { success: false, error: "Failed to save webhook configuration" };
     }
   }
@@ -829,12 +815,6 @@ export async function createOutboundWebhook(input: {
     };
   } catch (err) {
     console.error("[webhook-config] createOutboundWebhook (HMAC) failed", err);
-    if (isUniqueConstraintError(err)) {
-      return {
-        success: false,
-        error: "An outbound HMAC webhook for this project already exists",
-      };
-    }
     return { success: false, error: "Failed to save webhook configuration" };
   }
 }

@@ -64,6 +64,7 @@ vi.mock("sonner", () => ({
 // Translation mock — returns the key by default; we use the keys themselves
 // as visible UI text so assertions can target stable identifiers.
 vi.mock("next-intl", () => ({
+  useLocale: () => "en-US",
   useTranslations:
     (_namespace?: string) =>
     (key: string, params?: Record<string, unknown>) => {
@@ -292,8 +293,9 @@ describe("WebhookOutboundForm", () => {
     ).toBeInTheDocument();
   });
 
-  // Test 3: auto-detect badge updates as user types
-  it("Test 3: auto-detect badge shows Slack vs Generic HMAC based on URL", () => {
+  // Test 3: Slack auto-detect indicator (icon shown on Slack URL only;
+  // generic HMAC URLs render no indicator since HMAC is the default).
+  it("Test 3: Slack auto-detect icon visible on Slack URL and absent on non-Slack URL", () => {
     render(<WebhookOutboundForm projectId={42} />);
     fireEvent.click(screen.getByTestId("webhook-outbound-add-button"));
 
@@ -303,15 +305,15 @@ describe("WebhookOutboundForm", () => {
       target: { value: "https://hooks.slack.com/services/T/B/C" },
     });
     expect(
-      screen.getByTestId("webhook-outbound-detected-badge").textContent
-    ).toContain("outboundDetectedSlack");
+      screen.getByTestId("webhook-outbound-detected-slack-icon")
+    ).toBeInTheDocument();
 
     fireEvent.change(urlInput, {
       target: { value: "https://example.com/audit" },
     });
     expect(
-      screen.getByTestId("webhook-outbound-detected-badge").textContent
-    ).toContain("outboundDetectedHmac");
+      screen.queryByTestId("webhook-outbound-detected-slack-icon")
+    ).not.toBeInTheDocument();
   });
 
   // Test 4 (Blocker 4): createOutboundWebhook called with name/url/subscriptions on submit
@@ -343,8 +345,9 @@ describe("WebhookOutboundForm", () => {
     expect(Array.isArray(callArg.subscribedEvents)).toBe(true);
   });
 
-  // Test 5 (Blocker 4): empty-name client-side validation
-  it("Test 5 (Blocker 4): empty name does NOT call createOutboundWebhook; toast error shown", async () => {
+  // Test 5 (Blocker 4): empty-name client-side validation surfaces inline
+  // error (Zod validation on submit) and prevents the action from firing.
+  it("Test 5 (Blocker 4): empty name does NOT call createOutboundWebhook; inline error shown", async () => {
     render(<WebhookOutboundForm projectId={42} />);
     fireEvent.click(screen.getByTestId("webhook-outbound-add-button"));
 
@@ -356,7 +359,9 @@ describe("WebhookOutboundForm", () => {
     fireEvent.click(screen.getByTestId("webhook-outbound-create-submit"));
 
     await waitFor(() => {
-      expect(mockToastError).toHaveBeenCalledWith("outboundCreateNameRequired");
+      expect(
+        screen.getByTestId("webhook-outbound-name-error").textContent
+      ).toContain("outboundCreateNameRequired");
     });
     expect(mockCreate).not.toHaveBeenCalled();
   });
@@ -473,13 +478,17 @@ describe("WebhookOutboundForm", () => {
     });
   });
 
-  // Test 10: subscription checkbox group has three sections
-  it("Test 10: subscription checkbox group has three sections (TR/Sessions, Issues, Cases)", () => {
+  // Test 10: subscription checkbox group has four sections — testRuns + sessions
+  // were split apart so each entity gets its own section.
+  it("Test 10: subscription checkbox group has four sections (TestRuns, Sessions, Issues, Cases)", () => {
     render(<WebhookOutboundForm projectId={42} />);
     fireEvent.click(screen.getByTestId("webhook-outbound-add-button"));
 
     expect(
-      screen.getByTestId("webhook-outbound-subs-section-testRunsAndSessions")
+      screen.getByTestId("webhook-outbound-subs-section-testRuns")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("webhook-outbound-subs-section-sessions")
     ).toBeInTheDocument();
     expect(
       screen.getByTestId("webhook-outbound-subs-section-issues")

@@ -12,12 +12,20 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
+import { DateFormatter } from "@/components/DateFormatter";
+import { DateRangePicker } from "@/components/forms/DateRangePicker";
+import { ColumnSelection } from "@/components/tables/ColumnSelection";
+import { DataTable } from "@/components/tables/DataTable";
+import { PaginationComponent } from "@/components/tables/Pagination";
+import { PaginationInfo } from "@/components/tables/PaginationControls";
+import type { ColumnDef } from "@tanstack/react-table";
+import { useSession } from "next-auth/react";
+
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  PaginationProvider,
+  usePagination,
+  type PageSizeOption,
+} from "~/lib/contexts/PaginationContext";
 import {
   Select,
   SelectContent,
@@ -25,32 +33,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { format } from "date-fns";
-import { CalendarDays } from "lucide-react";
+import { Eye, Inbox, Send } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { bulkReplayFailedDeliveries } from "~/app/actions/webhook-config";
 import {
   useFindManyWebhookConfig,
+  useCountWebhookDelivery,
   useFindManyWebhookDelivery,
 } from "~/lib/hooks";
 import { usePathname, useRouter } from "~/lib/navigation";
 
-import {
-  WebhookDeliveryDrawer,
-  type DeliveryDrawerRow,
-} from "./webhook-delivery-drawer";
+import { WebhookDeliveryDrawer } from "./webhook-delivery-drawer";
+
+type DeliveryListItem = {
+  id: string;
+  webhookConfigId: string;
+  webhookConfig: {
+    name: string | null;
+    adapterType: string;
+    direction: string;
+  } | null;
+  direction: string;
+  adapterType: string;
+  eventType: string | null;
+  eventId: string | null;
+  payloadDigest: string | null;
+  statusCode: number | null;
+  error: string | null;
+  latencyMs: number | null;
+  attempt: number;
+  receivedAt: Date;
+  replayedFromDeliveryId: string | null;
+};
 
 interface WebhookDeliveriesTabProps {
   projectId: number;
@@ -58,7 +76,70 @@ interface WebhookDeliveriesTabProps {
 
 type StatusFilter = "all" | "failed" | "success";
 
-const PAGE_SIZE = 50;
+function adapterLabelKey(
+  adapterType: string
+):
+  | "inboundChooserJira"
+  | "inboundChooserGithub"
+  | "inboundChooserAdo"
+  | "adapterLabelSlack"
+  | "adapterLabelGenericHmac"
+  | null {
+  switch (adapterType) {
+    case "JIRA":
+      return "inboundChooserJira";
+    case "GITHUB":
+      return "inboundChooserGithub";
+    case "AZURE_DEVOPS":
+      return "inboundChooserAdo";
+    case "SLACK":
+      return "adapterLabelSlack";
+    case "GENERIC_HMAC":
+      return "adapterLabelGenericHmac";
+    default:
+      return null;
+  }
+}
+
+const EVENT_LABEL_KEYS: Record<string, string> = {
+  // Outbound events
+  "test_run.created": "events.testRunCreated",
+  "test_run.state_changed": "events.testRunStateChanged",
+  "test_run.completed": "events.testRunCompleted",
+  "test_run.duplicated": "events.testRunDuplicated",
+  "test_run.result_added": "events.testRunResultAdded",
+  "session.created": "events.sessionCreated",
+  "session.state_changed": "events.sessionStateChanged",
+  "session.completed": "events.sessionCompleted",
+  "session.duplicated": "events.sessionDuplicated",
+  "session.result_added": "events.sessionResultAdded",
+  "issue.created": "events.issueCreated",
+  "issue.updated": "events.issueUpdated",
+  "issue.deleted": "events.issueDeleted",
+  "case.created": "events.caseCreated",
+  "case.updated": "events.caseUpdated",
+  "case.deleted": "events.caseDeleted",
+  // Inbound: Jira
+  "jira:issue_created": "events.jiraIssueCreated",
+  "jira:issue_updated": "events.jiraIssueUpdated",
+  "jira:issue_deleted": "events.jiraIssueDeleted",
+  // Inbound: GitHub
+  issues: "events.githubIssues",
+  pull_request: "events.githubPullRequest",
+  push: "events.githubPush",
+  issue_comment: "events.githubIssueComment",
+  // Inbound: Azure DevOps
+  "workitem.created": "events.adoWorkitemCreated",
+  "workitem.updated": "events.adoWorkitemUpdated",
+  "workitem.deleted": "events.adoWorkitemDeleted",
+  // Synthetic test event ("Send test webhook" / "Send test event")
+  "webhook.test": "events.webhookTest",
+};
+
+function eventLabelKey(eventType: string | null | undefined): string | null {
+  if (!eventType) return null;
+  return EVENT_LABEL_KEYS[eventType] ?? null;
+}
 
 interface FilterState {
   configIds: string[];
@@ -85,7 +166,7 @@ function parseFilterFromSearchParams(
     statusRaw === "failed" || statusRaw === "success" ? statusRaw : "all";
   const sinceParam = searchParams?.get("since");
   const untilParam = searchParams?.get("until");
-  const since = sinceParam ? new Date(sinceParam) : defaultSince();
+  const since = sinceParam ? new Date(sinceParam) : null;
   const until = untilParam ? new Date(untilParam) : null;
   return { configIds, status, since, until };
 }
@@ -106,6 +187,14 @@ function parseFilterFromSearchParams(
  *     helper line invites re-triggering upstream instead.
  */
 export function WebhookDeliveriesTab({ projectId }: WebhookDeliveriesTabProps) {
+  return (
+    <PaginationProvider defaultPageSize={50}>
+      <WebhookDeliveriesTabContent projectId={projectId} />
+    </PaginationProvider>
+  );
+}
+
+function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
   const t = useTranslations("projects.settings.webhooks");
   const tCommon = useTranslations("common");
   const searchParams = useSearchParams();
@@ -117,8 +206,58 @@ export function WebhookDeliveriesTab({ projectId }: WebhookDeliveriesTabProps) {
     [searchParams]
   );
 
-  // ─── Cursor pagination state (independent from URL filter state) ────
-  const [cursor, setCursor] = useState<string | null>(null);
+  // ─── Server-side pagination via PaginationProvider context ─────────
+  const {
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
+    totalItems,
+    setTotalItems,
+    startIndex,
+    endIndex,
+    totalPages,
+  } = usePagination();
+
+  const pageSizeOptions: PageSizeOption[] = useMemo(() => {
+    if (totalItems <= 10) {
+      return ["All"];
+    }
+    const options: PageSizeOption[] = [10, 25, 50, 100, 250].filter(
+      (size) => size < totalItems || totalItems === 0
+    );
+    options.push("All");
+    return options;
+  }, [totalItems]);
+
+  const handlePageSizeChange = (value: string | number) => {
+    const newSize =
+      value === "All" ? totalItems : parseInt(value.toString(), 10);
+    setPageSize(newSize);
+    setCurrentPage(1);
+  };
+  // ─── DataTable sort + visibility state ──────────────────────────────
+  const [sortConfig, setSortConfig] = useState<{
+    column: string;
+    direction: "asc" | "desc";
+  }>({ column: "received", direction: "desc" });
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >({});
+
+  const handleSortChange = (columnId: string) => {
+    setSortConfig((prev) => ({
+      column: columnId,
+      direction:
+        prev.column === columnId && prev.direction === "asc" ? "desc" : "asc",
+    }));
+    setCurrentPage(1);
+  };
+
+  const { data: session } = useSession();
+  const dateTimeFormat = session?.user?.preferences?.dateFormat
+    ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat || "HH:mm"}`
+    : undefined;
 
   // ─── Fetch project's webhook configs for the multi-select ───────────
   const { data: configs } = useFindManyWebhookConfig({
@@ -149,12 +288,45 @@ export function WebhookDeliveriesTab({ projectId }: WebhookDeliveriesTabProps) {
     where.webhookConfigId = { in: filter.configIds };
   }
 
+  const orderBy = useMemo(() => {
+    const dir: "asc" | "desc" = sortConfig.direction;
+    const tieBreaker = { id: "desc" } as const;
+    switch (sortConfig.column) {
+      case "webhook":
+        return [{ webhookConfig: { name: dir } }, tieBreaker];
+      case "event":
+        return [{ eventType: dir }, tieBreaker];
+      case "direction":
+        return [{ direction: dir }, tieBreaker];
+      case "status":
+        return [{ statusCode: dir }, tieBreaker];
+      case "error":
+        return [{ error: dir }, tieBreaker];
+      case "attempt":
+        return [{ attempt: dir }, tieBreaker];
+      case "received":
+      default:
+        return [{ receivedAt: dir }, tieBreaker];
+    }
+  }, [sortConfig]);
+
+  const effectivePageSize = typeof pageSize === "number" ? pageSize : 250;
+  const skip = (currentPage - 1) * effectivePageSize;
+
+  const { data: totalCount } = useCountWebhookDelivery({ where });
+
+  useEffect(() => {
+    if (typeof totalCount === "number") {
+      setTotalItems(totalCount);
+    }
+  }, [totalCount, setTotalItems]);
+
   const { data: deliveriesData, refetch: refetchDeliveries } =
     useFindManyWebhookDelivery({
       where,
-      orderBy: [{ receivedAt: "desc" }, { id: "desc" }],
-      take: PAGE_SIZE,
-      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      orderBy,
+      take: effectivePageSize,
+      skip,
       select: {
         id: true,
         webhookConfigId: true,
@@ -167,15 +339,18 @@ export function WebhookDeliveriesTab({ projectId }: WebhookDeliveriesTabProps) {
         eventId: true,
         payloadDigest: true,
         statusCode: true,
-        latencyMs: true,
         error: true,
+        latencyMs: true,
         attempt: true,
         receivedAt: true,
         replayedFromDeliveryId: true,
       },
     });
 
-  const deliveries = (deliveriesData ?? []) as DeliveryDrawerRow[];
+  const deliveries = useMemo(
+    () => (deliveriesData ?? []) as DeliveryListItem[],
+    [deliveriesData]
+  );
 
   // ─── Drawer + bulk-replay local state ───────────────────────────────
   const [openDrawerDeliveryId, setOpenDrawerDeliveryId] = useState<
@@ -183,9 +358,6 @@ export function WebhookDeliveriesTab({ projectId }: WebhookDeliveriesTabProps) {
   >(null);
   const [bulkReplayOpen, setBulkReplayOpen] = useState(false);
   const [bulkInFlight, setBulkInFlight] = useState(false);
-
-  const openDelivery =
-    deliveries.find((d) => d.id === openDrawerDeliveryId) ?? null;
 
   // ─── Outbound-only bulk-replay gating (D-17a / Blocker 4) ───────────
   const outboundFailedCount = deliveries.filter(
@@ -214,14 +386,19 @@ export function WebhookDeliveriesTab({ projectId }: WebhookDeliveriesTabProps) {
     // Preserve the current tab so updates from the deliveries tab don't
     // unwittingly send the user back to the inbound default.
     if (!params.has("tab")) params.set("tab", "deliveries");
-    setCursor(null);
+    setCurrentPage(1);
     router.replace(`${pathname}?${params.toString()}`);
   }
 
   function resetFilters() {
     const params = new URLSearchParams();
     params.set("tab", "deliveries");
-    setCursor(null);
+    // Preserve pagination params on the same write so PaginationProvider's
+    // URL-sync effect doesn't fire a follow-up replace() against a stale
+    // searchParams snapshot — that race could leave filter params behind.
+    params.set("page", "1");
+    params.set("pageSize", String(pageSize));
+    setCurrentPage(1);
     router.replace(`${pathname}?${params.toString()}`);
   }
 
@@ -276,11 +453,22 @@ export function WebhookDeliveriesTab({ projectId }: WebhookDeliveriesTabProps) {
             <SelectItem value="__all__">
               {t("filterConfigPlaceholder")}
             </SelectItem>
-            {configList.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.name ?? c.adapterType}
-              </SelectItem>
-            ))}
+            {configList.map((c) => {
+              const fallbackKey = adapterLabelKey(c.adapterType);
+              const fallback = fallbackKey ? t(fallbackKey) : c.adapterType;
+              return (
+                <SelectItem key={c.id} value={c.id}>
+                  <span className="inline-flex items-center gap-2">
+                    {c.direction === "INBOUND" ? (
+                      <Inbox className="h-3.5 w-3.5" aria-hidden="true" />
+                    ) : (
+                      <Send className="h-3.5 w-3.5" aria-hidden="true" />
+                    )}
+                    <span>{c.name ?? fallback}</span>
+                  </span>
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
 
@@ -303,53 +491,23 @@ export function WebhookDeliveriesTab({ projectId }: WebhookDeliveriesTabProps) {
           </SelectContent>
         </Select>
 
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              data-testid="webhook-deliveries-filter-since-trigger"
-            >
-              <CalendarDays className="mr-2 h-4 w-4" />
-              {filter.since
-                ? format(filter.since, "yyyy-MM-dd")
-                : t("filterSinceDefault")}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={filter.since ?? undefined}
-              onSelect={(d: Date | undefined) =>
-                updateFilter({ since: d ? d.toISOString() : null })
-              }
-            />
-          </PopoverContent>
-        </Popover>
-
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              data-testid="webhook-deliveries-filter-until-trigger"
-            >
-              <CalendarDays className="mr-2 h-4 w-4" />
-              {filter.until
-                ? format(filter.until, "yyyy-MM-dd")
-                : t("filterUntilDefault")}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={filter.until ?? undefined}
-              onSelect={(d: Date | undefined) =>
-                updateFilter({ until: d ? d.toISOString() : null })
-              }
-            />
-          </PopoverContent>
-        </Popover>
+        <DateRangePicker
+          buttonTestId="webhook-deliveries-filter-date-range-trigger"
+          value={
+            filter.since || filter.until
+              ? {
+                  from: filter.since ?? undefined,
+                  to: filter.until ?? undefined,
+                }
+              : undefined
+          }
+          onChange={(range) =>
+            updateFilter({
+              since: range?.from ? range.from.toISOString() : null,
+              until: range?.to ? range.to.toISOString() : null,
+            })
+          }
+        />
 
         <Button
           type="button"
@@ -384,6 +542,16 @@ export function WebhookDeliveriesTab({ projectId }: WebhookDeliveriesTabProps) {
   }
 
   function renderEmpty() {
+    if (configList.length === 0) {
+      return (
+        <div
+          data-testid="webhook-deliveries-empty"
+          className="rounded-md border p-6 text-center text-sm text-muted-foreground"
+        >
+          <p>{t("deliveriesEmptyNoConfigs")}</p>
+        </div>
+      );
+    }
     return (
       <div
         data-testid="webhook-deliveries-empty"
@@ -403,52 +571,163 @@ export function WebhookDeliveriesTab({ projectId }: WebhookDeliveriesTabProps) {
     );
   }
 
+  type DeliveryRow = (typeof deliveries)[number] & { name: string };
+
+  const tableData: DeliveryRow[] = useMemo(
+    () =>
+      deliveries.map((d) => {
+        const k = adapterLabelKey(d.adapterType);
+        const adapterPretty = k ? t(k) : d.adapterType;
+        return {
+          ...d,
+          name: d.webhookConfig?.name ?? adapterPretty,
+        };
+      }),
+    [deliveries, t]
+  );
+
+  const columns: ColumnDef<DeliveryRow>[] = useMemo(
+    () => [
+      {
+        id: "webhook",
+        accessorKey: "name",
+        header: t("tableHeaderConfig"),
+        enableSorting: true,
+        enableResizing: true,
+        size: 250,
+        cell: ({ row }) => row.original.name,
+      },
+      {
+        id: "event",
+        accessorKey: "eventType",
+        header: t("tableHeaderEvent"),
+        enableSorting: true,
+        enableResizing: true,
+        size: 250,
+        cell: ({ row }) => {
+          const k = eventLabelKey(row.original.eventType);
+          return k
+            ? t(k as Parameters<typeof t>[0])
+            : (row.original.eventType ?? "—");
+        },
+      },
+      {
+        id: "direction",
+        accessorKey: "direction",
+        header: t("tableHeaderDirection"),
+        enableSorting: true,
+        enableResizing: true,
+        cell: ({ row }) => (
+          <Badge className="gap-1">
+            {row.original.direction === "INBOUND" ? (
+              <Inbox className="h-3 w-3" aria-hidden="true" />
+            ) : (
+              <Send className="h-3 w-3" aria-hidden="true" />
+            )}
+            <span>{row.original.direction}</span>
+          </Badge>
+        ),
+      },
+      {
+        id: "status",
+        accessorKey: "statusCode",
+        header: t("tableHeaderStatus"),
+        enableSorting: true,
+        enableResizing: true,
+        size: 100,
+        cell: ({ row }) => {
+          const value = row.original.statusCode ?? "—";
+          return row.original.error ? (
+            <span className="text-destructive">{value}</span>
+          ) : (
+            <span>{value}</span>
+          );
+        },
+      },
+      {
+        id: "error",
+        accessorKey: "error",
+        header: t("tableHeaderError"),
+        enableSorting: true,
+        enableResizing: true,
+        size: 100,
+        cell: ({ row }) => {
+          return (
+            row.original.error && (
+              <span className="text-destructive">{row.original.error}</span>
+            )
+          );
+        },
+      },
+      {
+        id: "attempt",
+        accessorKey: "attempt",
+        header: t("tableHeaderAttempt"),
+        enableSorting: true,
+        enableResizing: true,
+        size: 100,
+        cell: ({ row }) => row.original.attempt,
+      },
+      {
+        id: "received",
+        accessorKey: "receivedAt",
+        header: t("tableHeaderReceivedAt"),
+        enableSorting: true,
+        enableResizing: true,
+        minSize: 150,
+        size: 200,
+        maxSize: 350,
+        cell: ({ row }) => (
+          <DateFormatter
+            date={row.original.receivedAt}
+            formatString={dateTimeFormat}
+            timezone={session?.user?.preferences?.timezone}
+          />
+        ),
+      },
+      {
+        id: "actions",
+        header: t("tableHeaderActions"),
+        enableSorting: false,
+        enableResizing: false,
+        size: 60,
+        cell: ({ row }) => (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            data-testid={`webhook-delivery-view-details-${row.original.id}`}
+            title={t("tableActionViewDetails")}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenDrawerDeliveryId(row.original.id);
+            }}
+          >
+            <Eye className="h-4 w-4" />
+            <span className="sr-only">{t("tableActionViewDetails")}</span>
+          </Button>
+        ),
+      },
+    ],
+    [t, dateTimeFormat, session?.user?.preferences?.timezone]
+  );
+
   function renderTable() {
     return (
-      <Table data-testid="webhook-deliveries-table">
-        <TableHeader>
-          <TableRow>
-            <TableHead>{t("tableHeaderConfig")}</TableHead>
-            <TableHead>{t("tableHeaderEvent")}</TableHead>
-            <TableHead>{t("tableHeaderDirection")}</TableHead>
-            <TableHead>{t("tableHeaderStatus")}</TableHead>
-            <TableHead>{t("tableHeaderAttempt")}</TableHead>
-            <TableHead>{t("tableHeaderReceivedAt")}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {deliveries.map((d) => {
-            const receivedAtDate =
-              d.receivedAt instanceof Date
-                ? d.receivedAt
-                : new Date(d.receivedAt);
-            return (
-              <TableRow
-                key={d.id}
-                data-testid={`webhook-delivery-row-${d.id}`}
-                onClick={() => setOpenDrawerDeliveryId(d.id)}
-              >
-                <TableCell>{d.webhookConfig?.name ?? d.adapterType}</TableCell>
-                <TableCell>{d.eventType ?? "—"}</TableCell>
-                <TableCell>
-                  <Badge>{d.direction}</Badge>
-                </TableCell>
-                <TableCell>
-                  {d.error ? (
-                    <span className="text-destructive">
-                      {d.statusCode ?? "—"}
-                    </span>
-                  ) : (
-                    <span>{d.statusCode ?? "—"}</span>
-                  )}
-                </TableCell>
-                <TableCell>{d.attempt}</TableCell>
-                <TableCell>{receivedAtDate.toISOString()}</TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+      <div data-testid="webhook-deliveries-table">
+        <DataTable
+          columns={
+            columns as ColumnDef<DeliveryRow & { name: string }, unknown>[]
+          }
+          data={tableData}
+          sortConfig={sortConfig}
+          onSortChange={handleSortChange}
+          columnVisibility={columnVisibility}
+          onColumnVisibilityChange={setColumnVisibility}
+          rowTestIdPrefix="webhook-delivery-row"
+        />
+      </div>
     );
   }
 
@@ -461,27 +740,50 @@ export function WebhookDeliveriesTab({ projectId }: WebhookDeliveriesTabProps) {
     <div className="space-y-4" data-testid="webhook-deliveries-tab">
       {renderFilterBar()}
 
+      <div className="flex flex-row items-start">
+        <div className="flex flex-col grow w-full sm:w-1/3 min-w-[150px]">
+          <div className="m-2">
+            <ColumnSelection
+              key="webhook-deliveries-column-selection"
+              columns={
+                columns as ColumnDef<DeliveryRow & { name: string }, unknown>[]
+              }
+              onVisibilityChange={setColumnVisibility}
+            />
+          </div>
+        </div>
+        <div className="flex flex-col w-full sm:w-2/3 items-end">
+          {totalItems > 0 && (
+            <>
+              <div className="justify-end">
+                <PaginationInfo
+                  key="webhook-deliveries-pagination-info"
+                  startIndex={startIndex}
+                  endIndex={endIndex}
+                  totalRows={totalItems}
+                  searchString=""
+                  pageSize={typeof pageSize === "number" ? pageSize : "All"}
+                  pageSizeOptions={pageSizeOptions}
+                  handlePageSizeChange={handlePageSizeChange}
+                />
+              </div>
+              <div className="justify-end -mx-4">
+                <PaginationComponent
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
       {deliveries.length === 0 ? renderEmpty() : renderTable()}
 
-      {deliveries.length >= PAGE_SIZE && (
-        <div className="flex justify-center">
-          <Button
-            type="button"
-            variant="outline"
-            data-testid="webhook-deliveries-load-more"
-            onClick={() => {
-              const last = deliveries[deliveries.length - 1];
-              if (last) setCursor(last.id);
-            }}
-          >
-            {t("deliveriesLoadMore")}
-          </Button>
-        </div>
-      )}
-
       <WebhookDeliveryDrawer
-        delivery={openDelivery}
-        open={openDelivery !== null}
+        deliveryId={openDrawerDeliveryId}
+        open={openDrawerDeliveryId !== null}
         onOpenChange={(open) => !open && setOpenDrawerDeliveryId(null)}
         onReplaySuccess={() => {
           void refetchDeliveries();

@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Activity, Inbox, Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { notFound, useParams, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
@@ -142,23 +143,26 @@ export default function ProjectWebhooksPage() {
               <TabsTrigger
                 value="inbound"
                 data-testid="webhooks-tab-inbound"
-                className="w-1/3"
+                className="w-1/3 gap-2"
               >
-                {t("inboundTab")}
+                <Inbox className="h-4 w-4" />
+                <span>{t("inboundTab")}</span>
               </TabsTrigger>
               <TabsTrigger
                 value="outbound"
                 data-testid="webhooks-tab-outbound"
-                className="w-1/3"
+                className="w-1/3 gap-2"
               >
-                {t("outboundTab")}
+                <Send className="h-4 w-4" />
+                <span>{t("outboundTab")}</span>
               </TabsTrigger>
               <TabsTrigger
                 value="deliveries"
                 data-testid="webhooks-tab-deliveries"
-                className="w-1/3"
+                className="w-1/3 gap-2"
               >
-                {t("deliveriesTab")}
+                <Activity className="h-4 w-4" />
+                <span>{t("deliveriesTab")}</span>
               </TabsTrigger>
             </TabsList>
             <TabsContent value="inbound">

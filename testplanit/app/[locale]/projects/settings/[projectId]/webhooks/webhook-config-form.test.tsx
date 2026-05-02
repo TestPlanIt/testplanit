@@ -59,10 +59,9 @@ const KEY_TEMPLATES: Record<string, string> = {
   lastReceived: "Last received: {timestamp}",
 };
 
-vi.mock("next-intl", () => ({
-  useTranslations:
-    (_namespace?: string) =>
-    (key: string, params?: Record<string, unknown>) => {
+vi.mock("next-intl", () => {
+  function makeT() {
+    const t = (key: string, params?: Record<string, unknown>) => {
       const template = KEY_TEMPLATES[key] ?? key;
       let result = template;
       if (params) {
@@ -71,8 +70,17 @@ vi.mock("next-intl", () => ({
         });
       }
       return result;
-    },
-}));
+    };
+    // `t.rich(key, tags)` returns the key as plain text — sufficient for
+    // tests that only assert on the key/text, not on the rich element tree.
+    (t as any).rich = (key: string) => KEY_TEMPLATES[key] ?? key;
+    return t;
+  }
+  return {
+    useLocale: () => "en-US",
+    useTranslations: (_namespace?: string) => makeT(),
+  };
+});
 
 // ─── Stub shadcn primitives ──────────────────────────────────────────────
 
@@ -200,6 +208,20 @@ vi.mock("@/components/ui/alert-dialog", () => ({
       </button>
     );
   },
+}));
+
+// Tooltip stub: render trigger + content as inert siblings so tests can
+// assert tooltip content directly via DOM (Radix tooltips don't render
+// content in JSDOM without a hover/focus event).
+vi.mock("@/components/ui/tooltip", () => ({
+  TooltipProvider: ({ children }: any) => <>{children}</>,
+  Tooltip: ({ children }: any) => <>{children}</>,
+  TooltipTrigger: ({ children }: any) => <>{children}</>,
+  TooltipContent: ({ children, ...rest }: any) => (
+    <div data-testid="tooltip-content" {...rest}>
+      {children}
+    </div>
+  ),
 }));
 
 import { WebhookConfigForm } from "./webhook-config-form";
@@ -445,12 +467,11 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     expect(screen.getByText("inboundAdoScopeHint")).toBeInTheDocument();
   });
 
-  it("Test 11: GitHub scope hint is visible on the GitHub create form", () => {
-    setConfigs([]);
+  it("Test 11: GitHub scope hint is visible on the configured GitHub card", () => {
+    // Scope hint moved from the (now inline) create flow to the configured
+    // card so admins see the scoping rules after the webhook exists.
+    setConfigs([githubConfig]);
     render(<WebhookConfigForm projectId={42} />);
-    fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
-    fireEvent.click(screen.getByTestId("webhook-inbound-chooser-github"));
-    fireEvent.click(screen.getByTestId("webhook-inbound-chooser-submit"));
     expect(screen.getByText("inboundGithubScopeHint")).toBeInTheDocument();
   });
 
@@ -467,8 +488,8 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     render(<WebhookConfigForm projectId={42} />);
     fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
     fireEvent.click(screen.getByTestId("webhook-inbound-chooser-jira"));
+    // Jira chooser-submit creates inline (no separate create form).
     fireEvent.click(screen.getByTestId("webhook-inbound-chooser-submit"));
-    fireEvent.click(screen.getByTestId("webhook-create-button"));
     await waitFor(() => {
       expect(mockCreateOrRotateInbound).toHaveBeenCalledWith({
         projectId: 42,
@@ -488,8 +509,8 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     render(<WebhookConfigForm projectId={42} />);
     fireEvent.click(screen.getByTestId("webhook-inbound-add-button"));
     fireEvent.click(screen.getByTestId("webhook-inbound-chooser-github"));
+    // GitHub chooser-submit creates inline (no separate create form).
     fireEvent.click(screen.getByTestId("webhook-inbound-chooser-submit"));
-    fireEvent.click(screen.getByTestId("webhook-create-button"));
     await waitFor(() => {
       expect(mockCreateOrRotateInbound).toHaveBeenCalledWith({
         projectId: 42,
@@ -783,14 +804,12 @@ describe("WebhookConfigForm (multi-adapter)", () => {
     setConfigs([degradedJiraConfig]);
     render(<WebhookConfigForm projectId={42} />);
     const card = screen.getByTestId("webhook-inbound-card-jira");
-    const badge = within(card).getByTestId("webhook-health-badge-jira");
-    const title = badge.getAttribute("title") ?? "";
-    // Title is the t("healthTooltipDegraded", {count, lastFailureAt}) key
-    // since the test-mock returns the key string. The component MUST be
-    // passing both values into the t() params object — we can't assert the
-    // interpolation directly, but we can assert title is non-empty and
-    // references the correct tooltip key.
-    expect(title).toContain("healthTooltipDegraded");
+    // Tooltip content renders as a sibling of the trigger (mocked above).
+    // The test-mock for t() returns the key, so the rendered content is
+    // the literal "healthTooltipDegraded" — sufficient to confirm the
+    // component selected the right tooltip variant for DEGRADED.
+    const tooltip = within(card).getByTestId("tooltip-content");
+    expect(tooltip.textContent).toContain("healthTooltipDegraded");
   });
 
   it("Test 27: delivery activity field group renders all three timestamps when populated (DEL-08)", () => {

@@ -23,9 +23,30 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { WebhookAdapterIcon } from "@/components/webhooks/webhook-adapter-icon";
 import { formatDistanceToNow } from "date-fns";
-import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import {
+  AlertTriangle,
+  Archive,
+  Asterisk,
+  Check,
+  CirclePlus,
+  Clock,
+  Copy,
+  Power,
+  RotateCw,
+  Send,
+  Trash2,
+} from "lucide-react";
+
+import { dateFnsLocaleFor } from "~/lib/utils/dateFnsLocale";
+import { useLocale, useTranslations } from "next-intl";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -41,6 +62,18 @@ import {
 } from "~/app/actions/webhook-config";
 import { useFindManyWebhookConfig } from "~/lib/hooks";
 import { isSlackWebhookUrl } from "~/lib/webhooks/slack-url-detection";
+import { z } from "zod";
+
+const outboundCreateSchema = z.object({
+  name: z.string().trim().min(1, "outboundCreateNameRequired"),
+  url: z
+    .string()
+    .trim()
+    .min(1, "outboundCreateUrlRequired")
+    .url("outboundCreateUrlInvalid"),
+});
+
+type OutboundCreateErrors = Partial<Record<"name" | "url", string>>;
 
 interface WebhookOutboundFormProps {
   projectId: number;
@@ -54,12 +87,14 @@ interface WebhookOutboundFormProps {
  * duplicated, result_added.
  */
 const EVENT_CATALOG = {
-  testRunsAndSessions: [
+  testRuns: [
     "test_run.created",
     "test_run.state_changed",
     "test_run.completed",
     "test_run.duplicated",
     "test_run.result_added",
+  ],
+  sessions: [
     "session.created",
     "session.state_changed",
     "session.completed",
@@ -70,7 +105,7 @@ const EVENT_CATALOG = {
   cases: ["case.created", "case.updated", "case.deleted"],
 } as const;
 
-const DEFAULT_PRESET: string[] = ["test_run.completed", "issue.created"];
+const DEFAULT_PRESET: string[] = [];
 
 /**
  * Outbound config row shape returned by `useFindManyWebhookConfig`. The select
@@ -113,6 +148,34 @@ function healthBadgeVariant(
   return "default";
 }
 
+function adapterLabelKey(
+  adapterType: string
+): "adapterLabelSlack" | "adapterLabelGenericHmac" {
+  return adapterType === "SLACK"
+    ? "adapterLabelSlack"
+    : "adapterLabelGenericHmac";
+}
+
+// Reuse existing common.* keys where they exist; only the verbs unique to
+// webhook event terminology live in the webhooks scope.
+const EVENT_VERB_I18N_PATH: Record<string, string> = {
+  created: "common.fields.created",
+  updated: "common.updated",
+  deleted: "common.status.deleted",
+  completed: "common.fields.completed",
+  duplicated: "projects.settings.webhooks.eventVerbs.duplicated",
+  state_changed: "projects.settings.webhooks.eventVerbs.stateChanged",
+  result_added: "projects.settings.webhooks.eventVerbs.resultAdded",
+};
+
+function eventVerbI18nPath(eventName: string): string {
+  // "case.created" → "created"; "test_run.state_changed" → "state_changed"
+  const verbPart = eventName.includes(".")
+    ? eventName.slice(eventName.indexOf(".") + 1)
+    : eventName;
+  return EVENT_VERB_I18N_PATH[verbPart] ?? verbPart;
+}
+
 /**
  * Project admin form for OUTBOUND webhook configs (Phase 2 / Plan 02-07).
  *
@@ -132,9 +195,12 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
   const t = useTranslations("projects.settings.webhooks");
   const tCommon = useTranslations("common");
   const tActions = useTranslations("common.actions");
+  const tGlobal = useTranslations();
+  const dateLocale = dateFnsLocaleFor(useLocale());
 
   const { data, isLoading, refetch } = useFindManyWebhookConfig({
     where: { projectId, direction: "OUTBOUND" },
+    orderBy: { createdAt: "desc" },
     select: {
       id: true,
       projectId: true,
@@ -165,24 +231,20 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
     },
   });
 
-  const configs = (data ?? []) as unknown as OutboundConfig[];
+  const configs = (data ?? []) as OutboundConfig[];
 
   // ─── Create form local state ──────────────────────────────────────────
   const [creating, setCreating] = useState(false);
   const [createName, setCreateName] = useState("");
+  const [createErrors, setCreateErrors] = useState<OutboundCreateErrors>({});
   const [createUrl, setCreateUrl] = useState("");
   const [createSubscriptions, setCreateSubscriptions] =
     useState<string[]>(DEFAULT_PRESET);
   const [revealedSecret, setRevealedSecret] = useState<string | null>(null);
-  const [isSubmittingCreate, setIsSubmittingCreate] = useState(false);
-
-  const detectedAdapterKey = useMemo(
-    () =>
-      isSlackWebhookUrl(createUrl)
-        ? "outboundDetectedSlack"
-        : "outboundDetectedHmac",
-    [createUrl]
+  const [savedFlashes, setSavedFlashes] = useState<Set<string>>(
+    () => new Set()
   );
+  const [isSubmittingCreate, setIsSubmittingCreate] = useState(false);
 
   // ─── Per-config dialog state ──────────────────────────────────────────
   const [rotateDialogConfigId, setRotateDialogConfigId] = useState<
@@ -207,18 +269,28 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
   // ─── Handlers ─────────────────────────────────────────────────────────
 
   async function handleCreate() {
-    // Client-side guard so the user gets inline feedback rather than a
-    // server-side toast. The server action also validates (Plan 02-06).
-    if (createName.trim().length === 0) {
-      toast.error(t("outboundCreateNameRequired"));
+    const parsed = outboundCreateSchema.safeParse({
+      name: createName,
+      url: createUrl,
+    });
+    if (!parsed.success) {
+      const next: OutboundCreateErrors = {};
+      for (const issue of parsed.error.issues) {
+        const field = issue.path[0];
+        if (field === "name" || field === "url") {
+          next[field] = issue.message;
+        }
+      }
+      setCreateErrors(next);
       return;
     }
+    setCreateErrors({});
     setIsSubmittingCreate(true);
     try {
       const result = await createOutboundWebhook({
         projectId,
-        name: createName.trim(), // Blocker 4 — forwarded to server action
-        url: createUrl,
+        name: parsed.data.name,
+        url: parsed.data.url,
         subscribedEvents: createSubscriptions,
       });
       if (!result.success) {
@@ -233,6 +305,7 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
       setCreateName("");
       setCreateUrl("");
       setCreateSubscriptions(DEFAULT_PRESET);
+      setCreateErrors({});
       await refetch();
     } finally {
       setIsSubmittingCreate(false);
@@ -334,12 +407,33 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
 
   async function handleUpdateSubscriptions(
     configId: string,
-    nextEvents: string[]
+    nextEvents: string[],
+    flashEventNames?: string[]
   ) {
     const result = await updateOutboundSubscriptions(configId, nextEvents);
     if (!result.success) {
       toast.error(result.error ?? t("saveError"));
       return;
+    }
+    if (flashEventNames && flashEventNames.length > 0) {
+      const flashKeys = flashEventNames.map((e) => `${configId}:${e}`);
+      setSavedFlashes((prev) => {
+        const next = new Set(prev);
+        for (const k of flashKeys) next.add(k);
+        return next;
+      });
+      // Each flash key gets its own independent 1.5s timer so that toggling
+      // a different event mid-window doesn't shorten the existing one.
+      for (const k of flashKeys) {
+        setTimeout(() => {
+          setSavedFlashes((prev) => {
+            if (!prev.has(k)) return prev;
+            const next = new Set(prev);
+            next.delete(k);
+            return next;
+          });
+        }, 1500);
+      }
     }
     await refetch();
   }
@@ -397,45 +491,119 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
         <CardTitle>{t("outboundCreateTitle")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-1">
-          <Label htmlFor="webhook-outbound-name-input">
-            {t("outboundCreateName")}
-          </Label>
-          <Input
-            id="webhook-outbound-name-input"
-            data-testid="webhook-outbound-name-input"
-            value={createName}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setCreateName(e.target.value)
-            }
-            placeholder={t("outboundCreateNamePlaceholder")}
-          />
-          <p className="text-xs text-muted-foreground">
-            {t("outboundCreateNameHelp")}
-          </p>
-        </div>
-
-        <div className="space-y-1">
-          <Label htmlFor="webhook-outbound-url-input">
-            {t("outboundCreateUrl")}
-          </Label>
-          <div className="flex items-center gap-2">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1">
+            <Label htmlFor="webhook-outbound-name-input">
+              {t("outboundCreateName")}
+              <sup>
+                <Asterisk className="inline h-3 w-3 text-destructive" />
+              </sup>
+            </Label>
             <Input
-              id="webhook-outbound-url-input"
-              data-testid="webhook-outbound-url-input"
-              value={createUrl}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setCreateUrl(e.target.value)
+              id="webhook-outbound-name-input"
+              data-testid="webhook-outbound-name-input"
+              value={createName}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                setCreateName(e.target.value);
+                if (createErrors.name) {
+                  setCreateErrors((prev) => ({ ...prev, name: undefined }));
+                }
+              }}
+              placeholder={t("outboundCreateNamePlaceholder")}
+              aria-invalid={!!createErrors.name}
+              aria-describedby={
+                createErrors.name
+                  ? "webhook-outbound-name-error"
+                  : "webhook-outbound-name-help"
               }
-              placeholder={t("outboundCreateUrlPlaceholder")}
+              className={
+                createErrors.name
+                  ? "border-destructive focus-visible:ring-destructive"
+                  : undefined
+              }
             />
-            <Badge data-testid="webhook-outbound-detected-badge">
-              {t(detectedAdapterKey)}
-            </Badge>
+            {createErrors.name ? (
+              <p
+                id="webhook-outbound-name-error"
+                data-testid="webhook-outbound-name-error"
+                className="text-xs text-destructive"
+              >
+                {t(createErrors.name as Parameters<typeof t>[0])}
+              </p>
+            ) : (
+              <p
+                id="webhook-outbound-name-help"
+                className="text-xs text-muted-foreground"
+              >
+                {t("outboundCreateNameHelp")}
+              </p>
+            )}
           </div>
-          <p className="text-xs text-muted-foreground">
-            {t("outboundCreateUrlHelp")}
-          </p>
+
+          <div className="space-y-1">
+            <Label htmlFor="webhook-outbound-url-input">
+              {t("outboundCreateUrl")}
+              <sup>
+                <Asterisk className="inline h-3 w-3 text-destructive" />
+              </sup>
+            </Label>
+            <div className="flex items-center gap-2">
+              <Input
+                id="webhook-outbound-url-input"
+                data-testid="webhook-outbound-url-input"
+                value={createUrl}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  setCreateUrl(e.target.value);
+                  if (createErrors.url) {
+                    setCreateErrors((prev) => ({ ...prev, url: undefined }));
+                  }
+                }}
+                placeholder={t("outboundCreateUrlPlaceholder")}
+                aria-invalid={!!createErrors.url}
+                aria-describedby={
+                  createErrors.url
+                    ? "webhook-outbound-url-error"
+                    : "webhook-outbound-url-help"
+                }
+                className={
+                  createErrors.url
+                    ? "border-destructive focus-visible:ring-destructive"
+                    : undefined
+                }
+              />
+              {isSlackWebhookUrl(createUrl) && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      data-testid="webhook-outbound-detected-slack-icon"
+                      aria-label={t("outboundDetectedSlack")}
+                    >
+                      <WebhookAdapterIcon adapterType="SLACK" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {t("outboundDetectedSlack")}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+            {createErrors.url ? (
+              <p
+                id="webhook-outbound-url-error"
+                data-testid="webhook-outbound-url-error"
+                className="text-xs text-destructive"
+              >
+                {t(createErrors.url as Parameters<typeof t>[0])}
+              </p>
+            ) : (
+              <p
+                id="webhook-outbound-url-help"
+                className="text-xs text-muted-foreground"
+              >
+                {t("outboundCreateUrlHelp")}
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="space-y-3">
@@ -448,49 +616,55 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
             </p>
           </div>
 
-          {(
-            [
-              {
-                key: "testRunsAndSessions",
-                label: "outboundSubsTestRunsAndSessions",
-              },
-              { key: "issues", label: "outboundSubsIssues" },
-              { key: "cases", label: "outboundSubsCases" },
-            ] as const
-          ).map(({ key, label }) => (
-            <div
-              key={key}
-              data-testid={`webhook-outbound-subs-section-${key}`}
-              className="space-y-2 rounded-md border p-3"
-            >
-              <div className="flex items-center justify-between">
-                <h5 className="text-sm font-semibold">{t(label)}</h5>
-                <button
-                  type="button"
-                  data-testid={`webhook-outbound-subs-select-all-${key}`}
-                  className="text-xs underline"
-                  onClick={() => toggleSection(key)}
-                >
-                  {t("outboundSubsSelectAll")}
-                </button>
-              </div>
-              <div className="space-y-1">
-                {EVENT_CATALOG[key].map((eventName) => (
-                  <label
-                    key={eventName}
-                    className="flex items-center gap-2 text-xs"
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {(
+              [
+                { key: "cases", label: "outboundSubsCases" },
+                { key: "issues", label: "outboundSubsIssues" },
+                { key: "testRuns", label: "outboundSubsTestRuns" },
+                { key: "sessions", label: "outboundSubsSessions" },
+              ] as const
+            ).map(({ key, label }) => (
+              <div
+                key={key}
+                data-testid={`webhook-outbound-subs-section-${key}`}
+                className="space-y-2 rounded-md border p-3"
+              >
+                <div className="flex items-start justify-between">
+                  <h5 className="text-sm font-semibold">{t(label)}</h5>
+                  <button
+                    type="button"
+                    data-testid={`webhook-outbound-subs-select-all-${key}`}
+                    className="whitespace-nowrap text-xs underline"
+                    onClick={() => toggleSection(key)}
                   >
-                    <Checkbox
-                      data-testid={`webhook-outbound-subs-event-${eventName}`}
-                      checked={createSubscriptions.includes(eventName)}
-                      onCheckedChange={() => toggleEvent(eventName)}
-                    />
-                    <code>{eventName}</code>
-                  </label>
-                ))}
+                    {tActions("selectAll")}
+                  </button>
+                </div>
+                <div className="space-y-1">
+                  {EVENT_CATALOG[key].map((eventName) => (
+                    <label
+                      key={eventName}
+                      className="flex items-center gap-2 text-xs"
+                    >
+                      <Checkbox
+                        data-testid={`webhook-outbound-subs-event-${eventName}`}
+                        checked={createSubscriptions.includes(eventName)}
+                        onCheckedChange={() => toggleEvent(eventName)}
+                      />
+                      <span>
+                                {tGlobal(
+                                  eventVerbI18nPath(
+                                    eventName
+                                  ) as Parameters<typeof tGlobal>[0]
+                                )}
+                              </span>
+                    </label>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
         <div className="flex gap-2">
@@ -511,6 +685,7 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
               setCreateName("");
               setCreateUrl("");
               setCreateSubscriptions(DEFAULT_PRESET);
+              setCreateErrors({});
             }}
           >
             {t("outboundCreateCancel")}
@@ -525,6 +700,13 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
       className="space-y-3 rounded-md border border-primary/40 bg-muted/30 p-3"
       data-testid="webhook-outbound-revealed-secret-box"
     >
+      <div
+        role="alert"
+        className="flex items-start gap-2 rounded-md bg-destructive px-3 py-2 text-xs font-medium text-destructive-foreground"
+      >
+        <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+        <span>{t("outboundSecretShownOnce")}</span>
+      </div>
       <div className="space-y-1">
         <div className="text-xs font-medium text-muted-foreground">
           {t("secret")}
@@ -543,22 +725,22 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
             data-testid="webhook-outbound-secret-copy"
             onClick={() => copy(secret, t("secretCopied"))}
           >
-            {t("outboundSecretCopy")}
+            <Copy className="h-4 w-4" />
+            <span>{t("outboundSecretCopy")}</span>
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground">
-          {t("outboundSecretShownOnce")}
-        </p>
       </div>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        data-testid="webhook-outbound-secret-done"
-        onClick={onDismiss}
-      >
-        {t("outboundSecretDone")}
-      </Button>
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          size="sm"
+          data-testid="webhook-outbound-secret-done"
+          onClick={onDismiss}
+        >
+          <Check className="h-4 w-4" />
+          <span>{t("outboundSecretDone")}</span>
+        </Button>
+      </div>
     </div>
   );
 
@@ -573,7 +755,10 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
       <span className="font-medium">{t(labelKey)}:</span>{" "}
       <span>
         {value
-          ? formatDistanceToNow(new Date(value), { addSuffix: true })
+          ? formatDistanceToNow(new Date(value), {
+              addSuffix: true,
+              locale: dateLocale,
+            })
           : t("activityNever")}
       </span>
     </div>
@@ -614,173 +799,286 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
     const healthLabelKey: `healthBadge.${EndpointHealth}` = `healthBadge.${config.endpointHealth}`;
 
     return (
-      <Card key={config.id} data-testid={`webhook-outbound-card-${config.id}`}>
+      <Card
+        key={config.id}
+        data-testid={`webhook-outbound-card-${config.id}`}
+        className={
+          config.isActive ? undefined : "opacity-60 transition-opacity"
+        }
+      >
         <CardHeader>
-          <CardTitle data-testid={`webhook-outbound-card-title-${config.id}`}>
-            {config.name ?? t("outboundUnnamedConfig")}
-          </CardTitle>
-          <CardDescription>
-            <Badge>{config.adapterType}</Badge>{" "}
-            <Badge
-              data-testid={`webhook-health-badge-${config.id}`}
-              variant={healthBadgeVariant(config.endpointHealth)}
-              title={renderHealthTooltip(config)}
-            >
-              {t(healthLabelKey)}
-            </Badge>
-          </CardDescription>
+          <div className="flex items-center gap-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div aria-label={t(adapterLabelKey(config.adapterType))}>
+                  <WebhookAdapterIcon adapterType={config.adapterType} />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                {t(adapterLabelKey(config.adapterType))}
+              </TooltipContent>
+            </Tooltip>
+            <div className="min-w-0 flex-1">
+              <CardTitle
+                data-testid={`webhook-outbound-card-title-${config.id}`}
+              >
+                {config.name ?? t("outboundUnnamedConfig")}
+              </CardTitle>
+              <CardDescription className="mt-1 flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 text-xs">
+                  <Send className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>{t("directionOutbound")}</span>
+                </span>
+              </CardDescription>
+            </div>
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  {t("outboundActiveToggle")}
+                </span>
+                <Switch
+                  checked={config.isActive}
+                  onCheckedChange={(next: boolean) =>
+                    void handleToggleActive(config.id, next)
+                  }
+                  aria-label={t("outboundActiveToggle")}
+                  data-testid={`webhook-outbound-active-toggle-${config.id}`}
+                />
+              </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    data-testid={`webhook-health-badge-${config.id}`}
+                    variant={healthBadgeVariant(config.endpointHealth)}
+                    title={renderHealthTooltip(config)}
+                  >
+                    {t(healthLabelKey)}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {renderHealthTooltip(config)}
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-1">
-            <div className="text-xs font-medium text-muted-foreground">
-              {t("outboundUrlLabel")}
+          <div className={isSlack ? undefined : "grid gap-4 sm:grid-cols-2"}>
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold">
+                {t("outboundUrlLabel")}
+              </h4>
+              <code
+                data-testid={`webhook-outbound-url-${config.id}`}
+                className="block break-all text-xs"
+              >
+                {config.url ?? ""}
+              </code>
+              {isSlack && (
+                <p className="text-xs text-muted-foreground">
+                  {t("outboundSlackHint")}
+                </p>
+              )}
             </div>
-            <code
-              data-testid={`webhook-outbound-url-${config.id}`}
-              className="block break-all text-xs"
-            >
-              {config.url ?? ""}
-            </code>
-            {isSlack && (
-              <p className="text-xs text-muted-foreground">
-                {t("outboundSlackHint")}
-              </p>
-            )}
-          </div>
 
-          <div className="flex items-center gap-2">
-            <Switch
-              checked={config.isActive}
-              onCheckedChange={(next: boolean) =>
-                void handleToggleActive(config.id, next)
-              }
-              aria-label={t("outboundActiveToggle")}
-              data-testid={`webhook-outbound-active-toggle-${config.id}`}
-            />
-            <span className="text-sm">{t("outboundActiveToggle")}</span>
+            {!isSlack && (
+              <div
+                data-testid={`webhook-outbound-secrets-section-${config.id}`}
+                className="grid gap-4 sm:grid-cols-2"
+              >
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h4 className="text-sm font-semibold">
+                      {t("outboundHmacSecretsTitle")}
+                    </h4>
+                    {!activeSecret && (
+                      <Badge variant="destructive">
+                        {t("outboundHmacInactiveSecret")}
+                      </Badge>
+                    )}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    data-testid={`webhook-outbound-rotate-button-${config.id}`}
+                    onClick={() => setRotateDialogConfigId(config.id)}
+                  >
+                    <RotateCw className="h-4 w-4" />
+                    <span>{t("outboundHmacRotateButton")}</span>
+                  </Button>
+                </div>
+
+                {retiringSecret && (
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      <Badge>{t("outboundHmacRetiringSecret")}</Badge>
+                      {retiringSecret.autoRetireAt && (
+                        <span>
+                          {t("outboundHmacAutoRetireIn", {
+                            days: Math.max(
+                              0,
+                              Math.ceil(
+                                (new Date(
+                                  retiringSecret.autoRetireAt
+                                ).getTime() -
+                                  Date.now()) /
+                                  (1000 * 60 * 60 * 24)
+                              )
+                            ),
+                          })}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        data-testid={`webhook-outbound-extend-button-${retiringSecret.id}`}
+                        onClick={() => handleExtend(retiringSecret.id)}
+                      >
+                        <Clock className="h-4 w-4" />
+                        <span>{t("outboundHmacExtendButton")}</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        data-testid={`webhook-outbound-retire-now-button-${retiringSecret.id}`}
+                        onClick={() => setRetireDialogSecretId(retiringSecret.id)}
+                      >
+                        <Archive className="h-4 w-4" />
+                        <span>{t("outboundHmacRetireNowButton")}</span>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div
             data-testid={`webhook-outbound-subs-editor-${config.id}`}
-            className="space-y-2 rounded-md border p-3"
+            className="space-y-3"
           >
-            <h4 className="text-sm font-semibold">
+            <h4 className="text-sm font-medium">
               {t("outboundCreateSubscriptionsTitle")}
             </h4>
-            {(
-              [
-                {
-                  key: "testRunsAndSessions",
-                  label: "outboundSubsTestRunsAndSessions",
-                },
-                { key: "issues", label: "outboundSubsIssues" },
-                { key: "cases", label: "outboundSubsCases" },
-              ] as const
-            ).map(({ key, label }) => (
-              <div key={key} className="space-y-1">
-                <h5 className="text-xs font-semibold">{t(label)}</h5>
-                {EVENT_CATALOG[key].map((eventName) => {
-                  const checked = config.subscribedEvents.includes(eventName);
-                  return (
-                    <label
-                      key={eventName}
-                      className="flex items-center gap-2 text-xs"
-                    >
-                      <Checkbox
-                        data-testid={`webhook-outbound-config-${config.id}-event-${eventName}`}
-                        checked={checked}
-                        onCheckedChange={() => {
-                          const next = checked
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {(
+                [
+                  { key: "cases", label: "outboundSubsCases" },
+                  { key: "issues", label: "outboundSubsIssues" },
+                  { key: "testRuns", label: "outboundSubsTestRuns" },
+                  { key: "sessions", label: "outboundSubsSessions" },
+                ] as const
+              ).map(({ key, label }) => {
+                const sectionEvents = EVENT_CATALOG[key];
+                const allSelected = sectionEvents.every((e) =>
+                  config.subscribedEvents.includes(e)
+                );
+                return (
+                  <div
+                    key={key}
+                    data-testid={`webhook-outbound-config-${config.id}-subs-section-${key}`}
+                    className="space-y-2 rounded-md border p-3"
+                  >
+                    <div className="flex items-start justify-between">
+                      <h5 className="text-sm font-semibold">{t(label)}</h5>
+                      <button
+                        type="button"
+                        data-testid={`webhook-outbound-config-${config.id}-subs-select-all-${key}`}
+                        className="whitespace-nowrap text-xs underline"
+                        onClick={() => {
+                          const next = allSelected
                             ? config.subscribedEvents.filter(
-                                (e) => e !== eventName
+                                (e) =>
+                                  !(sectionEvents as readonly string[]).includes(
+                                    e
+                                  )
                               )
-                            : [...config.subscribedEvents, eventName];
-                          void handleUpdateSubscriptions(config.id, next);
+                            : Array.from(
+                                new Set([
+                                  ...config.subscribedEvents,
+                                  ...sectionEvents,
+                                ])
+                              );
+                          void handleUpdateSubscriptions(
+                            config.id,
+                            next,
+                            sectionEvents.slice()
+                          );
                         }}
-                      />
-                      <code>{eventName}</code>
-                    </label>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-
-          {!isSlack && (
-            <div
-              data-testid={`webhook-outbound-secrets-section-${config.id}`}
-              className="space-y-2 rounded-md border p-3"
-            >
-              <h4 className="text-sm font-semibold">
-                {t("outboundHmacSecretsTitle")}
-              </h4>
-              {activeSecret && (
-                <div className="text-xs">
-                  <Badge>{t("outboundHmacActiveSecret")}</Badge>
-                </div>
-              )}
-              {retiringSecret && (
-                <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <Badge>{t("outboundHmacRetiringSecret")}</Badge>
-                  {retiringSecret.autoRetireAt && (
-                    <span>
-                      {t("outboundHmacAutoRetireIn", {
-                        days: Math.max(
-                          0,
-                          Math.ceil(
-                            (new Date(retiringSecret.autoRetireAt).getTime() -
-                              Date.now()) /
-                              (1000 * 60 * 60 * 24)
-                          )
-                        ),
+                      >
+                        {tActions("selectAll")}
+                      </button>
+                    </div>
+                    <div className="space-y-1">
+                      {sectionEvents.map((eventName) => {
+                        const checked =
+                          config.subscribedEvents.includes(eventName);
+                        return (
+                          <label
+                            key={eventName}
+                            className="flex items-center gap-2 text-xs"
+                          >
+                            <Checkbox
+                              data-testid={`webhook-outbound-config-${config.id}-event-${eventName}`}
+                              checked={checked}
+                              onCheckedChange={() => {
+                                const next = checked
+                                  ? config.subscribedEvents.filter(
+                                      (e) => e !== eventName
+                                    )
+                                  : [...config.subscribedEvents, eventName];
+                                void handleUpdateSubscriptions(
+                                  config.id,
+                                  next,
+                                  [eventName]
+                                );
+                              }}
+                            />
+                            <span>
+                              {tGlobal(
+                                eventVerbI18nPath(
+                                  eventName
+                                ) as Parameters<typeof tGlobal>[0]
+                              )}
+                            </span>
+                            {savedFlashes.has(
+                              `${config.id}:${eventName}`
+                            ) && (
+                              <Check
+                                className="h-3.5 w-3.5 text-success"
+                                aria-hidden="true"
+                              />
+                            )}
+                          </label>
+                        );
                       })}
-                    </span>
-                  )}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    data-testid={`webhook-outbound-extend-button-${retiringSecret.id}`}
-                    onClick={() => handleExtend(retiringSecret.id)}
-                  >
-                    {t("outboundHmacExtendButton")}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    data-testid={`webhook-outbound-retire-now-button-${retiringSecret.id}`}
-                    onClick={() => setRetireDialogSecretId(retiringSecret.id)}
-                  >
-                    {t("outboundHmacRetireNowButton")}
-                  </Button>
-                </div>
-              )}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                data-testid={`webhook-outbound-rotate-button-${config.id}`}
-                onClick={() => setRotateDialogConfigId(config.id)}
-              >
-                {t("outboundHmacRotateButton")}
-              </Button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          )}
+          </div>
 
           <div
             data-testid={`webhook-delivery-activity-${config.id}`}
-            className="space-y-1 text-sm text-muted-foreground"
+            className="space-y-2 text-sm text-muted-foreground"
           >
-            <div className="text-xs font-medium uppercase">
+            <h4 className="text-sm font-semibold text-foreground">
               {t("activityLabel")}
+            </h4>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {renderActivityRow(
+                "activityLastDispatched",
+                config.lastDispatchedAt
+              )}
+              {renderActivityRow("activityLastSuccess", config.lastSuccessAt)}
+              {renderActivityRow("activityLastFailure", config.lastFailureAt)}
             </div>
-            {renderActivityRow(
-              "activityLastDispatched",
-              config.lastDispatchedAt
-            )}
-            {renderActivityRow("activityLastSuccess", config.lastSuccessAt)}
-            {renderActivityRow("activityLastFailure", config.lastFailureAt)}
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -789,7 +1087,8 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
               data-testid={`webhook-outbound-send-test-button-${config.id}`}
               onClick={() => handleSendTest(config.id)}
             >
-              {t("outboundSendTestButton")}
+              <Send className="h-4 w-4" />
+              <span>{t("outboundSendTestButton")}</span>
             </Button>
             {config.endpointHealth === "DISABLED" && (
               <Button
@@ -797,7 +1096,8 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
                 data-testid={`webhook-reenable-button-${config.id}`}
                 onClick={() => setReenableDialogConfigId(config.id)}
               >
-                {t("reEnable")}
+                <Power className="h-4 w-4" />
+                <span>{t("reEnable")}</span>
               </Button>
             )}
             <Button
@@ -806,7 +1106,8 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
               data-testid={`webhook-outbound-delete-button-${config.id}`}
               onClick={() => setDeleteDialogConfigId(config.id)}
             >
-              {t("outboundDeleteButton")}
+              <Trash2 className="h-4 w-4" />
+              <span>{t("outboundDeleteButton")}</span>
             </Button>
           </div>
 
@@ -828,14 +1129,17 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
   return (
     <div className="space-y-4" data-testid="webhook-outbound-form">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{t("description")}</p>
+        <p className="text-sm text-muted-foreground">
+          {t("outboundDescription")}
+        </p>
         {!creating && (
           <Button
             type="button"
             data-testid="webhook-outbound-add-button"
             onClick={() => setCreating(true)}
           >
-            {t("outboundAddButton")}
+            <CirclePlus className="h-4 w-4" />
+            <span>{t("outboundAddButton")}</span>
           </Button>
         )}
       </div>

@@ -23,8 +23,30 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { DateFormatter } from "@/components/DateFormatter";
+import { WebhookAdapterIcon } from "@/components/webhooks/webhook-adapter-icon";
 import { formatDistanceToNow } from "date-fns";
-import { useTranslations } from "next-intl";
+import {
+  AlertTriangle,
+  Asterisk,
+  Check,
+  CirclePlus,
+  Copy,
+  Inbox,
+  Power,
+  RotateCw,
+  Send,
+  Trash2,
+} from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useLocale, useTranslations } from "next-intl";
+
+import { dateFnsLocaleFor } from "~/lib/utils/dateFnsLocale";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -150,11 +172,17 @@ function healthBadgeVariant(
  */
 export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
   const t = useTranslations("projects.settings.webhooks");
+  const dateLocale = dateFnsLocaleFor(useLocale());
+  const { data: session } = useSession();
+  const dateTimeFormat = session?.user?.preferences?.dateFormat
+    ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat || "HH:mm"}`
+    : undefined;
   const tActions = useTranslations("common.actions");
   const tCommon = useTranslations("common");
 
   const { data, isLoading, refetch } = useFindManyWebhookConfig({
     where: { projectId, direction: "INBOUND" },
+    orderBy: { createdAt: "desc" },
     select: {
       id: true,
       projectId: true,
@@ -174,7 +202,7 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
     },
   });
 
-  const configs = (data ?? []) as unknown as InboundConfig[];
+  const configs = (data ?? []) as InboundConfig[];
   const usedAdapters = new Set<InboundAdapterType>(
     configs.map((c) => c.adapterType)
   );
@@ -416,13 +444,18 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
               type="button"
               data-testid="webhook-inbound-chooser-submit"
               onClick={() => {
-                // Submit advances from chooser to adapter-specific create form
                 if (!chosenAdapter) return;
-                setChooserOpen(false);
+                if (chosenAdapter === "AZURE_DEVOPS") {
+                  setChooserOpen(false);
+                } else {
+                  void handleCreate();
+                }
               }}
-              disabled={!chosenAdapter}
+              disabled={!chosenAdapter || isCreating}
             >
-              {t("inboundChooserSubmit")}
+              {chosenAdapter === "AZURE_DEVOPS"
+                ? t("inboundChooserSubmit")
+                : t("createButton")}
             </Button>
             <Button
               type="button"
@@ -446,22 +479,24 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
         data-testid={`webhook-inbound-create-form-${adapterSlug(chosenAdapter)}`}
       >
         <CardHeader>
-          <CardTitle>{t(titleKey)}</CardTitle>
-          <CardDescription>
-            <Badge>{chosenAdapter}</Badge>
-          </CardDescription>
+          <div className="flex items-center gap-3">
+            <WebhookAdapterIcon adapterType={chosenAdapter} />
+            <div className="min-w-0 flex-1">
+              <CardTitle>{t(titleKey)}</CardTitle>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {chosenAdapter === "GITHUB" && (
-            <p className="text-xs text-muted-foreground">
-              {t("inboundGithubScopeHint")}
-            </p>
-          )}
-
           {chosenAdapter === "AZURE_DEVOPS" && (
             <>
               <p className="text-xs text-muted-foreground">
-                {t("inboundAdoScopeHint")}
+                {t.rich("inboundAdoScopeHint", {
+                  code: (chunks) => (
+                    <code className="rounded bg-muted px-1 font-mono text-[0.95em]">
+                      {chunks}
+                    </code>
+                  ),
+                })}
               </p>
               <p className="text-xs text-muted-foreground">
                 {t("inboundAdoResourceDetailsHint")}
@@ -469,6 +504,9 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
               <div className="space-y-1">
                 <Label htmlFor="webhook-inbound-ado-username-input">
                   {t("inboundAdoUsername")}
+                  <sup>
+                    <Asterisk className="inline h-3 w-3 text-destructive" />
+                  </sup>
                 </Label>
                 <Input
                   id="webhook-inbound-ado-username-input"
@@ -486,6 +524,9 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
               <div className="space-y-1">
                 <Label htmlFor="webhook-inbound-ado-password-input">
                   {t("inboundAdoPassword")}
+                  <sup>
+                    <Asterisk className="inline h-3 w-3 text-destructive" />
+                  </sup>
                 </Label>
                 <Input
                   id="webhook-inbound-ado-password-input"
@@ -578,6 +619,16 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
         className="space-y-3 rounded-md border border-primary/40 bg-muted/30 p-3"
         data-testid="webhook-inbound-revealed-box"
       >
+        <div
+          role="alert"
+          className="flex items-start gap-2 rounded-md bg-destructive px-3 py-2 text-xs font-medium text-destructive-foreground"
+        >
+          <AlertTriangle
+            className="h-4 w-4 shrink-0"
+            aria-hidden="true"
+          />
+          <span>{t("revealedShownOnceWarning")}</span>
+        </div>
         {renderSetupSteps(adapterType)}
         <div className="space-y-1">
           <div className="text-xs font-medium text-muted-foreground">
@@ -597,7 +648,8 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
               onClick={() => copy(rev.url, t("urlCopied"))}
               aria-label={t("copyUrl")}
             >
-              {tActions("copyLink")}
+              <Copy className="h-4 w-4" />
+              <span>{tActions("copyLink")}</span>
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">{t("urlHelp")}</p>
@@ -623,26 +675,16 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
                 }
                 aria-label={t("copySecret")}
               >
-                {tActions("copy")}
+                <Copy className="h-4 w-4" />
+                <span>{tActions("copy")}</span>
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">{t("secretHelp")}</p>
           </div>
         )}
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-primary/20">
-          <p className="text-xs text-muted-foreground flex-1 min-w-[200px]">
-            {t("nextSteps")}
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            data-testid="webhook-reveal-done-button"
-            onClick={() => setRevealed(null)}
-          >
-            {t("revealDone")}
-          </Button>
-        </div>
+        <p className="text-xs text-muted-foreground border-t border-primary/20 pt-2">
+          {t("nextSteps")}
+        </p>
       </div>
     );
   }
@@ -681,7 +723,10 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
         <span className="font-medium">{t(labelKey)}:</span>{" "}
         <span>
           {value
-            ? formatDistanceToNow(new Date(value), { addSuffix: true })
+            ? formatDistanceToNow(new Date(value), {
+                addSuffix: true,
+                locale: dateLocale,
+              })
             : t("activityNever")}
         </span>
       </div>
@@ -722,29 +767,76 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
     }/api/webhooks/${config.token}`;
     const healthLabelKey: `healthBadge.${EndpointHealth}` = `healthBadge.${config.endpointHealth}`;
     return (
-      <Card key={config.id} data-testid={`webhook-inbound-card-${slug}`}>
+      <Card
+        key={config.id}
+        data-testid={`webhook-inbound-card-${slug}`}
+        className={
+          config.isActive ? undefined : "opacity-60 transition-opacity"
+        }
+      >
         <CardHeader>
-          <CardTitle>{t(titleKey)}</CardTitle>
-          <CardDescription>
-            <Badge>{config.adapterType}</Badge>{" "}
-            <Badge
-              data-testid={`webhook-health-badge-${slug}`}
-              variant={healthBadgeVariant(config.endpointHealth)}
-              title={renderHealthTooltip(config)}
-            >
-              {t(healthLabelKey)}
-            </Badge>
-          </CardDescription>
+          <div className="flex items-center gap-3">
+            <WebhookAdapterIcon adapterType={config.adapterType} />
+            <div className="min-w-0 flex-1">
+              <CardTitle>{t(titleKey)}</CardTitle>
+              <CardDescription className="mt-1 flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 text-xs">
+                  <Inbox className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>{t("directionInbound")}</span>
+                </span>
+              </CardDescription>
+            </div>
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  {t("isActive")}
+                </span>
+                <Switch
+                  checked={config.isActive}
+                  onCheckedChange={(next: boolean) =>
+                    void handleToggleActive(config, next)
+                  }
+                  aria-label={t("isActive")}
+                />
+              </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    data-testid={`webhook-health-badge-${slug}`}
+                    variant={healthBadgeVariant(config.endpointHealth)}
+                    title={renderHealthTooltip(config)}
+                  >
+                    {t(healthLabelKey)}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {renderHealthTooltip(config)}
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {config.adapterType === "GITHUB" && (
             <p className="text-xs text-muted-foreground">
-              {t("inboundGithubScopeHint")}
+              {t.rich("inboundGithubScopeHint", {
+                code: (chunks) => (
+                  <code className="rounded bg-muted px-1 font-mono text-[0.95em]">
+                    {chunks}
+                  </code>
+                ),
+              })}
             </p>
           )}
           {config.adapterType === "AZURE_DEVOPS" && (
             <p className="text-xs text-muted-foreground">
-              {t("inboundAdoScopeHint")}
+              {t.rich("inboundAdoScopeHint", {
+                code: (chunks) => (
+                  <code className="rounded bg-muted px-1 font-mono text-[0.95em]">
+                    {chunks}
+                  </code>
+                ),
+              })}
             </p>
           )}
 
@@ -753,73 +845,72 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
             renderRevealedBox(revealed, config.adapterType)}
 
           {!isRevealedHere && (
-            <div className="space-y-2">
-              <div className="space-y-1">
-                <div className="text-xs font-medium text-muted-foreground">
-                  {t("url")}
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div className="space-y-2">
+                <div className="space-y-1">
+                  <div className="text-xs font-medium text-muted-foreground">
+                    {t("url")}
+                  </div>
+                  <code
+                    data-testid="webhook-url"
+                    className="block break-all text-xs"
+                  >
+                    {redactWebhookUrl(url)}
+                  </code>
                 </div>
-                <code
-                  data-testid="webhook-url"
-                  className="block break-all text-xs"
-                >
-                  {redactWebhookUrl(url)}
-                </code>
-              </div>
-              <div className="space-y-1">
-                <div className="text-xs font-medium text-muted-foreground">
-                  {t("secret")}
+                <div className="space-y-1">
+                  <div className="text-xs font-medium text-muted-foreground">
+                    {t("secret")}
+                  </div>
+                  <code
+                    data-testid="webhook-secret"
+                    className="block text-xs text-muted-foreground"
+                  >
+                    {t("secretMasked")}
+                  </code>
                 </div>
-                <code
-                  data-testid="webhook-secret"
-                  className="block text-xs text-muted-foreground"
-                >
-                  {t("secretMasked")}
-                </code>
+                <div className="text-xs text-muted-foreground">
+                  {config.lastReceivedAt ? (
+                    <>
+                      {t("lastReceivedLabel")}{" "}
+                      <DateFormatter
+                        date={config.lastReceivedAt}
+                        formatString={dateTimeFormat}
+                        timezone={session?.user?.preferences?.timezone}
+                      />
+                    </>
+                  ) : (
+                    t("lastReceivedNever")
+                  )}
+                </div>
               </div>
-              <div className="text-xs text-muted-foreground">
-                {config.lastReceivedAt
-                  ? t("lastReceived", {
-                      timestamp: new Date(config.lastReceivedAt).toISOString(),
-                    })
-                  : t("lastReceivedNever")}
+
+              <div
+                data-testid={`webhook-delivery-activity-${slug}`}
+                className="space-y-1 text-sm text-muted-foreground"
+              >
+                <div className="text-xs font-medium uppercase">
+                  {t("activityLabel")}
+                </div>
+                {renderActivityRow(
+                  "activityLastDispatched",
+                  config.lastDispatchedAt
+                )}
+                {renderActivityRow("activityLastSuccess", config.lastSuccessAt)}
+                {renderActivityRow("activityLastFailure", config.lastFailureAt)}
               </div>
             </div>
           )}
 
-          <div className="flex items-center gap-2">
-            <Switch
-              checked={config.isActive}
-              onCheckedChange={(next: boolean) =>
-                void handleToggleActive(config, next)
-              }
-              aria-label={t("isActive")}
-            />
-            <span className="text-sm">{t("isActive")}</span>
-          </div>
-
-          <div
-            data-testid={`webhook-delivery-activity-${slug}`}
-            className="space-y-1 text-sm text-muted-foreground"
-          >
-            <div className="text-xs font-medium uppercase">
-              {t("activityLabel")}
-            </div>
-            {renderActivityRow(
-              "activityLastDispatched",
-              config.lastDispatchedAt
-            )}
-            {renderActivityRow("activityLastSuccess", config.lastSuccessAt)}
-            {renderActivityRow("activityLastFailure", config.lastFailureAt)}
-          </div>
-
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
               data-testid="webhook-send-test-button"
               onClick={() => handleSendTest(config)}
               disabled={pendingTestConfigId === config.id}
             >
-              {t("sendTest")}
+              <Send className="h-4 w-4" />
+              <span>{t("sendTest")}</span>
             </Button>
             {isHmacAdapter && (
               <Button
@@ -828,7 +919,8 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
                 data-testid="webhook-rotate-button"
                 onClick={() => setRotateDialogConfigId(config.id)}
               >
-                {t("rotateSecret")}
+                <RotateCw className="h-4 w-4" />
+                <span>{t("rotateSecret")}</span>
               </Button>
             )}
             {config.endpointHealth === "DISABLED" && (
@@ -837,17 +929,31 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
                 data-testid={`webhook-reenable-button-${slug}`}
                 onClick={() => setReenableDialogConfigId(config.id)}
               >
-                {t("reEnable")}
+                <Power className="h-4 w-4" />
+                <span>{t("reEnable")}</span>
               </Button>
             )}
-            <Button
-              type="button"
-              variant="destructive"
-              data-testid="webhook-delete-button"
-              onClick={() => setDeleteDialogConfigId(config.id)}
-            >
-              {tActions("delete")}
-            </Button>
+            <div className="ml-auto flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="destructive"
+                data-testid="webhook-delete-button"
+                onClick={() => setDeleteDialogConfigId(config.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>{tActions("delete")}</span>
+              </Button>
+              {isRevealedHere && (
+                <Button
+                  type="button"
+                  data-testid="webhook-reveal-done-button"
+                  onClick={() => setRevealed(null)}
+                >
+                  <Check className="h-4 w-4" />
+                  <span>{t("revealDone")}</span>
+                </Button>
+              )}
+            </div>
           </div>
 
           {renderTestResult(config.id)}
@@ -866,19 +972,41 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
   return (
     <div className="space-y-4" data-testid="webhook-config-form">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{t("description")}</p>
-        {!inCreateFlow && !allConfigured && (
-          <Button
-            type="button"
-            data-testid="webhook-inbound-add-button"
-            onClick={() => {
-              setChooserOpen(true);
-              setChosenAdapter(null);
-            }}
-          >
-            {t("inboundAddButton")}
-          </Button>
-        )}
+        <p className="text-sm text-muted-foreground">
+          {t("inboundDescription")}
+        </p>
+        {!inCreateFlow &&
+          (allConfigured ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button
+                    type="button"
+                    data-testid="webhook-inbound-add-button"
+                    disabled
+                  >
+                    <CirclePlus className="h-4 w-4" />
+                    <span>{t("inboundAddButton")}</span>
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {t("inboundAddButtonAllConfigured")}
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <Button
+              type="button"
+              data-testid="webhook-inbound-add-button"
+              onClick={() => {
+                setChooserOpen(true);
+                setChosenAdapter(null);
+              }}
+            >
+              <CirclePlus className="h-4 w-4" />
+              <span>{t("inboundAddButton")}</span>
+            </Button>
+          ))}
       </div>
 
       {chooserOpen && renderChooser()}
