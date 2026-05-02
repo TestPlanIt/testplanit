@@ -175,6 +175,19 @@ export async function POST(
       );
     }
 
+    // Capture the project's currently-active integration provider BEFORE
+    // any deactivate/reactivate calls. If the provider changes, any
+    // inbound webhook on the project is now orphaned (its adapterType is
+    // locked to the old provider, so events would route into deadweight).
+    // Hard-delete those rows post-switch — see cascade below.
+    const priorActiveProjectIntegration =
+      await prisma.projectIntegration.findFirst({
+        where: { projectId, isActive: true },
+        include: { integration: { select: { provider: true } } },
+      });
+    const priorProvider =
+      priorActiveProjectIntegration?.integration?.provider ?? null;
+
     // Check if this integration was previously assigned to the project
     const existingProjectIntegration = await db.projectIntegration.findFirst({
       where: {
@@ -237,6 +250,19 @@ export async function POST(
         include: {
           integration: true,
         },
+      });
+    }
+
+    // If the active integration's provider changed, any inbound webhook
+    // configured for the project is locked to the OLD provider's adapter
+    // and would silently drop or auto-create orphan rows after the
+    // switch. Hard-delete to keep the inbound webhook 1:1 with the
+    // project's assigned issue integration. WebhookConfig has no
+    // soft-delete column; FK cascades clean up dedup + secrets rows
+    // (deliveries SetNull-cascade, retained for audit history).
+    if (priorProvider !== integration.provider) {
+      await prisma.webhookConfig.deleteMany({
+        where: { projectId, direction: "INBOUND" },
       });
     }
 

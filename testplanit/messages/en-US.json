@@ -1099,6 +1099,7 @@
           "setAsDefault": "Set as Default",
           "removeProject": "Remove Project",
           "removeProjectConfirmation": "Removing this project will stop syncing issues from it. Previously synced issues are not deleted. Continue?",
+          "removeProjectWebhookCascadeBullet": "The inbound webhook for this project will also be removed.",
           "keepProject": "Keep Project",
           "defaultIndicator": "Default",
           "syncStatusSyncing": "Syncing",
@@ -1112,11 +1113,13 @@
           "removeWarning1": "Disconnect all linked issues from this issue integration (issues remain in database)",
           "removeWarning2": "Remove all issue integration-specific settings for this project",
           "removeWarning3": "Require reconfiguration if you want to use this issue integration again",
+          "removeWarning4": "Remove the inbound webhook configured for this integration",
           "switchIntegration": "Switch Integration",
           "switchWarningTitle": "Switching to a different AI model will:",
           "switchWarning1": "Disconnect all issues currently linked to the current issue integration",
           "switchWarning2": "Preserve the issues in the database (they become unlinked)",
-          "switchWarning3": "Replace the current issue integration configuration with the new one"
+          "switchWarning3": "Replace the current issue integration configuration with the new one",
+          "switchWarning4": "Remove the inbound webhook configured for the current integration"
         },
         "integrationAssigned": "Integration assigned successfully",
         "integrationAssignError": "Failed to assign issue integration to project",

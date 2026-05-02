@@ -19,17 +19,21 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Integration, ProjectIntegration } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Loader2, Save, Star, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   useFindManyIntegrationProject,
+  useFindManyWebhookConfig,
   useUpdateIntegrationProject,
   useUpdateProjectIntegration,
   useUpsertIntegrationProject,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
+
+import { removeIntegrationProjectMapping } from "~/app/actions/project-integration";
 
 interface ProjectIntegrationSettingsProps {
   projectIntegration: ProjectIntegration;
@@ -54,6 +58,7 @@ export function ProjectIntegrationSettings({
   const t = useTranslations("projects.settings.integrations");
   const tGlobal = useTranslations();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
   const [_isLoadingProjects, setIsLoadingProjects] = useState(false);
   const [externalProjects, setExternalProjects] = useState<ExternalProject[]>(
@@ -88,6 +93,20 @@ export function ProjectIntegrationSettings({
     useUpsertIntegrationProject();
   const { mutateAsync: updateIntegrationProject } =
     useUpdateIntegrationProject();
+
+  // The Remove confirmation copy includes a bullet about cascade-deleting
+  // the inbound webhook ONLY when one exists. Cheap query — same shape
+  // the webhooks page uses, so React Query dedupes when both are mounted.
+  const { data: inboundConfigs, refetch: refetchInboundConfigs } =
+    useFindManyWebhookConfig({
+      where: {
+        projectId: projectIntegration.projectId,
+        direction: "INBOUND",
+      },
+      select: { id: true },
+    });
+  const hasInboundWebhook = (inboundConfigs?.length ?? 0) > 0;
+  const isLastActiveMapping = (integrationProjects?.length ?? 0) === 1;
 
   const loadExternalProjects = useCallback(async () => {
     setIsLoadingProjects(true);
@@ -198,11 +217,23 @@ export function ProjectIntegrationSettings({
   const handleRemoveProject = async (id: string) => {
     try {
       const removedProject = integrationProjects?.find((ip) => ip.id === id);
-      await updateIntegrationProject({
-        where: { id },
-        data: { isActive: false },
-      });
+      // Server action wraps the mapping deactivation in a transaction
+      // and cascades to the parent ProjectIntegration + inbound webhook
+      // when this is the last active mapping (the only path that can
+      // strand an inbound webhook with a now-unassigned provider).
+      const result = await removeIntegrationProjectMapping(id);
+      if (!result.success) {
+        toast.error(result.error ?? t("integration.saveSettingsError"));
+        return;
+      }
       setConfirmingRemoveId(null);
+      // Server action bypasses ZenStack mutation hooks — invalidate
+      // the React Query cache so parent's useFindManyProjectIntegration
+      // and local IntegrationProject/WebhookConfig queries refetch.
+      await queryClient.invalidateQueries({ queryKey: ["zenstack"] });
+      if (result.inboundWebhookDeletedCount > 0) {
+        await refetchInboundConfigs();
+      }
 
       // If removed project was default and others remain, set first remaining as default
       if (removedProject?.isDefault) {
@@ -516,6 +547,15 @@ export function ProjectIntegrationSettings({
                       {confirmingRemoveId === ip.id && (
                         <div className="p-3 bg-muted rounded-md text-sm space-y-2">
                           <p>{t("integration.removeProjectConfirmation")}</p>
+                          {isLastActiveMapping && hasInboundWebhook && (
+                            <ul className="list-disc pl-5 text-muted-foreground">
+                              <li>
+                                {t(
+                                  "integration.removeProjectWebhookCascadeBullet"
+                                )}
+                              </li>
+                            </ul>
+                          )}
                           <div className="flex gap-2">
                             <Button
                               variant="destructive"

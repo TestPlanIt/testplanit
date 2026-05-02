@@ -1099,6 +1099,7 @@
           "setAsDefault": "Définir comme valeur par défaut",
           "removeProject": "Supprimer le projet",
           "removeProjectConfirmation": "La suppression de ce projet interrompra la synchronisation des tickets associés. Les tickets précédemment synchronisés ne seront pas supprimés. Continuer ?",
+          "removeProjectWebhookCascadeBullet": "Le webhook entrant pour ce projet sera également supprimé.",
           "keepProject": "Conserver le projet",
           "defaultIndicator": "Défaut",
           "syncStatusSyncing": "Synchronisation",
@@ -1112,11 +1113,13 @@
           "removeWarning1": "Déconnecter tous les tickets liés de cette intégration (les tickets restent dans la base de données).",
           "removeWarning2": "Supprimez tous les paramètres spécifiques à l'intégration des problèmes pour ce projet.",
           "removeWarning3": "Une reconfiguration est nécessaire si vous souhaitez réutiliser cette intégration.",
+          "removeWarning4": "Supprimez le webhook entrant configuré pour cette intégration.",
           "switchIntegration": "Intégration de commutateur",
           "switchWarningTitle": "Passer à un modèle d'IA différent permettra de :",
           "switchWarning1": "Déconnectez tous les problèmes actuellement liés à l'intégration du problème actuel",
           "switchWarning2": "Conserver les problèmes dans la base de données (ils seront dissociés).",
-          "switchWarning3": "Remplacez la configuration d'intégration actuelle par la nouvelle."
+          "switchWarning3": "Remplacez la configuration d'intégration actuelle par la nouvelle.",
+          "switchWarning4": "Supprimez le webhook entrant configuré pour l'intégration actuelle."
         },
         "integrationAssigned": "Intégration attribuée avec succès",
         "integrationAssignError": "Échec de l'attribution de l'intégration du problème au projet",

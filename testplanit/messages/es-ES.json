@@ -1099,6 +1099,7 @@
           "setAsDefault": "Establecer como predeterminado",
           "removeProject": "Eliminar proyecto",
           "removeProjectConfirmation": "Eliminar este proyecto detendrá la sincronización de incidencias. Las incidencias previamente sincronizadas no se eliminarán. ¿Desea continuar?",
+          "removeProjectWebhookCascadeBullet": "También se eliminará el webhook entrante para este proyecto.",
           "keepProject": "Mantener el proyecto",
           "defaultIndicator": "Por defecto",
           "syncStatusSyncing": "Sincronización",
@@ -1112,11 +1113,13 @@
           "removeWarning1": "Desconectar todas las incidencias vinculadas de esta integración de problemas (las incidencias permanecen en la base de datos)",
           "removeWarning2": "Eliminar todos los ajustes específicos de integración de este proyecto",
           "removeWarning3": "Requerir reconfiguración si desea utilizar la integración de este problema de nuevo",
+          "removeWarning4": "Elimine el webhook entrante configurado para esta integración.",
           "switchIntegration": "Integración",
           "switchWarningTitle": "Cambiar a un modelo de IA diferente permitirá lo siguiente:",
           "switchWarning1": "Desconectar todas las incidencias actualmente vinculadas a la integración actual de incidencias",
           "switchWarning2": "Conservar los problemas en la base de datos (se desenlazan)",
-          "switchWarning3": "Reemplaza la configuración actual de integración de incidencias con la nueva"
+          "switchWarning3": "Reemplaza la configuración actual de integración de incidencias con la nueva",
+          "switchWarning4": "Elimine el webhook entrante configurado para la integración actual."
         },
         "integrationAssigned": "Integración asignada correctamente",
         "integrationAssignError": "No se pudo asignar la integración de la incidencia al proyecto",
