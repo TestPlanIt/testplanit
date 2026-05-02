@@ -23,7 +23,7 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { defaultPageSizeOptions } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/lib/hooks/usePageSizeOptions";
 import {
   useCountRepositoryCases,
   useCountSessions,
@@ -456,6 +456,10 @@ function TagDetail() {
     testRunsCount ?? 0
   );
 
+  const casesPageSizeOptions = usePageSizeOptions(casesCount ?? 0);
+  const testRunsPageSizeOptions = usePageSizeOptions(testRunsCount ?? 0);
+  const sessionsPageSizeOptions = usePageSizeOptions(sessionsCount ?? 0);
+
   // Reset page when search or filters change
   useEffect(() => {
     setCasesPage(1);
@@ -624,7 +628,7 @@ function TagDetail() {
                     totalRows={casesCount ?? 0}
                     searchString={searchString}
                     pageSize={casesPageSize}
-                    pageSizeOptions={defaultPageSizeOptions}
+                    pageSizeOptions={casesPageSizeOptions}
                     handlePageSizeChange={setCasesPageSize}
                   />
                   <PaginationComponent
@@ -662,7 +666,7 @@ function TagDetail() {
                     totalRows={testRunsCount ?? 0}
                     searchString={searchString}
                     pageSize={testRunsPageSize}
-                    pageSizeOptions={defaultPageSizeOptions}
+                    pageSizeOptions={testRunsPageSizeOptions}
                     handlePageSizeChange={setTestRunsPageSize}
                   />
                   <PaginationComponent
@@ -700,7 +704,7 @@ function TagDetail() {
                     totalRows={sessionsCount ?? 0}
                     searchString={searchString}
                     pageSize={sessionsPageSize}
-                    pageSizeOptions={defaultPageSizeOptions}
+                    pageSizeOptions={sessionsPageSizeOptions}
                     handlePageSizeChange={setSessionsPageSize}
                   />
                   <PaginationComponent

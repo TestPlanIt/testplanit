@@ -11,6 +11,7 @@ import { CopyX, Link2, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { usePageSizeOptions } from "~/lib/hooks/usePageSizeOptions";
 import { type DuplicateCandidateRow, getColumns } from "./duplicateColumns";
 import { DuplicateComparisonDialog } from "./DuplicateComparisonDialog";
 
@@ -31,8 +32,6 @@ interface DuplicateCandidate {
 interface DuplicateResultsTableProps {
   projectId: string;
 }
-
-const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
 
 export function DuplicateResultsTable({
   projectId,
@@ -176,6 +175,7 @@ export function DuplicateResultsTable({
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = Math.min(startIndex + pageSize, totalItems);
   const pageItems = sortedItems.slice(startIndex, endIndex);
+  const pageSizeOptions = usePageSizeOptions(totalItems);
 
   const handleCheckboxClick = useCallback(
     (rowIndex: number, event: React.MouseEvent) => {
@@ -365,7 +365,7 @@ export function DuplicateResultsTable({
                   totalRows={totalItems}
                   searchString={searchString}
                   pageSize={pageSize}
-                  pageSizeOptions={[...PAGE_SIZE_OPTIONS]}
+                  pageSizeOptions={pageSizeOptions}
                   handlePageSizeChange={handlePageSizeChange}
                 />
               </div>

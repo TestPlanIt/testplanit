@@ -30,7 +30,7 @@ import { useFlakyTestsColumns } from "~/hooks/useFlakyTestsColumns";
 import { useIssueTestCoverageSummaryColumns } from "~/hooks/useIssueTestCoverageColumns";
 import { useReportColumns } from "~/hooks/useReportColumns";
 import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
-import { defaultPageSizeOptions } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/lib/hooks/usePageSizeOptions";
 
 // Helper functions for report type matching
 // These helpers allow us to write code that works with both project-level and cross-project variants
@@ -223,6 +223,7 @@ export function ReportRenderer({
     pageSize === "All"
       ? totalCount
       : Math.min(currentPage * pageSize, totalCount);
+  const pageSizeOptions = usePageSizeOptions(totalCount);
 
   // Maximum number of data points to render in charts
   const MAX_CHART_DATA_POINTS = 50;
@@ -419,7 +420,7 @@ export function ReportRenderer({
                       totalRows={totalCount}
                       searchString=""
                       pageSize={pageSize}
-                      pageSizeOptions={defaultPageSizeOptions}
+                      pageSizeOptions={pageSizeOptions}
                       handlePageSizeChange={onPageSizeChange}
                     />
                   </div>

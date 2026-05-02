@@ -55,10 +55,10 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useTabState } from "~/hooks/useTabState";
 import {
-  defaultPageSizeOptions,
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/lib/hooks/usePageSizeOptions";
 import {
   useCreateTestRuns,
   useFindFirstJUnitTestResult,
@@ -504,6 +504,9 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
 
   const completedTestRuns = completedRunsData?.runs || [];
   const totalCompletedRunsCount = completedRunsData?.totalCount || 0;
+  const completedRunsPageSizeOptions = usePageSizeOptions(
+    totalCompletedRunsCount
+  );
 
   // Update pagination context with total count
   useEffect(() => {
@@ -1477,7 +1480,7 @@ const ProjectTestRuns: React.FC<ProjectTestRunsProps> = ({ params }) => {
                                     ? completedRunsPageSize
                                     : "All"
                                 }
-                                pageSizeOptions={defaultPageSizeOptions}
+                                pageSizeOptions={completedRunsPageSizeOptions}
                                 handlePageSizeChange={(size) =>
                                   setCompletedRunsPageSize(size)
                                 }

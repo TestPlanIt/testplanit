@@ -4,10 +4,10 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  defaultPageSizeOptions,
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/lib/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
@@ -98,6 +98,7 @@ function ProjectAdmin() {
     endIndex,
     totalPages,
   } = usePagination();
+  const pageSizeOptions = usePageSizeOptions(totalItems);
 
   const [sortConfig, setSortConfig] = useState<{
     column: string;
@@ -495,7 +496,7 @@ function ProjectAdmin() {
                       totalRows={totalItems}
                       searchString={searchString}
                       pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                      pageSizeOptions={defaultPageSizeOptions}
+                      pageSizeOptions={pageSizeOptions}
                       handlePageSizeChange={(size) => setPageSize(size)}
                     />
                   </div>

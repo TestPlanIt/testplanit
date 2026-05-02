@@ -21,7 +21,7 @@ import { AlertCircle, XIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { defaultPageSizeOptions } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/lib/hooks/usePageSizeOptions";
 import { IconName } from "~/types/globals";
 import { toHumanReadable } from "~/utils/duration";
 
@@ -78,6 +78,7 @@ export function SelectedTestCasesDrawer({
   const totalPages = Math.max(1, Math.ceil(totalItems / effectivePageSize));
   const startIndex = (currentPage - 1) * effectivePageSize + 1;
   const endIndex = Math.min(currentPage * effectivePageSize, totalItems);
+  const pageSizeOptions = usePageSizeOptions(totalItems);
 
   // Fetched test cases data
   const [fetchedTestCases, setFetchedTestCases] = useState<any[]>([]);
@@ -361,7 +362,7 @@ export function SelectedTestCasesDrawer({
                 totalRows={totalItems}
                 searchString=""
                 pageSize={pageSize}
-                pageSizeOptions={defaultPageSizeOptions}
+                pageSizeOptions={pageSizeOptions}
                 handlePageSizeChange={handlePageSizeChange}
               />
             </div>

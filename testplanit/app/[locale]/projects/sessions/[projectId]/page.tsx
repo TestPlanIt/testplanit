@@ -24,10 +24,10 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useTabState } from "~/hooks/useTabState";
 import {
-  defaultPageSizeOptions,
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/lib/hooks/usePageSizeOptions";
 import {
   useFindFirstProjects,
   useFindFirstSessionResults,
@@ -295,6 +295,9 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
 
   // Pagination on filtered data
   const totalCompletedSessionsCount = filteredData.length;
+  const completedSessionsPageSizeOptions = usePageSizeOptions(
+    totalCompletedSessionsCount
+  );
   const completedSessions = filteredData.slice(
     completedSessionsSkip,
     completedSessionsSkip + effectiveCompletedPageSize
@@ -1021,7 +1024,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                                     ? completedSessionsPageSize
                                     : "All"
                                 }
-                                pageSizeOptions={defaultPageSizeOptions}
+                                pageSizeOptions={completedSessionsPageSizeOptions}
                                 handlePageSizeChange={(size) =>
                                   setCompletedSessionsPageSize(size)
                                 }

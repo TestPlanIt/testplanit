@@ -15,7 +15,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ExternalLink, MessageSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
-import { defaultPageSizeOptions } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/lib/hooks/usePageSizeOptions";
 import { useCountCommentMention, useFindManyCommentMention } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { createMentionExtension } from "~/lib/tiptap/mentionExtension";
@@ -235,6 +235,8 @@ export function UserMentionedComments({ userId }: UserMentionedCommentsProps) {
   // Calculate numeric page size for queries
   const numericPageSize = pageSize === "All" ? (totalCount ?? 1000) : pageSize;
 
+  const pageSizeOptions = usePageSizeOptions(totalCount ?? 0);
+
   const { data: mentions, isLoading: isMentionsLoading } =
     useFindManyCommentMention({
       where: {
@@ -316,7 +318,7 @@ export function UserMentionedComments({ userId }: UserMentionedCommentsProps) {
             totalRows={totalCount ?? 0}
             searchString=""
             pageSize={pageSize}
-            pageSizeOptions={defaultPageSizeOptions}
+            pageSizeOptions={pageSizeOptions}
             handlePageSizeChange={handlePageSizeChange}
           />
         </div>
