@@ -16,6 +16,7 @@ import DOMPurify from "dompurify";
 import { ExternalLink, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";
+import { useIssueUpdateStream } from "~/lib/hooks/useIssueUpdateStream";
 import { Link } from "~/lib/navigation";
 import { IssueTypeIcon } from "~/utils/issueTypeIcons";
 
@@ -71,7 +72,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   title,
   status,
   size = "small",
-  projectIds: _projectIds,
+  projectIds,
   data: _data,
   integrationProvider,
   integrationId,
@@ -86,6 +87,11 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   const [error, setError] = useState<string | null>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const syncTriggeredRef = useRef(false); // Avoid duplicate fetches per mount.
+
+  // Subscribe to live updates for this issue's project(s) — webhook → sync
+  // events fan out via the singleton SSE manager so any number of
+  // IssuesDisplay instances on the same project share a single connection.
+  useIssueUpdateStream(projectIds);
 
   // Trigger a background sync for this issue. The freshness gate lives
   // server-side now (?trigger=hover → 5-min skip window in SyncService);
