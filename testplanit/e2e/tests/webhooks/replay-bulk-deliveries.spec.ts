@@ -54,6 +54,9 @@ test.describe("Webhook delivery bulk replay — outbound-only count", () => {
 
   test.beforeAll(async ({ api }) => {
     projectId = await api.createProject(`E2E Bulk Replay ${uniqueId}`);
+    // Inbound webhook below requires the project to have a matching
+    // active issue integration; spec configures GitHub.
+    await api.setupProjectIssueIntegration(projectId, "GITHUB");
     stub = await startStubServer(); // always 200 — replays succeed
     prisma = new PrismaClient();
   });
@@ -104,10 +107,8 @@ test.describe("Webhook delivery bulk replay — outbound-only count", () => {
     await page.goto(`${baseURL}/projects/settings/${projectId}/webhooks`);
     const form = page.getByTestId("webhook-config-form");
     await expect(form).toBeVisible();
+    // 1:1 inbound model: Add skips the chooser and creates inline.
     await page.getByTestId("webhook-inbound-add-button").click();
-    await page.getByTestId("webhook-inbound-chooser-github").click();
-    // GitHub chooser-submit creates inline — no separate create button.
-    await page.getByTestId("webhook-inbound-chooser-submit").click();
 
     const githubCard = page.getByTestId("webhook-inbound-card-github");
     await expect(githubCard).toBeVisible();

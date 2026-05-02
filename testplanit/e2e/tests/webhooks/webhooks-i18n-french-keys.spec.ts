@@ -35,8 +35,6 @@ interface WebhookMessages {
   inboundTab: string;
   outboundTab: string;
   deliveriesTab: string;
-  inboundChooserTitle: string;
-  inboundChooserDescription: string;
   inboundAddButton: string;
   outboundAddButton: string;
   outboundCreateTitle: string;
@@ -68,8 +66,6 @@ function loadMessages(locale: "en-US" | "es-ES" | "fr-FR"): WebhookMessages {
     inboundTab: webhooks.inboundTab as string,
     outboundTab: webhooks.outboundTab as string,
     deliveriesTab: webhooks.deliveriesTab as string,
-    inboundChooserTitle: webhooks.inboundChooserTitle as string,
-    inboundChooserDescription: webhooks.inboundChooserDescription as string,
     inboundAddButton: webhooks.inboundAddButton as string,
     outboundAddButton: webhooks.outboundAddButton as string,
     outboundCreateTitle: webhooks.outboundCreateTitle as string,
@@ -174,16 +170,12 @@ test.describe("Webhook admin surface — French (fr-FR) i18n key coverage (F-02)
 
     const addInbound = page.getByTestId("webhook-inbound-add-button");
     await expect(addInbound).toContainText(fr.inboundAddButton);
-    await addInbound.click();
-    const chooser = page.getByTestId("webhook-inbound-chooser");
-    await expect(chooser).toBeVisible();
-    await expect(chooser).toContainText(fr.inboundChooserTitle);
-    await expect(chooser).toContainText(fr.inboundChooserDescription);
-
-    await page.getByTestId("webhook-inbound-chooser-cancel").click();
+    // The 1:1 inbound model gates Add on the project's active issue
+    // integration. With no integration assigned (i18n test scope is
+    // string coverage, not flow coverage) the button is disabled and
+    // clicking it has no effect; we don't drive a creation flow here.
 
     await assertNoMissingKeyMarkers(page);
-    await expectAbsentText(page, en.inboundChooserTitle);
 
     // ─── 2. Outbound tab ─────────────────────────────────────────────
     await page.getByTestId("webhooks-tab-outbound").click();

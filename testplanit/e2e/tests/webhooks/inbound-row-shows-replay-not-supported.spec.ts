@@ -38,6 +38,7 @@ test.describe("Webhook deliveries — inbound row shows replay-not-supported ban
 
   test.beforeAll(async ({ api }) => {
     projectId = await api.createProject(`E2E Inbound Banner ${uniqueId}`);
+    await api.setupProjectIssueIntegration(projectId, "GITHUB");
     prisma = new PrismaClient();
   });
 
@@ -55,10 +56,8 @@ test.describe("Webhook deliveries — inbound row shows replay-not-supported ban
     const form = page.getByTestId("webhook-config-form");
     await expect(form).toBeVisible();
 
+    // 1:1 inbound model: Add skips the chooser and creates inline.
     await page.getByTestId("webhook-inbound-add-button").click();
-    await page.getByTestId("webhook-inbound-chooser-github").click();
-    // GitHub chooser-submit creates inline — no separate create button.
-    await page.getByTestId("webhook-inbound-chooser-submit").click();
 
     const githubCard = page.getByTestId("webhook-inbound-card-github");
     await expect(githubCard).toBeVisible();

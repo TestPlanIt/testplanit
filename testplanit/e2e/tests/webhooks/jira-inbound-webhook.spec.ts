@@ -31,6 +31,10 @@ test.describe("Jira inbound webhook — admin form + send-test self-loop", () =>
 
   test.beforeAll(async ({ api }) => {
     projectId = await api.createProject(`E2E Jira Webhook ${uniqueId}`);
+    // Inbound webhooks are 1:1 with the project's active issue
+    // integration. Without an integration assigned the Add button is
+    // disabled, so the webhook UI flow can't even start.
+    await api.setupProjectIssueIntegration(projectId, "JIRA");
   });
 
   test("project admin can configure Jira inbound webhook and self-test it end-to-end", async ({
@@ -45,11 +49,10 @@ test.describe("Jira inbound webhook — admin form + send-test self-loop", () =>
     const form = page.getByTestId("webhook-config-form");
     await expect(form).toBeVisible();
 
-    // Multi-card inbound flow: Add → chooser → pick Jira → Continue → Create.
+    // 1:1 inbound model: the Add button skips the chooser entirely
+    // and creates inline against the project's active integration
+    // adapter (JIRA, set up in beforeAll).
     await page.getByTestId("webhook-inbound-add-button").click();
-    await page.getByTestId("webhook-inbound-chooser-jira").click();
-    // Jira chooser-submit creates inline — no separate create button.
-    await page.getByTestId("webhook-inbound-chooser-submit").click();
 
     // Scope to the JIRA card after creation. URL + secret revealed once.
     const jiraCard = page.getByTestId("webhook-inbound-card-jira");

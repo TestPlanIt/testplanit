@@ -1,3 +1,5 @@
+import { randomBytes } from "node:crypto";
+
 import { APIRequestContext } from "@playwright/test";
 
 /**
@@ -22,6 +24,7 @@ export class ApiHelper {
   private createdConfigurationIds: number[] = [];
   private createdLlmIntegrationIds: number[] = [];
   private createdProjectLlmIntegrationIds: string[] = [];
+  private createdIssueIntegrationIds: number[] = [];
   private cachedTemplateIds: Map<number, number> = new Map(); // projectId -> templateId
   private cachedStateIds: Map<number, number> = new Map(); // projectId -> stateId
   private cachedRepositoryIds: Map<number, number> = new Map(); // projectId -> repositoryId
@@ -3266,6 +3269,89 @@ export class ApiHelper {
   }
 
   /**
+   * Create an admin-level Issue Integration record (Jira / GitHub /
+   * Azure DevOps). Uses fake credentials — webhook E2E specs only need
+   * the integration to *exist* and be ACTIVE so the webhook config form
+   * unlocks the matching inbound adapter; no real upstream calls are made.
+   */
+  async createIssueIntegration(
+    provider: "JIRA" | "GITHUB" | "AZURE_DEVOPS",
+    name?: string
+  ): Promise<number> {
+    const integrationName =
+      name ?? `E2E ${provider} Integration ${randomBytes(4).toString("hex")}`;
+    const config =
+      provider === "JIRA"
+        ? {
+            email: "test@example.com",
+            apiToken: "fake-api-token-for-e2e",
+            baseUrl: "https://example.atlassian.net",
+          }
+        : provider === "GITHUB"
+          ? { personalAccessToken: "ghp_fakePATforE2Etesting1234567890" }
+          : {
+              personalAccessToken: "fake-azure-pat-for-e2e-testing",
+              organizationUrl: "https://dev.azure.com/fakeorg",
+            };
+    const authType = provider === "JIRA" ? "API_KEY" : "PERSONAL_ACCESS_TOKEN";
+
+    const response = await this.request.post(
+      `${this.baseURL}/api/integrations`,
+      {
+        data: {
+          name: integrationName,
+          type: provider,
+          authType,
+          config,
+        },
+      }
+    );
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create ${provider} integration: ${error}`);
+    }
+    const body = await response.json();
+    const id: number = body.id;
+    this.createdIssueIntegrationIds.push(id);
+    return id;
+  }
+
+  /**
+   * Assign an Issue Integration to a project. Mirrors the POST route at
+   * `/api/projects/[projectId]/integrations` — the same path the
+   * Available Issue Integrations UI hits when an admin clicks Assign.
+   */
+  async assignIssueIntegrationToProject(
+    projectId: number,
+    integrationId: number
+  ): Promise<void> {
+    const response = await this.request.post(
+      `${this.baseURL}/api/projects/${projectId}/integrations`,
+      { data: { integrationId } }
+    );
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(
+        `Failed to assign integration ${integrationId} to project ${projectId}: ${error}`
+      );
+    }
+  }
+
+  /**
+   * One-shot helper for webhook specs: create an Issue Integration of
+   * the given provider and assign it to the project. Returns the
+   * integration id so callers can clean up explicitly if needed.
+   */
+  async setupProjectIssueIntegration(
+    projectId: number,
+    provider: "JIRA" | "GITHUB" | "AZURE_DEVOPS"
+  ): Promise<number> {
+    const integrationId = await this.createIssueIntegration(provider);
+    await this.assignIssueIntegrationToProject(projectId, integrationId);
+    return integrationId;
+  }
+
+  /**
    * Enable QuickScript on a project.
    */
   async enableQuickScript(projectId: number): Promise<void> {
@@ -3425,6 +3511,19 @@ export class ApiHelper {
         .catch(() => {});
     }
     this.createdLlmIntegrationIds = [];
+
+    // Delete Issue Integrations (Jira/GitHub/ADO admin records). The
+    // ProjectIntegration rows that reference them cascade with the
+    // project deletion below, so order doesn't matter strictly, but
+    // we still try to clean these up before the project tear-down.
+    for (const issueIntegrationId of this.createdIssueIntegrationIds) {
+      this.request
+        .delete(`${this.baseURL}/api/model/integration/delete`, {
+          data: { where: { id: issueIntegrationId } },
+        })
+        .catch(() => {});
+    }
+    this.createdIssueIntegrationIds = [];
 
     // Delete share links (they reference projects)
     for (const shareLinkId of this.createdShareLinkIds) {

@@ -24,6 +24,7 @@ test.describe("Inbound webhook body cap (5 MB)", () => {
 
   test.beforeAll(async ({ api }) => {
     projectId = await api.createProject(`E2E Body Cap ${uniqueId}`);
+    await api.setupProjectIssueIntegration(projectId, "JIRA");
   });
 
   test("rejects bodies > 5 MB with HTTP 413, no WebhookDelivery row written", async ({
@@ -34,10 +35,8 @@ test.describe("Inbound webhook body cap (5 MB)", () => {
     // Provision a Jira config via the admin form. The body cap is route-
     // level so the choice of adapter is immaterial.
     await page.goto(`${baseURL}/projects/settings/${projectId}/webhooks`);
+    // 1:1 inbound model: Add skips the chooser and creates inline.
     await page.getByTestId("webhook-inbound-add-button").click();
-    await page.getByTestId("webhook-inbound-chooser-jira").click();
-    // Jira chooser-submit creates inline — no separate create button.
-    await page.getByTestId("webhook-inbound-chooser-submit").click();
 
     // Scope to the JIRA card after creation.
     const jiraCard = page.getByTestId("webhook-inbound-card-jira");

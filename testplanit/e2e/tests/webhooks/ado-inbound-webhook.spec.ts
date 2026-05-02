@@ -49,6 +49,7 @@ test.describe("Azure DevOps inbound webhook — admin form + raw-POST coverage",
 
   test.beforeAll(async ({ api }) => {
     projectId = await api.createProject(`E2E ADO Webhook ${uniqueId}`);
+    await api.setupProjectIssueIntegration(projectId, "AZURE_DEVOPS");
   });
 
   test("Spec 1 happy path: configure ADO inbound + self-test (synthetic → duplicate)", async ({
@@ -60,10 +61,9 @@ test.describe("Azure DevOps inbound webhook — admin form + raw-POST coverage",
     const form = page.getByTestId("webhook-config-form");
     await expect(form).toBeVisible();
 
-    // Open the chooser, pick ADO, submit. Chooser testids are unscoped.
+    // 1:1 inbound model: Add skips the chooser and lands directly on
+    // the ADO credentials form (since ADO needs admin-typed creds).
     await page.getByTestId("webhook-inbound-add-button").click();
-    await page.getByTestId("webhook-inbound-chooser-ado").click();
-    await page.getByTestId("webhook-inbound-chooser-submit").click();
 
     // ADO create-form inputs (unscoped — only one create-form is alive at a
     // time). Submit is the same `webhook-create-button` testid all adapters

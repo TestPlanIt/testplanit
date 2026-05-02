@@ -39,32 +39,25 @@ test.describe.configure({ mode: "serial" });
 interface AdapterCase {
   /** Display name for the test title. */
   label: string;
-  /** Adapter chooser testid (e.g. "webhook-inbound-chooser-jira"). */
-  chooserTestId: string;
+  /** Provider id for the project's issue integration. The 1:1 inbound
+   *  model derives the inbound adapter from this. */
+  provider: "JIRA" | "GITHUB" | "AZURE_DEVOPS";
   /** Card testid suffix (e.g. "jira", "github", "ado"). */
   cardSlug: "jira" | "github" | "ado";
   /**
    * Optional fill function for adapter-specific create-form inputs.
    * Jira and GitHub auto-generate the HMAC secret server-side; ADO
-   * needs the admin to type a username + password (D-09).
+   * needs the admin to type a username + password.
    */
   fillCreateForm?: (page: Page) => Promise<void>;
 }
 
 const ADAPTERS: AdapterCase[] = [
-  {
-    label: "Jira",
-    chooserTestId: "webhook-inbound-chooser-jira",
-    cardSlug: "jira",
-  },
-  {
-    label: "GitHub",
-    chooserTestId: "webhook-inbound-chooser-github",
-    cardSlug: "github",
-  },
+  { label: "Jira", provider: "JIRA", cardSlug: "jira" },
+  { label: "GitHub", provider: "GITHUB", cardSlug: "github" },
   {
     label: "Azure DevOps",
-    chooserTestId: "webhook-inbound-chooser-ado",
+    provider: "AZURE_DEVOPS",
     cardSlug: "ado",
     fillCreateForm: async (page) => {
       await page
@@ -83,24 +76,23 @@ async function configureAdapter(
   api: ApiHelper,
   adapter: AdapterCase
 ): Promise<{ projectId: number; fullToken: string }> {
-  // Use a fresh project per adapter so the chooser never shows the
-  // "already configured" disabled state and the after-reload card list
+  // Use a fresh project per adapter so the after-reload card list
   // contains exactly the one adapter we want to assert against.
   const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   const projectId = await api.createProject(
     `E2E Redact ${adapter.label} ${uniqueId}`
   );
+  // Inbound adapter is now derived from the project's active issue
+  // integration; assign the matching provider before opening the form.
+  await api.setupProjectIssueIntegration(projectId, adapter.provider);
 
   await page.goto(`${baseURL}/projects/settings/${projectId}/webhooks`);
   const form = page.getByTestId("webhook-config-form");
   await expect(form).toBeVisible();
 
+  // 1:1 inbound model: Add skips the chooser and either creates inline
+  // (Jira/GitHub) or opens the credentials form (ADO).
   await page.getByTestId("webhook-inbound-add-button").click();
-  await page.getByTestId(adapter.chooserTestId).click();
-  await page.getByTestId("webhook-inbound-chooser-submit").click();
-  // Jira/GitHub: chooser-submit creates inline (no separate create form).
-  // ADO: chooser-submit opens the credentials form; admin fills username +
-  // password, then clicks the dedicated create button.
   if (adapter.fillCreateForm) {
     await adapter.fillCreateForm(page);
     await page.getByTestId("webhook-create-button").click();

@@ -67,6 +67,12 @@ test.describe("Webhook cross-tenant — send-test fires only on the requesting p
     projectAId = await api.createProject(`E2E K-03 Project A ${uniqueId}`);
     projectBId = await api.createProject(`E2E K-03 Project B ${uniqueId}`);
 
+    // Inbound webhook is locked to the project's active issue integration.
+    // Assign Jira to both projects so the Add button is enabled and the
+    // creation flow lands on a Jira card.
+    await api.setupProjectIssueIntegration(projectAId, "JIRA");
+    await api.setupProjectIssueIntegration(projectBId, "JIRA");
+
     // Configure a Jira inbound webhook in EACH project via the admin form.
     // We use the admin storageState (default) for the page navigation —
     // creation goes through `createOrRotateInboundWebhook` which is the
@@ -80,10 +86,8 @@ test.describe("Webhook cross-tenant — send-test fires only on the requesting p
         await expect(adminPage.getByTestId("webhook-config-form")).toBeVisible({
           timeout: 15_000,
         });
+        // 1:1 inbound model: Add skips the chooser and creates inline.
         await adminPage.getByTestId("webhook-inbound-add-button").click();
-        await adminPage.getByTestId("webhook-inbound-chooser-jira").click();
-        // Jira chooser-submit creates inline — no separate create button.
-        await adminPage.getByTestId("webhook-inbound-chooser-submit").click();
         await expect(
           adminPage.getByTestId("webhook-inbound-card-jira")
         ).toBeVisible({ timeout: 15_000 });

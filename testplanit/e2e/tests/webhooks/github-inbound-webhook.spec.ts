@@ -39,6 +39,7 @@ test.describe("GitHub inbound webhook — admin form + raw-POST coverage", () =>
 
   test.beforeAll(async ({ api }) => {
     projectId = await api.createProject(`E2E GitHub Webhook ${uniqueId}`);
+    await api.setupProjectIssueIntegration(projectId, "GITHUB");
   });
 
   test("Spec 1 happy path: configure GitHub inbound + self-test (synthetic → duplicate)", async ({
@@ -51,12 +52,9 @@ test.describe("GitHub inbound webhook — admin form + raw-POST coverage", () =>
     const form = page.getByTestId("webhook-config-form");
     await expect(form).toBeVisible();
 
-    // Open the chooser, pick GitHub, Continue → submit the create form.
-    // Chooser testids are unscoped (only one chooser is alive at a time).
+    // 1:1 inbound model: Add skips the chooser and creates inline
+    // against the project's active integration adapter (GITHUB).
     await page.getByTestId("webhook-inbound-add-button").click();
-    await page.getByTestId("webhook-inbound-chooser-github").click();
-    // GitHub chooser-submit creates inline — no separate create button.
-    await page.getByTestId("webhook-inbound-chooser-submit").click();
 
     // From here on, scope to the GitHub card.
     const githubCard = page.getByTestId("webhook-inbound-card-github");
