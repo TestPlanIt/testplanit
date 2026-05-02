@@ -28,7 +28,6 @@ describe("webhookEvents.emit", () => {
     const result = await webhookEvents.emit(
       "test_run.completed",
       { runId: 5 },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       { projectId: 7, tx: tx as any }
     );
     expect(result).not.toBeNull();
@@ -40,7 +39,6 @@ describe("webhookEvents.emit", () => {
     await webhookEvents.emit(
       "test_run.created",
       { runId: 1 },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       { projectId: 42, tx: tx as any }
     );
     expect(createSpy).toHaveBeenCalledTimes(1);
@@ -55,7 +53,6 @@ describe("webhookEvents.emit", () => {
       await webhookEvents.emit(
         "issue.created",
         { issueId: 9 },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         { projectId: 1, tx: tx as any }
       );
     });
@@ -68,7 +65,6 @@ describe("webhookEvents.emit", () => {
       await webhookEvents.emit(
         "issue.updated",
         { issueId: 9 },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         { projectId: 1, tx: tx as any, actorUserId: "user-99" }
       );
     });
@@ -81,7 +77,6 @@ describe("webhookEvents.emit", () => {
       { caseId: 123 },
       {
         projectId: 1,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         tx: tx as any,
         actorUserId: SYSTEM_ACTOR_ID,
       }
@@ -95,7 +90,6 @@ describe("webhookEvents.emit", () => {
       { caseId: 1 },
       {
         projectId: 1,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         tx: tx as any,
         actorUserId: undefined,
       }
@@ -110,7 +104,6 @@ describe("webhookEvents.emit", () => {
         await webhookEvents.emit(
           "test_run.created",
           { runId: 1 },
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           { projectId: 1, tx: tx as any }
         )
     );
@@ -125,7 +118,6 @@ describe("webhookEvents.emit", () => {
       { runId: 5 },
       {
         projectId: 7,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         tx: tx as any,
         eventTimestamp: ts,
       }
@@ -138,7 +130,6 @@ describe("webhookEvents.emit", () => {
     await webhookEvents.emit(
       "test_run.completed",
       data,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       { projectId: 7, tx: tx as any }
     );
     expect(createSpy.mock.calls[0][0].data.payload).toBe(data);
@@ -149,7 +140,6 @@ describe("webhookEvents.emit", () => {
       webhookEvents.emit(
         "foo",
         {},
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         { projectId: 1, tx: undefined as any }
       )
     ).rejects.toThrow(/Prisma\.TransactionClient/);
