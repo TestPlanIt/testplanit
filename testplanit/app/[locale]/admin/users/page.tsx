@@ -39,8 +39,6 @@ import { AddUser } from "./AddUser";
 import { DeleteUser } from "./DeleteUser";
 import { EditUser } from "./EditUser";
 
-type PageSizeOption = number | "All";
-
 export default function UserListPage() {
   return (
     <PaginationProvider>

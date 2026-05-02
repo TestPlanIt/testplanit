@@ -44,8 +44,6 @@ import { useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
 import { getColumns } from "./columns";
 
-type PageSizeOption = number | "All";
-
 export default function TagList() {
   return (
     <PaginationProvider>

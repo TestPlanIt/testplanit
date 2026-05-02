@@ -28,8 +28,6 @@ import { ExtendedIssue, useIssueColumns } from "./columns";
 import { DeleteIssue } from "./DeleteIssue";
 import { EditIssue } from "./EditIssue";
 
-type PageSizeOption = number | "All";
-
 export default function IssueListPage() {
   return (
     <PaginationProvider>

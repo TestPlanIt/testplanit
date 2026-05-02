@@ -41,8 +41,6 @@ import {
 import { useRouter } from "~/lib/navigation";
 import { ExtendedIssues, useIssueColumns } from "./columns";
 
-type PageSizeOption = number | "All";
-
 export default function ProjectIssueList() {
   return (
     <PaginationProvider>

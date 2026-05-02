@@ -35,8 +35,6 @@ import { AddRole } from "./AddRoles";
 import { DeleteRole } from "./DeleteRoles";
 import { EditRole } from "./EditRoles";
 
-type PageSizeOption = number | "All";
-
 export default function RoleListPage() {
   return (
     <PaginationProvider>

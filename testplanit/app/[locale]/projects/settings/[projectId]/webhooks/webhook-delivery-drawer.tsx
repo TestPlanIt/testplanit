@@ -216,7 +216,9 @@ export function WebhookDeliveryDrawer({
                       {t("drawerLabelLatency")}
                     </label>
                     <p className="text-sm" data-testid="webhook-drawer-latency">
-                      {delivery.latencyMs ?? "—"} ms
+                      {delivery.latencyMs == null
+                        ? t("drawerLatencyUnknown")
+                        : t("drawerLatencyValue", { ms: delivery.latencyMs })}
                     </p>
                   </div>
                   <div className="overflow-hidden">

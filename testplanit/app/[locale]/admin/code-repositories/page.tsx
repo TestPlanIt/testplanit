@@ -43,8 +43,6 @@ import {
 import { useRouter } from "~/lib/navigation";
 import { CodeRepositoryRow, getColumns } from "./columns";
 
-type PageSizeOption = number | "All";
-
 export default function CodeRepositoriesPage() {
   return (
     <PaginationProvider>

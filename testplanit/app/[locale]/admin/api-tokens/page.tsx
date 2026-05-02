@@ -44,8 +44,6 @@ import { Switch } from "@/components/ui/switch";
 import { AlertTriangle, Ban, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-type PageSizeOption = number | "All";
-
 export default function ApiTokensPage() {
   return (
     <PaginationProvider>

@@ -22,8 +22,6 @@ import { DeleteAppConfig } from "./DeleteAppConfig";
 import { EditAppConfig } from "./EditAppConfig";
 import { AppConfigRow } from "./types";
 
-type PageSizeOption = number | "All";
-
 export default function AppConfigsPage() {
   return (
     <PaginationProvider>

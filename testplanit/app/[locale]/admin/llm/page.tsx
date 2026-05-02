@@ -35,8 +35,6 @@ import { DeleteLlmIntegration } from "./DeleteLlmIntegration";
 import { EditLlmIntegration } from "./EditLlmIntegration";
 import { ExtendedLlmIntegration, getColumns } from "./columns";
 
-type PageSizeOption = number | "All";
-
 export default function LlmAdminPage() {
   return (
     <PaginationProvider>

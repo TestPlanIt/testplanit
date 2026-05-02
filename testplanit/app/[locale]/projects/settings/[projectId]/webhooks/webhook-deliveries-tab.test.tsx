@@ -91,6 +91,7 @@ const KEY_TEMPLATES: Record<string, string> = {
   bulkReplayConfirm: "Replay {count} outbound failures to {configName}",
   bulkReplayCapExceeded: "Cap exceeded: {count}",
   drawerReplayedFrom: "Replay of {id}",
+  drawerLatencyValue: "{ms} ms",
   toastReplayFailed: "Replay failed: {error}",
   toastBulkReplaySuccess: "Bulk replay started · batch {batchId}",
 };

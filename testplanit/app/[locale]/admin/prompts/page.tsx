@@ -29,8 +29,6 @@ import { ExtendedPromptConfig, getColumns } from "./columns";
 import { DeletePromptConfig } from "./DeletePromptConfig";
 import { EditPromptConfig } from "./EditPromptConfig";
 
-type PageSizeOption = number | "All";
-
 export default function PromptsAdminPage() {
   return (
     <PaginationProvider>

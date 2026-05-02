@@ -32,8 +32,6 @@ import { useCountIssue, useFindManyIssue, useGroupByIssue } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { ExtendedIssues, useIssueColumns } from "./columns";
 
-type PageSizeOption = number | "All";
-
 export default function IssueList() {
   return (
     <PaginationProvider>

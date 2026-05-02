@@ -1337,6 +1337,8 @@
         "drawerLabelDirection": "Direction",
         "drawerLabelStatusCode": "Status code",
         "drawerLabelLatency": "Latency",
+        "drawerLatencyValue": "{ms} ms",
+        "drawerLatencyUnknown": "—",
         "drawerLabelError": "Error",
         "drawerLabelPayloadDigest": "Payload digest",
         "drawerLabelEventId": "Event ID",

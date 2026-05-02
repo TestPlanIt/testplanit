@@ -43,8 +43,6 @@ import { usePageSizeOptions } from "~/lib/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 import { type ExtendedIntegration, getColumns } from "./columns";
 
-type PageSizeOption = number | "All";
-
 export default function IntegrationsPage() {
   return (
     <PaginationProvider>

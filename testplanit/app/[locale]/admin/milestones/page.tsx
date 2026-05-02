@@ -52,8 +52,6 @@ import { ExtendedMilestoneTypes, getColumns } from "./columns";
 import { DeleteMilestoneType } from "./DeleteMilestoneTypes";
 import { EditMilestoneType } from "./EditMilestoneTypes";
 
-type PageSizeOption = number | "All";
-
 export default function MilestoneTypesListPage() {
   return (
     <PaginationProvider>

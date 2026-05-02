@@ -32,8 +32,6 @@ import { AddGroup } from "./AddGroup";
 import { DeleteGroup } from "./DeleteGroup";
 import { EditGroup } from "./EditGroup";
 
-type PageSizeOption = number | "All";
-
 export default function GroupListPage() {
   return (
     <PaginationProvider>

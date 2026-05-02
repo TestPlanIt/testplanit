@@ -19,8 +19,6 @@ import { ConfigWithVariants, getColumns } from "./configColumns";
 import { DeleteConfiguration } from "./DeleteConfig";
 import { EditConfiguration } from "./EditConfig";
 
-type PageSizeOption = number | "All";
-
 export default function ConfigurationList(): React.ReactElement {
   return <Configurations />;
 }

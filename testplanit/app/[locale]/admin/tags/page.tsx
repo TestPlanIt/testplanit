@@ -31,8 +31,6 @@ import { ExtendedTags, getColumns } from "./columns";
 import { DeleteTag } from "./DeleteTag";
 import { EditTag } from "./EditTag";
 
-type PageSizeOption = number | "All";
-
 export default function TagListPage() {
   return (
     <PaginationProvider>
