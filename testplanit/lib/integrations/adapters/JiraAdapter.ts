@@ -3,8 +3,10 @@ import {
   AuthenticationData,
   CreateIssueData,
   IssueAdapterCapabilities,
+  IssueComment,
   IssueData,
   IssueSearchOptions,
+  LinkedIssueRef,
   UpdateIssueData,
 } from "./IssueAdapter";
 
@@ -46,6 +48,8 @@ export class JiraAdapter extends BaseAdapter {
       webhooks: true,
       customFields: true,
       attachments: true,
+      linkedIssues: true,
+      comments: true,
     };
   }
 
@@ -512,6 +516,47 @@ export class JiraAdapter extends BaseAdapter {
     return this.mapJiraIssue(response);
   }
 
+  async getLinkedIssues(issueId: string): Promise<LinkedIssueRef[]> {
+    try {
+      const params = new URLSearchParams({
+        fields: "issuelinks,parent,subtasks,customfield_10014",
+      });
+      const encodedId = encodeURIComponent(issueId);
+      const response = await this.makeRequest<any>(
+        this.buildUrl(`/rest/api/3/issue/${encodedId}?${params.toString()}`)
+      );
+      return this.mapLinkedIssues(response);
+    } catch (error) {
+      const status = this.parseStatusFromError(error);
+      const level = status === null || status >= 500 ? "error" : "warn";
+      console[level](
+        `[JiraAdapter] getLinkedIssues failed for %s:`,
+        issueId,
+        error
+      );
+      return [];
+    }
+  }
+
+  async getIssueComments(issueId: string): Promise<IssueComment[]> {
+    try {
+      const encodedId = encodeURIComponent(issueId);
+      const response = await this.makeRequest<any>(
+        this.buildUrl(`/rest/api/3/issue/${encodedId}/comment`)
+      );
+      return this.mapJiraComments(response);
+    } catch (error) {
+      const status = this.parseStatusFromError(error);
+      const level = status === null || status >= 500 ? "error" : "warn";
+      console[level](
+        `[JiraAdapter] getIssueComments failed for %s:`,
+        issueId,
+        error
+      );
+      return [];
+    }
+  }
+
   async searchIssues(options: IssueSearchOptions): Promise<{
     issues: IssueData[];
     total: number;
@@ -701,6 +746,85 @@ export class JiraAdapter extends BaseAdapter {
       updatedAt: new Date(fields.updated),
       url: `${jiraIssue.self.split("/rest/")[0]}/browse/${jiraIssue.key}`,
     };
+  }
+
+  private mapLinkedIssues(jiraIssue: any): LinkedIssueRef[] {
+    const refs: LinkedIssueRef[] = [];
+    const fields = jiraIssue?.fields ?? {};
+
+    const issuelinks = Array.isArray(fields.issuelinks)
+      ? fields.issuelinks
+      : [];
+    for (const link of issuelinks) {
+      const linkType = link?.type?.name;
+      if (typeof linkType !== "string") continue;
+      if (link.outwardIssue && link.outwardIssue.id != null) {
+        refs.push({
+          id: String(link.outwardIssue.id),
+          key: link.outwardIssue.key,
+          linkType,
+          direction: "outward",
+        });
+      } else if (link.inwardIssue && link.inwardIssue.id != null) {
+        refs.push({
+          id: String(link.inwardIssue.id),
+          key: link.inwardIssue.key,
+          linkType,
+          direction: "inward",
+        });
+      }
+    }
+
+    if (fields.parent && fields.parent.id) {
+      refs.push({
+        id: String(fields.parent.id),
+        key: fields.parent.key,
+        linkType: "parent",
+        direction: "inward",
+      });
+    }
+
+    const subtasks = Array.isArray(fields.subtasks) ? fields.subtasks : [];
+    for (const sub of subtasks) {
+      if (!sub || !sub.id) continue;
+      refs.push({
+        id: String(sub.id),
+        key: sub.key,
+        linkType: "subtask",
+        direction: "outward",
+      });
+    }
+
+    const epicLink = fields.customfield_10014;
+    if (typeof epicLink === "string" && epicLink.length > 0) {
+      refs.push({
+        id: epicLink,
+        key: epicLink,
+        linkType: "Epic-Link",
+        direction: "inward",
+      });
+    }
+
+    return refs;
+  }
+
+  private mapJiraComments(response: any): IssueComment[] {
+    const comments = Array.isArray(response?.comments) ? response.comments : [];
+    const out: IssueComment[] = [];
+    for (const c of comments) {
+      if (!c) continue;
+      out.push({
+        id: c.id != null ? String(c.id) : undefined,
+        author:
+          c.author?.displayName ??
+          c.author?.emailAddress ??
+          c.author?.accountId ??
+          "Unknown",
+        body: this.extractDescription(c.body) ?? "",
+        created: c.created ?? "",
+      });
+    }
+    return out;
   }
 
   private extractDescription(description: any): string | undefined {

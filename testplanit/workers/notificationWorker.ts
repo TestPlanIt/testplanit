@@ -6,6 +6,10 @@ import {
   MultiTenantJobData,
   validateMultiTenantJobData,
 } from "../lib/multiTenantPrisma";
+import {
+  tenantBroadcastChannel,
+  userChannel,
+} from "../lib/notifications/channels";
 import { getEmailQueue, NOTIFICATION_QUEUE_NAME } from "../lib/queues";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
@@ -90,6 +94,43 @@ const processor = async (job: Job) => {
             data: createData.data,
           },
         });
+
+        // Best-effort SSE wake-up publish (Wave 1, REQ PUB-01/PUB-02/PUB-03/SSE-03).
+        // Failures are swallowed: SSE is a wake-up signal, the row is the source of truth.
+        // Per CR-01 / Architectural Directive 1: tenantId comes from server-resolved job
+        // payload (populated upstream via getCurrentTenantId), never client input.
+        // Single-tenant deployments leave tenantId unset; fall back to "default" so the
+        // channel key matches what the SSE route subscribes to.
+        const publishTenantId = createData.tenantId ?? "default";
+        try {
+          const channel =
+            createData.type === "SYSTEM_ANNOUNCEMENT"
+              ? tenantBroadcastChannel(publishTenantId)
+              : userChannel(publishTenantId, createData.userId);
+          const payload = JSON.stringify({
+            id: notification.id,
+            event: "notification",
+          });
+          await valkeyConnection?.publish(channel, payload);
+        } catch (publishErr) {
+          console.warn(
+            `[notificationWorker] SSE publish failed for notification ${notification.id}`,
+            {
+              notificationId: notification.id,
+              tenantId: publishTenantId,
+              userId: createData.userId,
+              error:
+                publishErr instanceof Error
+                  ? publishErr.message
+                  : String(publishErr),
+            }
+          );
+        }
+        if (!createData.tenantId) {
+          console.debug(
+            `[notificationWorker] Used fallback tenantId 'default' for notification ${notification.id} (single-tenant deployment)`
+          );
+        }
 
         // Queue email if needed based on notification mode
         // Note: In multi-tenant mode, the email job should also include tenantId

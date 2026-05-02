@@ -102,4 +102,37 @@ if (skipConnection) {
   console.warn("Valkey URL not provided. Valkey connection not established.");
 }
 
+/**
+ * Create a fresh IORedis client suitable for use as a Redis pub/sub subscriber.
+ *
+ * Subscribed Redis clients cannot issue regular commands, so each SSE
+ * connection (Wave 2) instantiates its own subscriber via this factory.
+ * Mirrors the same Sentinel / URL / skip-connection branches as the shared
+ * singleton above so deployment behavior is identical (DEP-01 / Architectural
+ * Directive 5).
+ */
+export function createSubscriberClient(): IORedis | null {
+  if (skipConnection) {
+    return null;
+  }
+  if (valkeySentinels) {
+    const sentinels = parseSentinels(valkeySentinels);
+    const masterPassword = valkeyUrl
+      ? extractPasswordFromUrl(valkeyUrl)
+      : undefined;
+    return new IORedis({
+      sentinels,
+      name: sentinelMasterName,
+      ...(masterPassword && { password: masterPassword }),
+      ...(sentinelPassword && { sentinelPassword }),
+      ...baseOptions,
+    });
+  }
+  if (valkeyUrl) {
+    const connectionUrl = valkeyUrl.replace(/^valkey:\/\//, "redis://");
+    return new IORedis(connectionUrl, baseOptions);
+  }
+  return null;
+}
+
 export default valkeyConnection;

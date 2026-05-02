@@ -46,7 +46,7 @@
     "vitest": "^4.1.2"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "keywords": [
     "testplanit",

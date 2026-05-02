@@ -636,16 +636,6 @@ const UserProfile: React.FC<UserProfileProps> = ({
                     </div>
                   )}
                 </div>
-
-                {/* Projects Section */}
-                <div className="pt-2">
-                  <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide mb-2">
-                    {tCommon("fields.projects")}
-                  </h4>
-                  <div className="bg-muted/30 p-4 rounded-lg border">
-                    <UserProjectsDisplay usePopover={false} userId={user.id} />
-                  </div>
-                </div>
               </div>
             </div>
           </CardHeader>
@@ -653,18 +643,17 @@ const UserProfile: React.FC<UserProfileProps> = ({
           {/* Private Information Section - Only for own profile */}
           {(user?.id === session?.user?.id ||
             session.user.access === "ADMIN") && (
-            <CardContent className="space-y-8 pt-6">
+            <CardContent>
               <div>
                 <Separator className="mb-6" />
-
                 <Accordion
                   type="multiple"
                   defaultValue={[
                     "account",
-                    "api-tokens",
-                    "groups",
-                    "activity",
+                    "access",
                     "preferences",
+                    "api-tokens",
+                    "activity",
                     "history",
                     "mentions",
                   ]}
@@ -676,7 +665,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                       {tCommon("fields.account")}
                     </AccordionTrigger>
                     <AccordionContent>
-                      <div className="bg-muted/30 p-4 rounded-lg border mt-2">
+                      <div className="px-4">
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
                             <span className="text-sm">
@@ -740,113 +729,27 @@ const UserProfile: React.FC<UserProfileProps> = ({
                     </AccordionContent>
                   </AccordionItem>
 
-                  {/* API Tokens - Only for own profile and if user has API access */}
-                  {user?.id === session?.user?.id && user.isApi && (
-                    <AccordionItem value="api-tokens">
-                      <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
-                        {tGlobal("admin.menu.apiTokens")}
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="bg-muted/30 p-4 rounded-lg border mt-2">
-                          <ApiTokenSettings
+                  {/* Access — Projects + Groups */}
+                  <AccordionItem value="access">
+                    <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                      {t("access.title")}
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="px-4 space-y-6">
+                        <div>
+                          <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide mb-2">
+                            {tCommon("fields.projects")}
+                          </h4>
+                          <UserProjectsDisplay
+                            usePopover={false}
                             userId={user.id}
-                            isOwnProfile={user?.id === session?.user?.id}
-                            isAdmin={session.user.access === "ADMIN"}
                           />
                         </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  )}
-
-                  {/* Groups and Relationships */}
-                  <AccordionItem value="groups">
-                    <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
-                      {tCommon("fields.groups")}
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="bg-muted/30 p-4 rounded-lg border mt-2">
-                        <GroupListDisplay groups={user.groups} />
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-
-                  {/* User Activity Statistics */}
-                  <AccordionItem value="activity">
-                    <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
-                      {tCommon("fields.activity")}
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="bg-muted/30 p-4 rounded-lg border mt-2">
-                        <div className="grid gap-3 sm:grid-cols-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">
-                              {tCommon("fields.projects")}{" "}
-                              {tCommon("fields.created")}
-                            </span>
-                            <Badge variant="outline">
-                              {user._count?.createdProjects || 0}
-                            </Badge>
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">
-                              {tCommon("fields.testCases")}{" "}
-                              {tCommon("fields.created")}
-                            </span>
-                            <Badge variant="outline">
-                              {user._count?.repositoryCases || 0}
-                            </Badge>
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">
-                              {tCommon("fields.sessions")}{" "}
-                              {tCommon("fields.created")}
-                            </span>
-                            <Badge variant="outline">
-                              {user._count?.createdSessions || 0}
-                            </Badge>
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">
-                              {tCommon("fields.testRuns")}{" "}
-                              {tCommon("fields.created")}
-                            </span>
-                            <Badge variant="outline">
-                              {user._count?.testRunCreatedBy || 0}
-                            </Badge>
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm">
-                              {tCommon("fields.milestones")}{" "}
-                              {tCommon("fields.created")}
-                            </span>
-                            <Badge variant="outline">
-                              {user._count?.createdMilestones || 0}
-                            </Badge>
-                          </div>
-
-                          {user.lastActiveAt && (
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm">
-                                {tCommon("fields.lastActive")}
-                              </span>
-                              <span className="text-sm text-muted-foreground">
-                                <DateFormatter
-                                  date={user.lastActiveAt}
-                                  formatString={
-                                    session?.user.preferences?.dateFormat &&
-                                    session?.user.preferences?.timeFormat
-                                      ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat}`
-                                      : session?.user.preferences?.dateFormat
-                                  }
-                                  timezone={session?.user.preferences?.timezone}
-                                />
-                              </span>
-                            </div>
-                          )}
+                        <div>
+                          <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wide mb-2">
+                            {tCommon("fields.groups")}
+                          </h4>
+                          <GroupListDisplay groups={user.groups} />
                         </div>
                       </div>
                     </AccordionContent>
@@ -860,7 +763,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                       </AccordionTrigger>
                       <AccordionContent>
                         {!isEditing ? (
-                          <div className="bg-muted/30 p-4 rounded-lg border mt-2">
+                          <div className="px-4">
                             <div className="grid gap-4 sm:grid-cols-2">
                               <div className="space-y-3">
                                 <div className="flex items-center justify-between">
@@ -1349,13 +1252,113 @@ const UserProfile: React.FC<UserProfileProps> = ({
                     </AccordionItem>
                   )}
 
+                  {/* API Tokens - Only for own profile and if user has API access */}
+                  {user?.id === session?.user?.id && user.isApi && (
+                    <AccordionItem value="api-tokens">
+                      <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                        {tGlobal("admin.menu.apiTokens")}
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="px-4">
+                          <ApiTokenSettings
+                            userId={user.id}
+                            isOwnProfile={user?.id === session?.user?.id}
+                            isAdmin={session.user.access === "ADMIN"}
+                          />
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
+
+                  {/* User Activity Statistics */}
+                  <AccordionItem value="activity">
+                    <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                      {tCommon("fields.activity")}
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="px-4">
+                        <div className="grid gap-3 sm:grid-cols-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm">
+                              {tCommon("fields.projects")}{" "}
+                              {tCommon("fields.created")}
+                            </span>
+                            <Badge variant="outline">
+                              {user._count?.createdProjects || 0}
+                            </Badge>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm">
+                              {tCommon("fields.testCases")}{" "}
+                              {tCommon("fields.created")}
+                            </span>
+                            <Badge variant="outline">
+                              {user._count?.repositoryCases || 0}
+                            </Badge>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm">
+                              {tCommon("fields.sessions")}{" "}
+                              {tCommon("fields.created")}
+                            </span>
+                            <Badge variant="outline">
+                              {user._count?.createdSessions || 0}
+                            </Badge>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm">
+                              {tCommon("fields.testRuns")}{" "}
+                              {tCommon("fields.created")}
+                            </span>
+                            <Badge variant="outline">
+                              {user._count?.testRunCreatedBy || 0}
+                            </Badge>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm">
+                              {tCommon("fields.milestones")}{" "}
+                              {tCommon("fields.created")}
+                            </span>
+                            <Badge variant="outline">
+                              {user._count?.createdMilestones || 0}
+                            </Badge>
+                          </div>
+
+                          {user.lastActiveAt && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm">
+                                {tCommon("fields.lastActive")}
+                              </span>
+                              <span className="text-sm text-muted-foreground">
+                                <DateFormatter
+                                  date={user.lastActiveAt}
+                                  formatString={
+                                    session?.user.preferences?.dateFormat &&
+                                    session?.user.preferences?.timeFormat
+                                      ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat}`
+                                      : session?.user.preferences?.dateFormat
+                                  }
+                                  timezone={session?.user.preferences?.timezone}
+                                />
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
                   {/* Account History */}
                   <AccordionItem value="history">
                     <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
                       {tCommon("fields.accountHistory")}
                     </AccordionTrigger>
                     <AccordionContent>
-                      <div className="bg-muted/30 p-4 rounded-lg border mt-2">
+                      <div className="px-4">
                         <div className="grid gap-4 sm:grid-cols-2">
                           <div className="space-y-3">
                             <div className="flex items-center justify-between">
@@ -1438,7 +1441,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                         {t("mentionedComments.title")}
                       </AccordionTrigger>
                       <AccordionContent>
-                        <div className="bg-muted/30 p-4 rounded-lg border mt-2">
+                        <div className="px-4">
                           <UserMentionedComments userId={userId} />
                         </div>
                       </AccordionContent>

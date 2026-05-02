@@ -371,7 +371,7 @@ const reporterOptions: TestPlanItReporterOptions = {
 | 9.x | Yes |
 | 8.x | Yes |
 
-Requires Node.js 18 or later.
+Requires Node.js 24 or later.
 
 ## Related Packages
 

@@ -4,6 +4,7 @@ import type {
   LlmRequest,
   LlmResponse,
   LlmStreamResponse,
+  ModelCapabilities,
   RateLimitInfo,
 } from "../types";
 import { BaseLlmAdapter } from "./base.adapter";
@@ -97,7 +98,7 @@ export class AnthropicAdapter extends BaseLlmAdapter {
       stream: false,
     };
 
-    if (!AnthropicAdapter.modelsWithoutTemperature.has(model)) {
+    if (this.modelSupportsTemperature(model)) {
       anthropicRequest.temperature =
         request.temperature ?? this.config.config.defaultTemperature;
     }
@@ -115,7 +116,10 @@ export class AnthropicAdapter extends BaseLlmAdapter {
         throw this.createError("Request timeout", "TIMEOUT", 408, true);
       }
       // Retry without temperature if the model doesn't support it, and
-      // remember this model for future requests
+      // remember this model for future requests. This is the runtime
+      // fallback for integrations that haven't been probed yet — the
+      // probed result lives in LlmProviderConfig.settings.modelCapabilities
+      // and would have caused us to skip the param above.
       if (this.isTemperatureDeprecatedError(error)) {
         AnthropicAdapter.modelsWithoutTemperature.add(model);
         delete anthropicRequest.temperature;
@@ -142,7 +146,7 @@ export class AnthropicAdapter extends BaseLlmAdapter {
       stream: true,
     };
 
-    if (!AnthropicAdapter.modelsWithoutTemperature.has(model)) {
+    if (this.modelSupportsTemperature(model)) {
       anthropicRequest.temperature =
         request.temperature ?? this.config.config.defaultTemperature;
     }
@@ -380,6 +384,79 @@ export class AnthropicAdapter extends BaseLlmAdapter {
       message.includes("temperature") &&
       message.includes("deprecated")
     );
+  }
+
+  /**
+   * Whether to include the `temperature` field on requests for this model.
+   *
+   * Source order:
+   * 1. The persisted probe result in `config.settings.modelCapabilities[model]`
+   *    (preferred — set during the admin "Test Connection" flow).
+   * 2. The in-memory cache populated by the runtime fallback below.
+   *
+   * Either source returning "unsupported" causes us to skip the param.
+   */
+  private modelSupportsTemperature(model: string): boolean {
+    if (this.getUnsupportedParams(model).includes("temperature")) {
+      return false;
+    }
+    return !AnthropicAdapter.modelsWithoutTemperature.has(model);
+  }
+
+  /**
+   * Probe the configured model for parameter support. Sends a minimal chat
+   * request with `temperature: 1` and watches for the deprecation error;
+   * any model that returns it gets `"temperature"` recorded in
+   * `unsupportedParams`. Other params (`top_p`, `top_k`) are not probed
+   * today — neither is sent by the adapter — but the structure leaves
+   * room to extend.
+   */
+  async probeModelCapabilities(modelId?: string): Promise<ModelCapabilities> {
+    const model = modelId || this.getDefaultModel();
+    const unsupportedParams: string[] = [];
+
+    const probeRequest: AnthropicRequest = {
+      model,
+      messages: [{ role: "user", content: "ping" }],
+      max_tokens: 1,
+      temperature: 1,
+      stream: false,
+    };
+
+    try {
+      // Use fetchAnthropicMessage rather than executeChat: we only care
+      // whether the request was accepted, not about the response content.
+      // executeChat assumes data.content[0].text exists, which can blow up
+      // on adaptive-thinking models (the response may have an empty content
+      // array or only a thinking block when max_tokens=1).
+      // 10s is plenty for a 1-token probe; ignore the configured timeout
+      // since this runs from the admin UI where users expect quick feedback.
+      const response = await this.fetchAnthropicMessage(probeRequest, 10000);
+      // Drain the body so the connection can be released. We don't parse it,
+      // and we ignore any error here — a missing/broken body shouldn't fail
+      // the probe (mock responses in tests, for instance, don't implement text()).
+      try {
+        await response.text();
+      } catch {
+        // ignore
+      }
+    } catch (error: any) {
+      if (this.isTemperatureDeprecatedError(error)) {
+        unsupportedParams.push("temperature");
+        // Cache locally too so any in-flight requests on this adapter
+        // instance benefit immediately.
+        AnthropicAdapter.modelsWithoutTemperature.add(model);
+      } else {
+        // Any other failure (auth, rate limit, network) means we can't
+        // probe right now; surface it so the admin sees the real problem.
+        throw error;
+      }
+    }
+
+    return {
+      unsupportedParams,
+      probedAt: new Date().toISOString(),
+    };
   }
 
   private extractMessages(messages: LlmRequest["messages"]): {

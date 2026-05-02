@@ -287,6 +287,36 @@ describe("LlmManager", () => {
       expect(adapter).toBeDefined();
     });
 
+    it("should create OpenAI adapter with custom proxy URL (e.g., LiteLLM)", async () => {
+      mockPrisma.llmIntegration.findUnique.mockResolvedValue({
+        ...mockLlmIntegration,
+        provider: "OPENAI",
+        credentials: {
+          apiKey: "test-api-key",
+          baseUrl: "https://litellm.example.com/v1",
+        },
+      });
+
+      const adapter = await manager.getAdapter(1);
+
+      expect(adapter).toBeDefined();
+    });
+
+    it("should create Gemini adapter with custom proxy URL", async () => {
+      mockPrisma.llmIntegration.findUnique.mockResolvedValue({
+        ...mockLlmIntegration,
+        provider: "GEMINI",
+        credentials: {
+          apiKey: "test-api-key",
+          baseUrl: "https://litellm.example.com/v1",
+        },
+      });
+
+      const adapter = await manager.getAdapter(1);
+
+      expect(adapter).toBeDefined();
+    });
+
     it("should throw for Ollama adapter with localhost URL when not in ALLOWED_PRIVATE_HOSTS", async () => {
       const original = process.env.ALLOWED_PRIVATE_HOSTS;
       process.env.ALLOWED_PRIVATE_HOSTS = "";

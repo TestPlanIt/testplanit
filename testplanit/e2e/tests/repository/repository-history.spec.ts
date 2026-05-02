@@ -98,7 +98,6 @@ function countPushes(log: HistoryEntry[]): number {
 function expectPushCount(log: HistoryEntry[], expected: number): void {
   const actual = countPushes(log);
   if (actual !== expected) {
-    // eslint-disable-next-line no-console
     console.log("[history-log]", JSON.stringify(log, null, 2));
   }
   expect(actual).toBe(expected);
@@ -291,7 +290,6 @@ test.describe("Repository — navigation & history", () => {
     const rootFolderId = await api.getRootFolderId(projectId);
     // Need >10 cases so the default pageSize=10 produces a second page.
     for (let i = 0; i < 12; i += 1) {
-      // eslint-disable-next-line no-await-in-loop
       await api.createTestCase(projectId, rootFolderId, `Case ${i + 1}`);
     }
 

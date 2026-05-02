@@ -29,6 +29,7 @@ import {
   useUpdateManyLlmProviderConfig,
 } from "~/lib/hooks/llm-provider-config";
 import { useGroupByLlmUsage } from "~/lib/hooks/llm-usage";
+import { getBillingPeriodStart } from "~/lib/utils/billingPeriod";
 import { AddLlmIntegration } from "./AddLlmIntegration";
 import { DeleteLlmIntegration } from "./DeleteLlmIntegration";
 import { EditLlmIntegration } from "./EditLlmIntegration";
@@ -241,18 +242,29 @@ function LlmIntegrationList() {
     [dateFormat, timezone]
   );
 
-  // Fetch current-month cost per integration for the Budget Usage column
-  const startOfMonth = useMemo(() => {
-    const d = new Date();
-    return new Date(d.getFullYear(), d.getMonth(), 1);
-  }, []);
+  // Fetch current-period cost per integration for the Budget Usage column.
+  // Each integration may have its own billingPeriodStartDay, so the groupBy
+  // query uses the EARLIEST period start across all integrations to ensure
+  // no integration's window is truncated. The per-row spend may slightly
+  // over-count for integrations whose period starts later than the earliest
+  // (gap is bounded by max-min-day-of-month). Acceptable for this 10s-refresh
+  // display column; alerting/reset paths use the integration-specific period.
+  const earliestPeriodStart = useMemo(() => {
+    const days = (totalFilteredIntegrations ?? []).map(
+      (i: any) => i.llmProviderConfig?.billingPeriodStartDay ?? 1
+    );
+    if (days.length === 0) return getBillingPeriodStart(1);
+    return days
+      .map((d: number) => getBillingPeriodStart(d))
+      .reduce((a: Date, b: Date) => (a < b ? a : b));
+  }, [totalFilteredIntegrations]);
 
   const { data: monthlyUsageGroups } = useGroupByLlmUsage(
     {
       by: ["llmIntegrationId"],
       _sum: { totalCost: true },
       where: {
-        createdAt: { gte: startOfMonth },
+        createdAt: { gte: earliestPeriodStart },
         llmIntegrationId: { not: null },
       },
     },

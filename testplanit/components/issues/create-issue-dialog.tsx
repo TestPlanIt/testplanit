@@ -708,6 +708,7 @@ export function CreateIssueDialog({
                   <span>{t("issues.authRequiredDescription")}</span>
                   {authError.startsWith("http") && (
                     <Button
+                      type="button"
                       variant="outline"
                       size="sm"
                       onClick={() => handleAuthenticate(authError)}

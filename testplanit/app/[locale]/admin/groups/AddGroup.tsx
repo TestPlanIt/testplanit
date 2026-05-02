@@ -204,6 +204,7 @@ export function AddGroup({ open, onClose }: AddGroupProps) {
                     >
                       <UserNameCell userId={user.id} hideLink={true} />
                       <Button
+                        type="button"
                         variant="ghost"
                         size="icon"
                         onClick={() => handleRemoveUser(user.id)}

@@ -1,3 +1,43 @@
+## [0.23.1](https://github.com/TestPlanIt/testplanit/compare/v0.23.0...v0.23.1) (2026-04-30)
+
+### Enhancements
+
+* **llm:** LLM custom billing period, admin UX redesign, and capability probing ([#265](https://github.com/TestPlanIt/testplanit/issues/265)) ([6c1ee8b](https://github.com/TestPlanIt/testplanit/commit/6c1ee8b9372d222eafafc81067f528ecbe6734e1))
+
+## [0.23.0](https://github.com/TestPlanIt/testplanit/compare/v0.22.22...v0.23.0) (2026-04-30)
+
+### Features
+
+* **notifications:** SSE transport replaces bell polling ([#264](https://github.com/TestPlanIt/testplanit/issues/264)) ([bcf9d9f](https://github.com/TestPlanIt/testplanit/commit/bcf9d9f35e49e1634b3f52511bbaeae60fc10c8e))
+
+## [0.22.22](https://github.com/TestPlanIt/testplanit/compare/v0.22.21...v0.22.22) (2026-04-29)
+
+### Bug Fixes
+
+* minor UI polish and form-submission bug sweep ([#260](https://github.com/TestPlanIt/testplanit/issues/260)) ([7da0162](https://github.com/TestPlanIt/testplanit/commit/7da016250f4fc700f441bbbf1f78296989fa3e84)), closes [#result-history](https://github.com/TestPlanIt/testplanit/issues/result-history)
+
+## [0.22.21](https://github.com/TestPlanIt/testplanit/compare/v0.22.20...v0.22.21) (2026-04-29)
+
+### Enhancements
+
+* **llms:** Enhance/generate context from issue linked ([#257](https://github.com/TestPlanIt/testplanit/issues/257)) ([c3e796a](https://github.com/TestPlanIt/testplanit/commit/c3e796ac799496b5440b39e23ac4d3fbbebb7857)), closes [#1](https://github.com/TestPlanIt/testplanit/issues/1) [owner/repo#number](https://github.com/owner/repo/issues/number) [#42](https://github.com/TestPlanIt/testplanit/issues/42) [acme/foo/bar#42](https://github.com/acme/foo/bar/issues/42) [owner/repo#number](https://github.com/owner/repo/issues/number)
+
+## [0.22.20](https://github.com/TestPlanIt/testplanit/compare/v0.22.19...v0.22.20) (2026-04-28)
+
+### Bug Fixes
+
+* **deps:** bump postcss to 8.5.10 to address XSS advisory ([#253](https://github.com/TestPlanIt/testplanit/issues/253)) ([0be5e13](https://github.com/TestPlanIt/testplanit/commit/0be5e13c1c2a595304f7b9539d78b4955206459e))
+
+### Enhancements
+
+* smooth out jira issue create-and-link flow ([#256](https://github.com/TestPlanIt/testplanit/issues/256)) ([7dfdb6a](https://github.com/TestPlanIt/testplanit/commit/7dfdb6a97a0808cefb2348526dce49d7fadc3494))
+
+## [0.22.19](https://github.com/TestPlanIt/testplanit/compare/v0.22.18...v0.22.19) (2026-04-28)
+
+### Bug Fixes
+
+* workflow type translations + linked projects on integration card ([#252](https://github.com/TestPlanIt/testplanit/issues/252)) ([66b5923](https://github.com/TestPlanIt/testplanit/commit/66b5923489727ae2592930d6d2b8e5cfde63e5b2))
+
 ## [0.22.18](https://github.com/TestPlanIt/testplanit/compare/v0.22.17...v0.22.18) (2026-04-26)
 
 ### Bug Fixes

@@ -331,7 +331,7 @@ function JunitTableSection({
               {!isEditMode && (
                 <div className="mr-2">
                   <Link href={`/projects/runs/${projectId}`}>
-                    <Button variant="outline" size="icon">
+                    <Button type="button" variant="outline" size="icon">
                       <ArrowLeft className="h-4 w-4" />
                     </Button>
                   </Link>
@@ -399,6 +399,7 @@ function JunitTableSection({
                     )}
                     {effectiveCanDelete && (
                       <Button
+                        type="button"
                         variant="secondary"
                         onClick={() => setIsDeleteDialogOpen(true)}
                         className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2 text-destructive"

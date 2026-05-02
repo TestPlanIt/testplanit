@@ -9,7 +9,7 @@ This guide covers how to run and write end-to-end (E2E) tests for TestPlanIt usi
 
 ## Prerequisites
 
-- Node.js 20+ and pnpm installed
+- Node.js 24+ and pnpm installed
 - PostgreSQL database available
 - TestPlanIt development environment set up
 

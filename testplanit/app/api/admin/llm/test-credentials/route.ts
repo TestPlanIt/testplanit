@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
         streamingEnabled: true,
         isDefault: false,
         monthlyBudget: new Prisma.Decimal(0),
+        billingPeriodStartDay: 1,
         createdAt: new Date(),
         updatedAt: new Date(),
         settings: {},
@@ -140,10 +141,35 @@ export async function POST(request: NextRequest) {
         });
       }
 
+      // Probe the model for parameter support so future chat requests
+      // skip params the model rejects (e.g. temperature on Anthropic
+      // adaptive-thinking models). Failure to probe is non-fatal — connection
+      // already succeeded, and the runtime fallback in each adapter will
+      // catch any rejections on the first real request.
+      let modelCapabilities: Record<
+        string,
+        { unsupportedParams: string[]; probedAt: string }
+      > | null = null;
+      if (defaultModel) {
+        try {
+          const capabilities =
+            await adapter.probeModelCapabilities(defaultModel);
+          modelCapabilities = { [defaultModel]: capabilities };
+        } catch (probeError) {
+          console.warn(
+            "Capability probe failed for %s/%s; continuing without persisted capabilities:",
+            provider,
+            defaultModel,
+            probeError
+          );
+        }
+      }
+
       // Returning success response
       return NextResponse.json({
         success: true,
         message: "Connection successful!",
+        modelCapabilities,
       });
     } catch (error) {
       console.error("Error testing credentials:", error);

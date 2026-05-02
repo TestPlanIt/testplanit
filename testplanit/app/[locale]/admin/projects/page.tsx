@@ -542,7 +542,7 @@ function ProjectAdmin() {
             <div className="flex flex-col items-start space-y-2">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-[240px]">
+                  <Button type="button" variant="outline" className="w-[240px]">
                     {completedAt
                       ? format(completedAt, "PPP")
                       : tGlobal("common.placeholders.date")}

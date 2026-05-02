@@ -1,6 +1,6 @@
 {
   "name": "@testplanit/api",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Official JavaScript/TypeScript API client for TestPlanIt - test management platform",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -44,7 +44,7 @@
   },
   "homepage": "https://github.com/testplanit/testplanit/tree/main/packages/api#readme",
   "engines": {
-    "node": ">=18"
+    "node": ">=24"
   },
   "devDependencies": {
     "@types/node": "^25.5.2",

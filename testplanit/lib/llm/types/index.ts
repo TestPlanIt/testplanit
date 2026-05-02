@@ -64,6 +64,35 @@ export interface LlmAdapterConfig {
   additionalHeaders?: Record<string, string>;
 }
 
+/**
+ * Per-model parameter capabilities discovered via probing during integration
+ * setup. Persisted in `LlmProviderConfig.settings.modelCapabilities[modelId]`
+ * so adapters can skip parameters the model rejects without paying the cost
+ * of a failed-and-retried request on every call.
+ */
+export interface ModelCapabilities {
+  /**
+   * List of optional request parameters the model has been observed to reject
+   * (e.g. ["temperature"] for newer Anthropic adaptive-thinking models).
+   */
+  unsupportedParams: string[];
+  /**
+   * ISO-8601 timestamp of the last successful probe. Used to surface staleness
+   * in the admin UI and as a cache-busting hint.
+   */
+  probedAt: string;
+}
+
+/**
+ * Shape of `LlmProviderConfig.settings` JSON when it carries probed model
+ * capabilities. Other keys are preserved so the settings field remains a
+ * general-purpose bag.
+ */
+export interface SettingsWithCapabilities {
+  modelCapabilities?: Record<string, ModelCapabilities>;
+  [key: string]: unknown;
+}
+
 export interface LlmModelInfo {
   id: string;
   name: string;

@@ -7088,6 +7088,10 @@ const metadata: ModelMeta = {
                     name: "monthlyBudget",
                     type: "Decimal",
                     isOptional: true,
+                }, billingPeriodStartDay: {
+                    name: "billingPeriodStartDay",
+                    type: "Int",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": 1 }] }],
                 }, defaultTemperature: {
                     name: "defaultTemperature",
                     type: "Float",

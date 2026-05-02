@@ -342,6 +342,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
         {canManageLinks && (
           <>
             <Button
+              type="button"
               variant="outline"
               size="sm"
               onClick={() => setIsModalOpen(true)}

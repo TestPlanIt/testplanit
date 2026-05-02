@@ -67,6 +67,8 @@ describe("JiraAdapter", () => {
         webhooks: true,
         customFields: true,
         attachments: true,
+        linkedIssues: true,
+        comments: true,
       });
     });
   });
@@ -560,6 +562,577 @@ describe("JiraAdapter", () => {
       await expect(adapter.getIssue("TEST-123")).rejects.toThrow(
         "missing summary field"
       );
+    });
+  });
+
+  describe("getLinkedIssues", () => {
+    const mockJiraIssueWithLinks = {
+      id: "10001",
+      key: "PROJ-1",
+      fields: {
+        issuelinks: [
+          {
+            type: {
+              name: "Blocks",
+              inward: "is blocked by",
+              outward: "blocks",
+            },
+            outwardIssue: { id: "10010", key: "PROJ-10" },
+          },
+          {
+            type: {
+              name: "Relates",
+              inward: "relates to",
+              outward: "relates to",
+            },
+            inwardIssue: { id: "10011", key: "PROJ-11" },
+          },
+        ],
+        parent: { id: "10000", key: "PROJ-EPIC" },
+        subtasks: [{ id: "10020", key: "PROJ-20" }],
+        customfield_10014: "PROJ-EPIC-LEGACY",
+      },
+    };
+
+    beforeEach(async () => {
+      mockFetch.mockReset();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ accountId: "test-user" }),
+      });
+      await adapter.authenticate({
+        type: "api_key",
+        email: "test@example.com",
+        apiToken: "test-token",
+        baseUrl: "https://test.atlassian.net",
+      });
+    });
+
+    afterEach(() => {
+      mockFetch.mockReset();
+    });
+
+    it("should return refs for all four sources on the happy path", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockJiraIssueWithLinks),
+      });
+
+      const result = await adapter.getLinkedIssues!("PROJ-1");
+
+      expect(result).toHaveLength(5);
+      expect(result).toEqual(
+        expect.arrayContaining([
+          {
+            id: "10010",
+            key: "PROJ-10",
+            linkType: "Blocks",
+            direction: "outward",
+          },
+          {
+            id: "10011",
+            key: "PROJ-11",
+            linkType: "Relates",
+            direction: "inward",
+          },
+          {
+            id: "10000",
+            key: "PROJ-EPIC",
+            linkType: "parent",
+            direction: "inward",
+          },
+          {
+            id: "10020",
+            key: "PROJ-20",
+            linkType: "subtask",
+            direction: "outward",
+          },
+          {
+            id: "PROJ-EPIC-LEGACY",
+            key: "PROJ-EPIC-LEGACY",
+            linkType: "Epic-Link",
+            direction: "inward",
+          },
+        ])
+      );
+    });
+
+    it("should skip Epic-Link silently when customfield_10014 is absent", async () => {
+      const responseWithoutEpicLink = {
+        ...mockJiraIssueWithLinks,
+        fields: {
+          ...mockJiraIssueWithLinks.fields,
+          customfield_10014: undefined,
+        },
+      };
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(responseWithoutEpicLink),
+      });
+
+      const result = await adapter.getLinkedIssues!("PROJ-1");
+
+      expect(result).toHaveLength(4);
+      expect(result.some((ref) => ref.linkType === "Epic-Link")).toBe(false);
+    });
+
+    it("should return [] when all sources are empty/absent", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: "10001",
+            key: "PROJ-1",
+            fields: {
+              issuelinks: [],
+              subtasks: [],
+            },
+          }),
+      });
+
+      const result = await adapter.getLinkedIssues!("PROJ-1");
+
+      expect(result).toEqual([]);
+    });
+
+    it("should fail soft on 403 by returning [] and logging at warn level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        text: () => Promise.resolve("Forbidden"),
+      });
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("PROJ-1");
+
+      expect(result).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const firstArg = warnSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[JiraAdapter]");
+      expect(firstArg).toContain("getLinkedIssues");
+      expect(firstArg).toContain("PROJ-1");
+      warnSpy.mockRestore();
+    });
+
+    it("should fail soft on 404 by returning [] and logging at warn level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve("Not Found"),
+      });
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("PROJ-1");
+
+      expect(result).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const firstArg = warnSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[JiraAdapter]");
+      expect(firstArg).toContain("getLinkedIssues");
+      expect(firstArg).toContain("PROJ-1");
+      warnSpy.mockRestore();
+    });
+
+    it("should fail soft on 5xx by returning [] and logging at error level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        statusText: "Service Unavailable",
+        text: () => Promise.resolve("Service Unavailable"),
+      });
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("PROJ-1");
+
+      expect(result).toEqual([]);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const firstArg = errorSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[JiraAdapter]");
+      expect(firstArg).toContain("getLinkedIssues");
+      expect(firstArg).toContain("PROJ-1");
+      errorSpy.mockRestore();
+    });
+
+    it("should fail soft on network error by returning [] and logging at error level", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("network ECONNRESET"));
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("PROJ-1");
+
+      expect(result).toEqual([]);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const firstArg = errorSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[JiraAdapter]");
+      expect(firstArg).toContain("getLinkedIssues");
+      expect(firstArg).toContain("PROJ-1");
+      errorSpy.mockRestore();
+    });
+
+    it("should request all four fields in the URL", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockJiraIssueWithLinks),
+      });
+
+      await adapter.getLinkedIssues!("PROJ-1");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      const decodedUrl = decodeURIComponent(calledUrl);
+      expect(decodedUrl).toContain(
+        "fields=issuelinks,parent,subtasks,customfield_10014"
+      );
+      expect(calledUrl).toContain("/rest/api/3/issue/PROJ-1");
+    });
+
+    it("should encode issueId path-injection chars (?, /, &) in URL", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockJiraIssueWithLinks),
+      });
+
+      await adapter.getLinkedIssues!("PROJ-1?fields=*all");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      expect(calledUrl).toContain("/rest/api/3/issue/PROJ-1%3Ffields%3D*all?");
+      expect(calledUrl).not.toContain("/rest/api/3/issue/PROJ-1?fields=*all?");
+    });
+  });
+
+  describe("getIssueComments", () => {
+    const mockJiraCommentsResponse = {
+      comments: [
+        {
+          id: "1",
+          author: { displayName: "Alice" },
+          body: {
+            type: "doc",
+            content: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: "Hello" }],
+              },
+            ],
+          },
+          created: "2026-01-01T00:00:00Z",
+        },
+        {
+          id: "2",
+          author: { displayName: "Bob" },
+          body: {
+            type: "doc",
+            content: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: "World" }],
+              },
+            ],
+          },
+          created: "2026-01-02T00:00:00Z",
+        },
+      ],
+    };
+
+    beforeEach(async () => {
+      mockFetch.mockReset();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ accountId: "test-user" }),
+      });
+      await adapter.authenticate({
+        type: "api_key",
+        email: "test@example.com",
+        apiToken: "test-token",
+        baseUrl: "https://test.atlassian.net",
+      });
+    });
+
+    afterEach(() => {
+      mockFetch.mockReset();
+    });
+
+    it("should request /rest/api/3/issue/{key}/comment", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockJiraCommentsResponse),
+      });
+
+      await adapter.getIssueComments!("PROJ-1");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      expect(calledUrl).toContain("/rest/api/3/issue/PROJ-1/comment");
+    });
+
+    it("should map all comments to IssueComment[] on the happy path", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockJiraCommentsResponse),
+      });
+
+      const result = await adapter.getIssueComments!("PROJ-1");
+
+      expect(result).toEqual([
+        {
+          id: "1",
+          author: "Alice",
+          body: "<p>Hello</p>",
+          created: "2026-01-01T00:00:00Z",
+        },
+        {
+          id: "2",
+          author: "Bob",
+          body: "<p>World</p>",
+          created: "2026-01-02T00:00:00Z",
+        },
+      ]);
+    });
+
+    it("should fall back to author.emailAddress when displayName is missing", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            comments: [
+              {
+                id: "3",
+                author: { emailAddress: "bob@example.com" },
+                body: {
+                  type: "doc",
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Hi" }],
+                    },
+                  ],
+                },
+                created: "2026-01-03T00:00:00Z",
+              },
+            ],
+          }),
+      });
+
+      const result = await adapter.getIssueComments!("PROJ-1");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].author).toBe("bob@example.com");
+    });
+
+    it("should fall back to author.accountId when displayName and emailAddress are missing", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            comments: [
+              {
+                id: "5",
+                author: { accountId: "557058:abc123-anonymized" },
+                body: {
+                  type: "doc",
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Hola" }],
+                    },
+                  ],
+                },
+                created: "2026-01-05T00:00:00Z",
+              },
+            ],
+          }),
+      });
+
+      const result = await adapter.getIssueComments!("PROJ-1");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].author).toBe("557058:abc123-anonymized");
+    });
+
+    it("should fall back to 'Unknown' when displayName, emailAddress, and accountId are all missing", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            comments: [
+              {
+                id: "4",
+                author: {},
+                body: {
+                  type: "doc",
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Hey" }],
+                    },
+                  ],
+                },
+                created: "2026-01-04T00:00:00Z",
+              },
+            ],
+          }),
+      });
+
+      const result = await adapter.getIssueComments!("PROJ-1");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].author).toBe("Unknown");
+    });
+
+    it("should return [] when comments array is absent or empty", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({}),
+      });
+
+      const result1 = await adapter.getIssueComments!("PROJ-1");
+      expect(result1).toEqual([]);
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ comments: [] }),
+      });
+
+      const result2 = await adapter.getIssueComments!("PROJ-1");
+      expect(result2).toEqual([]);
+    });
+
+    it("should skip malformed entries and keep valid ones", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            comments: [
+              null,
+              {
+                id: "5",
+                author: { displayName: "Carol" },
+                body: {
+                  type: "doc",
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [{ type: "text", text: "Valid" }],
+                    },
+                  ],
+                },
+                created: "2026-01-05T00:00:00Z",
+              },
+            ],
+          }),
+      });
+
+      const result = await adapter.getIssueComments!("PROJ-1");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].author).toBe("Carol");
+    });
+
+    it("should fail soft on 403 by returning [] and logging at warn level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        text: () => Promise.resolve("Forbidden"),
+      });
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("PROJ-1");
+
+      expect(result).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const firstArg = warnSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[JiraAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("PROJ-1");
+      warnSpy.mockRestore();
+    });
+
+    it("should fail soft on 404 by returning [] and logging at warn level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve("Not Found"),
+      });
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("PROJ-1");
+
+      expect(result).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const firstArg = warnSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[JiraAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("PROJ-1");
+      warnSpy.mockRestore();
+    });
+
+    it("should fail soft on 5xx by returning [] and logging at error level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        statusText: "Service Unavailable",
+        text: () => Promise.resolve("Service Unavailable"),
+      });
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("PROJ-1");
+
+      expect(result).toEqual([]);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const firstArg = errorSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[JiraAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("PROJ-1");
+      errorSpy.mockRestore();
+    });
+
+    it("should fail soft on network error by returning [] and logging at error level", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("network ECONNRESET"));
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("PROJ-1");
+
+      expect(result).toEqual([]);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const firstArg = errorSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[JiraAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("PROJ-1");
+      errorSpy.mockRestore();
+    });
+
+    it("should encode issueId path-injection chars (?, /, &) in URL", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockJiraCommentsResponse),
+      });
+
+      await adapter.getIssueComments!("PROJ-1?fields=*all");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      expect(calledUrl).toContain(
+        "/rest/api/3/issue/PROJ-1%3Ffields%3D*all/comment"
+      );
+      expect(calledUrl).not.toContain("/rest/api/3/issue/PROJ-1?fields=*all/");
+    });
+
+    it("should encode traversal chars (../) in issueId path", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockJiraCommentsResponse),
+      });
+
+      await adapter.getIssueComments!("PROJ-1/../");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      expect(calledUrl).toContain("PROJ-1%2F..%2F/comment");
+      expect(calledUrl).not.toContain("PROJ-1/../comment");
     });
   });
 

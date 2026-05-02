@@ -26,10 +26,15 @@ const ALLOWED_BASE_URLS: Record<string, string[]> = {
   CUSTOM_LLM: [], // Custom endpoints, validated separately
 };
 
-// Providers that allow custom endpoints (must pass additional validation)
+// Providers that allow custom endpoints (must pass additional validation).
+// Custom endpoints unlock LiteLLM and similar OpenAI-compatible proxies for
+// every provider. The official URL still gets the fast path via
+// ALLOWED_BASE_URLS; anything else falls through to the private-IP guard.
 const CUSTOM_ENDPOINT_PROVIDERS = [
+  "OPENAI",
   "ANTHROPIC",
   "AZURE_OPENAI",
+  "GEMINI",
   "OLLAMA",
   "CUSTOM_LLM",
 ];

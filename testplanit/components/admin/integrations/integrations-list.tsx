@@ -26,6 +26,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import {
   useDeleteProjectIntegration,
+  useFindManyIntegrationProject,
   useUpdateManyProjectIntegration,
   useUpsertProjectIntegration,
 } from "~/lib/hooks";
@@ -58,6 +59,19 @@ export function IntegrationsList({
     useUpsertProjectIntegration();
   const { mutateAsync: updateManyProjectIntegration } =
     useUpdateManyProjectIntegration();
+
+  const { data: linkedProjects } = useFindManyIntegrationProject(
+    {
+      where: {
+        projectIntegrationId: currentIntegration?.id ?? "",
+        isActive: true,
+      },
+      orderBy: [{ isDefault: "desc" }, { externalProjectName: "asc" }],
+    },
+    {
+      enabled: !!currentIntegration?.id,
+    }
+  );
 
   const handleAssignIntegrationClick = (integrationId: number) => {
     // If there's already an active integration, show warning dialog
@@ -172,7 +186,7 @@ export function IntegrationsList({
                 </Badge>
               )}
             </CardHeader>
-            <CardContent className="grow">
+            <CardContent className="grow space-y-3">
               <div
                 className={`flex items-start gap-3${isDimmed ? " opacity-70" : ""}`}
               >
@@ -193,6 +207,31 @@ export function IntegrationsList({
                   </p>
                 </div>
               </div>
+              {isActive &&
+                integration.provider !== "SIMPLE_URL" &&
+                linkedProjects &&
+                linkedProjects.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      {t("integration.linkedProjects")}
+                    </p>
+                    <ul className="space-y-1">
+                      {linkedProjects.map((lp) => (
+                        <li
+                          key={lp.id}
+                          className="flex items-center gap-2 text-sm"
+                        >
+                          <Badge variant="outline" className="text-xs shrink-0">
+                            {lp.externalProjectKey}
+                          </Badge>
+                          <span className="truncate">
+                            {lp.externalProjectName}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
             </CardContent>
             <CardFooter>
               <div className="flex gap-2 w-full">

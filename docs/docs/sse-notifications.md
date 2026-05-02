@@ -1,0 +1,159 @@
+---
+sidebar_position: 10
+---
+
+# SSE Notifications
+
+TestPlanIt's in-app notification bell uses [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events) with [Valkey](https://valkey.io/) (or Redis) pub/sub fan-out to push updates to clients in near-real time. This page documents how it works, the ingress/proxy configuration required to make long-lived streams reliable behind a load balancer, and the tuning knobs available to operators.
+
+## What it is and how it works
+
+Before this transport existed, the bell polled `useFindManyNotification` every 5–30 seconds per session. That worked but does not scale — every active browser tab generates 2–12 unnecessary requests per minute even when nothing changed.
+
+The current architecture replaces that with:
+
+1. **Publish.** When the notification worker (`testplanit/workers/notificationWorker.ts`) creates a `Notification` row, it publishes a small wake-up payload (`{id, event}`) to a tenant-scoped Valkey channel. Channel keys are constructed in one place — `testplanit/lib/notifications/channels.ts`:
+   - User channel: `notifications:tenant:<tenantId>:user:<userId>`
+   - Broadcast channel (used for `SYSTEM_ANNOUNCEMENT`): `notifications:tenant:<tenantId>:broadcast`
+2. **Subscribe.** Each authenticated client opens a long-lived `EventSource` connection to `GET /api/notifications/stream` (`testplanit/app/api/notifications/stream/route.ts`). The route subscribes to both the user channel and the tenant broadcast channel for the requesting user.
+3. **Refetch.** On every SSE message, the bell calls `refetch()` on its existing `useFindManyNotification` query. The wake-up payload is treated as opaque "something changed" — actual notification data is fetched through the policy-enforced ZenStack hook so multi-tenant isolation and access control are re-applied on every read.
+
+The pub/sub layer is treated as untrusted plumbing: even if a wake-up arrives wrongly, the read path cannot leak data because `getEnhancedDb` re-applies the tenant filter and access policy. Tenant context for both publish and subscribe is resolved server-side via `getCurrentTenantId()` (`testplanit/lib/multiTenantPrisma.ts`), which reads `INSTANCE_TENANT_ID` from the environment — never from client input.
+
+A single shared Valkey instance handles fan-out for every tenant; isolation is by channel-key prefix, not by separate Valkey deployments. The Valkey already provisioned for BullMQ is reused.
+
+## Ingress and proxy configuration
+
+SSE relies on the connection staying open and on byte-by-byte delivery. Most ingress controllers and load balancers buffer responses and apply short idle timeouts by default — both will break SSE. The same TestPlanIt application image runs in every environment; the differences are configuration on the ingress, not in the code.
+
+The route already sets these response headers, which most proxies respect when they are configured to honor them:
+
+```text
+Content-Type: text/event-stream
+Cache-Control: no-cache, no-transform
+Connection: keep-alive
+X-Accel-Buffering: no
+```
+
+`X-Accel-Buffering: no` is the nginx convention for disabling response buffering on a per-response basis; many ingress controllers downstream honor it.
+
+### nginx-ingress (Kubernetes)
+
+Annotate the Ingress resource that fronts the TestPlanIt service:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: testplanit
+  annotations:
+    # Disable response buffering so SSE bytes are forwarded as soon as they arrive.
+    nginx.ingress.kubernetes.io/proxy-buffering: 'off'
+    # Lengthen idle timeouts so streams survive periods without messages.
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '3600'
+    nginx.ingress.kubernetes.io/proxy-send-timeout: '3600'
+```
+
+`proxy-read-timeout` of 3600 seconds (1 hour) is well over the 25-second heartbeat that the route emits, leaving wide margin for transient network slowness.
+
+### Traefik
+
+Traefik does not buffer streamed responses by default, but its idle timeouts may need to be raised. Set `respondingTimeouts` on the entryPoint. Example (Traefik v2 / v3 static config):
+
+```yaml
+entryPoints:
+  websecure:
+    address: ':443'
+    transport:
+      respondingTimeouts:
+        readTimeout: '1h'
+        writeTimeout: '1h'
+        idleTimeout: '1h'
+```
+
+No additional middleware is required for the route specifically — the application's own `Cache-Control: no-cache, no-transform` and `X-Accel-Buffering: no` headers are sufficient.
+
+### AWS Load Balancer Controller (ALB)
+
+For an Application Load Balancer in front of TestPlanIt:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: testplanit
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=3600
+```
+
+The `idle_timeout.timeout_seconds=3600` attribute raises the ALB's connection idle timeout to one hour. The 25-second heartbeat on the route ensures the connection has bytes flowing well within that window.
+
+HTTP/2 is enabled by default on ALB v2; no extra configuration needed. SSE multiplexes per-stream over HTTP/2, which keeps file-descriptor pressure low for clients with many tabs.
+
+### Plain nginx (non-ingress)
+
+For deployments that put TestPlanIt behind a manually configured nginx (e.g. on a single docker-compose host), add a location block matching `/api/notifications/stream`:
+
+```nginx
+location /api/notifications/stream {
+  proxy_pass http://testplanit_upstream;
+  proxy_http_version 1.1;
+  proxy_set_header Connection "";
+  proxy_buffering off;
+  proxy_cache off;
+  proxy_read_timeout 3600s;
+  proxy_send_timeout 3600s;
+  chunked_transfer_encoding off;
+}
+```
+
+## Tuning knobs
+
+Two environment variables tune the route's connection caps:
+
+| Variable             | Default | Purpose                                                                                                                                                                                                                                                                                            |
+| -------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SSE_PER_TENANT_CAP` | `1000`  | Maximum concurrent SSE connections per tenant per pod. The Nth+1 connection receives HTTP `503 Service Unavailable` with a `Retry-After: 30` header. With N replicas, a tenant can hold up to N × cap connections cluster-wide; the per-pod cap is intentional fd-exhaustion / runaway protection. |
+| `SSE_PER_USER_CAP`   | `4`     | Maximum concurrent SSE connections per user per pod. The 5th connection is accepted; the oldest connection for that user is closed (LRU). This is a fairness mechanism — it prevents a single user with many tabs from monopolizing tenant capacity.                                               |
+
+Both variables are read once at module load. Restart the application pods after changing them.
+
+## Observability
+
+The route emits a structured stdout log line every 30 seconds for every tenant with at least one active connection:
+
+```json
+{"metric":"sse.connections.active","tenantId":"<tenantId>","count":<n>,"podId":"<hostname>","ts":"<iso>"}
+```
+
+Operators ingest this through whatever log pipeline already collects application stdout (Loki, Datadog, CloudWatch, etc.). No new HTTP endpoint, no new dependency, no new credentials to provision. A future cross-cutting Observability milestone may migrate this to a Prometheus gauge — until then the structured stdout line is the canonical metric.
+
+The route also logs (at `console.warn`) when:
+
+- Subscribe to Valkey fails for a connection (`[sse/notifications] subscribe failed`).
+- The notification worker's best-effort SSE publish fails (`[notificationWorker] SSE publish failed`).
+
+Both are non-fatal: SSE is a wake-up signal, the `Notification` row is the source of truth, and clients self-heal on reconnect via the route's `{event:"sync"}` first byte.
+
+## Graceful shutdown
+
+The route registers a `SIGTERM` handler that, on signal, writes `event: shutdown\ndata: {}\n\n` to every active stream, unsubscribes each subscriber, and closes the underlying Valkey clients. EventSource's built-in auto-reconnect on the client kicks in — combined with the route's sync-on-connect, users are reconnected and resynced on a different pod within seconds. Set `terminationGracePeriodSeconds` on the pod to at least 30 seconds (60 seconds is a safer margin) to give the handler room to drain.
+
+## Future helm chart checklist
+
+The TestPlanIt helm chart is planned for a future milestone. The same TestPlanIt application image runs in every environment — the only environment-specific knobs are ingress annotations and the two tuning env vars. When the chart is built, the following values must be exposed for SSE to work portably:
+
+- `sse.perTenantCap` → `SSE_PER_TENANT_CAP` env var
+- `sse.perUserCap` → `SSE_PER_USER_CAP` env var
+- Ingress annotations block that defaults to the nginx-ingress / Traefik / ALB examples above
+- `terminationGracePeriodSeconds` ≥ 30 on the application Deployment (60 recommended)
+
+## Reference files
+
+- Route: `testplanit/app/api/notifications/stream/route.ts`
+- Channel helpers: `testplanit/lib/notifications/channels.ts`
+- Publisher: `testplanit/workers/notificationWorker.ts` (after `prisma.notification.create`)
+- Valkey wiring: `testplanit/lib/valkey.ts` (default singleton + `createSubscriberClient` factory)
+- Bell client: `testplanit/components/NotificationBell.tsx` (EventSource useEffect)

@@ -557,7 +557,7 @@ export default function MilestoneDetailsPage() {
               <div className="flex items-start gap-2 grow">
                 {!isEditMode && (
                   <Link href={`/projects/milestones/${projectId}`}>
-                    <Button variant="outline" size="icon">
+                    <Button type="button" variant="outline" size="icon">
                       <ArrowLeft className="h-4 w-4" />
                     </Button>
                   </Link>

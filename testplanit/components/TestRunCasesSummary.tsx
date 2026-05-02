@@ -12,6 +12,7 @@ import {
   CalendarClock,
   CheckCircle2,
   Clock,
+  Combine,
   HelpCircle,
   ListChecks,
   Loader2,
@@ -539,7 +540,8 @@ export function TestRunCasesSummary({
                     {item.caseName || `Test case ${index + 1}`}
                   </div>
                   {item.configurationName && (
-                    <div className="flex items-center gap-1 mt-0.5 text-muted-foreground">
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <Combine className="h-3 w-3" />
                       <span>{item.configurationName}</span>
                     </div>
                   )}

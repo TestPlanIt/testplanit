@@ -57,20 +57,30 @@ The Add Case dialog uses a resizable two-panel layout:
 When [LLM integrations](../llm-integrations.md) are configured, you'll see an additional **Generate Test Cases** button (with sparkles icon) in the folder view. This opens the AI generation wizard which allows you to:
 
 ### Generation Sources
-- **From Issues**: Generate test cases from linked Jira, GitHub, or Azure DevOps issues
-- **From Documents**: Generate test cases from requirements documents or specifications
+
+- **From Issue**: Pick a Jira / GitHub / Azure DevOps issue from your project's tracker. The AI uses the issue's title, description, and comments — and automatically pulls in the issue's directly-linked items (one hop) so it sees the wider context. For example: pick an Epic and the AI also sees the Stories under it; pick a Story and the AI also sees what blocks it, what it relates to, and any subtasks.
+- **From Document**: Type or paste your own requirements directly. Useful when no tracker issue exists yet.
+- **From URL**: Point the AI at a web page (e.g., a public spec, a help article, a SaaS app screen). The AI crawls and reads the page content.
+
+### What the AI sees when you pick an issue
+
+After you select an issue, the wizard shows a **Linked issues that will be included** section listing each linked issue's key (e.g. `PROJ-123`) and its relationship to the source (parent, subtask, blocks, relates-to, etc.). This lets you preview the AI's context before generating. Linked-issue traversal stops at one hop — issues linked to your linked issues are not followed.
+
+When the combined context (your issue + its linked issues + all their comments) is too large for the AI model's token budget, the wizard automatically trims linked-issue content first, never the source issue itself. After generation, if any linked issues were dropped to fit the budget, you'll see an alert above the generated cases listing exactly which issues were excluded — so you know what the AI saw and what it didn't.
 
 ### Generation Process
+
 1. **Select Source**: Choose an issue or provide requirements document details
 2. **Select Template**: Choose the template and specific fields to populate
 3. **Configure Settings**: Set quantity, provide additional instructions, enable auto-tagging
 4. **Review & Import**: Review generated test cases and select which ones to import
 
 ### Key Features
+
 - **Smart Field Population**: AI automatically fills template fields with contextually relevant content
-- **Context Awareness**: Considers existing test cases to avoid duplication
+- **Context Awareness**: Considers existing test cases in the folder to avoid duplication
 - **Flexible Quantity**: Generate from single test cases to comprehensive test suites
 - **Auto-tagging**: Automatically generates and assigns relevant tags
 - **Test Steps Generation**: Creates detailed action/expected result pairs
 
-For detailed information about AI test generation, see the [LLM Integrations](../llm-integrations.md) documentation.
+For per-tracker details (which Jira link types are followed, GitHub sub-issues, ADO `System.LinkTypes.*`, etc.) and the AI configuration side, see the [Test Case Generation](../llm-test-generation.md) admin documentation.

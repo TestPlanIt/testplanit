@@ -57,6 +57,7 @@ function WorkflowComponent() {
   const router = useRouter();
   const t = useTranslations("admin.workflows");
   const tCommon = useTranslations("common");
+  const tWorkflowTypes = useTranslations("enums.WorkflowType");
   const [pageSize] = useState(10);
   const queryClient = useQueryClient();
 
@@ -196,7 +197,7 @@ function WorkflowComponent() {
 
   const columns = getColumns(
     data || [],
-    t,
+    tWorkflowTypes,
     tCommon,
     handleToggleEnabled,
     handleToggleDefault,

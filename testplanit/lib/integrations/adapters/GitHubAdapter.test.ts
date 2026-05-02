@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GitHubAdapter } from "./GitHubAdapter";
 
 // Mock global fetch
@@ -63,6 +63,8 @@ describe("GitHubAdapter", () => {
         webhooks: true,
         customFields: false,
         attachments: false,
+        linkedIssues: true,
+        comments: true,
       });
     });
   });
@@ -383,6 +385,636 @@ describe("GitHubAdapter", () => {
       await expect(adapterNoRepo.getIssue("42")).rejects.toThrow(
         "GitHub repository not configured"
       );
+    });
+  });
+
+  describe("getLinkedIssues", () => {
+    const mockSubIssuesResponse = [
+      {
+        id: 1234567,
+        number: 42,
+        title: "Sub one",
+        html_url: "https://github.com/testowner/testrepo/issues/42",
+      },
+      {
+        id: 1234568,
+        number: 43,
+        title: "Sub two",
+        html_url: "https://github.com/testowner/testrepo/issues/43",
+      },
+    ];
+
+    const mockTimelineResponse = [
+      { event: "labeled", actor: { login: "u" } },
+      {
+        event: "cross-referenced",
+        actor: { login: "u" },
+        source: {
+          type: "issue",
+          issue: {
+            id: 9876543,
+            number: 99,
+            repository: { full_name: "acme/other-repo" },
+          },
+        },
+      },
+      { event: "closed", actor: { login: "u" } },
+    ];
+
+    beforeEach(async () => {
+      mockFetch.mockReset();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ login: "testuser" }),
+      });
+      await adapter.authenticate({ type: "api_key", apiKey: "ghp_test_token" });
+      // Disable retry + rate-limit in this suite. We're testing the
+      // sub_issues / timeline routing inside getLinkedIssues, not the
+      // BaseAdapter retry loop. With retries enabled, a single rejected
+      // mock would be re-fetched and consume the next mock in the queue
+      // (e.g., the one intended for the parallel timeline call), leading
+      // to wrong-call mock attribution. Retry behavior is covered by the
+      // BaseAdapter tests separately.
+      (adapter as any).maxRetries = 0;
+      (adapter as any).rateLimitDelay = 0;
+    });
+
+    afterEach(() => {
+      mockFetch.mockReset();
+    });
+
+    it("should return refs from both sub_issues and cross-referenced timeline events on the happy path", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockSubIssuesResponse),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockTimelineResponse),
+      });
+
+      const result = await adapter.getLinkedIssues!("42");
+
+      expect(result).toHaveLength(3);
+      expect(result).toEqual(
+        expect.arrayContaining([
+          {
+            id: "1234567",
+            key: "#42",
+            linkType: "sub_issue",
+            direction: "outward",
+          },
+          {
+            id: "1234568",
+            key: "#43",
+            linkType: "sub_issue",
+            direction: "outward",
+          },
+          {
+            id: "9876543",
+            key: "#99",
+            linkType: "cross_referenced",
+            direction: "inward",
+          },
+        ])
+      );
+
+      const calledUrls = mockFetch.mock.calls.map((c) => c[0] as string);
+      expect(
+        calledUrls.some((u) =>
+          u.includes("/repos/testowner/testrepo/issues/42/sub_issues")
+        )
+      ).toBe(true);
+      expect(
+        calledUrls.some((u) =>
+          u.includes("/repos/testowner/testrepo/issues/42/timeline")
+        )
+      ).toBe(true);
+    });
+
+    it("should send GitHub Accept and X-GitHub-Api-Version headers on both sub_issues and timeline fetches", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockSubIssuesResponse),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockTimelineResponse),
+      });
+
+      await adapter.getLinkedIssues!("42");
+
+      const subIssuesCall = mockFetch.mock.calls.find((c) =>
+        (c[0] as string).includes("/sub_issues")
+      );
+      const timelineCall = mockFetch.mock.calls.find((c) =>
+        (c[0] as string).includes("/timeline")
+      );
+      expect(subIssuesCall).toBeDefined();
+      expect(timelineCall).toBeDefined();
+      const subHeaders = (subIssuesCall![1] as RequestInit).headers as Record<
+        string,
+        string
+      >;
+      const timelineHeaders = (timelineCall![1] as RequestInit)
+        .headers as Record<string, string>;
+      expect(subHeaders["Accept"]).toBe("application/vnd.github+json");
+      expect(subHeaders["X-GitHub-Api-Version"]).toBe("2022-11-28");
+      expect(timelineHeaders["Accept"]).toBe("application/vnd.github+json");
+      expect(timelineHeaders["X-GitHub-Api-Version"]).toBe("2022-11-28");
+    });
+
+    it("should return only sub_issues entries when timeline call fails with 503 and log at error level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockSubIssuesResponse),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        statusText: "Service Unavailable",
+        text: () => Promise.resolve("Service Unavailable"),
+      });
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("42");
+
+      expect(result).toHaveLength(2);
+      expect(result.every((r) => r.linkType === "sub_issue")).toBe(true);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const firstArg = errorSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[GitHubAdapter]");
+      expect(firstArg).toContain("timeline");
+      errorSpy.mockRestore();
+    });
+
+    it("should return only cross-referenced entries when sub_issues call fails with 403 and log at warn level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        text: () => Promise.resolve("Forbidden"),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockTimelineResponse),
+      });
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("42");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].linkType).toBe("cross_referenced");
+      expect(result[0].direction).toBe("inward");
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const firstArg = warnSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[GitHubAdapter]");
+      expect(firstArg).toContain("sub_issues");
+      warnSpy.mockRestore();
+    });
+
+    it("should return [] and log error twice when both sub_issues and timeline fail with 5xx", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 502,
+        statusText: "Bad Gateway",
+        text: () => Promise.resolve("Bad Gateway"),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 502,
+        statusText: "Bad Gateway",
+        text: () => Promise.resolve("Bad Gateway"),
+      });
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("42");
+
+      expect(result).toEqual([]);
+      expect(errorSpy).toHaveBeenCalledTimes(2);
+      errorSpy.mockRestore();
+    });
+
+    it("should return only cross-referenced entries when sub_issues raises a network error", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("network ECONNRESET"));
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockTimelineResponse),
+      });
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("42");
+
+      expect(result).toHaveLength(1);
+      expect(result[0].linkType).toBe("cross_referenced");
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const firstArg = errorSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[GitHubAdapter]");
+      expect(firstArg).toContain("sub_issues");
+      errorSpy.mockRestore();
+    });
+
+    it("should filter timeline events to only cross-referenced ones", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([]),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            { event: "labeled", actor: { login: "u" } },
+            {
+              event: "cross-referenced",
+              actor: { login: "u" },
+              source: {
+                type: "issue",
+                issue: { id: 1, number: 1 },
+              },
+            },
+            { event: "closed", actor: { login: "u" } },
+          ]),
+      });
+
+      const result = await adapter.getLinkedIssues!("42");
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        id: "1",
+        key: "#1",
+        linkType: "cross_referenced",
+        direction: "inward",
+      });
+    });
+
+    it("should parse owner/repo#number form for both sub_issues and timeline URLs", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([]),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([]),
+      });
+
+      await adapter.getLinkedIssues!("acme/widgets#42");
+
+      const calledUrls = mockFetch.mock.calls.map((c) => c[0] as string);
+      expect(
+        calledUrls.some((u) =>
+          u.includes("/repos/acme/widgets/issues/42/sub_issues")
+        )
+      ).toBe(true);
+      expect(
+        calledUrls.some((u) =>
+          u.includes("/repos/acme/widgets/issues/42/timeline")
+        )
+      ).toBe(true);
+    });
+
+    it("should use configured owner/repo and the issue number when issueId starts with #", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([]),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([]),
+      });
+
+      await adapter.getLinkedIssues!("#42");
+
+      const calledUrls = mockFetch.mock.calls.map((c) => c[0] as string);
+      expect(
+        calledUrls.some((u) =>
+          u.includes("/repos/testowner/testrepo/issues/42/sub_issues")
+        )
+      ).toBe(true);
+      expect(
+        calledUrls.some((u) =>
+          u.includes("/repos/testowner/testrepo/issues/42/timeline")
+        )
+      ).toBe(true);
+    });
+
+    it("should reject owner/repo/sub#number forms with slashes in the repo segment", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([]),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([]),
+      });
+
+      await adapter.getLinkedIssues!("acme/foo/bar#42");
+
+      const calledUrls = mockFetch.mock.calls.map((c) => c[0] as string);
+      expect(
+        calledUrls.some((u) =>
+          u.includes("/repos/acme/foo/bar/issues/42/sub_issues")
+        )
+      ).toBe(false);
+      expect(
+        calledUrls.some((u) =>
+          u.includes("/repos/acme/foo/issues/bar#42/sub_issues")
+        )
+      ).toBe(false);
+    });
+
+    it("should fail soft on bare '#' input rather than building a malformed URL", async () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("#");
+
+      expect(result).toEqual([]);
+      const calledUrls = mockFetch.mock.calls.map((c) => c[0] as string);
+      expect(calledUrls.some((u) => u.includes("/issues//sub_issues"))).toBe(
+        false
+      );
+      expect(warnSpy).toHaveBeenCalled();
+      const firstArg = warnSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[GitHubAdapter]");
+      expect(firstArg).toContain("getLinkedIssues");
+      warnSpy.mockRestore();
+    });
+
+    it("should fail soft on '#abc' (non-numeric) input rather than building a malformed URL", async () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getLinkedIssues!("#abc");
+
+      expect(result).toEqual([]);
+      const calledUrls = mockFetch.mock.calls.map((c) => c[0] as string);
+      expect(calledUrls.some((u) => u.includes("/issues/abc/sub_issues"))).toBe(
+        false
+      );
+      expect(warnSpy).toHaveBeenCalled();
+      const firstArg = warnSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[GitHubAdapter]");
+      expect(firstArg).toContain("getLinkedIssues");
+      warnSpy.mockRestore();
+    });
+  });
+
+  describe("getIssueComments", () => {
+    const mockGitHubCommentsResponse = [
+      {
+        id: 1,
+        body: "Looks good",
+        user: { login: "alice" },
+        created_at: "2026-01-01T00:00:00Z",
+      },
+      {
+        id: 2,
+        body: "Ship it",
+        user: { login: "bob" },
+        created_at: "2026-01-02T00:00:00Z",
+      },
+    ];
+
+    beforeEach(async () => {
+      mockFetch.mockReset();
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ login: "testuser" }),
+      });
+      await adapter.authenticate({ type: "api_key", apiKey: "ghp_test_token" });
+    });
+
+    afterEach(() => {
+      mockFetch.mockReset();
+    });
+
+    it("should request /repos/{owner}/{repo}/issues/{n}/comments using configured owner/repo for a numeric issueId", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockGitHubCommentsResponse),
+      });
+
+      await adapter.getIssueComments!("42");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      expect(calledUrl).toContain(
+        "/repos/testowner/testrepo/issues/42/comments"
+      );
+    });
+
+    it("should request /repos/{owner}/{repo}/issues/{n}/comments using owner/repo override for owner/repo#n form", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([]),
+      });
+
+      await adapter.getIssueComments!("acme/widgets#42");
+
+      const lastCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const calledUrl = lastCall[0] as string;
+      expect(calledUrl).toContain("/repos/acme/widgets/issues/42/comments");
+    });
+
+    it("should map all comments to IssueComment[] on the happy path", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockGitHubCommentsResponse),
+      });
+
+      const result = await adapter.getIssueComments!("42");
+
+      expect(result).toEqual([
+        {
+          id: "1",
+          author: "alice",
+          body: "Looks good",
+          created: "2026-01-01T00:00:00Z",
+        },
+        {
+          id: "2",
+          author: "bob",
+          body: "Ship it",
+          created: "2026-01-02T00:00:00Z",
+        },
+      ]);
+    });
+
+    it("should fall back to 'Unknown' when user is missing or login is falsy", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            {
+              id: 10,
+              body: "no user",
+              created_at: "2026-01-03T00:00:00Z",
+            },
+            {
+              id: 11,
+              body: "blank login",
+              user: { login: "" },
+              created_at: "2026-01-04T00:00:00Z",
+            },
+          ]),
+      });
+
+      const result = await adapter.getIssueComments!("42");
+
+      expect(result).toHaveLength(2);
+      expect(result[0].author).toBe("Unknown");
+      expect(result[1].author).toBe("Unknown");
+    });
+
+    it("should return [] when response is empty array or non-array (e.g., null)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve([]),
+      });
+
+      const result1 = await adapter.getIssueComments!("42");
+      expect(result1).toEqual([]);
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(null),
+      });
+
+      const result2 = await adapter.getIssueComments!("42");
+      expect(result2).toEqual([]);
+    });
+
+    it("should skip malformed entries and keep valid ones", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            null,
+            {
+              id: 7,
+              body: "valid",
+              user: { login: "carol" },
+              created_at: "2026-01-05T00:00:00Z",
+            },
+          ]),
+      });
+
+      const result = await adapter.getIssueComments!("42");
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        id: "7",
+        author: "carol",
+        body: "valid",
+        created: "2026-01-05T00:00:00Z",
+      });
+    });
+
+    it("should fail soft on 403 by returning [] and logging at warn level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        text: () => Promise.resolve("Forbidden"),
+      });
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("42");
+
+      expect(result).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const firstArg = warnSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[GitHubAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("42");
+      warnSpy.mockRestore();
+    });
+
+    it("should fail soft on 404 by returning [] and logging at warn level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: "Not Found",
+        text: () => Promise.resolve("Not Found"),
+      });
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("42");
+
+      expect(result).toEqual([]);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      const firstArg = warnSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[GitHubAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("42");
+      warnSpy.mockRestore();
+    });
+
+    it("should fail soft on 5xx by returning [] and logging at error level", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        statusText: "Service Unavailable",
+        text: () => Promise.resolve("Service Unavailable"),
+      });
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("42");
+
+      expect(result).toEqual([]);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const firstArg = errorSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[GitHubAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("42");
+      errorSpy.mockRestore();
+    });
+
+    it("should fail soft on network error by returning [] and logging at error level", async () => {
+      mockFetch.mockRejectedValueOnce(new Error("network ECONNRESET"));
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("42");
+
+      expect(result).toEqual([]);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      const firstArg = errorSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[GitHubAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      expect(firstArg).toContain("42");
+      errorSpy.mockRestore();
+    });
+
+    it("should fail soft on bare '#' input rather than building a malformed URL", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("#");
+
+      expect(result).toEqual([]);
+      const calledUrls = mockFetch.mock.calls.map((c) => c[0] as string);
+      expect(calledUrls.some((u) => u.includes("/issues//comments"))).toBe(
+        false
+      );
+      expect(errorSpy).toHaveBeenCalled();
+      const firstArg = errorSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[GitHubAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      errorSpy.mockRestore();
+    });
+
+    it("should fail soft on '#abc' (non-numeric) input rather than building a malformed URL", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const result = await adapter.getIssueComments!("#abc");
+
+      expect(result).toEqual([]);
+      const calledUrls = mockFetch.mock.calls.map((c) => c[0] as string);
+      expect(calledUrls.some((u) => u.includes("/issues/abc/comments"))).toBe(
+        false
+      );
+      expect(errorSpy).toHaveBeenCalled();
+      const firstArg = errorSpy.mock.calls[0].join(" ");
+      expect(firstArg).toContain("[GitHubAdapter]");
+      expect(firstArg).toContain("getIssueComments");
+      errorSpy.mockRestore();
     });
   });
 

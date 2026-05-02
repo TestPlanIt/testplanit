@@ -1973,27 +1973,28 @@ model WebhookOutboxEvent {
 }
 
 model LlmProviderConfig {
-  id                   Int             @id() @default(autoincrement())
-  llmIntegrationId     Int?            @unique()
-  llmIntegration       LlmIntegration? @relation(fields: [llmIntegrationId], references: [id], onDelete: Cascade)
-  defaultModel         String
-  availableModels      Json
-  maxTokensPerRequest  Int             @default(4096)
-  maxRequestsPerMinute Int             @default(60)
-  maxRequestsPerDay    Int?
-  costPerInputToken    Decimal         @db.Decimal(10, 8)
-  costPerOutputToken   Decimal         @db.Decimal(10, 8)
-  monthlyBudget        Decimal?        @db.Decimal(10, 2)
-  defaultTemperature   Float           @default(0.7)
-  defaultMaxTokens     Int             @default(2048)
-  timeout              Int             @default(30000)
-  retryAttempts        Int             @default(3)
-  streamingEnabled     Boolean         @default(false)
-  isDefault            Boolean         @default(false)
-  settings             Json?
-  alertThresholdsFired Json?
-  createdAt            DateTime        @default(now()) @db.Timestamptz(6)
-  updatedAt            DateTime        @updatedAt()
+  id                    Int             @id() @default(autoincrement())
+  llmIntegrationId      Int?            @unique()
+  llmIntegration        LlmIntegration? @relation(fields: [llmIntegrationId], references: [id], onDelete: Cascade)
+  defaultModel          String
+  availableModels       Json
+  maxTokensPerRequest   Int             @default(4096)
+  maxRequestsPerMinute  Int             @default(60)
+  maxRequestsPerDay     Int?
+  costPerInputToken     Decimal         @db.Decimal(10, 8)
+  costPerOutputToken    Decimal         @db.Decimal(10, 8)
+  monthlyBudget         Decimal?        @db.Decimal(10, 2)
+  billingPeriodStartDay Int             @default(1)
+  defaultTemperature    Float           @default(0.7)
+  defaultMaxTokens      Int             @default(2048)
+  timeout               Int             @default(30000)
+  retryAttempts         Int             @default(3)
+  streamingEnabled      Boolean         @default(false)
+  isDefault             Boolean         @default(false)
+  settings              Json?
+  alertThresholdsFired  Json?
+  createdAt             DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt             DateTime        @updatedAt()
 }
 
 model PromptConfig {
