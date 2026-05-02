@@ -136,7 +136,11 @@ test.describe("Webhook delivery replay — single outbound", () => {
       `webhook-delivery-row-${originalDeliveryId}`
     );
     await expect(failedRow).toBeVisible({ timeout: 10_000 });
-    await failedRow.click();
+    // Drawer now opens via the per-row "View details" Eye icon, not the
+    // row itself (D-17a follow-up — explicit affordance).
+    await page
+      .getByTestId(`webhook-delivery-view-details-${originalDeliveryId}`)
+      .click();
 
     // 5. Drawer renders the OUTBOUND contract.
     const drawer = page.getByTestId("webhook-delivery-drawer");

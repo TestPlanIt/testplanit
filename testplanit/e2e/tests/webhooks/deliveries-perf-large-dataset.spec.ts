@@ -132,9 +132,12 @@ test.describe("Webhook deliveries tab — large dataset performance (N-03)", () 
     //    (seed timestamps are based on Date.now() so technically they ARE
     //    within last-7-days, but pinning the filter explicitly removes a
     //    subtle dependency on test wall-clock).
+    // Pin pageSize=50 explicitly — the admin's user preferences may set
+    // itemsPerPage=P10 which the PaginationProvider applies by default.
+    // The perf assertion expects PAGE_SIZE rows on page 1, so override.
     const deliveriesUrl =
       `${baseURL}/projects/settings/${projectId}/webhooks` +
-      `?tab=deliveries&since=${new Date(0).toISOString()}`;
+      `?tab=deliveries&since=${new Date(0).toISOString()}&pageSize=${PAGE_SIZE}`;
 
     const t0 = Date.now();
     await page.goto(deliveriesUrl);
@@ -170,20 +173,10 @@ test.describe("Webhook deliveries tab — large dataset performance (N-03)", () 
       `Expected exactly ${PAGE_SIZE} rows on page 1; got ${visibleRowCount}`
     ).toBe(PAGE_SIZE);
 
-    // 3. Load more button is visible (the deliveries.length >= PAGE_SIZE
-    //    gate in webhook-deliveries-tab.tsx:466). Exists IFF we have at
-    //    least one full page → the next-page cursor is reachable.
-    await expect(
-      page.getByTestId("webhook-deliveries-load-more")
-    ).toBeVisible();
-
-    // 4. Click Load more → query re-runs with cursor=last-row-id + skip:1
-    //    and the result REPLACES the visible rows (cursor pagination is
-    //    page-replace, not infinite-append, in the current implementation
-    //    at webhook-deliveries-tab.tsx:472-475). Capture page-1 row IDs
-    //    before the click and assert page-2 returns a disjoint set —
-    //    proves the cursor was honoured, the rows DID change, and the
-    //    query returned a fresh page within budget.
+    // 3. Capture the page-1 row ids — used to confirm page 2 returns a
+    //    disjoint set after we navigate forward. The cursor "Load more"
+    //    button was replaced by server-side pagination via PaginationProvider,
+    //    so we drive page changes via the `page` URL param.
     const page1Ids = await page
       .locator('[data-testid^="webhook-delivery-row-"]')
       .evaluateAll((els) =>
@@ -191,7 +184,16 @@ test.describe("Webhook deliveries tab — large dataset performance (N-03)", () 
       );
     expect(page1Ids).toHaveLength(PAGE_SIZE);
 
-    await page.getByTestId("webhook-deliveries-load-more").click();
+    // 4. Navigate to page 2 by setting `page=2` in the URL (the same
+    //    mechanism the rendered paginator uses internally). Assert page 2
+    //    returns PAGE_SIZE rows, all disjoint from page 1 — proves
+    //    skip/take are honoured by useFindManyWebhookDelivery.
+    const page2Url = new URL(page.url());
+    page2Url.searchParams.set("page", "2");
+    await page.goto(page2Url.toString());
+    await expect(
+      page.locator('[data-testid^="webhook-delivery-row-"]').first()
+    ).toBeVisible({ timeout: PAGE_LOAD_BUDGET_MS });
     await expect
       .poll(
         async () => {
@@ -205,23 +207,23 @@ test.describe("Webhook deliveries tab — large dataset performance (N-03)", () 
           return ids.every((id) => !page1Ids.includes(id));
         },
         {
-          message: `Load more did not converge on a fresh PAGE_SIZE-sized page disjoint from page 1`,
+          message: `page=2 did not converge on a fresh PAGE_SIZE-sized page disjoint from page 1`,
           timeout: PAGE_LOAD_BUDGET_MS,
         }
       )
       .toBe(true);
 
-    // 5. Apply the config filter — the dropdown lists the seeded outbound
-    //    config; selecting it re-runs the query under the same cursor
-    //    state but with where.webhookConfigId in [outboundConfigId]. Time
-    //    the round-trip: a filter regression that drops `take` would
-    //    blow this budget the same way the initial render did.
+    // 5. Apply the config filter — drive it through the URL (same path the
+    //    Select dropdown's onValueChange uses internally). This isolates
+    //    the perf assertion from Radix Select interaction quirks; the
+    //    important thing is the round-trip time of the re-fetch under the
+    //    new where clause, not the dropdown UI surface (which has its own
+    //    coverage in webhook-deliveries-tab.test.tsx).
     const t1 = Date.now();
-    await page.getByTestId("webhook-deliveries-filter-config").click();
-    await page
-      .getByRole("option", { name: "E2E Perf Outbound" })
-      .first()
-      .click();
+    const filteredUrl = new URL(page.url());
+    filteredUrl.searchParams.set("configIds", outboundConfigId);
+    filteredUrl.searchParams.set("page", "1");
+    await page.goto(filteredUrl.toString());
     // The first page after filter applies — by design only the seeded
     // outbound config has rows in this project, so post-filter row count
     // matches PAGE_SIZE again (same config, just under-filter).

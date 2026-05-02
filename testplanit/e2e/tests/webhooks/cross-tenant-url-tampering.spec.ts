@@ -70,8 +70,8 @@ test.describe("Webhook cross-tenant — URL tampering blocked at UI + ZenStack p
       await expect(form).toBeVisible({ timeout: 15_000 });
       await adminPage.getByTestId("webhook-inbound-add-button").click();
       await adminPage.getByTestId("webhook-inbound-chooser-jira").click();
+      // Jira chooser-submit creates inline — no separate create button.
       await adminPage.getByTestId("webhook-inbound-chooser-submit").click();
-      await adminPage.getByTestId("webhook-create-button").click();
       const jiraCard = adminPage.getByTestId("webhook-inbound-card-jira");
       await expect(jiraCard).toBeVisible({ timeout: 15_000 });
     } finally {

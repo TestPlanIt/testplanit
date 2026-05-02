@@ -57,8 +57,8 @@ test.describe("Webhook deliveries — inbound row shows replay-not-supported ban
 
     await page.getByTestId("webhook-inbound-add-button").click();
     await page.getByTestId("webhook-inbound-chooser-github").click();
+    // GitHub chooser-submit creates inline — no separate create button.
     await page.getByTestId("webhook-inbound-chooser-submit").click();
-    await page.getByTestId("webhook-create-button").click();
 
     const githubCard = page.getByTestId("webhook-inbound-card-github");
     await expect(githubCard).toBeVisible();
@@ -130,7 +130,11 @@ test.describe("Webhook deliveries — inbound row shows replay-not-supported ban
       `webhook-delivery-row-${failedDeliveryId}`
     );
     await expect(failedRow).toBeVisible({ timeout: 10_000 });
-    await failedRow.click();
+    // Drawer now opens via the per-row "View details" Eye icon, not the
+    // row itself (D-17a follow-up — explicit affordance).
+    await page
+      .getByTestId(`webhook-delivery-view-details-${failedDeliveryId}`)
+      .click();
 
     // 4. Drawer opens with the inbound contract.
     const drawer = page.getByTestId("webhook-delivery-drawer");

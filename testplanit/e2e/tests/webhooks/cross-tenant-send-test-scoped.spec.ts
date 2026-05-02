@@ -82,8 +82,8 @@ test.describe("Webhook cross-tenant — send-test fires only on the requesting p
         });
         await adminPage.getByTestId("webhook-inbound-add-button").click();
         await adminPage.getByTestId("webhook-inbound-chooser-jira").click();
+        // Jira chooser-submit creates inline — no separate create button.
         await adminPage.getByTestId("webhook-inbound-chooser-submit").click();
-        await adminPage.getByTestId("webhook-create-button").click();
         await expect(
           adminPage.getByTestId("webhook-inbound-card-jira")
         ).toBeVisible({ timeout: 15_000 });

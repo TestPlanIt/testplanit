@@ -55,8 +55,8 @@ test.describe("GitHub inbound webhook — admin form + raw-POST coverage", () =>
     // Chooser testids are unscoped (only one chooser is alive at a time).
     await page.getByTestId("webhook-inbound-add-button").click();
     await page.getByTestId("webhook-inbound-chooser-github").click();
+    // GitHub chooser-submit creates inline — no separate create button.
     await page.getByTestId("webhook-inbound-chooser-submit").click();
-    await page.getByTestId("webhook-create-button").click();
 
     // From here on, scope to the GitHub card.
     const githubCard = page.getByTestId("webhook-inbound-card-github");

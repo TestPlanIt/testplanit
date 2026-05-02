@@ -174,10 +174,13 @@ test.describe("Webhook DISABLED diagnosis surface — badge + tooltip + activity
     //    disable kicked in AFTER the 10 upstream failures).
     const since = new Date();
     since.setDate(since.getDate() - 1);
+    // Pin pageSize=50 so all 11 seeded rows fit on page 1. Default
+    // pageSize honours admin's itemsPerPage preference (often P10), which
+    // would push the oldest TIMEOUT row onto page 2.
     const deliveriesUrl =
       `${baseURL}/projects/settings/${projectId}/webhooks` +
       `?tab=deliveries&configIds=${configId}&status=failed` +
-      `&since=${since.toISOString()}`;
+      `&since=${since.toISOString()}&pageSize=50`;
     await page.goto(deliveriesUrl);
     await expect(page.getByTestId("webhook-deliveries-tab")).toBeVisible({
       timeout: 15_000,

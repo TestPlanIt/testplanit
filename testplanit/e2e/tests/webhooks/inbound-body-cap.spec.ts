@@ -36,8 +36,8 @@ test.describe("Inbound webhook body cap (5 MB)", () => {
     await page.goto(`${baseURL}/projects/settings/${projectId}/webhooks`);
     await page.getByTestId("webhook-inbound-add-button").click();
     await page.getByTestId("webhook-inbound-chooser-jira").click();
+    // Jira chooser-submit creates inline — no separate create button.
     await page.getByTestId("webhook-inbound-chooser-submit").click();
-    await page.getByTestId("webhook-create-button").click();
 
     // Scope to the JIRA card after creation.
     const jiraCard = page.getByTestId("webhook-inbound-card-jira");

@@ -1,4 +1,7 @@
+import { PrismaClient } from "@prisma/client";
+
 import { expect, test } from "../../fixtures/index";
+import { seedOutboundConfig } from "../../fixtures/webhooks-seed";
 
 /**
  * Deliveries tab empty state (E-06).
@@ -30,10 +33,25 @@ test.describe.configure({ mode: "serial" });
 
 test.describe("Webhook deliveries tab empty state — copy + Reset filters CTA (E-06)", () => {
   let projectId: number;
+  let prisma: PrismaClient;
 
   test.beforeAll(async ({ api }) => {
     const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     projectId = await api.createProject(`E2E Empty Deliveries ${uniqueId}`);
+    prisma = new PrismaClient();
+    // Seed an outbound config so the deliveries tab renders the
+    // "no matches" empty-state (with Reset filters CTA), NOT the
+    // "no webhooks configured" empty-state. The two branches are
+    // distinguished by `configList.length` in renderEmpty().
+    await seedOutboundConfig(prisma, {
+      projectId,
+      url: "https://example.com/E-06/empty-state",
+      name: "E2E E-06 Outbound",
+    });
+  });
+
+  test.afterAll(async () => {
+    if (prisma) await prisma.$disconnect();
   });
 
   test("admin lands on Deliveries tab, sees empty-state copy + Reset filters button, click clears filter query params", async ({
@@ -68,16 +86,33 @@ test.describe("Webhook deliveries tab empty state — copy + Reset filters CTA (
     //    is showing (the component renders one or the other, never both).
     await expect(page.getByTestId("webhook-deliveries-table")).toHaveCount(0);
 
-    // 4. Click Reset filters → URL collapses to just `?tab=deliveries`.
-    //    The component's resetFilters() implementation builds a fresh
-    //    URLSearchParams (everything else is dropped, including
-    //    `status`, `since`, `until`, and `configIds`).
+    // 4. Click Reset filters → URL drops every filter param. The component's
+    //    resetFilters() rebuilds the search params from `?tab=deliveries`,
+    //    after which PaginationProvider re-syncs `page` + `pageSize` from
+    //    its state. The exact suffix is therefore tab-deliveries plus a
+    //    pagination tail; assert the filter keys are absent in step 5.
     await resetButton.click();
-    await expect(page).toHaveURL(/\?tab=deliveries$/, { timeout: 5_000 });
 
-    // 5. Defensive parse — none of the filter params survived. This
-    //    catches a regression where resetFilters() forgot to drop one
-    //    of the four filter keys.
+    // Poll until every filter param is gone — the URL settles in two
+    // steps (resetFilters writes ?tab=deliveries&page=...&pageSize=..., then
+    // PaginationProvider may follow up). Polling guards against reading
+    // page.url() in the brief window between those writes.
+    await expect
+      .poll(
+        () => {
+          const u = new URL(page.url());
+          return [
+            u.searchParams.get("status"),
+            u.searchParams.get("since"),
+            u.searchParams.get("until"),
+            u.searchParams.get("configIds"),
+          ];
+        },
+        { timeout: 5_000 }
+      )
+      .toEqual([null, null, null, null]);
+
+    // 5. Defensive parse — tab is preserved; nothing else lingers.
     const url = new URL(page.url());
     expect(url.searchParams.get("tab")).toBe("deliveries");
     expect(url.searchParams.get("status")).toBeNull();

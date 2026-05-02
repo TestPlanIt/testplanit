@@ -106,8 +106,8 @@ test.describe("Webhook delivery bulk replay — outbound-only count", () => {
     await expect(form).toBeVisible();
     await page.getByTestId("webhook-inbound-add-button").click();
     await page.getByTestId("webhook-inbound-chooser-github").click();
+    // GitHub chooser-submit creates inline — no separate create button.
     await page.getByTestId("webhook-inbound-chooser-submit").click();
-    await page.getByTestId("webhook-create-button").click();
 
     const githubCard = page.getByTestId("webhook-inbound-card-github");
     await expect(githubCard).toBeVisible();

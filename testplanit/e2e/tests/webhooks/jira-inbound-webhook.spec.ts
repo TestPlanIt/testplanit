@@ -48,8 +48,8 @@ test.describe("Jira inbound webhook — admin form + send-test self-loop", () =>
     // Multi-card inbound flow: Add → chooser → pick Jira → Continue → Create.
     await page.getByTestId("webhook-inbound-add-button").click();
     await page.getByTestId("webhook-inbound-chooser-jira").click();
+    // Jira chooser-submit creates inline — no separate create button.
     await page.getByTestId("webhook-inbound-chooser-submit").click();
-    await page.getByTestId("webhook-create-button").click();
 
     // Scope to the JIRA card after creation. URL + secret revealed once.
     const jiraCard = page.getByTestId("webhook-inbound-card-jira");

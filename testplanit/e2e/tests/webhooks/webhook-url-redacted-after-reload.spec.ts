@@ -98,10 +98,13 @@ async function configureAdapter(
   await page.getByTestId("webhook-inbound-add-button").click();
   await page.getByTestId(adapter.chooserTestId).click();
   await page.getByTestId("webhook-inbound-chooser-submit").click();
+  // Jira/GitHub: chooser-submit creates inline (no separate create form).
+  // ADO: chooser-submit opens the credentials form; admin fills username +
+  // password, then clicks the dedicated create button.
   if (adapter.fillCreateForm) {
     await adapter.fillCreateForm(page);
+    await page.getByTestId("webhook-create-button").click();
   }
-  await page.getByTestId("webhook-create-button").click();
 
   // Capture the full token from the just-revealed URL. The card is now
   // mounted; its inner `webhook-url` testid is shared between the
