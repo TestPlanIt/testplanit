@@ -646,7 +646,9 @@ export default function TestCaseVersions() {
                       }}
                     >
                       <SelectTrigger className="w-fit">
-                        <SelectValue placeholder="Select Version" />
+                        <SelectValue
+                          placeholder={t("common.placeholders.selectVersion")}
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         {versions?.map((v, index) => (

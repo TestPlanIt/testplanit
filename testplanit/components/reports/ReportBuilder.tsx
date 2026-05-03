@@ -2502,7 +2502,9 @@ function ReportBuilderContent({
                               }}
                               options={availablePriorityValues}
                               styles={customStyles}
-                              placeholder="Select priority values (or leave empty for all)"
+                              placeholder={tCommon(
+                                "placeholders.selectPriorityValuesOrEmpty"
+                              )}
                               className="basic-multi-select"
                               classNamePrefix="select"
                               menuPortalTarget={

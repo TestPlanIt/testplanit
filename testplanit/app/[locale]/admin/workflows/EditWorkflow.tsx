@@ -366,7 +366,9 @@ export function EditWorkflows({
                     disabled={isLastWorkflowOfType(workflows, allWorkflows)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select workflow type" />
+                      <SelectValue
+                        placeholder={tCommon("placeholders.selectWorkflowType")}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {workflowTypeOptions.map((type) => (

@@ -346,7 +346,9 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                             onCheckedChange={(checked) =>
                               handleSelectAll("canAddEdit", !!checked)
                             }
-                            aria-label="Select/Deselect All Add/Edit"
+                            aria-label={t(
+                              "common.aria.selectDeselectAllAddEdit"
+                            )}
                             data-state={
                               getHeaderCheckboxState("canAddEdit").indeterminate
                                 ? "indeterminate"
@@ -369,7 +371,9 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                             onCheckedChange={(checked) =>
                               handleSelectAll("canDelete", !!checked)
                             }
-                            aria-label="Select/Deselect All Delete"
+                            aria-label={t(
+                              "common.aria.selectDeselectAllDelete"
+                            )}
                             data-state={
                               getHeaderCheckboxState("canDelete").indeterminate
                                 ? "indeterminate"
@@ -390,7 +394,7 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                             onCheckedChange={(checked) =>
                               handleSelectAll("canClose", !!checked)
                             }
-                            aria-label="Select/Deselect All Close"
+                            aria-label={t("common.aria.selectDeselectAllClose")}
                             data-state={
                               getHeaderCheckboxState("canClose").indeterminate
                                 ? "indeterminate"

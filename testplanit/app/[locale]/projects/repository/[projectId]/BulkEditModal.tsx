@@ -1314,7 +1314,7 @@ export function BulkEditModal({
 
     // Ensure casesData is loaded before proceeding
     if (!casesData) {
-      toast.error("Failed to load case data. Cannot save.");
+      toast.error(tCommon("errors.failedToLoadCaseData"));
       return;
     }
 

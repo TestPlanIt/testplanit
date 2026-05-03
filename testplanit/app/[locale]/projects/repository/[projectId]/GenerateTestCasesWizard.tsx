@@ -1796,7 +1796,7 @@ export function GenerateTestCasesWizard({
           setIsNotificationReopen(false);
         }
       } catch {
-        toast.error("Failed to load job results");
+        toast.error(tCommon("errors.failedToLoadJobResults"));
         setIsNotificationReopen(false);
       }
     },

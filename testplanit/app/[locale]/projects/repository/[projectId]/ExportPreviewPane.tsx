@@ -88,7 +88,7 @@ export function ExportPreviewPane({
       toast.success(t("copySuccess"));
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error("Failed to copy to clipboard");
+      toast.error(tCommon("errors.failedToCopyToClipboard"));
     }
   }, [results, t]);
 
@@ -314,7 +314,9 @@ export function ExportPreviewPane({
                             toast.success(t("copySuccess"));
                             setTimeout(() => setCopiedCaseId(null), 2000);
                           } catch {
-                            toast.error("Failed to copy to clipboard");
+                            toast.error(
+                              tCommon("errors.failedToCopyToClipboard")
+                            );
                           }
                         }}
                       >

@@ -147,7 +147,7 @@ export function StepsFilterInput({
         onValueChange={(val) => setOperator(val as StepsOperator)}
       >
         <SelectTrigger className="w-full h-8 text-xs">
-          <SelectValue placeholder="Select operator" />
+          <SelectValue placeholder={t("common.placeholders.selectOperator")} />
         </SelectTrigger>
         <SelectContent>
           {(Object.keys(operatorLabels) as StepsOperator[]).map((op) => (
@@ -163,7 +163,7 @@ export function StepsFilterInput({
           type="number"
           step="1"
           min="0"
-          placeholder="Step count"
+          placeholder={t("common.placeholders.stepCount")}
           value={value1}
           onChange={(e) => setValue1(e.target.value)}
           onKeyPress={handleKeyPress}
@@ -179,7 +179,7 @@ export function StepsFilterInput({
               type="number"
               step="1"
               min="0"
-              placeholder="Step count"
+              placeholder={t("common.placeholders.stepCount")}
               value={value2}
               onChange={(e) => setValue2(e.target.value)}
               onKeyPress={handleKeyPress}

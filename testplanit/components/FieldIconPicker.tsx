@@ -7,6 +7,7 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { Ellipsis } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React, { useEffect, useRef, useState } from "react";
 import { useFindManyColor, useFindManyFieldIcon } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
@@ -25,6 +26,7 @@ export const FieldIconPicker: React.FC<FieldIconPickerProps> = ({
   initialIconId,
   initialColorId,
 }) => {
+  const tCommon = useTranslations("common");
   const { data: allIcons, isLoading: isIconsLoading } = useFindManyFieldIcon({
     orderBy: { name: "asc" },
   });
@@ -122,7 +124,7 @@ export const FieldIconPicker: React.FC<FieldIconPickerProps> = ({
                 <Input
                   ref={searchInputRef}
                   type="text"
-                  placeholder="Search icons..."
+                  placeholder={tCommon("placeholders.searchIcons")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full p-2"

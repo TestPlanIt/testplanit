@@ -124,7 +124,7 @@ export function TextFilterInput({
         onValueChange={(val) => setOperator(val as TextOperator)}
       >
         <SelectTrigger className="w-full h-8 text-xs">
-          <SelectValue placeholder="Select operator" />
+          <SelectValue placeholder={t("common.placeholders.selectOperator")} />
         </SelectTrigger>
         <SelectContent>
           {(Object.keys(operatorLabels) as TextOperator[]).map((op) => (
@@ -138,7 +138,7 @@ export function TextFilterInput({
       <div className="flex gap-2 items-center">
         <Input
           type="text"
-          placeholder="Enter text..."
+          placeholder={t("common.placeholders.enterText")}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyPress={handleKeyPress}

@@ -513,7 +513,7 @@ export function AddCaseFieldModal({
                     ) : option.key.toLowerCase() === "dropdownoptions" ? (
                       <div>
                         <Input
-                          placeholder="Add an option"
+                          placeholder={tCommon("placeholders.addAnOption")}
                           onChange={handleInputChange}
                           onKeyDown={handleKeyDown}
                           className="my-2"

@@ -153,6 +153,7 @@ export function DataTable<TData extends DataRow, TValue>({
 }: DataTableProps<TData, TValue>) {
   const t = useTranslations("common.table");
   const tLabels = useTranslations("common.labels");
+  const tCommon = useTranslations("common");
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -725,12 +726,12 @@ export function DataTable<TData extends DataRow, TValue>({
                               {header.column.getIsGrouped() ? (
                                 <UnfoldVertical
                                   className="inline h-4 w-4"
-                                  aria-label="Grouped"
+                                  aria-label={tCommon("aria.grouped")}
                                 />
                               ) : (
                                 <Group
                                   className="inline h-4 w-4"
-                                  aria-label="Group"
+                                  aria-label={tCommon("aria.group")}
                                 />
                               )}
                             </button>

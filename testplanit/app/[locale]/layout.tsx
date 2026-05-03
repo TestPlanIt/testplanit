@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { UpgradeNotificationChecker } from "@/components/UpgradeNotificationChecker";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
+import { getTranslations } from "next-intl/server";
 
 import { headers } from "next/headers";
 import { Toaster } from "sonner";
@@ -10,12 +11,22 @@ import "~/styles/globals.css";
 import "~/styles/tiptap-mentions.css";
 import Providers from "../providers";
 
-export const metadata: Metadata = {
-  title: {
-    template: "%s | TestPlanIt",
-    default: "Dashboard | TestPlanIt",
-  },
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: import("~/i18n/navigation").Locale }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale });
+  const appName = t("common.pageTitles.appName");
+  const dashboard = t("common.pageTitles.dashboard");
+  return {
+    title: {
+      template: `%s | ${appName}`,
+      default: `${dashboard} | ${appName}`,
+    },
+  };
+}
 
 // Force dynamic rendering to reduce memory usage during Docker builds
 // This prevents Next.js from attempting to statically generate pages at build time

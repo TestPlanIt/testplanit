@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Asterisk, LockIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import { Control } from "react-hook-form";
@@ -44,6 +45,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
   canEditRestricted = true,
   projectId,
 }) => {
+  const tCommon = useTranslations("common");
   const defaultOption = field.caseField.fieldOptions?.find(
     (option: any) => option.fieldOption.isDefault
   );
@@ -158,7 +160,9 @@ const RenderField: React.FC<RenderFieldProps> = ({
               disabled={isDisabled}
             >
               <SelectTrigger className="w-fit">
-                <SelectValue placeholder="Select an option" />
+                <SelectValue
+                  placeholder={tCommon("placeholders.selectOption")}
+                />
               </SelectTrigger>
               <SelectContent>
                 {(field.caseField.fieldOptions ?? [])
