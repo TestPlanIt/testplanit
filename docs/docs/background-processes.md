@@ -73,6 +73,7 @@ The application uses the following background processes:
 - Location: `workers/elasticsearchReindexWorker.ts`
 
 **Supported Operations:**
+
 - Full reindex of all entities
 - Selective reindex by entity type (repository-cases, test-runs, sessions, etc.)
 - Project-specific reindexing
@@ -229,9 +230,9 @@ Most workers run with a 512 MB `max_memory_restart` ceiling and a 384 MB old-spa
 | Worker | `max_memory_restart` | `--max-old-space-size` | Why |
 | --- | --- | --- | --- |
 | Sync Worker | 1G | 768M | Loads integration adapters + Elasticsearch sync extensions |
-| Webhook Dispatch Worker | 1G | 768M | Loads ZenStack runtime + ES sync services + audit log service; carries full `test_run.completed` payloads under concurrency=5 |
-| Webhook Outbox Worker | 1G | 768M | Same dependency tree as dispatch; in multi-tenant mode also caches one Prisma client per tenant |
-| Webhook Retention Worker | 1G | 768M | Multi-tenant batched-delete loop reuses the same heavy module graph; headroom prevents PM2 SIGKILL/restart thrash on tenants with large retention backlogs |
+| Webhook Dispatch Worker | 3G | 2304M | Loads ZenStack runtime + ES sync services + audit log service; carries full `test_run.completed` payloads under concurrency=5; observed steady-state RSS in multi-tenant clusters sits near 1.9 GB |
+| Webhook Outbox Worker | 3G | 2304M | Same heavy dependency tree as dispatch; caches one Prisma client per tenant in multi-tenant mode |
+| Webhook Retention Worker | 3G | 2304M | Iterates every tenant's database per pass; headroom protects against batched-delete loops on tenants with large retention backlogs. Tenant Prisma clients are disconnected after each pass to release Rust query engine buffers, so steady-state should drop substantially after the first few passes — these ceilings can be lowered once production telemetry confirms it. |
 
 ## Persistence Across Reboots
 
@@ -295,7 +296,7 @@ You can monitor worker health and performance using:
 
 ### Memory issues
 
-- Most workers run with a 512 MB ceiling; sync, dispatch, outbox, and retention workers run with a 1 GB ceiling. See the **Worker memory tiers** table above.
+- Most workers run with a 512 MB ceiling; the sync worker runs with a 1 GB ceiling; the three webhook workers (dispatch, outbox, retention) run with a 3 GB ceiling. See the **Worker memory tiers** table above for the rationale on each elevated tier.
 - If a worker is being killed and restarted by PM2 in a tight loop (visible as repeated `restart` events in `pm2 status`), raise `max_memory_restart` and `--max-old-space-size` in `ecosystem.config.js` for that worker before assuming there is a real leak.
 - Monitor with `pm2 monit`
 

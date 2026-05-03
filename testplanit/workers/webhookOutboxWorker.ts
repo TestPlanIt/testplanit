@@ -69,7 +69,16 @@ export async function pollOnce(
             // BullMQ rejects custom IDs containing colons (`Custom Id cannot
             // contain :` thrown from Job.addJob; verified against
             // node_modules/bullmq/src/classes/job.ts).
-            jobId: `${row.id}--${webhookConfigId}`,
+            //
+            // Tenant prefix: in multi-tenant mode each tenant has its own DB,
+            // so two tenants can independently mint outbox rows whose ids
+            // happen to collide (extremely unlikely with cuid/uuid but not
+            // impossible). Prefixing with tenantId namespaces the BullMQ
+            // idempotency key per tenant. Single-tenant mode (no tenantId)
+            // falls back to the original `${id}--${cfg}` shape.
+            jobId: effectiveTenantId
+              ? `${effectiveTenantId}--${row.id}--${webhookConfigId}`
+              : `${row.id}--${webhookConfigId}`,
           }
         );
       }
