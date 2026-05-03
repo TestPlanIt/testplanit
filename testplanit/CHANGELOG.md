@@ -1,3 +1,9 @@
+## [0.24.7](https://github.com/TestPlanIt/testplanit/compare/v0.24.6...v0.24.7) (2026-05-03)
+
+### Bug Fixes
+
+* **i18n:** LLM stream error codes + React stragglers sweep ([#275](https://github.com/TestPlanIt/testplanit/issues/275)) ([917890f](https://github.com/TestPlanIt/testplanit/commit/917890fbffd1e0e734d512da61364521fdacab35))
+
 ## [0.24.6](https://github.com/TestPlanIt/testplanit/compare/v0.24.5...v0.24.6) (2026-05-03)
 
 ### Bug Fixes
