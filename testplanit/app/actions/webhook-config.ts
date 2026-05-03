@@ -680,6 +680,12 @@ export interface CreateOutboundResult {
   /** Plaintext secret — show ONCE on creation. Only set for GENERIC_HMAC. */
   secret?: string;
   error?: string;
+  /**
+   * i18n key for the error, set on user-actionable validation failures
+   * (empty name, invalid URL, missing HTTPS). Diagnostic / authorization
+   * errors keep `error` in English by project policy.
+   */
+  errorCode?: string;
 }
 
 /**
@@ -707,7 +713,11 @@ export async function createOutboundWebhook(input: {
   // Validate trim-non-empty up front.
   const trimmedName = input.name?.trim() ?? "";
   if (trimmedName.length === 0) {
-    return { success: false, error: "Name is required" };
+    return {
+      success: false,
+      errorCode: "projects.webhooks.outboundCreateNameRequired",
+      error: "Name is required",
+    };
   }
 
   // URL validation runs BEFORE auth so invalid input doesn't probe the
@@ -716,10 +726,18 @@ export async function createOutboundWebhook(input: {
   try {
     parsedUrl = new URL(input.url);
   } catch {
-    return { success: false, error: "Invalid URL" };
+    return {
+      success: false,
+      errorCode: "projects.webhooks.outboundCreateUrlInvalid",
+      error: "Invalid URL",
+    };
   }
   if (parsedUrl.protocol !== "https:" && !isHttpOutboundAllowed()) {
-    return { success: false, error: "URL must use HTTPS" };
+    return {
+      success: false,
+      errorCode: "projects.webhooks.outboundCreateUrlMustUseHttps",
+      error: "URL must use HTTPS",
+    };
   }
 
   let authorized: boolean;

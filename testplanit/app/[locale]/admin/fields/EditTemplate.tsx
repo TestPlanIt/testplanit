@@ -55,16 +55,20 @@ import { Switch } from "@/components/ui/switch";
 
 import { useTranslations } from "next-intl";
 
-const FormSchema = z.object({
-  name: z.string().min(2, {
-    error: "Please enter a name for the Template",
-  }),
-  isDefault: z.boolean().prefault(false),
-  isEnabled: z.boolean().prefault(false),
-  projects: z.array(z.number()).optional(),
-  caseFields: z.array(z.number()).optional(),
-  resultFields: z.array(z.number()).optional(),
-});
+function buildFormSchema(t: (key: any) => string) {
+  return z.object({
+    name: z.string().min(2, {
+      error: t("common.errors.templateNameRequired"),
+    }),
+    isDefault: z.boolean().prefault(false),
+    isEnabled: z.boolean().prefault(false),
+    projects: z.array(z.number()).optional(),
+    caseFields: z.array(z.number()).optional(),
+    resultFields: z.array(z.number()).optional(),
+  });
+}
+
+type FormValues = z.infer<ReturnType<typeof buildFormSchema>>;
 
 interface ExtendedTemplateCaseField {
   caseFieldId: number;
@@ -170,8 +174,9 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
     [template]
   );
 
+  const formSchema = useMemo(() => buildFormSchema(tGlobal), [tGlobal]);
   const form = useForm({
-    resolver: zodResolver(FormSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: defaultFormValues,
   });
 
@@ -274,7 +279,7 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
     }
   };
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
+  async function onSubmit(data: FormValues) {
     setIsSubmitting(true);
     try {
       if (data.isDefault) {

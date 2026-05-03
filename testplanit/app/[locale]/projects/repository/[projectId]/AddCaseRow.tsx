@@ -17,7 +17,7 @@ import { PlusSquare } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
@@ -31,19 +31,25 @@ import {
 } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 
-const FormSchema = z.object({
-  name: z.string().min(2, {
-    error: "Please enter a name for the Test Case",
-  }),
-  workflowId: z
-    .number({
-      error: (issue) =>
-        issue.input === undefined ? "Please select a State" : undefined,
-    })
-    .refine((value) => !isNaN(value), {
-      error: "Please select a valid State",
+function buildFormSchema(t: (key: any) => string) {
+  return z.object({
+    name: z.string().min(2, {
+      error: t("common.errors.caseNameRequired"),
     }),
-});
+    workflowId: z
+      .number({
+        error: (issue) =>
+          issue.input === undefined
+            ? t("common.errors.caseStateRequired")
+            : undefined,
+      })
+      .refine((value) => !isNaN(value), {
+        error: t("common.errors.caseStateInvalid"),
+      }),
+  });
+}
+
+type FormValues = z.infer<ReturnType<typeof buildFormSchema>>;
 
 interface AddCaseRowProps {
   folderId: number;
@@ -149,8 +155,9 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
       ),
     })) || [];
 
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+  const formSchema = useMemo(() => buildFormSchema(t), [t]);
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       workflowId: defaultWorkflowId,
@@ -196,7 +203,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
     return null;
   }
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
+  async function onSubmit(data: FormValues) {
     setIsSubmitting(true);
     try {
       if (session) {
@@ -279,7 +286,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
 
         reset({ name: "", workflowId: defaultWorkflowId });
 
-        toast.success("New Test Case Added", {
+        toast.success(t("common.errors.newTestCaseAdded"), {
           position: "bottom-right",
         });
 

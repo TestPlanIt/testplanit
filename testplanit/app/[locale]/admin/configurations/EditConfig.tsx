@@ -79,8 +79,7 @@ export function EditConfiguration({
       if (err.info?.prisma && err.info?.code === "P2002") {
         form.setError("name", {
           type: "custom",
-          message:
-            "Configuration name already exists. Please choose a different name.",
+          message: tCommon("errors.configurationNameExists"),
         });
       } else {
         form.setError("root", {

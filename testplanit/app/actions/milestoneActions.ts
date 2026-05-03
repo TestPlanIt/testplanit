@@ -272,10 +272,9 @@ export async function completeMilestoneCascade(
       }
     });
 
-    return {
-      status: "success",
-      message: "Milestone and dependencies completed successfully.",
-    };
+    // Success path returns no `message`; the client renders a localized
+    // toast based on whether dependencies were involved.
+    return { status: "success" };
   } catch (error) {
     console.error("Error during actual milestone completion:", error);
     let message = "Failed to complete milestone.";

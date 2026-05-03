@@ -49,22 +49,24 @@ interface EditRoleProps {
 }
 
 // Define Zod schema for the form including permissions
-const EditRoleFormSchema = z.object({
-  name: z.string().min(1, {
-    error: "Role name cannot be empty",
-  }),
-  isDefault: z.boolean(),
-  permissions: z.partialRecord(
-    z.enum(ApplicationArea),
-    z.object({
-      canAddEdit: z.boolean(),
-      canDelete: z.boolean(),
-      canClose: z.boolean(),
-    })
-  ),
-});
+function buildEditRoleFormSchema(t: (key: any) => string) {
+  return z.object({
+    name: z.string().min(1, {
+      error: t("common.errors.roleNameEmpty"),
+    }),
+    isDefault: z.boolean(),
+    permissions: z.partialRecord(
+      z.enum(ApplicationArea),
+      z.object({
+        canAddEdit: z.boolean(),
+        canDelete: z.boolean(),
+        canClose: z.boolean(),
+      })
+    ),
+  });
+}
 
-type EditRoleFormData = z.infer<typeof EditRoleFormSchema>;
+type EditRoleFormData = z.infer<ReturnType<typeof buildEditRoleFormSchema>>;
 
 export function EditRole({ role, open, onClose }: EditRoleProps) {
   const t = useTranslations();
@@ -110,8 +112,9 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
     };
   }, [role.name, role.isDefault, existingPermissions]);
 
+  const formSchema = useMemo(() => buildEditRoleFormSchema(t), [t]);
   const form = useForm<EditRoleFormData>({
-    resolver: zodResolver(EditRoleFormSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: defaultFormValues, // Use pre-calculated defaults
   });
   const {

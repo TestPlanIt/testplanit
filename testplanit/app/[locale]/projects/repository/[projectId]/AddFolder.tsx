@@ -28,7 +28,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleX, Undo2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
@@ -38,12 +38,16 @@ import {
   useFindManyRepositoryFolders,
 } from "~/lib/hooks";
 
-const FormSchema = z.object({
-  name: z.string().min(2, {
-    error: "Please enter a name for the Folder",
-  }),
-  docs: z.any().optional(),
-});
+function buildFormSchema(t: (key: any) => string) {
+  return z.object({
+    name: z.string().min(2, {
+      error: t("common.errors.folderNameRequired"),
+    }),
+    docs: z.any().optional(),
+  });
+}
+
+type FormValues = z.infer<ReturnType<typeof buildFormSchema>>;
 
 interface AddFolderProps {
   projectId: number;
@@ -96,8 +100,9 @@ export function AddFolder({
     },
   });
 
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+  const formSchema = useMemo(() => buildFormSchema(t), [t]);
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       docs: emptyEditorContent,
@@ -112,7 +117,7 @@ export function AddFolder({
     formState: { errors },
   } = form;
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
+  async function onSubmit(data: FormValues) {
     setIsSubmitting(true);
     if (session) {
       try {

@@ -366,7 +366,10 @@
           "displayNameRequiredResult": "Introduzca un nombre para mostrar el campo resultante.",
           "displayNameRequiredCase": "Introduzca un nombre para mostrar el campo Caso.",
           "minValueMaxValue": "El valor mínimo debe ser menor que el valor máximo, y ambos deben establecerse si se establece uno.",
-          "minMaxValueInteger": "El valor entero mínimo debe ser menor que el valor entero máximo, y ambos deben establecerse si se establece uno."
+          "minMaxValueInteger": "El valor entero mínimo debe ser menor que el valor entero máximo, y ambos deben establecerse si se establece uno.",
+          "systemNameRequired": "El nombre del sistema no puede estar vacío.",
+          "systemNameRegex": "El nombre del sistema debe comenzar con una letra y solo puede contener letras, números y guiones bajos.",
+          "fieldTypeRequired": "El tipo de campo es obligatorio."
         }
       },
       "placeholders": {
@@ -557,6 +560,36 @@
       "valueRequired": "Se requiere valor",
       "contentRequired": "El contenido es obligatorio",
       "invalidContentFormat": "Formato de contenido no válido",
+      "caseNameRequired": "Por favor, introduzca un nombre para el caso de prueba.",
+      "caseStateRequired": "Seleccione un estado",
+      "caseFolderRequired": "Seleccione una carpeta",
+      "estimateTooLarge": "La estimación es demasiado grande.",
+      "estimateRequiredValid": "Se requiere una estimación y debe tener una duración válida (por ejemplo, 1h 30m).",
+      "invalidDurationOrExceedsMax": "Formato de duración no válido o excede el límite máximo (por ejemplo, 1h 30m).",
+      "configurationNameExists": "El nombre de configuración ya existe. Por favor, elija un nombre diferente.",
+      "variantNameExists": "Ya existe una variante con ese nombre. Por favor, elija un nombre diferente.",
+      "categoryNameExists": "La categoría con ese nombre ya existe. Por favor, elija un nombre diferente.",
+      "workflowStateNameExists": "El nombre \"Estado del flujo de trabajo\" ya existe. Por favor, elija un nombre diferente.",
+      "folderNameRequired": "Por favor, introduzca un nombre para la carpeta.",
+      "folderNameRequiredEnter": "Introduzca un nombre para la carpeta.",
+      "workflowStateNameRequired": "Introduzca un nombre para el estado del flujo de trabajo.",
+      "roleNameEmpty": "El nombre del rol no puede estar vacío.",
+      "groupNameRequired": "Se requiere el nombre del grupo.",
+      "templateNameRequired": "Por favor, introduzca un nombre para la plantilla.",
+      "caseStateInvalid": "Seleccione un estado válido.",
+      "caseTemplateRequired": "Seleccione una plantilla.",
+      "invalidContent": "Contenido no válido",
+      "milestoneNameRequired": "Por favor, introduzca un nombre para el Hito.",
+      "milestoneTypeRequired": "Seleccione un tipo de hito.",
+      "testRunNameMinLength": "El nombre debe tener al menos 2 caracteres.",
+      "stateRequiredDot": "Se requiere estado.",
+      "milestoneTypeNameMinLength": "El nombre del tipo de hito debe tener al menos 2 caracteres.",
+      "projectNameRequired": "Se requiere el nombre del proyecto.",
+      "workflowScopeRequired": "Por favor, seleccione un flujo de trabajo para el estado.",
+      "workflowTypeRequired": "Seleccione un tipo de flujo de trabajo.",
+      "newTestCaseAdded": "Se ha añadido un nuevo caso de prueba.",
+      "repositoryDeleted": "Repositorio eliminado",
+      "failedToDeleteRepository": "Error al eliminar el repositorio",
       "permissionDenied": "No tienes permiso para acceder a esta página.",
       "resultSubmitPermissionDenied": "No puedes enviar los resultados de este caso. Pídele a un administrador del proyecto que te lo asigne.",
       "noModelsFound": "No se encontraron modelos",
@@ -889,7 +922,9 @@
       "accessDenied": "Acceso denegado. Es posible que tu cuenta esté inactiva o que no tengas permiso para iniciar sesión.",
       "configuration": "Hay un problema con la configuración del servidor.",
       "verification": "El token de verificación ha expirado o ya ha sido utilizado.",
-      "invalid2FACode": "Código de verificación no válido. Inténtalo de nuevo."
+      "invalid2FACode": "Código de verificación no válido. Inténtalo de nuevo.",
+      "twoFactorTokenRequired": "Se requiere token",
+      "verificationCodeRequired": "Se requiere un código de verificación."
     },
     "signup": {
       "description": "Introduzca su información para registrarse en una nueva cuenta.",
@@ -1187,6 +1222,7 @@
         "outboundCreateNameRequired": "Se requiere el nombre.",
         "outboundCreateUrlRequired": "Se requiere una URL.",
         "outboundCreateUrlInvalid": "Introduzca una URL válida (https://example.com/...).",
+        "outboundCreateUrlMustUseHttps": "La URL debe usar HTTPS.",
         "outboundNameLabel": "Nombre",
         "outboundUnnamedConfig": "(webhook sin nombre)",
         "outboundCreateUrl": "URL",
@@ -1585,7 +1621,9 @@
     "toast": {
       "deleted": "Hito {name} eliminado",
       "updated": "Hito actualizado",
-      "updateFailed": "Error al actualizar el hito"
+      "updateFailed": "Error al actualizar el hito",
+      "completed": "Hito \"{name}\" completado.",
+      "completedWithDependencies": "Los hitos y las dependencias se completaron con éxito."
     },
     "errors": {
       "nameExists": "Ya existe un hito con este nombre",
@@ -6472,6 +6510,15 @@
       "unsubscribe": "Darse de baja",
       "managePreferences": "Administrar preferencias",
       "allRightsReserved": "Todos los derechos reservados."
+    },
+    "magicLink": {
+      "subject": "Inicia sesión en TestPlanIt",
+      "heading": "Inicia sesión en TestPlanIt",
+      "intro": "Haz clic en el botón de abajo para iniciar sesión:",
+      "signInButton": "Iniciar sesión",
+      "copyPasteIntro": "O bien, copie y pegue este enlace en su navegador:",
+      "disclaimer": "Si no solicitaste este correo electrónico, puedes ignorarlo sin problema.",
+      "textBody": "Inicia sesión en TestPlanIt\n\nHaz clic en el enlace de abajo para iniciar sesión:\n{url}\n\nSi no solicitaste este correo electrónico, puedes ignorarlo sin problema."
     }
   },
   "comments": {

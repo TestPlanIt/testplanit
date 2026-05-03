@@ -14,6 +14,7 @@ import {
   useFindFirstRegistrationSettings,
   useFindManySsoProvider,
 } from "~/lib/hooks";
+import { translateServerError } from "~/lib/i18n/translateServerError";
 import { useRouter } from "~/lib/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -219,7 +220,11 @@ const Signup: NextPage = () => {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to create user");
+        // Surface the localized message via errorCode when present, falling
+        // back to the legacy English `error` field for old responses.
+        throw new Error(
+          translateServerError(t, error, t("common.errors.unknown"))
+        );
       }
 
       newUser = await response.json().then((r) => r.data);
@@ -229,12 +234,7 @@ const Signup: NextPage = () => {
         await resendVerificationEmail(data.email);
       }
     } catch (err: any) {
-      // Handle user-friendly error messages
-      if (err.message?.includes("already exists")) {
-        setSubmissionError(t("common.errors.userExists"));
-      } else {
-        setSubmissionError(t("common.errors.unknown"));
-      }
+      setSubmissionError(err.message || t("common.errors.unknown"));
       return;
     }
 

@@ -36,6 +36,7 @@ import { Check, Copy, Info, Loader2, RefreshCw, Shield } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { translateServerError } from "~/lib/i18n/translateServerError";
 
 interface TwoFactorSettingsProps {
   userId: string;
@@ -131,7 +132,7 @@ export function TwoFactorSettings({
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || "Failed to enable 2FA");
+        throw new Error(translateServerError(t, data, "Failed to enable 2FA"));
       }
       setBackupCodes(data.backupCodes);
       onUpdate?.();

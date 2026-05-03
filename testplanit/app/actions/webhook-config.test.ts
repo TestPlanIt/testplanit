@@ -1049,8 +1049,16 @@ describe("webhook-config server actions", () => {
         url: "https://example.com/hook",
       });
 
-      expect(r1).toEqual({ success: false, error: "Name is required" });
-      expect(r2).toEqual({ success: false, error: "Name is required" });
+      expect(r1).toEqual({
+        success: false,
+        errorCode: "projects.webhooks.outboundCreateNameRequired",
+        error: "Name is required",
+      });
+      expect(r2).toEqual({
+        success: false,
+        errorCode: "projects.webhooks.outboundCreateNameRequired",
+        error: "Name is required",
+      });
       expect(mockWebhookConfigCreate).not.toHaveBeenCalled();
     });
 
@@ -1077,7 +1085,11 @@ describe("webhook-config server actions", () => {
         url: "not-a-url",
       });
 
-      expect(result).toEqual({ success: false, error: "Invalid URL" });
+      expect(result).toEqual({
+        success: false,
+        errorCode: "projects.webhooks.outboundCreateUrlInvalid",
+        error: "Invalid URL",
+      });
       expect(mockWebhookConfigCreate).not.toHaveBeenCalled();
     });
 
@@ -1090,7 +1102,11 @@ describe("webhook-config server actions", () => {
         url: "http://example.com/hook",
       });
 
-      expect(result).toEqual({ success: false, error: "URL must use HTTPS" });
+      expect(result).toEqual({
+        success: false,
+        errorCode: "projects.webhooks.outboundCreateUrlMustUseHttps",
+        error: "URL must use HTTPS",
+      });
       expect(mockWebhookConfigCreate).not.toHaveBeenCalled();
     });
 
