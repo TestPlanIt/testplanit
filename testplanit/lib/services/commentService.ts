@@ -54,11 +54,12 @@ export class CommentService {
       return [];
     }
 
-    // Import db to check user access
     const { prisma } = await import("~/lib/prisma");
+    const { buildProjectAccessWhere } = await import("~/lib/project-access");
 
-    // Get user details - basic info only for now
-    // TODO: Implement proper project access checking with ZenStack
+    // Fetch the mentioned user records — `access` is the Access enum
+    // (ADMIN / PROJECTADMIN / USER / NONE) used to gate the project
+    // access check below.
     const mentionedUsers = await prisma.user.findMany({
       where: {
         id: { in: usersToNotify },
@@ -70,16 +71,40 @@ export class CommentService {
         name: true,
         email: true,
         role: true,
+        access: true,
       },
     });
 
-    // For now, assume all mentioned users have access
-    // In production, you would check project permissions here
+    // Per-user project access check. The notification message + link
+    // payload differ depending on whether the mentioned user can
+    // actually open the linked entity:
+    //   - has access → message names the entity, payload carries IDs
+    //     so the bell-icon link routes to the case/run/session/milestone.
+    //   - no access  → message is a redacted "you were mentioned, but
+    //     you don't have access to this project" line, no entity ID.
+    // Reuses the canonical `buildProjectAccessWhere` access predicate
+    // (direct user permissions, group permissions, GLOBAL_ROLE
+    // default-access projects, PROJECTADMIN direct assignment) so the
+    // policy stays in lock-step with the rest of the app.
+    const accessByUserId = new Map<string, boolean>();
+    await Promise.all(
+      mentionedUsers.map(async (user) => {
+        const hit = await prisma.projects.findFirst({
+          where: buildProjectAccessWhere(
+            projectId,
+            user.id,
+            user.access === "ADMIN",
+            user.access === "PROJECTADMIN"
+          ),
+          select: { id: true },
+        });
+        accessByUserId.set(user.id, hit !== null);
+      })
+    );
+
     // Create notification for each mentioned user
     const notificationPromises = mentionedUsers.map((user) => {
-      // Simplified access check - assume has access for now
-      // TODO: Implement proper project access logic using ZenStack
-      const hasProjectAccess = true;
+      const hasProjectAccess = accessByUserId.get(user.id) ?? false;
 
       const entityTypeLabel =
         entityType === "RepositoryCase"

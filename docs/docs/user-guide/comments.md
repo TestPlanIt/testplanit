@@ -119,6 +119,10 @@ When you're mentioned in a comment:
    - Which item was commented on (test case, run, session, or milestone)
    - A direct link to the comment
 
+#### Mentions in Projects You Cannot Access
+
+If someone mentions you in a comment on a project you do not have access to, you still receive a notification, but the message is redacted to protect the project's contents. The notification tells you who mentioned you and which project the comment is in, but does not name the specific item or include a clickable link. To gain access, contact a project admin.
+
 ### Notification Settings
 
 Control how you're notified about comments:

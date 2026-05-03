@@ -156,6 +156,8 @@ When someone mentions you with `@username`:
 - Includes project context
 - Direct navigation to the comment
 
+If you are mentioned in a project you do not have access to, the notification is redacted: the message names the project and who mentioned you, but does not name the specific item or include a clickable link. This protects the project's contents while still letting you know that someone tried to loop you in.
+
 #### System Announcement Notifications
 
 **Special Formatting**:
