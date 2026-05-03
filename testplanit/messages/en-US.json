@@ -366,7 +366,10 @@
           "displayNameRequiredResult": "Enter a display name for the Result Field.",
           "displayNameRequiredCase": "Enter a display name for the Case Field.",
           "minValueMaxValue": "Minimum value must be less than maximum value, and both must be set if one is set.",
-          "minMaxValueInteger": "Minimum integer value must be less than maximum integer value, and both must be set if one is set."
+          "minMaxValueInteger": "Minimum integer value must be less than maximum integer value, and both must be set if one is set.",
+          "systemNameRequired": "System Name cannot be empty.",
+          "systemNameRegex": "System Name must start with a letter and can only contain letters, numbers, and underscores.",
+          "fieldTypeRequired": "Field Type is required."
         }
       },
       "placeholders": {
@@ -557,6 +560,36 @@
       "valueRequired": "Value is required",
       "contentRequired": "Content is required",
       "invalidContentFormat": "Invalid content format",
+      "caseNameRequired": "Please enter a name for the Test Case",
+      "caseStateRequired": "Please select a State",
+      "caseFolderRequired": "Please select a Folder",
+      "estimateTooLarge": "Estimate is too large",
+      "estimateRequiredValid": "Estimate is required and must be a valid duration (e.g., 1h 30m)",
+      "invalidDurationOrExceedsMax": "Invalid duration format or exceeds maximum limit (e.g., 1h 30m)",
+      "configurationNameExists": "Configuration name already exists. Please choose a different name.",
+      "variantNameExists": "Variant name already exists. Please choose a different name.",
+      "categoryNameExists": "Category name already exists. Please choose a different name.",
+      "workflowStateNameExists": "Workflow State name already exists. Please choose a different name.",
+      "folderNameRequired": "Please enter a name for the Folder",
+      "folderNameRequiredEnter": "Enter a name for the Folder.",
+      "workflowStateNameRequired": "Please enter a name for the Workflow State",
+      "roleNameEmpty": "Role name cannot be empty",
+      "groupNameRequired": "Group Name is required",
+      "templateNameRequired": "Please enter a name for the Template",
+      "caseStateInvalid": "Please select a valid State",
+      "caseTemplateRequired": "Please select a Template",
+      "invalidContent": "Invalid content",
+      "milestoneNameRequired": "Please enter a name for the Milestone",
+      "milestoneTypeRequired": "Please select a Milestone Type",
+      "testRunNameMinLength": "Name must be at least 2 characters.",
+      "stateRequiredDot": "State is required.",
+      "milestoneTypeNameMinLength": "Milestone Type name must be at least 2 characters.",
+      "projectNameRequired": "Project Name is required",
+      "workflowScopeRequired": "Please choose a Workflow for the State",
+      "workflowTypeRequired": "Please select a workflow type",
+      "newTestCaseAdded": "New Test Case Added",
+      "repositoryDeleted": "Repository deleted",
+      "failedToDeleteRepository": "Failed to delete repository",
       "permissionDenied": "You do not have permission to access this page.",
       "resultSubmitPermissionDenied": "You can’t submit results for this case. Ask a project admin to assign it to you.",
       "noModelsFound": "No models found",
@@ -889,7 +922,9 @@
       "accessDenied": "Access denied. Your account may be inactive or you don't have permission to sign in.",
       "configuration": "There is a problem with the server configuration.",
       "verification": "The verification token has expired or has already been used.",
-      "invalid2FACode": "Invalid verification code. Please try again."
+      "invalid2FACode": "Invalid verification code. Please try again.",
+      "twoFactorTokenRequired": "Token is required",
+      "verificationCodeRequired": "Verification code is required"
     },
     "signup": {
       "description": "Enter your information to sign up for a new account.",
@@ -1187,6 +1222,7 @@
         "outboundCreateNameRequired": "Name is required.",
         "outboundCreateUrlRequired": "URL is required.",
         "outboundCreateUrlInvalid": "Enter a valid URL (https://example.com/...).",
+        "outboundCreateUrlMustUseHttps": "URL must use HTTPS",
         "outboundNameLabel": "Name",
         "outboundUnnamedConfig": "(unnamed webhook)",
         "outboundCreateUrl": "URL",
@@ -1585,7 +1621,9 @@
     "toast": {
       "deleted": "Milestone {name} deleted",
       "updated": "Milestone updated",
-      "updateFailed": "Failed to update milestone"
+      "updateFailed": "Failed to update milestone",
+      "completed": "Milestone \"{name}\" completed.",
+      "completedWithDependencies": "Milestone and dependencies completed successfully."
     },
     "errors": {
       "nameExists": "A milestone with this name already exists",
@@ -6472,6 +6510,15 @@
       "unsubscribe": "Unsubscribe",
       "managePreferences": "Manage Preferences",
       "allRightsReserved": "All rights reserved."
+    },
+    "magicLink": {
+      "subject": "Sign in to TestPlanIt",
+      "heading": "Sign in to TestPlanIt",
+      "intro": "Click the button below to sign in:",
+      "signInButton": "Sign In",
+      "copyPasteIntro": "Or copy and paste this link into your browser:",
+      "disclaimer": "If you did not request this email, you can safely ignore it.",
+      "textBody": "Sign in to TestPlanIt\n\nClick the link below to sign in:\n{url}\n\nIf you did not request this email, you can safely ignore it."
     }
   },
   "comments": {

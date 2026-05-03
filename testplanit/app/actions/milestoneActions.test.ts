@@ -303,9 +303,7 @@ describe("milestoneActions", () => {
         });
 
         expect(result.status).toBe("success");
-        expect(result.message).toBe(
-          "Milestone and dependencies completed successfully."
-        );
+        expect(result.message).toBeUndefined();
       });
 
       it("should complete milestone with force flag despite dependencies", async () => {

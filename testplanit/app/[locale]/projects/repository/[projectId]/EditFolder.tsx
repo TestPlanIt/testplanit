@@ -41,12 +41,16 @@ const parseTipTapContent = (content: any) => {
   return content;
 };
 
-const FormSchema = z.object({
-  name: z.string().min(1, {
-    error: "Enter a name for the Folder.",
-  }),
-  docs: z.any().optional(),
-});
+function buildFormSchema(t: (key: any) => string) {
+  return z.object({
+    name: z.string().min(1, {
+      error: t("common.errors.folderNameRequiredEnter"),
+    }),
+    docs: z.any().optional(),
+  });
+}
+
+type FormValues = z.infer<ReturnType<typeof buildFormSchema>>;
 
 interface EditRepositoryFolderModalProps {
   folderId: number;
@@ -84,8 +88,9 @@ export function EditFolderModal({
     [folder]
   );
 
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+  const formSchema = useMemo(() => buildFormSchema(t), [t]);
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: defaultFormValues,
   });
 
@@ -111,7 +116,7 @@ export function EditFolderModal({
     formState: { errors },
   } = form;
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
+  async function onSubmit(data: FormValues) {
     setIsSubmitting(true);
     try {
       await updateRepositoryFolder({

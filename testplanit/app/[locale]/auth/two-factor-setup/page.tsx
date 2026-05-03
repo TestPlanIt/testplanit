@@ -21,6 +21,7 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Alert } from "~/components/ui/alert";
+import { translateServerError } from "~/lib/i18n/translateServerError";
 import { useRouter } from "~/lib/navigation";
 import svgIcon from "~/public/tpi_logo.svg";
 
@@ -113,7 +114,7 @@ export default function TwoFactorSetupPage() {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || "Failed to enable 2FA");
+        throw new Error(translateServerError(t, data, "Failed to enable 2FA"));
       }
       setBackupCodes(data.backupCodes);
       setStep("backup");

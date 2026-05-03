@@ -83,13 +83,12 @@ export function EditVariantModal({
       if (err.info?.prisma && err.info?.code === "P2002") {
         form.setError("name", {
           type: "custom",
-          message:
-            "Variant name already exists. Please choose a different name.",
+          message: tCommon("errors.variantNameExists"),
         });
       } else {
         form.setError("root", {
           type: "custom",
-          message: "An unknown error occurred.",
+          message: tCommon("errors.unknown"),
         });
       }
       setIsSubmitting(false);

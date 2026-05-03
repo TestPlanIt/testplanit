@@ -157,7 +157,9 @@ export function EditWorkflows({
     }),
     workflowType: z.enum(WorkflowType, {
       error: (issue) =>
-        issue.input === undefined ? "Please select a workflow type" : undefined,
+        issue.input === undefined
+          ? tCommon("errors.workflowTypeRequired")
+          : undefined,
     }),
     isDefault: z.boolean().prefault(false).optional(),
     isEnabled: z.boolean().prefault(true).optional(),
@@ -239,13 +241,14 @@ export function EditWorkflows({
       if (err.info?.prisma && err.info?.code === "P2002") {
         form.setError("name", {
           type: "nameExists",
-          message:
-            "Workflow State name already exists. Please choose a different name.",
+          message: tCommon("errors.workflowStateNameExists"),
         });
       } else {
         form.setError("root", {
           type: "unknown",
-          message: `An unknown error occurred. Error: ${err.message}`,
+          message: tCommon("errors.unknownErrorWithMessage", {
+            message: err.message ?? "",
+          }),
         });
       }
       setIsSubmitting(false);

@@ -1082,22 +1082,22 @@ export function BulkEditModal({
             },
             {
               message: isRequired
-                ? "Estimate is required and must be a valid duration (e.g., 1h 30m)"
-                : "Invalid duration format or exceeds maximum limit (e.g., 1h 30m)",
+                ? t("common.errors.estimateRequiredValid")
+                : t("common.errors.invalidDurationOrExceedsMax"),
             }
           );
       } else if (fieldKey === "tags") {
         let tagsSchema = z.array(z.number());
         if (isRequired)
           tagsSchema = tagsSchema.min(1, {
-            message: "At least one tag is required",
+            message: t("common.errors.atLeastOneTagRequired"),
           });
         schema = isRequired ? tagsSchema : tagsSchema.nullable(); // Apply nullability correctly
       } else if (fieldKey === "issues") {
         let issuesSchema = z.array(z.number());
         if (isRequired)
           issuesSchema = issuesSchema.min(1, {
-            message: "At least one issue is required",
+            message: t("common.errors.atLeastOneIssueRequired"),
           });
         schema = isRequired ? issuesSchema : issuesSchema.nullable();
       } else if (fieldDef.isCustom && fieldDef.field) {
@@ -1118,7 +1118,7 @@ export function BulkEditModal({
             let multiSchema = z.array(z.number());
             if (isRequired)
               multiSchema = multiSchema.min(1, {
-                message: "At least one option must be selected",
+                message: t("common.errors.atLeastOneOptionRequired"),
               });
             schema = isRequired ? multiSchema : multiSchema.nullable();
             break;
@@ -1153,7 +1153,9 @@ export function BulkEditModal({
           case "Text String": // Text String field type
             let strSchema = z.string();
             if (isRequired)
-              strSchema = strSchema.min(1, { message: "Value is required" });
+              strSchema = strSchema.min(1, {
+                message: t("common.errors.valueRequired"),
+              });
             schema = strSchema.nullable(); // Allow null/empty string if not required
             break;
           case "Text Long":
@@ -1171,7 +1173,7 @@ export function BulkEditModal({
                     return false;
                   } // Invalid JSON doesn't satisfy required
                 },
-                { message: "Content is required" }
+                { message: t("common.errors.contentRequired") }
               );
             } else {
               // If not required, allow null/undefined, OR valid JSON string (can be empty)
@@ -1188,7 +1190,7 @@ export function BulkEditModal({
                     }
                   },
                   {
-                    message: "Invalid content format",
+                    message: t("common.errors.invalidContentFormat"),
                   }
                 )
                 .nullable();

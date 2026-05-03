@@ -42,22 +42,24 @@ import { Label } from "@radix-ui/react-label";
 const applicationAreaValues = Object.values(ApplicationArea);
 
 // Define Zod schema for the form including permissions (copied from EditRoles)
-const AddRoleFormSchema = z.object({
-  name: z.string().min(1, {
-    error: "Role name cannot be empty",
-  }),
-  isDefault: z.boolean(),
-  permissions: z.partialRecord(
-    z.enum(ApplicationArea),
-    z.object({
-      canAddEdit: z.boolean(),
-      canDelete: z.boolean(),
-      canClose: z.boolean(),
-    })
-  ),
-});
+function buildAddRoleFormSchema(t: (key: any) => string) {
+  return z.object({
+    name: z.string().min(1, {
+      error: t("common.errors.roleNameEmpty"),
+    }),
+    isDefault: z.boolean(),
+    permissions: z.partialRecord(
+      z.enum(ApplicationArea),
+      z.object({
+        canAddEdit: z.boolean(),
+        canDelete: z.boolean(),
+        canClose: z.boolean(),
+      })
+    ),
+  });
+}
 
-type AddRoleFormData = z.infer<typeof AddRoleFormSchema>;
+type AddRoleFormData = z.infer<ReturnType<typeof buildAddRoleFormSchema>>;
 
 interface AddRoleProps {
   open: boolean;
@@ -85,8 +87,9 @@ export function AddRole({ open, onClose }: AddRoleProps) {
     []
   );
 
+  const formSchema = useMemo(() => buildAddRoleFormSchema(t), [t]);
   const form = useForm<AddRoleFormData>({
-    resolver: zodResolver(AddRoleFormSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       isDefault: false,

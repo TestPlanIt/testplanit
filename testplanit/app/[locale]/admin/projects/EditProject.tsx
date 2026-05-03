@@ -7,7 +7,7 @@ import {
   UserProjectPermission,
 } from "@prisma/client";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   useCreateManyProjectAssignment,
   useDeleteManyGroupProjectPermission,
@@ -83,35 +83,37 @@ interface EditProjectModalProps {
   onClose: () => void;
 }
 
-const EditProjectFormSchema = z.object({
-  iconUrl: optionalImageUrlSchema,
-  name: z.string().min(1, {
-    error: "Project Name is required",
-  }),
-  note: z.string().optional(),
-  isCompleted: z.boolean(),
-  completedAt: z.date().optional().nullable(),
-  defaultAccessType: z.enum(ProjectAccessType),
-  defaultRoleId: z.string().nullable(),
-  userPermissions: z
-    .record(
-      z.string(),
-      z.object({
-        accessType: z.string(),
-        roleId: z.string().nullable(),
-      })
-    )
-    .optional(),
-  groupPermissions: z
-    .record(
-      z.string(),
-      z.object({
-        accessType: z.string(),
-        roleId: z.string().nullable(),
-      })
-    )
-    .optional(),
-});
+function buildEditProjectFormSchema(t: (key: any) => string) {
+  return z.object({
+    iconUrl: optionalImageUrlSchema,
+    name: z.string().min(1, {
+      error: t("common.errors.projectNameRequired"),
+    }),
+    note: z.string().optional(),
+    isCompleted: z.boolean(),
+    completedAt: z.date().optional().nullable(),
+    defaultAccessType: z.enum(ProjectAccessType),
+    defaultRoleId: z.string().nullable(),
+    userPermissions: z
+      .record(
+        z.string(),
+        z.object({
+          accessType: z.string(),
+          roleId: z.string().nullable(),
+        })
+      )
+      .optional(),
+    groupPermissions: z
+      .record(
+        z.string(),
+        z.object({
+          accessType: z.string(),
+          roleId: z.string().nullable(),
+        })
+      )
+      .optional(),
+  });
+}
 
 // --- Type for User Permission in Form State ---
 // We use string for accessType to allow for "PROJECT_DEFAULT"
@@ -128,7 +130,9 @@ type GroupPermissionFormState = {
 };
 
 // Use inferred type from Zod schema directly
-type EditProjectFormData = z.infer<typeof EditProjectFormSchema>;
+type EditProjectFormData = z.infer<
+  ReturnType<typeof buildEditProjectFormSchema>
+>;
 
 // --- Export Types Needed by Child Component ---
 export type {
@@ -251,9 +255,17 @@ export function EditProjectModal({
 
   const handleCancel = () => onClose();
 
+  const t = useTranslations("admin.projects.edit");
+  const tGlobal = useTranslations();
+  const tCommon = useTranslations("common");
+
   // Use inferred type for useForm
+  const formSchema = useMemo(
+    () => buildEditProjectFormSchema(tGlobal),
+    [tGlobal]
+  );
   const form = useForm<EditProjectFormData>({
-    resolver: zodResolver(EditProjectFormSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       iconUrl: project.iconUrl ?? null,
       name: project.name ?? "",
@@ -281,10 +293,6 @@ export function EditProjectModal({
 
   const isCompleted = watch("isCompleted");
   const defaultAccessType = watch("defaultAccessType");
-
-  const t = useTranslations("admin.projects.edit");
-  const tGlobal = useTranslations();
-  const tCommon = useTranslations("common");
 
   // Store initial permissions to compare against on submit
   const [initialUserPermissions, setInitialUserPermissions] = useState<Record<
@@ -435,7 +443,7 @@ export function EditProjectModal({
       ) {
         setError("defaultRoleId", {
           type: "manual",
-          message: "Invalid Role ID",
+          message: tCommon("errors.invalidRoleId"),
         });
         setIsSubmitting(false);
         return;

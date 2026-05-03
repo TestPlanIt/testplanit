@@ -366,7 +366,10 @@
           "displayNameRequiredResult": "Saisissez un nom d'affichage pour le champ Résultat.",
           "displayNameRequiredCase": "Saisissez un nom d'affichage pour le champ « Dossier ».",
           "minValueMaxValue": "La valeur minimale doit être inférieure à la valeur maximale, et les deux doivent être définies si l'une d'elles l'est déjà.",
-          "minMaxValueInteger": "La valeur entière minimale doit être inférieure à la valeur entière maximale, et les deux doivent être définies si l'une d'elles l'est déjà."
+          "minMaxValueInteger": "La valeur entière minimale doit être inférieure à la valeur entière maximale, et les deux doivent être définies si l'une d'elles l'est déjà.",
+          "systemNameRequired": "Le nom du système ne peut pas être vide.",
+          "systemNameRegex": "Le nom du système doit commencer par une lettre et ne peut contenir que des lettres, des chiffres et des traits de soulignement.",
+          "fieldTypeRequired": "Le type de champ est obligatoire."
         }
       },
       "placeholders": {
@@ -557,6 +560,36 @@
       "valueRequired": "Une valeur est requise",
       "contentRequired": "Le contenu est requis",
       "invalidContentFormat": "Format de contenu invalide",
+      "caseNameRequired": "Veuillez saisir un nom pour le cas de test.",
+      "caseStateRequired": "Veuillez sélectionner un État",
+      "caseFolderRequired": "Veuillez sélectionner un dossier",
+      "estimateTooLarge": "L'estimation est trop élevée.",
+      "estimateRequiredValid": "Une estimation est requise et doit correspondre à une durée valide (par exemple, 1h 30m).",
+      "invalidDurationOrExceedsMax": "Format de durée invalide ou dépasse la limite maximale (ex. : 1 h 30).",
+      "configurationNameExists": "Ce nom de configuration existe déjà. Veuillez choisir un autre nom.",
+      "variantNameExists": "Ce nom existe déjà. Veuillez choisir un autre nom.",
+      "categoryNameExists": "Cette catégorie existe déjà. Veuillez choisir un autre nom.",
+      "workflowStateNameExists": "Le nom de l'état du flux de travail existe déjà. Veuillez choisir un autre nom.",
+      "folderNameRequired": "Veuillez saisir un nom pour le dossier",
+      "folderNameRequiredEnter": "Saisissez un nom pour le dossier.",
+      "workflowStateNameRequired": "Veuillez saisir un nom pour l'état du flux de travail",
+      "roleNameEmpty": "Le nom du rôle ne peut pas être vide.",
+      "groupNameRequired": "Le nom du groupe est requis.",
+      "templateNameRequired": "Veuillez saisir un nom pour le modèle",
+      "caseStateInvalid": "Veuillez sélectionner un État valide",
+      "caseTemplateRequired": "Veuillez sélectionner un modèle",
+      "invalidContent": "Contenu invalide",
+      "milestoneNameRequired": "Veuillez saisir un nom pour l'étape importante.",
+      "milestoneTypeRequired": "Veuillez sélectionner un type d'étape importante",
+      "testRunNameMinLength": "Le nom doit comporter au moins 2 caractères.",
+      "stateRequiredDot": "L'État est requis.",
+      "milestoneTypeNameMinLength": "Le nom du type d'étape doit comporter au moins 2 caractères.",
+      "projectNameRequired": "Le nom du projet est requis.",
+      "workflowScopeRequired": "Veuillez choisir un flux de travail pour l'État",
+      "workflowTypeRequired": "Veuillez sélectionner un type de flux de travail",
+      "newTestCaseAdded": "Nouveau cas de test ajouté",
+      "repositoryDeleted": "Dépôt supprimé",
+      "failedToDeleteRepository": "Échec de la suppression du dépôt",
       "permissionDenied": "Vous n'êtes pas autorisé à accéder à cette page.",
       "resultSubmitPermissionDenied": "Vous ne pouvez pas soumettre de résultats pour ce dossier. Veuillez demander à un administrateur de projet de vous l'attribuer.",
       "noModelsFound": "Aucun modèle trouvé",
@@ -889,7 +922,9 @@
       "accessDenied": "Accès refusé. Votre compte est peut-être inactif ou vous n'avez pas l'autorisation de vous connecter.",
       "configuration": "Il y a un problème avec la configuration du serveur.",
       "verification": "Le jeton de vérification a expiré ou a déjà été utilisé.",
-      "invalid2FACode": "Code de vérification invalide. Veuillez réessayer."
+      "invalid2FACode": "Code de vérification invalide. Veuillez réessayer.",
+      "twoFactorTokenRequired": "Un jeton est requis.",
+      "verificationCodeRequired": "Un code de vérification est requis."
     },
     "signup": {
       "description": "Saisissez vos informations pour créer un nouveau compte.",
@@ -1187,6 +1222,7 @@
         "outboundCreateNameRequired": "Le nom est obligatoire.",
         "outboundCreateUrlRequired": "L'URL est requise.",
         "outboundCreateUrlInvalid": "Saisissez une URL valide (https://example.com/...).",
+        "outboundCreateUrlMustUseHttps": "L'URL doit utiliser HTTPS.",
         "outboundNameLabel": "Nom",
         "outboundUnnamedConfig": "(webhook non nommé)",
         "outboundCreateUrl": "URL",
@@ -1585,7 +1621,9 @@
     "toast": {
       "deleted": "Étape {name} supprimée",
       "updated": "Étape importante mise à jour",
-      "updateFailed": "Échec de la mise à jour de l'étape clé"
+      "updateFailed": "Échec de la mise à jour de l'étape clé",
+      "completed": "Étape importante «{name}» terminée.",
+      "completedWithDependencies": "Étape importante et dépendances remplies avec succès."
     },
     "errors": {
       "nameExists": "Un jalon portant ce nom existe déjà.",
@@ -6472,6 +6510,15 @@
       "unsubscribe": "Se désabonner",
       "managePreferences": "Gérer les préférences",
       "allRightsReserved": "Tous droits réservés."
+    },
+    "magicLink": {
+      "subject": "Connectez-vous à TestPlanIt",
+      "heading": "Connectez-vous à TestPlanIt",
+      "intro": "Cliquez sur le bouton ci-dessous pour vous connecter :",
+      "signInButton": "Se connecter",
+      "copyPasteIntro": "Ou copiez et collez ce lien dans votre navigateur :",
+      "disclaimer": "Si vous n'avez pas demandé cet e-mail, vous pouvez l'ignorer sans problème.",
+      "textBody": "Connectez-vous à TestPlanIt\n\nCliquez sur le lien ci-dessous pour vous connecter :\n{url}\n\nSi vous n’avez pas demandé cet e-mail, vous pouvez l’ignorer sans risque."
     }
   },
   "comments": {

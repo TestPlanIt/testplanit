@@ -61,6 +61,7 @@ import {
   updateOutboundSubscriptions,
 } from "~/app/actions/webhook-config";
 import { useFindManyWebhookConfig } from "~/lib/hooks";
+import { translateServerError } from "~/lib/i18n/translateServerError";
 import { isSlackWebhookUrl } from "~/lib/webhooks/slack-url-detection";
 import { z } from "zod";
 
@@ -294,7 +295,9 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
         subscribedEvents: createSubscriptions,
       });
       if (!result.success) {
-        toast.error(result.error ?? t("outboundCreateError"));
+        toast.error(
+          translateServerError(tGlobal, result, t("outboundCreateError"))
+        );
         return;
       }
       toast.success(t("outboundCreateSuccess"));

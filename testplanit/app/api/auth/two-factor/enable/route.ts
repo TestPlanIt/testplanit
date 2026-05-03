@@ -25,7 +25,13 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     const { token } = body;
 
     if (!token || typeof token !== "string") {
-      return NextResponse.json({ error: "Token is required" }, { status: 400 });
+      return NextResponse.json(
+        {
+          errorCode: "auth.errors.twoFactorTokenRequired",
+          error: "Token is required",
+        },
+        { status: 400 }
+      );
     }
 
     const user = await prisma.user.findUnique({

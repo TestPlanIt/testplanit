@@ -3,7 +3,7 @@ import { HelpPopover } from "@/components/ui/help-popover";
 import { User } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   useCreateGroups,
   useCreateManyGroupAssignment,
@@ -41,13 +41,15 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-const AddGroupFormSchema = z.object({
-  name: z.string().min(1, {
-    error: "Group Name is required",
-  }),
-});
+function buildAddGroupFormSchema(t: (key: any) => string) {
+  return z.object({
+    name: z.string().min(1, {
+      error: t("common.errors.groupNameRequired"),
+    }),
+  });
+}
 
-type AddGroupFormData = z.infer<typeof AddGroupFormSchema>;
+type AddGroupFormData = z.infer<ReturnType<typeof buildAddGroupFormSchema>>;
 
 interface AddGroupProps {
   open: boolean;
@@ -72,8 +74,9 @@ export function AddGroup({ open, onClose }: AddGroupProps) {
 
   const allUsers: User[] | undefined = allUsersData as User[] | undefined;
 
+  const formSchema = useMemo(() => buildAddGroupFormSchema(tGlobal), [tGlobal]);
   const form = useForm<AddGroupFormData>({
-    resolver: zodResolver(AddGroupFormSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
     },

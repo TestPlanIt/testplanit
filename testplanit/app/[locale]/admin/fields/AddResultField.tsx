@@ -53,72 +53,80 @@ import {
 import { HelpPopover } from "@/components/ui/help-popover";
 import type { FieldDraftOption } from "./AddCaseField";
 
-const FormSchema = z
-  .object({
-    displayName: z.string().min(1, {
-      message: "Enter a display name for the Result Field.",
-    }),
-    systemName: z
-      .string()
-      .min(1, {
-        message: "System Name cannot be empty.",
-      })
-      .regex(/^[A-Za-z][A-Za-z0-9_]*$/, {
-        message:
-          "System Name must start with a letter and can only contain letters, numbers, and underscores.",
+// Schema is built per-render so Zod messages reflect the active locale.
+// `t` is the unscoped translator from useTranslations(); keep paths
+// fully-qualified. Typed loosely because next-intl's typed translator
+// rejects dynamic key strings.
+function buildFormSchema(t: (key: any) => string) {
+  return z
+    .object({
+      displayName: z.string().min(1, {
+        message: t(
+          "common.fields.options.validation.displayNameRequiredResult"
+        ),
       }),
-    typeId: z.string().min(1, {
-      message: "Field Type is required.",
-    }),
-    hint: z.string().optional(),
-    isEnabled: z.boolean().default(true).optional(),
-    isRequired: z.boolean().default(false).optional(),
-    isRestricted: z.boolean().default(false).optional(),
-    defaultValue: z.string().optional(),
-    isChecked: z.boolean().default(false).optional(),
-    minValue: z.number().nullable().optional(),
-    maxValue: z.number().nullable().optional(),
-    minIntegerValue: z.int().nullable().optional(),
-    maxIntegerValue: z.int().nullable().optional(),
-    initialHeight: z.int().nullable().optional(),
-    dropdownOptions: z.array(z.string()).optional(),
-  })
-  .refine(
-    (data) =>
-      (data.minValue == null && data.maxValue == null) ||
-      (data.minValue != null &&
-        data.maxValue != null &&
-        data.minValue < data.maxValue),
-    {
-      path: ["minValue"],
-      message:
-        "Minimum value must be less than maximum value, and both must be set if one is set.",
-    }
-  )
-  .refine(
-    (data) =>
-      (data.minIntegerValue == null && data.maxIntegerValue == null) ||
-      (data.minIntegerValue != null &&
-        data.maxIntegerValue != null &&
-        data.minIntegerValue < data.maxIntegerValue),
-    {
-      path: ["minIntegerValue"],
-      message:
-        "Minimum integer value must be less than maximum integer value, and both must be set if one is set.",
-    }
-  );
+      systemName: z
+        .string()
+        .min(1, {
+          message: t("common.fields.options.validation.systemNameRequired"),
+        })
+        .regex(/^[A-Za-z][A-Za-z0-9_]*$/, {
+          message: t("common.fields.options.validation.systemNameRegex"),
+        }),
+      typeId: z.string().min(1, {
+        message: t("common.fields.options.validation.fieldTypeRequired"),
+      }),
+      hint: z.string().optional(),
+      isEnabled: z.boolean().default(true).optional(),
+      isRequired: z.boolean().default(false).optional(),
+      isRestricted: z.boolean().default(false).optional(),
+      defaultValue: z.string().optional(),
+      isChecked: z.boolean().default(false).optional(),
+      minValue: z.number().nullable().optional(),
+      maxValue: z.number().nullable().optional(),
+      minIntegerValue: z.int().nullable().optional(),
+      maxIntegerValue: z.int().nullable().optional(),
+      initialHeight: z.int().nullable().optional(),
+      dropdownOptions: z.array(z.string()).optional(),
+    })
+    .refine(
+      (data) =>
+        (data.minValue == null && data.maxValue == null) ||
+        (data.minValue != null &&
+          data.maxValue != null &&
+          data.minValue < data.maxValue),
+      {
+        path: ["minValue"],
+        message: t("common.fields.options.validation.minValueMaxValue"),
+      }
+    )
+    .refine(
+      (data) =>
+        (data.minIntegerValue == null && data.maxIntegerValue == null) ||
+        (data.minIntegerValue != null &&
+          data.maxIntegerValue != null &&
+          data.minIntegerValue < data.maxIntegerValue),
+      {
+        path: ["minIntegerValue"],
+        message: t("common.fields.options.validation.minMaxValueInteger"),
+      }
+    );
+}
+
+type FormSchemaType = ReturnType<typeof buildFormSchema>;
+type FormValues = z.infer<FormSchemaType>;
 
 export interface AddResultFieldModalProps {
   open: boolean;
   onClose: () => void;
   onSubmitField?: (payload: {
-    values: z.infer<typeof FormSchema>;
+    values: FormValues;
     dropdownOptions: FieldOptions[];
     defaultOptionId: number | null;
     typeName: string | undefined;
   }) => Promise<boolean | void> | boolean | void;
   draft?: {
-    values?: Partial<z.infer<typeof FormSchema>>;
+    values?: Partial<FormValues>;
     options?: FieldDraftOption[];
   };
   submitLabel?: string;
@@ -185,7 +193,7 @@ export function AddResultFieldModal({
 
   const validationSchema = useMemo(
     () =>
-      FormSchema.superRefine((data, ctx) => {
+      buildFormSchema(tGlobal).superRefine((data, ctx) => {
         const normalizedSystemName = data.systemName
           ? data.systemName.trim().toLowerCase()
           : null;
@@ -200,7 +208,7 @@ export function AddResultFieldModal({
           });
         }
       }),
-    [existingSystemNames, tCommon]
+    [existingSystemNames, tCommon, tGlobal]
   );
 
   const typeOptions =
@@ -275,7 +283,7 @@ export function AddResultFieldModal({
     }
   };
 
-  const form = useForm<z.infer<typeof FormSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(validationSchema),
     defaultValues: {
       displayName: "",
@@ -364,7 +372,7 @@ export function AddResultFieldModal({
       minIntegerValue: null,
       maxIntegerValue: null,
       initialHeight: null,
-    } satisfies Partial<z.infer<typeof FormSchema>>;
+    } satisfies Partial<FormValues>;
 
     reset({
       ...baseDefaults,
@@ -482,7 +490,7 @@ export function AddResultFieldModal({
         return (
           <Controller
             key={option.key}
-            name={option.key as keyof z.infer<typeof FormSchema>}
+            name={option.key as keyof FormValues}
             control={form.control}
             render={({ field, fieldState }) => (
               <FormItem>
@@ -614,18 +622,18 @@ export function AddResultFieldModal({
   ) {
     const value = e.target.value;
     if (value === "") {
-      form.setValue(key as keyof z.infer<typeof FormSchema>, null);
+      form.setValue(key as keyof FormValues, null);
     } else {
       const numericValue = isInteger ? parseInt(value, 10) : parseFloat(value);
       if (!isNaN(numericValue)) {
-        form.setValue(key as keyof z.infer<typeof FormSchema>, numericValue);
+        form.setValue(key as keyof FormValues, numericValue);
       } else {
-        form.setValue(key as keyof z.infer<typeof FormSchema>, null);
+        form.setValue(key as keyof FormValues, null);
       }
     }
   }
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
+  async function onSubmit(data: FormValues) {
     setIsSubmitting(true);
     try {
       if (onSubmitField) {

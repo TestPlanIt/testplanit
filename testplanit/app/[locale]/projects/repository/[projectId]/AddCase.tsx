@@ -82,7 +82,7 @@ interface SharedStepGroupWithItems {
   items: SharedStepItemDetail[];
 }
 
-const mapFieldToZodType = (field: any) => {
+const mapFieldToZodType = (field: any, t: (key: any) => string) => {
   const isRequired = field.caseField.isRequired;
 
   const _addMinMax = (schema: z.ZodNumber) => {
@@ -194,7 +194,7 @@ const mapFieldToZodType = (field: any) => {
               }
             },
             {
-              error: "This field is required",
+              error: t("common.errors.fieldRequired"),
             }
           )
         : z.string().optional();
@@ -215,18 +215,22 @@ const mapFieldToZodType = (field: any) => {
   }
 };
 
-const createFormSchema = (fields: any[]) => {
+const createFormSchema = (fields: any[], t: (key: any) => string) => {
   const baseSchema = {
     name: z.string().min(2, {
-      error: "Please enter a name for the Test Case",
+      error: t("common.errors.caseNameRequired"),
     }),
     templateId: z.number({
       error: (issue) =>
-        issue.input === undefined ? "Please select a Template" : undefined,
+        issue.input === undefined
+          ? t("common.errors.caseTemplateRequired")
+          : undefined,
     }),
     workflowId: z.number({
       error: (issue) =>
-        issue.input === undefined ? "Please select a State" : undefined,
+        issue.input === undefined
+          ? t("common.errors.caseStateRequired")
+          : undefined,
     }),
     estimate: z
       .string()
@@ -238,8 +242,7 @@ const createFormSchema = (fields: any[]) => {
           return durationInMilliseconds !== null;
         },
         {
-          error:
-            "Invalid duration format. Try something like 30m, 1 week or 1h 25m",
+          error: t("common.validation.invalidDurationFormat"),
         }
       )
       .refine(
@@ -251,7 +254,7 @@ const createFormSchema = (fields: any[]) => {
           return durationInSeconds <= MAX_DURATION;
         },
         {
-          error: "Estimate is too large",
+          error: t("common.errors.estimateTooLarge"),
         }
       ),
     automated: z.boolean().prefault(false),
@@ -262,7 +265,7 @@ const createFormSchema = (fields: any[]) => {
       const fieldName = field.caseField.id.toString();
       // Skip Date fields entirely - we'll handle them manually without validation
       if (field.caseField.type.type !== "Date") {
-        schema[fieldName] = mapFieldToZodType(field);
+        schema[fieldName] = mapFieldToZodType(field, t);
       }
       return schema;
     },
@@ -304,7 +307,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
   const [isTemplateReady, setIsTemplateReady] = useState(false);
   const panelRef = useRef<React.ComponentRef<typeof ResizablePanel>>(null);
 
-  const [formSchema, setFormSchema] = useState(createFormSchema([]));
+  const [formSchema, setFormSchema] = useState(() => createFormSchema([], t));
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
     null
   );
@@ -568,7 +571,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
       (template) => template.id === selectedTemplateId
     );
     if (selectedTemplate) {
-      setFormSchema(createFormSchema(selectedTemplate.caseFields));
+      setFormSchema(createFormSchema(selectedTemplate.caseFields, t));
       const defaultValues: Partial<FormValues> = {
         name: "",
         templateId: selectedTemplateId ?? 0,

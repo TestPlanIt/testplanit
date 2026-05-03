@@ -218,11 +218,11 @@ function CodeRepositoryList() {
       },
       {
         onSuccess: () => {
-          toast.success("Repository deleted");
+          toast.success(tCommon("errors.repositoryDeleted"));
           void refetch();
         },
         onError: (error) => {
-          toast.error("Failed to delete repository", {
+          toast.error(tCommon("errors.failedToDeleteRepository"), {
             description: error.message,
           });
         },
