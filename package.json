@@ -78,6 +78,7 @@
             "undici": "^7.24.7",
             "diff": ">=8.0.3",
             "fast-xml-parser": ">=5.5.7",
+            "uuid": ">=14.0.0",
             "esbuild": ">=0.25.0",
             "webpack": ">=5.104.1",
             "webpackbar": ">=7.0.0",
