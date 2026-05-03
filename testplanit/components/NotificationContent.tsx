@@ -335,7 +335,7 @@ export function NotificationContent({
 
   // Handle share link accessed notifications
   if (notification.type === "SHARE_LINK_ACCESSED") {
-    if (data.shareLinkId && data.projectId) {
+    if (data.shareLinkId) {
       const viewedAt = data.viewedAt
         ? new Date(data.viewedAt).toLocaleDateString(locale, {
             month: "short",
@@ -344,15 +344,24 @@ export function NotificationContent({
             minute: "2-digit",
           })
         : "";
+      const viewer =
+        data.viewerName ||
+        data.viewerEmail ||
+        t("shareLinkAccessedAnonymousViewer");
 
       return (
         <div className="space-y-2">
-          <h4 className="font-medium text-sm">{notification.title}</h4>
+          <h4 className="font-medium text-sm">{t("shareLinkAccessedTitle")}</h4>
           <div className="text-sm text-muted-foreground space-y-1">
-            <p>{notification.message}</p>
+            <p>
+              {t("shareLinkAccessedMessage", {
+                viewer,
+                shareTitle: data.shareTitle ?? "",
+              })}
+            </p>
             {viewedAt && (
               <p className="text-xs">
-                {t("viewedAt", { defaultValue: "Viewed at" })}: {viewedAt}
+                {t("viewedAt")}: {viewedAt}
               </p>
             )}
             {data.projectId && (
@@ -384,6 +393,10 @@ export function NotificationContent({
     const isCopy = data.operation === "copy";
     const count = (data.copiedCount ?? 0) + (data.movedCount ?? 0);
     const repositoryLink = `/projects/repository/${data.targetProjectId}`;
+    const errorAppend =
+      data.errorCount > 0
+        ? t("copyMoveErrorsAppend", { errorCount: data.errorCount })
+        : "";
 
     return (
       <div className="space-y-2">
@@ -393,19 +406,23 @@ export function NotificationContent({
           ) : (
             <ArrowRightLeft className="h-4 w-4 text-primary shrink-0 mt-0.5" />
           )}
-          <h4 className="font-medium text-sm">{notification.title}</h4>
+          <h4 className="font-medium text-sm">
+            {isCopy ? t("copyCompleteTitle") : t("moveCompleteTitle")}
+          </h4>
         </div>
         <div className="text-sm text-muted-foreground space-y-1">
           <p>
-            {count} {"case(s)"} {isCopy ? "copied" : "moved"} {"successfully"}
-            {data.errorCount > 0 ? `, ${data.errorCount} failed` : ""}
+            {isCopy
+              ? t("copyCompleteMessage", { count })
+              : t("moveCompleteMessage", { count })}
+            {errorAppend}
           </p>
           <div className="flex items-center gap-1">
             <Link
               href={repositoryLink}
               className="font-medium text-primary hover:underline inline-flex items-center gap-1"
             >
-              {"View target repository"}
+              {t("viewTargetRepository")}
               <ExternalLink className="h-3 w-3" />
             </Link>
           </div>
@@ -416,18 +433,109 @@ export function NotificationContent({
 
   // Handle LLM budget alerts
   if (notification.type === "LLM_BUDGET_ALERT") {
+    const threshold = data.threshold;
+    const isExceeded = typeof threshold === "number" && threshold >= 100;
+    // LLM providers (OpenAI/Anthropic/Google) bill in USD. The currency
+    // code is hardcoded here intentionally; multi-currency support
+    // would require tracking the provider's billing currency in the
+    // LlmIntegration model.
+    const fmt =
+      typeof Intl !== "undefined"
+        ? new Intl.NumberFormat(locale, {
+            style: "currency",
+            currency: "USD",
+          })
+        : null;
+    const formatAmount = (n: unknown): string => {
+      if (typeof n !== "number") {
+        // Older notification rows may have stored the amount as a
+        // pre-formatted string (e.g. "1234.56"). Render as-is so the
+        // bell doesn't show "NaN" until the row ages out.
+        return String(n ?? "");
+      }
+      return fmt ? fmt.format(n) : `$${n.toFixed(2)}`;
+    };
+    const spend = formatAmount(data.currentSpend);
+    const budget = formatAmount(data.budgetLimit);
+    const providerName = data.providerName ?? "";
+
+    if (data.providerName == null || data.threshold == null) {
+      // Old-shape fallback — render the persisted text rather than
+      // attempt to compose from a partial payload.
+      return (
+        <div className="space-y-2">
+          <h4 className="font-medium text-sm">{notification.title}</h4>
+          <div className="text-sm text-muted-foreground">
+            <p>{notification.message}</p>
+            <p className="text-xs mt-2">{t("budgetDisclaimer")}</p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-2">
-        <h4 className="font-medium text-sm">{notification.title}</h4>
+        <h4 className="font-medium text-sm">
+          {isExceeded
+            ? t("llmBudgetExceededTitle")
+            : t("llmBudgetThresholdTitle", { threshold })}
+        </h4>
         <div className="text-sm text-muted-foreground">
-          <p>{notification.message}</p>
-          <p className="text-xs mt-2">
-            {t("budgetDisclaimer", {
-              defaultValue:
-                "Budget limits are informational only and do not prevent usage.",
-            })}
+          <p>
+            {isExceeded
+              ? t("llmBudgetExceededMessage", {
+                  providerName,
+                  spend,
+                  budget,
+                })
+              : t("llmBudgetThresholdMessage", {
+                  providerName,
+                  threshold,
+                  spend,
+                  budget,
+                })}
           </p>
+          <p className="text-xs mt-2">{t("budgetDisclaimer")}</p>
         </div>
+      </div>
+    );
+  }
+
+  // Handle new-user-registration notifications (sent to system admins).
+  if (notification.type === "USER_REGISTERED") {
+    if (data.newUserName && data.newUserEmail) {
+      const messageKey =
+        data.registrationMethod === "sso"
+          ? "userRegisteredMessageSso"
+          : "userRegisteredMessageForm";
+      return (
+        <div className="space-y-2">
+          <h4 className="font-medium text-sm">{t("userRegisteredTitle")}</h4>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <p>
+              {t(messageKey, {
+                userName: data.newUserName,
+                userEmail: data.newUserEmail,
+              })}
+            </p>
+            <div className="flex items-center gap-1">
+              <Link
+                href="/admin/users"
+                className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+              >
+                {t("viewUserList")}
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    // Fallback for older notifications without complete data.
+    return (
+      <div className="space-y-1">
+        <h4 className="font-medium text-sm">{notification.title}</h4>
+        <p className="text-sm text-muted-foreground">{notification.message}</p>
       </div>
     );
   }

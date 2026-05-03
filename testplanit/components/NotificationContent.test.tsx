@@ -62,6 +62,34 @@ describe("NotificationContent", () => {
         testRun: "Test Run:",
         casesInProject: "{count} cases in",
         sentBy: "Sent by {name}",
+        // New i18n keys for the four notification types we just
+        // refactored to render via t() instead of falling back to the
+        // persisted English `notification.title` / `.message` columns.
+        shareLinkAccessedTitle: "Shared Report Viewed",
+        shareLinkAccessedAnonymousViewer: "Someone",
+        shareLinkAccessedMessage:
+          '{viewer} viewed your shared report: "{shareTitle}"',
+        viewedAt: "Viewed at",
+        copyCompleteTitle: "Copy Complete",
+        moveCompleteTitle: "Move Complete",
+        copyCompleteMessage: "{count} cases copied successfully",
+        moveCompleteMessage: "{count} cases moved successfully",
+        copyMoveErrorsAppend: ", {errorCount} failed",
+        viewTargetRepository: "View target repository",
+        llmBudgetExceededTitle: "LLM Budget Exceeded",
+        llmBudgetThresholdTitle: "LLM Budget {threshold}% Used",
+        llmBudgetExceededMessage:
+          "{providerName} has exceeded its monthly budget: {spend} spent of {budget} budget.",
+        llmBudgetThresholdMessage:
+          "{providerName} has used {threshold}% of its monthly budget: {spend} of {budget}.",
+        budgetDisclaimer:
+          "Budget limits are informational only and do not prevent usage.",
+        userRegisteredTitle: "New User Registration",
+        userRegisteredMessageSso:
+          "{userName} ({userEmail}) has registered via SSO",
+        userRegisteredMessageForm:
+          "{userName} ({userEmail}) has registered via the registration form",
+        viewUserList: "View user list",
       };
 
       let result = translations[key] || key;
@@ -347,9 +375,10 @@ describe("NotificationContent", () => {
         id: "12",
         type: "SHARE_LINK_ACCESSED",
         title: "Shared Report Viewed",
-        message: "John viewed your shared report",
+        message: 'John viewed your shared report: "Q3 Regression"',
         data: {
           shareLinkId: "link-abc",
+          shareTitle: "Q3 Regression",
           projectId: 100,
           viewerName: "John",
           viewedAt,
@@ -360,11 +389,11 @@ describe("NotificationContent", () => {
 
       expect(screen.getByText("Shared Report Viewed")).toBeInTheDocument();
       expect(
-        screen.getByText("John viewed your shared report")
+        screen.getByText('John viewed your shared report: "Q3 Regression"')
       ).toBeInTheDocument();
     });
 
-    it("should render share link accessed notification without viewedAt", () => {
+    it("should fall back to anonymous viewer when name + email are absent", () => {
       const notification = {
         id: "13",
         type: "SHARE_LINK_ACCESSED",
@@ -372,6 +401,7 @@ describe("NotificationContent", () => {
         message: "Someone viewed your report",
         data: {
           shareLinkId: "link-xyz",
+          shareTitle: "Sprint 5",
           projectId: 200,
         },
       };
@@ -380,7 +410,7 @@ describe("NotificationContent", () => {
 
       expect(screen.getByText("Shared Report Viewed")).toBeInTheDocument();
       expect(
-        screen.getByText("Someone viewed your report")
+        screen.getByText('Someone viewed your shared report: "Sprint 5"')
       ).toBeInTheDocument();
       // viewedAt label should not appear when viewedAt is absent
       expect(screen.queryByText(/Viewed at/i)).not.toBeInTheDocument();
@@ -474,7 +504,7 @@ describe("NotificationContent", () => {
   });
 
   describe("User Registration (USER_REGISTERED)", () => {
-    it("should render user registered notification using fallback", () => {
+    it("should render localized form-registration message", () => {
       const notification = {
         id: "18",
         type: "USER_REGISTERED",
@@ -493,20 +523,113 @@ describe("NotificationContent", () => {
       expect(screen.getByText("New User Registration")).toBeInTheDocument();
       expect(
         screen.getByText(
-          "John Doe (john@example.com) has registered via registration form"
+          "John Doe (john@example.com) has registered via the registration form"
         )
       ).toBeInTheDocument();
+      const link = screen.getByRole("link");
+      expect(link).toHaveAttribute("href", "/admin/users");
+    });
+
+    it("should render localized SSO-registration message", () => {
+      const notification = {
+        id: "18b",
+        type: "USER_REGISTERED",
+        title: "New User Registration",
+        message: "Jane Doe (jane@example.com) has registered via SSO",
+        data: {
+          newUserName: "Jane Doe",
+          newUserEmail: "jane@example.com",
+          registrationMethod: "sso",
+        },
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(
+        screen.getByText("Jane Doe (jane@example.com) has registered via SSO")
+      ).toBeInTheDocument();
+    });
+
+    it("should fall back when newUserName / newUserEmail are absent", () => {
+      const notification = {
+        id: "18c",
+        type: "USER_REGISTERED",
+        title: "New User Registration (legacy)",
+        message: "User registered",
+        data: {},
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(
+        screen.getByText("New User Registration (legacy)")
+      ).toBeInTheDocument();
+      expect(screen.getByText("User registered")).toBeInTheDocument();
     });
   });
 
   describe("LLM Budget Alert", () => {
-    it("should render LLM budget alert notification", () => {
+    it("should render localized 'threshold crossed' message with currency formatting", () => {
       const notification = {
         id: "19",
         type: "LLM_BUDGET_ALERT",
+        title: "LLM Budget 90% Used",
+        message:
+          "OpenAI has used 90% of its monthly budget: $90.00 of $100.00.",
+        data: {
+          providerName: "OpenAI",
+          currentSpend: 90,
+          budgetLimit: 100,
+          threshold: 90,
+        },
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      // Title goes through the "below 100%" branch.
+      expect(screen.getByText("LLM Budget 90% Used")).toBeInTheDocument();
+      // Body interpolates spend/budget formatted via Intl.NumberFormat.
+      // The exact currency string is locale-dependent; assert on the
+      // provider name + threshold + the formatted dollar amounts so
+      // the test stays stable across Node Intl variants.
+      expect(
+        screen.getByText(/OpenAI has used 90% of its monthly budget/)
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/budget limits are informational/i)
+      ).toBeInTheDocument();
+    });
+
+    it("should render localized 'exceeded' message when threshold >= 100", () => {
+      const notification = {
+        id: "19b",
+        type: "LLM_BUDGET_ALERT",
+        title: "LLM Budget Exceeded",
+        message:
+          "OpenAI has exceeded its monthly budget: $110.00 spent of $100.00 budget.",
+        data: {
+          providerName: "OpenAI",
+          currentSpend: 110,
+          budgetLimit: 100,
+          threshold: 100,
+        },
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(screen.getByText("LLM Budget Exceeded")).toBeInTheDocument();
+      expect(
+        screen.getByText(/OpenAI has exceeded its monthly budget/)
+      ).toBeInTheDocument();
+    });
+
+    it("should fall back when providerName / threshold absent (legacy data shape)", () => {
+      const notification = {
+        id: "19c",
+        type: "LLM_BUDGET_ALERT",
         title: "Budget Alert",
         message: "You have reached 90% of your LLM budget",
-        data: {},
+        data: {}, // legacy row
       };
 
       render(<NotificationContent notification={notification} />);
@@ -515,8 +638,60 @@ describe("NotificationContent", () => {
       expect(
         screen.getByText("You have reached 90% of your LLM budget")
       ).toBeInTheDocument();
-      // Disclaimer text
-      expect(screen.getByText("budgetDisclaimer")).toBeInTheDocument();
+    });
+  });
+
+  describe("Copy/Move Complete (COPY_MOVE_COMPLETE)", () => {
+    it("should render localized copy-complete with target-repository link", () => {
+      const notification = {
+        id: "20",
+        type: "COPY_MOVE_COMPLETE",
+        title: "Copy Complete",
+        message: "5 case(s) copied successfully",
+        data: {
+          operation: "copy",
+          sourceProjectId: 1,
+          targetProjectId: 99,
+          copiedCount: 5,
+          movedCount: 0,
+          errorCount: 0,
+        },
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(screen.getByText("Copy Complete")).toBeInTheDocument();
+      expect(
+        screen.getByText("5 cases copied successfully")
+      ).toBeInTheDocument();
+      expect(screen.getByText("View target repository")).toBeInTheDocument();
+      expect(screen.getByRole("link")).toHaveAttribute(
+        "href",
+        "/projects/repository/99"
+      );
+    });
+
+    it("should append the failed-count clause when errorCount > 0", () => {
+      const notification = {
+        id: "20b",
+        type: "COPY_MOVE_COMPLETE",
+        title: "Move Complete",
+        message: "3 cases moved successfully, 2 failed",
+        data: {
+          operation: "move",
+          targetProjectId: 99,
+          copiedCount: 0,
+          movedCount: 3,
+          errorCount: 2,
+        },
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(screen.getByText("Move Complete")).toBeInTheDocument();
+      expect(
+        screen.getByText("3 cases moved successfully, 2 failed")
+      ).toBeInTheDocument();
     });
   });
 

@@ -136,8 +136,12 @@ export class BudgetAlertService {
           relatedEntityId: String(config.llmIntegrationId),
           data: {
             providerName,
-            currentSpend: currentSpend.toFixed(2),
-            budgetLimit: budget.toFixed(2),
+            // Raw numbers so the bell-icon UI and the email worker can
+            // format currency per the recipient's locale via
+            // `Intl.NumberFormat`. Pre-formatted "1234.56" strings would
+            // strip the locale's grouping/decimal separators.
+            currentSpend,
+            budgetLimit: budget,
             threshold,
             periodKey,
             link: "/admin/llm",
