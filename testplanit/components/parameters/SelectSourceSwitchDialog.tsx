@@ -64,8 +64,8 @@ export function SelectSourceSwitchDialog({
         return;
       }
       toast.success(t("updateSuccess"));
-      queryClient.invalidateQueries({ queryKey: ["TestCaseParameter"] });
-      queryClient.invalidateQueries({ queryKey: ["RepositoryCases"] });
+      queryClient.invalidateQueries({ queryKey: ["zenstack", "TestCaseParameter"] });
+      queryClient.invalidateQueries({ queryKey: ["zenstack", "RepositoryCases"] });
       onComplete?.();
       onOpenChange(false);
     } finally {

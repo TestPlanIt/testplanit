@@ -186,8 +186,8 @@ export function DatasetImportWizard({
           count: json?.created ?? csvRows.length,
         }),
       );
-      void queryClient.invalidateQueries({ queryKey: ["DataSetRow"] });
-      void queryClient.invalidateQueries({ queryKey: ["DataSet"] });
+      void queryClient.invalidateQueries({ queryKey: ["zenstack", "DataSetRow"] });
+      void queryClient.invalidateQueries({ queryKey: ["zenstack", "DataSet"] });
       reset();
       onClose();
     } finally {

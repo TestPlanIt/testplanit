@@ -201,7 +201,7 @@ export function DatasetTab({
         toast.error(t("datasetSaveError"));
         return false;
       }
-      queryClient.invalidateQueries({ queryKey: ["DataSetRow"] });
+      queryClient.invalidateQueries({ queryKey: ["zenstack", "DataSetRow"] });
       return true;
     },
     [caseId, queryClient, t]
@@ -293,7 +293,7 @@ export function DatasetTab({
       toast.error(t("datasetSaveError"));
       return;
     }
-    queryClient.invalidateQueries({ queryKey: ["DataSetRow"] });
+    queryClient.invalidateQueries({ queryKey: ["zenstack", "DataSetRow"] });
     await loadDataset();
   }, [caseId, queryClient, rows.length, t, loadDataset]);
 
@@ -376,7 +376,7 @@ export function DatasetTab({
         })
       )
     );
-    queryClient.invalidateQueries({ queryKey: ["DataSetRow"] });
+    queryClient.invalidateQueries({ queryKey: ["zenstack", "DataSetRow"] });
   };
 
   // ---------- Build columns ----------

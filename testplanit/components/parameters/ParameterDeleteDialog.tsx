@@ -82,8 +82,8 @@ export function ParameterDeleteDialog({
         return;
       }
       toast.success(t("deleteSuccess", { name: paramName }));
-      queryClient.invalidateQueries({ queryKey: ["TestCaseParameter"] });
-      queryClient.invalidateQueries({ queryKey: ["RepositoryCases"] });
+      queryClient.invalidateQueries({ queryKey: ["zenstack", "TestCaseParameter"] });
+      queryClient.invalidateQueries({ queryKey: ["zenstack", "RepositoryCases"] });
       onOpenChange(false);
     } finally {
       setSubmitting(false);

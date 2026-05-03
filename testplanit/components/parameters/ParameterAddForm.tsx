@@ -156,8 +156,8 @@ export function ParameterAddForm({ caseId }: ParameterAddFormProps) {
         toast.message(t("toastVersionBumped", { version }));
       }
       form.reset(DEFAULTS);
-      queryClient.invalidateQueries({ queryKey: ["TestCaseParameter"] });
-      queryClient.invalidateQueries({ queryKey: ["RepositoryCases"] });
+      queryClient.invalidateQueries({ queryKey: ["zenstack", "TestCaseParameter"] });
+      queryClient.invalidateQueries({ queryKey: ["zenstack", "RepositoryCases"] });
     } catch {
       toast.error(t("addError"));
     } finally {

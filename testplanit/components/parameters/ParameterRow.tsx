@@ -186,7 +186,7 @@ export function ParameterRow({
           setRenameOpen(open);
           if (!open) {
             setEditing(false);
-            queryClient.invalidateQueries({ queryKey: ["TestCaseParameter"] });
+            queryClient.invalidateQueries({ queryKey: ["zenstack", "TestCaseParameter"] });
           }
         }}
         caseId={caseId}

@@ -144,8 +144,8 @@ export function PasteCsvDialog({
           count: json?.created ?? parsed.rows.length,
         })
       );
-      queryClient.invalidateQueries({ queryKey: ["DataSetRow"] });
-      queryClient.invalidateQueries({ queryKey: ["DataSet"] });
+      queryClient.invalidateQueries({ queryKey: ["zenstack", "DataSetRow"] });
+      queryClient.invalidateQueries({ queryKey: ["zenstack", "DataSet"] });
       reset();
       onOpenChange(false);
     } finally {
