@@ -665,7 +665,13 @@
       "removeIssue": "Supprimer le problème",
       "selectDeselectAllAddEdit": "Sélectionner/Désélectionner tout Ajouter/Modifier",
       "selectDeselectAllDelete": "Sélectionner/Désélectionner tout Supprimer",
-      "selectDeselectAllClose": "Tout sélectionner/désélectionner Fermer"
+      "selectDeselectAllClose": "Tout sélectionner/désélectionner Fermer",
+      "clearFilter": "Filtre clair",
+      "olderVersion": "Version antérieure",
+      "newerVersion": "Version plus récente",
+      "deletedUser": "Utilisateur supprimé",
+      "restrictedField": "Champ restreint",
+      "backToTestCase": "Retour au cas de test"
     },
     "labels": {
       "projects": "{count, plural, =1 {# Projet} other {# Projets}}",

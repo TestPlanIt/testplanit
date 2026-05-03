@@ -665,7 +665,13 @@
       "removeIssue": "Remove issue",
       "selectDeselectAllAddEdit": "Select/Deselect All Add/Edit",
       "selectDeselectAllDelete": "Select/Deselect All Delete",
-      "selectDeselectAllClose": "Select/Deselect All Close"
+      "selectDeselectAllClose": "Select/Deselect All Close",
+      "clearFilter": "Clear filter",
+      "olderVersion": "Older Version",
+      "newerVersion": "Newer Version",
+      "deletedUser": "Deleted User",
+      "restrictedField": "Restricted Field",
+      "backToTestCase": "Back to Test Case"
     },
     "labels": {
       "projects": "{count, plural, =1 {# Project} other {# Projects}}",

@@ -1959,7 +1959,7 @@ export function BulkEditModal({
                         )}
                         {field.isCustom && field.field?.isRestricted && (
                           <span
-                            title="Restricted Field"
+                            title={tCommon("aria.restrictedField")}
                             className="ml-1 text-muted-foreground"
                           >
                             <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />

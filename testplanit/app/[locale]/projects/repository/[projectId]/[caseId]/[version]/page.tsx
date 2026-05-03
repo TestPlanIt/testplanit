@@ -684,7 +684,7 @@ export default function TestCaseVersions() {
                       onPrevVersion={goToPreviousVersion}
                       onNextVersion={goToNextVersion}
                       backHref={`/projects/repository/${projectId}/${caseId}`}
-                      backTitle="Back to Test Case"
+                      backTitle={t("common.aria.backToTestCase")}
                     />
                   </>
                 )}

@@ -205,7 +205,7 @@ export function DeferredIssueManager({
               )}
               <button
                 type="button"
-                title="Remove issue"
+                title={t("common.aria.removeIssue")}
                 onClick={() => handleRemoveIssue(issue.id)}
                 disabled={disabled}
                 className="ml-2 shrink-0 opacity-60 hover:opacity-100 transition-opacity disabled:opacity-30"

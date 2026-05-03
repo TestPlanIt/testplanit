@@ -44,7 +44,7 @@ export const UserNameCell: React.FC<UserNameCellProps> = ({
       <div
         className="min-w-0"
         data-testid="user-name-cell"
-        title="Deleted User"
+        title={t("deletedUser")}
       >
         <span className="text-muted-foreground italic">{t("deletedUser")}</span>
       </div>

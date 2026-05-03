@@ -135,7 +135,7 @@ export function StepsFilterInput({
               }
             }}
             className="h-5 w-5 p-0"
-            title="Clear filter"
+            title={t("common.aria.clearFilter")}
           >
             <X className="h-3 w-3" />
           </Button>
