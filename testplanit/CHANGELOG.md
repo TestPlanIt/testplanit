@@ -1,3 +1,9 @@
+## [0.24.4](https://github.com/TestPlanIt/testplanit/compare/v0.24.3...v0.24.4) (2026-05-03)
+
+### Bug Fixes
+
+* **i18n:** translate notifications for the four under-covered types ([#272](https://github.com/TestPlanIt/testplanit/issues/272)) ([a4c79bd](https://github.com/TestPlanIt/testplanit/commit/a4c79bdea48bbe9dd9d50889e7367a06cbd2a312))
+
 ## [0.24.3](https://github.com/TestPlanIt/testplanit/compare/v0.24.2...v0.24.3) (2026-05-03)
 
 ### Bug Fixes
