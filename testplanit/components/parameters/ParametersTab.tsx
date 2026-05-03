@@ -60,17 +60,25 @@ export function ParametersTab({
         })
       )
     );
-    queryClient.invalidateQueries({ queryKey: ["zenstack", "TestCaseParameter"] });
-    queryClient.invalidateQueries({ queryKey: ["zenstack", "RepositoryCases"] });
+    queryClient.invalidateQueries({
+      queryKey: ["zenstack", "TestCaseParameter"],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["zenstack", "RepositoryCases"],
+    });
   };
 
   return (
     <div className="flex flex-col h-full">
       <div className="sticky top-0 z-10 bg-card p-6 border-b">
-        <ParameterAddForm caseId={caseId} projectId={projectId} />
+        <ParameterAddForm
+          caseId={caseId}
+          projectId={projectId}
+          existingCount={parameters.length}
+        />
       </div>
 
-      <div className="flex-1 p-6">
+      <div className="flex-1 px-6 py-2">
         {parameters.length === 0 ? (
           <div
             className="flex flex-col items-center justify-center text-center py-12 gap-2"

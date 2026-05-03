@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next-intl", () => ({
@@ -8,16 +9,35 @@ vi.mock("next-intl", () => ({
   ) => {
     const parameters: Record<string, string> = {
       toolbarInsertParameter: "Insert parameter",
-      chooserTitle: "Insert parameter",
-      chooserDescription:
-        "Choose a parameter to insert at the cursor position.",
-      chooserSearchPlaceholder: "Search parameters...",
-      chooserEmpty: "No parameters declared yet.",
-      chooserConfigureLink: "Configure parameters",
+      toolbarInsertParameterPlaceholder: "Search parameters...",
     };
     const common: Record<string, string> = { cancel: "Cancel" };
     const dict = namespace === "common" ? common : parameters;
     return dict[key] ?? key;
+  },
+}));
+
+// Capture the props AsyncCombobox is invoked with so we can drive its
+// callbacks directly. Behavior of the popover/list itself is owned by
+// AsyncCombobox's own tests; here we only verify the integration shape.
+const comboboxPropsRef: { current: Record<string, unknown> | null } = {
+  current: null,
+};
+vi.mock("@/components/ui/async-combobox", () => ({
+  AsyncCombobox: (props: Record<string, unknown>) => {
+    comboboxPropsRef.current = props;
+    const renderTrigger = props.renderTrigger as
+      | ((args: Record<string, unknown>) => ReactElement)
+      | undefined;
+    return renderTrigger
+      ? renderTrigger({
+          value: null,
+          open: false,
+          placeholder: "",
+          triggerLabel: null,
+          defaultContent: null,
+        })
+      : null;
   },
 }));
 
@@ -55,7 +75,7 @@ function makeEditor(): {
 }
 
 describe("InsertParameterToolbarButton", () => {
-  it("renders the toolbar button with Braces icon and the data-testid", () => {
+  it("renders the toolbar button with the Braces icon and the data-testid", () => {
     const { editor } = makeEditor();
     render(
       <InsertParameterToolbarButton
@@ -68,22 +88,7 @@ describe("InsertParameterToolbarButton", () => {
     ).toBeInTheDocument();
   });
 
-  it("opens the chooser dialog on click", () => {
-    const { editor } = makeEditor();
-    render(
-      <InsertParameterToolbarButton
-        editor={editor as never}
-        parameters={PARAMS}
-      />
-    );
-    expect(
-      screen.queryByTestId("parameter-chooser-dialog")
-    ).not.toBeInTheDocument();
-    fireEvent.click(screen.getByTestId("tiptap-insert-parameter-button"));
-    expect(screen.getByTestId("parameter-chooser-dialog")).toBeVisible();
-  });
-
-  it("on item pick, calls editor.chain().focus().insertContent(parameterMention).insertContent(' ').run() and closes", () => {
+  it("on parameter pick (via combobox onValueChange), inserts parameterMention chip + trailing space and runs the chain", () => {
     const { editor, insertContent, runSpy } = makeEditor();
     render(
       <InsertParameterToolbarButton
@@ -91,21 +96,45 @@ describe("InsertParameterToolbarButton", () => {
         parameters={PARAMS}
       />
     );
-    fireEvent.click(screen.getByTestId("tiptap-insert-parameter-button"));
-    fireEvent.click(screen.getByTestId("parameter-chooser-item-amount"));
 
-    // First insertContent: parameterMention node.
+    const onValueChange = comboboxPropsRef.current
+      ?.onValueChange as (p: ParameterChipMeta | null) => void;
+    expect(typeof onValueChange).toBe("function");
+
+    onValueChange(PARAMS[1]);
+
     expect(insertContent).toHaveBeenNthCalledWith(1, {
       type: "parameterMention",
-      attrs: { id: "amount", label: "amount", paramId: 8, paramType: "INTEGER" },
+      attrs: {
+        id: "amount",
+        label: "amount",
+        paramId: 8,
+        paramType: "INTEGER",
+      },
     });
-    // Second insertContent: trailing space.
     expect(insertContent).toHaveBeenNthCalledWith(2, " ");
     expect(runSpy).toHaveBeenCalledTimes(1);
+  });
 
-    // Dialog closed after pick.
-    expect(
-      screen.queryByTestId("parameter-chooser-dialog")
-    ).not.toBeInTheDocument();
+  it("fetchOptions filters the parameter list by query (case-insensitive substring)", async () => {
+    const { editor } = makeEditor();
+    render(
+      <InsertParameterToolbarButton
+        editor={editor as never}
+        parameters={PARAMS}
+      />
+    );
+
+    const fetchOptions = comboboxPropsRef.current?.fetchOptions as (
+      query: string
+    ) => Promise<{ results: ParameterChipMeta[]; total: number }>;
+    expect(typeof fetchOptions).toBe("function");
+
+    const all = await fetchOptions("");
+    expect(all.results).toHaveLength(2);
+
+    const filtered = await fetchOptions("AMO");
+    expect(filtered.results).toHaveLength(1);
+    expect(filtered.results[0]?.name).toBe("amount");
   });
 });

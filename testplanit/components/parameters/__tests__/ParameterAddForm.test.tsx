@@ -77,12 +77,11 @@ describe("ParameterAddForm", () => {
     global.fetch = originalFetch;
   });
 
-  it("renders Name, Type, Default, Order, Required, Sensitive fields and submit button", () => {
+  it("renders Name, Type, Default, Required, Sensitive fields and submit button", () => {
     render(wrap(<ParameterAddForm caseId={1} projectId={2} />));
     expect(screen.getByTestId("parameter-form-name")).toBeInTheDocument();
     expect(screen.getByTestId("parameter-form-type")).toBeInTheDocument();
     expect(screen.getByTestId("parameter-form-default")).toBeInTheDocument();
-    expect(screen.getByTestId("parameter-form-order")).toBeInTheDocument();
     expect(screen.getByTestId("parameter-form-required")).toBeInTheDocument();
     expect(screen.getByTestId("parameter-form-sensitive")).toBeInTheDocument();
     expect(screen.getByTestId("parameter-form-submit")).toBeInTheDocument();

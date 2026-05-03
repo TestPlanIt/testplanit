@@ -56,7 +56,7 @@ const mkParam = (overrides: Partial<DatasetCellParameter> = {}): DatasetCellPara
 });
 
 describe("DatasetCell — read mode", () => {
-  it("Test 1: STRING value renders as a span with truncate class", () => {
+  it("Test 1: STRING value renders as a readonly input with the value", () => {
     render(
       <DatasetCell
         rowId={1}
@@ -74,10 +74,10 @@ describe("DatasetCell — read mode", () => {
         onMoveDown={noop}
       />
     );
-    const span = screen.getByTestId("dataset-cell-display");
-    expect(span.tagName).toBe("SPAN");
-    expect(span.className).toContain("truncate");
-    expect(span).toHaveTextContent("alice");
+    const input = screen.getByTestId("dataset-cell-display") as HTMLInputElement;
+    expect(input.tagName).toBe("INPUT");
+    expect(input.readOnly).toBe(true);
+    expect(input.value).toBe("alice");
   });
 
   it("Test 2: INTEGER value renders with font-mono tabular-nums text-right", () => {
@@ -98,11 +98,11 @@ describe("DatasetCell — read mode", () => {
         onMoveDown={noop}
       />
     );
-    const span = screen.getByTestId("dataset-cell-display");
-    expect(span.className).toContain("font-mono");
-    expect(span.className).toContain("tabular-nums");
-    expect(span.className).toContain("text-right");
-    expect(span).toHaveTextContent("42");
+    const input = screen.getByTestId("dataset-cell-display") as HTMLInputElement;
+    expect(input.className).toContain("font-mono");
+    expect(input.className).toContain("tabular-nums");
+    expect(input.className).toContain("text-right");
+    expect(input.value).toBe("42");
   });
 
   it("Test 3: BOOLEAN renders as a Checkbox in display mode (no edit boundary)", () => {
@@ -446,6 +446,10 @@ describe("DatasetCell — label cell (isLabel)", () => {
         onMoveDown={noop}
       />
     );
-    expect(screen.getByTestId("dataset-cell-display")).toHaveTextContent("My Row");
+    const input = screen.getByTestId(
+      "dataset-cell-display"
+    ) as HTMLInputElement;
+    expect(input.tagName).toBe("INPUT");
+    expect(input.value).toBe("My Row");
   });
 });

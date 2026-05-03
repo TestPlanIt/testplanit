@@ -189,14 +189,11 @@ export function DatasetTab({
   // ---------- Mutations ----------
   const patchRow = useCallback(
     async (body: Record<string, unknown>) => {
-      const res = await fetch(
-        `/api/repository/cases/${caseId}/dataset/rows`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        }
-      );
+      const res = await fetch(`/api/repository/cases/${caseId}/dataset/rows`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
       if (!res.ok) {
         toast.error(t("datasetSaveError"));
         return false;
@@ -277,18 +274,15 @@ export function DatasetTab({
   // ---------- Add row ----------
   const handleAddRow = useCallback(async () => {
     const nextIndex = rows.length;
-    const res = await fetch(
-      `/api/repository/cases/${caseId}/dataset/rows`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          rowIndex: nextIndex,
-          label: "",
-          valuesJson: {},
-        }),
-      }
-    );
+    const res = await fetch(`/api/repository/cases/${caseId}/dataset/rows`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        rowIndex: nextIndex,
+        label: t("datasetRowDefaultLabel", { number: nextIndex + 1 }),
+        valuesJson: {},
+      }),
+    });
     if (!res.ok) {
       toast.error(t("datasetSaveError"));
       return;
@@ -417,23 +411,26 @@ export function DatasetTab({
         size: 32,
         header: () => null,
         cell: ({ row }) => (
-          <Checkbox
-            checked={selectedRowIds.has(row.original.id)}
-            onCheckedChange={(v) =>
-              setSelectedRowIds((prev) => {
-                const next = new Set(prev);
-                if (v) next.add(row.original.id);
-                else next.delete(row.original.id);
-                return next;
-              })
-            }
-            aria-label={t("datasetRowSelectAria")}
-            data-testid={`dataset-row-select-${row.original.id}`}
-          />
+          <div className="flex items-center justify-center">
+            <Checkbox
+              checked={selectedRowIds.has(row.original.id)}
+              onCheckedChange={(v) =>
+                setSelectedRowIds((prev) => {
+                  const next = new Set(prev);
+                  if (v) next.add(row.original.id);
+                  else next.delete(row.original.id);
+                  return next;
+                })
+              }
+              aria-label={t("datasetRowSelectAria")}
+              data-testid={`dataset-row-select-${row.original.id}`}
+            />
+          </div>
         ),
       },
       {
         id: LABEL_COLUMN_ID,
+        minSize: 100,
         header: () => t("datasetLabelColumn"),
         accessorKey: "label",
         cell: ({ row }) => {
@@ -465,8 +462,9 @@ export function DatasetTab({
         const colId = `param-${p.id}`;
         return {
           id: colId,
+          minSize: 180,
           header: () => (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 whitespace-nowrap">
               <span className="font-mono text-sm">@{p.name}</span>
               <Badge variant="secondary">{p.type}</Badge>
               {p.sensitive ? (
@@ -477,8 +475,9 @@ export function DatasetTab({
           accessorFn: (row: DatasetRowRecord) =>
             (row.valuesJson as Record<string, unknown> | null)?.[p.name],
           cell: ({ row }: { row: { original: DatasetRowRecord } }) => {
-            const cellValue =
-              (row.original.valuesJson as Record<string, unknown> | null)?.[p.name];
+            const cellValue = (
+              row.original.valuesJson as Record<string, unknown> | null
+            )?.[p.name];
             const isEditing =
               editCell?.rowId === row.original.id &&
               editCell.columnId === colId;
@@ -600,7 +599,9 @@ export function DatasetTab({
           <h3 className="text-base font-semibold">
             {t("datasetEmptyHeading")}
           </h3>
-          <p className="text-sm text-muted-foreground">{t("datasetEmptyBody")}</p>
+          <p className="text-sm text-muted-foreground">
+            {t("datasetEmptyBody")}
+          </p>
           <div className="flex gap-2">
             <Button variant="default" size="sm" onClick={handleAddRow}>
               {t("datasetAddRow")}
@@ -637,14 +638,23 @@ export function DatasetTab({
                 <thead className="bg-muted/30 sticky top-0">
                   {table.getHeaderGroups().map((hg) => (
                     <tr key={hg.id}>
-                      {hg.headers.map((h) => (
-                        <th key={h.id} className="px-2 py-1 text-left">
-                          {flexRender(
-                            h.column.columnDef.header,
-                            h.getContext()
-                          )}
-                        </th>
-                      ))}
+                      {hg.headers.map((h) => {
+                        const minSize = h.column.columnDef.minSize;
+                        return (
+                          <th
+                            key={h.id}
+                            className="px-2 py-1 text-left"
+                            style={
+                              minSize ? { minWidth: `${minSize}px` } : undefined
+                            }
+                          >
+                            {flexRender(
+                              h.column.columnDef.header,
+                              h.getContext()
+                            )}
+                          </th>
+                        );
+                      })}
                     </tr>
                   ))}
                 </thead>
@@ -670,7 +680,7 @@ export function DatasetTab({
                           {...attributes}
                           data-testid={`dataset-row-${row.original.id}`}
                         >
-                          <td className="w-6 px-2 py-1">
+                          <td className="w-6 px-2 py-1 align-middle">
                             <div
                               ref={setActivatorNodeRef}
                               {...listeners}
@@ -684,17 +694,25 @@ export function DatasetTab({
                           {row
                             .getVisibleCells()
                             .slice(1)
-                            .map((cell) => (
-                              <td
-                                key={cell.id}
-                                className="px-2 py-1 align-top"
-                              >
-                                {flexRender(
-                                  cell.column.columnDef.cell,
-                                  cell.getContext()
-                                )}
-                              </td>
-                            ))}
+                            .map((cell) => {
+                              const minSize = cell.column.columnDef.minSize;
+                              return (
+                                <td
+                                  key={cell.id}
+                                  className="px-2 py-1 align-middle"
+                                  style={
+                                    minSize
+                                      ? { minWidth: `${minSize}px` }
+                                      : undefined
+                                  }
+                                >
+                                  {flexRender(
+                                    cell.column.columnDef.cell,
+                                    cell.getContext()
+                                  )}
+                                </td>
+                              );
+                            })}
                         </tr>
                       )}
                     </SortableDatasetRow>
@@ -707,7 +725,7 @@ export function DatasetTab({
       )}
 
       <div
-        className="p-2 border-t text-xs text-muted-foreground"
+        className="p-2 pl-4 border-t text-xs text-muted-foreground"
         data-testid="dataset-tab-footer"
       >
         {t("datasetFooterHint")}

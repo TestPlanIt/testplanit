@@ -1,6 +1,7 @@
 "use client";
 
 import { ParameterDeleteDialog } from "@/components/parameters/ParameterDeleteDialog";
+import { ParameterEditDialog } from "@/components/parameters/ParameterEditDialog";
 import { ParameterRenameDialog } from "@/components/parameters/ParameterRenameDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { TestCaseParameter } from "@prisma/client";
-import { useQueryClient } from "@tanstack/react-query";
 import { GripVertical, Lock, Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -34,12 +34,8 @@ function defaultValueDisplay(parameter: TestCaseParameter): string {
   return JSON.stringify(parameter.defaultValue);
 }
 
-export function ParameterRow({
-  parameter,
-  caseId,
-}: ParameterRowProps) {
+export function ParameterRow({ parameter, caseId }: ParameterRowProps) {
   const t = useTranslations("parameters");
-  const queryClient = useQueryClient();
   const {
     attributes,
     listeners,
@@ -50,10 +46,11 @@ export function ParameterRow({
     isDragging,
   } = useSortable({ id: parameter.id });
 
-  const [editing, setEditing] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [renaming, setRenaming] = useState(false);
   const [draftName, setDraftName] = useState(parameter.name);
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const style = {
     transform: CSS.Translate.toString(transform),
@@ -63,13 +60,13 @@ export function ParameterRow({
 
   const commitNameChange = () => {
     if (draftName === parameter.name) {
-      setEditing(false);
+      setRenaming(false);
       return;
     }
     if (!draftName.trim()) {
       toast.error(t("addError"));
       setDraftName(parameter.name);
-      setEditing(false);
+      setRenaming(false);
       return;
     }
     setRenameOpen(true);
@@ -80,7 +77,7 @@ export function ParameterRow({
       <div
         ref={setNodeRef}
         style={style}
-        className="border rounded-md bg-card p-3 flex items-center gap-3"
+        className="border rounded-md bg-card p-1 flex items-center gap-3"
         data-testid={`parameter-row-${parameter.id}`}
       >
         <div
@@ -94,7 +91,7 @@ export function ParameterRow({
           <GripVertical className="w-4 h-4" />
         </div>
 
-        {editing ? (
+        {renaming ? (
           <Input
             autoFocus
             className="h-8 w-40 text-sm font-mono"
@@ -108,13 +105,24 @@ export function ParameterRow({
               } else if (e.key === "Escape") {
                 e.preventDefault();
                 setDraftName(parameter.name);
-                setEditing(false);
+                setRenaming(false);
               }
             }}
             data-testid="parameter-row-name-input"
           />
         ) : (
-          <span className="text-sm font-mono">{parameter.name}</span>
+          <button
+            type="button"
+            className="text-sm font-mono hover:underline cursor-pointer"
+            onClick={() => {
+              setDraftName(parameter.name);
+              setRenaming(true);
+            }}
+            title={t("renameAria")}
+            data-testid="parameter-row-name"
+          >
+            {parameter.name}
+          </button>
         )}
 
         <Badge variant="secondary">{typeChipLabel(parameter)}</Badge>
@@ -148,10 +156,7 @@ export function ParameterRow({
           size="icon"
           aria-label={t("editAria")}
           title={t("editAria")}
-          onClick={() => {
-            setDraftName(parameter.name);
-            setEditing((v) => !v);
-          }}
+          onClick={() => setEditOpen(true)}
           data-testid="parameter-row-edit-button"
         >
           <Pencil className="w-4 h-4" />
@@ -171,6 +176,13 @@ export function ParameterRow({
         </Button>
       </div>
 
+      <ParameterEditDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        caseId={caseId}
+        parameter={parameter}
+      />
+
       <ParameterDeleteDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
@@ -184,19 +196,14 @@ export function ParameterRow({
         open={renameOpen}
         onOpenChange={(open) => {
           setRenameOpen(open);
-          if (!open) {
-            setEditing(false);
-            queryClient.invalidateQueries({ queryKey: ["zenstack", "TestCaseParameter"] });
-          }
+          if (!open) setRenaming(false);
         }}
         caseId={caseId}
         paramId={parameter.id}
         oldName={parameter.name}
         newName={draftName}
         currentCaseVersion={1}
-        onComplete={() => {
-          setEditing(false);
-        }}
+        onComplete={() => setRenaming(false)}
       />
     </>
   );

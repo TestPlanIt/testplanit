@@ -3,33 +3,30 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 // Per-file next-intl mock so we assert on real English copy.
 vi.mock("next-intl", () => ({
-  useTranslations: (namespace?: string) => (
-    key: string,
-    params?: Record<string, unknown>
-  ) => {
-    const parameters: Record<string, string> = {
-      sheetTitle: "Configure Parameters",
-      sheetDescription:
-        "Declare named parameters for this test case and (optionally) attach a dataset of values to use during execution.",
-      tabParameters: "Parameters",
-      tabDataset: "Dataset",
-      tabDatasetDisabledTooltip:
-        "Add at least one parameter before editing dataset rows.",
-      sheetAutoSaveHint: "Changes save automatically.",
-    };
-    const commonActions: Record<string, string> = {
-      close: "Close",
-    };
-    const dict =
-      namespace === "common.actions" ? commonActions : parameters;
-    let value = dict[key] ?? key;
-    if (params) {
-      Object.entries(params).forEach(([k, v]) => {
-        value = value.replace(`{${k}}`, String(v));
-      });
-    }
-    return value;
-  },
+  useTranslations:
+    (namespace?: string) => (key: string, params?: Record<string, unknown>) => {
+      const parameters: Record<string, string> = {
+        sheetTitle: "Configure Parameters",
+        sheetDescription:
+          "Declare named parameters to be used in test steps for this test case and (optionally) attach a dataset of values to use during execution.",
+        tabParameters: "Parameters",
+        tabDataset: "Dataset",
+        tabDatasetDisabledTooltip:
+          "Add at least one parameter before editing dataset rows.",
+        sheetAutoSaveHint: "Changes save automatically.",
+      };
+      const commonActions: Record<string, string> = {
+        close: "Close",
+      };
+      const dict = namespace === "common.actions" ? commonActions : parameters;
+      let value = dict[key] ?? key;
+      if (params) {
+        Object.entries(params).forEach(([k, v]) => {
+          value = value.replace(`{${k}}`, String(v));
+        });
+      }
+      return value;
+    },
 }));
 
 // Mock ZenStack hooks BEFORE importing the component under test
@@ -64,9 +61,7 @@ vi.mock("@/components/parameters/ParametersTab", () => ({
 // React Query, etc.
 vi.mock("@/components/parameters/DatasetImportWizard", () => ({
   DatasetImportWizard: ({ open }: { open: boolean }) =>
-    open ? (
-      <div data-testid="stub-dataset-import-wizard" />
-    ) : null,
+    open ? <div data-testid="stub-dataset-import-wizard" /> : null,
 }));
 
 import { ConfigureParametersSheet } from "@/components/parameters/ConfigureParametersSheet";
@@ -87,7 +82,9 @@ describe("ConfigureParametersSheet", () => {
         projectId={2}
       />
     );
-    expect(screen.getByTestId("configure-parameters-sheet")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("configure-parameters-sheet")
+    ).toBeInTheDocument();
   });
 
   it("does not render sheet content when open=false", () => {

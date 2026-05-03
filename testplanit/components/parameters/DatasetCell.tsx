@@ -166,26 +166,36 @@ export function DatasetCell({
       );
     }
 
-    // STRING / INTEGER / SELECT / label — read-mode display
+    // STRING / INTEGER / SELECT / label — read-mode display.
+    // Render a readonly <Input> so the box model is byte-identical to
+    // edit mode: same shadcn Input component, same h-9 border-box, same
+    // border thickness. Only the colors change (transparent border in
+    // view mode, hover-revealed). Clicking switches to edit mode.
     const display =
       value === null || value === undefined ? "" : String(value);
+    const isEmpty = display === "";
     return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span
-            className={cn(
-              "block truncate cursor-text",
-              parameter?.type === "INTEGER" &&
-                "font-mono tabular-nums text-right"
-            )}
-            onClick={onEdit}
-            data-testid="dataset-cell-display"
-          >
-            {display}
-          </span>
-        </TooltipTrigger>
-        {display.length > 30 && <TooltipContent>{display}</TooltipContent>}
-      </Tooltip>
+      <div className="relative">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Input
+              readOnly
+              value={isEmpty ? t("datasetCellEmptyPlaceholder") : display}
+              onClick={onEdit}
+              onFocus={onEdit}
+              tabIndex={0}
+              className={cn(
+                "border-transparent cursor-text hover:border-input shadow-none focus-visible:ring-0",
+                isEmpty && "text-muted-foreground/50 italic",
+                parameter?.type === "INTEGER" &&
+                  "font-mono tabular-nums text-right"
+              )}
+              data-testid="dataset-cell-display"
+            />
+          </TooltipTrigger>
+          {display.length > 30 && <TooltipContent>{display}</TooltipContent>}
+        </Tooltip>
+      </div>
     );
   }
 

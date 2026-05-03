@@ -26,13 +26,14 @@ import { parameterCreateSchema } from "~/lib/schemas/parameterSchema";
 export interface ParameterAddFormProps {
   caseId: number;
   projectId: number;
+  /** Current parameter count — new parameter is appended at this order. */
+  existingCount?: number;
 }
 
 type FormValues = {
   name: string;
   type: "STRING" | "INTEGER" | "BOOLEAN" | "SELECT";
   defaultValue: string;
-  order: number;
   required: boolean;
   sensitive: boolean;
   selectSource: "inline" | "lookup";
@@ -44,7 +45,6 @@ const DEFAULTS: FormValues = {
   name: "",
   type: "STRING",
   defaultValue: "",
-  order: 0,
   required: false,
   sensitive: false,
   selectSource: "inline",
@@ -54,13 +54,14 @@ const DEFAULTS: FormValues = {
 
 function buildPayload(
   values: FormValues,
-  caseId: number
+  caseId: number,
+  nextOrder: number
 ): Record<string, unknown> {
   const payload: Record<string, unknown> = {
     testCaseId: caseId,
     name: values.name,
     type: values.type,
-    order: values.order,
+    order: nextOrder,
     required: values.required,
     sensitive: values.sensitive,
   };
@@ -89,7 +90,7 @@ function buildPayload(
   return payload;
 }
 
-export function ParameterAddForm({ caseId }: ParameterAddFormProps) {
+export function ParameterAddForm({ caseId, existingCount = 0 }: ParameterAddFormProps) {
   const t = useTranslations("parameters");
   const queryClient = useQueryClient();
   const [submitting, setSubmitting] = useState(false);
@@ -100,7 +101,7 @@ export function ParameterAddForm({ caseId }: ParameterAddFormProps) {
     // Resolve via the Phase 1 Zod schema after re-shaping the form values
     // into the shape parameterCreateSchema expects.
     resolver: async (values) => {
-      const payload = buildPayload(values as FormValues, caseId);
+      const payload = buildPayload(values as FormValues, caseId, existingCount);
       const result = parameterCreateSchema.safeParse(payload);
       if (result.success) {
         return { values: values, errors: {} };
@@ -129,7 +130,7 @@ export function ParameterAddForm({ caseId }: ParameterAddFormProps) {
   const onSubmit = async (values: FormValues) => {
     setSubmitting(true);
     try {
-      const body = buildPayload(values, caseId);
+      const body = buildPayload(values, caseId, existingCount);
       const res = await fetch(
         `/api/repository/cases/${caseId}/parameters`,
         {
@@ -228,62 +229,50 @@ export function ParameterAddForm({ caseId }: ParameterAddFormProps) {
           />
         </div>
 
-        <div>
-          <label className="text-xs font-medium" htmlFor="parameter-form-order">
-            {t("formOrder")}
-          </label>
-          <Input
-            id="parameter-form-order"
-            data-testid="parameter-form-order"
-            type="number"
-            {...form.register("order", { valueAsNumber: true })}
-          />
-        </div>
-      </div>
+        <div className="flex items-end gap-6 pb-2">
+          <div className="flex items-center gap-2">
+            <Controller
+              control={form.control}
+              name="required"
+              render={({ field }) => (
+                <Checkbox
+                  id="parameter-form-required"
+                  data-testid="parameter-form-required"
+                  checked={field.value}
+                  onCheckedChange={(v) => field.onChange(Boolean(v))}
+                />
+              )}
+            />
+            <label
+              htmlFor="parameter-form-required"
+              className="text-xs font-medium"
+              title={t("formRequiredHelp")}
+            >
+              {t("formRequired")}
+            </label>
+          </div>
 
-      <div className="flex items-center gap-6">
-        <div className="flex items-center gap-2">
-          <Controller
-            control={form.control}
-            name="required"
-            render={({ field }) => (
-              <Checkbox
-                id="parameter-form-required"
-                data-testid="parameter-form-required"
-                checked={field.value}
-                onCheckedChange={(v) => field.onChange(Boolean(v))}
-              />
-            )}
-          />
-          <label
-            htmlFor="parameter-form-required"
-            className="text-xs font-medium"
-            title={t("formRequiredHelp")}
-          >
-            {t("formRequired")}
-          </label>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Controller
-            control={form.control}
-            name="sensitive"
-            render={({ field }) => (
-              <Checkbox
-                id="parameter-form-sensitive"
-                data-testid="parameter-form-sensitive"
-                checked={field.value}
-                onCheckedChange={(v) => field.onChange(Boolean(v))}
-              />
-            )}
-          />
-          <label
+          <div className="flex items-center gap-2">
+            <Controller
+              control={form.control}
+              name="sensitive"
+              render={({ field }) => (
+                <Checkbox
+                  id="parameter-form-sensitive"
+                  data-testid="parameter-form-sensitive"
+                  checked={field.value}
+                  onCheckedChange={(v) => field.onChange(Boolean(v))}
+                />
+              )}
+            />
+            <label
             htmlFor="parameter-form-sensitive"
             className="text-xs font-medium"
             title={t("formSensitiveHelp")}
           >
             {t("formSensitive")}
           </label>
+        </div>
         </div>
       </div>
 
