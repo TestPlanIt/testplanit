@@ -1,3 +1,10 @@
+## [0.24.2](https://github.com/TestPlanIt/testplanit/compare/v0.24.1...v0.24.2) (2026-05-03)
+
+### Bug Fixes
+
+* **comments:** enforce per-user project access on comment-mention notifications ([#269](https://github.com/TestPlanIt/testplanit/issues/269)) ([c82b565](https://github.com/TestPlanIt/testplanit/commit/c82b5657d92c46a6c4e7e5c589e592a2d857232a))
+* **deps:** override transitive uuid to >=14.0.0 (GHSA-9w38-pjwr-2x88) ([#268](https://github.com/TestPlanIt/testplanit/issues/268)) ([834da4b](https://github.com/TestPlanIt/testplanit/commit/834da4b3b21ba398a808845dc53699eec0321554)), closes [#360](https://github.com/TestPlanIt/testplanit/issues/360) [#362](https://github.com/TestPlanIt/testplanit/issues/362)
+
 ## [0.24.1](https://github.com/TestPlanIt/testplanit/compare/v0.24.0...v0.24.1) (2026-05-03)
 
 ### Bug Fixes
