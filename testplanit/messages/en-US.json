@@ -4938,7 +4938,8 @@
     "noTeamsAvailable": "No teams available",
     "filterAll": "All",
     "fanOutPartialFailure": "{count} project(s) could not be reached. Showing results from {successCount} project(s).",
-    "projectSelectorLabel": "Project"
+    "projectSelectorLabel": "Project",
+    "searchFailedTitle": "Search failed"
   },
   "Pages": {
     "Issues": {
