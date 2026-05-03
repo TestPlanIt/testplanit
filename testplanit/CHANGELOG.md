@@ -1,3 +1,9 @@
+## [0.24.8](https://github.com/TestPlanIt/testplanit/compare/v0.24.7...v0.24.8) (2026-05-03)
+
+### Bug Fixes
+
+* **duplicates:** exclude source case from creation-time duplicate scan and fire toast from inline AddCaseRow ([#276](https://github.com/TestPlanIt/testplanit/issues/276)) ([6e011c2](https://github.com/TestPlanIt/testplanit/commit/6e011c21d066a6e9f66c74f6e3dbc5ae7dc852ff))
+
 ## [0.24.7](https://github.com/TestPlanIt/testplanit/compare/v0.24.6...v0.24.7) (2026-05-03)
 
 ### Bug Fixes
