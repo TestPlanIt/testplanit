@@ -22,6 +22,10 @@ import {
   type IssueData,
   type TemplateData,
 } from "../shared";
+import {
+  classifyLlmStreamError,
+  type LlmStreamErrorCode,
+} from "../error-codes";
 
 function formatError(err: unknown): string {
   if (!(err instanceof Error)) return "AI generation failed";
@@ -69,7 +73,7 @@ export async function POST(req: NextRequest) {
 
   if (!projectId || !issue || !template) {
     return NextResponse.json(
-      { error: "Missing required parameters" },
+      { error: "Missing required parameters", errorCode: "invalid_request" },
       { status: 400 }
     );
   }
@@ -170,6 +174,7 @@ export async function POST(req: NextRequest) {
         if (!project) {
           send(controller, {
             type: "error",
+            code: "project_not_found" satisfies LlmStreamErrorCode,
             message: "Project not found or access denied",
           });
           return;
@@ -192,6 +197,7 @@ export async function POST(req: NextRequest) {
         if (!resolved) {
           send(controller, {
             type: "error",
+            code: "no_integration" satisfies LlmStreamErrorCode,
             message: "No active LLM integration found for this project",
           });
           return;
@@ -405,9 +411,11 @@ export async function POST(req: NextRequest) {
           }
         } catch (err) {
           console.error("[generate-test-cases/stream] LLM stream failed:", err);
+          const message = formatError(err);
           send(controller, {
             type: "error",
-            message: formatError(err),
+            code: classifyLlmStreamError(message),
+            message,
           });
           return;
         }
@@ -425,9 +433,15 @@ export async function POST(req: NextRequest) {
         });
       } catch (err) {
         console.error("[generate-test-cases/stream] Setup failed:", err);
+        const message =
+          err instanceof Error ? err.message : "Internal server error";
         send(controller, {
           type: "error",
-          message: err instanceof Error ? err.message : "Internal server error",
+          // Setup-phase failures (DB, integration manager, prompt resolver)
+          // are best-effort categorized by message content, defaulting to
+          // "generic" so the wizard renders the catch-all error UI.
+          code: classifyLlmStreamError(message),
+          message,
         });
       } finally {
         clearInterval(heartbeat);

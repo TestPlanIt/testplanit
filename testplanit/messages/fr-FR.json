@@ -2594,6 +2594,26 @@
             "title": "Erreur réseau",
             "message": "Impossible de se connecter au service d'IA. Veuillez vérifier votre connexion Internet et réessayer."
           },
+          "unauthorized": {
+            "title": "L'authentification du service d'IA a échoué.",
+            "message": "Le service d'IA a refusé nos identifiants. Un administrateur doit vérifier la clé API de l'intégration LLM dans les paramètres d'administration."
+          },
+          "forbidden": {
+            "title": "Accès au service d'IA refusé",
+            "message": "Le service d'IA a refusé cette requête. Un administrateur doit vérifier les autorisations d'intégration LLM et l'accès au projet."
+          },
+          "projectNotFound": {
+            "title": "Projet introuvable",
+            "message": "Nous n'avons pas trouvé ce projet, ou vous n'avez pas l'autorisation d'utiliser la génération par IA ici."
+          },
+          "noIntegration": {
+            "title": "Aucune intégration LLM active",
+            "message": "Aucune intégration LLM active n'est configurée pour ce projet. Un administrateur doit en activer une dans les paramètres d'administration."
+          },
+          "invalidRequest": {
+            "title": "Requête invalide",
+            "message": "La requête de génération d'IA ne contenait pas les informations requises. Veuillez actualiser la page et réessayer."
+          },
           "retryButton": "Réessayer",
           "dismissButton": "Rejeter",
           "suggestionsHeading": "Suggestions",

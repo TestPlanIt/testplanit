@@ -2594,6 +2594,26 @@
             "title": "Error de red",
             "message": "No se puede conectar al servicio de IA. Comprueba tu conexión a internet y vuelve a intentarlo."
           },
+          "unauthorized": {
+            "title": "Falló la autenticación del servicio de IA.",
+            "message": "El servicio de IA rechazó nuestras credenciales. Un administrador debe revisar la clave API de la integración LLM en la configuración de administración."
+          },
+          "forbidden": {
+            "title": "Acceso denegado al servicio de IA",
+            "message": "El servicio de IA rechazó esta solicitud. Un administrador debe verificar los permisos de integración de LLM y el acceso al proyecto."
+          },
+          "projectNotFound": {
+            "title": "Proyecto no encontrado",
+            "message": "No pudimos encontrar este proyecto, o no tienes permiso para usar la generación de IA aquí."
+          },
+          "noIntegration": {
+            "title": "Sin integración activa de LLM",
+            "message": "No hay ninguna integración LLM activa configurada para este proyecto. Un administrador debe habilitarla en la configuración de administración."
+          },
+          "invalidRequest": {
+            "title": "Solicitud no válida",
+            "message": "La solicitud de generación de IA carecía de la información necesaria. Por favor, actualice la página e inténtelo de nuevo."
+          },
           "retryButton": "Rever",
           "dismissButton": "Despedir",
           "suggestionsHeading": "Sugerencias",

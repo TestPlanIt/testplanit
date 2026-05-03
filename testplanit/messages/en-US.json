@@ -2594,6 +2594,26 @@
             "title": "Network Error",
             "message": "Unable to connect to the AI service. Please check your internet connection and try again."
           },
+          "unauthorized": {
+            "title": "AI Service Authentication Failed",
+            "message": "The AI service rejected our credentials. An administrator needs to review the LLM integration's API key in admin settings."
+          },
+          "forbidden": {
+            "title": "AI Service Access Denied",
+            "message": "The AI service refused this request. An administrator needs to verify the LLM integration's permissions and project access."
+          },
+          "projectNotFound": {
+            "title": "Project Not Found",
+            "message": "We couldn't find this project, or you don't have permission to use AI generation here."
+          },
+          "noIntegration": {
+            "title": "No Active LLM Integration",
+            "message": "No active LLM integration is configured for this project. An administrator needs to enable one in admin settings."
+          },
+          "invalidRequest": {
+            "title": "Invalid Request",
+            "message": "The AI generation request was missing required information. Please refresh and try again."
+          },
           "retryButton": "Retry",
           "dismissButton": "Dismiss",
           "suggestionsHeading": "Suggestions",
