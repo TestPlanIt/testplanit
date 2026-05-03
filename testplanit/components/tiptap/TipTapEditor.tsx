@@ -341,7 +341,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
       },
     },
     editable: !readOnly,
-  });
+  }, [parameters]);
 
   useEffect(() => {
     if (editor) {
