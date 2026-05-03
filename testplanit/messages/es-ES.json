@@ -830,6 +830,27 @@
         "addParagraphBelow": "Añadir párrafo a continuación",
         "clearFormatting": "Borrar formato",
         "copyToClipboard": "Copiar al portapapeles"
+      },
+      "textMenu": {
+        "bold": "Atrevido",
+        "italic": "Itálico",
+        "underline": "Subrayar",
+        "strikethrough": "Tachado",
+        "code": "Código",
+        "codeBlock": "Bloque de código",
+        "highlightText": "Resaltar texto",
+        "textColor": "Color del texto",
+        "moreOptions": "Más opciones",
+        "subscript": "Subíndice",
+        "superscript": "Sobrescrito",
+        "alignLeft": "Alinear a la izquierda",
+        "alignCenter": "Alinear al centro",
+        "alignRight": "Alinear a la derecha",
+        "justify": "Justificar",
+        "setLink": "Establecer enlace",
+        "editLink": "Editar enlace",
+        "removeLink": "Eliminar enlace",
+        "resetColorToDefault": "Restablecer el color a los valores predeterminados"
       }
     },
     "ai": {
