@@ -1,3 +1,9 @@
+## [0.24.1](https://github.com/TestPlanIt/testplanit/compare/v0.24.0...v0.24.1) (2026-05-03)
+
+### Bug Fixes
+
+* **integrations:** probe issue scopes + surface search errors ([#267](https://github.com/TestPlanIt/testplanit/issues/267)) ([212da3f](https://github.com/TestPlanIt/testplanit/commit/212da3f227d708e799b836e587ced28c53f62c61))
+
 ## [0.24.0](https://github.com/TestPlanIt/testplanit/compare/v0.23.1...v0.24.0) (2026-05-02)
 
 ### Features
