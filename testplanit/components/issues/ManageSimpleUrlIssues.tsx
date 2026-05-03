@@ -234,7 +234,10 @@ export function ManageSimpleUrlIssues({
                       </sup>
                     </FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="ISSUE-123" />
+                      <Input
+                        {...field}
+                        placeholder={t("common.placeholders.issueIdExample")}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

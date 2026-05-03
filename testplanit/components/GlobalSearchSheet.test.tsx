@@ -280,8 +280,9 @@ describe("GlobalSearchSheet", () => {
     expect(heading).toBeInTheDocument();
     expect(heading.textContent).toContain("title");
 
-    // Help popover trigger button
-    expect(screen.getByRole("button", { name: "Help" })).toBeInTheDocument();
+    // Help popover trigger button. The aria-label now reads from
+    // common.aria.help; the test mock returns only the last key segment.
+    expect(screen.getByRole("button", { name: "help" })).toBeInTheDocument();
 
     // Help content rendered inline in mocked popover
     expect(screen.getByTestId("search-help-content")).toBeInTheDocument();

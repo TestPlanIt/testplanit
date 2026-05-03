@@ -646,7 +646,9 @@ export default function TestCaseVersions() {
                       }}
                     >
                       <SelectTrigger className="w-fit">
-                        <SelectValue placeholder="Select Version" />
+                        <SelectValue
+                          placeholder={t("common.placeholders.selectVersion")}
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         {versions?.map((v, index) => (
@@ -682,7 +684,7 @@ export default function TestCaseVersions() {
                       onPrevVersion={goToPreviousVersion}
                       onNextVersion={goToNextVersion}
                       backHref={`/projects/repository/${projectId}/${caseId}`}
-                      backTitle="Back to Test Case"
+                      backTitle={t("common.aria.backToTestCase")}
                     />
                   </>
                 )}

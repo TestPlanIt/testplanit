@@ -112,7 +112,7 @@ export function LinkFilterInput({
               }
             }}
             className="h-5 w-5 p-0"
-            title="Clear filter"
+            title={t("common.aria.clearFilter")}
           >
             <X className="h-3 w-3" />
           </Button>
@@ -124,7 +124,7 @@ export function LinkFilterInput({
         onValueChange={(val) => setOperator(val as LinkOperator)}
       >
         <SelectTrigger className="w-full h-8 text-xs">
-          <SelectValue placeholder="Select operator" />
+          <SelectValue placeholder={t("common.placeholders.selectOperator")} />
         </SelectTrigger>
         <SelectContent>
           {(Object.keys(operatorLabels) as LinkOperator[]).map((op) => (

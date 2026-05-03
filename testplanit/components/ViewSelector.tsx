@@ -196,7 +196,7 @@ export function ViewSelector({
     <div className="flex flex-col pt-0.5     w-full">
       <Select value={selectedItem} onValueChange={onValueChange}>
         <SelectTrigger className="mr-6 ml-1 text-primary text-lg md:text-xl font-extrabold">
-          <SelectValue placeholder="Select an option" />
+          <SelectValue placeholder={tCommon("placeholders.selectOption")} />
         </SelectTrigger>
         <SelectContent className="text-primary text-lg md:text-xl font-extrabold">
           <SelectGroup>

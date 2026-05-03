@@ -339,7 +339,9 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
                   </FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select workflow type" />
+                      <SelectValue
+                        placeholder={tCommon("placeholders.selectWorkflowType")}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {workflowTypeOptions.map((type) => (

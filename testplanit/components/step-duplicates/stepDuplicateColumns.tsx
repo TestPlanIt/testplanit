@@ -35,7 +35,7 @@ export const getColumns = (
           if (!onSelectAllClick) table.toggleAllPageRowsSelected(!!value);
         }}
         onClick={(e) => onSelectAllClick?.(e)}
-        aria-label="Select all"
+        aria-label={tCommon("aria.selectAll")}
       />
     ),
     cell: ({ row }) => (
@@ -48,7 +48,7 @@ export const getColumns = (
           e.stopPropagation();
           onCheckboxClick?.(row.index, e);
         }}
-        aria-label="Select row"
+        aria-label={tCommon("aria.selectRow")}
       />
     ),
     enableSorting: false,

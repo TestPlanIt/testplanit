@@ -52,7 +52,9 @@ export function VersionSelect({
       }}
     >
       <SelectTrigger className="w-fit" data-testid="version-select-trigger">
-        <SelectValue placeholder="Select Version" />
+        <SelectValue
+          placeholder={tGlobal("common.placeholders.selectVersion")}
+        />
       </SelectTrigger>
       <SelectContent>
         {versions.map((v, index) => (

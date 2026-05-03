@@ -309,7 +309,7 @@ export function AddLlmIntegration({
               description: `Selected "${data.models[0]}" as default model`,
             });
           } else {
-            toast.warning("No models found", {
+            toast.warning(tCommon("errors.noModelsFound"), {
               description: "The provider returned no available models",
             });
           }

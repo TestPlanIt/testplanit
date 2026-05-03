@@ -155,7 +155,7 @@ function AppConfigs() {
             <div className="text-muted-foreground w-full text-nowrap">
               <Filter
                 key="app-config-value-filter"
-                placeholder="Filter by value..."
+                placeholder={tCommon("placeholders.filterByValue")}
                 initialSearchString={valueSearchString}
                 onSearchChange={setValueSearchString}
                 dataTestId="app-config-value-filter-input"

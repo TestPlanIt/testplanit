@@ -315,7 +315,9 @@ function SessionFormControls({
                     onValueChange={(value) => field.onChange(Number(value))}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select Template" />
+                      <SelectValue
+                        placeholder={tCommon("placeholders.selectTemplate")}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {templates?.map((template) => (
@@ -375,7 +377,9 @@ function SessionFormControls({
                     disabled={isSubmitting}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select State" />
+                      <SelectValue
+                        placeholder={tCommon("placeholders.selectState")}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -1892,7 +1896,9 @@ export default function SessionPage() {
                                     }}
                                     readOnly={!isEditMode}
                                     className="h-auto"
-                                    placeholder="Add a description..."
+                                    placeholder={tCommon(
+                                      "placeholders.addADescription"
+                                    )}
                                     projectId={safeProjectId}
                                   />
                                 </div>
@@ -1941,7 +1947,9 @@ export default function SessionPage() {
                                     }}
                                     readOnly={!isEditMode}
                                     className="h-auto"
-                                    placeholder="Add a description..."
+                                    placeholder={tCommon(
+                                      "placeholders.addADescription"
+                                    )}
                                     projectId={safeProjectId}
                                   />
                                 </div>

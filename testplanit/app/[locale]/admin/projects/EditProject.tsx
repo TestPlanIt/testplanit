@@ -849,7 +849,10 @@ export function EditProjectModal({
                         <HelpPopover helpKey="project.description" />
                       </FormLabel>
                       <FormControl>
-                        <Input placeholder="Project notes..." {...field} />
+                        <Input
+                          placeholder={tCommon("placeholders.projectNotes")}
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -497,7 +497,26 @@
       "selectConfiguration": "Seleccionar configuración",
       "selectConfigurations": "Seleccionar configuraciones",
       "selectOption": "Seleccione una opción",
-      "date": "Seleccione una fecha"
+      "date": "Seleccione una fecha",
+      "selectEncoding": "Seleccione la codificación...",
+      "selectATemplate": "Seleccione una plantilla...",
+      "selectVersion": "Seleccionar versión",
+      "selectAModel": "Seleccione un modelo",
+      "selectWorkflowType": "Seleccione el tipo de flujo de trabajo",
+      "addAnOption": "Agregar una opción",
+      "addADescription": "Añade una descripción...",
+      "optionalDescription": "Descripción opcional...",
+      "projectNotes": "Notas del proyecto...",
+      "filterByName": "Filtrar por nombre...",
+      "filterByValue": "Filtrar por valor...",
+      "selectOperator": "Seleccione el operador",
+      "searchIcons": "Iconos de búsqueda...",
+      "value": "Valor",
+      "stepCount": "Contador de pasos",
+      "enterText": "Introduzca el texto...",
+      "enterUrl": "Introduzca la URL",
+      "issueIdExample": "NÚMERO 123",
+      "selectPriorityValuesOrEmpty": "Seleccione los valores de prioridad (o déjelos en blanco para todos)."
     },
     "errors": {
       "error": "Error",
@@ -593,7 +612,66 @@
       "permissionDenied": "No tienes permiso para acceder a esta página.",
       "resultSubmitPermissionDenied": "No puedes enviar los resultados de este caso. Pídele a un administrador del proyecto que te lo asigne.",
       "noModelsFound": "No se encontraron modelos",
-      "failedToFetchModels": "No se pudieron obtener los modelos"
+      "failedToFetchModels": "No se pudieron obtener los modelos",
+      "failedToCopyToClipboard": "No se pudo copiar al portapapeles.",
+      "failedToLoadJobResults": "No se pudieron cargar los resultados del trabajo.",
+      "failedToUpdateRepositoryStatus": "No se pudo actualizar el estado del repositorio."
+    },
+    "pageTitles": {
+      "appName": "Plan de prueba",
+      "dashboard": "Panel",
+      "twoFactorVerification": "Verificación de dos factores",
+      "changePassword": "Cambiar la contraseña",
+      "twoFactorSetup": "Configuración de dos factores",
+      "signUp": "Inscribirse",
+      "signIn": "Iniciar sesión",
+      "verifyEmail": "Verificar correo electrónico",
+      "trialExpired": "El período de prueba ha expirado.",
+      "linkSsoAccount": "Vincular cuenta SSO",
+      "userProfile": "Perfil de usuario",
+      "users": "Usuarios",
+      "issues": "Asuntos",
+      "tags": "Etiquetas",
+      "tagDetails": "Detalles de la etiqueta",
+      "aiModels": "Modelos de IA",
+      "integrations": "Integraciones",
+      "quickscript": "QuickScript",
+      "webhooks": "Webhooks",
+      "shares": "Acciones",
+      "repository": "Repositorio",
+      "testCaseVersion": "Versión del caso de prueba",
+      "duplicateTestCases": "Casos de prueba duplicados",
+      "documentation": "Documentación",
+      "sharedSteps": "Pasos compartidos",
+      "stepDuplicates": "Duplicados de pasos",
+      "sessions": "Sesiones",
+      "sessionVersion": "Versión de sesión",
+      "milestones": "Hitos",
+      "testRuns": "Pruebas de funcionamiento",
+      "reports": "Informes",
+      "adminSamlConfig": "Administrador - Configuración SAML",
+      "apiDocumentation": "Documentación de la API",
+      "sharedContent": "Contenido compartido"
+    },
+    "aria": {
+      "userMenu": "Menú de usuario",
+      "search": "Buscar",
+      "helpMenu": "Menú de ayuda",
+      "help": "Ayuda",
+      "grouped": "Agrupados",
+      "group": "Grupo",
+      "selectAll": "Seleccionar todo",
+      "selectRow": "Seleccione la fila",
+      "removeIssue": "Eliminar problema",
+      "selectDeselectAllAddEdit": "Seleccionar/Deseleccionar todo Agregar/Editar",
+      "selectDeselectAllDelete": "Seleccionar/Deseleccionar todo Eliminar",
+      "selectDeselectAllClose": "Seleccionar/Deseleccionar todo Cerrar",
+      "clearFilter": "Filtro transparente",
+      "olderVersion": "Versión anterior",
+      "newerVersion": "Versión más reciente",
+      "deletedUser": "Usuario eliminado",
+      "restrictedField": "Campo restringido",
+      "backToTestCase": "Volver al caso de prueba"
     },
     "labels": {
       "projects": "{count, plural, =1 {# Proyecto} other {# Proyectos}}",
@@ -2593,6 +2671,26 @@
           "network": {
             "title": "Error de red",
             "message": "No se puede conectar al servicio de IA. Comprueba tu conexión a internet y vuelve a intentarlo."
+          },
+          "unauthorized": {
+            "title": "Falló la autenticación del servicio de IA.",
+            "message": "El servicio de IA rechazó nuestras credenciales. Un administrador debe revisar la clave API de la integración LLM en la configuración de administración."
+          },
+          "forbidden": {
+            "title": "Acceso denegado al servicio de IA",
+            "message": "El servicio de IA rechazó esta solicitud. Un administrador debe verificar los permisos de integración de LLM y el acceso al proyecto."
+          },
+          "projectNotFound": {
+            "title": "Proyecto no encontrado",
+            "message": "No pudimos encontrar este proyecto, o no tienes permiso para usar la generación de IA aquí."
+          },
+          "noIntegration": {
+            "title": "Sin integración activa de LLM",
+            "message": "No hay ninguna integración LLM activa configurada para este proyecto. Un administrador debe habilitarla en la configuración de administración."
+          },
+          "invalidRequest": {
+            "title": "Solicitud no válida",
+            "message": "La solicitud de generación de IA carecía de la información necesaria. Por favor, actualice la página e inténtelo de nuevo."
           },
           "retryButton": "Rever",
           "dismissButton": "Despedir",

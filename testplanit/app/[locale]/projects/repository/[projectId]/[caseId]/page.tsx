@@ -2059,7 +2059,7 @@ export default function TestCaseDetails() {
                                 )}
                                 {field.caseField.isRestricted && (
                                   <span
-                                    title="Restricted Field"
+                                    title={t("common.aria.restrictedField")}
                                     className="ml-1 text-muted-foreground"
                                   >
                                     <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />

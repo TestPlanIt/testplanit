@@ -1314,7 +1314,7 @@ export function BulkEditModal({
 
     // Ensure casesData is loaded before proceeding
     if (!casesData) {
-      toast.error("Failed to load case data. Cannot save.");
+      toast.error(tCommon("errors.failedToLoadCaseData"));
       return;
     }
 
@@ -1959,7 +1959,7 @@ export function BulkEditModal({
                         )}
                         {field.isCustom && field.field?.isRestricted && (
                           <span
-                            title="Restricted Field"
+                            title={tCommon("aria.restrictedField")}
                             className="ml-1 text-muted-foreground"
                           >
                             <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />

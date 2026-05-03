@@ -186,7 +186,10 @@ export function AddPromptConfig({
                     <HelpPopover helpKey="promptConfig.description" />
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder="Optional description..." {...field} />
+                    <Input
+                      placeholder={tCommon("placeholders.optionalDescription")}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

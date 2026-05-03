@@ -1,23 +1,17 @@
 import type { Metadata } from "next";
-import { getServerSession } from "next-auth";
-import { authOptions } from "~/server/auth";
-import { ShareLayoutContent } from "./ShareLayoutContent";
+import { getTranslations } from "next-intl/server";
+import type { Locale } from "~/i18n/navigation";
 
-export const metadata: Metadata = {
-  title: "Shared Content",
-  description: "View shared content from TestPlanIt",
-};
-
-/**
- * Minimal layout for public share pages
- * No header, no navigation - just the shared content
- */
-export default async function ShareLayout({
-  children,
+export async function generateMetadata({
+  params,
 }: {
-  children: React.ReactNode;
-}) {
-  const session = await getServerSession(authOptions);
+  params: Promise<{ locale: Locale }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale });
+  return { title: t("common.pageTitles.sharedContent") };
+}
 
-  return <ShareLayoutContent session={session}>{children}</ShareLayoutContent>;
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
 }

@@ -186,7 +186,8 @@ function CodeRepositoryList() {
         {
           onSuccess: () =>
             queryClient.invalidateQueries({ queryKey: ["CodeRepository"] }),
-          onError: () => toast.error("Failed to update repository status"),
+          onError: () =>
+            toast.error(tCommon("errors.failedToUpdateRepositoryStatus")),
         }
       );
     },
@@ -309,7 +310,7 @@ function CodeRepositoryList() {
               <div className="text-muted-foreground w-full text-nowrap">
                 <Filter
                   key="code-repo-filter"
-                  placeholder="Filter by name..."
+                  placeholder={tCommon("placeholders.filterByName")}
                   initialSearchString={searchString}
                   onSearchChange={setSearchString}
                 />
