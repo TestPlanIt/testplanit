@@ -19,6 +19,7 @@ const mockCaptureAuditEvent = vi.fn();
 const mockIsMultiTenantMode = vi.fn();
 const mockGetAllTenantIds = vi.fn();
 const mockGetTenantPrismaClient = vi.fn();
+const mockDisconnectAllTenantClients = vi.fn();
 
 vi.mock("../lib/prisma", () => ({
   prisma: {
@@ -35,7 +36,7 @@ vi.mock("../lib/multiTenantPrisma", () => ({
   getAllTenantIds: () => mockGetAllTenantIds(),
   getTenantPrismaClient: (tenantId: string) =>
     mockGetTenantPrismaClient(tenantId),
-  disconnectAllTenantClients: vi.fn(),
+  disconnectAllTenantClients: () => mockDisconnectAllTenantClients(),
 }));
 
 import { purgeAllTenantsOnce, purgeOnce } from "./webhookRetentionWorker";
@@ -94,6 +95,8 @@ describe("workers/webhookRetentionWorker.purgeOnce", () => {
     mockIsMultiTenantMode.mockReset();
     mockGetAllTenantIds.mockReset();
     mockGetTenantPrismaClient.mockReset();
+    mockDisconnectAllTenantClients.mockReset();
+    mockDisconnectAllTenantClients.mockResolvedValue(undefined);
     mockIsMultiTenantMode.mockReturnValue(false);
   });
 
@@ -278,6 +281,51 @@ describe("workers/webhookRetentionWorker.purgeOnce", () => {
     const event = mockCaptureAuditEvent.mock.calls[0][0];
     expect(event.tenantId).toBe("tenant-a");
   });
+
+  it("10. truncated=false on a successful sweep that finishes inside the time budget", async () => {
+    setupTableQueues({
+      WebhookDelivery: [47, 0],
+      WebhookEventDedup: [13, 0],
+      WebhookOutboxEvent: [89, 0],
+    });
+
+    const result = await purgeOnce();
+
+    expect(result.truncated).toBe(false);
+    expect(mockCaptureAuditEvent.mock.calls[0][0].metadata.truncated).toBe(
+      false
+    );
+  });
+
+  it("11. truncated=true when the per-tenant time budget elapses; remaining rows are left for next pass", async () => {
+    // budget=0 forces every batched-delete loop to exit on its first
+    // Date.now()<deadline check. The DELETE for WebhookDelivery still runs
+    // once via the existing while-true semantics? No — the new gate is
+    // `while (Date.now() < deadlineMs)`, which evaluates BEFORE the first
+    // call when budgetMs=0 and timers are fake. So the helpers no-op and
+    // the truncated flag fires.
+    setupTableQueues({
+      WebhookDelivery: [0],
+      WebhookEventDedup: [0],
+      WebhookOutboxEvent: [0],
+    });
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const result = await purgeOnce(undefined, undefined, 0);
+
+    expect(result.truncated).toBe(true);
+    expect(mockCaptureAuditEvent.mock.calls[0][0].metadata.truncated).toBe(
+      true
+    );
+    expect(
+      warnSpy.mock.calls.some((args) =>
+        args.some(
+          (a) => typeof a === "string" && a.includes("tenant time budget")
+        )
+      )
+    ).toBe(true);
+    warnSpy.mockRestore();
+  });
 });
 
 describe("workers/webhookRetentionWorker.purgeAllTenantsOnce", () => {
@@ -289,6 +337,8 @@ describe("workers/webhookRetentionWorker.purgeAllTenantsOnce", () => {
     mockIsMultiTenantMode.mockReset();
     mockGetAllTenantIds.mockReset();
     mockGetTenantPrismaClient.mockReset();
+    mockDisconnectAllTenantClients.mockReset();
+    mockDisconnectAllTenantClients.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -361,5 +411,41 @@ describe("workers/webhookRetentionWorker.purgeAllTenantsOnce", () => {
     expect(results).toEqual([]);
     expect(mockExecuteRaw).not.toHaveBeenCalled();
     expect(mockCaptureAuditEvent).not.toHaveBeenCalled();
+  });
+
+  it("multi-tenant mode: disconnects all tenant Prisma clients after the pass to free Rust query engine buffers", async () => {
+    mockIsMultiTenantMode.mockReturnValue(true);
+    mockGetAllTenantIds.mockReturnValue(["tenant-a", "tenant-b"]);
+    mockGetTenantPrismaClient.mockImplementation(() => ({
+      $executeRaw: vi.fn().mockResolvedValue(0),
+    }));
+
+    await purgeAllTenantsOnce();
+
+    expect(mockDisconnectAllTenantClients).toHaveBeenCalledTimes(1);
+  });
+
+  it("multi-tenant mode: disconnect still runs even when a tenant errors mid-pass", async () => {
+    mockIsMultiTenantMode.mockReturnValue(true);
+    mockGetAllTenantIds.mockReturnValue(["tenant-a", "tenant-b"]);
+    mockGetTenantPrismaClient.mockImplementation((id: string) => {
+      if (id === "tenant-a") throw new Error("boom");
+      return { $executeRaw: vi.fn().mockResolvedValue(0) };
+    });
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await purgeAllTenantsOnce();
+
+    expect(mockDisconnectAllTenantClients).toHaveBeenCalledTimes(1);
+    errorSpy.mockRestore();
+  });
+
+  it("single-tenant mode: does NOT disconnect tenant clients (the singleton client is owned elsewhere)", async () => {
+    mockIsMultiTenantMode.mockReturnValue(false);
+    mockExecuteRaw.mockResolvedValue(0);
+
+    await purgeAllTenantsOnce();
+
+    expect(mockDisconnectAllTenantClients).not.toHaveBeenCalled();
   });
 });

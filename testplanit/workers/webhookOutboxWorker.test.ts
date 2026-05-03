@@ -194,6 +194,18 @@ describe("webhookOutboxWorker.pollOnce", () => {
     });
     expect(mockClaim).toHaveBeenCalledWith({ __mock: "tenant-prisma" }, 100);
   });
+
+  it("10. tenant-aware jobId: `${tenantId}--${row.id}--${webhookConfigId}` to namespace BullMQ idempotency keys per tenant", async () => {
+    mockClaim.mockResolvedValue([sampleRow]);
+    mockFanout.mockResolvedValue(["c1", "c2"]);
+    const addSpy = vi.fn();
+    mockGetQueue.mockReturnValue({ add: addSpy });
+
+    await pollOnce({ __mock: "tenant-prisma" } as never, "tenant-a");
+
+    expect(addSpy.mock.calls[0][2].jobId).toBe("tenant-a--outbox-1--c1");
+    expect(addSpy.mock.calls[1][2].jobId).toBe("tenant-a--outbox-1--c2");
+  });
 });
 
 describe("webhookOutboxWorker.pollAllTenantsOnce", () => {

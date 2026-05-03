@@ -39,12 +39,24 @@ const RETENTION_DAYS = 30;
 const RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 // 24h cadence — wake once per day, run purgeAllTenantsOnce(), sleep again.
 const POLL_INTERVAL_MS = 24 * 60 * 60 * 1000;
+// Per-tenant time budget. A tenant with a huge first-time backlog could keep
+// the LIMIT-1000 batched-delete loop running for hours and starve every other
+// tenant on the same worker. Capping at 5 minutes lets us make forward
+// progress on every tenant per cycle; whatever rows remain get cleaned up on
+// the next daily pass.
+const TENANT_PURGE_BUDGET_MS = 5 * 60 * 1000;
 
 export interface PurgeResult {
   webhookDeliveryRows: number;
   webhookEventDedupRows: number;
   webhookOutboxEventRows: number;
   durationMs: number;
+  /**
+   * True when the per-tenant time budget elapsed before the batched-delete
+   * loop reached a 0-row sweep. The remaining rows are picked up on the next
+   * daily pass — this is informational, not an error.
+   */
+  truncated: boolean;
 }
 
 let stopRequested = false;
@@ -52,10 +64,11 @@ let inflight: Promise<unknown> | null = null;
 
 async function batchedDeleteWebhookDelivery(
   client: PrismaClient,
-  cutoff: Date
+  cutoff: Date,
+  deadlineMs: number
 ): Promise<number> {
   let total = 0;
-  while (true) {
+  while (Date.now() < deadlineMs) {
     const rowsAffected = await client.$executeRaw`
       DELETE FROM "WebhookDelivery"
       WHERE id IN (
@@ -73,10 +86,11 @@ async function batchedDeleteWebhookDelivery(
 
 async function batchedDeleteWebhookEventDedup(
   client: PrismaClient,
-  cutoff: Date
+  cutoff: Date,
+  deadlineMs: number
 ): Promise<number> {
   let total = 0;
-  while (true) {
+  while (Date.now() < deadlineMs) {
     const rowsAffected = await client.$executeRaw`
       DELETE FROM "WebhookEventDedup"
       WHERE id IN (
@@ -94,10 +108,11 @@ async function batchedDeleteWebhookEventDedup(
 
 async function batchedDeleteWebhookOutboxEvent(
   client: PrismaClient,
-  cutoff: Date
+  cutoff: Date,
+  deadlineMs: number
 ): Promise<number> {
   let total = 0;
-  while (true) {
+  while (Date.now() < deadlineMs) {
     const rowsAffected = await client.$executeRaw`
       DELETE FROM "WebhookOutboxEvent"
       WHERE id IN (
@@ -116,15 +131,18 @@ async function batchedDeleteWebhookOutboxEvent(
 
 export async function purgeOnce(
   client: PrismaClient = prisma,
-  tenantId?: string
+  tenantId?: string,
+  budgetMs: number = TENANT_PURGE_BUDGET_MS
 ): Promise<PurgeResult> {
   const startedAt = Date.now();
+  const deadlineMs = startedAt + budgetMs;
   const cutoff = new Date(startedAt - RETENTION_MS);
   const tenantSuffix = tenantId ? ` tenant=${tenantId}` : "";
 
   const webhookDeliveryRows = await batchedDeleteWebhookDelivery(
     client,
-    cutoff
+    cutoff,
+    deadlineMs
   );
   console.log(
     `[WebhookRetention] purged ${webhookDeliveryRows} WebhookDelivery rows (cutoff=${cutoff.toISOString()})${tenantSuffix}`
@@ -132,7 +150,8 @@ export async function purgeOnce(
 
   const webhookEventDedupRows = await batchedDeleteWebhookEventDedup(
     client,
-    cutoff
+    cutoff,
+    deadlineMs
   );
   console.log(
     `[WebhookRetention] purged ${webhookEventDedupRows} WebhookEventDedup rows${tenantSuffix}`
@@ -140,13 +159,21 @@ export async function purgeOnce(
 
   const webhookOutboxEventRows = await batchedDeleteWebhookOutboxEvent(
     client,
-    cutoff
+    cutoff,
+    deadlineMs
   );
   console.log(
     `[WebhookRetention] purged ${webhookOutboxEventRows} WebhookOutboxEvent rows${tenantSuffix}`
   );
 
   const durationMs = Date.now() - startedAt;
+  const truncated = Date.now() >= deadlineMs;
+  if (truncated) {
+    console.warn(
+      `[WebhookRetention] tenant time budget (${budgetMs}ms) elapsed${tenantSuffix}; remaining rows will be purged on the next pass`
+    );
+  }
+
   await captureAuditEvent({
     action: "WEBHOOK_RETENTION_PURGED",
     entityType: "WebhookDelivery",
@@ -159,6 +186,7 @@ export async function purgeOnce(
       webhookEventDedupRows,
       webhookOutboxEventRows,
       durationMs,
+      truncated,
       cutoff: cutoff.toISOString(),
     },
   });
@@ -168,12 +196,21 @@ export async function purgeOnce(
     webhookEventDedupRows,
     webhookOutboxEventRows,
     durationMs,
+    truncated,
   };
 }
 
 /**
  * Run one purge pass across every configured tenant in multi-tenant mode,
  * or against the singleton client in single-tenant mode.
+ *
+ * Memory hygiene: in multi-tenant mode, after the full pass we
+ * `disconnectAllTenantClients()` so the Prisma Rust query engine releases
+ * the buffers it accumulated while iterating 30+ tenant DBs. The retention
+ * worker is a 24h-cadence loop, so reusing a long-lived client cache offers
+ * no throughput benefit but keeps RSS climbing across passes. The dispatch
+ * worker still benefits from caching per-job clients — that decision lives
+ * inside `getTenantPrismaClient`'s callsite, not here.
  */
 export async function purgeAllTenantsOnce(): Promise<PurgeResult[]> {
   if (!isMultiTenantMode()) {
@@ -186,14 +223,25 @@ export async function purgeAllTenantsOnce(): Promise<PurgeResult[]> {
   }
 
   const results: PurgeResult[] = [];
-  for (const tenantId of tenantIds) {
+  try {
+    for (const tenantId of tenantIds) {
+      try {
+        const client = getTenantPrismaClient(tenantId);
+        const result = await purgeOnce(client, tenantId);
+        results.push(result);
+      } catch (err) {
+        console.error(
+          `[WebhookRetention] Purge error for tenant ${tenantId}:`,
+          err
+        );
+      }
+    }
+  } finally {
     try {
-      const client = getTenantPrismaClient(tenantId);
-      const result = await purgeOnce(client, tenantId);
-      results.push(result);
+      await disconnectAllTenantClients();
     } catch (err) {
       console.error(
-        `[WebhookRetention] Purge error for tenant ${tenantId}:`,
+        "[WebhookRetention] Failed to disconnect tenant clients after pass:",
         err
       );
     }
