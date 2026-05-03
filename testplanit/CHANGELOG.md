@@ -1,3 +1,9 @@
+## [0.24.5](https://github.com/TestPlanIt/testplanit/compare/v0.24.4...v0.24.5) (2026-05-03)
+
+### Bug Fixes
+
+* **webhooks:** tenant-aware jobId, retention memory hygiene, raised PM2 ceilings ([#273](https://github.com/TestPlanIt/testplanit/issues/273)) ([590f91b](https://github.com/TestPlanIt/testplanit/commit/590f91b0c21d912d16ca0ff5f8f95f8e4ce7c0e0)), closes [#271](https://github.com/TestPlanIt/testplanit/issues/271)
+
 ## [0.24.4](https://github.com/TestPlanIt/testplanit/compare/v0.24.3...v0.24.4) (2026-05-03)
 
 ### Bug Fixes
