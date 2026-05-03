@@ -1,3 +1,9 @@
+## [0.24.3](https://github.com/TestPlanIt/testplanit/compare/v0.24.2...v0.24.3) (2026-05-03)
+
+### Bug Fixes
+
+* **webhooks:** make outbox + retention workers multi-tenant aware ([#271](https://github.com/TestPlanIt/testplanit/issues/271)) ([6731c68](https://github.com/TestPlanIt/testplanit/commit/6731c68329bfca35c5a73f43711a10d991968946))
+
 ## [0.24.2](https://github.com/TestPlanIt/testplanit/compare/v0.24.1...v0.24.2) (2026-05-03)
 
 ### Bug Fixes
