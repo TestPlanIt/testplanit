@@ -1,5 +1,6 @@
 import TextFromJson from "@/components/TextFromJson";
 import { Button } from "@/components/ui/button";
+import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import {
   Tooltip,
   TooltipContent,
@@ -33,18 +34,21 @@ interface DisplayStep {
 interface StepsProps {
   steps: DisplayStep[];
   previousSteps?: DisplayStep[];
+  parameters?: ParameterChipMeta[];
 }
 
 interface RenderSharedGroupItemsProps {
   sharedStepGroupId: number;
   sharedStepGroupName: string;
   expandAll: boolean;
+  parameters?: ParameterChipMeta[];
 }
 
 const RenderSharedGroupItems: React.FC<RenderSharedGroupItemsProps> = ({
   sharedStepGroupId,
   sharedStepGroupName: _sharedStepGroupName,
   expandAll,
+  parameters,
 }) => {
   const t_steps = useTranslations("repository.steps");
 
@@ -118,7 +122,8 @@ const RenderSharedGroupItems: React.FC<RenderSharedGroupItemsProps> = ({
                   undefined,
                   `shared-${sharedStepGroupId}-item-${item.id || itemIndex}-step`,
                   expandAll,
-                  false
+                  false,
+                  parameters
                 )}
               </div>
             </div>
@@ -130,7 +135,8 @@ const RenderSharedGroupItems: React.FC<RenderSharedGroupItemsProps> = ({
                   undefined,
                   `shared-${sharedStepGroupId}-item-${item.id || itemIndex}-expected`,
                   expandAll,
-                  false
+                  false,
+                  parameters
                 )}
               </div>
             </div>
@@ -146,7 +152,8 @@ const renderFieldValue = (
   previousFieldValue: any | undefined,
   key: string,
   expand: boolean,
-  showDiff: boolean
+  showDiff: boolean,
+  parameters?: ParameterChipMeta[]
 ) => {
   // Ensure we have a valid JSON string for the TipTapEditor
   const ensureValidJsonString = (value: any): string => {
@@ -217,6 +224,7 @@ const renderFieldValue = (
           room={key}
           format="html"
           expand={expand}
+          parameters={parameters}
         />
       </div>
     );
@@ -236,6 +244,7 @@ const renderFieldValue = (
             room={key}
             format="html"
             expand={expand}
+            parameters={parameters}
           />
         </span>
       </div>
@@ -263,6 +272,7 @@ const renderFieldValue = (
               room={"prev" + key}
               format="html"
               expand={expand}
+              parameters={parameters}
             />
           </span>
         </div>
@@ -278,6 +288,7 @@ const renderFieldValue = (
               room={key}
               format="html"
               expand={expand}
+              parameters={parameters}
             />
           </span>
         </div>
@@ -292,6 +303,7 @@ const renderFieldValue = (
           room={key}
           format="html"
           expand={expand}
+          parameters={parameters}
         />
       </div>
     );
@@ -301,6 +313,7 @@ const renderFieldValue = (
 export const StepsDisplay: React.FC<StepsProps> = ({
   steps,
   previousSteps,
+  parameters,
 }) => {
   const [expandAll, setExpandAll] = useState(false);
   const t_repo_steps = useTranslations("repository.steps");
@@ -402,6 +415,7 @@ export const StepsDisplay: React.FC<StepsProps> = ({
                           "Shared Steps"
                         }
                         expandAll={expandAll}
+                        parameters={parameters}
                       />
                     </div>
                   </div>
@@ -433,7 +447,8 @@ export const StepsDisplay: React.FC<StepsProps> = ({
                         previousStep ? previousStep.step || "" : undefined,
                         step.id.toString(),
                         expandAll,
-                        showDiff
+                        showDiff,
+                        parameters
                       )}
                     </div>
                   </div>
@@ -450,7 +465,8 @@ export const StepsDisplay: React.FC<StepsProps> = ({
                           : undefined,
                         step.id.toString() + "-expected",
                         expandAll,
-                        showDiff
+                        showDiff,
+                        parameters
                       )}
                     </div>
                   </div>
@@ -523,6 +539,7 @@ export const StepsDisplay: React.FC<StepsProps> = ({
                             room={"prev" + step.id.toString()}
                             format="html"
                             expand={expandAll}
+                            parameters={parameters}
                           />
                         </span>
                       </div>
@@ -543,6 +560,7 @@ export const StepsDisplay: React.FC<StepsProps> = ({
                             room={"prev" + step.id.toString() + "-expected"}
                             format="html"
                             expand={expandAll}
+                            parameters={parameters}
                           />
                         </span>
                       </div>

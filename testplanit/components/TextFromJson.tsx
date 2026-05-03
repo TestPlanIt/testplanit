@@ -2,6 +2,7 @@ import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { Button } from "@/components/ui/button";
 import { ChevronDownCircle } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
+import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 
 interface TextFromJsonProps {
@@ -10,6 +11,7 @@ interface TextFromJsonProps {
   room: string;
   expand?: boolean;
   expandable?: boolean;
+  parameters?: ParameterChipMeta[];
 }
 
 const TextFromJson: React.FC<TextFromJsonProps> = ({
@@ -18,6 +20,7 @@ const TextFromJson: React.FC<TextFromJsonProps> = ({
   room,
   expand = false,
   expandable = true,
+  parameters,
 }) => {
   // Normalize input: if an object is passed instead of a string, stringify it
   const jsonString =
@@ -92,7 +95,11 @@ const TextFromJson: React.FC<TextFromJsonProps> = ({
             isOpen ? "" : "max-h-[75px]"
           }`}
         >
-          <TipTapEditorWrapper jsonString={jsonString} room={room} />
+          <TipTapEditorWrapper
+            jsonString={jsonString}
+            room={room}
+            parameters={parameters}
+          />
         </div>
       </div>
       {showButton && (
@@ -136,7 +143,8 @@ const isValidTipTapContent = (content: any): boolean => {
 const TipTapEditorWrapper: React.FC<{
   jsonString: string | object;
   room: string;
-}> = ({ jsonString: jsonStringProp, room }) => {
+  parameters?: ParameterChipMeta[];
+}> = ({ jsonString: jsonStringProp, room, parameters }) => {
   const jsonString =
     typeof jsonStringProp === "string"
       ? jsonStringProp
@@ -170,6 +178,7 @@ const TipTapEditorWrapper: React.FC<{
         content={content}
         readOnly={true}
         className="w-full"
+        parameters={parameters}
       />
     </div>
   );

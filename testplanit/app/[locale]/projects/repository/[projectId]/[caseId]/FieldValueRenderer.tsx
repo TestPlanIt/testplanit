@@ -603,6 +603,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
             <StepsDisplay
               steps={stepsForDisplay || fieldValue || []}
               previousSteps={previousFieldValue}
+              parameters={parameters}
             />
           );
         }
