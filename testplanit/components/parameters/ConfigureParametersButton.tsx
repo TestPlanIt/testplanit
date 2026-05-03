@@ -31,9 +31,9 @@ export function ConfigureParametersButton({
       size="sm"
       onClick={onOpen}
       data-testid="configure-parameters-button"
-      className="mb-2"
+      className=""
     >
-      <Braces className="w-4 h-4 mr-2" />
+      <Braces className="w-4 h-4" />
       {label}
     </Button>
   );

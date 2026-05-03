@@ -2059,11 +2059,6 @@ export default function TestCaseDetails() {
                 onExpand={() => setIsCollapsedLeft(false)}
               >
                 <div className="mb-4">
-                  <ConfigureParametersButton
-                    parameterCount={parameterCount}
-                    canEdit={canAddEdit}
-                    onOpen={() => setIsParamSheetOpen(true)}
-                  />
                   <ul>
                     {(testcase?.template?.caseFields || []).map(
                       (field, fieldIndex) => {
@@ -2083,6 +2078,15 @@ export default function TestCaseDetails() {
                             key={`case-field-${field.caseField.id}-${fieldIndex}`}
                             className="mb-2 mr-6"
                           >
+                            {field.caseField.type.type === "Steps" && (
+                              <div className="flex justify-end">
+                                <ConfigureParametersButton
+                                  parameterCount={parameterCount}
+                                  canEdit={canAddEdit}
+                                  onOpen={() => setIsParamSheetOpen(true)}
+                                />
+                              </div>
+                            )}
                             {field.caseField.type.type !== "Steps" && (
                               <div className="font-bold flex items-center">
                                 {field.caseField.displayName}
@@ -2156,6 +2160,11 @@ export default function TestCaseDetails() {
                       (f) => f.caseField.type.type === "Steps"
                     ) && (
                       <div className="mb-4 mr-6">
+                        <ConfigureParametersButton
+                          parameterCount={parameterCount}
+                          canEdit={canAddEdit}
+                          onOpen={() => setIsParamSheetOpen(true)}
+                        />
                         <Alert className="border-warning/50 bg-warning/10 mb-2">
                           <AlertCircle className="h-4 w-4 text-warning" />
                           <AlertDescription className="text-sm text-warning-foreground">
