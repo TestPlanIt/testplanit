@@ -71,6 +71,7 @@ export type DispatchOutcome =
 
 const HTTP_TIMEOUT_MS = 10_000;
 const MAX_ERROR_LEN = 1024;
+const MAX_RESPONSE_BODY_BYTES = 8 * 1024;
 
 /** Synthetic event from sendTestOutboundWebhook bypasses subscription matching. */
 const DIAGNOSTIC_EVENT_NAME = "webhook.test" as const;
@@ -256,7 +257,10 @@ export async function dispatchWebhook(
     });
     statusCode = response.status;
     if (!response.ok) {
-      const responseText = await response.text().catch(() => "");
+      const responseText = await readBodyCapped(
+        response,
+        MAX_RESPONSE_BODY_BYTES
+      ).catch(() => "");
       errorSentinel = `${response.status}_${truncate(
         responseText,
         MAX_ERROR_LEN - 32
@@ -338,6 +342,50 @@ export async function dispatchWebhook(
 function truncate(s: string, n: number): string {
   if (!s) return "";
   return s.length <= n ? s : s.slice(0, n) + "…";
+}
+
+/**
+ * Read at most `maxBytes` from a fetch Response body, then cancel the rest.
+ * Prevents a misbehaving consumer that returns a huge response body from
+ * blowing up worker memory via `response.text()`.
+ */
+async function readBodyCapped(
+  response: Response,
+  maxBytes: number
+): Promise<string> {
+  if (!response.body) {
+    return "";
+  }
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+  try {
+    while (received < maxBytes) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!value) continue;
+      const remaining = maxBytes - received;
+      if (value.byteLength > remaining) {
+        chunks.push(value.subarray(0, remaining));
+        received += remaining;
+        break;
+      }
+      chunks.push(value);
+      received += value.byteLength;
+    }
+  } finally {
+    // Discard the rest of the stream so the connection can be released
+    // without waiting on a multi-MB body we don't care about.
+    reader.cancel().catch(() => {});
+  }
+  if (chunks.length === 0) return "";
+  const merged = new Uint8Array(received);
+  let offset = 0;
+  for (const c of chunks) {
+    merged.set(c, offset);
+    offset += c.byteLength;
+  }
+  return new TextDecoder("utf-8", { fatal: false }).decode(merged);
 }
 
 function mapFetchError(err: unknown): string {

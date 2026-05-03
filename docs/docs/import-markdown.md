@@ -57,7 +57,7 @@ smoke, authentication, login
 **How it maps:**
 
 | Markdown Element | Detected Column | Maps To |
-|------------------|----------------|---------|
+| ------------------ | ---------------- | --------- |
 | `#` heading text | `name` | **Name** (system field, required) |
 | `## Steps` list items | `steps` | **Steps** (system field) |
 | `## Expected Results` list items | `steps` | **Steps** expected result, paired by position |
@@ -127,7 +127,7 @@ Define test cases in a Markdown table. Each row becomes a test case.
 
 ```markdown
 | Name | Steps | Expected Result | Tags |
-|------|-------|-----------------|------|
+| ------ | ------- | ----------------- | ------ |
 | Login Test | Navigate to login page and enter credentials | User is redirected to dashboard | smoke, login |
 | Logout Test | Click the logout button | User is redirected to login page | smoke, logout |
 | Password Reset | Click forgot password and enter email | Reset email is sent | security |
@@ -136,7 +136,7 @@ Define test cases in a Markdown table. Each row becomes a test case.
 **Recognized column headers:**
 
 | Column Header | Detected As |
-|---------------|-------------|
+| --------------- | ------------- |
 | `Name`, `Title`, `Test Case`, `Test Name` | `name` — maps to **Name** (system field, required) |
 | `Steps`, `Procedure`, `Actions`, `Test Steps` | `steps` — maps to **Steps** (system field) |
 | `Expected Result`, `Expected Results`, `Expected`, `Result` | Expected result on steps |
@@ -325,7 +325,7 @@ During import, the parser detects columns from your Markdown and you map them to
 These fields exist on every test case regardless of template:
 
 | Detected Column | System Field | Notes |
-|-----------------|--------------|-------|
+| ----------------- | -------------- | ------- |
 | `name` (from headings, table `Name`/`Title` column) | **Name** | Required. Falls back to "Test Case 1", "Test Case 2", etc. |
 | `steps` (from `## Steps`, inline lists, table `Steps` column) | **Steps** | Supports numbered and bulleted lists. Expected results paired by position or inline separators. |
 | `tags` (from `## Tags`, table `Tags`/`Labels` column) | **Tags** | Comma-separated values or list items |
@@ -339,7 +339,7 @@ All other detected columns — `description`, `preconditions`, `Priority`, `Note
 Common examples:
 
 | Detected Column | Typical Template Field |
-|-----------------|----------------------|
+| ----------------- | ---------------------- |
 | `description` (text between heading and first sub-heading) | A "Description" or "Summary" text field |
 | `preconditions` (from `## Preconditions` / `## Prerequisites`) | A "Preconditions" text field |
 | `Priority` (from `## Priority` or table column) | A "Priority" dropdown or text field |
@@ -451,7 +451,7 @@ tag3, tag4
 
 ```markdown
 | Name | Description | Steps | Expected Result | Tags | Priority |
-|------|-------------|-------|-----------------|------|----------|
+| ------ | ------------- | ------- | ----------------- | ------ | ---------- |
 | [Test Name] | [Description] | [Step text] | [Expected result] | [tag1, tag2] | [High] |
 | [Test Name] | [Description] | [Step text] | [Expected result] | [tag1, tag2] | [Medium] |
 ```
@@ -477,7 +477,7 @@ Very large Markdown files may take longer to parse, especially with AI-assisted 
 ## Comparison: CSV vs Markdown Import
 
 | Feature | CSV Import | Markdown Import |
-|---------|-----------|----------------|
+| --------- | ----------- | ---------------- |
 | Multi-step formatting | Pipe-separated in a single cell | Native numbered/bulleted lists |
 | Expected results | Pipe separator in step cell | `->`, `\|` inline, or separate section |
 | Rich text in fields | Auto-detected (Markdown, HTML, JSON) | Native Markdown |

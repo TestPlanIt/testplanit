@@ -32,7 +32,7 @@ When no LLM integration is configured, the scan returns fuzzy-only results and s
 ### Confidence Levels
 
 | Level | Meaning |
-|---|---|
+| --- | --- |
 | **High** | Cases are very likely duplicates. Review and resolve promptly. |
 | **Medium** | Cases share significant overlap. Review to confirm whether they are intentional duplicates. |
 | **Low** | Cases share some similarity. Use your judgment — they may be testing related but distinct behavior. |

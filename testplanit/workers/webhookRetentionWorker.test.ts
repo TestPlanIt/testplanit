@@ -16,6 +16,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockExecuteRaw = vi.fn();
 const mockCaptureAuditEvent = vi.fn();
+const mockIsMultiTenantMode = vi.fn();
+const mockGetAllTenantIds = vi.fn();
+const mockGetTenantPrismaClient = vi.fn();
 
 vi.mock("../lib/prisma", () => ({
   prisma: {
@@ -27,7 +30,15 @@ vi.mock("../lib/services/auditLog", () => ({
   captureAuditEvent: (...args: unknown[]) => mockCaptureAuditEvent(...args),
 }));
 
-import { purgeOnce } from "./webhookRetentionWorker";
+vi.mock("../lib/multiTenantPrisma", () => ({
+  isMultiTenantMode: () => mockIsMultiTenantMode(),
+  getAllTenantIds: () => mockGetAllTenantIds(),
+  getTenantPrismaClient: (tenantId: string) =>
+    mockGetTenantPrismaClient(tenantId),
+  disconnectAllTenantClients: vi.fn(),
+}));
+
+import { purgeAllTenantsOnce, purgeOnce } from "./webhookRetentionWorker";
 
 /**
  * Helper — flatten the tagged-template SQL strings array into a single string
@@ -80,6 +91,10 @@ describe("workers/webhookRetentionWorker.purgeOnce", () => {
     vi.setSystemTime(new Date("2026-04-29T03:00:00.000Z"));
     mockExecuteRaw.mockReset();
     mockCaptureAuditEvent.mockReset();
+    mockIsMultiTenantMode.mockReset();
+    mockGetAllTenantIds.mockReset();
+    mockGetTenantPrismaClient.mockReset();
+    mockIsMultiTenantMode.mockReturnValue(false);
   });
 
   afterEach(() => {
@@ -249,5 +264,102 @@ describe("workers/webhookRetentionWorker.purgeOnce", () => {
 
     // And spelled out: 2026-03-30T03:00:00.000Z
     expect(cutoffArg.toISOString()).toBe("2026-03-30T03:00:00.000Z");
+  });
+
+  it("9. accepts an explicit Prisma client and tenantId, and stamps tenantId on the audit event", async () => {
+    const tenantExecute = vi.fn().mockResolvedValue(0);
+    const tenantClient = { $executeRaw: tenantExecute } as never;
+
+    await purgeOnce(tenantClient, "tenant-a");
+
+    // Default mockExecuteRaw was NOT used — the per-tenant client was.
+    expect(mockExecuteRaw).not.toHaveBeenCalled();
+    expect(tenantExecute).toHaveBeenCalled();
+    const event = mockCaptureAuditEvent.mock.calls[0][0];
+    expect(event.tenantId).toBe("tenant-a");
+  });
+});
+
+describe("workers/webhookRetentionWorker.purgeAllTenantsOnce", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-29T03:00:00.000Z"));
+    mockExecuteRaw.mockReset();
+    mockCaptureAuditEvent.mockReset();
+    mockIsMultiTenantMode.mockReset();
+    mockGetAllTenantIds.mockReset();
+    mockGetTenantPrismaClient.mockReset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it("single-tenant mode: runs purgeOnce against the singleton client and returns one result", async () => {
+    mockIsMultiTenantMode.mockReturnValue(false);
+    mockExecuteRaw.mockResolvedValue(0);
+
+    const results = await purgeAllTenantsOnce();
+
+    expect(results).toHaveLength(1);
+    expect(mockExecuteRaw).toHaveBeenCalled();
+    expect(mockGetTenantPrismaClient).not.toHaveBeenCalled();
+    expect(mockCaptureAuditEvent).toHaveBeenCalledTimes(1);
+    expect(mockCaptureAuditEvent.mock.calls[0][0].tenantId).toBeUndefined();
+  });
+
+  it("multi-tenant mode: runs purgeOnce per tenant with that tenant's client and emits one audit row per tenant", async () => {
+    mockIsMultiTenantMode.mockReturnValue(true);
+    mockGetAllTenantIds.mockReturnValue(["tenant-a", "tenant-b"]);
+    const tenantAExecute = vi.fn().mockResolvedValue(0);
+    const tenantBExecute = vi.fn().mockResolvedValue(0);
+    mockGetTenantPrismaClient.mockImplementation((id: string) =>
+      id === "tenant-a"
+        ? { $executeRaw: tenantAExecute }
+        : { $executeRaw: tenantBExecute }
+    );
+
+    const results = await purgeAllTenantsOnce();
+
+    expect(results).toHaveLength(2);
+    expect(tenantAExecute).toHaveBeenCalled();
+    expect(tenantBExecute).toHaveBeenCalled();
+    expect(mockCaptureAuditEvent).toHaveBeenCalledTimes(2);
+    expect(mockCaptureAuditEvent.mock.calls[0][0].tenantId).toBe("tenant-a");
+    expect(mockCaptureAuditEvent.mock.calls[1][0].tenantId).toBe("tenant-b");
+  });
+
+  it("multi-tenant mode: a tenant-level error does NOT abort other tenants", async () => {
+    mockIsMultiTenantMode.mockReturnValue(true);
+    mockGetAllTenantIds.mockReturnValue(["tenant-a", "tenant-b"]);
+    const tenantBExecute = vi.fn().mockResolvedValue(0);
+    mockGetTenantPrismaClient.mockImplementation((id: string) => {
+      if (id === "tenant-a") {
+        throw new Error("tenant-a config missing");
+      }
+      return { $executeRaw: tenantBExecute };
+    });
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const results = await purgeAllTenantsOnce();
+
+    // Only tenant-b succeeded
+    expect(results).toHaveLength(1);
+    expect(tenantBExecute).toHaveBeenCalled();
+    expect(mockCaptureAuditEvent).toHaveBeenCalledTimes(1);
+    expect(mockCaptureAuditEvent.mock.calls[0][0].tenantId).toBe("tenant-b");
+    expect(errorSpy).toHaveBeenCalled();
+  });
+
+  it("multi-tenant mode with zero tenants returns an empty array", async () => {
+    mockIsMultiTenantMode.mockReturnValue(true);
+    mockGetAllTenantIds.mockReturnValue([]);
+
+    const results = await purgeAllTenantsOnce();
+
+    expect(results).toEqual([]);
+    expect(mockExecuteRaw).not.toHaveBeenCalled();
+    expect(mockCaptureAuditEvent).not.toHaveBeenCalled();
   });
 });

@@ -106,7 +106,7 @@ TENANT_TENANT_B_ELASTICSEARCH_INDEX="tenant_b"
 ### Web Application Instance
 
 | Variable | Description | Required |
-|----------|-------------|----------|
+| ---------- | ------------- | ---------- |
 | `INSTANCE_TENANT_ID` | Unique identifier for this tenant instance | Yes (multi-tenant) |
 | `DATABASE_URL` | PostgreSQL connection string for this tenant | Yes |
 | `VALKEY_URL` | Shared Valkey/Redis connection string | Yes |
@@ -114,7 +114,7 @@ TENANT_TENANT_B_ELASTICSEARCH_INDEX="tenant_b"
 ### Worker Container
 
 | Variable | Description | Required |
-|----------|-------------|----------|
+| ---------- | ------------- | ---------- |
 | `MULTI_TENANT_MODE` | Set to `"true"` to enable multi-tenant mode | Yes |
 | `VALKEY_URL` | Shared Valkey/Redis connection string | Yes |
 | `TENANT_CONFIGS` | JSON object with tenant configurations | One of these |
@@ -157,7 +157,7 @@ This prevents cross-tenant data leakage in the admin interface.
 All workers support multi-tenant mode:
 
 | Worker | Multi-tenant | Notes |
-|--------|--------------|-------|
+| -------- | -------------- | ------- |
 | Notification Worker | Yes | Creates tenant-specific notifications |
 | Email Worker | Yes | Sends emails for correct tenant |
 | Forecast Worker | Yes | Updates forecasts per tenant database |
@@ -168,6 +168,9 @@ All workers support multi-tenant mode:
 | Budget Alert Worker | Yes | Checks budgets per tenant database |
 | Repo Cache Worker | Yes | Refreshes tenant-scoped Valkey caches |
 | Testmo Import Worker | Yes | Memory-intensive; consider per-tenant deployment for frequent imports |
+| Webhook Dispatch Worker | Yes | Routes per-job via `tenantId` stamped on each dispatch job by the outbox poller |
+| Webhook Outbox Worker | Yes | Polls every configured tenant per cycle, claims per-tenant batches via `FOR UPDATE SKIP LOCKED`, stamps `tenantId` on each enqueued dispatch job |
+| Webhook Retention Worker | Yes | Runs the daily 30-day purge against every configured tenant database, emits one audit row per tenant per run |
 
 ### Testmo Import Worker Note
 
@@ -297,7 +300,7 @@ In multi-tenant mode, Elasticsearch indices are automatically prefixed with the 
 ### Index Naming Convention
 
 | Entity Type | Single-Tenant Index | Multi-Tenant Index (Tenant A) |
-|-------------|---------------------|-------------------------------|
+| ------------- | --------------------- | ------------------------------- |
 | Repository Cases | `testplanit-repository-cases` | `testplanit-tenant-a-repository-cases` |
 | Shared Steps | `testplanit-shared-steps` | `testplanit-tenant-a-shared-steps` |
 | Test Runs | `testplanit-test-runs` | `testplanit-tenant-a-test-runs` |

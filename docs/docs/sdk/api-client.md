@@ -65,7 +65,7 @@ const client = new TestPlanItClient({
 ```
 
 | Option | Type | Required | Default | Description |
-|--------|------|----------|---------|-------------|
+| -------- | ------ | ---------- | --------- | ------------- |
 | `baseUrl` | string | Yes | - | Base URL of your TestPlanIt instance |
 | `apiToken` | string | Yes | - | API token for authentication (starts with `tpi_`) |
 | `timeout` | number | No | 30000 | Request timeout in milliseconds |
@@ -316,7 +316,7 @@ try {
 ### Common Error Codes
 
 | Status Code | Description |
-|-------------|-------------|
+| ------------- | ------------- |
 | 400 | Bad Request - Invalid parameters |
 | 401 | Unauthorized - Invalid or missing API token |
 | 403 | Forbidden - Insufficient permissions |

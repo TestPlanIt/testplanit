@@ -165,7 +165,7 @@ See [CUSTOM_DOMAIN_SETUP.md](https://github.com/testplanit/testplanit/blob/main/
 The app calls these endpoints on your TestPlanIt instance:
 
 | Endpoint | Purpose |
-|----------|---------|
+| ---------- | --------- |
 | `GET /version.json` | Connection test (returns app version) |
 | `GET /api/integrations/jira/test-info` | Fetch linked test cases, runs, and sessions |
 

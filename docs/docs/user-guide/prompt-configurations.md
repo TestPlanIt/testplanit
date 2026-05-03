@@ -109,7 +109,7 @@ This allows different projects to use different AI behaviors — for example, a 
 User prompts can include `{{variable}}` placeholders that are replaced at runtime with actual values. The available variables depend on the feature:
 
 | Feature | Common Variables |
-|---------|-----------------|
+| --------- | ----------------- |
 | Test Case Generation | `{{sourceContent}}`, `{{fields}}`, `{{numberOfCases}}` |
 | Markdown Parsing | `{{markdownContent}}`, `{{fields}}` |
 | Smart Test Case Selection | `{{testCases}}`, `{{context}}` |

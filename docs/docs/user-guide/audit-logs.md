@@ -32,7 +32,7 @@ Only users with administrative privileges can access the audit log viewer.
 ### Authentication Events
 
 | Action | Description |
-|--------|-------------|
+| -------- | ------------- |
 | `LOGIN` | User successfully logged in |
 | `LOGOUT` | User logged out |
 | `LOGIN_FAILED` | Failed login attempt |
@@ -48,7 +48,7 @@ Only users with administrative privileges can access the audit log viewer.
 ### Data Operations
 
 | Action | Description |
-|--------|-------------|
+| -------- | ------------- |
 | `CREATE` | A new record was created |
 | `UPDATE` | An existing record was modified |
 | `DELETE` | A record was deleted (soft delete) |
@@ -59,7 +59,7 @@ Only users with administrative privileges can access the audit log viewer.
 ### Permission & Access Control
 
 | Action | Description |
-|--------|-------------|
+| -------- | ------------- |
 | `PERMISSION_GRANT` | User/group granted access to a project |
 | `PERMISSION_REVOKE` | User/group access revoked from a project |
 | `ROLE_CHANGED` | User's system-wide role was changed |
@@ -67,7 +67,7 @@ Only users with administrative privileges can access the audit log viewer.
 ### API Token Management
 
 | Action | Description |
-|--------|-------------|
+| -------- | ------------- |
 | `API_KEY_CREATED` | A new API token was created |
 | `API_KEY_DELETED` | An API token was deleted |
 | `API_KEY_REVOKED` | An API token was revoked by an administrator |
@@ -76,7 +76,7 @@ Only users with administrative privileges can access the audit log viewer.
 ### Security Administration
 
 | Action | Description |
-|--------|-------------|
+| -------- | ------------- |
 | `PASSWORD_POLICY_CHANGED` | Password policy or lockout settings were modified |
 | `FORCE_PASSWORD_CHANGE` | User(s) required to change password on next login (individual or bulk) |
 | `PASSWORD_REVOKED` | A user's password was removed by an administrator |
@@ -86,14 +86,14 @@ Only users with administrative privileges can access the audit log viewer.
 ### System Configuration
 
 | Action | Description |
-|--------|-------------|
+| -------- | ------------- |
 | `SYSTEM_CONFIG_CHANGED` | Application configuration was modified (includes queue operator actions, integration sync, LLM cache operations) |
 | `SSO_CONFIG_CHANGED` | SSO provider settings were updated |
 
 ### Share Links
 
 | Action | Description |
-|--------|-------------|
+| -------- | ------------- |
 | `SHARE_LINK_CREATED` | A share link was generated |
 | `SHARE_LINK_ACCESSED` | A share link was opened |
 | `SHARE_LINK_PASSWORD_VERIFY` | A password-protected share link was unlocked (success) or rejected (failure, for brute-force detection) |
@@ -102,14 +102,14 @@ Only users with administrative privileges can access the audit log viewer.
 ### Imports & Data Quality
 
 | Action | Description |
-|--------|-------------|
+| -------- | ------------- |
 | `IMPORT_STARTED` | A data import run (e.g., Testmo) was kicked off; pairs with the worker's `BULK_CREATE` event when the import completes |
 | `DUPLICATE_RESOLVED` | A duplicate-case scan result was resolved (merged, linked, or dismissed) |
 
 ### Data Export
 
 | Action | Description |
-|--------|-------------|
+| -------- | ------------- |
 | `DATA_EXPORTED` | Data was exported from the system |
 
 ## Tracked Entities
@@ -139,7 +139,7 @@ The audit log viewer supports filtering by:
 Each audit log entry contains:
 
 | Field | Description |
-|-------|-------------|
+| ------- | ------------- |
 | Timestamp | When the action occurred |
 | User | Who performed the action (name, email) |
 | Action | The type of action performed |

@@ -1,3 +1,11 @@
+import type { PrismaClient } from "@prisma/client";
+
+import {
+  disconnectAllTenantClients,
+  getAllTenantIds,
+  getTenantPrismaClient,
+  isMultiTenantMode,
+} from "../lib/multiTenantPrisma";
 import { prisma } from "../lib/prisma";
 import { getWebhookDispatchQueue } from "../lib/queues";
 import { claimOutboxBatch, fanoutToConfigs } from "../lib/webhooks/outbox";
@@ -8,13 +16,16 @@ import { claimOutboxBatch, fanoutToConfigs } from "../lib/webhooks/outbox";
  * Single-process polled loop (NOT a BullMQ Worker — claims its own work
  * directly from Postgres via FOR UPDATE SKIP LOCKED). Multiple replicas
  * can run concurrently without double-claiming.
- * *
+ *
+ * Multi-tenant mode: iterates getAllTenantIds() once per cadence and
+ * polls each tenant's database via getTenantPrismaClient(tenantId). The
+ * per-tenant tenantId is stamped onto every enqueued dispatch job so the
+ * dispatch worker routes to the correct tenant DB.
+ *
  * Note on `attempt: 1` in the enqueued job: this is the INITIAL attempt
  * value. The dispatch worker overrides this on every processor
  * invocation with `job.attemptsMade + 1` so retry rows have the correct
- * 1-indexed attempt number. We could omit `attempt` here entirely and let
- * the processor compute it from scratch, but keeping `attempt: 1` makes
- * the initial-attempt case explicit in the job data.
+ * 1-indexed attempt number.
  */
 
 const POLL_INTERVAL_MS = 2_000;
@@ -23,8 +34,11 @@ const BATCH_SIZE = 100;
 let stopRequested = false;
 let inflight: Promise<number> | null = null;
 
-export async function pollOnce(): Promise<number> {
-  const claimed = await claimOutboxBatch(prisma, BATCH_SIZE);
+export async function pollOnce(
+  client: PrismaClient = prisma,
+  tenantId?: string
+): Promise<number> {
+  const claimed = await claimOutboxBatch(client, BATCH_SIZE);
   if (claimed.length === 0) return 0;
 
   const queue = getWebhookDispatchQueue();
@@ -35,9 +49,11 @@ export async function pollOnce(): Promise<number> {
     return claimed.length;
   }
 
+  const effectiveTenantId = tenantId ?? process.env.TENANT_ID ?? undefined;
+
   for (const row of claimed) {
     try {
-      const configIds = await fanoutToConfigs(row, prisma);
+      const configIds = await fanoutToConfigs(row, client);
       for (const webhookConfigId of configIds) {
         await queue.add(
           "dispatch",
@@ -45,7 +61,7 @@ export async function pollOnce(): Promise<number> {
             outboxEventId: row.id,
             webhookConfigId,
             attempt: 1, // initial attempt; processor overrides on retries via job.attemptsMade + 1
-            tenantId: process.env.TENANT_ID ?? undefined,
+            tenantId: effectiveTenantId,
           },
           {
             // Idempotent — re-enqueue same row produces no duplicate (BullMQ
@@ -58,11 +74,11 @@ export async function pollOnce(): Promise<number> {
         );
       }
       console.log(
-        `[WebhookOutboxWorker] Fan-out: outbox=${row.id} event=${row.eventName} configs=${configIds.length}`
+        `[WebhookOutboxWorker] Fan-out: outbox=${row.id} event=${row.eventName} configs=${configIds.length}${effectiveTenantId ? ` tenant=${effectiveTenantId}` : ""}`
       );
     } catch (err) {
       console.error(
-        `[WebhookOutboxWorker] Fan-out error for outbox row ${row.id} (${row.eventName}):`,
+        `[WebhookOutboxWorker] Fan-out error for outbox row ${row.id} (${row.eventName})${effectiveTenantId ? ` tenant=${effectiveTenantId}` : ""}:`,
         err
       );
       // Continue with next row — do NOT abort the whole batch
@@ -71,20 +87,55 @@ export async function pollOnce(): Promise<number> {
   return claimed.length;
 }
 
+/**
+ * Run one polling pass across every configured tenant in multi-tenant mode,
+ * or against the singleton client in single-tenant mode. Returns the total
+ * number of rows claimed across all tenants this pass.
+ */
+export async function pollAllTenantsOnce(): Promise<number> {
+  if (!isMultiTenantMode()) {
+    return pollOnce();
+  }
+
+  const tenantIds = getAllTenantIds();
+  if (tenantIds.length === 0) {
+    return 0;
+  }
+
+  let total = 0;
+  for (const tenantId of tenantIds) {
+    try {
+      const client = getTenantPrismaClient(tenantId);
+      const claimed = await pollOnce(client, tenantId);
+      total += claimed;
+    } catch (err) {
+      console.error(
+        `[WebhookOutboxWorker] Poll error for tenant ${tenantId}:`,
+        err
+      );
+    }
+  }
+  return total;
+}
+
 export async function startLoop(): Promise<void> {
-  console.log(
-    "[WebhookOutboxWorker] Starting poll loop (cadence=" +
-      POLL_INTERVAL_MS +
-      "ms)"
-  );
+  if (isMultiTenantMode()) {
+    console.log(
+      `[WebhookOutboxWorker] Starting MULTI-TENANT poll loop (cadence=${POLL_INTERVAL_MS}ms, tenants=${getAllTenantIds().length})`
+    );
+  } else {
+    console.log(
+      `[WebhookOutboxWorker] Starting SINGLE-TENANT poll loop (cadence=${POLL_INTERVAL_MS}ms)`
+    );
+  }
   while (!stopRequested) {
     try {
-      inflight = pollOnce();
+      inflight = pollAllTenantsOnce();
       const n = await inflight;
       if (n === 0) {
         await sleep(POLL_INTERVAL_MS);
       }
-      // If batch was full (n === BATCH_SIZE), do not sleep — drain backlog ASAP.
+      // If we got rows on this pass, do not sleep — drain backlog ASAP.
     } catch (err) {
       console.error("[WebhookOutboxWorker] Poll error:", err);
       await sleep(POLL_INTERVAL_MS);
@@ -108,6 +159,9 @@ async function gracefulShutdown(signal: string): Promise<void> {
     } catch {
       // Ignore errors from the in-flight poll — startLoop catches them
     }
+  }
+  if (isMultiTenantMode()) {
+    await disconnectAllTenantClients();
   }
   process.exit(0);
 }

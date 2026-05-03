@@ -159,7 +159,7 @@ The Playwright configuration is in `testplanit/e2e/playwright.config.ts`.
 ### Key Settings
 
 | Setting | Value | Description |
-| --------- | ------- |------------- |
+| --------- | ------- | ------------- |
 | Port | 3002 | E2E tests run on port 3002 to avoid conflicts with dev server |
 | Timeout | 60s | Global test timeout |
 | Retries | 2 (CI only) | Tests retry on CI, not locally |
