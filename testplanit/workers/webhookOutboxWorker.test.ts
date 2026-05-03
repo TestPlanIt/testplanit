@@ -1,8 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockClaim = vi.fn();
 const mockFanout = vi.fn();
 const mockGetQueue = vi.fn();
+const mockIsMultiTenantMode = vi.fn();
+const mockGetAllTenantIds = vi.fn();
+const mockGetTenantPrismaClient = vi.fn();
 
 vi.mock("../lib/prisma", () => ({
   prisma: { __mock: "prisma" },
@@ -18,7 +21,15 @@ vi.mock("../lib/queues", () => ({
   WEBHOOK_DISPATCH_QUEUE_NAME: "webhook-dispatch",
 }));
 
-import { pollOnce } from "./webhookOutboxWorker";
+vi.mock("../lib/multiTenantPrisma", () => ({
+  isMultiTenantMode: () => mockIsMultiTenantMode(),
+  getAllTenantIds: () => mockGetAllTenantIds(),
+  getTenantPrismaClient: (tenantId: string) =>
+    mockGetTenantPrismaClient(tenantId),
+  disconnectAllTenantClients: vi.fn(),
+}));
+
+import { pollAllTenantsOnce, pollOnce } from "./webhookOutboxWorker";
 
 const sampleRow = {
   id: "outbox-1",
@@ -37,6 +48,10 @@ describe("webhookOutboxWorker.pollOnce", () => {
     mockClaim.mockReset();
     mockFanout.mockReset();
     mockGetQueue.mockReset();
+    mockIsMultiTenantMode.mockReset();
+    mockGetAllTenantIds.mockReset();
+    mockGetTenantPrismaClient.mockReset();
+    mockIsMultiTenantMode.mockReturnValue(false);
   });
 
   it("1. calls claimOutboxBatch with prisma and 100 (default batch size)", async () => {
@@ -160,5 +175,124 @@ describe("webhookOutboxWorker.pollOnce", () => {
     );
     expect(fanoutLog).toBeDefined();
     logSpy.mockRestore();
+  });
+
+  it("9. when called with explicit tenantId, stamps it on the enqueued dispatch job", async () => {
+    mockClaim.mockResolvedValue([sampleRow]);
+    mockFanout.mockResolvedValue(["c1"]);
+    const addSpy = vi.fn();
+    mockGetQueue.mockReturnValue({ add: addSpy });
+
+    await pollOnce({ __mock: "tenant-prisma" } as never, "tenant-a");
+
+    expect(addSpy).toHaveBeenCalledTimes(1);
+    expect(addSpy.mock.calls[0][1]).toMatchObject({
+      outboxEventId: "outbox-1",
+      webhookConfigId: "c1",
+      attempt: 1,
+      tenantId: "tenant-a",
+    });
+    expect(mockClaim).toHaveBeenCalledWith({ __mock: "tenant-prisma" }, 100);
+  });
+});
+
+describe("webhookOutboxWorker.pollAllTenantsOnce", () => {
+  beforeEach(() => {
+    mockClaim.mockReset();
+    mockFanout.mockReset();
+    mockGetQueue.mockReset();
+    mockIsMultiTenantMode.mockReset();
+    mockGetAllTenantIds.mockReset();
+    mockGetTenantPrismaClient.mockReset();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("single-tenant mode: delegates to pollOnce against the singleton client", async () => {
+    mockIsMultiTenantMode.mockReturnValue(false);
+    mockClaim.mockResolvedValue([]);
+    mockGetQueue.mockReturnValue({ add: vi.fn() });
+
+    const n = await pollAllTenantsOnce();
+
+    expect(n).toBe(0);
+    expect(mockClaim).toHaveBeenCalledTimes(1);
+    expect(mockClaim).toHaveBeenCalledWith({ __mock: "prisma" }, 100);
+    expect(mockGetTenantPrismaClient).not.toHaveBeenCalled();
+  });
+
+  it("multi-tenant mode: polls every tenant with its own prisma client and stamps tenantId on each enqueued job", async () => {
+    mockIsMultiTenantMode.mockReturnValue(true);
+    mockGetAllTenantIds.mockReturnValue(["tenant-a", "tenant-b"]);
+    const tenantAPrisma = { __mock: "tenantA" };
+    const tenantBPrisma = { __mock: "tenantB" };
+    mockGetTenantPrismaClient.mockImplementation((id: string) =>
+      id === "tenant-a" ? tenantAPrisma : tenantBPrisma
+    );
+    // Each tenant claims one row
+    mockClaim
+      .mockResolvedValueOnce([{ ...sampleRow, id: "outbox-a" }])
+      .mockResolvedValueOnce([{ ...sampleRow, id: "outbox-b" }]);
+    mockFanout.mockResolvedValue(["c1"]);
+    const addSpy = vi.fn();
+    mockGetQueue.mockReturnValue({ add: addSpy });
+
+    const n = await pollAllTenantsOnce();
+
+    expect(n).toBe(2);
+    expect(mockGetTenantPrismaClient).toHaveBeenCalledWith("tenant-a");
+    expect(mockGetTenantPrismaClient).toHaveBeenCalledWith("tenant-b");
+    // claim was called with each tenant's client
+    expect(mockClaim).toHaveBeenNthCalledWith(1, tenantAPrisma, 100);
+    expect(mockClaim).toHaveBeenNthCalledWith(2, tenantBPrisma, 100);
+    // dispatch jobs are stamped with the right tenantId
+    expect(addSpy).toHaveBeenCalledTimes(2);
+    expect(addSpy.mock.calls[0][1]).toMatchObject({
+      outboxEventId: "outbox-a",
+      tenantId: "tenant-a",
+    });
+    expect(addSpy.mock.calls[1][1]).toMatchObject({
+      outboxEventId: "outbox-b",
+      tenantId: "tenant-b",
+    });
+  });
+
+  it("multi-tenant mode: a tenant-level error does NOT abort other tenants", async () => {
+    mockIsMultiTenantMode.mockReturnValue(true);
+    mockGetAllTenantIds.mockReturnValue(["tenant-a", "tenant-b"]);
+    mockGetTenantPrismaClient.mockImplementation((id: string) => {
+      if (id === "tenant-a") {
+        throw new Error("tenant-a config missing");
+      }
+      return { __mock: "tenantB" };
+    });
+    mockClaim.mockResolvedValueOnce([{ ...sampleRow, id: "outbox-b" }]);
+    mockFanout.mockResolvedValue(["c1"]);
+    const addSpy = vi.fn();
+    mockGetQueue.mockReturnValue({ add: addSpy });
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const n = await pollAllTenantsOnce();
+
+    expect(n).toBe(1);
+    expect(addSpy).toHaveBeenCalledTimes(1);
+    expect(addSpy.mock.calls[0][1]).toMatchObject({
+      outboxEventId: "outbox-b",
+      tenantId: "tenant-b",
+    });
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
+  it("multi-tenant mode with zero tenants returns 0 without polling", async () => {
+    mockIsMultiTenantMode.mockReturnValue(true);
+    mockGetAllTenantIds.mockReturnValue([]);
+
+    const n = await pollAllTenantsOnce();
+
+    expect(n).toBe(0);
+    expect(mockClaim).not.toHaveBeenCalled();
   });
 });

@@ -21,7 +21,10 @@ The application uses the following background processes:
 9. **Budget Alert Worker** - Checks and sends alerts for AI model budget thresholds
 10. **Repo Cache Worker** - Automatically refreshes expired code repository caches for QuickScript
 11. **Magic Select Worker** - Processes AI-powered test case selection jobs for test runs
-12. **Scheduler** - Sets up recurring jobs (cron jobs)
+12. **Webhook Dispatch Worker** - Delivers outbound webhooks to subscribed external endpoints
+13. **Webhook Outbox Worker** - Polls the outbox table and fans events out to webhook configs
+14. **Webhook Retention Worker** - Daily purge of webhook delivery / dedup / outbox rows older than 30 days
+15. **Scheduler** - Sets up recurring jobs (cron jobs)
 
 ## Workers
 
@@ -111,6 +114,28 @@ The application uses the following background processes:
 - Default concurrency: 1 (each job involves multiple LLM batch calls)
 - Location: `workers/magicSelectWorker.ts`
 
+### Webhook Dispatch Worker
+
+- Consumes the `webhook-dispatch` BullMQ queue and POSTs each event to its subscribed endpoints
+- Honors per-config retry curve (0s, 30s, 5m, 30m, 2h, 6h, 12h) and writes a `WebhookDelivery` row per attempt
+- Caps response-body buffering to prevent a misbehaving consumer from exhausting worker memory
+- Default concurrency: 5 (overridable via `WEBHOOK_DISPATCH_CONCURRENCY`)
+- Location: `workers/webhookDispatchWorker.ts`
+
+### Webhook Outbox Worker
+
+- Polls `WebhookOutboxEvent` every 2s using `FOR UPDATE SKIP LOCKED` and fans matched events into the dispatch queue
+- Multi-tenant aware: in `MULTI_TENANT_MODE=true` it iterates every configured tenant per cycle and stamps `tenantId` onto each enqueued dispatch job
+- Multiple replicas can run concurrently without double-claiming
+- Location: `workers/webhookOutboxWorker.ts`
+
+### Webhook Retention Worker
+
+- Wakes once per day and purges `WebhookDelivery`, `WebhookEventDedup`, and dispatched `WebhookOutboxEvent` rows older than 30 days
+- Multi-tenant aware: runs the purge against every configured tenant database per cycle and emits one audit row per (tenant, run)
+- Batched `LIMIT 1000` deletes to avoid lock contention
+- Location: `workers/webhookRetentionWorker.ts`
+
 ### Scheduler
 
 - Sets up recurring jobs using cron patterns
@@ -194,8 +219,19 @@ pnpm pm2:delete
 The PM2 configuration is defined in `ecosystem.config.js`. Each worker is configured with:
 
 - Automatic restart on failure
-- Memory limit of 1GB
+- Per-worker `max_memory_restart` and `--max-old-space-size` tuned to that worker's footprint
 - Production environment variables
+
+### Worker memory tiers
+
+Most workers run with a 512 MB `max_memory_restart` ceiling and a 384 MB old-space limit, which is sufficient for lightweight queue consumers. The following workers run with elevated ceilings because they load a heavier dependency tree at idle and/or carry larger payloads:
+
+| Worker | `max_memory_restart` | `--max-old-space-size` | Why |
+| --- | --- | --- | --- |
+| Sync Worker | 1G | 768M | Loads integration adapters + Elasticsearch sync extensions |
+| Webhook Dispatch Worker | 1G | 768M | Loads ZenStack runtime + ES sync services + audit log service; carries full `test_run.completed` payloads under concurrency=5 |
+| Webhook Outbox Worker | 1G | 768M | Same dependency tree as dispatch; in multi-tenant mode also caches one Prisma client per tenant |
+| Webhook Retention Worker | 1G | 768M | Multi-tenant batched-delete loop reuses the same heavy module graph; headroom prevents PM2 SIGKILL/restart thrash on tenants with large retention backlogs |
 
 ## Persistence Across Reboots
 
@@ -259,8 +295,8 @@ You can monitor worker health and performance using:
 
 ### Memory issues
 
-- Workers are configured with 1GB memory limit
-- Adjust in `ecosystem.config.js` if needed
+- Most workers run with a 512 MB ceiling; sync, dispatch, outbox, and retention workers run with a 1 GB ceiling. See the **Worker memory tiers** table above.
+- If a worker is being killed and restarted by PM2 in a tight loop (visible as repeated `restart` events in `pm2 status`), raise `max_memory_restart` and `--max-old-space-size` in `ecosystem.config.js` for that worker before assuming there is a real leak.
 - Monitor with `pm2 monit`
 
 ## Environment Variables
@@ -315,6 +351,11 @@ ELASTICSEARCH_REINDEX_CONCURRENCY=2
 # Audit Log Worker (lightweight independent writes, default: 10)
 # Can safely be set higher on powerful machines
 AUDIT_LOG_CONCURRENCY=10
+
+# Webhook Dispatch Worker (I/O-intensive, default: 5)
+# Each job POSTs to one external endpoint with a 10s timeout; raise on
+# beefier hosts, lower if external endpoints are slow or rate-limited
+WEBHOOK_DISPATCH_CONCURRENCY=5
 ```
 
 ### Setting Concurrency Values

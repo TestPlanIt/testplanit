@@ -25,7 +25,7 @@ To manage QuickScript templates, navigate to **Administration** and select **Qui
 Templates are organized by category in collapsible accordion sections. Each section shows a count of templates in that category. The table columns are:
 
 | Column | Description |
-|--------|-------------|
+| -------- | ------------- |
 | **Name** | Template name (e.g., "Playwright (TypeScript)") |
 | **Framework** | The testing framework or tool |
 | **File Extension** | Output file extension (e.g., `.spec.ts`) |
@@ -99,7 +99,7 @@ Templates use [Mustache](https://mustache.github.io/) syntax. The Template Body 
 #### Case Fields
 
 | Variable | Type | Description |
-|----------|------|-------------|
+| ---------- | ------ | ------------- |
 | `{{name}}` | Text | Test case name |
 | `{{id}}` | Integer | Test case ID |
 | `{{folder}}` | Text | Folder name |
@@ -121,7 +121,7 @@ Use a Mustache section block to iterate over test steps:
 ```
 
 | Variable | Type | Description |
-|----------|------|-------------|
+| ---------- | ------ | ------------- |
 | `{{#steps}}...{{/steps}}` | Block | Iterates over each step |
 | `{{order}}` | Integer | Step number (1-indexed) |
 | `{{step}}` | Text | Step description |

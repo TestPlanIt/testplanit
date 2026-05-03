@@ -1,5 +1,13 @@
-import { prisma } from "../lib/prisma";
+import type { PrismaClient } from "@prisma/client";
+
 import { SYSTEM_ACTOR_ID } from "../lib/auditContext";
+import {
+  disconnectAllTenantClients,
+  getAllTenantIds,
+  getTenantPrismaClient,
+  isMultiTenantMode,
+} from "../lib/multiTenantPrisma";
+import { prisma } from "../lib/prisma";
 import { captureAuditEvent } from "../lib/services/auditLog";
 
 /**
@@ -9,7 +17,7 @@ import { captureAuditEvent } from "../lib/services/auditLog";
  * sleeps until the next scheduled hour. Three purges per pass:
  *   1. WebhookDelivery rows where receivedAt < (now - 30 days)
  *   2. WebhookEventDedup rows where processedAt < (now - 30 days)
- *      (column is processedAt per schema.zmodel:3591 — pass-1 fix lock)
+ *      (column is processedAt per schema.zmodel WebhookEventDedup model)
  *   3. WebhookOutboxEvent rows where dispatchedAt IS NOT NULL
  *      AND dispatchedAt < (now - 30 days). Un-dispatched (in-flight) rows
  *      always survive.
@@ -20,13 +28,16 @@ import { captureAuditEvent } from "../lib/services/auditLog";
  * pattern is the standard Postgres idiom for batched deletes — `LIMIT` is
  * illegal in Postgres `DELETE` directly, but legal in the inner subquery.
  *
- * One audit row per run with totals + duration so operators can answer
- * "did purge run last night, and how much was deleted?".
+ * Multi-tenant mode: iterates getAllTenantIds() once per cadence and
+ * runs purgeOnce against each tenant's database via getTenantPrismaClient().
+ *
+ * One audit row per (tenant, run) with totals + duration so operators can
+ * answer "did purge run last night, and how much was deleted?".
  */
 
 const RETENTION_DAYS = 30;
 const RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
-// 24h cadence — wake once per day, run purgeOnce(), sleep again.
+// 24h cadence — wake once per day, run purgeAllTenantsOnce(), sleep again.
 const POLL_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 export interface PurgeResult {
@@ -37,12 +48,15 @@ export interface PurgeResult {
 }
 
 let stopRequested = false;
-let inflight: Promise<PurgeResult> | null = null;
+let inflight: Promise<unknown> | null = null;
 
-async function batchedDeleteWebhookDelivery(cutoff: Date): Promise<number> {
+async function batchedDeleteWebhookDelivery(
+  client: PrismaClient,
+  cutoff: Date
+): Promise<number> {
   let total = 0;
   while (true) {
-    const rowsAffected = await prisma.$executeRaw`
+    const rowsAffected = await client.$executeRaw`
       DELETE FROM "WebhookDelivery"
       WHERE id IN (
         SELECT id FROM "WebhookDelivery"
@@ -57,10 +71,13 @@ async function batchedDeleteWebhookDelivery(cutoff: Date): Promise<number> {
   return total;
 }
 
-async function batchedDeleteWebhookEventDedup(cutoff: Date): Promise<number> {
+async function batchedDeleteWebhookEventDedup(
+  client: PrismaClient,
+  cutoff: Date
+): Promise<number> {
   let total = 0;
   while (true) {
-    const rowsAffected = await prisma.$executeRaw`
+    const rowsAffected = await client.$executeRaw`
       DELETE FROM "WebhookEventDedup"
       WHERE id IN (
         SELECT id FROM "WebhookEventDedup"
@@ -75,10 +92,13 @@ async function batchedDeleteWebhookEventDedup(cutoff: Date): Promise<number> {
   return total;
 }
 
-async function batchedDeleteWebhookOutboxEvent(cutoff: Date): Promise<number> {
+async function batchedDeleteWebhookOutboxEvent(
+  client: PrismaClient,
+  cutoff: Date
+): Promise<number> {
   let total = 0;
   while (true) {
-    const rowsAffected = await prisma.$executeRaw`
+    const rowsAffected = await client.$executeRaw`
       DELETE FROM "WebhookOutboxEvent"
       WHERE id IN (
         SELECT id FROM "WebhookOutboxEvent"
@@ -94,23 +114,36 @@ async function batchedDeleteWebhookOutboxEvent(cutoff: Date): Promise<number> {
   return total;
 }
 
-export async function purgeOnce(): Promise<PurgeResult> {
+export async function purgeOnce(
+  client: PrismaClient = prisma,
+  tenantId?: string
+): Promise<PurgeResult> {
   const startedAt = Date.now();
   const cutoff = new Date(startedAt - RETENTION_MS);
+  const tenantSuffix = tenantId ? ` tenant=${tenantId}` : "";
 
-  const webhookDeliveryRows = await batchedDeleteWebhookDelivery(cutoff);
+  const webhookDeliveryRows = await batchedDeleteWebhookDelivery(
+    client,
+    cutoff
+  );
   console.log(
-    `[WebhookRetention] purged ${webhookDeliveryRows} WebhookDelivery rows (cutoff=${cutoff.toISOString()})`
+    `[WebhookRetention] purged ${webhookDeliveryRows} WebhookDelivery rows (cutoff=${cutoff.toISOString()})${tenantSuffix}`
   );
 
-  const webhookEventDedupRows = await batchedDeleteWebhookEventDedup(cutoff);
+  const webhookEventDedupRows = await batchedDeleteWebhookEventDedup(
+    client,
+    cutoff
+  );
   console.log(
-    `[WebhookRetention] purged ${webhookEventDedupRows} WebhookEventDedup rows`
+    `[WebhookRetention] purged ${webhookEventDedupRows} WebhookEventDedup rows${tenantSuffix}`
   );
 
-  const webhookOutboxEventRows = await batchedDeleteWebhookOutboxEvent(cutoff);
+  const webhookOutboxEventRows = await batchedDeleteWebhookOutboxEvent(
+    client,
+    cutoff
+  );
   console.log(
-    `[WebhookRetention] purged ${webhookOutboxEventRows} WebhookOutboxEvent rows`
+    `[WebhookRetention] purged ${webhookOutboxEventRows} WebhookOutboxEvent rows${tenantSuffix}`
   );
 
   const durationMs = Date.now() - startedAt;
@@ -119,6 +152,7 @@ export async function purgeOnce(): Promise<PurgeResult> {
     entityType: "WebhookDelivery",
     entityId: `retention-${cutoff.toISOString()}`,
     userId: SYSTEM_ACTOR_ID,
+    tenantId,
     metadata: {
       retentionDays: RETENTION_DAYS,
       webhookDeliveryRows,
@@ -137,13 +171,49 @@ export async function purgeOnce(): Promise<PurgeResult> {
   };
 }
 
+/**
+ * Run one purge pass across every configured tenant in multi-tenant mode,
+ * or against the singleton client in single-tenant mode.
+ */
+export async function purgeAllTenantsOnce(): Promise<PurgeResult[]> {
+  if (!isMultiTenantMode()) {
+    return [await purgeOnce()];
+  }
+
+  const tenantIds = getAllTenantIds();
+  if (tenantIds.length === 0) {
+    return [];
+  }
+
+  const results: PurgeResult[] = [];
+  for (const tenantId of tenantIds) {
+    try {
+      const client = getTenantPrismaClient(tenantId);
+      const result = await purgeOnce(client, tenantId);
+      results.push(result);
+    } catch (err) {
+      console.error(
+        `[WebhookRetention] Purge error for tenant ${tenantId}:`,
+        err
+      );
+    }
+  }
+  return results;
+}
+
 export async function startLoop(): Promise<void> {
-  console.log(
-    `[WebhookRetention] Starting daily retention loop (cadence=${POLL_INTERVAL_MS}ms)`
-  );
+  if (isMultiTenantMode()) {
+    console.log(
+      `[WebhookRetention] Starting MULTI-TENANT daily retention loop (cadence=${POLL_INTERVAL_MS}ms, tenants=${getAllTenantIds().length})`
+    );
+  } else {
+    console.log(
+      `[WebhookRetention] Starting SINGLE-TENANT daily retention loop (cadence=${POLL_INTERVAL_MS}ms)`
+    );
+  }
   while (!stopRequested) {
     try {
-      inflight = purgeOnce();
+      inflight = purgeAllTenantsOnce();
       await inflight;
     } catch (err) {
       console.error("[WebhookRetention] Purge error:", err);
@@ -168,6 +238,9 @@ async function gracefulShutdown(signal: string): Promise<void> {
     } catch {
       // Ignore — startLoop catches purge errors
     }
+  }
+  if (isMultiTenantMode()) {
+    await disconnectAllTenantClients();
   }
   process.exit(0);
 }

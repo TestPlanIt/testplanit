@@ -438,7 +438,7 @@ Regular health checks verify:
 Integration and project-integration records are tracked in the [audit log](/docs/user-guide/audit-logs) via the standard CRUD actions:
 
 | Action | Description |
-|--------|-------------|
+| -------- | ------------- |
 | `CREATE` | A new integration or project-integration mapping was created |
 | `UPDATE` | An integration was reconfigured (settings, credentials, endpoint changes) |
 | `DELETE` | An integration or project-integration mapping was removed |
@@ -553,7 +553,7 @@ curl -H "Authorization: token YOUR_PAT" \
 ### Jira Cloud vs Server Differences
 
 | Feature | Cloud | Server/DC |
-|---------|-------|-----------|
+| --------- | ------- | ----------- |
 | Authentication | OAuth 2.0, API Key | Basic Auth, PAT |
 | API Version | v3 | v2/v3 |
 | User IDs | accountId | username |

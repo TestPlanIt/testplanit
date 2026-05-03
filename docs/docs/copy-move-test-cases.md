@@ -100,7 +100,7 @@ If the selected cases reference shared step groups, you can choose how those gro
 ## What Data is Carried Over
 
 | Data | Copied | Moved | Notes |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Test steps | Yes | Yes | All steps recreated in target |
 | Custom field values | Yes | Yes | Field option IDs re-resolved by option name when templates differ; values are dropped if no matching option is found |
 | Tags | Yes | Yes | Connected to target case |
@@ -116,7 +116,7 @@ If the selected cases reference shared step groups, you can choose how those gro
 The following data is **not transferred** during copy or move operations:
 
 | Data | Reason |
-|---|---|
+| --- | --- |
 | **Test run results** | Test execution history (pass/fail results, run assignments) is tied to test runs in the source project and is not carried over. Copied or moved cases start with no test run history in the target project. |
 | **Result field values** | Custom field values recorded during test execution belong to the source project's test runs. |
 | **Automated test results** | Imported JUnit, TestNG, xUnit, NUnit, and other automated test results are linked to source project test runs. |
@@ -126,7 +126,7 @@ The following data is **not transferred** during copy or move operations:
 ## Copy vs Move Differences
 
 | Aspect | Copy | Move |
-|---|---|---|
+| --- | --- | --- |
 | Source case | Unchanged | Removed from source project (soft-deleted) |
 | Version history | Starts at version 1 with no prior history | Full version history preserved |
 | Comments | Not included | Preserved |

@@ -49,7 +49,7 @@ The fields available for mapping depend on the template you select. You'll alway
 **System Fields (always available):**
 
 | Field | Required | Description |
-|-------|----------|-------------|
+| ------- | ---------- | ------------- |
 | Name | Yes | Test case name/title |
 | Steps | No | Test steps (formatted) |
 | Tags | No | Comma-separated tags |
@@ -214,7 +214,7 @@ Import automated test results from multiple testing frameworks and formats.
 TestPlanIt supports importing test results from the following formats:
 
 | Format | File Types | Description |
-|--------|-----------|-------------|
+| -------- | ----------- | ------------- |
 | **JUnit XML** | `.xml` | Standard JUnit XML format (Java, Python pytest, etc.) |
 | **TestNG XML** | `.xml` | TestNG XML reports from Java projects |
 | **NUnit XML** | `.xml` | NUnit v2/v3 XML reports from .NET projects |
@@ -390,7 +390,7 @@ There are two ways to start a test results import:
 Test result statuses are automatically mapped to TestPlanIt statuses:
 
 | Source Status | TestPlanIt Status | Description |
-|--------------|-------------------|-------------|
+| -------------- | ------------------- | ------------- |
 | pass, passed, success, ok | Passed | Test executed successfully |
 | fail, failed, failure | Failed | Test assertion failed |
 | error, errored, broken | Error | Test execution error |
@@ -532,7 +532,7 @@ Export complete project data including:
 **PDF Export Options:**
 
 | Option | Values | Description |
-|--------|--------|-------------|
+| -------- | -------- | ------------- |
 | **Scope** | Selected / All Filtered / All Project | Which test cases to include |
 | **Columns** | Visible / All | Which fields to export |
 | **Text Fields** | JSON / Plain Text | How to format rich text content (Markdown option available in CSV only) |

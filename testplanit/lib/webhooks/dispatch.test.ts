@@ -796,4 +796,40 @@ describe("dispatchWebhook — replay + eventId threading ( / + )", () => {
     expect(createCall.data.error).toMatch(/^500_/);
     expect(createCall.data.eventId).toBe("evt_500");
   });
+
+  it("R6. non-2xx with a huge streaming response body: error sentinel stays bounded and the underlying stream is cancelled before draining", async () => {
+    // Misbehaving consumer that keeps emitting 64 KB chunks indefinitely.
+    // Without the capped reader the worker would buffer the whole thing
+    // into memory; cancel() must fire as soon as the cap is reached.
+    let pulls = 0;
+    let cancelled = false;
+    const chunk = new TextEncoder().encode("x".repeat(64 * 1024));
+    const stream = new ReadableStream({
+      pull(controller) {
+        pulls++;
+        controller.enqueue(chunk);
+      },
+      cancel() {
+        cancelled = true;
+      },
+    });
+    const hugeResponse = new Response(stream, { status: 502 });
+    const fetchSpy = vi.fn().mockResolvedValue(hugeResponse);
+    globalThis.fetch = fetchSpy as any;
+    const prismaMock = buildPrismaMock({
+      outboxEvent: { ...baseOutboxEvent, eventId: "evt_huge" },
+      config: baseConfig(),
+    });
+
+    await expect(dispatchWebhook(baseJobData, prismaMock)).rejects.toThrow();
+
+    const createCall = prismaMock.webhookDelivery.create.mock.calls[0][0];
+    // Sentinel still capped by MAX_ERROR_LEN (1024).
+    expect(createCall.data.error.length).toBeLessThanOrEqual(1024);
+    expect(createCall.data.error).toMatch(/^502_/);
+    // We pulled at most a couple of chunks before hitting the cap and
+    // cancelling — NOT enough to consume an unbounded stream.
+    expect(pulls).toBeLessThan(5);
+    expect(cancelled).toBe(true);
+  });
 });

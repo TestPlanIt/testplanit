@@ -16,7 +16,7 @@ TestPlanIt includes interactive Swagger UI documentation for exploring and testi
 The interactive documentation is organized into categories:
 
 | Category | Description |
-|----------|-------------|
+| ---------- | ------------- |
 | **Custom API Endpoints** | Authentication, file uploads, JUnit imports, search, and admin endpoints |
 | **Projects & Folders** | Project and folder management |
 | **Test Cases & Repository** | Test case management, steps, templates, and custom fields |
@@ -237,7 +237,7 @@ curl -X POST "https://your-domain.com/api/junit/import" \
 **Parameters:**
 
 | Parameter | Required | Description |
-|-----------|----------|-------------|
+| ----------- | ---------- | ------------- |
 | `name` | Yes | Name for the test run |
 | `projectId` | Yes | Project ID |
 | `files` | Yes | One or more JUnit XML files |
@@ -274,7 +274,7 @@ All API endpoints return consistent error responses:
 ### Common HTTP Status Codes
 
 | Status | Description |
-|--------|-------------|
+| -------- | ------------- |
 | 200 | Success |
 | 201 | Created |
 | 400 | Bad Request - Invalid parameters |
@@ -292,7 +292,7 @@ TestPlanIt enforces a **global hourly rate limit** on all authenticated API requ
 The `TIER` environment variable selects the hourly limit:
 
 | Tier | Hourly Limit | Typical Use |
-|------|--------------|-------------|
+| ------ | -------------- | ------------- |
 | `essentials` | 1,000 requests/hour | Small teams, light CI/CD integration |
 | `team` | 5,000 requests/hour | Mid-size teams with moderate automation |
 | `professional` (default) | 10,000 requests/hour | Most production deployments |
@@ -305,7 +305,7 @@ When the limit is exceeded, requests return **HTTP 429** with a `Retry-After` he
 Every API response includes the following headers:
 
 | Header | Description |
-|--------|-------------|
+| -------- | ------------- |
 | `X-RateLimit-Limit` | Maximum requests allowed in the current hour |
 | `X-RateLimit-Remaining` | Requests remaining in the current window |
 | `X-RateLimit-Reset` | Unix timestamp (seconds) when the window resets |
