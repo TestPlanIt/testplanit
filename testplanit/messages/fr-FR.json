@@ -830,6 +830,27 @@
         "addParagraphBelow": "Ajoutez un paragraphe ci-dessous",
         "clearFormatting": "Mise en forme claire",
         "copyToClipboard": "Copier dans le presse-papiers"
+      },
+      "textMenu": {
+        "bold": "Audacieux",
+        "italic": "Italique",
+        "underline": "Souligner",
+        "strikethrough": "barré",
+        "code": "Code",
+        "codeBlock": "Bloc de code",
+        "highlightText": "Surligner le texte",
+        "textColor": "Couleur du texte",
+        "moreOptions": "Plus d'options",
+        "subscript": "Indice",
+        "superscript": "Exposant",
+        "alignLeft": "Aligner à gauche",
+        "alignCenter": "Centre d'alignement",
+        "alignRight": "Alignez à droite",
+        "justify": "Justifier",
+        "setLink": "Définir le lien",
+        "editLink": "Modifier le lien",
+        "removeLink": "Supprimer le lien",
+        "resetColorToDefault": "Réinitialiser la couleur par défaut"
       }
     },
     "ai": {

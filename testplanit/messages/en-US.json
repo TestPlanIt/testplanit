@@ -830,6 +830,27 @@
         "addParagraphBelow": "Add paragraph below",
         "clearFormatting": "Clear formatting",
         "copyToClipboard": "Copy to clipboard"
+      },
+      "textMenu": {
+        "bold": "Bold",
+        "italic": "Italic",
+        "underline": "Underline",
+        "strikethrough": "Strikethrough",
+        "code": "Code",
+        "codeBlock": "Code block",
+        "highlightText": "Highlight text",
+        "textColor": "Text color",
+        "moreOptions": "More options",
+        "subscript": "Subscript",
+        "superscript": "Superscript",
+        "alignLeft": "Align left",
+        "alignCenter": "Align center",
+        "alignRight": "Align right",
+        "justify": "Justify",
+        "setLink": "Set Link",
+        "editLink": "Edit link",
+        "removeLink": "Remove link",
+        "resetColorToDefault": "Reset color to default"
       }
     },
     "ai": {
