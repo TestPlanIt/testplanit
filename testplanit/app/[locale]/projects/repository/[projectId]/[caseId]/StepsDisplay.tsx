@@ -1,19 +1,7 @@
 import TextFromJson from "@/components/TextFromJson";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  ChevronRightCircle,
-  Layers,
-  Minus,
-  Plus,
-  SearchCheck,
-} from "lucide-react";
+import { Layers, Minus, Plus, SearchCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
-import React, { useState } from "react";
+import React from "react";
 import { emptyEditorContent } from "~/app/constants";
 import { useFindManySharedStepItem } from "~/lib/hooks";
 
@@ -38,13 +26,11 @@ interface StepsProps {
 interface RenderSharedGroupItemsProps {
   sharedStepGroupId: number;
   sharedStepGroupName: string;
-  expandAll: boolean;
 }
 
 const RenderSharedGroupItems: React.FC<RenderSharedGroupItemsProps> = ({
   sharedStepGroupId,
   sharedStepGroupName: _sharedStepGroupName,
-  expandAll,
 }) => {
   const t_steps = useTranslations("repository.steps");
 
@@ -117,7 +103,6 @@ const RenderSharedGroupItems: React.FC<RenderSharedGroupItemsProps> = ({
                   item.step,
                   undefined,
                   `shared-${sharedStepGroupId}-item-${item.id || itemIndex}-step`,
-                  expandAll,
                   false
                 )}
               </div>
@@ -129,7 +114,6 @@ const RenderSharedGroupItems: React.FC<RenderSharedGroupItemsProps> = ({
                   item.expectedResult,
                   undefined,
                   `shared-${sharedStepGroupId}-item-${item.id || itemIndex}-expected`,
-                  expandAll,
                   false
                 )}
               </div>
@@ -145,7 +129,6 @@ const renderFieldValue = (
   fieldValue: any,
   previousFieldValue: any | undefined,
   key: string,
-  expand: boolean,
   showDiff: boolean
 ) => {
   // Ensure we have a valid JSON string for the TipTapEditor
@@ -216,7 +199,6 @@ const renderFieldValue = (
           jsonString={fieldValueString}
           room={key}
           format="html"
-          expand={expand}
         />
       </div>
     );
@@ -235,7 +217,6 @@ const renderFieldValue = (
             jsonString={fieldValueString}
             room={key}
             format="html"
-            expand={expand}
           />
         </span>
       </div>
@@ -262,7 +243,6 @@ const renderFieldValue = (
               jsonString={previousFieldValueString}
               room={"prev" + key}
               format="html"
-              expand={expand}
             />
           </span>
         </div>
@@ -277,7 +257,6 @@ const renderFieldValue = (
               jsonString={fieldValueString}
               room={key}
               format="html"
-              expand={expand}
             />
           </span>
         </div>
@@ -291,7 +270,6 @@ const renderFieldValue = (
           jsonString={fieldValueString}
           room={key}
           format="html"
-          expand={expand}
         />
       </div>
     );
@@ -302,7 +280,6 @@ export const StepsDisplay: React.FC<StepsProps> = ({
   steps,
   previousSteps,
 }) => {
-  const [expandAll, setExpandAll] = useState(false);
   const t_repo_steps = useTranslations("repository.steps");
   const tGlobal = useTranslations();
 
@@ -315,38 +292,7 @@ export const StepsDisplay: React.FC<StepsProps> = ({
   return (
     <div data-testid="steps-display">
       <div className="flex items-center">
-        <div className="font-bold">{tGlobal("common.fields.steps")}</div>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setExpandAll(!expandAll);
-                return false;
-              }}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                return false;
-              }}
-            >
-              <ChevronRightCircle
-                className={`h-4 w-4 shrink-0 transition-transform ${
-                  expandAll ? "rotate-90" : ""
-                }`}
-              />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <div>
-              {expandAll ? t_repo_steps("collapse") : t_repo_steps("expand")}
-            </div>
-          </TooltipContent>
-        </Tooltip>
+        <div className="font-bold pb-2">{tGlobal("common.fields.steps")}</div>
       </div>
       {steps.length > 0 && (
         <ol className="ml-1 mr-6 min-w-[200px]">
@@ -401,7 +347,6 @@ export const StepsDisplay: React.FC<StepsProps> = ({
                           step.sharedStepGroupName ||
                           "Shared Steps"
                         }
-                        expandAll={expandAll}
                       />
                     </div>
                   </div>
@@ -432,7 +377,6 @@ export const StepsDisplay: React.FC<StepsProps> = ({
                         step.step || "",
                         previousStep ? previousStep.step || "" : undefined,
                         step.id.toString(),
-                        expandAll,
                         showDiff
                       )}
                     </div>
@@ -449,7 +393,6 @@ export const StepsDisplay: React.FC<StepsProps> = ({
                           ? previousStep.expectedResult || ""
                           : undefined,
                         step.id.toString() + "-expected",
-                        expandAll,
                         showDiff
                       )}
                     </div>
@@ -522,7 +465,6 @@ export const StepsDisplay: React.FC<StepsProps> = ({
                             jsonString={ensureValidJsonString(step.step)}
                             room={"prev" + step.id.toString()}
                             format="html"
-                            expand={expandAll}
                           />
                         </span>
                       </div>
@@ -542,7 +484,6 @@ export const StepsDisplay: React.FC<StepsProps> = ({
                             )}
                             room={"prev" + step.id.toString() + "-expected"}
                             format="html"
-                            expand={expandAll}
                           />
                         </span>
                       </div>

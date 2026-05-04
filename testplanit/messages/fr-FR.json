@@ -2107,8 +2107,6 @@
       "addSharedSteps": "Ajouter des étapes partagées",
       "delete": "Supprimer l'étape",
       "confirmDelete": "Confirmer la suppression Étape {number}?",
-      "expand": "Développer toutes les étapes",
-      "collapse": "Réduire toutes les étapes",
       "createSharedSteps": "Créer une étape partagée {number, plural, one {Étapes} other {Étapes}}",
       "sharedStepsName": "Nom des étapes partagées",
       "sharedStepsDescription": "Saisissez un nom pour votre nouvelle étape partagée {number, plural, one {} other {étapes}}. Cela inclura {number, plural, one {# étape sélectionnée} other {# étapes sélectionnées}}.",

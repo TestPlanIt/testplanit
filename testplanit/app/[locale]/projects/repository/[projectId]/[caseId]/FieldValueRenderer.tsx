@@ -547,7 +547,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                 content={content}
                 projectId={projectId?.toString()}
                 readOnly
-                className="max-h-[100px] overflow-auto hover:max-h-fit"
+                className="h-auto"
               />
             );
           })
@@ -567,7 +567,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
                 content={content}
                 projectId={projectId?.toString()}
                 readOnly
-                className="max-h-[100px] overflow-auto hover:max-h-fit"
+                className="h-auto"
               />
             );
           })()

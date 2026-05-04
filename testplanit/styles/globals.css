@@ -378,6 +378,23 @@ mark {
   margin-bottom: 0;
 }
 
+/* Strip the backticks @tailwindcss/typography injects around inline <code>,
+ * and give it a theme-aware background so it stays legible in both modes.
+ * Scoped to inline code only — pre > code keeps its code-block styling. */
+.prose code::before,
+.prose code::after {
+  content: none;
+}
+
+.prose :not(pre) > code {
+  background-color: hsl(var(--foreground) / 0.1);
+  color: hsl(var(--foreground));
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+  font-size: 0.875em;
+}
+
 /* Firefox-specific fixes for resizable panels */
 @-moz-document url-prefix() {
   /* Prevent text selection during drag in Firefox */

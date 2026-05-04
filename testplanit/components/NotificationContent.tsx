@@ -565,7 +565,6 @@ export function NotificationContent({
                 jsonString={JSON.stringify(notification.data.richContent)}
                 format="html"
                 room="notification"
-                expand={false}
               />
             </div>
           ) : (
