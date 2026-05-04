@@ -1,3 +1,9 @@
+## [0.24.10](https://github.com/TestPlanIt/testplanit/compare/v0.24.9...v0.24.10) (2026-05-04)
+
+### Bug Fixes
+
+* **tiptap:** drop pseudo-element backticks; remove bounded-height/expand wrappers ([#278](https://github.com/TestPlanIt/testplanit/issues/278)) ([9a17462](https://github.com/TestPlanIt/testplanit/commit/9a1746292c03fbe2c7b8314964508dd25217daf3))
+
 ## [0.24.9](https://github.com/TestPlanIt/testplanit/compare/v0.24.8...v0.24.9) (2026-05-04)
 
 ### Bug Fixes
