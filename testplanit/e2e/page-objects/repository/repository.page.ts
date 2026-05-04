@@ -470,58 +470,22 @@ export class RepositoryPage extends BasePage {
   async createTestCase(name: string): Promise<void> {
     await this.openAddCaseModal();
 
-    // Fill in the test case name (it's a textarea, not an input)
-    const nameInput = this.page.getByTestId("case-name-input");
+    // Scope name input to the dialog so it doesn't match the inline AddCaseRow input
+    const dialog = this.page.getByTestId("add-case-dialog");
+    const nameInput = dialog.getByTestId("case-name-input");
     await expect(nameInput).toBeVisible({ timeout: 5000 });
     await nameInput.fill(name);
 
-    // Submit the form - button says "Create Test Case"
-    const submitButton = this.page
-      .locator('[role="dialog"] button:has-text("Create Test Case")')
-      .first();
+    const submitButton = this.page.getByTestId("case-submit-button");
     await expect(submitButton).toBeEnabled({ timeout: 5000 });
-
-    // Wait for the API call to complete
-    const responsePromise = this.page.waitForResponse(
-      (response) =>
-        response.url().includes("/api/model/repositoryCases") &&
-        response.request().method() === "POST",
-      { timeout: 15000 }
-    );
 
     await submitButton.click();
 
-    // Wait for the API response
-    const response = await responsePromise;
-    if (!response.ok()) {
-      const text = await response.text();
-      throw new Error(
-        `Test case creation failed: ${response.status()} - ${text}`
-      );
-    }
+    // AddCase uses importGeneratedTestCases (server action), not the ZenStack REST API.
+    // Wait for the dialog to close — that's the success signal.
+    await expect(dialog).not.toBeVisible({ timeout: 15000 });
 
-    // Wait for modal to close (indicates success)
-    await expect(this.page.locator('[role="dialog"]')).not.toBeVisible({
-      timeout: 10000,
-    });
-
-    // Wait for network to settle after creation - the mutation should trigger query invalidation
-    await this.page.waitForLoadState("networkidle");
-
-    // Wait for the GET request that refetches the cases list after invalidation
-    try {
-      await this.page.waitForResponse(
-        (response) =>
-          response.url().includes("/api/model/repositoryCases") &&
-          response.request().method() === "GET" &&
-          response.ok(),
-        { timeout: 5000 }
-      );
-    } catch {
-      // If no GET request is seen, the cache may have already been updated
-    }
-
-    // Wait for the table to update
+    // Let React Query invalidation finish so the cases table is up to date
     await this.page.waitForLoadState("networkidle");
   }
 
