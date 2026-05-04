@@ -2107,8 +2107,6 @@
       "addSharedSteps": "Añadir pasos compartidos",
       "delete": "Eliminar paso",
       "confirmDelete": "¿Borrar paso {number}?",
-      "expand": "Expandir todos los pasos",
-      "collapse": "Colapsar todos los pasos",
       "createSharedSteps": "¡Crear compartido {number, plural, one {Paso} other {¡Pasos}}",
       "sharedStepsName": "Nombre de pasos compartidos",
       "sharedStepsDescription": "¡Introduce un nombre para tu nuevo {number, plural, one {paso} other {pasos}}. ¡Esto incluirá {number, plural, one {# paso seleccionado} other {# ¡pasos seleccionados}}.",

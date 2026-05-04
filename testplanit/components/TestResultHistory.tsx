@@ -1559,7 +1559,7 @@ export default function TestResultHistory({
                                             ? String(projectId)
                                             : undefined
                                         }
-                                        className="max-h-[100px] overflow-auto hover:max-h-fit"
+                                        className="h-auto"
                                       />
                                     </div>
                                   </div>
@@ -1570,7 +1570,7 @@ export default function TestResultHistory({
                                     <div className="text-xs text-muted-foreground">
                                       {tCommon("fields.notes")}
                                     </div>
-                                    <pre className="whitespace-pre-wrap wrap-break-word bg-background border rounded p-2 mt-1 max-h-[100px] overflow-auto hover:max-h-fit text-sm">
+                                    <pre className="whitespace-pre-wrap wrap-break-word bg-background border rounded p-2 mt-1 text-sm">
                                       {result.content}
                                     </pre>
                                   </div>

@@ -2107,8 +2107,6 @@
       "addSharedSteps": "Add Shared Steps",
       "delete": "Delete Step",
       "confirmDelete": "Confirm delete Step {number}?",
-      "expand": "Expand all steps",
-      "collapse": "Collapse all steps",
       "createSharedSteps": "Create Shared {number, plural, one {Step} other {Steps}}",
       "sharedStepsName": "Shared Steps Name",
       "sharedStepsDescription": "Enter a name for your new shared {number, plural, one {step} other {steps}}. This will include {number, plural, one {# selected step} other {# selected steps}}.",

@@ -109,8 +109,6 @@ export const getColumns = (
                 jsonString={JSON.stringify(richContent)}
                 format="html"
                 room={`notification-history-${isPreview ? "preview" : "full"}-${notification.id}`}
-                expand={!isPreview}
-                expandable={false}
               />
             </div>
           );

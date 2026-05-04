@@ -1,120 +1,39 @@
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
-import { Button } from "@/components/ui/button";
-import { ChevronDownCircle } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 
 interface TextFromJsonProps {
   jsonString: string | object;
   format?: "text" | "html";
   room: string;
-  expand?: boolean;
-  expandable?: boolean;
 }
 
 const TextFromJson: React.FC<TextFromJsonProps> = ({
   jsonString: jsonStringProp,
   format = "text",
   room,
-  expand = false,
-  expandable = true,
 }) => {
-  // Normalize input: if an object is passed instead of a string, stringify it
   const jsonString =
     typeof jsonStringProp === "string"
       ? jsonStringProp
       : JSON.stringify(jsonStringProp);
   const [plainText, setPlainText] = useState("");
-  const [isOpen, setIsOpen] = useState(expand);
-  const [showButton, setShowButton] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (format !== "text") return;
     try {
-      if (format === "text") {
-        const jsonContent = JSON.parse(jsonString);
-        const text = extractTextFromNode(jsonContent);
-        setPlainText(text);
-      } else {
-        setPlainText(jsonString);
-      }
+      const jsonContent = JSON.parse(jsonString);
+      setPlainText(extractTextFromNode(jsonContent));
     } catch {
       setPlainText(jsonString);
     }
   }, [jsonString, format]);
 
-  useEffect(() => {
-    const checkHeight = () => {
-      if (contentRef.current) {
-        // Check if there's actual overflow by comparing scrollHeight with clientHeight
-        const hasOverflow =
-          contentRef.current.scrollHeight > contentRef.current.clientHeight;
-        setShowButton(expandable && hasOverflow);
-      }
-    };
+  if (format === "text") {
+    return <span>{plainText}</span>;
+  }
 
-    // Check immediately after render
-    const timeoutId = setTimeout(checkHeight, 0);
-
-    // Watch for content changes (DOM mutations)
-    const mutationObserver = new MutationObserver(checkHeight);
-
-    // Watch for size changes (container width/height changes)
-    const resizeObserver = new ResizeObserver(checkHeight);
-
-    if (contentRef.current) {
-      mutationObserver.observe(contentRef.current, {
-        childList: true,
-        subtree: true,
-      });
-      resizeObserver.observe(contentRef.current);
-    }
-
-    return () => {
-      clearTimeout(timeoutId);
-      mutationObserver.disconnect();
-      resizeObserver.disconnect();
-    };
-  }, [plainText, expandable]);
-
-  useEffect(() => {
-    setIsOpen(expand);
-  }, [expand]);
-
-  return format === "text" ? (
-    <span>{plainText}</span>
-  ) : (
-    <div>
-      <div className="flex items-start">
-        <div
-          ref={contentRef}
-          className={`overflow-hidden transition-max-height duration-500 ease-in-out ${
-            isOpen ? "" : "max-h-[75px]"
-          }`}
-        >
-          <TipTapEditorWrapper jsonString={jsonString} room={room} />
-        </div>
-      </div>
-      {showButton && (
-        <div className="flex whitespace-nowrap items-center mt-2">
-          <div className="border-t-2 border-double border-primary w-1/2" />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsOpen(!isOpen)}
-          >
-            <ChevronDownCircle
-              className={`text-primary/50 h-5 w-5 shrink-0 transition-transform ${
-                isOpen ? "rotate-180" : ""
-              }`}
-            />
-          </Button>
-          <div className="border-t-2 border-double border-primary w-1/2" />
-        </div>
-      )}
-    </div>
-  );
+  return <TipTapEditorWrapper jsonString={jsonString} room={room} />;
 };
 
 const isValidTipTapContent = (content: any): boolean => {

@@ -1610,16 +1610,12 @@ export const getColumns = (
                       jsonString={value}
                       room={row.original.id.toString()}
                       format="html"
-                      expand={true}
-                      expandable={false}
                     />
                   ) : (
                     <PlainTextFromJson
                       jsonString={JSON.stringify(value).toString()}
                       room={row.original.id.toString()}
                       format="html"
-                      expand={true}
-                      expandable={false}
                     />
                   )}
                 </div>

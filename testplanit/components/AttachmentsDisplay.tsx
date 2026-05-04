@@ -340,7 +340,7 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                             )}
                           />
                         ) : (
-                          <div className="w-full min-h-10 max-h-10 overflow-y-auto hover:max-h-24">
+                          <div className="w-full">
                             {displayValues.note || t("common.access.none")}
                           </div>
                         )}
