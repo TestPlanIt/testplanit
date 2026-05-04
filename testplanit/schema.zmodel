@@ -4552,6 +4552,10 @@ enum AuditAction {
     PASSWORD_REVOKED
     // v0.23.0 Phase 1 — webhook system
     WEBHOOK_RECEIVED
+    // Parameterized Test Cases — iteration audit actions
+    ITERATION_VALUES_OVERRIDDEN
+    ITERATION_BULK_SKIPPED
+    ITERATION_RESULT_RECORDED
 }
 
 model AuditLog {
