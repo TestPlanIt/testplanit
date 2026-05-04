@@ -50,11 +50,13 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod/v4";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   getAssignmentsForRunCases,
   type GetAssignmentsResponse,
 } from "~/app/actions/getAssignmentsForRunCases";
 import { emptyEditorContent } from "~/app/constants";
+import { iterationProgressBus } from "~/lib/services/iterationProgressBus";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import LoadingSpinnerAlert from "~/components/LoadingSpinnerAlert";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
@@ -840,6 +842,8 @@ export default function AddTestRunModal({
   const numericProjectId = Number(projectId);
   const t = useTranslations("runs.add");
   const tCommon = useTranslations("common");
+  const tParameters = useTranslations("parameters");
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [creationProgress, setCreationProgress] = useState({
     current: 0,
@@ -1274,6 +1278,70 @@ export default function AddTestRunModal({
           }
 
           await updateTestRunForecast(newTestRun.id);
+
+          // Fan out iteration rows for any parameterized cases. Three
+          // possible response shapes from /generate-iterations:
+          //   - 422 hardRefuse  → toast.error with cap details
+          //   - 200 async:true  → register on iterationProgressBus (Wave 3
+          //                       toast/sidebar consumes the bus)
+          //   - 200 async:false → invalidate ZenStack caches so iteration
+          //                       counts surface immediately in the UI
+          // Failures are non-fatal for the run itself — the run still
+          // exists; only iteration generation failed. Surface the error
+          // but do NOT throw (other configs in the loop should still get
+          // their fan-out attempt).
+          try {
+            const fanOutRes = await fetch(
+              `/api/test-runs/${newTestRun.id}/generate-iterations`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({}),
+              }
+            );
+            const fanOutBody = await fanOutRes.json().catch(() => ({}));
+
+            if (fanOutRes.status === 422 && fanOutBody?.refused) {
+              toast.error(tParameters("runHardRefuseTitle"), {
+                description: tParameters("runHardRefuseDescription", {
+                  count: fanOutBody.iterationCount ?? 0,
+                  cap: fanOutBody.cap ?? 0,
+                }),
+              });
+            } else if (!fanOutRes.ok) {
+              toast.error(tParameters("runProgressFailed"), {
+                description: fanOutBody?.error ?? `HTTP ${fanOutRes.status}`,
+              });
+            } else if (fanOutBody?.async === true) {
+              iterationProgressBus.start({
+                jobId: String(fanOutBody.jobId),
+                runId: newTestRun.id,
+                runName: createData.name,
+                total: fanOutBody.iterationCount ?? 0,
+              });
+            } else {
+              // Sync path — invalidate ZenStack caches so iteration counts
+              // appear in the UI without a manual refresh. Use the locked
+              // ["zenstack", "ModelName"] prefix per Phase 2 carry-forward.
+              await Promise.all([
+                queryClient.invalidateQueries({
+                  queryKey: ["zenstack", "TestRunCases"],
+                }),
+                queryClient.invalidateQueries({
+                  queryKey: ["zenstack", "TestRunCaseIteration"],
+                }),
+              ]);
+            }
+          } catch (fanOutErr) {
+            // Network or JSON-parse failure — surface, don't throw.
+            console.error("[generate-iterations]", fanOutErr);
+            toast.error(tParameters("runProgressFailed"), {
+              description:
+                fanOutErr instanceof Error
+                  ? fanOutErr.message
+                  : String(fanOutErr),
+            });
+          }
         }
       }
 

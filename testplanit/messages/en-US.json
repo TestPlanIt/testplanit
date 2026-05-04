@@ -6453,6 +6453,12 @@
     "chipTooltipDefault": "Default: {value}",
     "chipTooltipNoDefault": "Default: (none)",
     "chipTooltipUndeclared": "\"@{name}\" is not a declared parameter. Open Configure parameters to add it.",
-    "editorUndeclaredWarning": "Undeclared references: {names}. Add them via Configure parameters to enable iteration substitution."
+    "editorUndeclaredWarning": "Undeclared references: {names}. Add them via Configure parameters to enable iteration substitution.",
+    "runProgressTitle": "Generating iterations for \"{runName}\"",
+    "runProgressDescriptionAsync": "Creating {count, plural, =1 {# iteration} other {# iterations}} in the background. You can keep working — we'll notify you when this finishes.",
+    "runProgressDescriptionSync": "Created {count, plural, =1 {# iteration} other {# iterations}}.",
+    "runProgressFailed": "Could not start iteration generation",
+    "runHardRefuseTitle": "Too many iterations to create",
+    "runHardRefuseDescription": "This run would create {count} iterations, exceeding the limit of {cap}. Reduce the dataset row count, deselect cases, or split into multiple runs."
   }
 }
