@@ -9,6 +9,7 @@ import {
   EMAIL_QUEUE_NAME,
   FORECAST_QUEUE_NAME,
   GENERATE_FROM_URL_QUEUE_NAME,
+  ITERATION_GENERATION_QUEUE_NAME,
   MAGIC_SELECT_QUEUE_NAME,
   NOTIFICATION_QUEUE_NAME,
   REPO_CACHE_QUEUE_NAME,
@@ -35,6 +36,7 @@ export {
   STEP_SCAN_QUEUE_NAME,
   MAGIC_SELECT_QUEUE_NAME,
   GENERATE_FROM_URL_QUEUE_NAME,
+  ITERATION_GENERATION_QUEUE_NAME,
 };
 
 // Lazy-initialized queue instances
@@ -53,6 +55,7 @@ let _duplicateScanQueue: Queue | null = null;
 let _stepScanQueue: Queue | null = null;
 let _magicSelectQueue: Queue | null = null;
 let _generateFromUrlQueue: Queue | null = null;
+let _iterationGenerationQueue: Queue | null = null;
 
 /**
  * Get the forecast queue instance (lazy initialization)
@@ -590,6 +593,35 @@ export function getGenerateFromUrlQueue(): Queue | null {
 }
 
 /**
+ * Get the iteration-generation queue instance (lazy initialization)
+ * Used for asynchronous fan-out of TestRunCaseIteration rows when a parameterized
+ * test run exceeds the synchronous cardinality threshold (PARAMETERIZED_RUN_ASYNC_CAP).
+ * attempts: 1 — no retry; partial retry creates duplicate iteration rows.
+ */
+export function getIterationGenerationQueue(): Queue | null {
+  if (_iterationGenerationQueue) return _iterationGenerationQueue;
+  if (!valkeyConnection) {
+    console.warn(
+      `Valkey connection not available, Queue "${ITERATION_GENERATION_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+  _iterationGenerationQueue = new Queue(ITERATION_GENERATION_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    defaultJobOptions: {
+      attempts: 1, // LOCKED: no retry — partial retry creates duplicate iterations
+      removeOnComplete: { age: 3600 * 24 * 7, count: 500 },
+      removeOnFail: { age: 3600 * 24 * 14 },
+    },
+  });
+  console.log(`Queue "${ITERATION_GENERATION_QUEUE_NAME}" initialized.`);
+  _iterationGenerationQueue.on("error", (error) => {
+    console.error(`Queue ${ITERATION_GENERATION_QUEUE_NAME} error:`, error);
+  });
+  return _iterationGenerationQueue;
+}
+
+/**
  * Get all queues (initializes all of them)
  * Use this only when you need access to all queues (e.g., admin dashboard)
  */
@@ -610,5 +642,6 @@ export function getAllQueues() {
     stepScanQueue: getStepScanQueue(),
     "magic-select": getMagicSelectQueue(),
     "generate-from-url": getGenerateFromUrlQueue(),
+    iterationGenerationQueue: getIterationGenerationQueue(),
   };
 }

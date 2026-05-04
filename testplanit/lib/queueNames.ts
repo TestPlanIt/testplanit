@@ -14,3 +14,4 @@ export const DUPLICATE_SCAN_QUEUE_NAME = "duplicate-scan";
 export const STEP_SCAN_QUEUE_NAME = "step-scan";
 export const MAGIC_SELECT_QUEUE_NAME = "magic-select";
 export const GENERATE_FROM_URL_QUEUE_NAME = "generate-from-url";
+export const ITERATION_GENERATION_QUEUE_NAME = "iteration-generation";
