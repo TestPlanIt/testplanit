@@ -1,3 +1,9 @@
+## [0.24.9](https://github.com/TestPlanIt/testplanit/compare/v0.24.8...v0.24.9) (2026-05-04)
+
+### Bug Fixes
+
+* **i18n:** localize tiptap rich-text toolbar tooltips ([#277](https://github.com/TestPlanIt/testplanit/issues/277)) ([be18f5a](https://github.com/TestPlanIt/testplanit/commit/be18f5ada098cbff424b828f12841601ef1b79b9))
+
 ## [0.24.8](https://github.com/TestPlanIt/testplanit/compare/v0.24.7...v0.24.8) (2026-05-03)
 
 ### Bug Fixes
