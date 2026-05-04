@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 
 /**
@@ -7,7 +8,7 @@ import { prisma } from "~/lib/prisma";
  * It bypasses normal authentication to allow E2E tests to create verified users.
  */
 
-export async function POST(req: NextRequest) {
+export const POST = withAuditContext(async (req: NextRequest) => {
   // Only allow when explicitly running E2E tests
   // Never available in actual production deployments
   const isE2ETest =
@@ -45,4 +46,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
