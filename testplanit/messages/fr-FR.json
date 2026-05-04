@@ -4858,7 +4858,9 @@
         "last30d": "30 derniers jours",
         "last90d": "90 derniers jours",
         "allTime": "Tout le temps"
-      }
+      },
+      "systemActor": "Système",
+      "systemActorTooltip": "Action effectuée par le système, et non par un utilisateur connecté"
     }
   },
   "components": {
