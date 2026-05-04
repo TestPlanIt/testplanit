@@ -2,6 +2,7 @@
 
 import { CheckCircle2, InfoIcon, Shield } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { siGoogle } from "simple-icons";
 import { Alert, AlertDescription } from "~/components/ui/alert";
@@ -25,14 +26,16 @@ const GoogleIcon = ({ className }: { className?: string }) => (
 export default function LinkSSOPage() {
   const router = useRouter();
   const t = useTranslations();
+  const searchParams = useSearchParams();
   const [linking, setLinking] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch available SSO providers
-  const { data: ssoProviders } = useFindManySsoProvider({
+  const { data: allProviders } = useFindManySsoProvider({
     where: { enabled: true },
     include: { samlConfig: true },
   });
+  // MAGIC_LINK is a login method, not a linkable identity provider
+  const ssoProviders = allProviders?.filter((p) => p.type !== "MAGIC_LINK");
 
   const handleLinkProvider = async (provider: any) => {
     setLinking(provider.id);
@@ -40,10 +43,13 @@ export default function LinkSSOPage() {
 
     try {
       if (provider.type === "GOOGLE") {
-        // For Google OAuth, redirect to sign in with linking mode
-        window.location.href = `/api/auth/signin?callbackUrl=${encodeURIComponent("/account/link-sso?linked=google")}`;
+        // Redirect directly to the Google OAuth flow, bypassing the generic sign-in page
+        window.location.href = `/api/auth/signin/google?callbackUrl=${encodeURIComponent("/account/link-sso?linked=google")}`;
+      } else if (provider.type === "APPLE") {
+        window.location.href = `/api/auth/signin/apple?callbackUrl=${encodeURIComponent("/account/link-sso?linked=apple")}`;
+      } else if (provider.type === "MICROSOFT") {
+        window.location.href = `/api/auth/signin/azure-ad?callbackUrl=${encodeURIComponent("/account/link-sso?linked=microsoft")}`;
       } else if (provider.type === "SAML") {
-        // For SAML, initiate SAML flow with linking parameter
         window.location.href = `/api/auth/saml?provider=${provider.samlConfig.id}&callbackUrl=${encodeURIComponent("/account/link-sso?linked=saml")}`;
       }
     } catch {
@@ -52,8 +58,6 @@ export default function LinkSSOPage() {
     }
   };
 
-  // Check if we just completed linking
-  const searchParams = new URLSearchParams(window.location.search);
   const linkedProvider = searchParams.get("linked");
 
   if (linkedProvider) {
