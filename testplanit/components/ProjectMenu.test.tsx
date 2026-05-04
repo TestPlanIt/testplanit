@@ -151,8 +151,14 @@ beforeEach(() => {
   // Default permissions: canAddEdit=true => show shared steps, reports, settings
   mockUseProjectPermissions.mockReturnValue(stablePermissions);
 
-  // Mock localStorage
-  const store: Record<string, string> = {};
+  // Mock localStorage — default all sections expanded so accordion content is visible
+  const store: Record<string, string> = {
+    "projectMenu:openSections": JSON.stringify([
+      "project",
+      "management",
+      "settings",
+    ]),
+  };
   vi.stubGlobal("localStorage", {
     getItem: (key: string) => store[key] ?? null,
     setItem: (key: string, val: string) => {
