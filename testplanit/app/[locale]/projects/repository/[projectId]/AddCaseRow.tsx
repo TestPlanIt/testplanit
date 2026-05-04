@@ -395,7 +395,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
                       placeholder={t("repository.addCase.namePlaceholder")}
                       {...field}
                       autoComplete="off"
-                      data-testid="case-name-input"
+                      data-testid="inline-case-name-input"
                       ref={(e) => {
                         field.ref(e);
                         nameInputRef.current = e;

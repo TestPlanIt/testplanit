@@ -41,7 +41,7 @@ test.describe("Add Case — Inline Row", () => {
 
     // The inline add row must be visible even when the folder has no cases yet.
     // This was a bug fixed as part of the importGeneratedTestCases refactor.
-    await expect(page.getByTestId("case-name-input").first()).toBeVisible({
+    await expect(page.getByTestId("inline-case-name-input")).toBeVisible({
       timeout: 10000,
     });
   });
@@ -57,7 +57,7 @@ test.describe("Add Case — Inline Row", () => {
     await repositoryPage.selectFolder(folderId);
 
     // Wait for inline form to appear
-    const nameInput = page.getByTestId("case-name-input").first();
+    const nameInput = page.getByTestId("inline-case-name-input");
     await expect(nameInput).toBeVisible({ timeout: 10000 });
 
     // Listen for the duplicate-scan request BEFORE triggering submission
@@ -100,11 +100,12 @@ test.describe("Add Case — Inline Row", () => {
     await repositoryPage.goto(projectId);
     await repositoryPage.selectFolder(folderId);
 
-    const nameInput = page.getByTestId("case-name-input").first();
+    const nameInput = page.getByTestId("inline-case-name-input");
     await expect(nameInput).toBeVisible({ timeout: 10000 });
     await nameInput.fill(caseName);
 
     await page.getByTestId("inline-add-case-button").click();
+    await page.waitForLoadState("networkidle");
 
     await expect(repositoryPage.getTestCaseByName(caseName)).toBeVisible({
       timeout: 15000,
@@ -123,7 +124,7 @@ test.describe("Add Case — Inline Row", () => {
     await repositoryPage.goto(projectId);
     await repositoryPage.selectFolder(folderId);
 
-    const nameInput = page.getByTestId("case-name-input").first();
+    const nameInput = page.getByTestId("inline-case-name-input");
     await expect(nameInput).toBeVisible({ timeout: 10000 });
 
     // Submit first case
@@ -217,18 +218,13 @@ test.describe("Add Case — Modal", () => {
     await submitButton.click();
     await expect(dialog).not.toBeVisible({ timeout: 15000 });
 
-    // Click the case row to open the detail page
+    // Click the case row — this opens the case in the right-side detail panel
     const caseRow = repositoryPage.getTestCaseByName(caseName);
     await expect(caseRow).toBeVisible({ timeout: 15000 });
     await caseRow.click();
-
-    // Wait for detail page to load (URL changes to include the case ID)
-    await page.waitForURL(/\/projects\/repository\/\d+\/\d+/, {
-      timeout: 10000,
-    });
     await page.waitForLoadState("networkidle");
 
-    // The case name must appear on the detail page
+    // The case name must be visible in the detail panel
     await expect(page.locator(`text="${caseName}"`).first()).toBeVisible({
       timeout: 10000,
     });
