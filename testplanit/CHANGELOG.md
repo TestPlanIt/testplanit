@@ -1,3 +1,9 @@
+## [0.24.12](https://github.com/TestPlanIt/testplanit/compare/v0.24.11...v0.24.12) (2026-05-04)
+
+### Enhancements
+
+* **repository:** route single-case add through importGeneratedTestCases action ([#280](https://github.com/TestPlanIt/testplanit/issues/280)) ([24b8523](https://github.com/TestPlanIt/testplanit/commit/24b85239fa3b0a17fc9d92eff3f1ebf99f634563))
+
 ## [0.24.11](https://github.com/TestPlanIt/testplanit/compare/v0.24.10...v0.24.11) (2026-05-04)
 
 ### Enhancements
