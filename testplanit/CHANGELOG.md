@@ -1,3 +1,9 @@
+## [0.24.11](https://github.com/TestPlanIt/testplanit/compare/v0.24.10...v0.24.11) (2026-05-04)
+
+### Enhancements
+
+* **audit:** system actor badge + wrap remaining routes with audit context ([#279](https://github.com/TestPlanIt/testplanit/issues/279)) ([b685997](https://github.com/TestPlanIt/testplanit/commit/b6859973f89ce448491abb6b164bdba0b1c8c91f))
+
 ## [0.24.10](https://github.com/TestPlanIt/testplanit/compare/v0.24.9...v0.24.10) (2026-05-04)
 
 ### Bug Fixes
