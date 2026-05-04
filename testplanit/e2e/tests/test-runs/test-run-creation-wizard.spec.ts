@@ -211,7 +211,7 @@ test.describe("Test Run Creation Wizard", () => {
     // Click Next — should trigger validation since name is too short
     const nextBtnValidation = dialog.getByTestId("run-next-button");
     await expect(nextBtnValidation).toBeVisible({ timeout: 5000 });
-    await nextBtnValidation.dispatchEvent("click");
+    await nextBtnValidation.click();
 
     // Validation error message should appear
     const validationError = dialog
