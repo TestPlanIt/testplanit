@@ -210,24 +210,6 @@ const UserWorkGanttChart: React.FC<UserWorkGanttChartProps> = ({
             fillOpacity: "opacity",
             ariaLabel: (d: PlotTask) => `task-bar-${d.id}`,
           }),
-          Plot.text(tasks, {
-            x: "start",
-            y: "groupName",
-            text: (d: PlotTask) => {
-              const maxLength = 30;
-              if (d.name.length > maxLength) {
-                return d.name.substring(0, maxLength) + "...";
-              }
-              return d.name;
-            },
-            dx: 5,
-            textAnchor: "start",
-            fill: "var(--tp-text-on-primary)", // Changed to use text-on-primary for better contrast
-            fontSize: 10,
-            title: (d: PlotTask) => d.name,
-            pointerEvents: "none",
-            className: "gantt-task-label",
-          }),
         ],
       });
 
