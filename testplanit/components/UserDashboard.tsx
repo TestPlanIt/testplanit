@@ -660,7 +660,7 @@ export function UserDashboard() {
           color: sessionColor, // Use themed color
           projectName: item.projectName,
           link: item.link,
-          opacity: 0.7, // Set opacity for sessions
+          opacity: 1.0,
           originalDurationInSeconds: item.originalDurationInSeconds,
         });
         // Reset group marker as sessions are independent groups
@@ -703,7 +703,7 @@ export function UserDashboard() {
             color: testRunColor, // Use themed color (which is now primary for all)
             projectName: item.projectName,
             link: caseItem.link,
-            opacity: 1.0, // Set opacity for test run cases
+            opacity: 1.0,
             originalDurationInSeconds: caseItem.timeValue,
           });
           // Update the marker for the next case in this group
@@ -714,6 +714,20 @@ export function UserDashboard() {
         // After processing all cases in a group, reset the marker for the next independent item/group
         groupInternalScheduleMarker = null;
       }
+    }
+
+    // Assign graduated opacity per group: leftmost bar = 1.0, fading to 0.35
+    const byGroup = new Map<string, PlotTask[]>();
+    for (const task of generatedPlotTasks) {
+      if (!byGroup.has(task.groupName)) byGroup.set(task.groupName, []);
+      byGroup.get(task.groupName)!.push(task);
+    }
+    for (const group of byGroup.values()) {
+      group.sort((a, b) => a.start.getTime() - b.start.getTime());
+      const n = group.length;
+      group.forEach((task, i) => {
+        task.opacity = n === 1 ? 1.0 : 1.0 - (i / (n - 1)) * 0.65;
+      });
     }
 
     return generatedPlotTasks;
