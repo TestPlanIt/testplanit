@@ -1,3 +1,9 @@
+## [0.24.15](https://github.com/TestPlanIt/testplanit/compare/v0.24.14...v0.24.15) (2026-05-05)
+
+### Bug Fixes
+
+* prevent repository menu link from stripping node/view search params ([13cd95c](https://github.com/TestPlanIt/testplanit/commit/13cd95c7a5a8a3baf982797c67c97c732bca96e3))
+
 ## [0.24.14](https://github.com/TestPlanIt/testplanit/compare/v0.24.13...v0.24.14) (2026-05-05)
 
 ### Enhancements
