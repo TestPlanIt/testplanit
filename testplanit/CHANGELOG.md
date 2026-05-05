@@ -1,3 +1,9 @@
+## [0.24.14](https://github.com/TestPlanIt/testplanit/compare/v0.24.13...v0.24.14) (2026-05-05)
+
+### Enhancements
+
+* graduated opacity per Gantt group and remove overlapping bar labels ([#283](https://github.com/TestPlanIt/testplanit/issues/283)) ([e7c7ad0](https://github.com/TestPlanIt/testplanit/commit/e7c7ad01adac3d274659b0dcef6a970b1394f970))
+
 ## [0.24.13](https://github.com/TestPlanIt/testplanit/compare/v0.24.12...v0.24.13) (2026-05-05)
 
 ### Bug Fixes
