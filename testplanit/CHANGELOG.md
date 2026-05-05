@@ -1,3 +1,9 @@
+## [0.24.13](https://github.com/TestPlanIt/testplanit/compare/v0.24.12...v0.24.13) (2026-05-05)
+
+### Bug Fixes
+
+* small bug fixes for SSO linking, password policy, project menu, and LLM adapters ([#282](https://github.com/TestPlanIt/testplanit/issues/282)) ([e5a2af4](https://github.com/TestPlanIt/testplanit/commit/e5a2af4ecffe25d0642277b624bbc1ca219e281e))
+
 ## [0.24.12](https://github.com/TestPlanIt/testplanit/compare/v0.24.11...v0.24.12) (2026-05-04)
 
 ### Enhancements
