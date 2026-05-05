@@ -136,9 +136,7 @@ export function ChangePasswordModal({
               {tGlobal(titleKey)}
             </DialogTitle>
             <DialogDescription>
-              {hasPassword
-                ? t("description")
-                : t("setPasswordDescription")}
+              {hasPassword ? t("description") : t("setPasswordDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -216,9 +214,7 @@ export function ChangePasswordModal({
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isLoading}>
-              {isLoading
-                ? tCommon("actions.submitting")
-                : tGlobal(titleKey)}
+              {isLoading ? tCommon("actions.submitting") : tGlobal(titleKey)}
             </Button>
           </DialogFooter>
         </form>

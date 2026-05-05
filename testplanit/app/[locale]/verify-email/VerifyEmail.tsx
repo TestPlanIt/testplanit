@@ -212,7 +212,10 @@ const VerifyEmail = () => {
                   </div>
                 </div>
                 <div>
-                  <Link href="/signin" className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4">
+                  <Link
+                    href="/signin"
+                    className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4"
+                  >
                     {tGlobal("auth.signin.magicLink.backToSignIn")}
                   </Link>
                 </div>

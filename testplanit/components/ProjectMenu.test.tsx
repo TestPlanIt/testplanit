@@ -151,14 +151,8 @@ beforeEach(() => {
   // Default permissions: canAddEdit=true => show shared steps, reports, settings
   mockUseProjectPermissions.mockReturnValue(stablePermissions);
 
-  // Mock localStorage — default all sections expanded so accordion content is visible
-  const store: Record<string, string> = {
-    "projectMenu:openSections": JSON.stringify([
-      "project",
-      "management",
-      "settings",
-    ]),
-  };
+  // Mock localStorage — empty store simulates first-visit; component defaults to all expanded
+  const store: Record<string, string> = {};
   vi.stubGlobal("localStorage", {
     getItem: (key: string) => store[key] ?? null,
     setItem: (key: string, val: string) => {
@@ -336,6 +330,36 @@ describe("ProjectsMenu", () => {
       triggers.forEach((trigger) => {
         expect(trigger.className).toContain("md:max-h-0");
       });
+    });
+  });
+
+  describe("localStorage persistence", () => {
+    it("expands all sections on first visit when no localStorage value exists", () => {
+      // Empty store → no stored preference → component defaults to all sections open
+      render(<ProjectsMenu isCollapsed={false} onToggleCollapse={vi.fn()} />);
+      const accordion = screen.getByTestId("accordion");
+      const openSections = JSON.parse(
+        accordion.getAttribute("data-value") ?? "[]"
+      ) as string[];
+      expect(openSections).toContain("project");
+      expect(openSections).toContain("management");
+      expect(openSections).toContain("settings");
+    });
+
+    it("restores only the sections saved in localStorage on subsequent visits", () => {
+      // Pre-seed localStorage as if the user previously collapsed management and settings
+      localStorage.setItem(
+        "projectMenu:openSections",
+        JSON.stringify(["project"])
+      );
+      render(<ProjectsMenu isCollapsed={false} onToggleCollapse={vi.fn()} />);
+      const accordion = screen.getByTestId("accordion");
+      const openSections = JSON.parse(
+        accordion.getAttribute("data-value") ?? "[]"
+      ) as string[];
+      expect(openSections).toContain("project");
+      expect(openSections).not.toContain("management");
+      expect(openSections).not.toContain("settings");
     });
   });
 

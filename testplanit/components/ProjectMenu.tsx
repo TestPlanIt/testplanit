@@ -314,12 +314,13 @@ export default function ProjectsMenu({
     if (typeof window !== "undefined") {
       try {
         const stored = localStorage.getItem("projectMenu:openSections");
-        return stored ? (JSON.parse(stored) as string[]) : [];
+        // First visit: no stored value → expand all sections so users discover the full menu
+        return stored ? (JSON.parse(stored) as string[]) : [...sectionOrder];
       } catch {
-        return [];
+        return [...sectionOrder];
       }
     }
-    return [];
+    return [...sectionOrder];
   });
 
   useEffect(() => {

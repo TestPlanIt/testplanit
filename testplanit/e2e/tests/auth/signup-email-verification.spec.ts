@@ -94,16 +94,9 @@ test.describe("Sign Up with Email Verification", () => {
         );
 
         // Wait for the verification to complete — the component auto-submits via useEffect
-        // and redirects to "/" on success (or shows an error toast on failure)
-        await Promise.race([
-          verifyPage.waitForURL(
-            /\/en-US\/?$|\/en-US\/projects|\/en-US\/signin/,
-            {
-              timeout: 15000,
-            }
-          ),
-          verifyPage.waitForTimeout(10000),
-        ]);
+        // and redirects to /signin on success
+        await verifyPage.waitForURL(/\/en-US\/signin/, { timeout: 15000 });
+        expect(verifyPage.url()).toContain("/signin");
 
         // After verification, sign in to confirm emailVerified was set
         // An unverified user would be redirected to /verify-email by the Header component
@@ -177,6 +170,39 @@ test.describe("Sign Up with Email Verification", () => {
           const pageTitle = page.getByTestId("verify-email-page-title");
           await expect(pageTitle).toBeVisible({ timeout: 5000 });
         }
+      } finally {
+        await api.deleteUser(userId);
+      }
+    });
+
+    test("Back to sign in link exists on verify-email page", async ({
+      page,
+      api,
+    }) => {
+      const timestamp = Date.now();
+      const testEmail = `back-link-${timestamp}@example.com`;
+      const testPassword = "TestPassword123!";
+
+      const userResult = await api.createUser({
+        name: `Back Link Test ${timestamp}`,
+        email: testEmail,
+        password: testPassword,
+        access: "USER",
+        emailVerified: false,
+      });
+      const userId = userResult.data.id;
+
+      try {
+        const signinPage = new SigninPage(page);
+        await signinPage.goto();
+        await signinPage.fillCredentials(testEmail, testPassword);
+        await signinPage.submit();
+
+        await page.waitForURL(/\/en-US\/verify-email/, { timeout: 30000 });
+
+        const backLink = page.getByRole("link", { name: /back to sign in/i });
+        await expect(backLink).toBeVisible({ timeout: 5000 });
+        await expect(backLink).toHaveAttribute("href", /\/signin/);
       } finally {
         await api.deleteUser(userId);
       }
