@@ -57,11 +57,17 @@ export default function LinkSSOPage() {
 
     try {
       if (provider.type === "GOOGLE") {
-        await signIn("google", { callbackUrl: "/account/link-sso?linked=google" });
+        await signIn("google", {
+          callbackUrl: "/account/link-sso?linked=google",
+        });
       } else if (provider.type === "APPLE") {
-        await signIn("apple", { callbackUrl: "/account/link-sso?linked=apple" });
+        await signIn("apple", {
+          callbackUrl: "/account/link-sso?linked=apple",
+        });
       } else if (provider.type === "MICROSOFT") {
-        await signIn("azure-ad", { callbackUrl: "/account/link-sso?linked=microsoft" });
+        await signIn("azure-ad", {
+          callbackUrl: "/account/link-sso?linked=microsoft",
+        });
       } else if (provider.type === "SAML") {
         window.location.href = `/api/auth/saml/login/${provider.id}`;
       }
@@ -87,7 +93,9 @@ export default function LinkSSOPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => router.push(`/users/profile/${session?.user?.id}`)}>
+            <Button
+              onClick={() => router.push(`/users/profile/${session?.user?.id}`)}
+            >
               {t("common.actions.back")}
             </Button>
           </CardContent>
