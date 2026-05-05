@@ -94,6 +94,7 @@ function MenuLink({
         <Link
           id={option.id}
           href={href}
+          onClick={isActive ? (e) => e.preventDefault() : undefined}
           className={cn(
             buttonVariants({ variant: "ghost" }),
             menuButtonClass,
