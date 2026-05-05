@@ -424,16 +424,13 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
           }
 
           if (dbUser) {
-            // If user was INTERNAL, change to BOTH
-            // If user was SSO, keep as SSO
-            // If user was BOTH, keep as BOTH
             if (dbUser.authMethod === "INTERNAL") {
               await db.user.update({
                 where: { id: dbUser.id },
                 data: { authMethod: "BOTH" },
               });
             }
-            // Audit successful OAuth/SSO login
+
             auditAuthEvent("LOGIN", dbUser.id, dbUser.email, {
               provider: account?.provider,
             }).catch(console.error);

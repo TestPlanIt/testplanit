@@ -1990,7 +1990,9 @@
       },
       "changePasswordModal": {
         "buttonText": "Change Password",
+        "setPasswordButtonText": "Set Password",
         "description": "Enter your current password and a new password to change your account password. This will only change your internally managed password. If you login through SSO, that password will not change.",
+        "setPasswordDescription": "You signed in via SSO and have not set a local password yet. Enter a new password to enable email/password login for your account.",
         "currentPasswordLabel": "Current Password",
         "newPasswordLabel": "New Password",
         "confirmPasswordLabel": "Confirm New Password",

@@ -1,9 +1,11 @@
 "use client";
 
 import { CheckCircle2, InfoIcon, Shield } from "lucide-react";
+import { signIn, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { siGoogle } from "simple-icons";
+import { siApple, siGoogle } from "simple-icons";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import {
@@ -22,17 +24,32 @@ const GoogleIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const AppleIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="currentColor">
+    <path d={siApple.path} />
+  </svg>
+);
+
+const MicrosoftIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="currentColor">
+    <path d="M0 0h11.377v11.372H0zm12.623 0H24v11.372H12.623zM0 12.623h11.377V24H0zm12.623 0H24V24H12.623" />
+  </svg>
+);
+
 export default function LinkSSOPage() {
   const router = useRouter();
   const t = useTranslations();
+  const { data: session } = useSession();
+  const searchParams = useSearchParams();
   const [linking, setLinking] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch available SSO providers
-  const { data: ssoProviders } = useFindManySsoProvider({
+  const { data: allProviders } = useFindManySsoProvider({
     where: { enabled: true },
     include: { samlConfig: true },
   });
+  // MAGIC_LINK is a login method, not a linkable identity provider
+  const ssoProviders = allProviders?.filter((p) => p.type !== "MAGIC_LINK");
 
   const handleLinkProvider = async (provider: any) => {
     setLinking(provider.id);
@@ -40,11 +57,13 @@ export default function LinkSSOPage() {
 
     try {
       if (provider.type === "GOOGLE") {
-        // For Google OAuth, redirect to sign in with linking mode
-        window.location.href = `/api/auth/signin?callbackUrl=${encodeURIComponent("/account/link-sso?linked=google")}`;
+        await signIn("google", { callbackUrl: "/account/link-sso?linked=google" });
+      } else if (provider.type === "APPLE") {
+        await signIn("apple", { callbackUrl: "/account/link-sso?linked=apple" });
+      } else if (provider.type === "MICROSOFT") {
+        await signIn("azure-ad", { callbackUrl: "/account/link-sso?linked=microsoft" });
       } else if (provider.type === "SAML") {
-        // For SAML, initiate SAML flow with linking parameter
-        window.location.href = `/api/auth/saml?provider=${provider.samlConfig.id}&callbackUrl=${encodeURIComponent("/account/link-sso?linked=saml")}`;
+        window.location.href = `/api/auth/saml/login/${provider.id}`;
       }
     } catch {
       setError(t("account.linkSso.linkingFailed"));
@@ -52,8 +71,6 @@ export default function LinkSSOPage() {
     }
   };
 
-  // Check if we just completed linking
-  const searchParams = new URLSearchParams(window.location.search);
   const linkedProvider = searchParams.get("linked");
 
   if (linkedProvider) {
@@ -70,7 +87,7 @@ export default function LinkSSOPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => router.push("/account/settings")}>
+            <Button onClick={() => router.push(`/users/profile/${session?.user?.id}`)}>
               {t("common.actions.back")}
             </Button>
           </CardContent>
@@ -107,6 +124,10 @@ export default function LinkSSOPage() {
                   <div className="flex items-center gap-3">
                     {provider.type === "GOOGLE" ? (
                       <GoogleIcon className="h-6 w-6" />
+                    ) : provider.type === "APPLE" ? (
+                      <AppleIcon className="h-6 w-6" />
+                    ) : provider.type === "MICROSOFT" ? (
+                      <MicrosoftIcon className="h-6 w-6" />
                     ) : (
                       <Shield className="h-6 w-6" />
                     )}
@@ -132,7 +153,7 @@ export default function LinkSSOPage() {
             ))}
           </div>
 
-          {(!ssoProviders || ssoProviders.length === 0) && (
+          {allProviders && ssoProviders?.length === 0 && (
             <p className="text-center text-muted-foreground py-4">
               {t("account.linkSso.noProvidersContactAdmin")}
             </p>

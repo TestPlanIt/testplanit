@@ -18,19 +18,29 @@ export async function GET(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const settings = await db.registrationSettings.findFirst({
-    select: {
-      minPasswordLength: true,
-      requireUppercase: true,
-      requireLowercase: true,
-      requireNumbers: true,
-      requiredSpecialChars: true,
-    },
-  });
+  const [settings, user] = await Promise.all([
+    db.registrationSettings.findFirst({
+      select: {
+        minPasswordLength: true,
+        requireUppercase: true,
+        requireLowercase: true,
+        requireNumbers: true,
+        requiredSpecialChars: true,
+      },
+    }),
+    db.user.findUnique({
+      where: { id: userId },
+      select: { password: true },
+    }),
+  ]);
+
+  const hasPassword =
+    typeof user?.password === "string" &&
+    (user.password.startsWith("$2b$") || user.password.startsWith("$2a$"));
 
   if (!settings) {
-    return NextResponse.json({ policy: null });
+    return NextResponse.json({ policy: null, hasPassword });
   }
 
-  return NextResponse.json({ policy: settings });
+  return NextResponse.json({ policy: settings, hasPassword });
 }

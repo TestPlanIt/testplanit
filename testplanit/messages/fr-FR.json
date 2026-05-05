@@ -1990,7 +1990,9 @@
       },
       "changePasswordModal": {
         "buttonText": "Changer le mot de passe",
+        "setPasswordButtonText": "Définir le mot de passe",
         "description": "Saisissez votre mot de passe actuel et un nouveau mot de passe pour modifier le mot de passe de votre compte. Seul votre mot de passe interne sera modifié. Si vous vous connectez via l'authentification unique (SSO), ce mot de passe restera inchangé.",
+        "setPasswordDescription": "Vous vous êtes connecté via l'authentification unique (SSO) et n'avez pas encore défini de mot de passe local. Veuillez saisir un nouveau mot de passe pour activer la connexion par e-mail et mot de passe à votre compte.",
         "currentPasswordLabel": "Mot de passe actuel",
         "newPasswordLabel": "Nouveau mot de passe",
         "confirmPasswordLabel": "Confirmer le nouveau mot de passe",
