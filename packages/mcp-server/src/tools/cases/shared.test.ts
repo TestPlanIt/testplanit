@@ -161,26 +161,15 @@ describe("buildFolderBreadcrumb", () => {
   });
 
   it("halts and throws TestPlanItHttpError when depth exceeds max (depth bound at 10)", async () => {
-    const leaf = { id: 11, name: "DeepLeaf", parentId: 10 };
-    // Mock a never-ending chain: parent 10 → 9 → 8 → ... → 1 → 0 (keeps returning a non-null parentId)
-    let depth = 10;
+    // Leaf starts with parentId=1; the mock always returns a parent with a non-null parentId
+    // so the chain never terminates naturally — forcing the depth check to trigger.
+    const leaf = { id: 999, name: "DeepLeaf", parentId: 1 };
+    let counter = 1;
     mockZenstack.mockImplementation(async () => {
-      const current = depth;
-      depth -= 1;
-      return { id: current, name: `Folder${current}`, parentId: current > 1 ? current - 1 : null };
-    });
-
-    await expect(buildFolderBreadcrumb(leaf, mockEnv)).rejects.toThrow(
-      TestPlanItHttpError,
-    );
-
-    // Re-test to verify the error message contains "depth"
-    mockZenstack.mockReset();
-    depth = 10;
-    mockZenstack.mockImplementation(async () => {
-      const current = depth;
-      depth -= 1;
-      return { id: current, name: `Folder${current}`, parentId: current > 0 ? current - 1 : null };
+      const current = counter;
+      counter += 1;
+      // Always returns a non-null parentId — infinite chain
+      return { id: current, name: `Folder${current}`, parentId: current + 1 };
     });
 
     const err = await buildFolderBreadcrumb(leaf, mockEnv).catch((e) => e);
