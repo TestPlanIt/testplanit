@@ -899,19 +899,9 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
 
         if (formSteps?.value && Array.isArray(formSteps.value)) {
           for (const stepItem of formSteps.value) {
-            const rawStep =
-              typeof stepItem.step === "string"
-                ? stepItem.step
-                : JSON.stringify(stepItem.step);
-            const rawExpected = stepItem.expectedResult
-              ? typeof stepItem.expectedResult === "string"
-                ? stepItem.expectedResult
-                : JSON.stringify(stepItem.expectedResult)
-              : undefined;
-
             stepRowsForCase.push({
-              step: rawStep,
-              expectedResult: rawExpected,
+              step: stepItem.step || emptyEditorContent,
+              expectedResult: stepItem.expectedResult || emptyEditorContent,
               sharedStepGroupId: stepItem.sharedStepGroupId,
             });
 
