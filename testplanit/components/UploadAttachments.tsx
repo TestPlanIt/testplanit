@@ -7,6 +7,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { filesize } from "filesize";
 import {
   CloudUpload,
@@ -399,14 +404,19 @@ export default function UploadAttachments({
                 >
                   <div className="mt-2 relative w-16 h-16 bg-accent rounded-full flex items-center justify-center">
                     {getThumbnail(file)}
-                    <button
-                      type="button"
-                      className="absolute top-0 left-14 transform -translate-y-2 -translate-x-2"
-                      onClick={() => removeFile(index)}
-                    >
-                      <XCircle className="w-6 h-6 text-destructive" />
-                      {tGlobal("common.cancel")}
-                    </button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="absolute top-0 left-14 transform -translate-y-2 -translate-x-2"
+                          onClick={() => removeFile(index)}
+                          aria-label={tGlobal("common.cancel")}
+                        >
+                          <XCircle className="w-6 h-6 text-destructive" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>{tGlobal("common.cancel")}</TooltipContent>
+                    </Tooltip>
                   </div>
                   <div className="w-[100px] lg:w-[150px]">
                     <div className="mb-2 mx-4 text-sm truncate text-center">
