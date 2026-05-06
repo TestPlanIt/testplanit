@@ -1,3 +1,9 @@
+## [0.24.16](https://github.com/TestPlanIt/testplanit/compare/v0.24.15...v0.24.16) (2026-05-06)
+
+### Bug Fixes
+
+* preserve search params when clicking active menu link ([d3eb91c](https://github.com/TestPlanIt/testplanit/commit/d3eb91c2ef71dc1acc6cbc9afb1524433cfc611b))
+
 ## [0.24.15](https://github.com/TestPlanIt/testplanit/compare/v0.24.14...v0.24.15) (2026-05-05)
 
 ### Bug Fixes
