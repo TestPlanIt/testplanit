@@ -36,7 +36,7 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { Link, usePathname } from "~/lib/navigation";
@@ -79,7 +79,8 @@ function MenuLink({
   menuButtonClass: string;
 }) {
   const IconComponent = option.icon;
-  const href =
+  const searchParams = useSearchParams();
+  const basePath =
     option.path === "shared-steps"
       ? `/projects/shared-steps/${projectId}`
       : option.path === "reports"
@@ -87,6 +88,10 @@ function MenuLink({
         : option.path.startsWith("settings/")
           ? `/projects/settings/${projectId}/${option.path.split("/")[1]}`
           : `/projects/${option.path}/${projectId}`;
+  const href =
+    isActive && searchParams.size > 0
+      ? `${basePath}?${searchParams.toString()}`
+      : basePath;
 
   return (
     <Tooltip>
@@ -94,7 +99,6 @@ function MenuLink({
         <Link
           id={option.id}
           href={href}
-          onClick={isActive ? (e) => e.preventDefault() : undefined}
           className={cn(
             buttonVariants({ variant: "ghost" }),
             menuButtonClass,

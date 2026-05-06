@@ -27,6 +27,7 @@ vi.mock("next-intl", () => ({
 
 vi.mock("next/navigation", () => ({
   useParams: mockUseParams,
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 vi.mock("~/lib/navigation", () => ({
