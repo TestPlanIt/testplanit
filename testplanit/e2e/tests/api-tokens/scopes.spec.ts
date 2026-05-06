@@ -146,4 +146,92 @@ test.describe("API Token Scopes (mode:read + client:mcp)", () => {
       await ctx.close();
     }
   });
+
+  // Phase 6 regression: T-06-01 carry-forward.
+  // Proves Phase 6 write tools (repositoryCases create/update + repositoryFolders
+  // create) inherit Phase 5's WRITE_HTTP_METHODS host gate without any MCP-layer
+  // change. The auth gate fires BEFORE ZenStack processes the request body, so
+  // placeholder IDs are fine — the 403 is returned before FK validation.
+
+  test("read-only token: rejects POST /api/model/repositoryCases/create with READ_ONLY_TOKEN (T-06-01)", async ({
+    baseURL,
+    browser,
+  }) => {
+    const ctx = await browser.newContext({ storageState: undefined });
+    try {
+      const r = await ctx.request.post(`${baseURL}/api/model/repositoryCases/create`, {
+        headers: {
+          Authorization: `Bearer ${readOnlyToken}`,
+          "Content-Type": "application/json",
+        },
+        // Placeholder body — request is rejected at the auth gate before
+        // reaching ZenStack, so the FK shape doesn't matter.
+        data: {
+          data: {
+            name: "should-not-be-created",
+            source: "MANUAL",
+            automated: false,
+            project: { connect: { id: 1 } },
+            repository: { connect: { id: 1 } },
+            folder: { connect: { id: 1 } },
+            template: { connect: { id: 1 } },
+            state: { connect: { id: 1 } },
+          },
+        },
+      });
+      expect(r.status()).toBe(403);
+      const body = await r.json();
+      expect(body.code).toBe("READ_ONLY_TOKEN");
+    } finally {
+      await ctx.close();
+    }
+  });
+
+  test("read-only token: rejects PATCH /api/model/repositoryCases/update with READ_ONLY_TOKEN (T-06-01)", async ({
+    baseURL,
+    browser,
+  }) => {
+    const ctx = await browser.newContext({ storageState: undefined });
+    try {
+      const r = await ctx.request.patch(`${baseURL}/api/model/repositoryCases/update`, {
+        headers: {
+          Authorization: `Bearer ${readOnlyToken}`,
+          "Content-Type": "application/json",
+        },
+        data: { where: { id: 1 }, data: { name: "x" } },
+      });
+      expect(r.status()).toBe(403);
+      const body = await r.json();
+      expect(body.code).toBe("READ_ONLY_TOKEN");
+    } finally {
+      await ctx.close();
+    }
+  });
+
+  test("read-only token: rejects POST /api/model/repositoryFolders/create with READ_ONLY_TOKEN (T-06-01)", async ({
+    baseURL,
+    browser,
+  }) => {
+    const ctx = await browser.newContext({ storageState: undefined });
+    try {
+      const r = await ctx.request.post(`${baseURL}/api/model/repositoryFolders/create`, {
+        headers: {
+          Authorization: `Bearer ${readOnlyToken}`,
+          "Content-Type": "application/json",
+        },
+        data: {
+          data: {
+            name: "should-not-be-created",
+            project: { connect: { id: 1 } },
+            repository: { connect: { id: 1 } },
+          },
+        },
+      });
+      expect(r.status()).toBe(403);
+      const body = await r.json();
+      expect(body.code).toBe("READ_ONLY_TOKEN");
+    } finally {
+      await ctx.close();
+    }
+  });
 });
