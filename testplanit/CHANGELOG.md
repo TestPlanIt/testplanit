@@ -1,3 +1,9 @@
+## [0.24.17](https://github.com/TestPlanIt/testplanit/compare/v0.24.16...v0.24.17) (2026-05-06)
+
+### Bug Fixes
+
+* **AddCase:** simplify step handling by using default values ([09dd0b3](https://github.com/TestPlanIt/testplanit/commit/09dd0b399e01e4d6bfa3b52696a09527bdf8525e))
+
 ## [0.24.16](https://github.com/TestPlanIt/testplanit/compare/v0.24.15...v0.24.16) (2026-05-06)
 
 ### Bug Fixes
