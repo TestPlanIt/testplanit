@@ -32,7 +32,6 @@ export function registerFoldersCreate(server: McpServer, deps: FoldersCreateDeps
         if (input.parentId !== undefined) {
           data["parent"] = { connect: { id: input.parentId } };
         }
-        // creatorId is auto-injected by route.ts — DO NOT pass.
         const created = await zenstack<{ id: number }>(
           "repositoryFolders",
           "create",
