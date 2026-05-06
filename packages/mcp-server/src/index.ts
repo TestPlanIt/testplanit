@@ -37,3 +37,12 @@ export type { WhoamiUser, ValidateResult } from "./http.js";
 export type { RunDeps } from "./cli.js";
 export type { ToolErrorResult } from "./errors.js";
 export type { ToolRegistryDeps, WhoamiDeps } from "./tools/index.js";
+
+export {
+  zenstack,
+  lookup,
+  resolveActiveRepository,
+  resolveDefaultTemplate,
+  resolveCaseWorkflowState,
+} from "./api.js";
+export type { LookupRequest, LookupResponse, LookupType } from "./api.js";
