@@ -415,7 +415,9 @@ export default function UploadAttachments({
                           <XCircle className="w-6 h-6 text-destructive" />
                         </button>
                       </TooltipTrigger>
-                      <TooltipContent>{tGlobal("common.cancel")}</TooltipContent>
+                      <TooltipContent>
+                        {tGlobal("common.cancel")}
+                      </TooltipContent>
                     </Tooltip>
                   </div>
                   <div className="w-[100px] lg:w-[150px]">
