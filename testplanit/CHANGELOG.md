@@ -1,3 +1,9 @@
+## [0.24.18](https://github.com/TestPlanIt/testplanit/compare/v0.24.17...v0.24.18) (2026-05-06)
+
+### Bug Fixes
+
+* **ProjectRepository:** update file drop conditions to include addCaseOpen state ([f09f344](https://github.com/TestPlanIt/testplanit/commit/f09f344e87fcc39380177e484c7f0ef211ec5f89))
+
 ## [0.24.17](https://github.com/TestPlanIt/testplanit/compare/v0.24.16...v0.24.17) (2026-05-06)
 
 ### Bug Fixes
