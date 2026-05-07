@@ -2166,8 +2166,8 @@
       "copy": "Copie",
       "promptTitle": "Que souhaitez-vous faire ?",
       "copying": "Copie de…",
-      "copyComplete": "{count, plural, =1 {Copie du cas n°} other {Copie du cas n°}}",
-      "copyError": "Échec de la copie du cas de test {count, plural, =1 {, des cas de test} other {et des cas de test}}"
+      "copyComplete": "{count, plural, =1 {# cas copié} other {# cas copiés}}",
+      "copyError": "Échec de la copie {count, plural, =1 {du cas de test} other {des cas de test}}"
     },
     "folderActions": {
       "edit": "Modifier le dossier",
