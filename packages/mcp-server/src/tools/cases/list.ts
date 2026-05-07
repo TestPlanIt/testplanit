@@ -83,7 +83,8 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
     {
       description:
         "List test cases scoped to a project. Filters: folderId, tagIds, name (case-insensitive substring), stateId, customField (by display name), issueId (linked Issue numeric id — see issues_list for resolution from external keys). Cursor pagination via the `cursor` returned in `nextCursor`. (per CASE-01 + EXEC-06 chain via D7-03) " +
-        "Phase-8 maintenance filters: automated (user-controlled flag), source (single or array of RepositoryCaseSource), repositoryId, hasNeverExecuted (no junitResults AND no TestRunResults via TestRunCases), staleSinceUpdate (handler-side post-filter — bounded scan of POST_FILTER_SCAN_CAP=400; surfaces truncated:true when scan cap hit), updatedAfter/updatedBefore (filter via the repositoryCaseVersions relation since RepositoryCases has no updatedAt column). Each row carries lastUpdatedAt and latestResult (union of latest junitResults / TestRunResults).",
+        "Phase-8 maintenance filters: automated (user-controlled flag), source (single or array of RepositoryCaseSource), repositoryId, hasNeverExecuted (no junitResults AND no TestRunResults via TestRunCases), staleSinceUpdate (handler-side post-filter — bounded scan of POST_FILTER_SCAN_CAP=400; surfaces truncated:true when scan cap hit), updatedAfter/updatedBefore (filter via the repositoryCaseVersions relation since RepositoryCases has no updatedAt column). Each row carries lastUpdatedAt and latestResult (union of latest junitResults / TestRunResults). " +
+        "Creator and date filters: creatorIds (array of user ids — matches any; deliberately array-shaped while runs_list/sessions_list use single-string createdById), from/to (ISO 8601 createdAt range).",
       inputSchema: {
         projectId: z.number().int().positive(),
         folderId: z.number().int().positive().optional(),
@@ -122,6 +123,9 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
         staleSinceUpdate: z.boolean().optional(),
         updatedAfter: z.string().datetime({ offset: true }).optional(),
         updatedBefore: z.string().datetime({ offset: true }).optional(),
+        creatorIds: z.array(z.string().min(1)).optional(),
+        from: z.string().datetime({ offset: true }).optional(),
+        to: z.string().datetime({ offset: true }).optional(),
         cursor: z.number().int().positive().optional(),
         limit: z.number().int().positive().max(MAX_LIMIT).optional(),
       },
@@ -189,6 +193,15 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
             createdAt.lte = new Date(input.updatedBefore);
           }
           where.repositoryCaseVersions = { some: { createdAt } };
+        }
+        if (input.creatorIds && input.creatorIds.length > 0) {
+          where.creatorId = { in: input.creatorIds };
+        }
+        if (input.from || input.to) {
+          where.createdAt = {
+            ...(input.from ? { gte: new Date(input.from) } : {}),
+            ...(input.to ? { lte: new Date(input.to) } : {}),
+          };
         }
 
         // staleSinceUpdate over-fetches up to POST_FILTER_SCAN_CAP+1 rows so
