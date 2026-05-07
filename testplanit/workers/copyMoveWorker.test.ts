@@ -51,6 +51,7 @@ const mockTx = {
   sharedStepGroup: { findFirst: vi.fn(), create: vi.fn() },
   repositoryCaseVersions: { create: vi.fn(), findMany: vi.fn() },
   comment: { create: vi.fn() },
+  repositoryCaseLink: { create: vi.fn() },
 };
 
 const mockPrisma = {
@@ -92,6 +93,13 @@ const mockCreateVersion = vi.fn().mockResolvedValue(undefined);
 vi.mock("../lib/services/testCaseVersionService", () => ({
   createTestCaseVersionInTransaction: (...args: any[]) =>
     mockCreateVersion(...args),
+}));
+
+// ─── Mock audit log ───────────────────────────────────────────────────────────
+
+const mockCaptureAuditEvent = vi.fn().mockResolvedValue(undefined);
+vi.mock("../lib/services/auditLog", () => ({
+  captureAuditEvent: (...args: any[]) => mockCaptureAuditEvent(...args),
 }));
 
 // ─── Test fixtures ────────────────────────────────────────────────────────────
@@ -272,6 +280,12 @@ describe("CopyMoveWorker", () => {
 
     // Version history: empty by default
     mockPrisma.repositoryCaseVersions.findMany.mockResolvedValue([]);
+
+    // Audit + provenance link mock resets
+    mockCaptureAuditEvent.mockClear();
+    mockCaptureAuditEvent.mockResolvedValue(undefined);
+    mockTx.repositoryCaseLink.create.mockClear();
+    mockTx.repositoryCaseLink.create.mockResolvedValue({ id: 9001 });
   });
 
   // ─── Helper: set up template field mocks for field value resolution ───────
@@ -1385,6 +1399,212 @@ describe("CopyMoveWorker", () => {
           }),
         })
       );
+    });
+  });
+
+  // ─── Provenance link write (DUP-04) ───────────────────────────────────────
+
+  describe("provenance link write (DUP-04)", () => {
+    it("writes RepositoryCaseLink(DUPLICATED_FROM) for within-project copy", async () => {
+      const { processor } = await loadWorker();
+      await processor(
+        makeMockJob({
+          data: {
+            ...baseCopyJobData,
+            sourceProjectId: 20,
+            targetProjectId: 20,
+          },
+        }) as Job
+      );
+
+      expect(mockTx.repositoryCaseLink.create).toHaveBeenCalledWith({
+        data: {
+          caseAId: 1001,
+          caseBId: 1,
+          type: "DUPLICATED_FROM",
+          createdById: "user-1",
+        },
+      });
+    });
+
+    it("does NOT write link for cross-project copy", async () => {
+      const { processor } = await loadWorker();
+      await processor(makeMockJob() as Job);
+
+      expect(mockTx.repositoryCaseLink.create).not.toHaveBeenCalled();
+    });
+
+    it("does NOT write link for move operation (even within-project)", async () => {
+      const { processor } = await loadWorker();
+      await processor(
+        makeMockJob({
+          data: {
+            ...baseCopyJobData,
+            operation: "move",
+            sourceProjectId: 20,
+            targetProjectId: 20,
+          },
+        }) as Job
+      );
+
+      expect(mockTx.repositoryCaseLink.create).not.toHaveBeenCalled();
+    });
+  });
+
+  // ─── DUPLICATED audit emission (DUP-10) ───────────────────────────────────
+
+  describe("DUPLICATED audit emission (DUP-10)", () => {
+    it("emits captureAuditEvent({action: 'DUPLICATED'}) for within-project copy", async () => {
+      const { processor } = await loadWorker();
+      await processor(
+        makeMockJob({
+          data: {
+            ...baseCopyJobData,
+            sourceProjectId: 20,
+            targetProjectId: 20,
+          },
+        }) as Job
+      );
+
+      expect(mockCaptureAuditEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: "DUPLICATED",
+          entityType: "RepositoryCases",
+          entityId: "1001",
+          projectId: 20,
+          userId: "user-1",
+          metadata: expect.objectContaining({
+            duplicatedFromCaseId: 1,
+            sourceProjectId: 20,
+            targetFolderId: 2000,
+          }),
+        })
+      );
+    });
+
+    it("emits both CREATE and DUPLICATED audits for within-project copy (D-07)", async () => {
+      const { processor } = await loadWorker();
+      await processor(
+        makeMockJob({
+          data: {
+            ...baseCopyJobData,
+            sourceProjectId: 20,
+            targetProjectId: 20,
+          },
+        }) as Job
+      );
+
+      const actions = mockCaptureAuditEvent.mock.calls.map(
+        (c: any[]) => c[0].action
+      );
+      expect(actions).toEqual(expect.arrayContaining(["CREATE", "DUPLICATED"]));
+    });
+
+    it("emits ONLY CREATE (no DUPLICATED) for cross-project copy", async () => {
+      const { processor } = await loadWorker();
+      await processor(makeMockJob() as Job);
+
+      const actions = mockCaptureAuditEvent.mock.calls.map(
+        (c: any[]) => c[0].action
+      );
+      expect(actions).toContain("CREATE");
+      expect(actions).not.toContain("DUPLICATED");
+    });
+  });
+
+  // ─── Multi-source duplication (DUP-07) ────────────────────────────────────
+
+  describe("multi-source duplication (DUP-07)", () => {
+    it("writes one link + one DUPLICATED audit per source case", async () => {
+      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+        { ...mockSourceCase, id: 1 },
+        { ...mockSourceCase, id: 2, name: "Test Case 2" },
+        { ...mockSourceCase, id: 3, name: "Test Case 3" },
+      ]);
+
+      mockTx.repositoryCases.create
+        .mockResolvedValueOnce({ id: 1001 })
+        .mockResolvedValueOnce({ id: 1002 })
+        .mockResolvedValueOnce({ id: 1003 });
+
+      const { processor } = await loadWorker();
+      await processor(
+        makeMockJob({
+          data: {
+            ...baseCopyJobData,
+            caseIds: [1, 2, 3],
+            sourceProjectId: 20,
+            targetProjectId: 20,
+          },
+        }) as Job
+      );
+
+      expect(mockTx.repositoryCaseLink.create).toHaveBeenCalledTimes(3);
+      expect(
+        mockCaptureAuditEvent.mock.calls.filter(
+          (c: any[]) => c[0].action === "DUPLICATED"
+        )
+      ).toHaveLength(3);
+    });
+  });
+
+  // ─── Transaction rollback on link-write failure (TST-03) ──────────────────
+
+  describe("transaction rollback on link-write failure (TST-03)", () => {
+    it("rolls back created cases when a subsequent link write throws", async () => {
+      // Two sources: first link write succeeds; second throws — outer catch
+      // then deletes the first successfully-committed target case.
+      mockPrisma.repositoryCases.findMany.mockResolvedValue([
+        { ...mockSourceCase, id: 1 },
+        { ...mockSourceCase, id: 2, name: "Test Case 2" },
+      ]);
+      mockTx.repositoryCases.create
+        .mockResolvedValueOnce({ id: 1001 })
+        .mockResolvedValueOnce({ id: 1002 });
+      mockTx.repositoryCaseLink.create
+        .mockResolvedValueOnce({ id: 9001 })
+        .mockRejectedValueOnce(
+          new Error("simulated unique-constraint violation")
+        );
+
+      const { processor } = await loadWorker();
+
+      await expect(
+        processor(
+          makeMockJob({
+            data: {
+              ...baseCopyJobData,
+              caseIds: [1, 2],
+              sourceProjectId: 20,
+              targetProjectId: 20,
+            },
+          }) as Job
+        )
+      ).rejects.toThrow();
+
+      expect(mockPrisma.repositoryCases.deleteMany).toHaveBeenCalledWith({
+        where: { id: { in: [1001] } },
+      });
+    });
+
+    it("propagates the link-write error so the per-case transaction is rejected", async () => {
+      mockTx.repositoryCaseLink.create.mockRejectedValueOnce(
+        new Error("simulated unique-constraint violation")
+      );
+
+      const { processor } = await loadWorker();
+
+      await expect(
+        processor(
+          makeMockJob({
+            data: {
+              ...baseCopyJobData,
+              sourceProjectId: 20,
+              targetProjectId: 20,
+            },
+          }) as Job
+        )
+      ).rejects.toThrow(/simulated unique-constraint violation/);
     });
   });
 });
