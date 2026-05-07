@@ -88,6 +88,76 @@ describe("extractProseMirrorText", () => {
     expect(result).toContain("Line A");
     expect(result).toContain("Line B");
   });
+
+  it("WR-05: code_block with multiple text runs concatenates inline (no stray newlines)", () => {
+    const doc = {
+      type: "doc",
+      content: [
+        {
+          type: "code_block",
+          content: [
+            { type: "text", text: "const x = 1;" },
+            { type: "text", text: " // inline" },
+          ],
+        },
+      ],
+    };
+    // Code-block runs are joined inline; only one block in the doc, so no
+    // outer newline either.
+    expect(extractProseMirrorText(doc)).toBe("const x = 1; // inline");
+  });
+
+  it("WR-05: bullet_list of two items renders one line per item (no extra blanks)", () => {
+    const doc = {
+      type: "doc",
+      content: [
+        {
+          type: "bullet_list",
+          content: [
+            {
+              type: "list_item",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "first" }],
+                },
+              ],
+            },
+            {
+              type: "list_item",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: "second" }],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    // bullet_list is a non-block container (joins children with "\n"),
+    // list_item / paragraph are block-level (children inline). Result is
+    // exactly "first\nsecond" — not "first\n\nsecond" (the bug).
+    expect(extractProseMirrorText(doc)).toBe("first\nsecond");
+  });
+
+  it("WR-05: heading with multiple inline runs renders as one line", () => {
+    const doc = {
+      type: "doc",
+      content: [
+        {
+          type: "heading",
+          attrs: { level: 1 },
+          content: [
+            { type: "text", text: "Hello, " },
+            { type: "text", text: "world" },
+          ],
+        },
+      ],
+    };
+    expect(extractProseMirrorText(doc)).toBe("Hello, world");
+  });
 });
 
 // ── denormalizeCustomFields ────────────────────────────────────────────────

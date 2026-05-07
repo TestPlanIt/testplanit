@@ -4,10 +4,36 @@ import { TestPlanItHttpError } from "../../http.js";
 import type { EnvConfig } from "../../env.js";
 
 /**
+ * Block-level node types per Tiptap / ProseMirror schema. Children of
+ * these nodes are joined inline (no extra newlines between text runs);
+ * the newline goes BETWEEN sibling block nodes only. Inline-content
+ * containers (e.g., `text` itself) never appear here.
+ *
+ * (WR-05: previously the walker inserted "\n" between every non-paragraph
+ * child, corrupting code blocks and over-indenting nested lists.)
+ */
+const BLOCK_TYPES = new Set([
+  "paragraph",
+  "code_block",
+  "codeBlock",
+  "heading",
+  "list_item",
+  "listItem",
+  "blockquote",
+]);
+
+/**
  * Walk a Tiptap ProseMirror document and extract concatenated plain text.
  * Marks (bold, italic, links) are ignored — only `text` nodes contribute.
- * Paragraphs are joined with `"\n"`. Defensive: returns `""` on null/undefined,
- * or the string itself if input is already a primitive string.
+ *
+ * Newlines are inserted BETWEEN block-level nodes (paragraphs, headings,
+ * code blocks, list items, blockquotes) — never within them. This matches
+ * Tiptap `Node.textBetween` semantics and avoids the corruption mode
+ * where a code block with two text runs gets a stray newline injected
+ * between the runs (WR-05).
+ *
+ * Defensive: returns `""` on null/undefined, or the string itself if
+ * input is already a primitive string.
  */
 export function extractProseMirrorText(doc: unknown): string {
   if (doc == null) return "";
@@ -18,10 +44,12 @@ export function extractProseMirrorText(doc: unknown): string {
     const n = node as { type?: string; text?: string; content?: unknown[] };
     if (n.type === "text" && typeof n.text === "string") return n.text;
     if (Array.isArray(n.content)) {
-      if (n.type === "paragraph") {
-        return n.content.map(collectFromNode).join("");
-      }
-      return n.content.map(collectFromNode).join("\n");
+      // For block-level nodes, children are inline — concatenate without
+      // separators. For container nodes (doc, bullet_list, ordered_list,
+      // etc.), children are themselves blocks — join with "\n".
+      const isBlock = n.type ? BLOCK_TYPES.has(n.type) : false;
+      const parts = n.content.map(collectFromNode);
+      return isBlock ? parts.join("") : parts.join("\n");
     }
     return "";
   };
