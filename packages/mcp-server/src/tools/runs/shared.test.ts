@@ -141,7 +141,9 @@ describe("mapRunRow", () => {
     testRunType: "REGULAR",
     project: { id: 7, name: "TestProject" },
     state: { id: 3, name: "Active" },
-    creator: {
+    // Schema relation is `createdBy` (TestRuns.createdBy), NOT `creator`.
+    // RepositoryCases uses `creator`, but TestRuns / Sessions use `createdBy`.
+    createdBy: {
       id: "user-1",
       name: "Alice",
       email: "alice@example.com",
@@ -172,7 +174,7 @@ describe("mapRunRow", () => {
         "createdAt",
         "project",
         "state",
-        "creator",
+        "createdBy",
         "configuration",
         "milestone",
         "tags",
