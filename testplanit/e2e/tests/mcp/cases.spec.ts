@@ -201,4 +201,41 @@ test.describe("MCP test-case CRUD lifecycle (Phase 6)", () => {
     const body = await r.json();
     expect(body.data).toHaveLength(0);
   });
+
+  // -- Phase 8 REPO-02 maintenance smoke -------------------------------------
+  // Proves the new `automated: true` filter dimension survives a production-
+  // build round-trip. The MCP tool layer adds 7 maintenance filters on top of
+  // the existing cases_list shape; the `automated` boolean is the simplest one
+  // to assert on the wire and pins the contract at the host gateway.
+  test("Phase 8 REPO-02 maintenance filter — automated: true narrows correctly", async ({
+    request,
+    baseURL,
+  }) => {
+    const q = encodeURIComponent(
+      JSON.stringify({
+        where: { projectId: ctx.projectId, isDeleted: false, automated: true },
+        orderBy: [{ id: "asc" }],
+        take: 5,
+      }),
+    );
+    const r = await request.get(
+      `${baseURL}/api/model/repositoryCases/findMany?q=${q}`,
+      { headers: ctx.headers },
+    );
+    expect(r.status()).toBe(200);
+    const body = await r.json();
+    expect(Array.isArray(body.data)).toBe(true);
+    if (body.data.length === 0) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        "Phase 8 REPO-02 maintenance smoke: project has 0 automated:true cases — filter shape verified, row-shape assertion skipped",
+      );
+      return;
+    }
+    for (const row of body.data) {
+      expect(row.automated).toBe(true);
+      expect(row.projectId).toBe(ctx.projectId);
+      expect(row.isDeleted).toBe(false);
+    }
+  });
 });
