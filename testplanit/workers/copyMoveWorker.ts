@@ -717,6 +717,21 @@ const processor = async (
             }
           }
 
+          // Provenance link — within-project copies only
+          if (
+            job.data.operation === "copy" &&
+            job.data.sourceProjectId === job.data.targetProjectId
+          ) {
+            await tx.repositoryCaseLink.create({
+              data: {
+                caseAId: newCase.id,
+                caseBId: sourceCase.id,
+                type: "DUPLICATED_FROM",
+                createdById: job.data.userId,
+              },
+            });
+          }
+
           return newCase.id;
         });
 
