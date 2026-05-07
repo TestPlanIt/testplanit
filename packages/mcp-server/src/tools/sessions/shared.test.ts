@@ -37,7 +37,8 @@ describe("mapSessionRow", () => {
       email: "alice@example.com",
     },
     assignedTo: null,
-    template: { id: 4, name: "ExploratoryTemplate" },
+    // Templates.templateName is the schema field; mapper renames to `name` for agents.
+    template: { id: 4, templateName: "ExploratoryTemplate" },
     configuration: null,
     milestone: null,
     tags: [{ id: 9, name: "exploratory" }],
@@ -100,7 +101,8 @@ describe("mapSessionDetail", () => {
       email: "alice@example.com",
     },
     assignedTo: null,
-    template: { id: 4, name: "ExploratoryTemplate" },
+    // Templates.templateName is the schema field; mapper renames to `name` for agents.
+    template: { id: 4, templateName: "ExploratoryTemplate" },
     configuration: null,
     milestone: null,
     tags: [{ id: 9, name: "exploratory" }],
