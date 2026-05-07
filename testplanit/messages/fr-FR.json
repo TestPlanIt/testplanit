@@ -2168,6 +2168,7 @@
       "copying": "Copie de…",
       "copyComplete": "{count, plural, =1 {# cas copié} other {# cas copiés}}",
       "copyError": "Échec de la copie {count, plural, =1 {du cas de test} other {des cas de test}}",
+      "copyAlreadyRunning": "Une autre copie est déjà en cours. Veuillez patienter qu’elle se termine.",
       "dragPreviewCase": "Cas de test",
       "dragPreviewCount": "{count, plural, =1 {# cas de test} other {# cas de test}}"
     },

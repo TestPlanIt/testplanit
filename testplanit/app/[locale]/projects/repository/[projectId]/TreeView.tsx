@@ -377,7 +377,15 @@ const TreeView: React.FC<{
   const [pendingCopyTargets, setPendingCopyTargets] = useState<
     Map<number, string>
   >(new Map());
-  const lastSubmittedFolderIdRef = useRef<number | null>(null);
+  // Track the in-flight copy submission (folder + case count) so the completion
+  // and failure effects can clear the right per-folder spinner and toast the
+  // correct count. useCopyMoveJob is single-job, so a second submit while one
+  // is in flight would orphan the first job's spinner; handleCopyDrop rejects
+  // overlapping submits explicitly.
+  const lastSubmittedRef = useRef<{
+    folderId: number;
+    caseCount: number;
+  } | null>(null);
   const [pendingDrop, setPendingDrop] = useState<{
     x: number;
     y: number;
@@ -445,7 +453,17 @@ const TreeView: React.FC<{
       itemsToUpdate: Array<{ id: number | string }>,
       targetFolderId: number
     ) => {
-      lastSubmittedFolderIdRef.current = targetFolderId;
+      // useCopyMoveJob can only track one job at a time. If a copy is already
+      // in flight, surfacing a second submit() call would orphan the first
+      // job's spinner and lose its result toast.
+      if (copyMoveJob.status !== "idle") {
+        toast.error(t("repository.dragDrop.copyAlreadyRunning"));
+        return;
+      }
+      lastSubmittedRef.current = {
+        folderId: targetFolderId,
+        caseCount: itemsToUpdate.length,
+      };
       setPendingCopyTargets((prev) => {
         const next = new Map(prev);
         next.set(targetFolderId, "pending");
@@ -461,16 +479,16 @@ const TreeView: React.FC<{
         sharedStepGroupResolution: "reuse",
       });
     },
-    [copyMoveJob, numericProjectId]
+    [copyMoveJob, numericProjectId, t]
   );
 
   useEffect(() => {
     if (copyMoveJob.status === "completed") {
-      const folderId = lastSubmittedFolderIdRef.current;
+      const submitted = lastSubmittedRef.current;
       setPendingCopyTargets((prev) => {
-        if (folderId == null) return prev;
+        if (submitted == null) return prev;
         const next = new Map(prev);
-        next.delete(folderId);
+        next.delete(submitted.folderId);
         return next;
       });
       toast.success(
@@ -478,19 +496,25 @@ const TreeView: React.FC<{
           count: copyMoveJob.result?.copiedCount ?? 0,
         })
       );
+      lastSubmittedRef.current = null;
       void refetchCases();
       void refetchFolders();
       onRefetchStats?.();
       copyMoveJob.reset();
     } else if (copyMoveJob.status === "failed") {
-      const folderId = lastSubmittedFolderIdRef.current;
+      const submitted = lastSubmittedRef.current;
       setPendingCopyTargets((prev) => {
-        if (folderId == null) return prev;
+        if (submitted == null) return prev;
         const next = new Map(prev);
-        next.delete(folderId);
+        next.delete(submitted.folderId);
         return next;
       });
-      toast.error(t("repository.dragDrop.copyError", { count: 1 }));
+      toast.error(
+        t("repository.dragDrop.copyError", {
+          count: submitted?.caseCount ?? 1,
+        })
+      );
+      lastSubmittedRef.current = null;
       copyMoveJob.reset();
     }
   }, [

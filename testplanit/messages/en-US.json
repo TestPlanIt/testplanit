@@ -2168,6 +2168,7 @@
       "copying": "Copying…",
       "copyComplete": "{count, plural, =1 {Copied # case} other {Copied # cases}}",
       "copyError": "Failed to copy {count, plural, =1 {test case} other {test cases}}",
+      "copyAlreadyRunning": "Another copy is already in progress. Please wait for it to finish.",
       "dragPreviewCase": "Test Case",
       "dragPreviewCount": "{count, plural, =1 {# test case} other {# test cases}}"
     },
