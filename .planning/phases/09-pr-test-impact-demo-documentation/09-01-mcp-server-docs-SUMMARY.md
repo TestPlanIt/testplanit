@@ -95,11 +95,17 @@ Sections:
 
 Slug: `sdk/mcp-prompts` · Title: `Example Prompts` · Position: 3
 
-Sections:
-1. Page intro `:::tip` admonition explaining canonical tool naming
-2. **`## Read-only flows`** — three sub-examples: "Who tested issue X?" (3-call chain — `issues_find_by_key` → `cases_list({issueId})` → `test_run_results_list({caseIds})`), "What automated tests are stale?" (`cases_list({automated:true, staleSinceUpdate:true})` + optional `hasNeverExecuted:true`), "Show me failed test runs from last week" (`test_runs_list` with `from`/`to` + inline `statusCounts`)
-3. **`## Killer-app flow: PR Test Impact`** — single multi-call example using v1-shipped tools only (`cases_list({name:pathFragment})` heuristic + `repository_case_links_list` + `cases_get`); a `:::note` admonition surfaces path-array filtering as future capability (REPO-FUTURE-01 framing — without naming it as such)
-4. **`## See also`** — 3 cross-links
+Sections (post-correction — see "Post-execution correction" in Deviations below):
+
+1. Page intro `:::tip` admonition explaining canonical tool naming + the `projects_list` warm-up
+2. Six h2 example prompts, each formatted as: user prompt block → tool call(s) with required parameters → "What comes back" + (where useful) a sketched response shape
+   - "Show me the most recent issues in project Acme" — `projects_list` (optional warm-up) → `issues_list({projectId})`
+   - "Who tested JIRA-1234?" — 3-call chain: `issues_find_by_key` → `cases_list({issueId})` → `test_run_results_list({caseIds})`
+   - "Show me failed test runs from last week" — `test_runs_list` with `from`/`to` + inline `statusCounts`
+   - "What automated tests are stale?" — `cases_list({automated:true, staleSinceUpdate:true})` + optional `hasNeverExecuted:true`
+   - "What test cases live in this code repository?" — `code_repositories_list` → `cases_list({repositoryId, automated:true})` (with a clarifying note that `CodeRepository` tracks TestPlanIt's automated test code, not application code)
+   - "What manual cases cover this automated test?" — `repository_case_links_list({caseId})`
+3. **`## See also`** — 3 cross-links
 
 ## Sidebar Wiring
 
@@ -220,6 +226,20 @@ Note: the plan's `<verify>` blocks reference `pnpm --filter @testplanit/website 
 - **Fix:** Used `pnpm --filter docs build` instead. Build succeeded; new pages emitted under `docs/build/docs/sdk/mcp-{overview,configuration,prompts}/index.html`.
 - **Files modified:** none (preflight only — the plan file itself is in `.planning/` and stays local-only)
 - **Commit:** none (the plan literal isn't authoritative; this is a documentation-of-record adjustment)
+
+### Post-execution correction (user-driven, 2026-05-07)
+
+**What was wrong:** the plan's Task 4 prescribed a `## Killer-app flow: PR Test Impact` section in `mcp-prompts.md` that documented a tool chain the data model cannot support — `testplanit_cases_list({ name: "<path fragment>" })` against application PR diff paths. `CodeRepository` in TestPlanIt only tracks where automated TEST code lives; there is no link from application code paths to test cases. The plan author imported the framing from earlier ROADMAP "killer-app demo" narrative without verifying the v1 tool surface could deliver it.
+
+**What was changed:**
+
+- Rewrote `docs/docs/sdk/mcp-prompts.md` end-to-end. New format: page-level `:::tip` + six h2 example prompts (user prompt → tool calls → what comes back). Dropped the `## Read-only flows` h2 wrapper and the broken `## Killer-app flow: PR Test Impact` section entirely. Added "Show me the most recent issues in project Acme" as the leading example — closes a real gap surfaced by the user's ad-hoc Claude Desktop session where Claude wrongly claimed `testplanit_issues_list` did not exist (it does, Phase 8 / ISSUE-02; requires `projectId`).
+- Updated `docs/docs/sdk/mcp-overview.md` Next-steps bullet from "Read-only and PR Test Impact flow examples" → "agent prompts for issue lookup, run history, and maintenance flows".
+- Updated `.planning/ROADMAP.md` Phase 9 success criterion #1 to drop the trailing "PR Test Impact flow" wording (local-only — gitignored).
+
+**What was NOT changed:** older ROADMAP lines (6, 8, 22, 138, 147) that bake the same broken framing into the milestone narrative are left intact. Per memory `project_v023_webhook_demo_deadline.md`, "killer-app / demo" wording in roadmaps is narrative-not-scope; cleaning up earlier-phase narrative is out of scope for Phase 9.
+
+**Commit:** the corrections committed as a single follow-up `docs(09-01): rewrite mcp-prompts.md to example-driven format + drop unsupported PR Test Impact framing`.
 
 ### Architectural Decisions Pending User Input
 

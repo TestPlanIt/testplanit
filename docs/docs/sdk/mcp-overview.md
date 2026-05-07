@@ -47,5 +47,5 @@ The server validates `TESTPLANIT_API_TOKEN` on startup and exits cleanly with a 
 ## Next steps
 
 - [Configuration](./mcp-configuration.md) — Claude Desktop / Cursor snippets, token scopes, and the read-only agent token walkthrough
-- [Example prompts](./mcp-prompts.md) — Read-only and PR Test Impact flow examples
+- [Example prompts](./mcp-prompts.md) — agent prompts for issue lookup, run history, and maintenance flows
 - [npm package README](https://www.npmjs.com/package/@testplanit/mcp-server) — full tool catalog with request/response schemas

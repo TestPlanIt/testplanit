@@ -5,79 +5,105 @@ sidebar_position: 3
 
 # Example Prompts
 
-These are real prompts you can paste into Claude Desktop, Cursor, or any MCP-aware agent once the TestPlanIt server is wired up. Each example shows the user-side text plus the canonical `testplanit_*` tool calls the agent should chain to answer it.
+Real prompts you can paste into Claude Desktop, Cursor, or any MCP-aware agent
+once the TestPlanIt server is wired up. Each example shows the user prompt, the
+tool call(s) the agent is expected to make, and what the agent will see back.
 
 :::tip
-Tool names in this guide are the canonical MCP names the server registers (`testplanit_{domain}_{operation}`). The agent decides when to call which tool — these examples document the *expected* chain so you can recognize when the agent gets it right.
+Tool names in this guide are the canonical MCP names the server registers
+(`testplanit_{domain}_{operation}`). Most tools require a `projectId` — if the
+agent does not already have one, it should call `testplanit_projects_list` first.
 :::
 
-## Read-only flows
-
-### "Who tested issue X?"
-
-**User prompt:**
+## "Show me the most recent issues in project Acme"
 
 ```text
-Who tested JIRA-1234? Show me who ran tests for that issue most recently.
+Show me the most recent issues in the Acme project.
 ```
 
-**Expected tool chain (2 calls):**
+**Tool calls (1–2):**
 
-1. `testplanit_issues_find_by_key({ projectId: <P>, externalKey: "JIRA-1234", externalSystem: "JIRA" })` — resolves the issue id
-2. `testplanit_cases_list({ projectId: <P>, issueId: <id from step 1> })` — returns RepositoryCases linked to the issue
-3. `testplanit_test_run_results_list({ caseIds: [<from step 2>] })` — returns most recent results with `executedBy: { id, name, email }` inline
+1. `testplanit_projects_list({})` — only if the agent does not already know the project id; returns `{ items: [{ id, name, ... }] }`.
+2. `testplanit_issues_list({ projectId: <id> })` — required `projectId`. Optional filters: `externalSystem` (`JIRA | GITHUB | AZURE_DEVOPS | SIMPLE_URL`), `integrationId`, `status`, `externalStatus`, `cursor`, `limit` (default 25, max 100).
 
-The two-call killer-app chain (`cases_list({ issueId })` → `test_run_results_list({ caseIds })`) is the canonical "who tested this?" pattern. The find-by-key step is optional — if the agent already has an issue id, it skips step 1.
+**What comes back:** a page of issues ordered by `createdAt DESC` then `id DESC`. Each row carries `linkedCaseCount` inline so the agent can rank issues by how many test cases reference them. Cursor-pagination via `nextCursor` for older pages.
 
-### "What automated tests are stale?"
+```json
+{
+  "items": [
+    { "id": 411, "externalKey": "JIRA-892", "summary": "Login fails on Safari",
+      "status": "open", "externalStatus": "In Progress", "linkedCaseCount": 6,
+      "createdAt": "2026-05-06T18:14:09Z" }
+  ],
+  "hasNextPage": true,
+  "nextCursor": 411
+}
+```
 
-**User prompt:**
+## "Who tested JIRA-1234?"
 
 ```text
-Which automated tests in project Acme have not been updated alongside their code, or have never been run?
+Who tested JIRA-1234? Show me the most recent results for that issue.
 ```
 
-**Expected tool chain (1-2 calls):**
+**Tool calls (3):**
 
-1. `testplanit_cases_list({ projectId: <P>, automated: true, staleSinceUpdate: true })` — returns automated tests whose latest execution timestamp is older than the latest update timestamp
-2. *(optional)* `testplanit_cases_list({ projectId: <P>, automated: true, hasNeverExecuted: true })` — returns automated tests with no execution history at all
+1. `testplanit_issues_find_by_key({ projectId: <P>, externalKey: "JIRA-1234", externalSystem: "JIRA" })` → resolves the issue id.
+2. `testplanit_cases_list({ projectId: <P>, issueId: <id from step 1> })` → RepositoryCases linked to the issue.
+3. `testplanit_test_run_results_list({ caseIds: [<from step 2>] })` → most-recent results per case, ordered by `executedAt DESC`.
 
-The maintenance filters (`staleSinceUpdate`, `hasNeverExecuted`) are designed to surface test debt. Combine with `repositoryId` to scope to a specific code repository in multi-repo projects.
+**What comes back:** a list of run results, each with `executedBy: { id, name, email }` inline. The agent can summarize "most recent run on case X was 3 days ago by Sarah, status Pass."
 
-### "Show me failed test runs from last week"
+If the agent already has the issue id, it skips step 1.
 
-**User prompt:**
+## "Show me failed test runs from last week"
 
 ```text
 Show me test runs in project Acme that completed in the last 7 days with failures.
 ```
 
-**Expected tool chain (1 call):**
+**Tool calls (1):**
 
-1. `testplanit_test_runs_list({ projectId: <P>, from: "<7 days ago ISO date>", to: "<today ISO date>", isCompleted: true })` — each row carries inline `statusCounts: [{id, name, count}]` so the agent can spot rows where the failed-status count is non-zero without a follow-up call
+1. `testplanit_test_runs_list({ projectId: <P>, from: "<7-days-ago ISO>", to: "<today ISO>", isCompleted: true })`.
 
-List rows on `testplanit_test_runs_list` carry inline status counts — a single call gives the agent enough data to filter to runs with failures locally before drilling into individual runs.
+**What comes back:** each row carries inline `statusCounts: [{ id, name, count }]` plus `untested` and `total`. The agent filters to rows where the failed-status count is non-zero locally — no follow-up call needed for status rollup.
 
-## Killer-app flow: PR Test Impact
-
-The PR Test Impact flow is the highest-leverage use of TestPlanIt MCP. The user pastes a PR diff (or links to a PR), the agent reads the changed file paths from a separate tool (the GitHub MCP, a shell command, etc.), and TestPlanIt MCP answers *what tests does this PR affect, and where are the coverage gaps?*
-
-**User prompt:**
+## "What automated tests are stale?"
 
 ```text
-Here is the diff for PR #471. What automated tests live in those files, what manual cases are linked to them, and where are the coverage gaps?
+Which automated tests in project Acme have not been updated alongside their code,
+or have never been run?
 ```
 
-**Expected tool chain (3-4 calls):**
+**Tool calls (1–2):**
 
-1. *(Agent reads PR diff via separate tool — not a TestPlanIt MCP call.)*
-2. `testplanit_cases_list({ projectId: <P>, name: "<path fragment>" })` per changed path — heuristic name-substring filter against test case titles. Repeated as needed.
-3. `testplanit_repository_case_links_list({ caseId: <id from step 2> })` per automated case — returns linked manual cases.
-4. `testplanit_cases_get({ id: <linked manual case id> })` — full details for any case the agent wants to summarize, including linked issues.
+1. `testplanit_cases_list({ projectId: <P>, automated: true, staleSinceUpdate: true })` → automated tests whose latest execution is older than the latest update.
+2. (Optional) `testplanit_cases_list({ projectId: <P>, automated: true, hasNeverExecuted: true })` → automated tests with no execution history at all.
 
-:::note
-Path-array filtering (one tool call to find every automated test in a given list of file paths) is on the roadmap as a future capability. In v1, the agent uses name-substring heuristics on `testplanit_cases_list({ name })` and the maintenance filters from "What automated tests are stale?" to approximate the same answer.
-:::
+**What comes back:** each row carries `lastUpdatedAt` and `latestResult` inline so the agent can describe staleness without a follow-up call. The response stamps `truncated: true` when the post-filter scan cap (400) is hit; combine with `repositoryId` to scope.
+
+## "What test cases live in this code repository?"
+
+```text
+List the automated test cases in our `playwright-suite` repository.
+```
+
+**Tool calls (2):**
+
+1. `testplanit_code_repositories_list({ projectId: <P> })` → resolves repository ids; credentials are never returned. Note: this lists repositories that hold TestPlanIt's automated test code, not application code.
+2. `testplanit_cases_list({ projectId: <P>, repositoryId: <id from step 1>, automated: true })` → cases imported from that test repo, with `lastUpdatedAt` + `latestResult` inline.
+
+## "What manual cases cover this automated test?"
+
+```text
+Show me the manual test cases linked to automated test case #7.
+```
+
+**Tool calls (1):**
+
+1. `testplanit_repository_case_links_list({ caseId: 7 })` → each row's `otherCase` carries the counterpart denormalized; optional `linkType` filter (e.g., `SAME_TEST_DIFFERENT_SOURCE`).
+
+**What comes back:** a list of links each with `otherCase: { id, name, source, automated }` so the agent can describe the manual side-by-side coverage.
 
 ## See also
 
