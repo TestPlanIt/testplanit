@@ -26,7 +26,7 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
     "testplanit_cases_list",
     {
       description:
-        "List test cases scoped to a project. Filters: folderId, tagIds, name (case-insensitive substring), stateId, customField (by display name). Cursor pagination via the `cursor` returned in `nextCursor`. (per D-05 / CASE-01)",
+        "List test cases scoped to a project. Filters: folderId, tagIds, name (case-insensitive substring), stateId, customField (by display name), issueId (linked Issue numeric id — see issues_list for resolution from external keys). Cursor pagination via the `cursor` returned in `nextCursor`. (per CASE-01 + EXEC-06 chain via D7-03)",
       inputSchema: {
         projectId: z.number().int().positive(),
         folderId: z.number().int().positive().optional(),
@@ -46,6 +46,15 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
             name: z.string().min(1),
           })
           .optional(),
+        // D7-03: filter cases linked to a specific issue. Pass the internal
+        // numeric Issue.id (the Phase-8 `issues_list` / `issues_get` `id`
+        // field), NOT the externalKey. `externalKey` (e.g. "JIRA-123") is
+        // intentionally NOT a filter dimension here because it is not
+        // globally unique on the schema (`@@unique([externalId,
+        // integrationId])` is the only constraint — multiple integrations
+        // can have the same external key). Phase 8 ships proper issueKey
+        // resolution scoped by integration.
+        issueId: z.number().int().positive().optional(),
         cursor: z.number().int().positive().optional(),
         limit: z.number().int().positive().max(MAX_LIMIT).optional(),
       },
@@ -69,6 +78,12 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
           where.caseFieldValues = {
             some: { field: { displayName: input.customField.name } },
           };
+        }
+        if (input.issueId !== undefined) {
+          // D7-03: RepositoryCases.issues is many-to-many to Issue. Filtering
+          // `some: { isDeleted: false }` excludes soft-deleted issue links
+          // from matching, consistent with the soft-delete invariant.
+          where.issues = { some: { id: input.issueId, isDeleted: false } };
         }
 
         const body: Record<string, unknown> = {
