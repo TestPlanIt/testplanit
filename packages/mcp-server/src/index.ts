@@ -29,14 +29,14 @@ export {
   TestPlanItHttpError,
 } from "./http.js";
 export { mapHttpErrorToToolResult } from "./errors.js";
-export { registerAll, registerWhoami, registerCases, registerFolders, registerTags, registerProjects, registerRuns } from "./tools/index.js";
+export { registerAll, registerWhoami, registerCases, registerFolders, registerTags, registerProjects, registerRuns, registerSessions } from "./tools/index.js";
 
 export type { ServerDeps } from "./server.js";
 export type { EnvConfig } from "./env.js";
 export type { WhoamiUser, ValidateResult } from "./http.js";
 export type { RunDeps } from "./cli.js";
 export type { ToolErrorResult } from "./errors.js";
-export type { ToolRegistryDeps, WhoamiDeps, CasesDeps, FoldersDeps, TagsDeps, ProjectsDeps, RunsDeps } from "./tools/index.js";
+export type { ToolRegistryDeps, WhoamiDeps, CasesDeps, FoldersDeps, TagsDeps, ProjectsDeps, RunsDeps, SessionsDeps } from "./tools/index.js";
 
 export {
   zenstack,
