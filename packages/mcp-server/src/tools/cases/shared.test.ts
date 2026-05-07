@@ -123,6 +123,96 @@ describe("denormalizeCustomFields", () => {
     const result = denormalizeCustomFields(rows);
     expect(result).toEqual({ ValidField: "baz" });
   });
+
+  it("resolves Dropdown numeric value to FieldOption.name", () => {
+    const rows = [
+      {
+        value: 147,
+        field: {
+          displayName: "Priority",
+          type: { type: "Dropdown" },
+          fieldOptions: [
+            { fieldOption: { id: 146, name: "Low" } },
+            { fieldOption: { id: 147, name: "High" } },
+          ],
+        },
+      },
+    ];
+    expect(denormalizeCustomFields(rows)).toEqual({ Priority: "High" });
+  });
+
+  it("resolves Dropdown stringified-numeric value to FieldOption.name", () => {
+    const rows = [
+      {
+        value: "147",
+        field: {
+          displayName: "Priority",
+          type: { type: "Dropdown" },
+          fieldOptions: [{ fieldOption: { id: 147, name: "High" } }],
+        },
+      },
+    ];
+    expect(denormalizeCustomFields(rows)).toEqual({ Priority: "High" });
+  });
+
+  it("resolves Multi-Select array of IDs to array of FieldOption names", () => {
+    const rows = [
+      {
+        value: ["10", "12"],
+        field: {
+          displayName: "Tags",
+          type: { type: "Multi-Select" },
+          fieldOptions: [
+            { fieldOption: { id: 10, name: "Smoke" } },
+            { fieldOption: { id: 11, name: "Regression" } },
+            { fieldOption: { id: 12, name: "Compliance" } },
+          ],
+        },
+      },
+    ];
+    expect(denormalizeCustomFields(rows)).toEqual({
+      Tags: ["Smoke", "Compliance"],
+    });
+  });
+
+  it("falls back to raw value when Dropdown option ID is unknown", () => {
+    const rows = [
+      {
+        value: 999,
+        field: {
+          displayName: "Priority",
+          type: { type: "Dropdown" },
+          fieldOptions: [{ fieldOption: { id: 147, name: "High" } }],
+        },
+      },
+    ];
+    expect(denormalizeCustomFields(rows)).toEqual({ Priority: 999 });
+  });
+
+  it("passes Text/Number/Date values through unchanged", () => {
+    const rows = [
+      {
+        value: "Manual entry",
+        field: {
+          displayName: "Notes",
+          type: { type: "Text" },
+          fieldOptions: [],
+        },
+      },
+      {
+        value: 42,
+        field: {
+          displayName: "Severity",
+          type: { type: "Number" },
+          fieldOptions: [],
+        },
+      },
+    ];
+    expect(denormalizeCustomFields(rows)).toEqual({
+      Notes: "Manual entry",
+      Severity: 42,
+    });
+  });
 });
 
 // ── buildFolderBreadcrumb ──────────────────────────────────────────────────

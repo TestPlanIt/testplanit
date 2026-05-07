@@ -32,7 +32,19 @@ export const CASE_DETAIL_INCLUDE = {
     },
   },
   caseFieldValues: {
-    include: { field: { select: { displayName: true } } },
+    include: {
+      field: {
+        select: {
+          displayName: true,
+          type: { select: { type: true } },
+          fieldOptions: {
+            select: {
+              fieldOption: { select: { id: true, name: true } },
+            },
+          },
+        },
+      },
+    },
   },
   linksFrom: {
     where: { isDeleted: false },
