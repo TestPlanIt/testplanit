@@ -5,28 +5,30 @@ import { expect, test } from "../../fixtures/index";
  * drag, no modifier keys; the flushReactRender / resolveCopyModifier helpers
  * from drag-drop-modifier-aware.spec.ts do not apply here.
  *
- * Three behavior tests cover the case-mode dialog flow (the only entry the
- * dialog has today with stable test IDs):
+ * Tests:
  *   - same-project copy creates a new case in the target folder; verifies
  *     the (Current) suffix is visible on the picker trigger and that copy
  *     is the default operation
- *   - same-project move updates the source case's folderId
+ *   - same-project move soft-deletes the source and creates a new case in
+ *     the target folder
  *   - multi-select copy hits the plural ICU branch
  *
- * Two folder-mode tests are deliberately deferred:
- *   - same-folder Move radio disabled with localized tooltip
- *   - source folder + descendants disabled in destination folder picker
- *
- * Both require folder-mode dialog entry (sourceFolderId populated) which is
- * only reachable via the TreeView folder three-dot "Copy/Move folder" menu
- * item. That trigger and its menu item have no data-testid attributes today
- * (TreeView.tsx:1170-1202 — the DropdownMenuTrigger button and its "Copy/Move
- * folder" DropdownMenuItem are unannotated). Case-mode dialog entry never
- * sets sourceFolderId, so the same-folder guard short-circuits to false
- * regardless of folder picks. Adding TreeView testids is its own change.
- * The folder-mode behaviors are covered today by the dialog's vitest
- * props-driven coverage and by the AsyncCombobox isOptionDisabled unit
- * tests; add Playwright cases here once the folder-row testids land.
+ * Folder-mode descendant disable (CONTEXT D-08..D-10) and the same-folder
+ * Move tooltip (CONTEXT D-05..D-07) are not covered E2E by this spec. The
+ * folder-mode dialog entry depends on a Tailwind `group-hover:visible`
+ * three-dot trigger inside a react-arborist TreeView row + a Radix
+ * DropdownMenu portal whose Trigger opens on PointerDown. In headless
+ * Playwright every approach we tried races the menu's auto-dismiss
+ * behavior: real cursor click loses :hover the moment the cursor moves
+ * onto the portal-rendered menu item; synthetic PointerDown / dispatch
+ * sequences either never open the menu or open and close it before the
+ * item click resolves. The TreeView testids
+ * (`folder-actions-trigger-{id}`, `folder-action-copy-move-{id}`) ARE
+ * present in the source so a future test using a different driver, real
+ * cursor mouse-tracking, or a refactored TreeView can pick this up. The
+ * descendant-disable behavior is covered today by the dialog's vitest
+ * suite at the props level (CopyMoveDialog.test.tsx) and the unit
+ * coverage on AsyncCombobox isOptionDisabled — both run on every CI build.
  *
  * Run protocol (CLAUDE.md mandatory):
  *   cd testplanit
@@ -166,11 +168,14 @@ test.describe("Copy/Move dialog same-project", () => {
         .getByTestId("copy-move-project-current-suffix")
     ).toBeVisible();
 
-    // Pick the sibling folder as destination.
+    // Pick the sibling folder as destination. Wait for the option to render
+    // — AsyncCombobox lazy-loads options after the trigger opens the popover.
     await page.getByTestId("copy-move-target-folder-trigger").click();
-    await page
-      .getByTestId(`copy-move-folder-option-${siblingFolderId}`)
-      .click();
+    const siblingOption = page.getByTestId(
+      `copy-move-folder-option-${siblingFolderId}`
+    );
+    await expect(siblingOption).toBeVisible({ timeout: 15_000 });
+    await siblingOption.click();
 
     await page.getByTestId("copy-move-next-button").click();
 
@@ -250,7 +255,11 @@ test.describe("Copy/Move dialog same-project", () => {
 
     // Pick the nested folder as destination — different from source root.
     await page.getByTestId("copy-move-target-folder-trigger").click();
-    await page.getByTestId(`copy-move-folder-option-${nestedFolderId}`).click();
+    const nestedOption = page.getByTestId(
+      `copy-move-folder-option-${nestedFolderId}`
+    );
+    await expect(nestedOption).toBeVisible({ timeout: 15_000 });
+    await nestedOption.click();
 
     await page.getByTestId("copy-move-next-button").click();
 
@@ -366,9 +375,11 @@ test.describe("Copy/Move dialog same-project", () => {
     await expect(page.getByTestId("copy-move-dialog")).toBeVisible();
 
     await page.getByTestId("copy-move-target-folder-trigger").click();
-    await page
-      .getByTestId(`copy-move-folder-option-${siblingFolderId}`)
-      .click();
+    const multiSiblingOption = page.getByTestId(
+      `copy-move-folder-option-${siblingFolderId}`
+    );
+    await expect(multiSiblingOption).toBeVisible({ timeout: 15_000 });
+    await multiSiblingOption.click();
     await page.getByTestId("copy-move-next-button").click();
 
     // Same-project copy of existing cases — pick rename so neither is skipped.

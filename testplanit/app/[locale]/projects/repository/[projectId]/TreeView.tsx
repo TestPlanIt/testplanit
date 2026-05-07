@@ -1169,7 +1169,12 @@ const TreeView: React.FC<{
           <div className="ml-1 flex items-center h-7 invisible group-hover:visible shrink-0">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7 p-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 p-0"
+                  data-testid={`folder-actions-trigger-${data?.folderId ?? 0}`}
+                >
                   <MoreVertical className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
@@ -1189,6 +1194,7 @@ const TreeView: React.FC<{
                 </DropdownMenuItem>
                 {onCopyMoveFolder && (
                   <DropdownMenuItem
+                    data-testid={`folder-action-copy-move-${data?.folderId ?? 0}`}
                     onClick={(e) => {
                       e.stopPropagation();
                       onCopyMoveFolder(data?.folderId ?? 0, node.data.name);
