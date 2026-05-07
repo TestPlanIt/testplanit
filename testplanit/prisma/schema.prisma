@@ -107,6 +107,7 @@ enum RepositoryCaseSource {
 enum LinkType {
   SAME_TEST_DIFFERENT_SOURCE
   DEPENDS_ON
+  DUPLICATED_FROM
 }
 
 enum DuplicateScanResultStatus {
@@ -320,6 +321,7 @@ enum AuditAction {
   WEBHOOK_REPLAYED
   WEBHOOK_HEALTH_CHANGED
   WEBHOOK_RETENTION_PURGED
+  DUPLICATED
 }
 
 model AppConfig {

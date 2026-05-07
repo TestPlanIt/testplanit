@@ -5177,6 +5177,7 @@
     "failedToCreate": "Failed to create link.",
     "confirmRemoveLink": "Are you sure you want to remove this link?",
     "DEPENDS_ON": "Dependency",
+    "DUPLICATED_FROM": "Duplicated From",
     "SAME_TEST_DIFFERENT_SOURCE": "Same Test (Different Source)",
     "status": "Latest Status",
     "at": "Executed"
