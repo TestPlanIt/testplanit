@@ -15,14 +15,16 @@ import {
   registerRepositoryCaseLinks,
   type RepositoryCaseLinksDeps,
 } from "./repository-case-links/index.js";
+import {
+  registerMilestones,
+  type MilestonesDeps,
+} from "./milestones/index.js";
 
 /**
  * Aggregate dependencies for every tool registered by
- * `@testplanit/mcp-server`. Phase 5 introduced WhoamiDeps; Phase 6 extends
- * with CasesDeps, FoldersDeps, TagsDeps, and ProjectsDeps; Phase 7 adds
- * RunsDeps for the test-run read tools and SessionsDeps for the session
- * read tools. Phase 8 adds CodeRepositoriesDeps, IssuesDeps, and
- * RepositoryCaseLinksDeps for the repository + issue read surface.
+ * `@testplanit/mcp-server`. The intersection widens with each new domain;
+ * adding a new domain barrel means adding the matching `& <Domain>Deps`
+ * here so all registered tools see the same single deps object at runtime.
  */
 export type ToolRegistryDeps =
   & WhoamiDeps
@@ -34,17 +36,16 @@ export type ToolRegistryDeps =
   & SessionsDeps
   & CodeRepositoriesDeps
   & IssuesDeps
-  & RepositoryCaseLinksDeps;
+  & RepositoryCaseLinksDeps
+  & MilestonesDeps;
 
 /**
  * Register every tool shipped by `@testplanit/mcp-server`.
  *
- * Tools are grouped by domain: whoami (debug/identity), cases (CASE-01..05
- * + Phase-8 maintenance filters), folders (CASE-06..10), tags (CASE-11),
- * projects (agent context disambiguation), runs (EXEC-01..05 — Phase 7),
- * sessions (SESS-01..05 — Phase 7), code-repositories (REPO-01 — Phase 8),
- * issues (ISSUE-01..04 — Phase 8), and repository-case-links (REPO-05 —
- * Phase 8).
+ * Tools are grouped by domain: whoami (debug/identity), cases, folders,
+ * tags, projects (agent context disambiguation), runs, sessions,
+ * code-repositories, issues, repository-case-links, and milestones
+ * (milestones_list, milestones_get, milestone_types_list).
  */
 export function registerAll(
   server: McpServer,
@@ -60,6 +61,7 @@ export function registerAll(
   registerCodeRepositories(server, deps);
   registerIssues(server, deps);
   registerRepositoryCaseLinks(server, deps);
+  registerMilestones(server, deps);
 }
 
 export {
@@ -73,6 +75,7 @@ export {
   registerCodeRepositories,
   registerIssues,
   registerRepositoryCaseLinks,
+  registerMilestones,
 };
 export type { WhoamiDeps } from "./whoami.js";
 export type { CasesDeps } from "./cases/index.js";
@@ -84,3 +87,4 @@ export type { SessionsDeps } from "./sessions/index.js";
 export type { CodeRepositoriesDeps } from "./code-repositories/index.js";
 export type { IssuesDeps } from "./issues/index.js";
 export type { RepositoryCaseLinksDeps } from "./repository-case-links/index.js";
+export type { MilestonesDeps } from "./milestones/index.js";
