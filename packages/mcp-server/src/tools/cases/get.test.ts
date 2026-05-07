@@ -287,4 +287,215 @@ describe("registerCasesGet", () => {
     expect(names).toContain("testplanit_cases_list");
     expect(names).toContain("testplanit_cases_get");
   });
+
+  // ── Phase 8 (D8-02) inline codeRepository on cases_get ──────────────────
+
+  it("Phase-8: codeRepository populated when project has a config (GITHUB)", async () => {
+    const caseWithRepo = makeRawCase({
+      folder: { id: 5, name: "Root", parentId: null },
+      project: {
+        id: 7,
+        name: "TestProject",
+        codeRepositoryConfig: {
+          repository: {
+            id: 5,
+            name: "acme/tools",
+            provider: "GITHUB",
+            status: "ACTIVE",
+            lastTestedAt: null,
+            settings: {
+              owner: "acme",
+              repo: "tools",
+              personalAccessToken: "pat_secret",
+            },
+          },
+        },
+      },
+    });
+    mockZenstack.mockResolvedValueOnce(caseWithRepo);
+
+    const { client } = await setupGetClient();
+    const result = await client.callTool({
+      name: "testplanit_cases_get",
+      arguments: { caseId: 101 },
+    });
+
+    const structured = (result as { structuredContent?: Record<string, unknown> })
+      .structuredContent as Record<string, unknown>;
+    expect(structured.codeRepository).toEqual({
+      id: 5,
+      name: "acme/tools",
+      type: "GITHUB",
+      url: "https://github.com/acme/tools",
+    });
+  });
+
+  it("Phase-8: codeRepository null when project has no codeRepositoryConfig", async () => {
+    const caseWithoutRepo = makeRawCase({
+      folder: { id: 5, name: "Root", parentId: null },
+      project: { id: 7, name: "TestProject", codeRepositoryConfig: null },
+    });
+    mockZenstack.mockResolvedValueOnce(caseWithoutRepo);
+
+    const { client } = await setupGetClient();
+    const result = await client.callTool({
+      name: "testplanit_cases_get",
+      arguments: { caseId: 101 },
+    });
+
+    const structured = (result as { structuredContent?: Record<string, unknown> })
+      .structuredContent as Record<string, unknown>;
+    expect(structured.codeRepository).toBeNull();
+  });
+
+  it("Phase-8: codeRepository never includes credentials / personalAccessToken (defense in depth)", async () => {
+    const caseWithRepo = makeRawCase({
+      folder: { id: 5, name: "Root", parentId: null },
+      project: {
+        id: 7,
+        name: "TestProject",
+        codeRepositoryConfig: {
+          repository: {
+            id: 5,
+            name: "acme/tools",
+            provider: "GITHUB",
+            status: "ACTIVE",
+            lastTestedAt: null,
+            settings: {
+              owner: "acme",
+              repo: "tools",
+              personalAccessToken: "pat_secret",
+              webhookSecret: "secret_xyz",
+            },
+          },
+        },
+      },
+    });
+    mockZenstack.mockResolvedValueOnce(caseWithRepo);
+
+    const { client } = await setupGetClient();
+    const result = await client.callTool({
+      name: "testplanit_cases_get",
+      arguments: { caseId: 101 },
+    });
+
+    const structured = (result as { structuredContent?: Record<string, unknown> })
+      .structuredContent as Record<string, unknown>;
+    const serialized = JSON.stringify(structured.codeRepository);
+    expect(serialized).not.toMatch(/personalAccessToken/i);
+    expect(serialized).not.toMatch(/webhookSecret/i);
+    expect(serialized).not.toMatch(/credentials/i);
+    expect(serialized).not.toMatch(/pat_secret/);
+    expect(serialized).not.toMatch(/secret_xyz/);
+  });
+
+  it("Phase-8: CASE_DETAIL_INCLUDE selects project.codeRepositoryConfig.repository chain (no credentials)", async () => {
+    mockZenstack.mockResolvedValueOnce(
+      makeRawCase({
+        folder: { id: 5, name: "Root", parentId: null },
+        project: { id: 7, name: "TestProject", codeRepositoryConfig: null },
+      }),
+    );
+
+    const { client } = await setupGetClient();
+    await client.callTool({
+      name: "testplanit_cases_get",
+      arguments: { caseId: 101 },
+    });
+
+    // The first zenstack call carries the include shape we assert on.
+    const calls = mockZenstack.mock.calls;
+    expect(calls.length).toBeGreaterThan(0);
+    const body = calls[0][2] as {
+      include: {
+        project: {
+          select: {
+            id: boolean;
+            name: boolean;
+            codeRepositoryConfig: {
+              select: { repository: { select: Record<string, boolean> } };
+            };
+          };
+        };
+      };
+    };
+    const projectSelect = body.include.project.select;
+    expect(projectSelect.id).toBe(true);
+    expect(projectSelect.name).toBe(true);
+    const repoSelect = projectSelect.codeRepositoryConfig.select.repository.select;
+    expect(repoSelect.id).toBe(true);
+    expect(repoSelect.name).toBe(true);
+    expect(repoSelect.provider).toBe(true);
+    expect(repoSelect.status).toBe(true);
+    expect(repoSelect.lastTestedAt).toBe(true);
+    expect(repoSelect.settings).toBe(true);
+    // Defense in depth: credentials NEVER selected.
+    expect(repoSelect).not.toHaveProperty("credentials");
+  });
+
+  it("Phase-8: regression — existing case-detail fields still populated when codeRepository present", async () => {
+    const caseWithEverything = makeRawCase({
+      folder: { id: 5, name: "Root", parentId: null },
+      project: {
+        id: 7,
+        name: "TestProject",
+        codeRepositoryConfig: {
+          repository: {
+            id: 5,
+            name: "acme/tools",
+            provider: "GITHUB",
+            status: "ACTIVE",
+            lastTestedAt: null,
+            settings: { owner: "acme", repo: "tools" },
+          },
+        },
+      },
+      caseFieldValues: [
+        { value: "High", field: { displayName: "Priority" } },
+      ],
+      issues: [
+        {
+          id: 1,
+          externalKey: "JIRA-1",
+          integration: { provider: "JIRA" },
+          title: "Bug",
+          externalStatus: "Open",
+        },
+      ],
+      linksFrom: [
+        { caseB: { id: 9, name: "auto_a", source: "JUNIT" } },
+      ],
+      steps: [
+        {
+          id: 1,
+          order: 0,
+          step: makeProseMirrorDoc("Step body"),
+          expectedResult: makeProseMirrorDoc("Expected"),
+        },
+      ],
+    });
+    mockZenstack.mockResolvedValueOnce(caseWithEverything);
+
+    const { client } = await setupGetClient();
+    const result = await client.callTool({
+      name: "testplanit_cases_get",
+      arguments: { caseId: 101 },
+    });
+
+    const structured = (result as { structuredContent?: Record<string, unknown> })
+      .structuredContent as Record<string, unknown>;
+    expect(structured.customFields).toEqual({ Priority: "High" });
+    const issues = structured.issues as Array<Record<string, unknown>>;
+    expect(issues[0].externalKey).toBe("JIRA-1");
+    const linkedTests = structured.linkedAutomatedTests as Array<{ id: number }>;
+    expect(linkedTests.map((l) => l.id)).toContain(9);
+    const steps = structured.steps as Array<{ step: string }>;
+    expect(steps[0].step).toBe("Step body");
+    expect(structured.codeRepository).toEqual({
+      id: 5,
+      name: "acme/tools",
+      type: "GITHUB",
+      url: "https://github.com/acme/tools",
+    });
+  });
 });

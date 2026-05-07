@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { zenstack, lookup } from "../../api.js";
 import { TestPlanItHttpError } from "../../http.js";
 import type { EnvConfig } from "../../env.js";
+import { deriveWebUrl, stripSettings } from "../code-repositories/shared.js";
 
 /**
  * Resolve tag IDs from a mixed array of existing IDs (numbers) and tag
@@ -222,13 +223,114 @@ export function fullPathFromBreadcrumb(
 
 // ── Row & detail mappers ──────────────────────────────────────────────────
 
+// Phase-8 D8-02: latest junit + test-run result shapes used by
+// resolveLatestResult to surface a unified `latestResult` field on each
+// case row. Junit's status is nullable on the schema (statusId Int?);
+// TestRunResults.statusId is required, so its status is non-null.
+export interface RawLatestJunit {
+  id: number;
+  executedAt: Date | string | null;
+  status: { id: number; name: string } | null;
+}
+
+export interface RawLatestRunResult {
+  id: number;
+  executedAt: Date | string | null;
+  status: { id: number; name: string };
+}
+
+/**
+ * Phase-8 D8-02 lastUpdatedAt source: walk the latest version row
+ * (orderBy version desc, take:1) and read its createdAt. Returns null
+ * when no version exists (defensive — should not happen for hydrated
+ * cases, but the include shape uses `take: 1` which returns an empty
+ * array gracefully). Tests in shared.test.ts cover the present /
+ * empty-array / undefined cases.
+ */
+export function lastUpdatedAtFromRaw(raw: {
+  repositoryCaseVersions?: Array<{ createdAt: Date | string }>;
+}): Date | string | null {
+  return raw.repositoryCaseVersions?.[0]?.createdAt ?? null;
+}
+
+/**
+ * Phase-8 D8-02 latestResult union: takes the latest junit result and
+ * the latest test-run result (both `take:1` from the include shape) and
+ * picks whichever has the greater executedAt. Source label distinguishes
+ * the two ("JUnit" | "TestRun"). Returns null when neither has a usable
+ * executedAt + status. Verbatim from RESEARCH § Example 3.
+ */
+export function resolveLatestResult(
+  junit: RawLatestJunit | undefined,
+  runResult: RawLatestRunResult | undefined,
+):
+  | {
+      id: number;
+      status: { id: number; name: string };
+      executedAt: Date | string;
+      source: "JUnit" | "TestRun";
+    }
+  | null {
+  const j = junit?.executedAt && junit.status ? junit : null;
+  const r = runResult?.executedAt && runResult.status ? runResult : null;
+  if (!j && !r) return null;
+  if (j && !r) {
+    return {
+      id: j.id,
+      status: j.status!,
+      executedAt: j.executedAt!,
+      source: "JUnit",
+    };
+  }
+  if (r && !j) {
+    return {
+      id: r.id,
+      status: r.status,
+      executedAt: r.executedAt!,
+      source: "TestRun",
+    };
+  }
+  const jt = new Date(j!.executedAt!).getTime();
+  const rt = new Date(r!.executedAt!).getTime();
+  return jt >= rt
+    ? {
+        id: j!.id,
+        status: j!.status!,
+        executedAt: j!.executedAt!,
+        source: "JUnit",
+      }
+    : {
+        id: r!.id,
+        status: r!.status,
+        executedAt: r!.executedAt!,
+        source: "TestRun",
+      };
+}
+
 interface RawCaseRow {
   id: number;
   name: string;
   source: string;
   automated: boolean;
   createdAt: string | Date;
-  project: { id: number; name: string };
+  // Phase-8 (D8-02) widens project to optionally carry the
+  // codeRepositoryConfig chain. Phase-6 row callers don't include this
+  // sub-select so the field is optional; Phase-8 cases_get adds it via
+  // CASE_DETAIL_INCLUDE.
+  project: {
+    id: number;
+    name: string;
+    codeRepositoryConfig?: {
+      repository: {
+        id: number;
+        name: string;
+        provider: string;
+        status: string;
+        lastTestedAt: Date | string | null;
+        settings: unknown;
+      } | null;
+    } | null;
+  };
   // WR-04: folderId is non-nullable in schema.zmodel — folder is always
   // present on a hydrated row. Call sites in get.ts / fetchDetail.ts
   // dereference raw.folder.id without a null check, so widening the
@@ -237,6 +339,13 @@ interface RawCaseRow {
   state: { id: number; name: string };
   creator: { id: string; name: string | null; email: string };
   tags: Array<{ id: number; name: string }>;
+  // Phase-8 D8-02 sub-includes for lastUpdatedAt + latestResult.
+  // All three are optional; rows fetched without the new include shape
+  // (e.g. existing call sites in fetchDetail.ts) read undefined and
+  // get null mappings.
+  repositoryCaseVersions?: Array<{ createdAt: Date | string; version: number }>;
+  junitResults?: RawLatestJunit[];
+  testRuns?: Array<{ results: RawLatestRunResult[] }>;
 }
 
 export function mapCaseRow(raw: RawCaseRow) {
@@ -253,6 +362,11 @@ export function mapCaseRow(raw: RawCaseRow) {
       ? { id: raw.creator.id, name: raw.creator.name, email: raw.creator.email }
       : null,
     tags: (raw.tags ?? []).map((t) => ({ id: t.id, name: t.name })),
+    lastUpdatedAt: lastUpdatedAtFromRaw(raw),
+    latestResult: resolveLatestResult(
+      raw.junitResults?.[0],
+      raw.testRuns?.[0]?.results?.[0],
+    ),
   };
 }
 
@@ -286,6 +400,24 @@ export function mapCaseDetail(
     .filter((c) => c && c.source !== "MANUAL")
     .map((c) => ({ id: c.id, name: c.name, source: c.source }));
 
+  // Phase-8 D8-02: derive inline codeRepository from the chained
+  // project.codeRepositoryConfig.repository select. Reuses the 08-01
+  // helpers (SETTINGS_ALLOW_LIST + stripSettings + deriveWebUrl) — never
+  // forks them — so the per-provider public-key allow-list and URL
+  // derivation stay in one place.
+  const repo = raw.project?.codeRepositoryConfig?.repository;
+  const codeRepository = repo
+    ? (() => {
+        const settings = stripSettings(repo.provider, repo.settings);
+        return {
+          id: repo.id,
+          name: repo.name,
+          type: repo.provider,
+          url: deriveWebUrl(repo.provider, settings),
+        };
+      })()
+    : null;
+
   return {
     ...mapCaseRow(raw),
     folderBreadcrumb: breadcrumb,
@@ -305,5 +437,6 @@ export function mapCaseDetail(
       externalStatus: i.externalStatus,
     })),
     linkedAutomatedTests,
+    codeRepository,
   };
 }

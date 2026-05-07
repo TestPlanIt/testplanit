@@ -7,7 +7,32 @@ import { mapHttpErrorToToolResult } from "../../errors.js";
 import { buildFolderBreadcrumb, mapCaseDetail } from "./shared.js";
 
 export const CASE_DETAIL_INCLUDE = {
-  project: { select: { id: true, name: true } },
+  // Phase-8 D8-02: surface inline codeRepository on cases_get by chaining
+  // through the project's optional ProjectCodeRepositoryConfig back-relation
+  // (schema.zmodel:394). The `repository` join is select-only; the secrets
+  // column (credentials) is INTENTIONALLY ABSENT so it never crosses the
+  // wire (defense in depth — T-08-PITFALL-7 / T-08-CRED-LEAK).
+  project: {
+    select: {
+      id: true,
+      name: true,
+      codeRepositoryConfig: {
+        select: {
+          repository: {
+            select: {
+              id: true,
+              name: true,
+              provider: true,
+              status: true,
+              lastTestedAt: true,
+              settings: true,
+              // credentials INTENTIONALLY ABSENT — defense in depth, never expose secrets in MCP responses
+            },
+          },
+        },
+      },
+    },
+  },
   folder: { select: { id: true, name: true, parentId: true } },
   state: { select: { id: true, name: true } },
   creator: { select: { id: true, name: true, email: true } },
