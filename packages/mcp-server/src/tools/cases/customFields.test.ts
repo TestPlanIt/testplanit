@@ -24,11 +24,30 @@ beforeEach(() => {
 
 // ── resolveCustomFields ───────────────────────────────────────────────────────
 
+/**
+ * Helper to build the field row shape that the new resolveCustomFields
+ * expects (with `type` and `fieldOptions`). Text-typed fields have no
+ * options; Dropdown / Multi-Select pass an options array.
+ */
+function makeField(opts: {
+  id: number;
+  displayName: string;
+  type?: string | null;
+  options?: Array<{ id: number; name: string }>;
+}) {
+  return {
+    id: opts.id,
+    displayName: opts.displayName,
+    type: opts.type !== undefined ? { type: opts.type } : null,
+    fieldOptions: (opts.options ?? []).map((o) => ({ fieldOption: o })),
+  };
+}
+
 describe("resolveCustomFields", () => {
-  it("returns array of { fieldId, value } for valid names", async () => {
+  it("returns array of { fieldId, value } for valid names (Text/Number pass through)", async () => {
     zenstackMock.mockResolvedValueOnce([
-      { id: 1, displayName: "Priority" },
-      { id: 2, displayName: "Severity" },
+      makeField({ id: 1, displayName: "Priority", type: "Text" }),
+      makeField({ id: 2, displayName: "Severity", type: "Number" }),
     ]);
 
     const result = await resolveCustomFields(
@@ -58,7 +77,9 @@ describe("resolveCustomFields", () => {
   });
 
   it("throws TestPlanItHttpError 422 for unknown field name", async () => {
-    zenstackMock.mockResolvedValueOnce([{ id: 1, displayName: "Priority" }]);
+    zenstackMock.mockResolvedValueOnce([
+      makeField({ id: 1, displayName: "Priority", type: "Text" }),
+    ]);
 
     const inputValue = "x";
     await expect(
@@ -76,8 +97,8 @@ describe("resolveCustomFields", () => {
 
   it("throws TestPlanItHttpError 422 for ambiguous displayName", async () => {
     zenstackMock.mockResolvedValueOnce([
-      { id: 1, displayName: "Priority" },
-      { id: 99, displayName: "Priority" },
+      makeField({ id: 1, displayName: "Priority", type: "Text" }),
+      makeField({ id: 99, displayName: "Priority", type: "Text" }),
     ]);
 
     await expect(
@@ -107,8 +128,8 @@ describe("resolveCustomFields", () => {
   it("error message for ambiguous field does not contain the input value (T-06-05)", async () => {
     const secretValue = "SENSITIVE_DATA_67890";
     zenstackMock.mockResolvedValueOnce([
-      { id: 1, displayName: "Priority" },
-      { id: 2, displayName: "Priority" },
+      makeField({ id: 1, displayName: "Priority", type: "Text" }),
+      makeField({ id: 2, displayName: "Priority", type: "Text" }),
     ]);
 
     await expect(
@@ -116,6 +137,111 @@ describe("resolveCustomFields", () => {
     ).rejects.toSatisfy((err: unknown) => {
       if (!(err instanceof TestPlanItHttpError)) return false;
       expect(err.message).not.toContain(secretValue);
+      return true;
+    });
+  });
+
+  // ── WR-01 / WR-02: Dropdown / Multi-Select round-trip ────────────────────
+
+  it("WR-02: Dropdown by option NAME resolves to canonical option ID (round-trip from read path)", async () => {
+    zenstackMock.mockResolvedValueOnce([
+      makeField({
+        id: 1,
+        displayName: "Priority",
+        type: "Dropdown",
+        options: [
+          { id: 147, name: "High" },
+          { id: 148, name: "Medium" },
+        ],
+      }),
+    ]);
+
+    const result = await resolveCustomFields({ Priority: "High" }, env);
+    expect(result).toEqual([
+      expect.objectContaining({ fieldId: 1, value: 147, name: "Priority" }),
+    ]);
+  });
+
+  it("WR-02: Dropdown by option ID stays as ID", async () => {
+    zenstackMock.mockResolvedValueOnce([
+      makeField({
+        id: 1,
+        displayName: "Priority",
+        type: "Dropdown",
+        options: [
+          { id: 147, name: "High" },
+          { id: 148, name: "Medium" },
+        ],
+      }),
+    ]);
+
+    const result = await resolveCustomFields({ Priority: 147 }, env);
+    expect(result).toEqual([
+      expect.objectContaining({ fieldId: 1, value: 147 }),
+    ]);
+  });
+
+  it("WR-02: Dropdown with unknown option name throws 422 with field name only (T-06-05)", async () => {
+    const secretValue = "Phantom_OPTION_VALUE";
+    zenstackMock.mockResolvedValueOnce([
+      makeField({
+        id: 1,
+        displayName: "Priority",
+        type: "Dropdown",
+        options: [{ id: 147, name: "High" }],
+      }),
+    ]);
+
+    await expect(
+      resolveCustomFields({ Priority: secretValue }, env),
+    ).rejects.toSatisfy((err: unknown) => {
+      if (!(err instanceof TestPlanItHttpError)) return false;
+      expect(err.statusCode).toBe(422);
+      expect(err.message).toContain("Priority");
+      expect(err.message).not.toContain(secretValue);
+      return true;
+    });
+  });
+
+  it("WR-02: Multi-Select by option names resolves to canonical option ID array", async () => {
+    zenstackMock.mockResolvedValueOnce([
+      makeField({
+        id: 5,
+        displayName: "Tags",
+        type: "Multi-Select",
+        options: [
+          { id: 10, name: "alpha" },
+          { id: 11, name: "beta" },
+          { id: 12, name: "gamma" },
+        ],
+      }),
+    ]);
+
+    const result = await resolveCustomFields(
+      { Tags: ["alpha", "gamma"] },
+      env,
+    );
+    const value = result[0]!.value as number[];
+    expect(value).toEqual([10, 12]);
+  });
+
+  it("WR-02: Multi-Select with non-array value throws 422", async () => {
+    zenstackMock.mockResolvedValueOnce([
+      makeField({
+        id: 5,
+        displayName: "Tags",
+        type: "Multi-Select",
+        options: [{ id: 10, name: "alpha" }],
+      }),
+    ]);
+
+    await expect(
+      resolveCustomFields({ Tags: "alpha" }, env),
+    ).rejects.toSatisfy((err: unknown) => {
+      if (!(err instanceof TestPlanItHttpError)) return false;
+      expect(err.statusCode).toBe(422);
+      expect(err.message).toContain("Tags");
+      expect(err.message).toContain("array");
       return true;
     });
   });
