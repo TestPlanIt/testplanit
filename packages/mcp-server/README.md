@@ -30,7 +30,16 @@ Set scopes when creating the token in **Profile → API Tokens** (checkboxes: "R
 
 ## Tool Catalog
 
-Phase 6 ships 11 production tools across three domains plus a context-disambiguation helper. All tools authenticate via the bearer token in `TESTPLANIT_API_TOKEN`. Read tools return JSON; write tools return the same shape as their corresponding `_get` tool.
+Phase 6 + Phase 7 ship 21 production tools across cases / folders / tags / projects / runs / sessions / findings, plus the `testplanit_whoami` debug helper (22 total). All tools authenticate via the bearer token in `TESTPLANIT_API_TOKEN`. Read tools return JSON; write tools return the same shape as their corresponding `_get` tool.
+
+### Killer-app chain: "Who tested issue X?"
+
+Two MCP calls give an agent the full executor lineage for an issue:
+
+1. `testplanit_cases_list({ projectId: P, issueId: I })` → returns RepositoryCases linked to issue I (Phase 7 / D7-03 — additive filter).
+2. `testplanit_test_run_results_list({ caseIds: [<from step 1>] })` → returns the most recent results (default `orderBy executedAt DESC` per D7-02) with `executedBy: { id, name, email }` inline.
+
+No aggregate helper tool needed — the two-call composition is reusable for PR-diff impact (Phase 8) and any future "what tested this?" prompts.
 
 ### Context
 
@@ -71,10 +80,13 @@ List test cases scoped to a project. Supports filters and cursor-based paginatio
   "name": "login",
   "stateId": 5,
   "customField": { "name": "Priority" },
+  "issueId": 55,
   "cursor": 100,
   "limit": 25
 }
 ```
+
+The `issueId` filter (Phase 7 / D7-03 — additive) returns RepositoryCases linked to the named Issue. Used as the front-half of the killer-app chain `cases_list({issueId}) → test_run_results_list({caseIds})`.
 
 **Output:**
 ```json
@@ -310,6 +322,412 @@ List all tags (global). When `projectId` is provided, usage counts are scoped to
 }
 ```
 
+### Execution + Session Read (Phase 7)
+
+Phase 7 ships 10 read-only tools across the test-execution domain (5 run-side tools + 5 session-side tools). All carry `isDeleted: false` filters, deterministic `[{<order>:'desc'},{id:'desc'}]` orderBy, and cursor pagination capped at `limit: 100` (T-07-06 DoS guard).
+
+#### `testplanit_test_runs_list` (EXEC-01)
+
+List test runs scoped to a project. Each row carries `statusCounts: [{id,name,count}]` + `untested` + `total` inline (per D7-06 — counts SUM to `total` per R3 invariant). The rollup is fetched via a SINGLE batched groupBy per page (no N+1) so an agent can list 100 runs in one tool call.
+
+**Input:**
+```json
+{
+  "projectId": 1,
+  "stateId": 3,
+  "isCompleted": false,
+  "createdById": "user-1",
+  "from": "2026-01-01T00:00:00Z",
+  "to": "2026-02-01T00:00:00Z",
+  "cursor": 100,
+  "limit": 25
+}
+```
+
+**Output:**
+```json
+{
+  "items": [
+    {
+      "id": 5,
+      "name": "Sprint 12 regression",
+      "isCompleted": false,
+      "completedAt": null,
+      "createdAt": "2026-01-05T00:00:00Z",
+      "testRunType": "REGULAR",
+      "project": { "id": 1, "name": "TestProject" },
+      "state": { "id": 3, "name": "In Progress" },
+      "createdBy": { "id": "user-1", "name": "Alice", "email": "alice@example.com" },
+      "configuration": null,
+      "milestone": null,
+      "tags": [],
+      "issues": [],
+      "statusCounts": [
+        { "id": 1, "name": "Passed", "count": 5 },
+        { "id": 2, "name": "Failed", "count": 2 }
+      ],
+      "untested": 1,
+      "total": 8
+    }
+  ],
+  "hasNextPage": false,
+  "nextCursor": null
+}
+```
+
+**Example:** "List the most recent 10 test runs in project 5."
+
+#### `testplanit_test_runs_get` (EXEC-02)
+
+Fetch a single test run with the first 50 testCases inline + status rollup. Each inline testCase carries `latestResult: { id, status, executedBy, executedAt }` so the agent sees the most-recent execution per case in one call.
+
+**Input:**
+```json
+{ "runId": 5 }
+```
+
+**Output:**
+```json
+{
+  "id": 5,
+  "name": "Sprint 12 regression",
+  "project": { "id": 1, "name": "TestProject" },
+  "state": { "id": 3, "name": "In Progress" },
+  "createdBy": { "id": "user-1", "name": "Alice", "email": "alice@example.com" },
+  "statusCounts": [{ "id": 1, "name": "Passed", "count": 5 }],
+  "untested": 1,
+  "total": 8,
+  "testCases": [
+    {
+      "id": 100,
+      "order": 0,
+      "isCompleted": false,
+      "repositoryCase": { "id": 99, "name": "Login flow", "source": "MANUAL" },
+      "assignedTo": null,
+      "status": { "id": 1, "name": "Passed" },
+      "latestResult": {
+        "id": 555,
+        "status": { "id": 1, "name": "Passed" },
+        "executedBy": { "id": "user-1", "name": "Alice", "email": "alice@example.com" },
+        "executedAt": "2026-01-05T01:00:00Z"
+      }
+    }
+  ],
+  "testCasesNextCursor": null
+}
+```
+
+**Example:** "Show me the details of run 5 including the status counts."
+
+#### `testplanit_test_runs_cases_list` (EXEC-03)
+
+Paginate testCases for a run beyond the 50-cap returned by `testplanit_test_runs_get`. Same row shape as the inline `testCases[i]`.
+
+**Input:**
+```json
+{
+  "runId": 5,
+  "isCompleted": false,
+  "statusId": 2,
+  "assignedToId": "user-1",
+  "cursor": 100,
+  "limit": 25
+}
+```
+
+**Output:** `{ items: [...], hasNextPage, nextCursor }` — items match the `testCases[i]` shape from `testplanit_test_runs_get`.
+
+**Example:** "List the failed cases in run 5."
+
+#### `testplanit_test_run_results_list` (EXEC-04 + EXEC-06 back-half)
+
+List test-run results with denormalized status / executedBy / testRunCase. The `caseIds` filter ships the **back-half** of the killer-app chain — pass the RepositoryCase ids returned by `testplanit_cases_list({issueId})` to get the latest results per case (`orderBy executedAt DESC` matches the schema index).
+
+**Input:**
+```json
+{
+  "runId": 5,
+  "caseIds": [99, 100],
+  "executedById": "user-1",
+  "statusId": 2,
+  "from": "2026-01-01T00:00:00Z",
+  "to": "2026-02-01T00:00:00Z",
+  "cursor": 200,
+  "limit": 25
+}
+```
+
+**Output:**
+```json
+{
+  "items": [
+    {
+      "id": 555,
+      "attempt": 1,
+      "executedAt": "2026-01-05T01:00:00Z",
+      "status": { "id": 1, "name": "Passed" },
+      "executedBy": { "id": "user-1", "name": "Alice", "email": "alice@example.com" },
+      "testRunCase": {
+        "id": 100,
+        "repositoryCaseId": 99,
+        "repositoryCase": { "id": 99, "name": "Login flow", "source": "MANUAL" },
+        "testRun": { "id": 5, "name": "Sprint 12 regression" }
+      }
+    }
+  ],
+  "hasNextPage": false,
+  "nextCursor": null
+}
+```
+
+**Example:** "Who tested the cases linked to issue JIRA-42?" — chain `cases_list({issueId})` then this tool with `caseIds`.
+
+#### `testplanit_test_run_results_get` (EXEC-05)
+
+Drill-down — fetch a single test-run result with `stepResults: [...]` inlined. Each step result carries `stepText` / `expectedResultText` (ProseMirror-extracted) + `status` (from the `stepStatus` relation per R2) + `notes` + `evidence` (as-is per D7-08) + `attachments` + `issues`. Top-level result carries `customFields` denormalized and the parent `testRunCase` summary.
+
+**Input:**
+```json
+{ "resultId": 555 }
+```
+
+**Output:**
+```json
+{
+  "id": 555,
+  "attempt": 1,
+  "executedAt": "2026-01-05T01:00:00Z",
+  "elapsed": 320,
+  "notes": "Step 2 had a 200ms hiccup",
+  "evidence": { "url": "https://traces.example.com/run-5/case-100" },
+  "status": { "id": 1, "name": "Passed" },
+  "executedBy": { "id": "user-1", "name": "Alice", "email": "alice@example.com" },
+  "testRunCase": {
+    "id": 100,
+    "repositoryCaseId": 99,
+    "repositoryCase": { "id": 99, "name": "Login flow", "source": "MANUAL" },
+    "testRun": { "id": 5, "name": "Sprint 12 regression" }
+  },
+  "customFields": { "Priority": "High" },
+  "stepResults": [
+    {
+      "id": 7000,
+      "status": { "id": 1, "name": "Passed" },
+      "stepId": 1,
+      "stepOrder": 0,
+      "stepText": "Open the login page",
+      "expectedResultText": "Login form is visible",
+      "notes": "",
+      "evidence": null,
+      "executedAt": "2026-01-05T01:00:00Z",
+      "elapsed": 80,
+      "attachments": [],
+      "issues": []
+    }
+  ],
+  "attachments": [],
+  "issues": []
+}
+```
+
+**Example:** "Show me the step-level breakdown for result 555."
+
+#### `testplanit_sessions_list` (SESS-01)
+
+List exploratory sessions scoped to a project, with denormalized state / createdBy / assignedTo / template / configuration / milestone / tags. Mission and note are extracted from ProseMirror to plain text.
+
+**Input:**
+```json
+{
+  "projectId": 1,
+  "stateId": 3,
+  "isCompleted": false,
+  "createdById": "user-1",
+  "from": "2026-01-01T00:00:00Z",
+  "to": "2026-02-01T00:00:00Z",
+  "cursor": 50,
+  "limit": 25
+}
+```
+
+**Output:**
+```json
+{
+  "items": [
+    {
+      "id": 12,
+      "name": "Login flow exploration",
+      "isCompleted": false,
+      "completedAt": null,
+      "createdAt": "2026-01-10T00:00:00Z",
+      "mission": "Explore login edge cases",
+      "note": "",
+      "project": { "id": 1, "name": "TestProject" },
+      "state": { "id": 3, "name": "In Progress" },
+      "createdBy": { "id": "user-1", "name": "Alice", "email": "alice@example.com" },
+      "assignedTo": null,
+      "template": { "id": 4, "name": "ExploratoryTemplate" },
+      "configuration": null,
+      "milestone": null,
+      "tags": []
+    }
+  ],
+  "hasNextPage": false,
+  "nextCursor": null
+}
+```
+
+**Example:** "List my open sessions in project 1."
+
+#### `testplanit_sessions_get` (SESS-02)
+
+Fetch a single session with up to 100 sessionResults inlined and a `truncated: boolean` marker (D7-12). When `truncated: true`, paginate the rest via `testplanit_session_results_list({sessionId})`.
+
+**Input:**
+```json
+{ "sessionId": 12 }
+```
+
+**Output:**
+```json
+{
+  "id": 12,
+  "name": "Login flow exploration",
+  "mission": "Explore login edge cases",
+  "note": "",
+  "project": { "id": 1, "name": "TestProject" },
+  "state": { "id": 3, "name": "In Progress" },
+  "createdBy": { "id": "user-1", "name": "Alice", "email": "alice@example.com" },
+  "issues": [],
+  "customFields": {},
+  "sessionResults": [
+    {
+      "id": 800,
+      "createdAt": "2026-01-10T00:30:00Z",
+      "elapsed": 600,
+      "resultDataText": "Tried 5 invalid passwords; UI showed correct error.",
+      "status": { "id": 1, "name": "Passed" },
+      "createdBy": { "id": "user-1", "name": "Alice", "email": "alice@example.com" },
+      "session": { "id": 12, "name": "Login flow exploration", "projectId": 1 }
+    }
+  ],
+  "truncated": false
+}
+```
+
+**Example:** "Show me session 12 with its results."
+
+#### `testplanit_session_results_list` (SESS-03)
+
+List session results with filters `sessionId` / `createdById` / `statusId`. **NO** `testCaseId` filter — Sessions are exploratory and SessionResults has no `testCaseId` FK (R4 invariant; enforced at the input schema and at the where-clause Prisma type).
+
+**Input:**
+```json
+{
+  "sessionId": 12,
+  "createdById": "user-1",
+  "statusId": 2,
+  "cursor": 100,
+  "limit": 25
+}
+```
+
+**Output:** `{ items, hasNextPage, nextCursor }` — items match the `sessionResults[i]` shape from `testplanit_sessions_get`.
+
+**Example:** "List failed results in session 12."
+
+#### `testplanit_session_results_get` (SESS-04)
+
+Fetch a single session result with denormalized status / `createdBy` (the executor — D7-13: NO separate `executedBy` field) / session / customFields / attachments / issues. **NO** step-level results — sessions are exploratory and don't have ordered steps.
+
+**Input:**
+```json
+{ "resultId": 800 }
+```
+
+**Output:**
+```json
+{
+  "id": 800,
+  "createdAt": "2026-01-10T00:30:00Z",
+  "elapsed": 600,
+  "resultDataText": "Tried 5 invalid passwords; UI showed correct error.",
+  "status": { "id": 1, "name": "Passed" },
+  "createdBy": { "id": "user-1", "name": "Alice", "email": "alice@example.com" },
+  "session": { "id": 12, "name": "Login flow exploration", "projectId": 1 },
+  "customFields": { "Severity": "Low" },
+  "attachments": [],
+  "issues": []
+}
+```
+
+**Example:** "Show me session result 800."
+
+#### `testplanit_sessions_findings_list` (SESS-05)
+
+Dual-mode (XOR — provide exactly one of `sessionId` or `issueId`):
+
+- **sessionId mode** — returns Issue rows linked to the session OR to any of its sessionResults. Mirrors the agent-facing prompt "what issues surfaced in session X?"
+- **issueId mode** — returns the issue plus its `linkedSessions` and `linkedSessionResults`. Mirrors "where did issue Y appear?"
+
+**Input (sessionId mode):**
+```json
+{ "sessionId": 12 }
+```
+
+**Output (sessionId mode):**
+```json
+{
+  "session": { "id": 12, "name": "Login flow exploration" },
+  "findings": [
+    {
+      "id": 55,
+      "externalKey": "JIRA-99",
+      "title": "Login fails on Safari",
+      "status": "Open",
+      "externalStatus": "Open",
+      "priority": "High",
+      "externalSystem": "JIRA"
+    }
+  ],
+  "truncated": false
+}
+```
+
+**Input (issueId mode):**
+```json
+{ "issueId": 55 }
+```
+
+**Output (issueId mode):**
+```json
+{
+  "issue": { "id": 55, "externalKey": "JIRA-99", "title": "Login fails on Safari", "externalStatus": "Open", "externalSystem": "JIRA" },
+  "linkedSessions": [
+    {
+      "id": 12,
+      "name": "Login flow exploration",
+      "createdAt": "2026-01-10T00:00:00Z",
+      "isCompleted": false,
+      "createdBy": { "id": "user-1", "name": "Alice", "email": "alice@example.com" }
+    }
+  ],
+  "linkedSessionResults": [
+    {
+      "id": 800,
+      "sessionId": 12,
+      "createdAt": "2026-01-10T00:30:00Z",
+      "status": { "id": 1, "name": "Passed" },
+      "createdBy": { "id": "user-1", "name": "Alice", "email": "alice@example.com" }
+    }
+  ]
+}
+```
+
+**Example:** "What sessions surfaced JIRA-99?"
+
+> Note: `issueKey` (e.g. `JIRA-99`) resolution is intentionally deferred to Phase 8 — `Issue.externalKey` is not globally unique on the schema (only `@@unique([externalId, integrationId])`), so disambiguation requires the upcoming integration-context tools.
+
 ## Soft-Delete Invariant
 
 All TestPlanIt MCP "delete" tools perform soft-delete: they set `isDeleted: true` via PATCH update and never call the underlying ZenStack `delete` operation. Soft-deleted records remain in the database for audit purposes and are hidden from subsequent list/get tool calls.
@@ -324,7 +742,7 @@ Tokens minted with the `mode:read` scope are blocked at the host on POST/PATCH/D
 | -------- | --------------------------------------------------------------- |
 | `whoami` | Debug: returns the authenticated user (token owner) and scopes. |
 
-Phase 5 ships the `whoami` tool. Phase 6 adds the full production tool surface documented above.
+Phase 5 ships the `whoami` tool. Phase 6 adds the case / folder / tag / projects domain (12 tools); Phase 7 adds the test-run + session + findings read domain (10 tools) plus an additive `issueId` filter on `testplanit_cases_list`. Total registered tools after Phase 7: 22.
 
 ## Claude Desktop configuration
 
