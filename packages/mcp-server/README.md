@@ -30,7 +30,7 @@ Set scopes when creating the token in **Profile → API Tokens** (checkboxes: "R
 
 ## Tool Catalog
 
-Phase 6 + Phase 7 ship 21 production tools across cases / folders / tags / projects / runs / sessions / findings, plus the `testplanit_whoami` debug helper (22 total). All tools authenticate via the bearer token in `TESTPLANIT_API_TOKEN`. Read tools return JSON; write tools return the same shape as their corresponding `_get` tool.
+Phase 6 + Phase 7 + Phase 8 ship 27 production tools across cases / folders / tags / projects / runs / sessions / findings / code-repositories / issues / repository-case-links, plus the `testplanit_whoami` debug helper (28 total). All tools authenticate via the bearer token in `TESTPLANIT_API_TOKEN`. Read tools return JSON; write tools return the same shape as their corresponding `_get` tool.
 
 ### Killer-app chain: "Who tested issue X?"
 
@@ -88,6 +88,17 @@ List test cases scoped to a project. Supports filters and cursor-based paginatio
 
 The `issueId` filter (Phase 7 / D7-03 — additive) returns RepositoryCases linked to the named Issue. Used as the front-half of the killer-app chain `cases_list({issueId}) → test_run_results_list({caseIds})`.
 
+**Phase 8 maintenance filters (D8-01 / D8-02 — additive):** seven new filters narrow the list to test-maintenance questions:
+
+- `automated: boolean` — narrows to user-flagged automated tests (`RepositoryCases.automated`); independent of `source`.
+- `source: 'MANUAL'|'JUNIT'|'TESTNG'|'XUNIT'|'NUNIT'|'MSTEST'|'MOCHA'|'CUCUMBER'|'API'` — single value or array; the import-format that originally created the row.
+- `repositoryId: number` — scopes to a specific per-project case container (useful for multi-repository projects).
+- `hasNeverExecuted: boolean` — narrows to cases with **zero** JUnit results AND zero TestRunResults (via TestRunCases).
+- `staleSinceUpdate: boolean` — narrows to cases whose latest execution timestamp is earlier than the latest update timestamp (or never executed). Implemented as a handler-side post-filter with a bounded scan cap of 400 rows; the response stamps `truncated: true` when the cap is hit.
+- `updatedAfter: ISODate`, `updatedBefore: ISODate` — calendar filters that route through the `repositoryCaseVersions` relation (`RepositoryCases` has no `updatedAt` column).
+
+**Phase 8 row fields (additive):** every row carries `lastUpdatedAt` (from `repositoryCaseVersions[currentVersion].createdAt`) and `latestResult: { id, status, executedAt, source: 'TestRun' | 'JUnit' } | null` (the most recent execution across both pipelines, with a `source` discriminator). Returns `null` when the case has never been executed.
+
 **Output:**
 ```json
 {
@@ -114,7 +125,7 @@ When `hasNextPage` is `true`, pass `nextCursor` as `cursor` to fetch the next pa
 
 #### `testplanit_cases_get`
 
-Fetch full details for a single test case, including steps (plain text), custom fields (flat dict keyed by display name), folder breadcrumb, linked issues, and linked automated tests.
+Fetch full details for a single test case, including steps (plain text), custom fields (flat dict keyed by display name), folder breadcrumb, linked issues, and linked automated tests. **Phase 8 (additive):** the response now includes inline `codeRepository: { id, name, type, url? } | null` derived from the project's configured `ProjectCodeRepositoryConfig.repository` — surfaces the test-framework source location alongside the existing case detail. The repository's `credentials` column is never returned and `settings` is stripped to a per-provider public-key allow-list.
 
 **Input:**
 ```json
@@ -726,7 +737,262 @@ Dual-mode (XOR — provide exactly one of `sessionId` or `issueId`):
 
 **Example:** "What sessions surfaced JIRA-99?"
 
-> Note: `issueKey` (e.g. `JIRA-99`) resolution is intentionally deferred to Phase 8 — `Issue.externalKey` is not globally unique on the schema (only `@@unique([externalId, integrationId])`), so disambiguation requires the upcoming integration-context tools.
+> Note: For resolving an external key like `JIRA-99` to an Issue, see `testplanit_issues_find_by_key` (Phase 8 — ISSUE-01). The lookup tuple is `(externalKey, externalSystem, projectId)` to disambiguate when multiple integrations of the same provider exist (`Issue.externalKey` is not globally unique — schema enforces only `@@unique([externalId, integrationId])`).
+
+### Code Repositories
+
+#### `testplanit_code_repositories_list` (Phase 8 — REPO-01)
+
+List the project's code-repository configuration. Returns `ProjectCodeRepositoryConfig` rows with the underlying `CodeRepository` denormalized inline. The schema enforces `@@unique([projectId])` so the response carries 0 or 1 row today; cursor pagination is shape-compatible with future multi-config relaxation.
+
+**Input:**
+```json
+{ "projectId": 1, "cursor": 100, "limit": 25 }
+```
+
+**Output:**
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "projectId": 42,
+      "branch": "main",
+      "pathPatterns": [{ "path": "src/**", "pattern": "*.test.ts" }],
+      "cacheEnabled": true,
+      "cacheTtlDays": 7,
+      "cacheStatus": "READY",
+      "cacheLastFetchedAt": "2026-05-01T12:00:00Z",
+      "cacheFileCount": 1234,
+      "cacheTotalSize": 5678901,
+      "cacheError": null,
+      "repository": {
+        "id": 5,
+        "name": "acme/tools",
+        "provider": "GITHUB",
+        "status": "ACTIVE",
+        "lastTestedAt": "2026-04-30T08:00:00Z",
+        "settings": { "owner": "acme", "repo": "tools" },
+        "url": "https://github.com/acme/tools"
+      }
+    }
+  ],
+  "hasNextPage": false,
+  "nextCursor": null
+}
+```
+
+> **Security (T-08-CRED-LEAK):** the underlying `credentials` column is never selected (defense-in-depth #1 — TS2353 at compile time if reintroduced). The wholesale `settings` JSON is stripped to a per-provider public-key allow-list at the mapper boundary (defense-in-depth #2): `GITHUB ["owner","repo"]`, `GITLAB / BITBUCKET / GITEA ["baseUrl","owner","repo"]`, `AZURE_DEVOPS ["organizationUrl","project","repositoryId"]`. The derived web `url` follows each provider's canonical pattern; trailing slashes sanitized.
+
+### Issues
+
+#### `testplanit_issues_find_by_key` (Phase 8 — ISSUE-01)
+
+Resolve `(externalKey, externalSystem, projectId)` to an Issue. The schema enforces only `@@unique([externalId, integrationId])` — `externalKey` is NOT globally unique when multiple integrations of the same provider exist in the same project. The tool's input tuple matches how integrations are configured in practice and how an agent already disambiguates project context.
+
+**Input:**
+```json
+{
+  "externalKey": "JIRA-123",
+  "externalSystem": "JIRA",
+  "projectId": 42,
+  "integrationId": 7
+}
+```
+
+- `externalSystem` — `IntegrationProvider` enum: `JIRA | GITHUB | AZURE_DEVOPS | SIMPLE_URL`. Internal-only issues (`Issue.integrationId IS NULL`) are NOT addressable here — agents reach those via `testplanit_issues_list`.
+- `integrationId` (optional) — narrows to that integration directly and skips multi-match logic.
+
+**Output (single match):**
+```json
+{
+  "issue": {
+    "id": 99,
+    "externalKey": "JIRA-123",
+    "externalSystem": "JIRA",
+    "externalUrl": "https://acme.atlassian.net/browse/JIRA-123",
+    "externalStatus": "Open",
+    "summary": "Login fails on Safari",
+    "status": "open",
+    "projectId": 42,
+    "integration": { "id": 7, "name": "Acme Jira", "provider": "JIRA" },
+    "createdBy": { "id": "user-1", "name": "Alice", "email": "alice@example.com" },
+    "createdAt": "2026-01-01T00:00:00Z",
+    "lastSyncedAt": "2026-05-01T12:00:00Z",
+    "linkedCaseCount": 6
+  },
+  "multipleMatches": false
+}
+```
+
+**Output (multi-match fallback):** when `findMany` returns more than one row (rare — happens when two integrations of the same provider share an external key in the same project), the response shape switches:
+```json
+{
+  "issues": [ /* up to 5 issues; same shape as `issue` above */ ],
+  "multipleMatches": true,
+  "hint": "Pass integrationId to disambiguate."
+}
+```
+
+#### `testplanit_issues_list` (Phase 8 — ISSUE-02)
+
+List issues scoped to a project, with cursor-based pagination and deterministic `[{createdAt:'desc'},{id:'desc'}]` ordering. Each row carries `linkedCaseCount` inline (the dominant fan-out — median 6, p95 35, max 1061 in dev DB) so agents can rank issues by reach without a follow-up.
+
+**Input:**
+```json
+{
+  "projectId": 42,
+  "externalSystem": "JIRA",
+  "integrationId": 7,
+  "status": "open",
+  "externalStatus": "In Progress",
+  "cursor": 100,
+  "limit": 25
+}
+```
+
+> **Note:** an `assignee` filter is intentionally absent — `Issue` has no native assignee column; assignee data lives in `Issue.data: Json` (provider-shaped). Filtering on a JSON path would be brittle and per-provider; deferred until a real ask.
+
+**Output:** `{ items, hasNextPage, nextCursor }` — items match the `issue` shape from `testplanit_issues_find_by_key`.
+
+#### `testplanit_issues_get` (Phase 8 — ISSUE-03)
+
+Fetch a single issue header plus three denormalized linked-row arrays inline. Mirrors Phase 7's D7-12 / D7-13 inline-with-truncation pattern.
+
+**Input:**
+```json
+{ "issueId": 99 }
+```
+
+**Output:**
+```json
+{
+  "id": 99,
+  "externalKey": "JIRA-123",
+  "summary": "Login fails on Safari",
+  "description": "Steps to repro: ...",
+  "priority": "high",
+  "issueTypeName": "Bug",
+  "issueTypeIconUrl": "https://...",
+  "note": "Reproduced on Safari 17.",
+  "status": "open",
+  "externalStatus": "In Progress",
+  "linkedCases": [
+    { "id": 7, "name": "Login flow", "source": "MANUAL", "automated": false, "latestResult": null }
+  ],
+  "linkedSessions": [
+    { "id": 12, "name": "Login flow exploration", "mission": "Try edge cases.", "isCompleted": false, "state": { "id": 1, "name": "Draft" } }
+  ],
+  "linkedTestRuns": [
+    { "id": 200, "name": "Smoke run", "isCompleted": true, "completedAt": "2026-05-01T12:00:00Z" }
+  ],
+  "truncated": { }
+}
+```
+
+> Each inline array is capped at 100 rows. When overflow occurs the response stamps `truncated.linkedCases: true` (or `linkedSessions` / `linkedTestRuns` as appropriate); the rest are reachable via `testplanit_cases_list({issueId})` and `testplanit_issues_list_links({issueId, target})`. `linkedSessionResults`, `linkedTestRunResults`, and `linkedTestRunStepResults` are NOT inlined (small junctions; agents reach them via the link tool).
+
+#### `testplanit_issues_list_links` (Phase 8 — ISSUE-04)
+
+Single dual-mode XOR tool covering all six `Issue` M:N junctions. Mirrors Phase 7's D7-11 dual-mode pattern (sessions findings).
+
+- **Outbound mode** — given an `issueId` plus a `target`, returns the linked counterparts denormalized.
+- **Inbound mode** — given exactly one of `caseId | sessionId | sessionResultId | runId | runResultId | runStepResultId`, returns the linked Issue rows.
+
+**Input (outbound):**
+```json
+{ "issueId": 99, "target": "cases", "cursor": 100, "limit": 25 }
+```
+
+- `target`: `cases | sessions | sessionResults | testRuns | testRunResults | testRunStepResults` (one of six).
+
+**Input (inbound — exactly ONE inbound ID; the others MUST be omitted):**
+```json
+{ "caseId": 7 }
+```
+
+**Output:** `{ items, hasNextPage, nextCursor }` — items are typed per the queried direction.
+
+> **Why one tool not six:** Phase 7's `sessions_findings_list` already proved the dual-mode shape composes cleanly. Six small tools would push the catalog past 30 and bury the mental model ("I'm walking the issue ↔ X graph") under ceremony.
+
+### Repository Case Links
+
+#### `testplanit_repository_case_links_list` (Phase 8 — REPO-05)
+
+Traverse the manual-↔-imported case linkage graph. Three input modes (3-way XOR; exactly one ID supplied):
+
+- `caseId` — bidirectional, matches both endpoints via `OR=[{caseAId},{caseBId}]`.
+- `caseAId` — one-way, originating side.
+- `caseBId` — one-way, destination side.
+
+Optional `linkType` narrows to `SAME_TEST_DIFFERENT_SOURCE` or `DEPENDS_ON`. The response shape varies by mode: `caseId` collapses each row to an inline `otherCase` (the side opposite the queried id); `caseAId` / `caseBId` modes preserve both `caseA` and `caseB`.
+
+**Input:**
+```json
+{ "caseId": 7, "linkType": "SAME_TEST_DIFFERENT_SOURCE", "cursor": 100, "limit": 25 }
+```
+
+**Output (caseId mode):**
+```json
+{
+  "items": [
+    {
+      "id": 31,
+      "type": "SAME_TEST_DIFFERENT_SOURCE",
+      "createdAt": "2026-01-01T00:00:00Z",
+      "createdBy": { "id": "user-1", "name": "Alice", "email": "alice@example.com" },
+      "otherCase": { "id": 9, "name": "automated_login_test", "source": "JUNIT", "automated": true }
+    }
+  ],
+  "hasNextPage": false,
+  "nextCursor": null
+}
+```
+
+> Project scope is enforced transitively by the host's access policy on `caseA.project` — `RepositoryCaseLink` itself is not project-scoped, so the tool deliberately exposes no project-id input.
+
+## Killer-app compositions (Phase 8)
+
+### Issue → linked test cases (2 calls)
+
+```json
+{ "tool": "testplanit_issues_find_by_key",
+  "input": { "externalKey": "JIRA-123", "externalSystem": "JIRA", "projectId": 42 } }
+// → { issue: { id: 99, ... }, multipleMatches: false }
+
+{ "tool": "testplanit_cases_list", "input": { "projectId": 42, "issueId": 99 } }
+// → { items: [{ id: 7, name: "Login flow", lastUpdatedAt: "...", latestResult: {...} }, ...] }
+```
+
+### Stale automated tests (1 call)
+
+```json
+{ "tool": "testplanit_cases_list",
+  "input": { "projectId": 42, "automated": true, "staleSinceUpdate": true } }
+// → each row carries lastUpdatedAt + latestResult; envelope.truncated:true when scan cap (400) hit.
+```
+
+### Recently-updated automated scripts (1 call)
+
+```json
+{ "tool": "testplanit_cases_list",
+  "input": { "projectId": 42, "automated": true, "updatedAfter": "2026-04-01T00:00:00Z" } }
+```
+
+### Manual ↔ imported case graph walk (1 call)
+
+```json
+{ "tool": "testplanit_repository_case_links_list",
+  "input": { "caseId": 7, "linkType": "SAME_TEST_DIFFERENT_SOURCE" } }
+// → each row's otherCase carries the counterpart denormalized.
+```
+
+### Never-run scripts (1 call)
+
+```json
+{ "tool": "testplanit_cases_list",
+  "input": { "projectId": 42, "automated": true, "hasNeverExecuted": true } }
+```
 
 ## Soft-Delete Invariant
 
@@ -742,7 +1008,7 @@ Tokens minted with the `mode:read` scope are blocked at the host on POST/PATCH/D
 | -------- | --------------------------------------------------------------- |
 | `whoami` | Debug: returns the authenticated user (token owner) and scopes. |
 
-Phase 5 ships the `whoami` tool. Phase 6 adds the case / folder / tag / projects domain (12 tools); Phase 7 adds the test-run + session + findings read domain (10 tools) plus an additive `issueId` filter on `testplanit_cases_list`. Total registered tools after Phase 7: 22.
+Phase 5 ships the `whoami` tool. Phase 6 adds the case / folder / tag / projects domain (12 tools); Phase 7 adds the test-run + session + findings read domain (10 tools) plus an additive `issueId` filter on `testplanit_cases_list`. Phase 8 adds the code-repositories / issues / repository-case-links read domain (6 tools — `testplanit_code_repositories_list`, `testplanit_issues_find_by_key`, `testplanit_issues_list`, `testplanit_issues_get`, `testplanit_issues_list_links`, `testplanit_repository_case_links_list`) and extends `testplanit_cases_list` with 7 maintenance filters + 2 row fields plus `testplanit_cases_get` with inline `codeRepository`. Total registered tools after Phase 8: 28.
 
 ## Claude Desktop configuration
 
