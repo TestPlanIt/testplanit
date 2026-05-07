@@ -451,7 +451,7 @@ const processor = async (
 
     // 8. Initialize state
     const sharedGroupMap = new Map<number, number>();
-    const createdTargetIds: number[] = [];
+    const createdTargetIds: Array<{ newId: number; sourceId: number }> = [];
     const result: CopyMoveJobResult = {
       copiedCount: 0,
       movedCount: 0,
@@ -720,7 +720,7 @@ const processor = async (
           return newCase.id;
         });
 
-        createdTargetIds.push(newCaseId);
+        createdTargetIds.push({ newId: newCaseId, sourceId: sourceCase.id });
         result.copiedCount++;
       }
     } catch (err: any) {
@@ -730,7 +730,7 @@ const processor = async (
           `Copy-move job ${job.id} failed — rolling back ${createdTargetIds.length} created cases.`
         );
         await prisma.repositoryCases.deleteMany({
-          where: { id: { in: createdTargetIds } },
+          where: { id: { in: createdTargetIds.map((c) => c.newId) } },
         });
       }
       throw err;
@@ -763,9 +763,9 @@ const processor = async (
       finalizing: true,
     });
 
-    for (const id of createdTargetIds) {
-      syncRepositoryCaseToElasticsearch(id, job.data.tenantId, prisma).catch(
-        (err) => console.error(`ES sync failed for new case ${id}:`, err)
+    for (const { newId } of createdTargetIds) {
+      syncRepositoryCaseToElasticsearch(newId, job.data.tenantId, prisma).catch(
+        (err) => console.error(`ES sync failed for new case ${newId}:`, err)
       );
     }
 
@@ -790,11 +790,11 @@ const processor = async (
     result.droppedLinkCount = 0;
 
     // 12b. Audit logging — log bulk operation for created cases
-    for (const targetId of createdTargetIds) {
+    for (const { newId } of createdTargetIds) {
       captureAuditEvent({
         action: "CREATE",
         entityType: "RepositoryCases",
-        entityId: String(targetId),
+        entityId: String(newId),
         projectId: job.data.targetProjectId,
         userId: job.data.userId,
         tenantId: job.data.tenantId,
