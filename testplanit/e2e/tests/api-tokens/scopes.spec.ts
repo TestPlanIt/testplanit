@@ -24,14 +24,13 @@ import { expect, test } from "../../fixtures/index";
 test.use({ storageState: "e2e/.auth/admin.json" });
 test.describe.configure({ mode: "serial" });
 
-// Single-character tag name generator (Tags.name has @length(1)).
-// Using a random letter from a-z; uniqueness is best-effort — if a collision
-// occurs the assertion `not.toBe(403)` still holds (200 vs 400 unique-conflict
-// are both acceptable per the spec since the chokepoint we're guarding is the
-// READ_ONLY_TOKEN 403 path, not the entity uniqueness path).
+// Tags.name has @length(1) (min length 1, no max — ZenStack semantics) and
+// is @unique. WR-09: the prior single-letter generator had a 1/26 collision
+// chance per call, so a unique-violation could mask the real assertion.
+// Use a timestamp-derived name long enough to be unique across parallel
+// runs but short enough to read in CI logs.
 function uniqueTagName(): string {
-  const letters = "abcdefghijklmnopqrstuvwxyz";
-  return letters[Math.floor(Math.random() * letters.length)];
+  return `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 test.describe("API Token Scopes (mode:read + client:mcp)", () => {
@@ -137,11 +136,15 @@ test.describe("API Token Scopes (mode:read + client:mcp)", () => {
         headers: { Authorization: `Bearer ${fullAccessToken}` },
         data: { data: { name: uniqueTagName() } },
       });
-      // The key assertion is "not 403 with READ_ONLY_TOKEN". 200 (created),
-      // 201 (created alt), or 400/422 (unique-name collision on the single-
-      // letter pool) are all acceptable proofs that the read-only chokepoint
-      // did not trip.
-      expect(r.status()).not.toBe(403);
+      // WR-09: the contract is "TOK-06: empty-scopes token CAN write." A
+      // 500 / 401 / unrelated 403 is a real regression that `not.toBe(403)`
+      // alone would mask. Constrain to success or expected validation.
+      expect([200, 201, 400, 422]).toContain(r.status());
+      if (r.status() === 400 || r.status() === 422) {
+        const body = await r.json();
+        // The expected error code MUST NOT be the READ_ONLY_TOKEN chokepoint.
+        expect(body.code ?? body.error?.code).not.toBe("READ_ONLY_TOKEN");
+      }
     } finally {
       await ctx.close();
     }
