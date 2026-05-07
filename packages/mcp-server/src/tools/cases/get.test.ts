@@ -159,7 +159,7 @@ describe("registerCasesGet", () => {
         {
           id: 1,
           externalKey: "JIRA-1",
-          externalSystem: "JIRA",
+          integration: { provider: "JIRA" },
           title: "Bug",
           externalStatus: "Open",
         },

@@ -31,7 +31,7 @@ export async function fetchCaseDetail(
           select: {
             id: true,
             externalKey: true,
-            externalSystem: true,
+            integration: { select: { provider: true } },
             title: true,
             externalStatus: true,
           },

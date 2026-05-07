@@ -252,7 +252,7 @@ describe("mapCaseDetail", () => {
       {
         id: 55,
         externalKey: "JIRA-99",
-        externalSystem: "JIRA",
+        integration: { provider: "JIRA" },
         title: "Login bug",
         externalStatus: "Open",
       },

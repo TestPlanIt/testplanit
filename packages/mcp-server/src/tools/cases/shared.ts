@@ -148,7 +148,7 @@ interface RawCaseDetail extends RawCaseRow {
   issues: Array<{
     id: number;
     externalKey: string | null;
-    externalSystem: string | null;
+    integration: { provider: string } | null;
     title: string | null;
     externalStatus: string | null;
   }>;
@@ -191,7 +191,7 @@ export function mapCaseDetail(
     issues: (raw.issues ?? []).map((i) => ({
       id: i.id,
       externalKey: i.externalKey,
-      externalSystem: i.externalSystem,
+      externalSystem: i.integration?.provider ?? null,
       title: i.title,
       externalStatus: i.externalStatus,
     })),

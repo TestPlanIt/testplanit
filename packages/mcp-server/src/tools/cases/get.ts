@@ -39,7 +39,7 @@ export function registerCasesGet(server: McpServer, deps: CasesGetDeps): void {
                 select: {
                   id: true,
                   externalKey: true,
-                  externalSystem: true,
+                  integration: { select: { provider: true } },
                   title: true,
                   externalStatus: true,
                 },
