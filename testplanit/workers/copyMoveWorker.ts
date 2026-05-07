@@ -821,6 +821,29 @@ const processor = async (
       }).catch(() => {}); // best-effort, don't fail the job
     }
 
+    // Provenance audit — within-project copies only
+    if (
+      job.data.operation === "copy" &&
+      job.data.sourceProjectId === job.data.targetProjectId
+    ) {
+      for (const { newId, sourceId } of createdTargetIds) {
+        captureAuditEvent({
+          action: "DUPLICATED",
+          entityType: "RepositoryCases",
+          entityId: String(newId),
+          projectId: job.data.targetProjectId,
+          userId: job.data.userId,
+          tenantId: job.data.tenantId,
+          metadata: {
+            duplicatedFromCaseId: sourceId,
+            sourceProjectId: job.data.sourceProjectId,
+            targetFolderId: job.data.targetFolderId,
+            jobId: job.id,
+          },
+        }).catch(() => {});
+      }
+    }
+
     // Audit logging — log soft-deletes for moved source cases
     if (job.data.operation === "move") {
       for (const sourceId of job.data.caseIds) {
