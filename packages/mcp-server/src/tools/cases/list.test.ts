@@ -259,6 +259,72 @@ describe("registerCasesList", () => {
     expect(textContent.text).toContain("422");
   });
 
+  it("D7-03: issueId filter — happy path; where.issues = { some: { id, isDeleted: false } }", async () => {
+    mockZenstack.mockResolvedValueOnce([makeRawRow({}, 1)]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, issueId: 42 },
+    });
+    const body = getLastCallBody();
+    const where = body?.where as Record<string, unknown>;
+    expect(where.projectId).toBe(7);
+    expect(where.isDeleted).toBe(false);
+    expect(where.issues).toEqual({ some: { id: 42, isDeleted: false } });
+  });
+
+  it("D7-03: issueId filter coexists with folderId / tagIds / name / stateId / customField", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: {
+        projectId: 7,
+        issueId: 42,
+        folderId: 1,
+        tagIds: [3],
+        name: "login",
+        stateId: 4,
+        customField: { name: "Priority" },
+      },
+    });
+    const body = getLastCallBody();
+    const where = body?.where as Record<string, unknown>;
+    expect(where.projectId).toBe(7);
+    expect(where.folderId).toBe(1);
+    expect(where.tags).toEqual({ some: { id: { in: [3] } } });
+    expect(where.name).toEqual({ contains: "login", mode: "insensitive" });
+    expect(where.stateId).toBe(4);
+    expect(where.caseFieldValues).toEqual({
+      some: { field: { displayName: "Priority" } },
+    });
+    expect(where.issues).toEqual({ some: { id: 42, isDeleted: false } });
+  });
+
+  it("D7-03: issueId rejects 0 / negative / non-integer values via zod", async () => {
+    const { client } = await setupClient();
+    const zero = await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, issueId: 0 },
+    });
+    expect(zero.isError).toBe(true);
+
+    const negative = await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, issueId: -1 },
+    });
+    expect(negative.isError).toBe(true);
+
+    const fractional = await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, issueId: 1.5 },
+    });
+    expect(fractional.isError).toBe(true);
+
+    // Zod rejected before zenstack was called for any of the three.
+    expect(mockZenstack).not.toHaveBeenCalled();
+  });
+
   it("tool registration: tool is named testplanit_cases_list with correct description prefix", async () => {
     const server = new McpServer({ name: "test", version: "0.0.0" });
     registerCasesList(server, deps);
