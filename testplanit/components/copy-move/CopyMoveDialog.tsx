@@ -17,6 +17,11 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Boxes,
   CheckCircle2,
   ChevronLeft,
@@ -65,6 +70,7 @@ export function CopyMoveDialog({
   const tCommon = useTranslations("common");
   const tNav = useTranslations("navigation.projects.dropdown");
   const tRepo = useTranslations("repository.cases.importWizard.page1");
+  const tGlobal = useTranslations();
 
   // ── Wizard state ────────────────────────────────────────────────────────
   const [step, setStep] = useState<WizardStep>("target");
@@ -142,6 +148,13 @@ export function CopyMoveDialog({
     }
     return ids;
   }, [sourceFolderId, sourceFolders]);
+
+  const disabledFolderIds = useMemo(() => {
+    if (!sourceFolderId || targetProjectId !== sourceProjectId) {
+      return new Set<number>();
+    }
+    return new Set(folderSubtreeIds);
+  }, [sourceFolderId, targetProjectId, sourceProjectId, folderSubtreeIds]);
 
   const { data: folderCases = [] } = useFindManyRepositoryCases(
     folderSubtreeIds.length > 0
@@ -237,7 +250,7 @@ export function CopyMoveDialog({
   useEffect(() => {
     if (open) {
       setStep("target");
-      setTargetProjectId(null);
+      setTargetProjectId(sourceProjectId);
       setTargetFolderId(null);
       setOperation("copy");
       setConflictResolution("skip");
@@ -321,20 +334,26 @@ export function CopyMoveDialog({
   };
 
   // ── Derived values ───────────────────────────────────────────────────────
-  const filteredProjects = projects.filter((p) => p.id !== sourceProjectId);
+  type ProjectOption = (typeof projects)[number] & { isCurrent: boolean };
 
-  type ProjectOption = (typeof filteredProjects)[number];
+  const projectsWithCurrent = useMemo<ProjectOption[]>(() => {
+    const current = projects.find((p) => p.id === sourceProjectId);
+    const others = projects
+      .filter((p) => p.id !== sourceProjectId)
+      .map((p) => ({ ...p, isCurrent: false }));
+    return current ? [{ ...current, isCurrent: true }, ...others] : others;
+  }, [projects, sourceProjectId]);
+
   const selectedProject =
-    filteredProjects.find((p) => p.id === targetProjectId) ?? null;
+    projectsWithCurrent.find((p) => p.id === targetProjectId) ?? null;
 
   const fetchProjects = useCallback(
     async (query: string) => {
-      const filtered = filteredProjects.filter((p) =>
+      return projectsWithCurrent.filter((p) =>
         p.name.toLowerCase().includes(query.toLowerCase())
       );
-      return filtered;
     },
-    [filteredProjects]
+    [projectsWithCurrent]
   );
   // Build a flat, depth-annotated folder list preserving parent→child order
   type FolderOption = {
@@ -378,6 +397,25 @@ export function CopyMoveDialog({
   const workflowFallbacks =
     preflight?.workflowMappings.filter((m) => m.isDefaultFallback) ?? [];
 
+  const isSameFolderMove = useMemo(() => {
+    if (operation !== "move") return false;
+    if (targetProjectId !== sourceProjectId) return false;
+    if (sourceFolderId === undefined) return false;
+    return targetFolderId === sourceFolderId;
+  }, [
+    operation,
+    targetProjectId,
+    sourceProjectId,
+    sourceFolderId,
+    targetFolderId,
+  ]);
+
+  useEffect(() => {
+    if (isSameFolderMove && operation === "move") {
+      setOperation("copy");
+    }
+  }, [isSameFolderMove, operation]);
+
   const canGo = !job.isPrefighting && !hasPermissionError && !!targetFolderId;
 
   const progressValue =
@@ -394,7 +432,10 @@ export function CopyMoveDialog({
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-3xl h-[90vh] flex flex-col overflow-hidden">
+      <DialogContent
+        data-testid="copy-move-dialog"
+        className="max-w-3xl h-[90vh] flex flex-col overflow-hidden"
+      >
         <DialogHeader className="shrink-0">
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{stepDescriptions[step]}</DialogDescription>
@@ -438,7 +479,10 @@ export function CopyMoveDialog({
           {/* ── Step 1: Target Selection ─────────────────────────────────── */}
           {step === "target" && (
             <div className="flex flex-col gap-4 mb-2">
-              <div className="flex flex-col gap-1.5">
+              <div
+                className="flex flex-col gap-1.5"
+                data-testid="copy-move-target-project-trigger"
+              >
                 <Label>{t("targetProject")}</Label>
                 <AsyncCombobox<ProjectOption>
                   value={selectedProject}
@@ -449,7 +493,10 @@ export function CopyMoveDialog({
                   fetchOptions={fetchProjects}
                   getOptionValue={(p) => p.id}
                   renderOption={(p) => (
-                    <div className="flex items-center gap-2">
+                    <div
+                      data-testid={`copy-move-project-option-${p.id}`}
+                      className="flex items-center gap-2"
+                    >
                       {p.iconUrl ? (
                         <Image
                           src={p.iconUrl}
@@ -469,6 +516,14 @@ export function CopyMoveDialog({
                       >
                         {p.name}
                       </span>
+                      {p.isCurrent && (
+                        <span
+                          data-testid="copy-move-project-current-suffix"
+                          className="ml-1 text-xs text-muted-foreground"
+                        >
+                          {tGlobal("repository.dragDrop.currentSuffix")}
+                        </span>
+                      )}
                       {p.isCompleted && (
                         <span className="ml-auto text-xs text-muted-foreground">
                           {t("completed")}
@@ -483,7 +538,7 @@ export function CopyMoveDialog({
               </div>
 
               {targetProjectId && (
-                <div>
+                <div data-testid="copy-move-target-folder-trigger">
                   <Label>{t("targetFolder")}</Label>
                   <div className="flex gap-1.5">
                     <AsyncCombobox<FolderOption>
@@ -493,8 +548,10 @@ export function CopyMoveDialog({
                       }
                       fetchOptions={fetchFolders}
                       getOptionValue={(f) => f.id}
+                      isOptionDisabled={(f) => disabledFolderIds.has(f.id)}
                       renderOption={(f) => (
                         <div
+                          data-testid={`copy-move-folder-option-${f.id}`}
                           className="flex items-center gap-1.5"
                           style={{ paddingLeft: `${f.depth * 12}px` }}
                         >
@@ -572,6 +629,7 @@ export function CopyMoveDialog({
                       value="copy"
                       id="op-copy"
                       className="mt-0.5"
+                      data-testid="copy-move-operation-copy"
                     />
                     <div className="flex flex-col gap-0.5">
                       <Label
@@ -586,15 +644,40 @@ export function CopyMoveDialog({
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
-                    <RadioGroupItem
-                      value="move"
-                      id="op-move"
-                      className="mt-0.5"
-                    />
+                    {isSameFolderMove ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-block">
+                            <RadioGroupItem
+                              value="move"
+                              id="op-move"
+                              disabled
+                              className="mt-0.5"
+                              data-testid="copy-move-operation-move"
+                            />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {tGlobal(
+                            "repository.dragDrop.moveDisabledSameFolder"
+                          )}
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <RadioGroupItem
+                        value="move"
+                        id="op-move"
+                        className="mt-0.5"
+                        data-testid="copy-move-operation-move"
+                      />
+                    )}
                     <div className="flex flex-col gap-0.5">
                       <Label
                         htmlFor="op-move"
-                        className="font-medium cursor-pointer"
+                        className={cn(
+                          "font-medium cursor-pointer",
+                          isSameFolderMove && "opacity-50 cursor-not-allowed"
+                        )}
                       >
                         {t("operationMove")}
                       </Label>
@@ -800,12 +883,29 @@ export function CopyMoveDialog({
                     {tCommon("actions.complete")}
                   </div>
                   <p className="text-sm">
-                    {t("successCount", {
-                      count:
-                        (job.result.copiedCount ?? 0) +
-                        (job.result.movedCount ?? 0),
-                      operation,
-                    })}
+                    {operation === "copy"
+                      ? tGlobal("repository.dragDrop.copyComplete", {
+                          count:
+                            (job.result.copiedCount ?? 0) +
+                            (job.result.movedCount ?? 0),
+                          folder: selectedFolder?.name ?? "",
+                          dest:
+                            targetProjectId === sourceProjectId
+                              ? "samename"
+                              : "crossProject",
+                          projectName: selectedProject?.name ?? "",
+                        })
+                      : tGlobal("repository.dragDrop.moveComplete", {
+                          count:
+                            (job.result.copiedCount ?? 0) +
+                            (job.result.movedCount ?? 0),
+                          folder: selectedFolder?.name ?? "",
+                          dest:
+                            targetProjectId === sourceProjectId
+                              ? "samename"
+                              : "crossProject",
+                          projectName: selectedProject?.name ?? "",
+                        })}
                   </p>
                   {job.result.skippedCount > 0 && (
                     <p className="text-sm text-muted-foreground">
@@ -875,6 +975,7 @@ export function CopyMoveDialog({
         <DialogFooter className="shrink-0">
           {step === "target" && (
             <Button
+              data-testid="copy-move-next-button"
               onClick={handleNext}
               disabled={!targetProjectId || !targetFolderId}
             >
@@ -888,7 +989,11 @@ export function CopyMoveDialog({
                 <ChevronLeft className="h-4 w-4" />
                 {tCommon("actions.back")}
               </Button>
-              <Button onClick={handleGo} disabled={!canGo}>
+              <Button
+                data-testid="copy-move-go-button"
+                onClick={handleGo}
+                disabled={!canGo}
+              >
                 {job.isPrefighting ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : null}
@@ -904,7 +1009,10 @@ export function CopyMoveDialog({
             )}
           {step === "progress" &&
             (job.status === "completed" || job.status === "failed") && (
-              <Button onClick={() => handleOpenChange(false)}>
+              <Button
+                data-testid="copy-move-close-button"
+                onClick={() => handleOpenChange(false)}
+              >
                 {tCommon("actions.close")}
               </Button>
             )}
