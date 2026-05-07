@@ -1990,7 +1990,9 @@
       },
       "changePasswordModal": {
         "buttonText": "Cambiar contraseña",
+        "setPasswordButtonText": "Establecer contraseña",
         "description": "Introduzca su contraseña actual y una nueva contraseña para cambiar la contraseña de su cuenta. Esto sólo cambiará su contraseña administrada internamente. Si inicia sesión a través del SSO, esa contraseña no cambiará.",
+        "setPasswordDescription": "Has iniciado sesión mediante SSO y aún no has configurado una contraseña local. Introduce una nueva contraseña para habilitar el inicio de sesión con correo electrónico y contraseña en tu cuenta.",
         "currentPasswordLabel": "Contraseña actual",
         "newPasswordLabel": "Nueva contraseña",
         "confirmPasswordLabel": "Confirmar nueva contraseña",
@@ -2158,6 +2160,14 @@
       "expandAll": "Expandir todo",
       "collapseAll": "Colapsar todos",
       "altKey": "Mantenga la tecla Alt para expandir/contraer todos los niños"
+    },
+    "dragDrop": {
+      "move": "Mover",
+      "copy": "Copiar",
+      "promptTitle": "¿Qué te gustaría hacer?",
+      "copying": "Copiando…",
+      "copyComplete": "{count, plural, =1 {Copiado # caso} other {Copiado # casos}}",
+      "copyError": "Error al copiar {count, plural, =1 {caso de prueba} other {casos de prueba}}"
     },
     "folderActions": {
       "edit": "Editar carpeta",
@@ -5175,6 +5185,7 @@
     "failedToCreate": "No se pudo crear el enlace.",
     "confirmRemoveLink": "¿Está seguro que desea eliminar este enlace?",
     "DEPENDS_ON": "Dependencia",
+    "DUPLICATED_FROM": "Duplicado de",
     "SAME_TEST_DIFFERENT_SOURCE": "Misma prueba (Fuente diferente)",
     "status": "Último estado",
     "at": "Ejecutado"

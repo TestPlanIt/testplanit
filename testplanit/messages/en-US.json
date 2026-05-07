@@ -2161,6 +2161,14 @@
       "collapseAll": "Collapse all",
       "altKey": "Hold Alt key to expand/collapse all children"
     },
+    "dragDrop": {
+      "move": "Move",
+      "copy": "Copy",
+      "promptTitle": "What would you like to do?",
+      "copying": "Copying…",
+      "copyComplete": "{count, plural, =1 {Copied # case} other {Copied # cases}}",
+      "copyError": "Failed to copy {count, plural, =1 {test case} other {test cases}}"
+    },
     "folderActions": {
       "edit": "Edit Folder",
       "delete": "Delete Folder",
