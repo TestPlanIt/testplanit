@@ -37,7 +37,10 @@ beforeEach(() => {
 });
 
 describe("testplanit_folders_delete", () => {
-  it("happy path: soft-deletes folder via update with isDeleted:true; returns {id, isDeleted:true}", async () => {
+  it("happy path: empty folder soft-deletes via update with isDeleted:true; returns {id, isDeleted:true}", async () => {
+    // BL-01: pre-check returns empty arrays (no active cases, no children).
+    zenstackMock.mockResolvedValueOnce([]); // active cases
+    zenstackMock.mockResolvedValueOnce([]); // active children
     zenstackMock.mockResolvedValueOnce({ id: 42, isDeleted: true });
 
     const result = await callTool({ folderId: 42 });
@@ -56,7 +59,36 @@ describe("testplanit_folders_delete", () => {
     );
   });
 
+  it("BL-01 pre-check: queries repositoryCases findMany filtered by folderId and isDeleted:false", async () => {
+    zenstackMock.mockResolvedValueOnce([]); // active cases
+    zenstackMock.mockResolvedValueOnce([]); // active children
+    zenstackMock.mockResolvedValueOnce({ id: 42, isDeleted: true });
+
+    await callTool({ folderId: 42 });
+
+    expect(zenstackMock).toHaveBeenCalledWith(
+      "repositoryCases",
+      "findMany",
+      expect.objectContaining({
+        where: { folderId: 42, isDeleted: false },
+        take: 1,
+      }),
+      env,
+    );
+    expect(zenstackMock).toHaveBeenCalledWith(
+      "repositoryFolders",
+      "findMany",
+      expect.objectContaining({
+        where: { parentId: 42, isDeleted: false },
+        take: 1,
+      }),
+      env,
+    );
+  });
+
   it("NEVER calls 'delete' or 'deleteMany' (T-06-06 invariant)", async () => {
+    zenstackMock.mockResolvedValueOnce([]); // active cases
+    zenstackMock.mockResolvedValueOnce([]); // active children
     zenstackMock.mockResolvedValueOnce({ id: 42, isDeleted: true });
 
     await callTool({ folderId: 42 });
@@ -79,21 +111,48 @@ describe("testplanit_folders_delete", () => {
     );
   });
 
-  it("non-empty folder rejection: 422 with 'not empty' surfaces as isError, no token in message (T-06-05)", async () => {
-    zenstackMock.mockRejectedValueOnce(
-      new TestPlanItHttpError("HTTP 422 from /api/model/repositoryFolders/update: folder not empty", { statusCode: 422 }),
-    );
+  it("BL-01: non-empty folder (active cases) rejected with 422 'not empty'; no soft-delete PATCH issued", async () => {
+    // Pre-check finds an active case in the folder.
+    zenstackMock.mockResolvedValueOnce([{ id: 7 }]); // active cases (non-empty)
+    zenstackMock.mockResolvedValueOnce([]); // active children
 
     const result = await callTool({ folderId: 42 });
 
     expect(result.isError).toBe(true);
     const text = (result.content as Array<{ text: string }>)[0]!.text;
     expect(text.toLowerCase()).toContain("not empty");
-    // T-06-05: no token prefix in error message
+    expect(text).toContain("active cases");
+    // No soft-delete PATCH issued.
+    expect(zenstackMock).not.toHaveBeenCalledWith(
+      "repositoryFolders",
+      "update",
+      expect.anything(),
+      expect.anything(),
+    );
+    // T-06-05: no token in error
     expect(text).not.toMatch(/tpi_/);
   });
 
+  it("BL-01: non-empty folder (active sub-folders) rejected with 422 'not empty'; no soft-delete PATCH issued", async () => {
+    zenstackMock.mockResolvedValueOnce([]); // active cases
+    zenstackMock.mockResolvedValueOnce([{ id: 13 }]); // active children (non-empty)
+
+    const result = await callTool({ folderId: 42 });
+
+    expect(result.isError).toBe(true);
+    const text = (result.content as Array<{ text: string }>)[0]!.text;
+    expect(text.toLowerCase()).toContain("not empty");
+    expect(text).toContain("active sub-folders");
+    expect(zenstackMock).not.toHaveBeenCalledWith(
+      "repositoryFolders",
+      "update",
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
   it("READ_ONLY_TOKEN regression: error message contains 'mode:read'", async () => {
+    // Pre-check fails first with the 403 from the read.
     zenstackMock.mockRejectedValueOnce(
       new TestPlanItHttpError("Forbidden", { statusCode: 403, code: "READ_ONLY_TOKEN" }),
     );

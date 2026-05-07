@@ -4,6 +4,7 @@ import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
+import { TestPlanItHttpError } from "../../http.js";
 
 export interface FoldersDeleteDeps {
   env: EnvConfig;
@@ -15,9 +16,14 @@ const FOLDER_DELETE_SELECT = {
 } as const satisfies Prisma.RepositoryFoldersSelect;
 
 /**
- * Soft-delete a folder. The host enforces the "no cases, no sub-folders"
- * rule — a non-empty folder yields HTTP 422 which `mapHttpErrorToToolResult`
- * surfaces as a structured tool error (CASE-12).
+ * Soft-delete a folder. The MCP tool layer enforces the "no cases,
+ * no sub-folders" rule (BL-01) before issuing the soft-delete PATCH —
+ * the host REST API does NOT enforce this constraint at the ZenStack
+ * layer (verified by validation-errors.spec.ts), so the pre-check has
+ * to live here.
+ *
+ * Non-empty folders yield a structured TestPlanItHttpError with status
+ * 422 which `mapHttpErrorToToolResult` surfaces as a CASE-12 error.
  *
  * T-06-06: ALWAYS uses `update` with `isDeleted: true`. NEVER calls
  * ZenStack `delete` or `deleteMany`.
@@ -27,13 +33,54 @@ export function registerFoldersDelete(server: McpServer, deps: FoldersDeleteDeps
     "testplanit_folders_delete",
     {
       description:
-        "Soft-delete a folder by id. Folders with cases or sub-folders cannot be deleted; the host returns a structured error in that case. Returns { id, isDeleted: true } on success.",
+        "Soft-delete a folder by id. Folders with cases or sub-folders cannot be deleted; the tool returns a structured error in that case. Returns { id, isDeleted: true } on success.",
       inputSchema: {
         folderId: z.number().int().positive(),
       },
     },
     async (input) => {
       try {
+        // BL-01: pre-check that the folder is empty before issuing the
+        // soft-delete PATCH. Two `findMany` reads with take:1 are cheap
+        // and avoid double-counting on the host. Empty arrays mean clear.
+        const [activeCases, activeChildren] = await Promise.all([
+          zenstack<Array<{ id: number }>>(
+            "repositoryCases",
+            "findMany",
+            {
+              where: {
+                folderId: input.folderId,
+                isDeleted: false,
+              } satisfies Prisma.RepositoryCasesWhereInput,
+              select: { id: true } satisfies Prisma.RepositoryCasesSelect,
+              take: 1,
+            },
+            deps.env,
+          ),
+          zenstack<Array<{ id: number }>>(
+            "repositoryFolders",
+            "findMany",
+            {
+              where: {
+                parentId: input.folderId,
+                isDeleted: false,
+              } satisfies Prisma.RepositoryFoldersWhereInput,
+              select: { id: true } satisfies Prisma.RepositoryFoldersSelect,
+              take: 1,
+            },
+            deps.env,
+          ),
+        ]);
+        if (activeCases.length > 0 || activeChildren.length > 0) {
+          const reasons: string[] = [];
+          if (activeCases.length > 0) reasons.push("active cases");
+          if (activeChildren.length > 0) reasons.push("active sub-folders");
+          throw new TestPlanItHttpError(
+            `Folder ${input.folderId} is not empty (contains ${reasons.join(" and ")}). Move or soft-delete contents first.`,
+            { statusCode: 422 },
+          );
+        }
+
         const result = await zenstack<{ id: number; isDeleted: boolean }>(
           "repositoryFolders",
           "update",
