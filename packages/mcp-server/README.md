@@ -70,7 +70,7 @@ List test cases scoped to a project. Supports filters and cursor-based paginatio
   "tagIds": [3, 4],
   "name": "login",
   "stateId": 5,
-  "customField": { "name": "Priority", "value": "High" },
+  "customField": { "name": "Priority" },
   "cursor": 100,
   "limit": 25
 }

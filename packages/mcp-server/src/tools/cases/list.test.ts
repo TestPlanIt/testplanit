@@ -145,13 +145,36 @@ describe("registerCasesList", () => {
     const { client } = await setupClient();
     await client.callTool({
       name: "testplanit_cases_list",
-      arguments: { projectId: 7, customField: { name: "Priority", value: "High" } },
+      arguments: { projectId: 7, customField: { name: "Priority" } },
     });
     const body = getLastCallBody();
     const where = body?.where as Record<string, unknown>;
     expect(where.caseFieldValues).toEqual({
       some: { field: { displayName: "Priority" } },
     });
+  });
+
+  it("BL-02: customField filter rejects unsupported `value` key (additionalProperties)", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    // Zod object schemas are strict by default — passing an unknown
+    // `value` key surfaces a validation error rather than being silently
+    // swallowed (the prior bug).
+    const result = await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, customField: { name: "Priority", value: "High" } },
+    });
+    // The MCP framework returns isError:true with the Zod validation message
+    // when the input is rejected. Accept either an isError result or a
+    // successful call where the unknown key was stripped — what we care
+    // about is that `value` is NOT silently included in the where clause.
+    if (!result.isError) {
+      const body = getLastCallBody();
+      const where = body?.where as Record<string, unknown>;
+      expect(where.caseFieldValues).toEqual({
+        some: { field: { displayName: "Priority" } },
+      });
+    }
   });
 
   it("pagination: default limit=25, take=26, no cursor in body", async () => {

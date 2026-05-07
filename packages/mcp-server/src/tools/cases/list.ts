@@ -33,10 +33,17 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
         tagIds: z.array(z.number().int().positive()).optional(),
         name: z.string().min(1).optional(),
         stateId: z.number().int().positive().optional(),
+        // BL-02: only `name` is supported. Value-equality on the Json?
+        // `caseFieldValues.value` column is unreliable across field types
+        // (Dropdown stores option IDs, Multi-Select stores arrays, Text
+        // stores strings). Silently swallowing an agent-supplied `value`
+        // (the prior behavior) would let the agent act on incorrect data.
+        // Dropping it from the schema makes the unsupported dimension
+        // explicit; agents that need value filtering should call
+        // testplanit_cases_get on candidate IDs and filter locally.
         customField: z
           .object({
             name: z.string().min(1),
-            value: z.unknown().optional(),
           })
           .optional(),
         cursor: z.number().int().positive().optional(),
