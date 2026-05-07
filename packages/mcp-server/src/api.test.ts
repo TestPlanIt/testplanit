@@ -298,6 +298,17 @@ describe("resolveDefaultTemplate()", () => {
     const result = await resolveDefaultTemplate(7, ENV);
     expect(result).toBe(5);
   });
+
+  it("BL-04: query is deterministic (orderBy id asc, take 1) so concurrent calls pick the same template", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(200, { data: [{ id: 5 }] }));
+    await resolveDefaultTemplate(7, ENV);
+    const call = fetchMock.mock.calls[0];
+    const url = call[0] as string;
+    const qParam = new URL(url).searchParams.get("q");
+    const body = JSON.parse(decodeURIComponent(qParam!));
+    expect(body.orderBy).toEqual({ id: "asc" });
+    expect(body.take).toBe(1);
+  });
 });
 
 // ---------------------------------------------------------------------------
