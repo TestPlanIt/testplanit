@@ -1,7 +1,34 @@
 import type { Prisma } from "@prisma/client";
-import { zenstack } from "../../api.js";
+import { zenstack, lookup } from "../../api.js";
 import { TestPlanItHttpError } from "../../http.js";
 import type { EnvConfig } from "../../env.js";
+
+/**
+ * Resolve tag IDs from a mixed array of existing IDs (numbers) and tag
+ * names (strings). Names are resolved via lookup with createIfMissing:true,
+ * so the first reference to a new tag name lazily creates it. Empty string
+ * tags are rejected (Pitfall 5). Shared between cases/create.ts and
+ * cases/update.ts to avoid divergent copies (WR-07).
+ */
+export async function resolveTagIds(
+  tags: Array<number | string> | undefined,
+  env: EnvConfig,
+): Promise<number[]> {
+  if (!tags || tags.length === 0) return [];
+  const out: number[] = [];
+  for (const t of tags) {
+    if (typeof t === "number") {
+      out.push(t);
+      continue;
+    }
+    if (typeof t !== "string" || t.length === 0) {
+      throw new TestPlanItHttpError("Empty tag name not allowed.", { statusCode: 422 });
+    }
+    const result = await lookup({ type: "tag", name: t, createIfMissing: true }, env);
+    out.push(result.id);
+  }
+  return out;
+}
 
 /**
  * Block-level node types per Tiptap / ProseMirror schema. Children of

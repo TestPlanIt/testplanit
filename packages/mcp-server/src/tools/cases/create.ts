@@ -2,7 +2,6 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import * as z from "zod/v4";
 import {
   zenstack,
-  lookup,
   resolveActiveRepository,
   resolveDefaultTemplate,
   resolveCaseWorkflowState,
@@ -11,36 +10,12 @@ import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import { TestPlanItHttpError } from "../../http.js";
 import { resolveCustomFields, writeCustomFieldValues } from "./customFields.js";
+import { resolveTagIds } from "./shared.js";
 import { createStepsForCase, type StepInput } from "./steps.js";
 import { fetchCaseDetail } from "./fetchDetail.js";
 
 export interface CasesCreateDeps {
   env: EnvConfig;
-}
-
-/**
- * Resolve tag IDs from a mixed array of existing IDs (numbers) and tag names
- * (strings). Names are resolved via lookup with createIfMissing:true.
- * Empty string tags are rejected (Pitfall 5).
- */
-async function resolveTagIds(
-  tags: Array<number | string> | undefined,
-  env: EnvConfig,
-): Promise<number[]> {
-  if (!tags || tags.length === 0) return [];
-  const out: number[] = [];
-  for (const t of tags) {
-    if (typeof t === "number") {
-      out.push(t);
-      continue;
-    }
-    if (typeof t !== "string" || t.length === 0) {
-      throw new TestPlanItHttpError("Empty tag name not allowed.", { statusCode: 422 });
-    }
-    const result = await lookup({ type: "tag", name: t, createIfMissing: true }, env);
-    out.push(result.id);
-  }
-  return out;
 }
 
 export function registerCasesCreate(

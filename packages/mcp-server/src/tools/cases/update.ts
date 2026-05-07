@@ -1,40 +1,16 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
-import { zenstack, lookup, resolveCaseWorkflowState } from "../../api.js";
+import { zenstack, resolveCaseWorkflowState } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
-import { TestPlanItHttpError } from "../../http.js";
 import { resolveCustomFields, writeCustomFieldValues } from "./customFields.js";
+import { resolveTagIds } from "./shared.js";
 import { replaceStepsForCase, type StepInput } from "./steps.js";
 import { fetchCaseDetail } from "./fetchDetail.js";
 
 export interface CasesUpdateDeps {
   env: EnvConfig;
-}
-
-/**
- * Resolve tag IDs from a mixed array. Identical to the helper in create.ts —
- * duplicated here to avoid cyclic imports between the two tool modules.
- */
-async function resolveTagIds(
-  tags: Array<number | string> | undefined,
-  env: EnvConfig,
-): Promise<number[]> {
-  if (!tags || tags.length === 0) return [];
-  const out: number[] = [];
-  for (const t of tags) {
-    if (typeof t === "number") {
-      out.push(t);
-      continue;
-    }
-    if (typeof t !== "string" || t.length === 0) {
-      throw new TestPlanItHttpError("Empty tag name not allowed.", { statusCode: 422 });
-    }
-    const result = await lookup({ type: "tag", name: t, createIfMissing: true }, env);
-    out.push(result.id);
-  }
-  return out;
 }
 
 export function registerCasesUpdate(
