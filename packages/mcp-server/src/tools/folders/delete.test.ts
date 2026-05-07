@@ -151,6 +151,21 @@ describe("testplanit_folders_delete", () => {
     );
   });
 
+  it("WR-03: tool-result error text never leaks the bearer token (T-06-05 defense in depth)", async () => {
+    zenstackMock.mockRejectedValueOnce(
+      new TestPlanItHttpError(
+        `upstream regression message containing ${env.apiToken}`,
+        { statusCode: 500 },
+      ),
+    );
+    const result = await callTool({ folderId: 42 });
+    expect(result.isError).toBe(true);
+    const text = (result.content as Array<{ text: string }>)[0]!.text;
+    // Literal token must not appear; the redactTokens() placeholder may.
+    expect(text).not.toContain(env.apiToken);
+    expect(text).not.toContain("tpi_testtoken");
+  });
+
   it("READ_ONLY_TOKEN regression: error message contains 'mode:read'", async () => {
     // Pre-check fails first with the 403 from the read.
     zenstackMock.mockRejectedValueOnce(

@@ -107,5 +107,24 @@ describe("mapHttpErrorToToolResult", () => {
       // template, not the raw err.message.
       expect(result.content[0].text).not.toContain("tpi_supersecretvalue");
     });
+
+    it("WR-03: redacts tpi_* substrings on the unknown-code Request failed: <message> fallback", () => {
+      const err = new TestPlanItHttpError(
+        "upstream regression: tpi_supersecretvalue leaked",
+        { statusCode: 500 },
+      );
+      const result = mapHttpErrorToToolResult(err);
+      expect(result.content[0].text).not.toContain("tpi_supersecretvalue");
+      // The redacted placeholder is preserved so operators can spot the
+      // event in logs.
+      expect(result.content[0].text).toContain("tpi_***");
+    });
+
+    it("WR-03: redacts tpi_* substrings on the network/runtime Error fallback", () => {
+      const err = new Error("ECONNREFUSED — token tpi_supersecretvalue rejected");
+      const result = mapHttpErrorToToolResult(err);
+      expect(result.content[0].text).not.toContain("tpi_supersecretvalue");
+      expect(result.content[0].text).toContain("tpi_***");
+    });
   });
 });

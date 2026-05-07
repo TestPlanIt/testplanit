@@ -47,6 +47,23 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
 };
 
 /**
+ * Defense-in-depth scrub: redact any `tpi_<token>` substring that may have
+ * leaked into an error message before we hand the text to the agent
+ * (WR-03 / T-05-06b). The api.ts layer already avoids interpolating
+ * env.apiToken into messages, but a future regression — or a host echoing
+ * a header verbatim — would otherwise leak through `mapHttpErrorToToolResult`.
+ *
+ * Matches the `tpi_` prefix followed by URL-safe token characters; pasted
+ * tokens, base64url-suffixed tokens, and shorter prefixes all collapse to
+ * the literal string `tpi_***`.
+ */
+const TOKEN_PATTERN = /tpi_[A-Za-z0-9_-]+/g;
+
+function redactTokens(text: string): string {
+  return text.replace(TOKEN_PATTERN, "tpi_***");
+}
+
+/**
  * Translate any thrown error from a tool handler into the MCP tool-result
  * error envelope. Three paths:
  *
@@ -59,22 +76,24 @@ const ERROR_CODE_MESSAGES: Record<string, string> = {
  *
  * The friendly templates are fixed strings, NOT echoes of `err.message`,
  * so a token-bearing message accidentally constructed upstream cannot leak
- * the raw token through this layer (T-05-06 defense in depth).
+ * the raw token through this layer (T-05-06 defense in depth). The fallback
+ * paths DO interpolate `err.message`, so the final text is run through
+ * `redactTokens` as a belt-and-suspenders scrub (WR-03).
  */
 export function mapHttpErrorToToolResult(err: unknown): ToolErrorResult {
   if (err instanceof TestPlanItHttpError) {
     const code = err.code;
     const friendly = code ? ERROR_CODE_MESSAGES[code] : undefined;
-    const text = friendly
+    const rawText = friendly
       ? `${friendly} (${code})`
       : `Request failed: ${err.message} (HTTP ${err.statusCode ?? "unknown"})`;
-    return { isError: true, content: [{ type: "text", text }] };
+    return { isError: true, content: [{ type: "text", text: redactTokens(rawText) }] };
   }
   if (err instanceof Error) {
     return {
       isError: true,
       content: [
-        { type: "text", text: `Network or runtime error: ${err.message}` },
+        { type: "text", text: redactTokens(`Network or runtime error: ${err.message}`) },
       ],
     };
   }

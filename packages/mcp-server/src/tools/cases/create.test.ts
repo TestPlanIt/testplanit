@@ -329,6 +329,29 @@ describe("testplanit_cases_create", () => {
     expect(cleanup).toBeDefined();
   });
 
+  it("WR-03: tool-result error text never leaks the bearer token (T-06-05 defense in depth)", async () => {
+    // Simulate a regression where an upstream message accidentally embedded
+    // the raw token. The tool-layer mapper / handler chain must never echo
+    // the literal token through to the agent — the redactTokens() scrub
+    // collapses it to `tpi_***`.
+    resolveActiveRepositoryMock.mockRejectedValueOnce(
+      new TestPlanItHttpError(
+        `upstream regression message containing ${env.apiToken}`,
+        { statusCode: 500 },
+      ),
+    );
+    const result = await callTool({
+      projectId: 7,
+      folderId: 12,
+      name: "leak-check",
+    });
+    expect(result.isError).toBe(true);
+    const text = (result.content as Array<{ type: string; text: string }>)[0]!.text;
+    // The literal token must not appear; the placeholder may.
+    expect(text).not.toContain(env.apiToken);
+    expect(text).not.toContain("tpi_testtoken");
+  });
+
   it("BL-03: re-fetch failure (case missing post-create) also triggers compensating soft-delete", async () => {
     zenstackMock.mockResolvedValueOnce({ id: 101 });
     fetchCaseDetailMock.mockRejectedValueOnce(
