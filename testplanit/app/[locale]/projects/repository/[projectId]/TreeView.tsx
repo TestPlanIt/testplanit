@@ -32,7 +32,7 @@ import React, {
   useState,
 } from "react";
 import { NodeApi, Tree, TreeApi } from "react-arborist";
-import { useDragDropManager, useDrop } from "react-dnd";
+import { useDragLayer, useDrop } from "react-dnd";
 import { toast } from "sonner";
 import { useCopyMoveJob } from "~/components/copy-move/useCopyMoveJob";
 import { useDragModifier } from "~/hooks/useDragModifier";
@@ -940,10 +940,11 @@ const TreeView: React.FC<{
     const IconComponent = node.isOpen && hasChildren ? FolderOpen : Folder;
     const childrenLoaded = !!data?.childrenLoaded;
 
-    const dndManager = useDragDropManager();
-    const { copyHeld, moveHeld } = useDragModifier(
-      dndManager.getMonitor().isDragging()
-    );
+    // useDragLayer subscribes the component to drag-state changes; reading
+    // dndManager.getMonitor().isDragging() directly does not subscribe and
+    // gates useDragModifier's listener attach/detach on incidental re-renders.
+    const isDragging = useDragLayer((monitor) => monitor.isDragging());
+    const { copyHeld, moveHeld } = useDragModifier(isDragging);
 
     // Handle test case drops
     const [{ isOver, canDrop }, drop] = useDrop<
