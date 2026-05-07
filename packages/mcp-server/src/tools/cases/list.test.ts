@@ -699,4 +699,79 @@ describe("registerCasesList", () => {
     expect(result.isError).toBe(true);
     expect(mockZenstack).not.toHaveBeenCalled();
   });
+
+  it("creatorIds: ['u1','u2'] adds where.creatorId = { in: ['u1','u2'] }", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, creatorIds: ["u1", "u2"] },
+    });
+    const body = getLastCallBody();
+    const where = (body as { where: Record<string, unknown> }).where;
+    expect(where.creatorId).toEqual({ in: ["u1", "u2"] });
+  });
+
+  it("creatorIds: [] omits where.creatorId entirely (empty-array guard)", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, creatorIds: [] },
+    });
+    const body = getLastCallBody();
+    const where = (body as { where: Record<string, unknown> }).where;
+    expect(where).not.toHaveProperty("creatorId");
+  });
+
+  it("from alone produces where.createdAt = { gte: Date } with no lte key", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, from: "2026-04-01T00:00:00Z" },
+    });
+    const body = getLastCallBody();
+    const where = (body as { where: { createdAt: { gte?: Date; lte?: Date } } }).where;
+    expect(where.createdAt.gte).toEqual(new Date("2026-04-01T00:00:00Z"));
+    expect(where.createdAt).not.toHaveProperty("lte");
+  });
+
+  it("to alone produces where.createdAt = { lte: Date } with no gte key", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, to: "2026-05-01T00:00:00Z" },
+    });
+    const body = getLastCallBody();
+    const where = (body as { where: { createdAt: { gte?: Date; lte?: Date } } }).where;
+    expect(where.createdAt.lte).toEqual(new Date("2026-05-01T00:00:00Z"));
+    expect(where.createdAt).not.toHaveProperty("gte");
+  });
+
+  it("from + to + creatorIds + automated coexist additively in the same where clause", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: {
+        projectId: 7,
+        creatorIds: ["u1"],
+        from: "2026-04-01T00:00:00Z",
+        to: "2026-05-01T00:00:00Z",
+        automated: true,
+      },
+    });
+    const body = getLastCallBody();
+    const where = (body as { where: Record<string, unknown> }).where;
+    expect(where.creatorId).toEqual({ in: ["u1"] });
+    expect(where.createdAt).toEqual({
+      gte: new Date("2026-04-01T00:00:00Z"),
+      lte: new Date("2026-05-01T00:00:00Z"),
+    });
+    expect(where.automated).toBe(true);
+    expect(where.projectId).toBe(7);
+    expect(where.isDeleted).toBe(false);
+  });
 });
