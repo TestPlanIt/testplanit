@@ -1402,7 +1402,7 @@ describe("CopyMoveWorker", () => {
     });
   });
 
-  // ─── Provenance link write (DUP-04) ───────────────────────────────────────
+  // ─── Provenance link write ────────────────────────────────────────────────
 
   describe("provenance link write (DUP-04)", () => {
     it("writes RepositoryCaseLink(DUPLICATED_FROM) for within-project copy", async () => {
@@ -1451,7 +1451,7 @@ describe("CopyMoveWorker", () => {
     });
   });
 
-  // ─── DUPLICATED audit emission (DUP-10) ───────────────────────────────────
+  // ─── DUPLICATED audit emission ────────────────────────────────────────────
 
   describe("DUPLICATED audit emission (DUP-10)", () => {
     it("emits captureAuditEvent({action: 'DUPLICATED'}) for within-project copy", async () => {
@@ -1512,7 +1512,7 @@ describe("CopyMoveWorker", () => {
     });
   });
 
-  // ─── Multi-source duplication (DUP-07) ────────────────────────────────────
+  // ─── Multi-source duplication ─────────────────────────────────────────────
 
   describe("multi-source duplication (DUP-07)", () => {
     it("writes one link + one DUPLICATED audit per source case", async () => {
@@ -1548,7 +1548,7 @@ describe("CopyMoveWorker", () => {
     });
   });
 
-  // ─── Transaction rollback on link-write failure (TST-03) ──────────────────
+  // ─── Transaction rollback on link-write failure ───────────────────────────
 
   describe("transaction rollback on link-write failure (TST-03)", () => {
     it("rolls back created cases when a subsequent link write throws", async () => {
