@@ -13,6 +13,7 @@ TestPlanIt provides official npm packages to integrate with your test automation
 | Package | Description | npm |
 |---------|-------------|-----|
 | [`@testplanit/api`](./api-client.md) | Official JavaScript/TypeScript API client | [![npm](https://img.shields.io/npm/v/@testplanit/api)](https://www.npmjs.com/package/@testplanit/api) |
+| [`@testplanit/mcp-server`](./mcp-overview.md) | MCP server for AI agents (Claude Desktop, Cursor) | [![npm](https://img.shields.io/npm/v/@testplanit/mcp-server)](https://www.npmjs.com/package/@testplanit/mcp-server) |
 | [`@testplanit/wdio-reporter`](./wdio-overview.md) | WebdriverIO reporter | [![npm](https://img.shields.io/npm/v/@testplanit/wdio-reporter)](https://www.npmjs.com/package/@testplanit/wdio-reporter) |
 
 ## Architecture
