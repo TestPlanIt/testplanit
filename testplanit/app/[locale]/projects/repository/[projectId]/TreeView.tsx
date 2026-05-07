@@ -979,7 +979,9 @@ const TreeView: React.FC<{
           monitor
         ) => {
           const targetFolderId = data?.folderId;
-          if (!targetFolderId) return;
+          // folderId === 0 is a sentinel for the root pseudo-folder which
+          // cannot accept drops; null/undefined means no folder data.
+          if (targetFolderId == null || targetFolderId === 0) return;
 
           const itemsToUpdate: Array<{ id: number | string }> =
             item.draggedItems && item.draggedItems.length > 0
