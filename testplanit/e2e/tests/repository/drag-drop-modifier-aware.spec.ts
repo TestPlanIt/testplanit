@@ -76,7 +76,14 @@ async function dragWithModifier(
   if (modifier) await page.keyboard.down(modifier);
   await page.mouse.move(targetCenterX + 2, targetCenterY + 2, { steps: 20 });
   await page.mouse.up();
-  if (modifier) await page.keyboard.up(modifier);
+  // Wait for the drop to settle (dragend/drop callbacks have run) before
+  // releasing the modifier. Releasing too early on slow CI hardware races
+  // the dragover→drop ordering and can lose the modifier state in the drop
+  // callback's captured copyHeld/moveHeld closure.
+  if (modifier) {
+    await page.waitForTimeout(50);
+    await page.keyboard.up(modifier);
+  }
 }
 
 async function casesInFolder(
@@ -432,12 +439,12 @@ test.describe("Drag-drop modifier-aware UX", () => {
 
     // Modifier held through drop so the drop branches to direct copy.
     await page.mouse.up();
-    await page.keyboard.up(copyModifier);
-
-    // Copy modifier held → no popover.
+    // Wait for the drop to settle before releasing the modifier so the drop
+    // callback observes the modifier-bearing dragover state on slow CI.
     await expect(page.getByTestId("drop-action-popover")).not.toBeVisible({
       timeout: 2_000,
     });
+    await page.keyboard.up(copyModifier);
 
     let newCaseId: number | undefined;
     await expect
@@ -499,12 +506,12 @@ test.describe("Drag-drop modifier-aware UX", () => {
 
     // Modifier held through drop so the drop branches to direct move.
     await page.mouse.up();
-    await page.keyboard.up("Shift");
-
-    // Move modifier held → no popover.
+    // Wait for the drop to settle before releasing the modifier so the drop
+    // callback observes the modifier-bearing dragover state on slow CI.
     await expect(page.getByTestId("drop-action-popover")).not.toBeVisible({
       timeout: 2_000,
     });
+    await page.keyboard.up("Shift");
 
     // Move uses the fast path — source ends up in target folder.
     await expect
