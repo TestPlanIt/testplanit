@@ -29,8 +29,8 @@ export type ToolRegistryDeps =
  * Tools are grouped by domain: whoami (debug/identity), cases (CASE-01..05),
  * folders (CASE-06..10), tags (CASE-11), projects (agent context
  * disambiguation — Claude's Discretion include), runs (EXEC-01..05 — Phase 7
- * read-side execution tools), sessions (SESS-01..02 so far — Phase 7 plan
- * 07-05 will extend with SESS-03..05).
+ * read-side execution tools), sessions (SESS-01..05 — Phase 7 read-side
+ * exploratory-session tools, including session results and findings).
  */
 export function registerAll(
   server: McpServer,
