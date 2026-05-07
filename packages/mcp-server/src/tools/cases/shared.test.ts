@@ -411,7 +411,7 @@ describe("mapCaseRow", () => {
     ],
   };
 
-  it("returns the D-09 shape with correct field mapping", () => {
+  it("returns the D-09 shape with correct field mapping (Phase-8 widened: + lastUpdatedAt + latestResult)", () => {
     const result = mapCaseRow(rawRow);
     expect(result).toEqual({
       id: 101,
@@ -427,6 +427,12 @@ describe("mapCaseRow", () => {
         { id: 1, name: "smoke" },
         { id: 2, name: "auth" },
       ],
+      // Phase-8 D8-02 additive fields. The Phase-6 rawRow fixture
+      // doesn't seed repositoryCaseVersions / junitResults / testRuns,
+      // so both new fields default to null per the optional-include
+      // contract documented on RawCaseRow.
+      lastUpdatedAt: null,
+      latestResult: null,
     });
   });
 
