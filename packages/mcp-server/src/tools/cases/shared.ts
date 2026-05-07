@@ -128,8 +128,14 @@ function resolveCustomFieldValue(
 }
 
 function coerceOptionId(v: unknown): number | null {
-  if (typeof v === "number" && Number.isFinite(v)) return v;
-  if (typeof v === "string" && /^\d+$/.test(v)) return parseInt(v, 10);
+  // WR-06: option IDs are positive integers — reject non-integer numerics
+  // (147.5 would have silently misrouted to FieldOption 147 via the
+  // byId lookup) and reject 0 / negatives.
+  if (typeof v === "number" && Number.isInteger(v) && v > 0) return v;
+  if (typeof v === "string" && /^\d+$/.test(v)) {
+    const n = parseInt(v, 10);
+    return Number.isInteger(n) && n > 0 ? n : null;
+  }
   return null;
 }
 

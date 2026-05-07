@@ -259,6 +259,47 @@ describe("denormalizeCustomFields", () => {
     expect(denormalizeCustomFields(rows)).toEqual({ Priority: 999 });
   });
 
+  it("WR-06: Dropdown with non-integer numeric value (147.5) does NOT misroute to FieldOption 147", () => {
+    const rows = [
+      {
+        value: 147.5,
+        field: {
+          displayName: "Priority",
+          type: { type: "Dropdown" },
+          fieldOptions: [{ fieldOption: { id: 147, name: "High" } }],
+        },
+      },
+    ];
+    // 147.5 is rejected by coerceOptionId, so denormalize falls back to
+    // the raw value rather than incorrectly returning "High".
+    expect(denormalizeCustomFields(rows)).toEqual({ Priority: 147.5 });
+  });
+
+  it("WR-06: Dropdown with negative or zero numeric value falls back to raw", () => {
+    const rows = [
+      {
+        value: -1,
+        field: {
+          displayName: "Priority",
+          type: { type: "Dropdown" },
+          fieldOptions: [{ fieldOption: { id: 147, name: "High" } }],
+        },
+      },
+      {
+        value: 0,
+        field: {
+          displayName: "Severity",
+          type: { type: "Dropdown" },
+          fieldOptions: [{ fieldOption: { id: 5, name: "Low" } }],
+        },
+      },
+    ];
+    expect(denormalizeCustomFields(rows)).toEqual({
+      Priority: -1,
+      Severity: 0,
+    });
+  });
+
   it("passes Text/Number/Date values through unchanged", () => {
     const rows = [
       {

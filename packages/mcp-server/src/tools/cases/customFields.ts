@@ -32,11 +32,14 @@ const CASE_FIELD_RESOLVE_SELECT = {
 /**
  * Coerce a value to an option ID. Mirrors the read-side coercion in
  * shared.ts: accepts a positive integer (number or numeric string).
- * Returns null for anything else.
+ * Returns null for anything else (incl. 147.5, -3, "0", BigInt, ...).
  */
 function coerceOptionId(v: unknown): number | null {
-  if (typeof v === "number" && Number.isFinite(v)) return v;
-  if (typeof v === "string" && /^\d+$/.test(v)) return parseInt(v, 10);
+  if (typeof v === "number" && Number.isInteger(v) && v > 0) return v;
+  if (typeof v === "string" && /^\d+$/.test(v)) {
+    const n = parseInt(v, 10);
+    return Number.isInteger(n) && n > 0 ? n : null;
+  }
   return null;
 }
 
