@@ -384,12 +384,14 @@ const TreeView: React.FC<{
   // overlapping submits explicitly.
   const lastSubmittedRef = useRef<{
     folderId: number;
+    folderName: string;
     caseCount: number;
   } | null>(null);
   const [pendingDrop, setPendingDrop] = useState<{
     x: number;
     y: number;
     targetFolderId: number;
+    targetFolderName: string;
     draggedItems: Array<{ id: number | string }>;
   } | null>(null);
 
@@ -451,7 +453,8 @@ const TreeView: React.FC<{
   const handleCopyDrop = useCallback(
     async (
       itemsToUpdate: Array<{ id: number | string }>,
-      targetFolderId: number
+      targetFolderId: number,
+      targetFolderName: string
     ) => {
       // useCopyMoveJob can only track one job at a time. If a copy is already
       // in flight, surfacing a second submit() call would orphan the first
@@ -462,6 +465,7 @@ const TreeView: React.FC<{
       }
       lastSubmittedRef.current = {
         folderId: targetFolderId,
+        folderName: targetFolderName,
         caseCount: itemsToUpdate.length,
       };
       setPendingCopyTargets((prev) => {
@@ -494,6 +498,9 @@ const TreeView: React.FC<{
       toast.success(
         t("repository.dragDrop.copyComplete", {
           count: copyMoveJob.result?.copiedCount ?? 0,
+          folder: submitted?.folderName ?? "",
+          dest: "samename",
+          projectName: "",
         })
       );
       lastSubmittedRef.current = null;
@@ -512,6 +519,9 @@ const TreeView: React.FC<{
       toast.error(
         t("repository.dragDrop.copyError", {
           count: submitted?.caseCount ?? 1,
+          folder: submitted?.folderName ?? "",
+          dest: "samename",
+          projectName: "",
         })
       );
       lastSubmittedRef.current = null;
@@ -999,8 +1009,13 @@ const TreeView: React.FC<{
                 : [];
           if (itemsToUpdate.length === 0) return;
 
+          const targetFolderName = node.data?.name ?? "";
           if (copyHeld) {
-            void handleCopyDrop(itemsToUpdate, targetFolderId);
+            void handleCopyDrop(
+              itemsToUpdate,
+              targetFolderId,
+              targetFolderName
+            );
           } else if (moveHeld) {
             void handleMoveDrop(itemsToUpdate, targetFolderId);
           } else {
@@ -1010,6 +1025,7 @@ const TreeView: React.FC<{
               x: offset.x,
               y: offset.y,
               targetFolderId,
+              targetFolderName,
               draggedItems: itemsToUpdate,
             });
           }
@@ -1449,7 +1465,8 @@ const TreeView: React.FC<{
               ) {
                 void handleCopyDrop(
                   pendingDrop.draggedItems,
-                  pendingDrop.targetFolderId
+                  pendingDrop.targetFolderId,
+                  pendingDrop.targetFolderName
                 );
               }
               setPendingDrop(null);
