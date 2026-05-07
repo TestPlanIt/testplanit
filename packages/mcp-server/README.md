@@ -30,7 +30,7 @@ Set scopes when creating the token in **Profile → API Tokens** (checkboxes: "R
 
 ## Tool Catalog
 
-Phase 6 + Phase 7 + Phase 8 ship 27 production tools across cases / folders / tags / projects / runs / sessions / findings / code-repositories / issues / repository-case-links, plus the `testplanit_whoami` debug helper (28 total). All tools authenticate via the bearer token in `TESTPLANIT_API_TOKEN`. Read tools return JSON; write tools return the same shape as their corresponding `_get` tool.
+Phase 6 + Phase 7 + Phase 8 ship 27 production tools across cases / folders / tags / projects / runs / sessions / findings / code-repositories / issues / repository-case-links, plus three milestones-domain read tools (`testplanit_milestones_list`, `testplanit_milestones_get`, `testplanit_milestone_types_list`) and the `testplanit_whoami` debug helper — **31 total**. All tools authenticate via the bearer token in `TESTPLANIT_API_TOKEN`. Read tools return JSON; write tools return the same shape as their corresponding `_get` tool.
 
 ### Killer-app chain: "Who tested issue X?"
 
@@ -96,6 +96,11 @@ The `issueId` filter (Phase 7 / D7-03 — additive) returns RepositoryCases link
 - `hasNeverExecuted: boolean` — narrows to cases with **zero** JUnit results AND zero TestRunResults (via TestRunCases).
 - `staleSinceUpdate: boolean` — narrows to cases whose latest execution timestamp is earlier than the latest update timestamp (or never executed). Implemented as a handler-side post-filter with a bounded scan cap of 400 rows; the response stamps `truncated: true` when the cap is hit.
 - `updatedAfter: ISODate`, `updatedBefore: ISODate` — calendar filters that route through the `repositoryCaseVersions` relation (`RepositoryCases` has no `updatedAt` column).
+
+**Creator + creation-date filters (additive):** three more optional inputs narrow the list to authorship questions like *"How many test cases did I write last month?"*:
+
+- `creatorIds: string[]` — array of user IDs; matches any. Deliberately wider than `runs_list` / `sessions_list` `createdById` (single string) — a frequent question is "what did **anyone on my team** write" and the array shape avoids round-tripping through union of single-creator calls.
+- `from: ISODate`, `to: ISODate` — `createdAt` range filter. Naming mirrors `runs_list` / `sessions_list` for consistency.
 
 **Phase 8 row fields (additive):** every row carries `lastUpdatedAt` (from `repositoryCaseVersions[currentVersion].createdAt`) and `latestResult: { id, status, executedAt, source: 'TestRun' | 'JUnit' } | null` (the most recent execution across both pipelines, with a `source` discriminator). Returns `null` when the case has never been executed.
 
@@ -951,6 +956,32 @@ Optional `linkType` narrows to `SAME_TEST_DIFFERENT_SOURCE` or `DEPENDS_ON`. The
 
 > Project scope is enforced transitively by the host's access policy on `caseA.project` — `RepositoryCaseLink` itself is not project-scoped, so the tool deliberately exposes no project-id input.
 
+### Milestones
+
+#### `testplanit_milestones_list`
+
+List milestones scoped to a project, with **pooled `statusCounts` rollup** inline on every row (merged across linked test runs AND linked sessions). Single call answers *"How much work is left in milestone X."*
+
+**Inputs:** `projectId` (required), `isCompleted?`, `isStarted?`, `milestoneTypeId?`, `createdById?` (single string), `from?` / `to?` (ISO 8601 createdAt range), `parentId?` (`null` = root-only, `number` = direct children of, omitted = all), `cursor?`, `limit?` (default 25, max 100).
+
+**Each row carries:** `id`, `name`, `milestoneType: {id, name}`, `creator: {id, name, email}`, `parentId`, `directChildrenCount`, `commentCount`, `totalDescendants` (recursive CTE — counts the full subtree), `statusCounts: [{id, name, count}]`, `untested`, `total` (counts SUM to total), plus `isStarted`, `isCompleted`, `automaticCompletion`, `startedAt`, `completedAt`, `createdAt`.
+
+**Cost model:** at most 5 backend round trips per page — one `milestones.findMany`, two batched `groupBy` calls (`testRunCases` + `sessionResults`; either skipped if the page has no runs or no sessions), one `status.findMany` for the status names, and one batched recursive-CTE call to `/api/mcp/milestones-descendants` for the page's `totalDescendants`. NEVER per-row.
+
+#### `testplanit_milestones_get`
+
+Fetch a single Milestone by id. Returns the full denormalized header + `note` and `docs` rendered to plain text (ProseMirror walked) + three inlined linked arrays:
+
+- `linkedTestRuns` (cap **250** rows — wider than the standard 100 because milestones legitimately carry hundreds of runs; this is the dominant fan-out)
+- `linkedSessions` (cap 100)
+- `children` (cap 100, **1-level deep only**; each child carries `totalDescendants` so agents can prioritize which subtree to walk first)
+
+When an array is over capacity the response carries `truncated.<key>: true`. The pooled `statusCounts` rollup at the milestone level is included; per-run rollups are reachable via `testplanit_test_runs_get`.
+
+#### `testplanit_milestone_types_list`
+
+List the milestone types assigned to a project (via the `MilestoneTypesAssignment` junction). Returns `{ items: [{id, name, isDefault}] }` ordered by name. No cursor pagination — types-per-project is small. Every `milestones_list` row + `milestones_get` response also denormalizes `milestoneType: {id, name}` inline, so this tool exists for full-catalog and filter-picker use cases.
+
 ## Killer-app compositions (Phase 8)
 
 ### Issue → linked test cases (2 calls)
@@ -992,6 +1023,16 @@ Optional `linkType` narrows to `SAME_TEST_DIFFERENT_SOURCE` or `DEPENDS_ON`. The
 ```json
 { "tool": "testplanit_cases_list",
   "input": { "projectId": 42, "automated": true, "hasNeverExecuted": true } }
+```
+
+### Milestone progress overview (1 call)
+
+`testplanit_milestones_list({ projectId, isCompleted: false })` returns every open milestone for a project with pooled `statusCounts + untested + total` inline (merged across linked test runs AND sessions). An agent answers *"How much work is left in each open milestone?"* in a single round trip without any follow-up `_get` calls.
+
+```json
+{ "tool": "testplanit_milestones_list",
+  "input": { "projectId": 42, "isCompleted": false } }
+// → each row: { name, statusCounts:[{name,count}], untested, total, totalDescendants, ... }
 ```
 
 ## Soft-Delete Invariant
