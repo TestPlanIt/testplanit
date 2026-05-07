@@ -1,4 +1,5 @@
 import { ArrowRight, CopyPlus, Folder, ListChecks } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React, { CSSProperties, useEffect, useRef } from "react";
 import { useDragLayer, XYCoord } from "react-dnd";
 import { useDragModifier } from "~/hooks/useDragModifier";
@@ -63,6 +64,7 @@ function getItemStyles(
 // The unified drag layer component for all drag types
 export const UnifiedDragPreview: React.FC = () => {
   const previewRef = useRef<HTMLDivElement>(null);
+  const t = useTranslations();
 
   const {
     itemType,
@@ -115,9 +117,13 @@ export const UnifiedDragPreview: React.FC = () => {
         if (item.draggedItems && item.draggedItems.length > 0) {
           const itemCount = item.draggedItems.length;
           if (itemCount === 1) {
-            displayName = item.draggedItems[0]?.name || "Test Case";
+            displayName =
+              item.draggedItems[0]?.name ||
+              t("repository.dragDrop.dragPreviewCase");
           } else {
-            displayName = `${itemCount} test cases`;
+            displayName = t("repository.dragDrop.dragPreviewCount", {
+              count: itemCount,
+            });
           }
         } else if (item.name) {
           displayName = item.name;

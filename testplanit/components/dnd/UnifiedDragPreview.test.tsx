@@ -23,6 +23,19 @@ vi.mock("react-dnd", () => ({
     }),
 }));
 
+// Mock next-intl: return the values param so plural keys render with count
+vi.mock("next-intl", () => ({
+  useTranslations: () => (key: string, values?: Record<string, unknown>) => {
+    if (key === "repository.dragDrop.dragPreviewCount" && values?.count) {
+      return `${values.count} test cases`;
+    }
+    if (key === "repository.dragDrop.dragPreviewCase") {
+      return "Test Case";
+    }
+    return key;
+  },
+}));
+
 // Mock dndTypes
 vi.mock("~/types/dndTypes", () => ({
   ItemTypes: {
