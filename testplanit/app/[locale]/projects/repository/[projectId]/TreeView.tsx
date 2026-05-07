@@ -6,12 +6,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from "@/components/ui/popover";
 import type { RepositoryFolders } from "@prisma/client";
 import {
   ArrowRightLeft,
   ChevronRight,
   Folder,
   FolderOpen,
+  Loader2,
   MoreVertical,
   SquarePenIcon,
   Trash2Icon,
@@ -26,8 +32,10 @@ import React, {
   useState,
 } from "react";
 import { NodeApi, Tree, TreeApi } from "react-arborist";
-import { useDrop } from "react-dnd";
+import { useDragDropManager, useDrop } from "react-dnd";
 import { toast } from "sonner";
+import { useCopyMoveJob } from "~/components/copy-move/useCopyMoveJob";
+import { useDragModifier } from "~/hooks/useDragModifier";
 import {
   useFindManyRepositoryFolders,
   useUpdateRepositoryCases,
@@ -364,6 +372,18 @@ const TreeView: React.FC<{
 
   const { mutateAsync: updateFolder } = useUpdateRepositoryFolders();
   const { mutateAsync: updateCase } = useUpdateRepositoryCases();
+
+  const copyMoveJob = useCopyMoveJob();
+  const [pendingCopyTargets, setPendingCopyTargets] = useState<
+    Map<number, string>
+  >(new Map());
+  const lastSubmittedFolderIdRef = useRef<number | null>(null);
+  const [pendingDrop, setPendingDrop] = useState<{
+    x: number;
+    y: number;
+    targetFolderId: number;
+    draggedItems: Array<{ id: number | string }>;
+  } | null>(null);
 
   const buildTree = useCallback(
     (parentId: number | null): ArboristNode[] => {
@@ -777,6 +797,11 @@ const TreeView: React.FC<{
     // Only show open folder icon if folder is open AND has children
     const IconComponent = node.isOpen && hasChildren ? FolderOpen : Folder;
     const childrenLoaded = !!data?.childrenLoaded;
+
+    const dndManager = useDragDropManager();
+    const { copyHeld, moveHeld } = useDragModifier(
+      dndManager.getMonitor().isDragging()
+    );
 
     // Handle test case drops
     const [{ isOver, canDrop }, drop] = useDrop<
