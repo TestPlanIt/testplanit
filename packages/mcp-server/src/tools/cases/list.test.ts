@@ -339,4 +339,364 @@ describe("registerCasesList", () => {
     expect(tool).toBeDefined();
     expect(tool?.description).toMatch(/^List test cases/);
   });
+
+  // ── Phase 8 (D8-02) maintenance filters + new row fields ─────────────────
+
+  // Helper: build a Phase-8-shaped raw row with the new sub-include fields.
+  function makeRawRowP8(
+    overrides: Record<string, unknown> = {},
+    id = 1,
+  ): Record<string, unknown> {
+    return {
+      ...makeRawRow({}, id),
+      repositoryCaseVersions: [],
+      junitResults: [],
+      testRuns: [],
+      ...overrides,
+    };
+  }
+
+  it("filter: automated=true is included in where clause", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, automated: true },
+    });
+    const body = getLastCallBody();
+    const where = body?.where as Record<string, unknown>;
+    expect(where.automated).toBe(true);
+  });
+
+  it("filter: source single value", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, source: "JUNIT" },
+    });
+    const body = getLastCallBody();
+    const where = body?.where as Record<string, unknown>;
+    expect(where.source).toBe("JUNIT");
+  });
+
+  it("filter: source array uses { in: [...] }", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, source: ["JUNIT", "TESTNG"] },
+    });
+    const body = getLastCallBody();
+    const where = body?.where as Record<string, unknown>;
+    expect(where.source).toEqual({ in: ["JUNIT", "TESTNG"] });
+  });
+
+  it("filter: repositoryId is included in where clause", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, repositoryId: 42 },
+    });
+    const body = getLastCallBody();
+    const where = body?.where as Record<string, unknown>;
+    expect(where.repositoryId).toBe(42);
+  });
+
+  it("filter: hasNeverExecuted emits both junitResults.none and testRuns.none.results.some", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, hasNeverExecuted: true },
+    });
+    const body = getLastCallBody();
+    const where = body?.where as Record<string, unknown>;
+    expect(where.junitResults).toEqual({ none: {} });
+    expect(where.testRuns).toEqual({ none: { results: { some: {} } } });
+  });
+
+  it("filter: updatedAfter routes through repositoryCaseVersions.some.createdAt.gte", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, updatedAfter: "2026-04-01T00:00:00.000Z" },
+    });
+    const body = getLastCallBody();
+    const where = body?.where as Record<string, unknown>;
+    const versions = where.repositoryCaseVersions as {
+      some: { createdAt: { gte: Date; lte?: Date } };
+    };
+    expect(versions.some.createdAt.gte).toBeInstanceOf(Date);
+    expect(versions.some.createdAt.gte.toISOString()).toBe(
+      "2026-04-01T00:00:00.000Z",
+    );
+    expect(versions.some.createdAt.lte).toBeUndefined();
+  });
+
+  it("filter: updatedBefore routes through repositoryCaseVersions.some.createdAt.lte", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, updatedBefore: "2026-05-01T00:00:00.000Z" },
+    });
+    const body = getLastCallBody();
+    const where = body?.where as Record<string, unknown>;
+    const versions = where.repositoryCaseVersions as {
+      some: { createdAt: { gte?: Date; lte: Date } };
+    };
+    expect(versions.some.createdAt.lte).toBeInstanceOf(Date);
+    expect(versions.some.createdAt.gte).toBeUndefined();
+  });
+
+  it("filter: updatedAfter + updatedBefore combined in repositoryCaseVersions.some.createdAt", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: {
+        projectId: 7,
+        updatedAfter: "2026-04-01T00:00:00.000Z",
+        updatedBefore: "2026-05-01T00:00:00.000Z",
+      },
+    });
+    const body = getLastCallBody();
+    const where = body?.where as Record<string, unknown>;
+    const versions = where.repositoryCaseVersions as {
+      some: { createdAt: { gte: Date; lte: Date } };
+    };
+    expect(versions.some.createdAt.gte).toBeInstanceOf(Date);
+    expect(versions.some.createdAt.lte).toBeInstanceOf(Date);
+  });
+
+  it("CASE_ROW_INCLUDE: sub-includes carry deterministic orderBy (Pitfall 5 / MED-02)", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7 },
+    });
+    const body = getLastCallBody() as {
+      include: {
+        repositoryCaseVersions: { take: number; orderBy: unknown[] };
+        junitResults: { take: number; orderBy: unknown[] };
+        testRuns: {
+          select: { results: { take: number; orderBy: unknown[] } };
+        };
+      };
+    };
+    expect(body.include.repositoryCaseVersions.take).toBe(1);
+    expect(body.include.repositoryCaseVersions.orderBy).toEqual([
+      { version: "desc" },
+      { id: "desc" },
+    ]);
+    expect(body.include.junitResults.take).toBe(1);
+    expect(body.include.junitResults.orderBy).toEqual([
+      { executedAt: "desc" },
+      { id: "desc" },
+    ]);
+    expect(body.include.testRuns.select.results.take).toBe(1);
+    expect(body.include.testRuns.select.results.orderBy).toEqual([
+      { executedAt: "desc" },
+      { id: "desc" },
+    ]);
+  });
+
+  it("staleSinceUpdate=false: take = limit + 1 (default behavior unchanged)", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, limit: 25 },
+    });
+    const body = getLastCallBody();
+    expect(body?.take).toBe(26);
+  });
+
+  it("staleSinceUpdate=true: take = min(POST_FILTER_SCAN_CAP=400, limit*4) + 1", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    // limit=25 → min(400, 100) + 1 = 101
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, limit: 25, staleSinceUpdate: true },
+    });
+    const body = getLastCallBody();
+    expect(body?.take).toBe(101);
+  });
+
+  it("staleSinceUpdate=true with limit=100 caps at POST_FILTER_SCAN_CAP+1=401", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    // limit=100 → min(400, 400) + 1 = 401
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, limit: 100, staleSinceUpdate: true },
+    });
+    const body = getLastCallBody();
+    expect(body?.take).toBe(401);
+  });
+
+  it("staleSinceUpdate post-filter retains rows where latestExec < lastUpdated", async () => {
+    // Two rows: row 1 last-updated AFTER its latest exec → STALE → kept.
+    //           row 2 last-updated BEFORE its latest exec → fresh → dropped.
+    const stale = makeRawRowP8(
+      {
+        repositoryCaseVersions: [
+          { createdAt: "2026-04-15T00:00:00.000Z", version: 2 },
+        ],
+        junitResults: [
+          {
+            id: 1,
+            executedAt: "2026-04-01T00:00:00.000Z",
+            status: { id: 5, name: "Passed" },
+          },
+        ],
+      },
+      1,
+    );
+    const fresh = makeRawRowP8(
+      {
+        repositoryCaseVersions: [
+          { createdAt: "2026-04-01T00:00:00.000Z", version: 2 },
+        ],
+        junitResults: [
+          {
+            id: 2,
+            executedAt: "2026-04-15T00:00:00.000Z",
+            status: { id: 5, name: "Passed" },
+          },
+        ],
+      },
+      2,
+    );
+    mockZenstack.mockResolvedValueOnce([stale, fresh]);
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, staleSinceUpdate: true },
+    });
+    const structured = (result as { structuredContent?: Record<string, unknown> })
+      .structuredContent as Record<string, unknown>;
+    const items = structured.items as Array<{ id: number }>;
+    expect(items).toHaveLength(1);
+    expect(items[0].id).toBe(1);
+  });
+
+  it("staleSinceUpdate post-filter retains rows with no executions (never-executed counts as stale)", async () => {
+    const neverExecuted = makeRawRowP8(
+      {
+        repositoryCaseVersions: [
+          { createdAt: "2026-04-15T00:00:00.000Z", version: 2 },
+        ],
+        junitResults: [],
+        testRuns: [],
+      },
+      1,
+    );
+    mockZenstack.mockResolvedValueOnce([neverExecuted]);
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, staleSinceUpdate: true },
+    });
+    const structured = (result as { structuredContent?: Record<string, unknown> })
+      .structuredContent as Record<string, unknown>;
+    const items = structured.items as Array<{ id: number }>;
+    expect(items).toHaveLength(1);
+    expect(items[0].id).toBe(1);
+  });
+
+  it("staleSinceUpdate truncated:true when scan cap (POST_FILTER_SCAN_CAP=400) hit", async () => {
+    // 401 rows — 400 stale, 1 fresh; surfaces truncated.
+    const rows = Array.from({ length: 401 }, (_, i) =>
+      makeRawRowP8(
+        {
+          repositoryCaseVersions: [
+            { createdAt: "2026-04-15T00:00:00.000Z", version: 2 },
+          ],
+          junitResults: [],
+          testRuns: [],
+        },
+        i + 1,
+      ),
+    );
+    mockZenstack.mockResolvedValueOnce(rows);
+
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7, limit: 100, staleSinceUpdate: true },
+    });
+    const structured = (result as { structuredContent?: Record<string, unknown> })
+      .structuredContent as Record<string, unknown>;
+    expect(structured.truncated).toBe(true);
+  });
+
+  it("staleSinceUpdate=false does NOT surface truncated key", async () => {
+    mockZenstack.mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7 },
+    });
+    const structured = (result as { structuredContent?: Record<string, unknown> })
+      .structuredContent as Record<string, unknown>;
+    expect(structured.truncated).toBeUndefined();
+  });
+
+  it("Phase-8 row mapper: items carry lastUpdatedAt + latestResult", async () => {
+    const row = makeRawRowP8(
+      {
+        repositoryCaseVersions: [
+          { createdAt: "2026-04-10T00:00:00.000Z", version: 3 },
+        ],
+        junitResults: [
+          {
+            id: 99,
+            executedAt: "2026-04-01T00:00:00.000Z",
+            status: { id: 5, name: "Passed" },
+          },
+        ],
+      },
+      1,
+    );
+    mockZenstack.mockResolvedValueOnce([row]);
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: { projectId: 7 },
+    });
+    const structured = (result as { structuredContent?: Record<string, unknown> })
+      .structuredContent as Record<string, unknown>;
+    const items = structured.items as Array<Record<string, unknown>>;
+    expect(items[0].lastUpdatedAt).toBe("2026-04-10T00:00:00.000Z");
+    expect(items[0].latestResult).toEqual({
+      id: 99,
+      status: { id: 5, name: "Passed" },
+      executedAt: "2026-04-01T00:00:00.000Z",
+      source: "JUnit",
+    });
+  });
+
+  // MED-03 invariant: cases/list.ts uses Prisma.RepositoryCasesWhereInput;
+  // reintroducing Record<string, unknown> would TS2353 the new
+  // automated/source filters at compile time. Verified by `pnpm typecheck`
+  // against the source file (no runtime test possible without a fixture
+  // that exercises the type system at the call site).
+  it("MED-03 typed-where guard: automated rejects non-boolean via zod", async () => {
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_cases_list",
+      // @ts-expect-error — automated must be boolean per zod schema
+      arguments: { projectId: 7, automated: "not-a-boolean" },
+    });
+    expect(result.isError).toBe(true);
+    expect(mockZenstack).not.toHaveBeenCalled();
+  });
 });
