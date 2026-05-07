@@ -387,6 +387,27 @@ const TreeView: React.FC<{
 
   const numericProjectId = useMemo(() => Number(projectId), [projectId]);
 
+  const virtualAnchor = useMemo(
+    () =>
+      pendingDrop
+        ? {
+            getBoundingClientRect: () =>
+              ({
+                x: pendingDrop.x,
+                y: pendingDrop.y,
+                left: pendingDrop.x,
+                top: pendingDrop.y,
+                right: pendingDrop.x,
+                bottom: pendingDrop.y,
+                width: 0,
+                height: 0,
+                toJSON: () => null,
+              }) as DOMRect,
+          }
+        : null,
+    [pendingDrop]
+  );
+
   const handleMoveDrop = useCallback(
     async (
       itemsToUpdate: Array<{ id: number | string }>,
@@ -442,6 +463,45 @@ const TreeView: React.FC<{
     },
     [copyMoveJob, numericProjectId]
   );
+
+  useEffect(() => {
+    if (copyMoveJob.status === "completed") {
+      const folderId = lastSubmittedFolderIdRef.current;
+      setPendingCopyTargets((prev) => {
+        if (folderId == null) return prev;
+        const next = new Map(prev);
+        next.delete(folderId);
+        return next;
+      });
+      toast.success(
+        t("repository.dragDrop.copyComplete", {
+          count: copyMoveJob.result?.copiedCount ?? 0,
+        })
+      );
+      void refetchCases();
+      void refetchFolders();
+      onRefetchStats?.();
+      copyMoveJob.reset();
+    } else if (copyMoveJob.status === "failed") {
+      const folderId = lastSubmittedFolderIdRef.current;
+      setPendingCopyTargets((prev) => {
+        if (folderId == null) return prev;
+        const next = new Map(prev);
+        next.delete(folderId);
+        return next;
+      });
+      toast.error(t("repository.dragDrop.copyError", { count: 1 }));
+      copyMoveJob.reset();
+    }
+  }, [
+    copyMoveJob.status,
+    copyMoveJob.result,
+    copyMoveJob.reset,
+    refetchCases,
+    refetchFolders,
+    onRefetchStats,
+    t,
+  ]);
 
   const buildTree = useCallback(
     (parentId: number | null): ArboristNode[] => {
@@ -1046,6 +1106,14 @@ const TreeView: React.FC<{
         />
         <span className="ml-2 truncate flex-1">{node.data.name}</span>
 
+        {pendingCopyTargets.has(data?.folderId ?? -1) && (
+          <Loader2
+            className="ml-2 h-3 w-3 animate-spin text-primary shrink-0"
+            data-testid={`folder-row-copy-progress-${data?.folderId}`}
+            aria-label={t("repository.dragDrop.copying")}
+          />
+        )}
+
         {canAddEdit && !filteredFolders && data?.folderId !== 0 && (
           <div className="ml-1 flex items-center h-7 invisible group-hover:visible shrink-0">
             <DropdownMenu>
@@ -1287,6 +1355,67 @@ const TreeView: React.FC<{
           onClose={() => setDeleteModalState({ open: false, node: null })}
         />
       )}
+
+      <Popover
+        open={!!pendingDrop}
+        onOpenChange={(open) => {
+          if (!open) setPendingDrop(null);
+        }}
+      >
+        {virtualAnchor && (
+          <PopoverAnchor
+            {...({
+              virtualRef: { current: virtualAnchor },
+            } as unknown as Record<string, unknown>)}
+          />
+        )}
+        <PopoverContent
+          data-testid="drop-action-popover"
+          side="bottom"
+          align="start"
+          onEscapeKeyDown={() => setPendingDrop(null)}
+          onInteractOutside={() => setPendingDrop(null)}
+        >
+          <Button
+            autoFocus
+            data-testid="drop-action-cancel"
+            variant="ghost"
+            onClick={() => setPendingDrop(null)}
+          >
+            {t("common.cancel")}
+          </Button>
+          <Button
+            data-testid="drop-action-move"
+            variant="secondary"
+            onClick={() => {
+              if (pendingDrop) {
+                void handleMoveDrop(
+                  pendingDrop.draggedItems,
+                  pendingDrop.targetFolderId
+                );
+              }
+              setPendingDrop(null);
+            }}
+          >
+            {t("repository.dragDrop.move")}
+          </Button>
+          <Button
+            data-testid="drop-action-copy"
+            variant="default"
+            onClick={() => {
+              if (pendingDrop) {
+                void handleCopyDrop(
+                  pendingDrop.draggedItems,
+                  pendingDrop.targetFolderId
+                );
+              }
+              setPendingDrop(null);
+            }}
+          >
+            {t("repository.dragDrop.copy")}
+          </Button>
+        </PopoverContent>
+      </Popover>
     </>
   );
 };
