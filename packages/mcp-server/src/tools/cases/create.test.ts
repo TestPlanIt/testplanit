@@ -265,4 +265,83 @@ describe("testplanit_cases_create", () => {
     // Registration doesn't throw — the tool is registered
     expect(true).toBe(true);
   });
+
+  it("BL-03: post-create step failure compensates by soft-deleting the case and surfaces orphan id", async () => {
+    // Case create succeeds, returning id 99.
+    zenstackMock.mockResolvedValueOnce({ id: 99 });
+    // createStepsForCase blows up mid-flight.
+    createStepsForCaseMock.mockRejectedValueOnce(
+      new TestPlanItHttpError("step write failed", { statusCode: 500 }),
+    );
+    // The compensating soft-delete update succeeds.
+    zenstackMock.mockResolvedValueOnce({ id: 99, isDeleted: true });
+
+    const result = await callTool({
+      projectId: 7,
+      folderId: 12,
+      name: "Login",
+      steps: [{ text: "boom" }],
+    });
+
+    expect(result.isError).toBe(true);
+    const text = (result.content as Array<{ type: string; text: string }>)[0]!.text;
+    // Orphan caseId surfaced so the agent can retry / clean up.
+    expect(text).toContain("99");
+    // The compensating call was an `update` setting isDeleted: true (T-06-06).
+    const cleanup = zenstackMock.mock.calls.find(
+      (c) =>
+        c[0] === "repositoryCases" &&
+        c[1] === "update" &&
+        ((c[2] as { data?: { isDeleted?: boolean } }).data?.isDeleted === true),
+    );
+    expect(cleanup).toBeDefined();
+    // Re-fetch was NOT used to deliver detail; re-fetch fails too because
+    // we never reached it.
+    expect(fetchCaseDetailMock).not.toHaveBeenCalled();
+  });
+
+  it("BL-03: post-create custom-field write failure also triggers compensating soft-delete", async () => {
+    zenstackMock.mockResolvedValueOnce({ id: 100 });
+    resolveCustomFieldsMock.mockResolvedValueOnce([
+      { fieldId: 1, value: "High", name: "Priority" },
+    ]);
+    writeCustomFieldValuesMock.mockRejectedValueOnce(
+      new TestPlanItHttpError("cfv write failed", { statusCode: 500 }),
+    );
+    zenstackMock.mockResolvedValueOnce({ id: 100, isDeleted: true });
+
+    const result = await callTool({
+      projectId: 7,
+      folderId: 12,
+      name: "CF fail",
+      customFields: { Priority: "High" },
+    });
+
+    expect(result.isError).toBe(true);
+    const text = (result.content as Array<{ type: string; text: string }>)[0]!.text;
+    expect(text).toContain("100");
+    const cleanup = zenstackMock.mock.calls.find(
+      (c) =>
+        c[0] === "repositoryCases" &&
+        c[1] === "update" &&
+        ((c[2] as { data?: { isDeleted?: boolean } }).data?.isDeleted === true),
+    );
+    expect(cleanup).toBeDefined();
+  });
+
+  it("BL-03: re-fetch failure (case missing post-create) also triggers compensating soft-delete", async () => {
+    zenstackMock.mockResolvedValueOnce({ id: 101 });
+    fetchCaseDetailMock.mockRejectedValueOnce(
+      new TestPlanItHttpError("Case 101 not found after write — this is unexpected.", {
+        statusCode: 404,
+      }),
+    );
+    zenstackMock.mockResolvedValueOnce({ id: 101, isDeleted: true });
+
+    const result = await callTool({ projectId: 7, folderId: 12, name: "refetch fail" });
+
+    expect(result.isError).toBe(true);
+    const text = (result.content as Array<{ type: string; text: string }>)[0]!.text;
+    expect(text).toContain("101");
+  });
 });

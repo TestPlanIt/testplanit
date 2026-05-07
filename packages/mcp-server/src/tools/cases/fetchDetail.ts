@@ -1,5 +1,6 @@
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
+import { TestPlanItHttpError } from "../../http.js";
 import { CASE_DETAIL_INCLUDE } from "./get.js";
 import { buildFolderBreadcrumb, mapCaseDetail } from "./shared.js";
 
@@ -28,7 +29,14 @@ export async function fetchCaseDetail(
   );
 
   if (!raw) {
-    throw new Error(`Case ${caseId} not found after write — this is unexpected.`);
+    // BL-03: surface the orphan caseId via a TestPlanItHttpError so the
+    // create/update outer catch can compensate (soft-delete the case)
+    // and the error mapper passes the structured 404 through to the
+    // agent rather than the generic "Network or runtime error" branch.
+    throw new TestPlanItHttpError(
+      `Case ${caseId} not found after write — this is unexpected.`,
+      { statusCode: 404 },
+    );
   }
 
   const breadcrumb = await buildFolderBreadcrumb(

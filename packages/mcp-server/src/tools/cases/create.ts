@@ -119,35 +119,69 @@ export function registerCasesCreate(
           deps.env,
         );
 
-        // Post-create wiring: steps, tags, custom-field values.
-        if (input.steps && input.steps.length > 0) {
-          await createStepsForCase(
-            created.id,
-            input.steps as StepInput[],
-            deps.env,
-          );
-        }
-        if (tagIds.length > 0) {
+        // BL-03: post-create wiring (steps / tags / custom fields /
+        // re-fetch) runs in a try/catch so a mid-flight failure does
+        // not leave a half-built case in the database. On any failure
+        // we issue a best-effort soft-delete (T-06-06: NEVER `delete`)
+        // and re-throw an error that names the orphan caseId so the
+        // agent can recover deterministically.
+        try {
+          if (input.steps && input.steps.length > 0) {
+            await createStepsForCase(
+              created.id,
+              input.steps as StepInput[],
+              deps.env,
+            );
+          }
+          if (tagIds.length > 0) {
+            await zenstack(
+              "repositoryCases",
+              "update",
+              {
+                where: { id: created.id },
+                data: { tags: { set: tagIds.map((id) => ({ id })) } },
+              },
+              deps.env,
+            );
+          }
+          if (resolvedCustomFields.length > 0) {
+            await writeCustomFieldValues(created.id, resolvedCustomFields, deps.env);
+          }
+
+          // Re-fetch with full D-10 denormalized shape.
+          const detail = await fetchCaseDetail(created.id, deps.env);
+          return {
+            content: [{ type: "text", text: JSON.stringify(detail) }],
+            structuredContent: detail as unknown as Record<string, unknown>,
+          };
+        } catch (postCreateErr) {
+          // Best-effort compensating soft-delete. Swallow cleanup failures
+          // (the agent already has the orphan caseId in the surfaced
+          // error and can call testplanit_cases_delete to clean up).
           await zenstack(
             "repositoryCases",
             "update",
             {
               where: { id: created.id },
-              data: { tags: { set: tagIds.map((id) => ({ id })) } },
+              data: { isDeleted: true },
             },
             deps.env,
+          ).catch(() => {
+            /* swallow — we surface the orphan id below */
+          });
+          const inner =
+            postCreateErr instanceof Error
+              ? postCreateErr.message
+              : String(postCreateErr);
+          const status =
+            postCreateErr instanceof TestPlanItHttpError
+              ? postCreateErr.statusCode
+              : undefined;
+          throw new TestPlanItHttpError(
+            `Test case ${created.id} was created but post-create wiring failed (steps / tags / custom fields / re-fetch); the case was soft-deleted as a best-effort cleanup. Underlying error: ${inner}`,
+            status !== undefined ? { statusCode: status } : {},
           );
         }
-        if (resolvedCustomFields.length > 0) {
-          await writeCustomFieldValues(created.id, resolvedCustomFields, deps.env);
-        }
-
-        // Re-fetch with full D-10 denormalized shape.
-        const detail = await fetchCaseDetail(created.id, deps.env);
-        return {
-          content: [{ type: "text", text: JSON.stringify(detail) }],
-          structuredContent: detail as unknown as Record<string, unknown>,
-        };
       } catch (err) {
         return mapHttpErrorToToolResult(err);
       }
