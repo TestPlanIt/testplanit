@@ -5,6 +5,8 @@ import {
   buildFolderBreadcrumb,
   mapCaseRow,
   mapCaseDetail,
+  lastUpdatedAtFromRaw,
+  resolveLatestResult,
 } from "./shared.js";
 import { TestPlanItHttpError } from "../../http.js";
 
@@ -532,5 +534,292 @@ describe("mapCaseDetail", () => {
     expect(linkedIds).toContain(9);
     expect(linkedIds).toContain(11);
     expect(linkedIds).not.toContain(10);
+  });
+});
+
+// ── lastUpdatedAtFromRaw (Phase 8 / D8-02) ─────────────────────────────────
+
+describe("lastUpdatedAtFromRaw", () => {
+  it("returns repositoryCaseVersions[0].createdAt when present", () => {
+    const raw = {
+      repositoryCaseVersions: [
+        { createdAt: "2026-04-15T12:34:56.000Z", version: 3 },
+      ],
+    };
+    expect(lastUpdatedAtFromRaw(raw)).toBe("2026-04-15T12:34:56.000Z");
+  });
+
+  it("returns null when array is empty", () => {
+    expect(lastUpdatedAtFromRaw({ repositoryCaseVersions: [] })).toBeNull();
+  });
+
+  it("returns null when repositoryCaseVersions is undefined", () => {
+    expect(lastUpdatedAtFromRaw({})).toBeNull();
+  });
+});
+
+// ── resolveLatestResult (Phase 8 / D8-02) ──────────────────────────────────
+
+describe("resolveLatestResult", () => {
+  const junitStatus = { id: 5, name: "Passed" };
+  const runStatus = { id: 6, name: "Failed" };
+
+  it("returns null when both undefined", () => {
+    expect(resolveLatestResult(undefined, undefined)).toBeNull();
+  });
+
+  it("returns junit shape when only junit present", () => {
+    const result = resolveLatestResult(
+      { id: 1, executedAt: "2026-04-01T00:00:00.000Z", status: junitStatus },
+      undefined,
+    );
+    expect(result).toEqual({
+      id: 1,
+      status: junitStatus,
+      executedAt: "2026-04-01T00:00:00.000Z",
+      source: "JUnit",
+    });
+  });
+
+  it("returns testRun shape when only testRun present", () => {
+    const result = resolveLatestResult(undefined, {
+      id: 2,
+      executedAt: "2026-04-01T00:00:00.000Z",
+      status: runStatus,
+    });
+    expect(result).toEqual({
+      id: 2,
+      status: runStatus,
+      executedAt: "2026-04-01T00:00:00.000Z",
+      source: "TestRun",
+    });
+  });
+
+  it("picks junit when both present and junit executedAt is newer", () => {
+    const result = resolveLatestResult(
+      { id: 1, executedAt: "2026-04-10T00:00:00.000Z", status: junitStatus },
+      { id: 2, executedAt: "2026-04-01T00:00:00.000Z", status: runStatus },
+    );
+    expect(result?.source).toBe("JUnit");
+    expect(result?.id).toBe(1);
+  });
+
+  it("picks testRun when both present and testRun executedAt is newer", () => {
+    const result = resolveLatestResult(
+      { id: 1, executedAt: "2026-04-01T00:00:00.000Z", status: junitStatus },
+      { id: 2, executedAt: "2026-04-10T00:00:00.000Z", status: runStatus },
+    );
+    expect(result?.source).toBe("TestRun");
+    expect(result?.id).toBe(2);
+  });
+
+  it("returns null when junit has no executedAt and runResult is undefined", () => {
+    expect(
+      resolveLatestResult(
+        { id: 1, executedAt: null, status: junitStatus },
+        undefined,
+      ),
+    ).toBeNull();
+  });
+});
+
+// ── mapCaseRow Phase-8 extensions ──────────────────────────────────────────
+
+describe("mapCaseRow Phase-8 extensions", () => {
+  function makeRow(overrides: Record<string, unknown> = {}) {
+    return {
+      id: 101,
+      name: "Login flow",
+      source: "MANUAL",
+      automated: false,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      project: { id: 7, name: "TestProject" },
+      folder: { id: 12, name: "Auth", parentId: 5 },
+      state: { id: 3, name: "Active" },
+      creator: { id: "user-1", name: "Alice", email: "alice@example.com" },
+      tags: [],
+      ...overrides,
+    };
+  }
+
+  it("returns lastUpdatedAt populated from repositoryCaseVersions[0]", () => {
+    const row = makeRow({
+      repositoryCaseVersions: [
+        { createdAt: "2026-03-12T00:00:00.000Z", version: 2 },
+      ],
+    });
+    const mapped = mapCaseRow(row as never);
+    expect(mapped.lastUpdatedAt).toBe("2026-03-12T00:00:00.000Z");
+  });
+
+  it("returns lastUpdatedAt: null when repositoryCaseVersions is empty", () => {
+    const row = makeRow({ repositoryCaseVersions: [] });
+    const mapped = mapCaseRow(row as never);
+    expect(mapped.lastUpdatedAt).toBeNull();
+  });
+
+  it("returns latestResult populated when junitResults[0] is present", () => {
+    const row = makeRow({
+      junitResults: [
+        {
+          id: 99,
+          executedAt: "2026-04-01T00:00:00.000Z",
+          status: { id: 5, name: "Passed" },
+        },
+      ],
+      testRuns: [],
+    });
+    const mapped = mapCaseRow(row as never);
+    expect(mapped.latestResult).toEqual({
+      id: 99,
+      status: { id: 5, name: "Passed" },
+      executedAt: "2026-04-01T00:00:00.000Z",
+      source: "JUnit",
+    });
+  });
+
+  it("returns latestResult populated when testRuns[0].results[0] is present", () => {
+    const row = makeRow({
+      junitResults: [],
+      testRuns: [
+        {
+          results: [
+            {
+              id: 77,
+              executedAt: "2026-04-02T00:00:00.000Z",
+              status: { id: 6, name: "Failed" },
+            },
+          ],
+        },
+      ],
+    });
+    const mapped = mapCaseRow(row as never);
+    expect(mapped.latestResult).toEqual({
+      id: 77,
+      status: { id: 6, name: "Failed" },
+      executedAt: "2026-04-02T00:00:00.000Z",
+      source: "TestRun",
+    });
+  });
+
+  it("returns latestResult: null when both junitResults and testRuns are empty", () => {
+    const row = makeRow({ junitResults: [], testRuns: [] });
+    const mapped = mapCaseRow(row as never);
+    expect(mapped.latestResult).toBeNull();
+  });
+
+  it("regression: existing fields (id, name, source, automated, createdAt, project, folder, state, creator, tags) still populated", () => {
+    const row = makeRow({
+      repositoryCaseVersions: [],
+      junitResults: [],
+      testRuns: [],
+    });
+    const mapped = mapCaseRow(row as never);
+    expect(mapped.id).toBe(101);
+    expect(mapped.name).toBe("Login flow");
+    expect(mapped.source).toBe("MANUAL");
+    expect(mapped.automated).toBe(false);
+    expect(mapped.createdAt).toBe("2026-01-01T00:00:00.000Z");
+    expect(mapped.project).toEqual({ id: 7, name: "TestProject" });
+    expect(mapped.folder).toEqual({ id: 12, name: "Auth" });
+    expect(mapped.state).toEqual({ id: 3, name: "Active" });
+    expect(mapped.creator).toEqual({
+      id: "user-1",
+      name: "Alice",
+      email: "alice@example.com",
+    });
+    expect(mapped.tags).toEqual([]);
+  });
+});
+
+// ── mapCaseDetail Phase-8 codeRepository extension (D8-02) ─────────────────
+
+describe("mapCaseDetail Phase-8 codeRepository extension", () => {
+  function makeDetail(overrides: Record<string, unknown> = {}) {
+    return {
+      id: 101,
+      name: "Login flow",
+      source: "MANUAL",
+      automated: false,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      project: { id: 7, name: "TestProject" },
+      folder: { id: 12, name: "Auth", parentId: 5 },
+      state: { id: 3, name: "Active" },
+      creator: { id: "user-1", name: "Alice", email: "alice@example.com" },
+      tags: [],
+      issues: [],
+      steps: [],
+      caseFieldValues: [],
+      linksFrom: [],
+      linksTo: [],
+      ...overrides,
+    };
+  }
+
+  const breadcrumb = [{ id: 12, name: "Auth" }];
+
+  it("returns codeRepository: null when project.codeRepositoryConfig is null", () => {
+    const detail = makeDetail({
+      project: { id: 7, name: "TestProject", codeRepositoryConfig: null },
+    });
+    const result = mapCaseDetail(detail as never, breadcrumb);
+    expect(result.codeRepository).toBeNull();
+  });
+
+  it("returns codeRepository: null when project has no codeRepositoryConfig at all", () => {
+    const detail = makeDetail();
+    const result = mapCaseDetail(detail as never, breadcrumb);
+    expect(result.codeRepository).toBeNull();
+  });
+
+  it("returns codeRepository populated for a GITHUB project config with derived url", () => {
+    const detail = makeDetail({
+      project: {
+        id: 7,
+        name: "TestProject",
+        codeRepositoryConfig: {
+          repository: {
+            id: 5,
+            name: "acme/tools",
+            provider: "GITHUB",
+            status: "ACTIVE",
+            lastTestedAt: null,
+            settings: {
+              owner: "acme",
+              repo: "tools",
+              personalAccessToken: "pat_secret",
+            },
+          },
+        },
+      },
+    });
+    const result = mapCaseDetail(detail as never, breadcrumb);
+    expect(result.codeRepository).toEqual({
+      id: 5,
+      name: "acme/tools",
+      type: "GITHUB",
+      url: "https://github.com/acme/tools",
+    });
+  });
+
+  it("regression: existing detail fields still present when codeRepository null", () => {
+    const detail = makeDetail({
+      project: { id: 7, name: "TestProject", codeRepositoryConfig: null },
+      caseFieldValues: [{ value: "High", field: { displayName: "Priority" } }],
+      issues: [
+        {
+          id: 55,
+          externalKey: "JIRA-99",
+          integration: { provider: "JIRA" },
+          title: "Login bug",
+          externalStatus: "Open",
+        },
+      ],
+    });
+    const result = mapCaseDetail(detail as never, breadcrumb);
+    expect(result.customFields).toEqual({ Priority: "High" });
+    expect(result.issues).toHaveLength(1);
+    expect(result.issues[0].externalKey).toBe("JIRA-99");
+    expect(result.folderBreadcrumb).toEqual(breadcrumb);
   });
 });
