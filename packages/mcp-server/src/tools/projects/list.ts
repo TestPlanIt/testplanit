@@ -1,4 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { Prisma } from "@prisma/client";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
@@ -6,6 +7,11 @@ import { mapHttpErrorToToolResult } from "../../errors.js";
 export interface ProjectsListDeps {
   env: EnvConfig;
 }
+
+const PROJECTS_LIST_SELECT = {
+  id: true,
+  name: true,
+} as const satisfies Prisma.ProjectsSelect;
 
 /**
  * List projects accessible to the authenticated token.
@@ -37,7 +43,7 @@ export function registerProjectsList(
           "findMany",
           {
             where: { isDeleted: false },
-            select: { id: true, name: true },
+            select: PROJECTS_LIST_SELECT,
             orderBy: { name: "asc" },
           },
           deps.env,

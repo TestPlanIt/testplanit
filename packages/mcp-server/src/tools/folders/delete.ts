@@ -1,4 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -7,6 +8,11 @@ import { mapHttpErrorToToolResult } from "../../errors.js";
 export interface FoldersDeleteDeps {
   env: EnvConfig;
 }
+
+const FOLDER_DELETE_SELECT = {
+  id: true,
+  isDeleted: true,
+} as const satisfies Prisma.RepositoryFoldersSelect;
 
 /**
  * Soft-delete a folder. The host enforces the "no cases, no sub-folders"
@@ -34,7 +40,7 @@ export function registerFoldersDelete(server: McpServer, deps: FoldersDeleteDeps
           {
             where: { id: input.folderId },
             data: { isDeleted: true },
-            select: { id: true, isDeleted: true },
+            select: FOLDER_DELETE_SELECT,
           },
           deps.env,
         );

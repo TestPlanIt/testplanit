@@ -1,4 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -8,6 +9,17 @@ import { mapFolderTreeNode } from "./shared.js";
 export interface FoldersListDeps {
   env: EnvConfig;
 }
+
+const FOLDER_TREE_INCLUDE = {
+  _count: { select: { cases: { where: { isDeleted: false } } } },
+  children: {
+    where: { isDeleted: false },
+    include: {
+      _count: { select: { cases: { where: { isDeleted: false } } } },
+      children: { where: { isDeleted: false } },
+    },
+  },
+} as const satisfies Prisma.RepositoryFoldersInclude;
 
 export function registerFoldersList(server: McpServer, deps: FoldersListDeps): void {
   server.registerTool(
@@ -24,16 +36,7 @@ export function registerFoldersList(server: McpServer, deps: FoldersListDeps): v
           "findMany",
           {
             where: { projectId: input.projectId, isDeleted: false, parentId: null },
-            include: {
-              _count: { select: { cases: { where: { isDeleted: false } } } },
-              children: {
-                where: { isDeleted: false },
-                include: {
-                  _count: { select: { cases: { where: { isDeleted: false } } } },
-                  children: { where: { isDeleted: false } },
-                },
-              },
-            },
+            include: FOLDER_TREE_INCLUDE,
             orderBy: { order: "asc" },
           },
           deps.env,

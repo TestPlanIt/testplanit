@@ -1,4 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -11,6 +12,14 @@ export interface CasesListDeps {
 
 const DEFAULT_LIMIT = 25;
 const MAX_LIMIT = 100;
+
+const CASE_ROW_INCLUDE = {
+  project: { select: { id: true, name: true } },
+  folder: { select: { id: true, name: true, parentId: true } },
+  state: { select: { id: true, name: true } },
+  creator: { select: { id: true, name: true, email: true } },
+  tags: { select: { id: true, name: true } },
+} as const satisfies Prisma.RepositoryCasesInclude;
 
 export function registerCasesList(server: McpServer, deps: CasesListDeps): void {
   server.registerTool(
@@ -57,13 +66,7 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
 
         const body: Record<string, unknown> = {
           where,
-          include: {
-            project: { select: { id: true, name: true } },
-            folder: { select: { id: true, name: true, parentId: true } },
-            state: { select: { id: true, name: true } },
-            creator: { select: { id: true, name: true, email: true } },
-            tags: { select: { id: true, name: true } },
-          },
+          include: CASE_ROW_INCLUDE,
           orderBy: { id: "asc" },
           take: limit + 1,
         };

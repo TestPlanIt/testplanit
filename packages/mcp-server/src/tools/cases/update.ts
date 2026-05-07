@@ -1,4 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
 import { zenstack, lookup, resolveCaseWorkflowState } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -88,7 +89,7 @@ export function registerCasesUpdate(
           "findUnique",
           {
             where: { id: input.caseId },
-            select: { id: true, projectId: true },
+            select: { id: true, projectId: true } satisfies Prisma.RepositoryCasesSelect,
           },
           deps.env,
         );

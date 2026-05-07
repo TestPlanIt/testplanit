@@ -1,9 +1,52 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import { buildFolderBreadcrumb, mapCaseDetail } from "./shared.js";
+
+export const CASE_DETAIL_INCLUDE = {
+  project: { select: { id: true, name: true } },
+  folder: { select: { id: true, name: true, parentId: true } },
+  state: { select: { id: true, name: true } },
+  creator: { select: { id: true, name: true, email: true } },
+  tags: { select: { id: true, name: true } },
+  issues: {
+    select: {
+      id: true,
+      externalKey: true,
+      integration: { select: { provider: true } },
+      title: true,
+      externalStatus: true,
+    },
+  },
+  steps: {
+    where: { isDeleted: false },
+    orderBy: { order: "asc" },
+    select: {
+      id: true,
+      step: true,
+      expectedResult: true,
+      order: true,
+    },
+  },
+  caseFieldValues: {
+    include: { field: { select: { displayName: true } } },
+  },
+  linksFrom: {
+    where: { isDeleted: false },
+    include: {
+      caseB: { select: { id: true, name: true, source: true } },
+    },
+  },
+  linksTo: {
+    where: { isDeleted: false },
+    include: {
+      caseA: { select: { id: true, name: true, source: true } },
+    },
+  },
+} as const satisfies Prisma.RepositoryCasesInclude;
 
 export interface CasesGetDeps {
   env: EnvConfig;
@@ -29,47 +72,7 @@ export function registerCasesGet(server: McpServer, deps: CasesGetDeps): void {
           "findUnique",
           {
             where: { id: input.caseId },
-            include: {
-              project: { select: { id: true, name: true } },
-              folder: { select: { id: true, name: true, parentId: true } },
-              state: { select: { id: true, name: true } },
-              creator: { select: { id: true, name: true, email: true } },
-              tags: { select: { id: true, name: true } },
-              issues: {
-                select: {
-                  id: true,
-                  externalKey: true,
-                  integration: { select: { provider: true } },
-                  title: true,
-                  externalStatus: true,
-                },
-              },
-              steps: {
-                where: { isDeleted: false },
-                orderBy: { order: "asc" },
-                select: {
-                  id: true,
-                  step: true,
-                  expectedResult: true,
-                  order: true,
-                },
-              },
-              caseFieldValues: {
-                include: { field: { select: { displayName: true } } },
-              },
-              linksFrom: {
-                where: { isDeleted: false },
-                include: {
-                  caseB: { select: { id: true, name: true, source: true } },
-                },
-              },
-              linksTo: {
-                where: { isDeleted: false },
-                include: {
-                  caseA: { select: { id: true, name: true, source: true } },
-                },
-              },
-            },
+            include: CASE_DETAIL_INCLUDE,
           },
           deps.env,
         );

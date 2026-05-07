@@ -1,6 +1,26 @@
+import type { Prisma } from "@prisma/client";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { buildFolderBreadcrumb } from "../cases/shared.js";
+
+const FOLDER_DETAIL_INCLUDE = {
+  children: {
+    where: { isDeleted: false },
+    select: {
+      id: true,
+      name: true,
+      _count: { select: { cases: { where: { isDeleted: false } } } },
+    },
+    orderBy: { order: "asc" },
+  },
+  cases: {
+    where: { isDeleted: false },
+    select: { id: true, name: true, source: true },
+    orderBy: { order: "asc" },
+    take: 100,
+  },
+  _count: { select: { cases: { where: { isDeleted: false } } } },
+} as const satisfies Prisma.RepositoryFoldersInclude;
 
 interface RawFolderNode {
   id: number;
@@ -46,24 +66,7 @@ export async function fetchFolderDetail(folderId: number, env: EnvConfig) {
     "findUnique",
     {
       where: { id: folderId },
-      include: {
-        children: {
-          where: { isDeleted: false },
-          select: {
-            id: true,
-            name: true,
-            _count: { select: { cases: { where: { isDeleted: false } } } },
-          },
-          orderBy: { order: "asc" },
-        },
-        cases: {
-          where: { isDeleted: false },
-          select: { id: true, name: true, source: true },
-          orderBy: { order: "asc" },
-          take: 100,
-        },
-        _count: { select: { cases: { where: { isDeleted: false } } } },
-      },
+      include: FOLDER_DETAIL_INCLUDE,
     },
     env,
   );

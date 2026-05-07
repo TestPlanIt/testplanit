@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { zenstack } from "../../api.js";
 import { TestPlanItHttpError } from "../../http.js";
 import type { EnvConfig } from "../../env.js";
@@ -34,8 +35,8 @@ export async function resolveCustomFields(
         displayName: { in: names },
         isDeleted: false,
         isEnabled: true,
-      },
-      select: { id: true, displayName: true },
+      } satisfies Prisma.CaseFieldsWhereInput,
+      select: { id: true, displayName: true } satisfies Prisma.CaseFieldsSelect,
     },
     env,
   );
@@ -84,8 +85,8 @@ export async function writeCustomFieldValues(
       "caseFieldValues",
       "findFirst",
       {
-        where: { testCaseId: caseId, fieldId: r.fieldId },
-        select: { id: true },
+        where: { testCaseId: caseId, fieldId: r.fieldId } satisfies Prisma.CaseFieldValuesWhereInput,
+        select: { id: true } satisfies Prisma.CaseFieldValuesSelect,
       },
       env,
     );
