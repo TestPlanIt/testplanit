@@ -1,6 +1,7 @@
-import { Folder, ListChecks } from "lucide-react";
+import { ArrowRight, CopyPlus, Folder, ListChecks } from "lucide-react";
 import React, { CSSProperties, useEffect, useRef } from "react";
 import { useDragLayer, XYCoord } from "react-dnd";
+import { useDragModifier } from "~/hooks/useDragModifier";
 import { ItemTypes } from "~/types/dndTypes";
 
 // Define the structure for test case info
@@ -77,6 +78,8 @@ export const UnifiedDragPreview: React.FC = () => {
     isDragging: monitor.isDragging(),
   }));
 
+  const { copyHeld, moveHeld } = useDragModifier(isDragging);
+
   // Track mouse position and update DOM directly without React re-renders
   useEffect(() => {
     if (!isDragging || !previewRef.current) {
@@ -126,10 +129,26 @@ export const UnifiedDragPreview: React.FC = () => {
           <div
             ref={previewRef}
             style={getItemStyles(initialOffset, currentOffset)}
-            className="bg-primary/20 border-primary border rounded-md shadow-md text-sm flex items-start gap-2 max-w-[400px]"
+            className="bg-primary/20 border-primary border rounded-md shadow-md text-sm flex items-start gap-2 max-w-[400px] relative"
           >
             <ListChecks size={16} className="text-primary shrink-0" />
             <span className="truncate">{displayName}</span>
+            {copyHeld && (
+              <div
+                data-testid="drag-preview-copy-badge"
+                className="absolute -top-2 -right-2 rounded-full bg-primary text-primary-foreground p-0.5 ring-2 ring-background"
+              >
+                <CopyPlus size={12} />
+              </div>
+            )}
+            {moveHeld && !copyHeld && (
+              <div
+                data-testid="drag-preview-move-badge"
+                className="absolute -top-2 -right-2 rounded-full bg-secondary text-secondary-foreground p-0.5 ring-2 ring-background"
+              >
+                <ArrowRight size={12} />
+              </div>
+            )}
           </div>
         );
       }

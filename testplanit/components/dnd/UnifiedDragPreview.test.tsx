@@ -196,9 +196,7 @@ describe("UnifiedDragPreview", () => {
       modifierState.moveHeld = false;
 
       render(<UnifiedDragPreview />);
-      expect(
-        screen.getByTestId("drag-preview-copy-badge")
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("drag-preview-copy-badge")).toBeInTheDocument();
       expect(screen.getByTestId("copy-plus-icon")).toBeInTheDocument();
       expect(
         screen.queryByTestId("drag-preview-move-badge")
@@ -210,9 +208,7 @@ describe("UnifiedDragPreview", () => {
       modifierState.moveHeld = true;
 
       render(<UnifiedDragPreview />);
-      expect(
-        screen.getByTestId("drag-preview-move-badge")
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("drag-preview-move-badge")).toBeInTheDocument();
       expect(screen.getByTestId("arrow-right-icon")).toBeInTheDocument();
       expect(
         screen.queryByTestId("drag-preview-copy-badge")
@@ -224,9 +220,7 @@ describe("UnifiedDragPreview", () => {
       modifierState.moveHeld = true;
 
       render(<UnifiedDragPreview />);
-      expect(
-        screen.getByTestId("drag-preview-copy-badge")
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("drag-preview-copy-badge")).toBeInTheDocument();
       expect(
         screen.queryByTestId("drag-preview-move-badge")
       ).not.toBeInTheDocument();
