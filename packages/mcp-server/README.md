@@ -1031,6 +1031,28 @@ Add the server to your `claude_desktop_config.json`:
 
 Restart Claude Desktop after editing the config. The TestPlanIt server should appear in the MCP servers list. Send a message asking Claude to "use the testplanit whoami tool" to verify the wiring.
 
+## Cursor configuration
+
+Add the server to `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (project-scoped):
+
+```json
+{
+  "mcpServers": {
+    "testplanit": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@testplanit/mcp-server"],
+      "env": {
+        "TESTPLANIT_API_TOKEN": "tpi_your_token_here",
+        "TESTPLANIT_API_URL": "https://your-instance.testplanit.com"
+      }
+    }
+  }
+}
+```
+
+Restart Cursor after editing. If you prefer to pull the token from your shell environment rather than hardcoding it, Cursor supports interpolation: `"TESTPLANIT_API_TOKEN": "${env:TESTPLANIT_API_TOKEN}"`.
+
 ## Diagnostics
 
 - All diagnostic output is written to **stderr**. Stdout is reserved for the JSON-RPC stream — never write to it.
