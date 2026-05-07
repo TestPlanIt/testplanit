@@ -59,6 +59,9 @@ const mockPrisma: any = {
     updateMany: (...args: any[]) => mockUpdateMany(...args),
     createMany: (...args: any[]) => mockCreateMany(...args),
   },
+  repositoryCaseLink: {
+    findMany: vi.fn().mockResolvedValue([]),
+  },
   llmProviderConfig: {
     findFirst: vi.fn().mockResolvedValue(null),
   },
