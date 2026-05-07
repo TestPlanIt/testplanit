@@ -385,6 +385,64 @@ const TreeView: React.FC<{
     draggedItems: Array<{ id: number | string }>;
   } | null>(null);
 
+  const numericProjectId = useMemo(() => Number(projectId), [projectId]);
+
+  const handleMoveDrop = useCallback(
+    async (
+      itemsToUpdate: Array<{ id: number | string }>,
+      targetFolderId: number
+    ) => {
+      try {
+        const updatePromises = itemsToUpdate.map((draggedItem) =>
+          updateCase({
+            where: { id: Number(draggedItem.id) },
+            data: { folderId: targetFolderId },
+          })
+        );
+        await Promise.all(updatePromises);
+
+        toast.success(t("common.fields.success"), {
+          description: t("common.messages.updateSuccess", {
+            count: itemsToUpdate.length,
+          }),
+        });
+        void refetchCases();
+        void refetchFolders();
+        onRefetchStats?.();
+      } catch (error) {
+        console.error("Failed to move test case(s):", error);
+        toast.error(t("common.errors.error"), {
+          description: t("common.messages.updateError"),
+        });
+      }
+    },
+    [updateCase, refetchCases, refetchFolders, onRefetchStats, t]
+  );
+
+  const handleCopyDrop = useCallback(
+    async (
+      itemsToUpdate: Array<{ id: number | string }>,
+      targetFolderId: number
+    ) => {
+      lastSubmittedFolderIdRef.current = targetFolderId;
+      setPendingCopyTargets((prev) => {
+        const next = new Map(prev);
+        next.set(targetFolderId, "pending");
+        return next;
+      });
+      await copyMoveJob.submit({
+        operation: "copy",
+        caseIds: itemsToUpdate.map((i) => Number(i.id)),
+        sourceProjectId: numericProjectId,
+        targetProjectId: numericProjectId,
+        targetFolderId,
+        conflictResolution: "rename",
+        sharedStepGroupResolution: "reuse",
+      });
+    },
+    [copyMoveJob, numericProjectId]
+  );
+
   const buildTree = useCallback(
     (parentId: number | null): ArboristNode[] => {
       const children = childrenMap.get(parentId ?? null) || [];
@@ -820,56 +878,46 @@ const TreeView: React.FC<{
           folderId?: number | null;
           draggedItems?: Array<{ id: number | string }>;
         }) => {
-          return (
-            !(!canAddEdit || !!filteredFolders) &&
-            data?.folderId !== 0 &&
-            item.folderId !== data?.folderId
-          );
+          const baseChecks =
+            !(!canAddEdit || !!filteredFolders) && data?.folderId !== 0;
+          if (copyHeld) {
+            return baseChecks;
+          }
+          return baseChecks && item.folderId !== data?.folderId;
         },
-        drop: (item: {
-          id?: number | string;
-          folderId?: number | null;
-          draggedItems?: Array<{ id: number | string }>;
-        }) => {
+        drop: (
+          item: {
+            id?: number | string;
+            folderId?: number | null;
+            draggedItems?: Array<{ id: number | string }>;
+          },
+          monitor
+        ) => {
           const targetFolderId = data?.folderId;
           if (!targetFolderId) return;
 
-          const processDrop = async () => {
-            let itemsToUpdate: Array<{ id: number | string }> = [];
+          const itemsToUpdate: Array<{ id: number | string }> =
+            item.draggedItems && item.draggedItems.length > 0
+              ? item.draggedItems
+              : item.id != null
+                ? [{ id: item.id }]
+                : [];
+          if (itemsToUpdate.length === 0) return;
 
-            if (item.draggedItems && item.draggedItems.length > 0) {
-              itemsToUpdate = item.draggedItems;
-            } else if (item.id) {
-              itemsToUpdate.push({ id: item.id });
-            }
-
-            if (itemsToUpdate.length === 0) return;
-
-            try {
-              const updatePromises = itemsToUpdate.map((draggedItem) =>
-                updateCase({
-                  where: { id: Number(draggedItem.id) },
-                  data: { folderId: targetFolderId },
-                })
-              );
-              await Promise.all(updatePromises);
-
-              toast.success(t("common.fields.success"), {
-                description: t("common.messages.updateSuccess", {
-                  count: itemsToUpdate.length,
-                }),
-              });
-              void refetchCases();
-              void refetchFolders();
-              onRefetchStats?.();
-            } catch (error) {
-              console.error("Failed to move test case(s):", error);
-              toast.error(t("common.errors.error"), {
-                description: t("common.messages.updateError"),
-              });
-            }
-          };
-          void processDrop();
+          if (copyHeld) {
+            void handleCopyDrop(itemsToUpdate, targetFolderId);
+          } else if (moveHeld) {
+            void handleMoveDrop(itemsToUpdate, targetFolderId);
+          } else {
+            const offset = monitor.getClientOffset();
+            if (!offset) return;
+            setPendingDrop({
+              x: offset.x,
+              y: offset.y,
+              targetFolderId,
+              draggedItems: itemsToUpdate,
+            });
+          }
         },
         collect: (monitor: any) => ({
           isOver: monitor.isOver(),
@@ -885,6 +933,10 @@ const TreeView: React.FC<{
         refetchFolders,
         onRefetchStats,
         t,
+        copyHeld,
+        moveHeld,
+        handleCopyDrop,
+        handleMoveDrop,
       ]
     );
 
