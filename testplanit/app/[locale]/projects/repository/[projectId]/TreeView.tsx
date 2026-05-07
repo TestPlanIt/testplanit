@@ -1413,7 +1413,11 @@ const TreeView: React.FC<{
             data-testid="drop-action-move"
             variant="secondary"
             onClick={() => {
-              if (pendingDrop) {
+              if (
+                pendingDrop &&
+                pendingDrop.draggedItems.length > 0 &&
+                pendingDrop.targetFolderId
+              ) {
                 void handleMoveDrop(
                   pendingDrop.draggedItems,
                   pendingDrop.targetFolderId
@@ -1428,7 +1432,11 @@ const TreeView: React.FC<{
             data-testid="drop-action-copy"
             variant="default"
             onClick={() => {
-              if (pendingDrop) {
+              if (
+                pendingDrop &&
+                pendingDrop.draggedItems.length > 0 &&
+                pendingDrop.targetFolderId
+              ) {
                 void handleCopyDrop(
                   pendingDrop.draggedItems,
                   pendingDrop.targetFolderId
