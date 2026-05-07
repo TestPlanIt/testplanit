@@ -168,7 +168,11 @@ interface RawCaseRow {
   automated: boolean;
   createdAt: string | Date;
   project: { id: number; name: string };
-  folder: { id: number; name: string; parentId: number | null } | null;
+  // WR-04: folderId is non-nullable in schema.zmodel — folder is always
+  // present on a hydrated row. Call sites in get.ts / fetchDetail.ts
+  // dereference raw.folder.id without a null check, so widening the
+  // type here would create a runtime / compile-time mismatch.
+  folder: { id: number; name: string; parentId: number | null };
   state: { id: number; name: string };
   creator: { id: string; name: string | null; email: string };
   tags: Array<{ id: number; name: string }>;
@@ -182,9 +186,7 @@ export function mapCaseRow(raw: RawCaseRow) {
     automated: raw.automated,
     createdAt: raw.createdAt,
     project: raw.project ? { id: raw.project.id, name: raw.project.name } : null,
-    folder: raw.folder
-      ? { id: raw.folder.id, name: raw.folder.name }
-      : null,
+    folder: { id: raw.folder.id, name: raw.folder.name },
     state: raw.state ? { id: raw.state.id, name: raw.state.name } : null,
     creator: raw.creator
       ? { id: raw.creator.id, name: raw.creator.name, email: raw.creator.email }

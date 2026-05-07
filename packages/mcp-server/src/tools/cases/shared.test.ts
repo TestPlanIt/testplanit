@@ -317,10 +317,14 @@ describe("mapCaseRow", () => {
     });
   });
 
-  it("handles null folder gracefully (defensive — returns folder: null)", () => {
-    const rowWithNullFolder = { ...rawRow, folder: null };
-    const result = mapCaseRow(rowWithNullFolder);
-    expect(result.folder).toBeNull();
+  it("WR-04: folder is required (schema invariant — folderId is non-nullable)", () => {
+    // The schema makes folderId non-nullable; mapCaseRow trusts this and
+    // dereferences raw.folder directly. A future schema change that
+    // relaxes the constraint would surface here as a TypeError, which is
+    // the signal we want — call sites in get.ts / fetchDetail.ts have
+    // the same shape contract.
+    const rowWithNullFolder = { ...rawRow, folder: null as unknown };
+    expect(() => mapCaseRow(rowWithNullFolder as never)).toThrow();
   });
 });
 
