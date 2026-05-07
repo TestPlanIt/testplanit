@@ -757,6 +757,10 @@ const TreeView: React.FC<{
 
   // Listen for custom folder selection events
   useEffect(() => {
+    // Track every retry timeout so cleanup on unmount cancels them all and
+    // prevents setSelectedId / onSelectFolder calls on an unmounted tree.
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+
     const handleFolderSelectionChanged = (event: CustomEvent) => {
       const folderId = event.detail?.folderId;
       const expandParentId = event.detail?.expandParentId;
@@ -807,12 +811,14 @@ const TreeView: React.FC<{
           } else if (retriesLeft > 0) {
             // Node not found yet (may still be rendering after state update), retry after a delay
             // Use longer delay to allow React to complete its render cycle
-            setTimeout(() => selectNodeWithRetry(retriesLeft - 1), 100);
+            timeouts.push(
+              setTimeout(() => selectNodeWithRetry(retriesLeft - 1), 100)
+            );
           }
         };
 
         // Start the retry loop after a short initial delay to allow state updates to propagate
-        setTimeout(() => selectNodeWithRetry(15), 100);
+        timeouts.push(setTimeout(() => selectNodeWithRetry(15), 100));
       }
     };
 
@@ -826,6 +832,8 @@ const TreeView: React.FC<{
         "folderSelectionChanged",
         handleFolderSelectionChanged as EventListener
       );
+      timeouts.forEach(clearTimeout);
+      timeouts.length = 0;
     };
   }, [onSelectFolder, ensureFolderPathLoaded, ensureFolderChildrenLoaded]);
 
