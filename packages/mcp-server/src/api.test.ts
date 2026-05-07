@@ -237,6 +237,39 @@ describe("lookup()", () => {
       },
     );
   });
+
+  it("WR-08: lookup non-2xx surfaces the host-side error message in TestPlanItHttpError", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(400, {
+        error: { message: "tag name length exceeds limit", code: "VALIDATION" },
+      }),
+    );
+    await expect(
+      lookup({ type: "tag", name: "way-too-long" }, ENV),
+    ).rejects.toSatisfy((err: unknown) => {
+      const e = err as TestPlanItHttpError;
+      expect(e.statusCode).toBe(400);
+      expect(e.code).toBe("VALIDATION");
+      // Host message reaches the agent rather than the generic
+      // `HTTP 400 from /api/cli/lookup`.
+      expect(e.message).toContain("tag name length exceeds limit");
+      // No raw token in the message.
+      expect(e.message).not.toContain("tpi_");
+      return true;
+    });
+  });
+
+  it("WR-08: lookup non-2xx with string error envelope still surfaces the message", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse(422, { error: "invalid type" }));
+    await expect(lookup({ type: "tag", name: "x" }, ENV)).rejects.toSatisfy(
+      (err: unknown) => {
+        const e = err as TestPlanItHttpError;
+        expect(e.statusCode).toBe(422);
+        expect(e.message).toContain("invalid type");
+        return true;
+      },
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------

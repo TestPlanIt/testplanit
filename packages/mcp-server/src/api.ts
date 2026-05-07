@@ -190,15 +190,30 @@ export async function lookup(
   });
   const text = await response.text();
   if (!response.ok) {
+    // WR-08: mirror the zenstack() error parser so a host-side
+    // validation message ("tag name length exceeds limit") reaches the
+    // agent instead of a generic `HTTP 400 from /api/cli/lookup`.
     let code: string | undefined;
+    let parsedMessage: string | undefined;
     try {
       const parsed = JSON.parse(text) as Record<string, unknown>;
       if (typeof parsed?.["code"] === "string") code = parsed["code"] as string;
+      const errField = parsed?.["error"];
+      if (errField && typeof errField === "object" && errField !== null) {
+        const errObj = errField as Record<string, unknown>;
+        if (typeof errObj["code"] === "string") code = errObj["code"] as string;
+        if (typeof errObj["message"] === "string") parsedMessage = errObj["message"] as string;
+      } else if (typeof errField === "string" && !parsedMessage) {
+        parsedMessage = errField;
+      }
     } catch {
-      // ignore
+      // body is not JSON; leave parsedMessage / code undefined
     }
+    // T-06-05 / T-05-06b: NEVER include the bearer token in error
+    // messages — we only echo the parsed envelope `message`, never the
+    // raw body or env.apiToken.
     throw new TestPlanItHttpError(
-      `HTTP ${response.status} from /api/cli/lookup`,
+      `HTTP ${response.status} from /api/cli/lookup${parsedMessage ? `: ${parsedMessage}` : ""}`,
       { statusCode: response.status, code },
     );
   }
