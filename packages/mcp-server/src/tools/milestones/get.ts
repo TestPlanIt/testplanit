@@ -100,8 +100,35 @@ export function registerMilestonesGet(
           children: raw.children.slice(0, MILESTONE_CHILDREN_CAP),
         };
 
-        const runIds = trimmed.testRuns.map((r) => r.id);
-        const sessionIds = trimmed.sessions.map((s) => s.id);
+        // CR-02 fix: derive the rollup id sets from milestoneId-scoped
+        // findMany queries rather than the trimmed inline arrays, so the
+        // pooled statusCounts / untested / total stay correct even when
+        // the inline display caps fire (e.g. milestones with >250 linked
+        // runs). The cost is two short id-only findMany calls; the
+        // resulting rollup matches what milestones_list reports for the
+        // same milestone.
+        const allRuns =
+          (await zenstack<Array<{ id: number }>>(
+            "testRuns",
+            "findMany",
+            {
+              where: { milestoneId: raw.id, isDeleted: false },
+              select: { id: true },
+            } satisfies Prisma.TestRunsFindManyArgs,
+            deps.env,
+          )) ?? [];
+        const runIds = allRuns.map((r) => r.id);
+        const allSessions =
+          (await zenstack<Array<{ id: number }>>(
+            "sessions",
+            "findMany",
+            {
+              where: { milestoneId: raw.id, isDeleted: false },
+              select: { id: true },
+            } satisfies Prisma.SessionsFindManyArgs,
+            deps.env,
+          )) ?? [];
+        const sessionIds = allSessions.map((s) => s.id);
 
         // Pooled rollup for the milestone itself: same merge algorithm as
         // milestones_list, but bounded to a single milestone's runs +

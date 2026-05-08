@@ -170,6 +170,20 @@ describe("registerMilestonesGet", () => {
         children: [makeChild(200, 1), makeChild(201, 0)],
       }),
     );
+    // testRuns.findMany (CR-02 — full rollup id set, milestoneId-scoped)
+    mockZenstack.mockResolvedValueOnce([
+      { id: 10 },
+      { id: 11 },
+      { id: 12 },
+      { id: 13 },
+      { id: 14 },
+    ]);
+    // sessions.findMany (CR-02)
+    mockZenstack.mockResolvedValueOnce([
+      { id: 50 },
+      { id: 51 },
+      { id: 52 },
+    ]);
     // testRunCases.groupBy
     mockZenstack.mockResolvedValueOnce([
       { testRunId: 10, statusId: 1, _count: { id: 2 } },
@@ -225,6 +239,12 @@ describe("registerMilestonesGet", () => {
       makeTestRun(i + 1),
     );
     mockZenstack.mockResolvedValueOnce(makeRawDetail({ testRuns }));
+    // testRuns.findMany (CR-02) — same 250 ids
+    mockZenstack.mockResolvedValueOnce(
+      Array.from({ length: 250 }, (_, i) => ({ id: i + 1 })),
+    );
+    // sessions.findMany (CR-02) — none
+    mockZenstack.mockResolvedValueOnce([]);
     // testRunCases.groupBy fires (250 ids)
     mockZenstack.mockResolvedValueOnce([]);
     // sessions empty → no sessionResults.groupBy. statuses skipped.
@@ -244,6 +264,15 @@ describe("registerMilestonesGet", () => {
       makeTestRun(i + 1),
     );
     mockZenstack.mockResolvedValueOnce(makeRawDetail({ testRuns }));
+    // testRuns.findMany (CR-02) — full 251 ids; rollup is computed against
+    // the full set so totals stay correct even though linkedTestRuns is
+    // trimmed for inline display.
+    mockZenstack.mockResolvedValueOnce(
+      Array.from({ length: 251 }, (_, i) => ({ id: i + 1 })),
+    );
+    // sessions.findMany (CR-02) — none
+    mockZenstack.mockResolvedValueOnce([]);
+    // testRunCases.groupBy
     mockZenstack.mockResolvedValueOnce([]);
 
     const { client } = await setupClient();
@@ -261,6 +290,12 @@ describe("registerMilestonesGet", () => {
       makeSession(i + 1),
     );
     mockZenstack.mockResolvedValueOnce(makeRawDetail({ sessions }));
+    // testRuns.findMany (CR-02) — none
+    mockZenstack.mockResolvedValueOnce([]);
+    // sessions.findMany (CR-02) — same 100 ids
+    mockZenstack.mockResolvedValueOnce(
+      Array.from({ length: 100 }, (_, i) => ({ id: i + 1 })),
+    );
     // No runs → testRunCases.groupBy skipped. sessions present → sessionResults.groupBy.
     mockZenstack.mockResolvedValueOnce([]);
 
@@ -279,6 +314,13 @@ describe("registerMilestonesGet", () => {
       makeSession(i + 1),
     );
     mockZenstack.mockResolvedValueOnce(makeRawDetail({ sessions }));
+    // testRuns.findMany (CR-02) — none
+    mockZenstack.mockResolvedValueOnce([]);
+    // sessions.findMany (CR-02) — full 101 ids; rollup uses the full set.
+    mockZenstack.mockResolvedValueOnce(
+      Array.from({ length: 101 }, (_, i) => ({ id: i + 1 })),
+    );
+    // sessionResults.groupBy
     mockZenstack.mockResolvedValueOnce([]);
 
     const { client } = await setupClient();
