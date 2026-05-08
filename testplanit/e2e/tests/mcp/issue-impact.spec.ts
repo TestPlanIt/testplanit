@@ -77,12 +77,20 @@ async function findFirst(
   token: string,
   model: string,
   where: Record<string, unknown>,
-  select?: Record<string, unknown>,
+  select?: Record<string, unknown>
 ): Promise<{ id: number } | null> {
-  const q = encodeURIComponent(JSON.stringify({ where, ...(select ? { select } : {}) }));
-  const r = await request.get(`${baseURL}/api/model/${model}/findFirst?q=${q}`, {
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-  });
+  const q = encodeURIComponent(
+    JSON.stringify({ where, ...(select ? { select } : {}) })
+  );
+  const r = await request.get(
+    `${baseURL}/api/model/${model}/findFirst?q=${q}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
   if (r.status() !== 200) return null;
   const body = await r.json();
   return body.data ?? null;
@@ -102,7 +110,9 @@ test.describe("MCP issue-impact chain (Phase 7 EXEC-06)", () => {
       "Content-Type": "application/json",
     };
 
-    const project = await findFirst(request, baseURL!, token, "projects", { isDeleted: false });
+    const project = await findFirst(request, baseURL!, token, "projects", {
+      isDeleted: false,
+    });
     expect(project, "seed must have at least one project").not.toBeNull();
 
     // EXEC-06 requires an Issue with at least one linked RepositoryCase. Look
@@ -130,7 +140,7 @@ test.describe("MCP issue-impact chain (Phase 7 EXEC-06)", () => {
     if (ctx.issueId === null) {
       // eslint-disable-next-line no-console
       console.warn(
-        "EXEC-06 chain skipped: seed has no Issue linked to a project's RepositoryCases",
+        "EXEC-06 chain skipped: seed has no Issue linked to a project's RepositoryCases"
       );
       return;
     }
@@ -146,11 +156,11 @@ test.describe("MCP issue-impact chain (Phase 7 EXEC-06)", () => {
         include: { project: { select: { id: true, name: true } } },
         orderBy: [{ id: "asc" }],
         take: 26,
-      }),
+      })
     );
     const casesR = await request.get(
       `${baseURL}/api/model/repositoryCases/findMany?q=${casesQ}`,
-      { headers: ctx.headers },
+      { headers: ctx.headers }
     );
     expect(casesR.status()).toBe(200);
     const casesBody = await casesR.json();
@@ -159,7 +169,7 @@ test.describe("MCP issue-impact chain (Phase 7 EXEC-06)", () => {
     if (casesBody.data.length === 0) {
       // eslint-disable-next-line no-console
       console.warn(
-        "EXEC-06 partial: issue has 0 linked RepositoryCases (access policy may have filtered)",
+        "EXEC-06 partial: issue has 0 linked RepositoryCases (access policy may have filtered)"
       );
       return;
     }
@@ -183,18 +193,20 @@ test.describe("MCP issue-impact chain (Phase 7 EXEC-06)", () => {
             select: {
               id: true,
               repositoryCaseId: true,
-              repositoryCase: { select: { id: true, name: true, source: true } },
+              repositoryCase: {
+                select: { id: true, name: true, source: true },
+              },
               testRun: { select: { id: true, name: true } },
             },
           },
         },
         orderBy: [{ executedAt: "desc" }, { id: "desc" }],
         take: 26,
-      }),
+      })
     );
     const resultsR = await request.get(
       `${baseURL}/api/model/testRunResults/findMany?q=${resultsQ}`,
-      { headers: ctx.headers },
+      { headers: ctx.headers }
     );
     expect(resultsR.status()).toBe(200);
     const resultsBody = await resultsR.json();
@@ -203,7 +215,7 @@ test.describe("MCP issue-impact chain (Phase 7 EXEC-06)", () => {
     if (resultsBody.data.length === 0) {
       // eslint-disable-next-line no-console
       console.warn(
-        "EXEC-06 partial: linked cases have 0 TestRunResults yet — chain shape verified but executedBy assertion skipped",
+        "EXEC-06 partial: linked cases have 0 TestRunResults yet — chain shape verified but executedBy assertion skipped"
       );
       return;
     }

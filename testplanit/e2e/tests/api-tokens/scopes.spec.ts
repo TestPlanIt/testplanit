@@ -162,26 +162,29 @@ test.describe("API Token Scopes (mode:read + client:mcp)", () => {
   }) => {
     const ctx = await browser.newContext({ storageState: undefined });
     try {
-      const r = await ctx.request.post(`${baseURL}/api/model/repositoryCases/create`, {
-        headers: {
-          Authorization: `Bearer ${readOnlyToken}`,
-          "Content-Type": "application/json",
-        },
-        // Placeholder body — request is rejected at the auth gate before
-        // reaching ZenStack, so the FK shape doesn't matter.
-        data: {
-          data: {
-            name: "should-not-be-created",
-            source: "MANUAL",
-            automated: false,
-            project: { connect: { id: 1 } },
-            repository: { connect: { id: 1 } },
-            folder: { connect: { id: 1 } },
-            template: { connect: { id: 1 } },
-            state: { connect: { id: 1 } },
+      const r = await ctx.request.post(
+        `${baseURL}/api/model/repositoryCases/create`,
+        {
+          headers: {
+            Authorization: `Bearer ${readOnlyToken}`,
+            "Content-Type": "application/json",
           },
-        },
-      });
+          // Placeholder body — request is rejected at the auth gate before
+          // reaching ZenStack, so the FK shape doesn't matter.
+          data: {
+            data: {
+              name: "should-not-be-created",
+              source: "MANUAL",
+              automated: false,
+              project: { connect: { id: 1 } },
+              repository: { connect: { id: 1 } },
+              folder: { connect: { id: 1 } },
+              template: { connect: { id: 1 } },
+              state: { connect: { id: 1 } },
+            },
+          },
+        }
+      );
       expect(r.status()).toBe(403);
       const body = await r.json();
       expect(body.code).toBe("READ_ONLY_TOKEN");
@@ -196,13 +199,16 @@ test.describe("API Token Scopes (mode:read + client:mcp)", () => {
   }) => {
     const ctx = await browser.newContext({ storageState: undefined });
     try {
-      const r = await ctx.request.patch(`${baseURL}/api/model/repositoryCases/update`, {
-        headers: {
-          Authorization: `Bearer ${readOnlyToken}`,
-          "Content-Type": "application/json",
-        },
-        data: { where: { id: 1 }, data: { name: "x" } },
-      });
+      const r = await ctx.request.patch(
+        `${baseURL}/api/model/repositoryCases/update`,
+        {
+          headers: {
+            Authorization: `Bearer ${readOnlyToken}`,
+            "Content-Type": "application/json",
+          },
+          data: { where: { id: 1 }, data: { name: "x" } },
+        }
+      );
       expect(r.status()).toBe(403);
       const body = await r.json();
       expect(body.code).toBe("READ_ONLY_TOKEN");
@@ -217,19 +223,22 @@ test.describe("API Token Scopes (mode:read + client:mcp)", () => {
   }) => {
     const ctx = await browser.newContext({ storageState: undefined });
     try {
-      const r = await ctx.request.post(`${baseURL}/api/model/repositoryFolders/create`, {
-        headers: {
-          Authorization: `Bearer ${readOnlyToken}`,
-          "Content-Type": "application/json",
-        },
-        data: {
-          data: {
-            name: "should-not-be-created",
-            project: { connect: { id: 1 } },
-            repository: { connect: { id: 1 } },
+      const r = await ctx.request.post(
+        `${baseURL}/api/model/repositoryFolders/create`,
+        {
+          headers: {
+            Authorization: `Bearer ${readOnlyToken}`,
+            "Content-Type": "application/json",
           },
-        },
-      });
+          data: {
+            data: {
+              name: "should-not-be-created",
+              project: { connect: { id: 1 } },
+              repository: { connect: { id: 1 } },
+            },
+          },
+        }
+      );
       expect(r.status()).toBe(403);
       const body = await r.json();
       expect(body.code).toBe("READ_ONLY_TOKEN");

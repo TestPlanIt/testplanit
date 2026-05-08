@@ -253,7 +253,8 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
     `,
   },
   "0.25.0": {
-    title: "New Feature: MCP Server — Talk to Your Test Data from Any AI Assistant",
+    title:
+      "New Feature: MCP Server — Talk to Your Test Data from Any AI Assistant",
     message: `
       <p>The <strong>TestPlanIt MCP Server</strong> lets AI assistants like Claude and Cursor read your live test data directly — no copy-pasting, no manual lookups.</p>
       <h4>What You Can Ask</h4>

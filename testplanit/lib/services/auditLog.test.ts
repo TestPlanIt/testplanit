@@ -631,7 +631,10 @@ describe("AuditLog Service", () => {
       });
 
       const jobData = mocks.mockQueue.add.mock.calls[0][1];
-      const md = (jobData.event.metadata ?? {}) as Record<string, unknown> | null;
+      const md = (jobData.event.metadata ?? {}) as Record<
+        string,
+        unknown
+      > | null;
       // Either metadata is absent entirely, or it has no `source` key.
       if (md) {
         expect(md).not.toHaveProperty("source");

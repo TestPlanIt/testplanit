@@ -39,12 +39,20 @@ async function findFirst(
   token: string,
   model: string,
   where: Record<string, unknown>,
-  select?: Record<string, unknown>,
+  select?: Record<string, unknown>
 ): Promise<Record<string, unknown> | null> {
-  const q = encodeURIComponent(JSON.stringify({ where, ...(select ? { select } : {}) }));
-  const r = await request.get(`${baseURL}/api/model/${model}/findFirst?q=${q}`, {
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-  });
+  const q = encodeURIComponent(
+    JSON.stringify({ where, ...(select ? { select } : {}) })
+  );
+  const r = await request.get(
+    `${baseURL}/api/model/${model}/findFirst?q=${q}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
   if (r.status() !== 200) return null;
   const body = await r.json();
   return body.data ?? null;
@@ -64,7 +72,9 @@ test.describe("MCP repository case links read (Phase 8 REPO-05)", () => {
       "Content-Type": "application/json",
     };
 
-    const project = await findFirst(request, baseURL!, token, "projects", { isDeleted: false });
+    const project = await findFirst(request, baseURL!, token, "projects", {
+      isDeleted: false,
+    });
     expect(project, "seed must have at least one project").not.toBeNull();
     const projectId = project!.id as number;
 
@@ -83,11 +93,16 @@ test.describe("MCP repository case links read (Phase 8 REPO-05)", () => {
           caseBId: true,
         },
         take: 1,
-      }),
+      })
     );
     const linkR = await request.get(
       `${baseURL}/api/model/repositoryCaseLink/findMany?q=${linkQ}`,
-      { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
     );
     let linkId: number | null = null;
     let caseAId: number | null = null;
@@ -124,7 +139,7 @@ test.describe("MCP repository case links read (Phase 8 REPO-05)", () => {
     if (ctx.linkId === null || ctx.caseAId === null) {
       // eslint-disable-next-line no-console
       console.warn(
-        "REPO-05 caseId mode skipped: seed has no RepositoryCaseLink in this project",
+        "REPO-05 caseId mode skipped: seed has no RepositoryCaseLink in this project"
       );
       return;
     }
@@ -135,24 +150,30 @@ test.describe("MCP repository case links read (Phase 8 REPO-05)", () => {
           OR: [{ caseAId: ctx.caseAId }, { caseBId: ctx.caseAId }],
         },
         include: {
-          caseA: { select: { id: true, name: true, source: true, automated: true } },
-          caseB: { select: { id: true, name: true, source: true, automated: true } },
+          caseA: {
+            select: { id: true, name: true, source: true, automated: true },
+          },
+          caseB: {
+            select: { id: true, name: true, source: true, automated: true },
+          },
           createdBy: { select: { id: true, name: true, email: true } },
         },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: 26,
-      }),
+      })
     );
     const r = await request.get(
       `${baseURL}/api/model/repositoryCaseLink/findMany?q=${q}`,
-      { headers: ctx.headers },
+      { headers: ctx.headers }
     );
     expect(r.status()).toBe(200);
     const body = await r.json();
     expect(Array.isArray(body.data)).toBe(true);
     expect(body.data.length).toBeGreaterThanOrEqual(1);
     // Confirm the link we located in beforeAll appears in the OR-mode results.
-    const found = body.data.find((row: { id: number }) => row.id === ctx.linkId);
+    const found = body.data.find(
+      (row: { id: number }) => row.id === ctx.linkId
+    );
     expect(found).toBeDefined();
   });
 
@@ -164,7 +185,9 @@ test.describe("MCP repository case links read (Phase 8 REPO-05)", () => {
   }) => {
     if (ctx.caseAId === null) {
       // eslint-disable-next-line no-console
-      console.warn("REPO-05 caseAId mode skipped: seed has no RepositoryCaseLink");
+      console.warn(
+        "REPO-05 caseAId mode skipped: seed has no RepositoryCaseLink"
+      );
       return;
     }
     const q = encodeURIComponent(
@@ -172,11 +195,11 @@ test.describe("MCP repository case links read (Phase 8 REPO-05)", () => {
         where: { isDeleted: false, caseAId: ctx.caseAId },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: 26,
-      }),
+      })
     );
     const r = await request.get(
       `${baseURL}/api/model/repositoryCaseLink/findMany?q=${q}`,
-      { headers: ctx.headers },
+      { headers: ctx.headers }
     );
     expect(r.status()).toBe(200);
     const body = await r.json();
@@ -194,7 +217,9 @@ test.describe("MCP repository case links read (Phase 8 REPO-05)", () => {
   }) => {
     if (ctx.caseBId === null) {
       // eslint-disable-next-line no-console
-      console.warn("REPO-05 caseBId mode skipped: seed has no RepositoryCaseLink");
+      console.warn(
+        "REPO-05 caseBId mode skipped: seed has no RepositoryCaseLink"
+      );
       return;
     }
     const q = encodeURIComponent(
@@ -202,11 +227,11 @@ test.describe("MCP repository case links read (Phase 8 REPO-05)", () => {
         where: { isDeleted: false, caseBId: ctx.caseBId },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: 26,
-      }),
+      })
     );
     const r = await request.get(
       `${baseURL}/api/model/repositoryCaseLink/findMany?q=${q}`,
-      { headers: ctx.headers },
+      { headers: ctx.headers }
     );
     expect(r.status()).toBe(200);
     const body = await r.json();
@@ -236,11 +261,11 @@ test.describe("MCP repository case links read (Phase 8 REPO-05)", () => {
         },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: 26,
-      }),
+      })
     );
     const r = await request.get(
       `${baseURL}/api/model/repositoryCaseLink/findMany?q=${q}`,
-      { headers: ctx.headers },
+      { headers: ctx.headers }
     );
     expect(r.status()).toBe(200);
     const body = await r.json();

@@ -44,7 +44,7 @@ export const GET = withAuditContext(async (request: NextRequest) => {
     if (!auth.authenticated || !auth.userId) {
       return NextResponse.json(
         { error: auth.error ?? "Unauthorized", code: auth.errorCode },
-        { status: 401 },
+        { status: 401 }
       );
     }
 
@@ -53,7 +53,7 @@ export const GET = withAuditContext(async (request: NextRequest) => {
     if (q.length > MAX_Q_LENGTH) {
       return NextResponse.json(
         { error: "q parameter too large" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -63,20 +63,20 @@ export const GET = withAuditContext(async (request: NextRequest) => {
     } catch {
       return NextResponse.json(
         { error: "Invalid q parameter" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     const ids = Array.isArray(parsed?.milestoneIds)
       ? parsed.milestoneIds.filter(
-          (n): n is number => Number.isInteger(n) && n > 0,
+          (n): n is number => Number.isInteger(n) && n > 0
         )
       : [];
     if (ids.length === 0) return NextResponse.json({ data: {} });
     if (ids.length > MAX_BATCHED_IDS) {
       return NextResponse.json(
         { error: `milestoneIds exceeds maximum of ${MAX_BATCHED_IDS}` },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -131,14 +131,15 @@ export const GET = withAuditContext(async (request: NextRequest) => {
       GROUP BY root_milestone_id
     `;
 
-    for (const r of rows) data[String(r.root_milestone_id)] = r.descendant_count;
+    for (const r of rows)
+      data[String(r.root_milestone_id)] = r.descendant_count;
 
     return NextResponse.json({ data });
   } catch (error) {
     console.error("Failed to compute milestone descendants:", error);
     return NextResponse.json(
       { error: "Failed to compute milestone descendants" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 });

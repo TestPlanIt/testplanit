@@ -53,12 +53,20 @@ async function findFirst(
   token: string,
   model: string,
   where: Record<string, unknown>,
-  select?: Record<string, unknown>,
+  select?: Record<string, unknown>
 ): Promise<{ id: number } | null> {
-  const q = encodeURIComponent(JSON.stringify({ where, ...(select ? { select } : {}) }));
-  const r = await request.get(`${baseURL}/api/model/${model}/findFirst?q=${q}`, {
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-  });
+  const q = encodeURIComponent(
+    JSON.stringify({ where, ...(select ? { select } : {}) })
+  );
+  const r = await request.get(
+    `${baseURL}/api/model/${model}/findFirst?q=${q}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
   if (r.status() !== 200) return null;
   const body = await r.json();
   return body.data ?? null;
@@ -86,7 +94,12 @@ async function findFirst(
 async function callTool(
   name: "testplanit_test_runs_list",
   args: { projectId: number; limit?: number },
-  ctx: { request: APIRequestContext; baseURL: string; headers: Record<string, string>; token: string },
+  ctx: {
+    request: APIRequestContext;
+    baseURL: string;
+    headers: Record<string, string>;
+    token: string;
+  }
 ): Promise<{
   data: Array<{
     id: number;
@@ -124,20 +137,24 @@ async function callTool(
       },
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: limit + 1,
-    }),
+    })
   );
-  const listR = await ctx.request.get(`${ctx.baseURL}/api/model/testRuns/findMany?q=${listQ}`, {
-    headers: ctx.headers,
-  });
+  const listR = await ctx.request.get(
+    `${ctx.baseURL}/api/model/testRuns/findMany?q=${listQ}`,
+    {
+      headers: ctx.headers,
+    }
+  );
   expect(listR.status()).toBe(200);
-  const rawRows: Array<Record<string, unknown>> = ((await listR.json()).data ?? []) as Array<
-    Record<string, unknown>
-  >;
+  const rawRows: Array<Record<string, unknown>> = ((await listR.json()).data ??
+    []) as Array<Record<string, unknown>>;
 
   // hasNextPage / nextCursor probe (mirrors the tool's slice + nextCursor logic).
   const hasNextPage = rawRows.length > limit;
   const trimmed = hasNextPage ? rawRows.slice(0, limit) : rawRows;
-  const nextCursor = hasNextPage ? (trimmed[trimmed.length - 1]?.id as number) : null;
+  const nextCursor = hasNextPage
+    ? (trimmed[trimmed.length - 1]?.id as number)
+    : null;
 
   if (trimmed.length === 0) {
     return { data: [], hasNextPage: false, nextCursor: null };
@@ -151,22 +168,30 @@ async function callTool(
       by: ["testRunId", "statusId"],
       where: { testRunId: { in: pageIds } },
       _count: { id: true },
-    }),
+    })
   );
-  const groupR = await ctx.request.get(`${ctx.baseURL}/api/model/testRunCases/groupBy?q=${groupQ}`, {
-    headers: ctx.headers,
-  });
+  const groupR = await ctx.request.get(
+    `${ctx.baseURL}/api/model/testRunCases/groupBy?q=${groupQ}`,
+    {
+      headers: ctx.headers,
+    }
+  );
   expect(groupR.status()).toBe(200);
-  const groups: Array<{ testRunId: number; statusId: number | null; _count: { id: number } }> =
-    ((await groupR.json()).data ?? []) as Array<{
-      testRunId: number;
-      statusId: number | null;
-      _count: { id: number };
-    }>;
+  const groups: Array<{
+    testRunId: number;
+    statusId: number | null;
+    _count: { id: number };
+  }> = ((await groupR.json()).data ?? []) as Array<{
+    testRunId: number;
+    statusId: number | null;
+    _count: { id: number };
+  }>;
 
   // 3. status.findMany for non-null statusIds (R6 short-circuit).
   const nonNullStatusIds = Array.from(
-    new Set(groups.map((g) => g.statusId).filter((id): id is number => id !== null)),
+    new Set(
+      groups.map((g) => g.statusId).filter((id): id is number => id !== null)
+    )
   );
   let nameById = new Map<number, string>();
   if (nonNullStatusIds.length > 0) {
@@ -174,14 +199,18 @@ async function callTool(
       JSON.stringify({
         where: { id: { in: nonNullStatusIds } },
         select: { id: true, name: true },
-      }),
+      })
     );
-    const statusR = await ctx.request.get(`${ctx.baseURL}/api/model/status/findMany?q=${statusQ}`, {
-      headers: ctx.headers,
-    });
+    const statusR = await ctx.request.get(
+      `${ctx.baseURL}/api/model/status/findMany?q=${statusQ}`,
+      {
+        headers: ctx.headers,
+      }
+    );
     expect(statusR.status()).toBe(200);
-    const statuses: Array<{ id: number; name: string }> = ((await statusR.json()).data ??
-      []) as Array<{ id: number; name: string }>;
+    const statuses: Array<{ id: number; name: string }> = ((
+      await statusR.json()
+    ).data ?? []) as Array<{ id: number; name: string }>;
     nameById = new Map(statuses.map((s) => [s.id, s.name]));
   }
 
@@ -231,7 +260,9 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
       "Content-Type": "application/json",
     };
 
-    const project = await findFirst(request, baseURL!, token, "projects", { isDeleted: false });
+    const project = await findFirst(request, baseURL!, token, "projects", {
+      isDeleted: false,
+    });
     expect(project, "seed must have at least one project").not.toBeNull();
 
     const run = await findFirst(request, baseURL!, token, "testRuns", {
@@ -239,7 +270,9 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
       isDeleted: false,
     });
     const testRunCase = run
-      ? await findFirst(request, baseURL!, token, "testRunCases", { testRunId: run.id })
+      ? await findFirst(request, baseURL!, token, "testRunCases", {
+          testRunId: run.id,
+        })
       : null;
     const testRunResult = run
       ? await findFirst(request, baseURL!, token, "testRunResults", {
@@ -269,17 +302,22 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
         where: { projectId: ctx.projectId, isDeleted: false },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: 26, // limit+1 probe, mirrors the MCP tool default of 25
-      }),
+      })
     );
-    const r = await request.get(`${baseURL}/api/model/testRuns/findMany?q=${q}`, {
-      headers: ctx.headers,
-    });
+    const r = await request.get(
+      `${baseURL}/api/model/testRuns/findMany?q=${q}`,
+      {
+        headers: ctx.headers,
+      }
+    );
     expect(r.status()).toBe(200);
     const body = await r.json();
     expect(Array.isArray(body.data)).toBe(true);
     if (body.data.length === 0) {
       // eslint-disable-next-line no-console
-      console.warn("EXEC-01 part A: seed project has 0 TestRuns — RPC accepts the query shape but returned empty");
+      console.warn(
+        "EXEC-01 part A: seed project has 0 TestRuns — RPC accepts the query shape but returned empty"
+      );
       return;
     }
     const row = body.data[0];
@@ -296,13 +334,13 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
     const list = await callTool(
       "testplanit_test_runs_list",
       { projectId: ctx.projectId, limit: 5 },
-      { request, baseURL: baseURL!, headers: ctx.headers, token: ctx.token },
+      { request, baseURL: baseURL!, headers: ctx.headers, token: ctx.token }
     );
 
     if (list.data.length === 0) {
       // eslint-disable-next-line no-console
       console.warn(
-        "EXEC-01 list-row statusCounts assertion skipped: seed project has 0 runs",
+        "EXEC-01 list-row statusCounts assertion skipped: seed project has 0 runs"
       );
       return;
     }
@@ -326,11 +364,14 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
         where: { projectId: ctx.projectId, isDeleted: false },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: 100,
-      }),
+      })
     );
-    const r = await request.get(`${baseURL}/api/model/testRuns/findMany?q=${q}`, {
-      headers: ctx.headers,
-    });
+    const r = await request.get(
+      `${baseURL}/api/model/testRuns/findMany?q=${q}`,
+      {
+        headers: ctx.headers,
+      }
+    );
     expect(r.status()).toBe(200);
   });
 
@@ -369,7 +410,9 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
             take: 50,
             orderBy: [{ order: "asc" }, { id: "asc" }],
             include: {
-              repositoryCase: { select: { id: true, name: true, source: true } },
+              repositoryCase: {
+                select: { id: true, name: true, source: true },
+              },
               assignedTo: { select: { id: true, name: true, email: true } },
               status: { select: { id: true, name: true } },
               results: {
@@ -386,11 +429,14 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
             },
           },
         },
-      }),
+      })
     );
-    const detailR = await request.get(`${baseURL}/api/model/testRuns/findUnique?q=${detailQ}`, {
-      headers: ctx.headers,
-    });
+    const detailR = await request.get(
+      `${baseURL}/api/model/testRuns/findUnique?q=${detailQ}`,
+      {
+        headers: ctx.headers,
+      }
+    );
     expect(detailR.status()).toBe(200);
     const detail = (await detailR.json()).data;
     expect(detail).not.toBeNull();
@@ -402,11 +448,14 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
         by: ["statusId"],
         where: { testRunId: ctx.runId },
         _count: { id: true },
-      }),
+      })
     );
-    const groupR = await request.get(`${baseURL}/api/model/testRunCases/groupBy?q=${groupQ}`, {
-      headers: ctx.headers,
-    });
+    const groupR = await request.get(
+      `${baseURL}/api/model/testRunCases/groupBy?q=${groupQ}`,
+      {
+        headers: ctx.headers,
+      }
+    );
     expect(groupR.status()).toBe(200);
     const groups: Array<{ statusId: number | null; _count: { id: number } }> =
       ((await groupR.json()).data ?? []) as Array<{
@@ -415,7 +464,9 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
       }>;
     if (groups.length === 0) {
       // eslint-disable-next-line no-console
-      console.warn("EXEC-02 partial: run has 0 TestRunCases — rollup assertion skipped");
+      console.warn(
+        "EXEC-02 partial: run has 0 TestRunCases — rollup assertion skipped"
+      );
       return;
     }
 
@@ -446,17 +497,22 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
         where: { testRunId: ctx.runId },
         orderBy: [{ order: "asc" }, { id: "asc" }],
         take: 26,
-      }),
+      })
     );
-    const r = await request.get(`${baseURL}/api/model/testRunCases/findMany?q=${q}`, {
-      headers: ctx.headers,
-    });
+    const r = await request.get(
+      `${baseURL}/api/model/testRunCases/findMany?q=${q}`,
+      {
+        headers: ctx.headers,
+      }
+    );
     expect(r.status()).toBe(200);
     const body = await r.json();
     expect(Array.isArray(body.data)).toBe(true);
     if (body.data.length === 0) {
       // eslint-disable-next-line no-console
-      console.warn("EXEC-03 partial: run has 0 TestRunCases — row-shape assertion skipped");
+      console.warn(
+        "EXEC-03 partial: run has 0 TestRunCases — row-shape assertion skipped"
+      );
       return;
     }
     const row = body.data[0];
@@ -488,23 +544,30 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
         where: { isDeleted: false, testRunId: ctx.runId },
         orderBy: [{ executedAt: "desc" }, { id: "desc" }],
         take: 26,
-      }),
+      })
     );
-    const r = await request.get(`${baseURL}/api/model/testRunResults/findMany?q=${q}`, {
-      headers: ctx.headers,
-    });
+    const r = await request.get(
+      `${baseURL}/api/model/testRunResults/findMany?q=${q}`,
+      {
+        headers: ctx.headers,
+      }
+    );
     expect(r.status()).toBe(200);
     const body = await r.json();
     expect(Array.isArray(body.data)).toBe(true);
     if (body.data.length === 0) {
       // eslint-disable-next-line no-console
-      console.warn("EXEC-04 partial: run has 0 TestRunResults — row-shape assertion skipped");
+      console.warn(
+        "EXEC-04 partial: run has 0 TestRunResults — row-shape assertion skipped"
+      );
       return;
     }
     const row = body.data[0];
     expect(typeof row.id).toBe("number");
     expect(typeof row.testRunCaseId).toBe("number");
-    expect(typeof row.executedAt === "string" || row.executedAt === null).toBe(true);
+    expect(typeof row.executedAt === "string" || row.executedAt === null).toBe(
+      true
+    );
   });
 
   // -- EXEC-05: get a single testRunResult with stepResults inlined ----------
@@ -566,11 +629,14 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
             },
           },
         },
-      }),
+      })
     );
-    const r = await request.get(`${baseURL}/api/model/testRunResults/findUnique?q=${q}`, {
-      headers: ctx.headers,
-    });
+    const r = await request.get(
+      `${baseURL}/api/model/testRunResults/findUnique?q=${q}`,
+      {
+        headers: ctx.headers,
+      }
+    );
     expect(r.status()).toBe(200);
     const data = (await r.json()).data;
     expect(data).not.toBeNull();
@@ -578,14 +644,18 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
     expect(Array.isArray(data.stepResults)).toBe(true);
     if (data.stepResults.length === 0) {
       // eslint-disable-next-line no-console
-      console.warn("EXEC-05 partial: result has 0 stepResults — R2/D7-08 assertions skipped");
+      console.warn(
+        "EXEC-05 partial: result has 0 stepResults — R2/D7-08 assertions skipped"
+      );
       return;
     }
     const sr0 = data.stepResults[0];
     // R2 / Pitfall 2: TestRunStepResults relation to Status is `stepStatus`,
     // NOT `status`. The select uses `stepStatus`; reading it back proves the
     // host honors the schema relation name.
-    expect(sr0.stepStatus === null || typeof sr0.stepStatus === "object").toBe(true);
+    expect(sr0.stepStatus === null || typeof sr0.stepStatus === "object").toBe(
+      true
+    );
     // D7-08: evidence is a Json? field surfaced AS-IS by the MCP tool. The host
     // returns whatever shape was written — the assertion below only checks the
     // key is present (may be null, object, array, or primitive).

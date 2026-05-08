@@ -42,12 +42,20 @@ async function findFirst(
   token: string,
   model: string,
   where: Record<string, unknown>,
-  select?: Record<string, unknown>,
+  select?: Record<string, unknown>
 ): Promise<Record<string, unknown> | null> {
-  const q = encodeURIComponent(JSON.stringify({ where, ...(select ? { select } : {}) }));
-  const r = await request.get(`${baseURL}/api/model/${model}/findFirst?q=${q}`, {
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-  });
+  const q = encodeURIComponent(
+    JSON.stringify({ where, ...(select ? { select } : {}) })
+  );
+  const r = await request.get(
+    `${baseURL}/api/model/${model}/findFirst?q=${q}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
   if (r.status() !== 200) return null;
   const body = await r.json();
   return body.data ?? null;
@@ -67,7 +75,9 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
       "Content-Type": "application/json",
     };
 
-    const project = await findFirst(request, baseURL!, token, "projects", { isDeleted: false });
+    const project = await findFirst(request, baseURL!, token, "projects", {
+      isDeleted: false,
+    });
     expect(project, "seed must have at least one project").not.toBeNull();
     const projectId = project!.id as number;
 
@@ -79,11 +89,17 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
         where: { isDeleted: false, projectId },
         include: { integration: { select: { provider: true } } },
         take: 1,
-      }),
+      })
     );
-    const issueR = await request.get(`${baseURL}/api/model/issue/findMany?q=${issueQ}`, {
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    });
+    const issueR = await request.get(
+      `${baseURL}/api/model/issue/findMany?q=${issueQ}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
     let issueId: number | null = null;
     let issueExternalKey: string | null = null;
     let issueExternalSystem: string | null = null;
@@ -93,17 +109,24 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
       if (row) {
         issueId = row.id as number;
         issueExternalKey = (row.externalKey as string | null) ?? null;
-        issueExternalSystem = (row.integration?.provider as string | null) ?? null;
+        issueExternalSystem =
+          (row.integration?.provider as string | null) ?? null;
       }
     }
 
     // ISSUE-04 inbound mode wants any RepositoryCases.id linked to any Issue.
     // Look for a case with at least one issue link.
-    const caseLinked = await findFirst(request, baseURL!, token, "repositoryCases", {
-      projectId,
-      isDeleted: false,
-      issues: { some: { isDeleted: false } },
-    });
+    const caseLinked = await findFirst(
+      request,
+      baseURL!,
+      token,
+      "repositoryCases",
+      {
+        projectId,
+        isDeleted: false,
+        issues: { some: { isDeleted: false } },
+      }
+    );
 
     ctx = {
       projectId,
@@ -129,7 +152,7 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
     ) {
       // eslint-disable-next-line no-console
       console.warn(
-        "ISSUE-01 skipped: seed has no Issue with externalKey + integration.provider in this project",
+        "ISSUE-01 skipped: seed has no Issue with externalKey + integration.provider in this project"
       );
       return;
     }
@@ -141,8 +164,10 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
           projectId: ctx.projectId,
           isDeleted: false,
         },
-        include: { integration: { select: { id: true, name: true, provider: true } } },
-      }),
+        include: {
+          integration: { select: { id: true, name: true, provider: true } },
+        },
+      })
     );
     const r = await request.get(`${baseURL}/api/model/issue/findFirst?q=${q}`, {
       headers: ctx.headers,
@@ -165,10 +190,12 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
     const q = encodeURIComponent(
       JSON.stringify({
         where: { projectId: ctx.projectId, isDeleted: false },
-        include: { integration: { select: { id: true, name: true, provider: true } } },
+        include: {
+          integration: { select: { id: true, name: true, provider: true } },
+        },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: 26,
-      }),
+      })
     );
     const r = await request.get(`${baseURL}/api/model/issue/findMany?q=${q}`, {
       headers: ctx.headers,
@@ -178,7 +205,9 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
     expect(Array.isArray(body.data)).toBe(true);
     if (body.data.length === 0) {
       // eslint-disable-next-line no-console
-      console.warn("ISSUE-02: seed project has 0 Issues — order assertion skipped");
+      console.warn(
+        "ISSUE-02: seed project has 0 Issues — order assertion skipped"
+      );
       return;
     }
     // Verify orderBy applied: each createdAt >= the next.
@@ -239,11 +268,14 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
             },
           },
         },
-      }),
+      })
     );
-    const r = await request.get(`${baseURL}/api/model/issue/findUnique?q=${q}`, {
-      headers: ctx.headers,
-    });
+    const r = await request.get(
+      `${baseURL}/api/model/issue/findUnique?q=${q}`,
+      {
+        headers: ctx.headers,
+      }
+    );
     expect(r.status()).toBe(200);
     const data = (await r.json()).data;
     expect(data).not.toBeNull();
@@ -258,7 +290,9 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
     // would surface truncated:true. We document it but do not require it.
     if (data.repositoryCases.length === 101) {
       // eslint-disable-next-line no-console
-      console.warn("ISSUE-03: linkedCases overflow probe HIT (>= 100 — MCP would surface truncated)");
+      console.warn(
+        "ISSUE-03: linkedCases overflow probe HIT (>= 100 — MCP would surface truncated)"
+      );
     }
   });
 
@@ -281,17 +315,22 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
         },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: 26,
-      }),
+      })
     );
-    const r = await request.get(`${baseURL}/api/model/repositoryCases/findMany?q=${q}`, {
-      headers: ctx.headers,
-    });
+    const r = await request.get(
+      `${baseURL}/api/model/repositoryCases/findMany?q=${q}`,
+      {
+        headers: ctx.headers,
+      }
+    );
     expect(r.status()).toBe(200);
     const body = await r.json();
     expect(Array.isArray(body.data)).toBe(true);
     if (body.data.length === 0) {
       // eslint-disable-next-line no-console
-      console.warn("ISSUE-04 outbound: issue has 0 linked cases (or filtered by access policy)");
+      console.warn(
+        "ISSUE-04 outbound: issue has 0 linked cases (or filtered by access policy)"
+      );
     }
   });
 
@@ -301,7 +340,9 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
   }) => {
     if (ctx.caseIdLinkedToAnyIssue === null) {
       // eslint-disable-next-line no-console
-      console.warn("ISSUE-04 inbound skipped: no RepositoryCase has any Issue link in this project");
+      console.warn(
+        "ISSUE-04 inbound skipped: no RepositoryCase has any Issue link in this project"
+      );
       return;
     }
     const q = encodeURIComponent(
@@ -312,10 +353,12 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
             some: { id: ctx.caseIdLinkedToAnyIssue, isDeleted: false },
           },
         },
-        include: { integration: { select: { id: true, name: true, provider: true } } },
+        include: {
+          integration: { select: { id: true, name: true, provider: true } },
+        },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: 26,
-      }),
+      })
     );
     const r = await request.get(`${baseURL}/api/model/issue/findMany?q=${q}`, {
       headers: ctx.headers,
@@ -339,7 +382,7 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
     ) {
       // eslint-disable-next-line no-console
       console.warn(
-        "ISSUE chain skipped: seed has no Issue with externalKey + integration.provider in this project",
+        "ISSUE chain skipped: seed has no Issue with externalKey + integration.provider in this project"
       );
       return;
     }
@@ -353,11 +396,14 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
           projectId: ctx.projectId,
           isDeleted: false,
         },
-      }),
+      })
     );
-    const findR = await request.get(`${baseURL}/api/model/issue/findFirst?q=${findQ}`, {
-      headers: ctx.headers,
-    });
+    const findR = await request.get(
+      `${baseURL}/api/model/issue/findFirst?q=${findQ}`,
+      {
+        headers: ctx.headers,
+      }
+    );
     expect(findR.status()).toBe(200);
     const findBody = await findR.json();
     expect(findBody.data).not.toBeNull();
@@ -374,11 +420,11 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
         },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: 26,
-      }),
+      })
     );
     const casesR = await request.get(
       `${baseURL}/api/model/repositoryCases/findMany?q=${casesQ}`,
-      { headers: ctx.headers },
+      { headers: ctx.headers }
     );
     expect(casesR.status()).toBe(200);
     const casesBody = await casesR.json();
@@ -386,7 +432,7 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
     if (casesBody.data.length === 0) {
       // eslint-disable-next-line no-console
       console.warn(
-        "ISSUE chain partial: issue has 0 linked RepositoryCases — chain shape verified, non-empty assertion skipped",
+        "ISSUE chain partial: issue has 0 linked RepositoryCases — chain shape verified, non-empty assertion skipped"
       );
     }
   });

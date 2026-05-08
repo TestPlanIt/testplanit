@@ -37,12 +37,20 @@ async function findFirst(
   token: string,
   model: string,
   where: Record<string, unknown>,
-  select?: Record<string, unknown>,
+  select?: Record<string, unknown>
 ): Promise<{ id: number } | null> {
-  const q = encodeURIComponent(JSON.stringify({ where, ...(select ? { select } : {}) }));
-  const r = await request.get(`${baseURL}/api/model/${model}/findFirst?q=${q}`, {
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-  });
+  const q = encodeURIComponent(
+    JSON.stringify({ where, ...(select ? { select } : {}) })
+  );
+  const r = await request.get(
+    `${baseURL}/api/model/${model}/findFirst?q=${q}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
   if (r.status() !== 200) return null;
   const body = await r.json();
   return body.data ?? null;
@@ -75,7 +83,9 @@ test.describe("MCP code-repositories read (Phase 8 REPO-01)", () => {
       "Content-Type": "application/json",
     };
 
-    const project = await findFirst(request, baseURL!, token, "projects", { isDeleted: false });
+    const project = await findFirst(request, baseURL!, token, "projects", {
+      isDeleted: false,
+    });
     expect(project, "seed must have at least one project").not.toBeNull();
 
     ctx = {
@@ -109,11 +119,11 @@ test.describe("MCP code-repositories read (Phase 8 REPO-01)", () => {
         },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: 26,
-      }),
+      })
     );
     const r = await request.get(
       `${baseURL}/api/model/projectCodeRepositoryConfig/findMany?q=${q}`,
-      { headers: ctx.headers },
+      { headers: ctx.headers }
     );
     expect(r.status()).toBe(200);
     const responseText = await r.text();
@@ -123,7 +133,9 @@ test.describe("MCP code-repositories read (Phase 8 REPO-01)", () => {
 
     if (body.data.length === 0) {
       // eslint-disable-next-line no-console
-      console.warn("REPO-01 skipped: seed has 0 ProjectCodeRepositoryConfig rows");
+      console.warn(
+        "REPO-01 skipped: seed has 0 ProjectCodeRepositoryConfig rows"
+      );
       return;
     }
 
@@ -140,13 +152,18 @@ test.describe("MCP code-repositories read (Phase 8 REPO-01)", () => {
     // the allow-list is the right superset for the provider returned.
     const provider = row.repository.provider as string;
     const allow = SETTINGS_ALLOW_LIST[provider] ?? [];
-    if (row.repository.settings && typeof row.repository.settings === "object") {
+    if (
+      row.repository.settings &&
+      typeof row.repository.settings === "object"
+    ) {
       // For an MCP-tool round-trip we only verify that the response COULD be
       // stripped to allow-listed keys (if extra keys are present, the package
       // strips them at the boundary). The end-to-end privacy guarantee comes
       // from the package mapper, not the host wire — but the host MUST not
       // return the credentials column.
-      expect(Object.prototype.hasOwnProperty.call(row.repository, "credentials")).toBe(false);
+      expect(
+        Object.prototype.hasOwnProperty.call(row.repository, "credentials")
+      ).toBe(false);
       const settingKeys = Object.keys(row.repository.settings);
       // At least one of the returned setting keys should be in the allow-list
       // for known providers (sanity — guards against an entirely-mismatched

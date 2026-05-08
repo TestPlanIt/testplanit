@@ -42,12 +42,20 @@ async function findFirst(
   token: string,
   model: string,
   where: Record<string, unknown>,
-  select?: Record<string, unknown>,
+  select?: Record<string, unknown>
 ): Promise<{ id: number } | null> {
-  const q = encodeURIComponent(JSON.stringify({ where, ...(select ? { select } : {}) }));
-  const r = await request.get(`${baseURL}/api/model/${model}/findFirst?q=${q}`, {
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-  });
+  const q = encodeURIComponent(
+    JSON.stringify({ where, ...(select ? { select } : {}) })
+  );
+  const r = await request.get(
+    `${baseURL}/api/model/${model}/findFirst?q=${q}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
   if (r.status() !== 200) return null;
   const body = await r.json();
   return body.data ?? null;
@@ -67,7 +75,9 @@ test.describe("MCP session read tools (Phase 7 SESS-01..05)", () => {
       "Content-Type": "application/json",
     };
 
-    const project = await findFirst(request, baseURL!, token, "projects", { isDeleted: false });
+    const project = await findFirst(request, baseURL!, token, "projects", {
+      isDeleted: false,
+    });
     expect(project, "seed must have at least one project").not.toBeNull();
 
     const session = await findFirst(request, baseURL!, token, "sessions", {
@@ -84,7 +94,9 @@ test.describe("MCP session read tools (Phase 7 SESS-01..05)", () => {
     // SESS-05 issueId mode requires an Issue tied to the project — not all
     // seeds carry one. Look broadly: any non-deleted Issue accessible from this
     // project's sessions/sessionResults.
-    const issue = await findFirst(request, baseURL!, token, "issue", { isDeleted: false });
+    const issue = await findFirst(request, baseURL!, token, "issue", {
+      isDeleted: false,
+    });
 
     ctx = {
       projectId: project!.id,
@@ -98,23 +110,31 @@ test.describe("MCP session read tools (Phase 7 SESS-01..05)", () => {
 
   // -- SESS-01: list sessions ------------------------------------------------
 
-  test("SESS-01 — list sessions filtered by projectId", async ({ request, baseURL }) => {
+  test("SESS-01 — list sessions filtered by projectId", async ({
+    request,
+    baseURL,
+  }) => {
     const q = encodeURIComponent(
       JSON.stringify({
         where: { projectId: ctx.projectId, isDeleted: false },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: 26,
-      }),
+      })
     );
-    const r = await request.get(`${baseURL}/api/model/sessions/findMany?q=${q}`, {
-      headers: ctx.headers,
-    });
+    const r = await request.get(
+      `${baseURL}/api/model/sessions/findMany?q=${q}`,
+      {
+        headers: ctx.headers,
+      }
+    );
     expect(r.status()).toBe(200);
     const body = await r.json();
     expect(Array.isArray(body.data)).toBe(true);
     if (body.data.length === 0) {
       // eslint-disable-next-line no-console
-      console.warn("SESS-01: seed project has 0 Sessions — row-shape assertion skipped");
+      console.warn(
+        "SESS-01: seed project has 0 Sessions — row-shape assertion skipped"
+      );
       return;
     }
     const row = body.data[0];
@@ -169,11 +189,14 @@ test.describe("MCP session read tools (Phase 7 SESS-01..05)", () => {
             },
           },
         },
-      }),
+      })
     );
-    const r = await request.get(`${baseURL}/api/model/sessions/findUnique?q=${q}`, {
-      headers: ctx.headers,
-    });
+    const r = await request.get(
+      `${baseURL}/api/model/sessions/findUnique?q=${q}`,
+      {
+        headers: ctx.headers,
+      }
+    );
     expect(r.status()).toBe(200);
     const data = (await r.json()).data;
     expect(data).not.toBeNull();
@@ -198,11 +221,14 @@ test.describe("MCP session read tools (Phase 7 SESS-01..05)", () => {
         where: { isDeleted: false, sessionId: ctx.sessionId },
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: 26,
-      }),
+      })
     );
-    const r = await request.get(`${baseURL}/api/model/sessionResults/findMany?q=${q}`, {
-      headers: ctx.headers,
-    });
+    const r = await request.get(
+      `${baseURL}/api/model/sessionResults/findMany?q=${q}`,
+      {
+        headers: ctx.headers,
+      }
+    );
     expect(r.status()).toBe(200);
     const body = await r.json();
     expect(Array.isArray(body.data)).toBe(true);
@@ -221,11 +247,14 @@ test.describe("MCP session read tools (Phase 7 SESS-01..05)", () => {
       JSON.stringify({
         where: { isDeleted: false, testCaseId: 999999 },
         take: 1,
-      }),
+      })
     );
-    const r = await request.get(`${baseURL}/api/model/sessionResults/findMany?q=${q}`, {
-      headers: ctx.headers,
-    });
+    const r = await request.get(
+      `${baseURL}/api/model/sessionResults/findMany?q=${q}`,
+      {
+        headers: ctx.headers,
+      }
+    );
     // The host MAY reject the unknown column (preferred — strict schema) OR
     // silently ignore it (acceptable — input schema is the MCP layer's job).
     // The MCP tool's primary R4 enforcement is at the input-schema level
@@ -238,7 +267,7 @@ test.describe("MCP session read tools (Phase 7 SESS-01..05)", () => {
       // input schema (07-05 plan). Document and move on.
       // eslint-disable-next-line no-console
       console.warn(
-        "SESS-03: host accepted unknown `testCaseId` filter on sessionResults; R4 enforced at MCP input-schema layer",
+        "SESS-03: host accepted unknown `testCaseId` filter on sessionResults; R4 enforced at MCP input-schema layer"
       );
     }
   });
@@ -273,13 +302,18 @@ test.describe("MCP session read tools (Phase 7 SESS-01..05)", () => {
               integration: { select: { provider: true } },
             },
           },
-          resultFieldValues: { select: { id: true, value: true, fieldId: true } },
+          resultFieldValues: {
+            select: { id: true, value: true, fieldId: true },
+          },
         },
-      }),
+      })
     );
-    const r = await request.get(`${baseURL}/api/model/sessionResults/findUnique?q=${q}`, {
-      headers: ctx.headers,
-    });
+    const r = await request.get(
+      `${baseURL}/api/model/sessionResults/findUnique?q=${q}`,
+      {
+        headers: ctx.headers,
+      }
+    );
     expect(r.status()).toBe(200);
     const data = (await r.json()).data;
     expect(data).not.toBeNull();
@@ -298,7 +332,9 @@ test.describe("MCP session read tools (Phase 7 SESS-01..05)", () => {
   }) => {
     if (ctx.sessionId === null) {
       // eslint-disable-next-line no-console
-      console.warn("SESS-05 sessionId mode skipped: seed project has 0 Sessions");
+      console.warn(
+        "SESS-05 sessionId mode skipped: seed project has 0 Sessions"
+      );
       return;
     }
     // D7-11 OR shape: findings = issues linked to the session OR to any of its
@@ -315,7 +351,7 @@ test.describe("MCP session read tools (Phase 7 SESS-01..05)", () => {
         include: { integration: { select: { provider: true } } },
         orderBy: [{ id: "asc" }],
         take: 501, // 500 cap + overflow probe (matches FINDINGS_TAKE_CAP)
-      }),
+      })
     );
     const r = await request.get(`${baseURL}/api/model/issue/findMany?q=${q}`, {
       headers: ctx.headers,
@@ -325,7 +361,9 @@ test.describe("MCP session read tools (Phase 7 SESS-01..05)", () => {
     expect(Array.isArray(body.data)).toBe(true);
     if (body.data.length === 0) {
       // eslint-disable-next-line no-console
-      console.warn("SESS-05 sessionId mode: session has 0 linked issues — row-shape skipped");
+      console.warn(
+        "SESS-05 sessionId mode: session has 0 linked issues — row-shape skipped"
+      );
     }
   });
 
@@ -366,16 +404,21 @@ test.describe("MCP session read tools (Phase 7 SESS-01..05)", () => {
             },
           },
         },
-      }),
+      })
     );
-    const r = await request.get(`${baseURL}/api/model/issue/findUnique?q=${q}`, {
-      headers: ctx.headers,
-    });
+    const r = await request.get(
+      `${baseURL}/api/model/issue/findUnique?q=${q}`,
+      {
+        headers: ctx.headers,
+      }
+    );
     expect(r.status()).toBe(200);
     const data = (await r.json()).data;
     if (data === null) {
       // eslint-disable-next-line no-console
-      console.warn("SESS-05 issueId mode: issue not accessible to this token — skipped");
+      console.warn(
+        "SESS-05 issueId mode: issue not accessible to this token — skipped"
+      );
       return;
     }
     expect(data.id).toBe(ctx.issueId);

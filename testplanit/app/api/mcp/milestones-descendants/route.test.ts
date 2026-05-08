@@ -50,7 +50,7 @@ import { GET } from "./route";
 
 const createMockRequest = (
   q: string | null,
-  authHeader = "Bearer tpi_validtoken",
+  authHeader = "Bearer tpi_validtoken"
 ): NextRequest => {
   const headers = new Headers();
   if (authHeader) headers.set("authorization", authHeader);
@@ -88,7 +88,7 @@ describe("GET /api/mcp/milestones-descendants — batched recursive CTE", () => 
     ]);
 
     const response = await GET(
-      createMockRequest(JSON.stringify({ milestoneIds: [1, 2, 3] })),
+      createMockRequest(JSON.stringify({ milestoneIds: [1, 2, 3] }))
     );
     expect(response.status).toBe(200);
     const body = await response.json();
@@ -107,7 +107,7 @@ describe("GET /api/mcp/milestones-descendants — batched recursive CTE", () => 
     });
 
     const response = await GET(
-      createMockRequest(JSON.stringify({ milestoneIds: [1] })),
+      createMockRequest(JSON.stringify({ milestoneIds: [1] }))
     );
     expect(response.status).toBe(401);
     const body = await response.json();
@@ -123,7 +123,7 @@ describe("GET /api/mcp/milestones-descendants — batched recursive CTE", () => 
     });
 
     const response = await GET(
-      createMockRequest(JSON.stringify({ milestoneIds: [] })),
+      createMockRequest(JSON.stringify({ milestoneIds: [] }))
     );
     expect(response.status).toBe(200);
     const body = await response.json();
@@ -159,7 +159,10 @@ describe("GET /api/mcp/milestones-descendants — batched recursive CTE", () => 
     // (TemplateStringsArray-like), subsequent args are the bound values.
     const callArgs = (prisma.$queryRaw as any).mock.calls[0];
     const strings = callArgs[0] as unknown as ArrayLike<string>;
-    const staticParts = Array.from({ length: strings.length }, (_, i) => strings[i]).join("");
+    const staticParts = Array.from(
+      { length: strings.length },
+      (_, i) => strings[i]
+    ).join("");
     expect(staticParts).toContain("WITH RECURSIVE descendants");
     expect(staticParts).toContain('"parentId" = ANY(');
     expect(staticParts).toContain('"isDeleted" = false');
@@ -182,7 +185,7 @@ describe("GET /api/mcp/milestones-descendants — batched recursive CTE", () => 
     ]);
 
     const response = await GET(
-      createMockRequest(JSON.stringify({ milestoneIds: [1, 2, 3] })),
+      createMockRequest(JSON.stringify({ milestoneIds: [1, 2, 3] }))
     );
     expect(response.status).toBe(200);
     const body = await response.json();
@@ -203,7 +206,7 @@ describe("GET /api/mcp/milestones-descendants — batched recursive CTE", () => 
     findManyMock.mockResolvedValueOnce([]);
 
     const response = await GET(
-      createMockRequest(JSON.stringify({ milestoneIds: [1, 2, 3] })),
+      createMockRequest(JSON.stringify({ milestoneIds: [1, 2, 3] }))
     );
     expect(response.status).toBe(200);
     const body = await response.json();
@@ -220,7 +223,7 @@ describe("GET /api/mcp/milestones-descendants — batched recursive CTE", () => 
     const tooMany = Array.from({ length: 251 }, (_, i) => i + 1);
 
     const response = await GET(
-      createMockRequest(JSON.stringify({ milestoneIds: tooMany })),
+      createMockRequest(JSON.stringify({ milestoneIds: tooMany }))
     );
     expect(response.status).toBe(400);
     const body = await response.json();
@@ -262,8 +265,8 @@ describe("GET /api/mcp/milestones-descendants — batched recursive CTE", () => 
 
     const response = await GET(
       createMockRequest(
-        JSON.stringify({ milestoneIds: [1, 0, -5, 7, "x" as never, 9.5] }),
-      ),
+        JSON.stringify({ milestoneIds: [1, 0, -5, 7, "x" as never, 9.5] })
+      )
     );
     expect(response.status).toBe(200);
     const body = await response.json();
