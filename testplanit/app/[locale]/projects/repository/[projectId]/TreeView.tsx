@@ -15,6 +15,7 @@ import type { RepositoryFolders } from "@prisma/client";
 import {
   ArrowRightLeft,
   ChevronRight,
+  Copy,
   Folder,
   FolderOpen,
   Loader2,
@@ -394,6 +395,10 @@ const TreeView: React.FC<{
     targetFolderName: string;
     draggedItems: Array<{ id: number | string }>;
   } | null>(null);
+
+  const isMac =
+    typeof navigator !== "undefined" &&
+    /Mac|iPhone|iPod|iPad/i.test(navigator.userAgent);
 
   const numericProjectId = useMemo(() => Number(projectId), [projectId]);
 
@@ -1432,13 +1437,14 @@ const TreeView: React.FC<{
           data-testid="drop-action-popover"
           side="bottom"
           align="start"
+          className="flex flex-col gap-2"
           onEscapeKeyDown={() => setPendingDrop(null)}
           onInteractOutside={() => setPendingDrop(null)}
         >
           <Button
             autoFocus
             data-testid="drop-action-cancel"
-            variant="ghost"
+            variant="default"
             onClick={() => setPendingDrop(null)}
           >
             {t("common.cancel")}
@@ -1460,11 +1466,12 @@ const TreeView: React.FC<{
               setPendingDrop(null);
             }}
           >
+            <ArrowRightLeft className="h-4 w-4" />
             {t("repository.dragDrop.move")}
           </Button>
           <Button
             data-testid="drop-action-copy"
-            variant="default"
+            variant="secondary"
             onClick={() => {
               if (
                 pendingDrop &&
@@ -1480,8 +1487,16 @@ const TreeView: React.FC<{
               setPendingDrop(null);
             }}
           >
+            <Copy className="h-4 w-4" />
             {t("repository.dragDrop.copy")}
           </Button>
+          <p className="text-xs text-muted-foreground pt-1 border-t">
+            {t(
+              isMac
+                ? "repository.dragDrop.modifierHintMac"
+                : "repository.dragDrop.modifierHintWin"
+            )}
+          </p>
         </PopoverContent>
       </Popover>
     </>

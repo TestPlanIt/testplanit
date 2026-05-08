@@ -2174,7 +2174,9 @@
       "currentSuffix": "(Actual)",
       "moveDisabledSameFolder": "Los casos ya se encuentran en esta carpeta.",
       "dragPreviewCase": "Caso de prueba",
-      "dragPreviewCount": "{count, plural, =1 {# caso de prueba} other {# casos de prueba}}"
+      "dragPreviewCount": "{count, plural, =1 {# caso de prueba} other {# casos de prueba}}",
+      "modifierHintMac": "Mantén pulsado ⇧ para mover o ⌥ para copiar mientras arrastras para saltarte este menú.",
+      "modifierHintWin": "Mantén pulsada la tecla Mayús para mover o la tecla Ctrl para copiar mientras arrastras para saltarte este menú."
     },
     "folderActions": {
       "edit": "Editar carpeta",

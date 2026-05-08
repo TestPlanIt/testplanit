@@ -49,8 +49,8 @@ vi.mock("~/types/dndTypes", () => ({
 vi.mock("lucide-react", () => ({
   ListChecks: () => <svg data-testid="list-checks-icon" />,
   Folder: () => <svg data-testid="folder-icon" />,
-  CopyPlus: () => <svg data-testid="copy-plus-icon" />,
-  ArrowRight: () => <svg data-testid="arrow-right-icon" />,
+  Copy: () => <svg data-testid="copy-plus-icon" />,
+  ArrowRightLeft: () => <svg data-testid="arrow-right-icon" />,
 }));
 
 // vi.hoisted for mutable modifier state returned by useDragModifier

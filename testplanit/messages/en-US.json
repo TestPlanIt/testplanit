@@ -2174,7 +2174,9 @@
       "currentSuffix": "(Current)",
       "moveDisabledSameFolder": "Cases are already in this folder",
       "dragPreviewCase": "Test Case",
-      "dragPreviewCount": "{count, plural, =1 {# test case} other {# test cases}}"
+      "dragPreviewCount": "{count, plural, =1 {# test case} other {# test cases}}",
+      "modifierHintMac": "Hold ⇧ to move or ⌥ to copy while dragging to skip this menu.",
+      "modifierHintWin": "Hold Shift to move or Ctrl to copy while dragging to skip this menu."
     },
     "folderActions": {
       "edit": "Edit Folder",

@@ -103,8 +103,8 @@ export function CopyMoveDialog({
     useFindManyRepositoryFolders(
       {
         where: { projectId: targetProjectId ?? 0, isDeleted: false },
-        select: { id: true, name: true, parentId: true },
-        orderBy: { name: "asc" },
+        select: { id: true, name: true, parentId: true, order: true },
+        orderBy: { order: "asc" },
       },
       { enabled: !!targetProjectId }
     );
@@ -541,7 +541,7 @@ export function CopyMoveDialog({
                       {p.isCurrent && (
                         <span
                           data-testid="copy-move-project-current-suffix"
-                          className="ml-1 text-xs text-muted-foreground"
+                          className="ml-1 text-xs opacity-60"
                         >
                           {tGlobal("repository.dragDrop.currentSuffix")}
                         </span>

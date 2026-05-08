@@ -2174,7 +2174,9 @@
       "currentSuffix": "(Actuel)",
       "moveDisabledSameFolder": "Les dossiers sont déjà dans ce dossier",
       "dragPreviewCase": "Cas de test",
-      "dragPreviewCount": "{count, plural, =1 {# cas de test} other {# cas de test}}"
+      "dragPreviewCount": "{count, plural, =1 {# cas de test} other {# cas de test}}",
+      "modifierHintMac": "Maintenez ⇧ pour déplacer ou ⌥ pour copier tout en faisant glisser pour ignorer ce menu.",
+      "modifierHintWin": "Maintenez la touche Maj enfoncée pour déplacer ou la touche Ctrl pour copier tout en faisant glisser pour ignorer ce menu."
     },
     "folderActions": {
       "edit": "Modifier le dossier",

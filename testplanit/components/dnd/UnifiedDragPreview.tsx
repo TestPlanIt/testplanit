@@ -1,4 +1,4 @@
-import { ArrowRight, CopyPlus, Folder, ListChecks } from "lucide-react";
+import { ArrowRightLeft, Copy, Folder, ListChecks } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { CSSProperties, useEffect, useRef } from "react";
 import { useDragLayer, XYCoord } from "react-dnd";
@@ -142,17 +142,17 @@ export const UnifiedDragPreview: React.FC = () => {
             {copyHeld && (
               <div
                 data-testid="drag-preview-copy-badge"
-                className="absolute -top-2 -right-2 rounded-full bg-primary text-primary-foreground p-0.5 ring-2 ring-background"
+                className="absolute -top-2 -right-2 rounded-full bg-primary text-primary-foreground p-1 ring-2 ring-background"
               >
-                <CopyPlus size={12} />
+                <Copy size={16} />
               </div>
             )}
             {moveHeld && !copyHeld && (
               <div
                 data-testid="drag-preview-move-badge"
-                className="absolute -top-2 -right-2 rounded-full bg-secondary text-secondary-foreground p-0.5 ring-2 ring-background"
+                className="absolute -top-2 -right-2 rounded-full bg-secondary text-secondary-foreground p-1 ring-2 ring-background"
               >
-                <ArrowRight size={12} />
+                <ArrowRightLeft size={16} />
               </div>
             )}
           </div>
