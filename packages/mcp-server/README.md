@@ -1043,13 +1043,17 @@ All TestPlanIt MCP "delete" tools perform soft-delete: they set `isDeleted: true
 
 Tokens minted with the `mode:read` scope are blocked at the host on POST/PATCH/DELETE — including all Phase 6 write tools. The MCP layer surfaces a structured error message naming the `mode:read` scope. See [Token scopes](#token-scopes) for minting steps.
 
-## Tool catalog (Phase 5)
+## Tool registry growth
 
-| Tool     | Description                                                     |
-| -------- | --------------------------------------------------------------- |
-| `whoami` | Debug: returns the authenticated user (token owner) and scopes. |
+The registry has grown additively over multiple releases:
 
-Phase 5 ships the `whoami` tool. Phase 6 adds the case / folder / tag / projects domain (12 tools); Phase 7 adds the test-run + session + findings read domain (10 tools) plus an additive `issueId` filter on `testplanit_cases_list`. Phase 8 adds the code-repositories / issues / repository-case-links read domain (6 tools — `testplanit_code_repositories_list`, `testplanit_issues_find_by_key`, `testplanit_issues_list`, `testplanit_issues_get`, `testplanit_issues_list_links`, `testplanit_repository_case_links_list`) and extends `testplanit_cases_list` with 7 maintenance filters + 2 row fields plus `testplanit_cases_get` with inline `codeRepository`. Total registered tools after Phase 8: 28.
+- `whoami` — initial debug tool.
+- Cases / folders / tags / projects domain — 12 tools.
+- Test-run + session + findings read domain — 10 tools, plus an additive `issueId` filter on `testplanit_cases_list`.
+- Code-repositories / issues / repository-case-links read domain — 6 tools (`testplanit_code_repositories_list`, `testplanit_issues_find_by_key`, `testplanit_issues_list`, `testplanit_issues_get`, `testplanit_issues_list_links`, `testplanit_repository_case_links_list`), plus 7 maintenance filters + 2 row fields on `testplanit_cases_list` and inline `codeRepository` on `testplanit_cases_get`.
+- Milestones domain — 3 read tools (`testplanit_milestones_list`, `testplanit_milestones_get`, `testplanit_milestone_types_list`), plus 3 additive filters on `testplanit_cases_list` (`creatorIds`, `from`, `to`).
+
+Total registered tools: **31** (matches the count at the top of this catalog).
 
 ## Claude Desktop configuration
 
