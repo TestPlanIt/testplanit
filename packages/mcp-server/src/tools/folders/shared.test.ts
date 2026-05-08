@@ -46,7 +46,7 @@ describe("mapFolderTreeNode", () => {
       name: string;
       parentId: number | null;
       _count?: { cases?: number };
-      children?: unknown[];
+      children?: never[];
     };
     const result = mapFolderTreeNode(raw);
     expect(result.caseCount).toBe(0);

@@ -63,6 +63,9 @@ const FULL_DETAIL = {
   customFields: {},
   issues: [],
   linkedAutomatedTests: [],
+  codeRepository: null,
+  lastUpdatedAt: null,
+  latestResult: null,
 };
 
 function makeClientServer() {
