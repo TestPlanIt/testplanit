@@ -5,7 +5,6 @@ import { AsyncLocalStorage } from "async_hooks";
 import { NextRequest, NextResponse } from "next/server";
 import { tryFastPathCreate } from "~/lib/access-fast-path";
 import {
-  authenticateApiToken,
   authenticateApiTokenForMethod,
   extractBearerToken,
 } from "~/lib/api-token-auth";
