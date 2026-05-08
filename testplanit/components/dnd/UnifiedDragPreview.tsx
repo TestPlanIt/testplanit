@@ -150,7 +150,7 @@ export const UnifiedDragPreview: React.FC = () => {
             {isOverReorderZone ? (
               <div
                 data-testid="drag-preview-reorder-badge"
-                className="absolute -top-2 -right-2 rounded-full bg-secondary-foreground/70 text-secondary p-1 ring-2 ring-primary/50"
+                className="absolute -top-2 -right-2 rounded-full bg-secondary-foreground/70 text-secondary p-1 ring-2 ring-primary/70"
               >
                 <ArrowUpDown size={16} />
               </div>
@@ -159,7 +159,7 @@ export const UnifiedDragPreview: React.FC = () => {
                 {copyHeld && (
                   <div
                     data-testid="drag-preview-copy-badge"
-                    className="absolute -top-2 -right-2 rounded-full bg-primary-foreground/70 text-primary p-1 ring-2 ring-primary/50"
+                    className="absolute -top-2 -right-2 rounded-full bg-primary-foreground/70 text-primary p-1 ring-2 ring-primary/70"
                   >
                     <Copy size={16} />
                   </div>
@@ -167,7 +167,7 @@ export const UnifiedDragPreview: React.FC = () => {
                 {moveHeld && !copyHeld && (
                   <div
                     data-testid="drag-preview-move-badge"
-                    className="absolute -top-2 -right-2 rounded-full bg-secondary-foreground/70 text-secondary p-1 ring-2 ring-primary/50"
+                    className="absolute -top-2 -right-2 rounded-full bg-secondary-foreground/70 text-secondary p-1 ring-2 ring-primary/70"
                   >
                     <ArrowRightLeft size={16} />
                   </div>
