@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import React, { CSSProperties, useEffect, useRef, useState } from "react";
 import { DropTargetMonitor, useDrag, useDrop, XYCoord } from "react-dnd";
 import { getEmptyImage } from "react-dnd-html5-backend";
+import { useDragTargetKind } from "~/hooks/useDragTargetKind";
 import { ItemTypes } from "~/types/dndTypes";
 
 // Structure for individual items within draggedItems array
@@ -53,6 +54,7 @@ function SortableItem<
   const [hoverPosition, setHoverPosition] = useState<"top" | "bottom" | null>(
     null
   );
+  const { setIsOverReorderZone } = useDragTargetKind();
   const searchParams = useSearchParams();
   const selectedCaseId = searchParams.get("selectedCase")
     ? parseInt(searchParams.get("selectedCase")!)
@@ -214,6 +216,11 @@ function SortableItem<
       setHoverPosition(null);
     }
   }, [isOverCurrent]);
+
+  useEffect(() => {
+    setIsOverReorderZone(isOverCurrent);
+    return () => setIsOverReorderZone(false);
+  }, [isOverCurrent, setIsOverReorderZone]);
 
   useEffect(() => {
     dragPreview(getEmptyImage(), { captureDraggingState: true });

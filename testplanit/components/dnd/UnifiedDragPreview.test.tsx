@@ -66,6 +66,11 @@ vi.mock("~/hooks/useDragModifier", () => ({
   }),
 }));
 
+vi.mock("~/hooks/useDragTargetKind", () => ({
+  useDragTargetKind: () => ({ isOverReorderZone: false }),
+  DragTargetProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 import { UnifiedDragPreview } from "./UnifiedDragPreview";
 
 describe("UnifiedDragPreview", () => {

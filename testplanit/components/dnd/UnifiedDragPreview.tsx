@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import React, { CSSProperties, useEffect, useRef } from "react";
 import { useDragLayer, XYCoord } from "react-dnd";
 import { useDragModifier } from "~/hooks/useDragModifier";
+import { useDragTargetKind } from "~/hooks/useDragTargetKind";
 import { ItemTypes } from "~/types/dndTypes";
 
 // Define the structure for test case info
@@ -81,6 +82,7 @@ export const UnifiedDragPreview: React.FC = () => {
   }));
 
   const { copyHeld, moveHeld } = useDragModifier(isDragging);
+  const { isOverReorderZone } = useDragTargetKind();
 
   // Track mouse position and update DOM directly without React re-renders
   useEffect(() => {
@@ -139,7 +141,7 @@ export const UnifiedDragPreview: React.FC = () => {
           >
             <ListChecks size={16} className="text-primary shrink-0" />
             <span className="truncate">{displayName}</span>
-            {copyHeld && (
+            {copyHeld && !isOverReorderZone && (
               <div
                 data-testid="drag-preview-copy-badge"
                 className="absolute -top-2 -right-2 rounded-full bg-primary text-primary-foreground p-1 ring-2 ring-background"
@@ -147,7 +149,7 @@ export const UnifiedDragPreview: React.FC = () => {
                 <Copy size={16} />
               </div>
             )}
-            {moveHeld && !copyHeld && (
+            {moveHeld && !copyHeld && !isOverReorderZone && (
               <div
                 data-testid="drag-preview-move-badge"
                 className="absolute -top-2 -right-2 rounded-full bg-secondary text-secondary-foreground p-1 ring-2 ring-background"

@@ -20,6 +20,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
+import { DragTargetProvider } from "~/hooks/useDragTargetKind";
 import { Toggle } from "@/components/ui/toggle";
 import { ViewSelector } from "@/components/ViewSelector";
 import { ApplicationArea } from "@prisma/client";
@@ -106,10 +107,12 @@ const ConditionalDndWrapper = ({
     return <>{children}</>;
   }
   return (
-    <SimpleDndProvider>
-      <UnifiedDragPreview />
-      {children}
-    </SimpleDndProvider>
+    <DragTargetProvider>
+      <SimpleDndProvider>
+        <UnifiedDragPreview />
+        {children}
+      </SimpleDndProvider>
+    </DragTargetProvider>
   );
 };
 
