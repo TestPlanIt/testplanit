@@ -30,7 +30,7 @@ Set scopes when creating the token in **Profile → API Tokens** (checkboxes: "R
 
 ## Tool Catalog
 
-Phase 6 + Phase 7 + Phase 8 ship 27 production tools across cases / folders / tags / projects / runs / sessions / findings / code-repositories / issues / repository-case-links, plus three milestones-domain read tools (`testplanit_milestones_list`, `testplanit_milestones_get`, `testplanit_milestone_types_list`) and the `testplanit_whoami` debug helper — **31 total**. All tools authenticate via the bearer token in `TESTPLANIT_API_TOKEN`. Read tools return JSON; write tools return the same shape as their corresponding `_get` tool.
+Phase 6 + Phase 7 + Phase 8 ship 27 production tools across cases / folders / tags / projects / runs / sessions / findings / code-repositories / issues / repository-case-links, plus three milestones-domain read tools (`testplanit_milestones_list`, `testplanit_milestones_get`, `testplanit_milestone_types_list`), two issue-link write tools (`testplanit_issues_link`, `testplanit_issues_unlink`), and the `testplanit_whoami` debug helper — **33 total**. All tools authenticate via the bearer token in `TESTPLANIT_API_TOKEN`. Read tools return JSON; write tools return the same shape as their corresponding `_get` tool.
 
 ### Killer-app chain: "Who tested issue X?"
 
@@ -920,6 +920,31 @@ Single dual-mode XOR tool covering all six `Issue` M:N junctions. Mirrors Phase 
 
 > **Why one tool not six:** Phase 7's `sessions_findings_list` already proved the dual-mode shape composes cleanly. Six small tools would push the catalog past 30 and bury the mental model ("I'm walking the issue ↔ X graph") under ceremony.
 
+#### `testplanit_issues_link`
+
+Link one or more entities to an issue in a single call. Batch-capable: pass up to 100 entity IDs.
+
+**Input:**
+```json
+{ "issueId": 7978, "entityType": "testCase", "entityIds": [201, 202, 203] }
+```
+
+- `entityType`: `testCase | session | testRun | testRunResult | testRunStepResult`
+- `entityIds`: array of 1–100 entity IDs
+
+**Output:** `{ linked, issueId, entityType, entityIds }`
+
+#### `testplanit_issues_unlink`
+
+Remove links between entities and an issue. Same shape as `issues_link`.
+
+**Input:**
+```json
+{ "issueId": 7978, "entityType": "testCase", "entityIds": [201] }
+```
+
+**Output:** `{ unlinked, issueId, entityType, entityIds }`
+
 ### Repository Case Links
 
 #### `testplanit_repository_case_links_list` (Phase 8 — REPO-05)
@@ -1052,8 +1077,9 @@ The registry has grown additively over multiple releases:
 - Test-run + session + findings read domain — 10 tools, plus an additive `issueId` filter on `testplanit_cases_list`.
 - Code-repositories / issues / repository-case-links read domain — 6 tools (`testplanit_code_repositories_list`, `testplanit_issues_find_by_key`, `testplanit_issues_list`, `testplanit_issues_get`, `testplanit_issues_list_links`, `testplanit_repository_case_links_list`), plus 7 maintenance filters + 2 row fields on `testplanit_cases_list` and inline `codeRepository` on `testplanit_cases_get`.
 - Milestones domain — 3 read tools (`testplanit_milestones_list`, `testplanit_milestones_get`, `testplanit_milestone_types_list`), plus 3 additive filters on `testplanit_cases_list` (`creatorIds`, `from`, `to`).
+- Issue link write domain — 2 write tools (`testplanit_issues_link`, `testplanit_issues_unlink`): batch-link / unlink any entity type to an issue in one call.
 
-Total registered tools: **31** (matches the count at the top of this catalog).
+Total registered tools: **33** (matches the count at the top of this catalog).
 
 ## Claude Desktop configuration
 
