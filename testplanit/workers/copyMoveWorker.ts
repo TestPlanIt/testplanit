@@ -751,10 +751,13 @@ const processor = async (
       throw err;
     }
 
-    // 10. Move: soft-delete source cases only after ALL copies succeeded
-    if (job.data.operation === "move") {
+    // 10. Move: soft-delete only source cases that were actually copied — guards
+    // against same-project self-collision with conflictResolution:"skip" where
+    // every case is skipped (copiedCount=0) but the old code deleted originals.
+    if (job.data.operation === "move" && createdTargetIds.length > 0) {
+      const movedSourceIds = createdTargetIds.map((c) => c.sourceId);
       await prisma.repositoryCases.updateMany({
-        where: { id: { in: job.data.caseIds } },
+        where: { id: { in: movedSourceIds } },
         data: { isDeleted: true },
       });
 
@@ -784,9 +787,9 @@ const processor = async (
       );
     }
 
-    // For move: also remove source cases from ES index (best-effort)
-    if (job.data.operation === "move") {
-      for (const sourceId of job.data.caseIds) {
+    // For move: also remove source cases from ES index (best-effort, only those actually moved)
+    if (job.data.operation === "move" && createdTargetIds.length > 0) {
+      for (const sourceId of createdTargetIds.map((c) => c.sourceId)) {
         syncRepositoryCaseToElasticsearch(
           sourceId,
           job.data.tenantId,

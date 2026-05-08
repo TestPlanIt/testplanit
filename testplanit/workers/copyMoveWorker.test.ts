@@ -799,6 +799,38 @@ describe("CopyMoveWorker", () => {
       expect(mockPrisma.repositoryCases.updateMany).toHaveBeenCalledTimes(1);
     });
 
+    it("DATA-LOSS-01: should NOT soft-delete source cases when all are skipped (same-project move + skip)", async () => {
+      // Regression guard: same-project self-collision with conflictResolution:"skip"
+      // previously caused copiedCount=0 but the unconditional updateMany still ran,
+      // silently deleting originals. The fix gates soft-delete on createdTargetIds.
+      const sameProjSkipMoveJobData = {
+        ...baseMoveJobData,
+        sourceProjectId: 20,
+        targetProjectId: 20,
+        caseIds: [1],
+        conflictResolution: "skip" as const,
+      };
+
+      // First findFirst = max-order pre-fetch → null.
+      // Second findFirst = collision check → source case found (self-collision).
+      mockPrisma.repositoryCases.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ id: 1 });
+
+      mockPrisma.repositoryCaseVersions.findMany.mockResolvedValue([]);
+
+      const { processor } = await loadWorker();
+      const result = await processor(
+        makeMockJob({ data: sameProjSkipMoveJobData }) as Job
+      );
+
+      // Every case was skipped — source should NOT be soft-deleted
+      expect(mockPrisma.repositoryCases.updateMany).not.toHaveBeenCalled();
+      expect(result.skippedCount).toBe(1);
+      expect(result.copiedCount).toBe(0);
+      expect(result.movedCount).toBe(0);
+    });
+
     it("should set movedCount equal to copiedCount on successful move", async () => {
       const { processor } = await loadWorker();
       const result = await processor(
