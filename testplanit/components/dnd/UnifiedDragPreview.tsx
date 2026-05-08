@@ -1,4 +1,10 @@
-import { ArrowRightLeft, Copy, Folder, ListChecks } from "lucide-react";
+import {
+  ArrowRightLeft,
+  ArrowUpDown,
+  Copy,
+  Folder,
+  ListChecks,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { CSSProperties, useEffect, useRef } from "react";
 import { useDragLayer, XYCoord } from "react-dnd";
@@ -141,21 +147,32 @@ export const UnifiedDragPreview: React.FC = () => {
           >
             <ListChecks size={16} className="text-primary shrink-0" />
             <span className="truncate">{displayName}</span>
-            {copyHeld && !isOverReorderZone && (
+            {isOverReorderZone ? (
               <div
-                data-testid="drag-preview-copy-badge"
-                className="absolute -top-2 -right-2 rounded-full bg-primary text-primary-foreground p-1 ring-2 ring-background"
+                data-testid="drag-preview-reorder-badge"
+                className="absolute -top-2 -right-2 rounded-full bg-muted text-muted-foreground p-1 ring-2 ring-background"
               >
-                <Copy size={16} />
+                <ArrowUpDown size={16} />
               </div>
-            )}
-            {moveHeld && !copyHeld && !isOverReorderZone && (
-              <div
-                data-testid="drag-preview-move-badge"
-                className="absolute -top-2 -right-2 rounded-full bg-secondary text-secondary-foreground p-1 ring-2 ring-background"
-              >
-                <ArrowRightLeft size={16} />
-              </div>
+            ) : (
+              <>
+                {copyHeld && (
+                  <div
+                    data-testid="drag-preview-copy-badge"
+                    className="absolute -top-2 -right-2 rounded-full bg-primary text-primary-foreground p-1 ring-2 ring-background"
+                  >
+                    <Copy size={16} />
+                  </div>
+                )}
+                {moveHeld && !copyHeld && (
+                  <div
+                    data-testid="drag-preview-move-badge"
+                    className="absolute -top-2 -right-2 rounded-full bg-secondary text-secondary-foreground p-1 ring-2 ring-background"
+                  >
+                    <ArrowRightLeft size={16} />
+                  </div>
+                )}
+              </>
             )}
           </div>
         );

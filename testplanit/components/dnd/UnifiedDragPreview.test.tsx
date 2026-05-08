@@ -51,6 +51,7 @@ vi.mock("lucide-react", () => ({
   Folder: () => <svg data-testid="folder-icon" />,
   Copy: () => <svg data-testid="copy-plus-icon" />,
   ArrowRightLeft: () => <svg data-testid="arrow-right-icon" />,
+  ArrowUpDown: () => <svg data-testid="arrow-up-down-icon" />,
 }));
 
 // vi.hoisted for mutable modifier state returned by useDragModifier
@@ -66,8 +67,12 @@ vi.mock("~/hooks/useDragModifier", () => ({
   }),
 }));
 
+const dragTargetState = vi.hoisted(() => ({ isOverReorderZone: false }));
+
 vi.mock("~/hooks/useDragTargetKind", () => ({
-  useDragTargetKind: () => ({ isOverReorderZone: false }),
+  useDragTargetKind: () => ({
+    isOverReorderZone: dragTargetState.isOverReorderZone,
+  }),
   DragTargetProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
@@ -194,6 +199,7 @@ describe("UnifiedDragPreview", () => {
       dragState.currentOffset = { x: 100, y: 200 };
       modifierState.copyHeld = false;
       modifierState.moveHeld = false;
+      dragTargetState.isOverReorderZone = false;
     });
 
     it("renders no badge when neither copyHeld nor moveHeld is true", () => {
@@ -258,6 +264,37 @@ describe("UnifiedDragPreview", () => {
         screen.queryByTestId("drag-preview-move-badge")
       ).not.toBeInTheDocument();
       expect(screen.getByText("My Folder")).toBeInTheDocument();
+    });
+
+    it("renders the reorder badge when isOverReorderZone is true", () => {
+      dragTargetState.isOverReorderZone = true;
+      modifierState.copyHeld = false;
+      modifierState.moveHeld = false;
+
+      render(<UnifiedDragPreview />);
+      expect(
+        screen.getByTestId("drag-preview-reorder-badge")
+      ).toBeInTheDocument();
+      expect(screen.getByTestId("arrow-up-down-icon")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("drag-preview-copy-badge")
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("drag-preview-move-badge")
+      ).not.toBeInTheDocument();
+    });
+
+    it("shows reorder badge instead of copy badge when isOverReorderZone is true with copyHeld", () => {
+      dragTargetState.isOverReorderZone = true;
+      modifierState.copyHeld = true;
+
+      render(<UnifiedDragPreview />);
+      expect(
+        screen.getByTestId("drag-preview-reorder-badge")
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("drag-preview-copy-badge")
+      ).not.toBeInTheDocument();
     });
 
     it("anchors the chip with relative positioning so absolute-positioned badges align", () => {
