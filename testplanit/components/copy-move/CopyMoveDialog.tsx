@@ -174,6 +174,18 @@ export function CopyMoveDialog({
     return selectedCaseIds;
   }, [sourceFolderId, folderCases, selectedCaseIds]);
 
+  // Case-mode: look up the source folders of the selected cases so we can
+  // detect same-folder moves when sourceFolderId is not provided.
+  const { data: selectedCases = [] } = useFindManyRepositoryCases(
+    sourceFolderId === undefined && selectedCaseIds.length > 0
+      ? {
+          where: { id: { in: selectedCaseIds }, isDeleted: false },
+          select: { id: true, folderId: true },
+        }
+      : undefined,
+    { enabled: sourceFolderId === undefined && selectedCaseIds.length > 0 }
+  );
+
   // Build BFS-ordered folder tree for submit
   const folderTree: FolderTreeNode[] | undefined = useMemo(() => {
     if (!sourceFolderId || sourceFolders.length === 0) return undefined;
@@ -400,14 +412,24 @@ export function CopyMoveDialog({
   const isSameFolderMove = useMemo(() => {
     if (operation !== "move") return false;
     if (targetProjectId !== sourceProjectId) return false;
-    if (sourceFolderId === undefined) return false;
-    return targetFolderId === sourceFolderId;
+    if (targetFolderId == null) return false;
+    if (sourceFolderId !== undefined) {
+      return targetFolderId === sourceFolderId;
+    }
+    // Case-mode: same-folder move if every selected case lives in targetFolderId.
+    if (selectedCases.length === 0) return false;
+    if (selectedCases.length !== selectedCaseIds.length) return false;
+    return selectedCases.every(
+      (c: { folderId: number | null }) => c.folderId === targetFolderId
+    );
   }, [
     operation,
     targetProjectId,
     sourceProjectId,
     sourceFolderId,
     targetFolderId,
+    selectedCases,
+    selectedCaseIds,
   ]);
 
   useEffect(() => {
