@@ -11,16 +11,20 @@ import {
   registerMilestoneTypesList,
   type MilestoneTypesListDeps,
 } from "./types-list.js";
+import {
+  registerMilestonesCreate,
+  type MilestonesCreateDeps,
+} from "./create.js";
+import {
+  registerMilestonesUpdate,
+  type MilestonesUpdateDeps,
+} from "./update.js";
 
-/**
- * Aggregate dependencies for the milestones-domain read tools. All three
- * tools share the same EnvConfig; this intersection mirrors the runs /
- * cases / sessions / issues barrel pattern so callers can pass a single
- * deps object.
- */
 export type MilestonesDeps = MilestonesListDeps &
   MilestonesGetDeps &
-  MilestoneTypesListDeps;
+  MilestoneTypesListDeps &
+  MilestonesCreateDeps &
+  MilestonesUpdateDeps;
 
 export function registerMilestones(
   server: McpServer,
@@ -29,15 +33,21 @@ export function registerMilestones(
   registerMilestonesList(server, deps);
   registerMilestonesGet(server, deps);
   registerMilestoneTypesList(server, deps);
+  registerMilestonesCreate(server, deps);
+  registerMilestonesUpdate(server, deps);
 }
 
 export {
   registerMilestonesList,
   registerMilestonesGet,
   registerMilestoneTypesList,
+  registerMilestonesCreate,
+  registerMilestonesUpdate,
 };
 export type {
   MilestonesListDeps,
   MilestonesGetDeps,
   MilestoneTypesListDeps,
+  MilestonesCreateDeps,
+  MilestonesUpdateDeps,
 };

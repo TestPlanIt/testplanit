@@ -105,6 +105,66 @@ Show me the manual test cases linked to automated test case #7.
 
 **What comes back:** a list of links each with `otherCase: { id, name, source, automated }` so the agent can describe the manual side-by-side coverage.
 
+## "Create a test run for JIRA-892 with the uncovered cases"
+
+```text
+Create a test run for JIRA-892 covering all test cases linked to it.
+```
+
+**Tool calls (3):**
+
+1. `testplanit_issues_find_by_key({ projectId: <P>, externalKey: "JIRA-892", externalSystem: "JIRA" })` → resolves the issue id.
+2. `testplanit_cases_list({ projectId: <P>, issueId: <id from step 1> })` → gets the caseIds linked to that issue.
+3. `testplanit_runs_create({ projectId: <P>, name: "JIRA-892 coverage run", caseIds: [<ids from step 2>] })` → creates the run and adds all the cases in a single call.
+
+**What comes back:** the full run detail with `total` equal to the number of linked cases and `untested` equal to `total` (no results have been submitted yet).
+
+```json
+{
+  "id": 5,
+  "name": "JIRA-892 coverage run",
+  "untested": 6,
+  "total": 6,
+  "statusCounts": [],
+  "testCases": [ /* first 50 run cases inline */ ],
+  "testCasesNextCursor": null
+}
+```
+
+## "Mark the login test as passed in run 5"
+
+```text
+Mark the login test case as passed in run 5.
+```
+
+**Tool calls (2):**
+
+1. `testplanit_test_runs_get({ runId: 5 })` → returns the run with inline `testCases`; each testCase has an `id` (the TestRunCase ID) and `repositoryCase.name` so the agent can identify the login case.
+2. `testplanit_test_run_results_create({ testRunCaseId: <id of login case from step 1>, statusName: "Passed" })` → submits the result; the run case's current status is updated atomically.
+
+**What comes back:** the full result detail including `attempt: 1`, the resolved status, and the testRunCase summary.
+
+```json
+{
+  "id": 555,
+  "attempt": 1,
+  "executedAt": "2026-05-07T12:00:00Z",
+  "status": { "id": 1, "name": "Passed" },
+  "executedBy": { "id": "user-1", "name": "Alice", "email": "alice@example.com" },
+  "testRunCase": {
+    "id": 100,
+    "repositoryCaseId": 99,
+    "repositoryCase": { "id": 99, "name": "Login flow", "source": "MANUAL" },
+    "testRun": { "id": 5, "name": "Sprint 12 regression" }
+  },
+  "elapsed": null,
+  "notes": null,
+  "stepResults": [],
+  "attachments": [],
+  "issues": []
+}
+```
+
 ## See also
 
 - [Overview](./mcp-overview.md) — what the MCP server does

@@ -15,7 +15,7 @@ const mockEnv = {
 };
 
 describe("registerMilestones barrel", () => {
-  it("registers exactly three tools — milestones_list, milestones_get, milestone_types_list", async () => {
+  it("registers exactly five tools — milestones_list, milestones_get, milestone_types_list, milestones_create, milestones_update", async () => {
     const server = new McpServer({ name: "test", version: "0.0.0" });
     registerMilestones(server, { env: mockEnv });
 
@@ -30,11 +30,12 @@ describe("registerMilestones barrel", () => {
     expect(names).toContain("testplanit_milestones_list");
     expect(names).toContain("testplanit_milestones_get");
     expect(names).toContain("testplanit_milestone_types_list");
-    // Exactly three milestones tools — no accidental sibling registrations.
+    expect(names).toContain("testplanit_milestones_create");
+    expect(names).toContain("testplanit_milestones_update");
     const milestoneToolCount = names.filter((n) =>
       n.startsWith("testplanit_milestone"),
     ).length;
-    expect(milestoneToolCount).toBe(3);
+    expect(milestoneToolCount).toBe(5);
   });
 
   it("MilestonesDeps shape resolves to {env: EnvConfig} and accepts the standard deps object", () => {

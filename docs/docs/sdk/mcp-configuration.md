@@ -24,7 +24,7 @@ Edit your Claude Desktop config file:
       "args": ["-y", "@testplanit/mcp-server"],
       "env": {
         "TESTPLANIT_API_TOKEN": "tpi_your_token_here",
-        "TESTPLANIT_API_URL": "https://your-instance.testplanit.com"
+        "TESTPLANIT_API_URL": "https://yourcompany.testplanit.com"
       }
     }
   }
@@ -49,7 +49,7 @@ Edit your Cursor MCP config file:
       "args": ["-y", "@testplanit/mcp-server"],
       "env": {
         "TESTPLANIT_API_TOKEN": "tpi_your_token_here",
-        "TESTPLANIT_API_URL": "https://your-instance.testplanit.com"
+        "TESTPLANIT_API_URL": "https://yourcompany.testplanit.com"
       }
     }
   }

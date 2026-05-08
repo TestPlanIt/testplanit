@@ -22,11 +22,17 @@ You don't paste anything. You don't switch tabs. The AI asks TestPlanIt, gets re
 
 Here are the kinds of conversations you can have once it's set up.
 
+**When a ticket lands:**
+
+> "Add test cases for JIRA-1234 and put together a test run for those cases, plus any other cases that validate that nothing it touches has regressed."
+
+The AI looks up the ticket, reads what it describes, and creates test cases for the new behavior — writing them directly into your repository. Then it searches your existing test suite for cases in folders related to what the ticket describes, builds a run with the new cases and the relevant regression cases together, and links everything back to JIRA-1234. You go from ticket to test run without opening the TestPlanIt UI.
+
 **Before a release:**
 
-> "Which test cases haven't been run since we merged the authentication rewrite?"
+> "Which test cases in the Authentication folder haven't been run in the last two weeks?"
 
-The AI checks your repository and test run history, cross-references which cases cover the affected areas, and gives you a prioritized list — without you building a filter or exporting a report.
+The AI checks your repository and test run history, finds the cases that are overdue for execution, and gives you a prioritized list — without you building a filter or exporting a report.
 
 **During a sprint:**
 
@@ -52,20 +58,20 @@ QA teams spend a lot of time translating between systems. A developer asks a que
 
 The MCP Server collapses that gap. When your AI assistant can read your test data in real time, it becomes a useful participant in planning conversations instead of a writing tool you have to separately feed information to.
 
-It also means you can ask questions you'd normally skip because the lookup cost isn't worth it. "How many test cases did I write last month?" is a simple question, but getting the answer manually requires a filter, maybe an export, and a few minutes. With the MCP Server, it's one sentence.
+It also means you can ask questions you'd normally skip because the lookup cost isn't worth it. "How many test cases did I write last month?" is a simple question, but getting the answer manually requires a filter, maybe building a report, and a few minutes. With the MCP Server, it's one sentence.
 
 ## What the MCP Server can do
 
-The initial release covers the full read surface of TestPlanIt, plus issue linking:
+The initial release covers the full read and write surface of TestPlanIt:
 
 - **Test cases** — search, filter by folder, tag, status, creator, date range; create, update, delete
-- **Test runs** — details, case results, step results, linked issues
-- **Sessions** — exploratory test sessions, results, notes
-- **Milestones** — completion status, linked runs, descendant structure
+- **Test runs** — create runs, add cases, submit results, update state; read details, case results, step results, and linked issues
+- **Sessions** — create and update exploratory test sessions; read results and notes
+- **Milestones** — create, update, and mark complete; read completion status, linked runs, and descendant structure
 - **Repositories and issues** — linked cases, external issue connections
 - **Issue links** — link or unlink test cases, sessions, test runs, and results to issues in a single call
 
-That last one closes the loop on a common workflow: ask the AI to find issues without test coverage, create cases for them, and link everything together — without leaving the conversation.
+Together these close the loop on the full testing workflow in a single conversation: find an issue, create cases for it, and build a test run — without leaving the chat.
 
 All operations are scoped to your API token's permissions. The AI can only see and modify what your account can access.
 

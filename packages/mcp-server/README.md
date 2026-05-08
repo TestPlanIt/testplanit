@@ -15,7 +15,7 @@ The server runs as a stdio MCP transport — your MCP-aware client (Claude Deskt
 | Variable               | Required | Description                                                                                              |
 | ---------------------- | -------- | -------------------------------------------------------------------------------------------------------- |
 | `TESTPLANIT_API_TOKEN` | yes      | API token from your TestPlanIt profile. Must start with `tpi_`. Mint one under **Profile → API Tokens**. |
-| `TESTPLANIT_API_URL`   | no       | Override for self-hosted instances. Defaults to the TestPlanIt SaaS endpoint when unset.                 |
+| `TESTPLANIT_API_URL`   | yes      | Base URL of your TestPlanIt instance (e.g. `https://testplanit.yourcompany.com`).                        |
 
 The server validates `TESTPLANIT_API_TOKEN` against the TestPlanIt API on startup. Invalid, expired, or revoked tokens cause the server to exit with code 1 before the MCP handshake completes — the agent will report a clean failure rather than hang.
 
@@ -30,7 +30,7 @@ Set scopes when creating the token in **Profile → API Tokens** (checkboxes: "R
 
 ## Tool Catalog
 
-Phase 6 + Phase 7 + Phase 8 ship 27 production tools across cases / folders / tags / projects / runs / sessions / findings / code-repositories / issues / repository-case-links, plus three milestones-domain read tools (`testplanit_milestones_list`, `testplanit_milestones_get`, `testplanit_milestone_types_list`), two issue-link write tools (`testplanit_issues_link`, `testplanit_issues_unlink`), and the `testplanit_whoami` debug helper — **33 total**. All tools authenticate via the bearer token in `TESTPLANIT_API_TOKEN`. Read tools return JSON; write tools return the same shape as their corresponding `_get` tool.
+Phase 6 + Phase 7 + Phase 8 ship 27 production tools across cases / folders / tags / projects / runs / sessions / findings / code-repositories / issues / repository-case-links, plus three milestones-domain read tools (`testplanit_milestones_list`, `testplanit_milestones_get`, `testplanit_milestone_types_list`), two issue-link write tools (`testplanit_issues_link`, `testplanit_issues_unlink`), and the `testplanit_whoami` debug helper. Phase 9 adds 8 write tools: four for the runs domain (`testplanit_runs_create`, `testplanit_runs_update`, `testplanit_runs_cases_add`, `testplanit_test_run_results_create`), two for sessions (`testplanit_sessions_create`, `testplanit_sessions_update`), and two for milestones (`testplanit_milestones_create`, `testplanit_milestones_update`) — **42 total**. All tools authenticate via the bearer token in `TESTPLANIT_API_TOKEN`. Read tools return JSON; write tools return the same shape as their corresponding `_get` tool.
 
 ### Killer-app chain: "Who tested issue X?"
 
@@ -548,6 +548,89 @@ Drill-down — fetch a single test-run result with `stepResults: [...]` inlined.
 
 **Example:** "Show me the step-level breakdown for result 555."
 
+#### `testplanit_runs_create`
+
+Create a new test run. Optionally adds repository test cases in the same call (up to 250). Defaults to the first RUNS-scope workflow state if `stateName` is omitted.
+
+**Input:**
+```json
+{
+  "projectId": 1,
+  "name": "Sprint 13 regression",
+  "caseIds": [99, 100, 101],
+  "milestoneId": 7,
+  "configId": 3,
+  "stateName": "In Progress",
+  "tags": [3, "smoke"]
+}
+```
+
+- `caseIds` — optional, max 250; appended as TestRunCases in order.
+- `tags` — accepts tag IDs (numbers) or tag names (strings, created if missing).
+- `stateName` — defaults to the first RUNS-scope workflow state for the project.
+
+**Output:** Same shape as `testplanit_test_runs_get`.
+
+#### `testplanit_runs_update`
+
+Update an existing test run. Pass `milestoneId: null` or `configId: null` to remove those associations. Providing `tags` replaces the full tag set.
+
+**Input:**
+```json
+{
+  "runId": 5,
+  "name": "Sprint 13 regression (updated)",
+  "stateName": "Completed",
+  "milestoneId": null,
+  "configId": null,
+  "tags": ["smoke"],
+  "isCompleted": true
+}
+```
+
+**Output:** Same shape as `testplanit_test_runs_get`.
+
+#### `testplanit_runs_cases_add`
+
+Add repository test cases to an existing run. Cases are appended in order after any existing cases; duplicates are skipped silently.
+
+**Input:**
+```json
+{
+  "runId": 5,
+  "caseIds": [102, 103, 104]
+}
+```
+
+- `caseIds` — required, 1–250.
+
+**Output:**
+```json
+{ "runId": 5, "requested": 3, "total": 11 }
+```
+
+- `requested` — number of caseIds submitted.
+- `total` — total TestRunCases in the run after the add (including pre-existing cases).
+
+#### `testplanit_test_run_results_create`
+
+Submit a test result for a case in a run. Atomically creates the result and updates the run case's current status. The attempt number is auto-incremented — callers do not track it.
+
+**Input:**
+```json
+{
+  "testRunCaseId": 100,
+  "statusName": "Passed",
+  "notes": "All steps green.",
+  "elapsed": 320
+}
+```
+
+- `statusName` — matched by name within the project's configured statuses.
+- `elapsed` — optional duration in seconds; pass `null` to omit.
+
+**Output:** Same shape as `testplanit_test_run_results_get`.
+
 #### `testplanit_sessions_list` (SESS-01)
 
 List exploratory sessions scoped to a project, with denormalized state / createdBy / assignedTo / template / configuration / milestone / tags. Mission and note are extracted from ProseMirror to plain text.
@@ -632,6 +715,49 @@ Fetch a single session with up to 100 sessionResults inlined and a `truncated: b
 ```
 
 **Example:** "Show me session 12 with its results."
+
+#### `testplanit_sessions_create`
+
+Create a new exploratory test session. Auto-resolves the default template and the first SESSIONS-scope workflow state if not specified.
+
+**Input:**
+```json
+{
+  "projectId": 1,
+  "name": "Login edge case exploration",
+  "mission": "Explore login edge cases under slow network conditions",
+  "milestoneId": 7,
+  "configId": 3,
+  "stateName": "In Progress",
+  "tags": [3, "exploratory"]
+}
+```
+
+- `mission` — optional plain-text mission statement.
+- `stateName` — defaults to the first SESSIONS-scope workflow state for the project.
+- `tags` — accepts tag IDs (numbers) or tag names (strings, created if missing).
+
+**Output:** Same shape as `testplanit_sessions_get`.
+
+#### `testplanit_sessions_update`
+
+Update an existing session. Pass `mission: null`, `milestoneId: null`, or `configId: null` to remove those fields. Providing `tags` replaces the full tag set.
+
+**Input:**
+```json
+{
+  "sessionId": 12,
+  "name": "Login edge case exploration (updated)",
+  "mission": null,
+  "stateName": "Completed",
+  "milestoneId": null,
+  "configId": null,
+  "tags": ["smoke"],
+  "isCompleted": true
+}
+```
+
+**Output:** Same shape as `testplanit_sessions_get`.
 
 #### `testplanit_session_results_list` (SESS-03)
 
@@ -1007,6 +1133,59 @@ When an array is over capacity the response carries `truncated.<key>: true`. The
 
 List the milestone types assigned to a project (via the `MilestoneTypesAssignment` junction). Returns `{ items: [{id, name, isDefault}] }` ordered by name. No cursor pagination — types-per-project is small. Every `milestones_list` row + `milestones_get` response also denormalizes `milestoneType: {id, name}` inline, so this tool exists for full-catalog and filter-picker use cases.
 
+#### `testplanit_milestones_create`
+
+Create a new milestone. Use `testplanit_milestone_types_list` to enumerate valid `milestoneTypeId` values.
+
+**Input:**
+```json
+{
+  "projectId": 1,
+  "name": "v2.0 Release",
+  "milestoneTypeId": 3,
+  "parentId": 5,
+  "note": "Target: end of Q3."
+}
+```
+
+- `milestoneTypeId` — required; use `testplanit_milestone_types_list` to enumerate.
+- `parentId` — optional; omit for a top-level milestone.
+- `note` — optional plain text.
+
+**Output:**
+```json
+{
+  "id": 42,
+  "name": "v2.0 Release",
+  "isStarted": false,
+  "isCompleted": false,
+  "createdAt": "2026-05-07T00:00:00Z",
+  "milestoneType": { "id": 3, "name": "Release" },
+  "creator": { "id": "user-1", "name": "Alice", "email": "alice@example.com" },
+  "parent": { "id": 5, "name": "Q3 Goals" },
+  "note": "Target: end of Q3."
+}
+```
+
+#### `testplanit_milestones_update`
+
+Update an existing milestone. Pass `note: null` or `parentId: null` to clear those fields. Setting `isStarted: true` records `startedAt`; setting `isCompleted: true` records `completedAt`.
+
+**Input:**
+```json
+{
+  "milestoneId": 42,
+  "name": "v2.0 Release (revised)",
+  "note": null,
+  "milestoneTypeId": 4,
+  "parentId": null,
+  "isStarted": true,
+  "isCompleted": false
+}
+```
+
+**Output:** Same shape as `testplanit_milestones_create`.
+
 ## Killer-app compositions (Phase 8)
 
 ### Issue → linked test cases (2 calls)
@@ -1060,6 +1239,24 @@ List the milestone types assigned to a project (via the `MilestoneTypesAssignmen
 // → each row: { name, statusCounts:[{name,count}], untested, total, totalDescendants, ... }
 ```
 
+### Create a run, add cases, and execute (3 calls)
+
+Chain `testplanit_runs_create` → `testplanit_runs_cases_add` (if cases were not supplied at creation) → `testplanit_test_run_results_create` per case.
+
+```json
+{ "tool": "testplanit_runs_create",
+  "input": { "projectId": 42, "name": "JIRA-892 coverage run", "caseIds": [99, 100, 101] } }
+// → full run detail; total: 3, untested: 3
+
+{ "tool": "testplanit_runs_cases_add",
+  "input": { "runId": 5, "caseIds": [102, 103] } }
+// → { runId: 5, requested: 2, total: 5 }
+
+{ "tool": "testplanit_test_run_results_create",
+  "input": { "testRunCaseId": 100, "statusName": "Passed", "elapsed": 320 } }
+// → full result detail; attempt: 1, status: { name: "Passed" }
+```
+
 ## Soft-Delete Invariant
 
 All TestPlanIt MCP "delete" tools perform soft-delete: they set `isDeleted: true` via PATCH update and never call the underlying ZenStack `delete` operation. Soft-deleted records remain in the database for audit purposes and are hidden from subsequent list/get tool calls.
@@ -1078,8 +1275,9 @@ The registry has grown additively over multiple releases:
 - Code-repositories / issues / repository-case-links read domain — 6 tools (`testplanit_code_repositories_list`, `testplanit_issues_find_by_key`, `testplanit_issues_list`, `testplanit_issues_get`, `testplanit_issues_list_links`, `testplanit_repository_case_links_list`), plus 7 maintenance filters + 2 row fields on `testplanit_cases_list` and inline `codeRepository` on `testplanit_cases_get`.
 - Milestones domain — 3 read tools (`testplanit_milestones_list`, `testplanit_milestones_get`, `testplanit_milestone_types_list`), plus 3 additive filters on `testplanit_cases_list` (`creatorIds`, `from`, `to`).
 - Issue link write domain — 2 write tools (`testplanit_issues_link`, `testplanit_issues_unlink`): batch-link / unlink any entity type to an issue in one call.
+- Run / session / milestone write domain — 8 write tools added: `testplanit_runs_create`, `testplanit_runs_update`, `testplanit_runs_cases_add`, `testplanit_test_run_results_create`, `testplanit_sessions_create`, `testplanit_sessions_update`, `testplanit_milestones_create`, `testplanit_milestones_update`.
 
-Total registered tools: **33** (matches the count at the top of this catalog).
+Total registered tools: **42** (matches the count at the top of this catalog).
 
 ## Claude Desktop configuration
 
@@ -1093,7 +1291,7 @@ Add the server to your `claude_desktop_config.json`:
       "args": ["-y", "@testplanit/mcp-server"],
       "env": {
         "TESTPLANIT_API_TOKEN": "tpi_your_token_here",
-        "TESTPLANIT_API_URL": "https://your-instance.testplanit.com"
+        "TESTPLANIT_API_URL": "https://yourcompany.testplanit.com"
       }
     }
   }
@@ -1115,7 +1313,7 @@ Add the server to `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (project-s
       "args": ["-y", "@testplanit/mcp-server"],
       "env": {
         "TESTPLANIT_API_TOKEN": "tpi_your_token_here",
-        "TESTPLANIT_API_URL": "https://your-instance.testplanit.com"
+        "TESTPLANIT_API_URL": "https://yourcompany.testplanit.com"
       }
     }
   }

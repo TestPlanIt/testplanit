@@ -1,17 +1,10 @@
 import * as z from "zod/v4";
 
-/**
- * Default TestPlanIt SaaS API URL. Self-hosted deployments override via
- * `TESTPLANIT_API_URL`. Documented in the package README and locked here
- * as the SaaS canonical default.
- */
-const DEFAULT_API_URL = "https://app.testplanit.com";
-
 const EnvSchema = z.object({
   TESTPLANIT_API_TOKEN: z
     .string()
     .regex(/^tpi_/, "Token must start with tpi_"),
-  TESTPLANIT_API_URL: z.string().url().default(DEFAULT_API_URL),
+  TESTPLANIT_API_URL: z.string().url(),
 });
 
 export interface EnvConfig {
@@ -24,7 +17,7 @@ export interface EnvConfig {
  *
  * Throws a zod validation error when:
  *  - `TESTPLANIT_API_TOKEN` is missing or does not start with `tpi_`
- *  - `TESTPLANIT_API_URL` is set but is not a valid URL
+ *  - `TESTPLANIT_API_URL` is missing or is not a valid URL
  *
  * The returned `apiUrl` is normalized (trailing slash stripped).
  */
