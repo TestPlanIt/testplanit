@@ -54,7 +54,7 @@ export function registerMilestonesList(
         isCompleted: z.boolean().optional(),
         isStarted: z.boolean().optional(),
         milestoneTypeId: z.number().int().positive().optional(),
-        createdById: z.string().min(1).optional(),
+        createdById: z.string().trim().min(1).optional(),
         from: z.string().datetime({ offset: true }).optional(),
         to: z.string().datetime({ offset: true }).optional(),
         // Three states — null (root-only), number (children-of), undefined (all)

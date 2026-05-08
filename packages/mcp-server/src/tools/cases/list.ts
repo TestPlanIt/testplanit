@@ -123,7 +123,7 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
         staleSinceUpdate: z.boolean().optional(),
         updatedAfter: z.string().datetime({ offset: true }).optional(),
         updatedBefore: z.string().datetime({ offset: true }).optional(),
-        creatorIds: z.array(z.string().min(1)).optional(),
+        creatorIds: z.array(z.string().trim().min(1)).optional(),
         from: z.string().datetime({ offset: true }).optional(),
         to: z.string().datetime({ offset: true }).optional(),
         cursor: z.number().int().positive().optional(),
