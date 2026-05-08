@@ -101,12 +101,12 @@ export async function zenstack<T>(
         code = parsed["code"] as string;
       }
       const errField = parsed?.["error"];
-      if (errField && typeof errField === "object" && errField !== null) {
+      if (errField && typeof errField === "object") {
         const errObj = errField as Record<string, unknown>;
         if (typeof errObj["code"] === "string") code = errObj["code"] as string;
         if (typeof errObj["message"] === "string") parsedMessage = errObj["message"] as string;
       }
-      if (typeof errField === "string" && !parsedMessage) {
+      if (typeof errField === "string") {
         parsedMessage = errField;
       }
     } catch {
@@ -199,11 +199,11 @@ export async function lookup(
       const parsed = JSON.parse(text) as Record<string, unknown>;
       if (typeof parsed?.["code"] === "string") code = parsed["code"] as string;
       const errField = parsed?.["error"];
-      if (errField && typeof errField === "object" && errField !== null) {
+      if (errField && typeof errField === "object") {
         const errObj = errField as Record<string, unknown>;
         if (typeof errObj["code"] === "string") code = errObj["code"] as string;
         if (typeof errObj["message"] === "string") parsedMessage = errObj["message"] as string;
-      } else if (typeof errField === "string" && !parsedMessage) {
+      } else if (typeof errField === "string") {
         parsedMessage = errField;
       }
     } catch {

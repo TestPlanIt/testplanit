@@ -56,9 +56,7 @@ test.describe("Outbound webhook — test_run.completed delivery (Phase 2 demo ta
     //    (?tab=outbound). Radix Tabs only mounts the active tab's content,
     //    so we click the outbound trigger explicitly rather than relying
     //    on the query-string roundtrip surviving the i18n redirect.
-    await page.goto(
-      `${baseURL}/en-US/projects/settings/${projectId}/webhooks`
-    );
+    await page.goto(`${baseURL}/en-US/projects/settings/${projectId}/webhooks`);
     await page.waitForLoadState("networkidle");
     // Wait for the Tabs primitive to mount before clicking.
     await expect(page.getByTestId("webhooks-tab-outbound")).toBeVisible({

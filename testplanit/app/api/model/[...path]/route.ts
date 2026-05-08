@@ -221,7 +221,10 @@ async function getPrisma() {
         if (attempt < 2) {
           await new Promise((r) => setTimeout(r, 50 * (attempt + 1)));
         } else {
-          console.error("[getPrisma] user lookup failed after 3 attempts:", err);
+          console.error(
+            "[getPrisma] user lookup failed after 3 attempts:",
+            err
+          );
         }
       }
     }

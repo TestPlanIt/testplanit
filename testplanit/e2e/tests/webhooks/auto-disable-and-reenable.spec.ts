@@ -67,9 +67,7 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
     api,
   }) => {
     // 1. Configure outbound webhook via the admin form.
-    await page.goto(
-      `${baseURL}/en-US/projects/settings/${projectId}/webhooks`
-    );
+    await page.goto(`${baseURL}/en-US/projects/settings/${projectId}/webhooks`);
     await page.waitForLoadState("networkidle");
     await expect(page.getByTestId("webhooks-tab-outbound")).toBeVisible({
       timeout: 20_000,
@@ -209,9 +207,7 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
   }) => {
     // 1. Continue from Test 1 — the config is DISABLED. Find the outbound
     //    card (rendered on the outbound tab) and click Re-enable.
-    await page.goto(
-      `${baseURL}/en-US/projects/settings/${projectId}/webhooks`
-    );
+    await page.goto(`${baseURL}/en-US/projects/settings/${projectId}/webhooks`);
     await page.waitForLoadState("networkidle");
     await expect(page.getByTestId("webhooks-tab-outbound")).toBeVisible({
       timeout: 20_000,

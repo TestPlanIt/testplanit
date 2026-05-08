@@ -55,9 +55,7 @@ test.describe("Webhook delivery replay — single outbound", () => {
     api,
   }) => {
     // 1. Configure outbound webhook pointing at the stub.
-    await page.goto(
-      `${baseURL}/en-US/projects/settings/${projectId}/webhooks`
-    );
+    await page.goto(`${baseURL}/en-US/projects/settings/${projectId}/webhooks`);
     await page.waitForLoadState("networkidle");
     await expect(page.getByTestId("webhooks-tab-outbound")).toBeVisible({
       timeout: 20_000,

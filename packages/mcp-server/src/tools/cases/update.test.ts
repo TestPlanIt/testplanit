@@ -36,7 +36,6 @@ import * as fetchDetailModule from "./fetchDetail.js";
 import { registerCasesUpdate } from "./update.js";
 
 const zenstackMock = vi.mocked(apiModule.zenstack);
-const lookupMock = vi.mocked(apiModule.lookup);
 const resolveCaseWorkflowStateMock = vi.mocked(apiModule.resolveCaseWorkflowState);
 const resolveCustomFieldsMock = vi.mocked(customFieldsModule.resolveCustomFields);
 const writeCustomFieldValuesMock = vi.mocked(customFieldsModule.writeCustomFieldValues);

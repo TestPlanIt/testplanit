@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
-import { zenstack, lookup } from "../../api.js";
+import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
 import { TestPlanItHttpError } from "../../http.js";
