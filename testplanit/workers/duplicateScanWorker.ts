@@ -94,6 +94,25 @@ export const processor = async (
     })
   );
 
+  // 5c. Load active provenance/source links — exclude pairs already marked DUPLICATED_FROM or SAME_TEST_DIFFERENT_SOURCE
+  const provenanceLinks = await prisma.repositoryCaseLink.findMany({
+    where: {
+      type: { in: ["DUPLICATED_FROM", "SAME_TEST_DIFFERENT_SOURCE"] },
+      isDeleted: false,
+      caseA: { projectId: job.data.projectId },
+    },
+    select: { caseAId: true, caseBId: true },
+  });
+  const linkedPairs = new Set<string>(
+    provenanceLinks.map(
+      ({ caseAId, caseBId }: { caseAId: number; caseBId: number }) => {
+        const a = Math.min(caseAId, caseBId);
+        const b = Math.max(caseAId, caseBId);
+        return `${a}:${b}`;
+      }
+    )
+  );
+
   const total = cases.length;
   const seenPairs = new Set<string>();
   const allPairs: Array<{
@@ -140,7 +159,11 @@ export const processor = async (
     for (const pairs of batchResults) {
       for (const pair of pairs) {
         const key = `${pair.caseAId}:${pair.caseBId}`;
-        if (!seenPairs.has(key) && !resolvedPairs.has(key)) {
+        if (
+          !seenPairs.has(key) &&
+          !resolvedPairs.has(key) &&
+          !linkedPairs.has(key)
+        ) {
           seenPairs.add(key);
           allPairs.push(pair);
         }

@@ -10,7 +10,6 @@ import {
 } from "../lib/multiTenantPrisma";
 import { COPY_MOVE_QUEUE_NAME } from "../lib/queueNames";
 import { captureAuditEvent } from "../lib/services/auditLog";
-import { NotificationService } from "../lib/services/notificationService";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { createTestCaseVersionInTransaction } from "../lib/services/testCaseVersionService";
@@ -451,7 +450,7 @@ const processor = async (
 
     // 8. Initialize state
     const sharedGroupMap = new Map<number, number>();
-    const createdTargetIds: number[] = [];
+    const createdTargetIds: Array<{ newId: number; sourceId: number }> = [];
     const result: CopyMoveJobResult = {
       copiedCount: 0,
       movedCount: 0,
@@ -717,10 +716,25 @@ const processor = async (
             }
           }
 
+          // Provenance link — within-project copies only
+          if (
+            job.data.operation === "copy" &&
+            job.data.sourceProjectId === job.data.targetProjectId
+          ) {
+            await tx.repositoryCaseLink.create({
+              data: {
+                caseAId: newCase.id,
+                caseBId: sourceCase.id,
+                type: "DUPLICATED_FROM",
+                createdById: job.data.userId,
+              },
+            });
+          }
+
           return newCase.id;
         });
 
-        createdTargetIds.push(newCaseId);
+        createdTargetIds.push({ newId: newCaseId, sourceId: sourceCase.id });
         result.copiedCount++;
       }
     } catch (err: any) {
@@ -730,16 +744,19 @@ const processor = async (
           `Copy-move job ${job.id} failed — rolling back ${createdTargetIds.length} created cases.`
         );
         await prisma.repositoryCases.deleteMany({
-          where: { id: { in: createdTargetIds } },
+          where: { id: { in: createdTargetIds.map((c) => c.newId) } },
         });
       }
       throw err;
     }
 
-    // 10. Move: soft-delete source cases only after ALL copies succeeded
-    if (job.data.operation === "move") {
+    // 10. Move: soft-delete only source cases that were actually copied — guards
+    // against same-project self-collision with conflictResolution:"skip" where
+    // every case is skipped (copiedCount=0) but the old code deleted originals.
+    if (job.data.operation === "move" && createdTargetIds.length > 0) {
+      const movedSourceIds = createdTargetIds.map((c) => c.sourceId);
       await prisma.repositoryCases.updateMany({
-        where: { id: { in: job.data.caseIds } },
+        where: { id: { in: movedSourceIds } },
         data: { isDeleted: true },
       });
 
@@ -763,15 +780,15 @@ const processor = async (
       finalizing: true,
     });
 
-    for (const id of createdTargetIds) {
-      syncRepositoryCaseToElasticsearch(id, job.data.tenantId, prisma).catch(
-        (err) => console.error(`ES sync failed for new case ${id}:`, err)
+    for (const { newId } of createdTargetIds) {
+      syncRepositoryCaseToElasticsearch(newId, job.data.tenantId, prisma).catch(
+        (err) => console.error(`ES sync failed for new case ${newId}:`, err)
       );
     }
 
-    // For move: also remove source cases from ES index (best-effort)
-    if (job.data.operation === "move") {
-      for (const sourceId of job.data.caseIds) {
+    // For move: also remove source cases from ES index (best-effort, only those actually moved)
+    if (job.data.operation === "move" && createdTargetIds.length > 0) {
+      for (const sourceId of createdTargetIds.map((c) => c.sourceId)) {
         syncRepositoryCaseToElasticsearch(
           sourceId,
           job.data.tenantId,
@@ -790,11 +807,11 @@ const processor = async (
     result.droppedLinkCount = 0;
 
     // 12b. Audit logging — log bulk operation for created cases
-    for (const targetId of createdTargetIds) {
+    for (const { newId } of createdTargetIds) {
       captureAuditEvent({
         action: "CREATE",
         entityType: "RepositoryCases",
-        entityId: String(targetId),
+        entityId: String(newId),
         projectId: job.data.targetProjectId,
         userId: job.data.userId,
         tenantId: job.data.tenantId,
@@ -804,6 +821,29 @@ const processor = async (
           jobId: job.id,
         },
       }).catch(() => {}); // best-effort, don't fail the job
+    }
+
+    // Provenance audit — within-project copies only
+    if (
+      job.data.operation === "copy" &&
+      job.data.sourceProjectId === job.data.targetProjectId
+    ) {
+      for (const { newId, sourceId } of createdTargetIds) {
+        captureAuditEvent({
+          action: "DUPLICATED",
+          entityType: "RepositoryCases",
+          entityId: String(newId),
+          projectId: job.data.targetProjectId,
+          userId: job.data.userId,
+          tenantId: job.data.tenantId,
+          metadata: {
+            duplicatedFromCaseId: sourceId,
+            sourceProjectId: job.data.sourceProjectId,
+            targetFolderId: job.data.targetFolderId,
+            jobId: job.id,
+          },
+        }).catch(() => {});
+      }
     }
 
     // Audit logging — log soft-deletes for moved source cases
@@ -831,30 +871,6 @@ const processor = async (
         `copied=${result.copiedCount} moved=${result.movedCount} skipped=${result.skippedCount} ` +
         `droppedLinks=${result.droppedLinkCount}`
     );
-
-    // 13. Notify the submitting user that the job completed
-    try {
-      await NotificationService.createNotification({
-        userId: job.data.userId,
-        type: "COPY_MOVE_COMPLETE",
-        title:
-          job.data.operation === "copy" ? "Copy Complete" : "Move Complete",
-        message: `${result.copiedCount + result.movedCount} case(s) ${job.data.operation === "copy" ? "copied" : "moved"} successfully${result.errors.length > 0 ? `, ${result.errors.length} failed` : ""}`,
-        relatedEntityId: String(job.data.targetProjectId),
-        relatedEntityType: "Project",
-        data: {
-          operation: job.data.operation,
-          sourceProjectId: job.data.sourceProjectId,
-          targetProjectId: job.data.targetProjectId,
-          copiedCount: result.copiedCount,
-          movedCount: result.movedCount,
-          skippedCount: result.skippedCount,
-          errorCount: result.errors.length,
-        },
-      });
-    } catch (notifErr) {
-      console.warn("Failed to create copy-move notification:", notifErr);
-    }
 
     return result;
   });

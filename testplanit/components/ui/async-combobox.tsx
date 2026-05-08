@@ -37,6 +37,7 @@ interface AsyncComboboxProps<T> {
   placeholder?: string;
   triggerLabel?: React.ReactNode;
   disabled?: boolean;
+  isOptionDisabled?: (option: T) => boolean;
   className?: ClassValue;
   dropdownClassName?: ClassValue;
   pageSize?: number;
@@ -62,6 +63,7 @@ export function AsyncCombobox<T>({
   placeholder,
   triggerLabel,
   disabled = false,
+  isOptionDisabled,
   className,
   dropdownClassName,
   pageSize = 10,
@@ -297,24 +299,29 @@ export function AsyncCombobox<T>({
                     </div>
                   </CommandItem>
                 )}
-                {options.map((option) => (
-                  <CommandItem
-                    key={getOptionValue(option)}
-                    value={String(getOptionValue(option))}
-                    onSelect={() => {
-                      onValueChange(option);
-                      setOpen(false);
-                    }}
-                  >
-                    <div className="flex items-center w-full">
-                      {renderOption(option)}
-                      {value &&
-                        getOptionValue(option) === getOptionValue(value) && (
-                          <Check className="ml-auto h-4 w-4 text-muted-foreground" />
-                        )}
-                    </div>
-                  </CommandItem>
-                ))}
+                {options.map((option) => {
+                  const optionDisabled = isOptionDisabled?.(option) ?? false;
+                  return (
+                    <CommandItem
+                      key={getOptionValue(option)}
+                      value={String(getOptionValue(option))}
+                      disabled={optionDisabled}
+                      onSelect={() => {
+                        if (optionDisabled) return;
+                        onValueChange(option);
+                        setOpen(false);
+                      }}
+                    >
+                      <div className="flex items-center w-full">
+                        {renderOption(option)}
+                        {value &&
+                          getOptionValue(option) === getOptionValue(value) && (
+                            <Check className="ml-auto h-4 w-4 text-muted-foreground" />
+                          )}
+                      </div>
+                    </CommandItem>
+                  );
+                })}
               </CommandGroup>
             </CommandList>
             <div className="flex items-center justify-between gap-2 border-t px-2 py-1 bg-muted">

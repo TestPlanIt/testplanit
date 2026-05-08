@@ -95,9 +95,10 @@ vi.mock("react-arborist", () => ({
   ),
 }));
 
-// Mock react-dnd useDrop
+// Mock react-dnd useDrop + useDragLayer
 vi.mock("react-dnd", () => ({
   useDrop: vi.fn(() => [{ isOver: false, canDrop: false }, vi.fn()]),
+  useDragLayer: vi.fn(() => false),
 }));
 
 // Mock DnD types

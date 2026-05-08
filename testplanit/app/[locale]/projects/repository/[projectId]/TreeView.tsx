@@ -6,12 +6,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from "@/components/ui/popover";
 import type { RepositoryFolders } from "@prisma/client";
 import {
   ArrowRightLeft,
   ChevronRight,
+  Copy,
   Folder,
   FolderOpen,
+  Loader2,
   MoreVertical,
   SquarePenIcon,
   Trash2Icon,
@@ -26,8 +33,10 @@ import React, {
   useState,
 } from "react";
 import { NodeApi, Tree, TreeApi } from "react-arborist";
-import { useDrop } from "react-dnd";
+import { useDragLayer, useDrop } from "react-dnd";
 import { toast } from "sonner";
+import { useCopyMoveJob } from "~/components/copy-move/useCopyMoveJob";
+import { useDragModifier } from "~/hooks/useDragModifier";
 import {
   useFindManyRepositoryFolders,
   useUpdateRepositoryCases,
@@ -365,6 +374,176 @@ const TreeView: React.FC<{
   const { mutateAsync: updateFolder } = useUpdateRepositoryFolders();
   const { mutateAsync: updateCase } = useUpdateRepositoryCases();
 
+  const copyMoveJob = useCopyMoveJob();
+  const [pendingCopyTargets, setPendingCopyTargets] = useState<
+    Map<number, string>
+  >(new Map());
+  // Track the in-flight copy submission (folder + case count) so the completion
+  // and failure effects can clear the right per-folder spinner and toast the
+  // correct count. useCopyMoveJob is single-job, so a second submit while one
+  // is in flight would orphan the first job's spinner; handleCopyDrop rejects
+  // overlapping submits explicitly.
+  const lastSubmittedRef = useRef<{
+    folderId: number;
+    folderName: string;
+    caseCount: number;
+  } | null>(null);
+  const [pendingDrop, setPendingDrop] = useState<{
+    x: number;
+    y: number;
+    targetFolderId: number;
+    targetFolderName: string;
+    draggedItems: Array<{ id: number | string }>;
+  } | null>(null);
+
+  const isMac =
+    typeof navigator !== "undefined" &&
+    /Mac|iPhone|iPod|iPad/i.test(navigator.userAgent);
+
+  const numericProjectId = useMemo(() => Number(projectId), [projectId]);
+
+  const virtualAnchor = useMemo(
+    () =>
+      pendingDrop
+        ? {
+            getBoundingClientRect: () =>
+              ({
+                x: pendingDrop.x,
+                y: pendingDrop.y,
+                left: pendingDrop.x,
+                top: pendingDrop.y,
+                right: pendingDrop.x,
+                bottom: pendingDrop.y,
+                width: 0,
+                height: 0,
+                toJSON: () => null,
+              }) as DOMRect,
+          }
+        : null,
+    [pendingDrop]
+  );
+
+  const handleMoveDrop = useCallback(
+    async (
+      itemsToUpdate: Array<{ id: number | string }>,
+      targetFolderId: number
+    ) => {
+      try {
+        const updatePromises = itemsToUpdate.map((draggedItem) =>
+          updateCase({
+            where: { id: Number(draggedItem.id) },
+            data: { folderId: targetFolderId },
+          })
+        );
+        await Promise.all(updatePromises);
+
+        toast.success(t("common.fields.success"), {
+          description: t("common.messages.updateSuccess", {
+            count: itemsToUpdate.length,
+          }),
+        });
+        void refetchCases();
+        void refetchFolders();
+        onRefetchStats?.();
+      } catch (error) {
+        console.error("Failed to move test case(s):", error);
+        toast.error(t("common.errors.error"), {
+          description: t("common.messages.updateError"),
+        });
+      }
+    },
+    [updateCase, refetchCases, refetchFolders, onRefetchStats, t]
+  );
+
+  const handleCopyDrop = useCallback(
+    async (
+      itemsToUpdate: Array<{ id: number | string }>,
+      targetFolderId: number,
+      targetFolderName: string
+    ) => {
+      // useCopyMoveJob can only track one job at a time. If a copy is already
+      // in flight, surfacing a second submit() call would orphan the first
+      // job's spinner and lose its result toast.
+      if (copyMoveJob.status !== "idle") {
+        toast.error(t("repository.dragDrop.copyAlreadyRunning"));
+        return;
+      }
+      lastSubmittedRef.current = {
+        folderId: targetFolderId,
+        folderName: targetFolderName,
+        caseCount: itemsToUpdate.length,
+      };
+      setPendingCopyTargets((prev) => {
+        const next = new Map(prev);
+        next.set(targetFolderId, "pending");
+        return next;
+      });
+      await copyMoveJob.submit({
+        operation: "copy",
+        caseIds: itemsToUpdate.map((i) => Number(i.id)),
+        sourceProjectId: numericProjectId,
+        targetProjectId: numericProjectId,
+        targetFolderId,
+        conflictResolution: "rename",
+        sharedStepGroupResolution: "reuse",
+      });
+    },
+    [copyMoveJob, numericProjectId, t]
+  );
+
+  useEffect(() => {
+    if (copyMoveJob.status === "completed") {
+      const submitted = lastSubmittedRef.current;
+      setPendingCopyTargets((prev) => {
+        if (submitted == null) return prev;
+        const next = new Map(prev);
+        next.delete(submitted.folderId);
+        return next;
+      });
+      toast.success(
+        t("repository.dragDrop.copyComplete", {
+          count: copyMoveJob.result?.copiedCount ?? 0,
+          folder: submitted?.folderName ?? "",
+          dest: "samename",
+          projectName: "",
+        })
+      );
+      lastSubmittedRef.current = null;
+      void refetchCases();
+      void refetchFolders();
+      onRefetchStats?.();
+      copyMoveJob.reset();
+    } else if (copyMoveJob.status === "failed") {
+      const submitted = lastSubmittedRef.current;
+      setPendingCopyTargets((prev) => {
+        if (submitted == null) return prev;
+        const next = new Map(prev);
+        next.delete(submitted.folderId);
+        return next;
+      });
+      if (submitted != null) {
+        toast.error(
+          t("repository.dragDrop.copyError", {
+            count: submitted.caseCount,
+            folder: submitted.folderName,
+            dest: "samename",
+            projectName: "",
+          })
+        );
+      }
+      lastSubmittedRef.current = null;
+      copyMoveJob.reset();
+    }
+  }, [
+    copyMoveJob.status,
+    copyMoveJob.result,
+    copyMoveJob.reset,
+    refetchCases,
+    refetchFolders,
+    onRefetchStats,
+    t,
+  ]);
+
   const buildTree = useCallback(
     (parentId: number | null): ArboristNode[] => {
       const children = childrenMap.get(parentId ?? null) || [];
@@ -595,6 +774,10 @@ const TreeView: React.FC<{
 
   // Listen for custom folder selection events
   useEffect(() => {
+    // Track every retry timeout so cleanup on unmount cancels them all and
+    // prevents setSelectedId / onSelectFolder calls on an unmounted tree.
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+
     const handleFolderSelectionChanged = (event: CustomEvent) => {
       const folderId = event.detail?.folderId;
       const expandParentId = event.detail?.expandParentId;
@@ -645,12 +828,14 @@ const TreeView: React.FC<{
           } else if (retriesLeft > 0) {
             // Node not found yet (may still be rendering after state update), retry after a delay
             // Use longer delay to allow React to complete its render cycle
-            setTimeout(() => selectNodeWithRetry(retriesLeft - 1), 100);
+            timeouts.push(
+              setTimeout(() => selectNodeWithRetry(retriesLeft - 1), 100)
+            );
           }
         };
 
         // Start the retry loop after a short initial delay to allow state updates to propagate
-        setTimeout(() => selectNodeWithRetry(15), 100);
+        timeouts.push(setTimeout(() => selectNodeWithRetry(15), 100));
       }
     };
 
@@ -664,6 +849,8 @@ const TreeView: React.FC<{
         "folderSelectionChanged",
         handleFolderSelectionChanged as EventListener
       );
+      timeouts.forEach(clearTimeout);
+      timeouts.length = 0;
     };
   }, [onSelectFolder, ensureFolderPathLoaded, ensureFolderChildrenLoaded]);
 
@@ -778,6 +965,12 @@ const TreeView: React.FC<{
     const IconComponent = node.isOpen && hasChildren ? FolderOpen : Folder;
     const childrenLoaded = !!data?.childrenLoaded;
 
+    // useDragLayer subscribes the component to drag-state changes; reading
+    // dndManager.getMonitor().isDragging() directly does not subscribe and
+    // gates useDragModifier's listener attach/detach on incidental re-renders.
+    const isDragging = useDragLayer((monitor) => monitor.isDragging());
+    const { copyHeld, moveHeld } = useDragModifier(isDragging);
+
     // Handle test case drops
     const [{ isOver, canDrop }, drop] = useDrop<
       {
@@ -795,56 +988,54 @@ const TreeView: React.FC<{
           folderId?: number | null;
           draggedItems?: Array<{ id: number | string }>;
         }) => {
-          return (
-            !(!canAddEdit || !!filteredFolders) &&
-            data?.folderId !== 0 &&
-            item.folderId !== data?.folderId
-          );
+          const baseChecks =
+            !(!canAddEdit || !!filteredFolders) && data?.folderId !== 0;
+          if (copyHeld) {
+            return baseChecks;
+          }
+          return baseChecks && item.folderId !== data?.folderId;
         },
-        drop: (item: {
-          id?: number | string;
-          folderId?: number | null;
-          draggedItems?: Array<{ id: number | string }>;
-        }) => {
+        drop: (
+          item: {
+            id?: number | string;
+            folderId?: number | null;
+            draggedItems?: Array<{ id: number | string }>;
+          },
+          monitor
+        ) => {
           const targetFolderId = data?.folderId;
-          if (!targetFolderId) return;
+          // folderId === 0 is a sentinel for the root pseudo-folder which
+          // cannot accept drops; null/undefined means no folder data.
+          if (targetFolderId == null || targetFolderId === 0) return;
 
-          const processDrop = async () => {
-            let itemsToUpdate: Array<{ id: number | string }> = [];
+          const itemsToUpdate: Array<{ id: number | string }> =
+            item.draggedItems && item.draggedItems.length > 0
+              ? item.draggedItems
+              : item.id != null
+                ? [{ id: item.id }]
+                : [];
+          if (itemsToUpdate.length === 0) return;
 
-            if (item.draggedItems && item.draggedItems.length > 0) {
-              itemsToUpdate = item.draggedItems;
-            } else if (item.id) {
-              itemsToUpdate.push({ id: item.id });
-            }
-
-            if (itemsToUpdate.length === 0) return;
-
-            try {
-              const updatePromises = itemsToUpdate.map((draggedItem) =>
-                updateCase({
-                  where: { id: Number(draggedItem.id) },
-                  data: { folderId: targetFolderId },
-                })
-              );
-              await Promise.all(updatePromises);
-
-              toast.success(t("common.fields.success"), {
-                description: t("common.messages.updateSuccess", {
-                  count: itemsToUpdate.length,
-                }),
-              });
-              void refetchCases();
-              void refetchFolders();
-              onRefetchStats?.();
-            } catch (error) {
-              console.error("Failed to move test case(s):", error);
-              toast.error(t("common.errors.error"), {
-                description: t("common.messages.updateError"),
-              });
-            }
-          };
-          void processDrop();
+          const targetFolderName = node.data?.name ?? "";
+          if (copyHeld) {
+            void handleCopyDrop(
+              itemsToUpdate,
+              targetFolderId,
+              targetFolderName
+            );
+          } else if (moveHeld) {
+            void handleMoveDrop(itemsToUpdate, targetFolderId);
+          } else {
+            const offset = monitor.getClientOffset();
+            if (!offset) return;
+            setPendingDrop({
+              x: offset.x,
+              y: offset.y,
+              targetFolderId,
+              targetFolderName,
+              draggedItems: itemsToUpdate,
+            });
+          }
         },
         collect: (monitor: any) => ({
           isOver: monitor.isOver(),
@@ -860,6 +1051,10 @@ const TreeView: React.FC<{
         refetchFolders,
         onRefetchStats,
         t,
+        copyHeld,
+        moveHeld,
+        handleCopyDrop,
+        handleMoveDrop,
       ]
     );
 
@@ -969,11 +1164,24 @@ const TreeView: React.FC<{
         />
         <span className="ml-2 truncate flex-1">{node.data.name}</span>
 
+        {pendingCopyTargets.has(data?.folderId ?? -1) && (
+          <Loader2
+            className="ml-2 h-3 w-3 animate-spin text-primary shrink-0"
+            data-testid={`folder-row-copy-progress-${data?.folderId}`}
+            aria-label={t("repository.dragDrop.copying")}
+          />
+        )}
+
         {canAddEdit && !filteredFolders && data?.folderId !== 0 && (
           <div className="ml-1 flex items-center h-7 invisible group-hover:visible shrink-0">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7 p-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 p-0"
+                  data-testid={`folder-actions-trigger-${data?.folderId ?? 0}`}
+                >
                   <MoreVertical className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
@@ -993,6 +1201,7 @@ const TreeView: React.FC<{
                 </DropdownMenuItem>
                 {onCopyMoveFolder && (
                   <DropdownMenuItem
+                    data-testid={`folder-action-copy-move-${data?.folderId ?? 0}`}
                     onClick={(e) => {
                       e.stopPropagation();
                       onCopyMoveFolder(data?.folderId ?? 0, node.data.name);
@@ -1210,6 +1419,86 @@ const TreeView: React.FC<{
           onClose={() => setDeleteModalState({ open: false, node: null })}
         />
       )}
+
+      <Popover
+        open={!!pendingDrop}
+        onOpenChange={(open) => {
+          if (!open) setPendingDrop(null);
+        }}
+      >
+        {virtualAnchor && (
+          <PopoverAnchor
+            {...({
+              virtualRef: { current: virtualAnchor },
+            } as unknown as Record<string, unknown>)}
+          />
+        )}
+        <PopoverContent
+          data-testid="drop-action-popover"
+          side="bottom"
+          align="start"
+          className="flex flex-col gap-2"
+          onEscapeKeyDown={() => setPendingDrop(null)}
+          onInteractOutside={() => setPendingDrop(null)}
+        >
+          <Button
+            autoFocus
+            data-testid="drop-action-cancel"
+            variant="default"
+            onClick={() => setPendingDrop(null)}
+          >
+            {t("common.cancel")}
+          </Button>
+          <Button
+            data-testid="drop-action-move"
+            variant="secondary"
+            onClick={() => {
+              if (
+                pendingDrop &&
+                pendingDrop.draggedItems.length > 0 &&
+                pendingDrop.targetFolderId
+              ) {
+                void handleMoveDrop(
+                  pendingDrop.draggedItems,
+                  pendingDrop.targetFolderId
+                );
+              }
+              setPendingDrop(null);
+            }}
+          >
+            <ArrowRightLeft className="h-4 w-4" />
+            {t("repository.dragDrop.move")}
+          </Button>
+          <Button
+            data-testid="drop-action-copy"
+            variant="secondary"
+            onClick={() => {
+              if (
+                pendingDrop &&
+                pendingDrop.draggedItems.length > 0 &&
+                pendingDrop.targetFolderId
+              ) {
+                void handleCopyDrop(
+                  pendingDrop.draggedItems,
+                  pendingDrop.targetFolderId,
+                  pendingDrop.targetFolderName
+                );
+              }
+              setPendingDrop(null);
+            }}
+          >
+            <Copy className="h-4 w-4" />
+            {t("repository.dragDrop.copy")}
+          </Button>
+          <p className="text-xs text-muted-foreground pt-1 border-t">
+            {t(
+              isMac
+                ? "repository.dragDrop.modifierHintMac"
+                : "repository.dragDrop.modifierHintWin"
+            )}
+          </p>
+        </PopoverContent>
+      </Popover>
     </>
   );
 };

@@ -12,6 +12,8 @@ const {
   mockUpdateMany,
   mockCreateMany,
   mockFindManyDuplicateScanResult,
+  mockFindManyRepositoryCaseLink,
+  mockAnalyzePairs,
 } = vi.hoisted(() => ({
   mockRedisGet: vi.fn(),
   mockRedisDel: vi.fn(),
@@ -21,6 +23,8 @@ const {
   mockUpdateMany: vi.fn(),
   mockCreateMany: vi.fn(),
   mockFindManyDuplicateScanResult: vi.fn(),
+  mockFindManyRepositoryCaseLink: vi.fn(),
+  mockAnalyzePairs: vi.fn(),
 }));
 
 const mockRedisClient = {
@@ -59,6 +63,9 @@ const mockPrisma: any = {
     updateMany: (...args: any[]) => mockUpdateMany(...args),
     createMany: (...args: any[]) => mockCreateMany(...args),
   },
+  repositoryCaseLink: {
+    findMany: (...args: any[]) => mockFindManyRepositoryCaseLink(...args),
+  },
   llmProviderConfig: {
     findFirst: vi.fn().mockResolvedValue(null),
   },
@@ -86,6 +93,30 @@ vi.mock("../lib/services/duplicateScanService", () => ({
 
 vi.mock("../services/elasticsearchService", () => ({
   getElasticsearchClient: vi.fn(() => null),
+}));
+
+// ─── Mock LLM services so analyzePairs can be spied on ───────────────────────
+
+vi.mock(
+  "../lib/llm/services/duplicate-detection/duplicate-analysis.service",
+  () => ({
+    DuplicateAnalysisService: class MockDuplicateAnalysisService {
+      analyzePairs = (...args: any[]) => mockAnalyzePairs(...args);
+      constructor() {}
+    },
+  })
+);
+
+vi.mock("../lib/llm/services/llm-manager.service", () => ({
+  LlmManager: {
+    createForWorker: vi.fn(() => ({ resolveIntegration: vi.fn() })),
+  },
+}));
+
+vi.mock("../lib/llm/services/prompt-resolver.service", () => ({
+  PromptResolver: class MockPromptResolver {
+    constructor() {}
+  },
 }));
 
 // ─── Mock queue name ─────────────────────────────────────────────────────────
@@ -154,6 +185,15 @@ describe("DuplicateScanWorker", () => {
     mockFindManyDuplicateScanResult.mockResolvedValue([]);
     // Default: no similar cases
     mockFindSimilarCases.mockResolvedValue([]);
+    // Default: no provenance/source links
+    mockFindManyRepositoryCaseLink.mockResolvedValue([]);
+    // Default: LLM analyzePairs is a pass-through (returns the pairs it was
+    // given, marked detectionMethod: "fuzzy") so existing tests that don't
+    // care about the LLM still see allPairs reflected in pairsFound.
+    mockAnalyzePairs.mockClear();
+    mockAnalyzePairs.mockImplementation(async (pairs: any[]) =>
+      pairs.map((p) => ({ ...p, detectionMethod: "fuzzy" }))
+    );
   });
 
   describe("basic scan processing", () => {
@@ -343,6 +383,82 @@ describe("DuplicateScanWorker", () => {
           skipDuplicates: true,
         })
       );
+    });
+  });
+
+  describe("provenance-link exclusion (DUP-05, D-11)", () => {
+    it("excludes DUPLICATED_FROM-linked pairs from allPairs (no LLM call)", async () => {
+      mockFindMany.mockResolvedValue([
+        { id: 1, name: "Source", steps: [], tags: [] },
+        { id: 2, name: "Duplicate", steps: [], tags: [] },
+      ]);
+      mockFindManyRepositoryCaseLink.mockResolvedValue([
+        { caseAId: 2, caseBId: 1 },
+      ]);
+      mockFindSimilarCases.mockResolvedValue([makePair(1, 2, 0.95)]);
+
+      const { processor } = await loadWorker();
+      const result = await processor(makeMockJob({ id: "job-link-1" }) as Job);
+
+      expect(result.pairsFound).toBe(0);
+
+      if (mockAnalyzePairs.mock.calls.length > 0) {
+        const enrichedPairs = mockAnalyzePairs.mock.calls[0][0];
+        const hasLinkedPair = enrichedPairs.some(
+          (p: any) =>
+            (p.caseAId === 1 && p.caseBId === 2) ||
+            (p.caseAId === 2 && p.caseBId === 1)
+        );
+        expect(hasLinkedPair).toBe(false);
+      }
+    });
+
+    it("excludes SAME_TEST_DIFFERENT_SOURCE-linked pairs (D-10 latent fix)", async () => {
+      mockFindMany.mockResolvedValue([
+        { id: 5, name: "A", steps: [], tags: [] },
+        { id: 6, name: "B", steps: [], tags: [] },
+      ]);
+      mockFindManyRepositoryCaseLink.mockResolvedValue([
+        { caseAId: 5, caseBId: 6 },
+      ]);
+      mockFindSimilarCases.mockResolvedValue([makePair(5, 6, 0.9)]);
+
+      const { processor } = await loadWorker();
+      const result = await processor(makeMockJob({ id: "job-link-2" }) as Job);
+
+      expect(result.pairsFound).toBe(0);
+    });
+
+    it("queries RepositoryCaseLink with type IN [DUPLICATED_FROM, SAME_TEST_DIFFERENT_SOURCE] AND isDeleted=false AND project-scoped", async () => {
+      mockFindMany.mockResolvedValue(mockCases);
+      mockFindSimilarCases.mockResolvedValue([]);
+
+      const { processor } = await loadWorker();
+      await processor(makeMockJob({ id: "job-link-3" }) as Job);
+
+      expect(mockFindManyRepositoryCaseLink).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            type: { in: ["DUPLICATED_FROM", "SAME_TEST_DIFFERENT_SOURCE"] },
+            isDeleted: false,
+            caseA: { projectId: 42 },
+          }),
+        })
+      );
+    });
+
+    it("does NOT exclude DEPENDS_ON-typed links", async () => {
+      mockFindMany.mockResolvedValue([
+        { id: 7, name: "X", steps: [], tags: [] },
+        { id: 8, name: "Y", steps: [], tags: [] },
+      ]);
+      mockFindManyRepositoryCaseLink.mockResolvedValue([]);
+      mockFindSimilarCases.mockResolvedValue([makePair(7, 8, 0.85)]);
+
+      const { processor } = await loadWorker();
+      const result = await processor(makeMockJob({ id: "job-link-4" }) as Job);
+
+      expect(result.pairsFound).toBe(1);
     });
   });
 });
