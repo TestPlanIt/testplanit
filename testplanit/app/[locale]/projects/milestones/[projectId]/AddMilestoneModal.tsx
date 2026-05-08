@@ -39,7 +39,7 @@ import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { emptyEditorContent } from "~/app/constants";
 import {
   useCreateMilestones,

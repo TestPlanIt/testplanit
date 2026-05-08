@@ -48,7 +48,7 @@ import { useParams } from "next/navigation";
 import Papa from "papaparse";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod/v4";
+import { z } from "zod";
 import {
   useFindManyProjectLlmIntegration,
   useFindManyRepositoryFolders,

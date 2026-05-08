@@ -46,7 +46,7 @@ import { useTranslations } from "next-intl";
 import parseDuration from "parse-duration";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {

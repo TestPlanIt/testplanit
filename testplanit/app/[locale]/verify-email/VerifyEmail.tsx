@@ -8,7 +8,7 @@ import { Link, useRouter } from "~/lib/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { verifyEmail } from "~/lib/verifyEmail";
 
 import { resendVerificationEmail } from "@/components/EmailVerifications";

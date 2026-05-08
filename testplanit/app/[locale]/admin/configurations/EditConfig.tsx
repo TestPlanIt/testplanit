@@ -4,7 +4,7 @@ import { Configurations } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { useUpdateConfigurations } from "~/lib/hooks";
 
 import { Button } from "@/components/ui/button";

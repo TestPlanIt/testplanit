@@ -1,7 +1,7 @@
 import { getEnhancedDb } from "@/lib/auth/utils";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { prisma } from "~/lib/prisma";
 import { authOptions } from "~/server/auth";
 

@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { db } from "~/server/db";
 
 const RequestBodySchema = z.object({

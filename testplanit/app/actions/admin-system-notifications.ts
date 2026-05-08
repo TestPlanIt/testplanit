@@ -1,6 +1,6 @@
 "use server";
 
-import { z } from "zod/v4";
+import { z } from "zod";
 import { prisma } from "~/lib/prisma";
 import { NotificationService } from "~/lib/services/notificationService";
 import { getServerAuthSession } from "~/server/auth";

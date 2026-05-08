@@ -11,7 +11,7 @@ import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "next-auth/react";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { notifySessionAssignment } from "~/app/actions/session-notifications";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { CommentsSection } from "~/components/comments/CommentsSection";

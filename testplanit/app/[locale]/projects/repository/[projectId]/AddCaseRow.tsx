@@ -20,7 +20,7 @@ import { useParams } from "next/navigation";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases";
 import {
   useFindFirstRepositoryCases,

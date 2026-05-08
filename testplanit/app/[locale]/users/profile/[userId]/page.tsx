@@ -70,7 +70,7 @@ import { useTranslations } from "next-intl";
 import * as React from "react";
 import { use, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { useFindFirstUser, useFindUniqueAppConfig } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { ApiTokenSettings } from "./ApiTokenSettings";

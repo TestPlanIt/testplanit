@@ -10,7 +10,7 @@ import { useRouter } from "~/lib/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SsoProviderType } from "@prisma/client";
 import { useForm } from "react-hook-form";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { useFindManySsoProvider } from "~/lib/hooks/sso-provider";
 
 import { Button } from "@/components/ui/button";

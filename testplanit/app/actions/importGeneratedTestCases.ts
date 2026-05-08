@@ -1,7 +1,7 @@
 "use server";
 
 import { RepositoryCaseSource } from "@prisma/client";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { prisma } from "~/lib/prisma";
 import { getServerAuthSession } from "~/server/auth";
 import { emptyEditorContent } from "~/app/constants/backend";

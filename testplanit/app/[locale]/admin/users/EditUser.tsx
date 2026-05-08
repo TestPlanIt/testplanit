@@ -16,7 +16,7 @@ import {
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { z } from "zod/v4";
+import { z } from "zod";
 
 import { Avatar } from "@/components/Avatar";
 import UploadAvatar from "@/components/UploadAvatar";

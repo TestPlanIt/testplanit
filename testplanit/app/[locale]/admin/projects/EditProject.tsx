@@ -26,7 +26,7 @@ import {
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { optionalImageUrlSchema } from "~/lib/schemas/imageUrl";
 
 import { Badge } from "@/components/ui/badge";

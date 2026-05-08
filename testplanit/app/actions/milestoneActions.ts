@@ -1,7 +1,7 @@
 "use server";
 
 import { ApplicationArea } from "@prisma/client";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { prisma } from "~/lib/prisma";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
 import { getServerAuthSession } from "~/server/auth";

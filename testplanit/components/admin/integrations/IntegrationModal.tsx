@@ -33,7 +33,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import * as z from "zod/v4";
+import * as z from "zod";
 import { IntegrationConfigForm } from "./IntegrationConfigForm";
 import { IntegrationTypeSelector } from "./IntegrationTypeSelector";
 

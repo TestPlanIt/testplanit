@@ -38,7 +38,7 @@ import React, {
 import { DateRange } from "react-day-picker";
 import { useForm } from "react-hook-form";
 import MultiSelect from "react-select";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { DateFormatter } from "~/components/DateFormatter";
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
 import { DrillDownDrawer } from "~/components/reports/DrillDownDrawer";

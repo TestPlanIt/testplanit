@@ -53,7 +53,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { CalendarDays, CirclePlus } from "lucide-react";
 import { Resolver, SubmitHandler, useForm } from "react-hook-form";
-import { z } from "zod/v4";
+import { z } from "zod";
 import {
   ProcessedProject,
   processProjectsWithEffectiveMembers,

@@ -32,7 +32,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import * as z from "zod/v4";
+import * as z from "zod";
 import { useUpdateCodeRepository, useUpsertCodeRepository } from "~/lib/hooks";
 import { CodeRepositoryConfigForm } from "./CodeRepositoryConfigForm";
 

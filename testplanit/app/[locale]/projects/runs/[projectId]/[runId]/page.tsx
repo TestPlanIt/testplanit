@@ -91,7 +91,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Resolver } from "react-hook-form";
 import { FormProvider, useForm } from "react-hook-form";
 import { ImperativePanelHandle } from "react-resizable-panels";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { emptyEditorContent } from "~/app/constants";
 import { CommentsSection } from "~/components/comments/CommentsSection";
 import TestRunCasesSummary from "~/components/TestRunCasesSummary";

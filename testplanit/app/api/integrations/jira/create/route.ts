@@ -3,7 +3,7 @@ import { IntegrationManager } from "@/lib/integrations/IntegrationManager";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { authOptions } from "~/server/auth";
 
 const createIssueSchema = z.object({

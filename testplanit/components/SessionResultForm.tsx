@@ -31,7 +31,7 @@ import { useLocale, useTranslations } from "next-intl";
 import parseDuration from "parse-duration";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod/v4";
+import { z } from "zod";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import {
   useCreateAttachments,
