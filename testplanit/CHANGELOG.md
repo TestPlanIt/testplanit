@@ -1,3 +1,9 @@
+## [0.24.19](https://github.com/TestPlanIt/testplanit/compare/v0.24.18...v0.24.19) (2026-05-08)
+
+### Enhancements
+
+* **copy/move:** Enhancement/copy move in same project ([#290](https://github.com/TestPlanIt/testplanit/issues/290)) ([bac7c18](https://github.com/TestPlanIt/testplanit/commit/bac7c18df640082eca1b796413bbba28a0733357))
+
 ## [0.24.18](https://github.com/TestPlanIt/testplanit/compare/v0.24.17...v0.24.18) (2026-05-06)
 
 ### Bug Fixes
