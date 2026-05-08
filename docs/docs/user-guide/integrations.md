@@ -142,6 +142,8 @@ Jira URL: https://your-domain.atlassian.net
 
 #### Jira with OAuth 2.0
 
+OAuth 2.0 is Atlassian's preferred authentication path for Jira Cloud and is recommended for any team where the per-user reporter attribution and granular scoping matter.
+
 1. Create OAuth app in [Atlassian Developer Console](https://developer.atlassian.com/console)
 2. Set redirect URL: `https://your-testplanit-domain/api/auth/jira/callback`
 3. Configure in TestPlanIt:
@@ -322,6 +324,16 @@ When enabled, TestPlanIt can:
 - Create follow-up issues for recurring failures
 - Track issue resolution time for metrics
 
+### Real-time updates via inbound webhooks
+
+For Jira, GitHub, and Azure DevOps integrations, TestPlanIt can also subscribe to events emitted by the external tracker so issue changes appear in TestPlanIt without waiting for a manual refresh. When an inbound webhook is configured for a project:
+
+- Status, assignee, and other supported fields on linked issues update within seconds of the change in the external tracker.
+- New issues filed directly in the external tracker are imported into TestPlanIt's Issues list automatically the first time they are referenced by a webhook event.
+- Open browser tabs reflect the change in near-real time through a project-scoped event stream — no page reload required.
+
+Inbound webhooks are configured per project from **Project Settings** → **Webhooks**. They are 1:1 with the project's active issue integration: switching the integration to a different provider (or removing it) automatically removes the inbound webhook so it cannot drift out of sync. See [Webhooks](./webhooks.md) for setup, secret rotation, health monitoring, delivery replay, and security details.
+
 ## Field Mapping and Transformation
 
 ### Dynamic Field Discovery
@@ -426,7 +438,7 @@ Regular health checks verify:
 Integration and project-integration records are tracked in the [audit log](/docs/user-guide/audit-logs) via the standard CRUD actions:
 
 | Action | Description |
-|--------|-------------|
+| -------- | ------------- |
 | `CREATE` | A new integration or project-integration mapping was created |
 | `UPDATE` | An integration was reconfigured (settings, credentials, endpoint changes) |
 | `DELETE` | An integration or project-integration mapping was removed |
@@ -541,7 +553,7 @@ curl -H "Authorization: token YOUR_PAT" \
 ### Jira Cloud vs Server Differences
 
 | Feature | Cloud | Server/DC |
-|---------|-------|-----------|
+| --------- | ------- | ----------- |
 | Authentication | OAuth 2.0, API Key | Basic Auth, PAT |
 | API Version | v3 | v2/v3 |
 | User IDs | accountId | username |

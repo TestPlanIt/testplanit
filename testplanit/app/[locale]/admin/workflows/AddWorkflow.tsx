@@ -1,6 +1,6 @@
 "use client";
 /* eslint-disable react-hooks/incompatible-library */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   useCreateManyProjectWorkflowAssignment,
   useCreateWorkflows,
@@ -69,21 +69,25 @@ const getWorkflowTypeOptions = (
   { value: WorkflowType.DONE, label: tWorkflowTypes("DONE") },
 ];
 
-const FormSchema: any = z.object({
-  scope: z.enum(scopeKeys, {
-    message: `Please choose a Workflow for the State`,
-  }),
-  name: z.string().min(1, {
-    error: "Please enter a name for the Workflow State",
-  }),
-  workflowType: z.enum(WorkflowType, {
-    error: (issue) =>
-      issue.input === undefined ? "Please select a workflow type" : undefined,
-  }),
-  isDefault: z.boolean().prefault(false).optional(),
-  isEnabled: z.boolean().prefault(true).optional(),
-  projects: z.array(z.number()).optional(),
-});
+function buildFormSchema(t: (key: any) => string): any {
+  return z.object({
+    scope: z.enum(scopeKeys, {
+      message: t("common.errors.workflowScopeRequired"),
+    }),
+    name: z.string().min(1, {
+      error: t("common.errors.workflowStateNameRequired"),
+    }),
+    workflowType: z.enum(WorkflowType, {
+      error: (issue) =>
+        issue.input === undefined
+          ? t("common.errors.workflowTypeRequired")
+          : undefined,
+    }),
+    isDefault: z.boolean().prefault(false).optional(),
+    isEnabled: z.boolean().prefault(true).optional(),
+    projects: z.array(z.number()).optional(),
+  });
+}
 
 interface AddWorkflowsProps {
   open: boolean;
@@ -140,8 +144,9 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
     setSelectedColorId(colorId);
   };
 
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+  const formSchema = useMemo(() => buildFormSchema(tGlobal), [tGlobal]);
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       scope: undefined,
       name: "",
@@ -164,7 +169,7 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
     }
   }, [defaultIconData, defaultColorData]);
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
+  async function onSubmit(data: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
       if (data.isDefault) {
@@ -217,12 +222,14 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
       if (err.info?.prisma && err.info?.code === "P2002") {
         form.setError("name", {
           type: "custom",
-          message: "Workflow State already exists. Please choose a new name.",
+          message: tCommon("errors.workflowStateExists"),
         });
       } else {
         form.setError("root", {
           type: "custom",
-          message: `An unknown error occurred. Error: ${err.message}`,
+          message: tCommon("errors.unknownErrorWithMessage", {
+            message: err.message ?? "",
+          }),
         });
       }
       setIsSubmitting(false);
@@ -332,7 +339,9 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
                   </FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select workflow type" />
+                      <SelectValue
+                        placeholder={tCommon("placeholders.selectWorkflowType")}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {workflowTypeOptions.map((type) => (

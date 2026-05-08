@@ -289,21 +289,6 @@ function sumLinkedTokens(items: LinkedIssueContext[]): number {
  * token budget. Mirrors `fetchHierarchyContext` — same char/4 token heuristic,
  * same accumulator style.
  *
- * Drop policy (tiers 2 + 3 of CONTEXT D-03; tier 1, 4, 5 owned by the route):
- *   - Tier 2: when over budget AND any included context still has comments,
- *     drop ONE comment from the linked issue with the largest comment count
- *     (tied counts -> the issue whose largest comment is longest).
- *   - Tier 3: when ALL included contexts have empty comments, drop the LAST
- *     linked-issue context in array order (tracker iteration order — last-
- *     returned first per D-04). Walk the tail backwards, one issue per pass.
- *
- * Fail-soft (Phase 1 D-06/D-07):
- *   - If `getLinkedIssues` is missing OR throws, returns `{ included: [], dropped: [], tokensUsed: 0 }`.
- *   - If a per-ref `getIssue` rejects, the body falls back to `undefined` and
- *     the title falls back to `ref.key ?? ref.id` (still useful in the prompt).
- *   - If a per-ref `getIssueComments` rejects, that issue's comments fall back to `[]`.
- *   - The whole helper never throws.
- *
  * `tokensUsed` is the accumulator across all `included` items
  * (`ceil((title + body + comments-bodies-concat) / 4)`). Callers use it to
  * compute downstream budgets without recomputing.

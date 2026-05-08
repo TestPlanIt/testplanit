@@ -140,9 +140,6 @@ export function useIssueTestCoverageSummaryColumns(
                 data={original.issueData}
                 integrationProvider={original.integrationProvider ?? undefined}
                 integrationId={original.integrationId ?? undefined}
-                lastSyncedAt={
-                  original.lastSyncedAt ? new Date(original.lastSyncedAt) : null
-                }
                 issueTypeName={original.issueTypeName}
                 issueTypeIconUrl={original.issueTypeIconUrl}
               />
@@ -175,9 +172,6 @@ export function useIssueTestCoverageSummaryColumns(
                 data={firstRow.issueData}
                 integrationProvider={firstRow.integrationProvider ?? undefined}
                 integrationId={firstRow.integrationId ?? undefined}
-                lastSyncedAt={
-                  firstRow.lastSyncedAt ? new Date(firstRow.lastSyncedAt) : null
-                }
                 issueTypeName={firstRow.issueTypeName}
                 issueTypeIconUrl={firstRow.issueTypeIconUrl}
               />

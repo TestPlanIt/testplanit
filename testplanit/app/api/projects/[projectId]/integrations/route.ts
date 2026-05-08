@@ -160,7 +160,7 @@ export async function POST(
     const validatedData = createProjectIntegrationSchema.parse(body);
 
     // Check if integration exists and is active
-    const integration = await db.integration.findFirst({
+    const integration = await prisma.integration.findFirst({
       where: {
         id: validatedData.integrationId,
         status: "ACTIVE",
@@ -175,19 +175,33 @@ export async function POST(
       );
     }
 
+    // Capture the project's currently-active integration provider BEFORE
+    // any deactivate/reactivate calls. If the provider changes, any
+    // inbound webhook on the project is now orphaned (its adapterType is
+    // locked to the old provider, so events would route into deadweight).
+    // Hard-delete those rows post-switch — see cascade below.
+    const priorActiveProjectIntegration =
+      await prisma.projectIntegration.findFirst({
+        where: { projectId, isActive: true },
+        include: { integration: { select: { provider: true } } },
+      });
+    const priorProvider =
+      priorActiveProjectIntegration?.integration?.provider ?? null;
+
     // Check if this integration was previously assigned to the project
-    const existingProjectIntegration = await db.projectIntegration.findFirst({
-      where: {
-        projectId,
-        integrationId: validatedData.integrationId,
-      },
-    });
+    const existingProjectIntegration =
+      await prisma.projectIntegration.findFirst({
+        where: {
+          projectId,
+          integrationId: validatedData.integrationId,
+        },
+      });
 
     let projectIntegration;
 
     if (existingProjectIntegration) {
       // Deactivate other project integrations
-      await db.projectIntegration.updateMany({
+      await prisma.projectIntegration.updateMany({
         where: {
           projectId,
           isActive: true,
@@ -201,7 +215,7 @@ export async function POST(
       });
 
       // Reactivate the existing integration
-      projectIntegration = await db.projectIntegration.update({
+      projectIntegration = await prisma.projectIntegration.update({
         where: {
           id: existingProjectIntegration.id,
         },
@@ -216,7 +230,7 @@ export async function POST(
       });
     } else {
       // Deactivate existing project integrations
-      await db.projectIntegration.updateMany({
+      await prisma.projectIntegration.updateMany({
         where: {
           projectId,
           isActive: true,
@@ -227,7 +241,7 @@ export async function POST(
       });
 
       // Create new project integration
-      projectIntegration = await db.projectIntegration.create({
+      projectIntegration = await prisma.projectIntegration.create({
         data: {
           projectId,
           integrationId: validatedData.integrationId,
@@ -237,6 +251,19 @@ export async function POST(
         include: {
           integration: true,
         },
+      });
+    }
+
+    // If the active integration's provider changed, any inbound webhook
+    // configured for the project is locked to the OLD provider's adapter
+    // and would silently drop or auto-create orphan rows after the
+    // switch. Hard-delete to keep the inbound webhook 1:1 with the
+    // project's assigned issue integration. WebhookConfig has no
+    // soft-delete column; FK cascades clean up dedup + secrets rows
+    // (deliveries SetNull-cascade, retained for audit history).
+    if (priorProvider !== integration.provider) {
+      await prisma.webhookConfig.deleteMany({
+        where: { projectId, direction: "INBOUND" },
       });
     }
 

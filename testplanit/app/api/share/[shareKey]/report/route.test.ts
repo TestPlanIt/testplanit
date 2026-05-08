@@ -23,6 +23,7 @@ vi.mock("~/lib/config/reportTypes", () => ({
 }));
 
 import { getServerSession } from "next-auth/next";
+import { getAuditContext, type AuditContext } from "~/lib/auditContext";
 import {
   getCrossProjectReportTypes,
   getProjectReportTypes,
@@ -432,6 +433,31 @@ describe("GET /api/share/[shareKey]/report", () => {
 
       expect(response.status).toBe(500);
       expect(data.error).toContain("Failed to load report data");
+    });
+  });
+
+  describe("withAuditContext wrapper", () => {
+    it("seeds ALS with request headers inside the GET handler", async () => {
+      let capturedCtx: AuditContext | undefined;
+      (getServerSession as any).mockResolvedValue(null);
+      (prisma.shareLink.findUnique as any).mockImplementation(() => {
+        capturedCtx = getAuditContext();
+        return Promise.resolve(mockShareLink);
+      });
+
+      const url = new URL(`http://localhost/api/share/abc123/report`);
+      const req = new NextRequest(url.toString(), {
+        headers: {
+          "x-forwarded-for": "203.0.113.99",
+          "user-agent": "vitest-share-report",
+        },
+      });
+      await GET(req, { params: Promise.resolve({ shareKey: "abc123" }) });
+
+      expect(capturedCtx).toBeDefined();
+      expect(capturedCtx?.ipAddress).toBe("203.0.113.99");
+      expect(capturedCtx?.userAgent).toBe("vitest-share-report");
+      expect(capturedCtx?.requestId).toMatch(/^req_\d+_[a-z0-9]+$/);
     });
   });
 });

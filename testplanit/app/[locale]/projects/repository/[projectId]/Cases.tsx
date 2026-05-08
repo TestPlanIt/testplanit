@@ -3686,9 +3686,14 @@ export default function Cases({
             }
             // Default "no test cases" if not covered by more specific messages above
             return (
-              <div className="m-1 mb-4 text-muted-foreground">
-                {t("repository.cases.noTestCases")}
-              </div>
+              <>
+                <div className="m-1 mb-4 text-muted-foreground">
+                  {t("repository.cases.noTestCases")}
+                </div>
+                {!isSelectionMode && folderId && canAddEdit && (
+                  <AddCaseRow folderId={folderId} />
+                )}
+              </>
             );
           }
 

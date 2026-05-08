@@ -648,7 +648,7 @@ describe("CustomLlmAdapter", () => {
       await expect(adapter.chat(request)).rejects.toMatchObject({
         code: "TIMEOUT",
         statusCode: 408,
-        retryable: true,
+        retryable: false,
       });
     });
 

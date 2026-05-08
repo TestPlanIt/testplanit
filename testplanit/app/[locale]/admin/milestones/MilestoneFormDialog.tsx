@@ -44,24 +44,30 @@ import { useFindManyMilestoneTypes } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import { MilestoneFormData } from "./AddMilestonesToProjectsWizard";
 
-const FormSchema = z.object({
-  name: z.string().min(2, {
-    error: "Please enter a name for the Milestone",
-  }),
-  note: z.any().nullable(),
-  docs: z.any().nullable(),
-  isStarted: z.boolean(),
-  isCompleted: z.boolean(),
-  startedAt: z.date().nullable().optional(),
-  completedAt: z.date().nullable().optional(),
-  automaticCompletion: z.boolean(),
-  enableNotifications: z.boolean(),
-  notifyDaysBefore: z.number().min(0),
-  milestoneTypeId: z.number({
-    error: (issue) =>
-      issue.input === undefined ? "Please select a Milestone Type" : undefined,
-  }),
-});
+function buildFormSchema(t: (key: any) => string) {
+  return z.object({
+    name: z.string().min(2, {
+      error: t("common.errors.milestoneNameRequired"),
+    }),
+    note: z.any().nullable(),
+    docs: z.any().nullable(),
+    isStarted: z.boolean(),
+    isCompleted: z.boolean(),
+    startedAt: z.date().nullable().optional(),
+    completedAt: z.date().nullable().optional(),
+    automaticCompletion: z.boolean(),
+    enableNotifications: z.boolean(),
+    notifyDaysBefore: z.number().min(0),
+    milestoneTypeId: z.number({
+      error: (issue) =>
+        issue.input === undefined
+          ? t("common.errors.milestoneTypeRequired")
+          : undefined,
+    }),
+  });
+}
+
+type FormValues = z.infer<ReturnType<typeof buildFormSchema>>;
 
 interface MilestoneFormDialogProps {
   open: boolean;
@@ -150,8 +156,9 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
     (type) => type.isDefault
   )?.id;
 
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+  const formSchema = useMemo(() => buildFormSchema(t), [t]);
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       note: null,
@@ -222,7 +229,7 @@ export const MilestoneFormDialog: React.FC<MilestoneFormDialogProps> = ({
     return null;
   }
 
-  async function handleFormSubmit(data: z.infer<typeof FormSchema>) {
+  async function handleFormSubmit(data: FormValues) {
     if (!session?.user?.id) {
       form.setError("root", {
         type: "custom",

@@ -304,7 +304,7 @@ export const Header = () => {
                 size="icon"
                 onClick={() => setIsSearchOpen(true)}
                 className="relative group"
-                aria-label="Search"
+                aria-label={tCommon("aria.search")}
                 title={`Search (${isMac ? "⌘" : "Ctrl"}+K)`}
                 data-testid="global-search-trigger"
               >
@@ -319,7 +319,7 @@ export const Header = () => {
                     variant="ghost"
                     size="icon"
                     className="relative"
-                    aria-label="Help menu"
+                    aria-label={tCommon("aria.helpMenu")}
                     title="Help & Support"
                     data-testid="help-menu-button"
                   >

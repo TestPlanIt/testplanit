@@ -18,7 +18,7 @@ The audit log queue (`audit-log-queue`) uses BullMQ's `defaultJobOptions`
 with the following configuration:
 
 | Setting | Value | Rationale |
-|---------|-------|-----------|
+| --------- | ------- | ----------- |
 | `attempts` | `3` | A transient Valkey or database hiccup should auto-recover; three tries is the conventional BullMQ default for background jobs where per-job idempotency makes retries safe. |
 | `backoff.type` | `exponential` | Spreads retry load when Valkey or the database is under pressure. |
 | `backoff.delay` | `5000ms` | First retry at 5s, second at 10s, third at 20s. Keeps total retry window under a minute while giving transient infrastructure issues time to clear. |
@@ -142,7 +142,7 @@ critical workers in `testplanit/lib/queues.ts` use intentionally
 different configs — for example:
 
 | Queue | `attempts` | `backoff` | `delay` | `removeOnComplete.age` | Rationale |
-|-------|-----------|-----------|---------|------------------------|-----------|
+| ------- | ----------- | ----------- | --------- | ------------------------ | ----------- |
 | `audit-log-queue` | 3 | exponential | 5000ms | 1 year | This queue — forensic retention, auto-retry on transient issues |
 | `notification-queue` | 3 | exponential | 5000ms | 7 days | Analogous critical worker — notifications are transient so retention is shorter |
 | `testmo-import-queue` | 1 | n/a | n/a | 30 days | Single attempt by design — imports should not silently retry; users trigger them manually |

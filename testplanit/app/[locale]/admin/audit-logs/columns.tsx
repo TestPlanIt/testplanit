@@ -8,8 +8,9 @@ import {
 } from "@/components/ui/tooltip";
 import { AuditAction, AuditLog } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { Eye } from "lucide-react";
+import { Cog, Eye } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
 
 export interface ExtendedAuditLog extends AuditLog {
   project?: {
@@ -135,8 +136,27 @@ export const getColumns = (
     enableSorting: true,
     size: 200,
     cell: ({ row }) => {
+      const userId = row.original.userId;
       const email = row.original.userEmail;
       const name = row.original.userName;
+      const isSystemActor = userId === SYSTEM_ACTOR_ID;
+      if (isSystemActor) {
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge
+                variant="secondary"
+                className="gap-1 font-medium"
+                data-testid="audit-log-system-actor-badge"
+              >
+                <Cog className="h-3 w-3" aria-hidden="true" />
+                {t("systemActor")}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>{t("systemActorTooltip")}</TooltipContent>
+          </Tooltip>
+        );
+      }
       return (
         <div className="flex flex-col">
           {name && <span className="font-medium text-sm">{name}</span>}

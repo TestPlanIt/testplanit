@@ -28,7 +28,7 @@ interface _UpdateAllCasesJobData extends MultiTenantJobData {
   // No additional fields required for this job type
 }
 
-// Phase 64 D-10: every forecast job carries an actorContext injected by
+// every forecast job carries an actorContext injected by
 // enqueueWithAuditContext so the worker can re-establish the ALS frame.
 // Kept as an interface extension (rather than a strict generic) so the
 // existing discriminated cast to UpdateSingleCaseJobData inside the switch
@@ -44,7 +44,7 @@ export const JOB_UPDATE_ALL_CASES = "update-all-cases-forecast";
 export const JOB_AUTO_COMPLETE_MILESTONES = "auto-complete-milestones";
 export const JOB_MILESTONE_DUE_NOTIFICATIONS = "milestone-due-notifications";
 
-// Phase 64 D-10: re-establish the ALS frame from job.data.actorContext so
+// re-establish the ALS frame from job.data.actorContext so
 // downstream captureAuditEvent calls in this processor pick up the
 // originating user's context (or the systemReason for scheduled jobs, via
 // W5 Option A — no per-worker systemReason handling needed).

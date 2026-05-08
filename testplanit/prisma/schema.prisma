@@ -144,11 +144,19 @@ enum AdapterType {
   JIRA
   GITHUB
   AZURE_DEVOPS
+  SLACK
+  GENERIC_HMAC
 }
 
 enum WebhookDirection {
   INBOUND
   OUTBOUND
+}
+
+enum EndpointHealth {
+  HEALTHY
+  DEGRADED
+  DISABLED
 }
 
 enum LlmProvider {
@@ -308,6 +316,10 @@ enum AuditAction {
   FORCE_PASSWORD_CHANGE
   PASSWORD_REVOKED
   WEBHOOK_RECEIVED
+  WEBHOOK_DISPATCHED
+  WEBHOOK_REPLAYED
+  WEBHOOK_HEALTH_CHANGED
+  WEBHOOK_RETENTION_PURGED
 }
 
 model AppConfig {
@@ -525,6 +537,7 @@ model Projects {
   sharedStepGroups            SharedStepGroup[]
   projectIntegrations         ProjectIntegration[]
   webhookConfigs              WebhookConfig[]
+  webhookOutboxEvents         WebhookOutboxEvent[]
   projectLlmIntegrations      ProjectLlmIntegration[]
   codeRepositoryConfig        ProjectCodeRepositoryConfig?
   promptConfigId              String?
@@ -1865,42 +1878,57 @@ model IntegrationProject {
 }
 
 model WebhookConfig {
-  id             String              @id() @default(cuid())
-  projectId      Int
-  project        Projects            @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  adapterType    AdapterType
-  direction      WebhookDirection
-  token          String              @unique()
-  secret         String
-  isActive       Boolean             @default(true)
-  lastReceivedAt DateTime?           @db.Timestamptz(6)
-  createdAt      DateTime            @default(now()) @db.Timestamptz(6)
-  updatedAt      DateTime            @updatedAt()
-  deliveries     WebhookDelivery[]
-  eventDedups    WebhookEventDedup[]
+  id                      String                @id() @default(cuid())
+  projectId               Int
+  project                 Projects              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  adapterType             AdapterType
+  direction               WebhookDirection
+  token                   String                @unique()
+  secret                  String
+  isActive                Boolean               @default(true)
+  subscribedEvents        String[]              @default([])
+  endpointHealth          EndpointHealth        @default(HEALTHY)
+  url                     String?
+  name                    String?
+  lastReceivedAt          DateTime?             @db.Timestamptz(6)
+  lastDispatchedAt        DateTime?             @db.Timestamptz(6)
+  lastSuccessAt           DateTime?             @db.Timestamptz(6)
+  lastFailureAt           DateTime?             @db.Timestamptz(6)
+  consecutiveFailureCount Int                   @default(0)
+  createdAt               DateTime              @default(now()) @db.Timestamptz(6)
+  updatedAt               DateTime              @updatedAt()
+  deliveries              WebhookDelivery[]
+  eventDedups             WebhookEventDedup[]
+  secrets                 WebhookConfigSecret[]
 
-  @@unique([projectId, adapterType, direction])
+  @@index([projectId, adapterType, direction])
   @@index([projectId])
   @@index([token])
 }
 
 model WebhookDelivery {
-  id              String           @id() @default(cuid())
-  webhookConfigId String
-  webhookConfig   WebhookConfig    @relation(fields: [webhookConfigId], references: [id], onDelete: Cascade)
-  direction       WebhookDirection
-  adapterType     AdapterType
-  eventType       String?
-  statusCode      Int?
-  latencyMs       Int?
-  payloadDigest   String
-  error           String?
-  attempt         Int              @default(1)
-  receivedAt      DateTime         @default(now()) @db.Timestamptz(6)
+  id                     String            @id() @default(cuid())
+  webhookConfigId        String?
+  webhookConfig          WebhookConfig?    @relation(fields: [webhookConfigId], references: [id], onDelete: SetNull)
+  direction              WebhookDirection
+  adapterType            AdapterType
+  eventType              String?
+  eventId                String?
+  statusCode             Int?
+  latencyMs              Int?
+  payloadDigest          String
+  error                  String?
+  attempt                Int               @default(1)
+  replayedFromDeliveryId String?
+  replayedFrom           WebhookDelivery?  @relation("WebhookDeliveryReplay", fields: [replayedFromDeliveryId], references: [id], onDelete: SetNull)
+  replays                WebhookDelivery[] @relation("WebhookDeliveryReplay")
+  receivedAt             DateTime          @default(now()) @db.Timestamptz(6)
 
   @@index([webhookConfigId, receivedAt])
+  @@index([webhookConfigId, eventId])
   @@index([direction, receivedAt])
   @@index([payloadDigest])
+  @@index([replayedFromDeliveryId])
 }
 
 model WebhookEventDedup {
@@ -1912,6 +1940,36 @@ model WebhookEventDedup {
 
   @@unique([webhookConfigId, payloadDigest])
   @@index([webhookConfigId, processedAt])
+}
+
+model WebhookConfigSecret {
+  id              String        @id() @default(cuid())
+  webhookConfigId String
+  webhookConfig   WebhookConfig @relation(fields: [webhookConfigId], references: [id], onDelete: Cascade)
+  secret          String
+  activatedAt     DateTime      @default(now()) @db.Timestamptz(6)
+  retiredAt       DateTime?     @db.Timestamptz(6)
+  autoRetireAt    DateTime?     @db.Timestamptz(6)
+  createdAt       DateTime      @default(now()) @db.Timestamptz(6)
+
+  @@index([webhookConfigId, activatedAt])
+  @@index([retiredAt, autoRetireAt])
+}
+
+model WebhookOutboxEvent {
+  id             String    @id() @default(cuid())
+  projectId      Int
+  project        Projects  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  eventName      String
+  eventId        String    @unique()
+  eventTimestamp DateTime  @default(now()) @db.Timestamptz(6)
+  actorUserId    String?
+  payload        Json
+  dispatchedAt   DateTime? @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@index([dispatchedAt, createdAt])
+  @@index([projectId, eventName])
 }
 
 model LlmProviderConfig {

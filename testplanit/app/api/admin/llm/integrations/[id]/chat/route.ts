@@ -53,7 +53,6 @@ export async function POST(
       ],
       model,
       temperature: resolvedPrompt.temperature,
-      maxTokens: 500,
       stream: false,
       userId: session.user.id,
       feature: "admin-test",

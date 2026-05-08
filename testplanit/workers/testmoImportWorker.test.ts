@@ -254,8 +254,6 @@ describe("testmoImportWorker module", () => {
   });
 });
 
-// Phase 64 Plan 05 Task 2 Tests 3 & 4 — CTX-03 representative tests.
-//
 // We verify the exact runtime sequence the production worker exercises:
 //   1. Upstream wrapped route/action (or scheduled script) calls
 //      enqueueWithAuditContext — Plan 01 Task 2 stamps job.data.

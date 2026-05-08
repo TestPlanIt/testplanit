@@ -98,7 +98,6 @@ export function useIssueColumns({
               data={row.original.data}
               integrationProvider={row.original.integration?.provider}
               integrationId={row.original.integration?.id}
-              lastSyncedAt={row.original.lastSyncedAt}
               issueTypeName={row.original.issueTypeName}
               issueTypeIconUrl={row.original.issueTypeIconUrl}
             />

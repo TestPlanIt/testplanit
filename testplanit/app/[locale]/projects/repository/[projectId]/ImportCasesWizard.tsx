@@ -1120,7 +1120,9 @@ export function ImportCasesWizard({
               onValueChange={(v) => setEncoding(v as Encoding)}
             >
               <SelectTrigger className="mt-2">
-                <SelectValue placeholder="Select encoding..." />
+                <SelectValue
+                  placeholder={tCommon("placeholders.selectEncoding")}
+                />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="UTF-8">{"UTF-8"}</SelectItem>
@@ -1167,7 +1169,9 @@ export function ImportCasesWizard({
             className={`mt-2 ${validationErrors.selectedTemplateId ? "border-destructive" : ""}`}
             data-testid="template-select"
           >
-            <SelectValue placeholder="Select a template..." />
+            <SelectValue
+              placeholder={tCommon("placeholders.selectATemplate")}
+            />
           </SelectTrigger>
           <SelectContent>
             {templates?.map((template) => (

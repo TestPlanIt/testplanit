@@ -44,7 +44,7 @@ export async function POST(request: Request) {
 
     const service = new DuplicateScanService(prisma, esClient);
     const pairs = await service.findSimilarCases(
-      { name, tags: tags?.map((t) => ({ name: t })) },
+      { id: caseId, name, tags: tags?.map((t) => ({ name: t })) },
       projectId,
       tenantId
     );
@@ -55,10 +55,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ cases: [] });
     }
 
-    // The new case has no id, so DuplicateScanService sets caseAId=0 and caseBId=candidate.id
-    // Collect the candidate IDs (caseBId when caseAId is 0)
     const caseIds = top3.map((pair) =>
-      pair.caseAId === 0 ? pair.caseBId : pair.caseAId
+      pair.caseAId === (caseId ?? 0) ? pair.caseBId : pair.caseAId
     );
 
     const caseRecords = await prisma.repositoryCases.findMany({
@@ -69,7 +67,8 @@ export async function POST(request: Request) {
     const caseNameMap = new Map(caseRecords.map((c) => [c.id, c.name]));
 
     const cases = top3.map((pair) => {
-      const candidateId = pair.caseAId === 0 ? pair.caseBId : pair.caseAId;
+      const candidateId =
+        pair.caseAId === (caseId ?? 0) ? pair.caseBId : pair.caseAId;
       return {
         id: candidateId,
         name: caseNameMap.get(candidateId) ?? "",

@@ -17,11 +17,11 @@ import { captureAuditEvent } from "../lib/services/auditLog";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 
-// Extend SyncJobData with multi-tenant + actor-context support (Phase 64 D-10)
+// Extend SyncJobData with multi-tenant + actor-context support
 interface MultiTenantSyncJobData
   extends ActorContextJobData<SyncJobData>, MultiTenantJobData {}
 
-// Phase 64 D-10: re-establish the ALS frame from job.data.actorContext so
+// re-establish the ALS frame from job.data.actorContext so
 // downstream captureAuditEvent calls in this processor pick up the
 // originating user's context (or the systemReason for scheduled jobs, via
 // W5 Option A — no per-worker systemReason handling needed).

@@ -179,7 +179,7 @@ This immediately invalidates all authentication attempts using that user's token
 API requests made with tokens count against TestPlanIt's **global hourly rate limit**. The limit applies per instance (not per token), so all tokens across all users share the same hourly budget.
 
 | Tier | Hourly Limit |
-|------|--------------|
+| ------ | -------------- |
 | `essentials` | 1,000 requests/hour |
 | `team` | 5,000 requests/hour |
 | `professional` (default) | 10,000 requests/hour |
@@ -257,7 +257,7 @@ import_results:
 ### Authentication Errors
 
 | Error Code | HTTP Status | Description |
-|------------|-------------|-------------|
+| ------------ | ------------- | ------------- |
 | `NO_TOKEN` | 401 | No Bearer token provided in Authorization header |
 | `INVALID_FORMAT` | 401 | Token does not match expected format |
 | `INVALID_TOKEN` | 401 | Token not found or incorrect |
@@ -306,7 +306,7 @@ if (response.status === 401) {
 All API token operations are recorded in the [audit log](/docs/user-guide/audit-logs) for security and compliance:
 
 | Action | Description |
-|--------|-------------|
+| -------- | ------------- |
 | `API_KEY_CREATED` | Logged when a user creates a new API token |
 | `API_KEY_DELETED` | Logged when a user deletes their own token |
 | `API_KEY_REVOKED` | Logged when an administrator revokes a token |

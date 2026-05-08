@@ -63,9 +63,12 @@ function makeRequest(body: Record<string, unknown>): Request {
   });
 }
 
-function makePair(caseBId: number, score = 0.85) {
+function makePair(candidateId: number, score = 0.85, sourceId = 0) {
+  // Canonical ordering: caseAId < caseBId (matches DuplicateScanService)
+  const [caseAId, caseBId] =
+    sourceId < candidateId ? [sourceId, candidateId] : [candidateId, sourceId];
   return {
-    caseAId: 0,
+    caseAId,
     caseBId,
     score,
     confidence: score >= 0.9 ? "HIGH" : score >= 0.8 ? "MEDIUM" : "LOW",
@@ -128,6 +131,67 @@ describe("POST /api/duplicate-scan/check-new", () => {
     expect(data.cases).toEqual([]);
   });
 
+  it("forwards caseId into findSimilarCases so the source case can be excluded", async () => {
+    mockFindSimilarCases.mockResolvedValue([]);
+
+    const { POST } = await import("./route");
+    await POST(
+      makeRequest({
+        projectId: 1,
+        caseId: 98361,
+        name: "New manually added test case",
+        tags: ["regression"],
+      })
+    );
+
+    expect(mockFindSimilarCases).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 98361 }),
+      1,
+      "tenant-1"
+    );
+  });
+
+  it("returns the OTHER side of the pair when caseId matches caseAId (canonical ordering)", async () => {
+    // Source caseId=50 is the lower ID, so canonical ordering puts it in caseAId.
+    // Candidate is caseBId=100. Route must return 100, not 50.
+    const sourceId = 50;
+    mockFindSimilarCases.mockResolvedValue([
+      makePair(100, 0.92, sourceId),
+      makePair(200, 0.85, sourceId),
+    ]);
+    mockFindMany.mockResolvedValue([
+      { id: 100, name: "Candidate One" },
+      { id: 200, name: "Candidate Two" },
+    ]);
+
+    const { POST } = await import("./route");
+    const res = await POST(
+      makeRequest({ projectId: 1, caseId: sourceId, name: "Test" })
+    );
+    const data = await res.json();
+
+    expect(data.cases).toHaveLength(2);
+    expect(data.cases.map((c: { id: number }) => c.id)).toEqual([100, 200]);
+    // Regression guard: must never echo the source case back as a candidate
+    expect(data.cases.map((c: { id: number }) => c.id)).not.toContain(sourceId);
+  });
+
+  it("returns the OTHER side of the pair when caseId matches caseBId", async () => {
+    // Source caseId=500 is the higher ID, so canonical ordering puts it in caseBId.
+    const sourceId = 500;
+    mockFindSimilarCases.mockResolvedValue([makePair(10, 0.9, sourceId)]);
+    mockFindMany.mockResolvedValue([{ id: 10, name: "Candidate" }]);
+
+    const { POST } = await import("./route");
+    const res = await POST(
+      makeRequest({ projectId: 1, caseId: sourceId, name: "Test" })
+    );
+    const data = await res.json();
+
+    expect(data.cases).toHaveLength(1);
+    expect(data.cases[0].id).toBe(10);
+  });
+
   it("returns top 3 candidates with names, scores, and matchedFields", async () => {
     mockFindSimilarCases.mockResolvedValue([
       makePair(10, 0.95),
@@ -181,8 +245,8 @@ describe("POST /api/duplicate-scan/check-new", () => {
 
     it("creates DuplicateScanResult records when caseId is provided", async () => {
       mockFindSimilarCases.mockResolvedValue([
-        makePair(10, 0.92),
-        makePair(20, 0.85),
+        makePair(10, 0.92, 99),
+        makePair(20, 0.85, 99),
       ]);
       mockFindMany.mockResolvedValue([
         { id: 10, name: "Login Test" },
@@ -208,7 +272,7 @@ describe("POST /api/duplicate-scan/check-new", () => {
 
     it("uses canonical ordering (lowId, highId) for caseAId and caseBId", async () => {
       // caseId=99, candidateId=10 → lowId=10, highId=99
-      mockFindSimilarCases.mockResolvedValue([makePair(10, 0.9)]);
+      mockFindSimilarCases.mockResolvedValue([makePair(10, 0.9, 99)]);
       mockFindMany.mockResolvedValue([{ id: 10, name: "Login Test" }]);
 
       const { POST } = await import("./route");
@@ -244,7 +308,7 @@ describe("POST /api/duplicate-scan/check-new", () => {
 
     it("uses canonical ordering when caseId is lower than candidateId", async () => {
       // caseId=5, candidateId=100 → lowId=5, highId=100
-      mockFindSimilarCases.mockResolvedValue([makePair(100, 0.88)]);
+      mockFindSimilarCases.mockResolvedValue([makePair(100, 0.88, 5)]);
       mockFindMany.mockResolvedValue([{ id: 100, name: "Some Test" }]);
 
       const { POST } = await import("./route");
@@ -264,7 +328,7 @@ describe("POST /api/duplicate-scan/check-new", () => {
     });
 
     it("still returns cases even if persistence fails", async () => {
-      mockFindSimilarCases.mockResolvedValue([makePair(10, 0.9)]);
+      mockFindSimilarCases.mockResolvedValue([makePair(10, 0.9, 50)]);
       mockFindMany.mockResolvedValue([{ id: 10, name: "Login Test" }]);
       mockUpsert.mockRejectedValue(new Error("DB connection failed"));
 
@@ -298,9 +362,9 @@ describe("POST /api/duplicate-scan/check-new", () => {
 
     it("persists each candidate with its own score from the similarity engine", async () => {
       mockFindSimilarCases.mockResolvedValue([
-        makePair(10, 0.95),
-        makePair(20, 0.82),
-        makePair(30, 0.71),
+        makePair(10, 0.95, 50),
+        makePair(20, 0.82, 50),
+        makePair(30, 0.71, 50),
       ]);
       mockFindMany.mockResolvedValue([
         { id: 10, name: "A" },

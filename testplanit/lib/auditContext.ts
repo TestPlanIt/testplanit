@@ -1,6 +1,12 @@
 import { AsyncLocalStorage } from "async_hooks";
 import type { NextRequest } from "next/server";
 
+// Re-export the client-safe constants so existing server-side imports keep
+// working unchanged. Client/edge code should import from
+// `auditContextConstants` directly to avoid pulling AsyncLocalStorage into
+// browser bundles.
+export { SYSTEM_ACTOR_ID, type SystemActor } from "~/lib/auditContextConstants";
+
 /**
  * Context for audit logging, propagated through the request lifecycle
  * using AsyncLocalStorage to avoid passing context through all functions.
@@ -33,20 +39,14 @@ export interface AuditContext {
    * unforgeable by request-time headers because attribution lives with the token.
    */
   tokenScopes?: string[];
+  /**
+   * Suppression hatch for backfill scripts and migrations that mutate domain
+   * entities without producing outbound webhook events. webhookEvents.emit()
+   * short-circuits when this flag is true. Audit emission is unaffected.
+   * Defaults to undefined (= no suppression) so existing callers are unchanged.
+   */
+  suppressWebhooks?: boolean;
 }
-
-/**
- * Sentinel userId for audit events that have no originating human actor
- * (scheduled jobs, worker-to-worker fan-outs, infrastructure tasks).
- *
- * Per Phase 64 D-12 / D-13: no schema migration is introduced — this
- * string literal lives in the existing userId column. Queries that
- * exclude system-initiated events use `WHERE "userId" <> '__system__'`.
- */
-export const SYSTEM_ACTOR_ID = "__system__" as const;
-
-/** Type-level alias for code that must branch on system-vs-human actors. */
-export type SystemActor = typeof SYSTEM_ACTOR_ID;
 
 /**
  * AsyncLocalStorage instance for audit context.

@@ -10,6 +10,26 @@ import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 const StepSchema = z.object({
   step: z.any(),
   expectedResult: z.any(),
+  sharedStepGroupId: z.number().optional(),
+});
+
+const AttachmentInputSchema = z.object({
+  url: z.string(),
+  name: z.string(),
+  mimeType: z.string(),
+  size: z.number(),
+  note: z.string().optional(),
+});
+
+const VersionFieldValueSchema = z.object({
+  field: z.string(),
+  value: z.any(),
+});
+
+const VersionIssueSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  externalId: z.string().nullable(),
 });
 
 const FieldMappingSchema = z.object({
@@ -34,6 +54,15 @@ const TestCaseInputSchema = z.object({
   automated: z.boolean().optional(),
   tags: z.array(z.string()).optional(),
   sourceUrl: z.string().optional(),
+  // Modal-add inputs (pre-resolved IDs / metadata; optional)
+  estimate: z.number().optional(),
+  tagIds: z.array(z.number()).optional(),
+  issueIds: z.array(z.number()).optional(),
+  attachments: z.array(AttachmentInputSchema).optional(),
+  fieldValuesById: z.record(z.string(), z.any()).optional(),
+  versionFieldValues: z.array(VersionFieldValueSchema).optional(),
+  versionTags: z.array(z.string()).optional(),
+  versionIssues: z.array(VersionIssueSchema).optional(),
 });
 
 const ImportInputSchema = z.object({
@@ -50,6 +79,7 @@ const ImportInputSchema = z.object({
   autoGenerateTags: z.boolean(),
   testCases: z.array(TestCaseInputSchema),
   fieldMappings: z.array(FieldMappingSchema),
+  source: z.enum(RepositoryCaseSource).optional(),
   // Issue linking (optional)
   issue: z
     .object({
@@ -69,6 +99,7 @@ interface ImportResult {
   status: "success" | "error";
   message?: string;
   importedCount: number;
+  importedIds: number[];
   errors: string[];
 }
 
@@ -142,6 +173,7 @@ export async function importGeneratedTestCases(
       status: "error",
       message: "User not authenticated",
       importedCount: 0,
+      importedIds: [],
       errors: [],
     };
   }
@@ -152,6 +184,7 @@ export async function importGeneratedTestCases(
       status: "error",
       message: "Invalid input data",
       importedCount: 0,
+      importedIds: [],
       errors: parseResult.error.issues.map((i) => i.message),
     };
   }
@@ -160,6 +193,7 @@ export async function importGeneratedTestCases(
   const userId = session.user.id;
   const userName = session.user.name || "Unknown User";
   const errors: string[] = [];
+  const importedIds: number[] = [];
   let importedCount = 0;
 
   try {
@@ -327,6 +361,23 @@ export async function importGeneratedTestCases(
               ? (folderIdBySourceUrl.get(testCase.sourceUrl) ?? data.folderId)
               : data.folderId;
 
+            // Resolve tag connects: prefer explicit IDs, fall back to autoGenerateTags map
+            const tagConnects = testCase.tagIds?.length
+              ? testCase.tagIds.map((id) => ({ id }))
+              : data.autoGenerateTags && testCase.tags?.length
+                ? testCase.tags
+                    .map((t) => tagMap.get(t.trim()))
+                    .filter((id): id is number => id != null)
+                    .map((id) => ({ id }))
+                : [];
+
+            // Resolve issue connects: prefer explicit IDs, fall back to sharedIssue
+            const issueConnects = testCase.issueIds?.length
+              ? testCase.issueIds.map((id) => ({ id }))
+              : sharedIssue
+                ? [{ id: sharedIssue.id }]
+                : [];
+
             // 1. Create the repository case
             const newCase = await tx.repositoryCases.create({
               data: {
@@ -335,32 +386,77 @@ export async function importGeneratedTestCases(
                 folderId: targetFolderId,
                 templateId: data.templateId,
                 name: testCase.name.slice(0, 255),
-                source: RepositoryCaseSource.API,
+                source: data.source ?? RepositoryCaseSource.API,
                 stateId: data.stateId,
                 order: calculatedOrder,
                 creatorId: userId,
-                automated: false,
+                automated: testCase.automated ?? false,
+                estimate: testCase.estimate,
                 currentVersion: 1,
-                // Connect issue if available
-                ...(sharedIssue
-                  ? { issues: { connect: [{ id: sharedIssue.id }] } }
+                ...(issueConnects.length
+                  ? { issues: { connect: issueConnects } }
                   : {}),
-                // Connect tags if available
-                ...(data.autoGenerateTags && testCase.tags?.length
-                  ? {
-                      tags: {
-                        connect: testCase.tags
-                          .map((t) => tagMap.get(t.trim()))
-                          .filter((id): id is number => id != null)
-                          .map((id) => ({ id })),
-                      },
-                    }
+                ...(tagConnects.length
+                  ? { tags: { connect: tagConnects } }
                   : {}),
               },
               select: { id: true },
             });
 
-            // 2. Prepare version data
+            // 2. Create attachments (must exist before version snapshot embeds them)
+            let attachmentsForVersion: Array<{
+              id: number;
+              testCaseId: number;
+              url: string;
+              name: string;
+              note: string;
+              isDeleted: boolean;
+              mimeType: string;
+              size: string;
+              createdAt: string;
+              createdById: string;
+            }> = [];
+            if (testCase.attachments?.length) {
+              const createdAttachments = await Promise.all(
+                testCase.attachments.map((a) =>
+                  tx.attachments.create({
+                    data: {
+                      testCaseId: newCase.id,
+                      url: a.url,
+                      name: a.name,
+                      note: a.note ?? "",
+                      mimeType: a.mimeType,
+                      size: BigInt(a.size),
+                      createdById: userId,
+                    },
+                    select: {
+                      id: true,
+                      url: true,
+                      name: true,
+                      note: true,
+                      mimeType: true,
+                      size: true,
+                      createdAt: true,
+                      createdById: true,
+                    },
+                  })
+                )
+              );
+              attachmentsForVersion = createdAttachments.map((a) => ({
+                id: a.id,
+                testCaseId: newCase.id,
+                url: a.url,
+                name: a.name,
+                note: a.note ?? "",
+                isDeleted: false,
+                mimeType: a.mimeType,
+                size: a.size.toString(),
+                createdAt: a.createdAt.toISOString(),
+                createdById: a.createdById,
+              }));
+            }
+
+            // 3. Prepare version data
             const resolvedStepsForVersion =
               testCase.steps?.map((step) => ({
                 step: convertStepToTipTapForVersion(step.step),
@@ -369,20 +465,25 @@ export async function importGeneratedTestCases(
                 ),
               })) || [];
 
-            const issuesDataForVersion = sharedIssue
-              ? [
-                  {
-                    id: sharedIssue.id,
-                    name: sharedIssue.name,
-                    externalId: sharedIssue.externalId,
-                  },
-                ]
-              : [];
+            const issuesDataForVersion = testCase.versionIssues?.length
+              ? testCase.versionIssues
+              : sharedIssue
+                ? [
+                    {
+                      id: sharedIssue.id,
+                      name: sharedIssue.name,
+                      externalId: sharedIssue.externalId,
+                    },
+                  ]
+                : [];
 
-            const tagNamesForVersion =
-              data.autoGenerateTags && testCase.tags ? testCase.tags : [];
+            const tagNamesForVersion = testCase.versionTags?.length
+              ? testCase.versionTags
+              : data.autoGenerateTags && testCase.tags
+                ? testCase.tags
+                : [];
 
-            // 3. Create version
+            // 4. Create version
             const newVersion = await tx.repositoryCaseVersions.create({
               data: {
                 repositoryCaseId: newCase.id,
@@ -397,23 +498,23 @@ export async function importGeneratedTestCases(
                 name: testCase.name.slice(0, 255),
                 stateId: data.stateId,
                 stateName: data.stateName,
-                estimate: 0,
+                estimate: testCase.estimate ?? 0,
                 order: calculatedOrder,
                 creatorId: userId,
                 creatorName: userName,
-                automated: false,
+                automated: testCase.automated ?? false,
                 isArchived: false,
                 isDeleted: false,
                 version: 1,
                 steps: resolvedStepsForVersion,
-                attachments: [],
+                attachments: attachmentsForVersion,
                 tags: tagNamesForVersion,
                 issues: issuesDataForVersion,
               },
               select: { id: true },
             });
 
-            // 4. Batch create field values and version values
+            // 5. Batch create field values and version values
             const fieldValueData: {
               testCaseId: number;
               fieldId: number;
@@ -425,32 +526,60 @@ export async function importGeneratedTestCases(
               value: any;
             }[] = [];
 
-            for (const [fieldName, fieldValue] of Object.entries(
-              testCase.fieldValues
-            )) {
-              if (
-                fieldName === "Steps" ||
-                fieldName.toLowerCase().includes("steps")
-              ) {
-                continue;
-              }
-
-              const mapping = fieldMappingsByName.get(fieldName);
-              if (mapping && fieldValue != null) {
-                const processedValue = processFieldValue(
-                  mapping.fieldType,
-                  fieldValue,
-                  mapping.fieldOptions
-                );
+            if (testCase.fieldValuesById) {
+              // ID-keyed path (modal-add) — values pre-processed by caller
+              for (const [fieldIdStr, fieldValue] of Object.entries(
+                testCase.fieldValuesById
+              )) {
+                const fieldId = parseInt(fieldIdStr, 10);
+                if (Number.isNaN(fieldId) || fieldValue == null) continue;
                 fieldValueData.push({
                   testCaseId: newCase.id,
-                  fieldId: mapping.caseFieldId,
-                  value: processedValue,
+                  fieldId,
+                  value: fieldValue,
                 });
+              }
+            } else {
+              // Name-keyed path (wizard import) — resolve via fieldMappings
+              for (const [fieldName, fieldValue] of Object.entries(
+                testCase.fieldValues
+              )) {
+                if (
+                  fieldName === "Steps" ||
+                  fieldName.toLowerCase().includes("steps")
+                ) {
+                  continue;
+                }
+
+                const mapping = fieldMappingsByName.get(fieldName);
+                if (mapping && fieldValue != null) {
+                  const processedValue = processFieldValue(
+                    mapping.fieldType,
+                    fieldValue,
+                    mapping.fieldOptions
+                  );
+                  fieldValueData.push({
+                    testCaseId: newCase.id,
+                    fieldId: mapping.caseFieldId,
+                    value: processedValue,
+                  });
+                  fieldVersionValueData.push({
+                    versionId: newVersion.id,
+                    field: fieldName,
+                    value: processedValue,
+                  });
+                }
+              }
+            }
+
+            // Version field values: prefer explicit list (modal-add) over wizard auto-derived
+            if (testCase.versionFieldValues?.length) {
+              for (const vfv of testCase.versionFieldValues) {
+                if (vfv.value == null) continue;
                 fieldVersionValueData.push({
                   versionId: newVersion.id,
-                  field: fieldName,
-                  value: processedValue,
+                  field: vfv.field,
+                  value: vfv.value,
                 });
               }
             }
@@ -464,17 +593,19 @@ export async function importGeneratedTestCases(
               });
             }
 
-            // 5. Batch create steps
+            // 6. Batch create steps
             if (testCase.steps && testCase.steps.length > 0) {
               const stepData = testCase.steps.map((step, stepIndex) => ({
                 testCaseId: newCase.id,
                 step: convertStepToTipTap(step.step),
                 expectedResult: convertStepToTipTap(step.expectedResult),
                 order: stepIndex,
+                sharedStepGroupId: step.sharedStepGroupId ?? null,
               }));
               await tx.steps.createMany({ data: stepData });
             }
 
+            importedIds.push(newCase.id);
             importedCount++;
           } catch (error) {
             const msg = error instanceof Error ? error.message : String(error);
@@ -488,6 +619,7 @@ export async function importGeneratedTestCases(
     return {
       status: "success",
       importedCount,
+      importedIds,
       errors,
     };
   } catch (error) {
@@ -496,6 +628,7 @@ export async function importGeneratedTestCases(
       status: "error",
       message: `Import failed: ${msg}`,
       importedCount,
+      importedIds,
       errors,
     };
   }

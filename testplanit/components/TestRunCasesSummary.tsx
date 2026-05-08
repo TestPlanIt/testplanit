@@ -25,6 +25,7 @@ import { useParams } from "next/navigation";
 import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
 import { useFindFirstStatus } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
+import { aggregateRunCounts } from "~/lib/services/testRunSummary-shared";
 import { cn } from "~/utils";
 import { toHumanReadable } from "~/utils/duration";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
@@ -182,13 +183,12 @@ export function TestRunCasesSummary({
       }
     });
 
-    // Calculate aggregated completion rate
+    // Calculate aggregated completion rate via the shared helper so the
+    // in-app summary and the test_run.completed Slack formatter use one
+    // source of truth for "completed" semantics.
     const statusCounts = Array.from(statusCountMap.values());
-    const completedCases = statusCounts
-      .filter((item) => item.isCompleted === true)
-      .reduce((sum, item) => sum + item.count, 0);
-    const completionRate =
-      totalCases > 0 ? Math.min((completedCases / totalCases) * 100, 100) : 0;
+    const { completionPct } = aggregateRunCounts({ totalCases, statusCounts });
+    const completionRate = completionPct;
 
     return {
       testRunType: summaries[0].testRunType,

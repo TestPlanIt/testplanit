@@ -203,22 +203,13 @@ export abstract class BaseLlmAdapter {
       throw new Error(`Requests to ${h} are not allowed`);
     }
 
-    // Node's fetch (undici) has a default bodyTimeout of 300s (5 min).
-    // For long-running requests, create a per-request Agent with no timeout.
-    try {
-      const undici = await import("undici");
-      const agent = new undici.Agent({
-        bodyTimeout: 0,
-        headersTimeout: 0,
-      });
-      return fetch(parsed.href, {
-        ...init,
-        dispatcher: agent,
-      } as any);
-    } catch {
-      // If undici is not available, fall back to regular fetch
-      return fetch(parsed.href, init);
-    }
+    // Use the global fetch directly. Node.js 22+ bundles undici internally;
+    // creating a per-request undici.Agent causes dispatcher version-mismatch
+    // issues between the project's undici package and Node's built-in undici,
+    // which can cause requests to hang. The AbortSignal passed by the caller
+    // controls the actual timeout and takes precedence over undici's default
+    // 300s body timeout, so no custom dispatcher is needed.
+    return fetch(parsed.href, init);
   }
 
   /**

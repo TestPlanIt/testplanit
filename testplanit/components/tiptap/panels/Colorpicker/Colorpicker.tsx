@@ -1,4 +1,5 @@
 import { themeColors } from "@/constants";
+import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { HexColorPicker } from "react-colorful";
 import { Icon } from "../../ui/Icon";
@@ -12,6 +13,7 @@ export type ColorPickerProps = {
 };
 
 export const ColorPicker = ({ color, onChange, onClear }: ColorPickerProps) => {
+  const t = useTranslations("common.editor.textMenu");
   const [colorInputValue, setColorInputValue] = useState(color || "");
 
   const handleColorUpdate = useCallback(
@@ -61,7 +63,7 @@ export const ColorPicker = ({ color, onChange, onClear }: ColorPickerProps) => {
             onColorChange={onChange}
           />
         ))}
-        <Toolbar.Button tooltip="Reset color to default" onClick={onClear}>
+        <Toolbar.Button tooltip={t("resetColorToDefault")} onClick={onClear}>
           <Icon name="Undo" />
         </Toolbar.Button>
       </div>

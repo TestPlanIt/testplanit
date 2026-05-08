@@ -150,12 +150,16 @@ describe("POST /api/integrations/test-connection", () => {
   });
 
   describe("JIRA provider", () => {
-    it("returns success when Jira API returns 200 for API_KEY auth", async () => {
+    it("returns success when Jira API returns 200 for API_KEY auth and all scope probes pass", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      mockFetch.mockResolvedValueOnce({
+      // Three probes per provider now: connection (/myself) +
+      // searchIssues (/search) + readIssue (/issue/picker). All
+      // succeed → success=true with capabilities populated.
+      mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
         statusText: "OK",
+        json: async () => ({}),
       });
 
       const response = await POST(
@@ -170,6 +174,9 @@ describe("POST /api/integrations/test-connection", () => {
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
+      expect(data.capabilities?.connection?.ok).toBe(true);
+      expect(data.capabilities?.searchIssues?.ok).toBe(true);
+      expect(data.capabilities?.readIssue?.ok).toBe(true);
       expect(mockFetch).toHaveBeenCalledWith(
         "https://mycompany.atlassian.net/rest/api/3/myself",
         expect.objectContaining({
@@ -182,10 +189,13 @@ describe("POST /api/integrations/test-connection", () => {
 
     it("returns failure when Jira API returns 401", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
+      // Connection probe fails → route returns early without running
+      // searchIssues / readIssue probes, so a single mock is enough.
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 401,
         statusText: "Unauthorized",
+        json: async () => ({}),
       });
 
       const response = await POST(
@@ -223,12 +233,14 @@ describe("POST /api/integrations/test-connection", () => {
   });
 
   describe("GITHUB provider", () => {
-    it("returns success when GitHub API returns 200", async () => {
+    it("returns success when GitHub API returns 200 and all scope probes pass", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      mockFetch.mockResolvedValueOnce({
+      // /user (auth) + /search/issues (search scope) + /issues (read scope).
+      mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
         statusText: "OK",
+        json: async () => ({}),
       });
 
       const response = await POST(
@@ -241,6 +253,8 @@ describe("POST /api/integrations/test-connection", () => {
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
+      expect(data.capabilities?.searchIssues?.ok).toBe(true);
+      expect(data.capabilities?.readIssue?.ok).toBe(true);
       expect(mockFetch).toHaveBeenCalledWith(
         "https://api.github.com/user",
         expect.objectContaining({
@@ -251,12 +265,13 @@ describe("POST /api/integrations/test-connection", () => {
       );
     });
 
-    it("returns failure when GitHub API returns 401", async () => {
+    it("returns failure when GitHub /user returns 401", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 401,
         statusText: "Unauthorized",
+        json: async () => ({}),
       });
 
       const response = await POST(
@@ -290,12 +305,14 @@ describe("POST /api/integrations/test-connection", () => {
   });
 
   describe("AZURE_DEVOPS provider", () => {
-    it("returns success when Azure DevOps API returns 200", async () => {
+    it("returns success when Azure DevOps API returns 200 and all scope probes pass", async () => {
       (getServerSession as any).mockResolvedValue(mockSession);
-      mockFetch.mockResolvedValueOnce({
+      // /_apis/projects (auth) + /_apis/wit/wiql (search) + /_apis/wit/workitems (read).
+      mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
         statusText: "OK",
+        json: async () => ({}),
       });
 
       const response = await POST(
@@ -309,6 +326,8 @@ describe("POST /api/integrations/test-connection", () => {
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
+      expect(data.capabilities?.searchIssues?.ok).toBe(true);
+      expect(data.capabilities?.readIssue?.ok).toBe(true);
       expect(mockFetch).toHaveBeenCalledWith(
         "https://dev.azure.com/myorg/_apis/projects?api-version=6.0",
         expect.anything()
@@ -321,6 +340,7 @@ describe("POST /api/integrations/test-connection", () => {
         ok: false,
         status: 401,
         statusText: "Unauthorized",
+        json: async () => ({}),
       });
 
       const response = await POST(
@@ -367,10 +387,12 @@ describe("POST /api/integrations/test-connection", () => {
       });
       (isEncrypted as any).mockReturnValue(true);
       (decrypt as any).mockResolvedValue("decrypted-token");
-      mockFetch.mockResolvedValueOnce({
+      // GitHub provider runs three probes; all succeed.
+      mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
         statusText: "OK",
+        json: async () => ({}),
       });
 
       const response = await POST(createRequest({ integrationId: 5 }));

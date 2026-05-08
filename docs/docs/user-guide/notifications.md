@@ -122,7 +122,7 @@ When you have no notifications, the panel displays:
 
 :::note Operator note
 
-For SSE to work behind a load balancer, the ingress / reverse proxy must allow long-lived streamed responses (no buffering, idle timeouts ≥ 1 hour). See [SSE Notifications](../sse-notifications.md) for nginx-ingress, Traefik, AWS LBC, and plain nginx configuration recipes plus the tuning environment variables.
+For SSE to work behind a load balancer, the ingress / reverse proxy must allow long-lived streamed responses (no buffering, idle timeouts ≥ 1 hour). See [SSE Notifications and Live Updates](../sse-notifications.md) for nginx-ingress, Traefik, AWS LBC, and plain nginx configuration recipes plus the tuning environment variables. The same ingress recipe also covers the project-scoped issue-update stream that powers live updates from inbound [webhooks](./webhooks.md).
 
 :::
 
@@ -155,6 +155,8 @@ When someone mentions you with `@username`:
 - Links to the commented item (test case, run, or session)
 - Includes project context
 - Direct navigation to the comment
+
+If you are mentioned in a project you do not have access to, the notification is redacted: the message names the project and who mentioned you, but does not name the specific item or include a clickable link. This protects the project's contents while still letting you know that someone tried to loop you in.
 
 #### System Announcement Notifications
 
@@ -329,7 +331,7 @@ Event Occurs → Create Notification Job → Notification Worker
               Bell refetches → Badge updates
 ```
 
-For ingress / proxy configuration required to run SSE reliably behind a load balancer, see [SSE Notifications](../sse-notifications.md).
+For ingress / proxy configuration required to run SSE reliably behind a load balancer, see [SSE Notifications and Live Updates](../sse-notifications.md). The same page covers the project-scoped issue-update stream used by inbound [webhooks](./webhooks.md).
 
 ## Global Settings
 

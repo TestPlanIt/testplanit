@@ -1379,7 +1379,10 @@ export function AddResultModal({
                     <span className="text-destructive">{"*"}</span>
                   )}
                   {isRestricted && ( // Add LockIcon
-                    <span title="Restricted Field" className="ml-1">
+                    <span
+                      title={tCommon("aria.restrictedField")}
+                      className="ml-1"
+                    >
                       <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                     </span>
                   )}
@@ -1415,7 +1418,10 @@ export function AddResultModal({
                     <span className="text-destructive">{"*"}</span>
                   )}
                   {isRestricted && ( // Add LockIcon
-                    <span title="Restricted Field" className="ml-1">
+                    <span
+                      title={tCommon("aria.restrictedField")}
+                      className="ml-1"
+                    >
                       <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                     </span>
                   )}
@@ -1457,7 +1463,10 @@ export function AddResultModal({
                     <span className="text-destructive">{"*"}</span>
                   )}
                   {isRestricted && ( // Add LockIcon
-                    <span title="Restricted Field" className="ml-1">
+                    <span
+                      title={tCommon("aria.restrictedField")}
+                      className="ml-1"
+                    >
                       <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                     </span>
                   )}
@@ -1545,7 +1554,10 @@ export function AddResultModal({
                         <span className="text-destructive">{"*"}</span>
                       )}
                       {isRestricted && ( // Add LockIcon
-                        <span title="Restricted Field" className="ml-1">
+                        <span
+                          title={tCommon("aria.restrictedField")}
+                          className="ml-1"
+                        >
                           <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                         </span>
                       )}
@@ -1589,7 +1601,10 @@ export function AddResultModal({
                       <span className="text-destructive">{"*"}</span>
                     )}
                     {isRestricted && ( // Add LockIcon
-                      <span title="Restricted Field" className="ml-1">
+                      <span
+                        title={tCommon("aria.restrictedField")}
+                        className="ml-1"
+                      >
                         <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                       </span>
                     )}

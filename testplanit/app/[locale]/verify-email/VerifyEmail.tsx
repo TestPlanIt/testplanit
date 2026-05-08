@@ -4,7 +4,7 @@ import { signOut, useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
-import { useRouter } from "~/lib/navigation";
+import { Link, useRouter } from "~/lib/navigation";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -100,7 +100,7 @@ const VerifyEmail = () => {
           description: t("toast.verifySuccess.description"),
           position: "top-center",
         });
-        router.push("/");
+        router.push("/signin");
       } else {
         await toast.error(tGlobal("auth.verifyEmail.error"), {
           description: t("toast.verifyError.description"),
@@ -210,6 +210,14 @@ const VerifyEmail = () => {
                       {tCommon("actions.resend")}
                     </Button>
                   </div>
+                </div>
+                <div>
+                  <Link
+                    href="/signin"
+                    className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-4"
+                  >
+                    {tGlobal("auth.signin.magicLink.backToSignIn")}
+                  </Link>
                 </div>
               </form>
             </Form>

@@ -33,6 +33,9 @@ const entryPoints = [
   "workers/magicSelectWorker.ts",
   "workers/stepSequenceScanWorker.ts",
   "workers/generateFromUrlWorker.ts",
+  "workers/webhookDispatchWorker.ts",
+  "workers/webhookOutboxWorker.ts",
+  "workers/webhookRetentionWorker.ts",
   "scheduler.ts",
 ];
 

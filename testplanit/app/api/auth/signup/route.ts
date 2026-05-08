@@ -44,7 +44,10 @@ export async function POST(req: NextRequest) {
 
     if (existingUser) {
       return NextResponse.json(
-        { error: "User with this email already exists" },
+        {
+          errorCode: "common.errors.userExists",
+          error: "User with this email already exists",
+        },
         { status: 400 }
       );
     }
@@ -124,7 +127,10 @@ export async function POST(req: NextRequest) {
     // Handle Prisma unique constraint violation
     if (error.code === "P2002") {
       return NextResponse.json(
-        { error: "User with this email already exists" },
+        {
+          errorCode: "common.errors.userExists",
+          error: "User with this email already exists",
+        },
         { status: 400 }
       );
     }

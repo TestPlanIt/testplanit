@@ -1,3 +1,5 @@
+import { randomBytes } from "node:crypto";
+
 import { APIRequestContext } from "@playwright/test";
 
 /**
@@ -22,6 +24,7 @@ export class ApiHelper {
   private createdConfigurationIds: number[] = [];
   private createdLlmIntegrationIds: number[] = [];
   private createdProjectLlmIntegrationIds: string[] = [];
+  private createdIssueIntegrationIds: number[] = [];
   private cachedTemplateIds: Map<number, number> = new Map(); // projectId -> templateId
   private cachedStateIds: Map<number, number> = new Map(); // projectId -> stateId
   private cachedRepositoryIds: Map<number, number> = new Map(); // projectId -> repositoryId
@@ -1661,6 +1664,60 @@ export class ApiHelper {
     }
   }
 
+  async completeTestRunViaStateChange(
+    testRunId: number,
+    projectId: number
+  ): Promise<void> {
+    const stateResponse = await this.request.get(
+      `${this.baseURL}/api/model/workflows/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: {
+              workflowType: "DONE",
+              isDeleted: false,
+              projects: { some: { projectId } },
+            },
+            select: { id: true },
+          }),
+        },
+      }
+    );
+    if (!stateResponse.ok()) {
+      throw new Error(
+        `Failed to find DONE workflow: ${await stateResponse.text()}`
+      );
+    }
+    const stateData = await stateResponse.json();
+    const completedStateId: number | undefined = stateData?.data?.id;
+    if (!completedStateId) {
+      throw new Error(
+        `No DONE workflow assigned to project ${projectId}. ` +
+          `The E2E test requires the project to have at least one Workflows ` +
+          `row with workflowType="DONE" assigned via ProjectWorkflowAssignment ` +
+          `(prisma/seed.ts seeds these for every project).`
+      );
+    }
+    const updateResponse = await this.request.patch(
+      `${this.baseURL}/api/model/testRuns/update`,
+      {
+        data: {
+          where: { id: testRunId },
+          data: {
+            state: { connect: { id: completedStateId } },
+            isCompleted: true,
+            completedAt: new Date().toISOString(),
+          },
+        },
+      }
+    );
+    if (!updateResponse.ok()) {
+      throw new Error(
+        `Failed to complete test run: ${await updateResponse.text()}`
+      );
+    }
+  }
+
   /**
    * Create a test result for a test run case
    * Test results record the outcome of executing a test case
@@ -3212,6 +3269,89 @@ export class ApiHelper {
   }
 
   /**
+   * Create an admin-level Issue Integration record (Jira / GitHub /
+   * Azure DevOps). Uses fake credentials — webhook E2E specs only need
+   * the integration to *exist* and be ACTIVE so the webhook config form
+   * unlocks the matching inbound adapter; no real upstream calls are made.
+   */
+  async createIssueIntegration(
+    provider: "JIRA" | "GITHUB" | "AZURE_DEVOPS",
+    name?: string
+  ): Promise<number> {
+    const integrationName =
+      name ?? `E2E ${provider} Integration ${randomBytes(4).toString("hex")}`;
+    const config =
+      provider === "JIRA"
+        ? {
+            email: "test@example.com",
+            apiToken: "fake-api-token-for-e2e",
+            baseUrl: "https://example.atlassian.net",
+          }
+        : provider === "GITHUB"
+          ? { personalAccessToken: "ghp_fakePATforE2Etesting1234567890" }
+          : {
+              personalAccessToken: "fake-azure-pat-for-e2e-testing",
+              organizationUrl: "https://dev.azure.com/fakeorg",
+            };
+    const authType = provider === "JIRA" ? "API_KEY" : "PERSONAL_ACCESS_TOKEN";
+
+    const response = await this.request.post(
+      `${this.baseURL}/api/integrations`,
+      {
+        data: {
+          name: integrationName,
+          type: provider,
+          authType,
+          config,
+        },
+      }
+    );
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(`Failed to create ${provider} integration: ${error}`);
+    }
+    const body = await response.json();
+    const id: number = body.id;
+    this.createdIssueIntegrationIds.push(id);
+    return id;
+  }
+
+  /**
+   * Assign an Issue Integration to a project. Mirrors the POST route at
+   * `/api/projects/[projectId]/integrations` — the same path the
+   * Available Issue Integrations UI hits when an admin clicks Assign.
+   */
+  async assignIssueIntegrationToProject(
+    projectId: number,
+    integrationId: number
+  ): Promise<void> {
+    const response = await this.request.post(
+      `${this.baseURL}/api/projects/${projectId}/integrations`,
+      { data: { integrationId } }
+    );
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(
+        `Failed to assign integration ${integrationId} to project ${projectId}: ${error}`
+      );
+    }
+  }
+
+  /**
+   * One-shot helper for webhook specs: create an Issue Integration of
+   * the given provider and assign it to the project. Returns the
+   * integration id so callers can clean up explicitly if needed.
+   */
+  async setupProjectIssueIntegration(
+    projectId: number,
+    provider: "JIRA" | "GITHUB" | "AZURE_DEVOPS"
+  ): Promise<number> {
+    const integrationId = await this.createIssueIntegration(provider);
+    await this.assignIssueIntegrationToProject(projectId, integrationId);
+    return integrationId;
+  }
+
+  /**
    * Enable QuickScript on a project.
    */
   async enableQuickScript(projectId: number): Promise<void> {
@@ -3372,6 +3512,19 @@ export class ApiHelper {
     }
     this.createdLlmIntegrationIds = [];
 
+    // Delete Issue Integrations (Jira/GitHub/ADO admin records). The
+    // ProjectIntegration rows that reference them cascade with the
+    // project deletion below, so order doesn't matter strictly, but
+    // we still try to clean these up before the project tear-down.
+    for (const issueIntegrationId of this.createdIssueIntegrationIds) {
+      this.request
+        .delete(`${this.baseURL}/api/model/integration/delete`, {
+          data: { where: { id: issueIntegrationId } },
+        })
+        .catch(() => {});
+    }
+    this.createdIssueIntegrationIds = [];
+
     // Delete share links (they reference projects)
     for (const shareLinkId of this.createdShareLinkIds) {
       await this.deleteShareLink(shareLinkId);
@@ -3522,6 +3675,57 @@ export class ApiHelper {
 
     const result = await response.json();
     return result;
+  }
+
+  /**
+   * Set a user's system-level access level (NONE | USER | PROJECTADMIN | ADMIN).
+   *
+   * The signup endpoint's Zod schema only accepts NONE | USER | ADMIN
+   * (`app/api/auth/signup/route.ts`), so PROJECTADMIN cannot be minted at
+   * registration. The user-update PATCH endpoint accepts all four values
+   * (`app/api/users/[userId]/route.ts`), so the cross-tenant E2E specs use
+   * the two-step flow: signup as USER → PATCH access to PROJECTADMIN.
+   *
+   * Caller must hold an ADMIN session (the PATCH endpoint authorizes via
+   * `session.user.id === userId || session.user.access === 'ADMIN'`).
+   */
+  async setUserAccess(
+    userId: string,
+    access: "NONE" | "USER" | "PROJECTADMIN" | "ADMIN"
+  ): Promise<void> {
+    await this.updateUser({ userId, data: { access } });
+  }
+
+  /**
+   * Assign a user to a project as a member (creates a `ProjectAssignment` row).
+   *
+   * This is what `project.assignedUsers?[user == auth() && auth().access ==
+   * 'PROJECTADMIN']` in the WebhookConfig / WebhookDelivery read policies
+   * matches against — without this row, a PROJECTADMIN cannot read the
+   * project's webhook configs even if they have global PROJECTADMIN access.
+   *
+   * The schema's `ProjectAssignment.@@allow('all', auth().access == 'ADMIN')`
+   * lets the default ADMIN E2E session create assignment rows directly via
+   * the model RPC. There is no role concept on `ProjectAssignment` itself —
+   * the row simply records membership; the system-level `User.access` field
+   * is what differentiates PROJECTADMIN from USER for webhook authorization.
+   */
+  async assignUserToProject(userId: string, projectId: number): Promise<void> {
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/projectAssignment/create`,
+      {
+        data: {
+          data: { userId, projectId },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(
+        `Failed to assign user ${userId} to project ${projectId}: ${error}`
+      );
+    }
   }
 
   /**

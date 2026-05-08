@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Phase 64 Plan 03: auditShareLinkCreation and revokeShareLink are
+// auditShareLinkCreation and revokeShareLink are
 // wrapped in withActionAuditContext, which calls `await headers()` from
 // next/headers. Unit tests run outside a Next.js request scope, so the
-// real `headers()` throws. Hermetic mock per the Plan 01 pattern
-// (vi.hoisted + vi.mock). prepareShareLinkData remains unwrapped, so it
-// does not exercise the next/headers path — but mocking is harmless.
+// real `headers()` throws. Hermetic mock per the vi.hoisted + vi.mock pattern.
+// prepareShareLinkData remains unwrapped, so it does not exercise the
+// next/headers path — but mocking is harmless.
 const headersMocks = vi.hoisted(() => ({
   current: new Map<string, string>([
     ["user-agent", "vitest-agent/1.0"],
@@ -484,17 +484,6 @@ describe("share-links server actions", () => {
     });
   });
 
-  // Phase 64 Plan 05 Task 2 Test 2 — CTX-02 representative test.
-  //
-  // Proves that the wrapped auditShareLinkCreation server action emits
-  // an audit row whose actor context is fully populated when called
-  // inside a request scope (simulated here by the vi.hoisted
-  // next/headers mock + a session-callback-style updateAuditContext).
-  //
-  // ipAddress/userAgent/requestId come from withActionAuditContext
-  // (Plan 01 Task 2 — await headers()). userId/userEmail/userName come
-  // from the mocked getServerSession calling updateAuditContext the
-  // same way the real NextAuth session callback does (Plan 01 Task 3).
   describe("auditShareLinkCreation — CTX-02", () => {
     const mockShareLink = {
       id: "share-ctx02",

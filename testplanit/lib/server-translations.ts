@@ -2,16 +2,36 @@ import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// Get the current directory (works in both ESM and CommonJS after build)
-
-// @ts-ignore - __dirname is available in CommonJS after build
+// Resolve the messages directory in two phases so this module works under
+// every consumer: Next.js (Turbopack/Webpack server bundles), the workers
+// build (esbuild), and unit tests (vitest).
+//
+// Turbopack rewrites `__dirname` in server chunks to a `/ROOT/...` sentinel
+// that doesn't exist at runtime, so a `__dirname`-based path produces ENOENT
+// when the magic-link sender runs from a Next.js route. Worker builds, by
+// contrast, retain a real on-disk `__dirname`. We try `process.cwd()` first
+// (works in Next.js when invoked from the project root) and fall back to a
+// `__dirname`-relative resolution for the worker context.
+// @ts-ignore - __dirname is only available in CommonJS after build
 const currentDir =
   typeof __dirname !== "undefined"
     ? __dirname
     : path.dirname(fileURLToPath(import.meta.url));
 
+async function resolveMessagesDir(): Promise<string> {
+  const cwdCandidate = path.join(process.cwd(), "messages");
+  try {
+    await fs.access(cwdCandidate);
+    return cwdCandidate;
+  } catch {
+    // Fall through to the build-relative path.
+  }
+  return path.join(currentDir, "..", "messages");
+}
+
 // Cache for loaded translations
 const translationCache = new Map<string, any>();
+let messagesDirPromise: Promise<string> | null = null;
 
 /**
  * Load translations for a specific locale
@@ -26,13 +46,9 @@ async function loadTranslations(locale: string): Promise<any> {
   }
 
   try {
-    // Load the translation file
-    const translationPath = path.join(
-      currentDir,
-      "..",
-      "messages",
-      `${normalizedLocale}.json`
-    );
+    if (!messagesDirPromise) messagesDirPromise = resolveMessagesDir();
+    const messagesDir = await messagesDirPromise;
+    const translationPath = path.join(messagesDir, `${normalizedLocale}.json`);
     const translationContent = await fs.readFile(translationPath, "utf-8");
     const translations = JSON.parse(translationContent);
 

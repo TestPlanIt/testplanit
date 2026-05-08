@@ -291,7 +291,7 @@ export function UserDropdownMenu() {
           variant="link"
           className="hover:opacity-80"
           data-testid="user-menu-trigger"
-          aria-label="User menu"
+          aria-label={tCommon("aria.userMenu")}
         >
           <Avatar
             image={session.user.image ?? ""}

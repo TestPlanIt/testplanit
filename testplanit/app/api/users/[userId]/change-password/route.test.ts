@@ -187,6 +187,87 @@ describe("POST /api/users/[userId]/change-password", () => {
     );
   });
 
+  describe("SSO user without bcrypt password", () => {
+    it("allows password set when user has null password (no currentPassword required)", async () => {
+      mockGetServerAuthSession.mockResolvedValue(makeUserSession());
+      mockDb.user.findUnique.mockResolvedValue({
+        id: "user-1",
+        password: null,
+        email: "user@test.com",
+      } as any);
+      mockDb.registrationSettings.findFirst.mockResolvedValue({
+        passwordHistoryDepth: 0,
+      } as any);
+      mockDb.user.update.mockResolvedValue({} as any);
+
+      const res = await POST(
+        makeRequest("user-1", { currentPassword: undefined }),
+        { params: Promise.resolve({ userId: "user-1" }) }
+      );
+
+      expect(res.status).toBe(200);
+    });
+
+    it("allows password set when user has plain-text UUID password (no currentPassword required)", async () => {
+      mockGetServerAuthSession.mockResolvedValue(makeUserSession());
+      mockDb.user.findUnique.mockResolvedValue({
+        id: "user-1",
+        password: "3f2a1b4c-5d6e-7f8a-9b0c-1d2e3f4a5b6c",
+        email: "user@test.com",
+      } as any);
+      mockDb.registrationSettings.findFirst.mockResolvedValue({
+        passwordHistoryDepth: 0,
+      } as any);
+      mockDb.user.update.mockResolvedValue({} as any);
+
+      const res = await POST(
+        makeRequest("user-1", { currentPassword: undefined }),
+        { params: Promise.resolve({ userId: "user-1" }) }
+      );
+
+      expect(res.status).toBe(200);
+    });
+
+    it("returns 400 when user has bcrypt password but currentPassword is missing", async () => {
+      mockGetServerAuthSession.mockResolvedValue(makeUserSession());
+      mockDb.user.findUnique.mockResolvedValue({
+        id: "user-1",
+        password: "$2b$10$abcdefghijklmnopqrstuuVGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
+        email: "user@test.com",
+      } as any);
+
+      const res = await POST(
+        makeRequest("user-1", { currentPassword: undefined }),
+        { params: Promise.resolve({ userId: "user-1" }) }
+      );
+
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error).toMatch(/current password/i);
+    });
+
+    it("returns 400 when user has bcrypt password and currentPassword is wrong", async () => {
+      const bcrypt = (await import("bcrypt")).default;
+      vi.mocked(bcrypt.compare).mockResolvedValueOnce(false as never);
+
+      mockGetServerAuthSession.mockResolvedValue(makeUserSession());
+      mockDb.user.findUnique.mockResolvedValue({
+        id: "user-1",
+        password: "$2b$10$abcdefghijklmnopqrstuuVGGGGGGGGGGGGGGGGGGGGGGGGGGGGG",
+        email: "user@test.com",
+      } as any);
+
+      const res = await POST(
+        makeRequest("user-1", { currentPassword: "WrongPassword!" }),
+        { params: Promise.resolve({ userId: "user-1" }) }
+      );
+
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error).toMatch(/invalid current password/i);
+    });
+  });
+
   it("emits audit row with complete actor context (D-18)", async () => {
     const { updateAuditContext, getAuditContext } =
       await import("~/lib/auditContext");

@@ -180,7 +180,7 @@ function LinkedIssueBadge({
             onUnlink(issue.id);
           }}
           className="shrink-0 opacity-60 hover:opacity-100 transition-opacity"
-          aria-label="Remove issue"
+          aria-label={t("common.aria.removeIssue")}
         >
           <X className="h-3 w-3" />
         </button>

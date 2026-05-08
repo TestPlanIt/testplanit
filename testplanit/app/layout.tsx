@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Noto_Sans } from "next/font/google";
+import { getLocale } from "next-intl/server";
 import Script from "next/script";
 import "~/styles/globals.css";
 
@@ -49,7 +50,7 @@ const notoSans = Noto_Sans({
   variable: "--font-noto-sans",
 });
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -65,8 +66,10 @@ export default function RootLayout({
   const storageMode =
     isMultiTenant || (isHosted && !hasPublicEndpoint) ? "proxy" : "direct";
 
+  const locale = await getLocale();
+
   return (
-    <html lang="en" className={`${notoSans.variable}`}>
+    <html lang={locale} className={`${notoSans.variable}`}>
       <head>
         <meta name="storage-mode" content={storageMode} />
         <Script

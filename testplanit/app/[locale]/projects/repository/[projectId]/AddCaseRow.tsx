@@ -15,15 +15,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { PlusSquare } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
+import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases";
 import {
-  useCreateRepositoryCases,
-  useCreateRepositoryCaseVersions,
   useFindFirstRepositoryCases,
   useFindFirstRepositoryFolders,
   useFindFirstTemplates,
@@ -31,19 +30,25 @@ import {
 } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 
-const FormSchema = z.object({
-  name: z.string().min(2, {
-    error: "Please enter a name for the Test Case",
-  }),
-  workflowId: z
-    .number({
-      error: (issue) =>
-        issue.input === undefined ? "Please select a State" : undefined,
-    })
-    .refine((value) => !isNaN(value), {
-      error: "Please select a valid State",
+function buildFormSchema(t: (key: any) => string) {
+  return z.object({
+    name: z.string().min(2, {
+      error: t("common.errors.caseNameRequired"),
     }),
-});
+    workflowId: z
+      .number({
+        error: (issue) =>
+          issue.input === undefined
+            ? t("common.errors.caseStateRequired")
+            : undefined,
+      })
+      .refine((value) => !isNaN(value), {
+        error: t("common.errors.caseStateInvalid"),
+      }),
+  });
+}
+
+type FormValues = z.infer<ReturnType<typeof buildFormSchema>>;
 
 interface AddCaseRowProps {
   folderId: number;
@@ -51,15 +56,12 @@ interface AddCaseRowProps {
 
 export function AddCaseRow({ folderId }: AddCaseRowProps) {
   const t = useTranslations();
+  const locale = useLocale();
   const { data: session } = useSession();
   const { projectId } = useParams();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
-
-  const { mutateAsync: createRepositoryCases } = useCreateRepositoryCases();
-  const { mutateAsync: createRepositoryCaseVersions } =
-    useCreateRepositoryCaseVersions();
 
   const { data: folder } = useFindFirstRepositoryFolders(
     {
@@ -149,8 +151,9 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
       ),
     })) || [];
 
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+  const formSchema = useMemo(() => buildFormSchema(t), [t]);
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       workflowId: defaultWorkflowId,
@@ -196,79 +199,112 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
     return null;
   }
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
+  const checkForDuplicates = async (caseName: string, caseId: number) => {
+    try {
+      const res = await fetch("/api/duplicate-scan/check-new", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId: Number(projectId),
+          caseId,
+          name: caseName,
+          tags: [],
+        }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.cases && data.cases.length > 0) {
+        const caseLinks = data.cases.map((c: { id: number; name: string }) =>
+          React.createElement(
+            "a",
+            {
+              key: c.id,
+              href: `/${locale}/projects/repository/${projectId}/${c.id}`,
+              target: "_blank",
+              rel: "noopener noreferrer",
+              style: {
+                textDecoration: "underline",
+                display: "block",
+                marginTop: 4,
+              },
+            },
+            c.name
+          )
+        );
+        toast.warning(t("repository.duplicates.duplicateWarning"), {
+          description: React.createElement(
+            "div",
+            null,
+            t("repository.duplicates.duplicateWarningDescription", {
+              count: data.cases.length,
+            }),
+            ...caseLinks,
+            React.createElement(
+              "a",
+              {
+                href: `/${locale}/projects/repository/${projectId}/duplicates`,
+                target: "_blank",
+                rel: "noopener noreferrer",
+                style: {
+                  textDecoration: "underline",
+                  fontWeight: 500,
+                  display: "block",
+                  marginTop: 8,
+                },
+              },
+              t("repository.duplicates.duplicateWarningReview")
+            )
+          ),
+          duration: 15000,
+        });
+      }
+    } catch {
+      // Silently ignore — duplicate check is advisory only
+    }
+  };
+
+  async function onSubmit(data: FormValues) {
     setIsSubmitting(true);
     try {
       if (session) {
-        const newCase = await createRepositoryCases({
-          data: {
-            project: {
-              connect: { id: Number(projectId) },
+        const result = await importGeneratedTestCases({
+          projectId: Number(projectId),
+          projectName: folder?.project?.name || "",
+          repositoryId: folder?.repositoryId || 0,
+          folderId,
+          folderName: folder?.name || "",
+          templateId: template?.id || 0,
+          templateName: template?.templateName || "",
+          stateId: data.workflowId,
+          stateName:
+            workflows?.find((w) => w.id === data.workflowId)?.name || "",
+          maxOrder: maxOrder?.order ?? 0,
+          autoGenerateTags: false,
+          source: "MANUAL",
+          testCases: [
+            {
+              id: crypto.randomUUID(),
+              name: data.name,
+              fieldValues: {},
+              tags: [],
             },
-            repository: {
-              connect: { id: folder?.repositoryId },
-            },
-            folder: {
-              connect: { id: folderId },
-            },
-            name: data.name,
-            template: {
-              connect: { id: template?.id || 0 },
-            },
-            state: {
-              connect: { id: data.workflowId },
-            },
-            createdAt: new Date(),
-            creator: {
-              connect: { id: session.user.id },
-            },
-            order: maxOrder?.order ? maxOrder.order + 1 : 1,
-          },
+          ],
+          fieldMappings: [],
         });
 
-        if (!newCase) throw new Error("Failed to create new case");
+        if (result.status === "error" || result.importedIds.length === 0) {
+          throw new Error(
+            result.message || result.errors[0] || "Import failed"
+          );
+        }
 
-        // Create the initial version of the test case
-        const newCaseVersion = await createRepositoryCaseVersions({
-          data: {
-            repositoryCase: {
-              connect: { id: newCase.id },
-            },
-            project: {
-              connect: { id: Number(projectId) },
-            },
-            staticProjectName: folder?.project?.name || "",
-            staticProjectId: Number(projectId),
-            repositoryId: folder?.repositoryId || 0,
-            folderId: folderId,
-            folderName: folder?.name || "",
-            templateId: template?.id || 0,
-            templateName: template?.templateName || "",
-            name: data.name,
-            stateId: data.workflowId,
-            stateName:
-              workflows?.find((w) => w.id === data.workflowId)?.name || "",
-            createdAt: new Date(),
-            creatorId: session.user.id,
-            creatorName: session.user.name || "",
-            isArchived: false,
-            isDeleted: false,
-            version: 1,
-          },
-        });
+        const newCaseId = result.importedIds[0];
 
-        if (!newCaseVersion)
-          throw new Error("Failed to create new case version");
-
-        // Invalidate folder stats first - this updates the case count which enables the Cases query
         await queryClient.invalidateQueries({
           queryKey: ["folderStats"],
           refetchType: "all",
         });
 
-        // Invalidate RepositoryCases queries to refresh the table
-        // ZenStack query keys are: ["zenstack", model, operation, args, options]
-        // Using refetchType: 'all' to ensure queries are refetched immediately
         await queryClient.invalidateQueries({
           predicate: (query) =>
             Array.isArray(query.queryKey) &&
@@ -279,15 +315,17 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
 
         reset({ name: "", workflowId: defaultWorkflowId });
 
-        toast.success("New Test Case Added", {
+        toast.success(t("common.errors.newTestCaseAdded"), {
           position: "bottom-right",
         });
+
+        checkForDuplicates(data.name, newCaseId).catch(() => {});
 
         setIsSubmitting(false);
         setHasSubmitted(true);
       }
     } catch (err: any) {
-      toast.success("Unknown error adding new test case", {
+      toast.error(t("repository.addCase.errorMessage"), {
         position: "bottom-right",
       });
 
@@ -357,7 +395,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
                       placeholder={t("repository.addCase.namePlaceholder")}
                       {...field}
                       autoComplete="off"
-                      data-testid="case-name-input"
+                      data-testid="inline-case-name-input"
                       ref={(e) => {
                         field.ref(e);
                         nameInputRef.current = e;

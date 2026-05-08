@@ -10,7 +10,7 @@ import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";
 import { submitSchema } from "./schemas";
 
-// Phase 64 Plan 04 Rule 3: wrapped with withAuditContext so
+// Wrapped with withAuditContext so
 // enqueueWithAuditContext below has an ALS frame. copyMoveWorker emits
 // audit events at L778 / L796; this wrapper propagates the user's
 // actorContext onto the job so the worker's ALS re-population attributes

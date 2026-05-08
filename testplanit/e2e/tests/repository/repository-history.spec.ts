@@ -294,9 +294,12 @@ test.describe("Repository — navigation & history", () => {
     }
 
     await installHistoryTracker(page);
-    const repositoryPage = new RepositoryPage(page);
-    await repositoryPage.goto(projectId);
-    await page.waitForURL(/[?&]view=folders/, { timeout: 10000 });
+    // Navigate directly with an explicit pageSize so pagination is guaranteed
+    // to render (default page size may exceed the 12 cases we created).
+    await page.goto(
+      `/en-US/projects/repository/${projectId}?node=${rootFolderId}&pageSize=10`
+    );
+    await page.waitForLoadState("networkidle");
     // Wait for an actual case row to appear — guarantees the case query
     // has resolved and pagination is meaningful. Using the case name
     // text is more robust than tbody-tr selectors which can match

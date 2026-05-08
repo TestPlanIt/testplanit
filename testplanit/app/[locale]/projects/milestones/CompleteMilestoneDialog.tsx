@@ -184,7 +184,7 @@ export function CompleteMilestoneDialog({
       if (result.status === "success") {
         // The server action completed the milestone directly (no dependencies)
         toast.success(
-          result.message || `Milestone "${milestoneToComplete.name}" completed.`
+          t("milestones.toast.completed", { name: milestoneToComplete.name })
         );
         onCompleteSuccess();
         onOpenChange(false);
@@ -202,12 +202,12 @@ export function CompleteMilestoneDialog({
           await handleForceComplete(data.completionDate);
         }
       } else if (result.status === "error") {
-        toast.error(result.message || "An unknown error occurred.");
+        toast.error(result.message || tCommon("errors.unknown"));
         onOpenChange(false);
       }
     } catch (error) {
       console.error("Failed to preview milestone completion:", error);
-      toast.error("An unknown error occurred.");
+      toast.error(tCommon("errors.unknown"));
       onOpenChange(false);
     } finally {
       setIsSubmitting(false);
@@ -230,17 +230,19 @@ export function CompleteMilestoneDialog({
 
       if (result.status === "success") {
         toast.success(
-          result.message || `Milestone "${milestoneToComplete.name}" completed.`
+          t("milestones.toast.completedWithDependencies", {
+            name: milestoneToComplete.name,
+          })
         );
         onCompleteSuccess();
         onOpenChange(false);
       } else {
-        toast.error(result.message || "An unknown error occurred.");
+        toast.error(result.message || tCommon("errors.unknown"));
         if (result.status === "error") onOpenChange(false);
       }
     } catch (error) {
       console.error("Failed to complete milestone with force:", error);
-      toast.error("An unknown error occurred.");
+      toast.error(tCommon("errors.unknown"));
       onOpenChange(false);
     } finally {
       setIsSubmitting(false);

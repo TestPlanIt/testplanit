@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { MoreHorizontal } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -374,45 +373,21 @@ export default function MilestoneFormControls({
             (milestone?.note &&
               milestone?.note !== JSON.stringify(emptyEditorContent)) ? (
               <FormControl>
-                <div
-                  className={`relative group ${
-                    !isEditMode
-                      ? "max-h-[4em] overflow-hidden hover:max-h-none hover:overflow-visible hover:z-10"
-                      : ""
-                  }`}
-                >
-                  {!isEditMode && (
-                    <>
-                      <div className="absolute group-hover:hidden" />
-                      <MoreHorizontal className="absolute right-0 bottom-0 h-4 w-4 bg-primary-foreground shrink-0 text-muted-foreground group-hover:hidden z-50" />
-                    </>
-                  )}
-                  <div
-                    className={`${
-                      !isEditMode
-                        ? "group-hover:rounded-md group-hover:p-0 group-hover:bg-background"
-                        : ""
-                    }`}
-                  >
-                    <TipTapEditor
-                      key={`editing-note-${isEditMode}`}
-                      content={
-                        field.value
-                          ? JSON.parse(field.value)
-                          : emptyEditorContent
-                      }
-                      onUpdate={(newContent) => {
-                        if (isEditMode) {
-                          field.onChange(JSON.stringify(newContent));
-                        }
-                      }}
-                      readOnly={!isEditMode}
-                      className="h-auto"
-                      placeholder={t("placeholders.description")}
-                      projectId={projectId}
-                    />
-                  </div>
-                </div>
+                <TipTapEditor
+                  key={`editing-note-${isEditMode}`}
+                  content={
+                    field.value ? JSON.parse(field.value) : emptyEditorContent
+                  }
+                  onUpdate={(newContent) => {
+                    if (isEditMode) {
+                      field.onChange(JSON.stringify(newContent));
+                    }
+                  }}
+                  readOnly={!isEditMode}
+                  className="h-auto"
+                  placeholder={t("placeholders.description")}
+                  projectId={projectId}
+                />
               </FormControl>
             ) : (
               <div className="text-muted-foreground text-sm">

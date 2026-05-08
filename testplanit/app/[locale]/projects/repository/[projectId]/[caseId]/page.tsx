@@ -145,7 +145,7 @@ const parseJsonToTipTap = (
   return emptyEditorContent;
 };
 
-const mapFieldToZodType = (field: any) => {
+const mapFieldToZodType = (field: any, t: (key: any) => string) => {
   const isRequired = field.caseField.isRequired;
 
   const addMinMax = (schema: z.ZodNumber) => {
@@ -210,7 +210,9 @@ const mapFieldToZodType = (field: any) => {
             }
           },
           {
-            message: isRequired ? "This field is required" : "Invalid content",
+            message: isRequired
+              ? t("common.errors.fieldRequired")
+              : t("common.errors.invalidContent"),
           }
         )
       );
@@ -231,18 +233,22 @@ const mapFieldToZodType = (field: any) => {
   }
 };
 
-const createFormSchema = (fields: any[]) => {
+const createFormSchema = (fields: any[], t: (key: any) => string) => {
   const baseSchema = {
     name: z.string().min(2, {
-      error: "Please enter a name for the Test Case",
+      error: t("common.errors.caseNameRequired"),
     }),
     workflowId: z.number({
       error: (issue) =>
-        issue.input === undefined ? "Please select a State" : undefined,
+        issue.input === undefined
+          ? t("common.errors.caseStateRequired")
+          : undefined,
     }),
     folderId: z.number({
       error: (issue) =>
-        issue.input === undefined ? "Please select a Folder" : undefined,
+        issue.input === undefined
+          ? t("common.errors.caseFolderRequired")
+          : undefined,
     }),
     estimate: z
       .string()
@@ -254,8 +260,7 @@ const createFormSchema = (fields: any[]) => {
           return durationInMilliseconds !== null;
         },
         {
-          error:
-            "Invalid duration format. Try something like 30m, 1 week or 1h 25m",
+          error: t("common.validation.invalidDurationFormat"),
         }
       )
       .refine(
@@ -267,7 +272,7 @@ const createFormSchema = (fields: any[]) => {
           return durationInSeconds <= MAX_DURATION;
         },
         {
-          error: "Estimate is too large",
+          error: t("common.errors.estimateTooLarge"),
         }
       ),
     automated: z.boolean().prefault(false),
@@ -295,7 +300,7 @@ const createFormSchema = (fields: any[]) => {
         field.caseField.displayName !== "Steps" &&
         field.caseField.type.type !== "Date"
       ) {
-        schema[fieldName] = mapFieldToZodType(field);
+        schema[fieldName] = mapFieldToZodType(field, t);
       }
       return schema;
     },
@@ -709,8 +714,8 @@ export default function TestCaseDetails() {
     return transformFolders(folders || []);
   }, [folders]);
 
-  const [, setFormSchema] = useState(
-    createFormSchema(testcase?.template?.caseFields || [])
+  const [, setFormSchema] = useState(() =>
+    createFormSchema(testcase?.template?.caseFields || [], t)
   );
 
   const { data: workflows } = useFindManyWorkflows(
@@ -811,10 +816,12 @@ export default function TestCaseDetails() {
   useEffect(() => {
     if (!isFormInitialized.current || !testcase || !templates) return;
 
-    const selectedTemplate = templates.find((t) => t.id === selectedTemplateId);
+    const selectedTemplate = templates.find(
+      (template) => template.id === selectedTemplateId
+    );
     const caseFieldsForSchema =
       selectedTemplate?.caseFields || (selectedTemplateId === null ? [] : []);
-    const newSchema = createFormSchema(caseFieldsForSchema);
+    const newSchema = createFormSchema(caseFieldsForSchema, t);
     setFormSchema(newSchema);
 
     // Get current form values to preserve external issues
@@ -874,6 +881,7 @@ export default function TestCaseDetails() {
     reset,
     setFormSchema,
     getValues,
+    t,
     // parseJsonToTipTap, formatSeconds, emptyEditorContent are assumed stable
   ]);
 
@@ -948,7 +956,7 @@ export default function TestCaseDetails() {
     ) {
       methods.setError("name", {
         type: "manual",
-        message: "Please enter a name for the Test Case",
+        message: t("common.errors.caseNameRequired"),
       });
       hasErrors = true;
     }
@@ -956,7 +964,7 @@ export default function TestCaseDetails() {
     if (!data.workflowId) {
       methods.setError("workflowId", {
         type: "manual",
-        message: "Please select a State",
+        message: t("common.errors.caseStateRequired"),
       });
       hasErrors = true;
     }
@@ -964,7 +972,7 @@ export default function TestCaseDetails() {
     if (!data.folderId) {
       methods.setError("folderId", {
         type: "manual",
-        message: "Please select a Folder",
+        message: t("common.errors.caseFolderRequired"),
       });
       hasErrors = true;
     }
@@ -975,8 +983,7 @@ export default function TestCaseDetails() {
       if (durationInMilliseconds === null) {
         methods.setError("estimate", {
           type: "manual",
-          message:
-            "Invalid duration format. Try something like 30m, 1 week or 1h 25m",
+          message: t("common.validation.invalidDurationFormat"),
         });
         hasErrors = true;
       } else {
@@ -984,7 +991,7 @@ export default function TestCaseDetails() {
         if (durationInSeconds > MAX_DURATION) {
           methods.setError("estimate", {
             type: "manual",
-            message: "Estimate is too large",
+            message: t("common.errors.estimateTooLarge"),
           });
           hasErrors = true;
         }
@@ -2052,7 +2059,7 @@ export default function TestCaseDetails() {
                                 )}
                                 {field.caseField.isRestricted && (
                                   <span
-                                    title="Restricted Field"
+                                    title={t("common.aria.restrictedField")}
                                     className="ml-1 text-muted-foreground"
                                   >
                                     <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />

@@ -385,6 +385,10 @@ function extractPartialTestCases(
   return results;
 }
 
+// Mirrors `LlmStreamErrorCode` in `app/api/llm/generate-test-cases/error-codes.ts`.
+// Kept duplicated here (rather than imported) because importing a server-only
+// module into a client component pulls server-side deps into the client bundle.
+// Add new codes in both places.
 type LlmErrorType =
   | "overloaded"
   | "quota"
@@ -392,7 +396,10 @@ type LlmErrorType =
   | "unauthorized"
   | "forbidden"
   | "network"
-  | "generic";
+  | "generic"
+  | "project_not_found"
+  | "no_integration"
+  | "invalid_request";
 
 interface LlmErrorState {
   type: LlmErrorType;
@@ -1789,7 +1796,7 @@ export function GenerateTestCasesWizard({
           setIsNotificationReopen(false);
         }
       } catch {
-        toast.error("Failed to load job results");
+        toast.error(tCommon("errors.failedToLoadJobResults"));
         setIsNotificationReopen(false);
       }
     },
@@ -2674,6 +2681,7 @@ export function GenerateTestCasesWizard({
       let accumulated = "";
       let streamDone = false;
       let streamError: string | undefined;
+      let streamErrorCode: LlmErrorType | undefined;
       let yieldedCount = 0; // how many test cases we've already rendered
       const finalizedCases: GeneratedTestCase[] = [];
 
@@ -2753,6 +2761,9 @@ export function GenerateTestCasesWizard({
               }
             } else if (data.type === "error") {
               streamError = data.message;
+              if (typeof data.code === "string") {
+                streamErrorCode = data.code as LlmErrorType;
+              }
             }
           } catch (e) {
             if (e instanceof SyntaxError) continue;
@@ -2771,7 +2782,9 @@ export function GenerateTestCasesWizard({
       setGeneratedTestCases([...finalizedCases]);
 
       if (streamError) {
-        throw new Error(JSON.stringify({ message: streamError }));
+        throw new Error(
+          JSON.stringify({ message: streamError, code: streamErrorCode })
+        );
       }
 
       if (!accumulated && !streamDone) {
@@ -2839,6 +2852,20 @@ export function GenerateTestCasesWizard({
           : undefined) ||
         "";
 
+      const KNOWN_ERROR_TYPES: ReadonlySet<LlmErrorType> =
+        new Set<LlmErrorType>([
+          "overloaded",
+          "quota",
+          "timeout",
+          "unauthorized",
+          "forbidden",
+          "network",
+          "generic",
+          "project_not_found",
+          "no_integration",
+          "invalid_request",
+        ]);
+
       const normalizedMessage = [
         providerDetail,
         typeof enhancedError?.error === "string" ? enhancedError.error : "",
@@ -2852,7 +2879,21 @@ export function GenerateTestCasesWizard({
 
       let errorType: LlmErrorType = "generic";
 
-      if (contains("overload") || contains("busy") || contains("capacity")) {
+      // Prefer the explicit code from the SSE error event when present (the
+      // server classifies errors close to where they happen). Fall back to
+      // substring matching for legacy paths that don't yet emit a code.
+      const serverCode =
+        typeof parsedErrorPayload?.code === "string"
+          ? (parsedErrorPayload.code as LlmErrorType)
+          : undefined;
+
+      if (serverCode && KNOWN_ERROR_TYPES.has(serverCode)) {
+        errorType = serverCode;
+      } else if (
+        contains("overload") ||
+        contains("busy") ||
+        contains("capacity")
+      ) {
         errorType = "overloaded";
       } else if (
         contains("quota") ||
@@ -2899,6 +2940,9 @@ export function GenerateTestCasesWizard({
         forbidden: ["reviewConfiguration", "contactAdmin", "checkStatus"],
         network: ["checkNetwork", "retryLater", "contactAdmin"],
         generic: ["retryLater", "contactAdmin", "checkStatus"],
+        project_not_found: ["contactAdmin"],
+        no_integration: ["reviewConfiguration", "contactAdmin"],
+        invalid_request: ["retryLater", "contactAdmin"],
       };
 
       const providerSuggestions =
@@ -2940,6 +2984,18 @@ export function GenerateTestCasesWizard({
         case "network":
           title = t(`${baseKey}.network.title` as any);
           message = t(`${baseKey}.network.message` as any);
+          break;
+        case "project_not_found":
+          title = t(`${baseKey}.projectNotFound.title` as any);
+          message = t(`${baseKey}.projectNotFound.message` as any);
+          break;
+        case "no_integration":
+          title = t(`${baseKey}.noIntegration.title` as any);
+          message = t(`${baseKey}.noIntegration.message` as any);
+          break;
+        case "invalid_request":
+          title = t(`${baseKey}.invalidRequest.title` as any);
+          message = t(`${baseKey}.invalidRequest.message` as any);
           break;
         default:
           break;

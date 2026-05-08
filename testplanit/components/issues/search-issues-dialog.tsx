@@ -118,8 +118,18 @@ export function SearchIssuesDialog({
     string | null
   >(null);
 
-  // Partial failure tracking
-  const [searchFailures, setSearchFailures] = useState<string[]>([]);
+  // Partial failure tracking (fan-out: a per-project entry exists when that
+  // project's search returned non-2xx). The error message is captured so
+  // the UI can distinguish "no matches" (success but empty) from "search
+  // failed" (e.g. GitHub 422 on a config that lists users not repos, or
+  // 403 from a token whose lifetime exceeds the org's PAT policy).
+  const [searchFailures, setSearchFailures] = useState<
+    { projectKey: string; status: number; message: string }[]
+  >([]);
+  // Single-project / fatal error captured separately. Used both for the
+  // legacy single-project search (no fan-out) and as a catch-all when the
+  // fan-out path hits an exception before per-project results land.
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
@@ -227,6 +237,7 @@ export function SearchIssuesDialog({
 
     if (manageLoadingState) setIsSearching(true);
     setAuthError(null);
+    setSearchError(null);
     setSearchFailures([]);
 
     try {
@@ -261,11 +272,14 @@ export function SearchIssuesDialog({
         if (!response.ok) {
           const errorData = await response
             .json()
-            .catch(() => ({ error: "Unknown error" }));
+            .catch(() => ({ error: undefined }));
           console.error("Search API error:", errorData);
-          throw new Error(
-            errorData.error || "Failed to search external issues"
+          setSearchError(
+            errorData?.error ??
+              `HTTP ${response.status}: failed to search external issues`
           );
+          setExternalIssues([]);
+          return null;
         }
 
         const data = await response.json();
@@ -304,14 +318,26 @@ export function SearchIssuesDialog({
             return {
               success: false,
               projectKey: ip.externalProjectKey,
+              status: response.status,
+              message: errorData.error ?? "Authentication required",
               issues: [] as ExternalIssue[],
             };
           }
 
           if (!response.ok) {
+            // Read the server's error message so the UI can surface what
+            // actually went wrong (422 validation, 403 scope/policy, 500
+            // downstream). Falling back to a generic message keeps the
+            // path safe if the server returned a non-JSON body.
+            const errorData = await response
+              .json()
+              .catch(() => ({ error: undefined }));
             return {
               success: false,
               projectKey: ip.externalProjectKey,
+              status: response.status,
+              message:
+                errorData?.error ?? `HTTP ${response.status}: search failed`,
               issues: [] as ExternalIssue[],
             };
           }
@@ -335,14 +361,16 @@ export function SearchIssuesDialog({
             })
           );
           return {
-            success: true,
+            success: true as const,
             projectKey: ip.externalProjectKey,
             issues: formattedIssues,
           };
-        } catch {
+        } catch (err) {
           return {
-            success: false,
+            success: false as const,
             projectKey: ip.externalProjectKey,
+            status: 0,
+            message: err instanceof Error ? err.message : "Network error",
             issues: [] as ExternalIssue[],
           };
         }
@@ -351,18 +379,33 @@ export function SearchIssuesDialog({
       const results = await Promise.allSettled(searchPromises);
 
       const allIssues: ExternalIssue[] = [];
-      const failures: string[] = [];
+      const failures: {
+        projectKey: string;
+        status: number;
+        message: string;
+      }[] = [];
 
       for (const result of results) {
         if (result.status === "fulfilled") {
           if (result.value.success) {
             allIssues.push(...result.value.issues);
           } else {
-            failures.push(result.value.projectKey);
+            failures.push({
+              projectKey: result.value.projectKey,
+              status: result.value.status,
+              message: result.value.message,
+            });
           }
         } else {
           // Promise itself rejected (shouldn't happen with try/catch, but safety net)
-          failures.push("unknown");
+          failures.push({
+            projectKey: "unknown",
+            status: 0,
+            message:
+              result.reason instanceof Error
+                ? result.reason.message
+                : "Unknown error",
+          });
         }
       }
 
@@ -371,6 +414,11 @@ export function SearchIssuesDialog({
       return allIssues;
     } catch (error) {
       console.error("Failed to search external issues:", error);
+      setSearchError(
+        error instanceof Error
+          ? error.message
+          : "Failed to search external issues"
+      );
       setExternalIssues([]);
       return null;
     } finally {
@@ -565,17 +613,43 @@ export function SearchIssuesDialog({
                 </div>
               )}
 
-            {/* Partial failure alert */}
+            {/* Search-failed alert (legacy single-project path or fan-out
+                exception). Distinct from "no matches" — shown when the API
+                actually returned a non-2xx, so the user knows the empty
+                state below is NOT just "nothing matched". */}
+            {searchError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>{t("issues.searchFailedTitle")}</AlertTitle>
+                <AlertDescription>{searchError}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Partial failure alert (fan-out: at least one IntegrationProject
+                returned non-2xx). Shows the count + per-project messages so
+                the admin can see which project's search broke and why
+                (e.g. "ACME: Validation Failed — listed users and
+                repositories cannot be searched"). */}
             {searchFailures.length > 0 && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  {t("issues.fanOutPartialFailure", {
-                    count: searchFailures.length,
-                    successCount:
-                      (activeIntegrationProjects?.length || 0) -
-                      searchFailures.length,
-                  })}
+                  <p>
+                    {t("issues.fanOutPartialFailure", {
+                      count: searchFailures.length,
+                      successCount:
+                        (activeIntegrationProjects?.length || 0) -
+                        searchFailures.length,
+                    })}
+                  </p>
+                  <ul className="mt-2 list-disc pl-5 space-y-1 text-sm">
+                    {searchFailures.map((f) => (
+                      <li key={f.projectKey}>
+                        <span className="font-medium">{f.projectKey}</span>:{" "}
+                        {f.message}
+                      </li>
+                    ))}
+                  </ul>
                 </AlertDescription>
               </Alert>
             )}

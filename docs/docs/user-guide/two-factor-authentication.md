@@ -149,7 +149,7 @@ When enabled:
 ### Enforcement Behavior
 
 | Setting | Password Login | SSO Login |
-|---------|----------------|-----------|
+| --------- | ---------------- | ----------- |
 | Both disabled | 2FA optional | 2FA optional |
 | Non-SSO only | 2FA required | 2FA optional |
 | All logins | 2FA required | 2FA required |
@@ -196,7 +196,7 @@ If a user is locked out:
 All 2FA-related actions emit entries in the [audit log](/docs/user-guide/audit-logs):
 
 | Action | Description |
-|--------|-------------|
+| -------- | ------------- |
 | `TWO_FACTOR_SETUP_REQUIRED` | Administrator enforced 2FA setup for a user |
 | `TWO_FACTOR_ENABLED` | User completed 2FA enrollment |
 | `TWO_FACTOR_VERIFIED` | User passed a 2FA challenge during the SSO flow |

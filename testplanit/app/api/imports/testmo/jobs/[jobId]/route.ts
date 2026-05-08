@@ -73,7 +73,6 @@ export async function GET(request: NextRequest, context: RouteContext) {
 }
 
 export async function POST(request: NextRequest, context: RouteContext) {
-  // Audit: intentionally-skipped (Phase 62 / D-11).
   // This endpoint is a Testmo-import preparation step (generic job mutation,
   // currently only `action: "cancel"`). The consequential event is the
   // import START -> COMPLETE pair audited at:
