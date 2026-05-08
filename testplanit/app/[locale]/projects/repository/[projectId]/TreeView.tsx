@@ -516,14 +516,16 @@ const TreeView: React.FC<{
         next.delete(submitted.folderId);
         return next;
       });
-      toast.error(
-        t("repository.dragDrop.copyError", {
-          count: submitted?.caseCount ?? 1,
-          folder: submitted?.folderName ?? "",
-          dest: "samename",
-          projectName: "",
-        })
-      );
+      if (submitted != null) {
+        toast.error(
+          t("repository.dragDrop.copyError", {
+            count: submitted.caseCount,
+            folder: submitted.folderName,
+            dest: "samename",
+            projectName: "",
+          })
+        );
+      }
       lastSubmittedRef.current = null;
       copyMoveJob.reset();
     }
