@@ -1990,7 +1990,9 @@
       },
       "changePasswordModal": {
         "buttonText": "Cambiar contraseña",
+        "setPasswordButtonText": "Establecer contraseña",
         "description": "Introduzca su contraseña actual y una nueva contraseña para cambiar la contraseña de su cuenta. Esto sólo cambiará su contraseña administrada internamente. Si inicia sesión a través del SSO, esa contraseña no cambiará.",
+        "setPasswordDescription": "Has iniciado sesión mediante SSO y aún no has configurado una contraseña local. Introduce una nueva contraseña para habilitar el inicio de sesión con correo electrónico y contraseña en tu cuenta.",
         "currentPasswordLabel": "Contraseña actual",
         "newPasswordLabel": "Nueva contraseña",
         "confirmPasswordLabel": "Confirmar nueva contraseña",
