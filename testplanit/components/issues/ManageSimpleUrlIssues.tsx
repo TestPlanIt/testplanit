@@ -27,7 +27,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
-import * as z from "zod";
+import * as z from "zod/v4";
 import { useFindManyIssue, useUpsertIssue } from "~/lib/hooks";
 import { buildSimpleUrlLink } from "~/lib/integrations/simpleUrl";
 

@@ -48,7 +48,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
+import { z } from "zod/v4";
 import type { BatchTestRunSummaryResponse } from "~/app/api/test-runs/summaries/route";
 import { emptyEditorContent } from "~/app/constants";
 import { CommentsSection } from "~/components/comments/CommentsSection";

@@ -12,7 +12,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FieldOptions } from "@prisma/client";
 import { Controller, useForm } from "react-hook-form";
-import { z } from "zod";
+import { z } from "zod/v4";
 
 import { DraggableList } from "@/components/DraggableFieldOptions";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";

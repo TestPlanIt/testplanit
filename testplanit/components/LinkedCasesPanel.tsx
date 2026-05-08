@@ -49,7 +49,7 @@ import {
 import type { Session } from "next-auth";
 import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from "react";
-import { z } from "zod";
+import { z } from "zod/v4";
 import {
   useFindManyRepositoryCaseLink,
   useUpdateRepositoryCaseLink,

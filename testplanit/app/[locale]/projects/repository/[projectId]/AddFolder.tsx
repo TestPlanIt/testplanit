@@ -30,7 +30,7 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
 import {
   useCreateRepositoryFolders,

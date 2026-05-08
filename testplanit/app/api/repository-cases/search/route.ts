@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import { getServerAuthSession } from "~/server/auth";

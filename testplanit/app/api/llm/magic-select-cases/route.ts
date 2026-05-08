@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { ProjectAccessType } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { authOptions } from "~/server/auth";
 import {
   getElasticsearchClient,

@@ -23,7 +23,7 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { z } from "zod";
+import { z } from "zod/v4";
 import {
   useCreateConfigCategories,
   useCreateConfigVariants,

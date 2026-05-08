@@ -46,7 +46,7 @@ import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import MultiSelect from "react-select";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
 import { IconName } from "~/types/globals";

@@ -1,6 +1,6 @@
 import { hash } from "bcrypt";
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { isEmailServerConfigured } from "~/lib/email/emailConfig";
 import { db } from "~/server/db";
 
