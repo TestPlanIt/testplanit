@@ -218,8 +218,10 @@ function SortableItem<
   }, [isOverCurrent]);
 
   useEffect(() => {
-    setIsOverReorderZone(isOverCurrent);
-    return () => setIsOverReorderZone(false);
+    if (isOverCurrent) {
+      setIsOverReorderZone(true);
+      return () => setIsOverReorderZone(false);
+    }
   }, [isOverCurrent, setIsOverReorderZone]);
 
   useEffect(() => {
