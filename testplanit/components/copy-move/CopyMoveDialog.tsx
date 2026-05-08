@@ -262,7 +262,7 @@ export function CopyMoveDialog({
       job.reset();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, sourceProjectId]);
 
   // ── Handle dialog close ──────────────────────────────────────────────────
   const handleOpenChange = useCallback(
