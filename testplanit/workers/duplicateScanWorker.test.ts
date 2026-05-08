@@ -398,9 +398,7 @@ describe("DuplicateScanWorker", () => {
       mockFindSimilarCases.mockResolvedValue([makePair(1, 2, 0.95)]);
 
       const { processor } = await loadWorker();
-      const result = await processor(
-        makeMockJob({ id: "job-link-1" }) as Job
-      );
+      const result = await processor(makeMockJob({ id: "job-link-1" }) as Job);
 
       expect(result.pairsFound).toBe(0);
 
@@ -426,9 +424,7 @@ describe("DuplicateScanWorker", () => {
       mockFindSimilarCases.mockResolvedValue([makePair(5, 6, 0.9)]);
 
       const { processor } = await loadWorker();
-      const result = await processor(
-        makeMockJob({ id: "job-link-2" }) as Job
-      );
+      const result = await processor(makeMockJob({ id: "job-link-2" }) as Job);
 
       expect(result.pairsFound).toBe(0);
     });
@@ -460,9 +456,7 @@ describe("DuplicateScanWorker", () => {
       mockFindSimilarCases.mockResolvedValue([makePair(7, 8, 0.85)]);
 
       const { processor } = await loadWorker();
-      const result = await processor(
-        makeMockJob({ id: "job-link-4" }) as Job
-      );
+      const result = await processor(makeMockJob({ id: "job-link-4" }) as Job);
 
       expect(result.pairsFound).toBe(1);
     });

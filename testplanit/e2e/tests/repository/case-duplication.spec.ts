@@ -134,7 +134,10 @@ test.describe("Case duplication", () => {
     request,
     baseURL,
   }) => {
-    test.skip(!duplicateJobId, "Queue unavailable — skipping data verification");
+    test.skip(
+      !duplicateJobId,
+      "Queue unavailable — skipping data verification"
+    );
 
     const jobResult = await pollUntilDone(request, baseURL!, duplicateJobId!);
     expect(jobResult.state).toBe("completed");
