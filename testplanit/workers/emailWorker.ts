@@ -113,10 +113,6 @@ const processor = async (job: Job) => {
         } else if (notification.type === "LLM_BUDGET_ALERT") {
           // Same destination as the bell-icon link (`data.link`) — admin LLM page.
           notificationUrl = `${baseUrl}/${urlLocale}${data.link ?? "/admin/llm"}`;
-        } else if (notification.type === "COPY_MOVE_COMPLETE") {
-          if (data.targetProjectId) {
-            notificationUrl = `${baseUrl}/${urlLocale}/projects/repository/${data.targetProjectId}`;
-          }
         }
 
         // Get translated title and message
@@ -306,30 +302,6 @@ const processor = async (job: Job) => {
                   budget,
                 }
               );
-        } else if (notification.type === "COPY_MOVE_COMPLETE") {
-          const isCopy = data.operation === "copy";
-          const count = (data.copiedCount ?? 0) + (data.movedCount ?? 0);
-          translatedTitle = await getServerTranslation(
-            userLocale,
-            isCopy
-              ? "components.notifications.content.copyCompleteTitle"
-              : "components.notifications.content.moveCompleteTitle"
-          );
-          let body = await getServerTranslation(
-            userLocale,
-            isCopy
-              ? "components.notifications.content.copyCompleteMessage"
-              : "components.notifications.content.moveCompleteMessage",
-            { count }
-          );
-          if (data.errorCount && data.errorCount > 0) {
-            body += await getServerTranslation(
-              userLocale,
-              "components.notifications.content.copyMoveErrorsAppend",
-              { errorCount: data.errorCount }
-            );
-          }
-          translatedMessage = body;
         }
 
         // Get email template translations
