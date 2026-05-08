@@ -905,29 +905,23 @@ export function CopyMoveDialog({
                     {tCommon("actions.complete")}
                   </div>
                   <p className="text-sm">
-                    {operation === "copy"
-                      ? tGlobal("repository.dragDrop.copyComplete", {
-                          count:
-                            (job.result.copiedCount ?? 0) +
-                            (job.result.movedCount ?? 0),
-                          folder: selectedFolder?.name ?? "",
-                          dest:
-                            targetProjectId === sourceProjectId
-                              ? "samename"
-                              : "crossProject",
-                          projectName: selectedProject?.name ?? "",
-                        })
-                      : tGlobal("repository.dragDrop.moveComplete", {
-                          count:
-                            (job.result.copiedCount ?? 0) +
-                            (job.result.movedCount ?? 0),
-                          folder: selectedFolder?.name ?? "",
-                          dest:
-                            targetProjectId === sourceProjectId
-                              ? "samename"
-                              : "crossProject",
-                          projectName: selectedProject?.name ?? "",
-                        })}
+                    {tGlobal(
+                      operation === "copy"
+                        ? "repository.dragDrop.copyComplete"
+                        : "repository.dragDrop.moveComplete",
+                      {
+                        count:
+                          operation === "copy"
+                            ? (job.result.copiedCount ?? 0)
+                            : (job.result.movedCount ?? 0),
+                        folder: selectedFolder?.name ?? "",
+                        dest:
+                          targetProjectId === sourceProjectId
+                            ? "samename"
+                            : "crossProject",
+                        projectName: selectedProject?.name ?? "",
+                      }
+                    )}
                   </p>
                   {job.result.skippedCount > 0 && (
                     <p className="text-sm text-muted-foreground">
