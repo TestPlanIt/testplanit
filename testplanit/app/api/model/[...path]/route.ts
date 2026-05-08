@@ -191,29 +191,40 @@ async function getPrisma() {
 
   let user;
   if (userId) {
-    user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        access: true,
-        roleId: true, // Required by ZenStack authSelector
-        isActive: true,
-        isDeleted: true,
-        role: {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        user = await prisma.user.findUnique({
+          where: { id: userId },
           select: {
             id: true,
-            rolePermissions: true,
+            name: true,
+            email: true,
+            access: true,
+            roleId: true, // Required by ZenStack authSelector
+            isActive: true,
+            isDeleted: true,
+            role: {
+              select: {
+                id: true,
+                rolePermissions: true,
+              },
+            },
+            groups: {
+              include: {
+                group: true,
+              },
+            },
           },
-        },
-        groups: {
-          include: {
-            group: true,
-          },
-        },
-      },
-    });
+        });
+        break;
+      } catch (err) {
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 50 * (attempt + 1)));
+        } else {
+          console.error("[getPrisma] user lookup failed after 3 attempts:", err);
+        }
+      }
+    }
   }
 
   // Use prisma from lib/prisma.ts which has audit logging extensions

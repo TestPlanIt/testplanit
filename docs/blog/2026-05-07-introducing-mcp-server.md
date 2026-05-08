@@ -79,7 +79,7 @@ All operations are scoped to your API token's permissions. The AI can only see a
 
 The MCP Server is a standalone package you install once. It authenticates with your existing TestPlanIt API token and works with any MCP-compatible client — Claude Desktop, Cursor, and others.
 
-Full setup instructions are in the [MCP Server documentation](/docs/mcp-server).
+Full setup instructions are in the [MCP Server documentation](/docs/sdk/mcp-overview).
 
 ---
 

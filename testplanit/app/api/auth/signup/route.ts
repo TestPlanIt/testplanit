@@ -92,6 +92,9 @@ export async function POST(req: NextRequest) {
           emailVerifToken: requireEmailVerification
             ? validatedData.emailVerifToken
             : null,
+          emailTokenExpires: requireEmailVerification
+            ? new Date(Date.now() + 24 * 60 * 60 * 1000)
+            : null,
           emailVerified: requireEmailVerification ? null : new Date(),
           access: validatedData.access,
           roleId,

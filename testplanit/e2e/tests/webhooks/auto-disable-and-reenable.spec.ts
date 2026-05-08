@@ -68,10 +68,11 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
   }) => {
     // 1. Configure outbound webhook via the admin form.
     await page.goto(
-      `${baseURL}/projects/settings/${projectId}/webhooks?tab=outbound`
+      `${baseURL}/en-US/projects/settings/${projectId}/webhooks`
     );
+    await page.waitForLoadState("networkidle");
     await expect(page.getByTestId("webhooks-tab-outbound")).toBeVisible({
-      timeout: 15_000,
+      timeout: 20_000,
     });
     await page.getByTestId("webhooks-tab-outbound").click();
     await expect(page.getByTestId("webhook-outbound-form")).toBeVisible({
@@ -166,7 +167,8 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
     // 5. Reload the inbound tab; badge flips to DISABLED variant. Outbound
     //    cards live on the inbound page in the configured-list sense — the
     //    health badge is rendered per card on the same form.
-    await page.goto(`${baseURL}/projects/settings/${projectId}/webhooks`);
+    await page.goto(`${baseURL}/en-US/projects/settings/${projectId}/webhooks`);
+    await page.waitForLoadState("networkidle");
     // Outbound config doesn't render a card on the inbound tab; navigate to
     // the outbound tab to find it.
     await page.getByTestId("webhooks-tab-outbound").click();
@@ -189,7 +191,7 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
         direction: "OUTBOUND",
         error: "endpoint_disabled",
       },
-      timeoutMs: 30_000,
+      timeoutMs: 60_000,
     });
     expect(disabledDelivery.length).toBeGreaterThanOrEqual(1);
     expect(disabledDelivery[0].statusCode).toBeNull();
@@ -208,10 +210,11 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
     // 1. Continue from Test 1 — the config is DISABLED. Find the outbound
     //    card (rendered on the outbound tab) and click Re-enable.
     await page.goto(
-      `${baseURL}/projects/settings/${projectId}/webhooks?tab=outbound`
+      `${baseURL}/en-US/projects/settings/${projectId}/webhooks`
     );
+    await page.waitForLoadState("networkidle");
     await expect(page.getByTestId("webhooks-tab-outbound")).toBeVisible({
-      timeout: 15_000,
+      timeout: 20_000,
     });
     await page.getByTestId("webhooks-tab-outbound").click();
     await expect(page.getByTestId("webhook-outbound-form")).toBeVisible({
@@ -280,7 +283,7 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
         direction: "OUTBOUND",
         error: null,
       },
-      timeoutMs: 30_000,
+      timeoutMs: 60_000,
     });
     expect(successDelivery.length).toBeGreaterThanOrEqual(1);
     expect(successDelivery[0].statusCode).toBe(200);

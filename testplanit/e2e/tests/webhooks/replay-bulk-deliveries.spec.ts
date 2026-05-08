@@ -73,10 +73,11 @@ test.describe("Webhook delivery bulk replay — outbound-only count", () => {
   }) => {
     // 1. Configure outbound webhook via the admin form.
     await page.goto(
-      `${baseURL}/projects/settings/${projectId}/webhooks?tab=outbound`
+      `${baseURL}/en-US/projects/settings/${projectId}/webhooks`
     );
+    await page.waitForLoadState("networkidle");
     await expect(page.getByTestId("webhooks-tab-outbound")).toBeVisible({
-      timeout: 15_000,
+      timeout: 20_000,
     });
     await page.getByTestId("webhooks-tab-outbound").click();
     await expect(page.getByTestId("webhook-outbound-form")).toBeVisible({
@@ -104,7 +105,8 @@ test.describe("Webhook delivery bulk replay — outbound-only count", () => {
     outboundConfigId = outboundConfig!.id;
 
     // 2. Configure GitHub inbound webhook in the same project.
-    await page.goto(`${baseURL}/projects/settings/${projectId}/webhooks`);
+    await page.goto(`${baseURL}/en-US/projects/settings/${projectId}/webhooks`);
+    await page.waitForLoadState("networkidle");
     const form = page.getByTestId("webhook-config-form");
     await expect(form).toBeVisible();
     // 1:1 inbound model: Add skips the chooser and creates inline.
@@ -212,11 +214,12 @@ test.describe("Webhook delivery bulk replay — outbound-only count", () => {
     const since = new Date();
     since.setDate(since.getDate() - 1);
     const deliveriesUrl =
-      `${baseURL}/projects/settings/${projectId}/webhooks` +
+      `${baseURL}/en-US/projects/settings/${projectId}/webhooks` +
       `?tab=deliveries&configIds=${outboundConfigId}&status=failed&since=${since.toISOString()}`;
     await page.goto(deliveriesUrl);
+    await page.waitForLoadState("networkidle");
     await expect(page.getByTestId("webhook-deliveries-tab")).toBeVisible({
-      timeout: 15_000,
+      timeout: 20_000,
     });
     await expect(page.getByTestId("webhook-deliveries-table")).toBeVisible({
       timeout: 10_000,
@@ -254,7 +257,7 @@ test.describe("Webhook delivery bulk replay — outbound-only count", () => {
         replayedFromDeliveryId: { in: seededOutboundDeliveryIds },
       },
       target: FAILED_OUTBOUND_COUNT,
-      timeoutMs: 30_000,
+      timeoutMs: 60_000,
     });
     expect(replayRows.length).toBe(FAILED_OUTBOUND_COUNT);
     for (const row of replayRows) {

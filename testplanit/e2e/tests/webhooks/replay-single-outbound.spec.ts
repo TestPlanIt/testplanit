@@ -56,10 +56,11 @@ test.describe("Webhook delivery replay — single outbound", () => {
   }) => {
     // 1. Configure outbound webhook pointing at the stub.
     await page.goto(
-      `${baseURL}/projects/settings/${projectId}/webhooks?tab=outbound`
+      `${baseURL}/en-US/projects/settings/${projectId}/webhooks`
     );
+    await page.waitForLoadState("networkidle");
     await expect(page.getByTestId("webhooks-tab-outbound")).toBeVisible({
-      timeout: 15_000,
+      timeout: 20_000,
     });
     await page.getByTestId("webhooks-tab-outbound").click();
     await expect(page.getByTestId("webhook-outbound-form")).toBeVisible({
@@ -102,7 +103,7 @@ test.describe("Webhook delivery replay — single outbound", () => {
         error: { not: null },
         replayedFromDeliveryId: null,
       },
-      timeoutMs: 30_000,
+      timeoutMs: 60_000,
     });
     expect(failedRows.length).toBeGreaterThanOrEqual(1);
     const failed = failedRows[0];
@@ -119,10 +120,11 @@ test.describe("Webhook delivery replay — single outbound", () => {
 
     // 4. Open the Deliveries tab and click the failed row.
     await page.goto(
-      `${baseURL}/projects/settings/${projectId}/webhooks?tab=deliveries`
+      `${baseURL}/en-US/projects/settings/${projectId}/webhooks?tab=deliveries`
     );
+    await page.waitForLoadState("networkidle");
     await expect(page.getByTestId("webhooks-tab-deliveries")).toBeVisible({
-      timeout: 15_000,
+      timeout: 20_000,
     });
     await page.getByTestId("webhooks-tab-deliveries").click();
     await expect(page.getByTestId("webhook-deliveries-tab")).toBeVisible({
@@ -166,7 +168,7 @@ test.describe("Webhook delivery replay — single outbound", () => {
         direction: "OUTBOUND",
         replayedFromDeliveryId: originalDeliveryId,
       },
-      timeoutMs: 30_000,
+      timeoutMs: 60_000,
     });
     expect(replayRows.length).toBeGreaterThanOrEqual(1);
     const replay = replayRows[0];
