@@ -700,6 +700,8 @@
       "casesInRun": "{count, plural, =0 {No hay casos de prueba en la prueba} =1 {1 caso de prueba en la prueba} other {# casos de prueba en la prueba}}",
       "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 Caso único} other {# Casos únicos}} en {configCount, plural, =1 {1 Configuración} other {# Configuraciones}} ({totalCount} casos totales)",
       "viewTestRunDetails": "Ver detalles de la prueba",
+      "sortByStatus": "Agrupar por estado",
+      "sortByDate": "Ordenar por fecha",
       "testRuns": "{count, plural, =0 {No hay ejecuciones de prueba} =1 {1 Prueba de ejecución} other {# Prueba de ejecuciones}}",
       "sessions": "{count, plural, =0 {Sin Sesiones} =1 {1 Sesión} other {# Sesiones}}",
       "noOptions": "No hay opciones disponibles",

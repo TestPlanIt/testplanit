@@ -700,6 +700,8 @@
       "casesInRun": "{count, plural, =0 {No Test Cases in the Test Run} =1 {1 Test Case in the Test Run} other {# Test Cases in the Test Run}}",
       "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 Unique Case} other {# Unique Cases}} across {configCount, plural, =1 {1 Configuration} other {# Configurations}} ({totalCount} total cases)",
       "viewTestRunDetails": "View test run details",
+      "sortByStatus": "Group by status",
+      "sortByDate": "Sort by date",
       "testRuns": "{count, plural, =0 {No Test Runs} =1 {1 Test Run} other {# Test Runs}}",
       "sessions": "{count, plural, =0 {No Sessions} =1 {1 Session} other {# Sessions}}",
       "noOptions": "No options available",
