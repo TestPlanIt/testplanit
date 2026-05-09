@@ -246,6 +246,7 @@ async function getBatchRegularRunSummaries(
     colorValue: string;
     estimate: number | null;
     isPending: boolean;
+    statusOrder: number | null;
   };
   const caseDetails = await prisma.$queryRaw<Array<CaseDetail>>`
     SELECT
@@ -258,7 +259,8 @@ async function getBatchRegularRunSummaries(
       COALESCE(s.name, 'Pending') as "statusName",
       COALESCE(c.value, '#9ca3af') as "colorValue",
       rc.estimate,
-      (trc."statusId" IS NULL OR s."isCompleted" = false) as "isPending"
+      (trc."statusId" IS NULL OR s."isCompleted" = false) as "isPending",
+      s.order as "statusOrder"
     FROM "TestRunCases" trc
     JOIN "RepositoryCases" rc ON trc."repositoryCaseId" = rc.id
     JOIN "TestRuns" tr ON trc."testRunId" = tr.id
@@ -362,6 +364,7 @@ async function getBatchRegularRunSummaries(
         colorValue: detail.colorValue,
         estimate: detail.estimate,
         isPending: detail.isPending,
+        statusOrder: detail.statusOrder,
       })),
     });
   });

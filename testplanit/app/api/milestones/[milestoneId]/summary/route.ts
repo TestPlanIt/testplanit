@@ -23,6 +23,7 @@ export type MilestoneSummaryData = {
     estimate: number | null;
     isPending: boolean;
     itemCount?: number; // For test runs, number of cases
+    statusOrder: number | null;
   }>;
   issues: Array<{
     id: number;
@@ -273,6 +274,7 @@ async function getTestRunSegments(
       statusName: string | null;
       colorValue: string | null;
       statusCaseCount: bigint;
+      statusOrder: number | null;
     }>
   >`
     WITH test_run_data AS (
@@ -283,6 +285,7 @@ async function getTestRunSegments(
         trc."statusId",
         s.name as "statusName",
         COALESCE(c.value, '#9ca3af') as "colorValue",
+        s.order as "statusOrder",
         COUNT(trc.id) as "statusCaseCount",
         SUM(
           COALESCE(trr.elapsed, 0) +
@@ -302,7 +305,7 @@ async function getTestRunSegments(
       LEFT JOIN "Color" c ON s."colorId" = c.id
       WHERE tr."milestoneId" = ANY(${milestoneIds}::int[])
         AND tr."isDeleted" = false
-      GROUP BY tr.id, tr.name, tr."testRunType", trc."statusId", s.name, c.value
+      GROUP BY tr.id, tr.name, tr."testRunType", trc."statusId", s.name, c.value, s.order
     )
     SELECT
       "testRunId",
@@ -315,9 +318,10 @@ async function getTestRunSegments(
       "statusId",
       COALESCE("statusName", 'Untested') as "statusName",
       "colorValue",
+      "statusOrder",
       SUM("statusCaseCount") as "statusCaseCount"
     FROM test_run_data
-    GROUP BY "testRunId", "testRunName", "testRunType", "statusId", "statusName", "colorValue"
+    GROUP BY "testRunId", "testRunName", "testRunType", "statusId", "statusName", "colorValue", "statusOrder"
     ORDER BY "testRunId", "statusId" ASC NULLS LAST
   `;
 
@@ -336,6 +340,7 @@ async function getTestRunSegments(
         elapsed: number;
         estimate: number;
         hasPending: boolean;
+        statusOrder: number | null;
       }>;
     }
   >();
@@ -357,6 +362,7 @@ async function getTestRunSegments(
       elapsed: Number(run.totalElapsed || 0),
       estimate: Number(run.totalEstimate || 0),
       hasPending: run.hasPendingCases,
+      statusOrder: run.statusOrder,
     });
   });
 
@@ -375,6 +381,7 @@ async function getTestRunSegments(
         estimate: caseData.estimate,
         isPending: caseData.hasPending,
         itemCount: caseData.count,
+        statusOrder: caseData.statusOrder,
       });
     });
   });
@@ -397,6 +404,7 @@ async function getSessionSegments(
       statusId: number | null;
       statusName: string | null;
       colorValue: string | null;
+      statusOrder: number | null;
     }>
   >`
     SELECT
@@ -408,7 +416,8 @@ async function getSessionSegments(
       sr.elapsed as "resultElapsed",
       sr."statusId",
       st.name as "statusName",
-      COALESCE(c.value, '#9ca3af') as "colorValue"
+      COALESCE(c.value, '#9ca3af') as "colorValue",
+      st.order as "statusOrder"
     FROM "Sessions" s
     LEFT JOIN LATERAL (
       SELECT
@@ -446,6 +455,7 @@ async function getSessionSegments(
       estimate: hasPending ? session.sessionEstimate : null,
       isPending: hasPending,
       itemCount: 1,
+      statusOrder: session.statusOrder,
     };
   });
 }

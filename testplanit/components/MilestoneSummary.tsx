@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useQuery } from "@tanstack/react-query";
 import {
+  ArrowUpDown,
   CalendarClock,
   CheckCircle2,
   Clock,
@@ -20,11 +21,13 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
+import { useMemo, useState } from "react";
 import type { MilestoneSummaryData } from "~/app/api/milestones/[milestoneId]/summary/route";
 import { useFindFirstStatus } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { cn, type ClassValue } from "~/utils";
 import { toHumanReadable } from "~/utils/duration";
+import { sortSummaryItems } from "~/utils/summarySort";
 
 interface MilestoneSummaryProps {
   milestoneId: number;
@@ -67,6 +70,19 @@ export function MilestoneSummary({
       color: true,
     },
   });
+
+  const [sortMode, setSortMode] = useState<"date" | "status">("date");
+
+  const sortedSegments = useMemo(
+    () =>
+      sortSummaryItems(
+        summaryData?.segments ?? [],
+        sortMode,
+        firstStatus?.id,
+        firstStatus?.order ?? 0
+      ),
+    [summaryData, sortMode, firstStatus?.id, firstStatus?.order]
+  );
 
   if (isLoading) {
     return (
@@ -165,8 +181,11 @@ export function MilestoneSummary({
         className="flex h-2.5 w-full rounded-full overflow-hidden bg-muted"
         data-testid="milestone-summary-bar"
       >
-        {summaryData.segments.map((segment, _index) => {
-          const color = segment.colorValue || "#9ca3af";
+        {sortedSegments.map((segment, _index) => {
+          const color =
+            segment.statusId !== null
+              ? segment.colorValue
+              : (firstStatus?.color?.value ?? segment.colorValue);
 
           // Calculate segment width based on elapsed time or item count
           const minSegmentWidth = 3;
@@ -309,6 +328,30 @@ export function MilestoneSummary({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={() =>
+                  setSortMode((m) => (m === "date" ? "status" : "date"))
+                }
+                onKeyDown={(e) =>
+                  e.key === "Enter" &&
+                  setSortMode((m) => (m === "date" ? "status" : "date"))
+                }
+                className="inline-flex cursor-pointer items-center text-muted-foreground hover:text-foreground transition-colors"
+                data-testid="sort-toggle"
+              >
+                <ArrowUpDown className="h-3 w-3" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              {sortMode === "date"
+                ? tCommon("labels.sortByStatus")
+                : tCommon("labels.sortByDate")}
+            </TooltipContent>
+          </Tooltip>
           {/* Display completion percentage */}
           <Tooltip>
             <TooltipTrigger asChild>

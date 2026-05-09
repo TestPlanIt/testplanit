@@ -76,6 +76,7 @@ export type TestRunSummaryData = {
     estimate: number | null;
     isPending: boolean;
     resultCount?: number;
+    statusOrder?: number | null;
   }>;
 };
 

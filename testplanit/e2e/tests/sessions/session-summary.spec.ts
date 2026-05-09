@@ -158,3 +158,41 @@ test.describe("Session Summary API", () => {
     expect(summary.commentsCount).toBe(0);
   });
 });
+
+test.describe("Sort toggle – statusOrder field", () => {
+  test("session summary includes statusOrder in every result", async ({
+    request,
+  }) => {
+    const projectResponse = await request.get(
+      `/api/model/projects/findFirst?q=${encodeURIComponent(
+        JSON.stringify({ where: { name: "E2E Test Project" } })
+      )}`
+    );
+    const project = await projectResponse.json();
+
+    const sessionResponse = await request.get(
+      `/api/model/sessions/findFirst?q=${encodeURIComponent(
+        JSON.stringify({
+          where: {
+            projectId: project.data.id,
+            name: "Exploratory Testing - User Management",
+          },
+        })
+      )}`
+    );
+    const session = await sessionResponse.json();
+
+    const summaryResponse = await request.get(
+      `/api/sessions/${session.data.id}/summary`
+    );
+    expect(summaryResponse.ok()).toBeTruthy();
+
+    const summary = await summaryResponse.json();
+    expect(summary.results.length).toBeGreaterThan(0);
+
+    for (const result of summary.results) {
+      expect(result).toHaveProperty("statusOrder");
+      expect(typeof result.statusOrder).toBe("number");
+    }
+  });
+});

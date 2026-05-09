@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useQuery } from "@tanstack/react-query";
 import {
+  ArrowUpDown,
   Calendar,
   CalendarClock,
   CheckCircle2,
@@ -22,6 +23,7 @@ import {
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
+import { useMemo, useState } from "react";
 import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
 import { useFindFirstStatus } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
@@ -29,6 +31,7 @@ import { aggregateRunCounts } from "~/lib/services/testRunSummary-shared";
 import { cn } from "~/utils";
 import { toHumanReadable } from "~/utils/duration";
 import { isAutomatedTestRunType } from "~/utils/testResultTypes";
+import { sortSummaryItems } from "~/utils/summarySort";
 
 interface TestRunCasesSummaryProps {
   testRunId: number;
@@ -205,16 +208,23 @@ export function TestRunCasesSummary({
   }
 
   const { data: firstStatus } = useFindFirstStatus({
-    where: {
-      isDeleted: false,
-    },
-    orderBy: {
-      order: "asc",
-    },
-    include: {
-      color: true,
-    },
+    where: { isDeleted: false },
+    orderBy: { order: "asc" },
+    include: { color: true },
   });
+
+  const [sortMode, setSortMode] = useState<"date" | "status">("date");
+
+  const sortedCaseDetails = useMemo(
+    () =>
+      sortSummaryItems(
+        summaryData?.caseDetails ?? [],
+        sortMode,
+        firstStatus?.id,
+        firstStatus?.order ?? 0
+      ),
+    [summaryData, sortMode, firstStatus?.id, firstStatus?.order]
+  );
 
   // Get date format from user preferences
   const dateTimeFormat = session?.user.preferences?.dateFormat
@@ -460,7 +470,6 @@ export function TestRunCasesSummary({
   }
 
   // Handle regular test runs
-  const caseDetails = summaryData.caseDetails || [];
   const totalItems = summaryData.totalCases;
 
   // Generate summary text from status counts
@@ -493,8 +502,11 @@ export function TestRunCasesSummary({
         className="flex h-2.5 w-full rounded-full overflow-hidden bg-muted"
         data-testid="test-run-cases-status-bar"
       >
-        {caseDetails.map((item, index) => {
-          const color = item.colorValue || "#9ca3af";
+        {sortedCaseDetails.map((item, index) => {
+          const color =
+            item.statusId !== null
+              ? item.colorValue
+              : (firstStatus?.color?.value ?? item.colorValue);
 
           // Calculate segment width based on total elapsed time
           const minSegmentWidth = 3;
@@ -659,6 +671,30 @@ export function TestRunCasesSummary({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={() =>
+                  setSortMode((m) => (m === "date" ? "status" : "date"))
+                }
+                onKeyDown={(e) =>
+                  e.key === "Enter" &&
+                  setSortMode((m) => (m === "date" ? "status" : "date"))
+                }
+                className="inline-flex cursor-pointer items-center text-muted-foreground hover:text-foreground transition-colors"
+                data-testid="sort-toggle"
+              >
+                <ArrowUpDown className="h-3 w-3" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              {sortMode === "date"
+                ? tCommon("labels.sortByStatus")
+                : tCommon("labels.sortByDate")}
+            </TooltipContent>
+          </Tooltip>
           {/* Display completion percentage */}
           <Tooltip>
             <TooltipTrigger asChild>

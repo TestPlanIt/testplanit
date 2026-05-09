@@ -15,6 +15,7 @@ export type SessionSummaryData = {
     statusId: number;
     statusName: string;
     statusColorValue: string;
+    statusOrder: number;
     issueIds: number[];
   }>;
   sessionIssues: Array<{
@@ -54,7 +55,7 @@ export type SessionSummaryData = {
 };
 
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ sessionId: string }> }
 ) {
   const { sessionId: sessionIdParam } = await params;
@@ -113,6 +114,7 @@ export async function GET(
         statusId: number;
         statusName: string;
         statusColorValue: string;
+        statusOrder: number;
       }>
     >`
       SELECT
@@ -121,7 +123,8 @@ export async function GET(
         sr.elapsed,
         sr."statusId",
         s.name as "statusName",
-        COALESCE(c.value, '#B1B2B3') as "statusColorValue"
+        COALESCE(c.value, '#B1B2B3') as "statusColorValue",
+        s.order as "statusOrder"
       FROM "SessionResults" sr
       JOIN "Status" s ON sr."statusId" = s.id
       LEFT JOIN "Color" c ON s."colorId" = c.id
