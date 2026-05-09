@@ -1,3 +1,10 @@
+## [0.24.20](https://github.com/TestPlanIt/testplanit/compare/v0.24.19...v0.24.20) (2026-05-09)
+
+### Bug Fixes
+
+* **docs:** pin pnpm to v10 in Dockerfile to match lockfile format ([4847551](https://github.com/TestPlanIt/testplanit/commit/48475516bfc56d0e635c6435df7165c6a3cc04d6))
+* search access for non-direct project members + automated flag promotion on result submission ([#291](https://github.com/TestPlanIt/testplanit/issues/291)) ([7981f6e](https://github.com/TestPlanIt/testplanit/commit/7981f6e416ddf385d45776611f8499872ffefd54))
+
 ## [0.24.19](https://github.com/TestPlanIt/testplanit/compare/v0.24.18...v0.24.19) (2026-05-08)
 
 ### Enhancements
