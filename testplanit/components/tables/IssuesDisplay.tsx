@@ -110,6 +110,23 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
     });
   };
 
+  // DEBUG: track mount/unmount and open state to diagnose hover-sync flicker.
+  // Remove before merging.
+  const isExternalDebug =
+    integrationProvider?.toUpperCase() === "JIRA" && integrationId;
+  useEffect(() => {
+    if (!isExternalDebug) return;
+    console.debug(`[IssuesDisplay] MOUNT id=${id} name=${name}`);
+    return () => {
+      console.debug(`[IssuesDisplay] UNMOUNT id=${id} name=${name}`);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (!isExternalDebug) return;
+    console.debug(`[IssuesDisplay] isOpen=${isOpen} id=${id}`);
+  }, [isOpen, id, isExternalDebug]);
+
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
@@ -241,6 +258,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
       <div
         className="flex items-center group max-w-full"
         onMouseEnter={() => {
+          console.debug(`[IssuesDisplay] onMouseEnter id=${id}`);
           // Trigger background sync if needed
           triggerSyncIfNeeded();
 
@@ -252,6 +270,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
           }, 200); // 200ms delay before opening
         }}
         onMouseLeave={() => {
+          console.debug(`[IssuesDisplay] onMouseLeave id=${id}`);
           if (hoverTimeoutRef.current) {
             clearTimeout(hoverTimeoutRef.current);
           }
@@ -260,7 +279,17 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
           }, 100); // 100ms delay before closing
         }}
       >
-        <Popover open={isOpen} onOpenChange={setIsOpen} modal={false}>
+        <Popover
+          open={isOpen}
+          onOpenChange={(open) => {
+            console.debug(
+              `[IssuesDisplay] onOpenChange open=${open} id=${id} stack=`,
+              new Error().stack?.split("\n")[2]?.trim()
+            );
+            setIsOpen(open);
+          }}
+          modal={false}
+        >
           <PopoverTrigger asChild>{badgeContent}</PopoverTrigger>
           <PopoverContent
             className="w-96 p-0"
