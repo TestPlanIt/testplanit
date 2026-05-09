@@ -405,6 +405,7 @@
     "fast-xml-builder": ">=1.1.7",
     "ip-address": ">=10.1.1",
     "icu-minify": ">=4.9.2",
+    "@babel/plugin-transform-modules-systemjs": ">=7.29.4",
     "nodemailer": ">=8.0.5",
     "cheerio": ">=1.0.0",
     "ioredis": "5.10.1",
