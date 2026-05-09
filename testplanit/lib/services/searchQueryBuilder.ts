@@ -205,19 +205,63 @@ export async function buildElasticsearchQuery(
 
   // Add user access control
   if (user.access !== "ADMIN") {
-    // Get user's assigned project IDs
     const { db } = await import("~/server/db");
-    const userProjectAssignments = await db.projectAssignment.findMany({
-      where: { userId: user.id },
-      select: { projectId: true },
-    });
-    const userProjectIds = userProjectAssignments.map((pa) => pa.projectId);
+    const { ProjectAccessType } = await import("@prisma/client");
 
-    // If user has no project assignments, they should see no results
+    // Resolve the full set of projects this user can access, mirroring the
+    // ZenStack access rules on the Projects model:
+    //   1. Directly assigned to the project (ProjectAssignment)
+    //   2. Explicit user-level permission (UserProjectPermission, not NO_ACCESS)
+    //   3. Group-based permission (GroupProjectPermission, not NO_ACCESS)
+    //   4. Project has an open default access type (GLOBAL_ROLE / SPECIFIC_ROLE / DEFAULT)
+    // All paths are vetoed if the user has an explicit NO_ACCESS UserProjectPermission.
+    const accessibleProjects = await db.projects.findMany({
+      where: {
+        isDeleted: false,
+        userPermissions: {
+          none: { userId: user.id, accessType: ProjectAccessType.NO_ACCESS },
+        },
+        OR: [
+          { assignedUsers: { some: { userId: user.id } } },
+          {
+            userPermissions: {
+              some: {
+                userId: user.id,
+                accessType: { not: ProjectAccessType.NO_ACCESS },
+              },
+            },
+          },
+          {
+            groupPermissions: {
+              some: {
+                accessType: { not: ProjectAccessType.NO_ACCESS },
+                group: { assignedUsers: { some: { userId: user.id } } },
+              },
+            },
+          },
+          ...(user.access !== "NONE"
+            ? [
+                {
+                  defaultAccessType: {
+                    in: [
+                      ProjectAccessType.GLOBAL_ROLE,
+                      ProjectAccessType.SPECIFIC_ROLE,
+                      ProjectAccessType.DEFAULT,
+                    ],
+                  },
+                },
+              ]
+            : []),
+        ],
+      },
+      select: { id: true },
+    });
+
+    const userProjectIds = accessibleProjects.map((p) => p.id);
+
     if (userProjectIds.length === 0) {
-      filter.push({ terms: { projectId: [-1] } }); // Non-existent project ID
+      filter.push({ terms: { projectId: [-1] } });
     } else {
-      // Restrict search to only user's assigned projects
       filter.push({ terms: { projectId: userProjectIds } });
     }
   }
