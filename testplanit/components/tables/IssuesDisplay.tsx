@@ -116,15 +116,15 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
     integrationProvider?.toUpperCase() === "JIRA" && integrationId;
   useEffect(() => {
     if (!isExternalDebug) return;
-    console.debug(`[IssuesDisplay] MOUNT id=${id} name=${name}`);
+    console.log(`[IssuesDisplay] MOUNT id=${id} name=${name}`);
     return () => {
-      console.debug(`[IssuesDisplay] UNMOUNT id=${id} name=${name}`);
+      console.log(`[IssuesDisplay] UNMOUNT id=${id} name=${name}`);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
     if (!isExternalDebug) return;
-    console.debug(`[IssuesDisplay] isOpen=${isOpen} id=${id}`);
+    console.log(`[IssuesDisplay] isOpen=${isOpen} id=${id}`);
   }, [isOpen, id, isExternalDebug]);
 
   // Cleanup timeout on unmount
@@ -258,7 +258,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
       <div
         className="flex items-center group max-w-full"
         onMouseEnter={() => {
-          console.debug(`[IssuesDisplay] onMouseEnter id=${id}`);
+          console.log(`[IssuesDisplay] onMouseEnter id=${id}`);
           // Trigger background sync if needed
           triggerSyncIfNeeded();
 
@@ -270,7 +270,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
           }, 200); // 200ms delay before opening
         }}
         onMouseLeave={() => {
-          console.debug(`[IssuesDisplay] onMouseLeave id=${id}`);
+          console.log(`[IssuesDisplay] onMouseLeave id=${id}`);
           if (hoverTimeoutRef.current) {
             clearTimeout(hoverTimeoutRef.current);
           }
@@ -282,7 +282,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
         <Popover
           open={isOpen}
           onOpenChange={(open) => {
-            console.debug(
+            console.log(
               `[IssuesDisplay] onOpenChange open=${open} id=${id} stack=`,
               new Error().stack?.split("\n")[2]?.trim()
             );

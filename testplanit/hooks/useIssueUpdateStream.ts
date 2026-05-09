@@ -51,7 +51,7 @@ export function useIssueUpdateStream(
   useEffect(() => {
     if (depKey === "") return;
     const onUpdate = () => {
-      console.debug(`[useIssueUpdateStream] SSE fired for projects=${depKey}`);
+      console.log(`[useIssueUpdateStream] SSE fired for projects=${depKey}`);
       // ZenStack's queryKey shape is `["zenstack", model, operation, args,
       // options]` (verified against the v2.22 / v3.6 runtimes). React
       // Query treats a partial key as a prefix, so `["zenstack"]` matches
