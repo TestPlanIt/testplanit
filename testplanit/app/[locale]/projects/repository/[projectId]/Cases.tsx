@@ -2547,6 +2547,7 @@ export default function Cases({
         completedAt: trc.completedAt,
         elapsed: trc.elapsed,
         order: trc.order,
+        testRunId: trc.testRun?.id,
         testRunConfiguration: trc.testRun?.configuration,
       }));
     }
@@ -2774,14 +2775,21 @@ export default function Cases({
         setRowSelection(rangeSelection);
 
         // Convert to IDs for the global selection
+        const getCaseId = (tc: (typeof MappedCases)[number]) =>
+          isMultiConfigMode && (tc as any).testRunCaseId
+            ? (tc as any).testRunCaseId
+            : tc.id;
         const selectedIds = Object.entries(rangeSelection)
           .filter(([_, isSelected]) => isSelected)
-          .map(([index]) => MappedCases[parseInt(index)]?.id)
+          .map(([index]) => {
+            const tc = MappedCases[parseInt(index)];
+            return tc ? getCaseId(tc) : undefined;
+          })
           .filter((id): id is number => id !== undefined);
 
         if (isSelectionMode && onSelectionChange) {
           // Get IDs from other pages
-          const allCaseIdsOnCurrentPage = MappedCases.map((tc) => tc.id);
+          const allCaseIdsOnCurrentPage = MappedCases.map(getCaseId);
           const selectedIdsFromOtherPages = selectedTestCases.filter(
             (id) => !allCaseIdsOnCurrentPage.includes(id)
           );
@@ -2882,20 +2890,24 @@ export default function Cases({
           });
           setRowSelection(newSelection);
 
+          const getDeselectCaseId = (tc: (typeof MappedCases)[number]) =>
+            isMultiConfigMode && (tc as any).testRunCaseId
+              ? (tc as any).testRunCaseId
+              : tc.id;
+          const currentPageIds = selectableRows.map(getDeselectCaseId);
+
           if (isSelectionMode && onSelectionChange) {
             // Remove current page IDs from selection
-            const currentPageIds = selectableRows.map((tc) => tc.id);
-            const newSelection = selectedTestCases.filter(
-              (id) => !currentPageIds.includes(id)
+            onSelectionChange(
+              selectedTestCases.filter((id) => !currentPageIds.includes(id))
             );
-            onSelectionChange(newSelection);
           } else {
-            // For bulk edit mode, we typically clear all when deselecting current page
-            const currentPageIds = selectableRows.map((tc) => tc.id);
-            const newSelection = selectedCaseIdsForBulkEdit.filter(
-              (id) => !currentPageIds.includes(id)
+            // For bulk edit mode, remove current page IDs from selection
+            setSelectedCaseIdsForBulkEdit(
+              selectedCaseIdsForBulkEdit.filter(
+                (id) => !currentPageIds.includes(id)
+              )
             );
-            setSelectedCaseIdsForBulkEdit(newSelection);
           }
         } else {
           // Select all selectable rows on current page
@@ -2905,11 +2917,15 @@ export default function Cases({
           });
           setRowSelection(newSelection);
 
-          const selectedIds = selectableRows.map((tc) => tc.id);
+          const getSelectAllCaseId = (tc: (typeof MappedCases)[number]) =>
+            isMultiConfigMode && (tc as any).testRunCaseId
+              ? (tc as any).testRunCaseId
+              : tc.id;
+          const selectedIds = selectableRows.map(getSelectAllCaseId);
 
           if (isSelectionMode && onSelectionChange) {
             // Add current page IDs to existing selection
-            const currentPageIds = MappedCases.map((tc) => tc.id);
+            const currentPageIds = MappedCases.map(getSelectAllCaseId);
             const selectedIdsFromOtherPages = selectedTestCases.filter(
               (id) => !currentPageIds.includes(id)
             );
@@ -3016,7 +3032,10 @@ export default function Cases({
         setAddResultModalState({
           isOpen: true,
           ...modalData,
-          configuration: testRunData?.configuration || null,
+          configuration:
+            modalData.configuration !== undefined
+              ? modalData.configuration
+              : testRunData?.configuration || null,
         });
       },
       // Pass isMultiConfigRun flag
@@ -3028,9 +3047,11 @@ export default function Cases({
         ? selectedTestCases.length
         : selectedCaseIdsForBulkEdit.length,
       // Pass enableReorder to show/hide grip handle
+      // Disabled in multi-config mode: ordering a merged view of multiple runs is undefined
       isDefaultSort &&
         !isSelectionMode &&
         !isCompleted &&
+        !isMultiConfigMode &&
         ((isRunMode && canAddEditRun) || (!isRunMode && canAddEdit)),
       // QuickScript per-row action
       quickScriptEnabled,
@@ -3710,6 +3731,7 @@ export default function Cases({
                   isDefaultSort &&
                   !isSelectionMode &&
                   !isCompleted &&
+                  !isMultiConfigMode &&
                   ((isRunMode && canAddEditRun) || (!isRunMode && canAddEdit))
                 }
                 onReorder={handleReorder}

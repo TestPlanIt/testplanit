@@ -160,6 +160,7 @@ export interface ExtendedCases extends RepositoryCases {
     };
   }[];
   // Test run specific fields
+  testRunId?: number;
   testRunCaseId?: number;
   testRunStatus?: {
     id: number;
@@ -492,6 +493,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
     isBulkResult?: boolean;
     selectedCases?: ExtendedCases[];
     steps?: any[];
+    configuration?: { id: number; name: string } | null;
   }) => void;
 }) {
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -1310,6 +1312,7 @@ export const getColumns = (
     isBulkResult?: boolean;
     selectedCases?: ExtendedCases[];
     steps?: any[];
+    configuration?: { id: number; name: string } | null;
   }) => void,
   isMultiConfigRun?: boolean,
   totalItems?: number,
@@ -2184,7 +2187,7 @@ export const getColumns = (
             caseId={row.original.id}
             testRunCaseId={row.original.testRunCaseId}
             currentAssignee={row.original.assignedTo}
-            testRunId={runId || 0}
+            testRunId={row.original.testRunId || runId || 0}
             caseName={row.original.name}
             projectId={Number(row.original.projectId || 0)}
             table={table}
@@ -2197,7 +2200,15 @@ export const getColumns = (
             isCompleted={isCompleted || !canAddEditResults}
             steps={row.original.steps || []}
             isSoftDeletedInRun={isSoftDeletedInRun}
-            onOpenAddResultModal={onOpenAddResultModal}
+            onOpenAddResultModal={
+              onOpenAddResultModal
+                ? (modalData) =>
+                    onOpenAddResultModal({
+                      ...modalData,
+                      configuration: row.original.testRunConfiguration,
+                    })
+                : undefined
+            }
           />
         );
       },
