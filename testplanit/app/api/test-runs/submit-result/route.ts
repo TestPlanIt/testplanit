@@ -5,6 +5,7 @@ import { z } from "zod/v4";
 import { authenticateRequest } from "~/lib/api-token-auth";
 import { prisma } from "~/lib/prisma";
 import { authOptions } from "~/server/auth";
+import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 
 const submitResultSchema = z.object({
   testRunId: z.number().int().positive(),
@@ -213,10 +214,15 @@ export async function POST(req: NextRequest) {
       select: {
         id: true,
         assignedToId: true,
+        repositoryCaseId: true,
+        repositoryCase: {
+          select: { automated: true },
+        },
         testRun: {
           select: {
             id: true,
             createdById: true,
+            testRunType: true,
             project: {
               select: {
                 createdBy: true,
@@ -335,6 +341,9 @@ export async function POST(req: NextRequest) {
         ? {}
         : (input.evidence as Prisma.InputJsonValue);
 
+    const isAutomatedRun = runCase.testRun.testRunType !== "REGULAR";
+    const needsAutomatedFlip = isAutomatedRun && !runCase.repositoryCase.automated;
+
     const result = await prisma.$transaction(async (tx) => {
       const createdResult = await tx.testRunResults.create({
         data: {
@@ -362,6 +371,13 @@ export async function POST(req: NextRequest) {
           statusId: input.statusId,
         },
       });
+
+      if (needsAutomatedFlip) {
+        await tx.repositoryCases.update({
+          where: { id: runCase.repositoryCaseId },
+          data: { automated: true },
+        });
+      }
 
       if (input.inProgressStateId) {
         const previousResult = await tx.testRunResults.findFirst({
@@ -391,6 +407,16 @@ export async function POST(req: NextRequest) {
 
       return createdResult;
     });
+
+    if (needsAutomatedFlip) {
+      void syncRepositoryCaseToElasticsearch(runCase.repositoryCaseId).catch(
+        (err) =>
+          console.error(
+            `ES sync failed after automated flag update for case ${runCase.repositoryCaseId}:`,
+            err
+          )
+      );
+    }
 
     return NextResponse.json({ result });
   } catch (error) {
