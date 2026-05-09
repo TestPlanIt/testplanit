@@ -1,3 +1,9 @@
+## [0.24.21](https://github.com/TestPlanIt/testplanit/compare/v0.24.20...v0.24.21) (2026-05-09)
+
+### Bug Fixes
+
+* webhook audit tenantId + summary sort toggle ([#292](https://github.com/TestPlanIt/testplanit/issues/292)) ([fe9f1ec](https://github.com/TestPlanIt/testplanit/commit/fe9f1ec8132cf80173462fcb72a8e6bff7809759))
+
 ## [0.24.20](https://github.com/TestPlanIt/testplanit/compare/v0.24.19...v0.24.20) (2026-05-09)
 
 ### Bug Fixes
