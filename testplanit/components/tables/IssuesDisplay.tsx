@@ -15,7 +15,7 @@ import { useIssueColors } from "@/hooks/useIssueColors";
 import DOMPurify from "dompurify";
 import { ExternalLink, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useIssueUpdateStream } from "~/hooks/useIssueUpdateStream";
 import { Link } from "~/lib/navigation";
 import { IssueTypeIcon } from "~/utils/issueTypeIcons";
@@ -64,6 +64,14 @@ interface JiraIssueDetails {
   updated: string;
 }
 
+// Module-level stores that survive component remounts caused by parent query
+// invalidations. When the SSE sync fires → queryClient.invalidateQueries →
+// parent re-renders → IssuesDisplay unmounts+remounts, these maps let each
+// instance restore its prior open/data state so the popover stays visible.
+// Entries are cleared when the popover closes, so they only hold in-flight data.
+const issuePopoverOpen = new Map<number, boolean>();
+const issueJiraCache = new Map<number, JiraIssueDetails>();
+
 export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   id,
   name,
@@ -81,17 +89,35 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
 }) => {
   const t = useTranslations();
   const { getPriorityStyle } = useIssueColors();
-  const [isOpen, setIsOpen] = useState(false);
-  const [jiraDetails, setJiraDetails] = useState<JiraIssueDetails | null>(null);
+  const [isOpen, setIsOpen] = useState(() => issuePopoverOpen.get(id) ?? false);
+  const [jiraDetails, setJiraDetails] = useState<JiraIssueDetails | null>(
+    () => issueJiraCache.get(id) ?? null
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const syncTriggeredRef = useRef(false); // Avoid duplicate fetches per mount.
+  const syncTriggeredRef = useRef(false);
 
   // Subscribe to live updates for this issue's project(s) — webhook → sync
   // events fan out via the singleton SSE manager so any number of
   // IssuesDisplay instances on the same project share a single connection.
   useIssueUpdateStream(projectIds);
+
+  // Update module-level open state and clear cached data when closing so the
+  // next open always re-fetches fresh Jira details.
+  const updateIsOpen = useCallback(
+    (open: boolean) => {
+      if (open) {
+        issuePopoverOpen.set(id, true);
+      } else {
+        issuePopoverOpen.delete(id);
+        issueJiraCache.delete(id);
+        setJiraDetails(null);
+      }
+      setIsOpen(open);
+    },
+    [id]
+  );
 
   // Trigger a background sync for this issue. The freshness gate lives
   // server-side now (?trigger=hover → 5-min skip window in SyncService);
@@ -109,23 +135,6 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
       // Silently fail — this is a background optimization.
     });
   };
-
-  // DEBUG: track mount/unmount and open state to diagnose hover-sync flicker.
-  // Remove before merging.
-  const isExternalDebug =
-    integrationProvider?.toUpperCase() === "JIRA" && integrationId;
-  useEffect(() => {
-    if (!isExternalDebug) return;
-    console.log(`[IssuesDisplay] MOUNT id=${id} name=${name}`);
-    return () => {
-      console.log(`[IssuesDisplay] UNMOUNT id=${id} name=${name}`);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  useEffect(() => {
-    if (!isExternalDebug) return;
-    console.log(`[IssuesDisplay] isOpen=${isOpen} id=${id}`);
-  }, [isOpen, id, isExternalDebug]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -172,6 +181,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
           return res.json();
         })
         .then((data) => {
+          issueJiraCache.set(id, data);
           setJiraDetails(data);
           setIsLoading(false);
         })
@@ -187,6 +197,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
     integrationId,
     name,
     jiraDetails,
+    id,
   ]);
 
   // Issue config is no longer needed as we use integrations directly
@@ -258,36 +269,27 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
       <div
         className="flex items-center group max-w-full"
         onMouseEnter={() => {
-          console.log(`[IssuesDisplay] onMouseEnter id=${id}`);
-          // Trigger background sync if needed
           triggerSyncIfNeeded();
 
           if (hoverTimeoutRef.current) {
             clearTimeout(hoverTimeoutRef.current);
           }
           hoverTimeoutRef.current = setTimeout(() => {
-            setIsOpen(true);
-          }, 200); // 200ms delay before opening
+            updateIsOpen(true);
+          }, 200);
         }}
         onMouseLeave={() => {
-          console.log(`[IssuesDisplay] onMouseLeave id=${id}`);
           if (hoverTimeoutRef.current) {
             clearTimeout(hoverTimeoutRef.current);
           }
           hoverTimeoutRef.current = setTimeout(() => {
-            setIsOpen(false);
-          }, 100); // 100ms delay before closing
+            updateIsOpen(false);
+          }, 100);
         }}
       >
         <Popover
           open={isOpen}
-          onOpenChange={(open) => {
-            console.log(
-              `[IssuesDisplay] onOpenChange open=${open} id=${id} stack=`,
-              new Error().stack?.split("\n")[2]?.trim()
-            );
-            setIsOpen(open);
-          }}
+          onOpenChange={updateIsOpen}
           modal={false}
         >
           <PopoverTrigger asChild>{badgeContent}</PopoverTrigger>
@@ -305,7 +307,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
                 clearTimeout(hoverTimeoutRef.current);
               }
               hoverTimeoutRef.current = setTimeout(() => {
-                setIsOpen(false);
+                updateIsOpen(false);
               }, 100);
             }}
           >
@@ -453,7 +455,6 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
         <div
           className="flex items-center group max-w-full"
           onMouseEnter={() => {
-            // Trigger background sync if needed
             triggerSyncIfNeeded();
           }}
         >
