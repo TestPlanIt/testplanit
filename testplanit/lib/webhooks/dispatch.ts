@@ -154,6 +154,7 @@ export async function dispatchWebhook(
       statusCode: null,
       outcome: "failure",
       error: "endpoint_disabled",
+      tenantId: jobData.tenantId,
     });
     return {
       outcome: "failure",
@@ -226,6 +227,7 @@ export async function dispatchWebhook(
         attempt: jobData.attempt,
         statusCode: null,
         outcome: "failure",
+        tenantId: jobData.tenantId,
       });
       return {
         outcome: "failure",
@@ -324,6 +326,7 @@ export async function dispatchWebhook(
     attempt: jobData.attempt,
     statusCode,
     outcome: errorSentinel ? "failure" : "success",
+    tenantId: jobData.tenantId,
   });
 
   // 9. Throw on failure so BullMQ retries.
@@ -421,6 +424,7 @@ async function emitAudit(args: {
   // the DISABLED gate ("endpoint_disabled"); future error-flavored audit
   // metadata can flow through this same field.
   error?: string;
+  tenantId?: string;
 }): Promise<void> {
   const metadata: Record<string, unknown> = {
     webhookConfigId: args.configId,
@@ -439,6 +443,7 @@ async function emitAudit(args: {
     entityId: args.deliveryId,
     projectId: args.projectId,
     userId: SYSTEM_ACTOR_ID,
+    tenantId: args.tenantId,
     metadata,
   });
 }
