@@ -23,8 +23,8 @@ import {
 // Mock the server/db module for buildElasticsearchQuery tests
 vi.mock("~/server/db", () => ({
   db: {
-    projectAssignment: {
-      findMany: vi.fn().mockResolvedValue([{ projectId: 1 }, { projectId: 2 }]),
+    projects: {
+      findMany: vi.fn().mockResolvedValue([{ id: 1 }, { id: 2 }]),
     },
   },
 }));
@@ -1039,12 +1039,9 @@ describe("buildElasticsearchQuery", () => {
     expect(projectFilter).toBeUndefined();
   });
 
-  it("non-admin user gets project ID filter from DB", async () => {
+  it("non-admin user gets project ID filter from accessible projects", async () => {
     const { db } = await import("~/server/db");
-    (db.projectAssignment.findMany as any).mockResolvedValue([
-      { projectId: 10 },
-      { projectId: 20 },
-    ]);
+    (db.projects.findMany as any).mockResolvedValue([{ id: 10 }, { id: 20 }]);
 
     const result = await buildElasticsearchQuery(
       { query: "test" },
@@ -1057,9 +1054,9 @@ describe("buildElasticsearchQuery", () => {
     expect(projectFilter).toEqual({ terms: { projectId: [10, 20] } });
   });
 
-  it("non-admin user with no project assignments gets impossible filter", async () => {
+  it("non-admin user with no accessible projects gets impossible filter", async () => {
     const { db } = await import("~/server/db");
-    (db.projectAssignment.findMany as any).mockResolvedValue([]);
+    (db.projects.findMany as any).mockResolvedValue([]);
 
     const result = await buildElasticsearchQuery(
       { query: "test" },
@@ -1070,6 +1067,80 @@ describe("buildElasticsearchQuery", () => {
       (f: any) => f.terms?.projectId
     );
     expect(projectFilter).toEqual({ terms: { projectId: [-1] } });
+  });
+
+  it("queries projects using all four access paths for non-admin user", async () => {
+    const { db } = await import("~/server/db");
+    (db.projects.findMany as any).mockResolvedValue([{ id: 5 }]);
+
+    await buildElasticsearchQuery(
+      { query: "test" },
+      { access: "USER", id: "user-789" }
+    );
+
+    const callArgs = (db.projects.findMany as any).mock.calls[0][0];
+
+    // Must exclude projects where user has explicit NO_ACCESS
+    expect(callArgs.where.userPermissions).toMatchObject({
+      none: { userId: "user-789" },
+    });
+
+    // OR conditions must include all four paths
+    const orClauses = callArgs.where.OR;
+    expect(orClauses).toBeDefined();
+
+    // Path 1: direct assignment
+    expect(orClauses).toContainEqual(
+      expect.objectContaining({
+        assignedUsers: { some: { userId: "user-789" } },
+      })
+    );
+
+    // Path 2: explicit user permission (not NO_ACCESS)
+    expect(orClauses).toContainEqual(
+      expect.objectContaining({
+        userPermissions: { some: expect.objectContaining({ userId: "user-789" }) },
+      })
+    );
+
+    // Path 3: group-based permission
+    expect(orClauses).toContainEqual(
+      expect.objectContaining({
+        groupPermissions: {
+          some: expect.objectContaining({
+            group: { assignedUsers: { some: { userId: "user-789" } } },
+          }),
+        },
+      })
+    );
+
+    // Path 4: open default access type (GLOBAL_ROLE / SPECIFIC_ROLE / DEFAULT)
+    const defaultAccessClause = orClauses.find(
+      (c: any) => c.defaultAccessType?.in
+    );
+    expect(defaultAccessClause).toBeDefined();
+    expect(defaultAccessClause.defaultAccessType.in).toEqual(
+      expect.arrayContaining(["GLOBAL_ROLE", "SPECIFIC_ROLE", "DEFAULT"])
+    );
+  });
+
+  it("skips defaultAccessType OR clause for NONE-access users", async () => {
+    const { db } = await import("~/server/db");
+    (db.projects.findMany as any).mockResolvedValue([]);
+
+    await buildElasticsearchQuery(
+      { query: "test" },
+      { access: "NONE", id: "user-none" }
+    );
+
+    const callArgs = (db.projects.findMany as any).mock.calls[0][0];
+    const orClauses = callArgs.where.OR;
+
+    // defaultAccessType check must NOT be present for NONE users
+    const defaultAccessClause = orClauses.find(
+      (c: any) => c.defaultAccessType?.in
+    );
+    expect(defaultAccessClause).toBeUndefined();
   });
 
   it("always adds isDeleted filter for non-admin", async () => {
