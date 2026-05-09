@@ -106,7 +106,10 @@ test.describe("Multi-Config Run Interaction", () => {
     const submitted: Array<{ testRunId: number; testRunCaseId: number }> = [];
     await page.route("**/api/test-runs/submit-result", async (route) => {
       const body = route.request().postDataJSON();
-      submitted.push({ testRunId: body.testRunId, testRunCaseId: body.testRunCaseId });
+      submitted.push({
+        testRunId: body.testRunId,
+        testRunCaseId: body.testRunCaseId,
+      });
       await route.continue();
     });
 
@@ -170,11 +173,7 @@ test.describe("Multi-Config Run Interaction", () => {
   }) => {
     const ts = Date.now();
     // 2 cases × 2 configs = 4 rows
-    const { projectId, run1Id, run2Id } = await setupMultiConfigRun(
-      api,
-      ts,
-      2
-    );
+    const { projectId, run1Id, run2Id } = await setupMultiConfigRun(api, ts, 2);
 
     await page.goto(
       `/en-US/projects/runs/${projectId}/${run1Id}?configs=${run1Id},${run2Id}`
@@ -194,9 +193,7 @@ test.describe("Multi-Config Run Interaction", () => {
     await headerCheckbox.click();
 
     // Every row checkbox must now be checked
-    const rowCheckboxes = page
-      .locator("tbody")
-      .getByRole("checkbox");
+    const rowCheckboxes = page.locator("tbody").getByRole("checkbox");
     const count = await rowCheckboxes.count();
     expect(count).toBe(4);
     for (let i = 0; i < count; i++) {
@@ -212,11 +209,7 @@ test.describe("Multi-Config Run Interaction", () => {
     page,
   }) => {
     const ts = Date.now();
-    const { projectId, run1Id, run2Id } = await setupMultiConfigRun(
-      api,
-      ts,
-      2
-    );
+    const { projectId, run1Id, run2Id } = await setupMultiConfigRun(api, ts, 2);
 
     await page.goto(
       `/en-US/projects/runs/${projectId}/${run1Id}?configs=${run1Id},${run2Id}`
@@ -256,11 +249,7 @@ test.describe("Multi-Config Run Interaction", () => {
     const ts = Date.now();
     // 2 cases × 2 configs = 4 rows — expect rows ordered: C1/cfg1, C1/cfg2, C2/cfg1, C2/cfg2
     // (actual order depends on server sort, but we need ≥4 rows to test a range)
-    const { projectId, run1Id, run2Id } = await setupMultiConfigRun(
-      api,
-      ts,
-      2
-    );
+    const { projectId, run1Id, run2Id } = await setupMultiConfigRun(api, ts, 2);
 
     await page.goto(
       `/en-US/projects/runs/${projectId}/${run1Id}?configs=${run1Id},${run2Id}`

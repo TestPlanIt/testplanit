@@ -342,7 +342,8 @@ export async function POST(req: NextRequest) {
         : (input.evidence as Prisma.InputJsonValue);
 
     const isAutomatedRun = runCase.testRun.testRunType !== "REGULAR";
-    const needsAutomatedFlip = isAutomatedRun && !runCase.repositoryCase.automated;
+    const needsAutomatedFlip =
+      isAutomatedRun && !runCase.repositoryCase.automated;
 
     const result = await prisma.$transaction(async (tx) => {
       const createdResult = await tx.testRunResults.create({

@@ -1099,7 +1099,9 @@ describe("buildElasticsearchQuery", () => {
     // Path 2: explicit user permission (not NO_ACCESS)
     expect(orClauses).toContainEqual(
       expect.objectContaining({
-        userPermissions: { some: expect.objectContaining({ userId: "user-789" }) },
+        userPermissions: {
+          some: expect.objectContaining({ userId: "user-789" }),
+        },
       })
     );
 

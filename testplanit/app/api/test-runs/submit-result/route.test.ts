@@ -233,7 +233,9 @@ describe("Submit Result API Route", () => {
     };
 
     it("flips repositoryCase.automated to true when an automated run submits a result for a manual case", async () => {
-      (prisma.testRunCases.findFirst as any).mockResolvedValue(automatedRunCase);
+      (prisma.testRunCases.findFirst as any).mockResolvedValue(
+        automatedRunCase
+      );
 
       const response = await POST(createRequest(validBody));
 
@@ -245,7 +247,9 @@ describe("Submit Result API Route", () => {
     });
 
     it("triggers ES re-sync after flipping the automated flag", async () => {
-      (prisma.testRunCases.findFirst as any).mockResolvedValue(automatedRunCase);
+      (prisma.testRunCases.findFirst as any).mockResolvedValue(
+        automatedRunCase
+      );
 
       await POST(createRequest(validBody));
 
@@ -275,21 +279,26 @@ describe("Submit Result API Route", () => {
       expect(syncRepositoryCaseToElasticsearch).not.toHaveBeenCalled();
     });
 
-    it.each(["JUNIT", "TESTNG", "XUNIT", "NUNIT", "MSTEST", "MOCHA", "CUCUMBER"])(
-      "flips the flag for automated run type %s",
-      async (testRunType) => {
-        (prisma.testRunCases.findFirst as any).mockResolvedValue({
-          ...automatedRunCase,
-          testRun: { ...automatedRunCase.testRun, testRunType },
-        });
+    it.each([
+      "JUNIT",
+      "TESTNG",
+      "XUNIT",
+      "NUNIT",
+      "MSTEST",
+      "MOCHA",
+      "CUCUMBER",
+    ])("flips the flag for automated run type %s", async (testRunType) => {
+      (prisma.testRunCases.findFirst as any).mockResolvedValue({
+        ...automatedRunCase,
+        testRun: { ...automatedRunCase.testRun, testRunType },
+      });
 
-        await POST(createRequest(validBody));
+      await POST(createRequest(validBody));
 
-        expect(txMocks.repositoryCases.update).toHaveBeenCalledWith({
-          where: { id: 55 },
-          data: { automated: true },
-        });
-      }
-    );
+      expect(txMocks.repositoryCases.update).toHaveBeenCalledWith({
+        where: { id: 55 },
+        data: { automated: true },
+      });
+    });
   });
 });
