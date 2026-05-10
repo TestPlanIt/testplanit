@@ -1,3 +1,9 @@
+## [0.24.22](https://github.com/TestPlanIt/testplanit/compare/v0.24.21...v0.24.22) (2026-05-10)
+
+### Bug Fixes
+
+* stabilize column hooks to prevent Jira popover flicker and broken checkboxes ([#293](https://github.com/TestPlanIt/testplanit/issues/293)) ([0542d4b](https://github.com/TestPlanIt/testplanit/commit/0542d4be6c6bd28ba2701c7c0a7051e7bf24fb6c))
+
 ## [0.24.21](https://github.com/TestPlanIt/testplanit/compare/v0.24.20...v0.24.21) (2026-05-09)
 
 ### Bug Fixes
