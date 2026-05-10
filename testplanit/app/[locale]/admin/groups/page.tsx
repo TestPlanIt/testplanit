@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   PaginationProvider,
   usePagination,
@@ -14,7 +14,7 @@ import { useDebounce } from "@/components/Debounce";
 import { CustomColumnDef } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { useFindManyGroups } from "~/lib/hooks";
-import { ExtendedGroups, getColumns } from "./columns";
+import { ExtendedGroups, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
@@ -188,9 +188,10 @@ function GroupList() {
     setCurrentPage(1);
   };
 
-  const columns: CustomColumnDef<ExtendedGroups>[] = useMemo(
-    () => getColumns(tCommon, setEditingGroup, setDeletingGroup),
-    [tCommon]
+  const columns: CustomColumnDef<ExtendedGroups>[] = useColumns(
+    tCommon,
+    setEditingGroup,
+    setDeletingGroup
   );
 
   const [columnVisibility, setColumnVisibility] = useState<

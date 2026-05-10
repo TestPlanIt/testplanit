@@ -17,7 +17,7 @@ import { Templates } from "@prisma/client";
 import { CirclePlus, LayoutTemplate } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   useCreateManyTemplateProjectAssignment,
   useDeleteManyTemplateProjectAssignment,
@@ -30,7 +30,7 @@ import { useRouter } from "~/lib/navigation";
 import { AddTemplate } from "./AddTemplate";
 import { DeleteTemplate } from "./DeleteTemplate";
 import { EditTemplate } from "./EditTemplate";
-import { ExtendedTemplates, getColumns } from "./templateColumns";
+import { ExtendedTemplates, useColumns } from "./templateColumns";
 
 export default function TemplateComponent() {
   const { data: session, status } = useSession();
@@ -146,17 +146,12 @@ export default function TemplateComponent() {
     }
   };
 
-  const columns: any[] = useMemo(
-    () =>
-      getColumns(
-        tCommon,
-        // eslint-disable-next-line react-hooks/refs
-        handleToggleEnabled,
-        handleToggleDefault,
-        setEditingTemplate,
-        setDeletingTemplate
-      ),
-    [handleToggleEnabled, handleToggleDefault, tCommon]
+  const columns: any[] = useColumns(
+    tCommon,
+    handleToggleEnabled,
+    handleToggleDefault,
+    setEditingTemplate,
+    setDeletingTemplate
   );
 
   const [columnVisibility, setColumnVisibility] = useState<

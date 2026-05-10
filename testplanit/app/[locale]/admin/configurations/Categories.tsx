@@ -22,7 +22,7 @@ import { PlusCircle, SquarePen, Trash } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { z } from "zod/v4";
 import {
   useCreateConfigCategories,
@@ -32,7 +32,7 @@ import {
   useUpdateManyConfigurations,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
-import { ConfigCategoryWithVariants, getColumns } from "./categoryColumns";
+import { ConfigCategoryWithVariants, useColumns } from "./categoryColumns";
 import { DeleteConfigCategory } from "./DeleteCategory";
 import { EditCategory } from "./EditCategory";
 import { DeleteVariantModal } from "./DeleteVariantModal";
@@ -328,10 +328,7 @@ function ConfigCategoriesList() {
   const [deletingCategory, setDeletingCategory] =
     useState<ConfigCategoryWithVariants | null>(null);
 
-  const columns = useMemo(
-    () => getColumns(tCommon, setEditingCategory, setDeletingCategory),
-    [tCommon]
-  );
+  const columns = useColumns(tCommon, setEditingCategory, setDeletingCategory);
 
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>

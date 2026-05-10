@@ -33,7 +33,7 @@ import { getBillingPeriodStart } from "~/lib/utils/billingPeriod";
 import { AddLlmIntegration } from "./AddLlmIntegration";
 import { DeleteLlmIntegration } from "./DeleteLlmIntegration";
 import { EditLlmIntegration } from "./EditLlmIntegration";
-import { ExtendedLlmIntegration, getColumns } from "./columns";
+import { ExtendedLlmIntegration, useColumns } from "./columns";
 
 export default function LlmAdminPage() {
   return (
@@ -288,20 +288,16 @@ function LlmIntegrationList() {
   const [deletingIntegration, setDeletingIntegration] =
     useState<ExtendedLlmIntegration | null>(null);
 
-  const columns = useMemo(
-    // eslint-disable-next-line react-hooks/refs
-    () =>
-      getColumns(
-        userPreferences,
-        handleToggle,
-        tCommon,
-        t,
-        usageByIntegrationIdRef,
-        integrations?.length ?? 0,
-        setEditingIntegration,
-        setDeletingIntegration
-      ),
-    [userPreferences, handleToggle, tCommon, t, integrations?.length]
+  // eslint-disable-next-line react-hooks/refs
+  const columns = useColumns(
+    userPreferences,
+    handleToggle,
+    tCommon,
+    t,
+    usageByIntegrationIdRef,
+    integrations?.length ?? 0,
+    setEditingIntegration,
+    setDeletingIntegration
   );
 
   const [columnVisibility, setColumnVisibility] = useState<

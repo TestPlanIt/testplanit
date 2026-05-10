@@ -7,6 +7,7 @@ import { Tags } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
 import { SquarePen, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useMemo } from "react";
 
 export interface ExtendedTags extends Tags {
   repositoryCases: { id: number }[];
@@ -18,147 +19,154 @@ export interface ExtendedTags extends Tags {
   testRunsCount?: number;
 }
 
-export const getColumns = (
+export const useColumns = (
   tCommon: ReturnType<typeof useTranslations<"common">>,
   isLoadingCounts: boolean = false,
   onEditTag?: (tag: ExtendedTags) => void,
   onDeleteTag?: (tag: ExtendedTags) => void
-): ColumnDef<ExtendedTags>[] => [
-  {
-    id: "name",
-    accessorKey: "name",
-    accessorFn: (row) => row.name,
-    header: tCommon("name"),
-    enableSorting: true,
-    enableResizing: true,
-    enableHiding: false,
-    meta: { isPinned: "left" },
-    size: 500,
-    maxSize: 500,
-    cell: ({ row }) => row.original.name,
-  },
-  {
-    id: "cases",
-    accessorKey: "repositoryCases",
-    accessorFn: (row) => row.repositoryCases,
-    header: tCommon("fields.testCases"),
-    enableSorting: false,
-    enableResizing: true,
-    size: 75,
-    cell: ({ row }) => {
-      const count = row.original.repositoryCasesCount;
-      return (
-        <div className="text-center">
-          <CasesListDisplay
-            count={count}
-            filter={{
-              tags: {
-                some: {
-                  id: row.original.id,
-                },
-              },
-            }}
-            isLoading={isLoadingCounts}
-          />
-        </div>
-      );
-    },
-  },
-  {
-    id: "testRuns",
-    accessorKey: "testRuns",
-    accessorFn: (row) => row.testRuns,
-    header: tCommon("fields.testRuns"),
-    enableSorting: false,
-    enableResizing: true,
-    size: 75,
-    cell: ({ row }) => {
-      const count = row.original.testRunsCount;
-      return (
-        <div className="text-center">
-          <TestRunsListDisplay
-            count={count}
-            filter={{
-              tags: {
-                some: {
-                  id: row.original.id,
-                },
-              },
-            }}
-            isLoading={isLoadingCounts}
-          />
-        </div>
-      );
-    },
-  },
-  {
-    id: "sessions",
-    accessorKey: "sessions",
-    accessorFn: (row) => row.sessions,
-    header: tCommon("fields.sessions"),
-    enableSorting: false,
-    enableResizing: true,
-    size: 75,
-    cell: ({ row }) => {
-      const count = row.original.sessionsCount;
-      return (
-        <div className="text-center">
-          <SessionsListDisplay
-            count={count}
-            filter={{
-              tags: {
-                some: {
-                  id: row.original.id,
-                },
-              },
-            }}
-            isLoading={isLoadingCounts}
-          />
-        </div>
-      );
-    },
-  },
-  {
-    id: "projects",
-    accessorKey: "projects",
-    header: tCommon("fields.projects"),
-    enableSorting: false,
-    enableResizing: true,
-    size: 75,
-    cell: ({ row }) => {
-      const projects = row.original.projects || [];
-      return (
-        <div className="text-center">
-          <ProjectListDisplay projects={projects} isLoading={isLoadingCounts} />
-        </div>
-      );
-    },
-  },
-  {
-    id: "actions",
-    header: tCommon("actions.actionsLabel"),
-    enableResizing: true,
-    enableSorting: false,
-    enableHiding: false,
-    meta: { isPinned: "right" },
-    size: 80,
-    cell: ({ row }) => (
-      <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
-        <Button
-          variant="ghost"
-          className="px-2 py-1 h-auto"
-          onClick={() => onEditTag?.(row.original)}
-        >
-          <SquarePen className="h-5 w-5" />
-        </Button>
-        <Button
-          variant="destructive"
-          className="px-2 py-1 h-auto"
-          onClick={() => onDeleteTag?.(row.original)}
-        >
-          <Trash2 className="h-5 w-5" />
-        </Button>
-      </div>
-    ),
-  },
-];
+): ColumnDef<ExtendedTags>[] =>
+  useMemo(
+    () => [
+      {
+        id: "name",
+        accessorKey: "name",
+        accessorFn: (row) => row.name,
+        header: tCommon("name"),
+        enableSorting: true,
+        enableResizing: true,
+        enableHiding: false,
+        meta: { isPinned: "left" },
+        size: 500,
+        maxSize: 500,
+        cell: ({ row }) => row.original.name,
+      },
+      {
+        id: "cases",
+        accessorKey: "repositoryCases",
+        accessorFn: (row) => row.repositoryCases,
+        header: tCommon("fields.testCases"),
+        enableSorting: false,
+        enableResizing: true,
+        size: 75,
+        cell: ({ row }) => {
+          const count = row.original.repositoryCasesCount;
+          return (
+            <div className="text-center">
+              <CasesListDisplay
+                count={count}
+                filter={{
+                  tags: {
+                    some: {
+                      id: row.original.id,
+                    },
+                  },
+                }}
+                isLoading={isLoadingCounts}
+              />
+            </div>
+          );
+        },
+      },
+      {
+        id: "testRuns",
+        accessorKey: "testRuns",
+        accessorFn: (row) => row.testRuns,
+        header: tCommon("fields.testRuns"),
+        enableSorting: false,
+        enableResizing: true,
+        size: 75,
+        cell: ({ row }) => {
+          const count = row.original.testRunsCount;
+          return (
+            <div className="text-center">
+              <TestRunsListDisplay
+                count={count}
+                filter={{
+                  tags: {
+                    some: {
+                      id: row.original.id,
+                    },
+                  },
+                }}
+                isLoading={isLoadingCounts}
+              />
+            </div>
+          );
+        },
+      },
+      {
+        id: "sessions",
+        accessorKey: "sessions",
+        accessorFn: (row) => row.sessions,
+        header: tCommon("fields.sessions"),
+        enableSorting: false,
+        enableResizing: true,
+        size: 75,
+        cell: ({ row }) => {
+          const count = row.original.sessionsCount;
+          return (
+            <div className="text-center">
+              <SessionsListDisplay
+                count={count}
+                filter={{
+                  tags: {
+                    some: {
+                      id: row.original.id,
+                    },
+                  },
+                }}
+                isLoading={isLoadingCounts}
+              />
+            </div>
+          );
+        },
+      },
+      {
+        id: "projects",
+        accessorKey: "projects",
+        header: tCommon("fields.projects"),
+        enableSorting: false,
+        enableResizing: true,
+        size: 75,
+        cell: ({ row }) => {
+          const projects = row.original.projects || [];
+          return (
+            <div className="text-center">
+              <ProjectListDisplay
+                projects={projects}
+                isLoading={isLoadingCounts}
+              />
+            </div>
+          );
+        },
+      },
+      {
+        id: "actions",
+        header: tCommon("actions.actionsLabel"),
+        enableResizing: true,
+        enableSorting: false,
+        enableHiding: false,
+        meta: { isPinned: "right" },
+        size: 80,
+        cell: ({ row }) => (
+          <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
+            <Button
+              variant="ghost"
+              className="px-2 py-1 h-auto"
+              onClick={() => onEditTag?.(row.original)}
+            >
+              <SquarePen className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="destructive"
+              className="px-2 py-1 h-auto"
+              onClick={() => onDeleteTag?.(row.original)}
+            >
+              <Trash2 className="h-5 w-5" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [tCommon, onEditTag, onDeleteTag]
+  );

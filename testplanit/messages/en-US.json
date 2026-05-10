@@ -2978,6 +2978,7 @@
       "webhooks": "Webhooks",
       "llm": "AI Models",
       "prompts": "Prompt Configs",
+      "exportTemplates": "Export Templates",
       "codeRepositories": "Code Repositories",
       "quickScript": "QuickScript",
       "sso": "Authentication",

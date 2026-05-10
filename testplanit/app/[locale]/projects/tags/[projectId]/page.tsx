@@ -33,7 +33,7 @@ import {
   useFindManyTestRuns,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
-import { getColumns } from "./columns";
+import { useColumns } from "./columns";
 
 export default function ProjectTagListPage() {
   return (
@@ -483,24 +483,13 @@ function TagList() {
 
   const isLoadingCounts = isLoadingCases || isLoadingSessions || isLoadingRuns;
 
-  const columns = useMemo(
-    () =>
-      getColumns(
-        projectId as string,
-        activeCaseMap,
-        activeSessionMap,
-        activeRunMap,
-        t,
-        isLoadingCounts
-      ),
-    [
-      projectId,
-      activeCaseMap,
-      activeSessionMap,
-      activeRunMap,
-      t,
-      isLoadingCounts,
-    ]
+  const columns = useColumns(
+    projectId as string,
+    activeCaseMap,
+    activeSessionMap,
+    activeRunMap,
+    t,
+    isLoadingCounts
   );
 
   // Wait for all data to load - this prevents the flash

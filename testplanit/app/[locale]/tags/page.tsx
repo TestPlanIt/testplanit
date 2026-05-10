@@ -42,7 +42,7 @@ import {
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
-import { getColumns } from "./columns";
+import { useTagColumns } from "./columns";
 
 export default function TagList() {
   return (
@@ -371,19 +371,15 @@ function Tags() {
     }
   }, [status, session, router]);
 
-  const columns = useMemo(
-    () =>
-      getColumns(
-        {
-          name: t("common.name"),
-          testCases: t("common.fields.testCases"),
-          sessions: t("common.fields.sessions"),
-          testRuns: t("common.fields.testRuns"),
-          projects: t("common.fields.projects"),
-        },
-        isLoadingCounts
-      ),
-    [t, isLoadingCounts]
+  const columns = useTagColumns(
+    {
+      name: t("common.name"),
+      testCases: t("common.fields.testCases"),
+      sessions: t("common.fields.sessions"),
+      testRuns: t("common.fields.testRuns"),
+      projects: t("common.fields.projects"),
+    },
+    isLoadingCounts
   );
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>

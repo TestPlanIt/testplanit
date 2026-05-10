@@ -17,6 +17,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useMemo } from "react";
 
 export type ConfigWithVariants = Configurations & {
   variants: {
@@ -29,115 +30,121 @@ export type ConfigWithVariants = Configurations & {
   }[];
 };
 
-export const getColumns = (
+export const useColumns = (
   t: ReturnType<typeof useTranslations<"common">>,
   handleToggle: (id: number, isEnabled: boolean) => void,
   onEditConfiguration?: (config: ConfigWithVariants) => void,
   onDeleteConfiguration?: (config: ConfigWithVariants) => void
-): ColumnDef<ConfigWithVariants>[] => [
-  {
-    id: "name",
-    accessorKey: "name",
-    accessorFn: (row) => row.name,
-    header: t("name"),
-    enableSorting: true,
-    enableResizing: true,
-    enableHiding: false,
-    meta: { isPinned: "left" },
-    size: 500,
-    cell: ({ row }) => {
-      // Check if any variant is disabled
-      const hasDisabledVariant = row.original.variants.some(
-        ({ variant }) => !variant.isEnabled
-      );
+): ColumnDef<ConfigWithVariants>[] =>
+  useMemo(
+    () => [
+      {
+        id: "name",
+        accessorKey: "name",
+        accessorFn: (row) => row.name,
+        header: t("name"),
+        enableSorting: true,
+        enableResizing: true,
+        enableHiding: false,
+        meta: { isPinned: "left" },
+        size: 500,
+        cell: ({ row }) => {
+          // Check if any variant is disabled
+          const hasDisabledVariant = row.original.variants.some(
+            ({ variant }) => !variant.isEnabled
+          );
 
-      return (
-        <Label className="flex items-center space-x-2">
-          <Switch
-            checked={row.original.isEnabled}
-            onCheckedChange={() =>
-              handleToggle(row.original.id, !row.original.isEnabled)
-            }
-            disabled={hasDisabledVariant}
-          />
-          <div
-            className={row.original.isEnabled ? "" : "text-muted-foreground"}
-          >
-            {row.original.name}
-          </div>
-        </Label>
-      );
-    },
-  },
-  {
-    id: "variants",
-    accessorKey: "variants",
-    accessorFn: (row) => row.name,
-    header: t("fields.variants"),
-    enableSorting: false,
-    enableResizing: true,
-    size: 100,
-    cell: ({ row }) => {
-      const hasVariants = row.original.variants.length > 0;
-      return (
-        <div className="text-center">
-          {hasVariants && (
-            <Popover>
-              <PopoverTrigger
-                className="cursor-default"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
+          return (
+            <Label className="flex items-center space-x-2">
+              <Switch
+                checked={row.original.isEnabled}
+                onCheckedChange={() =>
+                  handleToggle(row.original.id, !row.original.isEnabled)
+                }
+                disabled={hasDisabledVariant}
+              />
+              <div
+                className={
+                  row.original.isEnabled ? "" : "text-muted-foreground"
+                }
               >
-                <Badge>
-                  {" "}
-                  <Component className="w-4 h-4 mr-1" />
-                  {row.original.variants.length}
-                </Badge>
-              </PopoverTrigger>
-              <PopoverContent>
-                {row.original.variants.map((variant) => (
-                  <Badge key={variant.variant.id}>
-                    {variant.variant.isEnabled ? (
-                      <CircleCheckBig className="w-4 h-4" />
-                    ) : (
-                      <CircleSlash2 className="w-4 h-4 text-destructive" />
-                    )}
-                    <span className="ml-1">{variant.variant.name}</span>
-                  </Badge>
-                ))}
-              </PopoverContent>
-            </Popover>
-          )}
-        </div>
-      );
-    },
-  },
-  {
-    id: "actions",
-    header: t("actions.actionsLabel"),
-    enableResizing: true,
-    enableSorting: false,
-    enableHiding: false,
-    meta: { isPinned: "right" },
-    size: 80,
-    cell: ({ row }) => (
-      <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
-        <Button
-          variant="ghost"
-          className="px-2 py-1 h-auto"
-          onClick={() => onEditConfiguration?.(row.original)}
-        >
-          <SquarePen className="h-5 w-5" />
-        </Button>
-        <Button
-          variant="destructive"
-          className="px-2 py-1 h-auto"
-          onClick={() => onDeleteConfiguration?.(row.original)}
-        >
-          <Trash2 className="h-5 w-5" />
-        </Button>
-      </div>
-    ),
-  },
-];
+                {row.original.name}
+              </div>
+            </Label>
+          );
+        },
+      },
+      {
+        id: "variants",
+        accessorKey: "variants",
+        accessorFn: (row) => row.name,
+        header: t("fields.variants"),
+        enableSorting: false,
+        enableResizing: true,
+        size: 100,
+        cell: ({ row }) => {
+          const hasVariants = row.original.variants.length > 0;
+          return (
+            <div className="text-center">
+              {hasVariants && (
+                <Popover>
+                  <PopoverTrigger
+                    className="cursor-default"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                  >
+                    <Badge>
+                      {" "}
+                      <Component className="w-4 h-4 mr-1" />
+                      {row.original.variants.length}
+                    </Badge>
+                  </PopoverTrigger>
+                  <PopoverContent>
+                    {row.original.variants.map((variant) => (
+                      <Badge key={variant.variant.id}>
+                        {variant.variant.isEnabled ? (
+                          <CircleCheckBig className="w-4 h-4" />
+                        ) : (
+                          <CircleSlash2 className="w-4 h-4 text-destructive" />
+                        )}
+                        <span className="ml-1">{variant.variant.name}</span>
+                      </Badge>
+                    ))}
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        id: "actions",
+        header: t("actions.actionsLabel"),
+        enableResizing: true,
+        enableSorting: false,
+        enableHiding: false,
+        meta: { isPinned: "right" },
+        size: 80,
+        cell: ({ row }) => (
+          <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
+            <Button
+              variant="ghost"
+              className="px-2 py-1 h-auto"
+              onClick={() => onEditConfiguration?.(row.original)}
+            >
+              <SquarePen className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="destructive"
+              className="px-2 py-1 h-auto"
+              onClick={() => onDeleteConfiguration?.(row.original)}
+            >
+              <Trash2 className="h-5 w-5" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [t, handleToggle, onEditConfiguration, onDeleteConfiguration]
+  );

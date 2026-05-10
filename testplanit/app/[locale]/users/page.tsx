@@ -13,7 +13,7 @@ import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { useFindManyUser } from "~/lib/hooks";
-import { ExtendedUser, getColumns } from "./columns";
+import { ExtendedUser, useUserColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
@@ -157,6 +157,8 @@ function Users() {
     setCurrentPage(1);
   }, [pageSize, setCurrentPage]);
 
+  const columns = useUserColumns(tCommon);
+
   if (status === "loading") return null;
 
   const handleSortChange = (column: string) => {
@@ -169,8 +171,6 @@ function Users() {
     setSortConfig({ column, direction });
     setCurrentPage(1); // Reset to first page when sorting changes
   };
-
-  const columns = getColumns(tCommon);
 
   if (session && session.user.access !== "NONE") {
     return (
