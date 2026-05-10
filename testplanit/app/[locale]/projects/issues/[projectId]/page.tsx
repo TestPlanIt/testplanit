@@ -109,6 +109,10 @@ function ProjectIssues() {
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const hasInitializedRef = useRef(false);
+  const prevSearchStringRef = useRef(searchString);
+  const prevPageSizeRef = useRef(pageSize);
+  const prevStatusFilterRef = useRef(statusFilter);
+  const prevPriorityFilterRef = useRef(priorityFilter);
   const [shouldPreventPageReset, setShouldPreventPageReset] =
     useState(!!targetIssueId);
   const [isTableReady, setIsTableReady] = useState(false);
@@ -689,21 +693,32 @@ function ProjectIssues() {
   }, [targetIssueId, isTableReady]);
 
   useEffect(() => {
+    if (searchString === prevSearchStringRef.current) return;
+    prevSearchStringRef.current = searchString;
     setCurrentPage(1);
-    setIsTableReady(false); // Reset when search changes
-    hasInitializedRef.current = false; // Reset scroll initialization
+    setIsTableReady(false);
+    hasInitializedRef.current = false;
   }, [searchString, setCurrentPage]);
 
   useEffect(() => {
+    if (pageSize === prevPageSizeRef.current) return;
+    prevPageSizeRef.current = pageSize;
     setCurrentPage(1);
-    setIsTableReady(false); // Reset when page size changes
-    hasInitializedRef.current = false; // Reset scroll initialization
+    setIsTableReady(false);
+    hasInitializedRef.current = false;
   }, [pageSize, setCurrentPage]);
 
   useEffect(() => {
+    if (
+      statusFilter === prevStatusFilterRef.current &&
+      priorityFilter === prevPriorityFilterRef.current
+    )
+      return;
+    prevStatusFilterRef.current = statusFilter;
+    prevPriorityFilterRef.current = priorityFilter;
     setCurrentPage(1);
-    setIsTableReady(false); // Reset when filters change
-    hasInitializedRef.current = false; // Reset scroll initialization
+    setIsTableReady(false);
+    hasInitializedRef.current = false;
   }, [statusFilter, priorityFilter, setCurrentPage]);
 
   // Reset table ready state when page changes
