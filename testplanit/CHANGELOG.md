@@ -1,3 +1,9 @@
+## [0.24.23](https://github.com/TestPlanIt/testplanit/compare/v0.24.22...v0.24.23) (2026-05-10)
+
+### Bug Fixes
+
+* preserve URL page number on initial load + pin next-intl to 4.9.1 ([#294](https://github.com/TestPlanIt/testplanit/issues/294)) ([cf3d0fa](https://github.com/TestPlanIt/testplanit/commit/cf3d0fae6c0bc5835968d1685e0e44e66bb4a22e))
+
 ## [0.24.22](https://github.com/TestPlanIt/testplanit/compare/v0.24.21...v0.24.22) (2026-05-10)
 
 ### Bug Fixes
