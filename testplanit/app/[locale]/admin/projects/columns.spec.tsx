@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, renderHook, screen } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 
-import { ExtendedProjects, getColumns } from "./columns";
+import { ExtendedProjects, useColumns } from "./columns";
 
 // Mock next-intl
 vi.mock("next-intl", () => ({
@@ -104,7 +104,7 @@ function makeQueryClient() {
 }
 
 function renderCell(
-  columns: ReturnType<typeof getColumns>,
+  columns: ReturnType<typeof useColumns>,
   columnId: string,
   row: ExtendedProjects
 ) {
@@ -179,12 +179,15 @@ const projectWithNoIntegrations: ExtendedProjects = {
 };
 
 describe("Projects columns", () => {
-  const columns = getColumns(
-    mockUserPreferences,
-    mockToggleCompleted,
-    mockOpenEditModal,
-    mockTranslations
+  const { result } = renderHook(() =>
+    useColumns(
+      mockUserPreferences,
+      mockToggleCompleted,
+      mockOpenEditModal,
+      mockTranslations
+    )
   );
+  const columns = result.current;
 
   describe("column definitions", () => {
     test("includes groups column", () => {

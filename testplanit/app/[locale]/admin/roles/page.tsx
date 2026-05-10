@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   PaginationProvider,
   usePagination,
@@ -17,7 +17,7 @@ import {
   useUpdateManyRoles,
   useUpdateRoles,
 } from "~/lib/hooks";
-import { ExtendedRoles, getColumns } from "./columns";
+import { ExtendedRoles, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
@@ -203,16 +203,12 @@ function RoleList() {
     []
   );
 
-  const columns = useMemo(
-    () =>
-      getColumns(
-        // eslint-disable-next-line react-hooks/refs
-        handleToggleDefault,
-        tCommon,
-        setEditingRole,
-        setDeletingRole
-      ),
-    [handleToggleDefault, tCommon]
+  const columns = useColumns(
+    // eslint-disable-next-line react-hooks/refs
+    handleToggleDefault,
+    tCommon,
+    setEditingRole,
+    setDeletingRole
   );
 
   const [columnVisibility, setColumnVisibility] = useState<

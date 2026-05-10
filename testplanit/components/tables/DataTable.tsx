@@ -446,7 +446,6 @@ export function DataTable<TData extends DataRow, TValue>({
   const table = useReactTable({
     data: localData,
     columns: finalColumns,
-    getRowId: (row) => String(row.id),
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getGroupedRowModel:

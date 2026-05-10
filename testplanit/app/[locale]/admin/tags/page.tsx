@@ -27,7 +27,7 @@ import {
 import { CirclePlus } from "lucide-react";
 import { useCountTags, useFindManyTags } from "~/lib/hooks";
 import { AddTag } from "./AddTag";
-import { ExtendedTags, getColumns } from "./columns";
+import { ExtendedTags, useColumns } from "./columns";
 import { DeleteTag } from "./DeleteTag";
 import { EditTag } from "./EditTag";
 
@@ -258,9 +258,11 @@ function TagList() {
     }
   }, [status, session, router]);
 
-  const columns = useMemo(
-    () => getColumns(tCommon, isLoadingCounts, setEditingTag, setDeletingTag),
-    [tCommon, isLoadingCounts]
+  const columns = useColumns(
+    tCommon,
+    isLoadingCounts,
+    setEditingTag,
+    setDeletingTag
   );
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>

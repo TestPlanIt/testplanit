@@ -15,7 +15,7 @@ import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { useFindManyUser } from "~/lib/hooks";
-import { ExtendedUser, getColumns } from "./columns";
+import { ExtendedUser, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
 
@@ -260,19 +260,15 @@ function UserList() {
     [userId, dateFormat, timezone]
   );
 
-  const columns = useMemo(
-    () =>
-      getColumns(
-        userPreferences,
-        handleToggle,
-        tCommon,
-        tAdmin,
-        setEditingUser,
-        setDeletingUser,
-        setForcingUser,
-        setRevokingUser
-      ),
-    [userPreferences, handleToggle, tCommon, tAdmin]
+  const columns = useColumns(
+    userPreferences,
+    handleToggle,
+    tCommon,
+    tAdmin,
+    setEditingUser,
+    setDeletingUser,
+    setForcingUser,
+    setRevokingUser
   );
 
   const [columnVisibility, setColumnVisibility] = useState<

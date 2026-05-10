@@ -98,22 +98,6 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const syncTriggeredRef = useRef(false);
 
-  // DEBUG: remove before merging
-  const isExternalDebug =
-    integrationProvider?.toUpperCase() === "JIRA" && integrationId;
-  useEffect(() => {
-    if (!isExternalDebug) return;
-    console.log(`[IssuesDisplay] MOUNT id=${id} name=${name}`);
-    return () => {
-      console.log(`[IssuesDisplay] UNMOUNT id=${id} name=${name}`);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  useEffect(() => {
-    if (!isExternalDebug) return;
-    console.log(`[IssuesDisplay] isOpen=${isOpen} id=${id}`);
-  }, [isOpen, id, isExternalDebug]);
-
   // Subscribe to live updates for this issue's project(s) — webhook → sync
   // events fan out via the singleton SSE manager so any number of
   // IssuesDisplay instances on the same project share a single connection.
@@ -303,11 +287,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
           }, 100);
         }}
       >
-        <Popover
-          open={isOpen}
-          onOpenChange={updateIsOpen}
-          modal={false}
-        >
+        <Popover open={isOpen} onOpenChange={updateIsOpen} modal={false}>
           <PopoverTrigger asChild>{badgeContent}</PopoverTrigger>
           <PopoverContent
             className="w-96 p-0"

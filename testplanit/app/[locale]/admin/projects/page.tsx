@@ -21,7 +21,7 @@ import {
   useFindManyUser,
   useUpdateProjects,
 } from "~/lib/hooks";
-import { ExtendedProjects, getColumns } from "./columns";
+import { ExtendedProjects, useColumns } from "./columns";
 
 import { CreateProjectWizard } from "@/admin/projects/CreateProjectWizard";
 import { Filter } from "@/components/tables/Filter";
@@ -423,17 +423,13 @@ function ProjectAdmin() {
     [dateFormat, timezone]
   );
 
-  const columns: CustomColumnDef<ExtendedProjects>[] = useMemo(
-    () =>
-      getColumns(
-        userPreferences,
-        // eslint-disable-next-line react-hooks/refs
-        handleToggleCompleted,
-        handleOpenEditModal,
-        tCommon,
-        setDeletingProject
-      ),
-    [userPreferences, handleToggleCompleted, handleOpenEditModal, tCommon]
+  const columns: CustomColumnDef<ExtendedProjects>[] = useColumns(
+    userPreferences,
+    // eslint-disable-next-line react-hooks/refs
+    handleToggleCompleted,
+    handleOpenEditModal,
+    tCommon,
+    setDeletingProject
   );
 
   useEffect(() => {

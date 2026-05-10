@@ -13,6 +13,7 @@ import {
 import { Issue } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
 import DOMPurify from "dompurify";
+import { useMemo } from "react";
 import { buildSimpleUrlLink } from "~/lib/integrations/simpleUrl";
 
 function resolveIssueUrl(row: ExtendedIssues): string | null {
@@ -85,362 +86,388 @@ export function useIssueColumns({
    *  when the project only has SIMPLE_URL integrations — those columns never have values. */
   hideSyncedFields?: boolean;
 }): ColumnDef<ExtendedIssues>[] {
-  const columns: ColumnDef<ExtendedIssues>[] = [
-    {
-      id: "name",
-      accessorKey: "name",
-      accessorFn: (row) => row.name,
-      header: translations.name,
-      enableSorting: true,
-      enableResizing: true,
-      enableHiding: false,
-      meta: { isPinned: "left" },
-      size: 400,
-      minSize: 150,
-      maxSize: 800,
-      cell: ({ row, column }) => {
-        return (
-          <div
-            data-row-id={row.original.id}
-            style={{ maxWidth: column.getSize() }}
-            className="overflow-hidden"
-          >
-            <IssuesDisplay
-              id={row.original.id}
-              name={row.original.name}
-              externalId={row.original.externalId}
-              externalUrl={resolveIssueUrl(row.original)}
-              title={row.original.title}
-              status={row.original.externalStatus}
-              projectIds={row.original.projectIds}
-              size="small"
-              data={row.original.data}
-              integrationProvider={row.original.integration?.provider}
-              integrationId={row.original.integration?.id}
-              issueTypeName={row.original.issueTypeName}
-              issueTypeIconUrl={row.original.issueTypeIconUrl}
-            />
-          </div>
-        );
-      },
-    },
-    {
-      id: "title",
-      accessorKey: "title",
-      accessorFn: (row) => row.title,
-      header: translations.title,
-      enableSorting: true,
-      enableResizing: true,
-      size: 250,
-      minSize: 150,
-      maxSize: 500,
-      cell: ({ row, column }) => {
-        const title = row.original.title;
-        const externalUrl = resolveIssueUrl(row.original);
-        const hasHtml = title && /<[^>]+>/.test(title);
-        const plainText = stripHtmlTags(title);
+  // Destructure to primitive deps so useMemo only re-runs when strings change (locale switch),
+  // not on every parent render that creates a new translations object.
+  const {
+    name: tName,
+    title: tTitle,
+    description: tDescription,
+    status: tStatus,
+    priority: tPriority,
+    lastSyncedAt: tLastSyncedAt,
+    testCases: tTestCases,
+    sessions: tSessions,
+    testRuns: tTestRuns,
+  } = translations;
 
-        if (!title) return <span className="text-muted-foreground">-</span>;
-
-        // If the issue has an externalUrl and the title is plain text,
-        // render the title as a link to the external system.
-        if (externalUrl && !hasHtml) {
+  return useMemo(() => {
+    const columns: ColumnDef<ExtendedIssues>[] = [
+      {
+        id: "name",
+        accessorKey: "name",
+        accessorFn: (row) => row.name,
+        header: tName,
+        enableSorting: true,
+        enableResizing: true,
+        enableHiding: false,
+        meta: { isPinned: "left" },
+        size: 400,
+        minSize: 150,
+        maxSize: 800,
+        cell: ({ row, column }) => {
           return (
-            <a
-              href={externalUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              title={plainText}
-              className="line-clamp-2 overflow-hidden text-ellipsis text-sm hover:text-primary hover:underline block px-1 -mx-1 py-0.5"
+            <div
+              data-row-id={row.original.id}
               style={{ maxWidth: column.getSize() }}
-              onClick={(e) => e.stopPropagation()}
+              className="overflow-hidden"
             >
-              {plainText}
-            </a>
+              <IssuesDisplay
+                id={row.original.id}
+                name={row.original.name}
+                externalId={row.original.externalId}
+                externalUrl={resolveIssueUrl(row.original)}
+                title={row.original.title}
+                status={row.original.externalStatus}
+                projectIds={row.original.projectIds}
+                size="small"
+                data={row.original.data}
+                integrationProvider={row.original.integration?.provider}
+                integrationId={row.original.integration?.id}
+                issueTypeName={row.original.issueTypeName}
+                issueTypeIconUrl={row.original.issueTypeIconUrl}
+              />
+            </div>
           );
-        }
+        },
+      },
+      {
+        id: "title",
+        accessorKey: "title",
+        accessorFn: (row) => row.title,
+        header: tTitle,
+        enableSorting: true,
+        enableResizing: true,
+        size: 250,
+        minSize: 150,
+        maxSize: 500,
+        cell: ({ row, column }) => {
+          const title = row.original.title;
+          const externalUrl = resolveIssueUrl(row.original);
+          const hasHtml = title && /<[^>]+>/.test(title);
+          const plainText = stripHtmlTags(title);
 
-        return (
-          <Popover>
-            <PopoverTrigger asChild>
-              <div
-                className="line-clamp-2 overflow-hidden text-ellipsis text-sm cursor-pointer hover:bg-accent/50 rounded px-1 -mx-1 py-0.5 transition-colors"
-                style={{ maxWidth: column.getSize() }}
+          if (!title) return <span className="text-muted-foreground">-</span>;
+
+          // If the issue has an externalUrl and the title is plain text,
+          // render the title as a link to the external system.
+          if (externalUrl && !hasHtml) {
+            return (
+              <a
+                href={externalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
                 title={plainText}
+                className="line-clamp-2 overflow-hidden text-ellipsis text-sm hover:text-primary hover:underline block px-1 -mx-1 py-0.5"
+                style={{ maxWidth: column.getSize() }}
+                onClick={(e) => e.stopPropagation()}
               >
                 {plainText}
-              </div>
-            </PopoverTrigger>
-            <PopoverContent className="w-[500px] max-h-[400px] overflow-auto">
-              <div className="space-y-2">
-                <h4 className="font-semibold text-sm">{translations.title}</h4>
-                {hasHtml ? (
-                  <div
-                    className="text-sm [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0"
-                    dangerouslySetInnerHTML={{
-                      __html: DOMPurify.sanitize(title, {
-                        ALLOWED_TAGS: [
-                          "p",
-                          "br",
-                          "a",
-                          "strong",
-                          "em",
-                          "u",
-                          "ul",
-                          "ol",
-                          "li",
-                          "h1",
-                          "h2",
-                          "h3",
-                          "h4",
-                          "h5",
-                          "h6",
-                        ],
-                        ALLOWED_ATTR: ["href", "target", "rel"],
-                      }),
-                    }}
-                  />
-                ) : (
-                  <p className="text-sm whitespace-pre-wrap">{title}</p>
-                )}
-              </div>
-            </PopoverContent>
-          </Popover>
-        );
-      },
-    },
-    {
-      id: "description",
-      accessorKey: "description",
-      accessorFn: (row) => stripHtmlTags(row.description),
-      header: translations.description,
-      enableSorting: false,
-      enableResizing: true,
-      size: 250,
-      minSize: 150,
-      maxSize: 500,
-      cell: ({ row, column }) => {
-        const description = row.original.description;
-        const plainText = stripHtmlTags(description);
+              </a>
+            );
+          }
 
-        if (!plainText) return <span className="text-muted-foreground">-</span>;
+          return (
+            <Popover>
+              <PopoverTrigger asChild>
+                <div
+                  className="line-clamp-2 overflow-hidden text-ellipsis text-sm cursor-pointer hover:bg-accent/50 rounded px-1 -mx-1 py-0.5 transition-colors"
+                  style={{ maxWidth: column.getSize() }}
+                  title={plainText}
+                >
+                  {plainText}
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-[500px] max-h-[400px] overflow-auto">
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm">{tTitle}</h4>
+                  {hasHtml ? (
+                    <div
+                      className="text-sm [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0"
+                      dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(title, {
+                          ALLOWED_TAGS: [
+                            "p",
+                            "br",
+                            "a",
+                            "strong",
+                            "em",
+                            "u",
+                            "ul",
+                            "ol",
+                            "li",
+                            "h1",
+                            "h2",
+                            "h3",
+                            "h4",
+                            "h5",
+                            "h6",
+                          ],
+                          ALLOWED_ATTR: ["href", "target", "rel"],
+                        }),
+                      }}
+                    />
+                  ) : (
+                    <p className="text-sm whitespace-pre-wrap">{title}</p>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+          );
+        },
+      },
+      {
+        id: "description",
+        accessorKey: "description",
+        accessorFn: (row) => stripHtmlTags(row.description),
+        header: tDescription,
+        enableSorting: false,
+        enableResizing: true,
+        size: 250,
+        minSize: 150,
+        maxSize: 500,
+        cell: ({ row, column }) => {
+          const description = row.original.description;
+          const plainText = stripHtmlTags(description);
 
-        const hasHtml = description && /<[^>]+>/.test(description);
+          if (!plainText)
+            return <span className="text-muted-foreground">-</span>;
 
-        return (
-          <Popover>
-            <PopoverTrigger asChild>
-              <div
-                className="line-clamp-2 overflow-hidden text-ellipsis text-sm cursor-pointer hover:bg-accent/50 rounded px-1 -mx-1 py-0.5 transition-colors"
-                style={{ maxWidth: column.getSize() }}
-                title={plainText}
-              >
-                {plainText}
-              </div>
-            </PopoverTrigger>
-            <PopoverContent className="w-[500px] max-h-[400px] overflow-auto">
-              <div className="space-y-2">
-                <h4 className="font-semibold text-sm">
-                  {translations.description}
-                </h4>
-                {hasHtml ? (
-                  <div
-                    className="text-sm [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4"
-                    dangerouslySetInnerHTML={{
-                      __html: DOMPurify.sanitize(description, {
-                        ALLOWED_TAGS: [
-                          "p",
-                          "br",
-                          "a",
-                          "strong",
-                          "em",
-                          "u",
-                          "ul",
-                          "ol",
-                          "li",
-                          "h1",
-                          "h2",
-                          "h3",
-                          "h4",
-                          "h5",
-                          "h6",
-                          "blockquote",
-                          "code",
-                          "pre",
-                        ],
-                        ALLOWED_ATTR: ["href", "target", "rel"],
-                      }),
-                    }}
-                  />
-                ) : (
-                  <p className="text-sm whitespace-pre-wrap">{description}</p>
-                )}
-              </div>
-            </PopoverContent>
-          </Popover>
-        );
+          const hasHtml = description && /<[^>]+>/.test(description);
+
+          return (
+            <Popover>
+              <PopoverTrigger asChild>
+                <div
+                  className="line-clamp-2 overflow-hidden text-ellipsis text-sm cursor-pointer hover:bg-accent/50 rounded px-1 -mx-1 py-0.5 transition-colors"
+                  style={{ maxWidth: column.getSize() }}
+                  title={plainText}
+                >
+                  {plainText}
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="w-[500px] max-h-[400px] overflow-auto">
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm">{tDescription}</h4>
+                  {hasHtml ? (
+                    <div
+                      className="text-sm [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0 [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4"
+                      dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(description, {
+                          ALLOWED_TAGS: [
+                            "p",
+                            "br",
+                            "a",
+                            "strong",
+                            "em",
+                            "u",
+                            "ul",
+                            "ol",
+                            "li",
+                            "h1",
+                            "h2",
+                            "h3",
+                            "h4",
+                            "h5",
+                            "h6",
+                            "blockquote",
+                            "code",
+                            "pre",
+                          ],
+                          ALLOWED_ATTR: ["href", "target", "rel"],
+                        }),
+                      }}
+                    />
+                  ) : (
+                    <p className="text-sm whitespace-pre-wrap">{description}</p>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+          );
+        },
       },
-    },
-    {
-      id: "status",
-      accessorKey: "status",
-      accessorFn: (row) => row.status || "",
-      header: translations.status,
-      enableSorting: true,
-      enableResizing: true,
-      size: 120,
-      minSize: 80,
-      maxSize: 200,
-      cell: ({ row }) => {
-        const status = row.original.status;
-        return <IssueStatusDisplay status={status} className="capitalize" />;
+      {
+        id: "status",
+        accessorKey: "status",
+        accessorFn: (row) => row.status || "",
+        header: tStatus,
+        enableSorting: true,
+        enableResizing: true,
+        size: 120,
+        minSize: 80,
+        maxSize: 200,
+        cell: ({ row }) => {
+          const status = row.original.status;
+          return <IssueStatusDisplay status={status} className="capitalize" />;
+        },
       },
-    },
-    {
-      id: "priority",
-      accessorKey: "priority",
-      accessorFn: (row) => row.priority || "",
-      header: translations.priority,
-      enableSorting: true,
-      enableResizing: true,
-      size: 100,
-      minSize: 80,
-      maxSize: 200,
-      cell: ({ row }) => {
-        const priority = row.original.priority;
-        return (
-          <IssuePriorityDisplay priority={priority} className="capitalize" />
-        );
+      {
+        id: "priority",
+        accessorKey: "priority",
+        accessorFn: (row) => row.priority || "",
+        header: tPriority,
+        enableSorting: true,
+        enableResizing: true,
+        size: 100,
+        minSize: 80,
+        maxSize: 200,
+        cell: ({ row }) => {
+          const priority = row.original.priority;
+          return (
+            <IssuePriorityDisplay priority={priority} className="capitalize" />
+          );
+        },
       },
-    },
-    {
-      id: "lastSyncedAt",
-      accessorKey: "lastSyncedAt",
-      accessorFn: (row) => row.lastSyncedAt,
-      header: translations.lastSyncedAt,
-      enableSorting: true,
-      enableResizing: true,
-      size: 150,
-      minSize: 80,
-      maxSize: 250,
-      cell: ({ row, column }) => {
-        const lastSyncedAt = row.original.lastSyncedAt;
-        if (!lastSyncedAt)
-          return <span className="text-muted-foreground">-</span>;
-        return (
-          <span
-            className="text-sm truncate overflow-hidden block"
-            style={{ maxWidth: column.getSize() }}
-          >
-            <DateFormatter date={lastSyncedAt} formatString="PPp" />
-          </span>
-        );
+      {
+        id: "lastSyncedAt",
+        accessorKey: "lastSyncedAt",
+        accessorFn: (row) => row.lastSyncedAt,
+        header: tLastSyncedAt,
+        enableSorting: true,
+        enableResizing: true,
+        size: 150,
+        minSize: 80,
+        maxSize: 250,
+        cell: ({ row, column }) => {
+          const lastSyncedAt = row.original.lastSyncedAt;
+          if (!lastSyncedAt)
+            return <span className="text-muted-foreground">-</span>;
+          return (
+            <span
+              className="text-sm truncate overflow-hidden block"
+              style={{ maxWidth: column.getSize() }}
+            >
+              <DateFormatter date={lastSyncedAt} formatString="PPp" />
+            </span>
+          );
+        },
       },
-    },
-    {
-      id: "cases",
-      accessorKey: "repositoryCases",
-      accessorFn: (row) => row.repositoryCasesCount ?? 0,
-      header: translations.testCases,
-      enableSorting: true,
-      enableResizing: true,
-      sortingFn: "basic",
-      size: 75,
-      minSize: 60,
-      maxSize: 150,
-      cell: ({ row }) => {
-        const count = row.original.repositoryCasesCount;
-        return (
-          <div className="text-center">
-            <CasesListDisplay
-              count={count}
-              filter={{
-                issues: {
-                  some: {
-                    id: row.original.id,
+      {
+        id: "cases",
+        accessorKey: "repositoryCases",
+        accessorFn: (row) => row.repositoryCasesCount ?? 0,
+        header: tTestCases,
+        enableSorting: true,
+        enableResizing: true,
+        sortingFn: "basic",
+        size: 75,
+        minSize: 60,
+        maxSize: 150,
+        cell: ({ row }) => {
+          const count = row.original.repositoryCasesCount;
+          return (
+            <div className="text-center">
+              <CasesListDisplay
+                count={count}
+                filter={{
+                  issues: {
+                    some: {
+                      id: row.original.id,
+                    },
                   },
-                },
-              }}
-              isLoading={isLoadingCounts}
-            />
-          </div>
-        );
+                }}
+                isLoading={isLoadingCounts}
+              />
+            </div>
+          );
+        },
       },
-    },
-    {
-      id: "testRuns",
-      accessorKey: "aggregatedTestRunIds",
-      accessorFn: (row) => row.testRunsCount ?? 0,
-      header: translations.testRuns,
-      enableSorting: true,
-      enableResizing: true,
-      sortingFn: "basic",
-      size: 75,
-      minSize: 60,
-      maxSize: 150,
-      cell: ({ row }) => {
-        const count = row.original.testRunsCount;
-        return (
-          <div className="text-center">
-            <TestRunsListDisplay
-              key={`tr-${row.original.id}`}
-              count={count}
-              filter={{
-                issues: {
-                  some: {
-                    id: row.original.id,
+      {
+        id: "testRuns",
+        accessorKey: "aggregatedTestRunIds",
+        accessorFn: (row) => row.testRunsCount ?? 0,
+        header: tTestRuns,
+        enableSorting: true,
+        enableResizing: true,
+        sortingFn: "basic",
+        size: 75,
+        minSize: 60,
+        maxSize: 150,
+        cell: ({ row }) => {
+          const count = row.original.testRunsCount;
+          return (
+            <div className="text-center">
+              <TestRunsListDisplay
+                key={`tr-${row.original.id}`}
+                count={count}
+                filter={{
+                  issues: {
+                    some: {
+                      id: row.original.id,
+                    },
                   },
-                },
-              }}
-              isLoading={isLoadingCounts}
-            />
-          </div>
-        );
+                }}
+                isLoading={isLoadingCounts}
+              />
+            </div>
+          );
+        },
       },
-    },
-    {
-      id: "sessions",
-      accessorKey: "sessions",
-      accessorFn: (row) => row.sessionsCount ?? 0,
-      header: translations.sessions,
-      enableSorting: true,
-      enableResizing: true,
-      sortingFn: "basic",
-      size: 75,
-      minSize: 60,
-      maxSize: 150,
-      cell: ({ row }) => {
-        const count = row.original.sessionsCount;
-        return (
-          <div className="text-center">
-            <SessionsListDisplay
-              count={count}
-              filter={{
-                issues: {
-                  some: {
-                    id: row.original.id,
+      {
+        id: "sessions",
+        accessorKey: "sessions",
+        accessorFn: (row) => row.sessionsCount ?? 0,
+        header: tSessions,
+        enableSorting: true,
+        enableResizing: true,
+        sortingFn: "basic",
+        size: 75,
+        minSize: 60,
+        maxSize: 150,
+        cell: ({ row }) => {
+          const count = row.original.sessionsCount;
+          return (
+            <div className="text-center">
+              <SessionsListDisplay
+                count={count}
+                filter={{
+                  issues: {
+                    some: {
+                      id: row.original.id,
+                    },
                   },
-                },
-              }}
-              isLoading={isLoadingCounts}
-            />
-          </div>
-        );
+                }}
+                isLoading={isLoadingCounts}
+              />
+            </div>
+          );
+        },
       },
-    },
-  ];
+    ];
 
-  // Hide columns that are populated only via external API sync when the project
-  // only has SIMPLE_URL integrations — those columns would always be empty.
-  if (hideSyncedFields) {
-    const syncedOnly = new Set([
-      "description",
-      "status",
-      "priority",
-      "lastSyncedAt",
-    ]);
-    return columns.filter((c) => !syncedOnly.has(c.id as string));
-  }
+    // Hide columns that are populated only via external API sync when the project
+    // only has SIMPLE_URL integrations — those columns would always be empty.
+    if (hideSyncedFields) {
+      const syncedOnly = new Set([
+        "description",
+        "status",
+        "priority",
+        "lastSyncedAt",
+      ]);
+      return columns.filter((c) => !syncedOnly.has(c.id as string));
+    }
 
-  return columns;
+    return columns;
+  }, [
+    tName,
+    tTitle,
+    tDescription,
+    tStatus,
+    tPriority,
+    tLastSyncedAt,
+    tTestCases,
+    tSessions,
+    tTestRuns,
+    hideSyncedFields,
+  ]);
 }

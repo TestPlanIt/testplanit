@@ -7,13 +7,13 @@ import { Button } from "@/components/ui/button";
 import { CirclePlus, SquareCheck } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useFindManyResultFields, useUpdateResultFields } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { AddResultFieldModal } from "./AddResultField";
 import { DeleteResultField } from "./DeleteResultField";
 import { EditResultField } from "./EditResultField";
-import { ExtendedResultFields, getColumns } from "./resultFieldColumns";
+import { ExtendedResultFields, useColumns } from "./resultFieldColumns";
 
 export default function ResultFields() {
   const { data: session, status } = useSession();
@@ -96,17 +96,12 @@ export default function ResultFields() {
   const [deletingResultField, setDeletingResultField] =
     useState<ExtendedResultFields | null>(null);
 
-  const columns: CustomColumnDef<ExtendedResultFields>[] = useMemo(
-    () =>
-      getColumns(
-        t,
-        tCommon,
-        // eslint-disable-next-line react-hooks/refs
-        handleToggle,
-        setEditingResultField,
-        setDeletingResultField
-      ),
-    [handleToggle, t, tCommon]
+  const columns: CustomColumnDef<ExtendedResultFields>[] = useColumns(
+    t,
+    tCommon,
+    handleToggle,
+    setEditingResultField,
+    setDeletingResultField
   );
 
   const [addResultFieldOpen, setAddResultFieldOpen] = useState(false);

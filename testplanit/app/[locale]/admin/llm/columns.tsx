@@ -6,7 +6,7 @@ import { LlmIntegration, LlmProviderConfig } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
 import { CheckCircle, Edit, Sparkles, Trash2, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { type MutableRefObject } from "react";
+import { useMemo, type MutableRefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { LlmProviderBadge } from "~/lib/llm/provider-styles";
 import { TestLlmIntegration } from "./TestLlmIntegration";
@@ -17,7 +17,7 @@ export interface ExtendedLlmIntegration extends LlmIntegration {
   projectLlmIntegrations?: { projectId: number }[];
 }
 
-export const getColumns = (
+export const useColumns = (
   userPreferences: any,
   handleToggle: (
     id: number,
@@ -31,266 +31,289 @@ export const getColumns = (
   totalIntegrations: number = 0,
   onEditIntegration?: (integration: ExtendedLlmIntegration) => void,
   onDeleteIntegration?: (integration: ExtendedLlmIntegration) => void
-): ColumnDef<ExtendedLlmIntegration>[] => [
-  {
-    id: "name",
-    accessorKey: "name",
-    header: () => (
-      <div className="bg-primary-foreground">{tCommon("name")}</div>
-    ),
-    enableSorting: true,
-    enableResizing: true,
-    enableHiding: false,
-    meta: { isPinned: "left" },
-    size: 300,
-    cell: ({ row }) => (
-      <div className="bg-primary-foreground flex items-center gap-2">
-        <Sparkles className="h-4 w-4 text-muted-foreground shrink-0" />
-        <span className="font-medium">{row.original.name}</span>
-      </div>
-    ),
-  },
-  {
-    id: "provider",
-    accessorKey: "provider",
-    header: tCommon("fields.provider"),
-    enableSorting: true,
-    enableResizing: true,
-    size: 150,
-    cell: ({ row }) => <LlmProviderBadge provider={row.original.provider} />,
-  },
-  {
-    id: "status",
-    accessorKey: "status",
-    header: tCommon("actions.status"),
-    enableSorting: true,
-    enableResizing: true,
-    size: 150,
-    cell: ({ row }) => {
-      const isActive = row.original.status === "ACTIVE";
-      const isConnected = row.original.isConnected;
-
-      return (
-        <div className="flex items-center gap-2">
-          <Badge variant={isActive ? "default" : "secondary"}>
-            {row.original.status}
-          </Badge>
-          {isConnected !== undefined &&
-            (isConnected ? (
-              <CheckCircle className="h-4 w-4 text-success" />
-            ) : (
-              <XCircle className="h-4 w-4 text-destructive" />
-            ))}
-        </div>
-      );
-    },
-  },
-
-  {
-    id: "projects",
-    accessorKey: "projectLlmIntegrations",
-    header: tCommon("fields.projects"),
-    enableSorting: false,
-    enableResizing: true,
-    size: 75,
-    cell: ({ row }) => {
-      const projects = row.original.projectLlmIntegrations || [];
-
-      if (projects.length === 0) {
-        return null;
-      }
-
-      return <ProjectListDisplay projects={projects} usePopover={true} />;
-    },
-  },
-  {
-    id: "defaultModel",
-    accessorKey: "llmProviderConfig.defaultModel",
-    header: t("defaultModel"),
-    enableSorting: false,
-    enableResizing: true,
-    size: 200,
-    cell: ({ row }) => (
-      <span className="text-sm text-muted-foreground">
-        {row.original.llmProviderConfig?.defaultModel || t("notConfigured")}
-      </span>
-    ),
-  },
-  {
-    id: "monthlyBudget",
-    accessorKey: "llmProviderConfig.monthlyBudget",
-    header: t("budgetUsage"),
-    enableSorting: false,
-    enableResizing: true,
-    size: 200,
-    cell: ({ row }) => {
-      const budget = row.original.llmProviderConfig?.monthlyBudget;
-      const usage = usageByIntegrationIdRef.current.get(row.original.id) ?? 0;
-
-      if (!budget || Number(budget) === 0) {
-        return (
-          <span className="text-sm text-muted-foreground">
-            {`$${usage.toFixed(4)}`}
-          </span>
-        );
-      }
-
-      const percentage = (usage / Number(budget)) * 100;
-      const isOverBudget = percentage > 100;
-
-      return (
-        <div className="space-y-1">
-          <div className="text-sm">
-            {`$${usage.toFixed(4)} / $${Number(budget).toFixed(2)}`}
+): ColumnDef<ExtendedLlmIntegration>[] => {
+  return useMemo(
+    () => [
+      {
+        id: "name",
+        accessorKey: "name",
+        header: () => (
+          <div className="bg-primary-foreground">{tCommon("name")}</div>
+        ),
+        enableSorting: true,
+        enableResizing: true,
+        enableHiding: false,
+        meta: { isPinned: "left" },
+        size: 300,
+        cell: ({ row }) => (
+          <div className="bg-primary-foreground flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span className="font-medium">{row.original.name}</span>
           </div>
-          <div className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-            <div
-              className={`h-full transition-all ${
-                isOverBudget
-                  ? "bg-destructive"
-                  : percentage > 80
-                    ? "bg-warning"
-                    : "bg-success"
-              }`}
-              style={{ width: `${Math.min(percentage, 100)}%` }}
+        ),
+      },
+      {
+        id: "provider",
+        accessorKey: "provider",
+        header: tCommon("fields.provider"),
+        enableSorting: true,
+        enableResizing: true,
+        size: 150,
+        cell: ({ row }) => (
+          <LlmProviderBadge provider={row.original.provider} />
+        ),
+      },
+      {
+        id: "status",
+        accessorKey: "status",
+        header: tCommon("actions.status"),
+        enableSorting: true,
+        enableResizing: true,
+        size: 150,
+        cell: ({ row }) => {
+          const isActive = row.original.status === "ACTIVE";
+          const isConnected = row.original.isConnected;
+
+          return (
+            <div className="flex items-center gap-2">
+              <Badge variant={isActive ? "default" : "secondary"}>
+                {row.original.status}
+              </Badge>
+              {isConnected !== undefined &&
+                (isConnected ? (
+                  <CheckCircle className="h-4 w-4 text-success" />
+                ) : (
+                  <XCircle className="h-4 w-4 text-destructive" />
+                ))}
+            </div>
+          );
+        },
+      },
+
+      {
+        id: "projects",
+        accessorKey: "projectLlmIntegrations",
+        header: tCommon("fields.projects"),
+        enableSorting: false,
+        enableResizing: true,
+        size: 75,
+        cell: ({ row }) => {
+          const projects = row.original.projectLlmIntegrations || [];
+
+          if (projects.length === 0) {
+            return null;
+          }
+
+          return <ProjectListDisplay projects={projects} usePopover={true} />;
+        },
+      },
+      {
+        id: "defaultModel",
+        accessorKey: "llmProviderConfig.defaultModel",
+        header: t("defaultModel"),
+        enableSorting: false,
+        enableResizing: true,
+        size: 200,
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">
+            {row.original.llmProviderConfig?.defaultModel || t("notConfigured")}
+          </span>
+        ),
+      },
+      {
+        id: "monthlyBudget",
+        accessorKey: "llmProviderConfig.monthlyBudget",
+        header: t("budgetUsage"),
+        enableSorting: false,
+        enableResizing: true,
+        size: 200,
+        cell: ({ row }) => {
+          const budget = row.original.llmProviderConfig?.monthlyBudget;
+          const usage =
+            usageByIntegrationIdRef.current.get(row.original.id) ?? 0;
+
+          if (!budget || Number(budget) === 0) {
+            return (
+              <span className="text-sm text-muted-foreground">
+                {`$${usage.toFixed(4)}`}
+              </span>
+            );
+          }
+
+          const percentage = (usage / Number(budget)) * 100;
+          const isOverBudget = percentage > 100;
+
+          return (
+            <div className="space-y-1">
+              <div className="text-sm">
+                {`$${usage.toFixed(4)} / $${Number(budget).toFixed(2)}`}
+              </div>
+              <div className="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  className={`h-full transition-all ${
+                    isOverBudget
+                      ? "bg-destructive"
+                      : percentage > 80
+                        ? "bg-warning"
+                        : "bg-success"
+                  }`}
+                  style={{ width: `${Math.min(percentage, 100)}%` }}
+                />
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        id: "streamingEnabled",
+        accessorKey: "llmProviderConfig.streamingEnabled",
+        header: t("streaming"),
+        enableSorting: false,
+        enableResizing: true,
+        enableHiding: true,
+        meta: { isVisible: false },
+        size: 100,
+        cell: ({ row }) => (
+          <div className="text-center">
+            <Switch
+              checked={
+                row.original.llmProviderConfig?.streamingEnabled || false
+              }
+              onCheckedChange={(checked) =>
+                handleToggle(
+                  row.original.id,
+                  "streamingEnabled",
+                  checked,
+                  row.original.llmProviderConfig?.id
+                )
+              }
             />
           </div>
-        </div>
-      );
-    },
-  },
-  {
-    id: "streamingEnabled",
-    accessorKey: "llmProviderConfig.streamingEnabled",
-    header: t("streaming"),
-    enableSorting: false,
-    enableResizing: true,
-    enableHiding: true,
-    meta: { isVisible: false },
-    size: 100,
-    cell: ({ row }) => (
-      <div className="text-center">
-        <Switch
-          checked={row.original.llmProviderConfig?.streamingEnabled || false}
-          onCheckedChange={(checked) =>
-            handleToggle(
-              row.original.id,
-              "streamingEnabled",
-              checked,
-              row.original.llmProviderConfig?.id
-            )
-          }
-        />
-      </div>
-    ),
-  },
-  {
-    id: "createdAt",
-    accessorKey: "createdAt",
-    header: tCommon("fields.createdAt"),
-    enableSorting: true,
-    enableResizing: true,
-    enableHiding: true,
-    meta: { isVisible: false },
-    size: 150,
-    cell: ({ getValue, row: _row }) => (
-      <div className="whitespace-nowrap">
-        <DateFormatter
-          date={getValue() as Date | string}
-          formatString={
-            userPreferences.user.preferences?.dateFormat || "MM_DD_YYYY_DASH"
-          }
-          timezone={userPreferences.user.preferences?.timezone || "Etc/UTC"}
-        />
-      </div>
-    ),
-  },
-  {
-    id: "updatedAt",
-    accessorKey: "updatedAt",
-    header: tCommon("fields.updatedAt"),
-    enableSorting: true,
-    enableResizing: true,
-    enableHiding: true,
-    meta: { isVisible: false },
-    size: 150,
-    cell: ({ getValue, row: _row }) => (
-      <div className="whitespace-nowrap">
-        <DateFormatter
-          date={getValue() as Date | string}
-          formatString={
-            userPreferences.user.preferences?.dateFormat || "MM_DD_YYYY_DASH"
-          }
-          timezone={userPreferences.user.preferences?.timezone || "Etc/UTC"}
-        />
-      </div>
-    ),
-  },
-  {
-    id: "isDefault",
-    accessorKey: "llmProviderConfig.isDefault",
-    header: tCommon("fields.default"),
-    enableSorting: false,
-    enableResizing: true,
-    size: 100,
-    cell: ({ row }) => (
-      <div className="text-center">
-        <Switch
-          checked={row.original.llmProviderConfig?.isDefault || false}
-          disabled={row.original.llmProviderConfig?.isDefault}
-          onCheckedChange={(checked) =>
-            handleToggle(
-              row.original.id,
-              "isDefault",
-              checked,
-              row.original.llmProviderConfig?.id
-            )
-          }
-        />
-      </div>
-    ),
-  },
-  {
-    id: "actions",
-    header: tCommon("actions.actionsLabel"),
-    enableResizing: true,
-    enableSorting: false,
-    enableHiding: false,
-    size: 150,
-    meta: { isPinned: "right" },
-    cell: ({ row }) => (
-      <div className="bg-primary-foreground whitespace-nowrap flex">
-        <TestLlmIntegration
-          key={`test-${row.original.id}`}
-          integration={row.original}
-        />
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => onEditIntegration?.(row.original)}
-          className="px-2 py-1 h-auto"
-          data-testid="llm-edit-button"
-        >
-          <Edit className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="destructive"
-          size="icon"
-          onClick={() => onDeleteIntegration?.(row.original)}
-          className="px-2 py-1 h-auto"
-          disabled={
-            row.original.llmProviderConfig?.isDefault && totalIntegrations > 1
-          }
-          title={
-            row.original.llmProviderConfig?.isDefault && totalIntegrations > 1
-              ? t("delete.cannotDeleteDefault")
-              : undefined
-          }
-          data-testid="llm-delete-button"
-        >
-          <Trash2 className="h-8 w-8 shrink-0" />
-        </Button>
-      </div>
-    ),
-  },
-];
+        ),
+      },
+      {
+        id: "createdAt",
+        accessorKey: "createdAt",
+        header: tCommon("fields.createdAt"),
+        enableSorting: true,
+        enableResizing: true,
+        enableHiding: true,
+        meta: { isVisible: false },
+        size: 150,
+        cell: ({ getValue, row: _row }) => (
+          <div className="whitespace-nowrap">
+            <DateFormatter
+              date={getValue() as Date | string}
+              formatString={
+                userPreferences.user.preferences?.dateFormat ||
+                "MM_DD_YYYY_DASH"
+              }
+              timezone={userPreferences.user.preferences?.timezone || "Etc/UTC"}
+            />
+          </div>
+        ),
+      },
+      {
+        id: "updatedAt",
+        accessorKey: "updatedAt",
+        header: tCommon("fields.updatedAt"),
+        enableSorting: true,
+        enableResizing: true,
+        enableHiding: true,
+        meta: { isVisible: false },
+        size: 150,
+        cell: ({ getValue, row: _row }) => (
+          <div className="whitespace-nowrap">
+            <DateFormatter
+              date={getValue() as Date | string}
+              formatString={
+                userPreferences.user.preferences?.dateFormat ||
+                "MM_DD_YYYY_DASH"
+              }
+              timezone={userPreferences.user.preferences?.timezone || "Etc/UTC"}
+            />
+          </div>
+        ),
+      },
+      {
+        id: "isDefault",
+        accessorKey: "llmProviderConfig.isDefault",
+        header: tCommon("fields.default"),
+        enableSorting: false,
+        enableResizing: true,
+        size: 100,
+        cell: ({ row }) => (
+          <div className="text-center">
+            <Switch
+              checked={row.original.llmProviderConfig?.isDefault || false}
+              disabled={row.original.llmProviderConfig?.isDefault}
+              onCheckedChange={(checked) =>
+                handleToggle(
+                  row.original.id,
+                  "isDefault",
+                  checked,
+                  row.original.llmProviderConfig?.id
+                )
+              }
+            />
+          </div>
+        ),
+      },
+      {
+        id: "actions",
+        header: tCommon("actions.actionsLabel"),
+        enableResizing: true,
+        enableSorting: false,
+        enableHiding: false,
+        size: 150,
+        meta: { isPinned: "right" },
+        cell: ({ row }) => (
+          <div className="bg-primary-foreground whitespace-nowrap flex">
+            <TestLlmIntegration
+              key={`test-${row.original.id}`}
+              integration={row.original}
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onEditIntegration?.(row.original)}
+              className="px-2 py-1 h-auto"
+              data-testid="llm-edit-button"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="destructive"
+              size="icon"
+              onClick={() => onDeleteIntegration?.(row.original)}
+              className="px-2 py-1 h-auto"
+              disabled={
+                row.original.llmProviderConfig?.isDefault &&
+                totalIntegrations > 1
+              }
+              title={
+                row.original.llmProviderConfig?.isDefault &&
+                totalIntegrations > 1
+                  ? t("delete.cannotDeleteDefault")
+                  : undefined
+              }
+              data-testid="llm-delete-button"
+            >
+              <Trash2 className="h-8 w-8 shrink-0" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      userPreferences,
+      handleToggle,
+      tCommon,
+      t,
+      totalIntegrations,
+      onEditIntegration,
+      onDeleteIntegration,
+    ]
+  );
+};
