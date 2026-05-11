@@ -1,3 +1,9 @@
+## [0.25.0](https://github.com/TestPlanIt/testplanit/compare/v0.24.24...v0.25.0) (2026-05-11)
+
+### Features
+
+* **mcp:** TestPlanIt MCP Server ([1d711b2](https://github.com/TestPlanIt/testplanit/commit/1d711b20982bf44f2447be0bf812c86c363e2e79))
+
 ## [0.24.24](https://github.com/TestPlanIt/testplanit/compare/v0.24.23...v0.24.24) (2026-05-11)
 
 ### Enhancements
