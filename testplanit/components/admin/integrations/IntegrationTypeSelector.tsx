@@ -38,11 +38,13 @@ const integrationTypes = [
   {
     type: IntegrationProvider.GITHUB,
     icon: () => (
-      <svg viewBox="0 0 24 24" className="h-8 w-8" fill="currentColor">
-        <path d={siGithub.path} />
-      </svg>
+      <div className="h-8 w-8 rounded bg-gray-900 dark:bg-gray-700 flex items-center justify-center">
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="white">
+          <path d={siGithub.path} />
+        </svg>
+      </div>
     ),
-    color: "text-gray-900 dark:text-white",
+    color: "",
   },
   {
     type: IntegrationProvider.GITLAB,
@@ -55,8 +57,8 @@ const integrationTypes = [
   },
   {
     type: IntegrationProvider.GITEA,
-    icon: () => <GiteaFamilyIcon className="h-8 w-8" />,
-    color: "",
+    icon: () => <GiteaFamilyIcon className="h-8 w-24" />,
+    color: "w-24",
   },
   {
     type: IntegrationProvider.AZURE_DEVOPS,

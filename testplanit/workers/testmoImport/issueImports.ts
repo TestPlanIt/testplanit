@@ -197,6 +197,18 @@ const constructExternalUrl = (
     case IntegrationProvider.AZURE_DEVOPS:
       // Azure DevOps: baseUrl/_workitems/edit/ID
       return `${cleanBaseUrl}/_workitems/edit/${externalKey}`;
+    case IntegrationProvider.GITLAB: {
+      // GitLab key format: "namespace/project#iid"
+      const match = externalKey.match(/^(.+)#(\d+)$/);
+      if (match) return `${cleanBaseUrl}/${match[1]}/-/issues/${match[2]}`;
+      return null;
+    }
+    case IntegrationProvider.GITEA: {
+      // Gitea/Forgejo/Gogs key format: "owner/repo#number"
+      const match = externalKey.match(/^(.+)#(\d+)$/);
+      if (match) return `${cleanBaseUrl}/${match[1]}/issues/${match[2]}`;
+      return null;
+    }
     case IntegrationProvider.SIMPLE_URL:
       // For simple URL, use the baseUrl as a template if it contains {issueId}
       if (baseUrl.includes("{issueId}")) {

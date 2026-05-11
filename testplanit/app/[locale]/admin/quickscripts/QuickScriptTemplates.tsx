@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { CaseExportTemplate } from "@prisma/client";
-import { CirclePlus, Pencil, ScrollText, Search, Trash2 } from "lucide-react";
+import { CirclePlus, ScrollText, Search, Trash2, Edit } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -395,7 +395,7 @@ export default function QuickScriptTemplates() {
                                       data-testid="edit-export-template-button"
                                       onClick={() => setEditingTemplate(tmpl)}
                                     >
-                                      <Pencil className="h-5 w-5" />
+                                      <Edit className="h-5 w-5" />
                                     </Button>
                                     {tmpl.isDefault ? (
                                       <Button

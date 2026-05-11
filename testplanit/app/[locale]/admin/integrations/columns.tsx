@@ -3,7 +3,7 @@ import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Integration } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { GiteaFamilyIcon } from "@/components/shared/gitea-family-icon";
+import { GiteaPlatformIcon } from "@/components/shared/gitea-family-icon";
 import { Link, Plug } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
@@ -20,13 +20,11 @@ const providerIcons: Record<string, React.ReactNode> = {
     </svg>
   ),
   GITHUB: (
-    <svg
-      viewBox="0 0 24 24"
-      className="h-4 w-4 text-gray-900 dark:text-white"
-      fill="currentColor"
-    >
-      <path d={siGithub.path} />
-    </svg>
+    <div className="h-4 w-4 rounded bg-gray-900 dark:bg-gray-700 flex items-center justify-center">
+      <svg viewBox="0 0 24 24" className="h-3 w-3" fill="white">
+        <path d={siGithub.path} />
+      </svg>
+    </div>
   ),
   AZURE_DEVOPS: (
     <svg viewBox="0 0 18 18" className="h-4 w-4" fill="currentColor">
@@ -38,7 +36,6 @@ const providerIcons: Record<string, React.ReactNode> = {
       <path d={siGitlab.path} />
     </svg>
   ),
-  GITEA: <GiteaFamilyIcon className="h-4 w-4" />,
   SIMPLE_URL: <Link className="h-4 w-4" />,
 };
 
@@ -74,12 +71,26 @@ export const useColumns = (
         enableHiding: false,
         meta: { isPinned: "left" },
         size: 150,
-        cell: ({ row }) => (
-          <div className="bg-primary-foreground flex items-center gap-2">
-            {providerIcons[row.original.provider]}
-            <span className="font-medium">{row.original.provider}</span>
-          </div>
-        ),
+        cell: ({ row }) => {
+          const { provider, settings } = row.original;
+          const platform =
+            provider === "GITEA" &&
+            typeof settings === "object" &&
+            settings !== null &&
+            "platform" in settings
+              ? String((settings as Record<string, unknown>).platform)
+              : undefined;
+          return (
+            <div className="bg-primary-foreground flex items-center gap-2">
+              {provider === "GITEA" ? (
+                <GiteaPlatformIcon platform={platform} className="h-4 w-4" />
+              ) : (
+                providerIcons[provider]
+              )}
+              <span className="font-medium">{provider}</span>
+            </div>
+          );
+        },
       },
       {
         id: "name",

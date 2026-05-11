@@ -42,13 +42,13 @@ The Templates table lists all defined templates with columns for:
 
 ### Editing an Existing Template
 
-1. Click the **Edit** button (pencil icon) for the desired template.
+1. Click the **Edit** button for the desired template.
 2. Modify the **Name**, **Enabled** status, **Default** status, assigned **Case Fields**, **Result Fields**, and **Project assignments** as needed.
 3. Click "Submit".
 
 ### Deleting a Template
 
-1. Click the **Delete** button (trash icon) for the desired template. (Note: Default templates cannot be deleted).
+1. Click the **Delete** button for the desired template. (Note: Default templates cannot be deleted).
 2. Confirm the deletion in the dialog box. This marks the template as deleted and removes its associations.
 
 ## Case Fields
@@ -104,13 +104,13 @@ The Case Fields table lists all defined fields with columns for:
 
 ### Editing an Existing Case Field
 
-1. Click the **Edit** button (pencil icon) for the desired field.
+1. Click the **Edit** button for the desired field.
 2. Modify the **Display Name**, **Hint**, **Enabled/Required/Restricted** status, and **Type-Specific Options** as needed. (Note: System Name and Field Type cannot be changed after creation).
 3. Click "Submit".
 
 ### Deleting a Case Field
 
-1. Click the **Delete** button (trash icon) for the desired field.
+1. Click the **Delete** button for the desired field.
 2. Confirm the deletion. This marks the field as deleted and removes it from any templates.
 
 ## Result Fields

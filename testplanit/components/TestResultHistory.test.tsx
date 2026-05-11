@@ -379,7 +379,7 @@ describe("TestResultHistory", () => {
   it("shows edit/delete buttons for manual results when canAddEditResults is true", () => {
     renderWithQueryClient(<TestResultHistory {...defaultProps} />);
 
-    // Edit (Pencil) and Delete (Trash2) buttons should be visible
+    // Edit (Pencil) and Delete buttons should be visible
     const editButtons = screen.queryAllByRole("button");
     // At least one interactive button present in rows
     expect(editButtons.length).toBeGreaterThan(0);

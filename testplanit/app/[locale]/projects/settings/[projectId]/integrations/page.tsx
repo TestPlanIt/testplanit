@@ -83,7 +83,7 @@ export default function ProjectIntegrationsPage() {
         isDeleted: false,
         status: "ACTIVE",
         provider: {
-          in: ["JIRA", "GITHUB", "AZURE_DEVOPS", "SIMPLE_URL"],
+          in: ["JIRA", "GITHUB", "AZURE_DEVOPS", "GITLAB", "GITEA", "SIMPLE_URL"],
         },
       },
       orderBy: {
@@ -95,7 +95,7 @@ export default function ProjectIntegrationsPage() {
   const currentIntegration = projectIntegrations?.find(
     (pi: any) =>
       pi.isActive &&
-      ["JIRA", "GITHUB", "AZURE_DEVOPS", "SIMPLE_URL"].includes(
+      ["JIRA", "GITHUB", "AZURE_DEVOPS", "GITLAB", "GITEA", "SIMPLE_URL"].includes(
         pi.integration.provider
       )
   );

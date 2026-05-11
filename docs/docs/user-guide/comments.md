@@ -75,7 +75,7 @@ Comments are displayed in chronological order (oldest first) in the Comments sec
 
 You can edit your own comments:
 
-1. Click the **Edit** button (pencil icon) on your comment
+1. Click the **Edit** button on your comment
 2. The comment editor opens with the existing content
 3. Make your changes
 4. Click **Save** to update the comment
@@ -91,7 +91,7 @@ You can edit your own comments:
 
 You can delete your own comments:
 
-1. Click the **Delete** button (trash icon) on your comment
+1. Click the **Delete** button on your comment
 2. Confirm the deletion in the dialog
 3. The comment is removed from the thread
 

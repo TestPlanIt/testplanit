@@ -11,13 +11,20 @@ import {
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { IntegrationAuthType, IntegrationProvider } from "@prisma/client";
 import {
   AlertTriangle,
   Check,
   Copy,
   Lock,
-  Pencil,
+  Edit,
   RefreshCw,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -39,6 +46,7 @@ interface FieldConfig {
   placeholder: string;
   help?: string;
   type?: string;
+  options?: { value: string; label: string }[];
   isCredential?: boolean;
   required?: boolean;
 }
@@ -171,6 +179,20 @@ const providerFields: Record<IntegrationProvider, FieldConfig[]> = {
     },
   ],
   [IntegrationProvider.GITEA]: [
+    {
+      name: "platform",
+      label: "config.platform",
+      placeholder: "config.platformPlaceholder",
+      help: "config.platformHelp",
+      type: "select",
+      options: [
+        { value: "gitea", label: "config.platformGitea" },
+        { value: "forgejo", label: "config.platformForgejo" },
+        { value: "gogs", label: "config.platformGogs" },
+      ],
+      isCredential: false,
+      required: true,
+    },
     {
       name: "personalAccessToken",
       label: "authType.personal_access_token",
@@ -316,17 +338,37 @@ export function IntegrationConfigForm({
             </FormLabel>
             <FormControl>
               <div className="relative">
-                <Input
-                  type={field.type || "text"}
-                  placeholder={
-                    isEncrypted
-                      ? "••••••••••••"
-                      : t(field.placeholder as Parameters<typeof t>[0])
-                  }
-                  value={value}
-                  onChange={(e) => handleFieldChange(field, e.target.value)}
-                  disabled={isEncrypted}
-                />
+                {field.type === "select" && field.options ? (
+                  <Select
+                    value={value}
+                    onValueChange={(v) => handleFieldChange(field, v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={t(field.placeholder as Parameters<typeof t>[0])}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {field.options.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {t(opt.label as Parameters<typeof t>[0])}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    type={field.type || "text"}
+                    placeholder={
+                      isEncrypted
+                        ? "••••••••••••"
+                        : t(field.placeholder as Parameters<typeof t>[0])
+                    }
+                    value={value}
+                    onChange={(e) => handleFieldChange(field, e.target.value)}
+                    disabled={isEncrypted}
+                  />
+                )}
                 {isEncrypted && (
                   <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                     <Badge variant="secondary" className="text-xs">
@@ -346,7 +388,7 @@ export function IntegrationConfigForm({
                         });
                       }}
                     >
-                      <Pencil className="w-3 h-3" />
+                      <Edit className="w-3 h-3" />
                       {t("config.changeCredential")}
                     </Button>
                   </div>

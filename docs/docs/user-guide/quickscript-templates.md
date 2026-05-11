@@ -61,13 +61,13 @@ You can filter templates by searching across name, category, framework, language
 
 ### Editing a Template
 
-1. Click the **Edit** button (pencil icon) for the template.
+1. Click the **Edit** button for the template.
 2. Modify any fields. The preview updates as you type.
 3. Click **Submit**.
 
 ### Deleting a Template
 
-1. Click the **Delete** button (trash icon) for the template. The default template cannot be deleted.
+1. Click the **Delete** button for the template. The default template cannot be deleted.
 2. Confirm the deletion in the dialog.
 
 ### Setting a Default Template

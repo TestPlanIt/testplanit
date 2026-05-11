@@ -72,7 +72,7 @@ If you logged in using the default initial credentials and want to create a sepa
 6. Log back in using the credentials for the **new account** you just created.
 7. Navigate back to **Administration > Users**.
 8. Find the default `admin@testplanit.com` user in the list.
-9. Click the **Delete** (trash can) icon next to the default admin user.
+9. Click the **Delete** icon next to the default admin user.
 10. Confirm the deletion.
 
 Now you are logged in as your own administrative user!

@@ -1,16 +1,18 @@
 import { MessagesSquare, Webhook } from "lucide-react";
 import { siGithub, siGitlab, siJira } from "simple-icons";
-import { GiteaFamilyIcon } from "@/components/shared/gitea-family-icon";
+import { GiteaPlatformIcon } from "@/components/shared/gitea-family-icon";
 
 import { cn } from "~/utils";
 
 interface WebhookAdapterIconProps {
   adapterType: string;
+  platform?: string | null;
   className?: string;
 }
 
 export function WebhookAdapterIcon({
   adapterType,
+  platform,
   className,
 }: WebhookAdapterIconProps) {
   const baseClass = cn(
@@ -56,7 +58,7 @@ export function WebhookAdapterIcon({
     case "GITEA":
       return (
         <div className={cn(baseClass, "bg-white dark:bg-gray-800 p-0.5")}>
-          <GiteaFamilyIcon className="h-full w-full" />
+          <GiteaPlatformIcon platform={platform} className="h-full w-full" />
         </div>
       );
     case "SLACK":

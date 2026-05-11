@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ColumnDef } from "@tanstack/react-table";
-import { Pencil, Trash2 } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export interface CodeRepositoryRow {
@@ -169,7 +169,7 @@ export function getColumns({
             className="px-2 py-1 h-auto"
             onClick={() => onEdit(row.original)}
           >
-            <Pencil className="h-4 w-4" />
+            <Edit className="h-4 w-4" />
           </Button>
           <Button
             variant="destructive"

@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { CaseExportTemplate } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { Pencil, Trash2 } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
@@ -14,7 +14,6 @@ export const useColumns = (
   onEditTemplate?: (template: CaseExportTemplate) => void,
   onDeleteTemplate?: (template: CaseExportTemplate) => void
 ): ColumnDef<CaseExportTemplate>[] => {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   return useMemo(
     () => [
       {
@@ -111,7 +110,7 @@ export const useColumns = (
               data-testid="edit-export-template-button"
               onClick={() => onEditTemplate?.(row.original)}
             >
-              <Pencil className="h-5 w-5" />
+              <Edit className="h-5 w-5" />
             </Button>
             {row.original.isDefault ? (
               <Button

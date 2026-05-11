@@ -47,7 +47,7 @@ The Statuses page displays a table listing all configured statuses with the foll
 ## Editing an Existing Status
 
 1. Locate the status you wish to modify in the table.
-2. Click the **Edit** (pencil) icon in the **Actions** column. (Note: The "Untested" status cannot be edited).
+2. Click the **Edit** icon in the **Actions** column. (Note: The "Untested" status cannot be edited).
 3. A modal window will appear. You can modify:
     - Color
     - Name
@@ -63,6 +63,6 @@ The Statuses page displays a table listing all configured statuses with the foll
 Deleting a status marks it as inactive and removes its assignments.
 
 1. Locate the status you wish to remove in the table.
-2. Click the **Delete** (trash can) icon in the **Actions** column. (Note: The "Untested" status cannot be deleted).
+2. Click the **Delete** icon in the **Actions** column. (Note: The "Untested" status cannot be deleted).
 3. A confirmation dialog will appear, warning that this action cannot be undone.
 4. Click **Delete** to confirm.

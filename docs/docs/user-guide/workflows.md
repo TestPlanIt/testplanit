@@ -53,7 +53,7 @@ The states within each table can be reordered using **drag-and-drop** to define 
 ## Editing an Existing Workflow State
 
 1. Locate the state you wish to modify in the relevant scope table.
-2. Click the **Edit** button (pencil icon) in the corresponding row.
+2. Click the **Edit** button in the corresponding row.
 3. A dialog box will appear. You can modify:
     - **Icon & Color**
     - **Name**

@@ -185,6 +185,13 @@ export function IntegrationsList({
               >
                 <IntegrationIcon
                   provider={integration.provider}
+                  platform={
+                    typeof integration.settings === "object" &&
+                    integration.settings !== null &&
+                    "platform" in integration.settings
+                      ? String(integration.settings.platform)
+                      : undefined
+                  }
                   className="h-10 w-10"
                 />
                 <div className="flex-1">

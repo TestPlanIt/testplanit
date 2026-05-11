@@ -11,9 +11,52 @@ interface GiteaFamilyIconProps {
   className?: string;
 }
 
+interface GiteaPlatformIconProps {
+  platform?: string | null;
+  className?: string;
+}
+
+export function GiteaPlatformIcon({ platform, className }: GiteaPlatformIconProps) {
+  if (platform === "forgejo") {
+    return (
+      <svg viewBox="0 0 24 24" className={className} fill="#FB923C">
+        <path d={siForgejo.path} />
+      </svg>
+    );
+  }
+  if (platform === "gogs") {
+    return (
+      <svg viewBox="0 0 190 197" className={className}>
+        <defs>
+          <radialGradient
+            id="gogs-platform-grad"
+            cx="39.6065985%"
+            cy="0%"
+            fx="39.6065985%"
+            fy="0%"
+            r="103.684211%"
+            gradientTransform="translate(0.396066,0),scale(1,0.964467),rotate(90),translate(-0.396066,0)"
+          >
+            <stop offset="0%" stopColor="#F47359" />
+            <stop offset="100%" stopColor="#BE4025" />
+          </radialGradient>
+        </defs>
+        <path fill="url(#gogs-platform-grad)" d={GOGS_OUTER} />
+        <path fill="white" fillRule="nonzero" d={GOGS_INNER} />
+      </svg>
+    );
+  }
+  // "gitea" or unset — default to Gitea icon
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="#609926">
+      <path d={siGitea.path} />
+    </svg>
+  );
+}
+
 export function GiteaFamilyIcon({ className }: GiteaFamilyIconProps) {
   return (
-    <div className={cn("flex items-center justify-between", className)}>
+    <div className={cn("flex items-center gap-1", className)}>
       <svg viewBox="0 0 24 24" className="h-full w-auto flex-1" fill="#609926">
         <path d={siGitea.path} />
       </svg>

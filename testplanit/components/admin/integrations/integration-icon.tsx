@@ -1,15 +1,16 @@
 import { IntegrationProvider } from "@prisma/client";
 import { Bug } from "lucide-react";
 import { siGithub, siGitlab, siJira } from "simple-icons";
-import { GiteaFamilyIcon } from "@/components/shared/gitea-family-icon";
+import { GiteaPlatformIcon } from "@/components/shared/gitea-family-icon";
 import { cn } from "~/utils";
 
 interface IntegrationIconProps {
   provider: IntegrationProvider;
+  platform?: string | null;
   className?: string;
 }
 
-export function IntegrationIcon({ provider, className }: IntegrationIconProps) {
+export function IntegrationIcon({ provider, platform, className }: IntegrationIconProps) {
   const baseClass = cn("flex items-center justify-center rounded", className);
 
   switch (provider) {
@@ -50,7 +51,7 @@ export function IntegrationIcon({ provider, className }: IntegrationIconProps) {
     case "GITEA":
       return (
         <div className={cn(baseClass, "bg-white dark:bg-gray-800 p-0.5")}>
-          <GiteaFamilyIcon className="h-full w-full" />
+          <GiteaPlatformIcon platform={platform} className="h-full w-full" />
         </div>
       );
     default:
