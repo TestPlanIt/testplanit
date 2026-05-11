@@ -69,7 +69,12 @@ interface WebhookConfigFormProps {
   projectId: number;
 }
 
-type InboundAdapterType = "JIRA" | "GITHUB" | "AZURE_DEVOPS";
+type InboundAdapterType =
+  | "JIRA"
+  | "GITHUB"
+  | "AZURE_DEVOPS"
+  | "GITLAB"
+  | "GITEA";
 
 // Inbound webhooks today are 1:1 with the project's active issue integration:
 // the only inbound consumer is `applyInboundIssueUpdate`, and a project has
@@ -82,6 +87,8 @@ function inboundAdapterForProvider(
   if (provider === "JIRA") return "JIRA";
   if (provider === "GITHUB") return "GITHUB";
   if (provider === "AZURE_DEVOPS") return "AZURE_DEVOPS";
+  if (provider === "GITLAB") return "GITLAB";
+  if (provider === "GITEA") return "GITEA";
   return null;
 }
 
@@ -124,7 +131,12 @@ interface TestResultDisplay {
 
 const ADAPTER_OPTIONS: ReadonlyArray<{
   value: InboundAdapterType;
-  labelKey: "inboundChooserJira" | "inboundChooserGithub" | "inboundChooserAdo";
+  labelKey:
+    | "inboundChooserJira"
+    | "inboundChooserGithub"
+    | "inboundChooserAdo"
+    | "inboundChooserGitlab"
+    | "inboundChooserGitea";
   testid: string;
 }> = [
   {
@@ -142,21 +154,40 @@ const ADAPTER_OPTIONS: ReadonlyArray<{
     labelKey: "inboundChooserAdo",
     testid: "webhook-inbound-chooser-ado",
   },
+  {
+    value: "GITLAB",
+    labelKey: "inboundChooserGitlab",
+    testid: "webhook-inbound-chooser-gitlab",
+  },
+  {
+    value: "GITEA",
+    labelKey: "inboundChooserGitea",
+    testid: "webhook-inbound-chooser-gitea",
+  },
 ];
 
 function adapterSlug(
   adapterType: InboundAdapterType
-): "jira" | "github" | "ado" {
+): "jira" | "github" | "ado" | "gitlab" | "gitea" {
   if (adapterType === "JIRA") return "jira";
   if (adapterType === "GITHUB") return "github";
+  if (adapterType === "GITLAB") return "gitlab";
+  if (adapterType === "GITEA") return "gitea";
   return "ado";
 }
 
 function adapterTitleKey(
   adapterType: InboundAdapterType
-): "inboundJiraTitle" | "inboundGithubTitle" | "inboundAdoTitle" {
+):
+  | "inboundJiraTitle"
+  | "inboundGithubTitle"
+  | "inboundAdoTitle"
+  | "inboundGitlabTitle"
+  | "inboundGiteaTitle" {
   if (adapterType === "JIRA") return "inboundJiraTitle";
   if (adapterType === "GITHUB") return "inboundGithubTitle";
+  if (adapterType === "GITLAB") return "inboundGitlabTitle";
+  if (adapterType === "GITEA") return "inboundGiteaTitle";
   return "inboundAdoTitle";
 }
 
@@ -645,6 +676,19 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
         "setupStepsAdoStep4",
         "setupStepsAdoStep5",
       ],
+      GITLAB: [
+        "setupStepsGitlabStep1",
+        "setupStepsGitlabStep2",
+        "setupStepsGitlabStep3",
+        "setupStepsGitlabStep4",
+      ],
+      GITEA: [
+        "setupStepsGiteaStep1",
+        "setupStepsGiteaStep2",
+        "setupStepsGiteaStep3",
+        "setupStepsGiteaStep4",
+        "setupStepsGiteaStep5",
+      ],
     };
     return (
       <div
@@ -807,7 +851,10 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
   function renderConfigCard(config: InboundConfig) {
     const slug = adapterSlug(config.adapterType);
     const isHmacAdapter =
-      config.adapterType === "JIRA" || config.adapterType === "GITHUB";
+      config.adapterType === "JIRA" ||
+      config.adapterType === "GITHUB" ||
+      config.adapterType === "GITLAB" ||
+      config.adapterType === "GITEA";
     const titleKey = adapterTitleKey(config.adapterType);
     const isRevealedHere = revealed?.configId === config.id;
     const url = `${
@@ -877,6 +924,28 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
           {config.adapterType === "AZURE_DEVOPS" && (
             <p className="text-xs text-muted-foreground">
               {t.rich("inboundAdoScopeHint", {
+                code: (chunks) => (
+                  <code className="rounded bg-muted px-1 font-mono text-[0.95em]">
+                    {chunks}
+                  </code>
+                ),
+              })}
+            </p>
+          )}
+          {config.adapterType === "GITLAB" && (
+            <p className="text-xs text-muted-foreground">
+              {t.rich("inboundGitlabScopeHint", {
+                code: (chunks) => (
+                  <code className="rounded bg-muted px-1 font-mono text-[0.95em]">
+                    {chunks}
+                  </code>
+                ),
+              })}
+            </p>
+          )}
+          {config.adapterType === "GITEA" && (
+            <p className="text-xs text-muted-foreground">
+              {t.rich("inboundGiteaScopeHint", {
                 code: (chunks) => (
                   <code className="rounded bg-muted px-1 font-mono text-[0.95em]">
                     {chunks}

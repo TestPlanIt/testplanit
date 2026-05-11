@@ -2531,6 +2531,8 @@ enum IntegrationProvider {
     GITHUB
     AZURE_DEVOPS
     SIMPLE_URL
+    GITLAB
+    GITEA
 
     @@deny('all', !auth())
     @@allow('update', auth().access == 'ADMIN')
@@ -2543,6 +2545,8 @@ enum AdapterType {
     AZURE_DEVOPS
     SLACK
     GENERIC_HMAC
+    GITLAB
+    GITEA
 
     @@deny('all', !auth())
     @@allow('update', auth().access == 'ADMIN')

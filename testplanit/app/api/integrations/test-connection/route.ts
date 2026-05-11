@@ -342,6 +342,117 @@ async function testAzureDevOpsConnection(
   };
 }
 
+async function testGitLabConnection(
+  credentials: Record<string, string>,
+  settings: Record<string, string>
+): Promise<TestConnectionResult> {
+  const { personalAccessToken } = credentials;
+  const instanceUrl = settings.instanceUrl || "https://gitlab.com";
+  const baseUrl = instanceUrl.replace(/\/$/, "");
+
+  if (!personalAccessToken) {
+    return { success: false, error: "Missing personal access token" };
+  }
+
+  const headers = {
+    "PRIVATE-TOKEN": personalAccessToken,
+    Accept: "application/json",
+  };
+
+  // Auth probe — /api/v4/user returns the authenticated user's profile.
+  const connection = await probe(`${baseUrl}/api/v4/user`, { headers });
+  if (!connection.ok) {
+    return {
+      success: false,
+      error: summarizeProbeFailures("GitLab", { connection }),
+      capabilities: { connection },
+    };
+  }
+
+  // Search probe — /api/v4/issues lists issues the token can read.
+  // A 200 with an empty array still proves search scope.
+  const searchIssues = await probe(
+    `${baseUrl}/api/v4/issues?per_page=1&scope=all`,
+    { headers }
+  );
+
+  // Read probe — /api/v4/projects requires at least Reporter access;
+  // a 200 proves the token can enumerate project resources.
+  const readIssue = await probe(
+    `${baseUrl}/api/v4/projects?membership=true&simple=true&per_page=1`,
+    { headers }
+  );
+
+  const success = connection.ok && searchIssues.ok && readIssue.ok;
+  return {
+    success,
+    error: success
+      ? undefined
+      : summarizeProbeFailures("GitLab", {
+          connection,
+          searchIssues,
+          readIssue,
+        }),
+    capabilities: { connection, searchIssues, readIssue },
+  };
+}
+
+async function testGiteaConnection(
+  credentials: Record<string, string>,
+  settings: Record<string, string>
+): Promise<TestConnectionResult> {
+  const { personalAccessToken } = credentials;
+  const { instanceUrl } = settings;
+
+  if (!personalAccessToken || !instanceUrl) {
+    return {
+      success: false,
+      error:
+        "Missing required Gitea configuration (personalAccessToken, instanceUrl)",
+    };
+  }
+
+  const baseUrl = instanceUrl.replace(/\/$/, "");
+  const headers = {
+    Authorization: `token ${personalAccessToken}`,
+    Accept: "application/json",
+  };
+
+  // Auth probe — /api/v1/user returns the authenticated user's profile.
+  const connection = await probe(`${baseUrl}/api/v1/user`, { headers });
+  if (!connection.ok) {
+    return {
+      success: false,
+      error: summarizeProbeFailures("Gitea", { connection }),
+      capabilities: { connection },
+    };
+  }
+
+  // Search probe — /api/v1/repos/search proves repo-list scope.
+  const searchIssues = await probe(`${baseUrl}/api/v1/repos/search?limit=1`, {
+    headers,
+  });
+
+  // Read probe — /api/v1/issues?type=issues proves issue read scope.
+  const readIssue = await probe(
+    `${baseUrl}/api/v1/repos/search?limit=1&topic=false`,
+    { headers }
+  );
+
+  const success = connection.ok && searchIssues.ok && readIssue.ok;
+  return {
+    success,
+    error: success
+      ? undefined
+      : summarizeProbeFailures("Gitea", {
+          connection,
+          searchIssues,
+          readIssue,
+        }),
+    capabilities: { connection, searchIssues, readIssue },
+  };
+}
+
 async function testSimpleUrlConnection(
   credentials: Record<string, string>,
   settings: Record<string, string>
@@ -490,6 +601,12 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         break;
       case IntegrationProvider.AZURE_DEVOPS:
         result = await testAzureDevOpsConnection(testCredentials, testSettings);
+        break;
+      case IntegrationProvider.GITLAB:
+        result = await testGitLabConnection(testCredentials, testSettings);
+        break;
+      case IntegrationProvider.GITEA:
+        result = await testGiteaConnection(testCredentials, testSettings);
         break;
       case IntegrationProvider.SIMPLE_URL:
         result = await testSimpleUrlConnection(testCredentials, testSettings);

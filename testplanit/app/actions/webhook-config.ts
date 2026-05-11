@@ -71,6 +71,26 @@ const SYNTHETIC_ADO_PAYLOAD = JSON.stringify({
   resource: { id: 0, fields: { "System.State": "Synthetic" } },
 });
 
+// GitLab: X-Gitlab-Token header (raw secret comparison). iid === 0 is the
+// non-forgeable synthetic sentinel — GitLab issue IIDs are positive integers ≥ 1.
+const SYNTHETIC_GITLAB_PAYLOAD = JSON.stringify({
+  object_kind: "issue",
+  object_attributes: {
+    iid: 0,
+    state: "opened",
+    title: "Synthetic test",
+  },
+  project: { path_with_namespace: "__synthetic__/__synthetic__" },
+});
+
+// Gitea: X-Gitea-Signature HMAC-SHA256 (same scheme as GitHub).
+// issue.number === 0 is the non-forgeable synthetic sentinel.
+const SYNTHETIC_GITEA_PAYLOAD = JSON.stringify({
+  action: "opened",
+  issue: { number: 0, state: "open", title: "Synthetic test" },
+  repository: { full_name: "__synthetic__/__synthetic__" },
+});
+
 function generateToken(): string {
   // 32 random bytes → 64 hex chars with "whk_" prefix.
   return `whk_${randomBytes(32).toString("hex")}`;
@@ -101,7 +121,9 @@ export interface CreateOrRotateResult {
 export type AdapterSecretInput =
   | { kind: "JIRA" }
   | { kind: "GITHUB" }
-  | { kind: "AZURE_DEVOPS"; username: string; password: string };
+  | { kind: "AZURE_DEVOPS"; username: string; password: string }
+  | { kind: "GITLAB" }
+  | { kind: "GITEA" };
 
 /**
  * Create or rotate an inbound `WebhookConfig` for the (project, adapterType)
@@ -150,7 +172,12 @@ export async function createOrRotateInboundWebhook(input: {
   let plaintextToEncrypt: string;
   let returnSecretToAdmin: boolean;
 
-  if (adapterType === "JIRA" || adapterType === "GITHUB") {
+  if (
+    adapterType === "JIRA" ||
+    adapterType === "GITHUB" ||
+    adapterType === "GITLAB" ||
+    adapterType === "GITEA"
+  ) {
     plaintextToEncrypt = generateSecret();
     returnSecretToAdmin = true;
   } else if (adapterType === "AZURE_DEVOPS") {
@@ -474,6 +501,9 @@ export interface SendTestWebhookResult {
  *   - JIRA: HMAC-SHA256 over SYNTHETIC_PAYLOAD; `x-hub-signature-256` header.
  *   - GITHUB: HMAC-SHA256 over SYNTHETIC_GITHUB_PAYLOAD; `x-hub-signature-256`
  *     + `x-github-event: issues` headers.
+ *   - GITLAB: raw token in `x-gitlab-token` + `x-gitlab-event: Issue Hook`.
+ *   - GITEA: HMAC-SHA256 over SYNTHETIC_GITEA_PAYLOAD; `x-gitea-signature`
+ *     + `x-gitea-event: issues` headers.
  *   - AZURE_DEVOPS: Basic Auth from JSON-decoded {username, password};
  *     `authorization: Basic <base64>` header; SYNTHETIC_ADO_PAYLOAD body.
  *
@@ -581,6 +611,32 @@ export async function sendTestWebhook(
         "x-github-event": "issues",
       },
       body: SYNTHETIC_GITHUB_PAYLOAD,
+    };
+  } else if (config.adapterType === "GITLAB") {
+    // GitLab verifies X-Gitlab-Token as a raw token comparison (not HMAC).
+    requestInit = {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-gitlab-token": plainSecret,
+        "x-gitlab-event": "Issue Hook",
+      },
+      body: SYNTHETIC_GITLAB_PAYLOAD,
+    };
+  } else if (config.adapterType === "GITEA") {
+    const sig =
+      "sha256=" +
+      createHmac("sha256", plainSecret)
+        .update(SYNTHETIC_GITEA_PAYLOAD)
+        .digest("hex");
+    requestInit = {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-gitea-signature": sig,
+        "x-gitea-event": "issues",
+      },
+      body: SYNTHETIC_GITEA_PAYLOAD,
     };
   } else if (config.adapterType === "AZURE_DEVOPS") {
     // Secret is JSON-encoded {username, password} for ADO. Decoded

@@ -143,6 +143,68 @@ const providerFields: Record<IntegrationProvider, FieldConfig[]> = {
       required: true,
     },
   ],
+  [IntegrationProvider.GITLAB]: [
+    {
+      name: "personalAccessToken",
+      label: "authType.personal_access_token",
+      placeholder: "config.personalAccessTokenPlaceholder",
+      help: "config.personalAccessTokenHelp",
+      type: "password",
+      isCredential: true,
+      required: true,
+    },
+    {
+      name: "projectPath",
+      label: "config.projectPath",
+      placeholder: "config.projectPathPlaceholder",
+      help: "config.projectPathHelp",
+      isCredential: false,
+      required: true,
+    },
+    {
+      name: "instanceUrl",
+      label: "config.instanceUrl",
+      placeholder: "config.instanceUrlPlaceholder",
+      help: "config.instanceUrlHelp",
+      isCredential: false,
+      required: false,
+    },
+  ],
+  [IntegrationProvider.GITEA]: [
+    {
+      name: "personalAccessToken",
+      label: "authType.personal_access_token",
+      placeholder: "config.personalAccessTokenPlaceholder",
+      help: "config.personalAccessTokenHelp",
+      type: "password",
+      isCredential: true,
+      required: true,
+    },
+    {
+      name: "owner",
+      label: "config.owner",
+      placeholder: "config.ownerPlaceholder",
+      help: "config.ownerHelp",
+      isCredential: false,
+      required: true,
+    },
+    {
+      name: "repo",
+      label: "config.repo",
+      placeholder: "config.repoPlaceholder",
+      help: "config.repoHelp",
+      isCredential: false,
+      required: true,
+    },
+    {
+      name: "instanceUrl",
+      label: "config.instanceUrl",
+      placeholder: "config.giteaInstanceUrlPlaceholder",
+      help: "config.instanceUrlHelp",
+      isCredential: false,
+      required: true,
+    },
+  ],
 };
 
 function generateApiKey(): string {

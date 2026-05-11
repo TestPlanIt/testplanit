@@ -1,6 +1,8 @@
 import type { AdapterType } from "@prisma/client";
 import { azureDevopsAdapter } from "./azure-devops";
 import { genericHmacAdapter } from "./generic-hmac";
+import { giteaAdapter } from "./gitea";
+import { gitlabAdapter } from "./gitlab";
 import { githubAdapter } from "./github";
 import { jiraAdapter } from "./jira";
 import { slackAdapter } from "./slack";
@@ -25,6 +27,8 @@ export const ADAPTER_REGISTRY: Record<AdapterType, WebhookAdapter | null> = {
   JIRA: jiraAdapter,
   GITHUB: githubAdapter,
   AZURE_DEVOPS: azureDevopsAdapter,
+  GITLAB: gitlabAdapter,
+  GITEA: giteaAdapter,
   SLACK: null,
   GENERIC_HMAC: null,
 };
@@ -62,6 +66,8 @@ export const OUTBOUND_ADAPTER_REGISTRY: Record<
   JIRA: null,
   GITHUB: null,
   AZURE_DEVOPS: null,
+  GITLAB: null,
+  GITEA: null,
   SLACK: slackAdapter,
   GENERIC_HMAC: genericHmacAdapter,
 };
@@ -79,7 +85,9 @@ export function getOutboundAdapter(
     if (
       adapterType === "JIRA" ||
       adapterType === "GITHUB" ||
-      adapterType === "AZURE_DEVOPS"
+      adapterType === "AZURE_DEVOPS" ||
+      adapterType === "GITLAB" ||
+      adapterType === "GITEA"
     ) {
       throw new Error(
         `Adapter ${adapterType} is INBOUND-only — call getAdapter() instead`

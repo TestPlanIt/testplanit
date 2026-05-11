@@ -65,6 +65,8 @@ const providerAuthTypes: Record<IntegrationProvider, IntegrationAuthType[]> = {
     IntegrationAuthType.PERSONAL_ACCESS_TOKEN,
   ],
   [IntegrationProvider.SIMPLE_URL]: [IntegrationAuthType.NONE],
+  [IntegrationProvider.GITLAB]: [IntegrationAuthType.PERSONAL_ACCESS_TOKEN],
+  [IntegrationProvider.GITEA]: [IntegrationAuthType.PERSONAL_ACCESS_TOKEN],
 };
 
 export function IntegrationModal({
