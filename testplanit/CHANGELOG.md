@@ -1,3 +1,9 @@
+## [0.26.0](https://github.com/TestPlanIt/testplanit/compare/v0.25.1...v0.26.0) (2026-05-11)
+
+### Features
+
+* add GitLab and Gitea/Forgejo/Gogs issue tracker integrations ([#296](https://github.com/TestPlanIt/testplanit/issues/296)) ([5bbf277](https://github.com/TestPlanIt/testplanit/commit/5bbf277ef24fed47a492647a3b33e201aafe6fa1)), closes [namespace/project#iid](https://github.com/namespace/project/issues/iid) [owner/repo#number](https://github.com/owner/repo/issues/number) [group/project#42](https://github.com/group/project/issues/42)
+
 ## [0.25.1](https://github.com/TestPlanIt/testplanit/compare/v0.25.0...v0.25.1) (2026-05-11)
 
 ### Bug Fixes
