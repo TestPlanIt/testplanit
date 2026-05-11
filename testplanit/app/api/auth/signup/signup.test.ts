@@ -245,6 +245,21 @@ describe("POST /api/auth/signup", () => {
       });
     });
 
+    it("should return 403 when open registration is disabled", async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.registrationSettings.findFirst.mockResolvedValue({
+        allowOpenRegistration: false,
+        requireEmailVerification: true,
+      });
+
+      const response = await signup(createRequest(validSignupData));
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.errorCode).toBe("auth.signup.registrationDisabled");
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    });
+
     it("should return 400 when user already exists", async () => {
       mockPrisma.user.findUnique.mockResolvedValue({
         id: "existing-user",

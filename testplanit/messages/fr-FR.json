@@ -1030,6 +1030,7 @@
     "signup": {
       "description": "Saisissez vos informations pour créer un nouveau compte.",
       "signIn": "Connectez-vous à votre compte existant.",
+      "registrationDisabled": "Contactez un administrateur pour créer un compte.",
       "errors": {
         "emailRequired": "L'adresse électronique est requise.",
         "passwordRequired": "Le mot de passe ne répond pas aux exigences de sécurité",
@@ -3484,7 +3485,10 @@
         "emailVerificationDisabled": "La vérification par e-mail n'est plus requise pour les nouveaux utilisateurs.",
         "emailVerificationDisabledAndVerified": "La vérification par e-mail est désactivée et {count, plural, one {# compte utilisateur} other {# comptes utilisateurs}} vérifiés",
         "emailVerificationUpdateFailed": "Échec de la mise à jour des paramètres de vérification de l'e-mail",
-        "emailServerNotConfigured": "Impossible d'activer la vérification des e-mails : le serveur de messagerie n'est pas configuré."
+        "emailServerNotConfigured": "Impossible d'activer la vérification des e-mails : le serveur de messagerie n'est pas configuré.",
+        "openRegistrationEnabled": "L'auto-inscription est désormais activée",
+        "openRegistrationDisabled": "L'auto-inscription est désormais désactivée.",
+        "openRegistrationUpdateFailed": "Échec de la mise à jour des paramètres d'auto-inscription"
       },
       "dialogs": {
         "googleOAuth": {
@@ -3590,6 +3594,10 @@
           "title": "Exiger une vérification de l'adresse électronique",
           "description": "Les utilisateurs doivent vérifier leur adresse électronique avant d'accéder au système.",
           "noEmailServerWarning": "Le serveur de messagerie n'est pas configuré. La vérification des adresses e-mail est automatiquement désactivée jusqu'à ce qu'un serveur de messagerie soit configuré."
+        },
+        "allowOpenRegistration": {
+          "title": "Autoriser l'auto-inscription",
+          "description": "Lorsque cette fonctionnalité est désactivée, les nouveaux utilisateurs ne peuvent ni s'inscrire directement ni créer de compte via l'authentification unique (SSO). Les utilisateurs existants peuvent toujours se connecter."
         }
       },
       "errors": {

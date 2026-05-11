@@ -1030,6 +1030,7 @@
     "signup": {
       "description": "Enter your information to sign up for a new account.",
       "signIn": "Sign into your existing account.",
+      "registrationDisabled": "Contact an administrator to create an account.",
       "errors": {
         "emailRequired": "Email is required",
         "passwordRequired": "Password does not meet the security requirements",
@@ -3484,7 +3485,10 @@
         "emailVerificationDisabled": "Email verification is no longer required for new users",
         "emailVerificationDisabledAndVerified": "Email verification disabled and {count, plural, one {# user account} other {# user accounts}} verified",
         "emailVerificationUpdateFailed": "Failed to update email verification setting",
-        "emailServerNotConfigured": "Cannot enable email verification: Email server is not configured"
+        "emailServerNotConfigured": "Cannot enable email verification: Email server is not configured",
+        "openRegistrationEnabled": "Self-registration is now enabled",
+        "openRegistrationDisabled": "Self-registration is now disabled",
+        "openRegistrationUpdateFailed": "Failed to update self-registration setting"
       },
       "dialogs": {
         "googleOAuth": {
@@ -3590,6 +3594,10 @@
           "title": "Require Email Verification",
           "description": "Users must verify their email address before accessing the system",
           "noEmailServerWarning": "Email server is not configured. Email verification is automatically disabled until an email server is set up."
+        },
+        "allowOpenRegistration": {
+          "title": "Allow Self-Registration",
+          "description": "When disabled, new users cannot sign up directly or create an account via SSO. Existing users can still sign in."
         }
       },
       "errors": {

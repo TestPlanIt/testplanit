@@ -46,6 +46,13 @@ vi.mock("~/lib/hooks/sso-provider", () => ({
     mockUseFindManySsoProvider(...args),
 }));
 
+// Mock ZenStack registration settings hook
+const mockUseFindFirstRegistrationSettings = vi.fn();
+vi.mock("~/lib/hooks/registration-settings", () => ({
+  useFindFirstRegistrationSettings: (...args: any[]) =>
+    mockUseFindFirstRegistrationSettings(...args),
+}));
+
 // Mock next-auth signIn
 const mockSignIn = vi.fn();
 vi.mock("next-auth/react", async (importOriginal) => {
@@ -84,6 +91,12 @@ describe("Signin Page", () => {
     // Default: no SSO providers, finished loading
     mockUseFindManySsoProvider.mockReturnValue({
       data: [],
+      isLoading: false,
+    });
+
+    // Default: self-registration enabled
+    mockUseFindFirstRegistrationSettings.mockReturnValue({
+      data: { allowOpenRegistration: true },
       isLoading: false,
     });
 
@@ -132,6 +145,20 @@ describe("Signin Page", () => {
     });
     expect(signupLink).toBeInTheDocument();
     expect(signupLink.getAttribute("href")).toContain("/signup");
+  });
+
+  it("hides the signup link when self-registration is disabled", async () => {
+    mockUseFindFirstRegistrationSettings.mockReturnValue({
+      data: { allowOpenRegistration: false },
+      isLoading: false,
+    });
+
+    render(<Signin />);
+    await waitForFormToRender();
+
+    expect(
+      screen.queryByRole("link", { name: /signup|create|sign up|register/i })
+    ).not.toBeInTheDocument();
   });
 
   it("shows validation error when submitting with empty email", async () => {

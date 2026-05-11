@@ -107,6 +107,11 @@ const Signup: NextPage = () => {
   const forceSsoEnabled =
     ssoProviders?.some((provider) => provider.forceSso) || false;
 
+  const registrationDisabled =
+    registrationSettings !== undefined &&
+    registrationSettings !== null &&
+    registrationSettings.allowOpenRegistration === false;
+
   // Track if we're still loading (session clearing or SSO providers)
   const isStillLoading = !sessionCleared || isLoadingSsoProviders;
 
@@ -307,10 +312,25 @@ const Signup: NextPage = () => {
           <CardTitle className="flex py-5 scroll-m-20 tracking-tight lg:text-3xl text-primary">
             {t("common.actions.signUp")}
           </CardTitle>
-          <CardDescription>{t("auth.signup.description")}</CardDescription>
+          {!registrationDisabled && (
+            <CardDescription>{t("auth.signup.description")}</CardDescription>
+          )}
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center">
-          {isStillLoading && showDelayedLoader ? (
+          {registrationDisabled ? (
+            <div
+              data-testid="registration-disabled-message"
+              className="w-1/2 space-y-6 flex flex-col items-center justify-center py-8 text-center"
+            >
+              <p className="text-muted-foreground">
+                {t("auth.signup.registrationDisabled")}
+              </p>
+              <Link href="/signin" className="group underline text-sm">
+                {t("auth.signup.signIn")}
+                <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+              </Link>
+            </div>
+          ) : isStillLoading && showDelayedLoader ? (
             <div className="w-1/2 space-y-6 flex flex-col items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin" />
               <p className="text-muted-foreground text-center">
