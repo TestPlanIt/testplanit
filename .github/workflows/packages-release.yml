@@ -59,6 +59,9 @@ jobs:
         env:
           NODE_OPTIONS: '--max-old-space-size=4096'
 
+      - name: Generate Prisma client
+        run: pnpm --filter "testplanit" exec prisma generate
+
       - name: Run package tests
         run: |
           pnpm --filter "@testplanit/api" test -- --run
