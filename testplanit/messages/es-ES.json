@@ -4419,7 +4419,7 @@
           "description": "Conéctate a GitLab para el seguimiento de incidencias y solicitudes de fusión."
         },
         "gitea": {
-          "name": "Gitea",
+          "name": "Gitea / Forgejo / Gogs",
           "description": "Conéctese a una instancia autohospedada de Gitea, Forgejo o Gogs para el seguimiento de incidencias."
         },
         "azureDevops": {

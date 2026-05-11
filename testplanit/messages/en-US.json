@@ -4419,7 +4419,7 @@
           "description": "Connect to GitLab for issue and merge request tracking"
         },
         "gitea": {
-          "name": "Gitea",
+          "name": "Gitea / Forgejo / Gogs",
           "description": "Connect to a self-hosted Gitea, Forgejo, or Gogs instance for issue tracking"
         },
         "azureDevops": {
