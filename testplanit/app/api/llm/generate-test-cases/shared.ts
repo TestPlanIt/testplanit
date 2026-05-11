@@ -753,6 +753,118 @@ export function getQuantityGuidance(quantity: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// Two-phase generation: outline + expand
+// ---------------------------------------------------------------------------
+
+export interface TestCaseOutline {
+  title: string;
+  summary: string;
+}
+
+export function buildOutlineSystemPrompt(quantity?: string): string {
+  const quantityGuidance = quantity ? getQuantityGuidance(quantity) : "3-5";
+  return `You are a test case planning assistant. Given a software issue, generate a concise list of test case titles and one-sentence summaries.
+
+CRITICAL: Respond with ONLY valid JSON. No explanations, no text before or after.
+
+JSON structure (EXACT format required):
+{
+  "outlines": [
+    { "title": "Descriptive test case name", "summary": "One sentence describing what this test validates." }
+  ]
+}
+
+REQUIREMENTS:
+- Generate ${quantityGuidance}
+- Each title must be specific to the issue — no generic names
+- Each summary must be a single sentence explaining what the test validates
+- Titles and summaries must be distinct — no duplicates or overlapping coverage
+- Do NOT include field values, steps, or any other detail — only title and summary
+
+Return ONLY the JSON.`;
+}
+
+export function buildOutlineUserPrompt(
+  issue: IssueData,
+  context: GenerationContext
+): string {
+  let prompt = `ISSUE TO TEST: ${issue.key} - "${issue.title}"
+
+ISSUE DETAILS:
+${issue.description || "No description provided"}
+
+STATUS: ${issue.status}${issue.priority ? ` | PRIORITY: ${issue.priority}` : ""}`;
+
+  if (context.userNotes) {
+    prompt += `\n\nADDITIONAL TESTING GUIDANCE: ${context.userNotes}`;
+  }
+
+  prompt += `\n\nGenerate a list of test case titles and one-sentence summaries that cover the key scenarios for this issue.`;
+  return prompt;
+}
+
+export function buildExpandSystemPrompt(
+  template: TemplateData,
+  autoGenerateTags?: boolean,
+  baseTemplate?: string
+): string {
+  return buildSystemPrompt(
+    template,
+    { folderContext: 0 },
+    "just_one",
+    autoGenerateTags,
+    baseTemplate
+  );
+}
+
+export function buildExpandUserPrompt(
+  issue: IssueData,
+  outline: TestCaseOutline,
+  context: GenerationContext,
+  baseTemplate?: string
+): string {
+  const outlineSection = `\n\nTEST CASE TO GENERATE:\nTitle: "${outline.title}"\nSummary: ${outline.summary}\n\nGenerate a complete test case for the title and summary above. The test case must match that title exactly.`;
+
+  if (baseTemplate) {
+    return baseTemplate
+      .replace("{{ISSUE_KEY}}", issue.key)
+      .replace("{{ISSUE_TITLE}}", issue.title)
+      .replace(
+        "{{ISSUE_DESCRIPTION}}",
+        issue.description || "No description provided"
+      )
+      .replace("{{ISSUE_STATUS}}", issue.status)
+      .replace(
+        "{{ISSUE_PRIORITY}}",
+        issue.priority ? ` | PRIORITY: ${issue.priority}` : ""
+      )
+      .replace("{{COMMENTS_SECTION}}", "")
+      .replace("{{LINKED_ISSUES_SECTION}}", "")
+      .replace(
+        "{{USER_NOTES_SECTION}}",
+        context.userNotes
+          ? `\n\nADDITIONAL TESTING GUIDANCE: ${context.userNotes}`
+          : ""
+      )
+      .replace("{{EXISTING_CASES_SECTION}}", outlineSection);
+  }
+
+  let prompt = `ISSUE TO TEST: ${issue.key} - "${issue.title}"
+
+ISSUE DETAILS:
+${issue.description || "No description provided"}
+
+STATUS: ${issue.status}${issue.priority ? ` | PRIORITY: ${issue.priority}` : ""}`;
+
+  if (context.userNotes) {
+    prompt += `\n\nADDITIONAL TESTING GUIDANCE: ${context.userNotes}`;
+  }
+
+  prompt += outlineSection;
+  return prompt;
+}
+
+// ---------------------------------------------------------------------------
 // Response parsing & validation
 // ---------------------------------------------------------------------------
 

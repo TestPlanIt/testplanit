@@ -1679,6 +1679,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                               )}
                               <Button
                                 variant="outline"
+                                disabled={folderHierarchy.length === 0}
                                 onClick={() => setGenerateWizardOpen(true)}
                                 className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
                               >
