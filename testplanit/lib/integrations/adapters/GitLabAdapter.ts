@@ -70,6 +70,7 @@ export class GitLabAdapter extends BaseAdapter {
       const assigneeId = parseInt(data.assigneeId, 10);
       if (!isNaN(assigneeId)) payload.assignee_id = assigneeId;
     }
+    if (data.issueType) payload.issue_type = data.issueType;
     const response = await this.makeRequest<any>(
       `${this.baseUrl}/api/v4/projects/${encoded}/issues`,
       { method: "POST", body: JSON.stringify(payload) }
@@ -126,7 +127,15 @@ export class GitLabAdapter extends BaseAdapter {
         (options.offset || 0) / (options.limit || 30) + 1
       ).toString(),
     });
-    if (options.query) params.set("search", options.query);
+    if (options.query) {
+      // Key format: "namespace/project#iid" — use iids[] for exact lookup
+      const keyMatch = options.query.match(/^.+#(\d+)$/);
+      if (keyMatch) {
+        params.set("iids[]", keyMatch[1]);
+      } else {
+        params.set("search", options.query);
+      }
+    }
     if (options.assignee) params.set("assignee_username", options.assignee);
     if (options.labels && options.labels.length > 0) {
       params.set("labels", options.labels.join(","));
@@ -185,6 +194,16 @@ export class GitLabAdapter extends BaseAdapter {
 
   async getLinkedIssues(_issueId: string): Promise<LinkedIssueRef[]> {
     return [];
+  }
+
+  async getIssueTypes(
+    _projectId: string
+  ): Promise<Array<{ id: string; name: string }>> {
+    // GitLab CE/Free supports "issue" and "incident"; paid tiers add task/objective/key_result
+    return [
+      { id: "issue", name: "Issue" },
+      { id: "incident", name: "Incident" },
+    ];
   }
 
   async getProjects(): Promise<
@@ -313,6 +332,7 @@ export class GitLabAdapter extends BaseAdapter {
             email: issue.author.email,
           }
         : undefined,
+      issueType: issue.issue_type ?? "issue",
       labels: Array.isArray(issue.labels) ? issue.labels : [],
       customFields: {
         _gitlab_project: projectPath,

@@ -127,7 +127,10 @@ export function useIssueColumns({
                 externalId={row.original.externalId}
                 externalUrl={resolveIssueUrl(row.original)}
                 title={row.original.title}
+                description={row.original.description}
                 status={row.original.externalStatus}
+                priority={row.original.priority}
+                lastSyncedAt={row.original.lastSyncedAt}
                 projectIds={row.original.projectIds}
                 size="small"
                 data={row.original.data}

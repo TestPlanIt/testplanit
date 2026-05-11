@@ -241,7 +241,13 @@ export class GitHubAdapter extends BaseAdapter {
 
     // Add search query
     if (options.query) {
-      searchQuery.push(options.query);
+      // Key format: "#42" — use number: qualifier for exact issue lookup
+      const numMatch = options.query.match(/^#(\d+)$/);
+      if (numMatch) {
+        searchQuery.push(`number:${numMatch[1]}`);
+      } else {
+        searchQuery.push(options.query);
+      }
     }
 
     // Add status filter

@@ -86,6 +86,10 @@ export function getIssueTypeIcon(
     return { icon: ListTodo };
   }
 
+  if (normalizedType === "issue") {
+    return { icon: ListTodo };
+  }
+
   // Default to Bug icon
   return { icon: Bug };
 }

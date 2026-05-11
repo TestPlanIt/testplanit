@@ -127,7 +127,22 @@ export class GiteaAdapter extends BaseAdapter {
         (options.offset || 0) / (options.limit || 30) + 1
       ).toString(),
     });
-    if (options.query) params.set("q", options.query);
+    if (options.query) {
+      // Key format: "owner/repo#number" — fetch the specific issue directly
+      const keyMatch = options.query.match(/^.+#(\d+)$/);
+      if (keyMatch) {
+        try {
+          const issue = await this.makeRequest<any>(
+            `${this.baseUrl}/api/v1/repos/${owner}/${repo}/issues/${keyMatch[1]}`
+          );
+          const mapped = this.mapGiteaIssue(issue, owner, repo);
+          return { issues: [mapped], total: 1, hasMore: false };
+        } catch {
+          return { issues: [], total: 0, hasMore: false };
+        }
+      }
+      params.set("q", options.query);
+    }
     if (options.assignee) params.set("assigned_by", options.assignee);
     if (options.status && options.status.length > 0) {
       const state = options.status[0].toLowerCase();
