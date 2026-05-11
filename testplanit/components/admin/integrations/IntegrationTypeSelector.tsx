@@ -9,7 +9,8 @@ import {
 import { IntegrationProvider } from "@prisma/client";
 import { Check, Link } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { siGitea, siGithub, siGitlab, siJira } from "simple-icons";
+import { siGithub, siGitlab, siJira } from "simple-icons";
+import { GiteaFamilyIcon } from "@/components/shared/gitea-family-icon";
 import { cn } from "~/utils";
 
 interface IntegrationTypeSelectorProps {
@@ -54,12 +55,8 @@ const integrationTypes = [
   },
   {
     type: IntegrationProvider.GITEA,
-    icon: () => (
-      <svg viewBox="0 0 24 24" className="h-8 w-8" fill="currentColor">
-        <path d={siGitea.path} />
-      </svg>
-    ),
-    color: "text-[#609926]",
+    icon: () => <GiteaFamilyIcon className="h-8 w-8" />,
+    color: "",
   },
   {
     type: IntegrationProvider.AZURE_DEVOPS,

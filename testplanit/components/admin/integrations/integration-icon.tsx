@@ -1,6 +1,7 @@
 import { IntegrationProvider } from "@prisma/client";
 import { Bug } from "lucide-react";
-import { siGitea, siGithub, siGitlab, siJira } from "simple-icons";
+import { siGithub, siGitlab, siJira } from "simple-icons";
+import { GiteaFamilyIcon } from "@/components/shared/gitea-family-icon";
 import { cn } from "~/utils";
 
 interface IntegrationIconProps {
@@ -48,10 +49,8 @@ export function IntegrationIcon({ provider, className }: IntegrationIconProps) {
       );
     case "GITEA":
       return (
-        <div className={cn(baseClass, "bg-[#609926] text-white")}>
-          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
-            <path d={siGitea.path} />
-          </svg>
+        <div className={cn(baseClass, "bg-white dark:bg-gray-800 p-0.5")}>
+          <GiteaFamilyIcon className="h-full w-full" />
         </div>
       );
     default:

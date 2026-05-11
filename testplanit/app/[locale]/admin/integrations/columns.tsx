@@ -3,10 +3,11 @@ import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Integration } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
+import { GiteaFamilyIcon } from "@/components/shared/gitea-family-icon";
 import { Link, Plug } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
-import { siGitea, siGithub, siGitlab, siJira } from "simple-icons";
+import { siGithub, siGitlab, siJira } from "simple-icons";
 import { DeleteIntegrationButton } from "./DeleteIntegrationButton";
 import { EditIntegrationButton } from "./EditIntegrationButton";
 import { SyncIntegrationButton } from "./SyncIntegrationButton";
@@ -37,11 +38,7 @@ const providerIcons: Record<string, React.ReactNode> = {
       <path d={siGitlab.path} />
     </svg>
   ),
-  GITEA: (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
-      <path d={siGitea.path} />
-    </svg>
-  ),
+  GITEA: <GiteaFamilyIcon className="h-4 w-4" />,
   SIMPLE_URL: <Link className="h-4 w-4" />,
 };
 
