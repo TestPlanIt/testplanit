@@ -272,7 +272,7 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
         <li>Link test cases (and other entities) to issues in a single call — no manual UI step</li>
       </ul>
       <p>All reads are scoped to your API token permissions — the AI only sees what your account can see.</p>
-      <p>See the <a href="/docs/mcp-server" target="_blank">MCP Server documentation</a> to install and connect your AI assistant.</p>
+      <p>See the <a href="https://docs.testplanit.com/docs/sdk/mcp-overview/" target="_blank">MCP Server documentation</a> to install and connect your AI assistant.</p>
     `,
   },
   "0.22.0": {
