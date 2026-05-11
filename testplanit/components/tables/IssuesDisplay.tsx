@@ -573,9 +573,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
 
               {/* Priority — only for providers that actually support it */}
               {priority &&
-                ["JIRA", "AZURE_DEVOPS"].includes(
-                  integrationProvider!
-                ) && (
+                ["JIRA", "AZURE_DEVOPS"].includes(integrationProvider!) && (
                   <div className="flex items-center gap-2 text-sm">
                     <span className="text-muted-foreground text-xs">
                       {t("common.fields.priority")}:
