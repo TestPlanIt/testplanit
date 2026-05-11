@@ -63,7 +63,7 @@ import {
 import { useFindManyWebhookConfig } from "~/lib/hooks";
 import { translateServerError } from "~/lib/i18n/translateServerError";
 import { isSlackWebhookUrl } from "~/lib/webhooks/slack-url-detection";
-import { z } from "zod";
+import { z } from "zod/v4";
 
 const outboundCreateSchema = z.object({
   name: z.string().trim().min(1, "outboundCreateNameRequired"),

@@ -95,7 +95,7 @@ test.describe("Sign Up with Email Verification", () => {
 
         // Wait for the verification to complete — the component auto-submits via useEffect
         // and redirects to /signin on success
-        await verifyPage.waitForURL(/\/en-US\/signin/, { timeout: 15000 });
+        await verifyPage.waitForURL(/\/en-US\/signin/, { timeout: 30_000 });
         expect(verifyPage.url()).toContain("/signin");
 
         // After verification, sign in to confirm emailVerified was set

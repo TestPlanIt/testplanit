@@ -107,6 +107,10 @@ curl -X POST "https://your-domain.com/api/junit/import" \
   -F "files=@junit-results.xml"
 ```
 
+### AI agents (MCP)
+
+To grant an AI agent (Claude Desktop, Cursor, etc.) read-only access to TestPlanIt, see the dedicated walkthrough at [SDK & Integrations → MCP Server → Configuration](./sdk/mcp-configuration.md). The walkthrough covers token scopes (`mode:read`, `client:mcp`), client configuration snippets, and the audit-log attribution behavior agent tokens get.
+
 ## Managing API Tokens
 
 ### Viewing Your Tokens

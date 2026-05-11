@@ -32,11 +32,18 @@ export interface AuditContext {
    */
   systemReason?: string;
   /**
-   * Phase 2 / D-01a — suppression hatch for backfill scripts and migrations
-   * that mutate domain entities without producing outbound webhook events.
-   * webhookEvents.emit() short-circuits when this flag is true. Audit
-   * emission is unaffected (audit events still flow). Defaults to undefined
-   * (= no suppression) so existing callers are unchanged.
+   * tokenScopes — scopes from the authenticating ApiToken, if any.
+   * Empty/undefined for session-authed requests (cookie auth).
+   * Set by enrichFromApiAuth() after token validation in Bearer-authed routes.
+   * Used by captureAuditEvent to derive metadata.source ("mcp" | "api") —
+   * unforgeable by request-time headers because attribution lives with the token.
+   */
+  tokenScopes?: string[];
+  /**
+   * Suppression hatch for backfill scripts and migrations that mutate domain
+   * entities without producing outbound webhook events. webhookEvents.emit()
+   * short-circuits when this flag is true. Audit emission is unaffected.
+   * Defaults to undefined (= no suppression) so existing callers are unchanged.
    */
   suppressWebhooks?: boolean;
 }

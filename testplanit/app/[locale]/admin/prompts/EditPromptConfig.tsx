@@ -28,7 +28,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import * as z from "zod";
+import * as z from "zod/v4";
 import { updatePromptConfig } from "~/app/actions/promptConfigActions";
 import { LLM_FEATURES, type LlmFeature } from "~/lib/llm/constants";
 import type { ExtendedPromptConfig } from "./columns";

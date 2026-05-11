@@ -101,5 +101,6 @@ export const test = base.extend<TestFixtures>({
   },
 });
 
-// Re-export expect for convenience
+// Re-export expect and common Playwright types for convenience
 export { expect };
+export type { APIRequestContext } from "@playwright/test";

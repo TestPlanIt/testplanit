@@ -2054,6 +2054,12 @@
         "yourToken": "Tu token",
         "deleteTitle": "¿Eliminar token API?",
         "deleteDescription": "Esta acción no se puede deshacer. Las aplicaciones que usen este token ya no podrán autenticarse.",
+        "readOnlyLabel": "Solo lectura",
+        "readOnlyDescription": "Utilizar para agentes de IA que solo deben consultar datos, nunca modificarlos.",
+        "agentTokenLabel": "Marcar como token de agente",
+        "agentTokenDescription": "Etiqueta las entradas del registro de auditoría con metadata.source: \"mcp\" para que los administradores puedan atribuir los cambios realizados por el agente.",
+        "readOnlyBadge": "Solo lectura",
+        "agentTokenBadge": "Token de agente",
         "errors": {
           "nameRequired": "Se requiere el nombre del token."
         }

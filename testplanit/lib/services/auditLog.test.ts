@@ -106,7 +106,7 @@ const auditContextMocks = vi.hoisted(() => ({
     ipAddress: "192.168.1.1",
     userAgent: "Mozilla/5.0",
     requestId: "req-default",
-  } as Record<string, string> | null,
+  } as Record<string, unknown> | null,
 }));
 
 vi.mock("../auditContext", () => ({
@@ -529,6 +529,156 @@ describe("AuditLog Service", () => {
         userAgent: "Mozilla/5.0",
         requestId: "req-default",
       };
+    });
+  });
+
+  describe("captureAuditEvent metadata.source from tokenScopes", () => {
+    const DEFAULT_CONTEXT = {
+      userId: "context-user-123",
+      userEmail: "context@example.com",
+      userName: "Context User",
+      ipAddress: "192.168.1.1",
+      userAgent: "Mozilla/5.0",
+      requestId: "req-default",
+    };
+
+    function setContext(extra: Record<string, unknown>) {
+      auditContextMocks.currentContext = {
+        ...DEFAULT_CONTEXT,
+        ...extra,
+      } as unknown as typeof auditContextMocks.currentContext;
+    }
+
+    function restoreContext() {
+      auditContextMocks.currentContext = { ...DEFAULT_CONTEXT };
+    }
+
+    it("derives source: 'mcp' when tokenScopes includes client:mcp", async () => {
+      setContext({ tokenScopes: ["client:mcp"] });
+      mocks.mockQueue.add.mockResolvedValue({ id: "j-mcp" });
+
+      await captureAuditEvent({
+        action: "CREATE",
+        entityType: "TestCase",
+        entityId: "c1",
+      });
+
+      const jobData = mocks.mockQueue.add.mock.calls[0][1];
+      expect(jobData.event.metadata).toMatchObject({ source: "mcp" });
+
+      restoreContext();
+    });
+
+    it("derives source: 'api' when tokenScopes is non-empty without client:mcp", async () => {
+      setContext({ tokenScopes: ["mode:read"] });
+      mocks.mockQueue.add.mockResolvedValue({ id: "j-api" });
+
+      await captureAuditEvent({
+        action: "CREATE",
+        entityType: "TestCase",
+        entityId: "c2",
+      });
+
+      const jobData = mocks.mockQueue.add.mock.calls[0][1];
+      expect(jobData.event.metadata).toMatchObject({ source: "api" });
+
+      restoreContext();
+    });
+
+    it("derives source: 'mcp' when tokenScopes includes both mode:read and client:mcp", async () => {
+      setContext({ tokenScopes: ["mode:read", "client:mcp"] });
+      mocks.mockQueue.add.mockResolvedValue({ id: "j-mcp-rw" });
+
+      await captureAuditEvent({
+        action: "UPDATE",
+        entityType: "TestCase",
+        entityId: "c3",
+      });
+
+      const jobData = mocks.mockQueue.add.mock.calls[0][1];
+      expect(jobData.event.metadata).toMatchObject({ source: "mcp" });
+
+      restoreContext();
+    });
+
+    it("emits NO source key when tokenScopes is empty []", async () => {
+      setContext({ tokenScopes: [] });
+      mocks.mockQueue.add.mockResolvedValue({ id: "j-empty" });
+
+      await captureAuditEvent({
+        action: "CREATE",
+        entityType: "TestCase",
+        entityId: "c4",
+      });
+
+      const jobData = mocks.mockQueue.add.mock.calls[0][1];
+      // Empty scopes is the existing-token default — preserve absence of source.
+      const md = (jobData.event.metadata ?? {}) as Record<string, unknown>;
+      expect(md).not.toHaveProperty("source");
+
+      restoreContext();
+    });
+
+    it("emits NO source key for session-authed requests (tokenScopes undefined)", async () => {
+      // Default context has no tokenScopes — simulate cookie/session auth.
+      restoreContext();
+      mocks.mockQueue.add.mockResolvedValue({ id: "j-session" });
+
+      await captureAuditEvent({
+        action: "CREATE",
+        entityType: "TestCase",
+        entityId: "c5",
+      });
+
+      const jobData = mocks.mockQueue.add.mock.calls[0][1];
+      const md = (jobData.event.metadata ?? {}) as Record<
+        string,
+        unknown
+      > | null;
+      // Either metadata is absent entirely, or it has no `source` key.
+      if (md) {
+        expect(md).not.toHaveProperty("source");
+      }
+    });
+
+    it("preserves caller-explicit metadata.source over derived value (T-05-03)", async () => {
+      setContext({ tokenScopes: ["client:mcp"] });
+      mocks.mockQueue.add.mockResolvedValue({ id: "j-explicit" });
+
+      await captureAuditEvent({
+        action: "CREATE",
+        entityType: "TestCase",
+        entityId: "c6",
+        metadata: { source: "import" },
+      });
+
+      const jobData = mocks.mockQueue.add.mock.calls[0][1];
+      // Caller-explicit value wins — derived "mcp" must not override "import".
+      expect(jobData.event.metadata.source).toBe("import");
+
+      restoreContext();
+    });
+
+    it("merges derived source AND ALS systemReason when both apply", async () => {
+      setContext({
+        tokenScopes: ["client:mcp"],
+        systemReason: "scheduled:rollup",
+      });
+      mocks.mockQueue.add.mockResolvedValue({ id: "j-both" });
+
+      await captureAuditEvent({
+        action: "CREATE",
+        entityType: "TestCase",
+        entityId: "c7",
+      });
+
+      const jobData = mocks.mockQueue.add.mock.calls[0][1];
+      expect(jobData.event.metadata).toMatchObject({
+        source: "mcp",
+        systemReason: "scheduled:rollup",
+      });
+
+      restoreContext();
     });
   });
 

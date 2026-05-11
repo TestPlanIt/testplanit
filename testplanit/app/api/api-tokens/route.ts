@@ -31,9 +31,23 @@ const dateOrDatetimeSchema = z.string().refine(
   { message: "Invalid date format. Use YYYY-MM-DD or ISO datetime." }
 );
 
+/**
+ * Canonical allow-list for API token scope tags.
+ *
+ * Convention: <namespace>:<value> (see schema.zmodel `ApiToken.scopes` comment).
+ * Recognized values:
+ *   - "mode:read"   — narrows the token to read-only operations (write methods rejected at the ZenStack chokepoint)
+ *   - "client:mcp"  — attributes audit events from this token to the MCP source
+ *
+ * Exported so the UI (plan 05-04) and any other writer can agree on the same source of truth.
+ */
+export const ALLOWED_API_TOKEN_SCOPES = ["mode:read", "client:mcp"] as const;
+export type ApiTokenScope = (typeof ALLOWED_API_TOKEN_SCOPES)[number];
+
 const createTokenSchema = z.object({
   name: z.string().min(1).max(100),
   expiresAt: dateOrDatetimeSchema.optional().nullable(),
+  scopes: z.array(z.enum([...ALLOWED_API_TOKEN_SCOPES])).default([]),
 });
 
 export const POST = withAuditContext(async (request: NextRequest) => {
@@ -58,6 +72,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         tokenPrefix: prefix,
         userId: session.user.id,
         expiresAt: validated.expiresAt ? new Date(validated.expiresAt) : null,
+        scopes: validated.scopes,
       },
       select: {
         id: true,
@@ -66,6 +81,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         createdAt: true,
         expiresAt: true,
         isActive: true,
+        scopes: true,
       },
     });
 
@@ -81,6 +97,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       metadata: {
         tokenPrefix: prefix,
         expiresAt: apiToken.expiresAt?.toISOString() || null,
+        scopes: validated.scopes,
       },
     });
 

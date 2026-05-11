@@ -1,7 +1,7 @@
 import { getCurrentTenantId } from "@/lib/multiTenantPrisma";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { prisma } from "~/lib/prisma";
 import { DuplicateScanService } from "~/lib/services/duplicateScanService";
 import { authOptions } from "~/server/auth";

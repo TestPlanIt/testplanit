@@ -5,8 +5,10 @@ import { NextIntlClientProvider } from "next-intl";
 import { getTranslations } from "next-intl/server";
 
 import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import { Toaster } from "sonner";
 import { NextStepOnboarding } from "~/components/onboarding/NextStepOnboarding";
+import { locales } from "~/i18n/navigation";
 import "~/styles/globals.css";
 import "~/styles/tiptap-mentions.css";
 import Providers from "../providers";
@@ -17,6 +19,7 @@ export async function generateMetadata({
   params: Promise<{ locale: import("~/i18n/navigation").Locale }>;
 }): Promise<Metadata> {
   const { locale } = await params;
+  if (!locales.includes(locale as any)) return {};
   const t = await getTranslations({ locale });
   const appName = t("common.pageTitles.appName");
   const dashboard = t("common.pageTitles.dashboard");
@@ -38,6 +41,7 @@ export default async function RootLayout(props: any) {
   const locale = (headerList.get("x-next-intl-locale") || "en-US") as
     | "en-US"
     | "es-ES";
+  if (!locales.includes(locale as any)) notFound();
   const messages = (await import(`../../messages/${locale}.json`)).default;
 
   return (

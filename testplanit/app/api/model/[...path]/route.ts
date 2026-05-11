@@ -4,7 +4,10 @@ import { NextRequestHandler } from "@zenstackhq/server/next";
 import { AsyncLocalStorage } from "async_hooks";
 import { NextRequest, NextResponse } from "next/server";
 import { tryFastPathCreate } from "~/lib/access-fast-path";
-import { authenticateApiToken, extractBearerToken } from "~/lib/api-token-auth";
+import {
+  authenticateApiTokenForMethod,
+  extractBearerToken,
+} from "~/lib/api-token-auth";
 import { getAuditContext, runWithAuditContext } from "~/lib/auditContext";
 import {
   enrichFromApiAuth,
@@ -188,29 +191,43 @@ async function getPrisma() {
 
   let user;
   if (userId) {
-    user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        access: true,
-        roleId: true, // Required by ZenStack authSelector
-        isActive: true,
-        isDeleted: true,
-        role: {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        user = await prisma.user.findUnique({
+          where: { id: userId },
           select: {
             id: true,
-            rolePermissions: true,
+            name: true,
+            email: true,
+            access: true,
+            roleId: true, // Required by ZenStack authSelector
+            isActive: true,
+            isDeleted: true,
+            role: {
+              select: {
+                id: true,
+                rolePermissions: true,
+              },
+            },
+            groups: {
+              include: {
+                group: true,
+              },
+            },
           },
-        },
-        groups: {
-          include: {
-            group: true,
-          },
-        },
-      },
-    });
+        });
+        break;
+      } catch (err) {
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 50 * (attempt + 1)));
+        } else {
+          console.error(
+            "[getPrisma] user lookup failed after 3 attempts:",
+            err
+          );
+        }
+      }
+    }
   }
 
   // Use prisma from lib/prisma.ts which has audit logging extensions
@@ -288,11 +305,14 @@ async function innerHandler(
     // Check if there's a Bearer token
     const token = extractBearerToken(req);
     if (token) {
-      const apiAuth = await authenticateApiToken(req);
+      const apiAuth = await authenticateApiTokenForMethod(req);
       if (!apiAuth.authenticated) {
+        // READ_ONLY_TOKEN is a permissions failure (token is valid; the
+        // operation is forbidden), not an authentication failure — map to 403.
+        const status = apiAuth.errorCode === "READ_ONLY_TOKEN" ? 403 : 401;
         return NextResponse.json(
           { error: apiAuth.error, code: apiAuth.errorCode },
-          { status: 401 }
+          { status }
         );
       }
       // Build auth context for AsyncLocalStorage

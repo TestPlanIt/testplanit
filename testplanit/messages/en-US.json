@@ -2054,6 +2054,12 @@
         "yourToken": "Your Token",
         "deleteTitle": "Delete API Token?",
         "deleteDescription": "This action cannot be undone. Any applications using this token will no longer be able to authenticate.",
+        "readOnlyLabel": "Read-only",
+        "readOnlyDescription": "Use for AI agents that should only query data, never modify it.",
+        "agentTokenLabel": "Mark as agent token",
+        "agentTokenDescription": "Tags audit log entries with metadata.source: \"mcp\" so admins can attribute agent-driven changes.",
+        "readOnlyBadge": "Read-only",
+        "agentTokenBadge": "Agent token",
         "errors": {
           "nameRequired": "Token name is required."
         }

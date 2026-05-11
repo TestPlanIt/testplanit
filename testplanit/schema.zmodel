@@ -199,7 +199,7 @@ model ApiToken {
     tokenPrefix String                          // First 8 chars for identification (e.g., "tpi_xxxx")
     userId      String
     user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-    scopes      String[]  @default([])          // API scopes - empty means full access based on user permissions
+    scopes      String[]  @default([])          // API scopes - empty means full access. Recognized: "mode:read" (narrows to read-only), "client:mcp" (attributes audit to MCP source). Convention: <namespace>:<value>. See packages/mcp-server/README.md.
     expiresAt   DateTime?                       // Optional expiration date
     lastUsedAt  DateTime?                       // Track last usage
     lastUsedIp  String?                         // Last IP address used

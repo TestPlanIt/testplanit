@@ -232,6 +232,18 @@ const sidebars: SidebarsConfig = {
         'sdk/jira-forge-app', // Jira Forge app (Marketplace plugin)
         {
           type: 'category',
+          label: 'MCP Server',
+          link: {
+            type: 'doc',
+            id: 'sdk/mcp-overview',
+          },
+          items: [
+            'sdk/mcp-configuration', // Configuration: Claude Desktop + Cursor + token scopes
+            'sdk/mcp-prompts', // Example agent prompts
+          ],
+        },
+        {
+          type: 'category',
           label: 'WebdriverIO Reporter',
           link: {
             type: 'doc',
