@@ -1,10 +1,11 @@
+import type { Prisma } from "@prisma/client";
 import {
   extractProseMirrorText,
   denormalizeCustomFields,
 } from "../cases/shared.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Typed includes — every literal carries `as const<Model><Include|Select>`.
+// Typed includes — every literal carries `as const satisfies Prisma.<Model><Include|Select>`.
 // Reintroducing an unknown column produces TS2353 (Phase 6 WR-09 invariant).
 //
 // CRITICAL invariants:
@@ -27,7 +28,7 @@ export const SESSION_ROW_INCLUDE = {
   configuration: { select: { id: true, name: true } },
   milestone: { select: { id: true, name: true } },
   tags: { select: { id: true, name: true } },
-} as const;
+} as const satisfies Prisma.SessionsInclude;
 
 // SESS-02 full include — sessionFieldValues use `field.type.type` +
 // `field.fieldOptions[].fieldOption` shape identical to caseFieldValues
@@ -82,13 +83,13 @@ export const SESSION_DETAIL_INCLUDE = {
       },
     },
   },
-} as const;
+} as const satisfies Prisma.SessionsInclude;
 
 export const SESSION_RESULT_LIST_INCLUDE = {
   status: { select: { id: true, name: true } },
   createdBy: { select: { id: true, name: true, email: true } },
   session: { select: { id: true, name: true, projectId: true } },
-} as const;
+} as const satisfies Prisma.SessionResultsInclude;
 
 export const SESSION_RESULT_DETAIL_INCLUDE = {
   status: { select: { id: true, name: true } },
@@ -121,12 +122,12 @@ export const SESSION_RESULT_DETAIL_INCLUDE = {
       },
     },
   },
-} as const;
+} as const satisfies Prisma.SessionResultsInclude;
 
 // FINDING_INCLUDE — for SESS-05 sessionId mode; per-Issue row shape
 export const FINDING_INCLUDE = {
   integration: { select: { provider: true } },
-} as const;
+} as const satisfies Prisma.IssueInclude;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // denormalizeResultFieldValues

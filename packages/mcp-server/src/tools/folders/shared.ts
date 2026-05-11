@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { buildFolderBreadcrumb } from "../cases/shared.js";
@@ -19,7 +20,7 @@ const FOLDER_DETAIL_INCLUDE = {
     take: 100,
   },
   _count: { select: { cases: { where: { isDeleted: false } } } },
-} as const;
+} as const satisfies Prisma.RepositoryFoldersInclude;
 
 interface RawFolderNode {
   id: number;

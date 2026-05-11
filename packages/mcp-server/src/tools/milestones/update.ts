@@ -1,4 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -27,7 +28,7 @@ const UPDATED_MILESTONE_INCLUDE = {
   milestoneType: { select: { id: true, name: true } },
   creator: { select: { id: true, name: true, email: true } },
   parent: { select: { id: true, name: true } },
-} as const;
+} as const satisfies Prisma.MilestonesInclude;
 
 export function registerMilestonesUpdate(
   server: McpServer,

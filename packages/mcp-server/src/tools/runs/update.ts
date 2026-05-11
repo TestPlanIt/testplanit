@@ -1,4 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -84,7 +85,7 @@ export function registerRunsUpdate(
             "findUnique",
             {
               where: { id: input.runId },
-              select: { projectId: true },
+              select: { projectId: true } satisfies Prisma.TestRunsSelect,
             },
             deps.env,
           );

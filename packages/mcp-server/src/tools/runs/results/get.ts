@@ -39,7 +39,7 @@ export function registerRunResultsGet(
             // RUN_RESULT_DETAIL_INCLUDE (07-01) ships the full step-level
             // shape: stepResults with stepStatus (R2), step text, attachments,
             // issues, plus top-level resultFieldValues / attachments / issues.
-            // The constant is `as const`
+            // The constant is `as const satisfies Prisma.TestRunResultsInclude`
             // so a schema drift fails at typecheck (Phase 6 WR-09 invariant).
             include: RUN_RESULT_DETAIL_INCLUDE,
           },

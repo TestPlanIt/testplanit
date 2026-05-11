@@ -1,4 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -43,7 +44,7 @@ export function registerIssuesFindByKey(
     },
     async (input) => {
       try {
-        const where: Record<string, unknown> = {
+        const where: Prisma.IssueWhereInput = {
           externalKey: input.externalKey,
           isDeleted: false,
           projectId: input.projectId,

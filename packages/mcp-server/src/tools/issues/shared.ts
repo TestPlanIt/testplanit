@@ -1,7 +1,8 @@
+import type { Prisma } from "@prisma/client";
 import { extractProseMirrorText } from "../cases/shared.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Typed includes — every literal carries `as const`.
+// Typed includes — every literal carries `as const satisfies Prisma.IssueInclude`.
 // Adding an unknown column produces TS2353 at compile time (Phase 6 WR-09).
 //
 // Pitfall 7 (Phase 6 retrofit): `externalSystem` is NOT a column on Issue —
@@ -18,7 +19,7 @@ export const ISSUE_ROW_INCLUDE = {
   integration: { select: { id: true, name: true, provider: true } },
   createdBy: { select: { id: true, name: true, email: true } },
   _count: { select: { repositoryCases: true } },
-} as const;
+} as const satisfies Prisma.IssueInclude;
 
 const LINKED_ARRAYS_INLINE_CAP_PLUS_ONE = 101;
 
@@ -53,7 +54,7 @@ export const ISSUE_DETAIL_INCLUDE = {
       completedAt: true,
     },
   },
-} as const;
+} as const satisfies Prisma.IssueInclude;
 
 export const ISSUE_LINKED_ARRAYS_INLINE_CAP = 100;
 

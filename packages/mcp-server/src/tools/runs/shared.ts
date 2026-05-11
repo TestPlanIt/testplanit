@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import {
@@ -6,7 +7,7 @@ import {
 } from "../cases/shared.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Typed includes — every literal carries `as const<Model><Include|Select>`.
+// Typed includes — every literal carries `as const satisfies Prisma.<Model><Include|Select>`.
 // Reintroducing an unknown column produces TS2353 (Phase 6 WR-09 invariant).
 //
 // CRITICAL invariants:
@@ -35,7 +36,7 @@ export const RUN_ROW_INCLUDE = {
       integration: { select: { provider: true } },
     },
   },
-} as const;
+} as const satisfies Prisma.TestRunsInclude;
 
 // EXEC-02 / EXEC-03 inline test-case shape (latest result via take:1 nested include)
 export const RUN_DETAIL_TESTCASE_INCLUDE = {
@@ -56,7 +57,7 @@ export const RUN_DETAIL_TESTCASE_INCLUDE = {
       executedAt: true,
     },
   },
-} as const;
+} as const satisfies Prisma.TestRunCasesInclude;
 
 // EXEC-04 list rows
 export const RUN_RESULT_LIST_INCLUDE = {
@@ -70,7 +71,7 @@ export const RUN_RESULT_LIST_INCLUDE = {
       testRun: { select: { id: true, name: true } },
     },
   },
-} as const;
+} as const satisfies Prisma.TestRunResultsInclude;
 
 // EXEC-05 step-result shape — R2: relation field on TestRunStepResults is
 // `stepStatus` NOT `status` (schema.zmodel:2437). Reintroducing `status` here
@@ -105,7 +106,7 @@ export const STEP_RESULT_SELECT = {
       integration: { select: { provider: true } },
     },
   },
-} as const;
+} as const satisfies Prisma.TestRunStepResultsSelect;
 
 export const RUN_RESULT_DETAIL_INCLUDE = {
   status: { select: { id: true, name: true } },
@@ -155,7 +156,7 @@ export const RUN_RESULT_DETAIL_INCLUDE = {
     orderBy: [{ stepId: "asc" }, { id: "asc" }],
     select: STEP_RESULT_SELECT,
   },
-} as const;
+} as const satisfies Prisma.TestRunResultsInclude;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Status rollup (D7-04 statusCounts shape; R3 — total computed FROM groups)
@@ -214,7 +215,7 @@ export async function extractStatusNames(
       // R1: TestRunCases has NO isDeleted; do NOT add `isDeleted: false`.
       where: { testRunId: runId },
       _count: { id: true },
-    },
+    } satisfies Prisma.TestRunCasesGroupByArgs,
     env,
   );
   const safeGroups = groups ?? [];
@@ -230,7 +231,7 @@ export async function extractStatusNames(
     {
       where: { id: { in: statusIds } },
       select: { id: true, name: true },
-    },
+    } satisfies Prisma.StatusFindManyArgs,
     env,
   );
   const nameById = new Map<number, string>(

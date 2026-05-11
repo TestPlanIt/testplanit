@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { zenstack } from "../../api.js";
 import { TestPlanItHttpError } from "../../http.js";
 import type { EnvConfig } from "../../env.js";
@@ -26,7 +27,7 @@ const CASE_FIELD_RESOLVE_SELECT = {
       fieldOption: { select: { id: true, name: true } },
     },
   },
-} as const;
+} as const satisfies Prisma.CaseFieldsSelect;
 
 /**
  * Coerce a value to an option ID. Mirrors the read-side coercion in
@@ -99,7 +100,7 @@ export async function resolveCustomFields(
         displayName: { in: names },
         isDeleted: false,
         isEnabled: true,
-      },
+      } satisfies Prisma.CaseFieldsWhereInput,
       select: CASE_FIELD_RESOLVE_SELECT,
     },
     env,
@@ -190,8 +191,8 @@ export async function writeCustomFieldValues(
       "caseFieldValues",
       "findFirst",
       {
-        where: { testCaseId: caseId, fieldId: r.fieldId },
-        select: { id: true },
+        where: { testCaseId: caseId, fieldId: r.fieldId } satisfies Prisma.CaseFieldValuesWhereInput,
+        select: { id: true } satisfies Prisma.CaseFieldValuesSelect,
       },
       env,
     );

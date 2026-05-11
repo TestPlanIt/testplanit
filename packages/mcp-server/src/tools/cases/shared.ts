@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { zenstack, lookup } from "../../api.js";
 import { TestPlanItHttpError } from "../../http.js";
 import type { EnvConfig } from "../../env.js";
@@ -198,7 +199,7 @@ export async function buildFolderBreadcrumb(
       "findUnique",
       {
         where: { id: parentId },
-        select: { id: true, name: true, parentId: true },
+        select: { id: true, name: true, parentId: true } satisfies Prisma.RepositoryFoldersSelect,
       },
       env,
     );

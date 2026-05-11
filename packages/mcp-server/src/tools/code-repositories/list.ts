@@ -1,4 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -34,7 +35,7 @@ export function registerCodeRepositoriesList(
     async (input) => {
       try {
         const limit = input.limit ?? DEFAULT_LIMIT;
-        const where: Record<string, unknown> = {
+        const where: Prisma.ProjectCodeRepositoryConfigWhereInput = {
           projectId: input.projectId,
           // CodeRepository carries `isDeleted`; the join table does not.
           repository: { isDeleted: false },

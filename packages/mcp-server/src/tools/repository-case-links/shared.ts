@@ -1,9 +1,10 @@
+import type { Prisma } from "@prisma/client";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LINK_INCLUDE — typed include literal for RepositoryCaseLink reads.
 //
 // Selects denormalized counterpart cases (caseA, caseB) and the actor who
-// created the link. The `as const`
+// created the link. The `as const satisfies Prisma.RepositoryCaseLinkInclude`
 // annotation pins the shape: any unknown column reintroduced here trips
 // TS2353 — the same compile-time invariant the rest of the read tools rely on.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -32,7 +33,7 @@ export const LINK_INCLUDE = {
       email: true,
     },
   },
-} as const;
+} as const satisfies Prisma.RepositoryCaseLinkInclude;
 
 export interface RawLinkCase {
   id: number;

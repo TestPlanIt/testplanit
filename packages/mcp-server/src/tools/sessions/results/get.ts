@@ -40,7 +40,7 @@ export function registerSessionResultsGet(
             //   - status / createdBy / session denormalized
             //   - attachments (isDeleted:false), issues (isDeleted:false)
             //   - resultFieldValues with field.type.type + field.fieldOptions[].fieldOption
-            // The constant is `as const`
+            // The constant is `as const satisfies Prisma.SessionResultsInclude`
             // so a schema drift fails at typecheck (Phase 6 WR-09 invariant).
             include: SESSION_RESULT_DETAIL_INCLUDE,
           },
