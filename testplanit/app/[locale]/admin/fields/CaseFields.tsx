@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 import { CirclePlus, LayoutList } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useFindManyCaseFields, useUpdateCaseFields } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { AddCaseFieldModal } from "./AddCaseField";
-import { ExtendedCaseFields, getColumns } from "./caseFieldColumns";
+import { ExtendedCaseFields, useColumns } from "./caseFieldColumns";
 import { DeleteCaseField } from "./DeleteCaseField";
 import { EditCaseField } from "./EditCaseField";
 
@@ -96,17 +96,12 @@ export default function CaseFields() {
   const [deletingCaseField, setDeletingCaseField] =
     useState<ExtendedCaseFields | null>(null);
 
-  const columns: CustomColumnDef<ExtendedCaseFields>[] = useMemo(
-    () =>
-      getColumns(
-        t,
-        tCommon,
-        // eslint-disable-next-line react-hooks/refs
-        handleToggle,
-        setEditingCaseField,
-        setDeletingCaseField
-      ),
-    [handleToggle, t, tCommon]
+  const columns: CustomColumnDef<ExtendedCaseFields>[] = useColumns(
+    t,
+    tCommon,
+    handleToggle,
+    setEditingCaseField,
+    setDeletingCaseField
   );
 
   const [addCaseFieldOpen, setAddCaseFieldOpen] = useState(false);

@@ -32,7 +32,7 @@ import type { Session } from "next-auth";
 import { useCountAuditLog, useFindManyAuditLog } from "~/lib/hooks";
 import { logDataExport } from "~/lib/services/auditClient";
 import { AuditLogDetailModal } from "./AuditLogDetailModal";
-import { ExtendedAuditLog, getColumns } from "./columns";
+import { ExtendedAuditLog, useColumns } from "./columns";
 
 type PageSizeOption = number | "All";
 
@@ -391,9 +391,12 @@ function AuditLogsContent({ session }: { session: Session }) {
     [dateFormat, timezone]
   );
 
-  const columns = useMemo(
-    () => getColumns(userPreferences, handleViewDetails, t, tCommon, tUserMenu),
-    [userPreferences, handleViewDetails, t, tCommon, tUserMenu]
+  const columns = useColumns(
+    userPreferences,
+    handleViewDetails,
+    t,
+    tCommon,
+    tUserMenu
   );
 
   const [columnVisibility, setColumnVisibility] = useState<

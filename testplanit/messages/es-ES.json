@@ -700,6 +700,8 @@
       "casesInRun": "{count, plural, =0 {No hay casos de prueba en la prueba} =1 {1 caso de prueba en la prueba} other {# casos de prueba en la prueba}}",
       "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 Caso único} other {# Casos únicos}} en {configCount, plural, =1 {1 Configuración} other {# Configuraciones}} ({totalCount} casos totales)",
       "viewTestRunDetails": "Ver detalles de la prueba",
+      "sortByStatus": "Agrupar por estado",
+      "sortByDate": "Ordenar por fecha",
       "testRuns": "{count, plural, =0 {No hay ejecuciones de prueba} =1 {1 Prueba de ejecución} other {# Prueba de ejecuciones}}",
       "sessions": "{count, plural, =0 {Sin Sesiones} =1 {1 Sesión} other {# Sesiones}}",
       "noOptions": "No hay opciones disponibles",
@@ -1028,6 +1030,7 @@
     "signup": {
       "description": "Introduzca su información para registrarse en una nueva cuenta.",
       "signIn": "Inicia sesión en tu cuenta existente.",
+      "registrationDisabled": "Contacta con un administrador para crear una cuenta.",
       "errors": {
         "emailRequired": "Se requiere correo electrónico",
         "passwordRequired": "La contraseña no cumple con los requisitos de seguridad.",
@@ -2167,6 +2170,23 @@
       "collapseAll": "Colapsar todos",
       "altKey": "Mantenga la tecla Alt para expandir/contraer todos los niños"
     },
+    "dragDrop": {
+      "move": "Mover",
+      "copy": "Copiar",
+      "promptTitle": "¿Qué te gustaría hacer?",
+      "copying": "Copiando…",
+      "copyComplete": "{count, plural, =1 {Se copió 1 caso a {folder}} other {Se copiaron # casos a {folder}}}{dest, select, samename {} crossProject { en {projectName}} other {}}",
+      "moveComplete": "{count, plural, =1 {Se movió 1 caso a {folder}} other {Se movieron # casos a {folder}}}{dest, select, samename {} crossProject { en {projectName}} other {}}",
+      "copyError": "{count, plural, =1 {Error al copiar 1 caso a {folder}} other {Error al copiar # casos a {folder}}}{dest, select, samename {} crossProject { en {projectName}} other {}}",
+      "moveError": "{count, plural, =1 {No se pudo mover 1 caso a {folder}} other {No se pudieron mover # casos a {folder}}}{dest, select, samename {} crossProject { en {projectName}} other {}}",
+      "copyAlreadyRunning": "Ya se está trabajando en otra copia. Por favor, espere a que termine.",
+      "currentSuffix": "(Actual)",
+      "moveDisabledSameFolder": "Los casos ya se encuentran en esta carpeta.",
+      "dragPreviewCase": "Caso de prueba",
+      "dragPreviewCount": "{count, plural, =1 {# caso de prueba} other {# casos de prueba}}",
+      "modifierHintMac": "Mantén pulsado ⇧ para mover o ⌥ para copiar mientras arrastras para saltarte este menú.",
+      "modifierHintWin": "Mantén pulsada la tecla Mayús para mover o la tecla Ctrl para copiar mientras arrastras para saltarte este menú."
+    },
     "folderActions": {
       "edit": "Editar carpeta",
       "delete": "Eliminar carpeta",
@@ -2965,6 +2985,7 @@
       "webhooks": "Webhooks",
       "llm": "AI Models",
       "prompts": "Configuraciones de aviso",
+      "exportTemplates": "Exportar plantillas",
       "codeRepositories": "Repositorios de código",
       "quickScript": "Script rápido",
       "sso": "Autenticación",
@@ -3470,7 +3491,10 @@
         "emailVerificationDisabled": "La verificación de correo electrónico ya no es necesaria para los nuevos usuarios",
         "emailVerificationDisabledAndVerified": "Verificación de correo electrónico deshabilitada y {count, plural, one {# cuenta de usuario} other {# cuentas de usuario}} verificada",
         "emailVerificationUpdateFailed": "No se pudo actualizar la configuración de verificación de correo electrónico",
-        "emailServerNotConfigured": "No se puede habilitar la verificación de correo electrónico: el servidor de correo electrónico no está configurado"
+        "emailServerNotConfigured": "No se puede habilitar la verificación de correo electrónico: el servidor de correo electrónico no está configurado",
+        "openRegistrationEnabled": "El autorregistro ya está habilitado.",
+        "openRegistrationDisabled": "El autorregistro está ahora deshabilitado.",
+        "openRegistrationUpdateFailed": "No se pudo actualizar la configuración de autorregistro."
       },
       "dialogs": {
         "googleOAuth": {
@@ -3576,6 +3600,10 @@
           "title": "Requerir verificación de correo electrónico",
           "description": "Los usuarios deben verificar su dirección de correo electrónico antes de acceder al sistema",
           "noEmailServerWarning": "El servidor de correo electrónico no está configurado. La verificación de correo electrónico se desactiva automáticamente hasta que se configure un servidor."
+        },
+        "allowOpenRegistration": {
+          "title": "Permitir el autorregistro",
+          "description": "Cuando esta función está desactivada, los nuevos usuarios no pueden registrarse directamente ni crear una cuenta mediante SSO. Los usuarios existentes sí pueden iniciar sesión."
         }
       },
       "errors": {
@@ -4930,12 +4958,6 @@
         "llmBudgetThresholdTitle": "Presupuesto LLM {threshold}% utilizado",
         "llmBudgetExceededMessage": "{providerName} ha excedido su presupuesto mensual: {spend} gastó de {budget} presupuesto.",
         "llmBudgetThresholdMessage": "{providerName} ha utilizado {threshold}% de su presupuesto mensual: {spend} de {budget}.",
-        "copyCompleteTitle": "Copia completa",
-        "moveCompleteTitle": "Mudanza completada",
-        "copyCompleteMessage": "{count, plural, =0 {No se copiaron casos} one {# caso copiado correctamente} other {# casos copiados correctamente}}",
-        "moveCompleteMessage": "{count, plural, =0 {No se movieron casos} one {# caso movido correctamente} other {# casos movidos correctamente}}",
-        "copyMoveErrorsAppend": ", {errorCount, plural, one {# falló} other {# falló}}",
-        "viewTargetRepository": "Ver repositorio de destino",
         "userRegisteredTitle": "Registro de nuevo usuario",
         "userRegisteredMessageSso": "{userName} ({userEmail}) se ha registrado mediante SSO",
         "userRegisteredMessageForm": "{userName} ({userEmail}) se ha registrado a través del formulario de registro",
@@ -5183,6 +5205,7 @@
     "failedToCreate": "No se pudo crear el enlace.",
     "confirmRemoveLink": "¿Está seguro que desea eliminar este enlace?",
     "DEPENDS_ON": "Dependencia",
+    "DUPLICATED_FROM": "Duplicado de",
     "SAME_TEST_DIFFERENT_SOURCE": "Misma prueba (Fuente diferente)",
     "status": "Último estado",
     "at": "Ejecutado"

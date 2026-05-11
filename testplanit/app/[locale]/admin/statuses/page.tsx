@@ -125,6 +125,13 @@ function Status() {
     []
   );
 
+  const [editingStatus, setEditingStatus] = useState<ExtendedStatus | null>(
+    null
+  );
+  const [deletingStatus, setDeletingStatus] = useState<ExtendedStatus | null>(
+    null
+  );
+
   /* eslint-disable react-hooks/refs */
   const columns = useMemo(
     () =>
@@ -151,12 +158,6 @@ function Status() {
     Record<string, boolean>
   >({});
   const [addStatusOpen, setAddStatusOpen] = useState(false);
-  const [editingStatus, setEditingStatus] = useState<ExtendedStatus | null>(
-    null
-  );
-  const [deletingStatus, setDeletingStatus] = useState<ExtendedStatus | null>(
-    null
-  );
 
   useEffect(() => {
     if (status !== "loading" && !session) {

@@ -1,3 +1,40 @@
+## [0.24.24](https://github.com/TestPlanIt/testplanit/compare/v0.24.23...v0.24.24) (2026-05-11)
+
+### Enhancements
+
+* add self-registration toggle for admins ([#295](https://github.com/TestPlanIt/testplanit/issues/295)) ([68d6cf8](https://github.com/TestPlanIt/testplanit/commit/68d6cf80c4aef61608374e576386e051e7f20711))
+
+## [0.24.23](https://github.com/TestPlanIt/testplanit/compare/v0.24.22...v0.24.23) (2026-05-10)
+
+### Bug Fixes
+
+* preserve URL page number on initial load + pin next-intl to 4.9.1 ([#294](https://github.com/TestPlanIt/testplanit/issues/294)) ([cf3d0fa](https://github.com/TestPlanIt/testplanit/commit/cf3d0fae6c0bc5835968d1685e0e44e66bb4a22e))
+
+## [0.24.22](https://github.com/TestPlanIt/testplanit/compare/v0.24.21...v0.24.22) (2026-05-10)
+
+### Bug Fixes
+
+* stabilize column hooks to prevent Jira popover flicker and broken checkboxes ([#293](https://github.com/TestPlanIt/testplanit/issues/293)) ([0542d4b](https://github.com/TestPlanIt/testplanit/commit/0542d4be6c6bd28ba2701c7c0a7051e7bf24fb6c))
+
+## [0.24.21](https://github.com/TestPlanIt/testplanit/compare/v0.24.20...v0.24.21) (2026-05-09)
+
+### Bug Fixes
+
+* webhook audit tenantId + summary sort toggle ([#292](https://github.com/TestPlanIt/testplanit/issues/292)) ([fe9f1ec](https://github.com/TestPlanIt/testplanit/commit/fe9f1ec8132cf80173462fcb72a8e6bff7809759))
+
+## [0.24.20](https://github.com/TestPlanIt/testplanit/compare/v0.24.19...v0.24.20) (2026-05-09)
+
+### Bug Fixes
+
+* **docs:** pin pnpm to v10 in Dockerfile to match lockfile format ([4847551](https://github.com/TestPlanIt/testplanit/commit/48475516bfc56d0e635c6435df7165c6a3cc04d6))
+* search access for non-direct project members + automated flag promotion on result submission ([#291](https://github.com/TestPlanIt/testplanit/issues/291)) ([7981f6e](https://github.com/TestPlanIt/testplanit/commit/7981f6e416ddf385d45776611f8499872ffefd54))
+
+## [0.24.19](https://github.com/TestPlanIt/testplanit/compare/v0.24.18...v0.24.19) (2026-05-08)
+
+### Enhancements
+
+* **copy/move:** Enhancement/copy move in same project ([#290](https://github.com/TestPlanIt/testplanit/issues/290)) ([bac7c18](https://github.com/TestPlanIt/testplanit/commit/bac7c18df640082eca1b796413bbba28a0733357))
+
 ## [0.24.18](https://github.com/TestPlanIt/testplanit/compare/v0.24.17...v0.24.18) (2026-05-06)
 
 ### Bug Fixes

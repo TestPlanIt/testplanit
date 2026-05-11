@@ -29,7 +29,7 @@ import { Boxes, TagsIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   PaginationProvider,
   usePagination,
@@ -42,7 +42,7 @@ import {
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
-import { getColumns } from "./columns";
+import { useTagColumns } from "./columns";
 
 export default function TagList() {
   return (
@@ -357,11 +357,18 @@ function Tags() {
 
   const pageSizeOptions = usePageSizeOptions(totalItems);
 
+  const prevSearchStringRef = useRef(searchString);
+  const prevPageSizeRef = useRef(pageSize);
+
   useEffect(() => {
+    if (searchString === prevSearchStringRef.current) return;
+    prevSearchStringRef.current = searchString;
     setCurrentPage(1);
   }, [searchString, setCurrentPage]);
 
   useEffect(() => {
+    if (pageSize === prevPageSizeRef.current) return;
+    prevPageSizeRef.current = pageSize;
     setCurrentPage(1);
   }, [pageSize, setCurrentPage]);
 
@@ -371,19 +378,15 @@ function Tags() {
     }
   }, [status, session, router]);
 
-  const columns = useMemo(
-    () =>
-      getColumns(
-        {
-          name: t("common.name"),
-          testCases: t("common.fields.testCases"),
-          sessions: t("common.fields.sessions"),
-          testRuns: t("common.fields.testRuns"),
-          projects: t("common.fields.projects"),
-        },
-        isLoadingCounts
-      ),
-    [t, isLoadingCounts]
+  const columns = useTagColumns(
+    {
+      name: t("common.name"),
+      testCases: t("common.fields.testCases"),
+      sessions: t("common.fields.sessions"),
+      testRuns: t("common.fields.testRuns"),
+      projects: t("common.fields.projects"),
+    },
+    isLoadingCounts
   );
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>

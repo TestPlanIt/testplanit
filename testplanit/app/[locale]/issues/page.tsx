@@ -22,7 +22,7 @@ import {
 import type { VisibilityState } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   PaginationProvider,
   usePagination,
@@ -67,6 +67,11 @@ function Issues() {
 
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [priorityFilter, setPriorityFilter] = useState<string>("");
+
+  const prevSearchStringRef = useRef(searchString);
+  const prevPageSizeRef = useRef(pageSize);
+  const prevStatusFilterRef = useRef(statusFilter);
+  const prevPriorityFilterRef = useRef(priorityFilter);
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
@@ -501,14 +506,25 @@ function Issues() {
   const pageSizeOptions = usePageSizeOptions(totalItems);
 
   useEffect(() => {
+    if (searchString === prevSearchStringRef.current) return;
+    prevSearchStringRef.current = searchString;
     setCurrentPage(1);
   }, [searchString, setCurrentPage]);
 
   useEffect(() => {
+    if (pageSize === prevPageSizeRef.current) return;
+    prevPageSizeRef.current = pageSize;
     setCurrentPage(1);
   }, [pageSize, setCurrentPage]);
 
   useEffect(() => {
+    if (
+      statusFilter === prevStatusFilterRef.current &&
+      priorityFilter === prevPriorityFilterRef.current
+    )
+      return;
+    prevStatusFilterRef.current = statusFilter;
+    prevPriorityFilterRef.current = priorityFilter;
     setCurrentPage(1);
   }, [statusFilter, priorityFilter, setCurrentPage]);
 

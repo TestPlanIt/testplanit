@@ -248,6 +248,8 @@ export default function SSOAdminPage() {
         ...prev,
         force2FANonSSO: registrationSettings.force2FANonSSO || false,
         force2FAAllLogins: registrationSettings.force2FAAllLogins || false,
+        allowOpenRegistration:
+          registrationSettings.allowOpenRegistration ?? true,
       }));
     }
   }, [registrationSettings]);
@@ -700,6 +702,31 @@ export default function SSOAdminPage() {
     } catch {
       setToggleState((prev) => ({ ...prev, forceSso: !enabled }));
       toast.error(t("admin.sso.messages.forceSsoUpdateFailed"));
+    }
+  };
+
+  const handleToggleAllowOpenRegistration = async (enabled: boolean) => {
+    setToggleState((prev) => ({ ...prev, allowOpenRegistration: enabled }));
+    try {
+      await upsertSettings({
+        where: {
+          id: registrationSettings?.id ?? "default-registration-settings",
+        },
+        create: {
+          id: "default-registration-settings",
+          allowOpenRegistration: enabled,
+        },
+        update: { allowOpenRegistration: enabled },
+      });
+      toast.success(
+        enabled
+          ? t("admin.sso.messages.openRegistrationEnabled")
+          : t("admin.sso.messages.openRegistrationDisabled")
+      );
+      void refetchSettings();
+    } catch {
+      setToggleState((prev) => ({ ...prev, allowOpenRegistration: !enabled }));
+      toast.error(t("admin.sso.messages.openRegistrationUpdateFailed"));
     }
   };
 
@@ -1278,6 +1305,22 @@ export default function SSOAdminPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Allow Open Registration */}
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <Label className="text-base font-medium">
+                {t("admin.sso.registration.allowOpenRegistration.title")}
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                {t("admin.sso.registration.allowOpenRegistration.description")}
+              </p>
+            </div>
+            <Switch
+              checked={toggleState.allowOpenRegistration ?? true}
+              onCheckedChange={handleToggleAllowOpenRegistration}
+            />
+          </div>
+
           {/* Default Access Level Setting */}
           <div className="flex items-center justify-between">
             <div className="flex-1 mr-4">

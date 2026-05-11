@@ -35,9 +35,9 @@ import {
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import {
-  getCaseColumns,
-  getSessionColumns,
-  getTestRunColumns,
+  useCaseColumns,
+  useSessionColumns,
+  useTestRunColumns,
 } from "./columns";
 
 type TabType = "cases" | "sessions" | "testRuns";
@@ -390,44 +390,32 @@ function TagDetail() {
   }, [testRuns, t]);
 
   // Column definitions
-  const caseColumns = useMemo(
-    () =>
-      getCaseColumns({
-        testCases: t("common.fields.testCases"),
-        type: t("common.fields.type"),
-        manual: t("common.fields.manual"),
-        automated: t("common.fields.automated"),
-        project: t("common.fields.project"),
-        noProject: t("tags.noProject"),
-      }),
-    [t]
-  );
+  const caseColumns = useCaseColumns({
+    testCases: t("common.fields.testCases"),
+    type: t("common.fields.type"),
+    manual: t("common.fields.manual"),
+    automated: t("common.fields.automated"),
+    project: t("common.fields.project"),
+    noProject: t("tags.noProject"),
+  });
 
-  const sessionColumns = useMemo(
-    () =>
-      getSessionColumns({
-        sessions: t("common.fields.sessions"),
-        status: t("common.actions.status"),
-        completed: t("common.fields.completed"),
-        inProgress: t("milestones.statusLabels.IN_PROGRESS"),
-        project: t("common.fields.project"),
-        noProject: t("tags.noProject"),
-      }),
-    [t]
-  );
+  const sessionColumns = useSessionColumns({
+    sessions: t("common.fields.sessions"),
+    status: t("common.actions.status"),
+    completed: t("common.fields.completed"),
+    inProgress: t("milestones.statusLabels.IN_PROGRESS"),
+    project: t("common.fields.project"),
+    noProject: t("tags.noProject"),
+  });
 
-  const testRunColumns = useMemo(
-    () =>
-      getTestRunColumns({
-        testRuns: t("common.fields.testRuns"),
-        status: t("common.actions.status"),
-        completed: t("common.fields.completed"),
-        inProgress: t("milestones.statusLabels.IN_PROGRESS"),
-        project: t("common.fields.project"),
-        noProject: t("tags.noProject"),
-      }),
-    [t]
-  );
+  const testRunColumns = useTestRunColumns({
+    testRuns: t("common.fields.testRuns"),
+    status: t("common.actions.status"),
+    completed: t("common.fields.completed"),
+    inProgress: t("milestones.statusLabels.IN_PROGRESS"),
+    project: t("common.fields.project"),
+    noProject: t("tags.noProject"),
+  });
 
   // Pagination calculations
   const casesTotalPages = Math.ceil((casesCount ?? 0) / effectiveCasesPageSize);

@@ -3,7 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   PaginationProvider,
   usePagination,
@@ -15,7 +15,7 @@ import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { useFindManyUser } from "~/lib/hooks";
-import { ExtendedUser, getColumns } from "./columns";
+import { ExtendedUser, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
 
@@ -235,13 +235,20 @@ function UserList() {
 
   const pageSizeOptions = usePageSizeOptions(totalItems);
 
+  const prevSearchStringRef = useRef(searchString);
+  const prevPageSizeRef = useRef(pageSize);
+
   // Reset to first page when search changes
   useEffect(() => {
+    if (searchString === prevSearchStringRef.current) return;
+    prevSearchStringRef.current = searchString;
     setCurrentPage(1);
   }, [searchString, setCurrentPage]);
 
   // Reset to first page when page size changes
   useEffect(() => {
+    if (pageSize === prevPageSizeRef.current) return;
+    prevPageSizeRef.current = pageSize;
     setCurrentPage(1);
   }, [pageSize, setCurrentPage]);
 
@@ -260,19 +267,15 @@ function UserList() {
     [userId, dateFormat, timezone]
   );
 
-  const columns = useMemo(
-    () =>
-      getColumns(
-        userPreferences,
-        handleToggle,
-        tCommon,
-        tAdmin,
-        setEditingUser,
-        setDeletingUser,
-        setForcingUser,
-        setRevokingUser
-      ),
-    [userPreferences, handleToggle, tCommon, tAdmin]
+  const columns = useColumns(
+    userPreferences,
+    handleToggle,
+    tCommon,
+    tAdmin,
+    setEditingUser,
+    setDeletingUser,
+    setForcingUser,
+    setRevokingUser
   );
 
   const [columnVisibility, setColumnVisibility] = useState<

@@ -10,6 +10,7 @@ import { AuditAction, AuditLog } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
 import { Cog, Eye } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useMemo } from "react";
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
 
 export interface ExtendedAuditLog extends AuditLog {
@@ -59,147 +60,154 @@ function formatAction(action: AuditAction): string {
   return action.replace(/_/g, " ");
 }
 
-export const getColumns = (
+export const useColumns = (
   userPreferences: { user: { preferences: { timezone?: string } } },
   onViewDetails: (log: ExtendedAuditLog) => void,
   t: ReturnType<typeof useTranslations<"admin.auditLogs">>,
   tCommon: ReturnType<typeof useTranslations<"common">>,
   tUserMenu: ReturnType<typeof useTranslations<"userMenu">>
-): ColumnDef<ExtendedAuditLog>[] => [
-  {
-    id: "timestamp",
-    accessorKey: "timestamp",
-    header: t("columns.timestamp"),
-    enableSorting: true,
-    size: 180,
-    cell: ({ row: _row, getValue }) => (
-      <div className="whitespace-nowrap text-sm">
-        <DateFormatter
-          date={getValue() as Date | string}
-          formatString="MM-dd-yyyy HH:mm:ss"
-          timezone={userPreferences?.user?.preferences?.timezone || "Etc/UTC"}
-        />
-      </div>
-    ),
-  },
-  {
-    id: "action",
-    accessorKey: "action",
-    header: t("filterAction"),
-    enableSorting: true,
-    size: 150,
-    cell: ({ getValue }) => {
-      const action = getValue() as AuditAction;
-      return (
-        <Badge variant={getActionBadgeVariant(action)}>
-          {formatAction(action)}
-        </Badge>
-      );
-    },
-  },
-  {
-    id: "entityType",
-    accessorKey: "entityType",
-    header: t("filterEntityType"),
-    enableSorting: true,
-    size: 150,
-    cell: ({ getValue }) => (
-      <span className="font-mono text-sm">{getValue() as string}</span>
-    ),
-  },
-  {
-    id: "entityName",
-    accessorKey: "entityName",
-    header: t("columns.entityName"),
-    enableSorting: false,
-    size: 200,
-    cell: ({ getValue }) => {
-      const name = getValue() as string | null;
-      return name ? (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="truncate max-w-[200px] block">{name}</span>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{name}</p>
-          </TooltipContent>
-        </Tooltip>
-      ) : (
-        <span className="text-muted-foreground">-</span>
-      );
-    },
-  },
-  {
-    id: "userEmail",
-    accessorKey: "userEmail",
-    header: tCommon("access.user"),
-    enableSorting: true,
-    size: 200,
-    cell: ({ row }) => {
-      const userId = row.original.userId;
-      const email = row.original.userEmail;
-      const name = row.original.userName;
-      const isSystemActor = userId === SYSTEM_ACTOR_ID;
-      if (isSystemActor) {
-        return (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Badge
-                variant="secondary"
-                className="gap-1 font-medium"
-                data-testid="audit-log-system-actor-badge"
-              >
-                <Cog className="h-3 w-3" aria-hidden="true" />
-                {t("systemActor")}
-              </Badge>
-            </TooltipTrigger>
-            <TooltipContent>{t("systemActorTooltip")}</TooltipContent>
-          </Tooltip>
-        );
-      }
-      return (
-        <div className="flex flex-col">
-          {name && <span className="font-medium text-sm">{name}</span>}
-          {email && (
-            <span className="text-xs text-muted-foreground">{email}</span>
-          )}
-          {!name && !email && (
-            <span className="text-muted-foreground">
-              {tUserMenu("themes.system")}
-            </span>
-          )}
-        </div>
-      );
-    },
-  },
-  {
-    id: "project",
-    accessorKey: "project",
-    header: tCommon("fields.project"),
-    enableSorting: false,
-    size: 150,
-    cell: ({ row }) => {
-      const project = row.original.project;
-      return project?.name ? (
-        <span className="text-sm">{project.name}</span>
-      ) : (
-        <span className="text-muted-foreground">-</span>
-      );
-    },
-  },
-  {
-    id: "actions",
-    header: "",
-    size: 50,
-    cell: ({ row }) => (
-      <Button
-        variant="ghost"
-        className="px-2 py-1 h-auto"
-        onClick={() => onViewDetails(row.original)}
-        title={t("viewDetails")}
-      >
-        <Eye className="h-4 w-4" />
-      </Button>
-    ),
-  },
-];
+): ColumnDef<ExtendedAuditLog>[] => {
+  return useMemo(
+    () => [
+      {
+        id: "timestamp",
+        accessorKey: "timestamp",
+        header: t("columns.timestamp"),
+        enableSorting: true,
+        size: 180,
+        cell: ({ row: _row, getValue }) => (
+          <div className="whitespace-nowrap text-sm">
+            <DateFormatter
+              date={getValue() as Date | string}
+              formatString="MM-dd-yyyy HH:mm:ss"
+              timezone={
+                userPreferences?.user?.preferences?.timezone || "Etc/UTC"
+              }
+            />
+          </div>
+        ),
+      },
+      {
+        id: "action",
+        accessorKey: "action",
+        header: t("filterAction"),
+        enableSorting: true,
+        size: 150,
+        cell: ({ getValue }) => {
+          const action = getValue() as AuditAction;
+          return (
+            <Badge variant={getActionBadgeVariant(action)}>
+              {formatAction(action)}
+            </Badge>
+          );
+        },
+      },
+      {
+        id: "entityType",
+        accessorKey: "entityType",
+        header: t("filterEntityType"),
+        enableSorting: true,
+        size: 150,
+        cell: ({ getValue }) => (
+          <span className="font-mono text-sm">{getValue() as string}</span>
+        ),
+      },
+      {
+        id: "entityName",
+        accessorKey: "entityName",
+        header: t("columns.entityName"),
+        enableSorting: false,
+        size: 200,
+        cell: ({ getValue }) => {
+          const name = getValue() as string | null;
+          return name ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="truncate max-w-[200px] block">{name}</span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{name}</p>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          );
+        },
+      },
+      {
+        id: "userEmail",
+        accessorKey: "userEmail",
+        header: tCommon("access.user"),
+        enableSorting: true,
+        size: 200,
+        cell: ({ row }) => {
+          const userId = row.original.userId;
+          const email = row.original.userEmail;
+          const name = row.original.userName;
+          const isSystemActor = userId === SYSTEM_ACTOR_ID;
+          if (isSystemActor) {
+            return (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    variant="secondary"
+                    className="gap-1 font-medium"
+                    data-testid="audit-log-system-actor-badge"
+                  >
+                    <Cog className="h-3 w-3" aria-hidden="true" />
+                    {t("systemActor")}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>{t("systemActorTooltip")}</TooltipContent>
+              </Tooltip>
+            );
+          }
+          return (
+            <div className="flex flex-col">
+              {name && <span className="font-medium text-sm">{name}</span>}
+              {email && (
+                <span className="text-xs text-muted-foreground">{email}</span>
+              )}
+              {!name && !email && (
+                <span className="text-muted-foreground">
+                  {tUserMenu("themes.system")}
+                </span>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        id: "project",
+        accessorKey: "project",
+        header: tCommon("fields.project"),
+        enableSorting: false,
+        size: 150,
+        cell: ({ row }) => {
+          const project = row.original.project;
+          return project?.name ? (
+            <span className="text-sm">{project.name}</span>
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          );
+        },
+      },
+      {
+        id: "actions",
+        header: "",
+        size: 50,
+        cell: ({ row }) => (
+          <Button
+            variant="ghost"
+            className="px-2 py-1 h-auto"
+            onClick={() => onViewDetails(row.original)}
+            title={t("viewDetails")}
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+        ),
+      },
+    ],
+    [userPreferences, onViewDetails, t, tCommon, tUserMenu]
+  );
+};

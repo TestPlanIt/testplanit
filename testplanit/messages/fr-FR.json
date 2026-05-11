@@ -700,6 +700,8 @@
       "casesInRun": "{count, plural, =0 {Aucun cas de test dans l'exécution} =1 {1 cas de test dans l'exécution} other {Nombre de cas de test dans l'exécution}}",
       "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 cas unique} other {# cas uniques}} sur {configCount, plural, =1 {1 configuration} other {# configurations}} ({totalCount} nombre total de cas)",
       "viewTestRunDetails": "Afficher les détails de l'essai",
+      "sortByStatus": "Grouper par statut",
+      "sortByDate": "Trier par date",
       "testRuns": "{count, plural, =0 {Aucun test exécuté} =1 {1 test exécuté} other {Nombre de tests exécutés}}",
       "sessions": "{count, plural, =0 {Aucune session} =1 {1 session} other {Nombre de sessions}}",
       "noOptions": "Aucune option disponible",
@@ -1028,6 +1030,7 @@
     "signup": {
       "description": "Saisissez vos informations pour créer un nouveau compte.",
       "signIn": "Connectez-vous à votre compte existant.",
+      "registrationDisabled": "Contactez un administrateur pour créer un compte.",
       "errors": {
         "emailRequired": "L'adresse électronique est requise.",
         "passwordRequired": "Le mot de passe ne répond pas aux exigences de sécurité",
@@ -2167,6 +2170,23 @@
       "collapseAll": "Réduire tout",
       "altKey": "Maintenez la touche Alt enfoncée pour développer/réduire tous les enfants"
     },
+    "dragDrop": {
+      "move": "Se déplacer",
+      "copy": "Copie",
+      "promptTitle": "Que souhaitez-vous faire ?",
+      "copying": "Copie de…",
+      "copyComplete": "{count, plural, =1 {1 cas copié dans {folder}} other {# cas copiés dans {folder}}}{dest, select, samename {} crossProject { dans {projectName}} other {}}",
+      "moveComplete": "{count, plural, =1 {1 cas déplacé vers {folder}} other {# cas déplacés vers {folder}}}{dest, select, samename {} crossProject { dans {projectName}} other {}}",
+      "copyError": "{count, plural, =1 {Failed to copy 1 case to {folder}} other {Failed to copy # cases to {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
+      "moveError": "{count, plural, =1 {Failed to move 1 case to {folder}} other {Failed to move # cases to {folder}}}{dest, select, samename {} crossProject { in {projectName}} other {}}",
+      "copyAlreadyRunning": "Une autre copie est déjà en cours de traitement. Veuillez patienter jusqu'à la fin.",
+      "currentSuffix": "(Actuel)",
+      "moveDisabledSameFolder": "Les dossiers sont déjà dans ce dossier",
+      "dragPreviewCase": "Cas de test",
+      "dragPreviewCount": "{count, plural, =1 {# cas de test} other {# cas de test}}",
+      "modifierHintMac": "Maintenez ⇧ pour déplacer ou ⌥ pour copier tout en faisant glisser pour ignorer ce menu.",
+      "modifierHintWin": "Maintenez la touche Maj enfoncée pour déplacer ou la touche Ctrl pour copier tout en faisant glisser pour ignorer ce menu."
+    },
     "folderActions": {
       "edit": "Modifier le dossier",
       "delete": "Supprimer le dossier",
@@ -2965,6 +2985,7 @@
       "webhooks": "Webhooks",
       "llm": "Modèles d'IA",
       "prompts": "Configurations d'invite",
+      "exportTemplates": "Modèles d'exportation",
       "codeRepositories": "Dépôts de code",
       "quickScript": "QuickScript",
       "sso": "Authentification",
@@ -3470,7 +3491,10 @@
         "emailVerificationDisabled": "La vérification par e-mail n'est plus requise pour les nouveaux utilisateurs.",
         "emailVerificationDisabledAndVerified": "La vérification par e-mail est désactivée et {count, plural, one {# compte utilisateur} other {# comptes utilisateurs}} vérifiés",
         "emailVerificationUpdateFailed": "Échec de la mise à jour des paramètres de vérification de l'e-mail",
-        "emailServerNotConfigured": "Impossible d'activer la vérification des e-mails : le serveur de messagerie n'est pas configuré."
+        "emailServerNotConfigured": "Impossible d'activer la vérification des e-mails : le serveur de messagerie n'est pas configuré.",
+        "openRegistrationEnabled": "L'auto-inscription est désormais activée",
+        "openRegistrationDisabled": "L'auto-inscription est désormais désactivée.",
+        "openRegistrationUpdateFailed": "Échec de la mise à jour des paramètres d'auto-inscription"
       },
       "dialogs": {
         "googleOAuth": {
@@ -3576,6 +3600,10 @@
           "title": "Exiger une vérification de l'adresse électronique",
           "description": "Les utilisateurs doivent vérifier leur adresse électronique avant d'accéder au système.",
           "noEmailServerWarning": "Le serveur de messagerie n'est pas configuré. La vérification des adresses e-mail est automatiquement désactivée jusqu'à ce qu'un serveur de messagerie soit configuré."
+        },
+        "allowOpenRegistration": {
+          "title": "Autoriser l'auto-inscription",
+          "description": "Lorsque cette fonctionnalité est désactivée, les nouveaux utilisateurs ne peuvent ni s'inscrire directement ni créer de compte via l'authentification unique (SSO). Les utilisateurs existants peuvent toujours se connecter."
         }
       },
       "errors": {
@@ -4930,12 +4958,6 @@
         "llmBudgetThresholdTitle": "Budget LLM {threshold}% utilisé",
         "llmBudgetExceededMessage": "{providerName} a dépassé son budget mensuel : {spend} a dépensé {budget} de son budget.",
         "llmBudgetThresholdMessage": "{providerName} a utilisé {threshold}% de son budget mensuel : {spend} de {budget}.",
-        "copyCompleteTitle": "Copie complète",
-        "moveCompleteTitle": "Déménagement terminé",
-        "copyCompleteMessage": "{count, plural, =0 {Aucun cas copié} one {# cas copié avec succès} other {# cas copiés avec succès}}",
-        "moveCompleteMessage": "{count, plural, =0 {Aucun dossier déplacé} one {# dossier déplacé avec succès} other {# dossiers déplacés avec succès}}",
-        "copyMoveErrorsAppend": ", {errorCount, plural, one {# échec} other {# échec}}",
-        "viewTargetRepository": "Afficher le dépôt cible",
         "userRegisteredTitle": "Inscription d'un nouvel utilisateur",
         "userRegisteredMessageSso": "{userName} ({userEmail}) s'est enregistré via SSO",
         "userRegisteredMessageForm": "{userName} ({userEmail}) s'est inscrit via le formulaire d'inscription",
@@ -5183,6 +5205,7 @@
     "failedToCreate": "Impossible de créer le lien.",
     "confirmRemoveLink": "Êtes-vous sûr de vouloir supprimer ce lien ?",
     "DEPENDS_ON": "Dépendance",
+    "DUPLICATED_FROM": "Dupliqué à partir de",
     "SAME_TEST_DIFFERENT_SOURCE": "Même test (source différente)",
     "status": "Dernière mise à jour",
     "at": "Exécuté"

@@ -204,6 +204,7 @@ export async function getRegularRunSummary(
     estimate: number | null;
     isPending: boolean;
     resultCount: bigint;
+    statusOrder: number | null;
   }> = [];
 
   if (includeCaseDetails) {
@@ -222,7 +223,8 @@ export async function getRegularRunSummary(
         latest_result.elapsed,
         rc.estimate,
         CASE WHEN latest_result.id IS NULL THEN true ELSE false END as "isPending",
-        COALESCE(result_count.count, 0) as "resultCount"
+        COALESCE(result_count.count, 0) as "resultCount",
+        s.order as "statusOrder"
       FROM "TestRunCases" trc
       JOIN "RepositoryCases" rc ON trc."repositoryCaseId" = rc.id
       JOIN "TestRuns" tr ON trc."testRunId" = tr.id

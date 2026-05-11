@@ -14,6 +14,8 @@ Two operations are available:
 - **Copy** creates a duplicate of the selected cases in the target project. The copied cases start at version 1 with a fresh history. The originals remain unchanged in the source project.
 - **Move** transfers the selected cases to the target project. Moved cases retain their full version history. The originals are removed (soft-deleted) from the source project. This operation cannot be automatically undone.
 
+Both operations support the **current project** as a destination, making it easy to reorganize cases between folders within the same project.
+
 ## Getting Started
 
 ### Entry Points
@@ -50,7 +52,7 @@ The dialog walks you through three steps.
 
 #### Step 1: Select Target
 
-- Choose the destination project from the project picker. Only projects you have write access to are shown.
+- Choose the destination project from the project picker. Only projects you have write access to are shown. The current project is included — select it to reorganize cases between folders within the same project.
 - Once a project is selected, choose a destination folder within that project.
 - Click **Next** to continue.
 
@@ -67,6 +69,7 @@ The dialog walks you through three steps.
 - You can click **Cancel** at any time. Cases already processed before cancellation remain in the target project.
 - When the operation completes, a summary shows the count of successfully copied or moved cases, any skipped cases, and any errors.
 - A link to the target project is provided for quick navigation.
+- No email or bell notification is sent — the step-3 summary is the only feedback.
 
 ## Compatibility Checks
 
@@ -82,6 +85,15 @@ If the source project uses templates that are not assigned to the target project
 ### Workflow State Mapping
 
 Workflow states are matched between projects by name. States that exist in the source project but have no name match in the target project are shown in a warning list. Those unmatched states fall back to the target project's default workflow state when cases are transferred.
+
+### Same-Project Operations
+
+When the source and destination project are the same, a few behaviors differ from cross-project operations:
+
+- **Move to a different folder** works the same as a cross-project move, except the cases stay in your project. Version history and comments are preserved.
+- **Move to the same folder** is detected automatically. The dialog shows a warning and prevents the operation from proceeding, since no work would be done.
+- **Copy within the same project** creates a duplicate of each selected case in the chosen destination folder.
+- **Skip + move**: If all selected cases are skipped due to name collisions, no cases are soft-deleted in the source. Only cases that were actually moved are removed from their original location.
 
 ### Naming Collisions
 
@@ -147,6 +159,10 @@ When you copy or move a folder from the folder context menu, the entire folder t
 ### Template Warning Appears
 
 If you see a template mismatch warning and you do not have the auto-assign option, ask a project admin to assign the required template to the target project before proceeding. After the template is assigned, the custom field values will display correctly.
+
+### Move Blocked — Same Folder
+
+If the dialog warns that the selected cases are already in the destination folder, you have chosen to move cases to the folder they are already in. Select a different destination folder, or use **Copy** if you want a duplicate in the same folder.
 
 ### Cases Show as Skipped
 

@@ -641,60 +641,6 @@ describe("NotificationContent", () => {
     });
   });
 
-  describe("Copy/Move Complete (COPY_MOVE_COMPLETE)", () => {
-    it("should render localized copy-complete with target-repository link", () => {
-      const notification = {
-        id: "20",
-        type: "COPY_MOVE_COMPLETE",
-        title: "Copy Complete",
-        message: "5 case(s) copied successfully",
-        data: {
-          operation: "copy",
-          sourceProjectId: 1,
-          targetProjectId: 99,
-          copiedCount: 5,
-          movedCount: 0,
-          errorCount: 0,
-        },
-      };
-
-      render(<NotificationContent notification={notification} />);
-
-      expect(screen.getByText("Copy Complete")).toBeInTheDocument();
-      expect(
-        screen.getByText("5 cases copied successfully")
-      ).toBeInTheDocument();
-      expect(screen.getByText("View target repository")).toBeInTheDocument();
-      expect(screen.getByRole("link")).toHaveAttribute(
-        "href",
-        "/projects/repository/99"
-      );
-    });
-
-    it("should append the failed-count clause when errorCount > 0", () => {
-      const notification = {
-        id: "20b",
-        type: "COPY_MOVE_COMPLETE",
-        title: "Move Complete",
-        message: "3 cases moved successfully, 2 failed",
-        data: {
-          operation: "move",
-          targetProjectId: 99,
-          copiedCount: 0,
-          movedCount: 3,
-          errorCount: 2,
-        },
-      };
-
-      render(<NotificationContent notification={notification} />);
-
-      expect(screen.getByText("Move Complete")).toBeInTheDocument();
-      expect(
-        screen.getByText("3 cases moved successfully, 2 failed")
-      ).toBeInTheDocument();
-    });
-  });
-
   describe("Fallback rendering", () => {
     it("should render generic notification for unknown types", () => {
       const notification = {

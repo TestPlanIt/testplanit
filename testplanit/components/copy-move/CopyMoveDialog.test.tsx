@@ -4,7 +4,7 @@
  * Requirements: DLGSEL-03, DLGSEL-04, DLGSEL-05, DLGSEL-06, BULK-02, BULK-04
  */
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -101,6 +101,7 @@ vi.mock("@/components/ui/async-combobox", () => ({
     getOptionValue,
     placeholder,
     disabled,
+    isOptionDisabled,
   }: any) => {
     const [options, setOptions] = React.useState<any[]>([]);
     const testId = placeholder?.toLowerCase().includes("folder")
@@ -124,7 +125,11 @@ vi.mock("@/components/ui/async-combobox", () => ({
       >
         <option value="">-- {placeholder ?? "select"} --</option>
         {options.map((o: any) => (
-          <option key={getOptionValue(o)} value={getOptionValue(o)}>
+          <option
+            key={getOptionValue(o)}
+            value={getOptionValue(o)}
+            disabled={isOptionDisabled?.(o) ?? false}
+          >
             {o.name}
           </option>
         ))}
@@ -247,32 +252,40 @@ describe("CopyMoveDialog", () => {
     });
   });
 
-  // Test 2: Step 1 does not show source project in picker
-  it("Step 1 does not show source project in picker", () => {
+  // Test 2: Step 1 includes source project in picker as a valid destination
+  it("Step 1 includes source project in picker as a valid destination", async () => {
     render(<CopyMoveDialog {...DEFAULT_PROPS} />);
 
-    // Source project (id=1, name="Source Project") should be filtered out
-    expect(screen.queryByText("Source Project")).not.toBeInTheDocument();
+    // Source project (id=1) is the current project and is now a valid
+    // destination (filter removed). The (Current) suffix is rendered via the
+    // AsyncCombobox renderOption prop, which the test mock does not exercise;
+    // the visible suffix is covered by Plan 03-03's Playwright spec.
+    const projectSelect = await screen.findByTestId("project-select");
+    const sourceOption = within(projectSelect).getByRole("option", {
+      name: /^Source Project$/i,
+    });
+    expect(sourceOption).toBeInTheDocument();
   });
 
-  // Test 3: Folder picker appears after project selection with lazy-loaded folders (DLGSEL-04)
-  it("Folder picker appears after project selection with lazy-loaded folders", async () => {
+  // Test 3: Folder picker is present (destination project pre-filled to current) and
+  // updates folder options when the user picks a different project (lazy-load).
+  it("Folder picker is present and lazy-loads options after project switch", async () => {
     const user = userEvent.setup();
     render(<CopyMoveDialog {...DEFAULT_PROPS} />);
 
-    // Initially no folder select visible
-    expect(screen.queryByTestId("folder-select")).not.toBeInTheDocument();
-
-    // Select a project via the mocked select
-    const projectSelect = await screen.findByTestId("project-select");
-    await user.selectOptions(projectSelect, "2");
-
-    // Folder picker should now appear
+    // Folder picker is visible from the start because targetProjectId
+    // defaults to sourceProjectId (current project pre-fill).
     await waitFor(() => {
       expect(screen.getByTestId("folder-select")).toBeInTheDocument();
     });
 
-    // Folder options should be available (mocked lazy-load)
+    // Switch to a different project; folder picker remains and reloads options.
+    const projectSelect = await screen.findByTestId("project-select");
+    await user.selectOptions(projectSelect, "2");
+
+    await waitFor(() => {
+      expect(screen.getByTestId("folder-select")).toBeInTheDocument();
+    });
     expect(screen.getByRole("option", { name: /Root/i })).toBeInTheDocument();
     expect(
       screen.getByRole("option", { name: /Subfolder/i })
@@ -472,8 +485,8 @@ describe("CopyMoveDialog", () => {
       expect(screen.getByText("actions.complete")).toBeInTheDocument();
     });
 
-    // Success count message
-    expect(screen.getByText(/successCount/i)).toBeInTheDocument();
+    // Success count message — toast renders the widened repository.dragDrop.copyComplete key.
+    expect(screen.getByText(/copyComplete/i)).toBeInTheDocument();
 
     // View in target project link visible
     expect(
@@ -598,5 +611,116 @@ describe("CopyMoveDialog", () => {
 
     // reset was already called on initial open; subsequent renders don't trigger it
     expect(mockJobState.reset).not.toHaveBeenCalled();
+  });
+
+  // Test 17: Folder-mode descendant disable — when sourceFolderId is set and
+  // the destination project equals the source, the destination folder picker
+  // disables the source folder + all descendants while leaving siblings/
+  // ancestors enabled. This is the props-level coverage for CONTEXT D-08..D-10
+  // — the same contract the (deferred) E2E descendant-disable test would
+  // assert against the live AsyncCombobox + cmdk integration.
+  it("Folder mode disables source folder + descendants in destination picker, siblings/ancestors stay enabled", async () => {
+    const user = userEvent.setup();
+
+    // Build a small folder tree:
+    //   10 (Root)
+    //   ├─ 11 (Source)        ← sourceFolderId
+    //   │   └─ 12 (Descendant)
+    //   └─ 13 (Sibling)
+    mockFoldersData.data = [
+      { id: 10, name: "Root", parentId: null },
+      { id: 11, name: "Source", parentId: 10 },
+      { id: 12, name: "Descendant", parentId: 11 },
+      { id: 13, name: "Sibling", parentId: 10 },
+    ] as any[];
+
+    render(
+      <CopyMoveDialog
+        {...DEFAULT_PROPS}
+        sourceFolderId={11}
+        sourceFolderName="Source"
+      />
+    );
+
+    // The destination project is pre-filled to the current project (D-02).
+    // Folder picker is rendered immediately; pick options must reflect the
+    // disabledFolderIds Set derived from the BFS over sourceFolders.
+    const folderSelect = await screen.findByTestId("folder-select");
+
+    // Wait for the lazy-loaded options to populate.
+    await waitFor(() => {
+      expect(
+        within(folderSelect).getAllByRole("option").length
+      ).toBeGreaterThan(1);
+    });
+
+    const optionFor = (id: number) =>
+      within(folderSelect).getByRole("option", {
+        name: new RegExp(
+          `^${
+            id === 10
+              ? "Root"
+              : id === 11
+                ? "Source"
+                : id === 12
+                  ? "Descendant"
+                  : "Sibling"
+          }$`
+        ),
+      });
+
+    // Source folder + descendants are disabled.
+    expect(optionFor(11)).toBeDisabled();
+    expect(optionFor(12)).toBeDisabled();
+
+    // Ancestor (Root) and unrelated sibling are enabled.
+    expect(optionFor(10)).not.toBeDisabled();
+    expect(optionFor(13)).not.toBeDisabled();
+
+    // Selecting a disabled option is a no-op via the user agent (HTMLSelectElement
+    // browser semantics); selecting an enabled one fires onValueChange.
+    await user.selectOptions(folderSelect, "13");
+    await waitFor(() => {
+      expect(folderSelect).toHaveValue("13");
+    });
+  });
+
+  // Test 18: Cross-project mode lifts the descendant disable — the picker is
+  // empty of disable hints when targetProjectId !== sourceProjectId.
+  it("Cross-project mode does NOT disable any folders even if sourceFolderId is set", async () => {
+    mockFoldersData.data = [
+      { id: 10, name: "Root", parentId: null },
+      { id: 11, name: "Source", parentId: 10 },
+      { id: 12, name: "Descendant", parentId: 11 },
+    ] as any[];
+
+    const user = userEvent.setup();
+    render(
+      <CopyMoveDialog
+        {...DEFAULT_PROPS}
+        sourceFolderId={11}
+        sourceFolderName="Source"
+      />
+    );
+
+    // Switch to a different target project (id=2 — "Target Project").
+    const projectSelect = await screen.findByTestId("project-select");
+    await user.selectOptions(projectSelect, "2");
+
+    const folderSelect = await screen.findByTestId("folder-select");
+    await waitFor(() => {
+      expect(
+        within(folderSelect).getAllByRole("option").length
+      ).toBeGreaterThan(1);
+    });
+
+    // Cross-project: disabledFolderIds short-circuits to an empty Set, so
+    // even the source folder + descendant render as enabled.
+    expect(
+      within(folderSelect).getByRole("option", { name: /^Source$/ })
+    ).not.toBeDisabled();
+    expect(
+      within(folderSelect).getByRole("option", { name: /^Descendant$/ })
+    ).not.toBeDisabled();
   });
 });

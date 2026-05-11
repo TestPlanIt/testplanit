@@ -14,7 +14,7 @@ import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { useFindManyApiToken, useUpdateApiToken } from "~/lib/hooks";
-import { ExtendedApiToken, getColumns } from "./columns";
+import { ExtendedApiToken, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
 
@@ -312,10 +312,7 @@ function ApiTokensList() {
     [dateFormat, timezone]
   );
 
-  const columns = useMemo(
-    () => getColumns(userPreferences, handleRevoke, t, tCommon),
-    [userPreferences, handleRevoke, t, tCommon]
-  );
+  const columns = useColumns(userPreferences, handleRevoke, t, tCommon);
 
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>

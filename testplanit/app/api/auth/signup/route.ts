@@ -52,9 +52,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const registrationSettings = await db.registrationSettings.findFirst();
+
+    if (!(registrationSettings?.allowOpenRegistration ?? true)) {
+      return NextResponse.json(
+        {
+          errorCode: "auth.signup.registrationDisabled",
+          error: "Registration is currently disabled",
+        },
+        { status: 403 }
+      );
+    }
+
     // Check if email verification is required
     // Email verification is automatically disabled if no email server is configured
-    const registrationSettings = await db.registrationSettings.findFirst();
     const requireEmailVerification =
       isEmailServerConfigured() &&
       (registrationSettings?.requireEmailVerification ?? true);

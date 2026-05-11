@@ -41,7 +41,7 @@ import {
 } from "~/lib/contexts/PaginationContext";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
-import { type ExtendedIntegration, getColumns } from "./columns";
+import { type ExtendedIntegration, useColumns } from "./columns";
 
 export default function IntegrationsPage() {
   return (
@@ -276,26 +276,14 @@ function IntegrationList() {
     [dateFormat, timezone]
   );
 
-  const columns = useMemo(
-    () =>
-      getColumns(
-        userPreferences,
-        handleEditIntegration,
-        handleDeleteClick,
-        handleTestConnection,
-        tCommon,
-        t,
-        tApiTokens
-      ),
-    [
-      userPreferences,
-      handleEditIntegration,
-      handleDeleteClick,
-      handleTestConnection,
-      tCommon,
-      t,
-      tApiTokens,
-    ]
+  const columns = useColumns(
+    userPreferences,
+    handleEditIntegration,
+    handleDeleteClick,
+    handleTestConnection,
+    tCommon,
+    t,
+    tApiTokens
   );
 
   const [columnVisibility, setColumnVisibility] = useState<

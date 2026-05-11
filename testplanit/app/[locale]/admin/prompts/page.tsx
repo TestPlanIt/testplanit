@@ -25,7 +25,7 @@ import {
   useUpdatePromptConfig,
 } from "~/lib/hooks/prompt-config";
 import { AddPromptConfig } from "./AddPromptConfig";
-import { ExtendedPromptConfig, getColumns } from "./columns";
+import { ExtendedPromptConfig, useColumns } from "./columns";
 import { DeletePromptConfig } from "./DeletePromptConfig";
 import { EditPromptConfig } from "./EditPromptConfig";
 
@@ -215,18 +215,14 @@ function PromptConfigList() {
   const [deletingConfig, setDeletingConfig] =
     useState<ExtendedPromptConfig | null>(null);
 
-  const columns = useMemo(
-    () =>
-      getColumns(
-        userPreferences,
-        // eslint-disable-next-line react-hooks/refs
-        handleToggleDefault,
-        tCommon,
-        t,
-        setEditingConfig,
-        setDeletingConfig
-      ),
-    [userPreferences, handleToggleDefault, tCommon, t]
+  const columns = useColumns(
+    userPreferences,
+    // eslint-disable-next-line react-hooks/refs
+    handleToggleDefault,
+    tCommon,
+    t,
+    setEditingConfig,
+    setDeletingConfig
   );
 
   const [columnVisibility, setColumnVisibility] = useState<

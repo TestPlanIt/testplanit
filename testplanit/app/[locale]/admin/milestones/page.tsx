@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   PaginationProvider,
   usePagination,
@@ -48,7 +48,7 @@ import {
 } from "~/lib/hooks";
 import AddMilestonesToProjectsWizard from "./AddMilestonesToProjectsWizard";
 import { AddMilestoneType } from "./AddMilestoneTypes";
-import { ExtendedMilestoneTypes, getColumns } from "./columns";
+import { ExtendedMilestoneTypes, useColumns } from "./columns";
 import { DeleteMilestoneType } from "./DeleteMilestoneTypes";
 import { EditMilestoneType } from "./EditMilestoneTypes";
 
@@ -247,15 +247,11 @@ function MilestoneTypes() {
     }
   };
 
-  const columns: CustomColumnDef<ExtendedMilestoneTypes>[] = useMemo(
-    () =>
-      getColumns(
-        handleToggleDefault,
-        tCommon,
-        setEditingMilestoneType,
-        setDeletingMilestoneType
-      ),
-    [handleToggleDefault, tCommon]
+  const columns: CustomColumnDef<ExtendedMilestoneTypes>[] = useColumns(
+    handleToggleDefault,
+    tCommon,
+    setEditingMilestoneType,
+    setDeletingMilestoneType
   );
 
   const [columnVisibility, setColumnVisibility] = useState<

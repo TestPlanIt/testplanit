@@ -40,7 +40,7 @@ import {
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
-import { getColumns, NotificationHistoryItem } from "./columns";
+import { useColumns, NotificationHistoryItem } from "./columns";
 
 export default function NotificationSettingsPage() {
   return (
@@ -91,10 +91,7 @@ function NotificationSettingsContent() {
     [dateFormat, timezone, timeFormat]
   );
 
-  const columns = useMemo(
-    () => getColumns(userPreferences, t, tCommon),
-    [userPreferences, t, tCommon]
-  );
+  const columns = useColumns(userPreferences, t, tCommon);
 
   const tableData: NotificationHistoryItem[] = useMemo(
     () =>

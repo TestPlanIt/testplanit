@@ -290,7 +290,7 @@ export function DataTable<TData extends DataRow, TValue>({
     return columns;
   }, [columns, effectiveColumnVisibility, columnVisibility]);
 
-  const [localData, setLocalData] = useState<TData[]>([]);
+  const [localData, setLocalData] = useState<TData[]>(() => data || []);
   const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({
     left: [],
     right: [],

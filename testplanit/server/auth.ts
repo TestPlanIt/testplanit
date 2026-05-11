@@ -423,6 +423,16 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
             }
           }
 
+          if (!dbUser) {
+            const registrationSettings =
+              await db.registrationSettings.findFirst({
+                select: { allowOpenRegistration: true },
+              });
+            if (!(registrationSettings?.allowOpenRegistration ?? true)) {
+              return false;
+            }
+          }
+
           if (dbUser) {
             // If user was INTERNAL, change to BOTH
             // If user was SSO, keep as SSO
@@ -747,6 +757,15 @@ export const authOptions: NextAuthOptions = {
           const isDomainAllowed = await isEmailDomainAllowed(user.email);
           if (!isDomainAllowed) {
             return false; // Reject sign-in if domain is not allowed
+          }
+        }
+
+        if (!dbUser) {
+          const regSettings = await db.registrationSettings.findFirst({
+            select: { allowOpenRegistration: true },
+          });
+          if (!(regSettings?.allowOpenRegistration ?? true)) {
+            return false;
           }
         }
 

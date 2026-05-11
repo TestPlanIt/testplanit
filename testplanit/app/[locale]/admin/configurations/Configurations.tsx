@@ -15,7 +15,7 @@ import {
   useUpdateConfigurations,
 } from "~/lib/hooks";
 import AddConfigurationWizard from "./AddConfigurationWizard";
-import { ConfigWithVariants, getColumns } from "./configColumns";
+import { ConfigWithVariants, useColumns } from "./configColumns";
 import { DeleteConfiguration } from "./DeleteConfig";
 import { EditConfiguration } from "./EditConfig";
 
@@ -122,16 +122,11 @@ function Configurations(): React.ReactElement | null {
   const [deletingConfiguration, setDeletingConfiguration] =
     useState<ConfigWithVariants | null>(null);
 
-  const columns = useMemo(
-    () =>
-      getColumns(
-        tCommon,
-        // eslint-disable-next-line react-hooks/refs
-        handleToggle,
-        setEditingConfiguration,
-        setDeletingConfiguration
-      ),
-    [tCommon, handleToggle]
+  const columns = useColumns(
+    tCommon,
+    handleToggle,
+    setEditingConfiguration,
+    setDeletingConfiguration
   );
 
   const [columnVisibility, setColumnVisibility] = useState<

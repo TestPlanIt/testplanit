@@ -26,9 +26,14 @@ vi.mock("~/lib/prisma", () => ({
   },
 }));
 
+vi.mock("~/services/repositoryCaseSync", () => ({
+  syncRepositoryCaseToElasticsearch: vi.fn().mockResolvedValue(true),
+}));
+
 import { getServerSession } from "next-auth";
 import { authenticateRequest } from "~/lib/api-token-auth";
 import { prisma } from "~/lib/prisma";
+import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 
 describe("Submit Result API Route", () => {
   const validBody = {
@@ -58,9 +63,12 @@ describe("Submit Result API Route", () => {
   const baseRunCase = {
     id: 10,
     assignedToId: null,
+    repositoryCaseId: 55,
+    repositoryCase: { automated: false },
     testRun: {
       id: 1,
       createdById: "run-owner",
+      testRunType: "REGULAR",
       project: {
         createdBy: "project-owner",
         defaultAccessType: "DEFAULT",
@@ -88,6 +96,9 @@ describe("Submit Result API Route", () => {
     testRunCases: {
       update: ReturnType<typeof vi.fn>;
     };
+    repositoryCases: {
+      update: ReturnType<typeof vi.fn>;
+    };
     testRuns: {
       update: ReturnType<typeof vi.fn>;
     };
@@ -110,6 +121,9 @@ describe("Submit Result API Route", () => {
       },
       testRunCases: {
         update: vi.fn().mockResolvedValue({ id: 10 }),
+      },
+      repositoryCases: {
+        update: vi.fn().mockResolvedValue({ id: 55 }),
       },
       testRuns: {
         update: vi.fn().mockResolvedValue({ id: 1 }),
@@ -205,5 +219,86 @@ describe("Submit Result API Route", () => {
 
     expect(response.status).toBe(500);
     expect(data.code).toBe("SUBMIT_RESULT_FAILED");
+  });
+
+  describe("automated flag promotion", () => {
+    const automatedRunCase = {
+      ...baseRunCase,
+      repositoryCaseId: 55,
+      repositoryCase: { automated: false },
+      testRun: {
+        ...baseRunCase.testRun,
+        testRunType: "JUNIT",
+      },
+    };
+
+    it("flips repositoryCase.automated to true when an automated run submits a result for a manual case", async () => {
+      (prisma.testRunCases.findFirst as any).mockResolvedValue(
+        automatedRunCase
+      );
+
+      const response = await POST(createRequest(validBody));
+
+      expect(response.status).toBe(200);
+      expect(txMocks.repositoryCases.update).toHaveBeenCalledWith({
+        where: { id: 55 },
+        data: { automated: true },
+      });
+    });
+
+    it("triggers ES re-sync after flipping the automated flag", async () => {
+      (prisma.testRunCases.findFirst as any).mockResolvedValue(
+        automatedRunCase
+      );
+
+      await POST(createRequest(validBody));
+
+      // Allow the fire-and-forget void promise to settle
+      await Promise.resolve();
+
+      expect(syncRepositoryCaseToElasticsearch).toHaveBeenCalledWith(55);
+    });
+
+    it("does not flip automated flag when run type is REGULAR", async () => {
+      // baseRunCase already has testRunType: "REGULAR"
+      await POST(createRequest(validBody));
+
+      expect(txMocks.repositoryCases.update).not.toHaveBeenCalled();
+      expect(syncRepositoryCaseToElasticsearch).not.toHaveBeenCalled();
+    });
+
+    it("does not flip automated flag when case is already marked automated", async () => {
+      (prisma.testRunCases.findFirst as any).mockResolvedValue({
+        ...automatedRunCase,
+        repositoryCase: { automated: true },
+      });
+
+      await POST(createRequest(validBody));
+
+      expect(txMocks.repositoryCases.update).not.toHaveBeenCalled();
+      expect(syncRepositoryCaseToElasticsearch).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      "JUNIT",
+      "TESTNG",
+      "XUNIT",
+      "NUNIT",
+      "MSTEST",
+      "MOCHA",
+      "CUCUMBER",
+    ])("flips the flag for automated run type %s", async (testRunType) => {
+      (prisma.testRunCases.findFirst as any).mockResolvedValue({
+        ...automatedRunCase,
+        testRun: { ...automatedRunCase.testRun, testRunType },
+      });
+
+      await POST(createRequest(validBody));
+
+      expect(txMocks.repositoryCases.update).toHaveBeenCalledWith({
+        where: { id: 55 },
+        data: { automated: true },
+      });
+    });
   });
 });
