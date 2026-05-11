@@ -1,3 +1,9 @@
+## [0.24.24](https://github.com/TestPlanIt/testplanit/compare/v0.24.23...v0.24.24) (2026-05-11)
+
+### Enhancements
+
+* add self-registration toggle for admins ([#295](https://github.com/TestPlanIt/testplanit/issues/295)) ([68d6cf8](https://github.com/TestPlanIt/testplanit/commit/68d6cf80c4aef61608374e576386e051e7f20711))
+
 ## [0.24.23](https://github.com/TestPlanIt/testplanit/compare/v0.24.22...v0.24.23) (2026-05-10)
 
 ### Bug Fixes
