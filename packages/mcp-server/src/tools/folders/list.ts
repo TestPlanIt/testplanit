@@ -1,5 +1,4 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -19,7 +18,7 @@ const FOLDER_TREE_INCLUDE = {
       children: { where: { isDeleted: false } },
     },
   },
-} as const satisfies Prisma.RepositoryFoldersInclude;
+} as const;
 
 export function registerFoldersList(server: McpServer, deps: FoldersListDeps): void {
   server.registerTool(

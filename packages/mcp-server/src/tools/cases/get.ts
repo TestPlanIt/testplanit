@@ -1,5 +1,4 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -83,7 +82,7 @@ export const CASE_DETAIL_INCLUDE = {
       caseA: { select: { id: true, name: true, source: true } },
     },
   },
-} as const satisfies Prisma.RepositoryCasesInclude;
+} as const;
 
 export interface CasesGetDeps {
   env: EnvConfig;

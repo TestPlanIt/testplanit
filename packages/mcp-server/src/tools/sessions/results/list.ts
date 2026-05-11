@@ -1,5 +1,4 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
 import { zenstack } from "../../../api.js";
 import type { EnvConfig } from "../../../env.js";
@@ -43,7 +42,7 @@ export function registerSessionResultsList(
         // `testCaseId` assignment were ever introduced. The input schema does
         // not declare `testCaseId` either; zod's raw-shape validator strips
         // unknown fields before this handler runs.
-        const where: Prisma.SessionResultsWhereInput = { isDeleted: false };
+        const where: Record<string, unknown> = { isDeleted: false };
         if (input.sessionId !== undefined) where.sessionId = input.sessionId;
         if (input.createdById) where.createdById = input.createdById;
         if (input.statusId !== undefined) where.statusId = input.statusId;

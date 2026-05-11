@@ -1,5 +1,4 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
 import { zenstack } from "../../../api.js";
 import type { EnvConfig } from "../../../env.js";
@@ -118,7 +117,7 @@ export function registerRunResultsCreate(
               id: true,
               testRunId: true,
               testRun: { select: { projectId: true } },
-            } satisfies Prisma.TestRunCasesSelect,
+            },
           },
           deps.env,
         );
@@ -145,8 +144,8 @@ export function registerRunResultsCreate(
               isDeleted: false,
               isEnabled: true,
               projects: { some: { projectId: runCase.testRun.projectId } },
-            } satisfies Prisma.StatusWhereInput,
-            select: { id: true } satisfies Prisma.StatusSelect,
+            },
+            select: { id: true },
             take: 1,
           },
           deps.env,
@@ -172,7 +171,7 @@ export function registerRunResultsCreate(
             where: {
               testRunCaseId: input.testRunCaseId,
               isDeleted: false,
-            } satisfies Prisma.TestRunResultsWhereInput,
+            },
           },
           deps.env,
         );

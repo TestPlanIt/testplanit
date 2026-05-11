@@ -1,5 +1,4 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -44,7 +43,7 @@ export function registerRunsCasesAdd(
           {
             where: { testRunId: input.runId },
             _max: { order: true },
-          } satisfies Prisma.TestRunCasesAggregateArgs,
+          },
           deps.env,
         );
         const baseOrder = (agg?._max?.order ?? 0) + 1;
@@ -69,7 +68,7 @@ export function registerRunsCasesAdd(
           "count",
           {
             where: { testRunId: input.runId },
-          } satisfies Prisma.TestRunCasesCountArgs,
+          },
           deps.env,
         );
 

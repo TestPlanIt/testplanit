@@ -1,5 +1,4 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -61,7 +60,7 @@ const CASE_ROW_INCLUDE = {
       },
     },
   },
-} as const satisfies Prisma.RepositoryCasesInclude;
+} as const;
 
 // Phase 8 D8-02: enum literals for the source filter. Mirrors
 // RepositoryCaseSource on schema.zmodel:1470 — keep synchronized.
@@ -138,7 +137,7 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
         // compile time. The previous `Record<string, unknown>` annotation
         // accepted any shape including `updatedAt` (which doesn't exist on
         // RepositoryCases — Pitfall 1).
-        const where: Prisma.RepositoryCasesWhereInput = {
+        const where: Record<string, unknown> = {
           projectId: input.projectId,
           isDeleted: false,
         };

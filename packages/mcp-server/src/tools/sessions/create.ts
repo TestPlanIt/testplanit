@@ -1,5 +1,4 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
 import { zenstack, resolveDefaultTemplate } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -33,8 +32,8 @@ export async function resolveSessionState(
         scope: "SESSIONS",
         projects: { some: { projectId } },
         ...(name ? { name } : {}),
-      } satisfies Prisma.WorkflowsWhereInput,
-      orderBy: { order: "asc" } satisfies Prisma.WorkflowsOrderByWithRelationInput,
+      },
+      orderBy: { order: "asc" },
       take: 1,
     },
     env,

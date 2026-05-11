@@ -1,5 +1,4 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
 import { zenstack } from "../../../api.js";
 import type { EnvConfig } from "../../../env.js";
@@ -48,7 +47,7 @@ export function registerRunResultsList(
         // TestRunResults HAS isDeleted (schema.zmodel:2393 area). Defense-in-depth:
         // every code path that builds `where` starts from this base object so no
         // input branch can drop the soft-delete filter.
-        const where: Prisma.TestRunResultsWhereInput = { isDeleted: false };
+        const where: Record<string, unknown> = { isDeleted: false };
         if (input.runId !== undefined) where.testRunId = input.runId;
         if (input.caseIds && input.caseIds.length > 0) {
           // EXEC-06 back-half: nested relation filter via

@@ -1,5 +1,4 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -39,7 +38,7 @@ export function registerTagsList(server: McpServer, deps: TagsListDeps): void {
     },
     async (input) => {
       try {
-        const countSelect: Prisma.TagsCountOutputTypeSelect = input.projectId
+        const countSelect = input.projectId
           ? {
               repositoryCases: {
                 where: { isDeleted: false, projectId: input.projectId },

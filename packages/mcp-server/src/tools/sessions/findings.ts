@@ -1,5 +1,4 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -40,7 +39,7 @@ const ISSUE_DETAIL_INCLUDE = {
     },
   },
   integration: { select: { provider: true } },
-} as const satisfies Prisma.IssueInclude;
+} as const;
 
 interface RawIssueDetail {
   id: number;
@@ -106,13 +105,13 @@ export function registerSessionsFindings(
         if (hasSession) {
           // sessionId mode: Issue.findMany with OR over both link paths.
           const sessionId = input.sessionId!;
-          const where = {
+          const where: Record<string, unknown> = {
             isDeleted: false,
             OR: [
               { sessions: { some: { id: sessionId } } },
               { sessionResults: { some: { session: { id: sessionId } } } },
             ],
-          } satisfies Prisma.IssueWhereInput;
+          };
 
           const issuesBody: Record<string, unknown> = {
             where,

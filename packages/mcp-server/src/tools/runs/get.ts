@@ -1,5 +1,4 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -27,7 +26,7 @@ const TESTCASES_INLINE_LIMIT = 50;
  * assignedTo / status / latest result via RUN_DETAIL_TESTCASE_INCLUDE).
  *
  * Cases beyond the 50-cap are paginated via `testplanit_test_runs_cases_list`.
- * The include shape is `as const satisfies Prisma.TestRunsInclude` — adding
+ * The include shape is `as const` — adding
  * an unknown column produces TS2353 at compile time (Phase 6 WR-09).
  */
 export const RUN_DETAIL_INCLUDE = {
@@ -38,7 +37,7 @@ export const RUN_DETAIL_INCLUDE = {
     take: TESTCASES_INLINE_LIMIT,
     include: RUN_DETAIL_TESTCASE_INCLUDE,
   },
-} as const satisfies Prisma.TestRunsInclude;
+} as const;
 
 export function registerRunsGet(
   server: McpServer,

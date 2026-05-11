@@ -1,5 +1,4 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -53,7 +52,7 @@ export function registerRunsList(
       try {
         const limit = input.limit ?? DEFAULT_LIMIT;
 
-        const where: Prisma.TestRunsWhereInput = {
+        const where: Record<string, unknown> = {
           projectId: input.projectId,
           isDeleted: false,
         };
@@ -105,7 +104,7 @@ export function registerRunsList(
                 // R1: TestRunCases has NO isDeleted; do NOT add `isDeleted: false`.
                 where: { testRunId: { in: pageIds } },
                 _count: { id: true },
-              } satisfies Prisma.TestRunCasesGroupByArgs,
+              },
               deps.env,
             )) ?? [];
         }
@@ -129,7 +128,7 @@ export function registerRunsList(
                 {
                   where: { id: { in: nonNullStatusIds } },
                   select: { id: true, name: true },
-                } satisfies Prisma.StatusFindManyArgs,
+                },
                 deps.env,
               )) ?? []);
         const nameById = new Map<number, string>(

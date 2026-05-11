@@ -1,5 +1,4 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { Prisma } from "@prisma/client";
 import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
@@ -58,7 +57,7 @@ export function registerMilestonesGet(
             where: {
               id: input.milestoneId,
               isDeleted: false,
-            } satisfies Prisma.MilestonesWhereUniqueInput,
+            },
             include: MILESTONE_DETAIL_INCLUDE,
           },
           deps.env,
@@ -114,7 +113,7 @@ export function registerMilestonesGet(
             {
               where: { milestoneId: raw.id, isDeleted: false },
               select: { id: true },
-            } satisfies Prisma.TestRunsFindManyArgs,
+            },
             deps.env,
           )) ?? [];
         const runIds = allRuns.map((r) => r.id);
@@ -125,7 +124,7 @@ export function registerMilestonesGet(
             {
               where: { milestoneId: raw.id, isDeleted: false },
               select: { id: true },
-            } satisfies Prisma.SessionsFindManyArgs,
+            },
             deps.env,
           )) ?? [];
         const sessionIds = allSessions.map((s) => s.id);
@@ -143,7 +142,7 @@ export function registerMilestonesGet(
                 by: ["testRunId", "statusId"],
                 where: { testRunId: { in: runIds } },
                 _count: { id: true },
-              } satisfies Prisma.TestRunCasesGroupByArgs,
+              },
               deps.env,
             )) ?? [];
         }
@@ -157,7 +156,7 @@ export function registerMilestonesGet(
                 by: ["sessionId", "statusId"],
                 where: { sessionId: { in: sessionIds }, isDeleted: false },
                 _count: { id: true },
-              } satisfies Prisma.SessionResultsGroupByArgs,
+              },
               deps.env,
             )) ?? [];
         }
@@ -178,7 +177,7 @@ export function registerMilestonesGet(
                 {
                   where: { id: { in: nonNullStatusIds } },
                   select: { id: true, name: true },
-                } satisfies Prisma.StatusFindManyArgs,
+                },
                 deps.env,
               )) ?? []);
         const nameById = new Map<number, string>(
