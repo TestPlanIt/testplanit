@@ -1,4 +1,3 @@
-import type { Prisma } from "@prisma/client";
 import { TestPlanItHttpError } from "./http.js";
 import type { EnvConfig } from "./env.js";
 
@@ -244,8 +243,8 @@ export async function resolveActiveRepository(
         isActive: true,
         isDeleted: false,
         isArchived: false,
-      } satisfies Prisma.RepositoriesWhereInput,
-      select: { id: true } satisfies Prisma.RepositoriesSelect,
+      },
+      select: { id: true },
       take: 1,
     },
     env,
@@ -276,11 +275,9 @@ export async function resolveDefaultTemplate(
         isDeleted: false,
         isEnabled: true,
         projects: { some: { projectId } },
-      } satisfies Prisma.TemplatesWhereInput,
-      select: { id: true } satisfies Prisma.TemplatesSelect,
-      // Deterministic selection: lowest-id enabled template wins so two
-      // back-to-back create calls always pick the same template (BL-04).
-      orderBy: { id: "asc" } satisfies Prisma.TemplatesOrderByWithRelationInput,
+      },
+      select: { id: true },
+      orderBy: { id: "asc" },
       take: 1,
     },
     env,
@@ -316,7 +313,7 @@ export async function resolveCaseWorkflowState(
         scope: "CASES",
         projects: { some: { projectId } },
         ...(name ? { name } : {}),
-      } satisfies Prisma.WorkflowsWhereInput,
+      },
       orderBy: { order: "asc" },
       take: 1,
     },
