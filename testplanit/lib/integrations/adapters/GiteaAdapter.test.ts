@@ -85,7 +85,7 @@ describe("GiteaAdapter", () => {
 
     it("should throw for non-api_key auth type", async () => {
       await expect(
-        adapter.authenticate({ type: "oauth2", token: "tok" })
+        adapter.authenticate({ type: "oauth", accessToken: "tok" })
       ).rejects.toThrow("Personal Access Token");
     });
 

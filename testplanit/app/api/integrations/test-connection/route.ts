@@ -389,10 +389,9 @@ async function testGitLabConnection(
       `${baseUrl}/api/v4/projects/${encoded}/issues?per_page=1&state=opened`,
       { headers }
     );
-    readIssue = await probe(
-      `${baseUrl}/api/v4/projects/${encoded}`,
-      { headers }
-    );
+    readIssue = await probe(`${baseUrl}/api/v4/projects/${encoded}`, {
+      headers,
+    });
   } else {
     // Fallback when no projectPath is configured yet.
     searchIssues = await probe(

@@ -82,6 +82,8 @@ function adapterLabelKey(
   | "inboundChooserJira"
   | "inboundChooserGithub"
   | "inboundChooserAdo"
+  | "inboundChooserGitlab"
+  | "inboundChooserGitea"
   | "adapterLabelSlack"
   | "adapterLabelGenericHmac"
   | null {

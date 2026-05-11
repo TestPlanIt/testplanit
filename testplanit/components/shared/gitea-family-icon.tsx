@@ -16,7 +16,10 @@ interface GiteaPlatformIconProps {
   className?: string;
 }
 
-export function GiteaPlatformIcon({ platform, className }: GiteaPlatformIconProps) {
+export function GiteaPlatformIcon({
+  platform,
+  className,
+}: GiteaPlatformIconProps) {
   if (platform === "forgejo") {
     return (
       <svg viewBox="0 0 24 24" className={className} fill="#FB923C">

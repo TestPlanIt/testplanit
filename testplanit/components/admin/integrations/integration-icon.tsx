@@ -10,7 +10,11 @@ interface IntegrationIconProps {
   className?: string;
 }
 
-export function IntegrationIcon({ provider, platform, className }: IntegrationIconProps) {
+export function IntegrationIcon({
+  provider,
+  platform,
+  className,
+}: IntegrationIconProps) {
   const baseClass = cn("flex items-center justify-center rounded", className);
 
   switch (provider) {

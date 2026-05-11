@@ -345,7 +345,9 @@ export function IntegrationConfigForm({
                   >
                     <SelectTrigger>
                       <SelectValue
-                        placeholder={t(field.placeholder as Parameters<typeof t>[0])}
+                        placeholder={t(
+                          field.placeholder as Parameters<typeof t>[0]
+                        )}
                       />
                     </SelectTrigger>
                     <SelectContent>

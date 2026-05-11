@@ -93,7 +93,7 @@ describe("GitLabAdapter", () => {
 
     it("should throw for non-api_key auth type", async () => {
       await expect(
-        adapter.authenticate({ type: "oauth2", token: "tok" })
+        adapter.authenticate({ type: "oauth", accessToken: "tok" })
       ).rejects.toThrow("Personal Access Token");
     });
 
@@ -161,7 +161,8 @@ describe("GitLabAdapter", () => {
     it("should include issue_type in payload when provided", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ ...mockGitLabIssue, issue_type: "incident" }),
+        json: () =>
+          Promise.resolve({ ...mockGitLabIssue, issue_type: "incident" }),
       });
 
       await adapter.createIssue({
@@ -217,7 +218,8 @@ describe("GitLabAdapter", () => {
     it("should map issueType from issue_type field", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve({ ...mockGitLabIssue, issue_type: "incident" }),
+        json: () =>
+          Promise.resolve({ ...mockGitLabIssue, issue_type: "incident" }),
       });
 
       const result = await adapter.getIssue("testgroup/testrepo#42");
