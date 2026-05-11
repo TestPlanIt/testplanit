@@ -11,6 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { SsoProviderType } from "@prisma/client";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
+import { useFindFirstRegistrationSettings } from "~/lib/hooks";
 import { useFindManySsoProvider } from "~/lib/hooks/sso-provider";
 
 import { Button } from "@/components/ui/button";
@@ -141,6 +142,11 @@ const Signin: NextPage = () => {
 
   // Fetch ALL SSO providers (we need all to check forceSso)
   // Sort by name at the database level to help with SAML providers
+  const { data: registrationSettings } = useFindFirstRegistrationSettings(
+    undefined,
+    { enabled: sessionCleared }
+  );
+
   // Wait for session to be cleared before fetching to prevent 410 errors with stale sessions
   const { data: ssoProviders, isLoading: isLoadingSsoProviders } =
     useFindManySsoProvider(
@@ -554,13 +560,15 @@ const Signin: NextPage = () => {
                   </>
                 )}
 
-                <div className="text-center text-sm">
-                  {t("common.or")}{" "}
-                  <Link href="/signup" className="group underline">
-                    {t("auth.signin.createAccount")}
-                    <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                  </Link>
-                </div>
+                {registrationSettings?.allowOpenRegistration !== false && (
+                  <div className="text-center text-sm">
+                    {t("common.or")}{" "}
+                    <Link href="/signup" className="group underline">
+                      {t("auth.signin.createAccount")}
+                      <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                    </Link>
+                  </div>
+                )}
               </form>
             </Form>
           ) : (

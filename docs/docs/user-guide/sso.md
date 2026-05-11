@@ -238,7 +238,25 @@ When environment variables are set and no database-configured Microsoft provider
 
 ### Registration Settings
 
-TestPlanIt provides additional controls for managing user registration and access through email domain restrictions.
+TestPlanIt provides controls for managing user registration and access. These settings are in the **Registration Settings** card at the bottom of `/admin/sso`.
+
+#### Allow Self-Registration
+
+The **Allow Self-Registration** toggle controls whether new users can create accounts on their own.
+
+- **Enabled (default)**: New users can sign up via the signup form or create accounts through SSO providers on first login
+- **Disabled**: New registrations are blocked for all methods — the signup form, Google OAuth, Apple Sign In, Microsoft, Magic Link, and SAML. Existing users can still sign in normally.
+
+When disabled:
+
+- The "Create account" link is hidden on the sign-in page
+- The signup page shows a message directing users to contact an administrator
+- The signup API returns an error for any registration attempt
+- SSO sign-in for first-time (unprovisioned) users is rejected
+
+:::tip
+Use this setting when you want to manage user onboarding manually — for example, when you provision users through the Admin → User Management page and do not want self-service sign-ups.
+:::
 
 #### Email Domain Restrictions
 
@@ -310,17 +328,19 @@ graph TD
     A[User visits /signin] --> B{Force SSO Enabled?}
     B -->|No| C[Show email/password form]
     C --> D[Show SSO options below]
-    D --> E[Show signup link]
-    B -->|Yes| F[Hide email/password form]
-    F --> G[Show only SSO buttons]
-    G --> H[No signup link]
+    D --> E{Self-Registration Enabled?}
+    E -->|Yes| F[Show signup link]
+    E -->|No| G[No signup link]
+    B -->|Yes| H[Hide email/password form]
+    H --> I[Show only SSO buttons]
+    I --> J[No signup link]
 ```
 
 ### Sign Up Page (`/signup`)
 
-The signup page behavior is significantly affected by SSO configuration:
+The signup page behavior is affected by both Force SSO and the self-registration toggle:
 
-#### Standard Mode (Force SSO Disabled)
+#### Standard Mode (Force SSO Disabled, Self-Registration Enabled)
 
 - Signup page is **accessible**
 - Users can create accounts with:
@@ -330,6 +350,12 @@ The signup page behavior is significantly affected by SSO configuration:
   - Password confirmation
 - Email verification is required
 - Default user preferences are created
+
+#### Self-Registration Disabled
+
+- Signup page displays a **"contact an administrator" message** instead of the form
+- The signup form and all SSO sign-up flows are blocked for new users
+- Existing users are unaffected and can still sign in
 
 #### Force SSO Mode (Force SSO Enabled)
 

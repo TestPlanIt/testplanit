@@ -1030,6 +1030,7 @@
     "signup": {
       "description": "Introduzca su información para registrarse en una nueva cuenta.",
       "signIn": "Inicia sesión en tu cuenta existente.",
+      "registrationDisabled": "Contacta con un administrador para crear una cuenta.",
       "errors": {
         "emailRequired": "Se requiere correo electrónico",
         "passwordRequired": "La contraseña no cumple con los requisitos de seguridad.",
@@ -3484,7 +3485,10 @@
         "emailVerificationDisabled": "La verificación de correo electrónico ya no es necesaria para los nuevos usuarios",
         "emailVerificationDisabledAndVerified": "Verificación de correo electrónico deshabilitada y {count, plural, one {# cuenta de usuario} other {# cuentas de usuario}} verificada",
         "emailVerificationUpdateFailed": "No se pudo actualizar la configuración de verificación de correo electrónico",
-        "emailServerNotConfigured": "No se puede habilitar la verificación de correo electrónico: el servidor de correo electrónico no está configurado"
+        "emailServerNotConfigured": "No se puede habilitar la verificación de correo electrónico: el servidor de correo electrónico no está configurado",
+        "openRegistrationEnabled": "El autorregistro ya está habilitado.",
+        "openRegistrationDisabled": "El autorregistro está ahora deshabilitado.",
+        "openRegistrationUpdateFailed": "No se pudo actualizar la configuración de autorregistro."
       },
       "dialogs": {
         "googleOAuth": {
@@ -3590,6 +3594,10 @@
           "title": "Requerir verificación de correo electrónico",
           "description": "Los usuarios deben verificar su dirección de correo electrónico antes de acceder al sistema",
           "noEmailServerWarning": "El servidor de correo electrónico no está configurado. La verificación de correo electrónico se desactiva automáticamente hasta que se configure un servidor."
+        },
+        "allowOpenRegistration": {
+          "title": "Permitir el autorregistro",
+          "description": "Cuando esta función está desactivada, los nuevos usuarios no pueden registrarse directamente ni crear una cuenta mediante SSO. Los usuarios existentes sí pueden iniciar sesión."
         }
       },
       "errors": {
