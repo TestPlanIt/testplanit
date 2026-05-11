@@ -1,3 +1,14 @@
+## [0.25.1](https://github.com/TestPlanIt/testplanit/compare/v0.25.0...v0.25.1) (2026-05-11)
+
+### Bug Fixes
+
+* **ci:** run prisma generate before mcp-server build in packages-release ([#300](https://github.com/TestPlanIt/testplanit/issues/300)) ([f1c4acb](https://github.com/TestPlanIt/testplanit/commit/f1c4acb2835cffb19b335592f5f658cff50d695e))
+* correct MCP server docs link in upgrade notification ([#303](https://github.com/TestPlanIt/testplanit/issues/303)) ([7cddd71](https://github.com/TestPlanIt/testplanit/commit/7cddd71f45491db8aa34aec02b9844b168be12c5))
+* correct repository.url casing in package.json files ([#302](https://github.com/TestPlanIt/testplanit/issues/302)) ([5f4db71](https://github.com/TestPlanIt/testplanit/commit/5f4db714195fee24ae0ff71cc8933b19d87f32cd))
+* make TESTPLANIT_API_URL optional with SaaS default ([#297](https://github.com/TestPlanIt/testplanit/issues/297)) ([d38432b](https://github.com/TestPlanIt/testplanit/commit/d38432b42af7e0025f90a5f1e906c394a10f0dcb))
+* **mcp-server:** remove @prisma/client import to fix CI build ([#298](https://github.com/TestPlanIt/testplanit/issues/298)) ([4c0c9a2](https://github.com/TestPlanIt/testplanit/commit/4c0c9a21afde5a57437f50120dab4f1349fc5fcf))
+* **mcp-server:** run prisma generate in packages-release workflow ([#299](https://github.com/TestPlanIt/testplanit/issues/299)) ([d3980d7](https://github.com/TestPlanIt/testplanit/commit/d3980d77d4ebb3d7cf327578a87b2939a18e08e8))
+
 ## [0.25.0](https://github.com/TestPlanIt/testplanit/compare/v0.24.24...v0.25.0) (2026-05-11)
 
 ### Features
