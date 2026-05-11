@@ -41,7 +41,7 @@ const integrationTypes = [
         <path d={siGithub.path} />
       </svg>
     ),
-    color: "text-gray-800 dark:text-gray-200",
+    color: "text-gray-900 dark:text-white",
   },
   {
     type: IntegrationProvider.GITLAB,

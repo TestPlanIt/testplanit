@@ -19,7 +19,11 @@ const providerIcons: Record<string, React.ReactNode> = {
     </svg>
   ),
   GITHUB: (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
+    <svg
+      viewBox="0 0 24 24"
+      className="h-4 w-4 text-gray-900 dark:text-white"
+      fill="currentColor"
+    >
       <path d={siGithub.path} />
     </svg>
   ),
