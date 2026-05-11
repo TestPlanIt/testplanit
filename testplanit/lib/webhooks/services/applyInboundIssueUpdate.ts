@@ -31,7 +31,7 @@ const WEBHOOK_SYNC_FRESHNESS_SECONDS = 15;
  */
 function inboundProviderForAdapter(
   adapterType: AdapterType
-): "JIRA" | "GITHUB" | "AZURE_DEVOPS" | null {
+): "JIRA" | "GITHUB" | "AZURE_DEVOPS" | "GITLAB" | "GITEA" | null {
   switch (adapterType) {
     case "JIRA":
       return "JIRA";
@@ -39,6 +39,10 @@ function inboundProviderForAdapter(
       return "GITHUB";
     case "AZURE_DEVOPS":
       return "AZURE_DEVOPS";
+    case "GITLAB":
+      return "GITLAB";
+    case "GITEA":
+      return "GITEA";
     default:
       return null;
   }

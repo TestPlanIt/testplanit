@@ -176,7 +176,7 @@ test.describe("Role Management", () => {
       const roleRow = page.locator("tr").filter({ hasText: roleName });
       await expect(roleRow).toBeVisible({ timeout: 10000 });
 
-      // Click the delete button (Trash2 destructive button) in actions cell
+      // Click the delete button in actions cell
       const actionsCell = roleRow.locator("td").last();
       const deleteButton = actionsCell
         .locator("button[class*='destructive']")

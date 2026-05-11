@@ -81,7 +81,8 @@ function summarizeProbeFailures(
 
 async function probe(url: string, init: RequestInit): Promise<CapabilityProbe> {
   try {
-    const response = await fetch(url, init);
+    const signal = AbortSignal.timeout(10000);
+    const response = await fetch(url, { ...init, signal });
     if (!response.ok) {
       // Try to extract the upstream error body so the admin sees the
       // actual reason (e.g. Jira's error messages, GitHub validation
@@ -104,9 +105,16 @@ async function probe(url: string, init: RequestInit): Promise<CapabilityProbe> {
     }
     return { ok: true, status: response.status };
   } catch (err) {
+    const isTimeout =
+      err instanceof Error &&
+      (err.name === "TimeoutError" || err.name === "AbortError");
     return {
       ok: false,
-      error: err instanceof Error ? err.message : "Network error",
+      error: isTimeout
+        ? `Request timed out after 10s (${url})`
+        : err instanceof Error
+          ? err.message
+          : "Network error",
     };
   }
 }
@@ -342,6 +350,130 @@ async function testAzureDevOpsConnection(
   };
 }
 
+async function testGitLabConnection(
+  credentials: Record<string, string>,
+  settings: Record<string, string>
+): Promise<TestConnectionResult> {
+  const { personalAccessToken } = credentials;
+  const instanceUrl = settings.instanceUrl || "https://gitlab.com";
+  const baseUrl = instanceUrl.replace(/\/$/, "");
+  const projectPath = settings.projectPath;
+
+  if (!personalAccessToken) {
+    return { success: false, error: "Missing personal access token" };
+  }
+
+  const headers = {
+    "PRIVATE-TOKEN": personalAccessToken,
+    Accept: "application/json",
+  };
+
+  // Auth probe — /api/v4/user confirms the token is valid.
+  const connection = await probe(`${baseUrl}/api/v4/user`, { headers });
+  if (!connection.ok) {
+    return {
+      success: false,
+      error: summarizeProbeFailures("GitLab", { connection }),
+      capabilities: { connection },
+    };
+  }
+
+  let searchIssues: CapabilityProbe;
+  let readIssue: CapabilityProbe;
+
+  if (projectPath) {
+    // Project-scoped probes: much faster than cross-project queries and
+    // directly validates that the token can access the configured project.
+    const encoded = encodeURIComponent(projectPath);
+    searchIssues = await probe(
+      `${baseUrl}/api/v4/projects/${encoded}/issues?per_page=1&state=opened`,
+      { headers }
+    );
+    readIssue = await probe(`${baseUrl}/api/v4/projects/${encoded}`, {
+      headers,
+    });
+  } else {
+    // Fallback when no projectPath is configured yet.
+    searchIssues = await probe(
+      `${baseUrl}/api/v4/projects?membership=true&simple=true&per_page=1`,
+      { headers }
+    );
+    readIssue = await probe(
+      `${baseUrl}/api/v4/projects?membership=true&simple=true&per_page=1`,
+      { headers }
+    );
+  }
+
+  const success = connection.ok && searchIssues.ok && readIssue.ok;
+  return {
+    success,
+    error: success
+      ? undefined
+      : summarizeProbeFailures("GitLab", {
+          connection,
+          searchIssues,
+          readIssue,
+        }),
+    capabilities: { connection, searchIssues, readIssue },
+  };
+}
+
+async function testGiteaConnection(
+  credentials: Record<string, string>,
+  settings: Record<string, string>
+): Promise<TestConnectionResult> {
+  const { personalAccessToken } = credentials;
+  const { instanceUrl } = settings;
+
+  if (!personalAccessToken || !instanceUrl) {
+    return {
+      success: false,
+      error:
+        "Missing required Gitea configuration (personalAccessToken, instanceUrl)",
+    };
+  }
+
+  const baseUrl = instanceUrl.replace(/\/$/, "");
+  const headers = {
+    Authorization: `token ${personalAccessToken}`,
+    Accept: "application/json",
+  };
+
+  // Auth probe — /api/v1/user returns the authenticated user's profile.
+  const connection = await probe(`${baseUrl}/api/v1/user`, { headers });
+  if (!connection.ok) {
+    return {
+      success: false,
+      error: summarizeProbeFailures("Gitea", { connection }),
+      capabilities: { connection },
+    };
+  }
+
+  // Search probe — /api/v1/repos/search proves repo-list scope.
+  const searchIssues = await probe(`${baseUrl}/api/v1/repos/search?limit=1`, {
+    headers,
+  });
+
+  // Read probe — /api/v1/issues?type=issues proves issue read scope.
+  const readIssue = await probe(
+    `${baseUrl}/api/v1/repos/search?limit=1&topic=false`,
+    { headers }
+  );
+
+  const success = connection.ok && searchIssues.ok && readIssue.ok;
+  return {
+    success,
+    error: success
+      ? undefined
+      : summarizeProbeFailures("Gitea", {
+          connection,
+          searchIssues,
+          readIssue,
+        }),
+    capabilities: { connection, searchIssues, readIssue },
+  };
+}
+
 async function testSimpleUrlConnection(
   credentials: Record<string, string>,
   settings: Record<string, string>
@@ -490,6 +622,12 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         break;
       case IntegrationProvider.AZURE_DEVOPS:
         result = await testAzureDevOpsConnection(testCredentials, testSettings);
+        break;
+      case IntegrationProvider.GITLAB:
+        result = await testGitLabConnection(testCredentials, testSettings);
+        break;
+      case IntegrationProvider.GITEA:
+        result = await testGiteaConnection(testCredentials, testSettings);
         break;
       case IntegrationProvider.SIMPLE_URL:
         result = await testSimpleUrlConnection(testCredentials, testSettings);

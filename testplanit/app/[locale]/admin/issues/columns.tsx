@@ -88,7 +88,10 @@ export function useIssueColumns({
                 id={issue.id}
                 name={issue.name}
                 title={issue.title}
+                description={issue.description || undefined}
                 status={issue.status || undefined}
+                priority={issue.priority || undefined}
+                lastSyncedAt={issue.lastSyncedAt || undefined}
                 externalId={issue.externalId || undefined}
                 externalUrl={issue.externalUrl || undefined}
                 projectIds={projectIds}

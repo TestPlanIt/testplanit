@@ -925,6 +925,7 @@
         "errorLoadingDetails": "Error loading issue details: ",
         "updated": "Updated: ",
         "openInJira": "Open in Jira",
+        "openInExternalSystem": "Open in {provider}",
         "assignee": "Assignee",
         "status": "Status: ",
         "clickToOpenInNewTab": "Click to open in new tab",
@@ -1271,6 +1272,15 @@
           },
           "github": {
             "description": "Connect to GitHub for issue tracking and repository management."
+          },
+          "gitlab": {
+            "description": "Connect to GitLab for issue and merge request tracking."
+          },
+          "gitea": {
+            "description": "Connect to a self-hosted Gitea, Forgejo, or Gogs instance for issue tracking."
+          },
+          "azure_devops": {
+            "description": "Connect to Azure DevOps for work item tracking."
           }
         }
       },
@@ -1418,13 +1428,19 @@
         "inboundChooserJira": "Jira",
         "inboundChooserGithub": "GitHub",
         "inboundChooserAdo": "Azure DevOps",
+        "inboundChooserGitlab": "GitLab",
+        "inboundChooserGitea": "Gitea",
         "inboundChooserAlreadyConfigured": "Already configured",
         "inboundChooserSubmit": "Continue",
         "inboundChooserCancel": "Cancel",
-        "inboundEmpty": "No inbound webhooks configured. Add one to receive issue updates from Jira, GitHub, or Azure DevOps.",
+        "inboundEmpty": "No inbound webhooks configured. Add one to receive issue updates from Jira, GitHub, GitLab, Gitea, or Azure DevOps.",
         "inboundJiraTitle": "Jira inbound webhook",
         "inboundGithubTitle": "GitHub inbound webhook",
         "inboundGithubScopeHint": "GitHub <code>issues</code> events update linked TestPlanIt issues. Pull request and issue comment events are accepted but do not update issues yet.",
+        "inboundGitlabTitle": "GitLab inbound webhook",
+        "inboundGitlabScopeHint": "GitLab <code>Issue Hook</code> events update linked TestPlanIt issues. Other event types are accepted but do not update issues.",
+        "inboundGiteaTitle": "Gitea inbound webhook",
+        "inboundGiteaScopeHint": "Gitea <code>issues</code> events update linked TestPlanIt issues. Other event types are accepted but do not update issues.",
         "inboundAdoTitle": "Azure DevOps inbound webhook",
         "inboundAdoScopeHint": "Azure DevOps <code>workitem.updated</code> events update linked TestPlanIt issues. Other events are accepted but do not update issues.",
         "inboundAdoUsername": "Username",
@@ -1448,6 +1464,15 @@
         "setupStepsAdoStep3": "Set Resource details to send = All so System.State is included.",
         "setupStepsAdoStep4": "Paste the URL below into the URL field. Set Basic authentication username and password to the values you entered above.",
         "setupStepsAdoStep5": "Save the subscription. Use \"Send test webhook\" below to verify the pipeline.",
+        "setupStepsGitlabStep1": "In GitLab, go to your project → Settings → Webhooks.",
+        "setupStepsGitlabStep2": "Paste the URL below into the URL field. Paste the secret below into the Secret token field.",
+        "setupStepsGitlabStep3": "Under Trigger, check \"Issues events\".",
+        "setupStepsGitlabStep4": "Click \"Add webhook\". Use \"Send test webhook\" below to verify the pipeline.",
+        "setupStepsGiteaStep1": "In Gitea, go to your repository → Settings → Webhooks.",
+        "setupStepsGiteaStep2": "Click \"Add Webhook\" and choose \"Gitea\".",
+        "setupStepsGiteaStep3": "Paste the URL below into the Target URL field. Paste the secret below into the Secret field.",
+        "setupStepsGiteaStep4": "Under \"Trigger On\", select \"Issues\".",
+        "setupStepsGiteaStep5": "Click \"Add Webhook\". Use \"Send test webhook\" below to verify the pipeline.",
         "deliveriesTab": "Deliveries",
         "filterConfigPlaceholder": "All webhooks",
         "filterStatusAll": "All",
@@ -4345,16 +4370,16 @@
       }
     },
     "integrations": {
-      "description": "Manage third-party integrations for issue tracking and more",
+      "description": "Manage third-party integrations for issue tracking",
       "list": {
-        "title": "Configured Integrations",
+        "title": "Configured Issue Integrations",
         "description": "View and manage your configured issue integrations"
       },
       "empty": {
         "message": "No issue integrations configured yet"
       },
-      "addIntegration": "Add Integration",
-      "allIntegrations": "All Integrations",
+      "addIntegration": "Add Issue Integration",
+      "allIntegrations": "All Issue Integrations",
       "manageDescription": "Configure and manage your external service issue integrations",
       "status": {
         "active": "Active",
@@ -4369,12 +4394,12 @@
       "testFailedDescription": "Unable to connect to the external service",
       "testError": "Test Error",
       "testErrorDescription": "An error occurred while testing the connection",
-      "syncInProgress": "Syncing Integration...",
-      "syncIntegration": "Sync all issues from integration",
+      "syncInProgress": "Syncing Issues...",
+      "syncIntegration": "Sync all issues from issue integration",
       "syncSuccess": "Sync Queued",
       "syncSuccessDescription": "Issues from \"{name}\" are being synced in the background. This may take a few moments. The table will update automatically when complete.",
       "syncError": "Sync Failed",
-      "syncErrorDescription": "Could not queue sync job for this integration. Please try again later.",
+      "syncErrorDescription": "Could not queue sync job for this issue integration. Please try again later.",
       "delete": {
         "confirmMessage": "Are you sure you want to delete the issue integration \"{name}\"?",
         "warning": "This will remove the issue integration and disconnect it from all projects. This action cannot be undone.",
@@ -4384,14 +4409,14 @@
         "warning3": "Preserve all linked issues in the database (issues become unlinked)",
         "warning4": "Require removing the issue integration from all projects first"
       },
-      "deleteSuccess": "Integration Deleted",
+      "deleteSuccess": "Issue Integration Deleted",
       "deleteSuccessDescription": "The issue integration has been removed successfully",
       "deleteError": "Delete Error",
       "add": {
         "description": "Configure a new issue integration with an external service",
-        "selectType": "Select Integration Type",
+        "selectType": "Select Issue Integration Type",
         "typeDescription": "Choose the type of service you want to integrate",
-        "successMessage": "Integration created successfully",
+        "successMessage": "Issue Integration created successfully",
         "successDescription": "The issue integration has been configured and is ready to use",
         "simple_url": {
           "name": "Simple URL",
@@ -4407,7 +4432,11 @@
         },
         "gitlab": {
           "name": "GitLab",
-          "description": "Connect to GitLab for issue tracking"
+          "description": "Connect to GitLab for issue and merge request tracking"
+        },
+        "gitea": {
+          "name": "Gitea / Forgejo / Gogs",
+          "description": "Connect to a self-hosted Gitea, Forgejo, or Gogs instance for issue tracking"
         },
         "azureDevops": {
           "name": "Azure DevOps",
@@ -4417,22 +4446,22 @@
       "filterPlaceholder": "Filter integrations...",
       "table": {
         "lastSync": "Last Sync",
-        "empty": "No integrations found",
-        "loading": "Loading integrations...",
+        "empty": "No issue integrations found",
+        "loading": "Loading issue integrations...",
         "configure": "Configure"
       },
       "edit": {
-        "description": "Update integration settings and configuration",
-        "successMessage": "Integration updated successfully",
-        "successDescription": "The integration settings have been saved"
+        "description": "Update issue integration settings and configuration",
+        "successMessage": "Issue Integration updated successfully",
+        "successDescription": "The issue integration settings have been saved"
       },
-      "editIntegration": "Edit Integration",
-      "saveIntegration": "Save Integration",
-      "deleteIntegration": "Delete Integration",
+      "editIntegration": "Edit Issue Integration",
+      "saveIntegration": "Save Issue Integration",
+      "deleteIntegration": "Delete Issue Integration",
       "config": {
-        "name": "Integration Name",
-        "namePlaceholder": "Enter a name for this integration",
-        "nameHelp": "A descriptive name to identify this integration",
+        "name": "Issue Integration Name",
+        "namePlaceholder": "Enter a name for this issue integration",
+        "nameHelp": "A descriptive name to identify this issue integration",
         "authType": "Authentication Type",
         "authTypeHelp": "Choose how to authenticate with the external service",
         "emailPlaceholder": "your-email@example.com",
@@ -4465,6 +4494,19 @@
         "organizationUrl": "Organization URL",
         "organizationUrlPlaceholder": "https://dev.azure.com/your-org",
         "organizationUrlHelp": "Your Azure DevOps organization URL",
+        "projectPath": "Project Path",
+        "projectPathPlaceholder": "group/subgroup/project",
+        "projectPathHelp": "The full path of your GitLab project (e.g. mygroup/myproject)",
+        "instanceUrl": "Instance URL",
+        "instanceUrlPlaceholder": "https://gitlab.example.com",
+        "instanceUrlHelp": "URL of your self-hosted instance. Leave blank to use gitlab.com",
+        "giteaInstanceUrlPlaceholder": "https://gitea.example.com",
+        "owner": "Owner",
+        "ownerPlaceholder": "username or organization",
+        "ownerHelp": "The Gitea user or organization that owns the repository",
+        "repo": "Repository",
+        "repoPlaceholder": "repository-name",
+        "repoHelp": "The name of the Gitea repository",
         "encrypted": "Encrypted",
         "encryptedHelp": "This field is encrypted and stored securely",
         "changeCredential": "Change",
@@ -4478,7 +4520,12 @@
         "forgeApiKeyPlaceholder": "Click Generate to create an API key",
         "forgeApiKeyGenerate": "Generate",
         "forgeApiKeyCopy": "Copy",
-        "forgeApiKeyCopied": "Copied"
+        "forgeApiKeyCopied": "Copied",
+        "platform": "Platform",
+        "platformPlaceholder": "Select platform...",
+        "platformGitea": "Gitea",
+        "platformForgejo": "Forgejo",
+        "platformGogs": "Gogs"
       },
       "authType": {
         "api_key": "API Key",
@@ -4486,7 +4533,7 @@
         "personal_access_token": "Personal Access Token"
       },
       "validation": {
-        "nameRequired": "Integration name is required",
+        "nameRequired": "Issue Integration name is required",
         "clientIdRequired": "Client ID is required",
         "clientSecretRequired": "Client Secret is required",
         "cloudIdRequired": "Cloud ID is required",
@@ -4495,19 +4542,19 @@
         "apiKeyRequired": "API Key is required"
       },
       "errors": {
-        "updateFailed": "Failed to update integration",
+        "updateFailed": "Failed to update issue integration",
         "testFailed": "Connection test failed",
-        "nameExists": "An integration with this name already exists",
-        "createFailed": "Failed to create integration",
-        "deleteFailed": "Failed to delete integration"
+        "nameExists": "An issue integration with this name already exists",
+        "createFailed": "Failed to create issue integration",
+        "deleteFailed": "Failed to delete issue integration"
       },
       "confirmDelete": {
-        "message": "Are you sure you want to delete the integration \"{name}\"?",
-        "warning": "This will remove the integration and disconnect it from all projects. This action cannot be undone."
+        "message": "Are you sure you want to delete the issue integration \"{name}\"?",
+        "warning": "This will remove the issue integration and disconnect it from all projects. This action cannot be undone."
       },
       "form": {
-        "success": "Integration saved successfully",
-        "successDescription": "The integration has been configured and is ready to use",
+        "success": "Issue Integration saved successfully",
+        "successDescription": "The issue integration has been configured and is ready to use",
         "testing": "Testing connection..."
       },
       "oauth": {
@@ -5366,7 +5413,12 @@
       "baseUrl": "## URL Pattern\nURL pattern for linking to external issues.\n\n- Use '{issueId}' as a placeholder for the issue identifier\n- Example: https://example.com/issues/'{issueId}'\n- Used for simple URL-based integrations",
       "organizationUrl": "## Organization URL\nYour Azure DevOps organization URL.\n\n- Format: https://dev.azure.com/your-org\n- Must be accessible from this server\n- Used to access Azure DevOps APIs",
       "apiKey": "## API Key\nThe API key for authentication with the external service.\n\n- Generated in the service's API settings\n- Provides programmatic access to the service\n- Keep secure and rotate regularly",
-      "forgeApiKey": "## Forge API Key\nUsed to authenticate the Atlassian Forge app when it fetches test data from your Jira issues.\n\n- Click Generate to create a new key\n- Copy the key and paste it in the Forge app settings in Jira (Manage Apps → TestPlanIt Settings)\n- Regenerating will invalidate the previous key"
+      "forgeApiKey": "## Forge API Key\nUsed to authenticate the Atlassian Forge app when it fetches test data from your Jira issues.\n\n- Click Generate to create a new key\n- Copy the key and paste it in the Forge app settings in Jira (Manage Apps → TestPlanIt Settings)\n- Regenerating will invalidate the previous key",
+      "owner": "## Owner / Namespace\nThe user or organization that owns the repository.\n\n- For GitHub/GitLab: the username or organization name\n- For Gitea/Forgejo/Gogs: the user or group name\n- Example: my-org or my-username",
+      "repo": "## Repository Name\nThe name of the repository to link issues from.\n\n- Exact repository name (not the full URL)\n- Example: my-project\n- Must be accessible with the provided credentials",
+      "instanceUrl": "## Instance URL\nThe base URL of your self-hosted instance.\n\n- Format: https://git.example.com\n- Do not include trailing slashes or paths\n- Must be accessible from this server",
+      "projectPath": "## Project Path\nThe full path to your GitLab project.\n\n- Format: namespace/project or group/subgroup/project\n- Example: my-org/my-project\n- Found in the project URL: gitlab.com/namespace/project",
+      "platform": "## Platform\nThe self-hosted Git platform you are connecting to.\n\n- **Gitea**: gitea.io-based instances\n- **Forgejo**: forgejo.org-based instances (Gitea fork)\n- **Gogs**: gogs.io-based instances\n\nThis controls which icon is shown and may affect API compatibility."
     },
     "config": {
       "name": "## Configuration Name\nA clear, descriptive name that is used across all projects.\n\n- Helps describe the variant cominations that make up the Configuration (e.g. \"Chrome, Windows 10\",  \"Safari/macOS 15.5\", \"Edge/Windows 11\", etc.)."

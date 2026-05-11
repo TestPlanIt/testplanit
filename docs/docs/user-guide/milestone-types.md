@@ -34,7 +34,7 @@ The Milestone Types page displays a table listing all configured milestone types
 ## Editing a Milestone Type
 
 1. Locate the Milestone Type you wish to modify in the table.
-2. Click the **Edit** (pencil) icon in the **Actions** column for that row.
+2. Click the **Edit** icon in the **Actions** column for that row.
 3. A modal window will appear, allowing you to change:
     - **Icon**: Select a different icon.
     - **Name**: Modify the name of the Milestone Type.
@@ -49,5 +49,5 @@ Deleting a Milestone Type is irreversible. Any Milestones currently assigned to 
 :::
 
 1. Locate the Milestone Type you wish to remove in the table.
-2. Click the **Delete** (trash can) icon in the **Actions** column for that row.
+2. Click the **Delete** icon in the **Actions** column for that row.
 3. A confirmation modal will appear. Confirm the deletion by clicking the appropriate button.

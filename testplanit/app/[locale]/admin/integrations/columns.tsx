@@ -3,31 +3,39 @@ import { ProjectListDisplay } from "@/components/tables/ProjectListDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Integration } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
+import { GiteaPlatformIcon } from "@/components/shared/gitea-family-icon";
 import { Link, Plug } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
-import { siGithub, siJira } from "simple-icons";
+import { siGithub, siGitlab, siJira } from "simple-icons";
 import { DeleteIntegrationButton } from "./DeleteIntegrationButton";
 import { EditIntegrationButton } from "./EditIntegrationButton";
 import { SyncIntegrationButton } from "./SyncIntegrationButton";
 import { TestIntegrationButton } from "./TestIntegrationButton";
 
-const JiraIcon = ({ className }: { className: string }) => (
-  <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-    <path d={siJira.path} />
-  </svg>
-);
-
-const GithubIcon = ({ className }: { className: string }) => (
-  <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-    <path d={siGithub.path} />
-  </svg>
-);
-
 const providerIcons: Record<string, React.ReactNode> = {
-  JIRA: <JiraIcon className="h-4 w-4" />,
-  GITHUB: <GithubIcon className="h-4 w-4" />,
-  AZURE_DEVOPS: <JiraIcon className="h-4 w-4" />,
+  JIRA: (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
+      <path d={siJira.path} />
+    </svg>
+  ),
+  GITHUB: (
+    <div className="h-4 w-4 rounded bg-gray-900 dark:bg-gray-700 flex items-center justify-center">
+      <svg viewBox="0 0 24 24" className="h-3 w-3" fill="white">
+        <path d={siGithub.path} />
+      </svg>
+    </div>
+  ),
+  AZURE_DEVOPS: (
+    <svg viewBox="0 0 18 18" className="h-4 w-4" fill="currentColor">
+      <path d="M17,4v9.74l-4,3.28-6.2-2.26V17L3.29,12.41l10.23.8V4.44Zm-3.41.49L7.85,1V3.29L2.58,4.84,1,6.87v4.61l2.26,1V6.57Z" />
+    </svg>
+  ),
+  GITLAB: (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
+      <path d={siGitlab.path} />
+    </svg>
+  ),
   SIMPLE_URL: <Link className="h-4 w-4" />,
 };
 
@@ -63,12 +71,26 @@ export const useColumns = (
         enableHiding: false,
         meta: { isPinned: "left" },
         size: 150,
-        cell: ({ row }) => (
-          <div className="bg-primary-foreground flex items-center gap-2">
-            {providerIcons[row.original.provider]}
-            <span className="font-medium">{row.original.provider}</span>
-          </div>
-        ),
+        cell: ({ row }) => {
+          const { provider, settings } = row.original;
+          const platform =
+            provider === "GITEA" &&
+            typeof settings === "object" &&
+            settings !== null &&
+            "platform" in settings
+              ? String((settings as Record<string, unknown>).platform)
+              : undefined;
+          return (
+            <div className="bg-primary-foreground flex items-center gap-2">
+              {provider === "GITEA" ? (
+                <GiteaPlatformIcon platform={platform} className="h-4 w-4" />
+              ) : (
+                providerIcons[provider]
+              )}
+              <span className="font-medium">{provider}</span>
+            </div>
+          );
+        },
       },
       {
         id: "name",

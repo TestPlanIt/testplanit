@@ -2071,6 +2071,10 @@ export function GenerateTestCasesWizard({
         return "GitHub";
       case "AZURE_DEVOPS":
         return "Azure DevOps";
+      case "GITLAB":
+        return "GitLab";
+      case "GITEA":
+        return "Gitea / Forgejo / Gogs";
       case "SIMPLE_URL":
         return externalSystem;
       default:

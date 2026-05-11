@@ -2,7 +2,9 @@ import { prisma } from "@/lib/prismaBase";
 import { EncryptionService, getMasterKey } from "@/utils/encryption";
 import type { Integration, IntegrationProvider } from "@prisma/client";
 import { AzureDevOpsAdapter } from "./adapters/AzureDevOpsAdapter";
+import { GiteaAdapter } from "./adapters/GiteaAdapter";
 import { GitHubAdapter } from "./adapters/GitHubAdapter";
+import { GitLabAdapter } from "./adapters/GitLabAdapter";
 import { IssueAdapter } from "./adapters/IssueAdapter";
 import { JiraAdapter } from "./adapters/JiraAdapter";
 import { SimpleUrlAdapter } from "./adapters/SimpleUrlAdapter";
@@ -37,17 +39,12 @@ export class IntegrationManager {
    * Register built-in adapters
    */
   private registerAdapters(): void {
-    // Register Jira adapter
     this.registerAdapter("JIRA", JiraAdapter);
-
-    // Register GitHub adapter
     this.registerAdapter("GITHUB", GitHubAdapter);
-
-    // Register Azure DevOps adapter
     this.registerAdapter("AZURE_DEVOPS", AzureDevOpsAdapter);
-
-    // Register Simple URL adapter
     this.registerAdapter("SIMPLE_URL", SimpleUrlAdapter);
+    this.registerAdapter("GITLAB", GitLabAdapter);
+    this.registerAdapter("GITEA", GiteaAdapter);
   }
 
   /**

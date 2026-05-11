@@ -7,7 +7,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ColumnDef } from "@tanstack/react-table";
-import { Pencil, Trash2 } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { AppConfigRow } from "./types";
 
@@ -86,7 +86,7 @@ export function getColumns(
             data-testid="edit-config-button"
             onClick={() => onEditConfig?.(row.original)}
           >
-            <Pencil className="h-4 w-4" />
+            <Edit className="h-4 w-4" />
           </Button>
           <Button
             variant="destructive"

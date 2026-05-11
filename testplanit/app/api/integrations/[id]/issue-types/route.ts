@@ -63,23 +63,14 @@ export async function GET(
         },
       });
 
-      if (!projectIntegration) {
-        return NextResponse.json(
-          { error: "No active project integration found" },
-          { status: 404 }
-        );
+      if (projectIntegration) {
+        const config = projectIntegration.config as Record<string, any> | null;
+        projectKey =
+          config?.externalProjectKey ||
+          config?.externalProjectId ||
+          config?.projectPath ||
+          null;
       }
-
-      const config = projectIntegration.config as Record<string, any> | null;
-      projectKey =
-        config?.externalProjectKey || config?.externalProjectId || null;
-    }
-
-    if (!projectKey) {
-      return NextResponse.json(
-        { error: "No external project configured" },
-        { status: 400 }
-      );
     }
 
     // Initialize adapter through IntegrationManager
@@ -93,12 +84,13 @@ export async function GET(
       );
     }
 
-    // Get issue types for the project
-    // Some integrations (like GitHub) don't have issue types - return empty array
+    // Some integrations don't have issue types - return empty array
     if (!adapter.getIssueTypes) {
       return NextResponse.json({ issueTypes: [] });
     }
-    const issueTypes = await adapter.getIssueTypes(projectKey);
+
+    // Pass projectKey (may be empty string for adapters with static type lists)
+    const issueTypes = await adapter.getIssueTypes(projectKey ?? "");
 
     return NextResponse.json({ issueTypes });
   } catch (error) {

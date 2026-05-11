@@ -2,6 +2,7 @@ import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,
+  PopoverAnchor,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
@@ -26,7 +27,10 @@ interface IssueDisplayProps {
   externalId?: string | null;
   externalUrl?: string | null;
   title?: string | null;
+  description?: string | null;
   status?: string | null;
+  priority?: string | null;
+  lastSyncedAt?: string | Date | null;
   size?: "small" | "large";
   projectIds: number[];
   data?: any; // Additional data from external system
@@ -78,7 +82,10 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   externalId,
   externalUrl,
   title,
+  description,
   status,
+  priority,
+  lastSyncedAt,
   size = "small",
   projectIds,
   data: _data,
@@ -288,7 +295,20 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
         }}
       >
         <Popover open={isOpen} onOpenChange={updateIsOpen} modal={false}>
-          <PopoverTrigger asChild>{badgeContent}</PopoverTrigger>
+          {linkHref ? (
+            <PopoverAnchor asChild>
+              <a
+                href={linkHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center max-w-full no-underline"
+              >
+                {badgeContent}
+              </a>
+            </PopoverAnchor>
+          ) : (
+            <PopoverTrigger asChild>{badgeContent}</PopoverTrigger>
+          )}
           <PopoverContent
             className="w-96 p-0"
             align="start"
@@ -444,36 +464,168 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
     );
   }
 
-  // For internal issues, use the original Tooltip
+  // For external non-Jira issues, use a hover popover matching Jira's layout
+  if (linkHref && integrationProvider) {
+    const providerLabel =
+      integrationProvider === "GITHUB"
+        ? "GitHub"
+        : integrationProvider === "GITLAB"
+          ? "GitLab"
+          : integrationProvider === "GITEA"
+            ? "Gitea"
+            : integrationProvider === "AZURE_DEVOPS"
+              ? "Azure DevOps"
+              : integrationProvider === "SIMPLE_URL"
+                ? "External"
+                : integrationProvider;
+
+    return (
+      <div
+        className="flex items-center group max-w-full"
+        onMouseEnter={() => {
+          triggerSyncIfNeeded();
+          if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+          hoverTimeoutRef.current = setTimeout(() => updateIsOpen(true), 200);
+        }}
+        onMouseLeave={() => {
+          if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+          hoverTimeoutRef.current = setTimeout(() => updateIsOpen(false), 100);
+        }}
+      >
+        <Popover open={isOpen} onOpenChange={updateIsOpen} modal={false}>
+          <PopoverAnchor asChild>
+            <a
+              href={linkHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center max-w-full no-underline"
+            >
+              {badgeContent}
+            </a>
+          </PopoverAnchor>
+          <PopoverContent
+            className="w-96 p-0"
+            align="start"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+            onMouseEnter={() => {
+              if (hoverTimeoutRef.current)
+                clearTimeout(hoverTimeoutRef.current);
+            }}
+            onMouseLeave={() => {
+              if (hoverTimeoutRef.current)
+                clearTimeout(hoverTimeoutRef.current);
+              hoverTimeoutRef.current = setTimeout(
+                () => updateIsOpen(false),
+                100
+              );
+            }}
+          >
+            <div className="p-4 space-y-3">
+              {/* Header */}
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-1">
+                  <IssueTypeIcon
+                    issueTypeName={issueTypeName}
+                    iconUrl={issueTypeIconUrl}
+                    className="h-4 w-4 shrink-0"
+                  />
+                  <Link
+                    href={linkHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold hover:text-primary hover:underline"
+                  >
+                    {name}
+                  </Link>
+                </div>
+                {status && (
+                  <IssueStatusDisplay status={status} className="text-xs" />
+                )}
+              </div>
+
+              {/* Title */}
+              {title && title !== name && (
+                <h4 className="font-medium">{title}</h4>
+              )}
+
+              {/* Description */}
+              {description && (
+                <div
+                  className="text-sm text-muted-foreground line-clamp-3 [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0"
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(description, {
+                      ALLOWED_TAGS: [
+                        "p",
+                        "br",
+                        "a",
+                        "strong",
+                        "em",
+                        "u",
+                        "ul",
+                        "ol",
+                        "li",
+                      ],
+                      ALLOWED_ATTR: ["href", "target", "rel"],
+                    }),
+                  }}
+                />
+              )}
+
+              {/* Priority — only for providers that actually support it */}
+              {priority &&
+                ["JIRA", "AZURE_DEVOPS"].includes(integrationProvider!) && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground text-xs">
+                      {t("common.fields.priority")}:
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className="text-xs"
+                      style={getPriorityStyle(priority)}
+                    >
+                      {priority}
+                    </Badge>
+                  </div>
+                )}
+
+              {/* Footer */}
+              <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
+                {lastSyncedAt ? (
+                  <span>
+                    {t("common.ui.issues.updated")}
+                    {new Date(lastSyncedAt).toLocaleDateString()}
+                  </span>
+                ) : (
+                  <span />
+                )}
+                <Link
+                  href={linkHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 hover:text-primary"
+                >
+                  {t("common.ui.issues.openInExternalSystem", {
+                    provider: providerLabel,
+                  })}
+                  <ExternalLink className="h-3 w-3" />
+                </Link>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+        <ExternalLink className="w-4 h-4 -ml-1 mr-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+      </div>
+    );
+  }
+
+  // For internal issues, use a simple tooltip
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip>
-        <div
-          className="flex items-center group max-w-full"
-          onMouseEnter={() => {
-            triggerSyncIfNeeded();
-          }}
-        >
-          {linkHref && /^https?:\/\//i.test(linkHref) ? (
-            <TooltipTrigger asChild>
-              <a
-                href={linkHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center max-w-full no-underline"
-                title={displayText}
-              >
-                {badgeContent}
-              </a>
-            </TooltipTrigger>
-          ) : (
-            <TooltipTrigger asChild className="cursor-default">
-              {badgeContent}
-            </TooltipTrigger>
-          )}
-          {linkHref && (
-            <ExternalLink className="w-4 h-4 -ml-1 mr-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-          )}
+        <div className="flex items-center group max-w-full">
+          <TooltipTrigger asChild className="cursor-default">
+            {badgeContent}
+          </TooltipTrigger>
         </div>
         <TooltipContent className="max-w-sm bg-popover text-popover-foreground border">
           <div className="space-y-1">
@@ -485,11 +637,6 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
               <div className="text-xs opacity-75">
                 {t("common.ui.issues.status")}
                 {status}
-              </div>
-            )}
-            {linkHref && (
-              <div className="text-xs opacity-75">
-                {t("common.ui.issues.clickToOpenInNewTab")}
               </div>
             )}
           </div>

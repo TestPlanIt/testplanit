@@ -925,6 +925,7 @@
         "errorLoadingDetails": "Error al cargar los detalles del problema: ",
         "updated": "Actualizado: ",
         "openInJira": "Abrir en Jira",
+        "openInExternalSystem": "Abrir en {provider}",
         "assignee": "Cesionario",
         "status": "Estado: ",
         "clickToOpenInNewTab": "Haga clic para abrir en una nueva pestaña",
@@ -1271,6 +1272,15 @@
           },
           "github": {
             "description": "Conéctese a GitHub para el seguimiento de problemas y la gestión del repositorio."
+          },
+          "gitlab": {
+            "description": "Conéctate a GitLab para el seguimiento de incidencias y solicitudes de fusión."
+          },
+          "gitea": {
+            "description": "Conéctese a una instancia autohospedada de Gitea, Forgejo o Gogs para el seguimiento de incidencias."
+          },
+          "azure_devops": {
+            "description": "Conéctese a Azure DevOps para el seguimiento de elementos de trabajo."
           }
         }
       },
@@ -1418,13 +1428,19 @@
         "inboundChooserJira": "Jira",
         "inboundChooserGithub": "GitHub",
         "inboundChooserAdo": "Azure DevOps",
+        "inboundChooserGitlab": "GitLab",
+        "inboundChooserGitea": "Gitea",
         "inboundChooserAlreadyConfigured": "Ya configurado",
         "inboundChooserSubmit": "Continuar",
         "inboundChooserCancel": "Cancelar",
-        "inboundEmpty": "No hay webhooks entrantes configurados. Añada uno para recibir actualizaciones de incidencias de Jira, GitHub o Azure DevOps.",
+        "inboundEmpty": "No hay webhooks entrantes configurados. Añada uno para recibir actualizaciones de incidencias de Jira, GitHub, GitLab, Gitea o Azure DevOps.",
         "inboundJiraTitle": "Webhook entrante de Jira",
         "inboundGithubTitle": "Webhook entrante de GitHub",
         "inboundGithubScopeHint": "GitHub <code>incidencias</code> eventos actualiza incidencias vinculadas de TestPlanIt. Se aceptan eventos de solicitud de extracción y comentarios de incidencias, pero aún no actualizan las incidencias.",
+        "inboundGitlabTitle": "Webhook entrante de GitLab",
+        "inboundGitlabScopeHint": "Los eventos de GitLab <code>Issue Hook</code> actualizan los problemas vinculados de TestPlanIt. Se aceptan otros tipos de eventos, pero no actualizan los problemas.",
+        "inboundGiteaTitle": "Webhook entrante de Gitea",
+        "inboundGiteaScopeHint": "Los problemas de Gitea <code>y los eventos</code> actualizan los problemas vinculados de TestPlanIt. Se aceptan otros tipos de eventos, pero no actualizan los problemas.",
         "inboundAdoTitle": "Webhook entrante de Azure DevOps",
         "inboundAdoScopeHint": "Los eventos <code>workitem.updated</code> de Azure DevOps actualizan los problemas vinculados de TestPlanIt. Se aceptan otros eventos, pero no actualizan los problemas.",
         "inboundAdoUsername": "Nombre de usuario",
@@ -1448,6 +1464,15 @@
         "setupStepsAdoStep3": "Establezca los detalles del recurso en \"Enviar\" = \"Todos\" para que se incluya System.State.",
         "setupStepsAdoStep4": "Pegue la siguiente URL en el campo URL. Establezca el nombre de usuario y la contraseña de autenticación básica con los valores que ingresó anteriormente.",
         "setupStepsAdoStep5": "Guarda la suscripción. Usa la opción \"Enviar webhook de prueba\" que aparece a continuación para verificar el flujo de trabajo.",
+        "setupStepsGitlabStep1": "En GitLab, ve a tu proyecto → Configuración → Webhooks.",
+        "setupStepsGitlabStep2": "Pega la URL que aparece a continuación en el campo URL. Pega la clave secreta que aparece a continuación en el campo Token secreto.",
+        "setupStepsGitlabStep3": "En la sección \"Activador\", marque \"Eventos de emisión\".",
+        "setupStepsGitlabStep4": "Haz clic en \"Agregar webhook\". Usa \"Enviar webhook de prueba\" a continuación para verificar la canalización.",
+        "setupStepsGiteaStep1": "En Gitea, ve a tu repositorio → Configuración → Webhooks.",
+        "setupStepsGiteaStep2": "Haz clic en \"Añadir webhook\" y elige \"Gitea\".",
+        "setupStepsGiteaStep3": "Pegue la URL que aparece a continuación en el campo URL de destino. Pegue la clave secreta que aparece a continuación en el campo Clave secreta.",
+        "setupStepsGiteaStep4": "En \"Activar en\", seleccione \"Problemas\".",
+        "setupStepsGiteaStep5": "Haz clic en \"Agregar webhook\". Usa \"Enviar webhook de prueba\" a continuación para verificar la canalización.",
         "deliveriesTab": "Entregas",
         "filterConfigPlaceholder": "Todos los webhooks",
         "filterStatusAll": "Todo",
@@ -4345,16 +4370,16 @@
       }
     },
     "integrations": {
-      "description": "Administrar integraciones de terceros para seguimiento de incidencias y más",
+      "description": "Gestionar las integraciones de terceros para el seguimiento de incidencias.",
       "list": {
-        "title": "Integraciones configuradas",
+        "title": "Integraciones de incidencias configuradas",
         "description": "Ver y administrar sus integraciones de problemas configuradas"
       },
       "empty": {
         "message": "No hay integraciones de problemas configuradas aún"
       },
-      "addIntegration": "Añadir Integración",
-      "allIntegrations": "Todas las integraciones",
+      "addIntegration": "Agregar integración de incidencias",
+      "allIntegrations": "Integraciones de todos los problemas",
       "manageDescription": "Configurar y administrar sus integraciones de problemas de servicio externo",
       "status": {
         "active": "Activo",
@@ -4369,8 +4394,8 @@
       "testFailedDescription": "No se puede conectar al servicio externo",
       "testError": "Error de prueba",
       "testErrorDescription": "Ocurrió un error mientras se probaba la conexión",
-      "syncInProgress": "Sincronización de integración...",
-      "syncIntegration": "Sincronizar todos los problemas desde la integración",
+      "syncInProgress": "Problemas de sincronización...",
+      "syncIntegration": "Sincroniza todos los problemas desde la integración de problemas.",
       "syncSuccess": "Sincronización en cola",
       "syncSuccessDescription": "Los problemas de \"{name}\" se están sincronizando en segundo plano. Esto puede tardar unos instantes. La tabla se actualizará automáticamente al finalizar.",
       "syncError": "Sincronización fallida",
@@ -4384,14 +4409,14 @@
         "warning3": "Conservar todos los problemas vinculados en la base de datos (los problemas se desvinculan)",
         "warning4": "Requiere eliminar la integración del problema de todos los proyectos primero"
       },
-      "deleteSuccess": "Integración eliminada",
+      "deleteSuccess": "Problema de integración eliminado",
       "deleteSuccessDescription": "La integración de la incidencia se ha eliminado correctamente",
       "deleteError": "Error al eliminar",
       "add": {
         "description": "Configurar una nueva integración de problemas con un servicio externo",
-        "selectType": "Seleccionar tipo de integración",
+        "selectType": "Seleccione el tipo de integración de incidencias.",
         "typeDescription": "Elija el tipo de servicio que desea integrar",
-        "successMessage": "Integración creada con éxito",
+        "successMessage": "Integración de incidencias creada correctamente",
         "successDescription": "La integración del problema ha sido configurada y está lista para ser usada",
         "simple_url": {
           "name": "URL simple",
@@ -4407,7 +4432,11 @@
         },
         "gitlab": {
           "name": "GitLab",
-          "description": "Conectar a GitLab para seguimiento de incidencias"
+          "description": "Conéctate a GitLab para el seguimiento de incidencias y solicitudes de fusión."
+        },
+        "gitea": {
+          "name": "Gitea / Forgejo / Gogs",
+          "description": "Conéctese a una instancia autohospedada de Gitea, Forgejo o Gogs para el seguimiento de incidencias."
         },
         "azureDevops": {
           "name": "Azure DevOps",
@@ -4417,22 +4446,22 @@
       "filterPlaceholder": "Integraciones de filtros...",
       "table": {
         "lastSync": "Última sincronización",
-        "empty": "No se encontraron integraciones",
-        "loading": "Cargando integraciones...",
+        "empty": "No se encontraron problemas de integración.",
+        "loading": "Cargando integraciones de problemas...",
         "configure": "Configurar"
       },
       "edit": {
-        "description": "Actualizar configuración y configuración de integración",
-        "successMessage": "Integración actualizada correctamente",
-        "successDescription": "Se han guardado los ajustes de integración"
+        "description": "Actualizar la configuración y los ajustes de integración de incidencias",
+        "successMessage": "La integración de incidencias se actualizó correctamente.",
+        "successDescription": "Se han guardado los ajustes de integración de incidencias."
       },
-      "editIntegration": "Editar integración",
-      "saveIntegration": "Guardar Integración",
-      "deleteIntegration": "Borrar integración",
+      "editIntegration": "Integración de edición de incidencias",
+      "saveIntegration": "Integración de guardado de incidencias",
+      "deleteIntegration": "Integración de eliminación de incidencias",
       "config": {
-        "name": "Nombre de integración",
-        "namePlaceholder": "Introduzca un nombre para esta integración",
-        "nameHelp": "Un nombre descriptivo para identificar esta integración",
+        "name": "Nombre de integración del problema",
+        "namePlaceholder": "Introduzca un nombre para esta integración de problemas",
+        "nameHelp": "Un nombre descriptivo para identificar esta integración del problema",
         "authType": "Tipo de autenticación",
         "authTypeHelp": "Elija cómo autenticarse con el servicio externo",
         "emailPlaceholder": "tu-email@ejemplo.com",
@@ -4465,6 +4494,19 @@
         "organizationUrl": "URL de la organización",
         "organizationUrlPlaceholder": "https://dev.azure.com/tu-org",
         "organizationUrlHelp": "URL de su organización Azure DevOps",
+        "projectPath": "Ruta del proyecto",
+        "projectPathPlaceholder": "grupo/subgrupo/proyecto",
+        "projectPathHelp": "La ruta completa de tu proyecto de GitLab (por ejemplo, mygroup/myproject)",
+        "instanceUrl": "URL de instancia",
+        "instanceUrlPlaceholder": "https://gitlab.example.com",
+        "instanceUrlHelp": "URL de tu instancia autohospedada. Déjala en blanco para usar gitlab.com.",
+        "giteaInstanceUrlPlaceholder": "https://gitea.example.com",
+        "owner": "Dueño",
+        "ownerPlaceholder": "nombre de usuario u organización",
+        "ownerHelp": "El usuario u organización de Gitea que posee el repositorio",
+        "repo": "Repositorio",
+        "repoPlaceholder": "nombre del repositorio",
+        "repoHelp": "El nombre del repositorio de Gitea",
         "encrypted": "Cifrado",
         "encryptedHelp": "Este campo está cifrado y almacenado de forma segura",
         "changeCredential": "Cambiar",
@@ -4478,7 +4520,12 @@
         "forgeApiKeyPlaceholder": "Haga clic en Generar para crear una clave API",
         "forgeApiKeyGenerate": "Generar",
         "forgeApiKeyCopy": "Copiar",
-        "forgeApiKeyCopied": "Copiado"
+        "forgeApiKeyCopied": "Copiado",
+        "platform": "Plataforma",
+        "platformPlaceholder": "Seleccione la plataforma...",
+        "platformGitea": "Gitea",
+        "platformForgejo": "Forgejo",
+        "platformGogs": "Gogs"
       },
       "authType": {
         "api_key": "Clave API",
@@ -4486,7 +4533,7 @@
         "personal_access_token": "Token de acceso personal"
       },
       "validation": {
-        "nameRequired": "Se requiere el nombre de la integración",
+        "nameRequired": "Se requiere el nombre de la integración del problema.",
         "clientIdRequired": "El ID del cliente es requerido",
         "clientSecretRequired": "El secreto del cliente es obligatorio",
         "cloudIdRequired": "Se requiere ID de la nube",
@@ -4495,19 +4542,19 @@
         "apiKeyRequired": "Clave API es requerida"
       },
       "errors": {
-        "updateFailed": "Error al actualizar la integración",
+        "updateFailed": "No se pudo actualizar la integración del problema",
         "testFailed": "Prueba de conexión fallida",
-        "nameExists": "Ya existe una integración con este nombre",
-        "createFailed": "Error al crear la integración",
-        "deleteFailed": "Error al eliminar la integración"
+        "nameExists": "Ya existe una integración de incidencias con este nombre.",
+        "createFailed": "No se pudo crear la integración del problema",
+        "deleteFailed": "No se pudo eliminar la integración del problema"
       },
       "confirmDelete": {
-        "message": "¿Está seguro de que desea eliminar la integración \"{name}\"?",
-        "warning": "Esto eliminará la integración y la desconectará de todos los proyectos. Esta acción no se puede deshacer."
+        "message": "¿Estás seguro de que quieres eliminar la integración de incidencias \"{name}\"?",
+        "warning": "Esto eliminará la integración del problema y la desconectará de todos los proyectos. Esta acción no se puede deshacer."
       },
       "form": {
-        "success": "Integración guardada correctamente",
-        "successDescription": "La integración ha sido configurada y está lista para ser usada",
+        "success": "La integración del problema se guardó correctamente.",
+        "successDescription": "La integración de incidencias se ha configurado y está lista para usarse.",
         "testing": "Probando conexión..."
       },
       "oauth": {
@@ -5366,7 +5413,12 @@
       "baseUrl": "## Patrón de URL\npatrón de URL para enlazar a problemas externos.\n\n- Usar '{issueId}' como marcador de posición para el identificador de problema\n- Ejemplo: https://example. om/issues/'{issueId}'\n- Utilizado para integraciones simples basadas en URL",
       "organizationUrl": "## URL de la organización\nLa URL de tu organización Azure DevOps.\n\n- Formato: https://dev.azure. om/tu-org\n- Debe ser accesible desde este servidor\n- Utilizado para acceder a las APIs de Azure DevOps",
       "apiKey": "## Clave de API\nLa clave de API para la autenticación con el servicio externo.\n\n- Generado en la configuración de la API del servicio\n- Proporciona acceso programático al servicio\n- Mantén seguro y rota regularmente",
-      "forgeApiKey": "## Clave API de Forge\nSe utiliza para autenticar la aplicación Atlassian Forge cuando obtiene datos de prueba de sus problemas de Jira.\n\n- Haga clic en Generar para crear una nueva clave\n- Copie la clave y péguela en la configuración de la aplicación Forge en Jira (Administrar aplicaciones → Configuración de TestPlanIt)\n- La regeneración invalidará la clave anterior"
+      "forgeApiKey": "## Clave API de Forge\nSe utiliza para autenticar la aplicación Atlassian Forge cuando obtiene datos de prueba de sus problemas de Jira.\n\n- Haga clic en Generar para crear una nueva clave\n- Copie la clave y péguela en la configuración de la aplicación Forge en Jira (Administrar aplicaciones → Configuración de TestPlanIt)\n- La regeneración invalidará la clave anterior",
+      "owner": "## Propietario / Espacio de nombres\nEl usuario u organización propietario del repositorio.\n\n- Para GitHub/GitLab: el nombre de usuario o el nombre de la organización\n- Para Gitea/Forgejo/Gogs: el nombre de usuario o grupo\n- Ejemplo: my-org o my-username",
+      "repo": "## Nombre del repositorio\nEl nombre del repositorio desde el que se enlazarán los problemas.\n\n- Nombre exacto del repositorio (no la URL completa)\n- Ejemplo: my-project\n- Debe ser accesible con las credenciales proporcionadas",
+      "instanceUrl": "## URL de instancia\nLa URL base de su instancia autohospedada.\n\n- Formato: https://git.example.com\n- No incluya barras diagonales ni rutas al final.\n- Debe ser accesible desde este servidor.",
+      "projectPath": "## Ruta del proyecto\nLa ruta completa a tu proyecto de GitLab.\n\n- Formato: espacio de nombres/proyecto o grupo/subgrupo/proyecto\n- Ejemplo: my-org/my-project\n- Se encuentra en la URL del proyecto: gitlab.com/namespace/project",
+      "platform": "## Plataforma\nLa plataforma Git autoalojada a la que te estás conectando.\n\n- **Gitea**: instancias basadas en gitea.io\n- **Forgejo**: instancias basadas en forgejo.org (bifurcación de Gitea)\n- **Gogs**: instancias basadas en gogs.io\n\nEsto controla qué icono se muestra y puede afectar la compatibilidad de la API."
     },
     "config": {
       "name": "## Nombre de configuración\nUn nombre claro y descriptivo que se utiliza en todos los proyectos.\n\n- Ayuda a describir las cominaciones variantes que componen la Configuración (por ejemplo, \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", etc.)."

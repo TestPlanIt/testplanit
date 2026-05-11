@@ -139,6 +139,8 @@ enum IntegrationProvider {
   GITHUB
   AZURE_DEVOPS
   SIMPLE_URL
+  GITLAB
+  GITEA
 }
 
 enum AdapterType {
@@ -147,6 +149,8 @@ enum AdapterType {
   AZURE_DEVOPS
   SLACK
   GENERIC_HMAC
+  GITLAB
+  GITEA
 }
 
 enum WebhookDirection {

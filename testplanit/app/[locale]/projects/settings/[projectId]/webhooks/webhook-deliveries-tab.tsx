@@ -82,6 +82,8 @@ function adapterLabelKey(
   | "inboundChooserJira"
   | "inboundChooserGithub"
   | "inboundChooserAdo"
+  | "inboundChooserGitlab"
+  | "inboundChooserGitea"
   | "adapterLabelSlack"
   | "adapterLabelGenericHmac"
   | null {
@@ -92,6 +94,10 @@ function adapterLabelKey(
       return "inboundChooserGithub";
     case "AZURE_DEVOPS":
       return "inboundChooserAdo";
+    case "GITLAB":
+      return "inboundChooserGitlab";
+    case "GITEA":
+      return "inboundChooserGitea";
     case "SLACK":
       return "adapterLabelSlack";
     case "GENERIC_HMAC":
