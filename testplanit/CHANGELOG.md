@@ -1,3 +1,9 @@
+## [0.26.1](https://github.com/TestPlanIt/testplanit/compare/v0.26.0...v0.26.1) (2026-05-12)
+
+### Bug Fixes
+
+* disable generate button with no folders; two-phase test case generation to avoid timeouts ([#304](https://github.com/TestPlanIt/testplanit/issues/304)) ([8b9f897](https://github.com/TestPlanIt/testplanit/commit/8b9f897c7ffbe34d8d7b80b9a7ee19ba1ec2fbff))
+
 ## [0.26.0](https://github.com/TestPlanIt/testplanit/compare/v0.25.1...v0.26.0) (2026-05-11)
 
 ### Features
