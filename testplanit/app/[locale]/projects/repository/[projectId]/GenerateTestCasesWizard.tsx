@@ -1283,8 +1283,6 @@ export function GenerateTestCasesWizard({
   const abortControllerRef = useRef<AbortController | null>(null);
   // Track last crawl job ID for cleanup after import
   const lastCrawlJobIdRef = useRef<string | null>(null);
-  // Ref on the wizard's scrollable content area
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   // Throttle streaming UI updates to once per animation frame
   const pendingStreamUpdateRef = useRef<GeneratedTestCase[] | null>(null);
   const rafIdRef = useRef<number>(0);
@@ -1548,17 +1546,6 @@ export function GenerateTestCasesWizard({
       }
     }
   }, [selectedTemplateId, templates, currentStep]);
-
-  // Auto-scroll to bottom when new cards stream in.
-  // requestAnimationFrame ensures the new card is laid out before we read scrollHeight.
-  useEffect(() => {
-    if (!isGenerating || generatedTestCases.length === 0) return;
-    const frame = requestAnimationFrame(() => {
-      const el = scrollContainerRef.current;
-      if (el) el.scrollTop = el.scrollHeight;
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [isGenerating, generatedTestCases.length]);
 
   // Convert option names → IDs for dropdown/multi-select fields in generated test cases.
   // The worker returns string names but the UI expects numeric option IDs.
@@ -2719,7 +2706,10 @@ export function GenerateTestCasesWizard({
                   try {
                     const data = JSON.parse(line.slice(6));
                     if (data.type === "done" && data.testCase) {
-                      const tc = convertFieldOptionIds(data.testCase);
+                      const tc = convertFieldOptionIds({
+                        ...data.testCase,
+                        id: `expand_${i}_${data.testCase.id ?? i}`,
+                      });
                       setExpandedCases((prev) => {
                         const next = [...prev];
                         next[i] = tc;
@@ -3501,10 +3491,7 @@ export function GenerateTestCasesWizard({
               </div>
             )}
 
-          <div
-            ref={scrollContainerRef}
-            className="flex-1 min-h-0 px-4 overflow-y-auto"
-          >
+          <div className="flex-1 min-h-0 px-4 overflow-y-auto">
             {isNotificationReopen ? (
               <div className="flex flex-col items-center justify-center py-20 space-y-4">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -4761,6 +4748,39 @@ export function GenerateTestCasesWizard({
                                 })}
                               </AlertDescription>
                             </Alert>
+                          )}
+                          {caseOutlines.length > 0 && (
+                            <div className="space-y-1.5">
+                              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                <span>
+                                  {t("generateTestCases.expandProgress", {
+                                    done: caseOutlines.filter(
+                                      (o) =>
+                                        o.status === "done" ||
+                                        o.status === "error" ||
+                                        o.status === "cancelled"
+                                    ).length,
+                                    total: caseOutlines.length,
+                                  })}
+                                </span>
+                                {isGenerating && (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                )}
+                              </div>
+                              <Progress
+                                value={
+                                  (caseOutlines.filter(
+                                    (o) =>
+                                      o.status === "done" ||
+                                      o.status === "error" ||
+                                      o.status === "cancelled"
+                                  ).length /
+                                    caseOutlines.length) *
+                                  100
+                                }
+                                className="h-1.5"
+                              />
+                            </div>
                           )}
                           {caseOutlines.length > 0
                             ? caseOutlines.map((outline, i) => {

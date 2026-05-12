@@ -2681,6 +2681,7 @@
         "allPages": "Toutes les pages ({pages, plural, one {# page} other {# pages}}, {cases, plural, one {# cas} other {# cas}})"
       },
       "generatingLegacy": "Générer des cas de test avec l'IA...",
+      "expandProgress": "{done} de {total} généré",
       "import": "{count, plural, =0 {Importer les cas de test} =1 {Importer 1 cas de test} other {Importer # cas de test}}",
       "importing": "{count, plural, =0 {Importation des cas de test...} =1 {Importation de 1 cas de test...} other {Importation de # cas de test...}}",
       "openInExternalSystem": "Ouvrir dans {provider}",
