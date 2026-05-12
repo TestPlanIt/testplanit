@@ -1,25 +1,9 @@
-import { format, Locale } from "date-fns";
-import { enUS } from "date-fns/locale/en-US";
-import { es } from "date-fns/locale/es";
-import { fr } from "date-fns/locale/fr";
+import { format, type Locale } from "date-fns";
 
-// Map locales to date-fns locales
-const localeMap: Record<string, Locale> = {
-  "en-US": enUS,
-  en_US: enUS,
-  "es-ES": es,
-  es_ES: es,
-  "fr-FR": fr,
-  fr_FR: fr,
-};
+import { dateFnsLocaleFor } from "~/i18n/dateFnsLocales";
 
-/**
- * Get date-fns locale from locale string
- */
 export function getServerDateFnsLocale(locale: string): Locale {
-  // Normalize locale format
-  const normalizedLocale = locale.replace("_", "-");
-  return localeMap[normalizedLocale] || localeMap[locale] || enUS;
+  return dateFnsLocaleFor(locale);
 }
 
 /**
@@ -52,9 +36,15 @@ export function formatEmailDateTime(
 ): string {
   // Use localized "at" word for different languages
   const atWordMap: Record<string, string> = {
+    de: "um",
     en: "at",
     es: "a las",
     fr: "à",
+    it: "alle",
+    nl: "om",
+    pl: "o",
+    pt: "às",
+    vi: "lúc",
   };
 
   const langCode = locale.substring(0, 2);

@@ -1,6 +1,8 @@
 import { enUS } from "date-fns/locale/en-US";
 import { es } from "date-fns/locale/es";
 import { fr } from "date-fns/locale/fr";
+import { it as itLocale } from "date-fns/locale/it";
+import { de } from "date-fns/locale/de";
 import { describe, expect, it } from "vitest";
 import { getDateFnsLocale } from "./locales";
 
@@ -9,6 +11,8 @@ describe("getDateFnsLocale", () => {
     expect(getDateFnsLocale("en-US")).toBe(enUS);
     expect(getDateFnsLocale("es-ES")).toBe(es);
     expect(getDateFnsLocale("fr-FR")).toBe(fr);
+    expect(getDateFnsLocale("it-IT")).toBe(itLocale);
+    expect(getDateFnsLocale("de-DE")).toBe(de);
   });
 
   it("should return the default locale (enUS) for unknown locales", () => {

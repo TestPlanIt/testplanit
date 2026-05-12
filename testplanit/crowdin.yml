@@ -9,5 +9,15 @@ files:
     languages_mapping:
       locale:
         # Map Crowdin locale codes to our locale format
+        de: "de-DE"
         es-ES: "es-ES"
         fr: "fr-FR"
+        it: "it-IT"
+        nl: "nl-NL"
+        pl: "pl-PL"
+        pt-BR: "pt-BR"
+        vi: "vi-VN"
+        zh-CN: "zh-CN"
+        zh-TW: "zh-TW"
+        ja: "ja-JP"
+        ko: "ko-KR"

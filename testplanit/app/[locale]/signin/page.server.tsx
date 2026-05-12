@@ -1,4 +1,6 @@
 import { cookies, headers } from "next/headers";
+
+import { locales, defaultLocale, type Locale } from "~/i18n/navigation";
 import { redirect } from "~/lib/navigation";
 
 export default async function SigninPage() {
@@ -8,19 +10,12 @@ export default async function SigninPage() {
 
   // Get browser's preferred language
   const headersList = await headers();
-  const acceptLanguage = headersList.get("accept-language");
+  const acceptLanguage = headersList.get("accept-language") ?? "";
 
-  // Parse accept-language header to get preferred locale
-  let browserLocale = "en-US"; // default
-  if (acceptLanguage) {
-    // Look for es-ES or en-US in accept-language header
-    if (acceptLanguage.includes("es")) {
-      browserLocale = "es-ES";
-    } else if (acceptLanguage.includes("en")) {
-      browserLocale = "en-US";
-    }
-  }
+  // Match the first supported locale whose language tag appears in Accept-Language
+  const matched = locales.find((locale) =>
+    acceptLanguage.includes(locale.substring(0, 2))
+  );
 
-  // Redirect to the correct locale version
-  redirect({ href: `/signin`, locale: browserLocale as "en-US" | "es-ES" });
+  redirect({ href: `/signin`, locale: (matched ?? defaultLocale) as Locale });
 }

@@ -3030,7 +3030,7 @@
       "system": "Système"
     },
     "imports": {
-      "description": "Importez les données provenant d'outils de gestion de tests externes dans Testplanit.",
+      "description": "Importez les données provenant d'outils de gestion de tests externes dans TestPlanIt.",
       "tabs": {
         "testmoJson": "Testmo JSON"
       },

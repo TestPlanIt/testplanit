@@ -31,7 +31,23 @@ const updateUserSchema = z.object({
       theme: z
         .enum(["Light", "Dark", "System", "Green", "Orange", "Purple"])
         .optional(),
-      locale: z.enum(["en_US", "es_ES", "fr_FR"]).optional(),
+      locale: z
+        .enum([
+          "en_US",
+          "es_ES",
+          "fr_FR",
+          "it_IT",
+          "de_DE",
+          "nl_NL",
+          "pl_PL",
+          "pt_BR",
+          "vi_VN",
+          "zh_CN",
+          "zh_TW",
+          "ja_JP",
+          "ko_KR",
+        ])
+        .optional(),
       itemsPerPage: z.enum(["P10", "P25", "P50", "P100", "P250"]).optional(),
       dateFormat: z
         .enum([

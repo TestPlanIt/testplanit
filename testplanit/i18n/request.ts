@@ -10,9 +10,13 @@ export default getRequestConfig(async ({ requestLocale }) => {
     locale = "en-US";
   }
 
+  const messages = await import(`../messages/${locale}.json`).catch(
+    () => import("../messages/en-US.json")
+  );
+
   return {
     locale: locale as Locale,
-    messages: (await import(`../messages/${locale}.json`)).default,
+    messages: messages.default,
     timeZone: "UTC",
   };
 });
