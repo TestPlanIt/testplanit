@@ -1259,6 +1259,21 @@ export function GenerateTestCasesWizard({
   );
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingStatus, setGeneratingStatus] = useState("");
+
+  // Two-phase generation state
+  interface CaseOutlineStatus {
+    title: string;
+    summary: string;
+    status: "pending" | "generating" | "done" | "error" | "cancelled";
+    errorMessage?: string;
+  }
+  const [caseOutlines, setCaseOutlines] = useState<CaseOutlineStatus[]>([]);
+  const [expandedCases, setExpandedCases] = useState<
+    (GeneratedTestCase | null)[]
+  >([]);
+  const expandAbortControllersRef = useRef<Map<number, AbortController>>(
+    new Map()
+  );
   const [urlStreamingPageInfo, setUrlStreamingPageInfo] = useState<{
     current: number;
     total: number;
@@ -1268,8 +1283,6 @@ export function GenerateTestCasesWizard({
   const abortControllerRef = useRef<AbortController | null>(null);
   // Track last crawl job ID for cleanup after import
   const lastCrawlJobIdRef = useRef<string | null>(null);
-  // Ref on the wizard's scrollable content area
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   // Throttle streaming UI updates to once per animation frame
   const pendingStreamUpdateRef = useRef<GeneratedTestCase[] | null>(null);
   const rafIdRef = useRef<number>(0);
@@ -1533,17 +1546,6 @@ export function GenerateTestCasesWizard({
       }
     }
   }, [selectedTemplateId, templates, currentStep]);
-
-  // Auto-scroll to bottom when new cards stream in.
-  // requestAnimationFrame ensures the new card is laid out before we read scrollHeight.
-  useEffect(() => {
-    if (!isGenerating || generatedTestCases.length === 0) return;
-    const frame = requestAnimationFrame(() => {
-      const el = scrollContainerRef.current;
-      if (el) el.scrollTop = el.scrollHeight;
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [isGenerating, generatedTestCases.length]);
 
   // Convert option names → IDs for dropdown/multi-select fields in generated test cases.
   // The worker returns string names but the UI expects numeric option IDs.
@@ -2006,15 +2008,13 @@ export function GenerateTestCasesWizard({
     goPrev();
   }, [goPrev]);
 
-  const handleNext = useCallback(async () => {
+  const handleNext = async () => {
     if (currentStep === WizardStep.ADD_NOTES) {
-      // Generate test cases when moving from notes step
       await generateTestCases();
     } else {
       goNext();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep, goNext]); // generateTestCases is intentionally not included as it's not memoized
+  };
 
   const resetWizard = () => {
     // Abort any in-progress SSE stream
@@ -2052,6 +2052,10 @@ export function GenerateTestCasesWizard({
     setQuantity("several");
     setGeneratedTestCases([]);
     setSelectedTestCases(new Set());
+    setCaseOutlines([]);
+    setExpandedCases([]);
+    for (const ac of expandAbortControllersRef.current.values()) ac.abort();
+    expandAbortControllersRef.current.clear();
     setCrawledPagesResult([]);
     setIsGenerating(false);
     setIsImporting(false);
@@ -2510,8 +2514,11 @@ export function GenerateTestCasesWizard({
     setGeneratedTestCases([]);
     setSelectedTestCases(new Set());
     setDroppedLinkedIssues([]);
+    setCaseOutlines([]);
+    setExpandedCases([]);
+    for (const ac of expandAbortControllersRef.current.values()) ac.abort();
+    expandAbortControllersRef.current.clear();
     setCurrentStep(WizardStep.REVIEW_GENERATED);
-    // Cancel any in-flight generation
     abortControllerRef.current?.abort();
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
@@ -2537,79 +2544,6 @@ export function GenerateTestCasesWizard({
         };
       } else {
         throw new Error(t("generateTestCases.errors.invalidSourceConfig"));
-      }
-
-      setGeneratingStatus("calling_ai");
-
-      // Build the request payload
-      const requestBody = {
-        projectId,
-        issue: issueData,
-        template: {
-          id: template?.id,
-          name: template?.templateName,
-          fields: template?.caseFields
-            .filter((cf) => selectedFieldIds.has(cf.caseFieldId))
-            .sort((a, b) => a.order - b.order)
-            .map((cf) => ({
-              id: cf.caseField.id,
-              name: cf.caseField.displayName,
-              type: cf.caseField.type.type,
-              required: cf.caseField.isRequired,
-              options:
-                cf.caseField.fieldOptions &&
-                cf.caseField.fieldOptions.length > 0
-                  ? cf.caseField.fieldOptions.map((fo) => fo.fieldOption.name)
-                  : undefined,
-            })),
-        },
-        context: {
-          userNotes,
-          folderContext: folderId,
-        },
-        quantity,
-        autoGenerateTags,
-      };
-
-      // Use SSE streaming endpoint for real-time feedback
-      const response = await fetch("/api/llm/generate-test-cases/stream", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-        signal: abortController.signal,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.text();
-        let errorMessage = t("generateTestCases.errors.generateFailed");
-        let parsedError: any = null;
-
-        try {
-          parsedError = JSON.parse(errorData);
-          if (parsedError.error) {
-            errorMessage = parsedError.error;
-          } else if (parsedError.message) {
-            errorMessage = parsedError.message;
-          }
-        } catch {
-          if (
-            errorData.includes("<!DOCTYPE html>") ||
-            errorData.includes("<html>") ||
-            errorData.includes("Synology")
-          ) {
-            errorMessage = t("generateTestCases.errors.networkRoutingError");
-          } else if (errorData && errorData.trim().length > 0) {
-            errorMessage = errorData.trim();
-          } else {
-            errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-          }
-        }
-
-        const errorObj = {
-          message: errorMessage,
-          ...(parsedError && { enhancedError: parsedError }),
-        };
-        throw new Error(JSON.stringify(errorObj));
       }
 
       // Helper: convert option names → IDs for a single test case
@@ -2642,10 +2576,12 @@ export function GenerateTestCasesWizard({
         return { ...tc, fieldValues: converted };
       };
 
-      // Build template fields descriptor once for parsing
-      const templateFields =
-        template?.caseFields
+      const templatePayload = {
+        id: template?.id,
+        name: template?.templateName,
+        fields: template?.caseFields
           .filter((cf) => selectedFieldIds.has(cf.caseFieldId))
+          .sort((a, b) => a.order - b.order)
           .map((cf) => ({
             id: cf.caseField.id,
             name: cf.caseField.displayName,
@@ -2655,143 +2591,37 @@ export function GenerateTestCasesWizard({
               cf.caseField.fieldOptions && cf.caseField.fieldOptions.length > 0
                 ? cf.caseField.fieldOptions.map((fo) => fo.fieldOption.name)
                 : undefined,
-          })) ?? [];
-
-      const templateForParsing = {
-        id: template?.id ?? 0,
-        name: template?.templateName ?? "",
-        fields: templateFields,
+          })),
       };
 
-      const issueForParsing = {
-        key: issueData.key ?? "",
-        title: issueData.title,
-        description: issueData.description,
-        status: issueData.status ?? "",
-        priority: issueData.priority,
-        comments: issueData.comments,
-      };
+      const contextPayload = { userNotes, folderContext: folderId };
 
-      // Lazy-import the shared parsers once
-      const { extractStreamedTestCases, parseAndValidateTestCases } =
-        await import("~/app/api/llm/generate-test-cases/shared");
+      // Phase 1: Get test case titles from the outline endpoint
+      setGeneratingStatus("calling_ai");
+      const outlineRes = await fetch("/api/llm/generate-test-cases/outline", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId,
+          issue: issueData,
+          context: contextPayload,
+          quantity,
+        }),
+        signal: abortController.signal,
+      });
 
-      // Consume the SSE stream with incremental rendering:
-      // - Finalized cases: fully-closed JSON objects, rendered permanently
-      // - Streaming stub: the in-progress test case, updated live as fields arrive
-      const reader = response.body!.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let accumulated = "";
-      let streamDone = false;
-      let streamError: string | undefined;
-      let streamErrorCode: LlmErrorType | undefined;
-      let yieldedCount = 0; // how many test cases we've already rendered
-      const finalizedCases: GeneratedTestCase[] = [];
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const parts = buffer.split("\n\n");
-        buffer = parts.pop() ?? "";
-
-        for (const part of parts) {
-          const line = part.trim();
-          if (!line.startsWith("data: ")) continue;
-          try {
-            const data = JSON.parse(line.slice(6));
-            if (data.type === "stage") {
-              if (data.stage === "calling_ai") {
-                setGeneratingStatus("calling_ai");
-              } else if (data.stage === "resolving") {
-                setGeneratingStatus("preparing");
-              } else if (data.stage === "validating") {
-                setGeneratingStatus("preparing");
-              }
-            } else if (data.type === "chunk") {
-              accumulated += data.delta;
-              setGeneratingStatus("streaming");
-
-              // 1. Extract fully-closed test case objects
-              const newCases = extractStreamedTestCases(
-                accumulated,
-                templateForParsing,
-                yieldedCount
-              );
-
-              if (newCases.length > 0) {
-                const converted = newCases.map(convertFieldOptionIds);
-                yieldedCount += newCases.length;
-                finalizedCases.push(...converted);
-
-                setSelectedTestCases((prev) => {
-                  const next = new Set(prev);
-                  converted.forEach((tc) => next.add(tc.id));
-                  return next;
-                });
-              }
-
-              // 2. Extract the in-progress (partial) test case
-              const partials = extractPartialTestCases(
-                accumulated,
-                yieldedCount
-              );
-
-              const streamingStub = partials.map((tc) => ({
-                ...tc,
-                id: `streaming_issue`,
-              }));
-
-              // 3. Throttle UI updates to once per animation frame
-              const allCases = [...finalizedCases, ...streamingStub];
-              pendingStreamUpdateRef.current = allCases;
-              if (!rafIdRef.current) {
-                rafIdRef.current = requestAnimationFrame(() => {
-                  if (pendingStreamUpdateRef.current) {
-                    setGeneratedTestCases(pendingStreamUpdateRef.current);
-                    pendingStreamUpdateRef.current = null;
-                  }
-                  rafIdRef.current = 0;
-                });
-              }
-            } else if (data.type === "done") {
-              streamDone = true;
-              if (Array.isArray(data.metadata?.droppedLinkedIssues)) {
-                setDroppedLinkedIssues(data.metadata.droppedLinkedIssues);
-              } else {
-                setDroppedLinkedIssues([]);
-              }
-            } else if (data.type === "error") {
-              streamError = data.message;
-              if (typeof data.code === "string") {
-                streamErrorCode = data.code as LlmErrorType;
-              }
-            }
-          } catch (e) {
-            if (e instanceof SyntaxError) continue;
-            throw e;
-          }
-        }
-      }
-
-      // Flush any pending rAF update
-      if (rafIdRef.current) {
-        cancelAnimationFrame(rafIdRef.current);
-        rafIdRef.current = 0;
-        pendingStreamUpdateRef.current = null;
-      }
-      // Remove any lingering streaming stub
-      setGeneratedTestCases([...finalizedCases]);
-
-      if (streamError) {
+      if (!outlineRes.ok) {
+        const errData = await outlineRes.json().catch(() => ({}));
         throw new Error(
-          JSON.stringify({ message: streamError, code: streamErrorCode })
+          JSON.stringify({
+            message:
+              errData.error || t("generateTestCases.errors.generateFailed"),
+          })
         );
       }
 
-      if (!accumulated && !streamDone) {
+      const { outlines } = await outlineRes.json();
+      if (!Array.isArray(outlines) || outlines.length === 0) {
         throw new Error(
           JSON.stringify({
             message: t("generateTestCases.errors.generateFailed"),
@@ -2799,38 +2629,140 @@ export function GenerateTestCasesWizard({
         );
       }
 
-      // Final parse with full recovery logic for any trailing content
-      setGeneratingStatus("processing");
-      const { testCases: finalTestCases, parseError } =
-        parseAndValidateTestCases(
-          accumulated,
-          templateForParsing,
-          issueForParsing,
-          autoGenerateTags,
-          quantity
-        );
+      // Show outline cards immediately — user sees titles before details arrive
+      setCaseOutlines(
+        outlines.map((o: { title: string; summary: string }) => ({
+          ...o,
+          status: "pending" as const,
+        }))
+      );
+      setExpandedCases(new Array(outlines.length).fill(null));
+      setGeneratingStatus("streaming");
 
-      if (parseError && yieldedCount === 0) {
-        throw new Error(
-          JSON.stringify({
-            message: parseError.userError,
-            enhancedError: {
-              error: parseError.userError,
-              suggestions: parseError.userSuggestions,
-              details: parseError.errorMessage,
-            },
-          })
-        );
-      }
+      // Phase 2: Expand each outline in parallel
+      await Promise.all(
+        outlines.map(
+          async (outline: { title: string; summary: string }, i: number) => {
+            if (abortController.signal.aborted) return;
 
-      // Replace all incrementally-yielded cases with the final validated set
-      // (the final parse may recover a truncated last case that the stream
-      // parser skipped, and also normalises IDs consistently)
-      if (finalTestCases.length > 0) {
-        const allConverted = finalTestCases.map(convertFieldOptionIds);
-        setGeneratedTestCases(allConverted);
-        setSelectedTestCases(new Set(allConverted.map((tc) => tc.id)));
-      }
+            const ac = new AbortController();
+            expandAbortControllersRef.current.set(i, ac);
+            abortController.signal.addEventListener("abort", () => ac.abort());
+
+            setCaseOutlines((prev) => {
+              const next = [...prev];
+              next[i] = { ...next[i], status: "generating" };
+              return next;
+            });
+
+            try {
+              const expandRes = await fetch(
+                "/api/llm/generate-test-cases/expand",
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    projectId,
+                    issue: issueData,
+                    template: templatePayload,
+                    context: contextPayload,
+                    outline,
+                    autoGenerateTags,
+                  }),
+                  signal: ac.signal,
+                }
+              );
+
+              if (!expandRes.ok) {
+                const errData = await expandRes.json().catch(() => ({}));
+                setCaseOutlines((prev) => {
+                  const next = [...prev];
+                  next[i] = {
+                    ...next[i],
+                    status: "error",
+                    errorMessage:
+                      errData.error ||
+                      t("generateTestCases.errors.generateFailed"),
+                  };
+                  return next;
+                });
+                return;
+              }
+
+              // Consume the SSE stream — we only care about the final "done" event
+              const reader = expandRes.body!.getReader();
+              const decoder = new TextDecoder();
+              let buffer = "";
+
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                const parts = buffer.split("\n\n");
+                buffer = parts.pop() ?? "";
+                for (const part of parts) {
+                  const line = part.trim();
+                  if (!line.startsWith("data: ")) continue;
+                  try {
+                    const data = JSON.parse(line.slice(6));
+                    if (data.type === "done" && data.testCase) {
+                      const tc = convertFieldOptionIds({
+                        ...data.testCase,
+                        id: `expand_${i}_${data.testCase.id ?? i}`,
+                      });
+                      setExpandedCases((prev) => {
+                        const next = [...prev];
+                        next[i] = tc;
+                        return next;
+                      });
+                      setGeneratedTestCases((prev) => [...prev, tc]);
+                      setSelectedTestCases((prev) => new Set([...prev, tc.id]));
+                      setCaseOutlines((prev) => {
+                        const next = [...prev];
+                        next[i] = { ...next[i], status: "done" };
+                        return next;
+                      });
+                    } else if (data.type === "error") {
+                      setCaseOutlines((prev) => {
+                        const next = [...prev];
+                        next[i] = {
+                          ...next[i],
+                          status: "error",
+                          errorMessage: data.message,
+                        };
+                        return next;
+                      });
+                    }
+                  } catch (e) {
+                    if (e instanceof SyntaxError) continue;
+                  }
+                }
+              }
+            } catch (err: any) {
+              if (err.name === "AbortError") {
+                setCaseOutlines((prev) => {
+                  const next = [...prev];
+                  if (next[i]?.status !== "cancelled") {
+                    next[i] = { ...next[i], status: "cancelled" };
+                  }
+                  return next;
+                });
+                return;
+              }
+              setCaseOutlines((prev) => {
+                const next = [...prev];
+                next[i] = {
+                  ...next[i],
+                  status: "error",
+                  errorMessage: err.message,
+                };
+                return next;
+              });
+            }
+          }
+        )
+      );
+
       setGeneratingStatus("");
     } catch (error) {
       console.error("Error generating test cases:", error);
@@ -3088,6 +3020,9 @@ export function GenerateTestCasesWizard({
     // Cancel SSE streaming (issue/document/URL generation)
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
+    // Cancel any in-flight expand requests
+    for (const ac of expandAbortControllersRef.current.values()) ac.abort();
+    expandAbortControllersRef.current.clear();
     // Cancel URL crawl background job if still running
     if (urlJobId) {
       fetch(`/api/llm/generate-from-url/cancel/${urlJobId}`, {
@@ -3102,6 +3037,16 @@ export function GenerateTestCasesWizard({
 
   const handleRetryGeneration = () => {
     void generateTestCases();
+  };
+
+  const handleCancelExpand = (index: number) => {
+    const ac = expandAbortControllersRef.current.get(index);
+    if (ac) ac.abort();
+    setCaseOutlines((prev) => {
+      const next = [...prev];
+      if (next[index]) next[index] = { ...next[index], status: "cancelled" };
+      return next;
+    });
   };
 
   const handleCopyErrorDetails = async () => {
@@ -3546,10 +3491,7 @@ export function GenerateTestCasesWizard({
               </div>
             )}
 
-          <div
-            ref={scrollContainerRef}
-            className="flex-1 min-h-0 px-4 overflow-y-auto"
-          >
+          <div className="flex-1 min-h-0 px-4 overflow-y-auto">
             {isNotificationReopen ? (
               <div className="flex flex-col items-center justify-center py-20 space-y-4">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -4723,7 +4665,9 @@ export function GenerateTestCasesWizard({
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      {isGenerating && generatedTestCases.length === 0 ? (
+                      {isGenerating &&
+                      generatedTestCases.length === 0 &&
+                      caseOutlines.length === 0 ? (
                         // No cards yet — show stage indicator / spinner
                         <div className="flex flex-col items-center justify-center py-12 space-y-4">
                           <Sparkles className="w-8 h-8 text-primary shrink-0" />
@@ -4776,7 +4720,9 @@ export function GenerateTestCasesWizard({
                             </div>
                           </div>
                         </div>
-                      ) : !isGenerating && generatedTestCases.length === 0 ? (
+                      ) : !isGenerating &&
+                        generatedTestCases.length === 0 &&
+                        caseOutlines.length === 0 ? (
                         <Alert>
                           <AlertTriangle className="h-4 w-4" />
                           <AlertDescription>
@@ -4785,7 +4731,7 @@ export function GenerateTestCasesWizard({
                         </Alert>
                       ) : (
                         <div
-                          className={`space-y-4 transition-opacity duration-300 ${isGenerating ? "opacity-60" : "opacity-100"}`}
+                          className={`space-y-4 transition-opacity duration-300 ${isGenerating && caseOutlines.length === 0 ? "opacity-60" : "opacity-100"}`}
                         >
                           {droppedLinkedIssues.length > 0 && (
                             <Alert>
@@ -4803,62 +4749,219 @@ export function GenerateTestCasesWizard({
                               </AlertDescription>
                             </Alert>
                           )}
-                          {generatedTestCases
-                            .filter(
-                              (tc) =>
-                                !reviewPageFilter ||
-                                tc.sourceUrl === reviewPageFilter
-                            )
-                            .map((testCase, index) => {
-                              const template = templates?.find(
-                                (t) => t.id === selectedTemplateId
-                              );
-                              if (!template) {
-                                return null;
-                              }
+                          {caseOutlines.length > 0 && (
+                            <div className="space-y-1.5">
+                              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                <span>
+                                  {t("generateTestCases.expandProgress", {
+                                    done: caseOutlines.filter(
+                                      (o) =>
+                                        o.status === "done" ||
+                                        o.status === "error" ||
+                                        o.status === "cancelled"
+                                    ).length,
+                                    total: caseOutlines.length,
+                                  })}
+                                </span>
+                                {isGenerating && (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                )}
+                              </div>
+                              <Progress
+                                value={
+                                  (caseOutlines.filter(
+                                    (o) =>
+                                      o.status === "done" ||
+                                      o.status === "error" ||
+                                      o.status === "cancelled"
+                                  ).length /
+                                    caseOutlines.length) *
+                                  100
+                                }
+                                className="h-1.5"
+                              />
+                            </div>
+                          )}
+                          {caseOutlines.length > 0
+                            ? caseOutlines.map((outline, i) => {
+                                const tc = expandedCases[i];
+                                const cardTemplate = templates?.find(
+                                  (t) => t.id === selectedTemplateId
+                                );
 
-                              return (
-                                <GeneratedTestCaseCard
-                                  key={testCase.id}
-                                  testCase={testCase}
-                                  template={template}
-                                  selectedFieldIds={selectedFieldIds}
-                                  isSelected={selectedTestCases.has(
-                                    testCase.id
-                                  )}
-                                  onSelectionChange={(checked) =>
-                                    toggleTestCaseSelection(
-                                      testCase.id,
-                                      checked
-                                    )
+                                if (
+                                  outline.status === "done" &&
+                                  tc &&
+                                  cardTemplate
+                                ) {
+                                  return (
+                                    <GeneratedTestCaseCard
+                                      key={`outline-${i}`}
+                                      testCase={tc}
+                                      template={cardTemplate}
+                                      selectedFieldIds={selectedFieldIds}
+                                      isSelected={selectedTestCases.has(tc.id)}
+                                      onSelectionChange={(checked) =>
+                                        toggleTestCaseSelection(tc.id, checked)
+                                      }
+                                      isEditing={editingTestCaseIds.has(tc.id)}
+                                      onStartEdit={() =>
+                                        startEditingTestCase(tc.id)
+                                      }
+                                      onCancelEdit={() =>
+                                        stopEditingTestCase(tc.id)
+                                      }
+                                      onSave={handleSaveEditedTestCase}
+                                      autoGenerateTags={autoGenerateTags}
+                                      disabled={false}
+                                      t={t}
+                                      tCommon={tCommon}
+                                      session={session}
+                                      projectId={projectId}
+                                      index={i}
+                                      formSubmitHandlersRef={
+                                        formSubmitHandlersRef
+                                      }
+                                    />
+                                  );
+                                }
+
+                                if (outline.status === "generating") {
+                                  return (
+                                    <div
+                                      key={`outline-${i}`}
+                                      className="rounded-lg border bg-card p-4 flex items-center justify-between gap-3"
+                                    >
+                                      <div className="flex items-center gap-3 min-w-0">
+                                        <Loader2 className="h-4 w-4 animate-spin shrink-0 text-muted-foreground" />
+                                        <div className="min-w-0">
+                                          <p className="text-sm font-medium truncate">
+                                            {outline.title}
+                                          </p>
+                                          <p className="text-xs text-muted-foreground">
+                                            {outline.summary}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="shrink-0 h-7 w-7"
+                                        onClick={() => handleCancelExpand(i)}
+                                      >
+                                        <X className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </div>
+                                  );
+                                }
+
+                                if (outline.status === "pending") {
+                                  return (
+                                    <div
+                                      key={`outline-${i}`}
+                                      className="rounded-lg border bg-card p-4 animate-pulse"
+                                    >
+                                      <p className="text-sm font-medium text-muted-foreground">
+                                        {outline.title}
+                                      </p>
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        {outline.summary}
+                                      </p>
+                                    </div>
+                                  );
+                                }
+
+                                if (outline.status === "error") {
+                                  return (
+                                    <div
+                                      key={`outline-${i}`}
+                                      className="rounded-lg border border-destructive/50 bg-destructive/5 p-4"
+                                    >
+                                      <p className="text-sm font-medium">
+                                        {outline.title}
+                                      </p>
+                                      <p className="text-xs text-destructive mt-1">
+                                        {outline.errorMessage ||
+                                          t(
+                                            "generateTestCases.errors.generateFailed"
+                                          )}
+                                      </p>
+                                    </div>
+                                  );
+                                }
+
+                                // cancelled
+                                return (
+                                  <div
+                                    key={`outline-${i}`}
+                                    className="rounded-lg border bg-muted/30 p-4 opacity-50"
+                                  >
+                                    <p className="text-sm font-medium line-through text-muted-foreground">
+                                      {outline.title}
+                                    </p>
+                                  </div>
+                                );
+                              })
+                            : generatedTestCases
+                                .filter(
+                                  (tc) =>
+                                    !reviewPageFilter ||
+                                    tc.sourceUrl === reviewPageFilter
+                                )
+                                .map((testCase, index) => {
+                                  const template = templates?.find(
+                                    (t) => t.id === selectedTemplateId
+                                  );
+                                  if (!template) {
+                                    return null;
                                   }
-                                  isEditing={editingTestCaseIds.has(
-                                    testCase.id
-                                  )}
-                                  onStartEdit={() =>
-                                    startEditingTestCase(testCase.id)
-                                  }
-                                  onCancelEdit={() =>
-                                    stopEditingTestCase(testCase.id)
-                                  }
-                                  onSave={handleSaveEditedTestCase}
-                                  autoGenerateTags={autoGenerateTags}
-                                  disabled={isGenerating}
-                                  t={t}
-                                  tCommon={tCommon}
-                                  session={session}
-                                  projectId={projectId}
-                                  index={index}
-                                  formSubmitHandlersRef={formSubmitHandlersRef}
-                                  folderLabel={
-                                    crawledPagesResult.length > 1 &&
-                                    testCase.sourceUrl
-                                      ? folderNameFromUrl(testCase.sourceUrl)
-                                      : undefined
-                                  }
-                                />
-                              );
-                            })}
+
+                                  return (
+                                    <GeneratedTestCaseCard
+                                      key={testCase.id}
+                                      testCase={testCase}
+                                      template={template}
+                                      selectedFieldIds={selectedFieldIds}
+                                      isSelected={selectedTestCases.has(
+                                        testCase.id
+                                      )}
+                                      onSelectionChange={(checked) =>
+                                        toggleTestCaseSelection(
+                                          testCase.id,
+                                          checked
+                                        )
+                                      }
+                                      isEditing={editingTestCaseIds.has(
+                                        testCase.id
+                                      )}
+                                      onStartEdit={() =>
+                                        startEditingTestCase(testCase.id)
+                                      }
+                                      onCancelEdit={() =>
+                                        stopEditingTestCase(testCase.id)
+                                      }
+                                      onSave={handleSaveEditedTestCase}
+                                      autoGenerateTags={autoGenerateTags}
+                                      disabled={isGenerating}
+                                      t={t}
+                                      tCommon={tCommon}
+                                      session={session}
+                                      projectId={projectId}
+                                      index={index}
+                                      formSubmitHandlersRef={
+                                        formSubmitHandlersRef
+                                      }
+                                      folderLabel={
+                                        crawledPagesResult.length > 1 &&
+                                        testCase.sourceUrl
+                                          ? folderNameFromUrl(
+                                              testCase.sourceUrl
+                                            )
+                                          : undefined
+                                      }
+                                    />
+                                  );
+                                })}
                         </div>
                       )}
                     </CardContent>
