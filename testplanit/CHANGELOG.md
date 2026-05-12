@@ -1,3 +1,9 @@
+## [0.27.0](https://github.com/TestPlanIt/testplanit/compare/v0.26.2...v0.27.0) (2026-05-12)
+
+### Features
+
+* **i18n:** add localization support for 13 languages ([#305](https://github.com/TestPlanIt/testplanit/issues/305)) ([b739945](https://github.com/TestPlanIt/testplanit/commit/b739945e642c7bbe397ba253197ee1c79de997cc))
+
 ## [0.26.2](https://github.com/TestPlanIt/testplanit/compare/v0.26.1...v0.26.2) (2026-05-12)
 
 ### Bug Fixes
