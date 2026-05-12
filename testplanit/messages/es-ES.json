@@ -4149,6 +4149,7 @@
       "combinations": {
         "title": "Combinaciones",
         "description": "Administrar combinaciones globales",
+        "confirmDescription": "Se crearán las siguientes combinaciones {count}.",
         "addCombination": "Añadir combinación",
         "editCombination": "Editar combinación",
         "selectCombination": "Seleccionar combinación",

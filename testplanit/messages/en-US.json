@@ -4149,6 +4149,7 @@
       "combinations": {
         "title": "Combinations",
         "description": "Manage global combinations",
+        "confirmDescription": "The following {count} combinations will be created.",
         "addCombination": "Add Combination",
         "editCombination": "Edit Combination",
         "selectCombination": "Select Combination",

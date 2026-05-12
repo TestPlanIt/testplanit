@@ -4149,6 +4149,7 @@
       "combinations": {
         "title": "組合",
         "description": "管理全域組合",
+        "confirmDescription": "將建立以下 {count} 組合。",
         "addCombination": "新增組合",
         "editCombination": "編輯組合",
         "selectCombination": "選擇組合",

@@ -4149,6 +4149,7 @@
       "combinations": {
         "title": "組み合わせ",
         "description": "グローバルな組み合わせを管理する",
+        "confirmDescription": "以下の {count} の組み合わせが作成されます。",
         "addCombination": "組み合わせを追加",
         "editCombination": "組み合わせを編集",
         "selectCombination": "組み合わせを選択",

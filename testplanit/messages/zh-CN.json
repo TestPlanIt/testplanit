@@ -4149,6 +4149,7 @@
       "combinations": {
         "title": "组合",
         "description": "管理全局组合",
+        "confirmDescription": "将创建以下 {count} 组合。",
         "addCombination": "添加组合",
         "editCombination": "编辑组合",
         "selectCombination": "选择组合",

@@ -4149,6 +4149,7 @@
       "combinations": {
         "title": "조합",
         "description": "글로벌 조합 관리",
+        "confirmDescription": "다음과 같은 {count} 조합이 생성됩니다.",
         "addCombination": "조합을 추가하세요",
         "editCombination": "조합 편집",
         "selectCombination": "조합을 선택하세요",

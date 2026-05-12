@@ -68,7 +68,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
               </div>
             </DialogHeader>
             <DialogDescription>
-              {t("description", {
+              {t("confirmDescription", {
                 count: selectedCombinations?.length,
               })}
             </DialogDescription>

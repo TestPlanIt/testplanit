@@ -4149,6 +4149,7 @@
       "combinations": {
         "title": "Sự kết hợp",
         "description": "Quản lý các tổ hợp toàn cầu",
+        "confirmDescription": "Các tổ hợp {count} sau đây sẽ được tạo ra.",
         "addCombination": "Thêm tổ hợp",
         "editCombination": "Chỉnh sửa kết hợp",
         "selectCombination": "Chọn tổ hợp",
