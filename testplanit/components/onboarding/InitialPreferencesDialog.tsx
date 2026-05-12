@@ -320,8 +320,7 @@ export function InitialPreferencesDialog() {
       // Mark theme as saved so we don't revert it
       originalThemeRef.current = undefined;
 
-      const localeChanged =
-        data.locale !== userPreferences?.locale;
+      const localeChanged = data.locale !== userPreferences?.locale;
 
       if (localeChanged) {
         const urlLocale = data.locale.replace("_", "-");
