@@ -25,11 +25,15 @@ interface StatusData {
 
 interface FindDuplicatesButtonProps {
   projectId: string;
+  disabled?: boolean;
 }
 
 const STORAGE_KEY_PREFIX = "duplicate-scan-job:";
 
-export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
+export function FindDuplicatesButton({
+  projectId,
+  disabled,
+}: FindDuplicatesButtonProps) {
   const t = useTranslations("repository.duplicates");
   const storageKey = `${STORAGE_KEY_PREFIX}${projectId}`;
 
@@ -236,6 +240,7 @@ export function FindDuplicatesButton({ projectId }: FindDuplicatesButtonProps) {
     <Button
       data-testid="find-duplicates-button"
       variant="outline"
+      disabled={disabled}
       onClick={handleScan}
       className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
     >

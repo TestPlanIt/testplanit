@@ -1690,6 +1690,13 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                               </Button>
                               <FindDuplicatesButton
                                 projectId={projectIdParam}
+                                disabled={
+                                  !folderStatsData ||
+                                  folderStatsData.reduce(
+                                    (sum, s) => sum + s.totalCaseCount,
+                                    0
+                                  ) === 0
+                                }
                               />
                               <Button
                                 variant="default"

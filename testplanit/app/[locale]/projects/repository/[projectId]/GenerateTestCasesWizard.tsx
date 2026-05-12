@@ -4678,7 +4678,9 @@ export function GenerateTestCasesWizard({
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      {isGenerating && generatedTestCases.length === 0 ? (
+                      {isGenerating &&
+                      generatedTestCases.length === 0 &&
+                      caseOutlines.length === 0 ? (
                         // No cards yet — show stage indicator / spinner
                         <div className="flex flex-col items-center justify-center py-12 space-y-4">
                           <Sparkles className="w-8 h-8 text-primary shrink-0" />
@@ -4731,7 +4733,9 @@ export function GenerateTestCasesWizard({
                             </div>
                           </div>
                         </div>
-                      ) : !isGenerating && generatedTestCases.length === 0 ? (
+                      ) : !isGenerating &&
+                        generatedTestCases.length === 0 &&
+                        caseOutlines.length === 0 ? (
                         <Alert>
                           <AlertTriangle className="h-4 w-4" />
                           <AlertDescription>
