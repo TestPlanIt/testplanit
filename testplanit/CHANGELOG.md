@@ -1,3 +1,9 @@
+## [0.27.1](https://github.com/TestPlanIt/testplanit/compare/v0.27.0...v0.27.1) (2026-05-12)
+
+### Bug Fixes
+
+* **i18n:** add confirmation dialog description for combinations in multiple languages ([ca6d785](https://github.com/TestPlanIt/testplanit/commit/ca6d7850906d515304ab845361cad5d8842bc171))
+
 ## [0.27.0](https://github.com/TestPlanIt/testplanit/compare/v0.26.2...v0.27.0) (2026-05-12)
 
 ### Features
