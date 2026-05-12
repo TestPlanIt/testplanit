@@ -1,3 +1,9 @@
+## [0.26.2](https://github.com/TestPlanIt/testplanit/compare/v0.26.1...v0.26.2) (2026-05-12)
+
+### Bug Fixes
+
+* apply prettier formatting after CodeQL fix ([476cbb2](https://github.com/TestPlanIt/testplanit/commit/476cbb22839e003cc9e11f069d04803591394bec))
+
 ## [0.26.1](https://github.com/TestPlanIt/testplanit/compare/v0.26.0...v0.26.1) (2026-05-12)
 
 ### Bug Fixes
