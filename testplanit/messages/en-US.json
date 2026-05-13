@@ -6023,6 +6023,10 @@
         "issueTestCoverage": {
           "label": "Issue Test Coverage",
           "description": "View issues with their linked test cases and latest execution status"
+        },
+        "executionLog": {
+          "label": "Execution Log",
+          "description": "Flat list of individual test result records with status, executor, and timestamp"
         }
       },
       "flakyTests": {
@@ -6176,6 +6180,10 @@
         "issueTestCoverage": {
           "label": "Cross-Project Issue Test Coverage",
           "description": "View issues with their linked test cases and latest execution status across projects"
+        },
+        "executionLog": {
+          "label": "Cross-Project Execution Log",
+          "description": "Flat list of individual test result records with status, executor, and timestamp across projects"
         }
       }
     },

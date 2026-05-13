@@ -439,6 +439,28 @@ export const ReportChart: React.FC<ReportChartProps> = ({
     return <ReportMultiLineChart data={transformedData} />;
   }
 
+  // Special handling for execution log - status distribution donut
+  // chartData here is statusBreakdown[] from allResults, not the paginated table rows
+  if (reportType && matchesReportType(reportType, "execution-log")) {
+    const donutData = results
+      .filter((item: any) => item.count > 0)
+      .map((item: any) => ({
+        id: item.statusId ?? item.statusName,
+        name: item.statusName ?? "Unknown",
+        value: item.count,
+        color: item.color ?? "#6b7280",
+        formattedValue: String(item.count),
+      }));
+    if (donutData.length === 0) return null;
+    const total = donutData.reduce((sum: number, d: any) => sum + d.value, 0);
+    return (
+      <RecentResultsDonut
+        data={donutData}
+        formattedTotal={total.toLocaleString()}
+      />
+    );
+  }
+
   // Special handling for flaky tests report - use bubble chart
   // Shows flip count vs recency of failures - tests in top-right need most attention
   if (reportType && matchesReportType(reportType, "flaky-tests")) {

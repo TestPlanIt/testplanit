@@ -6,6 +6,7 @@ import {
   Link2,
   ListTree,
   PlayCircle,
+  ScrollText,
   Shuffle,
   TrendingUp,
   Users,
@@ -97,6 +98,14 @@ export const getProjectReportTypes = (tReports: any): ReportType[] => [
     endpoint: "/api/report-builder/issue-test-coverage",
     isPreBuilt: true,
   },
+  {
+    id: "execution-log",
+    label: tReports("reportTypes.executionLog.label"),
+    description: tReports("reportTypes.executionLog.description"),
+    icon: ScrollText,
+    endpoint: "/api/report-builder/execution-log",
+    isPreBuilt: true,
+  },
 ];
 
 // Cross-project report types for admin - using function to access translations
@@ -165,6 +174,14 @@ export const getCrossProjectReportTypes = (tReports: any): ReportType[] => [
     ),
     icon: Link2,
     endpoint: "/api/report-builder/cross-project-issue-test-coverage",
+    isPreBuilt: true,
+  },
+  {
+    id: "cross-project-execution-log",
+    label: tReports("crossProjectReportTypes.executionLog.label"),
+    description: tReports("crossProjectReportTypes.executionLog.description"),
+    icon: ScrollText,
+    endpoint: "/api/report-builder/cross-project-execution-log",
     isPreBuilt: true,
   },
 ];

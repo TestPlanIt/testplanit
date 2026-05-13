@@ -26,6 +26,7 @@ import { useMemo } from "react";
 import { PaginationComponent } from "~/components/tables/Pagination";
 import { PaginationInfo } from "~/components/tables/PaginationControls";
 import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
+import { useExecutionLogColumns } from "~/hooks/useExecutionLogColumns";
 import { useFlakyTestsColumns } from "~/hooks/useFlakyTestsColumns";
 import { useIssueTestCoverageSummaryColumns } from "~/hooks/useIssueTestCoverageColumns";
 import { useReportColumns } from "~/hooks/useReportColumns";
@@ -194,6 +195,11 @@ export function ReportRenderer({
     mode === "cross-project"
   );
 
+  const executionLogColumns = useExecutionLogColumns(
+    projectId,
+    mode === "cross-project"
+  );
+
   // Choose which columns to use based on report type (same logic as ReportBuilder)
   // If preGeneratedColumns are provided (e.g., from ReportBuilder with drill-down handlers), use those
   const generatedColumns = matchesReportType(reportType, "automation-trends")
@@ -204,7 +210,9 @@ export function ReportRenderer({
         ? testCaseHealthColumns
         : matchesReportType(reportType, "issue-test-coverage")
           ? issueTestCoverageColumns
-          : standardColumns;
+          : matchesReportType(reportType, "execution-log")
+            ? executionLogColumns
+            : standardColumns;
 
   const columns = preGeneratedColumns || generatedColumns;
 
@@ -216,6 +224,7 @@ export function ReportRenderer({
     reportType,
     "issue-test-coverage"
   );
+  const isExecutionLog = matchesReportType(reportType, "execution-log");
 
   // Calculate pagination
   const startIndex = pageSize === "All" ? 1 : (currentPage - 1) * pageSize + 1;
@@ -240,6 +249,7 @@ export function ReportRenderer({
         !isFlakyTests &&
         !isTestCaseHealth &&
         !isIssueTestCoverage &&
+        !isExecutionLog &&
         (dimensionIds.length === 0 || metricIds.length === 0))
     ) {
       return { chart: null, isTruncated: false, totalDataPoints: 0 };
@@ -282,9 +292,11 @@ export function ReportRenderer({
       ? dataToLimit.slice(0, MAX_CHART_DATA_POINTS)
       : dataToLimit;
 
-    // For Test Case Health and Issue Test Coverage, pass all data for accurate summaries
+    // For Test Case Health, Issue Test Coverage, and Execution Log, pass all data for accurate summaries
     const chartResults =
-      isTestCaseHealth || isIssueTestCoverage ? dataForChart : limitedChartData;
+      isTestCaseHealth || isIssueTestCoverage || isExecutionLog
+        ? dataForChart
+        : limitedChartData;
 
     return {
       chart: (
@@ -333,7 +345,8 @@ export function ReportRenderer({
                 : isAutomationTrends ||
                     isFlakyTests ||
                     isTestCaseHealth ||
-                    isIssueTestCoverage
+                    isIssueTestCoverage ||
+                    isExecutionLog
                   ? tReports("noDataAvailable")
                   : tReports("selectAtLeastOneDimensionAndMetric")}
             </CardDescription>

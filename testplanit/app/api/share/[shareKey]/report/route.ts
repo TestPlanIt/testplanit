@@ -242,7 +242,9 @@ export const GET = withAuditContext(
         // Pre-built reports return data in { data: [...] } format
         // Don't generate dimension/metric metadata - let the frontend handle column generation
         results = reportData.data || [];
-        chartData = reportData.data || [];
+        // Some pre-built reports (e.g. execution-log) return a separate statusBreakdown
+        // array for the chart rather than using the paginated table rows.
+        chartData = reportData.statusBreakdown || reportData.data || [];
         // Leave dimensions and metrics empty for pre-built reports
         dimensionsWithLabels = [];
         metricsWithLabels = [];
