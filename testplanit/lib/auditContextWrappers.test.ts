@@ -178,13 +178,8 @@ describe("enrichFromApiAuth", () => {
         userName: "Orphan",
       })
     ).not.toThrow();
-    // getAuditContext may return the globalFallbackContext singleton if
-    // some other test set it; the invariant we care about here is that
-    // enrichFromApiAuth itself doesn't create a frame. Confirm that via
-    // the ALS store directly.
-    // Note: we don't assert getAuditContext() === undefined because
-    // auditContext.ts's getAuditContext falls back to globalFallbackContext.
-    // The behavioral contract is "doesn't throw"; anything else is
-    // delegated to updateAuditContext's existing semantics.
+    // The behavioral contract is "doesn't throw" — enrichFromApiAuth must
+    // not create its own ALS frame; anything else is delegated to
+    // updateAuditContext's existing semantics.
   });
 });

@@ -1,5 +1,9 @@
 import NextAuth from "next-auth";
 import { cookies } from "next/headers";
+import {
+  extractAuditContextFromHeaders,
+  runWithAuditContext,
+} from "~/lib/auditContext";
 import { getAuthOptions } from "~/server/auth";
 
 /**
@@ -50,7 +54,11 @@ export async function GET(
     params: await context.params,
   };
 
-  return handler(req, resolvedContext);
+  // Seed the audit-context ALS frame so signIn/signOut callbacks in
+  // server/auth.ts inherit ipAddress/userAgent/requestId for LOGIN /
+  // LOGIN_FAILED audit rows.
+  const auditCtx = extractAuditContextFromHeaders(req.headers);
+  return runWithAuditContext(auditCtx, () => handler(req, resolvedContext));
 }
 
 export async function POST(
@@ -65,5 +73,6 @@ export async function POST(
     params: await context.params,
   };
 
-  return handler(req, resolvedContext);
+  const auditCtx = extractAuditContextFromHeaders(req.headers);
+  return runWithAuditContext(auditCtx, () => handler(req, resolvedContext));
 }
