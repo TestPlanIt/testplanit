@@ -37,6 +37,27 @@ vi.mock("~/lib/hooks", () => ({
     mockUseFindManyTestCaseParameter(args, opts),
   useCountDataSetRow: (args: any, opts?: any) =>
     mockUseCountDataSetRow(args, opts),
+  // DatasetTab (Surface F) consumes these — stub to no-op so the Sheet
+  // shell test doesn't need to model run history.
+  useCountTestRunCases: () => ({ data: 0 }),
+  useFindManyTestRunCaseIteration: () => ({ data: [] }),
+}));
+
+// DatasetTab imports `~/lib/navigation` which builds on next-intl's
+// createNavigation; the global next/navigation mock omits `redirect`,
+// so we stub the navigation surface explicitly here.
+vi.mock("~/lib/navigation", () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    refresh: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+  }),
+  usePathname: () => "/",
+  Link: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  redirect: vi.fn(),
 }));
 
 // Mock sonner toast

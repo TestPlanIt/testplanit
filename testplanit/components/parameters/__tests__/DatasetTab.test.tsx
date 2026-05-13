@@ -12,11 +12,16 @@ vi.mock("next-intl", () => ({
       datasetPasteCsv: "Paste CSV",
       datasetImportCsv: "Import CSV",
       datasetEmptyHeading: "No dataset rows yet",
-      datasetEmptyBody: "Add a row, paste CSV, or import a file to get started.",
-      datasetFooterHint: "Press Enter to commit · Tab to next cell · Drag to reorder",
+      datasetEmptyBody:
+        "Add a row, paste CSV, or import a file to get started.",
+      datasetFooterHint:
+        "Press Enter to commit · Tab to next cell · Drag to reorder",
       datasetRowSelectAria: "Select row",
       datasetSaveError: "Could not save change",
       datasetSaveBlocked: "Fix {count} errors before continuing.",
+      datasetRowResultsHeader: "Last result",
+      datasetRowResultLink: "View {status} result",
+      datasetRowResultEmpty: "—",
     };
     let v = dict[key] ?? key;
     if (params) {
@@ -26,6 +31,28 @@ vi.mock("next-intl", () => ({
     }
     return v;
   },
+}));
+
+const mockUseCountTestRunCases = vi.fn();
+const mockUseFindManyTestRunCaseIteration = vi.fn();
+const mockRouterPush = vi.fn();
+
+vi.mock("~/lib/hooks", () => ({
+  useCountTestRunCases: (...args: any[]) => mockUseCountTestRunCases(...args),
+  useFindManyTestRunCaseIteration: (...args: any[]) =>
+    mockUseFindManyTestRunCaseIteration(...args),
+}));
+
+vi.mock("~/lib/navigation", () => ({
+  useRouter: () => ({
+    push: mockRouterPush,
+    replace: vi.fn(),
+    refresh: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+  }),
+  usePathname: () => "/",
 }));
 
 vi.mock("sonner", () => ({
@@ -39,10 +66,7 @@ vi.mock("sonner", () => ({
 // Stub the cell + paste dialog so we can focus on the grid + toolbar
 vi.mock("@/components/parameters/DatasetCell", () => ({
   DatasetCell: ({ rowId, columnId, value, onEdit }: any) => (
-    <span
-      data-testid={`stub-cell-${rowId}-${columnId}`}
-      onClick={onEdit}
-    >
+    <span data-testid={`stub-cell-${rowId}-${columnId}`} onClick={onEdit}>
       {String(value ?? "")}
     </span>
   ),
@@ -111,6 +135,11 @@ const mockGetDatasetResponse = (rows: any[]) =>
 
 beforeEach(() => {
   vi.restoreAllMocks();
+  // Default: case has no run history. Tests that exercise the Surface F
+  // "Last result" column override these mocks explicitly.
+  mockUseCountTestRunCases.mockReturnValue({ data: 0 });
+  mockUseFindManyTestRunCaseIteration.mockReturnValue({ data: [] });
+  mockRouterPush.mockReset();
 });
 
 describe("DatasetTab — initial mount + structure", () => {
@@ -154,7 +183,9 @@ describe("DatasetTab — initial mount + structure", () => {
     await waitFor(() => {
       expect(screen.getByTestId(`dataset-row-200`)).toBeInTheDocument();
     });
-    expect(screen.getByTestId("dataset-row-drag-handle-200")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("dataset-row-drag-handle-200")
+    ).toBeInTheDocument();
   });
 
   it("Test 5: Toolbar renders counts text + Paste CSV + Import CSV + Add Row buttons", async () => {
@@ -250,7 +281,9 @@ describe("DatasetTab — toolbar actions", () => {
       )
     );
     await waitFor(() => {
-      expect(screen.getByTestId("dataset-paste-csv-button")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("dataset-paste-csv-button")
+      ).toBeInTheDocument();
     });
     fireEvent.click(screen.getByTestId("dataset-paste-csv-button"));
     await waitFor(() => {
@@ -272,7 +305,9 @@ describe("DatasetTab — toolbar actions", () => {
       )
     );
     await waitFor(() => {
-      expect(screen.getByTestId("dataset-import-csv-button")).toBeInTheDocument();
+      expect(
+        screen.getByTestId("dataset-import-csv-button")
+      ).toBeInTheDocument();
     });
     fireEvent.click(screen.getByTestId("dataset-import-csv-button"));
     expect(onOpenImportWizard).toHaveBeenCalled();
@@ -284,5 +319,231 @@ describe("DatasetTab — uses SheetEditingContext", () => {
     // Module-level grep is verified in acceptance criteria; here we just
     // verify the import did not crash.
     expect(true).toBe(true);
+  });
+});
+
+describe("DatasetTab — Surface F: 'Last result' cross-link column", () => {
+  const SAMPLE_ROWS = [
+    {
+      id: 200,
+      label: "Happy",
+      rowIndex: 0,
+      valuesJson: { username: "alice", amount: 100 },
+    },
+    {
+      id: 201,
+      label: "Sad",
+      rowIndex: 1,
+      valuesJson: { username: "bob", amount: 200 },
+    },
+  ];
+
+  it("does not render the 'Last result' column when the case has no run history", async () => {
+    mockUseCountTestRunCases.mockReturnValue({ data: 0 });
+    mockUseFindManyTestRunCaseIteration.mockReturnValue({ data: [] });
+    global.fetch = mockGetDatasetResponse(SAMPLE_ROWS) as any;
+    render(
+      wrap(
+        <DatasetTab
+          caseId={42}
+          projectId={9}
+          parameters={SAMPLE_PARAMS as any}
+        />
+      )
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId("dataset-row-200")).toBeInTheDocument();
+    });
+    // No header text, no empty-cell markers, no link buttons.
+    expect(screen.queryByText("Last result")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("dataset-row-result-empty-0")
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("dataset-row-result-link-0")
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders the 'Last result' column with status pip + link when the case has run history", async () => {
+    mockUseCountTestRunCases.mockReturnValue({ data: 3 });
+    mockUseFindManyTestRunCaseIteration.mockReturnValue({
+      data: [
+        {
+          id: 9001,
+          rowIndex: 0,
+          status: {
+            id: 1,
+            name: "Failed",
+            isSuccess: false,
+            isFailure: true,
+            isCompleted: true,
+            systemName: "failed",
+            color: { value: "rgb(255, 0, 0)" },
+          },
+          testRunCase: { testRunId: 77 },
+        },
+      ],
+    });
+    global.fetch = mockGetDatasetResponse(SAMPLE_ROWS) as any;
+    render(
+      wrap(
+        <DatasetTab
+          caseId={42}
+          projectId={9}
+          parameters={SAMPLE_PARAMS as any}
+        />
+      )
+    );
+    await waitFor(() => {
+      expect(screen.getByText("Last result")).toBeInTheDocument();
+    });
+    const link = screen.getByTestId("dataset-row-result-link-0");
+    expect(link).toBeInTheDocument();
+    expect(link.textContent).toContain("View Failed result");
+  });
+
+  it("renders an empty cell for dataset rows with no matching iteration", async () => {
+    mockUseCountTestRunCases.mockReturnValue({ data: 3 });
+    mockUseFindManyTestRunCaseIteration.mockReturnValue({
+      // Only row 0 has a matching iteration; row 1 has none.
+      data: [
+        {
+          id: 9001,
+          rowIndex: 0,
+          status: {
+            id: 1,
+            name: "Passed",
+            isSuccess: true,
+            isFailure: false,
+            isCompleted: true,
+            systemName: "passed",
+            color: null,
+          },
+          testRunCase: { testRunId: 77 },
+        },
+      ],
+    });
+    global.fetch = mockGetDatasetResponse(SAMPLE_ROWS) as any;
+    render(
+      wrap(
+        <DatasetTab
+          caseId={42}
+          projectId={9}
+          parameters={SAMPLE_PARAMS as any}
+        />
+      )
+    );
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("dataset-row-result-link-0")
+      ).toBeInTheDocument();
+    });
+    expect(
+      screen.getByTestId("dataset-row-result-empty-1")
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("dataset-row-result-link-1")
+    ).not.toBeInTheDocument();
+  });
+
+  it("pushes to the run page with iteration ordinal + selectedCase on click", async () => {
+    mockUseCountTestRunCases.mockReturnValue({ data: 1 });
+    mockUseFindManyTestRunCaseIteration.mockReturnValue({
+      data: [
+        {
+          id: 9002,
+          rowIndex: 1,
+          status: {
+            id: 2,
+            name: "Passed",
+            isSuccess: true,
+            isFailure: false,
+            isCompleted: true,
+            systemName: "passed",
+            color: null,
+          },
+          testRunCase: { testRunId: 55 },
+        },
+      ],
+    });
+    global.fetch = mockGetDatasetResponse(SAMPLE_ROWS) as any;
+    render(
+      wrap(
+        <DatasetTab
+          caseId={42}
+          projectId={9}
+          parameters={SAMPLE_PARAMS as any}
+        />
+      )
+    );
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("dataset-row-result-link-1")
+      ).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId("dataset-row-result-link-1"));
+    expect(mockRouterPush).toHaveBeenCalledWith(
+      "/projects/runs/9/55?iteration=2&selectedCase=42"
+    );
+  });
+
+  it("uses the most recent iteration when multiple iterations share a rowIndex", async () => {
+    // Hook returns desc by completedAt; first occurrence per rowIndex wins.
+    mockUseCountTestRunCases.mockReturnValue({ data: 2 });
+    mockUseFindManyTestRunCaseIteration.mockReturnValue({
+      data: [
+        {
+          id: 9100,
+          rowIndex: 0,
+          status: {
+            id: 1,
+            name: "Failed",
+            isSuccess: false,
+            isFailure: true,
+            isCompleted: true,
+            systemName: "failed",
+            color: null,
+          },
+          testRunCase: { testRunId: 88 },
+        },
+        {
+          id: 9099,
+          rowIndex: 0,
+          status: {
+            id: 2,
+            name: "Passed",
+            isSuccess: true,
+            isFailure: false,
+            isCompleted: true,
+            systemName: "passed",
+            color: null,
+          },
+          testRunCase: { testRunId: 77 },
+        },
+      ],
+    });
+    global.fetch = mockGetDatasetResponse(SAMPLE_ROWS) as any;
+    render(
+      wrap(
+        <DatasetTab
+          caseId={42}
+          projectId={9}
+          parameters={SAMPLE_PARAMS as any}
+        />
+      )
+    );
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("dataset-row-result-link-0")
+      ).toBeInTheDocument();
+    });
+    // "Failed" came first in the desc-ordered list, so it wins.
+    expect(
+      screen.getByTestId("dataset-row-result-link-0").textContent
+    ).toContain("View Failed result");
+    fireEvent.click(screen.getByTestId("dataset-row-result-link-0"));
+    expect(mockRouterPush).toHaveBeenCalledWith(
+      "/projects/runs/9/88?iteration=1&selectedCase=42"
+    );
   });
 });

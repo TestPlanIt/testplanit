@@ -5,6 +5,10 @@ import { DatasetRowActions } from "@/components/parameters/DatasetRowActions";
 import { PasteCsvDialog } from "@/components/parameters/PasteCsvDialog";
 import { SheetEditingContext } from "@/components/parameters/ConfigureParametersSheet";
 import { SortableDatasetRow } from "@/components/parameters/SortableDatasetRow";
+import {
+  glyphFromStatus,
+  IterationStatusPip,
+} from "@/components/iterations/IterationStatusPip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -50,6 +54,11 @@ import {
   useState,
 } from "react";
 import { toast } from "sonner";
+import {
+  useCountTestRunCases,
+  useFindManyTestRunCaseIteration,
+} from "~/lib/hooks";
+import { useRouter } from "~/lib/navigation";
 import {
   buildRowSchemaFromParameters,
   type ParameterShape,
@@ -97,6 +106,22 @@ interface EditCellState {
 const DRAG_COLUMN_ID = "__drag";
 const SELECT_COLUMN_ID = "__select";
 const LABEL_COLUMN_ID = "__label";
+const RESULT_COLUMN_ID = "__lastResult";
+
+interface LastResultEntry {
+  iterationId: number;
+  rowIndex: number;
+  runId: number;
+  status: {
+    id: number;
+    name: string;
+    isSuccess: boolean;
+    isFailure: boolean;
+    isCompleted: boolean;
+    systemName: string | null;
+    color?: { value: string } | null;
+  };
+}
 
 /**
  * Surface D — the dataset spreadsheet inside the ConfigureParametersSheet.
@@ -111,12 +136,70 @@ const LABEL_COLUMN_ID = "__label";
  */
 export function DatasetTab({
   caseId,
+  projectId,
   parameters,
   onOpenImportWizard,
 }: DatasetTabProps) {
   const t = useTranslations("parameters");
   const queryClient = useQueryClient();
+  const router = useRouter();
   const { setEditingCell } = useContext(SheetEditingContext);
+
+  // ---------- Surface F: "Last result" cross-link column ----------
+  // Cheap gate: only render the trailing column when this case has run history.
+  const { data: runHistoryCount } = useCountTestRunCases({
+    where: { repositoryCaseId: caseId },
+  });
+  const caseHasRunHistory = (runHistoryCount ?? 0) > 0;
+
+  const { data: lastResultsRaw } = useFindManyTestRunCaseIteration(
+    {
+      where: {
+        testRunCase: { repositoryCaseId: caseId },
+        isDeleted: false,
+        statusId: { not: null },
+      },
+      include: {
+        status: {
+          select: {
+            id: true,
+            name: true,
+            isSuccess: true,
+            isFailure: true,
+            isCompleted: true,
+            systemName: true,
+            color: { select: { value: true } },
+          },
+        },
+        testRunCase: { select: { testRunId: true } },
+      },
+      orderBy: { completedAt: "desc" },
+    },
+    { enabled: caseHasRunHistory }
+  );
+
+  // Build a map of rowIndex → most-recent iteration result. Query is ordered
+  // desc by completedAt, so the first occurrence of any rowIndex wins.
+  const lastResultByRowIndex = useMemo(() => {
+    const map = new Map<number, LastResultEntry>();
+    const list = (lastResultsRaw ?? []) as Array<{
+      id: number;
+      rowIndex: number;
+      status: LastResultEntry["status"] | null;
+      testRunCase: { testRunId: number };
+    }>;
+    for (const it of list) {
+      if (!it.status) continue;
+      if (map.has(it.rowIndex)) continue;
+      map.set(it.rowIndex, {
+        iterationId: it.id,
+        rowIndex: it.rowIndex,
+        runId: it.testRunCase.testRunId,
+        status: it.status,
+      });
+    }
+    return map;
+  }, [lastResultsRaw]);
 
   const [dataset, setDataset] = useState<DatasetRecord | null>(null);
   const [editCell, setEditCell] = useState<EditCellState | null>(null);
@@ -511,6 +594,57 @@ export function DatasetTab({
         } as ColumnDef<DatasetRowRecord>;
       }),
     ];
+
+    // Surface F.1: trailing "Last result" column — only when the case has
+    // been run at least once. PARAM-07 invariant: cases without run history
+    // see no new column.
+    if (caseHasRunHistory) {
+      cols.push({
+        id: RESULT_COLUMN_ID,
+        size: 128,
+        minSize: 128,
+        header: () => t("datasetRowResultsHeader"),
+        cell: ({ row }: { row: { original: DatasetRowRecord } }) => {
+          const entry = lastResultByRowIndex.get(row.original.rowIndex);
+          if (!entry) {
+            return (
+              <span
+                className="text-xs text-muted-foreground"
+                data-testid={`dataset-row-result-empty-${row.original.rowIndex}`}
+              >
+                {t("datasetRowResultEmpty")}
+              </span>
+            );
+          }
+          const glyph = glyphFromStatus(entry.status, false);
+          const handleClick = () => {
+            router.push(
+              `/projects/runs/${projectId}/${entry.runId}?iteration=${
+                entry.rowIndex + 1
+              }&selectedCase=${caseId}`
+            );
+          };
+          return (
+            <div className="flex items-center gap-2">
+              <IterationStatusPip
+                glyph={glyph}
+                statusColor={entry.status.color?.value}
+              />
+              <Button
+                variant="link"
+                size="sm"
+                onClick={handleClick}
+                data-testid={`dataset-row-result-link-${row.original.rowIndex}`}
+                className="p-0 h-auto"
+              >
+                {t("datasetRowResultLink", { status: entry.status.name })}
+              </Button>
+            </div>
+          );
+        },
+      } as ColumnDef<DatasetRowRecord>);
+    }
+
     return cols;
   }, [
     parameters,
@@ -523,6 +657,11 @@ export function DatasetTab({
     commitCell,
     moveCell,
     moveDown,
+    caseHasRunHistory,
+    lastResultByRowIndex,
+    caseId,
+    projectId,
+    router,
   ]);
 
   const table = useReactTable<DatasetRowRecord>({
