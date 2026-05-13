@@ -58,5 +58,6 @@ jobs:
             echo "Locale files already up to date, nothing to commit"
           else
             git commit -m "chore(i18n): sync locale files [skip ci]"
+            git pull --rebase origin main
             git push
           fi
