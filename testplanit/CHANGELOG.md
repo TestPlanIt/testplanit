@@ -1,3 +1,9 @@
+## [0.27.4](https://github.com/TestPlanIt/testplanit/compare/v0.27.3...v0.27.4) (2026-05-13)
+
+### Bug Fixes
+
+* **i18n:** fix TypeScript type errors in next-intl interpolation calls ([08a0c9c](https://github.com/TestPlanIt/testplanit/commit/08a0c9cf7191a530feedd8db927970a1d95c9973))
+
 ## [0.27.3](https://github.com/TestPlanIt/testplanit/compare/v0.27.2...v0.27.3) (2026-05-13)
 
 ### Bug Fixes
