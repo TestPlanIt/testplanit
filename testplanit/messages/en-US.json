@@ -6512,6 +6512,27 @@
     "iterationValueOverridden": "Overridden",
     "iterationValueSnapshot": "Original: {value}",
     "iterationOverrideBanner": "This iteration's values were overridden after run creation. The original snapshot is preserved for audit.",
-    "iterationViewHistory": "View history"
+    "iterationViewHistory": "View history",
+    "overrideDialogTitle": "Override values · Iteration {n}",
+    "overrideDialogDescription": "Edit values for this iteration. The original snapshot is preserved.",
+    "overrideResetRow": "Reset to original",
+    "overrideSave": "Save & continue",
+    "overrideSavedToast": "Iteration values overridden",
+    "overrideError": "Could not save overrides",
+    "overrideRevealAria": "Reveal value",
+    "overrideHideAria": "Hide value",
+    "overrideUnsavedTitle": "Discard unsaved changes?",
+    "overrideUnsavedDescription": "Your overrides have not been saved. Closing the dialog will discard them.",
+    "overrideUnsavedKeep": "Keep editing",
+    "overrideUnsavedDiscard": "Discard changes",
+    "iterationBulkConfirmTitle": "Mark {count, plural, =1 {# iteration} other {# iterations}} as {action}?",
+    "iterationBulkConfirmDescription": "Each selected iteration will receive a new result with status \"{statusName}\".",
+    "iterationBulkConfirm": "Mark {action}",
+    "iterationBulkConfirmReplace": "Replace with {action}",
+    "iterationBulkOverwriteWarning": "{count, plural, =1 {# of the selected iterations already has} other {# of the selected iterations already have}} a result. A new result will be recorded and the latest will replace the current one.",
+    "iterationBulkReasonLabel": "Reason (optional)",
+    "iterationBulkReasonHelp": "Recorded on each result and in the audit log.",
+    "iterationBulkSuccess": "{count, plural, =1 {# iteration} other {# iterations}} marked {action}",
+    "iterationBulkError": "Could not mark iterations"
   }
 }

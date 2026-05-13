@@ -1,16 +1,22 @@
 "use client";
 
-import { useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
 import { useActiveIterationFromUrl } from "~/hooks/useActiveIterationFromUrl";
 import { useFindManyTestRunCaseIteration } from "~/lib/hooks";
+import type { OverrideParameterSchemaEntry } from "~/lib/schemas/iterationOverrideSchema";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 
 import { IterationHeader } from "./IterationHeader";
 import { IterationOverrideBanner } from "./IterationOverrideBanner";
 import { IterationSidebar } from "./IterationSidebar";
 import { IterationValuesStrip } from "./IterationValuesStrip";
+import { OverrideValuesDialog } from "./OverrideValuesDialog";
 import type {
   IterationDTO,
   IterationMenuAction,
@@ -32,7 +38,10 @@ interface SnapshotParameter {
   type: "STRING" | "INTEGER" | "BOOLEAN" | "SELECT";
   order?: number;
   sensitive?: boolean;
+  required?: boolean;
   defaultValue?: unknown;
+  allowedValuesJson?: unknown;
+  allowedValues?: unknown;
 }
 
 function deepEqual(a: unknown, b: unknown): boolean {
@@ -64,6 +73,20 @@ export function IterationAwareTestRunCaseDetails({
   innerProps,
 }: IterationAwareTestRunCaseDetailsProps) {
   const { activeRowIndex } = useActiveIterationFromUrl();
+  const { data: session } = useSession();
+  const t = useTranslations("parameters");
+  const queryClient = useQueryClient();
+
+  // Dialog state: Override (Task 12), BulkConfirm (Task 13).
+  const [overrideOpen, setOverrideOpen] = useState(false);
+  const [overrideTargetId, setOverrideTargetId] = useState<number | null>(null);
+
+  // Conservative client-side default: only system ADMINs see sensitive
+  // plaintext in the dialog. Non-admin users get the redacted/disabled
+  // input. The server enforces the real RolePermission.canReadSensitive
+  // check at the audit boundary; this client toggle is purely UX.
+  const viewerCanReadSensitive =
+    (session?.user as { access?: string } | undefined)?.access === "ADMIN";
 
   const { data: iterationsRaw } = useFindManyTestRunCaseIteration(
     {
@@ -132,6 +155,29 @@ export function IterationAwareTestRunCaseDetails({
     }));
   }, [snapshot]);
 
+  // Richer per-parameter schema for the OverrideValuesDialog — carries
+  // `required` and `allowedValues` from the snapshot. The dialog's Zod
+  // factory needs these to validate SELECT values and decide optionality.
+  const overrideParamsSchema: OverrideParameterSchemaEntry[] = useMemo(() => {
+    if (!snapshot?.parametersJson) return [];
+    const arr = (snapshot.parametersJson as SnapshotParameter[]) ?? [];
+    return arr.map((p) => ({
+      name: p.name,
+      type: p.type,
+      required: p.required !== false,
+      sensitive: !!p.sensitive,
+      allowedValues: Array.isArray(p.allowedValuesJson)
+        ? (p.allowedValuesJson as unknown[])
+            .filter((v) => typeof v === "string")
+            .map((v) => v as string)
+        : Array.isArray(p.allowedValues)
+          ? (p.allowedValues as unknown[])
+              .filter((v) => typeof v === "string")
+              .map((v) => v as string)
+          : null,
+    }));
+  }, [snapshot]);
+
   const snapshotRows: Array<Record<string, unknown>> = useMemo(() => {
     if (!snapshot?.rowsJson) return [];
     return (snapshot.rowsJson as Array<Record<string, unknown>>) ?? [];
@@ -189,23 +235,96 @@ export function IterationAwareTestRunCaseDetails({
     });
   }, [activeIteration, parametersSchema]);
 
+  const handleResetIteration = async (iterationId: number) => {
+    try {
+      // Reset writes a new TestRunResults row with the seeded "untested"
+      // status via the existing submit-result endpoint. Per CONTEXT.md
+      // open-question resolution, reset is "record a new result with
+      // untested" rather than a destructive delete (preserves audit chain).
+      const statusRes = await fetch(`/api/statuses?systemName=untested`);
+      let untestedId: number | null = null;
+      if (statusRes.ok) {
+        const data = await statusRes.json();
+        const list = Array.isArray(data?.statuses)
+          ? data.statuses
+          : Array.isArray(data)
+            ? data
+            : [];
+        const match = list.find(
+          (s: { systemName?: string }) => s?.systemName === "untested",
+        );
+        if (match) untestedId = match.id;
+      }
+      if (!untestedId) {
+        toast.error(t("overrideError"), {
+          description: "Untested status not found",
+        });
+        return;
+      }
+      const res = await fetch(`/api/test-runs/submit-result`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          testRunId,
+          testRunCaseId,
+          iterationId,
+          statusId: untestedId,
+          attempt: 1,
+          testRunCaseVersion: 1,
+        }),
+      });
+      if (!res.ok) {
+        toast.error(t("overrideError"));
+        return;
+      }
+      await queryClient.invalidateQueries({
+        queryKey: ["zenstack", "TestRunCaseIteration"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["zenstack", "TestRunCases"],
+      });
+    } catch {
+      toast.error(t("overrideError"));
+    }
+  };
+
   const handleIterationMenuAction = (
     iterationId: number,
     action: IterationMenuAction
   ) => {
-    // Wave 5 wires real dialogs. For Wave 4 we no-op visibly so reviewers can
-    // confirm menu interactions reach this layer.
-    console.log("iteration menu action", {
-      iterationId,
-      action,
-      testRunCaseId,
-    });
+    if (action === "override") {
+      setOverrideTargetId(iterationId);
+      setOverrideOpen(true);
+      return;
+    }
+    if (action === "skip") {
+      // Single-iteration skip reuses the bulk-skip path with one element.
+      // Wave 5 Task 13 wires the bulk dialog; for Task 12 we leave this a
+      // no-op so the override path can ship independently.
+      void iterationId;
+      return;
+    }
+    if (action === "reset") {
+      void handleResetIteration(iterationId);
+      return;
+    }
   };
 
   const handleBulkSkip = (iterationIds: number[]) => {
-    // Wave 5 (Task 13) wires the bulk-skip confirm dialog.
-    console.log("bulk-skip clicked", { iterationIds, testRunCaseId });
+    // Task 13 wires the IterationBulkConfirmDialog. For Task 12 ship, this
+    // remains a no-op stub so the override flow can land independently.
+    void iterationIds;
   };
+
+  const overrideTargetIteration = useMemo(
+    () => iterations.find((it) => it.id === overrideTargetId) ?? null,
+    [iterations, overrideTargetId]
+  );
+
+  const overrideTargetSnapshotRow = useMemo(() => {
+    if (!overrideTargetIteration) return null;
+    return snapshotRows[overrideTargetIteration.rowIndex] ?? null;
+  }, [overrideTargetIteration, snapshotRows]);
 
   return (
     <div className="flex flex-col md:flex-row h-full">
@@ -243,6 +362,26 @@ export function IterationAwareTestRunCaseDetails({
           <TestRunCaseDetails {...innerProps} stepParameters={stepParameters} />
         </div>
       </div>
+
+      {overrideTargetIteration && overrideTargetSnapshotRow && (
+        <OverrideValuesDialog
+          open={overrideOpen}
+          onOpenChange={(next) => {
+            setOverrideOpen(next);
+            if (!next) setOverrideTargetId(null);
+          }}
+          runId={testRunId}
+          caseId={testRunCaseId}
+          iterationId={overrideTargetIteration.id}
+          rowIndex={overrideTargetIteration.rowIndex}
+          parametersSchema={overrideParamsSchema}
+          snapshotRow={overrideTargetSnapshotRow}
+          currentValues={overrideTargetIteration.valuesJson}
+          viewerCanReadSensitive={viewerCanReadSensitive}
+        />
+      )}
+
+      {/* IterationBulkConfirmDialog mounted in Task 13. */}
     </div>
   );
 }
