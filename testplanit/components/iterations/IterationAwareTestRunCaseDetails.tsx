@@ -260,7 +260,7 @@ export function IterationAwareTestRunCaseDetails({
       }
       if (!untestedId) {
         toast.error(t("overrideError"), {
-          description: "Untested status not found",
+          description: t("iterationResetUntestedMissing"),
         });
         return;
       }

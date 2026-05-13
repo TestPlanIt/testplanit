@@ -6536,6 +6536,13 @@
     "iterationBulkReasonLabel": "Reason (optional)",
     "iterationBulkReasonHelp": "Recorded on each result and in the audit log.",
     "iterationBulkSuccess": "{count, plural, =1 {# iteration} other {# iterations}} marked {action}",
-    "iterationBulkError": "Could not mark iterations"
+    "iterationBulkError": "Could not mark iterations",
+    "iterationBulkNa": "Mark N/A",
+    "iterationListLoadError": "Couldn't load iterations.",
+    "iterationResetUntestedMissing": "Untested status not found",
+    "overrideTitle": "Override values for iteration {n}",
+    "overrideDescription": "Changes affect only this iteration. The dataset snapshot and source dataset remain unchanged. This action is audit-logged.",
+    "overrideValidationItem": "@{param}: {message}",
+    "overrideSensitiveDenied": "You don't have permission to edit sensitive values."
   }
 }

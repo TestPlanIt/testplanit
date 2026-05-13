@@ -470,7 +470,7 @@
       "updateError": "Se ha producido un error al actualizar el artículo",
       "linkCopied": "Enlace copiado al portapapeles",
       "copyFailed": "Error al copiar el enlace al portapapeles",
-      "created": "Prueba creada con éxito",
+      "created": "La prueba se realizó correctamente.",
       "createdDescription": "La ejecución de prueba ha sido creada y ahora es visible en la lista de ejecuciones de prueba.",
       "createError": "Se ha producido un error desconocido. Por favor, inténtelo de nuevo.",
       "emptyActive": "No hay ejecuciones de prueba activas",
@@ -586,7 +586,7 @@
       "noTestCasesSelected": "Ningún caso de prueba seleccionado",
       "editToSelectTestCases": "Editar el Test Run para seleccionar los casos de prueba.",
       "casesInRun": "{count, plural, =0 {No hay casos de prueba en la prueba} =1 {1 caso de prueba en la prueba} other {# casos de prueba en la prueba}}",
-      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 Caso único} other {# Casos únicos}} en {configCount, plural, =1 {1 Configuración} other {# Configuraciones}} ({totalCount} casos totales)",
+      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 caso único} other {# Casos únicos}} en {configCount, plural, =1 {1 configuración} other {# Configuraciones}} ({totalCount} casos totales)",
       "viewTestRunDetails": "Ver detalles de la prueba",
       "testRuns": "{count, plural, =0 {No hay ejecuciones de prueba} =1 {1 Prueba de ejecución} other {# Prueba de ejecuciones}}",
       "sessions": "{count, plural, =0 {Sin Sesiones} =1 {1 Sesión} other {# Sesiones}}",
@@ -1229,8 +1229,8 @@
         "preview": {
           "resolvingBranch": "Resolviendo la rama…",
           "scanningFiles": "Escaneando archivos en {scope}…",
-          "scanningFilesCount": "Escaneando archivos en {scope}… ({count} encontrados)",
-          "filtering": "Aplicación de filtros a {count} archivos…"
+          "scanningFilesCount": "Escaneando archivos en {scope}… ({count} encontrado)",
+          "filtering": "Aplicando filtros a los archivos {count}…"
         },
         "cache": {
           "title": "Configuración de caché",
@@ -1475,8 +1475,8 @@
       "backToSession": "Volver a la sesión",
       "backToLatest": "Volver a la última versión",
       "versionInfo": {
-        "created": "Versión {number} creada",
-        "latestUpdated": "Última versión {number} actualizada"
+        "created": "Versión {number} Creada",
+        "latestUpdated": "Última versión {number} Actualizada"
       },
       "renderer": {
         "noEstimate": "No hay estimación",
@@ -1571,7 +1571,7 @@
         "avatarUpdated": "Avatar actualizado correctamente.",
         "avatarUpdateError": "Error al actualizar el avatar.",
         "deleteAvatar": "Eliminar avatar",
-        "deleteAvatarConfirm": "¿Está seguro que desea eliminar su avatar?",
+        "deleteAvatarConfirm": "¿Estás seguro de que quieres eliminar tu avatar?",
         "emailDisabledForSso": "El correo electrónico no se puede cambiar para las cuentas SSO. Por favor, actualízalo a través de tu proveedor de identidad.",
         "emailEditableForBoth": "Puede iniciar sesión con correo electrónico/contraseña y SSO. Los cambios de correo electrónico sólo afectarán la autenticación de contraseña.",
         "linkSsoProvider": "Enlazar proveedor SSO"
@@ -1700,7 +1700,7 @@
       "detailsRegion": "Detalles del caso de prueba",
       "metadataRegion": "Metadatos de caso de prueba",
       "versionCreated": "Versión {version} creada",
-      "latestVersionUpdated": "Última versión {version} actualizada",
+      "latestVersionUpdated": "Última versión {version} Actualizada",
       "historyView": "Ver Historial de Casos de Prueba"
     },
     "fields": {
@@ -1723,7 +1723,7 @@
       "add": "Añadir paso",
       "addSharedSteps": "Añadir pasos compartidos",
       "delete": "Eliminar paso",
-      "confirmDelete": "¿Borrar paso {number}?",
+      "confirmDelete": "¿Confirmar eliminación del paso {number}?",
       "expand": "Expandir todos los pasos",
       "collapse": "Colapsar todos los pasos",
       "createSharedSteps": "¡Crear compartido {number, plural, one {Paso} other {¡Pasos}}",
@@ -1806,7 +1806,7 @@
       "cannotReorderAcrossPages": "No se pueden reordenar los casos de prueba en varias páginas. Para reordenarlos, visualice todos los casos en una sola página seleccionando «Todos» en el menú de tamaño de página, o deseleccione los casos de otras páginas. Aún puede arrastrar los casos seleccionados a carpetas.",
       "exportModal": {
         "scope": {
-          "allFiltered": "Todo en vista ({count})"
+          "allFiltered": "Todo a la vista ({count})"
         },
         "textLongFormat": {
           "label": "Formato de texto rico"
@@ -2002,7 +2002,7 @@
       "description": "Elija sus opciones de exportación a continuación.",
       "scope": {
         "selected": "Seleccionado ({count})",
-        "allFiltered": "Todos (Vista actual) ({count})",
+        "allFiltered": "Todo (Vista actual) ({count})",
         "allProject": "Todo en el proyecto ({count})"
       },
       "format": {
@@ -2237,7 +2237,7 @@
       "review": {
         "title": "Revisar casos de prueba generados",
         "description": "Revise los casos de prueba generados por AI, haga cualquier edición necesaria y seleccione cuáles para importar.",
-        "selected": "{count} de {total} seleccionados",
+        "selected": "{count} de {total} seleccionado",
         "moreSteps": "... y {count, plural, one {# más pasos} other {# más pasos}}",
         "templateFields": "Campos de Plantilla:",
         "moreFields": "... y {count, plural, one {# más campos} other {# más campos}}",
@@ -2392,7 +2392,7 @@
       "description": "Añadir una nueva prueba al proyecto",
       "success": {
         "title": "Prueba de ejecución añadida correctamente",
-        "description": "La ejecución de la prueba ha sido añadida al proyecto",
+        "description": "La prueba se ha añadido al proyecto.",
         "descriptionMultiple": "{count, plural, one {# la ejecución de prueba tiene} other {# las ejecuciones de prueba tienen}} se ha creado para '{name}'"
       },
       "estimates": {
@@ -2400,7 +2400,7 @@
         "automated": "Tiempo estimado automatizado",
         "mixed": "Tiempo estimado Manual/Automatizado"
       },
-      "creatingProgress": "Creando la ejecución de prueba {current} de {total}..."
+      "creatingProgress": "Creando ejecución de prueba {current} de {total}..."
     },
     "magicSelect": {
       "title": "Selección mágica",
@@ -2573,7 +2573,7 @@
       "system": "Sistema"
     },
     "imports": {
-      "description": "Traiga datos de herramientas de gestión de pruebas externas a Testplanit.",
+      "description": "Importa datos de herramientas externas de gestión de pruebas a Testplanit.",
       "tabs": {
         "testmoJson": "Testmo JSON"
       },
@@ -3277,7 +3277,7 @@
       },
       "delete": {
         "title": "Eliminar proyecto",
-        "confirmMessage": "¿Está seguro que desea eliminar este proyecto?"
+        "confirmMessage": "¿Estás seguro de que quieres eliminar este proyecto?"
       }
     },
     "templates": {
@@ -3317,7 +3317,7 @@
         },
         "delete": {
           "title": "Eliminar Campo de Caso",
-          "confirmMessage": "¿Está seguro que desea eliminar este campo de Caso?",
+          "confirmMessage": "¿Está seguro de que desea eliminar este campo de caso?",
           "warning": "Campo de Caso se eliminará de cualquier Plantilla. Esta acción no se puede deshacer."
         }
       },
@@ -3535,7 +3535,7 @@
       },
       "delete": {
         "title": "Eliminar Etiqueta",
-        "confirmMessage": "¿Está seguro que desea eliminar esta etiqueta?",
+        "confirmMessage": "¿Estás seguro de que quieres eliminar esta etiqueta?",
         "warning": "Esta etiqueta se eliminará de todos los casos de prueba y Sesiones.",
         "errors": {
           "unknown": "Se ha producido un error al eliminar la etiqueta"
@@ -3566,7 +3566,7 @@
       },
       "delete": {
         "title": "Eliminar flujo de trabajo",
-        "confirmMessage": "¿Está seguro que desea eliminar este workflow?"
+        "confirmMessage": "¿Está seguro de que desea eliminar este flujo de trabajo?"
       },
       "setDefault": {
         "title": "Establecer flujo de trabajo por defecto",
@@ -3594,7 +3594,7 @@
       },
       "delete": {
         "title": "Eliminar rol",
-        "confirmMessage": "¿Está seguro que desea eliminar este rol?",
+        "confirmMessage": "¿Estás seguro de que quieres eliminar este rol?",
         "warning": "Esta acción no se puede deshacer. Los usuarios con este rol serán asignados al rol predeterminado.",
         "errors": {
           "defaultNotFound": "No se puede eliminar el rol predeterminado"
@@ -3762,7 +3762,7 @@
       },
       "delete": {
         "title": "Eliminar tipo de hito",
-        "confirmMessage": "¿Está seguro que desea eliminar este tipo de hito?"
+        "confirmMessage": "¿Está seguro de que desea eliminar este tipo de hito?"
       }
     },
     "issue_config": {
@@ -3907,7 +3907,7 @@
       }
     },
     "integrations": {
-      "description": "Administrar integraciones de terceros para seguimiento de incidencias y más",
+      "description": "Gestiona las integraciones con terceros para el seguimiento de incidencias y mucho más.",
       "list": {
         "title": "Integraciones configuradas",
         "description": "Ver y administrar sus integraciones de problemas configuradas"
@@ -3915,7 +3915,7 @@
       "empty": {
         "message": "No hay integraciones de problemas configuradas aún"
       },
-      "addIntegration": "Añadir Integración",
+      "addIntegration": "Agregar integración",
       "allIntegrations": "Todas las integraciones",
       "manageDescription": "Configurar y administrar sus integraciones de problemas de servicio externo",
       "status": {
@@ -3931,8 +3931,8 @@
       "testFailedDescription": "No se puede conectar al servicio externo",
       "testError": "Error de prueba",
       "testErrorDescription": "Ocurrió un error mientras se probaba la conexión",
-      "syncInProgress": "Sincronización de integración...",
-      "syncIntegration": "Sincronizar todos los problemas desde la integración",
+      "syncInProgress": "Sincronizando la integración...",
+      "syncIntegration": "Sincroniza todos los problemas de la integración.",
       "syncSuccess": "Sincronización en cola",
       "syncSuccessDescription": "Los problemas de \"{name}\" se están sincronizando en segundo plano. Esto puede tardar unos instantes. La tabla se actualizará automáticamente al finalizar.",
       "syncError": "Sincronización fallida",
@@ -3951,7 +3951,7 @@
       "deleteError": "Error al eliminar",
       "add": {
         "description": "Configurar una nueva integración de problemas con un servicio externo",
-        "selectType": "Seleccionar tipo de integración",
+        "selectType": "Seleccione el tipo de integración",
         "typeDescription": "Elija el tipo de servicio que desea integrar",
         "successMessage": "Integración creada con éxito",
         "successDescription": "La integración del problema ha sido configurada y está lista para ser usada",
@@ -3969,7 +3969,7 @@
         },
         "gitlab": {
           "name": "GitLab",
-          "description": "Conectar a GitLab para seguimiento de incidencias"
+          "description": "Conéctate a GitLab para el seguimiento de incidencias"
         },
         "azureDevops": {
           "name": "Azure DevOps",
@@ -3984,17 +3984,17 @@
         "configure": "Configurar"
       },
       "edit": {
-        "description": "Actualizar configuración y configuración de integración",
+        "description": "Actualizar la configuración y los ajustes de integración",
         "successMessage": "Integración actualizada correctamente",
-        "successDescription": "Se han guardado los ajustes de integración"
+        "successDescription": "Se han guardado los ajustes de integración."
       },
-      "editIntegration": "Editar integración",
-      "saveIntegration": "Guardar Integración",
-      "deleteIntegration": "Borrar integración",
+      "editIntegration": "Integración de edición",
+      "saveIntegration": "Guardar integración",
+      "deleteIntegration": "Eliminar integración",
       "config": {
-        "name": "Nombre de integración",
-        "namePlaceholder": "Introduzca un nombre para esta integración",
-        "nameHelp": "Un nombre descriptivo para identificar esta integración",
+        "name": "Nombre de la integración",
+        "namePlaceholder": "Introduzca un nombre para esta integración.",
+        "nameHelp": "Un nombre descriptivo para identificar esta integración.",
         "authType": "Tipo de autenticación",
         "authTypeHelp": "Elija cómo autenticarse con el servicio externo",
         "emailPlaceholder": "tu-email@ejemplo.com",
@@ -4048,7 +4048,7 @@
         "personal_access_token": "Token de acceso personal"
       },
       "validation": {
-        "nameRequired": "Se requiere el nombre de la integración",
+        "nameRequired": "Se requiere el nombre de la integración.",
         "clientIdRequired": "El ID del cliente es requerido",
         "clientSecretRequired": "El secreto del cliente es obligatorio",
         "cloudIdRequired": "Se requiere ID de la nube",
@@ -4059,17 +4059,17 @@
       "errors": {
         "updateFailed": "Error al actualizar la integración",
         "testFailed": "Prueba de conexión fallida",
-        "nameExists": "Ya existe una integración con este nombre",
-        "createFailed": "Error al crear la integración",
-        "deleteFailed": "Error al eliminar la integración"
+        "nameExists": "Ya existe una integración con ese nombre.",
+        "createFailed": "No se pudo crear la integración.",
+        "deleteFailed": "No se pudo eliminar la integración"
       },
       "confirmDelete": {
-        "message": "¿Está seguro de que desea eliminar la integración \"{name}\"?",
+        "message": "¿Estás seguro de que quieres eliminar la integración \"{name}\"?",
         "warning": "Esto eliminará la integración y la desconectará de todos los proyectos. Esta acción no se puede deshacer."
       },
       "form": {
         "success": "Integración guardada correctamente",
-        "successDescription": "La integración ha sido configurada y está lista para ser usada",
+        "successDescription": "La integración se ha configurado y está lista para usarse.",
         "testing": "Probando conexión..."
       },
       "oauth": {
@@ -4166,7 +4166,7 @@
       },
       "delete": {
         "title": "Eliminar Integración del Modelo AI",
-        "description": "¿Está seguro de que desea eliminar esta integración de modelo de IA? Esto lo eliminará de todos los proyectos y no se puede deshacer.",
+        "description": "¿Está seguro de que desea eliminar esta integración del modelo de IA? Esto la eliminará de todos los proyectos y no se podrá deshacer.",
         "integrationDeletedSuccess": "Integración del modelo IA eliminada con éxito",
         "failedToDeleteIntegration": "Error al eliminar integración de modelo IA",
         "cannotDeleteDefault": "No se puede eliminar el modelo de IA predeterminado. Primero, configure otro como predeterminado."
@@ -4463,7 +4463,7 @@
     "notifications": {
       "empty": "Sin notificaciones",
       "aria": {
-        "notifications": "Notificaciones ({count} no leídos)"
+        "notifications": "Notificaciones ({count} no leídas)"
       },
       "actions": {
         "markRead": "Marcar como leído",
@@ -4643,7 +4643,7 @@
     "error": "Error al cargar problemas",
     "errorDescription": "Error al cargar problemas. Por favor, inténtalo de nuevo.",
     "selectIssues": "Seleccionar Problemas",
-    "authRequiredDescription": "Por favor, autentifica con {provider} para buscar problemas",
+    "authRequiredDescription": "Autentícate con {provider} para buscar problemas.",
     "integrationNotConfigured": "Integración no configurada",
     "integrationNotConfiguredDescription": "Esta integración no se ha configurado completamente. Póngase en contacto con el administrador de su proyecto para configurar el proyecto externo en los ajustes del proyecto.",
     "createIssue": "Crear asunto",
@@ -4729,7 +4729,7 @@
   },
   "charts": {
     "average": "Promedio",
-    "count": "Conteo: {count}",
+    "count": "Recuento: {count}",
     "percent": "Porcentaje: {percent}%",
     "completed": "Completado: {count}",
     "durationRange": "Duración: {from}s - {to}s",
@@ -6400,6 +6400,9 @@
     "datasetDeleteSelected": "Eliminar seleccionado",
     "datasetFooterHint": "Pulsa Intro para confirmar · Tabulador para ir a la siguiente celda · Arrastra para reordenar",
     "datasetSaveError": "No se pudo guardar el cambio.",
+    "datasetRowResultsHeader": "Último resultado",
+    "datasetRowResultLink": "Ver {status} resultado",
+    "datasetRowResultEmpty": "—",
     "pasteCsvPlaceholder": "Pegue aquí las filas del archivo CSV. La primera línea se considera el encabezado.",
     "pasteCsvParseButton": "Analizar gramaticalmente",
     "pasteCsvReplaceWarning": "Las filas existentes del conjunto de datos ({existingCount}) serán eliminadas.",
@@ -6453,6 +6456,93 @@
     "chipTooltipDefault": "Predeterminado: {value}",
     "chipTooltipNoDefault": "Predeterminado: (ninguno)",
     "chipTooltipUndeclared": "\"@{name}\" no es un parámetro declarado. Abra Configurar parámetros para agregarlo.",
-    "editorUndeclaredWarning": "Referencias no declaradas: {names}. Agréguelas a través de los parámetros de configuración para habilitar la sustitución de iteraciones."
+    "editorUndeclaredWarning": "Referencias no declaradas: {names}. Agréguelas a través de los parámetros de configuración para habilitar la sustitución de iteraciones.",
+    "runProgressTitle": "Generando iteraciones para \"{runName}\"",
+    "runProgressDescriptionAsync": "Creando {count, plural, =1 {# iteración} other {# iteraciones}} en segundo plano. Puedes seguir trabajando; te avisaremos cuando termine.",
+    "runProgressDescriptionSync": "Creado {count, plural, =1 {# iteración} other {# iteraciones}}.",
+    "runProgressFailed": "No se pudo iniciar la generación de iteraciones.",
+    "runHardRefuseTitle": "Demasiadas iteraciones para crear",
+    "runHardRefuseDescription": "Esta ejecución crearía {count} iteraciones, superando el límite de {cap}. Reduzca el número de filas del conjunto de datos, deseleccione casos o divídalo en varias ejecuciones.",
+    "runPreflightSync": "Se creará {n, plural, =1 {# iteración} other {# iteraciones}} instantáneamente",
+    "runPreflightAsync": "Se creará {n, plural, =1 {# iteración} other {# iteraciones}} (tarea en segundo plano)",
+    "runPreflightSoftConfirm": "Se creará {n, plural, =1 {# iteración} other {# iteraciones}} — se requiere confirmación",
+    "runPreflightHardRefuse": "No se puede crear: {n} excede el límite de {cap}",
+    "runPreflightTooltip": "{iterations, plural, =1 {# iteración} other {# iteraciones}} = {cases, plural, =1 {# caso} other {# casos}} × {configs, plural, =1 {# configuración} other {# configuraciones}} × filas del conjunto de datos",
+    "hardRefuseTitle": "No se puede crear: demasiadas iteraciones",
+    "hardRefuseDescription": "La creación de ejecuciones de prueba está limitada a {cap} iteraciones para mantener el sistema receptivo. Reduce uno de los contribuyentes a continuación.",
+    "hardRefuseColumnCase": "Caso",
+    "hardRefuseColumnRows": "filas del conjunto de datos",
+    "hardRefuseColumnConfigs": "Configuraciones",
+    "hardRefuseColumnIterations": "Iteraciones",
+    "hardRefuseTotalRow": "Total",
+    "hardRefuseSuggestionsHeading": "Acciones sugeridas",
+    "hardRefuseSuggestion1": "Reduzca el número de filas del conjunto de datos en el caso que más contribuya.",
+    "hardRefuseSuggestion2": "Deseleccione una o más configuraciones.",
+    "hardRefuseSuggestion3": "Divide el trabajo en varias pruebas.",
+    "softConfirmTitle": "Generar {n, plural, =1 {# iteración} other {# iteraciones}}?",
+    "softConfirmDescription": "Esta ejecución creará {n, plural, =1 {# iteración} other {# iteraciones}} a través de {cases, plural, =1 {# caso} other {# casos}} × {configs, plural, =1 {# configuración} other {# configuraciones}}. La generación se ejecuta como un trabajo en segundo plano y puede tardar unos minutos.",
+    "softConfirmEta": "Tiempo estimado: {minutes, plural, =1 {# minuto} other {# minutos}}",
+    "softConfirmGo": "Generar iteraciones",
+    "runProgressCounter": "{done} / {total}",
+    "runProgressEta": "Tiempo estimado restante: {minutes, plural, =1 {# minutos} other {# minutos}}",
+    "runProgressDismissAria": "Descartar el progreso",
+    "runProgressComplete": "Generado {total, plural, =1 {# iteración} other {# iteraciones}} para \"{runName}\"",
+    "runProgressFailedToast": "No se pudieron generar iteraciones para \"{runName}\". {reason}",
+    "runProgressNavAway": "Muéstrame el resto de la carrera.",
+    "runGeneratingHeading": "Generando iteraciones…",
+    "runGeneratingHelper": "Esto puede tardar unos minutos.",
+    "iterationsHeading": "Iteraciones",
+    "iterationsHeaderCount": "{complete}/{total}",
+    "iterationsHeaderCountPending": "0/{total} (generando)",
+    "iterationSidebarAria": "Iteraciones",
+    "iterationStatusLegendAria": "Leyenda de estado",
+    "iterationStatusNotStarted": "No ha comenzado",
+    "iterationStatusActive": "Activo",
+    "iterationStatusPassed": "Aprobado",
+    "iterationStatusFailed": "Fallido",
+    "iterationStatusSkipped": "Omitido / No disponible",
+    "iterationStatusBlocked": "Obstruido",
+    "iterationSelectAria": "Seleccionar iteración {n}",
+    "iterationRowMenuAria": "Acciones de iteración {n}",
+    "iterationOverrideValues": "Anular valores…",
+    "iterationSkip": "Marcar como omitido",
+    "iterationReset": "Resultado de la iteración de reinicio",
+    "iterationSelectedCount": "{count} seleccionado",
+    "iterationBulkSkip": "Marcar omitido",
+    "iterationBulkCancel": "Cancelar",
+    "iterationHeaderTitle": "Iteración {n} de {total}",
+    "iterationValuesLabel": "Valores:",
+    "iterationValueOverridden": "Anulado",
+    "iterationValueSnapshot": "Original: {value}",
+    "iterationOverrideBanner": "Los valores de esta iteración se sobrescribieron después de la creación de la ejecución. La instantánea original se conserva para fines de auditoría.",
+    "iterationViewHistory": "Ver historial",
+    "overrideDialogTitle": "Valores de anulación · Iteración {n}",
+    "overrideDialogDescription": "Edita los valores para esta iteración. Se conserva la instantánea original.",
+    "overrideResetRow": "Restablecer a la configuración original.",
+    "overrideSave": "Guardar y continuar",
+    "overrideSavedToast": "Valores de iteración sobrescritos",
+    "overrideError": "No se pudieron guardar las modificaciones.",
+    "overrideRevealAria": "Revelar valor",
+    "overrideHideAria": "Ocultar valor",
+    "overrideUnsavedTitle": "¿Descartar los cambios no guardados?",
+    "overrideUnsavedDescription": "Sus modificaciones no se han guardado. Al cerrar el cuadro de diálogo, se descartarán.",
+    "overrideUnsavedKeep": "Sigue editando",
+    "overrideUnsavedDiscard": "Descartar cambios",
+    "iterationBulkConfirmTitle": "Marcar {count, plural, =1 {# iteración} other {# iteraciones}} como {action}?",
+    "iterationBulkConfirmDescription": "Cada iteración seleccionada recibirá un nuevo resultado con el estado \"{statusName}\".",
+    "iterationBulkConfirm": "Marca {action}",
+    "iterationBulkConfirmReplace": "Reemplazar con {action}",
+    "iterationBulkOverwriteWarning": "{count, plural, =1 {# de las iteraciones seleccionadas ya tiene} other {# de las iteraciones seleccionadas ya tiene}} un resultado. Se registrará un nuevo resultado y el último reemplazará al actual.",
+    "iterationBulkReasonLabel": "Motivo (opcional)",
+    "iterationBulkReasonHelp": "Registrado en cada resultado y en el registro de auditoría.",
+    "iterationBulkSuccess": "{count, plural, =1 {# iteración} other {# iteraciones}} marcado {action}",
+    "iterationBulkError": "No se pudieron marcar las iteraciones.",
+    "iterationBulkNa": "Marca N/A",
+    "iterationListLoadError": "No se pudieron cargar las iteraciones.",
+    "iterationResetUntestedMissing": "Estado no probado no encontrado",
+    "overrideTitle": "Anular valores para la iteración {n}",
+    "overrideDescription": "Los cambios afectan únicamente a esta iteración. La instantánea del conjunto de datos y el conjunto de datos de origen permanecen sin cambios. Esta acción queda registrada en el registro de auditoría.",
+    "overrideValidationItem": "@{param}: {message}",
+    "overrideSensitiveDenied": "No tienes permiso para editar valores confidenciales."
   }
 }
