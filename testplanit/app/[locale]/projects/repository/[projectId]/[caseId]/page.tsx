@@ -67,7 +67,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import parseDuration from "parse-duration";
 import React, {
   useCallback,
@@ -327,6 +327,7 @@ export default function TestCaseDetails() {
   } = useRequireAuth();
   const router = useRouter();
   const { projectId, caseId } = useParams();
+  const searchParams = useSearchParams();
   const t = useTranslations();
 
   // Parse and validate projectId
@@ -962,6 +963,21 @@ export default function TestCaseDetails() {
     }
     setIsEditMode(!isEditMode);
   };
+
+  const editParamProcessed = useRef(false);
+  useEffect(() => {
+    if (
+      !editParamProcessed.current &&
+      searchParams.get("edit") === "true" &&
+      canAddEdit &&
+      testcase?.template?.id &&
+      !isEditMode
+    ) {
+      editParamProcessed.current = true;
+      setSelectedTemplateId(testcase.template.id);
+      setIsEditMode(true);
+    }
+  }, [searchParams, canAddEdit, testcase, isEditMode]);
 
   const handleCancel = () => {
     setIsEditMode(false);

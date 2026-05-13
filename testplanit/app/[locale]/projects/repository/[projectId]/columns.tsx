@@ -86,6 +86,7 @@ import {
   Plus,
   PlusSquare,
   ScrollText,
+  SquarePen,
   Trash2,
   UserCog,
 } from "lucide-react";
@@ -930,6 +931,18 @@ const ActionsCell = React.memo(function ActionsCell({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          {!isRunMode && !isSelectionMode && canAddEdit && (
+            <Link
+              href={`/projects/repository/${row.original.projectId}/${row.original.id}?edit=true`}
+            >
+              <DropdownMenuItem
+                data-testid={`edit-case-${row.original.id}`}
+              >
+                <SquarePen className="mr-2 h-4 w-4" />
+                <span>{t("common.actions.edit")}</span>
+              </DropdownMenuItem>
+            </Link>
+          )}
           {!isRunMode &&
             !isSelectionMode &&
             quickScriptEnabled &&
