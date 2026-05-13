@@ -57,18 +57,10 @@ export const auditContextStorage = new AsyncLocalStorage<AuditContext>();
 
 /**
  * Get the current audit context from AsyncLocalStorage.
- * If not in AsyncLocalStorage context, falls back to global context.
  * Returns undefined if not within a request context.
  */
 export function getAuditContext(): AuditContext | undefined {
-  // First try AsyncLocalStorage
-  const stored = auditContextStorage.getStore();
-  if (stored) {
-    return stored;
-  }
-
-  // Fall back to global context (set by API routes)
-  return globalFallbackContext;
+  return auditContextStorage.getStore();
 }
 
 /**
@@ -88,37 +80,6 @@ export function updateAuditContext(updates: Partial<AuditContext>): void {
   if (current) {
     Object.assign(current, updates);
   }
-}
-
-/**
- * Global fallback context for when AsyncLocalStorage is not available.
- * This is used in API routes where we can't wrap the entire request
- * in a runWithAuditContext call.
- * Note: This is a simple fallback and may not be perfectly isolated
- * across concurrent requests, but provides basic context for audit logs.
- */
-let globalFallbackContext: AuditContext | undefined;
-
-/**
- * Set the audit context directly (fallback for when AsyncLocalStorage isn't available).
- * Used in API routes that can't use runWithAuditContext.
- */
-export function setAuditContext(context: AuditContext): void {
-  // First try to update existing AsyncLocalStorage context
-  const current = auditContextStorage.getStore();
-  if (current) {
-    Object.assign(current, context);
-  } else {
-    // Fall back to global context for API routes
-    globalFallbackContext = context;
-  }
-}
-
-/**
- * Get the fallback context when AsyncLocalStorage context is not available.
- */
-export function getFallbackContext(): AuditContext | undefined {
-  return globalFallbackContext;
 }
 
 /**
