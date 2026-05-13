@@ -46,7 +46,7 @@ import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import * as React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod/v4";
@@ -59,6 +59,10 @@ import { emptyEditorContent } from "~/app/constants";
 import { iterationProgressBus } from "~/lib/services/iterationProgressBus";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import LoadingSpinnerAlert from "~/components/LoadingSpinnerAlert";
+import { RunPreflightChip } from "@/components/runs/RunPreflightChip";
+import { RunCardinalityHardRefuseDialog } from "@/components/runs/RunCardinalityHardRefuseDialog";
+import { RunCardinalitySoftConfirmDialog } from "@/components/runs/RunCardinalitySoftConfirmDialog";
+import type { PreflightResult } from "~/lib/types/iterationCardinality";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
   useCreateAttachments,
@@ -565,8 +569,18 @@ const TestCasesDialog = React.memo(
     form,
     projectId,
     linkedIssueIds,
+    numericProjectId,
+    onPreflightResult,
+    onPreflightChipClick,
+    preflightClassification,
   }: any) => {
     const tRepository = useTranslations("repository");
+    // Live config selection from the parent form — drives the preflight chip
+    // alongside the modal's selectedTestCases. Using `useWatch` keeps the
+    // chip in sync without re-rendering the entire TestCasesDialog tree.
+    const watchedConfigIds: number[] =
+      (useWatch({ control: form.control, name: "configIds" }) as number[]) ??
+      [];
     // Local pagination state for the modal (independent from parent page)
     const [modalCurrentPage, setModalCurrentPage] = useState(1);
     const [modalPageSize, setModalPageSize] = useState<number>(10);
@@ -783,13 +797,28 @@ const TestCasesDialog = React.memo(
             skipDndProvider={true}
           />
         </div>
-        <div className="p-6 bg-background border-t flex justify-end gap-2">
+        <div className="p-6 bg-background border-t flex justify-end items-center gap-2">
+          {selectedTestCases.length > 0 && numericProjectId ? (
+            <div className="mr-auto">
+              <RunPreflightChip
+                caseIds={selectedTestCases}
+                configIds={watchedConfigIds}
+                projectId={numericProjectId}
+                onResult={onPreflightResult}
+                onClick={onPreflightChipClick}
+              />
+            </div>
+          ) : null}
           <Button variant="outline" onClick={onPrevious}>
             {tCommon("actions.back")}
           </Button>
           <Button
             onClick={onNext}
-            disabled={isLoadingForecast || isLoadingTestCasesForDrawer}
+            disabled={
+              isLoadingForecast ||
+              isLoadingTestCasesForDrawer ||
+              preflightClassification === "hardRefuse"
+            }
             data-testid="run-save-button"
           >
             {tCommon("actions.save")}
@@ -836,6 +865,16 @@ export default function AddTestRunModal({
     initialSelectedCaseIds || []
   );
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  // Latest cardinality preflight result reported by the chip in Step 1.
+  // Drives the soft-confirm gate + hard-refuse breakdown dialog.
+  const [preflightResult, setPreflightResult] = useState<
+    PreflightResult | undefined
+  >(undefined);
+  const [hardRefuseDialogOpen, setHardRefuseDialogOpen] = useState(false);
+  const [softConfirmDialogOpen, setSoftConfirmDialogOpen] = useState(false);
+  // Set to true once the user accepts the soft-confirm dialog, so the next
+  // call to onSubmit bypasses the gate and proceeds to create the run.
+  const softConfirmAcceptedRef = useRef(false);
 
   const { data: session } = useSession();
   const { projectId } = useParams();
@@ -1145,6 +1184,24 @@ export default function AddTestRunModal({
   const handleNext = () => {
     if (step === 1) {
       setValue("testCases", selectedCaseIds); // Ensure selectedCaseIds from state is used
+
+      // Cardinality gate (Surface E.1/E.3): block hardRefuse, soft-confirm in
+      // the warning band. Server-side enforcement still applies — this just
+      // saves a round-trip and surfaces the friction sooner.
+      if (preflightResult && !softConfirmAcceptedRef.current) {
+        if (preflightResult.classification === "hardRefuse") {
+          setHardRefuseDialogOpen(true);
+          return;
+        }
+        if (preflightResult.classification === "softConfirm") {
+          setSoftConfirmDialogOpen(true);
+          return;
+        }
+      }
+      // Reset the soft-confirm latch after one use so subsequent submissions
+      // re-evaluate the (possibly-changed) cardinality band.
+      softConfirmAcceptedRef.current = false;
+
       void handleSubmit(onSubmit, (errors) => {
         console.error("Form validation errors:", errors);
       })();
@@ -1412,6 +1469,14 @@ export default function AddTestRunModal({
             form: form,
             projectId: projectId?.toString() || "",
             linkedIssueIds: linkedIssueIds,
+            numericProjectId: numericProjectId,
+            onPreflightResult: setPreflightResult,
+            onPreflightChipClick: (r: PreflightResult) => {
+              if (r.classification === "hardRefuse") {
+                setHardRefuseDialogOpen(true);
+              }
+            },
+            preflightClassification: preflightResult?.classification,
           }
         : {};
 
@@ -1427,10 +1492,29 @@ export default function AddTestRunModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={mainDialogOnOpenChange}>
-      {DialogContentComponent && open && (
-        <DialogContentComponent {...dialogProps} />
-      )}
-    </Dialog>
+    <>
+      <Dialog open={open} onOpenChange={mainDialogOnOpenChange}>
+        {DialogContentComponent && open && (
+          <DialogContentComponent {...dialogProps} />
+        )}
+      </Dialog>
+      <RunCardinalityHardRefuseDialog
+        open={hardRefuseDialogOpen}
+        onOpenChange={setHardRefuseDialogOpen}
+        result={preflightResult ?? null}
+        configCount={form.watch("configIds")?.length ?? 0}
+      />
+      <RunCardinalitySoftConfirmDialog
+        open={softConfirmDialogOpen}
+        onOpenChange={setSoftConfirmDialogOpen}
+        result={preflightResult ?? null}
+        configCount={form.watch("configIds")?.length ?? 0}
+        onConfirm={() => {
+          softConfirmAcceptedRef.current = true;
+          // Re-trigger handleNext now that the gate has been accepted.
+          handleNext();
+        }}
+      />
+    </>
   );
 }
