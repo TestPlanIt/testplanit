@@ -20,6 +20,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { AddResultModal } from "@/projects/repository/[projectId]/AddResultModal";
 import FieldValueRenderer from "@/projects/repository/[projectId]/[caseId]/FieldValueRenderer";
+import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { Attachments, Prisma, Status } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -79,6 +80,13 @@ interface TestRunCaseDetailsProps {
   }>;
   isTransitioning?: boolean;
   isCompleted?: boolean;
+  /**
+   * Phase 3 — iteration-aware step text substitution. When set, the inner
+   * step renderer receives the iteration's effective parameter values so
+   * `@name` chips render as their substituted values. When omitted,
+   * behavior is unchanged (PARAM-07 invariant).
+   */
+  stepParameters?: ParameterChipMeta[];
 }
 
 export function TestRunCaseDetails({
@@ -92,6 +100,7 @@ export function TestRunCaseDetails({
   testRunCasesData,
   isTransitioning = false,
   isCompleted = false,
+  stepParameters,
 }: TestRunCaseDetailsProps) {
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -1110,6 +1119,7 @@ export function TestRunCaseDetails({
                       errors={undefined}
                       isRunMode={true}
                       stepsForDisplay={testcase.steps}
+                      parameters={stepParameters}
                     />
                   </div>
                 );
