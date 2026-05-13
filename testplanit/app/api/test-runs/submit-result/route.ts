@@ -520,6 +520,7 @@ export async function POST(req: NextRequest) {
             isSuccess: true,
             isFailure: true,
             isCompleted: true,
+            order: true,
           },
         });
         const statusMap = new Map<number, RollupStatus>(
@@ -531,6 +532,7 @@ export async function POST(req: NextRequest) {
               isSuccess: s.isSuccess,
               isFailure: s.isFailure,
               isCompleted: s.isCompleted,
+              order: s.order,
             },
           ])
         );

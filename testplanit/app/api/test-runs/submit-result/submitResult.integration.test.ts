@@ -268,6 +268,7 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
         isSuccess: true,
         isFailure: true,
         isCompleted: true,
+        order: true,
       },
     });
     const statusMap = new Map<number, RollupStatus>(
