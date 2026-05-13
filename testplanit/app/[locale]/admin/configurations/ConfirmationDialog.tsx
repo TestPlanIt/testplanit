@@ -69,7 +69,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
             </DialogHeader>
             <DialogDescription>
               {t("confirmDescription", {
-                count: String(selectedCombinations?.length ?? 0),
+                count: selectedCombinations?.length ?? 0,
               })}
             </DialogDescription>
             <ScrollArea>

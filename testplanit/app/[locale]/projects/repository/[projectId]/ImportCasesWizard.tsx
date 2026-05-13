@@ -918,8 +918,8 @@ export function ImportCasesWizard({
 
               if (data.complete) {
                 // Import completed
-                toast.success(tCommon("fields.title"), {
-                  description: tCommon("fields.description", {
+                toast.success(t("importWizard.title"), {
+                  description: t("importWizard.success.description", {
                     count: data.importedCount,
                   }),
                 });

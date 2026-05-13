@@ -471,10 +471,12 @@
       "moveSuccess": "Item moved successfully",
       "moveError": "An error occurred while moving the item",
       "updateSuccess": "Item updated successfully",
+      "updateSuccessCount": "{count, number} items updated successfully",
       "updateError": "An error occurred while updating the item",
       "linkCopied": "Link copied to clipboard",
       "copyFailed": "Failed to copy link to clipboard",
-      "created": "Test run created successfully",
+      "created": "Created successfully",
+      "createdItem": "{item} created successfully",
       "createdDescription": "The test run has been created and is now visible in the Test Runs list.",
       "createError": "An unknown error occurred. Please try again.",
       "emptyActive": "No active Test Runs",
@@ -698,7 +700,7 @@
       "noTestCasesSelected": "No test cases selected",
       "editToSelectTestCases": "Edit the Test Run to select test cases.",
       "casesInRun": "{count, plural, =0 {No Test Cases in the Test Run} =1 {1 Test Case in the Test Run} other {# Test Cases in the Test Run}}",
-      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 Unique Case} other {# Unique Cases}} across {configCount, plural, =1 {1 Configuration} other {# Configurations}} ({totalCount} total cases)",
+      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 Unique Case} other {# Unique Cases}} across {configCount, plural, =1 {1 Configuration} other {# Configurations}} ({totalCount, number} total cases)",
       "viewTestRunDetails": "View test run details",
       "sortByStatus": "Group by status",
       "sortByDate": "Sort by date",
@@ -973,7 +975,7 @@
       "case": "{count, plural, =1 {case} other {cases}}",
       "result": "{count, plural, =1 {result} other {results}}",
       "run": "{count, plural, =1 {run} other {runs}}",
-      "comment": "{count, plural, =1 {{count} comment} other {{count} comments}}"
+      "comment": "{count, plural, =1 {# comment} other {# comments}}"
     },
     "success": {
       "assigned": "Test case assigned successfully",
@@ -1099,7 +1101,7 @@
       "passwordRequired": "Password is required.",
       "genericError": "An error occurred. Please try again.",
       "policyTitle": "Password Requirements:",
-      "policyMinLength": "At least {count} characters",
+      "policyMinLength": "At least {count, number} characters",
       "policyUppercase": "At least one uppercase letter",
       "policyLowercase": "At least one lowercase letter",
       "policyNumbers": "At least one number",
@@ -1149,7 +1151,7 @@
   },
   "projects": {
     "status": {
-      "id": "Project ID: {id}",
+      "id": "Project ID: {id, number}",
       "active": "Project is Active",
       "completed": "Project is Completed"
     },
@@ -1199,7 +1201,7 @@
           "updateError": "Failed to update issue integration settings",
           "removeError": "Failed to remove issue integration",
           "removeIntegration": "Remove Integration",
-          "confirmRemove": "Confirm Remove",
+          "confirmRemove": "Are you sure you want to remove the {name} integration?",
           "authDescription": "You need to authenticate with {provider} to use this issue integration",
           "authenticating": "Authenticating...",
           "authSuccess": "Authentication successful",
@@ -1310,8 +1312,8 @@
         "deleteConfirmTitle": "Delete webhook configuration?",
         "deleteConfirm": "Delete this webhook configuration? Inbound deliveries will be rejected.",
         "sendTest": "Send test webhook",
-        "testSuccess": "Test webhook accepted (HTTP {statusCode}, outcome: {outcome})",
-        "testFailure": "Test webhook failed (HTTP {statusCode}): {error}",
+        "testSuccess": "Test webhook accepted (HTTP {statusCode, number}, outcome: {outcome})",
+        "testFailure": "Test webhook failed (HTTP {statusCode, number}): {error}",
         "saveError": "Failed to save webhook configuration",
         "lastReceived": "Last received: {timestamp}",
         "lastReceivedLabel": "Last received:",
@@ -1397,7 +1399,7 @@
         "outboundHmacActiveSecret": "Active",
         "outboundHmacInactiveSecret": "Inactive",
         "outboundHmacRetiringSecret": "Retiring",
-        "outboundHmacAutoRetireIn": "Auto-retires in {days} days",
+        "outboundHmacAutoRetireIn": "Auto-retires in {days, number} days",
         "outboundHmacRotateButton": "Rotate secret",
         "outboundHmacExtendButton": "Extend 7 days",
         "outboundHmacRetireNowButton": "Retire now",
@@ -1481,7 +1483,7 @@
         "filterSinceDefault": "Since…",
         "filterUntilDefault": "Until…",
         "filterReset": "Reset filters",
-        "filterBulkReplayButton": "Bulk replay {count} outbound failures",
+        "filterBulkReplayButton": "Bulk replay {count, number} outbound failures",
         "filterBulkReplayHidden": "All visible failures are inbound — re-trigger the upstream event instead.",
         "deliveriesEmpty": "No deliveries match these filters.",
         "deliveriesResetFilters": "Reset filters",
@@ -1500,7 +1502,7 @@
         "drawerLabelDirection": "Direction",
         "drawerLabelStatusCode": "Status code",
         "drawerLabelLatency": "Latency",
-        "drawerLatencyValue": "{ms} ms",
+        "drawerLatencyValue": "{ms, number} ms",
         "drawerLatencyUnknown": "—",
         "drawerLabelError": "Error",
         "drawerLabelPayloadDigest": "Payload digest",
@@ -1515,16 +1517,16 @@
         "replayConfirm": "This will fire a real {direction} {adapterType} request.",
         "replayAction": "Replay",
         "bulkReplayConfirmTitle": "Replay outbound failures?",
-        "bulkReplayConfirm": "Replay {count} outbound failures to {configName}? This will fire {count} real HTTP requests.",
-        "bulkReplayCapExceeded": "Bulk replay limited to 100 outbound at a time. Narrow the filter or run sequentially. Currently {count} would be replayed.",
-        "bulkReplayAction": "Replay {count}",
+        "bulkReplayConfirm": "Replay {count, number} outbound failures to {configName}? This will fire {count, number} real HTTP requests.",
+        "bulkReplayCapExceeded": "Bulk replay limited to 100 outbound at a time. Narrow the filter or run sequentially. Currently {count, number} would be replayed.",
+        "bulkReplayAction": "Replay {count, number}",
         "healthBadge": {
           "HEALTHY": "Healthy",
           "DEGRADED": "Degraded",
           "DISABLED": "Disabled"
         },
         "healthTooltipHealthy": "Last success: {lastSuccessAt}",
-        "healthTooltipDegraded": "{count} consecutive failures · last at {lastFailureAt}",
+        "healthTooltipDegraded": "{count, number} consecutive failures · last at {lastFailureAt}",
         "healthTooltipDisabled": "Disabled after 10 consecutive failures · {lastFailureAt}",
         "activityLabel": "Delivery activity",
         "activityLastDispatched": "Last dispatched",
@@ -1638,8 +1640,8 @@
         "preview": {
           "resolvingBranch": "Resolving branch…",
           "scanningFiles": "Scanning files in {scope}…",
-          "scanningFilesCount": "Scanning files in {scope}… ({count} found)",
-          "filtering": "Applying filters to {count} files…"
+          "scanningFilesCount": "Scanning files in {scope}… ({count, number} found)",
+          "filtering": "Applying filters to {count, number} files…"
         },
         "cache": {
           "title": "Cache Settings",
@@ -1748,9 +1750,10 @@
     "toast": {
       "deleted": "Milestone {name} deleted",
       "updated": "Milestone updated",
+      "updatedWithName": "{name} updated",
       "updateFailed": "Failed to update milestone",
       "completed": "Milestone \"{name}\" completed.",
-      "completedWithDependencies": "Milestone and dependencies completed successfully."
+      "completedWithDependencies": "{name} and dependencies completed successfully."
     },
     "errors": {
       "nameExists": "A milestone with this name already exists",
@@ -1819,7 +1822,7 @@
     },
     "messages": {
       "createSuccess": "Session created successfully",
-      "createSuccessMultiple": "{count} Sessions created successfully",
+      "createSuccessMultiple": "{count, number} Sessions created successfully",
       "duplicateSuccess": "Session duplicated successfully",
       "duplicateSuccessMultiple": "{count} Sessions duplicated successfully"
     },
@@ -1886,8 +1889,8 @@
       "backToSession": "Back to Session",
       "backToLatest": "Back to Latest Version",
       "versionInfo": {
-        "created": "Version {number} Created",
-        "latestUpdated": "Latest Version {number} Updated"
+        "created": "Version {number, number} Created",
+        "latestUpdated": "Latest Version {number, number} Updated"
       },
       "renderer": {
         "noEstimate": "No estimate",
@@ -1982,7 +1985,7 @@
         "avatarUpdated": "Avatar updated successfully.",
         "avatarUpdateError": "Failed to update avatar.",
         "deleteAvatar": "Delete Avatar",
-        "deleteAvatarConfirm": "Are you sure you want to delete your avatar?",
+        "deleteAvatarConfirm": "Are you sure you want to delete your {name}?",
         "emailDisabledForSso": "Email cannot be changed for SSO accounts. Please update it through your identity provider.",
         "emailEditableForBoth": "You can sign in with both email/password and SSO. Email changes will only affect password authentication.",
         "linkSsoProvider": "Link SSO Provider"
@@ -2119,7 +2122,7 @@
       "detailsRegion": "Test case details",
       "metadataRegion": "Test case metadata",
       "versionCreated": "Version {version} Created",
-      "latestVersionUpdated": "Latest Version {version} Updated",
+      "latestVersionUpdated": "Latest Version {version, number} Updated",
       "historyView": "Test Case History View"
     },
     "fields": {
@@ -2142,7 +2145,7 @@
       "add": "Add Step",
       "addSharedSteps": "Add Shared Steps",
       "delete": "Delete Step",
-      "confirmDelete": "Confirm delete Step {number}?",
+      "confirmDelete": "Confirm delete Step {number, number}?",
       "createSharedSteps": "Create Shared {number, plural, one {Step} other {Steps}}",
       "sharedStepsName": "Shared Steps Name",
       "sharedStepsDescription": "Enter a name for your new shared {number, plural, one {step} other {steps}}. This will include {number, plural, one {# selected step} other {# selected steps}}.",
@@ -2240,7 +2243,7 @@
       "cannotReorderAcrossPages": "Cannot reorder test cases across multiple pages. To reorder, view all cases on one page by selecting 'All' from the page size menu, or deselect cases from other pages. You can still drag selected cases to folders.",
       "exportModal": {
         "scope": {
-          "allFiltered": "All in View ({count})"
+          "allFiltered": "All in View ({count, number})"
         },
         "textLongFormat": {
           "label": "Rich Text Format"
@@ -2315,8 +2318,8 @@
         },
         "page4": {
           "title": "Preview Import",
-          "showing": "Showing {start}-{end} of {total} cases",
-          "case": "Case {number}"
+          "showing": "Showing {start, number}-{end, number} of {total, number} cases",
+          "case": "Case {number, number}"
         }
       }
     },
@@ -2385,7 +2388,7 @@
       "description": "Editing {count, plural, one {# selected case} other {# selected cases}}. Check a field to enable editing.",
       "defineStepsTitle": "Define Steps for Bulk Update",
       "saveNewSteps": "Save New Steps",
-      "newStepsDefined": "New steps defined ({count}) - Click button to edit",
+      "newStepsDefined": "New steps defined ({count, number}) - Click button to edit",
       "clearExistingStepsWarning": "Existing steps will be removed",
       "warnings": {
         "templateMismatch": {
@@ -2405,7 +2408,7 @@
         "fetchError": "Error fetching case data."
       },
       "success": {
-        "casesUpdated": "Cases updated successfully"
+        "casesUpdated": "{count, number} cases updated successfully"
       },
       "placeholders": {
         "various": "<various values>"
@@ -2435,9 +2438,9 @@
       "title": "Export Test Cases",
       "description": "Choose your export options below.",
       "scope": {
-        "selected": "Selected ({count})",
-        "allFiltered": "All (Current View) ({count})",
-        "allProject": "All in Project ({count})"
+        "selected": "Selected ({count, number})",
+        "allFiltered": "All (Current View) ({count, number})",
+        "allProject": "All in Project ({count, number})"
       },
       "format": {
         "label": "Format",
@@ -2495,7 +2498,7 @@
     "aiExport": {
       "toggleLabel": "Generate with AI",
       "generating": "Generating...",
-      "generatingProgress": "Generating case {current} of {total}...",
+      "generatingProgress": "Generating case {current, number} of {total, number}...",
       "generatingBatch": "Generating {count, plural, one {# case} other {# cases}} in one file...",
       "previewTitle": "Export Preview",
       "previewDescription": "{count, plural, one {# file} other {# files}} generated",
@@ -2507,14 +2510,14 @@
       "truncatedWarning": "Output was truncated — the model reached its token limit. Try reducing the batch size or increasing Max Output Tokens in your Prompt Config.",
       "contextFiles": "{count, plural, one {(# context file)} other {(# context files)}}",
       "noCodeContextHint": "No code repository configured. AI will use standard framework patterns.",
-      "generatingParallelProgress": "Generated {done} of {total} files...",
+      "generatingParallelProgress": "Generated {done, number} of {total, number} files...",
       "cancelledGeneration": "Cancelled"
     },
     "duplicates": {
       "findDuplicates": "Find Duplicates",
       "viewResults": "View {count, plural, one {# Result} other {# Results}}",
       "retryScan": "Retry Scan",
-      "analyzing": "{analyzed}/{total}",
+      "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Enhancing results with AI...",
       "scanComplete": "Duplicate analysis complete — {count, plural, =0 {no duplicates found} one {# potential duplicate found} other {# potential duplicates found}}",
       "scanFailed": "Duplicate analysis failed",
@@ -2538,8 +2541,8 @@
       "selectAll": "Select all",
       "selectRow": "Select row",
       "selected": "{count, plural, one {# selected} other {# selected}}",
-      "bulkDismiss": "Not Duplicates ({count})",
-      "bulkLink": "Link as Related ({count})",
+      "bulkDismiss": "Not Duplicates ({count, number})",
+      "bulkLink": "Link as Related ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# pair dismissed} other {# pairs dismissed}}",
       "bulkLinkSuccess": "{count, plural, one {# pair linked} other {# pairs linked}}",
       "bulkError": "Some operations failed. Please try again.",
@@ -2584,8 +2587,8 @@
       "loadingResults": "Loading generated test cases...",
       "generatingPreparing": "Preparing request...",
       "generatingCallingAi": "Waiting for AI to generate test cases...",
-      "generatingStreaming": "AI is generating test case {count}...",
-      "generatingStreamingPage": "AI is generating test case {count} — page {current} of {total}: {page}",
+      "generatingStreaming": "AI is generating test case {count, number}...",
+      "generatingStreamingPage": "AI is generating test case {count, number} — page {current, number} of {total, number}: {page}",
       "generatingProcessing": "Processing generated test cases...",
       "generatingHint": "This may take a minute depending on the complexity of your source material.",
       "steps": {
@@ -2671,7 +2674,7 @@
       "review": {
         "title": "Review Generated Test Cases",
         "description": "Review the AI-generated test cases, make any necessary edits, and select which ones to import.",
-        "selected": "{count} of {total} selected",
+        "selected": "{count, number} of {total, number} selected",
         "moreSteps": "... and {count, plural, one {# more step} other {# more steps}}",
         "templateFields": "Template Fields:",
         "moreFields": "... and {count, plural, one {# more field} other {# more fields}}",
@@ -2681,7 +2684,7 @@
         "allPages": "All pages ({pages, plural, one {# page} other {# pages}}, {cases, plural, one {# case} other {# cases}})"
       },
       "generatingLegacy": "Generating test cases with AI...",
-      "expandProgress": "{done} of {total} generated",
+      "expandProgress": "{done, number} of {total, number} generated",
       "import": "{count, plural, =0 {Import Test Cases} =1 {Import 1 Test Case} other {Import # Test Cases}}",
       "importing": "{count, plural, =0 {Importing Test Cases...} =1 {Importing 1 Test Case...} other {Importing # Test Cases...}}",
       "openInExternalSystem": "Open in {provider}",
@@ -2847,15 +2850,15 @@
       "description": "Add a new test run to the project",
       "success": {
         "title": "Test run added successfully",
-        "description": "The test run has been added to the project",
-        "descriptionMultiple": "{count, plural, one {# test run has} other {# test runs have}} been created for '{name}'"
+        "description": "{name} has been added to the project",
+        "descriptionMultiple": "{count, plural, one {# test run has} other {# test runs have}} been created for {name}"
       },
       "estimates": {
         "manual": "Estimated Manual Time",
         "automated": "Estimated Automated Time",
         "mixed": "Estimated Manual/Automated Time"
       },
-      "creatingProgress": "Creating test run {current} of {total}..."
+      "creatingProgress": "Creating test run {current, number} of {total, number}..."
     },
     "magicSelect": {
       "title": "Magic Select",
@@ -2864,7 +2867,7 @@
       "reasoning": "AI Reasoning",
       "reviewSelection": "Review suggested test cases",
       "viewSuggested": "View Suggested Cases",
-      "tokenUsage": "{total} tokens used",
+      "tokenUsage": "{total, number} tokens used",
       "noLlmIntegration": "AI features require an LLM integration. Configure one in project settings.",
       "configure": {
         "title": "Test Case Scope",
@@ -2883,7 +2886,7 @@
       "loading": {
         "batch": "Processing batch {current} of {total}",
         "analyzing": "Analyzing test cases...",
-        "progress": "Analyzed {analyzed} of {total} test cases...",
+        "progress": "Analyzed {analyzed, number} of {total, number} test cases...",
         "waitingForAi": "Waiting for AI response (batch {batch} of {total})...",
         "selectedSoFar": "{count, plural, =1 {# test case selected so far} other {# test cases selected so far}}",
         "resolving_integration": "Resolving AI integration...",
@@ -3043,7 +3046,7 @@
             "mapping": "Configure mapping",
             "import": "Monitor import"
           },
-          "stepIndicator": "Step {step} of {total}"
+          "stepIndicator": "Step {step, number} of {total, number}"
         },
         "fileLabel": "Testmo JSON file",
         "fileHelp": "Select the JSON export that you downloaded from Testmo.",
@@ -3174,8 +3177,8 @@
         "importProgressDescription": "{count, plural, =0 {All records imported across tracked entities.} =1 {1 record remaining across tracked entities.} other {# records remaining across tracked entities.}}",
         "importProgressTotalRemaining": "{count, plural, =0 {No remaining records} =1 {1 record remaining} other {# records remaining}}",
         "importProgressProcessed": "{processed, number}/{total, number} records imported",
-        "importProgressAria": "{percent}% of import complete",
-        "importProgressPercentLabel": "{percent}%",
+        "importProgressAria": "{percent, number}% of import complete",
+        "importProgressPercentLabel": "{percent, number}%",
         "importDurationLabel": "Total time:",
         "activityLogTitle": "Import activity",
         "activityLogDescription": "Detailed log of background import steps. Timestamps are based on the server time zone.",
@@ -3249,7 +3252,7 @@
           "configurationNoTokens": "No variants detected in this configuration.",
           "configurationNoExistingTargets": "No configurations available to map.",
           "configurationNamePlaceholder": "Enter a configuration name",
-          "configurationVariantLabel": "Variant {index}",
+          "configurationVariantLabel": "Variant {index, number}",
           "configurationVariantActionLabel": "How should this variant be handled?",
           "configurationVariantActionPlaceholder": "Choose an option",
           "configurationVariantMapOption": "Map to existing variant",
@@ -3955,12 +3958,12 @@
       "saveChanges": "Save Changes",
       "forceAllUsers": "Force All Users to Change Password",
       "forceAllUsersDialogTitle": "Force Password Change for All Users",
-      "forceAllUsersDialogDescription": "This will require {count} credential-based users to change their password on next login.",
+      "forceAllUsersDialogDescription": "This will require {count, number} credential-based users to change their password on next login.",
       "forceAllUsersDialogWarning": "This action cannot be undone.",
       "forceAllUsersDialogConfirm": "Force Change",
       "saved": "Security settings saved",
       "saveFailed": "Failed to save security settings",
-      "forceAllSuccess": "Password change required for {count} users",
+      "forceAllSuccess": "Password change required for {count, number} users",
       "forceAllFailed": "Failed to force password change"
     },
     "apiTokens": {
@@ -4149,7 +4152,7 @@
       "combinations": {
         "title": "Combinations",
         "description": "Manage global combinations",
-        "confirmDescription": "The following {count} combinations will be created.",
+        "confirmDescription": "The following {count, number} combinations will be created.",
         "addCombination": "Add Combination",
         "editCombination": "Edit Combination",
         "selectCombination": "Select Combination",
@@ -4226,7 +4229,7 @@
         "title": "Edit Milestone Type"
       },
       "delete": {
-        "title": "Delete Milestone Type",
+        "title": "Delete {item}",
         "confirmMessage": "Are you sure you want to delete the {name} Milestone Type?"
       }
     },
@@ -4653,7 +4656,7 @@
       },
       "delete": {
         "title": "Delete AI Model Integration",
-        "description": "Are you sure you want to delete this AI model integration? This will remove it from all projects and cannot be undone.",
+        "description": "Are you sure you want to delete the {name} AI model integration? This will remove it from all projects and cannot be undone.",
         "integrationDeletedSuccess": "AI model integration deleted successfully",
         "failedToDeleteIntegration": "Failed to delete AI model integration",
         "cannotDeleteDefault": "Cannot delete the default AI model. Set another as default first."
@@ -4725,7 +4728,7 @@
         "warning": "This action cannot be undone. All projects using this configuration will revert to the default prompt configuration."
       },
       "llmColumn": "LLM",
-      "mixedLlms": "{count} LLMs",
+      "mixedLlms": "{count, number} LLMs",
       "cannotDeleteDefault": "Cannot delete the default prompt configuration. Set another as default first.",
       "defaultChanged": "Default prompt configuration updated successfully.",
       "featureLabels": {
@@ -4952,7 +4955,7 @@
     "notifications": {
       "empty": "No notifications",
       "aria": {
-        "notifications": "Notifications ({count} unread)"
+        "notifications": "Notifications ({count, number} unread)"
       },
       "actions": {
         "markRead": "Mark as read",
@@ -5097,11 +5100,11 @@
       "sharedStepGroupCreateNewDesc": "A new shared step group will be created.",
       "go": "Go",
       "processing": "Processing...",
-      "progressText": "{processed} of {total} cases processed",
+      "progressText": "{processed, number} of {total, number} cases processed",
       "successCount": "{count} case(s) {operation}d successfully",
-      "skipped": "Skipped: {count}",
-      "droppedLinks": "Cross-project links dropped: {count}",
-      "errorCount": "{count} case(s) failed",
+      "skipped": "Skipped: {count, number}",
+      "droppedLinks": "Cross-project links dropped: {count, number}",
+      "errorCount": "{count, number} case(s) failed",
       "viewInTargetProject": "View in target project",
       "failed": "Failed",
       "folderMode": "Folder \"{folderName}\" — {caseCount, plural, one {# case} other {# cases}}"
@@ -5128,7 +5131,7 @@
     "unlinkError": "Failed to unlink issue",
     "noIssuesFound": "No issues found",
     "startTypingToSearch": "Start typing to search for issues",
-    "selectedCount": "{count} selected",
+    "selectedCount": "{count, number} selected",
     "confirmSelection": "Confirm Selection",
     "alreadyLinked": "Already linked",
     "authenticate": "Authenticate",
@@ -5142,7 +5145,7 @@
     "error": "Error loading issues",
     "errorDescription": "Failed to load issues. Please try again.",
     "selectIssues": "Select Issues",
-    "authRequiredDescription": "Please authenticate with {provider} to search for issues",
+    "authRequiredDescription": "Please authenticate to search for issues",
     "integrationNotConfigured": "Integration Not Configured",
     "integrationNotConfiguredDescription": "This integration has not been fully configured. Please contact your project administrator to configure the external project in the project settings.",
     "createIssue": "Create Issue",
@@ -5189,7 +5192,7 @@
     "searchUsers": "Search for users",
     "noTeamsAvailable": "No teams available",
     "filterAll": "All",
-    "fanOutPartialFailure": "{count} project(s) could not be reached. Showing results from {successCount} project(s).",
+    "fanOutPartialFailure": "{count, number} project(s) could not be reached. Showing results from {successCount, number} project(s).",
     "projectSelectorLabel": "Project",
     "searchFailedTitle": "Search failed"
   },
@@ -5229,7 +5232,7 @@
   },
   "charts": {
     "average": "Average",
-    "count": "Count: {count}",
+    "count": "Count: {count, number}",
     "percent": "Percent: {percent}%",
     "completed": "Completed: {count}",
     "durationRange": "Duration: {from}s - {to}s",
@@ -6262,7 +6265,7 @@
       "loadingMore": "Loading more...",
       "noRecords": "No records found",
       "error": "Failed to load records",
-      "recordCount": "{count} {count, plural, =1 {record} other {records}}",
+      "recordCount": "{count, plural, =1 {# record} other {# records}}",
       "allRecords": "All Records",
       "allLoaded": "All records loaded"
     },
@@ -6516,8 +6519,8 @@
       },
       "page3": {
         "title": "Preview Import Data",
-        "showing": "Showing {start} to {end} of {total} shared steps",
-        "step": "Shared Step {number}",
+        "showing": "Showing {start, number} to {end, number} of {total, number} shared steps",
+        "step": "Shared Step {number, number}",
         "noValue": "(empty)"
       }
     },
@@ -6539,7 +6542,7 @@
       "noResultsDescription": "Run a scan to detect repeated step sequences across your test cases.",
       "filterPlaceholder": "Filter by case name...",
       "selected": "{count, plural, one {# selected} other {# selected}}",
-      "bulkDismiss": "Dismiss ({count})",
+      "bulkDismiss": "Dismiss ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# match dismissed} other {# matches dismissed}}",
       "bulkError": "Some operations failed. Please try again.",
       "tableHint": "Click a row to preview matched steps. Select rows with checkboxes for bulk actions.",
@@ -6555,7 +6558,7 @@
       "cancelScan": "Cancel scan",
       "findStepDuplicates": "Find Step Duplicates",
       "rescan": "Scan",
-      "viewResults": "View Results ({count})",
+      "viewResults": "View Results ({count, number})",
       "retryScan": "Retry Scan",
       "dialog": {
         "title": "Convert to Shared Steps",
@@ -6805,9 +6808,9 @@
     },
     "progress": {
       "starting": "Starting analysis...",
-      "analyzed": "Analyzed {analyzed}/{total} entities",
-      "sizing": "Finding optimal batch size (trying {size} entities)...",
-      "streaming": "Receiving AI response ({analyzed}/{total} entities done)...",
+      "analyzed": "Analyzed {analyzed, number}/{total, number} entities",
+      "sizing": "Finding optimal batch size (trying {size, number} entities)...",
+      "streaming": "Receiving AI response ({analyzed, number}/{total, number} entities done)...",
       "finalizing": "Preparing results...",
       "complete": "Analysis complete",
       "reviewSuggestions": "Review Suggestions",
@@ -6815,7 +6818,7 @@
     },
     "wizard": {
       "description": "AI will analyze your entire project's test cases, test runs, and sessions to suggest relevant tags based on their content.",
-      "entityLine": "{count} {type}",
+      "entityLine": "{count, number} {type}",
       "startAnalysis": "Start Analysis",
       "untaggedOnly": "Only analyze records without existing tags",
       "allowNewTags": "Allow creating new tags",
@@ -6834,7 +6837,7 @@
     "fair": "Fair",
     "good": "Good",
     "strong": "Strong",
-    "minLength": "At least {count} characters",
+    "minLength": "At least {count, number} characters",
     "uppercase": "At least one uppercase letter",
     "lowercase": "At least one lowercase letter",
     "numbers": "At least one number",

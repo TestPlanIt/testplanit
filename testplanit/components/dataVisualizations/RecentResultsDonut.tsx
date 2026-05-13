@@ -150,7 +150,9 @@ const RecentResultsDonut: React.FC<RecentResultsDonutProps> = ({
           tooltipRef.current.style.display = "block";
           tooltipRef.current.style.fontSize = `${tooltipFontSize}px`;
           const percentage =
-            totalCount > 0 ? ((d.data.value / totalCount) * 100).toFixed(1) : 0;
+            totalCount > 0
+              ? ((d.data.value / totalCount) * 100).toFixed(1)
+              : "0";
           const displayValue =
             d.data.formattedValue ?? t("charts.count", { count: d.data.value });
           tooltipRef.current.innerHTML = `

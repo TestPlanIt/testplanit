@@ -531,7 +531,7 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
                 data-testid="webhook-outbound-name-error"
                 className="text-xs text-destructive"
               >
-                {t(createErrors.name as Parameters<typeof t>[0])}
+                {(t as unknown as (key: string) => string)(createErrors.name)}
               </p>
             ) : (
               <p
@@ -594,7 +594,7 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
                 data-testid="webhook-outbound-url-error"
                 className="text-xs text-destructive"
               >
-                {t(createErrors.url as Parameters<typeof t>[0])}
+                {(t as unknown as (key: string) => string)(createErrors.url)}
               </p>
             ) : (
               <p
@@ -654,10 +654,8 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
                         onCheckedChange={() => toggleEvent(eventName)}
                       />
                       <span>
-                        {tGlobal(
-                          eventVerbI18nPath(eventName) as Parameters<
-                            typeof tGlobal
-                          >[0]
+                        {(tGlobal as unknown as (key: string) => string)(
+                          eventVerbI18nPath(eventName)
                         )}
                       </span>
                     </label>
@@ -1039,10 +1037,8 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
                               }}
                             />
                             <span>
-                              {tGlobal(
-                                eventVerbI18nPath(eventName) as Parameters<
-                                  typeof tGlobal
-                                >[0]
+                              {(tGlobal as unknown as (key: string) => string)(
+                                eventVerbI18nPath(eventName)
                               )}
                             </span>
                             {savedFlashes.has(`${config.id}:${eventName}`) && (

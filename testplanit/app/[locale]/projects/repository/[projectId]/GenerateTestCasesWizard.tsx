@@ -4186,7 +4186,6 @@ export function GenerateTestCasesWizard({
                                           {
                                             current:
                                               urlJobProgress.pagesProcessed,
-                                            total: urlJobProgress.totalPages,
                                           }
                                         )}
                                       </span>

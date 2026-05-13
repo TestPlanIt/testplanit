@@ -557,9 +557,7 @@ export function NotificationContent({
                   href={reviewLink}
                   className="font-medium text-primary hover:underline inline-flex items-center gap-1"
                 >
-                  {t("reviewGeneratedCases", {
-                    defaultValue: "Review generated test cases",
-                  })}
+                  {t("reviewGeneratedCases")}
                   <ExternalLink className="h-3 w-3" />
                 </Link>
               </div>

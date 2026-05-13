@@ -438,7 +438,7 @@ const TreeView: React.FC<{
         await Promise.all(updatePromises);
 
         toast.success(t("common.fields.success"), {
-          description: t("common.messages.updateSuccess", {
+          description: t("common.messages.updateSuccessCount", {
             count: itemsToUpdate.length,
           }),
         });

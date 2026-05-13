@@ -996,7 +996,7 @@ export default function MilestoneDetailsPage() {
           onOpenChange={setIsCompleteDialogOpen}
           milestoneToComplete={milestone as unknown as MilestonesWithTypes}
           onCompleteSuccess={() => {
-            toast.success(t("toast.updated", { name: milestone.name }));
+            toast.success(t("toast.updatedWithName", { name: milestone.name }));
             router.refresh();
           }}
         />

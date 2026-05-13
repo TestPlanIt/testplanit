@@ -471,10 +471,12 @@
       "moveSuccess": "Vật phẩm đã được di chuyển thành công.",
       "moveError": "Đã xảy ra lỗi trong quá trình di chuyển mục",
       "updateSuccess": "Mục đã được cập nhật thành công.",
+      "updateSuccessCount": "{count, number} items updated successfully",
       "updateError": "Đã xảy ra lỗi trong quá trình cập nhật mục",
       "linkCopied": "Liên kết đã được sao chép vào clipboard",
       "copyFailed": "Không thể sao chép liên kết vào clipboard",
-      "created": "Quá trình chạy thử nghiệm đã được tạo thành công.",
+      "created": "Đã tạo thành công",
+      "createdItem": "{item} đã được tạo thành công",
       "createdDescription": "Quá trình chạy thử nghiệm đã được tạo và hiện đang hiển thị trong danh sách Các lần chạy thử nghiệm.",
       "createError": "Đã xảy ra lỗi không xác định. Vui lòng thử lại.",
       "emptyActive": "Hiện không có đợt chạy thử nghiệm nào đang hoạt động.",
@@ -698,7 +700,7 @@
       "noTestCasesSelected": "Không có trường hợp thử nghiệm nào được chọn.",
       "editToSelectTestCases": "Chỉnh sửa Lần chạy thử nghiệm để chọn các trường hợp thử nghiệm.",
       "casesInRun": "{count, plural, =0 {Không có trường hợp kiểm thử nào trong lần chạy thử nghiệm} =1 {1 trường hợp kiểm thử trong lần chạy thử nghiệm} other {# trường hợp kiểm thử trong lần chạy thử nghiệm}}",
-      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 Trường hợp duy nhất} other {Số trường hợp duy nhất}} trên {configCount, plural, =1 {1 Cấu hình} other {Số cấu hình}} ({totalCount} tổng số trường hợp)",
+      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 Trường hợp duy nhất} other {Số trường hợp duy nhất}} trên {configCount, plural, =1 {1 Cấu hình} other {Số cấu hình}} ({totalCount, number} tổng số trường hợp)",
       "viewTestRunDetails": "Xem chi tiết kết quả chạy thử nghiệm",
       "sortByStatus": "Phân nhóm theo trạng thái",
       "sortByDate": "Sắp xếp theo ngày",
@@ -973,7 +975,7 @@
       "case": "{count, plural, =1 {trường hợp} other {các trường hợp}}",
       "result": "{count, plural, =1 {kết quả} other {kết quả}}",
       "run": "{count, plural, =1 {chạy} other {chạy}}",
-      "comment": "{count, plural, =1 {{count} bình luận} other {{count} bình luận}}"
+      "comment": "{count, plural, =1 {# bình luận} other {# bình luận}}"
     },
     "success": {
       "assigned": "Trường hợp kiểm thử được gán thành công",
@@ -1099,7 +1101,7 @@
       "passwordRequired": "Cần nhập mật khẩu.",
       "genericError": "Đã xảy ra lỗi. Vui lòng thử lại.",
       "policyTitle": "Yêu cầu về mật khẩu:",
-      "policyMinLength": "Ít nhất {count} ký tự",
+      "policyMinLength": "Ít nhất {count, number} ký tự",
       "policyUppercase": "Ít nhất một chữ cái viết hoa",
       "policyLowercase": "Ít nhất một chữ cái viết thường",
       "policyNumbers": "Ít nhất một số",
@@ -1149,7 +1151,7 @@
   },
   "projects": {
     "status": {
-      "id": "Mã dự án: {id}",
+      "id": "Mã dự án: {id, number}",
       "active": "Dự án đang hoạt động",
       "completed": "Dự án đã hoàn thành."
     },
@@ -1199,7 +1201,7 @@
           "updateError": "Không thể cập nhật cài đặt tích hợp sự cố.",
           "removeError": "Không thể gỡ bỏ sự cố tích hợp",
           "removeIntegration": "Loại bỏ tích hợp",
-          "confirmRemove": "Xác nhận xóa",
+          "confirmRemove": "Bạn có chắc chắn muốn xóa tích hợp {name} không?",
           "authDescription": "Bạn cần xác thực với {provider} để sử dụng tính năng tích hợp sự cố này.",
           "authenticating": "Đang xác thực...",
           "authSuccess": "Xác thực thành công",
@@ -1310,8 +1312,8 @@
         "deleteConfirmTitle": "Xóa cấu hình webhook?",
         "deleteConfirm": "Xóa cấu hình webhook này? Các đơn hàng đến sẽ bị từ chối.",
         "sendTest": "Gửi webhook thử nghiệm",
-        "testSuccess": "Webhook thử nghiệm đã được chấp nhận (HTTP {statusCode}, kết quả: {outcome})",
-        "testFailure": "Kiểm tra webhook thất bại (HTTP {statusCode}): {error}",
+        "testSuccess": "Webhook thử nghiệm đã được chấp nhận (HTTP {statusCode, number}, kết quả: {outcome})",
+        "testFailure": "Kiểm tra webhook thất bại (HTTP {statusCode, number}): {error}",
         "saveError": "Không thể lưu cấu hình webhook.",
         "lastReceived": "Lần nhận cuối cùng: {timestamp}",
         "lastReceivedLabel": "Lần nhận cuối cùng:",
@@ -1397,7 +1399,7 @@
         "outboundHmacActiveSecret": "Tích cực",
         "outboundHmacInactiveSecret": "Không hoạt động",
         "outboundHmacRetiringSecret": "Nghỉ hưu",
-        "outboundHmacAutoRetireIn": "Tự động nghỉ hưu sau {days} ngày",
+        "outboundHmacAutoRetireIn": "Tự động nghỉ hưu sau {days, number} ngày",
         "outboundHmacRotateButton": "Xoay bí mật",
         "outboundHmacExtendButton": "Gia hạn thêm 7 ngày",
         "outboundHmacRetireNowButton": "Hãy nghỉ hưu ngay bây giờ",
@@ -1481,7 +1483,7 @@
         "filterSinceDefault": "Kể từ…",
         "filterUntilDefault": "Cho đến khi…",
         "filterReset": "Đặt lại bộ lọc",
-        "filterBulkReplayButton": "Phát lại hàng loạt {count} lỗi gửi đi",
+        "filterBulkReplayButton": "Phát lại hàng loạt {count, number} lỗi gửi đi",
         "filterBulkReplayHidden": "Tất cả các lỗi hiển thị đều là lỗi từ phía máy khách — hãy kích hoạt lại sự kiện ở phía máy chủ.",
         "deliveriesEmpty": "Không có đơn hàng nào phù hợp với các bộ lọc này.",
         "deliveriesResetFilters": "Đặt lại bộ lọc",
@@ -1500,7 +1502,7 @@
         "drawerLabelDirection": "Phương hướng",
         "drawerLabelStatusCode": "Mã trạng thái",
         "drawerLabelLatency": "Độ trễ",
-        "drawerLatencyValue": "{ms} ms",
+        "drawerLatencyValue": "{ms, number} ms",
         "drawerLatencyUnknown": "—",
         "drawerLabelError": "Lỗi",
         "drawerLabelPayloadDigest": "Tóm tắt tải trọng",
@@ -1515,16 +1517,16 @@
         "replayConfirm": "Điều này sẽ kích hoạt yêu cầu {direction} {adapterType} thực sự.",
         "replayAction": "Phát lại",
         "bulkReplayConfirmTitle": "Phát lại các lỗi gửi đi?",
-        "bulkReplayConfirm": "Phát lại các lỗi gửi đi {count} thành {configName}? Điều này sẽ kích hoạt {count} các yêu cầu HTTP thực sự.",
-        "bulkReplayCapExceeded": "Việc phát lại hàng loạt giới hạn ở 100 lần gửi đi cùng một lúc. Thu hẹp bộ lọc hoặc chạy tuần tự. Hiện tại {count} sẽ được phát lại.",
-        "bulkReplayAction": "Phát lại {count}",
+        "bulkReplayConfirm": "Phát lại các lỗi gửi đi {count, number} thành {configName}? Điều này sẽ kích hoạt các yêu cầu HTTP thực sự {count, number}.",
+        "bulkReplayCapExceeded": "Việc phát lại hàng loạt giới hạn ở 100 lần gửi đi cùng một lúc. Thu hẹp bộ lọc hoặc chạy tuần tự. Hiện tại {count, number} sẽ được phát lại.",
+        "bulkReplayAction": "Phát lại {count, number}",
         "healthBadge": {
           "HEALTHY": "Khỏe mạnh",
           "DEGRADED": "bị xuống cấp",
           "DISABLED": "Tàn tật"
         },
         "healthTooltipHealthy": "Thành công gần nhất: {lastSuccessAt}",
-        "healthTooltipDegraded": "{count} lần thất bại liên tiếp · lần cuối tại {lastFailureAt}",
+        "healthTooltipDegraded": "{count, number} những lần thất bại liên tiếp · lần cuối tại {lastFailureAt}",
         "healthTooltipDisabled": "Bị vô hiệu hóa sau 10 lần thất bại liên tiếp · {lastFailureAt}",
         "activityLabel": "Hoạt động giao hàng",
         "activityLastDispatched": "Lần gửi cuối cùng",
@@ -1638,8 +1640,8 @@
         "preview": {
           "resolvingBranch": "Đang giải quyết nhánh…",
           "scanningFiles": "Đang quét các tập tin trong {scope}…",
-          "scanningFilesCount": "Đang quét các tập tin trong {scope}… ({count} đã được tìm thấy)",
-          "filtering": "Áp dụng bộ lọc cho {count} tập tin…"
+          "scanningFilesCount": "Đang quét các tập tin trong {scope}… ({count, number} đã tìm thấy)",
+          "filtering": "Áp dụng bộ lọc cho các tệp {count, number}…"
         },
         "cache": {
           "title": "Cài đặt bộ nhớ đệm",
@@ -1748,9 +1750,10 @@
     "toast": {
       "deleted": "Cột mốc {name} đã bị xóa",
       "updated": "Đã cập nhật cột mốc quan trọng",
+      "updatedWithName": "{name} đã cập nhật",
       "updateFailed": "Không thể cập nhật mốc thời gian",
       "completed": "Cột mốc \"{name}\" đã hoàn thành.",
-      "completedWithDependencies": "Các mốc quan trọng và các điều kiện phụ thuộc đã được hoàn thành thành công."
+      "completedWithDependencies": "{name} và các phụ thuộc đã hoàn thành thành công."
     },
     "errors": {
       "nameExists": "Đã có một cột mốc mang tên này.",
@@ -1819,7 +1822,7 @@
     },
     "messages": {
       "createSuccess": "Phiên được tạo thành công",
-      "createSuccessMultiple": "{count} Phiên được tạo thành công",
+      "createSuccessMultiple": "{count, number} Sessions created successfully",
       "duplicateSuccess": "Phiên làm việc đã được sao chép thành công",
       "duplicateSuccessMultiple": "{count} Phiên đã được sao chép thành công"
     },
@@ -1886,8 +1889,8 @@
       "backToSession": "Trở lại phiên",
       "backToLatest": "Trở lại phiên bản mới nhất",
       "versionInfo": {
-        "created": "Phiên bản {number} Đã tạo",
-        "latestUpdated": "Phiên bản mới nhất {number} Đã cập nhật"
+        "created": "Version {number, number} Created",
+        "latestUpdated": "Phiên bản mới nhất {number, number} Đã cập nhật"
       },
       "renderer": {
         "noEstimate": "Không có ước tính",
@@ -1982,7 +1985,7 @@
         "avatarUpdated": "Ảnh đại diện đã được cập nhật thành công.",
         "avatarUpdateError": "Không thể cập nhật ảnh đại diện.",
         "deleteAvatar": "Xóa ảnh đại diện",
-        "deleteAvatarConfirm": "Bạn có chắc chắn muốn xóa ảnh đại diện của mình không?",
+        "deleteAvatarConfirm": "Bạn có chắc chắn muốn xóa {name} của mình không?",
         "emailDisabledForSso": "Bạn không thể thay đổi email cho các tài khoản SSO. Vui lòng cập nhật email thông qua nhà cung cấp dịch vụ xác thực của bạn.",
         "emailEditableForBoth": "Bạn có thể đăng nhập bằng cả email/mật khẩu và SSO. Việc thay đổi email chỉ ảnh hưởng đến xác thực bằng mật khẩu.",
         "linkSsoProvider": "Nhà cung cấp SSO liên kết"
@@ -2119,7 +2122,7 @@
       "detailsRegion": "Chi tiết trường hợp thử nghiệm",
       "metadataRegion": "Siêu dữ liệu trường hợp thử nghiệm",
       "versionCreated": "Phiên bản {version} Đã tạo",
-      "latestVersionUpdated": "Phiên bản mới nhất {version} Đã cập nhật",
+      "latestVersionUpdated": "Phiên bản mới nhất {version, number} Đã cập nhật",
       "historyView": "Chế độ xem lịch sử trường hợp kiểm thử"
     },
     "fields": {
@@ -2142,7 +2145,7 @@
       "add": "Thêm bước",
       "addSharedSteps": "Thêm các bước được chia sẻ",
       "delete": "Xóa bước",
-      "confirmDelete": "Xác nhận xóa Bước {number}?",
+      "confirmDelete": "Xác nhận xóa Bước {number, number}?",
       "createSharedSteps": "Tạo các bước chia sẻ {number, plural, one {Bước} other {Các bước}}",
       "sharedStepsName": "Tên các bước được chia sẻ",
       "sharedStepsDescription": "Nhập tên cho các bước {number, plural, one {được chia sẻ mới của bạn} other {các bước}}. Điều này sẽ bao gồm {number, plural, one {# bước đã chọn} other {# các bước đã chọn}}.",
@@ -2240,7 +2243,7 @@
       "cannotReorderAcrossPages": "Không thể sắp xếp lại các trường hợp kiểm thử trên nhiều trang. Để sắp xếp lại, hãy xem tất cả các trường hợp trên một trang bằng cách chọn 'Tất cả' từ menu kích thước trang hoặc bỏ chọn các trường hợp từ các trang khác. Bạn vẫn có thể kéo các trường hợp đã chọn vào thư mục.",
       "exportModal": {
         "scope": {
-          "allFiltered": "Tất cả đều hiển thị ({count})"
+          "allFiltered": "Tất cả đều trong tầm nhìn ({count, number})"
         },
         "textLongFormat": {
           "label": "Định dạng văn bản phong phú"
@@ -2315,8 +2318,8 @@
         },
         "page4": {
           "title": "Xem trước khi nhập",
-          "showing": "Hiển thị {start}-{end} trong tổng số {total} trường hợp",
-          "case": "Trường hợp {number}"
+          "showing": "Hiển thị {start, number}-{end, number} trong số {total, number} trường hợp",
+          "case": "Trường hợp {number, number}"
         }
       }
     },
@@ -2385,7 +2388,7 @@
       "description": "Chỉnh sửa {count, plural, one {# trường hợp đã chọn} other {# trường hợp đã chọn}}. Chọn một trường để bật chế độ chỉnh sửa.",
       "defineStepsTitle": "Xác định các bước để cập nhật hàng loạt",
       "saveNewSteps": "Lưu các bước mới",
-      "newStepsDefined": "Các bước mới được xác định ({count}) - Nhấp vào nút để chỉnh sửa",
+      "newStepsDefined": "Các bước mới được định nghĩa ({count, number}) - Nhấp vào nút để chỉnh sửa",
       "clearExistingStepsWarning": "Các bậc thang hiện có sẽ bị loại bỏ.",
       "warnings": {
         "templateMismatch": {
@@ -2405,7 +2408,7 @@
         "fetchError": "Lỗi khi truy xuất dữ liệu vụ việc."
       },
       "success": {
-        "casesUpdated": "Các trường hợp đã được cập nhật thành công."
+        "casesUpdated": "{count, number} trường hợp đã được cập nhật thành công"
       },
       "placeholders": {
         "various": "<various values>"
@@ -2435,9 +2438,9 @@
       "title": "Xuất các trường hợp kiểm thử",
       "description": "Chọn tùy chọn xuất dữ liệu bên dưới.",
       "scope": {
-        "selected": "Đã chọn ({count})",
-        "allFiltered": "Tất cả (Chế độ xem hiện tại) ({count})",
-        "allProject": "Tất cả trong Dự án ({count})"
+        "selected": "Đã chọn ({count, number})",
+        "allFiltered": "Tất cả (Chế độ xem hiện tại) ({count, number})",
+        "allProject": "Tất cả trong Dự án ({count, number})"
       },
       "format": {
         "label": "Định dạng",
@@ -2495,7 +2498,7 @@
     "aiExport": {
       "toggleLabel": "Tạo bằng AI",
       "generating": "Đang tạo...",
-      "generatingProgress": "Tạo trường hợp {current} của {total}...",
+      "generatingProgress": "Tạo trường hợp {current, number} của {total, number}...",
       "generatingBatch": "Tạo {count, plural, one {# trường hợp} other {# trường hợp}} trong một tệp...",
       "previewTitle": "Xem trước khi xuất",
       "previewDescription": "{count, plural, one {# tập tin} other {# tập tin}} được tạo",
@@ -2507,14 +2510,14 @@
       "truncatedWarning": "Kết quả đầu ra bị cắt ngắn — mô hình đã đạt đến giới hạn token. Hãy thử giảm kích thước lô hoặc tăng Max Output Tokens trong Prompt Config của bạn.",
       "contextFiles": "{count, plural, one {(# tập tin ngữ cảnh)} other {(# tập tin ngữ cảnh)}}",
       "noCodeContextHint": "Chưa có kho lưu trữ mã nguồn nào được cấu hình. AI sẽ sử dụng các mẫu khung chuẩn.",
-      "generatingParallelProgress": "Đã tạo {done} trong số {total} tập tin...",
+      "generatingParallelProgress": "Đã tạo {done, number} trong số {total, number} tập tin...",
       "cancelledGeneration": "Đã hủy"
     },
     "duplicates": {
       "findDuplicates": "Tìm các mục trùng lặp",
       "viewResults": "Xem {count, plural, one {# Kết quả} other {# Kết quả}}",
       "retryScan": "Thử quét lại",
-      "analyzing": "{analyzed}/{total}",
+      "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Nâng cao hiệu quả với trí tuệ nhân tạo...",
       "scanComplete": "Phân tích trùng lặp hoàn tất — {count, plural, =0 {không tìm thấy bản sao trùng lặp} one {# tìm thấy bản sao trùng lặp tiềm năng} other {# tìm thấy bản sao trùng lặp tiềm năng}}",
       "scanFailed": "Phân tích trùng lặp thất bại",
@@ -2538,8 +2541,8 @@
       "selectAll": "Chọn tất cả",
       "selectRow": "Chọn hàng",
       "selected": "{count, plural, one {# đã chọn} other {# đã chọn}}",
-      "bulkDismiss": "Không trùng lặp ({count})",
-      "bulkLink": "Liên kết dưới dạng liên quan ({count})",
+      "bulkDismiss": "Không trùng lặp ({count, number})",
+      "bulkLink": "Liên kết dưới dạng liên quan ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# cặp đôi bị loại bỏ} other {# các cặp đôi bị loại bỏ}}",
       "bulkLinkSuccess": "{count, plural, one {# cặp liên kết} other {# các cặp liên kết}}",
       "bulkError": "Một số thao tác đã thất bại. Vui lòng thử lại.",
@@ -2584,8 +2587,8 @@
       "loadingResults": "Đang tải các trường hợp kiểm thử đã tạo...",
       "generatingPreparing": "Đang chuẩn bị yêu cầu...",
       "generatingCallingAi": "Đang chờ AI tạo ra các trường hợp thử nghiệm...",
-      "generatingStreaming": "AI đang tạo trường hợp thử nghiệm {count}...",
-      "generatingStreamingPage": "AI đang tạo trường hợp thử nghiệm {count} — trang {current} của {total}: {page}",
+      "generatingStreaming": "AI đang tạo ra trường hợp thử nghiệm {count, number}...",
+      "generatingStreamingPage": "AI đang tạo trường hợp thử nghiệm {count, number} — trang {current, number} của {total, number}: {page}",
       "generatingProcessing": "Đang xử lý các trường hợp kiểm thử được tạo ra...",
       "generatingHint": "Quá trình này có thể mất một phút tùy thuộc vào độ phức tạp của tài liệu nguồn.",
       "steps": {
@@ -2671,7 +2674,7 @@
       "review": {
         "title": "Đánh giá các trường hợp kiểm thử được tạo ra",
         "description": "Xem xét các trường hợp thử nghiệm do AI tạo ra, thực hiện bất kỳ chỉnh sửa cần thiết nào và chọn những trường hợp cần nhập.",
-        "selected": "{count} trong số {total} được chọn",
+        "selected": "{count, number} trong số {total, number} được chọn",
         "moreSteps": "... và {count, plural, one {# thêm bước} other {# thêm bước}}",
         "templateFields": "Các trường mẫu:",
         "moreFields": "... và {count, plural, one {# thêm trường} other {# thêm trường}}",
@@ -2681,7 +2684,7 @@
         "allPages": "Tất cả các trang ({pages, plural, one {# trang} other {# trang}}, {cases, plural, one {# trường hợp} other {# trường hợp}})"
       },
       "generatingLegacy": "Tạo các trường hợp thử nghiệm bằng AI...",
-      "expandProgress": "{done} của {total} được tạo ra",
+      "expandProgress": "{done, number} của {total, number} được tạo ra",
       "import": "{count, plural, =0 {Nhập các trường hợp kiểm thử} =1 {Nhập 1 trường hợp kiểm thử} other {Nhập # trường hợp kiểm thử}}",
       "importing": "{count, plural, =0 {Đang nhập các trường hợp kiểm thử...} =1 {Đang nhập 1 trường hợp kiểm thử...} other {Đang nhập # trường hợp kiểm thử...}}",
       "openInExternalSystem": "Mở trong {provider}",
@@ -2847,15 +2850,15 @@
       "description": "Thêm một lượt chạy thử nghiệm mới vào dự án.",
       "success": {
         "title": "Đã thêm thành công lượt chạy thử nghiệm.",
-        "description": "Quá trình chạy thử nghiệm đã được thêm vào dự án.",
-        "descriptionMultiple": "{count, plural, one {# Đã tạo lượt chạy thử nghiệm} other {# Đã tạo lượt chạy thử nghiệm}} cho '{name}'"
+        "description": "{name} đã được thêm vào dự án",
+        "descriptionMultiple": "{count, plural, one {# test run has} other {# test runs have}} been created for {name}"
       },
       "estimates": {
         "manual": "Thời gian thao tác bằng tay ước tính",
         "automated": "Thời gian tự động ước tính",
         "mixed": "Thời gian ước tính thủ công/tự động"
       },
-      "creatingProgress": "Đang tạo bản chạy thử nghiệm {current} của {total}..."
+      "creatingProgress": "Đang tạo bản chạy thử nghiệm {current, number} của {total, number}..."
     },
     "magicSelect": {
       "title": "Lựa chọn ma thuật",
@@ -2864,7 +2867,7 @@
       "reasoning": "Suy luận AI",
       "reviewSelection": "Xem xét các trường hợp thử nghiệm được đề xuất",
       "viewSuggested": "Xem các trường hợp được đề xuất",
-      "tokenUsage": "{total} mã thông báo được sử dụng",
+      "tokenUsage": "{total, number} tokens used",
       "noLlmIntegration": "Các tính năng AI yêu cầu tích hợp LLM. Hãy cấu hình tích hợp này trong cài đặt dự án.",
       "configure": {
         "title": "Phạm vi trường hợp thử nghiệm",
@@ -2883,7 +2886,7 @@
       "loading": {
         "batch": "Đang xử lý lô {current} trong số {total}",
         "analyzing": "Phân tích các trường hợp thử nghiệm...",
-        "progress": "Đã phân tích {analyzed} trong số {total} trường hợp thử nghiệm...",
+        "progress": "Đã phân tích {analyzed, number} trong số {total, number} trường hợp thử nghiệm...",
         "waitingForAi": "Đang chờ phản hồi từ AI (lô {batch} trong số {total})...",
         "selectedSoFar": "{count, plural, =1 {# Số trường hợp thử nghiệm đã được chọn cho đến nay} other {# Số trường hợp thử nghiệm đã được chọn cho đến nay}}",
         "resolving_integration": "Giải quyết vấn đề tích hợp AI...",
@@ -3043,7 +3046,7 @@
             "mapping": "Cấu hình ánh xạ",
             "import": "Nhập màn hình"
           },
-          "stepIndicator": "Bước {step} của {total}"
+          "stepIndicator": "Bước {step, number} của {total, number}"
         },
         "fileLabel": "Tệp JSON Testmo",
         "fileHelp": "Chọn tệp xuất JSON mà bạn đã tải xuống từ Testmo.",
@@ -3174,8 +3177,8 @@
         "importProgressDescription": "{count, plural, =0 {Tất cả bản ghi đã được nhập từ các thực thể được theo dõi.} =1 {Còn lại 1 bản ghi từ các thực thể được theo dõi.} other {Số bản ghi còn lại từ các thực thể được theo dõi.}}",
         "importProgressTotalRemaining": "{count, plural, =0 {Không còn bản ghi nào} =1 {Còn lại 1 bản ghi} other {Còn lại # bản ghi}}",
         "importProgressProcessed": "{processed, number}/{total, number} bản ghi được nhập",
-        "importProgressAria": "{percent}% nhập khẩu hoàn tất",
-        "importProgressPercentLabel": "{percent}%",
+        "importProgressAria": "{percent, number}% nhập khẩu hoàn tất",
+        "importProgressPercentLabel": "{percent, number}%",
         "importDurationLabel": "Tổng thời gian:",
         "activityLogTitle": "Hoạt động nhập khẩu",
         "activityLogDescription": "Nhật ký chi tiết các bước nhập dữ liệu nền. Dấu thời gian dựa trên múi giờ của máy chủ.",
@@ -3249,7 +3252,7 @@
           "configurationNoTokens": "Không phát hiện thấy biến thể nào trong cấu hình này.",
           "configurationNoExistingTargets": "Hiện không có cấu hình nào để ánh xạ.",
           "configurationNamePlaceholder": "Nhập tên cấu hình",
-          "configurationVariantLabel": "Biến thể {index}",
+          "configurationVariantLabel": "Biến thể {index, number}",
           "configurationVariantActionLabel": "Nên xử lý biến thể này như thế nào?",
           "configurationVariantActionPlaceholder": "Chọn một tùy chọn",
           "configurationVariantMapOption": "Ánh xạ tới biến thể hiện có",
@@ -3741,7 +3744,7 @@
       },
       "delete": {
         "title": "Xóa dự án",
-        "confirmMessage": "Bạn có chắc chắn muốn xóa dự án này không?"
+        "confirmMessage": "Bạn có chắc chắn muốn xóa <strong>{name}</strong> không?"
       }
     },
     "templates": {
@@ -3781,7 +3784,7 @@
         },
         "delete": {
           "title": "Xóa trường hợp",
-          "confirmMessage": "Bạn có chắc chắn muốn xóa trường Thông tin vụ việc này không?",
+          "confirmMessage": "Bạn có chắc chắn muốn xóa <strong>{name}</strong> không?",
           "warning": "Trường Case Field sẽ bị xóa khỏi mọi mẫu. Thao tác này không thể hoàn tác."
         }
       },
@@ -3955,12 +3958,12 @@
       "saveChanges": "Lưu thay đổi",
       "forceAllUsers": "Buộc tất cả người dùng phải thay đổi mật khẩu.",
       "forceAllUsersDialogTitle": "Buộc thay đổi mật khẩu cho tất cả người dùng",
-      "forceAllUsersDialogDescription": "Điều này sẽ yêu cầu {count} người dùng dựa trên thông tin đăng nhập phải thay đổi mật khẩu của họ trong lần đăng nhập tiếp theo.",
+      "forceAllUsersDialogDescription": "This will require {count, number} credential-based users to change their password on next login.",
       "forceAllUsersDialogWarning": "Hành động này không thể đảo ngược.",
       "forceAllUsersDialogConfirm": "Thay đổi bắt buộc",
       "saved": "Cài đặt bảo mật đã được lưu",
       "saveFailed": "Không thể lưu cài đặt bảo mật.",
-      "forceAllSuccess": "Người dùng {count} cần thay đổi mật khẩu.",
+      "forceAllSuccess": "Người dùng {count, number} cần thay đổi mật khẩu.",
       "forceAllFailed": "Không thể buộc thay đổi mật khẩu."
     },
     "apiTokens": {
@@ -3999,7 +4002,7 @@
       },
       "delete": {
         "title": "Xóa thẻ",
-        "confirmMessage": "Bạn có chắc chắn muốn xóa thẻ này không?",
+        "confirmMessage": "Bạn có chắc chắn muốn xóa thẻ {name} không?",
         "warning": "Thẻ này sẽ bị xóa khỏi tất cả các trường hợp kiểm thử và phiên làm việc.",
         "errors": {
           "unknown": "Đã xảy ra lỗi khi xóa thẻ."
@@ -4030,7 +4033,7 @@
       },
       "delete": {
         "title": "Xóa quy trình làm việc",
-        "confirmMessage": "Bạn có chắc chắn muốn xóa quy trình làm việc này không?"
+        "confirmMessage": "Bạn có chắc chắn muốn xóa <strong>{name}</strong> không?"
       },
       "setDefault": {
         "title": "Thiết lập quy trình làm việc mặc định",
@@ -4058,7 +4061,7 @@
       },
       "delete": {
         "title": "Xóa vai trò",
-        "confirmMessage": "Bạn có chắc chắn muốn xóa vai trò này không?",
+        "confirmMessage": "Bạn có chắc chắn muốn xóa vai trò {name} không?",
         "warning": "Thao tác này không thể hoàn tác. Người dùng có vai trò này sẽ được chỉ định vai trò mặc định.",
         "errors": {
           "defaultNotFound": "Không thể xóa vai trò mặc định"
@@ -4149,7 +4152,7 @@
       "combinations": {
         "title": "Sự kết hợp",
         "description": "Quản lý các tổ hợp toàn cầu",
-        "confirmDescription": "Các tổ hợp {count} sau đây sẽ được tạo ra.",
+        "confirmDescription": "Các tổ hợp sau đây {count, number} sẽ được tạo ra.",
         "addCombination": "Thêm tổ hợp",
         "editCombination": "Chỉnh sửa kết hợp",
         "selectCombination": "Chọn tổ hợp",
@@ -4226,8 +4229,8 @@
         "title": "Chỉnh sửa loại mốc"
       },
       "delete": {
-        "title": "Xóa loại mốc",
-        "confirmMessage": "Bạn có chắc chắn muốn xóa Loại mốc quan trọng này không?"
+        "title": "Xóa {item}",
+        "confirmMessage": "Bạn có chắc chắn muốn xóa Loại cột mốc {name} không?"
       }
     },
     "issue_config": {
@@ -4634,7 +4637,7 @@
       },
       "edit": {
         "title": "Chỉnh sửa tích hợp mô hình AI",
-        "description": "Cập nhật cấu hình cho việc tích hợp mô hình AI này.",
+        "description": "Cập nhật cấu hình cho việc tích hợp mô hình AI {name}",
         "statusDescription": "Cho phép hoặc vô hiệu hóa tính năng tích hợp này.",
         "apiKeyPlaceholder": "Nhập khóa API mới để cập nhật...",
         "update": "Cập nhật",
@@ -4653,7 +4656,7 @@
       },
       "delete": {
         "title": "Xóa tích hợp mô hình AI",
-        "description": "Bạn có chắc chắn muốn xóa tích hợp mô hình AI này không? Thao tác này sẽ xóa nó khỏi tất cả các dự án và không thể hoàn tác.",
+        "description": "Bạn có chắc chắn muốn xóa tích hợp mô hình AI {name} không? Thao tác này sẽ xóa nó khỏi tất cả các dự án và không thể hoàn tác.",
         "integrationDeletedSuccess": "Quá trình tích hợp mô hình AI đã được xóa thành công.",
         "failedToDeleteIntegration": "Không thể xóa tích hợp mô hình AI.",
         "cannotDeleteDefault": "Không thể xóa mô hình AI mặc định. Hãy thiết lập một mô hình khác làm mặc định trước."
@@ -4725,7 +4728,7 @@
         "warning": "Thao tác này không thể hoàn tác. Tất cả các dự án sử dụng cấu hình này sẽ trở về cấu hình nhắc lệnh mặc định."
       },
       "llmColumn": "Thạc sĩ Luật",
-      "mixedLlms": "{count} LLMs",
+      "mixedLlms": "{count, number} LLMs",
       "cannotDeleteDefault": "Không thể xóa cấu hình lời nhắc mặc định. Hãy thiết lập một cấu hình khác làm mặc định trước.",
       "defaultChanged": "Cấu hình lời nhắc mặc định đã được cập nhật thành công.",
       "featureLabels": {
@@ -4952,7 +4955,7 @@
     "notifications": {
       "empty": "Không có thông báo",
       "aria": {
-        "notifications": "Thông báo ({count} chưa đọc)"
+        "notifications": "Thông báo ({count, number} chưa đọc)"
       },
       "actions": {
         "markRead": "Đánh dấu là đã đọc",
@@ -5097,11 +5100,11 @@
       "sharedStepGroupCreateNewDesc": "Một nhóm bước chung mới sẽ được tạo.",
       "go": "Đi",
       "processing": "Xử lý...",
-      "progressText": "{processed} trong số {total} trường hợp đã được xử lý",
+      "progressText": "{processed, number} trong số {total, number} trường hợp đã được xử lý",
       "successCount": "{count} trường hợp {operation}thành công",
-      "skipped": "Đã bỏ qua: {count}",
-      "droppedLinks": "Các liên kết giữa các dự án đã bị xóa: {count}",
-      "errorCount": "{count} trường hợp thất bại",
+      "skipped": "Đã bỏ qua: {count, number}",
+      "droppedLinks": "Các liên kết giữa các dự án đã bị xóa: {count, number}",
+      "errorCount": "{count, number} trường hợp thất bại",
       "viewInTargetProject": "Xem trong dự án mục tiêu",
       "failed": "Thất bại",
       "folderMode": "Thư mục \"{folderName}\" — {caseCount, plural, one {# trường hợp} other {# trường hợp}}"
@@ -5128,7 +5131,7 @@
     "unlinkError": "Không thể hủy liên kết",
     "noIssuesFound": "Không phát hiện vấn đề nào.",
     "startTypingToSearch": "Bắt đầu gõ để tìm kiếm các vấn đề",
-    "selectedCount": "{count} đã chọn",
+    "selectedCount": "{count, number} selected",
     "confirmSelection": "Xác nhận lựa chọn",
     "alreadyLinked": "Đã được liên kết",
     "authenticate": "Xác thực",
@@ -5142,7 +5145,7 @@
     "error": "Lỗi khi tải",
     "errorDescription": "Không thể tải thông tin. Vui lòng thử lại.",
     "selectIssues": "Chọn các vấn đề",
-    "authRequiredDescription": "Vui lòng xác thực bằng {provider} để tìm kiếm sự cố",
+    "authRequiredDescription": "Vui lòng xác thực để tìm kiếm vấn đề.",
     "integrationNotConfigured": "Tích hợp chưa được cấu hình",
     "integrationNotConfiguredDescription": "Việc tích hợp này chưa được cấu hình hoàn chỉnh. Vui lòng liên hệ với quản trị viên dự án của bạn để cấu hình dự án bên ngoài trong cài đặt dự án.",
     "createIssue": "Tạo sự cố",
@@ -5189,7 +5192,7 @@
     "searchUsers": "Tìm kiếm người dùng",
     "noTeamsAvailable": "Hiện không có đội nào.",
     "filterAll": "Tất cả",
-    "fanOutPartialFailure": "Không thể truy cập {count} dự án. Hiển thị kết quả từ {successCount} dự án.",
+    "fanOutPartialFailure": "Không thể truy cập {count, number} dự án. Hiển thị kết quả từ {successCount, number} dự án.",
     "projectSelectorLabel": "Dự án",
     "searchFailedTitle": "Tìm kiếm thất bại"
   },
@@ -5229,7 +5232,7 @@
   },
   "charts": {
     "average": "Trung bình",
-    "count": "Số lượng: {count}",
+    "count": "Số lượng: {count, number}",
     "percent": "Phần trăm: {percent}%",
     "completed": "Đã hoàn thành: {count}",
     "durationRange": "Thời lượng: {from}giây - {to}giây",
@@ -6262,7 +6265,7 @@
       "loadingMore": "Đang tải thêm...",
       "noRecords": "Không tìm thấy hồ sơ nào.",
       "error": "Không thể tải bản ghi",
-      "recordCount": "{count} {count, plural, =1 {bản ghi} other {các bản ghi}}",
+      "recordCount": "{count, plural, =1 {# bản ghi} other {# bản ghi}}",
       "allRecords": "Tất cả hồ sơ",
       "allLoaded": "Tất cả bản ghi đã được tải"
     },
@@ -6516,8 +6519,8 @@
       },
       "page3": {
         "title": "Xem trước dữ liệu nhập",
-        "showing": "Hiển thị các bước được chia sẻ từ {start} đến {end} trong tổng số {total} bước được chia sẻ",
-        "step": "Bước chung {number}",
+        "showing": "Hiển thị {start, number} đến {end, number} trong tổng số {total, number} bước được chia sẻ",
+        "step": "Shared Step {number, number}",
         "noValue": "(trống)"
       }
     },
@@ -6539,7 +6542,7 @@
       "noResultsDescription": "Chạy quét để phát hiện các chuỗi bước lặp lại trong các trường hợp thử nghiệm của bạn.",
       "filterPlaceholder": "Lọc theo tên vụ việc...",
       "selected": "{count, plural, one {# đã chọn} other {# đã chọn}}",
-      "bulkDismiss": "Bỏ qua ({count})",
+      "bulkDismiss": "Bỏ qua ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# trận đấu bị hủy bỏ} other {# các trận đấu bị hủy bỏ}}",
       "bulkError": "Một số thao tác đã thất bại. Vui lòng thử lại.",
       "tableHint": "Nhấp vào một hàng để xem trước các bước đã khớp. Chọn các hàng có hộp kiểm để thực hiện các thao tác hàng loạt.",
@@ -6555,7 +6558,7 @@
       "cancelScan": "Hủy quét",
       "findStepDuplicates": "Tìm các bước trùng lặp",
       "rescan": "Quét",
-      "viewResults": "Xem kết quả ({count})",
+      "viewResults": "Xem kết quả ({count, number})",
       "retryScan": "Thử quét lại",
       "dialog": {
         "title": "Chuyển đổi sang các bước được chia sẻ",
@@ -6805,9 +6808,9 @@
     },
     "progress": {
       "starting": "Bắt đầu phân tích...",
-      "analyzed": "Đã phân tích các thực thể {analyzed}/{total}",
-      "sizing": "Đang tìm kích thước lô tối ưu (thử {size} thực thể)...",
-      "streaming": "Đã nhận phản hồi AI ({analyzed}/{total} thực thể đã hoàn thành)...",
+      "analyzed": "Đã phân tích {analyzed, number}/{total, number} thực thể",
+      "sizing": "Tìm kích thước lô tối ưu (thử {size, number} thực thể)...",
+      "streaming": "Nhận phản hồi AI ({analyzed, number}/{total, number} thực thể đã hoàn thành)...",
       "finalizing": "Đang chuẩn bị kết quả...",
       "complete": "Phân tích hoàn tất",
       "reviewSuggestions": "Đề xuất đánh giá",
@@ -6815,7 +6818,7 @@
     },
     "wizard": {
       "description": "Trí tuệ nhân tạo (AI) sẽ phân tích toàn bộ các trường hợp thử nghiệm, các lần chạy thử nghiệm và các phiên làm việc của dự án để đề xuất các thẻ liên quan dựa trên nội dung của chúng.",
-      "entityLine": "{count} {type}",
+      "entityLine": "{count, number} {type}",
       "startAnalysis": "Bắt đầu phân tích",
       "untaggedOnly": "Chỉ phân tích các bản ghi không có thẻ hiện có.",
       "allowNewTags": "Cho phép tạo thẻ mới",
@@ -6834,7 +6837,7 @@
     "fair": "Hội chợ",
     "good": "Tốt",
     "strong": "Mạnh",
-    "minLength": "Ít nhất {count} ký tự",
+    "minLength": "Ít nhất {count, number} ký tự",
     "uppercase": "Ít nhất một chữ cái viết hoa",
     "lowercase": "Ít nhất một chữ cái viết thường",
     "numbers": "Ít nhất một số",

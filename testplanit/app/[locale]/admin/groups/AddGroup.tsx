@@ -130,7 +130,9 @@ export function AddGroup({ open, onClose }: AddGroupProps) {
       await invalidateModelQueries(queryClient, "Groups");
 
       toast.success(
-        tCommon("messages.created", { item: tGlobal("common.fields.groups") })
+        tCommon("messages.createdItem", {
+          item: tGlobal("common.fields.groups"),
+        })
       );
       onClose();
     } catch (err: any) {

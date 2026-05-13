@@ -613,7 +613,7 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
         cell: ({ row }) => {
           const k = eventLabelKey(row.original.eventType);
           return k
-            ? t(k as Parameters<typeof t>[0])
+            ? (t as unknown as (key: string) => string)(k)
             : (row.original.eventType ?? "—");
         },
       },

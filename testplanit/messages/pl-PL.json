@@ -471,10 +471,12 @@
       "moveSuccess": "Przedmiot został pomyślnie przeniesiony",
       "moveError": "Wystąpił błąd podczas przenoszenia elementu",
       "updateSuccess": "Element zaktualizowany pomyślnie",
+      "updateSuccessCount": "{count, number} elementy zostały pomyślnie zaktualizowane",
       "updateError": "Wystąpił błąd podczas aktualizacji elementu",
       "linkCopied": "Link skopiowany do schowka",
       "copyFailed": "Nie udało się skopiować linku do schowka",
-      "created": "Test został pomyślnie utworzony",
+      "created": "Utworzono pomyślnie",
+      "createdItem": "{item} utworzono pomyślnie",
       "createdDescription": "Test został utworzony i jest teraz widoczny na liście testów.",
       "createError": "Wystąpił nieznany błąd. Spróbuj ponownie.",
       "emptyActive": "Brak aktywnych przebiegów testowych",
@@ -698,7 +700,7 @@
       "noTestCasesSelected": "Nie wybrano przypadków testowych",
       "editToSelectTestCases": "Edytuj przebieg testu, aby wybrać przypadki testowe.",
       "casesInRun": "{count, plural, =0 {Brak przypadków testowych w przebiegu testu} =1 {1 przypadek testowy w przebiegu testu} other {# przypadków testowych w przebiegu testu}}",
-      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 Unikalny przypadek} other {# Unikalne przypadki}} w poprzek {configCount, plural, =1 {1 Konfiguracja} other {# Konfiguracje}} ({totalCount} całkowita liczba przypadków)",
+      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 Unikalny przypadek} other {# Unikalne przypadki}} w poprzek {configCount, plural, =1 {1 Konfiguracja} other {# Konfiguracje}} ({totalCount, number} całkowita liczba przypadków)",
       "viewTestRunDetails": "Wyświetl szczegóły testu",
       "sortByStatus": "Grupuj według statusu",
       "sortByDate": "Sortuj według daty",
@@ -973,7 +975,7 @@
       "case": "{count, plural, =1 {przypadek} other {przypadki}}",
       "result": "{count, plural, =1 {wynik} other {wyniki}}",
       "run": "{count, plural, =1 {biegnij} other {biegnij}}",
-      "comment": "{count, plural, =1 {{count} komentarz} other {{count} komentarze}}"
+      "comment": "{count, plural, =1 {# komentarz} other {# komentarze}}"
     },
     "success": {
       "assigned": "Przypadek testowy przypisany pomyślnie",
@@ -1099,7 +1101,7 @@
       "passwordRequired": "Hasło jest wymagane.",
       "genericError": "Wystąpił błąd. Spróbuj ponownie.",
       "policyTitle": "Wymagania dotyczące hasła:",
-      "policyMinLength": "Co najmniej {count} znaków",
+      "policyMinLength": "Co najmniej {count, number} znaków",
       "policyUppercase": "Co najmniej jedna wielka litera",
       "policyLowercase": "Co najmniej jedna mała litera",
       "policyNumbers": "Co najmniej jedna liczba",
@@ -1149,7 +1151,7 @@
   },
   "projects": {
     "status": {
-      "id": "Identyfikator projektu: {id}",
+      "id": "Identyfikator projektu: {id, number}",
       "active": "Projekt jest aktywny",
       "completed": "Projekt zakończony"
     },
@@ -1199,7 +1201,7 @@
           "updateError": "Nie udało się zaktualizować ustawień integracji problemu",
           "removeError": "Nie udało się usunąć integracji problemu",
           "removeIntegration": "Usuń integrację",
-          "confirmRemove": "Potwierdź Usuń",
+          "confirmRemove": "Czy na pewno chcesz usunąć integrację {name}?",
           "authDescription": "Aby skorzystać z integracji tego problemu, należy uwierzytelnić się za pomocą {provider}",
           "authenticating": "Uwierzytelnianie...",
           "authSuccess": "Uwierzytelnianie pomyślne",
@@ -1310,8 +1312,8 @@
         "deleteConfirmTitle": "Usunąć konfigurację webhooka?",
         "deleteConfirm": "Usunąć tę konfigurację webhooka? Dostawy przychodzące zostaną odrzucone.",
         "sendTest": "Wyślij testowy webhook",
-        "testSuccess": "Zaakceptowano webhook testowy (HTTP {statusCode}, wynik: {outcome})",
-        "testFailure": "Nieudany test webhooka (HTTP {statusCode}): {error}",
+        "testSuccess": "Zaakceptowano webhook testowy (HTTP {statusCode, number}, wynik: {outcome})",
+        "testFailure": "Nieudany test webhooka (HTTP {statusCode, number}): {error}",
         "saveError": "Nie udało się zapisać konfiguracji webhooka",
         "lastReceived": "Ostatnio odebrano: {timestamp}",
         "lastReceivedLabel": "Ostatnio otrzymano:",
@@ -1397,7 +1399,7 @@
         "outboundHmacActiveSecret": "Aktywny",
         "outboundHmacInactiveSecret": "Nieaktywny",
         "outboundHmacRetiringSecret": "Ustępujący",
-        "outboundHmacAutoRetireIn": "Automatyczne wycofanie za {days} dni",
+        "outboundHmacAutoRetireIn": "Automatyczne wycofanie za {days, number} dni",
         "outboundHmacRotateButton": "Obróć sekret",
         "outboundHmacExtendButton": "Przedłuż o 7 dni",
         "outboundHmacRetireNowButton": "Przejdź na emeryturę teraz",
@@ -1481,7 +1483,7 @@
         "filterSinceDefault": "Ponieważ…",
         "filterUntilDefault": "Do…",
         "filterReset": "Zresetuj filtry",
-        "filterBulkReplayButton": "Odtwarzanie zbiorcze {count} błędów wychodzących",
+        "filterBulkReplayButton": "Odtwarzanie zbiorcze {count, number} błędów wychodzących",
         "filterBulkReplayHidden": "Wszystkie widoczne awarie są przychodzące — zamiast tego należy ponownie wywołać zdarzenie nadrzędne.",
         "deliveriesEmpty": "Żadna dostawa nie spełnia tych kryteriów.",
         "deliveriesResetFilters": "Zresetuj filtry",
@@ -1500,7 +1502,7 @@
         "drawerLabelDirection": "Kierunek",
         "drawerLabelStatusCode": "Kod statusu",
         "drawerLabelLatency": "Utajenie",
-        "drawerLatencyValue": "{ms} ms",
+        "drawerLatencyValue": "{ms, number} ms",
         "drawerLatencyUnknown": "—",
         "drawerLabelError": "Błąd",
         "drawerLabelPayloadDigest": "Podsumowanie ładunku",
@@ -1515,16 +1517,16 @@
         "replayConfirm": "Spowoduje to wygenerowanie rzeczywistego żądania {direction} {adapterType}.",
         "replayAction": "Powtórna rozgrywka",
         "bulkReplayConfirmTitle": "Odtworzyć błędy wychodzące?",
-        "bulkReplayConfirm": "Odtwórz {count} błędów wychodzących do {configName}? Spowoduje to wygenerowanie {count} rzeczywistych żądań HTTP.",
-        "bulkReplayCapExceeded": "Odtwarzanie zbiorcze ograniczone do 100 połączeń wychodzących na raz. Zawęź filtr lub odtwarzaj sekwencyjnie. Obecnie odtwarzane będzie {count}.",
-        "bulkReplayAction": "Powtórka {count}",
+        "bulkReplayConfirm": "Odtwórz {count, number} błędy wychodzące do {configName}? Spowoduje to wygenerowanie {count, number} rzeczywistych żądań HTTP.",
+        "bulkReplayCapExceeded": "Odtwarzanie zbiorcze ograniczone do 100 połączeń wychodzących na raz. Zawęź filtr lub uruchom sekwencyjnie. Obecnie odtwarzane jest {count, number}.",
+        "bulkReplayAction": "Powtórka {count, number}",
         "healthBadge": {
           "HEALTHY": "Zdrowy",
           "DEGRADED": "Zdegradowany",
           "DISABLED": "Wyłączony"
         },
         "healthTooltipHealthy": "Ostatni sukces: {lastSuccessAt}",
-        "healthTooltipDegraded": "{count} kolejnych niepowodzeń · ostatnia o {lastFailureAt}",
+        "healthTooltipDegraded": "{count, number} kolejne awarie · ostatnia o {lastFailureAt}",
         "healthTooltipDisabled": "Wyłączone po 10 kolejnych awariach · {lastFailureAt}",
         "activityLabel": "Aktywność dostawcza",
         "activityLastDispatched": "Ostatnia wysyłka",
@@ -1638,8 +1640,8 @@
         "preview": {
           "resolvingBranch": "Rozwiązywanie gałęzi…",
           "scanningFiles": "Skanowanie plików w {scope}…",
-          "scanningFilesCount": "Skanowanie plików w {scope}… (znaleziono{count})",
-          "filtering": "Stosowanie filtrów do plików {count}…"
+          "scanningFilesCount": "Skanowanie plików w {scope}… (znaleziono{count, number})",
+          "filtering": "Stosowanie filtrów do plików {count, number}…"
         },
         "cache": {
           "title": "Ustawienia pamięci podręcznej",
@@ -1748,9 +1750,10 @@
     "toast": {
       "deleted": "Kamień milowy {name} usunięty",
       "updated": "Zaktualizowano kamień milowy",
+      "updatedWithName": "{name} zaktualizowano",
       "updateFailed": "Nie udało się zaktualizować kamienia milowego",
       "completed": "Kamień milowy „{name}” ukończony.",
-      "completedWithDependencies": "Kamienie milowe i zależności zostały pomyślnie ukończone."
+      "completedWithDependencies": "{name} i zależności zostały pomyślnie ukończone."
     },
     "errors": {
       "nameExists": "Kamień milowy o tej nazwie już istnieje",
@@ -1819,7 +1822,7 @@
     },
     "messages": {
       "createSuccess": "Sesja utworzona pomyślnie",
-      "createSuccessMultiple": "{count} Sesje utworzone pomyślnie",
+      "createSuccessMultiple": "{count, number} Sesje zostały pomyślnie utworzone",
       "duplicateSuccess": "Sesja została pomyślnie zduplikowana",
       "duplicateSuccessMultiple": "{count} Sesje zostały pomyślnie zduplikowane"
     },
@@ -1886,8 +1889,8 @@
       "backToSession": "Powrót do sesji",
       "backToLatest": "Powrót do najnowszej wersji",
       "versionInfo": {
-        "created": "Wersja {number} Utworzono",
-        "latestUpdated": "Najnowsza wersja {number} Zaktualizowana"
+        "created": "Wersja {number, number} Utworzono",
+        "latestUpdated": "Najnowsza wersja {number, number} Zaktualizowano"
       },
       "renderer": {
         "noEstimate": "Brak szacunków",
@@ -1982,7 +1985,7 @@
         "avatarUpdated": "Awatar został pomyślnie zaktualizowany.",
         "avatarUpdateError": "Nie udało się zaktualizować awatara.",
         "deleteAvatar": "Usuń awatar",
-        "deleteAvatarConfirm": "Czy na pewno chcesz usunąć swój awatar?",
+        "deleteAvatarConfirm": "Czy na pewno chcesz usunąć {name}?",
         "emailDisabledForSso": "Adresu e-mail nie można zmienić dla kont SSO. Zaktualizuj go za pośrednictwem swojego dostawcy tożsamości.",
         "emailEditableForBoth": "Możesz zalogować się zarówno za pomocą adresu e-mail i hasła, jak i za pomocą logowania jednokrotnego (SSO). Zmiany adresu e-mail wpłyną tylko na uwierzytelnianie hasłem.",
         "linkSsoProvider": "Dostawca SSO Link"
@@ -2119,7 +2122,7 @@
       "detailsRegion": "Szczegóły przypadku testowego",
       "metadataRegion": "Metadane przypadku testowego",
       "versionCreated": "Wersja {version} Utworzono",
-      "latestVersionUpdated": "Najnowsza wersja {version} Zaktualizowana",
+      "latestVersionUpdated": "Najnowsza wersja {version, number} Zaktualizowano",
       "historyView": "Widok historii przypadków testowych"
     },
     "fields": {
@@ -2142,7 +2145,7 @@
       "add": "Dodaj krok",
       "addSharedSteps": "Dodaj współdzielone kroki",
       "delete": "Usuń krok",
-      "confirmDelete": "Potwierdź usunięcie Krok {number}?",
+      "confirmDelete": "Potwierdź usunięcie Krok {number, number}?",
       "createSharedSteps": "Utwórz współdzielone {number, plural, one {Krok} other {Kroki}}",
       "sharedStepsName": "Nazwa wspólnych kroków",
       "sharedStepsDescription": "Wprowadź nazwę nowego współdzielonego kroku {number, plural, one {} other {}}. Będzie ona obejmować {number, plural, one {# wybrany krok} other {# wybrane kroki}}.",
@@ -2240,7 +2243,7 @@
       "cannotReorderAcrossPages": "Nie można zmienić kolejności przypadków testowych na wielu stronach. Aby zmienić kolejność, wyświetl wszystkie przypadki na jednej stronie, wybierając opcję „Wszystkie” z menu rozmiaru strony, lub odznacz przypadki na innych stronach. Nadal możesz przeciągać wybrane przypadki do folderów.",
       "exportModal": {
         "scope": {
-          "allFiltered": "Wszystko w widoku ({count})"
+          "allFiltered": "Wszystko w widoku ({count, number})"
         },
         "textLongFormat": {
           "label": "Format RTF"
@@ -2315,8 +2318,8 @@
         },
         "page4": {
           "title": "Podgląd importu",
-          "showing": "Wyświetlanie {start}-{end} z {total} przypadków",
-          "case": "Przypadek {number}"
+          "showing": "Wyświetlanie {start, number}-{end, number} z {total, number} przypadków",
+          "case": "Przypadek {number, number}"
         }
       }
     },
@@ -2385,7 +2388,7 @@
       "description": "Edycja {count, plural, one {# wybrany przypadek} other {# wybrane przypadki}}. Zaznacz pole, aby włączyć edycję.",
       "defineStepsTitle": "Zdefiniuj kroki aktualizacji zbiorczej",
       "saveNewSteps": "Zapisz nowe kroki",
-      "newStepsDefined": "Zdefiniowano nowe kroki ({count}) - Kliknij przycisk, aby edytować",
+      "newStepsDefined": "Zdefiniowano nowe kroki ({count, number}) - Kliknij przycisk, aby edytować",
       "clearExistingStepsWarning": "Istniejące kroki zostaną usunięte",
       "warnings": {
         "templateMismatch": {
@@ -2405,7 +2408,7 @@
         "fetchError": "Błąd podczas pobierania danych o sprawie."
       },
       "success": {
-        "casesUpdated": "Sprawy zostały pomyślnie zaktualizowane"
+        "casesUpdated": "{count, number} przypadków zaktualizowano pomyślnie"
       },
       "placeholders": {
         "various": "<various values>"
@@ -2435,9 +2438,9 @@
       "title": "Eksportuj przypadki testowe",
       "description": "Wybierz poniżej opcje eksportu.",
       "scope": {
-        "selected": "Wybrano ({count})",
-        "allFiltered": "Wszystko (Widok bieżący) ({count})",
-        "allProject": "Wszystko w projekcie ({count})"
+        "selected": "Wybrano ({count, number})",
+        "allFiltered": "Wszystko (Widok bieżący) ({count, number})",
+        "allProject": "Wszystko w projekcie ({count, number})"
       },
       "format": {
         "label": "Format",
@@ -2495,7 +2498,7 @@
     "aiExport": {
       "toggleLabel": "Generuj za pomocą AI",
       "generating": "Generowanie...",
-      "generatingProgress": "Generowanie przypadku {current} z {total}...",
+      "generatingProgress": "Generowanie przypadku {current, number} z {total, number}...",
       "generatingBatch": "Generowanie {count, plural, one {# przypadków} other {# przypadków}} w jednym pliku...",
       "previewTitle": "Podgląd eksportu",
       "previewDescription": "{count, plural, one {# plik} other {# pliki}} wygenerowano",
@@ -2507,14 +2510,14 @@
       "truncatedWarning": "Dane wyjściowe zostały obcięte — model osiągnął limit tokenów. Spróbuj zmniejszyć rozmiar partii lub zwiększyć maksymalną liczbę tokenów wyjściowych w konfiguracji monitu.",
       "contextFiles": "{count, plural, one {(# plik kontekstowy)} other {(# pliki kontekstowe)}}",
       "noCodeContextHint": "Brak skonfigurowanego repozytorium kodu. Sztuczna inteligencja będzie korzystać ze standardowych wzorców frameworków.",
-      "generatingParallelProgress": "Wygenerowano {done} z {total} plików...",
+      "generatingParallelProgress": "Wygenerowano {done, number} z {total, number} plików...",
       "cancelledGeneration": "Odwołany"
     },
     "duplicates": {
       "findDuplicates": "Znajdź duplikaty",
       "viewResults": "Widok {count, plural, one {# Wynik} other {# Wyniki}}",
       "retryScan": "Ponów skanowanie",
-      "analyzing": "{analyzed}/{total}",
+      "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Poprawa wyników dzięki sztucznej inteligencji...",
       "scanComplete": "Zakończono analizę duplikatów — {count, plural, =0 {nie znaleziono duplikatów} one {# znaleziono potencjalny duplikat} other {# znaleziono potencjalne duplikaty}}",
       "scanFailed": "Duplikacja analizy nie powiodła się",
@@ -2538,8 +2541,8 @@
       "selectAll": "Zaznacz wszystko",
       "selectRow": "Wybierz wiersz",
       "selected": "{count, plural, one {# wybrano} other {# wybrano}}",
-      "bulkDismiss": "Nie duplikaty ({count})",
-      "bulkLink": "Link jako powiązany ({count})",
+      "bulkDismiss": "Nie duplikaty ({count, number})",
+      "bulkLink": "Link jako powiązany ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# para odrzucona} other {# pary odrzucone}}",
       "bulkLinkSuccess": "{count, plural, one {# para połączona} other {# pary połączone}}",
       "bulkError": "Niektóre operacje nie powiodły się. Spróbuj ponownie.",
@@ -2584,8 +2587,8 @@
       "loadingResults": "Ładowanie wygenerowanych przypadków testowych...",
       "generatingPreparing": "Przygotowywanie żądania...",
       "generatingCallingAi": "Czekamy, aż sztuczna inteligencja wygeneruje przypadki testowe...",
-      "generatingStreaming": "Sztuczna inteligencja generuje przypadek testowy {count}...",
-      "generatingStreamingPage": "Sztuczna inteligencja generuje przypadek testowy {count} — strona {current} z {total}: {page}",
+      "generatingStreaming": "Sztuczna inteligencja generuje przypadek testowy {count, number}...",
+      "generatingStreamingPage": "Sztuczna inteligencja generuje przypadek testowy {count, number} — strona {current, number} z {total, number}: {page}",
       "generatingProcessing": "Przetwarzanie wygenerowanych przypadków testowych...",
       "generatingHint": "Może to potrwać chwilę, w zależności od stopnia złożoności materiału źródłowego.",
       "steps": {
@@ -2671,7 +2674,7 @@
       "review": {
         "title": "Przejrzyj wygenerowane przypadki testowe",
         "description": "Przejrzyj wygenerowane przez sztuczną inteligencję przypadki testowe, wprowadź niezbędne zmiany i wybierz te, które chcesz zaimportować.",
-        "selected": "{count} z {total} zaznaczono",
+        "selected": "{count, number} z {total, number} wybrano",
         "moreSteps": "... i {count, plural, one {# więcej kroków} other {# więcej kroków}}",
         "templateFields": "Pola szablonu:",
         "moreFields": "... i {count, plural, one {# więcej pól} other {# więcej pól}}",
@@ -2681,7 +2684,7 @@
         "allPages": "Wszystkie strony ({pages, plural, one {# strona} other {# strony}}, {cases, plural, one {# przypadek} other {# przypadki}})"
       },
       "generatingLegacy": "Generowanie przypadków testowych za pomocą sztucznej inteligencji...",
-      "expandProgress": "Wygenerowano {done} z {total}",
+      "expandProgress": "{done, number} z {total, number} wygenerowano",
       "import": "{count, plural, =0 {Importuj przypadki testowe} =1 {Importuj 1 przypadek testowy} other {Importuj # przypadków testowych}}",
       "importing": "{count, plural, =0 {Importowanie przypadków testowych...} =1 {Importowanie 1 przypadku testowego...} other {Importowanie # przypadków testowych...}}",
       "openInExternalSystem": "Otwórz za {provider}",
@@ -2847,15 +2850,15 @@
       "description": "Dodaj nowy przebieg testu do projektu",
       "success": {
         "title": "Test dodany pomyślnie",
-        "description": "Dodano przebieg testowy do projektu",
-        "descriptionMultiple": "{count, plural, one {# wykonano} other {# wykonano}} testów dla '{name}'"
+        "description": "{name} został dodany do projektu",
+        "descriptionMultiple": "{count, plural, one {# wykonano} other {# wykonano}} testów dla {name}"
       },
       "estimates": {
         "manual": "Szacowany czas ręczny",
         "automated": "Szacowany czas automatyczny",
         "mixed": "Szacowany czas ręczny/automatyczny"
       },
-      "creatingProgress": "Tworzenie testu {current} z {total}..."
+      "creatingProgress": "Tworzenie testu {current, number} z {total, number}..."
     },
     "magicSelect": {
       "title": "Magiczny wybór",
@@ -2864,7 +2867,7 @@
       "reasoning": "Rozumowanie AI",
       "reviewSelection": "Przejrzyj sugerowane przypadki testowe",
       "viewSuggested": "Wyświetl sugerowane przypadki",
-      "tokenUsage": "{total} użytych tokenów",
+      "tokenUsage": "{total, number} użytych tokenów",
       "noLlmIntegration": "Funkcje AI wymagają integracji LLM. Skonfiguruj ją w ustawieniach projektu.",
       "configure": {
         "title": "Zakres przypadku testowego",
@@ -2883,7 +2886,7 @@
       "loading": {
         "batch": "Przetwarzanie partii {current} z {total}",
         "analyzing": "Analizowanie przypadków testowych...",
-        "progress": "Przeanalizowano {analyzed} z {total} przypadków testowych...",
+        "progress": "Przeanalizowano {analyzed, number} z {total, number} przypadków testowych...",
         "waitingForAi": "Oczekiwanie na odpowiedź AI (partia {batch} z {total})...",
         "selectedSoFar": "{count, plural, =1 {# dotychczas wybrany przypadek testowy} other {# dotychczas wybrany przypadek testowy}}",
         "resolving_integration": "Rozwiązywanie problemu integracji AI...",
@@ -3043,7 +3046,7 @@
             "mapping": "Konfiguruj mapowanie",
             "import": "Monitoruj import"
           },
-          "stepIndicator": "Krok {step} z {total}"
+          "stepIndicator": "Krok {step, number} z {total, number}"
         },
         "fileLabel": "Plik JSON Testmo",
         "fileHelp": "Wybierz eksport JSON pobrany z Testmo.",
@@ -3174,8 +3177,8 @@
         "importProgressDescription": "{count, plural, =0 {Wszystkie rekordy zaimportowane między śledzonymi jednostkami.} =1 {Pozostało 1 rekord między śledzonymi jednostkami.} other {Pozostało # rekordów między śledzonymi jednostkami.}}",
         "importProgressTotalRemaining": "{count, plural, =0 {Brak pozostałych rekordów} =1 {Pozostał 1 rekord} other {Pozostała liczba rekordów}}",
         "importProgressProcessed": "{processed, number}/{total, number} zaimportowano rekordy",
-        "importProgressAria": "{percent}% ukończenia importu",
-        "importProgressPercentLabel": "{percent}%",
+        "importProgressAria": "{percent, number}% ukończonego importu",
+        "importProgressPercentLabel": "{percent, number}%",
         "importDurationLabel": "Całkowity czas:",
         "activityLogTitle": "Aktywność importowa",
         "activityLogDescription": "Szczegółowy dziennik kroków importu w tle. Znaczniki czasu są oparte na strefie czasowej serwera.",
@@ -3249,7 +3252,7 @@
           "configurationNoTokens": "Nie wykryto żadnych wariantów w tej konfiguracji.",
           "configurationNoExistingTargets": "Brak dostępnych konfiguracji do mapowania.",
           "configurationNamePlaceholder": "Wprowadź nazwę konfiguracji",
-          "configurationVariantLabel": "Wariant {index}",
+          "configurationVariantLabel": "Wariant {index, number}",
           "configurationVariantActionLabel": "Jak należy postępować w przypadku tego wariantu?",
           "configurationVariantActionPlaceholder": "Wybierz opcję",
           "configurationVariantMapOption": "Mapa do istniejącego wariantu",
@@ -3741,7 +3744,7 @@
       },
       "delete": {
         "title": "Usuń projekt",
-        "confirmMessage": "Czy na pewno chcesz usunąć ten projekt?"
+        "confirmMessage": "Czy na pewno chcesz usunąć <strong>{name}</strong>?"
       }
     },
     "templates": {
@@ -3781,7 +3784,7 @@
         },
         "delete": {
           "title": "Usuń pole sprawy",
-          "confirmMessage": "Czy na pewno chcesz usunąć to pole sprawy?",
+          "confirmMessage": "Czy na pewno chcesz usunąć <strong>{name}</strong>?",
           "warning": "Pole „Sprawa” zostanie usunięte ze wszystkich szablonów. Tej czynności nie można cofnąć."
         }
       },
@@ -3955,12 +3958,12 @@
       "saveChanges": "Zapisz zmiany",
       "forceAllUsers": "Wymuś zmianę hasła przez wszystkich użytkowników",
       "forceAllUsersDialogTitle": "Wymuś zmianę hasła dla wszystkich użytkowników",
-      "forceAllUsersDialogDescription": "Wymagać to będzie od {count} użytkowników posiadających dane uwierzytelniające zmiany hasła przy następnym logowaniu.",
+      "forceAllUsersDialogDescription": "This will require {count, number} credential-based users to change their password on next login.",
       "forceAllUsersDialogWarning": "Tej czynności nie można cofnąć.",
       "forceAllUsersDialogConfirm": "Wymuś zmianę",
       "saved": "Ustawienia zabezpieczeń zostały zapisane",
       "saveFailed": "Nie udało się zapisać ustawień zabezpieczeń",
-      "forceAllSuccess": "Wymagana zmiana hasła dla użytkowników {count}",
+      "forceAllSuccess": "Wymagana zmiana hasła dla użytkowników {count, number}",
       "forceAllFailed": "Nie udało się wymusić zmiany hasła"
     },
     "apiTokens": {
@@ -3999,7 +4002,7 @@
       },
       "delete": {
         "title": "Usuń tag",
-        "confirmMessage": "Czy na pewno chcesz usunąć ten tag?",
+        "confirmMessage": "Czy na pewno chcesz usunąć znacznik {name}?",
         "warning": "Ten tag zostanie usunięty ze wszystkich przypadków testowych i sesji.",
         "errors": {
           "unknown": "Wystąpił błąd podczas usuwania tagu"
@@ -4030,7 +4033,7 @@
       },
       "delete": {
         "title": "Usuń przepływ pracy",
-        "confirmMessage": "Czy na pewno chcesz usunąć ten przepływ pracy?"
+        "confirmMessage": "Czy na pewno chcesz usunąć <strong>{name}</strong>?"
       },
       "setDefault": {
         "title": "Ustaw domyślny przepływ pracy",
@@ -4058,7 +4061,7 @@
       },
       "delete": {
         "title": "Usuń rolę",
-        "confirmMessage": "Czy na pewno chcesz usunąć tę rolę?",
+        "confirmMessage": "Czy na pewno chcesz usunąć rolę {name}?",
         "warning": "Tej czynności nie można cofnąć. Użytkownicy z tą rolą zostaną przypisani do roli domyślnej.",
         "errors": {
           "defaultNotFound": "Nie można usunąć roli domyślnej"
@@ -4149,7 +4152,7 @@
       "combinations": {
         "title": "Kombinacje",
         "description": "Zarządzaj kombinacjami globalnymi",
-        "confirmDescription": "Zostaną utworzone następujące kombinacje {count}.",
+        "confirmDescription": "Zostaną utworzone następujące kombinacje {count, number}.",
         "addCombination": "Dodaj kombinację",
         "editCombination": "Edytuj kombinację",
         "selectCombination": "Wybierz kombinację",
@@ -4226,8 +4229,8 @@
         "title": "Edytuj typ kamienia milowego"
       },
       "delete": {
-        "title": "Usuń typ kamienia milowego",
-        "confirmMessage": "Czy na pewno chcesz usunąć ten typ kamienia milowego?"
+        "title": "Usuń {item}",
+        "confirmMessage": "Czy na pewno chcesz usunąć typ kamienia milowego {name}?"
       }
     },
     "issue_config": {
@@ -4634,7 +4637,7 @@
       },
       "edit": {
         "title": "Edytuj integrację modelu AI",
-        "description": "Zaktualizuj konfigurację integracji tego modelu AI",
+        "description": "Zaktualizuj konfigurację integracji modelu AI {name}",
         "statusDescription": "Włącz lub wyłącz tę integrację",
         "apiKeyPlaceholder": "Wprowadź nowy klucz API, aby zaktualizować...",
         "update": "Aktualizacja",
@@ -4653,7 +4656,7 @@
       },
       "delete": {
         "title": "Usuń integrację modelu AI",
-        "description": "Czy na pewno chcesz usunąć tę integrację modelu AI? Spowoduje to usunięcie jej ze wszystkich projektów i nie będzie można tego cofnąć.",
+        "description": "Czy na pewno chcesz usunąć integrację modelu AI {name} ? Spowoduje to usunięcie jej ze wszystkich projektów i nie będzie można tego cofnąć.",
         "integrationDeletedSuccess": "Pomyślnie usunięto integrację modelu AI",
         "failedToDeleteIntegration": "Nie udało się usunąć integracji modelu AI",
         "cannotDeleteDefault": "Nie można usunąć domyślnego modelu AI. Najpierw ustaw inny jako domyślny."
@@ -4725,7 +4728,7 @@
         "warning": "Tej czynności nie można cofnąć. Wszystkie projekty korzystające z tej konfiguracji powrócą do domyślnej konfiguracji monitu."
       },
       "llmColumn": "Magister prawa",
-      "mixedLlms": "{count} LLM-y",
+      "mixedLlms": "{count, number} LLM-y",
       "cannotDeleteDefault": "Nie można usunąć domyślnej konfiguracji monitu. Najpierw ustaw inną jako domyślną.",
       "defaultChanged": "Domyślna konfiguracja monitu została pomyślnie zaktualizowana.",
       "featureLabels": {
@@ -4952,7 +4955,7 @@
     "notifications": {
       "empty": "Brak powiadomień",
       "aria": {
-        "notifications": "Powiadomienia ({count} nieprzeczytane)"
+        "notifications": "Powiadomienia ({count, number} nieprzeczytane)"
       },
       "actions": {
         "markRead": "Oznacz jako przeczytane",
@@ -5097,11 +5100,11 @@
       "sharedStepGroupCreateNewDesc": "Zostanie utworzona nowa współdzielona grupa kroków.",
       "go": "Iść",
       "processing": "Przetwarzanie...",
-      "progressText": "Przetworzono {processed} z {total} przypadków",
+      "progressText": "{processed, number} z {total, number} przetworzonych przypadków",
       "successCount": "{count} przypadków {operation}pomyślnie",
-      "skipped": "Pominięto: {count}",
-      "droppedLinks": "Usunięto linki międzyprojektowe: {count}",
-      "errorCount": "{count} przypadków zakończyło się niepowodzeniem",
+      "skipped": "Pominięto: {count, number}",
+      "droppedLinks": "Usunięto linki międzyprojektowe: {count, number}",
+      "errorCount": "{count, number} przypadków zakończonych niepowodzeniem",
       "viewInTargetProject": "Widok w projekcie docelowym",
       "failed": "Przegrany",
       "folderMode": "Folder \"{folderName}\" — {caseCount, plural, one {# przypadek} other {# przypadki}}"
@@ -5128,7 +5131,7 @@
     "unlinkError": "Nie udało się odłączyć problemu",
     "noIssuesFound": "Nie znaleziono problemów",
     "startTypingToSearch": "Zacznij pisać, aby wyszukać problemy",
-    "selectedCount": "{count} wybrano",
+    "selectedCount": "{count, number} wybrano",
     "confirmSelection": "Potwierdź wybór",
     "alreadyLinked": "Już połączone",
     "authenticate": "Uwierzytelniać",
@@ -5142,7 +5145,7 @@
     "error": "Wystąpił błąd podczas ładowania",
     "errorDescription": "Nie udało się załadować problemów. Spróbuj ponownie.",
     "selectIssues": "Wybierz problemy",
-    "authRequiredDescription": "Aby wyszukać problemy, należy uwierzytelnić się za pomocą {provider}",
+    "authRequiredDescription": "Proszę się uwierzytelnić, aby wyszukać problemy",
     "integrationNotConfigured": "Integracja nie jest skonfigurowana",
     "integrationNotConfiguredDescription": "Ta integracja nie została w pełni skonfigurowana. Skontaktuj się z administratorem projektu, aby skonfigurować projekt zewnętrzny w ustawieniach projektu.",
     "createIssue": "Utwórz problem",
@@ -5189,7 +5192,7 @@
     "searchUsers": "Wyszukaj użytkowników",
     "noTeamsAvailable": "Brak dostępnych zespołów",
     "filterAll": "Wszystko",
-    "fanOutPartialFailure": "Nie udało się nawiązać połączenia z {count} projektami. Wyświetlane są wyniki z {successCount} projektów.",
+    "fanOutPartialFailure": "Nie można nawiązać połączenia z projektami {count, number} . Wyświetlane są wyniki z projektów {successCount, number}.",
     "projectSelectorLabel": "Projekt",
     "searchFailedTitle": "Wyszukiwanie nie powiodło się"
   },
@@ -5229,7 +5232,7 @@
   },
   "charts": {
     "average": "Przeciętny",
-    "count": "Liczba: {count}",
+    "count": "Liczba: {count, number}",
     "percent": "Procent: {percent}%",
     "completed": "Zakończono: {count}",
     "durationRange": "Czas trwania: {from}s - {to}s",
@@ -6262,7 +6265,7 @@
       "loadingMore": "Ładowanie kolejnych...",
       "noRecords": "Nie znaleziono żadnych rekordów",
       "error": "Nie udało się załadować rekordów",
-      "recordCount": "{count} {count, plural, =1 {rekord} other {rekordy}}",
+      "recordCount": "{count, plural, =1 {# rekord} other {# rekordy}}",
       "allRecords": "Wszystkie rekordy",
       "allLoaded": "Wszystkie rekordy załadowane"
     },
@@ -6516,8 +6519,8 @@
       },
       "page3": {
         "title": "Podgląd importowanych danych",
-        "showing": "Wyświetlanie od {start} do {end} z {total} udostępnionych kroków",
-        "step": "Wspólny krok {number}",
+        "showing": "Wyświetlanie {start, number} do {end, number} z {total, number} udostępnionych kroków",
+        "step": "Wspólny krok {number, number}",
         "noValue": "(pusty)"
       }
     },
@@ -6539,7 +6542,7 @@
       "noResultsDescription": "Uruchom skanowanie w celu wykrycia powtarzających się sekwencji kroków w przypadkach testowych.",
       "filterPlaceholder": "Filtruj według nazwy sprawy...",
       "selected": "{count, plural, one {# wybrano} other {# wybrano}}",
-      "bulkDismiss": "Odrzuć ({count})",
+      "bulkDismiss": "Odrzuć ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# dopasowanie odrzucone} other {# dopasowania odrzucone}}",
       "bulkError": "Niektóre operacje nie powiodły się. Spróbuj ponownie.",
       "tableHint": "Kliknij wiersz, aby wyświetlić podgląd dopasowanych kroków. Zaznacz wiersze z polami wyboru, aby wykonać działania zbiorcze.",
@@ -6555,7 +6558,7 @@
       "cancelScan": "Anuluj skanowanie",
       "findStepDuplicates": "Znajdź duplikaty kroków",
       "rescan": "Skandować",
-      "viewResults": "Wyświetl wyniki ({count})",
+      "viewResults": "Wyświetl wyniki ({count, number})",
       "retryScan": "Ponów skanowanie",
       "dialog": {
         "title": "Konwertuj na kroki współdzielone",
@@ -6805,9 +6808,9 @@
     },
     "progress": {
       "starting": "Rozpoczęcie analizy...",
-      "analyzed": "Przeanalizowano {analyzed}/{total} jednostek",
-      "sizing": "Znalezienie optymalnego rozmiaru partii (próbowanie {size} jednostek)...",
-      "streaming": "Otrzymywanie odpowiedzi AI ({analyzed}/{total} jednostek gotowych)...",
+      "analyzed": "Przeanalizowano {analyzed, number}/{total, number} jednostek",
+      "sizing": "Znalezienie optymalnego rozmiaru partii (próbowanie {size, number} jednostek)...",
+      "streaming": "Otrzymywanie odpowiedzi AI ({analyzed, number}/{total, number} encji gotowych)...",
       "finalizing": "Przygotowywanie wyników...",
       "complete": "Analiza ukończona",
       "reviewSuggestions": "Sugestie dotyczące recenzji",
@@ -6815,7 +6818,7 @@
     },
     "wizard": {
       "description": "Sztuczna inteligencja przeanalizuje wszystkie przypadki testowe, przebiegi testów i sesje Twojego projektu, aby na podstawie ich zawartości zasugerować odpowiednie tagi.",
-      "entityLine": "{count} {type}",
+      "entityLine": "{count, number} {type}",
       "startAnalysis": "Rozpocznij analizę",
       "untaggedOnly": "Analizuj tylko rekordy bez istniejących tagów",
       "allowNewTags": "Zezwól na tworzenie nowych tagów",
@@ -6834,7 +6837,7 @@
     "fair": "Sprawiedliwy",
     "good": "Dobry",
     "strong": "Mocny",
-    "minLength": "Co najmniej {count} znaków",
+    "minLength": "Co najmniej {count, number} znaków",
     "uppercase": "Co najmniej jedna wielka litera",
     "lowercase": "Co najmniej jedna mała litera",
     "numbers": "Co najmniej jedna liczba",

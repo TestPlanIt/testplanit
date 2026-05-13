@@ -471,10 +471,12 @@
       "moveSuccess": "アイテムは正常に移動されました",
       "moveError": "アイテムの移動中にエラーが発生しました",
       "updateSuccess": "アイテムが正常に更新されました",
+      "updateSuccessCount": "{count, number} アイテムが正常に更新されました",
       "updateError": "アイテムの更新中にエラーが発生しました",
       "linkCopied": "リンクをクリップボードにコピーしました",
       "copyFailed": "リンクをクリップボードにコピーできませんでした",
-      "created": "テスト実行が正常に作成されました",
+      "created": "正常に作成されました",
+      "createdItem": "{item} が正常に作成されました",
       "createdDescription": "テスト実行が作成され、テスト実行リストに表示されるようになりました。",
       "createError": "不明なエラーが発生しました。もう一度お試しください。",
       "emptyActive": "アクティブなテスト実行はありません",
@@ -698,7 +700,7 @@
       "noTestCasesSelected": "テストケースが選択されていません",
       "editToSelectTestCases": "テスト実行を編集してテストケースを選択します。",
       "casesInRun": "{count, plural, =0 {テスト実行にテストケースはありません} =1 {テスト実行にテストケースが 1 つあります} other {テスト実行にテストケースの数があります}}",
-      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 つのユニークなケース} other {# つのユニークなケース}} 全体 {configCount, plural, =1 {1 つの構成} other {# つの構成}} (合計{totalCount} 件のケース)",
+      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 つの固有ケース} other {固有ケースの数}} 全体 {configCount, plural, =1 {1 つの構成} other {構成の数}} ({totalCount, number} ケースの総数)",
       "viewTestRunDetails": "テスト実行の詳細を表示",
       "sortByStatus": "ステータス別にグループ化",
       "sortByDate": "日付順に並べ替え",
@@ -973,7 +975,7 @@
       "case": "{count, plural, =1 {ケース} other {ケース}}",
       "result": "{count, plural, =1 {結果} other {結果}}",
       "run": "{count, plural, =1 {実行} other {実行}}",
-      "comment": "{count, plural, =1 {{count} コメント} other {{count} コメント}}"
+      "comment": "{count, plural, =1 {# コメント} other {# コメント}}"
     },
     "success": {
       "assigned": "テストケースが正常に割り当てられました",
@@ -1099,7 +1101,7 @@
       "passwordRequired": "パスワードが必要です。",
       "genericError": "エラーが発生しました。もう一度お試しください。",
       "policyTitle": "パスワード要件:",
-      "policyMinLength": "少なくとも {count} 文字",
+      "policyMinLength": "少なくとも {count, number} 文字",
       "policyUppercase": "少なくとも1文字は大文字",
       "policyLowercase": "少なくとも1文字は小文字",
       "policyNumbers": "少なくとも1つの数字",
@@ -1149,7 +1151,7 @@
   },
   "projects": {
     "status": {
-      "id": "プロジェクトID: {id}",
+      "id": "プロジェクトID: {id, number}",
       "active": "プロジェクトはアクティブです",
       "completed": "プロジェクトが完了しました"
     },
@@ -1199,7 +1201,7 @@
           "updateError": "問題統合設定の更新に失敗しました",
           "removeError": "問題の統合を削除できませんでした",
           "removeIntegration": "統合を削除",
-          "confirmRemove": "削除を確認する",
+          "confirmRemove": "{name} の統合を削除してもよろしいですか？",
           "authDescription": "この問題統合を使用するには、 {provider} で認証する必要があります",
           "authenticating": "認証中...",
           "authSuccess": "認証成功",
@@ -1310,8 +1312,8 @@
         "deleteConfirmTitle": "ウェブフックの設定を削除しますか？",
         "deleteConfirm": "このWebhook設定を削除しますか？受信する配信が拒否されます。",
         "sendTest": "テスト用ウェブフックを送信",
-        "testSuccess": "テストWebhookが受け入れられました（HTTP {statusCode}、結果： {outcome}）",
-        "testFailure": "テストウェブフックが失敗しました (HTTP {statusCode}): {error}",
+        "testSuccess": "テストウェブフックが受け入れられました (HTTP {statusCode, number}、結果: {outcome})",
+        "testFailure": "テストウェブフックが失敗しました (HTTP {statusCode, number}): {error}",
         "saveError": "ウェブフック設定の保存に失敗しました",
         "lastReceived": "最終受信日時: {timestamp}",
         "lastReceivedLabel": "最終受信日時:",
@@ -1397,7 +1399,7 @@
         "outboundHmacActiveSecret": "アクティブ",
         "outboundHmacInactiveSecret": "非アクティブ",
         "outboundHmacRetiringSecret": "退職",
-        "outboundHmacAutoRetireIn": "{days} 日後に自動退職します",
+        "outboundHmacAutoRetireIn": "{days, number} 日後に自動引退します",
         "outboundHmacRotateButton": "秘密を回転させる",
         "outboundHmacExtendButton": "7日間延長",
         "outboundHmacRetireNowButton": "今すぐ退職する",
@@ -1481,7 +1483,7 @@
         "filterSinceDefault": "…以来",
         "filterUntilDefault": "…まで",
         "filterReset": "フィルターをリセット",
-        "filterBulkReplayButton": "一括リプレイ {count} 送信失敗",
+        "filterBulkReplayButton": "一括再生 {count, number} 送信失敗",
         "filterBulkReplayHidden": "目に見える障害はすべて受信側からのものです。代わりに、上流側のイベントを再トリガーしてください。",
         "deliveriesEmpty": "これらの条件に一致する配達はありません。",
         "deliveriesResetFilters": "フィルターをリセット",
@@ -1500,7 +1502,7 @@
         "drawerLabelDirection": "方向",
         "drawerLabelStatusCode": "ステータスコード",
         "drawerLabelLatency": "遅延",
-        "drawerLatencyValue": "{ms} ms",
+        "drawerLatencyValue": "{ms, number} ms",
         "drawerLatencyUnknown": "—",
         "drawerLabelError": "エラー",
         "drawerLabelPayloadDigest": "ペイロード概要",
@@ -1515,16 +1517,16 @@
         "replayConfirm": "これにより、実際の {direction} {adapterType} リクエストが送信されます。",
         "replayAction": "リプレイ",
         "bulkReplayConfirmTitle": "送信エラーを再生しますか？",
-        "bulkReplayConfirm": "{count} の送信失敗を {configName}にリプレイしますか？これにより、 {count} の実際の HTTP リクエストが送信されます。",
-        "bulkReplayCapExceeded": "一括再生は一度に100件の送信に制限されています。フィルタを絞り込むか、順番に実行してください。現在、 {count} が再生されます。",
-        "bulkReplayAction": "リプレイ {count}",
+        "bulkReplayConfirm": "{count, number} アウトバウンドの失敗を {configName}にリプレイしますか? これにより、 {count, number} 実際の HTTP リクエストが送信されます。",
+        "bulkReplayCapExceeded": "一括リプレイは一度に100件の送信に制限されています。フィルタを絞り込むか、順番に実行してください。現在、 {count, number} がリプレイされます。",
+        "bulkReplayAction": "リプレイ {count, number}",
         "healthBadge": {
           "HEALTHY": "健康",
           "DEGRADED": "劣化",
           "DISABLED": "無効"
         },
         "healthTooltipHealthy": "最後の成功: {lastSuccessAt}",
-        "healthTooltipDegraded": "{count} 連続失敗 · 最終失敗 {lastFailureAt}",
+        "healthTooltipDegraded": "{count, number} 連続失敗 · 最後は {lastFailureAt}",
         "healthTooltipDisabled": "10回連続で失敗すると無効になります · {lastFailureAt}",
         "activityLabel": "配送活動",
         "activityLastDispatched": "最終発送",
@@ -1638,8 +1640,8 @@
         "preview": {
           "resolvingBranch": "ブランチ… を解決しています",
           "scanningFiles": "{scope}… のファイルをスキャンしています。",
-          "scanningFilesCount": "{scope}… 内のファイルをスキャンしています ({count} が見つかりました)",
-          "filtering": "{count} 個のファイル…にフィルタを適用しています。"
+          "scanningFilesCount": "{scope}… 内のファイルをスキャンしています ({count, number} が見つかりました)",
+          "filtering": "{count, number} ファイル… にフィルタを適用しています。"
         },
         "cache": {
           "title": "キャッシュ設定",
@@ -1748,9 +1750,10 @@
     "toast": {
       "deleted": "マイルストーン {name} が削除されました",
       "updated": "マイルストーンを更新しました",
+      "updatedWithName": "{name} 更新済み",
       "updateFailed": "マイルストーンの更新に失敗しました",
       "completed": "マイルストーン「{name}」が完了しました。",
-      "completedWithDependencies": "マイルストーンと依存関係は正常に完了しました。"
+      "completedWithDependencies": "{name} 依存関係が正常に完了しました。"
     },
     "errors": {
       "nameExists": "この名前のマイルストーンは既に存在します",
@@ -1819,7 +1822,7 @@
     },
     "messages": {
       "createSuccess": "セッションが正常に作成されました",
-      "createSuccessMultiple": "{count} セッションが正常に作成されました",
+      "createSuccessMultiple": "{count, number} セッションが正常に作成されました",
       "duplicateSuccess": "セッションの複製に成功しました",
       "duplicateSuccessMultiple": "{count} セッションの複製に成功しました"
     },
@@ -1886,8 +1889,8 @@
       "backToSession": "セッションに戻る",
       "backToLatest": "最新バージョンに戻る",
       "versionInfo": {
-        "created": "バージョン {number} が作成されました",
-        "latestUpdated": "最新バージョン {number} 更新"
+        "created": "バージョン {number, number} 作成済み",
+        "latestUpdated": "最新バージョン {number, number} 更新済み"
       },
       "renderer": {
         "noEstimate": "見積もりなし",
@@ -1982,7 +1985,7 @@
         "avatarUpdated": "アバターが正常に更新されました。",
         "avatarUpdateError": "アバターの更新に失敗しました。",
         "deleteAvatar": "アバターを削除",
-        "deleteAvatarConfirm": "本当にアバターを削除してもよろしいですか?",
+        "deleteAvatarConfirm": "{name} を削除してもよろしいですか？",
         "emailDisabledForSso": "SSOアカウントのメールアドレスは変更できません。IDプロバイダーを通じて更新してください。",
         "emailEditableForBoth": "メールアドレス/パスワードとSSOの両方でサインインできます。メールアドレスの変更はパスワード認証にのみ影響します。",
         "linkSsoProvider": "SSOプロバイダーへのリンク"
@@ -2119,7 +2122,7 @@
       "detailsRegion": "テストケースの詳細",
       "metadataRegion": "テストケースのメタデータ",
       "versionCreated": "バージョン {version} が作成されました",
-      "latestVersionUpdated": "最新バージョン {version} 更新",
+      "latestVersionUpdated": "最新バージョン {version, number} 更新済み",
       "historyView": "テストケース履歴ビュー"
     },
     "fields": {
@@ -2142,7 +2145,7 @@
       "add": "ステップを追加",
       "addSharedSteps": "共有ステップを追加する",
       "delete": "ステップを削除",
-      "confirmDelete": "ステップ {number}の削除を確認しますか?",
+      "confirmDelete": "削除手順の確認 {number, number}?",
       "createSharedSteps": "共有を作成 {number, plural, one {ステップ} other {ステップ}}",
       "sharedStepsName": "共有ステップ名",
       "sharedStepsDescription": "新しい共有ステップ {number, plural, one {ステップ} other {ステップ}}の名前を入力します。これには、選択したステップ {number, plural, one {個、選択したステップ} other {個、選択したステップ}}が含まれます。",
@@ -2240,7 +2243,7 @@
       "cannotReorderAcrossPages": "複数ページにまたがるテストケースの順序を変更することはできません。順序を変更するには、ページサイズメニューから「すべて」を選択してすべてのケースを1ページに表示するか、他のページでケースの選択を解除してください。選択したケースをフォルダにドラッグすることは可能です。",
       "exportModal": {
         "scope": {
-          "allFiltered": "すべて表示 ({count})"
+          "allFiltered": "すべて表示 ({count, number})"
         },
         "textLongFormat": {
           "label": "リッチテキスト形式"
@@ -2315,8 +2318,8 @@
         },
         "page4": {
           "title": "プレビューインポート",
-          "showing": "{total} 件中 {start}-{end} 件を表示",
-          "case": "ケース {number}"
+          "showing": "{start, number}-{end, number} を表示中（全 {total, number} 件）",
+          "case": "ケース {number, number}"
         }
       }
     },
@@ -2385,7 +2388,7 @@
       "description": "{count, plural, one {# 選択されたケース} other {# 選択されたケース}}を編集しています。編集を有効にするには、フィールドをチェックしてください。",
       "defineStepsTitle": "一括更新の手順を定義する",
       "saveNewSteps": "新しいステップを保存",
-      "newStepsDefined": "新しいステップが定義されました ({count}) - ボタンをクリックして編集します",
+      "newStepsDefined": "新しいステップが定義されました ({count, number}) - ボタンをクリックして編集",
       "clearExistingStepsWarning": "既存のステップは削除されます",
       "warnings": {
         "templateMismatch": {
@@ -2405,7 +2408,7 @@
         "fetchError": "ケースデータの取得中にエラーが発生しました。"
       },
       "success": {
-        "casesUpdated": "ケースが正常に更新されました"
+        "casesUpdated": "{count, number} ケースが正常に更新されました"
       },
       "placeholders": {
         "various": "<various values>"
@@ -2435,9 +2438,9 @@
       "title": "テストケースのエクスポート",
       "description": "以下のエクスポート オプションを選択してください。",
       "scope": {
-        "selected": "選択済み ({count})",
-        "allFiltered": "すべて（現在のビュー）（{count}）",
-        "allProject": "プロジェクト内のすべて ({count})"
+        "selected": "選択済み ({count, number})",
+        "allFiltered": "すべて（現在の表示）（{count, number}）",
+        "allProject": "プロジェクト内のすべての ({count, number})"
       },
       "format": {
         "label": "形式",
@@ -2495,7 +2498,7 @@
     "aiExport": {
       "toggleLabel": "AIで生成",
       "generating": "生成中...",
-      "generatingProgress": "{total} のケース {current} を生成しています...",
+      "generatingProgress": "{current, number} の {total, number} を生成しています...",
       "generatingBatch": "{count, plural, one {# ケース} other {# ケース}} を 1 つのファイルに生成しています...",
       "previewTitle": "エクスポートプレビュー",
       "previewDescription": "{count, plural, one {# ファイル} other {# ファイル}} 生成されました",
@@ -2507,14 +2510,14 @@
       "truncatedWarning": "出力が途中で途切れました。モデルがトークン数の上限に達したためです。バッチサイズを小さくするか、プロンプト設定で最大出力トークン数を増やしてみてください。",
       "contextFiles": "{count, plural, one {(# コンテキスト ファイル)} other {(# コンテキスト ファイル)}}",
       "noCodeContextHint": "コードリポジトリが設定されていません。AIは標準的なフレームワークパターンを使用します。",
-      "generatingParallelProgress": "{done} 個のファイルのうち、 {total} 個のファイルが生成されました...",
+      "generatingParallelProgress": "{done, number} 個の {total, number} 個のファイルを生成しました...",
       "cancelledGeneration": "キャンセル"
     },
     "duplicates": {
       "findDuplicates": "重複データの検索",
       "viewResults": "表示 {count, plural, one {# 結果} other {# 結果}}",
       "retryScan": "スキャンを再試行",
-      "analyzing": "{analyzed}/{total}",
+      "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "AIを活用して成果を向上させる…",
       "scanComplete": "重複分析完了 — {count, plural, =0 {重複なし} one {# 重複の可能性あり} other {# 重複の可能性あり}}",
       "scanFailed": "重複分析に失敗しました",
@@ -2538,8 +2541,8 @@
       "selectAll": "すべて選択",
       "selectRow": "行を選択",
       "selected": "{count, plural, one {# 選択済み} other {# 選択済み}}",
-      "bulkDismiss": "重複なし ({count})",
-      "bulkLink": "関連リンク ({count})",
+      "bulkDismiss": "重複なし ({count, number})",
+      "bulkLink": "関連リンク ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# ペアが削除されました} other {# ペアが削除されました}}",
       "bulkLinkSuccess": "{count, plural, one {# ペアがリンクされています} other {# ペアがリンクされています}}",
       "bulkError": "一部の操作が失敗しました。もう一度お試しください。",
@@ -2584,8 +2587,8 @@
       "loadingResults": "生成されたテストケースを読み込んでいます...",
       "generatingPreparing": "リクエストを準備しています...",
       "generatingCallingAi": "AIがテストケースを生成するのを待っています...",
-      "generatingStreaming": "AI がテストケース {count} を生成しています...",
-      "generatingStreamingPage": "AI がテストケース {count} を生成しています — {current} / {total}: {page}",
+      "generatingStreaming": "AI がテストケースを生成しています {count, number}...",
+      "generatingStreamingPage": "AI がテストケース {count, number} を生成しています — ページ {current, number} / {total, number}: {page}",
       "generatingProcessing": "生成されたテストケースを処理しています...",
       "generatingHint": "資料の複雑さによっては、1分ほどかかる場合があります。",
       "steps": {
@@ -2671,7 +2674,7 @@
       "review": {
         "title": "生成されたテストケースを確認する",
         "description": "AI によって生成されたテスト ケースを確認し、必要な編集を行って、インポートするテスト ケースを選択します。",
-        "selected": "{total} 件中 {count} 件を選択",
+        "selected": "{count, number} のうち {total, number} が選択されました",
         "moreSteps": "...そして {count, plural, one {# さらなるステップ} other {# さらなるステップ}}",
         "templateFields": "テンプレートフィールド:",
         "moreFields": "...そして {count, plural, one {# その他のフィールド} other {# その他のフィールド}}",
@@ -2681,7 +2684,7 @@
         "allPages": "すべてのページ ({pages, plural, one {# ページ} other {# ページ}}、 {cases, plural, one {# ケース} other {# ケース}})"
       },
       "generatingLegacy": "AIによるテストケースの生成...",
-      "expandProgress": "{done} のうち {total} が生成しました",
+      "expandProgress": "{done, number} の {total, number} が生成されました",
       "import": "{count, plural, =0 {テストケースをインポート} =1 {1 つのテストケースをインポート} other {# つのテストケースをインポート}}",
       "importing": "{count, plural, =0 {テストケースをインポートしています...} =1 {1 つのテストケースをインポートしています...} other {# つのテストケースをインポートしています...}}",
       "openInExternalSystem": "{provider}で開く",
@@ -2847,15 +2850,15 @@
       "description": "プロジェクトに新しいテスト実行を追加する",
       "success": {
         "title": "テスト実行が正常に追加されました",
-        "description": "テスト実行がプロジェクトに追加されました",
-        "descriptionMultiple": "{count, plural, one {# テスト実行は} other {# テスト実行は}} '{name} ' 用に作成されました"
+        "description": "{name} がプロジェクトに追加されました",
+        "descriptionMultiple": "{count, plural, one {# テスト実行は} other {# テスト実行は}} が {name} 用に作成されました。"
       },
       "estimates": {
         "manual": "推定手動時間",
         "automated": "推定自動所要時間",
         "mixed": "推定手動/自動時間"
       },
-      "creatingProgress": "{total}件中のテスト実行 {current} を作成しています..."
+      "creatingProgress": "{current, number} の {total, number} のテスト実行を作成しています..."
     },
     "magicSelect": {
       "title": "マジックセレクト",
@@ -2864,7 +2867,7 @@
       "reasoning": "AI推論",
       "reviewSelection": "提案されたテストケースを確認する",
       "viewSuggested": "提案されたケースを見る",
-      "tokenUsage": "{total} トークン使用",
+      "tokenUsage": "{total, number} トークン使用済み",
       "noLlmIntegration": "AI機能を使用するにはLLM統合が必要です。プロジェクト設定で設定してください。",
       "configure": {
         "title": "テストケースの範囲",
@@ -2883,7 +2886,7 @@
       "loading": {
         "batch": "{total}のバッチ {current} を処理中",
         "analyzing": "テストケースを分析しています...",
-        "progress": "Analyzed {analyzed} of {total} test cases...",
+        "progress": "Analyzed {analyzed, number} of {total, number} test cases...",
         "waitingForAi": "AIからの応答を待っています（バッチ {batch} / {total}）...",
         "selectedSoFar": "{count, plural, =1 {# これまでに選択されたテストケース} other {# これまでに選択されたテストケース}}",
         "resolving_integration": "AI統合の課題解決…",
@@ -3043,7 +3046,7 @@
             "mapping": "マッピングを構成する",
             "import": "インポートを監視する"
           },
-          "stepIndicator": "ステップ {step} / {total}"
+          "stepIndicator": "ステップ {step, number} / {total, number}"
         },
         "fileLabel": "Testmo JSONファイル",
         "fileHelp": "Testmo からダウンロードした JSON エクスポートを選択します。",
@@ -3174,8 +3177,8 @@
         "importProgressDescription": "{count, plural, =0 {追跡対象のエンティティ全体ですべてのレコードがインポートされました。} =1 {追跡対象のエンティティ全体で 1 レコードが残っています。} other {追跡対象のエンティティ全体で # レコードが残っています。}}",
         "importProgressTotalRemaining": "{count, plural, =0 {残りレコードなし} =1 {残り 1 レコード} other {残りレコード数}}",
         "importProgressProcessed": "{processed, number}/{total, number} レコードがインポートされました",
-        "importProgressAria": "{percent}インポート完了率",
-        "importProgressPercentLabel": "{percent}%",
+        "importProgressAria": "{percent, number}インポート完了率 %",
+        "importProgressPercentLabel": "{percent, number}%",
         "importDurationLabel": "合計時間:",
         "activityLogTitle": "輸入活動",
         "activityLogDescription": "バックグラウンドインポート手順の詳細なログ。タイムスタンプはサーバーのタイムゾーンに基づきます。",
@@ -3249,7 +3252,7 @@
           "configurationNoTokens": "この構成ではバリアントは検出されませんでした。",
           "configurationNoExistingTargets": "マップできる構成がありません。",
           "configurationNamePlaceholder": "設定名を入力してください",
-          "configurationVariantLabel": "バリアント {index}",
+          "configurationVariantLabel": "バリアント {index, number}",
           "configurationVariantActionLabel": "このバリアントはどのように処理する必要がありますか?",
           "configurationVariantActionPlaceholder": "オプションを選択",
           "configurationVariantMapOption": "既存のバリアントにマップする",
@@ -3741,7 +3744,7 @@
       },
       "delete": {
         "title": "プロジェクトを削除",
-        "confirmMessage": "このプロジェクトを削除してもよろしいですか?"
+        "confirmMessage": "<strong>{name}</strong> を削除してもよろしいですか？"
       }
     },
     "templates": {
@@ -3781,7 +3784,7 @@
         },
         "delete": {
           "title": "ケースフィールドの削除",
-          "confirmMessage": "このケースフィールドを削除してもよろしいですか?",
+          "confirmMessage": "<strong>{name}</strong> を削除してもよろしいですか？",
           "warning": "ケースフィールドはすべてのテンプレートから削除されます。この操作は元に戻せません。"
         }
       },
@@ -3955,12 +3958,12 @@
       "saveChanges": "変更を保存",
       "forceAllUsers": "全ユーザーにパスワードの変更を強制する",
       "forceAllUsersDialogTitle": "全ユーザーのパスワード変更を強制する",
-      "forceAllUsersDialogDescription": "これにより、 {count} 認証情報ベースのユーザーは次回のログイン時にパスワードを変更する必要があります。",
+      "forceAllUsersDialogDescription": "これにより、 {count, number} 認証情報ベースのユーザーは次回のログイン時にパスワードを変更する必要があります。",
       "forceAllUsersDialogWarning": "この操作は取り消すことができません。",
       "forceAllUsersDialogConfirm": "変化を強制する",
       "saved": "セキュリティ設定が保存されました",
       "saveFailed": "セキュリティ設定の保存に失敗しました",
-      "forceAllSuccess": "{count} ユーザーのパスワード変更が必要です",
+      "forceAllSuccess": "{count, number} ユーザーのパスワード変更が必要です",
       "forceAllFailed": "パスワード変更の強制に失敗しました"
     },
     "apiTokens": {
@@ -3999,7 +4002,7 @@
       },
       "delete": {
         "title": "タグを削除",
-        "confirmMessage": "このタグを削除してもよろしいですか?",
+        "confirmMessage": "{name} タグを削除してもよろしいですか？",
         "warning": "このタグはすべてのテストケースとセッションから削除されます。",
         "errors": {
           "unknown": "タグの削除中にエラーが発生しました"
@@ -4030,7 +4033,7 @@
       },
       "delete": {
         "title": "ワークフローの削除",
-        "confirmMessage": "このワークフローを削除してもよろしいですか?"
+        "confirmMessage": "<strong>{name}</strong> を削除してもよろしいですか？"
       },
       "setDefault": {
         "title": "デフォルトのワークフローを設定する",
@@ -4058,7 +4061,7 @@
       },
       "delete": {
         "title": "ロールを削除",
-        "confirmMessage": "このロールを削除してもよろしいですか?",
+        "confirmMessage": "{name} ロールを削除してもよろしいですか？",
         "warning": "この操作は元に戻せません。このロールを持つユーザーにはデフォルトのロールが割り当てられます。",
         "errors": {
           "defaultNotFound": "デフォルトロールを削除できません"
@@ -4149,7 +4152,7 @@
       "combinations": {
         "title": "組み合わせ",
         "description": "グローバルな組み合わせを管理する",
-        "confirmDescription": "以下の {count} の組み合わせが作成されます。",
+        "confirmDescription": "以下の {count, number} 組み合わせが作成されます。",
         "addCombination": "組み合わせを追加",
         "editCombination": "組み合わせを編集",
         "selectCombination": "組み合わせを選択",
@@ -4226,8 +4229,8 @@
         "title": "マイルストーンタイプの編集"
       },
       "delete": {
-        "title": "マイルストーンタイプの削除",
-        "confirmMessage": "このマイルストーン タイプを削除してもよろしいですか?"
+        "title": "{item} を削除",
+        "confirmMessage": "マイルストーンタイプ {name} を削除してもよろしいですか？"
       }
     },
     "issue_config": {
@@ -4634,7 +4637,7 @@
       },
       "edit": {
         "title": "AIモデルの統合を編集する",
-        "description": "このAIモデル統合の設定を更新します",
+        "description": "{name} AIモデル統合の設定を更新します",
         "statusDescription": "この統合を有効または無効にする",
         "apiKeyPlaceholder": "更新するには新しい API キーを入力してください...",
         "update": "アップデート",
@@ -4653,7 +4656,7 @@
       },
       "delete": {
         "title": "AIモデル統合の削除",
-        "description": "この AI モデル統合を削除してもよろしいですか? すべてのプロジェクトから削除され、元に戻すことはできません。",
+        "description": "{name} AIモデルの統合を削除してもよろしいですか？削除するとすべてのプロジェクトから削除され、元に戻すことはできません。",
         "integrationDeletedSuccess": "AIモデルの統合が正常に削除されました",
         "failedToDeleteIntegration": "AIモデル統合の削除に失敗しました",
         "cannotDeleteDefault": "デフォルトのAIモデルは削除できません。まず別のモデルをデフォルトに設定してください。"
@@ -4725,7 +4728,7 @@
         "warning": "この操作は元に戻せません。この設定を使用しているすべてのプロジェクトは、デフォルトのプロンプト設定に戻ります。"
       },
       "llmColumn": "法学修士",
-      "mixedLlms": "{count} LLMs",
+      "mixedLlms": "{count, number} LLMs",
       "cannotDeleteDefault": "デフォルトのプロンプト設定を削除できません。まず別の設定をデフォルトにしてください。",
       "defaultChanged": "デフォルトのプロンプト設定が正常に更新されました。",
       "featureLabels": {
@@ -4952,7 +4955,7 @@
     "notifications": {
       "empty": "通知なし",
       "aria": {
-        "notifications": "通知（{count} 件未読）"
+        "notifications": "通知（{count, number} 未読）"
       },
       "actions": {
         "markRead": "既読にする",
@@ -5097,11 +5100,11 @@
       "sharedStepGroupCreateNewDesc": "新しい共有ステップグループが作成されます。",
       "go": "行く",
       "processing": "処理...",
-      "progressText": "{processed} 件のうち {total} 件が処理されました",
+      "progressText": "{processed, number} のうち {total, number} のケースが処理されました。",
       "successCount": "{count} ケース {operation}d 成功",
-      "skipped": "スキップ: {count}",
-      "droppedLinks": "プロジェクト間のリンクが削除されました: {count}",
-      "errorCount": "{count} ケースが失敗しました",
+      "skipped": "スキップ: {count, number}",
+      "droppedLinks": "プロジェクト間のリンクが削除されました: {count, number}",
+      "errorCount": "{count, number} ケースが失敗しました",
       "viewInTargetProject": "対象プロジェクトで表示",
       "failed": "失敗した",
       "folderMode": "フォルダ \"{folderName}\" — {caseCount, plural, one {# ケース} other {# ケース}}"
@@ -5128,7 +5131,7 @@
     "unlinkError": "問題のリンクを解除できませんでした",
     "noIssuesFound": "問題は見つかりませんでした",
     "startTypingToSearch": "問題を検索するには入力を開始してください",
-    "selectedCount": "{count} 選択済み",
+    "selectedCount": "{count, number} 選択済み",
     "confirmSelection": "選択を確認",
     "alreadyLinked": "すでにリンクされています",
     "authenticate": "認証",
@@ -5142,7 +5145,7 @@
     "error": "読み込みエラーの問題",
     "errorDescription": "問題を読み込めませんでした。もう一度お試しください。",
     "selectIssues": "問題を選択",
-    "authRequiredDescription": "問題を検索するには、 {provider} で認証してください",
+    "authRequiredDescription": "問題を検索するには認証してください",
     "integrationNotConfigured": "統合が設定されていません",
     "integrationNotConfiguredDescription": "この統合はまだ完全に設定されていません。プロジェクト管理者に連絡して、プロジェクト設定で外部プロジェクトを設定してください。",
     "createIssue": "問題を作成",
@@ -5189,7 +5192,7 @@
     "searchUsers": "ユーザーを検索",
     "noTeamsAvailable": "利用可能なチームはありません",
     "filterAll": "全て",
-    "fanOutPartialFailure": "{count} 個のプロジェクトにアクセスできませんでした。 {successCount} 個のプロジェクトの結果を表示します。",
+    "fanOutPartialFailure": "{count, number} プロジェクトにアクセスできませんでした。 {successCount, number} プロジェクトの結果を表示します。",
     "projectSelectorLabel": "プロジェクト",
     "searchFailedTitle": "検索に失敗しました"
   },
@@ -5229,7 +5232,7 @@
   },
   "charts": {
     "average": "平均",
-    "count": "カウント: {count}",
+    "count": "カウント: {count, number}",
     "percent": "パーセント: {percent}%",
     "completed": "完了: {count}",
     "durationRange": "持続時間: {from}秒 - {to}秒",
@@ -6262,7 +6265,7 @@
       "loadingMore": "さらに読み込み中...",
       "noRecords": "記録が見つかりません",
       "error": "レコードの読み込みに失敗しました",
-      "recordCount": "{count} {count, plural, =1 {記録} other {記録}}",
+      "recordCount": "{count, plural, =1 {# レコード} other {# レコード}}",
       "allRecords": "すべての記録",
       "allLoaded": "すべてのレコードがロードされました"
     },
@@ -6516,8 +6519,8 @@
       },
       "page3": {
         "title": "インポートデータのプレビュー",
-        "showing": "{total} 件の共有ステップのうち {start} ～ {end} 件を表示しています",
-        "step": "共有ステップ {number}",
+        "showing": "共有ステップの {start, number} から {end, number} までを表示しています（全 {total, number}）。",
+        "step": "共有ステップ {number, number}",
         "noValue": "（空の）"
       }
     },
@@ -6539,7 +6542,7 @@
       "noResultsDescription": "スキャンを実行して、テストケース全体で繰り返される手順シーケンスを検出します。",
       "filterPlaceholder": "ケース名で絞り込む...",
       "selected": "{count, plural, one {# 選択済み} other {# 選択済み}}",
-      "bulkDismiss": "閉じる ({count})",
+      "bulkDismiss": "却下 ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# 試合が却下されました} other {# 試合が却下されました}}",
       "bulkError": "一部の操作が失敗しました。もう一度お試しください。",
       "tableHint": "該当する行をクリックすると、一致する手順をプレビューできます。チェックボックスが付いている行を選択すると、一括操作を実行できます。",
@@ -6555,7 +6558,7 @@
       "cancelScan": "スキャンをキャンセル",
       "findStepDuplicates": "重複する手順を検索",
       "rescan": "スキャン",
-      "viewResults": "結果を表示（{count}）",
+      "viewResults": "結果を表示 ({count, number})",
       "retryScan": "スキャンを再試行",
       "dialog": {
         "title": "共有ステップに変換する",
@@ -6805,9 +6808,9 @@
     },
     "progress": {
       "starting": "分析を開始します...",
-      "analyzed": "{analyzed}/{total} エンティティを解析しました。",
-      "sizing": "最適なバッチサイズを見つける（ {size} 個のエンティティを試行）...",
-      "streaming": "AIからの応答を受信しました（{analyzed}/{total} エンティティ完了）...",
+      "analyzed": "{analyzed, number}/{total, number} エンティティを分析しました。",
+      "sizing": "最適なバッチサイズを見つける（ {size, number} 個のエンティティを試行）...",
+      "streaming": "AIからの応答を受信しました（{analyzed, number}/{total, number} エンティティ完了）...",
       "finalizing": "結果を準備中...",
       "complete": "分析完了",
       "reviewSuggestions": "レビューの提案",
@@ -6815,7 +6818,7 @@
     },
     "wizard": {
       "description": "AIは、プロジェクト全体のテストケース、テスト実行、およびセッションを分析し、その内容に基づいて関連するタグを提案します。",
-      "entityLine": "{count} {type}",
+      "entityLine": "{count, number} {type}",
       "startAnalysis": "分析を開始",
       "untaggedOnly": "既存のタグがないレコードのみを分析する",
       "allowNewTags": "新しいタグの作成を許可する",
@@ -6834,7 +6837,7 @@
     "fair": "公平",
     "good": "良い",
     "strong": "強い",
-    "minLength": "少なくとも {count} 文字",
+    "minLength": "少なくとも {count, number} 文字",
     "uppercase": "少なくとも1文字は大文字",
     "lowercase": "少なくとも1文字は小文字",
     "numbers": "少なくとも1つの数字",

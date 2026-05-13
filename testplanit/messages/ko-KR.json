@@ -471,10 +471,12 @@
       "moveSuccess": "물품이 성공적으로 이동되었습니다.",
       "moveError": "물품을 이동하는 동안 오류가 발생했습니다.",
       "updateSuccess": "항목이 성공적으로 업데이트되었습니다.",
+      "updateSuccessCount": "{count, number} 항목이 성공적으로 업데이트되었습니다",
       "updateError": "항목을 업데이트하는 동안 오류가 발생했습니다.",
       "linkCopied": "링크가 클립보드에 복사되었습니다",
       "copyFailed": "링크를 클립보드에 복사하는 데 실패했습니다.",
-      "created": "테스트 실행이 성공적으로 완료되었습니다.",
+      "created": "성공적으로 생성되었습니다",
+      "createdItem": "{item} 이 성공적으로 생성되었습니다",
       "createdDescription": "테스트 실행이 생성되었으며 이제 테스트 실행 목록에서 확인할 수 있습니다.",
       "createError": "알 수 없는 오류가 발생했습니다. 다시 시도해 주세요.",
       "emptyActive": "현재 실행 중인 테스트가 없습니다.",
@@ -698,7 +700,7 @@
       "noTestCasesSelected": "선택된 테스트 케이스가 없습니다.",
       "editToSelectTestCases": "테스트 실행을 편집하여 테스트 케이스를 선택하세요.",
       "casesInRun": "{count, plural, =0 {테스트 실행에 테스트 케이스가 없습니다} =1 {테스트 실행에 테스트 케이스가 1개 있습니다} other {테스트 실행에 테스트 케이스가 있습니다}}",
-      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {고유 사례 1개} other {고유 사례 수}} {configCount, plural, =1 {구성 1개} other {구성 수}} (총 사례 수{totalCount} 개)",
+      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {고유 사례 1개} other {고유 사례 수}} {configCount, plural, =1 {구성 1개} other {구성 수}} (총 사례 수{totalCount, number})",
       "viewTestRunDetails": "테스트 실행 세부 정보 보기",
       "sortByStatus": "상태별로 그룹화",
       "sortByDate": "날짜순으로 정렬",
@@ -973,7 +975,7 @@
       "case": "{count, plural, =1 {경우} other {경우}}",
       "result": "{count, plural, =1 {결과} other {결과}}",
       "run": "{count, plural, =1 {실행} other {실행}}",
-      "comment": "{count, plural, =1 {{count} 댓글} other {{count} 댓글}}"
+      "comment": "{count, plural, =1 {# 댓글} other {# 댓글}}"
     },
     "success": {
       "assigned": "테스트 케이스가 성공적으로 할당되었습니다.",
@@ -1099,7 +1101,7 @@
       "passwordRequired": "비밀번호를 입력해야 합니다.",
       "genericError": "오류가 발생했습니다. 다시 시도해 주세요.",
       "policyTitle": "비밀번호 요구 사항:",
-      "policyMinLength": "최소 {count} 문자",
+      "policyMinLength": "최소 {count, number} 문자",
       "policyUppercase": "적어도 하나의 대문자",
       "policyLowercase": "적어도 하나의 소문자",
       "policyNumbers": "적어도 하나의 숫자",
@@ -1149,7 +1151,7 @@
   },
   "projects": {
     "status": {
-      "id": "프로젝트 ID: {id}",
+      "id": "프로젝트 ID: {id, number}",
       "active": "프로젝트가 진행 중입니다",
       "completed": "프로젝트가 완료되었습니다"
     },
@@ -1199,7 +1201,7 @@
           "updateError": "이슈 통합 설정 업데이트에 실패했습니다.",
           "removeError": "이슈 통합 제거에 실패했습니다.",
           "removeIntegration": "통합 제거",
-          "confirmRemove": "확인 제거",
+          "confirmRemove": "{name} 통합을 정말로 제거하시겠습니까?",
           "authDescription": "이슈 통합 기능을 사용하려면 {provider} 로 인증해야 합니다.",
           "authenticating": "인증 중...",
           "authSuccess": "인증 성공",
@@ -1310,8 +1312,8 @@
         "deleteConfirmTitle": "웹훅 설정을 삭제하시겠습니까?",
         "deleteConfirm": "이 웹훅 설정을 삭제하시겠습니까? 그러면 수신 요청이 거부됩니다.",
         "sendTest": "테스트 웹훅 전송",
-        "testSuccess": "테스트 웹훅 수락됨(HTTP {statusCode}, 결과: {outcome})",
-        "testFailure": "웹훅 테스트 실패(HTTP {statusCode}): {error}",
+        "testSuccess": "테스트 웹훅 수락됨(HTTP {statusCode, number}, 결과: {outcome})",
+        "testFailure": "웹훅 테스트 실패(HTTP {statusCode, number}): {error}",
         "saveError": "웹훅 설정을 저장하는 데 실패했습니다.",
         "lastReceived": "마지막 수신: {timestamp}",
         "lastReceivedLabel": "최종 수신일:",
@@ -1397,7 +1399,7 @@
         "outboundHmacActiveSecret": "활동적인",
         "outboundHmacInactiveSecret": "비활성화됨",
         "outboundHmacRetiringSecret": "암띤",
-        "outboundHmacAutoRetireIn": "자동 은퇴 ( {days} 일 소요)",
+        "outboundHmacAutoRetireIn": "자동 은퇴는 {days, number} 일 후에 이루어집니다.",
         "outboundHmacRotateButton": "비밀을 회전시키세요",
         "outboundHmacExtendButton": "7일 연장",
         "outboundHmacRetireNowButton": "지금 은퇴하세요",
@@ -1481,7 +1483,7 @@
         "filterSinceDefault": "… 이후로",
         "filterUntilDefault": "…까지",
         "filterReset": "필터 초기화",
-        "filterBulkReplayButton": "대량 재생 {count} 아웃바운드 실패",
+        "filterBulkReplayButton": "대량 재생 {count, number} 아웃바운드 실패",
         "filterBulkReplayHidden": "모든 가시적인 오류는 인바운드 오류이므로, 상위 이벤트 트리거를 다시 실행하십시오.",
         "deliveriesEmpty": "이 필터 조건에 맞는 배송 건이 없습니다.",
         "deliveriesResetFilters": "필터 초기화",
@@ -1500,7 +1502,7 @@
         "drawerLabelDirection": "방향",
         "drawerLabelStatusCode": "상태 코드",
         "drawerLabelLatency": "숨어 있음",
-        "drawerLatencyValue": "{ms} ms",
+        "drawerLatencyValue": "{ms, number} ms",
         "drawerLatencyUnknown": "—",
         "drawerLabelError": "오류",
         "drawerLabelPayloadDigest": "페이로드 다이제스트",
@@ -1515,16 +1517,16 @@
         "replayConfirm": "이렇게 하면 실제 {direction} {adapterType} 요청이 발생합니다.",
         "replayAction": "다시 하다",
         "bulkReplayConfirmTitle": "발신 실패를 다시 실행하시겠습니까?",
-        "bulkReplayConfirm": "{count} 아웃바운드 실패를 {configName}로 다시 재생하시겠습니까? 이렇게 하면 {count} 실제 HTTP 요청이 실행됩니다.",
-        "bulkReplayCapExceeded": "대량 재생은 한 번에 최대 100개의 발신으로 제한됩니다. 필터를 좁히거나 순차적으로 실행하세요. 현재 {count} 이 재생됩니다.",
-        "bulkReplayAction": "재생 {count}",
+        "bulkReplayConfirm": "{count, number} 아웃바운드 실패를 {configName}로 다시 재생하시겠습니까? 이렇게 하면 {count, number} 실제 HTTP 요청이 발생합니다.",
+        "bulkReplayCapExceeded": "대량 재생은 한 번에 최대 100개의 발신으로 제한됩니다. 필터를 좁히거나 순차적으로 실행하세요. 현재는 {count, number} 이 재생됩니다.",
+        "bulkReplayAction": "다시 재생 {count, number}",
         "healthBadge": {
           "HEALTHY": "건강한",
           "DEGRADED": "타락한",
           "DISABLED": "장애가 있는"
         },
         "healthTooltipHealthy": "마지막 성공: {lastSuccessAt}",
-        "healthTooltipDegraded": "{count} 연속 실패 · 마지막 실패 시간: {lastFailureAt}",
+        "healthTooltipDegraded": "{count, number} 연속 실패 · 마지막 실패 시간: {lastFailureAt}",
         "healthTooltipDisabled": "10회 연속 실패 후 비활성화됨 · {lastFailureAt}",
         "activityLabel": "배송 활동",
         "activityLastDispatched": "마지막으로 발송됨",
@@ -1638,8 +1640,8 @@
         "preview": {
           "resolvingBranch": "분기…를 해결 중",
           "scanningFiles": "{scope}…에서 파일을 스캔합니다.",
-          "scanningFilesCount": "{scope}… 에서 파일을 스캔하는 중입니다 ({count} 이 발견되었습니다)",
-          "filtering": "{count} 파일…에 필터 적용"
+          "scanningFilesCount": "{scope}… 에서 파일을 스캔하는 중입니다 ({count, number} 발견됨)",
+          "filtering": "{count, number} 파일…에 필터를 적용합니다."
         },
         "cache": {
           "title": "캐시 설정",
@@ -1748,9 +1750,10 @@
     "toast": {
       "deleted": "마일스톤 {name} 삭제됨",
       "updated": "마일스톤 업데이트됨",
+      "updatedWithName": "{name} 업데이트됨",
       "updateFailed": "마일스톤 업데이트에 실패했습니다.",
       "completed": "마일스톤 \"{name}\"이 완료되었습니다.",
-      "completedWithDependencies": "마일스톤 및 관련 작업이 성공적으로 완료되었습니다."
+      "completedWithDependencies": "{name} 및 종속성 작업이 성공적으로 완료되었습니다."
     },
     "errors": {
       "nameExists": "이미 같은 이름을 가진 이정표가 존재합니다.",
@@ -1819,7 +1822,7 @@
     },
     "messages": {
       "createSuccess": "세션이 성공적으로 생성되었습니다.",
-      "createSuccessMultiple": "{count} 세션이 성공적으로 생성되었습니다",
+      "createSuccessMultiple": "{count, number} 세션이 성공적으로 생성되었습니다",
       "duplicateSuccess": "세션이 성공적으로 복제되었습니다.",
       "duplicateSuccessMultiple": "{count} 세션이 성공적으로 복제되었습니다"
     },
@@ -1886,8 +1889,8 @@
       "backToSession": "세션으로 돌아가기",
       "backToLatest": "최신 버전으로 돌아가기",
       "versionInfo": {
-        "created": "버전 {number} 생성됨",
-        "latestUpdated": "최신 버전 {number} 업데이트됨"
+        "created": "버전 {number, number} 생성됨",
+        "latestUpdated": "최신 버전 {number, number} 업데이트됨"
       },
       "renderer": {
         "noEstimate": "견적 없음",
@@ -1982,7 +1985,7 @@
         "avatarUpdated": "아바타가 성공적으로 업데이트되었습니다.",
         "avatarUpdateError": "아바타 업데이트에 실패했습니다.",
         "deleteAvatar": "아바타 삭제",
-        "deleteAvatarConfirm": "아바타를 정말로 삭제하시겠습니까?",
+        "deleteAvatarConfirm": "{name}를 정말로 삭제하시겠습니까?",
         "emailDisabledForSso": "SSO 계정의 경우 이메일 주소를 변경할 수 없습니다. ID 제공업체를 통해 이메일 주소를 업데이트하십시오.",
         "emailEditableForBoth": "이메일/비밀번호 로그인과 SSO(싱글 사인온) 로그인 모두 가능합니다. 이메일 주소 변경은 비밀번호 인증에만 영향을 미칩니다.",
         "linkSsoProvider": "SSO 제공업체 링크"
@@ -2119,7 +2122,7 @@
       "detailsRegion": "테스트 케이스 세부 정보",
       "metadataRegion": "테스트 케이스 메타데이터",
       "versionCreated": "버전 {version} 생성됨",
-      "latestVersionUpdated": "최신 버전 {version} 업데이트됨",
+      "latestVersionUpdated": "최신 버전 {version, number} 업데이트됨",
       "historyView": "테스트 케이스 기록 보기"
     },
     "fields": {
@@ -2142,7 +2145,7 @@
       "add": "단계 추가",
       "addSharedSteps": "공유 단계 추가",
       "delete": "삭제 단계",
-      "confirmDelete": "삭제 단계 {number}를 확인하시겠습니까?",
+      "confirmDelete": "삭제 단계 확인 {number, number}?",
       "createSharedSteps": "공유 생성 {number, plural, one {단계} other {단계}}",
       "sharedStepsName": "공유 단계 이름",
       "sharedStepsDescription": "Enter a name for your new shared {number, plural, one {step} other {steps}}. This will include {number, plural, one {# selected step} other {# selected steps}}.",
@@ -2240,7 +2243,7 @@
       "cannotReorderAcrossPages": "여러 페이지에 걸쳐 있는 테스트 케이스의 순서를 변경할 수 없습니다. 순서를 변경하려면 페이지 크기 메뉴에서 '모두'를 선택하여 모든 케이스를 한 페이지에 표시하거나 다른 페이지에서 케이스 선택을 해제하세요. 선택한 케이스는 폴더로 드래그하여 이동할 수 있습니다.",
       "exportModal": {
         "scope": {
-          "allFiltered": "모두 보기 ({count})"
+          "allFiltered": "모두 보기 ({count, number})"
         },
         "textLongFormat": {
           "label": "서식 있는 텍스트 형식"
@@ -2315,8 +2318,8 @@
         },
         "page4": {
           "title": "미리보기 가져오기",
-          "showing": "Showing {start}-{end} of {total} cases",
-          "case": "케이스 {number}"
+          "showing": "{start, number}-{end, number} {total, number} 개의 사례를 표시합니다.",
+          "case": "케이스 {number, number}"
         }
       }
     },
@@ -2385,7 +2388,7 @@
       "description": "편집 중 {count, plural, one {# 선택된 사례} other {# 선택된 사례}}. 편집을 활성화하려면 필드를 선택하세요.",
       "defineStepsTitle": "일괄 업데이트를 위한 단계 정의",
       "saveNewSteps": "새로운 단계 저장",
-      "newStepsDefined": "새로운 단계가 정의되었습니다({count}) - 편집하려면 버튼을 클릭하세요",
+      "newStepsDefined": "새로운 단계가 정의되었습니다({count, number}) - 편집하려면 버튼을 클릭하세요",
       "clearExistingStepsWarning": "기존 단계는 삭제됩니다.",
       "warnings": {
         "templateMismatch": {
@@ -2405,7 +2408,7 @@
         "fetchError": "사례 데이터를 가져오는 중 오류가 발생했습니다."
       },
       "success": {
-        "casesUpdated": "사례 정보가 성공적으로 업데이트되었습니다."
+        "casesUpdated": "{count, number} 사례가 성공적으로 업데이트되었습니다."
       },
       "placeholders": {
         "various": "<various values>"
@@ -2435,9 +2438,9 @@
       "title": "내보내기 테스트 케이스",
       "description": "아래에서 내보내기 옵션을 선택하세요.",
       "scope": {
-        "selected": "선택됨 ({count})",
-        "allFiltered": "전체 (현재 보기) ({count})",
-        "allProject": "프로젝트의 모든 것 ({count})"
+        "selected": "선택됨 ({count, number})",
+        "allFiltered": "전체 (현재 보기) ({count, number})",
+        "allProject": "프로젝트의 모든 것 ({count, number})"
       },
       "format": {
         "label": "체재",
@@ -2495,7 +2498,7 @@
     "aiExport": {
       "toggleLabel": "AI로 생성",
       "generating": "생성 중...",
-      "generatingProgress": "{current} 의 {total} 생성 중...",
+      "generatingProgress": "{current, number} {total, number} 사례 생성 중...",
       "generatingBatch": "하나의 파일에 {count, plural, one {# 케이스} other {# 케이스}} 를 생성하는 중...",
       "previewTitle": "내보내기 미리보기",
       "previewDescription": "{count, plural, one {# 파일} other {# 파일}} 생성됨",
@@ -2507,14 +2510,14 @@
       "truncatedWarning": "출력이 잘렸습니다. 모델이 토큰 제한에 도달했습니다. 배치 크기를 줄이거나 프롬프트 구성에서 최대 출력 토큰 수를 늘려 보세요.",
       "contextFiles": "{count, plural, one {(# 컨텍스트 파일)} other {(# 컨텍스트 파일)}}",
       "noCodeContextHint": "코드 저장소가 구성되지 않았습니다. AI는 표준 프레임워크 패턴을 사용합니다.",
-      "generatingParallelProgress": "{done} 개의 {total} 개의 파일이 생성되었습니다...",
+      "generatingParallelProgress": "{done, number} 개의 {total, number} 개의 파일이 생성되었습니다...",
       "cancelledGeneration": "취소"
     },
     "duplicates": {
       "findDuplicates": "중복 항목 찾기",
       "viewResults": "보기 {count, plural, one {# 결과} other {# 결과}}",
       "retryScan": "스캔 재시도",
-      "analyzing": "{analyzed}/{total}",
+      "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "AI를 활용하여 결과 향상...",
       "scanComplete": "중복 분석 완료 — {count, plural, =0 {중복 항목 없음} one {잠재적 중복 항목 수} other {잠재적 중복 항목 수}}",
       "scanFailed": "중복 분석에 실패했습니다.",
@@ -2538,8 +2541,8 @@
       "selectAll": "모두 선택하세요",
       "selectRow": "행을 선택하세요",
       "selected": "{count, plural, one {# 선택됨} other {# 선택됨}}",
-      "bulkDismiss": "중복되지 않음 ({count})",
-      "bulkLink": "관련 링크 ({count})",
+      "bulkDismiss": "중복되지 않음 ({count, number})",
+      "bulkLink": "관련 링크 ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# 쌍 해제됨} other {# 쌍 해제됨}}",
       "bulkLinkSuccess": "{count, plural, one {# 연결된 쌍} other {# 연결된 쌍}}",
       "bulkError": "일부 작업에 실패했습니다. 다시 시도해 주세요.",
@@ -2584,8 +2587,8 @@
       "loadingResults": "생성된 테스트 케이스를 불러오는 중...",
       "generatingPreparing": "요청 준비 중...",
       "generatingCallingAi": "AI가 테스트 케이스를 생성하기를 기다리는 중...",
-      "generatingStreaming": "AI가 테스트 케이스 {count}를 생성하고 있습니다...",
-      "generatingStreamingPage": "AI가 테스트 케이스 {count} 를 생성하고 있습니다. — {total}의 {current} 페이지 : {page}",
+      "generatingStreaming": "AI가 테스트 케이스를 생성 중입니다 {count, number}...",
+      "generatingStreamingPage": "AI가 테스트 케이스 {count, number} 를 생성하고 있습니다. — {total, number}페이지 {current, number} : {page}",
       "generatingProcessing": "생성된 테스트 케이스를 처리 중...",
       "generatingHint": "원본 자료의 복잡성에 따라 다소 시간이 걸릴 수 있습니다.",
       "steps": {
@@ -2671,7 +2674,7 @@
       "review": {
         "title": "생성된 테스트 케이스를 검토하세요",
         "description": "AI가 생성한 테스트 케이스를 검토하고 필요한 수정을 거쳐 가져올 케이스를 선택합니다.",
-        "selected": "{count} > {total} 이 선택되었습니다.",
+        "selected": "{count, number} {total, number} 선택됨",
         "moreSteps": "... 그리고 {count, plural, one {# 추가 단계} other {# 추가 단계}}",
         "templateFields": "템플릿 필드:",
         "moreFields": "... 그리고 {count, plural, one {# 추가 필드} other {# 추가 필드}}",
@@ -2681,7 +2684,7 @@
         "allPages": "모든 페이지 ({pages, plural, one {# 페이지} other {# 페이지}}, {cases, plural, one {# 사례} other {# 사례}})"
       },
       "generatingLegacy": "AI를 이용한 테스트 케이스 생성...",
-      "expandProgress": "{done} {total} 이 생성되었습니다.",
+      "expandProgress": "{done, number} {total, number} 생성됨",
       "import": "{count, plural, =0 {테스트 케이스 가져오기} =1 {테스트 케이스 1개 가져오기} other {테스트 케이스 #개 가져오기}}",
       "importing": "{count, plural, =0 {테스트 케이스를 가져오는 중...} =1 {테스트 케이스 1개를 가져오는 중...} other {테스트 케이스 #개를 가져오는 중...}}",
       "openInExternalSystem": "{provider}에서 열기",
@@ -2847,15 +2850,15 @@
       "description": "프로젝트에 새 테스트 실행을 추가합니다.",
       "success": {
         "title": "테스트 실행이 성공적으로 추가되었습니다.",
-        "description": "테스트 실행 기능이 프로젝트에 추가되었습니다.",
-        "descriptionMultiple": "{count, plural, one {# 테스트 실행 횟수} other {# 테스트 실행 횟수}} '{name} '에 대해 테스트 실행이 생성되었습니다."
+        "description": "{name} 가 프로젝트에 추가되었습니다.",
+        "descriptionMultiple": "{count, plural, one {# 테스트 실행 횟수는} other {# 테스트 실행 횟수는}} {name}에 대해 생성되었습니다."
       },
       "estimates": {
         "manual": "예상 수동 작업 시간",
         "automated": "예상 자동 처리 시간",
         "mixed": "예상 수동/자동 처리 시간"
       },
-      "creatingProgress": "{total}의 테스트 실행 {current} 을 생성하는 중..."
+      "creatingProgress": "테스트 실행 {current, number} {total, number} 생성 중..."
     },
     "magicSelect": {
       "title": "매직 셀렉트",
@@ -2864,7 +2867,7 @@
       "reasoning": "AI 추론",
       "reviewSelection": "제안된 테스트 케이스를 검토하세요.",
       "viewSuggested": "추천 사례 보기",
-      "tokenUsage": "{total} 토큰 사용됨",
+      "tokenUsage": "{total, number} 토큰 사용됨",
       "noLlmIntegration": "AI 기능을 사용하려면 LLM 통합이 필요합니다. 프로젝트 설정에서 LLM 통합을 구성하십시오.",
       "configure": {
         "title": "테스트 케이스 범위",
@@ -2883,7 +2886,7 @@
       "loading": {
         "batch": "{current} 배치 처리 중 {total}",
         "analyzing": "테스트 케이스 분석 중...",
-        "progress": "{analyzed} 개 테스트 케이스 중 {total} 개를 분석했습니다...",
+        "progress": "{analyzed, number} 개의 {total, number} 테스트 케이스를 분석했습니다...",
         "waitingForAi": "AI 응답을 기다리는 중 (배치 {batch} of {total})...",
         "selectedSoFar": "{count, plural, =1 {# 지금까지 선택된 테스트 케이스} other {# 지금까지 선택된 테스트 케이스}}",
         "resolving_integration": "AI 통합 문제 해결 중...",
@@ -3043,7 +3046,7 @@
             "mapping": "매핑 구성",
             "import": "모니터 가져오기"
           },
-          "stepIndicator": "{step} 단계 {total}"
+          "stepIndicator": "단계 {step, number} {total, number}"
         },
         "fileLabel": "테스트모 JSON 파일",
         "fileHelp": "Testmo에서 다운로드한 JSON 내보내기 파일을 선택하세요.",
@@ -3174,8 +3177,8 @@
         "importProgressDescription": "{count, plural, =0 {추적된 엔티티 전체에서 가져온 모든 레코드입니다.} =1 {추적된 엔티티 전체에 1개의 레코드가 남아 있습니다.} other {추적된 엔티티 전체에 남은 레코드 수입니다.}}",
         "importProgressTotalRemaining": "{count, plural, =0 {남은 레코드 없음} =1 {레코드 1개 남음} other {남은 레코드 수}}",
         "importProgressProcessed": "{processed, number}/{total, number} 레코드가 가져왔습니다",
-        "importProgressAria": "{percent}가져오기 완료율",
-        "importProgressPercentLabel": "{percent}%",
+        "importProgressAria": "{percent, number}가져오기 완료율(%)",
+        "importProgressPercentLabel": "{percent, number}%",
         "importDurationLabel": "총 소요 시간:",
         "activityLogTitle": "가져오기 활동",
         "activityLogDescription": "백그라운드 가져오기 단계에 대한 자세한 로그입니다. 타임스탬프는 서버 시간대를 기준으로 합니다.",
@@ -3249,7 +3252,7 @@
           "configurationNoTokens": "이 구성에서는 변이체가 발견되지 않았습니다.",
           "configurationNoExistingTargets": "매핑할 수 있는 구성이 없습니다.",
           "configurationNamePlaceholder": "구성 이름을 입력하세요",
-          "configurationVariantLabel": "변형 {index}",
+          "configurationVariantLabel": "변형 {index, number}",
           "configurationVariantActionLabel": "이 변형은 어떻게 처리해야 할까요?",
           "configurationVariantActionPlaceholder": "옵션을 선택하세요",
           "configurationVariantMapOption": "기존 변형에 매핑",
@@ -3741,7 +3744,7 @@
       },
       "delete": {
         "title": "프로젝트 삭제",
-        "confirmMessage": "이 프로젝트를 정말로 삭제하시겠습니까?"
+        "confirmMessage": "<strong>{name}</strong>를 정말로 삭제하시겠습니까?"
       }
     },
     "templates": {
@@ -3781,7 +3784,7 @@
         },
         "delete": {
           "title": "케이스 필드 삭제",
-          "confirmMessage": "이 사례 필드를 삭제하시겠습니까?",
+          "confirmMessage": "<strong>{name}</strong>를 삭제하시겠습니까?",
           "warning": "케이스 필드는 모든 템플릿에서 제거됩니다. 이 작업은 되돌릴 수 없습니다."
         }
       },
@@ -3955,12 +3958,12 @@
       "saveChanges": "변경 사항 저장",
       "forceAllUsers": "모든 사용자에게 비밀번호 변경 강제 적용",
       "forceAllUsersDialogTitle": "모든 사용자에 대한 비밀번호 강제 변경",
-      "forceAllUsersDialogDescription": "이렇게 하면 {count} 자격 증명 기반 사용자는 다음 로그인 시 비밀번호를 변경해야 합니다.",
+      "forceAllUsersDialogDescription": "This will require {count, number} credential-based users to change their password on next login.",
       "forceAllUsersDialogWarning": "이 작업은 되돌릴 수 없습니다.",
       "forceAllUsersDialogConfirm": "강제 변화",
       "saved": "보안 설정이 저장되었습니다",
       "saveFailed": "보안 설정을 저장하는 데 실패했습니다.",
-      "forceAllSuccess": "{count} 사용자의 비밀번호 변경이 필요합니다.",
+      "forceAllSuccess": "{count, number} 사용자의 비밀번호 변경이 필요합니다.",
       "forceAllFailed": "비밀번호 변경 강제 실행에 실패했습니다."
     },
     "apiTokens": {
@@ -3999,7 +4002,7 @@
       },
       "delete": {
         "title": "태그 삭제",
-        "confirmMessage": "이 태그를 정말로 삭제하시겠습니까?",
+        "confirmMessage": "{name} 태그를 정말로 삭제하시겠습니까?",
         "warning": "이 태그는 모든 테스트 케이스와 세션에서 제거될 예정입니다.",
         "errors": {
           "unknown": "태그를 삭제하는 동안 오류가 발생했습니다."
@@ -4030,7 +4033,7 @@
       },
       "delete": {
         "title": "워크플로 삭제",
-        "confirmMessage": "이 워크플로를 정말로 삭제하시겠습니까?"
+        "confirmMessage": "<strong>{name}</strong>를 정말로 삭제하시겠습니까?"
       },
       "setDefault": {
         "title": "기본 워크플로 설정",
@@ -4058,7 +4061,7 @@
       },
       "delete": {
         "title": "역할 삭제",
-        "confirmMessage": "이 역할을 정말로 삭제하시겠습니까?",
+        "confirmMessage": "{name} 역할을 삭제하시겠습니까?",
         "warning": "이 작업은 되돌릴 수 없습니다. 이 역할을 가진 사용자는 기본 역할로 할당됩니다.",
         "errors": {
           "defaultNotFound": "기본 역할을 삭제할 수 없습니다"
@@ -4149,7 +4152,7 @@
       "combinations": {
         "title": "조합",
         "description": "글로벌 조합 관리",
-        "confirmDescription": "다음과 같은 {count} 조합이 생성됩니다.",
+        "confirmDescription": "The following {count, number} combinations will be created.",
         "addCombination": "조합을 추가하세요",
         "editCombination": "조합 편집",
         "selectCombination": "조합을 선택하세요",
@@ -4226,8 +4229,8 @@
         "title": "마일스톤 유형 편집"
       },
       "delete": {
-        "title": "마일스톤 유형 삭제",
-        "confirmMessage": "이 마일스톤 유형을 정말로 삭제하시겠습니까?"
+        "title": "삭제 {item}",
+        "confirmMessage": "마일스톤 유형 {name} 을 삭제하시겠습니까?"
       }
     },
     "issue_config": {
@@ -4634,7 +4637,7 @@
       },
       "edit": {
         "title": "AI 모델 통합 편집",
-        "description": "이 AI 모델 통합에 대한 구성을 업데이트하세요.",
+        "description": "{name} AI 모델 통합을 위한 구성을 업데이트하세요.",
         "statusDescription": "이 통합 기능을 활성화 또는 비활성화합니다.",
         "apiKeyPlaceholder": "업데이트하려면 새 API 키를 입력하세요...",
         "update": "업데이트",
@@ -4653,7 +4656,7 @@
       },
       "delete": {
         "title": "AI 모델 통합 삭제",
-        "description": "이 AI 모델 통합을 삭제하시겠습니까? 삭제하면 모든 프로젝트에서 제거되며 되돌릴 수 없습니다.",
+        "description": "{name} AI 모델 통합을 삭제하시겠습니까? 삭제하면 모든 프로젝트에서 제거되며 되돌릴 수 없습니다.",
         "integrationDeletedSuccess": "AI 모델 통합이 성공적으로 삭제되었습니다.",
         "failedToDeleteIntegration": "AI 모델 통합 삭제에 실패했습니다.",
         "cannotDeleteDefault": "기본 AI 모델을 삭제할 수 없습니다. 먼저 다른 AI 모델을 기본값으로 설정하십시오."
@@ -4725,7 +4728,7 @@
         "warning": "이 작업은 되돌릴 수 없습니다. 이 설정을 사용하는 모든 프로젝트는 기본 프롬프트 설정으로 되돌아갑니다."
       },
       "llmColumn": "법학 석사",
-      "mixedLlms": "{count} LLMs",
+      "mixedLlms": "{count, number} LLMs",
       "cannotDeleteDefault": "기본 프롬프트 구성을 삭제할 수 없습니다. 먼저 다른 설정을 기본값으로 지정하십시오.",
       "defaultChanged": "기본 프롬프트 구성이 성공적으로 업데이트되었습니다.",
       "featureLabels": {
@@ -4952,7 +4955,7 @@
     "notifications": {
       "empty": "알림 없음",
       "aria": {
-        "notifications": "알림 ({count} 읽지 않음)"
+        "notifications": "알림 ({count, number} 읽지 않음)"
       },
       "actions": {
         "markRead": "읽음으로 표시",
@@ -5097,11 +5100,11 @@
       "sharedStepGroupCreateNewDesc": "새로운 공유 단계 그룹이 생성됩니다.",
       "go": "가다",
       "processing": "처리 중...",
-      "progressText": "{processed} {total} 건이 처리되었습니다.",
+      "progressText": "처리된 사례 수 {processed, number} {total, number}",
       "successCount": "{count} 사례 {operation}d 성공적으로 완료",
-      "skipped": "건너뛴 항목: {count}",
-      "droppedLinks": "프로젝트 간 링크 삭제됨: {count}",
-      "errorCount": "{count} 케이스(들)가 실패했습니다",
+      "skipped": "건너뛴 항목: {count, number}",
+      "droppedLinks": "프로젝트 간 링크 삭제됨: {count, number}",
+      "errorCount": "{count, number} 케이스(들)가 실패했습니다",
       "viewInTargetProject": "대상 프로젝트에서 보기",
       "failed": "실패한",
       "folderMode": "폴더 \"{folderName}\" — {caseCount, plural, one {# 경우} other {# 경우}}"
@@ -5128,7 +5131,7 @@
     "unlinkError": "연결 해제 실패 문제",
     "noIssuesFound": "문제가 발견되지 않았습니다.",
     "startTypingToSearch": "검색하려면 입력을 시작하세요.",
-    "selectedCount": "{count} 선택됨",
+    "selectedCount": "{count, number} 선택됨",
     "confirmSelection": "선택 확인",
     "alreadyLinked": "이미 연결됨",
     "authenticate": "인증하다",
@@ -5142,7 +5145,7 @@
     "error": "오류 로딩 문제",
     "errorDescription": "페이지를 불러오는 데 실패했습니다. 다시 시도해 주세요.",
     "selectIssues": "이슈 선택",
-    "authRequiredDescription": "이슈를 검색하려면 {provider} 로 인증하세요.",
+    "authRequiredDescription": "이슈를 검색하려면 인증하십시오.",
     "integrationNotConfigured": "통합이 구성되지 않았습니다.",
     "integrationNotConfiguredDescription": "이 통합은 아직 완전히 구성되지 않았습니다. 프로젝트 관리자에게 문의하여 프로젝트 설정에서 외부 프로젝트를 구성하십시오.",
     "createIssue": "이슈 생성",
@@ -5189,7 +5192,7 @@
     "searchUsers": "사용자 검색",
     "noTeamsAvailable": "이용 가능한 팀이 없습니다.",
     "filterAll": "모두",
-    "fanOutPartialFailure": "{count} 프로젝트에 연결할 수 없습니다. {successCount} 프로젝트의 결과를 표시합니다.",
+    "fanOutPartialFailure": "{count, number} 프로젝트에 연결할 수 없습니다. {successCount, number} 프로젝트의 결과를 표시합니다.",
     "projectSelectorLabel": "프로젝트",
     "searchFailedTitle": "검색 실패"
   },
@@ -5229,7 +5232,7 @@
   },
   "charts": {
     "average": "평균",
-    "count": "개수: {count}",
+    "count": "개수: {count, number}",
     "percent": "백분율: {percent}%",
     "completed": "완료됨: {count}",
     "durationRange": "지속 시간: {from}초 - {to}초",
@@ -6262,7 +6265,7 @@
       "loadingMore": "더 많은 내용을 불러오는 중...",
       "noRecords": "검색된 기록이 없습니다.",
       "error": "레코드를 불러오는 데 실패했습니다.",
-      "recordCount": "{count} {count, plural, =1 {레코드} other {레코드}}",
+      "recordCount": "{count, plural, =1 {# 레코드} other {# 레코드}}",
       "allRecords": "모든 기록",
       "allLoaded": "모든 레코드가 로드되었습니다."
     },
@@ -6516,8 +6519,8 @@
       },
       "page3": {
         "title": "미리보기 가져오기 데이터",
-        "showing": "{start} 부터 {end} 까지 {total} 개의 공유된 단계를 표시합니다.",
-        "step": "공유 단계 {number}",
+        "showing": "공유된 단계 {start, number} 부터 {end, number} 까지 표시 중 {total, number} 단계",
+        "step": "공유 단계 {number, number}",
         "noValue": "(비어 있는)"
       }
     },
@@ -6539,7 +6542,7 @@
       "noResultsDescription": "테스트 케이스 전체에서 반복되는 단계 순서를 감지하기 위해 스캔을 실행하세요.",
       "filterPlaceholder": "사건명으로 필터링...",
       "selected": "{count, plural, one {# 선택됨} other {# 선택됨}}",
-      "bulkDismiss": "닫기({count})",
+      "bulkDismiss": "닫기 ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# 일치 항목 해제됨} other {# 일치 항목 해제됨}}",
       "bulkError": "일부 작업에 실패했습니다. 다시 시도해 주세요.",
       "tableHint": "일치하는 단계를 미리 보려면 행을 클릭하세요. 일괄 작업을 하려면 확인란이 있는 행을 선택하세요.",
@@ -6555,7 +6558,7 @@
       "cancelScan": "스캔 취소",
       "findStepDuplicates": "단계 중복 찾기",
       "rescan": "주사",
-      "viewResults": "결과 보기 ({count})",
+      "viewResults": "결과 보기 ({count, number})",
       "retryScan": "스캔 재시도",
       "dialog": {
         "title": "공유 단계로 변환",
@@ -6805,9 +6808,9 @@
     },
     "progress": {
       "starting": "분석 시작 중...",
-      "analyzed": "{analyzed}/{total} 엔티티를 분석했습니다.",
-      "sizing": "최적의 배치 크기를 찾는 중( {size} 엔티티를 시도해 보는 중)...",
-      "streaming": "AI 응답 수신 중 ({analyzed}/{total} 엔티티 완료)...",
+      "analyzed": "분석된 엔티티 {analyzed, number}/{total, number}",
+      "sizing": "최적의 배치 크기를 찾는 중( {size, number} 엔티티를 시도해 보는 중)...",
+      "streaming": "AI 응답 수신 중 ({analyzed, number}/{total, number} 엔티티 완료)...",
       "finalizing": "결과를 준비하는 중...",
       "complete": "분석 완료",
       "reviewSuggestions": "리뷰 제안",
@@ -6815,7 +6818,7 @@
     },
     "wizard": {
       "description": "AI는 프로젝트 전체의 테스트 케이스, 테스트 실행 및 세션을 분석하여 콘텐츠에 기반한 관련 태그를 제안합니다.",
-      "entityLine": "{count} {type}",
+      "entityLine": "{count, number} {type}",
       "startAnalysis": "분석 시작",
       "untaggedOnly": "기존 태그가 없는 레코드만 분석합니다.",
       "allowNewTags": "새 태그 생성을 허용합니다",
@@ -6834,7 +6837,7 @@
     "fair": "공정한",
     "good": "좋은",
     "strong": "강한",
-    "minLength": "최소 {count} 문자",
+    "minLength": "최소 {count, number} 문자",
     "uppercase": "적어도 하나의 대문자",
     "lowercase": "적어도 하나의 소문자",
     "numbers": "적어도 하나의 숫자",

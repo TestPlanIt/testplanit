@@ -562,7 +562,9 @@ export function ProjectIntegrationSettings({
                               size="sm"
                               onClick={() => handleRemoveProject(ip.id)}
                             >
-                              {t("integration.confirmRemove")}
+                              {t("integration.confirmRemove", {
+                                name: integration.name,
+                              })}
                             </Button>
                             <Button
                               variant="outline"

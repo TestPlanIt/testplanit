@@ -417,10 +417,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
   const workDistributionChartData = useMemo(() => {
     if (!incompleteSessions || incompleteSessions.length === 0) {
       return {
-        name: t("runs.summary.noWorkDistributionData", {
-          defaultValue:
-            "No active sessions with assignees or estimates to display.",
-        }),
+        name: t("runs.summary.noWorkDistributionData"),
         id: "root-empty-work-distribution",
         itemType: "root",
         children: [],
@@ -432,10 +429,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     );
     if (filteredSessions.length === 0) {
       return {
-        name: t("runs.summary.noWorkDistributionData", {
-          defaultValue:
-            "No active sessions with assignees or estimates to display.",
-        }),
+        name: t("runs.summary.noWorkDistributionData"),
         id: "root-empty-filtered-work-distribution",
         itemType: "root",
         children: [],

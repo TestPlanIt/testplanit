@@ -471,10 +471,12 @@
       "moveSuccess": "Article déplacé avec succès",
       "moveError": "Une erreur s'est produite lors du déplacement de l'élément",
       "updateSuccess": "Article mis à jour avec succès",
+      "updateSuccessCount": "{count, number} éléments mis à jour avec succès",
       "updateError": "Une erreur s'est produite lors de la mise à jour de l'élément",
       "linkCopied": "Lien copié dans le presse-papiers",
       "copyFailed": "Impossible de copier le lien dans le presse-papiers.",
-      "created": "Test exécuté avec succès",
+      "created": "Créé avec succès",
+      "createdItem": "{item} créé avec succès",
       "createdDescription": "L'exécution de test a été créée et est maintenant visible dans la liste des exécutions de test.",
       "createError": "Une erreur inconnue s'est produite. Veuillez réessayer.",
       "emptyActive": "Aucun test en cours",
@@ -698,7 +700,7 @@
       "noTestCasesSelected": "Aucun cas de test sélectionné",
       "editToSelectTestCases": "Modifiez l'exécution des tests pour sélectionner les cas de test.",
       "casesInRun": "{count, plural, =0 {Aucun cas de test dans l'exécution} =1 {1 cas de test dans l'exécution} other {Nombre de cas de test dans l'exécution}}",
-      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 cas unique} other {# cas uniques}} sur {configCount, plural, =1 {1 configuration} other {# configurations}} ({totalCount} nombre total de cas)",
+      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 cas unique} other {Nombre de cas uniques}} sur {configCount, plural, =1 {1 configuration} other {Nombre de configurations}} ({totalCount, number} nombre total de cas)",
       "viewTestRunDetails": "Afficher les détails de l'essai",
       "sortByStatus": "Grouper par statut",
       "sortByDate": "Trier par date",
@@ -973,7 +975,7 @@
       "case": "{count, plural, =1 {cas} other {cas}}",
       "result": "{count, plural, =1 {résultat} other {résultats}}",
       "run": "{count, plural, =1 {exécute} other {exécute}}",
-      "comment": "{count, plural, =1 {{count} commentaire} other {{count} commentaires}}"
+      "comment": "{count, plural, =1 {# commentaire} other {# commentaires}}"
     },
     "success": {
       "assigned": "Cas de test attribué avec succès",
@@ -1099,7 +1101,7 @@
       "passwordRequired": "Un mot de passe est requis.",
       "genericError": "Une erreur s'est produite. Veuillez réessayer.",
       "policyTitle": "Exigences relatives au mot de passe :",
-      "policyMinLength": "Au moins {count} caractères",
+      "policyMinLength": "Au moins {count, number} caractères",
       "policyUppercase": "Au moins une lettre majuscule",
       "policyLowercase": "Au moins une lettre minuscule",
       "policyNumbers": "Au moins un nombre",
@@ -1149,7 +1151,7 @@
   },
   "projects": {
     "status": {
-      "id": "ID du projet : {id}",
+      "id": "ID du projet : {id, number}",
       "active": "Le projet est actif.",
       "completed": "Le projet est terminé."
     },
@@ -1199,7 +1201,7 @@
           "updateError": "Échec de la mise à jour des paramètres d'intégration des problèmes",
           "removeError": "Échec de la suppression du problème d'intégration",
           "removeIntegration": "Supprimer l'intégration",
-          "confirmRemove": "Confirmer la suppression",
+          "confirmRemove": "Êtes-vous sûr de vouloir supprimer l'intégration {name} ?",
           "authDescription": "Vous devez vous authentifier avec {provider} pour utiliser cette intégration de problèmes",
           "authenticating": "Authentification en cours...",
           "authSuccess": "Authentification réussie",
@@ -1310,8 +1312,8 @@
         "deleteConfirmTitle": "Supprimer la configuration du webhook ?",
         "deleteConfirm": "Supprimer cette configuration de webhook ? Les livraisons entrantes seront rejetées.",
         "sendTest": "Envoyer un webhook de test",
-        "testSuccess": "Test webhook accepté (HTTP {statusCode}, résultat : {outcome})",
-        "testFailure": "Échec du test du webhook (HTTP {statusCode}): {error}",
+        "testSuccess": "Test webhook accepté (HTTP {statusCode, number}, résultat : {outcome})",
+        "testFailure": "Échec du test webhook (HTTP {statusCode, number}): {error}",
         "saveError": "Échec de l'enregistrement de la configuration du webhook",
         "lastReceived": "Dernière réception : {timestamp}",
         "lastReceivedLabel": "Dernière réception :",
@@ -1397,7 +1399,7 @@
         "outboundHmacActiveSecret": "Actif",
         "outboundHmacInactiveSecret": "Inactif",
         "outboundHmacRetiringSecret": "Sortant",
-        "outboundHmacAutoRetireIn": "Retraite automatique dans {days} jours",
+        "outboundHmacAutoRetireIn": "Retraite automatique dans {days, number} jours",
         "outboundHmacRotateButton": "Rotation secrète",
         "outboundHmacExtendButton": "Prolonger de 7 jours",
         "outboundHmacRetireNowButton": "Prenez votre retraite maintenant",
@@ -1481,7 +1483,7 @@
         "filterSinceDefault": "Depuis…",
         "filterUntilDefault": "Jusqu'à…",
         "filterReset": "Réinitialiser les filtres",
-        "filterBulkReplayButton": "Échecs de relecture en masse {count} échecs de sortie",
+        "filterBulkReplayButton": "Échecs de relecture en masse {count, number} échecs de sortie",
         "filterBulkReplayHidden": "Toutes les défaillances visibles sont entrantes ; il faut plutôt redéclencher l’événement en amont.",
         "deliveriesEmpty": "Aucune livraison ne correspond à ces filtres.",
         "deliveriesResetFilters": "Réinitialiser les filtres",
@@ -1500,7 +1502,7 @@
         "drawerLabelDirection": "Direction",
         "drawerLabelStatusCode": "Code d'état",
         "drawerLabelLatency": "Latence",
-        "drawerLatencyValue": "{ms} ms",
+        "drawerLatencyValue": "{ms, number} ms",
         "drawerLatencyUnknown": "—",
         "drawerLabelError": "Erreur",
         "drawerLabelPayloadDigest": "Résumé de la charge utile",
@@ -1515,16 +1517,16 @@
         "replayConfirm": "Cela déclenchera une véritable requête {direction} {adapterType}.",
         "replayAction": "Rejouer",
         "bulkReplayConfirmTitle": "Rejouer les échecs de sortie ?",
-        "bulkReplayConfirm": "Rejouer les échecs de sortie {count} vers {configName}? Cela déclenchera {count} de véritables requêtes HTTP.",
-        "bulkReplayCapExceeded": "La relecture en masse est limitée à 100 entrées sortantes à la fois. Affinez le filtre ou exécutez-le séquentiellement. Actuellement, {count} serait relu.",
-        "bulkReplayAction": "Rejouer {count}",
+        "bulkReplayConfirm": "Rejouer {count, number} les échecs de sortie vers {configName}? Cela déclenchera {count, number} véritables requêtes HTTP.",
+        "bulkReplayCapExceeded": "La relecture en masse est limitée à 100 entrées sortantes à la fois. Affinez le filtre ou exécutez-le séquentiellement. Actuellement, {count, number} serait relu.",
+        "bulkReplayAction": "Rejouer {count, number}",
         "healthBadge": {
           "HEALTHY": "En bonne santé",
           "DEGRADED": "Dégradé",
           "DISABLED": "Désactivé"
         },
         "healthTooltipHealthy": "Dernier succès : {lastSuccessAt}",
-        "healthTooltipDegraded": "{count} échecs consécutifs · dernier à {lastFailureAt}",
+        "healthTooltipDegraded": "{count, number} échecs consécutifs · dernier à {lastFailureAt}",
         "healthTooltipDisabled": "Désactivé après 10 échecs consécutifs · {lastFailureAt}",
         "activityLabel": "Activité de livraison",
         "activityLastDispatched": "Dernier envoi",
@@ -1638,8 +1640,8 @@
         "preview": {
           "resolvingBranch": "Résolution de la branche…",
           "scanningFiles": "Analyse des fichiers dans {scope}…",
-          "scanningFilesCount": "Analyse des fichiers dans {scope}… ({count} trouvé)",
-          "filtering": "Application des filtres aux fichiers {count}…"
+          "scanningFilesCount": "Analyse des fichiers dans {scope}… ({count, number} trouvé)",
+          "filtering": "Application des filtres aux fichiers {count, number}…"
         },
         "cache": {
           "title": "Paramètres du cache",
@@ -1748,9 +1750,10 @@
     "toast": {
       "deleted": "Étape {name} supprimée",
       "updated": "Étape importante mise à jour",
+      "updatedWithName": "{name} mis à jour",
       "updateFailed": "Échec de la mise à jour de l'étape clé",
       "completed": "Étape importante «{name}» terminée.",
-      "completedWithDependencies": "Étape importante et dépendances remplies avec succès."
+      "completedWithDependencies": "{name} et les dépendances ont été exécutées avec succès."
     },
     "errors": {
       "nameExists": "Un jalon portant ce nom existe déjà.",
@@ -1819,7 +1822,7 @@
     },
     "messages": {
       "createSuccess": "Session créée avec succès",
-      "createSuccessMultiple": "{count} Sessions créées avec succès",
+      "createSuccessMultiple": "{count, number} Sessions créées avec succès",
       "duplicateSuccess": "Session dupliquée avec succès",
       "duplicateSuccessMultiple": "{count} Sessions dupliquées avec succès"
     },
@@ -1886,8 +1889,8 @@
       "backToSession": "Retour à la session",
       "backToLatest": "Retour à la dernière version",
       "versionInfo": {
-        "created": "Version {number} Créée",
-        "latestUpdated": "Dernière version {number} Mise à jour"
+        "created": "Version {number, number} Créée",
+        "latestUpdated": "Dernière version {number, number} Mise à jour"
       },
       "renderer": {
         "noEstimate": "Aucune estimation",
@@ -1982,7 +1985,7 @@
         "avatarUpdated": "Avatar mis à jour avec succès.",
         "avatarUpdateError": "Impossible de mettre à jour l'avatar.",
         "deleteAvatar": "Supprimer l'avatar",
-        "deleteAvatarConfirm": "Êtes-vous sûr de vouloir supprimer votre avatar ?",
+        "deleteAvatarConfirm": "Êtes-vous sûr de vouloir supprimer votre {name}?",
         "emailDisabledForSso": "L'adresse e-mail ne peut pas être modifiée pour les comptes SSO. Veuillez la mettre à jour auprès de votre fournisseur d'identité.",
         "emailEditableForBoth": "Vous pouvez vous connecter à la fois par adresse e-mail/mot de passe et par authentification unique (SSO). Les modifications apportées à votre adresse e-mail n'affecteront que l'authentification par mot de passe.",
         "linkSsoProvider": "Fournisseur d'authentification unique (SSO) Link"
@@ -2119,7 +2122,7 @@
       "detailsRegion": "Détails du cas de test",
       "metadataRegion": "métadonnées des cas de test",
       "versionCreated": "Version {version} Créée",
-      "latestVersionUpdated": "Dernière version {version} Mise à jour",
+      "latestVersionUpdated": "Dernière version {version, number} Mise à jour",
       "historyView": "Historique des cas de test"
     },
     "fields": {
@@ -2142,7 +2145,7 @@
       "add": "Ajouter une étape",
       "addSharedSteps": "Ajouter des étapes partagées",
       "delete": "Supprimer l'étape",
-      "confirmDelete": "Confirmer la suppression Étape {number}?",
+      "confirmDelete": "Confirmer la suppression Étape {number, number}?",
       "createSharedSteps": "Créer une étape partagée {number, plural, one {Étapes} other {Étapes}}",
       "sharedStepsName": "Nom des étapes partagées",
       "sharedStepsDescription": "Saisissez un nom pour votre nouvelle étape partagée {number, plural, one {} other {étapes}}. Cela inclura {number, plural, one {# étape sélectionnée} other {# étapes sélectionnées}}.",
@@ -2240,7 +2243,7 @@
       "cannotReorderAcrossPages": "Il est impossible de réorganiser les cas de test sur plusieurs pages. Pour les réorganiser, affichez-les tous sur une seule page en sélectionnant « Tout » dans le menu de format de page, ou désélectionnez les cas sur les autres pages. Vous pouvez toujours glisser-déposer les cas sélectionnés dans des dossiers.",
       "exportModal": {
         "scope": {
-          "allFiltered": "Tout est visible ({count})"
+          "allFiltered": "Tout en vue ({count, number})"
         },
         "textLongFormat": {
           "label": "Format de texte enrichi"
@@ -2315,8 +2318,8 @@
         },
         "page4": {
           "title": "Aperçu de l'importation",
-          "showing": "Affichage des cas {start}à{end} de {total}",
-          "case": "Cas {number}"
+          "showing": "Affichage des cas {start, number}-{end, number} sur {total, number}",
+          "case": "Cas {number, number}"
         }
       }
     },
@@ -2385,7 +2388,7 @@
       "description": "Modification {count, plural, one {# cas sélectionné} other {# cas sélectionnés}}. Cochez un champ pour activer la modification.",
       "defineStepsTitle": "Définir les étapes pour une mise à jour en masse",
       "saveNewSteps": "Enregistrer les nouvelles étapes",
-      "newStepsDefined": "Nouvelles étapes définies ({count}) - Cliquez sur le bouton pour modifier",
+      "newStepsDefined": "Nouvelles étapes définies ({count, number}) - Cliquez sur le bouton pour modifier",
       "clearExistingStepsWarning": "Les marches existantes seront supprimées.",
       "warnings": {
         "templateMismatch": {
@@ -2405,7 +2408,7 @@
         "fetchError": "Erreur lors de la récupération des données du dossier."
       },
       "success": {
-        "casesUpdated": "Dossiers mis à jour avec succès"
+        "casesUpdated": "{count, number} dossiers mis à jour avec succès"
       },
       "placeholders": {
         "various": "<various values>"
@@ -2435,9 +2438,9 @@
       "title": "Cas de test d'exportation",
       "description": "Choisissez vos options d'exportation ci-dessous.",
       "scope": {
-        "selected": "Sélectionné ({count})",
-        "allFiltered": "Tout (Vue actuelle) ({count})",
-        "allProject": "Tout dans le projet ({count})"
+        "selected": "Sélectionné ({count, number})",
+        "allFiltered": "Tout (Vue actuelle) ({count, number})",
+        "allProject": "Tout dans le projet ({count, number})"
       },
       "format": {
         "label": "Format",
@@ -2495,7 +2498,7 @@
     "aiExport": {
       "toggleLabel": "Générer avec l'IA",
       "generating": "Générateur...",
-      "generatingProgress": "Génération du cas {current} de {total}...",
+      "generatingProgress": "Génération du cas {current, number} de {total, number}...",
       "generatingBatch": "Génération de {count, plural, one {# cas} other {# cas}} dans un seul fichier...",
       "previewTitle": "Aperçu de l'exportation",
       "previewDescription": "{count, plural, one {# fichier} other {# fichiers}} générés",
@@ -2507,14 +2510,14 @@
       "truncatedWarning": "Le résultat a été tronqué : le modèle a atteint sa limite de jetons. Essayez de réduire la taille du lot ou d’augmenter le nombre maximal de jetons de sortie dans votre configuration d’invite.",
       "contextFiles": "{count, plural, one {(# fichier de contexte)} other {(# fichiers de contexte)}}",
       "noCodeContextHint": "Aucun dépôt de code n'est configuré. L'IA utilisera des modèles de framework standard.",
-      "generatingParallelProgress": "Génération de {done} de fichiers {total}...",
+      "generatingParallelProgress": "Génération de {done, number} de {total, number} fichiers...",
       "cancelledGeneration": "Annulé"
     },
     "duplicates": {
       "findDuplicates": "Trouver les doublons",
       "viewResults": "Afficher {count, plural, one {# Résultat} other {# Résultats}}",
       "retryScan": "Réessayer l'analyse",
-      "analyzing": "{analyzed}/{total}",
+      "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Améliorer les résultats grâce à l'IA...",
       "scanComplete": "Analyse des doublons terminée — {count, plural, =0 {aucun doublon trouvé} one {# doublon potentiel trouvé} other {# doublons potentiels trouvés}}",
       "scanFailed": "L'analyse en double a échoué",
@@ -2538,8 +2541,8 @@
       "selectAll": "Tout sélectionner",
       "selectRow": "Sélectionner la ligne",
       "selected": "{count, plural, one {# sélectionné} other {# sélectionné}}",
-      "bulkDismiss": "Non dupliqué ({count})",
-      "bulkLink": "Lien associé ({count})",
+      "bulkDismiss": "Pas de doublons ({count, number})",
+      "bulkLink": "Lien associé ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# paire rejetée} other {# paires rejetées}}",
       "bulkLinkSuccess": "{count, plural, one {# paire liée} other {# paires liées}}",
       "bulkError": "Certaines opérations ont échoué. Veuillez réessayer.",
@@ -2584,8 +2587,8 @@
       "loadingResults": "Chargement des cas de test générés...",
       "generatingPreparing": "Préparation de la demande...",
       "generatingCallingAi": "En attendant que l'IA génère des cas de test...",
-      "generatingStreaming": "L'IA génère un cas de test {count}...",
-      "generatingStreamingPage": "L'IA génère le cas de test {count} — page {current} de {total}: {page}",
+      "generatingStreaming": "L'IA génère un cas de test {count, number}...",
+      "generatingStreamingPage": "L'IA génère le cas de test {count, number} — page {current, number} de {total, number}: {page}",
       "generatingProcessing": "Traitement des cas de test générés...",
       "generatingHint": "Cela peut prendre une minute en fonction de la complexité de votre document source.",
       "steps": {
@@ -2671,7 +2674,7 @@
       "review": {
         "title": "Examiner les cas de test générés",
         "description": "Examinez les cas de test générés par l'IA, apportez les modifications nécessaires et sélectionnez ceux à importer.",
-        "selected": "{count} de {total} sélectionné",
+        "selected": "{count, number} de {total, number} sélectionné",
         "moreSteps": "... et {count, plural, one {# étape supplémentaire} other {# étapes supplémentaires}}",
         "templateFields": "Champs du modèle :",
         "moreFields": "... et {count, plural, one {# champ supplémentaire} other {# champs supplémentaires}}",
@@ -2681,7 +2684,7 @@
         "allPages": "Toutes les pages ({pages, plural, one {# page} other {# pages}}, {cases, plural, one {# cas} other {# cas}})"
       },
       "generatingLegacy": "Générer des cas de test avec l'IA...",
-      "expandProgress": "{done} de {total} généré",
+      "expandProgress": "{done, number} de {total, number} généré",
       "import": "{count, plural, =0 {Importer les cas de test} =1 {Importer 1 cas de test} other {Importer # cas de test}}",
       "importing": "{count, plural, =0 {Importation des cas de test...} =1 {Importation de 1 cas de test...} other {Importation de # cas de test...}}",
       "openInExternalSystem": "Ouvrir dans {provider}",
@@ -2847,15 +2850,15 @@
       "description": "Ajouter un nouveau test au projet",
       "success": {
         "title": "Test effectué avec succès",
-        "description": "L'essai a été ajouté au projet.",
-        "descriptionMultiple": "{count, plural, one {# exécution de test} other {# exécutions de test}} ont été créées pour '{name}'"
+        "description": "{name} a été ajouté au projet",
+        "descriptionMultiple": "{count, plural, one {# test run has} other {# test runs have}} been created for {name}"
       },
       "estimates": {
         "manual": "Temps manuel estimé",
         "automated": "Temps automatisé estimé",
         "mixed": "Temps estimé manuel/automatisé"
       },
-      "creatingProgress": "Création d'une exécution de test {current} de {total}..."
+      "creatingProgress": "Création d'un test {current, number} de {total, number}..."
     },
     "magicSelect": {
       "title": "Magic Select",
@@ -2864,7 +2867,7 @@
       "reasoning": "Raisonnement IA",
       "reviewSelection": "Examiner les cas de test suggérés",
       "viewSuggested": "Voir les cas suggérés",
-      "tokenUsage": "{total} jetons utilisés",
+      "tokenUsage": "{total, number} jetons utilisés",
       "noLlmIntegration": "Les fonctionnalités d'IA nécessitent une intégration LLM. Configurez-en une dans les paramètres du projet.",
       "configure": {
         "title": "Étendue du cas de test",
@@ -2883,7 +2886,7 @@
       "loading": {
         "batch": "Traitement du lot {current} de {total}",
         "analyzing": "Analyse des cas de test...",
-        "progress": "Analyse de {analyzed} des cas de test {total}...",
+        "progress": "Analyse de {analyzed, number} sur {total, number} cas de test...",
         "waitingForAi": "En attente de la réponse de l'IA (lot {batch} de {total})...",
         "selectedSoFar": "{count, plural, =1 {# cas de test sélectionné jusqu'à présent} other {# cas de test sélectionnés jusqu'à présent}}",
         "resolving_integration": "Résolution de l'intégration de l'IA...",
@@ -3043,7 +3046,7 @@
             "mapping": "Configurer le mappage",
             "import": "Surveiller l'importation"
           },
-          "stepIndicator": "Étape {step} de {total}"
+          "stepIndicator": "Étape {step, number} de {total, number}"
         },
         "fileLabel": "Fichier JSON Testmo",
         "fileHelp": "Sélectionnez le fichier JSON exporté que vous avez téléchargé depuis Testmo.",
@@ -3174,8 +3177,8 @@
         "importProgressDescription": "{count, plural, =0 {Tous les enregistrements importés pour les entités suivies.} =1 {1 enregistrement restant pour les entités suivies.} other {Nombre d'enregistrements restants pour les entités suivies.}}",
         "importProgressTotalRemaining": "{count, plural, =0 {Aucun enregistrement restant} =1 {1 enregistrement restant} other {Nombre d'enregistrements restants}}",
         "importProgressProcessed": "{processed, number}/{total, number} enregistrements importés",
-        "importProgressAria": "{percent}% d'importation terminée",
-        "importProgressPercentLabel": "{percent}%",
+        "importProgressAria": "{percent, number}% d'importation terminée",
+        "importProgressPercentLabel": "{percent, number}%",
         "importDurationLabel": "Durée totale :",
         "activityLogTitle": "Activité d'importation",
         "activityLogDescription": "Journal détaillé des étapes d'importation en arrière-plan. Les horodatages sont basés sur le fuseau horaire du serveur.",
@@ -3249,7 +3252,7 @@
           "configurationNoTokens": "Aucune variante détectée dans cette configuration.",
           "configurationNoExistingTargets": "Aucune configuration disponible pour la cartographie.",
           "configurationNamePlaceholder": "Saisissez un nom de configuration",
-          "configurationVariantLabel": "Variante {index}",
+          "configurationVariantLabel": "Variante {index, number}",
           "configurationVariantActionLabel": "Comment gérer cette variante ?",
           "configurationVariantActionPlaceholder": "Choisissez une option",
           "configurationVariantMapOption": "Associer à une variante existante",
@@ -3741,7 +3744,7 @@
       },
       "delete": {
         "title": "Supprimer le projet",
-        "confirmMessage": "Êtes-vous sûr de vouloir supprimer ce projet ?"
+        "confirmMessage": "Êtes-vous sûr de vouloir supprimer <strong>{name}</strong>?"
       }
     },
     "templates": {
@@ -3781,7 +3784,7 @@
         },
         "delete": {
           "title": "Supprimer le champ Cas",
-          "confirmMessage": "Êtes-vous sûr de vouloir supprimer ce champ de requête ?",
+          "confirmMessage": "Êtes-vous sûr de vouloir supprimer <strong>{name}</strong>?",
           "warning": "Le champ « Cas » sera supprimé de tous les modèles. Cette action est irréversible."
         }
       },
@@ -3955,12 +3958,12 @@
       "saveChanges": "Enregistrer les modifications",
       "forceAllUsers": "Obliger tous les utilisateurs à changer leur mot de passe",
       "forceAllUsersDialogTitle": "Forcer le changement de mot de passe pour tous les utilisateurs",
-      "forceAllUsersDialogDescription": "Cela obligera les utilisateurs utilisant l'authentification {count} à changer leur mot de passe lors de leur prochaine connexion.",
+      "forceAllUsersDialogDescription": "Cela obligera les utilisateurs utilisant l'authentification {count, number} à changer leur mot de passe lors de leur prochaine connexion.",
       "forceAllUsersDialogWarning": "Cette action est irréversible.",
       "forceAllUsersDialogConfirm": "Force Change",
       "saved": "Paramètres de sécurité enregistrés",
       "saveFailed": "Impossible d'enregistrer les paramètres de sécurité",
-      "forceAllSuccess": "Changement de mot de passe requis pour les utilisateurs {count}",
+      "forceAllSuccess": "Changement de mot de passe requis pour les utilisateurs {count, number}",
       "forceAllFailed": "Échec de la modification forcée du mot de passe"
     },
     "apiTokens": {
@@ -3999,7 +4002,7 @@
       },
       "delete": {
         "title": "Supprimer l'étiquette",
-        "confirmMessage": "Êtes-vous sûr de vouloir supprimer cette étiquette ?",
+        "confirmMessage": "Êtes-vous sûr de vouloir supprimer la balise {name}?",
         "warning": "Cette étiquette sera supprimée de tous les cas de test et des sessions.",
         "errors": {
           "unknown": "Une erreur s'est produite lors de la suppression de l'étiquette"
@@ -4030,7 +4033,7 @@
       },
       "delete": {
         "title": "Suppression du flux de travail",
-        "confirmMessage": "Êtes-vous sûr de vouloir supprimer ce flux de travail ?"
+        "confirmMessage": "Êtes-vous sûr de vouloir supprimer <strong>{name}</strong>?"
       },
       "setDefault": {
         "title": "Définir le flux de travail par défaut",
@@ -4058,7 +4061,7 @@
       },
       "delete": {
         "title": "Supprimer le rôle",
-        "confirmMessage": "Êtes-vous sûr de vouloir supprimer ce rôle ?",
+        "confirmMessage": "Êtes-vous sûr de vouloir supprimer le rôle {name} ?",
         "warning": "Cette action est irréversible. Les utilisateurs possédant ce rôle se verront attribuer le rôle par défaut.",
         "errors": {
           "defaultNotFound": "Impossible de supprimer le rôle par défaut"
@@ -4149,7 +4152,7 @@
       "combinations": {
         "title": "Combinaisons",
         "description": "Gérer les combinaisons globales",
-        "confirmDescription": "Les combinaisons suivantes {count} seront créées.",
+        "confirmDescription": "Les combinaisons suivantes {count, number} seront créées.",
         "addCombination": "Ajouter une combinaison",
         "editCombination": "Combinaison de modification",
         "selectCombination": "Sélectionner une combinaison",
@@ -4226,8 +4229,8 @@
         "title": "Modifier le type d'étape"
       },
       "delete": {
-        "title": "Supprimer le type d'étape",
-        "confirmMessage": "Êtes-vous sûr de vouloir supprimer ce type d'étape ?"
+        "title": "Supprimer {item}",
+        "confirmMessage": "Êtes-vous sûr de vouloir supprimer le type d'étape {name} ?"
       }
     },
     "issue_config": {
@@ -4634,7 +4637,7 @@
       },
       "edit": {
         "title": "Intégration du modèle d'IA modifié",
-        "description": "Mettez à jour la configuration pour cette intégration de modèle d'IA",
+        "description": "Mettez à jour la configuration pour l'intégration du modèle d'IA {name}",
         "statusDescription": "Activer ou désactiver cette intégration",
         "apiKeyPlaceholder": "Saisissez une nouvelle clé API pour mettre à jour...",
         "update": "Mise à jour",
@@ -4653,7 +4656,7 @@
       },
       "delete": {
         "title": "Supprimer l'intégration du modèle d'IA",
-        "description": "Êtes-vous sûr de vouloir supprimer cette intégration de modèle d'IA ? Cette action la supprimera de tous les projets et ne pourra pas être annulée.",
+        "description": "Êtes-vous sûr de vouloir supprimer l'intégration du modèle d'IA {name}  ? Cette action la supprimera de tous les projets et est irréversible.",
         "integrationDeletedSuccess": "Intégration du modèle d'IA supprimée avec succès",
         "failedToDeleteIntegration": "Échec de la suppression de l'intégration du modèle d'IA",
         "cannotDeleteDefault": "Impossible de supprimer le modèle d'IA par défaut. Veuillez d'abord en définir un autre comme modèle par défaut."
@@ -4725,7 +4728,7 @@
         "warning": "Cette action est irréversible. Tous les projets utilisant cette configuration reviendront à la configuration d'invite de commande par défaut."
       },
       "llmColumn": "LLM",
-      "mixedLlms": "{count} LLM",
+      "mixedLlms": "{count, number} LLM",
       "cannotDeleteDefault": "Impossible de supprimer la configuration d'invite par défaut. Veuillez d'abord en définir une autre comme invite par défaut.",
       "defaultChanged": "La configuration d'invite par défaut a été mise à jour avec succès.",
       "featureLabels": {
@@ -4952,7 +4955,7 @@
     "notifications": {
       "empty": "Aucune notification",
       "aria": {
-        "notifications": "Notifications ({count} non lues)"
+        "notifications": "Notifications ({count, number} non lues)"
       },
       "actions": {
         "markRead": "Marquer comme lu",
@@ -5097,11 +5100,11 @@
       "sharedStepGroupCreateNewDesc": "Un nouveau groupe de partage de pas sera créé.",
       "go": "Aller",
       "processing": "Traitement...",
-      "progressText": "{processed} de {total} cas traités",
+      "progressText": "{processed, number} de {total, number} cas traités",
       "successCount": "{count} cas {operation}d avec succès",
-      "skipped": "Ignoré : {count}",
-      "droppedLinks": "Liens inter-projets supprimés : {count}",
-      "errorCount": "{count} cas ont échoué",
+      "skipped": "Ignoré : {count, number}",
+      "droppedLinks": "Liens inter-projets supprimés : {count, number}",
+      "errorCount": "{count, number} cas ont échoué",
       "viewInTargetProject": "Voir dans le projet cible",
       "failed": "Échoué",
       "folderMode": "Dossier \"{folderName}\" — {caseCount, plural, one {# cas} other {# cas}}"
@@ -5128,7 +5131,7 @@
     "unlinkError": "Échec de la dissociation du problème",
     "noIssuesFound": "Aucun problème détecté",
     "startTypingToSearch": "Commencez à taper pour rechercher des problèmes",
-    "selectedCount": "{count} sélectionné",
+    "selectedCount": "{count, number} sélectionné",
     "confirmSelection": "Confirmer la sélection",
     "alreadyLinked": "Déjà lié",
     "authenticate": "Authentifier",
@@ -5142,7 +5145,7 @@
     "error": "Problèmes de chargement d'erreur",
     "errorDescription": "Impossible de charger les problèmes. Veuillez réessayer.",
     "selectIssues": "Sélection de numéros",
-    "authRequiredDescription": "Veuillez vous authentifier avec {provider} pour rechercher les problèmes",
+    "authRequiredDescription": "Veuillez vous authentifier pour rechercher les problèmes",
     "integrationNotConfigured": "Intégration non configurée",
     "integrationNotConfiguredDescription": "Cette intégration n'est pas entièrement configurée. Veuillez contacter votre administrateur de projet pour configurer le projet externe dans les paramètres du projet.",
     "createIssue": "Créer un problème",
@@ -5189,7 +5192,7 @@
     "searchUsers": "Recherche d'utilisateurs",
     "noTeamsAvailable": "Aucune équipe disponible",
     "filterAll": "Tous",
-    "fanOutPartialFailure": "Impossible d'accéder au(x) projet(s) {count} . Affichage des résultats du/des projet(s) {successCount}.",
+    "fanOutPartialFailure": "Impossible d'accéder au(x) projet(s) {count, number} . Affichage des résultats du/des projet(s) {successCount, number}.",
     "projectSelectorLabel": "Projet",
     "searchFailedTitle": "La recherche a échoué."
   },
@@ -5229,7 +5232,7 @@
   },
   "charts": {
     "average": "Moyenne",
-    "count": "Nombre : {count}",
+    "count": "Compte : {count, number}",
     "percent": "Pourcentage : {percent}%",
     "completed": "Terminé : {count}",
     "durationRange": "Durée : {from}s - {to}s",
@@ -6262,7 +6265,7 @@
       "loadingMore": "Chargement en cours...",
       "noRecords": "Aucun enregistrement trouvé",
       "error": "Échec du chargement des enregistrements",
-      "recordCount": "{count} {count, plural, =1 {enregistrement} other {enregistrements}}",
+      "recordCount": "{count, plural, =1 {# enregistrement} other {# enregistrements}}",
       "allRecords": "Tous les disques",
       "allLoaded": "Tous les enregistrements ont été chargés."
     },
@@ -6516,8 +6519,8 @@
       },
       "page3": {
         "title": "Aperçu des données importées",
-        "showing": "Affichage des étapes partagées {start} à {end} de {total}",
-        "step": "Étape partagée {number}",
+        "showing": "Affichage des étapes partagées de {start, number} à {end, number} sur {total, number}",
+        "step": "Étape partagée {number, number}",
         "noValue": "(vide)"
       }
     },
@@ -6539,7 +6542,7 @@
       "noResultsDescription": "Effectuez une analyse pour détecter les séquences d'étapes répétées dans vos cas de test.",
       "filterPlaceholder": "Filtrer par nom de dossier...",
       "selected": "{count, plural, one {# sélectionné} other {# sélectionné}}",
-      "bulkDismiss": "Ignorer ({count})",
+      "bulkDismiss": "Rejeter ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# match rejeté} other {# matchs rejetés}}",
       "bulkError": "Certaines opérations ont échoué. Veuillez réessayer.",
       "tableHint": "Cliquez sur une ligne pour prévisualiser les étapes correspondantes. Sélectionnez les lignes à l'aide de cases à cocher pour effectuer des actions groupées.",
@@ -6555,7 +6558,7 @@
       "cancelScan": "Annuler l'analyse",
       "findStepDuplicates": "Trouver les doublons d'étapes",
       "rescan": "Balayage",
-      "viewResults": "Afficher les résultats ({count})",
+      "viewResults": "Afficher les résultats ({count, number})",
       "retryScan": "Réessayer l'analyse",
       "dialog": {
         "title": "Convertir en étapes partagées",
@@ -6805,9 +6808,9 @@
     },
     "progress": {
       "starting": "Début de l'analyse...",
-      "analyzed": "Entités analysées {analyzed}/{total}",
-      "sizing": "Recherche de la taille de lot optimale (essai des entités {size})...",
-      "streaming": "Réception de la réponse de l'IA ( entités{analyzed}/{total} terminées)...",
+      "analyzed": "Entités analysées {analyzed, number}/{total, number}",
+      "sizing": "Recherche de la taille de lot optimale (essai avec {size, number} entités)...",
+      "streaming": "Réception de la réponse de l'IA ({analyzed, number}/{total, number} entités terminées)...",
       "finalizing": "Préparation des résultats...",
       "complete": "Analyse complète",
       "reviewSuggestions": "Suggestions de révision",
@@ -6815,7 +6818,7 @@
     },
     "wizard": {
       "description": "L'IA analysera l'ensemble des cas de test, des exécutions de test et des sessions de votre projet afin de suggérer des balises pertinentes en fonction de leur contenu.",
-      "entityLine": "{count} {type}",
+      "entityLine": "{count, number} {type}",
       "startAnalysis": "Lancer l'analyse",
       "untaggedOnly": "Analyser uniquement les enregistrements sans balises existantes",
       "allowNewTags": "Autoriser la création de nouvelles balises",
@@ -6834,7 +6837,7 @@
     "fair": "Équitable",
     "good": "Bien",
     "strong": "Fort",
-    "minLength": "Au moins {count} caractères",
+    "minLength": "Au moins {count, number} caractères",
     "uppercase": "Au moins une lettre majuscule",
     "lowercase": "Au moins une lettre minuscule",
     "numbers": "Au moins un nombre",

@@ -471,10 +471,12 @@
       "moveSuccess": "Item succesvol verplaatst",
       "moveError": "Er is een fout opgetreden bij het verplaatsen van het item",
       "updateSuccess": "Item succesvol bijgewerkt",
+      "updateSuccessCount": "{count, number} items succesvol bijgewerkt",
       "updateError": "Er is een fout opgetreden tijdens het bijwerken van het item",
       "linkCopied": "Link gekopieerd naar klembord",
       "copyFailed": "Het is niet gelukt om de link naar het klembord te kopiëren",
-      "created": "Testrun succesvol aangemaakt",
+      "created": "Succesvol aangemaakt",
+      "createdItem": "{item} succesvol aangemaakt",
       "createdDescription": "De testrun is gemaakt en is nu zichtbaar in de lijst Testruns.",
       "createError": "Er is een onbekende fout opgetreden. Probeer het opnieuw.",
       "emptyActive": "Geen actieve testruns",
@@ -698,7 +700,7 @@
       "noTestCasesSelected": "Geen testgevallen geselecteerd",
       "editToSelectTestCases": "Bewerk de testrun om testcases te selecteren.",
       "casesInRun": "{count, plural, =0 {Geen testgevallen in de testrun} =1 {1 testgeval in de testrun} other {# testgevallen in de testrun}}",
-      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 Uniek geval} other {# Unieke gevallen}} over {configCount, plural, =1 {1 Configuratie} other {# Configuraties}} ({totalCount} totaal aantal gevallen)",
+      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 Uniek geval} other {# Unieke gevallen}} over {configCount, plural, =1 {1 Configuratie} other {# Configuraties}} ({totalCount, number} totaal aantal gevallen)",
       "viewTestRunDetails": "Bekijk testrundetails",
       "sortByStatus": "Groeperen op status",
       "sortByDate": "Sorteren op datum",
@@ -973,7 +975,7 @@
       "case": "{count, plural, =1 {geval} other {gevallen}}",
       "result": "{count, plural, =1 {resultaat} other {resultaten}}",
       "run": "{count, plural, =1 {loopt} other {loopt}}",
-      "comment": "{count, plural, =1 {{count} commentaar} other {{count} opmerkingen}}"
+      "comment": "{count, plural, =1 {# reactie} other {# reacties}}"
     },
     "success": {
       "assigned": "Testgeval succesvol toegewezen",
@@ -1099,7 +1101,7 @@
       "passwordRequired": "Een wachtwoord is vereist.",
       "genericError": "Er is een fout opgetreden. Probeer het opnieuw.",
       "policyTitle": "Wachtwoordvereisten:",
-      "policyMinLength": "Ten minste {count} tekens",
+      "policyMinLength": "Ten minste {count, number} tekens",
       "policyUppercase": "Ten minste één hoofdletter",
       "policyLowercase": "Ten minste één kleine letter",
       "policyNumbers": "Ten minste één getal",
@@ -1149,7 +1151,7 @@
   },
   "projects": {
     "status": {
-      "id": "Project-ID: {id}",
+      "id": "Project-ID: {id, number}",
       "active": "Project is actief",
       "completed": "Project is voltooid"
     },
@@ -1199,7 +1201,7 @@
           "updateError": "Het is niet gelukt om de integratie-instellingen voor het probleem bij te werken",
           "removeError": "Het is niet gelukt om de probleemintegratie te verwijderen",
           "removeIntegration": "Integratie verwijderen",
-          "confirmRemove": "Bevestig verwijderen",
+          "confirmRemove": "Weet je zeker dat je de {name} integratie wilt verwijderen?",
           "authDescription": "U moet zich authenticeren met {provider} om deze probleemintegratie te gebruiken",
           "authenticating": "Authenticatie...",
           "authSuccess": "Authenticatie succesvol",
@@ -1310,8 +1312,8 @@
         "deleteConfirmTitle": "Webhook-configuratie verwijderen?",
         "deleteConfirm": "Als u deze webhookconfiguratie wilt verwijderen, worden inkomende leveringen geweigerd.",
         "sendTest": "Testwebhook verzenden",
-        "testSuccess": "Testwebhook geaccepteerd (HTTP {statusCode}, resultaat: {outcome})",
-        "testFailure": "Test webhook mislukt (HTTP {statusCode}): {error}",
+        "testSuccess": "Testwebhook geaccepteerd (HTTP {statusCode, number}, resultaat: {outcome})",
+        "testFailure": "Testwebhook mislukt (HTTP {statusCode, number}): {error}",
         "saveError": "Het opslaan van de webhookconfiguratie is mislukt.",
         "lastReceived": "Laatst ontvangen: {timestamp}",
         "lastReceivedLabel": "Laatst ontvangen:",
@@ -1397,7 +1399,7 @@
         "outboundHmacActiveSecret": "Actief",
         "outboundHmacInactiveSecret": "Inactief",
         "outboundHmacRetiringSecret": "Met pensioen gaan",
-        "outboundHmacAutoRetireIn": "Gaat automatisch met pensioen over {days} dagen",
+        "outboundHmacAutoRetireIn": "Gaat automatisch met pensioen over {days, number} dagen",
         "outboundHmacRotateButton": "Geheim draaien",
         "outboundHmacExtendButton": "Verleng met 7 dagen",
         "outboundHmacRetireNowButton": "Ga nu met pensioen.",
@@ -1481,7 +1483,7 @@
         "filterSinceDefault": "Sinds…",
         "filterUntilDefault": "Totdat…",
         "filterReset": "Filters resetten",
-        "filterBulkReplayButton": "Massale herhaling {count} uitgaande fouten",
+        "filterBulkReplayButton": "Massale herhaling {count, number} uitgaande fouten",
         "filterBulkReplayHidden": "Alle zichtbare fouten zijn inkomend — activeer in plaats daarvan de upstream-gebeurtenis opnieuw.",
         "deliveriesEmpty": "Geen leveringen voldoen aan deze filters.",
         "deliveriesResetFilters": "Filters resetten",
@@ -1500,7 +1502,7 @@
         "drawerLabelDirection": "Richting",
         "drawerLabelStatusCode": "Statuscode",
         "drawerLabelLatency": "Latentie",
-        "drawerLatencyValue": "{ms} ms",
+        "drawerLatencyValue": "{ms, number} ms",
         "drawerLatencyUnknown": "—",
         "drawerLabelError": "Fout",
         "drawerLabelPayloadDigest": "Payload samenvatting",
@@ -1515,16 +1517,16 @@
         "replayConfirm": "Dit zal een echt {direction} {adapterType} verzoek versturen.",
         "replayAction": "Opnieuw afspelen",
         "bulkReplayConfirmTitle": "Fouten bij het opnieuw afspelen van uitgaande verbindingen?",
-        "bulkReplayConfirm": "Herhaal de mislukte uitgaande verzoeken {count} naar {configName}? Dit zal {count} echte HTTP-verzoeken genereren.",
-        "bulkReplayCapExceeded": "Het afspelen van bulkverzoeken is beperkt tot 100 uitgaande verzoeken tegelijk. Verfijn het filter of voer de verzoeken sequentieel uit. Momenteel wordt {count} afgespeeld.",
-        "bulkReplayAction": "Opnieuw afspelen {count}",
+        "bulkReplayConfirm": "Herhaal {count, number} uitgaande fouten naar {configName}? Dit zal {count, number} echte HTTP-verzoeken activeren.",
+        "bulkReplayCapExceeded": "Het afspelen van bulkverzoeken is beperkt tot 100 uitgaande verzoeken tegelijk. Verfijn het filter of voer de verzoeken sequentieel uit. Momenteel wordt {count, number} afgespeeld.",
+        "bulkReplayAction": "Opnieuw afspelen {count, number}",
         "healthBadge": {
           "HEALTHY": "Gezond",
           "DEGRADED": "Gedegradeerd",
           "DISABLED": "Gehandicapt"
         },
         "healthTooltipHealthy": "Laatste succes: {lastSuccessAt}",
-        "healthTooltipDegraded": "{count} opeenvolgende mislukkingen · laatste bij {lastFailureAt}",
+        "healthTooltipDegraded": "{count, number} opeenvolgende mislukkingen · laatste op {lastFailureAt}",
         "healthTooltipDisabled": "Uitgeschakeld na 10 opeenvolgende mislukkingen · {lastFailureAt}",
         "activityLabel": "Leveringsactiviteit",
         "activityLastDispatched": "Laatst verzonden",
@@ -1638,8 +1640,8 @@
         "preview": {
           "resolvingBranch": "Oplossende tak…",
           "scanningFiles": "Bestanden scannen in {scope}…",
-          "scanningFilesCount": "Bestanden scannen in {scope}… ({count} gevonden)",
-          "filtering": "Filters toepassen op {count} bestanden…"
+          "scanningFilesCount": "Bestanden scannen in {scope}… ({count, number} gevonden)",
+          "filtering": "Filters toepassen op {count, number} bestanden…"
         },
         "cache": {
           "title": "Cache-instellingen",
@@ -1748,9 +1750,10 @@
     "toast": {
       "deleted": "Mijlpaal {name} verwijderd",
       "updated": "Mijlpaal bijgewerkt",
+      "updatedWithName": "{name} bijgewerkt",
       "updateFailed": "Mijlpaal kan niet worden bijgewerkt",
       "completed": "Mijlpaal \"{name}\" voltooid.",
-      "completedWithDependencies": "De mijlpaal en bijbehorende afhankelijkheden zijn succesvol afgerond."
+      "completedWithDependencies": "{name} en afhankelijkheden succesvol voltooid."
     },
     "errors": {
       "nameExists": "Er bestaat al een mijlpaal met deze naam",
@@ -1819,7 +1822,7 @@
     },
     "messages": {
       "createSuccess": "Sessie succesvol aangemaakt",
-      "createSuccessMultiple": "{count} Sessies succesvol aangemaakt",
+      "createSuccessMultiple": "{count, number} Sessies succesvol aangemaakt",
       "duplicateSuccess": "Sessie succesvol gedupliceerd",
       "duplicateSuccessMultiple": "{count} Sessies succesvol gedupliceerd"
     },
@@ -1886,8 +1889,8 @@
       "backToSession": "Terug naar sessie",
       "backToLatest": "Terug naar de nieuwste versie",
       "versionInfo": {
-        "created": "Versie {number} Gemaakt",
-        "latestUpdated": "Laatste versie {number} bijgewerkt"
+        "created": "Versie {number, number} Gemaakt",
+        "latestUpdated": "Laatste versie {number, number} Bijgewerkt"
       },
       "renderer": {
         "noEstimate": "Geen schatting",
@@ -1982,7 +1985,7 @@
         "avatarUpdated": "Avatar succesvol bijgewerkt.",
         "avatarUpdateError": "Avatar kon niet worden bijgewerkt.",
         "deleteAvatar": "Avatar verwijderen",
-        "deleteAvatarConfirm": "Weet u zeker dat u uw avatar wilt verwijderen?",
+        "deleteAvatarConfirm": "Weet je zeker dat je je {name} wilt verwijderen?",
         "emailDisabledForSso": "E-mailadres kan niet worden gewijzigd voor SSO-accounts. Werk het bij via uw identiteitsprovider.",
         "emailEditableForBoth": "U kunt inloggen met zowel e-mailadres/wachtwoord als SSO. Wijzigingen in e-mailadressen hebben alleen invloed op wachtwoordverificatie.",
         "linkSsoProvider": "SSO-provider koppelen"
@@ -2119,7 +2122,7 @@
       "detailsRegion": "Testcasedetails",
       "metadataRegion": "Testcase-metagegevens",
       "versionCreated": "Versie {version} Gemaakt",
-      "latestVersionUpdated": "Laatste versie {version} bijgewerkt",
+      "latestVersionUpdated": "Laatste versie {version, number} Bijgewerkt",
       "historyView": "Testcase geschiedenisweergave"
     },
     "fields": {
@@ -2142,7 +2145,7 @@
       "add": "Stap toevoegen",
       "addSharedSteps": "Gedeelde stappen toevoegen",
       "delete": "Stap verwijderen",
-      "confirmDelete": "Verwijderen bevestigen Stap {number}?",
+      "confirmDelete": "Bevestig verwijderingsstap {number, number}?",
       "createSharedSteps": "Gedeelde {number, plural, one {Stap} other {Stappen}}maken",
       "sharedStepsName": "Naam gedeelde stappen",
       "sharedStepsDescription": "Voer een naam in voor je nieuwe gedeelde {number, plural, one {stap} other {stappen}}. Dit omvat {number, plural, one {# geselecteerde stap} other {# geselecteerde stappen}}.",
@@ -2240,7 +2243,7 @@
       "cannotReorderAcrossPages": "Het is niet mogelijk om testgevallen over meerdere pagina's te herschikken. Om de volgorde te wijzigen, kunt u alle gevallen op één pagina weergeven door 'Alles' te selecteren in het menu voor paginagrootte, of gevallen op andere pagina's deselecteren. U kunt geselecteerde gevallen nog steeds naar mappen slepen.",
       "exportModal": {
         "scope": {
-          "allFiltered": "Alles in beeld ({count})"
+          "allFiltered": "Alles in beeld ({count, number})"
         },
         "textLongFormat": {
           "label": "Rich Text-indeling"
@@ -2315,8 +2318,8 @@
         },
         "page4": {
           "title": "Voorbeeld importeren",
-          "showing": "{start}-{end} van {total} gevallen weergeven",
-          "case": "Geval {number}"
+          "showing": "Toont {start, number}-{end, number} van {total, number} gevallen",
+          "case": "Geval {number, number}"
         }
       }
     },
@@ -2385,7 +2388,7 @@
       "description": "Bewerken {count, plural, one {# geselecteerde zaak} other {# geselecteerde zaken}}. Vink een veld aan om bewerken mogelijk te maken.",
       "defineStepsTitle": "Stappen voor bulkupdate definiëren",
       "saveNewSteps": "Nieuwe stappen opslaan",
-      "newStepsDefined": "Nieuwe stappen gedefinieerd ({count}) - Klik op de knop om te bewerken",
+      "newStepsDefined": "Nieuwe stappen gedefinieerd ({count, number}) - Klik op de knop om te bewerken",
       "clearExistingStepsWarning": "Bestaande stappen worden verwijderd",
       "warnings": {
         "templateMismatch": {
@@ -2405,7 +2408,7 @@
         "fetchError": "Fout bij het ophalen van de casusgegevens."
       },
       "success": {
-        "casesUpdated": "Cases succesvol bijgewerkt"
+        "casesUpdated": "{count, number} gevallen succesvol bijgewerkt"
       },
       "placeholders": {
         "various": "<various values>"
@@ -2435,9 +2438,9 @@
       "title": "Testcases exporteren",
       "description": "Kies hieronder uw exportopties.",
       "scope": {
-        "selected": "Geselecteerd ({count})",
-        "allFiltered": "Alles (huidige weergave) ({count})",
-        "allProject": "Alles in project ({count})"
+        "selected": "Geselecteerd ({count, number})",
+        "allFiltered": "Alles (Huidige weergave) ({count, number})",
+        "allProject": "Alles in Project ({count, number})"
       },
       "format": {
         "label": "Formaat",
@@ -2495,7 +2498,7 @@
     "aiExport": {
       "toggleLabel": "Genereer met AI",
       "generating": "Genereren...",
-      "generatingProgress": "Genereren van geval {current} van {total}...",
+      "generatingProgress": "Het genereren van geval {current, number} van {total, number}...",
       "generatingBatch": "Genereren van {count, plural, one {# geval} other {# gevallen}} in één bestand...",
       "previewTitle": "Exporteervoorbeeld",
       "previewDescription": "{count, plural, one {# bestand} other {# bestanden}} gegenereerd",
@@ -2507,14 +2510,14 @@
       "truncatedWarning": "De uitvoer is afgekapt — het model heeft de tokenlimiet bereikt. Probeer de batchgrootte te verkleinen of het maximale aantal uitvoertokens in uw promptconfiguratie te verhogen.",
       "contextFiles": "{count, plural, one {(# contextbestand)} other {(# contextbestanden)}}",
       "noCodeContextHint": "Er is geen code-repository geconfigureerd. De AI zal gebruikmaken van standaard frameworkpatronen.",
-      "generatingParallelProgress": "Er zijn {done} van {total} bestanden gegenereerd...",
+      "generatingParallelProgress": "Er zijn {done, number} van {total, number} bestanden gegenereerd...",
       "cancelledGeneration": "Geannuleerd"
     },
     "duplicates": {
       "findDuplicates": "Dubbele items zoeken",
       "viewResults": "Weergave {count, plural, one {# Resultaat} other {# Resultaten}}",
       "retryScan": "Scan opnieuw uitvoeren",
-      "analyzing": "{analyzed}/{total}",
+      "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Resultaten verbeteren met AI...",
       "scanComplete": "Analyse van duplicaten voltooid — {count, plural, =0 {geen duplicaten gevonden} one {# potentieel duplicaat gevonden} other {# potentieel duplicaten gevonden}}",
       "scanFailed": "Dubbele analyse mislukt",
@@ -2538,8 +2541,8 @@
       "selectAll": "Alles selecteren",
       "selectRow": "Selecteer rij",
       "selected": "{count, plural, one {# geselecteerd} other {# geselecteerd}}",
-      "bulkDismiss": "Geen duplicaten ({count})",
-      "bulkLink": "Link als gerelateerd ({count})",
+      "bulkDismiss": "Geen duplicaten ({count, number})",
+      "bulkLink": "Link als gerelateerd ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# paar afgewezen} other {# paren afgewezen}}",
       "bulkLinkSuccess": "{count, plural, one {# gekoppeld paar} other {# gekoppelde paren}}",
       "bulkError": "Sommige bewerkingen zijn mislukt. Probeer het opnieuw.",
@@ -2584,8 +2587,8 @@
       "loadingResults": "De gegenereerde testgevallen worden geladen...",
       "generatingPreparing": "Verzoek voorbereiden...",
       "generatingCallingAi": "Wachten tot de AI testgevallen genereert...",
-      "generatingStreaming": "AI genereert testcase {count}...",
-      "generatingStreamingPage": "AI genereert testcase {count} — pagina {current} van {total}: {page}",
+      "generatingStreaming": "AI genereert testcase {count, number}...",
+      "generatingStreamingPage": "AI genereert testcase {count, number} — pagina {current, number} van {total, number}: {page}",
       "generatingProcessing": "Verwerking van gegenereerde testgevallen...",
       "generatingHint": "Dit kan een minuut duren, afhankelijk van de complexiteit van uw bronmateriaal.",
       "steps": {
@@ -2671,7 +2674,7 @@
       "review": {
         "title": "Gegenereerde testcases beoordelen",
         "description": "Bekijk de door de AI gegenereerde testcases, breng eventuele wijzigingen aan en selecteer welke u wilt importeren.",
-        "selected": "{count} van {total} geselecteerd",
+        "selected": "{count, number} van {total, number} geselecteerd",
         "moreSteps": "... en {count, plural, one {# volgende stap} other {# volgende stappen}}",
         "templateFields": "Sjabloonvelden:",
         "moreFields": "... en {count, plural, one {# meer veld} other {# meer velden}}",
@@ -2681,7 +2684,7 @@
         "allPages": "Alle pagina's ({pages, plural, one {# pagina} other {# pagina's}}, {cases, plural, one {# geval} other {# gevallen}})"
       },
       "generatingLegacy": "Testgevallen genereren met AI...",
-      "expandProgress": "{done} van {total} gegenereerd",
+      "expandProgress": "{done, number} van {total, number} gegenereerd",
       "import": "{count, plural, =0 {Testcases importeren} =1 {1 testcase importeren} other {# Testcases importeren}}",
       "importing": "{count, plural, =0 {Testgevallen importeren...} =1 {1 testgeval importeren...} other {# testgevallen importeren...}}",
       "openInExternalSystem": "Openen in {provider}",
@@ -2847,15 +2850,15 @@
       "description": "Voeg een nieuwe testrun toe aan het project",
       "success": {
         "title": "Testrun succesvol toegevoegd",
-        "description": "De testrun is toegevoegd aan het project",
-        "descriptionMultiple": "{count, plural, one {# testrun heeft} other {# testruns hebben}} zijn aangemaakt voor '{name}'"
+        "description": "{name} is toegevoegd aan het project",
+        "descriptionMultiple": "{count, plural, one {# testrun heeft} other {# testruns hebben}} zijn aangemaakt voor {name}"
       },
       "estimates": {
         "manual": "Geschatte handmatige tijd",
         "automated": "Geschatte geautomatiseerde tijd",
         "mixed": "Geschatte handmatige/geautomatiseerde tijd"
       },
-      "creatingProgress": "Testrun {current} van {total} aanmaken ..."
+      "creatingProgress": "Testrun {current, number} van {total, number} aanmaken ..."
     },
     "magicSelect": {
       "title": "Magische selectie",
@@ -2864,7 +2867,7 @@
       "reasoning": "AI-redenering",
       "reviewSelection": "Bekijk de voorgestelde testgevallen",
       "viewSuggested": "Bekijk voorgestelde casussen",
-      "tokenUsage": "{total} tokens gebruikt",
+      "tokenUsage": "{total, number} gebruikte tokens",
       "noLlmIntegration": "AI-functies vereisen een LLM-integratie. Configureer deze in de projectinstellingen.",
       "configure": {
         "title": "Testcasebereik",
@@ -2883,7 +2886,7 @@
       "loading": {
         "batch": "Batch {current} van {total} wordt verwerkt",
         "analyzing": "Testgevallen analyseren...",
-        "progress": "Geanalyseerde {analyzed} van {total} testgevallen...",
+        "progress": "Geanalyseerde {analyzed, number} van {total, number} testgevallen...",
         "waitingForAi": "Wachten op AI-reactie (batch {batch} van {total})...",
         "selectedSoFar": "{count, plural, =1 {# tot nu toe geselecteerde testgevallen} other {# tot nu toe geselecteerde testgevallen}}",
         "resolving_integration": "Het oplossen van AI-integratieproblemen...",
@@ -3043,7 +3046,7 @@
             "mapping": "Toewijzing configureren",
             "import": "Monitor import"
           },
-          "stepIndicator": "Stap {step} van {total}"
+          "stepIndicator": "Stap {step, number} van {total, number}"
         },
         "fileLabel": "Testmo JSON-bestand",
         "fileHelp": "Selecteer de JSON-export die u van Testmo hebt gedownload.",
@@ -3174,8 +3177,8 @@
         "importProgressDescription": "{count, plural, =0 {Alle records geïmporteerd over de gevolgde entiteiten.} =1 {1 record resterend over de gevolgde entiteiten.} other {# records resterend over de gevolgde entiteiten.}}",
         "importProgressTotalRemaining": "{count, plural, =0 {Geen resterende records} =1 {1 record resterend} other {# records resterend}}",
         "importProgressProcessed": "{processed, number}/{total, number} records geïmporteerd",
-        "importProgressAria": "{percent}% van import voltooid",
-        "importProgressPercentLabel": "{percent}%",
+        "importProgressAria": "{percent, number}% van de import voltooid",
+        "importProgressPercentLabel": "{percent, number}%",
         "importDurationLabel": "Totale tijd:",
         "activityLogTitle": "Importactiviteit",
         "activityLogDescription": "Gedetailleerd logboek van de stappen van achtergrondimport. Tijdstempels zijn gebaseerd op de tijdzone van de server.",
@@ -3249,7 +3252,7 @@
           "configurationNoTokens": "Er zijn geen varianten gedetecteerd in deze configuratie.",
           "configurationNoExistingTargets": "Er zijn geen configuraties beschikbaar om in kaart te brengen.",
           "configurationNamePlaceholder": "Voer een configuratienaam in",
-          "configurationVariantLabel": "Variant {index}",
+          "configurationVariantLabel": "Variant {index, number}",
           "configurationVariantActionLabel": "Hoe moet met deze variant worden omgegaan?",
           "configurationVariantActionPlaceholder": "Kies een optie",
           "configurationVariantMapOption": "Toewijzen aan bestaande variant",
@@ -3741,7 +3744,7 @@
       },
       "delete": {
         "title": "Project verwijderen",
-        "confirmMessage": "Weet u zeker dat u dit project wilt verwijderen?"
+        "confirmMessage": "Weet je zeker dat je <strong>{name}</strong> wilt verwijderen?"
       }
     },
     "templates": {
@@ -3781,7 +3784,7 @@
         },
         "delete": {
           "title": "Verwijder zaakveld",
-          "confirmMessage": "Weet u zeker dat u dit Caseveld wilt verwijderen?",
+          "confirmMessage": "Weet je zeker dat je <strong>{name}</strong> wilt verwijderen?",
           "warning": "Het veld 'Case' wordt uit alle sjablonen verwijderd. Deze actie kan niet ongedaan worden gemaakt."
         }
       },
@@ -3955,12 +3958,12 @@
       "saveChanges": "Wijzigingen opslaan",
       "forceAllUsers": "Alle gebruikers dwingen hun wachtwoord te wijzigen",
       "forceAllUsersDialogTitle": "Wachtwoordwijziging afdwingen voor alle gebruikers",
-      "forceAllUsersDialogDescription": "This will require {count} credential-based users to change their password on next login.",
+      "forceAllUsersDialogDescription": "This will require {count, number} credential-based users to change their password on next login.",
       "forceAllUsersDialogWarning": "Deze actie kan niet ongedaan gemaakt worden.",
       "forceAllUsersDialogConfirm": "Krachtverandering",
       "saved": "Beveiligingsinstellingen opgeslagen",
       "saveFailed": "Beveiligingsinstellingen konden niet worden opgeslagen.",
-      "forceAllSuccess": "Wachtwoordwijziging vereist voor {count} gebruikers",
+      "forceAllSuccess": "Wachtwoordwijziging vereist voor {count, number} gebruikers",
       "forceAllFailed": "Wachtwoordwijziging is mislukt"
     },
     "apiTokens": {
@@ -3999,7 +4002,7 @@
       },
       "delete": {
         "title": "Tag verwijderen",
-        "confirmMessage": "Weet u zeker dat u deze tag wilt verwijderen?",
+        "confirmMessage": "Weet je zeker dat je de {name} tag wilt verwijderen?",
         "warning": "Deze tag wordt uit alle testcases en sessies verwijderd.",
         "errors": {
           "unknown": "Er is een fout opgetreden bij het verwijderen van de tag"
@@ -4030,7 +4033,7 @@
       },
       "delete": {
         "title": "Workflow verwijderen",
-        "confirmMessage": "Weet u zeker dat u deze workflow wilt verwijderen?"
+        "confirmMessage": "Weet je zeker dat je <strong>{name}</strong> wilt verwijderen?"
       },
       "setDefault": {
         "title": "Standaardworkflow instellen",
@@ -4058,7 +4061,7 @@
       },
       "delete": {
         "title": "Rol verwijderen",
-        "confirmMessage": "Weet u zeker dat u deze rol wilt verwijderen?",
+        "confirmMessage": "Weet je zeker dat je de rol {name} wilt verwijderen?",
         "warning": "Deze actie kan niet ongedaan worden gemaakt. Gebruikers met deze rol krijgen de standaardrol toegewezen.",
         "errors": {
           "defaultNotFound": "Kan standaardrol niet verwijderen"
@@ -4149,7 +4152,7 @@
       "combinations": {
         "title": "Combinaties",
         "description": "Beheer globale combinaties",
-        "confirmDescription": "De volgende {count} combinaties zullen worden gecreëerd.",
+        "confirmDescription": "De volgende {count, number} combinaties zullen worden gecreëerd.",
         "addCombination": "Combinatie toevoegen",
         "editCombination": "Combinatie bewerken",
         "selectCombination": "Selecteer combinatie",
@@ -4226,8 +4229,8 @@
         "title": "Mijlpaaltype bewerken"
       },
       "delete": {
-        "title": "Mijlpaaltype verwijderen",
-        "confirmMessage": "Weet u zeker dat u dit mijlpaaltype wilt verwijderen?"
+        "title": "Verwijderen {item}",
+        "confirmMessage": "Weet je zeker dat je het mijlpaaltype {name} wilt verwijderen?"
       }
     },
     "issue_config": {
@@ -4634,7 +4637,7 @@
       },
       "edit": {
         "title": "Bewerken AI-modelintegratie",
-        "description": "Werk de configuratie voor deze AI-modelintegratie bij",
+        "description": "Werk de configuratie bij voor de integratie van het {name} AI-model",
         "statusDescription": "Deze integratie in- of uitschakelen",
         "apiKeyPlaceholder": "Voer een nieuwe API-sleutel in om te updaten...",
         "update": "Update",
@@ -4653,7 +4656,7 @@
       },
       "delete": {
         "title": "AI-modelintegratie verwijderen",
-        "description": "Weet u zeker dat u deze AI-modelintegratie wilt verwijderen? Hiermee wordt de integratie uit alle projecten verwijderd en dit kan niet ongedaan worden gemaakt.",
+        "description": "Weet je zeker dat je de {name} AI-modelintegratie wilt verwijderen? Hiermee wordt deze uit alle projecten verwijderd en deze actie kan niet ongedaan worden gemaakt.",
         "integrationDeletedSuccess": "AI-modelintegratie succesvol verwijderd",
         "failedToDeleteIntegration": "Het is niet gelukt om de AI-modelintegratie te verwijderen",
         "cannotDeleteDefault": "Het standaard AI-model kan niet worden verwijderd. Stel eerst een ander model in als standaard."
@@ -4725,7 +4728,7 @@
         "warning": "Deze actie kan niet ongedaan worden gemaakt. Alle projecten die deze configuratie gebruiken, zullen terugkeren naar de standaard promptconfiguratie."
       },
       "llmColumn": "LLM",
-      "mixedLlms": "{count} LLMs",
+      "mixedLlms": "{count, number} LLMs",
       "cannotDeleteDefault": "De standaard promptconfiguratie kan niet worden verwijderd. Stel eerst een andere prompt als standaard in.",
       "defaultChanged": "De standaard promptconfiguratie is succesvol bijgewerkt.",
       "featureLabels": {
@@ -4952,7 +4955,7 @@
     "notifications": {
       "empty": "Geen meldingen",
       "aria": {
-        "notifications": "Meldingen ({count} ongelezen)"
+        "notifications": "Meldingen ({count, number} ongelezen)"
       },
       "actions": {
         "markRead": "Markeer als gelezen",
@@ -5097,11 +5100,11 @@
       "sharedStepGroupCreateNewDesc": "Er wordt een nieuwe gezamenlijke stappengroep aangemaakt.",
       "go": "Gaan",
       "processing": "Bezig met verwerken...",
-      "progressText": "{processed} van {total} verwerkte gevallen",
+      "progressText": "{processed, number} van {total, number} verwerkte zaken",
       "successCount": "{count} geval(len) {operation}succesvol",
-      "skipped": "Overgeslagen: {count}",
-      "droppedLinks": "Links tussen projecten verwijderd: {count}",
-      "errorCount": "{count} geval(len) mislukt",
+      "skipped": "Overgeslagen: {count, number}",
+      "droppedLinks": "Links tussen projecten verwijderd: {count, number}",
+      "errorCount": "{count, number} geval/gevallen mislukt",
       "viewInTargetProject": "Bekijken in doelproject",
       "failed": "Mislukt",
       "folderMode": "Map \"{folderName}\" — {caseCount, plural, one {# geval} other {# gevallen}}"
@@ -5128,7 +5131,7 @@
     "unlinkError": "Probleem met het loskoppelen is mislukt",
     "noIssuesFound": "Geen problemen gevonden",
     "startTypingToSearch": "Begin met typen om naar problemen te zoeken",
-    "selectedCount": "{count} geselecteerd",
+    "selectedCount": "{count, number} geselecteerd",
     "confirmSelection": "Selectie bevestigen",
     "alreadyLinked": "Al gekoppeld",
     "authenticate": "Authenticeren",
@@ -5142,7 +5145,7 @@
     "error": "Fout bij het laden van problemen",
     "errorDescription": "Problemen met laden mislukt. Probeer het opnieuw.",
     "selectIssues": "Selecteer problemen",
-    "authRequiredDescription": "Gelieve te authenticeren met {provider} om te zoeken naar problemen",
+    "authRequiredDescription": "Authenticeer u om naar problemen te zoeken.",
     "integrationNotConfigured": "Integratie niet geconfigureerd",
     "integrationNotConfiguredDescription": "Deze integratie is niet volledig geconfigureerd. Neem contact op met uw projectbeheerder om het externe project te configureren in de projectinstellingen.",
     "createIssue": "Probleem maken",
@@ -5189,7 +5192,7 @@
     "searchUsers": "Zoeken naar gebruikers",
     "noTeamsAvailable": "Geen teams beschikbaar",
     "filterAll": "Alle",
-    "fanOutPartialFailure": "Project(en) {count} konden niet worden bereikt. Resultaten van project(en) {successCount} worden weergegeven.",
+    "fanOutPartialFailure": "Project(en) {count, number} konden niet worden bereikt. Resultaten van project(en) {successCount, number} worden weergegeven.",
     "projectSelectorLabel": "Project",
     "searchFailedTitle": "Zoeken mislukt"
   },
@@ -5229,7 +5232,7 @@
   },
   "charts": {
     "average": "Gemiddeld",
-    "count": "Aantal: {count}",
+    "count": "Aantal: {count, number}",
     "percent": "Percentage: {percent}%",
     "completed": "Voltooid: {count}",
     "durationRange": "Duur: {from}s - {to}s",
@@ -6262,7 +6265,7 @@
       "loadingMore": "Meer laden...",
       "noRecords": "Geen gegevens gevonden",
       "error": "Het laden van records is mislukt.",
-      "recordCount": "{count} {count, plural, =1 {record} other {records}}",
+      "recordCount": "{count, plural, =1 {# record} other {# records}}",
       "allRecords": "Alle records",
       "allLoaded": "Alle records geladen"
     },
@@ -6516,8 +6519,8 @@
       },
       "page3": {
         "title": "Voorbeeld importeren van gegevens",
-        "showing": "Weergave van {start} tot {end} van {total} gedeelde stappen",
-        "step": "Gedeelde stap {number}",
+        "showing": "Toont {start, number} tot {end, number} van {total, number} gedeelde stappen",
+        "step": "Gedeelde stap {number, number}",
         "noValue": "(leeg)"
       }
     },
@@ -6539,7 +6542,7 @@
       "noResultsDescription": "Voer een scan uit om herhaalde stappenreeksen in uw testgevallen te detecteren.",
       "filterPlaceholder": "Filteren op zaaknaam...",
       "selected": "{count, plural, one {# geselecteerd} other {# geselecteerd}}",
-      "bulkDismiss": "Afwijzen ({count})",
+      "bulkDismiss": "Afwijzen ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# wedstrijd beëindigd} other {# wedstrijden beëindigd}}",
       "bulkError": "Sommige bewerkingen zijn mislukt. Probeer het opnieuw.",
       "tableHint": "Klik op een rij om een voorbeeld van de overeenkomende stappen te bekijken. Selecteer rijen met selectievakjes voor bulkacties.",
@@ -6555,7 +6558,7 @@
       "cancelScan": "Scan annuleren",
       "findStepDuplicates": "Zoek naar dubbele stappen",
       "rescan": "Scannen",
-      "viewResults": "Resultaten bekijken ({count})",
+      "viewResults": "Resultaten bekijken ({count, number})",
       "retryScan": "Scan opnieuw uitvoeren",
       "dialog": {
         "title": "Omzetten naar gedeelde stappen",
@@ -6805,9 +6808,9 @@
     },
     "progress": {
       "starting": "Analyse starten...",
-      "analyzed": "Geanalyseerde {analyzed}/{total} entiteiten",
-      "sizing": "Het vinden van de optimale batchgrootte (proberen {size} entiteiten)...",
-      "streaming": "AI-reactie ontvangen ({analyzed}/{total} entiteiten voltooid)...",
+      "analyzed": "Geanalyseerde {analyzed, number}/{total, number} entiteiten",
+      "sizing": "Het vinden van de optimale batchgrootte (proberen van {size, number} entiteiten)...",
+      "streaming": "AI-reactie ontvangen ({analyzed, number}/{total, number} entiteiten voltooid)...",
       "finalizing": "Resultaten voorbereiden...",
       "complete": "Analyse voltooid",
       "reviewSuggestions": "Suggesties voor beoordelingen",
@@ -6815,7 +6818,7 @@
     },
     "wizard": {
       "description": "AI analyseert alle testgevallen, testruns en sessies van je project om relevante tags voor te stellen op basis van hun inhoud.",
-      "entityLine": "{count} {type}",
+      "entityLine": "{count, number} {type}",
       "startAnalysis": "Start analyse",
       "untaggedOnly": "Analyseer alleen records zonder bestaande tags.",
       "allowNewTags": "Sta het aanmaken van nieuwe tags toe.",
@@ -6834,7 +6837,7 @@
     "fair": "Eerlijk",
     "good": "Goed",
     "strong": "Sterk",
-    "minLength": "Ten minste {count} tekens",
+    "minLength": "Ten minste {count, number} tekens",
     "uppercase": "Ten minste één hoofdletter",
     "lowercase": "Ten minste één kleine letter",
     "numbers": "Ten minste één getal",

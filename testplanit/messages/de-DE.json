@@ -471,10 +471,12 @@
       "moveSuccess": "Artikel erfolgreich verschoben",
       "moveError": "Beim Verschieben des Artikels ist ein Fehler aufgetreten.",
       "updateSuccess": "Artikel erfolgreich aktualisiert",
+      "updateSuccessCount": "{count, number} Elemente erfolgreich aktualisiert",
       "updateError": "Beim Aktualisieren des Artikels ist ein Fehler aufgetreten.",
       "linkCopied": "Link in die Zwischenablage kopiert",
       "copyFailed": "Link konnte nicht in die Zwischenablage kopiert werden",
-      "created": "Testlauf erfolgreich erstellt",
+      "created": "Erfolgreich erstellt",
+      "createdItem": "{item} erfolgreich erstellt",
       "createdDescription": "Der Testlauf wurde erstellt und ist nun in der Liste der Testläufe sichtbar.",
       "createError": "Es ist ein unbekannter Fehler aufgetreten. Bitte versuchen Sie es erneut.",
       "emptyActive": "Keine aktiven Testläufe",
@@ -698,7 +700,7 @@
       "noTestCasesSelected": "Keine Testfälle ausgewählt",
       "editToSelectTestCases": "Bearbeiten Sie den Testlauf, um Testfälle auszuwählen.",
       "casesInRun": "{count, plural, =0 {Keine Testfälle im Testlauf} =1 {1 Testfall im Testlauf} other {Anzahl Testfälle im Testlauf}}",
-      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 eindeutiger Fall} other {# eindeutige Fälle}} insgesamt {configCount, plural, =1 {1 Konfiguration} other {# Konfigurationen}} ({totalCount} insgesamt Fälle)",
+      "casesInRunMultiConfig": "{uniqueCount, plural, =1 {1 eindeutiger Fall} other {# eindeutige Fälle}} insgesamt {configCount, plural, =1 {1 Konfiguration} other {# Konfigurationen}} ({totalCount, number} Gesamtzahl der Fälle)",
       "viewTestRunDetails": "Details zum Testlauf anzeigen",
       "sortByStatus": "Nach Status gruppieren",
       "sortByDate": "Nach Datum sortieren",
@@ -973,7 +975,7 @@
       "case": "{count, plural, =1 {Fall} other {Fälle}}",
       "result": "{count, plural, =1 {Ergebnis} other {Ergebnisse}}",
       "run": "{count, plural, =1 {run} other {runs}}",
-      "comment": "{count, plural, =1 {{count} Kommentar} other {{count} Kommentare}}"
+      "comment": "{count, plural, =1 {# Kommentar} other {# Kommentare}}"
     },
     "success": {
       "assigned": "Testfall erfolgreich zugewiesen",
@@ -1099,7 +1101,7 @@
       "passwordRequired": "Ein Passwort ist erforderlich.",
       "genericError": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
       "policyTitle": "Passwortanforderungen:",
-      "policyMinLength": "Mindestens {count} Zeichen",
+      "policyMinLength": "Mindestens {count, number} Zeichen",
       "policyUppercase": "Mindestens ein Großbuchstabe",
       "policyLowercase": "Mindestens ein Kleinbuchstabe",
       "policyNumbers": "Mindestens eine Zahl",
@@ -1149,7 +1151,7 @@
   },
   "projects": {
     "status": {
-      "id": "Projekt-ID: {id}",
+      "id": "Projekt-ID: {id, number}",
       "active": "Das Projekt ist aktiv",
       "completed": "Projekt abgeschlossen"
     },
@@ -1199,7 +1201,7 @@
           "updateError": "Fehler beim Aktualisieren der Einstellungen für die Problemintegration",
           "removeError": "Problem beim Entfernen der Integrationsproblematik fehlgeschlagen",
           "removeIntegration": "Integration entfernen",
-          "confirmRemove": "Entfernen bestätigen",
+          "confirmRemove": "Möchten Sie die {name} -Integration wirklich entfernen?",
           "authDescription": "Sie müssen sich mit {provider} authentifizieren, um diese Problemintegration zu nutzen.",
           "authenticating": "Authentifizierung läuft...",
           "authSuccess": "Authentifizierung erfolgreich",
@@ -1310,8 +1312,8 @@
         "deleteConfirmTitle": "Webhook-Konfiguration löschen?",
         "deleteConfirm": "Wenn Sie diese Webhook-Konfiguration löschen, werden eingehende Lieferungen abgelehnt.",
         "sendTest": "Test-Webhook senden",
-        "testSuccess": "Webhook-Test akzeptiert (HTTP {statusCode}, Ergebnis: {outcome})",
-        "testFailure": "Test des Webhooks fehlgeschlagen (HTTP {statusCode}): {error}",
+        "testSuccess": "Test-Webhook akzeptiert (HTTP {statusCode, number}, Ergebnis: {outcome})",
+        "testFailure": "Test des Webhooks fehlgeschlagen (HTTP {statusCode, number}): {error}",
         "saveError": "Webhook-Konfiguration konnte nicht gespeichert werden",
         "lastReceived": "Zuletzt empfangen: {timestamp}",
         "lastReceivedLabel": "Zuletzt empfangen:",
@@ -1397,7 +1399,7 @@
         "outboundHmacActiveSecret": "Aktiv",
         "outboundHmacInactiveSecret": "Inaktiv",
         "outboundHmacRetiringSecret": "Ruhestand",
-        "outboundHmacAutoRetireIn": "Automatischer Ruhestand in {days} Tagen",
+        "outboundHmacAutoRetireIn": "Automatischer Ruhestand in {days, number} Tagen",
         "outboundHmacRotateButton": "Geheimnis drehen",
         "outboundHmacExtendButton": "7 Tage verlängern",
         "outboundHmacRetireNowButton": "Jetzt in Rente gehen",
@@ -1481,7 +1483,7 @@
         "filterSinceDefault": "Seit…",
         "filterUntilDefault": "Bis…",
         "filterReset": "Filter zurücksetzen",
-        "filterBulkReplayButton": "Massenwiedergabe {count} Ausgehende Fehler",
+        "filterBulkReplayButton": "Massenwiederholung {count, number} Ausgehende Fehler",
         "filterBulkReplayHidden": "Alle sichtbaren Fehler sind eingehende Fehler – lösen Sie stattdessen das vorgelagerte Ereignis erneut aus.",
         "deliveriesEmpty": "Es wurden keine Lieferungen gefunden, die diesen Filtern entsprechen.",
         "deliveriesResetFilters": "Filter zurücksetzen",
@@ -1500,7 +1502,7 @@
         "drawerLabelDirection": "Richtung",
         "drawerLabelStatusCode": "Statuscode",
         "drawerLabelLatency": "Latenz",
-        "drawerLatencyValue": "{ms} ms",
+        "drawerLatencyValue": "{ms, number} ms",
         "drawerLatencyUnknown": "—",
         "drawerLabelError": "Fehler",
         "drawerLabelPayloadDigest": "Payload-Digest",
@@ -1515,16 +1517,16 @@
         "replayConfirm": "Dies löst eine echte {direction} {adapterType} Anfrage aus.",
         "replayAction": "Wiederholung",
         "bulkReplayConfirmTitle": "Ausgehende Verbindungsfehler erneut abspielen?",
-        "bulkReplayConfirm": "Replay {count} outbound failures to {configName}? This will fire {count} real HTTP requests.",
-        "bulkReplayCapExceeded": "Die Massenwiedergabe ist auf 100 ausgehende Nachrichten gleichzeitig beschränkt. Filtern Sie die Nachrichten ein oder führen Sie die Wiedergabe sequenziell aus. Aktuell würde {count} wiederholt werden.",
-        "bulkReplayAction": "Wiederholung {count}",
+        "bulkReplayConfirm": "Replay {count, number} outbound failures to {configName}? This will fire {count, number} real HTTP requests.",
+        "bulkReplayCapExceeded": "Die Massenwiedergabe ist auf 100 ausgehende Nachrichten gleichzeitig beschränkt. Filtern Sie die Nachrichten ein oder führen Sie die Wiedergabe sequenziell aus. Aktuell würde {count, number} wiederholt werden.",
+        "bulkReplayAction": "Wiederholung {count, number}",
         "healthBadge": {
           "HEALTHY": "Gesund",
           "DEGRADED": "Abgebaut",
           "DISABLED": "Deaktiviert"
         },
         "healthTooltipHealthy": "Letzter Erfolg: {lastSuccessAt}",
-        "healthTooltipDegraded": "{count} aufeinanderfolgende Fehler · zuletzt bei {lastFailureAt}",
+        "healthTooltipDegraded": "{count, number} aufeinanderfolgende Fehlschläge · letzter bei {lastFailureAt}",
         "healthTooltipDisabled": "Deaktiviert nach 10 aufeinanderfolgenden Fehlern · {lastFailureAt}",
         "activityLabel": "Liefertätigkeit",
         "activityLastDispatched": "Zuletzt versendet",
@@ -1638,8 +1640,8 @@
         "preview": {
           "resolvingBranch": "Auflösen des Zweigs…",
           "scanningFiles": "Dateien werden gescannt in {scope}…",
-          "scanningFilesCount": "Dateien werden in {scope}… durchsucht ({count} gefunden)",
-          "filtering": "Anwenden von Filtern auf {count} Dateien…"
+          "scanningFilesCount": "Dateien in {scope}… werden durchsucht ({count, number} gefunden)",
+          "filtering": "Anwenden von Filtern auf {count, number} Dateien…"
         },
         "cache": {
           "title": "Cache-Einstellungen",
@@ -1748,9 +1750,10 @@
     "toast": {
       "deleted": "Meilenstein {name} gelöscht",
       "updated": "Meilenstein aktualisiert",
+      "updatedWithName": "{name} aktualisiert",
       "updateFailed": "Meilenstein konnte nicht aktualisiert werden",
       "completed": "Meilenstein \"{name}\" abgeschlossen.",
-      "completedWithDependencies": "Meilenstein und Abhängigkeiten erfolgreich abgeschlossen."
+      "completedWithDependencies": "{name} und Abhängigkeiten erfolgreich abgeschlossen."
     },
     "errors": {
       "nameExists": "Ein Meilenstein mit diesem Namen existiert bereits.",
@@ -1819,7 +1822,7 @@
     },
     "messages": {
       "createSuccess": "Sitzung erfolgreich erstellt",
-      "createSuccessMultiple": "{count} Sitzungen erfolgreich erstellt",
+      "createSuccessMultiple": "{count, number} Sitzungen erfolgreich erstellt",
       "duplicateSuccess": "Sitzung erfolgreich dupliziert.",
       "duplicateSuccessMultiple": "{count} Sitzungen erfolgreich dupliziert"
     },
@@ -1886,8 +1889,8 @@
       "backToSession": "Zurück zur Sitzung",
       "backToLatest": "Zurück zur neuesten Version",
       "versionInfo": {
-        "created": "Version {number} Erstellt",
-        "latestUpdated": "Neueste Version {number} Aktualisiert"
+        "created": "Version {number, number} Erstellt",
+        "latestUpdated": "Neueste Version {number, number} Aktualisiert"
       },
       "renderer": {
         "noEstimate": "Keine Schätzung",
@@ -1982,7 +1985,7 @@
         "avatarUpdated": "Avatar erfolgreich aktualisiert.",
         "avatarUpdateError": "Avatar konnte nicht aktualisiert werden.",
         "deleteAvatar": "Avatar löschen",
-        "deleteAvatarConfirm": "Möchtest du deinen Avatar wirklich löschen?",
+        "deleteAvatarConfirm": "Möchten Sie Ihren Eintrag {name} wirklich löschen?",
         "emailDisabledForSso": "Die E-Mail-Adresse kann für SSO-Konten nicht geändert werden. Bitte aktualisieren Sie diese über Ihren Identitätsanbieter.",
         "emailEditableForBoth": "Sie können sich sowohl mit E-Mail/Passwort als auch mit SSO anmelden. Änderungen der E-Mail-Adresse wirken sich nur auf die Passwortauthentifizierung aus.",
         "linkSsoProvider": "Link SSO Provider"
@@ -2119,7 +2122,7 @@
       "detailsRegion": "Details zum Testfall",
       "metadataRegion": "Testfall-Metadaten",
       "versionCreated": "Version {version} Erstellt",
-      "latestVersionUpdated": "Neueste Version {version} Aktualisiert",
+      "latestVersionUpdated": "Neueste Version {version, number} Aktualisiert",
       "historyView": "Testfallverlauf anzeigen"
     },
     "fields": {
@@ -2142,7 +2145,7 @@
       "add": "Schritt hinzufügen",
       "addSharedSteps": "Gemeinsame Schritte hinzufügen",
       "delete": "Schritt löschen",
-      "confirmDelete": "Löschvorgang bestätigen Schritt {number}?",
+      "confirmDelete": "Löschvorgang bestätigen Schritt {number, number}?",
       "createSharedSteps": "Gemeinsame Schritte erstellen {number, plural, one {Schritt} other {Schritte}}",
       "sharedStepsName": "Gemeinsame Schritte Name",
       "sharedStepsDescription": "Geben Sie einen Namen für Ihren neuen gemeinsamen Schritt {number, plural, one {} other {}}ein. Dieser umfasst {number, plural, one {# ausgewählte Schritte} other {# ausgewählte Schritte}}.",
@@ -2240,7 +2243,7 @@
       "cannotReorderAcrossPages": "Testfälle können nicht seitenübergreifend neu angeordnet werden. Um die Reihenfolge zu ändern, wählen Sie im Menü „Seitengröße“ die Option „Alle“ aus, um alle Fälle auf einer Seite anzuzeigen, oder deaktivieren Sie die Auswahl von Fällen auf anderen Seiten. Sie können ausgewählte Fälle weiterhin in Ordner verschieben.",
       "exportModal": {
         "scope": {
-          "allFiltered": "Alles im Blickfeld ({count})"
+          "allFiltered": "Alles im Blickfeld ({count, number})"
         },
         "textLongFormat": {
           "label": "Rich-Text-Format"
@@ -2315,8 +2318,8 @@
         },
         "page4": {
           "title": "Vorschau Import",
-          "showing": "Anzeige der Fälle {start}-{end} von {total}",
-          "case": "Fall {number}"
+          "showing": "Zeigt {start, number}-{end, number} von {total, number} Fällen",
+          "case": "Fall {number, number}"
         }
       }
     },
@@ -2385,7 +2388,7 @@
       "description": "Bearbeiten {count, plural, one {# ausgewählter Fall} other {# ausgewählter Fall}}. Markieren Sie ein Feld, um die Bearbeitung zu aktivieren.",
       "defineStepsTitle": "Schritte für die Massenaktualisierung definieren",
       "saveNewSteps": "Neue Schritte speichern",
-      "newStepsDefined": "Neue Schritte definiert ({count}) - Zum Bearbeiten auf die Schaltfläche klicken",
+      "newStepsDefined": "Neue Schritte definiert ({count, number}) - Zum Bearbeiten auf die Schaltfläche klicken.",
       "clearExistingStepsWarning": "Die bestehenden Schritte werden entfernt.",
       "warnings": {
         "templateMismatch": {
@@ -2405,7 +2408,7 @@
         "fetchError": "Fehler beim Abrufen der Falldaten."
       },
       "success": {
-        "casesUpdated": "Fälle erfolgreich aktualisiert"
+        "casesUpdated": "{count, number} Fälle erfolgreich aktualisiert"
       },
       "placeholders": {
         "various": "<various values>"
@@ -2435,9 +2438,9 @@
       "title": "Export-Testfälle",
       "description": "Wählen Sie unten Ihre Exportoptionen aus.",
       "scope": {
-        "selected": "Ausgewählt ({count})",
-        "allFiltered": "Alle (Aktuelle Ansicht) ({count})",
-        "allProject": "Alles im Projekt ({count})"
+        "selected": "Ausgewählt ({count, number})",
+        "allFiltered": "Alle (Aktuelle Ansicht) ({count, number})",
+        "allProject": "Alles im Projekt ({count, number})"
       },
       "format": {
         "label": "Format",
@@ -2495,7 +2498,7 @@
     "aiExport": {
       "toggleLabel": "Mit KI generieren",
       "generating": "Wird generiert...",
-      "generatingProgress": "Erzeuge Fall {current} von {total}...",
+      "generatingProgress": "Erzeuge Fall {current, number} von {total, number}...",
       "generatingBatch": "Generiere {count, plural, one {# Fall} other {# Fälle}} in einer Datei...",
       "previewTitle": "Exportvorschau",
       "previewDescription": "{count, plural, one {# Datei} other {# Dateien}} generiert",
@@ -2507,14 +2510,14 @@
       "truncatedWarning": "Die Ausgabe wurde abgeschnitten – das Modell hat sein Token-Limit erreicht. Versuchen Sie, die Batchgröße zu verringern oder die maximale Anzahl an Ausgabetokens in Ihrer Eingabeaufforderungskonfiguration zu erhöhen.",
       "contextFiles": "{count, plural, one {(# Kontextdatei)} other {(# Kontextdateien)}}",
       "noCodeContextHint": "Es ist kein Code-Repository konfiguriert. Die KI verwendet Standard-Framework-Muster.",
-      "generatingParallelProgress": "Es wurden {done} von {total} Dateien generiert...",
+      "generatingParallelProgress": "Es wurden {done, number} von {total, number} Dateien generiert...",
       "cancelledGeneration": "Abgesagt"
     },
     "duplicates": {
       "findDuplicates": "Duplikate finden",
       "viewResults": "Ansicht {count, plural, one {# Ergebnis} other {# Ergebnisse}}",
       "retryScan": "Scan wiederholen",
-      "analyzing": "{analyzed}/{total}",
+      "analyzing": "{analyzed, number}/{total, number}",
       "aiAnalyzing": "Ergebnisse durch KI verbessern...",
       "scanComplete": "Duplikatanalyse abgeschlossen — {count, plural, =0 {Keine Duplikate gefunden} one {# Potenzielle Duplikate gefunden} other {# Potenzielle Duplikate gefunden}}",
       "scanFailed": "Duplikatanalyse fehlgeschlagen",
@@ -2538,8 +2541,8 @@
       "selectAll": "Alle auswählen",
       "selectRow": "Zeile auswählen",
       "selected": "{count, plural, one {# ausgewählt} other {# ausgewählt}}",
-      "bulkDismiss": "Keine Duplikate ({count})",
-      "bulkLink": "Link als verwandtes Thema ({count})",
+      "bulkDismiss": "Keine Duplikate ({count, number})",
+      "bulkLink": "Link als verwandtes Element ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# Paar verworfen} other {# Paare verworfen}}",
       "bulkLinkSuccess": "{count, plural, one {# Paar verknüpft} other {# Paare verknüpft}}",
       "bulkError": "Es sind einige Vorgänge fehlgeschlagen. Bitte versuchen Sie es erneut.",
@@ -2584,8 +2587,8 @@
       "loadingResults": "Generierte Testfälle werden geladen...",
       "generatingPreparing": "Anfrage wird vorbereitet...",
       "generatingCallingAi": "Warten auf die Generierung von Testfällen durch die KI...",
-      "generatingStreaming": "Die KI generiert den Testfall {count}...",
-      "generatingStreamingPage": "KI generiert Testfall {count} — Seite {current} von {total}: {page}",
+      "generatingStreaming": "Die KI generiert den Testfall {count, number}...",
+      "generatingStreamingPage": "KI generiert Testfall {count, number} — Seite {current, number} von {total, number}: {page}",
       "generatingProcessing": "Generierte Testfälle werden verarbeitet...",
       "generatingHint": "Dies kann je nach Komplexität Ihres Ausgangsmaterials eine Minute dauern.",
       "steps": {
@@ -2671,7 +2674,7 @@
       "review": {
         "title": "Generierte Testfälle überprüfen",
         "description": "Überprüfen Sie die KI-generierten Testfälle, nehmen Sie gegebenenfalls Änderungen vor und wählen Sie die zu importierenden Fälle aus.",
-        "selected": "{count} von {total} ausgewählt",
+        "selected": "{count, number} von {total, number} ausgewählt",
         "moreSteps": "... und {count, plural, one {# weiterer Schritt} other {# weitere Schritte}}",
         "templateFields": "Vorlagenfelder:",
         "moreFields": "... und {count, plural, one {# weitere Felder} other {# weitere Felder}}",
@@ -2681,7 +2684,7 @@
         "allPages": "Alle Seiten ({pages, plural, one {# Seite} other {# Seiten}}, {cases, plural, one {# Fall} other {# Fälle}})"
       },
       "generatingLegacy": "Generierung von Testfällen mit KI...",
-      "expandProgress": "{done} von {total} generiert",
+      "expandProgress": "{done, number} von {total, number} generiert",
       "import": "{count, plural, =0 {Testfälle importieren} =1 {1 Testfall importieren} other {# Testfälle importieren}}",
       "importing": "{count, plural, =0 {Importiere Testfälle...} =1 {Importiere 1 Testfall...} other {Importiere # Testfälle...}}",
       "openInExternalSystem": "Öffnen in {provider}",
@@ -2847,15 +2850,15 @@
       "description": "Füge dem Projekt einen neuen Testlauf hinzu.",
       "success": {
         "title": "Testlauf erfolgreich hinzugefügt",
-        "description": "Der Testlauf wurde dem Projekt hinzugefügt.",
-        "descriptionMultiple": "{count, plural, one {# test run has} other {# test runs have}} been created for '{name}'"
+        "description": "{name} wurde dem Projekt hinzugefügt",
+        "descriptionMultiple": "{count, plural, one {# Testlauf hat} other {# Testläufe haben}} wurden für {name} erstellt"
       },
       "estimates": {
         "manual": "Geschätzte manuelle Zeit",
         "automated": "Geschätzte automatische Zeit",
         "mixed": "Geschätzte manuelle/automatisierte Zeit"
       },
-      "creatingProgress": "Erstelle Testlauf {current} von {total}..."
+      "creatingProgress": "Erstelle Testlauf {current, number} von {total, number}..."
     },
     "magicSelect": {
       "title": "Magic Select",
@@ -2864,7 +2867,7 @@
       "reasoning": "KI-Schlussfolgerung",
       "reviewSelection": "Überprüfung der vorgeschlagenen Testfälle",
       "viewSuggested": "Empfohlene Fälle ansehen",
-      "tokenUsage": "{total} verwendete Tokens",
+      "tokenUsage": "{total, number} verwendete Tokens",
       "noLlmIntegration": "Die KI-Funktionen erfordern eine LLM-Integration. Konfigurieren Sie diese in den Projekteinstellungen.",
       "configure": {
         "title": "Testfallumfang",
@@ -2883,7 +2886,7 @@
       "loading": {
         "batch": "Verarbeitung des Stapels {current} von {total}",
         "analyzing": "Analyse der Testfälle...",
-        "progress": "Analysierte {analyzed} von {total} Testfällen...",
+        "progress": "Analysierte {analyzed, number} von {total, number} Testfällen...",
         "waitingForAi": "Warte auf KI-Antwort (Batch {batch} von {total})...",
         "selectedSoFar": "{count, plural, =1 {# Bisher ausgewählte Testfälle} other {# Bisher ausgewählte Testfälle}}",
         "resolving_integration": "Lösung der KI-Integration...",
@@ -3043,7 +3046,7 @@
             "mapping": "Zuordnung konfigurieren",
             "import": "Monitorimport"
           },
-          "stepIndicator": "Schritt {step} von {total}"
+          "stepIndicator": "Schritt {step, number} von {total, number}"
         },
         "fileLabel": "Testmo JSON-Datei",
         "fileHelp": "Wählen Sie den JSON-Export aus, den Sie von Testmo heruntergeladen haben.",
@@ -3174,8 +3177,8 @@
         "importProgressDescription": "{count, plural, =0 {Alle importierten Datensätze aller verfolgten Entitäten.} =1 {1 Datensatz aller verfolgten Entitäten verbleibend.} other {Anzahl der verbleibenden Datensätze aller verfolgten Entitäten.}}",
         "importProgressTotalRemaining": "{count, plural, =0 {Keine Datensätze mehr} =1 {1 Datensatz übrig} other {Anzahl der verbleibenden Datensätze}}",
         "importProgressProcessed": "{processed, number}/{total, number} Datensätze importiert",
-        "importProgressAria": "{percent}% des Imports abgeschlossen",
-        "importProgressPercentLabel": "{percent}%",
+        "importProgressAria": "{percent, number}% des Imports abgeschlossen",
+        "importProgressPercentLabel": "{percent, number}%",
         "importDurationLabel": "Gesamtzeit:",
         "activityLogTitle": "Importaktivität",
         "activityLogDescription": "Detailliertes Protokoll der Hintergrundimportschritte. Die Zeitstempel basieren auf der Serverzeitzone.",
@@ -3249,7 +3252,7 @@
           "configurationNoTokens": "In dieser Konfiguration wurden keine Varianten gefunden.",
           "configurationNoExistingTargets": "Es sind keine Konfigurationen zum Zuordnen verfügbar.",
           "configurationNamePlaceholder": "Geben Sie einen Konfigurationsnamen ein",
-          "configurationVariantLabel": "Variante {index}",
+          "configurationVariantLabel": "Variante {index, number}",
           "configurationVariantActionLabel": "Wie sollte mit dieser Variante umgegangen werden?",
           "configurationVariantActionPlaceholder": "Wählen Sie eine Option",
           "configurationVariantMapOption": "Zuordnung zu bestehender Variante",
@@ -3741,7 +3744,7 @@
       },
       "delete": {
         "title": "Projekt löschen",
-        "confirmMessage": "Möchten Sie dieses Projekt wirklich löschen?"
+        "confirmMessage": "Möchten Sie wirklich <strong>{name}</strong> löschen?"
       }
     },
     "templates": {
@@ -3781,7 +3784,7 @@
         },
         "delete": {
           "title": "Löschen Sie das Feld „Fall“",
-          "confirmMessage": "Möchten Sie dieses Fallfeld wirklich löschen?",
+          "confirmMessage": "Möchten Sie wirklich <strong>{name}</strong> löschen?",
           "warning": "Das Feld „Fall“ wird aus allen Vorlagen entfernt. Diese Aktion kann nicht rückgängig gemacht werden."
         }
       },
@@ -3955,12 +3958,12 @@
       "saveChanges": "Änderungen speichern",
       "forceAllUsers": "Alle Benutzer zur Passwortänderung zwingen",
       "forceAllUsersDialogTitle": "Passwortänderung für alle Benutzer erzwingen",
-      "forceAllUsersDialogDescription": "Dies erfordert, dass {count} Benutzer, die auf Anmeldeinformationen angewiesen sind, ihr Passwort beim nächsten Login ändern.",
+      "forceAllUsersDialogDescription": "Dies erfordert, dass {count, number} Benutzer, die auf Anmeldeinformationen angewiesen sind, ihr Passwort beim nächsten Login ändern.",
       "forceAllUsersDialogWarning": "Diese Handlung kann nicht rückgängig gemacht werden.",
       "forceAllUsersDialogConfirm": "Kraftänderung",
       "saved": "Sicherheitseinstellungen gespeichert",
       "saveFailed": "Sicherheitseinstellungen konnten nicht gespeichert werden",
-      "forceAllSuccess": "Passwortänderung für {count} Benutzer erforderlich",
+      "forceAllSuccess": "Passwortänderung für {count, number} Benutzer erforderlich",
       "forceAllFailed": "Passwortänderung konnte nicht erzwungen werden"
     },
     "apiTokens": {
@@ -3999,7 +4002,7 @@
       },
       "delete": {
         "title": "Tag löschen",
-        "confirmMessage": "Möchten Sie dieses Tag wirklich löschen?",
+        "confirmMessage": "Möchten Sie wirklich das {name} -Tag löschen?",
         "warning": "Dieses Tag wird aus allen Testfällen und Sitzungen entfernt.",
         "errors": {
           "unknown": "Beim Löschen des Tags ist ein Fehler aufgetreten."
@@ -4030,7 +4033,7 @@
       },
       "delete": {
         "title": "Workflow löschen",
-        "confirmMessage": "Möchten Sie diesen Workflow wirklich löschen?"
+        "confirmMessage": "Möchten Sie wirklich <strong>{name}</strong> löschen?"
       },
       "setDefault": {
         "title": "Standard-Workflow festlegen",
@@ -4058,7 +4061,7 @@
       },
       "delete": {
         "title": "Rolle löschen",
-        "confirmMessage": "Möchten Sie diese Rolle wirklich löschen?",
+        "confirmMessage": "Möchten Sie die Rolle {name} wirklich löschen?",
         "warning": "Diese Aktion kann nicht rückgängig gemacht werden. Benutzer mit dieser Rolle werden der Standardrolle zugewiesen.",
         "errors": {
           "defaultNotFound": "Standardrolle kann nicht gelöscht werden"
@@ -4149,7 +4152,7 @@
       "combinations": {
         "title": "Kombinationen",
         "description": "Globale Kombinationen verwalten",
-        "confirmDescription": "Es werden die folgenden {count} Kombinationen erstellt.",
+        "confirmDescription": "Es werden die folgenden {count, number} Kombinationen erstellt.",
         "addCombination": "Kombination hinzufügen",
         "editCombination": "Bearbeitungskombination",
         "selectCombination": "Kombination auswählen",
@@ -4226,8 +4229,8 @@
         "title": "Meilensteintyp bearbeiten"
       },
       "delete": {
-        "title": "Meilensteintyp löschen",
-        "confirmMessage": "Möchten Sie diesen Meilensteintyp wirklich löschen?"
+        "title": "Löschen {item}",
+        "confirmMessage": "Möchten Sie den Meilensteintyp {name} wirklich löschen?"
       }
     },
     "issue_config": {
@@ -4634,7 +4637,7 @@
       },
       "edit": {
         "title": "Integration des KI-Modells bearbeiten",
-        "description": "Aktualisieren Sie die Konfiguration für diese KI-Modellintegration.",
+        "description": "Aktualisieren Sie die Konfiguration für die {name} KI-Modellintegration",
         "statusDescription": "Diese Integration aktivieren oder deaktivieren",
         "apiKeyPlaceholder": "Geben Sie einen neuen API-Schlüssel ein, um das Update durchzuführen...",
         "update": "Aktualisieren",
@@ -4653,7 +4656,7 @@
       },
       "delete": {
         "title": "KI-Modellintegration löschen",
-        "description": "Sind Sie sicher, dass Sie diese KI-Modellintegration löschen möchten? Dadurch wird sie aus allen Projekten entfernt und kann nicht rückgängig gemacht werden.",
+        "description": "Möchten Sie die KI-Modellintegration {name} wirklich löschen? Dadurch wird sie aus allen Projekten entfernt und kann nicht rückgängig gemacht werden.",
         "integrationDeletedSuccess": "Die Integration des KI-Modells wurde erfolgreich gelöscht.",
         "failedToDeleteIntegration": "Fehler beim Löschen der KI-Modellintegration",
         "cannotDeleteDefault": "Das Standard-KI-Modell kann nicht gelöscht werden. Legen Sie zuerst ein anderes als Standard fest."
@@ -4725,7 +4728,7 @@
         "warning": "Diese Aktion kann nicht rückgängig gemacht werden. Alle Projekte, die diese Konfiguration verwenden, werden auf die Standardkonfiguration zurückgesetzt."
       },
       "llmColumn": "LLM",
-      "mixedLlms": "{count} LLMs",
+      "mixedLlms": "{count, number} LLMs",
       "cannotDeleteDefault": "Die Standard-Eingabeaufforderungskonfiguration kann nicht gelöscht werden. Legen Sie zuerst eine andere als Standard fest.",
       "defaultChanged": "Die Standard-Eingabeaufforderungskonfiguration wurde erfolgreich aktualisiert.",
       "featureLabels": {
@@ -4952,7 +4955,7 @@
     "notifications": {
       "empty": "Keine Benachrichtigungen",
       "aria": {
-        "notifications": "Benachrichtigungen ({count} ungelesen)"
+        "notifications": "Benachrichtigungen ({count, number} ungelesen)"
       },
       "actions": {
         "markRead": "Als gelesen markieren",
@@ -5097,11 +5100,11 @@
       "sharedStepGroupCreateNewDesc": "Es wird eine neue gemeinsame Schrittgruppe erstellt.",
       "go": "Gehen",
       "processing": "Verarbeitung...",
-      "progressText": "{processed} von {total} Fällen bearbeitet",
+      "progressText": "{processed, number} von {total, number} Fällen bearbeitet",
       "successCount": "{count} Fall(e) {operation}d erfolgreich",
-      "skipped": "Übersprungen: {count}",
-      "droppedLinks": "Projektübergreifende Verknüpfungen entfernt: {count}",
-      "errorCount": "{count} Fall(e) fehlgeschlagen",
+      "skipped": "Übersprungen: {count, number}",
+      "droppedLinks": "Projektübergreifende Links entfernt: {count, number}",
+      "errorCount": "{count, number} Fall(e) fehlgeschlagen",
       "viewInTargetProject": "Im Zielprojekt anzeigen",
       "failed": "Fehlgeschlagen",
       "folderMode": "Ordner \"{folderName}\" — {caseCount, plural, one {# Fall} other {# Fälle}}"
@@ -5128,7 +5131,7 @@
     "unlinkError": "Problem konnte nicht gelöst werden",
     "noIssuesFound": "Es wurden keine Probleme gefunden",
     "startTypingToSearch": "Beginnen Sie mit der Eingabe, um nach Problemen zu suchen.",
-    "selectedCount": "{count} ausgewählt",
+    "selectedCount": "{count, number} ausgewählt",
     "confirmSelection": "Auswahl bestätigen",
     "alreadyLinked": "Bereits verlinkt",
     "authenticate": "Authentifizieren",
@@ -5142,7 +5145,7 @@
     "error": "Fehler beim Laden",
     "errorDescription": "Probleme beim Laden. Bitte versuchen Sie es erneut.",
     "selectIssues": "Themen auswählen",
-    "authRequiredDescription": "Bitte authentifizieren Sie sich mit {provider} , um nach Problemen zu suchen.",
+    "authRequiredDescription": "Bitte authentifizieren Sie sich, um nach Problemen zu suchen.",
     "integrationNotConfigured": "Integration nicht konfiguriert",
     "integrationNotConfiguredDescription": "Diese Integration ist noch nicht vollständig konfiguriert. Bitte wenden Sie sich an Ihren Projektadministrator, um das externe Projekt in den Projekteinstellungen zu konfigurieren.",
     "createIssue": "Problem erstellen",
@@ -5189,7 +5192,7 @@
     "searchUsers": "Benutzer suchen",
     "noTeamsAvailable": "Keine Teams verfügbar",
     "filterAll": "Alle",
-    "fanOutPartialFailure": "{count} Projekt(e) konnten nicht erreicht werden. Ergebnisse von {successCount} Projekt(en) werden angezeigt.",
+    "fanOutPartialFailure": "Das/Die Projekt(e) {count, number} konnte/konnten nicht erreicht werden. Es werden Ergebnisse vom/von den Projekt(en) {successCount, number} angezeigt.",
     "projectSelectorLabel": "Projekt",
     "searchFailedTitle": "Suche fehlgeschlagen"
   },
@@ -5229,7 +5232,7 @@
   },
   "charts": {
     "average": "Durchschnitt",
-    "count": "Anzahl: {count}",
+    "count": "Anzahl: {count, number}",
     "percent": "Prozent: {percent}%",
     "completed": "Abgeschlossen: {count}",
     "durationRange": "Dauer: {from}s - {to}s",
@@ -6262,7 +6265,7 @@
       "loadingMore": "Weitere Informationen werden geladen...",
       "noRecords": "Keine Datensätze gefunden",
       "error": "Datensätze konnten nicht geladen werden",
-      "recordCount": "{count} {count, plural, =1 {Datensatz} other {Datensätze}}",
+      "recordCount": "{count, plural, =1 {# Datensatz} other {# Datensätze}}",
       "allRecords": "Alle Datensätze",
       "allLoaded": "Alle Datensätze geladen"
     },
@@ -6516,8 +6519,8 @@
       },
       "page3": {
         "title": "Vorschau der Importdaten",
-        "showing": "Zeigt {start} bis {end} der {total} gemeinsamen Schritte",
-        "step": "Gemeinsamer Schritt {number}",
+        "showing": "Zeigt {start, number} bis {end, number} von {total, number} gemeinsamen Schritten",
+        "step": "Gemeinsamer Schritt {number, number}",
         "noValue": "(leer)"
       }
     },
@@ -6539,7 +6542,7 @@
       "noResultsDescription": "Führen Sie einen Scan durch, um wiederkehrende Schrittsequenzen in Ihren Testfällen zu erkennen.",
       "filterPlaceholder": "Nach Fallnamen filtern...",
       "selected": "{count, plural, one {# ausgewählt} other {# ausgewählt}}",
-      "bulkDismiss": "Schließen ({count})",
+      "bulkDismiss": "Schließen ({count, number})",
       "bulkDismissSuccess": "{count, plural, one {# Spiel abgebrochen} other {# Spiele abgebrochen}}",
       "bulkError": "Es sind einige Vorgänge fehlgeschlagen. Bitte versuchen Sie es erneut.",
       "tableHint": "Klicken Sie auf eine Zeile, um die zugehörigen Schritte in der Vorschau anzuzeigen. Markieren Sie Zeilen mit Kontrollkästchen, um Massenaktionen durchzuführen.",
@@ -6555,7 +6558,7 @@
       "cancelScan": "Scan abbrechen",
       "findStepDuplicates": "Schrittduplikate finden",
       "rescan": "Scan",
-      "viewResults": "Ergebnisse anzeigen ({count})",
+      "viewResults": "Ergebnisse anzeigen ({count, number})",
       "retryScan": "Scan wiederholen",
       "dialog": {
         "title": "In gemeinsame Schritte umwandeln",
@@ -6805,9 +6808,9 @@
     },
     "progress": {
       "starting": "Analyse wird gestartet...",
-      "analyzed": "Analysierte {analyzed}/{total} Entitäten",
-      "sizing": "Optimale Batchgröße ermitteln (Versuch von {size} Entitäten)...",
-      "streaming": "Empfange KI-Antwort ({analyzed}/{total} Entitäten abgeschlossen)...",
+      "analyzed": "Analysierte {analyzed, number}/{total, number} Entitäten",
+      "sizing": "Optimale Batchgröße ermitteln (Versuch mit {size, number} Entitäten)...",
+      "streaming": "Empfange KI-Antwort ({analyzed, number}/{total, number} Entitäten abgeschlossen)...",
       "finalizing": "Ergebnisse werden vorbereitet...",
       "complete": "Analyse abgeschlossen",
       "reviewSuggestions": "Vorschläge zur Überprüfung",
@@ -6815,7 +6818,7 @@
     },
     "wizard": {
       "description": "Die KI analysiert alle Testfälle, Testläufe und Sitzungen Ihres Projekts und schlägt basierend auf deren Inhalt relevante Tags vor.",
-      "entityLine": "{count} {type}",
+      "entityLine": "{count, number} {type}",
       "startAnalysis": "Analyse starten",
       "untaggedOnly": "Analysiere nur Datensätze ohne vorhandene Tags.",
       "allowNewTags": "Erstellen neuer Tags zulassen",
@@ -6834,7 +6837,7 @@
     "fair": "Gerecht",
     "good": "Gut",
     "strong": "Stark",
-    "minLength": "Mindestens {count} Zeichen",
+    "minLength": "Mindestens {count, number} Zeichen",
     "uppercase": "Mindestens ein Großbuchstabe",
     "lowercase": "Mindestens ein Kleinbuchstabe",
     "numbers": "Mindestens eine Zahl",

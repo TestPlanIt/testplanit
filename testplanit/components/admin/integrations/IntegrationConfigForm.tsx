@@ -268,11 +268,9 @@ export function IntegrationConfigForm({
 
   const getFieldLabel = (label: string): string => {
     if (label.startsWith("common.")) {
-      // Type assertion needed for dynamic keys - validated at runtime by startsWith check
-      return tCommon(label as Parameters<typeof tCommon>[0]);
+      return (tCommon as unknown as (key: string) => string)(label);
     }
-    // Type assertion needed for dynamic keys - all non-common keys are in admin.integrations namespace
-    return t(label as Parameters<typeof t>[0]);
+    return (t as unknown as (key: string) => string)(label);
   };
 
   const handleFieldChange = (field: FieldConfig, value: string) => {
@@ -345,15 +343,15 @@ export function IntegrationConfigForm({
                   >
                     <SelectTrigger>
                       <SelectValue
-                        placeholder={t(
-                          field.placeholder as Parameters<typeof t>[0]
+                        placeholder={(t as unknown as (key: string) => string)(
+                          field.placeholder
                         )}
                       />
                     </SelectTrigger>
                     <SelectContent>
                       {field.options.map((opt) => (
                         <SelectItem key={opt.value} value={opt.value}>
-                          {t(opt.label as Parameters<typeof t>[0])}
+                          {(t as unknown as (key: string) => string)(opt.label)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -364,7 +362,9 @@ export function IntegrationConfigForm({
                     placeholder={
                       isEncrypted
                         ? "••••••••••••"
-                        : t(field.placeholder as Parameters<typeof t>[0])
+                        : (t as unknown as (key: string) => string)(
+                            field.placeholder
+                          )
                     }
                     value={value}
                     onChange={(e) => handleFieldChange(field, e.target.value)}

@@ -186,9 +186,7 @@ function Users() {
           <CardHeader className="w-full">
             <div>
               <div>
-                <CardTitle>
-                  {tCommon("fields.users", { count: totalItems })}
-                </CardTitle>
+                <CardTitle>{tCommon("fields.users")}</CardTitle>
               </div>
               <div></div>
             </div>

@@ -184,7 +184,7 @@ export function WebhookDeliveryDrawer({
                       {(() => {
                         const k = eventLabelKey(delivery.eventType);
                         return k
-                          ? t(k as Parameters<typeof t>[0])
+                          ? (t as unknown as (key: string) => string)(k)
                           : (delivery.eventType ?? "—");
                       })()}
                     </p>
