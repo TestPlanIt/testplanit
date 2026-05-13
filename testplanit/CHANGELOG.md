@@ -1,3 +1,12 @@
+## [0.27.6](https://github.com/TestPlanIt/testplanit/compare/v0.27.5...v0.27.6) (2026-05-13)
+
+### Bug Fixes
+
+* address CodeQL quality findings and bump dependencies ([#311](https://github.com/TestPlanIt/testplanit/issues/311)) ([3bcc423](https://github.com/TestPlanIt/testplanit/commit/3bcc4239c20938e5da8412f0ba3f82b967859127))
+* **ci:** pull --rebase before pushing in Crowdin sync workflow ([#307](https://github.com/TestPlanIt/testplanit/issues/307)) ([f587a60](https://github.com/TestPlanIt/testplanit/commit/f587a6082432cbfca9eda50f51f49e8f90446fca))
+* **ci:** use RELEASE_PLEASE_TOKEN in Crowdin sync to bypass branch protection ([#310](https://github.com/TestPlanIt/testplanit/issues/310)) ([62b896b](https://github.com/TestPlanIt/testplanit/commit/62b896befd30c17d8c547934e05d0708f2175dcb))
+* **tests:** add useExecutionLogColumns mock to ReportRenderer test ([#308](https://github.com/TestPlanIt/testplanit/issues/308)) ([1d9881f](https://github.com/TestPlanIt/testplanit/commit/1d9881ffbcf0707e927d6ab9494dbc2aa2a6f9a4))
+
 ## [0.27.5](https://github.com/TestPlanIt/testplanit/compare/v0.27.4...v0.27.5) (2026-05-13)
 
 ### Enhancements
