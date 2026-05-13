@@ -1,3 +1,9 @@
+## [0.27.5](https://github.com/TestPlanIt/testplanit/compare/v0.27.4...v0.27.5) (2026-05-13)
+
+### Enhancements
+
+* **reports:** add Execution Log pre-built report ([6631cad](https://github.com/TestPlanIt/testplanit/commit/6631cad42970cb7b53234066a3eb9c6089b1f19f))
+
 ## [0.27.4](https://github.com/TestPlanIt/testplanit/compare/v0.27.3...v0.27.4) (2026-05-13)
 
 ### Bug Fixes
