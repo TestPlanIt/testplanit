@@ -9,8 +9,11 @@ import {
   redactValues,
   type ParameterSchemaEntry,
 } from "~/lib/services/parameterRedaction";
+import {
+  computeWorstOfStatus,
+  type RollupStatus,
+} from "~/lib/services/iterationRollup";
 import { authOptions } from "~/server/auth";
-import { computeWorstOfStatus, type RollupStatus } from "./worstOf";
 
 const submitResultSchema = z.object({
   testRunId: z.number().int().positive(),

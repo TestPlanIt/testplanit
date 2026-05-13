@@ -18,7 +18,7 @@ import {
   computeWorstOfStatus,
   type RollupIteration,
   type RollupStatus,
-} from "./worstOf";
+} from "./iterationRollup";
 
 // Synthetic Status fixtures. `order` mirrors the seeded ranking so the
 // pairwise matrix demonstrates that admin-defined ordering produces the

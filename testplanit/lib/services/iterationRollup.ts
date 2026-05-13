@@ -1,9 +1,14 @@
 /**
  * Worst-of status rollup for parameterized test-case iterations.
  *
- * Used by `/api/test-runs/submit-result` to update `TestRunCases.statusId`
- * after every iteration result write. The case-level status is the WORST
- * status across all live iterations under the case.
+ * Shared helper for every endpoint that rolls up a parameterized
+ * test-run case's status from its iterations:
+ *   - `/api/test-runs/submit-result` — single-iteration result writes
+ *   - `/api/repository/test-runs/[runId]/cases/[caseId]/iterations/bulk-skip`
+ *     — atomic multi-iteration skip
+ *
+ * The case-level status is the WORST status across all live iterations
+ * under the case.
  *
  * Status names are admin-defined and not reliable. The only signal we can
  * trust is the (isSuccess, isFailure, isCompleted) triplet, plus the

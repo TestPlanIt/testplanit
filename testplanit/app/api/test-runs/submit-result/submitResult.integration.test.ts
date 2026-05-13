@@ -23,7 +23,11 @@
  */
 
 import { afterAll, describe, expect, it } from "vitest";
-import { computeWorstOfStatus, type RollupStatus } from "./worstOf";
+
+import {
+  computeWorstOfStatus,
+  type RollupStatus,
+} from "~/lib/services/iterationRollup";
 
 const RUN_INTEGRATION = process.env.RUN_DB_INTEGRATION === "1";
 const HAS_DB_URL = Boolean(process.env.DATABASE_URL);

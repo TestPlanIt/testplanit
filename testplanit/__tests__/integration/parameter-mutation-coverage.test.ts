@@ -58,6 +58,10 @@ function isExemptFile(file: string): boolean {
   if (file === HELPER_FILE) return true;
   if (file.startsWith(TEST_DIR_MARKER)) return true;
   if (file.includes(SERVICE_TEST_DIR_MARKER)) return true;
+  // Co-located test files (e.g. `route.integration.test.ts` next to a
+  // route) are also exempt — they exercise mutation paths through fixtures
+  // that don't represent production code.
+  if (/\.(test|spec|integration\.test)\.(t|j)sx?$/.test(file)) return true;
   return false;
 }
 

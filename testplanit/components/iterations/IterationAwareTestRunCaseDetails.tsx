@@ -12,6 +12,7 @@ import { useFindManyTestRunCaseIteration } from "~/lib/hooks";
 import type { OverrideParameterSchemaEntry } from "~/lib/schemas/iterationOverrideSchema";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 
+import { IterationBulkConfirmDialog } from "./IterationBulkConfirmDialog";
 import { IterationHeader } from "./IterationHeader";
 import { IterationOverrideBanner } from "./IterationOverrideBanner";
 import { IterationSidebar } from "./IterationSidebar";
@@ -80,6 +81,8 @@ export function IterationAwareTestRunCaseDetails({
   // Dialog state: Override (Task 12), BulkConfirm (Task 13).
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [overrideTargetId, setOverrideTargetId] = useState<number | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkIterationIds, setBulkIterationIds] = useState<number[]>([]);
 
   // Conservative client-side default: only system ADMINs see sensitive
   // plaintext in the dialog. Non-admin users get the redacted/disabled
@@ -299,9 +302,8 @@ export function IterationAwareTestRunCaseDetails({
     }
     if (action === "skip") {
       // Single-iteration skip reuses the bulk-skip path with one element.
-      // Wave 5 Task 13 wires the bulk dialog; for Task 12 we leave this a
-      // no-op so the override path can ship independently.
-      void iterationId;
+      setBulkIterationIds([iterationId]);
+      setBulkOpen(true);
       return;
     }
     if (action === "reset") {
@@ -311,9 +313,8 @@ export function IterationAwareTestRunCaseDetails({
   };
 
   const handleBulkSkip = (iterationIds: number[]) => {
-    // Task 13 wires the IterationBulkConfirmDialog. For Task 12 ship, this
-    // remains a no-op stub so the override flow can land independently.
-    void iterationIds;
+    setBulkIterationIds(iterationIds);
+    setBulkOpen(true);
   };
 
   const overrideTargetIteration = useMemo(
@@ -325,6 +326,14 @@ export function IterationAwareTestRunCaseDetails({
     if (!overrideTargetIteration) return null;
     return snapshotRows[overrideTargetIteration.rowIndex] ?? null;
   }, [overrideTargetIteration, snapshotRows]);
+
+  const alreadyCompletedInBulk = useMemo(
+    () =>
+      iterations.filter(
+        (it) => bulkIterationIds.includes(it.id) && it.isCompleted
+      ).length,
+    [iterations, bulkIterationIds]
+  );
 
   return (
     <div className="flex flex-col md:flex-row h-full">
@@ -381,7 +390,18 @@ export function IterationAwareTestRunCaseDetails({
         />
       )}
 
-      {/* IterationBulkConfirmDialog mounted in Task 13. */}
+      <IterationBulkConfirmDialog
+        open={bulkOpen}
+        onOpenChange={(next) => {
+          setBulkOpen(next);
+          if (!next) setBulkIterationIds([]);
+        }}
+        iterationIds={bulkIterationIds}
+        runId={testRunId}
+        caseId={testRunCaseId}
+        alreadyCompletedCount={alreadyCompletedInBulk}
+        statusName={t("iterationStatusSkipped")}
+      />
     </div>
   );
 }
