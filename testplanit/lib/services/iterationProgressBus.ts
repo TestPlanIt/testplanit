@@ -1,63 +1,102 @@
 /**
- * Iteration progress bus — stub for Wave 1.
+ * Iteration progress bus — in-memory pub/sub for async iteration generation.
  *
- * Wave 3 (Task 8 in the phase plan) replaces this stub with a real
- * in-memory pub/sub that drives the polling progress toast and the
- * in-page IterationSidebarGeneratingState overlay. Until then, the
- * stub satisfies the AddTestRunModal's import for async-path runs
- * without coupling Wave 1 to the Wave 3 surface.
+ * The AddTestRunModal calls `start()` after enqueueing a fan-out job. A
+ * single React subscriber (mounted once at the providers level) drives the
+ * polling loop against `/api/test-runs/iterations/status/[jobId]` and the
+ * `RunGenerationProgressToast` UI. The IterationSidebarGeneratingState
+ * overlay subscribes too so the in-page progress card stays in sync.
  *
- * Behavior of the stub:
- *   - `start()` records the job in a module-level Map so a future Wave 3
- *     consumer mounted at app startup CAN pick up jobs that were
- *     enqueued before its mount (defensive — prevents lost progress
- *     for jobs in flight at the moment of upgrade).
- *   - No subscribers, no dispatch, no UI side effects. The polling
- *     status endpoint is the authoritative source of truth for the
- *     async path; this bus just multicasts that polling result to any
- *     consumer that wants to render it.
- *
- * Wave 3 must KEEP the same `start()` signature so AddTestRunModal
- * does not need a second edit when the real implementation lands.
+ * Module-scoped state is intentional — there is exactly one bus per browser
+ * tab. The polling consumer is mounted once via `<RunGenerationProgressMount />`
+ * in `app/providers.tsx`; if you mount it elsewhere too, you will get
+ * duplicate `setInterval` loops per job.
  */
 
-export interface IterationProgressJob {
+export type IterationProgressState =
+  | "queued"
+  | "active"
+  | "completed"
+  | "failed";
+
+export interface ProgressJob {
   jobId: string;
   runId: number;
   runName: string;
   total: number;
+  processed: number;
+  state: IterationProgressState;
+  failedReason?: string;
 }
 
-const inFlight = new Map<string, IterationProgressJob>();
+type Listener = (jobs: Map<string, ProgressJob>) => void;
 
-/**
- * Register a newly-enqueued iteration-generation job. Called from the
- * AddTestRunModal submission flow when /generate-iterations returns
- * `async: true`. Wave 3 will add a subscribe()/unsubscribe()/poll()
- * surface that drives the toast and in-page overlay.
- */
-function start(job: IterationProgressJob): void {
-  inFlight.set(job.jobId, job);
+const listeners = new Set<Listener>();
+const jobs = new Map<string, ProgressJob>();
+
+function emit(): void {
+  const snapshot = new Map(jobs);
+  for (const fn of listeners) {
+    fn(snapshot);
+  }
 }
 
-/**
- * Snapshot of currently-tracked jobs. Wave 3's mount-time consumer
- * uses this to recover jobs enqueued before it subscribed.
- */
-function snapshot(): IterationProgressJob[] {
-  return Array.from(inFlight.values());
+function start(args: {
+  jobId: string;
+  runId: number;
+  runName: string;
+  total: number;
+}): void {
+  jobs.set(args.jobId, {
+    jobId: args.jobId,
+    runId: args.runId,
+    runName: args.runName,
+    total: args.total,
+    processed: 0,
+    state: "queued",
+  });
+  emit();
 }
 
-/**
- * Test/dev helper — drop a job from the in-memory map. Production
- * Wave 3 implementation will clear jobs on completion or failure.
- */
-function clear(jobId: string): void {
-  inFlight.delete(jobId);
+function update(jobId: string, patch: Partial<ProgressJob>): void {
+  const cur = jobs.get(jobId);
+  if (!cur) return;
+  jobs.set(jobId, { ...cur, ...patch });
+  emit();
+}
+
+function remove(jobId: string): void {
+  if (jobs.delete(jobId)) {
+    emit();
+  }
+}
+
+function subscribe(fn: Listener): () => void {
+  listeners.add(fn);
+  // Push the current snapshot immediately so subscribers don't miss state
+  // for jobs that started before they mounted.
+  fn(new Map(jobs));
+  return () => {
+    listeners.delete(fn);
+  };
+}
+
+function snapshot(): ProgressJob[] {
+  return Array.from(jobs.values());
 }
 
 export const iterationProgressBus = {
   start,
+  update,
+  remove,
+  subscribe,
   snapshot,
-  clear,
 };
+
+// Backwards-compat alias for Wave 1's `IterationProgressJob` type. Existing
+// import sites (AddTestRunModal) reference this name and only use the four
+// fields the start() call already supplies.
+export type IterationProgressJob = Pick<
+  ProgressJob,
+  "jobId" | "runId" | "runName" | "total"
+>;
