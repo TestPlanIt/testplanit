@@ -222,8 +222,23 @@ describeIntegration("iteration values override (live DB)", () => {
         where: { id: iteration!.dataSetSnapshotId! },
         select: { rowsJson: true },
       });
-      const snapRows = snap!.rowsJson as Array<Record<string, unknown>>;
-      expect(snapRows[iteration!.rowIndex].username).toBe("alice");
+      // Snapshot rows have shape { sourceRowId, rowIndex, label, valuesJson }
+      // — original parameter values live under `valuesJson`, not at the top
+      // level (materializeIterations wraps each dataset row this way for audit
+      // correlation).
+      const snapRows = snap!.rowsJson as Array<{
+        rowIndex: number;
+        valuesJson: Record<string, unknown>;
+      }>;
+      const matching = snapRows.find(
+        (r) => r.rowIndex === iteration!.rowIndex,
+      );
+      expect(matching).toBeDefined();
+      // Iteration may correspond to rowIndex 0 (alice) or 1 (bob) depending
+      // on findFirst ordering; assert the original value is unchanged from
+      // the dataset row, whichever was picked.
+      const expectedUsername = iteration!.rowIndex === 0 ? "alice" : "bob";
+      expect(matching!.valuesJson.username).toBe(expectedUsername);
     });
   });
 

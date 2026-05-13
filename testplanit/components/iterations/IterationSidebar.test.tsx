@@ -1,5 +1,5 @@
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { render, screen, within } from "~/test/test-utils";
 
@@ -9,6 +9,21 @@ import { IterationSidebar } from "./IterationSidebar";
 import type { IterationDTO, IterationParameterMeta } from "./types";
 
 const replaceMock = vi.fn();
+// Mutable search-params for ITER-09 URL-param tests; default empty.
+let mockSearchParams = new URLSearchParams();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    replace: replaceMock,
+    push: vi.fn(),
+    refresh: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+  }),
+  usePathname: () => "/projects/runs/1/2",
+  useSearchParams: () => mockSearchParams,
+  useParams: () => ({}),
+}));
 
 vi.mock("~/lib/navigation", () => ({
   Link: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -44,6 +59,9 @@ function mkIteration(
 }
 
 describe("IterationSidebar", () => {
+  beforeEach(() => {
+    mockSearchParams = new URLSearchParams();
+  });
   afterEach(() => {
     replaceMock.mockClear();
     for (const job of iterationProgressBus.snapshot()) {
@@ -195,5 +213,57 @@ describe("IterationSidebar", () => {
     expect(
       screen.queryByTestId("iteration-sidebar-list")
     ).not.toBeInTheDocument();
+  });
+
+  // ITER-09: ?iteration=N URL param sets active iteration on page load.
+  it("marks the iteration matching the ?iteration=N URL param as active on mount", () => {
+    mockSearchParams = new URLSearchParams("iteration=2");
+    render(
+      <IterationSidebar
+        testRunCaseId={1}
+        runId={2}
+        iterations={[mkIteration(0), mkIteration(1), mkIteration(2)]}
+        parametersSchema={parametersSchema}
+        isRunCompleted={false}
+        onIterationMenuAction={vi.fn()}
+        onBulkSkip={vi.fn()}
+      />
+    );
+    // iteration=2 is 1-indexed → rowIndex 1 is active.
+    expect(screen.getByTestId("iteration-row-1")).toHaveAttribute(
+      "data-active",
+      "true"
+    );
+    expect(screen.getByTestId("iteration-row-0")).toHaveAttribute(
+      "data-active",
+      "false"
+    );
+    expect(screen.getByTestId("iteration-row-2")).toHaveAttribute(
+      "data-active",
+      "false"
+    );
+  });
+
+  // ITER-09: Enter key on a focused row fires router.replace with ?iteration=N.
+  it("fires router.replace with the right iteration ordinal on Enter key", async () => {
+    const user = userEvent.setup();
+    render(
+      <IterationSidebar
+        testRunCaseId={1}
+        runId={2}
+        iterations={[mkIteration(0), mkIteration(1), mkIteration(2)]}
+        parametersSchema={parametersSchema}
+        isRunCompleted={false}
+        onIterationMenuAction={vi.fn()}
+        onBulkSkip={vi.fn()}
+      />
+    );
+    const row = screen.getByTestId("iteration-row-2");
+    row.focus();
+    await user.keyboard("{Enter}");
+    expect(replaceMock).toHaveBeenCalled();
+    const args = replaceMock.mock.calls[0]?.[0] as string;
+    // rowIndex 2 → 1-indexed ordinal 3.
+    expect(args).toContain("iteration=3");
   });
 });

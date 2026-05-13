@@ -427,6 +427,61 @@ describeIntegration("materializeIterations (live DB)", () => {
     });
   });
 
+  it("rolls back atomically when an error is thrown after fan-out completes (ITER-06 atomicity)", async () => {
+    // ITER-06 invariant (VALIDATION.md): fan-out is all-or-nothing. If
+    // anything throws after materializeIterations runs but before the
+    // transaction commits, the snapshot + iteration rows must NOT persist.
+    //
+    // We exercise this by running the full materialize inside a real
+    // prisma.$transaction that throws a sentinel error at the end. Prisma
+    // rolls back; we then read OUTSIDE any transaction to confirm that no
+    // TestRunCaseIteration rows survive. Since the seed data is also part
+    // of the rolled-back transaction, this leaves the DB untouched.
+    const { prisma, materializeIterations } = await importDeps();
+    const ROLLBACK_TAG = `__ITER06_ATOMIC_${Date.now()}__`;
+    let snapshotIdFromInsideTx: number | undefined;
+    let testRunCaseIdFromInsideTx: number | undefined;
+
+    let thrown: unknown;
+    try {
+      await prisma.$transaction(async (tx: any) => {
+        const fx = await seedFixture(tx);
+        testRunCaseIdFromInsideTx = fx.testRunCaseId;
+        const result = await materializeIterations(fx.testRunId, tx);
+        // Sanity: materializeIterations actually wrote rows inside the tx
+        // (the rollback then reverts those writes).
+        expect(result.iterationCount).toBeGreaterThan(0);
+        const snap = await tx.testRunCaseDataSetSnapshot.findFirst({
+          where: { testRunCaseId: fx.testRunCaseId },
+          select: { id: true },
+        });
+        snapshotIdFromInsideTx = snap?.id;
+        expect(snapshotIdFromInsideTx).toBeDefined();
+        throw new Error(ROLLBACK_TAG);
+      });
+    } catch (err) {
+      thrown = err;
+    }
+    expect(thrown).toBeInstanceOf(Error);
+    expect((thrown as Error).message).toContain(ROLLBACK_TAG);
+
+    // Read OUTSIDE the tx — none of the in-tx writes should survive.
+    const surviveSnapshot = snapshotIdFromInsideTx
+      ? await prisma.testRunCaseDataSetSnapshot.findUnique({
+          where: { id: snapshotIdFromInsideTx },
+          select: { id: true },
+        })
+      : null;
+    expect(surviveSnapshot).toBeNull();
+
+    const surviveIterations = testRunCaseIdFromInsideTx
+      ? await prisma.testRunCaseIteration.count({
+          where: { testRunCaseId: testRunCaseIdFromInsideTx },
+        })
+      : 0;
+    expect(surviveIterations).toBe(0);
+  });
+
   it("emits progress callbacks at the configured cadence", async () => {
     const { prisma, materializeIterations } = await importDeps();
     await withRollback(prisma, async (tx) => {
