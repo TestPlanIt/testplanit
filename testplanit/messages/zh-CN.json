@@ -6023,6 +6023,10 @@
         "issueTestCoverage": {
           "label": "问题测试覆盖率",
           "description": "查看问题及其关联的测试用例和最新执行状态"
+        },
+        "executionLog": {
+          "label": "执行日志",
+          "description": "包含状态、执行者和时间戳的单个测试结果记录的扁平列表"
         }
       },
       "flakyTests": {
@@ -6176,6 +6180,10 @@
         "issueTestCoverage": {
           "label": "跨项目问题测试覆盖率",
           "description": "查看项目中的问题及其关联的测试用例和最新执行状态"
+        },
+        "executionLog": {
+          "label": "跨项目执行日志",
+          "description": "包含项目状态、执行者和时间戳的各个测试结果记录的扁平化列表"
         }
       }
     },

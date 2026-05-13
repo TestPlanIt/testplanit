@@ -6023,6 +6023,10 @@
         "issueTestCoverage": {
           "label": "Zakres testów problemu",
           "description": "Wyświetlanie problemów z powiązanymi przypadkami testowymi i najnowszym stanem wykonania"
+        },
+        "executionLog": {
+          "label": "Dziennik wykonania",
+          "description": "Płaska lista indywidualnych rekordów wyników testów ze statusem, wykonawcą i znacznikiem czasu"
         }
       },
       "flakyTests": {
@@ -6176,6 +6180,10 @@
         "issueTestCoverage": {
           "label": "Pokrycie testowe problemów w ramach wielu projektów",
           "description": "Przeglądaj problemy z powiązanymi przypadkami testowymi i najnowszym statusem wykonania w różnych projektach"
+        },
+        "executionLog": {
+          "label": "Dziennik realizacji międzyprojektowej",
+          "description": "Płaska lista indywidualnych rekordów wyników testów ze statusem, wykonawcą i znacznikiem czasu dla wszystkich projektów"
         }
       }
     },

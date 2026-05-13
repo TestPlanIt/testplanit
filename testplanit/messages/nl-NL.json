@@ -6023,6 +6023,10 @@
         "issueTestCoverage": {
           "label": "Testdekking van het probleem",
           "description": "Bekijk problemen met de bijbehorende testgevallen en de meest recente uitvoeringsstatus."
+        },
+        "executionLog": {
+          "label": "Uitvoeringslogboek",
+          "description": "Platte lijst met individuele testresultaten, inclusief status, uitvoerder en tijdstempel."
         }
       },
       "flakyTests": {
@@ -6176,6 +6180,10 @@
         "issueTestCoverage": {
           "label": "Testdekking voor problemen die meerdere projecten omvatten",
           "description": "Bekijk problemen met de bijbehorende testcases en de meest recente uitvoeringsstatus in alle projecten."
+        },
+        "executionLog": {
+          "label": "Uitvoeringslogboek voor meerdere projecten",
+          "description": "Platte lijst met individuele testresultaten, inclusief status, uitvoerder en tijdstempel, per project."
         }
       }
     },

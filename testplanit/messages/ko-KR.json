@@ -6023,6 +6023,10 @@
         "issueTestCoverage": {
           "label": "이슈 테스트 커버리지",
           "description": "연결된 테스트 케이스 및 최신 실행 상태와 함께 문제를 확인하세요."
+        },
+        "executionLog": {
+          "label": "실행 로그",
+          "description": "개별 테스트 결과 기록의 평면 목록으로, 상태, 실행자 및 타임스탬프가 표시됩니다."
         }
       },
       "flakyTests": {
@@ -6176,6 +6180,10 @@
         "issueTestCoverage": {
           "label": "프로젝트 간 이슈 테스트 범위",
           "description": "프로젝트 전반에 걸쳐 연결된 테스트 케이스 및 최신 실행 상태와 함께 문제를 확인하세요."
+        },
+        "executionLog": {
+          "label": "프로젝트 간 실행 로그",
+          "description": "프로젝트 전반에 걸쳐 상태, 실행자 및 타임스탬프가 포함된 개별 테스트 결과 기록의 평면 목록"
         }
       }
     },

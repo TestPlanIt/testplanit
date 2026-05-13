@@ -6023,6 +6023,10 @@
         "issueTestCoverage": {
           "label": "Couverture des tests de problèmes",
           "description": "Afficher les problèmes avec leurs cas de test associés et leur état d'exécution le plus récent"
+        },
+        "executionLog": {
+          "label": "Journal d'exécution",
+          "description": "Liste plate des enregistrements de résultats de tests individuels avec statut, exécuteur et horodatage"
         }
       },
       "flakyTests": {
@@ -6176,6 +6180,10 @@
         "issueTestCoverage": {
           "label": "Couverture des tests de problèmes inter-projets",
           "description": "Consultez les problèmes, leurs cas de test associés et leur statut d'exécution le plus récent dans tous les projets."
+        },
+        "executionLog": {
+          "label": "Journal d'exécution inter-projets",
+          "description": "Liste plate des enregistrements de résultats de tests individuels avec statut, exécuteur et horodatage pour l'ensemble des projets"
         }
       }
     },

@@ -6023,6 +6023,10 @@
         "issueTestCoverage": {
           "label": "Vấn đề về phạm vi kiểm thử",
           "description": "Xem các vấn đề liên quan cùng với các trường hợp kiểm thử được liên kết và trạng thái thực thi mới nhất."
+        },
+        "executionLog": {
+          "label": "Nhật ký thực thi",
+          "description": "Danh sách dạng phẳng các bản ghi kết quả kiểm tra riêng lẻ, bao gồm trạng thái, người thực hiện và dấu thời gian."
         }
       },
       "flakyTests": {
@@ -6176,6 +6180,10 @@
         "issueTestCoverage": {
           "label": "Độ phủ kiểm thử vấn đề xuyên dự án",
           "description": "Xem các vấn đề liên quan đến các trường hợp kiểm thử được liên kết và trạng thái thực thi mới nhất trên các dự án."
+        },
+        "executionLog": {
+          "label": "Nhật ký thực thi liên dự án",
+          "description": "Danh sách dạng phẳng các bản ghi kết quả kiểm thử riêng lẻ, bao gồm trạng thái, người thực hiện và dấu thời gian, trên nhiều dự án."
         }
       }
     },
