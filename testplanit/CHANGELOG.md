@@ -1,3 +1,9 @@
+## [0.27.3](https://github.com/TestPlanIt/testplanit/compare/v0.27.2...v0.27.3) (2026-05-13)
+
+### Bug Fixes
+
+* **i18n:** add missing interpolation placeholders to admin delete dialogs ([f15049b](https://github.com/TestPlanIt/testplanit/commit/f15049b2c26eeb3b184a15844c76a82c3895024f))
+
 ## [0.27.2](https://github.com/TestPlanIt/testplanit/compare/v0.27.1...v0.27.2) (2026-05-13)
 
 ### Bug Fixes
