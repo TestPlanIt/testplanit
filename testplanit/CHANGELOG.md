@@ -1,3 +1,9 @@
+## [0.27.7](https://github.com/TestPlanIt/testplanit/compare/v0.27.6...v0.27.7) (2026-05-13)
+
+### Enhancements
+
+* **audit:** harden audit-context plumbing ([#312](https://github.com/TestPlanIt/testplanit/issues/312)) ([b5be42d](https://github.com/TestPlanIt/testplanit/commit/b5be42d04052078343441b516098ced790f53ab6))
+
 ## [0.27.6](https://github.com/TestPlanIt/testplanit/compare/v0.27.5...v0.27.6) (2026-05-13)
 
 ### Bug Fixes
