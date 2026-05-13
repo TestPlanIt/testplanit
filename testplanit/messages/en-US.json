@@ -3741,7 +3741,7 @@
       },
       "delete": {
         "title": "Delete Project",
-        "confirmMessage": "Are you sure you want to delete this project?"
+        "confirmMessage": "Are you sure you want to delete <strong>{name}</strong>?"
       }
     },
     "templates": {
@@ -3781,7 +3781,7 @@
         },
         "delete": {
           "title": "Delete Case Field",
-          "confirmMessage": "Are you sure you want to delete this Case Field?",
+          "confirmMessage": "Are you sure you want to delete <strong>{name}</strong>?",
           "warning": "Case Field will be removed from any Templates. This action cannot be undone."
         }
       },
@@ -3999,7 +3999,7 @@
       },
       "delete": {
         "title": "Delete Tag",
-        "confirmMessage": "Are you sure you want to delete this tag?",
+        "confirmMessage": "Are you sure you want to delete the {name} tag?",
         "warning": "This tag will be removed from all test cases and Sessions.",
         "errors": {
           "unknown": "An error occurred while deleting the tag"
@@ -4030,7 +4030,7 @@
       },
       "delete": {
         "title": "Delete Workflow",
-        "confirmMessage": "Are you sure you want to delete this workflow?"
+        "confirmMessage": "Are you sure you want to delete <strong>{name}</strong>?"
       },
       "setDefault": {
         "title": "Set Default Workflow",
@@ -4058,7 +4058,7 @@
       },
       "delete": {
         "title": "Delete Role",
-        "confirmMessage": "Are you sure you want to delete this role?",
+        "confirmMessage": "Are you sure you want to delete the {name} role?",
         "warning": "This action cannot be undone. Users with this role will be assigned to the default role.",
         "errors": {
           "defaultNotFound": "Cannot delete default role"
@@ -4227,7 +4227,7 @@
       },
       "delete": {
         "title": "Delete Milestone Type",
-        "confirmMessage": "Are you sure you want to delete this Milestone Type?"
+        "confirmMessage": "Are you sure you want to delete the {name} Milestone Type?"
       }
     },
     "issue_config": {
@@ -4634,7 +4634,7 @@
       },
       "edit": {
         "title": "Edit AI Model Integration",
-        "description": "Update the configuration for this AI model integration",
+        "description": "Update the configuration for the {name} AI model integration",
         "statusDescription": "Enable or disable this integration",
         "apiKeyPlaceholder": "Enter new API key to update...",
         "update": "Update",
