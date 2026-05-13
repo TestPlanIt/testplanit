@@ -244,9 +244,7 @@ describe("DataTable Column Visibility Logic", () => {
       {
         id: "actions",
         header: "Actions",
-        cell: () => {
-          "Edit";
-        },
+        cell: () => "Edit",
         enableHiding: false, // Always visible
       },
     ];

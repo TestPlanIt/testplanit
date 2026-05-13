@@ -29,7 +29,7 @@ function formatError(err: unknown): string {
     if (cause instanceof Error) {
       parts.push(cause.message);
       cause = (cause as { cause?: unknown }).cause;
-    } else if (cause && typeof cause === "object" && "code" in cause) {
+    } else if (typeof cause === "object" && "code" in cause) {
       parts.push(String((cause as { code: unknown }).code));
       break;
     } else {

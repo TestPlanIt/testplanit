@@ -457,23 +457,21 @@ function SingleResultView({
               </Tooltip>
             )}
           </Badge>
-          {onRetry && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onRetry}
-              disabled={isRetrying}
-              className="h-7 px-2"
-              title={t("retryButton")}
-            >
-              {isRetrying ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                <RefreshCw className="h-3 w-3" />
-              )}
-              <span className="ml-1 text-xs">{t("retryButton")}</span>
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onRetry}
+            disabled={isRetrying}
+            className="h-7 px-2"
+            title={t("retryButton")}
+          >
+            {isRetrying ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <RefreshCw className="h-3 w-3" />
+            )}
+            <span className="ml-1 text-xs">{t("retryButton")}</span>
+          </Button>
         </div>
       )}
       {result.truncated && (
