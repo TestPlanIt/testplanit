@@ -8,6 +8,7 @@ const {
   mockFlakyTestsColumns,
   mockTestCaseHealthColumns,
   mockIssueTestCoverageColumns,
+  mockExecutionLogColumns,
 } = vi.hoisted(() => {
   const col = (id: string) => ({
     id,
@@ -21,6 +22,7 @@ const {
     mockFlakyTestsColumns: [col("testName"), col("flipCount")],
     mockTestCaseHealthColumns: [col("testCase"), col("health")],
     mockIssueTestCoverageColumns: [col("issue"), col("coverage")],
+    mockExecutionLogColumns: [col("testCaseName"), col("statusName")],
   };
 });
 
@@ -48,6 +50,10 @@ vi.mock("~/hooks/useTestCaseHealthColumns", () => ({
 
 vi.mock("~/hooks/useIssueTestCoverageColumns", () => ({
   useIssueTestCoverageSummaryColumns: () => mockIssueTestCoverageColumns,
+}));
+
+vi.mock("~/hooks/useExecutionLogColumns", () => ({
+  useExecutionLogColumns: () => mockExecutionLogColumns,
 }));
 
 // Mock DataTable to render data rows for inspection
