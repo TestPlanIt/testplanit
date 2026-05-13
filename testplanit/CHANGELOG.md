@@ -1,3 +1,9 @@
+## [0.27.2](https://github.com/TestPlanIt/testplanit/compare/v0.27.1...v0.27.2) (2026-05-13)
+
+### Bug Fixes
+
+* **i18n:** ensure count is a string in confirmation dialog description ([a7c4d30](https://github.com/TestPlanIt/testplanit/commit/a7c4d30c7691ef54d3817c6c4ebea096cd6fd224))
+
 ## [0.27.1](https://github.com/TestPlanIt/testplanit/compare/v0.27.0...v0.27.1) (2026-05-12)
 
 ### Bug Fixes
