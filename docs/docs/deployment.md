@@ -10,7 +10,7 @@ This guide outlines the steps to deploy TestPlanIt to production using the compr
 ## Prerequisites
 
 - A server with Docker and Docker Compose installed
-- For all services, at least 8GB RAM and 4 CPU cores, 16GB and 8 CPU cores recommended
+- For all services, at least 8GB RAM and 4 CPU cores; building requires 24GB RAM
 - Storage for persistent data volumes
 - A domain name and SSL certificate (for HTTPS)
 

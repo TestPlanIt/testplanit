@@ -31,10 +31,10 @@ The Docker Compose setup starts these containerized services:
 
   | Phase                    | Minimum | Recommended | Notes                                      |
   | -------------------------- | --------- | ------------- | -------------------------------------------- |
-  | **Building**             | 16GB    | 16GB+       | Required during initial build and updates  |
+  | **Building**             | 24GB    | 24GB+       | Required during initial build and updates  |
   | **Running (Full Stack)** | 7GB     | 11GB        | All services combined                      |
 
-  **Memory-constrained systems:** Allocate 16GB to Docker for building, then reduce to 7-11GB for running after build completes.
+  **Memory-constrained systems:** Allocate 24GB to Docker for building, then reduce to 7-11GB for running after build completes.
 
   **Per-service breakdown (running):**
 
