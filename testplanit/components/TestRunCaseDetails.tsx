@@ -34,6 +34,7 @@ import {
   Combine,
   LayoutTemplate,
   Plus,
+  SquareStack,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -87,6 +88,19 @@ interface TestRunCaseDetailsProps {
    * behavior is unchanged (PARAM-07 invariant).
    */
   stepParameters?: ParameterChipMeta[];
+  /**
+   * Phase 3 — when set, every result submitted from this surface is recorded
+   * against the given iteration (server runs worst-of rollup + counter
+   * updates). Omit on non-parameterized cases (PARAM-07).
+   */
+  activeIterationId?: number;
+  /**
+   * Phase 3 — pre-formatted iteration label (e.g. "Submit result for
+   * Iteration 3 of 10") shown in the AddResultModal title when in iteration
+   * mode so testers can see which iteration the result is being recorded
+   * against. Wrapper formats this from the active iteration + totalIterations.
+   */
+  activeIterationLabel?: string;
 }
 
 export function TestRunCaseDetails({
@@ -101,6 +115,8 @@ export function TestRunCaseDetails({
   isTransitioning = false,
   isCompleted = false,
   stepParameters,
+  activeIterationId,
+  activeIterationLabel,
 }: TestRunCaseDetailsProps) {
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -543,6 +559,7 @@ export function TestRunCaseDetails({
         attempt: 1,
         testRunCaseVersion: testcase.currentVersion,
         inProgressStateId: inProgressWorkflow?.id ?? null,
+        iterationId: activeIterationId,
       });
       await invalidateAfterSubmit();
 
@@ -678,6 +695,9 @@ export function TestRunCaseDetails({
         <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
           {testRunId && canAddEditResults && (
             <>
+              {/* Case-level result buttons hide in iteration mode — those
+                  controls live in IterationResultPanel above. */}
+              {!activeIterationId && (
               <div className="flex items-center gap-2 shrink-0">
                 <Button
                   type="button"
@@ -741,6 +761,7 @@ export function TestRunCaseDetails({
                                 testRunCaseVersion: testcase.currentVersion,
                                 inProgressStateId:
                                   inProgressWorkflow?.id ?? null,
+                                iterationId: activeIterationId,
                               });
                               await invalidateAfterSubmit();
 
@@ -807,6 +828,7 @@ export function TestRunCaseDetails({
                   </DropdownMenu>
                 </div>
               </div>
+              )}
               <div className="min-w-[200px] max-w-[300px]">
                 <AsyncCombobox
                   value={
@@ -894,7 +916,31 @@ export function TestRunCaseDetails({
           )}
         </div>
         <div className="flex items-center gap-2">
-          {testRunId && (
+          {testRunId && activeIterationId ? (
+            // Iteration mode: case-level status is computed by the worst-of
+            // rollup of iterations — render as a read-only badge so users
+            // don't accidentally write a case-level result that the rollup
+            // would overwrite on the next iteration submit.
+            <div
+              className="inline-flex items-center gap-2 h-8 px-3 rounded-md border bg-muted/50 text-sm"
+              data-testid="case-status-readonly"
+              title="Case status is computed from iteration results"
+            >
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{
+                  backgroundColor: hasColor(displayStatus)
+                    ? displayStatus.color.value
+                    : "#B1B2B3",
+                }}
+              />
+              <div className="whitespace-nowrap">{displayStatus.name}</div>
+              <SquareStack
+                className="h-3.5 w-3.5 text-muted-foreground"
+                aria-hidden
+              />
+            </div>
+          ) : testRunId && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -1162,6 +1208,9 @@ export function TestRunCaseDetails({
           defaultStatusId={selectedStatusId || successStatus?.id?.toString()}
           steps={testcase.steps}
           configuration={testcase.testRuns?.[0]?.testRun?.configuration}
+          iterationId={activeIterationId}
+          iterationLabel={activeIterationLabel}
+          parameters={stepParameters}
         />
       )}
     </div>

@@ -8,16 +8,21 @@ import { toast } from "sonner";
 
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
 import { useActiveIterationFromUrl } from "~/hooks/useActiveIterationFromUrl";
-import { useFindManyTestRunCaseIteration } from "~/lib/hooks";
+import {
+  useFindManyStatus,
+  useFindManyTestRunCaseIteration,
+} from "~/lib/hooks";
 import type { OverrideParameterSchemaEntry } from "~/lib/schemas/iterationOverrideSchema";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 
 import { IterationBulkConfirmDialog } from "./IterationBulkConfirmDialog";
 import { IterationHeader } from "./IterationHeader";
 import { IterationOverrideBanner } from "./IterationOverrideBanner";
+import { IterationResultPanel } from "./IterationResultPanel";
 import { IterationSidebar } from "./IterationSidebar";
 import { IterationValuesStrip } from "./IterationValuesStrip";
 import { OverrideValuesDialog } from "./OverrideValuesDialog";
+import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import type {
   IterationDTO,
   IterationMenuAction,
@@ -73,7 +78,7 @@ export function IterationAwareTestRunCaseDetails({
   isRunCompleted,
   innerProps,
 }: IterationAwareTestRunCaseDetailsProps) {
-  const { activeRowIndex } = useActiveIterationFromUrl();
+  const { activeRowIndex, setActiveRowIndex } = useActiveIterationFromUrl();
   const { data: session } = useSession();
   const t = useTranslations("parameters");
   const queryClient = useQueryClient();
@@ -90,6 +95,21 @@ export function IterationAwareTestRunCaseDetails({
   // check at the audit boundary; this client toggle is purely UX.
   const viewerCanReadSensitive =
     (session?.user as { access?: string } | undefined)?.access === "ADMIN";
+
+  // Project Test-Run statuses (deduped via React Query with the same call
+   // in IterationResultPanel / IterationStatusLegendPopover). Used by
+   // handleResetIteration to find a target status without a custom endpoint.
+  const { data: projectStatuses } = useFindManyStatus({
+    where: {
+      AND: [
+        { isEnabled: true },
+        { isDeleted: false },
+        { projects: { some: { projectId: innerProps.projectId } } },
+        { scope: { some: { scope: { name: "Test Run" } } } },
+      ],
+    },
+    orderBy: { order: "asc" },
+  });
 
   const { data: iterationsRaw } = useFindManyTestRunCaseIteration(
     {
@@ -183,7 +203,16 @@ export function IterationAwareTestRunCaseDetails({
 
   const snapshotRows: Array<Record<string, unknown>> = useMemo(() => {
     if (!snapshot?.rowsJson) return [];
-    return (snapshot.rowsJson as Array<Record<string, unknown>>) ?? [];
+    // Snapshot rows are wrapped as { sourceRowId, rowIndex, label, valuesJson }.
+    // Unwrap so consumers see a flat { paramName: value } map keyed by param.
+    const raw = (snapshot.rowsJson as Array<Record<string, unknown>>) ?? [];
+    return raw.map((row) => {
+      const inner = row?.valuesJson;
+      if (inner && typeof inner === "object" && !Array.isArray(inner)) {
+        return inner as Record<string, unknown>;
+      }
+      return row;
+    });
   }, [snapshot]);
 
   const activeIteration = useMemo(
@@ -229,36 +258,86 @@ export function IterationAwareTestRunCaseDetails({
           val = String(raw);
         }
       }
+      // Permission gate for sensitive params: when the viewer can't read them,
+      // pass `null` as the value so the chip falls back to `@name` (unsubstituted).
+      // Server-side audit redaction is the source of truth — this is defence
+      // in depth for the rendered DOM.
+      if (p.sensitive && !viewerCanReadSensitive) {
+        val = null;
+      }
       return {
         id: p.id ?? 0,
         name: p.name,
         type: p.type,
         defaultValue: val,
+        sensitive: !!p.sensitive,
       };
     });
-  }, [activeIteration, parametersSchema]);
+  }, [activeIteration, parametersSchema, viewerCanReadSensitive]);
+
+  // Permission for the iteration result panel — checked here in the wrapper
+  // so the panel itself stays presentational and dedupes the project-perm fetch.
+  const projectId = innerProps.projectId;
+  const { permissions: testRunResultsPermissions } = useProjectPermissions(
+    projectId,
+    "TestRunResults"
+  );
+  const canAddEditResults = testRunResultsPermissions?.canAddEdit ?? false;
+
+  /**
+   * Iteration-aware advance after any result submission from the result
+   * panel. Walks iterations sequentially by rowIndex (1, 2, 3, …); once
+   * past the last iteration, falls back to the case-level Next behavior.
+   *
+   * Every status pick in the panel (the Pass button AND any item in the
+   * status dropdown) is a deliberate user action to record + move on, so
+   * we don't gate on success-only.
+   *
+   * Uses `totalIterations` (the schema counter on TestRunCases) rather than
+   * inspecting the local `iterations` array so the post-submit advance is
+   * not blocked by closure-stale data after `await invalidateQueries`.
+   */
+  const handleAdvanceAfterResult = (_args: { wasSuccess: boolean }) => {
+    if (!activeIteration) return;
+    const nextRowIndex = activeIteration.rowIndex + 1;
+    if (nextRowIndex < totalIterations) {
+      setActiveRowIndex(nextRowIndex);
+      return;
+    }
+    // Past the last iteration → fall through to the case-level "next case"
+    // handler if one is wired in innerProps.
+    const onNextCase = innerProps.onNextCase;
+    const testRunCasesData = innerProps.testRunCasesData;
+    const caseId = innerProps.caseId;
+    if (onNextCase && testRunCasesData) {
+      const currentCase = testRunCasesData.find(
+        (trc) => trc.repositoryCaseId === caseId
+      );
+      if (currentCase) {
+        const nextCase = testRunCasesData
+          .filter((trc) => trc.order > currentCase.order)
+          .sort((a, b) => a.order - b.order)[0];
+        if (nextCase) onNextCase(nextCase.repositoryCaseId);
+      }
+    }
+  };
 
   const handleResetIteration = async (iterationId: number) => {
     try {
-      // Reset writes a new TestRunResults row with the seeded "untested"
-      // status via the existing submit-result endpoint. Per CONTEXT.md
-      // open-question resolution, reset is "record a new result with
-      // untested" rather than a destructive delete (preserves audit chain).
-      const statusRes = await fetch(`/api/statuses?systemName=untested`);
-      let untestedId: number | null = null;
-      if (statusRes.ok) {
-        const data = await statusRes.json();
-        const list = Array.isArray(data?.statuses)
-          ? data.statuses
-          : Array.isArray(data)
-            ? data
-            : [];
-        const match = list.find(
-          (s: { systemName?: string }) => s?.systemName === "untested",
-        );
-        if (match) untestedId = match.id;
-      }
-      if (!untestedId) {
+      // Reset writes a new TestRunResults row with a "starting" status via
+      // the existing submit-result endpoint. Preserves the audit chain
+      // rather than destructively deleting the iteration's history.
+      //
+      // Status selection (no hardcoding): prefer a project status with
+      // systemName === "untested"; otherwise fall back to the first
+      // status in the project's configured order. If no statuses are
+      // available at all, surface an actionable error.
+      const list = projectStatuses ?? [];
+      const target =
+        list.find(
+          (s: { systemName?: string | null }) => s?.systemName === "untested",
+        ) ?? list[0];
+      if (!target) {
         toast.error(t("overrideError"), {
           description: t("iterationResetUntestedMissing"),
         });
@@ -271,7 +350,7 @@ export function IterationAwareTestRunCaseDetails({
           testRunId,
           testRunCaseId,
           iterationId,
-          statusId: untestedId,
+          statusId: target.id,
           attempt: 1,
           testRunCaseVersion: 1,
         }),
@@ -340,6 +419,7 @@ export function IterationAwareTestRunCaseDetails({
       <IterationSidebar
         testRunCaseId={testRunCaseId}
         runId={testRunId}
+        projectId={projectId}
         iterations={iterations}
         parametersSchema={parametersSchema}
         isRunCompleted={isRunCompleted}
@@ -365,10 +445,34 @@ export function IterationAwareTestRunCaseDetails({
               parametersSchema={parametersSchema}
             />
             {anyOverridden && <IterationOverrideBanner />}
+            <IterationResultPanel
+              testRunId={testRunId}
+              testRunCaseId={testRunCaseId}
+              caseId={innerProps.caseId}
+              projectId={projectId}
+              iteration={activeIteration}
+              totalIterations={totalIterations}
+              isDisabled={isRunCompleted}
+              canAddEditResults={canAddEditResults}
+              stepParameters={stepParameters}
+              onAfterSubmit={handleAdvanceAfterResult}
+            />
           </>
         )}
         <div className="flex-1 min-h-0 overflow-auto">
-          <TestRunCaseDetails {...innerProps} stepParameters={stepParameters} />
+          <TestRunCaseDetails
+            {...innerProps}
+            stepParameters={stepParameters}
+            activeIterationId={activeIteration?.id}
+            activeIterationLabel={
+              activeIteration
+                ? t("iterationResultPanelHeading", {
+                    n: activeIteration.rowIndex + 1,
+                    total: totalIterations,
+                  })
+                : undefined
+            }
+          />
         </div>
       </div>
 
@@ -399,8 +503,8 @@ export function IterationAwareTestRunCaseDetails({
         iterationIds={bulkIterationIds}
         runId={testRunId}
         caseId={testRunCaseId}
+        projectId={projectId}
         alreadyCompletedCount={alreadyCompletedInBulk}
-        statusName={t("iterationStatusSkipped")}
       />
     </div>
   );

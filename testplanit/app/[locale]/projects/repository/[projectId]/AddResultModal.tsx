@@ -32,6 +32,7 @@ import { toast } from "sonner";
 import * as z from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import {
   useCreateAttachments,
   useCreateResultFieldValues,
@@ -227,6 +228,24 @@ interface AddResultModalProps {
   selectedCases?: ExtendedCases[];
   steps?: EnrichedStep[]; // Updated to EnrichedStep
   configuration?: { id: number; name: string } | null;
+  /**
+   * Phase 3 — when set, every result submitted from this modal is recorded
+   * against the given iteration of a parameterized test case (server runs
+   * worst-of rollup + counter updates). Omit on non-parameterized cases.
+   */
+  iterationId?: number;
+  /**
+   * Phase 3 — when set, the dialog title shows iteration context (e.g.
+   * "Add result for Iteration 3 of 10"). Caller pre-formats the label.
+   */
+  iterationLabel?: string;
+  /**
+   * Phase 3 — parameter chip metadata with the active iteration's effective
+   * values. Threaded into all step-text TipTapEditor instances inside the
+   * modal so chips render substituted (e.g. `@username: alice@example.com`)
+   * instead of just `@username`. Matches the case-detail surface.
+   */
+  parameters?: ParameterChipMeta[];
 }
 
 export function AddResultModal({
@@ -242,6 +261,9 @@ export function AddResultModal({
   selectedCases = [],
   steps = [], // Default to empty array
   configuration,
+  iterationId,
+  iterationLabel,
+  parameters,
 }: AddResultModalProps) {
   const t = useTranslations();
   const tCommon = useTranslations("common");
@@ -986,6 +1008,7 @@ export function AddResultModal({
           testRunCaseVersion: repositoryCase.currentVersion,
           issueIds: issueIdsToConnect,
           inProgressStateId: inProgressWorkflow?.id ?? null,
+          iterationId,
         });
 
         // Save template field values if any exist
@@ -1324,7 +1347,10 @@ export function AddResultModal({
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>{tCommon("actions.addResult")}</DialogTitle>
+            <DialogTitle>
+              {tCommon("actions.addResult")}
+              {iterationLabel ? ` — ${iterationLabel}` : ""}
+            </DialogTitle>
             <DialogDescription>
               <LoadingSpinner />
             </DialogDescription>
@@ -1629,7 +1655,10 @@ export function AddResultModal({
         }}
       >
         <DialogHeader>
-          <DialogTitle>{tCommon("actions.addResult")}</DialogTitle>
+          <DialogTitle>
+            {tCommon("actions.addResult")}
+            {iterationLabel ? ` — ${iterationLabel}` : ""}
+          </DialogTitle>
           <DialogDescription>
             <div className="text-sm text-muted-foreground flex flex-col gap-1">
               {isBulkResult ? (
@@ -1828,6 +1857,7 @@ export function AddResultModal({
                             setSelectedIssues={setSelectedSharedItemIssues}
                             issueMap={issueMap}
                             onMainStatusChange={() => setAnimateBorder(true)}
+                            parameters={parameters}
                           />
                         </li>
                       );
@@ -1882,6 +1912,7 @@ export function AddResultModal({
                               readOnly={true}
                               projectId={`step_${step.id}`}
                               className="prose-sm"
+                              parameters={parameters}
                             />
                           </div>
                         </div>
@@ -1893,6 +1924,7 @@ export function AddResultModal({
                               readOnly={true}
                               projectId={`step_${step.id}_expected`}
                               className="prose-sm"
+                              parameters={parameters}
                             />
                           </div>
                         </div>
@@ -2095,6 +2127,7 @@ interface SharedStepGroupInputsProps {
   >;
   issueMap: Map<number, { key: string; title: string; url?: string }>;
   onMainStatusChange?: () => void;
+  parameters?: ParameterChipMeta[];
 }
 
 const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
@@ -2109,6 +2142,7 @@ const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
   setSelectedIssues,
   issueMap: _issueMap,
   onMainStatusChange,
+  parameters,
 }): React.ReactNode => {
   // Explicitly set return type to React.ReactNode
   const t = useTranslations();
@@ -2199,6 +2233,7 @@ const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
                   readOnly
                   projectId={`shared_item_step_${item.id}`}
                   className="prose-sm"
+                  parameters={parameters}
                 />
               </div>
             </div>
@@ -2210,6 +2245,7 @@ const SharedStepGroupInputs: React.FC<SharedStepGroupInputsProps> = ({
                   readOnly
                   projectId={`shared_item_expected_${item.id}`}
                   className="prose-sm"
+                  parameters={parameters}
                 />
               </div>
             </div>
