@@ -217,7 +217,7 @@ function PromptConfigList() {
 
   const columns = useColumns(
     userPreferences,
-    // eslint-disable-next-line react-hooks/refs
+     
     handleToggleDefault,
     tCommon,
     t,

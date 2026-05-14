@@ -287,10 +287,10 @@ afterAll(async () => {
   await prisma.$disconnect();
   // Emit findings table so the test summary captures policy runtime behavior.
   if (findings.length > 0) {
-    // eslint-disable-next-line no-console
+     
     console.log("\n[Plan 01-03] Policy runtime findings:");
     for (const f of findings) {
-      // eslint-disable-next-line no-console
+       
       console.log(
         `  - ${f.check}: ${f.outcome}${f.note ? ` (${f.note})` : ""}`
       );

@@ -26,7 +26,7 @@ vi.mock("~/lib/auth/utils", () => ({
 // export chain (WR-03). Stored on globalThis because `vi.mock` factories
 // are hoisted above top-level `let`/`const` declarations.
 declare global {
-  // eslint-disable-next-line no-var
+   
   var __auditContextTracker: { calls: number; handler: unknown } | undefined;
 }
 vi.mock("~/lib/auditContextWrappers", () => {

@@ -131,7 +131,7 @@ test.describe("MCP session read tools (Phase 7 SESS-01..05)", () => {
     const body = await r.json();
     expect(Array.isArray(body.data)).toBe(true);
     if (body.data.length === 0) {
-      // eslint-disable-next-line no-console
+       
       console.warn(
         "SESS-01: seed project has 0 Sessions — row-shape assertion skipped"
       );
@@ -151,7 +151,7 @@ test.describe("MCP session read tools (Phase 7 SESS-01..05)", () => {
     baseURL,
   }) => {
     if (ctx.sessionId === null) {
-      // eslint-disable-next-line no-console
+       
       console.warn("SESS-02 skipped: seed project has 0 Sessions");
       return;
     }
@@ -212,7 +212,7 @@ test.describe("MCP session read tools (Phase 7 SESS-01..05)", () => {
     baseURL,
   }) => {
     if (ctx.sessionId === null) {
-      // eslint-disable-next-line no-console
+       
       console.warn("SESS-03 skipped: seed project has 0 Sessions");
       return;
     }
@@ -265,7 +265,7 @@ test.describe("MCP session read tools (Phase 7 SESS-01..05)", () => {
     } else {
       // Host accepted but presumably ignored. R4 is still enforced at the MCP
       // input schema (07-05 plan). Document and move on.
-      // eslint-disable-next-line no-console
+       
       console.warn(
         "SESS-03: host accepted unknown `testCaseId` filter on sessionResults; R4 enforced at MCP input-schema layer"
       );
@@ -279,7 +279,7 @@ test.describe("MCP session read tools (Phase 7 SESS-01..05)", () => {
     baseURL,
   }) => {
     if (ctx.sessionResultId === null) {
-      // eslint-disable-next-line no-console
+       
       console.warn("SESS-04 skipped: seed has 0 SessionResults");
       return;
     }
@@ -331,7 +331,7 @@ test.describe("MCP session read tools (Phase 7 SESS-01..05)", () => {
     baseURL,
   }) => {
     if (ctx.sessionId === null) {
-      // eslint-disable-next-line no-console
+       
       console.warn(
         "SESS-05 sessionId mode skipped: seed project has 0 Sessions"
       );
@@ -360,7 +360,7 @@ test.describe("MCP session read tools (Phase 7 SESS-01..05)", () => {
     const body = await r.json();
     expect(Array.isArray(body.data)).toBe(true);
     if (body.data.length === 0) {
-      // eslint-disable-next-line no-console
+       
       console.warn(
         "SESS-05 sessionId mode: session has 0 linked issues — row-shape skipped"
       );
@@ -374,7 +374,7 @@ test.describe("MCP session read tools (Phase 7 SESS-01..05)", () => {
     baseURL,
   }) => {
     if (ctx.issueId === null) {
-      // eslint-disable-next-line no-console
+       
       console.warn("SESS-05 issueId mode skipped: seed has 0 Issues");
       return;
     }
@@ -415,7 +415,7 @@ test.describe("MCP session read tools (Phase 7 SESS-01..05)", () => {
     expect(r.status()).toBe(200);
     const data = (await r.json()).data;
     if (data === null) {
-      // eslint-disable-next-line no-console
+       
       console.warn(
         "SESS-05 issueId mode: issue not accessible to this token — skipped"
       );
