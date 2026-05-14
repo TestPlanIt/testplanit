@@ -1521,6 +1521,7 @@ model RepositoryCases {
     comments               Comment[]
     parameters             TestCaseParameter[]
     ownedDataSets          DataSet[]                @relation("DataSetOwnerCase")
+    sharedDataSetAssignment CaseSharedDataSetAssignment? @relation("CaseSharedDataSetAssignmentCase")
 
     @@unique([projectId, name, className, source])
     @@index([projectId, isDeleted, isArchived])
@@ -3632,6 +3633,86 @@ model DataSetVersion {
         dataSet.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
                                           accessType == 'SPECIFIC_ROLE' &&
                                           role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)]]
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+// Shared Datasets: per-case binding to a project-scoped shared dataset.
+// At most one row per case (enforced by @@unique on caseId). This is
+// distinct from TestCaseParameter.lookupDataSetId, which sources
+// SELECT-allowed-values for a single parameter; this binding drives
+// iteration row-set resolution for the whole case.
+model CaseSharedDataSetAssignment {
+    id              Int             @id @default(autoincrement())
+    caseId          Int             @unique
+    case            RepositoryCases @relation("CaseSharedDataSetAssignmentCase", fields: [caseId], references: [id], onDelete: Cascade)
+    sharedDataSetId Int
+    sharedDataSet   DataSet         @relation("CaseSharedDataSet", fields: [sharedDataSetId], references: [id], onDelete: Restrict)
+    pinnedVersionId Int?
+    pinnedVersion   DataSetVersion? @relation("AssignmentPinnedVersion", fields: [pinnedVersionId], references: [id], onDelete: SetNull)
+    mappingJson     Json
+    createdAt       DateTime        @default(now()) @db.Timestamptz(6)
+    createdById     String
+    createdBy       User            @relation("CaseSharedDataSetAssignmentCreatedBy", fields: [createdById], references: [id])
+    updatedAt       DateTime        @updatedAt
+
+    @@index([caseId])
+    @@index([sharedDataSetId])
+    @@index([pinnedVersionId])
+    @@index([createdById])
+
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Cross-project denial (defense-in-depth). The shared dataset must
+    // live in the same project as the case being assigned.
+    @@deny('create,update', sharedDataSet.projectId != case.projectId)
+
+    // Inherit read access from the case's project (mirrors TestCaseParameter).
+    @@deny('read', case.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        case.project.creator == auth() ||
+        case.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        case.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        case.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (case.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (case.project.assignedUsers?[user == auth()] &&
+         case.project.defaultAccessType == 'SPECIFIC_ROLE' && case.project.defaultRole != null)
+    )
+
+    // Create/update/delete access based on TestCaseRepository permissions
+    // (mirrors TestCaseParameter's write clause).
+    @@allow('create,update,delete',
+        case.project.creator == auth() ||
+    // User with SPECIFIC_ROLE access type
+        case.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                      (role.name == 'Project Admin' ||
+                                       role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+    // User with GLOBAL_ROLE access type (use their global role)
+        case.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' &&
+                                      auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
+    // System PROJECTADMIN assigned to project
+        case.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+    // Group with SPECIFIC_ROLE access type
+        case.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                       ((accessType == 'SPECIFIC_ROLE' &&
+                                         role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+                                        (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                         auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]))] ||
+    // Project default GLOBAL_ROLE - user's global role has permission
+        (case.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+    // Project default SPECIFIC_ROLE - project's default role has permission
+        (case.project.assignedUsers?[user == auth()] &&
+         case.project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         case.project.defaultRole.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])
     )
 
     @@allow('all', auth().access == 'ADMIN')
