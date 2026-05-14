@@ -85,14 +85,29 @@ export function classifyBand(
  * Per-case input shape for `computePreflight`. Callers (the API route)
  * resolve the case + dataset row count from the database; this function
  * only does the math.
+ *
+ * `rowCount`: row count from the owner dataset (0 if no owner).
+ * `assignedRowCount`: row count from the pinned shared-dataset version (0
+ *   if no assignment OR if the case has an owner dataset that wins per
+ *   the owner-wins semantic). The case's effective row count is
+ *   `Math.max(rowCount, assignedRowCount)`; both being non-zero is unusual
+ *   but possible (a case has both an owner dataset and a shared
+ *   assignment) — owner wins for iteration, so the API route MUST set
+ *   `assignedRowCount` to 0 in that case before passing the input here.
+ *   `computePreflight` itself uses `Math.max` defensively.
  */
 export interface PreflightCaseInput {
   caseId: number;
   caseTitle: string;
   /** True iff RepositoryCases.hasParameters is true AND a dataset is attached */
   hasParameters: boolean;
-  /** Number of non-soft-deleted dataset rows attached to the case (0 if none) */
+  /** Number of non-soft-deleted dataset rows on the owner dataset (0 if none) */
   rowCount: number;
+  /**
+   * Number of rows on the resolved shared-dataset version (0 if no shared
+   * assignment OR the route already zeroed it for owner-wins).
+   */
+  assignedRowCount?: number;
 }
 
 /**
@@ -100,16 +115,20 @@ export interface PreflightCaseInput {
  * fan-out factor.
  *
  * Math:
- *   - For each parameterized case: `iterations = rowCount × configCount`
+ *   - For each parameterized case: `iterations =
+ *     max(rowCount, assignedRowCount ?? 0) × configCount`. Shared datasets
+ *     contribute via `assignedRowCount`; the API route is responsible for
+ *     applying the owner-wins zeroing before calling.
  *   - For each non-parameterized case: `iterations = 0` (still gets a
  *     TestRunCases row but no iteration fan-out)
  *   - `configCount = max(1, configIds.length)` — selecting zero configs still
  *     creates exactly one TestRunCases row per case (configId = null), so the
  *     iteration multiplier collapses to 1, not 0.
  *
- * Cases with `hasParameters: true` but `rowCount: 0` contribute 0 iterations
- * and ARE included in `perCase` so the UI can show "0 rows yet — add data"
- * messaging if desired. Non-parameterized cases are omitted from `perCase`.
+ * Cases with `hasParameters: true` but no row source contribute 0
+ * iterations and ARE included in `perCase` so the UI can show "0 rows yet
+ * — add data" messaging if desired. Non-parameterized cases are omitted
+ * from `perCase`.
  */
 export function computePreflight(
   cases: PreflightCaseInput[],
@@ -121,11 +140,12 @@ export function computePreflight(
   let total = 0;
   for (const c of cases) {
     if (!c.hasParameters) continue;
-    const iterations = c.rowCount * fanOut;
+    const effectiveRowCount = Math.max(c.rowCount, c.assignedRowCount ?? 0);
+    const iterations = effectiveRowCount * fanOut;
     perCase.push({
       caseId: c.caseId,
       caseTitle: c.caseTitle,
-      rowCount: c.rowCount,
+      rowCount: effectiveRowCount,
       iterations,
     });
     total += iterations;

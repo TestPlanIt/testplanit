@@ -34,7 +34,11 @@ export interface PerCaseContribution {
   caseId: number;
   /** RepositoryCases.name (de-redacted, for display) */
   caseTitle: string;
-  /** Number of dataset rows attached to this case */
+  /**
+   * Effective number of dataset rows that drive iteration fan-out for this
+   * case (max of the owner-dataset row count and the shared-dataset row
+   * count, after the route applies owner-wins zeroing).
+   */
   rowCount: number;
   /**
    * Number of iterations this case will materialize for the run.

@@ -64,13 +64,23 @@ export async function POST(request: NextRequest) {
     // Resolve cases the caller can read AND that belong to the requested
     // project. The explicit projectId filter is the Phase 1 cross-project
     // carry-forward — DataSet @@deny does not block cross-project reads.
+    //
+    // We also include the case's shared-dataset assignment (if any) so we
+    // can derive the row count from a pinned or follow-latest version.
+    // CaseSharedDataSetAssignment has no isDeleted field of its own (it
+    // cascades from RepositoryCases.isDeleted), so the inner select carries
+    // no `where` filter.
     const cases: Array<{
       id: number;
       name: string;
       hasParameters: boolean;
-      ownedDataSets: Array<{
-        _count: { rows: number };
-      }>;
+      ownedDataSets: Array<{ _count: { rows: number } }>;
+      sharedDataSetAssignment: {
+        sharedDataSetId: number;
+        pinnedVersionId: number | null;
+        pinnedVersion: { rowCount: number } | null;
+        sharedDataSet: { id: number; version: number; isDeleted: boolean };
+      } | null;
     }> = await db.repositoryCases.findMany({
       where: {
         id: { in: caseIds },
@@ -90,23 +100,59 @@ export async function POST(request: NextRequest) {
           },
           take: 1,
         },
+        sharedDataSetAssignment: {
+          select: {
+            sharedDataSetId: true,
+            pinnedVersionId: true,
+            pinnedVersion: { select: { rowCount: true } },
+            sharedDataSet: {
+              select: { id: true, version: true, isDeleted: true },
+            },
+          },
+        },
       },
     });
 
-    const inputs: PreflightCaseInput[] = cases.map((c) => {
-      const rowCount = c.ownedDataSets[0]?._count.rows ?? 0;
-      return {
-        caseId: c.id,
-        caseTitle: c.name,
-        // A case is "parameterized for fan-out purposes" only if it both
-        // has the flag AND has at least one dataset row. A case flagged
-        // hasParameters with a zero-row dataset still contributes 0
-        // iterations — we report it in perCase so the UI can hint, but
-        // hasParameters drives perCase inclusion (not row count > 0).
-        hasParameters: c.hasParameters,
-        rowCount,
-      };
-    });
+    const inputs: PreflightCaseInput[] = await Promise.all(
+      cases.map(async (c) => {
+        const ownerRowCount = c.ownedDataSets[0]?._count.rows ?? 0;
+        let assignedRowCount = 0;
+
+        // Owner-wins: when an owner dataset is present we ignore the
+        // shared assignment's row count (owner is the iteration source).
+        if (ownerRowCount === 0) {
+          const a = c.sharedDataSetAssignment;
+          if (a && !a.sharedDataSet?.isDeleted) {
+            if (a.pinnedVersionId && a.pinnedVersion) {
+              assignedRowCount = a.pinnedVersion.rowCount;
+            } else if (a.sharedDataSetId) {
+              // Follow-latest: resolve the current version's rowCount.
+              // One extra query per case-with-shared-assignment-and-no-owner.
+              // Acceptable for preflight (per-case cardinality is intrinsically
+              // O(N cases) anyway). Batch via IN clause if profiling flags it.
+              const latest = await db.dataSetVersion.findFirst({
+                where: { dataSetId: a.sharedDataSetId },
+                orderBy: { version: "desc" },
+                select: { rowCount: true },
+              });
+              assignedRowCount = latest?.rowCount ?? 0;
+            }
+          }
+        }
+
+        return {
+          caseId: c.id,
+          caseTitle: c.name,
+          // A case is "parameterized for fan-out purposes" only if it
+          // has the flag. Row count drives `iterations`; hasParameters
+          // drives perCase inclusion (so a parameterized case with zero
+          // rows still surfaces as a UI hint).
+          hasParameters: c.hasParameters,
+          rowCount: ownerRowCount,
+          assignedRowCount,
+        };
+      }),
+    );
 
     const result = computePreflight(inputs, configIds.length, thresholds);
     return NextResponse.json(result);
