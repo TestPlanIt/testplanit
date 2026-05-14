@@ -1,5 +1,13 @@
 import type { Prisma } from "@prisma/client";
 
+import { applyMapping } from "~/lib/utils/datasetMapping";
+
+// Re-export the pure mapping helpers for ergonomic server-side usage. The
+// canonical implementation lives in `~/lib/utils/datasetMapping`. Client
+// consumers MUST import directly from that module so the bundler does not
+// pull this file (and its Prisma types) into the client bundle.
+export { applyMapping, SKIP_SENTINEL } from "~/lib/utils/datasetMapping";
+
 /**
  * Iteration fan-out service.
  *
@@ -202,9 +210,15 @@ export async function materializeForOneCase(
     },
   });
 
-  // Phase 1 carry-forward: explicit projectId filter on DataSet read.
-  // The DataSet @@deny only enforces same-project on create/update.
-  const dataset = await tx.dataSet.findFirst({
+  // Resolve the iteration source. Owner-wins: if the case has an owner
+  // dataset we use it and never look at the shared assignment, even when
+  // both exist. The owner-only path stays bit-for-bit identical to the
+  // pre-Shared-Datasets behavior (the new sourceVersionId column is
+  // additive and nullable; for owner-only it is always null).
+  //
+  // Step A: explicit projectId filter on DataSet read. The DataSet @@deny
+  // only enforces same-project on create/update, not read.
+  const ownerDataset = await tx.dataSet.findFirst({
     where: {
       ownerCaseId: repositoryCaseId,
       projectId,
@@ -226,22 +240,124 @@ export async function materializeForOneCase(
     },
   });
 
-  // Snapshot rows are deep copies of the dataset rows, augmented with the
-  // source row's id and rowIndex so future audit / diff surfaces can
-  // correlate back to the originating DataSetRow.
-  const snapshotRows = (dataset?.rows ?? []).map((row) => ({
-    sourceRowId: row.id,
-    rowIndex: row.rowIndex,
-    label: row.label,
-    valuesJson: row.valuesJson ?? {},
-  }));
+  type ResolvedSourceRow = {
+    sourceRowId: number;
+    rowIndex: number;
+    label: string | null;
+    valuesJson: Record<string, unknown>;
+  };
+  type ResolvedSource = {
+    id: number;
+    name: string;
+    rows: ResolvedSourceRow[];
+    pinnedVersionId: number | null;
+  };
 
-  // Snapshot first — must precede iteration inserts so we can FK-reference it.
+  let resolvedSource: ResolvedSource | null = null;
+
+  if (ownerDataset) {
+    resolvedSource = {
+      id: ownerDataset.id,
+      name: ownerDataset.name,
+      rows: ownerDataset.rows.map((row) => ({
+        sourceRowId: row.id,
+        rowIndex: row.rowIndex,
+        label: row.label,
+        valuesJson: (row.valuesJson ?? {}) as Record<string, unknown>,
+      })),
+      pinnedVersionId: null,
+    };
+  } else {
+    // Step B: no owner dataset — see if the case has a shared-dataset
+    // assignment. The schema enforces at most one assignment per case
+    // (CaseSharedDataSetAssignment.caseId is @unique).
+    const assignment = await tx.caseSharedDataSetAssignment.findUnique({
+      where: { caseId: repositoryCaseId },
+      select: {
+        sharedDataSetId: true,
+        pinnedVersionId: true,
+        mappingJson: true,
+        sharedDataSet: {
+          select: { id: true, name: true, projectId: true, version: true },
+        },
+      },
+    });
+
+    // Defense-in-depth cross-project check. The schema @@deny prevents
+    // creating an assignment whose dataset lives in another project, but
+    // this resolver runs against the unenhanced client (orchestration
+    // path) so we re-check at read time.
+    if (
+      assignment &&
+      assignment.sharedDataSet.projectId === projectId
+    ) {
+      const targetVersion = assignment.pinnedVersionId
+        ? await tx.dataSetVersion.findUnique({
+            where: { id: assignment.pinnedVersionId },
+            select: { id: true, rowsJson: true },
+          })
+        : await tx.dataSetVersion.findFirst({
+            where: { dataSetId: assignment.sharedDataSetId },
+            orderBy: { version: "desc" },
+            select: { id: true, rowsJson: true },
+          });
+
+      if (targetVersion) {
+        const mapping =
+          (assignment.mappingJson ?? {}) as Record<string, string>;
+        const versionRows = (targetVersion.rowsJson ?? []) as Array<unknown>;
+        const mappedRows: ResolvedSourceRow[] = versionRows.map(
+          (row, idx) => {
+            // DataSetVersion.rowsJson can store either the augmented snapshot
+            // shape ({ valuesJson, label, ... }) or a flat raw-row object.
+            // Detect the augmented shape and unwrap.
+            const isAugmented =
+              typeof row === "object" &&
+              row !== null &&
+              "valuesJson" in row &&
+              typeof (row as Record<string, unknown>).valuesJson === "object" &&
+              (row as Record<string, unknown>).valuesJson !== null;
+            const raw = isAugmented
+              ? ((row as Record<string, unknown>).valuesJson as Record<
+                  string,
+                  unknown
+                >)
+              : ((row ?? {}) as Record<string, unknown>);
+            const label =
+              typeof row === "object" &&
+              row !== null &&
+              "label" in row &&
+              typeof (row as Record<string, unknown>).label === "string"
+                ? ((row as Record<string, unknown>).label as string)
+                : null;
+            return {
+              sourceRowId: idx,
+              rowIndex: idx,
+              label,
+              valuesJson: applyMapping(raw, mapping),
+            };
+          },
+        );
+        resolvedSource = {
+          id: assignment.sharedDataSetId,
+          name: assignment.sharedDataSet.name,
+          rows: mappedRows,
+          pinnedVersionId: targetVersion.id,
+        };
+      }
+    }
+  }
+
+  // Snapshot rows are the resolved-source rows directly. Iterations FK to
+  // the snapshot, so we must insert it first.
+  const snapshotRows: ResolvedSourceRow[] = resolvedSource?.rows ?? [];
+
   const snapshot = await tx.testRunCaseDataSetSnapshot.create({
     data: {
       testRunCaseId,
-      sourceDataSetId: dataset?.id ?? null,
-      sourceDataSetName: dataset?.name ?? "(no dataset)",
+      sourceDataSetId: resolvedSource?.id ?? null,
+      sourceDataSetName: resolvedSource?.name ?? "(no dataset)",
+      sourceVersionId: resolvedSource?.pinnedVersionId ?? null,
       parametersJson: parameters as unknown as Prisma.InputJsonValue,
       rowsJson: snapshotRows as unknown as Prisma.InputJsonValue,
     },

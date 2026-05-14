@@ -25,6 +25,11 @@ interface MockTx {
   };
   testCaseParameter: { findMany: ReturnType<typeof vi.fn> };
   dataSet: { findFirst: ReturnType<typeof vi.fn> };
+  caseSharedDataSetAssignment: { findUnique: ReturnType<typeof vi.fn> };
+  dataSetVersion: {
+    findUnique: ReturnType<typeof vi.fn>;
+    findFirst: ReturnType<typeof vi.fn>;
+  };
   testRunCaseDataSetSnapshot: { create: ReturnType<typeof vi.fn> };
   testRunCaseIteration: { createMany: ReturnType<typeof vi.fn> };
 }
@@ -42,6 +47,13 @@ function buildTx(overrides: Partial<MockTx> = {}): MockTx {
       findMany: vi.fn().mockResolvedValue([]),
     },
     dataSet: {
+      findFirst: vi.fn().mockResolvedValue(null),
+    },
+    caseSharedDataSetAssignment: {
+      findUnique: vi.fn().mockResolvedValue(null),
+    },
+    dataSetVersion: {
+      findUnique: vi.fn().mockResolvedValue(null),
       findFirst: vi.fn().mockResolvedValue(null),
     },
     testRunCaseDataSetSnapshot: {
