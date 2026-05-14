@@ -187,11 +187,25 @@ export function RunPreflightChip({
         <span className="inline-flex">{chip}</span>
       </TooltipTrigger>
       <TooltipContent>
-        {t("runPreflightTooltip", {
-          iterations: total,
-          cases,
-          configs,
-        })}
+        <div className="text-xs font-medium tabular-nums">
+          {t("runPreflightTooltipHeader", {
+            iterations: total,
+            cases,
+            configs,
+          })}
+        </div>
+        {perCase.length > 0 && (
+          <ul className="mt-1.5 space-y-0.5 text-xs text-primary-foreground/70 tabular-nums">
+            {perCase.map((c) => (
+              <li key={c.caseId}>
+                {t("runPreflightTooltipCaseRow", {
+                  title: c.caseTitle,
+                  rows: c.rowCount,
+                })}
+              </li>
+            ))}
+          </ul>
+        )}
       </TooltipContent>
     </Tooltip>
   );

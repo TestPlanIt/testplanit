@@ -207,7 +207,7 @@ const BasicInfoDialog = React.memo(
     };
 
     return (
-      <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
+      <>
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
         </DialogHeader>
@@ -541,7 +541,7 @@ const BasicInfoDialog = React.memo(
             canEdit={false}
           />
         )}
-      </DialogContent>
+      </>
     );
   }
 );
@@ -705,7 +705,7 @@ const TestCasesDialog = React.memo(
     }, [selectedTestCases, form, open]);
 
     return (
-      <DialogContent className="max-w-[1200px] h-[90vh] flex flex-col p-0">
+      <>
         <DialogHeader className="p-6 pb-0 pr-4">
           <DialogTitle>{tRepository("cases.selectCases")}</DialogTitle>
           <DialogDescription asChild>
@@ -775,7 +775,7 @@ const TestCasesDialog = React.memo(
             </div>
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-1">
+        <div className="flex-1 min-h-0 overflow-y-auto">
           <ProjectRepository
             isSelectionMode={true}
             selectedTestCases={selectedTestCases}
@@ -824,7 +824,7 @@ const TestCasesDialog = React.memo(
             {tCommon("actions.save")}
           </Button>
         </div>
-      </DialogContent>
+      </>
     );
   }
 );
@@ -1491,11 +1491,20 @@ export default function AddTestRunModal({
     return <LoadingSpinnerAlert message={progressMessage} />;
   }
 
+  const dialogContentClassName =
+    step === 1
+      ? "max-w-[1200px] h-[90vh] flex flex-col p-0"
+      : "sm:max-w-[600px] lg:max-w-[1000px]";
+
   return (
     <>
       <Dialog open={open} onOpenChange={mainDialogOnOpenChange}>
-        {DialogContentComponent && open && (
-          <DialogContentComponent {...dialogProps} />
+        {open && (
+          <DialogContent className={dialogContentClassName}>
+            {DialogContentComponent && (
+              <DialogContentComponent {...dialogProps} />
+            )}
+          </DialogContent>
         )}
       </Dialog>
       <RunCardinalityHardRefuseDialog
