@@ -43,8 +43,6 @@ export function RunCardinalitySoftConfirmDialog({
   if (!result) return null;
   const cases = result.perCase.length;
   const configs = Math.max(1, configCount);
-  // Heuristic: ~1 minute per 1000 iterations baseline (locked in PLAN.md).
-  const minutes = Math.max(1, Math.ceil(result.total / 1000));
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -61,10 +59,6 @@ export function RunCardinalitySoftConfirmDialog({
             })}
           </AlertDialogDescription>
         </AlertDialogHeader>
-
-        <p className="text-sm text-muted-foreground">
-          {t("softConfirmEta", { minutes })}
-        </p>
 
         <AlertDialogFooter>
           <AlertDialogCancel data-testid="soft-confirm-cancel-button">

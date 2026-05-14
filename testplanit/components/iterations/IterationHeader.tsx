@@ -1,6 +1,13 @@
 "use client";
 
-import { MoreHorizontal, Pencil, Plus, RotateCcw } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  RotateCcw,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -11,6 +18,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import { glyphFromStatus, IterationStatusPip } from "./IterationStatusPip";
 import type { IterationMenuAction, IterationStatusDTO } from "./types";
@@ -23,6 +36,10 @@ export interface IterationHeaderProps {
   hasResult: boolean;
   /** Whether the parent run is completed (disables actions). */
   isRunCompleted: boolean;
+  /** Move to the iteration before this one. Omit to disable the button. */
+  onPrevIteration?: () => void;
+  /** Move to the iteration after this one. Omit to disable the button. */
+  onNextIteration?: () => void;
   onMenuAction: (action: IterationMenuAction) => void;
 }
 
@@ -36,6 +53,8 @@ export function IterationHeader({
   status,
   hasResult,
   isRunCompleted,
+  onPrevIteration,
+  onNextIteration,
   onMenuAction,
 }: IterationHeaderProps) {
   const t = useTranslations("parameters");
@@ -48,12 +67,48 @@ export function IterationHeader({
       className="flex items-center justify-between gap-4 pl-4 pr-12 py-3 border-b bg-muted/30"
       data-testid="iteration-header"
     >
-      <h2 className="text-base font-semibold">
-        {t("iterationHeaderTitle", {
-          n: String(rowIndex + 1),
-          total: String(total),
-        })}
-      </h2>
+      <TooltipProvider>
+        <div className="flex items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-7 w-7"
+                disabled={!onPrevIteration}
+                onClick={onPrevIteration}
+                aria-label={t("iterationPrevAria")}
+                data-testid="iteration-header-prev"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t("iterationPrevAria")}</TooltipContent>
+          </Tooltip>
+          <h2 className="text-base font-semibold">
+            {t("iterationHeaderTitle", {
+              n: String(rowIndex + 1),
+              total: String(total),
+            })}
+          </h2>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-7 w-7"
+                disabled={!onNextIteration}
+                onClick={onNextIteration}
+                aria-label={t("iterationNextAria")}
+                data-testid="iteration-header-next"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t("iterationNextAria")}</TooltipContent>
+          </Tooltip>
+        </div>
+      </TooltipProvider>
       <div className="flex items-center gap-3 ml-auto">
         {status && (
           <span

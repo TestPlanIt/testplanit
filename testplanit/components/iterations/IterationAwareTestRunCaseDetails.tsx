@@ -445,6 +445,16 @@ export function IterationAwareTestRunCaseDetails({
               status={activeIteration.status}
               hasResult={activeIteration.isCompleted}
               isRunCompleted={isRunCompleted}
+              onPrevIteration={
+                activeIteration.rowIndex > 0
+                  ? () => setActiveRowIndex(activeIteration.rowIndex - 1)
+                  : undefined
+              }
+              onNextIteration={
+                activeIteration.rowIndex < totalIterations - 1
+                  ? () => setActiveRowIndex(activeIteration.rowIndex + 1)
+                  : undefined
+              }
               onMenuAction={(action) =>
                 handleIterationMenuAction(activeIteration.id, action)
               }

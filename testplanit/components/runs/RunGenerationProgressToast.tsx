@@ -24,8 +24,6 @@ function ProgressToastBody({ job, onDismiss }: ProgressToastBodyProps) {
   const safeTotal = Math.max(job.total, 1);
   const done = Math.min(job.processed, safeTotal);
   const pct = Math.min(100, Math.round((done / safeTotal) * 100));
-  const remaining = Math.max(0, safeTotal - done);
-  const minutes = Math.max(1, Math.ceil(remaining / 1000));
 
   return (
     <div
@@ -49,14 +47,11 @@ function ProgressToastBody({ job, onDismiss }: ProgressToastBodyProps) {
         </Button>
       </div>
       <Progress value={pct} className="h-1.5" />
-      <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
-        <span>
-          {t("runProgressCounter", {
-            done: String(done),
-            total: String(safeTotal),
-          })}
-        </span>
-        <span>{t("runProgressEta", { minutes })}</span>
+      <div className="text-xs text-muted-foreground tabular-nums">
+        {t("runProgressCounter", {
+          done: String(done),
+          total: String(safeTotal),
+        })}
       </div>
     </div>
   );

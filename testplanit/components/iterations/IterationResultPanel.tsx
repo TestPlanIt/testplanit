@@ -206,7 +206,7 @@ export function IterationResultPanel({
             disabled={isDisabled || isSubmitting}
             data-testid="iteration-add-result-button"
           >
-            <Plus className="h-4 w-4 mr-1" />
+            <Plus className="h-4 w-4" />
             {t("iterationAddResult")}
           </Button>
           <div className="flex">
@@ -221,7 +221,7 @@ export function IterationResultPanel({
               className="rounded-r-none border-r-0"
               data-testid="iteration-pass-and-next-button"
             >
-              <CheckCircle className="h-4 w-4 mr-1" />
+              <CheckCircle className="h-4 w-4" />
               {t("iterationPassAndNext")}
             </Button>
             <DropdownMenu>
