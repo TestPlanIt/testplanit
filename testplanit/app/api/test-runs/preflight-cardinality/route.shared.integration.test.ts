@@ -342,6 +342,9 @@ describeIntegration(
     });
 
     it("parameterized case with pinned shared assignment uses pinnedVersion.rowCount", async () => {
+      // Default thresholds are asyncCap=500, softCap=1000, hardCap=5000.
+      // 700 rows × 1 config → 700 → softCap classification = "async"
+      // (asyncCap < 700 ≤ softCap).
       const { prisma } = await importDeps();
       await withRollback(prisma, async (tx) => {
         const ctx = await seedProject(tx);
@@ -350,11 +353,11 @@ describeIntegration(
           nameSuffix: "shared-pinned",
         });
         const shared = await createSharedDataset(tx, ctx);
-        const v1 = await createVersion(tx, shared.id, ctx.creatorId, 1, 200);
+        const v1 = await createVersion(tx, shared.id, ctx.creatorId, 1, 700);
         await attachAssignment(tx, c.id, shared.id, v1.id, ctx.creatorId);
 
         const r = await callPreflightInTx(tx, [c.id], 1, ctx.projectId);
-        expect(r.total).toBe(200);
+        expect(r.total).toBe(700);
         expect(r.classification).toBe("async");
       });
     });
