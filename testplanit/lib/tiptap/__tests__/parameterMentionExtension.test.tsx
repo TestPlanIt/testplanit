@@ -48,7 +48,19 @@ describe("createParameterMentionExtension", () => {
     });
     expect(Array.isArray(out)).toBe(true);
     expect(out[0]).toBe("span");
-    expect(out[out.length - 1]).toBe("@username");
+    // Chip body is now structured: outer span wraps a `parameter-ref-chip-text`
+    // span carrying the visible label/value. When a non-sensitive parameter has
+    // a value, the chip substitutes it inline (e.g. `@username: alice`).
+    const textNode = out
+      .slice(2)
+      .find(
+        (child): child is unknown[] =>
+          Array.isArray(child) &&
+          (child[1] as Record<string, unknown> | undefined)?.class ===
+            "parameter-ref-chip-text"
+      );
+    expect(textNode).toBeDefined();
+    expect(textNode![textNode!.length - 1]).toBe("@username: alice");
   });
 
   it("renderHTML attrs include the chip CSS class and data attributes", () => {

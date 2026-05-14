@@ -596,6 +596,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
             <StepsResults
               steps={stepsForDisplay || fieldValue || []}
               projectId={projectId}
+              parameters={parameters}
             />
           );
         } else {
