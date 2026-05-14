@@ -2049,7 +2049,6 @@ export default function TestRunPage() {
               );
               if (!trc) return null;
               const innerProps = {
-                key: selectedTestCaseId,
                 caseId: selectedTestCaseId,
                 projectId: Number(projectId),
                 testRunId: Number(runId),
@@ -2074,10 +2073,13 @@ export default function TestRunPage() {
               const totalIterations =
                 (trc as { totalIterations?: number }).totalIterations ?? 0;
 
-              // PARAM-07 invariant: legacy non-parameterized cases render
-              // exactly as today — no sidebar, no header, no banner.
               if (totalIterations === 0) {
-                return <TestRunCaseDetails {...innerProps} />;
+                return (
+                  <TestRunCaseDetails
+                    key={selectedTestCaseId}
+                    {...innerProps}
+                  />
+                );
               }
 
               return (

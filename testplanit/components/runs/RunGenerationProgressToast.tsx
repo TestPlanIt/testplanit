@@ -91,10 +91,15 @@ export function RunGenerationProgressToast() {
       seen.add(job.jobId);
       const prev = prevStateRef.current.get(job.jobId);
       prevStateRef.current.set(job.jobId, job.state);
+      // BullMQ assigns sequential numeric job ids ("2", "3"...) which collide
+      // with sonner's own auto-generated toast ids — causing duplicate React
+      // keys in the Toaster's child list. Namespacing the explicit id keeps
+      // the sticky-toast contract while sidestepping the collision.
+      const toastId = `iter-job-${job.jobId}`;
 
       if (job.state === "completed") {
         if (prev !== "completed") {
-          toast.dismiss(job.jobId);
+          toast.dismiss(toastId);
           toast.success(
             t("runProgressComplete", {
               total: job.total,
@@ -114,7 +119,7 @@ export function RunGenerationProgressToast() {
 
       if (job.state === "failed") {
         if (prev !== "failed") {
-          toast.dismiss(job.jobId);
+          toast.dismiss(toastId);
           toast.error(
             t("runProgressFailedToast", {
               runName: job.runName,
@@ -136,11 +141,11 @@ export function RunGenerationProgressToast() {
             job={job}
             onDismiss={() => {
               dismissedRef.current.add(job.jobId);
-              toast.dismiss(job.jobId);
+              toast.dismiss(toastId);
             }}
           />
         ),
-        { id: job.jobId, duration: Infinity }
+        { id: toastId, duration: Infinity }
       );
     }
 

@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
 import { useActiveIterationFromUrl } from "~/hooks/useActiveIterationFromUrl";
 import {
+  useFindFirstTestRunCaseDataSetSnapshot,
   useFindManyStatus,
   useFindManyTestRunCaseIteration,
 } from "~/lib/hooks";
@@ -97,8 +98,8 @@ export function IterationAwareTestRunCaseDetails({
     (session?.user as { access?: string } | undefined)?.access === "ADMIN";
 
   // Project Test-Run statuses (deduped via React Query with the same call
-   // in IterationResultPanel / IterationStatusLegendPopover). Used by
-   // handleResetIteration to find a target status without a custom endpoint.
+  // in IterationResultPanel / IterationStatusLegendPopover). Used by
+  // handleResetIteration to find a target status without a custom endpoint.
   const { data: projectStatuses } = useFindManyStatus({
     where: {
       AND: [
@@ -111,6 +112,10 @@ export function IterationAwareTestRunCaseDetails({
     orderBy: { order: "asc" },
   });
 
+  // Iteration list — DO NOT include dataSetSnapshot here. The snapshot is
+  // identical for every iteration row; including it duplicates the entire
+  // payload N times and overflows Prisma's napi string buffer above ~1500
+  // iterations. Snapshot is fetched once below via useFindFirstTestRunCaseDataSetSnapshot.
   const { data: iterationsRaw } = useFindManyTestRunCaseIteration(
     {
       where: { testRunCaseId, isDeleted: false },
@@ -120,9 +125,16 @@ export function IterationAwareTestRunCaseDetails({
             color: { select: { value: true } },
           },
         },
-        dataSetSnapshot: true,
       },
       orderBy: { rowIndex: "asc" },
+    },
+    { enabled: !!testRunCaseId }
+  );
+
+  const { data: snapshotRaw } = useFindFirstTestRunCaseDataSetSnapshot(
+    {
+      where: { testRunCaseId },
+      select: { parametersJson: true, rowsJson: true },
     },
     { enabled: !!testRunCaseId }
   );
@@ -152,19 +164,17 @@ export function IterationAwareTestRunCaseDetails({
     }));
   }, [iterationsRaw]);
 
-  // Snapshot lives on every iteration row but is identical across rows for a
-  // given testRunCase (single TestRunCaseDataSetSnapshot per case).
-  const snapshot = useMemo(() => {
-    const first = (iterationsRaw ?? [])[0] as
-      | {
-          dataSetSnapshot?: {
-            parametersJson: unknown;
-            rowsJson: unknown;
-          } | null;
-        }
-      | undefined;
-    return first?.dataSetSnapshot ?? null;
-  }, [iterationsRaw]);
+  const snapshot = useMemo(
+    () =>
+      snapshotRaw
+        ? {
+            parametersJson: (snapshotRaw as { parametersJson: unknown })
+              .parametersJson,
+            rowsJson: (snapshotRaw as { rowsJson: unknown }).rowsJson,
+          }
+        : null,
+    [snapshotRaw]
+  );
 
   const parametersSchema: IterationParameterMeta[] = useMemo(() => {
     if (!snapshot?.parametersJson) return [];
@@ -335,7 +345,7 @@ export function IterationAwareTestRunCaseDetails({
       const list = projectStatuses ?? [];
       const target =
         list.find(
-          (s: { systemName?: string | null }) => s?.systemName === "untested",
+          (s: { systemName?: string | null }) => s?.systemName === "untested"
         ) ?? list[0];
       if (!target) {
         toast.error(t("overrideError"), {
