@@ -2687,6 +2687,13 @@ model TestRunCaseDataSetSnapshot {
     sourceDataSetId   Int?
     sourceDataSet     DataSet?               @relation(fields: [sourceDataSetId], references: [id], onDelete: SetNull)
     sourceDataSetName String                 @length(1)
+    // Shared Datasets: when the snapshot was resolved from a shared
+    // dataset, this captures the exact DataSetVersion that was active
+    // at run-create time (even when the assignment is "follow latest"),
+    // so audit can answer "which version drove this run?". Null for
+    // owner-dataset and no-dataset cases.
+    sourceVersionId   Int?
+    sourceVersion     DataSetVersion?        @relation("SnapshotPinnedVersion", fields: [sourceVersionId], references: [id], onDelete: SetNull)
     parametersJson    Json
     rowsJson          Json
     snapshotAt        DateTime               @default(now()) @db.Timestamptz(6)
@@ -2695,11 +2702,20 @@ model TestRunCaseDataSetSnapshot {
 
     @@index([testRunCaseId])
     @@index([sourceDataSetId])
+    @@index([sourceVersionId])
     @@deny('all', !auth())
     @@deny('all', auth().access == 'NONE')
 
     // Explicit NO_ACCESS denial
     @@deny('read', testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Cross-project denial: a snapshot may not pin a version whose
+    // parent dataset lives in a different project than the run.
+    // Belt-and-suspenders alongside the ADMIN-only mutation gate below.
+    @@deny('create',
+        sourceVersionId != null &&
+        sourceVersion.dataSet.projectId != testRunCase.testRun.projectId
+    )
 
     // Inherit read access from test run case's project
     @@allow('read',
