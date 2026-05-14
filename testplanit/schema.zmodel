@@ -111,6 +111,8 @@ model User {
     editedTestRunResults    TestRunResults[]        @relation("TestRunResultEditor")
     testRunCaseIterations   TestRunCaseIteration[]
     createdDataSets         DataSet[]
+    createdDataSetVersions  DataSetVersion[]        @relation("DataSetVersionsCreatedBy")
+    createdSharedDataSetAssignments CaseSharedDataSetAssignment[] @relation("CaseSharedDataSetAssignmentCreatedBy")
     createdIssues           Issue[]                 @relation("IssueCreator")
     projectPermissions      UserProjectPermission[]
     junitTestSuites         JUnitTestSuite[]
@@ -3481,6 +3483,8 @@ model DataSet {
     rows         DataSetRow[]
     paramLookups TestCaseParameter[]          @relation("ParamLookupDataSet")
     snapshots    TestRunCaseDataSetSnapshot[]
+    versions     DataSetVersion[]             @relation("DataSetVersions")
+    sharedAssignments CaseSharedDataSetAssignment[] @relation("CaseSharedDataSet")
     isDeleted    Boolean                      @default(false)
     createdAt    DateTime                     @default(now()) @db.Timestamptz(6)
     createdById  String
@@ -3561,6 +3565,64 @@ model DataSetRow {
     )
 
     // Create/update/delete access based on shared steps permissions
+    @@allow('create,update,delete',
+        dataSet.project.creator == auth() ||
+        dataSet.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                         (role.name == 'Project Admin' ||
+                                          role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)])] ||
+        dataSet.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        dataSet.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                          accessType == 'SPECIFIC_ROLE' &&
+                                          role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)]]
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+// Shared Datasets: immutable per-save history for a DataSet.
+// Every explicit Save in the shared-dataset editor inserts one row here;
+// rows are never edited or soft-deleted. Soft-deleting the parent DataSet
+// is the correct cascade for retiring a shared dataset.
+model DataSetVersion {
+    id             Int                          @id @default(autoincrement())
+    dataSetId      Int
+    dataSet        DataSet                      @relation("DataSetVersions", fields: [dataSetId], references: [id], onDelete: Cascade)
+    version        Int
+    parametersJson Json?
+    rowsJson       Json
+    rowCount       Int                          @default(0)
+    createdAt      DateTime                     @default(now()) @db.Timestamptz(6)
+    createdById    String
+    createdBy      User                         @relation("DataSetVersionsCreatedBy", fields: [createdById], references: [id])
+    snapshots      TestRunCaseDataSetSnapshot[] @relation("SnapshotPinnedVersion")
+    assignments    CaseSharedDataSetAssignment[] @relation("AssignmentPinnedVersion")
+
+    @@unique([dataSetId, version])
+    @@index([dataSetId])
+    @@index([createdById])
+
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Inherit read access from parent DataSet's project (mirrors DataSetRow).
+    @@deny('read', dataSet.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        dataSet.project.creator == auth() ||
+        dataSet.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        dataSet.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        dataSet.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (dataSet.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (dataSet.project.assignedUsers?[user == auth()] &&
+         dataSet.project.defaultAccessType == 'SPECIFIC_ROLE' && dataSet.project.defaultRole != null)
+    )
+
+    // Create/update/delete access based on shared steps permissions (mirrors DataSet).
     @@allow('create,update,delete',
         dataSet.project.creator == auth() ||
         dataSet.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
