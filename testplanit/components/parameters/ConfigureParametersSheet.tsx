@@ -12,14 +12,15 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useTranslations } from "next-intl";
 import { createContext, useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-  useCountDataSetRow,
-  useFindManyTestCaseParameter,
-} from "~/lib/hooks";
+import { useCountDataSetRow, useFindManyTestCaseParameter } from "~/lib/hooks";
 
 /**
  * Context exposed to descendants of the Sheet so the dataset-cell editor
@@ -122,18 +123,23 @@ export function ConfigureParametersSheet({
             defaultValue="parameters"
             className="flex-1 flex flex-col overflow-hidden"
           >
-            <TabsList className="mx-6 mt-4 self-start">
-              <TabsTrigger value="parameters" data-testid="tab-parameters">
+            <TabsList className="mx-6 mt-4 flex w-auto">
+              <TabsTrigger
+                value="parameters"
+                data-testid="tab-parameters"
+                className="flex-1"
+              >
                 {t("tabParameters")}
               </TabsTrigger>
               {datasetTabDisabled ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span tabIndex={0}>
+                    <span tabIndex={0} className="flex-1">
                       <TabsTrigger
                         value="dataset"
                         disabled
                         data-testid="tab-dataset"
+                        className="w-full"
                       >
                         {t("tabDataset")}
                       </TabsTrigger>
@@ -144,7 +150,11 @@ export function ConfigureParametersSheet({
                   </TooltipContent>
                 </Tooltip>
               ) : (
-                <TabsTrigger value="dataset" data-testid="tab-dataset">
+                <TabsTrigger
+                  value="dataset"
+                  data-testid="tab-dataset"
+                  className="flex-1"
+                >
                   {t("tabDataset")}
                 </TabsTrigger>
               )}
