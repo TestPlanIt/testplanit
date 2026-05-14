@@ -6925,7 +6925,7 @@
     "datasetSelectedCount": "{count} selected",
     "datasetClearSelection": "Clear selection",
     "datasetDeleteSelected": "Delete selected",
-    "datasetFooterHint": "Press Enter to commit · Tab to next cell · Drag to reorder",
+    "datasetEditingHint": "Press Enter to commit · Tab to next cell · Drag to reorder",
     "datasetSaveError": "Could not save change",
     "datasetRowResultsHeader": "Last result",
     "datasetRowResultLink": "View {status} result",

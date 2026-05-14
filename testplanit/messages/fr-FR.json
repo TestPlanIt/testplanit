@@ -6925,7 +6925,7 @@
     "datasetSelectedCount": "{count} sélectionné",
     "datasetClearSelection": "Sélection claire",
     "datasetDeleteSelected": "Supprimer la sélection",
-    "datasetFooterHint": "Appuyez sur Entrée pour valider · Tabulation pour passer à la cellule suivante · Glisser pour réorganiser",
+    "datasetEditingHint": "Appuyez sur Entrée pour valider · Tabulation pour passer à la cellule suivante · Glisser pour réorganiser",
     "datasetSaveError": "Impossible d'enregistrer la monnaie",
     "datasetRowResultsHeader": "Dernier résultat",
     "datasetRowResultLink": "Afficher le résultat {status}",

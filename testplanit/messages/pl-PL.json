@@ -6925,7 +6925,7 @@
     "datasetSelectedCount": "{count} wybrano",
     "datasetClearSelection": "Wyczyść wybór",
     "datasetDeleteSelected": "Usuń wybrane",
-    "datasetFooterHint": "Naciśnij Enter, aby zatwierdzić · Klawiszem Tab przejdź do następnej komórki · Przeciągnij, aby zmienić kolejność",
+    "datasetEditingHint": "Naciśnij Enter, aby zatwierdzić · Klawiszem Tab przejdź do następnej komórki · Przeciągnij, aby zmienić kolejność",
     "datasetSaveError": "Nie udało się zapisać reszty",
     "datasetRowResultsHeader": "Ostatni wynik",
     "datasetRowResultLink": "Wyświetl wynik {status}",

@@ -6925,7 +6925,7 @@
     "datasetSelectedCount": "{count} selezionato",
     "datasetClearSelection": "Cancella selezione",
     "datasetDeleteSelected": "Elimina selezionati",
-    "datasetFooterHint": "Premi Invio per confermare · Tab per passare alla cella successiva · Trascina per riordinare",
+    "datasetEditingHint": "Premi Invio per confermare · Tab per passare alla cella successiva · Trascina per riordinare",
     "datasetSaveError": "Impossibile salvare il resto",
     "datasetRowResultsHeader": "Ultimo risultato",
     "datasetRowResultLink": "Visualizza il risultato {status}",

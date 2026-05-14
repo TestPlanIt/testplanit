@@ -5,13 +5,11 @@ import { DatasetRowActions } from "@/components/parameters/DatasetRowActions";
 import { PasteCsvDialog } from "@/components/parameters/PasteCsvDialog";
 import { SheetEditingContext } from "@/components/parameters/ConfigureParametersSheet";
 import { SortableDatasetRow } from "@/components/parameters/SortableDatasetRow";
-import {
-  glyphFromStatus,
-  IterationStatusPip,
-} from "@/components/iterations/IterationStatusPip";
+import StatusDotDisplay from "@/components/StatusDotDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import {
   closestCenter,
   DndContext,
@@ -37,8 +35,13 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   ClipboardPaste,
   GripVertical,
+  Loader2,
   Lock,
   Plus,
   Table2,
@@ -141,6 +144,8 @@ export function DatasetTab({
   onOpenImportWizard,
 }: DatasetTabProps) {
   const t = useTranslations("parameters");
+  const tCommon = useTranslations("common");
+  const tSearchResults = useTranslations("search.results");
   const queryClient = useQueryClient();
   const router = useRouter();
   const { setEditingCell } = useContext(SheetEditingContext);
@@ -202,40 +207,75 @@ export function DatasetTab({
   }, [lastResultsRaw]);
 
   const [dataset, setDataset] = useState<DatasetRecord | null>(null);
+  const [isLoadingDataset, setIsLoadingDataset] = useState(true);
+  const [showLoading, setShowLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 50;
+  const [totalRows, setTotalRows] = useState(0);
   const [editCell, setEditCell] = useState<EditCellState | null>(null);
   const [draftValue, setDraftValue] = useState<unknown>(undefined);
   const [cellErrors, setCellErrors] = useState<Map<string, string>>(new Map());
   const [selectedRowIds, setSelectedRowIds] = useState<Set<number>>(new Set());
+  const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(
+    null
+  );
   const [showPasteDialog, setShowPasteDialog] = useState(false);
 
-  const rows = dataset?.rows ?? [];
+  const rows = useMemo(() => dataset?.rows ?? [], [dataset]);
   const editCellRef = useRef<EditCellState | null>(null);
   editCellRef.current = editCell;
 
   // ---------- Dataset bootstrap ----------
   const loadDataset = useCallback(async () => {
-    const res = await fetch(`/api/repository/cases/${caseId}/dataset`);
-    if (!res.ok) return;
-    const json = await res.json();
-    if (json?.dataset) {
-      setDataset(json.dataset as DatasetRecord);
-      return;
+    setIsLoadingDataset(true);
+    try {
+      const url = `/api/repository/cases/${caseId}/dataset?page=${page}&pageSize=${pageSize}`;
+      const res = await fetch(url);
+      if (!res.ok) return;
+      const json = await res.json();
+      if (typeof json?.totalRows === "number") setTotalRows(json.totalRows);
+      if (json?.dataset) {
+        setDataset(json.dataset as DatasetRecord);
+        return;
+      }
+      // No dataset yet — idempotent attach
+      const attach = await fetch(`/api/repository/cases/${caseId}/dataset`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (attach.ok) {
+        const j2 = await attach.json();
+        setDataset(j2?.dataset ?? null);
+        setTotalRows(0);
+      }
+    } finally {
+      setIsLoadingDataset(false);
     }
-    // No dataset yet — idempotent attach
-    const attach = await fetch(`/api/repository/cases/${caseId}/dataset`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    });
-    if (attach.ok) {
-      const j2 = await attach.json();
-      setDataset(j2?.dataset ?? null);
-    }
-  }, [caseId]);
+  }, [caseId, page, pageSize]);
 
   useEffect(() => {
     void loadDataset();
   }, [loadDataset]);
+
+  // Delay showing the loading indicator so quick fetches don't flash a spinner.
+  useEffect(() => {
+    if (!isLoadingDataset) {
+      setShowLoading(false);
+      return;
+    }
+    const timeout = setTimeout(() => setShowLoading(true), 300);
+    return () => clearTimeout(timeout);
+  }, [isLoadingDataset]);
+
+  // If totalRows shrinks below the current page (e.g. after bulk delete),
+  // step back to the last valid page.
+  const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+  const showingFrom = totalRows === 0 ? 0 : (page - 1) * pageSize + 1;
+  const showingTo = Math.min(page * pageSize, totalRows);
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   // ---------- Sheet edit-state coordination ----------
   useEffect(() => {
@@ -358,7 +398,7 @@ export function DatasetTab({
 
   // ---------- Add row ----------
   const handleAddRow = useCallback(async () => {
-    const nextIndex = rows.length;
+    const nextIndex = totalRows;
     const res = await fetch(`/api/repository/cases/${caseId}/dataset/rows`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -375,8 +415,12 @@ export function DatasetTab({
     void queryClient.invalidateQueries({
       queryKey: ["zenstack", "DataSetRow"],
     });
-    await loadDataset();
-  }, [caseId, queryClient, rows.length, t, loadDataset]);
+    // Jump to the last page so the new row is visible.
+    const newTotal = totalRows + 1;
+    const lastPage = Math.max(1, Math.ceil(newTotal / pageSize));
+    if (lastPage !== page) setPage(lastPage);
+    else await loadDataset();
+  }, [caseId, queryClient, totalRows, pageSize, page, t, loadDataset]);
 
   // ---------- Move helpers (UI-SPEC D.2) ----------
   const moveCell = useCallback(
@@ -439,12 +483,17 @@ export function DatasetTab({
     );
     if (oldIndex < 0 || newIndex < 0) return;
     const reordered = arrayMove(rows, oldIndex, newIndex);
-    // Optimistic update
+    // Reordering is page-scoped: write back the absolute rowIndex range
+    // (pageStart..pageStart+pageLen-1) so other pages stay put.
+    const pageStart = (page - 1) * pageSize;
     setDataset((prev) =>
       prev
         ? {
             ...prev,
-            rows: reordered.map((r, idx) => ({ ...r, rowIndex: idx })),
+            rows: reordered.map((r, idx) => ({
+              ...r,
+              rowIndex: pageStart + idx,
+            })),
           }
         : prev
     );
@@ -453,7 +502,7 @@ export function DatasetTab({
         fetch(`/api/repository/cases/${caseId}/dataset/rows`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rowId: r.id, rowIndex: idx }),
+          body: JSON.stringify({ rowId: r.id, rowIndex: pageStart + idx }),
         })
       )
     );
@@ -499,23 +548,49 @@ export function DatasetTab({
         id: SELECT_COLUMN_ID,
         size: 32,
         header: () => null,
-        cell: ({ row }) => (
-          <div className="flex items-center justify-center">
-            <Checkbox
-              checked={selectedRowIds.has(row.original.id)}
-              onCheckedChange={(v) =>
-                setSelectedRowIds((prev) => {
-                  const next = new Set(prev);
-                  if (v) next.add(row.original.id);
-                  else next.delete(row.original.id);
-                  return next;
-                })
-              }
-              aria-label={t("datasetRowSelectAria")}
-              data-testid={`dataset-row-select-${row.original.id}`}
-            />
-          </div>
-        ),
+        cell: ({ row }) => {
+          const handleClick = (e: React.MouseEvent) => {
+            e.stopPropagation();
+            const visibleIndex = row.index;
+            if (
+              e.shiftKey &&
+              lastSelectedIndex !== null &&
+              lastSelectedIndex !== visibleIndex
+            ) {
+              const start = Math.min(lastSelectedIndex, visibleIndex);
+              const end = Math.max(lastSelectedIndex, visibleIndex);
+              setSelectedRowIds((prev) => {
+                const next = new Set(prev);
+                for (let i = start; i <= end; i++) {
+                  const r = rows[i];
+                  if (r) next.add(r.id);
+                }
+                return next;
+              });
+            } else {
+              setSelectedRowIds((prev) => {
+                const next = new Set(prev);
+                if (next.has(row.original.id)) next.delete(row.original.id);
+                else next.add(row.original.id);
+                return next;
+              });
+              setLastSelectedIndex(visibleIndex);
+            }
+          };
+          return (
+            <div className="flex items-center justify-center">
+              <Checkbox
+                checked={selectedRowIds.has(row.original.id)}
+                onCheckedChange={() => {
+                  /* handled in onClick to capture shiftKey */
+                }}
+                onClick={handleClick}
+                aria-label={t("datasetRowSelectAria")}
+                data-testid={`dataset-row-select-${row.original.id}`}
+              />
+            </div>
+          );
+        },
       },
       {
         id: LABEL_COLUMN_ID,
@@ -622,7 +697,6 @@ export function DatasetTab({
               </span>
             );
           }
-          const glyph = glyphFromStatus(entry.status, false);
           const handleClick = () => {
             router.push(
               `/projects/runs/${projectId}/${entry.runId}?iteration=${
@@ -631,21 +705,17 @@ export function DatasetTab({
             );
           };
           return (
-            <div className="flex items-center gap-2">
-              <IterationStatusPip
-                glyph={glyph}
-                statusColor={entry.status.color?.value}
+            <button
+              type="button"
+              onClick={handleClick}
+              data-testid={`dataset-row-result-link-${row.original.rowIndex}`}
+              className="text-sm hover:underline focus-visible:underline focus-visible:outline-none"
+            >
+              <StatusDotDisplay
+                name={entry.status.name}
+                color={entry.status.color?.value}
               />
-              <Button
-                variant="link"
-                size="sm"
-                onClick={handleClick}
-                data-testid={`dataset-row-result-link-${row.original.rowIndex}`}
-                className="p-0 h-auto"
-              >
-                {t("datasetRowResultLink", { status: entry.status.name })}
-              </Button>
-            </div>
+            </button>
           );
         },
       } as ColumnDef<DatasetRowRecord>);
@@ -658,6 +728,8 @@ export function DatasetTab({
     draftValue,
     cellErrors,
     selectedRowIds,
+    lastSelectedIndex,
+    rows,
     viewerCanReadSensitive,
     t,
     commitCell,
@@ -693,15 +765,21 @@ export function DatasetTab({
             caseId={caseId}
             selectedRowIds={Array.from(selectedRowIds)}
             onClear={() => setSelectedRowIds(new Set())}
+            onAfterDelete={loadDataset}
           />
         ) : (
           <>
-            <span className="text-sm text-muted-foreground">
-              {t("datasetCounts", {
-                paramCount: String(parameters.length),
-                rowCount: String(rows.length),
-              })}
-            </span>
+            <div className="flex flex-col">
+              <span className="text-sm text-muted-foreground">
+                {t("datasetCounts", {
+                  paramCount: String(parameters.length),
+                  rowCount: String(totalRows),
+                })}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {t("datasetEditingHint")}
+              </span>
+            </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -735,7 +813,17 @@ export function DatasetTab({
         )}
       </div>
 
-      {rows.length === 0 ? (
+      {isLoadingDataset && !showLoading ? (
+        <div className="flex-1" aria-hidden="true" />
+      ) : isLoadingDataset ? (
+        <div
+          className="flex-1 flex flex-col items-center justify-center gap-3 p-8"
+          data-testid="dataset-tab-loading"
+        >
+          <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
+          <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>
+        </div>
+      ) : rows.length === 0 ? (
         <div
           className="flex-1 flex flex-col items-center justify-center gap-3 p-8"
           data-testid="dataset-tab-empty"
@@ -779,8 +867,8 @@ export function DatasetTab({
               items={rows.map((r) => String(r.id))}
               strategy={verticalListSortingStrategy}
             >
-              <table className="w-full text-sm">
-                <thead className="bg-muted/30 sticky top-0">
+              <table className="w-full text-sm border-separate border-spacing-0">
+                <thead className="sticky top-0 z-10">
                   {table.getHeaderGroups().map((hg) => (
                     <tr key={hg.id}>
                       {hg.headers.map((h) => {
@@ -788,7 +876,7 @@ export function DatasetTab({
                         return (
                           <th
                             key={h.id}
-                            className="px-2 py-1 text-left"
+                            className="px-2 py-1 text-left bg-accent border-b font-medium"
                             style={
                               minSize ? { minWidth: `${minSize}px` } : undefined
                             }
@@ -814,6 +902,7 @@ export function DatasetTab({
                         transform,
                         transition,
                         isDragging,
+                        dropIndicator,
                       }) => (
                         <tr
                           ref={setNodeRef}
@@ -825,7 +914,21 @@ export function DatasetTab({
                           {...attributes}
                           data-testid={`dataset-row-${row.original.id}`}
                         >
-                          <td className="w-6 px-2 py-1 align-middle">
+                          <td className="w-6 px-2 py-1 align-middle relative">
+                            {dropIndicator === "top" && (
+                              <div
+                                className="absolute top-0 left-0 right-0 h-[3px] bg-primary z-50 pointer-events-none w-screen"
+                                aria-hidden="true"
+                                data-testid={`dataset-row-drop-indicator-top-${row.original.id}`}
+                              />
+                            )}
+                            {dropIndicator === "bottom" && (
+                              <div
+                                className="absolute bottom-0 left-0 right-0 h-[3px] bg-primary z-50 pointer-events-none w-screen"
+                                aria-hidden="true"
+                                data-testid={`dataset-row-drop-indicator-bottom-${row.original.id}`}
+                              />
+                            )}
                             <div
                               ref={setActivatorNodeRef}
                               {...listeners}
@@ -870,10 +973,74 @@ export function DatasetTab({
       )}
 
       <div
-        className="p-2 pl-4 border-t text-xs text-muted-foreground"
+        className="p-2 pl-4 pr-2 border-t flex items-center justify-end gap-3"
         data-testid="dataset-tab-footer"
       >
-        {t("datasetFooterHint")}
+        {totalRows > 0 && (
+          <div
+            className="flex items-center gap-2"
+            data-testid="dataset-tab-pagination"
+          >
+            <div className="text-sm text-muted-foreground">
+              {tCommon("pagination.showing")} {showingFrom}-{showingTo}{" "}
+              {tCommon("of")} {totalRows} {tCommon("results")}
+            </div>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setPage(1)}
+              disabled={page === 1}
+              data-testid="dataset-page-first"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              data-testid="dataset-page-prev"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="flex items-center gap-1">
+              <span className="text-sm">{tSearchResults("page")}</span>
+              <Input
+                type="number"
+                min={1}
+                max={totalPages}
+                value={page}
+                onChange={(e) => {
+                  const next = parseInt(e.target.value) || 1;
+                  if (next >= 1 && next <= totalPages) setPage(next);
+                }}
+                className="w-16 h-9 text-center"
+                data-testid="dataset-page-input"
+              />
+              <span className="text-sm">
+                {tCommon("of")} {totalPages}
+              </span>
+            </div>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              data-testid="dataset-page-next"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setPage(totalPages)}
+              disabled={page === totalPages}
+              data-testid="dataset-page-last"
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
 
       <PasteCsvDialog

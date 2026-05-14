@@ -19,6 +19,7 @@ export interface DatasetRowActionsProps {
   caseId: number;
   selectedRowIds: number[];
   onClear: () => void;
+  onAfterDelete?: () => void | Promise<void>;
 }
 
 /**
@@ -31,6 +32,7 @@ export function DatasetRowActions({
   caseId,
   selectedRowIds,
   onClear,
+  onAfterDelete,
 }: DatasetRowActionsProps) {
   const tCommon = useTranslations("common");
   const tActions = useTranslations("common.actions");
@@ -42,14 +44,11 @@ export function DatasetRowActions({
   const handleDelete = async () => {
     setSubmitting(true);
     try {
-      const res = await fetch(
-        `/api/repository/cases/${caseId}/dataset/rows`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rowIds: selectedRowIds }),
-        }
-      );
+      const res = await fetch(`/api/repository/cases/${caseId}/dataset/rows`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rowIds: selectedRowIds }),
+      });
       if (!res.ok) {
         toast.error(t("datasetSaveError"));
         return;
@@ -59,6 +58,7 @@ export function DatasetRowActions({
       });
       onClear();
       setConfirmOpen(false);
+      if (onAfterDelete) await onAfterDelete();
     } finally {
       setSubmitting(false);
     }

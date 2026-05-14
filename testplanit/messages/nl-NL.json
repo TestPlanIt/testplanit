@@ -6925,7 +6925,7 @@
     "datasetSelectedCount": "{count} geselecteerd",
     "datasetClearSelection": "Selectie wissen",
     "datasetDeleteSelected": "Verwijder geselecteerde",
-    "datasetFooterHint": "Druk op Enter om te bevestigen · Tab om naar de volgende cel te gaan · Sleep om de volgorde te wijzigen",
+    "datasetEditingHint": "Druk op Enter om te bevestigen · Tab om naar de volgende cel te gaan · Sleep om de volgorde te wijzigen",
     "datasetSaveError": "Wijzigingen opslaan mislukt",
     "datasetRowResultsHeader": "Laatste resultaat",
     "datasetRowResultLink": "Bekijk het resultaat {status}",

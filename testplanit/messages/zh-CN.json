@@ -6925,7 +6925,7 @@
     "datasetSelectedCount": "{count} 已选择",
     "datasetClearSelection": "清除选择",
     "datasetDeleteSelected": "删除所选内容",
-    "datasetFooterHint": "按 Enter 键提交 · 按 Tab 键切换到下一个单元格 · 拖动鼠标重新排序",
+    "datasetEditingHint": "按 Enter 键提交 · 按 Tab 键切换到下一个单元格 · 拖动鼠标重新排序",
     "datasetSaveError": "无法保存更改",
     "datasetRowResultsHeader": "最新结果",
     "datasetRowResultLink": "查看 {status} 结果",

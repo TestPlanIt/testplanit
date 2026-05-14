@@ -6925,7 +6925,7 @@
     "datasetSelectedCount": "{count} đã chọn",
     "datasetClearSelection": "Xóa lựa chọn",
     "datasetDeleteSelected": "Xóa mục đã chọn",
-    "datasetFooterHint": "Nhấn Enter để xác nhận · Nhấn Tab để chuyển đến ô tiếp theo · Kéo để sắp xếp lại",
+    "datasetEditingHint": "Nhấn Enter để xác nhận · Nhấn Tab để chuyển đến ô tiếp theo · Kéo để sắp xếp lại",
     "datasetSaveError": "Không thể lưu thay đổi",
     "datasetRowResultsHeader": "Kết quả cuối cùng",
     "datasetRowResultLink": "Xem kết quả {status}",

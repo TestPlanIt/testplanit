@@ -6925,7 +6925,7 @@
     "datasetSelectedCount": "{count} selecionado",
     "datasetClearSelection": "Limpar seleção",
     "datasetDeleteSelected": "Excluir selecionados",
-    "datasetFooterHint": "Pressione Enter para confirmar · Pressione Tab para ir para a próxima célula · Arraste para reordenar",
+    "datasetEditingHint": "Pressione Enter para confirmar · Pressione Tab para ir para a próxima célula · Arraste para reordenar",
     "datasetSaveError": "Não foi possível salvar o troco.",
     "datasetRowResultsHeader": "Último resultado",
     "datasetRowResultLink": "Ver {status} resultado",

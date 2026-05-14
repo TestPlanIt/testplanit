@@ -24,7 +24,7 @@ import { authOptions } from "~/server/auth";
 
 async function resolveCanReadSensitive(
   db: any,
-  userId: string,
+  userId: string
 ): Promise<boolean> {
   const user = await db.user.findUnique({
     where: { id: userId },
@@ -35,13 +35,18 @@ async function resolveCanReadSensitive(
   if (user.access === "ADMIN") return true;
   const perms = user.role?.rolePermissions ?? [];
   return Array.isArray(perms)
-    ? perms.some((p: { canReadSensitive?: boolean }) => p?.canReadSensitive === true)
+    ? perms.some(
+        (p: { canReadSensitive?: boolean }) => p?.canReadSensitive === true
+      )
     : false;
 }
 
+const DEFAULT_PAGE_SIZE = 50;
+const MAX_PAGE_SIZE = 200;
+
 export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ caseId: string }> },
+  request: NextRequest,
+  { params }: { params: Promise<{ caseId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -54,6 +59,20 @@ export async function GET(
     if (isNaN(caseId)) {
       return NextResponse.json({ error: "Invalid case id" }, { status: 400 });
     }
+
+    // Pagination: opt-in via ?page=. When absent, return the full dataset
+    // for back-compat (callers that need every row in one shot).
+    const url = new URL(request.url);
+    const pageParam = url.searchParams.get("page");
+    const pageSizeParam = url.searchParams.get("pageSize");
+    const isPaged = pageParam !== null;
+    const page = isPaged ? Math.max(1, parseInt(pageParam, 10) || 1) : 1;
+    const pageSize = isPaged
+      ? Math.min(
+          MAX_PAGE_SIZE,
+          Math.max(1, parseInt(pageSizeParam ?? "", 10) || DEFAULT_PAGE_SIZE)
+        )
+      : DEFAULT_PAGE_SIZE;
 
     const db = await getEnhancedDb(session);
 
@@ -77,12 +96,22 @@ export async function GET(
         rows: {
           where: { isDeleted: false },
           orderBy: { rowIndex: "asc" },
+          ...(isPaged ? { skip: (page - 1) * pageSize, take: pageSize } : {}),
         },
       },
     });
     if (!dataset) {
-      return NextResponse.json({ dataset: null });
+      return NextResponse.json({
+        dataset: null,
+        totalRows: 0,
+        page,
+        pageSize,
+      });
     }
+
+    const totalRows = await db.dataSetRow.count({
+      where: { dataSetId: dataset.id, isDeleted: false },
+    });
 
     const parameters = await db.testCaseParameter.findMany({
       where: { testCaseId: caseId, isDeleted: false },
@@ -91,22 +120,30 @@ export async function GET(
 
     const viewerCanReadSensitive = await resolveCanReadSensitive(
       db,
-      session.user.id,
+      session.user.id
     );
 
     const safeRows = (dataset.rows ?? []).map(
-      (row: { id: number; valuesJson: unknown; rowIndex: number; label: string | null }) => ({
+      (row: {
+        id: number;
+        valuesJson: unknown;
+        rowIndex: number;
+        label: string | null;
+      }) => ({
         ...row,
         valuesJson: redactValues(
           (row.valuesJson ?? {}) as Record<string, unknown>,
           parameters,
-          viewerCanReadSensitive,
+          viewerCanReadSensitive
         ),
-      }),
+      })
     );
 
     return NextResponse.json({
       dataset: { ...dataset, rows: safeRows },
+      totalRows,
+      page,
+      pageSize,
     });
   } catch (err) {
     console.error("[dataset GET]", err);
@@ -116,7 +153,7 @@ export async function GET(
 
 export async function POST(
   _request: NextRequest,
-  { params }: { params: Promise<{ caseId: string }> },
+  { params }: { params: Promise<{ caseId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
