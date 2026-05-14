@@ -89,6 +89,37 @@ interface DatasetRecord {
   rows: DatasetRowRecord[];
 }
 
+/**
+ * Operating mode for `DatasetTab`.
+ *
+ * - undefined (default): the per-case "owner dataset" surface — fetches
+ *   `/api/repository/cases/{caseId}/dataset`, PATCHes individual cells,
+ *   and bulk-deletes rows via the per-case API. PARAM-07 invariant
+ *   keeps this byte-for-byte backwards compatible.
+ * - "shared-editor": rows + parameters are supplied by the parent and
+ *   edits are buffered locally. Cell commits, label edits, add-row,
+ *   drag-reorder, and bulk-delete all flow through `onRowsChange` /
+ *   `onParametersChange` — no API calls. The parent owns the explicit
+ *   Save commit boundary (CONTEXT Amendment B).
+ * - "shared-readonly": rows + parameters are supplied by the parent.
+ *   Every edit affordance is hidden or disabled. Used to view
+ *   historical versions of a shared dataset.
+ */
+export type DatasetTabMode = "shared-editor" | "shared-readonly";
+
+export interface DatasetTabRow {
+  /**
+   * Local identifier — for shared mode this is a parent-assigned
+   * synthetic id (typically negative or a UUID-derived integer) that
+   * disambiguates rows during drag-reorder. For owner-dataset mode this
+   * is the real `DataSetRow.id`.
+   */
+  id: number;
+  label: string | null;
+  rowIndex: number;
+  valuesJson: Record<string, unknown> | null;
+}
+
 export interface DatasetTabProps {
   caseId: number;
   projectId: number;
@@ -99,6 +130,26 @@ export interface DatasetTabProps {
    * button is rendered but a no-op until 02-05 lands.
    */
   onOpenImportWizard?: () => void;
+  /**
+   * Optional operating mode. When omitted the per-case (owner-dataset)
+   * code path is used — see `DatasetTabMode` for the alternatives.
+   */
+  mode?: DatasetTabMode;
+  /**
+   * Required when `mode` is set. Controlled-mode rows.
+   */
+  rows?: DatasetTabRow[];
+  /**
+   * Required when `mode === "shared-editor"`. Called whenever the user
+   * makes a change that should land in the parent's buffered state.
+   */
+  onRowsChange?: (rows: DatasetTabRow[]) => void;
+  /**
+   * Optional in shared-editor mode for parameter-schema edits (column
+   * add/remove/rename). Reserved for future use; today the dataset
+   * editor pages do not author column schemas — they inherit them.
+   */
+  onParametersChange?: (parameters: ParameterRecord[]) => void;
 }
 
 interface EditCellState {
@@ -142,7 +193,12 @@ export function DatasetTab({
   projectId,
   parameters,
   onOpenImportWizard,
+  mode,
+  rows: controlledRows,
+  onRowsChange,
 }: DatasetTabProps) {
+  const isShared = mode === "shared-editor" || mode === "shared-readonly";
+  const isReadOnly = mode === "shared-readonly";
   const t = useTranslations("parameters");
   const tCommon = useTranslations("common");
   const tSearchResults = useTranslations("search.results");
@@ -151,11 +207,16 @@ export function DatasetTab({
   const { setEditingCell } = useContext(SheetEditingContext);
 
   // ---------- Surface F: "Last result" cross-link column ----------
-  // Cheap gate: only render the trailing column when this case has run history.
-  const { data: runHistoryCount } = useCountTestRunCases({
-    where: { repositoryCaseId: caseId },
-  });
-  const caseHasRunHistory = (runHistoryCount ?? 0) > 0;
+  // Cheap gate: only render the trailing column when this case has run
+  // history. In shared mode the dataset is project-scoped (no caseId
+  // semantics), so the "last result" cross-link is meaningless and the
+  // queries are skipped entirely to avoid hitting the API with the
+  // caller-supplied placeholder caseId.
+  const { data: runHistoryCount } = useCountTestRunCases(
+    { where: { repositoryCaseId: caseId } },
+    { enabled: !isShared }
+  );
+  const caseHasRunHistory = !isShared && (runHistoryCount ?? 0) > 0;
 
   const { data: lastResultsRaw } = useFindManyTestRunCaseIteration(
     {
@@ -221,12 +282,25 @@ export function DatasetTab({
   );
   const [showPasteDialog, setShowPasteDialog] = useState(false);
 
-  const rows = useMemo(() => dataset?.rows ?? [], [dataset]);
+  // In shared mode, rows are supplied by the parent. In owner-dataset
+  // mode, rows live in this component's local state seeded from the
+  // per-case API.
+  const rows = useMemo(
+    () => (isShared ? (controlledRows ?? []) : (dataset?.rows ?? [])),
+    [isShared, controlledRows, dataset]
+  );
   const editCellRef = useRef<EditCellState | null>(null);
   editCellRef.current = editCell;
 
   // ---------- Dataset bootstrap ----------
   const loadDataset = useCallback(async () => {
+    if (isShared) {
+      // Shared mode: parent supplies rows. The component renders a
+      // synthetic "loaded" state immediately so the empty-rows path
+      // doesn't flash the loading spinner.
+      setIsLoadingDataset(false);
+      return;
+    }
     setIsLoadingDataset(true);
     try {
       const url = `/api/repository/cases/${caseId}/dataset?page=${page}&pageSize=${pageSize}`;
@@ -252,11 +326,16 @@ export function DatasetTab({
     } finally {
       setIsLoadingDataset(false);
     }
-  }, [caseId, page, pageSize]);
+  }, [caseId, page, pageSize, isShared]);
 
   useEffect(() => {
     void loadDataset();
   }, [loadDataset]);
+
+  // Shared-mode total comes from the parent-controlled rows length.
+  useEffect(() => {
+    if (isShared) setTotalRows(controlledRows?.length ?? 0);
+  }, [isShared, controlledRows]);
 
   // Delay showing the loading indicator so quick fetches don't flash a spinner.
   useEffect(() => {
@@ -362,6 +441,28 @@ export function DatasetTab({
 
       const row = rows.find((r) => r.id === rowId);
       if (!row) return;
+
+      if (isShared) {
+        // Shared-editor mode: push the change into the parent's buffered
+        // rows. The parent flushes to the Save endpoint on demand.
+        if (!onRowsChange) return;
+        const next = rows.map((r) =>
+          r.id !== rowId
+            ? r
+            : paramName === null
+              ? { ...r, label: String(newValue ?? "") }
+              : {
+                  ...r,
+                  valuesJson: {
+                    ...(r.valuesJson ?? {}),
+                    [paramName]: newValue,
+                  },
+                }
+        );
+        onRowsChange(next);
+        return;
+      }
+
       const body =
         paramName === null
           ? { rowId, label: newValue }
@@ -393,12 +494,30 @@ export function DatasetTab({
         });
       }
     },
-    [patchRow, rowSchema, rows]
+    [patchRow, rowSchema, rows, isShared, onRowsChange]
   );
 
   // ---------- Add row ----------
   const handleAddRow = useCallback(async () => {
     const nextIndex = totalRows;
+    if (isShared) {
+      if (!onRowsChange) return;
+      // Synthetic negative ids prevent collisions with any positive
+      // server-side ids the parent might mix in. Re-indexing happens at
+      // Save time on the server.
+      const synthId = -(Date.now() + Math.floor(Math.random() * 1000));
+      const newRow: DatasetTabRow = {
+        id: synthId,
+        label: t("datasetRowDefaultLabel", { number: String(nextIndex + 1) }),
+        rowIndex: nextIndex,
+        valuesJson: {},
+      };
+      onRowsChange([...rows, newRow]);
+      const newTotal = nextIndex + 1;
+      const lastPage = Math.max(1, Math.ceil(newTotal / pageSize));
+      if (lastPage !== page) setPage(lastPage);
+      return;
+    }
     const res = await fetch(`/api/repository/cases/${caseId}/dataset/rows`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -420,7 +539,18 @@ export function DatasetTab({
     const lastPage = Math.max(1, Math.ceil(newTotal / pageSize));
     if (lastPage !== page) setPage(lastPage);
     else await loadDataset();
-  }, [caseId, queryClient, totalRows, pageSize, page, t, loadDataset]);
+  }, [
+    caseId,
+    queryClient,
+    totalRows,
+    pageSize,
+    page,
+    t,
+    loadDataset,
+    isShared,
+    onRowsChange,
+    rows,
+  ]);
 
   // ---------- Move helpers (UI-SPEC D.2) ----------
   const moveCell = useCallback(
@@ -486,6 +616,13 @@ export function DatasetTab({
     // Reordering is page-scoped: write back the absolute rowIndex range
     // (pageStart..pageStart+pageLen-1) so other pages stay put.
     const pageStart = (page - 1) * pageSize;
+    if (isShared) {
+      if (!onRowsChange) return;
+      onRowsChange(
+        reordered.map((r, idx) => ({ ...r, rowIndex: pageStart + idx }))
+      );
+      return;
+    }
     setDataset((prev) =>
       prev
         ? {
@@ -519,10 +656,14 @@ export function DatasetTab({
       paramName: string | null,
       currentValue: unknown
     ) => ({
-      onEdit: () => {
-        setEditCell({ rowId, columnId });
-        setDraftValue(currentValue);
-      },
+      onEdit: isReadOnly
+        ? () => {
+            /* readonly: cell click is a no-op */
+          }
+        : () => {
+            setEditCell({ rowId, columnId });
+            setDraftValue(currentValue);
+          },
       onChange: (v: unknown) => setDraftValue(v),
       onCommit: () => {
         void commitCell(rowId, columnId, paramName, draftValue);
@@ -740,6 +881,7 @@ export function DatasetTab({
     caseId,
     projectId,
     router,
+    isReadOnly,
   ]);
 
   const table = useReactTable<DatasetRowRecord>({
@@ -750,9 +892,23 @@ export function DatasetTab({
   });
 
   // ---------- Render ----------
-  if (!dataset) return null;
+  // Owner-dataset mode bootstraps via API and renders nothing until the
+  // backing DataSet record is loaded. Shared mode is parent-controlled
+  // and renders immediately against the supplied rows.
+  if (!isShared && !dataset) return null;
 
   const hasSelection = selectedRowIds.size > 0;
+
+  // Shared-mode bulk-delete: route through onRowsChange instead of the
+  // per-case API. The "delete" semantic in shared mode just removes
+  // rows from the parent's buffered list — Save then commits the new
+  // shape as a fresh version.
+  const handleSharedBulkDelete = () => {
+    if (!onRowsChange) return;
+    const ids = selectedRowIds;
+    onRowsChange(rows.filter((r) => !ids.has(r.id)));
+    setSelectedRowIds(new Set());
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -760,13 +916,40 @@ export function DatasetTab({
         className="p-4 border-b bg-card flex items-center justify-between"
         data-testid="dataset-tab-toolbar"
       >
-        {hasSelection ? (
-          <DatasetRowActions
-            caseId={caseId}
-            selectedRowIds={Array.from(selectedRowIds)}
-            onClear={() => setSelectedRowIds(new Set())}
-            onAfterDelete={loadDataset}
-          />
+        {hasSelection && !isReadOnly ? (
+          isShared ? (
+            <div className="flex items-center justify-between w-full">
+              <span className="text-sm">
+                {t("datasetSelectedCount", {
+                  count: String(selectedRowIds.size),
+                })}
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedRowIds(new Set())}
+                >
+                  {t("datasetClearSelection")}
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleSharedBulkDelete}
+                  data-testid="dataset-shared-bulk-delete-button"
+                >
+                  {t("datasetDeleteSelected")}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <DatasetRowActions
+              caseId={caseId}
+              selectedRowIds={Array.from(selectedRowIds)}
+              onClear={() => setSelectedRowIds(new Set())}
+              onAfterDelete={loadDataset}
+            />
+          )
         ) : (
           <>
             <div className="flex flex-col">
@@ -780,35 +963,41 @@ export function DatasetTab({
                 {t("datasetEditingHint")}
               </span>
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowPasteDialog(true)}
-                data-testid="dataset-paste-csv-button"
-              >
-                <ClipboardPaste className="w-4 h-4 mr-1" />
-                {t("datasetPasteCsv")}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onOpenImportWizard?.()}
-                data-testid="dataset-import-csv-button"
-              >
-                <Upload className="w-4 h-4 mr-1" />
-                {t("datasetImportCsv")}
-              </Button>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={handleAddRow}
-                data-testid="dataset-add-row-button"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                {t("datasetAddRow")}
-              </Button>
-            </div>
+            {!isReadOnly && (
+              <div className="flex gap-2">
+                {!isShared && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowPasteDialog(true)}
+                      data-testid="dataset-paste-csv-button"
+                    >
+                      <ClipboardPaste className="w-4 h-4 mr-1" />
+                      {t("datasetPasteCsv")}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onOpenImportWizard?.()}
+                      data-testid="dataset-import-csv-button"
+                    >
+                      <Upload className="w-4 h-4 mr-1" />
+                      {t("datasetImportCsv")}
+                    </Button>
+                  </>
+                )}
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleAddRow}
+                  data-testid="dataset-add-row-button"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  {t("datasetAddRow")}
+                </Button>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -835,25 +1024,31 @@ export function DatasetTab({
           <p className="text-sm text-muted-foreground">
             {t("datasetEmptyBody")}
           </p>
-          <div className="flex gap-2">
-            <Button variant="default" size="sm" onClick={handleAddRow}>
-              {t("datasetAddRow")}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowPasteDialog(true)}
-            >
-              {t("datasetPasteCsv")}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onOpenImportWizard?.()}
-            >
-              {t("datasetImportCsv")}
-            </Button>
-          </div>
+          {!isReadOnly && (
+            <div className="flex gap-2">
+              <Button variant="default" size="sm" onClick={handleAddRow}>
+                {t("datasetAddRow")}
+              </Button>
+              {!isShared && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowPasteDialog(true)}
+                  >
+                    {t("datasetPasteCsv")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onOpenImportWizard?.()}
+                  >
+                    {t("datasetImportCsv")}
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex-1 overflow-auto p-0">
@@ -931,8 +1126,12 @@ export function DatasetTab({
                             )}
                             <div
                               ref={setActivatorNodeRef}
-                              {...listeners}
-                              className="cursor-grab text-muted-foreground"
+                              {...(isReadOnly ? {} : listeners)}
+                              className={
+                                isReadOnly
+                                  ? "text-muted-foreground/40"
+                                  : "cursor-grab text-muted-foreground"
+                              }
                               data-testid={`dataset-row-drag-handle-${row.original.id}`}
                               aria-label="Drag to reorder"
                             >
@@ -1043,12 +1242,14 @@ export function DatasetTab({
         )}
       </div>
 
-      <PasteCsvDialog
-        open={showPasteDialog}
-        onOpenChange={setShowPasteDialog}
-        caseId={caseId}
-        parameters={parameters}
-      />
+      {!isShared && (
+        <PasteCsvDialog
+          open={showPasteDialog}
+          onOpenChange={setShowPasteDialog}
+          caseId={caseId}
+          parameters={parameters}
+        />
+      )}
     </div>
   );
 }
