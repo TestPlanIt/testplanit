@@ -321,6 +321,18 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'createdBy',
+                }, createdDataSetVersions: {
+                    name: "createdDataSetVersions",
+                    type: "DataSetVersion",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'createdBy',
+                }, createdSharedDataSetAssignments: {
+                    name: "createdSharedDataSetAssignments",
+                    type: "CaseSharedDataSetAssignment",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'createdBy',
                 }, createdIssues: {
                     name: "createdIssues",
                     type: "Issue",
@@ -3466,6 +3478,12 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'ownerCase',
+                }, sharedDataSetAssignment: {
+                    name: "sharedDataSetAssignment",
+                    type: "CaseSharedDataSetAssignment",
+                    isDataModel: true,
+                    isOptional: true,
+                    backLink: 'case',
                 },
             }, uniqueConstraints: {
                 id: {
@@ -5288,6 +5306,21 @@ const metadata: ModelMeta = {
                 }, sourceDataSetName: {
                     name: "sourceDataSetName",
                     type: "String",
+                }, sourceVersionId: {
+                    name: "sourceVersionId",
+                    type: "Int",
+                    isOptional: true,
+                    isForeignKey: true,
+                    relationField: 'sourceVersion',
+                }, sourceVersion: {
+                    name: "sourceVersion",
+                    type: "DataSetVersion",
+                    isDataModel: true,
+                    isOptional: true,
+                    backLink: 'snapshots',
+                    isRelationOwner: true,
+                    onDeleteAction: 'SetNull',
+                    foreignKeyMapping: { "id": "sourceVersionId" },
                 }, parametersJson: {
                     name: "parametersJson",
                     type: "Json",
@@ -6720,6 +6753,18 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'sourceDataSet',
+                }, versions: {
+                    name: "versions",
+                    type: "DataSetVersion",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'dataSet',
+                }, sharedAssignments: {
+                    name: "sharedAssignments",
+                    type: "CaseSharedDataSetAssignment",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'sharedDataSet',
                 }, isDeleted: {
                     name: "isDeleted",
                     type: "Boolean",
@@ -6792,6 +6837,163 @@ const metadata: ModelMeta = {
                 }, dataSetId_rowIndex: {
                     name: "dataSetId_rowIndex",
                     fields: ["dataSetId", "rowIndex"]
+                },
+            },
+        },
+        dataSetVersion: {
+            name: 'DataSetVersion', fields: {
+                id: {
+                    name: "id",
+                    type: "Int",
+                    isId: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                    isAutoIncrement: true,
+                }, dataSetId: {
+                    name: "dataSetId",
+                    type: "Int",
+                    isForeignKey: true,
+                    relationField: 'dataSet',
+                }, dataSet: {
+                    name: "dataSet",
+                    type: "DataSet",
+                    isDataModel: true,
+                    backLink: 'versions',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "dataSetId" },
+                }, version: {
+                    name: "version",
+                    type: "Int",
+                }, parametersJson: {
+                    name: "parametersJson",
+                    type: "Json",
+                    isOptional: true,
+                }, rowsJson: {
+                    name: "rowsJson",
+                    type: "Json",
+                }, rowCount: {
+                    name: "rowCount",
+                    type: "Int",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": 0 }] }],
+                }, createdAt: {
+                    name: "createdAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, createdById: {
+                    name: "createdById",
+                    type: "String",
+                    isForeignKey: true,
+                    relationField: 'createdBy',
+                }, createdBy: {
+                    name: "createdBy",
+                    type: "User",
+                    isDataModel: true,
+                    backLink: 'createdDataSetVersions',
+                    isRelationOwner: true,
+                    foreignKeyMapping: { "id": "createdById" },
+                }, snapshots: {
+                    name: "snapshots",
+                    type: "TestRunCaseDataSetSnapshot",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'sourceVersion',
+                }, assignments: {
+                    name: "assignments",
+                    type: "CaseSharedDataSetAssignment",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'pinnedVersion',
+                },
+            }, uniqueConstraints: {
+                id: {
+                    name: "id",
+                    fields: ["id"]
+                }, dataSetId_version: {
+                    name: "dataSetId_version",
+                    fields: ["dataSetId", "version"]
+                },
+            },
+        },
+        caseSharedDataSetAssignment: {
+            name: 'CaseSharedDataSetAssignment', fields: {
+                id: {
+                    name: "id",
+                    type: "Int",
+                    isId: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                    isAutoIncrement: true,
+                }, caseId: {
+                    name: "caseId",
+                    type: "Int",
+                    isForeignKey: true,
+                    relationField: 'case',
+                }, case: {
+                    name: "case",
+                    type: "RepositoryCases",
+                    isDataModel: true,
+                    backLink: 'sharedDataSetAssignment',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "caseId" },
+                }, sharedDataSetId: {
+                    name: "sharedDataSetId",
+                    type: "Int",
+                    isForeignKey: true,
+                    relationField: 'sharedDataSet',
+                }, sharedDataSet: {
+                    name: "sharedDataSet",
+                    type: "DataSet",
+                    isDataModel: true,
+                    backLink: 'sharedAssignments',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Restrict',
+                    foreignKeyMapping: { "id": "sharedDataSetId" },
+                }, pinnedVersionId: {
+                    name: "pinnedVersionId",
+                    type: "Int",
+                    isOptional: true,
+                    isForeignKey: true,
+                    relationField: 'pinnedVersion',
+                }, pinnedVersion: {
+                    name: "pinnedVersion",
+                    type: "DataSetVersion",
+                    isDataModel: true,
+                    isOptional: true,
+                    backLink: 'assignments',
+                    isRelationOwner: true,
+                    onDeleteAction: 'SetNull',
+                    foreignKeyMapping: { "id": "pinnedVersionId" },
+                }, mappingJson: {
+                    name: "mappingJson",
+                    type: "Json",
+                }, createdAt: {
+                    name: "createdAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, createdById: {
+                    name: "createdById",
+                    type: "String",
+                    isForeignKey: true,
+                    relationField: 'createdBy',
+                }, createdBy: {
+                    name: "createdBy",
+                    type: "User",
+                    isDataModel: true,
+                    backLink: 'createdSharedDataSetAssignments',
+                    isRelationOwner: true,
+                    foreignKeyMapping: { "id": "createdById" },
+                }, updatedAt: {
+                    name: "updatedAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@updatedAt", "args": [] }],
+                },
+            }, uniqueConstraints: {
+                id: {
+                    name: "id",
+                    fields: ["id"]
+                }, caseId: {
+                    name: "caseId",
+                    fields: ["caseId"]
                 },
             },
         },
@@ -9061,7 +9263,7 @@ const metadata: ModelMeta = {
         repositories: ['RepositoryFolders', 'RepositoryCases'],
         repositoryFolders: ['RepositoryCases'],
         stepSequenceMatch: ['StepSequenceMatchCase'],
-        repositoryCases: ['RepositoryCaseLink', 'DuplicateScanResult', 'StepSequenceMatchCase', 'RepositoryCaseVersions', 'CaseFieldValues', 'Attachments', 'Steps', 'TestCaseParameter', 'TestRunCases', 'JUnitTestResult', 'JUnitProperty', 'JUnitAttachment', 'JUnitTestStep', 'Comment'],
+        repositoryCases: ['RepositoryCaseLink', 'DuplicateScanResult', 'StepSequenceMatchCase', 'RepositoryCaseVersions', 'CaseFieldValues', 'Attachments', 'Steps', 'TestCaseParameter', 'TestRunCases', 'JUnitTestResult', 'JUnitProperty', 'JUnitAttachment', 'JUnitTestStep', 'CaseSharedDataSetAssignment', 'Comment'],
         steps: ['TestRunStepResults'],
         sessions: ['Attachments', 'SessionResults', 'SessionVersions', 'SessionFieldValues', 'Comment'],
         sessionResults: ['ResultFieldValues', 'Attachments'],
@@ -9074,7 +9276,7 @@ const metadata: ModelMeta = {
         jUnitTestSuite: ['JUnitTestResult', 'JUnitProperty'],
         jUnitTestResult: ['Attachments'],
         sharedStepGroup: ['SharedStepItem'],
-        dataSet: ['DataSetRow'],
+        dataSet: ['DataSetRow', 'DataSetVersion'],
         shareLink: ['ShareLinkAccessLog'],
         projectIntegration: ['IntegrationProject'],
         webhookConfig: ['WebhookEventDedup', 'WebhookConfigSecret'],

@@ -88,6 +88,8 @@ export * from './shared-step-group';
 export * from './shared-step-item';
 export * from './data-set';
 export * from './data-set-row';
+export * from './data-set-version';
+export * from './case-shared-data-set-assignment';
 export * from './notification';
 export * from './share-link';
 export * from './share-link-access-log';

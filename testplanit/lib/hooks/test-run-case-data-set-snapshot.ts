@@ -327,7 +327,7 @@ export function useSuspenseCountTestRunCaseDataSetSnapshot<TArgs extends Prisma.
     return useSuspenseModelQuery<TQueryFnData, TData, TError>('TestRunCaseDataSetSnapshot', `${endpoint}/testRunCaseDataSetSnapshot/count`, args, options, fetch);
 }
 
-export function useCheckTestRunCaseDataSetSnapshot<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: number; testRunCaseId?: number; sourceDataSetId?: number; sourceDataSetName?: string; isDeleted?: boolean }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
+export function useCheckTestRunCaseDataSetSnapshot<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: number; testRunCaseId?: number; sourceDataSetId?: number; sourceDataSetName?: string; sourceVersionId?: number; isDeleted?: boolean }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
     const { endpoint, fetch } = getHooksContext();
     return useModelQuery<boolean, boolean, TError>('TestRunCaseDataSetSnapshot', `${endpoint}/testRunCaseDataSetSnapshot/check`, args, options, fetch);
 }

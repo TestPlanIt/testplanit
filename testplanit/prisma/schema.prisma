@@ -381,74 +381,76 @@ model VerificationToken {
 }
 
 model User {
-  id                      String                  @id() @default(cuid())
-  name                    String
-  email                   String                  @unique()
-  emailVerified           DateTime?
-  emailVerifToken         String?
-  emailTokenExpires       DateTime?
-  password                String?
-  image                   String?
-  accounts                Account[]
-  authMethod              AuthMethod              @default(INTERNAL)
-  externalId              String?
-  access                  Access                  @default(NONE)
-  roleId                  Int
-  role                    Roles                   @relation(fields: [roleId], references: [id])
-  isActive                Boolean                 @default(true)
-  isDeleted               Boolean                 @default(false)
-  isApi                   Boolean                 @default(false)
-  createdAt               DateTime                @default(now()) @db.Timestamptz(6)
-  createdById             String?
-  createdBy               User?                   @relation("UserCreator", fields: [createdById], references: [id])
-  updatedAt               DateTime                @updatedAt()
-  userPreferences         UserPreferences?
-  createdUsers            User[]                  @relation("UserCreator")
-  projects                ProjectAssignment[]
-  createdProjects         Projects[]              @relation("ProjectCreator")
-  groups                  GroupAssignment[]
-  createdMilestones       Milestones[]
-  repositoryFolders       RepositoryFolders[]
-  repositoryCases         RepositoryCases[]
-  attachments             Attachments[]
-  assignedSessions        Sessions[]              @relation("SessionAssignedTo")
-  createdSessions         Sessions[]              @relation("SessionCreatedBy")
-  sessionResults          SessionResults[]
-  testRunCreatedBy        TestRuns[]              @relation("TestRunCreatedBy")
-  testRunCasesAssigned    TestRunCases[]
-  testRunResults          TestRunResults[]
-  editedTestRunResults    TestRunResults[]        @relation("TestRunResultEditor")
-  testRunCaseIterations   TestRunCaseIteration[]
-  createdDataSets         DataSet[]
-  createdIssues           Issue[]                 @relation("IssueCreator")
-  projectPermissions      UserProjectPermission[]
-  junitTestSuites         JUnitTestSuite[]
-  junitTestResults        JUnitTestResult[]
-  junitProperties         JUnitProperty[]
-  junitAttachments        JUnitAttachment[]
-  junitTestSteps          JUnitTestStep[]
-  createdCaseLinks        RepositoryCaseLink[]    @relation("UserCreatedCaseLinks")
-  createdSharedStepGroups SharedStepGroup[]
-  notifications           Notification[]
-  userIntegrationAuths    UserIntegrationAuth[]
-  createdEmailDomains     AllowedEmailDomain[]
-  lastActiveAt            DateTime?
-  lastSeenVersion         String?
-  llmUsages               LlmUsage[]
-  testmoImportJobs        TestmoImportJob[]
-  createdComments         Comment[]               @relation("CommentCreator")
-  commentMentions         CommentMention[]        @relation("CommentMentions")
-  apiTokens               ApiToken[]
-  createdShareLinks       ShareLink[]             @relation("ShareLinkCreator")
-  shareLinkAccessLogs     ShareLinkAccessLog[]    @relation("ShareLinkAccessor")
-  twoFactorEnabled        Boolean                 @default(false)
-  twoFactorSecret         String?
-  twoFactorBackupCodes    String?
-  failedLoginAttempts     Int                     @default(0)
-  lockedUntil             DateTime?               @db.Timestamptz(6)
-  passwordChangedAt       DateTime?               @db.Timestamptz(6)
-  mustChangePassword      Boolean                 @default(false)
-  passwordHistory         PasswordHistory[]
+  id                              String                        @id() @default(cuid())
+  name                            String
+  email                           String                        @unique()
+  emailVerified                   DateTime?
+  emailVerifToken                 String?
+  emailTokenExpires               DateTime?
+  password                        String?
+  image                           String?
+  accounts                        Account[]
+  authMethod                      AuthMethod                    @default(INTERNAL)
+  externalId                      String?
+  access                          Access                        @default(NONE)
+  roleId                          Int
+  role                            Roles                         @relation(fields: [roleId], references: [id])
+  isActive                        Boolean                       @default(true)
+  isDeleted                       Boolean                       @default(false)
+  isApi                           Boolean                       @default(false)
+  createdAt                       DateTime                      @default(now()) @db.Timestamptz(6)
+  createdById                     String?
+  createdBy                       User?                         @relation("UserCreator", fields: [createdById], references: [id])
+  updatedAt                       DateTime                      @updatedAt()
+  userPreferences                 UserPreferences?
+  createdUsers                    User[]                        @relation("UserCreator")
+  projects                        ProjectAssignment[]
+  createdProjects                 Projects[]                    @relation("ProjectCreator")
+  groups                          GroupAssignment[]
+  createdMilestones               Milestones[]
+  repositoryFolders               RepositoryFolders[]
+  repositoryCases                 RepositoryCases[]
+  attachments                     Attachments[]
+  assignedSessions                Sessions[]                    @relation("SessionAssignedTo")
+  createdSessions                 Sessions[]                    @relation("SessionCreatedBy")
+  sessionResults                  SessionResults[]
+  testRunCreatedBy                TestRuns[]                    @relation("TestRunCreatedBy")
+  testRunCasesAssigned            TestRunCases[]
+  testRunResults                  TestRunResults[]
+  editedTestRunResults            TestRunResults[]              @relation("TestRunResultEditor")
+  testRunCaseIterations           TestRunCaseIteration[]
+  createdDataSets                 DataSet[]
+  createdDataSetVersions          DataSetVersion[]              @relation("DataSetVersionsCreatedBy")
+  createdSharedDataSetAssignments CaseSharedDataSetAssignment[] @relation("CaseSharedDataSetAssignmentCreatedBy")
+  createdIssues                   Issue[]                       @relation("IssueCreator")
+  projectPermissions              UserProjectPermission[]
+  junitTestSuites                 JUnitTestSuite[]
+  junitTestResults                JUnitTestResult[]
+  junitProperties                 JUnitProperty[]
+  junitAttachments                JUnitAttachment[]
+  junitTestSteps                  JUnitTestStep[]
+  createdCaseLinks                RepositoryCaseLink[]          @relation("UserCreatedCaseLinks")
+  createdSharedStepGroups         SharedStepGroup[]
+  notifications                   Notification[]
+  userIntegrationAuths            UserIntegrationAuth[]
+  createdEmailDomains             AllowedEmailDomain[]
+  lastActiveAt                    DateTime?
+  lastSeenVersion                 String?
+  llmUsages                       LlmUsage[]
+  testmoImportJobs                TestmoImportJob[]
+  createdComments                 Comment[]                     @relation("CommentCreator")
+  commentMentions                 CommentMention[]              @relation("CommentMentions")
+  apiTokens                       ApiToken[]
+  createdShareLinks               ShareLink[]                   @relation("ShareLinkCreator")
+  shareLinkAccessLogs             ShareLinkAccessLog[]          @relation("ShareLinkAccessor")
+  twoFactorEnabled                Boolean                       @default(false)
+  twoFactorSecret                 String?
+  twoFactorBackupCodes            String?
+  failedLoginAttempts             Int                           @default(0)
+  lockedUntil                     DateTime?                     @db.Timestamptz(6)
+  passwordChangedAt               DateTime?                     @db.Timestamptz(6)
+  mustChangePassword              Boolean                       @default(false)
+  passwordHistory                 PasswordHistory[]
 
   @@index([isActive, isDeleted])
   @@index([access])
@@ -1075,52 +1077,53 @@ model StepSequenceMatchCase {
 }
 
 model RepositoryCases {
-  id                     Int                      @id() @default(autoincrement())
-  projectId              Int
-  project                Projects                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  repositoryId           Int
-  repository             Repositories             @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  folderId               Int
-  folder                 RepositoryFolders        @relation(fields: [folderId], references: [id], onDelete: Cascade)
-  templateId             Int
-  template               Templates                @relation(fields: [templateId], references: [id])
-  name                   String
-  className              String?
-  source                 RepositoryCaseSource     @default(MANUAL)
-  stateId                Int
-  state                  Workflows                @relation(fields: [stateId], references: [id])
-  estimate               Int?
-  forecastManual         Int?
-  forecastAutomated      Float?
-  order                  Int                      @default(0)
-  createdAt              DateTime                 @default(now()) @db.Timestamptz(6)
-  creatorId              String
-  creator                User                     @relation(fields: [creatorId], references: [id])
-  automated              Boolean                  @default(false)
-  isArchived             Boolean                  @default(false)
-  isDeleted              Boolean                  @default(false)
-  currentVersion         Int                      @default(1)
-  hasParameters          Boolean                  @default(false)
-  repositoryCaseVersions RepositoryCaseVersions[]
-  caseFieldValues        CaseFieldValues[]
-  resultFieldValues      ResultFieldValues[]
-  attachments            Attachments[]
-  steps                  Steps[]
-  testRuns               TestRunCases[]
-  tags                   Tags[]
-  issues                 Issue[]
-  junitResults           JUnitTestResult[]        @relation("JUnitResultCase")
-  junitProperties        JUnitProperty[]          @relation("JUnitPropertyCase")
-  junitAttachments       JUnitAttachment[]        @relation("JUnitAttachmentCase")
-  junitTestSteps         JUnitTestStep[]          @relation("JUnitTestStepCase")
-  linksFrom              RepositoryCaseLink[]     @relation("CaseALinks")
-  linksTo                RepositoryCaseLink[]     @relation("CaseBLinks")
-  duplicateScanResultsA  DuplicateScanResult[]    @relation("DuplicateCaseA")
-  duplicateScanResultsB  DuplicateScanResult[]    @relation("DuplicateCaseB")
-  stepSequenceMatchCases StepSequenceMatchCase[]
-  comments               Comment[]
-  parameters             TestCaseParameter[]
-  ownedDataSets          DataSet[]                @relation("DataSetOwnerCase")
+  id                      Int                          @id() @default(autoincrement())
+  projectId               Int
+  project                 Projects                     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  repositoryId            Int
+  repository              Repositories                 @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  folderId                Int
+  folder                  RepositoryFolders            @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  templateId              Int
+  template                Templates                    @relation(fields: [templateId], references: [id])
+  name                    String
+  className               String?
+  source                  RepositoryCaseSource         @default(MANUAL)
+  stateId                 Int
+  state                   Workflows                    @relation(fields: [stateId], references: [id])
+  estimate                Int?
+  forecastManual          Int?
+  forecastAutomated       Float?
+  order                   Int                          @default(0)
+  createdAt               DateTime                     @default(now()) @db.Timestamptz(6)
+  creatorId               String
+  creator                 User                         @relation(fields: [creatorId], references: [id])
+  automated               Boolean                      @default(false)
+  isArchived              Boolean                      @default(false)
+  isDeleted               Boolean                      @default(false)
+  currentVersion          Int                          @default(1)
+  hasParameters           Boolean                      @default(false)
+  repositoryCaseVersions  RepositoryCaseVersions[]
+  caseFieldValues         CaseFieldValues[]
+  resultFieldValues       ResultFieldValues[]
+  attachments             Attachments[]
+  steps                   Steps[]
+  testRuns                TestRunCases[]
+  tags                    Tags[]
+  issues                  Issue[]
+  junitResults            JUnitTestResult[]            @relation("JUnitResultCase")
+  junitProperties         JUnitProperty[]              @relation("JUnitPropertyCase")
+  junitAttachments        JUnitAttachment[]            @relation("JUnitAttachmentCase")
+  junitTestSteps          JUnitTestStep[]              @relation("JUnitTestStepCase")
+  linksFrom               RepositoryCaseLink[]         @relation("CaseALinks")
+  linksTo                 RepositoryCaseLink[]         @relation("CaseBLinks")
+  duplicateScanResultsA   DuplicateScanResult[]        @relation("DuplicateCaseA")
+  duplicateScanResultsB   DuplicateScanResult[]        @relation("DuplicateCaseB")
+  stepSequenceMatchCases  StepSequenceMatchCase[]
+  comments                Comment[]
+  parameters              TestCaseParameter[]
+  ownedDataSets           DataSet[]                    @relation("DataSetOwnerCase")
+  sharedDataSetAssignment CaseSharedDataSetAssignment? @relation("CaseSharedDataSetAssignmentCase")
 
   @@unique([projectId, name, className, source])
   @@index([projectId, isDeleted, isArchived])
@@ -1550,6 +1553,8 @@ model TestRunCaseDataSetSnapshot {
   sourceDataSetId   Int?
   sourceDataSet     DataSet?               @relation(fields: [sourceDataSetId], references: [id], onDelete: SetNull)
   sourceDataSetName String
+  sourceVersionId   Int?
+  sourceVersion     DataSetVersion?        @relation("SnapshotPinnedVersion", fields: [sourceVersionId], references: [id], onDelete: SetNull)
   parametersJson    Json
   rowsJson          Json
   snapshotAt        DateTime               @default(now()) @db.Timestamptz(6)
@@ -1558,6 +1563,7 @@ model TestRunCaseDataSetSnapshot {
 
   @@index([testRunCaseId])
   @@index([sourceDataSetId])
+  @@index([sourceVersionId])
 }
 
 model Issue {
@@ -1875,22 +1881,24 @@ model SharedStepItem {
 }
 
 model DataSet {
-  id           Int                          @id() @default(autoincrement())
-  projectId    Int
-  project      Projects                     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  ownerCaseId  Int?
-  ownerCase    RepositoryCases?             @relation("DataSetOwnerCase", fields: [ownerCaseId], references: [id], onDelete: SetNull)
-  name         String
-  description  String?
-  isShared     Boolean                      @default(false)
-  version      Int                          @default(1)
-  rows         DataSetRow[]
-  paramLookups TestCaseParameter[]          @relation("ParamLookupDataSet")
-  snapshots    TestRunCaseDataSetSnapshot[]
-  isDeleted    Boolean                      @default(false)
-  createdAt    DateTime                     @default(now()) @db.Timestamptz(6)
-  createdById  String
-  createdBy    User                         @relation(fields: [createdById], references: [id])
+  id                Int                           @id() @default(autoincrement())
+  projectId         Int
+  project           Projects                      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  ownerCaseId       Int?
+  ownerCase         RepositoryCases?              @relation("DataSetOwnerCase", fields: [ownerCaseId], references: [id], onDelete: SetNull)
+  name              String
+  description       String?
+  isShared          Boolean                       @default(false)
+  version           Int                           @default(1)
+  rows              DataSetRow[]
+  paramLookups      TestCaseParameter[]           @relation("ParamLookupDataSet")
+  snapshots         TestRunCaseDataSetSnapshot[]
+  versions          DataSetVersion[]              @relation("DataSetVersions")
+  sharedAssignments CaseSharedDataSetAssignment[] @relation("CaseSharedDataSet")
+  isDeleted         Boolean                       @default(false)
+  createdAt         DateTime                      @default(now()) @db.Timestamptz(6)
+  createdById       String
+  createdBy         User                          @relation(fields: [createdById], references: [id])
 
   @@index([projectId])
   @@index([ownerCaseId])
@@ -1908,6 +1916,45 @@ model DataSetRow {
 
   @@unique([dataSetId, rowIndex])
   @@index([dataSetId])
+}
+
+model DataSetVersion {
+  id             Int                           @id() @default(autoincrement())
+  dataSetId      Int
+  dataSet        DataSet                       @relation("DataSetVersions", fields: [dataSetId], references: [id], onDelete: Cascade)
+  version        Int
+  parametersJson Json?
+  rowsJson       Json
+  rowCount       Int                           @default(0)
+  createdAt      DateTime                      @default(now()) @db.Timestamptz(6)
+  createdById    String
+  createdBy      User                          @relation("DataSetVersionsCreatedBy", fields: [createdById], references: [id])
+  snapshots      TestRunCaseDataSetSnapshot[]  @relation("SnapshotPinnedVersion")
+  assignments    CaseSharedDataSetAssignment[] @relation("AssignmentPinnedVersion")
+
+  @@unique([dataSetId, version])
+  @@index([dataSetId])
+  @@index([createdById])
+}
+
+model CaseSharedDataSetAssignment {
+  id              Int             @id() @default(autoincrement())
+  caseId          Int             @unique()
+  case            RepositoryCases @relation("CaseSharedDataSetAssignmentCase", fields: [caseId], references: [id], onDelete: Cascade)
+  sharedDataSetId Int
+  sharedDataSet   DataSet         @relation("CaseSharedDataSet", fields: [sharedDataSetId], references: [id], onDelete: Restrict)
+  pinnedVersionId Int?
+  pinnedVersion   DataSetVersion? @relation("AssignmentPinnedVersion", fields: [pinnedVersionId], references: [id], onDelete: SetNull)
+  mappingJson     Json
+  createdAt       DateTime        @default(now()) @db.Timestamptz(6)
+  createdById     String
+  createdBy       User            @relation("CaseSharedDataSetAssignmentCreatedBy", fields: [createdById], references: [id])
+  updatedAt       DateTime        @updatedAt()
+
+  @@index([caseId])
+  @@index([sharedDataSetId])
+  @@index([pinnedVersionId])
+  @@index([createdById])
 }
 
 model Notification {
