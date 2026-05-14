@@ -71,7 +71,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
       // For now, we'll return a basic logout response
       const logoutResponse = `
-        <samlp:LogoutResponse 
+        <samlp:LogoutResponse
           xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"
           xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
           ID="_${Date.now()}"
@@ -93,7 +93,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       // this handler currently returns a stub response without parsing
       // the NameID. The `provider: "saml"` metadata is the meaningful
       // audit signal; identity would be added when assertion parsing is
-      // wired up. See Phase 62 D-04.
+      // wired up.
       await auditAuthEvent("LOGOUT", null, "", {
         provider: "saml",
         viaIdpCallback: true,

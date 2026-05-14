@@ -315,7 +315,9 @@ function SessionFormControls({
                     onValueChange={(value) => field.onChange(Number(value))}
                   >
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select Template" />
+                      <SelectValue
+                        placeholder={tCommon("placeholders.selectTemplate")}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {templates?.map((template) => (
@@ -375,7 +377,9 @@ function SessionFormControls({
                     disabled={isSubmitting}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select State" />
+                      <SelectValue
+                        placeholder={tCommon("placeholders.selectState")}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -653,7 +657,6 @@ function SessionFormControls({
                         projectIntegration?.integration?.provider
                       }
                       integrationId={projectIntegration?.integration?.id}
-                      lastSyncedAt={issue.lastSyncedAt}
                       issueTypeName={issue.issueTypeName}
                       issueTypeIconUrl={issue.issueTypeIconUrl}
                     />
@@ -1893,7 +1896,9 @@ export default function SessionPage() {
                                     }}
                                     readOnly={!isEditMode}
                                     className="h-auto"
-                                    placeholder="Add a description..."
+                                    placeholder={tCommon(
+                                      "placeholders.addADescription"
+                                    )}
                                     projectId={safeProjectId}
                                   />
                                 </div>
@@ -1942,7 +1947,9 @@ export default function SessionPage() {
                                     }}
                                     readOnly={!isEditMode}
                                     className="h-auto"
-                                    placeholder="Add a description..."
+                                    placeholder={tCommon(
+                                      "placeholders.addADescription"
+                                    )}
                                     projectId={safeProjectId}
                                   />
                                 </div>

@@ -46,6 +46,16 @@ Filters:
 
 Shows test coverage for issues tracked in integrated systems (Jira, GitHub, Azure DevOps). Track testing progress for issues and ensure critical items have adequate test coverage.
 
+#### Execution Log
+
+A flat, chronological log of individual test result records. See who executed each test case, when it was executed, which test run it belonged to, and what status was recorded. Useful for audit trails, team activity reviews, and tracking execution patterns over time.
+
+Filters:
+
+- **Date Range** — Limit results to a specific time window
+
+Supports server-side sorting by test case name, test run name, status, executed by, executed at, and duration.
+
 ### Custom Reports
 
 You can build custom reports using the Report Builder for specific analytical needs beyond the pre-built reports.

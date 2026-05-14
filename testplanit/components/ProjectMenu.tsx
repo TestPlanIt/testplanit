@@ -32,10 +32,11 @@ import {
   Share2,
   Sparkles,
   Tags as TagsIcon,
+  Webhook,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { Link, usePathname } from "~/lib/navigation";
@@ -78,7 +79,8 @@ function MenuLink({
   menuButtonClass: string;
 }) {
   const IconComponent = option.icon;
-  const href =
+  const searchParams = useSearchParams();
+  const basePath =
     option.path === "shared-steps"
       ? `/projects/shared-steps/${projectId}`
       : option.path === "reports"
@@ -86,6 +88,10 @@ function MenuLink({
         : option.path.startsWith("settings/")
           ? `/projects/settings/${projectId}/${option.path.split("/")[1]}`
           : `/projects/${option.path}/${projectId}`;
+  const href =
+    isActive && searchParams.size > 0
+      ? `${basePath}?${searchParams.toString()}`
+      : basePath;
 
   return (
     <Tooltip>
@@ -262,6 +268,13 @@ export default function ProjectsMenu({
             section: "settings" as MenuSection,
           },
           {
+            icon: Webhook,
+            label: t("admin.menu.webhooks"),
+            path: "settings/webhooks",
+            id: "settings-webhooks-link",
+            section: "settings" as MenuSection,
+          },
+          {
             icon: Sparkles,
             label: t("admin.menu.llm"),
             path: "settings/ai-models",
@@ -306,12 +319,13 @@ export default function ProjectsMenu({
     if (typeof window !== "undefined") {
       try {
         const stored = localStorage.getItem("projectMenu:openSections");
-        return stored ? (JSON.parse(stored) as string[]) : [];
+        // First visit: no stored value → expand all sections so users discover the full menu
+        return stored ? (JSON.parse(stored) as string[]) : [...sectionOrder];
       } catch {
-        return [];
+        return [...sectionOrder];
       }
     }
-    return [];
+    return [...sectionOrder];
   });
 
   useEffect(() => {

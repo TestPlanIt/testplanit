@@ -467,8 +467,8 @@ export function IterationAwareTestRunCaseDetails({
             activeIterationLabel={
               activeIteration
                 ? t("iterationResultPanelHeading", {
-                    n: activeIteration.rowIndex + 1,
-                    total: totalIterations,
+                    n: String(activeIteration.rowIndex + 1),
+                    total: String(totalIterations),
                   })
                 : undefined
             }

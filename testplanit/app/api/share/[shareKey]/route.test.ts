@@ -38,6 +38,7 @@ vi.mock("~/lib/services/notificationService", () => ({
 
 import bcrypt from "bcrypt";
 import { getServerSession } from "next-auth";
+import { getAuditContext, type AuditContext } from "~/lib/auditContext";
 import { prisma } from "~/lib/prisma";
 import { expectAuditRowComplete } from "~/lib/testing/auditAssertions";
 import { GET, POST } from "./route";
@@ -473,13 +474,70 @@ describe("POST /api/share/[shareKey]", () => {
       // is not yet withAuditContext-wrapped (Phase 64 CR-01 covered sync
       // routes; share-access routes are deferred). Until that route is
       // wrapped, this test synthesizes a requestId to satisfy
-      // expectAuditRowComplete's requestId non-null guard. When a future
-      // phase wraps share/[shareKey]/route.ts, remove the synthesis and
-      // read requestId from the real ALS-populated metadata. This test's
-      // current SCOPE is D-18 identity completeness on the authenticated
-      // path only.
+      // expectAuditRowComplete's requestId non-null guard. The wrap was
+      // applied in the audit-context follow-ups PR (999.4) — the route
+      // now runs inside an ALS frame seeded with request metadata. The
+      // inline `prisma.auditLog.create` here still doesn't read FROM
+      // ALS, however; migrating it to `captureAuditEvent` (which DOES
+      // consume ALS) is the next step. Until that migration lands, the
+      // inline audit row's metadata still won't carry requestId.
       requestId: "req-synthesized-for-legacy-route",
       metadata: md,
     });
+  });
+
+  it("withAuditContext seeds ALS with request headers inside the POST handler", async () => {
+    let capturedCtx: AuditContext | undefined;
+    (getServerSession as any).mockResolvedValue(null);
+    (prisma.shareLink.findUnique as any).mockImplementation(() => {
+      capturedCtx = getAuditContext();
+      return Promise.resolve(mockShareLink);
+    });
+
+    const req = new NextRequest(`http://localhost/api/share/abc123`, {
+      method: "POST",
+      body: JSON.stringify({}),
+      headers: {
+        "Content-Type": "application/json",
+        "x-forwarded-for": "203.0.113.7, 10.0.0.1",
+        "user-agent": "vitest-share-post",
+      },
+    });
+    await POST(req, { params: Promise.resolve({ shareKey: "abc123" }) });
+
+    // Wrapper proved: handler observed an ALS frame populated from request
+    // headers. Ipv4 with comma-separated x-forwarded-for takes the first IP.
+    expect(capturedCtx).toBeDefined();
+    expect(capturedCtx?.ipAddress).toBe("203.0.113.7");
+    expect(capturedCtx?.userAgent).toBe("vitest-share-post");
+    expect(capturedCtx?.requestId).toMatch(/^req_\d+_[a-z0-9]+$/);
+  });
+});
+
+describe("withAuditContext on share/[shareKey] GET", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (getServerSession as any).mockResolvedValue(null);
+  });
+
+  it("seeds ALS with request headers inside the GET handler", async () => {
+    let capturedCtx: AuditContext | undefined;
+    (prisma.shareLink.findUnique as any).mockImplementation(() => {
+      capturedCtx = getAuditContext();
+      return Promise.resolve(mockShareLink);
+    });
+
+    const req = new NextRequest(`http://localhost/api/share/abc123`, {
+      headers: {
+        "x-forwarded-for": "203.0.113.42",
+        "user-agent": "vitest-share-get",
+      },
+    });
+    await GET(req, { params: Promise.resolve({ shareKey: "abc123" }) });
+
+    expect(capturedCtx).toBeDefined();
+    expect(capturedCtx?.ipAddress).toBe("203.0.113.42");
+    expect(capturedCtx?.userAgent).toBe("vitest-share-get");
+    expect(capturedCtx?.requestId).toMatch(/^req_\d+_[a-z0-9]+$/);
   });
 });

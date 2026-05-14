@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import React from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // vi.hoisted for mutable drag state
 const dragState = vi.hoisted(() => ({
@@ -23,6 +23,19 @@ vi.mock("react-dnd", () => ({
     }),
 }));
 
+// Mock next-intl: return the values param so plural keys render with count
+vi.mock("next-intl", () => ({
+  useTranslations: () => (key: string, values?: Record<string, unknown>) => {
+    if (key === "repository.dragDrop.dragPreviewCount" && values?.count) {
+      return `${values.count} test cases`;
+    }
+    if (key === "repository.dragDrop.dragPreviewCase") {
+      return "Test Case";
+    }
+    return key;
+  },
+}));
+
 // Mock dndTypes
 vi.mock("~/types/dndTypes", () => ({
   ItemTypes: {
@@ -36,6 +49,31 @@ vi.mock("~/types/dndTypes", () => ({
 vi.mock("lucide-react", () => ({
   ListChecks: () => <svg data-testid="list-checks-icon" />,
   Folder: () => <svg data-testid="folder-icon" />,
+  Copy: () => <svg data-testid="copy-plus-icon" />,
+  ArrowRightLeft: () => <svg data-testid="arrow-right-icon" />,
+  ArrowUpDown: () => <svg data-testid="arrow-up-down-icon" />,
+}));
+
+// vi.hoisted for mutable modifier state returned by useDragModifier
+const modifierState = vi.hoisted(() => ({
+  copyHeld: false,
+  moveHeld: false,
+}));
+
+vi.mock("~/hooks/useDragModifier", () => ({
+  useDragModifier: () => ({
+    copyHeld: modifierState.copyHeld,
+    moveHeld: modifierState.moveHeld,
+  }),
+}));
+
+const dragTargetState = vi.hoisted(() => ({ isOverReorderZone: false }));
+
+vi.mock("~/hooks/useDragTargetKind", () => ({
+  useDragTargetKind: () => ({
+    isOverReorderZone: dragTargetState.isOverReorderZone,
+  }),
+  DragTargetProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
 import { UnifiedDragPreview } from "./UnifiedDragPreview";
@@ -150,5 +188,122 @@ describe("UnifiedDragPreview", () => {
     const { container } = render(<UnifiedDragPreview />);
     const layerDiv = container.firstChild as HTMLElement;
     expect(layerDiv.children.length).toBe(0);
+  });
+
+  describe("modifier badges", () => {
+    beforeEach(() => {
+      dragState.isDragging = true;
+      dragState.item = { id: 1, name: "Modifier Test Case" };
+      dragState.itemType = "testCase";
+      dragState.initialOffset = { x: 50, y: 50 };
+      dragState.currentOffset = { x: 100, y: 200 };
+      modifierState.copyHeld = false;
+      modifierState.moveHeld = false;
+      dragTargetState.isOverReorderZone = false;
+    });
+
+    it("renders no badge when neither copyHeld nor moveHeld is true", () => {
+      modifierState.copyHeld = false;
+      modifierState.moveHeld = false;
+
+      render(<UnifiedDragPreview />);
+      expect(
+        screen.queryByTestId("drag-preview-copy-badge")
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("drag-preview-move-badge")
+      ).not.toBeInTheDocument();
+    });
+
+    it("renders the copy badge with CopyPlus icon when copyHeld is true", () => {
+      modifierState.copyHeld = true;
+      modifierState.moveHeld = false;
+
+      render(<UnifiedDragPreview />);
+      expect(screen.getByTestId("drag-preview-copy-badge")).toBeInTheDocument();
+      expect(screen.getByTestId("copy-plus-icon")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("drag-preview-move-badge")
+      ).not.toBeInTheDocument();
+    });
+
+    it("renders the move badge with ArrowRight icon when moveHeld is true and copyHeld is false", () => {
+      modifierState.copyHeld = false;
+      modifierState.moveHeld = true;
+
+      render(<UnifiedDragPreview />);
+      expect(screen.getByTestId("drag-preview-move-badge")).toBeInTheDocument();
+      expect(screen.getByTestId("arrow-right-icon")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("drag-preview-copy-badge")
+      ).not.toBeInTheDocument();
+    });
+
+    it("renders only the copy badge when both copyHeld and moveHeld are true (copy wins)", () => {
+      modifierState.copyHeld = true;
+      modifierState.moveHeld = true;
+
+      render(<UnifiedDragPreview />);
+      expect(screen.getByTestId("drag-preview-copy-badge")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("drag-preview-move-badge")
+      ).not.toBeInTheDocument();
+    });
+
+    it("does not render either badge for non-test-case drag types (folder branch)", () => {
+      modifierState.copyHeld = true;
+      modifierState.moveHeld = true;
+      dragState.itemType = "someArboristType";
+      dragState.item = { text: "My Folder" };
+
+      render(<UnifiedDragPreview />);
+      expect(
+        screen.queryByTestId("drag-preview-copy-badge")
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("drag-preview-move-badge")
+      ).not.toBeInTheDocument();
+      expect(screen.getByText("My Folder")).toBeInTheDocument();
+    });
+
+    it("renders the reorder badge when isOverReorderZone is true", () => {
+      dragTargetState.isOverReorderZone = true;
+      modifierState.copyHeld = false;
+      modifierState.moveHeld = false;
+
+      render(<UnifiedDragPreview />);
+      expect(
+        screen.getByTestId("drag-preview-reorder-badge")
+      ).toBeInTheDocument();
+      expect(screen.getByTestId("arrow-up-down-icon")).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("drag-preview-copy-badge")
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("drag-preview-move-badge")
+      ).not.toBeInTheDocument();
+    });
+
+    it("shows reorder badge instead of copy badge when isOverReorderZone is true with copyHeld", () => {
+      dragTargetState.isOverReorderZone = true;
+      modifierState.copyHeld = true;
+
+      render(<UnifiedDragPreview />);
+      expect(
+        screen.getByTestId("drag-preview-reorder-badge")
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("drag-preview-copy-badge")
+      ).not.toBeInTheDocument();
+    });
+
+    it("anchors the chip with relative positioning so absolute-positioned badges align", () => {
+      modifierState.copyHeld = true;
+
+      render(<UnifiedDragPreview />);
+      const badge = screen.getByTestId("drag-preview-copy-badge");
+      const chip = badge.parentElement;
+      expect(chip?.className).toContain("relative");
+    });
   });
 });

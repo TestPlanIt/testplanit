@@ -22,16 +22,15 @@ import {
 import type { VisibilityState } from "@tanstack/react-table";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useCountIssue, useFindManyIssue, useGroupByIssue } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { ExtendedIssues, useIssueColumns } from "./columns";
-
-type PageSizeOption = number | "All";
 
 export default function IssueList() {
   return (
@@ -68,6 +67,11 @@ function Issues() {
 
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [priorityFilter, setPriorityFilter] = useState<string>("");
+
+  const prevSearchStringRef = useRef(searchString);
+  const prevPageSizeRef = useRef(pageSize);
+  const prevStatusFilterRef = useRef(statusFilter);
+  const prevPriorityFilterRef = useRef(priorityFilter);
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
 
@@ -499,26 +503,28 @@ function Issues() {
     return mappedIssues;
   }, [mappedIssues, needsClientSideSorting, skip, effectivePageSize]);
 
-  const pageSizeOptions: PageSizeOption[] = useMemo(() => {
-    if (totalItems <= 10) {
-      return ["All"];
-    }
-    const options: PageSizeOption[] = [10, 25, 50, 100, 250].filter(
-      (size) => size < totalItems || totalItems === 0
-    );
-    options.push("All");
-    return options;
-  }, [totalItems]);
+  const pageSizeOptions = usePageSizeOptions(totalItems);
 
   useEffect(() => {
+    if (searchString === prevSearchStringRef.current) return;
+    prevSearchStringRef.current = searchString;
     setCurrentPage(1);
   }, [searchString, setCurrentPage]);
 
   useEffect(() => {
+    if (pageSize === prevPageSizeRef.current) return;
+    prevPageSizeRef.current = pageSize;
     setCurrentPage(1);
   }, [pageSize, setCurrentPage]);
 
   useEffect(() => {
+    if (
+      statusFilter === prevStatusFilterRef.current &&
+      priorityFilter === prevPriorityFilterRef.current
+    )
+      return;
+    prevStatusFilterRef.current = statusFilter;
+    prevPriorityFilterRef.current = priorityFilter;
     setCurrentPage(1);
   }, [statusFilter, priorityFilter, setCurrentPage]);
 

@@ -22,7 +22,7 @@ export function ConfigureParametersButton({
   const label =
     parameterCount === 0
       ? t("configureButtonEmpty")
-      : t("configureButtonSet", { count: parameterCount });
+      : t("configureButtonSet", { count: String(parameterCount) });
 
   return (
     <Button

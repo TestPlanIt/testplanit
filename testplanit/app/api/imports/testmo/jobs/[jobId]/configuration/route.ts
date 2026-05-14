@@ -20,7 +20,6 @@ interface RouteContext {
 }
 
 export async function POST(request: NextRequest, context: RouteContext) {
-  // Audit: intentionally-skipped (Phase 62 / D-11).
   // This endpoint is a Testmo-import preparation step (job configuration).
   // The consequential event is the import START -> COMPLETE pair audited at:
   //   - POST /api/imports/testmo/jobs/[jobId]/import (IMPORT_STARTED)

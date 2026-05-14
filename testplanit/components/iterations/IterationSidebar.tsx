@@ -141,11 +141,11 @@ export function IterationSidebar({
           <span className="text-xs font-medium text-muted-foreground tabular-nums">
             {showGeneratingState
               ? t("iterationsHeaderCountPending", {
-                  total: generatingJob?.total ?? 0,
+                  total: String(generatingJob?.total ?? 0),
                 })
               : t("iterationsHeaderCount", {
-                  complete: completeCount,
-                  total: iterations.length,
+                  complete: String(completeCount),
+                  total: String(iterations.length),
                 })}
           </span>
         </header>

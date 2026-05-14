@@ -237,6 +237,12 @@ export abstract class BaseAdapter implements IssueAdapter {
           } else if (this.config.provider === "GITHUB") {
             // GitHub: token prefix works with both classic and fine-grained PATs
             headers["Authorization"] = `token ${this.authData.apiKey}`;
+          } else if (this.config.provider === "GITLAB") {
+            // GitLab: PRIVATE-TOKEN header for PAT authentication
+            headers["PRIVATE-TOKEN"] = this.authData.apiKey;
+          } else if (this.config.provider === "GITEA") {
+            // Gitea: Authorization: token <pat>
+            headers["Authorization"] = `token ${this.authData.apiKey}`;
           } else {
             // Default to X-API-Key header
             headers["X-API-Key"] = this.authData.apiKey;

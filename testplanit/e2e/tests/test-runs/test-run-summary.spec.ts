@@ -195,3 +195,92 @@ test.describe("Test Run Summary API", () => {
     expect(summary.completionRate).toBe(100); // All 3 passed
   });
 });
+
+test.describe("Sort toggle – statusOrder field", () => {
+  test("single-run summary includes statusOrder in every caseDetail", async ({
+    request,
+  }) => {
+    const projectResponse = await request.get(
+      `/api/model/projects/findFirst?q=${encodeURIComponent(
+        JSON.stringify({ where: { name: "E2E Test Project" } })
+      )}`
+    );
+    const project = await projectResponse.json();
+    const testRunResponse = await request.get(
+      `/api/model/testRuns/findFirst?q=${encodeURIComponent(
+        JSON.stringify({
+          where: {
+            projectId: project.data.id,
+            name: "Smoke Test - Build 1.2.3",
+          },
+        })
+      )}`
+    );
+    const testRun = await testRunResponse.json();
+
+    const summaryResponse = await request.get(
+      `/api/test-runs/${testRun.data.id}/summary?includeCaseDetails=true`
+    );
+    expect(summaryResponse.ok()).toBeTruthy();
+
+    const summary = await summaryResponse.json();
+    expect(Array.isArray(summary.caseDetails)).toBe(true);
+    expect(summary.caseDetails.length).toBeGreaterThan(0);
+
+    for (const detail of summary.caseDetails) {
+      expect(detail).toHaveProperty("statusOrder");
+      expect(
+        detail.statusOrder === null || typeof detail.statusOrder === "number"
+      ).toBe(true);
+    }
+  });
+
+  test("batch summaries endpoint includes statusOrder in every caseDetail", async ({
+    request,
+  }) => {
+    const projectResponse = await request.get(
+      `/api/model/projects/findFirst?q=${encodeURIComponent(
+        JSON.stringify({ where: { name: "E2E Test Project" } })
+      )}`
+    );
+    const project = await projectResponse.json();
+
+    const runsResponse = await request.get(
+      `/api/model/testRuns/findMany?q=${encodeURIComponent(
+        JSON.stringify({
+          where: {
+            projectId: project.data.id,
+            name: {
+              in: ["Smoke Test - Build 1.2.3", "Sprint 5 Acceptance Tests"],
+            },
+          },
+          select: { id: true },
+        })
+      )}`
+    );
+    const runs = await runsResponse.json();
+    const ids: number[] = runs.data.map((r: { id: number }) => r.id);
+    expect(ids.length).toBeGreaterThan(0);
+
+    const batchResponse = await request.get(
+      `/api/test-runs/summaries?testRunIds=${ids.join(",")}`
+    );
+    expect(batchResponse.ok()).toBeTruthy();
+
+    const batch = await batchResponse.json();
+    const summaries = Object.values(batch.summaries) as Array<{
+      caseDetails?: Array<{ statusOrder: number | null }>;
+    }>;
+    expect(summaries.length).toBeGreaterThan(0);
+
+    for (const summary of summaries) {
+      if (!summary.caseDetails?.length) continue;
+      for (const detail of summary.caseDetails) {
+        expect(detail).toHaveProperty("statusOrder");
+        expect(
+          detail.statusOrder === null || typeof detail.statusOrder === "number"
+        ).toBe(true);
+      }
+    }
+  });
+});

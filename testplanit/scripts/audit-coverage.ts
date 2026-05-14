@@ -279,7 +279,7 @@ async function enumeratePrismaHooks(
  *
  * Parity scope: only `create`/`update`/`delete` are counted. Bulk ops
  * (`createMany`/`updateMany`/`deleteMany`) and `upsert` are out of scope per
- * Phase 62 — the 3-op triad is the parity baseline.
+ * the 3-op triad is the parity baseline.
  */
 async function checkHookParity(
   hookItems: InventoryItem[],

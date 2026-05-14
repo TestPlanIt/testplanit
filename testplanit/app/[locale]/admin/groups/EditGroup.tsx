@@ -2,7 +2,7 @@
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Groups, User } from "@prisma/client";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   useCreateManyGroupAssignment,
   useDeleteManyGroupAssignment,
@@ -47,17 +47,20 @@ interface EditGroupProps {
   onClose: () => void;
 }
 
-const EditGroupFormSchema = z.object({
-  name: z.string().min(1, {
-    error: "Group Name is required",
-  }),
-});
+function buildEditGroupFormSchema(t: (key: any) => string) {
+  return z.object({
+    name: z.string().min(1, {
+      error: t("common.errors.groupNameRequired"),
+    }),
+  });
+}
 
-type EditGroupFormData = z.infer<typeof EditGroupFormSchema>;
+type EditGroupFormData = z.infer<ReturnType<typeof buildEditGroupFormSchema>>;
 
 export function EditGroup({ group, open, onClose }: EditGroupProps) {
   const t = useTranslations("admin.groups");
   const tCommon = useTranslations("common");
+  const tGlobal = useTranslations();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [assignedUsers, setAssignedUsers] = useState<User[]>([]);
   const [initialAssignedUserIds, setInitialAssignedUserIds] = useState<
@@ -91,8 +94,12 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
     }
   }, [allUsers, groupAssignments]);
 
+  const formSchema = useMemo(
+    () => buildEditGroupFormSchema(tGlobal),
+    [tGlobal]
+  );
   const form = useForm<EditGroupFormData>({
-    resolver: zodResolver(EditGroupFormSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: group.name,
     },

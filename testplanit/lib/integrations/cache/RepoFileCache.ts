@@ -3,7 +3,7 @@ import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import valkeyConnection from "../../valkey";
 
 // RepoFileEntry is defined here (not imported from adapter layer) to avoid
-// circular dependency concerns in Phase 2. Both definitions must stay in sync.
+// circular dependency concerns. Both definitions must stay in sync.
 export interface RepoFileEntry {
   path: string;
   size: number; // bytes

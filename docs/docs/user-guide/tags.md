@@ -26,7 +26,7 @@ The Tags page displays a table listing all defined tags (excluding those marked 
   - **Test Cases**: Displays the number of Test Cases associated with this Tag. Clicking the number may show a list or link to the relevant cases (depending on component implementation).
   - **Sessions**: Displays the number of Test Sessions associated with this Tag. Clicking the number may provide more details.
   - **Test Runs**: Displays the number of Test Runs associated with this Tag. Clicking the number may provide more details.
-  - **Actions**: Buttons to **Edit** (pencil icon) or **Delete** (trash can icon) the Tag.
+  - **Actions**: Buttons to **Edit** or **Delete** the Tag.
 
 ## Adding a New Tag
 
@@ -42,7 +42,7 @@ The Tags page displays a table listing all defined tags (excluding those marked 
 ## Editing an Existing Tag
 
 1. Locate the Tag you wish to modify in the table.
-2. Click the **Edit** (pencil) icon in the **Actions** column for that row.
+2. Click the **Edit** icon in the **Actions** column for that row.
 3. A modal dialog titled "Edit Tag" will appear, pre-filled with the current tag name.
 4. Modify the **Name** as needed.
 5. Click **Submit**.
@@ -54,7 +54,7 @@ The Tags page displays a table listing all defined tags (excluding those marked 
 Deleting a tag performs a _soft delete_, meaning it marks the tag as inactive but doesn't permanently remove it from the database. The tag will no longer be available for selection when tagging items and will be hidden from the main Tags list.
 
 1. Locate the Tag you wish to remove in the table.
-2. Click the **Delete** (trash can) icon in the **Actions** column.
+2. Click the **Delete** icon in the **Actions** column.
 3. A confirmation dialog will appear, asking you to confirm the deletion and showing the tag name.
 4. It will also display a warning: "This action cannot be undone. The Tag will be marked as deleted."
 5. Click **Delete** (the red button) to confirm the soft deletion.

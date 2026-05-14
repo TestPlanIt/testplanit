@@ -106,6 +106,13 @@ const processor = async (job: Job) => {
           if (data.projectId && data.jobId && !data.error) {
             notificationUrl = `${baseUrl}/${urlLocale}/projects/repository/${data.projectId}?urlJobId=${data.jobId}`;
           }
+        } else if (notification.type === "USER_REGISTERED") {
+          // Surface the admin user list so the recipient can find the
+          // newly-registered user without an extra search step.
+          notificationUrl = `${baseUrl}/${urlLocale}/admin/users`;
+        } else if (notification.type === "LLM_BUDGET_ALERT") {
+          // Same destination as the bell-icon link (`data.link`) — admin LLM page.
+          notificationUrl = `${baseUrl}/${urlLocale}${data.link ?? "/admin/llm"}`;
         }
 
         // Get translated title and message
@@ -212,6 +219,89 @@ const processor = async (job: Job) => {
               }
             );
           }
+        } else if (notification.type === "USER_REGISTERED") {
+          translatedTitle = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.userRegisteredTitle"
+          );
+          translatedMessage = await getServerTranslation(
+            userLocale,
+            data.registrationMethod === "sso"
+              ? "components.notifications.content.userRegisteredMessageSso"
+              : "components.notifications.content.userRegisteredMessageForm",
+            {
+              userName: data.newUserName ?? "",
+              userEmail: data.newUserEmail ?? "",
+            }
+          );
+        } else if (notification.type === "SHARE_LINK_ACCESSED") {
+          const viewer =
+            data.viewerName ||
+            data.viewerEmail ||
+            (await getServerTranslation(
+              userLocale,
+              "components.notifications.content.shareLinkAccessedAnonymousViewer"
+            ));
+          translatedTitle = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.shareLinkAccessedTitle"
+          );
+          translatedMessage = await getServerTranslation(
+            userLocale,
+            "components.notifications.content.shareLinkAccessedMessage",
+            {
+              viewer,
+              shareTitle: data.shareTitle ?? "",
+            }
+          );
+        } else if (notification.type === "LLM_BUDGET_ALERT") {
+          // LLM providers bill in USD; currency code is hardcoded
+          // intentionally — see the matching note in NotificationContent.tsx.
+          // Use the recipient's locale for grouping/decimal separators
+          // (`Intl.NumberFormat` accepts BCP-47, so swap the
+          // `en_US` underscore form to `en-US`).
+          const intlLocale = userLocale.replace("_", "-");
+          const formatAmount = (n: unknown): string => {
+            if (typeof n !== "number") return String(n ?? "");
+            return new Intl.NumberFormat(intlLocale, {
+              style: "currency",
+              currency: "USD",
+            }).format(n);
+          };
+          const threshold = data.threshold;
+          const isExceeded = typeof threshold === "number" && threshold >= 100;
+          const spend = formatAmount(data.currentSpend);
+          const budget = formatAmount(data.budgetLimit);
+          translatedTitle = isExceeded
+            ? await getServerTranslation(
+                userLocale,
+                "components.notifications.content.llmBudgetExceededTitle"
+              )
+            : await getServerTranslation(
+                userLocale,
+                "components.notifications.content.llmBudgetThresholdTitle",
+                { threshold }
+              );
+          translatedMessage = isExceeded
+            ? await getServerTranslation(
+                userLocale,
+                "components.notifications.content.llmBudgetExceededMessage",
+                {
+                  providerName: data.providerName ?? "",
+                  spend,
+                  budget,
+                }
+              )
+            : await getServerTranslation(
+                userLocale,
+                "components.notifications.content.llmBudgetThresholdMessage",
+                {
+                  providerName: data.providerName ?? "",
+                  threshold,
+                  spend,
+                  budget,
+                }
+              );
         }
 
         // Get email template translations

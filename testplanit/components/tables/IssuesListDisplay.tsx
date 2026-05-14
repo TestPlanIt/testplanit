@@ -16,7 +16,10 @@ interface Issue {
   externalUrl?: string | null;
   externalKey?: string | null;
   title?: string | null;
+  description?: string | null;
   externalStatus?: string | null;
+  priority?: string | null;
+  lastSyncedAt?: string | Date | null;
   data?: any;
   integration?: {
     id: number;
@@ -25,7 +28,6 @@ interface Issue {
   } | null;
   integrationId?: number | null;
   projectIds: number[];
-  lastSyncedAt?: Date | null;
   issueTypeName?: string | null;
   issueTypeIconUrl?: string | null;
 }
@@ -77,7 +79,10 @@ export const IssuesListDisplay: React.FC<IssuesListProps> = ({
                 externalId={issue.externalId}
                 externalUrl={issue.externalUrl}
                 title={issue.title}
+                description={issue.description}
                 status={issue.externalStatus}
+                priority={issue.priority}
+                lastSyncedAt={issue.lastSyncedAt}
                 projectIds={issue.projectIds}
                 size="small"
                 data={issue.data}
@@ -86,7 +91,6 @@ export const IssuesListDisplay: React.FC<IssuesListProps> = ({
                   (issue.integrationId ? "JIRA" : undefined)
                 }
                 integrationId={issue.integrationId || issue.integration?.id}
-                lastSyncedAt={issue.lastSyncedAt}
                 issueTypeName={issue.issueTypeName}
                 issueTypeIconUrl={issue.issueTypeIconUrl}
               />

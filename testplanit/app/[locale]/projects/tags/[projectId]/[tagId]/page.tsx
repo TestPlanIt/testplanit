@@ -23,7 +23,7 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { defaultPageSizeOptions } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import {
   useCountRepositoryCases,
   useCountSessions,
@@ -35,9 +35,9 @@ import {
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import {
-  getCaseColumns,
-  getSessionColumns,
-  getTestRunColumns,
+  useCaseColumns,
+  useSessionColumns,
+  useTestRunColumns,
 } from "./columns";
 
 type TabType = "cases" | "sessions" | "testRuns";
@@ -354,38 +354,26 @@ function TagDetail() {
   }, [testRuns, projectId]);
 
   // Column definitions
-  const caseColumns = useMemo(
-    () =>
-      getCaseColumns({
-        testCases: t("common.fields.testCases"),
-        type: t("common.fields.type"),
-        manual: t("common.fields.manual"),
-        automated: t("common.fields.automated"),
-      }),
-    [t]
-  );
+  const caseColumns = useCaseColumns({
+    testCases: t("common.fields.testCases"),
+    type: t("common.fields.type"),
+    manual: t("common.fields.manual"),
+    automated: t("common.fields.automated"),
+  });
 
-  const sessionColumns = useMemo(
-    () =>
-      getSessionColumns({
-        sessions: t("common.fields.sessions"),
-        status: t("common.actions.status"),
-        completed: t("common.fields.completed"),
-        inProgress: t("milestones.statusLabels.IN_PROGRESS"),
-      }),
-    [t]
-  );
+  const sessionColumns = useSessionColumns({
+    sessions: t("common.fields.sessions"),
+    status: t("common.actions.status"),
+    completed: t("common.fields.completed"),
+    inProgress: t("milestones.statusLabels.IN_PROGRESS"),
+  });
 
-  const testRunColumns = useMemo(
-    () =>
-      getTestRunColumns({
-        testRuns: t("common.fields.testRuns"),
-        status: t("common.actions.status"),
-        completed: t("common.fields.completed"),
-        inProgress: t("milestones.statusLabels.IN_PROGRESS"),
-      }),
-    [t]
-  );
+  const testRunColumns = useTestRunColumns({
+    testRuns: t("common.fields.testRuns"),
+    status: t("common.actions.status"),
+    completed: t("common.fields.completed"),
+    inProgress: t("milestones.statusLabels.IN_PROGRESS"),
+  });
 
   // Pagination calculations
   const casesTotalPages = Math.ceil((casesCount ?? 0) / effectiveCasesPageSize);
@@ -413,6 +401,10 @@ function TagDetail() {
     testRunsPage * effectiveTestRunsPageSize,
     testRunsCount ?? 0
   );
+
+  const casesPageSizeOptions = usePageSizeOptions(casesCount ?? 0);
+  const testRunsPageSizeOptions = usePageSizeOptions(testRunsCount ?? 0);
+  const sessionsPageSizeOptions = usePageSizeOptions(sessionsCount ?? 0);
 
   // Reset page when search or filters change
   useEffect(() => {
@@ -586,7 +578,7 @@ function TagDetail() {
                     totalRows={casesCount ?? 0}
                     searchString={searchString}
                     pageSize={casesPageSize}
-                    pageSizeOptions={defaultPageSizeOptions}
+                    pageSizeOptions={casesPageSizeOptions}
                     handlePageSizeChange={setCasesPageSize}
                   />
                   <PaginationComponent
@@ -624,7 +616,7 @@ function TagDetail() {
                     totalRows={testRunsCount ?? 0}
                     searchString={searchString}
                     pageSize={testRunsPageSize}
-                    pageSizeOptions={defaultPageSizeOptions}
+                    pageSizeOptions={testRunsPageSizeOptions}
                     handlePageSizeChange={setTestRunsPageSize}
                   />
                   <PaginationComponent
@@ -662,7 +654,7 @@ function TagDetail() {
                     totalRows={sessionsCount ?? 0}
                     searchString={searchString}
                     pageSize={sessionsPageSize}
-                    pageSizeOptions={defaultPageSizeOptions}
+                    pageSizeOptions={sessionsPageSizeOptions}
                     handlePageSizeChange={setSessionsPageSize}
                   />
                   <PaginationComponent

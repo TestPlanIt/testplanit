@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   PaginationProvider,
   usePagination,
@@ -13,7 +13,7 @@ import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { useFindManyUser } from "~/lib/hooks";
-import { ExtendedUser, getColumns } from "./columns";
+import { ExtendedUser, useUserColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
@@ -147,15 +147,24 @@ function Users() {
     return options;
   }, [totalItems]);
 
+  const prevSearchStringRef = useRef(searchString);
+  const prevPageSizeRef = useRef(pageSize);
+
   // Reset to first page when search changes
   useEffect(() => {
+    if (searchString === prevSearchStringRef.current) return;
+    prevSearchStringRef.current = searchString;
     setCurrentPage(1);
   }, [searchString, setCurrentPage]);
 
   // Reset to first page when page size changes
   useEffect(() => {
+    if (pageSize === prevPageSizeRef.current) return;
+    prevPageSizeRef.current = pageSize;
     setCurrentPage(1);
   }, [pageSize, setCurrentPage]);
+
+  const columns = useUserColumns(tCommon);
 
   if (status === "loading") return null;
 
@@ -170,8 +179,6 @@ function Users() {
     setCurrentPage(1); // Reset to first page when sorting changes
   };
 
-  const columns = getColumns(tCommon);
-
   if (session && session.user.access !== "NONE") {
     return (
       <main>
@@ -179,9 +186,7 @@ function Users() {
           <CardHeader className="w-full">
             <div>
               <div>
-                <CardTitle>
-                  {tCommon("fields.users", { count: totalItems })}
-                </CardTitle>
+                <CardTitle>{tCommon("fields.users")}</CardTitle>
               </div>
               <div></div>
             </div>

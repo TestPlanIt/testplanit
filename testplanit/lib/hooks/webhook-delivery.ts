@@ -328,7 +328,7 @@ export function useSuspenseCountWebhookDelivery<TArgs extends Prisma.WebhookDeli
 }
 import type { WebhookDirection, AdapterType } from '@prisma/client';
 
-export function useCheckWebhookDelivery<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: string; webhookConfigId?: string; direction?: WebhookDirection; adapterType?: AdapterType; eventType?: string; statusCode?: number; latencyMs?: number; payloadDigest?: string; error?: string; attempt?: number }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
+export function useCheckWebhookDelivery<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: string; webhookConfigId?: string; direction?: WebhookDirection; adapterType?: AdapterType; eventType?: string; eventId?: string; statusCode?: number; latencyMs?: number; payloadDigest?: string; error?: string; attempt?: number; replayedFromDeliveryId?: string }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
     const { endpoint, fetch } = getHooksContext();
     return useModelQuery<boolean, boolean, TError>('WebhookDelivery', `${endpoint}/webhookDelivery/check`, args, options, fetch);
 }

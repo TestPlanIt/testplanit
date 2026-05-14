@@ -7,6 +7,7 @@ import {
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
@@ -26,11 +27,9 @@ import {
 import { CirclePlus } from "lucide-react";
 import { useCountTags, useFindManyTags } from "~/lib/hooks";
 import { AddTag } from "./AddTag";
-import { ExtendedTags, getColumns } from "./columns";
+import { ExtendedTags, useColumns } from "./columns";
 import { DeleteTag } from "./DeleteTag";
 import { EditTag } from "./EditTag";
-
-type PageSizeOption = number | "All";
 
 export default function TagListPage() {
   return (
@@ -241,16 +240,7 @@ function TagList() {
     setTotalItems(tagsCount ?? 0);
   }, [tagsCount, setTotalItems]);
 
-  const pageSizeOptions: PageSizeOption[] = useMemo(() => {
-    if (totalItems <= 10) {
-      return ["All"];
-    }
-    const options: PageSizeOption[] = [10, 25, 50, 100, 250].filter(
-      (size) => size < totalItems || totalItems === 0
-    );
-    options.push("All");
-    return options;
-  }, [totalItems]);
+  const pageSizeOptions = usePageSizeOptions(totalItems);
 
   // Reset to first page when search changes
   useEffect(() => {
@@ -268,9 +258,11 @@ function TagList() {
     }
   }, [status, session, router]);
 
-  const columns = useMemo(
-    () => getColumns(tCommon, isLoadingCounts, setEditingTag, setDeletingTag),
-    [tCommon, isLoadingCounts]
+  const columns = useColumns(
+    tCommon,
+    isLoadingCounts,
+    setEditingTag,
+    setDeletingTag
   );
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>

@@ -316,7 +316,7 @@ test.describe("Tags", () => {
     // Click the edit button in that row - try multiple icon selectors
     const editButton = tagRow
       .locator(
-        "button:has(svg.lucide-square-pen), button:has(svg.lucide-pencil), button:has(svg[class*='pencil']), button:has(svg[class*='edit'])"
+        "button:has(svg.lucide-square-pen), button:has(svg.lucide-edit), button:has(svg[class*='edit']), button:has(svg[class*='edit'])"
       )
       .first();
     await expect(editButton).toBeVisible({ timeout: 3000 });
@@ -375,7 +375,7 @@ test.describe("Tags", () => {
     const tagRow = page.locator(`tr:has-text("${tagName}")`).first();
     await expect(tagRow).toBeVisible({ timeout: 5000 });
 
-    // Click the delete button (Trash2 icon) in that row
+    // Click the delete button in that row
     const deleteButton = tagRow.locator("button:has(svg.lucide-trash-2)");
     await expect(deleteButton).toBeVisible({ timeout: 3000 });
     await deleteButton.click();

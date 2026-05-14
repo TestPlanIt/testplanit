@@ -770,6 +770,7 @@ export function CreateIssueDialog({
               activeIntegration &&
               !authError &&
               activeIntegration.integration?.provider !== "GITHUB" &&
+              activeIntegration.integration?.provider !== "GITEA" &&
               isIntegrationConfigured && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">
@@ -793,7 +794,7 @@ export function CreateIssueDialog({
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("common.fields.issues")}</FormLabel>
+                  <FormLabel>{t("common.fields.title")}</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -816,37 +817,41 @@ export function CreateIssueDialog({
               )}
             />
 
-            <FormField
-              control={form.control as any}
-              name="priority"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("common.fields.priority")}</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="low">
-                        {t("common.priority.low")}
-                      </SelectItem>
-                      <SelectItem value="medium">
-                        {t("common.priority.medium")}
-                      </SelectItem>
-                      <SelectItem value="high">
-                        {t("common.priority.high")}
-                      </SelectItem>
-                      <SelectItem value="urgent">
-                        {t("issues.priorityUrgent")}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {["JIRA", "AZURE_DEVOPS"].includes(
+              activeIntegration?.integration?.provider ?? ""
+            ) && (
+              <FormField
+                control={form.control as any}
+                name="priority"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("common.fields.priority")}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="low">
+                          {t("common.priority.low")}
+                        </SelectItem>
+                        <SelectItem value="medium">
+                          {t("common.priority.medium")}
+                        </SelectItem>
+                        <SelectItem value="high">
+                          {t("common.priority.high")}
+                        </SelectItem>
+                        <SelectItem value="urgent">
+                          {t("issues.priorityUrgent")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             {/* Dynamic fields based on issue type */}
             {loadingFields && (

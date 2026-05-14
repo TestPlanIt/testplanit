@@ -28,9 +28,9 @@ export const POST = withAuditContext(
 
     const { currentPassword, newPassword } = await request.json();
 
-    if (!currentPassword || !newPassword) {
+    if (!newPassword) {
       return NextResponse.json(
-        { error: "Current password and new password are required" },
+        { error: "New password is required" },
         { status: 400 }
       );
     }
@@ -40,20 +40,33 @@ export const POST = withAuditContext(
         where: { id: userId },
       });
 
-      if (!user || !user.password) {
+      if (!user) {
         return NextResponse.json({ error: "User not found" }, { status: 404 });
       }
 
-      const isCurrentPasswordValid = await bcrypt.compare(
-        currentPassword,
-        user.password
-      );
+      // A "real" password is one the user chose, stored as a bcrypt hash.
+      // SSO-auto-provisioned users get a plain randomUUID() stored as-is.
+      const hasBcryptPassword =
+        typeof user.password === "string" &&
+        (user.password.startsWith("$2b$") || user.password.startsWith("$2a$"));
 
-      if (!isCurrentPasswordValid) {
-        return NextResponse.json(
-          { error: "Invalid current password" },
-          { status: 400 }
+      if (hasBcryptPassword) {
+        if (!currentPassword) {
+          return NextResponse.json(
+            { error: "Current password is required" },
+            { status: 400 }
+          );
+        }
+        const isCurrentPasswordValid = await bcrypt.compare(
+          currentPassword,
+          user.password!
         );
+        if (!isCurrentPasswordValid) {
+          return NextResponse.json(
+            { error: "Invalid current password" },
+            { status: 400 }
+          );
+        }
       }
 
       // Validate against password policy (per D-01). Returns structured

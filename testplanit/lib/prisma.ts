@@ -23,6 +23,30 @@ import {
   captureAuditEvent,
 } from "./services/auditLog";
 import { invalidateApiTokenCache } from "./api-token-cache";
+// Plan 02-05 — outbound webhook emitters spliced alongside the existing
+// audit/ES-sync calls. Each emit is bound to a Prisma.TransactionClient
+// constructed inside an explicit baseClient.$transaction wrapper (Blocker 3
+// fix — see Plan 02-05 02-CONTEXT D-01 for the crash-safety reasoning).
+import {
+  emitTestRunCreated,
+  emitTestRunResultAdded,
+  emitTestRunUpdateEvents,
+} from "./webhooks/event-emitters/testRunEvents";
+import {
+  emitSessionCreated,
+  emitSessionResultAdded,
+  emitSessionUpdateEvents,
+} from "./webhooks/event-emitters/sessionEvents";
+import {
+  emitIssueCreated,
+  emitIssueDeleted,
+  emitIssueUpdated,
+} from "./webhooks/event-emitters/issueEvents";
+import {
+  emitCaseCreated,
+  emitCaseDeleted,
+  emitCaseUpdated,
+} from "./webhooks/event-emitters/caseEvents";
 
 // Declare global types
 declare global {
@@ -42,95 +66,121 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
   const client = baseClient.$extends({
     query: {
       repositoryCases: {
+        // Plan 02-05 Blocker 3 — wrap entity write + emit in an explicit
+        // baseClient.$transaction so both commit-or-rollback atomically.
+        // Existing audit/ES-sync calls keep their async-via-queue /
+        // fire-and-forget shape inside the closure (they don't need tx
+        // binding for their own correctness).
         async create({ args, query }: any) {
-          const result = await query(args);
-          // Sync to Elasticsearch asynchronously
-          if (result?.id) {
-            syncRepositoryCaseToElasticsearch(result.id).catch((error: any) => {
-              console.error(
-                `Failed to sync repository case ${result.id} to Elasticsearch:`,
-                error
+          return await baseClient.$transaction(async (tx) => {
+            const result = await query(args);
+            if (result?.id) {
+              syncRepositoryCaseToElasticsearch(result.id).catch(
+                (error: any) => {
+                  console.error(
+                    `Failed to sync repository case ${result.id} to Elasticsearch:`,
+                    error
+                  );
+                }
               );
-            });
-            await auditCreate("RepositoryCases", result, result.projectId);
-          }
-          return result;
+              await auditCreate("RepositoryCases", result, result.projectId);
+              if (result.projectId !== undefined) {
+                await emitCaseCreated(result, tx);
+              }
+            }
+            return result;
+          });
         },
         async update({ args, query }: any) {
-          // Fetch old state for audit diff
-          const oldEntity = args.where
-            ? await baseClient.repositoryCases.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          // Sync to Elasticsearch asynchronously
-          if (result?.id) {
-            syncRepositoryCaseToElasticsearch(result.id).catch((error: any) => {
-              console.error(
-                `Failed to sync repository case ${result.id} to Elasticsearch:`,
-                error
+          return await baseClient.$transaction(async (tx) => {
+            // Fetch old state for audit diff
+            const oldEntity = args.where
+              ? await tx.repositoryCases.findUnique({ where: args.where })
+              : null;
+            const result = await query(args);
+            if (result?.id) {
+              syncRepositoryCaseToElasticsearch(result.id).catch(
+                (error: any) => {
+                  console.error(
+                    `Failed to sync repository case ${result.id} to Elasticsearch:`,
+                    error
+                  );
+                }
               );
-            });
-            // Audit log
-            await auditUpdate(
-              "RepositoryCases",
-              oldEntity,
-              result,
-              result.projectId
-            );
-          }
-          return result;
-        },
-        async upsert({ args, query }: any) {
-          // Check if entity exists for audit
-          const oldEntity = args.where
-            ? await baseClient.repositoryCases.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          // Sync to Elasticsearch asynchronously
-          if (result?.id) {
-            syncRepositoryCaseToElasticsearch(result.id).catch((error: any) => {
-              console.error(
-                `Failed to sync repository case ${result.id} to Elasticsearch:`,
-                error
-              );
-            });
-            // Audit log - determine if create or update
-            if (oldEntity) {
               await auditUpdate(
                 "RepositoryCases",
                 oldEntity,
                 result,
                 result.projectId
               );
-            } else {
-              await auditCreate("RepositoryCases", result, result.projectId);
+              if (result.projectId !== undefined) {
+                await emitCaseUpdated(oldEntity, result, tx);
+              }
             }
-          }
-          return result;
+            return result;
+          });
+        },
+        async upsert({ args, query }: any) {
+          return await baseClient.$transaction(async (tx) => {
+            const oldEntity = args.where
+              ? await tx.repositoryCases.findUnique({ where: args.where })
+              : null;
+            const result = await query(args);
+            if (result?.id) {
+              syncRepositoryCaseToElasticsearch(result.id).catch(
+                (error: any) => {
+                  console.error(
+                    `Failed to sync repository case ${result.id} to Elasticsearch:`,
+                    error
+                  );
+                }
+              );
+              if (oldEntity) {
+                await auditUpdate(
+                  "RepositoryCases",
+                  oldEntity,
+                  result,
+                  result.projectId
+                );
+                if (result.projectId !== undefined) {
+                  await emitCaseUpdated(oldEntity, result, tx);
+                }
+              } else {
+                await auditCreate("RepositoryCases", result, result.projectId);
+                if (result.projectId !== undefined) {
+                  await emitCaseCreated(result, tx);
+                }
+              }
+            }
+            return result;
+          });
         },
         async delete({ args, query }: any) {
-          // Fetch entity before deletion for audit
-          const oldEntity = args.where
-            ? await baseClient.repositoryCases.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          // Sync to Elasticsearch asynchronously (will handle removal if needed)
-          if (result?.id) {
-            syncRepositoryCaseToElasticsearch(result.id).catch((error: any) => {
-              console.error(
-                `Failed to sync repository case ${result.id} to Elasticsearch after delete:`,
-                error
+          return await baseClient.$transaction(async (tx) => {
+            const oldEntity = args.where
+              ? await tx.repositoryCases.findUnique({ where: args.where })
+              : null;
+            const result = await query(args);
+            if (result?.id) {
+              syncRepositoryCaseToElasticsearch(result.id).catch(
+                (error: any) => {
+                  console.error(
+                    `Failed to sync repository case ${result.id} to Elasticsearch after delete:`,
+                    error
+                  );
+                }
               );
-            });
-          }
-          if (oldEntity) {
-            await auditDelete(
-              "RepositoryCases",
-              oldEntity,
-              oldEntity.projectId
-            );
-          }
-          return result;
+            }
+            if (oldEntity) {
+              await auditDelete(
+                "RepositoryCases",
+                oldEntity,
+                oldEntity.projectId
+              );
+              await emitCaseDeleted(oldEntity, tx);
+            }
+            return result;
+          });
         },
         async createMany({ args, query }: any) {
           const result = await query(args);
@@ -166,46 +216,58 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
       },
       testRuns: {
         async create({ args, query }: any) {
-          const result = await query(args);
-          if (result?.id) {
-            syncTestRunToElasticsearch(result.id).catch((error: any) => {
-              console.error(
-                `Failed to sync test run ${result.id} to Elasticsearch:`,
-                error
-              );
-            });
-            // Audit log
-            await auditCreate("TestRuns", result, result.projectId);
-          }
-          return result;
+          return await baseClient.$transaction(async (tx) => {
+            const result = await query(args);
+            if (result?.id) {
+              syncTestRunToElasticsearch(result.id).catch((error: any) => {
+                console.error(
+                  `Failed to sync test run ${result.id} to Elasticsearch:`,
+                  error
+                );
+              });
+              await auditCreate("TestRuns", result, result.projectId);
+              if (result.projectId !== undefined) {
+                await emitTestRunCreated(result, tx);
+              }
+            }
+            return result;
+          });
         },
         async update({ args, query }: any) {
-          // Fetch old state for audit diff
-          const oldEntity = args.where
-            ? await baseClient.testRuns.findUnique({ where: args.where })
-            : null;
+          return await baseClient.$transaction(async (tx) => {
+            const oldEntity = args.where
+              ? await tx.testRuns.findUnique({ where: args.where })
+              : null;
 
-          // Auto-set completedAt when isCompleted changes to true
-          if (
-            args.data?.isCompleted === true &&
-            !args.data?.completedAt &&
-            oldEntity?.isCompleted !== true
-          ) {
-            args.data.completedAt = new Date();
-          }
+            // Auto-set completedAt when isCompleted changes to true
+            if (
+              args.data?.isCompleted === true &&
+              !args.data?.completedAt &&
+              oldEntity?.isCompleted !== true
+            ) {
+              args.data.completedAt = new Date();
+            }
 
-          const result = await query(args);
-          if (result?.id) {
-            syncTestRunToElasticsearch(result.id).catch((error: any) => {
-              console.error(
-                `Failed to sync test run ${result.id} to Elasticsearch:`,
-                error
+            const result = await query(args);
+            if (result?.id) {
+              syncTestRunToElasticsearch(result.id).catch((error: any) => {
+                console.error(
+                  `Failed to sync test run ${result.id} to Elasticsearch:`,
+                  error
+                );
+              });
+              await auditUpdate(
+                "TestRuns",
+                oldEntity,
+                result,
+                result.projectId
               );
-            });
-            // Audit log
-            await auditUpdate("TestRuns", oldEntity, result, result.projectId);
-          }
-          return result;
+              if (result.projectId !== undefined) {
+                await emitTestRunUpdateEvents(oldEntity, result, tx);
+              }
+            }
+            return result;
+          });
         },
         async delete({ args, query }: any) {
           // Fetch entity before deletion for audit
@@ -249,63 +311,81 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
       // Matches the lastActiveAt precedent at lib/prisma.ts:693-701.
       sessions: {
         async create({ args, query }: any) {
-          const result = await query(args);
-          if (result?.id) {
-            syncSessionToElasticsearch(result.id).catch((error: any) => {
-              console.error(
-                `Failed to sync session ${result.id} to Elasticsearch:`,
-                error
-              );
-            });
-            // Audit log
-            await auditCreate("Sessions", result, result.projectId);
-          }
-          return result;
+          return await baseClient.$transaction(async (tx) => {
+            const result = await query(args);
+            if (result?.id) {
+              syncSessionToElasticsearch(result.id).catch((error: any) => {
+                console.error(
+                  `Failed to sync session ${result.id} to Elasticsearch:`,
+                  error
+                );
+              });
+              await auditCreate("Sessions", result, result.projectId);
+              if (result.projectId !== undefined) {
+                await emitSessionCreated(result, tx);
+              }
+            }
+            return result;
+          });
         },
         async update({ args, query }: any) {
-          // Fetch old state for audit diff
-          const oldEntity = args.where
-            ? await baseClient.sessions.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          if (result?.id) {
-            syncSessionToElasticsearch(result.id).catch((error: any) => {
-              console.error(
-                `Failed to sync session ${result.id} to Elasticsearch:`,
-                error
-              );
-            });
-            // Audit log
-            await auditUpdate("Sessions", oldEntity, result, result.projectId);
-          }
-          return result;
-        },
-        async upsert({ args, query }: any) {
-          // Check if entity exists for audit
-          const oldEntity = args.where
-            ? await baseClient.sessions.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          if (result?.id) {
-            syncSessionToElasticsearch(result.id).catch((error: any) => {
-              console.error(
-                `Failed to sync session ${result.id} to Elasticsearch:`,
-                error
-              );
-            });
-            // Audit log - determine if create or update
-            if (oldEntity) {
+          return await baseClient.$transaction(async (tx) => {
+            const oldEntity = args.where
+              ? await tx.sessions.findUnique({ where: args.where })
+              : null;
+            const result = await query(args);
+            if (result?.id) {
+              syncSessionToElasticsearch(result.id).catch((error: any) => {
+                console.error(
+                  `Failed to sync session ${result.id} to Elasticsearch:`,
+                  error
+                );
+              });
               await auditUpdate(
                 "Sessions",
                 oldEntity,
                 result,
                 result.projectId
               );
-            } else {
-              await auditCreate("Sessions", result, result.projectId);
+              if (result.projectId !== undefined) {
+                await emitSessionUpdateEvents(oldEntity, result, tx);
+              }
             }
-          }
-          return result;
+            return result;
+          });
+        },
+        async upsert({ args, query }: any) {
+          return await baseClient.$transaction(async (tx) => {
+            const oldEntity = args.where
+              ? await tx.sessions.findUnique({ where: args.where })
+              : null;
+            const result = await query(args);
+            if (result?.id) {
+              syncSessionToElasticsearch(result.id).catch((error: any) => {
+                console.error(
+                  `Failed to sync session ${result.id} to Elasticsearch:`,
+                  error
+                );
+              });
+              if (oldEntity) {
+                await auditUpdate(
+                  "Sessions",
+                  oldEntity,
+                  result,
+                  result.projectId
+                );
+                if (result.projectId !== undefined) {
+                  await emitSessionUpdateEvents(oldEntity, result, tx);
+                }
+              } else {
+                await auditCreate("Sessions", result, result.projectId);
+                if (result.projectId !== undefined) {
+                  await emitSessionCreated(result, tx);
+                }
+              }
+            }
+            return result;
+          });
         },
         async delete({ args, query }: any) {
           // Fetch entity before deletion for audit
@@ -402,52 +482,102 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           return result;
         },
       },
-      issues: {
+      // Plan 02-05 Rule-1 fix: this hook block was previously keyed `issues:`
+      // (plural) which never matched the Prisma client field (`prisma.issue`,
+      // singular). The audit + ES-sync side effects below were therefore
+      // dead code on every Issue mutation. Renaming to the correct singular
+      // key activates BOTH the existing audit/ES sync AND the new webhook
+      // emit. Documented as a deviation in the SUMMARY.
+      issue: {
         async create({ args, query }: any) {
-          const result = await query(args);
-          if (result?.id) {
-            syncIssueToElasticsearch(result.id).catch((error: any) => {
-              console.error(
-                `Failed to sync issue ${result.id} to Elasticsearch:`,
-                error
-              );
-            });
-            // Audit log
-            await auditCreate("Issue", result, result.projectId);
-          }
-          return result;
+          return await baseClient.$transaction(async (tx) => {
+            const result = await query(args);
+            if (result?.id) {
+              syncIssueToElasticsearch(result.id).catch((error: any) => {
+                console.error(
+                  `Failed to sync issue ${result.id} to Elasticsearch:`,
+                  error
+                );
+              });
+              await auditCreate("Issue", result, result.projectId);
+              if (result.projectId !== undefined) {
+                await emitIssueCreated(result, tx);
+              }
+            }
+            return result;
+          });
         },
         async update({ args, query }: any) {
-          // Fetch old state for audit diff
-          const oldEntity = args.where
-            ? await baseClient.issue.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          if (result?.id) {
-            syncIssueToElasticsearch(result.id).catch((error: any) => {
-              console.error(
-                `Failed to sync issue ${result.id} to Elasticsearch:`,
-                error
-              );
-            });
-            // Audit log
-            await auditUpdate("Issue", oldEntity, result, result.projectId);
-          }
-          return result;
+          return await baseClient.$transaction(async (tx) => {
+            const oldEntity = args.where
+              ? await tx.issue.findUnique({ where: args.where })
+              : null;
+            const result = await query(args);
+            if (result?.id) {
+              syncIssueToElasticsearch(result.id).catch((error: any) => {
+                console.error(
+                  `Failed to sync issue ${result.id} to Elasticsearch:`,
+                  error
+                );
+              });
+              await auditUpdate("Issue", oldEntity, result, result.projectId);
+              if (result.projectId !== undefined) {
+                await emitIssueUpdated(oldEntity, result, tx);
+              }
+            }
+            return result;
+          });
+        },
+        async upsert({ args, query }: any) {
+          // Mirror the repositoryCases/testRuns/sessions upsert pattern:
+          // pre-fetch oldEntity so we can branch into create-vs-update emit.
+          // The Jira integration's /api/integrations/[id]/create-issue route
+          // uses upsert (so a re-link of an existing Jira ticket doesn't
+          // create a duplicate row) — without this hook, audit + emit were
+          // silently skipped.
+          return await baseClient.$transaction(async (tx) => {
+            const oldEntity = args.where
+              ? await tx.issue.findUnique({ where: args.where })
+              : null;
+            const result = await query(args);
+            if (result?.id) {
+              syncIssueToElasticsearch(result.id).catch((error: any) => {
+                console.error(
+                  `Failed to sync issue ${result.id} to Elasticsearch:`,
+                  error
+                );
+              });
+              if (oldEntity) {
+                await auditUpdate("Issue", oldEntity, result, result.projectId);
+                if (result.projectId !== undefined) {
+                  await emitIssueUpdated(oldEntity, result, tx);
+                }
+              } else {
+                await auditCreate("Issue", result, result.projectId);
+                if (result.projectId !== undefined) {
+                  await emitIssueCreated(result, tx);
+                }
+              }
+            }
+            return result;
+          });
         },
         async delete({ args, query }: any) {
-          const oldEntity = args.where
-            ? await baseClient.issue.findUnique({ where: args.where })
-            : null;
-          const result = await query(args);
-          if (oldEntity) {
-            await auditDelete(
-              "Issue",
-              oldEntity,
-              oldEntity.projectId ?? undefined
-            );
-          }
-          return result;
+          return await baseClient.$transaction(async (tx) => {
+            const oldEntity = args.where
+              ? await tx.issue.findUnique({ where: args.where })
+              : null;
+            const result = await query(args);
+            if (oldEntity) {
+              await auditDelete(
+                "Issue",
+                oldEntity,
+                oldEntity.projectId ?? undefined
+              );
+              await emitIssueDeleted(oldEntity, tx);
+            }
+            return result;
+          });
         },
       },
       milestones: {
@@ -828,13 +958,23 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
       // =============================================================================
       // Phase 3: Core Data - Test Execution & Content
       // =============================================================================
-      testRunResult: {
+      // Plan 02-05 Rule-1 fix: this hook block was previously keyed
+      // `testRunResult:` (singular) which never matched the Prisma client
+      // field `prisma.testRunResults` (plural). Audit calls were dead.
+      // Renaming to the correct plural key activates the audit calls AND
+      // the new webhook emit for TestRunResults.
+      testRunResults: {
         async create({ args, query }: any) {
-          const result = await query(args);
-          if (result?.id) {
-            await auditCreate("TestRunResult", result);
-          }
-          return result;
+          return await baseClient.$transaction(async (tx) => {
+            const result = await query(args);
+            if (result?.id) {
+              await auditCreate("TestRunResult", result);
+              if (result.testRunId !== undefined) {
+                await emitTestRunResultAdded(result, tx);
+              }
+            }
+            return result;
+          });
         },
         async update({ args, query }: any) {
           const oldEntity = args.where
@@ -855,6 +995,21 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             await auditDelete("TestRunResult", oldEntity);
           }
           return result;
+        },
+      },
+      // Plan 02-05 Warning-9 fix — NEW hook block for SessionResults. The
+      // model had no $extends entry today.
+      // We add only the webhook emit here; audit can slot in later as a
+      // sibling line if SessionResults coverage is desired.
+      sessionResults: {
+        async create({ args, query }: any) {
+          return await baseClient.$transaction(async (tx) => {
+            const result = await query(args);
+            if (result?.id && result.sessionId !== undefined) {
+              await emitSessionResultAdded(result, tx);
+            }
+            return result;
+          });
         },
       },
       comment: {

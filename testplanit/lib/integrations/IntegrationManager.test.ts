@@ -62,7 +62,9 @@ describe("IntegrationManager", () => {
       expect(types).toContain("GITHUB");
       expect(types).toContain("AZURE_DEVOPS");
       expect(types).toContain("SIMPLE_URL");
-      expect(types).toHaveLength(4);
+      expect(types).toContain("GITLAB");
+      expect(types).toContain("GITEA");
+      expect(types).toHaveLength(6);
     });
   });
 

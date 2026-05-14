@@ -101,9 +101,9 @@ export function ParameterDeleteDialog({
           </AlertDialogTitle>
           <AlertDialogDescription>
             {t("deleteDescription", {
-              stepCount: totalStepRefs,
-              rowCount: counts?.rowCount ?? 0,
-              nextVersion: currentCaseVersion + 1,
+              stepCount: String(totalStepRefs),
+              rowCount: String(counts?.rowCount ?? 0),
+              nextVersion: String(currentCaseVersion + 1),
             })}
           </AlertDialogDescription>
         </AlertDialogHeader>

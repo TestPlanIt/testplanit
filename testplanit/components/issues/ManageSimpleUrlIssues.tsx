@@ -175,7 +175,6 @@ export function ManageSimpleUrlIssues({
                 data={issue.data}
                 integrationProvider="SIMPLE_URL"
                 integrationId={issue.integrationId ?? undefined}
-                lastSyncedAt={issue.lastSyncedAt}
                 issueTypeName={issue.issueTypeName}
                 issueTypeIconUrl={issue.issueTypeIconUrl}
               />
@@ -235,7 +234,10 @@ export function ManageSimpleUrlIssues({
                       </sup>
                     </FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="ISSUE-123" />
+                      <Input
+                        {...field}
+                        placeholder={t("common.placeholders.issueIdExample")}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

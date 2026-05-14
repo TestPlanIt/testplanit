@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -76,6 +77,8 @@ export function ApiTokenSettings({
   const [tokenToDelete, setTokenToDelete] = useState<string | null>(null);
   const [newTokenName, setNewTokenName] = useState("");
   const [newTokenExpiry, setNewTokenExpiry] = useState("");
+  const [readOnly, setReadOnly] = useState(false);
+  const [agentToken, setAgentToken] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [newToken, setNewToken] = useState<NewTokenData | null>(null);
@@ -98,12 +101,17 @@ export function ApiTokenSettings({
     setError("");
 
     try {
+      const scopes: string[] = [];
+      if (readOnly) scopes.push("mode:read");
+      if (agentToken) scopes.push("client:mcp");
+
       const response = await fetch("/api/api-tokens", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: newTokenName.trim(),
           expiresAt: newTokenExpiry || null,
+          scopes,
         }),
       });
 
@@ -154,6 +162,8 @@ export function ApiTokenSettings({
     setIsCreateOpen(false);
     setNewTokenName("");
     setNewTokenExpiry("");
+    setReadOnly(false);
+    setAgentToken(false);
     setNewToken(null);
     setError("");
   }
@@ -205,6 +215,7 @@ export function ApiTokenSettings({
                 <TableHead>
                   {tGlobal("admin.apiTokens.columns.expires")}
                 </TableHead>
+                <TableHead></TableHead>
                 <TableHead className="w-[50px]"></TableHead>
               </TableRow>
             </TableHeader>
@@ -256,6 +267,16 @@ export function ApiTokenSettings({
                     ) : (
                       <Badge variant="outline">{tGlobal("common.never")}</Badge>
                     )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {token.scopes?.includes("mode:read") && (
+                        <Badge variant="secondary">{t("readOnlyBadge")}</Badge>
+                      )}
+                      {token.scopes?.includes("client:mcp") && (
+                        <Badge variant="outline">{t("agentTokenBadge")}</Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Button
@@ -323,6 +344,43 @@ export function ApiTokenSettings({
                 <p className="text-xs text-muted-foreground">
                   {t("expiryHint")}
                 </p>
+              </div>
+              <div className="space-y-3 pt-2">
+                <Label
+                  htmlFor="token-read-only"
+                  className="flex items-start gap-2"
+                >
+                  <Checkbox
+                    id="token-read-only"
+                    aria-label={t("readOnlyLabel")}
+                    checked={readOnly}
+                    onCheckedChange={(v) => setReadOnly(v === true)}
+                  />
+                  <span>
+                    <span className="block text-sm font-medium">
+                      {t("readOnlyLabel")}
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      {t("readOnlyDescription")}
+                    </span>
+                  </span>
+                </Label>
+                <Label htmlFor="token-agent" className="flex items-start gap-2">
+                  <Checkbox
+                    id="token-agent"
+                    aria-label={t("agentTokenLabel")}
+                    checked={agentToken}
+                    onCheckedChange={(v) => setAgentToken(v === true)}
+                  />
+                  <span>
+                    <span className="block text-sm font-medium">
+                      {t("agentTokenLabel")}
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      {t("agentTokenDescription")}
+                    </span>
+                  </span>
+                </Label>
               </div>
             </div>
           ) : (

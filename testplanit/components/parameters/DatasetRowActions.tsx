@@ -68,7 +68,7 @@ export function DatasetRowActions({
         className="text-sm font-medium"
         data-testid="dataset-row-actions-count"
       >
-        {t("datasetSelectedCount", { count: selectedRowIds.length })}
+        {t("datasetSelectedCount", { count: String(selectedRowIds.length) })}
       </span>
       <div className="flex gap-2 ml-auto">
         <Button

@@ -1125,6 +1125,32 @@ describe("GitHubAdapter", () => {
 
       expect(result.hasMore).toBe(true);
     });
+
+    it("should use number: qualifier when query is a key format #number", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockSearchResponse),
+      });
+
+      await adapter.searchIssues({ query: "#42" });
+
+      const url = mockFetch.mock.calls[mockFetch.mock.calls.length - 1][0];
+      expect(url).toContain("number%3A42");
+      expect(url).not.toContain("%2342"); // raw "#42" should not appear as freetext
+    });
+
+    it("should use plain query text for non-key searches", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockSearchResponse),
+      });
+
+      await adapter.searchIssues({ query: "authentication bug" });
+
+      const url = mockFetch.mock.calls[mockFetch.mock.calls.length - 1][0];
+      expect(url).toContain("authentication+bug");
+      expect(url).not.toContain("number%3A");
+    });
   });
 
   describe("getProjects", () => {

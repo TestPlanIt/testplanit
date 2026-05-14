@@ -42,17 +42,17 @@ export function ConfirmStep({
           variant="destructive"
           data-testid="dataset-import-wizard-confirm-error"
         >
-          {t("importStep4ErrorBlock", { errorCount: errorRowCount })}
+          {t("importStep4ErrorBlock", { errorCount: String(errorRowCount) })}
         </Alert>
       )}
 
       <Card className="p-4 shadow-none">
         <div className="text-sm space-y-1">
           <div data-testid="dataset-import-wizard-confirm-valid-count">
-            {t("confirmSummaryValid", { count: validRowCount })}
+            {t("confirmSummaryValid", { count: String(validRowCount) })}
           </div>
           <div data-testid="dataset-import-wizard-confirm-error-count">
-            {t("confirmSummaryErrors", { count: errorRowCount })}
+            {t("confirmSummaryErrors", { count: String(errorRowCount) })}
           </div>
           <div data-testid="dataset-import-wizard-confirm-mode">
             {t("confirmSummaryMode", { mode })}
@@ -79,7 +79,7 @@ export function ConfirmStep({
             </label>
             <p className="text-xs text-muted-foreground">
               {t("importStep4ReplaceDescription", {
-                existingCount: existingRowCount,
+                existingCount: String(existingRowCount),
               })}
             </p>
           </div>
@@ -99,7 +99,7 @@ export function ConfirmStep({
             </label>
             <p className="text-xs text-muted-foreground">
               {t("importStep4AppendDescription", {
-                existingCount: existingRowCount,
+                existingCount: String(existingRowCount),
               })}
             </p>
           </div>

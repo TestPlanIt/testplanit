@@ -8,7 +8,7 @@ import {
 } from "~/lib/integrations/adapters/GitRepoAdapter";
 import { authOptions } from "~/server/auth";
 
-const MAX_CONTEXT_BYTES = 500_000; // 500KB — Phase 2 will derive from LLM token budget
+const MAX_CONTEXT_BYTES = 500_000;
 
 interface PathPattern {
   path: string;

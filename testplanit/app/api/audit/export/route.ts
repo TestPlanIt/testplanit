@@ -26,10 +26,6 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       );
     }
 
-    // Phase 64 Plan 02: NextAuth session callback (Plan 01 Task 3) already
-    // enriched ALS with userId/userEmail/userName; withAuditContext seeded
-    // ipAddress/userAgent/requestId. No manual auditContext construction
-    // needed here — the audit helper reads ALS directly.
     await auditDataExport(exportType, entityType, {
       recordCount,
       filters,

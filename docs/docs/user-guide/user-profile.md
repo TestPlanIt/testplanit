@@ -64,7 +64,7 @@ When viewing your own profile, you can view and edit these preferences:
 #### Display Preferences
 
 - **Theme**: Choose from Light, Dark, System, Green, Orange, or Purple themes (with color indicators)
-- **Locale**: Language preference (English US, Español ES)
+- **Locale**: Language preference (English, German, Spanish, French, Italian, Dutch, Polish, Portuguese, Vietnamese, Chinese Simplified, Chinese Traditional, Japanese, Korean)
 - **Items Per Page**: Number of items to show in paginated tables (10, 25, 50, 100)
 
 #### Date & Time Formatting
@@ -86,7 +86,7 @@ When viewing your own profile, you can view and edit these preferences:
 
 Shown only when viewing your own profile and the account has API access. Lets you create, view, and revoke personal access tokens used to authenticate against the TestPlanIt REST API.
 
-For details on token scopes and lifecycle, see [API Tokens](../api-tokens).
+For details on token scopes and lifecycle, see [API Tokens](../../api-tokens).
 
 ### Activity Statistics
 

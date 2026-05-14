@@ -24,10 +24,10 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useTabState } from "~/hooks/useTabState";
 import {
-  defaultPageSizeOptions,
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import {
   useFindFirstProjects,
   useFindFirstSessionResults,
@@ -295,6 +295,9 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
 
   // Pagination on filtered data
   const totalCompletedSessionsCount = filteredData.length;
+  const completedSessionsPageSizeOptions = usePageSizeOptions(
+    totalCompletedSessionsCount
+  );
   const completedSessions = filteredData.slice(
     completedSessionsSkip,
     completedSessionsSkip + effectiveCompletedPageSize
@@ -414,10 +417,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
   const workDistributionChartData = useMemo(() => {
     if (!incompleteSessions || incompleteSessions.length === 0) {
       return {
-        name: t("runs.summary.noWorkDistributionData", {
-          defaultValue:
-            "No active sessions with assignees or estimates to display.",
-        }),
+        name: t("runs.summary.noWorkDistributionData"),
         id: "root-empty-work-distribution",
         itemType: "root",
         children: [],
@@ -429,10 +429,7 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
     );
     if (filteredSessions.length === 0) {
       return {
-        name: t("runs.summary.noWorkDistributionData", {
-          defaultValue:
-            "No active sessions with assignees or estimates to display.",
-        }),
+        name: t("runs.summary.noWorkDistributionData"),
         id: "root-empty-filtered-work-distribution",
         itemType: "root",
         children: [],
@@ -1021,7 +1018,9 @@ const ProjectSessions: React.FC<ProjectSessionsProps> = ({ params }) => {
                                     ? completedSessionsPageSize
                                     : "All"
                                 }
-                                pageSizeOptions={defaultPageSizeOptions}
+                                pageSizeOptions={
+                                  completedSessionsPageSizeOptions
+                                }
                                 handlePageSizeChange={(size) =>
                                   setCompletedSessionsPageSize(size)
                                 }

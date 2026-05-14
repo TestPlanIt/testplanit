@@ -41,7 +41,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import * as z from "zod";
+import * as z from "zod/v4";
 import {
   useCreateLlmIntegration,
   useFindManyLlmIntegration,
@@ -309,7 +309,7 @@ export function AddLlmIntegration({
               description: `Selected "${data.models[0]}" as default model`,
             });
           } else {
-            toast.warning("No models found", {
+            toast.warning(tCommon("errors.noModelsFound"), {
               description: "The provider returned no available models",
             });
           }

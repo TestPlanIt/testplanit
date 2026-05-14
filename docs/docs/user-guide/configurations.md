@@ -31,7 +31,7 @@ The Categories table lists all defined categories with columns for:
 
 ### Editing a Category Name
 
-1. Click the **Edit** (pencil) icon in the Actions column for the desired Category.
+1. Click the **Edit** icon in the Actions column for the desired Category.
 2. Modify the name in the modal dialog.
 3. Click **Submit**.
 
@@ -41,7 +41,7 @@ The Categories table lists all defined categories with columns for:
 Deleting a Category is irreversible and will also **permanently delete all Variants within it AND all Configurations that use any of those Variants**. Proceed with extreme caution.
 :::
 
-1. Click the **Delete** (trash can) icon in the Actions column for the desired Category.
+1. Click the **Delete** icon in the Actions column for the desired Category.
 2. A confirmation dialog will appear, emphasizing the consequences.
 3. Confirm the deletion.
 
@@ -52,14 +52,14 @@ To manage Variants, first expand the Category row by clicking the expand icon (â
 - **Viewing Variants**: Each variant is listed with:
   - A **Switch** to toggle its enabled/disabled status.
   - The **Variant Name**.
-  - An **Edit** (pencil) icon button.
-  - A **Delete** (trash can) icon button.
+  - An **Edit** icon button.
+  - A **Delete** icon button.
 - **Adding a Variant:**
   1. Click the **Add Variant** (plus icon) button located within the expanded Category area.
   2. An input field will appear. Enter the name for the new Variant (e.g., "Chrome", "Firefox").
   3. Click the **Save** button or press Enter. Click **Cancel** or press Escape to discard.
 - **Editing a Variant Name:**
-  1. Click the **Edit** (pencil) icon button next to the desired Variant name.
+  1. Click the **Edit** icon button next to the desired Variant name.
   2. A modal dialog will appear. Modify the name.
   3. Click **Save**.
 - **Enabling/Disabling a Variant:**
@@ -69,7 +69,7 @@ To manage Variants, first expand the Category row by clicking the expand icon (â
   :::warning Important
   Deleting a Variant is irreversible and will also **permanently delete all Configurations that use this Variant**. Consider disabling the Variant instead if you might need it later or want to preserve related Configurations.
   :::
-  1. Click the **Delete** (trash can) icon button next to the desired Variant name.
+  1. Click the **Delete** icon button next to the desired Variant name.
   2. A confirmation dialog will appear.
   3. Confirm the deletion.
 
@@ -109,7 +109,7 @@ Creating configurations involves selecting Variants and generating valid combina
 
 ### Editing a Configuration Name
 
-1. Click the **Edit** (pencil) icon in the Actions column for the desired Configuration.
+1. Click the **Edit** icon in the Actions column for the desired Configuration.
 2. Modify the name in the modal dialog. (Note: This only changes the display name; the underlying Variant combination remains the same).
 3. Click **Submit**.
 
@@ -120,7 +120,7 @@ Creating configurations involves selecting Variants and generating valid combina
 
 ### Deleting a Configuration
 
-1. Click the **Delete** (trash can) icon in the Actions column for the desired Configuration.
+1. Click the **Delete** icon in the Actions column for the desired Configuration.
 2. Confirm the deletion in the dialog box. This marks the specific configuration as deleted.
 
 ## Multi-Configuration Test Runs

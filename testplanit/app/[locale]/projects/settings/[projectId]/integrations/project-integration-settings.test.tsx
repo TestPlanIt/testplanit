@@ -3,24 +3,48 @@ import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // --- Stable mock refs via vi.hoisted() ---
-const { mockFindMany, mockUpdate, mockUpsert, mockUpdatePI } = vi.hoisted(
-  () => {
-    return {
-      mockFindMany: vi.fn(),
-      mockUpdate: vi.fn(),
-      mockUpsert: vi.fn(),
-      mockUpdatePI: vi.fn(),
-    };
-  }
-);
+const {
+  mockFindMany,
+  mockFindManyWebhookConfig,
+  mockUpdate,
+  mockUpsert,
+  mockUpdatePI,
+  mockRemoveIntegrationProjectMapping,
+} = vi.hoisted(() => {
+  return {
+    mockFindMany: vi.fn(),
+    mockFindManyWebhookConfig: vi.fn(() => ({
+      data: [],
+      refetch: vi.fn().mockResolvedValue({ data: [] }),
+    })),
+    mockUpdate: vi.fn(),
+    mockUpsert: vi.fn(),
+    mockUpdatePI: vi.fn(),
+    mockRemoveIntegrationProjectMapping: vi.fn().mockResolvedValue({
+      success: true,
+      cascadedToParent: false,
+      inboundWebhookDeletedCount: 0,
+    }),
+  };
+});
 
 // --- Mocks ---
 
 vi.mock("~/lib/hooks", () => ({
   useFindManyIntegrationProject: (...args: any[]) => mockFindMany(...args),
+  useFindManyWebhookConfig: () => mockFindManyWebhookConfig(),
   useUpdateIntegrationProject: () => ({ mutateAsync: mockUpdate }),
   useUpsertIntegrationProject: () => ({ mutateAsync: mockUpsert }),
   useUpdateProjectIntegration: () => ({ mutateAsync: mockUpdatePI }),
+}));
+
+vi.mock("~/app/actions/project-integration", () => ({
+  removeIntegrationProjectMapping: (...args: any[]) =>
+    mockRemoveIntegrationProjectMapping(...args),
+}));
+
+vi.mock("@tanstack/react-query", () => ({
+  useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
 
 vi.mock("~/lib/navigation", () => ({
@@ -356,8 +380,8 @@ describe("ProjectIntegrationSettings", () => {
     });
   });
 
-  // --- Test 7: Remove calls soft deactivate (isActive: false) ---
-  it("confirming remove calls updateIntegrationProject with isActive:false", async () => {
+  // --- Test 7: Remove calls server-side cascade action ---
+  it("confirming remove calls removeIntegrationProjectMapping with the IntegrationProject id", async () => {
     mockUpdate.mockResolvedValue({});
 
     const { container } = render(
@@ -376,12 +400,11 @@ describe("ProjectIntegrationSettings", () => {
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
-      expect(mockUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: "ip-1" },
-          data: { isActive: false },
-        })
-      );
+      // The server action wraps mapping deactivation + cascade in a
+      // transaction; client-side updateIntegrationProject is no longer
+      // the deactivation path (it is still used for default-promotion
+      // when other mappings remain).
+      expect(mockRemoveIntegrationProjectMapping).toHaveBeenCalledWith("ip-1");
     });
   });
 

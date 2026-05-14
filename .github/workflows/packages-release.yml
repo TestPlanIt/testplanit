@@ -59,15 +59,20 @@ jobs:
         env:
           NODE_OPTIONS: '--max-old-space-size=4096'
 
+      - name: Generate Prisma client
+        run: pnpm --filter "testplanit" exec prisma generate
+
       - name: Run package tests
         run: |
           pnpm --filter "@testplanit/api" test -- --run
           pnpm --filter "@testplanit/wdio-reporter" test -- --run
+          pnpm --filter "@testplanit/mcp-server" test -- --run
 
       - name: Build packages
         run: |
           pnpm --filter "@testplanit/api" build
           pnpm --filter "@testplanit/wdio-reporter" build
+          pnpm --filter "@testplanit/mcp-server" build
 
       - name: Create Release Pull Request or Publish
         id: changesets

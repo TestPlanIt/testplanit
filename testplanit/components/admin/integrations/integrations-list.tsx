@@ -20,17 +20,20 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Integration, ProjectIntegration } from "@prisma/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Check, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
-  useDeleteProjectIntegration,
   useFindManyIntegrationProject,
-  useUpdateManyProjectIntegration,
-  useUpsertProjectIntegration,
+  useFindManyWebhookConfig,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
+import {
+  removeProjectIntegration,
+  switchProjectIntegration,
+} from "~/app/actions/project-integration";
 import { IntegrationIcon } from "./integration-icon";
 
 interface IntegrationsListProps {
@@ -48,6 +51,7 @@ export function IntegrationsList({
   const tAiModels = useTranslations("projects.settings.aiModels");
   const tCommon = useTranslations("common");
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isAssigning, setIsAssigning] = useState<number | null>(null);
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
   const [showSwitchDialog, setShowSwitchDialog] = useState(false);
@@ -55,10 +59,14 @@ export function IntegrationsList({
     null
   );
 
-  const { mutateAsync: upsertProjectIntegration } =
-    useUpsertProjectIntegration();
-  const { mutateAsync: updateManyProjectIntegration } =
-    useUpdateManyProjectIntegration();
+  // Conditional bullet in the Remove + Switch dialogs: shown only when an
+  // inbound webhook actually exists for the project. Cheap query — same
+  // shape the webhooks page uses, dedupes via React Query when both mount.
+  const { data: inboundConfigs } = useFindManyWebhookConfig({
+    where: { projectId, direction: "INBOUND" },
+    select: { id: true },
+  });
+  const hasInboundWebhook = (inboundConfigs?.length ?? 0) > 0;
 
   const { data: linkedProjects } = useFindManyIntegrationProject(
     {
@@ -89,37 +97,23 @@ export function IntegrationsList({
     setShowSwitchDialog(false);
 
     try {
-      // First, deactivate any existing active integrations
-      await updateManyProjectIntegration({
-        where: {
-          projectId,
-          isActive: true,
-        },
-        data: {
-          isActive: false,
-        },
+      // Server action wraps deactivate + upsert + (conditional) inbound
+      // webhook hard-delete in a single transaction. Cascades when the
+      // provider changes — locks the inbound adapter to the new provider.
+      const result = await switchProjectIntegration({
+        projectId,
+        integrationId,
       });
-
-      // Upsert the project integration (create or update)
-      await upsertProjectIntegration({
-        where: {
-          projectId_integrationId: {
-            projectId,
-            integrationId,
-          },
-        },
-        create: {
-          projectId,
-          integrationId,
-          isActive: true,
-          config: {},
-        },
-        update: {
-          isActive: true,
-          config: {},
-        },
-      });
-
+      if (!result.success) {
+        toast.error(result.error ?? t("integrationAssignError"));
+        return;
+      }
+      // Server action bypasses ZenStack mutation hooks, so the React
+      // Query cache (used by parent's useFindManyProjectIntegration +
+      // local useFindManyWebhookConfig) doesn't auto-invalidate. Wide
+      // invalidation under the `["zenstack"]` prefix refreshes all
+      // related ZenStack-generated queries in one shot.
+      await queryClient.invalidateQueries({ queryKey: ["zenstack"] });
       toast.success(t("integrationAssigned"));
       router.refresh();
     } catch (error) {
@@ -131,9 +125,6 @@ export function IntegrationsList({
     }
   };
 
-  const { mutateAsync: deleteProjectIntegration } =
-    useDeleteProjectIntegration();
-
   const handleRemoveIntegration = async () => {
     if (!currentIntegration) return;
 
@@ -141,12 +132,14 @@ export function IntegrationsList({
     setShowRemoveDialog(false);
 
     try {
-      await deleteProjectIntegration({
-        where: {
-          id: currentIntegration.id,
-        },
-      });
-
+      // Server action wraps the ProjectIntegration delete + inbound
+      // webhook hard-delete in a single transaction.
+      const result = await removeProjectIntegration(currentIntegration.id);
+      if (!result.success) {
+        toast.error(result.error ?? t("integrationRemoveError"));
+        return;
+      }
+      await queryClient.invalidateQueries({ queryKey: ["zenstack"] });
       toast.success(t("integrationRemoved"));
       router.refresh();
     } catch (error) {
@@ -192,6 +185,13 @@ export function IntegrationsList({
               >
                 <IntegrationIcon
                   provider={integration.provider}
+                  platform={
+                    typeof integration.settings === "object" &&
+                    integration.settings !== null &&
+                    "platform" in integration.settings
+                      ? String(integration.settings.platform)
+                      : undefined
+                  }
                   className="h-10 w-10"
                 />
                 <div className="flex-1">
@@ -292,6 +292,9 @@ export function IntegrationsList({
                   <li>{t("integration.removeWarning1")}</li>
                   <li>{t("integration.removeWarning2")}</li>
                   <li>{t("integration.removeWarning3")}</li>
+                  {hasInboundWebhook && (
+                    <li>{t("integration.removeWarning4")}</li>
+                  )}
                 </ul>
               </div>
             </AlertDialogDescription>
@@ -332,6 +335,9 @@ export function IntegrationsList({
                   <li>{t("integration.switchWarning1")}</li>
                   <li>{t("integration.switchWarning2")}</li>
                   <li>{t("integration.switchWarning3")}</li>
+                  {hasInboundWebhook && (
+                    <li>{t("integration.switchWarning4")}</li>
+                  )}
                 </ul>
               </div>
             </AlertDialogDescription>

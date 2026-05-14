@@ -2970,7 +2970,7 @@ export function TestmoImportPanel() {
             <Progress
               value={completionPercent}
               aria-label={t("testmo.importProgressAria", {
-                percent: completionPercent,
+                percent: Math.round(completionPercent),
               })}
             />
             <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -2982,7 +2982,7 @@ export function TestmoImportPanel() {
               </span>
               <span>
                 {t("testmo.importProgressPercentLabel", {
-                  percent: completionPercent,
+                  percent: Math.round(completionPercent),
                 })}
               </span>
             </div>
@@ -3000,9 +3000,7 @@ export function TestmoImportPanel() {
                       return (
                         <div className="flex items-center gap-1">
                           <span className="font-medium">
-                            {t("testmo.job.datasetsLabel", {
-                              defaultValue: "Datasets:",
-                            })}
+                            {t("testmo.job.datasetsLabel")}
                           </span>
                           <span>{`${processed}/${total}`}</span>
                         </div>
@@ -3023,9 +3021,7 @@ export function TestmoImportPanel() {
                     currentJob.processedRows > 0 && (
                       <div className="flex items-center gap-1">
                         <span className="font-medium">
-                          {t("testmo.job.rowsProcessedLabel", {
-                            defaultValue: "Rows:",
-                          })}
+                          {t("testmo.job.rowsProcessedLabel")}
                         </span>
                         <span>{currentJob.processedRows.toLocaleString()}</span>
                       </div>

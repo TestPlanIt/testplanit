@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { authOptions } from "~/server/auth";
-import { z } from "zod";
+import { z } from "zod/v4";
 
 const ImportSchema = z.object({
   name: z.string().min(1),

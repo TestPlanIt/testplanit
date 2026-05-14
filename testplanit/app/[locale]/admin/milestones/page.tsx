@@ -2,11 +2,12 @@
 
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
@@ -47,11 +48,9 @@ import {
 } from "~/lib/hooks";
 import AddMilestonesToProjectsWizard from "./AddMilestonesToProjectsWizard";
 import { AddMilestoneType } from "./AddMilestoneTypes";
-import { ExtendedMilestoneTypes, getColumns } from "./columns";
+import { ExtendedMilestoneTypes, useColumns } from "./columns";
 import { DeleteMilestoneType } from "./DeleteMilestoneTypes";
 import { EditMilestoneType } from "./EditMilestoneTypes";
-
-type PageSizeOption = number | "All";
 
 export default function MilestoneTypesListPage() {
   return (
@@ -181,16 +180,7 @@ function MilestoneTypes() {
     where: { isDeleted: false },
   });
 
-  const pageSizeOptions: PageSizeOption[] = useMemo(() => {
-    if (totalItems <= 10) {
-      return ["All"];
-    }
-    const options: PageSizeOption[] = [10, 25, 50, 100, 250].filter(
-      (size) => size < totalItems || totalItems === 0
-    );
-    options.push("All");
-    return options;
-  }, [totalItems]);
+  const pageSizeOptions = usePageSizeOptions(totalItems);
 
   // Reset to first page when search changes
   useEffect(() => {
@@ -257,15 +247,11 @@ function MilestoneTypes() {
     }
   };
 
-  const columns: CustomColumnDef<ExtendedMilestoneTypes>[] = useMemo(
-    () =>
-      getColumns(
-        handleToggleDefault,
-        tCommon,
-        setEditingMilestoneType,
-        setDeletingMilestoneType
-      ),
-    [handleToggleDefault, tCommon]
+  const columns: CustomColumnDef<ExtendedMilestoneTypes>[] = useColumns(
+    handleToggleDefault,
+    tCommon,
+    setEditingMilestoneType,
+    setDeletingMilestoneType
   );
 
   const [columnVisibility, setColumnVisibility] = useState<

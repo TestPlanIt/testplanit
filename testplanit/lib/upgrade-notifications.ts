@@ -252,6 +252,29 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
       </ul>
     `,
   },
+  "0.25.0": {
+    title:
+      "New Feature: MCP Server — Talk to Your Test Data from Any AI Assistant",
+    message: `
+      <p>The <strong>TestPlanIt MCP Server</strong> lets AI assistants like Claude and Cursor read your live test data directly — no copy-pasting, no manual lookups.</p>
+      <h4>What You Can Ask</h4>
+      <ul>
+        <li>"Which test cases haven't been run since the last release?"</li>
+        <li>"How much work is left in the current milestone?"</li>
+        <li>"Summarize today's exploratory sessions and flag any patterns."</li>
+        <li>"How many test cases did I write last month?"</li>
+      </ul>
+      <h4>What It Covers</h4>
+      <ul>
+        <li>Test cases, test runs, and step results</li>
+        <li>Exploratory sessions and session notes</li>
+        <li>Milestones, repositories, and linked issues</li>
+        <li>Link test cases (and other entities) to issues in a single call — no manual UI step</li>
+      </ul>
+      <p>All reads are scoped to your API token permissions — the AI only sees what your account can see.</p>
+      <p>See the <a href="https://docs.testplanit.com/docs/sdk/mcp-overview/" target="_blank">MCP Server documentation</a> to install and connect your AI assistant.</p>
+    `,
+  },
   "0.22.0": {
     title: "New Feature: Password Policy & Security Hardening",
     message: `

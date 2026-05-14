@@ -1296,6 +1296,48 @@ describe("AzureDevOpsAdapter", () => {
       expect(result.total).toBe(0);
       expect(result.hasMore).toBe(false);
     });
+
+    it("should use [System.Id] = N when query is a numeric ID", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ workItems: [] }),
+      });
+
+      await adapter.searchIssues({ query: "123" });
+
+      const wiqlCall = mockFetch.mock.calls[1];
+      const body = JSON.parse(wiqlCall[1].body);
+      expect(body.query).toContain("[System.Id] = 123");
+      expect(body.query).not.toContain("CONTAINS");
+    });
+
+    it("should use CONTAINS for non-numeric text queries", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ workItems: [] }),
+      });
+
+      await adapter.searchIssues({ query: "login bug" });
+
+      const wiqlCall = mockFetch.mock.calls[1];
+      const body = JSON.parse(wiqlCall[1].body);
+      expect(body.query).toContain("CONTAINS 'login bug'");
+      // [System.Id] = N should NOT appear in the WHERE conditions
+      expect(body.query).not.toMatch(/\[System\.Id\]\s*=\s*\d/);
+    });
+
+    it("should use CONTAINS for alphanumeric queries that are not pure numeric", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ workItems: [] }),
+      });
+
+      await adapter.searchIssues({ query: "AB-123" });
+
+      const wiqlCall = mockFetch.mock.calls[1];
+      const body = JSON.parse(wiqlCall[1].body);
+      expect(body.query).toContain("CONTAINS 'AB-123'");
+    });
   });
 
   describe("getProjects", () => {

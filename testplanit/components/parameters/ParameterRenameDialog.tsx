@@ -68,7 +68,7 @@ export function ParameterRenameDialog({
       const result = await res.json();
       const version = result?.parameter?.testCase?.currentVersion;
       if (typeof version === "number") {
-        toast.message(t("toastVersionBumped", { version }));
+        toast.message(t("toastVersionBumped", { version: String(version) }));
       } else {
         toast.success(t("updateSuccess"));
       }
@@ -173,7 +173,7 @@ export function ParameterRenameDialog({
               </ul>
               <p>
                 {t("renameDescriptionVersion", {
-                  nextVersion: currentCaseVersion + 1,
+                  nextVersion: String(currentCaseVersion + 1),
                 })}
               </p>
             </div>

@@ -228,11 +228,17 @@ async function getDynamicProviders() {
               }) => {
                 // Wrap everything in try-catch to ensure we NEVER throw errors
                 try {
-                  // Check if user exists and is active
+                  // Check if user exists and is active. Pull
+                  // `userPreferences.locale` so the email is rendered
+                  // in the recipient's language; fall back to en_US.
                   const user = await db.user
                     .findUnique({
                       where: { email },
-                      select: { id: true, isActive: true },
+                      select: {
+                        id: true,
+                        isActive: true,
+                        userPreferences: { select: { locale: true } },
+                      },
                     })
                     .catch((err) => {
                       console.error("Database error checking user:", err);
@@ -246,38 +252,16 @@ async function getDynamicProviders() {
                     return Promise.resolve();
                   }
 
-                  // Send the magic link email using nodemailer
-                  const nodemailer = await import("nodemailer");
-                  const transport = nodemailer.createTransport({
-                    host: process.env.EMAIL_SERVER_HOST,
-                    port: Number(process.env.EMAIL_SERVER_PORT),
-                    auth: {
-                      user: process.env.EMAIL_SERVER_USER,
-                      pass: process.env.EMAIL_SERVER_PASSWORD,
-                    },
+                  const { sendMagicLinkEmail } =
+                    await import("~/lib/email/magicLink");
+                  await sendMagicLinkEmail({
+                    to: email,
+                    url,
+                    locale: user.userPreferences?.locale ?? "en_US",
+                  }).catch((err) => {
+                    console.error("Error sending magic link email:", err);
+                    // Swallow error - we don't want to reveal if email was sent or not
                   });
-
-                  await transport
-                    .sendMail({
-                      to: email,
-                      from: process.env.EMAIL_FROM,
-                      subject: "Sign in to TestPlanIt",
-                      text: `Sign in to TestPlanIt\n\nClick the link below to sign in:\n${url}\n\nIf you did not request this email, you can safely ignore it.`,
-                      html: `
-                      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                        <h2 style="color: #333;">Sign in to TestPlanIt</h2>
-                        <p>Click the button below to sign in:</p>
-                        <a href="${url}" style="display: inline-block; background-color: #7c3aed; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 16px 0;">Sign In</a>
-                        <p style="color: #666; font-size: 14px;">Or copy and paste this link into your browser:</p>
-                        <p style="color: #666; font-size: 14px; word-break: break-all;">${url}</p>
-                        <p style="color: #999; font-size: 12px; margin-top: 32px;">If you did not request this email, you can safely ignore it.</p>
-                      </div>
-                    `,
-                    })
-                    .catch((err) => {
-                      console.error("Error sending magic link email:", err);
-                      // Swallow error - we don't want to reveal if email was sent or not
-                    });
 
                   return Promise.resolve();
                 } catch (error) {
@@ -363,7 +347,7 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
             }
           }
 
-          // Phase 64 D-03: enrich audit-context ALS frame with resolved
+          // enrich audit-context ALS frame with resolved
           // identity so every downstream audit emission in this request
           // picks up userId/userEmail/userName without per-route
           // boilerplate. No-op when the request is not wrapped in
@@ -436,6 +420,16 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
                 provider: account?.provider,
               }).catch(console.error);
               return false; // Reject sign-in if domain is not allowed
+            }
+          }
+
+          if (!dbUser) {
+            const registrationSettings =
+              await db.registrationSettings.findFirst({
+                select: { allowOpenRegistration: true },
+              });
+            if (!(registrationSettings?.allowOpenRegistration ?? true)) {
+              return false;
             }
           }
 
@@ -704,7 +698,7 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
-        // Phase 64 D-03: enrich audit-context ALS frame with resolved
+        // enrich audit-context ALS frame with resolved
         // identity so every downstream audit emission in this request
         // picks up userId/userEmail/userName without per-route
         // boilerplate. No-op when the request is not wrapped in
@@ -763,6 +757,15 @@ export const authOptions: NextAuthOptions = {
           const isDomainAllowed = await isEmailDomainAllowed(user.email);
           if (!isDomainAllowed) {
             return false; // Reject sign-in if domain is not allowed
+          }
+        }
+
+        if (!dbUser) {
+          const regSettings = await db.registrationSettings.findFirst({
+            select: { allowOpenRegistration: true },
+          });
+          if (!(regSettings?.allowOpenRegistration ?? true)) {
+            return false;
           }
         }
 
@@ -1187,7 +1190,6 @@ function authorize(prisma: PrismaClient) {
         );
         if (new Date() > expiresAt) {
           // Password has expired — set mustChangePassword flag
-          // Phase 67 will implement the force-change-password redirect flow
           await prisma.user.update({
             where: { id: maybeUser.id },
             data: { mustChangePassword: true },

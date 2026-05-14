@@ -65,6 +65,15 @@ export const POST = withAuditContext(
         );
       }
 
+      // Trigger context controls the freshness gate inside performIssueRefresh.
+      // `manual` forces a fresh fetch (user explicitly clicked Sync).
+      // `hover` allows a 5-minute cache so opening the same issue popover
+      //   in two tabs / refreshing the table doesn't hammer the upstream API.
+      // Unknown / missing values default to `manual` (safe — always sync).
+      const triggerParam = req.nextUrl.searchParams.get("trigger");
+      const minFreshnessSeconds =
+        triggerParam === "hover" ? 300 : 0; /* manual / default */
+
       // Queue the sync job
       const jobId = await syncService.queueIssueRefresh(
         session.user.id,
@@ -83,7 +92,8 @@ export const POST = withAuditContext(
       const result = await syncService.performIssueRefresh(
         session.user.id,
         issue.integrationId,
-        issue.externalId
+        issue.externalId,
+        { minFreshnessSeconds }
       );
 
       if (!result.success) {
@@ -91,6 +101,19 @@ export const POST = withAuditContext(
           { error: result.error || "Failed to sync issue" },
           { status: 500 }
         );
+      }
+
+      // If the freshness gate or per-issue lock short-circuited the sync,
+      // surface that to the caller so the UI can avoid a redundant refetch.
+      if (result.cached || result.locked) {
+        return NextResponse.json({
+          success: true,
+          cached: result.cached ?? false,
+          locked: result.locked ?? false,
+          message: result.cached
+            ? "Issue is already fresh; skipped upstream sync"
+            : "A sync is already in progress for this issue",
+        });
       }
 
       // Fetch the updated issue

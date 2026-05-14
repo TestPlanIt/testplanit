@@ -1,0 +1,63 @@
+# Crowdin Sync Workflow
+#
+# Automatically syncs locale files whenever en-US.json changes on main.
+# Uploads the updated source, triggers machine translation, downloads all
+# translated locale files, then commits them back to main with [skip ci].
+#
+# Requires the CROWDIN_PERSONAL_TOKEN secret to be set in repository settings.
+#
+name: Crowdin Sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'testplanit/messages/en-US.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    name: Sync locale files
+    runs-on: ubuntu-latest
+    if: "github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip ci]')"
+
+    env:
+      CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+
+      - name: Install Crowdin CLI
+        run: npm install -g @crowdin/cli@4
+
+      - name: Upload sources
+        working-directory: testplanit
+        run: crowdin upload sources
+
+      - name: Pre-translate via machine translation
+        working-directory: testplanit
+        run: crowdin pre-translate --method=mt --engine-id=609928
+
+      - name: Download translations
+        working-directory: testplanit
+        run: crowdin download
+
+      - name: Commit updated locale files
+        working-directory: testplanit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add messages/*.json
+          if git diff --cached --quiet; then
+            echo "Locale files already up to date, nothing to commit"
+          else
+            git commit -m "chore(i18n): sync locale files [skip ci]"
+            git pull --rebase origin main
+            git push
+          fi

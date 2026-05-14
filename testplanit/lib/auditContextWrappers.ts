@@ -77,10 +77,12 @@ export function enrichFromApiAuth(apiAuth: {
   userId: string;
   userEmail?: string;
   userName?: string;
+  scopes?: string[];
 }): void {
   updateAuditContext({
     userId: apiAuth.userId,
     userEmail: apiAuth.userEmail,
     userName: apiAuth.userName,
+    tokenScopes: apiAuth.scopes,
   });
 }

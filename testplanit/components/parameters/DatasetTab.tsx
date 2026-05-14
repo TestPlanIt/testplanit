@@ -362,7 +362,7 @@ export function DatasetTab({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         rowIndex: nextIndex,
-        label: t("datasetRowDefaultLabel", { number: nextIndex + 1 }),
+        label: t("datasetRowDefaultLabel", { number: String(nextIndex + 1) }),
         valuesJson: {},
       }),
     });
@@ -692,8 +692,8 @@ export function DatasetTab({
           <>
             <span className="text-sm text-muted-foreground">
               {t("datasetCounts", {
-                paramCount: parameters.length,
-                rowCount: rows.length,
+                paramCount: String(parameters.length),
+                rowCount: String(rows.length),
               })}
             </span>
             <div className="flex gap-2">

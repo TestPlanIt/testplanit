@@ -69,7 +69,7 @@ export function EditMilestoneType({
 
   const FormSchema = z.object({
     name: z.string().min(2, {
-      error: "Milestone Type name must be at least 2 characters.",
+      error: tCommon("errors.milestoneTypeNameMinLength"),
     }),
     isDefault: z.boolean(),
     projects: z.array(z.number()).optional(),

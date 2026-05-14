@@ -629,6 +629,24 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
       expect(data.error).toBe("Invalid input");
     });
 
+    it("accepts all supported locale values", async () => {
+      const locales = ["en_US", "es_ES", "fr_FR", "it_IT", "de_DE"];
+
+      for (const locale of locales) {
+        const updatedUser = {
+          ...mockExistingUser,
+          userPreferences: { ...mockExistingUser.userPreferences, locale },
+        };
+        (prisma.$transaction as any).mockResolvedValue(updatedUser);
+
+        const request = createRequest({ userPreferences: { locale } });
+        const context = createContext("user-123");
+        const response = await PATCH(request, context);
+
+        expect(response.status).toBe(200);
+      }
+    });
+
     it("accepts valid request with all supported theme values", async () => {
       const themes = ["Light", "Dark", "System", "Green", "Orange", "Purple"];
 

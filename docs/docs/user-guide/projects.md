@@ -97,7 +97,7 @@ These associations can be modified later by visiting the specific administration
 ## Editing an Existing Project
 
 1. Locate the project you wish to modify in the table.
-2. Click the **Edit** button (pencil icon) in the corresponding row.
+2. Click the **Edit** button in the corresponding row.
 3. A dialog box will appear, pre-filled with the project's current details. You can modify:
     - **Icon:** Choose an icon for the project using the icon picker.
     - **Name:** Update the project name.
@@ -110,7 +110,7 @@ These associations can be modified later by visiting the specific administration
 Deleting a project marks it as inactive and typically hides it from standard views. While the underlying data might not be immediately purged, consider this a permanent action from a user perspective.
 
 1. Locate the project you wish to delete in the table.
-2. Click the **Delete** button (trash icon) in the corresponding row.
+2. Click the **Delete** button in the corresponding row.
 3. A confirmation dialog with a warning icon will appear, asking you to confirm the deletion of the project named **`{Project Name}`**. It emphasizes that this action cannot be undone.
 4. If you are certain, click the **Confirm Delete** button.
 

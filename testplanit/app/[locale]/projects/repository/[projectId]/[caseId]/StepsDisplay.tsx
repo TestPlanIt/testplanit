@@ -356,7 +356,9 @@ export const StepsDisplay: React.FC<StepsProps> = ({
           </TooltipTrigger>
           <TooltipContent>
             <div>
-              {expandAll ? t_repo_steps("collapse") : t_repo_steps("expand")}
+              {expandAll
+                ? tGlobal("common.actions.collapse")
+                : tGlobal("common.actions.expand")}
             </div>
           </TooltipContent>
         </Tooltip>

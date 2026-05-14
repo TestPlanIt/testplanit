@@ -327,9 +327,14 @@ export class AzureDevOpsAdapter extends BaseAdapter {
     }
 
     if (options.query) {
-      conditions.push(
-        `([System.Title] CONTAINS '${options.query}' OR [System.Description] CONTAINS '${options.query}')`
-      );
+      // Key format: numeric ID — use exact ID match
+      if (/^\d+$/.test(options.query.trim())) {
+        conditions.push(`[System.Id] = ${options.query.trim()}`);
+      } else {
+        conditions.push(
+          `([System.Title] CONTAINS '${options.query}' OR [System.Description] CONTAINS '${options.query}')`
+        );
+      }
     }
 
     if (options.status && options.status.length > 0) {

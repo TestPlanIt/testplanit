@@ -134,7 +134,9 @@ export function IterationRow({
           onCheckedChange={() => onToggleSelect()}
           onClick={(e) => e.stopPropagation()}
           data-testid={`iteration-row-checkbox-${iteration.rowIndex}`}
-          aria-label={t("iterationSelectAria", { n: iteration.rowIndex + 1 })}
+          aria-label={t("iterationSelectAria", {
+            n: String(iteration.rowIndex + 1),
+          })}
         />
       </span>
 
@@ -172,7 +174,7 @@ export function IterationRow({
                 data-testid="iteration-row-menu-trigger"
                 onClick={(e) => e.stopPropagation()}
                 aria-label={t("iterationRowMenuAria", {
-                  n: iteration.rowIndex + 1,
+                  n: String(iteration.rowIndex + 1),
                 })}
               >
                 <MoreHorizontal className="h-4 w-4" />

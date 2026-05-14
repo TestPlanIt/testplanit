@@ -18,12 +18,13 @@ import {
 import { Tags } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import {
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import {
   useFindFirstProjects,
   useFindManyRepositoryCases,
@@ -32,9 +33,7 @@ import {
   useFindManyTestRuns,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
-import { getColumns } from "./columns";
-
-type PageSizeOption = number | "All";
+import { useColumns } from "./columns";
 
 export default function ProjectTagListPage() {
   return (
@@ -453,24 +452,22 @@ function TagList() {
     return filteredTags.slice(skip, skip + effectivePageSize);
   }, [filteredTags, skip, effectivePageSize]);
 
-  const pageSizeOptions: PageSizeOption[] = useMemo(() => {
-    if (totalItems <= 10) {
-      return ["All"];
-    }
-    const options: PageSizeOption[] = [10, 25, 50, 100, 250].filter(
-      (size) => size < totalItems || totalItems === 0
-    );
-    options.push("All");
-    return options;
-  }, [totalItems]);
+  const pageSizeOptions = usePageSizeOptions(totalItems);
+
+  const prevSearchStringRef = useRef(searchString);
+  const prevPageSizeRef = useRef(pageSize);
 
   // Reset to first page when search changes
   useEffect(() => {
+    if (searchString === prevSearchStringRef.current) return;
+    prevSearchStringRef.current = searchString;
     setCurrentPage(1);
   }, [searchString, setCurrentPage]);
 
   // Reset to first page when page size changes
   useEffect(() => {
+    if (pageSize === prevPageSizeRef.current) return;
+    prevPageSizeRef.current = pageSize;
     setCurrentPage(1);
   }, [pageSize, setCurrentPage]);
 
@@ -493,24 +490,13 @@ function TagList() {
 
   const isLoadingCounts = isLoadingCases || isLoadingSessions || isLoadingRuns;
 
-  const columns = useMemo(
-    () =>
-      getColumns(
-        projectId as string,
-        activeCaseMap,
-        activeSessionMap,
-        activeRunMap,
-        t,
-        isLoadingCounts
-      ),
-    [
-      projectId,
-      activeCaseMap,
-      activeSessionMap,
-      activeRunMap,
-      t,
-      isLoadingCounts,
-    ]
+  const columns = useColumns(
+    projectId as string,
+    activeCaseMap,
+    activeSessionMap,
+    activeRunMap,
+    t,
+    isLoadingCounts
   );
 
   // Wait for all data to load - this prevents the flash

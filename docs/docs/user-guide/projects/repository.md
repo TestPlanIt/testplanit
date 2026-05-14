@@ -104,3 +104,28 @@ The main table displays the following information for each test case:
     * **Delete**: Initiates the soft delete process for the test case, requiring confirmation.
 
 Additional dynamic columns appear based on the fields defined in the templates used by the displayed cases.
+
+## Drag and Drop
+
+### Reordering Test Cases
+
+When the table is sorted by the default **Order** column and selection mode is off, you can drag any test case row to a new position within the same folder. A blue indicator line shows where the case will land. Releasing the row commits the new order.
+
+### Moving Test Cases to a Folder
+
+Drag one or more test cases from the table and drop them onto a folder in the folder tree. When you release, a small popover appears with three options:
+
+* **Cancel** — discards the drop and leaves all cases in place.
+* **Move** — transfers the cases to the target folder. Version history and comments are preserved.
+* **Copy** — creates duplicates of the cases in the target folder. Copies start at version 1 with no prior history.
+
+#### Bypassing the Popover with Modifier Keys
+
+Hold a modifier key while dragging to skip the popover entirely — the operation fires immediately on drop:
+
+| Platform | Copy | Move |
+| --- | --- | --- |
+| Mac | Hold **⌥ Option** | Hold **⇧ Shift** |
+| Windows / Linux | Hold **Ctrl** | Hold **Shift** |
+
+The drag preview badge updates in real time to reflect the active modifier — a copy icon when copying, a move icon when moving, and an up/down arrow icon when hovering over a reorder zone (where copy and move have no effect).

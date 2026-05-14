@@ -194,7 +194,7 @@ test.describe("Group Management", () => {
       const groupRow = page.locator("tr").filter({ hasText: groupName });
       await expect(groupRow).toBeVisible({ timeout: 10000 });
 
-      // Click the delete button (Trash2 destructive button) in the actions cell
+      // Click the delete button in the actions cell
       const actionsCell = groupRow.locator("td").last();
       const deleteButton = actionsCell
         .locator("button[class*='destructive']")

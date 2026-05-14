@@ -13,8 +13,9 @@ import {
 
 // Mock the router
 const mockPush = vi.fn();
+const mockRefresh = vi.fn();
 vi.mock("~/lib/navigation", () => ({
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => ({ push: mockPush, refresh: mockRefresh }),
 }));
 
 // Mock next-auth

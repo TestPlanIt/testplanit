@@ -137,8 +137,8 @@ export function RunPreflightChip({
       icon = Ban;
       extraClass = "bg-destructive/10 text-destructive border-destructive/30";
       label = t("runPreflightHardRefuse", {
-        n: total,
-        cap: thresholds.hardCap,
+        n: String(total),
+        cap: String(thresholds.hardCap),
       });
       break;
   }

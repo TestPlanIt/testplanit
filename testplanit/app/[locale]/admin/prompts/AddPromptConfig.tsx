@@ -28,7 +28,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import * as z from "zod";
+import * as z from "zod/v4";
 import { createPromptConfig } from "~/app/actions/promptConfigActions";
 import { LLM_FEATURES, type LlmFeature } from "~/lib/llm/constants";
 import { FALLBACK_PROMPTS } from "~/lib/llm/services/fallback-prompts";
@@ -186,7 +186,10 @@ export function AddPromptConfig({
                     <HelpPopover helpKey="promptConfig.description" />
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder="Optional description..." {...field} />
+                    <Input
+                      placeholder={tCommon("placeholders.optionalDescription")}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

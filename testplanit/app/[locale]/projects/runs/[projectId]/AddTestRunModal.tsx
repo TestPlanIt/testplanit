@@ -90,33 +90,40 @@ interface ConfigurationOption {
   name: string;
 }
 
-// Define the form schemas at the top level
-const BasicInfoFormSchema = z.object({
-  name: z.string().min(2, {
-    error: "Name must be at least 2 characters.",
-  }),
-  configIds: z.array(z.number()),
-  milestoneId: z.number().nullable(),
-  stateId: z.number().min(1, {
-    error: "State is required.",
-  }),
-  note: z.any().nullable(),
-  docs: z.any().nullable(),
-  attachments: z.array(z.any()).optional(),
-});
+// Define the form schemas via factory so messages reflect the active locale.
+function buildBasicInfoFormSchema(t: (key: any) => string) {
+  return z.object({
+    name: z.string().min(2, {
+      error: t("common.errors.testRunNameMinLength"),
+    }),
+    configIds: z.array(z.number()),
+    milestoneId: z.number().nullable(),
+    stateId: z.number().min(1, {
+      error: t("common.errors.stateRequiredDot"),
+    }),
+    note: z.any().nullable(),
+    docs: z.any().nullable(),
+    attachments: z.array(z.any()).optional(),
+  });
+}
 
-const BaseFormSchema = z.object({
-  name: z.string().min(2, {
-    error: "Name must be at least 2 characters.",
-  }),
-  configIds: z.array(z.number()),
-  milestoneId: z.number().nullable(),
-  stateId: z.number(),
-  note: z.any().nullable(),
-  docs: z.any().nullable(),
-  attachments: z.array(z.any()).optional(),
-  testCases: z.array(z.number()),
-});
+function buildBaseFormSchema(t: (key: any) => string) {
+  return z.object({
+    name: z.string().min(2, {
+      error: t("common.errors.testRunNameMinLength"),
+    }),
+    configIds: z.array(z.number()),
+    milestoneId: z.number().nullable(),
+    stateId: z.number(),
+    note: z.any().nullable(),
+    docs: z.any().nullable(),
+    attachments: z.array(z.any()).optional(),
+    testCases: z.array(z.number()),
+  });
+}
+
+type BasicInfoFormValues = z.infer<ReturnType<typeof buildBasicInfoFormSchema>>;
+type BaseFormValues = z.infer<ReturnType<typeof buildBaseFormSchema>>;
 
 // Step 1: Basic Information Dialog
 const BasicInfoDialog = React.memo(
@@ -144,10 +151,15 @@ const BasicInfoDialog = React.memo(
     canCreateTags = false,
   }: any) => {
     const tCommon = useTranslations("common");
+    const tGlobal = useTranslations();
     const parentMilestoneId = form.getValues("milestoneId") ?? null;
 
-    const basicInfoForm = useForm<z.infer<typeof BasicInfoFormSchema>>({
-      resolver: zodResolver(BasicInfoFormSchema),
+    const basicInfoFormSchema = useMemo(
+      () => buildBasicInfoFormSchema(tGlobal),
+      [tGlobal]
+    );
+    const basicInfoForm = useForm<BasicInfoFormValues>({
+      resolver: zodResolver(basicInfoFormSchema),
       defaultValues: {
         name: form.getValues("name"),
         configIds: form.getValues("configIds"),
@@ -882,6 +894,7 @@ export default function AddTestRunModal({
   const t = useTranslations("runs.add");
   const tCommon = useTranslations("common");
   const tParameters = useTranslations("parameters");
+  const tGlobal = useTranslations();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [creationProgress, setCreationProgress] = useState({
@@ -959,8 +972,9 @@ export default function AddTestRunModal({
     }
   };
 
-  const form = useForm<z.infer<typeof BaseFormSchema>>({
-    resolver: zodResolver(BaseFormSchema),
+  const baseFormSchema = useMemo(() => buildBaseFormSchema(tGlobal), [tGlobal]);
+  const form = useForm<BaseFormValues>({
+    resolver: zodResolver(baseFormSchema),
     defaultValues: {
       name: duplicationPreset
         ? `${duplicationPreset.originalName} - ${tCommon("actions.duplicate")}`
@@ -1226,7 +1240,7 @@ export default function AddTestRunModal({
     return null;
   }
 
-  async function onSubmit(data: z.infer<typeof BaseFormSchema>) {
+  async function onSubmit(data: BaseFormValues) {
     if (!session?.user?.id) {
       toast.error(tCommon("errors.notAuthenticated.title"), {
         description: tCommon("errors.notAuthenticated.message"),

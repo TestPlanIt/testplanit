@@ -2,18 +2,19 @@
 
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
 import { CustomColumnDef } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { useFindManyGroups } from "~/lib/hooks";
-import { ExtendedGroups, getColumns } from "./columns";
+import { ExtendedGroups, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
@@ -30,8 +31,6 @@ import { CirclePlus } from "lucide-react";
 import { AddGroup } from "./AddGroup";
 import { DeleteGroup } from "./DeleteGroup";
 import { EditGroup } from "./EditGroup";
-
-type PageSizeOption = number | "All";
 
 export default function GroupListPage() {
   return (
@@ -160,16 +159,7 @@ function GroupList() {
 
   const groups = data as ExtendedGroups[];
 
-  const pageSizeOptions: PageSizeOption[] = useMemo(() => {
-    if (totalItems <= 10) {
-      return ["All"];
-    }
-    const options: PageSizeOption[] = [10, 25, 50, 100, 250].filter(
-      (size) => size < totalItems || totalItems === 0
-    );
-    options.push("All");
-    return options;
-  }, [totalItems]);
+  const pageSizeOptions = usePageSizeOptions(totalItems);
 
   // Reset to first page when search changes
   useEffect(() => {
@@ -198,9 +188,10 @@ function GroupList() {
     setCurrentPage(1);
   };
 
-  const columns: CustomColumnDef<ExtendedGroups>[] = useMemo(
-    () => getColumns(tCommon, setEditingGroup, setDeletingGroup),
-    [tCommon]
+  const columns: CustomColumnDef<ExtendedGroups>[] = useColumns(
+    tCommon,
+    setEditingGroup,
+    setDeletingGroup
   );
 
   const [columnVisibility, setColumnVisibility] = useState<

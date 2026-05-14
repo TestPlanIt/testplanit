@@ -7,6 +7,7 @@ import {
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
@@ -24,11 +25,9 @@ import {
   useUpdatePromptConfig,
 } from "~/lib/hooks/prompt-config";
 import { AddPromptConfig } from "./AddPromptConfig";
-import { ExtendedPromptConfig, getColumns } from "./columns";
+import { ExtendedPromptConfig, useColumns } from "./columns";
 import { DeletePromptConfig } from "./DeletePromptConfig";
 import { EditPromptConfig } from "./EditPromptConfig";
-
-type PageSizeOption = number | "All";
 
 export default function PromptsAdminPage() {
   return (
@@ -188,16 +187,7 @@ function PromptConfigList() {
     [configs]
   );
 
-  const pageSizeOptions: PageSizeOption[] = useMemo(() => {
-    if (totalItems <= 10) {
-      return ["All"];
-    }
-    const options: PageSizeOption[] = [10, 25, 50, 100, 250].filter(
-      (size) => size < totalItems || totalItems === 0
-    );
-    options.push("All");
-    return options;
-  }, [totalItems]);
+  const pageSizeOptions = usePageSizeOptions(totalItems);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -225,18 +215,14 @@ function PromptConfigList() {
   const [deletingConfig, setDeletingConfig] =
     useState<ExtendedPromptConfig | null>(null);
 
-  const columns = useMemo(
-    () =>
-      getColumns(
-        userPreferences,
-        // eslint-disable-next-line react-hooks/refs
-        handleToggleDefault,
-        tCommon,
-        t,
-        setEditingConfig,
-        setDeletingConfig
-      ),
-    [userPreferences, handleToggleDefault, tCommon, t]
+  const columns = useColumns(
+    userPreferences,
+    // eslint-disable-next-line react-hooks/refs
+    handleToggleDefault,
+    tCommon,
+    t,
+    setEditingConfig,
+    setDeletingConfig
   );
 
   const [columnVisibility, setColumnVisibility] = useState<

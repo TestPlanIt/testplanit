@@ -20,6 +20,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { SimpleDndProvider } from "@/components/ui/SimpleDndProvider";
+import { DragTargetProvider } from "~/hooks/useDragTargetKind";
 import { Toggle } from "@/components/ui/toggle";
 import { ViewSelector } from "@/components/ViewSelector";
 import { ApplicationArea } from "@prisma/client";
@@ -106,10 +107,12 @@ const ConditionalDndWrapper = ({
     return <>{children}</>;
   }
   return (
-    <SimpleDndProvider>
-      <UnifiedDragPreview />
-      {children}
-    </SimpleDndProvider>
+    <DragTargetProvider>
+      <SimpleDndProvider>
+        <UnifiedDragPreview />
+        {children}
+      </SimpleDndProvider>
+    </DragTargetProvider>
   );
 };
 
@@ -1379,7 +1382,12 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
 
   const { isDragActive } = usePageFileDrop({
     acceptedExtensions: [".csv"],
-    enabled: canAddEdit && !isSelectionMode && !isRunMode && !importDialogOpen,
+    enabled:
+      canAddEdit &&
+      !isSelectionMode &&
+      !isRunMode &&
+      !importDialogOpen &&
+      !addCaseOpen,
     onDrop: (files) => {
       setDroppedFile(files[0]);
       setImportDialogOpen(true);
@@ -1671,6 +1679,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                               )}
                               <Button
                                 variant="outline"
+                                disabled={folderHierarchy.length === 0}
                                 onClick={() => setGenerateWizardOpen(true)}
                                 className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
                               >
@@ -1681,6 +1690,13 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                               </Button>
                               <FindDuplicatesButton
                                 projectId={projectIdParam}
+                                disabled={
+                                  !folderStatsData ||
+                                  folderStatsData.reduce(
+                                    (sum, s) => sum + s.totalCaseCount,
+                                    0
+                                  ) === 0
+                                }
                               />
                               <Button
                                 variant="default"

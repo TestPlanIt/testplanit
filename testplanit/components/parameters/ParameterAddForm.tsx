@@ -154,7 +154,7 @@ export function ParameterAddForm({ caseId, existingCount = 0 }: ParameterAddForm
       toast.success(t("addSuccess", { name: values.name }));
       const version = result?.parameter?.testCase?.currentVersion;
       if (typeof version === "number") {
-        toast.message(t("toastVersionBumped", { version }));
+        toast.message(t("toastVersionBumped", { version: String(version) }));
       }
       form.reset(DEFAULTS);
       queryClient.invalidateQueries({ queryKey: ["zenstack", "TestCaseParameter"] });

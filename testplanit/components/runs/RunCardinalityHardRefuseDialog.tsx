@@ -60,7 +60,7 @@ export function RunCardinalityHardRefuseDialog({
         <DialogHeader>
           <DialogTitle>{t("hardRefuseTitle")}</DialogTitle>
           <DialogDescription>
-            {t("hardRefuseDescription", { cap })}
+            {t("hardRefuseDescription", { cap: String(cap) })}
           </DialogDescription>
         </DialogHeader>
 

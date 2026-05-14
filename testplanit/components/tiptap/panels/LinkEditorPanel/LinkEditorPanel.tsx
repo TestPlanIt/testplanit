@@ -2,6 +2,7 @@ import { Button } from "@/components/tiptap/ui/Button";
 import { Icon } from "@/components/tiptap/ui/Icon";
 import { Surface } from "@/components/tiptap/ui/Surface";
 import { Toggle } from "@/components/tiptap/ui/Toggle";
+import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 
 export type LinkEditorPanelProps = {
@@ -52,6 +53,7 @@ export const LinkEditorPanel = ({
   initialOpenInNewTab,
   initialUrl,
 }: LinkEditorPanelProps) => {
+  const tCommon = useTranslations("common");
   const state = useLinkEditorState({
     onSetLink,
     initialOpenInNewTab,
@@ -66,7 +68,7 @@ export const LinkEditorPanel = ({
           <input
             type="url"
             className="flex-1 bg-transparent outline-hidden min-w-[12rem] text-black text-sm dark:text-white"
-            placeholder="Enter URL"
+            placeholder={tCommon("placeholders.enterUrl")}
             value={state.url}
             onChange={state.onChange}
           />

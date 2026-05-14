@@ -2,11 +2,12 @@
 
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
@@ -16,7 +17,7 @@ import {
   useUpdateManyRoles,
   useUpdateRoles,
 } from "~/lib/hooks";
-import { ExtendedRoles, getColumns } from "./columns";
+import { ExtendedRoles, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
@@ -33,8 +34,6 @@ import { CirclePlus } from "lucide-react";
 import { AddRole } from "./AddRoles";
 import { DeleteRole } from "./DeleteRoles";
 import { EditRole } from "./EditRoles";
-
-type PageSizeOption = number | "All";
 
 export default function RoleListPage() {
   return (
@@ -155,16 +154,7 @@ function RoleList() {
 
   const rolesData = roles as ExtendedRoles[];
 
-  const pageSizeOptions: PageSizeOption[] = useMemo(() => {
-    if (totalItems <= 10) {
-      return ["All"];
-    }
-    const options: PageSizeOption[] = [10, 25, 50, 100, 250].filter(
-      (size) => size < totalItems || totalItems === 0
-    );
-    options.push("All");
-    return options;
-  }, [totalItems]);
+  const pageSizeOptions = usePageSizeOptions(totalItems);
 
   // Reset to first page when search changes
   useEffect(() => {
@@ -213,16 +203,12 @@ function RoleList() {
     []
   );
 
-  const columns = useMemo(
-    () =>
-      getColumns(
-        // eslint-disable-next-line react-hooks/refs
-        handleToggleDefault,
-        tCommon,
-        setEditingRole,
-        setDeletingRole
-      ),
-    [handleToggleDefault, tCommon]
+  const columns = useColumns(
+    // eslint-disable-next-line react-hooks/refs
+    handleToggleDefault,
+    tCommon,
+    setEditingRole,
+    setDeletingRole
   );
 
   const [columnVisibility, setColumnVisibility] = useState<

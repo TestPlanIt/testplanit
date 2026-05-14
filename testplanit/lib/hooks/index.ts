@@ -96,6 +96,8 @@ export * from './integration-project';
 export * from './webhook-config';
 export * from './webhook-delivery';
 export * from './webhook-event-dedup';
+export * from './webhook-config-secret';
+export * from './webhook-outbox-event';
 export * from './llm-provider-config';
 export * from './prompt-config';
 export * from './prompt-config-prompt';

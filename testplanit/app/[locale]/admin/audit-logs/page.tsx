@@ -32,7 +32,7 @@ import type { Session } from "next-auth";
 import { useCountAuditLog, useFindManyAuditLog } from "~/lib/hooks";
 import { logDataExport } from "~/lib/services/auditClient";
 import { AuditLogDetailModal } from "./AuditLogDetailModal";
-import { ExtendedAuditLog, getColumns } from "./columns";
+import { ExtendedAuditLog, useColumns } from "./columns";
 
 type PageSizeOption = number | "All";
 
@@ -105,8 +105,7 @@ function AuditLogsContent({ session }: { session: Session }) {
   const [actionFilter, setActionFilter] = useState<AuditAction | "all">("all");
   const [entityTypeFilter, setEntityTypeFilter] = useState<string>("all");
   // Default to last 7 days so an unfiltered page load never scans the full
-  // audit history. Admins can widen via the dropdown. See Phase 63 for the
-  // full date-range picker + required-time-range redesign.
+  // audit history. Admins can widen via the dropdown.
   const [timeRangeFilter, setTimeRangeFilter] = useState<
     "24h" | "7d" | "30d" | "90d" | "all"
   >("7d");
@@ -232,7 +231,7 @@ function AuditLogsContent({ session }: { session: Session }) {
 
   // Hard cap at 100 rows per page — removing "All" prevents an admin from
   // requesting an unbounded row count against a table that can grow into the
-  // billions. See Phase 63 roadmap for the broader redesign.
+  // billions.
   const pageSizeOptions: PageSizeOption[] = useMemo(() => [25, 50, 100], []);
 
   // Reset to first page when filters change
@@ -392,9 +391,12 @@ function AuditLogsContent({ session }: { session: Session }) {
     [dateFormat, timezone]
   );
 
-  const columns = useMemo(
-    () => getColumns(userPreferences, handleViewDetails, t, tCommon, tUserMenu),
-    [userPreferences, handleViewDetails, t, tCommon, tUserMenu]
+  const columns = useColumns(
+    userPreferences,
+    handleViewDetails,
+    t,
+    tCommon,
+    tUserMenu
   );
 
   const [columnVisibility, setColumnVisibility] = useState<

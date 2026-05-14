@@ -35,14 +35,13 @@ import {
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import {
   useFindManyCodeRepository,
   useUpdateCodeRepository,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { CodeRepositoryRow, getColumns } from "./columns";
-
-type PageSizeOption = number | "All";
 
 export default function CodeRepositoriesPage() {
   return (
@@ -152,16 +151,7 @@ function CodeRepositoryList() {
     }
   );
 
-  const pageSizeOptions: PageSizeOption[] = useMemo(() => {
-    if (totalItems <= 10) {
-      return ["All"];
-    }
-    const options: PageSizeOption[] = [10, 25, 50, 100, 250].filter(
-      (size) => size < totalItems || totalItems === 0
-    );
-    options.push("All");
-    return options;
-  }, [totalItems]);
+  const pageSizeOptions = usePageSizeOptions(totalItems);
 
   // Reset to first page when search changes
   useEffect(() => {
@@ -196,7 +186,8 @@ function CodeRepositoryList() {
         {
           onSuccess: () =>
             queryClient.invalidateQueries({ queryKey: ["CodeRepository"] }),
-          onError: () => toast.error("Failed to update repository status"),
+          onError: () =>
+            toast.error(tCommon("errors.failedToUpdateRepositoryStatus")),
         }
       );
     },
@@ -228,11 +219,11 @@ function CodeRepositoryList() {
       },
       {
         onSuccess: () => {
-          toast.success("Repository deleted");
+          toast.success(tCommon("errors.repositoryDeleted"));
           void refetch();
         },
         onError: (error) => {
-          toast.error("Failed to delete repository", {
+          toast.error(tCommon("errors.failedToDeleteRepository"), {
             description: error.message,
           });
         },
@@ -319,7 +310,7 @@ function CodeRepositoryList() {
               <div className="text-muted-foreground w-full text-nowrap">
                 <Filter
                   key="code-repo-filter"
-                  placeholder="Filter by name..."
+                  placeholder={tCommon("placeholders.filterByName")}
                   initialSearchString={searchString}
                   onSearchChange={setSearchString}
                 />

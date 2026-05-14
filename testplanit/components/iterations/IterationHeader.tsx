@@ -49,7 +49,10 @@ export function IterationHeader({
       data-testid="iteration-header"
     >
       <h2 className="text-base font-semibold">
-        {t("iterationHeaderTitle", { n: rowIndex + 1, total })}
+        {t("iterationHeaderTitle", {
+          n: String(rowIndex + 1),
+          total: String(total),
+        })}
       </h2>
       <div className="flex items-center gap-3 ml-auto">
         {status && (
@@ -68,7 +71,9 @@ export function IterationHeader({
               size="icon"
               className="h-7 w-7"
               data-testid="iteration-header-menu-trigger"
-              aria-label={t("iterationRowMenuAria", { n: rowIndex + 1 })}
+              aria-label={t("iterationRowMenuAria", {
+                n: String(rowIndex + 1),
+              })}
             >
               <MoreHorizontal className="h-4 w-4" />
             </Button>

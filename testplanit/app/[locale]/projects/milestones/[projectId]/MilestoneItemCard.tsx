@@ -158,7 +158,6 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
                 jsonString={milestone.note as string}
                 format="text"
                 room={`milestone-note-${milestone.id}`}
-                expand={false}
               />
             </p>
             <div className={`${compact ? "hidden" : "hidden sm:block"} ml-7`}>

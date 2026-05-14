@@ -42,11 +42,12 @@ import { useTheme } from "next-themes";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
+import { z } from "zod/v4";
 import {
   useFindFirstUserPreferences,
   useUpdateUserPreferences,
 } from "~/lib/hooks";
+import { languageNames } from "~/i18n/navigation";
 
 type TimezoneOption = {
   id: string;
@@ -263,18 +264,8 @@ export function InitialPreferencesDialog() {
     [setTheme]
   );
 
-  const getLocaleLabel = (locale: Locale) => {
-    switch (locale) {
-      case "en_US":
-        return "English (US)";
-      case "es_ES":
-        return "Español (ES)";
-      case "fr_FR":
-        return "Français (FR)";
-      default:
-        return locale;
-    }
-  };
+  const getLocaleLabel = (locale: Locale) =>
+    languageNames[locale.replace("_", "-")] ?? locale;
 
   const getNotificationModeLabel = (mode: NotificationMode) => {
     switch (mode) {
@@ -328,6 +319,15 @@ export function InitialPreferencesDialog() {
 
       // Mark theme as saved so we don't revert it
       originalThemeRef.current = undefined;
+
+      const localeChanged = data.locale !== userPreferences?.locale;
+
+      if (localeChanged) {
+        const urlLocale = data.locale.replace("_", "-");
+        document.cookie = `NEXT_LOCALE=${urlLocale};path=/;max-age=31536000`;
+        window.location.reload();
+        return;
+      }
 
       toast.success(t("success"));
       setIsOpen(false);

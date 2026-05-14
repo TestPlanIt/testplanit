@@ -1,6 +1,5 @@
 import DynamicIcon from "@/components/DynamicIcon";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
-import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
 import { ManageTags } from "@/components/ManageTags";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,7 +39,7 @@ import UploadAttachments from "@/components/UploadAttachments";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ApplicationArea, Prisma } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Asterisk, ChevronLeft, ChevronRight } from "lucide-react";
+import { Asterisk, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -51,12 +50,8 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
+import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases";
 import {
-  useCreateAttachments,
-  useCreateCaseFieldValues,
-  useCreateCaseFieldVersionValues,
-  useCreateRepositoryCases,
-  useCreateSteps,
   useFindFirstRepositoryCases,
   useFindFirstRepositoryFolders,
   useFindManySharedStepGroup,
@@ -82,7 +77,7 @@ interface SharedStepGroupWithItems {
   items: SharedStepItemDetail[];
 }
 
-const mapFieldToZodType = (field: any) => {
+const mapFieldToZodType = (field: any, t: (key: any) => string) => {
   const isRequired = field.caseField.isRequired;
 
   const _addMinMax = (schema: z.ZodNumber) => {
@@ -194,7 +189,7 @@ const mapFieldToZodType = (field: any) => {
               }
             },
             {
-              error: "This field is required",
+              error: t("common.errors.fieldRequired"),
             }
           )
         : z.string().optional();
@@ -215,18 +210,22 @@ const mapFieldToZodType = (field: any) => {
   }
 };
 
-const createFormSchema = (fields: any[]) => {
+const createFormSchema = (fields: any[], t: (key: any) => string) => {
   const baseSchema = {
     name: z.string().min(2, {
-      error: "Please enter a name for the Test Case",
+      error: t("common.errors.caseNameRequired"),
     }),
     templateId: z.number({
       error: (issue) =>
-        issue.input === undefined ? "Please select a Template" : undefined,
+        issue.input === undefined
+          ? t("common.errors.caseTemplateRequired")
+          : undefined,
     }),
     workflowId: z.number({
       error: (issue) =>
-        issue.input === undefined ? "Please select a State" : undefined,
+        issue.input === undefined
+          ? t("common.errors.caseStateRequired")
+          : undefined,
     }),
     estimate: z
       .string()
@@ -238,8 +237,7 @@ const createFormSchema = (fields: any[]) => {
           return durationInMilliseconds !== null;
         },
         {
-          error:
-            "Invalid duration format. Try something like 30m, 1 week or 1h 25m",
+          error: t("common.validation.invalidDurationFormat"),
         }
       )
       .refine(
@@ -251,7 +249,7 @@ const createFormSchema = (fields: any[]) => {
           return durationInSeconds <= MAX_DURATION;
         },
         {
-          error: "Estimate is too large",
+          error: t("common.errors.estimateTooLarge"),
         }
       ),
     automated: z.boolean().prefault(false),
@@ -262,7 +260,7 @@ const createFormSchema = (fields: any[]) => {
       const fieldName = field.caseField.id.toString();
       // Skip Date fields entirely - we'll handle them manually without validation
       if (field.caseField.type.type !== "Date") {
-        schema[fieldName] = mapFieldToZodType(field);
+        schema[fieldName] = mapFieldToZodType(field, t);
       }
       return schema;
     },
@@ -304,7 +302,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
   const [isTemplateReady, setIsTemplateReady] = useState(false);
   const panelRef = useRef<React.ComponentRef<typeof ResizablePanel>>(null);
 
-  const [formSchema, setFormSchema] = useState(createFormSchema([]));
+  const [formSchema, setFormSchema] = useState(() => createFormSchema([], t));
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
     null
   );
@@ -331,13 +329,6 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
       },
       { enabled: !!projectId && open }
     );
-
-  const { mutateAsync: createRepositoryCases } = useCreateRepositoryCases();
-  const { mutateAsync: createCaseFieldValues } = useCreateCaseFieldValues();
-  const { mutateAsync: createCaseFieldVersionValues } =
-    useCreateCaseFieldVersionValues();
-  const { mutateAsync: createAttachments } = useCreateAttachments();
-  const { mutateAsync: createSteps } = useCreateSteps();
 
   const { data: folder } = useFindFirstRepositoryFolders(
     {
@@ -511,46 +502,27 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
     onClose();
   };
 
-  const uploadFiles = async (caseId: number) => {
+  const uploadFiles = async () => {
     const prependString = session!.user.id;
     const sanitizedFolder = folder?.repositoryId.toString() || "";
 
-    const attachmentsPromises = selectedFiles.map(async (file) => {
+    const uploads = selectedFiles.map(async (file) => {
       const fileUrl = await fetchSignedUrl(
         file,
         `/api/get-attachment-url/`,
         `${sanitizedFolder}/${prependString}`
       );
 
-      const attachment = await createAttachments({
-        data: {
-          testCase: {
-            connect: { id: caseId },
-          },
-          url: fileUrl,
-          name: file.name,
-          note: "",
-          mimeType: file.type,
-          size: BigInt(file.size),
-          createdBy: {
-            connect: { id: session!.user.id },
-          },
-        },
-      });
-
       return {
-        id: attachment?.id,
         url: fileUrl,
         name: file.name,
-        note: "",
         mimeType: file.type,
         size: file.size,
-        createdBy: session!.user.name,
+        note: "",
       };
     });
 
-    const attachments = await Promise.all(attachmentsPromises);
-    return attachments;
+    return Promise.all(uploads);
   };
 
   useEffect(() => {
@@ -568,7 +540,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
       (template) => template.id === selectedTemplateId
     );
     if (selectedTemplate) {
-      setFormSchema(createFormSchema(selectedTemplate.caseFields));
+      setFormSchema(createFormSchema(selectedTemplate.caseFields, t));
       const defaultValues: Partial<FormValues> = {
         name: "",
         templateId: selectedTemplateId ?? 0,
@@ -623,7 +595,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
       // Enable the name field after template and fields are ready
       setIsTemplateReady(true);
     }
-  }, [selectedTemplateId, templates, defaultWorkflowId, reset, setValue]);
+  }, [selectedTemplateId, templates, defaultWorkflowId, reset, setValue, t]);
 
   useEffect(() => {
     if (open) {
@@ -911,70 +883,35 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
           ? Math.round(estimateDuration / 1000)
           : undefined;
 
-        const newCase = await createRepositoryCases({
-          data: {
-            project: {
-              connect: { id: Number(projectId) },
-            },
-            repository: {
-              connect: { id: folder?.repositoryId },
-            },
-            folder: {
-              connect: { id: folderId },
-            },
-            name: convertedData.name,
-            template: {
-              connect: { id: convertedData.templateId },
-            },
-            state: {
-              connect: { id: convertedData.workflowId },
-            },
-            estimate: estimateInSeconds,
-            createdAt: new Date(),
-            creator: {
-              connect: { id: session.user.id },
-            },
-            automated: convertedData.automated,
-            order: maxOrder?.order ? maxOrder.order + 1 : 1,
-            tags: {
-              connect: selectedTags.map((tagId) => ({ id: tagId })),
-            },
-            issues: {
-              connect: linkedIssueIds.map((issueId) => ({ id: issueId })),
-            },
-          },
-        });
+        // Steps row stored on the test case (one entry per row in the form,
+        // shared-step rows pointing at a group via sharedStepGroupId)
+        const stepRowsForCase: Array<{
+          step: any;
+          expectedResult: any;
+          sharedStepGroupId?: number;
+        }> = [];
+        // Steps array embedded in the version snapshot (shared-step rows
+        // are EXPANDED into their constituent items)
+        const expandedStepsForVersion: Array<{
+          step: any;
+          expectedResult: any;
+        }> = [];
 
-        if (!newCase) throw new Error("Failed to create new case");
-
-        const createCaseFieldValuesPromises = dynamicFields
-          .filter(({ displayName }) => displayName !== "Steps")
-          .map(async ({ fieldId, value }) => {
-            await createCaseFieldValues({
-              data: {
-                testCase: {
-                  connect: { id: newCase.id },
-                },
-                field: {
-                  connect: { id: parseInt(fieldId as string) },
-                },
-                value: value,
-              },
-            });
-          });
-
-        await Promise.all(createCaseFieldValuesPromises);
-
-        const resolvedStepsForVersion: any[] = [];
         if (formSteps?.value && Array.isArray(formSteps.value)) {
           for (const stepItem of formSteps.value) {
+            stepRowsForCase.push({
+              step: stepItem.step || emptyEditorContent,
+              expectedResult: stepItem.expectedResult || emptyEditorContent,
+              sharedStepGroupId: stepItem.sharedStepGroupId,
+            });
+
             if (stepItem.isShared && stepItem.sharedStepGroupId) {
               const group = sharedStepGroupsData?.find(
                 (g) => g.id === stepItem.sharedStepGroupId
               );
-              if (group && group.items && group.items.length > 0) {
+              if (group?.items?.length) {
                 for (const sharedItem of group.items) {
-                  let parsedStepContent = emptyEditorContent;
+                  let parsedStepContent: any = emptyEditorContent;
                   try {
                     parsedStepContent =
                       typeof sharedItem.step === "string"
@@ -988,7 +925,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
                     );
                   }
 
-                  let parsedExpectedResultContent = emptyEditorContent;
+                  let parsedExpectedResultContent: any = emptyEditorContent;
                   try {
                     if (sharedItem.expectedResult) {
                       parsedExpectedResultContent =
@@ -1003,7 +940,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
                       e
                     );
                   }
-                  resolvedStepsForVersion.push({
+                  expandedStepsForVersion.push({
                     step: parsedStepContent,
                     expectedResult: parsedExpectedResultContent,
                   });
@@ -1014,7 +951,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
                 );
               }
             } else {
-              resolvedStepsForVersion.push({
+              expandedStepsForVersion.push({
                 step: stepItem.step || emptyEditorContent,
                 expectedResult: stepItem.expectedResult || emptyEditorContent,
               });
@@ -1022,61 +959,14 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
           }
         }
 
-        if (formSteps?.value && formSteps.value.length > 0) {
-          const createStepsPromises = formSteps.value.map(
-            async (stepItem: any, index: number) => {
-              const stepDataToSave: any = {
-                step:
-                  typeof stepItem.step === "string"
-                    ? stepItem.step
-                    : JSON.stringify(stepItem.step),
-                order: index,
-                testCase: {
-                  connect: { id: newCase.id },
-                },
-              };
-
-              if (stepItem.expectedResult) {
-                stepDataToSave.expectedResult =
-                  typeof stepItem.expectedResult === "string"
-                    ? stepItem.expectedResult
-                    : JSON.stringify(stepItem.expectedResult);
-              }
-
-              if (stepItem.sharedStepGroupId) {
-                stepDataToSave.sharedStepGroup = {
-                  connect: { id: stepItem.sharedStepGroupId },
-                };
-              }
-
-              await createSteps({ data: stepDataToSave });
-            }
-          );
-          await Promise.all(createStepsPromises);
-        }
-
-        const attachmentUrls =
-          selectedFiles.length > 0 ? await uploadFiles(newCase.id) : [];
-
-        const attachmentsJson = attachmentUrls.map((attachment) => ({
-          id: attachment?.id,
-          testCaseId: newCase.id,
-          url: attachment?.url,
-          name: attachment?.name,
-          note: attachment?.note,
-          isDeleted: false,
-          mimeType: attachment?.mimeType,
-          size: attachment?.size.toString(),
-          createdAt: new Date().toISOString(),
-          createdById: session.user.id,
-        }));
+        const uploadedAttachments =
+          selectedFiles.length > 0 ? await uploadFiles() : [];
 
         const tagNamesForVersion = selectedTags.map(
           (tagId) => tags?.find((tag) => tag.id === tagId)?.name || ""
         );
 
-        // Fetch issue details on demand for the version snapshot
-        let issuesDataForVersion: {
+        let versionIssues: {
           id: number;
           name: string;
           externalId: string | null;
@@ -1093,80 +983,73 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
             );
             if (res.ok) {
               const json = await res.json();
-              issuesDataForVersion = (json.data ?? json) || [];
+              versionIssues = (json.data ?? json) || [];
             }
           } catch (e) {
             console.error("Failed to fetch linked issues for version:", e);
           }
         }
 
-        // Invalidate and refetch the case to ensure we have the committed data from the database
-        // This prevents race conditions where version creation tries to use stale currentVersion
-        await queryClient.invalidateQueries({
-          queryKey: ["RepositoryCases", "findFirst"],
-        });
+        const fieldValuesById: Record<string, any> = {};
+        const versionFieldValues: { field: string; value: any }[] = [];
+        for (const { fieldId, value, displayName } of dynamicFields) {
+          if (displayName === "Steps") continue;
+          fieldValuesById[fieldId] = value;
+          versionFieldValues.push({ field: displayName, value });
+        }
 
-        // Create version snapshot using centralized API endpoint
-        const versionResponse = await fetch(
-          `/api/repository/cases/${newCase.id}/versions`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              // No version specified - will use currentVersion (1) from the newly created case
-              overrides: {
-                name: convertedData.name,
-                stateId: convertedData.workflowId,
-                stateName:
-                  workflows?.find((w) => w.id === convertedData.workflowId)
-                    ?.name || "",
-                automated: convertedData.automated,
-                estimate: estimateInSeconds,
-                steps: resolvedStepsForVersion,
-                attachments: attachmentsJson,
-                tags: tagNamesForVersion,
-                issues: issuesDataForVersion,
-              },
-            }),
-          }
+        const selectedTemplate = templates?.find(
+          (tt) => tt.id === convertedData.templateId
         );
 
-        if (!versionResponse.ok) {
-          const errorData = await versionResponse.json();
+        const result = await importGeneratedTestCases({
+          projectId: Number(projectId),
+          projectName: folder?.project?.name || "",
+          repositoryId: folder?.repositoryId || 0,
+          folderId,
+          folderName: folder?.name || "",
+          templateId: convertedData.templateId,
+          templateName: selectedTemplate?.templateName || "",
+          stateId: convertedData.workflowId,
+          stateName:
+            workflows?.find((w) => w.id === convertedData.workflowId)?.name ||
+            "",
+          maxOrder: maxOrder?.order ?? 0,
+          autoGenerateTags: false,
+          source: "MANUAL",
+          testCases: [
+            {
+              id: crypto.randomUUID(),
+              name: convertedData.name,
+              fieldValues: {},
+              fieldValuesById,
+              versionFieldValues,
+              estimate: estimateInSeconds,
+              automated: convertedData.automated,
+              tagIds: selectedTags,
+              issueIds: linkedIssueIds,
+              versionTags: tagNamesForVersion,
+              versionIssues,
+              attachments: uploadedAttachments,
+              steps: stepRowsForCase,
+            },
+          ],
+          fieldMappings: [],
+        });
+
+        if (result.status === "error" || result.importedIds.length === 0) {
           throw new Error(
-            `Failed to create case version: ${errorData.error || "Unknown error"}`
+            result.message || result.errors[0] || "Import failed"
           );
         }
 
-        const { version: newCaseVersion } = await versionResponse.json();
+        const newCaseId = result.importedIds[0];
 
-        const createCaseFieldVersionValuesPromises = dynamicFields
-          .filter(({ displayName }) => displayName !== "Steps")
-          .map(async ({ displayName, value }) => {
-            await createCaseFieldVersionValues({
-              data: {
-                version: {
-                  connect: { id: newCaseVersion.id },
-                },
-                field: displayName,
-                value: value,
-              },
-            });
-          });
-
-        await Promise.all(createCaseFieldVersionValuesPromises);
-
-        // Invalidate folder stats first - this updates the case count which enables the Cases query
         await queryClient.invalidateQueries({
           queryKey: ["folderStats"],
           refetchType: "all",
         });
 
-        // Invalidate RepositoryCases queries to refresh the table
-        // ZenStack query keys are: ["zenstack", model, operation, args, options]
-        // Using refetchType: 'all' to ensure queries are refetched immediately
         await queryClient.invalidateQueries({
           predicate: (query) =>
             Array.isArray(query.queryKey) &&
@@ -1178,10 +1061,9 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
         onClose();
         setIsSubmitting(false);
 
-        // Fire-and-forget duplicate check — never blocks the save
         checkForDuplicates(
           convertedData.name,
-          newCase.id,
+          newCaseId,
           tagNamesForVersion
         ).catch(() => {});
       }
@@ -1216,9 +1098,6 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
       >
         <Form {...form}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {isSubmitting && (
-              <LoadingSpinnerAlert className="w-[120px] h-[120px] text-primary" />
-            )}
             <DialogHeader>
               <DialogTitle className="flex items-center justify-between">
                 <div>{t("repository.addCase.title")}</div>
@@ -1524,6 +1403,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
                 }
                 data-testid="case-submit-button"
               >
+                {isSubmitting && <Loader2 className="animate-spin" />}
                 {isSubmitting
                   ? t("common.actions.submitting")
                   : isLoadingSharedStepGroups

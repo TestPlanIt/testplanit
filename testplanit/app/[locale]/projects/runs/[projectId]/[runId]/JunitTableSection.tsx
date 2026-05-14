@@ -66,10 +66,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 import LoadingSpinnerAlert from "~/components/LoadingSpinnerAlert";
 import { TestRunCasesSummary } from "~/components/TestRunCasesSummary";
-import {
-  defaultPageSizeOptions,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
+import { usePagination } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useFindManyJUnitTestResult } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
@@ -141,6 +139,7 @@ function JunitTableSection({
   useEffect(() => {
     setTotalItems(filteredJunitTestCases.length);
   }, [filteredJunitTestCases.length, setTotalItems]);
+  const pageSizeOptions = usePageSizeOptions(totalItems);
   const effectivePageSize =
     junitPageSize === "All" ? totalItems : junitPageSize;
   const pagedJunitTestCases = useMemo(() => {
@@ -560,7 +559,7 @@ function JunitTableSection({
                             totalRows={totalItems}
                             searchString={junitFilter}
                             pageSize={junitPageSize}
-                            pageSizeOptions={defaultPageSizeOptions}
+                            pageSizeOptions={pageSizeOptions}
                             handlePageSizeChange={setJunitPageSize}
                           />
                         </div>

@@ -9,16 +9,15 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { usePagination } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import {
   useFindManyConfigurations,
   useUpdateConfigurations,
 } from "~/lib/hooks";
 import AddConfigurationWizard from "./AddConfigurationWizard";
-import { ConfigWithVariants, getColumns } from "./configColumns";
+import { ConfigWithVariants, useColumns } from "./configColumns";
 import { DeleteConfiguration } from "./DeleteConfig";
 import { EditConfiguration } from "./EditConfig";
-
-type PageSizeOption = number | "All";
 
 export default function ConfigurationList(): React.ReactElement {
   return <Configurations />;
@@ -123,16 +122,11 @@ function Configurations(): React.ReactElement | null {
   const [deletingConfiguration, setDeletingConfiguration] =
     useState<ConfigWithVariants | null>(null);
 
-  const columns = useMemo(
-    () =>
-      getColumns(
-        tCommon,
-        // eslint-disable-next-line react-hooks/refs
-        handleToggle,
-        setEditingConfiguration,
-        setDeletingConfiguration
-      ),
-    [tCommon, handleToggle]
+  const columns = useColumns(
+    tCommon,
+    handleToggle,
+    setEditingConfiguration,
+    setDeletingConfiguration
   );
 
   const [columnVisibility, setColumnVisibility] = useState<
@@ -146,16 +140,7 @@ function Configurations(): React.ReactElement | null {
     return initialVisibility;
   });
 
-  const pageSizeOptions: PageSizeOption[] = useMemo(() => {
-    if (totalItems <= 10) {
-      return ["All"];
-    }
-    const options: PageSizeOption[] = [10, 25, 50, 100, 250].filter(
-      (size) => size < totalItems || totalItems === 0
-    );
-    options.push("All");
-    return options;
-  }, [totalItems]);
+  const pageSizeOptions = usePageSizeOptions(totalItems);
 
   // Reset to first page when search changes
   useEffect(() => {

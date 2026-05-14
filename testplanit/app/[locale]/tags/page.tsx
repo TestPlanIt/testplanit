@@ -29,11 +29,12 @@ import { Boxes, TagsIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import {
   useCountTags,
   useFindManyProjects,
@@ -41,9 +42,7 @@ import {
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
-import { getColumns } from "./columns";
-
-type PageSizeOption = number | "All";
+import { useTagColumns } from "./columns";
 
 export default function TagList() {
   return (
@@ -356,22 +355,20 @@ function Tags() {
     return mappedTags;
   }, [mappedTags, sortConfig.column, skip, effectivePageSize]);
 
-  const pageSizeOptions: PageSizeOption[] = useMemo(() => {
-    if (totalItems <= 10) {
-      return ["All"];
-    }
-    const options: PageSizeOption[] = [10, 25, 50, 100, 250].filter(
-      (size) => size < totalItems || totalItems === 0
-    );
-    options.push("All");
-    return options;
-  }, [totalItems]);
+  const pageSizeOptions = usePageSizeOptions(totalItems);
+
+  const prevSearchStringRef = useRef(searchString);
+  const prevPageSizeRef = useRef(pageSize);
 
   useEffect(() => {
+    if (searchString === prevSearchStringRef.current) return;
+    prevSearchStringRef.current = searchString;
     setCurrentPage(1);
   }, [searchString, setCurrentPage]);
 
   useEffect(() => {
+    if (pageSize === prevPageSizeRef.current) return;
+    prevPageSizeRef.current = pageSize;
     setCurrentPage(1);
   }, [pageSize, setCurrentPage]);
 
@@ -381,19 +378,15 @@ function Tags() {
     }
   }, [status, session, router]);
 
-  const columns = useMemo(
-    () =>
-      getColumns(
-        {
-          name: t("common.name"),
-          testCases: t("common.fields.testCases"),
-          sessions: t("common.fields.sessions"),
-          testRuns: t("common.fields.testRuns"),
-          projects: t("common.fields.projects"),
-        },
-        isLoadingCounts
-      ),
-    [t, isLoadingCounts]
+  const columns = useTagColumns(
+    {
+      name: t("common.name"),
+      testCases: t("common.fields.testCases"),
+      sessions: t("common.fields.sessions"),
+      testRuns: t("common.fields.testRuns"),
+      projects: t("common.fields.projects"),
+    },
+    isLoadingCounts
   );
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>

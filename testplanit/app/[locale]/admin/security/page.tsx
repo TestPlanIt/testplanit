@@ -176,7 +176,6 @@ export default function SecurityAdminPage() {
                 {t("minPasswordLengthDescription")}
               </p>
             </div>
-
             {/* Require Uppercase */}
             <div className="flex items-center justify-between">
               <Label htmlFor="requireUppercase">
@@ -188,7 +187,6 @@ export default function SecurityAdminPage() {
                 onCheckedChange={setRequireUppercase}
               />
             </div>
-
             {/* Require Lowercase */}
             <div className="flex items-center justify-between">
               <Label htmlFor="requireLowercase">
@@ -200,7 +198,6 @@ export default function SecurityAdminPage() {
                 onCheckedChange={setRequireLowercase}
               />
             </div>
-
             {/* Require Numbers */}
             <div className="flex items-center justify-between">
               <Label htmlFor="requireNumbers">{t("requireNumbersLabel")}</Label>
@@ -210,7 +207,6 @@ export default function SecurityAdminPage() {
                 onCheckedChange={setRequireNumbers}
               />
             </div>
-
             {/* Required Special Chars */}
             <div className="space-y-2">
               <Label htmlFor="requiredSpecialChars">
@@ -226,7 +222,6 @@ export default function SecurityAdminPage() {
                 {t("requiredSpecialCharsDescription")}
               </p>
             </div>
-
             {/* Password History Depth */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -249,7 +244,6 @@ export default function SecurityAdminPage() {
                 {t("passwordHistoryDepthDescription")}
               </p>
             </div>
-
             {/* Password Expiration Days */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -273,9 +267,7 @@ export default function SecurityAdminPage() {
               </p>
             </div>
           </div>
-
           <Separator />
-
           {/* Section 2: Lockout Policy */}
           <div className="space-y-4">
             <div>
@@ -333,9 +325,7 @@ export default function SecurityAdminPage() {
               </p>
             </div>
           </div>
-
           <Separator />
-
           {/* Section 3: Enforcement Actions */}
           <div className="space-y-4">
             <div>
@@ -352,9 +342,7 @@ export default function SecurityAdminPage() {
               {t("forceAllUsers")}
             </Button>
           </div>
-
           <Separator />
-
           {/* Save Button */}
           <div className="flex justify-end">
             <Button onClick={handleSave} disabled={isSaving}>

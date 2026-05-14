@@ -75,8 +75,7 @@ export function EditCategory({ category, open, onClose }: EditCategoryProps) {
       if (err.info?.prisma && err.info?.code === "P2002") {
         form.setError("name", {
           type: "custom",
-          message:
-            "Category name already exists. Please choose a different name.",
+          message: tCommon("errors.categoryNameExists"),
         });
       } else {
         form.setError("root", {

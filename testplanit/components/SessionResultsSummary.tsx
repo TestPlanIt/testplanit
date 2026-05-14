@@ -9,17 +9,18 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useQuery } from "@tanstack/react-query";
-import { Clock, MessageCircle, Timer } from "lucide-react";
+import { ArrowUpDown, Clock, MessageCircle, Timer } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { SessionSummaryData } from "~/app/api/sessions/[sessionId]/summary/route";
 import { useFindFirstStatus } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { cn } from "~/utils";
 import { toHumanReadable } from "~/utils/duration";
 import { ElapsedTime } from "./ElapsedTime";
+import { sortSummaryItems } from "~/utils/summarySort";
 
 interface SessionResultsSummaryProps {
   sessionId: number;
@@ -98,7 +99,6 @@ export function SessionResultsSummary({
     return combinedIssues;
   }, [summaryData, projectId]);
 
-  // Fetch the first status (typically "Untested" or similar) for the default bar
   const { data: firstStatus } = useFindFirstStatus({
     where: {
       isDeleted: false,
@@ -110,6 +110,19 @@ export function SessionResultsSummary({
       color: true,
     },
   });
+
+  const [sortMode, setSortMode] = useState<"date" | "status">("date");
+
+  const sortedResults = useMemo(
+    () =>
+      sortSummaryItems(
+        summaryData?.results ?? [],
+        sortMode,
+        firstStatus?.id,
+        firstStatus?.order ?? 0
+      ),
+    [summaryData, sortMode, firstStatus?.id, firstStatus?.order]
+  );
 
   if (isLoading) {
     return (
@@ -179,7 +192,7 @@ export function SessionResultsSummary({
     <div className={cn("flex flex-col space-y-1 w-full", className)}>
       {/* Color bar for results at the top */}
       <div className="flex h-2.5 w-full rounded-full overflow-hidden">
-        {summaryData.results.map((result, _index) => {
+        {sortedResults.map((result, _index) => {
           const color = result.statusColorValue || "#B1B2B3";
           // Calculate width: equal distribution if no duration, or proportional if durations exist
 
@@ -285,6 +298,30 @@ export function SessionResultsSummary({
           </div>
         )}
         <div className="flex items-center gap-2 shrink-0">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={() =>
+                  setSortMode((m) => (m === "date" ? "status" : "date"))
+                }
+                onKeyDown={(e) =>
+                  e.key === "Enter" &&
+                  setSortMode((m) => (m === "date" ? "status" : "date"))
+                }
+                className="inline-flex cursor-pointer items-center text-muted-foreground hover:text-foreground transition-colors"
+                data-testid="sort-toggle"
+              >
+                <ArrowUpDown className="h-3 w-3" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              {sortMode === "date"
+                ? t("common.labels.sortByStatus")
+                : t("common.labels.sortByDate")}
+            </TooltipContent>
+          </Tooltip>
           {/* Display comments count if any exist */}
           {summaryData.commentsCount > 0 && (
             <Link

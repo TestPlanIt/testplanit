@@ -193,8 +193,8 @@ export function IterationResultPanel({
       >
         <span className="text-xs font-medium text-muted-foreground">
           {t("iterationResultPanelHeading", {
-            n: iteration.rowIndex + 1,
-            total: totalIterations,
+            n: String(iteration.rowIndex + 1),
+            total: String(totalIterations),
           })}
         </span>
         <div className="flex items-center gap-2">
@@ -279,8 +279,8 @@ export function IterationResultPanel({
           configuration={testRun?.configuration ?? undefined}
           iterationId={iteration.id}
           iterationLabel={t("iterationResultPanelHeading", {
-            n: iteration.rowIndex + 1,
-            total: totalIterations,
+            n: String(iteration.rowIndex + 1),
+            total: String(totalIterations),
           })}
           steps={testcase.steps}
           parameters={stepParameters}

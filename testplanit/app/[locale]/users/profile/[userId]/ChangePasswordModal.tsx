@@ -45,6 +45,8 @@ export function ChangePasswordModal({
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [policy, setPolicy] = useState<PasswordPolicy | null>(null);
+  // Default true so existing users see the current-password field while loading.
+  const [hasPassword, setHasPassword] = useState(true);
 
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -52,6 +54,8 @@ export function ChangePasswordModal({
       .then((res) => res.json())
       .then((data) => {
         if (data.policy) setPolicy(data.policy);
+        if (typeof data.hasPassword === "boolean")
+          setHasPassword(data.hasPassword);
       })
       .catch(() => {
         // Non-fatal — modal still works without policy display
@@ -88,7 +92,10 @@ export function ChangePasswordModal({
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ currentPassword, newPassword }),
+          body: JSON.stringify({
+            currentPassword: hasPassword ? currentPassword : undefined,
+            newPassword,
+          }),
         }
       );
 
@@ -116,15 +123,21 @@ export function ChangePasswordModal({
     setIsLoading(false);
   };
 
+  const titleKey = hasPassword
+    ? "users.profile.changePasswordModal.buttonText"
+    : "users.profile.changePasswordModal.setPasswordButtonText";
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="text-destructive">
-              {tGlobal("users.profile.changePasswordModal.buttonText")}
+              {tGlobal(titleKey)}
             </DialogTitle>
-            <DialogDescription>{t("description")}</DialogDescription>
+            <DialogDescription>
+              {hasPassword ? t("description") : t("setPasswordDescription")}
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             {errors.length > 0 && (
@@ -143,22 +156,24 @@ export function ChangePasswordModal({
                 )}
               </div>
             )}
-            <div className="grid grid-cols-4 items-center gap-4 text-right">
-              <Label htmlFor="currentPassword" className="flex justify-end">
-                {t("currentPasswordLabel")}
-                <sup>
-                  <Asterisk className="w-3 h-3 text-destructive shrink-0" />
-                </sup>
-              </Label>
-              <Input
-                id="currentPassword"
-                type="password"
-                className="col-span-3"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                required
-              />
-            </div>
+            {hasPassword && (
+              <div className="grid grid-cols-4 items-center gap-4 text-right">
+                <Label htmlFor="currentPassword" className="flex justify-end">
+                  {t("currentPasswordLabel")}
+                  <sup>
+                    <Asterisk className="w-3 h-3 text-destructive shrink-0" />
+                  </sup>
+                </Label>
+                <Input
+                  id="currentPassword"
+                  type="password"
+                  className="col-span-3"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  required
+                />
+              </div>
+            )}
             <div className="grid grid-cols-4 items-center gap-4 text-right">
               <Label htmlFor="newPassword" className="flex justify-end">
                 {t("newPasswordLabel")}
@@ -199,9 +214,7 @@ export function ChangePasswordModal({
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isLoading}>
-              {isLoading
-                ? tCommon("actions.submitting")
-                : tGlobal("users.profile.changePasswordModal.buttonText")}
+              {isLoading ? tCommon("actions.submitting") : tGlobal(titleKey)}
             </Button>
           </DialogFooter>
         </form>

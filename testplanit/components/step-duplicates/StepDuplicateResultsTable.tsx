@@ -15,6 +15,7 @@ import {
   useFindManyStepSequenceMatch,
   useUpdateStepSequenceMatch,
 } from "~/lib/hooks/step-sequence-match";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { type StepDuplicateRow, getColumns } from "./stepDuplicateColumns";
 import { StepDuplicateConversionDialog } from "./StepDuplicateConversionDialog";
@@ -46,8 +47,6 @@ interface StepDuplicateResultsTableProps {
   projectId: string;
   onRowClick?: (row: StepDuplicateRow) => void;
 }
-
-const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
 
 export function StepDuplicateResultsTable({
   projectId,
@@ -222,6 +221,7 @@ export function StepDuplicateResultsTable({
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = Math.min(startIndex + pageSize, totalItems);
   const pageItems = sortedItems.slice(startIndex, endIndex);
+  const pageSizeOptions = usePageSizeOptions(totalItems);
 
   const handleCheckboxClick = useCallback(
     (rowIndex: number, event: React.MouseEvent) => {
@@ -408,7 +408,7 @@ export function StepDuplicateResultsTable({
                   totalRows={totalItems}
                   searchString={searchString}
                   pageSize={pageSize}
-                  pageSizeOptions={[...PAGE_SIZE_OPTIONS]}
+                  pageSizeOptions={pageSizeOptions}
                   handlePageSizeChange={handlePageSizeChange}
                 />
               </div>

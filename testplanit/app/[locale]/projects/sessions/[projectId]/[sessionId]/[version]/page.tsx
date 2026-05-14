@@ -532,7 +532,7 @@ export default function SessionVersionPage() {
               <div className="mb-1 mr-6">
                 <div className="font-bold mt-2">
                   {t("sessions.version.versionInfo.created", {
-                    number: version?.toString() ?? 0,
+                    number: typeof version === "number" ? version : 0,
                   })}
                 </div>
                 <div className="flex space-x-1">

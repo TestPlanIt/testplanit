@@ -38,6 +38,7 @@ interface GeminiGenerateResponse {
     content: {
       parts: Array<{
         text: string;
+        thought?: boolean;
       }>;
       role: string;
     };
@@ -48,7 +49,8 @@ interface GeminiGenerateResponse {
       probability: string;
     }>;
   }>;
-  usageMetadata: {
+  // usageMetadata is absent on some error/empty responses
+  usageMetadata?: {
     promptTokenCount: number;
     candidatesTokenCount: number;
     totalTokenCount: number;
@@ -60,6 +62,7 @@ interface GeminiStreamResponse {
     content: {
       parts: Array<{
         text: string;
+        thought?: boolean;
       }>;
       role: string;
     };
@@ -106,7 +109,8 @@ export class GeminiAdapter extends BaseLlmAdapter {
       temperature: request.temperature ?? this.config.config.defaultTemperature,
       maxOutputTokens: request.maxTokens ?? this.config.config.defaultMaxTokens,
       topP: 0.95,
-      topK: 64,
+      // topK is not supported by Gemini 2.0 Flash, 2.5 Pro, or 2.5 Flash;
+      // omitting it lets the API use its per-model default.
     };
 
     // Disable thinking/reasoning for structured output (e.g., JSON-only responses)
@@ -190,6 +194,7 @@ export class GeminiAdapter extends BaseLlmAdapter {
           candidate.content.parts.length > 0
         ) {
           content = candidate.content.parts
+            .filter((part) => !part.thought)
             .map((part) => part.text || "")
             .join("");
           if (content.trim()) {
@@ -213,7 +218,10 @@ export class GeminiAdapter extends BaseLlmAdapter {
       // Only process content if we haven't already handled it in special cases above
       if (!content) {
         if (candidate.content && candidate.content.parts) {
+          // Filter out thought parts (Gemini 2.5 thinking models include internal
+          // reasoning as thought:true parts; only surface the actual response text)
           content = candidate.content.parts
+            .filter((part) => !part.thought)
             .map((part) => part.text || "")
             .join("");
         } else if (candidate.content && typeof candidate.content === "string") {
@@ -254,14 +262,18 @@ export class GeminiAdapter extends BaseLlmAdapter {
       return {
         content,
         model,
-        promptTokens: data.usageMetadata.promptTokenCount,
-        completionTokens: data.usageMetadata.candidatesTokenCount,
-        totalTokens: data.usageMetadata.totalTokenCount,
+        promptTokens: data.usageMetadata?.promptTokenCount ?? 0,
+        completionTokens: data.usageMetadata?.candidatesTokenCount ?? 0,
+        totalTokens: data.usageMetadata?.totalTokenCount ?? 0,
         finishReason: this.mapFinishReason(candidate.finishReason),
       };
     } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        throw this.createError("Request timeout", "TIMEOUT", 408, true);
+      // AbortSignal.abort() → AbortError; AbortSignal.timeout() → TimeoutError
+      if (
+        error instanceof Error &&
+        (error.name === "AbortError" || error.name === "TimeoutError")
+      ) {
+        throw this.createError("Request timeout", "TIMEOUT", 408, false);
       }
       throw error;
     }
@@ -283,7 +295,7 @@ export class GeminiAdapter extends BaseLlmAdapter {
         maxOutputTokens:
           request.maxTokens ?? this.config.config.defaultMaxTokens,
         topP: 0.95,
-        topK: 64,
+        // topK omitted — not supported by Gemini 2.0/2.5 models
       },
       safetySettings: [
         {
@@ -353,6 +365,7 @@ export class GeminiAdapter extends BaseLlmAdapter {
             if (data.candidates && data.candidates.length > 0) {
               const candidate = data.candidates[0];
               const content = candidate.content.parts
+                .filter((part) => !part.thought)
                 .map((part) => part.text)
                 .join("");
 

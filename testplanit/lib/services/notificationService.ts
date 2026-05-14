@@ -230,6 +230,11 @@ export class NotificationService {
       relatedEntityType: "ShareLink",
       data: {
         shareLinkId,
+        // Persisted in the data payload so the bell-icon UI and the
+        // email worker can compose the localized "X viewed your shared
+        // report: '<title>'" message at render time without falling
+        // back to the English `message` column.
+        shareTitle,
         ...(projectId !== undefined && { projectId }),
         viewerName,
         viewerEmail,

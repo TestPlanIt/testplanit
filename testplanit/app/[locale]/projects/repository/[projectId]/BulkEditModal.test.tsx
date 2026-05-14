@@ -2173,7 +2173,9 @@ describe("BulkEditModal", () => {
 
       // Should show lock icon for restricted field (Steps)
       const stepsLabel = screen.getByText("Steps").closest("label");
-      const lockIcon = within(stepsLabel!).queryByTitle("Restricted Field");
+      const lockIcon = within(stepsLabel!).queryByTitle(
+        "[t]common.aria.restrictedField"
+      );
       expect(lockIcon).toBeInTheDocument();
     });
   });

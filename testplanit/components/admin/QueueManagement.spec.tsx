@@ -232,7 +232,7 @@ describe("QueueManagement", () => {
     });
   });
 
-  test("clicking clean (Trash2) button shows confirmation dialog", async () => {
+  test("clicking clean button opens confirmation dialog", async () => {
     global.fetch = makeSuccessFetch(mockQueues);
     render(<QueueManagement />);
 

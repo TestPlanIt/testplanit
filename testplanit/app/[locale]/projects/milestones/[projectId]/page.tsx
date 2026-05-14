@@ -160,9 +160,7 @@ const ProjectMilestones: React.FC<ProjectMilestonesProps> = ({ params }) => {
             <CardTitle>
               <div className="flex items-center justify-between text-primary text-xl md:text-2xl">
                 <div>
-                  <CardTitle>
-                    {t("common.fields.milestone", { count: 2 })}
-                  </CardTitle>
+                  <CardTitle>{t("common.fields.milestones")}</CardTitle>
                 </div>
                 {canAddEdit && (
                   <div>

@@ -50,7 +50,12 @@ function ProgressToastBody({ job, onDismiss }: ProgressToastBodyProps) {
       </div>
       <Progress value={pct} className="h-1.5" />
       <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
-        <span>{t("runProgressCounter", { done, total: safeTotal })}</span>
+        <span>
+          {t("runProgressCounter", {
+            done: String(done),
+            total: String(safeTotal),
+          })}
+        </span>
         <span>{t("runProgressEta", { minutes })}</span>
       </div>
     </div>

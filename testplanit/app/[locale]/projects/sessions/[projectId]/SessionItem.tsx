@@ -183,7 +183,6 @@ const SessionItem: React.FC<SessionItemProps> = ({
                 jsonString={testSession.note as string}
                 format="text"
                 room={`session-note-${testSession.id}`}
-                expand={false}
               />
             )}
           </div>

@@ -90,6 +90,7 @@ const sidebars: SidebarsConfig = {
               ],
             },
             'user-guide/integrations', // Issue integrations administration page
+            'user-guide/webhooks', // Inbound and outbound webhooks
             {
               type: 'category',
               label: 'AI Models',
@@ -229,6 +230,18 @@ const sidebars: SidebarsConfig = {
         'api-reference', // Add api-reference.md
         'sdk/api-client', // @testplanit/api package
         'sdk/jira-forge-app', // Jira Forge app (Marketplace plugin)
+        {
+          type: 'category',
+          label: 'MCP Server',
+          link: {
+            type: 'doc',
+            id: 'sdk/mcp-overview',
+          },
+          items: [
+            'sdk/mcp-configuration', // Configuration: Claude Desktop + Cursor + token scopes
+            'sdk/mcp-prompts', // Example agent prompts
+          ],
+        },
         {
           type: 'category',
           label: 'WebdriverIO Reporter',

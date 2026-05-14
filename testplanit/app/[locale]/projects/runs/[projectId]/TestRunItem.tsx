@@ -310,7 +310,6 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                   jsonString={testRun.note}
                   format="text"
                   room={`testrun-note-${testRun.id}`}
-                  expand={false}
                 />
               )}
             </div>

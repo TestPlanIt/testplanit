@@ -32,6 +32,7 @@ import {
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import {
   useCreateAppConfig,
   useFindUniqueAppConfig,
@@ -39,7 +40,7 @@ import {
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
-import { getColumns, NotificationHistoryItem } from "./columns";
+import { useColumns, NotificationHistoryItem } from "./columns";
 
 export default function NotificationSettingsPage() {
   return (
@@ -66,6 +67,7 @@ function NotificationSettingsContent() {
     endIndex,
     totalPages,
   } = usePagination();
+  const pageSizeOptions = usePageSizeOptions(totalItems);
 
   const [defaultMode, setDefaultMode] = useState<NotificationMode>("IN_APP");
   const [systemNotificationTitle, setSystemNotificationTitle] = useState("");
@@ -89,10 +91,7 @@ function NotificationSettingsContent() {
     [dateFormat, timezone, timeFormat]
   );
 
-  const columns = useMemo(
-    () => getColumns(userPreferences, t, tCommon),
-    [userPreferences, t, tCommon]
-  );
+  const columns = useColumns(userPreferences, t, tCommon);
 
   const tableData: NotificationHistoryItem[] = useMemo(
     () =>
@@ -459,7 +458,7 @@ function NotificationSettingsContent() {
                     totalRows={totalItems}
                     searchString=""
                     pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                    pageSizeOptions={[10, 25, 50]}
+                    pageSizeOptions={pageSizeOptions}
                     handlePageSizeChange={(size) => setPageSize(size)}
                   />
                   <PaginationComponent

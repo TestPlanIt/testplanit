@@ -192,8 +192,8 @@ describe("CreateIssueDialog", () => {
     render(<CreateIssueDialog {...defaultProps} />);
 
     expect(screen.getByRole("dialog")).toBeTruthy();
-    // Title field label
-    expect(screen.getAllByText("issues").length).toBeGreaterThan(0);
+    // Title field label (common.fields.title → mock returns "title")
+    expect(screen.getAllByText("title").length).toBeGreaterThan(0);
     // Submit button
     const submitButton = screen.getByRole("button", { name: /create/i });
     expect(submitButton).toBeTruthy();
@@ -281,10 +281,19 @@ describe("CreateIssueDialog", () => {
     );
   });
 
-  it("renders priority select field", () => {
+  it("renders priority select field for Jira integrations", () => {
+    mockUseFindManyProjectIntegration.mockReturnValue({
+      data: [
+        {
+          integrationId: 1,
+          isActive: true,
+          integration: { id: 1, name: "My Jira", provider: "JIRA" },
+        },
+      ],
+    });
+
     render(<CreateIssueDialog {...defaultProps} />);
 
-    // Priority select should be rendered
     const selects = screen.getAllByTestId("select");
     expect(selects.length).toBeGreaterThan(0);
   });

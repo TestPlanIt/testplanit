@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { render, screen } from "@testing-library/react";
+import type { AbstractIntlMessages } from "next-intl";
 import { NextIntlClientProvider } from "next-intl";
 import { FormProvider, useForm } from "react-hook-form";
 import { describe, expect, it, vi } from "vitest";
@@ -96,7 +97,10 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <NextIntlClientProvider messages={messages} locale="en-US">
+    <NextIntlClientProvider
+      messages={messages as AbstractIntlMessages}
+      locale="en-US"
+    >
       {children}
     </NextIntlClientProvider>
   );

@@ -2,11 +2,12 @@
 
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
@@ -26,8 +27,6 @@ import { useCountIssue, useFindManyIssue } from "~/lib/hooks";
 import { ExtendedIssue, useIssueColumns } from "./columns";
 import { DeleteIssue } from "./DeleteIssue";
 import { EditIssue } from "./EditIssue";
-
-type PageSizeOption = number | "All";
 
 export default function IssueListPage() {
   return (
@@ -299,24 +298,22 @@ function IssueList() {
     setTotalItems(issuesCount ?? 0);
   }, [issuesCount, setTotalItems]);
 
-  const pageSizeOptions: PageSizeOption[] = useMemo(() => {
-    if (totalItems <= 10) {
-      return ["All"];
-    }
-    const options: PageSizeOption[] = [10, 25, 50, 100, 250].filter(
-      (size) => size < totalItems || totalItems === 0
-    );
-    options.push("All");
-    return options;
-  }, [totalItems]);
+  const pageSizeOptions = usePageSizeOptions(totalItems);
+
+  const prevSearchStringRef = useRef(searchString);
+  const prevPageSizeRef = useRef(pageSize);
 
   // Reset to first page when search changes
   useEffect(() => {
+    if (searchString === prevSearchStringRef.current) return;
+    prevSearchStringRef.current = searchString;
     setCurrentPage(1);
   }, [searchString, setCurrentPage]);
 
   // Reset to first page when page size changes
   useEffect(() => {
+    if (pageSize === prevPageSizeRef.current) return;
+    prevPageSizeRef.current = pageSize;
     setCurrentPage(1);
   }, [pageSize, setCurrentPage]);
 

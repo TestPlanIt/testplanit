@@ -1,32 +1,31 @@
 import path from "path";
-import { fileURLToPath } from "url";
+import type { NextConfig } from "next";
+import type { RemotePattern } from "next/dist/shared/lib/image-config";
 import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin({
-  locales: ["en-US", "es-ES", "fr-FR"],
-  defaultLocale: "en-US",
   requestConfig: "./i18n/request.ts",
-  createMessagesDeclaration: {
-    path: "./messages/en-US.json",
-    makeParamsOptional: true,
+  experimental: {
+    createMessagesDeclaration: "./messages/en-US.json",
   },
 });
 
 // Helper function to extract hostname and port from URL
-const parseUrlForPattern = (url) => {
+const parseUrlForPattern = (url: string) => {
   try {
     const parsed = new URL(url);
-    return {
-      protocol: parsed.protocol.replace(":", ""),
-      hostname: parsed.hostname,
-      port: parsed.port || "",
-    };
+    const protocol = parsed.protocol.replace(":", "") as "http" | "https";
+    return { protocol, hostname: parsed.hostname, port: parsed.port || "" };
   } catch {
     return null;
   }
 };
 
-const addUploadPatternsForUrl = (patterns, url, uploadPaths) => {
+const addUploadPatternsForUrl = (
+  patterns: RemotePattern[],
+  url: string | undefined,
+  uploadPaths: string[]
+) => {
   if (!url) {
     return;
   }
@@ -43,7 +42,7 @@ const addUploadPatternsForUrl = (patterns, url, uploadPaths) => {
 
 // Build dynamic remote patterns based on environment configuration
 const buildDynamicRemotePatterns = () => {
-  const dynamicPatterns = [];
+  const dynamicPatterns: RemotePattern[] = [];
   const bucketName = process.env.AWS_BUCKET_NAME || "testplanit";
 
   const uploadPaths = [
@@ -82,7 +81,7 @@ const buildDynamicRemotePatterns = () => {
   if (baseDomain) {
     uploadPaths.forEach((pathname) => {
       dynamicPatterns.push({
-        protocol: "https",
+        protocol: "https" as const,
         hostname: `*.${baseDomain}`,
         port: "",
         pathname,
@@ -93,8 +92,7 @@ const buildDynamicRemotePatterns = () => {
   return dynamicPatterns;
 };
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: NextConfig = {
   output: "standalone",
   turbopack: {
     resolveAlias: {
@@ -111,10 +109,7 @@ const nextConfig = {
     "jspdf",
     "fflate",
   ],
-  outputFileTracingRoot: path.join(
-    path.dirname(fileURLToPath(import.meta.url)),
-    "../"
-  ),
+  outputFileTracingRoot: path.join(__dirname, "../"),
   experimental: {
     // Limit number of workers to reduce memory usage during build
     workerThreads: false,

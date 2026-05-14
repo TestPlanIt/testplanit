@@ -133,7 +133,7 @@ export class PromptConfigurationsPage extends BasePage {
     const row = this.dataTable.locator("tbody tr", { hasText: name });
     const editButton = row
       .locator(
-        'button:has(svg.lucide-square-pen), button:has(svg[class*="lucide-pencil"]), button:has(svg[class*="edit"])'
+        'button:has(svg.lucide-square-pen), button:has(svg[class*="lucide-edit"]), button:has(svg[class*="edit"])'
       )
       .first();
     await editButton.click();

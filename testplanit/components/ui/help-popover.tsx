@@ -16,6 +16,7 @@ export function HelpPopover({
   tabIndex,
 }: HelpPopoverProps) {
   const tHelp = useTranslations("help");
+  const tCommon = useTranslations("common");
   let contentToShow: string;
 
   // Handle empty or undefined helpKey
@@ -101,7 +102,7 @@ export function HelpPopover({
           type="button"
           className="ml-2 inline-flex"
           tabIndex={tabIndex}
-          aria-label="Help"
+          aria-label={tCommon("aria.help")}
         >
           <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground" />
         </button>

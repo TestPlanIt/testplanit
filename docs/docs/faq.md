@@ -22,7 +22,7 @@ The TestPlanIt Team will be offering a hosted solution for users who do not want
 
 TestPlanIt requires:
 
-- **RAM** 8GB to build/run the whole stack. 16GB recommended
+- **RAM** 24GB to build, 8GB to run the whole stack
 - **Disk** 25GB+ space for data and file attachments
 - **Node.js** 24 or later
 - **PostgreSQL** 14 or later
@@ -83,7 +83,7 @@ Yes, TestPlanIt integrates with various LLM providers including OpenAI, Azure Op
 
 ### Does TestPlanIt support multiple languages?
 
-The TestPlanIt interface supports multiple languages including English, Spanish, and French. Contributions for additional languages are welcome.
+The TestPlanIt interface supports 13 languages: English (US), Deutsch (German), Español (Spanish), Français (French), Italiano (Italian), Nederlands (Dutch), Polski (Polish), Português (Portuguese Brazil), Tiếng Việt (Vietnamese), 中文简体 (Chinese Simplified), 中文繁體 (Chinese Traditional), 日本語 (Japanese), and 한국어 (Korean). Contributions for additional languages are welcome.
 
 ## Administration
 

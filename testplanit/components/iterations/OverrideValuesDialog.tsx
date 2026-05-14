@@ -245,7 +245,7 @@ export function OverrideValuesDialog({
         >
           <DialogHeader>
             <DialogTitle>
-              {t("overrideDialogTitle", { n: rowIndex + 1 })}
+              {t("overrideDialogTitle", { n: String(rowIndex + 1) })}
             </DialogTitle>
             <DialogDescription>
               {t("overrideDialogDescription")}

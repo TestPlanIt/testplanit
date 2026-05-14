@@ -78,7 +78,7 @@ The AI prompt for QuickScript can be customized in **Administration > [Prompt Co
 ### Available Prompt Variables
 
 | Variable | Description |
-|----------|-------------|
+| ---------- | ------------- |
 | `{{FRAMEWORK}}` | Target test framework from the selected template (e.g., Playwright, pytest) |
 | `{{LANGUAGE}}` | Target programming language (e.g., TypeScript, Python) |
 | `{{CASE_NAME}}` | Name of the test case being generated |

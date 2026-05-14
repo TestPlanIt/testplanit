@@ -176,13 +176,13 @@ describe("EditRole", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByLabelText("Select/Deselect All Add/Edit")
+        screen.getByLabelText("common.aria.selectDeselectAllAddEdit")
       ).toBeInTheDocument();
       expect(
-        screen.getByLabelText("Select/Deselect All Delete")
+        screen.getByLabelText("common.aria.selectDeselectAllDelete")
       ).toBeInTheDocument();
       expect(
-        screen.getByLabelText("Select/Deselect All Close")
+        screen.getByLabelText("common.aria.selectDeselectAllClose")
       ).toBeInTheDocument();
     });
   });
@@ -318,9 +318,9 @@ describe("EditRole", () => {
       expect(screen.getByRole("table")).toBeInTheDocument();
     });
 
-    // Click the "Select/Deselect All Add/Edit" header checkbox
+    // Click the "common.aria.selectDeselectAllAddEdit" header checkbox
     const addEditHeaderCheckbox = screen.getByLabelText(
-      "Select/Deselect All Add/Edit"
+      "common.aria.selectDeselectAllAddEdit"
     );
     fireEvent.click(addEditHeaderCheckbox);
 

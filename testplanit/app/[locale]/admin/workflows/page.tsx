@@ -17,7 +17,7 @@ import {
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { performOptimisticReorder } from "~/utils/optimistic-updates";
-import { getColumns } from "./columns";
+import { useColumns } from "./columns";
 
 import { WorkflowDragPreview } from "@/components/dnd/WorkflowDragPreview";
 import { Button } from "@/components/ui/button";
@@ -138,8 +138,6 @@ function WorkflowComponent() {
     }
   }, [status, session, router]);
 
-  if (status === "loading") return null;
-
   const handleToggleEnabled = async (id: number, isEnabled: boolean) => {
     try {
       await updateWorkflows({
@@ -160,6 +158,18 @@ function WorkflowComponent() {
     setSelectedWorkflowScope(scope);
     setIsAlertDialogOpen(true);
   };
+
+  const columns = useColumns(
+    data || [],
+    tWorkflowTypes,
+    tCommon,
+    handleToggleEnabled,
+    handleToggleDefault,
+    setEditingWorkflow,
+    setDeletingWorkflow
+  );
+
+  if (status === "loading") return null;
 
   const handleConfirmToggleDefault = async () => {
     setIsAlertDialogOpen(false);
@@ -194,16 +204,6 @@ function WorkflowComponent() {
       console.error("Failed to update workflow:", error);
     }
   };
-
-  const columns = getColumns(
-    data || [],
-    tWorkflowTypes,
-    tCommon,
-    handleToggleEnabled,
-    handleToggleDefault,
-    setEditingWorkflow,
-    setDeletingWorkflow
-  );
 
   const renderWorkflowCard = (
     workflows: ExtendedWorkflows[],

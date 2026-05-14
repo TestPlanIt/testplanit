@@ -4,10 +4,10 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  defaultPageSizeOptions,
   PaginationProvider,
   usePagination,
 } from "~/lib/contexts/PaginationContext";
+import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 import { useRouter } from "~/lib/navigation";
 
 import { useDebounce } from "@/components/Debounce";
@@ -21,7 +21,7 @@ import {
   useFindManyUser,
   useUpdateProjects,
 } from "~/lib/hooks";
-import { ExtendedProjects, getColumns } from "./columns";
+import { ExtendedProjects, useColumns } from "./columns";
 
 import { CreateProjectWizard } from "@/admin/projects/CreateProjectWizard";
 import { Filter } from "@/components/tables/Filter";
@@ -98,6 +98,7 @@ function ProjectAdmin() {
     endIndex,
     totalPages,
   } = usePagination();
+  const pageSizeOptions = usePageSizeOptions(totalItems);
 
   const [sortConfig, setSortConfig] = useState<{
     column: string;
@@ -388,13 +389,20 @@ function ProjectAdmin() {
     setCurrentPage(1); // Reset to first page when sorting changes
   };
 
+  const prevSearchStringRef = useRef(searchString);
+  const prevPageSizeRef = useRef(pageSize);
+
   // Reset to first page when search changes
   useEffect(() => {
+    if (searchString === prevSearchStringRef.current) return;
+    prevSearchStringRef.current = searchString;
     setCurrentPage(1);
   }, [searchString, setCurrentPage]);
 
   // Reset to first page when page size changes
   useEffect(() => {
+    if (pageSize === prevPageSizeRef.current) return;
+    prevPageSizeRef.current = pageSize;
     setCurrentPage(1);
   }, [pageSize, setCurrentPage]);
 
@@ -422,17 +430,13 @@ function ProjectAdmin() {
     [dateFormat, timezone]
   );
 
-  const columns: CustomColumnDef<ExtendedProjects>[] = useMemo(
-    () =>
-      getColumns(
-        userPreferences,
-        // eslint-disable-next-line react-hooks/refs
-        handleToggleCompleted,
-        handleOpenEditModal,
-        tCommon,
-        setDeletingProject
-      ),
-    [userPreferences, handleToggleCompleted, handleOpenEditModal, tCommon]
+  const columns: CustomColumnDef<ExtendedProjects>[] = useColumns(
+    userPreferences,
+    // eslint-disable-next-line react-hooks/refs
+    handleToggleCompleted,
+    handleOpenEditModal,
+    tCommon,
+    setDeletingProject
   );
 
   useEffect(() => {
@@ -495,7 +499,7 @@ function ProjectAdmin() {
                       totalRows={totalItems}
                       searchString={searchString}
                       pageSize={typeof pageSize === "number" ? pageSize : "All"}
-                      pageSizeOptions={defaultPageSizeOptions}
+                      pageSizeOptions={pageSizeOptions}
                       handlePageSizeChange={(size) => setPageSize(size)}
                     />
                   </div>

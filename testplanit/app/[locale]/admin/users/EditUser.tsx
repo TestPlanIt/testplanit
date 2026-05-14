@@ -372,7 +372,9 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="max-w-md" side="bottom">
-                          {tUserEdit("deleteAvatarConfirm")}
+                          {tUserEdit("deleteAvatarConfirm", {
+                            name: tCommon("fields.avatar"),
+                          })}
                           <div className="flex items-start justify-between gap-4 mt-2">
                             <Button
                               type="button"

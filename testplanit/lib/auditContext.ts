@@ -1,6 +1,12 @@
 import { AsyncLocalStorage } from "async_hooks";
 import type { NextRequest } from "next/server";
 
+// Re-export the client-safe constants so existing server-side imports keep
+// working unchanged. Client/edge code should import from
+// `auditContextConstants` directly to avoid pulling AsyncLocalStorage into
+// browser bundles.
+export { SYSTEM_ACTOR_ID, type SystemActor } from "~/lib/auditContextConstants";
+
 /**
  * Context for audit logging, propagated through the request lifecycle
  * using AsyncLocalStorage to avoid passing context through all functions.
@@ -25,20 +31,22 @@ export interface AuditContext {
    * captureAuditEvent merges it into event.metadata automatically.
    */
   systemReason?: string;
+  /**
+   * tokenScopes — scopes from the authenticating ApiToken, if any.
+   * Empty/undefined for session-authed requests (cookie auth).
+   * Set by enrichFromApiAuth() after token validation in Bearer-authed routes.
+   * Used by captureAuditEvent to derive metadata.source ("mcp" | "api") —
+   * unforgeable by request-time headers because attribution lives with the token.
+   */
+  tokenScopes?: string[];
+  /**
+   * Suppression hatch for backfill scripts and migrations that mutate domain
+   * entities without producing outbound webhook events. webhookEvents.emit()
+   * short-circuits when this flag is true. Audit emission is unaffected.
+   * Defaults to undefined (= no suppression) so existing callers are unchanged.
+   */
+  suppressWebhooks?: boolean;
 }
-
-/**
- * Sentinel userId for audit events that have no originating human actor
- * (scheduled jobs, worker-to-worker fan-outs, infrastructure tasks).
- *
- * Per Phase 64 D-12 / D-13: no schema migration is introduced — this
- * string literal lives in the existing userId column. Queries that
- * exclude system-initiated events use `WHERE "userId" <> '__system__'`.
- */
-export const SYSTEM_ACTOR_ID = "__system__" as const;
-
-/** Type-level alias for code that must branch on system-vs-human actors. */
-export type SystemActor = typeof SYSTEM_ACTOR_ID;
 
 /**
  * AsyncLocalStorage instance for audit context.
@@ -49,18 +57,10 @@ export const auditContextStorage = new AsyncLocalStorage<AuditContext>();
 
 /**
  * Get the current audit context from AsyncLocalStorage.
- * If not in AsyncLocalStorage context, falls back to global context.
  * Returns undefined if not within a request context.
  */
 export function getAuditContext(): AuditContext | undefined {
-  // First try AsyncLocalStorage
-  const stored = auditContextStorage.getStore();
-  if (stored) {
-    return stored;
-  }
-
-  // Fall back to global context (set by API routes)
-  return globalFallbackContext;
+  return auditContextStorage.getStore();
 }
 
 /**
@@ -80,37 +80,6 @@ export function updateAuditContext(updates: Partial<AuditContext>): void {
   if (current) {
     Object.assign(current, updates);
   }
-}
-
-/**
- * Global fallback context for when AsyncLocalStorage is not available.
- * This is used in API routes where we can't wrap the entire request
- * in a runWithAuditContext call.
- * Note: This is a simple fallback and may not be perfectly isolated
- * across concurrent requests, but provides basic context for audit logs.
- */
-let globalFallbackContext: AuditContext | undefined;
-
-/**
- * Set the audit context directly (fallback for when AsyncLocalStorage isn't available).
- * Used in API routes that can't use runWithAuditContext.
- */
-export function setAuditContext(context: AuditContext): void {
-  // First try to update existing AsyncLocalStorage context
-  const current = auditContextStorage.getStore();
-  if (current) {
-    Object.assign(current, context);
-  } else {
-    // Fall back to global context for API routes
-    globalFallbackContext = context;
-  }
-}
-
-/**
- * Get the fallback context when AsyncLocalStorage context is not available.
- */
-export function getFallbackContext(): AuditContext | undefined {
-  return globalFallbackContext;
 }
 
 /**

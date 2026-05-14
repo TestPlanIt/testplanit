@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { ChevronLast, ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Link } from "~/lib/navigation";
 
 interface Version {
@@ -25,8 +26,9 @@ export function VersionNavigation({
   onPrevVersion,
   onNextVersion,
   backHref,
-  backTitle = "Back",
+  backTitle,
 }: VersionNavigationProps) {
+  const tCommon = useTranslations("common");
   if (!versions || versions.length <= 1) return null;
 
   return (
@@ -39,7 +41,7 @@ export function VersionNavigation({
           currentVersionIndex === undefined ||
           currentVersionIndex >= versions.length - 1
         }
-        title="Older Version"
+        title={tCommon("aria.olderVersion")}
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -48,7 +50,7 @@ export function VersionNavigation({
         size="icon"
         onClick={onPrevVersion}
         disabled={currentVersionIndex === undefined || currentVersionIndex <= 0}
-        title="Newer Version"
+        title={tCommon("aria.newerVersion")}
       >
         <ChevronRight className="h-4 w-4" />
       </Button>

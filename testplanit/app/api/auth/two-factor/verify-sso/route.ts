@@ -24,7 +24,10 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
     if (!token) {
       return NextResponse.json(
-        { error: "Verification code is required" },
+        {
+          errorCode: "auth.errors.verificationCodeRequired",
+          error: "Verification code is required",
+        },
         { status: 400 }
       );
     }

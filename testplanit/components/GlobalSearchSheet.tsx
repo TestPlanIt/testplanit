@@ -85,7 +85,7 @@ export function GlobalSearchSheet({ isOpen, onClose }: GlobalSearchSheetProps) {
                 <button
                   type="button"
                   className="ml-2 inline-flex"
-                  aria-label="Help"
+                  aria-label={t("common.aria.help")}
                 >
                   <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground" />
                 </button>

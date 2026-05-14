@@ -35,7 +35,7 @@ The Roles page displays a table listing all defined roles (excluding those marke
 ## Editing an Existing Role
 
 1. Locate the Role you wish to modify in the table.
-2. Click the **Edit** (pencil) icon in the **Actions** column.
+2. Click the **Edit** icon in the **Actions** column.
 3. A modal dialog will appear. You can modify:
     - **Name**: Change the name of the Role.
     - **Default**: Change the default status (cannot be unset directly if it is the current default; set another role as default instead).
@@ -50,7 +50,7 @@ You cannot delete the **Default** Role. To delete the current default, you must 
 :::
 
 1. Locate the Role you wish to remove in the table.
-2. Click the **Delete** (trash can) icon in the **Actions** column. The button will be disabled if the role is the default.
+2. Click the **Delete** icon in the **Actions** column. The button will be disabled if the role is the default.
 3. A confirmation dialog will appear, warning that users will be reassigned to the default role.
 4. Click **Confirm Delete** to confirm.
 

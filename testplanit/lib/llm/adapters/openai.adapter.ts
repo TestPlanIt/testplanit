@@ -117,8 +117,11 @@ export class OpenAIAdapter extends BaseLlmAdapter {
         finishReason: this.mapFinishReason(data.choices[0].finish_reason),
       };
     } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        throw this.createError("Request timeout", "TIMEOUT", 408, true);
+      if (
+        error instanceof Error &&
+        (error.name === "AbortError" || error.name === "TimeoutError")
+      ) {
+        throw this.createError("Request timeout", "TIMEOUT", 408, false);
       }
       throw error;
     }

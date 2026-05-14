@@ -64,7 +64,10 @@ export function IterationSidebarGeneratingState({
       <p className="text-sm font-medium">{t("runGeneratingHeading")}</p>
       <Progress value={pct} className="h-1.5 w-full max-w-xs" />
       <p className="text-xs text-muted-foreground tabular-nums">
-        {t("runProgressCounter", { done, total: safeTotal })}
+        {t("runProgressCounter", {
+          done: String(done),
+          total: String(safeTotal),
+        })}
       </p>
       <p className="text-xs text-muted-foreground">{t("runGeneratingHelper")}</p>
       <Button

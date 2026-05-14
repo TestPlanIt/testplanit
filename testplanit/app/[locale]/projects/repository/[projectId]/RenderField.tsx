@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Asterisk, LockIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import { Control } from "react-hook-form";
@@ -49,6 +50,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
   parameters,
   onOpenParametersSheet,
 }) => {
+  const tCommon = useTranslations("common");
   const defaultOption = field.caseField.fieldOptions?.find(
     (option: any) => option.fieldOption.isDefault
   );
@@ -163,7 +165,9 @@ const RenderField: React.FC<RenderFieldProps> = ({
               disabled={isDisabled}
             >
               <SelectTrigger className="w-fit">
-                <SelectValue placeholder="Select an option" />
+                <SelectValue
+                  placeholder={tCommon("placeholders.selectOption")}
+                />
               </SelectTrigger>
               <SelectContent>
                 {(field.caseField.fieldOptions ?? [])
@@ -359,7 +363,7 @@ const RenderField: React.FC<RenderFieldProps> = ({
             )}
             {isFieldRestricted && (
               <span
-                title="Restricted Field"
+                title={tCommon("aria.restrictedField")}
                 className="ml-1 text-muted-foreground"
               >
                 <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />

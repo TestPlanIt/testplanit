@@ -69,4 +69,8 @@ testplanit/backups/*
 demo/
 .planning/**
 
-.idea/
+# Local-only planning artifacts — scoping notes / audit reports that
+# stay on the author's machine alongside `.planning/`.
+.localization-audit*
+
+.idea/testplanit/prisma/seedMcpDemo.ts

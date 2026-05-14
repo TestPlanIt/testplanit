@@ -80,10 +80,6 @@ const SENSITIVE_FIELDS = new Set([
   "token",
   "emailVerifToken",
   "credentials",
-  // 2FA secrets — encrypted TOTP and hashed backup codes must never surface
-  // in audit payloads. user.update goes through the unenhanced baseClient
-  // where @omit does not apply, so the allowlist is the only defense.
-  // (REVIEW CR-01, Phase 62.)
   "twoFactorSecret",
   "twoFactorBackupCodes",
 ]);
@@ -94,7 +90,7 @@ const SENSITIVE_FIELDS = new Set([
  * `"fieldName":"value"` (JSON form) and `fieldName=value` (query-string/kv form)
  * and replaces the value with `[REDACTED]`.
  *
- * Defense-in-depth against the Phase 62 CR-01 class of bug: if an upstream
+ * Defense-in-depth against the class of bug: if an upstream
  * library serializes a job payload containing 2FA secrets, passwords, or
  * tokens into an error message, running the message through this helper
  * before logging prevents those values from hitting the log aggregator.
@@ -261,26 +257,37 @@ export async function captureAuditEvent(event: AuditEvent): Promise<void> {
   }
 
   const context = getAuditContext() || null;
-
-  // Phase 64 W5 Option A: merge systemReason from ALS into event.metadata.
-  // When a job was enqueued with `{ systemReason: "scheduled:..." }`, the
-  // enqueue helper embeds it in actorContext. Worker bodies re-establish
-  // the ALS frame via `runWithAuditContext(job.data.actorContext, ...)`,
-  // so it flows here as context.systemReason. Merging into event.metadata
-  // ensures the persisted AuditLog row surfaces the reason for downstream
-  // filtering/reporting (and makes D-17 `expectAuditRowComplete(row,
-  // { allowSystem: true })` pass). Caller-explicit event.metadata.systemReason
-  // wins over ALS to preserve intent when both are present.
   const existingMetadata = event.metadata;
   const alsSystemReason = context?.systemReason;
-  const mergedMetadata: Record<string, unknown> | undefined = alsSystemReason
-    ? {
-        ...(existingMetadata ?? {}),
-        systemReason:
-          (existingMetadata?.systemReason as string | undefined) ??
-          alsSystemReason,
-      }
-    : existingMetadata;
+  // Phase 5 (TOK-01 / SRV-06 / T-05-03): derive metadata.source from the
+  // authenticating token's scopes. The value lives on the ALS frame
+  // (set by enrichFromApiAuth) and is unforgeable by request-time headers.
+  // Bearer-with-MCP-scope -> "mcp"; any other Bearer -> "api"; no token
+  // (session auth) or empty scopes -> undefined. Caller-explicit
+  // event.metadata.source wins over derived value to preserve intent
+  // for hand-stamped sources like "import".
+  const derivedSource: "mcp" | "api" | undefined =
+    context?.tokenScopes && context.tokenScopes.length > 0
+      ? context.tokenScopes.includes("client:mcp")
+        ? "mcp"
+        : "api"
+      : undefined;
+  const mergedMetadata: Record<string, unknown> | undefined =
+    alsSystemReason || derivedSource
+      ? {
+          ...(existingMetadata ?? {}),
+          ...(alsSystemReason
+            ? {
+                systemReason:
+                  (existingMetadata?.systemReason as string | undefined) ??
+                  alsSystemReason,
+              }
+            : {}),
+          ...(derivedSource && existingMetadata?.source === undefined
+            ? { source: derivedSource }
+            : {}),
+        }
+      : existingMetadata;
   const eventWithMergedMetadata: AuditEvent =
     mergedMetadata === existingMetadata
       ? event

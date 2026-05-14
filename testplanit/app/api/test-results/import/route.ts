@@ -135,9 +135,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       );
     }
     userId = apiAuth.userId;
-    // Phase 64 B1: NextAuth session callback doesn't fire for Bearer-authed
-    // requests — enrich ALS with resolved identity so downstream audit
-    // emissions carry complete user context.
+
     if (apiAuth.userId) {
       enrichFromApiAuth({ userId: apiAuth.userId });
     }

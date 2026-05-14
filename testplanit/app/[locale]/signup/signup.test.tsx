@@ -250,6 +250,25 @@ describe("Signup Page", () => {
     });
   });
 
+  it("shows disabled message and hides description when registration is disabled", async () => {
+    mockUseFindFirstRegistrationSettings.mockReturnValue({
+      data: { allowOpenRegistration: false },
+      isLoading: false,
+    });
+
+    render(<Signup />);
+    await waitForFormToRender();
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("registration-disabled-message")
+      ).toBeInTheDocument();
+    });
+
+    // Form fields should not be present
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+  });
+
   it("redirects to home on successful signup", async () => {
     const user = userEvent.setup();
     setupFetchMock({ status: 201 });

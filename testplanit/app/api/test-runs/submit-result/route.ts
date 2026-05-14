@@ -14,6 +14,7 @@ import {
   type RollupStatus,
 } from "~/lib/services/iterationRollup";
 import { authOptions } from "~/server/auth";
+import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 
 const submitResultSchema = z.object({
   testRunId: z.number().int().positive(),
@@ -290,11 +291,16 @@ export async function POST(req: NextRequest) {
       select: {
         id: true,
         assignedToId: true,
+        repositoryCaseId: true,
+        repositoryCase: {
+          select: { automated: true },
+        },
         testRun: {
           select: {
             id: true,
             projectId: true,
             createdById: true,
+            testRunType: true,
             project: {
               select: {
                 createdBy: true,
@@ -422,6 +428,10 @@ export async function POST(req: NextRequest) {
     const viewerCanReadSensitive: boolean = input.iterationId
       ? await resolveCanReadSensitive(authenticatedUserId)
       : false;
+
+    const isAutomatedRun = runCase.testRun.testRunType !== "REGULAR";
+    const needsAutomatedFlip =
+      isAutomatedRun && !runCase.repositoryCase.automated;
 
     // Audit-event payload assembled inside the transaction (so it has the
     // iteration row + snapshot params), enqueued AFTER commit. Audit
@@ -601,6 +611,13 @@ export async function POST(req: NextRequest) {
         });
       }
 
+      if (needsAutomatedFlip) {
+        await tx.repositoryCases.update({
+          where: { id: runCase.repositoryCaseId },
+          data: { automated: true },
+        });
+      }
+
       if (input.inProgressStateId) {
         const previousResult = await tx.testRunResults.findFirst({
           where: {
@@ -654,6 +671,16 @@ export async function POST(req: NextRequest) {
       }).catch(() => {
         // Audit is best-effort — never block the API response on it.
       });
+    }
+
+    if (needsAutomatedFlip) {
+      void syncRepositoryCaseToElasticsearch(runCase.repositoryCaseId).catch(
+        (err) =>
+          console.error(
+            `ES sync failed after automated flag update for case ${runCase.repositoryCaseId}:`,
+            err
+          )
+      );
     }
 
     return NextResponse.json({ result });

@@ -994,6 +994,12 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'project',
+                }, webhookOutboxEvents: {
+                    name: "webhookOutboxEvents",
+                    type: "WebhookOutboxEvent",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'project',
                 }, projectLlmIntegrations: {
                     name: "projectLlmIntegrations",
                     type: "ProjectLlmIntegration",
@@ -7225,10 +7231,43 @@ const metadata: ModelMeta = {
                     name: "isActive",
                     type: "Boolean",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": true }] }],
+                }, subscribedEvents: {
+                    name: "subscribedEvents",
+                    type: "String",
+                    isArray: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": [] }] }],
+                }, endpointHealth: {
+                    name: "endpointHealth",
+                    type: "EndpointHealth",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, url: {
+                    name: "url",
+                    type: "String",
+                    isOptional: true,
+                }, name: {
+                    name: "name",
+                    type: "String",
+                    isOptional: true,
                 }, lastReceivedAt: {
                     name: "lastReceivedAt",
                     type: "DateTime",
                     isOptional: true,
+                }, lastDispatchedAt: {
+                    name: "lastDispatchedAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, lastSuccessAt: {
+                    name: "lastSuccessAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, lastFailureAt: {
+                    name: "lastFailureAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, consecutiveFailureCount: {
+                    name: "consecutiveFailureCount",
+                    type: "Int",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": 0 }] }],
                 }, createdAt: {
                     name: "createdAt",
                     type: "DateTime",
@@ -7249,6 +7288,12 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'webhookConfig',
+                }, secrets: {
+                    name: "secrets",
+                    type: "WebhookConfigSecret",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'webhookConfig',
                 },
             }, uniqueConstraints: {
                 id: {
@@ -7257,9 +7302,6 @@ const metadata: ModelMeta = {
                 }, token: {
                     name: "token",
                     fields: ["token"]
-                }, projectId_adapterType_direction: {
-                    name: "projectId_adapterType_direction",
-                    fields: ["projectId", "adapterType", "direction"]
                 },
             },
         },
@@ -7273,15 +7315,17 @@ const metadata: ModelMeta = {
                 }, webhookConfigId: {
                     name: "webhookConfigId",
                     type: "String",
+                    isOptional: true,
                     isForeignKey: true,
                     relationField: 'webhookConfig',
                 }, webhookConfig: {
                     name: "webhookConfig",
                     type: "WebhookConfig",
                     isDataModel: true,
+                    isOptional: true,
                     backLink: 'deliveries',
                     isRelationOwner: true,
-                    onDeleteAction: 'Cascade',
+                    onDeleteAction: 'SetNull',
                     foreignKeyMapping: { "id": "webhookConfigId" },
                 }, direction: {
                     name: "direction",
@@ -7291,6 +7335,10 @@ const metadata: ModelMeta = {
                     type: "AdapterType",
                 }, eventType: {
                     name: "eventType",
+                    type: "String",
+                    isOptional: true,
+                }, eventId: {
+                    name: "eventId",
                     type: "String",
                     isOptional: true,
                 }, statusCode: {
@@ -7312,6 +7360,27 @@ const metadata: ModelMeta = {
                     name: "attempt",
                     type: "Int",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": 1 }] }],
+                }, replayedFromDeliveryId: {
+                    name: "replayedFromDeliveryId",
+                    type: "String",
+                    isOptional: true,
+                    isForeignKey: true,
+                    relationField: 'replayedFrom',
+                }, replayedFrom: {
+                    name: "replayedFrom",
+                    type: "WebhookDelivery",
+                    isDataModel: true,
+                    isOptional: true,
+                    backLink: 'replays',
+                    isRelationOwner: true,
+                    onDeleteAction: 'SetNull',
+                    foreignKeyMapping: { "id": "replayedFromDeliveryId" },
+                }, replays: {
+                    name: "replays",
+                    type: "WebhookDelivery",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'replayedFrom',
                 }, receivedAt: {
                     name: "receivedAt",
                     type: "DateTime",
@@ -7359,6 +7428,109 @@ const metadata: ModelMeta = {
                 }, webhookConfigId_payloadDigest: {
                     name: "webhookConfigId_payloadDigest",
                     fields: ["webhookConfigId", "payloadDigest"]
+                },
+            },
+        },
+        webhookConfigSecret: {
+            name: 'WebhookConfigSecret', fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    isId: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, webhookConfigId: {
+                    name: "webhookConfigId",
+                    type: "String",
+                    isForeignKey: true,
+                    relationField: 'webhookConfig',
+                }, webhookConfig: {
+                    name: "webhookConfig",
+                    type: "WebhookConfig",
+                    isDataModel: true,
+                    backLink: 'secrets',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "webhookConfigId" },
+                }, secret: {
+                    name: "secret",
+                    type: "String",
+                }, activatedAt: {
+                    name: "activatedAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, retiredAt: {
+                    name: "retiredAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, autoRetireAt: {
+                    name: "autoRetireAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, createdAt: {
+                    name: "createdAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                },
+            }, uniqueConstraints: {
+                id: {
+                    name: "id",
+                    fields: ["id"]
+                },
+            },
+        },
+        webhookOutboxEvent: {
+            name: 'WebhookOutboxEvent', fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    isId: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, projectId: {
+                    name: "projectId",
+                    type: "Int",
+                    isForeignKey: true,
+                    relationField: 'project',
+                }, project: {
+                    name: "project",
+                    type: "Projects",
+                    isDataModel: true,
+                    backLink: 'webhookOutboxEvents',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "projectId" },
+                }, eventName: {
+                    name: "eventName",
+                    type: "String",
+                }, eventId: {
+                    name: "eventId",
+                    type: "String",
+                }, eventTimestamp: {
+                    name: "eventTimestamp",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, actorUserId: {
+                    name: "actorUserId",
+                    type: "String",
+                    isOptional: true,
+                }, payload: {
+                    name: "payload",
+                    type: "Json",
+                }, dispatchedAt: {
+                    name: "dispatchedAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, createdAt: {
+                    name: "createdAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                },
+            }, uniqueConstraints: {
+                id: {
+                    name: "id",
+                    fields: ["id"]
+                }, eventId: {
+                    name: "eventId",
+                    fields: ["eventId"]
                 },
             },
         },
@@ -8875,7 +9047,7 @@ const metadata: ModelMeta = {
         user: ['Account', 'PasswordHistory', 'UserPreferences', 'ApiToken', 'GroupAssignment', 'UserIntegrationAuth', 'UserProjectPermission', 'Notification', 'ShareLink', 'CommentMention'],
         groups: ['GroupAssignment', 'GroupProjectPermission'],
         roles: ['RolePermission'],
-        projects: ['ProjectAssignment', 'ProjectStatusAssignment', 'ProjectWorkflowAssignment', 'Milestones', 'MilestoneTypesAssignment', 'TemplateProjectAssignment', 'CaseExportTemplateProjectAssignment', 'Repositories', 'RepositoryFolders', 'DuplicateScanResult', 'StepSequenceMatch', 'RepositoryCases', 'RepositoryCaseVersions', 'Sessions', 'SessionVersions', 'TestRuns', 'Issue', 'ProjectCodeRepositoryConfig', 'ProjectLlmIntegration', 'UserProjectPermission', 'GroupProjectPermission', 'SharedStepGroup', 'DataSet', 'ShareLink', 'ProjectIntegration', 'WebhookConfig', 'LlmFeatureConfig', 'LlmResponseCache', 'Comment'],
+        projects: ['ProjectAssignment', 'ProjectStatusAssignment', 'ProjectWorkflowAssignment', 'Milestones', 'MilestoneTypesAssignment', 'TemplateProjectAssignment', 'CaseExportTemplateProjectAssignment', 'Repositories', 'RepositoryFolders', 'DuplicateScanResult', 'StepSequenceMatch', 'RepositoryCases', 'RepositoryCaseVersions', 'Sessions', 'SessionVersions', 'TestRuns', 'Issue', 'ProjectCodeRepositoryConfig', 'ProjectLlmIntegration', 'UserProjectPermission', 'GroupProjectPermission', 'SharedStepGroup', 'DataSet', 'ShareLink', 'ProjectIntegration', 'WebhookConfig', 'WebhookOutboxEvent', 'LlmFeatureConfig', 'LlmResponseCache', 'Comment'],
         milestones: ['Comment'],
         caseFields: ['TemplateCaseAssignment', 'CaseFieldAssignment', 'CaseFieldValues', 'SessionFieldValues'],
         resultFields: ['TemplateResultAssignment', 'ResultFieldAssignment', 'ResultFieldValues'],
@@ -8905,7 +9077,7 @@ const metadata: ModelMeta = {
         dataSet: ['DataSetRow'],
         shareLink: ['ShareLinkAccessLog'],
         projectIntegration: ['IntegrationProject'],
-        webhookConfig: ['WebhookDelivery', 'WebhookEventDedup'],
+        webhookConfig: ['WebhookEventDedup', 'WebhookConfigSecret'],
         promptConfig: ['PromptConfigPrompt'],
         ssoProvider: ['SamlConfiguration'],
         testmoImportJob: ['TestmoImportDataset'],

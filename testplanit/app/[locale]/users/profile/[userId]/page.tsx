@@ -72,6 +72,7 @@ import { use, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { useFindFirstUser, useFindUniqueAppConfig } from "~/lib/hooks";
+import { languageNames } from "~/i18n/navigation";
 import { useRouter } from "~/lib/navigation";
 import { ApiTokenSettings } from "./ApiTokenSettings";
 import { ChangePasswordModal } from "./ChangePasswordModal";
@@ -358,18 +359,8 @@ const UserProfile: React.FC<UserProfileProps> = ({
     }
   };
 
-  const getLocaleLabel = (locale: Locale) => {
-    switch (locale) {
-      case "en_US":
-        return "English (US)";
-      case "es_ES":
-        return "Español (ES)";
-      case "fr_FR":
-        return "Français (France)";
-      default:
-        return locale;
-    }
-  };
+  const getLocaleLabel = (locale: Locale) =>
+    languageNames[locale.replace("_", "-")] ?? locale;
 
   const getThemeIcon = (themeName: Theme) => {
     switch (themeName) {

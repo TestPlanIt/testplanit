@@ -75,7 +75,7 @@ Comments are displayed in chronological order (oldest first) in the Comments sec
 
 You can edit your own comments:
 
-1. Click the **Edit** button (pencil icon) on your comment
+1. Click the **Edit** button on your comment
 2. The comment editor opens with the existing content
 3. Make your changes
 4. Click **Save** to update the comment
@@ -91,7 +91,7 @@ You can edit your own comments:
 
 You can delete your own comments:
 
-1. Click the **Delete** button (trash icon) on your comment
+1. Click the **Delete** button on your comment
 2. Confirm the deletion in the dialog
 3. The comment is removed from the thread
 
@@ -118,6 +118,10 @@ When you're mentioned in a comment:
    - The comment content preview
    - Which item was commented on (test case, run, session, or milestone)
    - A direct link to the comment
+
+#### Mentions in Projects You Cannot Access
+
+If someone mentions you in a comment on a project you do not have access to, you still receive a notification, but the message is redacted to protect the project's contents. The notification tells you who mentioned you and which project the comment is in, but does not name the specific item or include a clickable link. To gain access, contact a project admin.
 
 ### Notification Settings
 

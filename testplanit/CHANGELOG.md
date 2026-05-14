@@ -1,3 +1,251 @@
+## [0.27.7](https://github.com/TestPlanIt/testplanit/compare/v0.27.6...v0.27.7) (2026-05-13)
+
+### Enhancements
+
+* **audit:** harden audit-context plumbing ([#312](https://github.com/TestPlanIt/testplanit/issues/312)) ([b5be42d](https://github.com/TestPlanIt/testplanit/commit/b5be42d04052078343441b516098ced790f53ab6))
+
+## [0.27.6](https://github.com/TestPlanIt/testplanit/compare/v0.27.5...v0.27.6) (2026-05-13)
+
+### Bug Fixes
+
+* address CodeQL quality findings and bump dependencies ([#311](https://github.com/TestPlanIt/testplanit/issues/311)) ([3bcc423](https://github.com/TestPlanIt/testplanit/commit/3bcc4239c20938e5da8412f0ba3f82b967859127))
+* **ci:** pull --rebase before pushing in Crowdin sync workflow ([#307](https://github.com/TestPlanIt/testplanit/issues/307)) ([f587a60](https://github.com/TestPlanIt/testplanit/commit/f587a6082432cbfca9eda50f51f49e8f90446fca))
+* **ci:** use RELEASE_PLEASE_TOKEN in Crowdin sync to bypass branch protection ([#310](https://github.com/TestPlanIt/testplanit/issues/310)) ([62b896b](https://github.com/TestPlanIt/testplanit/commit/62b896befd30c17d8c547934e05d0708f2175dcb))
+* **tests:** add useExecutionLogColumns mock to ReportRenderer test ([#308](https://github.com/TestPlanIt/testplanit/issues/308)) ([1d9881f](https://github.com/TestPlanIt/testplanit/commit/1d9881ffbcf0707e927d6ab9494dbc2aa2a6f9a4))
+
+## [0.27.5](https://github.com/TestPlanIt/testplanit/compare/v0.27.4...v0.27.5) (2026-05-13)
+
+### Enhancements
+
+* **reports:** add Execution Log pre-built report ([6631cad](https://github.com/TestPlanIt/testplanit/commit/6631cad42970cb7b53234066a3eb9c6089b1f19f))
+
+## [0.27.4](https://github.com/TestPlanIt/testplanit/compare/v0.27.3...v0.27.4) (2026-05-13)
+
+### Bug Fixes
+
+* **i18n:** fix TypeScript type errors in next-intl interpolation calls ([08a0c9c](https://github.com/TestPlanIt/testplanit/commit/08a0c9cf7191a530feedd8db927970a1d95c9973))
+
+## [0.27.3](https://github.com/TestPlanIt/testplanit/compare/v0.27.2...v0.27.3) (2026-05-13)
+
+### Bug Fixes
+
+* **i18n:** add missing interpolation placeholders to admin delete dialogs ([f15049b](https://github.com/TestPlanIt/testplanit/commit/f15049b2c26eeb3b184a15844c76a82c3895024f))
+
+## [0.27.2](https://github.com/TestPlanIt/testplanit/compare/v0.27.1...v0.27.2) (2026-05-13)
+
+### Bug Fixes
+
+* **i18n:** ensure count is a string in confirmation dialog description ([a7c4d30](https://github.com/TestPlanIt/testplanit/commit/a7c4d30c7691ef54d3817c6c4ebea096cd6fd224))
+
+## [0.27.1](https://github.com/TestPlanIt/testplanit/compare/v0.27.0...v0.27.1) (2026-05-12)
+
+### Bug Fixes
+
+* **i18n:** add confirmation dialog description for combinations in multiple languages ([ca6d785](https://github.com/TestPlanIt/testplanit/commit/ca6d7850906d515304ab845361cad5d8842bc171))
+
+## [0.27.0](https://github.com/TestPlanIt/testplanit/compare/v0.26.2...v0.27.0) (2026-05-12)
+
+### Features
+
+* **i18n:** add localization support for 13 languages ([#305](https://github.com/TestPlanIt/testplanit/issues/305)) ([b739945](https://github.com/TestPlanIt/testplanit/commit/b739945e642c7bbe397ba253197ee1c79de997cc))
+
+## [0.26.2](https://github.com/TestPlanIt/testplanit/compare/v0.26.1...v0.26.2) (2026-05-12)
+
+### Bug Fixes
+
+* apply prettier formatting after CodeQL fix ([476cbb2](https://github.com/TestPlanIt/testplanit/commit/476cbb22839e003cc9e11f069d04803591394bec))
+
+## [0.26.1](https://github.com/TestPlanIt/testplanit/compare/v0.26.0...v0.26.1) (2026-05-12)
+
+### Bug Fixes
+
+* disable generate button with no folders; two-phase test case generation to avoid timeouts ([#304](https://github.com/TestPlanIt/testplanit/issues/304)) ([8b9f897](https://github.com/TestPlanIt/testplanit/commit/8b9f897c7ffbe34d8d7b80b9a7ee19ba1ec2fbff))
+
+## [0.26.0](https://github.com/TestPlanIt/testplanit/compare/v0.25.1...v0.26.0) (2026-05-11)
+
+### Features
+
+* add GitLab and Gitea/Forgejo/Gogs issue tracker integrations ([#296](https://github.com/TestPlanIt/testplanit/issues/296)) ([5bbf277](https://github.com/TestPlanIt/testplanit/commit/5bbf277ef24fed47a492647a3b33e201aafe6fa1)), closes [namespace/project#iid](https://github.com/namespace/project/issues/iid) [owner/repo#number](https://github.com/owner/repo/issues/number) [group/project#42](https://github.com/group/project/issues/42)
+
+## [0.25.1](https://github.com/TestPlanIt/testplanit/compare/v0.25.0...v0.25.1) (2026-05-11)
+
+### Bug Fixes
+
+* **ci:** run prisma generate before mcp-server build in packages-release ([#300](https://github.com/TestPlanIt/testplanit/issues/300)) ([f1c4acb](https://github.com/TestPlanIt/testplanit/commit/f1c4acb2835cffb19b335592f5f658cff50d695e))
+* correct MCP server docs link in upgrade notification ([#303](https://github.com/TestPlanIt/testplanit/issues/303)) ([7cddd71](https://github.com/TestPlanIt/testplanit/commit/7cddd71f45491db8aa34aec02b9844b168be12c5))
+* correct repository.url casing in package.json files ([#302](https://github.com/TestPlanIt/testplanit/issues/302)) ([5f4db71](https://github.com/TestPlanIt/testplanit/commit/5f4db714195fee24ae0ff71cc8933b19d87f32cd))
+* make TESTPLANIT_API_URL optional with SaaS default ([#297](https://github.com/TestPlanIt/testplanit/issues/297)) ([d38432b](https://github.com/TestPlanIt/testplanit/commit/d38432b42af7e0025f90a5f1e906c394a10f0dcb))
+* **mcp-server:** remove @prisma/client import to fix CI build ([#298](https://github.com/TestPlanIt/testplanit/issues/298)) ([4c0c9a2](https://github.com/TestPlanIt/testplanit/commit/4c0c9a21afde5a57437f50120dab4f1349fc5fcf))
+* **mcp-server:** run prisma generate in packages-release workflow ([#299](https://github.com/TestPlanIt/testplanit/issues/299)) ([d3980d7](https://github.com/TestPlanIt/testplanit/commit/d3980d77d4ebb3d7cf327578a87b2939a18e08e8))
+
+## [0.25.0](https://github.com/TestPlanIt/testplanit/compare/v0.24.24...v0.25.0) (2026-05-11)
+
+### Features
+
+* **mcp:** TestPlanIt MCP Server ([1d711b2](https://github.com/TestPlanIt/testplanit/commit/1d711b20982bf44f2447be0bf812c86c363e2e79))
+
+## [0.24.24](https://github.com/TestPlanIt/testplanit/compare/v0.24.23...v0.24.24) (2026-05-11)
+
+### Enhancements
+
+* add self-registration toggle for admins ([#295](https://github.com/TestPlanIt/testplanit/issues/295)) ([68d6cf8](https://github.com/TestPlanIt/testplanit/commit/68d6cf80c4aef61608374e576386e051e7f20711))
+
+## [0.24.23](https://github.com/TestPlanIt/testplanit/compare/v0.24.22...v0.24.23) (2026-05-10)
+
+### Bug Fixes
+
+* preserve URL page number on initial load + pin next-intl to 4.9.1 ([#294](https://github.com/TestPlanIt/testplanit/issues/294)) ([cf3d0fa](https://github.com/TestPlanIt/testplanit/commit/cf3d0fae6c0bc5835968d1685e0e44e66bb4a22e))
+
+## [0.24.22](https://github.com/TestPlanIt/testplanit/compare/v0.24.21...v0.24.22) (2026-05-10)
+
+### Bug Fixes
+
+* stabilize column hooks to prevent Jira popover flicker and broken checkboxes ([#293](https://github.com/TestPlanIt/testplanit/issues/293)) ([0542d4b](https://github.com/TestPlanIt/testplanit/commit/0542d4be6c6bd28ba2701c7c0a7051e7bf24fb6c))
+
+## [0.24.21](https://github.com/TestPlanIt/testplanit/compare/v0.24.20...v0.24.21) (2026-05-09)
+
+### Bug Fixes
+
+* webhook audit tenantId + summary sort toggle ([#292](https://github.com/TestPlanIt/testplanit/issues/292)) ([fe9f1ec](https://github.com/TestPlanIt/testplanit/commit/fe9f1ec8132cf80173462fcb72a8e6bff7809759))
+
+## [0.24.20](https://github.com/TestPlanIt/testplanit/compare/v0.24.19...v0.24.20) (2026-05-09)
+
+### Bug Fixes
+
+* **docs:** pin pnpm to v10 in Dockerfile to match lockfile format ([4847551](https://github.com/TestPlanIt/testplanit/commit/48475516bfc56d0e635c6435df7165c6a3cc04d6))
+* search access for non-direct project members + automated flag promotion on result submission ([#291](https://github.com/TestPlanIt/testplanit/issues/291)) ([7981f6e](https://github.com/TestPlanIt/testplanit/commit/7981f6e416ddf385d45776611f8499872ffefd54))
+
+## [0.24.19](https://github.com/TestPlanIt/testplanit/compare/v0.24.18...v0.24.19) (2026-05-08)
+
+### Enhancements
+
+* **copy/move:** Enhancement/copy move in same project ([#290](https://github.com/TestPlanIt/testplanit/issues/290)) ([bac7c18](https://github.com/TestPlanIt/testplanit/commit/bac7c18df640082eca1b796413bbba28a0733357))
+
+## [0.24.18](https://github.com/TestPlanIt/testplanit/compare/v0.24.17...v0.24.18) (2026-05-06)
+
+### Bug Fixes
+
+* **ProjectRepository:** update file drop conditions to include addCaseOpen state ([f09f344](https://github.com/TestPlanIt/testplanit/commit/f09f344e87fcc39380177e484c7f0ef211ec5f89))
+
+## [0.24.17](https://github.com/TestPlanIt/testplanit/compare/v0.24.16...v0.24.17) (2026-05-06)
+
+### Bug Fixes
+
+* **AddCase:** simplify step handling by using default values ([09dd0b3](https://github.com/TestPlanIt/testplanit/commit/09dd0b399e01e4d6bfa3b52696a09527bdf8525e))
+
+## [0.24.16](https://github.com/TestPlanIt/testplanit/compare/v0.24.15...v0.24.16) (2026-05-06)
+
+### Bug Fixes
+
+* preserve search params when clicking active menu link ([d3eb91c](https://github.com/TestPlanIt/testplanit/commit/d3eb91c2ef71dc1acc6cbc9afb1524433cfc611b))
+
+## [0.24.15](https://github.com/TestPlanIt/testplanit/compare/v0.24.14...v0.24.15) (2026-05-05)
+
+### Bug Fixes
+
+* prevent repository menu link from stripping node/view search params ([13cd95c](https://github.com/TestPlanIt/testplanit/commit/13cd95c7a5a8a3baf982797c67c97c732bca96e3))
+
+## [0.24.14](https://github.com/TestPlanIt/testplanit/compare/v0.24.13...v0.24.14) (2026-05-05)
+
+### Enhancements
+
+* graduated opacity per Gantt group and remove overlapping bar labels ([#283](https://github.com/TestPlanIt/testplanit/issues/283)) ([e7c7ad0](https://github.com/TestPlanIt/testplanit/commit/e7c7ad01adac3d274659b0dcef6a970b1394f970))
+
+## [0.24.13](https://github.com/TestPlanIt/testplanit/compare/v0.24.12...v0.24.13) (2026-05-05)
+
+### Bug Fixes
+
+* small bug fixes for SSO linking, password policy, project menu, and LLM adapters ([#282](https://github.com/TestPlanIt/testplanit/issues/282)) ([e5a2af4](https://github.com/TestPlanIt/testplanit/commit/e5a2af4ecffe25d0642277b624bbc1ca219e281e))
+
+## [0.24.12](https://github.com/TestPlanIt/testplanit/compare/v0.24.11...v0.24.12) (2026-05-04)
+
+### Enhancements
+
+* **repository:** route single-case add through importGeneratedTestCases action ([#280](https://github.com/TestPlanIt/testplanit/issues/280)) ([24b8523](https://github.com/TestPlanIt/testplanit/commit/24b85239fa3b0a17fc9d92eff3f1ebf99f634563))
+
+## [0.24.11](https://github.com/TestPlanIt/testplanit/compare/v0.24.10...v0.24.11) (2026-05-04)
+
+### Enhancements
+
+* **audit:** system actor badge + wrap remaining routes with audit context ([#279](https://github.com/TestPlanIt/testplanit/issues/279)) ([b685997](https://github.com/TestPlanIt/testplanit/commit/b6859973f89ce448491abb6b164bdba0b1c8c91f))
+
+## [0.24.10](https://github.com/TestPlanIt/testplanit/compare/v0.24.9...v0.24.10) (2026-05-04)
+
+### Bug Fixes
+
+* **tiptap:** drop pseudo-element backticks; remove bounded-height/expand wrappers ([#278](https://github.com/TestPlanIt/testplanit/issues/278)) ([9a17462](https://github.com/TestPlanIt/testplanit/commit/9a1746292c03fbe2c7b8314964508dd25217daf3))
+
+## [0.24.9](https://github.com/TestPlanIt/testplanit/compare/v0.24.8...v0.24.9) (2026-05-04)
+
+### Bug Fixes
+
+* **i18n:** localize tiptap rich-text toolbar tooltips ([#277](https://github.com/TestPlanIt/testplanit/issues/277)) ([be18f5a](https://github.com/TestPlanIt/testplanit/commit/be18f5ada098cbff424b828f12841601ef1b79b9))
+
+## [0.24.8](https://github.com/TestPlanIt/testplanit/compare/v0.24.7...v0.24.8) (2026-05-03)
+
+### Bug Fixes
+
+* **duplicates:** exclude source case from creation-time duplicate scan and fire toast from inline AddCaseRow ([#276](https://github.com/TestPlanIt/testplanit/issues/276)) ([6e011c2](https://github.com/TestPlanIt/testplanit/commit/6e011c21d066a6e9f66c74f6e3dbc5ae7dc852ff))
+
+## [0.24.7](https://github.com/TestPlanIt/testplanit/compare/v0.24.6...v0.24.7) (2026-05-03)
+
+### Bug Fixes
+
+* **i18n:** LLM stream error codes + React stragglers sweep ([#275](https://github.com/TestPlanIt/testplanit/issues/275)) ([917890f](https://github.com/TestPlanIt/testplanit/commit/917890fbffd1e0e734d512da61364521fdacab35))
+
+## [0.24.6](https://github.com/TestPlanIt/testplanit/compare/v0.24.5...v0.24.6) (2026-05-03)
+
+### Bug Fixes
+
+* **i18n:** localize magic-link email, validation errors, success toasts ([#274](https://github.com/TestPlanIt/testplanit/issues/274)) ([acea2d6](https://github.com/TestPlanIt/testplanit/commit/acea2d6670fc345d3a8a15f78a64179d11455131))
+
+## [0.24.5](https://github.com/TestPlanIt/testplanit/compare/v0.24.4...v0.24.5) (2026-05-03)
+
+### Bug Fixes
+
+* **webhooks:** tenant-aware jobId, retention memory hygiene, raised PM2 ceilings ([#273](https://github.com/TestPlanIt/testplanit/issues/273)) ([590f91b](https://github.com/TestPlanIt/testplanit/commit/590f91b0c21d912d16ca0ff5f8f95f8e4ce7c0e0)), closes [#271](https://github.com/TestPlanIt/testplanit/issues/271)
+
+## [0.24.4](https://github.com/TestPlanIt/testplanit/compare/v0.24.3...v0.24.4) (2026-05-03)
+
+### Bug Fixes
+
+* **i18n:** translate notifications for the four under-covered types ([#272](https://github.com/TestPlanIt/testplanit/issues/272)) ([a4c79bd](https://github.com/TestPlanIt/testplanit/commit/a4c79bdea48bbe9dd9d50889e7367a06cbd2a312))
+
+## [0.24.3](https://github.com/TestPlanIt/testplanit/compare/v0.24.2...v0.24.3) (2026-05-03)
+
+### Bug Fixes
+
+* **webhooks:** make outbox + retention workers multi-tenant aware ([#271](https://github.com/TestPlanIt/testplanit/issues/271)) ([6731c68](https://github.com/TestPlanIt/testplanit/commit/6731c68329bfca35c5a73f43711a10d991968946))
+
+## [0.24.2](https://github.com/TestPlanIt/testplanit/compare/v0.24.1...v0.24.2) (2026-05-03)
+
+### Bug Fixes
+
+* **comments:** enforce per-user project access on comment-mention notifications ([#269](https://github.com/TestPlanIt/testplanit/issues/269)) ([c82b565](https://github.com/TestPlanIt/testplanit/commit/c82b5657d92c46a6c4e7e5c589e592a2d857232a))
+* **deps:** override transitive uuid to >=14.0.0 (GHSA-9w38-pjwr-2x88) ([#268](https://github.com/TestPlanIt/testplanit/issues/268)) ([834da4b](https://github.com/TestPlanIt/testplanit/commit/834da4b3b21ba398a808845dc53699eec0321554)), closes [#360](https://github.com/TestPlanIt/testplanit/issues/360) [#362](https://github.com/TestPlanIt/testplanit/issues/362)
+
+## [0.24.1](https://github.com/TestPlanIt/testplanit/compare/v0.24.0...v0.24.1) (2026-05-03)
+
+### Bug Fixes
+
+* **integrations:** probe issue scopes + surface search errors ([#267](https://github.com/TestPlanIt/testplanit/issues/267)) ([212da3f](https://github.com/TestPlanIt/testplanit/commit/212da3f227d708e799b836e587ced28c53f62c61))
+
+## [0.24.0](https://github.com/TestPlanIt/testplanit/compare/v0.23.1...v0.24.0) (2026-05-02)
+
+### Features
+
+* webhooks — two-way sync with issue trackers + outbound delivery ([#266](https://github.com/TestPlanIt/testplanit/issues/266)) ([2da2188](https://github.com/TestPlanIt/testplanit/commit/2da2188b91e12c7b23836677e28cb23108c8b6be)), closes [#1](https://github.com/TestPlanIt/testplanit/issues/1) [SC#5](https://github.com/TestPlanIt/SC/issues/5) [SC#5](https://github.com/TestPlanIt/SC/issues/5) [#5](https://github.com/TestPlanIt/testplanit/issues/5) [SC#5](https://github.com/TestPlanIt/SC/issues/5) [SC#5](https://github.com/TestPlanIt/SC/issues/5) [#5](https://github.com/TestPlanIt/testplanit/issues/5) [SC#5](https://github.com/TestPlanIt/SC/issues/5) [SC#5](https://github.com/TestPlanIt/SC/issues/5) [SC#5](https://github.com/TestPlanIt/SC/issues/5) [#22c55e](https://github.com/TestPlanIt/testplanit/issues/22c55e) [#ef4444](https://github.com/TestPlanIt/testplanit/issues/ef4444) [#eab308](https://github.com/TestPlanIt/testplanit/issues/eab308) [SC#5](https://github.com/TestPlanIt/SC/issues/5) [SC#5](https://github.com/TestPlanIt/SC/issues/5) [SC#5](https://github.com/TestPlanIt/SC/issues/5) [#4](https://github.com/TestPlanIt/testplanit/issues/4) [#5](https://github.com/TestPlanIt/testplanit/issues/5)
+
+### Bug Fixes
+
+* **docs:** correct link to API Tokens in user profile documentation ([9beda77](https://github.com/TestPlanIt/testplanit/commit/9beda778d66be84d031cfa75225edb190041669f))
+
+## [0.23.1](https://github.com/TestPlanIt/testplanit/compare/v0.23.0...v0.23.1) (2026-04-30)
+
+### Enhancements
+
+* **llm:** LLM custom billing period, admin UX redesign, and capability probing ([#265](https://github.com/TestPlanIt/testplanit/issues/265)) ([6c1ee8b](https://github.com/TestPlanIt/testplanit/commit/6c1ee8b9372d222eafafc81067f528ecbe6734e1))
+
 ## [0.23.0](https://github.com/TestPlanIt/testplanit/compare/v0.22.22...v0.23.0) (2026-04-30)
 
 ### Features

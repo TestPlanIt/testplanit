@@ -204,7 +204,8 @@ describe("POST /api/issues/[issueId]/sync", () => {
       expect(mockPerformIssueRefresh).toHaveBeenCalledWith(
         "user-1",
         10,
-        "PROJ-42"
+        "PROJ-42",
+        { minFreshnessSeconds: 0 }
       );
     });
 
@@ -216,6 +217,83 @@ describe("POST /api/issues/[issueId]/sync", () => {
 
       expect(mockFindUnique).toHaveBeenCalledTimes(2);
       expect(data.issue.project).toBeDefined();
+    });
+  });
+
+  describe("?trigger= → minFreshnessSeconds mapping", () => {
+    const requestWithTrigger = (trigger: string): NextRequest =>
+      new NextRequest(`http://localhost/api/issues/1/sync?trigger=${trigger}`, {
+        method: "POST",
+      });
+
+    it("trigger=hover passes minFreshnessSeconds=300 (5 minutes)", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+
+      await POST(requestWithTrigger("hover"), params("1"));
+
+      expect(mockPerformIssueRefresh).toHaveBeenCalledWith(
+        "user-1",
+        10,
+        "PROJ-42",
+        { minFreshnessSeconds: 300 }
+      );
+    });
+
+    it("trigger=manual passes minFreshnessSeconds=0 (always sync)", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+
+      await POST(requestWithTrigger("manual"), params("1"));
+
+      expect(mockPerformIssueRefresh).toHaveBeenCalledWith(
+        "user-1",
+        10,
+        "PROJ-42",
+        { minFreshnessSeconds: 0 }
+      );
+    });
+
+    it("missing trigger param defaults to manual (0s)", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+
+      await POST(createRequest(), params("1"));
+
+      expect(mockPerformIssueRefresh).toHaveBeenCalledWith(
+        "user-1",
+        10,
+        "PROJ-42",
+        { minFreshnessSeconds: 0 }
+      );
+    });
+
+    it("returns cached:true response without refetching when sync is short-circuited by gate", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      mockPerformIssueRefresh.mockResolvedValue({
+        success: true,
+        cached: true,
+      });
+
+      const response = await POST(requestWithTrigger("hover"), params("1"));
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data).toMatchObject({ success: true, cached: true });
+      // Only the initial findUnique fired — no post-sync refetch.
+      expect(mockFindUnique).toHaveBeenCalledTimes(1);
+    });
+
+    it("returns locked:true response when another sync is in flight for the same issue", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      mockPerformIssueRefresh.mockResolvedValue({
+        success: true,
+        locked: true,
+      });
+
+      const response = await POST(requestWithTrigger("hover"), params("1"));
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data).toMatchObject({ success: true, locked: true });
+      expect(mockFindUnique).toHaveBeenCalledTimes(1);
     });
   });
 

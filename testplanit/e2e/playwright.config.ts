@@ -93,6 +93,12 @@ export default defineConfig({
   // Alternative: Start dev server manually in separate terminal:
   //   Terminal 1: cd testplanit && dotenv -e .env.e2e -- pnpm dev --port 3002
   //   Terminal 2: cd testplanit/e2e && pnpm test:e2e
+  //
+  // E2E env vars sourced from .env.e2e (loaded by `dotenv -e .env.e2e --` in
+  // package.json scripts) include WEBHOOK_OUTBOUND_ALLOW_HTTP=true so the
+  // outbound-webhook E2E can point at a local node:http stub server. Both the
+  // next server (started below) and the BullMQ workers (spawned by
+  // global-setup.ts via `pnpm workers`) inherit process.env from this loader.
   webServer: isCI
     ? undefined
     : {

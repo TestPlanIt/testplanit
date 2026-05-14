@@ -19,6 +19,7 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useState } from "react";
+import { translateServerError } from "~/lib/i18n/translateServerError";
 import { useRouter } from "~/lib/navigation";
 import svgIcon from "~/public/tpi_logo.svg";
 
@@ -48,7 +49,9 @@ export default function TwoFactorVerifyPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Verification failed");
+        throw new Error(
+          translateServerError(t, data, t("auth.errors.invalid2FACode"))
+        );
       }
 
       // Update the session to mark 2FA as verified
@@ -57,7 +60,9 @@ export default function TwoFactorVerifyPage() {
       // Redirect to home
       router.push("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Verification failed");
+      setError(
+        err instanceof Error ? err.message : t("auth.errors.invalid2FACode")
+      );
     } finally {
       setIsLoading(false);
     }

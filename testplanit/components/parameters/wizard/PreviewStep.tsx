@@ -105,7 +105,7 @@ export function PreviewStep({
       </Alert>
 
       <p className="text-xs text-muted-foreground">
-        {t("importStep3PreviewLimit", { limit: PREVIEW_LIMIT })}
+        {t("importStep3PreviewLimit", { limit: String(PREVIEW_LIMIT) })}
       </p>
 
       <ScrollArea className="border rounded-md max-h-96">

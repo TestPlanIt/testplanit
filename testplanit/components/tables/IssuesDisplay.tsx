@@ -2,6 +2,7 @@ import { IssueStatusDisplay } from "@/components/IssueStatusDisplay";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,
+  PopoverAnchor,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
@@ -15,7 +16,8 @@ import { useIssueColors } from "@/hooks/useIssueColors";
 import DOMPurify from "dompurify";
 import { ExternalLink, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useIssueUpdateStream } from "~/hooks/useIssueUpdateStream";
 import { Link } from "~/lib/navigation";
 import { IssueTypeIcon } from "~/utils/issueTypeIcons";
 
@@ -25,13 +27,15 @@ interface IssueDisplayProps {
   externalId?: string | null;
   externalUrl?: string | null;
   title?: string | null;
+  description?: string | null;
   status?: string | null;
+  priority?: string | null;
+  lastSyncedAt?: string | Date | null;
   size?: "small" | "large";
   projectIds: number[];
   data?: any; // Additional data from external system
   integrationProvider?: string; // e.g., "JIRA"
   integrationId?: number; // ID of the integration
-  lastSyncedAt?: Date | null; // When the issue was last synced
   issueTypeName?: string | null;
   issueTypeIconUrl?: string | null;
 }
@@ -64,59 +68,79 @@ interface JiraIssueDetails {
   updated: string;
 }
 
+// Module-level stores that survive component remounts caused by parent query
+// invalidations. When the SSE sync fires → queryClient.invalidateQueries →
+// parent re-renders → IssuesDisplay unmounts+remounts, these maps let each
+// instance restore its prior open/data state so the popover stays visible.
+// Entries are cleared when the popover closes, so they only hold in-flight data.
+const issuePopoverOpen = new Map<number, boolean>();
+const issueJiraCache = new Map<number, JiraIssueDetails>();
+
 export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
   id,
   name,
   externalId,
   externalUrl,
   title,
+  description,
   status,
+  priority,
+  lastSyncedAt,
   size = "small",
-  projectIds: _projectIds,
+  projectIds,
   data: _data,
   integrationProvider,
   integrationId,
-  lastSyncedAt,
   issueTypeName,
   issueTypeIconUrl,
 }) => {
   const t = useTranslations();
   const { getPriorityStyle } = useIssueColors();
-  const [isOpen, setIsOpen] = useState(false);
-  const [jiraDetails, setJiraDetails] = useState<JiraIssueDetails | null>(null);
+  const [isOpen, setIsOpen] = useState(() => issuePopoverOpen.get(id) ?? false);
+  const [jiraDetails, setJiraDetails] = useState<JiraIssueDetails | null>(
+    () => issueJiraCache.get(id) ?? null
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const syncTriggeredRef = useRef(false); // Track if we've already triggered a sync for this issue
+  const syncTriggeredRef = useRef(false);
 
-  // Function to check if sync is needed and trigger it
+  // Subscribe to live updates for this issue's project(s) — webhook → sync
+  // events fan out via the singleton SSE manager so any number of
+  // IssuesDisplay instances on the same project share a single connection.
+  useIssueUpdateStream(projectIds);
+
+  // Update module-level open state and clear cached data when closing so the
+  // next open always re-fetches fresh Jira details.
+  const updateIsOpen = useCallback(
+    (open: boolean) => {
+      if (open) {
+        issuePopoverOpen.set(id, true);
+      } else {
+        issuePopoverOpen.delete(id);
+        issueJiraCache.delete(id);
+        setJiraDetails(null);
+      }
+      setIsOpen(open);
+    },
+    [id]
+  );
+
+  // Trigger a background sync for this issue. The freshness gate lives
+  // server-side now (?trigger=hover → 5-min skip window in SyncService);
+  // a per-issue Valkey lock additionally serializes concurrent fetches.
   const triggerSyncIfNeeded = () => {
-    // Only trigger once per component mount
-    if (syncTriggeredRef.current) {
-      return;
-    }
+    if (syncTriggeredRef.current) return;
+    if (!integrationId || !integrationProvider) return;
+    syncTriggeredRef.current = true;
 
-    // Only sync external issues with integration
-    if (!integrationId || !integrationProvider) {
-      return;
-    }
-
-    // Check if lastSyncedAt is older than 3 hours
-    const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
-    const now = new Date().getTime();
-    const lastSynced = lastSyncedAt ? new Date(lastSyncedAt).getTime() : 0;
-    const needsSync = !lastSyncedAt || now - lastSynced > THREE_HOURS_MS;
-
-    if (needsSync) {
-      syncTriggeredRef.current = true;
-
-      // Fire and forget - trigger background sync using the same endpoint as the sync button
-      fetch(`/api/issues/${id}/sync`, {
-        method: "POST",
-      }).catch((_err) => {
-        // Silently fail - this is a background optimization
-      });
-    }
+    // Fire and forget — the server returns `cached: true` cheaply when the
+    // issue is already fresh, so calling unconditionally is correct.
+    fetch(`/api/issues/${id}/sync?trigger=hover`, {
+      method: "POST",
+    }).catch((_err) => {
+      // Silently fail — this is a background optimization.
+    });
   };
 
   // Cleanup timeout on unmount
@@ -164,6 +188,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
           return res.json();
         })
         .then((data) => {
+          issueJiraCache.set(id, data);
           setJiraDetails(data);
           setIsLoading(false);
         })
@@ -179,6 +204,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
     integrationId,
     name,
     jiraDetails,
+    id,
   ]);
 
   // Issue config is no longer needed as we use integrations directly
@@ -250,27 +276,39 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
       <div
         className="flex items-center group max-w-full"
         onMouseEnter={() => {
-          // Trigger background sync if needed
           triggerSyncIfNeeded();
 
           if (hoverTimeoutRef.current) {
             clearTimeout(hoverTimeoutRef.current);
           }
           hoverTimeoutRef.current = setTimeout(() => {
-            setIsOpen(true);
-          }, 200); // 200ms delay before opening
+            updateIsOpen(true);
+          }, 200);
         }}
         onMouseLeave={() => {
           if (hoverTimeoutRef.current) {
             clearTimeout(hoverTimeoutRef.current);
           }
           hoverTimeoutRef.current = setTimeout(() => {
-            setIsOpen(false);
-          }, 100); // 100ms delay before closing
+            updateIsOpen(false);
+          }, 100);
         }}
       >
-        <Popover open={isOpen} onOpenChange={setIsOpen} modal={false}>
-          <PopoverTrigger asChild>{badgeContent}</PopoverTrigger>
+        <Popover open={isOpen} onOpenChange={updateIsOpen} modal={false}>
+          {linkHref ? (
+            <PopoverAnchor asChild>
+              <a
+                href={linkHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center max-w-full no-underline"
+              >
+                {badgeContent}
+              </a>
+            </PopoverAnchor>
+          ) : (
+            <PopoverTrigger asChild>{badgeContent}</PopoverTrigger>
+          )}
           <PopoverContent
             className="w-96 p-0"
             align="start"
@@ -285,7 +323,7 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
                 clearTimeout(hoverTimeoutRef.current);
               }
               hoverTimeoutRef.current = setTimeout(() => {
-                setIsOpen(false);
+                updateIsOpen(false);
               }, 100);
             }}
           >
@@ -426,37 +464,168 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
     );
   }
 
-  // For internal issues, use the original Tooltip
+  // For external non-Jira issues, use a hover popover matching Jira's layout
+  if (linkHref && integrationProvider) {
+    const providerLabel =
+      integrationProvider === "GITHUB"
+        ? "GitHub"
+        : integrationProvider === "GITLAB"
+          ? "GitLab"
+          : integrationProvider === "GITEA"
+            ? "Gitea"
+            : integrationProvider === "AZURE_DEVOPS"
+              ? "Azure DevOps"
+              : integrationProvider === "SIMPLE_URL"
+                ? "External"
+                : integrationProvider;
+
+    return (
+      <div
+        className="flex items-center group max-w-full"
+        onMouseEnter={() => {
+          triggerSyncIfNeeded();
+          if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+          hoverTimeoutRef.current = setTimeout(() => updateIsOpen(true), 200);
+        }}
+        onMouseLeave={() => {
+          if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+          hoverTimeoutRef.current = setTimeout(() => updateIsOpen(false), 100);
+        }}
+      >
+        <Popover open={isOpen} onOpenChange={updateIsOpen} modal={false}>
+          <PopoverAnchor asChild>
+            <a
+              href={linkHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center max-w-full no-underline"
+            >
+              {badgeContent}
+            </a>
+          </PopoverAnchor>
+          <PopoverContent
+            className="w-96 p-0"
+            align="start"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+            onMouseEnter={() => {
+              if (hoverTimeoutRef.current)
+                clearTimeout(hoverTimeoutRef.current);
+            }}
+            onMouseLeave={() => {
+              if (hoverTimeoutRef.current)
+                clearTimeout(hoverTimeoutRef.current);
+              hoverTimeoutRef.current = setTimeout(
+                () => updateIsOpen(false),
+                100
+              );
+            }}
+          >
+            <div className="p-4 space-y-3">
+              {/* Header */}
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-1">
+                  <IssueTypeIcon
+                    issueTypeName={issueTypeName}
+                    iconUrl={issueTypeIconUrl}
+                    className="h-4 w-4 shrink-0"
+                  />
+                  <Link
+                    href={linkHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold hover:text-primary hover:underline"
+                  >
+                    {name}
+                  </Link>
+                </div>
+                {status && (
+                  <IssueStatusDisplay status={status} className="text-xs" />
+                )}
+              </div>
+
+              {/* Title */}
+              {title && title !== name && (
+                <h4 className="font-medium">{title}</h4>
+              )}
+
+              {/* Description */}
+              {description && (
+                <div
+                  className="text-sm text-muted-foreground line-clamp-3 [&_a]:text-primary [&_a]:underline [&_p]:mb-2 [&_p:last-child]:mb-0"
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(description, {
+                      ALLOWED_TAGS: [
+                        "p",
+                        "br",
+                        "a",
+                        "strong",
+                        "em",
+                        "u",
+                        "ul",
+                        "ol",
+                        "li",
+                      ],
+                      ALLOWED_ATTR: ["href", "target", "rel"],
+                    }),
+                  }}
+                />
+              )}
+
+              {/* Priority — only for providers that actually support it */}
+              {priority &&
+                ["JIRA", "AZURE_DEVOPS"].includes(integrationProvider!) && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground text-xs">
+                      {t("common.fields.priority")}:
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className="text-xs"
+                      style={getPriorityStyle(priority)}
+                    >
+                      {priority}
+                    </Badge>
+                  </div>
+                )}
+
+              {/* Footer */}
+              <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
+                {lastSyncedAt ? (
+                  <span>
+                    {t("common.ui.issues.updated")}
+                    {new Date(lastSyncedAt).toLocaleDateString()}
+                  </span>
+                ) : (
+                  <span />
+                )}
+                <Link
+                  href={linkHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 hover:text-primary"
+                >
+                  {t("common.ui.issues.openInExternalSystem", {
+                    provider: providerLabel,
+                  })}
+                  <ExternalLink className="h-3 w-3" />
+                </Link>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+        <ExternalLink className="w-4 h-4 -ml-1 mr-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+      </div>
+    );
+  }
+
+  // For internal issues, use a simple tooltip
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip>
-        <div
-          className="flex items-center group max-w-full"
-          onMouseEnter={() => {
-            // Trigger background sync if needed
-            triggerSyncIfNeeded();
-          }}
-        >
-          {linkHref && /^https?:\/\//i.test(linkHref) ? (
-            <TooltipTrigger asChild>
-              <a
-                href={linkHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center max-w-full no-underline"
-                title={displayText}
-              >
-                {badgeContent}
-              </a>
-            </TooltipTrigger>
-          ) : (
-            <TooltipTrigger asChild className="cursor-default">
-              {badgeContent}
-            </TooltipTrigger>
-          )}
-          {linkHref && (
-            <ExternalLink className="w-4 h-4 -ml-1 mr-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-          )}
+        <div className="flex items-center group max-w-full">
+          <TooltipTrigger asChild className="cursor-default">
+            {badgeContent}
+          </TooltipTrigger>
         </div>
         <TooltipContent className="max-w-sm bg-popover text-popover-foreground border">
           <div className="space-y-1">
@@ -468,11 +637,6 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
               <div className="text-xs opacity-75">
                 {t("common.ui.issues.status")}
                 {status}
-              </div>
-            )}
-            {linkHref && (
-              <div className="text-xs opacity-75">
-                {t("common.ui.issues.clickToOpenInNewTab")}
               </div>
             )}
           </div>

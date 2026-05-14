@@ -1,6 +1,15 @@
-import { Folder, ListChecks } from "lucide-react";
+import {
+  ArrowRightLeft,
+  ArrowUpDown,
+  Copy,
+  Folder,
+  ListChecks,
+} from "lucide-react";
+import { useTranslations } from "next-intl";
 import React, { CSSProperties, useEffect, useRef } from "react";
 import { useDragLayer, XYCoord } from "react-dnd";
+import { useDragModifier } from "~/hooks/useDragModifier";
+import { useDragTargetKind } from "~/hooks/useDragTargetKind";
 import { ItemTypes } from "~/types/dndTypes";
 
 // Define the structure for test case info
@@ -62,6 +71,7 @@ function getItemStyles(
 // The unified drag layer component for all drag types
 export const UnifiedDragPreview: React.FC = () => {
   const previewRef = useRef<HTMLDivElement>(null);
+  const t = useTranslations();
 
   const {
     itemType,
@@ -76,6 +86,9 @@ export const UnifiedDragPreview: React.FC = () => {
     currentOffset: monitor.getClientOffset(),
     isDragging: monitor.isDragging(),
   }));
+
+  const { copyHeld, moveHeld } = useDragModifier(isDragging);
+  const { isOverReorderZone } = useDragTargetKind();
 
   // Track mouse position and update DOM directly without React re-renders
   useEffect(() => {
@@ -112,9 +125,13 @@ export const UnifiedDragPreview: React.FC = () => {
         if (item.draggedItems && item.draggedItems.length > 0) {
           const itemCount = item.draggedItems.length;
           if (itemCount === 1) {
-            displayName = item.draggedItems[0]?.name || "Test Case";
+            displayName =
+              item.draggedItems[0]?.name ||
+              t("repository.dragDrop.dragPreviewCase");
           } else {
-            displayName = `${itemCount} test cases`;
+            displayName = t("repository.dragDrop.dragPreviewCount", {
+              count: itemCount,
+            });
           }
         } else if (item.name) {
           displayName = item.name;
@@ -126,10 +143,37 @@ export const UnifiedDragPreview: React.FC = () => {
           <div
             ref={previewRef}
             style={getItemStyles(initialOffset, currentOffset)}
-            className="bg-primary/20 border-primary border rounded-md shadow-md text-sm flex items-start gap-2 max-w-[400px]"
+            className="bg-primary/20 border-primary border rounded-md shadow-md text-sm flex items-start gap-2 max-w-[400px] relative"
           >
             <ListChecks size={16} className="text-primary shrink-0" />
             <span className="truncate">{displayName}</span>
+            {isOverReorderZone ? (
+              <div
+                data-testid="drag-preview-reorder-badge"
+                className="absolute -top-2 -right-2 rounded-full bg-primary-foreground/70 text-primary p-1 ring-2 ring-primary/70"
+              >
+                <ArrowUpDown size={16} />
+              </div>
+            ) : (
+              <>
+                {copyHeld && (
+                  <div
+                    data-testid="drag-preview-copy-badge"
+                    className="absolute -top-2 -right-2 rounded-full bg-primary-foreground/70 text-primary p-1 ring-2 ring-primary/70"
+                  >
+                    <Copy size={16} />
+                  </div>
+                )}
+                {moveHeld && !copyHeld && (
+                  <div
+                    data-testid="drag-preview-move-badge"
+                    className="absolute -top-2 -right-2 rounded-full bg-primary-foreground/70 text-primary p-1 ring-2 ring-primary/70"
+                  >
+                    <ArrowRightLeft size={16} />
+                  </div>
+                )}
+              </>
+            )}
           </div>
         );
       }

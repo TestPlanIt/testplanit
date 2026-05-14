@@ -44,14 +44,28 @@ export async function POST(req: NextRequest) {
 
     if (existingUser) {
       return NextResponse.json(
-        { error: "User with this email already exists" },
+        {
+          errorCode: "common.errors.userExists",
+          error: "User with this email already exists",
+        },
         { status: 400 }
+      );
+    }
+
+    const registrationSettings = await db.registrationSettings.findFirst();
+
+    if (!(registrationSettings?.allowOpenRegistration ?? true)) {
+      return NextResponse.json(
+        {
+          errorCode: "auth.signup.registrationDisabled",
+          error: "Registration is currently disabled",
+        },
+        { status: 403 }
       );
     }
 
     // Check if email verification is required
     // Email verification is automatically disabled if no email server is configured
-    const registrationSettings = await db.registrationSettings.findFirst();
     const requireEmailVerification =
       isEmailServerConfigured() &&
       (registrationSettings?.requireEmailVerification ?? true);
@@ -89,6 +103,9 @@ export async function POST(req: NextRequest) {
           emailVerifToken: requireEmailVerification
             ? validatedData.emailVerifToken
             : null,
+          emailTokenExpires: requireEmailVerification
+            ? new Date(Date.now() + 24 * 60 * 60 * 1000)
+            : null,
           emailVerified: requireEmailVerification ? null : new Date(),
           access: validatedData.access,
           roleId,
@@ -124,7 +141,10 @@ export async function POST(req: NextRequest) {
     // Handle Prisma unique constraint violation
     if (error.code === "P2002") {
       return NextResponse.json(
-        { error: "User with this email already exists" },
+        {
+          errorCode: "common.errors.userExists",
+          error: "User with this email already exists",
+        },
         { status: 400 }
       );
     }

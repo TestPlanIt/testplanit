@@ -42,7 +42,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import * as z from "zod";
+import * as z from "zod/v4";
 import {
   useFindManyLlmIntegration,
   useUpdateLlmIntegration,
@@ -261,13 +261,13 @@ export function EditLlmIntegration({
             description: "Model list updated successfully",
           });
         } else {
-          toast.warning("No models found", {
+          toast.warning(tCommon("errors.noModelsFound"), {
             description: "The provider returned no available models",
           });
         }
       } else {
         setModelsError(data.error || "Failed to fetch models");
-        toast.error("Failed to fetch models", {
+        toast.error(tCommon("errors.failedToFetchModels"), {
           description: data.error || "Unknown error",
         });
       }
@@ -275,7 +275,7 @@ export function EditLlmIntegration({
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       setModelsError(errorMessage);
-      toast.error("Failed to fetch models", {
+      toast.error(tCommon("errors.failedToFetchModels"), {
         description: errorMessage,
       });
     } finally {
@@ -835,7 +835,11 @@ export function EditLlmIntegration({
                                     value={field.value}
                                   >
                                     <SelectTrigger>
-                                      <SelectValue placeholder="Select a model" />
+                                      <SelectValue
+                                        placeholder={tCommon(
+                                          "placeholders.selectAModel"
+                                        )}
+                                      />
                                     </SelectTrigger>
                                     <SelectContent>
                                       {availableModels.map((model) => (

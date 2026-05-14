@@ -112,8 +112,11 @@ export class AnthropicAdapter extends BaseLlmAdapter {
     try {
       return await this.executeChat(anthropicRequest, timeout);
     } catch (error: any) {
-      if (error instanceof Error && error.name === "AbortError") {
-        throw this.createError("Request timeout", "TIMEOUT", 408, true);
+      if (
+        error instanceof Error &&
+        (error.name === "AbortError" || error.name === "TimeoutError")
+      ) {
+        throw this.createError("Request timeout", "TIMEOUT", 408, false);
       }
       // Retry without temperature if the model doesn't support it, and
       // remember this model for future requests. This is the runtime

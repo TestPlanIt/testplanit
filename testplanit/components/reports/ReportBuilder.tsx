@@ -65,6 +65,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
 import { useDrillDown } from "~/hooks/useDrillDown";
+import { useExecutionLogColumns } from "~/hooks/useExecutionLogColumns";
 import { useFlakyTestsColumns } from "~/hooks/useFlakyTestsColumns";
 import { useIssueTestCoverageSummaryColumns } from "~/hooks/useIssueTestCoverageColumns";
 import { useReportColumns } from "~/hooks/useReportColumns";
@@ -143,6 +144,7 @@ function isPreBuiltReport(reportType: string): boolean {
     "flaky-tests",
     "test-case-health",
     "issue-test-coverage",
+    "execution-log",
   ].includes(baseType);
 }
 
@@ -653,6 +655,12 @@ function ReportBuilderContent({
     mode === "cross-project"
   );
 
+  // Use execution log columns for execution-log report
+  const executionLogColumns = useExecutionLogColumns(
+    projectId,
+    mode === "cross-project"
+  );
+
   // Choose which columns to use based on report type
   const columns = matchesReportType(reportType, "automation-trends")
     ? automationTrendsColumns
@@ -662,7 +670,9 @@ function ReportBuilderContent({
         ? testCaseHealthColumns
         : matchesReportType(reportType, "issue-test-coverage")
           ? issueTestCoverageSummaryColumns
-          : standardColumns;
+          : matchesReportType(reportType, "execution-log")
+            ? executionLogColumns
+            : standardColumns;
 
   // When lastUsedDimensions change (after running a report), update grouping
   React.useEffect(() => {
@@ -862,6 +872,9 @@ function ReportBuilderContent({
 
     // Update state immediately for responsive UI
     setReportType(safeReportType);
+    // Clear stale results so old-typed rows don't render with new-typed columns
+    setResults(null);
+    setAllResults(null);
 
     // Determine which tab this report belongs to
     const isPreBuilt = preBuiltReports.some((r) => r.id === safeReportType);
@@ -1323,6 +1336,22 @@ function ReportBuilderContent({
 
         // Handle client-side pagination for pre-built reports
         if (currentReport?.isPreBuilt) {
+          // Execution log uses server-side pagination
+          if (matchesReportType(reportType, "execution-log")) {
+            const tableData = data.data || data.results || [];
+            setResults(tableData);
+            setTotalCount(data.total ?? tableData.length);
+            if (updateUrl) {
+              // Store status breakdown in allResults for the chart;
+              // don't replace it on pagination so the chart stays stable.
+              setAllResults(data.statusBreakdown || []);
+              setLastUsedDimensions(selectedDimensions);
+            }
+            setReportGeneratedAt(new Date());
+            setLastRequestBody(body);
+            return;
+          }
+
           const allData = data.data || data.results;
 
           // Store projects for automation trends report
@@ -1573,6 +1602,16 @@ function ReportBuilderContent({
 
   // Re-fetch data when pagination changes (without full loading state)
   useEffect(() => {
+    // Execution log uses server-side pagination — refetch like a custom report
+    if (
+      matchesReportType(reportType, "execution-log") &&
+      currentReport?.isPreBuilt &&
+      results
+    ) {
+      void fetchReportData(lastUsedDimensions, lastUsedMetrics, false);
+      return;
+    }
+
     // For pre-built reports, handle client-side pagination
     if (currentReport?.isPreBuilt && allResults && allResults.length > 0) {
       // Apply client-side sorting first
@@ -1627,9 +1666,8 @@ function ReportBuilderContent({
   // Re-fetch data when sort changes for non-prebuilt reports (without full loading state)
   useEffect(() => {
     if (
-      !currentReport?.isPreBuilt &&
-      lastUsedDimensions.length > 0 &&
-      lastUsedMetrics.length > 0 &&
+      (!currentReport?.isPreBuilt ||
+        matchesReportType(reportType, "execution-log")) &&
       results
     ) {
       void fetchReportData(lastUsedDimensions, lastUsedMetrics, false);
@@ -2502,7 +2540,9 @@ function ReportBuilderContent({
                               }}
                               options={availablePriorityValues}
                               styles={customStyles}
-                              placeholder="Select priority values (or leave empty for all)"
+                              placeholder={tCommon(
+                                "placeholders.selectPriorityValuesOrEmpty"
+                              )}
                               className="basic-multi-select"
                               classNamePrefix="select"
                               menuPortalTarget={

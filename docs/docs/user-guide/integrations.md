@@ -5,7 +5,7 @@ title: 'Issue Tracking and External Integrations'
 
 # Issue Tracking and External Integrations
 
-TestPlanIt provides comprehensive issue tracking capabilities, allowing you to track bugs, tasks, and other issues directly within the platform or integrate with external issue tracking systems like Jira, GitHub Issues, and more.
+TestPlanIt provides comprehensive issue tracking capabilities, allowing you to track bugs, tasks, and other issues directly within the platform or integrate with external issue tracking systems like Jira, GitHub Issues, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, and more.
 
 ## Internal Issue Management
 
@@ -59,7 +59,7 @@ TestPlanIt's powerful integration system allows you to connect with external iss
 #### Personal Access Tokens
 
 - Similar to API keys but user-specific
-- Common with GitHub and Azure DevOps
+- Used by GitHub, GitLab, Gitea/Forgejo/Gogs, and Azure DevOps
 - Best for: Developer tools, CI/CD integration
 
 ## Supported Integration Types
@@ -85,10 +85,50 @@ Connect to GitHub for issue tracking and repository integration.
 
 - Create GitHub issues from test failures
 - Link test cases to GitHub issues
+- Search issues by text or by exact number format (e.g., `#42`)
 - Track issue status across both platforms
 - Personal Access Token authentication
+- Inbound webhook support for real-time status sync
 
-### 3. **Simple URL Integration**
+### 3. **GitLab Integration**
+
+Connect to GitLab for issue tracking across GitLab.com and self-managed GitLab instances.
+
+**Features:**
+
+- Create GitLab issues directly from TestPlanIt
+- Support for issue types: Issue and Incident
+- Search issues by text or by exact key format (e.g., `group/project#42`)
+- Track issue status across both platforms
+- Personal Access Token authentication
+- Works with both GitLab.com and self-managed instances
+
+### 4. **Gitea / Forgejo / Gogs Integration**
+
+Connect to self-hosted Gitea, Forgejo, or Gogs instances for lightweight issue tracking.
+
+**Features:**
+
+- Create issues in any repository on your instance
+- Search issues by text or by exact key format (e.g., `owner/repo#7`)
+- Personal Access Token authentication
+- Configurable instance URL — works with any self-hosted deployment
+
+### 5. **Azure DevOps Integration**
+
+Connect to Azure DevOps Boards for work item tracking.
+
+**Features:**
+
+- Create work items (bugs, tasks, user stories) from TestPlanIt
+- Support for all work item types defined in your Azure DevOps process
+- Search work items by text or by exact ID (e.g., `42`)
+- Priority field supported (maps to work item priority)
+- Personal Access Token authentication
+- Inbound webhook support for real-time status sync
+- Works with both Azure DevOps Services (cloud) and Azure DevOps Server (on-premises)
+
+### 6. **Simple URL Integration**
 
 A flexible integration for any issue tracking system that uses URL-based linking.
 
@@ -111,7 +151,7 @@ A flexible integration for any issue tracking system that uses URL-based linking
 
 1. Navigate to **Administration** → **Integrations**
 2. Click **Add Integration**
-3. Select your integration type (Jira, GitHub, or Simple URL)
+3. Select your integration type (Jira, GitHub, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, or Simple URL)
 4. Fill in the integration details:
 
 ```yaml
@@ -142,6 +182,8 @@ Jira URL: https://your-domain.atlassian.net
 
 #### Jira with OAuth 2.0
 
+OAuth 2.0 is Atlassian's preferred authentication path for Jira Cloud and is recommended for any team where the per-user reporter attribution and granular scoping matter.
+
 1. Create OAuth app in [Atlassian Developer Console](https://developer.atlassian.com/console)
 2. Set redirect URL: `https://your-testplanit-domain/api/auth/jira/callback`
 3. Configure in TestPlanIt:
@@ -168,6 +210,57 @@ Benefits:
 ```text
 Personal Access Token: Generated from GitHub settings
 ```
+
+#### GitLab
+
+1. Generate a Personal Access Token in **GitLab** → **User Settings** → **Access Tokens**
+2. Required scopes:
+   - `api` — Full API access (create/update issues)
+   - `read_user` — Read user information for auth verification
+3. Configure in TestPlanIt:
+
+```text
+Personal Access Token: Generated from GitLab settings
+GitLab URL: https://gitlab.com (or your self-managed instance URL)
+```
+
+**Notes:**
+- Leave GitLab URL blank to default to `https://gitlab.com`
+- For self-managed instances, enter the full base URL (e.g., `https://gitlab.yourcompany.com`)
+- The **Issue Type** field supports `Issue` and `Incident` types
+- Priority is not a native GitLab concept and is not shown in the Create Issue form
+
+#### Gitea / Forgejo / Gogs
+
+1. Generate a Personal Access Token in your instance's **Settings** → **Applications**
+2. No specific scopes required — the token inherits your user's repository permissions
+3. Configure in TestPlanIt:
+
+```text
+Personal Access Token: Generated from your Gitea/Forgejo/Gogs settings
+Instance URL: https://your-gitea-instance.com
+```
+
+**Note:** The instance URL is required for Gitea/Forgejo/Gogs. TestPlanIt uses it to
+construct all API calls to your self-hosted instance.
+
+#### Azure DevOps
+
+1. Generate a Personal Access Token in **Azure DevOps** → **User Settings** → **Personal Access Tokens**
+2. Required scopes:
+   - `Work Items (Read & Write)` — Create and update work items
+   - `Project and Team (Read)` — Read project and team information
+3. Configure in TestPlanIt:
+
+```text
+Personal Access Token: Generated from Azure DevOps settings
+Organization URL: https://dev.azure.com/your-organization
+```
+
+**Notes:**
+- The Organization URL is required (e.g., `https://dev.azure.com/myorg` or `https://myserver/tfs/DefaultCollection` for on-premises)
+- Work item types are discovered dynamically from your Azure DevOps process template
+- Priority values (1–4) map directly to Azure DevOps priority field values
 
 #### Simple URL
 
@@ -322,19 +415,27 @@ When enabled, TestPlanIt can:
 - Create follow-up issues for recurring failures
 - Track issue resolution time for metrics
 
+### Real-time updates via inbound webhooks
+
+For Jira, GitHub, GitLab, Gitea/Forgejo/Gogs, and Azure DevOps integrations, TestPlanIt can also subscribe to events emitted by the external tracker so issue changes appear in TestPlanIt without waiting for a manual refresh. When an inbound webhook is configured for a project:
+
+- Status, assignee, and other supported fields on linked issues update within seconds of the change in the external tracker.
+- New issues filed directly in the external tracker are imported into TestPlanIt's Issues list automatically the first time they are referenced by a webhook event.
+- Open browser tabs reflect the change in near-real time through a project-scoped event stream — no page reload required.
+
+Inbound webhooks are configured per project from **Project Settings** → **Webhooks**. They are 1:1 with the project's active issue integration: switching the integration to a different provider (or removing it) automatically removes the inbound webhook so it cannot drift out of sync. See [Webhooks](./webhooks.md) for setup, secret rotation, health monitoring, delivery replay, and security details.
+
 ## Field Mapping and Transformation
 
 ### Dynamic Field Discovery
 
-TestPlanIt automatically discovers fields from external systems:
+TestPlanIt automatically discovers fields from external systems. The level of dynamic
+field support varies by provider:
 
-```javascript
-// Jira field discovery
-GET /rest/api/3/issue/createmeta
-  ?projectKeys={projectKey}
-  &issuetypeIds={issueTypeId}
-  &expand=projects.issuetypes.fields
-```
+- **Jira**: Full dynamic discovery — issue types, required fields, and custom fields
+  are fetched per-project and per-issue-type from the create metadata API
+- **Azure DevOps**: Work item types are discovered per-project; fields are fixed per type
+- **GitHub / GitLab / Gitea**: Fixed field set (title, description, labels); no custom fields
 
 ### Custom Field Support
 
@@ -366,7 +467,7 @@ TestPlanIt preserves rich text formatting when creating external issues:
 TestPlanIt automatically converts between:
 
 - TipTap Editor JSON → Atlassian Document Format (Jira)
-- TipTap Editor JSON → Markdown (GitHub)
+- TipTap Editor JSON → Markdown (GitHub, GitLab, Gitea/Forgejo/Gogs)
 - TipTap Editor JSON → HTML (Azure DevOps)
 - User references → Account IDs
 - Dates → ISO 8601 format
@@ -426,7 +527,7 @@ Regular health checks verify:
 Integration and project-integration records are tracked in the [audit log](/docs/user-guide/audit-logs) via the standard CRUD actions:
 
 | Action | Description |
-|--------|-------------|
+| -------- | ------------- |
 | `CREATE` | A new integration or project-integration mapping was created |
 | `UPDATE` | An integration was reconfigured (settings, credentials, endpoint changes) |
 | `DELETE` | An integration or project-integration mapping was removed |
@@ -440,8 +541,10 @@ Stored credentials, OAuth tokens, and API keys are redacted from audit payloads 
 Respect external API limits:
 
 - Jira: 50 requests/second
-- GitHub: 5,000 requests/hour
-- Azure DevOps: No hard limit
+- GitHub: 5,000 requests/hour (authenticated)
+- GitLab: 600 requests/minute (GitLab.com); self-managed instances vary
+- Gitea / Forgejo / Gogs: Configured per-instance (no default limit)
+- Azure DevOps: No published hard limit
 
 ## Security Considerations
 
@@ -465,6 +568,20 @@ curl -u email@company.com:api_token \
 curl -H "Authorization: token YOUR_PAT" \
   https://api.github.com/user
 
+```
+
+```bash
+# Test GitLab connection
+curl -H "PRIVATE-TOKEN: YOUR_PAT" \
+  https://gitlab.com/api/v4/user
+
+# Test Gitea connection
+curl -H "Authorization: token YOUR_PAT" \
+  https://your-gitea-instance.com/api/v1/user
+
+# Test Azure DevOps connection
+curl -u ":YOUR_PAT" \
+  "https://dev.azure.com/your-org/_apis/projects?api-version=7.0"
 ```
 
 ### Common Issues
@@ -526,7 +643,7 @@ curl -H "Authorization: token YOUR_PAT" \
 
 ## Best Practices
 
-1. **Use OAuth when available** for better security and user attribution
+1. **Use OAuth for Jira** when possible — it provides per-user reporter attribution and granular scoping; other providers use Personal Access Tokens
 2. **Standardize naming** between TestPlanIt and external systems
 3. **Configure field mappings** to capture all relevant data
 4. **Enable status sync** for automated workflow
@@ -541,7 +658,7 @@ curl -H "Authorization: token YOUR_PAT" \
 ### Jira Cloud vs Server Differences
 
 | Feature | Cloud | Server/DC |
-|---------|-------|-----------|
+| --------- | ------- | ----------- |
 | Authentication | OAuth 2.0, API Key | Basic Auth, PAT |
 | API Version | v3 | v2/v3 |
 | User IDs | accountId | username |
@@ -558,9 +675,23 @@ curl -H "Authorization: token YOUR_PAT" \
 
 **GitHub:**
 
-- Read repository metadata
-- Write issues
-- Read user info
+- `repo` scope — Read/write repository access (includes issues)
+- `read:user` — Read user information
+
+**GitLab:**
+
+- `api` scope — Full API access (create/update issues, read user)
+- `read_user` scope — Verify authentication
+
+**Gitea / Forgejo / Gogs:**
+
+- Personal Access Token with repository read/write access (inherited from user permissions)
+- No specific scope configuration — access is governed by repository membership
+
+**Azure DevOps:**
+
+- `Work Items (Read & Write)` — Create and update work items
+- `Project and Team (Read)` — List projects and teams
 
 ## API Reference
 

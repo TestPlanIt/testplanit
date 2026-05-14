@@ -36,7 +36,31 @@ export interface ApiTokenAuthResult {
     | "EXPIRED_TOKEN"
     | "INACTIVE_TOKEN"
     | "INACTIVE_USER"
-    | "API_ACCESS_DISABLED";
+    | "API_ACCESS_DISABLED"
+    | "READ_ONLY_TOKEN";
+}
+
+/**
+ * HTTP methods that mutate state. Used by `authenticateApiTokenForMethod`
+ * to gate `mode:read` tokens. Set + uppercase letters because Next.js
+ * NextRequest.method is always uppercase.
+ */
+const WRITE_HTTP_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+/**
+ * Returns true when the token's scopes narrow it to read-only operations.
+ * Recognized scope tag: `mode:read` (see schema.zmodel + packages/mcp-server/README.md).
+ */
+export function isReadOnly(scopes: string[] | undefined): boolean {
+  return Boolean(scopes?.includes("mode:read"));
+}
+
+/**
+ * Returns true when the token's scopes mark it as MCP-attributable.
+ * Recognized scope tag: `client:mcp` (see schema.zmodel + packages/mcp-server/README.md).
+ */
+export function isMcpClient(scopes: string[] | undefined): boolean {
+  return Boolean(scopes?.includes("client:mcp"));
 }
 
 /**
@@ -275,4 +299,37 @@ export async function authenticateRequest(
     authenticated: true,
     user: { userId: apiAuth.userId!, access: apiAuth.access },
   };
+}
+
+/**
+ * Authenticate an API request using a Bearer token, then enforce
+ * `mode:read` against the request's HTTP method.
+ *
+ * Wraps `authenticateApiToken`: if the underlying call fails, the original
+ * errorCode is returned unchanged (so an `INVALID_TOKEN` is never masked
+ * as `READ_ONLY_TOKEN` — see T-05-01). On a successful auth, write-method
+ * requests (POST/PUT/PATCH/DELETE) made with a `mode:read` token are
+ * rejected with `errorCode: "READ_ONLY_TOKEN"`. Reads pass through.
+ *
+ * Used by mutation routes; non-mutation routes can keep calling
+ * `authenticateApiToken` directly.
+ */
+export async function authenticateApiTokenForMethod(
+  request: NextRequest
+): Promise<ApiTokenAuthResult> {
+  const result = await authenticateApiToken(request);
+  if (!result.authenticated) {
+    return result;
+  }
+
+  if (WRITE_HTTP_METHODS.has(request.method) && isReadOnly(result.scopes)) {
+    // Note: error message intentionally does NOT echo the raw token (T-05-06).
+    return {
+      authenticated: false,
+      error: "Token is read-only; write operations are not permitted.",
+      errorCode: "READ_ONLY_TOKEN",
+    };
+  }
+
+  return result;
 }

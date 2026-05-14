@@ -10,8 +10,11 @@ import {
 } from "vitest";
 import {
   authenticateApiToken,
+  authenticateApiTokenForMethod,
   extractBearerToken,
   hasBearerToken,
+  isMcpClient,
+  isReadOnly,
 } from "./api-token-auth";
 import { generateApiToken } from "./api-tokens";
 
@@ -49,13 +52,17 @@ describe("API Token Authentication", () => {
     (prisma.apiToken.update as any).mockResolvedValue({});
   });
 
-  const createMockRequest = (authHeader?: string): NextRequest => {
+  const createMockRequest = (
+    authHeader?: string,
+    method: string = "GET"
+  ): NextRequest => {
     const headers = new Headers();
     if (authHeader) {
       headers.set("authorization", authHeader);
     }
     return {
       headers,
+      method,
     } as unknown as NextRequest;
   };
 
@@ -499,6 +506,164 @@ describe("API Token Authentication", () => {
 
       // Auth should still succeed
       expect(result.authenticated).toBe(true);
+    });
+  });
+
+  describe("isReadOnly / isMcpClient", () => {
+    it("isReadOnly returns false for empty scopes", () => {
+      expect(isReadOnly([])).toBe(false);
+    });
+
+    it("isReadOnly returns true when scopes include mode:read", () => {
+      expect(isReadOnly(["mode:read"])).toBe(true);
+    });
+
+    it("isReadOnly returns false for undefined scopes", () => {
+      expect(isReadOnly(undefined)).toBe(false);
+    });
+
+    it("isReadOnly returns false for unrelated scope (client:mcp)", () => {
+      expect(isReadOnly(["client:mcp"])).toBe(false);
+    });
+
+    it("isMcpClient returns true when scopes include client:mcp", () => {
+      expect(isMcpClient(["client:mcp"])).toBe(true);
+    });
+
+    it("isMcpClient returns false for empty scopes", () => {
+      expect(isMcpClient([])).toBe(false);
+    });
+
+    it("isMcpClient returns false for undefined scopes", () => {
+      expect(isMcpClient(undefined)).toBe(false);
+    });
+  });
+
+  describe("authenticateApiTokenForMethod", () => {
+    const createValidToken = () => {
+      const { plaintext, hash } = generateApiToken();
+      return { plaintext, hash };
+    };
+
+    function mockUserToken(scopes: string[]) {
+      const { plaintext, hash } = createValidToken();
+      (prisma.apiToken.findUnique as any).mockResolvedValue({
+        id: "token-id",
+        token: hash,
+        isActive: true,
+        expiresAt: null,
+        userId: "user-123",
+        scopes,
+        user: {
+          id: "user-123",
+          access: "USER",
+          isActive: true,
+          isDeleted: false,
+          isApi: true,
+        },
+      });
+      return plaintext;
+    }
+
+    it("allows GET when token has mode:read scope", async () => {
+      const plaintext = mockUserToken(["mode:read"]);
+      const request = createMockRequest(`Bearer ${plaintext}`, "GET");
+
+      const result = await authenticateApiTokenForMethod(request);
+
+      expect(result.authenticated).toBe(true);
+      expect(result.userId).toBe("user-123");
+      expect(result.scopes).toEqual(["mode:read"]);
+      expect(result.errorCode).toBeUndefined();
+    });
+
+    it("blocks POST with READ_ONLY_TOKEN when token has mode:read scope", async () => {
+      const plaintext = mockUserToken(["mode:read"]);
+      const request = createMockRequest(`Bearer ${plaintext}`, "POST");
+
+      const result = await authenticateApiTokenForMethod(request);
+
+      expect(result.authenticated).toBe(false);
+      expect(result.errorCode).toBe("READ_ONLY_TOKEN");
+      expect(result.error).toMatch(/read[- ]only/i);
+    });
+
+    it("blocks PUT with READ_ONLY_TOKEN when token has mode:read scope", async () => {
+      const plaintext = mockUserToken(["mode:read"]);
+      const request = createMockRequest(`Bearer ${plaintext}`, "PUT");
+
+      const result = await authenticateApiTokenForMethod(request);
+
+      expect(result.authenticated).toBe(false);
+      expect(result.errorCode).toBe("READ_ONLY_TOKEN");
+    });
+
+    it("blocks PATCH with READ_ONLY_TOKEN when token has mode:read scope", async () => {
+      const plaintext = mockUserToken(["mode:read"]);
+      const request = createMockRequest(`Bearer ${plaintext}`, "PATCH");
+
+      const result = await authenticateApiTokenForMethod(request);
+
+      expect(result.authenticated).toBe(false);
+      expect(result.errorCode).toBe("READ_ONLY_TOKEN");
+    });
+
+    it("blocks DELETE with READ_ONLY_TOKEN when token has mode:read scope", async () => {
+      const plaintext = mockUserToken(["mode:read"]);
+      const request = createMockRequest(`Bearer ${plaintext}`, "DELETE");
+
+      const result = await authenticateApiTokenForMethod(request);
+
+      expect(result.authenticated).toBe(false);
+      expect(result.errorCode).toBe("READ_ONLY_TOKEN");
+    });
+
+    it("allows POST with empty scopes (TOK-06 backward compat)", async () => {
+      const plaintext = mockUserToken([]);
+      const request = createMockRequest(`Bearer ${plaintext}`, "POST");
+
+      const result = await authenticateApiTokenForMethod(request);
+
+      expect(result.authenticated).toBe(true);
+      expect(result.userId).toBe("user-123");
+      expect(result.errorCode).toBeUndefined();
+    });
+
+    it("allows POST with client:mcp but no mode:read (agent-token, not read-only)", async () => {
+      const plaintext = mockUserToken(["client:mcp"]);
+      const request = createMockRequest(`Bearer ${plaintext}`, "POST");
+
+      const result = await authenticateApiTokenForMethod(request);
+
+      expect(result.authenticated).toBe(true);
+      expect(result.userId).toBe("user-123");
+      expect(result.scopes).toEqual(["client:mcp"]);
+      expect(result.errorCode).toBeUndefined();
+    });
+
+    it("bubbles up INVALID_TOKEN without downgrading to READ_ONLY_TOKEN (T-05-01)", async () => {
+      // Underlying token lookup fails — must not be masked as read-only.
+      (prisma.apiToken.findUnique as any).mockResolvedValue(null);
+
+      const { plaintext } = createValidToken();
+      const request = createMockRequest(`Bearer ${plaintext}`, "POST");
+
+      const result = await authenticateApiTokenForMethod(request);
+
+      expect(result.authenticated).toBe(false);
+      expect(result.errorCode).toBe("INVALID_TOKEN");
+      // Critical: failed auth must NOT mask as a different error code.
+      expect(result.errorCode).not.toBe("READ_ONLY_TOKEN");
+    });
+
+    it("error message never echoes the raw token (T-05-06)", async () => {
+      const plaintext = mockUserToken(["mode:read"]);
+      const request = createMockRequest(`Bearer ${plaintext}`, "POST");
+
+      const result = await authenticateApiTokenForMethod(request);
+
+      expect(result.authenticated).toBe(false);
+      expect(result.error).not.toMatch(/tpi_/);
     });
   });
 });

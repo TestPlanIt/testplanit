@@ -23,10 +23,16 @@ export const POST = withAuditContext(async (req: NextRequest) => {
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
-    // Check if user exists and is active
+    // Check if user exists and is active. Pull `userPreferences.locale`
+    // so the email is rendered in the recipient's language; falls back
+    // to en_US.
     const user = await prisma.user.findUnique({
       where: { email },
-      select: { id: true, isActive: true },
+      select: {
+        id: true,
+        isActive: true,
+        userPreferences: { select: { locale: true } },
+      },
     });
 
     if (!user || !user.isActive) {
@@ -80,32 +86,12 @@ export const POST = withAuditContext(async (req: NextRequest) => {
 
     const url = `${baseUrl}/api/auth/callback/email?callbackUrl=${encodeURIComponent(finalCallbackUrl)}&token=${token}&email=${encodeURIComponent(email)}`;
 
-    // Send the email using nodemailer (same as NextAuth)
-    const nodemailer = await import("nodemailer");
-    const transport = nodemailer.createTransport({
-      host: process.env.EMAIL_SERVER_HOST,
-      port: Number(process.env.EMAIL_SERVER_PORT),
-      auth: {
-        user: process.env.EMAIL_SERVER_USER,
-        pass: process.env.EMAIL_SERVER_PASSWORD,
-      },
-    });
-
-    await transport.sendMail({
+    // Render and send the localized magic-link email via the shared helper.
+    const { sendMagicLinkEmail } = await import("~/lib/email/magicLink");
+    await sendMagicLinkEmail({
       to: email,
-      from: process.env.EMAIL_FROM,
-      subject: "Sign in to TestPlanIt",
-      text: `Sign in to TestPlanIt\n\nClick the link below to sign in:\n${url}\n\nIf you did not request this email, you can safely ignore it.`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Sign in to TestPlanIt</h2>
-          <p>Click the button below to sign in:</p>
-          <a href="${url}" style="display: inline-block; background-color: #7c3aed; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 16px 0;">Sign In</a>
-          <p style="color: #666; font-size: 14px;">Or copy and paste this link into your browser:</p>
-          <p style="color: #666; font-size: 14px; word-break: break-all;">${url}</p>
-          <p style="color: #999; font-size: 12px; margin-top: 32px;">If you did not request this email, you can safely ignore it.</p>
-        </div>
-      `,
+      url,
+      locale: user.userPreferences?.locale ?? "en_US",
     });
 
     // Audit magic-link request (the generated token is NOT logged — only

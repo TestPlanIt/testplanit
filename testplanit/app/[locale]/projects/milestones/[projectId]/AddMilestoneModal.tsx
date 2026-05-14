@@ -37,7 +37,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
@@ -48,25 +48,33 @@ import {
 } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 
-const FormSchema = z.object({
-  name: z.string().min(2, {
-    error: "Please enter a name for the Milestone",
-  }),
-  parentId: z.union([z.string().nullable(), z.number().optional()]).optional(),
-  note: z.any().nullable(),
-  docs: z.any().nullable(),
-  isStarted: z.boolean(),
-  isCompleted: z.boolean(),
-  startedAt: z.date().nullable().optional(),
-  completedAt: z.date().nullable().optional(),
-  automaticCompletion: z.boolean(),
-  enableNotifications: z.boolean(),
-  notifyDaysBefore: z.number().min(0),
-  milestoneTypeId: z.number({
-    error: (issue) =>
-      issue.input === undefined ? "Please select a Milestone Type" : undefined,
-  }),
-});
+function buildFormSchema(t: (key: any) => string) {
+  return z.object({
+    name: z.string().min(2, {
+      error: t("common.errors.milestoneNameRequired"),
+    }),
+    parentId: z
+      .union([z.string().nullable(), z.number().optional()])
+      .optional(),
+    note: z.any().nullable(),
+    docs: z.any().nullable(),
+    isStarted: z.boolean(),
+    isCompleted: z.boolean(),
+    startedAt: z.date().nullable().optional(),
+    completedAt: z.date().nullable().optional(),
+    automaticCompletion: z.boolean(),
+    enableNotifications: z.boolean(),
+    notifyDaysBefore: z.number().min(0),
+    milestoneTypeId: z.number({
+      error: (issue) =>
+        issue.input === undefined
+          ? t("common.errors.milestoneTypeRequired")
+          : undefined,
+    }),
+  });
+}
+
+type FormValues = z.infer<ReturnType<typeof buildFormSchema>>;
 
 interface AddMilestoneProps {
   open: boolean;
@@ -142,8 +150,9 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
   const [noteContent, setNoteContent] = useState<object>({});
   const [docsContent, setDocsContent] = useState<object>({});
 
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+  const formSchema = useMemo(() => buildFormSchema(t), [t]);
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       parentId: undefined,
@@ -193,7 +202,7 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
     return null;
   }
 
-  async function onSubmit(data: z.infer<typeof FormSchema>) {
+  async function onSubmit(data: FormValues) {
     setIsSubmitting(true);
     try {
       if (session) {

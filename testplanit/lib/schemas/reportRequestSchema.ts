@@ -13,6 +13,8 @@ const PRE_BUILT_REPORT_TYPES = [
   "cross-project-test-case-health",
   "issue-test-coverage",
   "cross-project-issue-test-coverage",
+  "execution-log",
+  "cross-project-execution-log",
 ] as const;
 
 /**
