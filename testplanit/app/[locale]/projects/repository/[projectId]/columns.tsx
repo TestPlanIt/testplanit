@@ -87,6 +87,7 @@ import {
   PlusSquare,
   ScrollText,
   SquarePen,
+  SquareStack,
   Trash2,
   UserCog,
 } from "lucide-react";
@@ -170,6 +171,12 @@ export interface ExtendedCases extends RepositoryCases {
     };
   } | null;
   testRunStatusId?: number | null;
+  /**
+   * Phase 3 — when > 0, the case is parameterized in this run. The status
+   * cell becomes read-only (sheet-opener) since case-level status is
+   * derived from iteration rollup, not user input.
+   */
+  totalIterations?: number;
   assignedToId?: string | null;
   assignedTo?: {
     id: string;
@@ -468,6 +475,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
   steps,
   isSoftDeletedInRun,
   onOpenAddResultModal,
+  totalIterations,
 }: {
   status: ExtendedCases["testRunStatus"];
   caseId: number;
@@ -494,7 +502,15 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
     selectedCases?: ExtendedCases[];
     steps?: any[];
   }) => void;
+  totalIterations?: number;
 }) {
+  // For parameterized cases, the status is derived from the iteration
+  // rollup (no per-case-level result writes). Render a click-to-open-sheet
+  // button instead of the status-picker dropdown.
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isParameterized = (totalIterations ?? 0) > 0;
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [isBulkAssign, setIsBulkAssign] = useState(false);
   const [isInitialRender, setIsInitialRender] = useState(true);
@@ -548,6 +564,13 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
 
   const displayStatus = status || defaultStatus;
   if (!displayStatus) return null;
+
+  const handleOpenParameterizedSheet = () => {
+    if (isSoftDeletedInRun) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("selectedCase", caseId.toString());
+    router.replace(`${pathname}?${params.toString()}`);
+  };
 
   // Combine isCompleted with isSoftDeletedInRun for disabling logic
   const isDisabled = isCompleted || isSoftDeletedInRun;
@@ -663,6 +686,28 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
   return (
     <>
       <div className="flex items-center justify-between w-fit">
+        {isParameterized ? (
+          <Button
+            variant="outline"
+            className="w-[120px] h-8 bg-transparent hover:bg-muted hover:text-foreground justify-between gap-1 overflow-hidden"
+            disabled={isSoftDeletedInRun}
+            onClick={handleOpenParameterizedSheet}
+            data-testid={`testrun-status-cell-parameterized-${caseId}`}
+            title={t("repository.cases.parameterizedStatusReadOnly")}
+          >
+            <StatusDotDisplay
+              name={displayStatus.name}
+              color={
+                hasColor(displayStatus)
+                  ? displayStatus.color.value
+                  : undefined
+              }
+              className="flex items-center space-x-1 min-w-0 overflow-hidden"
+              nameClassName="truncate"
+            />
+            <SquareStack className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          </Button>
+        ) : (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -704,6 +749,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+        )}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild disabled={isMenuDisabled || isDisabled}>
@@ -735,19 +781,21 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                     })}
                   </span>
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  className={`flex items-center ${isDisabled ? "cursor-not-allowed" : "cursor-pointer"}`}
-                  onClick={handleBulkResult}
-                  disabled={isDisabled}
-                  style={{ opacity: isDisabled ? 0.5 : 1 }}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  <span>
-                    {t("common.actions.addResultSelected", {
-                      count: selectedCount,
-                    })}
-                  </span>
-                </DropdownMenuItem>
+                {!isParameterized && (
+                  <DropdownMenuItem
+                    className={`flex items-center ${isDisabled ? "cursor-not-allowed" : "cursor-pointer"}`}
+                    onClick={handleBulkResult}
+                    disabled={isDisabled}
+                    style={{ opacity: isDisabled ? 0.5 : 1 }}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    <span>
+                      {t("common.actions.addResultSelected", {
+                        count: selectedCount,
+                      })}
+                    </span>
+                  </DropdownMenuItem>
+                )}
               </>
             ) : (
               <>
@@ -760,15 +808,17 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
                   <UserCog className="mr-2 h-4 w-4" />
                   <span>{t("common.actions.assign")}</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  className={`flex items-center ${isDisabled ? "cursor-not-allowed" : "cursor-pointer"}`}
-                  onClick={handleSingleResult}
-                  disabled={isDisabled}
-                  style={{ opacity: isDisabled ? 0.5 : 1 }}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  <span>{t("common.actions.addResult")}</span>
-                </DropdownMenuItem>
+                {!isParameterized && (
+                  <DropdownMenuItem
+                    className={`flex items-center ${isDisabled ? "cursor-not-allowed" : "cursor-pointer"}`}
+                    onClick={handleSingleResult}
+                    disabled={isDisabled}
+                    style={{ opacity: isDisabled ? 0.5 : 1 }}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    <span>{t("common.actions.addResult")}</span>
+                  </DropdownMenuItem>
+                )}
               </>
             )}
             <Link
@@ -2215,6 +2265,7 @@ export const getColumns = (
             steps={row.original.steps || []}
             isSoftDeletedInRun={isSoftDeletedInRun}
             onOpenAddResultModal={onOpenAddResultModal}
+            totalIterations={row.original.totalIterations}
           />
         );
       },
