@@ -35,12 +35,23 @@ vi.mock("next-intl", () => ({
 
 const mockUseCountTestRunCases = vi.fn();
 const mockUseFindManyTestRunCaseIteration = vi.fn();
+const mockUseFindUniqueCaseSharedDataSetAssignment = vi.fn();
+const mockUseFindFirstDataSetVersion = vi.fn();
 const mockRouterPush = vi.fn();
 
 vi.mock("~/lib/hooks", () => ({
   useCountTestRunCases: (...args: any[]) => mockUseCountTestRunCases(...args),
   useFindManyTestRunCaseIteration: (...args: any[]) =>
     mockUseFindManyTestRunCaseIteration(...args),
+  useFindUniqueCaseSharedDataSetAssignment: (...args: any[]) =>
+    mockUseFindUniqueCaseSharedDataSetAssignment(...args),
+  useFindFirstDataSetVersion: (...args: any[]) =>
+    mockUseFindFirstDataSetVersion(...args),
+  // The AssignSharedDatasetDialog (lazy-loaded path) also reaches into
+  // this module — provide a stub so it never throws when the dialog
+  // mounts in the rare test that triggers it.
+  useFindManyDataSet: () => ({ data: [] }),
+  useFindManyTestCaseParameter: () => ({ data: [] }),
 }));
 
 vi.mock("~/lib/navigation", () => ({
@@ -53,6 +64,11 @@ vi.mock("~/lib/navigation", () => ({
     forward: vi.fn(),
   }),
   usePathname: () => "/",
+  Link: ({ children, href, ...rest }: any) => (
+    <a href={typeof href === "string" ? href : "#"} {...rest}>
+      {children}
+    </a>
+  ),
 }));
 
 vi.mock("sonner", () => ({
@@ -139,6 +155,12 @@ beforeEach(() => {
   // "Last result" column override these mocks explicitly.
   mockUseCountTestRunCases.mockReturnValue({ data: 0 });
   mockUseFindManyTestRunCaseIteration.mockReturnValue({ data: [] });
+  // Default: no shared-dataset assignment. The Source toggle is mounted
+  // but the read-only shared view is never reached. PARAM-07 invariant.
+  mockUseFindUniqueCaseSharedDataSetAssignment.mockReturnValue({
+    data: null,
+  });
+  mockUseFindFirstDataSetVersion.mockReturnValue({ data: null });
   mockRouterPush.mockReset();
 });
 

@@ -1,15 +1,36 @@
 "use client";
 
+import { AssignSharedDatasetDialog } from "@/components/parameters/AssignSharedDatasetDialog";
 import { DatasetCell } from "@/components/parameters/DatasetCell";
 import { DatasetRowActions } from "@/components/parameters/DatasetRowActions";
 import { PasteCsvDialog } from "@/components/parameters/PasteCsvDialog";
 import { SheetEditingContext } from "@/components/parameters/ConfigureParametersSheet";
 import { SortableDatasetRow } from "@/components/parameters/SortableDatasetRow";
 import StatusDotDisplay from "@/components/StatusDotDisplay";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@/components/ui/toggle-group";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   closestCenter,
   DndContext,
@@ -59,13 +80,16 @@ import {
 import { toast } from "sonner";
 import {
   useCountTestRunCases,
+  useFindFirstDataSetVersion,
   useFindManyTestRunCaseIteration,
+  useFindUniqueCaseSharedDataSetAssignment,
 } from "~/lib/hooks";
-import { useRouter } from "~/lib/navigation";
+import { Link, useRouter } from "~/lib/navigation";
 import {
   buildRowSchemaFromParameters,
   type ParameterShape,
 } from "~/lib/schemas/datasetRowSchema";
+import { applyMapping } from "~/lib/utils/datasetMapping";
 
 interface ParameterRecord {
   id: number;
@@ -282,12 +306,176 @@ export function DatasetTab({
   );
   const [showPasteDialog, setShowPasteDialog] = useState(false);
 
+  // ---------- Source toggle (per-case mode only) ----------
+  // The Source segmented control is mounted only when this DatasetTab is
+  // operating in the per-case "owner dataset" mode. In shared-editor /
+  // shared-readonly modes the parent controls the entire surface and
+  // there is no Local/Shared notion to switch between.
+  const sourceToggleEnabled = !isShared;
+  const { data: assignmentRaw } = useFindUniqueCaseSharedDataSetAssignment(
+    {
+      where: { caseId },
+      include: {
+        sharedDataSet: { select: { id: true, name: true } },
+      },
+    },
+    { enabled: sourceToggleEnabled }
+  );
+  const assignment = (assignmentRaw ?? null) as
+    | {
+        id: number;
+        sharedDataSetId: number;
+        pinnedVersionId: number | null;
+        mappingJson: unknown;
+        sharedDataSet: { id: number; name: string } | null;
+      }
+    | null;
+  const hasAssignment = assignment !== null;
+
+  // PARAM-07 invariant: when there is no shared assignment, the default
+  // is "local" — the entire owner-dataset code path is unchanged.
+  const [viewSource, setViewSource] = useState<"local" | "shared">(() => {
+    // Initial render uses "local" — useEffect below promotes to "shared"
+    // when the assignment is loaded and there is no owner dataset on this
+    // case. The hooks fire in render order so an explicit promotion keeps
+    // the default selection logic deterministic.
+    return "local";
+  });
+  const [showAssignDialog, setShowAssignDialog] = useState(false);
+  const [showSwitchToLocalConfirm, setShowSwitchToLocalConfirm] =
+    useState(false);
+
+  // hasOwnerDataset: dataset is loaded AND has at least one row OR the
+  // dataset record itself exists (the per-case API attaches an empty
+  // DataSet for the case lazily). Once we know the API returned a
+  // dataset, treat owner as present.
+  const hasOwnerDataset = !isShared && dataset !== null;
+
+  // Default-source promotion: only when no owner dataset exists AND a
+  // shared assignment is present should we land on "shared" automatically.
+  const promotedRef = useRef(false);
+  useEffect(() => {
+    if (!sourceToggleEnabled) return;
+    if (promotedRef.current) return;
+    if (!hasAssignment) return;
+    // Wait until owner-dataset state has resolved.
+    if (isLoadingDataset) return;
+    promotedRef.current = true;
+    if (!hasOwnerDataset) {
+      setViewSource("shared");
+    }
+  }, [sourceToggleEnabled, hasAssignment, isLoadingDataset, hasOwnerDataset]);
+
+  // ---------- Shared (read-only) view: resolve mapped rows ----------
+  // In shared view we render rows fetched from the assignment's pinned
+  // version (or the latest, when follow-latest). `applyMapping` projects
+  // each row's columns onto the case's parameter names — imported from
+  // the pure helper module so the client bundle does NOT pull
+  // `iterationFanOut.ts` (and its Prisma type imports) along with it.
+  const sharedAssignmentActive =
+    sourceToggleEnabled && hasAssignment && viewSource === "shared";
+
+  // For pinned: load that version directly. For follow-latest: load the
+  // latest version of the assignment's dataset.
+  const pinnedVersionId = assignment?.pinnedVersionId ?? null;
+  const sharedDataSetId = assignment?.sharedDataSetId ?? null;
+  const { data: pinnedVersionData } = useFindFirstDataSetVersion(
+    {
+      where: { id: pinnedVersionId ?? -1 },
+      select: { id: true, version: true, rowsJson: true },
+    },
+    {
+      enabled: sharedAssignmentActive && pinnedVersionId !== null,
+    }
+  );
+  const { data: latestVersionData } = useFindFirstDataSetVersion(
+    {
+      where: { dataSetId: sharedDataSetId ?? -1 },
+      orderBy: { version: "desc" },
+      select: { id: true, version: true, rowsJson: true },
+    },
+    {
+      enabled:
+        sharedAssignmentActive &&
+        pinnedVersionId === null &&
+        sharedDataSetId !== null,
+    }
+  );
+
+  const sharedSnapshot = useMemo(() => {
+    if (!assignment) return null;
+    const followLatest = assignment.pinnedVersionId === null;
+    const versionRow = (followLatest
+      ? latestVersionData
+      : pinnedVersionData) as
+      | { id: number; version: number; rowsJson: unknown }
+      | null
+      | undefined;
+    if (!versionRow) {
+      return {
+        followLatest,
+        versionNumber: null as number | null,
+        rowsJson: [] as Array<{
+          label?: string | null;
+          valuesJson?: Record<string, unknown>;
+        }>,
+        sharedDataSet: assignment.sharedDataSet,
+        mappingJson:
+          (assignment.mappingJson as Record<string, string>) ?? {},
+      };
+    }
+    const raw = versionRow.rowsJson;
+    const list = Array.isArray(raw)
+      ? (raw as Array<{
+          label?: string | null;
+          valuesJson?: Record<string, unknown>;
+        }>)
+      : [];
+    return {
+      followLatest,
+      versionNumber: versionRow.version,
+      rowsJson: list,
+      sharedDataSet: assignment.sharedDataSet,
+      mappingJson:
+        (assignment.mappingJson as Record<string, string>) ?? {},
+    };
+  }, [assignment, pinnedVersionData, latestVersionData]);
+
+  const sharedReadonlyRows = useMemo<DatasetTabRow[]>(() => {
+    if (!sharedSnapshot) return [];
+    const mapping = sharedSnapshot.mappingJson;
+    return sharedSnapshot.rowsJson.map((r, idx) => ({
+      // Synthetic negative ids — these are read-only display rows.
+      id: -(idx + 1),
+      label: r.label ?? null,
+      rowIndex: idx,
+      valuesJson: applyMapping(
+        (r.valuesJson ?? {}) as Record<string, unknown>,
+        mapping
+      ) as Record<string, unknown>,
+    }));
+  }, [sharedSnapshot]);
+
+  // In shared view, pretend isReadOnly=true so the table disables all
+  // edit affordances. The original `isReadOnly` only fires for
+  // mode === "shared-readonly"; we OR it with the per-case shared view
+  // selection so the same render path is reused.
+  const renderReadOnly = isReadOnly || (sourceToggleEnabled && viewSource === "shared");
+
+  // In rendering below, when `viewSource === "shared"` (per-case mode),
+  // we override the rows the table sees with `sharedReadonlyRows`.
+
   // In shared mode, rows are supplied by the parent. In owner-dataset
   // mode, rows live in this component's local state seeded from the
   // per-case API.
   const rows = useMemo(
-    () => (isShared ? (controlledRows ?? []) : (dataset?.rows ?? [])),
-    [isShared, controlledRows, dataset]
+    () => {
+      if (sourceToggleEnabled && viewSource === "shared") {
+        return sharedReadonlyRows;
+      }
+      return isShared ? (controlledRows ?? []) : (dataset?.rows ?? []);
+    },
+    [isShared, controlledRows, dataset, sourceToggleEnabled, viewSource, sharedReadonlyRows]
   );
   const editCellRef = useRef<EditCellState | null>(null);
   editCellRef.current = editCell;
@@ -656,7 +844,7 @@ export function DatasetTab({
       paramName: string | null,
       currentValue: unknown
     ) => ({
-      onEdit: isReadOnly
+      onEdit: renderReadOnly
         ? () => {
             /* readonly: cell click is a no-op */
           }
@@ -881,7 +1069,7 @@ export function DatasetTab({
     caseId,
     projectId,
     router,
-    isReadOnly,
+    renderReadOnly,
   ]);
 
   const table = useReactTable<DatasetRowRecord>({
@@ -910,97 +1098,280 @@ export function DatasetTab({
     setSelectedRowIds(new Set());
   };
 
+  // Owner+shared coexistence — Amendment A. Render an info banner in
+  // BOTH local and shared views explaining that iteration uses local
+  // rows when both are present.
+  const showOwnerSharedBanner =
+    sourceToggleEnabled && hasOwnerDataset && hasAssignment;
+
+  // Source-toggle handler. When switching Local→Shared with no
+  // assignment yet, open the assignment dialog. When switching
+  // Shared→Local while an assignment exists AND no owner dataset is
+  // present, open the confirm AlertDialog (the assignment will be
+  // deleted on confirm). When an owner dataset is present, the
+  // Local↔Shared switch is non-destructive.
+  const handleSourceChange = (next: "local" | "shared") => {
+    if (next === viewSource) return;
+    if (next === "shared") {
+      if (!hasAssignment) {
+        setShowAssignDialog(true);
+        return;
+      }
+      setViewSource("shared");
+      return;
+    }
+    // next === "local"
+    if (hasAssignment && !hasOwnerDataset) {
+      setShowSwitchToLocalConfirm(true);
+      return;
+    }
+    setViewSource("local");
+  };
+
+  const handleConfirmSwitchToLocal = async () => {
+    try {
+      const res = await fetch(
+        `/api/repository/cases/${caseId}/shared-dataset`,
+        { method: "DELETE" }
+      );
+      if (!res.ok) {
+        toast.error(t("datasetSaveError"));
+        return;
+      }
+      void queryClient.invalidateQueries({
+        queryKey: ["zenstack", "CaseSharedDataSetAssignment"],
+      });
+      setViewSource("local");
+      setShowSwitchToLocalConfirm(false);
+    } catch {
+      toast.error(t("datasetSaveError"));
+    }
+  };
+
+  // Resolve the shared-view header data (dataset name + version label).
+  const sharedHeaderName = sharedSnapshot?.sharedDataSet?.name ?? "";
+  const sharedHeaderVersion = sharedSnapshot?.versionNumber ?? null;
+  const sharedFollowLatest = sharedSnapshot?.followLatest ?? false;
+
   return (
     <div className="flex flex-col h-full">
       <div
-        className="p-4 border-b bg-card flex items-center justify-between"
+        className="p-4 border-b bg-card flex flex-col gap-3"
         data-testid="dataset-tab-toolbar"
       >
-        {hasSelection && !isReadOnly ? (
-          isShared ? (
-            <div className="flex items-center justify-between w-full">
-              <span className="text-sm">
-                {t("datasetSelectedCount", {
-                  count: String(selectedRowIds.size),
-                })}
-              </span>
-              <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedRowIds(new Set())}
-                >
-                  {t("datasetClearSelection")}
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleSharedBulkDelete}
-                  data-testid="dataset-shared-bulk-delete-button"
-                >
-                  {t("datasetDeleteSelected")}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <DatasetRowActions
-              caseId={caseId}
-              selectedRowIds={Array.from(selectedRowIds)}
-              onClear={() => setSelectedRowIds(new Set())}
-              onAfterDelete={loadDataset}
-            />
-          )
-        ) : (
-          <>
-            <div className="flex flex-col">
-              <span className="text-sm text-muted-foreground">
-                {t("datasetCounts", {
-                  paramCount: String(parameters.length),
-                  rowCount: String(totalRows),
-                })}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {t("datasetEditingHint")}
-              </span>
-            </div>
-            {!isReadOnly && (
-              <div className="flex gap-2">
-                {!isShared && (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowPasteDialog(true)}
-                      data-testid="dataset-paste-csv-button"
-                    >
-                      <ClipboardPaste className="w-4 h-4 mr-1" />
-                      {t("datasetPasteCsv")}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onOpenImportWizard?.()}
-                      data-testid="dataset-import-csv-button"
-                    >
-                      <Upload className="w-4 h-4 mr-1" />
-                      {t("datasetImportCsv")}
-                    </Button>
-                  </>
-                )}
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={handleAddRow}
-                  data-testid="dataset-add-row-button"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  {t("datasetAddRow")}
-                </Button>
-              </div>
+        {sourceToggleEnabled && (
+          <div className="flex items-center justify-between">
+            <ToggleGroup
+              type="single"
+              value={viewSource}
+              onValueChange={(v) => {
+                if (v === "local" || v === "shared") handleSourceChange(v);
+              }}
+              data-testid="dataset-source-toggle"
+            >
+              <ToggleGroupItem
+                value="local"
+                data-testid="dataset-source-local"
+                aria-label={t("datasetSourceLocal")}
+              >
+                {t("datasetSourceLocal")}
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="shared"
+                data-testid="dataset-source-shared"
+                aria-label={t("datasetSourceShared")}
+              >
+                {t("datasetSourceShared")}
+              </ToggleGroupItem>
+            </ToggleGroup>
+            {hasOwnerDataset && hasAssignment && (
+              <Badge
+                variant="outline"
+                data-testid="dataset-shared-ref-badge"
+              >
+                {t("datasetSharedRefBadge")}
+              </Badge>
             )}
-          </>
+          </div>
         )}
+
+        {viewSource === "shared" && hasAssignment && sharedSnapshot && (
+          <div
+            className="flex items-center justify-between"
+            data-testid="dataset-shared-header"
+          >
+            <div className="flex items-center gap-2 text-sm">
+              <span>
+                {t("datasetSharedHeader", {
+                  datasetName: sharedHeaderName,
+                  version: String(sharedHeaderVersion ?? 0),
+                })}
+              </span>
+              <Button asChild variant="link" size="sm">
+                <Link
+                  href={`/projects/settings/${projectId}/datasets/${assignment?.sharedDataSetId}`}
+                >
+                  {t("datasetViewSource")}
+                </Link>
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              {sharedFollowLatest ? (
+                <Badge
+                  variant="outline"
+                  data-testid="dataset-shared-version-badge"
+                >
+                  {t("datasetSharedVersionFollowLatest", {
+                    version: String(sharedHeaderVersion ?? 0),
+                  })}
+                </Badge>
+              ) : (
+                <Badge
+                  variant="secondary"
+                  data-testid="dataset-shared-version-badge"
+                >
+                  {t("datasetSharedVersionPinned", {
+                    version: String(sharedHeaderVersion ?? 0),
+                  })}
+                </Badge>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAssignDialog(true)}
+                data-testid="dataset-shared-edit-assignment"
+              >
+                {t("datasetSharedEditAssignment")}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between">
+          {hasSelection && !renderReadOnly ? (
+            isShared ? (
+              <div className="flex items-center justify-between w-full">
+                <span className="text-sm">
+                  {t("datasetSelectedCount", {
+                    count: String(selectedRowIds.size),
+                  })}
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedRowIds(new Set())}
+                  >
+                    {t("datasetClearSelection")}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleSharedBulkDelete}
+                    data-testid="dataset-shared-bulk-delete-button"
+                  >
+                    {t("datasetDeleteSelected")}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <DatasetRowActions
+                caseId={caseId}
+                selectedRowIds={Array.from(selectedRowIds)}
+                onClear={() => setSelectedRowIds(new Set())}
+                onAfterDelete={loadDataset}
+              />
+            )
+          ) : (
+            <>
+              <div className="flex flex-col">
+                <span className="text-sm text-muted-foreground">
+                  {t("datasetCounts", {
+                    paramCount: String(parameters.length),
+                    rowCount: String(totalRows),
+                  })}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {t("datasetEditingHint")}
+                </span>
+              </div>
+              {!renderReadOnly && (
+                <div className="flex gap-2">
+                  {!isShared && (
+                    <>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span tabIndex={0}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setShowPasteDialog(true)}
+                              data-testid="dataset-paste-csv-button"
+                            >
+                              <ClipboardPaste className="w-4 h-4 mr-1" />
+                              {t("datasetPasteCsv")}
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        {renderReadOnly && (
+                          <TooltipContent>
+                            {t("datasetSharedReadOnly")}
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onOpenImportWizard?.()}
+                        data-testid="dataset-import-csv-button"
+                      >
+                        <Upload className="w-4 h-4 mr-1" />
+                        {t("datasetImportCsv")}
+                      </Button>
+                    </>
+                  )}
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleAddRow}
+                    data-testid="dataset-add-row-button"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    {t("datasetAddRow")}
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
+
+      {showOwnerSharedBanner && (
+        <Alert
+          variant="default"
+          className="m-4 mb-0"
+          data-testid="dataset-owner-shared-banner"
+        >
+          <AlertDescription className="flex items-center justify-between gap-3">
+            <span>
+              {viewSource === "local"
+                ? t("datasetOwnerWinsLocal")
+                : t("datasetOwnerWinsShared")}
+            </span>
+            <Button
+              variant="link"
+              size="sm"
+              onClick={() =>
+                handleSourceChange(viewSource === "local" ? "shared" : "local")
+              }
+            >
+              {viewSource === "local"
+                ? t("datasetViewSharedRef")
+                : t("datasetSwitchToLocal")}
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {isLoadingDataset && !showLoading ? (
         <div className="flex-1" aria-hidden="true" />
@@ -1024,7 +1395,7 @@ export function DatasetTab({
           <p className="text-sm text-muted-foreground">
             {t("datasetEmptyBody")}
           </p>
-          {!isReadOnly && (
+          {!renderReadOnly && (
             <div className="flex gap-2">
               <Button variant="default" size="sm" onClick={handleAddRow}>
                 {t("datasetAddRow")}
@@ -1126,9 +1497,9 @@ export function DatasetTab({
                             )}
                             <div
                               ref={setActivatorNodeRef}
-                              {...(isReadOnly ? {} : listeners)}
+                              {...(renderReadOnly ? {} : listeners)}
                               className={
-                                isReadOnly
+                                renderReadOnly
                                   ? "text-muted-foreground/40"
                                   : "cursor-grab text-muted-foreground"
                               }
@@ -1250,6 +1621,69 @@ export function DatasetTab({
           parameters={parameters}
         />
       )}
+
+      {sourceToggleEnabled && (
+        <AssignSharedDatasetDialog
+          open={showAssignDialog}
+          onOpenChange={(open) => {
+            setShowAssignDialog(open);
+            if (!open) {
+              // After the dialog closes (whether saved or cancelled),
+              // re-fetch the assignment so the UI reflects the new state.
+              void queryClient.invalidateQueries({
+                queryKey: ["zenstack", "CaseSharedDataSetAssignment"],
+              });
+            }
+          }}
+          caseId={caseId}
+          projectId={projectId}
+          hasOwnerDataset={hasOwnerDataset}
+          currentAssignment={
+            assignment
+              ? {
+                  sharedDataSetId: assignment.sharedDataSetId,
+                  pinnedVersionId: assignment.pinnedVersionId,
+                  mappingJson:
+                    (assignment.mappingJson as Record<string, string>) ?? {},
+                }
+              : null
+          }
+          onSaved={() => {
+            // After save, switch the view to Shared so the user sees the
+            // mapped rows immediately (matches the dialog's intent).
+            setViewSource("shared");
+          }}
+        />
+      )}
+
+      <AlertDialog
+        open={showSwitchToLocalConfirm}
+        onOpenChange={setShowSwitchToLocalConfirm}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("datasetSwitchToLocalTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("datasetSwitchToLocalDescription")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
+            <AlertDialogAction asChild>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleConfirmSwitchToLocal}
+                data-testid="dataset-source-switch-confirm"
+              >
+                {t("datasetSwitchToLocalConfirm")}
+              </Button>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

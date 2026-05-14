@@ -47,3 +47,47 @@ export function applyMapping(
   }
   return out;
 }
+
+/**
+ * Build an initial column → parameter mapping by case-insensitive name match.
+ *
+ * Mirrors the auto-map heuristic in `components/parameters/wizard/MapColumnsStep.tsx`
+ * so the CSV-import wizard and the shared-dataset assignment dialog stay in
+ * vocabulary-sync. Columns with no matching parameter are mapped to
+ * `SKIP_SENTINEL` so the result is a complete projection (every column is
+ * accounted for).
+ *
+ * Pure function. Safe to bundle into client code.
+ */
+export function autoMapColumns(
+  columns: string[],
+  parameters: { name: string }[],
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const column of columns) {
+    const match = parameters.find(
+      (p) => p.name.toLowerCase() === column.toLowerCase(),
+    );
+    out[column] = match ? match.name : SKIP_SENTINEL;
+  }
+  return out;
+}
+
+/**
+ * Required parameters whose name is NOT the target of any non-skip column
+ * mapping. Used to gate "Save" in the assignment dialog and to render the
+ * red-border hint on individual mapping rows.
+ *
+ * Pure function. Safe to bundle into client code.
+ */
+export function findUnmappedRequiredParameters(
+  mapping: Record<string, string>,
+  parameters: { name: string; required: boolean }[],
+): { name: string }[] {
+  const mappedParamNames = new Set(
+    Object.values(mapping).filter((v) => v !== SKIP_SENTINEL),
+  );
+  return parameters
+    .filter((p) => p.required && !mappedParamNames.has(p.name))
+    .map((p) => ({ name: p.name }));
+}
