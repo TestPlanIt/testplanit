@@ -1,4 +1,4 @@
-import { Queue } from "bullmq";
+import { type JobsOptions, Queue } from "bullmq";
 import {
   AUDIT_LOG_QUEUE_NAME,
   AUTO_TAG_QUEUE_NAME,
@@ -39,6 +39,25 @@ export {
   WEBHOOK_DISPATCH_QUEUE_NAME,
 };
 
+const STANDARD_RETRY: JobsOptions = {
+  attempts: 3,
+  backoff: { type: "exponential", delay: 5000 },
+  removeOnComplete: { age: 3600 * 24 * 7, count: 1000 },
+  removeOnFail: { age: 3600 * 24 * 14 },
+};
+
+const NO_RETRY_LIGHT_RETENTION: JobsOptions = {
+  attempts: 1,
+  removeOnComplete: { age: 3600 * 24, count: 100 },
+  removeOnFail: { age: 3600 * 24 * 7 },
+};
+
+const NO_RETRY_MEDIUM_RETENTION: JobsOptions = {
+  attempts: 1,
+  removeOnComplete: { age: 3600 * 24 * 7, count: 500 },
+  removeOnFail: { age: 3600 * 24 * 14 },
+};
+
 // Lazy-initialized queue instances
 let _forecastQueue: Queue | null = null;
 let _notificationQueue: Queue | null = null;
@@ -72,20 +91,7 @@ export function getForecastQueue(): Queue | null {
 
   _forecastQueue = new Queue(FORECAST_QUEUE_NAME, {
     connection: valkeyConnection as any,
-    defaultJobOptions: {
-      attempts: 3,
-      backoff: {
-        type: "exponential",
-        delay: 5000,
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 7,
-        count: 1000,
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 14,
-      },
-    },
+    defaultJobOptions: { ...STANDARD_RETRY },
   });
 
   console.log(`Queue "${FORECAST_QUEUE_NAME}" initialized.`);
@@ -111,20 +117,7 @@ export function getNotificationQueue(): Queue | null {
 
   _notificationQueue = new Queue(NOTIFICATION_QUEUE_NAME, {
     connection: valkeyConnection as any,
-    defaultJobOptions: {
-      attempts: 3,
-      backoff: {
-        type: "exponential",
-        delay: 5000,
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 7,
-        count: 1000,
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 14,
-      },
-    },
+    defaultJobOptions: { ...STANDARD_RETRY },
   });
 
   console.log(`Queue "${NOTIFICATION_QUEUE_NAME}" initialized.`);
@@ -152,17 +145,9 @@ export function getEmailQueue(): Queue | null {
     connection: valkeyConnection as any,
     defaultJobOptions: {
       attempts: 5,
-      backoff: {
-        type: "exponential",
-        delay: 10000,
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 30,
-        count: 5000,
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 30,
-      },
+      backoff: { type: "exponential", delay: 10000 },
+      removeOnComplete: { age: 3600 * 24 * 30, count: 5000 },
+      removeOnFail: { age: 3600 * 24 * 30 },
     },
   });
 
@@ -190,18 +175,9 @@ export function getSyncQueue(): Queue | null {
   _syncQueue = new Queue(SYNC_QUEUE_NAME, {
     connection: valkeyConnection as any,
     defaultJobOptions: {
-      attempts: 3,
-      backoff: {
-        type: "exponential",
-        delay: 5000,
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 3,
-        count: 500,
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 7,
-      },
+      ...STANDARD_RETRY,
+      removeOnComplete: { age: 3600 * 24 * 3, count: 500 },
+      removeOnFail: { age: 3600 * 24 * 7 },
     },
   });
 
@@ -229,14 +205,9 @@ export function getTestmoImportQueue(): Queue | null {
   _testmoImportQueue = new Queue(TESTMO_IMPORT_QUEUE_NAME, {
     connection: valkeyConnection as any,
     defaultJobOptions: {
-      attempts: 1,
-      removeOnComplete: {
-        age: 3600 * 24 * 30,
-        count: 100,
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 30,
-      },
+      ...NO_RETRY_LIGHT_RETENTION,
+      removeOnComplete: { age: 3600 * 24 * 30, count: 100 },
+      removeOnFail: { age: 3600 * 24 * 30 },
     },
   });
 
@@ -264,14 +235,9 @@ export function getElasticsearchReindexQueue(): Queue | null {
   _elasticsearchReindexQueue = new Queue(ELASTICSEARCH_REINDEX_QUEUE_NAME, {
     connection: valkeyConnection as any,
     defaultJobOptions: {
-      attempts: 1,
-      removeOnComplete: {
-        age: 3600 * 24 * 7,
-        count: 50,
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 14,
-      },
+      ...NO_RETRY_LIGHT_RETENTION,
+      removeOnComplete: { age: 3600 * 24 * 7, count: 50 },
+      removeOnFail: { age: 3600 * 24 * 14 },
     },
   });
 
@@ -307,20 +273,11 @@ export function getAuditLogQueue(): Queue | null {
   _auditLogQueue = new Queue(AUDIT_LOG_QUEUE_NAME, {
     connection: valkeyConnection as any,
     defaultJobOptions: {
-      attempts: 3,
-      backoff: {
-        type: "exponential",
-        delay: 5000,
-      },
+      ...STANDARD_RETRY,
       // Long retention for audit logs - keep completed jobs for 1 year
-      removeOnComplete: {
-        age: 3600 * 24 * 365, // 1 year
-        count: 100000,
-      },
+      removeOnComplete: { age: 3600 * 24 * 365, count: 100000 },
       // Keep failed jobs for investigation
-      removeOnFail: {
-        age: 3600 * 24 * 90, // 90 days
-      },
+      removeOnFail: { age: 3600 * 24 * 90 },
     },
   });
 
@@ -348,20 +305,7 @@ export function getBudgetAlertQueue(): Queue | null {
 
   _budgetAlertQueue = new Queue(BUDGET_ALERT_QUEUE_NAME, {
     connection: valkeyConnection as any,
-    defaultJobOptions: {
-      attempts: 3,
-      backoff: {
-        type: "exponential",
-        delay: 5000,
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 7, // 7 days
-        count: 1000,
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 14, // 14 days
-      },
-    },
+    defaultJobOptions: { ...STANDARD_RETRY },
   });
 
   console.log(`Queue "${BUDGET_ALERT_QUEUE_NAME}" initialized.`);
@@ -388,16 +332,7 @@ export function getAutoTagQueue(): Queue | null {
 
   _autoTagQueue = new Queue(AUTO_TAG_QUEUE_NAME, {
     connection: valkeyConnection as any,
-    defaultJobOptions: {
-      attempts: 1,
-      removeOnComplete: {
-        age: 3600 * 24, // 24 hours
-        count: 100,
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 7, // 7 days
-      },
-    },
+    defaultJobOptions: { ...NO_RETRY_LIGHT_RETENTION },
   });
 
   console.log(`Queue "${AUTO_TAG_QUEUE_NAME}" initialized.`);
@@ -425,18 +360,8 @@ export function getRepoCacheQueue(): Queue | null {
   _repoCacheQueue = new Queue(REPO_CACHE_QUEUE_NAME, {
     connection: valkeyConnection as any,
     defaultJobOptions: {
-      attempts: 3,
-      backoff: {
-        type: "exponential",
-        delay: 10000,
-      },
-      removeOnComplete: {
-        age: 3600 * 24 * 7, // 7 days
-        count: 1000,
-      },
-      removeOnFail: {
-        age: 3600 * 24 * 14, // 14 days
-      },
+      ...STANDARD_RETRY,
+      backoff: { type: "exponential", delay: 10000 },
     },
   });
 
@@ -465,11 +390,8 @@ export function getCopyMoveQueue(): Queue | null {
   }
   _copyMoveQueue = new Queue(COPY_MOVE_QUEUE_NAME, {
     connection: valkeyConnection as any,
-    defaultJobOptions: {
-      attempts: 1, // LOCKED: no retry - partial retry creates duplicates
-      removeOnComplete: { age: 3600 * 24 * 7, count: 500 },
-      removeOnFail: { age: 3600 * 24 * 14 },
-    },
+    // LOCKED: no retry — partial retry creates duplicates
+    defaultJobOptions: { ...NO_RETRY_MEDIUM_RETENTION },
   });
   console.log(`Queue "${COPY_MOVE_QUEUE_NAME}" initialized.`);
   _copyMoveQueue.on("error", (error) => {
@@ -493,11 +415,7 @@ export function getDuplicateScanQueue(): Queue | null {
 
   _duplicateScanQueue = new Queue(DUPLICATE_SCAN_QUEUE_NAME, {
     connection: valkeyConnection as any,
-    defaultJobOptions: {
-      attempts: 1,
-      removeOnComplete: { age: 3600 * 24, count: 100 },
-      removeOnFail: { age: 3600 * 24 * 7 },
-    },
+    defaultJobOptions: { ...NO_RETRY_LIGHT_RETENTION },
   });
 
   console.log(`Queue "${DUPLICATE_SCAN_QUEUE_NAME}" initialized.`);
@@ -525,11 +443,8 @@ export function getStepScanQueue(): Queue | null {
   }
   _stepScanQueue = new Queue(STEP_SCAN_QUEUE_NAME, {
     connection: valkeyConnection as any,
-    defaultJobOptions: {
-      attempts: 1, // LOCKED: no retry — user retries from UI
-      removeOnComplete: { age: 3600 * 24 * 7, count: 500 },
-      removeOnFail: { age: 3600 * 24 * 14 },
-    },
+    // LOCKED: no retry — user retries from UI
+    defaultJobOptions: { ...NO_RETRY_MEDIUM_RETENTION },
   });
   console.log(`Queue "${STEP_SCAN_QUEUE_NAME}" initialized.`);
   _stepScanQueue.on("error", (error) => {
@@ -552,11 +467,7 @@ export function getMagicSelectQueue(): Queue | null {
   }
   _magicSelectQueue = new Queue(MAGIC_SELECT_QUEUE_NAME, {
     connection: valkeyConnection as any,
-    defaultJobOptions: {
-      attempts: 1,
-      removeOnComplete: { age: 3600 * 24, count: 100 },
-      removeOnFail: { age: 3600 * 24 * 7 },
-    },
+    defaultJobOptions: { ...NO_RETRY_LIGHT_RETENTION },
   });
   console.log(`Queue "${MAGIC_SELECT_QUEUE_NAME}" initialized.`);
   _magicSelectQueue.on("error", (error) => {
@@ -580,8 +491,7 @@ export function getGenerateFromUrlQueue(): Queue | null {
   _generateFromUrlQueue = new Queue(GENERATE_FROM_URL_QUEUE_NAME, {
     connection: valkeyConnection as any,
     defaultJobOptions: {
-      attempts: 1,
-      removeOnComplete: { age: 3600 * 24, count: 100 },
+      ...NO_RETRY_LIGHT_RETENTION,
       removeOnFail: { age: 3600 * 24 * 3 },
     },
   });
