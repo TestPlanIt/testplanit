@@ -2,7 +2,6 @@
 
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -82,8 +81,12 @@ export function ParameterDeleteDialog({
         return;
       }
       toast.success(t("deleteSuccess", { name: paramName }));
-      queryClient.invalidateQueries({ queryKey: ["zenstack", "TestCaseParameter"] });
-      queryClient.invalidateQueries({ queryKey: ["zenstack", "RepositoryCases"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["zenstack", "TestCaseParameter"],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["zenstack", "RepositoryCases"],
+      });
       onOpenChange(false);
     } finally {
       setSubmitting(false);

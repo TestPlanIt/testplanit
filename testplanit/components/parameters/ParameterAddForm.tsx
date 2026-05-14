@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useQueryClient } from "@tanstack/react-query";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
@@ -157,8 +156,12 @@ export function ParameterAddForm({ caseId, existingCount = 0 }: ParameterAddForm
         toast.message(t("toastVersionBumped", { version: String(version) }));
       }
       form.reset(DEFAULTS);
-      queryClient.invalidateQueries({ queryKey: ["zenstack", "TestCaseParameter"] });
-      queryClient.invalidateQueries({ queryKey: ["zenstack", "RepositoryCases"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["zenstack", "TestCaseParameter"],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["zenstack", "RepositoryCases"],
+      });
     } catch {
       toast.error(t("addError"));
     } finally {
@@ -204,10 +207,10 @@ export function ParameterAddForm({ caseId, existingCount = 0 }: ParameterAddForm
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="STRING">STRING</SelectItem>
-                  <SelectItem value="INTEGER">INTEGER</SelectItem>
-                  <SelectItem value="BOOLEAN">BOOLEAN</SelectItem>
-                  <SelectItem value="SELECT">SELECT</SelectItem>
+                  <SelectItem value="STRING">{"STRING"}</SelectItem>
+                  <SelectItem value="INTEGER">{"INTEGER"}</SelectItem>
+                  <SelectItem value="BOOLEAN">{"BOOLEAN"}</SelectItem>
+                  <SelectItem value="SELECT">{"SELECT"}</SelectItem>
                 </SelectContent>
               </Select>
             )}

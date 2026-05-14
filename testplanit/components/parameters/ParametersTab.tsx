@@ -60,10 +60,10 @@ export function ParametersTab({
         })
       )
     );
-    queryClient.invalidateQueries({
+    void queryClient.invalidateQueries({
       queryKey: ["zenstack", "TestCaseParameter"],
     });
-    queryClient.invalidateQueries({
+    void queryClient.invalidateQueries({
       queryKey: ["zenstack", "RepositoryCases"],
     });
   };

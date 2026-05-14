@@ -92,7 +92,7 @@ export const ParameterMentionSuggestion = forwardRef<
           <Badge variant="secondary">{item.type}</Badge>
           {item.defaultValue !== null && (
             <span className="text-xs text-muted-foreground">
-              = {item.defaultValue}
+              {`= ${item.defaultValue}`}
             </span>
           )}
         </button>

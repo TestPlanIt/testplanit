@@ -153,10 +153,10 @@ export function ParameterEditDialog({
         return;
       }
       toast.success(t("editSuccess", { name: parameter.name }));
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ["zenstack", "TestCaseParameter"],
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ["zenstack", "RepositoryCases"],
       });
       onOpenChange(false);
@@ -217,10 +217,10 @@ export function ParameterEditDialog({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="STRING">STRING</SelectItem>
-                      <SelectItem value="INTEGER">INTEGER</SelectItem>
-                      <SelectItem value="BOOLEAN">BOOLEAN</SelectItem>
-                      <SelectItem value="SELECT">SELECT</SelectItem>
+                      <SelectItem value="STRING">{"STRING"}</SelectItem>
+                      <SelectItem value="INTEGER">{"INTEGER"}</SelectItem>
+                      <SelectItem value="BOOLEAN">{"BOOLEAN"}</SelectItem>
+                      <SelectItem value="SELECT">{"SELECT"}</SelectItem>
                     </SelectContent>
                   </Select>
                 )}

@@ -54,7 +54,9 @@ export function DatasetRowActions({
         toast.error(t("datasetSaveError"));
         return;
       }
-      queryClient.invalidateQueries({ queryKey: ["zenstack", "DataSetRow"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["zenstack", "DataSetRow"],
+      });
       onClear();
       setConfirmOpen(false);
     } finally {

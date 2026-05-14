@@ -36,7 +36,7 @@ import { DatasetCell } from "@/components/parameters/DatasetCell";
 
 const noop = () => {};
 
-const baseHandlers = {
+const _baseHandlers = {
   onEdit: vi.fn(),
   onChange: vi.fn(),
   onCommit: vi.fn(),
@@ -357,11 +357,7 @@ describe("DatasetCell — edit mode", () => {
       />
     );
     const input = screen.getByTestId("dataset-cell-input-string");
-    let bubbled = false;
     const parent = input.parentElement?.parentElement; // wrapper above the cell
-    document.addEventListener("keydown", () => {
-      bubbled = true;
-    });
     input.focus();
     fireEvent.keyDown(input, { key: "Escape", bubbles: true });
     expect(onCancel).toHaveBeenCalledTimes(1);

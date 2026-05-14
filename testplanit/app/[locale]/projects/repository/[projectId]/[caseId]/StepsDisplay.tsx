@@ -262,7 +262,7 @@ const renderFieldValue = (
       <div>
         <div className="relative p-1 rounded">
           <div className="absolute inset-0 bg-red-500/20 rounded pointer-events-none" />
-          <span className="relative text-red-600 dark:text-red-400 flex space-x-1 items-center">
+          <span className="relative text-destructive flex space-x-1 items-center">
             <div>
               <Minus className="w-4 h-4" />
             </div>

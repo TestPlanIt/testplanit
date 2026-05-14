@@ -60,7 +60,6 @@ export function PasteCsvDialog({
   caseId,
   parameters,
 }: PasteCsvDialogProps) {
-  const tActions = useTranslations("common.actions");
   const tCommon = useTranslations("common");
   const t = useTranslations("parameters");
   const queryClient = useQueryClient();
@@ -144,8 +143,12 @@ export function PasteCsvDialog({
           count: json?.created ?? parsed.rows.length,
         })
       );
-      queryClient.invalidateQueries({ queryKey: ["zenstack", "DataSetRow"] });
-      queryClient.invalidateQueries({ queryKey: ["zenstack", "DataSet"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["zenstack", "DataSetRow"],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["zenstack", "DataSet"],
+      });
       reset();
       onOpenChange(false);
     } finally {

@@ -234,7 +234,7 @@ export function DatasetTab({
   }, [caseId]);
 
   useEffect(() => {
-    loadDataset();
+    void loadDataset();
   }, [loadDataset]);
 
   // ---------- Sheet edit-state coordination ----------
@@ -281,7 +281,9 @@ export function DatasetTab({
         toast.error(t("datasetSaveError"));
         return false;
       }
-      queryClient.invalidateQueries({ queryKey: ["zenstack", "DataSetRow"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["zenstack", "DataSetRow"],
+      });
       return true;
     },
     [caseId, queryClient, t]
@@ -370,7 +372,9 @@ export function DatasetTab({
       toast.error(t("datasetSaveError"));
       return;
     }
-    queryClient.invalidateQueries({ queryKey: ["zenstack", "DataSetRow"] });
+    void queryClient.invalidateQueries({
+      queryKey: ["zenstack", "DataSetRow"],
+    });
     await loadDataset();
   }, [caseId, queryClient, rows.length, t, loadDataset]);
 
@@ -453,7 +457,9 @@ export function DatasetTab({
         })
       )
     );
-    queryClient.invalidateQueries({ queryKey: ["zenstack", "DataSetRow"] });
+    void queryClient.invalidateQueries({
+      queryKey: ["zenstack", "DataSetRow"],
+    });
   };
 
   // ---------- Build columns ----------
@@ -470,7 +476,7 @@ export function DatasetTab({
       },
       onChange: (v: unknown) => setDraftValue(v),
       onCommit: () => {
-        commitCell(rowId, columnId, paramName, draftValue);
+        void commitCell(rowId, columnId, paramName, draftValue);
         setEditCell(null);
         setDraftValue(undefined);
       },
@@ -548,7 +554,7 @@ export function DatasetTab({
           minSize: 180,
           header: () => (
             <div className="flex items-center gap-2 whitespace-nowrap">
-              <span className="font-mono text-sm">@{p.name}</span>
+              <span className="font-mono text-sm">{`@${p.name}`}</span>
               <Badge variant="secondary">{p.type}</Badge>
               {p.sensitive ? (
                 <Lock className="w-3 h-3 text-muted-foreground" />

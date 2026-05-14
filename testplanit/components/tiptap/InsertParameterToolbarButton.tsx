@@ -69,7 +69,7 @@ export function InsertParameterToolbarButton({
       pageSize={parameters.length || 10}
       renderOption={(p) => (
         <div className="flex items-center gap-2 w-full">
-          <span className="font-mono text-sm">@{p.name}</span>
+          <span className="font-mono text-sm">{`@${p.name}`}</span>
           <Badge variant="secondary" className="ml-auto">
             {p.type}
           </Badge>

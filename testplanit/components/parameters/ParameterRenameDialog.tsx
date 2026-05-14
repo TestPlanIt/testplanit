@@ -72,8 +72,12 @@ export function ParameterRenameDialog({
       } else {
         toast.success(t("updateSuccess"));
       }
-      queryClient.invalidateQueries({ queryKey: ["zenstack", "TestCaseParameter"] });
-      queryClient.invalidateQueries({ queryKey: ["zenstack", "RepositoryCases"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["zenstack", "TestCaseParameter"],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["zenstack", "RepositoryCases"],
+      });
       onComplete();
       onOpenChange(false);
     } finally {
@@ -115,8 +119,12 @@ export function ParameterRenameDialog({
           );
           if (cancelled) return;
           toast.message(t("renameNoRefsToast"));
-          queryClient.invalidateQueries({ queryKey: ["zenstack", "TestCaseParameter"] });
-          queryClient.invalidateQueries({ queryKey: ["zenstack", "RepositoryCases"] });
+          void queryClient.invalidateQueries({
+            queryKey: ["zenstack", "TestCaseParameter"],
+          });
+          void queryClient.invalidateQueries({
+            queryKey: ["zenstack", "RepositoryCases"],
+          });
           onComplete();
           onOpenChange(false);
           return;
