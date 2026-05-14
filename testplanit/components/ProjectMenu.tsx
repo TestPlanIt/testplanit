@@ -20,6 +20,7 @@ import {
   Bug as IssuesIcon,
   ChartNoAxesCombined,
   Compass as SessionsIcon,
+  Database,
   FolderKanban,
   Home,
   Layers,
@@ -272,6 +273,13 @@ export default function ProjectsMenu({
             label: t("admin.menu.webhooks"),
             path: "settings/webhooks",
             id: "settings-webhooks-link",
+            section: "settings" as MenuSection,
+          },
+          {
+            icon: Database,
+            label: t("admin.menu.datasets"),
+            path: "settings/datasets",
+            id: "settings-datasets-link",
             section: "settings" as MenuSection,
           },
           {
