@@ -17,28 +17,32 @@ import {
 import { authOptions } from "~/server/auth";
 
 /**
- * Phase 3 Wave 5 (Task 13) — Bulk-skip endpoint for parameterized
+ * Phase 3 Wave 5 (Task 13) — Bulk-apply-status endpoint for parameterized
  * test-run-case iterations.
  *
  * POST /api/repository/test-runs/[runId]/cases/[caseId]/iterations/bulk-skip
  *
- * For each iteration id:
+ * (The route name is preserved for back-compat; the action is now
+ * "apply any status" rather than the previously-hardcoded Skipped.)
+ *
+ * The caller picks the status to apply via `statusId` in the body. The
+ * server validates that the status is a Test-Run-scoped status enabled
+ * for the project; rejects otherwise. For each iteration:
  *   1. Writes a new TestRunResults row tied to that iteration with the
- *      seeded "skipped" status.
+ *      chosen statusId.
  *   2. Updates the iteration's statusId / isCompleted / completedAt.
  *
  * After the per-iteration writes, recomputes the case-level rollup and
- * counters ONCE (per testRunCaseId) using the shared
- * `lib/services/iterationRollup.ts` helper. Emits an ITERATION_BULK_SKIPPED
- * audit event per touched iteration after commit.
+ * counters ONCE using the shared `lib/services/iterationRollup.ts` helper.
+ * Emits an ITERATION_BULK_SKIPPED audit event per touched iteration after
+ * commit (action name preserved for audit-log consumer compatibility).
  *
- * Atomicity: all writes happen inside a single `prisma.$transaction`. A
- * caller-side failure (e.g. an iteration id outside the case) is logged
- * and skipped silently — never throws to abort the whole batch.
+ * Atomicity: all writes happen inside a single `prisma.$transaction`.
  */
 
 const bodySchema = z.object({
   iterationIds: z.array(z.number().int().positive()).min(1).max(5000),
+  statusId: z.number().int().positive(),
   reason: z.string().max(500).optional(),
 });
 
@@ -130,23 +134,26 @@ export async function POST(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // Resolve the seeded "skipped" Status. The Status table is global (no
-    // project scoping) — `systemName` is unique and seeded as part of the
-    // initial migration.
-    const skippedStatus = await prisma.status.findUnique({
-      where: { systemName: "skipped" },
+    // Validate the chosen status is a Test-Run-scoped status enabled for
+    // the project. Statuses are admin-configured per Workflow; we don't
+    // hardcode any systemName here.
+    const chosenStatus = await prisma.status.findFirst({
+      where: {
+        id: parsed.data.statusId,
+        isEnabled: true,
+        isDeleted: false,
+        projects: { some: { projectId: runCase.testRun.projectId } },
+        scope: { some: { scope: { name: "Test Run" } } },
+      },
       select: { id: true },
     });
-    if (!skippedStatus) {
-      console.error(
-        '[bulk-skip] "skipped" status missing from Status table — DB seed is broken',
-      );
+    if (!chosenStatus) {
       return NextResponse.json(
-        { error: "Skipped status not configured" },
+        { error: "Status not available for this project" },
         { status: 422 },
       );
     }
-    const skippedStatusId = skippedStatus.id;
+    const appliedStatusId = chosenStatus.id;
 
     // Pull the snapshot's parameter schema once so audit metadata can be
     // redacted against the viewer's permission.
@@ -194,7 +201,7 @@ export async function POST(
             testRunId: runId,
             testRunCaseId: caseId,
             iterationId: iter.id,
-            statusId: skippedStatusId,
+            statusId: appliedStatusId,
             notes: parsed.data.reason
               ? (parsed.data.reason as unknown as Prisma.InputJsonValue)
               : Prisma.JsonNull,
@@ -208,7 +215,7 @@ export async function POST(
         await tx.testRunCaseIteration.update({
           where: { id: iter.id },
           data: {
-            statusId: skippedStatusId,
+            statusId: appliedStatusId,
             isCompleted: true,
             completedAt: new Date(),
           },
@@ -280,7 +287,7 @@ export async function POST(
       await tx.testRunCases.update({
         where: { id: caseId },
         data: {
-          statusId: rollupStatusId ?? skippedStatusId,
+          statusId: rollupStatusId ?? appliedStatusId,
           passedIterations: passedCount,
           failedIterations: failedCount,
         },
@@ -303,7 +310,7 @@ export async function POST(
           reason: parsed.data.reason ?? null,
           testRunCaseId: caseId,
           testRunId: runId,
-          statusId: skippedStatusId,
+          statusId: appliedStatusId,
         },
       }).catch(() => {
         // Audit is best-effort.

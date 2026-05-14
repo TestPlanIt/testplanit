@@ -1,16 +1,15 @@
 /**
- * Unit tests for computeWorstOfStatus — the worst-of rollup used by the
- * submit-result route to set TestRunCases.statusId after every iteration
- * result write.
+ * Unit tests for computeWorstOfStatus.
  *
- * Status names are admin-mutable, so the rollup decides by the flag triplet
- * (isSuccess, isFailure, isCompleted) and breaks ties on Status.order. The
- * only reserved systemName is `untested` (used as the null-statusId
- * fallback).
+ * Spec (in order):
+ *   1. No iterations have a recorded result → first untested status
+ *      (lowest `order`, with !isCompleted && !isSuccess && !isFailure).
+ *   2. Any failure → most-frequent failure status (tie → lowest `order`).
+ *   3. No failures but some success → most-frequent success status (tie → lowest `order`).
+ *   4. Some recorded results, no success/failure → most-frequent recorded status (tie → lowest `order`).
  *
- * Strategy: a table-driven pairwise matrix asserting tier-based ordering,
- * plus single-iteration sanity checks, the null-statusId-as-untested rule,
- * and defensive cases.
+ * Status names are admin-defined and irrelevant; only the
+ * (isSuccess, isFailure, isCompleted) triplet and `Status.order` matter.
  */
 
 import { describe, expect, it } from "vitest";
@@ -20,11 +19,11 @@ import {
   type RollupStatus,
 } from "./iterationRollup";
 
-// Synthetic Status fixtures. `order` mirrors the seeded ranking so the
-// pairwise matrix demonstrates that admin-defined ordering produces the
-// historical worst-of behavior even though the logic is flag-driven.
-const STATUSES: Record<string, RollupStatus> = {
-  untested: {
+// Two status rows per category so we can exercise the tie-breaker (lowest
+// `order` wins) and the dominant-frequency rule (more-frequent wins).
+const STATUSES = {
+  // Untested-shape statuses (incomplete, not success, not failure)
+  untestedA: {
     id: 1,
     systemName: "untested",
     isSuccess: false,
@@ -32,260 +31,231 @@ const STATUSES: Record<string, RollupStatus> = {
     isCompleted: false,
     order: 3,
   },
-  passed: {
+  untestedB: {
     id: 2,
+    systemName: "draft",
+    isSuccess: false,
+    isFailure: false,
+    isCompleted: false,
+    order: 5,
+  },
+  // Success
+  passed: {
+    id: 10,
     systemName: "passed",
     isSuccess: true,
     isFailure: false,
     isCompleted: true,
     order: 1,
   },
+  passed2: {
+    id: 11,
+    systemName: "verified",
+    isSuccess: true,
+    isFailure: false,
+    isCompleted: true,
+    order: 4,
+  },
+  // Failure
   failed: {
-    id: 3,
+    id: 20,
     systemName: "failed",
     isSuccess: false,
     isFailure: true,
     isCompleted: true,
     order: 7,
   },
-  retest: {
-    id: 4,
-    systemName: "retest",
-    isSuccess: false,
-    isFailure: false,
-    isCompleted: false,
-    order: 4,
-  },
-  blocked: {
-    id: 5,
-    systemName: "blocked",
-    isSuccess: false,
-    isFailure: false,
-    isCompleted: false,
-    order: 5,
-  },
-  skipped: {
-    id: 6,
-    systemName: "skipped",
-    isSuccess: false,
-    isFailure: false,
-    isCompleted: true,
-    order: 2,
-  },
   exception: {
-    id: 7,
+    id: 21,
     systemName: "exception",
     isSuccess: false,
     isFailure: true,
     isCompleted: true,
     order: 6,
   },
-};
+  // Completed, neither success nor failure
+  skipped: {
+    id: 30,
+    systemName: "skipped",
+    isSuccess: false,
+    isFailure: false,
+    isCompleted: true,
+    order: 2,
+  },
+  blocked: {
+    id: 31,
+    systemName: "blocked",
+    isSuccess: false,
+    isFailure: false,
+    isCompleted: true,
+    order: 8,
+  },
+} satisfies Record<string, RollupStatus>;
 
-const STATUS_MAP = new Map<number, RollupStatus>(
+const MAP = new Map<number, RollupStatus>(
   Object.values(STATUSES).map((s) => [s.id, s])
 );
 
-// Tier per the flag rules in worstOf.ts. Higher tier wins; within a tier
-// the higher Status.order wins.
-function tierOf(name: keyof typeof STATUSES): number {
-  const s = STATUSES[name];
-  if (s.isFailure) return 4;
-  if (!s.isCompleted) return 3;
-  if (s.isCompleted && !s.isSuccess && !s.isFailure) return 2;
-  if (s.isSuccess) return 1;
-  return 0;
-}
+const iter = (id: number | null): RollupIteration => ({ statusId: id });
 
-function expectedWorst(
-  a: keyof typeof STATUSES,
-  b: keyof typeof STATUSES
-): keyof typeof STATUSES {
-  const ta = tierOf(a);
-  const tb = tierOf(b);
-  if (ta !== tb) return ta > tb ? a : b;
-  return STATUSES[a].order >= STATUSES[b].order ? a : b;
-}
-
-const NAMES: Array<keyof typeof STATUSES> = [
-  "failed",
-  "exception",
-  "blocked",
-  "retest",
-  "untested",
-  "skipped",
-  "passed",
-];
-
-describe("computeWorstOfStatus — single iteration", () => {
-  for (const name of NAMES) {
-    it(`returns the iteration's own status when only one iteration is present (${name})`, () => {
-      const iterations: RollupIteration[] = [{ statusId: STATUSES[name].id }];
-      expect(computeWorstOfStatus(iterations, STATUS_MAP)).toBe(
-        STATUSES[name].id
-      );
-    });
-  }
-});
-
-describe("computeWorstOfStatus — pairwise tier matrix (7×7)", () => {
-  for (const a of NAMES) {
-    for (const b of NAMES) {
-      const expected = expectedWorst(a, b);
-      it(`picks ${expected} from {${a}, ${b}}`, () => {
-        const iterations: RollupIteration[] = [
-          { statusId: STATUSES[a].id },
-          { statusId: STATUSES[b].id },
-        ];
-        expect(computeWorstOfStatus(iterations, STATUS_MAP)).toBe(
-          STATUSES[expected].id
-        );
-      });
-    }
-  }
-});
-
-describe("computeWorstOfStatus — tier rules (flag-driven, not name-driven)", () => {
-  it("isFailure beats every non-failure regardless of systemName", () => {
-    const customFailure: RollupStatus = {
-      id: 100,
-      systemName: "regression-fail-custom",
-      isSuccess: false,
-      isFailure: true,
-      isCompleted: true,
-      order: 1, // even with the lowest order, isFailure puts it in the top tier
-    };
-    const map = new Map(STATUS_MAP);
-    map.set(customFailure.id, customFailure);
-    const iterations: RollupIteration[] = [
-      { statusId: STATUSES.blocked.id },
-      { statusId: customFailure.id },
-      { statusId: STATUSES.passed.id },
-    ];
-    expect(computeWorstOfStatus(iterations, map)).toBe(customFailure.id);
+describe("computeWorstOfStatus — Rule 1: no recorded results", () => {
+  it("returns the first untested status (lowest order) when iterations is empty", () => {
+    expect(computeWorstOfStatus([], MAP)).toBe(STATUSES.untestedA.id);
   });
 
-  it("within the incomplete tier, higher Status.order wins (admin-configurable)", () => {
-    // blocked.order=5 vs retest.order=4 — blocked wins despite both being
-    // tier 3 (incomplete).
-    const iterations: RollupIteration[] = [
-      { statusId: STATUSES.retest.id },
-      { statusId: STATUSES.blocked.id },
-    ];
-    expect(computeWorstOfStatus(iterations, STATUS_MAP)).toBe(
-      STATUSES.blocked.id
-    );
+  it("returns the first untested status when all iteration statusIds are null", () => {
+    expect(
+      computeWorstOfStatus([iter(null), iter(null), iter(null)], MAP)
+    ).toBe(STATUSES.untestedA.id);
   });
 
-  it("incomplete tier beats skipped (completed-non-success)", () => {
-    const iterations: RollupIteration[] = [
-      { statusId: STATUSES.skipped.id },
-      { statusId: STATUSES.untested.id },
-    ];
-    expect(computeWorstOfStatus(iterations, STATUS_MAP)).toBe(
-      STATUSES.untested.id
-    );
+  it("picks the lowest-order untested-shape status (untestedA.order=3 vs untestedB.order=5)", () => {
+    expect(computeWorstOfStatus([], MAP)).toBe(STATUSES.untestedA.id);
   });
 
-  it("skipped beats passed", () => {
-    const iterations: RollupIteration[] = [
-      { statusId: STATUSES.passed.id },
-      { statusId: STATUSES.skipped.id },
-    ];
-    expect(computeWorstOfStatus(iterations, STATUS_MAP)).toBe(
-      STATUSES.skipped.id
-    );
+  it("returns null when no untested-shape status exists in the project", () => {
+    const noUntestedMap = new Map<number, RollupStatus>([
+      [STATUSES.passed.id, STATUSES.passed],
+      [STATUSES.failed.id, STATUSES.failed],
+    ]);
+    expect(computeWorstOfStatus([], noUntestedMap)).toBeNull();
   });
 });
 
-describe("computeWorstOfStatus — null statusId treated as untested", () => {
-  it("treats null statusId as untested when paired with passed", () => {
-    const iterations: RollupIteration[] = [
-      { statusId: STATUSES.passed.id },
-      { statusId: null },
-    ];
-    expect(computeWorstOfStatus(iterations, STATUS_MAP)).toBe(
-      STATUSES.untested.id
-    );
+describe("computeWorstOfStatus — Rule 2: any failure dominates", () => {
+  it("returns the only failure status when one iteration failed", () => {
+    expect(
+      computeWorstOfStatus([iter(STATUSES.failed.id)], MAP)
+    ).toBe(STATUSES.failed.id);
   });
 
-  it("treats null statusId as untested when paired with failed (failed wins)", () => {
-    const iterations: RollupIteration[] = [
-      { statusId: STATUSES.failed.id },
-      { statusId: null },
+  it("any failure beats any number of successes / skipped / untested", () => {
+    const iterations = [
+      iter(STATUSES.passed.id),
+      iter(STATUSES.passed.id),
+      iter(STATUSES.skipped.id),
+      iter(null),
+      iter(STATUSES.failed.id),
     ];
-    expect(computeWorstOfStatus(iterations, STATUS_MAP)).toBe(
-      STATUSES.failed.id
-    );
+    expect(computeWorstOfStatus(iterations, MAP)).toBe(STATUSES.failed.id);
   });
 
-  it("treats all-null iterations as all-untested", () => {
-    const iterations: RollupIteration[] = [
-      { statusId: null },
-      { statusId: null },
-      { statusId: null },
+  it("picks the most-frequent failure status (failed×2 beats exception×1)", () => {
+    const iterations = [
+      iter(STATUSES.failed.id),
+      iter(STATUSES.failed.id),
+      iter(STATUSES.exception.id),
     ];
-    expect(computeWorstOfStatus(iterations, STATUS_MAP)).toBe(
-      STATUSES.untested.id
-    );
+    expect(computeWorstOfStatus(iterations, MAP)).toBe(STATUSES.failed.id);
+  });
+
+  it("on a failure tie, lowest order wins (exception.order=6 < failed.order=7)", () => {
+    const iterations = [
+      iter(STATUSES.failed.id),
+      iter(STATUSES.exception.id),
+    ];
+    expect(computeWorstOfStatus(iterations, MAP)).toBe(STATUSES.exception.id);
+  });
+
+  it("ignores successes / non-failures even when they outnumber the single failure", () => {
+    const iterations = [
+      iter(STATUSES.passed.id),
+      iter(STATUSES.passed.id),
+      iter(STATUSES.passed.id),
+      iter(STATUSES.exception.id),
+    ];
+    expect(computeWorstOfStatus(iterations, MAP)).toBe(STATUSES.exception.id);
+  });
+});
+
+describe("computeWorstOfStatus — Rule 3: no failures, dominant success wins", () => {
+  it("returns the success status when only one iteration passed", () => {
+    expect(
+      computeWorstOfStatus([iter(STATUSES.passed.id)], MAP)
+    ).toBe(STATUSES.passed.id);
+  });
+
+  it("ignores untested iterations when at least one success exists (3 passed + 1 untested → passed)", () => {
+    const iterations = [
+      iter(STATUSES.passed.id),
+      iter(STATUSES.passed.id),
+      iter(STATUSES.passed.id),
+      iter(null),
+    ];
+    expect(computeWorstOfStatus(iterations, MAP)).toBe(STATUSES.passed.id);
+  });
+
+  it("picks the most-frequent success status (passed×3 beats passed2×1)", () => {
+    const iterations = [
+      iter(STATUSES.passed.id),
+      iter(STATUSES.passed.id),
+      iter(STATUSES.passed.id),
+      iter(STATUSES.passed2.id),
+    ];
+    expect(computeWorstOfStatus(iterations, MAP)).toBe(STATUSES.passed.id);
+  });
+
+  it("on a success tie, lowest order wins (passed.order=1 < passed2.order=4)", () => {
+    const iterations = [
+      iter(STATUSES.passed.id),
+      iter(STATUSES.passed2.id),
+    ];
+    expect(computeWorstOfStatus(iterations, MAP)).toBe(STATUSES.passed.id);
+  });
+});
+
+describe("computeWorstOfStatus — Rule 4: some recorded, no success/failure → dominant", () => {
+  it("returns the only recorded status (skipped) ignoring nulls", () => {
+    const iterations = [
+      iter(null),
+      iter(null),
+      iter(STATUSES.skipped.id),
+    ];
+    expect(computeWorstOfStatus(iterations, MAP)).toBe(STATUSES.skipped.id);
+  });
+
+  it("picks the most-frequent recorded status (skipped×2 beats blocked×1)", () => {
+    const iterations = [
+      iter(STATUSES.skipped.id),
+      iter(STATUSES.skipped.id),
+      iter(STATUSES.blocked.id),
+    ];
+    expect(computeWorstOfStatus(iterations, MAP)).toBe(STATUSES.skipped.id);
+  });
+
+  it("on a tie among recorded non-success/non-failure, lowest order wins (skipped.order=2 < blocked.order=8)", () => {
+    const iterations = [
+      iter(STATUSES.skipped.id),
+      iter(STATUSES.blocked.id),
+    ];
+    expect(computeWorstOfStatus(iterations, MAP)).toBe(STATUSES.skipped.id);
   });
 });
 
 describe("computeWorstOfStatus — defensive cases", () => {
-  it("returns null for an empty iteration list", () => {
-    expect(computeWorstOfStatus([], STATUS_MAP)).toBeNull();
+  it("ignores iterations whose statusId isn't in the statusMap", () => {
+    const iterations = [
+      iter(99999), // unknown
+      iter(STATUSES.passed.id),
+    ];
+    expect(computeWorstOfStatus(iterations, MAP)).toBe(STATUSES.passed.id);
   });
 
-  it("falls back to the first iteration's statusId when the statusMap is empty", () => {
-    const iterations: RollupIteration[] = [
-      { statusId: 999 },
-      { statusId: 888 },
-    ];
-    expect(computeWorstOfStatus(iterations, new Map())).toBe(999);
+  it("returns null when all iterations have unknown statusIds and no untested fallback exists", () => {
+    const noUntested = new Map<number, RollupStatus>([
+      [STATUSES.passed.id, STATUSES.passed],
+    ]);
+    expect(
+      computeWorstOfStatus([iter(99998), iter(99999)], noUntested)
+    ).toBeNull();
   });
 
-  it("ignores unknown statusIds (tier 0) when better-known statuses exist", () => {
-    const iterations: RollupIteration[] = [
-      { statusId: 12345 },
-      { statusId: STATUSES.failed.id },
-    ];
-    expect(computeWorstOfStatus(iterations, STATUS_MAP)).toBe(
-      STATUSES.failed.id
-    );
-  });
-});
-
-describe("computeWorstOfStatus — three-iteration mixed scenarios", () => {
-  it("pass + pass + fail rolls up to fail", () => {
-    const iterations: RollupIteration[] = [
-      { statusId: STATUSES.passed.id },
-      { statusId: STATUSES.passed.id },
-      { statusId: STATUSES.failed.id },
-    ];
-    expect(computeWorstOfStatus(iterations, STATUS_MAP)).toBe(
-      STATUSES.failed.id
-    );
-  });
-
-  it("pass + skipped + blocked rolls up to blocked", () => {
-    const iterations: RollupIteration[] = [
-      { statusId: STATUSES.passed.id },
-      { statusId: STATUSES.skipped.id },
-      { statusId: STATUSES.blocked.id },
-    ];
-    expect(computeWorstOfStatus(iterations, STATUS_MAP)).toBe(
-      STATUSES.blocked.id
-    );
-  });
-
-  it("all-passed rolls up to passed", () => {
-    const iterations: RollupIteration[] = [
-      { statusId: STATUSES.passed.id },
-      { statusId: STATUSES.passed.id },
-      { statusId: STATUSES.passed.id },
-    ];
-    expect(computeWorstOfStatus(iterations, STATUS_MAP)).toBe(
-      STATUSES.passed.id
-    );
+  it("returns null when all iterations have unknown statusIds even if untested exists", () => {
+    // Iterations with statusId set (but unknown) are NOT 'no result' — they
+    // count as recorded but resolve to no known status, so the dominant-by-tier
+    // logic finds no candidate and returns null.
+    expect(
+      computeWorstOfStatus([iter(99998), iter(99999)], MAP)
+    ).toBeNull();
   });
 });

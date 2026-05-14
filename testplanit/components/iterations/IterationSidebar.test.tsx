@@ -39,6 +39,13 @@ vi.mock("~/lib/navigation", () => ({
   redirect: vi.fn(),
 }));
 
+// IterationStatusLegendPopover (rendered inside the sidebar header) calls
+// the ZenStack `useFindManyStatus` hook, which uses React Query. Stub it
+// out so the sidebar test doesn't need a QueryClientProvider.
+vi.mock("~/lib/hooks", () => ({
+  useFindManyStatus: () => ({ data: [] }),
+}));
+
 const parametersSchema: IterationParameterMeta[] = [
   { name: "username", type: "STRING", order: 0 },
   { name: "password", type: "STRING", order: 1, sensitive: true },
@@ -76,6 +83,7 @@ describe("IterationSidebar", () => {
         runId={2}
         iterations={[mkIteration(0), mkIteration(1), mkIteration(2)]}
         parametersSchema={parametersSchema}
+        projectId={1}
         isRunCompleted={false}
         onIterationMenuAction={vi.fn()}
         onBulkSkip={vi.fn()}
@@ -101,6 +109,7 @@ describe("IterationSidebar", () => {
         runId={2}
         iterations={[mkIteration(0)]}
         parametersSchema={parametersSchema}
+        projectId={1}
         isRunCompleted={false}
         onIterationMenuAction={vi.fn()}
         onBulkSkip={vi.fn()}
@@ -120,6 +129,7 @@ describe("IterationSidebar", () => {
         runId={2}
         iterations={[mkIteration(0), mkIteration(1)]}
         parametersSchema={parametersSchema}
+        projectId={1}
         isRunCompleted={false}
         onIterationMenuAction={vi.fn()}
         onBulkSkip={vi.fn()}
@@ -139,6 +149,7 @@ describe("IterationSidebar", () => {
         runId={2}
         iterations={[mkIteration(0), mkIteration(1)]}
         parametersSchema={parametersSchema}
+        projectId={1}
         isRunCompleted={false}
         onIterationMenuAction={vi.fn()}
         onBulkSkip={vi.fn()}
@@ -170,6 +181,7 @@ describe("IterationSidebar", () => {
         runId={2}
         iterations={[mkIteration(0), mkIteration(1)]}
         parametersSchema={parametersSchema}
+        projectId={1}
         isRunCompleted={false}
         onIterationMenuAction={vi.fn()}
         onBulkSkip={vi.fn()}
@@ -202,6 +214,7 @@ describe("IterationSidebar", () => {
         runId={7}
         iterations={[]}
         parametersSchema={parametersSchema}
+        projectId={1}
         isRunCompleted={false}
         onIterationMenuAction={vi.fn()}
         onBulkSkip={vi.fn()}
@@ -224,6 +237,7 @@ describe("IterationSidebar", () => {
         runId={2}
         iterations={[mkIteration(0), mkIteration(1), mkIteration(2)]}
         parametersSchema={parametersSchema}
+        projectId={1}
         isRunCompleted={false}
         onIterationMenuAction={vi.fn()}
         onBulkSkip={vi.fn()}
@@ -253,6 +267,7 @@ describe("IterationSidebar", () => {
         runId={2}
         iterations={[mkIteration(0), mkIteration(1), mkIteration(2)]}
         parametersSchema={parametersSchema}
+        projectId={1}
         isRunCompleted={false}
         onIterationMenuAction={vi.fn()}
         onBulkSkip={vi.fn()}

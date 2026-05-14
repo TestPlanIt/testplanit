@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal, Pencil, RotateCcw, SkipForward } from "lucide-react";
+import { MoreHorizontal, Pencil, Plus, RotateCcw } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -45,7 +45,7 @@ export function IterationHeader({
 
   return (
     <header
-      className="flex items-center justify-between gap-4 px-4 py-3 border-b bg-muted/30"
+      className="flex items-center justify-between gap-4 pl-4 pr-12 py-3 border-b bg-muted/30"
       data-testid="iteration-header"
     >
       <h2 className="text-base font-semibold">
@@ -87,7 +87,7 @@ export function IterationHeader({
               disabled={isRunCompleted}
               data-testid="iteration-header-menu-skip"
             >
-              <SkipForward className="mr-2 h-4 w-4" />
+              <Plus className="mr-2 h-4 w-4" />
               {t("iterationSkip")}
             </DropdownMenuItem>
             {hasResult && (

@@ -26,10 +26,16 @@ describe("IterationStatusPip", () => {
     expect(pip).toHaveAttribute("data-glyph", glyph);
   });
 
-  it("uses the resolved fallback color when no statusColor is provided", () => {
+  it("falls back to the muted-foreground token when no statusColor and no special glyph", () => {
     render(<IterationStatusPip glyph="passed" />);
     const pip = screen.getByTestId("iteration-status-pip");
-    expect(pip.getAttribute("style") ?? "").toContain("--success");
+    expect(pip.getAttribute("style") ?? "").toContain("muted-foreground");
+  });
+
+  it("uses the primary token for the 'active' pseudo-state when no statusColor", () => {
+    render(<IterationStatusPip glyph="active" />);
+    const pip = screen.getByTestId("iteration-status-pip");
+    expect(pip.getAttribute("style") ?? "").toContain("--primary");
   });
 
   it("prefers the explicit statusColor for workflow-defined colors", () => {
@@ -92,9 +98,21 @@ describe("glyphFromStatus", () => {
 });
 
 describe("resolvePipColor", () => {
-  it("ignores statusColor for tokens that always use the semantic var", () => {
-    expect(resolvePipColor("notStarted", "#fff")).toContain("muted-foreground");
-    expect(resolvePipColor("active", "#fff")).toContain("--primary");
-    expect(resolvePipColor("skipped", "#fff")).toContain("muted-foreground");
+  it("always prefers the explicit statusColor when provided (statuses are color-only)", () => {
+    expect(resolvePipColor("notStarted", "#abc")).toBe("#abc");
+    expect(resolvePipColor("active", "#abc")).toBe("#abc");
+    expect(resolvePipColor("skipped", "#abc")).toBe("#abc");
+    expect(resolvePipColor("passed", "#abc")).toBe("#abc");
+    expect(resolvePipColor("failed", "#abc")).toBe("#abc");
+    expect(resolvePipColor("blocked", "#abc")).toBe("#abc");
+  });
+
+  it("falls back to primary for active and muted-foreground otherwise when no statusColor", () => {
+    expect(resolvePipColor("active")).toContain("--primary");
+    expect(resolvePipColor("notStarted")).toContain("muted-foreground");
+    expect(resolvePipColor("passed")).toContain("muted-foreground");
+    expect(resolvePipColor("failed")).toContain("muted-foreground");
+    expect(resolvePipColor("skipped")).toContain("muted-foreground");
+    expect(resolvePipColor("blocked")).toContain("muted-foreground");
   });
 });

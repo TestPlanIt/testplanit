@@ -1,11 +1,11 @@
-import type { ReactNode } from "react";
-
 /**
- * Surface A.3 — Status pip glyph for an iteration row.
+ * Surface A.3 — Status pip for an iteration row.
  *
- * Six locked glyphs derived from the iteration's `Status` row plus an
- * `isActive` indicator. All glyphs render as inline SVG so they color-mix
- * with `hsl(var(--token))` cleanly. See UI-SPEC § Status Pip Color Map.
+ * Statuses are color-only — no shape semantics. The pip is always a
+ * filled circle tinted with the iteration's status color (admin-defined).
+ * The `glyph` prop is preserved for API compatibility and used only by
+ * `resolvePipColor` to pick a fallback semantic color for the two
+ * pseudo-states (`notStarted`, `active`) which have no Status row.
  */
 
 export type IterationStatusGlyph =
@@ -15,45 +15,6 @@ export type IterationStatusGlyph =
   | "failed"
   | "skipped"
   | "blocked";
-
-export const PIP_PATHS: Record<IterationStatusGlyph, ReactNode> = {
-  notStarted: (
-    <circle
-      cx="5"
-      cy="5"
-      r="4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-    />
-  ),
-  active: <path d="M2 1.5 L8.5 5 L2 8.5 Z" fill="currentColor" />,
-  passed: (
-    <>
-      <circle cx="5" cy="5" r="4.5" fill="currentColor" />
-      <path
-        d="M3 5 L4.5 6.5 L7 3.5"
-        stroke="hsl(var(--background))"
-        strokeWidth="1.5"
-        fill="none"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </>
-  ),
-  failed: <circle cx="5" cy="5" r="4.5" fill="currentColor" />,
-  skipped: (
-    <rect
-      x="1.5"
-      y="4.25"
-      width="7"
-      height="1.5"
-      rx="0.5"
-      fill="currentColor"
-    />
-  ),
-  blocked: <path d="M5 1 L9 8.5 L1 8.5 Z" fill="currentColor" />,
-};
 
 export interface IterationStatusLike {
   isSuccess?: boolean;
@@ -83,28 +44,24 @@ export function glyphFromStatus(
 }
 
 /**
- * Resolves a CSS color string for the pip glyph. Workflow-defined
- * `status.color.value` wins for the four "well-known" semantics (passed,
- * failed, blocked); otherwise we fall back to the semantic token. Pure
- * UI-spec colors (notStarted, active, skipped) always use the token.
+ * Resolves a CSS color string for the pip. When a real Status row drives
+ * the pip, its admin-configured `color.value` is the source of truth and
+ * always wins — statuses are color-only, no semantic mapping.
+ *
+ * The two pseudo-states (notStarted, active) have no Status row; they fall
+ * back to a semantic CSS token so light + dark themes both work.
  */
 export function resolvePipColor(
   glyph: IterationStatusGlyph,
   statusColor?: string
 ): string {
+  if (statusColor) return statusColor;
   switch (glyph) {
-    case "notStarted":
-      return "hsl(var(--muted-foreground))";
     case "active":
       return "hsl(var(--primary))";
-    case "passed":
-      return statusColor || "hsl(var(--success))";
-    case "failed":
-      return statusColor || "hsl(var(--destructive))";
-    case "skipped":
+    case "notStarted":
+    default:
       return "hsl(var(--muted-foreground))";
-    case "blocked":
-      return statusColor || "hsl(var(--warning))";
   }
 }
 
@@ -131,7 +88,7 @@ export function IterationStatusPip({
       aria-hidden={rest["aria-label"] ? undefined : true}
       {...rest}
     >
-      {PIP_PATHS[glyph]}
+      <circle cx="5" cy="5" r="4.5" fill="currentColor" />
     </svg>
   );
 }

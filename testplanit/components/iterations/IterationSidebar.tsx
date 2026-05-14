@@ -29,6 +29,8 @@ import type {
 export interface IterationSidebarProps {
   testRunCaseId: number;
   runId: number;
+  /** Project ID — used by the status legend to fetch real project statuses. */
+  projectId: number;
   iterations: IterationDTO[];
   parametersSchema: IterationParameterMeta[];
   isRunCompleted: boolean;
@@ -44,6 +46,7 @@ export interface IterationSidebarProps {
 export function IterationSidebar({
   testRunCaseId,
   runId,
+  projectId,
   iterations,
   parametersSchema,
   isRunCompleted,
@@ -133,7 +136,7 @@ export function IterationSidebar({
         <header className="sticky top-0 z-10 bg-card border-b px-4 pt-4 pb-2 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-semibold">{t("iterationsHeading")}</h2>
-            <IterationStatusLegendPopover />
+            <IterationStatusLegendPopover projectId={projectId} />
           </div>
           <span className="text-xs font-medium text-muted-foreground tabular-nums">
             {showGeneratingState

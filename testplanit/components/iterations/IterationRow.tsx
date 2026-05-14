@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal, Pencil, RotateCcw, SkipForward } from "lucide-react";
+import { MoreHorizontal, Pencil, Plus, RotateCcw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { KeyboardEvent, MouseEvent } from "react";
 
@@ -192,7 +192,7 @@ export function IterationRow({
                 disabled={isRunCompleted}
                 data-testid="iteration-menu-skip"
               >
-                <SkipForward className="mr-2 h-4 w-4" />
+                <Plus className="mr-2 h-4 w-4" />
                 {t("iterationSkip")}
               </DropdownMenuItem>
               {iteration.isCompleted && (
