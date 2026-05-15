@@ -105,11 +105,33 @@ describe("review gate error helpers", () => {
     expect(isAlreadyPendingError(err)).toBe(true);
   });
 
+  it("isAlreadyPendingError detects P2002 with array target (Prisma 6 shape)", () => {
+    // Prisma 6.19+ reports `meta.target` as a string[] of field names instead
+    // of the bare index name. This is the shape returned in the wild by the
+    // partial unique index on ReviewRequest — verified by the live-DB test
+    // at lib/services/schemaValidation.test.ts.
+    const err = new Prisma.PrismaClientKnownRequestError("dup", {
+      code: "P2002",
+      clientVersion: "test",
+      meta: { target: ["entityType", "entityId"] },
+    });
+    expect(isAlreadyPendingError(err)).toBe(true);
+  });
+
   it("isAlreadyPendingError rejects P2002 with wrong index target", () => {
     const err = new Prisma.PrismaClientKnownRequestError("dup", {
       code: "P2002",
       clientVersion: "test",
       meta: { target: "some_other_constraint" },
+    });
+    expect(isAlreadyPendingError(err)).toBe(false);
+  });
+
+  it("isAlreadyPendingError rejects P2002 with array target on unrelated fields", () => {
+    const err = new Prisma.PrismaClientKnownRequestError("dup", {
+      code: "P2002",
+      clientVersion: "test",
+      meta: { target: ["email"] },
     });
     expect(isAlreadyPendingError(err)).toBe(false);
   });

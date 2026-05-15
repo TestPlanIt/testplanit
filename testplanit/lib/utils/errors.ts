@@ -51,10 +51,31 @@ export function isAlreadyPendingError(
   err: unknown,
 ): err is AlreadyPendingError | Prisma.PrismaClientKnownRequestError {
   if (err instanceof AlreadyPendingError) return true;
-  return (
-    err instanceof Prisma.PrismaClientKnownRequestError &&
-    err.code === "P2002" &&
-    typeof err.meta?.target === "string" &&
-    (err.meta.target as string).includes("review_request_one_pending_per_entity")
-  );
+  if (
+    !(err instanceof Prisma.PrismaClientKnownRequestError) ||
+    err.code !== "P2002"
+  ) {
+    return false;
+  }
+  // Prisma reports `meta.target` in two shapes depending on the underlying
+  // driver and Prisma version:
+  //   - String: the bare index name, e.g. "review_request_one_pending_per_entity".
+  //   - Array<string>: the field list, e.g. ["entityType", "entityId"]
+  //     (Prisma 6.19+ with the rust query engine returns this for partial
+  //     unique indexes on the ReviewRequest table — verified live against
+  //     PostgreSQL by lib/services/schemaValidation.test.ts).
+  // Match both. The message body always includes the field tuple wording
+  // "(`entityType`,`entityId`)", which is the disambiguating signal when
+  // `meta.target` is the array form (the array alone cannot be attributed
+  // to one specific partial index, but on the ReviewRequest table this
+  // exact pair only belongs to `review_request_one_pending_per_entity`).
+  const target = err.meta?.target;
+  if (typeof target === "string") {
+    return target.includes("review_request_one_pending_per_entity");
+  }
+  if (Array.isArray(target)) {
+    const fields = target.map(String);
+    return fields.includes("entityType") && fields.includes("entityId");
+  }
+  return false;
 }

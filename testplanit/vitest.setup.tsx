@@ -118,22 +118,29 @@ vi.mock("next-auth/react", async (importOriginal) => {
   };
 });
 
-// If your tests rely on window.matchMedia, you might need to mock it:
-Object.defineProperty(window, "matchMedia", {
-  writable: true,
-  value: vi.fn().mockImplementation((query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(), // deprecated
-    removeListener: vi.fn(), // deprecated
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })),
-});
+// If your tests rely on window.matchMedia, you might need to mock it.
+// Guarded so the global setup file is safe to load in per-file
+// `// @vitest-environment node` tests (live-DB integration tests have no
+// jsdom window). Without the guard, `Object.defineProperty(window, ...)`
+// throws ReferenceError before any node-env test can run.
+if (typeof window !== "undefined") {
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(), // deprecated
+      removeListener: vi.fn(), // deprecated
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
+}
 
-// Mock ResizeObserver for components that use it (like async-combobox)
+// Mock ResizeObserver for components that use it (like async-combobox).
+// `global` is defined in both jsdom and node, so this is safe everywhere.
 class MockResizeObserver {
   constructor(_callback?: ResizeObserverCallback) {}
   observe = vi.fn();
