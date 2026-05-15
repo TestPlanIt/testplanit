@@ -1,4 +1,4 @@
-import type { AuditAction } from "@prisma/client";
+import type { AuditAction, ReviewEntityType } from "@prisma/client";
 import { enhance } from "@zenstackhq/runtime";
 import { NextRequestHandler } from "@zenstackhq/server/next";
 import { AsyncLocalStorage } from "async_hooks";
@@ -16,6 +16,8 @@ import {
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import { prisma } from "~/lib/prisma";
 import { captureAuditEvent, type AuditEvent } from "~/lib/services/auditLog";
+import { assertReviewGatePasses } from "~/lib/services/reviewGate";
+import { isAlreadyPendingError, isReviewGateError } from "~/lib/utils/errors";
 import {
   emitCaseCreated,
   emitCaseDeleted,
@@ -77,6 +79,16 @@ const WEBHOOK_EMIT_MODELS = new Set([
   "testRunResults",
   "sessionResults",
 ]);
+
+// Models whose `stateId` updates are gated by Review & Approval (Plan 01-04).
+// When `parsedPath.operation === "update"` AND `requestBody.data.stateId` is
+// present for one of these models, the auto-API handler calls
+// `assertReviewGatePasses` before invoking the underlying ZenStack handler.
+const REVIEW_GATED_MODELS: Record<string, ReviewEntityType> = {
+  repositoryCases: "CASE",
+  testRuns: "RUN",
+  sessions: "SESSION",
+};
 
 function extractEntityIdFromBody(body: any): number | string | null {
   if (!body) return null;
@@ -378,6 +390,63 @@ async function innerHandler(
         }
       } catch {
         // Ignore body parsing errors
+      }
+    }
+
+    // Review & Approval preflight. For update operations on
+    // RepositoryCases / TestRuns / Sessions that change `stateId`, call
+    // `assertReviewGatePasses` BEFORE the request reaches `tryFastPathCreate`
+    // or `baseHandler`. The schema `@@deny('update', future().state.requiresReview)`
+    // rule from Plan 01 is the schema-layer backstop; the app preflight is the
+    // friendly-error path that produces a structured 403 with the typed code.
+    if (isMutation && parsedPath) {
+      const gatedEntityType = REVIEW_GATED_MODELS[parsedPath.model];
+      const isGatedUpdate =
+        parsedPath.operation === "update" &&
+        gatedEntityType !== undefined &&
+        requestBody?.data?.stateId !== undefined;
+
+      if (isGatedUpdate) {
+        const rawEntityId = extractEntityIdFromBody(requestBody);
+        const entityIdNum =
+          typeof rawEntityId === "number"
+            ? rawEntityId
+            : typeof rawEntityId === "string" && rawEntityId !== ""
+              ? Number(rawEntityId)
+              : NaN;
+        const toStateIdNum = Number(requestBody.data.stateId);
+
+        if (Number.isFinite(entityIdNum) && Number.isFinite(toStateIdNum)) {
+          try {
+            await assertReviewGatePasses(
+              prisma,
+              gatedEntityType,
+              entityIdNum,
+              toStateIdNum
+            );
+          } catch (err) {
+            if (isReviewGateError(err)) {
+              return NextResponse.json(
+                {
+                  error: {
+                    code: err.code,
+                    entityType: err.entityType,
+                    entityId: err.entityId,
+                    toStateId: err.toStateId,
+                  },
+                },
+                { status: 403 }
+              );
+            }
+            if (isAlreadyPendingError(err)) {
+              return NextResponse.json(
+                { error: { code: "PENDING_REVIEW_EXISTS" } },
+                { status: 409 }
+              );
+            }
+            throw err;
+          }
+        }
       }
     }
 
