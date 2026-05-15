@@ -28,6 +28,13 @@ export interface IterationStatusDTO {
 export interface IterationDTO {
   id: number;
   rowIndex: number;
+  /**
+   * Human-readable label inherited from the dataset row this iteration was
+   * fanned out from (e.g. "Bad password", "Good username 2"). Surfaced in
+   * the values strip as a friendlier identifier than the auto-composed
+   * "field: value / field: value" string.
+   */
+  label: string | null;
   valuesJson: Record<string, unknown>;
   isCompleted: boolean;
   status?: IterationStatusDTO | null;

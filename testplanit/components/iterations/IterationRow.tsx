@@ -67,17 +67,27 @@ export function IterationRow({
   });
   const summary = summaryParts.join(" / ");
 
-  const fullValuesTooltip = ordered.length
-    ? ordered
-        .map(
-          (p) =>
-            `${p.name}: ${formatIterationValue(
-              iteration.valuesJson?.[p.name],
-              !!p.sensitive
-            )}`
-        )
-        .join("\n")
-    : "";
+  const valuesLines = ordered.length
+    ? ordered.map(
+        (p) =>
+          `${p.name}: ${formatIterationValue(
+            iteration.valuesJson?.[p.name],
+            !!p.sensitive
+          )}`
+      )
+    : [];
+  // Prefix the dataset row label (e.g. "Bad username") above the values
+  // so users hovering the row see the same friendly identifier they
+  // recognize from the dataset / matrix popover. Falls back to values-only
+  // when the iteration has no label.
+  const labelLine =
+    iteration.label && iteration.label.trim().length > 0
+      ? iteration.label
+      : null;
+  const fullValuesTooltip = [
+    ...(labelLine ? [labelLine] : []),
+    ...valuesLines,
+  ].join("\n");
 
   const handleRowClick = (e: MouseEvent<HTMLDivElement>) => {
     // Avoid intercepting clicks that bubble up from the checkbox or menu.

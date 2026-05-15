@@ -17,6 +17,13 @@ export interface IterationValuesStripProps {
   valuesJson: Record<string, unknown> | null | undefined;
   snapshotRow: Record<string, unknown> | null | undefined;
   parametersSchema: IterationParameterMeta[];
+  /**
+   * Iteration's human label (from the originating dataset row, e.g.
+   * "Bad password"). When present, replaces the generic "Values:" prefix
+   * so users see the row's name they recognize from the dataset / matrix
+   * popover. Falls back to "Values:" when null/empty.
+   */
+  label?: string | null;
 }
 
 function valuesEqual(a: unknown, b: unknown): boolean {
@@ -43,6 +50,7 @@ export function IterationValuesStrip({
   valuesJson,
   snapshotRow,
   parametersSchema,
+  label,
 }: IterationValuesStripProps) {
   const t = useTranslations("parameters");
 
@@ -52,13 +60,19 @@ export function IterationValuesStrip({
 
   if (!valuesJson || ordered.length === 0) return null;
 
+  const leadingLabel =
+    label && label.trim().length > 0 ? label : t("iterationValuesLabel");
+
   return (
     <div
       data-testid="iteration-values-strip"
       className="flex flex-wrap items-center gap-2 px-4 py-2 border-b bg-card text-xs"
     >
-      <span className="text-xs font-medium text-muted-foreground">
-        {t("iterationValuesLabel")}
+      <span
+        className="text-xs font-medium text-muted-foreground"
+        data-testid="iteration-values-strip-label"
+      >
+        {leadingLabel}
       </span>
       <TooltipProvider delayDuration={300}>
         {ordered.map((p) => {

@@ -143,6 +143,7 @@ export function IterationAwareTestRunCaseDetails({
     const list = (iterationsRaw ?? []) as Array<{
       id: number;
       rowIndex: number;
+      label: string | null;
       valuesJson: unknown;
       isCompleted: boolean;
       status?: {
@@ -158,6 +159,7 @@ export function IterationAwareTestRunCaseDetails({
     return list.map((it) => ({
       id: it.id,
       rowIndex: it.rowIndex,
+      label: it.label ?? null,
       valuesJson: (it.valuesJson as Record<string, unknown>) ?? {},
       isCompleted: it.isCompleted,
       status: it.status ?? null,
@@ -463,6 +465,7 @@ export function IterationAwareTestRunCaseDetails({
               valuesJson={activeIteration.valuesJson}
               snapshotRow={activeSnapshotRow}
               parametersSchema={parametersSchema}
+              label={activeIteration.label}
             />
             {anyOverridden && <IterationOverrideBanner />}
             <IterationResultPanel

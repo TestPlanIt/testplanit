@@ -58,6 +58,7 @@ function mkIteration(
   return {
     id: 100 + rowIndex,
     rowIndex,
+    label: null,
     valuesJson: { username: `user${rowIndex}`, password: "hunter2" },
     isCompleted: false,
     status: null,
