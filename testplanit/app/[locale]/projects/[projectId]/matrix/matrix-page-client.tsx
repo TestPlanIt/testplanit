@@ -2,7 +2,10 @@
 
 import { useTranslations } from "next-intl";
 
+import { MatrixCellCapNotice } from "@/components/matrix/MatrixCellCapNotice";
+import { MatrixFilterBar } from "@/components/matrix/MatrixFilterBar";
 import { MatrixGrid } from "@/components/matrix/MatrixGrid";
+import { MatrixToolbar } from "@/components/matrix/MatrixToolbar";
 import { useMatrixAggregation } from "~/hooks/useMatrixAggregation";
 import { useMatrixFilters } from "~/hooks/useMatrixFilters";
 
@@ -26,13 +29,21 @@ import { useMatrixFilters } from "~/hooks/useMatrixFilters";
  */
 export function MatrixPageClient({ projectId }: { projectId: number }) {
   const t = useTranslations("projects.matrix");
-  const { filters } = useMatrixFilters();
+  const { filters, setFilters } = useMatrixFilters();
   const query = useMatrixAggregation(projectId, filters);
 
   return (
     <div className="flex h-full flex-col" data-testid="matrix-page-client">
-      {/* MOUNT_POINT: MatrixFilterBar — follow-up plan adds the import + JSX line here */}
-      {/* MOUNT_POINT: MatrixToolbar — follow-up plan adds the import + JSX line here */}
+      <MatrixToolbar
+        projectId={projectId}
+        filters={filters}
+        hasData={Boolean(query.data && query.data.cellCount > 0)}
+      />
+      <MatrixFilterBar
+        projectId={projectId}
+        filters={filters}
+        onChange={setFilters}
+      />
 
       {query.isLoading && (
         <div
@@ -44,16 +55,11 @@ export function MatrixPageClient({ projectId }: { projectId: number }) {
       )}
 
       {query.error?.matrixError?.type === "cell_cap_exceeded" && (
-        <div
-          className="m-4 rounded-md border border-amber-300 bg-amber-50 p-4 text-amber-900"
-          data-testid="matrix-cell-cap-placeholder"
-        >
-          {t("cellCapShort", {
-            cells: query.error.matrixError.cellCount,
-            threshold: query.error.matrixError.threshold,
-          })}
-          {/* MOUNT_POINT: MatrixCellCapNotice — follow-up plan replaces this placeholder with the full component */}
-        </div>
+        <MatrixCellCapNotice
+          error={query.error.matrixError}
+          filters={filters}
+          onChange={setFilters}
+        />
       )}
 
       {query.error && !query.error.matrixError && (
