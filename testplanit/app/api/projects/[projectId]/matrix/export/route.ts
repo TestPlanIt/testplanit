@@ -187,12 +187,35 @@ export async function GET(
       }
     }
 
-    const csv = Papa.unparse(rows, {
-      delimiter: ",",
-      header: true,
-      quotes: true,
-      escapeFormulae: true,
-    });
+    // Compute the unified column header set across every case's parameters
+    // before Papa.unparse — otherwise the library derives headers from the
+    // first row only and silently drops columns belonging to cases with
+    // heterogeneous parameter schemas.
+    const parameterFieldNames = new Set<string>();
+    for (const c of axes.caseAxis) {
+      if (!c.parameters) continue;
+      for (const p of c.parameters) parameterFieldNames.add(p.name);
+    }
+    const fields = [
+      "Case",
+      "Configuration",
+      "Parameter row label",
+      ...Array.from(parameterFieldNames),
+      "Status",
+      "Recorded at",
+      "Run name",
+      "Run id",
+    ];
+
+    const csv = Papa.unparse(
+      { fields, data: rows },
+      {
+        delimiter: ",",
+        header: true,
+        quotes: true,
+        escapeFormulae: true,
+      }
+    );
 
     const filename = `matrix-${projectId}-${new Date()
       .toISOString()

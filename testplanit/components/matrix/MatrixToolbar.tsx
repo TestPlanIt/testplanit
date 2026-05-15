@@ -55,7 +55,7 @@ export function MatrixToolbar({
           data-testid="matrix-export-csv"
         >
           <a href={exportUrl} download>
-            <Download className="mr-1 h-4 w-4" />
+            <Download className="h-4 w-4" />
             {t("exportCsv")}
           </a>
         </Button>
@@ -66,7 +66,7 @@ export function MatrixToolbar({
           disabled
           data-testid="matrix-export-csv"
         >
-          <Download className="mr-1 h-4 w-4" />
+          <Download className="h-4 w-4" />
           {t("exportCsv")}
         </Button>
       )}

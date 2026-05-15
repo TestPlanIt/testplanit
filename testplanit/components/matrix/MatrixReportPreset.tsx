@@ -39,7 +39,7 @@ export function MatrixReportPreset({
           onClick={() => exportToCsv(axes, `project-${projectId}`)}
           data-testid="matrix-preset-export-csv"
         >
-          <Download className="mr-1 h-4 w-4" />
+          <Download className="h-4 w-4" />
           {t("exportCsv")}
         </Button>
       </div>

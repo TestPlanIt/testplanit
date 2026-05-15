@@ -2,6 +2,7 @@
 
 import { ReportChart } from "@/components/dataVisualizations/ReportChart";
 import { DateFormatter } from "@/components/DateFormatter";
+import { MatrixReportPreset } from "@/components/matrix/MatrixReportPreset";
 import { DataTable } from "@/components/tables/DataTable";
 import {
   Card,
@@ -225,6 +226,7 @@ export function ReportRenderer({
     "issue-test-coverage"
   );
   const isExecutionLog = matchesReportType(reportType, "execution-log");
+  const isIterationMatrix = matchesReportType(reportType, "iteration-matrix");
 
   // Calculate pagination
   const startIndex = pageSize === "All" ? 1 : (currentPage - 1) * pageSize + 1;
@@ -332,6 +334,38 @@ export function ReportRenderer({
     isTestCaseHealth,
     isIssueTestCoverage,
   ]);
+
+  // Iteration Matrix preset bypasses the chart/table pipeline — the report
+  // payload is an AxesShape envelope (cells serialized as a [key, value]
+  // pair array), not a flat row collection. Reconstruct the Map and hand
+  // off to MatrixReportPreset, which mounts MatrixGrid inside the existing
+  // report shell. Empty matrices still render the grid so the axes are
+  // visible.
+  if (isIterationMatrix && projectId && results) {
+    const envelope = results as unknown as {
+      caseAxis: unknown;
+      configAxis: unknown;
+      cells: Array<[string, unknown]>;
+      cellCount: number;
+      statusMap: Record<string, unknown>;
+    };
+    const axes = {
+      caseAxis: envelope.caseAxis,
+      configAxis: envelope.configAxis,
+      cells: new Map(envelope.cells ?? []),
+      cellCount: envelope.cellCount ?? 0,
+      statusMap: envelope.statusMap ?? {},
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any;
+    return (
+      <MatrixReportPreset
+        axes={axes}
+        projectId={
+          typeof projectId === "string" ? parseInt(projectId, 10) : projectId
+        }
+      />
+    );
+  }
 
   if (!results || results.length === 0) {
     return (
