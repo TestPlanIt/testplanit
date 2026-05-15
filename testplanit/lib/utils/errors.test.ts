@@ -4,6 +4,10 @@ import {
   isUniqueConstraintError,
   isNotFoundError,
   isForeignKeyError,
+  ReviewGateError,
+  AlreadyPendingError,
+  isReviewGateError,
+  isAlreadyPendingError,
 } from "./errors";
 
 function makePrismaError(code: string): Prisma.PrismaClientKnownRequestError {
@@ -46,6 +50,73 @@ describe("errors helpers", () => {
       expect(isUniqueConstraintError(value)).toBe(false);
       expect(isNotFoundError(value)).toBe(false);
       expect(isForeignKeyError(value)).toBe(false);
+    }
+  });
+});
+
+describe("review gate error helpers", () => {
+  it("ReviewGateError carries entityType, entityId, toStateId, code='REVIEW_REQUIRED'", () => {
+    const err = new ReviewGateError("REVIEW_REQUIRED", "CASE", 1, 42);
+    expect(err).toBeInstanceOf(Error);
+    expect(err.code).toBe("REVIEW_REQUIRED");
+    expect(err.entityType).toBe("CASE");
+    expect(err.entityId).toBe(1);
+    expect(err.toStateId).toBe(42);
+    expect(err.name).toBe("ReviewGateError");
+  });
+
+  it("AlreadyPendingError carries entityType, entityId, existingRequestId, code='PENDING_REVIEW_EXISTS'", () => {
+    const err = new AlreadyPendingError("RUN", 5, "req-abc");
+    expect(err).toBeInstanceOf(Error);
+    expect(err.code).toBe("PENDING_REVIEW_EXISTS");
+    expect(err.entityType).toBe("RUN");
+    expect(err.entityId).toBe(5);
+    expect(err.existingRequestId).toBe("req-abc");
+    expect(err.name).toBe("AlreadyPendingError");
+  });
+
+  it("isReviewGateError detects ReviewGateError", () => {
+    const err = new ReviewGateError("REVIEW_REQUIRED", "CASE", 1, 42);
+    expect(isReviewGateError(err)).toBe(true);
+  });
+
+  it("isReviewGateError rejects AlreadyPendingError", () => {
+    const err = new AlreadyPendingError("CASE", 1, "req-1");
+    expect(isReviewGateError(err)).toBe(false);
+  });
+
+  it("isReviewGateError rejects non-Error values without throwing", () => {
+    for (const value of [null, undefined, 42, "str", {}]) {
+      expect(isReviewGateError(value)).toBe(false);
+    }
+  });
+
+  it("isAlreadyPendingError detects AlreadyPendingError", () => {
+    const err = new AlreadyPendingError("RUN", 5, "req-2");
+    expect(isAlreadyPendingError(err)).toBe(true);
+  });
+
+  it("isAlreadyPendingError detects P2002 with correct index target", () => {
+    const err = new Prisma.PrismaClientKnownRequestError("dup", {
+      code: "P2002",
+      clientVersion: "test",
+      meta: { target: "review_request_one_pending_per_entity" },
+    });
+    expect(isAlreadyPendingError(err)).toBe(true);
+  });
+
+  it("isAlreadyPendingError rejects P2002 with wrong index target", () => {
+    const err = new Prisma.PrismaClientKnownRequestError("dup", {
+      code: "P2002",
+      clientVersion: "test",
+      meta: { target: "some_other_constraint" },
+    });
+    expect(isAlreadyPendingError(err)).toBe(false);
+  });
+
+  it("isAlreadyPendingError rejects non-Error values without throwing", () => {
+    for (const value of [null, undefined, 42, "str", {}]) {
+      expect(isAlreadyPendingError(value)).toBe(false);
     }
   });
 });
