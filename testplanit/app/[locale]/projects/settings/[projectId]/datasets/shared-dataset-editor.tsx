@@ -376,7 +376,7 @@ export function SharedDatasetEditor({
     );
   }
 
-  const isReadOnly = selectedVersion !== "current";
+  const _isReadOnly = selectedVersion !== "current";
   const isLoadingRows =
     (isCurrentView && liveRowsLoading) || (!isCurrentView && historicalLoading);
 
