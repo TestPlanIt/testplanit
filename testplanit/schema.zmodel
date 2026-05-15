@@ -130,6 +130,9 @@ model User {
     apiTokens               ApiToken[]
     createdShareLinks       ShareLink[]             @relation("ShareLinkCreator")
     shareLinkAccessLogs     ShareLinkAccessLog[]    @relation("ShareLinkAccessor")
+    reviewsRequested        ReviewRequest[]         @relation("ReviewRequestedBy")
+    reviewsAssigned         ReviewRequest[]         @relation("ReviewAssignedToUser")
+    reviewsDecided          ReviewRequest[]         @relation("ReviewDecidedBy")
 
     // Two-factor authentication
     twoFactorEnabled        Boolean                 @default(false)
@@ -352,15 +355,16 @@ model GroupAssignment {
 }
 
 model Roles {
-    id                      Int                      @id @default(autoincrement())
-    name                    String                   @unique @length(1)
-    isDefault               Boolean                  @default(false)
-    isDeleted               Boolean                  @default(false)
-    users                   User[]
-    rolePermissions         RolePermission[]
-    defaultForProjects      Projects[]               @relation("ProjectDefaultRole")
-    userProjectPermissions  UserProjectPermission[]  @relation("UserProjectRole")
-    groupProjectPermissions GroupProjectPermission[] @relation("GroupProjectRole")
+    id                       Int                      @id @default(autoincrement())
+    name                     String                   @unique @length(1)
+    isDefault                Boolean                  @default(false)
+    isDeleted                Boolean                  @default(false)
+    users                    User[]
+    rolePermissions          RolePermission[]
+    defaultForProjects       Projects[]               @relation("ProjectDefaultRole")
+    userProjectPermissions   UserProjectPermission[]  @relation("UserProjectRole")
+    groupProjectPermissions  GroupProjectPermission[] @relation("GroupProjectRole")
+    reviewRequestAssignments ReviewRequest[]
 
     @@deny('all', !auth())
     @@allow('update, create', auth().access == 'ADMIN')
@@ -419,6 +423,7 @@ model Projects {
     quickScriptEnabled          Boolean                               @default(false)
     duplicateScanResults        DuplicateScanResult[]
     stepSequenceMatches         StepSequenceMatch[]
+    reviewRequests              ReviewRequest[]
 
     @@index([isDeleted, isCompleted])
     @@index([createdBy])
@@ -959,10 +964,13 @@ model Workflows {
     isDefault       Boolean                     @default(false)
     workflowType    WorkflowType                @default(NOT_STARTED)
     scope           WorkflowScope
+    requiresReview  Boolean                     @default(false)
     projects        ProjectWorkflowAssignment[]
     repositoryCases RepositoryCases[]
     sessions        Sessions[]
     testRuns        TestRuns[]
+    reviewRequestsFromState ReviewRequest[]     @relation("ReviewFromState")
+    reviewRequestsToState   ReviewRequest[]     @relation("ReviewToState")
 
     @@index([isDeleted, isEnabled])
     @@index([scope, isDefault])
@@ -1571,6 +1579,9 @@ model RepositoryCases {
     )
 
     @@allow('all', auth().access == 'ADMIN')
+
+    // Schema-layer review gate (SCHEMA-05, T-1-02). App preflight in lib/services/reviewGate.ts produces the typed REVIEW_REQUIRED error first.
+    @@deny('update', future().stateId != stateId && future().state.requiresReview)
 }
 
 model RepositoryCaseVersions {
@@ -1970,6 +1981,9 @@ model Sessions {
     )
 
     @@allow('all', auth().access == 'ADMIN')
+
+    // Schema-layer review gate (SCHEMA-05, T-1-02). App preflight in lib/services/reviewGate.ts produces the typed REVIEW_REQUIRED error first.
+    @@deny('update', future().stateId != stateId && future().state.requiresReview)
 }
 
 model SessionResults {
@@ -2267,6 +2281,9 @@ model TestRuns {
     )
 
     @@allow('all', auth().access == 'ADMIN')
+
+    // Schema-layer review gate (SCHEMA-05, T-1-02). App preflight in lib/services/reviewGate.ts produces the typed REVIEW_REQUIRED error first.
+    @@deny('update', future().stateId != stateId && future().state.requiresReview)
 }
 
 enum TestRunType {
@@ -3264,6 +3281,124 @@ model Notification {
     @@allow('update', (auth().id == userId && (future().isRead != isRead || future().isDeleted != isDeleted)) || auth().access == 'ADMIN')
     @@allow('create', auth().access != null)
     @@allow('delete', auth().access == 'ADMIN')
+}
+
+enum ReviewStatus {
+    PENDING
+    APPROVED
+    CHANGES_REQUESTED
+    REJECTED
+    CANCELLED
+
+    @@deny('all', !auth())
+    @@allow('read', true)
+}
+
+enum ReviewEntityType {
+    CASE
+    RUN
+    SESSION
+
+    @@deny('all', !auth())
+    @@allow('read', true)
+}
+
+model ReviewRequest {
+    id                String           @id @default(cuid())
+    projectId         Int
+    project           Projects         @relation(fields: [projectId], references: [id])
+
+    // Polymorphic entity reference (no FK back-relation; mirrors ShareLink/AuditLog pattern). D-14.
+    entityType        ReviewEntityType
+    entityId          Int
+
+    requestedByUserId String
+    requestedBy       User             @relation("ReviewRequestedBy", fields: [requestedByUserId], references: [id])
+
+    // XOR enforced by @@validate: exactly one of assigneeUserId or assigneeRoleId
+    assigneeUserId    String?
+    assigneeUser      User?            @relation("ReviewAssignedToUser", fields: [assigneeUserId], references: [id])
+    assigneeRoleId    Int?
+    assigneeRole      Roles?           @relation(fields: [assigneeRoleId], references: [id])
+
+    fromStateId       Int
+    fromState         Workflows        @relation("ReviewFromState", fields: [fromStateId], references: [id])
+    toStateId         Int
+    toState           Workflows        @relation("ReviewToState", fields: [toStateId], references: [id])
+
+    status            ReviewStatus     @default(PENDING)
+    decisionComment   String?
+    decidedByUserId   String?
+    decidedBy         User?            @relation("ReviewDecidedBy", fields: [decidedByUserId], references: [id])
+    decidedAt         DateTime?
+
+    // D-05 carve-out: consumedAt is the one permitted post-decision mutation.
+    // Field-level @allow override flag (third arg true) carves out the model-level append-only @@deny.
+    consumedAt        DateTime?        @allow('update', status == 'APPROVED', true)
+
+    isDeleted         Boolean          @default(false)
+    createdAt         DateTime         @default(now()) @db.Timestamptz(6)
+    updatedAt         DateTime         @updatedAt
+
+    @@index([assigneeUserId, status])
+    @@index([assigneeRoleId, status])
+    @@index([entityType, entityId, status, createdAt(sort: Desc)])
+    @@index([projectId, status])
+
+    // XOR: exactly one of assigneeUserId or assigneeRoleId must be set (SCHEMA-02, D-14).
+    @@validate(
+        (assigneeUserId != null && assigneeRoleId == null) ||
+        (assigneeUserId == null && assigneeRoleId != null),
+        "Exactly one of assigneeUserId or assigneeRoleId must be set"
+    )
+
+    // Self-approval prevention (T-1-01, D-15).
+    @@validate(
+        assigneeUserId == null || assigneeUserId != requestedByUserId,
+        "Requester cannot be the direct assignee"
+    )
+
+    // Append-only invariant (SCHEMA-03, T-1-04). consumedAt is exempted via field-level @allow override above.
+    @@deny('update', status != 'PENDING')
+
+    // Hard deletes forbidden (milestone-wide soft-delete rule).
+    @@deny('delete', true)
+
+    // Access policies (SCHEMA-08, T-1-06/07/08).
+    @@deny('all', auth() == null)
+
+    @@allow('read',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType != 'NO_ACCESS'] ||
+        auth().access == 'ADMIN'
+    )
+
+    @@allow('create',
+        auth() != null && (
+            project.creator == auth() ||
+            project.userPermissions?[user == auth() && accessType != 'NO_ACCESS'] ||
+            auth().access == 'ADMIN'
+        )
+    )
+
+    // Assignee (direct user or role holder on this project) can decide PENDING (T-1-07).
+    // D-08 effective project role: mirrors schema.zmodel:446 with assigneeRoleId != null guard (Q3 resolution).
+    @@allow('update',
+        status == 'PENDING' && (
+            (assigneeUserId != null && assigneeUser == auth()) ||
+            (assigneeRoleId != null && (
+                project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.id == assigneeRoleId] ||
+                project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' && assigneeRoleId != null && auth().roleId == assigneeRoleId]
+            ))
+        )
+    )
+
+    // Requester or admin can cancel PENDING (T-1-08).
+    @@allow('update',
+        status == 'PENDING' && (requestedBy == auth() || auth().access == 'ADMIN')
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
 }
 
 enum ShareLinkMode {
@@ -4284,6 +4419,11 @@ enum AuditAction {
     WEBHOOK_HEALTH_CHANGED
     WEBHOOK_RETENTION_PURGED
     DUPLICATED
+    REVIEW_REQUESTED
+    REVIEW_APPROVED
+    REVIEW_CHANGES_REQUESTED
+    REVIEW_REJECTED
+    REVIEW_CANCELLED
 }
 
 model AuditLog {
