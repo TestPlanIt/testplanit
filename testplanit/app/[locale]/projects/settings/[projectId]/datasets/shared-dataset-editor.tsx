@@ -8,12 +8,7 @@ import {
 import { SharedDatasetVersionPicker } from "@/components/parameters/SharedDatasetVersionPicker";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -46,9 +41,7 @@ interface ParameterRecord {
   lookupAllowedValues?: string[];
 }
 
-type SelectedVersion =
-  | "current"
-  | { id: number; version: number };
+type SelectedVersion = "current" | { id: number; version: number };
 
 interface SerializableRow {
   id: number;
@@ -73,6 +66,17 @@ function serializeRows(rows: SerializableRow[]): string {
   );
 }
 
+function serializeParameters(params: ParameterRecord[]): string {
+  return JSON.stringify(
+    params.map((p) => ({
+      name: p.name,
+      type: p.type,
+      sensitive: p.sensitive,
+      required: p.required,
+    }))
+  );
+}
+
 export function SharedDatasetEditor({
   projectId,
   dataSetId,
@@ -84,7 +88,11 @@ export function SharedDatasetEditor({
   const [selectedVersion, setSelectedVersion] =
     useState<SelectedVersion>("current");
   const [pendingRows, setPendingRows] = useState<DatasetTabRow[] | null>(null);
+  const [pendingParameters, setPendingParameters] = useState<
+    ParameterRecord[] | null
+  >(null);
   const [baselineRowsKey, setBaselineRowsKey] = useState<string>("");
+  const [baselineParamsKey, setBaselineParamsKey] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -114,36 +122,32 @@ export function SharedDatasetEditor({
   // editable surface; for historical views we resolve rowsJson from the
   // pinned DataSetVersion below.
   const isCurrentView = selectedVersion === "current";
-  const {
-    data: liveRowsRaw,
-    isLoading: liveRowsLoading,
-  } = useFindManyDataSetRow(
-    {
-      where: { dataSetId, isDeleted: false },
-      orderBy: { rowIndex: "asc" },
-      select: { id: true, label: true, rowIndex: true, valuesJson: true },
-    },
-    { enabled: isCurrentView }
-  );
+  const { data: liveRowsRaw, isLoading: liveRowsLoading } =
+    useFindManyDataSetRow(
+      {
+        where: { dataSetId, isDeleted: false },
+        orderBy: { rowIndex: "asc" },
+        select: { id: true, label: true, rowIndex: true, valuesJson: true },
+      },
+      { enabled: isCurrentView }
+    );
 
   // ----- Historical version when not in "current" view -----
   const historicalVersionId =
     selectedVersion !== "current" ? selectedVersion.id : -1;
-  const {
-    data: historicalVersion,
-    isLoading: historicalLoading,
-  } = useFindFirstDataSetVersion(
-    {
-      where: { id: historicalVersionId },
-      select: {
-        id: true,
-        version: true,
-        parametersJson: true,
-        rowsJson: true,
+  const { data: historicalVersion, isLoading: historicalLoading } =
+    useFindFirstDataSetVersion(
+      {
+        where: { id: historicalVersionId },
+        select: {
+          id: true,
+          version: true,
+          parametersJson: true,
+          rowsJson: true,
+        },
       },
-    },
-    { enabled: selectedVersion !== "current" }
-  );
+      { enabled: selectedVersion !== "current" }
+    );
 
   // ----- Latest version (used to derive parameters when current view
   //       has no live row schema yet — e.g., first save not done). -----
@@ -162,10 +166,7 @@ export function SharedDatasetEditor({
     const source =
       selectedVersion === "current"
         ? (latestVersion?.parametersJson as unknown[] | null | undefined)
-        : (historicalVersion?.parametersJson as
-            | unknown[]
-            | null
-            | undefined);
+        : (historicalVersion?.parametersJson as unknown[] | null | undefined);
     if (!Array.isArray(source)) return [];
     return source.map((raw, idx): ParameterRecord => {
       const obj = raw as {
@@ -226,14 +227,27 @@ export function SharedDatasetEditor({
     setSaveError(null);
   }, [sourceRows]);
 
+  useEffect(() => {
+    setPendingParameters(parameters);
+    setBaselineParamsKey(serializeParameters(parameters));
+  }, [parameters]);
+
   const editorRows = pendingRows ?? sourceRows;
+  const editorParameters = pendingParameters ?? parameters;
 
   const isDirty = useMemo(() => {
-    return serializeRows(editorRows) !== baselineRowsKey;
-  }, [editorRows, baselineRowsKey]);
+    return (
+      serializeRows(editorRows) !== baselineRowsKey ||
+      serializeParameters(editorParameters) !== baselineParamsKey
+    );
+  }, [editorRows, baselineRowsKey, editorParameters, baselineParamsKey]);
 
   const handleRowsChange = useCallback((rows: DatasetTabRow[]) => {
     setPendingRows(rows);
+  }, []);
+
+  const handleParametersChange = useCallback((params: ParameterRecord[]) => {
+    setPendingParameters(params);
   }, []);
 
   const handleSave = useCallback(async () => {
@@ -248,13 +262,20 @@ export function SharedDatasetEditor({
         _rowIndex: idx,
       }));
 
-      // The Save endpoint accepts {label, valuesJson} per row plus the
-      // optional parametersJson + branchedFromVersionId. We pass the
-      // current parametersJson through so the schema is preserved.
-      const sourceParameters =
-        selectedVersion === "current"
-          ? latestVersion?.parametersJson
-          : historicalVersion?.parametersJson;
+      // Build parametersJson from the editor's pending state so column
+      // additions / renames / removals are persisted alongside the rows.
+      // Falls back to the source version's shape when the user hasn't
+      // touched parameters this session.
+      const editorParametersJson = editorParameters.map((p, idx) => ({
+        name: p.name,
+        type: p.type,
+        sensitive: p.sensitive,
+        required: p.required,
+        order: idx,
+        ...(Array.isArray(p.allowedValuesJson)
+          ? { allowedValues: p.allowedValuesJson }
+          : {}),
+      }));
 
       const branchedFromVersionId =
         selectedVersion === "current" ? undefined : selectedVersion.id;
@@ -265,9 +286,7 @@ export function SharedDatasetEditor({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            parametersJson: Array.isArray(sourceParameters)
-              ? sourceParameters
-              : undefined,
+            parametersJson: editorParametersJson,
             rowsJson: renumbered.map((r) => ({
               label: r.label,
               valuesJson: r.valuesJson,
@@ -325,11 +344,10 @@ export function SharedDatasetEditor({
     }
   }, [
     editorRows,
+    editorParameters,
     projectId,
     dataSetId,
     selectedVersion,
-    latestVersion,
-    historicalVersion,
     queryClient,
     t,
     tEditor,
@@ -360,8 +378,7 @@ export function SharedDatasetEditor({
 
   const isReadOnly = selectedVersion !== "current";
   const isLoadingRows =
-    (isCurrentView && liveRowsLoading) ||
-    (!isCurrentView && historicalLoading);
+    (isCurrentView && liveRowsLoading) || (!isCurrentView && historicalLoading);
 
   return (
     <main>
@@ -450,12 +467,11 @@ export function SharedDatasetEditor({
                 // here so any debug logging surfaces a meaningful number.
                 caseId={dataSetId}
                 projectId={projectId}
-                parameters={parameters}
-                mode={
-                  isReadOnly && !isDirty ? "shared-readonly" : "shared-editor"
-                }
+                parameters={editorParameters}
+                mode="shared-editor"
                 rows={editorRows}
-                onRowsChange={isReadOnly && !isDirty ? undefined : handleRowsChange}
+                onRowsChange={handleRowsChange}
+                onParametersChange={handleParametersChange}
               />
             </div>
           )}

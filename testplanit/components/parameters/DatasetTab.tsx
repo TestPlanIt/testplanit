@@ -22,10 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@/components/ui/toggle-group";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Tooltip,
   TooltipContent,
@@ -220,6 +217,7 @@ export function DatasetTab({
   mode,
   rows: controlledRows,
   onRowsChange,
+  onParametersChange,
 }: DatasetTabProps) {
   const isShared = mode === "shared-editor" || mode === "shared-readonly";
   const isReadOnly = mode === "shared-readonly";
@@ -305,6 +303,9 @@ export function DatasetTab({
     null
   );
   const [showPasteDialog, setShowPasteDialog] = useState(false);
+  const [showAddColumnDialog, setShowAddColumnDialog] = useState(false);
+  const [newColumnName, setNewColumnName] = useState("");
+  const [addColumnError, setAddColumnError] = useState<string | null>(null);
 
   // ---------- Source toggle (per-case mode only) ----------
   // The Source segmented control is mounted only when this DatasetTab is
@@ -321,15 +322,13 @@ export function DatasetTab({
     },
     { enabled: sourceToggleEnabled }
   );
-  const assignment = (assignmentRaw ?? null) as
-    | {
-        id: number;
-        sharedDataSetId: number;
-        pinnedVersionId: number | null;
-        mappingJson: unknown;
-        sharedDataSet: { id: number; name: string } | null;
-      }
-    | null;
+  const assignment = (assignmentRaw ?? null) as {
+    id: number;
+    sharedDataSetId: number;
+    pinnedVersionId: number | null;
+    mappingJson: unknown;
+    sharedDataSet: { id: number; name: string } | null;
+  } | null;
   const hasAssignment = assignment !== null;
 
   // PARAM-07 invariant: when there is no shared assignment, the default
@@ -405,12 +404,9 @@ export function DatasetTab({
   const sharedSnapshot = useMemo(() => {
     if (!assignment) return null;
     const followLatest = assignment.pinnedVersionId === null;
-    const versionRow = (followLatest
-      ? latestVersionData
-      : pinnedVersionData) as
-      | { id: number; version: number; rowsJson: unknown }
-      | null
-      | undefined;
+    const versionRow = (
+      followLatest ? latestVersionData : pinnedVersionData
+    ) as { id: number; version: number; rowsJson: unknown } | null | undefined;
     if (!versionRow) {
       return {
         followLatest,
@@ -420,8 +416,7 @@ export function DatasetTab({
           valuesJson?: Record<string, unknown>;
         }>,
         sharedDataSet: assignment.sharedDataSet,
-        mappingJson:
-          (assignment.mappingJson as Record<string, string>) ?? {},
+        mappingJson: (assignment.mappingJson as Record<string, string>) ?? {},
       };
     }
     const raw = versionRow.rowsJson;
@@ -436,8 +431,7 @@ export function DatasetTab({
       versionNumber: versionRow.version,
       rowsJson: list,
       sharedDataSet: assignment.sharedDataSet,
-      mappingJson:
-        (assignment.mappingJson as Record<string, string>) ?? {},
+      mappingJson: (assignment.mappingJson as Record<string, string>) ?? {},
     };
   }, [assignment, pinnedVersionData, latestVersionData]);
 
@@ -460,7 +454,8 @@ export function DatasetTab({
   // edit affordances. The original `isReadOnly` only fires for
   // mode === "shared-readonly"; we OR it with the per-case shared view
   // selection so the same render path is reused.
-  const renderReadOnly = isReadOnly || (sourceToggleEnabled && viewSource === "shared");
+  const renderReadOnly =
+    isReadOnly || (sourceToggleEnabled && viewSource === "shared");
 
   // In rendering below, when `viewSource === "shared"` (per-case mode),
   // we override the rows the table sees with `sharedReadonlyRows`.
@@ -468,15 +463,19 @@ export function DatasetTab({
   // In shared mode, rows are supplied by the parent. In owner-dataset
   // mode, rows live in this component's local state seeded from the
   // per-case API.
-  const rows = useMemo(
-    () => {
-      if (sourceToggleEnabled && viewSource === "shared") {
-        return sharedReadonlyRows;
-      }
-      return isShared ? (controlledRows ?? []) : (dataset?.rows ?? []);
-    },
-    [isShared, controlledRows, dataset, sourceToggleEnabled, viewSource, sharedReadonlyRows]
-  );
+  const rows = useMemo(() => {
+    if (sourceToggleEnabled && viewSource === "shared") {
+      return sharedReadonlyRows;
+    }
+    return isShared ? (controlledRows ?? []) : (dataset?.rows ?? []);
+  }, [
+    isShared,
+    controlledRows,
+    dataset,
+    sourceToggleEnabled,
+    viewSource,
+    sharedReadonlyRows,
+  ]);
   const editCellRef = useRef<EditCellState | null>(null);
   editCellRef.current = editCell;
 
@@ -1185,10 +1184,7 @@ export function DatasetTab({
               </ToggleGroupItem>
             </ToggleGroup>
             {hasOwnerDataset && hasAssignment && (
-              <Badge
-                variant="outline"
-                data-testid="dataset-shared-ref-badge"
-              >
+              <Badge variant="outline" data-testid="dataset-shared-ref-badge">
                 {t("datasetSharedRefBadge")}
               </Badge>
             )}
@@ -1308,7 +1304,7 @@ export function DatasetTab({
                               onClick={() => setShowPasteDialog(true)}
                               data-testid="dataset-paste-csv-button"
                             >
-                              <ClipboardPaste className="w-4 h-4 mr-1" />
+                              <ClipboardPaste className="w-4 h-4" />
                               {t("datasetPasteCsv")}
                             </Button>
                           </span>
@@ -1325,18 +1321,31 @@ export function DatasetTab({
                         onClick={() => onOpenImportWizard?.()}
                         data-testid="dataset-import-csv-button"
                       >
-                        <Upload className="w-4 h-4 mr-1" />
+                        <Upload className="w-4 h-4" />
                         {t("datasetImportCsv")}
                       </Button>
                     </>
                   )}
+                  {isShared &&
+                    mode === "shared-editor" &&
+                    onParametersChange && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowAddColumnDialog(true)}
+                        data-testid="dataset-add-column-button"
+                      >
+                        <Plus className="w-4 h-4" />
+                        {t("datasetAddColumn")}
+                      </Button>
+                    )}
                   <Button
                     variant="default"
                     size="sm"
                     onClick={handleAddRow}
                     data-testid="dataset-add-row-button"
                   >
-                    <Plus className="w-4 h-4 mr-1" />
+                    <Plus className="w-4 h-4" />
                     {t("datasetAddRow")}
                   </Button>
                 </div>
@@ -1439,12 +1448,29 @@ export function DatasetTab({
                     <tr key={hg.id}>
                       {hg.headers.map((h) => {
                         const minSize = h.column.columnDef.minSize;
+                        // Lock the drag + checkbox columns to fixed widths
+                        // so they don't grow with the cell content.
+                        const isDragCol = h.column.id === DRAG_COLUMN_ID;
+                        const isSelectCol = h.column.id === SELECT_COLUMN_ID;
+                        const fixedWidth = isDragCol
+                          ? "32px"
+                          : isSelectCol
+                            ? "40px"
+                            : undefined;
                         return (
                           <th
                             key={h.id}
                             className="px-2 py-1 text-left bg-accent border-b font-medium"
                             style={
-                              minSize ? { minWidth: `${minSize}px` } : undefined
+                              fixedWidth
+                                ? {
+                                    width: fixedWidth,
+                                    minWidth: fixedWidth,
+                                    maxWidth: fixedWidth,
+                                  }
+                                : minSize
+                                  ? { minWidth: `${minSize}px` }
+                                  : undefined
                             }
                           >
                             {flexRender(
@@ -1480,7 +1506,14 @@ export function DatasetTab({
                           {...attributes}
                           data-testid={`dataset-row-${row.original.id}`}
                         >
-                          <td className="w-6 px-2 py-1 align-middle relative">
+                          <td
+                            className="px-2 py-1 align-middle relative"
+                            style={{
+                              width: "32px",
+                              minWidth: "32px",
+                              maxWidth: "32px",
+                            }}
+                          >
                             {dropIndicator === "top" && (
                               <div
                                 className="absolute top-0 left-0 right-0 h-[3px] bg-primary z-50 pointer-events-none w-screen"
@@ -1514,14 +1547,25 @@ export function DatasetTab({
                             .slice(1)
                             .map((cell) => {
                               const minSize = cell.column.columnDef.minSize;
+                              const isSelectCol =
+                                cell.column.id === SELECT_COLUMN_ID;
+                              const fixedWidth = isSelectCol
+                                ? "40px"
+                                : undefined;
                               return (
                                 <td
                                   key={cell.id}
                                   className="px-2 py-1 align-middle"
                                   style={
-                                    minSize
-                                      ? { minWidth: `${minSize}px` }
-                                      : undefined
+                                    fixedWidth
+                                      ? {
+                                          width: fixedWidth,
+                                          minWidth: fixedWidth,
+                                          maxWidth: fixedWidth,
+                                        }
+                                      : minSize
+                                        ? { minWidth: `${minSize}px` }
+                                        : undefined
                                   }
                                 >
                                   {flexRender(
@@ -1620,6 +1664,102 @@ export function DatasetTab({
           caseId={caseId}
           parameters={parameters}
         />
+      )}
+
+      {isShared && mode === "shared-editor" && onParametersChange && (
+        <AlertDialog
+          open={showAddColumnDialog}
+          onOpenChange={(open) => {
+            setShowAddColumnDialog(open);
+            if (!open) {
+              setNewColumnName("");
+              setAddColumnError(null);
+            }
+          }}
+        >
+          <AlertDialogContent
+            data-testid="dataset-add-column-dialog"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && newColumnName.trim()) {
+                e.preventDefault();
+                const name = newColumnName.trim();
+                const exists = parameters.some((p) => p.name === name);
+                if (exists) {
+                  setAddColumnError(t("datasetAddColumnDuplicate"));
+                  return;
+                }
+                onParametersChange([
+                  ...parameters,
+                  {
+                    id: -(parameters.length + 1),
+                    name,
+                    type: "STRING",
+                    sensitive: false,
+                    required: false,
+                  },
+                ]);
+                setShowAddColumnDialog(false);
+                setNewColumnName("");
+                setAddColumnError(null);
+              }
+            }}
+          >
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("datasetAddColumnTitle")}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("datasetAddColumnDescription")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <Input
+              value={newColumnName}
+              onChange={(e) => {
+                setNewColumnName(e.target.value);
+                setAddColumnError(null);
+              }}
+              placeholder={t("datasetAddColumnPlaceholder")}
+              data-testid="dataset-add-column-input"
+              autoFocus
+            />
+            {addColumnError && (
+              <p
+                className="text-sm text-destructive"
+                data-testid="dataset-add-column-error"
+              >
+                {addColumnError}
+              </p>
+            )}
+            <AlertDialogFooter>
+              <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
+              <Button
+                disabled={!newColumnName.trim()}
+                onClick={() => {
+                  const name = newColumnName.trim();
+                  const exists = parameters.some((p) => p.name === name);
+                  if (exists) {
+                    setAddColumnError(t("datasetAddColumnDuplicate"));
+                    return;
+                  }
+                  onParametersChange([
+                    ...parameters,
+                    {
+                      id: -(parameters.length + 1),
+                      name,
+                      type: "STRING",
+                      sensitive: false,
+                      required: false,
+                    },
+                  ]);
+                  setShowAddColumnDialog(false);
+                  setNewColumnName("");
+                  setAddColumnError(null);
+                }}
+                data-testid="dataset-add-column-submit"
+              >
+                {t("datasetAddColumnSubmit")}
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
 
       {sourceToggleEnabled && (
