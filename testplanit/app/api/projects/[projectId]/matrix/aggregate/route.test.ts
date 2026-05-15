@@ -118,7 +118,7 @@ describe("POST /api/projects/[projectId]/matrix/aggregate", () => {
       throw new MatrixCellCapExceededError({
         cellCount: 12345,
         willRefuse: true,
-        threshold: 10000,
+        threshold: 50000,
         axisCounts: {
           caseCount: 100,
           configCount: 100,
@@ -133,7 +133,7 @@ describe("POST /api/projects/[projectId]/matrix/aggregate", () => {
     const json = await res.json();
     expect(json.error).toBe("cell_cap_exceeded");
     expect(json.cellCount).toBe(12345);
-    expect(json.threshold).toBe(10000);
+    expect(json.threshold).toBe(50000);
     expect(json.axisCounts).toEqual({
       caseCount: 100,
       configCount: 100,

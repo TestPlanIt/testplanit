@@ -64,7 +64,7 @@ describe("<MatrixCellCapNotice />", () => {
   it("renders the cell count + threshold from props", () => {
     render(
       <MatrixCellCapNotice
-        error={makeError({ cellCount: 12345, threshold: 10000 })}
+        error={makeError({ cellCount: 12345, threshold: 50000 })}
         filters={{}}
         onChange={vi.fn()}
       />

@@ -35,8 +35,11 @@ export function useMatrixFilters() {
       statusIds: params.getAll("status").map(Number).filter(Number.isFinite),
       configIds: params.getAll("config").map(Number).filter(Number.isFinite),
       datasetIds: params.getAll("dataset").map(Number).filter(Number.isFinite),
-      dateFrom: params.get("from") ?? undefined,
-      dateTo: params.get("to") ?? undefined,
+      // Date bounds piggy-back on the report-builder shell's `startDate`/
+      // `endDate` URL convention so the existing date-range picker drives
+      // the matrix filter state too — no parallel date inputs needed.
+      dateFrom: params.get("startDate") ?? undefined,
+      dateTo: params.get("endDate") ?? undefined,
     }),
     [params]
   );
@@ -58,16 +61,16 @@ export function useMatrixFilters() {
       }
       if (next.dateFrom !== undefined) {
         if (next.dateFrom) {
-          sp.set("from", next.dateFrom);
+          sp.set("startDate", next.dateFrom);
         } else {
-          sp.delete("from");
+          sp.delete("startDate");
         }
       }
       if (next.dateTo !== undefined) {
         if (next.dateTo) {
-          sp.set("to", next.dateTo);
+          sp.set("endDate", next.dateTo);
         } else {
-          sp.delete("to");
+          sp.delete("endDate");
         }
       }
       const qs = sp.toString();

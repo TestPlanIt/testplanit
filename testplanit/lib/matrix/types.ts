@@ -73,10 +73,26 @@ export interface ConfigAxisItem {
  */
 export interface IterationSummary {
   id: number;
+  /**
+   * Zero-indexed position of this iteration within its TestRunCase's
+   * iteration list. The run page's `?iteration=N` URL param is 1-indexed
+   * and matches the visible ordinal in the iteration sidebar — so callers
+   * should pass `rowIndex + 1` when building a deep link, NOT `id`.
+   */
+  rowIndex: number;
   label: string | null;
   statusId: number | null;
   runId: number;
   runName: string;
+  runIsCompleted: boolean;
+  /**
+   * ISO-8601 string when this iteration was completed, or `null` when
+   * the iteration has been touched but not yet completed (e.g. status
+   * was overridden but no completion event recorded). Used by the
+   * matrix cell popover to answer "when was this run executed?"
+   * without requiring a click into the run page.
+   */
+  completedAt: string | null;
 }
 
 /**
@@ -150,7 +166,7 @@ export interface AxesShape {
 export interface MatrixCellCountResult {
   cellCount: number;
   willRefuse: boolean;
-  threshold: 10000;
+  threshold: 50000;
   axisCounts: {
     caseCount: number;
     configCount: number;
@@ -168,7 +184,7 @@ export class MatrixCellCapExceededError extends Error {
   public readonly result: MatrixCellCountResult;
   constructor(result: MatrixCellCountResult) {
     super(
-      `Matrix cell count ${result.cellCount} exceeds threshold ${result.threshold}`,
+      `Matrix cell count ${result.cellCount} exceeds threshold ${result.threshold}`
     );
     this.name = "MatrixCellCapExceededError";
     this.result = result;
@@ -182,7 +198,7 @@ export class MatrixCellCapExceededError extends Error {
 export function cellKey(
   caseId: number,
   configId: number,
-  rowIndex: number,
+  rowIndex: number
 ): string {
   return `${caseId}|${configId}|${rowIndex}`;
 }

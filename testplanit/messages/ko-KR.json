@@ -1784,19 +1784,26 @@
     },
     "matrix": {
       "metaTitle": "매트릭스 뷰",
-      "pageTitle": "반복 행렬",
+      "pageTitle": "매개변수화된 테스트 반복 행렬",
       "loading": "로딩 행렬…",
       "loadError": "매트릭스 뷰를 불러올 수 없습니다. 다시 시도하거나 필터 범위를 좁히세요.",
       "cellCapShort": "이 행렬은 {cells, number} 개의 셀을 생성하는데, 이는 {threshold, number} 개의 셀 제한을 초과합니다. 계속하려면 필터를 좁히십시오.",
       "caseColumnHeader": "케이스/매개변수 행",
-      "cellNotRun": "실행되지 않음",
+      "cellNotRun": "테스트되지 않음",
       "cellSummary": "{pass, number} 통과, {fail, number} 실패, {notRun, number} 실행 안 함",
       "popoverTitle": "{count, plural, =1 {# 반복 횟수} other {# 반복 횟수}}",
       "iterationUnlabeled": "반복 횟수 #{index, number}",
       "popoverInflightHint": "비행 중 반복 작업은 기록되면 여기에 표시됩니다.",
+      "popoverNoTimestamp": "—",
       "filterStatus": "{count, plural, =0 {상태} one {상태(#)} other {상태(#)}}",
       "filterConfig": "{count, plural, =0 {설정} one {설정 (#)} other {설정 (#)}}",
       "filterDataset": "{count, plural, =0 {데이터셋} one {데이터셋 (#)} other {데이터셋 (#)}}",
+      "filterStatusLabel": "상태",
+      "filterConfigLabel": "구성",
+      "filterDatasetLabel": "데이터셋",
+      "filterStatusPlaceholder": "어떤 상태든",
+      "filterConfigPlaceholder": "모든 구성",
+      "filterDatasetPlaceholder": "모든 데이터셋",
       "filterDateFrom": "에서",
       "filterDateTo": "에게",
       "configNone": "(설정 없음)",
@@ -1804,6 +1811,10 @@
       "filterEmpty": "사용 가능한 옵션이 없습니다",
       "resetFilters": "필터 초기화",
       "exportCsv": "CSV 내보내기",
+      "legendPassedName": "통과됨",
+      "legendFailedName": "실패한",
+      "legendUntestedName": "테스트되지 않음",
+      "legendClickHint": "반복 내역을 보려면 아무 셀이나 클릭하세요.",
       "cellCapTitle": "Matrix는 {cellCount, number} 개의 셀을 렌더링합니다(제한 {threshold, number}).",
       "cellCapSuggestionFilterCases": "테스트 케이스 수를 줄여서 필터링해 보세요. 해당 요소가 가장 큰 영향을 미칩니다.",
       "cellCapSuggestionFilterConfigs": "구성 수를 줄여서 필터링해 보세요. 해당 축이 가장 큰 영향을 미칩니다.",
@@ -6148,8 +6159,8 @@
           "description": "개별 테스트 결과 기록의 평면 목록으로, 상태, 실행자 및 타임스탬프가 표시됩니다."
         },
         "iterationMatrix": {
-          "label": "반복 행렬",
-          "description": "각 셀별로 최악의 상태를 집계한 사례 × 구성 × 매개변수 행"
+          "label": "매개변수화된 테스트 반복 행렬",
+          "description": "매개변수화된 사례 × 구성 × 매개변수 행(셀별 최악의 상태 집계 포함)"
         }
       },
       "flakyTests": {

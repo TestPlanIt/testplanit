@@ -43,6 +43,7 @@ import { DateFormatter } from "~/components/DateFormatter";
 import { DateRangePickerField } from "~/components/forms/DateRangePickerField";
 import { DrillDownDrawer } from "~/components/reports/DrillDownDrawer";
 import { ReportFilterChips } from "~/components/reports/ReportFilterChips";
+import { MatrixFilterPanel } from "@/components/matrix/MatrixFilterPanel";
 import { ReportFilters } from "~/components/reports/ReportFilters";
 import { ReportRenderer } from "~/components/reports/ReportRenderer";
 import { ShareButton } from "~/components/reports/ShareButton";
@@ -1165,6 +1166,19 @@ function ReportBuilderContent({
         // Don't attempt to run report if metrics are empty (except for pre-built reports)
         if (selectedMetrics.length === 0 && !currentReport?.isPreBuilt) {
           // Silently return - this is expected when first loading the report builder
+          return;
+        }
+
+        // Iteration matrix is self-fetching (MatrixReportPreset uses
+        // useMatrixAggregation directly to inherit cell-cap typing). Skip
+        // the proxy POST so "Run Report" doesn't throw on the matrix's
+        // 422 cell-cap path; just stamp the generated-at timestamp so the
+        // shell's chrome stays consistent.
+        if (matchesReportType(reportType, "iteration-matrix")) {
+          setReportGeneratedAt(new Date());
+          if (updateUrl) {
+            setLastUsedDimensions(selectedDimensions);
+          }
           return;
         }
 
@@ -2380,6 +2394,12 @@ function ReportBuilderContent({
                           </div>
                         </div>
                       )}
+
+                      {matchesReportType(reportType, "iteration-matrix") &&
+                        mode === "project" &&
+                        projectId && (
+                          <MatrixFilterPanel projectId={projectId} />
+                        )}
 
                       {/* Run Report Button */}
                       <Button

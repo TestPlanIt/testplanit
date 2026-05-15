@@ -1784,19 +1784,26 @@
     },
     "matrix": {
       "metaTitle": "矩陣視圖",
-      "pageTitle": "迭代矩陣",
+      "pageTitle": "參數化測試迭代矩陣",
       "loading": "載重矩陣…",
       "loadError": "無法載入矩陣視圖。請重試或縮小篩選範圍。",
       "cellCapShort": "此矩陣將產生 {cells, number} 個單元格，超出 {threshold, number} 個單元格的限制。請縮小篩選範圍以繼續。",
       "caseColumnHeader": "案例/參數行",
-      "cellNotRun": "未運行",
+      "cellNotRun": "未經測試",
       "cellSummary": "{pass, number} 通過， {fail, number} 失敗， {notRun, number} 未運行",
       "popoverTitle": "{count, plural, =1 {# 迭代次數} other {# 迭代次數}}",
       "iterationUnlabeled": "迭代 #{index, number}",
       "popoverInflightHint": "飛行中的迭代一旦記錄下來，就會顯示在這裡。",
+      "popoverNoTimestamp": "—",
       "filterStatus": "{count, plural, =0 {狀態} one {狀態 (#)} other {狀態 (#)}}",
       "filterConfig": "{count, plural, =0 {配置} one {配置 (#)} other {配置 (#)}}",
       "filterDataset": "{count, plural, =0 {Dataset} one {Dataset (#)} other {Dataset (#)}}",
+      "filterStatusLabel": "地位",
+      "filterConfigLabel": "配置",
+      "filterDatasetLabel": "數據集",
+      "filterStatusPlaceholder": "任何狀態",
+      "filterConfigPlaceholder": "任何配置",
+      "filterDatasetPlaceholder": "任何資料集",
       "filterDateFrom": "從",
       "filterDateTo": "到",
       "configNone": "（無配置）",
@@ -1804,6 +1811,10 @@
       "filterEmpty": "暫無選項",
       "resetFilters": "重置篩選器",
       "exportCsv": "匯出 CSV 文件",
+      "legendPassedName": "透過",
+      "legendFailedName": "失敗的",
+      "legendUntestedName": "未經測試",
+      "legendClickHint": "點擊任何儲存格即可查看迭代詳情",
       "cellCapTitle": "矩陣將渲染 {cellCount, number} 個單元格（限制 {threshold, number}）",
       "cellCapSuggestionFilterCases": "試著篩選出較少的測試案例－這是影響最大的因素。",
       "cellCapSuggestionFilterConfigs": "嘗試篩選較少的配置－此軸是影響最大的因素。",
@@ -6148,8 +6159,8 @@
           "description": "包含狀態、執行者和時間戳記的單一測試結果記錄的扁平列表"
         },
         "iterationMatrix": {
-          "label": "迭代矩陣",
-          "description": "每個單元格包含案例 × 配置 × 參數行，並彙總最差狀態。"
+          "label": "參數化測試迭代矩陣",
+          "description": "參數化案例 × 配置 × 參數行，每個單元格匯總最差狀態"
         }
       },
       "flakyTests": {

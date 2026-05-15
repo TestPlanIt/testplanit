@@ -175,7 +175,7 @@ describe("GET /api/projects/[projectId]/matrix/export", () => {
       throw new MatrixCellCapExceededError({
         cellCount: 12345,
         willRefuse: true,
-        threshold: 10000,
+        threshold: 50000,
         axisCounts: {
           caseCount: 100,
           configCount: 100,

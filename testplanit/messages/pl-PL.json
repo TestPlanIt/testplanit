@@ -1784,19 +1784,26 @@
     },
     "matrix": {
       "metaTitle": "Widok macierzy",
-      "pageTitle": "Macierz iteracji",
+      "pageTitle": "Parametryzowana macierz iteracji testów",
       "loading": "Ładowanie macierzy…",
       "loadError": "Nie udało się załadować widoku macierzy. Spróbuj ponownie lub zawęź filtry.",
       "cellCapShort": "Ta macierz wygenerowałaby {cells, number} komórek, co przekracza limit {threshold, number} komórek. Aby kontynuować, zawęź filtry.",
       "caseColumnHeader": "Wiersz przypadku/parametru",
-      "cellNotRun": "Nie uruchomiono",
+      "cellNotRun": "Nieprzetestowane",
       "cellSummary": "{pass, number} zaliczone, {fail, number} nieudane, {notRun, number} nie uruchomione",
       "popoverTitle": "{count, plural, =1 {# iteracja} other {# iteracje}}",
       "iterationUnlabeled": "Iteracja #{index, number}",
       "popoverInflightHint": "W tym miejscu wyświetlane są iteracje w trakcie lotu, po ich zarejestrowaniu.",
+      "popoverNoTimestamp": "—",
       "filterStatus": "{count, plural, =0 {Status} one {Status (#)} other {Status (#)}}",
       "filterConfig": "{count, plural, =0 {Konfiguracja} one {Konfiguracja (#)} other {Konfiguracja (#)}}",
       "filterDataset": "{count, plural, =0 {Zestaw danych} one {Zestaw danych (#)} other {Zestaw danych (#)}}",
+      "filterStatusLabel": "Status",
+      "filterConfigLabel": "Konfiguracja",
+      "filterDatasetLabel": "Zestaw danych",
+      "filterStatusPlaceholder": "Jakikolwiek status",
+      "filterConfigPlaceholder": "Dowolna konfiguracja",
+      "filterDatasetPlaceholder": "Dowolny zestaw danych",
       "filterDateFrom": "Z",
       "filterDateTo": "Do",
       "configNone": "(bez konfiguracji)",
@@ -1804,6 +1811,10 @@
       "filterEmpty": "Brak dostępnych opcji",
       "resetFilters": "Zresetuj filtry",
       "exportCsv": "Eksportuj CSV",
+      "legendPassedName": "Przeszedł",
+      "legendFailedName": "Przegrany",
+      "legendUntestedName": "Nieprzetestowane",
+      "legendClickHint": "Kliknij dowolną komórkę, aby zobaczyć szczegóły iteracji",
       "cellCapTitle": "Macierz wyrenderuje {cellCount, number} komórek (limit {threshold, number})",
       "cellCapSuggestionFilterCases": "Spróbuj zastosować filtr obejmujący mniejszą liczbę przypadków testowych — ta oś ma największy wpływ.",
       "cellCapSuggestionFilterConfigs": "Spróbuj filtrować według mniejszej liczby konfiguracji — ta oś ma największy wpływ.",
@@ -6148,8 +6159,8 @@
           "description": "Płaska lista indywidualnych rekordów wyników testów ze statusem, wykonawcą i znacznikiem czasu"
         },
         "iterationMatrix": {
-          "label": "Macierz iteracji",
-          "description": "Przypadki × konfiguracje × wiersze parametrów z podsumowaniem najgorszego stanu na komórkę"
+          "label": "Parametryzowana macierz iteracji testów",
+          "description": "Przypadki sparametryzowane × konfiguracje × wiersze parametrów z podsumowaniem najgorszego stanu na komórkę"
         }
       },
       "flakyTests": {

@@ -103,7 +103,16 @@ function buildAxes(): AxesShape {
     worstOfStatusId: 7,
     mostRecentCompletedAt: "2026-05-01T08:30:00.000Z",
     iterations: [
-      { id: 100, label: "creds", statusId: 7, runId: 999, runName: "Smoke" },
+      {
+        id: 100,
+        rowIndex: 0,
+        label: "creds",
+        statusId: 7,
+        runId: 999,
+        runName: "Smoke",
+        runIsCompleted: false,
+        completedAt: null,
+      },
     ],
   });
   // A not-run cell to exercise "Status: Not run" and blank run id.

@@ -28,15 +28,12 @@ const describeIntegration =
 describeIntegration("runMatrixAggregation (live DB)", () => {
   const importDeps = async () => {
     const { prisma } = await import("~/lib/prisma");
-    const { runMatrixAggregation, MatrixCellCapExceededError } = await import(
-      "./matrixAggregation"
-    );
-    const { computeWorstOfStatus } = await import(
-      "~/lib/services/iterationRollup"
-    );
-    const { materializeForOneCase } = await import(
-      "~/lib/services/iterationFanOut"
-    );
+    const { runMatrixAggregation, MatrixCellCapExceededError } =
+      await import("./matrixAggregation");
+    const { computeWorstOfStatus } =
+      await import("~/lib/services/iterationRollup");
+    const { materializeForOneCase } =
+      await import("~/lib/services/iterationFanOut");
     const { cellKey } = await import("./types");
     return {
       prisma,
@@ -53,7 +50,7 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
   async function withRollback<T>(
     prisma: any,
     body: (tx: any) => Promise<T>,
-    timeoutMs = 60_000,
+    timeoutMs = 60_000
   ): Promise<T> {
     let captured: T | undefined;
     let captureErr: unknown;
@@ -67,7 +64,7 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
           }
           throw new Error(ROLLBACK_SENTINEL);
         },
-        { timeout: timeoutMs },
+        { timeout: timeoutMs }
       );
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -84,7 +81,7 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
    */
   async function seedProjectScaffold(
     tx: any,
-    namePrefix: string,
+    namePrefix: string
   ): Promise<{
     creatorId: string;
     projectId: number;
@@ -117,7 +114,9 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
       select: { id: true },
     });
     if (!passed || !failed || !untested) {
-      throw new Error("Seed the DB first (missing passed/failed/untested status)");
+      throw new Error(
+        "Seed the DB first (missing passed/failed/untested status)"
+      );
     }
 
     const project = await tx.projects.create({
@@ -143,11 +142,15 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
       select: { id: true },
     });
     const chrome = await tx.configurations.create({
-      data: { name: `Chrome-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` },
+      data: {
+        name: `Chrome-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      },
       select: { id: true },
     });
     const firefox = await tx.configurations.create({
-      data: { name: `Firefox-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` },
+      data: {
+        name: `Firefox-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      },
       select: { id: true },
     });
 
@@ -170,7 +173,7 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
     tx: any,
     scaffold: Awaited<ReturnType<typeof seedProjectScaffold>>,
     name: string,
-    params: Array<{ name: string; sensitive?: boolean }>,
+    params: Array<{ name: string; sensitive?: boolean }>
   ): Promise<number> {
     const c = await tx.repositoryCases.create({
       data: {
@@ -203,7 +206,7 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
   async function createNonParamCase(
     tx: any,
     scaffold: Awaited<ReturnType<typeof seedProjectScaffold>>,
-    name: string,
+    name: string
   ): Promise<number> {
     const c = await tx.repositoryCases.create({
       data: {
@@ -225,7 +228,7 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
     tx: any,
     scaffold: Awaited<ReturnType<typeof seedProjectScaffold>>,
     repositoryCaseId: number,
-    rows: Array<{ label: string; values: Record<string, unknown> }>,
+    rows: Array<{ label: string; values: Record<string, unknown> }>
   ): Promise<number> {
     const ds = await tx.dataSet.create({
       data: {
@@ -254,11 +257,13 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
     scaffold: Awaited<ReturnType<typeof seedProjectScaffold>>,
     repositoryCaseId: number,
     configId: number | null,
-    runName?: string,
+    runName?: string
   ): Promise<{ testRunId: number; testRunCaseId: number }> {
     const testRun = await tx.testRuns.create({
       data: {
-        name: runName ?? `run-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        name:
+          runName ??
+          `run-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         projectId: scaffold.projectId,
         stateId: scaffold.workflowId,
         createdById: scaffold.creatorId,
@@ -286,7 +291,10 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
   async function setIterationStatuses(
     tx: any,
     testRunCaseId: number,
-    statuses: Array<{ statusId: number | null; completedAt?: Date | null } | null>,
+    statuses: Array<{
+      statusId: number | null;
+      completedAt?: Date | null;
+    } | null>
   ): Promise<void> {
     const iterations = await tx.testRunCaseIteration.findMany({
       where: { testRunCaseId },
@@ -315,9 +323,11 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
   });
 
   // -------------------------------------------------------------------
-  // Happy path: 3 cases (3 rows + 5 rows + non-parameterized) x 2 configs.
+  // Happy path: 2 parameterized cases (3 rows + 5 rows) x 2 configs.
+  // A non-parameterized case is also seeded but should NOT appear in
+  // the case axis (the matrix is parameterized-only).
   // -------------------------------------------------------------------
-  it("happy path: 3-axis aggregation produces (3 + 5 + 1) x 2 = 18 cells", async () => {
+  it("happy path: 3-axis aggregation produces (3 + 5) x 2 = 16 cells; non-parameterized case is filtered out", async () => {
     const { prisma, runMatrixAggregation, materializeForOneCase, cellKey } =
       await importDeps();
     await withRollback(prisma, async (tx) => {
@@ -341,8 +351,8 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
       ]);
 
       // Materialize caseA + caseB into both Chrome and Firefox runs.
-      // Non-parameterized caseC just gets a TestRunCase row in each run
-      // (no iterations).
+      // Non-parameterized caseC gets a TestRunCase row in each run but
+      // never produces iterations and is filtered out of the case axis.
       for (const cfg of [sc.chromeConfigId, sc.firefoxConfigId]) {
         for (const cId of [caseA, caseB]) {
           const r = await createRunWithCase(tx, sc, cId, cfg);
@@ -353,8 +363,9 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
 
       const axes = await runMatrixAggregation(tx, sc.projectId, {}, true);
 
-      expect(axes.cellCount).toBe(18);
-      expect(axes.caseAxis).toHaveLength(3);
+      expect(axes.cellCount).toBe(16);
+      expect(axes.caseAxis).toHaveLength(2);
+      expect(axes.caseAxis.find((c) => c.caseId === caseC)).toBeUndefined();
       expect(axes.configAxis).toHaveLength(2);
 
       // Spot-check: caseA × Chrome × row 0 has exactly one iteration,
@@ -370,9 +381,12 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
   });
 
   // -------------------------------------------------------------------
-  // PARAM-07: non-parameterized case shows up with the synthetic row.
+  // Non-parameterized cases are excluded — the matrix is the
+  // "Parameterized Test Iteration Matrix" and only includes cases with
+  // hasParameters=true. Non-parameterized cases are handled by a
+  // separate report (case × configuration only).
   // -------------------------------------------------------------------
-  it("PARAM-07: non-parameterized case has a single (no parameters) sub-row", async () => {
+  it("non-parameterized case is excluded from the case axis", async () => {
     const { prisma, runMatrixAggregation } = await importDeps();
     await withRollback(prisma, async (tx) => {
       const sc = await seedProjectScaffold(tx, "matrix-param07");
@@ -381,36 +395,29 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
 
       const axes = await runMatrixAggregation(tx, sc.projectId, {}, true);
       const c = axes.caseAxis.find((c) => c.caseId === caseC);
-      expect(c).toBeDefined();
-      expect(c?.hasParameters).toBe(false);
-      expect(c?.paramRows).toEqual([
-        { index: 0, label: "(no parameters)", values: {} },
-      ]);
+      expect(c).toBeUndefined();
     });
   });
 
   // -------------------------------------------------------------------
-  // Cell-cap refusal at the 10001-cell boundary.
+  // Cell-cap refusal at the 50001-cell boundary.
   // -------------------------------------------------------------------
-  it("cell-cap refusal: throws MatrixCellCapExceededError above 10,000 cells", async () => {
+  it("cell-cap refusal: throws MatrixCellCapExceededError above 50,000 cells", async () => {
     const { prisma, runMatrixAggregation, MatrixCellCapExceededError } =
       await importDeps();
     await withRollback(prisma, async (tx) => {
       const sc = await seedProjectScaffold(tx, "matrix-cap");
-      // One parameterized case with 10,001 dataset rows × 1 config = 10,001 cells.
+      // One parameterized case with 50,001 dataset rows × 1 config = 50,001 cells.
       const caseA = await createParamCase(tx, sc, "Big", [{ name: "n" }]);
-      const rows = Array.from({ length: 10001 }, (_, i) => ({
+      const rows = Array.from({ length: 50001 }, (_, i) => ({
         label: `r${i}`,
         values: { n: `v${i}` },
       }));
       await attachOwnerDataset(tx, sc, caseA, rows);
       const r = await createRunWithCase(tx, sc, caseA, sc.chromeConfigId);
-      await (await import("~/lib/services/iterationFanOut")).materializeForOneCase(
-        sc.projectId,
-        r.testRunCaseId,
-        caseA,
-        tx,
-      );
+      await (
+        await import("~/lib/services/iterationFanOut")
+      ).materializeForOneCase(sc.projectId, r.testRunCaseId, caseA, tx);
 
       let thrown: unknown = null;
       try {
@@ -421,8 +428,8 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
       expect(thrown).toBeInstanceOf(MatrixCellCapExceededError);
       const err = thrown as InstanceType<typeof MatrixCellCapExceededError>;
       expect(err.result.willRefuse).toBe(true);
-      expect(err.result.cellCount).toBeGreaterThanOrEqual(10001);
-      expect(err.result.threshold).toBe(10000);
+      expect(err.result.cellCount).toBeGreaterThanOrEqual(50001);
+      expect(err.result.threshold).toBe(50000);
     });
   });
 
@@ -439,32 +446,24 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
         { name: "password", sensitive: true },
       ]);
       await attachOwnerDataset(tx, sc, caseA, [
-        { label: "creds", values: { username: "alice", password: "secret123" } },
+        {
+          label: "creds",
+          values: { username: "alice", password: "secret123" },
+        },
       ]);
       const r = await createRunWithCase(tx, sc, caseA, sc.chromeConfigId);
-      await (await import("~/lib/services/iterationFanOut")).materializeForOneCase(
-        sc.projectId,
-        r.testRunCaseId,
-        caseA,
-        tx,
-      );
+      await (
+        await import("~/lib/services/iterationFanOut")
+      ).materializeForOneCase(sc.projectId, r.testRunCaseId, caseA, tx);
 
-      const redacted = await runMatrixAggregation(
-        tx,
-        sc.projectId,
-        {},
-        false,
+      const redacted = await runMatrixAggregation(tx, sc.projectId, {}, false);
+      const caseAxisRedacted = redacted.caseAxis.find(
+        (c) => c.caseId === caseA
       );
-      const caseAxisRedacted = redacted.caseAxis.find((c) => c.caseId === caseA);
       expect(caseAxisRedacted?.paramRows[0].values.username).toBe("alice");
       expect(caseAxisRedacted?.paramRows[0].values.password).toBe("[REDACTED]");
 
-      const exposed = await runMatrixAggregation(
-        tx,
-        sc.projectId,
-        {},
-        true,
-      );
+      const exposed = await runMatrixAggregation(tx, sc.projectId, {}, true);
       const caseAxisExposed = exposed.caseAxis.find((c) => c.caseId === caseA);
       expect(caseAxisExposed?.paramRows[0].values.username).toBe("alice");
       expect(caseAxisExposed?.paramRows[0].values.password).toBe("secret123");
@@ -480,8 +479,17 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
       const a = await seedProjectScaffold(tx, "matrix-cross-a");
       const b = await seedProjectScaffold(tx, "matrix-cross-b");
 
-      const caseA = await createNonParamCase(tx, a, "A-case");
-      const caseB = await createNonParamCase(tx, b, "B-case");
+      // Parameterized cases — non-parameterized cases are filtered out
+      // of the matrix axis, so the cross-project assertion needs cases
+      // that actually surface in `caseAxis`.
+      const caseA = await createParamCase(tx, a, "A-case", [{ name: "x" }]);
+      const caseB = await createParamCase(tx, b, "B-case", [{ name: "x" }]);
+      await attachOwnerDataset(tx, a, caseA, [
+        { label: "a1", values: { x: "1" } },
+      ]);
+      await attachOwnerDataset(tx, b, caseB, [
+        { label: "b1", values: { x: "1" } },
+      ]);
       await createRunWithCase(tx, a, caseA, a.chromeConfigId);
       await createRunWithCase(tx, b, caseB, b.chromeConfigId);
 
@@ -491,10 +499,10 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
       expect(axesA.caseAxis.map((c) => c.caseId)).toEqual([caseA]);
       expect(axesB.caseAxis.map((c) => c.caseId)).toEqual([caseB]);
       expect(
-        axesA.configAxis.map((c) => c.configId).includes(b.chromeConfigId),
+        axesA.configAxis.map((c) => c.configId).includes(b.chromeConfigId)
       ).toBe(false);
       expect(
-        axesB.configAxis.map((c) => c.configId).includes(a.chromeConfigId),
+        axesB.configAxis.map((c) => c.configId).includes(a.chromeConfigId)
       ).toBe(false);
     });
   });
@@ -515,7 +523,7 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
         Array.from({ length: 10 }, (_, i) => ({
           label: `r${i}`,
           values: { n: `v${i}` },
-        })),
+        }))
       );
       const r = await createRunWithCase(tx, sc, caseA, sc.chromeConfigId);
       await materializeForOneCase(sc.projectId, r.testRunCaseId, caseA, tx);
@@ -619,7 +627,7 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
       // Sanity: r2's worst-of equals the helper's untested fallback.
       const expectedR2 = computeWorstOfStatus(
         [{ statusId: null }],
-        rollupMap as any,
+        rollupMap as any
       );
       expect(r2?.worstOfStatusId).toBe(expectedR2);
     });
@@ -681,7 +689,7 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
         tx,
         sc.projectId,
         { dateFrom: "2026-04-01T00:00:00.000Z" },
-        true,
+        true
       );
       const cell = axes.cells.get(cellKey(caseA, sc.chromeConfigId, 0));
       expect(cell).toBeDefined();
@@ -697,7 +705,14 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
     const { prisma, runMatrixAggregation } = await importDeps();
     await withRollback(prisma, async (tx) => {
       const sc = await seedProjectScaffold(tx, "matrix-sentinel");
-      const caseA = await createNonParamCase(tx, sc, "A");
+      // Parameterized case so the case axis isn't filtered out — the
+      // sentinel collapse is a config-axis behavior independent of the
+      // case being parameterized, but we need at least one parameterized
+      // case to drive `fetchConfigAxis` through the same scope filter.
+      const caseA = await createParamCase(tx, sc, "A", [{ name: "x" }]);
+      await attachOwnerDataset(tx, sc, caseA, [
+        { label: "a1", values: { x: "1" } },
+      ]);
       await createRunWithCase(tx, sc, caseA, sc.chromeConfigId);
       await createRunWithCase(tx, sc, caseA, null); // no configuration
 
@@ -711,22 +726,23 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
   });
 
   // -------------------------------------------------------------------
-  // Snapshot join via TestRunCase.id (Pitfall 4): non-parameterized case
-  // with no snapshot row does not crash.
+  // Snapshot join via TestRunCase.id (Pitfall 4): a parameterized case
+  // with no dataset snapshot row does not crash; it just contributes
+  // zero cells (empty paramRows).
   // -------------------------------------------------------------------
-  it("non-parameterized case without snapshot row: aggregation succeeds with synthetic sub-row", async () => {
+  it("parameterized case with no snapshot row: aggregation succeeds with empty paramRows", async () => {
     const { prisma, runMatrixAggregation } = await importDeps();
     await withRollback(prisma, async (tx) => {
       const sc = await seedProjectScaffold(tx, "matrix-snapshot-join");
-      const caseC = await createNonParamCase(tx, sc, "NoParams");
-      await createRunWithCase(tx, sc, caseC, sc.chromeConfigId);
+      // Parameterized case with NO dataset attached → no snapshot row.
+      const caseP = await createParamCase(tx, sc, "Bare", [{ name: "x" }]);
+      await createRunWithCase(tx, sc, caseP, sc.chromeConfigId);
 
       const axes = await runMatrixAggregation(tx, sc.projectId, {}, true);
-      const c = axes.caseAxis.find((c) => c.caseId === caseC);
-      expect(c?.paramRows).toEqual([
-        { index: 0, label: "(no parameters)", values: {} },
-      ]);
-      expect(axes.cellCount).toBe(1); // 1 case x 1 row x 1 config
+      const c = axes.caseAxis.find((c) => c.caseId === caseP);
+      expect(c).toBeDefined();
+      expect(c?.paramRows).toEqual([]);
+      expect(axes.cellCount).toBe(0);
     });
   });
 
@@ -785,7 +801,7 @@ describeIntegration("runMatrixAggregation (live DB)", () => {
       expect(cell?.iterationCount).toBe(2);
       // SQL MAX picks May — even though April was inserted second.
       expect(cell?.mostRecentCompletedAt).toBe(
-        new Date("2026-05-01T08:30:00.000Z").toISOString(),
+        new Date("2026-05-01T08:30:00.000Z").toISOString()
       );
     });
   });

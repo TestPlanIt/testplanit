@@ -1784,19 +1784,26 @@
     },
     "matrix": {
       "metaTitle": "Matrix View",
-      "pageTitle": "Iteration Matrix",
+      "pageTitle": "Parameterized Test Iteration Matrix",
       "loading": "Loading matrix…",
       "loadError": "Could not load the matrix view. Try again or narrow your filters.",
       "cellCapShort": "This matrix would render {cells, number} cells, which exceeds the {threshold, number} cell limit. Narrow the filters to continue.",
       "caseColumnHeader": "Case / parameter row",
-      "cellNotRun": "Not run",
+      "cellNotRun": "Untested",
       "cellSummary": "{pass, number} passed, {fail, number} failed, {notRun, number} not run",
       "popoverTitle": "{count, plural, =1 {# iteration} other {# iterations}}",
       "iterationUnlabeled": "Iteration #{index, number}",
       "popoverInflightHint": "In-flight iterations appear here once recorded.",
+      "popoverNoTimestamp": "—",
       "filterStatus": "{count, plural, =0 {Status} one {Status (#)} other {Status (#)}}",
       "filterConfig": "{count, plural, =0 {Configuration} one {Configuration (#)} other {Configuration (#)}}",
       "filterDataset": "{count, plural, =0 {Dataset} one {Dataset (#)} other {Dataset (#)}}",
+      "filterStatusLabel": "Status",
+      "filterConfigLabel": "Configuration",
+      "filterDatasetLabel": "Dataset",
+      "filterStatusPlaceholder": "Any status",
+      "filterConfigPlaceholder": "Any configuration",
+      "filterDatasetPlaceholder": "Any dataset",
       "filterDateFrom": "From",
       "filterDateTo": "To",
       "configNone": "(no configuration)",
@@ -1804,6 +1811,10 @@
       "filterEmpty": "No options available",
       "resetFilters": "Reset filters",
       "exportCsv": "Export CSV",
+      "legendPassedName": "Passed",
+      "legendFailedName": "Failed",
+      "legendUntestedName": "Untested",
+      "legendClickHint": "Click any cell to see iteration details",
       "cellCapTitle": "Matrix would render {cellCount, number} cells (limit {threshold, number})",
       "cellCapSuggestionFilterCases": "Try filtering to fewer test cases — that axis is the largest contributor.",
       "cellCapSuggestionFilterConfigs": "Try filtering to fewer configurations — that axis is the largest contributor.",
@@ -6148,8 +6159,8 @@
           "description": "Flat list of individual test result records with status, executor, and timestamp"
         },
         "iterationMatrix": {
-          "label": "Iteration Matrix",
-          "description": "Cases × configurations × parameter rows with worst-of status rollup per cell"
+          "label": "Parameterized Test Iteration Matrix",
+          "description": "Parameterized cases × configurations × parameter rows with worst-of status rollup per cell"
         }
       },
       "flakyTests": {

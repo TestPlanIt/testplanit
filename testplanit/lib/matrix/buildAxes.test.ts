@@ -24,7 +24,7 @@ const STATUS_MAP: Record<number, StatusMapEntry> = { 1: STATUS_PASS };
 function makeCell(
   caseId: number,
   configId: number,
-  rowIndex: number,
+  rowIndex: number
 ): CellSummary {
   return {
     caseId,
@@ -40,10 +40,13 @@ function makeCell(
     iterations: [
       {
         id: 100 + rowIndex,
+        rowIndex,
         label: null,
         statusId: 1,
         runId: 200,
         runName: "Run 1",
+        runIsCompleted: false,
+        completedAt: null,
       },
     ],
   };
@@ -65,14 +68,14 @@ describe("buildAxes", () => {
     expect(axes.statusMap).toBe(STATUS_MAP);
   });
 
-  it("PARAM-07: non-parameterized case gets a single (no parameters) sub-row", () => {
+  it("case with no resolved param rows collapses to zero cells (parameterized case with no dataset snapshot yet)", () => {
     const axes = buildAxes({
       cases: [
         {
           caseId: 1,
           caseName: "Login flow",
-          hasParameters: false,
-          parameters: null,
+          hasParameters: true,
+          parameters: [],
         },
       ],
       configs: [{ configId: 0, configName: "(none)" }],
@@ -80,15 +83,13 @@ describe("buildAxes", () => {
       paramRowsByCaseId: new Map(),
       statusMap: STATUS_MAP,
     });
-    expect(axes.caseAxis[0].hasParameters).toBe(false);
-    expect(axes.caseAxis[0].paramRows).toEqual([
-      { index: 0, label: "(no parameters)", values: {} },
-    ]);
-    // 1 case × 1 paramRow × 1 config = 1 cell.
-    expect(axes.cellCount).toBe(1);
+    expect(axes.caseAxis[0].hasParameters).toBe(true);
+    // No dataset snapshot resolved → empty paramRows → contributes 0 cells.
+    expect(axes.caseAxis[0].paramRows).toEqual([]);
+    expect(axes.cellCount).toBe(0);
   });
 
-  it("per-case sub-axis math: (3 + 5 + 1) × 2 = 18 (Lock A)", () => {
+  it("per-case sub-axis math: (3 + 5) × 2 = 16 (Lock A)", () => {
     const caseA: ParamRowAxisItem[] = Array.from({ length: 3 }, (_, i) => ({
       index: i,
       label: `A row ${i}`,
@@ -104,7 +105,6 @@ describe("buildAxes", () => {
       cases: [
         { caseId: 1, caseName: "A", hasParameters: true, parameters: [] },
         { caseId: 2, caseName: "B", hasParameters: true, parameters: [] },
-        { caseId: 3, caseName: "C", hasParameters: false, parameters: null },
       ],
       configs: [
         { configId: 10, configName: "Chrome" },
@@ -118,19 +118,17 @@ describe("buildAxes", () => {
       statusMap: STATUS_MAP,
     });
 
-    expect(axes.cellCount).toBe(18);
+    expect(axes.cellCount).toBe(16);
     // Confirm we did NOT compute (3 × 5 × 2) = 30 (global axis math, RESEARCH Pitfall 3).
     expect(axes.cellCount).not.toBe(30);
-    // Case C falls through to the synthetic (no parameters) row.
-    expect(axes.caseAxis[2].paramRows).toEqual([
-      { index: 0, label: "(no parameters)", values: {} },
-    ]);
   });
 
   it("cell map keying: cells are looked up by cellKey()", () => {
     const cell = makeCell(7, 3, 2);
     const axes = buildAxes({
-      cases: [{ caseId: 7, caseName: "X", hasParameters: false, parameters: null }],
+      cases: [
+        { caseId: 7, caseName: "X", hasParameters: false, parameters: null },
+      ],
       configs: [{ configId: 3, configName: "C3" }],
       cells: [cell],
       paramRowsByCaseId: new Map(),
@@ -157,7 +155,9 @@ describe("buildAxes", () => {
     const sentinel: ConfigAxisItem = { configId: 0, configName: "(none)" };
     const cell = makeCell(1, 0, 0);
     const axes = buildAxes({
-      cases: [{ caseId: 1, caseName: "A", hasParameters: false, parameters: null }],
+      cases: [
+        { caseId: 1, caseName: "A", hasParameters: false, parameters: null },
+      ],
       configs: [sentinel],
       cells: [cell],
       paramRowsByCaseId: new Map(),
@@ -181,7 +181,7 @@ describe("buildAxes", () => {
     const a = buildAxes(inputs);
     const b = buildAxes(inputs);
     expect(Array.from(a.cells.entries())).toEqual(
-      Array.from(b.cells.entries()),
+      Array.from(b.cells.entries())
     );
   });
 });
@@ -192,7 +192,12 @@ describe("cartesianProduct", () => {
   });
 
   it("two arrays of two: 2 × 2 = 4 tuples", () => {
-    expect(cartesianProduct([[1, 2], [3, 4]])).toEqual([
+    expect(
+      cartesianProduct([
+        [1, 2],
+        [3, 4],
+      ])
+    ).toEqual([
       [1, 3],
       [1, 4],
       [2, 3],
@@ -201,9 +206,7 @@ describe("cartesianProduct", () => {
   });
 
   it("three single-element arrays: one tuple of three", () => {
-    expect(cartesianProduct([["a"], ["b"], ["c"]])).toEqual([
-      ["a", "b", "c"],
-    ]);
+    expect(cartesianProduct([["a"], ["b"], ["c"]])).toEqual([["a", "b", "c"]]);
   });
 
   it("an empty inner array collapses the product to []", () => {
@@ -212,10 +215,7 @@ describe("cartesianProduct", () => {
   });
 
   it("preserves T (generic) — works for objects", () => {
-    const out = cartesianProduct([
-      [{ a: 1 }, { a: 2 }],
-      [{ b: 1 }],
-    ]);
+    const out = cartesianProduct([[{ a: 1 }, { a: 2 }], [{ b: 1 }]]);
     expect(out).toEqual([
       [{ a: 1 }, { b: 1 }],
       [{ a: 2 }, { b: 1 }],

@@ -30,7 +30,7 @@ import type { MatrixCellCountResult, MatrixFilters } from "./types";
  */
 type PrismaLike = PrismaClient | Prisma.TransactionClient;
 
-const CELL_CAP_THRESHOLD = 10_000 as const;
+const CELL_CAP_THRESHOLD = 50_000 as const;
 
 /**
  * Pure math: sum (max(1, perCase.maxIterations) × max(1, configCount))
@@ -71,18 +71,18 @@ function buildFilterPredicates(filters: MatrixFilters): Prisma.Sql {
 
   if (filters.configIds && filters.configIds.length > 0) {
     fragments.push(
-      Prisma.sql`AND COALESCE(tr."configId", 0) = ANY(${filters.configIds}::int[])`,
+      Prisma.sql`AND COALESCE(tr."configId", 0) = ANY(${filters.configIds}::int[])`
     );
   }
 
   if (filters.dateFrom) {
     fragments.push(
-      Prisma.sql`AND tr."createdAt" >= ${new Date(filters.dateFrom)}`,
+      Prisma.sql`AND tr."createdAt" >= ${new Date(filters.dateFrom)}`
     );
   }
   if (filters.dateTo) {
     fragments.push(
-      Prisma.sql`AND tr."createdAt" <= ${new Date(filters.dateTo)}`,
+      Prisma.sql`AND tr."createdAt" <= ${new Date(filters.dateTo)}`
     );
   }
 
@@ -133,10 +133,16 @@ interface PerCaseRow {
 export async function runCellCountPreflight(
   prisma: PrismaLike,
   projectId: number,
-  filters: MatrixFilters,
+  filters: MatrixFilters
 ): Promise<MatrixCellCountResult> {
   const filterSql = buildFilterPredicates(filters);
 
+  // Both axis-count + per-case queries restrict to parameterized cases
+  // (`rc."hasParameters" = true`) so the cell-cap notice's "Test cases: N"
+  // and total cell count match what the matrix actually renders. Without
+  // this filter the preflight would over-count cases (and inflate the
+  // suggested "filter to fewer cases" hint) by including non-parameterized
+  // cases that the matrix excludes.
   const axisCountsRows = await prisma.$queryRaw<AxisCountsRow[]>`
     SELECT
       COUNT(DISTINCT trc."repositoryCaseId")::bigint AS case_count,
@@ -147,6 +153,7 @@ export async function runCellCountPreflight(
     WHERE tr."projectId" = ${projectId}
       AND tr."isDeleted" = false
       AND rc."isDeleted" = false
+      AND rc."hasParameters" = true
       ${filterSql}
   `;
 
@@ -163,6 +170,7 @@ export async function runCellCountPreflight(
     WHERE tr."projectId" = ${projectId}
       AND tr."isDeleted" = false
       AND rc."isDeleted" = false
+      AND rc."hasParameters" = true
       ${filterSql}
     GROUP BY trc."repositoryCaseId"
   `;

@@ -2,7 +2,7 @@
 
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useTranslations } from "next-intl";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { cellKey, type AxesShape } from "~/lib/matrix/types";
 
@@ -61,6 +61,27 @@ export function MatrixGrid({
   const t = useTranslations("projects.matrix");
   const parentRef = useRef<HTMLDivElement>(null);
 
+  // Dynamically size the scroll container to fit between its top edge and
+  // the viewport bottom (minus a small bottom margin). Without a bounded
+  // height, TanStack Virtual sees the parent as "infinitely tall," reports
+  // every row as visible, and renders the entire grid (~166k DOM nodes for
+  // a 5,895-row × 29-col case). Computing from `getBoundingClientRect().top`
+  // adapts to whatever chrome (app nav, project nav, toolbar, filter bar)
+  // sits above the grid in any surface — dedicated page or report-builder
+  // shell — without hard-coding offsets.
+  const [maxHeight, setMaxHeight] = useState<number | null>(null);
+  useEffect(() => {
+    const compute = () => {
+      const el = parentRef.current;
+      if (!el) return;
+      const top = el.getBoundingClientRect().top;
+      setMaxHeight(Math.max(200, window.innerHeight - top - 16));
+    };
+    compute();
+    window.addEventListener("resize", compute);
+    return () => window.removeEventListener("resize", compute);
+  }, []);
+
   // Flatten case axis × paramRows into a single list of sub-rows so the
   // row virtualizer can address each cell-row individually. The sub-row
   // carries enough metadata for the left-rail renderer to pick "case name"
@@ -108,7 +129,8 @@ export function MatrixGrid({
   return (
     <div
       ref={parentRef}
-      className="relative flex-1 overflow-auto bg-background"
+      className="relative overflow-auto bg-background"
+      style={{ height: maxHeight ?? undefined }}
       data-testid="matrix-grid"
     >
       <div

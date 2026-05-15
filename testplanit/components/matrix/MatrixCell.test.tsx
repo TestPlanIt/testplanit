@@ -171,10 +171,13 @@ describe("<MatrixCell />", () => {
           iterations: [
             {
               id: 999,
+              rowIndex: 0,
               label: "row-0",
               statusId: 1,
               runId: 11,
               runName: "Smoke Run",
+              runIsCompleted: false,
+              completedAt: null,
             },
           ],
         }}

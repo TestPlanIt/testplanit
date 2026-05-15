@@ -70,6 +70,18 @@ const reportBuilderMatrixBodySchema = z.object({
   filters: matrixFiltersSchema.default({}),
 });
 
+/**
+ * GET /api/report-builder/iteration-matrix
+ *
+ * ReportBuilder fetches metadata via GET on every preset's endpoint to populate
+ * its dimensions/metrics pickers. The matrix preset has neither — it's a fixed
+ * grid keyed on cases × configurations × parameter rows — so we return empty
+ * arrays. Mirrors the execution-log preset's GET stub.
+ */
+export async function GET() {
+  return NextResponse.json({ dimensions: [], metrics: [] });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);

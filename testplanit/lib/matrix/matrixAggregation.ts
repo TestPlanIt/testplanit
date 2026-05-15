@@ -80,10 +80,13 @@ interface SnapshotRow {
 
 interface IterationJsonShape {
   id: number;
+  rowIndex: number;
   label: string | null;
   statusId: number | null;
   runId: number;
   runName: string;
+  runIsCompleted: boolean;
+  completedAt: string | null;
 }
 
 interface AggregateRow {
@@ -125,19 +128,15 @@ function buildFilterFragments(filters: MatrixFilters): FilterFragments {
 
   if (filters.configIds && filters.configIds.length > 0) {
     scope.push(
-      Prisma.sql`AND COALESCE(tr."configId", 0) = ANY(${filters.configIds}::int[])`,
+      Prisma.sql`AND COALESCE(tr."configId", 0) = ANY(${filters.configIds}::int[])`
     );
   }
 
   if (filters.dateFrom) {
-    scope.push(
-      Prisma.sql`AND tr."createdAt" >= ${new Date(filters.dateFrom)}`,
-    );
+    scope.push(Prisma.sql`AND tr."createdAt" >= ${new Date(filters.dateFrom)}`);
   }
   if (filters.dateTo) {
-    scope.push(
-      Prisma.sql`AND tr."createdAt" <= ${new Date(filters.dateTo)}`,
-    );
+    scope.push(Prisma.sql`AND tr."createdAt" <= ${new Date(filters.dateTo)}`);
   }
 
   if (filters.datasetIds && filters.datasetIds.length > 0) {
@@ -167,7 +166,7 @@ function buildFilterFragments(filters: MatrixFilters): FilterFragments {
 async function fetchCaseAxis(
   prisma: PrismaLike,
   projectId: number,
-  scopeFragment: Prisma.Sql,
+  scopeFragment: Prisma.Sql
 ): Promise<CaseRow[]> {
   return prisma.$queryRaw<CaseRow[]>`
     SELECT
@@ -199,6 +198,13 @@ async function fetchCaseAxis(
         ${scopeFragment}
     )
       AND rc."isDeleted" = false
+      -- The matrix is the "Parameterized Test Iteration Matrix" — it only
+      -- aggregates iterations from parameterized cases. Non-parameterized
+      -- cases never have TestRunCaseIteration rows (see iterationFanOut
+      -- service) so they would render as a row of em-dashes — visual noise.
+      -- A separate non-parameterized report (case × configuration only)
+      -- handles those.
+      AND rc."hasParameters" = true
     ORDER BY rc.name ASC, rc.id ASC
   `;
 }
@@ -206,20 +212,36 @@ async function fetchCaseAxis(
 async function fetchConfigAxis(
   prisma: PrismaLike,
   projectId: number,
-  scopeFragment: Prisma.Sql,
+  scopeFragment: Prisma.Sql
 ): Promise<ConfigRow[]> {
+  // "(none)" (config_id 0) always pins to the leftmost column; everything
+  // else sorts case-insensitively by name. Postgres' default collation
+  // orders "(none)" inconsistently relative to alphabetic names depending
+  // on locale, so the explicit pin avoids the surprise.
+  //
+  // The ORDER BY lives outside the DISTINCT subquery because Postgres
+  // requires every ORDER BY expression to appear literally in the SELECT
+  // list when DISTINCT is in play — wrapping deduplicates first, then
+  // reorders.
   return prisma.$queryRaw<ConfigRow[]>`
-    SELECT DISTINCT
-      COALESCE(tr."configId", 0)::int AS config_id,
-      COALESCE(conf.name, '(none)') AS config_name
-    FROM "TestRuns" tr
-    LEFT JOIN "Configurations" conf ON tr."configId" = conf.id AND conf."isDeleted" = false
-    LEFT JOIN "TestRunCases" trc
-      ON trc."testRunId" = tr.id
-    WHERE tr."projectId" = ${projectId}
-      AND tr."isDeleted" = false
-      ${scopeFragment}
-    ORDER BY config_name ASC
+    SELECT config_id, config_name
+    FROM (
+      SELECT DISTINCT
+        COALESCE(tr."configId", 0)::int AS config_id,
+        COALESCE(conf.name, '(none)') AS config_name
+      FROM "TestRuns" tr
+      LEFT JOIN "Configurations" conf ON tr."configId" = conf.id AND conf."isDeleted" = false
+      INNER JOIN "TestRunCases" trc
+        ON trc."testRunId" = tr.id
+      INNER JOIN "RepositoryCases" rc
+        ON trc."repositoryCaseId" = rc.id
+      WHERE tr."projectId" = ${projectId}
+        AND tr."isDeleted" = false
+        AND rc."isDeleted" = false
+        AND rc."hasParameters" = true
+        ${scopeFragment}
+    ) configs
+    ORDER BY (config_id = 0) DESC, LOWER(config_name) ASC
   `;
 }
 
@@ -232,7 +254,7 @@ async function fetchParamRowsByCaseId(
   prisma: PrismaLike,
   projectId: number,
   scopeFragment: Prisma.Sql,
-  viewerCanReadSensitive: boolean,
+  viewerCanReadSensitive: boolean
 ): Promise<Map<number, ParamRowAxisItem[]>> {
   const rows = await prisma.$queryRaw<SnapshotRow[]>`
     SELECT
@@ -255,8 +277,7 @@ async function fetchParamRowsByCaseId(
     const caseId = Number(row.case_id);
     if (out.has(caseId)) continue; // first row per case == most recent run
     const rawRows = (row.rows_json ?? []) as SnapshotRowShape[];
-    const parameters = (row.parameters_json ??
-      []) as ParameterSchemaEntry[];
+    const parameters = (row.parameters_json ?? []) as ParameterSchemaEntry[];
     if (rawRows.length === 0) {
       // Snapshot exists but has no rows -> non-parameterized case;
       // buildAxes will synthesize the (no parameters) sub-row when the
@@ -276,9 +297,7 @@ async function fetchParamRowsByCaseId(
   return out;
 }
 
-async function fetchStatusMap(
-  prisma: PrismaLike,
-): Promise<{
+async function fetchStatusMap(prisma: PrismaLike): Promise<{
   record: Record<number, StatusMapEntry>;
   rollupMap: Map<number, RollupStatus>;
 }> {
@@ -323,7 +342,7 @@ async function fetchAggregateCells(
   prisma: PrismaLike,
   projectId: number,
   scopeFragment: Prisma.Sql,
-  iterationFragment: Prisma.Sql,
+  iterationFragment: Prisma.Sql
 ): Promise<AggregateRow[]> {
   return prisma.$queryRaw<AggregateRow[]>`
     SELECT
@@ -344,10 +363,13 @@ async function fetchAggregateCells(
       ARRAY_AGG(
         json_build_object(
           'id', iter.id,
+          'rowIndex', iter."rowIndex",
           'label', iter.label,
           'statusId', iter."statusId",
           'runId', tr.id,
-          'runName', tr.name
+          'runName', tr.name,
+          'runIsCompleted', tr."isCompleted",
+          'completedAt', iter."completedAt"
         ) ORDER BY iter.id
       ) AS iterations_json
     FROM "TestRunCaseIteration" iter
@@ -371,7 +393,7 @@ export async function runMatrixAggregation(
   prisma: PrismaLike,
   projectId: number,
   filters: MatrixFilters,
-  viewerCanReadSensitive: boolean,
+  viewerCanReadSensitive: boolean
 ): Promise<AxesShape> {
   // Step 1 — Defense-in-depth preflight. Throws before any aggregation
   // SQL runs if the requested cells exceed the cap. The route layer
@@ -392,15 +414,10 @@ export async function runMatrixAggregation(
         prisma,
         projectId,
         scopeFragment,
-        viewerCanReadSensitive,
+        viewerCanReadSensitive
       ),
       fetchStatusMap(prisma),
-      fetchAggregateCells(
-        prisma,
-        projectId,
-        scopeFragment,
-        iterationFragment,
-      ),
+      fetchAggregateCells(prisma, projectId, scopeFragment, iterationFragment),
     ]);
 
   const cases: CaseAxisItem[] = caseRows.map((r) => {
@@ -436,18 +453,20 @@ export async function runMatrixAggregation(
   }));
 
   const cells: CellSummary[] = aggregateRows.map((r) => {
-    const iterationsRaw =
-      (r.iterations_json ?? []) as IterationJsonShape[];
+    const iterationsRaw = (r.iterations_json ?? []) as IterationJsonShape[];
     const iterations: IterationSummary[] = iterationsRaw.map((i) => ({
       id: Number(i.id),
+      rowIndex: Number(i.rowIndex ?? 0),
       label: i.label ?? null,
       statusId: i.statusId == null ? null : Number(i.statusId),
       runId: Number(i.runId),
       runName: i.runName,
+      runIsCompleted: Boolean(i.runIsCompleted),
+      completedAt: i.completedAt ? new Date(i.completedAt).toISOString() : null,
     }));
     const worstOfStatusId = computeWorstOfStatus(
       iterations.map((i) => ({ statusId: i.statusId })),
-      statusMaps.rollupMap,
+      statusMaps.rollupMap
     );
     const completed = r.most_recent_completed_at;
     const mostRecentCompletedAt =

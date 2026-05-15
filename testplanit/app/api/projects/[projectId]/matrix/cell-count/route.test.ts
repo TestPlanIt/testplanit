@@ -107,7 +107,7 @@ describe("POST /api/projects/[projectId]/matrix/cell-count", () => {
     const result = {
       cellCount: 250,
       willRefuse: false,
-      threshold: 10000,
+      threshold: 50000,
       axisCounts: {
         caseCount: 5,
         configCount: 50,
@@ -134,7 +134,7 @@ describe("POST /api/projects/[projectId]/matrix/cell-count", () => {
     runCellCountPreflightMock.mockResolvedValue({
       cellCount: 0,
       willRefuse: false,
-      threshold: 10000,
+      threshold: 50000,
       axisCounts: {
         caseCount: 0,
         configCount: 0,

@@ -1784,19 +1784,26 @@
     },
     "matrix": {
       "metaTitle": "Visão matricial",
-      "pageTitle": "Matriz de Iteração",
+      "pageTitle": "Matriz de iteração de teste parametrizada",
       "loading": "Matriz de carregamento…",
       "loadError": "Não foi possível carregar a visualização em matriz. Tente novamente ou refine seus filtros.",
       "cellCapShort": "Esta matriz renderizaria {cells, number} células, o que excede o limite de {threshold, number} células. Reduza os filtros para continuar.",
       "caseColumnHeader": "Linha de caso/parâmetro",
-      "cellNotRun": "Não funciona",
+      "cellNotRun": "Não testado",
       "cellSummary": "{pass, number} aprovado, {fail, number} reprovado, {notRun, number} não executado",
       "popoverTitle": "{count, plural, =1 {# iteração} other {# iterações}}",
       "iterationUnlabeled": "Iteração #{index, number}",
       "popoverInflightHint": "As versões gravadas durante o voo aparecem aqui.",
+      "popoverNoTimestamp": "—",
       "filterStatus": "{count, plural, =0 {Status} one {Status (#)} other {Status (#)}}",
       "filterConfig": "{count, plural, =0 {Configuração} one {Configuração (#)} other {Configuração (#)}}",
       "filterDataset": "{count, plural, =0 {Conjunto de dados} one {Conjunto de dados (#)} other {Conjunto de dados (#)}}",
+      "filterStatusLabel": "Status",
+      "filterConfigLabel": "Configuração",
+      "filterDatasetLabel": "Conjunto de dados",
+      "filterStatusPlaceholder": "Qualquer status",
+      "filterConfigPlaceholder": "Qualquer configuração",
+      "filterDatasetPlaceholder": "Qualquer conjunto de dados",
       "filterDateFrom": "De",
       "filterDateTo": "Para",
       "configNone": "(sem configuração)",
@@ -1804,6 +1811,10 @@
       "filterEmpty": "Nenhuma opção disponível",
       "resetFilters": "Redefinir filtros",
       "exportCsv": "Exportar CSV",
+      "legendPassedName": "Aprovado",
+      "legendFailedName": "Fracassado",
+      "legendUntestedName": "Não testado",
+      "legendClickHint": "Clique em qualquer célula para ver os detalhes da iteração.",
       "cellCapTitle": "A matriz renderizaria {cellCount, number} células (limite {threshold, number})",
       "cellCapSuggestionFilterCases": "Tente filtrar para um número menor de casos de teste — esse eixo é o que mais contribui para o resultado.",
       "cellCapSuggestionFilterConfigs": "Tente filtrar para menos configurações — esse eixo é o que mais contribui para o problema.",
@@ -6148,8 +6159,8 @@
           "description": "Lista simples de registros individuais de resultados de testes com status, executor e data/hora."
         },
         "iterationMatrix": {
-          "label": "Matriz de Iteração",
-          "description": "Linhas de casos × configurações × parâmetros com agregação do pior status por célula"
+          "label": "Matriz de iteração de teste parametrizada",
+          "description": "Linhas de casos parametrizados × configurações × parâmetros com agregação do pior status por célula"
         }
       },
       "flakyTests": {

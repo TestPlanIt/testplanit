@@ -1784,19 +1784,26 @@
     },
     "matrix": {
       "metaTitle": "Chế độ xem ma trận",
-      "pageTitle": "Ma trận lặp",
+      "pageTitle": "Ma trận lặp kiểm thử tham số hóa",
       "loading": "Đang tải ma trận…",
       "loadError": "Không thể tải chế độ xem ma trận. Hãy thử lại hoặc thu hẹp bộ lọc của bạn.",
       "cellCapShort": "Ma trận này sẽ tạo ra {cells, number} ô, vượt quá giới hạn {threshold, number} ô. Thu hẹp bộ lọc để tiếp tục.",
       "caseColumnHeader": "Dòng trường hợp / tham số",
-      "cellNotRun": "Không chạy",
+      "cellNotRun": "Chưa được kiểm thử",
       "cellSummary": "{pass, number} đã vượt qua, {fail, number} thất bại, {notRun, number} chưa chạy",
       "popoverTitle": "{count, plural, =1 {# lần lặp} other {# lần lặp}}",
       "iterationUnlabeled": "Lần lặp #{index, number}",
       "popoverInflightHint": "Các phiên bản lặp lại trong quá trình bay sẽ xuất hiện ở đây sau khi được ghi lại.",
+      "popoverNoTimestamp": "—",
       "filterStatus": "{count, plural, =0 {Trạng thái} one {Trạng thái (#)} other {Trạng thái (#)}}",
       "filterConfig": "{count, plural, =0 {Cấu hình} one {Cấu hình (#)} other {Cấu hình (#)}}",
       "filterDataset": "{count, plural, =0 {Tập dữ liệu} one {Tập dữ liệu (#)} other {Tập dữ liệu (#)}}",
+      "filterStatusLabel": "Trạng thái",
+      "filterConfigLabel": "Cấu hình",
+      "filterDatasetLabel": "Tập dữ liệu",
+      "filterStatusPlaceholder": "Bất kỳ trạng thái nào",
+      "filterConfigPlaceholder": "Bất kỳ cấu hình nào",
+      "filterDatasetPlaceholder": "Bất kỳ tập dữ liệu nào",
       "filterDateFrom": "Từ",
       "filterDateTo": "ĐẾN",
       "configNone": "(không cần cấu hình)",
@@ -1804,6 +1811,10 @@
       "filterEmpty": "Không có tùy chọn nào.",
       "resetFilters": "Đặt lại bộ lọc",
       "exportCsv": "Xuất CSV",
+      "legendPassedName": "Đi qua",
+      "legendFailedName": "Thất bại",
+      "legendUntestedName": "Chưa được kiểm thử",
+      "legendClickHint": "Nhấp vào bất kỳ ô nào để xem chi tiết lần lặp.",
       "cellCapTitle": "Ma trận sẽ hiển thị {cellCount, number} ô (giới hạn {threshold, number})",
       "cellCapSuggestionFilterCases": "Hãy thử lọc xuống ít trường hợp thử nghiệm hơn — trục đó là yếu tố đóng góp lớn nhất.",
       "cellCapSuggestionFilterConfigs": "Hãy thử lọc xuống ít cấu hình hơn — trục đó là yếu tố đóng góp lớn nhất.",
@@ -6148,8 +6159,8 @@
           "description": "Danh sách dạng phẳng các bản ghi kết quả kiểm tra riêng lẻ, bao gồm trạng thái, người thực hiện và dấu thời gian."
         },
         "iterationMatrix": {
-          "label": "Ma trận lặp",
-          "description": "Số lượng trường hợp × cấu hình × hàng tham số với trạng thái tổng hợp tệ nhất cho mỗi ô."
+          "label": "Ma trận lặp kiểm thử tham số hóa",
+          "description": "Các trường hợp tham số hóa × cấu hình × hàng tham số với tổng hợp trạng thái tồi tệ nhất cho mỗi ô"
         }
       },
       "flakyTests": {

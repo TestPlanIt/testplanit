@@ -5,7 +5,7 @@ import { computeCellCount, runCellCountPreflight } from "./matrixCellCount";
 describe("computeCellCount", () => {
   it("returns 0 for empty case input", () => {
     expect(computeCellCount({ perCaseMaxIterations: [], configCount: 5 })).toBe(
-      0,
+      0
     );
   });
 
@@ -26,7 +26,7 @@ describe("computeCellCount", () => {
           { caseId: 3, maxIterations: 0 },
         ],
         configCount: 4,
-      }),
+      })
     ).toBe(36);
   });
 
@@ -38,19 +38,19 @@ describe("computeCellCount", () => {
           { caseId: 2, maxIterations: 5 },
         ],
         configCount: 0,
-      }),
+      })
     ).toBe(8);
   });
 
-  it("right at the 10,000 threshold: not refused", () => {
-    // 100 cases x 100 iterations x 1 config = 10,000.
-    const perCaseMaxIterations = Array.from({ length: 100 }, (_, i) => ({
+  it("right at the 50,000 threshold: not refused", () => {
+    // 500 cases x 100 iterations x 1 config = 50,000.
+    const perCaseMaxIterations = Array.from({ length: 500 }, (_, i) => ({
       caseId: i + 1,
       maxIterations: 100,
     }));
-    expect(
-      computeCellCount({ perCaseMaxIterations, configCount: 1 }),
-    ).toBe(10000);
+    expect(computeCellCount({ perCaseMaxIterations, configCount: 1 })).toBe(
+      50000
+    );
   });
 });
 
@@ -75,7 +75,7 @@ describe("runCellCountPreflight", () => {
     const result = await runCellCountPreflight(mockPrisma, 99, {});
     expect(result.cellCount).toBe(18); // (3 + 5 + 1) x 2
     expect(result.willRefuse).toBe(false);
-    expect(result.threshold).toBe(10000);
+    expect(result.threshold).toBe(50000);
     expect(result.axisCounts.caseCount).toBe(3);
     expect(result.axisCounts.configCount).toBe(2);
     expect(result.axisCounts.perCaseMaxIterations).toEqual([
@@ -85,26 +85,26 @@ describe("runCellCountPreflight", () => {
     ]);
   });
 
-  it("exactly at 10,000: willRefuse=false (boundary inclusive)", async () => {
+  it("exactly at 50,000: willRefuse=false (boundary inclusive)", async () => {
     mockPrisma.$queryRaw
-      .mockResolvedValueOnce([{ case_count: 100n, config_count: 1n }])
+      .mockResolvedValueOnce([{ case_count: 500n, config_count: 1n }])
       .mockResolvedValueOnce(
-        Array.from({ length: 100 }, (_, i) => ({
+        Array.from({ length: 500 }, (_, i) => ({
           case_id: i + 1,
           max_iters: 100,
-        })),
+        }))
       );
     const result = await runCellCountPreflight(mockPrisma, 1, {});
-    expect(result.cellCount).toBe(10000);
+    expect(result.cellCount).toBe(50000);
     expect(result.willRefuse).toBe(false);
   });
 
-  it("at 10,001: willRefuse=true", async () => {
+  it("at 50,001: willRefuse=true", async () => {
     mockPrisma.$queryRaw
       .mockResolvedValueOnce([{ case_count: 1n, config_count: 1n }])
-      .mockResolvedValueOnce([{ case_id: 1, max_iters: 10001 }]);
+      .mockResolvedValueOnce([{ case_id: 1, max_iters: 50001 }]);
     const result = await runCellCountPreflight(mockPrisma, 1, {});
-    expect(result.cellCount).toBe(10001);
+    expect(result.cellCount).toBe(50001);
     expect(result.willRefuse).toBe(true);
   });
 
@@ -120,11 +120,11 @@ describe("runCellCountPreflight", () => {
     expect(result.axisCounts.perCaseMaxIterations).toEqual([]);
   });
 
-  it("threshold has the literal value 10000 (matches the type contract)", async () => {
+  it("threshold has the literal value 50000 (matches the type contract)", async () => {
     mockPrisma.$queryRaw
       .mockResolvedValueOnce([{ case_count: 0n, config_count: 0n }])
       .mockResolvedValueOnce([]);
     const result = await runCellCountPreflight(mockPrisma, 1, {});
-    expect(result.threshold).toBe(10000);
+    expect(result.threshold).toBe(50000);
   });
 });

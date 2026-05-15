@@ -1,14 +1,18 @@
 /**
- * Pure shape builder for the Matrix view.
+ * Pure shape builder for the Parameterized Test Iteration Matrix.
  *
- * Assembles the `AxesShape` payload that both the dedicated Matrix page
- * and the report-builder preset render. No DB, no IO, no module-level
- * state — caller passes pre-fetched data.
+ * Assembles the `AxesShape` payload that the report-builder preset
+ * renders. No DB, no IO, no module-level state — caller passes
+ * pre-fetched data.
  *
  * Per-case sub-axis math (cell count): `Σ paramRows[c].length × configCount`.
  * Each case row visually expands into N sub-rows — one per parameter
- * row in that case's resolved iteration source. Non-parameterized
- * cases get a single synthetic sub-row labeled "(no parameters)".
+ * row in that case's resolved iteration source.
+ *
+ * Scope note: the matrix only includes parameterized cases — the SQL
+ * `fetchCaseAxis` filters on `RepositoryCases.hasParameters = true` so
+ * non-parameterized cases never reach `buildAxes`. A separate
+ * non-parameterized report (case × configuration only) handles those.
  *
  * Also exports the `cartesianProduct` helper, which subsumes the two
  * duplicate implementations previously inlined at:
@@ -26,21 +30,16 @@ import type {
 } from "./types";
 import { cellKey } from "./types";
 
-/** Sentinel sub-row for non-parameterized cases (PARAM-07). */
-const NO_PARAMS_ROW: ParamRowAxisItem = {
-  index: 0,
-  label: "(no parameters)",
-  values: {},
-};
-
 export interface BuildAxesInput {
   cases: Array<{
     caseId: number;
     caseName: string;
     hasParameters: boolean;
-    parameters:
-      | Array<{ name: string; type: string; sensitive: boolean }>
-      | null;
+    parameters: Array<{
+      name: string;
+      type: string;
+      sensitive: boolean;
+    }> | null;
   }>;
   configs: ConfigAxisItem[];
   cells: CellSummary[];
@@ -57,15 +56,18 @@ export interface BuildAxesInput {
  *
  * `cellCount` is computed from the per-case sub-axis math
  * (`Σ paramRows[c].length × configCount`), NOT the global axis math
- * (`caseCount × maxRows × configCount`). For non-parameterized cases
- * the synthetic "(no parameters)" sub-row contributes 1 to each
- * case×config slot.
+ * (`caseCount × maxRows × configCount`).
+ *
+ * Cases without resolved param rows fall back to an empty `paramRows`
+ * array — the cell count contribution is 0 and the case row collapses
+ * out of the rendered grid. In practice the SQL pre-filters on
+ * `hasParameters = true` so this only triggers for a parameterized
+ * case whose dataset hasn't been snapshotted yet.
  */
 export function buildAxes(input: BuildAxesInput): AxesShape {
   const caseAxis: CaseAxisItem[] = input.cases.map((c) => {
     const explicit = input.paramRowsByCaseId.get(c.caseId);
-    const paramRows: ParamRowAxisItem[] =
-      explicit && explicit.length > 0 ? explicit : [NO_PARAMS_ROW];
+    const paramRows: ParamRowAxisItem[] = explicit ?? [];
     const item: CaseAxisItem = {
       caseId: c.caseId,
       caseName: c.caseName,
@@ -87,6 +89,8 @@ export function buildAxes(input: BuildAxesInput): AxesShape {
 
   // Per-case sub-axis: each case contributes (paramRows.length × configCount)
   // cells. Empty configAxis collapses to 1 (the "(none)" sentinel column).
+  // A case with zero paramRows (parameterized but no dataset snapshot yet)
+  // contributes 0 cells.
   const configCount = Math.max(1, configAxis.length);
   let cellCount = 0;
   for (const item of caseAxis) {
@@ -120,6 +124,6 @@ export function cartesianProduct<T>(arrays: T[][]): T[][] {
   if (arrays.length === 0) return [[]];
   return arrays.reduce<T[][]>(
     (acc, curr) => acc.flatMap((d) => curr.map((e) => [...d, e])),
-    [[]],
+    [[]]
   );
 }

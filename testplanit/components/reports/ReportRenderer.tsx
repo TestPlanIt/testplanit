@@ -335,31 +335,15 @@ export function ReportRenderer({
     isIssueTestCoverage,
   ]);
 
-  // Iteration Matrix preset bypasses the chart/table pipeline — the report
-  // payload is an AxesShape envelope (cells serialized as a [key, value]
-  // pair array), not a flat row collection. Reconstruct the Map and hand
-  // off to MatrixReportPreset, which mounts MatrixGrid inside the existing
-  // report shell. Empty matrices still render the grid so the axes are
-  // visible.
-  if (isIterationMatrix && projectId && results) {
-    const envelope = results as unknown as {
-      caseAxis: unknown;
-      configAxis: unknown;
-      cells: Array<[string, unknown]>;
-      cellCount: number;
-      statusMap: Record<string, unknown>;
-    };
-    const axes = {
-      caseAxis: envelope.caseAxis,
-      configAxis: envelope.configAxis,
-      cells: new Map(envelope.cells ?? []),
-      cellCount: envelope.cellCount ?? 0,
-      statusMap: envelope.statusMap ?? {},
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any;
+  // Iteration Matrix preset bypasses the chart/table pipeline entirely.
+  // MatrixReportPreset is self-fetching (`useMatrixAggregation` +
+  // `useMatrixFilters`) so it inherits the dedicated `/projects/[id]/matrix`
+  // page's cell-cap handling, filter UX, and URL-backed share state. The
+  // ReportBuilder shell still owns title / save / share chrome; the data
+  // fetch path is independent of the report-builder POST flow.
+  if (isIterationMatrix && projectId) {
     return (
       <MatrixReportPreset
-        axes={axes}
         projectId={
           typeof projectId === "string" ? parseInt(projectId, 10) : projectId
         }

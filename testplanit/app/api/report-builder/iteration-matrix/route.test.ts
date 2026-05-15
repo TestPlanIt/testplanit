@@ -109,9 +109,9 @@ describe("POST /api/report-builder/iteration-matrix", () => {
     projectsFindFirstMock.mockResolvedValue({ id: 42 });
     runMatrixAggregationMock.mockImplementation(() => {
       throw new MatrixCellCapExceededError({
-        cellCount: 11000,
+        cellCount: 51000,
         willRefuse: true,
-        threshold: 10000,
+        threshold: 50000,
         axisCounts: {
           caseCount: 100,
           configCount: 100,
@@ -124,7 +124,7 @@ describe("POST /api/report-builder/iteration-matrix", () => {
     expect(res.status).toBe(422);
     const json = await res.json();
     expect(json.error).toBe("cell_cap_exceeded");
-    expect(json.cellCount).toBe(11000);
+    expect(json.cellCount).toBe(51000);
   });
 
   it("returns the same shape as the dedicated aggregate route on success", async () => {

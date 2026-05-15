@@ -6,17 +6,24 @@ import {
   glyphFromStatus,
   IterationStatusPip,
 } from "@/components/iterations/IterationStatusPip";
-import { Link } from "~/lib/navigation";
+import { RelativeTimeTooltip } from "@/components/RelativeTimeTooltip";
+import { TestRunLinkDisplay } from "@/components/tables/TestRunsListDisplay";
 import type { CellSummary, StatusMapEntry } from "~/lib/matrix/types";
 
 /**
  * Drill-down popover surfaced by `MatrixCell` on click.
  *
- * Renders one row per iteration in the cell with a status pip + label
- * + link to the run page (preselects the iteration via `?iteration=` and
- * the case via `?selectedCase=` so the run page opens the iteration
- * sidebar in the right place). The link uses `~/lib/navigation`'s `Link`
- * so the i18n locale prefix is preserved.
+ * Renders one row per iteration in the cell with:
+ *   - status pip (worst-of color)
+ *   - iteration ordinal + optional label  (e.g. "Iteration 3 — Bad password")
+ *     using the 1-indexed display number (matches the run page's iteration
+ *     sidebar, NOT the DB id)
+ *   - the run as a `TestRunLinkDisplay` so users see the canonical
+ *     PlayCircle icon + run-name treatment used everywhere else
+ *
+ * The link target preselects the iteration via `?iteration=N` (1-indexed,
+ * matches `useActiveIterationFromUrl` on the run page) and the case via
+ * `?selectedCase=` so the iteration sidebar opens to the right row.
  *
  * In-flight iterations (those without a recorded result yet) don't appear
  * in `cell.iterations` because the aggregation route only returns
@@ -54,6 +61,12 @@ export function MatrixCellPopover({
               : null,
             false
           );
+          const ordinal = iter.rowIndex + 1;
+          // Every iteration in a single cell sits on the same paramRow, so
+          // the dataset row label would just repeat across every row.
+          // Show the iteration's status name instead — that's the actual
+          // differentiator across runs (e.g. Passed / Failed / Not run).
+          const displayLabel = status?.name ?? t("cellNotRun");
           return (
             <li
               key={iter.id}
@@ -62,19 +75,43 @@ export function MatrixCellPopover({
             >
               <IterationStatusPip
                 glyph={glyph}
-                statusColor={status?.colorValue}
+                // Null statusId means "not yet executed" — fall back to
+                // the same #C8C9CA Untested swatch the cells use, so the
+                // popover row is visually consistent with the legend.
+                statusColor={status?.colorValue ?? "#C8C9CA"}
               />
-              <span className="flex-1 truncate" title={status?.name ?? ""}>
-                {iter.label ?? t("iterationUnlabeled", { index: iter.id })}
-              </span>
-              <Link
-                href={`/projects/runs/${projectId}/${iter.runId}?iteration=${iter.id}&selectedCase=${caseId}`}
-                className="truncate text-xs text-primary hover:underline"
+              <span className="w-20 shrink-0 truncate">{displayLabel}</span>
+              {iter.completedAt ? (
+                <span
+                  className="w-28 shrink-0 truncate text-xs text-muted-foreground"
+                  data-testid={`matrix-popover-time-${iter.id}`}
+                >
+                  <RelativeTimeTooltip date={iter.completedAt} />
+                </span>
+              ) : (
+                <span
+                  className="w-28 shrink-0 text-xs text-muted-foreground/60"
+                  data-testid={`matrix-popover-time-${iter.id}`}
+                >
+                  {t("popoverNoTimestamp")}
+                </span>
+              )}
+              <span
+                className="min-w-0 flex-1 text-xs"
                 data-testid={`matrix-popover-link-${iter.id}`}
-                title={iter.runName}
               >
-                {iter.runName}
-              </Link>
+                <TestRunLinkDisplay
+                  id={iter.runId}
+                  name={iter.runName}
+                  projectId={projectId}
+                  isCompleted={iter.runIsCompleted}
+                  maxLines={1}
+                  searchParams={{
+                    iteration: ordinal,
+                    selectedCase: caseId,
+                  }}
+                />
+              </span>
             </li>
           );
         })}
