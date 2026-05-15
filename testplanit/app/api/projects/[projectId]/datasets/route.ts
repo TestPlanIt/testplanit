@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod/v4";
 
 import { getEnhancedDb } from "~/lib/auth/utils";
+import { prisma } from "~/lib/prisma";
 import { sharedDatasetCreateSchema } from "~/lib/schemas/sharedDatasetCreateSchema";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { authOptions } from "~/server/auth";
@@ -49,12 +50,16 @@ export async function GET(
     }
 
     const url = new URL(request.url);
-    const page = Math.max(1, parseInt(url.searchParams.get("page") ?? "1", 10) || 1);
+    const page = Math.max(
+      1,
+      parseInt(url.searchParams.get("page") ?? "1", 10) || 1
+    );
     const pageSize = Math.min(
       MAX_PAGE_SIZE,
       Math.max(
         1,
-        parseInt(url.searchParams.get("pageSize") ?? "", 10) || DEFAULT_PAGE_SIZE
+        parseInt(url.searchParams.get("pageSize") ?? "", 10) ||
+          DEFAULT_PAGE_SIZE
       )
     );
 
@@ -126,9 +131,26 @@ export async function POST(
     const body = await request.json();
     const data = sharedDatasetCreateSchema.parse(body);
 
+    // First verify the user can READ this project via the enhanced client.
+    // The DataSet @@deny chain inherits read access from the project, so
+    // findFirst returning null means the caller has no business creating a
+    // shared dataset here. This replaces the @@deny('create') validation
+    // which can't run in ZenStack v2 against a null `ownerCase` relation —
+    // the policy expression `ownerCaseId != null && ownerCase.projectId !=
+    // projectId` is logically null-safe via &&, but the runtime Zod
+    // validator dereferences `ownerCase` regardless and rejects the null.
+    // We use the raw `prisma` client only for the create itself; the read
+    // gate above is the access check.
     const db = await getEnhancedDb(session);
+    const project = await db.projects.findFirst({
+      where: { id: projectId, isDeleted: false },
+      select: { id: true },
+    });
+    if (!project) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
-    const created = await db.$transaction(async (tx: any) => {
+    const created = await prisma.$transaction(async (tx) => {
       const dataSet = await tx.dataSet.create({
         data: {
           projectId,

@@ -163,17 +163,30 @@ export async function POST(
       // Replace live DataSetRow[] (soft-delete-then-create) so existing
       // UI surfaces continue to render the latest version. NEVER use
       // deleteMany — soft-delete preserves audit history.
+      //
+      // The @@unique([dataSetId, rowIndex]) constraint covers ALL rows,
+      // soft-deleted or not, so we cannot reuse rowIndex 0..N for the
+      // new rows. Insert past the existing max instead. The mirror is
+      // ordered by rowIndex asc downstream so any monotonically growing
+      // sequence works; the absolute values don't carry meaning.
       await tx.dataSetRow.updateMany({
         where: { dataSetId, isDeleted: false },
         data: { isDeleted: true },
       });
+
+      const maxRow = await tx.dataSetRow.findFirst({
+        where: { dataSetId },
+        orderBy: { rowIndex: "desc" },
+        select: { rowIndex: true },
+      });
+      const startIndex = (maxRow?.rowIndex ?? -1) + 1;
 
       for (let i = 0; i < payload.rowsJson.length; i++) {
         const row = payload.rowsJson[i];
         await tx.dataSetRow.create({
           data: {
             dataSetId,
-            rowIndex: i,
+            rowIndex: startIndex + i,
             label: row.label ?? null,
             valuesJson: row.valuesJson as never,
           },

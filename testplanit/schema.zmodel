@@ -3513,8 +3513,13 @@ model DataSet {
     @@deny('all', !auth())
     @@deny('all', auth().access == 'NONE')
 
-    // DSET-06: ownerCase must be in the same project (cross-project denial at policy)
-    @@deny('create,update', ownerCaseId != null && ownerCase.projectId != projectId)
+    // ownerCase must be in the same project (cross-project denial at policy).
+    // The explicit `ownerCase != null` guard prevents ZenStack v2's policy
+    // validator from dereferencing a null relation when ownerCaseId is null
+    // (i.e. shared datasets) — the && short-circuit alone is not enough
+    // because the Zod input schema for the policy expression treats
+    // `ownerCase` as a non-null record.
+    @@deny('create,update', ownerCaseId != null && ownerCase != null && ownerCase.projectId != projectId)
 
     // Inherit read access from project
     @@deny('read', project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
