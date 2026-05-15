@@ -1784,6 +1784,7 @@
     },
     "matrix": {
       "metaTitle": "Matrix View",
+      "pageTitle": "Iteration Matrix",
       "loading": "Loading matrix…",
       "loadError": "Could not load the matrix view. Try again or narrow your filters.",
       "cellCapShort": "This matrix would render {cells, number} cells, which exceeds the {threshold, number} cell limit. Narrow the filters to continue.",
@@ -1792,7 +1793,25 @@
       "cellSummary": "{pass, number} passed, {fail, number} failed, {notRun, number} not run",
       "popoverTitle": "{count, plural, =1 {# iteration} other {# iterations}}",
       "iterationUnlabeled": "Iteration #{index, number}",
-      "popoverInflightHint": "In-flight iterations appear here once recorded."
+      "popoverInflightHint": "In-flight iterations appear here once recorded.",
+      "filterStatus": "{count, plural, =0 {Status} one {Status (#)} other {Status (#)}}",
+      "filterConfig": "{count, plural, =0 {Configuration} one {Configuration (#)} other {Configuration (#)}}",
+      "filterDataset": "{count, plural, =0 {Dataset} one {Dataset (#)} other {Dataset (#)}}",
+      "filterDateFrom": "From",
+      "filterDateTo": "To",
+      "configNone": "(no configuration)",
+      "clearFilter": "Clear",
+      "filterEmpty": "No options available",
+      "resetFilters": "Reset filters",
+      "exportCsv": "Export CSV",
+      "cellCapTitle": "Matrix would render {cellCount, number} cells (limit {threshold, number})",
+      "cellCapSuggestionFilterCases": "Try filtering to fewer test cases — that axis is the largest contributor.",
+      "cellCapSuggestionFilterConfigs": "Try filtering to fewer configurations — that axis is the largest contributor.",
+      "cellCapSuggestionFilterDates": "Try narrowing the date range — parameter iterations dominate the cell count.",
+      "cellCapAxisCases": "Test cases: {count, number}",
+      "cellCapAxisConfigs": "Configurations: {count, number}",
+      "cellCapAxisMaxIters": "Largest parameter row count for any case: {count, number}",
+      "cellCapResetFilters": "Reset filters and try again"
     }
   },
   "milestones": {
