@@ -4,6 +4,8 @@ import { ApplicationArea } from "@prisma/client";
 import { z } from "zod/v4";
 import { prisma } from "~/lib/prisma";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
+import { assertReviewGatePasses } from "~/lib/services/reviewGate";
+import { isReviewGateError } from "~/lib/utils/errors";
 import { getServerAuthSession } from "~/server/auth";
 import { checkUserPermission } from "./permissions";
 
@@ -242,6 +244,34 @@ export async function completeMilestoneCascade(
         if (completedTestRunStateId !== undefined) {
           testRunUpdateData.stateId = completedTestRunStateId;
         }
+
+        // Review & Approval preflight (Plan 01-04). Milestone completion
+        // typically targets DONE workflow states which are unlikely to have
+        // requiresReview === true (review gates land on intermediate states,
+        // not DONE per RESEARCH.md §Q6). Cheap target-state guard first:
+        // skip the per-entity loop entirely when the target state is
+        // ungated. If it IS gated, fall back to per-entity preflight; any
+        // ReviewGateError aborts the whole transaction.
+        if (
+          completedTestRunStateId !== undefined &&
+          testRunUpdateData.stateId !== undefined
+        ) {
+          const targetTestRunState = await tx.workflows.findUnique({
+            where: { id: completedTestRunStateId },
+            select: { requiresReview: true },
+          });
+          if (targetTestRunState?.requiresReview) {
+            for (const tr of activeTestRuns) {
+              await assertReviewGatePasses(
+                tx,
+                "RUN",
+                tr.id,
+                completedTestRunStateId
+              );
+            }
+          }
+        }
+
         await tx.testRuns.updateMany({
           where: {
             id: { in: activeTestRuns.map((tr: { id: number }) => tr.id) },
@@ -263,6 +293,30 @@ export async function completeMilestoneCascade(
         if (completedSessionStateId !== undefined) {
           sessionUpdateData.stateId = completedSessionStateId;
         }
+
+        // Review & Approval preflight (Plan 01-04). Same pattern as the
+        // testRuns block above — cheap target-state guard, then per-entity
+        // preflight when gated.
+        if (
+          completedSessionStateId !== undefined &&
+          sessionUpdateData.stateId !== undefined
+        ) {
+          const targetSessionState = await tx.workflows.findUnique({
+            where: { id: completedSessionStateId },
+            select: { requiresReview: true },
+          });
+          if (targetSessionState?.requiresReview) {
+            for (const s of activeSessions) {
+              await assertReviewGatePasses(
+                tx,
+                "SESSION",
+                s.id,
+                completedSessionStateId
+              );
+            }
+          }
+        }
+
         await tx.sessions.updateMany({
           where: {
             id: { in: activeSessions.map((s: { id: number }) => s.id) },
@@ -276,6 +330,17 @@ export async function completeMilestoneCascade(
     // toast based on whether dependencies were involved.
     return { status: "success" };
   } catch (error) {
+    // Review & Approval (Plan 01-04). When a per-entity preflight rejects
+    // an in-flight cascade, surface the typed code through the server
+    // action's existing failure shape so the client can render a "review
+    // required" message instead of a generic "Failed to complete" toast.
+    if (isReviewGateError(error)) {
+      return {
+        status: "error",
+        message: `Review required for ${error.entityType.toLowerCase()} ${error.entityId} before transitioning to state ${error.toStateId}.`,
+      };
+    }
+
     console.error("Error during actual milestone completion:", error);
     let message = "Failed to complete milestone.";
     if (error instanceof Error) {

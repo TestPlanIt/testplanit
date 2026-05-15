@@ -50,6 +50,10 @@ vi.mock("~/lib/services/auditLog", () => ({
   captureAuditEvent: vi.fn(async () => undefined),
 }));
 
+vi.mock("~/lib/services/reviewGate", () => ({
+  assertReviewGatePasses: vi.fn(async () => null),
+}));
+
 vi.mock("~/services/issueSearch", () => ({
   syncIssueToElasticsearch: vi.fn(),
 }));
@@ -861,5 +865,243 @@ describe("ZenStack chokepoint mode:read enforcement", () => {
 
     expect(authenticateApiToken).not.toHaveBeenCalled();
     expect(authenticateApiTokenForMethod).toHaveBeenCalled();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Plan 01-04: Review & Approval gate at the auto-API chokepoint.
+// Verifies that PATCH/PUT to a gated model with `data.stateId` calls
+// `assertReviewGatePasses` before tryFastPathCreate / baseHandler, and that
+// ReviewGateError / AlreadyPendingError are translated to structured 403 / 409
+// responses with the typed code payload.
+// ─────────────────────────────────────────────────────────────────────────────
+describe("ZenStack chokepoint Review & Approval gate", () => {
+  function makeUpdateRequest(body: unknown): NextRequest {
+    const headers = new Headers();
+    headers.set("content-type", "application/json");
+    const json = JSON.stringify(body);
+    return {
+      method: "PATCH",
+      headers,
+      url: "http://localhost:3000/api/model/repositoryCases/update",
+      clone() {
+        return this;
+      },
+      async text() {
+        return json;
+      },
+    } as unknown as NextRequest;
+  }
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    const { getServerAuthSession } = await import("~/server/auth");
+    (getServerAuthSession as any).mockResolvedValue({
+      user: { id: "user-1", email: "u@e.com", name: "U" },
+    });
+    const { extractBearerToken } = await import("~/lib/api-token-auth");
+    (extractBearerToken as any).mockReturnValue(null);
+    const { prisma } = await import("~/lib/prisma");
+    (prisma as any).user.findUnique.mockResolvedValue({
+      id: "user-1",
+      email: "u@e.com",
+      name: "U",
+    });
+    baseHandlerMock.mockClear();
+    baseHandlerMock.mockResolvedValue(
+      new Response(JSON.stringify({ data: { id: 7 } }), { status: 200 })
+    );
+  });
+
+  it("translates ReviewGateError to a 403 with REVIEW_REQUIRED payload and skips baseHandler", async () => {
+    const { assertReviewGatePasses } = await import("~/lib/services/reviewGate");
+    const { ReviewGateError } = await import("~/lib/utils/errors");
+    (assertReviewGatePasses as any).mockRejectedValue(
+      new ReviewGateError("REVIEW_REQUIRED", "CASE", 42, 99)
+    );
+
+    const { PATCH } = await import("./route");
+    const req = makeUpdateRequest({
+      where: { id: 42 },
+      data: { stateId: 99 },
+    });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ path: ["repositoryCases", "update"] }),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(403);
+    expect(body.error).toEqual({
+      code: "REVIEW_REQUIRED",
+      entityType: "CASE",
+      entityId: 42,
+      toStateId: 99,
+    });
+    expect(baseHandlerMock).not.toHaveBeenCalled();
+  });
+
+  it("translates AlreadyPendingError to a 409 with PENDING_REVIEW_EXISTS payload", async () => {
+    const { assertReviewGatePasses } = await import("~/lib/services/reviewGate");
+    const { AlreadyPendingError } = await import("~/lib/utils/errors");
+    (assertReviewGatePasses as any).mockRejectedValue(
+      new AlreadyPendingError("CASE", 42, "pending-req-1")
+    );
+
+    const { PATCH } = await import("./route");
+    const req = makeUpdateRequest({
+      where: { id: 42 },
+      data: { stateId: 99 },
+    });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ path: ["repositoryCases", "update"] }),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(409);
+    expect(body.error).toEqual({ code: "PENDING_REVIEW_EXISTS" });
+    expect(baseHandlerMock).not.toHaveBeenCalled();
+  });
+
+  it("passes through to baseHandler when the gate returns null (ungated path)", async () => {
+    const { assertReviewGatePasses } = await import("~/lib/services/reviewGate");
+    (assertReviewGatePasses as any).mockResolvedValue(null);
+
+    const { PATCH } = await import("./route");
+    const req = makeUpdateRequest({
+      where: { id: 42 },
+      data: { stateId: 99 },
+    });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ path: ["repositoryCases", "update"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(assertReviewGatePasses).toHaveBeenCalledWith(
+      expect.anything(),
+      "CASE",
+      42,
+      99
+    );
+    expect(baseHandlerMock).toHaveBeenCalled();
+  });
+
+  it("does NOT call the gate when the update does not include stateId", async () => {
+    const { assertReviewGatePasses } = await import("~/lib/services/reviewGate");
+
+    const { PATCH } = await import("./route");
+    const req = makeUpdateRequest({
+      where: { id: 42 },
+      data: { name: "renamed only" },
+    });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ path: ["repositoryCases", "update"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(assertReviewGatePasses).not.toHaveBeenCalled();
+    expect(baseHandlerMock).toHaveBeenCalled();
+  });
+
+  it("does NOT call the gate for non-gated models even when stateId is in the patch", async () => {
+    const { assertReviewGatePasses } = await import("~/lib/services/reviewGate");
+
+    const { PATCH } = await import("./route");
+    const headers = new Headers();
+    headers.set("content-type", "application/json");
+    const json = JSON.stringify({
+      where: { id: 1 },
+      data: { stateId: 9 },
+    });
+    const req = {
+      method: "PATCH",
+      headers,
+      url: "http://localhost:3000/api/model/milestones/update",
+      clone() {
+        return this;
+      },
+      async text() {
+        return json;
+      },
+    } as unknown as NextRequest;
+    await PATCH(req, {
+      params: Promise.resolve({ path: ["milestones", "update"] }),
+    });
+
+    expect(assertReviewGatePasses).not.toHaveBeenCalled();
+    expect(baseHandlerMock).toHaveBeenCalled();
+  });
+
+  it("translates the gate for testRuns (RUN entity type)", async () => {
+    const { assertReviewGatePasses } = await import("~/lib/services/reviewGate");
+    const { ReviewGateError } = await import("~/lib/utils/errors");
+    (assertReviewGatePasses as any).mockRejectedValue(
+      new ReviewGateError("REVIEW_REQUIRED", "RUN", 5, 88)
+    );
+
+    const { PATCH } = await import("./route");
+    const headers = new Headers();
+    headers.set("content-type", "application/json");
+    const json = JSON.stringify({
+      where: { id: 5 },
+      data: { stateId: 88 },
+    });
+    const req = {
+      method: "PATCH",
+      headers,
+      url: "http://localhost:3000/api/model/testRuns/update",
+      clone() {
+        return this;
+      },
+      async text() {
+        return json;
+      },
+    } as unknown as NextRequest;
+    const res = await PATCH(req, {
+      params: Promise.resolve({ path: ["testRuns", "update"] }),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(403);
+    expect(body.error.entityType).toBe("RUN");
+    expect(assertReviewGatePasses).toHaveBeenCalledWith(
+      expect.anything(),
+      "RUN",
+      5,
+      88
+    );
+  });
+
+  it("translates the gate for sessions (SESSION entity type)", async () => {
+    const { assertReviewGatePasses } = await import("~/lib/services/reviewGate");
+    const { ReviewGateError } = await import("~/lib/utils/errors");
+    (assertReviewGatePasses as any).mockRejectedValue(
+      new ReviewGateError("REVIEW_REQUIRED", "SESSION", 3, 77)
+    );
+
+    const { PATCH } = await import("./route");
+    const headers = new Headers();
+    headers.set("content-type", "application/json");
+    const json = JSON.stringify({
+      where: { id: 3 },
+      data: { stateId: 77 },
+    });
+    const req = {
+      method: "PATCH",
+      headers,
+      url: "http://localhost:3000/api/model/sessions/update",
+      clone() {
+        return this;
+      },
+      async text() {
+        return json;
+      },
+    } as unknown as NextRequest;
+    const res = await PATCH(req, {
+      params: Promise.resolve({ path: ["sessions", "update"] }),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(403);
+    expect(body.error.entityType).toBe("SESSION");
   });
 });

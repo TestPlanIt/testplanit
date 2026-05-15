@@ -294,6 +294,7 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
+            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           } as any);
         });
 
@@ -334,6 +335,7 @@ describe("milestoneActions", () => {
             milestones: { update: mockUpdate, updateMany: mockUpdateMany },
             testRuns: { updateMany: mockUpdateMany },
             sessions: { updateMany: mockUpdateMany },
+            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           } as any);
         });
 
@@ -367,6 +369,7 @@ describe("milestoneActions", () => {
             milestones: { update: mockUpdate, updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
+            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           } as any);
         });
 
@@ -404,6 +407,7 @@ describe("milestoneActions", () => {
             milestones: { update: mockUpdate, updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
+            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           } as any);
         });
 
@@ -443,6 +447,7 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
+            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           } as any);
         });
 
@@ -479,6 +484,7 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
+            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           } as any);
         });
 
@@ -546,6 +552,7 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
+            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           } as any);
         });
 
@@ -643,6 +650,7 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: mockTestRunsUpdateMany },
             sessions: { updateMany: vi.fn() },
+            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           } as any);
         });
 
@@ -684,6 +692,7 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: mockSessionsUpdateMany },
+            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           } as any);
         });
 
@@ -732,6 +741,7 @@ describe("milestoneActions", () => {
             },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
+            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           } as any);
         });
 
@@ -778,6 +788,7 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: mockTestRunsUpdateMany },
             sessions: { updateMany: vi.fn() },
+            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           } as any);
         });
 
@@ -813,6 +824,7 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: mockTestRunsUpdateMany },
             sessions: { updateMany: vi.fn() },
+            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           } as any);
         });
 
@@ -847,6 +859,7 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: mockTestRunsUpdateMany },
             sessions: { updateMany: vi.fn() },
+            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           } as any);
         });
 
@@ -884,6 +897,7 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: mockSessionsUpdateMany },
+            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           } as any);
         });
 
@@ -919,6 +933,7 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: mockSessionsUpdateMany },
+            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           } as any);
         });
 
@@ -953,6 +968,7 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: mockSessionsUpdateMany },
+            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           } as any);
         });
 
@@ -989,6 +1005,7 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: mockTestRunsUpdateMany },
             sessions: { updateMany: vi.fn() },
+            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           } as any);
         });
 
@@ -1030,6 +1047,7 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: mockSessionsUpdateMany },
+            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           } as any);
         });
 
@@ -1071,6 +1089,7 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: mockTestRunsUpdateMany },
             sessions: { updateMany: vi.fn() },
+            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           } as any);
         });
 
@@ -1112,6 +1131,7 @@ describe("milestoneActions", () => {
             milestones: { update: mockMilestoneUpdate, updateMany: vi.fn() },
             testRuns: { updateMany: mockTestRunsUpdateMany },
             sessions: { updateMany: mockSessionsUpdateMany },
+            workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           } as any);
         });
 
@@ -1162,6 +1182,137 @@ describe("milestoneActions", () => {
           activeSessions: 1,
           descendantMilestonesToComplete: 0,
         });
+      });
+    });
+
+    describe("review gate", () => {
+      it("skips per-entity preflight when target state does NOT require review", async () => {
+        vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
+        vi.mocked(prisma.workflows.findFirst)
+          .mockResolvedValueOnce(mockDoneRunWorkflow as any)
+          .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
+        vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([
+          { id: 1 },
+          { id: 2 },
+        ] as any);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([] as any);
+
+        const txWorkflowsFindUnique = vi
+          .fn()
+          .mockResolvedValue({ requiresReview: false });
+        const txReviewRequestFindFirst = vi.fn();
+
+        vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
+          return callback({
+            milestones: { update: vi.fn(), updateMany: vi.fn() },
+            testRuns: { updateMany: vi.fn() },
+            sessions: { updateMany: vi.fn() },
+            workflows: { findUnique: txWorkflowsFindUnique },
+            reviewRequest: { findFirst: txReviewRequestFindFirst },
+          } as any);
+        });
+
+        const result = await completeMilestoneCascade({
+          milestoneId: 1,
+          completionDate: new Date(),
+          forceCompleteDependencies: true,
+        });
+
+        expect(result.status).toBe("success");
+        // Target-state guard queried for testRuns (run scope).
+        expect(txWorkflowsFindUnique).toHaveBeenCalledWith({
+          where: { id: mockDoneRunWorkflow.id },
+          select: { requiresReview: true },
+        });
+        // No per-entity ReviewRequest lookups because the target was ungated.
+        expect(txReviewRequestFindFirst).not.toHaveBeenCalled();
+      });
+
+      it("runs per-entity preflight when target state requires review", async () => {
+        vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
+        vi.mocked(prisma.workflows.findFirst)
+          .mockResolvedValueOnce(mockDoneRunWorkflow as any)
+          .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
+        vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([
+          { id: 1 },
+          { id: 2 },
+        ] as any);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([] as any);
+
+        const txReviewRequestFindFirst = vi
+          .fn()
+          .mockResolvedValue({ id: "approved-1" });
+        vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
+          return callback({
+            milestones: { update: vi.fn(), updateMany: vi.fn() },
+            testRuns: { updateMany: vi.fn() },
+            sessions: { updateMany: vi.fn() },
+            workflows: {
+              findUnique: vi
+                .fn()
+                .mockResolvedValue({ requiresReview: true }),
+            },
+            reviewRequest: { findFirst: txReviewRequestFindFirst },
+          } as any);
+        });
+
+        const result = await completeMilestoneCascade({
+          milestoneId: 1,
+          completionDate: new Date(),
+          forceCompleteDependencies: true,
+        });
+
+        expect(result.status).toBe("success");
+        // Two test runs → two per-entity ReviewRequest lookups.
+        expect(txReviewRequestFindFirst).toHaveBeenCalledTimes(2);
+      });
+
+      it("returns structured error when a per-entity preflight rejects", async () => {
+        vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
+        vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
+          mockMilestone as any
+        );
+        vi.mocked(prisma.workflows.findFirst)
+          .mockResolvedValueOnce(mockDoneRunWorkflow as any)
+          .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
+        vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
+        vi.mocked(prisma.testRuns.findMany).mockResolvedValue([
+          { id: 42 },
+        ] as any);
+        vi.mocked(prisma.sessions.findMany).mockResolvedValue([] as any);
+
+        vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
+          return callback({
+            milestones: { update: vi.fn(), updateMany: vi.fn() },
+            testRuns: { updateMany: vi.fn() },
+            sessions: { updateMany: vi.fn() },
+            workflows: {
+              findUnique: vi
+                .fn()
+                .mockResolvedValue({ requiresReview: true }),
+            },
+            // No approved ReviewRequest → helper throws ReviewGateError.
+            reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
+          } as any);
+        });
+
+        const result = await completeMilestoneCascade({
+          milestoneId: 1,
+          completionDate: new Date(),
+          forceCompleteDependencies: true,
+        });
+
+        expect(result.status).toBe("error");
+        expect(result.message).toMatch(/Review required/i);
+        expect(result.message).toMatch(/run 42/);
       });
     });
   });
