@@ -3387,8 +3387,8 @@ model ReviewRequest {
         status == 'PENDING' && (
             (assigneeUserId != null && assigneeUser == auth()) ||
             (assigneeRoleId != null && (
-                project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.id == assigneeRoleId] ||
-                project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' && assigneeRoleId != null && auth().roleId == assigneeRoleId]
+                project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.id == this.assigneeRoleId] ||
+                project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' && this.assigneeRoleId != null && auth().roleId == this.assigneeRoleId]
             ))
         )
     )
