@@ -700,9 +700,7 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
             <StatusDotDisplay
               name={displayStatus.name}
               color={
-                hasColor(displayStatus)
-                  ? displayStatus.color.value
-                  : undefined
+                hasColor(displayStatus) ? displayStatus.color.value : undefined
               }
               className="flex items-center space-x-1 min-w-0 overflow-hidden"
               nameClassName="truncate"
@@ -710,47 +708,47 @@ const TestRunStatusCell = React.memo(function TestRunStatusCell({
             <SquareStack className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           </Button>
         ) : (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              className="w-[120px] h-8 bg-transparent hover:bg-muted hover:text-foreground justify-start"
-              disabled={isDisabled}
-            >
-              <div className="flex items-center space-x-1 whitespace-nowrap">
-                <StatusDotDisplay
-                  name={displayStatus.name}
-                  color={
-                    hasColor(displayStatus)
-                      ? displayStatus.color.value
-                      : undefined
-                  }
-                />
-              </div>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-[140px]">
-            {statuses?.map((statusOption) => (
-              <DropdownMenuItem
-                key={statusOption.id}
-                onClick={() => handleStatusChange(statusOption.id.toString())}
-                className={`flex items-center cursor-pointer ${
-                  statusOption.id === displayStatus.id ? "bg-muted" : ""
-                }`}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-[120px] h-8 bg-transparent hover:bg-muted hover:text-foreground justify-start"
+                disabled={isDisabled}
               >
-                <StatusDotDisplay
-                  name={statusOption.name}
-                  color={statusOption.color?.value}
-                  dotClassName="w-3 h-3 rounded-full mr-2"
-                  nameClassName="flex-1"
-                />
-                {statusOption.id === displayStatus.id && (
-                  <Check className="h-4 w-4 ml-2 text-muted-foreground" />
-                )}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+                <div className="flex items-center space-x-1 whitespace-nowrap">
+                  <StatusDotDisplay
+                    name={displayStatus.name}
+                    color={
+                      hasColor(displayStatus)
+                        ? displayStatus.color.value
+                        : undefined
+                    }
+                  />
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-[140px]">
+              {statuses?.map((statusOption) => (
+                <DropdownMenuItem
+                  key={statusOption.id}
+                  onClick={() => handleStatusChange(statusOption.id.toString())}
+                  className={`flex items-center cursor-pointer ${
+                    statusOption.id === displayStatus.id ? "bg-muted" : ""
+                  }`}
+                >
+                  <StatusDotDisplay
+                    name={statusOption.name}
+                    color={statusOption.color?.value}
+                    dotClassName="w-3 h-3 rounded-full mr-2"
+                    nameClassName="flex-1"
+                  />
+                  {statusOption.id === displayStatus.id && (
+                    <Check className="h-4 w-4 ml-2 text-muted-foreground" />
+                  )}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
 
         <DropdownMenu>
@@ -987,9 +985,7 @@ const ActionsCell = React.memo(function ActionsCell({
             <Link
               href={`/projects/repository/${row.original.projectId}/${row.original.id}?edit=true`}
             >
-              <DropdownMenuItem
-                data-testid={`edit-case-${row.original.id}`}
-              >
+              <DropdownMenuItem data-testid={`edit-case-${row.original.id}`}>
                 <SquarePen className="mr-2 h-4 w-4" />
                 <span>{t("common.actions.edit")}</span>
               </DropdownMenuItem>

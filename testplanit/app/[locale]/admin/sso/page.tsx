@@ -1430,7 +1430,7 @@ export default function SSOAdminPage() {
                     disabled={isAddingDomain || !newDomain}
                     size="sm"
                   >
-                    <Plus className="h-4 w-4 mr-1" />
+                    <Plus className="h-4 w-4" />
                     {t("admin.sso.registration.allowedDomains.add")}
                   </Button>
                 </div>
