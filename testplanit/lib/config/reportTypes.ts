@@ -2,6 +2,7 @@ import {
   Activity,
   Bug,
   Compass,
+  Grid3x3,
   Heart,
   Link2,
   ListTree,
@@ -104,6 +105,14 @@ export const getProjectReportTypes = (tReports: any): ReportType[] => [
     description: tReports("reportTypes.executionLog.description"),
     icon: ScrollText,
     endpoint: "/api/report-builder/execution-log",
+    isPreBuilt: true,
+  },
+  {
+    id: "iteration-matrix",
+    label: tReports("reportTypes.iterationMatrix.label"),
+    description: tReports("reportTypes.iterationMatrix.description"),
+    icon: Grid3x3,
+    endpoint: "/api/report-builder/iteration-matrix",
     isPreBuilt: true,
   },
 ];

@@ -6146,6 +6146,10 @@
         "executionLog": {
           "label": "Execution Log",
           "description": "Flat list of individual test result records with status, executor, and timestamp"
+        },
+        "iterationMatrix": {
+          "label": "Iteration Matrix",
+          "description": "Cases × configurations × parameter rows with worst-of status rollup per cell"
         }
       },
       "flakyTests": {
