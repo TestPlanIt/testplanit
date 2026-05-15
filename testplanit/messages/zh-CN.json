@@ -1781,6 +1781,37 @@
         "disconnectSuccess": "代码库已断开连接",
         "disconnectError": "断开代码库连接失败"
       }
+    },
+    "matrix": {
+      "metaTitle": "矩阵视图",
+      "pageTitle": "迭代矩阵",
+      "loading": "载荷矩阵…",
+      "loadError": "无法加载矩阵视图。请重试或缩小筛选范围。",
+      "cellCapShort": "此矩阵将生成 {cells, number} 个单元格，超出 {threshold, number} 个单元格的限制。请缩小筛选范围以继续。",
+      "caseColumnHeader": "案例/参数行",
+      "cellNotRun": "未运行",
+      "cellSummary": "{pass, number} 通过， {fail, number} 失败， {notRun, number} 未运行",
+      "popoverTitle": "{count, plural, =1 {# 迭代次数} other {# 迭代次数}}",
+      "iterationUnlabeled": "迭代 #{index, number}",
+      "popoverInflightHint": "飞行中的迭代一旦记录下来，就会显示在这里。",
+      "filterStatus": "{count, plural, =0 {状态} one {状态 (#)} other {状态 (#)}}",
+      "filterConfig": "{count, plural, =0 {配置} one {配置 (#)} other {配置 (#)}}",
+      "filterDataset": "{count, plural, =0 {数据集} one {数据集 (#)} other {数据集 (#)}}",
+      "filterDateFrom": "从",
+      "filterDateTo": "到",
+      "configNone": "（无配置）",
+      "clearFilter": "清除",
+      "filterEmpty": "暂无选项",
+      "resetFilters": "重置筛选器",
+      "exportCsv": "导出 CSV 文件",
+      "cellCapTitle": "矩阵将渲染 {cellCount, number} 个单元格（限制 {threshold, number}）",
+      "cellCapSuggestionFilterCases": "尝试筛选出更少的测试用例——这是影响最大的因素。",
+      "cellCapSuggestionFilterConfigs": "尝试筛选较少的配置——该轴是影响最大的因素。",
+      "cellCapSuggestionFilterDates": "尝试缩小日期范围——参数迭代对单元格计数影响很大。",
+      "cellCapAxisCases": "测试用例： {count, number}",
+      "cellCapAxisConfigs": "配置： {count, number}",
+      "cellCapAxisMaxIters": "所有案例中参数行数最多的是： {count, number}",
+      "cellCapResetFilters": "重置筛选器并重试"
     }
   },
   "milestones": {
@@ -6115,6 +6146,10 @@
         "executionLog": {
           "label": "执行日志",
           "description": "包含状态、执行者和时间戳的单个测试结果记录的扁平列表"
+        },
+        "iterationMatrix": {
+          "label": "迭代矩阵",
+          "description": "每个单元格包含案例 × 配置 × 参数行，并汇总最差状态。"
         }
       },
       "flakyTests": {

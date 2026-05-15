@@ -1781,6 +1781,37 @@
         "disconnectSuccess": "Repositório de código desconectado",
         "disconnectError": "Falha ao desconectar o repositório de código"
       }
+    },
+    "matrix": {
+      "metaTitle": "Visão matricial",
+      "pageTitle": "Matriz de Iteração",
+      "loading": "Matriz de carregamento…",
+      "loadError": "Não foi possível carregar a visualização em matriz. Tente novamente ou refine seus filtros.",
+      "cellCapShort": "Esta matriz renderizaria {cells, number} células, o que excede o limite de {threshold, number} células. Reduza os filtros para continuar.",
+      "caseColumnHeader": "Linha de caso/parâmetro",
+      "cellNotRun": "Não funciona",
+      "cellSummary": "{pass, number} aprovado, {fail, number} reprovado, {notRun, number} não executado",
+      "popoverTitle": "{count, plural, =1 {# iteração} other {# iterações}}",
+      "iterationUnlabeled": "Iteração #{index, number}",
+      "popoverInflightHint": "As versões gravadas durante o voo aparecem aqui.",
+      "filterStatus": "{count, plural, =0 {Status} one {Status (#)} other {Status (#)}}",
+      "filterConfig": "{count, plural, =0 {Configuração} one {Configuração (#)} other {Configuração (#)}}",
+      "filterDataset": "{count, plural, =0 {Conjunto de dados} one {Conjunto de dados (#)} other {Conjunto de dados (#)}}",
+      "filterDateFrom": "De",
+      "filterDateTo": "Para",
+      "configNone": "(sem configuração)",
+      "clearFilter": "Claro",
+      "filterEmpty": "Nenhuma opção disponível",
+      "resetFilters": "Redefinir filtros",
+      "exportCsv": "Exportar CSV",
+      "cellCapTitle": "A matriz renderizaria {cellCount, number} células (limite {threshold, number})",
+      "cellCapSuggestionFilterCases": "Tente filtrar para um número menor de casos de teste — esse eixo é o que mais contribui para o resultado.",
+      "cellCapSuggestionFilterConfigs": "Tente filtrar para menos configurações — esse eixo é o que mais contribui para o problema.",
+      "cellCapSuggestionFilterDates": "Tente restringir o intervalo de datas — as iterações de parâmetros dominam a contagem de células.",
+      "cellCapAxisCases": "Casos de teste: {count, number}",
+      "cellCapAxisConfigs": "Configurações: {count, number}",
+      "cellCapAxisMaxIters": "Maior número de linhas de parâmetros para qualquer caso: {count, number}",
+      "cellCapResetFilters": "Redefina os filtros e tente novamente."
     }
   },
   "milestones": {
@@ -6115,6 +6146,10 @@
         "executionLog": {
           "label": "Registro de execução",
           "description": "Lista simples de registros individuais de resultados de testes com status, executor e data/hora."
+        },
+        "iterationMatrix": {
+          "label": "Matriz de Iteração",
+          "description": "Linhas de casos × configurações × parâmetros com agregação do pior status por célula"
         }
       },
       "flakyTests": {

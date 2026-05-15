@@ -1781,6 +1781,37 @@
         "disconnectSuccess": "Kho lưu trữ mã nguồn đã bị ngắt kết nối",
         "disconnectError": "Không thể ngắt kết nối kho lưu trữ mã."
       }
+    },
+    "matrix": {
+      "metaTitle": "Chế độ xem ma trận",
+      "pageTitle": "Ma trận lặp",
+      "loading": "Đang tải ma trận…",
+      "loadError": "Không thể tải chế độ xem ma trận. Hãy thử lại hoặc thu hẹp bộ lọc của bạn.",
+      "cellCapShort": "Ma trận này sẽ tạo ra {cells, number} ô, vượt quá giới hạn {threshold, number} ô. Thu hẹp bộ lọc để tiếp tục.",
+      "caseColumnHeader": "Dòng trường hợp / tham số",
+      "cellNotRun": "Không chạy",
+      "cellSummary": "{pass, number} đã vượt qua, {fail, number} thất bại, {notRun, number} chưa chạy",
+      "popoverTitle": "{count, plural, =1 {# lần lặp} other {# lần lặp}}",
+      "iterationUnlabeled": "Lần lặp #{index, number}",
+      "popoverInflightHint": "Các phiên bản lặp lại trong quá trình bay sẽ xuất hiện ở đây sau khi được ghi lại.",
+      "filterStatus": "{count, plural, =0 {Trạng thái} one {Trạng thái (#)} other {Trạng thái (#)}}",
+      "filterConfig": "{count, plural, =0 {Cấu hình} one {Cấu hình (#)} other {Cấu hình (#)}}",
+      "filterDataset": "{count, plural, =0 {Tập dữ liệu} one {Tập dữ liệu (#)} other {Tập dữ liệu (#)}}",
+      "filterDateFrom": "Từ",
+      "filterDateTo": "ĐẾN",
+      "configNone": "(không cần cấu hình)",
+      "clearFilter": "Thông thoáng",
+      "filterEmpty": "Không có tùy chọn nào.",
+      "resetFilters": "Đặt lại bộ lọc",
+      "exportCsv": "Xuất CSV",
+      "cellCapTitle": "Ma trận sẽ hiển thị {cellCount, number} ô (giới hạn {threshold, number})",
+      "cellCapSuggestionFilterCases": "Hãy thử lọc xuống ít trường hợp thử nghiệm hơn — trục đó là yếu tố đóng góp lớn nhất.",
+      "cellCapSuggestionFilterConfigs": "Hãy thử lọc xuống ít cấu hình hơn — trục đó là yếu tố đóng góp lớn nhất.",
+      "cellCapSuggestionFilterDates": "Hãy thử thu hẹp phạm vi ngày tháng — số lần lặp tham số chiếm ưu thế trong số lượng ô.",
+      "cellCapAxisCases": "Các trường hợp thử nghiệm: {count, number}",
+      "cellCapAxisConfigs": "Cấu hình: {count, number}",
+      "cellCapAxisMaxIters": "Số hàng tham số lớn nhất cho bất kỳ trường hợp nào: {count, number}",
+      "cellCapResetFilters": "Đặt lại bộ lọc và thử lại."
     }
   },
   "milestones": {
@@ -6115,6 +6146,10 @@
         "executionLog": {
           "label": "Nhật ký thực thi",
           "description": "Danh sách dạng phẳng các bản ghi kết quả kiểm tra riêng lẻ, bao gồm trạng thái, người thực hiện và dấu thời gian."
+        },
+        "iterationMatrix": {
+          "label": "Ma trận lặp",
+          "description": "Số lượng trường hợp × cấu hình × hàng tham số với trạng thái tổng hợp tệ nhất cho mỗi ô."
         }
       },
       "flakyTests": {

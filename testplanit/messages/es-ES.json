@@ -1781,6 +1781,37 @@
         "disconnectSuccess": "Repositorio de código desconectado",
         "disconnectError": "No se pudo desconectar el repositorio de código"
       }
+    },
+    "matrix": {
+      "metaTitle": "Vista de matriz",
+      "pageTitle": "Matriz de iteración",
+      "loading": "Matriz de carga…",
+      "loadError": "No se pudo cargar la vista de matriz. Inténtelo de nuevo o refine sus filtros.",
+      "cellCapShort": "Esta matriz generaría {cells, number} celdas, lo que excede el límite de {threshold, number} celdas. Reduzca los filtros para continuar.",
+      "caseColumnHeader": "Fila de caso/parámetro",
+      "cellNotRun": "No se ejecuta",
+      "cellSummary": "{pass, number} aprobado, {fail, number} reprobado, {notRun, number} no ejecutado",
+      "popoverTitle": "{count, plural, =1 {# iteración} other {# iteraciones}}",
+      "iterationUnlabeled": "Iteración #{index, number}",
+      "popoverInflightHint": "Las iteraciones realizadas durante el vuelo aparecen aquí una vez registradas.",
+      "filterStatus": "{count, plural, =0 {Estado} one {Estado (#)} other {Estado (#)}}",
+      "filterConfig": "{count, plural, =0 {Configuración} one {Configuración (#)} other {Configuración (#)}}",
+      "filterDataset": "{count, plural, =0 {Conjunto de datos} one {Conjunto de datos (#)} other {Conjunto de datos (#)}}",
+      "filterDateFrom": "De",
+      "filterDateTo": "A",
+      "configNone": "(sin configuración)",
+      "clearFilter": "Claro",
+      "filterEmpty": "No hay opciones disponibles",
+      "resetFilters": "Restablecer filtros",
+      "exportCsv": "Exportar CSV",
+      "cellCapTitle": "Matrix renderizaría {cellCount, number} celdas (límite {threshold, number})",
+      "cellCapSuggestionFilterCases": "Intenta filtrar para mostrar menos casos de prueba; ese eje es el que más contribuye.",
+      "cellCapSuggestionFilterConfigs": "Intenta filtrar por menos configuraciones; ese eje es el que más contribuye.",
+      "cellCapSuggestionFilterDates": "Intenta reducir el rango de fechas: las iteraciones de los parámetros influyen considerablemente en el recuento de celdas.",
+      "cellCapAxisCases": "Casos de prueba: {count, number}",
+      "cellCapAxisConfigs": "Configuraciones: {count, number}",
+      "cellCapAxisMaxIters": "Número máximo de filas de parámetros para cualquier caso: {count, number}",
+      "cellCapResetFilters": "Restablezca los filtros e inténtelo de nuevo."
     }
   },
   "milestones": {
@@ -6115,6 +6146,10 @@
         "executionLog": {
           "label": "Registro de ejecución",
           "description": "Lista plana de registros de resultados de pruebas individuales con estado, ejecutor y marca de tiempo."
+        },
+        "iterationMatrix": {
+          "label": "Matriz de iteración",
+          "description": "Casos × configuraciones × filas de parámetros con resumen del peor estado por celda"
         }
       },
       "flakyTests": {

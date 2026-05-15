@@ -1781,6 +1781,37 @@
         "disconnectSuccess": "Repository del codice disconnesso",
         "disconnectError": "Impossibile disconnettere il repository del codice"
       }
+    },
+    "matrix": {
+      "metaTitle": "Vista a matrice",
+      "pageTitle": "Matrice di iterazione",
+      "loading": "Matrice di caricamento…",
+      "loadError": "Impossibile caricare la visualizzazione a matrice. Riprova o restringi i filtri.",
+      "cellCapShort": "Questa matrice genererebbe circa {cells, number} celle, superando il limite di circa {threshold, number} celle. Restringi i filtri per continuare.",
+      "caseColumnHeader": "Riga del caso/parametro",
+      "cellNotRun": "Non correre",
+      "cellSummary": "{pass, number} superato, {fail, number} fallito, {notRun, number} non eseguito",
+      "popoverTitle": "{count, plural, =1 {# iterazione} other {# iterazioni}}",
+      "iterationUnlabeled": "Iterazione n.{index, number}",
+      "popoverInflightHint": "Le iterazioni in corso di esecuzione vengono visualizzate qui una volta registrate.",
+      "filterStatus": "{count, plural, =0 {Stato} one {Stato (#)} other {Stato (#)}}",
+      "filterConfig": "{count, plural, =0 {Configurazione} one {Configurazione (#)} other {Configurazione (#)}}",
+      "filterDataset": "{count, plural, =0 {Set di dati} one {Set di dati (#)} other {Set di dati (#)}}",
+      "filterDateFrom": "Da",
+      "filterDateTo": "A",
+      "configNone": "(nessuna configurazione)",
+      "clearFilter": "Chiaro",
+      "filterEmpty": "Nessuna opzione disponibile",
+      "resetFilters": "Reimposta i filtri",
+      "exportCsv": "Esporta in formato CSV",
+      "cellCapTitle": "La matrice renderizzerebbe {cellCount, number} celle (limite {threshold, number})",
+      "cellCapSuggestionFilterCases": "Prova a filtrare per ridurre il numero di casi di test: quell'asse è il fattore che incide maggiormente.",
+      "cellCapSuggestionFilterConfigs": "Prova a filtrare per ridurre il numero di configurazioni: quell'asse è quello che contribuisce maggiormente.",
+      "cellCapSuggestionFilterDates": "Prova a restringere l'intervallo di date: le iterazioni dei parametri incidono in modo preponderante sul conteggio delle celle.",
+      "cellCapAxisCases": "Casi di prova: {count, number}",
+      "cellCapAxisConfigs": "Configurazioni: {count, number}",
+      "cellCapAxisMaxIters": "Numero massimo di righe di parametri per qualsiasi caso: {count, number}",
+      "cellCapResetFilters": "Reimposta i filtri e riprova"
     }
   },
   "milestones": {
@@ -6115,6 +6146,10 @@
         "executionLog": {
           "label": "Registro di esecuzione",
           "description": "Elenco semplice di singoli record di risultati dei test con stato, esecutore e data e ora."
+        },
+        "iterationMatrix": {
+          "label": "Matrice di iterazione",
+          "description": "Casi × configurazioni × righe di parametri con riepilogo dello stato peggiore per cella"
         }
       },
       "flakyTests": {

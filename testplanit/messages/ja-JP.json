@@ -1781,6 +1781,37 @@
         "disconnectSuccess": "コードリポジトリとの接続が切断されました",
         "disconnectError": "コードリポジトリの接続解除に失敗しました"
       }
+    },
+    "matrix": {
+      "metaTitle": "マトリックスビュー",
+      "pageTitle": "反復マトリックス",
+      "loading": "ローディングマトリックス…",
+      "loadError": "マトリックスビューを読み込めませんでした。もう一度お試しいただくか、フィルターを絞り込んでください。",
+      "cellCapShort": "このマトリックスでは、 {cells, number} 個のセルが生成されますが、これは {threshold, number} 個のセル制限を超えています。続行するには、フィルタを狭めてください。",
+      "caseColumnHeader": "ケース/パラメータ行",
+      "cellNotRun": "実行しない",
+      "cellSummary": "{pass, number} 合格、 {fail, number} 不合格、 {notRun, number} 未実行",
+      "popoverTitle": "{count, plural, =1 {# 反復} other {# 反復}}",
+      "iterationUnlabeled": "イテレーション #{index, number}",
+      "popoverInflightHint": "飛行中のバージョンは、記録され次第ここに表示されます。",
+      "filterStatus": "{count, plural, =0 {ステータス} one {ステータス (#)} other {ステータス (#)}}",
+      "filterConfig": "{count, plural, =0 {設定} one {設定 (#)} other {設定 (#)}}",
+      "filterDataset": "{count, plural, =0 {データセット} one {データセット (#)} other {データセット (#)}}",
+      "filterDateFrom": "から",
+      "filterDateTo": "に",
+      "configNone": "（設定なし）",
+      "clearFilter": "クリア",
+      "filterEmpty": "利用可能なオプションはありません",
+      "resetFilters": "フィルターをリセット",
+      "exportCsv": "CSVをエクスポート",
+      "cellCapTitle": "マトリックスは {cellCount, number} セルをレンダリングします (制限 {threshold, number})",
+      "cellCapSuggestionFilterCases": "テストケースの数を減らしてみてください。その軸が最も大きな影響を与えています。",
+      "cellCapSuggestionFilterConfigs": "設定項目を絞り込んでみてください。その軸が最も大きな影響を与えています。",
+      "cellCapSuggestionFilterDates": "日付範囲を絞り込んでみてください。パラメータの反復処理がセル数の大部分を占めています。",
+      "cellCapAxisCases": "テストケース: {count, number}",
+      "cellCapAxisConfigs": "設定: {count, number}",
+      "cellCapAxisMaxIters": "いずれの場合も、パラメータ行の最大数: {count, number}",
+      "cellCapResetFilters": "フィルターをリセットしてもう一度お試しください"
     }
   },
   "milestones": {
@@ -6115,6 +6146,10 @@
         "executionLog": {
           "label": "実行ログ",
           "description": "ステータス、実行者、タイムスタンプを含む個々のテスト結果レコードのフラットリスト"
+        },
+        "iterationMatrix": {
+          "label": "反復マトリックス",
+          "description": "ケース × 構成 × パラメータ行（セルごとの最悪ステータス集計付き）"
         }
       },
       "flakyTests": {

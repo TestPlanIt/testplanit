@@ -1781,6 +1781,37 @@
         "disconnectSuccess": "Repozytorium kodu odłączone",
         "disconnectError": "Nie udało się odłączyć repozytorium kodu"
       }
+    },
+    "matrix": {
+      "metaTitle": "Widok macierzy",
+      "pageTitle": "Macierz iteracji",
+      "loading": "Ładowanie macierzy…",
+      "loadError": "Nie udało się załadować widoku macierzy. Spróbuj ponownie lub zawęź filtry.",
+      "cellCapShort": "Ta macierz wygenerowałaby {cells, number} komórek, co przekracza limit {threshold, number} komórek. Aby kontynuować, zawęź filtry.",
+      "caseColumnHeader": "Wiersz przypadku/parametru",
+      "cellNotRun": "Nie uruchomiono",
+      "cellSummary": "{pass, number} zaliczone, {fail, number} nieudane, {notRun, number} nie uruchomione",
+      "popoverTitle": "{count, plural, =1 {# iteracja} other {# iteracje}}",
+      "iterationUnlabeled": "Iteracja #{index, number}",
+      "popoverInflightHint": "W tym miejscu wyświetlane są iteracje w trakcie lotu, po ich zarejestrowaniu.",
+      "filterStatus": "{count, plural, =0 {Status} one {Status (#)} other {Status (#)}}",
+      "filterConfig": "{count, plural, =0 {Konfiguracja} one {Konfiguracja (#)} other {Konfiguracja (#)}}",
+      "filterDataset": "{count, plural, =0 {Zestaw danych} one {Zestaw danych (#)} other {Zestaw danych (#)}}",
+      "filterDateFrom": "Z",
+      "filterDateTo": "Do",
+      "configNone": "(bez konfiguracji)",
+      "clearFilter": "Jasne",
+      "filterEmpty": "Brak dostępnych opcji",
+      "resetFilters": "Zresetuj filtry",
+      "exportCsv": "Eksportuj CSV",
+      "cellCapTitle": "Macierz wyrenderuje {cellCount, number} komórek (limit {threshold, number})",
+      "cellCapSuggestionFilterCases": "Spróbuj zastosować filtr obejmujący mniejszą liczbę przypadków testowych — ta oś ma największy wpływ.",
+      "cellCapSuggestionFilterConfigs": "Spróbuj filtrować według mniejszej liczby konfiguracji — ta oś ma największy wpływ.",
+      "cellCapSuggestionFilterDates": "Spróbuj zawęzić zakres dat — iteracje parametrów mają decydujący wpływ na liczbę komórek.",
+      "cellCapAxisCases": "Przypadki testowe: {count, number}",
+      "cellCapAxisConfigs": "Konfiguracje: {count, number}",
+      "cellCapAxisMaxIters": "Największa liczba wierszy parametrów dla dowolnego przypadku: {count, number}",
+      "cellCapResetFilters": "Zresetuj filtry i spróbuj ponownie"
     }
   },
   "milestones": {
@@ -6115,6 +6146,10 @@
         "executionLog": {
           "label": "Dziennik wykonania",
           "description": "Płaska lista indywidualnych rekordów wyników testów ze statusem, wykonawcą i znacznikiem czasu"
+        },
+        "iterationMatrix": {
+          "label": "Macierz iteracji",
+          "description": "Przypadki × konfiguracje × wiersze parametrów z podsumowaniem najgorszego stanu na komórkę"
         }
       },
       "flakyTests": {

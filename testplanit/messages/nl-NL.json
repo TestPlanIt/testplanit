@@ -1781,6 +1781,37 @@
         "disconnectSuccess": "Codeopslagplaats is losgekoppeld",
         "disconnectError": "Het is niet gelukt om de verbinding met de codeopslagplaats te verbreken."
       }
+    },
+    "matrix": {
+      "metaTitle": "Matrixweergave",
+      "pageTitle": "Iteratiematrix",
+      "loading": "Laadmatrix…",
+      "loadError": "De matrixweergave kon niet worden geladen. Probeer het opnieuw of pas uw filters aan.",
+      "cellCapShort": "Deze matrix zou {cells, number} cellen opleveren, wat de limiet van {threshold, number} cellen overschrijdt. Verfijn de filters om verder te gaan.",
+      "caseColumnHeader": "Geval / parameterregel",
+      "cellNotRun": "Niet uitvoeren",
+      "cellSummary": "{pass, number} geslaagd, {fail, number} mislukt, {notRun, number} niet uitgevoerd",
+      "popoverTitle": "{count, plural, =1 {# iteratie} other {# iteraties}}",
+      "iterationUnlabeled": "Iteratie #{index, number}",
+      "popoverInflightHint": "Iteraties die tijdens de vlucht zijn gemaakt, verschijnen hier zodra ze zijn vastgelegd.",
+      "filterStatus": "{count, plural, =0 {Status} one {Status (#)} other {Status (#)}}",
+      "filterConfig": "{count, plural, =0 {Configuratie} one {Configuratie (#)} other {Configuratie (#)}}",
+      "filterDataset": "{count, plural, =0 {Dataset} one {Dataset (#)} other {Dataset (#)}}",
+      "filterDateFrom": "Van",
+      "filterDateTo": "Naar",
+      "configNone": "(geen configuratie)",
+      "clearFilter": "Duidelijk",
+      "filterEmpty": "Geen opties beschikbaar",
+      "resetFilters": "Filters resetten",
+      "exportCsv": "Exporteer naar CSV",
+      "cellCapTitle": "Matrix zou {cellCount, number} cellen weergeven (limiet {threshold, number})",
+      "cellCapSuggestionFilterCases": "Probeer te filteren op minder testgevallen; die as levert de grootste bijdrage.",
+      "cellCapSuggestionFilterConfigs": "Probeer te filteren op minder configuraties; die as levert de grootste bijdrage.",
+      "cellCapSuggestionFilterDates": "Probeer het datumbereik te verkleinen; het aantal parameteriteraties is bepalend voor het aantal cellen.",
+      "cellCapAxisCases": "Testgevallen: {count, number}",
+      "cellCapAxisConfigs": "Configuraties: {count, number}",
+      "cellCapAxisMaxIters": "Grootste aantal parameterrijen voor elk geval: {count, number}",
+      "cellCapResetFilters": "Reset de filters en probeer het opnieuw."
     }
   },
   "milestones": {
@@ -4046,7 +4077,7 @@
       "saveChanges": "Wijzigingen opslaan",
       "forceAllUsers": "Alle gebruikers dwingen hun wachtwoord te wijzigen",
       "forceAllUsersDialogTitle": "Wachtwoordwijziging afdwingen voor alle gebruikers",
-      "forceAllUsersDialogDescription": "This will require {count, number} credential-based users to change their password on next login.",
+      "forceAllUsersDialogDescription": "Dit vereist {count, number} inloggegevens gebaseerde gebruikers om hun wachtwoord te wijzigen bij de volgende login.",
       "forceAllUsersDialogWarning": "Deze actie kan niet ongedaan gemaakt worden.",
       "forceAllUsersDialogConfirm": "Krachtverandering",
       "saved": "Beveiligingsinstellingen opgeslagen",
@@ -6115,6 +6146,10 @@
         "executionLog": {
           "label": "Uitvoeringslogboek",
           "description": "Platte lijst met individuele testresultaten, inclusief status, uitvoerder en tijdstempel."
+        },
+        "iterationMatrix": {
+          "label": "Iteratiematrix",
+          "description": "Gevallen × configuraties × parameterrijen met statusoverzicht van het slechtst mogelijke resultaat per cel"
         }
       },
       "flakyTests": {

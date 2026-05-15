@@ -1,8 +1,8 @@
 {
   "common": {
     "name": "Namen",
-    "cancel": "Stornieren",
-    "dismiss": "Zurückweisen",
+    "cancel": "Abbrechen",
+    "dismiss": "Verwerfen",
     "of": "von",
     "on": "An",
     "at": "bei",
@@ -21,7 +21,7 @@
     "search": "Suchen...",
     "defaultOption": "Standardoption",
     "yes": "Ja",
-    "no": "NEIN",
+    "no": "Nein",
     "updated": "Aktualisiert",
     "groupedBy": "gruppiert nach",
     "lastEditedBy": "Zuletzt bearbeitet von",
@@ -270,7 +270,7 @@
       "accountHistory": "Kontoverlauf",
       "activity": "Aktivität",
       "lastActive": "Zuletzt aktiv",
-      "theme": "Thema",
+      "theme": "Erscheinungsbild",
       "locale": "Sprache",
       "timezone": "Zeitzone",
       "itemsPerPage": "Elemente pro Seite",
@@ -286,7 +286,7 @@
       "completedOn": "Abgeschlossen am",
       "variants": "Varianten",
       "emailVerified": "E-Mail verifiziert",
-      "issueTracker": "Problemverfolgung",
+      "issueTracker": "Ticket-Tracker",
       "caseFields": "Fallfelder",
       "resultFields": "Ergebnisfelder",
       "displayName": "Anzeigename",
@@ -315,9 +315,9 @@
       "defaultValue": "Standardwert",
       "checked": "Geprüft",
       "version": "Version",
-      "issues": "Probleme",
-      "internalIssues": "Interne Probleme",
-      "externalIssues": "{provider} Probleme",
+      "issues": "Tickets",
+      "internalIssues": "Interne Tickets",
+      "externalIssues": "{provider} Tickets",
       "data": "Daten",
       "note": "Notiz",
       "externalId": "Externe ID",
@@ -517,7 +517,7 @@
       "stepCount": "Schrittzahl",
       "enterText": "Text eingeben...",
       "enterUrl": "URL eingeben",
-      "issueIdExample": "AUSGABE-123",
+      "issueIdExample": "ISSUE-123",
       "selectPriorityValuesOrEmpty": "Prioritätswerte auswählen (oder für alle leer lassen)"
     },
     "errors": {
@@ -548,7 +548,7 @@
       "unauthorized": "Sie sind nicht befugt, diese Aktion durchzuführen.",
       "accessDenied": "Zugriff verweigert",
       "sessionNotFound": "Sitzung nicht gefunden oder ungültig.",
-      "issueTrackerNotConfigured": "Für dieses Projekt ist kein Issue-Tracker konfiguriert.",
+      "issueTrackerNotConfigured": "Für dieses Projekt ist kein Ticket-Tracker konfiguriert.",
       "noUserSession": "Keine Benutzersitzung gefunden",
       "noProjectId": "Keine Projekt-ID gefunden",
       "unknownErrorWithMessage": "Es ist ein unbekannter Fehler aufgetreten. {message}",
@@ -564,11 +564,11 @@
         "message": "Die Aufgaben konnten nicht abgerufen werden. Bitte versuchen Sie es später erneut."
       },
       "issueManagement": {
-        "linkedSuccess": "Problem erfolgreich verknüpft",
+        "linkedSuccess": "Ticket erfolgreich verknüpft",
         "linkError": "Fehler beim Verknüpfen",
-        "unlinkedSuccess": "Problem erfolgreich entkoppelt",
+        "unlinkedSuccess": "Verknüpfung erfolgreich aufgehoben",
         "unlinkError": "Fehler beim Aufheben der Verknüpfung",
-        "noActiveIntegration": "Für dieses Projekt wurde keine aktive Integration gefunden."
+        "noActiveIntegration": "Keine aktive Integration für das Projekt gefunden"
       },
       "roleRequiredForSpecificRole": "Die Angabe einer Rolle ist erforderlich, wenn der Zugriffstyp „Spezifische Rolle“ lautet.",
       "projectCreationFailed": "Projekterstellung fehlgeschlagen, keine ID zurückgegeben.",
@@ -576,7 +576,7 @@
       "workflowStateExists": "Der Workflow-Status existiert bereits. Bitte wählen Sie einen neuen Namen.",
       "failedToLoadCaseData": "Die Falldaten konnten nicht geladen werden. Speichern nicht möglich.",
       "atLeastOneTagRequired": "Mindestens ein Tag ist erforderlich.",
-      "atLeastOneIssueRequired": "Mindestens eine Ausgabe muss vorliegen",
+      "atLeastOneIssueRequired": "Mindestens ein Ticket ist erforderlich",
       "atLeastOneOptionRequired": "Mindestens eine Option muss ausgewählt werden.",
       "valueRequired": "Wert erforderlich",
       "contentRequired": "Inhalte werden benötigt",
@@ -632,14 +632,14 @@
       "linkSsoAccount": "SSO-Konto verknüpfen",
       "userProfile": "Benutzerprofil",
       "users": "Benutzer",
-      "issues": "Probleme",
+      "issues": "Tickets",
       "tags": "Tags",
       "tagDetails": "Tag-Details",
       "aiModels": "KI-Modelle",
       "integrations": "Integrationen",
       "quickscript": "QuickScript",
       "webhooks": "Webhooks",
-      "shares": "Aktien",
+      "shares": "Freigaben",
       "datasets": "Gemeinsame Datensätze",
       "repository": "Repository",
       "testCaseVersion": "Testfallversion",
@@ -665,7 +665,7 @@
       "group": "Gruppe",
       "selectAll": "Alle auswählen",
       "selectRow": "Zeile auswählen",
-      "removeIssue": "Problem beheben",
+      "removeIssue": "Ticket entfernen",
       "selectDeselectAllAddEdit": "Alle auswählen/abwählen Hinzufügen/Bearbeiten",
       "selectDeselectAllDelete": "Alle auswählen/abwählen Löschen",
       "selectDeselectAllClose": "Alle auswählen/abwählen Schließen",
@@ -925,16 +925,16 @@
         "parent": "Elternteil"
       },
       "issues": {
-        "errorLoadingDetails": "Details zum Ladefehler: ",
+        "errorLoadingDetails": "Fehler beim Laden der Ticketdetails: ",
         "updated": "Aktualisiert: ",
         "openInJira": "In Jira öffnen",
         "openInExternalSystem": "Öffnen in {provider}",
-        "assignee": "Abtretungsempfänger",
+        "assignee": "Zugewiesen an",
         "status": "Status: ",
         "clickToOpenInNewTab": "Zum Öffnen in neuem Tab klicken",
         "url": "URL: ",
         "externalId": "Externe ID: ",
-        "viewIn": "Ansehen in",
+        "viewIn": "Anzeigen in",
         "fieldType": "Feldtyp: ",
         "richTextContent": "Rich-Text-Inhalte",
         "invalidContent": "Ungültiger Inhalt",
@@ -961,7 +961,7 @@
           "windows1252": "Windows-1252"
         }
       },
-      "loadingIssueTracker": "Lade Informationen zum Problem-Tracker...",
+      "loadingIssueTracker": "Lade Informationen zum Ticket-Tracker...",
       "enterDocumentation": "Dokumente eingeben...",
       "noAutomatedTestResults": "Für diesen Durchlauf wurden keine automatisierten Testergebnisse gefunden."
     },
@@ -1189,21 +1189,21 @@
       "moreSettingsComingSoon": "Weitere Einstellungen folgen in Kürze.",
       "moreSettingsDescription": "Weitere Projektkonfigurationsoptionen werden in zukünftigen Updates hier verfügbar sein.",
       "integrations": {
-        "description": "Verwaltung der Problemintegrationen von Drittanbietern für dieses Projekt",
-        "availableIntegrations": "Verfügbare Problemintegrationen",
-        "availableDescription": "Wählen Sie eine Problemintegration aus, um eine Verbindung zu diesem Projekt herzustellen.",
+        "description": "Integration von Ticket-Trackern für dieses Projekt verwalten",
+        "availableIntegrations": "Verfügbare Ticket-Tracker",
+        "availableDescription": "Wählen Sie einen Ticket-Tracker aus, um diesen mit dem Projekt zu Verbinden.",
         "configuredIntegration": "Konfigurierte Integration",
-        "noIntegrationAssigned": "Keine Problemintegration zugewiesen",
-        "noIntegrationDescription": "Wählen Sie eine Problemintegration aus den verfügbaren Optionen aus, um zu beginnen.",
-        "selectIntegration": "Wählen Sie eine Problemintegration zur Konfiguration aus.",
+        "noIntegrationAssigned": "Keine Ticket-Tracker zugewiesen",
+        "noIntegrationDescription": "Wählen Sie einen verfügbaren Ticket-Tracker aus, um zu beginnen.",
+        "selectIntegration": "Wählen Sie eine Ticket-Tracker zur Konfiguration aus.",
         "integration": {
-          "assignError": "Fehler beim Zuweisen der Problemintegration",
+          "assignError": "Fehler beim Zuweisen des Ticket-Trackers",
           "updateSuccess": "Integrationseinstellungen aktualisiert",
-          "updateError": "Fehler beim Aktualisieren der Einstellungen für die Problemintegration",
-          "removeError": "Problem beim Entfernen der Integrationsproblematik fehlgeschlagen",
+          "updateError": "Fehler beim Aktualisieren der Einstellungen für den Ticket-Tracker",
+          "removeError": "Fehler beim Entfernen des Ticket-Trackers",
           "removeIntegration": "Integration entfernen",
           "confirmRemove": "Möchten Sie die {name} -Integration wirklich entfernen?",
-          "authDescription": "Sie müssen sich mit {provider} authentifizieren, um diese Problemintegration zu nutzen.",
+          "authDescription": "Sie müssen sich mit {provider} authentifizieren, um diesen Ticket-Tracker zu nutzen.",
           "authenticating": "Authentifizierung läuft...",
           "authSuccess": "Authentifizierung erfolgreich",
           "selectProject": "Projekt auswählen {provider}",
@@ -1211,25 +1211,25 @@
           "linkedProject": "Verknüpftes Projekt",
           "loadProjectsError": "Projekte konnten nicht geladen werden",
           "settingsSaved": "Integrationseinstellungen erfolgreich gespeichert",
-          "saveSettingsError": "Fehler beim Speichern der Einstellungen für die Problemintegration",
+          "saveSettingsError": "Fehler beim Speichern der Einstellungen für den Ticket-Tracker",
           "authorizationRequired": "Autorisierung erforderlich",
           "authenticationError": "Die Authentifizierung ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
-          "authorizationRequiredDescription": "Sie müssen diese Problemintegration autorisieren, um auf externe Projekte zugreifen zu können.",
-          "authorizationMessage": "Bitte genehmigen Sie die Fortsetzung der Problemintegration.",
+          "authorizationRequiredDescription": "Sie müssen diesen Ticket-Tracker autorisieren, um auf externe Projekte zugreifen zu können.",
+          "authorizationMessage": "Bitte autorisieren Sie die Ticket-Tracker Integration um fortzufahren.",
           "authorizeIntegration": "Autorisieren {name}",
           "integrationSettings": "{name} Einstellungen",
-          "integrationSettingsDescription": "Konfigurieren Sie die Einstellungen für die Problemintegration für dieses Projekt.",
+          "integrationSettingsDescription": "Konfigurieren Sie die Einstellungen für den Ticket-Tracker für dieses Projekt.",
           "selectExternalProject": "Externes Projekt auswählen",
           "refreshProjects": "Projekte aktualisieren",
-          "defaultIssueType": "Standard-Problemtyp",
-          "selectDefaultIssueType": "Standard-Problemtyp auswählen",
-          "defaultIssueTypeDescription": "Dieser Vorgangstyp wird beim Erstellen neuer Vorgänge vorausgewählt.",
+          "defaultIssueType": "Standard-Ticket-Typ",
+          "selectDefaultIssueType": "Standard-Ticket-Typ auswählen",
+          "defaultIssueTypeDescription": "Dieser Ticket-Typ wird beim Erstellen neuer Tickets vorausgewählt.",
           "issueTypePlaceholder": "z. B. Bug, Aufgabe, Story",
           "defaultComponent": "Standardkomponente",
           "componentPlaceholder": "z. B. Frontend, Backend",
           "automaticSync": "Automatische Synchronisierung",
-          "automaticSyncDescription": "Automatische Synchronisierung von Problemen zwischen TestPlanIt und dem externen System",
-          "simpleUrlDescription": "Diese Problemintegration verwendet ein einfaches URL-Muster, um auf externe Probleme zu verlinken. Probleme werden in einem neuen Tab mithilfe des konfigurierten URL-Musters geöffnet.",
+          "automaticSyncDescription": "Automatische Synchronisierung von Tickets zwischen TestPlanIt und dem externen System",
+          "simpleUrlDescription": "Dieser Ticker-Tracker verwendet ein einfaches URL-Muster, um auf externe Tickets zu verlinken. Tickets werden in einem neuen Tab mithilfe des konfigurierten URL-Musters geöffnet.",
           "externalProjectHelp": "Hiermit wird das Standardprojekt für die Erstellung neuer Tickets aus TestPlanIt festgelegt. Tickets aus anderen externen Projekten können weiterhin verknüpft und synchronisiert werden – jedes Ticket verwendet sein eigenes Quellprojekt.",
           "linkedProjects": "Verknüpfte externe Projekte",
           "linkedProjectsDescription": "Externe Projekte, die über diese Integration verbunden wurden.",
@@ -1368,16 +1368,16 @@
           "sessionCompleted": "Sitzung abgeschlossen",
           "sessionDuplicated": "Sitzung dupliziert",
           "sessionResultAdded": "Sitzungsergebnis hinzugefügt",
-          "issueCreated": "Problem erstellt",
-          "issueUpdated": "Problem aktualisiert",
-          "issueDeleted": "Problem gelöscht",
+          "issueCreated": "Ticket erstellt",
+          "issueUpdated": "Ticket aktualisiert",
+          "issueDeleted": "Ticket gelöscht",
           "caseCreated": "Fall erstellt",
           "caseUpdated": "Fall aktualisiert",
           "caseDeleted": "Fall gelöscht",
           "jiraIssueCreated": "Jira-Ticket erstellt",
           "jiraIssueUpdated": "Jira-Ticket aktualisiert",
-          "jiraIssueDeleted": "Jira-Vorgang gelöscht",
-          "githubIssues": "GitHub-Probleme-Event",
+          "jiraIssueDeleted": "Jira-Ticket gelöscht",
+          "githubIssues": "GitHub-Issue-Event",
           "githubPullRequest": "GitHub-Pull-Anfrage",
           "githubPush": "GitHub-Push",
           "githubIssueComment": "GitHub-Issue-Kommentar",
@@ -1386,7 +1386,7 @@
           "adoWorkitemDeleted": "Azure DevOps-Arbeitselement gelöscht",
           "webhookTest": "Testereignis"
         },
-        "outboundSubsIssues": "Probleme",
+        "outboundSubsIssues": "Tickets",
         "outboundSubsCases": "Fälle",
         "outboundSubsSelectAll": "Wählen Sie alle Elemente in diesem Abschnitt aus.",
         "outboundCreateSubmit": "Webhook erstellen",
@@ -1427,7 +1427,7 @@
         "outboundSecretDone": "Erledigt",
         "inboundAddButton": "Füge einen eingehenden Webhook hinzu.",
         "inboundChooserTitle": "Adapter auswählen",
-        "inboundChooserDescription": "Wählen Sie den Issue-Tracker aus, der Webhooks an TestPlanIt sendet. Jedes Projekt kann einen Jira-, einen GitHub- und einen Azure DevOps-Webhook für eingehende Anfragen haben.",
+        "inboundChooserDescription": "Wählen Sie den Ticket-Tracker aus, der Webhooks an TestPlanIt sendet. Jedes Projekt kann einen Jira-, einen GitHub- und einen Azure DevOps-Webhook für eingehende Anfragen haben.",
         "inboundChooserJira": "Jira",
         "inboundChooserGithub": "GitHub",
         "inboundChooserAdo": "Azure DevOps",
@@ -1441,11 +1441,11 @@
         "inboundGithubTitle": "GitHub-Webhook",
         "inboundGithubScopeHint": "GitHub <code>veröffentlicht</code> events aktualisieren verknüpfte TestPlanIt Issues. Pull-Request und Issue-Kommentar Ereignisse werden akzeptiert, aber Aktualisieren Sie die Probleme noch nicht.",
         "inboundGitlabTitle": "GitLab-Eingangs-Webhook",
-        "inboundGitlabScopeHint": "GitLab-Ereignisse ( <code>Issue Hook</code> ) aktualisieren verknüpfte TestPlanIt-Vorgänge. Andere Ereignistypen werden zwar akzeptiert, aktualisieren aber keine Vorgänge.",
+        "inboundGitlabScopeHint": "GitLab-Ereignisse ( <code>Issue Hook</code> ) aktualisieren verknüpfte TestPlanIt-Tickets. Andere Ereignistypen werden zwar akzeptiert, aktualisieren aber keine Tickets.",
         "inboundGiteaTitle": "Gitea Inbound-Webhook",
         "inboundGiteaScopeHint": "Gitea <code>veröffentlicht</code> Ereignisse, die mit TestPlanIt verknüpft sind. Andere Ereignistypen werden akzeptiert, aber keine Probleme aktualisieren.",
         "inboundAdoTitle": "Azure DevOps eingehender Webhook",
-        "inboundAdoScopeHint": "Azure DevOps-Ereignisse <code>workitem.updated</code> aktualisieren verknüpfte TestPlanIt-Vorgänge. Andere Ereignisse werden zwar akzeptiert, aktualisieren aber keine Vorgänge.",
+        "inboundAdoScopeHint": "Azure DevOps-Ereignisse <code>workitem.updated</code> aktualisieren verknüpfte TestPlanIt-Tickets. Andere Ereignisse werden zwar akzeptiert, aktualisieren aber keine Tickets.",
         "inboundAdoUsername": "Benutzername",
         "inboundAdoPassword": "Passwort",
         "inboundAdoUsernamePlaceholder": "Servicekonto",
@@ -1460,7 +1460,7 @@
         "setupStepsGithubStep1": "Gehen Sie in Ihrem GitHub-Repository zu Einstellungen → Webhooks → Webhook hinzufügen.",
         "setupStepsGithubStep2": "Fügen Sie die unten stehende URL in das Feld „Payload-URL“ ein. Stellen Sie den Inhaltstyp auf „application/json“ ein.",
         "setupStepsGithubStep3": "Fügen Sie das unten stehende Geheimnis in das Feld „Geheimnis“ ein.",
-        "setupStepsGithubStep4": "Wählen Sie „Einzelne Ereignisse auswählen“ und aktivieren Sie „Probleme“.",
+        "setupStepsGithubStep4": "Wählen Sie „Einzelne Ereignisse auswählen“ und aktivieren Sie „Tickets“.",
         "setupStepsGithubStep5": "Klicken Sie auf „Webhook hinzufügen“. Verwenden Sie anschließend „Test-Webhook senden“, um die Pipeline zu überprüfen.",
         "setupStepsAdoStep1": "Gehen Sie in Ihrem Azure DevOps-Projekt zu Projekteinstellungen → Diensthooks → Abonnement erstellen.",
         "setupStepsAdoStep2": "Wählen Sie als Dienst „Web Hooks“ aus. Stellen Sie den Auslöser auf „Arbeitselement aktualisiert“ ein.",
@@ -1469,12 +1469,12 @@
         "setupStepsAdoStep5": "Speichern Sie das Abonnement. Verwenden Sie unten „Test-Webhook senden“, um die Pipeline zu überprüfen.",
         "setupStepsGitlabStep1": "In GitLab gehen Sie zu Ihrem Projekt → Einstellungen → Webhooks.",
         "setupStepsGitlabStep2": "Fügen Sie die unten stehende URL in das Feld „URL“ ein. Fügen Sie den unten stehenden geheimen Token in das Feld „Geheimer Token“ ein.",
-        "setupStepsGitlabStep3": "Aktivieren Sie unter „Trigger“ die Option „Problemereignisse“.",
+        "setupStepsGitlabStep3": "Aktivieren Sie unter „Trigger“ die Option „Ticket-Events“.",
         "setupStepsGitlabStep4": "Klicken Sie auf „Webhook hinzufügen“. Verwenden Sie anschließend „Test-Webhook senden“, um die Pipeline zu überprüfen.",
         "setupStepsGiteaStep1": "In Gitea gehen Sie zu Ihrem Repository → Einstellungen → Webhooks.",
         "setupStepsGiteaStep2": "Klicken Sie auf „Webhook hinzufügen“ und wählen Sie „Gitea“.",
         "setupStepsGiteaStep3": "Fügen Sie die unten stehende URL in das Feld „Ziel-URL“ ein. Fügen Sie den unten stehenden Geheimcode in das Feld „Geheimcode“ ein.",
-        "setupStepsGiteaStep4": "Wählen Sie unter „Auslösen bei“ die Option „Probleme“ aus.",
+        "setupStepsGiteaStep4": "Wählen Sie unter „Auslösen bei“ die Option „Tickets“ aus.",
         "setupStepsGiteaStep5": "Klicken Sie auf „Webhook hinzufügen“. Verwenden Sie unten „Test-Webhook senden“, um die Pipeline zu überprüfen.",
         "deliveriesTab": "Lieferungen",
         "filterConfigPlaceholder": "Alle Webhooks",
@@ -1602,7 +1602,7 @@
         }
       },
       "shares": {
-        "title": "Aktien verwalten",
+        "title": "Freigaben verwalten",
         "description": "Alle Freigabelinks für dieses Projekt anzeigen und verwalten"
       },
       "datasets": {
@@ -1781,6 +1781,37 @@
         "disconnectSuccess": "Code-Repository getrennt",
         "disconnectError": "Fehler beim Trennen des Code-Repositorys"
       }
+    },
+    "matrix": {
+      "metaTitle": "Matrixansicht",
+      "pageTitle": "Iterationsmatrix",
+      "loading": "Ladematrix…",
+      "loadError": "Die Matrixansicht konnte nicht geladen werden. Versuchen Sie es erneut oder schränken Sie Ihre Filter ein.",
+      "cellCapShort": "Diese Matrix würde {cells, number} Zellen erzeugen, was den Grenzwert von {threshold, number} Zellen überschreitet. Verfeinern Sie die Filter, um fortzufahren.",
+      "caseColumnHeader": "Fall / Parameterzeile",
+      "cellNotRun": "Nicht ausführen",
+      "cellSummary": "{pass, number} bestanden, {fail, number} fehlgeschlagen, {notRun, number} nicht ausgeführt",
+      "popoverTitle": "{count, plural, =1 {# Iteration} other {# Iterationen}}",
+      "iterationUnlabeled": "Iteration #{index, number}",
+      "popoverInflightHint": "Die während des Fluges aufgezeichneten Iterationen erscheinen hier.",
+      "filterStatus": "{count, plural, =0 {Status} one {Status (#)} other {Status (#)}}",
+      "filterConfig": "{count, plural, =0 {Konfiguration} one {Konfiguration (#)} other {Konfiguration (#)}}",
+      "filterDataset": "{count, plural, =0 {Datensatz} one {Datensatz (#)} other {Datensatz (#)}}",
+      "filterDateFrom": "Aus",
+      "filterDateTo": "Zu",
+      "configNone": "(keine Konfiguration)",
+      "clearFilter": "Klar",
+      "filterEmpty": "Keine Optionen verfügbar",
+      "resetFilters": "Filter zurücksetzen",
+      "exportCsv": "CSV exportieren",
+      "cellCapTitle": "Die Matrix würde {cellCount, number} Zellen rendern (limit {threshold, number})",
+      "cellCapSuggestionFilterCases": "Versuchen Sie, die Anzahl der Testfälle zu reduzieren – diese Achse trägt am meisten dazu bei.",
+      "cellCapSuggestionFilterConfigs": "Versuchen Sie, die Anzahl der Konfigurationen zu reduzieren – diese Achse trägt am meisten dazu bei.",
+      "cellCapSuggestionFilterDates": "Versuchen Sie, den Datumsbereich einzugrenzen – die Parameteriterationen dominieren die Zellenzahl.",
+      "cellCapAxisCases": "Testfälle: {count, number}",
+      "cellCapAxisConfigs": "Konfigurationen: {count, number}",
+      "cellCapAxisMaxIters": "Größte Anzahl an Parameterzeilen für einen beliebigen Fall: {count, number}",
+      "cellCapResetFilters": "Filter zurücksetzen und erneut versuchen"
     }
   },
   "milestones": {
@@ -2194,7 +2225,7 @@
     "viewProfile": "Profil ansehen",
     "locale": "Ort",
     "themes": {
-      "light": "Licht",
+      "light": "Hell",
       "dark": "Dunkel",
       "system": "System",
       "green": "Grün",
@@ -2462,9 +2493,9 @@
       "anyTag": "Beliebiges Tag",
       "noTags": "Keine Tags",
       "byTag": "Etikett",
-      "byIssue": "Ausgabe",
-      "anyIssue": "Irgendein Problem",
-      "noIssues": "Keine Probleme"
+      "byIssue": "Ticket",
+      "anyIssue": "Jedes Ticket",
+      "noIssues": "Keine Tickets"
     },
     "noFoldersTitle": "Noch keine Ordner",
     "noFoldersDescription": "Beginnen Sie damit, Ihren ersten Ordner anzulegen, um Ihre Testfälle zu organisieren.",
@@ -2670,7 +2701,7 @@
     "generateTestCases": {
       "buttonText": "Testfälle generieren",
       "title": "Testfälle mit KI generieren",
-      "description": "Nutzen Sie KI, um automatisch umfassende Testfälle aus externen Problemen oder Dokumenten zu generieren.",
+      "description": "Nutzen Sie KI, um automatisch umfassende Testfälle aus externen Tickets oder Dokumenten zu generieren.",
       "loadingResults": "Generierte Testfälle werden geladen...",
       "generatingPreparing": "Anfrage wird vorbereitet...",
       "generatingCallingAi": "Warten auf die Generierung von Testfällen durch die KI...",
@@ -2880,7 +2911,7 @@
       },
       "linkedIssuesDroppedTitle": "Einige damit zusammenhängende Probleme wurden nicht berücksichtigt.",
       "linkedIssuesDropped": "{count, plural, =1 {# verknüpftes Problem wurde verworfen} other {# verknüpfte Probleme wurden verworfen}} aufgrund des Token-Budgets: {keys}.",
-      "linkedIssuesPreviewHeading": "Zugehörige Themen, die berücksichtigt werden"
+      "linkedIssuesPreviewHeading": "Verknüpfte Tickets, die aufgenommen werden"
     }
   },
   "tags": {
@@ -3107,16 +3138,16 @@
       "quickScript": "QuickScript",
       "sso": "Authentifizierung",
       "security": "Sicherheit",
-      "trash": "Müll",
+      "trash": "Papierkorb",
       "reports": "Berichte",
-      "shares": "Aktien verwalten",
+      "shares": "Freigaben verwalten",
       "elasticsearch": "Suchmaschine",
       "queues": "Jobwarteschlangen",
       "auditLogs": "Audit-Protokolle",
       "apiTokens": "API-Tokens",
       "quickscriptTemplates": "QuickScript-Vorlagen",
       "testManagement": "Testmanagement",
-      "peopleAndAccess": "Menschen und Zugang",
+      "peopleAndAccess": "Personen & Zugriff",
       "toolsAndIntegrations": "Tools & Integrationen",
       "system": "System"
     },
@@ -5098,7 +5129,7 @@
         "llmBudgetThresholdTitle": "LLM-Budget {threshold}% Ausgeschöpft",
         "llmBudgetExceededMessage": "{providerName} hat sein monatliches Budget überschritten: {spend} hat von {budget} Budget ausgegeben.",
         "llmBudgetThresholdMessage": "{providerName} hat {threshold}% seines monatlichen Budgets verwendet: {spend} von {budget}.",
-        "userRegisteredTitle": "Neubenutzerregistrierung",
+        "userRegisteredTitle": "Neue Benutzerregistrierung",
         "userRegisteredMessageSso": "{userName} ({userEmail}) hat sich über SSO registriert",
         "userRegisteredMessageForm": "{userName} ({userEmail}) hat sich über das Anmeldeformular registriert",
         "viewUserList": "Benutzerliste anzeigen",
@@ -5199,7 +5230,7 @@
     }
   },
   "issues": {
-    "linkedIssues": "Verwandte Themen",
+    "linkedIssues": "Verknüpfte Tickets",
     "linkedIssuesDescription": "Probleme im Zusammenhang mit diesem Artikel",
     "refreshed": "Aktualisierte Ausgaben",
     "refreshedDescription": "Die Liste der verlinkten Probleme wurde aktualisiert.",
@@ -5232,7 +5263,7 @@
     "searchExternalDescription": "Suche nach {provider} Ausgaben, um auf diesen Eintrag zu verlinken.",
     "error": "Fehler beim Laden",
     "errorDescription": "Probleme beim Laden. Bitte versuchen Sie es erneut.",
-    "selectIssues": "Themen auswählen",
+    "selectIssues": "Tickets auswählen",
     "authRequiredDescription": "Bitte authentifizieren Sie sich, um nach Problemen zu suchen.",
     "integrationNotConfigured": "Integration nicht konfiguriert",
     "integrationNotConfiguredDescription": "Diese Integration ist noch nicht vollständig konfiguriert. Bitte wenden Sie sich an Ihren Projektadministrator, um das externe Projekt in den Projekteinstellungen zu konfigurieren.",
@@ -5394,7 +5425,7 @@
       "dateFormat": "## Datumsformat\nLegt Ihr bevorzugtes Datumsanzeigeformat fest.\n\n- Wird in der gesamten Anwendung einheitlich angewendet.\n- Trägt zur korrekten Datumsinterpretation bei.\n- Änderungen werden sofort wirksam.\n- Die im Dropdown-Menü angezeigten Beispiele entsprechen dem tatsächlichen Format.",
       "timeFormat": "## Zeitformat\nLegt Ihr bevorzugtes Zeitanzeigeformat fest.\n\n– Wählen Sie zwischen 12-Stunden- und 24-Stunden-Format.\n– Wird in der gesamten Anwendung einheitlich angewendet.\n– Änderungen werden sofort wirksam.\n– Die im Dropdown-Menü angezeigten Beispiele entsprechen dem tatsächlichen Format.",
       "timezone": "## Zeitzone\nLegt Ihre bevorzugte Zeitzone für die Datums- und Zeitanzeige fest.\n\n- Wird in der gesamten Anwendung einheitlich angewendet.",
-      "theme": "## Design\nWählen Sie Ihr bevorzugtes visuelles Design für die Anwendung.\n\n- **System:** Passt sich automatisch dem Design Ihres Betriebssystems an.\n- **Hell:** Klare, helle Oberfläche für die Nutzung am Tag.\n- **Dunkel:** Augenschonender Dunkelmodus für Umgebungen mit wenig Licht.\n- **Grün, Orange, Lila:** Ein fröhlicher Farbtupfer!",
+      "theme": "## Erscheinungsbild\nWählen Sie Ihr bevorzugtes Erscheinungsbild für die Anwendung.\n\n- **System:** Passt sich automatisch dem Design Ihres Betriebssystems an.\n- **Hell:** Klare, helle Oberfläche für die Nutzung am Tag.\n- **Dunkel:** Augenschonender Dunkelmodus für Umgebungen mit wenig Licht.\n- **Grün, Orange, Lila:** Ein fröhlicher Farbtupfer!",
       "locale": "## Sprache\nWählen Sie Ihre bevorzugte Sprache für die Anwendungsoberfläche.\n\n- Ändert alle Texte, Beschriftungen und Meldungen in die gewählte Sprache.\n- Datums- und Zeitformate werden an regionale Konventionen angepasst.\n- Wirkt sofort ohne Seitenaktualisierung.\n- Verfügbare Sprachen hängen von den installierten Übersetzungen ab.",
       "notificationMode": "## Benachrichtigungseinstellungen\nSteuert, wie Sie Benachrichtigungen für Arbeitsaufträge und Aktualisierungen erhalten.\n\n- **Globale Einstellungen verwenden:** Systemstandardeinstellungen der Administratoren übernehmen\n- **Keine Benachrichtigungen:** Alle Benachrichtigungen deaktivieren\n- **Nur in der App:** Benachrichtigungen nur innerhalb der Anwendung erhalten\n- **In-App + E-Mail (Sofort):** In-App-Benachrichtigungen und sofortige E-Mail-Benachrichtigungen erhalten\n- **In-App + E-Mail (Tägliche Zusammenfassung):** In-App-Benachrichtigungen und eine tägliche E-Mail-Zusammenfassung erhalten\n\nSie können diese Einstellung jederzeit an Ihren Workflow anpassen."
     },
@@ -5762,7 +5793,7 @@
         },
         "account": {
           "title": "Kontomenü",
-          "content": "Passen Sie Ihr Profil, Ihre Benachrichtigungseinstellungen und Ihre Kontoeinstellungen an. Wechseln Sie zwischen hellem und dunklem Design."
+          "content": "Passen Sie Ihr Profil, Ihre Benachrichtigungseinstellungen und Ihre Kontoeinstellungen an. Wechseln Sie zwischen hellem und dunklem Erscheinungsbild."
         },
         "assignments": {
           "content": "Hier sehen Sie die Ihnen zugewiesenen Testfälle und -läufe aus allen Projekten. Dies ist Ihr persönliches Dashboard zur Nachverfolgung Ihrer Testarbeit."
@@ -5890,7 +5921,7 @@
           "content": "Verwalten Sie globale Anwendungseinstellungen und Systempräferenzen. Konfigurieren Sie Standardwerte, Funktionsumschalter und systemweite Verhaltensweisen."
         },
         "trash": {
-          "title": "Systemmüll",
+          "title": "System-Papierkorb",
           "content": "Gelöschte Elemente projektübergreifend anzeigen und verwalten. Versehentlich gelöschte Inhalte wiederherstellen oder Elemente endgültig aus dem System entfernen."
         }
       },
@@ -6115,6 +6146,10 @@
         "executionLog": {
           "label": "Ausführungsprotokoll",
           "description": "Einfache Liste einzelner Testergebnisdatensätze mit Status, Ausführendem und Zeitstempel"
+        },
+        "iterationMatrix": {
+          "label": "Iterationsmatrix",
+          "description": "Fälle × Konfigurationen × Parameterzeilen mit Zusammenfassung des schlechtesten Status pro Zelle"
         }
       },
       "flakyTests": {
@@ -6374,7 +6409,7 @@
       "dialogDescription": "Erstellen Sie einen teilbaren Link oder verwalten Sie bestehende freigegebene Berichtslinks.",
       "tabs": {
         "create": "Erstellen Teilen",
-        "list": "Meine Aktien"
+        "list": "Meine Freigaben"
       },
       "shareMode": {
         "label": "Freigabemodus",
@@ -6432,9 +6467,9 @@
         "poweredBy": "Angetrieben von"
       },
       "manageShares": {
-        "title": "Aktien verwalten",
+        "title": "Freigaben verwalten",
         "description": "Alle Freigabelinks für dieses Projekt anzeigen und verwalten",
-        "adminTitle": "Alle Aktien verwalten",
+        "adminTitle": "Alle Freigaben verwalten",
         "adminDescription": "Freigabelinks für alle Projekte anzeigen und verwalten"
       },
       "shareList": {

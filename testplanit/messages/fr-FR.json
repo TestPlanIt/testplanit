@@ -1781,6 +1781,37 @@
         "disconnectSuccess": "Dépôt de code déconnecté",
         "disconnectError": "Échec de la déconnexion du dépôt de code"
       }
+    },
+    "matrix": {
+      "metaTitle": "Vue matricielle",
+      "pageTitle": "Matrice d'itération",
+      "loading": "Matrice de chargement…",
+      "loadError": "Impossible de charger la vue matricielle. Veuillez réessayer ou affiner vos filtres.",
+      "cellCapShort": "Cette matrice afficherait {cells, number} cellules, ce qui dépasse la limite de {threshold, number} cellules. Affinez les filtres pour continuer.",
+      "caseColumnHeader": "Ligne de cas/paramètre",
+      "cellNotRun": "Ne pas exécuter",
+      "cellSummary": "{pass, number} réussi, {fail, number} échec, {notRun, number} non exécuté",
+      "popoverTitle": "{count, plural, =1 {# itération} other {# itérations}}",
+      "iterationUnlabeled": "Itération n°{index, number}",
+      "popoverInflightHint": "Les itérations en vol apparaissent ici une fois enregistrées.",
+      "filterStatus": "{count, plural, =0 {Statut} one {Statut (#)} other {Statut (#)}}",
+      "filterConfig": "{count, plural, =0 {Configuration} one {Configuration (#)} other {Configuration (#)}}",
+      "filterDataset": "{count, plural, =0 {Jeu de données} one {Jeu de données (#)} other {Jeu de données (#)}}",
+      "filterDateFrom": "Depuis",
+      "filterDateTo": "À",
+      "configNone": "(aucune configuration)",
+      "clearFilter": "Clair",
+      "filterEmpty": "Aucune option disponible",
+      "resetFilters": "Réinitialiser les filtres",
+      "exportCsv": "Exporter au format CSV",
+      "cellCapTitle": "La matrice afficherait {cellCount, number} cellules (limite {threshold, number})",
+      "cellCapSuggestionFilterCases": "Essayez de filtrer pour n'afficher qu'un nombre réduit de cas de test ; cet axe est celui qui contribue le plus.",
+      "cellCapSuggestionFilterConfigs": "Essayez de filtrer pour n'afficher qu'un nombre réduit de configurations ; cet axe est celui qui contribue le plus.",
+      "cellCapSuggestionFilterDates": "Essayez de réduire la plage de dates : les itérations des paramètres dominent le nombre de cellules.",
+      "cellCapAxisCases": "Cas de test : {count, number}",
+      "cellCapAxisConfigs": "Configurations : {count, number}",
+      "cellCapAxisMaxIters": "Nombre maximal de lignes de paramètres pour tous les cas : {count, number}",
+      "cellCapResetFilters": "Réinitialisez les filtres et réessayez."
     }
   },
   "milestones": {
@@ -6115,6 +6146,10 @@
         "executionLog": {
           "label": "Journal d'exécution",
           "description": "Liste plate des enregistrements de résultats de tests individuels avec statut, exécuteur et horodatage"
+        },
+        "iterationMatrix": {
+          "label": "Matrice d'itération",
+          "description": "Cas × configurations × lignes de paramètres avec cumul du pire état par cellule"
         }
       },
       "flakyTests": {
