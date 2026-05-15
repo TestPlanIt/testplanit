@@ -1781,6 +1781,18 @@
         "disconnectSuccess": "Code repository disconnected",
         "disconnectError": "Failed to disconnect code repository"
       }
+    },
+    "matrix": {
+      "metaTitle": "Matrix View",
+      "loading": "Loading matrix…",
+      "loadError": "Could not load the matrix view. Try again or narrow your filters.",
+      "cellCapShort": "This matrix would render {cells, number} cells, which exceeds the {threshold, number} cell limit. Narrow the filters to continue.",
+      "caseColumnHeader": "Case / parameter row",
+      "cellNotRun": "Not run",
+      "cellSummary": "{pass, number} passed, {fail, number} failed, {notRun, number} not run",
+      "popoverTitle": "{count, plural, =1 {# iteration} other {# iterations}}",
+      "iterationUnlabeled": "Iteration #{index, number}",
+      "popoverInflightHint": "In-flight iterations appear here once recorded."
     }
   },
   "milestones": {
