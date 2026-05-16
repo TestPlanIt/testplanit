@@ -221,7 +221,17 @@ function extractEntityName(
       .join(":");
   }
 
-  return result[field];
+  const value = result[field];
+
+  // WR-08: ApiToken.name is nullable in the schema. When a token row is
+  // saved without a name, audit rows would otherwise record entityName as
+  // undefined and become harder to triage. Prefer name -> tokenPrefix ->
+  // sentinel so the audit row always carries some human-readable signal.
+  if (entityType === "apiToken" && (value === null || value === undefined)) {
+    return result.tokenPrefix ?? "(unnamed token)";
+  }
+
+  return value;
 }
 
 async function getPrisma() {

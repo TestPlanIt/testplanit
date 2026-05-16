@@ -154,7 +154,7 @@ function getAuditAction(operation: string): string | null {
   }
 }
 
-// Replicate extractEntityName
+// Replicate extractEntityName (WR-08 keeps the apiToken fallback in sync)
 function extractEntityName(
   entityType: string,
   result: any
@@ -186,7 +186,11 @@ function extractEntityName(
       .join(":");
   }
 
-  return result[field];
+  const value = result[field];
+  if (entityType === "apiToken" && (value === null || value === undefined)) {
+    return result.tokenPrefix ?? "(unnamed token)";
+  }
+  return value;
 }
 
 // Replicate parseZenStackPath
@@ -389,6 +393,25 @@ describe("ZenStack API Route Audit Interception", () => {
       expect(
         extractEntityName("apiToken", { id: "token-1", name: "CI Token" })
       ).toBe("CI Token");
+    });
+
+    it("WR-08 — falls back to tokenPrefix when apiToken.name is null", () => {
+      expect(
+        extractEntityName("apiToken", {
+          id: "token-2",
+          name: null,
+          tokenPrefix: "tpi_abc",
+        })
+      ).toBe("tpi_abc");
+    });
+
+    it("WR-08 — falls back to (unnamed token) when apiToken has no name AND no tokenPrefix", () => {
+      expect(
+        extractEntityName("apiToken", {
+          id: "token-3",
+          name: null,
+        })
+      ).toBe("(unnamed token)");
     });
 
     it("should return undefined for entities without name mapping", () => {
