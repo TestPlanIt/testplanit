@@ -78,7 +78,36 @@ export type TestRunSummaryData = {
     resultCount?: number;
     statusOrder?: number | null;
   }>;
+  /**
+   * Per-case iteration counts (INT-03 / D-04). Only set on the
+   * `test_run.completed` webhook payload — the in-app summary UI does not
+   * consume this field. Non-parameterized cases report iterationCount: 0 and
+   * zeros across all four buckets.
+   *
+   * `redactedValuesJson` (when present) is the iteration's `valuesJson`
+   * passed through `redactValues()` with `viewerCanReadSensitive=false`
+   * (D-13). Cases without a snapshot (non-parameterized) omit the field.
+   * The webhook payload caps each value at 4 KB (Pitfall 5).
+   */
+  perCaseIterationCounts?: PerCaseIterationCounts[];
 };
+
+/**
+ * Public type — read by webhook emitter (testRunEvents.ts) and any future
+ * consumer that needs to roll up iteration health per case without joining
+ * the iteration table directly. Backed by the denormalized counter columns
+ * on TestRunCases (D-14).
+ */
+export interface PerCaseIterationCounts {
+  testRunCaseId: number;
+  iterationCount: number;
+  iterationsByStatus: {
+    passed: number;
+    failed: number;
+    skipped: number;
+    notRun: number;
+  };
+}
 
 /**
  * Aggregate `statusCounts` into the canonical run-summary metrics shared
