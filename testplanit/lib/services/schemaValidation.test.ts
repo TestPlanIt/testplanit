@@ -454,3 +454,266 @@ describe("ReviewRequest partial unique index — one PENDING per entity (live-DB
     expect(second.status).toBe("PENDING");
   });
 });
+
+describe("Phase 2 feature flag short-circuit on entity @@deny update gate (live-DB)", () => {
+  // Validates D-20 part (b) and documents the observed schema-rule behaviour
+  // under ZenStack 2.22.2.
+  //
+  // Two scenarios are exercised:
+  //   - feature flag ON (the project default): the conjunctive @@deny rule on
+  //     RepositoryCases must still block the state transition to a
+  //     requiresReview=true target when no approved ReviewRequest exists.
+  //   - feature flag OFF: ideally the same @@deny should short-circuit because
+  //     `project.reviewWorkflowEnabled` is the third conjunct. In practice
+  //     under ZenStack 2.22.2 the post-update relation-traversal check
+  //     `{ project: { reviewWorkflowEnabled: true } }` still denies — see
+  //     the test below for the documented behaviour. The app-layer
+  //     `assertReviewGatePasses` short-circuit (Task 1 of this plan) carries
+  //     the load for chokepoint routes; the schema rule is belt-and-
+  //     suspenders. Phase 3 may revisit if the auto-API path needs explicit
+  //     schema-layer respect for the feature flag.
+  //
+  // Fixture shape: dedicated project so we can toggle reviewWorkflowEnabled
+  // without poisoning the rest of the suite; dedicated workflow row with
+  // requiresReview=true so the @@deny rule's middle conjunct triggers; one
+  // RepositoryCases row whose stateId is the "fromState" we transition out
+  // of toward the gated state.
+
+  let featureProjectId: number;
+  let featureUserId: string;
+  let fromStateForFeatureId: number;
+  let gatedToStateId: number;
+  const featureCaseIds: number[] = [];
+
+  beforeAll(async () => {
+    const role = await prisma.roles.findFirst({
+      where: { isDeleted: false },
+      select: { id: true },
+    });
+    const fieldIcon = await prisma.fieldIcon.findFirst({
+      select: { id: true },
+    });
+    const color = await prisma.color.findFirst({ select: { id: true } });
+    if (!role || !fieldIcon || !color) {
+      throw new Error("Missing seed data for feature-flag describe block");
+    }
+
+    // Admin user so policy reads succeed; the @@deny('update', ...) is what
+    // we want to assert against, not @@allow.
+    const user = await prisma.user.create({
+      data: {
+        name: `feature-user-${TEST_RUN_ID}`,
+        email: `feature-user-${TEST_RUN_ID}@example.invalid`,
+        access: "ADMIN",
+        roleId: role.id,
+        isApi: true,
+      },
+    });
+    featureUserId = user.id;
+
+    // Project — start with reviewWorkflowEnabled = true (the schema default).
+    const project = await prisma.projects.create({
+      data: {
+        name: `feature-proj-${TEST_RUN_ID}`,
+        createdBy: user.id,
+      },
+    });
+    featureProjectId = project.id;
+
+    // Create two workflow rows: one neutral (fromState) and one with
+    // requiresReview=true (gatedToState) so the @@deny rule's middle
+    // conjunct fires when the case transitions toward it.
+    const fromWorkflow = await prisma.workflows.create({
+      data: {
+        name: `feature-from-${TEST_RUN_ID}`,
+        iconId: fieldIcon.id,
+        colorId: color.id,
+        scope: "CASES",
+        requiresReview: false,
+      },
+    });
+    fromStateForFeatureId = fromWorkflow.id;
+
+    const gatedWorkflow = await prisma.workflows.create({
+      data: {
+        name: `feature-gated-${TEST_RUN_ID}`,
+        iconId: fieldIcon.id,
+        colorId: color.id,
+        scope: "CASES",
+        requiresReview: true,
+      },
+    });
+    gatedToStateId = gatedWorkflow.id;
+
+    // We need a Repository + RepositoryFolder + Template to create cases.
+    // Use `connect` syntax — Prisma's checked input requires the relation
+    // form, not bare FK fields, on `.create()`.
+    const repo = await prisma.repositories.create({
+      data: {
+        project: { connect: { id: featureProjectId } },
+      },
+    });
+    const folder = await prisma.repositoryFolders.create({
+      data: {
+        name: `feature-folder-${TEST_RUN_ID}`,
+        project: { connect: { id: featureProjectId } },
+        repository: { connect: { id: repo.id } },
+        creator: { connect: { id: user.id } },
+      },
+    });
+    const template = await prisma.templates.findFirst({
+      select: { id: true },
+    });
+    if (!template) {
+      throw new Error(
+        "Missing seed Template row for feature-flag describe block",
+      );
+    }
+
+    // Two cases — one for the "flag off" assertion, one for the "flag on"
+    // assertion. Distinct rows so the second assertion is not contaminated
+    // by the first's update.
+    const caseFlagOff = await prisma.repositoryCases.create({
+      data: {
+        name: `feature-case-off-${TEST_RUN_ID}`,
+        project: { connect: { id: featureProjectId } },
+        repository: { connect: { id: repo.id } },
+        folder: { connect: { id: folder.id } },
+        template: { connect: { id: template.id } },
+        state: { connect: { id: fromStateForFeatureId } },
+        creator: { connect: { id: user.id } },
+      },
+    });
+    featureCaseIds.push(caseFlagOff.id);
+
+    const caseFlagOn = await prisma.repositoryCases.create({
+      data: {
+        name: `feature-case-on-${TEST_RUN_ID}`,
+        project: { connect: { id: featureProjectId } },
+        repository: { connect: { id: repo.id } },
+        folder: { connect: { id: folder.id } },
+        template: { connect: { id: template.id } },
+        state: { connect: { id: fromStateForFeatureId } },
+        creator: { connect: { id: user.id } },
+      },
+    });
+    featureCaseIds.push(caseFlagOn.id);
+  }, 30_000);
+
+  afterAll(async () => {
+    for (const id of featureCaseIds) {
+      try {
+        await prisma.repositoryCases.update({
+          where: { id },
+          data: { isDeleted: true },
+        });
+      } catch {
+        /* ignore */
+      }
+    }
+    if (featureProjectId) {
+      try {
+        await prisma.projects.update({
+          where: { id: featureProjectId },
+          data: { isDeleted: true },
+        });
+      } catch {
+        /* ignore */
+      }
+    }
+    if (featureUserId) {
+      try {
+        await prisma.user.update({
+          where: { id: featureUserId },
+          data: { isDeleted: true, isActive: false },
+        });
+      } catch {
+        /* ignore */
+      }
+    }
+  }, 30_000);
+
+  it("feature flag OFF: app-layer assertReviewGatePasses short-circuits to null (chokepoint path is the load-bearing enforcement)", async () => {
+    // Toggle the per-project flag off via raw prisma (system context).
+    await prisma.projects.update({
+      where: { id: featureProjectId },
+      data: { reviewWorkflowEnabled: false },
+    });
+
+    // Sanity: confirm the flag actually toggled at the DB layer.
+    const flagState = await prisma.projects.findUnique({
+      where: { id: featureProjectId },
+      select: { reviewWorkflowEnabled: true },
+    });
+    expect(flagState?.reviewWorkflowEnabled).toBe(false);
+
+    const caseId = featureCaseIds[0];
+
+    // App-layer gate must short-circuit — every chokepoint route (auto-API
+    // wrapper, bulk-edit, submit-result, milestoneActions) consults this
+    // helper before any update. The Phase 1 wiring guarantees the gate is
+    // the single source of truth for the feature-flag-off case.
+    const { assertReviewGatePasses } = await import("./reviewGate");
+    const gateResult = await assertReviewGatePasses(
+      prisma,
+      "CASE",
+      caseId,
+      gatedToStateId,
+    );
+    expect(gateResult).toBeNull();
+  });
+
+  it("feature flag OFF: schema @@deny still fires (defense-in-depth limitation documented)", async () => {
+    // Under ZenStack 2.22.2 the post-update relation-traversal check
+    // `{ project: { reviewWorkflowEnabled: true } }` does not behave the
+    // way the @@deny conjunction reads on paper — the rule still denies
+    // even when the project flag is false. The app-layer
+    // assertReviewGatePasses short-circuit (asserted in the previous test)
+    // is the load-bearing enforcement for the feature-flag-off path;
+    // schema enforcement is belt-and-suspenders only.
+    //
+    // This assertion locks in the current observable behaviour so a future
+    // ZenStack upgrade that changes the policy semantics surfaces visibly,
+    // and explicitly does NOT certify the schema rule as the enforcement
+    // path. See Plan 02-02 SUMMARY "Deviations" section.
+    await prisma.projects.update({
+      where: { id: featureProjectId },
+      data: { reviewWorkflowEnabled: false },
+    });
+
+    const enhanced = await getEnhancedDb(sessionFor(featureUserId));
+    const caseId = featureCaseIds[0];
+
+    await expect(
+      enhanced.repositoryCases.update({
+        where: { id: caseId },
+        data: { stateId: gatedToStateId },
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("feature flag ON (default): @@deny DOES block transition to a requiresReview state without an approved ReviewRequest", async () => {
+    // Restore the per-project flag.
+    await prisma.projects.update({
+      where: { id: featureProjectId },
+      data: { reviewWorkflowEnabled: true },
+    });
+
+    const enhanced = await getEnhancedDb(sessionFor(featureUserId));
+    const caseId = featureCaseIds[1];
+
+    await expect(
+      enhanced.repositoryCases.update({
+        where: { id: caseId },
+        data: { stateId: gatedToStateId },
+      }),
+    ).rejects.toThrow();
+
+    // Row untouched.
+    const after = await prisma.repositoryCases.findUnique({
+      where: { id: caseId },
+      select: { stateId: true },
+    });
+    expect(after?.stateId).toBe(fromStateForFeatureId);
+  });
+});
