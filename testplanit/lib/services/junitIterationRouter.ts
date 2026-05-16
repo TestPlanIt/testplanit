@@ -73,6 +73,71 @@ export class IterationCapExceededError extends Error {
 }
 
 /**
+ * Single offending case surfaced by `validateIterationCaps`. The route
+ * handler emits a 422 SSE event containing the full array so the caller
+ * sees every violation in one round-trip.
+ */
+export interface IterationCapViolator {
+  suiteName: string;
+  caseName: string;
+  className?: string;
+  requestedIndex: number;
+  cap: number;
+}
+
+/**
+ * Shape of one suite in the test-results-parser output, narrowed to just
+ * the fields `validateIterationCaps` needs. Declared locally so the
+ * helper does not pull in the parser library's types.
+ */
+export interface ParsedSuiteForValidation {
+  name?: string;
+  cases?: Array<{
+    name?: string;
+    classname?: string;
+    metadata?: Record<string, string>;
+  }>;
+}
+
+/**
+ * Pre-flight iteration-cap validation. Walks the parsed suites once
+ * before any DB writes and collects every case whose configured
+ * iteration property requests an index above `ITERATION_INDEX_CAP`.
+ *
+ * Returning all violators (not just the first) keeps the round-trip
+ * count low: the caller refuses the whole import with a single 422 and
+ * the user sees the complete list of cases that need fixing, instead
+ * of fix-one-then-fail-on-next.
+ *
+ * Cases whose metadata yields a `null` iteration index (legacy path)
+ * are skipped — the cap only applies to the INT-02 routing branch.
+ */
+export function validateIterationCaps(
+  suites: readonly ParsedSuiteForValidation[] | undefined,
+  configuredNames: readonly string[]
+): IterationCapViolator[] {
+  if (!suites) return [];
+  const violators: IterationCapViolator[] = [];
+  for (const suite of suites) {
+    if (!suite.cases) continue;
+    for (const testCase of suite.cases) {
+      const index = extractIterationIndex(testCase.metadata, configuredNames);
+      if (index === null) continue;
+      if (index > ITERATION_INDEX_CAP) {
+        violators.push({
+          suiteName: suite.name ?? "(unnamed suite)",
+          caseName: testCase.name ?? "(unnamed case)",
+          className: testCase.classname,
+          requestedIndex: index,
+          cap: ITERATION_INDEX_CAP,
+        });
+      }
+    }
+  }
+  return violators;
+}
+
+/**
  * Pure helper — returns the first parseable iteration value found in
  * `metadata` whose key (case-insensitively) matches any entry of
  * `configuredNames`, or `null` if no such property exists or the value

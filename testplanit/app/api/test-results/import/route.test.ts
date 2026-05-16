@@ -522,14 +522,10 @@ describe("Test Results Import API Route", () => {
       expect(prisma.testRunCases.update).toHaveBeenCalled();
     });
 
-    it("returns a 422-coded error event when routeToIteration throws IterationCapExceededError", async () => {
+    it("refuses with a 422 pre-flight event when a single case exceeds the cap (WR-07)", async () => {
       (prisma.projects.findUnique as any).mockResolvedValue({
         junitIterationPropertyNames: [],
       });
-      // Stub the router to throw the cap error on this run.
-      (routeToIteration as any).mockRejectedValueOnce(
-        new IterationCapExceededError(5001, 5000)
-      );
       (parseTestResults as any).mockResolvedValueOnce({
         result: {
           total: 1,
@@ -578,14 +574,114 @@ describe("Test Results Import API Route", () => {
       );
       expect(errorEvent).toBeDefined();
       expect(errorEvent.status).toBe(422);
-      expect(errorEvent.iterationIndex).toBe(5001);
       expect(errorEvent.cap).toBe(5000);
+      expect(errorEvent.violatorCount).toBe(1);
+      expect(errorEvent.violators).toHaveLength(1);
+      expect(errorEvent.violators[0]).toMatchObject({
+        suiteName: "com.example.TestSuite",
+        caseName: "test_overflow",
+        requestedIndex: 5001,
+        cap: 5000,
+      });
       expect(errorEvent.i18nKey).toBe(
         "api.testResults.import.iterationCapExceeded"
       );
+      // routeToIteration must NEVER be called: pre-flight refused before
+      // the per-suite loop began. No partial DB state can exist.
+      expect(routeToIteration).not.toHaveBeenCalled();
       // The completion event must NOT be present — we bailed before it.
       const completeEvent = events.find((e) => e.complete === true);
       expect(completeEvent).toBeUndefined();
+    });
+
+    it("refuses with a multi-violator 422 listing every offender in one pass (WR-07)", async () => {
+      (prisma.projects.findUnique as any).mockResolvedValue({
+        junitIterationPropertyNames: [],
+      });
+      (parseTestResults as any).mockResolvedValueOnce({
+        result: {
+          total: 3,
+          passed: 3,
+          failed: 0,
+          errors: 0,
+          skipped: 0,
+          duration: 3,
+          suites: [
+            {
+              name: "Alpha",
+              total: 2,
+              passed: 2,
+              failed: 0,
+              errors: 0,
+              skipped: 0,
+              duration: 2,
+              cases: [
+                {
+                  name: "case-A",
+                  status: "passed",
+                  duration: 1,
+                  failure: null,
+                  stack_trace: null,
+                  attachments: [],
+                  metadata: { iteration: "9999" },
+                },
+                {
+                  name: "case-OK",
+                  status: "passed",
+                  duration: 1,
+                  failure: null,
+                  stack_trace: null,
+                  attachments: [],
+                  metadata: { iteration: "3" },
+                },
+              ],
+            },
+            {
+              name: "Beta",
+              total: 1,
+              passed: 1,
+              failed: 0,
+              errors: 0,
+              skipped: 0,
+              duration: 1,
+              cases: [
+                {
+                  name: "case-B",
+                  status: "passed",
+                  duration: 1,
+                  failure: null,
+                  stack_trace: null,
+                  attachments: [],
+                  metadata: { iteration: "12345" },
+                },
+              ],
+            },
+          ],
+        },
+        errors: [],
+      });
+
+      const formData = new FormData();
+      formData.append("files", createMockFile("results.xml"));
+      formData.append("name", "CI Run");
+      formData.append("projectId", "1");
+
+      const request = createFormDataRequest(formData);
+      const response = await POST(request);
+      const events = await readSseResponse(response);
+
+      const errorEvent = events.find(
+        (e) => e.code === "ITERATION_CAP_EXCEEDED"
+      );
+      expect(errorEvent).toBeDefined();
+      expect(errorEvent.violatorCount).toBe(2);
+      expect(errorEvent.violators.map((v: { caseName: string }) => v.caseName)).toEqual(
+        ["case-A", "case-B"]
+      );
+      expect(errorEvent.i18nKey).toBe(
+        "api.testResults.import.iterationCapExceededMulti"
+      );
+      expect(routeToIteration).not.toHaveBeenCalled();
     });
   });
 });

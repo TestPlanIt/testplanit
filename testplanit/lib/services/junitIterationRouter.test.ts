@@ -25,6 +25,7 @@ import {
   IterationCapExceededError,
   ITERATION_INDEX_CAP,
   routeToIteration,
+  validateIterationCaps,
 } from "./junitIterationRouter";
 
 describe("extractIterationIndex", () => {
@@ -238,5 +239,116 @@ describe("routeToIteration — rollup respects soft-delete (CR-04)", () => {
       where: { testRunCaseId: 1, isDeleted: false },
       select: { statusId: true },
     });
+  });
+});
+
+describe("validateIterationCaps — pre-flight refusal (WR-07)", () => {
+  const propertyNames = ["iteration"];
+
+  it("returns an empty array when no suites are given", () => {
+    expect(validateIterationCaps(undefined, propertyNames)).toEqual([]);
+    expect(validateIterationCaps([], propertyNames)).toEqual([]);
+  });
+
+  it("returns an empty array when every case is below the cap", () => {
+    const suites = [
+      {
+        name: "suite",
+        cases: [
+          { name: "a", metadata: { iteration: "1" } },
+          { name: "b", metadata: { iteration: "4999" } },
+          { name: "c", metadata: { iteration: "5000" } },
+        ],
+      },
+    ];
+    expect(validateIterationCaps(suites, propertyNames)).toEqual([]);
+  });
+
+  it("ignores cases with no iteration metadata (legacy path)", () => {
+    const suites = [
+      {
+        name: "suite",
+        cases: [
+          { name: "legacy", metadata: { otherKey: "value" } },
+          { name: "no-metadata" },
+        ],
+      },
+    ];
+    expect(validateIterationCaps(suites, propertyNames)).toEqual([]);
+  });
+
+  it("returns ALL violators in one pass, not just the first", () => {
+    const suites = [
+      {
+        name: "Alpha",
+        cases: [
+          {
+            name: "case A",
+            classname: "Cls.A",
+            metadata: { iteration: "9999" },
+          },
+          { name: "case B", metadata: { iteration: "3" } },
+        ],
+      },
+      {
+        name: "Beta",
+        cases: [
+          {
+            name: "case C",
+            metadata: { iteration: "12345" },
+          },
+        ],
+      },
+    ];
+    const violators = validateIterationCaps(suites, propertyNames);
+    expect(violators).toHaveLength(2);
+    expect(violators[0]).toEqual({
+      suiteName: "Alpha",
+      caseName: "case A",
+      className: "Cls.A",
+      requestedIndex: 9999,
+      cap: ITERATION_INDEX_CAP,
+    });
+    expect(violators[1]).toMatchObject({
+      suiteName: "Beta",
+      caseName: "case C",
+      requestedIndex: 12345,
+      cap: ITERATION_INDEX_CAP,
+    });
+  });
+
+  it("honors configured property names (case-insensitive)", () => {
+    const suites = [
+      {
+        name: "suite",
+        cases: [
+          { name: "a", metadata: { ITER: "9999" } as Record<string, string> },
+          { name: "b", metadata: { iteration: "3" } as Record<string, string> },
+        ],
+      },
+    ];
+    const violators = validateIterationCaps(suites, ["iter"]);
+    expect(violators).toHaveLength(1);
+    expect(violators[0]?.caseName).toBe("a");
+  });
+
+  it("falls back to ['iteration'] when configuredNames is empty", () => {
+    const suites = [
+      {
+        cases: [{ name: "a", metadata: { iteration: "9999" } }],
+      },
+    ];
+    expect(validateIterationCaps(suites, [])).toHaveLength(1);
+  });
+
+  it("substitutes sentinel labels when suite or case name is missing", () => {
+    const suites = [
+      {
+        cases: [{ metadata: { iteration: "9999" } }],
+      },
+    ];
+    const [violator] = validateIterationCaps(suites, propertyNames);
+    expect(violator?.suiteName).toBe("(unnamed suite)");
+    expect(violator?.caseName).toBe("(unnamed case)");
   });
 });

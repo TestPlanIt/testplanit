@@ -29,7 +29,9 @@ import type { RollupStatus } from "~/lib/services/iterationRollup";
 import {
   extractIterationIndex,
   IterationCapExceededError,
+  ITERATION_INDEX_CAP,
   routeToIteration,
+  validateIterationCaps,
 } from "~/lib/services/junitIterationRouter";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import {
@@ -498,6 +500,44 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         });
         const junitIterationPropertyNames: string[] =
           projectRow?.junitIterationPropertyNames ?? [];
+
+        // Pre-flight iteration-cap validation. Walk the parsed suites once
+        // before any DB writes. If any case requests an iteration index
+        // above the cap, refuse the whole import with a 422 listing every
+        // offender so the user fixes all of them in one round-trip rather
+        // than fix-one-then-fail-on-next. Pre-flight here eliminates the
+        // mid-loop partial-commit scenario without holding a long-running
+        // transaction across the entire import.
+        const capViolators = validateIterationCaps(
+          result.suites,
+          junitIterationPropertyNames
+        );
+        if (capViolators.length > 0) {
+          const first = capViolators[0]!;
+          const summary =
+            capViolators.length === 1
+              ? `Iteration index ${first.requestedIndex} exceeds the maximum supported value of ${first.cap}. Reduce the iteration count or split the run.`
+              : `${capViolators.length} test cases request iteration indexes above the maximum supported value of ${ITERATION_INDEX_CAP}. Reduce the iteration count or split the run.`;
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({
+                error: summary,
+                status: 422,
+                code: "ITERATION_CAP_EXCEEDED",
+                cap: ITERATION_INDEX_CAP,
+                violatorCount: capViolators.length,
+                violators: capViolators,
+                i18nKey:
+                  capViolators.length === 1
+                    ? "api.testResults.import.iterationCapExceeded"
+                    : "api.testResults.import.iterationCapExceededMulti",
+              })}\n\n`
+            )
+          );
+          controller.close();
+          return;
+        }
+
         const allStatuses = await prisma.status.findMany({
           where: { isDeleted: false },
           select: {
@@ -1068,14 +1108,12 @@ export const POST = withAuditContext(async (request: NextRequest) => {
           }
         }
 
-        // INT-02 T-06-01-03: surface the cap-exceeded error to the SSE
-        // client and bail before the finalizing/audit/duplicate-warning
-        // post-processing. The cap check inside routeToIteration fires
-        // BEFORE any DB write for the offending case, so no partial
-        // TestRunCaseIteration row exists for the rejected index — only
-        // sibling cases that already routed successfully remain in the DB
-        // (documented behavior; not rolled back since the route does not
-        // wrap the per-suite loop in a single $transaction).
+        // Defense-in-depth. The pre-flight `validateIterationCaps` above
+        // refuses any import with a cap violator before the per-suite loop
+        // begins, so this branch is effectively unreachable. Kept so any
+        // future change that bypasses pre-flight (e.g. a concurrent
+        // `junitIterationPropertyNames` change racing with the import)
+        // still surfaces the cap as a 422 instead of a 500.
         if (iterationCapError !== null) {
           controller.enqueue(
             encoder.encode(

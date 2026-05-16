@@ -997,7 +997,8 @@
   "api": {
     "testResults": {
       "import": {
-        "iterationCapExceeded": "Iteration index {index} exceeds the maximum supported value of {cap}. Reduce the iteration count or split the run."
+        "iterationCapExceeded": "Iteration index {index} exceeds the maximum supported value of {cap}. Reduce the iteration count or split the run.",
+        "iterationCapExceededMulti": "{count} test cases request iteration indexes above the maximum supported value of {cap}. Reduce the iteration count or split the run."
       }
     }
   },
