@@ -592,6 +592,7 @@ model Projects {
   defaultCaseExportTemplateId Int?
   defaultCaseExportTemplate   CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
   quickScriptEnabled          Boolean                               @default(false)
+  reviewWorkflowEnabled       Boolean                               @default(true)
   duplicateScanResults        DuplicateScanResult[]
   stepSequenceMatches         StepSequenceMatch[]
   reviewRequests              ReviewRequest[]

@@ -5,7 +5,11 @@ import { z } from "zod/v4";
 import { prisma } from "~/lib/prisma";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
 import { assertReviewGatePasses } from "~/lib/services/reviewGate";
-import { isAlreadyPendingError, isReviewGateError } from "~/lib/utils/errors";
+import {
+  AlreadyPendingError,
+  isAlreadyPendingError,
+  isReviewGateError,
+} from "~/lib/utils/errors";
 import { getServerAuthSession } from "~/server/auth";
 import { checkUserPermission } from "./permissions";
 
@@ -342,9 +346,13 @@ export async function completeMilestoneCascade(
     }
 
     if (isAlreadyPendingError(error)) {
+      const message =
+        error instanceof AlreadyPendingError
+          ? `A pending review already exists for the ${error.entityType.toLowerCase()} ${error.entityId}.`
+          : "A pending review already exists for this entity.";
       return {
         status: "error",
-        message: `A pending review already exists for the ${error.entityType.toLowerCase()} ${error.entityId}.`,
+        message,
       };
     }
 

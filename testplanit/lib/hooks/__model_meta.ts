@@ -1099,6 +1099,10 @@ const metadata: ModelMeta = {
                     name: "quickScriptEnabled",
                     type: "Boolean",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, reviewWorkflowEnabled: {
+                    name: "reviewWorkflowEnabled",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": true }] }],
                 }, duplicateScanResults: {
                     name: "duplicateScanResults",
                     type: "DuplicateScanResult",
