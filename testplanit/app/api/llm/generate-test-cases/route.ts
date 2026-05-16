@@ -54,6 +54,20 @@ export async function POST(request: NextRequest) {
     const isAdmin = session.user.access === "ADMIN";
     const isProjectAdmin = session.user.access === "PROJECTADMIN";
 
+    // CR-03 (T-06-04-01): server-side admin gate on the
+    // `includeParameters` flag. The wizard hides the toggle for
+    // non-admins, but a crafted request body must still be rejected
+    // here — the UI guard is defense-in-depth, not the authority.
+    if (includeParameters === true && !isAdmin) {
+      return NextResponse.json(
+        {
+          error: "Admin access required for includeParameters",
+          code: "FORBIDDEN_PARAMETER_GENERATION",
+        },
+        { status: 403 }
+      );
+    }
+
     // Build the where clause for project access
     // This needs to account for all access paths: userPermissions, groupPermissions,
     // assignedUsers, and project defaultAccessType (GLOBAL_ROLE)

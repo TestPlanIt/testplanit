@@ -1370,8 +1370,11 @@ export function GenerateTestCasesWizard({
   const [autoGenerateTags, setAutoGenerateTags] = useState(true);
   // INT-06: opt-in toggle (default false) — when on, the LLM emits a parameter
   // schema + starter dataset per case so the result is immediately runnable
-  // as iterations. Visible only to admins (defense-in-depth on top of the
-  // API-tier admin gate).
+  // as iterations. Hiding the toggle for non-admins is the user-experience
+  // layer; the authoritative gate is the API-tier admin check enforced in
+  // the 3 LLM routes (route.ts / stream/route.ts / expand/route.ts) — a
+  // crafted request body with `includeParameters: true` from a non-admin
+  // is rejected there with 403 / FORBIDDEN_PARAMETER_GENERATION (CR-03).
   const [includeParameters, setIncludeParameters] = useState(false);
   // INT-06: parser warnings keyed by caseIndex (e.g., dataset_truncated).
   // Surfaced as an Alert on the preview card.

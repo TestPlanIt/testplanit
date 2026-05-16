@@ -623,3 +623,101 @@ describe("TOKEN-05: prompt budget estimation and truncation", () => {
     expect(data.metadata.truncationNote).toBeUndefined();
   });
 });
+
+// ─── CR-03 admin gate on includeParameters ───────────────────────────────────
+
+describe("CR-03: includeParameters admin gate (T-06-04-01)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    mockLlmManagerGetInstance.mockReturnValue({
+      resolveIntegration: mockResolveIntegration,
+      chat: mockChat,
+    });
+    mockResolveIntegration.mockResolvedValue({ integrationId: 42 });
+    mockPromptResolverResolve.mockResolvedValue({
+      systemPrompt: "System prompt",
+      userPrompt: "User prompt",
+      temperature: 0.7,
+      maxOutputTokens: 2048,
+      source: "default",
+    });
+    mockPrismaProjectsFindFirst.mockResolvedValue({
+      id: 1,
+      projectLlmIntegrations: [],
+    });
+    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+      id: 1,
+      llmIntegrationId: 42,
+      maxTokensPerRequest: 8192,
+      defaultMaxTokens: 4096,
+    });
+    mockPrismaRepositoryFoldersFindMany.mockResolvedValue([]);
+    mockPrismaRepositoryCasesFindMany.mockResolvedValue([]);
+    mockChat.mockResolvedValue({
+      content: VALID_TEST_CASES_RESPONSE,
+      model: "gpt-4",
+      promptTokens: 100,
+      completionTokens: 200,
+      totalTokens: 300,
+      finishReason: "stop",
+    });
+  });
+
+  it("rejects non-admin POST with includeParameters=true (403 / FORBIDDEN_PARAMETER_GENERATION)", async () => {
+    mockGetServerSession.mockResolvedValue({
+      user: { id: "user-1", access: "USER" },
+    });
+
+    const { POST } = await import("./route");
+    const res = await POST(
+      makeRequest({ ...VALID_BODY, includeParameters: true })
+    );
+
+    expect(res.status).toBe(403);
+    const data = await res.json();
+    expect(data.code).toBe("FORBIDDEN_PARAMETER_GENERATION");
+    // chat must never have been called — the gate fires before LLM I/O.
+    expect(mockChat).not.toHaveBeenCalled();
+  });
+
+  it("rejects PROJECTADMIN with includeParameters=true (the gate is ADMIN-only)", async () => {
+    mockGetServerSession.mockResolvedValue({
+      user: { id: "user-1", access: "PROJECTADMIN" },
+    });
+
+    const { POST } = await import("./route");
+    const res = await POST(
+      makeRequest({ ...VALID_BODY, includeParameters: true })
+    );
+
+    expect(res.status).toBe(403);
+    expect(mockChat).not.toHaveBeenCalled();
+  });
+
+  it("allows non-admin POST when includeParameters is absent / false", async () => {
+    mockGetServerSession.mockResolvedValue({
+      user: { id: "user-1", access: "USER" },
+    });
+
+    const { POST } = await import("./route");
+    const res = await POST(makeRequest(VALID_BODY));
+
+    expect(res.status).toBe(200);
+    expect(mockChat).toHaveBeenCalled();
+  });
+
+  it("allows admin POST with includeParameters=true", async () => {
+    mockGetServerSession.mockResolvedValue({
+      user: { id: "user-1", access: "ADMIN" },
+    });
+
+    const { POST } = await import("./route");
+    const res = await POST(
+      makeRequest({ ...VALID_BODY, includeParameters: true })
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockChat).toHaveBeenCalled();
+  });
+});
