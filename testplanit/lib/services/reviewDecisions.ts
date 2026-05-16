@@ -1,4 +1,4 @@
-import type { ReviewRequest } from "@prisma/client";
+import { Prisma, type ReviewRequest } from "@prisma/client";
 import type { Session } from "next-auth";
 
 import { prisma } from "~/lib/prisma";
@@ -51,12 +51,17 @@ export type DecideOutcome = "APPROVED" | "CHANGES_REQUESTED" | "REJECTED";
  *      future ZenStack release, this check authoritatively gates the
  *      mutation.
  *
- *   4. On qualification, mutate via raw `prisma` (NOT the enhanced
- *      client). Raw is required because the schema-layer
+ *   4. On qualification, mutate atomically via raw `prisma.updateMany`
+ *      scoped to `status: 'PENDING'`. The combined WHERE + UPDATE is a
+ *      single statement at the database, so two concurrent decide calls
+ *      cannot both pass the load-time PENDING check and both commit —
+ *      the loser gets `count === 0` and we throw "already decided".
+ *      Raw prisma is still required here because the schema-layer
  *      `@@deny('update', status != 'PENDING')` rule denies any update
- *      where the post-state differs from PENDING — flipping status to
- *      APPROVED / CHANGES_REQUESTED / REJECTED is exactly that change.
- *      This is the documented exception to the
+ *      where the post-state differs from PENDING; raw bypasses ZenStack
+ *      policy enforcement, which is appropriate because the eligibility
+ *      gate above plus the WHERE-scoped update are the authoritative
+ *      checks. This is the documented exception to the
  *      `feedback_default_to_enhanced_db` memory rule, mirroring the
  *      `reviewGate.ts` raw-client carve-out for the `consumedAt` stamp.
  *
@@ -145,14 +150,44 @@ export async function decideReviewRequest(
   // Raw prisma (documented exception): the append-only @@deny rule denies
   // any update that flips status away from PENDING; raw bypasses ZenStack
   // policy enforcement, which is appropriate here because the eligibility
-  // gate above is the authoritative check for this transition.
-  return prisma.reviewRequest.update({
-    where: { id: reviewRequestId },
+  // gate above plus the WHERE-scoped status check below are the
+  // authoritative checks for this transition.
+  //
+  // CR-01 fix: combine the PENDING precheck and the status flip into a
+  // single atomic statement via `updateMany({ where: { id, status: 'PENDING' }})`.
+  // Two concurrent decides racing on the same PENDING row cannot both pass
+  // — the second one returns `count === 0` and surfaces as "already decided".
+  // This restores the invariant the schema `@@deny('update', status != 'PENDING')`
+  // rule would have enforced, which we deliberately bypass via raw prisma.
+  const result = await prisma.reviewRequest.updateMany({
+    where: { id: reviewRequestId, status: "PENDING" },
     data: {
       status: decision,
       decisionComment: comment ?? null,
       decidedByUserId: userId,
       decidedAt: new Date(),
     },
+  });
+
+  if (result.count === 0) {
+    // Either the row no longer exists, or another concurrent decide won
+    // the race. Re-fetch to distinguish: a missing row surfaces as P2025
+    // (callers translate to 404), an extant non-PENDING row surfaces as
+    // "already decided" (callers translate to 409).
+    const after = await prisma.reviewRequest.findUnique({
+      where: { id: reviewRequestId },
+      select: { id: true },
+    });
+    if (!after) {
+      throw new Prisma.PrismaClientKnownRequestError(
+        "No ReviewRequest found",
+        { code: "P2025", clientVersion: Prisma.prismaVersion.client },
+      );
+    }
+    throw new Error("Review request already decided");
+  }
+
+  return prisma.reviewRequest.findUniqueOrThrow({
+    where: { id: reviewRequestId },
   });
 }

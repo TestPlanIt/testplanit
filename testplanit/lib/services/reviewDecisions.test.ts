@@ -30,6 +30,7 @@
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Session } from "next-auth";
+import type { ReviewRequest } from "@prisma/client";
 
 import { prisma } from "~/lib/prisma";
 import { isIneligibleReviewerError } from "~/lib/utils/errors";
@@ -448,5 +449,64 @@ describe("decideReviewRequest — admin override", () => {
 
     expect(result.status).toBe("APPROVED");
     expect(result.decidedByUserId).toBe(adminUserId);
+  });
+});
+
+describe("decideReviewRequest — concurrent decides (CR-01 regression)", () => {
+  it("two concurrent decide calls on the same PENDING row cannot both commit", async () => {
+    const requestId = await seedPendingRequest({
+      entityId: ENTITY_ID_NOT_FOUND - 2,
+      assigneeUserId: directAssigneeUserId,
+    });
+
+    // Fire both decides concurrently. With the CR-01 fix the precheck +
+    // update collapse into a single atomic statement
+    // (`updateMany({ where: { id, status: 'PENDING' } })`), so exactly one
+    // call must win and the loser must throw "Review request already decided".
+    // Before the fix, both calls could pass the load-time PENDING check and
+    // both commit, clobbering each other.
+    const results = await Promise.allSettled([
+      decideReviewRequest(
+        sessionFor(directAssigneeUserId),
+        requestId,
+        "APPROVED",
+        "race-A",
+      ),
+      decideReviewRequest(
+        sessionFor(adminUserId, "ADMIN"),
+        requestId,
+        "REJECTED",
+        "race-B",
+      ),
+    ]);
+
+    const fulfilled = results.filter((r) => r.status === "fulfilled");
+    const rejected = results.filter((r) => r.status === "rejected");
+    expect(fulfilled.length).toBe(1);
+    expect(rejected.length).toBe(1);
+
+    const rejectedReason = (rejected[0] as PromiseRejectedResult).reason;
+    expect(rejectedReason).toBeInstanceOf(Error);
+    expect((rejectedReason as Error).message.toLowerCase()).toMatch(
+      /already decided/,
+    );
+
+    // DB final state matches whichever decide won — exactly one decision
+    // was applied, no clobbering.
+    const after = await prisma.reviewRequest.findUnique({
+      where: { id: requestId },
+      select: {
+        status: true,
+        decisionComment: true,
+        decidedByUserId: true,
+      },
+    });
+    expect(after?.status).not.toBe("PENDING");
+    // The winner is whichever call resolved; verify its comment landed.
+    const winner = (fulfilled[0] as PromiseFulfilledResult<ReviewRequest>)
+      .value;
+    expect(after?.status).toBe(winner.status);
+    expect(after?.decisionComment).toBe(winner.decisionComment);
+    expect(after?.decidedByUserId).toBe(winner.decidedByUserId);
   });
 });
