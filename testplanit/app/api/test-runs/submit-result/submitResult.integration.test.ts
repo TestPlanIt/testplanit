@@ -500,7 +500,7 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
     });
   });
 
-  it("partial submission (1 of 3): counters reflect only completed iterations, rollup includes untested for the rest", async () => {
+  it("partial submission (1 of 3): counters reflect only completed iterations, rollup uses the worst-of recorded statuses (unrecorded iterations don't drag the rollup)", async () => {
     const { prisma, materializeIterations } = await importDeps();
     await withRollback(prisma, async (tx) => {
       const fx = await seedFixture(tx);
@@ -508,9 +508,6 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
 
       const passed = await tx.status.findUnique({
         where: { systemName: "passed" },
-      });
-      const untested = await tx.status.findUnique({
-        where: { systemName: "untested" },
       });
       const iterations = await tx.testRunCaseIteration.findMany({
         where: { testRunCaseId: fx.testRunCaseId },
@@ -537,9 +534,13 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
       });
       expect(runCase.passedIterations).toBe(1);
       expect(runCase.failedIterations).toBe(0);
-      // Untested ranks worse than passed in the worst-of order, so the
-      // case-level rollup is "untested" while two iterations remain unset.
-      expect(runCase.statusId).toBe(untested.id);
+      // Rollup intentionally considers ONLY recorded iteration statuses.
+      // With 1 of 3 recorded as passed, the case-level rollup is `passed`;
+      // unrecorded iterations don't drag the rollup back to `untested`.
+      // Users dig into the drill-down to see incomplete iterations — the
+      // case row is not the place to signal partial testing (the per-status
+      // counters do that).
+      expect(runCase.statusId).toBe(passed.id);
     });
   });
 

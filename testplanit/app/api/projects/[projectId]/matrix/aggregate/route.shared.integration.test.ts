@@ -185,7 +185,7 @@ describeIntegration(
             name: `${prefix}-Case`,
             stateId: wf.id,
             creatorId: ownerId,
-            hasParameters: false,
+            hasParameters: true,
           },
           select: { id: true },
         });
