@@ -294,7 +294,7 @@ export async function completeMilestoneCascade(
               select: { entityId: true },
             });
             const approvedEntityIds = new Set(
-              approvedRequests.map((r) => r.entityId)
+              approvedRequests.map((r: { entityId: number }) => r.entityId)
             );
             const missing = trIds.find(
               (id: number) => !approvedEntityIds.has(id)
@@ -365,7 +365,7 @@ export async function completeMilestoneCascade(
               select: { entityId: true },
             });
             const approvedEntityIds = new Set(
-              approvedRequests.map((r) => r.entityId)
+              approvedRequests.map((r: { entityId: number }) => r.entityId)
             );
             const missing = sessionIds.find(
               (id: number) => !approvedEntityIds.has(id)
