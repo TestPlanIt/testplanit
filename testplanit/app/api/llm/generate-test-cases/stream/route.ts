@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
     context,
     quantity,
     autoGenerateTags,
+    includeParameters,
     feature: featureOverride,
   } = body as {
     projectId: number;
@@ -67,6 +68,7 @@ export async function POST(req: NextRequest) {
     context: GenerationContext;
     quantity?: string;
     autoGenerateTags?: boolean;
+    includeParameters?: boolean;
     /** Optional LLM feature override (e.g., "generate_from_url" or "generate_from_url_app") */
     feature?: string;
   };
@@ -218,7 +220,8 @@ export async function POST(req: NextRequest) {
           context,
           quantity,
           autoGenerateTags,
-          systemPromptBase
+          systemPromptBase,
+          includeParameters === true
         );
 
         // TOKEN-02: Read provider config

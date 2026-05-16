@@ -491,6 +491,102 @@ describe("TOKEN-05: prompt budget estimation and truncation", () => {
     expect(data.metadata.truncationNote.length).toBeGreaterThan(0);
   });
 
+  // ── INT-06: includeParameters threads through to buildSystemPrompt ────────
+
+  it("INT-06: includeParameters=true threads through to systemPrompt and emits parameter+dataset instructions", async () => {
+    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+      id: 1,
+      llmIntegrationId: 42,
+      maxTokensPerRequest: 128000,
+      defaultMaxTokens: 4096,
+    });
+
+    const body = { ...VALID_BODY, includeParameters: true };
+
+    const { POST } = await import("./route");
+    const res = await POST(makeRequest(body));
+    expect(res.status).toBe(200);
+
+    const chatCall = mockChat.mock.calls[0]!;
+    const systemPromptSent: string = chatCall[1].messages[0].content;
+
+    expect(systemPromptSent).toContain("parameters");
+    expect(systemPromptSent).toContain("starterDataset");
+    expect(systemPromptSent).toContain("allowedValuesJson");
+  });
+
+  it("INT-06: includeParameters omitted defaults to false — no parameter instructions in prompt (legacy unchanged)", async () => {
+    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+      id: 1,
+      llmIntegrationId: 42,
+      maxTokensPerRequest: 128000,
+      defaultMaxTokens: 4096,
+    });
+
+    // Omit includeParameters entirely.
+    const { POST } = await import("./route");
+    const res = await POST(makeRequest(VALID_BODY));
+    expect(res.status).toBe(200);
+
+    const chatCall = mockChat.mock.calls[0]!;
+    const systemPromptSent: string = chatCall[1].messages[0].content;
+
+    expect(systemPromptSent).not.toContain("starterDataset");
+    expect(systemPromptSent).not.toContain("allowedValuesJson");
+  });
+
+  it("INT-06: response surfaces dataset_truncated warning when the LLM emits a broken starterDataset", async () => {
+    // Mock the LLM to return a valid-shape testCase with a TRUNCATED dataset
+    // (string instead of array). Parser should keep the parameters and add a
+    // dataset_truncated warning to the response.
+    const truncatedResponse = JSON.stringify({
+      testCases: [
+        {
+          id: "tc_1",
+          name: "TC",
+          fieldValues: {},
+          parameters: [
+            { name: "env", type: "STRING", sensitive: false },
+          ],
+          starterDataset: "TRUNCATED",
+        },
+      ],
+    });
+
+    mockChat.mockResolvedValue({
+      content: truncatedResponse,
+      model: "gpt-4",
+      promptTokens: 100,
+      completionTokens: 200,
+      totalTokens: 300,
+      finishReason: "stop",
+    });
+
+    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+      id: 1,
+      llmIntegrationId: 42,
+      maxTokensPerRequest: 128000,
+      defaultMaxTokens: 4096,
+    });
+
+    const body = { ...VALID_BODY, includeParameters: true };
+
+    const { POST } = await import("./route");
+    const res = await POST(makeRequest(body));
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(data.testCases).toHaveLength(1);
+    expect(data.testCases[0].parameters).toHaveLength(1);
+    expect(data.warnings).toBeDefined();
+    expect(
+      data.warnings.some((w: { message: string }) =>
+        w.message.includes("dataset_truncated")
+      )
+    ).toBe(true);
+  });
+
   // ── TOKEN-05-e: no truncation when within budget ──────────────────────────
 
   it("TOKEN-05-e: no truncation when prompt fits within budget", async () => {

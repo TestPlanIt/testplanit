@@ -46,15 +46,23 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { projectId, issue, template, context, outline, autoGenerateTags } =
-    body as {
-      projectId: number;
-      issue: IssueData;
-      template: TemplateData;
-      context: GenerationContext;
-      outline: TestCaseOutline;
-      autoGenerateTags?: boolean;
-    };
+  const {
+    projectId,
+    issue,
+    template,
+    context,
+    outline,
+    autoGenerateTags,
+    includeParameters,
+  } = body as {
+    projectId: number;
+    issue: IssueData;
+    template: TemplateData;
+    context: GenerationContext;
+    outline: TestCaseOutline;
+    autoGenerateTags?: boolean;
+    includeParameters?: boolean;
+  };
 
   if (!projectId || !issue || !template || !outline) {
     return NextResponse.json(
@@ -175,7 +183,8 @@ export async function POST(req: NextRequest) {
         const systemPrompt = buildExpandSystemPrompt(
           template,
           autoGenerateTags,
-          systemPromptBase
+          systemPromptBase,
+          includeParameters === true
         );
         const userPrompt = buildExpandUserPrompt(
           issue,

@@ -25,15 +25,23 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { projectId, issue, template, context, quantity, autoGenerateTags } =
-      body as {
-        projectId: number;
-        issue: IssueData;
-        template: TemplateData;
-        context: GenerationContext;
-        quantity?: string;
-        autoGenerateTags?: boolean;
-      };
+    const {
+      projectId,
+      issue,
+      template,
+      context,
+      quantity,
+      autoGenerateTags,
+      includeParameters,
+    } = body as {
+      projectId: number;
+      issue: IssueData;
+      template: TemplateData;
+      context: GenerationContext;
+      quantity?: string;
+      autoGenerateTags?: boolean;
+      includeParameters?: boolean;
+    };
 
     if (!projectId || !issue || !template) {
       return NextResponse.json(
@@ -158,7 +166,8 @@ export async function POST(request: NextRequest) {
       context,
       quantity,
       autoGenerateTags,
-      systemPromptBase
+      systemPromptBase,
+      includeParameters === true
     );
 
     // TOKEN-02: Read provider config from the resolved integration (not projectLlmIntegrations[0])
@@ -285,7 +294,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse & validate the LLM response using shared logic
-    const { testCases, parseError } = parseAndValidateTestCases(
+    const { testCases, parseError, warnings } = parseAndValidateTestCases(
       response.content,
       template,
       issue,
@@ -329,6 +338,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       testCases,
+      ...(warnings && warnings.length > 0 ? { warnings } : {}),
       metadata: {
         issueKey: issue.key,
         templateName: template.name,
