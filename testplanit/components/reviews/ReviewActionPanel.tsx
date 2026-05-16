@@ -17,6 +17,10 @@ import {
   RequestChangesDialog,
   type ReviewableEntityType,
 } from "./ReviewDecisionDialogs";
+import {
+  REVIEW_ACTION_PANEL_INCLUDE,
+  type ReviewActionPanelRequest,
+} from "./types";
 
 export interface ReviewActionPanelProps {
   entityType: ReviewableEntityType;
@@ -65,11 +69,7 @@ export function ReviewActionPanel({
         status: "PENDING",
         isDeleted: false,
       },
-      include: {
-        fromState: true,
-        toState: true,
-        requestedBy: { select: { id: true, name: true } },
-      },
+      include: REVIEW_ACTION_PANEL_INCLUDE,
     },
     {
       staleTime: 30_000,
@@ -78,20 +78,13 @@ export function ReviewActionPanel({
     } as Parameters<typeof useFindFirstReviewRequest>[1],
   );
 
-  // Cast the ZenStack hook result to the include-aware shape this component
-  // consumes. ZenStack's generated typings collapse the include arg to a
-  // generic `{}` payload at the call site because the args object is
-  // computed at runtime; the narrower shape below describes what we asked
-  // for in the include block above.
+  // WR-07: narrow the ZenStack hook result through the shared
+  // ReviewActionPanelRequest type so a future schema rename of any of the
+  // included relations surfaces as a real type error at this seam rather
+  // than a runtime null deref. The cast is now structural to the
+  // generated Prisma payload type rather than to an ad-hoc inline literal.
   const pendingRequest = pendingRequestRaw as
-    | {
-        id: string;
-        requestedByUserId: string;
-        assigneeUserId: string | null;
-        assigneeRoleId: number | null;
-        toState: { id: number; name: string } | null;
-        requestedBy: { id: string; name: string | null } | null;
-      }
+    | ReviewActionPanelRequest
     | null
     | undefined;
 
