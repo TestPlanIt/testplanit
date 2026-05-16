@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
+import { getEnhancedDb } from "~/lib/auth/utils";
 import { prisma } from "~/lib/prisma";
 import { buildIterationIssueBody } from "~/lib/services/iterationIssueBodyBuilder";
 import { authOptions } from "~/server/auth";
@@ -15,11 +16,18 @@ import { authOptions } from "~/server/auth";
  * a TipTap doc — the create-issue API route accepts the doc shape and the
  * three adapters (Jira/GitHub/Azure DevOps) render it natively (D-15).
  *
+ * Access control (CR-02): the existence check below uses the
+ * ZenStack-enhanced client (`getEnhancedDb(session)`) so the
+ * @@allow/@@deny policies on `TestRunCaseIteration` are enforced. Any
+ * authenticated caller that lacks project membership receives a 404 —
+ * the upstream gate the redactor depends on.
+ *
  * Sensitive parameter values are redacted per the CALLER's permission
- * (D-13). This is intentional: the user filing the issue should see what
- * they're authorized to see in the prefilled body. The adapter-side
- * webhook redaction in `submit-result` uses `viewerCanReadSensitive=false`
- * independently — the two paths do not share a flag.
+ * (D-13) — non-sensitive values still depend on the project-membership
+ * gate above. The user filing the issue sees what they're authorized to
+ * see in the prefilled body. The adapter-side webhook redaction in
+ * `submit-result` uses `viewerCanReadSensitive=false` independently —
+ * the two paths do not share a flag.
  */
 
 async function resolveCanReadSensitive(userId: string): Promise<boolean> {
@@ -57,11 +65,17 @@ export async function GET(
     return NextResponse.json({ error: "Invalid params" }, { status: 400 });
   }
 
-  // Verify the iteration belongs to the run + case the URL claims — defense
-  // in depth against IDOR. Read access is governed by the iteration's
-  // existing ZenStack project-membership policy via getEnhancedDb usage
-  // elsewhere; here we use raw prisma to scope the existence check.
-  const iteration = await prisma.testRunCaseIteration.findFirst({
+  // CR-02: enforce project membership via the ZenStack-enhanced client.
+  // `getEnhancedDb` applies the @@allow/@@deny rules on
+  // TestRunCaseIteration, so a caller without project access falls
+  // through to "not found" — same DX, correct enforcement. This is the
+  // upstream-of-redactor gate D-13 assumes.
+  //
+  // The `testRunCase: { testRunId }` filter is still applied so the
+  // URL params are internally consistent (defense in depth against
+  // IDOR via mismatched path segments).
+  const db = await getEnhancedDb(session);
+  const iteration = await db.testRunCaseIteration.findFirst({
     where: {
       id: iterationId,
       testRunCaseId,
