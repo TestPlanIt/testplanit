@@ -4,7 +4,6 @@ import { ApplicationArea } from "@prisma/client";
 import { z } from "zod/v4";
 import { prisma } from "~/lib/prisma";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
-import { assertReviewGatePasses } from "~/lib/services/reviewGate";
 import {
   AlreadyPendingError,
   isAlreadyPendingError,
@@ -152,6 +151,17 @@ export async function completeMilestoneCascade(
     }
   }
 
+  // WR-04: pre-fetch the project's reviewWorkflowEnabled flag ONCE here so
+  // the per-entity preflight loop inside the transaction can short-circuit
+  // when the project has opted out of review. Doing this outside the tx
+  // keeps a contended write transaction short under deadlock-prone
+  // conditions (project memory `Deadlock Issues (40P01)`).
+  const projectReviewFlag = await prisma.projects.findUnique({
+    where: { id: projectId },
+    select: { reviewWorkflowEnabled: true },
+  });
+  const projectReviewEnabled = projectReviewFlag?.reviewWorkflowEnabled ?? true;
+
   // --- Database Logic ---
   const descendantMilestoneIds =
     await getAllDescendantMilestoneIds(milestoneId);
@@ -253,10 +263,14 @@ export async function completeMilestoneCascade(
         // typically targets DONE workflow states which are unlikely to have
         // requiresReview === true (review gates land on intermediate states,
         // not DONE per RESEARCH.md §Q6). Cheap target-state guard first:
-        // skip the per-entity loop entirely when the target state is
-        // ungated. If it IS gated, fall back to per-entity preflight; any
-        // ReviewGateError aborts the whole transaction.
+        // skip the gate entirely when the target state is ungated or the
+        // project has opted out. If it IS gated, batch the per-entity
+        // ReviewRequest lookup into a single findMany (WR-04) — the old loop
+        // fired ~3N queries inside this long-lived write tx, which is both
+        // slow and deadlock-prone.
         if (
+          projectReviewEnabled &&
+          process.env.TESTPLANIT_REVIEW_FEATURE_ENABLED !== "false" &&
           completedTestRunStateId !== undefined &&
           testRunUpdateData.stateId !== undefined
         ) {
@@ -265,11 +279,35 @@ export async function completeMilestoneCascade(
             select: { requiresReview: true },
           });
           if (targetTestRunState?.requiresReview) {
-            for (const tr of activeTestRuns) {
-              await assertReviewGatePasses(
-                tx,
+            const trIds = activeTestRuns.map(
+              (tr: { id: number }) => tr.id
+            );
+            const approvedRequests = await tx.reviewRequest.findMany({
+              where: {
+                entityType: "RUN",
+                entityId: { in: trIds },
+                toStateId: completedTestRunStateId,
+                status: "APPROVED",
+                consumedAt: null,
+                isDeleted: false,
+              },
+              select: { entityId: true },
+            });
+            const approvedEntityIds = new Set(
+              approvedRequests.map((r) => r.entityId)
+            );
+            const missing = trIds.find(
+              (id: number) => !approvedEntityIds.has(id)
+            );
+            if (missing !== undefined) {
+              // Surface the same ReviewGateError shape the per-entity gate
+              // would have thrown for the first missing approval. The outer
+              // catch translates this to the typed error envelope.
+              const { ReviewGateError } = await import("~/lib/utils/errors");
+              throw new ReviewGateError(
+                "REVIEW_REQUIRED",
                 "RUN",
-                tr.id,
+                missing,
                 completedTestRunStateId
               );
             }
@@ -299,9 +337,11 @@ export async function completeMilestoneCascade(
         }
 
         // Review & Approval preflight (Plan 01-04). Same pattern as the
-        // testRuns block above — cheap target-state guard, then per-entity
-        // preflight when gated.
+        // testRuns block above — cheap target-state guard, then a single
+        // batched findMany for approvals (WR-04).
         if (
+          projectReviewEnabled &&
+          process.env.TESTPLANIT_REVIEW_FEATURE_ENABLED !== "false" &&
           completedSessionStateId !== undefined &&
           sessionUpdateData.stateId !== undefined
         ) {
@@ -310,11 +350,32 @@ export async function completeMilestoneCascade(
             select: { requiresReview: true },
           });
           if (targetSessionState?.requiresReview) {
-            for (const s of activeSessions) {
-              await assertReviewGatePasses(
-                tx,
+            const sessionIds = activeSessions.map(
+              (s: { id: number }) => s.id
+            );
+            const approvedRequests = await tx.reviewRequest.findMany({
+              where: {
+                entityType: "SESSION",
+                entityId: { in: sessionIds },
+                toStateId: completedSessionStateId,
+                status: "APPROVED",
+                consumedAt: null,
+                isDeleted: false,
+              },
+              select: { entityId: true },
+            });
+            const approvedEntityIds = new Set(
+              approvedRequests.map((r) => r.entityId)
+            );
+            const missing = sessionIds.find(
+              (id: number) => !approvedEntityIds.has(id)
+            );
+            if (missing !== undefined) {
+              const { ReviewGateError } = await import("~/lib/utils/errors");
+              throw new ReviewGateError(
+                "REVIEW_REQUIRED",
                 "SESSION",
-                s.id,
+                missing,
                 completedSessionStateId
               );
             }
