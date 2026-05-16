@@ -563,6 +563,13 @@ export async function POST(req: NextRequest) {
         const failedCount = iterations.filter(
           (it) => it.status?.isFailure === true
         ).length;
+        const skippedCount = iterations.filter(
+          (it) =>
+            it.status != null &&
+            it.status.isSuccess === false &&
+            it.status.isFailure === false &&
+            it.status.isCompleted === true
+        ).length;
 
         await tx.testRunCases.update({
           where: { id: input.testRunCaseId },
@@ -573,6 +580,7 @@ export async function POST(req: NextRequest) {
             statusId: rollupStatusId ?? input.statusId,
             passedIterations: passedCount,
             failedIterations: failedCount,
+            skippedIterations: skippedCount,
           },
         });
 

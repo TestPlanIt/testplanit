@@ -288,6 +288,13 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
     const failedCount = iterations.filter(
       (it: any) => it.status?.isFailure === true
     ).length;
+    const skippedCount = iterations.filter(
+      (it: any) =>
+        it.status != null &&
+        it.status.isSuccess === false &&
+        it.status.isFailure === false &&
+        it.status.isCompleted === true
+    ).length;
 
     await tx.testRunCases.update({
       where: { id: args.testRunCaseId },
@@ -295,6 +302,7 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
         statusId: rollupStatusId ?? args.statusId,
         passedIterations: passedCount,
         failedIterations: failedCount,
+        skippedIterations: skippedCount,
       },
     });
 
@@ -484,6 +492,54 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
         select: { iterationId: true },
       });
       expect(persisted.iterationId).toBe(targetIteration.id);
+    });
+  });
+
+  it("skipped iteration result increments skippedIterations counter", async () => {
+    const { prisma, materializeIterations } = await importDeps();
+    await withRollback(prisma, async (tx) => {
+      const fx = await seedFixture(tx);
+      await materializeIterations(fx.testRunId, tx);
+
+      const skipped = await tx.status.findUnique({
+        where: { systemName: "skipped" },
+      });
+      expect(skipped).not.toBeNull();
+      // Sanity-check the skip-class semantics: isCompleted but neither
+      // success nor failure — this is the inverse-of-pass-and-fail rule
+      // the route uses to derive skippedCount.
+      expect(skipped.isCompleted).toBe(true);
+      expect(skipped.isSuccess).toBe(false);
+      expect(skipped.isFailure).toBe(false);
+
+      const iterations = await tx.testRunCaseIteration.findMany({
+        where: { testRunCaseId: fx.testRunCaseId },
+        orderBy: { rowIndex: "asc" },
+      });
+      expect(iterations).toHaveLength(3);
+
+      // Submit only the first iteration as skipped.
+      await submitOneIterationResult(tx, {
+        testRunId: fx.testRunId,
+        testRunCaseId: fx.testRunCaseId,
+        iterationId: iterations[0].id,
+        statusId: skipped.id,
+        executedById: fx.creatorId,
+      });
+
+      const runCase = await tx.testRunCases.findUnique({
+        where: { id: fx.testRunCaseId },
+        select: {
+          passedIterations: true,
+          failedIterations: true,
+          skippedIterations: true,
+          totalIterations: true,
+        },
+      });
+      expect(runCase.passedIterations).toBe(0);
+      expect(runCase.failedIterations).toBe(0);
+      expect(runCase.skippedIterations).toBe(1);
+      expect(runCase.totalIterations).toBe(3);
     });
   });
 

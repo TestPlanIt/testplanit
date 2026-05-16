@@ -378,12 +378,18 @@ export async function materializeForOneCase(
     });
   }
 
-  // Update the run-case counter. passedIterations / failedIterations stay
-  // at their default (0); they're populated as iteration results land in
-  // Task 6 (Wave 2).
+  // Update the run-case counter. passedIterations / failedIterations /
+  // skippedIterations are written explicitly as 0 so fresh runs start
+  // with a documented contract (the column default already provides 0,
+  // but the explicit write survives any future default change).
   await tx.testRunCases.update({
     where: { id: testRunCaseId },
-    data: { totalIterations: snapshotRows.length },
+    data: {
+      totalIterations: snapshotRows.length,
+      passedIterations: 0,
+      failedIterations: 0,
+      skippedIterations: 0,
+    },
   });
 
   return { snapshotId: snapshot.id, iterationCount: snapshotRows.length };

@@ -375,11 +375,13 @@ describeIntegration("materializeIterations (live DB)", () => {
           totalIterations: true,
           passedIterations: true,
           failedIterations: true,
+          skippedIterations: true,
         },
       });
       expect(runCase.totalIterations).toBe(3);
       expect(runCase.passedIterations).toBe(0);
       expect(runCase.failedIterations).toBe(0);
+      expect(runCase.skippedIterations).toBe(0);
     });
   });
 
