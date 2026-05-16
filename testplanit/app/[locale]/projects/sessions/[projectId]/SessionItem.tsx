@@ -2,6 +2,10 @@ import { DateTextDisplay } from "@/components/DateTextDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
 import { MemberList } from "@/components/MemberList";
 import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
+import {
+  PendingReviewBadge,
+  type PendingReviewSummary,
+} from "@/components/reviews/PendingReviewBadge";
 import TextFromJson from "@/components/TextFromJson";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +50,12 @@ interface SessionItemProps {
   canDuplicate?: boolean;
   isNew?: boolean;
   showMilestone?: boolean;
+  /**
+   * Pre-fetched PENDING ReviewRequest for this row's entity (bulk-loaded by
+   * the parent SessionDisplay; see RESEARCH §"Pitfall 6"). `undefined` means
+   * no pending review for this row.
+   */
+  pendingRequest?: PendingReviewSummary;
 }
 
 const SessionItem: React.FC<SessionItemProps> = ({
@@ -58,6 +68,7 @@ const SessionItem: React.FC<SessionItemProps> = ({
   canDuplicate,
   isNew,
   showMilestone = true,
+  pendingRequest,
 }) => {
   const { projectId } = useParams();
   const router = useRouter();
@@ -163,6 +174,9 @@ const SessionItem: React.FC<SessionItemProps> = ({
                 <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
               </h3>
             </Link>
+            <div className="inline-flex items-center ml-1 align-middle">
+              <PendingReviewBadge pendingRequest={pendingRequest} />
+            </div>
           </div>
           <div className="text-sm text-muted-foreground line-clamp-1">
             {testSession.note && (

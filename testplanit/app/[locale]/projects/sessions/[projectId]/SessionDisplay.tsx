@@ -17,9 +17,12 @@ import { CirclePlus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import type { PendingReviewSummary } from "@/components/reviews/PendingReviewBadge";
+import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import {
   useFindManyColor,
+  useFindManyReviewRequest,
   useFindManySessionFieldValues,
   useFindUniqueSessions,
 } from "~/lib/hooks";
@@ -225,6 +228,48 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newSessionId, setNewSessionId] = useState<number | null>(null);
   const [, setOpenMilestones] = useState<Record<number, boolean>>({});
+
+  // Bulk-fetch PENDING ReviewRequests for the visible page (D-06; one round
+  // trip per page render — never per-row, per RESEARCH §"Pitfall 6").
+  const sessionProjectId = testSessions[0]?.projectId;
+  const visibleSessionIds = useMemo(
+    () => testSessions.map((s) => s.id),
+    [testSessions]
+  );
+  const { enabled: reviewFeatureEnabled } =
+    useReviewFeatureEnabled(sessionProjectId);
+  const { data: pendingReviewsForVisibleSessions } = useFindManyReviewRequest(
+    {
+      where: {
+        entityType: "SESSION",
+        entityId: { in: visibleSessionIds },
+        status: "PENDING",
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+        status: true,
+        entityId: true,
+        assigneeUserId: true,
+        assigneeRoleId: true,
+        assigneeUser: { select: { name: true } },
+        assigneeRole: { select: { name: true } },
+      },
+    } as any,
+    {
+      enabled: reviewFeatureEnabled === true && visibleSessionIds.length > 0,
+    } as any
+  );
+  const pendingBySessionId = useMemo(() => {
+    const map = new Map<number, PendingReviewSummary>();
+    const rows = pendingReviewsForVisibleSessions as
+      | Array<PendingReviewSummary & { entityId: number }>
+      | undefined;
+    rows?.forEach((row) => {
+      map.set(row.entityId, row);
+    });
+    return map;
+  }, [pendingReviewsForVisibleSessions]);
 
   // Single AddSessionModal state (handles both add and duplicate)
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -510,6 +555,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
                       canDuplicate={canAddEdit}
                       isNew={newSessionId === testSession.id}
                       showMilestone={false}
+                      pendingRequest={pendingBySessionId.get(testSession.id)}
                     />
                   </div>
                 )
@@ -571,6 +617,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
                   canDuplicate={canAddEdit}
                   isNew={newSessionId === testSession.id}
                   showMilestone={false}
+                  pendingRequest={pendingBySessionId.get(testSession.id)}
                 />
               </div>
             ))}
@@ -616,6 +663,7 @@ const SessionDisplay: React.FC<SessionDisplayProps> = ({
                   canDuplicate={canAddEdit}
                   isNew={newSessionId === testSession.id}
                   showMilestone={true}
+                  pendingRequest={pendingBySessionId.get(testSession.id)}
                 />
               ))}
             </div>

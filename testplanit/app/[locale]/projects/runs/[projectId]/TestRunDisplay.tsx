@@ -15,7 +15,13 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import type { BatchTestRunSummaryResponse } from "~/app/api/test-runs/summaries/route";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
-import { useFindManyColor, useUpdateTestRuns } from "~/lib/hooks";
+import type { PendingReviewSummary } from "@/components/reviews/PendingReviewBadge";
+import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
+import {
+  useFindManyColor,
+  useFindManyReviewRequest,
+  useUpdateTestRuns,
+} from "~/lib/hooks";
 import { useFindManyTestRunCases } from "~/lib/hooks/test-run-cases";
 import { ItemTypes } from "~/types/dndTypes";
 import { cn } from "~/utils";
@@ -369,6 +375,44 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
 
   const testRunIds = useMemo(() => testRuns.map((run) => run.id), [testRuns]);
 
+  // Bulk-fetch PENDING ReviewRequests for the visible page (D-06; one round
+  // trip per page render — never per-row, per RESEARCH §"Pitfall 6").
+  const { enabled: reviewFeatureEnabled } = useReviewFeatureEnabled(
+    numericProjectId
+  );
+  const { data: pendingReviewsForVisibleRuns } = useFindManyReviewRequest(
+    {
+      where: {
+        entityType: "RUN",
+        entityId: { in: testRunIds },
+        status: "PENDING",
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+        status: true,
+        entityId: true,
+        assigneeUserId: true,
+        assigneeRoleId: true,
+        assigneeUser: { select: { name: true } },
+        assigneeRole: { select: { name: true } },
+      },
+    } as any,
+    {
+      enabled: reviewFeatureEnabled === true && testRunIds.length > 0,
+    } as any
+  );
+  const pendingByTestRunId = useMemo(() => {
+    const map = new Map<number, PendingReviewSummary>();
+    const rows = pendingReviewsForVisibleRuns as
+      | Array<PendingReviewSummary & { entityId: number }>
+      | undefined;
+    rows?.forEach((row) => {
+      map.set(row.entityId, row);
+    });
+    return map;
+  }, [pendingReviewsForVisibleRuns]);
+
   // Batch-fetch test run summaries for all test runs
   const { data: batchSummaries } = useQuery<BatchTestRunSummaryResponse>({
     queryKey: ["batchTestRunSummaries", testRunIds],
@@ -545,6 +589,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
               milestonePath={testRun.milestone?.name}
               onDuplicate={onDuplicateTestRun}
               summaryData={batchSummaries?.summaries[testRun.id]}
+              pendingRequest={pendingByTestRunId.get(testRun.id)}
             />
           ))}
         </div>
@@ -739,6 +784,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                         isNew={false}
                         onDuplicate={onDuplicateTestRunParam}
                         summaryData={summariesData?.summaries[testRun.id]}
+                        pendingRequest={pendingByTestRunId.get(testRun.id)}
                       />
                     </DraggableTestRunWrapper>
                   </div>
