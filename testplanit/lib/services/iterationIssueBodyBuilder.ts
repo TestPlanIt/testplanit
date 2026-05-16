@@ -20,7 +20,7 @@ import { buildIterationDeepLink } from "~/lib/services/iterationDeepLink";
 
 export interface PrismaLike {
   testRunCaseIteration: {
-    findUnique: (args: any) => Promise<any>;
+    findFirst: (args: any) => Promise<any>;
     count: (args: any) => Promise<number>;
   };
 }
@@ -125,8 +125,13 @@ export async function buildIterationIssueBody(
     defaultPrisma) as unknown as PrismaLike;
 
   // 1. Load the iteration with the data we need for title + body.
-  const iteration = await client.testRunCaseIteration.findUnique({
-    where: { id: input.iterationId },
+  //    WR-03: `isDeleted: false` matches the sibling count query at
+  //    step 2 — a soft-deleted iteration must not be readable here
+  //    either, otherwise the title can render "Iteration 8 of 3 failed"
+  //    (N > M) as the count excludes deleted rows while the findFirst
+  //    would otherwise still return them.
+  const iteration = await client.testRunCaseIteration.findFirst({
+    where: { id: input.iterationId, isDeleted: false },
     select: {
       id: true,
       rowIndex: true,

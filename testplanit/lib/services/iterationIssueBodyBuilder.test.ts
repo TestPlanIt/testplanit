@@ -16,7 +16,9 @@ function makeClient(opts: {
 }): PrismaLike {
   return {
     testRunCaseIteration: {
-      findUnique: vi.fn(async () => opts.iteration ?? null),
+      // WR-03: builder switched from findUnique → findFirst so the
+      // `isDeleted: false` predicate can compose with the id lookup.
+      findFirst: vi.fn(async () => opts.iteration ?? null),
       count: vi.fn(async () => opts.totalIterations ?? 0),
     } as any,
   };
@@ -300,5 +302,25 @@ describe("buildIterationIssueBody", () => {
         client,
       })
     ).rejects.toThrow(/not found/i);
+  });
+
+  it("WR-03: findFirst includes `isDeleted: false` (consistent with sibling count query)", async () => {
+    const client = makeClient({
+      iteration: makeIterationFixture(),
+      totalIterations: 3,
+    });
+
+    await buildIterationIssueBody({
+      iterationId: 999,
+      viewerCanReadSensitive: true,
+      client,
+    });
+
+    const findFirstFn = (client.testRunCaseIteration as any).findFirst as ReturnType<
+      typeof vi.fn
+    >;
+    expect(findFirstFn).toHaveBeenCalledTimes(1);
+    const call = findFirstFn.mock.calls[0]![0];
+    expect(call.where).toMatchObject({ id: 999, isDeleted: false });
   });
 });
