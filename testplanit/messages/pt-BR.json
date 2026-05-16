@@ -638,6 +638,8 @@
       "aiModels": "Modelos de IA",
       "integrations": "Integrações",
       "quickscript": "QuickScript",
+      "advanced": "Avançado",
+      "reviews": "Avaliações",
       "webhooks": "Webhooks",
       "shares": "Ações",
       "repository": "Repositório",
@@ -1399,7 +1401,7 @@
         "outboundHmacActiveSecret": "Ativo",
         "outboundHmacInactiveSecret": "Inativo",
         "outboundHmacRetiringSecret": "Aposentadoria",
-        "outboundHmacAutoRetireIn": "Aposenta-se automaticamente em {days, number} dias",
+        "outboundHmacAutoRetireIn": "Aposentadoria automática em {days, number} dias",
         "outboundHmacRotateButton": "Segredo de rotação",
         "outboundHmacExtendButton": "Prorrogar por 7 dias",
         "outboundHmacRetireNowButton": "Aposente-se agora",
@@ -1694,6 +1696,17 @@
         "disconnectWarning3": "Pare de incluir o contexto do código nas exportações geradas por IA.",
         "disconnectSuccess": "Repositório de código desconectado",
         "disconnectError": "Falha ao desconectar o repositório de código"
+      },
+      "advanced": {
+        "title": "Avançado",
+        "description": "Opções específicas para cada projeto que definem suas preferências. Novas opções aparecerão aqui conforme forem introduzidas.",
+        "reviewWorkflow": {
+          "label": "Ativar fluxo de trabalho de revisão",
+          "description": "Quando ativada, a transição para estados que exigem revisão é controlada por uma solicitação de revisão aprovada. Os testadores veem o botão \"Solicitar revisão\"; os revisores recebem notificações.",
+          "enabledToast": "Fluxo de trabalho de revisão ativado para este projeto",
+          "disabledToast": "Fluxo de trabalho de revisão desativado para este projeto",
+          "saveError": "Falha ao atualizar a configuração do fluxo de trabalho de revisão"
+        }
       }
     }
   },
@@ -2843,6 +2856,91 @@
       "deferredMessage": "Este anexo será apagado ao salvar."
     }
   },
+  "reviews": {
+    "banner": {
+      "pendingMessage": "Avaliação solicitada há {assignee}. {ago} anos.",
+      "changesRequestedTitle": "Alterações solicitadas",
+      "rejectedTitle": "Revisão rejeitada",
+      "cancelRequest": "Cancelar solicitação",
+      "requestAgain": "Solicitar revisão novamente"
+    },
+    "cancel": {
+      "title": "Cancelar este pedido de avaliação?",
+      "description": "O revisor não poderá mais analisar esta solicitação. Você poderá enviar uma nova solicitação posteriormente.",
+      "confirm": "Cancelar solicitação",
+      "success": "Solicitação de revisão cancelada.",
+      "error": "Não foi possível cancelar a solicitação de revisão. Tente novamente em instantes."
+    },
+    "list": {
+      "pendingTooltip": "Aguardando revisão de {assignee}"
+    },
+    "inbox": {
+      "iconAria": "{count, plural, =0 {Revisar caixa de entrada} one {Revisar caixa de entrada, # pendentes} other {Revisar caixa de entrada, # pendentes}}",
+      "pageTitle": "Avaliações",
+      "pageDescription": "Solicitações de revisão pendentes que lhe foram atribuídas (diretamente ou por meio de uma função que você desempenha).",
+      "empty": "Sem avaliações pendentes. Você está em dia com tudo.",
+      "featureDisabled": "O recurso de fluxo de trabalho de revisão está temporariamente desativado. As revisões pendentes são preservadas e reaparecerão quando o recurso for reativado.",
+      "columnEntity": "Entidade",
+      "columnProject": "Projeto",
+      "columnRequester": "Solicitante",
+      "columnTransition": "Transição",
+      "columnRequestedAt": "Solicitado em",
+      "filterEntityType": "Tipo de entidade",
+      "filterProject": "Projeto",
+      "filterAllEntityTypes": "Todos os tipos de entidade",
+      "filterEntityTypeCase": "Casos de teste",
+      "filterEntityTypeRun": "Testes de execução",
+      "filterEntityTypeSession": "Sessões",
+      "filterAllProjects": "Todos os projetos"
+    },
+    "requester": {
+      "openButton": "Solicitar revisão",
+      "sheetTitle": "Solicitar revisão",
+      "sheetDescription": "Envie esta entidade para revisão antes de fazer a transição para o estado de destino.",
+      "assigneeLabel": "Cedente",
+      "assigneePlaceholder": "Selecione um usuário ou função",
+      "usersHoldRole": "{count, plural, one {# usuário detém esta função} other {# usuários detêm esta função}}",
+      "targetStateLabel": "Estado alvo",
+      "targetStatePlaceholder": "Selecione um estado de destino",
+      "commentLabel": "Comentário",
+      "commentPlaceholder": "Explique o que você precisa que o revisor observe.",
+      "commentRequired": "É necessário um comentário.",
+      "assigneeRequired": "Selecione um responsável.",
+      "targetStateRequired": "Selecione um estado de destino.",
+      "submitButton": "Solicitar revisão",
+      "submitSuccess": "Solicitação de revisão criada.",
+      "alreadyPendingError": "Já existe uma avaliação pendente para esta entidade."
+    },
+    "reviewer": {
+      "approve": "Aprovar",
+      "requestChanges": "Solicitar alterações",
+      "reject": "Rejeitar",
+      "approveConfirmTitle": "Aprovar este pedido de revisão?",
+      "approveConfirmDescription": "A aprovação permitirá ao solicitante fazer a transição deste {entityType} para {targetStateName}.",
+      "approvalNoteLabel": "Nota de aprovação",
+      "approvalNotePlaceholder": "Adicione uma nota opcional para o solicitante (visível junto com a aprovação).",
+      "requestChangesTitle": "Solicitar alterações",
+      "requestChangesDescription": "Informe ao solicitante o que precisa ser alterado antes que você possa aprovar essa transição.",
+      "requestChangesCommentLabel": "Comentário",
+      "requestChangesCommentPlaceholder": "Explique o que precisa ser mudado.",
+      "rejectTitle": "Deseja rejeitar este pedido de revisão?",
+      "rejectDescription": "A rejeição impede que o solicitante faça a transição deste {entityType} para {targetStateName}. Uma nova solicitação de revisão deve ser criada para tentar novamente.",
+      "rejectCommentLabel": "Comentário",
+      "rejectCommentPlaceholder": "Explique por que você está rejeitando esta solicitação.",
+      "commentRequired": "É necessário um comentário.",
+      "confirmApprove": "Aprovar",
+      "confirmRequestChanges": "Enviar",
+      "confirmReject": "Rejeitar",
+      "cancel": "Cancelar",
+      "approveSuccess": "Revisão aprovada.",
+      "requestChangesSuccess": "Alterações solicitadas.",
+      "rejectSuccess": "Análise rejeitada.",
+      "ineligibleError": "Você não está mais qualificado para decidir sobre esta solicitação de revisão.",
+      "alreadyDecidedError": "Essa avaliação já foi decidida.",
+      "decideError": "Não foi possível registrar sua decisão. Tente novamente em instantes.",
+      "panelSummary": "Solicitação de revisão de {requesterName}: transição para {targetStateName}"
+    }
+  },
   "runs": {
     "notFound": "Teste de execução não encontrado.",
     "add": {
@@ -3017,6 +3115,7 @@
       "exportTemplates": "Exportar modelos",
       "codeRepositories": "Repositórios de código",
       "quickScript": "QuickScript",
+      "advanced": "Avançado",
       "sso": "Autenticação",
       "security": "Segurança",
       "trash": "Lixo",
@@ -3963,7 +4062,7 @@
       "forceAllUsersDialogConfirm": "Mudança de Força",
       "saved": "Configurações de segurança salvas",
       "saveFailed": "Falha ao salvar as configurações de segurança",
-      "forceAllSuccess": "É necessário alterar a senha para {count, number} usuários",
+      "forceAllSuccess": "É necessário alterar a senha para os usuários {count, number}",
       "forceAllFailed": "Falha ao forçar a alteração de senha"
     },
     "apiTokens": {
@@ -4014,6 +4113,18 @@
     },
     "workflows": {
       "description": "Gerenciar fluxos de trabalho de casos de teste",
+      "systemFeatureCard": {
+        "title": "Recurso de revisão do fluxo de trabalho",
+        "description": "Opção de ativação/desativação do recurso de revisão e aprovação em nível de sistema. Quando ativada, os projetos podem optar por participar ou desativá-la individualmente por meio de suas configurações avançadas.",
+        "stateEnabled": "Habilitado",
+        "stateDisabled": "Desabilitado",
+        "operatorNotePrefix": "Definido por meio de variável de ambiente",
+        "operatorNoteSuffix": "É necessário reiniciar o sistema para que as alterações sejam aplicadas."
+      },
+      "editWorkflow": {
+        "requiresReviewLabel": "Requer revisão",
+        "requiresReviewFeatureDisabled": "O recurso de fluxo de trabalho de revisão está desativado no nível do sistema. Alterne as configurações avançadas de um projeto ou defina TESTPLANIT_REVIEW_FEATURE_ENABLED para reativá-lo."
+      },
       "add": {
         "button": "Adicionar fluxo de trabalho",
         "title": "Adicionar novo fluxo de trabalho",

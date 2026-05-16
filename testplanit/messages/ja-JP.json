@@ -9,16 +9,16 @@
     "in": "で",
     "add": "追加",
     "never": "一度もない",
-    "select": "選択...",
+    "select": "選択…",
     "file": "ファイル",
-    "selectMultiple": "複数選択...",
-    "searchUsers": "ユーザーを検索...",
+    "selectMultiple": "複数選択…",
+    "searchUsers": "ユーザーを検索…",
     "searchCases": "{count, plural, =0 {症例を検索} one {症例を検索 #} other {症例を検索 #}}",
     "searchProjects": "{count, plural, =0 {プロジェクトを検索} one {プロジェクト番号を検索} other {プロジェクト番号を検索}}",
-    "searchTags": "タグを検索...",
+    "searchTags": "タグを検索…",
     "searchRuns": "{count, plural, =0 {テスト実行を検索} one {テスト実行番号を検索} other {テスト実行番号を検索}}",
     "searchSessions": "{count, plural, =0 {セッションを検索} one {セッション番号を検索} other {セッション番号を検索}}",
-    "search": "検索...",
+    "search": "検索…",
     "defaultOption": "デフォルトオプション",
     "yes": "はい",
     "no": "いいえ",
@@ -38,7 +38,7 @@
       "signOut": "サインアウト",
       "signUp": "サインアップ",
       "resend": "再送信",
-      "deleting": "削除しています...",
+      "deleting": "削除しています…",
       "next": "次",
       "previous": "前の",
       "finish": "仕上げる",
@@ -47,8 +47,8 @@
       "confirm": "確認する",
       "confirmDelete": "削除を確認",
       "saveChanges": "変更を保存",
-      "saving": "保存中...",
-      "submitting": "送信中...",
+      "saving": "保存中…",
+      "submitting": "送信中…",
       "start": "始める",
       "pause": "一時停止",
       "reset": "リセット",
@@ -78,7 +78,7 @@
       "addResultSelected": "結果を {count, plural, one {# ケース} other {# ケース}} に追加します",
       "resultsAdded": "{count, plural, one {# 結果} other {# 結果}} 追加済み",
       "resultsAddedDescription": "{count, plural, one {結果が # テストケースに追加されました} other {結果が # テストケースに追加されました}} 正常に",
-      "addingResultsToMultiple": "結果を {count, plural, one {# テストケース} other {# テストケース}} に追加しています。",
+      "addingResultsToMultiple": "結果を {count, plural, one {# テストケース} other {# テストケース}} に追加しています",
       "addedToTestRun": "テスト実行に追加されました",
       "addedToTestRunDescription": "テスト ケースがテスト実行に追加されました。",
       "noAvailableTestRuns": "すべてのアクティブなテスト実行には、このテスト ケースがすでに含まれています。",
@@ -87,7 +87,7 @@
       "selectStatus": "ステータスを選択",
       "addToTestRun": "テスト実行に追加",
       "status": "状態",
-      "resultDetailsPlaceholder": "結果の詳細を入力してください...",
+      "resultDetailsPlaceholder": "結果の詳細を入力してください…",
       "selectAll": "すべて選択",
       "deselectAll": "すべて選択解除",
       "clearAll": "すべてクリア",
@@ -638,6 +638,8 @@
       "aiModels": "AIモデル",
       "integrations": "統合",
       "quickscript": "クイックスクリプト",
+      "advanced": "高度な",
+      "reviews": "レビュー",
       "webhooks": "ウェブフック",
       "shares": "株式",
       "repository": "リポジトリ",
@@ -1295,7 +1297,7 @@
         "inboundAddButtonAllConfigured": "インバウンドアダプタは既に設定済みです。",
         "inboundAddButtonNoIntegration": "インバウンドWebhookを追加する前に、このプロジェクトに課題統合を割り当ててください。",
         "inboundEmptyWithIntegration": "受信ウェブフックが設定されていません。 <link>割り当てられた課題統合から課題の更新情報を受け取るには、</link> を 1 つ追加してください。",
-        "inboundEmptyNoIntegration": "受信した課題更新情報を受け取るには、課題統合 <link>が必要です。開始するには、プロジェクトに課題統合</link> を割り当ててください。",
+        "inboundEmptyNoIntegration": "受信した課題の更新情報を受け取るには、課題統合 <link>が必要です。開始するには、プロジェクトに課題統合</link> を割り当ててください。",
         "deliveriesEmptyNoConfigs": "まだWebhookによる配信は開始されていません。受信を開始するには、他のタブで受信または送信のWebhookを作成してください。",
         "noConfig": "ウェブフックが設定されていません",
         "createButton": "ウェブフックを作成する",
@@ -1442,7 +1444,7 @@
         "inboundGitlabTitle": "GitLabの受信Webhook",
         "inboundGitlabScopeHint": "GitLab <code>Issue Hook</code> イベントは、リンクされた TestPlanIt の課題を更新します。他のイベントタイプも受け入れられますが、課題は更新されません。",
         "inboundGiteaTitle": "Giteaの受信Webhook",
-        "inboundGiteaScopeHint": "Gitea <code>の課題</code> イベントは、リンクされた TestPlanIt の課題を更新します。その他のイベントタイプも受け入れられますが、課題は更新されません。",
+        "inboundGiteaScopeHint": "Gitea <code>の課題</code> のイベントは、リンクされた TestPlanIt の課題を更新します。他のイベントタイプも受け入れられますが、課題は更新されません。",
         "inboundAdoTitle": "Azure DevOps インバウンド Webhook",
         "inboundAdoScopeHint": "Azure DevOps <code>workitem.updated</code> イベントは、リンクされた TestPlanIt の課題を更新します。その他のイベントも受け付けますが、課題は更新されません。",
         "inboundAdoUsername": "ユーザー名",
@@ -1694,6 +1696,17 @@
         "disconnectWarning3": "AI生成エクスポートにコードコンテキストを含めないようにする",
         "disconnectSuccess": "コードリポジトリとの接続が切断されました",
         "disconnectError": "コードリポジトリの接続解除に失敗しました"
+      },
+      "advanced": {
+        "title": "高度な",
+        "description": "プロジェクトごとに、独自の機能設定を切り替えることができます。新しい設定項目は、導入され次第ここに表示されます。",
+        "reviewWorkflow": {
+          "label": "レビューワークフローを有効にする",
+          "description": "有効にすると、レビューが必要な状態への移行は、承認済みのレビュー依頼によってのみ制限されます。テスターには「レビュー依頼」ボタンが表示され、レビュー担当者には通知が届きます。",
+          "enabledToast": "このプロジェクトではレビューワークフローが有効になっています。",
+          "disabledToast": "このプロジェクトではレビューワークフローが無効になっています。",
+          "saveError": "レビューワークフロー設定の更新に失敗しました"
+        }
       }
     }
   },
@@ -2318,7 +2331,7 @@
         },
         "page4": {
           "title": "プレビューインポート",
-          "showing": "{start, number}-{end, number} を表示中（全 {total, number} 件）",
+          "showing": "{start, number}-{end, number} を表示中（全 {total, number} ケース）",
           "case": "ケース {number, number}"
         }
       }
@@ -2587,7 +2600,7 @@
       "loadingResults": "生成されたテストケースを読み込んでいます...",
       "generatingPreparing": "リクエストを準備しています...",
       "generatingCallingAi": "AIがテストケースを生成するのを待っています...",
-      "generatingStreaming": "AI がテストケースを生成しています {count, number}...",
+      "generatingStreaming": "AI がテストケース {count, number} を生成しています...",
       "generatingStreamingPage": "AI がテストケース {count, number} を生成しています — ページ {current, number} / {total, number}: {page}",
       "generatingProcessing": "生成されたテストケースを処理しています...",
       "generatingHint": "資料の複雑さによっては、1分ほどかかる場合があります。",
@@ -2843,6 +2856,91 @@
       "deferredMessage": "この添付ファイルは保存すると削除されます。"
     }
   },
+  "reviews": {
+    "banner": {
+      "pendingMessage": "{assignee}から {ago} 前にレビューが依頼されました。",
+      "changesRequestedTitle": "変更依頼",
+      "rejectedTitle": "審査が却下されました",
+      "cancelRequest": "キャンセルリクエスト",
+      "requestAgain": "再度レビューを依頼する"
+    },
+    "cancel": {
+      "title": "このレビュー依頼をキャンセルしますか？",
+      "description": "審査担当者はこのリクエストに対応できなくなります。後ほど新しいリクエストを送信してください。",
+      "confirm": "キャンセルリクエスト",
+      "success": "レビュー依頼はキャンセルされました。",
+      "error": "レビュー依頼をキャンセルできませんでした。しばらくしてからもう一度お試しください。"
+    },
+    "list": {
+      "pendingTooltip": "{assignee}からのレビュー待ち"
+    },
+    "inbox": {
+      "iconAria": "{count, plural, =0 {レビュー受信ボックス} one {レビュー受信ボックス、# 保留中} other {レビュー受信ボックス、# 保留中}}",
+      "pageTitle": "レビュー",
+      "pageDescription": "あなたに割り当てられた（直接またはあなたが担う役割を通じて割り当てられた）保留中の審査依頼。",
+      "empty": "保留中のレビューはありません。すべて完了しています。",
+      "featureDisabled": "レビューワークフロー機能は現在無効になっています。保留中のレビューは保持されており、機能が再度有効になった際に表示されます。",
+      "columnEntity": "実在物",
+      "columnProject": "プロジェクト",
+      "columnRequester": "依頼者",
+      "columnTransition": "遷移",
+      "columnRequestedAt": "リクエスト先",
+      "filterEntityType": "エンティティタイプ",
+      "filterProject": "プロジェクト",
+      "filterAllEntityTypes": "すべてのエンティティタイプ",
+      "filterEntityTypeCase": "テストケース",
+      "filterEntityTypeRun": "テスト実行",
+      "filterEntityTypeSession": "セッション",
+      "filterAllProjects": "すべてのプロジェクト"
+    },
+    "requester": {
+      "openButton": "レビューを依頼する",
+      "sheetTitle": "レビューを依頼する",
+      "sheetDescription": "目標状態に移行する前に、このエンティティをレビューに提出してください。",
+      "assigneeLabel": "譲受人",
+      "assigneePlaceholder": "ユーザーまたは役割を選択してください",
+      "usersHoldRole": "{count, plural, one {# このロールを持つユーザー} other {# このロールを持つユーザー}}",
+      "targetStateLabel": "目標状態",
+      "targetStatePlaceholder": "対象州を選択してください",
+      "commentLabel": "コメント",
+      "commentPlaceholder": "レビュー担当者に確認してほしい内容を説明してください。",
+      "commentRequired": "コメントは必須です。",
+      "assigneeRequired": "担当者を選択してください。",
+      "targetStateRequired": "対象とする州を選択してください。",
+      "submitButton": "レビューを依頼する",
+      "submitSuccess": "レビュー依頼が作成されました。",
+      "alreadyPendingError": "この団体については既に審査が保留中です。"
+    },
+    "reviewer": {
+      "approve": "承認する",
+      "requestChanges": "変更をリクエストする",
+      "reject": "拒否する",
+      "approveConfirmTitle": "このレビュー依頼を承認しますか？",
+      "approveConfirmDescription": "承認すると、申請者はこの {entityType} を {targetStateName} に移行できるようになります。",
+      "approvalNoteLabel": "承認メモ",
+      "approvalNotePlaceholder": "申請者向けにオプションのメモを追加できます（承認画面の横に表示されます）。",
+      "requestChangesTitle": "変更をリクエストする",
+      "requestChangesDescription": "この移行を承認する前に、変更が必要な点を依頼者に伝えてください。",
+      "requestChangesCommentLabel": "コメント",
+      "requestChangesCommentPlaceholder": "何を変える必要があるのか説明してください。",
+      "rejectTitle": "このレビュー依頼を拒否しますか？",
+      "rejectDescription": "拒否すると、リクエスト元はこの {entityType} を {targetStateName}に移行できなくなります。再試行するには、新しいレビューリクエストを作成する必要があります。",
+      "rejectCommentLabel": "コメント",
+      "rejectCommentPlaceholder": "この依頼を却下する理由を説明してください。",
+      "commentRequired": "コメントは必須です。",
+      "confirmApprove": "承認する",
+      "confirmRequestChanges": "送信",
+      "confirmReject": "拒否する",
+      "cancel": "キャンセル",
+      "approveSuccess": "審査が承認されました。",
+      "requestChangesSuccess": "変更依頼がありました。",
+      "rejectSuccess": "審査は却下されました。",
+      "ineligibleError": "あなたはもはやこの審査依頼を決定する資格がありません。",
+      "alreadyDecidedError": "この審査は既に決定済みです。",
+      "decideError": "お客様のご決定を記録できませんでした。しばらくしてからもう一度お試しください。",
+      "panelSummary": "{requesterName}からのレビュー依頼： {targetStateName} への移行"
+    }
+  },
   "runs": {
     "notFound": "テスト実行が見つかりません。",
     "add": {
@@ -2886,7 +2984,7 @@
       "loading": {
         "batch": "{total}のバッチ {current} を処理中",
         "analyzing": "テストケースを分析しています...",
-        "progress": "Analyzed {analyzed, number} of {total, number} test cases...",
+        "progress": "{analyzed, number} テストケースの {total, number} を分析しました…",
         "waitingForAi": "AIからの応答を待っています（バッチ {batch} / {total}）...",
         "selectedSoFar": "{count, plural, =1 {# これまでに選択されたテストケース} other {# これまでに選択されたテストケース}}",
         "resolving_integration": "AI統合の課題解決…",
@@ -3017,6 +3115,7 @@
       "exportTemplates": "エクスポートテンプレート",
       "codeRepositories": "コードリポジトリ",
       "quickScript": "クイックスクリプト",
+      "advanced": "高度な",
       "sso": "認証",
       "security": "安全",
       "trash": "ごみ",
@@ -4014,6 +4113,18 @@
     },
     "workflows": {
       "description": "テストケースワークフローを管理する",
+      "systemFeatureCard": {
+        "title": "レビューワークフロー機能",
+        "description": "レビューおよび承認機能のシステムレベルの切り替えスイッチです。有効にすると、プロジェクトごとに詳細設定から個別に有効/無効を選択できます。",
+        "stateEnabled": "有効",
+        "stateDisabled": "無効",
+        "operatorNotePrefix": "環境変数で設定",
+        "operatorNoteSuffix": "変更を適用するには再起動が必要です。"
+      },
+      "editWorkflow": {
+        "requiresReviewLabel": "審査が必要",
+        "requiresReviewFeatureDisabled": "レビューワークフロー機能はシステムレベルで無効になっています。プロジェクトの詳細設定を切り替えるか、TESTPLANIT_REVIEW_FEATURE_ENABLED を設定して再度有効にしてください。"
+      },
       "add": {
         "button": "ワークフローを追加",
         "title": "新しいワークフローを追加",
@@ -6527,7 +6638,7 @@
       },
       "page3": {
         "title": "インポートデータのプレビュー",
-        "showing": "共有ステップの {start, number} から {end, number} までを表示しています（全 {total, number}）。",
+        "showing": "{start, number} から {end, number} までの {total, number} の共有ステップを表示しています。",
         "step": "共有ステップ {number, number}",
         "noValue": "（空の）"
       }
