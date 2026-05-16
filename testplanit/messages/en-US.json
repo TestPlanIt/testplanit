@@ -2856,6 +2856,23 @@
     }
   },
   "reviews": {
+    "banner": {
+      "pendingMessage": "Review requested from {assignee}. {ago} ago.",
+      "changesRequestedTitle": "Changes requested",
+      "rejectedTitle": "Review rejected",
+      "cancelRequest": "Cancel request",
+      "requestAgain": "Request review again"
+    },
+    "cancel": {
+      "title": "Cancel this review request?",
+      "description": "The reviewer will no longer be able to act on this request. You can submit a new request afterward.",
+      "confirm": "Cancel request",
+      "success": "Review request cancelled.",
+      "error": "Could not cancel the review request. Try again in a moment."
+    },
+    "list": {
+      "pendingTooltip": "Pending review from {assignee}"
+    },
     "requester": {
       "openButton": "Request review",
       "sheetTitle": "Request review",
