@@ -2843,6 +2843,26 @@
       "deferredMessage": "This attachment will be deleted when you save."
     }
   },
+  "reviews": {
+    "requester": {
+      "openButton": "Request review",
+      "sheetTitle": "Request review",
+      "sheetDescription": "Send this entity for review before transitioning to the target state.",
+      "assigneeLabel": "Assignee",
+      "assigneePlaceholder": "Select a user or role",
+      "usersHoldRole": "{count, plural, one {# user holds this role} other {# users hold this role}}",
+      "targetStateLabel": "Target state",
+      "targetStatePlaceholder": "Select a target state",
+      "commentLabel": "Comment",
+      "commentPlaceholder": "Explain what you need the reviewer to look at",
+      "commentRequired": "A comment is required.",
+      "assigneeRequired": "Select an assignee.",
+      "targetStateRequired": "Select a target state.",
+      "submitButton": "Request review",
+      "submitSuccess": "Review request created.",
+      "alreadyPendingError": "A review is already pending for this entity."
+    }
+  },
   "runs": {
     "notFound": "Test run not found.",
     "add": {
