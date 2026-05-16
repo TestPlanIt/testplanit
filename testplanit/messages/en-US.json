@@ -2873,6 +2873,9 @@
     "list": {
       "pendingTooltip": "Pending review from {assignee}"
     },
+    "inbox": {
+      "iconAria": "{count, plural, =0 {Review inbox} one {Review inbox, # pending} other {Review inbox, # pending}}"
+    },
     "requester": {
       "openButton": "Request review",
       "sheetTitle": "Request review",
