@@ -911,7 +911,18 @@ export function SearchIssuesDialog({
         </DialogContent>
       </Dialog>
 
+      {/* CR-05: When opened from a failed-iteration ("create linked Issue")
+          flow, ALWAYS use CreateIssueDialog regardless of provider — it
+          is the only dispatch component that accepts the `defaultValues`
+          / TipTap-doc prefill. The previous code dispatched JIRA to
+          CreateIssueJiraForm (which has no prefill prop), silently
+          dropping the iteration body for Jira customers. CreateIssueDialog
+          handles JIRA via the external-integration endpoint at
+          create-issue-dialog.tsx:537-625, so this preserves the Jira
+          create path while finally threading the prefilled doc through
+          tiptapToAdf on the adapter side (D-15). */}
       {showCreateDialog &&
+        !iterationPrefill &&
         activeIntegration?.integration.provider === "JIRA" && (
           <CreateIssueJiraForm
             open={showCreateDialog}
@@ -941,7 +952,8 @@ export function SearchIssuesDialog({
         )}
 
       {showCreateDialog &&
-        activeIntegration?.integration.provider !== "JIRA" && (
+        (iterationPrefill ||
+          activeIntegration?.integration.provider !== "JIRA") && (
           <CreateIssueDialog
             open={showCreateDialog}
             onOpenChange={setShowCreateDialog}
