@@ -65,14 +65,25 @@ export function useReviewFeatureEnabled(
     staleTime: 5 * 60 * 1000,
   });
 
-  const hasProjectId = typeof projectId === "number";
+  // WR-02: `0` is forbidden as a real projectId — guarding here keeps the
+  // ZenStack query key stable across consumer call sites that pass no
+  // projectId, and prevents a future refactor from accidentally enabling
+  // the call with the `id: 0` sentinel (which would silently return null
+  // and pin `enabled` to undefined forever via the `projectEnabled ===
+  // undefined` branch below). Real project ids are positive integers.
+  const hasProjectId = typeof projectId === "number" && projectId > 0;
 
   // Always call the ZenStack hook (Rules of Hooks); the `enabled` option
-  // controls whether it actually fires.
+  // controls whether it actually fires. The `where.id` value here is
+  // irrelevant when `enabled: false` — but we still use a non-zero sentinel
+  // so any future regression that flips enabled=true with no real id
+  // surfaces as a 404-shaped null rather than a "happens to match row id
+  // 0" surprise.
+  const PROJECT_ID_SENTINEL = -1;
   const { data: projectData, isLoading: projectLoading } =
     useFindUniqueProjects(
       {
-        where: { id: hasProjectId ? projectId : 0 },
+        where: { id: hasProjectId ? projectId : PROJECT_ID_SENTINEL },
         select: { reviewWorkflowEnabled: true },
       },
       { enabled: hasProjectId },
