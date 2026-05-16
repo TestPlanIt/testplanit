@@ -61,7 +61,7 @@ export function SystemFeatureCard() {
         <p className="text-sm text-muted-foreground">
           {t("operatorNotePrefix")}{" "}
           <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
-            TESTPLANIT_REVIEW_FEATURE_ENABLED
+            {"TESTPLANIT_REVIEW_FEATURE_ENABLED"}
           </code>
           {t("operatorNoteSuffix")}
         </p>
