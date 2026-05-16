@@ -175,7 +175,7 @@ export async function routeToIteration(
   //     case-level status drift from the iteration set, breaking
   //     iteration-aware UIs.
   const iterations = await tx.testRunCaseIteration.findMany({
-    where: { testRunCaseId },
+    where: { testRunCaseId, isDeleted: false },
     select: { statusId: true },
   });
   const rollupStatusId = computeWorstOfStatus(

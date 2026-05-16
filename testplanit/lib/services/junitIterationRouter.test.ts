@@ -181,3 +181,49 @@ describe("routeToIteration — cap enforcement (T-06-01-03)", () => {
     expect(tx.testRunCaseIteration.upsert).toHaveBeenCalled();
   });
 });
+
+describe("routeToIteration — rollup respects soft-delete (CR-04)", () => {
+  it("rollup re-read filters `isDeleted: false` on iterations", async () => {
+    // Soft-deleted iterations must not contribute to the case-level
+    // worst-of rollup or to the passed/failed/skipped counters. Mirrors
+    // the submit-result filter at submit-result/route.ts:507.
+    const tx = {
+      testRunCaseIteration: {
+        findFirst: vi.fn().mockResolvedValue(null),
+        upsert: vi.fn().mockResolvedValue({ id: 99 }),
+        findMany: vi.fn().mockResolvedValue([{ statusId: 10 }]),
+      },
+      testRunCases: {
+        update: vi.fn().mockResolvedValue({}),
+      },
+    };
+    const statusMap = new Map([
+      [
+        10,
+        {
+          id: 10,
+          systemName: "passed",
+          isSuccess: true,
+          isFailure: false,
+          isCompleted: true,
+          order: 1,
+        },
+      ],
+    ]);
+
+    await routeToIteration(tx as any, {
+      testRunCaseId: 1,
+      iterationIndex: 1,
+      statusId: 10,
+      statusMap,
+    });
+
+    // The findMany used to recompute the rollup must include the
+    // `isDeleted: false` filter. Without it, soft-deleted rows would
+    // pollute the worst-of computation and the denormalized counters.
+    expect(tx.testRunCaseIteration.findMany).toHaveBeenCalledWith({
+      where: { testRunCaseId: 1, isDeleted: false },
+      select: { statusId: true },
+    });
+  });
+});
