@@ -1105,6 +1105,11 @@ const metadata: ModelMeta = {
                     name: "quickScriptEnabled",
                     type: "Boolean",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, junitIterationPropertyNames: {
+                    name: "junitIterationPropertyNames",
+                    type: "String",
+                    isArray: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": [] }] }],
                 }, duplicateScanResults: {
                     name: "duplicateScanResults",
                     type: "DuplicateScanResult",
@@ -4859,6 +4864,10 @@ const metadata: ModelMeta = {
                     name: "failedIterations",
                     type: "Int",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": 0 }] }],
+                }, skippedIterations: {
+                    name: "skippedIterations",
+                    type: "Int",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": 0 }] }],
                 }, totalIterations: {
                     name: "totalIterations",
                     type: "Int",
@@ -5183,6 +5192,10 @@ const metadata: ModelMeta = {
                 }, valuesJson: {
                     name: "valuesJson",
                     type: "Json",
+                }, ciExtended: {
+                    name: "ciExtended",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
                 }, statusId: {
                     name: "statusId",
                     type: "Int",

@@ -584,6 +584,8 @@ model Projects {
   defaultCaseExportTemplateId Int?
   defaultCaseExportTemplate   CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
   quickScriptEnabled          Boolean                               @default(false)
+  /// Empty = default ['iteration']. Lookup is case-insensitive at read time (D-01).
+  junitIterationPropertyNames String[]                              @default([])
   duplicateScanResults        DuplicateScanResult[]
   stepSequenceMatches         StepSequenceMatch[]
 
@@ -1431,28 +1433,29 @@ model TestRuns {
 }
 
 model TestRunCases {
-  id               Int                         @id() @default(autoincrement())
-  testRunId        Int
-  testRun          TestRuns                    @relation(fields: [testRunId], references: [id], onDelete: Cascade)
-  repositoryCaseId Int
-  repositoryCase   RepositoryCases             @relation(fields: [repositoryCaseId], references: [id], onDelete: Cascade)
-  order            Int                         @default(0)
-  statusId         Int?
-  status           Status?                     @relation(fields: [statusId], references: [id])
-  assignedToId     String?
-  assignedTo       User?                       @relation(fields: [assignedToId], references: [id])
-  isCompleted      Boolean                     @default(false)
-  notes            Json?
-  startedAt        DateTime?
-  completedAt      DateTime?
-  elapsed          Int?
-  passedIterations Int                         @default(0)
-  failedIterations Int                         @default(0)
-  totalIterations  Int                         @default(0)
-  createdAt        DateTime                    @default(now()) @db.Timestamptz(6)
-  results          TestRunResults[]
-  iterations       TestRunCaseIteration[]
-  dataSetSnapshot  TestRunCaseDataSetSnapshot?
+  id                Int                         @id() @default(autoincrement())
+  testRunId         Int
+  testRun           TestRuns                    @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+  repositoryCaseId  Int
+  repositoryCase    RepositoryCases             @relation(fields: [repositoryCaseId], references: [id], onDelete: Cascade)
+  order             Int                         @default(0)
+  statusId          Int?
+  status            Status?                     @relation(fields: [statusId], references: [id])
+  assignedToId      String?
+  assignedTo        User?                       @relation(fields: [assignedToId], references: [id])
+  isCompleted       Boolean                     @default(false)
+  notes             Json?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  elapsed           Int?
+  passedIterations  Int                         @default(0)
+  failedIterations  Int                         @default(0)
+  skippedIterations Int                         @default(0)
+  totalIterations   Int                         @default(0)
+  createdAt         DateTime                    @default(now()) @db.Timestamptz(6)
+  results           TestRunResults[]
+  iterations        TestRunCaseIteration[]
+  dataSetSnapshot   TestRunCaseDataSetSnapshot?
 
   @@unique([testRunId, repositoryCaseId])
   @@index([testRunId])
@@ -1526,6 +1529,8 @@ model TestRunCaseIteration {
   rowIndex          Int
   label             String?
   valuesJson        Json
+  /// True when the row was auto-created by JUnit import to extend beyond the snapshot row count (D-02). Snapshot-born rows are false.
+  ciExtended        Boolean                     @default(false)
   statusId          Int?
   status            Status?                     @relation(fields: [statusId], references: [id])
   assignedToId      String?
