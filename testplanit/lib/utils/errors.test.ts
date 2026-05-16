@@ -6,8 +6,10 @@ import {
   isForeignKeyError,
   ReviewGateError,
   AlreadyPendingError,
+  IneligibleReviewerError,
   isReviewGateError,
   isAlreadyPendingError,
+  isIneligibleReviewerError,
 } from "./errors";
 
 function makePrismaError(code: string): Prisma.PrismaClientKnownRequestError {
@@ -139,6 +141,42 @@ describe("review gate error helpers", () => {
   it("isAlreadyPendingError rejects non-Error values without throwing", () => {
     for (const value of [null, undefined, 42, "str", {}]) {
       expect(isAlreadyPendingError(value)).toBe(false);
+    }
+  });
+});
+
+describe("ineligible reviewer error helpers", () => {
+  it("IneligibleReviewerError carries userId, reviewRequestId, code='INELIGIBLE_REVIEWER'", () => {
+    const err = new IneligibleReviewerError("user-123", "req-abc");
+    expect(err).toBeInstanceOf(Error);
+    expect(err.code).toBe("INELIGIBLE_REVIEWER");
+    expect(err.userId).toBe("user-123");
+    expect(err.reviewRequestId).toBe("req-abc");
+    expect(err.name).toBe("IneligibleReviewerError");
+    // Message references both fields for log diagnosability
+    expect(err.message).toContain("user-123");
+    expect(err.message).toContain("req-abc");
+  });
+
+  it("isIneligibleReviewerError detects IneligibleReviewerError instances", () => {
+    const err = new IneligibleReviewerError("user-1", "req-1");
+    expect(isIneligibleReviewerError(err)).toBe(true);
+  });
+
+  it("isIneligibleReviewerError rejects sibling typed errors", () => {
+    expect(
+      isIneligibleReviewerError(
+        new ReviewGateError("REVIEW_REQUIRED", "CASE", 1, 2),
+      ),
+    ).toBe(false);
+    expect(
+      isIneligibleReviewerError(new AlreadyPendingError("CASE", 1, "req-1")),
+    ).toBe(false);
+  });
+
+  it("isIneligibleReviewerError rejects non-Error values without throwing", () => {
+    for (const value of [null, undefined, 42, "str", {}, [], new Error("e")]) {
+      expect(isIneligibleReviewerError(value)).toBe(false);
     }
   });
 });
