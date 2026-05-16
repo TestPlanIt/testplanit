@@ -997,7 +997,8 @@
   "api": {
     "testResults": {
       "import": {
-        "iterationCapExceeded": "Der Iterationsindex {index} überschreitet den maximal unterstützten Wert von {cap}. Reduzieren Sie die Anzahl der Iterationen oder teilen Sie den Lauf auf."
+        "iterationCapExceeded": "Der Iterationsindex {index} überschreitet den maximal unterstützten Wert von {cap}. Reduzieren Sie die Anzahl der Iterationen oder teilen Sie den Lauf auf.",
+        "iterationCapExceededMulti": "Die Testfälle {count} fordern Iterationsindizes an, die über dem maximal unterstützten Wert von {cap}liegen. Reduzieren Sie die Anzahl der Iterationen oder teilen Sie den Testlauf auf."
       }
     }
   },
@@ -2840,6 +2841,15 @@
       "openInExternalSystem": "Öffnen in {provider}",
       "externalSystem": "Externes System",
       "autoGenerateTags": "Tags für Testfälle automatisch generieren",
+      "includeParametersLabel": "Parameter und Startdatensatz generieren",
+      "includeParametersHelp": "Beinhaltet ein Parameterschema (mit zulässigen Werten für SELECT-Typen) und einen Starterdatensatz, sodass generierte Fälle sofort als Iterationen ausgeführt werden können.",
+      "parametersSection": "Parameter",
+      "starterDatasetSection": "Starter-Datensatz",
+      "datasetTruncatedWarning": "Der Datensatz wurde von der KI gekürzt. Sie können nach dem Speichern im Parametereditor manuell Zeilen hinzufügen.",
+      "datasetCappedWarning": "Der Datensatz wurde auf die maximale Zeilenanzahl begrenzt. Überschüssige Zeilen wurden entfernt.",
+      "invalidParameterWarning": "Mindestens ein vorgeschlagener Parameter war ungültig und wurde verworfen.",
+      "datasetMoreRows": "...und {count, plural, one {# weitere Zeile} other {# weitere Zeilen}}",
+      "parameterChipSensitive": "empfindlich",
       "success": {
         "imported": "{count, plural, =1 {1 Testfall erfolgreich importiert} other {# Testfälle erfolgreich importiert}}"
       },

@@ -997,7 +997,8 @@
   "api": {
     "testResults": {
       "import": {
-        "iterationCapExceeded": "Chỉ số lặp {index} vượt quá giá trị tối đa được hỗ trợ của {cap}. Giảm số lần lặp hoặc chia nhỏ quá trình chạy."
+        "iterationCapExceeded": "Chỉ số lặp {index} vượt quá giá trị tối đa được hỗ trợ của {cap}. Giảm số lần lặp hoặc chia nhỏ quá trình chạy.",
+        "iterationCapExceededMulti": "{count} trường hợp kiểm thử yêu cầu chỉ số lặp vượt quá giá trị tối đa được hỗ trợ của {cap}. Giảm số lần lặp hoặc chia nhỏ quá trình chạy."
       }
     }
   },
@@ -2840,6 +2841,15 @@
       "openInExternalSystem": "Mở trong {provider}",
       "externalSystem": "Hệ thống bên ngoài",
       "autoGenerateTags": "Tự động tạo thẻ cho các trường hợp kiểm thử",
+      "includeParametersLabel": "Tạo các tham số và tập dữ liệu khởi đầu",
+      "includeParametersHelp": "Bao gồm lược đồ tham số (với các giá trị được cho phép cho các kiểu SELECT) và một tập dữ liệu khởi đầu để các trường hợp được tạo ra có thể chạy ngay lập tức dưới dạng các vòng lặp.",
+      "parametersSection": "Thông số",
+      "starterDatasetSection": "Bộ dữ liệu khởi đầu",
+      "datasetTruncatedWarning": "Bộ dữ liệu đã bị AI cắt bớt. Bạn có thể thêm các hàng theo cách thủ công trong trình chỉnh sửa tham số sau khi lưu.",
+      "datasetCappedWarning": "Tập dữ liệu đã được giới hạn ở số lượng hàng tối đa. Các hàng vượt quá giới hạn đã bị loại bỏ.",
+      "invalidParameterWarning": "Một hoặc nhiều tham số được đề xuất không hợp lệ và đã bị loại bỏ.",
+      "datasetMoreRows": "...và {count, plural, one {# thêm hàng} other {# thêm hàng}}",
+      "parameterChipSensitive": "nhạy cảm",
       "success": {
         "imported": "{count, plural, =1 {Đã nhập thành công 1 trường hợp thử nghiệm} other {Đã nhập thành công # trường hợp thử nghiệm}}"
       },

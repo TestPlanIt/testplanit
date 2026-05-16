@@ -997,7 +997,8 @@
   "api": {
     "testResults": {
       "import": {
-        "iterationCapExceeded": "Indeks iteracji {index} przekracza maksymalną obsługiwaną wartość {cap}. Zmniejsz liczbę iteracji lub podziel przebieg."
+        "iterationCapExceeded": "Indeks iteracji {index} przekracza maksymalną obsługiwaną wartość {cap}. Zmniejsz liczbę iteracji lub podziel przebieg.",
+        "iterationCapExceededMulti": "{count} przypadków testowych wymaga indeksów iteracji powyżej maksymalnej obsługiwanej wartości {cap}. Zmniejsz liczbę iteracji lub podziel przebieg."
       }
     }
   },
@@ -1679,7 +1680,7 @@
           "error": "Nie można usunąć zestawu danych"
         },
         "deleteSuccess": "Usunięto „{name}”",
-        "deleteSuccessWithAssignments": "Usunięto „{name}” i nieprzypisano {count, plural, =1 {# przypadek} other {# przypadków}}",
+        "deleteSuccessWithAssignments": "Usunięto „{name}” i nieprzypisano {count, plural, =1 {# przypadek} other {# przypadki}}",
         "editor": {
           "back": "Powrót do zestawów danych",
           "loadError": "Nie można załadować tego zestawu danych",
@@ -1708,7 +1709,7 @@
           "historicalItemBy": "przez {name}",
           "noVersionsYet": "Brak zapisanych wersji"
         },
-        "datasetTabSharedReadOnlyHint": "Tylko do odczytu widok wersji {version, number}. Aby edytować, przejdź do bieżącej wersji.",
+        "datasetTabSharedReadOnlyHint": "Tylko do odczytu widok wersji {version, number}. Przełącz się do bieżącej wersji, aby ją edytować.",
         "datasetTabSharedEditorHint": "Kliknij Zapisz, gdy skończysz. Każdy zapis tworzy nową wersję."
       },
       "quickScript": {
@@ -2840,6 +2841,15 @@
       "openInExternalSystem": "Otwórz za {provider}",
       "externalSystem": "System zewnętrzny",
       "autoGenerateTags": "Automatyczne generowanie tagów dla przypadków testowych",
+      "includeParametersLabel": "Wygeneruj parametry i początkowy zestaw danych",
+      "includeParametersHelp": "Zawiera schemat parametrów (z dozwolonymi wartościami dla typów SELECT) i początkowy zestaw danych, dzięki czemu wygenerowane przypadki można od razu uruchomić jako iteracje.",
+      "parametersSection": "Parametry",
+      "starterDatasetSection": "Zestaw danych startowych",
+      "datasetTruncatedWarning": "Zbiór danych został skrócony przez sztuczną inteligencję. Możesz dodać wiersze ręcznie w edytorze parametrów po zapisaniu.",
+      "datasetCappedWarning": "Zbiór danych został ograniczony do maksymalnej liczby wierszy. Nadmiarowe wiersze zostały usunięte.",
+      "invalidParameterWarning": "Jeden lub więcej zaproponowanych parametrów uznano za nieprawidłowe i odrzucono.",
+      "datasetMoreRows": "...i {count, plural, one {# więcej wierszy} other {# więcej wierszy}}",
+      "parameterChipSensitive": "wrażliwy",
       "success": {
         "imported": "{count, plural, =1 {Pomyślnie zaimportowano 1 przypadek testowy} other {Pomyślnie zaimportowano # przypadków testowych}}"
       },

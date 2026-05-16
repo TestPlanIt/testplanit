@@ -997,7 +997,8 @@
   "api": {
     "testResults": {
       "import": {
-        "iterationCapExceeded": "迭代索引 {index} 超過了支援的最大值 {cap}。請減少迭代次數或拆分運行。"
+        "iterationCapExceeded": "迭代索引 {index} 超過了支援的最大值 {cap}。請減少迭代次數或拆分運行。",
+        "iterationCapExceededMulti": "{count} 測試案例請求的迭代索引大於支援的最大值 {cap}。減少迭代次數或拆分運行。"
       }
     }
   },
@@ -2840,6 +2841,15 @@
       "openInExternalSystem": "開啟方式 {provider}",
       "externalSystem": "外部系統",
       "autoGenerateTags": "自動為測試用例產生標籤",
+      "includeParametersLabel": "生成參數和初始資料集",
+      "includeParametersHelp": "包含參數架構（包含 SELECT 類型的允許值）和初始資料集，以便產生的案例可以立即作為迭代運行。",
+      "parametersSection": "參數",
+      "starterDatasetSection": "初始資料集",
+      "datasetTruncatedWarning": "數據集已被人工智慧截斷。儲存後，您可以在參數編輯器中手動新增行。",
+      "datasetCappedWarning": "資料集已限制為最大行數，超出部分的行已被刪除。",
+      "invalidParameterWarning": "一個或多個擬定參數無效，已被捨棄。",
+      "datasetMoreRows": "……以及 {count, plural, one {# 更多行} other {# 更多行}}",
+      "parameterChipSensitive": "敏感的",
       "success": {
         "imported": "{count, plural, =1 {成功匯入 1 個測試案例} other {成功匯入 # 個測試案例}}"
       },
@@ -7144,7 +7154,7 @@
     "chipTooltipType": "類型： {type}",
     "chipTooltipDefault": "預設值： {value}",
     "chipTooltipNoDefault": "預設值：（無）",
-    "chipTooltipUndeclared": "\"@{name}\" 並非已宣告的參數。請打開“配置參數”以添加它。",
+    "chipTooltipUndeclared": "\"@{name}\" 並非已宣告的參數。請打開“配置參數”來添加它。",
     "editorUndeclaredWarning": "未聲明的引用： {names}。透過配置參數新增它們以啟用迭代替換。",
     "runProgressTitle": "正在為“{runName}”產生迭代",
     "runProgressDescriptionAsync": "正在背景建立 {count, plural, =1 {# 迭代} other {# 次迭代}} 。您可以繼續工作—完成後我們會通知您。",
@@ -7187,7 +7197,7 @@
     "runProgressCounter": "{done} / {total}",
     "runProgressDismissAria": "駁回進度",
     "runProgressComplete": "生成 {total, plural, =1 {# 迭代} other {# 迭代}} ，用於 \"{runName}\"",
-    "runProgressFailedToast": "無法為「{runName}」產生迭代。 {reason}",
+    "runProgressFailedToast": "無法為“{runName}”產生迭代。 {reason}",
     "runProgressNavAway": "把剩下的部分展示給我",
     "runGeneratingHeading": "生成迭代…",
     "runGeneratingHelper": "這可能需要幾分鐘。",

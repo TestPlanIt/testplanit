@@ -997,7 +997,8 @@
   "api": {
     "testResults": {
       "import": {
-        "iterationCapExceeded": "反復回数 {index} が、サポートされている最大値 {cap}を超えています。反復回数を減らすか、実行を分割してください。"
+        "iterationCapExceeded": "反復回数 {index} が、サポートされている最大値 {cap}を超えています。反復回数を減らすか、実行を分割してください。",
+        "iterationCapExceededMulti": "{count} のテストケースでは、サポートされている最大値 {cap}を超える反復インデックスが要求されています。反復回数を減らすか、実行を分割してください。"
       }
     }
   },
@@ -2840,6 +2841,15 @@
       "openInExternalSystem": "{provider}で開く",
       "externalSystem": "外部システム",
       "autoGenerateTags": "テストケースのタグを自動生成する",
+      "includeParametersLabel": "パラメータとスターターデータセットを生成する",
+      "includeParametersHelp": "パラメータスキーマ（SELECT型に許可される値を含む）とスターターデータセットが含まれているため、生成されたケースはすぐに反復処理として実行できます。",
+      "parametersSection": "パラメータ",
+      "starterDatasetSection": "スターターデータセット",
+      "datasetTruncatedWarning": "データセットはAIによって切り詰められました。保存後、パラメータエディタで手動で行を追加できます。",
+      "datasetCappedWarning": "データセットは最大行数で制限されました。超過行は削除されました。",
+      "invalidParameterWarning": "提案されたパラメータのうち、1つ以上が無効であったため削除されました。",
+      "datasetMoreRows": "...そして {count, plural, one {# 行がさらに続く} other {# 行がさらに続く}}",
+      "parameterChipSensitive": "センシティブ",
       "success": {
         "imported": "{count, plural, =1 {1 つのテストケースを正常にインポートしました} other {# つのテストケースを正常にインポートしました}}"
       },
@@ -7063,7 +7073,7 @@
     "renameConfirm": "名前を変更する",
     "renameNoRefsToast": "パラメータ名が変更されました（既存の参照はありません）",
     "selectSourceWarningTitle": "\"@{name} \"のSELECTソースを変更しますか？",
-    "selectSourceWarningDescription": "このパラメータの既存のデータセット値が新しいリストに存在しない可能性があります。 {invalidCount, plural, =1 {# row will} other {# rows will}} need attention after this change. Continue？",
+    "selectSourceWarningDescription": "Existing dataset values for this parameter may not exist in the new list. {invalidCount, plural, =1 {# row will} other {# rows will}} need attention after this change. Continue?",
     "selectSourceConfirm": "ソースを変更する",
     "datasetRowSelectAria": "行を選択",
     "datasetLabelColumn": "ラベル",

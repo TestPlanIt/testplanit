@@ -997,7 +997,8 @@
   "api": {
     "testResults": {
       "import": {
-        "iterationCapExceeded": "L'indice d'itération {index} dépasse la valeur maximale prise en charge {cap}. Réduisez le nombre d'itérations ou divisez l'exécution."
+        "iterationCapExceeded": "L'indice d'itération {index} dépasse la valeur maximale prise en charge {cap}. Réduisez le nombre d'itérations ou divisez l'exécution.",
+        "iterationCapExceededMulti": "Les cas de test {count} demandent des indices d'itération supérieurs à la valeur maximale prise en charge de {cap}. Réduisez le nombre d'itérations ou divisez l'exécution."
       }
     }
   },
@@ -2840,6 +2841,15 @@
       "openInExternalSystem": "Ouvrir dans {provider}",
       "externalSystem": "Système externe",
       "autoGenerateTags": "Générer automatiquement des étiquettes pour les cas de test",
+      "includeParametersLabel": "Générer les paramètres et le jeu de données initial",
+      "includeParametersHelp": "Inclut un schéma de paramètres (avec les valeurs autorisées pour les types SELECT) et un jeu de données de démarrage permettant d'exécuter immédiatement les cas générés sous forme d'itérations.",
+      "parametersSection": "Paramètres",
+      "starterDatasetSection": "Jeu de données de démarrage",
+      "datasetTruncatedWarning": "L'ensemble de données a été tronqué par l'IA. Vous pouvez ajouter des lignes manuellement dans l'éditeur de paramètres après l'enregistrement.",
+      "datasetCappedWarning": "L'ensemble de données a été limité au nombre maximal de lignes. Les lignes excédentaires ont été supprimées.",
+      "invalidParameterWarning": "Un ou plusieurs paramètres proposés étaient invalides et ont été abandonnés.",
+      "datasetMoreRows": "...et {count, plural, one {# autre ligne} other {# autres lignes}}",
+      "parameterChipSensitive": "sensible",
       "success": {
         "imported": "{count, plural, =1 {1 cas de test importé avec succès} other {# cas de test importés avec succès}}"
       },
@@ -7267,7 +7277,7 @@
     "assignSharedSection1": "1. Choisir l'ensemble de données",
     "assignSharedSection2": "2. Version à broches",
     "assignSharedSection3": "3. Associer les colonnes aux paramètres",
-    "assignSharedDatasetPlaceholder": "Sélectionnez un jeu de données partagé…",
+    "assignSharedDatasetPlaceholder": "Sélectionnez un ensemble de données partagé…",
     "assignSharedNoDatasets": "Aucun jeu de données partagé n'existe encore dans ce projet. Veuillez en créer un dans les paramètres du projet avant de l'attribuer.",
     "assignSharedCreateDataset": "Gérer les ensembles de données partagés",
     "assignSharedPinCurrent": "Épingler à la version actuelle (v{version})",

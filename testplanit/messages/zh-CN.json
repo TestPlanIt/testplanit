@@ -997,7 +997,8 @@
   "api": {
     "testResults": {
       "import": {
-        "iterationCapExceeded": "迭代索引 {index} 超过了支持的最大值 {cap}。请减少迭代次数或拆分运行。"
+        "iterationCapExceeded": "迭代索引 {index} 超过了支持的最大值 {cap}。请减少迭代次数或拆分运行。",
+        "iterationCapExceededMulti": "{count} 测试用例请求的迭代索引大于支持的最大值 {cap}。减少迭代次数或拆分运行。"
       }
     }
   },
@@ -2840,6 +2841,15 @@
       "openInExternalSystem": "打开方式 {provider}",
       "externalSystem": "外部系统",
       "autoGenerateTags": "自动为测试用例生成标签",
+      "includeParametersLabel": "生成参数和初始数据集",
+      "includeParametersHelp": "包含参数架构（包含 SELECT 类型的允许值）和初始数据集，以便生成的案例可以立即作为迭代运行。",
+      "parametersSection": "参数",
+      "starterDatasetSection": "初始数据集",
+      "datasetTruncatedWarning": "数据集已被人工智能截断。保存后，您可以在参数编辑器中手动添加行。",
+      "datasetCappedWarning": "数据集已限制为最大行数，超出部分的行已被删除。",
+      "invalidParameterWarning": "一个或多个拟定参数无效，已被舍弃。",
+      "datasetMoreRows": "……以及 {count, plural, one {# 更多行} other {# 更多行}}",
+      "parameterChipSensitive": "敏感的",
       "success": {
         "imported": "{count, plural, =1 {成功导入 1 个测试用例} other {成功导入 # 个测试用例}}"
       },
@@ -7148,7 +7158,7 @@
     "editorUndeclaredWarning": "未声明的引用： {names}。通过配置参数添加它们以启用迭代替换。",
     "runProgressTitle": "正在为“{runName}”生成迭代",
     "runProgressDescriptionAsync": "正在后台创建 {count, plural, =1 {# 次迭代} other {# 次迭代}} 。您可以继续工作——完成后我们会通知您。",
-    "runProgressDescriptionSync": "创建 {count, plural, =1 {# 迭代} other {# 迭代次数}}.",
+    "runProgressDescriptionSync": "创建 {count, plural, =1 {# 迭代} other {# 迭代次数}}。",
     "runProgressFailed": "无法启动迭代生成",
     "runHardRefuseTitle": "创建次数过多",
     "runHardRefuseDescription": "本次运行将产生 {count} 次迭代，超过 {cap}次迭代的限制。请减少数据集的行数、取消选择某些案例，或将其拆分为多次运行。",

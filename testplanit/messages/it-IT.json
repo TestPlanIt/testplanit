@@ -997,7 +997,8 @@
   "api": {
     "testResults": {
       "import": {
-        "iterationCapExceeded": "L'indice di iterazione {index} supera il valore massimo supportato di {cap}. Ridurre il numero di iterazioni o suddividere l'esecuzione."
+        "iterationCapExceeded": "L'indice di iterazione {index} supera il valore massimo supportato di {cap}. Ridurre il numero di iterazioni o suddividere l'esecuzione.",
+        "iterationCapExceededMulti": "I casi di test {count} richiedono indici di iterazione superiori al valore massimo supportato di {cap}. Ridurre il numero di iterazioni o suddividere l'esecuzione."
       }
     }
   },
@@ -2840,6 +2841,15 @@
       "openInExternalSystem": "Apri in {provider}",
       "externalSystem": "Sistema esterno",
       "autoGenerateTags": "Genera automaticamente tag per i casi di test",
+      "includeParametersLabel": "Genera parametri e set di dati iniziale",
+      "includeParametersHelp": "Include uno schema di parametri (con valori consentiti per i tipi SELECT) e un dataset iniziale in modo che i casi generati siano immediatamente eseguibili come iterazioni.",
+      "parametersSection": "Parametri",
+      "starterDatasetSection": "Set di dati iniziale",
+      "datasetTruncatedWarning": "Il dataset è stato troncato dall'IA. È possibile aggiungere righe manualmente nell'editor dei parametri dopo il salvataggio.",
+      "datasetCappedWarning": "Il dataset è stato limitato al numero massimo di righe consentite. Le righe in eccesso sono state eliminate.",
+      "invalidParameterWarning": "Uno o più parametri proposti non erano validi e sono stati scartati.",
+      "datasetMoreRows": "...e {count, plural, one {# altra riga} other {# altre righe}}",
+      "parameterChipSensitive": "sensibile",
       "success": {
         "imported": "{count, plural, =1 {Importato con successo 1 caso di test} other {Importati con successo # casi di test}}"
       },
@@ -7063,7 +7073,7 @@
     "renameConfirm": "Rinominare",
     "renameNoRefsToast": "Parametro rinominato (nessun riferimento esistente)",
     "selectSourceWarningTitle": "Modificare l'origine SELECT per \"@{name}\"?",
-    "selectSourceWarningDescription": "I valori di set di dati esistenti per questo parametro potrebbero non esistere nella nuova lista. {invalidCount, plural, one {}=1 {# riga} other {# righe}} bisogno di attenzione dopo questa modifica. Continuare?",
+    "selectSourceWarningDescription": "Existing dataset values for this parameter may not exist in the new list. {invalidCount, plural, =1 {# row will} other {# rows will}} need attention after this change. Continue?",
     "selectSourceConfirm": "Cambia sorgente",
     "datasetRowSelectAria": "Seleziona riga",
     "datasetLabelColumn": "Etichetta",

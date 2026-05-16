@@ -997,7 +997,8 @@
   "api": {
     "testResults": {
       "import": {
-        "iterationCapExceeded": "El índice de iteración {index} excede el valor máximo admitido de {cap}. Reduzca el número de iteraciones o divida la ejecución."
+        "iterationCapExceeded": "El índice de iteración {index} excede el valor máximo admitido de {cap}. Reduzca el número de iteraciones o divida la ejecución.",
+        "iterationCapExceededMulti": "Los casos de prueba {count} requieren índices de iteración superiores al valor máximo admitido de {cap}. Reduzca el número de iteraciones o divida la ejecución."
       }
     }
   },
@@ -2840,6 +2841,15 @@
       "openInExternalSystem": "Abrir en {provider}",
       "externalSystem": "Sistema externo",
       "autoGenerateTags": "Generar automáticamente etiquetas para casos de prueba",
+      "includeParametersLabel": "Generar parámetros y conjunto de datos inicial",
+      "includeParametersHelp": "Incluye un esquema de parámetros (con valores permitidos para los tipos SELECT) y un conjunto de datos inicial para que los casos generados se puedan ejecutar inmediatamente como iteraciones.",
+      "parametersSection": "Parámetros",
+      "starterDatasetSection": "Conjunto de datos inicial",
+      "datasetTruncatedWarning": "El conjunto de datos fue truncado por la IA. Puede agregar filas manualmente en el editor de parámetros después de guardar.",
+      "datasetCappedWarning": "El conjunto de datos se limitó al número máximo de filas. Las filas sobrantes se eliminaron.",
+      "invalidParameterWarning": "Uno o más de los parámetros propuestos no eran válidos y fueron descartados.",
+      "datasetMoreRows": "...y {count, plural, one {# más filas} other {# más filas}}",
+      "parameterChipSensitive": "sensible",
       "success": {
         "imported": "{count, plural, =1 {¡Se ha importado con éxito 1 caso de prueba} other {¡# casos de prueba importados con éxito}}"
       },

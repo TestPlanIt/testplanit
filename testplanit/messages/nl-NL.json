@@ -997,7 +997,8 @@
   "api": {
     "testResults": {
       "import": {
-        "iterationCapExceeded": "De iteratie-index {index} overschrijdt de maximaal ondersteunde waarde van {cap}. Verlaag het aantal iteraties of splits de uitvoering op."
+        "iterationCapExceeded": "De iteratie-index {index} overschrijdt de maximaal ondersteunde waarde van {cap}. Verlaag het aantal iteraties of splits de uitvoering op.",
+        "iterationCapExceededMulti": "Testgevallen {count} vereisen iteratie-indexen die hoger zijn dan de maximaal ondersteunde waarde van {cap}. Verlaag het aantal iteraties of splits de uitvoering op."
       }
     }
   },
@@ -2840,6 +2841,15 @@
       "openInExternalSystem": "Openen in {provider}",
       "externalSystem": "Extern systeem",
       "autoGenerateTags": "Automatisch tags genereren voor testcases",
+      "includeParametersLabel": "Genereer parameters en een startdataset.",
+      "includeParametersHelp": "Bevat een parameterschema (met toegestane waarden voor SELECT-typen) en een startdataset, zodat gegenereerde gevallen direct als iteraties kunnen worden uitgevoerd.",
+      "parametersSection": "Parameters",
+      "starterDatasetSection": "Startdataset",
+      "datasetTruncatedWarning": "De dataset is door de AI ingekort. U kunt na het opslaan handmatig rijen toevoegen in de parametereditor.",
+      "datasetCappedWarning": "De dataset werd beperkt tot het maximale aantal rijen. Overtollige rijen werden verwijderd.",
+      "invalidParameterWarning": "Een of meer voorgestelde parameters waren ongeldig en werden daarom verwijderd.",
+      "datasetMoreRows": "...en {count, plural, one {# meer rij} other {# meer rijen}}",
+      "parameterChipSensitive": "gevoelig",
       "success": {
         "imported": "{count, plural, =1 {1 testcase succesvol geïmporteerd} other {# testcases succesvol geïmporteerd}}"
       },
@@ -7151,9 +7161,9 @@
     "runProgressDescriptionSync": "Gemaakt {count, plural, =1 {# iteratie} other {# iteraties}}.",
     "runProgressFailed": "Iteratiegeneratie kon niet worden gestart.",
     "runHardRefuseTitle": "Te veel iteraties om te creëren",
-    "runHardRefuseDescription": "Deze run zou {count} iteraties genereren, waarmee de limiet van {cap}wordt overschreden. Verminder het aantal rijen in de dataset, deselecteer gevallen of splits de run op in meerdere runs.",
+    "runHardRefuseDescription": "Deze run zou {count} iteraties genereren, waarmee de limiet van {cap}wordt overschreden. Verminder het aantal rijen in de dataset, deselecteer gevallen of splits de dataset op in meerdere runs.",
     "runPreflightSync": "Zal {n, plural, =1 {# iteratie} other {# iteraties}} direct creëren",
-    "runPreflightAsync": "Er wordt een iteratie aangemaakt van {n, plural, =1 {# iteratie} other {# iteraties}} (achtergrondtaak)",
+    "runPreflightAsync": "Er wordt {n, plural, =1 {# iteratie} other {# iteraties}} aangemaakt (achtergrondtaak)",
     "runPreflightSoftConfirm": "Er worden {n, plural, =1 {# iteraties} other {# iteraties}} aangemaakt — bevestiging vereist",
     "runPreflightHardRefuse": "Kan niet aanmaken — {n} overschrijdt de limiet van {cap}",
     "runPreflightTooltip": "{iterations, plural, =1 {# iteratie} other {# iteraties}} = {cases, plural, =1 {# geval} other {# gevallen}} × {configs, plural, =1 {# configuratie} other {# configuraties}} × rijen in de dataset",
