@@ -35,12 +35,22 @@ vi.mock("~/lib/prisma", () => {
       findUnique: vi.fn(),
       update: vi.fn(),
     },
-    // The auto-API CR-01 mitigation wraps assertReviewGatePasses in
-    // `prisma.$transaction(...)` with Serializable isolation. The reviewGate
-    // service module is mocked above so the inner call resolves without
-    // actually hitting the tx; we just need $transaction to invoke the
-    // callback with a tx-like proxy so the await chain completes.
-    $transaction: vi.fn(async (cb: (tx: any) => Promise<unknown>) => cb({})),
+    // The auto-API CR-04 mitigation wraps the gate + consumedAt stamp in
+    // `prisma.$transaction(...)` with Serializable isolation. The
+    // reviewGate service module is mocked above so the inner call resolves
+    // without actually hitting the tx; we just need $transaction to invoke
+    // the callback with a tx-like proxy that exposes the same
+    // reviewRequest.updateMany surface the consumedAt stamp uses. Tests
+    // that exercise the gate hit-path configure
+    // `reviewRequest.updateMany` directly on this stub.
+    reviewRequest: {
+      updateMany: vi.fn(async () => ({ count: 1 })),
+    },
+    $transaction: vi.fn(async (cb: (tx: any) => Promise<unknown>) =>
+      cb({
+        reviewRequest: prismaStub.reviewRequest,
+      }),
+    ),
   };
   return { prisma: prismaStub };
 });
@@ -1293,6 +1303,100 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
 
     expect(res.status).toBe(200);
     expect(assertReviewGatePasses).not.toHaveBeenCalled();
+    expect(baseHandlerMock).toHaveBeenCalled();
+  });
+
+  // ───────────────────────────────────────────────────────────────────────
+  // CR-04 regression: the auto-API gate must atomically stamp `consumedAt`
+  // BEFORE handing off to ZenStack, so concurrent callers race on the
+  // `updateMany({ where: { id, consumedAt: null } })` instead of slipping
+  // between the (previously) read-only gate commit and the entity-update
+  // transaction. A lose-the-race outcome must surface as a typed 403.
+  // ───────────────────────────────────────────────────────────────────────
+
+  it("CR-04 — stamps consumedAt on the approved request when the gate hits", async () => {
+    const { assertReviewGatePasses } = await import(
+      "~/lib/services/reviewGate"
+    );
+    (assertReviewGatePasses as any).mockResolvedValue({
+      approvedRequestId: "approval-1",
+    });
+
+    const { prisma } = await import("~/lib/prisma");
+    (prisma as any).reviewRequest.updateMany.mockResolvedValue({ count: 1 });
+
+    const { PATCH } = await import("./route");
+    const req = makeUpdateRequest({
+      where: { id: 42 },
+      data: { stateId: 99 },
+    });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ path: ["repositoryCases", "update"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect((prisma as any).reviewRequest.updateMany).toHaveBeenCalledWith({
+      where: { id: "approval-1", consumedAt: null },
+      data: { consumedAt: expect.any(Date) },
+    });
+    expect(baseHandlerMock).toHaveBeenCalled();
+  });
+
+  it("CR-04 — returns 403 REVIEW_REQUIRED when consumedAt stamp loses the race", async () => {
+    const { assertReviewGatePasses } = await import(
+      "~/lib/services/reviewGate"
+    );
+    (assertReviewGatePasses as any).mockResolvedValue({
+      approvedRequestId: "approval-2",
+    });
+
+    const { prisma } = await import("~/lib/prisma");
+    // Another caller consumed this approval first — our stamp comes back
+    // with count: 0 and we must surface as REVIEW_REQUIRED instead of
+    // handing off to ZenStack.
+    (prisma as any).reviewRequest.updateMany.mockResolvedValue({ count: 0 });
+
+    const { PATCH } = await import("./route");
+    const req = makeUpdateRequest({
+      where: { id: 42 },
+      data: { stateId: 99 },
+    });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ path: ["repositoryCases", "update"] }),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(403);
+    expect(body.error).toEqual({
+      code: "REVIEW_REQUIRED",
+      entityType: "CASE",
+      entityId: 42,
+      toStateId: 99,
+    });
+    expect(baseHandlerMock).not.toHaveBeenCalled();
+  });
+
+  it("CR-04 — does NOT stamp consumedAt when the gate short-circuits (no approval needed)", async () => {
+    // When the target state does not require review (or the feature flag
+    // is off), the gate returns null and there is no approval to consume.
+    const { assertReviewGatePasses } = await import(
+      "~/lib/services/reviewGate"
+    );
+    (assertReviewGatePasses as any).mockResolvedValue(null);
+
+    const { prisma } = await import("~/lib/prisma");
+
+    const { PATCH } = await import("./route");
+    const req = makeUpdateRequest({
+      where: { id: 42 },
+      data: { stateId: 99 },
+    });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ path: ["repositoryCases", "update"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect((prisma as any).reviewRequest.updateMany).not.toHaveBeenCalled();
     expect(baseHandlerMock).toHaveBeenCalled();
   });
 });

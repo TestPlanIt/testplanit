@@ -17,7 +17,11 @@ import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import { prisma } from "~/lib/prisma";
 import { captureAuditEvent, type AuditEvent } from "~/lib/services/auditLog";
 import { assertReviewGatePasses } from "~/lib/services/reviewGate";
-import { isAlreadyPendingError, isReviewGateError } from "~/lib/utils/errors";
+import {
+  isAlreadyPendingError,
+  isReviewGateError,
+  ReviewGateError,
+} from "~/lib/utils/errors";
 import {
   emitCaseCreated,
   emitCaseDeleted,
@@ -495,25 +499,64 @@ async function innerHandler(
 
         if (Number.isFinite(entityIdNum) && Number.isFinite(toStateIdNum)) {
           try {
-            // Run the preflight inside a serializable transaction so the
-            // workflows + reviewRequest reads share one snapshot. The
-            // ZenStack auto-API handler manages its own connection and
-            // transactions internally, so the preflight cannot share the
-            // entity-update transaction the way the bulk-edit, submit-result,
-            // and milestone-completion paths do. Serializable isolation here
-            // narrows the race window between the gate check and the entity
-            // write: a concurrent decide / cancel / consume on the same
-            // ReviewRequest can't snapshot-mismatch this preflight, so we
-            // either see the approval as still valid (and proceed) or see
-            // it as consumed/cancelled (and 403).
+            // CR-04: the auto-API path cannot share a transaction with
+            // ZenStack's internal handler (baseHandler manages its own
+            // connection + tx), so it cannot honor the contract that the
+            // sibling chokepoint helpers do — namely "gate-read and
+            // entity-update commit together, then stamp consumedAt
+            // afterward". The previous Serializable wrapper around the
+            // read-only gate provided no atomicity with the later
+            // baseHandler write: the tx committed immediately after the
+            // read, and a concurrent decide/cancel/consume could slip
+            // between commit-of-gate-tx and start-of-entity-tx. Serializable
+            // also only conflicts with other Serializable transactions, and
+            // the decide path runs at default isolation.
+            //
+            // The right move is to make the gate write-locked: stamp
+            // `consumedAt` atomically inside the same tx that did the gate
+            // read, BEFORE handing off to ZenStack. Concurrent callers race
+            // on `updateMany({ where: { id, consumedAt: null } })` — exactly
+            // one wins, the rest get count=0 and surface as REVIEW_REQUIRED.
+            // This preserves the one-shot invariant from Phase 1 D-05.
+            //
+            // Tradeoff documented: a downstream ZenStack failure (FK
+            // violation, policy denial, etc.) leaves an orphan
+            // `consumedAt`-stamped row. The user retries by requesting a
+            // fresh review (the prior request is "consumed but no entity
+            // change shipped" — not the same shape as a clean approval,
+            // but cleaner than a double-consume). The bulk-edit /
+            // submit-result / milestone paths can hold a single tx across
+            // gate + entity update + consume and don't pay this cost; the
+            // auto-API path explicitly accepts it.
             await prisma.$transaction(
               async (tx) => {
-                await assertReviewGatePasses(
+                const gateResult = await assertReviewGatePasses(
                   tx,
                   gatedEntityType,
                   entityIdNum,
                   toStateIdNum
                 );
+                if (gateResult) {
+                  const stamp = await tx.reviewRequest.updateMany({
+                    where: {
+                      id: gateResult.approvedRequestId,
+                      consumedAt: null,
+                    },
+                    data: { consumedAt: new Date() },
+                  });
+                  if (stamp.count === 0) {
+                    // Another caller consumed this approval first. Surface
+                    // it as REVIEW_REQUIRED so the client gets the typed
+                    // 403 envelope; a fresh review request is the path
+                    // forward.
+                    throw new ReviewGateError(
+                      "REVIEW_REQUIRED",
+                      gatedEntityType,
+                      entityIdNum,
+                      toStateIdNum
+                    );
+                  }
+                }
               },
               { isolationLevel: "Serializable" }
             );
