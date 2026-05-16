@@ -159,6 +159,18 @@ interface GeneratedTestCase {
   sourceUrl?: string;
   /** True while the test case is still streaming from the LLM */
   _streaming?: boolean;
+  /** INT-06: LLM-proposed parameter schema (present when includeParameters=true). */
+  parameters?: Array<{
+    name: string;
+    type: "STRING" | "INTEGER" | "BOOLEAN" | "SELECT";
+    sensitive: boolean;
+    allowedValuesJson?: string[];
+  }>;
+  /** INT-06: LLM-proposed starter dataset rows (present when includeParameters=true). */
+  starterDataset?: Array<{
+    label?: string;
+    values: Record<string, string | number | boolean>;
+  }>;
 }
 
 /** Derive folder name from a URL — mirrors the logic in importGeneratedTestCases.ts */
@@ -460,6 +472,8 @@ interface GeneratedTestCaseCardProps {
   index: number;
   formSubmitHandlersRef: MutableRefObject<Map<string, () => void>>;
   folderLabel?: string;
+  /** INT-06: parser warnings scoped to this case index. */
+  caseWarnings?: Array<{ caseIndex: number; message: string }>;
 }
 
 const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
@@ -481,6 +495,7 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
   index,
   formSubmitHandlersRef,
   folderLabel,
+  caseWarnings,
 }: GeneratedTestCaseCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -1178,6 +1193,110 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                   </Badge>
                 ))}
             </div>
+
+            {/* INT-06: LLM-proposed parameter chips */}
+            {testCase.parameters && testCase.parameters.length > 0 && (
+              <div
+                className="space-y-2"
+                data-testid="wizard-preview-parameters-section"
+              >
+                <Label className="text-primary text-sm">
+                  {_t("generateTestCases.parametersSection")}
+                </Label>
+                <div className="flex flex-wrap items-center gap-2">
+                  {testCase.parameters.map((p, idx) => (
+                    <Badge
+                      key={`${testCase.id}-param-${idx}`}
+                      variant="outline"
+                      className="text-xs text-primary"
+                      data-testid="wizard-preview-parameter-chip"
+                    >
+                      {p.name}
+                      <span className="ml-1 text-muted-foreground">
+                        {`(${p.type.toLowerCase()})`}
+                      </span>
+                      {p.sensitive && (
+                        <span className="ml-1 text-destructive">
+                          {`· ${_t("generateTestCases.parameterChipSensitive")}`}
+                        </span>
+                      )}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* INT-06: dataset_truncated / dataset_capped / invalid_parameter
+                warnings for this case. */}
+            {caseWarnings && caseWarnings.length > 0 && (
+              <Alert
+                variant="default"
+                className="border-primary/40"
+                data-testid="wizard-preview-warning"
+              >
+                <AlertDescription>
+                  {caseWarnings.some((w) => w.message === "dataset_truncated") &&
+                    _t("generateTestCases.datasetTruncatedWarning")}
+                  {caseWarnings.some((w) => w.message === "dataset_capped") &&
+                    " " + _t("generateTestCases.datasetCappedWarning")}
+                  {caseWarnings.some((w) =>
+                    w.message.startsWith("invalid_parameter")
+                  ) && " " + _t("generateTestCases.invalidParameterWarning")}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* INT-06: starter dataset preview (first 5 rows + "...and N more"). */}
+            {testCase.starterDataset && testCase.starterDataset.length > 0 && (
+              <div
+                className="space-y-2"
+                data-testid="wizard-preview-dataset-section"
+              >
+                <Label className="text-primary text-sm">
+                  {_t("generateTestCases.starterDatasetSection")}
+                </Label>
+                <div className="overflow-x-auto rounded-md border">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b bg-muted/40">
+                        {testCase.parameters?.map((p) => (
+                          <th
+                            key={`${testCase.id}-th-${p.name}`}
+                            className="px-2 py-1 text-left font-medium"
+                          >
+                            {p.name}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {testCase.starterDataset.slice(0, 5).map((row, rIdx) => (
+                        <tr
+                          key={`${testCase.id}-row-${rIdx}`}
+                          className="border-b last:border-b-0"
+                        >
+                          {testCase.parameters?.map((p) => (
+                            <td
+                              key={`${testCase.id}-td-${rIdx}-${p.name}`}
+                              className="px-2 py-1 align-top"
+                            >
+                              {String(row.values?.[p.name] ?? "")}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {testCase.starterDataset.length > 5 && (
+                  <p className="text-xs text-muted-foreground">
+                    {_t("generateTestCases.datasetMoreRows", {
+                      count: testCase.starterDataset.length - 5,
+                    })}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </CollapsibleContent>
       </div>
@@ -1249,6 +1368,17 @@ export function GenerateTestCasesWizard({
   const [userNotes, setUserNotes] = useState("");
   const [quantity, setQuantity] = useState<string>("several");
   const [autoGenerateTags, setAutoGenerateTags] = useState(true);
+  // INT-06: opt-in toggle (default false) — when on, the LLM emits a parameter
+  // schema + starter dataset per case so the result is immediately runnable
+  // as iterations. Visible only to admins (defense-in-depth on top of the
+  // API-tier admin gate).
+  const [includeParameters, setIncludeParameters] = useState(false);
+  // INT-06: parser warnings keyed by caseIndex (e.g., dataset_truncated).
+  // Surfaced as an Alert on the preview card.
+  const [llmWarnings, setLlmWarnings] = useState<
+    Array<{ caseIndex: number; message: string }>
+  >([]);
+  const isAdmin = session?.user?.access === "ADMIN";
   const [linkedIssueRefs, setLinkedIssueRefs] = useState<LinkedIssueRef[]>([]);
   const [droppedLinkedIssues, setDroppedLinkedIssues] = useState<string[]>([]);
   const [generatedTestCases, setGeneratedTestCases] = useState<
@@ -2197,6 +2327,7 @@ export function GenerateTestCasesWizard({
             },
             quantity,
             autoGenerateTags,
+            includeParameters,
             feature: llmFeature,
           }),
           signal: abortController.signal,
@@ -2321,13 +2452,21 @@ export function GenerateTestCasesWizard({
             status: "Web Content",
           };
 
-          const { testCases: finalPageCases } = parseAndValidateTestCases(
+          const {
+            testCases: finalPageCases,
+            warnings: pageWarnings,
+          } = parseAndValidateTestCases(
             accumulated,
             templateForParsing,
             issueForParsing,
             autoGenerateTags,
             quantity
           );
+          // INT-06: surface parser warnings (dataset_truncated, dataset_capped,
+          // invalid_parameter:<name>) on the wizard so the preview can flag them.
+          if (pageWarnings && pageWarnings.length > 0) {
+            setLlmWarnings((prev) => [...prev, ...pageWarnings]);
+          }
 
           if (finalPageCases.length > pageYieldedCount) {
             // There were cases the stream parser missed (e.g., truncated last case)
@@ -2487,6 +2626,7 @@ export function GenerateTestCasesWizard({
             userNotes: userNotes || undefined,
             quantity: quantity || undefined,
             autoGenerateTags: autoGenerateTags || undefined,
+            includeParameters: includeParameters || undefined,
             options: {
               followLinks,
               maxDepth,
@@ -2514,6 +2654,7 @@ export function GenerateTestCasesWizard({
     setGeneratedTestCases([]);
     setSelectedTestCases(new Set());
     setDroppedLinkedIssues([]);
+    setLlmWarnings([]);
     setCaseOutlines([]);
     setExpandedCases([]);
     for (const ac of expandAbortControllersRef.current.values()) ac.abort();
@@ -2606,6 +2747,9 @@ export function GenerateTestCasesWizard({
           issue: issueData,
           context: contextPayload,
           quantity,
+          // outline endpoint accepts-but-ignores includeParameters — kept for
+          // uniform wizard plumbing.
+          includeParameters,
         }),
         signal: abortController.signal,
       });
@@ -2668,6 +2812,7 @@ export function GenerateTestCasesWizard({
                     context: contextPayload,
                     outline,
                     autoGenerateTags,
+                    includeParameters,
                   }),
                   signal: ac.signal,
                 }
@@ -4534,6 +4679,38 @@ export function GenerateTestCasesWizard({
                           </Label>
                         </div>
 
+                        {/* INT-06: Generate parameters + starter dataset
+                            (admin-only — defense in depth on top of the API
+                            admin gate). */}
+                        {isAdmin && (
+                          <div
+                            className="flex items-start space-x-2 mb-4"
+                            data-testid="include-parameters-toggle-row"
+                          >
+                            <Checkbox
+                              id="include-parameters"
+                              data-testid="include-parameters-toggle"
+                              checked={includeParameters}
+                              onCheckedChange={(checked) =>
+                                setIncludeParameters(checked === true)
+                              }
+                            />
+                            <div className="space-y-1">
+                              <Label
+                                htmlFor="include-parameters"
+                                className="text-sm font-medium cursor-pointer"
+                              >
+                                {t(
+                                  "generateTestCases.includeParametersLabel"
+                                )}
+                              </Label>
+                              <p className="text-xs text-muted-foreground">
+                                {t("generateTestCases.includeParametersHelp")}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
                         {/* Quick suggestions */}
                         <div className="space-y-2">
                           <Label className="text-sm font-medium">
@@ -4821,6 +4998,9 @@ export function GenerateTestCasesWizard({
                                       formSubmitHandlersRef={
                                         formSubmitHandlersRef
                                       }
+                                      caseWarnings={llmWarnings.filter(
+                                        (w) => w.caseIndex === i
+                                      )}
                                     />
                                   );
                                 }
@@ -4958,6 +5138,9 @@ export function GenerateTestCasesWizard({
                                             )
                                           : undefined
                                       }
+                                      caseWarnings={llmWarnings.filter(
+                                        (w) => w.caseIndex === index
+                                      )}
                                     />
                                   );
                                 })}

@@ -2840,6 +2840,15 @@
       "openInExternalSystem": "Open in {provider}",
       "externalSystem": "External System",
       "autoGenerateTags": "Automatically generate tags for test cases",
+      "includeParametersLabel": "Generate parameters and starter dataset",
+      "includeParametersHelp": "Includes a parameter schema (with allowed values for SELECT types) and a starter dataset so generated cases are immediately runnable as iterations.",
+      "parametersSection": "Parameters",
+      "starterDatasetSection": "Starter Dataset",
+      "datasetTruncatedWarning": "Dataset was truncated by the AI. You can add rows manually in the parameter editor after saving.",
+      "datasetCappedWarning": "Dataset was capped at the maximum row count. Excess rows were dropped.",
+      "invalidParameterWarning": "One or more proposed parameters were invalid and dropped.",
+      "datasetMoreRows": "...and {count, plural, one {# more row} other {# more rows}}",
+      "parameterChipSensitive": "sensitive",
       "success": {
         "imported": "{count, plural, =1 {Successfully imported 1 test case} other {Successfully imported # test cases}}"
       },
