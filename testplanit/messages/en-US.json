@@ -1374,8 +1374,10 @@
         "eventVerbs": {
           "duplicated": "Duplicated",
           "stateChanged": "State changed",
-          "resultAdded": "Result added"
+          "resultAdded": "Result added",
+          "resultRecorded": "Result Recorded"
         },
+        "iterationResultHelp": "Fires every time an iteration result is recorded — pass, fail, skip, or any other status. Use sparingly on long automation runs (one event per iteration).",
         "events": {
           "testRunCreated": "Test run created",
           "testRunStateChanged": "Test run state changed",
