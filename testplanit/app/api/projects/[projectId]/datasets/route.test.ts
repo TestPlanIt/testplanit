@@ -12,6 +12,7 @@ vi.mock("~/server/auth", () => ({
 const dataSetCreateMock = vi.fn();
 const dataSetFindManyMock = vi.fn();
 const dataSetCountMock = vi.fn();
+const projectsFindFirstMock = vi.fn(async () => ({ id: 1 }));
 const transactionMock = vi.fn(async (cb: any) =>
   cb({
     dataSet: { create: dataSetCreateMock },
@@ -20,12 +21,26 @@ const transactionMock = vi.fn(async (cb: any) =>
 
 vi.mock("~/lib/auth/utils", () => ({
   getEnhancedDb: vi.fn(async () => ({
+    projects: { findFirst: projectsFindFirstMock },
     dataSet: {
       findMany: dataSetFindManyMock,
       count: dataSetCountMock,
     },
     $transaction: transactionMock,
   })),
+}));
+
+// The POST handler bypasses the enhanced client and uses raw `prisma`
+// for the actual create (Phase 1 @@deny null-safety workaround). Mock
+// `~/lib/prisma` so the raw $transaction routes through the same
+// captured `dataSetCreateMock` as the enhanced path.
+vi.mock("~/lib/prisma", () => ({
+  prisma: {
+    $transaction: (cb: any) =>
+      cb({
+        dataSet: { create: dataSetCreateMock },
+      }),
+  },
 }));
 
 const captureAuditEventMock = vi.fn(

@@ -178,8 +178,10 @@ describe("DatasetTab — initial mount + structure", () => {
       )
     );
     await waitFor(() => {
+      // DatasetTab opted into the GET handler's pagination path, so the
+      // URL now carries `?page=1&pageSize=50` (default page size).
       expect(fetchMock).toHaveBeenCalledWith(
-        "/api/repository/cases/42/dataset"
+        "/api/repository/cases/42/dataset?page=1&pageSize=50"
       );
     });
   });
@@ -421,7 +423,9 @@ describe("DatasetTab — Surface F: 'Last result' cross-link column", () => {
     });
     const link = screen.getByTestId("dataset-row-result-link-0");
     expect(link).toBeInTheDocument();
-    expect(link.textContent).toContain("View Failed result");
+    // UX simplified to just the status name (the "View … result" wrapper
+    // was dropped in Phase 3 to make Last Result feel like a plain link).
+    expect(link.textContent).toContain("Failed");
   });
 
   it("renders an empty cell for dataset rows with no matching iteration", async () => {
@@ -560,9 +564,10 @@ describe("DatasetTab — Surface F: 'Last result' cross-link column", () => {
       ).toBeInTheDocument();
     });
     // "Failed" came first in the desc-ordered list, so it wins.
+    // UX dropped the "View … result" wrapper; link text is just the status.
     expect(
       screen.getByTestId("dataset-row-result-link-0").textContent
-    ).toContain("View Failed result");
+    ).toContain("Failed");
     fireEvent.click(screen.getByTestId("dataset-row-result-link-0"));
     expect(mockRouterPush).toHaveBeenCalledWith(
       "/projects/runs/9/88?iteration=1&selectedCase=42"

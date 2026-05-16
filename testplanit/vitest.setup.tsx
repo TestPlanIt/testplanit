@@ -96,6 +96,13 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/", // Default pathname
   useSearchParams: () => new URLSearchParams(), // Default search params
   useParams: () => ({}), // Default route params
+  // next-intl's `createNavigation` internally calls `getRedirectFn(redirect)`
+  // and `getRedirectFn(permanentRedirect)` at import time — they must be
+  // defined (even as no-op stubs) for any module that imports
+  // `~/lib/navigation` to load under vitest.
+  redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
+  notFound: vi.fn(),
 }));
 
 // Mock NextAuth useSession hook if tests require auth context

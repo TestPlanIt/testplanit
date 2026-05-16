@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   txDataSetVersionCreate: vi.fn(),
   txDataSetUpdate: vi.fn(),
   txDataSetRowFindMany: vi.fn(),
+  txDataSetRowFindFirst: vi.fn(async () => null),
   txDataSetRowUpdateMany: vi.fn(),
   txDataSetRowCreate: vi.fn(),
   captureAuditEvent: vi.fn(async () => undefined) as unknown as ReturnType<
@@ -35,6 +36,7 @@ vi.mock("~/lib/auth/utils", () => ({
         },
         dataSet: { update: mocks.txDataSetUpdate },
         dataSetRow: {
+          findFirst: mocks.txDataSetRowFindFirst,
           findMany: mocks.txDataSetRowFindMany,
           updateMany: mocks.txDataSetRowUpdateMany,
           create: mocks.txDataSetRowCreate,

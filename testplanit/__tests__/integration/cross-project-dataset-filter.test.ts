@@ -18,6 +18,10 @@ const { mockDb, sessionRef, dataSetFindFirst } = vi.hoisted(() => {
   const db: any = {
     repositoryCases: { findFirst: vi.fn() },
     dataSet: { findFirst: dataSetFindFirstFn },
+    // The route counts rows for the pagination response shape after the
+    // GET handler picked up `?page=` support — stub a default so tests
+    // that don't care about totalRows don't crash.
+    dataSetRow: { count: vi.fn(async () => 0) },
     testCaseParameter: { findMany: vi.fn(async () => []) },
     user: { findUnique: vi.fn() },
   };
@@ -39,7 +43,13 @@ vi.mock("~/lib/auth/utils", () => ({
 import { GET as datasetGet } from "~/app/api/repository/cases/[caseId]/dataset/route";
 
 function jsonRequest(body: unknown = {}): NextRequest {
-  return { json: async () => body } as unknown as NextRequest;
+  // The GET handler reads `new URL(request.url)` for pagination params,
+  // so the stub needs a usable `url` even when callers only care about
+  // `json()`.
+  return {
+    url: "http://test.local/api/repository/cases/5/dataset",
+    json: async () => body,
+  } as unknown as NextRequest;
 }
 
 beforeEach(() => {
