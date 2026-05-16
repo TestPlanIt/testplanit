@@ -96,7 +96,7 @@ describe("<MatrixCell />", () => {
     expect(screen.getByTestId("matrix-cell-not-run-1-2-0")).toBeInTheDocument();
   });
 
-  it("renders pip + counts when cell has iterations", () => {
+  it("renders three (pip, count) pairs when cell has iterations", () => {
     render(
       <MatrixCell
         cell={{
@@ -119,38 +119,24 @@ describe("<MatrixCell />", () => {
         caseId={1}
       />
     );
-    // data-testid uses the cell's own configId/rowIndex (not the prop).
-    expect(screen.getByTestId("matrix-cell-1-2-3")).toBeInTheDocument();
-    expect(screen.getByText("2/1/1")).toBeInTheDocument();
-  });
-
-  it("uses the worst-of status color for the pip", () => {
-    render(
-      <MatrixCell
-        cell={{
-          caseId: 1,
-          configId: 2,
-          rowIndex: 0,
-          iterationCount: 2,
-          pass: 1,
-          fail: 1,
-          notRun: 0,
-          other: 0,
-          worstOfStatusId: 2, // Failed
-          mostRecentCompletedAt: "2026-05-01T00:00:00.000Z",
-          iterations: [],
-        }}
-        configId={2}
-        rowIndex={0}
-        statusMap={baseStatusMap}
-        projectId={42}
-        caseId={1}
-      />
+    const cell = screen.getByTestId("matrix-cell-1-2-3");
+    expect(cell).toBeInTheDocument();
+    // aria-label is wired to the cellSummary i18n key (resolved at runtime).
+    expect(cell.getAttribute("aria-label")).toBeTruthy();
+    // Three colored pip swatches (Passed green / Failed red / Untested gray)
+    // and their counts in pass/fail/notRun order.
+    const pips = cell.querySelectorAll('[style*="background-color"]');
+    expect(pips).toHaveLength(3);
+    expect((pips[0] as HTMLElement).style.backgroundColor).toBe(
+      "rgb(42, 132, 63)"
     );
-    const pip = screen.getByTestId("iteration-status-pip");
-    // The pip's inline `color` style is the resolved status color.
-    expect(pip.getAttribute("style")).toContain("rgb(255, 0, 0)");
-    expect(pip.getAttribute("data-glyph")).toBe("failed");
+    expect((pips[1] as HTMLElement).style.backgroundColor).toBe(
+      "rgb(244, 75, 37)"
+    );
+    expect((pips[2] as HTMLElement).style.backgroundColor).toBe(
+      "rgb(200, 201, 202)"
+    );
+    expect(cell.textContent).toMatch(/2.*1.*1/);
   });
 
   it("clicking the cell mounts the popover content (drill-down list)", async () => {

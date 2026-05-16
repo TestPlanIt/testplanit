@@ -73,7 +73,7 @@ describe("<MatrixCellCapNotice />", () => {
     // Both numbers must show up somewhere in the title (raw or formatted).
     const text = screen.getByTestId("matrix-cell-cap-notice").textContent ?? "";
     expect(text).toMatch(/12[,.]?345/);
-    expect(text).toMatch(/10[,.]?000/);
+    expect(text).toMatch(/50[,.]?000/);
   });
 
   it("suggests filtering cases when caseCount dominates", () => {
