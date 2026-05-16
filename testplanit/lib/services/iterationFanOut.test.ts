@@ -245,7 +245,7 @@ describe("materializeIterations (mocked tx)", () => {
     await materializeIterations(1, tx as any);
     expect(tx.testRunCases.update).toHaveBeenCalledWith({
       where: { id: 50 },
-      data: { totalIterations: 3 },
+      data: { totalIterations: 3, passedIterations: 0, failedIterations: 0, skippedIterations: 0 },
     });
   });
 
