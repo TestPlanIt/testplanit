@@ -5,7 +5,7 @@ import { z } from "zod/v4";
 import { authenticateRequest } from "~/lib/api-token-auth";
 import { prisma } from "~/lib/prisma";
 import { assertReviewGatePasses } from "~/lib/services/reviewGate";
-import { isReviewGateError } from "~/lib/utils/errors";
+import { isAlreadyPendingError, isReviewGateError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 
@@ -449,6 +449,13 @@ export async function POST(req: NextRequest) {
           },
         },
         { status: 403 }
+      );
+    }
+
+    if (isAlreadyPendingError(error)) {
+      return NextResponse.json(
+        { error: { code: "PENDING_REVIEW_EXISTS" } },
+        { status: 409 }
       );
     }
 

@@ -43,6 +43,26 @@ export class AlreadyPendingError extends Error {
   }
 }
 
+export class IneligibleReviewerError extends Error {
+  readonly code = "INELIGIBLE_REVIEWER" as const;
+
+  constructor(
+    public readonly userId: string,
+    public readonly reviewRequestId: string,
+  ) {
+    super(
+      `User ${userId} is not eligible to decide review request ${reviewRequestId}`,
+    );
+    this.name = "IneligibleReviewerError";
+  }
+}
+
+export function isIneligibleReviewerError(
+  err: unknown,
+): err is IneligibleReviewerError {
+  return err instanceof IneligibleReviewerError;
+}
+
 export function isReviewGateError(err: unknown): err is ReviewGateError {
   return err instanceof ReviewGateError;
 }

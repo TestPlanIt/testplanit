@@ -5,7 +5,7 @@ import { z } from "zod/v4";
 import { prisma } from "~/lib/prisma";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
 import { assertReviewGatePasses } from "~/lib/services/reviewGate";
-import { isReviewGateError } from "~/lib/utils/errors";
+import { isAlreadyPendingError, isReviewGateError } from "~/lib/utils/errors";
 import { getServerAuthSession } from "~/server/auth";
 import { checkUserPermission } from "./permissions";
 
@@ -338,6 +338,13 @@ export async function completeMilestoneCascade(
       return {
         status: "error",
         message: `Review required for ${error.entityType.toLowerCase()} ${error.entityId} before transitioning to state ${error.toStateId}.`,
+      };
+    }
+
+    if (isAlreadyPendingError(error)) {
+      return {
+        status: "error",
+        message: `A pending review already exists for the ${error.entityType.toLowerCase()} ${error.entityId}.`,
       };
     }
 
