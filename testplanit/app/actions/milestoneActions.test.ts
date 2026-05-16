@@ -1209,8 +1209,18 @@ describe("milestoneActions", () => {
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
             milestones: { update: vi.fn(), updateMany: vi.fn() },
-            testRuns: { updateMany: vi.fn() },
-            sessions: { updateMany: vi.fn() },
+            testRuns: {
+              updateMany: vi.fn(),
+              findUnique: vi.fn().mockResolvedValue({
+                project: { reviewWorkflowEnabled: true },
+              }),
+            },
+            sessions: {
+              updateMany: vi.fn(),
+              findUnique: vi.fn().mockResolvedValue({
+                project: { reviewWorkflowEnabled: true },
+              }),
+            },
             workflows: { findUnique: txWorkflowsFindUnique },
             reviewRequest: { findFirst: txReviewRequestFindFirst },
           } as any);
@@ -1253,8 +1263,18 @@ describe("milestoneActions", () => {
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
             milestones: { update: vi.fn(), updateMany: vi.fn() },
-            testRuns: { updateMany: vi.fn() },
-            sessions: { updateMany: vi.fn() },
+            testRuns: {
+              updateMany: vi.fn(),
+              findUnique: vi.fn().mockResolvedValue({
+                project: { reviewWorkflowEnabled: true },
+              }),
+            },
+            sessions: {
+              updateMany: vi.fn(),
+              findUnique: vi.fn().mockResolvedValue({
+                project: { reviewWorkflowEnabled: true },
+              }),
+            },
             workflows: {
               findUnique: vi
                 .fn()
@@ -1292,8 +1312,18 @@ describe("milestoneActions", () => {
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
             milestones: { update: vi.fn(), updateMany: vi.fn() },
-            testRuns: { updateMany: vi.fn() },
-            sessions: { updateMany: vi.fn() },
+            testRuns: {
+              updateMany: vi.fn(),
+              findUnique: vi.fn().mockResolvedValue({
+                project: { reviewWorkflowEnabled: true },
+              }),
+            },
+            sessions: {
+              updateMany: vi.fn(),
+              findUnique: vi.fn().mockResolvedValue({
+                project: { reviewWorkflowEnabled: true },
+              }),
+            },
             workflows: {
               findUnique: vi
                 .fn()

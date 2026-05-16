@@ -101,6 +101,7 @@ describe("Submit Result API Route", () => {
     };
     testRuns: {
       update: ReturnType<typeof vi.fn>;
+      findUnique: ReturnType<typeof vi.fn>;
     };
     workflows: {
       findUnique: ReturnType<typeof vi.fn>;
@@ -133,6 +134,12 @@ describe("Submit Result API Route", () => {
       },
       testRuns: {
         update: vi.fn().mockResolvedValue({ id: 1 }),
+        // Review & Approval per-project flag lookup — default returns the
+        // project with reviewWorkflowEnabled=true so the gate continues
+        // evaluating the requiresReview branch.
+        findUnique: vi.fn().mockResolvedValue({
+          project: { reviewWorkflowEnabled: true },
+        }),
       },
       // Review & Approval gate dependencies — default to "not gated" so
       // every pre-existing test path passes the preflight as a no-op.

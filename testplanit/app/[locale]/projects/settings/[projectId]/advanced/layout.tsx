@@ -8,8 +8,8 @@ export async function generateMetadata({
   params: Promise<{ locale: Locale }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations({ locale });
-  return { title: t("common.pageTitles.advanced") };
+  const t = await getTranslations({ locale, namespace: "common.pageTitles" });
+  return { title: t("advanced") };
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
