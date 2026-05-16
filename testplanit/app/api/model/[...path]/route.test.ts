@@ -1111,4 +1111,188 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
     expect(res.status).toBe(403);
     expect(body.error.entityType).toBe("SESSION");
   });
+
+  // ───────────────────────────────────────────────────────────────────────
+  // CR-03 regression: the gate now covers `upsert` and `updateMany` payloads
+  // that carry a `stateId`. Previously only `update` was gated, so callers
+  // could route a state flip through upsert (data lands under
+  // body.update.stateId) or updateMany and bypass the friendly-error path.
+  // ───────────────────────────────────────────────────────────────────────
+
+  function makePathRequest(
+    method: string,
+    body: unknown,
+    pathSegments: string[]
+  ): NextRequest {
+    const headers = new Headers();
+    headers.set("content-type", "application/json");
+    const json = JSON.stringify(body);
+    return {
+      method,
+      headers,
+      url: `http://localhost:3000/api/model/${pathSegments.join("/")}`,
+      clone() {
+        return this;
+      },
+      async text() {
+        return json;
+      },
+    } as unknown as NextRequest;
+  }
+
+  it("CR-03 — gates upsert payloads whose update branch carries stateId", async () => {
+    const { assertReviewGatePasses } = await import(
+      "~/lib/services/reviewGate"
+    );
+    const { ReviewGateError } = await import("~/lib/utils/errors");
+    (assertReviewGatePasses as any).mockRejectedValue(
+      new ReviewGateError("REVIEW_REQUIRED", "CASE", 42, 99)
+    );
+
+    const { POST } = await import("./route");
+    const req = makePathRequest(
+      "POST",
+      {
+        where: { id: 42 },
+        create: { name: "fresh", stateId: 1 },
+        update: { stateId: 99 },
+      },
+      ["repositoryCases", "upsert"]
+    );
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["repositoryCases", "upsert"] }),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(403);
+    expect(body.error).toEqual({
+      code: "REVIEW_REQUIRED",
+      entityType: "CASE",
+      entityId: 42,
+      toStateId: 99,
+    });
+    expect(assertReviewGatePasses).toHaveBeenCalledWith(
+      expect.anything(),
+      "CASE",
+      42,
+      99
+    );
+    expect(baseHandlerMock).not.toHaveBeenCalled();
+  });
+
+  it("CR-03 — gates updateMany payloads with a scalar where.id and a stateId", async () => {
+    const { assertReviewGatePasses } = await import(
+      "~/lib/services/reviewGate"
+    );
+    const { ReviewGateError } = await import("~/lib/utils/errors");
+    (assertReviewGatePasses as any).mockRejectedValue(
+      new ReviewGateError("REVIEW_REQUIRED", "RUN", 5, 88)
+    );
+
+    const { POST } = await import("./route");
+    const req = makePathRequest(
+      "POST",
+      {
+        where: { id: 5 },
+        data: { stateId: 88 },
+      },
+      ["testRuns", "updateMany"]
+    );
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["testRuns", "updateMany"] }),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(403);
+    expect(body.error.entityType).toBe("RUN");
+    expect(assertReviewGatePasses).toHaveBeenCalledWith(
+      expect.anything(),
+      "RUN",
+      5,
+      88
+    );
+    expect(baseHandlerMock).not.toHaveBeenCalled();
+  });
+
+  it("CR-03 — does NOT block updateMany when where.id is a Prisma filter (e.g. { in: [...] })", async () => {
+    // Multi-row updateMany cannot be expressed in the gate's polymorphic
+    // (entityType, entityId) shape. The gate falls through to the schema
+    // @@deny backstop in that case; the route does not invoke the friendly
+    // gate at all. The gate would still be hit on a per-row basis when the
+    // caller targets a single id; this just covers the bulk path.
+    const { assertReviewGatePasses } = await import(
+      "~/lib/services/reviewGate"
+    );
+
+    const { POST } = await import("./route");
+    const req = makePathRequest(
+      "POST",
+      {
+        where: { id: { in: [1, 2, 3] } },
+        data: { stateId: 99 },
+      },
+      ["testRuns", "updateMany"]
+    );
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["testRuns", "updateMany"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(assertReviewGatePasses).not.toHaveBeenCalled();
+    expect(baseHandlerMock).toHaveBeenCalled();
+  });
+
+  it("CR-03 — does NOT block upsert when only the create branch carries stateId (no transition)", async () => {
+    // upsert.create.stateId is fresh-row creation, gated at row-creation
+    // time by FK + workflow rules — not by the review gate which targets
+    // transitions of existing entities.
+    const { assertReviewGatePasses } = await import(
+      "~/lib/services/reviewGate"
+    );
+
+    const { POST } = await import("./route");
+    const req = makePathRequest(
+      "POST",
+      {
+        where: { id: 99 },
+        create: { name: "new", stateId: 7 },
+        update: { name: "renamed" },
+      },
+      ["repositoryCases", "upsert"]
+    );
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["repositoryCases", "upsert"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(assertReviewGatePasses).not.toHaveBeenCalled();
+    expect(baseHandlerMock).toHaveBeenCalled();
+  });
+
+  it("CR-03 — gracefully ignores non-finite stateId values (no NaN slip into the gate)", async () => {
+    // Today stateId is a numeric primary key, but the new defensive coercion
+    // explicitly NaN's anything non-numeric so a hypothetical future payload
+    // shape (e.g. clearing the field to null) does not silently invoke the
+    // gate with NaN.
+    const { assertReviewGatePasses } = await import(
+      "~/lib/services/reviewGate"
+    );
+
+    const { POST } = await import("./route");
+    const req = makePathRequest(
+      "POST",
+      {
+        where: { id: 7 },
+        data: { stateId: null },
+      },
+      ["repositoryCases", "update"]
+    );
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["repositoryCases", "update"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(assertReviewGatePasses).not.toHaveBeenCalled();
+    expect(baseHandlerMock).toHaveBeenCalled();
+  });
 });
