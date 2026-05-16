@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ReviewStatusBanner } from "./ReviewStatusBanner";
@@ -267,7 +267,7 @@ describe("ReviewStatusBanner", () => {
     render(<ReviewStatusBanner {...props} />);
 
     const requestAgain = screen.getByTestId("request-review-again-button");
-    requestAgain.click();
+    fireEvent.click(requestAgain);
 
     // The stub captures props on each render — at least one call must have
     // had open=true with the expected initialValues.
