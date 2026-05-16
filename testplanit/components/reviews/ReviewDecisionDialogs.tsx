@@ -184,6 +184,7 @@ export function ApproveDialog({
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={3}
+            maxLength={5000}
           />
         </div>
         <AlertDialogFooter>
@@ -275,6 +276,7 @@ export function RequestChangesDialog({
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             rows={4}
+            maxLength={5000}
           />
         </div>
         <DialogFooter>
@@ -374,6 +376,7 @@ export function RejectDialog({
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             rows={4}
+            maxLength={5000}
           />
         </div>
         <AlertDialogFooter>

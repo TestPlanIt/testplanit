@@ -251,6 +251,29 @@ describe("ReviewStatusBanner", () => {
     ).toBeInTheDocument();
   });
 
+  it("(i.5) WR-09 — decisionComment paragraph applies line-clamp-6 + break-words + whitespace-pre-line", () => {
+    withFeatureEnabled(true);
+    withSession("requester-1");
+    withRequest(
+      makeRequest({
+        status: "REJECTED",
+        // A pathologically long comment with no spaces would otherwise
+        // break the banner layout. Verify the truncation utility classes
+        // are present so an oversized paste degrades gracefully.
+        decisionComment: "x".repeat(5000),
+      }),
+    );
+
+    render(<ReviewStatusBanner {...props} />);
+
+    const para = screen.getByTestId(
+      "review-status-banner-decision-comment",
+    );
+    expect(para.className).toMatch(/line-clamp-6/);
+    expect(para.className).toMatch(/break-words/);
+    expect(para.className).toMatch(/whitespace-pre-line/);
+  });
+
   it("(j) Request-again click opens RequestReviewSheet with initialValues prefilling targetStateId", () => {
     withFeatureEnabled(true);
     withSession("requester-1");

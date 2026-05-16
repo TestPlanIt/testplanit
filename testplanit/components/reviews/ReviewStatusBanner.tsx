@@ -186,7 +186,21 @@ export function ReviewStatusBanner({
             : t("reviews.banner.changesRequestedTitle")}
         </AlertTitle>
         <AlertDescription>
-          <p className="mb-2">{latest.decisionComment ?? ""}</p>
+          {/*
+            WR-09: clip oversized decisionComments at the banner so a 50KB
+            paste from the Textarea (no maxLength today) doesn't blow up the
+            layout. `whitespace-pre-line` preserves intentional line breaks,
+            `line-clamp-6` caps the visible height to about six lines with a
+            graceful ellipsis. Server-side max-length and a full
+            "Show more" toggle remain as a v1.x polish item; this is the
+            cheap defense for v1.
+          */}
+          <p
+            className="mb-2 line-clamp-6 break-words whitespace-pre-line"
+            data-testid="review-status-banner-decision-comment"
+          >
+            {latest.decisionComment ?? ""}
+          </p>
           <Button
             type="button"
             variant="outline"
