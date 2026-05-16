@@ -1195,6 +1195,18 @@
       "description": "Manage settings for {projectName}",
       "moreSettingsComingSoon": "More Settings Coming Soon",
       "moreSettingsDescription": "Additional project configuration options will be available here in future updates",
+      "junitIterationProperties": {
+        "title": "JUnit Iteration Property Names",
+        "description": "When automation imports JUnit XML, the import path reads the iteration index from a <property> child on each <testcase>. Add the property names your CI emitter uses; lookup is case-insensitive.",
+        "addLabel": "Add a property name",
+        "addButton": "Add",
+        "placeholder": "e.g. iterationIndex",
+        "defaultHint": "Default: iteration (case-insensitive). Add custom names to opt in.",
+        "saveButton": "Save",
+        "saveSuccess": "JUnit iteration property names saved.",
+        "saveError": "Could not save JUnit iteration property names.",
+        "removeAria": "Remove {name}"
+      },
       "integrations": {
         "description": "Manage third-party issue integrations for this project",
         "availableIntegrations": "Available Issue Integrations",
@@ -3148,6 +3160,7 @@
       "imports": "Data Imports",
       "integrations": "Issue Integrations",
       "webhooks": "Webhooks",
+      "junit": "JUnit",
       "datasets": "Shared Datasets",
       "llm": "AI Models",
       "prompts": "Prompt Configs",

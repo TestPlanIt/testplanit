@@ -21,6 +21,7 @@ import {
   ChartNoAxesCombined,
   Compass as SessionsIcon,
   Database,
+  FileCode2,
   FolderKanban,
   Home,
   Layers,
@@ -273,6 +274,13 @@ export default function ProjectsMenu({
             label: t("admin.menu.webhooks"),
             path: "settings/webhooks",
             id: "settings-webhooks-link",
+            section: "settings" as MenuSection,
+          },
+          {
+            icon: FileCode2,
+            label: t("admin.menu.junit"),
+            path: "settings/junit",
+            id: "settings-junit-link",
             section: "settings" as MenuSection,
           },
           {
