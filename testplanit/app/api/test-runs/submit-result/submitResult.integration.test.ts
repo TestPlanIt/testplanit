@@ -28,6 +28,11 @@ import {
   computeWorstOfStatus,
   type RollupStatus,
 } from "~/lib/services/iterationRollup";
+import {
+  redactValues,
+  type ParameterSchemaEntry,
+} from "~/lib/services/parameterRedaction";
+import { emitIterationResultRecorded } from "~/lib/webhooks/event-emitters/iterationEvents";
 
 const RUN_INTEGRATION = process.env.RUN_DB_INTEGRATION === "1";
 const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
@@ -222,8 +227,24 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
       iterationId: number;
       statusId: number;
       executedById: string;
+      projectId: number;
+      // When true, the submitter has RESULTS.READ_SENSITIVE — drives the
+      // audit redaction's `viewerCanReadSensitive` flag. The webhook
+      // redaction is ALWAYS false regardless (D-13).
+      viewerCanReadSensitive?: boolean;
+      // When true, the helper calls emitIterationResultRecorded inside
+      // the same tx (mirrors the route's wiring). Default true so the
+      // pre-existing tests' outbox-row presence is preserved.
+      emitWebhook?: boolean;
     }
-  ) {
+  ): Promise<{
+    createdResult: any;
+    auditRedactedValues: Record<string, unknown> | null;
+    webhookRedactedValues: Record<string, unknown> | null;
+  }> {
+    const viewerCanReadSensitive = args.viewerCanReadSensitive === true;
+    const emitWebhook = args.emitWebhook !== false;
+
     const createdResult = await tx.testRunResults.create({
       data: {
         testRunId: args.testRunId,
@@ -235,6 +256,13 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
         attempt: 1,
         testRunCaseVersion: 1,
       },
+    });
+
+    // Capture iteration row pre-update so we have valuesJson + rowIndex
+    // available for both redactions (matches the route's behavior).
+    const iterBefore = await tx.testRunCaseIteration.findUnique({
+      where: { id: args.iterationId },
+      select: { rowIndex: true, valuesJson: true },
     });
 
     await tx.testRunCaseIteration.update({
@@ -306,7 +334,51 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
       },
     });
 
-    return createdResult;
+    // Build the two redactions exactly the way the route does — fresh
+    // computations each time so the integration test exercises the
+    // separation D-13 demands.
+    let auditRedactedValues: Record<string, unknown> | null = null;
+    let webhookRedactedValues: Record<string, unknown> | null = null;
+    const snapshot = await tx.testRunCaseDataSetSnapshot.findUnique({
+      where: { testRunCaseId: args.testRunCaseId },
+      select: { parametersJson: true },
+    });
+    const paramSchemaRaw = snapshot?.parametersJson;
+    const paramSchema: ParameterSchemaEntry[] = Array.isArray(paramSchemaRaw)
+      ? paramSchemaRaw
+          .filter(
+            (e: any) => e && typeof e === "object" && typeof e.name === "string"
+          )
+          .map((e: any) => ({ name: String(e.name), sensitive: e.sensitive === true }))
+      : [];
+    const iterValues = (iterBefore?.valuesJson ?? {}) as Record<
+      string,
+      unknown
+    >;
+    auditRedactedValues = redactValues(
+      iterValues,
+      paramSchema,
+      viewerCanReadSensitive
+    );
+    webhookRedactedValues = redactValues(iterValues, paramSchema, false);
+
+    if (emitWebhook) {
+      await emitIterationResultRecorded(
+        {
+          iterationId: args.iterationId,
+          testRunCaseId: args.testRunCaseId,
+          testRunId: args.testRunId,
+          statusId: args.statusId,
+          projectId: args.projectId,
+          rowIndex: iterBefore?.rowIndex ?? 0,
+          redactedValues: webhookRedactedValues,
+        },
+        tx,
+        { actorUserId: args.executedById }
+      );
+    }
+
+    return { createdResult, auditRedactedValues, webhookRedactedValues };
   }
 
   afterAll(async () => {
@@ -346,6 +418,7 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
           iterationId: iterations[i].id,
           statusId: desired[i],
           executedById: fx.creatorId,
+          projectId: fx.projectId,
         });
       }
 
@@ -409,6 +482,7 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
           iterationId: it.id,
           statusId: passed.id,
           executedById: fx.creatorId,
+          projectId: fx.projectId,
         });
       }
 
@@ -450,6 +524,7 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
         iterationId: iterations[0].id,
         statusId: passed.id,
         executedById: fx.creatorId,
+        projectId: fx.projectId,
       });
 
       const runCase = await tx.testRunCases.findUnique({
@@ -480,15 +555,16 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
       const targetIteration = await tx.testRunCaseIteration.findFirst({
         where: { testRunCaseId: fx.testRunCaseId, rowIndex: 1 },
       });
-      const created = await submitOneIterationResult(tx, {
+      const { createdResult } = await submitOneIterationResult(tx, {
         testRunId: fx.testRunId,
         testRunCaseId: fx.testRunCaseId,
         iterationId: targetIteration.id,
         statusId: passed.id,
         executedById: fx.creatorId,
+        projectId: fx.projectId,
       });
       const persisted = await tx.testRunResults.findUnique({
-        where: { id: created.id },
+        where: { id: createdResult.id },
         select: { iterationId: true },
       });
       expect(persisted.iterationId).toBe(targetIteration.id);
@@ -525,6 +601,7 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
         iterationId: iterations[0].id,
         statusId: skipped.id,
         executedById: fx.creatorId,
+        projectId: fx.projectId,
       });
 
       const runCase = await tx.testRunCases.findUnique({
@@ -565,5 +642,166 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
       expect(password).toBeDefined();
       expect(password?.sensitive).toBe(true);
     });
+  });
+
+  // ─── INT-04 — iteration.result.recorded outbox + redaction divergence ────
+
+  it("INT-04: iteration.result.recorded outbox row exists after iteration submit", async () => {
+    const { prisma, materializeIterations } = await importDeps();
+    await withRollback(prisma, async (tx) => {
+      const fx = await seedFixture(tx);
+      await materializeIterations(fx.testRunId, tx);
+
+      const passed = await tx.status.findUnique({
+        where: { systemName: "passed" },
+      });
+      const iterations = await tx.testRunCaseIteration.findMany({
+        where: { testRunCaseId: fx.testRunCaseId },
+        orderBy: { rowIndex: "asc" },
+      });
+
+      await submitOneIterationResult(tx, {
+        testRunId: fx.testRunId,
+        testRunCaseId: fx.testRunCaseId,
+        iterationId: iterations[0].id,
+        statusId: passed.id,
+        executedById: fx.creatorId,
+        projectId: fx.projectId,
+        emitWebhook: true,
+      });
+
+      const outboxRows = await tx.webhookOutboxEvent.findMany({
+        where: {
+          eventName: "iteration.result.recorded",
+          projectId: fx.projectId,
+        },
+      });
+      expect(outboxRows).toHaveLength(1);
+      const outbox = outboxRows[0];
+      const payload = outbox.payload as Record<string, unknown>;
+      expect(payload.iterationId).toBe(iterations[0].id);
+      expect(payload.testRunCaseId).toBe(fx.testRunCaseId);
+      expect(payload.testRunId).toBe(fx.testRunId);
+      expect(payload.statusId).toBe(passed.id);
+      expect(payload.projectId).toBe(fx.projectId);
+      expect(payload.rowIndex).toBe(iterations[0].rowIndex);
+    });
+  });
+
+  it("INT-04 D-13: webhookRedactedValues uses viewerCanReadSensitive=false even when submitter has READ_SENSITIVE — audit and webhook redactions diverge for sensitive params", async () => {
+    const { prisma, materializeIterations } = await importDeps();
+    await withRollback(prisma, async (tx) => {
+      const fx = await seedFixture(tx);
+      await materializeIterations(fx.testRunId, tx);
+
+      const passed = await tx.status.findUnique({
+        where: { systemName: "passed" },
+      });
+      const iterations = await tx.testRunCaseIteration.findMany({
+        where: { testRunCaseId: fx.testRunCaseId },
+        orderBy: { rowIndex: "asc" },
+      });
+      expect(iterations[0].valuesJson).toMatchObject({
+        username: "alice",
+        password: "p1",
+      });
+
+      // Submitter has READ_SENSITIVE — drives audit redaction's flag true.
+      const { auditRedactedValues, webhookRedactedValues } =
+        await submitOneIterationResult(tx, {
+          testRunId: fx.testRunId,
+          testRunCaseId: fx.testRunCaseId,
+          iterationId: iterations[0].id,
+          statusId: passed.id,
+          executedById: fx.creatorId,
+          projectId: fx.projectId,
+          viewerCanReadSensitive: true,
+          emitWebhook: true,
+        });
+
+      // (a) Audit retains cleartext (viewer has the permission).
+      expect(auditRedactedValues).toMatchObject({
+        username: "alice",
+        password: "p1",
+      });
+      // (b) Webhook redacts sensitive param regardless of viewer permission.
+      expect(webhookRedactedValues).toMatchObject({
+        username: "alice",
+        password: "[REDACTED]",
+      });
+      // (c) The two structures differ for the sensitive key — proves
+      //     the redactions are computed independently.
+      expect(webhookRedactedValues!.password).not.toBe(
+        auditRedactedValues!.password
+      );
+
+      // The outbox row stores the webhook (NOT audit) redaction.
+      const outboxRows = await tx.webhookOutboxEvent.findMany({
+        where: {
+          eventName: "iteration.result.recorded",
+          projectId: fx.projectId,
+        },
+      });
+      expect(outboxRows).toHaveLength(1);
+      const outboxPayload = outboxRows[0].payload as {
+        redactedValues: Record<string, unknown>;
+      };
+      expect(outboxPayload.redactedValues).toMatchObject({
+        username: "alice",
+        password: "[REDACTED]",
+      });
+    });
+  });
+
+  it("INT-04: outbox row commits with the result write (atomicity); rollback also drops the outbox row", async () => {
+    const { prisma, materializeIterations } = await importDeps();
+    let outboxRowsAfterRollback: any[] = [];
+    await withRollback(prisma, async (tx) => {
+      const fx = await seedFixture(tx);
+      await materializeIterations(fx.testRunId, tx);
+
+      const passed = await tx.status.findUnique({
+        where: { systemName: "passed" },
+      });
+      const iterations = await tx.testRunCaseIteration.findMany({
+        where: { testRunCaseId: fx.testRunCaseId },
+        orderBy: { rowIndex: "asc" },
+      });
+
+      await submitOneIterationResult(tx, {
+        testRunId: fx.testRunId,
+        testRunCaseId: fx.testRunCaseId,
+        iterationId: iterations[0].id,
+        statusId: passed.id,
+        executedById: fx.creatorId,
+        projectId: fx.projectId,
+        emitWebhook: true,
+      });
+
+      // Inside tx: outbox row exists.
+      const insideTx = await tx.webhookOutboxEvent.findMany({
+        where: {
+          eventName: "iteration.result.recorded",
+          projectId: fx.projectId,
+        },
+      });
+      expect(insideTx).toHaveLength(1);
+
+      // Capture the projectId for the post-rollback check below.
+      outboxRowsAfterRollback = [{ projectId: fx.projectId }];
+    });
+
+    // Outside the rolled-back tx: nothing visible. The `withRollback`
+    // helper always throws ROLLBACK_SENTINEL so the tx never commits.
+    const projectId = outboxRowsAfterRollback[0]?.projectId;
+    if (projectId != null) {
+      const persistedRows = await prisma.webhookOutboxEvent.findMany({
+        where: {
+          eventName: "iteration.result.recorded",
+          projectId,
+        },
+      });
+      expect(persistedRows).toHaveLength(0);
+    }
   });
 });

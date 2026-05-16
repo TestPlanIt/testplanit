@@ -1,6 +1,50 @@
-// Iteration result emitter — implementation lands with INT-04.
+// Iteration result emitter — INT-04 implementation.
+//
+// Fires the `iteration.result.recorded` outbound webhook event from inside
+// the submit-result transaction so the outbox row commits atomically with
+// the iteration write (mirrors `emitTestRunCreated` contract).
+//
+// D-13 / Threat T-06-02-01: the `redactedValues` payload is assembled by
+// the CALLER and MUST already reflect `viewerCanReadSensitive=false`. This
+// emitter does NOT re-derive redaction — the boundary is single-direction
+// (route computes once, emitter forwards). See
+// `app/api/test-runs/submit-result/route.ts` for the call site that
+// computes `webhookRedactedValues` separately from the audit redaction.
 
 import type { Prisma } from "@prisma/client";
+
+import { webhookEvents } from "~/lib/webhooks/events";
+
+/**
+ * Per-value cap for parameter values emitted into webhook payloads
+ * (Pitfall 5 / T-06-02-02). Matches the cap in `testRunEvents.ts` so the
+ * INT-03 and INT-04 surfaces share one ceiling.
+ */
+const WEBHOOK_VALUE_MAX_BYTES = 4 * 1024;
+
+/**
+ * Defense-in-depth: even though the caller in submit-result/route.ts already
+ * redacts with `viewerCanReadSensitive=false`, a future caller might forget
+ * to truncate large blob values. Cap any string entry whose UTF-8 byte
+ * length exceeds 4 KB to `<value truncated: N bytes>` so the outbox row
+ * never carries a 200-KB single value.
+ */
+function capValueBytes(
+  values: Record<string, unknown>
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(values)) {
+    if (typeof v === "string") {
+      const bytes = Buffer.byteLength(v, "utf8");
+      if (bytes > WEBHOOK_VALUE_MAX_BYTES) {
+        out[k] = `<value truncated: ${bytes} bytes>`;
+        continue;
+      }
+    }
+    out[k] = v;
+  }
+  return out;
+}
 
 /**
  * Payload assembled at the iteration-result write site (submit-result tx).
@@ -13,6 +57,7 @@ export interface IterationResultRecordedPayload {
   testRunId: number;
   statusId: number;
   projectId: number;
+  rowIndex: number;
   redactedValues: Record<string, unknown>;
 }
 
@@ -26,17 +71,31 @@ export interface EmitOptions {
  * called inside the same `prisma.$transaction` that writes the iteration
  * result so the outbox row commits atomically with the result write
  * (mirrors `emitTestRunCreated` contract).
+ *
+ * Subscription matching uses the existing matcher unchanged: an empty
+ * `subscribedEvents` array means "all events", and existing configs that
+ * have an explicit array will NOT match this new event unless the admin
+ * adds it (D-06 opt-in).
  */
 export async function emitIterationResultRecorded(
   payload: IterationResultRecordedPayload,
   tx: Prisma.TransactionClient,
   opts: EmitOptions = {}
 ): Promise<void> {
-  // Silence unused-param lints while the stub remains pre-implementation.
-  void payload;
-  void tx;
-  void opts;
-  throw new Error(
-    "emitIterationResultRecorded: not implemented yet (lands with INT-04)"
-  );
+  // The runtime guard in webhookEvents.emit also enforces this, but a
+  // local check produces a more actionable error message for misuse.
+  if (!tx) {
+    throw new Error(
+      "emitIterationResultRecorded requires a Prisma.TransactionClient"
+    );
+  }
+  const safePayload: IterationResultRecordedPayload = {
+    ...payload,
+    redactedValues: capValueBytes(payload.redactedValues),
+  };
+  await webhookEvents.emit("iteration.result.recorded", safePayload, {
+    projectId: opts.projectId ?? payload.projectId,
+    tx,
+    actorUserId: opts.actorUserId,
+  });
 }

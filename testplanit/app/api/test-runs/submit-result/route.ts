@@ -13,6 +13,7 @@ import {
   computeWorstOfStatus,
   type RollupStatus,
 } from "~/lib/services/iterationRollup";
+import { emitIterationResultRecorded } from "~/lib/webhooks/event-emitters/iterationEvents";
 import { authOptions } from "~/server/auth";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 
@@ -605,6 +606,31 @@ export async function POST(req: NextRequest) {
           statusId: input.statusId,
           projectId: runCase.testRun.projectId,
         };
+
+        // INT-04 / D-13 — separately compute the webhook redaction with
+        // `viewerCanReadSensitive=false`. NEVER reuse `auditPayload.redactedValues`:
+        // the audit uses the SUBMITTING user's permission (potentially `true`)
+        // and reusing it would leak sensitive cleartext to webhook
+        // subscribers. The two redactions are computed independently from
+        // the same `iterValues + paramSchema` inputs.
+        const webhookRedactedValues = redactValues(
+          iterValues,
+          paramSchema,
+          false
+        );
+        await emitIterationResultRecorded(
+          {
+            iterationId: input.iterationId,
+            testRunCaseId: input.testRunCaseId,
+            testRunId: input.testRunId,
+            statusId: input.statusId,
+            projectId: runCase.testRun.projectId,
+            rowIndex: iter.rowIndex,
+            redactedValues: webhookRedactedValues,
+          },
+          tx,
+          { actorUserId: user.id }
+        );
       } else {
         // ─── Legacy branch (no iterationId) — unchanged behavior ──────
         // Preserves PARAM-07: non-parameterized cases see byte-identical
