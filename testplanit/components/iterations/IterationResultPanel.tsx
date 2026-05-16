@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SearchIssuesDialog } from "@/components/issues/search-issues-dialog";
 import {
   useFindFirstRepositoryCases,
   useFindFirstTestRuns,
@@ -80,6 +81,8 @@ export function IterationResultPanel({
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAddResultModal, setShowAddResultModal] = useState(false);
+  // INT-05: controlled-open state for the Create-linked-Issue flow.
+  const [showLinkedIssueDialog, setShowLinkedIssueDialog] = useState(false);
 
   // Fetch the case (for name + currentVersion + steps) — React Query
   // dedupes with the same query already running inside TestRunCaseDetails.
@@ -135,6 +138,14 @@ export function IterationResultPanel({
   });
 
   const successStatus = statuses?.find((s) => s.isSuccess === true);
+
+  // INT-05: the Create-linked-Issue button is gated on the iteration's
+  // current status being a failure status. We prefer the embedded
+  // `iteration.status` (already typed with `isFailure`) and fall back to
+  // looking up via the loaded `statuses` array when the DTO did not
+  // carry the full status object (defense-in-depth — `statusId` is not
+  // currently in the DTO shape, so the fallback is a no-op today).
+  const iterationIsFailure: boolean = iteration.status?.isFailure === true;
 
   const invalidateAfterSubmit = async () => {
     // Match the AddResultModal pattern — submit-result writes touch
@@ -198,6 +209,19 @@ export function IterationResultPanel({
           })}
         </span>
         <div className="flex items-center gap-2">
+          {iterationIsFailure && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowLinkedIssueDialog(true)}
+              disabled={isDisabled || isSubmitting}
+              data-testid="create-linked-issue-button"
+            >
+              <Plus className="h-4 w-4" />
+              {t("createLinkedIssue")}
+            </Button>
+          )}
           <Button
             type="button"
             variant="outline"
@@ -284,6 +308,23 @@ export function IterationResultPanel({
           })}
           steps={testcase.steps}
           parameters={stepParameters}
+        />
+      )}
+
+      {/* INT-05: Create-linked-Issue flow — mounts SearchIssuesDialog
+          with the iterationContext so its "Create New Issue" button
+          fetches the prefill body builder result and seeds the create
+          dialog. Controlled-open pattern. */}
+      {showLinkedIssueDialog && (
+        <SearchIssuesDialog
+          open={showLinkedIssueDialog}
+          onOpenChange={setShowLinkedIssueDialog}
+          projectId={projectId}
+          iterationContext={{
+            iterationId: iteration.id,
+            testRunId,
+            testRunCaseId,
+          }}
         />
       )}
     </>
