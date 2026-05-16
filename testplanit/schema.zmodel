@@ -421,6 +421,7 @@ model Projects {
     defaultCaseExportTemplateId Int?
     defaultCaseExportTemplate   CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
     quickScriptEnabled          Boolean                               @default(false)
+    reviewWorkflowEnabled       Boolean                               @default(true)
     duplicateScanResults        DuplicateScanResult[]
     stepSequenceMatches         StepSequenceMatch[]
     reviewRequests              ReviewRequest[]
@@ -1581,7 +1582,7 @@ model RepositoryCases {
     @@allow('all', auth().access == 'ADMIN')
 
     // Schema-layer review gate (SCHEMA-05, T-1-02). App preflight in lib/services/reviewGate.ts produces the typed REVIEW_REQUIRED error first.
-    @@deny('update', future().stateId != stateId && future().state.requiresReview)
+    @@deny('update', future().stateId != stateId && future().state.requiresReview && project.reviewWorkflowEnabled)
 }
 
 model RepositoryCaseVersions {
@@ -1983,7 +1984,7 @@ model Sessions {
     @@allow('all', auth().access == 'ADMIN')
 
     // Schema-layer review gate (SCHEMA-05, T-1-02). App preflight in lib/services/reviewGate.ts produces the typed REVIEW_REQUIRED error first.
-    @@deny('update', future().stateId != stateId && future().state.requiresReview)
+    @@deny('update', future().stateId != stateId && future().state.requiresReview && project.reviewWorkflowEnabled)
 }
 
 model SessionResults {
@@ -2283,7 +2284,7 @@ model TestRuns {
     @@allow('all', auth().access == 'ADMIN')
 
     // Schema-layer review gate (SCHEMA-05, T-1-02). App preflight in lib/services/reviewGate.ts produces the typed REVIEW_REQUIRED error first.
-    @@deny('update', future().stateId != stateId && future().state.requiresReview)
+    @@deny('update', future().stateId != stateId && future().state.requiresReview && project.reviewWorkflowEnabled)
 }
 
 enum TestRunType {
