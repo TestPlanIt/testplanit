@@ -35,13 +35,17 @@ import { describe, expect, it, vi } from "vitest";
  * test is the *shape* of that call.
  */
 
-type MockUpdate = ReturnType<typeof vi.fn>;
+type UpdateArgs = { where: { id: string }; data: { status: string } };
+type UpdateResult = { id: string; status: string };
+type UpdateFn = (args: UpdateArgs) => Promise<UpdateResult>;
 
-function createMockPrisma(updateImpl?: MockUpdate) {
-  const update = updateImpl ?? vi.fn().mockImplementation(async (args) => ({
-    id: args.where.id,
-    status: args.data.status,
-  }));
+function createMockPrisma(updateImpl?: ReturnType<typeof vi.fn<UpdateFn>>) {
+  const update =
+    updateImpl ??
+    vi.fn<UpdateFn>(async (args) => ({
+      id: args.where.id,
+      status: args.data.status,
+    }));
   return {
     reviewRequest: {
       update,
@@ -55,7 +59,7 @@ function createMockPrisma(updateImpl?: MockUpdate) {
 async function performCancel(
   client: ReturnType<typeof createMockPrisma>,
   reviewRequestId: string,
-) {
+): Promise<UpdateResult> {
   return client.reviewRequest.update({
     where: { id: reviewRequestId },
     data: { status: "CANCELLED" },
@@ -64,7 +68,9 @@ async function performCancel(
 
 describe("ReviewRequest cancel-by-status-mutation (D-07)", () => {
   it("invokes update with { status: 'CANCELLED' } — NOT a row delete", async () => {
-    const update = vi.fn().mockResolvedValue({ id: "r1", status: "CANCELLED" });
+    const update = vi
+      .fn<UpdateFn>()
+      .mockResolvedValue({ id: "r1", status: "CANCELLED" });
     const client = createMockPrisma(update);
 
     const result = await performCancel(client, "r1");
@@ -99,7 +105,7 @@ describe("ReviewRequest cancel-by-status-mutation (D-07)", () => {
     const denied = new Error(
       "denied by policy: reviewRequest entity failed update check",
     );
-    const update = vi.fn().mockRejectedValue(denied);
+    const update = vi.fn<UpdateFn>().mockRejectedValue(denied);
     const client = createMockPrisma(update);
 
     await expect(performCancel(client, "r3")).rejects.toBe(denied);
@@ -113,7 +119,9 @@ describe("ReviewRequest cancel-by-status-mutation (D-07)", () => {
     // surfaces the error; the cancel UI does not pre-filter. This test
     // documents that boundary by proving the call shape we issue makes
     // no assumption about the caller's identity.
-    const update = vi.fn().mockResolvedValue({ id: "r4", status: "CANCELLED" });
+    const update = vi
+      .fn<UpdateFn>()
+      .mockResolvedValue({ id: "r4", status: "CANCELLED" });
     const client = createMockPrisma(update);
 
     await performCancel(client, "r4");
