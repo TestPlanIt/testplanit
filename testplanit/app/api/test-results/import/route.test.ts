@@ -11,8 +11,13 @@ vi.mock("~/lib/api-token-auth", () => ({
   authenticateApiToken: vi.fn(),
 }));
 
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
+vi.mock("@/lib/prisma", () => {
+  // CR-01: import/route.ts wraps `routeToIteration` in
+  // `prisma.$transaction(async (tx) => …)`. The mock executes the
+  // callback synchronously with the same `prisma` mock as the tx
+  // client, which is enough for the smoke tests since
+  // `routeToIteration` itself is mocked out below.
+  const prismaMock: any = {
     workflows: {
       findFirst: vi.fn(),
     },
@@ -64,8 +69,12 @@ vi.mock("@/lib/prisma", () => ({
     projects: {
       findUnique: vi.fn(),
     },
-  },
-}));
+  };
+  prismaMock.$transaction = vi.fn(async (cb: (tx: any) => Promise<any>) =>
+    cb(prismaMock)
+  );
+  return { prisma: prismaMock };
+});
 
 vi.mock("~/lib/services/auditLog", () => ({
   auditBulkCreate: vi.fn().mockResolvedValue(undefined),

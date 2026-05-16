@@ -935,16 +935,36 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                     });
                   if (testRunCaseForIter) {
                     try {
-                      // The router owns the upsert (Pitfall 2 race-safety),
-                      // the iteration status write, AND the case-level
+                      // CR-01: wrap the router call in a $transaction so
+                      // the upsert → findMany → update sequence inside
+                      // `routeToIteration` commits atomically. Without
+                      // this, two concurrent CI imports for the same
+                      // TestRunCases row interleave the rollup re-read
+                      // and write, corrupting `statusId` /
+                      // `passedIterations` / `failedIterations` /
+                      // `skippedIterations` (and the INT-03 webhook
+                      // payload that reads off those columns).
+                      //
+                      // The router owns the upsert (Pitfall 2
+                      // race-safety on the iteration row itself), the
+                      // iteration status write, AND the case-level
                       // worst-of rollup + counter recompute. The legacy
-                      // TestRunCases.update is intentionally NOT called on
-                      // this path — routeToIteration owns the rollup.
-                      await routeToIteration(prisma, {
-                        testRunCaseId: testRunCaseForIter.id,
-                        iterationIndex,
-                        statusId: matchingStatus.id,
-                        statusMap,
+                      // TestRunCases.update is intentionally NOT called
+                      // on this path — routeToIteration owns the
+                      // rollup.
+                      //
+                      // The cap check inside routeToIteration still
+                      // fires before any DB I/O, so T-06-01-03
+                      // mitigation is preserved — IterationCapExceeded
+                      // is thrown out of the $transaction callback and
+                      // re-thrown to the outer catch below.
+                      await prisma.$transaction(async (tx) => {
+                        await routeToIteration(tx, {
+                          testRunCaseId: testRunCaseForIter.id,
+                          iterationIndex,
+                          statusId: matchingStatus.id,
+                          statusMap,
+                        });
                       });
                     } catch (err) {
                       if (err instanceof IterationCapExceededError) {
@@ -952,7 +972,9 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                         // error to the post-loop block which emits the
                         // 422-coded SSE error event. No partial-row state
                         // exists for this case (the cap check fires before
-                        // any DB write in routeToIteration).
+                        // any DB write in routeToIteration, and the
+                        // surrounding $transaction rolls back if it ever
+                        // managed to throw after a write).
                         iterationCapError = err;
                         break;
                       }
