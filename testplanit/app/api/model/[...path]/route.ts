@@ -418,11 +418,27 @@ async function innerHandler(
 
         if (Number.isFinite(entityIdNum) && Number.isFinite(toStateIdNum)) {
           try {
-            await assertReviewGatePasses(
-              prisma,
-              gatedEntityType,
-              entityIdNum,
-              toStateIdNum
+            // Run the preflight inside a serializable transaction so the
+            // workflows + reviewRequest reads share one snapshot. The
+            // ZenStack auto-API handler manages its own connection and
+            // transactions internally, so the preflight cannot share the
+            // entity-update transaction the way the bulk-edit, submit-result,
+            // and milestone-completion paths do. Serializable isolation here
+            // narrows the race window between the gate check and the entity
+            // write: a concurrent decide / cancel / consume on the same
+            // ReviewRequest can't snapshot-mismatch this preflight, so we
+            // either see the approval as still valid (and proceed) or see
+            // it as consumed/cancelled (and 403).
+            await prisma.$transaction(
+              async (tx) => {
+                await assertReviewGatePasses(
+                  tx,
+                  gatedEntityType,
+                  entityIdNum,
+                  toStateIdNum
+                );
+              },
+              { isolationLevel: "Serializable" }
             );
           } catch (err) {
             if (isReviewGateError(err)) {

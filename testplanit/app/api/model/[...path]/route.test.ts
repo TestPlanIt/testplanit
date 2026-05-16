@@ -26,8 +26,8 @@ vi.mock("~/lib/auditContextWrappers", () => ({
     handler,
 }));
 
-vi.mock("~/lib/prisma", () => ({
-  prisma: {
+vi.mock("~/lib/prisma", () => {
+  const prismaStub: any = {
     user: {
       findUnique: vi.fn(),
     },
@@ -35,8 +35,15 @@ vi.mock("~/lib/prisma", () => ({
       findUnique: vi.fn(),
       update: vi.fn(),
     },
-  },
-}));
+    // The auto-API CR-01 mitigation wraps assertReviewGatePasses in
+    // `prisma.$transaction(...)` with Serializable isolation. The reviewGate
+    // service module is mocked above so the inner call resolves without
+    // actually hitting the tx; we just need $transaction to invoke the
+    // callback with a tx-like proxy so the await chain completes.
+    $transaction: vi.fn(async (cb: (tx: any) => Promise<unknown>) => cb({})),
+  };
+  return { prisma: prismaStub };
+});
 
 vi.mock("~/lib/multiTenantPrisma", () => ({
   getCurrentTenantId: vi.fn(() => undefined),
