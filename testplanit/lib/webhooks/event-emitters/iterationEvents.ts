@@ -95,10 +95,19 @@ export interface EmitOptions {
  * result so the outbox row commits atomically with the result write
  * (mirrors `emitTestRunCreated` contract).
  *
- * Subscription matching uses the existing matcher unchanged: an empty
- * `subscribedEvents` array means "all events", and existing configs that
- * have an explicit array will NOT match this new event unless the admin
- * adds it (D-06 opt-in).
+ * Subscription matching uses the existing matcher unchanged:
+ *
+ *   1. Configs with an explicit non-empty `subscribedEvents` array will
+ *      NOT receive this new event unless the admin opts in (D-06).
+ *   2. Configs with an EMPTY `subscribedEvents` array WILL receive this
+ *      event automatically — empty is interpreted as "all events" by
+ *      the existing matcher (Pitfall 4 in 06-CONTEXT.md). WR-08:
+ *      customers who picked "subscribe to everything" via the empty
+ *      default will see a sudden event-storm on parameterized runs the
+ *      moment INT-04 ships. This is a documented deviation from D-06's
+ *      strict opt-in intent — surface it in the release notes for
+ *      v0.25.0 so admins can either prune to a specific event list or
+ *      acknowledge the extra deliveries.
  */
 export async function emitIterationResultRecorded(
   payload: IterationResultRecordedPayload,
