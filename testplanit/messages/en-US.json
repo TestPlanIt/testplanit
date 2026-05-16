@@ -638,6 +638,7 @@
       "aiModels": "AI Models",
       "integrations": "Integrations",
       "quickscript": "QuickScript",
+      "advanced": "Advanced",
       "webhooks": "Webhooks",
       "shares": "Shares",
       "repository": "Repository",
@@ -1694,6 +1695,17 @@
         "disconnectWarning3": "Stop including code context in AI-generated exports",
         "disconnectSuccess": "Code repository disconnected",
         "disconnectError": "Failed to disconnect code repository"
+      },
+      "advanced": {
+        "title": "Advanced",
+        "description": "Per-project toggles for opinionated features. New toggles will appear here as they are introduced.",
+        "reviewWorkflow": {
+          "label": "Enable review workflow",
+          "description": "When enabled, transitions into states that require review are gated by an approved review request. Testers see the Request Review button; reviewers receive notifications.",
+          "enabledToast": "Review workflow enabled for this project",
+          "disabledToast": "Review workflow disabled for this project",
+          "saveError": "Failed to update review workflow setting"
+        }
       }
     }
   },
@@ -3066,6 +3078,7 @@
       "exportTemplates": "Export Templates",
       "codeRepositories": "Code Repositories",
       "quickScript": "QuickScript",
+      "advanced": "Advanced",
       "sso": "Authentication",
       "security": "Security",
       "trash": "Trash",
