@@ -141,13 +141,14 @@ describe("routeToIteration — cap enforcement (T-06-01-03)", () => {
 
   it("accepts iterationIndex === 5000 (boundary — only strictly greater is rejected)", async () => {
     // Set up tx to short-circuit cleanly once the cap check passes — we
-    // only care that no cap error is thrown. Make findFirst return null
-    // (no existing row), upsert return a row, findMany return one entry,
-    // update succeed.
+    // only care that no cap error is thrown. Make upsert return a row
+    // (with ciExtended for the WR-01 autoCreated derivation), findMany
+    // return one entry, update succeed.
     const tx = {
       testRunCaseIteration: {
-        findFirst: vi.fn().mockResolvedValue(null),
-        upsert: vi.fn().mockResolvedValue({ id: 42 }),
+        upsert: vi
+          .fn()
+          .mockResolvedValue({ id: 42, ciExtended: true }),
         findMany: vi.fn().mockResolvedValue([{ statusId: 10 }]),
       },
       testRunCases: {
@@ -189,8 +190,9 @@ describe("routeToIteration — rollup respects soft-delete (CR-04)", () => {
     // the submit-result filter at submit-result/route.ts:507.
     const tx = {
       testRunCaseIteration: {
-        findFirst: vi.fn().mockResolvedValue(null),
-        upsert: vi.fn().mockResolvedValue({ id: 99 }),
+        upsert: vi
+          .fn()
+          .mockResolvedValue({ id: 99, ciExtended: true }),
         findMany: vi.fn().mockResolvedValue([{ statusId: 10 }]),
       },
       testRunCases: {

@@ -151,10 +151,18 @@ export async function routeToIteration(
   //     value (Pitfall 2). `valuesJson={}` + `ciExtended=true` is the D-02
   //     auto-create marker — UI surfaces that read snapshotted values must
   //     handle the empty case.
-  const before = await tx.testRunCaseIteration.findFirst({
-    where: { testRunCaseId, rowIndex },
-    select: { id: true },
-  });
+  //
+  //     WR-01: `autoCreated` derives from the row's `ciExtended` column
+  //     (set on the `create` branch only) rather than a separate
+  //     pre-upsert `findFirst` lookup. The pre-lookup approach was
+  //     TOCTOU-prone — two concurrent importers could both observe
+  //     `before === null` and both return `autoCreated: true` even
+  //     though only one row was actually created. Reading `ciExtended`
+  //     off the upsert result is post-write, so it reflects what the
+  //     row actually is. (For a row originally created by an earlier
+  //     CI extension, both calls accurately report
+  //     `autoCreated: true` — the marker is "CI-extended", which the
+  //     row remains.)
   const iteration = await tx.testRunCaseIteration.upsert({
     where: { testRunCaseId_rowIndex: { testRunCaseId, rowIndex } },
     create: {
@@ -165,9 +173,9 @@ export async function routeToIteration(
       statusId,
     },
     update: { statusId },
-    select: { id: true },
+    select: { id: true, ciExtended: true },
   });
-  const autoCreated = before === null;
+  const autoCreated = iteration.ciExtended === true;
 
   // (3) Recompute the case-level status + denormalized counters using the
   //     same rule set as submit-result/route.ts (Phase 3 worst-of rollup +
