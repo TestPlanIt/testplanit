@@ -241,9 +241,9 @@ afterAll(async () => {
   await prisma.$disconnect();
 }, 30_000);
 
-function sessionFor(userId: string): Session {
+function sessionFor(userId: string, access: string = "NONE"): Session {
   return {
-    user: { id: userId },
+    user: { id: userId, access },
     expires: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
   } as unknown as Session;
 }
@@ -440,7 +440,7 @@ describe("decideReviewRequest — admin override", () => {
     });
 
     const result = await decideReviewRequest(
-      sessionFor(adminUserId),
+      sessionFor(adminUserId, "ADMIN"),
       requestId,
       "APPROVED",
       "admin override",
