@@ -4076,6 +4076,18 @@
     },
     "workflows": {
       "description": "Manage test case workflows",
+      "systemFeatureCard": {
+        "title": "Review workflow feature",
+        "description": "System-level toggle for the review-and-approval feature. When enabled, projects may opt in or out individually via their Advanced settings.",
+        "stateEnabled": "Enabled",
+        "stateDisabled": "Disabled",
+        "operatorNotePrefix": "Set via environment variable",
+        "operatorNoteSuffix": ". A restart is required to apply changes."
+      },
+      "editWorkflow": {
+        "requiresReviewLabel": "Requires review",
+        "requiresReviewFeatureDisabled": "The review workflow feature is disabled at the system level. Toggle a project's Advanced settings or set TESTPLANIT_REVIEW_FEATURE_ENABLED to re-enable."
+      },
       "add": {
         "button": "Add Workflow",
         "title": "Add New Workflow",
