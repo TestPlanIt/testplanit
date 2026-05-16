@@ -124,6 +124,53 @@ describe("emitIterationResultRecorded — Wave 2 INT-04 contract", () => {
     expect(payload.redactedValues.payload).toContain(`${5 * 1024}`);
   });
 
+  it("WR-05: truncates nested-object values whose serialized size exceeds the cap", async () => {
+    const tx = makeTx();
+    // Single non-string top-level entry that previously escaped the
+    // cap entirely. Serialized size is ~5 KB (the inner string + JSON
+    // structural overhead).
+    const blob = { blob: "x".repeat(5 * 1024) };
+    await emitIterationResultRecorded(
+      {
+        iterationId: 9101,
+        testRunCaseId: 60,
+        testRunId: 8,
+        statusId: 6,
+        projectId: 42,
+        rowIndex: 0,
+        redactedValues: {
+          short: "ok",
+          nested: blob,
+        },
+      },
+      tx
+    );
+    const [, payload] = emitMock.mock.calls[0];
+    expect(payload.redactedValues.short).toBe("ok");
+    expect(payload.redactedValues.nested).toMatch(
+      /^<value truncated: \d+ bytes>$/
+    );
+  });
+
+  it("WR-05: leaves small nested-object values unchanged", async () => {
+    const tx = makeTx();
+    const small = { foo: "bar", n: 1 };
+    await emitIterationResultRecorded(
+      {
+        iterationId: 9102,
+        testRunCaseId: 60,
+        testRunId: 8,
+        statusId: 6,
+        projectId: 42,
+        rowIndex: 0,
+        redactedValues: { nested: small },
+      },
+      tx
+    );
+    const [, payload] = emitMock.mock.calls[0];
+    expect(payload.redactedValues.nested).toEqual(small);
+  });
+
   it("falls back to actorUserId undefined when not provided", async () => {
     const tx = makeTx();
     await emitIterationResultRecorded(

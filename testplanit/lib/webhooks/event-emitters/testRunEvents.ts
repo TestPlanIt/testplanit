@@ -22,14 +22,18 @@ import { webhookEvents } from "~/lib/webhooks/events";
 const WEBHOOK_VALUE_MAX_BYTES = 4 * 1024;
 
 /**
- * Replace any string value whose UTF-8 byte length exceeds the cap with a
- * truncated sentinel. Non-string values (numbers, booleans, nested objects)
- * pass through unchanged — they're already bounded by the parameter schema.
+ * Replace any value whose serialized UTF-8 byte length exceeds the cap
+ * with a truncated sentinel. The byte-count check uses
+ * `Buffer.byteLength` (server-only is fine — emitter runs in the Node
+ * API runtime). The sentinel format matches the plan's
+ * `<value truncated: N bytes>` wording exactly so subscribers can grep
+ * for it.
  *
- * The byte-count check uses `Buffer.byteLength` (server-only is fine —
- * emitter runs in the Node API runtime). The sentinel format matches the
- * plan's `<value truncated: N bytes>` wording exactly so subscribers can
- * grep for it.
+ * WR-05: non-string values (nested objects, arrays) are JSON-serialized
+ * before the byte check so an object-shaped parameter value cannot
+ * escape the cap. Numbers, booleans, and null pass through unchanged
+ * (their JSON form is already short enough that bounding is
+ * unnecessary).
  */
 function capValueBytes(
   values: Record<string, unknown>
@@ -38,6 +42,19 @@ function capValueBytes(
   for (const [k, v] of Object.entries(values)) {
     if (typeof v === "string") {
       const bytes = Buffer.byteLength(v, "utf8");
+      if (bytes > WEBHOOK_VALUE_MAX_BYTES) {
+        out[k] = `<value truncated: ${bytes} bytes>`;
+        continue;
+      }
+    } else if (v !== null && typeof v === "object") {
+      let serialized: string;
+      try {
+        serialized = JSON.stringify(v);
+      } catch {
+        out[k] = "<value truncated: unserializable>";
+        continue;
+      }
+      const bytes = Buffer.byteLength(serialized, "utf8");
       if (bytes > WEBHOOK_VALUE_MAX_BYTES) {
         out[k] = `<value truncated: ${bytes} bytes>`;
         continue;

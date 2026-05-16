@@ -25,9 +25,17 @@ const WEBHOOK_VALUE_MAX_BYTES = 4 * 1024;
 /**
  * Defense-in-depth: even though the caller in submit-result/route.ts already
  * redacts with `viewerCanReadSensitive=false`, a future caller might forget
- * to truncate large blob values. Cap any string entry whose UTF-8 byte
+ * to truncate large blob values. Cap any entry whose serialized UTF-8 byte
  * length exceeds 4 KB to `<value truncated: N bytes>` so the outbox row
  * never carries a 200-KB single value.
+ *
+ * WR-05: non-string values (nested objects, arrays) are JSON-serialized
+ * before the byte check so a parameter value of `{"blob": "<200KB>"}`
+ * is bounded just like a top-level string. The previous implementation
+ * only checked `typeof v === "string"`, so a single non-string entry
+ * could escape the cap entirely — defeating the Pitfall 5 / T-06-02-02
+ * mitigation. The serialized cap is conservative (it includes JSON
+ * structural overhead) but that is the wire-format intent.
  */
 function capValueBytes(
   values: Record<string, unknown>
@@ -36,6 +44,21 @@ function capValueBytes(
   for (const [k, v] of Object.entries(values)) {
     if (typeof v === "string") {
       const bytes = Buffer.byteLength(v, "utf8");
+      if (bytes > WEBHOOK_VALUE_MAX_BYTES) {
+        out[k] = `<value truncated: ${bytes} bytes>`;
+        continue;
+      }
+    } else if (v !== null && typeof v === "object") {
+      let serialized: string;
+      try {
+        serialized = JSON.stringify(v);
+      } catch {
+        // Unserializable (cycle, BigInt) — drop to sentinel rather
+        // than emit raw, which would break the subscriber's parser.
+        out[k] = "<value truncated: unserializable>";
+        continue;
+      }
+      const bytes = Buffer.byteLength(serialized, "utf8");
       if (bytes > WEBHOOK_VALUE_MAX_BYTES) {
         out[k] = `<value truncated: ${bytes} bytes>`;
         continue;
