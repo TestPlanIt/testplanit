@@ -26,10 +26,13 @@ import { JunitIterationPropertyForm } from "./junit-iteration-property-form";
  * status mapping, format-specific overrides) can land here as additional
  * sections without restructuring the page.
  *
- * Access: same project-admin policy as the rest of project settings —
- * page-level gate is `session.user.access ∈ {ADMIN, PROJECTADMIN}`, and
- * the PUT endpoint (`/api/projects/[id]/junit-iteration-property-names`)
- * re-enforces.
+ * Access: ADMIN always allowed; PROJECTADMIN must also be assigned to
+ * THIS specific project. The previous gate accepted any PROJECTADMIN
+ * across projects, allowing a PROJECTADMIN for project A to view
+ * project B's configured property names (mild info disclosure — see
+ * WR-04). The PUT endpoint
+ * (`/api/projects/[id]/junit-iteration-property-names`) re-enforces
+ * the same per-project scope.
  */
 export default function ProjectJunitSettingsPage() {
   const params = useParams();
@@ -61,9 +64,16 @@ export default function ProjectJunitSettingsPage() {
 
   useEffect(() => {
     if (!projectLoading && project && session?.user) {
+      // WR-04: mirror the PUT endpoint's per-project scope. The project
+      // query above filters `assignedUsers` to the current user, so
+      // `assignedUsers.length > 0` proves the caller is assigned to
+      // this specific project. ADMIN is unconditional.
+      const isAssignedToThisProject =
+        Array.isArray(project.assignedUsers) &&
+        project.assignedUsers.length > 0;
       const hasAccess =
         session.user.access === "ADMIN" ||
-        session.user.access === "PROJECTADMIN";
+        (session.user.access === "PROJECTADMIN" && isAssignedToThisProject);
       if (!hasAccess) notFound();
     } else if (!projectLoading && !project && session?.user) {
       notFound();
