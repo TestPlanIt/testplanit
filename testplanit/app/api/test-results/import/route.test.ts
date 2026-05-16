@@ -43,6 +43,11 @@ vi.mock("@/lib/prisma", () => ({
       findFirst: vi.fn(),
       update: vi.fn(),
     },
+    testRunCaseIteration: {
+      findFirst: vi.fn(),
+      upsert: vi.fn(),
+      findMany: vi.fn(),
+    },
     jUnitTestSuite: {
       create: vi.fn(),
     },
@@ -54,6 +59,10 @@ vi.mock("@/lib/prisma", () => ({
     },
     status: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
+    },
+    projects: {
+      findUnique: vi.fn(),
     },
   },
 }));
@@ -61,6 +70,21 @@ vi.mock("@/lib/prisma", () => ({
 vi.mock("~/lib/services/auditLog", () => ({
   auditBulkCreate: vi.fn().mockResolvedValue(undefined),
 }));
+
+// INT-02: mock the router so smokes can assert it was called (without
+// touching the DB) and inject the cap-exceeded error path.
+vi.mock("~/lib/services/junitIterationRouter", async () => {
+  const actual = await vi.importActual<
+    typeof import("~/lib/services/junitIterationRouter")
+  >("~/lib/services/junitIterationRouter");
+  return {
+    ...actual,
+    routeToIteration: vi.fn().mockResolvedValue({
+      iterationId: 555,
+      autoCreated: false,
+    }),
+  };
+});
 
 vi.mock("~/lib/services/testResultsParser", () => ({
   detectFormat: vi.fn(),
@@ -94,6 +118,10 @@ vi.mock("~/lib/services/testResultsParser", () => ({
 
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import { prisma } from "@/lib/prisma";
+import {
+  IterationCapExceededError,
+  routeToIteration,
+} from "~/lib/services/junitIterationRouter";
 import { getServerAuthSession } from "~/server/auth";
 import {
   detectFormat,
@@ -182,6 +210,16 @@ describe("Test Results Import API Route", () => {
     (prisma.jUnitTestSuite.create as any).mockResolvedValue(mockSuite);
     (prisma.jUnitTestResult.create as any).mockResolvedValue({ id: 400 });
     (prisma.status.findFirst as any).mockResolvedValue(mockStatus);
+    // INT-02: project iteration-property config + status map are loaded
+    // ONCE per import (before the per-case loop). Default mocks reflect
+    // the legacy (non-parameterized) path so existing tests keep passing.
+    (prisma.projects.findUnique as any).mockResolvedValue({
+      junitIterationPropertyNames: [],
+    });
+    (prisma.status.findMany as any).mockResolvedValue([]);
+    (prisma.testRunCaseIteration.findFirst as any).mockResolvedValue(null);
+    (prisma.testRunCaseIteration.upsert as any).mockResolvedValue({ id: 999 });
+    (prisma.testRunCaseIteration.findMany as any).mockResolvedValue([]);
 
     (detectFormat as any).mockReturnValue("junit");
     (isValidFormat as any).mockReturnValue(true);
@@ -391,6 +429,154 @@ describe("Test Results Import API Route", () => {
       const errorEvent = events.find((e) => "error" in e);
       expect(errorEvent).toBeDefined();
       expect(errorEvent.error).toContain("No template found");
+    });
+  });
+
+  describe("INT-02 iteration routing branch", () => {
+    it("calls routeToIteration when metadata.iteration is present", async () => {
+      // Project has the default property name list (empty array → fallback
+      // to ['iteration'] inside the helper).
+      (prisma.projects.findUnique as any).mockResolvedValue({
+        junitIterationPropertyNames: [],
+      });
+      // Parsed test case carries an iteration property.
+      (parseTestResults as any).mockResolvedValueOnce({
+        result: {
+          total: 1,
+          passed: 1,
+          failed: 0,
+          errors: 0,
+          skipped: 0,
+          duration: 1.5,
+          suites: [
+            {
+              name: "com.example.TestSuite",
+              total: 1,
+              passed: 1,
+              failed: 0,
+              errors: 0,
+              skipped: 0,
+              duration: 1.5,
+              cases: [
+                {
+                  name: "test_login",
+                  status: "passed",
+                  duration: 1.5,
+                  failure: null,
+                  stack_trace: null,
+                  attachments: [],
+                  metadata: { iteration: "2" },
+                },
+              ],
+            },
+          ],
+        },
+        errors: [],
+      });
+
+      const formData = new FormData();
+      formData.append("files", createMockFile("results.xml"));
+      formData.append("name", "CI Run");
+      formData.append("projectId", "1");
+
+      const request = createFormDataRequest(formData);
+      const response = await POST(request);
+      await readSseResponse(response);
+
+      // The router was called with iterationIndex === 2.
+      expect(routeToIteration).toHaveBeenCalled();
+      const callArgs = (routeToIteration as any).mock.calls[0][1];
+      expect(callArgs.iterationIndex).toBe(2);
+      // PARAM-07: the legacy TestRunCases.update path was NOT taken — the
+      // router owns the rollup on the iteration path.
+      expect(prisma.testRunCases.update).not.toHaveBeenCalled();
+    });
+
+    it("does NOT call routeToIteration when metadata.iteration is absent (legacy path)", async () => {
+      // No metadata on the parsed case (default fixture). Router must
+      // not be invoked; legacy TestRunCases.update runs.
+      (prisma.projects.findUnique as any).mockResolvedValue({
+        junitIterationPropertyNames: [],
+      });
+
+      const formData = new FormData();
+      formData.append("files", createMockFile("results.xml"));
+      formData.append("name", "CI Run");
+      formData.append("projectId", "1");
+
+      const request = createFormDataRequest(formData);
+      const response = await POST(request);
+      await readSseResponse(response);
+
+      expect(routeToIteration).not.toHaveBeenCalled();
+      // Legacy path writes case-level status directly.
+      expect(prisma.testRunCases.update).toHaveBeenCalled();
+    });
+
+    it("returns a 422-coded error event when routeToIteration throws IterationCapExceededError", async () => {
+      (prisma.projects.findUnique as any).mockResolvedValue({
+        junitIterationPropertyNames: [],
+      });
+      // Stub the router to throw the cap error on this run.
+      (routeToIteration as any).mockRejectedValueOnce(
+        new IterationCapExceededError(5001, 5000)
+      );
+      (parseTestResults as any).mockResolvedValueOnce({
+        result: {
+          total: 1,
+          passed: 1,
+          failed: 0,
+          errors: 0,
+          skipped: 0,
+          duration: 1.5,
+          suites: [
+            {
+              name: "com.example.TestSuite",
+              total: 1,
+              passed: 1,
+              failed: 0,
+              errors: 0,
+              skipped: 0,
+              duration: 1.5,
+              cases: [
+                {
+                  name: "test_overflow",
+                  status: "passed",
+                  duration: 1.5,
+                  failure: null,
+                  stack_trace: null,
+                  attachments: [],
+                  metadata: { iteration: "5001" },
+                },
+              ],
+            },
+          ],
+        },
+        errors: [],
+      });
+
+      const formData = new FormData();
+      formData.append("files", createMockFile("results.xml"));
+      formData.append("name", "CI Run");
+      formData.append("projectId", "1");
+
+      const request = createFormDataRequest(formData);
+      const response = await POST(request);
+      const events = await readSseResponse(response);
+
+      const errorEvent = events.find(
+        (e) => e.code === "ITERATION_CAP_EXCEEDED"
+      );
+      expect(errorEvent).toBeDefined();
+      expect(errorEvent.status).toBe(422);
+      expect(errorEvent.iterationIndex).toBe(5001);
+      expect(errorEvent.cap).toBe(5000);
+      expect(errorEvent.i18nKey).toBe(
+        "api.testResults.import.iterationCapExceeded"
+      );
+      // The completion event must NOT be present — we bailed before it.
+      const completeEvent = events.find((e) => e.complete === true);
+      expect(completeEvent).toBeUndefined();
     });
   });
 });

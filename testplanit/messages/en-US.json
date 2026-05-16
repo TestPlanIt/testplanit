@@ -994,6 +994,13 @@
     "results": "Results",
     "loading": "Loading..."
   },
+  "api": {
+    "testResults": {
+      "import": {
+        "iterationCapExceeded": "Iteration index {index} exceeds the maximum supported value of {cap}. Reduce the iteration count or split the run."
+      }
+    }
+  },
   "auth": {
     "signin": {
       "createAccount": "Create a new account",

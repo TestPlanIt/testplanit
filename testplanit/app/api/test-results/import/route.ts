@@ -25,6 +25,12 @@ import {
 } from "~/lib/auditContextWrappers";
 import { auditBulkCreate } from "~/lib/services/auditLog";
 import { DuplicateScanService } from "~/lib/services/duplicateScanService";
+import type { RollupStatus } from "~/lib/services/iterationRollup";
+import {
+  extractIterationIndex,
+  IterationCapExceededError,
+  routeToIteration,
+} from "~/lib/services/junitIterationRouter";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import {
   countTotalTestCases,
@@ -476,10 +482,44 @@ export const POST = withAuditContext(async (request: NextRequest) => {
           return;
         }
 
+        // INT-02: Load the project's iteration-property config + the full
+        // status set ONCE per import, before the per-case loop. The status
+        // map is consumed by routeToIteration to recompute the worst-of
+        // rollup after each iteration write; loading it per-case would
+        // multiply DB roundtrips by the case count. Pattern mirrors
+        // submit-result/route.ts:528-551.
+        //
+        // The legacy (non-parameterized) path is unchanged when the project
+        // is null or `junitIterationPropertyNames` is empty — `routeToIteration`
+        // is only called when extractIterationIndex returns a non-null index.
+        const projectRow = await prisma.projects.findUnique({
+          where: { id: projectId },
+          select: { junitIterationPropertyNames: true },
+        });
+        const junitIterationPropertyNames: string[] =
+          projectRow?.junitIterationPropertyNames ?? [];
+        const allStatuses = await prisma.status.findMany({
+          where: { isDeleted: false },
+          select: {
+            id: true,
+            systemName: true,
+            isSuccess: true,
+            isFailure: true,
+            isCompleted: true,
+            order: true,
+          },
+        });
+        const statusMap = new Map<number, RollupStatus>(
+          allStatuses.map((s) => [s.id, s])
+        );
+
         // Count total test cases for progress
         const totalTestCases = countTotalTestCases(result);
         let processedTestCases = 0;
         let caseOrder = 1;
+        // Set when the cap-exceeded error short-circuits the per-case loop;
+        // the post-loop block emits the 422-coded error event and bails.
+        let iterationCapError: IterationCapExceededError | null = null;
 
         // Track attachment mappings for CLI upload
         const attachmentMappings: Array<{
@@ -862,8 +902,69 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   });
                 }
 
-                // Update test run case status
-                if (matchingStatus) {
+                // INT-02: branch on the JUnit `<property name="iteration">`
+                // child. Resolve the iteration index from the parsed metadata
+                // map (case-insensitive lookup against the project's
+                // configured names, defaulting to ['iteration']). When a
+                // valid 1-indexed value is present, route the imported status
+                // to the matching TestRunCaseIteration row instead of the
+                // case-level status update below.
+                //
+                // PARAM-07 invariant: when extractIterationIndex returns null
+                // (no property, or unparseable), the legacy path runs
+                // unchanged — bit-identical to today.
+                const testCaseMetadata =
+                  (testCase as { metadata?: Record<string, string> })
+                    .metadata ?? undefined;
+                const iterationIndex = extractIterationIndex(
+                  testCaseMetadata,
+                  junitIterationPropertyNames
+                );
+
+                if (iterationIndex !== null && matchingStatus) {
+                  // ─── INT-02 iteration-routing branch ───────────────────
+                  // Resolve the TestRunCase id once so routeToIteration can
+                  // target the right composite-unique-key pair.
+                  const testRunCaseForIter =
+                    await prisma.testRunCases.findFirst({
+                      where: {
+                        testRunId: testRunId,
+                        repositoryCaseId: repositoryCase.id,
+                      },
+                      select: { id: true },
+                    });
+                  if (testRunCaseForIter) {
+                    try {
+                      // The router owns the upsert (Pitfall 2 race-safety),
+                      // the iteration status write, AND the case-level
+                      // worst-of rollup + counter recompute. The legacy
+                      // TestRunCases.update is intentionally NOT called on
+                      // this path — routeToIteration owns the rollup.
+                      await routeToIteration(prisma, {
+                        testRunCaseId: testRunCaseForIter.id,
+                        iterationIndex,
+                        statusId: matchingStatus.id,
+                        statusMap,
+                      });
+                    } catch (err) {
+                      if (err instanceof IterationCapExceededError) {
+                        // T-06-01-03: stop the loop and surface the cap
+                        // error to the post-loop block which emits the
+                        // 422-coded SSE error event. No partial-row state
+                        // exists for this case (the cap check fires before
+                        // any DB write in routeToIteration).
+                        iterationCapError = err;
+                        break;
+                      }
+                      throw err;
+                    }
+                  }
+                } else if (matchingStatus) {
+                  // ─── Legacy branch (no iteration property) ─────────────
+                  // PARAM-07: unchanged behavior — direct case-level status
+                  // write, no rollup, no iteration counters. Guarded by an
+                  // explicit `iterationIndex === null` so a future bug in
+                  // the iteration branch cannot leak into this path.
                   const testRunCase = await prisma.testRunCases.findFirst({
                     where: {
                       testRunId: testRunId,
@@ -926,11 +1027,48 @@ export const POST = withAuditContext(async (request: NextRequest) => {
               }
 
               caseOrder++;
+
+              // INT-02 T-06-01-03: break the case loop when the cap-exceeded
+              // error was set by routeToIteration. The outer suite loop also
+              // breaks below; the post-loop block emits the 422 error event.
+              if (iterationCapError !== null) {
+                break;
+              }
             }
           } catch (error) {
             console.error("Error processing test suite:", error);
             // Continue with next test suite
           }
+
+          // INT-02 T-06-01-03: also break the suite loop on cap-exceeded.
+          if (iterationCapError !== null) {
+            break;
+          }
+        }
+
+        // INT-02 T-06-01-03: surface the cap-exceeded error to the SSE
+        // client and bail before the finalizing/audit/duplicate-warning
+        // post-processing. The cap check inside routeToIteration fires
+        // BEFORE any DB write for the offending case, so no partial
+        // TestRunCaseIteration row exists for the rejected index — only
+        // sibling cases that already routed successfully remain in the DB
+        // (documented behavior; not rolled back since the route does not
+        // wrap the per-suite loop in a single $transaction).
+        if (iterationCapError !== null) {
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({
+                error: `Iteration index ${iterationCapError.iterationIndex} exceeds the maximum supported value of ${iterationCapError.cap}. Reduce the iteration count or split the run.`,
+                status: 422,
+                code: "ITERATION_CAP_EXCEEDED",
+                iterationIndex: iterationCapError.iterationIndex,
+                cap: iterationCapError.cap,
+                i18nKey: "api.testResults.import.iterationCapExceeded",
+              })}\n\n`
+            )
+          );
+          controller.close();
+          return;
         }
 
         sendProgress(90, progressMessages.finalizing);
