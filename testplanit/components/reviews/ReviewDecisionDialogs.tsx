@@ -139,7 +139,13 @@ export function ApproveDialog({
     }
 
     const code = extractErrorCode(result.err);
-    if (code === "INELIGIBLE_REVIEWER" || result.err.status === 403) {
+    // WR-01: match on the typed code, not on status alone. A 403 from an
+    // unrelated middleware (CSRF, rate-limit, future-feature gate) must
+    // NOT render as "you are not eligible to review" — that would mislead
+    // the user. The decide route consistently emits
+    // `{ error: { code: 'INELIGIBLE_REVIEWER' } }` for the eligibility
+    // path; the dialog keys on that code only.
+    if (code === "INELIGIBLE_REVIEWER") {
       toast.error(t("ineligibleError"));
       // Dialog stays open — reviewer needs to see the gate.
       return;
@@ -233,7 +239,8 @@ export function RequestChangesDialog({
     }
 
     const code = extractErrorCode(result.err);
-    if (code === "INELIGIBLE_REVIEWER" || result.err.status === 403) {
+    // WR-01: code-only match — see ApproveDialog for the rationale.
+    if (code === "INELIGIBLE_REVIEWER") {
       toast.error(t("ineligibleError"));
       return;
     }
@@ -331,7 +338,8 @@ export function RejectDialog({
     }
 
     const code = extractErrorCode(result.err);
-    if (code === "INELIGIBLE_REVIEWER" || result.err.status === 403) {
+    // WR-01: code-only match — see ApproveDialog for the rationale.
+    if (code === "INELIGIBLE_REVIEWER") {
       toast.error(t("ineligibleError"));
       return;
     }
