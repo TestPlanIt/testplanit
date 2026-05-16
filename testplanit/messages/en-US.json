@@ -639,6 +639,7 @@
       "integrations": "Integrations",
       "quickscript": "QuickScript",
       "advanced": "Advanced",
+      "reviews": "Reviews",
       "webhooks": "Webhooks",
       "shares": "Shares",
       "repository": "Repository",
@@ -2874,7 +2875,23 @@
       "pendingTooltip": "Pending review from {assignee}"
     },
     "inbox": {
-      "iconAria": "{count, plural, =0 {Review inbox} one {Review inbox, # pending} other {Review inbox, # pending}}"
+      "iconAria": "{count, plural, =0 {Review inbox} one {Review inbox, # pending} other {Review inbox, # pending}}",
+      "pageTitle": "Reviews",
+      "pageDescription": "Pending review requests assigned to you (directly or via a role you hold).",
+      "empty": "No pending reviews. You're all caught up.",
+      "featureDisabled": "The review workflow feature is currently disabled. Pending reviews are preserved and will reappear when the feature is re-enabled.",
+      "columnEntity": "Entity",
+      "columnProject": "Project",
+      "columnRequester": "Requester",
+      "columnTransition": "Transition",
+      "columnRequestedAt": "Requested at",
+      "filterEntityType": "Entity type",
+      "filterProject": "Project",
+      "filterAllEntityTypes": "All entity types",
+      "filterEntityTypeCase": "Test cases",
+      "filterEntityTypeRun": "Test runs",
+      "filterEntityTypeSession": "Sessions",
+      "filterAllProjects": "All projects"
     },
     "requester": {
       "openButton": "Request review",
