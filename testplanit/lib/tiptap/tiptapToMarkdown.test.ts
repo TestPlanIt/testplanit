@@ -197,6 +197,43 @@ describe("Wave 3 INT-05 tiptap → markdown serializer", () => {
     );
   });
 
+  it("WR-02: encodes structural characters in link href (spaces, parens)", () => {
+    // A href with `(`, `)`, and whitespace would break the markdown
+    // `[label](url)` syntax if interpolated raw — a `)` in the URL
+    // would close the link span prematurely. The helper must
+    // percent-encode them.
+    const doc = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "label",
+              marks: [
+                {
+                  type: "link",
+                  attrs: {
+                    href: "https://example.com/path (with) spaces?x=1",
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const md = tiptapToMarkdown(doc);
+    // No raw paren or space inside the URL part of the link span.
+    expect(md).toContain(
+      "[label](https://example.com/path%20%28with%29%20spaces?x=1)"
+    );
+    // Defensive: no unescaped `)` until the closing delimiter.
+    const urlPart = md.slice(md.indexOf("(") + 1, md.lastIndexOf(")"));
+    expect(urlPart).not.toMatch(/[()]/);
+  });
+
   it("throws on unknown node type", () => {
     const doc = {
       type: "doc",

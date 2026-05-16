@@ -53,12 +53,28 @@ function escapeForTableCell(text: string): string {
 function applyMark(text: string, mark: TiptapMark): string {
   switch (mark.type) {
     case "link": {
-      const href = String(
+      const rawHref = String(
         (mark.attrs as Record<string, unknown> | undefined)?.href ?? ""
       );
-      // Link href is NOT escaped — it is part of the markdown URL syntax.
-      // Adversarial hrefs are the caller's responsibility (we only emit
-      // hrefs from server-built deep links here).
+      // WR-02: defend the markdown URL syntax against hrefs that
+      // contain `(`, `)`, whitespace, or other structural characters
+      // that would let the URL escape the `[label](url)` boundary.
+      // `encodeURI` preserves legal URL delimiters
+      // (`;,/?:@&=+$-_.!~*'#`) but does NOT encode parentheses, so
+      // they get a second pass with explicit percent encoding.
+      // Server-controlled hrefs (the only intended caller today)
+      // remain unchanged; adversarial input cannot forge link spans.
+      let href: string;
+      try {
+        href = encodeURI(rawHref);
+      } catch {
+        // Malformed input (e.g. lone surrogate) — fall back to the
+        // raw string; the explicit char replace below still runs.
+        href = rawHref;
+      }
+      href = href
+        .replace(/\(/g, "%28")
+        .replace(/\)/g, "%29");
       return `[${text}](${href})`;
     }
     case "code":
