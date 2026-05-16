@@ -53,6 +53,17 @@ describe("extractIterationIndex", () => {
     expect(extractIterationIndex({ iteration: "NaN" }, ["iteration"])).toBeNull();
   });
 
+  it("WR-09: rejects non-strict integer forms (3.7, 3.0, 3foo) instead of silently truncating", () => {
+    // Previously parseInt accepted these and bucketed them into 3.
+    // The strict regex form forces CI emitters to send canonical
+    // unsigned integers — anything else surfaces as "no iteration."
+    expect(extractIterationIndex({ iteration: "3.7" }, ["iteration"])).toBeNull();
+    expect(extractIterationIndex({ iteration: "3.0" }, ["iteration"])).toBeNull();
+    expect(extractIterationIndex({ iteration: "3foo" }, ["iteration"])).toBeNull();
+    expect(extractIterationIndex({ iteration: " 3" }, ["iteration"])).toBe(3);
+    expect(extractIterationIndex({ iteration: "3 " }, ["iteration"])).toBe(3);
+  });
+
   it("returns null when no configured property is present", () => {
     expect(extractIterationIndex({}, ["iteration"])).toBeNull();
     expect(extractIterationIndex(undefined, ["iteration"])).toBeNull();

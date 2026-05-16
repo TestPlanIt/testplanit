@@ -99,10 +99,15 @@ export function extractIterationIndex(
 
   for (const [key, value] of Object.entries(metadata)) {
     if (!lowered.includes(key.toLowerCase())) continue;
-    const n = parseInt(String(value), 10);
-    if (Number.isFinite(n) && n >= 1) {
-      return n;
-    }
+    // WR-09: strict integer parsing. The previous implementation used
+    // `parseInt` which silently accepted "3.7" → 3 and "3foo" → 3 —
+    // a CI emitter mis-emitting `value="3.0"` was bucketed into
+    // iteration 3 without diagnostics. Match the strict numeric form
+    // the PUT property-name validator (Zod) enforces upstream.
+    const trimmed = String(value).trim();
+    if (!/^\d+$/.test(trimmed)) continue;
+    const n = Number(trimmed);
+    if (Number.isFinite(n) && n >= 1) return n;
   }
   return null;
 }
