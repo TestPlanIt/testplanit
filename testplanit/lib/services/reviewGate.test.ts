@@ -20,6 +20,9 @@ import { assertReviewGatePasses } from "./reviewGate";
 function createMockTx(
   workflowsResult: { requiresReview: boolean } | null,
   reviewRequestResult: { id: string } | null,
+  entityProjectResult: {
+    project: { reviewWorkflowEnabled: boolean };
+  } | null = { project: { reviewWorkflowEnabled: true } },
 ) {
   return {
     workflows: {
@@ -28,6 +31,19 @@ function createMockTx(
     reviewRequest: {
       findFirst: vi.fn().mockResolvedValue(reviewRequestResult),
       update: vi.fn(),
+    },
+    // The Phase 2 feature-flag short-circuit calls one of these finders BEFORE
+    // workflows.findUnique. Default each to `{ project: { reviewWorkflowEnabled: true } }`
+    // so the existing Phase 1 assertions about workflows / reviewRequest behaviour
+    // are not affected by the new short-circuit.
+    repositoryCases: {
+      findUnique: vi.fn().mockResolvedValue(entityProjectResult),
+    },
+    sessions: {
+      findUnique: vi.fn().mockResolvedValue(entityProjectResult),
+    },
+    testRuns: {
+      findUnique: vi.fn().mockResolvedValue(entityProjectResult),
     },
   } as any;
 }
