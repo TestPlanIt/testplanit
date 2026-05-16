@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
+import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
 import DatasetNameDisplay from "@/components/parameters/DatasetNameDisplay";
 import StatusDotDisplay from "@/components/StatusDotDisplay";
 import { MultiAsyncCombobox } from "@/components/ui/multi-async-combobox";
@@ -211,7 +212,10 @@ export function MatrixFilterPanel({ projectId }: { projectId: number }) {
             }
             return real;
           }}
-          renderOption={(opt) => <span>{opt.name}</span>}
+          renderOption={(opt) => <ConfigurationNameDisplay name={opt.name} />}
+          renderSelectedOption={(opt) => (
+            <ConfigurationNameDisplay name={opt.name} />
+          )}
           getOptionValue={(opt) => opt.id}
           getOptionLabel={(opt) => opt.name}
           placeholder={t("filterConfigPlaceholder")}

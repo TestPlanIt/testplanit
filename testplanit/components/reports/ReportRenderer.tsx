@@ -84,6 +84,19 @@ interface ReportRendererProps {
   dateGrouping?: string;
   totalFlakyTests?: number;
 
+  // Iteration-matrix shared-link payload: when the share endpoint pre-fetches
+  // the matrix axes server-side, this carries them through so MatrixReportPreset
+  // can render without re-fetching (the matrix has no public-share aggregate
+  // endpoint). `cells` arrives as Array<[key, value]> per JSON-serialization
+  // and is reconstructed into a Map by MatrixReportPreset.
+  matrixAxes?: {
+    caseAxis: any[];
+    configAxis: any[];
+    cells: Array<[string, any]>;
+    cellCount: number;
+    statusMap: Record<number, any>;
+  };
+
   // Pagination
   currentPage: number;
   pageSize: number | "All";
@@ -133,6 +146,7 @@ export function ReportRenderer({
   lookbackDays: _lookbackDays,
   dateGrouping = "weekly",
   totalFlakyTests,
+  matrixAxes,
   currentPage,
   pageSize,
   totalCount,
@@ -347,6 +361,9 @@ export function ReportRenderer({
         projectId={
           typeof projectId === "string" ? parseInt(projectId, 10) : projectId
         }
+        prefetchedAxes={matrixAxes}
+        readOnly={readOnly}
+        headerActions={headerActions}
       />
     );
   }

@@ -63,6 +63,8 @@ interface CaseRow {
   id: number;
   name: string;
   has_parameters: boolean;
+  source: string;
+  automated: boolean;
   parameters: unknown; // TestCaseParameter[] selected as a json aggregate
 }
 
@@ -173,6 +175,8 @@ async function fetchCaseAxis(
       rc.id,
       rc.name,
       rc."hasParameters" AS has_parameters,
+      rc.source::text AS source,
+      rc.automated,
       COALESCE(
         (
           SELECT json_agg(
@@ -430,6 +434,8 @@ export async function runMatrixAggregation(
       caseId: Number(r.id),
       caseName: r.name,
       hasParameters: r.has_parameters,
+      source: r.source,
+      automated: r.automated,
       paramRows: [], // filled in by buildAxes from paramRowsByCaseId
       parameters: params.map((p) => ({
         name: p.name,
@@ -444,6 +450,8 @@ export async function runMatrixAggregation(
     caseId: c.caseId,
     caseName: c.caseName,
     hasParameters: c.hasParameters,
+    source: c.source,
+    automated: c.automated,
     parameters: c.parameters ?? null,
   }));
 

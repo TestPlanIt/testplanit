@@ -70,6 +70,8 @@ function buildLargeAxes(caseCount: number, configCount: number): AxesShape {
     caseId: i + 1,
     caseName: `Case-${i + 1}`,
     hasParameters: false,
+    source: "MANUAL",
+    automated: false,
     paramRows: [{ index: 0, label: null, values: {} }],
   }));
   const configAxis = Array.from({ length: configCount }, (_, j) => ({
@@ -189,6 +191,8 @@ describe("<MatrixGrid />", () => {
           caseId: 1,
           caseName: "Login",
           hasParameters: true,
+          source: "MANUAL",
+          automated: false,
           paramRows: [
             { index: 0, label: "creds-1", values: { username: "alice" } },
             { index: 1, label: "creds-2", values: { username: "bob" } },

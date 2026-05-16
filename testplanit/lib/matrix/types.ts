@@ -47,11 +47,18 @@ export interface ParamRowAxisItem {
 /**
  * One entry per case in the rendered grid. The grid visually expands
  * each `CaseAxisItem` into N sub-rows — one per `paramRows[i]`.
+ *
+ * `source` matches the `RepositoryCaseSource` enum (kept as a string here
+ * to keep this module Prisma-free); `automated` mirrors `RepositoryCases.automated`.
+ * Both feed `CaseDisplay`/`TestCaseNameDisplay` so the rail icon picks the
+ * right glyph (manual vs. automated).
  */
 export interface CaseAxisItem {
   caseId: number;
   caseName: string;
   hasParameters: boolean;
+  source: string;
+  automated: boolean;
   paramRows: ParamRowAxisItem[];
   parameters?: Array<{ name: string; type: string; sensitive: boolean }>;
 }

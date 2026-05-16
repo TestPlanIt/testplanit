@@ -56,7 +56,7 @@ export function MatrixCell({
   if (!cell || cell.iterationCount === 0) {
     return (
       <div
-        className="flex h-full w-full items-center justify-center text-muted-foreground"
+        className="flex h-full w-full items-center justify-center text-muted-foreground/40"
         data-testid={`matrix-cell-not-run-${caseId}-${configId}-${rowIndex}`}
         aria-label={t("cellNotRun")}
       >

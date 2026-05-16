@@ -8,10 +8,37 @@ import { MatrixCellCapNotice } from "@/components/matrix/MatrixCellCapNotice";
 import { MatrixGrid } from "@/components/matrix/MatrixGrid";
 import { Button } from "@/components/ui/button";
 import { useMatrixAggregation } from "~/hooks/useMatrixAggregation";
+import { useMatrixCsvExport } from "~/hooks/useMatrixCsvExport";
 import { useMatrixFilters } from "~/hooks/useMatrixFilters";
+import type { AxesShape, CellSummary } from "~/lib/matrix/types";
 
 interface MatrixReportPresetProps {
   projectId: number;
+  /**
+   * Pre-fetched axes payload from the shared-link route. When present, the
+   * preset skips `useMatrixAggregation` (which requires an authenticated
+   * project-read) and renders directly. `cells` arrives JSON-serialized as
+   * an `Array<[key, value]>` and is reconstructed into a Map here.
+   */
+  prefetchedAxes?: {
+    caseAxis: AxesShape["caseAxis"];
+    configAxis: AxesShape["configAxis"];
+    cells: Array<[string, CellSummary]>;
+    cellCount: number;
+    statusMap: AxesShape["statusMap"];
+  };
+  /**
+   * Shared-link viewer mode. Hides the export button (no client session to
+   * gate sensitive params) and treats the prefetched filters/cap state as a
+   * frozen snapshot — no filter editing.
+   */
+  readOnly?: boolean;
+  /**
+   * Header actions from the ReportBuilder shell (e.g. the Share button).
+   * Rendered alongside the Export CSV button. Omitted in shared-link mode
+   * since the shell isn't rendered.
+   */
+  headerActions?: React.ReactNode;
 }
 
 /**
@@ -27,71 +54,82 @@ interface MatrixReportPresetProps {
  * report-builder metadata GET stub, but data fetching goes directly through
  * the dedicated aggregate route to inherit `MatrixAggregationError` typing.
  */
-export function MatrixReportPreset({ projectId }: MatrixReportPresetProps) {
+export function MatrixReportPreset({
+  projectId,
+  prefetchedAxes,
+  readOnly = false,
+  headerActions,
+}: MatrixReportPresetProps) {
   const t = useTranslations("projects.matrix");
+  const tCommon = useTranslations("common");
   const { filters, setFilters } = useMatrixFilters();
-  const query = useMatrixAggregation(projectId, filters);
-  const hasData = Boolean(query.data && query.data.cellCount > 0);
+  // When the share endpoint pre-fetches the matrix, skip the authenticated
+  // aggregate hook entirely — viewers of a public share have no session to
+  // gate `/api/projects/.../matrix/aggregate`. The provided axes are the
+  // snapshot the share was captured at.
+  const query = useMatrixAggregation(prefetchedAxes ? null : projectId, filters);
 
-  const exportUrl = useMemo(() => {
-    const sp = new URLSearchParams();
-    filters.statusIds?.forEach((id) => sp.append("status", String(id)));
-    filters.configIds?.forEach((id) => sp.append("config", String(id)));
-    filters.datasetIds?.forEach((id) => sp.append("dataset", String(id)));
-    if (filters.dateFrom) sp.set("from", filters.dateFrom);
-    if (filters.dateTo) sp.set("to", filters.dateTo);
-    const qs = sp.toString();
-    return qs
-      ? `/api/projects/${projectId}/matrix/export?${qs}`
-      : `/api/projects/${projectId}/matrix/export`;
-  }, [projectId, filters]);
+  const sharedAxes: AxesShape | null = useMemo(() => {
+    if (!prefetchedAxes) return null;
+    return {
+      caseAxis: prefetchedAxes.caseAxis,
+      configAxis: prefetchedAxes.configAxis,
+      cells: new Map<string, CellSummary>(prefetchedAxes.cells),
+      cellCount: prefetchedAxes.cellCount,
+      statusMap: prefetchedAxes.statusMap,
+    };
+  }, [prefetchedAxes]);
 
+  const axes = sharedAxes ?? query.data ?? null;
+  const isLoading = !sharedAxes && query.isLoading;
+  const error = sharedAxes ? null : query.error;
+  const exportCsv = useMatrixCsvExport();
+  const hasData = Boolean(axes && axes.cellCount > 0);
+
+  const showTopBar = !readOnly || headerActions;
   return (
     <div className="flex flex-col" data-testid="matrix-report-preset">
-      <div className="flex justify-end border-b p-2">
-        {hasData ? (
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            data-testid="matrix-preset-export-csv"
-          >
-            <a href={exportUrl} download>
-              <Download className="h-4 w-4" />
-              {t("exportCsv")}
-            </a>
-          </Button>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            disabled
-            data-testid="matrix-preset-export-csv"
-          >
-            <Download className="h-4 w-4" />
-            {t("exportCsv")}
-          </Button>
-        )}
-      </div>
-      {query.isLoading && (
+      {showTopBar && (
+        <div className="flex items-center justify-end gap-2 border-b p-2">
+          {!readOnly && (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={!hasData}
+              onClick={() => {
+                if (axes) exportCsv(axes, String(projectId));
+              }}
+              className="group gap-0 overflow-hidden transition-all hover:gap-2"
+              data-testid="matrix-preset-export-csv"
+            >
+              <Download className="h-4 w-4 shrink-0" />
+              <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all group-hover:max-w-xs">
+                {t("exportCsv")}
+              </span>
+            </Button>
+          )}
+          {headerActions}
+        </div>
+      )}
+      {isLoading && (
         <div
-          className="flex flex-1 items-center justify-center gap-2 text-muted-foreground"
+          className="flex flex-1 items-center justify-center gap-2 py-12 text-muted-foreground"
           data-testid="matrix-loading"
         >
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-          {t("loading")}
+          {tCommon("loading")}
         </div>
       )}
 
-      {query.error?.matrixError?.type === "cell_cap_exceeded" && (
+      {error?.matrixError?.type === "cell_cap_exceeded" && (
         <MatrixCellCapNotice
-          error={query.error.matrixError}
+          error={error.matrixError}
           filters={filters}
           onChange={setFilters}
         />
       )}
 
-      {query.error && !query.error.matrixError && (
+      {error && !error.matrixError && (
         <div
           className="m-4 rounded-md border border-destructive bg-destructive/10 p-4 text-destructive"
           data-testid="matrix-error"
@@ -100,10 +138,10 @@ export function MatrixReportPreset({ projectId }: MatrixReportPresetProps) {
         </div>
       )}
 
-      {query.data && (
+      {axes && (
         <>
           <MatrixCellLegend />
-          <MatrixGrid axes={query.data} projectId={projectId} />
+          <MatrixGrid axes={axes} projectId={projectId} />
         </>
       )}
     </div>

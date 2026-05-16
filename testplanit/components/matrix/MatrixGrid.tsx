@@ -1,9 +1,12 @@
 "use client";
 
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { RepositoryCaseSource } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
+import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { cellKey, type AxesShape } from "~/lib/matrix/types";
 
 import { MatrixCell } from "./MatrixCell";
@@ -27,11 +30,11 @@ import { MatrixCell } from "./MatrixCell";
  * cells slide under it as the user scrolls vertically; the left rail sits
  * above the data for the same reason horizontally. HTML `<table>` rowspan
  * is intentionally NOT used — TanStack Virtual cannot virtualize a `<tr>`
- * that participates in a rowspan, so each parameter sub-row is its own
- * virtualizer item and the case name renders only on the first sub-row;
- * a left-side border on the leading sub-row + a continuation indent on
- * subsequent sub-rows preserves the visual "row span" without breaking
- * virtualization.
+ * that participates in a rowspan, so a parameterized case emits a
+ * dedicated header sub-row (case name only, no cells) followed by one
+ * data sub-row per param row; a top border on the header + a continuation
+ * indent on the data rows preserves the visual "row span" without breaking
+ * virtualization. Non-parameterized cases collapse to a single data row.
  *
  * Cell lookup goes through `cellKey()` from `lib/matrix/types` so the
  * Map key format stays in lock-step with the aggregation route + buildAxes.
@@ -45,8 +48,11 @@ const LEFT_RAIL_WIDTH = 240;
 interface SubRow {
   caseId: number;
   caseName: string;
+  caseSource: string;
+  caseAutomated: boolean;
   rowIndex: number;
   label: string | null;
+  kind: "header" | "data";
   isFirstSubRow: boolean;
   subRowCountForCase: number;
 }
@@ -83,22 +89,52 @@ export function MatrixGrid({
   }, []);
 
   // Flatten case axis × paramRows into a single list of sub-rows so the
-  // row virtualizer can address each cell-row individually. The sub-row
-  // carries enough metadata for the left-rail renderer to pick "case name"
-  // vs "continuation indent" without re-walking the case axis.
+  // row virtualizer can address each cell-row individually. Parameterized
+  // cases emit a header sub-row (kind: "header", no cells) followed by one
+  // data sub-row per paramRow so the first param doesn't share its row with
+  // the case name. Non-parameterized cases keep the single-row layout.
   const subRows = useMemo<SubRow[]>(() => {
     const out: SubRow[] = [];
     for (const c of axes.caseAxis) {
-      c.paramRows.forEach((r, i) => {
+      if (c.hasParameters) {
         out.push({
           caseId: c.caseId,
           caseName: c.caseName,
+          caseSource: c.source,
+          caseAutomated: c.automated,
+          rowIndex: -1,
+          label: null,
+          kind: "header",
+          isFirstSubRow: true,
+          subRowCountForCase: c.paramRows.length + 1,
+        });
+        c.paramRows.forEach((r) => {
+          out.push({
+            caseId: c.caseId,
+            caseName: c.caseName,
+            caseSource: c.source,
+            caseAutomated: c.automated,
+            rowIndex: r.index,
+            label: r.label,
+            kind: "data",
+            isFirstSubRow: false,
+            subRowCountForCase: c.paramRows.length + 1,
+          });
+        });
+      } else {
+        const r = c.paramRows[0];
+        out.push({
+          caseId: c.caseId,
+          caseName: c.caseName,
+          caseSource: c.source,
+          caseAutomated: c.automated,
           rowIndex: r.index,
           label: r.label,
-          isFirstSubRow: i === 0,
-          subRowCountForCase: c.paramRows.length,
+          kind: "data",
+          isFirstSubRow: true,
+          subRowCountForCase: 1,
         });
-      });
+      }
     }
     return out;
   }, [axes]);
@@ -172,10 +208,9 @@ export function MatrixGrid({
                 width: CELL_WIDTH,
                 height: HEADER_HEIGHT,
               }}
-              title={cfg.configName}
               data-testid={`matrix-column-header-${cfg.configId}`}
             >
-              <span className="truncate">{cfg.configName}</span>
+              <ConfigurationNameDisplay name={cfg.configName} truncate />
             </div>
           ))}
         </div>
@@ -194,11 +229,12 @@ export function MatrixGrid({
         >
           {virtualRows.map((vRow) => {
             const sr = subRows[vRow.index];
+            const isCaseRow = sr.isFirstSubRow;
             return (
               <div
                 key={vRow.key}
                 className={`absolute flex items-center border-r px-2 text-xs ${
-                  sr.isFirstSubRow
+                  isCaseRow
                     ? "border-t font-medium"
                     : "pl-4 text-muted-foreground"
                 }`}
@@ -208,19 +244,29 @@ export function MatrixGrid({
                   width: LEFT_RAIL_WIDTH,
                 }}
                 data-testid={
-                  sr.isFirstSubRow
+                  isCaseRow
                     ? `matrix-row-case-${sr.caseId}`
                     : `matrix-row-sub-${sr.caseId}-${sr.rowIndex}`
                 }
               >
-                <span className="truncate">
-                  {sr.isFirstSubRow ? sr.caseName : (sr.label ?? "")}
-                </span>
-                {sr.isFirstSubRow && sr.label ? (
-                  <span className="ml-2 truncate text-muted-foreground">
-                    {sr.label}
+                {isCaseRow ? (
+                  <div className="min-w-0 flex-1 overflow-hidden [&_*]:min-w-0 [&_span]:block [&_span]:overflow-hidden [&_span]:truncate [&_span]:whitespace-nowrap">
+                    <CaseDisplay
+                      id={sr.caseId}
+                      name={sr.caseName}
+                      source={sr.caseSource as RepositoryCaseSource}
+                      automated={sr.caseAutomated}
+                      link={`/projects/repository/${projectId}/${sr.caseId}`}
+                      linkTarget="_blank"
+                      size="small"
+                      maxLines={1}
+                    />
+                  </div>
+                ) : (
+                  <span className="min-w-0 flex-1 truncate">
+                    {sr.label ?? ""}
                   </span>
-                ) : null}
+                )}
               </div>
             );
           })}
@@ -242,6 +288,7 @@ export function MatrixGrid({
         >
           {virtualRows.map((vRow) => {
             const sr = subRows[vRow.index];
+            if (sr.kind === "header") return null;
             return virtualColumns.map((vCol) => {
               const cfg = axes.configAxis[vCol.index];
               const cell = axes.cells.get(

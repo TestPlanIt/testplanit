@@ -164,7 +164,14 @@ describe("POST /api/projects/[projectId]/matrix/aggregate", () => {
     ]);
     runMatrixAggregationMock.mockResolvedValue({
       caseAxis: [
-        { caseId: 1, caseName: "A", hasParameters: false, paramRows: [] },
+        {
+          caseId: 1,
+          caseName: "A",
+          hasParameters: false,
+          source: "MANUAL",
+          automated: false,
+          paramRows: [],
+        },
       ],
       configAxis: [{ configId: 2, configName: "Chrome" }],
       cells: cellsMap,

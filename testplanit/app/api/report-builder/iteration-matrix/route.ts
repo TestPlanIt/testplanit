@@ -84,8 +84,18 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    // Shared-report bypass: the public share endpoint
+    // (`/api/share/[shareKey]/report`) forwards POSTs server-to-server with
+    // this internal header after validating the share link's mode/expiry/
+    // revocation. When set, skip the session + enhanced-DB project read-gate
+    // — the share link IS the read grant — and default sensitive-param
+    // visibility to false so unauthenticated viewers can't see redacted
+    // values. Mirrors `utils/reportApiUtils.ts`'s pattern.
+    const isSharedReportBypass =
+      request.headers.get("x-shared-report-bypass") === "true";
+
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    if (!session?.user && !isSharedReportBypass) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -105,18 +115,31 @@ export async function POST(request: NextRequest) {
 
     const { projectId, filters } = parsed.data;
 
-    const db = await getEnhancedDb(session);
-    const project = await db.projects.findFirst({
-      where: { id: projectId, isDeleted: false },
-      select: { id: true },
-    });
-    if (!project) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (isSharedReportBypass) {
+      // Raw existence check — the share link already authorized the read;
+      // ZenStack's policy enforcement would reject without a session.
+      const project = await prisma.projects.findFirst({
+        where: { id: projectId, isDeleted: false },
+        select: { id: true },
+      });
+      if (!project) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    } else {
+      const db = await getEnhancedDb(session!);
+      const project = await db.projects.findFirst({
+        where: { id: projectId, isDeleted: false },
+        select: { id: true },
+      });
+      if (!project) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
 
-    const viewerCanReadSensitive = await resolveCanReadSensitive(
-      session.user.id
-    );
+    const viewerCanReadSensitive =
+      session?.user && !isSharedReportBypass
+        ? await resolveCanReadSensitive(session.user.id)
+        : false;
 
     try {
       const axes = await runMatrixAggregation(

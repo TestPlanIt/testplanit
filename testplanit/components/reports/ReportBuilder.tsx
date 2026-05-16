@@ -47,6 +47,7 @@ import { MatrixFilterPanel } from "@/components/matrix/MatrixFilterPanel";
 import { ReportFilters } from "~/components/reports/ReportFilters";
 import { ReportRenderer } from "~/components/reports/ReportRenderer";
 import { ShareButton } from "~/components/reports/ShareButton";
+import { useMatrixFilters } from "~/hooks/useMatrixFilters";
 import { Card, CardContent } from "~/components/ui/card";
 import {
   DropdownMenu,
@@ -337,6 +338,12 @@ function ReportBuilderContent({
 
   // Store the last request body used to run the report (for sharing)
   const [lastRequestBody, setLastRequestBody] = useState<any>(null);
+
+  // Matrix filters live in URL state via useMatrixFilters. The iteration-matrix
+  // preset's run-report flow short-circuits the standard POST proxy, so its
+  // share config has to be assembled directly from the URL — not from
+  // lastRequestBody, which stays empty for the matrix preset.
+  const { filters: matrixFilters } = useMatrixFilters();
 
   // Table state
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -2740,11 +2747,19 @@ function ReportBuilderContent({
             headerActions={
               <ShareButton
                 projectId={mode === "project" ? projectId : undefined}
-                reportConfig={{
-                  reportType,
-                  // Use the last request body which contains ALL parameters
-                  ...(lastRequestBody || {}),
-                }}
+                reportConfig={
+                  matchesReportType(reportType, "iteration-matrix")
+                    ? {
+                        reportType,
+                        projectId,
+                        filters: matrixFilters,
+                      }
+                    : {
+                        reportType,
+                        // Use the last request body which contains ALL parameters
+                        ...(lastRequestBody || {}),
+                      }
+                }
                 reportTitle={
                   reportTypes.find((r) => r.id === reportType)?.label
                 }

@@ -135,6 +135,8 @@ function buildAxes(): AxesShape {
         caseId: 1,
         caseName: "Login",
         hasParameters: true,
+        source: "MANUAL",
+        automated: false,
         paramRows: [
           {
             index: 0,
@@ -152,6 +154,8 @@ function buildAxes(): AxesShape {
         caseId: 3,
         caseName: "Empty-Cell",
         hasParameters: false,
+        source: "MANUAL",
+        automated: false,
         paramRows: [
           {
             index: 0,

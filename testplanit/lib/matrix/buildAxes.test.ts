@@ -75,6 +75,8 @@ describe("buildAxes", () => {
           caseId: 1,
           caseName: "Login flow",
           hasParameters: true,
+          source: "MANUAL",
+          automated: false,
           parameters: [],
         },
       ],
@@ -103,8 +105,22 @@ describe("buildAxes", () => {
 
     const axes = buildAxes({
       cases: [
-        { caseId: 1, caseName: "A", hasParameters: true, parameters: [] },
-        { caseId: 2, caseName: "B", hasParameters: true, parameters: [] },
+        {
+          caseId: 1,
+          caseName: "A",
+          hasParameters: true,
+          source: "MANUAL",
+          automated: false,
+          parameters: [],
+        },
+        {
+          caseId: 2,
+          caseName: "B",
+          hasParameters: true,
+          source: "MANUAL",
+          automated: false,
+          parameters: [],
+        },
       ],
       configs: [
         { configId: 10, configName: "Chrome" },
@@ -127,7 +143,14 @@ describe("buildAxes", () => {
     const cell = makeCell(7, 3, 2);
     const axes = buildAxes({
       cases: [
-        { caseId: 7, caseName: "X", hasParameters: false, parameters: null },
+        {
+          caseId: 7,
+          caseName: "X",
+          hasParameters: false,
+          source: "MANUAL",
+          automated: false,
+          parameters: null,
+        },
       ],
       configs: [{ configId: 3, configName: "C3" }],
       cells: [cell],
@@ -156,7 +179,14 @@ describe("buildAxes", () => {
     const cell = makeCell(1, 0, 0);
     const axes = buildAxes({
       cases: [
-        { caseId: 1, caseName: "A", hasParameters: false, parameters: null },
+        {
+          caseId: 1,
+          caseName: "A",
+          hasParameters: false,
+          source: "MANUAL",
+          automated: false,
+          parameters: null,
+        },
       ],
       configs: [sentinel],
       cells: [cell],
@@ -170,8 +200,22 @@ describe("buildAxes", () => {
   it("determinism: same input -> same output insertion order", () => {
     const inputs = {
       cases: [
-        { caseId: 1, caseName: "A", hasParameters: false, parameters: null },
-        { caseId: 2, caseName: "B", hasParameters: false, parameters: null },
+        {
+          caseId: 1,
+          caseName: "A",
+          hasParameters: false,
+          source: "MANUAL",
+          automated: false,
+          parameters: null,
+        },
+        {
+          caseId: 2,
+          caseName: "B",
+          hasParameters: false,
+          source: "MANUAL",
+          automated: false,
+          parameters: null,
+        },
       ],
       configs: [{ configId: 5, configName: "C5" }],
       cells: [makeCell(1, 5, 0), makeCell(2, 5, 0)],

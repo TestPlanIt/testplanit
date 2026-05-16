@@ -35,6 +35,8 @@ export interface BuildAxesInput {
     caseId: number;
     caseName: string;
     hasParameters: boolean;
+    source: string;
+    automated: boolean;
     parameters: Array<{
       name: string;
       type: string;
@@ -72,6 +74,8 @@ export function buildAxes(input: BuildAxesInput): AxesShape {
       caseId: c.caseId,
       caseName: c.caseName,
       hasParameters: c.hasParameters,
+      source: c.source,
+      automated: c.automated,
       paramRows,
     };
     if (c.parameters) {
