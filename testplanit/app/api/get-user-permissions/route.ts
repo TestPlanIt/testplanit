@@ -261,6 +261,11 @@ export async function POST(request: Request) {
       }
     }
 
+    // Numeric effective-role id for UI gating predicates that need the role
+    // pointer (e.g. review action panel role-holder match). Null for system
+    // admins (they don't hold a project role) and for access-denied users.
+    const effectiveRoleId = effectiveRole?.id ?? null;
+
     // 4. Return Result
     // If checkAccessOnly is true, just return whether the user has access
     if (checkAccessOnly) {
@@ -274,6 +279,7 @@ export async function POST(request: Request) {
           : isSystemProjectAdmin
             ? "System Project Admin"
             : effectiveRole?.name || null,
+        effectiveRoleId,
         accessType: isSystemAdmin
           ? "SYSTEM_ADMIN"
           : isSystemProjectAdmin
@@ -298,6 +304,7 @@ export async function POST(request: Request) {
         : isSystemProjectAdmin
           ? "System Project Admin"
           : effectiveRole?.name || null,
+      effectiveRoleId,
       permissions: resultData,
     });
   } catch (error) {
