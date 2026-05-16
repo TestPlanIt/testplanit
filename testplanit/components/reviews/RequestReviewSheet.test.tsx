@@ -223,6 +223,71 @@ describe("RequestReviewSheet", () => {
     );
   });
 
+  it("(f.5) WR-03 — picking yourself as user assignee renders inline self-assign error and does NOT submit", async () => {
+    // The schema @@validate rejects requester == assigneeUserId server-side,
+    // but ZenStack RPC surfaces it as a generic "Something went wrong" toast.
+    // The sheet pre-checks the same condition client-side and renders an
+    // inline form error keyed on `reviews.requester.cannotSelfAssign`.
+    //
+    // Custom AssigneeCombobox mock: picks the session user (test-user-id)
+    // rather than the default `user-1`. We swap the mock by re-mocking the
+    // module for this single test via vi.doMock — the parent vi.mock at
+    // top-level captures the default stub.
+    vi.resetModules();
+    vi.doMock("./AssigneeCombobox", () => ({
+      AssigneeCombobox: ({
+        value,
+        onValueChange,
+      }: {
+        value: AssigneeOption | null;
+        onValueChange: (v: AssigneeOption | null) => void;
+      }) => (
+        <button
+          type="button"
+          data-testid="request-review-assignee"
+          data-value={value ? `${value.kind}:${value.id}` : ""}
+          onClick={() =>
+            onValueChange({
+              kind: "user",
+              id: "test-user-id", // matches vitest.setup.tsx session.user.id
+              name: "Self",
+              image: null,
+              roleName: null,
+            })
+          }
+        >
+          assignee-self-stub
+        </button>
+      ),
+    }));
+    // Re-import after the override so the new mock is wired.
+    const { RequestReviewSheet: SheetWithSelfMock } = await import(
+      "./RequestReviewSheet"
+    );
+
+    render(<SheetWithSelfMock {...makeProps()} />);
+
+    fireEvent.click(screen.getByTestId("request-review-assignee"));
+    fireEvent.change(screen.getByTestId("request-review-comment"), {
+      target: { value: "trying to self-review" },
+    });
+    fireEvent.click(screen.getByTestId("request-review-submit"));
+
+    // Submit must NOT reach the create mutation.
+    await new Promise((r) => setTimeout(r, 50));
+    expect(mockMutateAsync).not.toHaveBeenCalled();
+
+    // Localized inline error is rendered (FormMessage shows the i18n key in
+    // tests since useTranslations returns the key path as the value).
+    expect(
+      screen.getByText(/reviews\.requester\.cannotSelfAssign/),
+    ).toBeInTheDocument();
+
+    // Restore the default AssigneeCombobox mock for the remaining tests.
+    vi.doUnmock("./AssigneeCombobox");
+    vi.resetModules();
+  });
+
   it("(g) initialValues prefills assignee + targetStateId but not comment", () => {
     const initialAssignee: AssigneeOption = {
       kind: "role",

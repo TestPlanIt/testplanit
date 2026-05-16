@@ -2909,7 +2909,8 @@
       "targetStateRequired": "Select a target state.",
       "submitButton": "Request review",
       "submitSuccess": "Review request created.",
-      "alreadyPendingError": "A review is already pending for this entity."
+      "alreadyPendingError": "A review is already pending for this entity.",
+      "cannotSelfAssign": "You can't assign a review to yourself; pick another user or a role."
     },
     "reviewer": {
       "approve": "Approve",

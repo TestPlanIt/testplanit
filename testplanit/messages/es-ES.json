@@ -2909,7 +2909,8 @@
       "targetStateRequired": "Seleccione un estado de destino.",
       "submitButton": "Solicitar revisión",
       "submitSuccess": "Solicitud de revisión creada.",
-      "alreadyPendingError": "Ya hay una revisión pendiente para esta entidad."
+      "alreadyPendingError": "Ya hay una revisión pendiente para esta entidad.",
+      "cannotSelfAssign": "No puedes asignarte una revisión a ti mismo; elige otro usuario o un rol."
     },
     "reviewer": {
       "approve": "Aprobar",

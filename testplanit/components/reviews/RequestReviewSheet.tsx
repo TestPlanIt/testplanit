@@ -168,6 +168,23 @@ export function RequestReviewSheet({
       return;
     }
 
+    // WR-03: client-side guard against picking yourself as the direct
+    // assignee. The schema `@@validate(assigneeUserId == null ||
+    // assigneeUserId != requestedByUserId)` (schema.zmodel) catches this
+    // server-side, but ZenStack RPC surfaces validate failures as the
+    // generic "Something went wrong" toast with no hint about the actual
+    // problem. Pre-checking here renders a localized inline form error so
+    // the requester immediately understands why the submit didn't go.
+    if (
+      selectedAssignee.kind === "user" &&
+      selectedAssignee.id === requestedByUserId
+    ) {
+      form.setError("assigneeKey", {
+        message: t("reviews.requester.cannotSelfAssign"),
+      });
+      return;
+    }
+
     try {
       await createReviewRequest({
         data: {

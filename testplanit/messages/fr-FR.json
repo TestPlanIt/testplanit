@@ -2909,7 +2909,8 @@
       "targetStateRequired": "Sélectionnez un état cible.",
       "submitButton": "Demande d'avis",
       "submitSuccess": "Demande de révision créée.",
-      "alreadyPendingError": "Une évaluation est déjà en cours pour cette entité."
+      "alreadyPendingError": "Une évaluation est déjà en cours pour cette entité.",
+      "cannotSelfAssign": "Vous ne pouvez pas vous assigner une révision à vous-même ; choisissez un autre utilisateur ou un rôle."
     },
     "reviewer": {
       "approve": "Approuver",
