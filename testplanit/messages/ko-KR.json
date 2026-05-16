@@ -994,6 +994,13 @@
     "results": "결과",
     "loading": "로딩 중..."
   },
+  "api": {
+    "testResults": {
+      "import": {
+        "iterationCapExceeded": "반복 인덱스 {index} 가 지원되는 최대값 {cap}를 초과했습니다. 반복 횟수를 줄이거나 실행을 분할하십시오."
+      }
+    }
+  },
   "auth": {
     "signin": {
       "createAccount": "새 계정을 만드세요",
@@ -1188,6 +1195,18 @@
       "description": "{projectName}에 대한 설정을 관리합니다.",
       "moreSettingsComingSoon": "추가 설정 기능이 곧 제공될 예정입니다.",
       "moreSettingsDescription": "향후 업데이트에서 추가적인 프로젝트 구성 옵션이 여기에 제공될 예정입니다.",
+      "junitIterationProperties": {
+        "title": "JUnit 반복 속성 이름",
+        "description": "When automation imports JUnit XML, the import path reads the iteration index from a <property> child on each <testcase>. Add the property names your CI emitter uses; lookup is case-insensitive.",
+        "addLabel": "속성 이름을 추가하세요",
+        "addButton": "추가하다",
+        "placeholder": "예: iterationIndex",
+        "defaultHint": "기본값: 반복 횟수(대소문자 구분 안 함). 사용자 지정 이름을 추가하여 선택적으로 사용할 수 있습니다.",
+        "saveButton": "구하다",
+        "saveSuccess": "JUnit 반복 속성 이름이 저장되었습니다.",
+        "saveError": "JUnit 반복 속성 이름을 저장할 수 없습니다.",
+        "removeAria": "{name}를 제거하세요"
+      },
       "integrations": {
         "description": "이 프로젝트에 대한 타사 이슈 통합을 관리합니다.",
         "availableIntegrations": "사용 가능한 이슈 통합 기능",
@@ -1355,8 +1374,10 @@
         "eventVerbs": {
           "duplicated": "복제됨",
           "stateChanged": "상태가 변경되었습니다",
-          "resultAdded": "결과가 추가되었습니다"
+          "resultAdded": "결과가 추가되었습니다",
+          "resultRecorded": "결과가 기록되었습니다"
         },
+        "iterationResultHelp": "반복 결과가 기록될 때마다(통과, 실패, 건너뛰기 또는 기타 상태) 발생합니다. 장시간 자동화 실행 시에는 신중하게 사용하십시오(반복당 하나의 이벤트).",
         "events": {
           "testRunCreated": "테스트 실행이 생성되었습니다.",
           "testRunStateChanged": "테스트 실행 상태가 변경되었습니다.",
@@ -3141,6 +3162,7 @@
       "imports": "데이터 가져오기",
       "integrations": "이슈 통합",
       "webhooks": "웹훅",
+      "junit": "JUnit",
       "datasets": "공유 데이터 세트",
       "llm": "AI 모델",
       "prompts": "프롬프트 구성",
@@ -5283,6 +5305,7 @@
     "createIssueDescription": "새로운 이슈를 생성하세요",
     "createIssueDescriptionWithIntegration": "{provider}를 사용하여 새 이슈를 생성하세요.",
     "createIssueDescriptionSimpleUrl": "새로운 내부 이슈 생성 (간단한 URL 통합)",
+    "iterationContextHint": "본문에는 반복 매개변수 값과 딥 링크가 자동으로 채워집니다. 생성하기 전에 필요에 따라 편집하세요.",
     "creatingWith": "{provider}에 이슈를 생성하고 있습니다.",
     "authenticatedAndReady": "인증 완료, 문제 생성 준비 완료",
     "created": "문제 발생",
@@ -7146,6 +7169,7 @@
     "iterationPassAndNext": "통과 및 다음 반복",
     "iterationOtherStatuses": "기타 상태",
     "iterationAllComplete": "모든 반복 작업 완료",
+    "createLinkedIssue": "연결된 이슈 생성",
     "hardRefuseTitle": "생성할 수 없습니다. 반복 횟수가 너무 많습니다.",
     "hardRefuseDescription": "시스템 응답성을 유지하기 위해 테스트 실행 생성 횟수는 {cap} 회로 제한됩니다. 아래 기여 요소 중 하나를 줄이세요.",
     "hardRefuseColumnCase": "사례",

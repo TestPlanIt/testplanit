@@ -994,6 +994,13 @@
     "results": "Résultats",
     "loading": "Chargement..."
   },
+  "api": {
+    "testResults": {
+      "import": {
+        "iterationCapExceeded": "L'indice d'itération {index} dépasse la valeur maximale prise en charge {cap}. Réduisez le nombre d'itérations ou divisez l'exécution."
+      }
+    }
+  },
   "auth": {
     "signin": {
       "createAccount": "Créer un nouveau compte",
@@ -1188,6 +1195,18 @@
       "description": "Gérer les paramètres pour {projectName}",
       "moreSettingsComingSoon": "D'autres paramètres seront bientôt disponibles.",
       "moreSettingsDescription": "Des options de configuration de projet supplémentaires seront disponibles ici dans les prochaines mises à jour.",
+      "junitIterationProperties": {
+        "title": "Noms des propriétés d'itération JUnit",
+        "description": "Lors de l'importation automatisée de fichiers XML JUnit, le chemin d'importation lit l'index d'itération à partir d'un élément enfant <property> sur chaque élément <testcase>. Ajoutez les noms de propriétés utilisés par votre émetteur CI ; la recherche est insensible à la casse.",
+        "addLabel": "Ajouter le nom de la propriété",
+        "addButton": "Ajouter",
+        "placeholder": "par exemple, l'index d'itération",
+        "defaultHint": "Par défaut : itération (sans tenir compte de la casse). Ajoutez des noms personnalisés pour activer l’option.",
+        "saveButton": "Sauvegarder",
+        "saveSuccess": "Noms des propriétés d'itération JUnit enregistrés.",
+        "saveError": "Impossible d'enregistrer les noms des propriétés d'itération JUnit.",
+        "removeAria": "Supprimer {name}"
+      },
       "integrations": {
         "description": "Gérer les intégrations tierces pour ce projet",
         "availableIntegrations": "Intégrations de problèmes disponibles",
@@ -1355,8 +1374,10 @@
         "eventVerbs": {
           "duplicated": "Dupliqué",
           "stateChanged": "État modifié",
-          "resultAdded": "Résultat ajouté"
+          "resultAdded": "Résultat ajouté",
+          "resultRecorded": "Résultat enregistré"
         },
+        "iterationResultHelp": "Se déclenche à chaque enregistrement du résultat d'une itération (succès, échec, ignoré ou tout autre statut). À utiliser avec parcimonie lors d'exécutions d'automatisation longues (un événement par itération).",
         "events": {
           "testRunCreated": "Test réalisé",
           "testRunStateChanged": "L'état de l'exécution du test a changé",
@@ -3141,6 +3162,7 @@
       "imports": "Importation de données",
       "integrations": "Intégrations de problèmes",
       "webhooks": "Webhooks",
+      "junit": "JUnit",
       "datasets": "Ensembles de données partagés",
       "llm": "Modèles d'IA",
       "prompts": "Configurations d'invite",
@@ -5283,6 +5305,7 @@
     "createIssueDescription": "Créer un nouveau problème",
     "createIssueDescriptionWithIntegration": "Créez un nouveau problème en utilisant {provider}",
     "createIssueDescriptionSimpleUrl": "Créer un nouveau ticket interne (Intégration d'URL simple)",
+    "iterationContextHint": "Le corps du texte est automatiquement rempli avec les valeurs des paramètres d'itération et le lien profond. Modifiez-le si nécessaire avant la création.",
     "creatingWith": "Création d'un problème avec {provider}",
     "authenticatedAndReady": "Authentifié et prêt à créer des problèmes",
     "created": "Problème créé",
@@ -7146,6 +7169,7 @@
     "iterationPassAndNext": "Passer et itération suivante",
     "iterationOtherStatuses": "Autres statuts",
     "iterationAllComplete": "Toutes les itérations sont terminées.",
+    "createLinkedIssue": "Créer un problème lié",
     "hardRefuseTitle": "Impossible de créer — trop d'itérations",
     "hardRefuseDescription": "La création d'exécutions de test est limitée à {cap} itérations afin de garantir la réactivité du système. Réduisez le nombre de contributeurs ci-dessous.",
     "hardRefuseColumnCase": "Cas",

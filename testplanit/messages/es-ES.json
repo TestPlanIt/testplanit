@@ -994,6 +994,13 @@
     "results": "Resultados",
     "loading": "Cargando..."
   },
+  "api": {
+    "testResults": {
+      "import": {
+        "iterationCapExceeded": "El índice de iteración {index} excede el valor máximo admitido de {cap}. Reduzca el número de iteraciones o divida la ejecución."
+      }
+    }
+  },
   "auth": {
     "signin": {
       "createAccount": "Crear una nueva cuenta",
@@ -1188,6 +1195,18 @@
       "description": "Administrar ajustes para {projectName}",
       "moreSettingsComingSoon": "Más ajustes próximamente",
       "moreSettingsDescription": "Opciones adicionales de configuración del proyecto estarán disponibles aquí en futuras actualizaciones",
+      "junitIterationProperties": {
+        "title": "Nombres de propiedades de iteración de JUnit",
+        "description": "Cuando la automatización importa XML de JUnit, la ruta de importación lee el índice de iteración de un elemento secundario <property> en cada <testcase>. Agregue los nombres de las propiedades que utiliza su emisor de CI; la búsqueda no distingue entre mayúsculas y minúsculas.",
+        "addLabel": "Agregar un nombre de propiedad",
+        "addButton": "Agregar",
+        "placeholder": "p. ej. índice de iteración",
+        "defaultHint": "Predeterminado: iteración (sin distinción entre mayúsculas y minúsculas). Añada nombres personalizados para activar esta función.",
+        "saveButton": "Ahorrar",
+        "saveSuccess": "Se guardaron los nombres de las propiedades de la iteración de JUnit.",
+        "saveError": "No se pudieron guardar los nombres de las propiedades de iteración de JUnit.",
+        "removeAria": "Eliminar {name}"
+      },
       "integrations": {
         "description": "Administrar integraciones de problemas de terceros para este proyecto",
         "availableIntegrations": "Integraciones de problemas disponibles",
@@ -1355,8 +1374,10 @@
         "eventVerbs": {
           "duplicated": "Duplicado",
           "stateChanged": "El estado cambió",
-          "resultAdded": "Resultado añadido"
+          "resultAdded": "Resultado añadido",
+          "resultRecorded": "Resultado registrado"
         },
+        "iterationResultHelp": "Se activa cada vez que se registra el resultado de una iteración: aprobado, reprobado, omitido o cualquier otro estado. Úselo con moderación en ejecuciones de automatización largas (un evento por iteración).",
         "events": {
           "testRunCreated": "Se ha creado una prueba.",
           "testRunStateChanged": "El estado de la ejecución de la prueba cambió.",
@@ -3141,6 +3162,7 @@
       "imports": "Importaciones de datos",
       "integrations": "Integraciones del problema",
       "webhooks": "Webhooks",
+      "junit": "JUnit",
       "datasets": "Conjuntos de datos compartidos",
       "llm": "AI Models",
       "prompts": "Configuraciones de aviso",
@@ -5283,6 +5305,7 @@
     "createIssueDescription": "Crear un nuevo asunto",
     "createIssueDescriptionWithIntegration": "Crear un nuevo problema usando {provider}",
     "createIssueDescriptionSimpleUrl": "Crear un nuevo problema interno (integración de URL)",
+    "iterationContextHint": "El cuerpo se rellena automáticamente con los valores de los parámetros de iteración y el enlace directo. Edítelo según sea necesario antes de crearlo.",
     "creatingWith": "Creando problema con {provider}",
     "authenticatedAndReady": "Autenticado y listo para crear incidencias",
     "created": "Petición creada",
@@ -7146,6 +7169,7 @@
     "iterationPassAndNext": "Pasar y siguiente iteración",
     "iterationOtherStatuses": "Otros estados",
     "iterationAllComplete": "Todas las iteraciones completadas",
+    "createLinkedIssue": "Crear problema vinculado",
     "hardRefuseTitle": "No se puede crear: demasiadas iteraciones",
     "hardRefuseDescription": "La creación de ejecuciones de prueba está limitada a {cap} iteraciones para mantener el sistema receptivo. Reduce uno de los contribuyentes a continuación.",
     "hardRefuseColumnCase": "Caso",

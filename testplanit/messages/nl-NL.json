@@ -994,6 +994,13 @@
     "results": "Resultaten",
     "loading": "Bezig met laden..."
   },
+  "api": {
+    "testResults": {
+      "import": {
+        "iterationCapExceeded": "De iteratie-index {index} overschrijdt de maximaal ondersteunde waarde van {cap}. Verlaag het aantal iteraties of splits de uitvoering op."
+      }
+    }
+  },
   "auth": {
     "signin": {
       "createAccount": "Een nieuw account aanmaken",
@@ -1188,6 +1195,18 @@
       "description": "Beheer instellingen voor {projectName}",
       "moreSettingsComingSoon": "Binnenkort meer instellingen",
       "moreSettingsDescription": "In toekomstige updates zullen hier aanvullende projectconfiguratieopties beschikbaar zijn",
+      "junitIterationProperties": {
+        "title": "JUnit-iteratie-eigenschapsnamen",
+        "description": "Wanneer automatisering JUnit XML importeert, leest het importpad de iteratie-index van een <property> -child op elke <testcase>. Voeg de eigenschapsnamen toe die uw CI-emitter gebruikt; het opzoeken is niet hoofdlettergevoelig.",
+        "addLabel": "Voeg een eigenschapsnaam toe",
+        "addButton": "Toevoegen",
+        "placeholder": "bijv. iteratie-index",
+        "defaultHint": "Standaard: iteratie (hoofdletterongevoelig). Voeg aangepaste namen toe om deel te nemen.",
+        "saveButton": "Redden",
+        "saveSuccess": "Eigenschapsnamen van JUnit-iteraties opgeslagen.",
+        "saveError": "Kon de namen van de JUnit-iteratie-eigenschappen niet opslaan.",
+        "removeAria": "Verwijder {name}"
+      },
       "integrations": {
         "description": "Beheer integraties van problemen van derden voor dit project",
         "availableIntegrations": "Beschikbare probleemintegraties",
@@ -1355,8 +1374,10 @@
         "eventVerbs": {
           "duplicated": "Gedupliceerd",
           "stateChanged": "Staat gewijzigd",
-          "resultAdded": "Resultaat toegevoegd"
+          "resultAdded": "Resultaat toegevoegd",
+          "resultRecorded": "Resultaat vastgelegd"
         },
+        "iterationResultHelp": "Wordt geactiveerd telkens wanneer een iteratieresultaat wordt vastgelegd — geslaagd, mislukt, overgeslagen of een andere status. Gebruik dit spaarzaam bij lange automatiseringsruns (één gebeurtenis per iteratie).",
         "events": {
           "testRunCreated": "Testrun aangemaakt",
           "testRunStateChanged": "Testuitvoeringsstatus gewijzigd",
@@ -3141,6 +3162,7 @@
       "imports": "Gegevensimport",
       "integrations": "Probleemintegraties",
       "webhooks": "Webhooks",
+      "junit": "JUnit",
       "datasets": "Gedeelde datasets",
       "llm": "AI-modellen",
       "prompts": "Promptconfiguraties",
@@ -5283,6 +5305,7 @@
     "createIssueDescription": "Een nieuw probleem maken",
     "createIssueDescriptionWithIntegration": "Maak een nieuw probleem met {provider}",
     "createIssueDescriptionSimpleUrl": "Een nieuw intern probleem aanmaken (eenvoudige URL-integratie)",
+    "iterationContextHint": "De body wordt automatisch ingevuld met iteratieparameterwaarden en een deep link. Bewerk deze naar behoefte voordat u de body aanmaakt.",
     "creatingWith": "Probleem met {provider}creëren",
     "authenticatedAndReady": "Geverifieerd en klaar om problemen te creëren",
     "created": "Probleem gecreëerd",
@@ -7146,6 +7169,7 @@
     "iterationPassAndNext": "Pass & Next iteration",
     "iterationOtherStatuses": "Andere statussen",
     "iterationAllComplete": "Alle iteraties voltooid",
+    "createLinkedIssue": "Maak een gekoppeld probleem aan",
     "hardRefuseTitle": "Kan niet aanmaken — te veel iteraties",
     "hardRefuseDescription": "Het aantal iteraties voor het aanmaken van testruns is beperkt tot {cap} om de responsiviteit van het systeem te behouden. Verminder een van de onderstaande factoren.",
     "hardRefuseColumnCase": "Geval",

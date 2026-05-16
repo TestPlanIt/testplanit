@@ -994,6 +994,13 @@
     "results": "Ergebnisse",
     "loading": "Laden..."
   },
+  "api": {
+    "testResults": {
+      "import": {
+        "iterationCapExceeded": "Der Iterationsindex {index} überschreitet den maximal unterstützten Wert von {cap}. Reduzieren Sie die Anzahl der Iterationen oder teilen Sie den Lauf auf."
+      }
+    }
+  },
   "auth": {
     "signin": {
       "createAccount": "Neues Konto erstellen",
@@ -1188,6 +1195,18 @@
       "description": "Einstellungen für {projectName}verwalten",
       "moreSettingsComingSoon": "Weitere Einstellungen folgen in Kürze.",
       "moreSettingsDescription": "Weitere Projektkonfigurationsoptionen werden in zukünftigen Updates hier verfügbar sein.",
+      "junitIterationProperties": {
+        "title": "JUnit-Iterationseigenschaftennamen",
+        "description": "Beim automatisierten Import von JUnit-XML liest der Importpfad den Iterationsindex aus einem <property> -Kindelement jedes <testcase>. Fügen Sie die Eigenschaftsnamen hinzu, die Ihr CI-Emitter verwendet; die Suche unterscheidet nicht zwischen Groß- und Kleinschreibung.",
+        "addLabel": "Fügen Sie einen Eigenschaftsnamen hinzu",
+        "addButton": "Hinzufügen",
+        "placeholder": "z.B. Iterationsindex",
+        "defaultHint": "Standardmäßig wird iterativ vorgegangen (Groß-/Kleinschreibung wird nicht beachtet). Benutzerdefinierte Namen können hinzugefügt werden, um diese Option zu aktivieren.",
+        "saveButton": "Speichern",
+        "saveSuccess": "JUnit-Iterationseigenschaftennamen gespeichert.",
+        "saveError": "JUnit-Iterationseigenschaftennamen konnten nicht gespeichert werden.",
+        "removeAria": "Entferne {name}"
+      },
       "integrations": {
         "description": "Integration von Ticket-Trackern für dieses Projekt verwalten",
         "availableIntegrations": "Verfügbare Ticket-Tracker",
@@ -1355,8 +1374,10 @@
         "eventVerbs": {
           "duplicated": "Dupliziert",
           "stateChanged": "Status geändert",
-          "resultAdded": "Ergebnis hinzugefügt"
+          "resultAdded": "Ergebnis hinzugefügt",
+          "resultRecorded": "Ergebnis aufgezeichnet"
         },
+        "iterationResultHelp": "Wird jedes Mal ausgelöst, wenn ein Iterationsergebnis aufgezeichnet wird – ob erfolgreich, fehlgeschlagen, übersprungen oder ein anderer Status. Bei langen Automatisierungsläufen sparsam verwenden (ein Ereignis pro Iteration).",
         "events": {
           "testRunCreated": "Testlauf erstellt",
           "testRunStateChanged": "Testlaufstatus geändert",
@@ -3141,6 +3162,7 @@
       "imports": "Datenimporte",
       "integrations": "Problemintegrationen",
       "webhooks": "Webhooks",
+      "junit": "JUnit",
       "datasets": "Gemeinsame Datensätze",
       "llm": "KI-Modelle",
       "prompts": "Prompt-Konfigurationen",
@@ -5283,6 +5305,7 @@
     "createIssueDescription": "Neues Problem erstellen",
     "createIssueDescriptionWithIntegration": "Erstellen Sie ein neues Ticket mit {provider}",
     "createIssueDescriptionSimpleUrl": "Neues internes Ticket erstellen (Einfache URL-Integration)",
+    "iterationContextHint": "Der Textkörper wird automatisch mit Iterationsparameterwerten und einem Deep Link ausgefüllt. Bearbeiten Sie ihn bei Bedarf vor dem Erstellen.",
     "creatingWith": "Problem beim Erstellen von {provider}",
     "authenticatedAndReady": "Authentifiziert und bereit, Probleme zu erstellen",
     "created": "Problem erstellt",
@@ -7146,6 +7169,7 @@
     "iterationPassAndNext": "Bestehen & Nächste Iteration",
     "iterationOtherStatuses": "Andere Status",
     "iterationAllComplete": "Alle Iterationen abgeschlossen",
+    "createLinkedIssue": "Verknüpftes Problem erstellen",
     "hardRefuseTitle": "Erstellung fehlgeschlagen – zu viele Iterationen",
     "hardRefuseDescription": "Die Erstellung von Testläufen ist auf {cap} Iterationen begrenzt, um die Systemreaktionsfähigkeit zu gewährleisten. Reduzieren Sie einen der unten aufgeführten Faktoren.",
     "hardRefuseColumnCase": "Fall",

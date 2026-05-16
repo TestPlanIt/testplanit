@@ -994,6 +994,13 @@
     "results": "結果",
     "loading": "読み込み中..."
   },
+  "api": {
+    "testResults": {
+      "import": {
+        "iterationCapExceeded": "反復回数 {index} が、サポートされている最大値 {cap}を超えています。反復回数を減らすか、実行を分割してください。"
+      }
+    }
+  },
   "auth": {
     "signin": {
       "createAccount": "新しいアカウントを作成する",
@@ -1188,6 +1195,18 @@
       "description": "{projectName}の設定を管理する",
       "moreSettingsComingSoon": "その他の設定は近日公開予定です",
       "moreSettingsDescription": "追加のプロジェクト設定オプションは、今後のアップデートで利用可能になります。",
+      "junitIterationProperties": {
+        "title": "JUnitの反復処理プロパティ名",
+        "description": "When automation imports JUnit XML, the import path reads the iteration index from a <property> child on each <testcase>. Add the property names your CI emitter uses; lookup is case-insensitive.",
+        "addLabel": "プロパティ名を追加する",
+        "addButton": "追加",
+        "placeholder": "例：イテレーションインデックス",
+        "defaultHint": "デフォルト：反復処理（大文字小文字を区別しない）。オプトインするには、カスタム名を追加してください。",
+        "saveButton": "保存",
+        "saveSuccess": "JUnitの反復処理プロパティ名が保存されました。",
+        "saveError": "JUnitの反復処理プロパティ名を保存できませんでした。",
+        "removeAria": "{name} を削除"
+      },
       "integrations": {
         "description": "このプロジェクトのサードパーティの問題統合を管理する",
         "availableIntegrations": "利用可能な問題統合",
@@ -1355,8 +1374,10 @@
         "eventVerbs": {
           "duplicated": "複製",
           "stateChanged": "状態が変更されました",
-          "resultAdded": "結果を追加しました"
+          "resultAdded": "結果を追加しました",
+          "resultRecorded": "結果が記録されました"
         },
+        "iterationResultHelp": "反復処理の結果（合格、不合格、スキップ、その他のステータス）が記録されるたびに発生します。長時間の自動化実行では、使用頻度を少なくしてください（反復処理ごとに1つのイベント）。",
         "events": {
           "testRunCreated": "テスト実行が作成されました",
           "testRunStateChanged": "テスト実行状態が変更されました",
@@ -3141,6 +3162,7 @@
       "imports": "データのインポート",
       "integrations": "問題の統合",
       "webhooks": "ウェブフック",
+      "junit": "JUnit",
       "datasets": "共有データセット",
       "llm": "AIモデル",
       "prompts": "プロンプト設定",
@@ -5283,6 +5305,7 @@
     "createIssueDescription": "新しい問題を作成する",
     "createIssueDescriptionWithIntegration": "{provider}を使用して新しい問題を作成します",
     "createIssueDescriptionSimpleUrl": "新しい内部問題を作成する（シンプル URL 統合）",
+    "iterationContextHint": "本文には反復パラメータ値とディープリンクが自動入力されています。作成前に必要に応じて編集してください。",
     "creatingWith": "{provider}で問題を作成しています",
     "authenticatedAndReady": "認証され、問題を作成する準備ができました",
     "created": "問題が作成されました",
@@ -7146,6 +7169,7 @@
     "iterationPassAndNext": "パス＆次のイテレーション",
     "iterationOtherStatuses": "その他のステータス",
     "iterationAllComplete": "すべての反復処理が完了しました",
+    "createLinkedIssue": "関連付けられた課題を作成する",
     "hardRefuseTitle": "作成できません - 反復回数が多すぎます",
     "hardRefuseDescription": "システムの応答性を維持するため、テスト実行の作成回数は {cap} 回に制限されています。以下の要因のうち1つを減らしてください。",
     "hardRefuseColumnCase": "場合",

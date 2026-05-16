@@ -994,6 +994,13 @@
     "results": "结果",
     "loading": "加载中..."
   },
+  "api": {
+    "testResults": {
+      "import": {
+        "iterationCapExceeded": "迭代索引 {index} 超过了支持的最大值 {cap}。请减少迭代次数或拆分运行。"
+      }
+    }
+  },
   "auth": {
     "signin": {
       "createAccount": "创建新帐户",
@@ -1188,6 +1195,18 @@
       "description": "管理 {projectName}的设置",
       "moreSettingsComingSoon": "更多设置即将推出",
       "moreSettingsDescription": "更多项目配置选项将在未来的更新中在此处提供。",
+      "junitIterationProperties": {
+        "title": "JUnit迭代属性名称",
+        "description": "When automation imports JUnit XML, the import path reads the iteration index from a <property> child on each <testcase>. Add the property names your CI emitter uses; lookup is case-insensitive.",
+        "addLabel": "添加属性名称",
+        "addButton": "添加",
+        "placeholder": "例如 iterationIndex",
+        "defaultHint": "默认值：迭代次数（不区分大小写）。添加自定义名称即可启用。",
+        "saveButton": "节省",
+        "saveSuccess": "JUnit迭代属性名称已保存。",
+        "saveError": "无法保存 JUnit 迭代属性名称。",
+        "removeAria": "移除 {name}"
+      },
       "integrations": {
         "description": "管理此项目的第三方问题集成",
         "availableIntegrations": "可用的问题集成",
@@ -1355,8 +1374,10 @@
         "eventVerbs": {
           "duplicated": "重复",
           "stateChanged": "状态已改变",
-          "resultAdded": "结果已添加"
+          "resultAdded": "结果已添加",
+          "resultRecorded": "结果已记录"
         },
+        "iterationResultHelp": "每次记录迭代结果时触发——无论是通过、失败、跳过还是其他任何状态。在长时间的自动化运行中应谨慎使用（每次迭代触发一次事件）。",
         "events": {
           "testRunCreated": "创建测试运行",
           "testRunStateChanged": "测试运行状态已更改",
@@ -3141,6 +3162,7 @@
       "imports": "数据导入",
       "integrations": "问题整合",
       "webhooks": "网络钩子",
+      "junit": "JUnit",
       "datasets": "共享数据集",
       "llm": "人工智能模型",
       "prompts": "提示配置",
@@ -5283,6 +5305,7 @@
     "createIssueDescription": "创建新问题",
     "createIssueDescriptionWithIntegration": "使用 {provider}创建新问题",
     "createIssueDescriptionSimpleUrl": "创建新的内部问题（简单 URL 集成）",
+    "iterationContextHint": "正文会自动填充迭代参数值和深度链接。创建前可根据需要进行编辑。",
     "creatingWith": "创建问题 {provider}",
     "authenticatedAndReady": "已通过身份验证，可以创建问题。",
     "created": "问题已创建",
@@ -7146,6 +7169,7 @@
     "iterationPassAndNext": "通过和下一次迭代",
     "iterationOtherStatuses": "其他状态",
     "iterationAllComplete": "所有迭代完成",
+    "createLinkedIssue": "创建关联问题",
     "hardRefuseTitle": "无法创建——迭代次数过多",
     "hardRefuseDescription": "为保持系统响应速度，测试运行创建次数上限为 {cap} 次。请减少以下贡献者之一。",
     "hardRefuseColumnCase": "案件",

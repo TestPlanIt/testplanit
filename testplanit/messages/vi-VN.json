@@ -994,6 +994,13 @@
     "results": "Kết quả",
     "loading": "Đang tải..."
   },
+  "api": {
+    "testResults": {
+      "import": {
+        "iterationCapExceeded": "Chỉ số lặp {index} vượt quá giá trị tối đa được hỗ trợ của {cap}. Giảm số lần lặp hoặc chia nhỏ quá trình chạy."
+      }
+    }
+  },
   "auth": {
     "signin": {
       "createAccount": "Tạo tài khoản mới",
@@ -1188,6 +1195,18 @@
       "description": "Quản lý cài đặt cho {projectName}",
       "moreSettingsComingSoon": "Sẽ có thêm nhiều tùy chọn cài đặt trong thời gian tới.",
       "moreSettingsDescription": "Các tùy chọn cấu hình dự án bổ sung sẽ có sẵn trong các bản cập nhật sau này.",
+      "junitIterationProperties": {
+        "title": "Tên thuộc tính vòng lặp JUnit",
+        "description": "Khi tự động hóa nhập XML JUnit, đường dẫn nhập sẽ đọc chỉ số lặp từ một phần tử con <property> trên mỗi <testcase>. Thêm tên thuộc tính mà trình phát CI của bạn sử dụng; việc tìm kiếm không phân biệt chữ hoa chữ thường.",
+        "addLabel": "Thêm tên thuộc tính",
+        "addButton": "Thêm vào",
+        "placeholder": "ví dụ iterationIndex",
+        "defaultHint": "Mặc định: lặp lại (không phân biệt chữ hoa chữ thường). Thêm tên tùy chỉnh để tham gia.",
+        "saveButton": "Cứu",
+        "saveSuccess": "Tên thuộc tính của vòng lặp JUnit đã được lưu.",
+        "saveError": "Không thể lưu tên thuộc tính của vòng lặp JUnit.",
+        "removeAria": "Xóa {name}"
+      },
       "integrations": {
         "description": "Quản lý việc tích hợp các vấn đề của bên thứ ba cho dự án này.",
         "availableIntegrations": "Các tích hợp vấn đề hiện có",
@@ -1355,8 +1374,10 @@
         "eventVerbs": {
           "duplicated": "Đã sao chép",
           "stateChanged": "Trạng thái đã thay đổi",
-          "resultAdded": "Kết quả đã được thêm"
+          "resultAdded": "Kết quả đã được thêm",
+          "resultRecorded": "Kết quả đã được ghi nhận"
         },
+        "iterationResultHelp": "Sự kiện này được kích hoạt mỗi khi kết quả của một vòng lặp được ghi lại — đạt, không đạt, bỏ qua hoặc bất kỳ trạng thái nào khác. Nên sử dụng tiết kiệm trong các lần chạy tự động hóa dài (một sự kiện cho mỗi vòng lặp).",
         "events": {
           "testRunCreated": "Đã tạo bản chạy thử nghiệm",
           "testRunStateChanged": "Trạng thái chạy thử nghiệm đã thay đổi",
@@ -3141,6 +3162,7 @@
       "imports": "Nhập dữ liệu",
       "integrations": "Tích hợp vấn đề",
       "webhooks": "Webhooks",
+      "junit": "JUnit",
       "datasets": "Bộ dữ liệu được chia sẻ",
       "llm": "Mô hình AI",
       "prompts": "Cấu hình nhắc nhở",
@@ -5283,6 +5305,7 @@
     "createIssueDescription": "Tạo một vấn đề mới",
     "createIssueDescriptionWithIntegration": "Tạo sự cố mới bằng cách sử dụng {provider}",
     "createIssueDescriptionSimpleUrl": "Tạo một vấn đề nội bộ mới (Tích hợp URL đơn giản)",
+    "iterationContextHint": "Phần thân được tự động điền các giá trị tham số lặp và liên kết sâu. Chỉnh sửa nếu cần trước khi tạo.",
     "creatingWith": "Tạo sự cố với {provider}",
     "authenticatedAndReady": "Đã xác thực và sẵn sàng tạo vấn đề.",
     "created": "Sự cố đã được tạo",
@@ -7146,6 +7169,7 @@
     "iterationPassAndNext": "Vượt qua & Lần lặp tiếp theo",
     "iterationOtherStatuses": "Các trạng thái khác",
     "iterationAllComplete": "Tất cả các vòng lặp đã hoàn tất",
+    "createLinkedIssue": "Tạo sự cố liên kết",
     "hardRefuseTitle": "Không thể tạo — quá nhiều lần lặp",
     "hardRefuseDescription": "Việc tạo lượt chạy thử nghiệm được giới hạn ở {cap} lần lặp để giữ cho hệ thống phản hồi nhanh. Giảm một trong những yếu tố đóng góp bên dưới.",
     "hardRefuseColumnCase": "Trường hợp",
