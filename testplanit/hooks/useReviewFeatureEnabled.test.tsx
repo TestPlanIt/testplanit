@@ -203,10 +203,12 @@ describe("useReviewFeatureEnabled", () => {
   describe("loading state", () => {
     it("(f) reports isLoading true while the system fetch is in flight", async () => {
       // Never-resolving fetch promise to keep the query pending.
-      let resolveFetch: ((value: Response) => void) | null = null;
+      // Box the resolver so TypeScript doesn't narrow `let` to `never` inside
+      // the executor closure.
+      const resolverBox: { resolve?: (value: Response) => void } = {};
       mockFetch.mockReturnValueOnce(
         new Promise<Response>((resolve) => {
-          resolveFetch = resolve;
+          resolverBox.resolve = resolve;
         }),
       );
 
@@ -221,7 +223,7 @@ describe("useReviewFeatureEnabled", () => {
       expect(result.current.enabled).toBeUndefined();
 
       // Clean up so the test runner can teardown.
-      resolveFetch?.({
+      resolverBox.resolve?.({
         ok: true,
         json: async () => ({ enabled: true }),
       } as Response);
