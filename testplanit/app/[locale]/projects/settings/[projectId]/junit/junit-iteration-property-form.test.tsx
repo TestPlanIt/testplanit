@@ -71,6 +71,7 @@ vi.mock("@/components/ui/badge", () => ({
 vi.mock("lucide-react", () => ({
   Loader2: () => <svg data-testid="icon-loader" />,
   Plus: () => <svg data-testid="icon-plus" />,
+  Save: () => <svg data-testid="icon-save" />,
   X: () => <svg data-testid="icon-x" />,
 }));
 
@@ -147,7 +148,7 @@ describe("JunitIterationPropertyForm", () => {
   it("submits the current names list as { propertyNames } via PUT", async () => {
     (global as any).fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ propertyNames: ["iteration"] }),
+      json: async () => ({ propertyNames: ["iteration", "extra"] }),
     });
 
     render(
@@ -156,6 +157,12 @@ describe("JunitIterationPropertyForm", () => {
         initialNames={["iteration"]}
       />
     );
+    // Save is gated on dirty state — add a tag first so the button enables.
+    const input = screen.getByTestId(
+      "junit-iteration-property-input"
+    ) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "extra" } });
+    fireEvent.click(screen.getByTestId("junit-iteration-property-add"));
     fireEvent.click(screen.getByTestId("junit-iteration-property-save"));
 
     await waitFor(() => {
@@ -168,7 +175,7 @@ describe("JunitIterationPropertyForm", () => {
     expect(init.method).toBe("PUT");
     expect(init.headers["Content-Type"]).toBe("application/json");
     expect(JSON.parse(init.body)).toEqual({
-      propertyNames: ["iteration"],
+      propertyNames: ["iteration", "extra"],
     });
     await waitFor(() => {
       expect(mockToastSuccess).toHaveBeenCalled();
@@ -187,6 +194,12 @@ describe("JunitIterationPropertyForm", () => {
         initialNames={["iteration"]}
       />
     );
+    // Make the form dirty so Save is enabled.
+    const input = screen.getByTestId(
+      "junit-iteration-property-input"
+    ) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "extra" } });
+    fireEvent.click(screen.getByTestId("junit-iteration-property-add"));
     fireEvent.click(screen.getByTestId("junit-iteration-property-save"));
 
     await waitFor(() => {

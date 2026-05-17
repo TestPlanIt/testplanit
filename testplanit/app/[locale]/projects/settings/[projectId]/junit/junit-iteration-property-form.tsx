@@ -4,9 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Plus, X } from "lucide-react";
+import { Loader2, Plus, Save, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 interface JunitIterationPropertyFormProps {
@@ -37,6 +37,11 @@ export function JunitIterationPropertyForm({
   useEffect(() => {
     setNames([...initialNames]);
   }, [initialNames]);
+
+  const isDirty = useMemo(() => {
+    if (names.length !== initialNames.length) return true;
+    return names.some((n, i) => n !== initialNames[i]);
+  }, [names, initialNames]);
 
   const handleAdd = () => {
     const trimmed = input.trim();
@@ -100,7 +105,6 @@ export function JunitIterationPropertyForm({
         </div>
         <Button
           type="button"
-          variant="outline"
           onClick={handleAdd}
           disabled={input.trim().length === 0}
           data-testid="junit-iteration-property-add"
@@ -148,10 +152,14 @@ export function JunitIterationPropertyForm({
         <Button
           type="button"
           onClick={handleSave}
-          disabled={saving}
+          disabled={!isDirty || saving}
           data-testid="junit-iteration-property-save"
         >
-          {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+          {saving ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4" />
+          )}
           {t("saveButton")}
         </Button>
       </div>
