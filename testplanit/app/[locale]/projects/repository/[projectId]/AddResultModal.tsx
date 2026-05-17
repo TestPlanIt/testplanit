@@ -1793,6 +1793,15 @@ export function AddResultModal({
                   linkedIssueIds={selectedMainIssues}
                   setLinkedIssueIds={setSelectedMainIssues}
                   entityType="testRunResult"
+                  iterationContext={
+                    iterationId && testRunCaseId
+                      ? {
+                          iterationId,
+                          testRunId,
+                          testRunCaseId,
+                        }
+                      : undefined
+                  }
                 />
               </FormControl>
             </FormItem>

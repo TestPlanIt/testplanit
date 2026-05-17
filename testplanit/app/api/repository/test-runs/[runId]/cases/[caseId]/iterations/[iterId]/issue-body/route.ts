@@ -30,19 +30,30 @@ import { authOptions } from "~/server/auth";
  * the two paths do not share a flag.
  */
 
-async function resolveCanReadSensitive(userId: string): Promise<boolean> {
+async function resolveUserContext(
+  userId: string,
+): Promise<{ canReadSensitive: boolean; locale: string }> {
   const u = await prisma.user.findUnique({
     where: { id: userId },
-    include: { role: { include: { rolePermissions: true } } },
+    include: {
+      role: { include: { rolePermissions: true } },
+      // locale lives on UserPreferences, not User (schema.zmodel:182).
+      userPreferences: { select: { locale: true } },
+    },
   });
-  if (!u) return false;
-  if (u.access === "ADMIN") return true;
-  const perms = u.role?.rolePermissions ?? [];
-  return Array.isArray(perms)
-    ? perms.some(
-        (p: { canReadSensitive?: boolean }) => p?.canReadSensitive === true,
-      )
-    : false;
+  if (!u) return { canReadSensitive: false, locale: "en_US" };
+  const canReadSensitive =
+    u.access === "ADMIN" ||
+    (Array.isArray(u.role?.rolePermissions)
+      ? u.role.rolePermissions.some(
+          (p: { canReadSensitive?: boolean }) => p?.canReadSensitive === true,
+        )
+      : false);
+  // Locale is a Prisma enum (en_US, es_ES, …). Coerce to string for the
+  // server translator, which normalizes `en_US` → `en-US` internally.
+  const raw = u.userPreferences?.locale;
+  const locale = typeof raw === "string" && raw.length > 0 ? raw : "en_US";
+  return { canReadSensitive, locale };
 }
 
 export async function GET(
@@ -90,12 +101,14 @@ export async function GET(
     return NextResponse.json({ error: "Iteration not found" }, { status: 404 });
   }
 
-  const viewerCanReadSensitive = await resolveCanReadSensitive(session.user.id);
+  const { canReadSensitive: viewerCanReadSensitive, locale } =
+    await resolveUserContext(session.user.id);
 
   try {
     const body = await buildIterationIssueBody({
       iterationId,
       viewerCanReadSensitive,
+      locale,
     });
     return NextResponse.json(body);
   } catch (err) {

@@ -2,7 +2,6 @@ import {
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
-import userEvent from "@testing-library/user-event";
 import React from "react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -134,75 +133,41 @@ const baseProps = {
   canAddEditResults: true,
 };
 
-describe("IterationResultPanel — Create linked Issue button (INT-05)", () => {
-  it("renders Create linked Issue button when iteration status is a failure", () => {
-    renderPanel(
-      <IterationResultPanel
-        {...baseProps}
-        iteration={mkIteration(failureStatus)}
-      />,
-    );
-    expect(screen.getByTestId("create-linked-issue-button")).toBeTruthy();
-  });
+describe("IterationResultPanel — issue-linking lives in Add Result, not here", () => {
+  // INT-05 originally added a standalone "Create linked Issue" button to
+  // this panel. The button has been removed in favour of routing issue
+  // creation through the existing Add Result form's Link Issue path:
+  //
+  //   1. One entry point for both parameterized and non-parameterized
+  //      cases (consistency with the rest of the app).
+  //   2. Forgot to link at submit time? Use Edit Result — same dialog,
+  //      same Link Issue button.
+  //   3. The Add Result form supports per-step linking, which the
+  //      standalone button could not.
+  //
+  // The body builder + deep-link wiring + iteration-context plumbing
+  // remain — they're now consumed via UnifiedIssueManager →
+  // ManageExternalIssues → SearchIssuesDialog from inside Add Result.
 
-  it("does NOT render Create linked Issue button when iteration status is a success", () => {
-    renderPanel(
-      <IterationResultPanel
-        {...baseProps}
-        iteration={mkIteration(successStatus)}
-      />,
-    );
-    expect(screen.queryByTestId("create-linked-issue-button")).toBeNull();
-  });
+  it.each([
+    ["failure", failureStatus],
+    ["success", successStatus],
+    ["skipped", skippedStatus],
+    ["no status yet", null],
+  ] as const)(
+    "does NOT render a Create-linked-Issue button regardless of iteration status (%s)",
+    (_label, status) => {
+      renderPanel(
+        <IterationResultPanel
+          {...baseProps}
+          iteration={mkIteration(status)}
+        />,
+      );
+      expect(screen.queryByTestId("create-linked-issue-button")).toBeNull();
+    },
+  );
 
-  it("does NOT render Create linked Issue button when iteration status is skipped", () => {
-    renderPanel(
-      <IterationResultPanel
-        {...baseProps}
-        iteration={mkIteration(skippedStatus)}
-      />,
-    );
-    expect(screen.queryByTestId("create-linked-issue-button")).toBeNull();
-  });
-
-  it("does NOT render Create linked Issue button when iteration has no status (not yet executed)", () => {
-    renderPanel(
-      <IterationResultPanel {...baseProps} iteration={mkIteration(null)} />,
-    );
-    expect(screen.queryByTestId("create-linked-issue-button")).toBeNull();
-  });
-
-  it("does NOT render Create linked Issue button when canAddEditResults is false", () => {
-    renderPanel(
-      <IterationResultPanel
-        {...baseProps}
-        canAddEditResults={false}
-        iteration={mkIteration(failureStatus)}
-      />,
-    );
-    expect(screen.queryByTestId("create-linked-issue-button")).toBeNull();
-  });
-
-  it("clicking the button opens SearchIssuesDialog with iterationContext", async () => {
-    const user = userEvent.setup();
-    renderPanel(
-      <IterationResultPanel
-        {...baseProps}
-        iteration={mkIteration(failureStatus)}
-      />,
-    );
-    const button = screen.getByTestId("create-linked-issue-button");
-    await user.click(button);
-
-    const dialog = await screen.findByTestId("search-issues-dialog");
-    expect(dialog).toBeTruthy();
-    // iterationContext prop values reflected in data attributes
-    expect(dialog.getAttribute("data-iteration-id")).toBe("777");
-    expect(dialog.getAttribute("data-test-run-id")).toBe("42");
-    expect(dialog.getAttribute("data-test-run-case-id")).toBe("88");
-  });
-
-  it("dialog is not mounted on initial render (controlled-open pattern)", () => {
+  it("does NOT mount SearchIssuesDialog from this panel", () => {
     renderPanel(
       <IterationResultPanel
         {...baseProps}

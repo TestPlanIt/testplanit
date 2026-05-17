@@ -22,6 +22,16 @@ interface DeferredIssueManagerProps {
   label?: string;
   linkedIssueIds?: number[]; // The actual Issue IDs to display
   maxBadgeWidth?: string; // Tailwind max-width class for issue badges (e.g., "max-w-xs", "max-w-full")
+  /**
+   * INT-05: when set, the underlying SearchIssuesDialog prefills the
+   * Create New Issue form with title + description from the iteration
+   * body builder. Threaded through unchanged.
+   */
+  iterationContext?: {
+    iterationId: number;
+    testRunId: number;
+    testRunCaseId: number;
+  };
 }
 
 /**
@@ -36,6 +46,7 @@ export function DeferredIssueManager({
   label,
   linkedIssueIds = [],
   maxBadgeWidth = "max-w-xl",
+  iterationContext,
 }: DeferredIssueManagerProps) {
   const t = useTranslations();
   const { data: session } = useSession();
@@ -237,6 +248,7 @@ export function DeferredIssueManager({
         onOpenChange={setIsSearchOpen}
         projectId={projectId}
         linkedIssueIds={linkedIssueIds.map((id) => String(id))}
+        iterationContext={iterationContext}
         onIssueSelected={(issue) => {
           void handleAddIssue(issue);
           setIsSearchOpen(false);

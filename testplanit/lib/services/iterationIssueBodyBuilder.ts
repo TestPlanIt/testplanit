@@ -6,6 +6,7 @@
 // native format at send time (D-15).
 
 import { prisma as defaultPrisma } from "~/lib/prisma";
+import { getServerTranslation } from "~/lib/server-translations";
 import {
   redactValues,
   type ParameterSchemaEntry,
@@ -30,6 +31,13 @@ export interface IterationIssueBodyInput {
   /** Whether the viewer (the user creating the issue) is permitted to
    *  see sensitive parameter values. Computed at the caller (per D-13). */
   viewerCanReadSensitive: boolean;
+  /**
+   * The user's locale (e.g. "en_US", "es_ES"). Drives translation of the
+   * title, prose lead, table headers, and deep-link label. Defaults to
+   * "en_US" if omitted — the underlying loader also falls back to en-US
+   * when an unknown locale is requested.
+   */
+  locale?: string;
   /** Optional Prisma-like client override (tests). Production callers omit
    *  this and the helper uses the real `~/lib/prisma` client. */
   client?: PrismaLike;
@@ -179,10 +187,23 @@ export async function buildIterationIssueBody(
         },
       });
 
-  // 3. Title.
-  const title = isCiExtended
-    ? `Iteration ${iterationNumber} (CI-extended) failed: ${caseName}`
-    : `Iteration ${iterationNumber} of ${totalIterations} failed: ${caseName}`;
+  // 3. Title. Neutralized to "issue:" so the same prefill is reusable
+  // for any result status the tester chooses inside Add Result (status
+  // is picked in the form, not by this builder). Localized to the
+  // viewer's locale so the issue body ships to the tracker in their
+  // language; falls back to en-US when locale is unset.
+  const locale = input.locale ?? "en_US";
+  const title = await getServerTranslation(
+    locale,
+    isCiExtended
+      ? "parameters.iterationIssueTitleCiExtended"
+      : "parameters.iterationIssueTitleSnapshot",
+    {
+      n: iterationNumber,
+      total: totalIterations ?? 0,
+      caseName,
+    },
+  );
 
   // 4. Redact values per the viewer permission (D-13).
   const paramSchema = parseParameterSchema(trc?.dataSetSnapshot?.parametersJson);
@@ -200,34 +221,41 @@ export async function buildIterationIssueBody(
   const content: any[] = [];
 
   const leadLabel = iteration.label ?? `Row ${iterationNumber}`;
-  if (isCiExtended) {
-    content.push(
-      paragraph(
-        text(
-          `Iteration ${iterationNumber} (CI-extended) failed on `
-        ),
-        text(leadLabel, [{ type: "code" }]),
-        text(".")
-      )
-    );
-  } else {
-    content.push(
-      paragraph(
-        text(
-          `Iteration ${iterationNumber} of ${totalIterations} failed on `
-        ),
-        text(leadLabel, [{ type: "code" }]),
-        text(".")
-      )
-    );
-  }
+  // Prose lead identifies the iteration without committing to a status
+  // verb. Matches the neutralized title above so the prefill works for
+  // any result status the tester selects in Add Result. The label is
+  // embedded inline in the localized template (we lose the `code` mark
+  // we previously applied to the label — Crowdin translators get a
+  // single clean template per locale instead of two-part splits).
+  const proseText = await getServerTranslation(
+    locale,
+    isCiExtended
+      ? "parameters.iterationIssueProseCiExtended"
+      : "parameters.iterationIssueProseSnapshot",
+    {
+      n: iterationNumber,
+      total: totalIterations ?? 0,
+      label: leadLabel,
+    },
+  );
+  content.push(paragraph(text(proseText)));
 
   // Table: only when we have parameter values to render. CI-extended rows
   // (no snapshot) skip the table.
   const valueEntries = Object.entries(displayValues);
   if (!isCiExtended && valueEntries.length > 0) {
+    const [paramHeader, valueHeader] = await Promise.all([
+      getServerTranslation(
+        locale,
+        "parameters.iterationIssueTableHeaderParameter",
+      ),
+      getServerTranslation(
+        locale,
+        "parameters.iterationIssueTableHeaderValue",
+      ),
+    ]);
     const rows: any[] = [];
-    rows.push(tableRow(tableHeader("Parameter"), tableHeader("Value")));
+    rows.push(tableRow(tableHeader(paramHeader), tableHeader(valueHeader)));
     for (const [name, value] of valueEntries) {
       rows.push(tableRow(tableCell(name), tableCell(renderValue(value))));
     }
@@ -248,11 +276,13 @@ export async function buildIterationIssueBody(
     repositoryCaseId,
     origin,
   });
+  const deepLinkLabel = await getServerTranslation(
+    locale,
+    "parameters.iterationIssueDeepLinkLabel",
+  );
   content.push(
     paragraph(
-      text("View iteration in TestPlanIt", [
-        { type: "link", attrs: { href } },
-      ])
+      text(deepLinkLabel, [{ type: "link", attrs: { href } }])
     )
   );
 

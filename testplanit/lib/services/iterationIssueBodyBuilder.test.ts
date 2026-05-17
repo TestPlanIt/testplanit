@@ -62,7 +62,7 @@ function makeIterationFixture(overrides: Partial<any> = {}) {
 }
 
 describe("buildIterationIssueBody", () => {
-  it("builds title with 'Iteration N of M failed: <case name>' for snapshot-born iterations", async () => {
+  it("builds title with 'Iteration N of M issue: <case name>' for snapshot-born iterations", async () => {
     const client = makeClient({
       iteration: makeIterationFixture(),
       totalIterations: 5,
@@ -75,7 +75,7 @@ describe("buildIterationIssueBody", () => {
     });
 
     expect(result.title).toBe(
-      "Iteration 3 of 5 failed: Login with bad password"
+      "Iteration 3 of 5 issue: Login with bad password"
     );
   });
 
@@ -102,7 +102,7 @@ describe("buildIterationIssueBody", () => {
     });
 
     expect(result.title).toBe(
-      "Iteration 3 (CI-extended) failed: Login flow"
+      "Iteration 3 (CI-extended) issue: Login flow"
     );
   });
 
@@ -311,8 +311,7 @@ describe("buildIterationIssueBody", () => {
     const leadText = lead.content
       .map((n: any) => n.text ?? "")
       .join("");
-    expect(leadText).toContain("Iteration 3 of 5 failed");
-    expect(leadText).toContain("Bad password");
+    expect(leadText).toContain("Iteration 3 of 5 on Bad password.");
   });
 
   it("prose lead falls back to 'Row N' when label is null", async () => {
@@ -333,6 +332,62 @@ describe("buildIterationIssueBody", () => {
       .map((n: any) => n.text ?? "")
       .join("");
     expect(leadText).toContain("Row 3");
+  });
+
+  it("passes the caller's locale through to every translation lookup", async () => {
+    // Spies on the server-translations module to verify the locale is
+    // routed to every getServerTranslation call (title, prose lead,
+    // table headers, deep-link label) rather than falling back to the
+    // default en_US. Asserting locale routing keeps the test stable as
+    // Crowdin updates the actual translations for non-en locales.
+    const serverTranslations = await import("~/lib/server-translations");
+    const spy = vi.spyOn(serverTranslations, "getServerTranslation");
+
+    const client = makeClient({
+      iteration: makeIterationFixture(),
+      totalIterations: 5,
+    });
+
+    try {
+      await buildIterationIssueBody({
+        iterationId: 999,
+        viewerCanReadSensitive: true,
+        client,
+        locale: "es_ES",
+      });
+
+      // Title + prose + 2 table headers + deep-link label = 5 lookups
+      expect(spy).toHaveBeenCalledTimes(5);
+      for (const call of spy.mock.calls) {
+        expect(call[0]).toBe("es_ES");
+      }
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("defaults to en_US when no locale is passed", async () => {
+    const serverTranslations = await import("~/lib/server-translations");
+    const spy = vi.spyOn(serverTranslations, "getServerTranslation");
+
+    const client = makeClient({
+      iteration: makeIterationFixture(),
+      totalIterations: 5,
+    });
+
+    try {
+      await buildIterationIssueBody({
+        iterationId: 999,
+        viewerCanReadSensitive: true,
+        client,
+      });
+      // Every call uses en_US.
+      for (const call of spy.mock.calls) {
+        expect(call[0]).toBe("en_US");
+      }
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it("throws when iteration not found", async () => {
