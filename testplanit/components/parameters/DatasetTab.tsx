@@ -291,6 +291,7 @@ export function DatasetTab({
 
   const [dataset, setDataset] = useState<DatasetRecord | null>(null);
   const [isLoadingDataset, setIsLoadingDataset] = useState(true);
+  const [showLoading, setShowLoading] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 50;
   const [totalRows, setTotalRows] = useState(0);
@@ -522,6 +523,16 @@ export function DatasetTab({
   useEffect(() => {
     if (isShared) setTotalRows(controlledRows?.length ?? 0);
   }, [isShared, controlledRows]);
+
+  // Delay showing the loading indicator so quick fetches don't flash a spinner.
+  useEffect(() => {
+    if (!isLoadingDataset) {
+      setShowLoading(false);
+      return;
+    }
+    const timeout = setTimeout(() => setShowLoading(true), 300);
+    return () => clearTimeout(timeout);
+  }, [isLoadingDataset]);
 
   // If totalRows shrinks below the current page (e.g. after bulk delete),
   // step back to the last valid page.
@@ -1371,11 +1382,9 @@ export function DatasetTab({
         </Alert>
       )}
 
-      {isLoadingDataset ? (
-        // Always surface a spinner while the dataset is loading. The
-        // previous 300ms anti-flash gate left the panel visually empty
-        // for the first 300ms of every load — slow fetches showed a
-        // long blank panel before the spinner appeared.
+      {isLoadingDataset && !showLoading ? (
+        <div className="flex-1" aria-hidden="true" />
+      ) : isLoadingDataset ? (
         <div
           className="flex-1 flex flex-col items-center justify-center gap-3 p-8"
           data-testid="dataset-tab-loading"
