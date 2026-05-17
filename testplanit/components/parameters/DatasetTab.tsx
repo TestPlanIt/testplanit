@@ -22,6 +22,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Tooltip,
@@ -305,6 +312,11 @@ export function DatasetTab({
   const [showPasteDialog, setShowPasteDialog] = useState(false);
   const [showAddColumnDialog, setShowAddColumnDialog] = useState(false);
   const [newColumnName, setNewColumnName] = useState("");
+  const [newColumnType, setNewColumnType] = useState<
+    "STRING" | "INTEGER" | "BOOLEAN"
+  >("STRING");
+  const [newColumnRequired, setNewColumnRequired] = useState(false);
+  const [newColumnSensitive, setNewColumnSensitive] = useState(false);
   const [addColumnError, setAddColumnError] = useState<string | null>(null);
 
   // ---------- Source toggle (per-case mode only) ----------
@@ -854,6 +866,11 @@ export function DatasetTab({
       onChange: (v: unknown) => setDraftValue(v),
       onCommit: () => {
         void commitCell(rowId, columnId, paramName, draftValue);
+        setEditCell(null);
+        setDraftValue(undefined);
+      },
+      onCommitValue: (value: unknown) => {
+        void commitCell(rowId, columnId, paramName, value);
         setEditCell(null);
         setDraftValue(undefined);
       },
@@ -1679,6 +1696,9 @@ export function DatasetTab({
             setShowAddColumnDialog(open);
             if (!open) {
               setNewColumnName("");
+              setNewColumnType("STRING");
+              setNewColumnRequired(false);
+              setNewColumnSensitive(false);
               setAddColumnError(null);
             }
           }}
@@ -1699,13 +1719,16 @@ export function DatasetTab({
                   {
                     id: -(parameters.length + 1),
                     name,
-                    type: "STRING",
-                    sensitive: false,
-                    required: false,
+                    type: newColumnType,
+                    sensitive: newColumnSensitive,
+                    required: newColumnRequired,
                   },
                 ]);
                 setShowAddColumnDialog(false);
                 setNewColumnName("");
+                setNewColumnType("STRING");
+                setNewColumnRequired(false);
+                setNewColumnSensitive(false);
                 setAddColumnError(null);
               }
             }}
@@ -1716,16 +1739,83 @@ export function DatasetTab({
                 {t("datasetAddColumnDescription")}
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <Input
-              value={newColumnName}
-              onChange={(e) => {
-                setNewColumnName(e.target.value);
-                setAddColumnError(null);
-              }}
-              placeholder={t("datasetAddColumnPlaceholder")}
-              data-testid="dataset-add-column-input"
-              autoFocus
-            />
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label
+                  className="text-xs font-medium"
+                  htmlFor="dataset-add-column-input"
+                >
+                  {t("formName")}
+                </label>
+                <Input
+                  id="dataset-add-column-input"
+                  value={newColumnName}
+                  onChange={(e) => {
+                    setNewColumnName(e.target.value);
+                    setAddColumnError(null);
+                  }}
+                  placeholder={t("datasetAddColumnPlaceholder")}
+                  data-testid="dataset-add-column-input"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label
+                  className="text-xs font-medium"
+                  htmlFor="dataset-add-column-type"
+                >
+                  {t("formType")}
+                </label>
+                <Select
+                  value={newColumnType}
+                  onValueChange={(v) =>
+                    setNewColumnType(v as "STRING" | "INTEGER" | "BOOLEAN")
+                  }
+                >
+                  <SelectTrigger
+                    id="dataset-add-column-type"
+                    data-testid="dataset-add-column-type"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="STRING">{"STRING"}</SelectItem>
+                    <SelectItem value="INTEGER">{"INTEGER"}</SelectItem>
+                    <SelectItem value="BOOLEAN">{"BOOLEAN"}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="dataset-add-column-required"
+                  data-testid="dataset-add-column-required"
+                  checked={newColumnRequired}
+                  onCheckedChange={(v) => setNewColumnRequired(Boolean(v))}
+                />
+                <label
+                  htmlFor="dataset-add-column-required"
+                  className="text-xs font-medium"
+                >
+                  {t("formRequired")}
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="dataset-add-column-sensitive"
+                  data-testid="dataset-add-column-sensitive"
+                  checked={newColumnSensitive}
+                  onCheckedChange={(v) => setNewColumnSensitive(Boolean(v))}
+                />
+                <label
+                  htmlFor="dataset-add-column-sensitive"
+                  className="text-xs font-medium"
+                >
+                  {t("formSensitive")}
+                </label>
+              </div>
+            </div>
             {addColumnError && (
               <p
                 className="text-sm text-destructive"
@@ -1750,13 +1840,16 @@ export function DatasetTab({
                     {
                       id: -(parameters.length + 1),
                       name,
-                      type: "STRING",
-                      sensitive: false,
-                      required: false,
+                      type: newColumnType,
+                      sensitive: newColumnSensitive,
+                      required: newColumnRequired,
                     },
                   ]);
                   setShowAddColumnDialog(false);
                   setNewColumnName("");
+                  setNewColumnType("STRING");
+                  setNewColumnRequired(false);
+                  setNewColumnSensitive(false);
                   setAddColumnError(null);
                 }}
                 data-testid="dataset-add-column-submit"

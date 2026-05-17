@@ -48,6 +48,13 @@ export interface DatasetCellProps {
   onEdit: () => void;
   onChange: (v: unknown) => void;
   onCommit: () => void;
+  /**
+   * Commits a value directly, bypassing the parent's draftValue state.
+   * Required for direct-toggle cells (e.g. BOOLEAN) whose checkbox fires
+   * onCheckedChange synchronously — at that point setDraftValue(v) is
+   * queued but not flushed, so safeCommit()'s read of draftValue is stale.
+   */
+  onCommitValue?: (value: unknown) => void;
   onCancel: () => void;
   onTab: (direction: "left" | "right") => void;
   onMoveDown: () => void;
@@ -77,6 +84,7 @@ export function DatasetCell({
   onEdit,
   onChange,
   onCommit,
+  onCommitValue,
   onCancel,
   onTab,
   onMoveDown,
@@ -159,8 +167,12 @@ export function DatasetCell({
         <Checkbox
           checked={Boolean(value)}
           onCheckedChange={(v) => {
-            onChange(v);
-            safeCommit();
+            if (onCommitValue) {
+              onCommitValue(Boolean(v));
+            } else {
+              onChange(v);
+              safeCommit();
+            }
           }}
         />
       );
