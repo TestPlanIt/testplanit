@@ -13,7 +13,7 @@ import { Bug, ListChecks, LockIcon, SearchCheck, Trash2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import parseDuration from "parse-duration";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
@@ -25,6 +25,7 @@ import {
   useCreateTestRunStepResults,
   useFindFirstProjects,
   useFindFirstRepositoryCases,
+  useFindFirstTestRunResults,
   useFindManyStatus,
   useFindManyTemplateResultAssignment,
   useFindManyTestRunResults,
@@ -32,6 +33,7 @@ import {
   useUpdateTestRunResults,
   useUpdateTestRunStepResults,
 } from "~/lib/hooks";
+import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 
@@ -361,6 +363,108 @@ export function EditResultModal({
       issues: true,
     },
   });
+
+  // Load the iteration this result was recorded against (if any) so step
+  // renders can substitute @parameter chips with the iteration's effective
+  // values. Non-parameterized results have `iteration` = null and the
+  // memoized `parameters` below stays `undefined` — chips fall back to
+  // `@name` (unsubstituted) which matches the pre-iterations behavior.
+  const { data: resultRow } = useFindFirstTestRunResults(
+    {
+      where: { id: resultId, isDeleted: false },
+      select: {
+        id: true,
+        iteration: {
+          select: {
+            id: true,
+            valuesJson: true,
+            testRunCase: {
+              select: {
+                dataSetSnapshot: {
+                  select: { parametersJson: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    { enabled: !!resultId },
+  );
+
+  /**
+   * Build the iteration-aware `ParameterChipMeta[]` consumed by the
+   * read-only step + expected-result TipTapEditor mounts so `@username`
+   * chips render as `@username: alice@example.com` (or the redacted
+   * fallback for sensitive params the viewer can't see). Mirrors the
+   * shape `IterationAwareTestRunCaseDetails` produces — the chip
+   * extension is the consumer either way.
+   *
+   * Sensitive-param gate: the audit boundary is the source of truth;
+   * the client gate here is defense in depth and matches the
+   * IterationAwareTestRunCaseDetails convention (`access === "ADMIN"`
+   * sees plaintext; everyone else falls back to `@name`).
+   */
+  const stepParameters: ParameterChipMeta[] | undefined = useMemo(() => {
+    const iteration = resultRow?.iteration;
+    if (!iteration) return undefined;
+    const valuesJson =
+      (iteration.valuesJson as Record<string, unknown> | null | undefined) ??
+      {};
+    const parametersJson = iteration.testRunCase?.dataSetSnapshot
+      ?.parametersJson as
+      | Array<{
+          id?: number;
+          name: string;
+          type: string;
+          sensitive?: boolean;
+        }>
+      | null
+      | undefined;
+    if (!parametersJson || !Array.isArray(parametersJson)) return undefined;
+    const viewerCanReadSensitive = isSuperAdmin;
+    const VALID_PARAM_TYPES: ParameterChipMeta["type"][] = [
+      "STRING",
+      "INTEGER",
+      "BOOLEAN",
+      "SELECT",
+    ];
+    return parametersJson.map((p): ParameterChipMeta => {
+      const raw = valuesJson[p.name];
+      let val: string | null;
+      if (raw === null || raw === undefined) {
+        val = null;
+      } else if (typeof raw === "string") {
+        val = raw;
+      } else {
+        try {
+          val = JSON.stringify(raw);
+        } catch {
+          val = String(raw);
+        }
+      }
+      if (p.sensitive && !viewerCanReadSensitive) {
+        val = null;
+      }
+      // The snapshot's parametersJson is a Prisma `Json` column, so the
+      // `type` field arrives as a raw string. Narrow to the four valid
+      // chip types; anything unexpected falls back to STRING so the
+      // chip still renders (matches the editor extension's permissive
+      // string handling).
+      const narrowedType = (VALID_PARAM_TYPES as readonly string[]).includes(
+        p.type,
+      )
+        ? (p.type as ParameterChipMeta["type"])
+        : "STRING";
+      return {
+        id: p.id ?? 0,
+        name: p.name,
+        type: narrowedType,
+        defaultValue: val,
+        sensitive: !!p.sensitive,
+      };
+    });
+  }, [resultRow, isSuperAdmin]);
 
   // Find the repository case to get its template ID
   const { data: repositoryCase, isLoading: isLoadingCase } =
@@ -1560,6 +1664,7 @@ export function EditResultModal({
                               readOnly={true}
                               projectId={`step_${step.id}`}
                               className="prose-sm"
+                              parameters={stepParameters}
                             />
                           </div>
                         </div>
@@ -1571,6 +1676,7 @@ export function EditResultModal({
                               readOnly={true}
                               projectId={`step_${step.id}_expected`}
                               className="prose-sm"
+                              parameters={stepParameters}
                             />
                           </div>
                         </div>

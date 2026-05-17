@@ -2202,6 +2202,7 @@ export default function TestCaseDetails() {
                             ...s,
                             sharedStepGroupName: s.sharedStepGroup?.name,
                           }))}
+                          parameters={parameterChipMeta}
                         />
                         <Separator
                           orientation="horizontal"
