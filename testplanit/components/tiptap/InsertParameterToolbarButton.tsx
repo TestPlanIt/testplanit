@@ -4,7 +4,7 @@ import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Editor } from "@tiptap/core";
-import { Braces } from "lucide-react";
+import { SquareStack } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";
 
@@ -85,7 +85,7 @@ export function InsertParameterToolbarButton({
           aria-label={t("toolbarInsertParameter")}
           data-testid="tiptap-insert-parameter-button"
         >
-          <Braces className="w-4 h-4" />
+          <SquareStack className="w-4 h-4" />
         </Button>
       )}
     />

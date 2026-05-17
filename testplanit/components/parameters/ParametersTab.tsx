@@ -20,7 +20,7 @@ import {
 } from "@dnd-kit/sortable";
 import type { TestCaseParameter } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { Braces } from "lucide-react";
+import { SquareStack } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export interface ParametersTabProps {
@@ -84,7 +84,7 @@ export function ParametersTab({
             className="flex flex-col items-center justify-center text-center py-12 gap-2"
             data-testid="parameters-tab-empty"
           >
-            <Braces className="w-8 h-8 text-muted-foreground" />
+            <SquareStack className="w-8 h-8 text-muted-foreground" />
             <h3 className="text-base font-semibold">{t("emptyHeading")}</h3>
             <p className="text-sm text-muted-foreground">{t("emptyBody")}</p>
           </div>

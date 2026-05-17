@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Braces } from "lucide-react";
+import { SquareStack } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export interface ConfigureParametersButtonProps {
@@ -33,7 +33,7 @@ export function ConfigureParametersButton({
       data-testid="configure-parameters-button"
       className=""
     >
-      <Braces className="w-4 h-4" />
+      <SquareStack className="w-4 h-4" />
       {label}
     </Button>
   );
