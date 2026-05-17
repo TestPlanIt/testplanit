@@ -401,6 +401,66 @@ describe("JiraAdapter", () => {
 
       expect(body.fields.assignee).toEqual({ id: "user-123" });
     });
+
+    describe("priority mapping (dialog tokens vs numeric IDs)", () => {
+      async function captureCreateBody(priority: string | undefined) {
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              id: "10001",
+              key: "TEST-1",
+              self: "https://test.atlassian.net/rest/api/3/issue/10001",
+            }),
+        });
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(mockJiraIssue),
+        });
+        await adapter.createIssue({
+          title: "Priority Test",
+          projectId: "TEST",
+          priority: priority as any,
+        });
+        const idx = mockFetch.mock.calls.findIndex(
+          (call: any) => call[1]?.method === "POST"
+        );
+        return JSON.parse(mockFetch.mock.calls[idx][1].body).fields.priority;
+      }
+
+      it.each([
+        ["low", { name: "Low" }],
+        ["medium", { name: "Medium" }],
+        ["high", { name: "High" }],
+        ["urgent", { name: "Highest" }],
+      ] as const)(
+        "maps dialog token '%s' to %j (Jira looks up by name)",
+        async (token, expected) => {
+          const priority = await captureCreateBody(token);
+          expect(priority).toEqual(expected);
+        }
+      );
+
+      it("passes a numeric string through as { id } (back-compat with callers that already speak Jira-native)", async () => {
+        const priority = await captureCreateBody("3");
+        expect(priority).toEqual({ id: "3" });
+      });
+
+      it("passes an arbitrary non-token string through as { name } (custom Jira priority schemes)", async () => {
+        const priority = await captureCreateBody("Blocker");
+        expect(priority).toEqual({ name: "Blocker" });
+      });
+
+      it("omits the priority field entirely when value is empty (Jira uses project default)", async () => {
+        const priority = await captureCreateBody("");
+        expect(priority).toBeUndefined();
+      });
+
+      it("omits the priority field entirely when value is undefined", async () => {
+        const priority = await captureCreateBody(undefined);
+        expect(priority).toBeUndefined();
+      });
+    });
   });
 
   describe("updateIssue", () => {
