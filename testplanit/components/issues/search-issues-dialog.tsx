@@ -911,18 +911,13 @@ export function SearchIssuesDialog({
         </DialogContent>
       </Dialog>
 
-      {/* CR-05: When opened from a failed-iteration ("create linked Issue")
-          flow, ALWAYS use CreateIssueDialog regardless of provider — it
-          is the only dispatch component that accepts the `defaultValues`
-          / TipTap-doc prefill. The previous code dispatched JIRA to
-          CreateIssueJiraForm (which has no prefill prop), silently
-          dropping the iteration body for Jira customers. CreateIssueDialog
-          handles JIRA via the external-integration endpoint at
-          create-issue-dialog.tsx:537-625, so this preserves the Jira
-          create path while finally threading the prefilled doc through
-          tiptapToAdf on the adapter side (D-15). */}
+      {/* Jira always uses the dedicated CreateIssueJiraForm so issue-type
+          metadata, dynamic custom fields, and the rich TipTap description
+          editor all load correctly. When opened from the "create linked
+          Issue" flow (INT-05), the iteration prefill threads through as
+          `defaultValues` — the form already accepts a TipTap doc on the
+          description field, and the adapter converts to ADF (D-15). */}
       {showCreateDialog &&
-        !iterationPrefill &&
         activeIntegration?.integration.provider === "JIRA" && (
           <CreateIssueJiraForm
             open={showCreateDialog}
@@ -930,6 +925,17 @@ export function SearchIssuesDialog({
             projectId={projectId}
             integrationId={activeIntegration.integrationId}
             projectIntegrationId={activeIntegration.id}
+            defaultValues={
+              iterationPrefill
+                ? {
+                    title: iterationPrefill.title,
+                    description: iterationPrefill.description as
+                      | string
+                      | Record<string, unknown>
+                      | null,
+                  }
+                : undefined
+            }
             onIssueCreated={(createdIssue) => {
               // Close the create dialog
               setShowCreateDialog(false);
@@ -952,8 +958,7 @@ export function SearchIssuesDialog({
         )}
 
       {showCreateDialog &&
-        (iterationPrefill ||
-          activeIntegration?.integration.provider !== "JIRA") && (
+        activeIntegration?.integration.provider !== "JIRA" && (
           <CreateIssueDialog
             open={showCreateDialog}
             onOpenChange={setShowCreateDialog}

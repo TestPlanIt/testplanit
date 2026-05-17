@@ -132,8 +132,15 @@ vi.mock("./create-issue-dialog", () => ({
 }));
 
 vi.mock("./create-issue-jira-form", () => ({
-  CreateIssueJiraForm: ({ open }: any) =>
-    open ? <div data-testid="create-issue-jira-form" /> : null,
+  CreateIssueJiraForm: ({ open, defaultValues }: any) =>
+    open ? (
+      <div
+        data-testid="create-issue-jira-form"
+        data-default-values={
+          defaultValues ? JSON.stringify(defaultValues) : ""
+        }
+      />
+    ) : null,
 }));
 
 import { SearchIssuesDialog } from "./search-issues-dialog";
@@ -782,7 +789,7 @@ describe("SearchIssuesDialog", () => {
       });
     }
 
-    it("routes JIRA + iterationPrefill through CreateIssueDialog with the prefilled body", async () => {
+    it("routes JIRA + iterationPrefill through CreateIssueJiraForm with the prefilled body", async () => {
       mockUseFindManyProjectIntegration.mockReturnValue({
         data: [jiraIntegration],
       });
@@ -806,16 +813,18 @@ describe("SearchIssuesDialog", () => {
       });
       fireEvent.click(createButton);
 
-      // Even though the active integration is JIRA, the iteration-prefill
-      // path MUST use CreateIssueDialog (which accepts defaultValues).
-      // CreateIssueJiraForm has no prefill prop and would silently drop
-      // the body — that was the CR-05 bug.
+      // JIRA always uses the dedicated CreateIssueJiraForm so the rich
+      // editor + dynamic Jira field metadata loads correctly; the prefill
+      // threads through as `defaultValues`. Routing through the generic
+      // CreateIssueDialog dropped issue-type metadata and the proper
+      // TipTap editor — a CR-05 regression caught during the
+      // cross-adapter UAT.
       await waitFor(() => {
-        expect(screen.queryByTestId("create-issue-dialog")).toBeTruthy();
+        expect(screen.queryByTestId("create-issue-jira-form")).toBeTruthy();
       });
-      expect(screen.queryByTestId("create-issue-jira-form")).toBeNull();
+      expect(screen.queryByTestId("create-issue-dialog")).toBeNull();
 
-      const dialog = screen.getByTestId("create-issue-dialog");
+      const dialog = screen.getByTestId("create-issue-jira-form");
       const defaults = JSON.parse(
         dialog.getAttribute("data-default-values") ?? "{}",
       );
