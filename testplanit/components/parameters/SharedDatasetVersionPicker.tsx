@@ -148,7 +148,11 @@ export function SharedDatasetVersionPicker({
           >
             <span>{t("historicalItemLabel", { version: v.version })}</span>
             {v.createdBy?.name ? (
-              <span className="text-xs text-muted-foreground ml-2">
+              // `text-muted-foreground` is too close to the SelectItem
+              // hover background in some themes (especially when the
+              // accent-tinted hover state lifts the row). `text-foreground/70`
+              // gives clear hierarchy but stays legible across themes.
+              <span className="text-sm text-foreground/70 ml-2">
                 {t("historicalItemBy", { name: v.createdBy.name })}
               </span>
             ) : null}
