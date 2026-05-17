@@ -234,12 +234,19 @@ export async function buildIterationIssueBody(
     content.push({ type: "table", content: rows });
   }
 
-  // Deep link
+  // Deep link. INT-05 embeds this URL in an external tracker's issue
+  // body (Jira/GitHub/Azure DevOps), so a relative path can't resolve —
+  // the link MUST be absolute. NEXTAUTH_URL is the canonical app origin.
+  const origin =
+    typeof process.env.NEXTAUTH_URL === "string"
+      ? process.env.NEXTAUTH_URL
+      : null;
   const href = buildIterationDeepLink({
     projectId,
     runId,
     iterationNumber,
     repositoryCaseId,
+    origin,
   });
   content.push(
     paragraph(

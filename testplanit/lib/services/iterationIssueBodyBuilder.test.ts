@@ -190,35 +190,72 @@ describe("buildIterationIssueBody", () => {
     expect(flat).toContain("admin");
   });
 
-  it("deep link in trailing paragraph matches buildIterationDeepLink output", async () => {
-    const client = makeClient({
-      iteration: makeIterationFixture(),
-      totalIterations: 5,
-    });
+  it("deep link in trailing paragraph is absolute (prepends NEXTAUTH_URL origin) and uses the RepositoryCases.id", async () => {
+    // INT-05 ships the URL inside an external tracker (Jira/GitHub/ADO)
+    // issue body, so a relative path can't resolve. The body builder
+    // MUST prepend `process.env.NEXTAUTH_URL` so the link is clickable
+    // from any tracker UI.
+    vi.stubEnv("NEXTAUTH_URL", "https://testplanit.example.com");
+    try {
+      const client = makeClient({
+        iteration: makeIterationFixture(),
+        totalIterations: 5,
+      });
 
-    const result = await buildIterationIssueBody({
-      iterationId: 999,
-      viewerCanReadSensitive: true,
-      client,
-    });
+      const result = await buildIterationIssueBody({
+        iterationId: 999,
+        viewerCanReadSensitive: true,
+        client,
+      });
 
-    const doc = result.description as any;
-    // Final block is a paragraph with a link mark
-    const lastBlock = doc.content[doc.content.length - 1];
-    expect(lastBlock.type).toBe("paragraph");
-    const linkNode = lastBlock.content.find(
-      (c: any) => c.marks && c.marks.some((m: any) => m.type === "link")
-    );
-    expect(linkNode).toBeDefined();
-    const linkMark = linkNode.marks.find((m: any) => m.type === "link");
-    // selectedCase MUST be the RepositoryCases.id (5191), NOT the
-    // TestRunCases.id (77) — the run drill-down's `?selectedCase=` query
-    // is matched against `data-row-id` which is set from
-    // RepositoryCases.id. Distinct values here prove the right field is
-    // threaded through.
-    expect(linkMark.attrs.href).toBe(
-      "/projects/runs/7/42?iteration=3&selectedCase=5191"
-    );
+      const doc = result.description as any;
+      // Final block is a paragraph with a link mark
+      const lastBlock = doc.content[doc.content.length - 1];
+      expect(lastBlock.type).toBe("paragraph");
+      const linkNode = lastBlock.content.find(
+        (c: any) => c.marks && c.marks.some((m: any) => m.type === "link")
+      );
+      expect(linkNode).toBeDefined();
+      const linkMark = linkNode.marks.find((m: any) => m.type === "link");
+      // selectedCase MUST be the RepositoryCases.id (5191), NOT the
+      // TestRunCases.id (77) — the run drill-down's `?selectedCase=`
+      // query is matched against `data-row-id` which is set from
+      // RepositoryCases.id. Distinct values here prove the right field
+      // is threaded through.
+      expect(linkMark.attrs.href).toBe(
+        "https://testplanit.example.com/projects/runs/7/42?iteration=3&selectedCase=5191"
+      );
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("deep link falls back to relative path when NEXTAUTH_URL is unset", async () => {
+    vi.stubEnv("NEXTAUTH_URL", "");
+    try {
+      const client = makeClient({
+        iteration: makeIterationFixture(),
+        totalIterations: 5,
+      });
+
+      const result = await buildIterationIssueBody({
+        iterationId: 999,
+        viewerCanReadSensitive: true,
+        client,
+      });
+
+      const doc = result.description as any;
+      const lastBlock = doc.content[doc.content.length - 1];
+      const linkNode = lastBlock.content.find(
+        (c: any) => c.marks && c.marks.some((m: any) => m.type === "link")
+      );
+      const linkMark = linkNode.marks.find((m: any) => m.type === "link");
+      expect(linkMark.attrs.href).toBe(
+        "/projects/runs/7/42?iteration=3&selectedCase=5191"
+      );
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it("empty parameter value renders as single space, not empty string", async () => {

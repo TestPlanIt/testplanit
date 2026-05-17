@@ -40,4 +40,65 @@ describe("buildIterationDeepLink", () => {
       "/projects/runs/999999/1000000?iteration=1&selectedCase=2000000"
     );
   });
+
+  it("prepends an absolute origin when one is supplied (external-tracker case)", () => {
+    const url = buildIterationDeepLink({
+      projectId: 7,
+      runId: 42,
+      iterationNumber: 3,
+      repositoryCaseId: 199,
+      origin: "https://testplanit.example.com",
+    });
+    expect(url).toBe(
+      "https://testplanit.example.com/projects/runs/7/42?iteration=3&selectedCase=199"
+    );
+  });
+
+  it("strips a single trailing slash from the origin so callers can pass NEXTAUTH_URL verbatim", () => {
+    const url = buildIterationDeepLink({
+      projectId: 7,
+      runId: 42,
+      iterationNumber: 3,
+      repositoryCaseId: 199,
+      origin: "https://testplanit.example.com/",
+    });
+    expect(url).toBe(
+      "https://testplanit.example.com/projects/runs/7/42?iteration=3&selectedCase=199"
+    );
+  });
+
+  it("strips multiple trailing slashes from the origin", () => {
+    const url = buildIterationDeepLink({
+      projectId: 7,
+      runId: 42,
+      iterationNumber: 3,
+      repositoryCaseId: 199,
+      origin: "https://testplanit.example.com////",
+    });
+    expect(url).toBe(
+      "https://testplanit.example.com/projects/runs/7/42?iteration=3&selectedCase=199"
+    );
+  });
+
+  it("treats an empty-string origin as 'no origin' (relative path)", () => {
+    const url = buildIterationDeepLink({
+      projectId: 7,
+      runId: 42,
+      iterationNumber: 3,
+      repositoryCaseId: 199,
+      origin: "",
+    });
+    expect(url).toBe("/projects/runs/7/42?iteration=3&selectedCase=199");
+  });
+
+  it("treats null origin as 'no origin' (relative path)", () => {
+    const url = buildIterationDeepLink({
+      projectId: 7,
+      runId: 42,
+      iterationNumber: 3,
+      repositoryCaseId: 199,
+      origin: null,
+    });
+    expect(url).toBe("/projects/runs/7/42?iteration=3&selectedCase=199");
+  });
 });

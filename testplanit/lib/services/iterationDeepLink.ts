@@ -26,6 +26,22 @@ export interface BuildIterationDeepLinkInput {
    * a TestRunCases.id here silently fails to preselect the row.
    */
   repositoryCaseId: number;
+  /**
+   * Optional origin (scheme + host + optional port, no trailing slash).
+   * When provided, the returned URL is absolute — required for any
+   * consumer that embeds the link in an external surface (Jira/GitHub/
+   * Azure DevOps issue body, email, webhook payload) where a relative
+   * path can't resolve.
+   *
+   * In-app consumers (matrix popover, TestRunLinkDisplay, report-builder
+   * preset) should omit `origin` to keep the URL relative — the browser
+   * resolves it against the current location.
+   *
+   * The origin is normalized: a trailing slash is stripped so callers
+   * can pass `process.env.NEXTAUTH_URL` verbatim without worrying about
+   * the deployment's host format.
+   */
+  origin?: string | null;
 }
 
 export function buildIterationDeepLink(
@@ -34,5 +50,10 @@ export function buildIterationDeepLink(
   const params = new URLSearchParams();
   params.set("iteration", String(input.iterationNumber));
   params.set("selectedCase", String(input.repositoryCaseId));
-  return `/projects/runs/${input.projectId}/${input.runId}?${params.toString()}`;
+  const path = `/projects/runs/${input.projectId}/${input.runId}?${params.toString()}`;
+  const origin =
+    typeof input.origin === "string" && input.origin.length > 0
+      ? input.origin.replace(/\/+$/, "")
+      : "";
+  return origin ? `${origin}${path}` : path;
 }
