@@ -18,8 +18,14 @@ export interface BuildIterationDeepLinkInput {
   runId: number;
   /** 1-based iteration position (matches `iteration.rowIndex + 1`). */
   iterationNumber: number;
-  /** The TestRunCases.id — drives the case-row preselection on landing. */
-  testRunCaseId: number;
+  /**
+   * The RepositoryCases.id — drives the case-row preselection on landing.
+   * The case table on the run drill-down sets `data-row-id` from
+   * `row.original.id` (the RepositoryCases.id), and
+   * `TestCasesSection.tsx` matches `?selectedCase=` against that. Passing
+   * a TestRunCases.id here silently fails to preselect the row.
+   */
+  repositoryCaseId: number;
 }
 
 export function buildIterationDeepLink(
@@ -27,6 +33,6 @@ export function buildIterationDeepLink(
 ): string {
   const params = new URLSearchParams();
   params.set("iteration", String(input.iterationNumber));
-  params.set("selectedCase", String(input.testRunCaseId));
+  params.set("selectedCase", String(input.repositoryCaseId));
   return `/projects/runs/${input.projectId}/${input.runId}?${params.toString()}`;
 }

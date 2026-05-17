@@ -46,6 +46,7 @@ function makeIterationFixture(overrides: Partial<any> = {}) {
       id: 77,
       testRunId: 42,
       repositoryCase: {
+        id: 5191,
         name: "Login with bad password",
       },
       testRun: {
@@ -86,7 +87,7 @@ describe("buildIterationIssueBody", () => {
         testRunCase: {
           id: 77,
           testRunId: 42,
-          repositoryCase: { name: "Login flow" },
+          repositoryCase: { id: 5192, name: "Login flow" },
           testRun: { id: 42, projectId: 7 },
           dataSetSnapshot: null,
         },
@@ -210,8 +211,13 @@ describe("buildIterationIssueBody", () => {
     );
     expect(linkNode).toBeDefined();
     const linkMark = linkNode.marks.find((m: any) => m.type === "link");
+    // selectedCase MUST be the RepositoryCases.id (5191), NOT the
+    // TestRunCases.id (77) — the run drill-down's `?selectedCase=` query
+    // is matched against `data-row-id` which is set from
+    // RepositoryCases.id. Distinct values here prove the right field is
+    // threaded through.
     expect(linkMark.attrs.href).toBe(
-      "/projects/runs/7/42?iteration=3&selectedCase=77"
+      "/projects/runs/7/42?iteration=3&selectedCase=5191"
     );
   });
 

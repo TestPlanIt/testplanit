@@ -142,7 +142,7 @@ export async function buildIterationIssueBody(
         select: {
           id: true,
           testRunId: true,
-          repositoryCase: { select: { name: true } },
+          repositoryCase: { select: { id: true, name: true } },
           testRun: { select: { id: true, projectId: true } },
           dataSetSnapshot: { select: { parametersJson: true } },
         },
@@ -161,6 +161,11 @@ export async function buildIterationIssueBody(
   const projectId: number = trc?.testRun?.projectId ?? 0;
   const runId: number = trc?.testRun?.id ?? 0;
   const testRunCaseId: number = trc?.id ?? 0;
+  // The drill-down route's `?selectedCase=` param is consumed as the
+  // RepositoryCases.id (matched against `data-row-id` on each case row);
+  // the TestRunCases.id above is still used for the iteration `count`
+  // query because that's the column it's the FK against.
+  const repositoryCaseId: number = trc?.repositoryCase?.id ?? 0;
   const iterationNumber = iteration.rowIndex + 1;
   const isCiExtended: boolean = iteration.ciExtended === true;
 
@@ -234,7 +239,7 @@ export async function buildIterationIssueBody(
     projectId,
     runId,
     iterationNumber,
-    testRunCaseId,
+    repositoryCaseId,
   });
   content.push(
     paragraph(
