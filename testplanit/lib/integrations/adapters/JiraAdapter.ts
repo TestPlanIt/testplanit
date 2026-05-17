@@ -1296,6 +1296,47 @@ export class JiraAdapter extends BaseAdapter {
           type: "hardBreak",
         };
 
+      case "table":
+        // ADF tables require the `attrs` block + tableRow children. Our
+        // TipTap source (e.g. iterationIssueBodyBuilder) already shapes
+        // cells as `tableCell{ content: [paragraph{ text }] }` which is
+        // valid ADF — we just need to pass the structure through with
+        // the right attrs envelope. Without this case, the default
+        // fall-through wraps the table as a paragraph and Atlassian
+        // rejects the doc with HTTP 400 "INVALID_INPUT".
+        return {
+          type: "table",
+          attrs: {
+            isNumberColumnEnabled: false,
+            layout: "default",
+          },
+          content: (node.content || [])
+            .map((item: any) => this.convertTiptapNodeToAdf(item))
+            .filter(Boolean),
+        };
+
+      case "tableRow":
+        return {
+          type: "tableRow",
+          content: (node.content || [])
+            .map((item: any) => this.convertTiptapNodeToAdf(item))
+            .filter(Boolean),
+        };
+
+      case "tableHeader":
+      case "tableCell":
+        return {
+          type: node.type,
+          // attrs intentionally omitted — Atlassian defaults colspan/
+          // rowspan/colwidth/background to sensible values for new docs.
+          // Cells in our source always contain a paragraph (see
+          // iterationIssueBodyBuilder.tableCell/.tableHeader helpers),
+          // so the conversion is a straight recursion.
+          content: (node.content || [])
+            .map((item: any) => this.convertTiptapNodeToAdf(item))
+            .filter(Boolean),
+        };
+
       case "text":
         // Text nodes are handled by convertTiptapMarks
         return null;

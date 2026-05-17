@@ -303,6 +303,121 @@ describe("JiraAdapter", () => {
       expect(body.fields.description.version).toBe(1);
     });
 
+    it("converts a TipTap doc with a table to ADF table nodes (INT-05 body)", async () => {
+      // The INT-05 issue-body builder ships a TipTap doc whose middle
+      // block is a table (parameter name → value rows). Atlassian's ADF
+      // schema requires the table to be preserved as `type: "table"`
+      // with `tableRow` and `tableCell`/`tableHeader` children — wrapping
+      // it in a paragraph (the previous default-case fallback) produced
+      // an HTTP 400 "INVALID_INPUT" from Jira because paragraph cannot
+      // contain non-text children.
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: "10001",
+            key: "TEST-123",
+            self: "https://test.atlassian.net/rest/api/3/issue/10001",
+          }),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockJiraIssue),
+      });
+
+      const tiptapDescription = {
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "Lead paragraph" }],
+          },
+          {
+            type: "table",
+            content: [
+              {
+                type: "tableRow",
+                content: [
+                  {
+                    type: "tableHeader",
+                    content: [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "text", text: "Parameter" }],
+                      },
+                    ],
+                  },
+                  {
+                    type: "tableHeader",
+                    content: [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "text", text: "Value" }],
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                type: "tableRow",
+                content: [
+                  {
+                    type: "tableCell",
+                    content: [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "text", text: "username" }],
+                      },
+                    ],
+                  },
+                  {
+                    type: "tableCell",
+                    content: [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "text", text: "alice" }],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      await adapter.createIssue({
+        title: "Iteration failed",
+        description: tiptapDescription as any,
+        projectId: "TEST",
+      });
+
+      const createCallIndex = mockFetch.mock.calls.findIndex(
+        (call: any) => call[1]?.method === "POST"
+      );
+      const body = JSON.parse(
+        mockFetch.mock.calls[createCallIndex][1].body
+      );
+
+      const adfTable = body.fields.description.content.find(
+        (n: any) => n.type === "table"
+      );
+      expect(adfTable).toBeDefined();
+      expect(adfTable.attrs).toMatchObject({
+        isNumberColumnEnabled: false,
+        layout: "default",
+      });
+      expect(adfTable.content).toHaveLength(2); // header row + 1 data row
+      expect(adfTable.content[0].type).toBe("tableRow");
+      expect(adfTable.content[0].content[0].type).toBe("tableHeader");
+      expect(adfTable.content[1].content[0].type).toBe("tableCell");
+      // Cell content must remain a paragraph (Atlassian rejects raw
+      // text in cells; the schema is row → cell → paragraph → text).
+      expect(adfTable.content[1].content[0].content[0].type).toBe(
+        "paragraph"
+      );
+    });
+
     it("should handle HTML description", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
