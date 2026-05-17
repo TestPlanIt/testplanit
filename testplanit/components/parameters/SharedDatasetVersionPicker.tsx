@@ -148,13 +148,14 @@ export function SharedDatasetVersionPicker({
           >
             <span>{t("historicalItemLabel", { version: v.version })}</span>
             {v.createdBy?.name ? (
-              // No explicit text color — `opacity-70` inherits the
-              // parent's text color so the subtext follows the
-              // SelectItem's focus state (`text-accent-foreground` when
-              // highlighted/hovered, `text-foreground` otherwise).
-              // The earlier hardcoded muted token stayed at the wrong
-              // color on the highlighted row across themes.
-              <span className="text-sm opacity-70 ml-2">
+              // No color override and no opacity dim — both compose
+              // poorly against the SelectItem's focus state (the
+              // highlighted row flips to `bg-accent` + `text-accent-foreground`,
+              // a light-bg / dark-text pair in dark theme; mixing dark
+              // text with the light bg via opacity produces a mid-gray
+              // that drops below readable contrast). Visual hierarchy
+              // for the subtext comes from font size + `ml-2` spacing.
+              <span className="text-sm ml-2">
                 {t("historicalItemBy", { name: v.createdBy.name })}
               </span>
             ) : null}
