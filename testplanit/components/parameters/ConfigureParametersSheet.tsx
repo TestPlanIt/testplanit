@@ -17,6 +17,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { SquareStack } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { createContext, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -115,7 +116,10 @@ export function ConfigureParametersSheet({
           data-testid="configure-parameters-sheet"
         >
           <SheetHeader className="px-6 pt-6 pb-4 border-b">
-            <SheetTitle>{t("sheetTitle")}</SheetTitle>
+            <SheetTitle className="flex items-center gap-2">
+              <SquareStack className="h-5 w-5" aria-hidden />
+              {t("sheetTitle")}
+            </SheetTitle>
             <SheetDescription>{t("sheetDescription")}</SheetDescription>
           </SheetHeader>
 
