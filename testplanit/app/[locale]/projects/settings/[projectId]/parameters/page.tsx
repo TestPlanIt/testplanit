@@ -18,7 +18,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { useFindFirstProjects } from "~/lib/hooks";
-import { useRouter } from "~/lib/navigation";
+import { usePathname, useRouter } from "~/lib/navigation";
 import { DatasetCreateDialog } from "../datasets/dataset-create-dialog";
 import { DatasetsList } from "../datasets/datasets-list";
 import { JunitIterationPropertyForm } from "../junit/junit-iteration-property-form";
@@ -55,6 +55,7 @@ function parseTab(raw: string | null): ParametersTab {
 export default function ProjectParametersSettingsPage() {
   const params = useParams();
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const projectId = parseInt(params.projectId as string);
   const {
@@ -85,9 +86,9 @@ export default function ProjectParametersSettingsPage() {
         sp.set("tab", nextTab);
       }
       const qs = sp.toString();
-      router.replace(qs ? `?${qs}` : "?", { scroll: false });
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
-    [router, searchParams],
+    [router, pathname, searchParams],
   );
 
   const { data: project, isLoading: projectLoading } = useFindFirstProjects(
