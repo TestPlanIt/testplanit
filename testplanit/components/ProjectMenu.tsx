@@ -20,8 +20,6 @@ import {
   Bug as IssuesIcon,
   ChartNoAxesCombined,
   Compass as SessionsIcon,
-  Database,
-  FileCode2,
   FolderKanban,
   Home,
   Layers,
@@ -33,6 +31,7 @@ import {
   Settings,
   Share2,
   Sparkles,
+  SquareStack,
   Tags as TagsIcon,
   Webhook,
 } from "lucide-react";
@@ -277,20 +276,6 @@ export default function ProjectsMenu({
             section: "settings" as MenuSection,
           },
           {
-            icon: FileCode2,
-            label: t("admin.menu.junit"),
-            path: "settings/junit",
-            id: "settings-junit-link",
-            section: "settings" as MenuSection,
-          },
-          {
-            icon: Database,
-            label: t("admin.menu.datasets"),
-            path: "settings/datasets",
-            id: "settings-datasets-link",
-            section: "settings" as MenuSection,
-          },
-          {
             icon: Sparkles,
             label: t("admin.menu.llm"),
             path: "settings/ai-models",
@@ -302,6 +287,13 @@ export default function ProjectsMenu({
             label: t("admin.menu.quickScript"),
             path: "settings/quickscript",
             id: "settings-quickscript-link",
+            section: "settings" as MenuSection,
+          },
+          {
+            icon: SquareStack,
+            label: t("admin.menu.testCaseParameters"),
+            path: "settings/parameters",
+            id: "settings-test-case-parameters-link",
             section: "settings" as MenuSection,
           },
           {

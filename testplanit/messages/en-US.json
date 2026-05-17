@@ -1629,6 +1629,12 @@
         "title": "Manage Shares",
         "description": "View and manage all share links for this project"
       },
+      "parameters": {
+        "title": "Test Case Parameters",
+        "description": "Project-wide configuration for parameterized test cases — shared datasets and JUnit iteration mapping.",
+        "tabDatasets": "Shared Datasets",
+        "tabJunit": "JUnit Mapping"
+      },
       "datasets": {
         "metaTitle": "Shared Datasets",
         "title": "Shared Datasets",
@@ -3176,6 +3182,7 @@
       "webhooks": "Webhooks",
       "junit": "JUnit",
       "datasets": "Shared Datasets",
+      "testCaseParameters": "Test Case Parameters",
       "llm": "AI Models",
       "prompts": "Prompt Configs",
       "exportTemplates": "Export Templates",

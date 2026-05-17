@@ -1,128 +1,25 @@
 "use client";
 
-import { Loading } from "@/components/Loading";
-import { ProjectIcon } from "@/components/ProjectIcon";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { useTranslations } from "next-intl";
-import { notFound, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect } from "react";
 
-import { useRequireAuth } from "~/hooks/useRequireAuth";
-import { useFindFirstProjects } from "~/lib/hooks";
-import { JunitIterationPropertyForm } from "./junit-iteration-property-form";
+import { Loading } from "@/components/Loading";
+import { useRouter } from "~/lib/navigation";
 
 /**
- * Project-scoped JUnit settings page (sibling to /webhooks, /integrations).
- *
- * Houses the iteration-property-name list — the set of `<property>` names
- * the import path (INT-02) reads on each `<testcase>` to find the
- * iteration index. Future JUnit-related project settings (e.g., custom
- * status mapping, format-specific overrides) can land here as additional
- * sections without restructuring the page.
- *
- * Access: ADMIN always allowed; PROJECTADMIN must also be assigned to
- * THIS specific project. The previous gate accepted any PROJECTADMIN
- * across projects, allowing a PROJECTADMIN for project A to view
- * project B's configured property names (mild info disclosure — see
- * WR-04). The PUT endpoint
- * (`/api/projects/[id]/junit-iteration-property-names`) re-enforces
- * the same per-project scope.
+ * Legacy route — JUnit settings were merged into the unified "Test Case
+ * Parameters" page at /settings/[projectId]/parameters. This shim
+ * redirects to the new path with the JUnit Mapping tab preselected so
+ * existing bookmarks keep working.
  */
-export default function ProjectJunitSettingsPage() {
+export default function LegacyJunitRedirect() {
+  const router = useRouter();
   const params = useParams();
-  const projectId = parseInt(params.projectId as string);
-  const {
-    session,
-    isLoading: isAuthLoading,
-    isAuthenticated,
-  } = useRequireAuth();
-  const tCommon = useTranslations("common");
-  const tAdminMenu = useTranslations("admin.menu");
-
-  const { data: project, isLoading: projectLoading } = useFindFirstProjects(
-    {
-      where: { id: projectId },
-      select: {
-        id: true,
-        name: true,
-        iconUrl: true,
-        junitIterationPropertyNames: true,
-        assignedUsers: {
-          where: { user: { id: session?.user?.id || "" } },
-          select: { user: { select: { access: true } } },
-        },
-      },
-    },
-    { enabled: isAuthenticated }
-  );
+  const projectId = params.projectId as string;
 
   useEffect(() => {
-    if (!projectLoading && project && session?.user) {
-      // WR-04: mirror the PUT endpoint's per-project scope. The project
-      // query above filters `assignedUsers` to the current user, so
-      // `assignedUsers.length > 0` proves the caller is assigned to
-      // this specific project. ADMIN is unconditional.
-      const isAssignedToThisProject =
-        Array.isArray(project.assignedUsers) &&
-        project.assignedUsers.length > 0;
-      const hasAccess =
-        session.user.access === "ADMIN" ||
-        (session.user.access === "PROJECTADMIN" && isAssignedToThisProject);
-      if (!hasAccess) notFound();
-    } else if (!projectLoading && !project && session?.user) {
-      notFound();
-    }
-  }, [project, projectLoading, session]);
+    router.replace(`/projects/settings/${projectId}/parameters?tab=junit`);
+  }, [router, projectId]);
 
-  if (isAuthLoading || projectLoading) {
-    return <Loading />;
-  }
-  if (!project) {
-    return (
-      <Card className="flex flex-col w-full min-w-[400px] h-full">
-        <CardContent className="flex flex-col items-center justify-center h-full">
-          <h2 className="text-2xl font-semibold mb-2">
-            {tCommon("errors.projectNotFound")}
-          </h2>
-          <p className="text-muted-foreground">
-            {tCommon("errors.projectNotFoundDescription")}
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <main>
-      <Card>
-        <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
-            <CardTitle>
-              <span>{tAdminMenu("junit")}</span>
-            </CardTitle>
-          </div>
-          <CardDescription className="uppercase">
-            <span className="flex items-center gap-2">
-              <ProjectIcon iconUrl={project.iconUrl} />
-              {project.name}
-            </span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <JunitIterationPropertyForm
-            projectId={projectId}
-            initialNames={
-              (project.junitIterationPropertyNames as readonly string[]) ?? []
-            }
-          />
-        </CardContent>
-      </Card>
-    </main>
-  );
+  return <Loading />;
 }
