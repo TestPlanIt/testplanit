@@ -1680,7 +1680,7 @@
           "error": "Nie można usunąć zestawu danych"
         },
         "deleteSuccess": "Usunięto „{name}”",
-        "deleteSuccessWithAssignments": "Usunięto „{name}” i nieprzypisano {count, plural, =1 {# przypadek} other {# przypadki}}",
+        "deleteSuccessWithAssignments": "Usunięto „{name}” i nieprzypisano {count, plural, =1 {# przypadek} other {# przypadków}}",
         "editor": {
           "back": "Powrót do zestawów danych",
           "loadError": "Nie można załadować tego zestawu danych",

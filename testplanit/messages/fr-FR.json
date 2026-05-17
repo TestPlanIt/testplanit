@@ -7277,7 +7277,7 @@
     "assignSharedSection1": "1. Choisir l'ensemble de données",
     "assignSharedSection2": "2. Version à broches",
     "assignSharedSection3": "3. Associer les colonnes aux paramètres",
-    "assignSharedDatasetPlaceholder": "Sélectionnez un ensemble de données partagé…",
+    "assignSharedDatasetPlaceholder": "Sélectionnez un jeu de données partagé…",
     "assignSharedNoDatasets": "Aucun jeu de données partagé n'existe encore dans ce projet. Veuillez en créer un dans les paramètres du projet avant de l'attribuer.",
     "assignSharedCreateDataset": "Gérer les ensembles de données partagés",
     "assignSharedPinCurrent": "Épingler à la version actuelle (v{version})",
