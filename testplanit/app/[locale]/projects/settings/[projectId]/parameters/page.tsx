@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Plus } from "lucide-react";
+import { CirclePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -115,12 +115,13 @@ export default function ProjectParametersSettingsPage() {
               <span>{tDatasets("title")}</span>
             </CardTitle>
             <Button
-              size="sm"
               onClick={() => setCreateOpen(true)}
               data-testid="dataset-create-button"
             >
-              <Plus className="h-4 w-4" />
-              {tDatasets("newButton")}
+              <CirclePlus className="w-4" />
+              <span className="hidden md:inline">
+                {tDatasets("newButton")}
+              </span>
             </Button>
           </div>
           <p className="text-sm text-muted-foreground pt-2">

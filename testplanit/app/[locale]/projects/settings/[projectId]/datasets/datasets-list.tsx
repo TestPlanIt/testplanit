@@ -1,13 +1,9 @@
 "use client";
 
-import { DateFormatter } from "@/components/DateFormatter";
+import { DateTimeDisplay } from "@/components/search/DateTimeDisplay";
+import { CasesListDisplay } from "@/components/tables/CaseListDisplay";
+import { UserNameCell } from "@/components/tables/UserNameCell";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -22,13 +18,8 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import {
-  Database,
-  Loader2,
-  MoreHorizontal,
-  PencilLine,
-  Trash2,
-} from "lucide-react";
+import { BookLock, Database, Loader2, SquarePen, Trash2 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useFindManyDataSet } from "~/lib/hooks";
@@ -48,9 +39,9 @@ interface DatasetRow {
     rowCount: number;
     parametersJson: unknown;
     createdAt: Date | string;
-    createdBy: { id: string; name: string | null; email: string } | null;
+    createdBy: { id: string } | null;
   }>;
-  createdBy: { id: string; name: string | null; email: string } | null;
+  createdBy: { id: string } | null;
   _count: { sharedAssignments: number };
 }
 
@@ -61,6 +52,11 @@ function getColumnsCount(parametersJson: unknown): number | null {
 
 export function DatasetsList({ projectId }: DatasetsListProps) {
   const t = useTranslations("projects.settings.datasets");
+  const { data: session } = useSession();
+  const dateTimeFormat = session?.user?.preferences?.dateFormat
+    ? `${session.user.preferences.dateFormat} ${session.user.preferences.timeFormat || "HH:mm"}`
+    : undefined;
+  const timezone = session?.user?.preferences?.timezone || "Etc/UTC";
 
   const [pendingDelete, setPendingDelete] = useState<{
     id: number;
@@ -80,7 +76,7 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
       name: true,
       description: true,
       version: true,
-      createdBy: { select: { id: true, name: true, email: true } },
+      createdBy: { select: { id: true } },
       _count: { select: { sharedAssignments: true } },
       versions: {
         take: 1,
@@ -89,7 +85,7 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
           rowCount: true,
           parametersJson: true,
           createdAt: true,
-          createdBy: { select: { id: true, name: true, email: true } },
+          createdBy: { select: { id: true } },
         },
       },
     },
@@ -100,13 +96,16 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
       id: "name",
       header: () => t("columns.name"),
       cell: ({ row }) => (
-        <Link
-          href={`/projects/settings/${projectId}/datasets/${row.original.id}`}
-          className="font-medium text-primary hover:underline"
+        <span
+          className="flex items-center gap-2 font-medium"
           data-testid={`dataset-list-name-${row.original.id}`}
         >
-          {row.original.name}
-        </Link>
+          <BookLock
+            className="h-4 w-4 shrink-0 text-muted-foreground"
+            aria-hidden
+          />
+          <span>{row.original.name}</span>
+        </span>
       ),
     },
     {
@@ -151,9 +150,15 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
         if (!latest)
           return <span className="text-muted-foreground">{"—"}</span>;
         return (
-          <span className="text-sm text-muted-foreground">
-            <DateFormatter date={new Date(latest.createdAt as string)} />
-          </span>
+          <div className="whitespace-nowrap">
+            <DateTimeDisplay
+              date={new Date(latest.createdAt as string)}
+              showTime
+              formatString={dateTimeFormat}
+              timezone={timezone}
+              className="text-sm"
+            />
+          </div>
         );
       },
     },
@@ -162,66 +167,62 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
       header: () => t("columns.owner"),
       cell: ({ row }) => {
         const latest = row.original.versions[0];
-        const editor =
-          latest?.createdBy ?? row.original.createdBy ?? null;
-        return (
-          <span className="text-sm text-muted-foreground">
-            {editor?.name ?? editor?.email ?? "—"}
-          </span>
-        );
+        const editorId =
+          latest?.createdBy?.id ?? row.original.createdBy?.id ?? null;
+        if (!editorId)
+          return <span className="text-muted-foreground">{"—"}</span>;
+        return <UserNameCell userId={editorId} hideLink />;
       },
     },
     {
       id: "assignments",
       header: () => t("columns.assignments"),
       cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">
-          {t("assignmentsCount", {
-            count: row.original._count.sharedAssignments,
-          })}
-        </span>
+        <div className="text-center">
+          <CasesListDisplay
+            count={row.original._count.sharedAssignments}
+            filter={{
+              sharedDataSetAssignment: {
+                is: { sharedDataSetId: row.original.id },
+              },
+            }}
+          />
+        </div>
       ),
     },
     {
       id: "actions",
-      header: () => <span className="sr-only">{t("columns.actions")}</span>,
+      header: () => t("columns.actions"),
       cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={t("actionsMenuLabel")}
-              data-testid={`dataset-list-actions-${row.original.id}`}
+        <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
+          <Button
+            variant="ghost"
+            className="px-2 py-1 h-auto"
+            asChild
+          >
+            <Link
+              href={`/projects/settings/${projectId}/datasets/${row.original.id}`}
+              aria-label={t("actionOpen")}
+              data-testid={`dataset-list-open-${row.original.id}`}
             >
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-              <Link
-                href={`/projects/settings/${projectId}/datasets/${row.original.id}`}
-                data-testid={`dataset-list-open-${row.original.id}`}
-              >
-                <PencilLine className="h-4 w-4" />
-                {t("actionOpen")}
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={() =>
-                setPendingDelete({
-                  id: row.original.id,
-                  name: row.original.name,
-                })
-              }
-              data-testid={`dataset-list-delete-${row.original.id}`}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-              {t("actionDelete")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <SquarePen className="h-5 w-5" />
+            </Link>
+          </Button>
+          <Button
+            variant="destructive"
+            className="px-2 py-1 h-auto"
+            onClick={() =>
+              setPendingDelete({
+                id: row.original.id,
+                name: row.original.name,
+              })
+            }
+            aria-label={t("actionDelete")}
+            data-testid={`dataset-list-delete-${row.original.id}`}
+          >
+            <Trash2 className="h-5 w-5" />
+          </Button>
+        </div>
       ),
     },
   ];
@@ -276,7 +277,7 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
   return (
     <>
       <div data-testid="datasets-list">
-        <Table>
+        <Table className="w-auto">
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
               <TableRow key={hg.id}>
