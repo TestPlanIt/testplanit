@@ -67,9 +67,7 @@ function setupDefaults({
   });
 
   mockUseSession.mockReturnValue({
-    data: authenticated
-      ? { user: { id: "user-1", access: "USER" } }
-      : null,
+    data: authenticated ? { user: { id: "user-1", access: "USER" } } : null,
     status: authenticated ? "authenticated" : "unauthenticated",
   });
 
@@ -119,7 +117,7 @@ describe("ReviewInboxButton", () => {
     render(<ReviewInboxButton />);
     expect(screen.getByTestId("review-inbox-button")).toBeInTheDocument();
     expect(
-      screen.queryByTestId("review-inbox-count-badge"),
+      screen.queryByTestId("review-inbox-count-badge")
     ).not.toBeInTheDocument();
   });
 
@@ -182,7 +180,7 @@ describe("ReviewInboxButton", () => {
         expect.objectContaining({
           assigneeRoleId: { in: expect.arrayContaining([7, 12, 18]) },
         }),
-      ]),
+      ])
     );
   });
 

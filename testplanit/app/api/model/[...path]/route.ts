@@ -989,7 +989,8 @@ async function innerHandler(
         const entityId =
           (typeof data?.id === "number" || typeof data?.id === "string"
             ? data.id
-            : null) ?? extractEntityIdFromBody(requestBody, parsedPath.operation);
+            : null) ??
+          extractEntityIdFromBody(requestBody, parsedPath.operation);
 
         if (entityId !== null) {
           // Refetch the post-mutation row so we have the FULL set of fields

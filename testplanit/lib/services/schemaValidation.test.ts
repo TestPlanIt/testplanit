@@ -57,7 +57,7 @@ import { isAlreadyPendingError } from "~/lib/utils/errors";
 // scope its soft-deletes to this run only (and so concurrent runs against the
 // same DB never collide). String suffix because Projects.name is `@unique`.
 const TEST_RUN_ID = `phase1-schema-validation-${Date.now()}-${Math.floor(
-  Math.random() * 1_000_000,
+  Math.random() * 1_000_000
 )}`;
 
 // Synthetic polymorphic entityIds — never need to FK-resolve (D-14 polymorphic
@@ -82,15 +82,13 @@ beforeAll(async () => {
   // 1. Confirm the partial unique index is present. If setup-extensions.ts
   //    has not been run, the #16 race test would silently pass for the wrong
   //    reason (both inserts would succeed). Fail loudly here instead.
-  const indexes = await prisma.$queryRawUnsafe<
-    Array<{ indexname: string }>
-  >(
-    `SELECT indexname FROM pg_indexes WHERE indexname = 'review_request_one_pending_per_entity'`,
+  const indexes = await prisma.$queryRawUnsafe<Array<{ indexname: string }>>(
+    `SELECT indexname FROM pg_indexes WHERE indexname = 'review_request_one_pending_per_entity'`
   );
   if (indexes.length === 0) {
     throw new Error(
       "Partial unique index review_request_one_pending_per_entity not present on the test DB. " +
-        "Run `pnpm tsx prisma/setup-extensions.ts` before this test suite.",
+        "Run `pnpm tsx prisma/setup-extensions.ts` before this test suite."
     );
   }
 
@@ -103,7 +101,7 @@ beforeAll(async () => {
   });
   if (!fieldIcon || !color || !role) {
     throw new Error(
-      "Missing seed data: FieldIcon / Color / Roles must be seeded before this test suite (run `pnpm prisma db seed`).",
+      "Missing seed data: FieldIcon / Color / Roles must be seeded before this test suite (run `pnpm prisma db seed`)."
     );
   }
 
@@ -157,7 +155,7 @@ beforeAll(async () => {
   });
   if (workflows.length < 2) {
     throw new Error(
-      "Need at least two Workflows rows in the DB for fromState / toState; run `pnpm prisma db seed`.",
+      "Need at least two Workflows rows in the DB for fromState / toState; run `pnpm prisma db seed`."
     );
   }
   fromStateId = workflows[0].id;
@@ -236,7 +234,7 @@ describe("ReviewRequest XOR assignee @@validate (live-DB)", () => {
           fromStateId,
           toStateId,
         },
-      }),
+      })
     ).rejects.toThrow(/Exactly one of/i);
   });
 
@@ -258,7 +256,7 @@ describe("ReviewRequest XOR assignee @@validate (live-DB)", () => {
           fromStateId,
           toStateId,
         },
-      }),
+      })
     ).rejects.toThrow(/Exactly one of/i);
   });
 
@@ -298,7 +296,7 @@ describe("ReviewRequest self-approval @@validate (live-DB)", () => {
           fromStateId,
           toStateId,
         },
-      }),
+      })
     ).rejects.toThrow(/Requester cannot/i);
   });
 });
@@ -341,7 +339,7 @@ describe("ReviewRequest append-only @@deny (live-DB)", () => {
       enhanced.reviewRequest.update({
         where: { id: approvedRequestId },
         data: { decisionComment: "tamper attempt" },
-      }),
+      })
     ).rejects.toThrow();
 
     // Verify the row is untouched.
@@ -566,7 +564,7 @@ describe("Phase 2 feature flag short-circuit on entity @@deny update gate (live-
     });
     if (!template) {
       throw new Error(
-        "Missing seed Template row for feature-flag describe block",
+        "Missing seed Template row for feature-flag describe block"
       );
     }
 
@@ -658,7 +656,7 @@ describe("Phase 2 feature flag short-circuit on entity @@deny update gate (live-
       prisma,
       "CASE",
       caseId,
-      gatedToStateId,
+      gatedToStateId
     );
     expect(gateResult).toBeNull();
   });
@@ -688,7 +686,7 @@ describe("Phase 2 feature flag short-circuit on entity @@deny update gate (live-
       enhanced.repositoryCases.update({
         where: { id: caseId },
         data: { stateId: gatedToStateId },
-      }),
+      })
     ).rejects.toThrow();
   });
 
@@ -706,7 +704,7 @@ describe("Phase 2 feature flag short-circuit on entity @@deny update gate (live-
       enhanced.repositoryCases.update({
         where: { id: caseId },
         data: { stateId: gatedToStateId },
-      }),
+      })
     ).rejects.toThrow();
 
     // Row untouched.

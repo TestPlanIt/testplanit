@@ -74,7 +74,7 @@ describe("POST /api/get-user-permissions — caller authentication (CR-02)", () 
 
     const { POST } = await import("./route");
     const response = await POST(
-      makeRequest({ userId: "target-user", projectId: 42 }),
+      makeRequest({ userId: "target-user", projectId: 42 })
     );
     const body = await response.json();
 
@@ -93,7 +93,7 @@ describe("POST /api/get-user-permissions — caller authentication (CR-02)", () 
 
     const { POST } = await import("./route");
     const response = await POST(
-      makeRequest({ userId: "target-user", projectId: 42 }),
+      makeRequest({ userId: "target-user", projectId: 42 })
     );
 
     expect(response.status).toBe(401);
@@ -107,7 +107,7 @@ describe("POST /api/get-user-permissions — caller authentication (CR-02)", () 
 
     const { POST } = await import("./route");
     const response = await POST(
-      makeRequest({ userId: "target-user", projectId: 42 }),
+      makeRequest({ userId: "target-user", projectId: 42 })
     );
     const body = await response.json();
 
@@ -131,7 +131,7 @@ describe("POST /api/get-user-permissions — caller authentication (CR-02)", () 
 
     const { POST } = await import("./route");
     const response = await POST(
-      makeRequest({ userId: "target-user", projectId: 42 }),
+      makeRequest({ userId: "target-user", projectId: 42 })
     );
 
     expect(response.status).toBe(403);
@@ -149,7 +149,7 @@ describe("POST /api/get-user-permissions — caller authentication (CR-02)", () 
 
     const { POST } = await import("./route");
     const response = await POST(
-      makeRequest({ userId: "caller-user", projectId: 42 }),
+      makeRequest({ userId: "caller-user", projectId: 42 })
     );
 
     expect(response.status).toBe(200);
@@ -167,13 +167,13 @@ describe("POST /api/get-user-permissions — caller authentication (CR-02)", () 
 
     const { POST } = await import("./route");
     const response = await POST(
-      makeRequest({ userId: "target-user", projectId: 42 }),
+      makeRequest({ userId: "target-user", projectId: 42 })
     );
 
     expect(response.status).toBe(200);
     const { prisma } = await import("~/lib/prisma");
     expect((prisma as any).user.findUnique).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: "target-user" } }),
+      expect.objectContaining({ where: { id: "target-user" } })
     );
   });
 
@@ -185,9 +185,7 @@ describe("POST /api/get-user-permissions — caller authentication (CR-02)", () 
 
     const { POST } = await import("./route");
     // Missing projectId — Zod should reject.
-    const response = await POST(
-      makeRequest({ userId: "caller-user" }),
-    );
+    const response = await POST(makeRequest({ userId: "caller-user" }));
 
     expect(response.status).toBe(400);
   });

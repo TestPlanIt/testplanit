@@ -22,7 +22,7 @@ function createMockTx(
   reviewRequestResult: { id: string } | null,
   entityProjectResult: {
     project: { reviewWorkflowEnabled: boolean };
-  } | null = { project: { reviewWorkflowEnabled: true } },
+  } | null = { project: { reviewWorkflowEnabled: true } }
 ) {
   return {
     workflows: {
@@ -45,6 +45,13 @@ function createMockTx(
     testRuns: {
       findUnique: vi.fn().mockResolvedValue(entityProjectResult),
     },
+    // The Phase 2 system-flag short-circuit reads from AppConfig before any
+    // of the entity finders above. Default to "enabled" so the existing
+    // Phase 1 expectations still hold; feature-flag specifics live in the
+    // dedicated reviewGate.feature-flag.test.ts file.
+    appConfig: {
+      findUnique: vi.fn().mockResolvedValue({ value: true }),
+    },
   } as any;
 }
 
@@ -56,7 +63,7 @@ describe("assertReviewGatePasses", () => {
       tx,
       ReviewEntityType.CASE,
       1,
-      10,
+      10
     );
 
     expect(result).toBeNull();
@@ -71,16 +78,13 @@ describe("assertReviewGatePasses", () => {
   });
 
   it("passes with approval: returns { approvedRequestId } when requiresReview=true and an approved+unconsumed row exists", async () => {
-    const tx = createMockTx(
-      { requiresReview: true },
-      { id: "req-abc" },
-    );
+    const tx = createMockTx({ requiresReview: true }, { id: "req-abc" });
 
     const result = await assertReviewGatePasses(
       tx,
       ReviewEntityType.CASE,
       1,
-      10,
+      10
     );
 
     expect(result).toEqual({ approvedRequestId: "req-abc" });
@@ -92,13 +96,13 @@ describe("assertReviewGatePasses", () => {
     // First invocation — assert the thrown instance class.
     const tx1 = createMockTx({ requiresReview: true }, null);
     await expect(
-      assertReviewGatePasses(tx1, ReviewEntityType.RUN, 5, 10),
+      assertReviewGatePasses(tx1, ReviewEntityType.RUN, 5, 10)
     ).rejects.toBeInstanceOf(ReviewGateError);
 
     // Second invocation — assert the thrown error payload shape.
     const tx2 = createMockTx({ requiresReview: true }, null);
     await expect(
-      assertReviewGatePasses(tx2, ReviewEntityType.RUN, 5, 10),
+      assertReviewGatePasses(tx2, ReviewEntityType.RUN, 5, 10)
     ).rejects.toMatchObject({
       code: "REVIEW_REQUIRED",
       entityType: ReviewEntityType.RUN,
@@ -114,7 +118,7 @@ describe("assertReviewGatePasses", () => {
       tx,
       ReviewEntityType.SESSION,
       7,
-      999,
+      999
     );
 
     expect(result).toBeNull();
@@ -125,10 +129,7 @@ describe("assertReviewGatePasses", () => {
   });
 
   it("queries reviewRequest with exact where + select shape: keys on (entityType, entityId, toStateId) per D-06 — fromStateId is intentionally NOT pinned", async () => {
-    const tx = createMockTx(
-      { requiresReview: true },
-      { id: "req-xyz" },
-    );
+    const tx = createMockTx({ requiresReview: true }, { id: "req-xyz" });
 
     await assertReviewGatePasses(tx, ReviewEntityType.SESSION, 42, 77);
 
@@ -146,16 +147,13 @@ describe("assertReviewGatePasses", () => {
   });
 
   it("returns approvedRequestId without stamping consumedAt in helper: caller stamps atomically with the entity update per D-05 one-shot semantics", async () => {
-    const tx = createMockTx(
-      { requiresReview: true },
-      { id: "req-one-shot" },
-    );
+    const tx = createMockTx({ requiresReview: true }, { id: "req-one-shot" });
 
     const result = await assertReviewGatePasses(
       tx,
       ReviewEntityType.CASE,
       11,
-      22,
+      22
     );
 
     expect(result).toEqual({ approvedRequestId: "req-one-shot" });

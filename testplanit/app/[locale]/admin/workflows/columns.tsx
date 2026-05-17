@@ -28,12 +28,21 @@ export const useColumns = (
   workflows: ExtendedWorkflows[],
   tWorkflowTypes: ReturnType<typeof useTranslations<"enums.WorkflowType">>,
   tCommon: ReturnType<typeof useTranslations<"common">>,
+  tAdminWorkflows: ReturnType<typeof useTranslations<"admin.workflows">>,
   handleToggleEnabled: (id: number, isEnabled: boolean) => void,
   handleToggleDefault: (
     id: number,
     isDefault: boolean,
     scope: WorkflowScope
   ) => void,
+  /**
+   * When `true`, render the Requires Review column with an admin-editable
+   * Switch. When `false` (system-level review feature OFF, or still loading)
+   * the column is omitted entirely — the at-a-glance gate signal is only
+   * meaningful while the feature is active.
+   */
+  showRequiresReview: boolean,
+  handleToggleRequiresReview: (id: number, requiresReview: boolean) => void,
   onEditWorkflow?: (workflow: ExtendedWorkflows) => void,
   onDeleteWorkflow?: (workflow: ExtendedWorkflows) => void
 ): ColumnDef<ExtendedWorkflows>[] => {
@@ -114,6 +123,32 @@ export const useColumns = (
           </div>
         ),
       },
+      ...(showRequiresReview
+        ? ([
+            {
+              id: "requiresReview",
+              accessorKey: "requiresReview",
+              enableSorting: false,
+              enableResizing: true,
+              size: 120,
+              header: tAdminWorkflows("editWorkflow.requiresReviewLabel"),
+              cell: ({ row }) => (
+                <div
+                  className="text-center"
+                  data-testid={`requires-review-cell-${row.original.id}`}
+                >
+                  <Switch
+                    data-testid={`requires-review-switch-${row.original.id}`}
+                    checked={row.original.requiresReview}
+                    onCheckedChange={(checked) =>
+                      handleToggleRequiresReview(row.original.id, checked)
+                    }
+                  />
+                </div>
+              ),
+            },
+          ] as ColumnDef<ExtendedWorkflows>[])
+        : []),
       {
         id: "projects",
         accessorKey: "projects",
@@ -179,8 +214,11 @@ export const useColumns = (
       workflows,
       tWorkflowTypes,
       tCommon,
+      tAdminWorkflows,
       handleToggleEnabled,
       handleToggleDefault,
+      showRequiresReview,
+      handleToggleRequiresReview,
       onEditWorkflow,
       onDeleteWorkflow,
     ]

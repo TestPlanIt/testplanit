@@ -1,8 +1,11 @@
 import { Prisma, type ReviewRequest } from "@prisma/client";
+import type { JSONContent } from "@tiptap/core";
 import type { Session } from "next-auth";
 
 import { prisma } from "~/lib/prisma";
+import { CommentService } from "~/lib/services/commentService";
 import { IneligibleReviewerError } from "~/lib/utils/errors";
+import { extractMentionedUserIds } from "~/lib/utils/tiptapMentions";
 
 /**
  * Decision outcomes the requester or reviewer can take on a PENDING
@@ -79,25 +82,29 @@ export async function decideReviewRequest(
   session: Session,
   reviewRequestId: string,
   decision: DecideOutcome,
-  comment?: string,
+  comment?: string
 ): Promise<ReviewRequest> {
   const userId = session.user.id;
 
   // Load the request + project + caller's UserProjectPermission row. The
   // permission is needed to evaluate the SPECIFIC_ROLE / GLOBAL_ROLE
-  // branches without making a second query.
+  // branches without making a second query. `project.name` and
+  // `requester.name` are pulled here so the paired-Comment fan-out below
+  // doesn't need a second round-trip.
   const req = await prisma.reviewRequest.findUniqueOrThrow({
     where: { id: reviewRequestId },
     include: {
       project: {
         select: {
           id: true,
+          name: true,
           userPermissions: {
             where: { userId },
             select: { accessType: true, roleId: true },
           },
         },
       },
+      requestedBy: { select: { id: true, name: true } },
     },
   });
 
@@ -147,47 +154,182 @@ export async function decideReviewRequest(
     throw new IneligibleReviewerError(userId, reviewRequestId);
   }
 
-  // Raw prisma (documented exception): the append-only @@deny rule denies
-  // any update that flips status away from PENDING; raw bypasses ZenStack
-  // policy enforcement, which is appropriate here because the eligibility
-  // gate above plus the WHERE-scoped status check below are the
-  // authoritative checks for this transition.
-  //
-  // CR-01 fix: combine the PENDING precheck and the status flip into a
-  // single atomic statement via `updateMany({ where: { id, status: 'PENDING' }})`.
-  // Two concurrent decides racing on the same PENDING row cannot both pass
-  // — the second one returns `count === 0` and surfaces as "already decided".
-  // This restores the invariant the schema `@@deny('update', status != 'PENDING')`
-  // rule would have enforced, which we deliberately bypass via raw prisma.
-  const result = await prisma.reviewRequest.updateMany({
-    where: { id: reviewRequestId, status: "PENDING" },
-    data: {
-      status: decision,
-      decisionComment: comment ?? null,
-      decidedByUserId: userId,
-      decidedAt: new Date(),
+  // Build the TipTap doc for the paired Comment. The decision-type comment
+  // always mentions the original requester so the existing `@mention`
+  // notification path delivers a "your review was decided" notification
+  // back to them. If the reviewer supplied prose it follows the mention
+  // node on the same paragraph.
+  const requesterName = req.requestedBy.name ?? "user";
+  const trimmedComment = (comment ?? "").trim();
+  const paragraphChildren: JSONContent[] = [
+    {
+      type: "mention",
+      attrs: { id: req.requestedBy.id, label: requesterName },
     },
-  });
+    { type: "text", text: " " },
+  ];
+  if (trimmedComment.length > 0) {
+    paragraphChildren.push({ type: "text", text: trimmedComment });
+  }
+  const decisionCommentContent: JSONContent = {
+    type: "doc",
+    content: [{ type: "paragraph", content: paragraphChildren }],
+  };
 
-  if (result.count === 0) {
-    // Either the row no longer exists, or another concurrent decide won
-    // the race. Re-fetch to distinguish: a missing row surfaces as P2025
-    // (callers translate to 404), an extant non-PENDING row surfaces as
-    // "already decided" (callers translate to 409).
-    const after = await prisma.reviewRequest.findUnique({
-      where: { id: reviewRequestId },
+  const entityFkField: "repositoryCaseId" | "testRunId" | "sessionId" =
+    req.entityType === "CASE"
+      ? "repositoryCaseId"
+      : req.entityType === "RUN"
+        ? "testRunId"
+        : "sessionId";
+
+  // Combined status flip + paired Comment create in a single transaction
+  // so a decision never commits without its conversation-thread record
+  // (hybrid-comments D-21 follow-up). Raw prisma is still used inside the
+  // tx for the same documented-exception reason as before — the schema
+  // `@@deny('update', status != 'PENDING')` rule would block the
+  // PENDING→APPROVED/etc. flip via ZenStack policy, but the eligibility
+  // gate above plus the WHERE-scoped status check below are the
+  // authoritative atomic-update checks.
+  //
+  // CR-01 invariant preserved: `updateMany({ where: { id, status: 'PENDING' }})`
+  // remains a single atomic statement at the DB. Two concurrent decides
+  // racing on the same PENDING row cannot both pass — the loser returns
+  // `count === 0` and surfaces as "already decided" before the Comment
+  // ever lands.
+  const { commentId } = await prisma.$transaction(async (tx) => {
+    const result = await tx.reviewRequest.updateMany({
+      where: { id: reviewRequestId, status: "PENDING" },
+      data: {
+        status: decision,
+        decisionComment: comment ?? null,
+        decidedByUserId: userId,
+        decidedAt: new Date(),
+      },
+    });
+
+    if (result.count === 0) {
+      // Either the row no longer exists, or another concurrent decide won
+      // the race. Re-fetch to distinguish: a missing row surfaces as P2025
+      // (callers translate to 404), an extant non-PENDING row surfaces as
+      // "already decided" (callers translate to 409).
+      const after = await tx.reviewRequest.findUnique({
+        where: { id: reviewRequestId },
+        select: { id: true },
+      });
+      if (!after) {
+        throw new Prisma.PrismaClientKnownRequestError(
+          "No ReviewRequest found",
+          { code: "P2025", clientVersion: Prisma.prismaVersion.client }
+        );
+      }
+      throw new Error("Review request already decided");
+    }
+
+    const created = await tx.comment.create({
+      data: {
+        projectId: req.project.id,
+        type: "REVIEW_DECISION",
+        reviewRequestId,
+        content: decisionCommentContent as any,
+        creatorId: userId,
+        [entityFkField]: req.entityId,
+      },
       select: { id: true },
     });
-    if (!after) {
-      throw new Prisma.PrismaClientKnownRequestError(
-        "No ReviewRequest found",
-        { code: "P2025", clientVersion: Prisma.prismaVersion.client },
+
+    return { commentId: created.id };
+  });
+
+  // Fan out mention notification(s) to the requester outside the tx —
+  // mirrors the requestReview action's contract: notification failures do
+  // NOT roll back the decision. The user can still see the decision in
+  // the UI even if the bell-icon notification never lands.
+  try {
+    const mentionedUserIds = extractMentionedUserIds(decisionCommentContent);
+    if (mentionedUserIds.length > 0) {
+      await CommentService.createCommentMentions(commentId, mentionedUserIds);
+      const projectAndEntity = await loadProjectAndEntity(
+        req.project.id,
+        req.project.name,
+        req.entityType,
+        req.entityId
       );
+      if (projectAndEntity) {
+        await CommentService.processMentions(
+          commentId,
+          decisionCommentContent,
+          userId,
+          session.user.name ?? "Unknown User",
+          projectAndEntity.project.id,
+          projectAndEntity.project.name,
+          projectAndEntity.entityType,
+          projectAndEntity.entityName,
+          projectAndEntity.entityId
+        );
+      }
     }
-    throw new Error("Review request already decided");
+  } catch (mentionErr) {
+    console.error(
+      "decideReviewRequest: paired-comment mention processing failed",
+      mentionErr
+    );
   }
 
   return prisma.reviewRequest.findUniqueOrThrow({
     where: { id: reviewRequestId },
   });
+}
+
+async function loadProjectAndEntity(
+  projectId: number,
+  projectName: string,
+  entityType: "CASE" | "RUN" | "SESSION",
+  entityId: number
+): Promise<{
+  project: { id: number; name: string };
+  entityType: "RepositoryCase" | "TestRun" | "Session";
+  entityName: string;
+  entityId: string;
+} | null> {
+  if (entityType === "CASE") {
+    const row = await prisma.repositoryCases.findUnique({
+      where: { id: entityId },
+      select: { id: true, name: true },
+    });
+    return row
+      ? {
+          project: { id: projectId, name: projectName },
+          entityType: "RepositoryCase",
+          entityName: row.name,
+          entityId: String(row.id),
+        }
+      : null;
+  }
+  if (entityType === "RUN") {
+    const row = await prisma.testRuns.findUnique({
+      where: { id: entityId },
+      select: { id: true, name: true },
+    });
+    return row
+      ? {
+          project: { id: projectId, name: projectName },
+          entityType: "TestRun",
+          entityName: row.name,
+          entityId: String(row.id),
+        }
+      : null;
+  }
+  const row = await prisma.sessions.findUnique({
+    where: { id: entityId },
+    select: { id: true, name: true },
+  });
+  return row
+    ? {
+        project: { id: projectId, name: projectName },
+        entityType: "Session",
+        entityName: row.name,
+        entityId: String(row.id),
+      }
+    : null;
 }

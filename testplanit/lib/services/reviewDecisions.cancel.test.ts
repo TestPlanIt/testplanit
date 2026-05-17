@@ -58,7 +58,7 @@ function createMockPrisma(updateImpl?: ReturnType<typeof vi.fn<UpdateFn>>) {
 
 async function performCancel(
   client: ReturnType<typeof createMockPrisma>,
-  reviewRequestId: string,
+  reviewRequestId: string
 ): Promise<UpdateResult> {
   return client.reviewRequest.update({
     where: { id: reviewRequestId },
@@ -92,8 +92,12 @@ describe("ReviewRequest cancel-by-status-mutation (D-07)", () => {
     await performCancel(client, "r2");
 
     // No `delete*` keys on the reviewRequest namespace surface here.
-    expect((client.reviewRequest as Record<string, unknown>).delete).toBeUndefined();
-    expect((client.reviewRequest as Record<string, unknown>).deleteMany).toBeUndefined();
+    expect(
+      (client.reviewRequest as Record<string, unknown>).delete
+    ).toBeUndefined();
+    expect(
+      (client.reviewRequest as Record<string, unknown>).deleteMany
+    ).toBeUndefined();
   });
 
   it("policy-denied cancels surface the underlying policy error to the caller (idempotency path)", async () => {
@@ -103,7 +107,7 @@ describe("ReviewRequest cancel-by-status-mutation (D-07)", () => {
     // than a silent no-op. The cancel UI handles this by refetching the
     // latest request and rendering the new banner state.
     const denied = new Error(
-      "denied by policy: reviewRequest entity failed update check",
+      "denied by policy: reviewRequest entity failed update check"
     );
     const update = vi.fn<UpdateFn>().mockRejectedValue(denied);
     const client = createMockPrisma(update);

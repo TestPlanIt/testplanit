@@ -6532,6 +6532,12 @@ const metadata: ModelMeta = {
                     name: "consumedAt",
                     type: "DateTime",
                     isOptional: true,
+                }, comments: {
+                    name: "comments",
+                    type: "Comment",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'reviewRequest',
                 }, isDeleted: {
                     name: "isDeleted",
                     type: "Boolean",
@@ -8576,6 +8582,25 @@ const metadata: ModelMeta = {
                     isRelationOwner: true,
                     onDeleteAction: 'Cascade',
                     foreignKeyMapping: { "id": "milestoneId" },
+                }, type: {
+                    name: "type",
+                    type: "CommentType",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, reviewRequestId: {
+                    name: "reviewRequestId",
+                    type: "String",
+                    isOptional: true,
+                    isForeignKey: true,
+                    relationField: 'reviewRequest',
+                }, reviewRequest: {
+                    name: "reviewRequest",
+                    type: "ReviewRequest",
+                    isDataModel: true,
+                    isOptional: true,
+                    backLink: 'comments',
+                    isRelationOwner: true,
+                    onDeleteAction: 'SetNull',
+                    foreignKeyMapping: { "id": "reviewRequestId" },
                 }, creatorId: {
                     name: "creatorId",
                     type: "String",

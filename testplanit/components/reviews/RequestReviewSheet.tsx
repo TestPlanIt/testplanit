@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
@@ -33,7 +34,12 @@ import { toast } from "sonner";
 import * as z from "zod/v4";
 
 import DynamicIcon from "@/components/DynamicIcon";
-import { useCreateReviewRequest } from "~/lib/hooks";
+import { MessageSquareWarning } from "lucide-react";
+import { requestReview } from "~/app/actions/reviews";
+import {
+  commentsQueryKey,
+  reviewableEntityTypeToCommentEntityType,
+} from "~/components/comments/commentsQueryKey";
 import type { IconName } from "~/types/globals";
 
 import { AssigneeCombobox, type AssigneeOption } from "./AssigneeCombobox";
@@ -76,38 +82,36 @@ export function RequestReviewSheet({
   // [[feedback_namespaced_t_in_zod_schemas]]).
   const t = useTranslations();
   const { data: session } = useSession();
-  const { mutateAsync: createReviewRequest } = useCreateReviewRequest();
+  const queryClient = useQueryClient();
 
   const singleReachableStateId =
-    reachableGatedStates.length === 1
-      ? reachableGatedStates[0]!.id
-      : undefined;
+    reachableGatedStates.length === 1 ? reachableGatedStates[0]!.id : undefined;
 
   const defaultTargetStateId =
     initialValues?.targetStateId ?? singleReachableStateId ?? 0;
 
   // Build the Zod schema with full i18n key paths via the unscoped t().
+  // `comment` is intentionally optional — common usage is a one-liner
+  // ("Please review this.") that the requester shouldn't be forced to type
+  // every time. The paired Comment always carries the @mention; prose is
+  // additive context, not required for the request to be actionable.
   const formSchema = useMemo(
     () =>
       z.object({
-        assigneeKey: z
-          .string()
-          .min(1, t("reviews.requester.assigneeRequired")),
+        assigneeKey: z.string().min(1, t("reviews.requester.assigneeRequired")),
         targetStateId: z
           .number()
           .int()
           .min(1, t("reviews.requester.targetStateRequired")),
-        comment: z
-          .string()
-          .min(1, t("reviews.requester.commentRequired")),
+        comment: z.string().optional(),
       }),
-    [t],
+    [t]
   );
 
   type FormValues = {
     assigneeKey: string;
     targetStateId: number;
-    comment: string;
+    comment?: string;
   };
 
   const form = useForm<FormValues>({
@@ -134,7 +138,8 @@ export function RequestReviewSheet({
       assigneeKey: initialValues?.assignee
         ? `${initialValues.assignee.kind}:${initialValues.assignee.id}`
         : "",
-      targetStateId: initialValues?.targetStateId ?? singleReachableStateId ?? 0,
+      targetStateId:
+        initialValues?.targetStateId ?? singleReachableStateId ?? 0,
       comment: "",
     });
     setSelectedAssignee(initialValues?.assignee ?? null);
@@ -145,11 +150,9 @@ export function RequestReviewSheet({
 
   const handleAssigneeChange = (value: AssigneeOption | null) => {
     setSelectedAssignee(value);
-    form.setValue(
-      "assigneeKey",
-      value ? `${value.kind}:${value.id}` : "",
-      { shouldValidate: true },
-    );
+    form.setValue("assigneeKey", value ? `${value.kind}:${value.id}` : "", {
+      shouldValidate: true,
+    });
   };
 
   const onSubmit = async (values: FormValues) => {
@@ -186,22 +189,55 @@ export function RequestReviewSheet({
     }
 
     try {
-      await createReviewRequest({
-        data: {
-          projectId,
-          entityType,
-          entityId,
-          fromStateId: currentStateId,
-          toStateId: values.targetStateId,
-          requestedByUserId,
-          assigneeUserId:
-            selectedAssignee.kind === "user" ? selectedAssignee.id : null,
-          assigneeRoleId:
-            selectedAssignee.kind === "role" ? selectedAssignee.id : null,
-          decisionComment: values.comment,
-          status: "PENDING",
-        },
-      } as any);
+      // Hybrid-comments path (D-21 follow-up): the server action wraps
+      // ReviewRequest + paired Comment creation in a transaction and fans
+      // out the existing @mention notification for direct user-assignees.
+      // The Sheet no longer writes the requester's prose into
+      // ReviewRequest.decisionComment — that column is reserved for the
+      // reviewer's response and was getting overwritten on decide.
+      const result = await requestReview({
+        projectId,
+        entityType,
+        entityId,
+        fromStateId: currentStateId,
+        toStateId: values.targetStateId,
+        assigneeUserId:
+          selectedAssignee.kind === "user" ? selectedAssignee.id : null,
+        assigneeRoleId:
+          selectedAssignee.kind === "role" ? selectedAssignee.id : null,
+        commentText: values.comment ?? "",
+      });
+
+      if (!result.success) {
+        if (result.error === "ALREADY_PENDING") {
+          toast.error(t("reviews.requester.alreadyPendingError"));
+        } else {
+          toast.error(t("common.errors.somethingWentWrong"));
+        }
+        return;
+      }
+
+      // Refresh both caches so the entity page reflects the new state
+      // without a manual reload:
+      //   1. Comments thread → paired REVIEW_REQUEST card lands immediately
+      //   2. ReviewRequest queries → the PENDING banner appears (and the
+      //      "Request review" trigger auto-hides via the D-02 predicate).
+      //      ZenStack-generated hooks key under
+      //      `["zenstack", "<Model>", "<operation>", args, ...]` — the model
+      //      name is the SECOND element, not the first, so the prefix
+      //      `["zenstack", "ReviewRequest"]` is what hits every cached
+      //      ReviewRequest query.
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: commentsQueryKey(
+            reviewableEntityTypeToCommentEntityType(entityType),
+            entityId
+          ),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["zenstack", "ReviewRequest"],
+        }),
+      ]);
 
       toast.success(t("reviews.requester.submitSuccess"));
       form.reset({
@@ -211,12 +247,8 @@ export function RequestReviewSheet({
       });
       setSelectedAssignee(null);
       onOpenChange(false);
-    } catch (err) {
-      if (isAlreadyPendingClientError(err)) {
-        toast.error(t("reviews.requester.alreadyPendingError"));
-      } else {
-        toast.error(t("common.errors.somethingWentWrong"));
-      }
+    } catch {
+      toast.error(t("common.errors.somethingWentWrong"));
     }
   };
 
@@ -227,7 +259,10 @@ export function RequestReviewSheet({
         data-testid="request-review-sheet"
       >
         <SheetHeader>
-          <SheetTitle>{t("reviews.requester.sheetTitle")}</SheetTitle>
+          <SheetTitle className="flex items-center gap-2">
+            <MessageSquareWarning className="h-5 w-5" />
+            {t("reviews.requester.sheetTitle")}
+          </SheetTitle>
           <SheetDescription>
             {t("reviews.requester.sheetDescription")}
           </SheetDescription>
@@ -235,7 +270,16 @@ export function RequestReviewSheet({
 
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={(e) => {
+              // The Sheet is rendered in a Radix portal, but React's synthetic
+              // submit event still bubbles through the React tree to the
+              // enclosing case-page form (which has its own `handleSubmit`).
+              // react-hook-form's `handleSubmit` calls preventDefault but not
+              // stopPropagation, so without this the outer form would also fire
+              // its onSubmit when the requester clicks "Request review".
+              e.stopPropagation();
+              return form.handleSubmit(onSubmit)(e);
+            }}
             className="flex flex-1 flex-col gap-4"
           >
             <FormField
@@ -243,9 +287,7 @@ export function RequestReviewSheet({
               name="assigneeKey"
               render={() => (
                 <FormItem>
-                  <FormLabel>
-                    {t("reviews.requester.assigneeLabel")}
-                  </FormLabel>
+                  <FormLabel>{t("reviews.requester.assigneeLabel")}</FormLabel>
                   <FormControl>
                     <AssigneeCombobox
                       projectId={projectId}
@@ -269,14 +311,12 @@ export function RequestReviewSheet({
                   <FormControl>
                     <Select
                       value={field.value > 0 ? String(field.value) : ""}
-                      onValueChange={(value) =>
-                        field.onChange(Number(value))
-                      }
+                      onValueChange={(value) => field.onChange(Number(value))}
                     >
                       <SelectTrigger data-testid="request-review-target-state">
                         <SelectValue
                           placeholder={t(
-                            "reviews.requester.targetStatePlaceholder",
+                            "reviews.requester.targetStatePlaceholder"
                           )}
                         />
                       </SelectTrigger>
@@ -310,16 +350,12 @@ export function RequestReviewSheet({
               name="comment"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>
-                    {t("reviews.requester.commentLabel")}
-                  </FormLabel>
+                  <FormLabel>{t("reviews.requester.commentLabel")}</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
                       data-testid="request-review-comment"
-                      placeholder={t(
-                        "reviews.requester.commentPlaceholder",
-                      )}
+                      placeholder={t("reviews.requester.commentPlaceholder")}
                       rows={4}
                     />
                   </FormControl>
@@ -344,28 +380,5 @@ export function RequestReviewSheet({
         </Form>
       </SheetContent>
     </Sheet>
-  );
-}
-
-/**
- * Client-side detector for the AlreadyPendingError surface. The ZenStack RPC
- * handler does not preserve the typed error class across the network wire —
- * it serializes the message and surfaces it as `err.info.message` (or the
- * top-level `err.message` in some retry shapes). Treat either shape as a
- * hit. The English "pending review" substring is the load-bearing marker;
- * server error messages stay in English per
- * [[feedback_server_errors_stay_english]] precisely so detectors like this
- * one stay reliable.
- */
-function isAlreadyPendingClientError(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
-  const e = err as { info?: { message?: string }; message?: string };
-  const candidates = [e.info?.message, e.message]
-    .filter((s): s is string => typeof s === "string")
-    .map((s) => s.toLowerCase());
-  return candidates.some(
-    (m) =>
-      m.includes("pending review") ||
-      m.includes("a pending review request already exists"),
   );
 }

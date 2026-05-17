@@ -49,7 +49,7 @@ vi.mock("~/lib/prisma", () => {
     $transaction: vi.fn(async (cb: (tx: any) => Promise<unknown>) =>
       cb({
         reviewRequest: prismaStub.reviewRequest,
-      }),
+      })
     ),
   };
   return { prisma: prismaStub };
@@ -954,7 +954,8 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
   });
 
   it("translates ReviewGateError to a 403 with REVIEW_REQUIRED payload and skips baseHandler", async () => {
-    const { assertReviewGatePasses } = await import("~/lib/services/reviewGate");
+    const { assertReviewGatePasses } =
+      await import("~/lib/services/reviewGate");
     const { ReviewGateError } = await import("~/lib/utils/errors");
     (assertReviewGatePasses as any).mockRejectedValue(
       new ReviewGateError("REVIEW_REQUIRED", "CASE", 42, 99)
@@ -981,7 +982,8 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
   });
 
   it("translates AlreadyPendingError to a 409 with PENDING_REVIEW_EXISTS payload", async () => {
-    const { assertReviewGatePasses } = await import("~/lib/services/reviewGate");
+    const { assertReviewGatePasses } =
+      await import("~/lib/services/reviewGate");
     const { AlreadyPendingError } = await import("~/lib/utils/errors");
     (assertReviewGatePasses as any).mockRejectedValue(
       new AlreadyPendingError("CASE", 42, "pending-req-1")
@@ -1003,7 +1005,8 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
   });
 
   it("passes through to baseHandler when the gate returns null (ungated path)", async () => {
-    const { assertReviewGatePasses } = await import("~/lib/services/reviewGate");
+    const { assertReviewGatePasses } =
+      await import("~/lib/services/reviewGate");
     (assertReviewGatePasses as any).mockResolvedValue(null);
 
     const { PATCH } = await import("./route");
@@ -1026,7 +1029,8 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
   });
 
   it("does NOT call the gate when the update does not include stateId", async () => {
-    const { assertReviewGatePasses } = await import("~/lib/services/reviewGate");
+    const { assertReviewGatePasses } =
+      await import("~/lib/services/reviewGate");
 
     const { PATCH } = await import("./route");
     const req = makeUpdateRequest({
@@ -1043,7 +1047,8 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
   });
 
   it("does NOT call the gate for non-gated models even when stateId is in the patch", async () => {
-    const { assertReviewGatePasses } = await import("~/lib/services/reviewGate");
+    const { assertReviewGatePasses } =
+      await import("~/lib/services/reviewGate");
 
     const { PATCH } = await import("./route");
     const headers = new Headers();
@@ -1072,7 +1077,8 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
   });
 
   it("translates the gate for testRuns (RUN entity type)", async () => {
-    const { assertReviewGatePasses } = await import("~/lib/services/reviewGate");
+    const { assertReviewGatePasses } =
+      await import("~/lib/services/reviewGate");
     const { ReviewGateError } = await import("~/lib/utils/errors");
     (assertReviewGatePasses as any).mockRejectedValue(
       new ReviewGateError("REVIEW_REQUIRED", "RUN", 5, 88)
@@ -1112,7 +1118,8 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
   });
 
   it("translates the gate for sessions (SESSION entity type)", async () => {
-    const { assertReviewGatePasses } = await import("~/lib/services/reviewGate");
+    const { assertReviewGatePasses } =
+      await import("~/lib/services/reviewGate");
     const { ReviewGateError } = await import("~/lib/utils/errors");
     (assertReviewGatePasses as any).mockRejectedValue(
       new ReviewGateError("REVIEW_REQUIRED", "SESSION", 3, 77)
@@ -1174,9 +1181,8 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
   }
 
   it("CR-03 — gates upsert payloads whose update branch carries stateId", async () => {
-    const { assertReviewGatePasses } = await import(
-      "~/lib/services/reviewGate"
-    );
+    const { assertReviewGatePasses } =
+      await import("~/lib/services/reviewGate");
     const { ReviewGateError } = await import("~/lib/utils/errors");
     (assertReviewGatePasses as any).mockRejectedValue(
       new ReviewGateError("REVIEW_REQUIRED", "CASE", 42, 99)
@@ -1214,9 +1220,8 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
   });
 
   it("CR-03 — gates updateMany payloads with a scalar where.id and a stateId", async () => {
-    const { assertReviewGatePasses } = await import(
-      "~/lib/services/reviewGate"
-    );
+    const { assertReviewGatePasses } =
+      await import("~/lib/services/reviewGate");
     const { ReviewGateError } = await import("~/lib/utils/errors");
     (assertReviewGatePasses as any).mockRejectedValue(
       new ReviewGateError("REVIEW_REQUIRED", "RUN", 5, 88)
@@ -1253,9 +1258,8 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
     // @@deny backstop in that case; the route does not invoke the friendly
     // gate at all. The gate would still be hit on a per-row basis when the
     // caller targets a single id; this just covers the bulk path.
-    const { assertReviewGatePasses } = await import(
-      "~/lib/services/reviewGate"
-    );
+    const { assertReviewGatePasses } =
+      await import("~/lib/services/reviewGate");
 
     const { POST } = await import("./route");
     const req = makePathRequest(
@@ -1279,9 +1283,8 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
     // upsert.create.stateId is fresh-row creation, gated at row-creation
     // time by FK + workflow rules — not by the review gate which targets
     // transitions of existing entities.
-    const { assertReviewGatePasses } = await import(
-      "~/lib/services/reviewGate"
-    );
+    const { assertReviewGatePasses } =
+      await import("~/lib/services/reviewGate");
 
     const { POST } = await import("./route");
     const req = makePathRequest(
@@ -1307,9 +1310,8 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
     // explicitly NaN's anything non-numeric so a hypothetical future payload
     // shape (e.g. clearing the field to null) does not silently invoke the
     // gate with NaN.
-    const { assertReviewGatePasses } = await import(
-      "~/lib/services/reviewGate"
-    );
+    const { assertReviewGatePasses } =
+      await import("~/lib/services/reviewGate");
 
     const { POST } = await import("./route");
     const req = makePathRequest(
@@ -1338,9 +1340,8 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
   // ───────────────────────────────────────────────────────────────────────
 
   it("CR-04 — stamps consumedAt on the approved request when the gate hits", async () => {
-    const { assertReviewGatePasses } = await import(
-      "~/lib/services/reviewGate"
-    );
+    const { assertReviewGatePasses } =
+      await import("~/lib/services/reviewGate");
     (assertReviewGatePasses as any).mockResolvedValue({
       approvedRequestId: "approval-1",
     });
@@ -1366,9 +1367,8 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
   });
 
   it("CR-04 — returns 403 REVIEW_REQUIRED when consumedAt stamp loses the race", async () => {
-    const { assertReviewGatePasses } = await import(
-      "~/lib/services/reviewGate"
-    );
+    const { assertReviewGatePasses } =
+      await import("~/lib/services/reviewGate");
     (assertReviewGatePasses as any).mockResolvedValue({
       approvedRequestId: "approval-2",
     });
@@ -1402,9 +1402,8 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
   it("CR-04 — does NOT stamp consumedAt when the gate short-circuits (no approval needed)", async () => {
     // When the target state does not require review (or the feature flag
     // is off), the gate returns null and there is no approval to consume.
-    const { assertReviewGatePasses } = await import(
-      "~/lib/services/reviewGate"
-    );
+    const { assertReviewGatePasses } =
+      await import("~/lib/services/reviewGate");
     (assertReviewGatePasses as any).mockResolvedValue(null);
 
     const { prisma } = await import("~/lib/prisma");

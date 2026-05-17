@@ -1,6 +1,7 @@
 import { type Prisma, ReviewEntityType } from "@prisma/client";
 
 import { ReviewGateError } from "~/lib/utils/errors";
+import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
 
 /**
  * Review-gate preflight. Asserts that a state transition to `toStateId` for
@@ -14,11 +15,11 @@ import { ReviewGateError } from "~/lib/utils/errors";
  *
  *   2. Feature-flag short-circuits (evaluated first, in order):
  *
- *        (a) When the env var `TESTPLANIT_REVIEW_FEATURE_ENABLED` is the
- *            literal string `'false'`, the helper returns `null` immediately
- *            and queries no tables. Only the literal `'false'` disables; any
- *            other value (undefined, 'true', '0', 'no', '') leaves the
- *            feature enabled.
+ *        (a) When the AppConfig row keyed by `review_feature_enabled` has
+ *            `value === false`, the helper returns `null` immediately and
+ *            queries no other tables. A missing row (default) leaves the
+ *            feature enabled; admins toggle it from the Admin Workflows
+ *            page (no restart required).
  *
  *        (b) Otherwise the helper looks up the entity's project via
  *            `loadEntityProject` (one finder call routed by `entityType`).
@@ -86,10 +87,11 @@ export async function assertReviewGatePasses(
   tx: Prisma.TransactionClient,
   entityType: ReviewEntityType,
   entityId: number,
-  toStateId: number,
+  toStateId: number
 ): Promise<{ approvedRequestId: string } | null> {
-  // (a) System kill switch. Only the literal string 'false' disables.
-  if (process.env.TESTPLANIT_REVIEW_FEATURE_ENABLED === "false") {
+  // (a) System kill switch — AppConfig row `review_feature_enabled`.
+  // Default-on when the row is absent (matches the previous env-var convention).
+  if (!(await isReviewFeatureSystemEnabled(tx))) {
     return null;
   }
 
@@ -125,7 +127,7 @@ export async function assertReviewGatePasses(
       "REVIEW_REQUIRED",
       entityType,
       entityId,
-      toStateId,
+      toStateId
     );
   }
 
@@ -142,7 +144,7 @@ export async function assertReviewGatePasses(
 async function loadEntityProject(
   tx: Prisma.TransactionClient,
   entityType: ReviewEntityType,
-  entityId: number,
+  entityId: number
 ): Promise<{ project: { reviewWorkflowEnabled: boolean } } | null> {
   const select = {
     project: { select: { reviewWorkflowEnabled: true } },

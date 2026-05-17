@@ -23,6 +23,20 @@ vi.mock("sonner", () => ({
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
+// UserMention + WorkflowStateDisplay pull i18n navigation + a dynamic-icon
+// registry; stub to inert spans so the dialog tests stay hermetic.
+vi.mock("~/components/UserMention", () => ({
+  UserMention: ({ userId }: { userId: string }) => (
+    <span data-testid={`user-mention-${userId}`}>{userId}</span>
+  ),
+}));
+
+vi.mock("~/components/WorkflowStateDisplay", () => ({
+  WorkflowStateDisplay: ({ state }: { state: { name?: string } | null }) => (
+    <span data-testid="workflow-state-display">{state?.name ?? ""}</span>
+  ),
+}));
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
@@ -31,7 +45,7 @@ const REVIEW_REQUEST_ID = "rev-123";
 
 function mockDecideResponse(
   body: Record<string, unknown>,
-  init: { status?: number } = {},
+  init: { status?: number } = {}
 ) {
   mockFetch.mockResolvedValueOnce({
     ok: (init.status ?? 200) < 400,
@@ -46,7 +60,13 @@ function baseProps(overrides: Record<string, unknown> = {}) {
     open: true,
     onOpenChange: vi.fn(),
     entityType: "CASE" as const,
-    targetStateName: "In Review",
+    entityName: "Test case 100",
+    targetState: {
+      name: "In Review",
+      icon: { name: "eye" as const },
+      color: { value: "#888888" },
+    },
+    requesterUserId: "requester-user-id",
     onSuccess: vi.fn(),
     ...overrides,
   };
@@ -127,7 +147,7 @@ describe("ReviewDecisionDialogs", () => {
     it("(d) 403 INELIGIBLE_REVIEWER → toast.error + dialog stays open + onSuccess not called", async () => {
       mockDecideResponse(
         { error: { code: "INELIGIBLE_REVIEWER" } },
-        { status: 403 },
+        { status: 403 }
       );
 
       const props = baseProps();
@@ -143,7 +163,7 @@ describe("ReviewDecisionDialogs", () => {
     it("(e) 409 ALREADY_DECIDED → toast.error + dialog closes + onSuccess fires (so banner refetches)", async () => {
       mockDecideResponse(
         { error: { code: "ALREADY_DECIDED" } },
-        { status: 409 },
+        { status: 409 }
       );
 
       const props = baseProps();
@@ -172,10 +192,9 @@ describe("ReviewDecisionDialogs", () => {
     it("(b) submit becomes enabled once a non-empty comment is entered", () => {
       render(<RequestChangesDialog {...baseProps()} />);
 
-      fireEvent.change(
-        screen.getByTestId("request-changes-comment-input"),
-        { target: { value: "Please reword step 3." } },
-      );
+      fireEvent.change(screen.getByTestId("request-changes-comment-input"), {
+        target: { value: "Please reword step 3." },
+      });
 
       expect(screen.getByTestId("request-changes-submit")).not.toBeDisabled();
     });
@@ -190,10 +209,9 @@ describe("ReviewDecisionDialogs", () => {
       const props = baseProps();
       render(<RequestChangesDialog {...props} />);
 
-      fireEvent.change(
-        screen.getByTestId("request-changes-comment-input"),
-        { target: { value: "Please reword step 3." } },
-      );
+      fireEvent.change(screen.getByTestId("request-changes-comment-input"), {
+        target: { value: "Please reword step 3." },
+      });
       fireEvent.click(screen.getByTestId("request-changes-submit"));
 
       await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
@@ -212,16 +230,15 @@ describe("ReviewDecisionDialogs", () => {
     it("(d) 403 INELIGIBLE_REVIEWER → toast.error + dialog stays open + onSuccess not called", async () => {
       mockDecideResponse(
         { error: { code: "INELIGIBLE_REVIEWER" } },
-        { status: 403 },
+        { status: 403 }
       );
 
       const props = baseProps();
       render(<RequestChangesDialog {...props} />);
 
-      fireEvent.change(
-        screen.getByTestId("request-changes-comment-input"),
-        { target: { value: "More detail needed." } },
-      );
+      fireEvent.change(screen.getByTestId("request-changes-comment-input"), {
+        target: { value: "More detail needed." },
+      });
       fireEvent.click(screen.getByTestId("request-changes-submit"));
 
       await waitFor(() => expect(mockToastError).toHaveBeenCalledTimes(1));
@@ -231,16 +248,15 @@ describe("ReviewDecisionDialogs", () => {
     it("(e) 409 ALREADY_DECIDED → toast.error + dialog closes + onSuccess fires", async () => {
       mockDecideResponse(
         { error: { code: "ALREADY_DECIDED" } },
-        { status: 409 },
+        { status: 409 }
       );
 
       const props = baseProps();
       render(<RequestChangesDialog {...props} />);
 
-      fireEvent.change(
-        screen.getByTestId("request-changes-comment-input"),
-        { target: { value: "More detail needed." } },
-      );
+      fireEvent.change(screen.getByTestId("request-changes-comment-input"), {
+        target: { value: "More detail needed." },
+      });
       fireEvent.click(screen.getByTestId("request-changes-submit"));
 
       await waitFor(() => expect(mockToastError).toHaveBeenCalledTimes(1));
@@ -302,7 +318,7 @@ describe("ReviewDecisionDialogs", () => {
     it("(d) 403 INELIGIBLE_REVIEWER → toast.error + dialog stays open + onSuccess not called", async () => {
       mockDecideResponse(
         { error: { code: "INELIGIBLE_REVIEWER" } },
-        { status: 403 },
+        { status: 403 }
       );
 
       const props = baseProps();
@@ -320,7 +336,7 @@ describe("ReviewDecisionDialogs", () => {
     it("(e) 409 ALREADY_DECIDED → toast.error + dialog closes + onSuccess fires", async () => {
       mockDecideResponse(
         { error: { code: "ALREADY_DECIDED" } },
-        { status: 409 },
+        { status: 409 }
       );
 
       const props = baseProps();

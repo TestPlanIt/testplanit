@@ -54,11 +54,20 @@ async function fetchMentionUsers(
 }
 
 /**
- * Create mention extension with suggestion configuration
- * @param projectId Project ID to check user membership
- * @returns Configured Mention extension
+ * Create mention extension with suggestion configuration.
+ *
+ * @param projectId      Project ID to check user membership
+ * @param currentUserId  Logged-in user id. When a mention's id matches, the
+ *                       rendered pill grows a filled Star next to the avatar
+ *                       — same affordance the React `UserMention` component
+ *                       uses, so a `@you` in a comment body reads the same
+ *                       as a banner mention. Optional; mentions render
+ *                       without the Star when unset.
  */
-export function createMentionExtension(projectId: number) {
+export function createMentionExtension(
+  projectId: number,
+  currentUserId?: string
+) {
   return Mention.extend({
     addAttributes() {
       // Get parent attributes and extend them
@@ -152,6 +161,54 @@ export function createMentionExtension(projectId: number) {
             initials,
           ];
 
+      // Lucide's `Star` glyph reproduced as inline SVG so the raw-DOM render
+      // path emits the same affordance the React UserMention component
+      // shows. Path data is copied verbatim from
+      // `node_modules/lucide-react/dist/esm/icons/star.js` (v0.577) so the
+      // visual matches lucide's `<Star />` pixel-for-pixel.
+      //
+      // `fill-current` paints the star in the pill's resolved text color
+      // (inherits from the parent `<a class="text-secondary-foreground">`),
+      // so the star tone tracks the text tone across themes.
+      // ProseMirror's DOMSerializer renders tuples via `document.createElement`,
+      // which puts `<svg>` in the HTML namespace and produces an inert element
+      // with no glyph. The space-prefix `"<ns> <tag>"` form switches the
+      // serializer to `createElementNS`, and child elements inherit the
+      // namespace — so the path here renders as proper SVG.
+      const SVG_NS = "http://www.w3.org/2000/svg";
+      const isCurrentUser = currentUserId != null && currentUserId === userId;
+      const starElement = isCurrentUser
+        ? [
+            `${SVG_NS} svg`,
+            {
+              class: "w-3 h-3 min-w-3 fill-current shrink-0",
+              width: "24",
+              height: "24",
+              viewBox: "0 0 24 24",
+              fill: "none",
+              stroke: "currentColor",
+              "stroke-width": "2",
+              "stroke-linecap": "round",
+              "stroke-linejoin": "round",
+              "aria-hidden": "true",
+            },
+            [
+              "path",
+              {
+                d: "M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z",
+              },
+            ],
+          ]
+        : null;
+
+      // Children of the inner anchor — `starElement` is filtered out when
+      // the viewer isn't the mentioned user.
+      const anchorChildren = [
+        avatarElement,
+        starElement,
+        ["span", { class: "truncate max-w-[14rem]" }, userName],
+      ].filter(Boolean);
+
       return [
         "span",
         {
@@ -163,14 +220,13 @@ export function createMentionExtension(projectId: number) {
           "data-image": userImage,
         },
         [
-          "span",
+          "a",
           {
+            href: `/${locale}/users/profile/${userId}`,
             class:
-              "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-secondary text-secondary-foreground border border-muted-foreground/50 cursor-pointer hover:bg-secondary/80 transition-colors",
-            onclick: `window.location.href='/${locale}/users/profile/${userId}'`,
+              "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-secondary text-secondary-foreground border border-muted-foreground/50 hover:bg-secondary/80 cursor-pointer transition-colors no-underline align-middle max-w-[16rem]",
           },
-          avatarElement,
-          ["span", { class: "text-sm" }, userName],
+          ...anchorChildren,
         ],
       ];
     },

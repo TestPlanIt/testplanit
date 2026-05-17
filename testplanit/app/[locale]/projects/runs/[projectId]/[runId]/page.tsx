@@ -9,7 +9,6 @@ import { transformMilestones } from "@/components/forms/MilestoneSelect";
 import { Loading } from "@/components/Loading";
 import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
 import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
-import { ReviewActionPanel } from "@/components/reviews/ReviewActionPanel";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
@@ -1475,6 +1474,7 @@ export default function TestRunPage() {
                 entityType="RUN"
                 entityId={testRunData.id}
                 projectId={Number(projectId)}
+                entityName={testRunData.name}
                 reachableGatedStates={reachableGatedStates}
                 currentStateId={testRunData.stateId}
               />
@@ -1710,14 +1710,6 @@ export default function TestRunPage() {
               />
             </CardDescription>
           </CardHeader>
-
-          {testRunData ? (
-            <ReviewActionPanel
-              entityType="RUN"
-              entityId={testRunData.id}
-              projectId={Number(projectId)}
-            />
-          ) : null}
 
           <CardContent>
             <ResizablePanelGroup

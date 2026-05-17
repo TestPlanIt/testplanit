@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTranslations } from "next-intl";
+import { cn } from "~/utils";
 
 interface Version {
   id: number;
@@ -40,6 +41,11 @@ export function VersionSelect({
   const currentIndex = versions.findIndex(
     (v) => v.version.toString() === currentVersion
   );
+  const selectedVersion = currentIndex >= 0 ? versions[currentIndex] : null;
+  const dateFormatString =
+    userDateFormat && userTimeFormat
+      ? `${userDateFormat} ${userTimeFormat}`
+      : undefined;
 
   return (
     <Select
@@ -51,10 +57,30 @@ export function VersionSelect({
         }
       }}
     >
-      <SelectTrigger className="w-fit" data-testid="version-select-trigger">
-        <SelectValue
-          placeholder={tGlobal("common.placeholders.selectVersion")}
-        />
+      <SelectTrigger
+        className={cn(
+          "group w-fit transition-all duration-200 gap-1 hover:gap-2"
+        )}
+        data-testid="version-select-trigger"
+      >
+        {selectedVersion ? (
+          <div className="flex items-center gap-1 whitespace-nowrap">
+            <Badge className="text-primary-foreground text-xs">
+              {tGlobal("common.version.prefix")}
+              {selectedVersion.version.toString()}
+            </Badge>
+            <span className="text-xs flex max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-48">
+              <DateFormatter
+                date={selectedVersion.createdAt}
+                formatString={dateFormatString}
+              />
+            </span>
+          </div>
+        ) : (
+          <SelectValue
+            placeholder={tGlobal("common.placeholders.selectVersion")}
+          />
+        )}
       </SelectTrigger>
       <SelectContent>
         {versions.map((v, index) => (

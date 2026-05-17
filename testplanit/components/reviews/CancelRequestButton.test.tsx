@@ -49,12 +49,12 @@ describe("CancelRequestButton", () => {
 
   it("(a) renders null when canCancel === false", () => {
     const { container } = render(
-      <CancelRequestButton {...makeProps({ canCancel: false })} />,
+      <CancelRequestButton {...makeProps({ canCancel: false })} />
     );
 
     expect(container).toBeEmptyDOMElement();
     expect(
-      screen.queryByTestId("cancel-request-button"),
+      screen.queryByTestId("cancel-request-button")
     ).not.toBeInTheDocument();
   });
 
@@ -69,7 +69,7 @@ describe("CancelRequestButton", () => {
 
     // Dialog not open yet — content portal not rendered.
     expect(
-      screen.queryByTestId("cancel-request-dialog"),
+      screen.queryByTestId("cancel-request-dialog")
     ).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId("cancel-request-button"));
@@ -101,7 +101,7 @@ describe("CancelRequestButton", () => {
 
     await waitFor(() => expect(mockToastSuccess).toHaveBeenCalledTimes(1));
     expect(mockToastSuccess.mock.calls[0]?.[0]).toContain(
-      "reviews.cancel.success",
+      "reviews.cancel.success"
     );
   });
 
@@ -115,8 +115,6 @@ describe("CancelRequestButton", () => {
     fireEvent.click(screen.getByTestId("cancel-request-confirm"));
 
     await waitFor(() => expect(mockToastError).toHaveBeenCalledTimes(1));
-    expect(mockToastError.mock.calls[0]?.[0]).toContain(
-      "reviews.cancel.error",
-    );
+    expect(mockToastError.mock.calls[0]?.[0]).toContain("reviews.cancel.error");
   });
 });

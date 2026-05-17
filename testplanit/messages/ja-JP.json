@@ -353,7 +353,8 @@
         "edit_results_duration": "結果の期間を編集",
         "project_docs_default": "プロジェクトドキュメントのデフォルト",
         "notificationSettings": "通知のグローバル設定",
-        "elasticsearch_replicas": "Elasticsearchレプリカ"
+        "elasticsearch_replicas": "Elasticsearchレプリカ",
+        "review_feature_enabled": "レビュー機能が有効になりました"
       },
       "options": {
         "label": "ラベル",
@@ -2858,15 +2859,16 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "{assignee}から {ago} 前にレビューが依頼されました。",
+      "pendingMessage": "<assignee></assignee> から遷移 <fromState></fromState> → <toState></toState> <ago></ago> のレビュー依頼",
       "changesRequestedTitle": "変更依頼",
       "rejectedTitle": "審査が却下されました",
       "cancelRequest": "キャンセルリクエスト",
-      "requestAgain": "再度レビューを依頼する"
+      "requestAgain": "再度レビューを依頼する",
+      "decidedBy": "決定者"
     },
     "cancel": {
       "title": "このレビュー依頼をキャンセルしますか？",
-      "description": "審査担当者はこのリクエストに対応できなくなります。後ほど新しいリクエストを送信してください。",
+      "description": "審査担当者はこのリクエストに対応できなくなりました。後ほど改めてリクエストを送信してください。",
       "confirm": "キャンセルリクエスト",
       "success": "レビュー依頼はキャンセルされました。",
       "error": "レビュー依頼をキャンセルできませんでした。しばらくしてからもう一度お試しください。"
@@ -2878,13 +2880,25 @@
       "iconAria": "{count, plural, =0 {レビュー受信ボックス} one {レビュー受信ボックス、# 保留中} other {レビュー受信ボックス、# 保留中}}",
       "pageTitle": "レビュー",
       "pageDescription": "あなたに割り当てられた（直接またはあなたが担う役割を通じて割り当てられた）保留中の審査依頼。",
+      "pageDescriptionDecided": "既に決定済みのリクエストを再検討してください。",
+      "tabPending": "保留中",
+      "tabDecided": "決めた",
+      "emptyDecided": "まだレビューを決定していません。",
       "empty": "保留中のレビューはありません。すべて完了しています。",
       "featureDisabled": "レビューワークフロー機能は現在無効になっています。保留中のレビューは保持されており、機能が再度有効になった際に表示されます。",
       "columnEntity": "実在物",
       "columnProject": "プロジェクト",
       "columnRequester": "依頼者",
       "columnTransition": "遷移",
+      "columnTransitionFrom": "から",
+      "columnTransitionTo": "に",
       "columnRequestedAt": "リクエスト先",
+      "columnDecidedAt": "決定日",
+      "columnStatus": "状態",
+      "columnActions": "行動",
+      "actionApprove": "承認する",
+      "actionRequestChanges": "変更をリクエストする",
+      "actionReject": "拒否する",
       "filterEntityType": "エンティティタイプ",
       "filterProject": "プロジェクト",
       "filterAllEntityTypes": "すべてのエンティティタイプ",
@@ -2896,7 +2910,7 @@
     "requester": {
       "openButton": "レビューを依頼する",
       "sheetTitle": "レビューを依頼する",
-      "sheetDescription": "目標状態に移行する前に、このエンティティをレビューに提出してください。",
+      "sheetDescription": "目標状態への移行前に承認を申請してください。",
       "assigneeLabel": "譲受人",
       "assigneePlaceholder": "ユーザーまたは役割を選択してください",
       "usersHoldRole": "{count, plural, one {# このロールを持つユーザー} other {# このロールを持つユーザー}}",
@@ -2909,14 +2923,15 @@
       "targetStateRequired": "対象とする州を選択してください。",
       "submitButton": "レビューを依頼する",
       "submitSuccess": "レビュー依頼が作成されました。",
-      "alreadyPendingError": "この団体については既に審査が保留中です。"
+      "alreadyPendingError": "この団体については既に審査が保留中です。",
+      "cannotSelfAssign": "自分自身にレビューを割り当てることはできません。他のユーザーまたは役割を選択してください。"
     },
     "reviewer": {
       "approve": "承認する",
       "requestChanges": "変更をリクエストする",
       "reject": "拒否する",
       "approveConfirmTitle": "このレビュー依頼を承認しますか？",
-      "approveConfirmDescription": "承認すると、申請者はこの {entityType} を {targetStateName} に移行できるようになります。",
+      "approveConfirmDescription": "承認すると、 <requester></requester> が <name></name> から <state></state> に移行できるようになります。",
       "approvalNoteLabel": "承認メモ",
       "approvalNotePlaceholder": "申請者向けにオプションのメモを追加できます（承認画面の横に表示されます）。",
       "requestChangesTitle": "変更をリクエストする",
@@ -2924,7 +2939,7 @@
       "requestChangesCommentLabel": "コメント",
       "requestChangesCommentPlaceholder": "何を変える必要があるのか説明してください。",
       "rejectTitle": "このレビュー依頼を拒否しますか？",
-      "rejectDescription": "拒否すると、リクエスト元はこの {entityType} を {targetStateName}に移行できなくなります。再試行するには、新しいレビューリクエストを作成する必要があります。",
+      "rejectDescription": "ブロック <requester></requester> が <name></name> から <state></state>へ遷移するのを拒否しています。再試行するには、新しいレビューリクエストを作成する必要があります。",
       "rejectCommentLabel": "コメント",
       "rejectCommentPlaceholder": "この依頼を却下する理由を説明してください。",
       "commentRequired": "コメントは必須です。",
@@ -4114,16 +4129,16 @@
     "workflows": {
       "description": "テストケースワークフローを管理する",
       "systemFeatureCard": {
-        "title": "レビューワークフロー機能",
-        "description": "レビューおよび承認機能のシステムレベルの切り替えスイッチです。有効にすると、プロジェクトごとに詳細設定から個別に有効/無効を選択できます。",
-        "stateEnabled": "有効",
-        "stateDisabled": "無効",
-        "operatorNotePrefix": "環境変数で設定",
-        "operatorNoteSuffix": "変更を適用するには再起動が必要です。"
+        "title": "レビューワークフロー",
+        "description": "承認が得られるまでワークフローの遷移を制限することで、レビューを強制します。有効にすると、プロジェクトは詳細設定から個別に有効/無効を選択できます。無効にすると、ワークフローの承認制限が解除されます。",
+        "toggleAriaLabel": "レビューワークフロー機能の切り替え",
+        "adminOnlyNotice": "この設定を変更できるのは管理者のみです。",
+        "updateSuccessEnabled": "レビューワークフローが有効になりました。",
+        "updateSuccessDisabled": "レビューワークフローは無効になっています。",
+        "updateError": "レビューワークフロー設定の更新に失敗しました。しばらくしてからもう一度お試しください。"
       },
       "editWorkflow": {
-        "requiresReviewLabel": "審査が必要",
-        "requiresReviewFeatureDisabled": "レビューワークフロー機能はシステムレベルで無効になっています。プロジェクトの詳細設定を切り替えるか、TESTPLANIT_REVIEW_FEATURE_ENABLED を設定して再度有効にしてください。"
+        "requiresReviewLabel": "審査が必要"
       },
       "add": {
         "button": "ワークフローを追加",
@@ -5589,7 +5604,8 @@
       "isDefault": "## デフォルト\nこのワークフローがプロジェクトのデフォルトかどうかを示します。\n\n- 新しいテスト実行、セッション、および自動化では、デフォルトのワークフローが事前に選択されています。",
       "isEnabled": "## 有効\nこのワークフローが有効かどうかを示します。",
       "isActive": "## アクティブ\nこのワークフローの状態がアクティブで使用可能かどうかを示します。\n\n- アクティブなワークフローは、テスト実行、セッション、または自動化を更新するときに選択できます。\n- 非アクティブなワークフローは選択から非表示になりますが、既存の項目に保持されます。",
-      "projects": "## プロジェクト\nこのワークフローを使用できるプロジェクトを示します。"
+      "projects": "## プロジェクト\nこのワークフローを使用できるプロジェクトを示します。",
+      "requiresReview": "## レビューが必要\nON の場合、ケース、テスト実行、またはセッションをこの状態に移行させるには、承認されたレビュー要求が必要です。承認された要求がない場合、移行はブロックされます。\n\n- システム レベルの機能が OFF の場合、保留中の既存のレビューはサイレントに保持され、再度有効にすると再び表示されます。\n- テスターがエンティティの詳細ページから [レビューを要求] をクリックすると、レビュー担当者が選択されます。\n\nシステム レベルの機能が無効になっている場合、このスイッチはロックされます。上記の [レビュー ワークフロー] カードから再度有効にすると、オンに切り替えることができます。"
     },
     "testResult": {
       "status": "## ステータス\nテスト実行の全体的なステータスを選択します。選択したステータスは、プロジェクトのメトリクスとレポートに影響を与える可能性があります。",
@@ -6867,6 +6883,16 @@
     "mentions": {
       "notAMember": "プロジェクトメンバーではない",
       "noUsersFound": "ユーザーが見つかりません"
+    },
+    "type": {
+      "reviewRequest": "レビュー依頼",
+      "reviewDecision": {
+        "approved": "承認された",
+        "changesRequested": "変更依頼",
+        "rejected": "拒否されました",
+        "cancelled": "キャンセル",
+        "generic": "審査決定"
+      }
     }
   },
   "Trial": {

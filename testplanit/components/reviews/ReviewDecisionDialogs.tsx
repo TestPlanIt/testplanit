@@ -1,14 +1,5 @@
 "use client";
 
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,16 +15,45 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { UserMention } from "~/components/UserMention";
+import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
+import type { IconName } from "~/types/globals";
+
 export type ReviewableEntityType = "CASE" | "RUN" | "SESSION";
 
 type Decision = "APPROVED" | "CHANGES_REQUESTED" | "REJECTED";
+
+/**
+ * Shape `WorkflowStateDisplay` expects. The dialog title + body use it to
+ * render the target-state pill (icon + name) instead of plain text — keeps
+ * the workflow visualization consistent with the banner and inbox table.
+ */
+export interface DecisionDialogState {
+  name: string;
+  icon: { name: IconName } | null;
+  color: { value: string } | null;
+}
 
 interface BaseDialogProps {
   reviewRequestId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   entityType: ReviewableEntityType;
-  targetStateName: string;
+  /**
+   * The actual entity name (case/run/session) — shown inline in the dialog
+   * body so the reviewer sees what they're acting on instead of a generic
+   * "this CASE". Truncated with `line-clamp-2` so very long names don't
+   * blow out the dialog height.
+   */
+  entityName: string;
+  /** Target workflow state — passed straight to `WorkflowStateDisplay`. */
+  targetState: DecisionDialogState | null;
+  /**
+   * Original requester's user id. Rendered inline in the dialog body as a
+   * linked mention-pill (matches the banner / inbox treatment) so the
+   * reviewer sees exactly who they're acting on behalf of.
+   */
+  requesterUserId: string;
   /**
    * Called after a successful decide (HTTP 200) AND after a 409
    * ALREADY_DECIDED (so the parent banner refetches and stops showing
@@ -65,7 +85,7 @@ interface DecideErrorPayload {
  */
 async function postDecision(
   reviewRequestId: string,
-  body: { decision: Decision; comment?: string },
+  body: { decision: Decision; comment?: string }
 ): Promise<{ ok: true } | { ok: false; err: DecideErrorPayload }> {
   let response: Response;
   try {
@@ -106,15 +126,17 @@ function extractErrorCode(err: DecideErrorPayload): string | undefined {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ApproveDialog (AlertDialog confirm, optional approval note)
+// ApproveDialog (Dialog with optional approval note)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function ApproveDialog({
   reviewRequestId,
   open,
   onOpenChange,
-  entityType,
-  targetStateName,
+  entityType: _entityType,
+  entityName,
+  targetState,
+  requesterUserId,
   onSuccess,
 }: BaseDialogProps) {
   const t = useTranslations("reviews.reviewer");
@@ -162,17 +184,49 @@ export function ApproveDialog({
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent data-testid="approve-dialog">
-        <AlertDialogHeader>
-          <AlertDialogTitle>{t("approveConfirmTitle")}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {t("approveConfirmDescription", {
-              entityType,
-              targetStateName,
-            })}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent data-testid="approve-dialog">
+        <DialogHeader>
+          <DialogTitle>{t("approveConfirmTitle")}</DialogTitle>
+          <DialogDescription asChild>
+            <div className="text-sm text-muted-foreground">
+              {t.rich("approveConfirmDescription", {
+                // `inline-block` + `max-w-full` + `truncate` so very long
+                // case names get a clean single-line ellipsis instead of
+                // bloating dialog height. (`line-clamp` requires a
+                // block-display element, which fights `inline` flow.)
+                name: () => (
+                  // `inline [overflow-wrap:anywhere]` lets very long
+                  // case names wrap mid-string so a 200-char title
+                  // without a breakable character can't blow the dialog
+                  // out horizontally. `font-medium` flags it visually.
+                  <span className="font-medium text-foreground [overflow-wrap:anywhere]">
+                    {entityName}
+                  </span>
+                ),
+                state: () => (
+                  // The shared `WorkflowStateDisplay` wraps its name in a
+                  // `<span class="truncate">` but never gives it a
+                  // max-width — outer flex `shrink-0` keeps the pill at
+                  // content size. We cap the inner truncate span via an
+                  // arbitrary descendant selector so it engages even
+                  // when the flex chain above it refuses to shrink.
+                  <span className="inline-flex align-middle [&_.truncate]:max-w-[14rem]">
+                    {/* WorkflowStateDisplay's state requires non-null
+                       icon + color but the prisma include returns them
+                       as nullable joins. Cast at the seam so we don't
+                       lose the rest of the dialog's type safety. */}
+                    <WorkflowStateDisplay
+                      state={targetState as any}
+                      size="sm"
+                    />
+                  </span>
+                ),
+                requester: () => <UserMention userId={requesterUserId} />,
+              })}
+            </div>
+          </DialogDescription>
+        </DialogHeader>
         <div className="space-y-2">
           <Label htmlFor={`approve-note-${reviewRequestId}`}>
             {t("approvalNoteLabel")}
@@ -187,10 +241,15 @@ export function ApproveDialog({
             maxLength={5000}
           />
         </div>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={submitting}>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={submitting}
+          >
             {t("cancel")}
-          </AlertDialogCancel>
+          </Button>
           <Button
             type="button"
             data-testid="approve-confirm"
@@ -199,9 +258,9 @@ export function ApproveDialog({
           >
             {t("confirmApprove")}
           </Button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -304,15 +363,17 @@ export function RequestChangesDialog({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// RejectDialog (AlertDialog with required comment, destructive styling)
+// RejectDialog (Dialog with required comment, destructive styling)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function RejectDialog({
   reviewRequestId,
   open,
   onOpenChange,
-  entityType,
-  targetStateName,
+  entityType: _entityType,
+  entityName,
+  targetState,
+  requesterUserId,
   onSuccess,
 }: BaseDialogProps) {
   const t = useTranslations("reviews.reviewer");
@@ -357,14 +418,41 @@ export function RejectDialog({
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent data-testid="reject-dialog">
-        <AlertDialogHeader>
-          <AlertDialogTitle>{t("rejectTitle")}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {t("rejectDescription", { entityType, targetStateName })}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent data-testid="reject-dialog">
+        <DialogHeader>
+          <DialogTitle>{t("rejectTitle")}</DialogTitle>
+          <DialogDescription asChild>
+            <div className="text-sm text-muted-foreground">
+              {t.rich("rejectDescription", {
+                name: () => (
+                  // `inline [overflow-wrap:anywhere]` lets very long
+                  // case names wrap mid-string so a 200-char title
+                  // without a breakable character can't blow the dialog
+                  // out horizontally. `font-medium` flags it visually.
+                  <span className="font-medium text-foreground [overflow-wrap:anywhere]">
+                    {entityName}
+                  </span>
+                ),
+                state: () => (
+                  // The shared `WorkflowStateDisplay` wraps its name in a
+                  // `<span class="truncate">` but never gives it a
+                  // max-width — outer flex `shrink-0` keeps the pill at
+                  // content size. We cap the inner truncate span via an
+                  // arbitrary descendant selector so it engages even
+                  // when the flex chain above it refuses to shrink.
+                  <span className="inline-flex align-middle [&_.truncate]:max-w-[14rem]">
+                    <WorkflowStateDisplay
+                      state={targetState as any}
+                      size="sm"
+                    />
+                  </span>
+                ),
+                requester: () => <UserMention userId={requesterUserId} />,
+              })}
+            </div>
+          </DialogDescription>
+        </DialogHeader>
         <div className="space-y-2">
           <Label htmlFor={`reject-comment-${reviewRequestId}`}>
             {t("rejectCommentLabel")}
@@ -379,10 +467,15 @@ export function RejectDialog({
             maxLength={5000}
           />
         </div>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={submitting}>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={submitting}
+          >
             {t("cancel")}
-          </AlertDialogCancel>
+          </Button>
           <Button
             type="button"
             data-testid="reject-confirm"
@@ -392,8 +485,8 @@ export function RejectDialog({
           >
             {t("confirmReject")}
           </Button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

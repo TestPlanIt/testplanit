@@ -16,7 +16,7 @@ export async function generateMetadata({
   // meantime. See deferred-items.md for the documented pattern.
   const t = (await getTranslations({ locale })) as (
     key: string,
-    params?: Record<string, unknown>,
+    params?: Record<string, unknown>
   ) => string;
   return { title: t("common.pageTitles.reviews") };
 }

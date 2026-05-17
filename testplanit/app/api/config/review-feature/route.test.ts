@@ -1,45 +1,53 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { GET } from "./route";
 
 /**
  * Tests for GET /api/config/review-feature.
  *
- * Per Phase 02 Plan 03 Task 1 + D-19:
- *   - The system-level review feature flag is operator-controlled via the
- *     `TESTPLANIT_REVIEW_FEATURE_ENABLED` env var. It MUST NOT be exposed as
- *     `NEXT_PUBLIC_*` (per RESEARCH §Pitfall 2) — instead, this route reads
- *     it server-side and serves the resolved boolean to clients.
+ * The system-level review feature flag is admin-toggleable via the
+ * `review_feature_enabled` AppConfig row. This route reads the row
+ * server-side and serves the resolved boolean to clients so the value
+ * never ships in the client bundle.
  *
- * Env var convention (Assumption A6, matches assertReviewGatePasses):
- *   - Only the literal string 'false' disables the feature.
- *   - undefined / 'true' / '0' / 'no' / '' / any other value → enabled (true).
+ * Default-on convention (matches assertReviewGatePasses):
+ *   - row missing       → enabled (true)
+ *   - value === false   → disabled (false)
+ *   - anything else     → enabled (true)
  */
+vi.mock("~/lib/prisma", () => ({
+  prisma: {
+    appConfig: {
+      findUnique: vi.fn(),
+    },
+  },
+}));
+
+import { prisma } from "~/lib/prisma";
+
 describe("GET /api/config/review-feature", () => {
-  const ENV_KEY = "TESTPLANIT_REVIEW_FEATURE_ENABLED";
+  const findUnique = prisma.appConfig.findUnique as ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    vi.unstubAllEnvs();
+    findUnique.mockReset();
   });
 
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
-  it("returns { enabled: true } when the env var is unset", async () => {
-    // Explicitly remove the var (vi.stubEnv with undefined clears it for this test)
-    vi.stubEnv(ENV_KEY, "");
-    delete process.env[ENV_KEY];
+  it("returns { enabled: true } when the AppConfig row is missing", async () => {
+    findUnique.mockResolvedValue(null);
 
     const response = await GET();
     const body = await response.json();
 
     expect(response.status).toBe(200);
     expect(body).toEqual({ enabled: true });
+    expect(findUnique).toHaveBeenCalledWith({
+      where: { key: "review_feature_enabled" },
+      select: { value: true },
+    });
   });
 
-  it("returns { enabled: false } when the env var is the literal string 'false'", async () => {
-    vi.stubEnv(ENV_KEY, "false");
+  it("returns { enabled: false } when value === false", async () => {
+    findUnique.mockResolvedValue({ value: false });
 
     const response = await GET();
     const body = await response.json();
@@ -48,8 +56,8 @@ describe("GET /api/config/review-feature", () => {
     expect(body).toEqual({ enabled: false });
   });
 
-  it("returns { enabled: true } when the env var is 'true'", async () => {
-    vi.stubEnv(ENV_KEY, "true");
+  it("returns { enabled: true } when value === true", async () => {
+    findUnique.mockResolvedValue({ value: true });
 
     const response = await GET();
     const body = await response.json();
@@ -58,38 +66,17 @@ describe("GET /api/config/review-feature", () => {
     expect(body).toEqual({ enabled: true });
   });
 
-  it("returns { enabled: true } when the env var is '0' (off-by-one convention: only literal 'false' disables)", async () => {
-    vi.stubEnv(ENV_KEY, "0");
-
-    const response = await GET();
-    const body = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(body).toEqual({ enabled: true });
-  });
-
-  it("returns { enabled: true } when the env var is 'no' (only literal 'false' disables)", async () => {
-    vi.stubEnv(ENV_KEY, "no");
-
-    const response = await GET();
-    const body = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(body).toEqual({ enabled: true });
-  });
-
-  it("returns { enabled: true } when the env var is the empty string", async () => {
-    vi.stubEnv(ENV_KEY, "");
-
-    const response = await GET();
-    const body = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(body).toEqual({ enabled: true });
+  it("returns { enabled: true } for any non-false JSON value (forward-compat with future shapes)", async () => {
+    for (const value of [0, "false", { enabled: false }, []]) {
+      findUnique.mockResolvedValue({ value });
+      const response = await GET();
+      const body = await response.json();
+      expect(body).toEqual({ enabled: true });
+    }
   });
 
   it("returns a JSON body shaped exactly as { enabled: boolean } with no other fields", async () => {
-    vi.stubEnv(ENV_KEY, "true");
+    findUnique.mockResolvedValue({ value: true });
 
     const response = await GET();
     const body = await response.json();

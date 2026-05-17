@@ -109,6 +109,9 @@ describe("Submit Result API Route", () => {
     reviewRequest: {
       findFirst: ReturnType<typeof vi.fn>;
     };
+    appConfig: {
+      findUnique: ReturnType<typeof vi.fn>;
+    };
   };
 
   beforeEach(() => {
@@ -148,6 +151,12 @@ describe("Submit Result API Route", () => {
       },
       reviewRequest: {
         findFirst: vi.fn().mockResolvedValue(null),
+      },
+      // System-level review-feature flag (AppConfig). Default to enabled so
+      // the gate doesn't short-circuit; tests that need the flag OFF can
+      // override `txMocks.appConfig.findUnique` after construction.
+      appConfig: {
+        findUnique: vi.fn().mockResolvedValue({ value: true }),
       },
     };
 

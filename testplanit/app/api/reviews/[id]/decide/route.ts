@@ -25,17 +25,19 @@ const decideBodySchema = z
     comment: z.string().optional(),
   })
   .refine(
-    (data) => data.decision === "APPROVED" || (data.comment?.trim().length ?? 0) > 0,
+    (data) =>
+      data.decision === "APPROVED" || (data.comment?.trim().length ?? 0) > 0,
     {
-      message: "Comment is required for CHANGES_REQUESTED and REJECTED decisions",
+      message:
+        "Comment is required for CHANGES_REQUESTED and REJECTED decisions",
       path: ["comment"],
-    },
+    }
   );
 
 export const POST = withAuditContext(
   async (
     request: NextRequest,
-    context: { params: Promise<{ id: string }> },
+    context: { params: Promise<{ id: string }> }
   ) => {
     const routeParams = await context.params;
     const reviewRequestId = routeParams.id;
@@ -50,8 +52,13 @@ export const POST = withAuditContext(
       rawBody = await request.json();
     } catch {
       return NextResponse.json(
-        { error: { code: "INVALID_BODY", message: "Request body must be valid JSON" } },
-        { status: 400 },
+        {
+          error: {
+            code: "INVALID_BODY",
+            message: "Request body must be valid JSON",
+          },
+        },
+        { status: 400 }
       );
     }
 
@@ -64,7 +71,7 @@ export const POST = withAuditContext(
             details: parsed.error.issues,
           },
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -75,14 +82,14 @@ export const POST = withAuditContext(
         session,
         reviewRequestId,
         decision as DecideOutcome,
-        comment,
+        comment
       );
       return NextResponse.json(updated, { status: 200 });
     } catch (error) {
       if (isIneligibleReviewerError(error)) {
         return NextResponse.json(
           { error: { code: "INELIGIBLE_REVIEWER" } },
-          { status: 403 },
+          { status: 403 }
         );
       }
       if (
@@ -91,7 +98,7 @@ export const POST = withAuditContext(
       ) {
         return NextResponse.json(
           { error: { code: "ALREADY_DECIDED" } },
-          { status: 409 },
+          { status: 409 }
         );
       }
       if (
@@ -100,14 +107,14 @@ export const POST = withAuditContext(
       ) {
         return NextResponse.json(
           { error: { code: "NOT_FOUND" } },
-          { status: 404 },
+          { status: 404 }
         );
       }
       console.error("Error deciding review request:", error);
       return NextResponse.json(
         { error: { code: "INTERNAL_ERROR" } },
-        { status: 500 },
+        { status: 500 }
       );
     }
-  },
+  }
 );

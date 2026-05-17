@@ -353,7 +353,8 @@
         "edit_results_duration": "Editar Duración de Resultados",
         "project_docs_default": "Projektdokument",
         "notificationSettings": "Configuración global de notificación",
-        "elasticsearch_replicas": "Réplicas de Elasticsearch"
+        "elasticsearch_replicas": "Réplicas de Elasticsearch",
+        "review_feature_enabled": "Función de reseñas habilitada"
       },
       "options": {
         "label": "Etiqueta",
@@ -2858,15 +2859,16 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "Revisión solicitada desde {assignee}. {ago} hace.",
+      "pendingMessage": "Revisión solicitada de <assignee></assignee> para la transición <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "Cambios solicitados",
       "rejectedTitle": "Revisión rechazada",
       "cancelRequest": "Cancelar solicitud",
-      "requestAgain": "Solicitar revisión nuevamente"
+      "requestAgain": "Solicitar revisión nuevamente",
+      "decidedBy": "Decidido por"
     },
     "cancel": {
       "title": "¿Cancelar esta solicitud de revisión?",
-      "description": "El revisor ya no podrá tramitar esta solicitud. Posteriormente podrá enviar una nueva solicitud.",
+      "description": "El revisor ya no podrá tramitar esta solicitud. Puede enviar una nueva solicitud más adelante.",
       "confirm": "Cancelar solicitud",
       "success": "Solicitud de revisión cancelada.",
       "error": "No se pudo cancelar la solicitud de revisión. Inténtelo de nuevo en un momento."
@@ -2878,13 +2880,25 @@
       "iconAria": "{count, plural, =0 {Bandeja de entrada de revisiones} one {Bandeja de entrada de revisiones, # pendiente} other {Bandeja de entrada de revisiones, # pendiente}}",
       "pageTitle": "Reseñas",
       "pageDescription": "Solicitudes de revisión pendientes que se le hayan asignado (directamente o a través de un cargo que ocupe).",
+      "pageDescriptionDecided": "Revisa las solicitudes que ya has decidido.",
+      "tabPending": "Pendiente",
+      "tabDecided": "Decidido",
+      "emptyDecided": "Todavía no has decidido escribir ninguna reseña.",
       "empty": "No hay revisiones pendientes. Ya estás al día.",
       "featureDisabled": "La función de flujo de trabajo de revisiones está actualmente desactivada. Las revisiones pendientes se conservan y volverán a aparecer cuando se vuelva a activar la función.",
       "columnEntity": "Entidad",
       "columnProject": "Proyecto",
       "columnRequester": "Solicitante",
       "columnTransition": "Transición",
+      "columnTransitionFrom": "De",
+      "columnTransitionTo": "A",
       "columnRequestedAt": "Solicitado en",
+      "columnDecidedAt": "Decidido en",
+      "columnStatus": "Estado",
+      "columnActions": "Comportamiento",
+      "actionApprove": "Aprobar",
+      "actionRequestChanges": "Solicitar cambios",
+      "actionReject": "Rechazar",
       "filterEntityType": "Tipo de entidad",
       "filterProject": "Proyecto",
       "filterAllEntityTypes": "Todos los tipos de entidades",
@@ -2896,7 +2910,7 @@
     "requester": {
       "openButton": "Solicitar revisión",
       "sheetTitle": "Solicitar revisión",
-      "sheetDescription": "Envíe esta entidad para su revisión antes de la transición al estado de destino.",
+      "sheetDescription": "Solicitar aprobación antes de pasar al estado de destino.",
       "assigneeLabel": "Cesionario",
       "assigneePlaceholder": "Seleccione un usuario o rol.",
       "usersHoldRole": "{count, plural, one {# el usuario tiene este rol} other {# los usuarios tienen este rol}}",
@@ -2910,14 +2924,14 @@
       "submitButton": "Solicitar revisión",
       "submitSuccess": "Solicitud de revisión creada.",
       "alreadyPendingError": "Ya hay una revisión pendiente para esta entidad.",
-      "cannotSelfAssign": "No puedes asignarte una revisión a ti mismo; elige otro usuario o un rol."
+      "cannotSelfAssign": "No puedes asignarte una reseña a ti mismo; elige otro usuario o un rol."
     },
     "reviewer": {
       "approve": "Aprobar",
       "requestChanges": "Solicitar cambios",
       "reject": "Rechazar",
       "approveConfirmTitle": "¿Aprueba esta solicitud de revisión?",
-      "approveConfirmDescription": "La aprobación permitirá al solicitante hacer la transición de este {entityType} a {targetStateName}.",
+      "approveConfirmDescription": "La aprobación permitirá que <requester></requester> haga la transición de <name></name> a <state></state>.",
       "approvalNoteLabel": "Nota de aprobación",
       "approvalNotePlaceholder": "Agregue una nota opcional para el solicitante (visible junto a la aprobación).",
       "requestChangesTitle": "Solicitar cambios",
@@ -2925,7 +2939,7 @@
       "requestChangesCommentLabel": "Comentario",
       "requestChangesCommentPlaceholder": "Explica qué es lo que hay que cambiar.",
       "rejectTitle": "¿Rechazar esta solicitud de revisión?",
-      "rejectDescription": "Rechazar impide que el solicitante haga la transición de este {entityType} a {targetStateName}. Se debe crear una nueva solicitud de revisión para volver a intentarlo.",
+      "rejectDescription": "Rechazando los bloques <requester></requester> para la transición <name></name> a <state></state>. Se debe crear una nueva solicitud de revisión para reintentar.",
       "rejectCommentLabel": "Comentario",
       "rejectCommentPlaceholder": "Explique por qué rechaza esta solicitud.",
       "commentRequired": "Se requiere un comentario.",
@@ -4115,16 +4129,16 @@
     "workflows": {
       "description": "Administrar flujos de trabajo de casos de prueba",
       "systemFeatureCard": {
-        "title": "Revisar la función de flujo de trabajo",
-        "description": "Opción a nivel de sistema para la función de revisión y aprobación. Cuando está habilitada, los proyectos pueden activarla o desactivarla individualmente a través de su configuración avanzada.",
-        "stateEnabled": "Activado",
-        "stateDisabled": "Desactivado",
-        "operatorNotePrefix": "Configurado mediante variable de entorno",
-        "operatorNoteSuffix": "Es necesario reiniciar el sistema para aplicar los cambios."
+        "title": "Revisar el flujo de trabajo",
+        "description": "Aplique revisiones restringiendo las transiciones del flujo de trabajo hasta que se otorgue la aprobación. Cuando está habilitada, los proyectos pueden activarla o desactivarla individualmente a través de su configuración avanzada. Desactive esta opción para evitar las restricciones de aprobación del flujo de trabajo.",
+        "toggleAriaLabel": "Activar/desactivar la función de flujo de trabajo de revisión",
+        "adminOnlyNotice": "Solo los administradores pueden cambiar esta configuración.",
+        "updateSuccessEnabled": "Flujo de trabajo de revisión habilitado.",
+        "updateSuccessDisabled": "Revisión del flujo de trabajo deshabilitada.",
+        "updateError": "No se pudo actualizar la configuración del flujo de trabajo de revisión. Inténtelo de nuevo en un momento."
       },
       "editWorkflow": {
-        "requiresReviewLabel": "Requiere revisión",
-        "requiresReviewFeatureDisabled": "La función de flujo de trabajo de revisión está deshabilitada a nivel del sistema. Para volver a habilitarla, modifique la configuración avanzada del proyecto o establezca TESTPLANIT_REVIEW_FEATURE_ENABLED."
+        "requiresReviewLabel": "Requiere revisión"
       },
       "add": {
         "button": "Añadir flujo de trabajo",
@@ -5590,7 +5604,8 @@
       "isDefault": "## Por defecto\nIndica si este flujo de trabajo es el predeterminado para tu proyecto.\n\n- El flujo de trabajo predeterminado está preseleccionado para nuevas ejecuciones de pruebas, sesiones y automatización.",
       "isEnabled": "## Habilitado\\nIndica si este flujo de trabajo está activo.",
       "isActive": "## Activo\nIndica si este estado de flujo de trabajo está activo y disponible para su uso.\n\n- Los flujos de trabajo activos se pueden seleccionar al actualizar ejecuciones de pruebas, sesiones o automatización.\n- Los flujos de trabajo inactivos se ocultan de la selección, pero se conservan en los elementos existentes.",
-      "projects": "## Proyecta\nIndica los proyectos que pueden usar este flujo de trabajo."
+      "projects": "## Proyecta\nIndica los proyectos que pueden usar este flujo de trabajo.",
+      "requiresReview": "## Requiere revisión\nCuando está ACTIVADO, la transición de un caso, ejecución de prueba o sesión A este estado está sujeta a una solicitud de revisión aprobada. Sin una solicitud aprobada, la transición está bloqueada.\n\n- Las revisiones pendientes existentes se conservan silenciosamente cuando la función a nivel de sistema está DESACTIVADA y reaparecen cuando se vuelve a habilitar.\n- El revisor se selecciona cuando un evaluador hace clic en Solicitar revisión desde la página de detalles de la entidad.\n\nSi la función a nivel de sistema está deshabilitada, este interruptor está bloqueado. Vuelva a habilitarlo desde la tarjeta Flujo de trabajo de revisión anterior para activarlo."
     },
     "testResult": {
       "status": "## Estado\nSeleccione el estado general de la ejecución de la prueba. El estado que elija puede afectar a las métricas e informes del proyecto.",
@@ -6868,6 +6883,16 @@
     "mentions": {
       "notAMember": "No es miembro del proyecto",
       "noUsersFound": "No se encontraron usuarios"
+    },
+    "type": {
+      "reviewRequest": "Solicitud de revisión",
+      "reviewDecision": {
+        "approved": "Aprobado",
+        "changesRequested": "Cambios solicitados",
+        "rejected": "Rechazado",
+        "cancelled": "Cancelado",
+        "generic": "Revisar la decisión"
+      }
     }
   },
   "Trial": {

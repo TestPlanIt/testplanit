@@ -17,7 +17,7 @@ vi.mock("~/lib/hooks", () => ({
 }));
 
 function pending(
-  overrides: Record<string, unknown> = {},
+  overrides: Record<string, unknown> = {}
 ): Record<string, unknown> {
   return {
     id: "rev-1",
@@ -40,14 +40,16 @@ describe("PendingReviewBadge", () => {
 
   it("(a) renders null when pendingRequest is undefined", () => {
     const { container } = render(
-      <PendingReviewBadge pendingRequest={undefined} />,
+      <PendingReviewBadge pendingRequest={undefined} />
     );
     expect(container).toBeEmptyDOMElement();
   });
 
   it("(b) renders null when pendingRequest.status !== PENDING", () => {
     const { container } = render(
-      <PendingReviewBadge pendingRequest={pending({ status: "APPROVED" }) as any} />,
+      <PendingReviewBadge
+        pendingRequest={pending({ status: "APPROVED" }) as any}
+      />
     );
     expect(container).toBeEmptyDOMElement();
   });
@@ -82,7 +84,7 @@ describe("PendingReviewBadge", () => {
             assigneeRole: { id: 7, name: "QA Lead" },
           }) as any
         }
-      />,
+      />
     );
 
     const badge = screen.getByTestId("pending-review-badge");

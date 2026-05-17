@@ -3304,6 +3304,23 @@ enum ReviewEntityType {
     @@allow('read', true)
 }
 
+// Discriminator on the Comment model so review-related comments can carry a
+// different visual treatment + potentially a different notification template
+// than general entity chatter (D-21 follow-up to the Phase 2 hybrid design).
+// GENERAL is the default for all existing and future ad-hoc comments — no
+// behavioural change. REVIEW_REQUEST is auto-posted when a requester submits
+// the Request Review sheet (paired with the new ReviewRequest row via
+// `reviewRequestId`). REVIEW_DECISION is auto-posted when a reviewer
+// Approves / Requests Changes / Rejects a review.
+enum CommentType {
+    GENERAL
+    REVIEW_REQUEST
+    REVIEW_DECISION
+
+    @@deny('all', !auth())
+    @@allow('read', true)
+}
+
 model ReviewRequest {
     id                String           @id @default(cuid())
     projectId         Int
@@ -3337,6 +3354,14 @@ model ReviewRequest {
     // Field-level @allow override flag (third arg true) carves out the model-level append-only @@deny.
     consumedAt        DateTime?        @allow('update', status == 'APPROVED', true)
 
+    // Hybrid design (Phase 2 follow-up): the requester's typed prose at submit
+    // time AND the reviewer's optional notes at decide time both live in the
+    // standard Comments thread on the entity, linked back here via
+    // Comment.reviewRequestId. The decisionComment column above remains for
+    // structured audit fidelity (immutable decision narrative); the paired
+    // Comment is the human-readable conversation surface.
+    comments          Comment[]
+
     isDeleted         Boolean          @default(false)
     createdAt         DateTime         @default(now()) @db.Timestamptz(6)
     updatedAt         DateTime         @updatedAt
@@ -3345,6 +3370,11 @@ model ReviewRequest {
     @@index([assigneeRoleId, status])
     @@index([entityType, entityId, status, createdAt(sort: Desc)])
     @@index([projectId, status])
+    // Reviewer-history index — backs the /reviews "Decided" tab query
+    // `where: { decidedByUserId: me, status: { in: [APPROVED, CHANGES_REQUESTED, REJECTED] } }`
+    // ordered by `decidedAt desc`. Without this the query would scan the
+    // whole table as the request volume grows.
+    @@index([decidedByUserId, decidedAt(sort: Desc)])
 
     // XOR: exactly one of assigneeUserId or assigneeRoleId must be set (SCHEMA-02, D-14).
     @@validate(
@@ -4296,6 +4326,15 @@ model Comment {
     milestoneId      Int?
     milestone        Milestones?      @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
 
+    // Review-feature hybrid (Phase 2 follow-up): when the requester submits a
+    // Request Review or the reviewer Approves/Requests Changes/Rejects, the
+    // submit path also writes a paired Comment with `type` ≠ GENERAL and
+    // `reviewRequestId` set. GENERAL is the default; existing comments and
+    // any future ad-hoc comments are unaffected.
+    type             CommentType      @default(GENERAL)
+    reviewRequestId  String?
+    reviewRequest    ReviewRequest?   @relation(fields: [reviewRequestId], references: [id], onDelete: SetNull)
+
     // Creator and metadata
     creatorId        String
     creator          User             @relation("CommentCreator", fields: [creatorId], references: [id])
@@ -4312,6 +4351,7 @@ model Comment {
     @@index([testRunId, isDeleted])
     @@index([sessionId, isDeleted])
     @@index([milestoneId, isDeleted])
+    @@index([reviewRequestId])
     @@index([creatorId])
     @@deny('all', !auth())
     @@deny('all', auth().access == 'NONE')

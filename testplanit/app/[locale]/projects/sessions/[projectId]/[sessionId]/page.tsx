@@ -7,7 +7,6 @@ import { useRouter } from "~/lib/navigation";
 import { AttachmentChanges } from "@/components/AttachmentsDisplay";
 import { Loading } from "@/components/Loading";
 import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
-import { ReviewActionPanel } from "@/components/reviews/ReviewActionPanel";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
@@ -1675,6 +1674,7 @@ export default function SessionPage() {
                 entityType="SESSION"
                 entityId={sessionData.id}
                 projectId={Number(projectId)}
+                entityName={sessionData.name}
                 reachableGatedStates={reachableGatedStates}
                 currentStateId={sessionData.stateId}
               />
@@ -1873,14 +1873,6 @@ export default function SessionPage() {
               </div>
             </div>
           </CardHeader>
-
-          {sessionData ? (
-            <ReviewActionPanel
-              entityType="SESSION"
-              entityId={sessionData.id}
-              projectId={Number(projectId)}
-            />
-          ) : null}
 
           <CardContent>
             <ResizablePanelGroup

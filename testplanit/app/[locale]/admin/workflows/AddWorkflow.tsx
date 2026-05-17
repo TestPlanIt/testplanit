@@ -54,6 +54,7 @@ import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import MultiSelect from "react-select";
 import { scopeDisplayData } from "~/app/constants";
+import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
 
 const scopeKeys = Object.keys(scopeDisplayData) as [
@@ -85,6 +86,7 @@ function buildFormSchema(t: (key: any) => string): any {
     }),
     isDefault: z.boolean().prefault(false).optional(),
     isEnabled: z.boolean().prefault(true).optional(),
+    requiresReview: z.boolean().prefault(false).optional(),
     projects: z.array(z.number()).optional(),
   });
 }
@@ -102,6 +104,13 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
   const tGlobal = useTranslations();
   const tWorkflowTypes = useTranslations("enums.WorkflowType");
   const workflowTypeOptions = getWorkflowTypeOptions(tWorkflowTypes);
+
+  // System-level review-feature flag (AppConfig-backed). When OFF, the
+  // Requires Review switch in this form is locked so admins can't create a
+  // workflow state that depends on a disabled subsystem.
+  const { systemEnabled: reviewFeatureSystemEnabled } =
+    useReviewFeatureEnabled();
+  const reviewFeatureDisabled = reviewFeatureSystemEnabled === false;
 
   const { data: defaultIconData } = useFindFirstFieldIcon({
     where: { name: "layout-list" },
@@ -152,6 +161,7 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
       name: "",
       isDefault: false,
       isEnabled: true,
+      requiresReview: false,
       projects: [],
     },
   });
@@ -191,6 +201,7 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
           colorId: selectedColorId || defaultColorData?.id!,
           isEnabled: data.isEnabled || true,
           isDefault: data.isDefault || false,
+          requiresReview: data.requiresReview || false,
           scope: data.scope || "",
           workflowType: data.workflowType,
         },
@@ -406,6 +417,30 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
                 </FormItem>
               )}
             />
+            {!reviewFeatureDisabled && (
+              <FormField
+                control={form.control}
+                name="requiresReview"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center space-x-2">
+                      <FormControl>
+                        <Switch
+                          data-testid="requires-review-switch"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="flex items-center">
+                        {t("editWorkflow.requiresReviewLabel")}
+                        <HelpPopover helpKey="workflow.requiresReview" />
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control}

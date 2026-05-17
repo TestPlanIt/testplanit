@@ -260,6 +260,12 @@ enum ReviewEntityType {
   SESSION
 }
 
+enum CommentType {
+  GENERAL
+  REVIEW_REQUEST
+  REVIEW_DECISION
+}
+
 enum ShareLinkMode {
   AUTHENTICATED
   PUBLIC
@@ -1852,6 +1858,7 @@ model ReviewRequest {
   decidedBy         User?            @relation("ReviewDecidedBy", fields: [decidedByUserId], references: [id])
   decidedAt         DateTime?
   consumedAt        DateTime?
+  comments          Comment[]
   isDeleted         Boolean          @default(false)
   createdAt         DateTime         @default(now()) @db.Timestamptz(6)
   updatedAt         DateTime         @updatedAt()
@@ -1860,6 +1867,7 @@ model ReviewRequest {
   @@index([assigneeRoleId, status])
   @@index([entityType, entityId, status, createdAt(sort: Desc)])
   @@index([projectId, status])
+  @@index([decidedByUserId, decidedAt(sort: Desc)])
 }
 
 model ShareLink {
@@ -2405,6 +2413,9 @@ model Comment {
   session          Sessions?        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   milestoneId      Int?
   milestone        Milestones?      @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  type             CommentType      @default(GENERAL)
+  reviewRequestId  String?
+  reviewRequest    ReviewRequest?   @relation(fields: [reviewRequestId], references: [id], onDelete: SetNull)
   creatorId        String
   creator          User             @relation("CommentCreator", fields: [creatorId], references: [id])
   createdAt        DateTime         @default(now()) @db.Timestamptz(6)
@@ -2418,6 +2429,7 @@ model Comment {
   @@index([testRunId, isDeleted])
   @@index([sessionId, isDeleted])
   @@index([milestoneId, isDeleted])
+  @@index([reviewRequestId])
   @@index([creatorId])
 }
 

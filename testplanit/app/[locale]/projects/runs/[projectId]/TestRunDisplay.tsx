@@ -377,9 +377,8 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
 
   // Bulk-fetch PENDING ReviewRequests for the visible page (D-06; one round
   // trip per page render — never per-row, per RESEARCH §"Pitfall 6").
-  const { enabled: reviewFeatureEnabled } = useReviewFeatureEnabled(
-    numericProjectId
-  );
+  const { enabled: reviewFeatureEnabled } =
+    useReviewFeatureEnabled(numericProjectId);
   const { data: pendingReviewsForVisibleRuns } = useFindManyReviewRequest(
     {
       where: {

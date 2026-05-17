@@ -1,17 +1,32 @@
 "use client";
 
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { formatDistanceToNow } from "date-fns";
-import { MessageSquareWarning } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { WarningAlert } from "@/components/ui/warning-alert";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  CheckCircle2,
+  MessageCircleWarning,
+  MessageSquareWarning,
+  XCircle,
+} from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
+import {
+  commentsQueryKey,
+  reviewableEntityTypeToCommentEntityType,
+} from "~/components/comments/commentsQueryKey";
+import { RelativeTimeTooltip } from "~/components/RelativeTimeTooltip";
+import { UserMention } from "~/components/UserMention";
+import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
+import { useEffectiveRoleOnProject } from "~/hooks/useEffectiveRoleOnProject";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { useFindFirstReviewRequest } from "~/lib/hooks";
 
@@ -23,6 +38,11 @@ import {
   type ReviewableEntityType,
 } from "./RequestReviewSheet";
 import {
+  ApproveDialog,
+  RejectDialog,
+  RequestChangesDialog,
+} from "./ReviewDecisionDialogs";
+import {
   REVIEW_STATUS_BANNER_INCLUDE,
   type ReviewStatusBannerRequest,
 } from "./types";
@@ -31,6 +51,12 @@ export interface ReviewStatusBannerProps {
   entityType: ReviewableEntityType;
   entityId: number;
   projectId: number;
+  /**
+   * Display name of the entity under review (case/run/session). Surfaced
+   * inline in the decision dialogs that the PENDING banner now hosts so the
+   * reviewer sees what they're acting on instead of a generic "this CASE".
+   */
+  entityName: string;
   /**
    * Reachable gated states for "Request review again" (CHANGES_REQUESTED /
    * REJECTED branches). Bulk-fetched at the entity-page level; if empty the
@@ -76,13 +102,20 @@ export function ReviewStatusBanner({
   entityType,
   entityId,
   projectId,
+  entityName,
   reachableGatedStates,
   currentStateId,
 }: ReviewStatusBannerProps) {
   const t = useTranslations();
+  const tReviewer = useTranslations("reviews.reviewer");
+  const queryClient = useQueryClient();
   const { data: session } = useSession();
   const { enabled } = useReviewFeatureEnabled(projectId);
+  const { roleId: effectiveRoleId } = useEffectiveRoleOnProject(projectId);
   const [requestAgainOpen, setRequestAgainOpen] = useState(false);
+  const [approveOpen, setApproveOpen] = useState(false);
+  const [requestChangesOpen, setRequestChangesOpen] = useState(false);
+  const [rejectOpen, setRejectOpen] = useState(false);
 
   const { data } = useFindFirstReviewRequest(
     {
@@ -90,16 +123,14 @@ export function ReviewStatusBanner({
       orderBy: { createdAt: "desc" },
       include: REVIEW_STATUS_BANNER_INCLUDE,
     } as any,
-    { staleTime: 30_000, refetchOnWindowFocus: false } as any,
+    { staleTime: 30_000, refetchOnWindowFocus: false } as any
   );
 
   const latest = data as BannerRequest | null | undefined;
 
   const assigneeLabel = useMemo(() => {
     if (!latest) return "";
-    return (
-      latest.assigneeUser?.name ?? latest.assigneeRole?.name ?? ""
-    );
+    return latest.assigneeUser?.name ?? latest.assigneeRole?.name ?? "";
   }, [latest]);
 
   const initialValuesForRequestAgain = useMemo(() => {
@@ -133,85 +164,290 @@ export function ReviewStatusBanner({
     return null;
   }
 
+  const viewerId = session?.user?.id;
   const viewerIsRequester =
-    session?.user?.id != null &&
-    session.user.id === latest.requestedByUserId;
+    viewerId != null && viewerId === latest.requestedByUserId;
   const viewerIsAdmin =
     (session?.user as { access?: string } | undefined)?.access === "ADMIN";
   const canCancel = viewerIsRequester || viewerIsAdmin;
 
+  const isDirectAssignee =
+    latest.assigneeUserId != null && latest.assigneeUserId === viewerId;
+  const isRoleHolder =
+    latest.assigneeRoleId != null &&
+    effectiveRoleId != null &&
+    latest.assigneeRoleId === effectiveRoleId;
+  // Requester never gets decision buttons (D-12 — banner-only for the
+  // person who asked). Direct assignee / role-holder / admin all can decide.
+  const canDecide =
+    !viewerIsRequester &&
+    viewerId != null &&
+    (isDirectAssignee || isRoleHolder || viewerIsAdmin);
+
+  const handleDecisionSuccess = () => {
+    // ZenStack-generated hooks key under `["zenstack", "<Model>", ...]` —
+    // the model name is the SECOND element, so this prefix invalidates
+    // every cached ReviewRequest query and the banner flips out of PENDING.
+    void queryClient.invalidateQueries({
+      queryKey: ["zenstack", "ReviewRequest"],
+    });
+    // Refetch the Comments thread so the paired REVIEW_DECISION card lands
+    // immediately — decideReviewRequest writes it in the same transaction
+    // as the status flip.
+    void queryClient.invalidateQueries({
+      queryKey: commentsQueryKey(
+        reviewableEntityTypeToCommentEntityType(entityType),
+        entityId
+      ),
+    });
+  };
+
+  const targetState = latest.toState ?? null;
+
   if (latest.status === "PENDING") {
-    const ago = formatDistanceToNow(new Date(latest.createdAt));
     return (
-      <Alert data-testid="review-status-banner-pending" className="mb-2">
-        <MessageSquareWarning className="h-4 w-4" />
-        <AlertDescription className="flex items-center justify-between gap-2">
-          <span>
-            {t("reviews.banner.pendingMessage", {
-              assignee: assigneeLabel,
-              ago,
-            })}
-          </span>
-          <CancelRequestButton
-            reviewRequestId={latest.id}
-            canCancel={canCancel}
-          />
-        </AlertDescription>
-      </Alert>
+      <>
+        <WarningAlert data-testid="review-status-banner-pending">
+          <MessageSquareWarning className="h-5 w-5" />
+          {/*
+            `flex-wrap` keeps the prose + pills from overflowing into the
+            button cluster when the alert is narrow — anonymous text flex
+            items would otherwise refuse to wrap onto a second line. The
+            decision buttons themselves stay compact: each is icon-only by
+            default and expands its label on hover (same `group-hover`
+            reveal pattern the Add Folder button uses in the repository
+            header), so the cluster never crowds the prose.
+          */}
+          <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
+            <span className="flex flex-wrap gap-1 items-center flex-1 min-w-0">
+              {t.rich("reviews.banner.pendingMessage", {
+                assignee: () =>
+                  latest.assigneeUser ? (
+                    <UserMention userId={latest.assigneeUser.id} />
+                  ) : (
+                    <>{assigneeLabel}</>
+                  ),
+                // `WorkflowStateDisplay`'s state requires non-null icon +
+                // color, but the prisma include returns them as nullable
+                // joins. Cast at the seam — matches the decision dialogs.
+                fromState: () => (
+                  <span className="inline-flex align-middle [&_.truncate]:max-w-[10rem]">
+                    <WorkflowStateDisplay
+                      state={latest.fromState as any}
+                      size="sm"
+                    />
+                  </span>
+                ),
+                toState: () => (
+                  <span className="inline-flex align-middle [&_.truncate]:max-w-[10rem]">
+                    <WorkflowStateDisplay
+                      state={latest.toState as any}
+                      size="sm"
+                    />
+                  </span>
+                ),
+                ago: () => <RelativeTimeTooltip date={latest.createdAt} />,
+              })}
+            </span>
+            <div className="flex items-center gap-2 shrink-0">
+              {canDecide && (
+                <>
+                  {/*
+                    Default to icon+text; below `md` (768px viewport) the
+                    label hides and the button collapses to icon-only with
+                    a Tooltip on hover for discoverability. `md:hidden` on
+                    TooltipContent suppresses the hover label on wider
+                    viewports where the text is already visible.
+                  */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        onClick={() => setApproveOpen(true)}
+                        data-testid="review-approve-button"
+                        aria-label={tReviewer("approve")}
+                        className="bg-success text-success-foreground hover:bg-success/90 max-md:px-2"
+                      >
+                        <CheckCircle2 className="h-4 w-4" />
+                        <span className="hidden md:inline">
+                          {tReviewer("approve")}
+                        </span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="md:hidden">
+                      {tReviewer("approve")}
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        onClick={() => setRequestChangesOpen(true)}
+                        data-testid="review-request-changes-button"
+                        aria-label={tReviewer("requestChanges")}
+                        className="bg-warning text-warning-foreground hover:bg-warning/90 max-md:px-2"
+                      >
+                        <MessageCircleWarning className="h-4 w-4" />
+                        <span className="hidden md:inline">
+                          {tReviewer("requestChanges")}
+                        </span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="md:hidden">
+                      {tReviewer("requestChanges")}
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={() => setRejectOpen(true)}
+                        data-testid="review-reject-button"
+                        aria-label={tReviewer("reject")}
+                        className="max-md:px-2"
+                      >
+                        <XCircle className="h-4 w-4" />
+                        <span className="hidden md:inline">
+                          {tReviewer("reject")}
+                        </span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="md:hidden">
+                      {tReviewer("reject")}
+                    </TooltipContent>
+                  </Tooltip>
+                </>
+              )}
+              <CancelRequestButton
+                reviewRequestId={latest.id}
+                canCancel={canCancel}
+              />
+            </div>
+          </AlertDescription>
+        </WarningAlert>
+        <ApproveDialog
+          reviewRequestId={latest.id}
+          open={approveOpen}
+          onOpenChange={setApproveOpen}
+          entityType={entityType}
+          entityName={entityName}
+          targetState={targetState as any}
+          requesterUserId={latest.requestedByUserId}
+          onSuccess={handleDecisionSuccess}
+        />
+        <RequestChangesDialog
+          reviewRequestId={latest.id}
+          open={requestChangesOpen}
+          onOpenChange={setRequestChangesOpen}
+          entityType={entityType}
+          entityName={entityName}
+          targetState={targetState as any}
+          requesterUserId={latest.requestedByUserId}
+          onSuccess={handleDecisionSuccess}
+        />
+        <RejectDialog
+          reviewRequestId={latest.id}
+          open={rejectOpen}
+          onOpenChange={setRejectOpen}
+          entityType={entityType}
+          entityName={entityName}
+          targetState={targetState as any}
+          requesterUserId={latest.requestedByUserId}
+          onSuccess={handleDecisionSuccess}
+        />
+      </>
     );
   }
 
   // CHANGES_REQUESTED + REJECTED share the same decision-rendered shape.
+  // The wrapper component (destructive Alert vs. WarningAlert) and the
+  // header icon (XCircle vs. MessageCircleWarning) differ per outcome,
+  // but the attribution row + comment + Request-again CTA are shared.
   const isRejected = latest.status === "REJECTED";
+  const AlertShell = isRejected ? Alert : WarningAlert;
+  const DecisionIcon = isRejected ? XCircle : MessageCircleWarning;
+  const decider = (
+    latest as unknown as {
+      decidedBy: {
+        id: string;
+        name: string | null;
+        image: string | null;
+      } | null;
+    }
+  ).decidedBy;
+  const decidedAt = latest.decidedAt;
 
   return (
     <>
-      <Alert
+      <AlertShell
         data-testid={
           isRejected
             ? "review-status-banner-rejected"
             : "review-status-banner-changes-requested"
         }
-        variant={isRejected ? "destructive" : "default"}
-        className={
-          isRejected
-            ? "mb-2"
-            : "mb-2 border-warning/50 bg-warning/10 text-warning [&>svg]:text-warning"
-        }
+        {...(isRejected ? { variant: "destructive" as const } : {})}
+        // `pr-44` reserves the right gutter for the "Request review
+        // again" button so the description text doesn't run under it.
+        // The button itself is absolute-positioned below, anchored to
+        // the top-right corner so reviewers find the call-to-action in
+        // the same spot the PENDING banner puts "Cancel request".
+        className="mb-2 pr-44"
       >
-        <MessageSquareWarning className="h-4 w-4" />
+        <DecisionIcon className="h-5 w-5" />
         <AlertTitle>
           {isRejected
             ? t("reviews.banner.rejectedTitle")
             : t("reviews.banner.changesRequestedTitle")}
         </AlertTitle>
         <AlertDescription>
+          {/* Attribution row — who decided + when. Matches the PENDING
+             banner's mention-pill chrome so a reviewer reads the same
+             visual signal across all three outcomes. */}
+          {decider && decidedAt && (
+            <div
+              className="flex items-center gap-1 mb-2 text-xs"
+              data-testid="review-status-banner-attribution"
+            >
+              <span>{t("reviews.banner.decidedBy")}</span>
+              <UserMention userId={decider.id} />
+              <RelativeTimeTooltip date={decidedAt} className="ml-1" />
+            </div>
+          )}
+
           {/*
-            WR-09: clip oversized decisionComments at the banner so a 50KB
-            paste from the Textarea (no maxLength today) doesn't blow up the
-            layout. `whitespace-pre-line` preserves intentional line breaks,
-            `line-clamp-6` caps the visible height to about six lines with a
-            graceful ellipsis. Server-side max-length and a full
-            "Show more" toggle remain as a v1.x polish item; this is the
-            cheap defense for v1.
+            WR-09: clip oversized decisionComments so a 50KB paste from
+            the Textarea (no maxLength today) doesn't blow up the
+            layout. `whitespace-pre-line` preserves intentional line
+            breaks; `line-clamp-6` caps the visible height to ~six
+            lines with a graceful ellipsis. Server-side max-length and
+            a full "Show more" toggle remain as a v1.x polish item; this
+            is the cheap defense for v1.
           */}
-          <p
-            className="mb-2 line-clamp-6 break-words whitespace-pre-line"
-            data-testid="review-status-banner-decision-comment"
-          >
-            {latest.decisionComment ?? ""}
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setRequestAgainOpen(true)}
-            data-testid="request-review-again-button"
-          >
-            {t("reviews.banner.requestAgain")}
-          </Button>
+          {latest.decisionComment && (
+            <p
+              className="line-clamp-6 break-words whitespace-pre-line border-l-2 border-current pl-2"
+              data-testid="review-status-banner-decision-comment"
+            >
+              {latest.decisionComment}
+            </p>
+          )}
         </AlertDescription>
-      </Alert>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={() => setRequestAgainOpen(true)}
+          data-testid="request-review-again-button"
+          // The Alert root applies `[&>svg~*]:pl-7` to every sibling of
+          // its icon — including this absolute-positioned button. Reset
+          // back to size="sm"'s normal x-padding so the text isn't
+          // shoved off-center.
+          className="absolute right-3 top-3 !pl-3"
+        >
+          {t("reviews.banner.requestAgain")}
+        </Button>
+      </AlertShell>
       <RequestReviewSheet
         open={requestAgainOpen}
         onOpenChange={setRequestAgainOpen}

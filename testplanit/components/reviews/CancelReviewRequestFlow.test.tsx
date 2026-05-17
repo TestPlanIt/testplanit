@@ -43,6 +43,52 @@ vi.mock("./RequestReviewSheet", () => ({
   RequestReviewSheet: () => null,
 }));
 
+// Stub UserNameCell — pulls the i18n navigation router which isn't
+// available in the unit-test environment. Banner-flow assertions only
+// care that the user-attribution chunk renders, not its full chrome.
+vi.mock("~/components/tables/UserNameCell", () => ({
+  UserNameCell: ({ userId }: { userId: string }) => (
+    <span data-testid={`user-name-cell-${userId}`}>{userId}</span>
+  ),
+}));
+
+// Same reason as UserNameCell — UserMention pulls `~/lib/navigation`.
+vi.mock("~/components/UserMention", () => ({
+  UserMention: ({ userId }: { userId: string }) => (
+    <span data-testid={`user-mention-${userId}`}>{userId}</span>
+  ),
+}));
+
+vi.mock("~/components/WorkflowStateDisplay", () => ({
+  WorkflowStateDisplay: ({ state }: { state: { name?: string } | null }) => (
+    <span data-testid="workflow-state-display">{state?.name ?? ""}</span>
+  ),
+}));
+
+vi.mock("~/components/RelativeTimeTooltip", () => ({
+  RelativeTimeTooltip: ({ date }: { date: Date | string }) => (
+    <span data-testid="relative-time-tooltip">{String(date)}</span>
+  ),
+}));
+
+vi.mock("./ReviewDecisionDialogs", () => ({
+  ApproveDialog: () => null,
+  RequestChangesDialog: () => null,
+  RejectDialog: () => null,
+}));
+
+vi.mock("~/hooks/useEffectiveRoleOnProject", () => ({
+  useEffectiveRoleOnProject: () => ({ roleId: null }),
+}));
+
+vi.mock("@tanstack/react-query", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
+  return {
+    ...actual,
+    useQueryClient: () => ({ invalidateQueries: vi.fn() }),
+  };
+});
+
 const mockToastSuccess = vi.fn();
 const mockToastError = vi.fn();
 vi.mock("sonner", () => ({
@@ -77,6 +123,7 @@ const bannerProps = {
   entityType: "CASE" as const,
   entityId: 100,
   projectId: 42,
+  entityName: "Test case 100",
   reachableGatedStates: [],
 };
 
@@ -109,28 +156,24 @@ describe("CancelReviewRequestFlow (Banner + CancelRequestButton)", () => {
     });
 
     const { rerender, container } = render(
-      <ReviewStatusBanner {...bannerProps} />,
+      <ReviewStatusBanner {...bannerProps} />
     );
 
     // Banner is visible; Cancel button is visible to the requester.
     expect(
-      screen.getByTestId("review-status-banner-pending"),
+      screen.getByTestId("review-status-banner-pending")
     ).toBeInTheDocument();
     const cancelButton = screen.getByTestId("cancel-request-button");
     fireEvent.click(cancelButton);
 
     // AlertDialog content is rendered.
-    expect(
-      screen.getByTestId("cancel-request-dialog"),
-    ).toBeInTheDocument();
+    expect(screen.getByTestId("cancel-request-dialog")).toBeInTheDocument();
 
     // Confirm the cancel.
     fireEvent.click(screen.getByTestId("cancel-request-confirm"));
 
     // Status mutation called with CANCELLED.
-    await waitFor(() =>
-      expect(mockUpdateMutateAsync).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(mockUpdateMutateAsync).toHaveBeenCalledTimes(1));
     const arg = mockUpdateMutateAsync.mock.calls[0]?.[0];
     expect(arg).toMatchObject({
       where: { id: "rev-cancel-1" },

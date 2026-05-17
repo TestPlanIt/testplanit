@@ -5,6 +5,7 @@ import Placeholder from "@tiptap/extension-placeholder";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Loader2 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "~/components/ui/button";
@@ -33,6 +34,7 @@ export function CommentEditor({
   className,
 }: CommentEditorProps) {
   const t = useTranslations();
+  const { data: session } = useSession();
   const [isEmpty, setIsEmpty] = useState(true);
 
   const editor = useEditor({
@@ -45,7 +47,7 @@ export function CommentEditor({
       Placeholder.configure({
         placeholder,
       }),
-      createMentionExtension(projectId),
+      createMentionExtension(projectId, session?.user?.id),
     ],
     content: initialContent,
     editorProps: {

@@ -166,11 +166,11 @@ describe("ineligible reviewer error helpers", () => {
   it("isIneligibleReviewerError rejects sibling typed errors", () => {
     expect(
       isIneligibleReviewerError(
-        new ReviewGateError("REVIEW_REQUIRED", "CASE", 1, 2),
-      ),
+        new ReviewGateError("REVIEW_REQUIRED", "CASE", 1, 2)
+      )
     ).toBe(false);
     expect(
-      isIneligibleReviewerError(new AlreadyPendingError("CASE", 1, "req-1")),
+      isIneligibleReviewerError(new AlreadyPendingError("CASE", 1, "req-1"))
     ).toBe(false);
   });
 
