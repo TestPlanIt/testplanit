@@ -1631,7 +1631,6 @@
       },
       "parameters": {
         "title": "Test Case Parameters",
-        "description": "Project-wide configuration for parameterized test cases — shared datasets and JUnit iteration mapping.",
         "tabDatasets": "Shared Datasets",
         "tabJunit": "JUnit Mapping"
       },
