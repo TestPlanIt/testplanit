@@ -2,13 +2,6 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Plus, X } from "lucide-react";
@@ -85,86 +78,83 @@ export function JunitIterationPropertyForm({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("title")}</CardTitle>
-        <CardDescription>{t("description")}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-end gap-2">
-          <div className="flex-1 space-y-2">
-            <Label htmlFor="junit-iteration-property-input">
-              {t("addLabel")}
-            </Label>
-            <Input
-              id="junit-iteration-property-input"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={t("placeholder")}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleAdd();
-                }
-              }}
-              data-testid="junit-iteration-property-input"
-            />
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleAdd}
-            disabled={input.trim().length === 0}
-            data-testid="junit-iteration-property-add"
-          >
-            <Plus className="h-4 w-4" />
-            {t("addButton")}
-          </Button>
+    <div className="space-y-4">
+      <div className="flex items-end gap-2">
+        <div className="flex-1 space-y-2">
+          <Label htmlFor="junit-iteration-property-input">
+            {t("addLabel")}
+          </Label>
+          <Input
+            id="junit-iteration-property-input"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={t("placeholder")}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleAdd();
+              }
+            }}
+            data-testid="junit-iteration-property-input"
+          />
         </div>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleAdd}
+          disabled={input.trim().length === 0}
+          data-testid="junit-iteration-property-add"
+        >
+          <Plus className="h-4 w-4" />
+          {t("addButton")}
+        </Button>
+      </div>
 
-        {names.length === 0 ? (
-          <p className="text-sm text-muted-foreground" data-testid="junit-iteration-property-default-hint">
-            {t("defaultHint")}
-          </p>
-        ) : (
-          <div
-            className="flex flex-wrap gap-2"
-            data-testid="junit-iteration-property-tags"
-          >
-            {names.map((name) => (
-              <Badge
-                key={name}
-                variant="secondary"
-                className="font-mono"
-                data-testid={`junit-iteration-property-tag-${name}`}
+      {names.length === 0 ? (
+        <p
+          className="text-sm text-muted-foreground"
+          data-testid="junit-iteration-property-default-hint"
+        >
+          {t("defaultHint")}
+        </p>
+      ) : (
+        <div
+          className="flex flex-wrap gap-2"
+          data-testid="junit-iteration-property-tags"
+        >
+          {names.map((name) => (
+            <Badge
+              key={name}
+              variant="secondary"
+              className="font-mono"
+              data-testid={`junit-iteration-property-tag-${name}`}
+            >
+              {name}
+              <button
+                type="button"
+                className="ml-1 inline-flex items-center justify-center hover:text-destructive"
+                onClick={() => handleRemove(name)}
+                aria-label={t("removeAria", { name })}
+                data-testid={`junit-iteration-property-remove-${name}`}
               >
-                {name}
-                <button
-                  type="button"
-                  className="ml-1 inline-flex items-center justify-center hover:text-destructive"
-                  onClick={() => handleRemove(name)}
-                  aria-label={t("removeAria", { name })}
-                  data-testid={`junit-iteration-property-remove-${name}`}
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            ))}
-          </div>
-        )}
-
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            data-testid="junit-iteration-property-save"
-          >
-            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-            {t("saveButton")}
-          </Button>
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+          data-testid="junit-iteration-property-save"
+        >
+          {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+          {t("saveButton")}
+        </Button>
+      </div>
+    </div>
   );
 }

@@ -1200,7 +1200,7 @@
       "moreSettingsDescription": "Additional project configuration options will be available here in future updates",
       "junitIterationProperties": {
         "title": "Iteration Property Mapping",
-        "description": "On import, the iteration index for each test case is read from a property, attribute, or trait by name (e.g. JUnit <property>, TestNG attribute, xUnit trait, NUnit property). Add the names your emitter uses; lookup is case-insensitive.",
+        "description": "On import, the iteration index for each test case is read from a property, attribute, or trait whose name matches one of these entries (JUnit property, TestNG attribute, xUnit trait, NUnit property). Add the names your emitter uses; lookup is case-insensitive.",
         "addLabel": "Add a property name",
         "addButton": "Add",
         "placeholder": "e.g. iterationIndex",
