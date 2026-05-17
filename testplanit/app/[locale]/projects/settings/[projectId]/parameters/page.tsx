@@ -30,8 +30,6 @@ export default function ProjectParametersSettingsPage() {
     isAuthenticated,
   } = useRequireAuth();
   const tDatasets = useTranslations("projects.settings.datasets");
-  const tJunit = useTranslations("projects.settings.junitIterationProperties");
-  const tParameters = useTranslations("projects.settings.parameters");
   const tCommon = useTranslations("common");
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -87,11 +85,22 @@ export default function ProjectParametersSettingsPage() {
 
   return (
     <main className="space-y-6">
+      <div id="junit">
+        <JunitIterationPropertyForm
+          projectId={projectId}
+          initialNames={
+            (project.junitIterationPropertyNames as
+              | readonly string[]
+              | undefined) ?? []
+          }
+        />
+      </div>
+
       <Card id="datasets">
         <CardHeader className="w-full">
           <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
             <CardTitle>
-              <span>{tParameters("tabDatasets")}</span>
+              <span>{tDatasets("title")}</span>
             </CardTitle>
             <Button
               size="sm"
@@ -114,35 +123,6 @@ export default function ProjectParametersSettingsPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <DatasetsList projectId={projectId} />
-        </CardContent>
-      </Card>
-
-      <Card id="junit">
-        <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
-            <CardTitle>
-              <span>{tParameters("tabJunit")}</span>
-            </CardTitle>
-          </div>
-          <CardDescription className="uppercase">
-            <span className="flex items-center gap-2">
-              <ProjectIcon iconUrl={project.iconUrl} />
-              {project.name}
-            </span>
-          </CardDescription>
-          <p className="text-sm text-muted-foreground pt-2">
-            {tJunit("description")}
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <JunitIterationPropertyForm
-            projectId={projectId}
-            initialNames={
-              (project.junitIterationPropertyNames as
-                | readonly string[]
-                | undefined) ?? []
-            }
-          />
         </CardContent>
       </Card>
 
