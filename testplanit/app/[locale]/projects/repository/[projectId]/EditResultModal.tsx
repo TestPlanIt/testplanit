@@ -81,11 +81,13 @@ interface StepsWithExpectedResult {
   step: any;
   testCaseId: number;
   order: number;
-  expectedResult?: {
-    id: number;
-    expectedResult: any;
-    stepId: number;
-  } | null;
+  // `expectedResult` is the Json column directly on the Steps model (see
+  // schema.zmodel) — it carries the TipTap doc (or a stringified one),
+  // not a wrapper relation. The previous typing here was wrong and the
+  // parsing below double-dereferenced into a nonexistent inner field,
+  // which is why the expected-result editor in this modal always
+  // rendered empty.
+  expectedResult?: any;
 }
 
 interface TestRunResult {
@@ -1639,11 +1641,18 @@ export function EditResultModal({
 
                     let expectedResultContent;
                     try {
-                      expectedResultContent =
-                        typeof step.expectedResult?.expectedResult === "string"
-                          ? JSON.parse(step.expectedResult.expectedResult)
-                          : step.expectedResult?.expectedResult ||
-                            emptyEditorContent;
+                      if (typeof step.expectedResult === "string") {
+                        expectedResultContent = JSON.parse(step.expectedResult);
+                      } else if (
+                        typeof step.expectedResult === "object" &&
+                        step.expectedResult !== null
+                      ) {
+                        // Already a TipTap doc — pass through
+                        expectedResultContent = step.expectedResult;
+                      } else {
+                        // null / undefined / scalar — render empty editor
+                        expectedResultContent = emptyEditorContent;
+                      }
                     } catch (error) {
                       console.warn(
                         "Error parsing expected result content:",
