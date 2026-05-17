@@ -148,11 +148,13 @@ export function SharedDatasetVersionPicker({
           >
             <span>{t("historicalItemLabel", { version: v.version })}</span>
             {v.createdBy?.name ? (
-              // `text-muted-foreground` is too close to the SelectItem
-              // hover background in some themes (especially when the
-              // accent-tinted hover state lifts the row). `text-foreground/70`
-              // gives clear hierarchy but stays legible across themes.
-              <span className="text-sm text-foreground/70 ml-2">
+              // No explicit text color — `opacity-70` inherits the
+              // parent's text color so the subtext follows the
+              // SelectItem's focus state (`text-accent-foreground` when
+              // highlighted/hovered, `text-foreground` otherwise).
+              // The earlier hardcoded muted token stayed at the wrong
+              // color on the highlighted row across themes.
+              <span className="text-sm opacity-70 ml-2">
                 {t("historicalItemBy", { name: v.createdBy.name })}
               </span>
             ) : null}
