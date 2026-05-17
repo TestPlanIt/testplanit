@@ -252,6 +252,8 @@
       "mission": "使命",
       "assignedTo": "分配给",
       "executedBy": "执行人",
+      "editedHeader": "已编辑",
+      "iterations": "迭代",
       "optional": "选修的",
       "role": "角色",
       "defaultRole": "默认角色",
@@ -1197,15 +1199,15 @@
       "moreSettingsComingSoon": "更多设置即将推出",
       "moreSettingsDescription": "更多项目配置选项将在未来的更新中在此处提供。",
       "junitIterationProperties": {
-        "title": "JUnit迭代属性名称",
-        "description": "When automation imports JUnit XML, the import path reads the iteration index from a <property> child on each <testcase>. Add the property names your CI emitter uses; lookup is case-insensitive.",
+        "title": "迭代属性映射",
+        "description": "导入时，每个测试用例的迭代索引将从名称与以下条目之一匹配的属性、特性或 trait 中读取（JUnit 属性、TestNG 特性、xUnit 特性、NUnit 属性）。请添加您的测试用例生成器使用的名称；查找不区分大小写。",
         "addLabel": "添加属性名称",
         "addButton": "添加",
         "placeholder": "例如 iterationIndex",
         "defaultHint": "默认值：迭代次数（不区分大小写）。添加自定义名称即可启用。",
         "saveButton": "节省",
-        "saveSuccess": "JUnit迭代属性名称已保存。",
-        "saveError": "无法保存 JUnit 迭代属性名称。",
+        "saveSuccess": "迭代属性名称已保存。",
+        "saveError": "无法保存迭代属性名称。",
         "removeAria": "移除 {name}"
       },
       "integrations": {
@@ -1626,6 +1628,11 @@
       "shares": {
         "title": "管理股份",
         "description": "查看和管理此项目的所有共享链接"
+      },
+      "parameters": {
+        "title": "测试用例参数",
+        "tabDatasets": "共享数据集",
+        "tabJunit": "迭代属性映射"
       },
       "datasets": {
         "metaTitle": "共享数据集",
@@ -3174,6 +3181,7 @@
       "webhooks": "网络钩子",
       "junit": "JUnit",
       "datasets": "共享数据集",
+      "testCaseParameters": "测试用例参数",
       "llm": "人工智能模型",
       "prompts": "提示配置",
       "exportTemplates": "导出模板",
@@ -6962,7 +6970,7 @@
       "footerNewCount": "{newCount, plural, one {# 新标签} other {# 新标签}} 将创建",
       "newTagsPopoverTitle": "要创建的新标签",
       "applying": "正在申请……",
-      "applySuccess": "{tagCount, plural, one {# tag} other {# tags}} applied to {entityCount, plural, one {# entity} other {# entities}}",
+      "applySuccess": "{tagCount, plural, one {# 标签} other {# 标签}} 应用于 {entityCount, plural, one {# 实体} other {# 实体集}}",
       "applySuccessNewTags": "{tagCount, plural, one {# tag} other {# tags}} applied to {entityCount, plural, one {# entity} other {# entities}}, {newCount, plural, one {# new tag} other {# new tags}} created",
       "applyError": "标签应用失败，请重试。",
       "suggestedTags": "建议标签",
@@ -7228,6 +7236,10 @@
     "iterationHeaderTitle": "迭代 {n} 的 {total}",
     "iterationPrevAria": "前一次迭代",
     "iterationNextAria": "下一次迭代",
+    "iterationResultRowIcon": "参数化迭代结果",
+    "iterationResultRunDetails": "运行详情",
+    "iterationResultLabelHeading": "迭代",
+    "iterationResultNoValue": "（无值）",
     "iterationValuesLabel": "价值观：",
     "iterationValueOverridden": "已覆盖",
     "iterationValueSnapshot": "原文： {value}",

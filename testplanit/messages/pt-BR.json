@@ -252,6 +252,8 @@
       "mission": "Missão",
       "assignedTo": "Designado para",
       "executedBy": "Executado por",
+      "editedHeader": "Editado",
+      "iterations": "Iterações",
       "optional": "Opcional",
       "role": "Papel",
       "defaultRole": "Função padrão",
@@ -1197,15 +1199,15 @@
       "moreSettingsComingSoon": "Mais configurações em breve",
       "moreSettingsDescription": "Opções adicionais de configuração do projeto estarão disponíveis aqui em atualizações futuras.",
       "junitIterationProperties": {
-        "title": "Nomes de propriedades de iteração do JUnit",
-        "description": "Quando a automação importa XML JUnit, o caminho de importação lê o índice de iteração de um filho <property> em cada <testcase>. Adicione os nomes de propriedade que seu emissor de CI usa; a pesquisa não diferencia maiúsculas de minúsculas.",
+        "title": "Mapeamento de propriedades de iteração",
+        "description": "Na importação, o índice de iteração para cada caso de teste é lido de uma propriedade, atributo ou trait cujo nome corresponda a uma dessas entradas (propriedade JUnit, atributo TestNG, trait xUnit, propriedade NUnit). Adicione os nomes que seu emissor usa; a pesquisa não diferencia maiúsculas de minúsculas.",
         "addLabel": "Adicione um nome de propriedade",
         "addButton": "Adicionar",
         "placeholder": "por exemplo, índice de iteração",
         "defaultHint": "Padrão: iteração (sem distinção entre maiúsculas e minúsculas). Adicione nomes personalizados para ativar.",
         "saveButton": "Salvar",
-        "saveSuccess": "Nomes das propriedades de iteração do JUnit salvos.",
-        "saveError": "Não foi possível salvar os nomes das propriedades de iteração do JUnit.",
+        "saveSuccess": "Nomes das propriedades de iteração salvos.",
+        "saveError": "Não foi possível salvar os nomes das propriedades de iteração.",
         "removeAria": "Remover {name}"
       },
       "integrations": {
@@ -1626,6 +1628,11 @@
       "shares": {
         "title": "Gerenciar ações",
         "description": "Veja e gerencie todos os links de compartilhamento deste projeto."
+      },
+      "parameters": {
+        "title": "Parâmetros do caso de teste",
+        "tabDatasets": "Conjuntos de dados compartilhados",
+        "tabJunit": "Mapeamento de propriedades de iteração"
       },
       "datasets": {
         "metaTitle": "Conjuntos de dados compartilhados",
@@ -3174,6 +3181,7 @@
       "webhooks": "Webhooks",
       "junit": "JUnit",
       "datasets": "Conjuntos de dados compartilhados",
+      "testCaseParameters": "Parâmetros do caso de teste",
       "llm": "Modelos de IA",
       "prompts": "Configurações de prompt",
       "exportTemplates": "Exportar modelos",
@@ -7228,6 +7236,10 @@
     "iterationHeaderTitle": "Iteração {n} de {total}",
     "iterationPrevAria": "Iteração anterior",
     "iterationNextAria": "Próxima iteração",
+    "iterationResultRowIcon": "resultado da iteração parametrizada",
+    "iterationResultRunDetails": "Detalhes da execução",
+    "iterationResultLabelHeading": "Iteração",
+    "iterationResultNoValue": "(sem valor)",
     "iterationValuesLabel": "Valores:",
     "iterationValueOverridden": "Substituído",
     "iterationValueSnapshot": "Original: {value}",

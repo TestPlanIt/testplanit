@@ -252,6 +252,8 @@
       "mission": "Misión",
       "assignedTo": "Asignado a",
       "executedBy": "Ejecutado por",
+      "editedHeader": "Editado",
+      "iterations": "Iteraciones",
       "optional": "Opcional",
       "role": "Rol",
       "defaultRole": "Rol por defecto",
@@ -1197,15 +1199,15 @@
       "moreSettingsComingSoon": "Más ajustes próximamente",
       "moreSettingsDescription": "Opciones adicionales de configuración del proyecto estarán disponibles aquí en futuras actualizaciones",
       "junitIterationProperties": {
-        "title": "Nombres de propiedades de iteración de JUnit",
-        "description": "Cuando la automatización importa XML de JUnit, la ruta de importación lee el índice de iteración de un elemento secundario <property> en cada <testcase>. Agregue los nombres de las propiedades que utiliza su emisor de CI; la búsqueda no distingue entre mayúsculas y minúsculas.",
+        "title": "Mapeo de propiedades de iteración",
+        "description": "Al importar, el índice de iteración de cada caso de prueba se lee de una propiedad, atributo o rasgo cuyo nombre coincide con una de estas entradas (propiedad JUnit, atributo TestNG, rasgo xUnit, propiedad NUnit). Añada los nombres que utilice su emisor; la búsqueda no distingue entre mayúsculas y minúsculas.",
         "addLabel": "Agregar un nombre de propiedad",
         "addButton": "Agregar",
         "placeholder": "p. ej. índice de iteración",
         "defaultHint": "Predeterminado: iteración (sin distinción entre mayúsculas y minúsculas). Añada nombres personalizados para activar esta función.",
         "saveButton": "Ahorrar",
-        "saveSuccess": "Se guardaron los nombres de las propiedades de la iteración de JUnit.",
-        "saveError": "No se pudieron guardar los nombres de las propiedades de iteración de JUnit.",
+        "saveSuccess": "Se guardaron los nombres de las propiedades de iteración.",
+        "saveError": "No se pudieron guardar los nombres de las propiedades de iteración.",
         "removeAria": "Eliminar {name}"
       },
       "integrations": {
@@ -1626,6 +1628,11 @@
       "shares": {
         "title": "Administrar acciones",
         "description": "Ver y administrar todos los enlaces para compartir este proyecto"
+      },
+      "parameters": {
+        "title": "Parámetros del caso de prueba",
+        "tabDatasets": "Conjuntos de datos compartidos",
+        "tabJunit": "Mapeo de propiedades de iteración"
       },
       "datasets": {
         "metaTitle": "Conjuntos de datos compartidos",
@@ -3174,6 +3181,7 @@
       "webhooks": "Webhooks",
       "junit": "JUnit",
       "datasets": "Conjuntos de datos compartidos",
+      "testCaseParameters": "Parámetros del caso de prueba",
       "llm": "AI Models",
       "prompts": "Configuraciones de aviso",
       "exportTemplates": "Exportar plantillas",
@@ -7228,6 +7236,10 @@
     "iterationHeaderTitle": "Iteración {n} de {total}",
     "iterationPrevAria": "Iteración anterior",
     "iterationNextAria": "Siguiente iteración",
+    "iterationResultRowIcon": "Resultado de iteración parametrizada",
+    "iterationResultRunDetails": "Detalles de la carrera",
+    "iterationResultLabelHeading": "Iteración",
+    "iterationResultNoValue": "(sin valor)",
     "iterationValuesLabel": "Valores:",
     "iterationValueOverridden": "Anulado",
     "iterationValueSnapshot": "Original: {value}",

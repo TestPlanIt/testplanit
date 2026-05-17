@@ -252,6 +252,8 @@
       "mission": "Nhiệm vụ",
       "assignedTo": "Được giao cho",
       "executedBy": "Được thực thi bởi",
+      "editedHeader": "Đã chỉnh sửa",
+      "iterations": "Các lần lặp",
       "optional": "Không bắt buộc",
       "role": "Vai trò",
       "defaultRole": "Vai trò mặc định",
@@ -1197,15 +1199,15 @@
       "moreSettingsComingSoon": "Sẽ có thêm nhiều tùy chọn cài đặt trong thời gian tới.",
       "moreSettingsDescription": "Các tùy chọn cấu hình dự án bổ sung sẽ có sẵn trong các bản cập nhật sau này.",
       "junitIterationProperties": {
-        "title": "Tên thuộc tính vòng lặp JUnit",
-        "description": "Khi tự động hóa nhập XML JUnit, đường dẫn nhập sẽ đọc chỉ số lặp từ một phần tử con <property> trên mỗi <testcase>. Thêm tên thuộc tính mà trình phát CI của bạn sử dụng; việc tìm kiếm không phân biệt chữ hoa chữ thường.",
+        "title": "Ánh xạ thuộc tính lặp",
+        "description": "Khi nhập dữ liệu, chỉ số lặp cho mỗi trường hợp kiểm thử được đọc từ một thuộc tính, đặc tính hoặc đặc điểm có tên khớp với một trong các mục sau (thuộc tính JUnit, đặc tính TestNG, đặc điểm xUnit, thuộc tính NUnit). Thêm tên mà trình phát của bạn sử dụng; việc tìm kiếm không phân biệt chữ hoa chữ thường.",
         "addLabel": "Thêm tên thuộc tính",
         "addButton": "Thêm vào",
         "placeholder": "ví dụ iterationIndex",
         "defaultHint": "Mặc định: lặp lại (không phân biệt chữ hoa chữ thường). Thêm tên tùy chỉnh để tham gia.",
         "saveButton": "Cứu",
-        "saveSuccess": "Tên thuộc tính của vòng lặp JUnit đã được lưu.",
-        "saveError": "Không thể lưu tên thuộc tính của vòng lặp JUnit.",
+        "saveSuccess": "Tên thuộc tính của vòng lặp đã được lưu.",
+        "saveError": "Không thể lưu tên thuộc tính của vòng lặp.",
         "removeAria": "Xóa {name}"
       },
       "integrations": {
@@ -1626,6 +1628,11 @@
       "shares": {
         "title": "Quản lý cổ phần",
         "description": "Xem và quản lý tất cả các liên kết chia sẻ cho dự án này."
+      },
+      "parameters": {
+        "title": "Tham số trường hợp kiểm thử",
+        "tabDatasets": "Bộ dữ liệu được chia sẻ",
+        "tabJunit": "Ánh xạ thuộc tính lặp"
       },
       "datasets": {
         "metaTitle": "Bộ dữ liệu được chia sẻ",
@@ -3174,6 +3181,7 @@
       "webhooks": "Webhooks",
       "junit": "JUnit",
       "datasets": "Bộ dữ liệu được chia sẻ",
+      "testCaseParameters": "Tham số trường hợp kiểm thử",
       "llm": "Mô hình AI",
       "prompts": "Cấu hình nhắc nhở",
       "exportTemplates": "Mẫu xuất khẩu",
@@ -7228,6 +7236,10 @@
     "iterationHeaderTitle": "Lần lặp {n} của {total}",
     "iterationPrevAria": "Phiên bản trước",
     "iterationNextAria": "Lần lặp tiếp theo",
+    "iterationResultRowIcon": "Kết quả lặp tham số hóa",
+    "iterationResultRunDetails": "Chi tiết về lần chạy",
+    "iterationResultLabelHeading": "Lặp lại",
+    "iterationResultNoValue": "(không có giá trị)",
     "iterationValuesLabel": "Giá trị:",
     "iterationValueOverridden": "Đã ghi đè",
     "iterationValueSnapshot": "Bản gốc: {value}",

@@ -252,6 +252,8 @@
       "mission": "ミッション",
       "assignedTo": "割り当て先",
       "executedBy": "実行者",
+      "editedHeader": "編集済み",
+      "iterations": "反復",
       "optional": "オプション",
       "role": "役割",
       "defaultRole": "デフォルトロール",
@@ -1197,15 +1199,15 @@
       "moreSettingsComingSoon": "その他の設定は近日公開予定です",
       "moreSettingsDescription": "追加のプロジェクト設定オプションは、今後のアップデートで利用可能になります。",
       "junitIterationProperties": {
-        "title": "JUnitの反復処理プロパティ名",
-        "description": "When automation imports JUnit XML, the import path reads the iteration index from a <property> child on each <testcase>. Add the property names your CI emitter uses; lookup is case-insensitive.",
+        "title": "反復プロパティマッピング",
+        "description": "インポート時に、各テストケースの反復インデックスは、以下のエントリのいずれかに一致する名前を持つプロパティ、属性、または特性（JUnitプロパティ、TestNG属性、xUnit特性、NUnitプロパティ）から読み取られます。エミッターで使用する名前を追加してください。ルックアップでは大文字と小文字は区別されません。",
         "addLabel": "プロパティ名を追加する",
         "addButton": "追加",
         "placeholder": "例：イテレーションインデックス",
         "defaultHint": "デフォルト：反復処理（大文字小文字を区別しない）。オプトインするには、カスタム名を追加してください。",
         "saveButton": "保存",
-        "saveSuccess": "JUnitの反復処理プロパティ名が保存されました。",
-        "saveError": "JUnitの反復処理プロパティ名を保存できませんでした。",
+        "saveSuccess": "反復処理のプロパティ名が保存されました。",
+        "saveError": "イテレーションプロパティ名を保存できませんでした。",
         "removeAria": "{name} を削除"
       },
       "integrations": {
@@ -1626,6 +1628,11 @@
       "shares": {
         "title": "株式の管理",
         "description": "このプロジェクトのすべての共有リンクを表示および管理します。"
+      },
+      "parameters": {
+        "title": "テストケースパラメータ",
+        "tabDatasets": "共有データセット",
+        "tabJunit": "反復プロパティマッピング"
       },
       "datasets": {
         "metaTitle": "共有データセット",
@@ -3174,6 +3181,7 @@
       "webhooks": "ウェブフック",
       "junit": "JUnit",
       "datasets": "共有データセット",
+      "testCaseParameters": "テストケースパラメータ",
       "llm": "AIモデル",
       "prompts": "プロンプト設定",
       "exportTemplates": "エクスポートテンプレート",
@@ -7228,6 +7236,10 @@
     "iterationHeaderTitle": "{n} の {total} の反復 {n}",
     "iterationPrevAria": "前回の反復",
     "iterationNextAria": "次のイテレーション",
+    "iterationResultRowIcon": "パラメータ化された反復結果",
+    "iterationResultRunDetails": "実行の詳細",
+    "iterationResultLabelHeading": "反復",
+    "iterationResultNoValue": "（値なし）",
     "iterationValuesLabel": "価値観：",
     "iterationValueOverridden": "上書きされました",
     "iterationValueSnapshot": "オリジナル: {value}",

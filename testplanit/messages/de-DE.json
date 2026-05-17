@@ -252,6 +252,8 @@
       "mission": "Mission",
       "assignedTo": "Zugewiesen an",
       "executedBy": "Ausgeführt von",
+      "editedHeader": "Bearbeitet",
+      "iterations": "Iterationen",
       "optional": "Optional",
       "role": "Rolle",
       "defaultRole": "Standardrolle",
@@ -1197,15 +1199,15 @@
       "moreSettingsComingSoon": "Weitere Einstellungen folgen in Kürze.",
       "moreSettingsDescription": "Weitere Projektkonfigurationsoptionen werden in zukünftigen Updates hier verfügbar sein.",
       "junitIterationProperties": {
-        "title": "JUnit-Iterationseigenschaftennamen",
-        "description": "Beim automatisierten Import von JUnit-XML liest der Importpfad den Iterationsindex aus einem <property> -Kindelement jedes <testcase>. Fügen Sie die Eigenschaftsnamen hinzu, die Ihr CI-Emitter verwendet; die Suche unterscheidet nicht zwischen Groß- und Kleinschreibung.",
+        "title": "Iterations-Eigenschaftszuordnung",
+        "description": "Beim Import wird der Iterationsindex für jeden Testfall aus einer Eigenschaft, einem Attribut oder einem Trait gelesen, dessen Name mit einem der folgenden Einträge übereinstimmt (JUnit-Eigenschaft, TestNG-Attribut, xUnit-Trait, NUnit-Eigenschaft). Fügen Sie die Namen hinzu, die Ihr Emitter verwendet; die Suche unterscheidet nicht zwischen Groß- und Kleinschreibung.",
         "addLabel": "Fügen Sie einen Eigenschaftsnamen hinzu",
         "addButton": "Hinzufügen",
         "placeholder": "z.B. Iterationsindex",
         "defaultHint": "Standardmäßig wird iterativ vorgegangen (Groß-/Kleinschreibung wird nicht beachtet). Benutzerdefinierte Namen können hinzugefügt werden, um diese Option zu aktivieren.",
         "saveButton": "Speichern",
-        "saveSuccess": "JUnit-Iterationseigenschaftennamen gespeichert.",
-        "saveError": "JUnit-Iterationseigenschaftennamen konnten nicht gespeichert werden.",
+        "saveSuccess": "Iterationseigenschaftennamen gespeichert.",
+        "saveError": "Die Namen der Iterationseigenschaften konnten nicht gespeichert werden.",
         "removeAria": "Entferne {name}"
       },
       "integrations": {
@@ -1626,6 +1628,11 @@
       "shares": {
         "title": "Freigaben verwalten",
         "description": "Alle Freigabelinks für dieses Projekt anzeigen und verwalten"
+      },
+      "parameters": {
+        "title": "Testfallparameter",
+        "tabDatasets": "Gemeinsame Datensätze",
+        "tabJunit": "Iterations-Eigenschaftszuordnung"
       },
       "datasets": {
         "metaTitle": "Gemeinsame Datensätze",
@@ -3174,6 +3181,7 @@
       "webhooks": "Webhooks",
       "junit": "JUnit",
       "datasets": "Gemeinsame Datensätze",
+      "testCaseParameters": "Testfallparameter",
       "llm": "KI-Modelle",
       "prompts": "Prompt-Konfigurationen",
       "exportTemplates": "Exportvorlagen",
@@ -7221,13 +7229,17 @@
     "iterationIssueTitleSnapshot": "Iteration {n} von {total} Problem: {caseName}",
     "iterationIssueTitleCiExtended": "Iteration {n} (CI-extended) Problem: {caseName}",
     "iterationIssueProseSnapshot": "Iteration {n} von {total} auf {label}.",
-    "iterationIssueProseCiExtended": "Iteration {n} (CI-erweitert) auf {label}.",
+    "iterationIssueProseCiExtended": "Iteration {n} (CI-extended) on {label}.",
     "iterationIssueTableHeaderParameter": "Parameter",
     "iterationIssueTableHeaderValue": "Wert",
     "iterationIssueDeepLinkLabel": "Iteration in TestPlanIt anzeigen",
     "iterationHeaderTitle": "Iteration {n} von {total}",
     "iterationPrevAria": "Vorherige Iteration",
     "iterationNextAria": "Nächste Iteration",
+    "iterationResultRowIcon": "Parametrisiertes Iterationsergebnis",
+    "iterationResultRunDetails": "Details zum Ausführen",
+    "iterationResultLabelHeading": "Iteration",
+    "iterationResultNoValue": "(kein Wert)",
     "iterationValuesLabel": "Werte:",
     "iterationValueOverridden": "Überschrieben",
     "iterationValueSnapshot": "Original: {value}",

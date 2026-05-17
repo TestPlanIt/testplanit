@@ -252,6 +252,8 @@
       "mission": "Mission",
       "assignedTo": "Attribué à",
       "executedBy": "Exécuté par",
+      "editedHeader": "Édité",
+      "iterations": "Itérations",
       "optional": "Facultatif",
       "role": "Rôle",
       "defaultRole": "Rôle par défaut",
@@ -1197,15 +1199,15 @@
       "moreSettingsComingSoon": "D'autres paramètres seront bientôt disponibles.",
       "moreSettingsDescription": "Des options de configuration de projet supplémentaires seront disponibles ici dans les prochaines mises à jour.",
       "junitIterationProperties": {
-        "title": "Noms des propriétés d'itération JUnit",
-        "description": "Lors de l'importation automatisée de fichiers XML JUnit, le chemin d'importation lit l'index d'itération à partir d'un élément enfant <property> sur chaque élément <testcase>. Ajoutez les noms de propriétés utilisés par votre émetteur CI ; la recherche est insensible à la casse.",
+        "title": "Cartographie des propriétés d'itération",
+        "description": "Lors de l'importation, l'index d'itération de chaque cas de test est lu à partir d'une propriété, d'un attribut ou d'un trait dont le nom correspond à l'une de ces entrées (propriété JUnit, attribut TestNG, trait xUnit, propriété NUnit). Ajoutez les noms utilisés par votre émetteur ; la recherche est insensible à la casse.",
         "addLabel": "Ajouter le nom de la propriété",
         "addButton": "Ajouter",
         "placeholder": "par exemple, l'index d'itération",
         "defaultHint": "Par défaut : itération (sans tenir compte de la casse). Ajoutez des noms personnalisés pour activer l’option.",
         "saveButton": "Sauvegarder",
-        "saveSuccess": "Noms des propriétés d'itération JUnit enregistrés.",
-        "saveError": "Impossible d'enregistrer les noms des propriétés d'itération JUnit.",
+        "saveSuccess": "Noms des propriétés d'itération enregistrés.",
+        "saveError": "Impossible d'enregistrer les noms des propriétés d'itération.",
         "removeAria": "Supprimer {name}"
       },
       "integrations": {
@@ -1626,6 +1628,11 @@
       "shares": {
         "title": "Gérer les actions",
         "description": "Consultez et gérez tous les liens de partage de ce projet."
+      },
+      "parameters": {
+        "title": "Paramètres du cas de test",
+        "tabDatasets": "Ensembles de données partagés",
+        "tabJunit": "Cartographie des propriétés d'itération"
       },
       "datasets": {
         "metaTitle": "Ensembles de données partagés",
@@ -3174,6 +3181,7 @@
       "webhooks": "Webhooks",
       "junit": "JUnit",
       "datasets": "Ensembles de données partagés",
+      "testCaseParameters": "Paramètres du cas de test",
       "llm": "Modèles d'IA",
       "prompts": "Configurations d'invite",
       "exportTemplates": "Modèles d'exportation",
@@ -7228,6 +7236,10 @@
     "iterationHeaderTitle": "Itération {n} de {total}",
     "iterationPrevAria": "Itération précédente",
     "iterationNextAria": "Itération suivante",
+    "iterationResultRowIcon": "résultat d'itération paramétré",
+    "iterationResultRunDetails": "Détails de l'exécution",
+    "iterationResultLabelHeading": "Itération",
+    "iterationResultNoValue": "(sans valeur)",
     "iterationValuesLabel": "Valeurs:",
     "iterationValueOverridden": "Surchargé",
     "iterationValueSnapshot": "Original : {value}",

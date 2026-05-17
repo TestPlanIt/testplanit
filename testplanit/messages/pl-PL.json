@@ -252,6 +252,8 @@
       "mission": "Misja",
       "assignedTo": "Przypisany do",
       "executedBy": "Wykonany przez",
+      "editedHeader": "Edytowano",
+      "iterations": "Iteracje",
       "optional": "Fakultatywny",
       "role": "Rola",
       "defaultRole": "Domyślna rola",
@@ -1197,15 +1199,15 @@
       "moreSettingsComingSoon": "Więcej ustawień wkrótce",
       "moreSettingsDescription": "Dodatkowe opcje konfiguracji projektu będą dostępne w przyszłych aktualizacjach",
       "junitIterationProperties": {
-        "title": "Nazwy właściwości iteracji JUnit",
-        "description": "Gdy automatyzacja importuje plik XML JUnit, ścieżka importu odczytuje indeks iteracji z elementu potomnego <property> dla każdego elementu <testcase>. Dodaj nazwy właściwości używane przez emiter CI; wyszukiwanie nie uwzględnia wielkości liter.",
+        "title": "Mapowanie właściwości iteracji",
+        "description": "Podczas importu indeks iteracji dla każdego przypadku testowego jest odczytywany z właściwości, atrybutu lub cechy, której nazwa pasuje do jednego z tych wpisów (właściwość JUnit, atrybut TestNG, cecha xUnit, właściwość NUnit). Dodaj nazwy używane przez emiter; wyszukiwanie nie uwzględnia wielkości liter.",
         "addLabel": "Dodaj nazwę nieruchomości",
         "addButton": "Dodać",
         "placeholder": "np. iteracjaIndeks",
         "defaultHint": "Domyślnie: iteracja (bez uwzględniania wielkości liter). Dodaj niestandardowe nazwy, aby wyrazić zgodę.",
         "saveButton": "Ratować",
-        "saveSuccess": "Zapisano nazwy właściwości iteracji JUnit.",
-        "saveError": "Nie można zapisać nazw właściwości iteracji JUnit.",
+        "saveSuccess": "Zapisano nazwy właściwości iteracji.",
+        "saveError": "Nie można zapisać nazw właściwości iteracji.",
         "removeAria": "Usuń {name}"
       },
       "integrations": {
@@ -1626,6 +1628,11 @@
       "shares": {
         "title": "Zarządzaj udziałami",
         "description": "Wyświetl i zarządzaj wszystkimi linkami udostępniania dla tego projektu"
+      },
+      "parameters": {
+        "title": "Parametry przypadku testowego",
+        "tabDatasets": "Udostępniane zestawy danych",
+        "tabJunit": "Mapowanie właściwości iteracji"
       },
       "datasets": {
         "metaTitle": "Udostępniane zestawy danych",
@@ -3174,6 +3181,7 @@
       "webhooks": "Webhooki",
       "junit": "JUnit",
       "datasets": "Udostępniane zestawy danych",
+      "testCaseParameters": "Parametry przypadku testowego",
       "llm": "Modele AI",
       "prompts": "Konfiguracje monitów",
       "exportTemplates": "Eksportuj szablony",
@@ -7228,6 +7236,10 @@
     "iterationHeaderTitle": "Iteracja {n} z {total}",
     "iterationPrevAria": "Poprzednia iteracja",
     "iterationNextAria": "Następna iteracja",
+    "iterationResultRowIcon": "Wynik iteracji sparametryzowanej",
+    "iterationResultRunDetails": "Szczegóły uruchomienia",
+    "iterationResultLabelHeading": "Iteracja",
+    "iterationResultNoValue": "(bez wartości)",
     "iterationValuesLabel": "Wartości:",
     "iterationValueOverridden": "Nadpisano",
     "iterationValueSnapshot": "Oryginał: {value}",

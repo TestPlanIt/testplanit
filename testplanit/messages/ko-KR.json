@@ -252,6 +252,8 @@
       "mission": "사명",
       "assignedTo": "담당자에게 배정됨",
       "executedBy": "실행자:",
+      "editedHeader": "편집됨",
+      "iterations": "반복",
       "optional": "선택 과목",
       "role": "역할",
       "defaultRole": "기본 역할",
@@ -1197,15 +1199,15 @@
       "moreSettingsComingSoon": "추가 설정 기능이 곧 제공될 예정입니다.",
       "moreSettingsDescription": "향후 업데이트에서 추가적인 프로젝트 구성 옵션이 여기에 제공될 예정입니다.",
       "junitIterationProperties": {
-        "title": "JUnit 반복 속성 이름",
-        "description": "When automation imports JUnit XML, the import path reads the iteration index from a <property> child on each <testcase>. Add the property names your CI emitter uses; lookup is case-insensitive.",
+        "title": "반복 속성 매핑",
+        "description": "임포트 시 각 테스트 케이스의 반복 인덱스는 다음 항목 중 하나와 이름이 일치하는 속성, 특성 또는 트레이트에서 읽어옵니다(JUnit 속성, TestNG 특성, xUnit 트레이트, NUnit 속성). 사용 중인 이미터에서 사용하는 이름을 추가하세요. 조회는 대소문자를 구분하지 않습니다.",
         "addLabel": "속성 이름을 추가하세요",
         "addButton": "추가하다",
         "placeholder": "예: iterationIndex",
         "defaultHint": "기본값: 반복 횟수(대소문자 구분 안 함). 사용자 지정 이름을 추가하여 선택적으로 사용할 수 있습니다.",
         "saveButton": "구하다",
-        "saveSuccess": "JUnit 반복 속성 이름이 저장되었습니다.",
-        "saveError": "JUnit 반복 속성 이름을 저장할 수 없습니다.",
+        "saveSuccess": "반복 속성 이름이 저장되었습니다.",
+        "saveError": "반복 속성 이름을 저장할 수 없습니다.",
         "removeAria": "{name}를 제거하세요"
       },
       "integrations": {
@@ -1626,6 +1628,11 @@
       "shares": {
         "title": "주식 관리",
         "description": "이 프로젝트의 모든 공유 링크를 보고 관리하세요."
+      },
+      "parameters": {
+        "title": "테스트 케이스 매개변수",
+        "tabDatasets": "공유 데이터 세트",
+        "tabJunit": "반복 속성 매핑"
       },
       "datasets": {
         "metaTitle": "공유 데이터 세트",
@@ -3174,6 +3181,7 @@
       "webhooks": "웹훅",
       "junit": "JUnit",
       "datasets": "공유 데이터 세트",
+      "testCaseParameters": "테스트 케이스 매개변수",
       "llm": "AI 모델",
       "prompts": "프롬프트 구성",
       "exportTemplates": "내보내기 템플릿",
@@ -7228,6 +7236,10 @@
     "iterationHeaderTitle": "{total}의 반복 {n}",
     "iterationPrevAria": "이전 버전",
     "iterationNextAria": "다음 반복",
+    "iterationResultRowIcon": "매개변수화된 반복 결과",
+    "iterationResultRunDetails": "실행 세부 정보",
+    "iterationResultLabelHeading": "반복",
+    "iterationResultNoValue": "(값 없음)",
     "iterationValuesLabel": "값:",
     "iterationValueOverridden": "재정의됨",
     "iterationValueSnapshot": "원문: {value}",

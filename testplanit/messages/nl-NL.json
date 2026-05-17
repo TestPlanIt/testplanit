@@ -252,6 +252,8 @@
       "mission": "Missie",
       "assignedTo": "Toegewezen aan",
       "executedBy": "Uitgevoerd door",
+      "editedHeader": "Bewerkt",
+      "iterations": "Iteraties",
       "optional": "Optioneel",
       "role": "Rol",
       "defaultRole": "Standaardrol",
@@ -1197,15 +1199,15 @@
       "moreSettingsComingSoon": "Binnenkort meer instellingen",
       "moreSettingsDescription": "In toekomstige updates zullen hier aanvullende projectconfiguratieopties beschikbaar zijn",
       "junitIterationProperties": {
-        "title": "JUnit-iteratie-eigenschapsnamen",
-        "description": "Wanneer automatisering JUnit XML importeert, leest het importpad de iteratie-index van een <property> -child op elke <testcase>. Voeg de eigenschapsnamen toe die uw CI-emitter gebruikt; het opzoeken is niet hoofdlettergevoelig.",
+        "title": "Iteratie-eigenschapmapping",
+        "description": "Bij het importeren wordt de iteratie-index voor elk testgeval gelezen uit een eigenschap, attribuut of trait waarvan de naam overeenkomt met een van deze vermeldingen (JUnit-eigenschap, TestNG-attribuut, xUnit-trait, NUnit-eigenschap). Voeg de namen toe die uw emitter gebruikt; er wordt niet op hoofdletters of kleine letters gelet.",
         "addLabel": "Voeg een eigenschapsnaam toe",
         "addButton": "Toevoegen",
         "placeholder": "bijv. iteratie-index",
         "defaultHint": "Standaard: iteratie (hoofdletterongevoelig). Voeg aangepaste namen toe om deel te nemen.",
         "saveButton": "Redden",
-        "saveSuccess": "Eigenschapsnamen van JUnit-iteraties opgeslagen.",
-        "saveError": "Kon de namen van de JUnit-iteratie-eigenschappen niet opslaan.",
+        "saveSuccess": "Namen van iteratie-eigenschappen opgeslagen.",
+        "saveError": "Namen van iteratie-eigenschappen konden niet worden opgeslagen.",
         "removeAria": "Verwijder {name}"
       },
       "integrations": {
@@ -1626,6 +1628,11 @@
       "shares": {
         "title": "Aandelen beheren",
         "description": "Bekijk en beheer alle deelbare links voor dit project."
+      },
+      "parameters": {
+        "title": "Testcaseparameters",
+        "tabDatasets": "Gedeelde datasets",
+        "tabJunit": "Iteratie-eigenschapmapping"
       },
       "datasets": {
         "metaTitle": "Gedeelde datasets",
@@ -3174,6 +3181,7 @@
       "webhooks": "Webhooks",
       "junit": "JUnit",
       "datasets": "Gedeelde datasets",
+      "testCaseParameters": "Testcaseparameters",
       "llm": "AI-modellen",
       "prompts": "Promptconfiguraties",
       "exportTemplates": "Export sjablonen",
@@ -7228,6 +7236,10 @@
     "iterationHeaderTitle": "Iteratie {n} van {total}",
     "iterationPrevAria": "Vorige iteratie",
     "iterationNextAria": "Volgende iteratie",
+    "iterationResultRowIcon": "Geparameteriseerd iteratieresultaat",
+    "iterationResultRunDetails": "Details van de uitvoering",
+    "iterationResultLabelHeading": "Iteratie",
+    "iterationResultNoValue": "(geen waarde)",
     "iterationValuesLabel": "Waarden:",
     "iterationValueOverridden": "Overruled",
     "iterationValueSnapshot": "Origineel: {value}",
