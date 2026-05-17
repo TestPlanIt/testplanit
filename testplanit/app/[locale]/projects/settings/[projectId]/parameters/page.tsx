@@ -1,12 +1,10 @@
 "use client";
 
 import { Loading } from "@/components/Loading";
-import { ProjectIcon } from "@/components/ProjectIcon";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -94,12 +92,6 @@ export default function ProjectParametersSettingsPage() {
               <span>{tParameters("tabJunit")}</span>
             </CardTitle>
           </div>
-          <CardDescription className="uppercase">
-            <span className="flex items-center gap-2">
-              <ProjectIcon iconUrl={project.iconUrl} />
-              {project.name}
-            </span>
-          </CardDescription>
           <p className="text-sm text-muted-foreground pt-2">
             {tJunit("description")}
           </p>
@@ -131,12 +123,6 @@ export default function ProjectParametersSettingsPage() {
               {tDatasets("newButton")}
             </Button>
           </div>
-          <CardDescription className="uppercase">
-            <span className="flex items-center gap-2">
-              <ProjectIcon iconUrl={project.iconUrl} />
-              {project.name}
-            </span>
-          </CardDescription>
           <p className="text-sm text-muted-foreground pt-2">
             {tDatasets("description")}
           </p>
