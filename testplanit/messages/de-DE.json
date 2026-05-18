@@ -2876,6 +2876,11 @@
     "list": {
       "pendingTooltip": "Prüfung ausstehend von {assignee}"
     },
+    "transitionGate": {
+      "blockedByGate": "Für \"{gateName}\" ist vor diesem Übergang eine Genehmigung erforderlich. Verwenden Sie \"Überprüfung anfordern\", um eine solche zu starten.",
+      "gatedOptionBadge": "Überprüfung erforderlich",
+      "saveBlockedByFormErrors": "Beheben Sie die markierten Formularfehler vor dem Speichern."
+    },
     "inbox": {
       "iconAria": "{count, plural, =0 {Posteingang für Überprüfungen} one {Posteingang für Überprüfungen, # ausstehend} other {Posteingang für Überprüfungen, # ausstehend}}",
       "pageTitle": "Rezensionen",

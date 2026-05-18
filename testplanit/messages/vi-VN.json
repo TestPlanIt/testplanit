@@ -2876,6 +2876,11 @@
     "list": {
       "pendingTooltip": "Đang chờ xem xét từ {assignee}"
     },
+    "transitionGate": {
+      "blockedByGate": "Cần có sự chấp thuận cho \"{gateName}\" trước khi chuyển đổi này. Sử dụng \"Yêu cầu xem xét\" để bắt đầu.",
+      "gatedOptionBadge": "Cần xem xét lại",
+      "saveBlockedByFormErrors": "Hãy khắc phục các lỗi được đánh dấu trong biểu mẫu trước khi lưu."
+    },
     "inbox": {
       "iconAria": "{count, plural, =0 {Hộp thư đến đánh giá} one {Hộp thư đến đánh giá, # đang chờ xử lý} other {Hộp thư đến đánh giá, # đang chờ xử lý}}",
       "pageTitle": "Đánh giá",

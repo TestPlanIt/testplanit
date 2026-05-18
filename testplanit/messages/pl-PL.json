@@ -2876,6 +2876,11 @@
     "list": {
       "pendingTooltip": "Oczekuje na sprawdzenie od {assignee}"
     },
+    "transitionGate": {
+      "blockedByGate": "Wymagana jest zgoda na „{gateName}” przed tą zmianą. Użyj „Poproś o weryfikację”, aby ją rozpocząć.",
+      "gatedOptionBadge": "Wymaga przeglądu",
+      "saveBlockedByFormErrors": "Przed zapisaniem formularza popraw podświetlone błędy."
+    },
     "inbox": {
       "iconAria": "{count, plural, =0 {Skrzynka odbiorcza recenzji} one {Skrzynka odbiorcza recenzji, # oczekujące} other {Skrzynka odbiorcza recenzji, # oczekujące}}",
       "pageTitle": "Recenzje",

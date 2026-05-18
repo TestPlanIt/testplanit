@@ -9,7 +9,6 @@ import { Loading } from "@/components/Loading";
 import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
-import { MessageSquareWarning } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -393,26 +392,20 @@ function SessionFormControls({
                             key={workflow.id}
                             value={workflow.id.toString()}
                           >
-                            <div className="flex items-start justify-between gap-2 w-full">
-                              <div className="flex items-start gap-1 min-w-0">
-                                <DynamicIcon
-                                  name={workflow.icon?.name as IconName}
-                                  color={workflow.color?.value}
-                                  className="w-4 h-4 shrink-0 mt-0.5"
-                                />
-                                <span className="truncate">
-                                  {workflow.name}
-                                </span>
-                              </div>
-                              {workflow.requiresReview && (
-                                <MessageSquareWarning
-                                  className="h-3.5 w-3.5 shrink-0 mt-1 text-warning"
-                                  aria-label={tGlobal(
-                                    "reviews.transitionGate.gatedOptionBadge"
-                                  )}
-                                />
-                              )}
-                            </div>
+                            <WorkflowStateDisplay
+                              state={{
+                                name: workflow.name,
+                                icon: {
+                                  name: (workflow.icon?.name ??
+                                    "circle") as IconName,
+                                },
+                                color: {
+                                  value: workflow.color?.value ?? "",
+                                },
+                                requiresReview: workflow.requiresReview,
+                              }}
+                              size="sm"
+                            />
                           </SelectItem>
                         ))}
                       </SelectGroup>
@@ -426,6 +419,7 @@ function SessionFormControls({
                         ? { name: testSession.state.icon.name as IconName }
                         : { name: "circle" as IconName },
                       color: testSession.state.color || { value: "" },
+                      requiresReview: testSession.state.requiresReview,
                     }}
                   />
                 )}
@@ -1285,43 +1279,22 @@ export default function SessionPage() {
     handleSubmit,
     control,
     setValue,
-    watch,
     setError,
-    clearErrors,
     formState: { errors },
   } = form;
 
-  // Client mirror of the strict-transitive review gate — surfaces an
-  // inline error when the user picks a target state that would be blocked
-  // server-side, so other field edits aren't lost on a 403 round trip.
+  // Client mirror of the strict-transitive review gate. `onSubmit` re-runs
+  // the preflight before firing the mutation; the previous `useEffect`
+  // version that mirrored the gate result into `setError` caused an
+  // infinite render loop via the `errors.stateId` dep, and was redundant
+  // since the form's `FormMessage` reads from the same setError call we
+  // already do in `onSubmit`.
   const transitionGate = useTransitionGateStatus(
     "SESSION",
     sessionData?.id ?? 0,
     sessionData?.stateId ?? null,
     Number(projectId)
   );
-  const watchedStateId = watch("stateId") as number | undefined;
-  const stateTransitionCheck = transitionGate.canTransitionTo(watchedStateId);
-  useEffect(() => {
-    if (!stateTransitionCheck.allowed && stateTransitionCheck.blockingGate) {
-      setError("stateId", {
-        type: "review-gate",
-        message: tGlobal("reviews.transitionGate.blockedByGate", {
-          gateName: stateTransitionCheck.blockingGate.name,
-        }),
-      });
-    } else if (errors.stateId?.type === "review-gate") {
-      clearErrors("stateId");
-    }
-  }, [
-    stateTransitionCheck.allowed,
-    stateTransitionCheck.blockingGate?.id,
-    stateTransitionCheck.blockingGate?.name,
-    setError,
-    clearErrors,
-    errors.stateId,
-    tGlobal,
-  ]);
 
   // Add these functions
   const toggleCollapseLeft = () => {

@@ -2876,6 +2876,11 @@
     "list": {
       "pendingTooltip": "Aguardando revisão de {assignee}"
     },
+    "transitionGate": {
+      "blockedByGate": "É necessária aprovação para \"{gateName}\" antes desta transição. Use \"Solicitar revisão\" para iniciar uma.",
+      "gatedOptionBadge": "Requer revisão",
+      "saveBlockedByFormErrors": "Corrija os erros destacados no formulário antes de salvar."
+    },
     "inbox": {
       "iconAria": "{count, plural, =0 {Revisar caixa de entrada} one {Revisar caixa de entrada, # pendentes} other {Revisar caixa de entrada, # pendentes}}",
       "pageTitle": "Avaliações",

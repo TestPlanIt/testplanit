@@ -2876,6 +2876,11 @@
     "list": {
       "pendingTooltip": "In attesa di revisione da parte di {assignee}"
     },
+    "transitionGate": {
+      "blockedByGate": "È necessaria l'approvazione per \"{gateName}\" prima di questa transizione. Utilizza \"Richiedi revisione\" per avviarne una.",
+      "gatedOptionBadge": "Richiede revisione",
+      "saveBlockedByFormErrors": "Risolvi gli errori evidenziati nel modulo prima di salvare."
+    },
     "inbox": {
       "iconAria": "{count, plural, =0 {Posta in arrivo per le revisioni} one {Posta in arrivo per le revisioni, # in sospeso} other {Posta in arrivo per le revisioni, # in sospeso}}",
       "pageTitle": "Recensioni",

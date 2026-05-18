@@ -2878,7 +2878,8 @@
     },
     "transitionGate": {
       "blockedByGate": "Approval required for \"{gateName}\" before this transition. Use \"Request review\" to start one.",
-      "gatedOptionBadge": "Requires review"
+      "gatedOptionBadge": "Requires review",
+      "saveBlockedByFormErrors": "Resolve the highlighted form errors before saving."
     },
     "inbox": {
       "iconAria": "{count, plural, =0 {Review inbox} one {Review inbox, # pending} other {Review inbox, # pending}}",

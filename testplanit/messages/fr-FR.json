@@ -2876,6 +2876,11 @@
     "list": {
       "pendingTooltip": "En attente d'examen par {assignee}"
     },
+    "transitionGate": {
+      "blockedByGate": "L'approbation est requise pour «{gateName}» avant cette transition. Utilisez « Demander une révision » pour en lancer une.",
+      "gatedOptionBadge": "Nécessite une révision",
+      "saveBlockedByFormErrors": "Corrigez les erreurs de formulaire mises en évidence avant d'enregistrer."
+    },
     "inbox": {
       "iconAria": "{count, plural, =0 {Boîte de réception à consulter} one {Boîte de réception à consulter, # en attente} other {Boîte de réception à consulter, # en attente}}",
       "pageTitle": "Avis",

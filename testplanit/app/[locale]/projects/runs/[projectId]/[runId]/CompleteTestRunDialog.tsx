@@ -1,6 +1,6 @@
 "use client";
 
-import DynamicIcon from "@/components/DynamicIcon";
+import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -24,12 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { format } from "date-fns";
-import {
-  CalendarIcon,
-  CircleCheckBig,
-  MessageSquareWarning,
-  TriangleAlert,
-} from "lucide-react";
+import { CalendarIcon, CircleCheckBig, TriangleAlert } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
@@ -163,24 +158,17 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
               <SelectContent>
                 {workflows?.map((workflow) => (
                   <SelectItem key={workflow.id} value={workflow.id.toString()}>
-                    <div className="flex items-center justify-between gap-2 w-full">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <DynamicIcon
-                          name={workflow.icon?.name as IconName}
-                          color={workflow.color?.value}
-                          className="h-4 w-4 shrink-0"
-                        />
-                        <span className="truncate">{workflow.name}</span>
-                      </div>
-                      {workflow.requiresReview && (
-                        <MessageSquareWarning
-                          className="h-3.5 w-3.5 shrink-0 text-warning"
-                          aria-label={t(
-                            "reviews.transitionGate.gatedOptionBadge"
-                          )}
-                        />
-                      )}
-                    </div>
+                    <WorkflowStateDisplay
+                      state={{
+                        name: workflow.name,
+                        icon: {
+                          name: (workflow.icon?.name ?? "circle") as IconName,
+                        },
+                        color: { value: workflow.color?.value ?? "" },
+                        requiresReview: workflow.requiresReview,
+                      }}
+                      size="sm"
+                    />
                   </SelectItem>
                 ))}
               </SelectContent>

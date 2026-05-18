@@ -3,7 +3,6 @@
 import { AttachmentChanges } from "@/components/AttachmentsDisplay";
 import BreadcrumbComponent from "@/components/BreadcrumbComponent";
 import { formatSeconds } from "@/components/DurationDisplay";
-import DynamicIcon from "@/components/DynamicIcon";
 import {
   FolderSelect,
   transformFolders,
@@ -52,7 +51,6 @@ import {
 import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
-import { MessageSquareWarning } from "lucide-react";
 import { VersionSelect } from "@/components/VersionSelect";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { ApplicationArea, Attachments, Prisma } from "@prisma/client";
@@ -764,24 +762,17 @@ export default function TestCaseDetails() {
     workflows?.map((workflow) => ({
       value: workflow.id.toString(),
       label: (
-        // `justify-between` pushes the "requires review" warning glyph to
-        // the right of each gated option so the trailing badge surfaces
-        // before the user picks the state, not only after.
-        <div className="flex items-center justify-between gap-2 w-full">
-          <div className="flex items-center min-w-0">
-            <DynamicIcon
-              name={workflow.icon.name as IconName}
-              color={workflow.color.value}
-            />
-            <div className="mx-1 truncate">{workflow.name}</div>
-          </div>
-          {workflow.requiresReview && (
-            <MessageSquareWarning
-              className="h-3.5 w-3.5 shrink-0 text-warning"
-              aria-label={t("reviews.transitionGate.gatedOptionBadge")}
-            />
-          )}
-        </div>
+        // Use the shared WorkflowStateDisplay so the gated-state warning
+        // glyph stays consistent everywhere a workflow state renders.
+        <WorkflowStateDisplay
+          state={{
+            name: workflow.name,
+            icon: { name: workflow.icon.name as IconName },
+            color: { value: workflow.color.value },
+            requiresReview: workflow.requiresReview,
+          }}
+          size="sm"
+        />
       ),
     })) || [];
 
@@ -826,13 +817,13 @@ export default function TestCaseDetails() {
     formState: { errors },
     getValues,
     watch,
-    setError,
-    clearErrors,
   } = methods;
 
-  // Client mirror of the strict-transitive gate. Lets us pre-validate the
-  // chosen state BEFORE submit so the user gets an inline error instead of
-  // losing every other field edit on a 403 round-trip.
+  // Client mirror of the strict-transitive gate. The inline error JSX
+  // below the state Select renders directly off `transitionCheck`, and
+  // `handleSave` re-runs the preflight before firing the mutation — no
+  // `setError` effect required (and the previous version caused an
+  // infinite render loop by depending on `errors.workflowId`).
   const transitionGate = useTransitionGateStatus(
     "CASE",
     testcase?.id ?? 0,
@@ -841,30 +832,6 @@ export default function TestCaseDetails() {
   );
   const watchedWorkflowId = watch("workflowId") as number | undefined;
   const transitionCheck = transitionGate.canTransitionTo(watchedWorkflowId);
-  useEffect(() => {
-    if (!transitionCheck.allowed && transitionCheck.blockingGate) {
-      setError("workflowId", {
-        type: "review-gate",
-        message: t("reviews.transitionGate.blockedByGate", {
-          gateName: transitionCheck.blockingGate.name,
-        }),
-      });
-    } else {
-      // Only clear errors we owned to avoid stomping the required-field
-      // setError that runs in handleSave when workflowId is missing.
-      if (errors.workflowId?.type === "review-gate") {
-        clearErrors("workflowId");
-      }
-    }
-  }, [
-    transitionCheck.allowed,
-    transitionCheck.blockingGate?.id,
-    transitionCheck.blockingGate?.name,
-    setError,
-    clearErrors,
-    errors.workflowId,
-    t,
-  ]);
 
   // Restore handleTemplateChange
   const handleTemplateChange = useCallback(
@@ -1038,19 +1005,15 @@ export default function TestCaseDetails() {
       });
       hasErrors = true;
     } else {
-      // Pre-flight the strict-transitive review gate so the user sees an
-      // inline error instead of losing every other field edit on a 403
-      // round-trip. The server still re-validates — this is purely UX.
+      // Strict-transitive review-gate preflight. The live inline error
+      // rendered under the state Select reads off the same `transitionGate`,
+      // so we DON'T also `setError` here — that would double-render the
+      // message (once inline + once via `FormMessage`). Just flip
+      // `hasErrors` to keep the submit guard from firing the mutation.
       const preflight = transitionGate.canTransitionTo(
         data.workflowId as number
       );
       if (!preflight.allowed && preflight.blockingGate) {
-        methods.setError("workflowId", {
-          type: "review-gate",
-          message: t("reviews.transitionGate.blockedByGate", {
-            gateName: preflight.blockingGate.name,
-          }),
-        });
         hasErrors = true;
       }
     }
@@ -1889,12 +1852,63 @@ export default function TestCaseDetails() {
                   {isEditMode && !isSubmitting ? (
                     <div className="space-y-2 w-full">
                       <div className="flex items-center space-x-2">
-                        <Button type="submit" variant="default">
-                          <div className="flex items-center">
-                            <Save className="w-5 h-5 mr-2" />
-                            <div>{t("common.actions.save")}</div>
-                          </div>
-                        </Button>
+                        {(() => {
+                          // Save-blocked detection: either the strict-
+                          // transitive gate is firing OR react-hook-form
+                          // has at least one error from the previous
+                          // validation pass. Either path puts the button
+                          // in the red-ring + disabled + hover-tooltip
+                          // state so the user doesn't keep clicking on a
+                          // submit that won't fire.
+                          const gateBlocked =
+                            !transitionCheck.allowed &&
+                            transitionCheck.blockingGate;
+                          const formHasErrors = Object.keys(errors).length > 0;
+                          const saveBlocked = gateBlocked || formHasErrors;
+                          const tooltipMessage = gateBlocked
+                            ? t("reviews.transitionGate.blockedByGate", {
+                                gateName: transitionCheck.blockingGate!.name,
+                              })
+                            : t(
+                                "reviews.transitionGate.saveBlockedByFormErrors"
+                              );
+
+                          if (!saveBlocked) {
+                            return (
+                              <Button type="submit" variant="default">
+                                <div className="flex items-center">
+                                  <Save className="w-5 h-5 mr-2" />
+                                  <div>{t("common.actions.save")}</div>
+                                </div>
+                              </Button>
+                            );
+                          }
+
+                          // Wrap in a `span` so the Tooltip still
+                          // receives pointer events even when the inner
+                          // Button is `disabled` (disabled buttons swallow
+                          // pointer events in most browsers).
+                          return (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span tabIndex={0}>
+                                  <Button
+                                    type="submit"
+                                    variant="default"
+                                    disabled
+                                    className="ring-2 ring-destructive ring-offset-2 ring-offset-background"
+                                  >
+                                    <div className="flex items-center">
+                                      <Save className="w-5 h-5 mr-2" />
+                                      <div>{t("common.actions.save")}</div>
+                                    </div>
+                                  </Button>
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>{tooltipMessage}</TooltipContent>
+                            </Tooltip>
+                          );
+                        })()}
                         <Button
                           type="button"
                           variant="outline"
@@ -1989,12 +2003,22 @@ export default function TestCaseDetails() {
                       name="workflowId"
                       render={({ field: _field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center">
+                          {/*
+                            The State FormField lives inside `CardDescription`
+                            which forces `text-sm text-muted-foreground` on
+                            every child — that's why this label looked
+                            smaller / faded compared to its peers. Override
+                            the inherited size + color (and pin font-bold)
+                            so the row matches the case-page's other
+                            section labels (Steps / Attachments / Properties
+                            / custom-field display labels).
+                          */}
+                          <div className="font-bold text-base text-foreground mb-1 flex items-center">
                             {t("common.fields.state")}
                             <sup>
                               <Asterisk className="w-3 h-3 text-destructive" />
                             </sup>{" "}
-                          </FormLabel>
+                          </div>
                           <FormControl>
                             <Controller
                               control={control}
@@ -2028,6 +2052,18 @@ export default function TestCaseDetails() {
                             />
                           </FormControl>
                           <FormMessage />
+                          {/* Strict-transitive gate preview: render the
+                             blocking-gate message directly so the user sees
+                             it whether or not the manually-set FormMessage
+                             error has been picked up by the form context. */}
+                          {!transitionCheck.allowed &&
+                            transitionCheck.blockingGate && (
+                              <p className="text-[0.8rem] font-medium text-destructive mt-1">
+                                {t("reviews.transitionGate.blockedByGate", {
+                                  gateName: transitionCheck.blockingGate.name,
+                                })}
+                              </p>
+                            )}
                         </FormItem>
                       )}
                     />

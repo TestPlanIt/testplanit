@@ -2876,6 +2876,11 @@
     "list": {
       "pendingTooltip": "{assignee}의 검토 대기 중"
     },
+    "transitionGate": {
+      "blockedByGate": "이 전환을 진행하기 전에 \"{gateName}\"에 대한 승인이 필요합니다. \"검토 요청\"을 사용하여 승인을 요청하세요.",
+      "gatedOptionBadge": "검토가 필요합니다",
+      "saveBlockedByFormErrors": "저장하기 전에 강조 표시된 양식 오류를 해결하세요."
+    },
     "inbox": {
       "iconAria": "{count, plural, =0 {리뷰 받은 편지함} one {리뷰 받은 편지함, 대기 중인 리뷰 수} other {리뷰 받은 편지함, 대기 중인 리뷰 수}}",
       "pageTitle": "리뷰",

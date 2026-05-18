@@ -2876,6 +2876,11 @@
     "list": {
       "pendingTooltip": "{assignee}からのレビュー待ち"
     },
+    "transitionGate": {
+      "blockedByGate": "この移行を行う前に、「{gateName}」の承認が必要です。「レビューをリクエスト」を使用して承認を開始してください。",
+      "gatedOptionBadge": "審査が必要",
+      "saveBlockedByFormErrors": "保存する前に、強調表示されているフォームエラーを解決してください。"
+    },
     "inbox": {
       "iconAria": "{count, plural, =0 {レビュー受信ボックス} one {レビュー受信ボックス、# 保留中} other {レビュー受信ボックス、# 保留中}}",
       "pageTitle": "レビュー",

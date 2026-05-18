@@ -2876,6 +2876,11 @@
     "list": {
       "pendingTooltip": "In afwachting van beoordeling door {assignee}"
     },
+    "transitionGate": {
+      "blockedByGate": "Goedkeuring is vereist voor \"{gateName}\" vóór deze overgang. Gebruik \"Review aanvragen\" om er een te starten.",
+      "gatedOptionBadge": "Vereist beoordeling",
+      "saveBlockedByFormErrors": "Los de gemarkeerde formulierfouten op voordat u opslaat."
+    },
     "inbox": {
       "iconAria": "{count, plural, =0 {Review-inbox} one {Review-inbox, # in behandeling} other {Review-inbox, # in behandeling}}",
       "pageTitle": "Recensies",
