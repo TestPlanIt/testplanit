@@ -49,8 +49,8 @@ Datasets are also **versioned**. Every save creates an immutable snapshot, so a 
 Per-row results unlock a kind of report you couldn't really build before: a **matrix** of cases × configurations × input rows, color-coded by status, all in one view.
 
 <figure>
-  <img src="/img/blog/iteration-matrix-blog.png" alt="The Parameterized Test Iteration Matrix report. Rows are parameter scenarios for two test cases (Login flow and another parameterized case). Columns are configurations including Chrome, Edge Windows, Salesforce CRM, Oracle CRM, and Galaxy S20. Each cell shows colored pass/fail/untested counts." />
-  <figcaption>One view, every row across every configuration. Green is a passed iteration; red is a failure; gray is untested. Click any cell to see iteration details.</figcaption>
+  <img src="/img/blog/iteration-matrix-blog.jpg" alt="The Parameterized Test Iteration Matrix report focused on a Login case with seven parameter rows (Valid user, Locked account, Wrong password, Empty password, SSO user, Expired credentials, Maintenance mode) and configuration columns including CRM Oracle, CRM Salesforce, Edge Windows, and Galaxy S20. A hover popover on the Empty password / no-config cell shows the four runs that contributed: UAT param run, async dup-key repro, async dup-key verify, and Sprint 24 regression." />
+  <figcaption>One view, every row across every configuration. Green is a passed iteration; red is a failure; gray is untested. Hover any cell to see which runs contributed.</figcaption>
 </figure>
 
 Did Chrome on Windows pass every login scenario this regression? One look. Did the "Locked account" row fail across every browser? One look. Are there configurations you've never actually tested for a critical case? They show up empty.
