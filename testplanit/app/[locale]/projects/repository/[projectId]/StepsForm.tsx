@@ -475,10 +475,7 @@ const StepItem: React.FC<StepItemProps> = ({
               </Popover>
             )}
           </div>
-          <div
-            className="w-full ring-2 ring-primary/50 p-1 rounded-md bg-primary-foreground rounded-b-none"
-            data-testid={`step-editor-${index}`}
-          >
+          <div className="w-full ring-2 ring-primary/50 p-1 rounded-md bg-primary-foreground rounded-b-none">
             <FormControl>
               <TipTapEditorWrapper
                 name={`${namePrefix}.${index}.step`}

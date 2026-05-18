@@ -48,14 +48,9 @@ test.describe("Parameters - authoring + step mentions @parameters", () => {
       page.getByTestId("configure-parameters-sheet")
     ).not.toBeVisible();
 
-    // Switch the case into edit mode (assumes existing edit affordance).
-    const editButton = page
-      .locator('[data-testid="edit-case-button"]')
-      .or(page.getByRole("button", { name: /^Edit$/ }))
-      .first();
-    if (await editButton.isVisible().catch(() => false)) {
-      await editButton.click();
-    }
+    // Switch the case into edit mode — StepsForm (with TipTap editor) only
+    // renders when isEditMode === true.
+    await page.getByTestId("edit-test-case-button").click();
 
     // Locate the first step's contenteditable.
     const stepEditor = page

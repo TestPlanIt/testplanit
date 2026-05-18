@@ -85,20 +85,19 @@ test.describe("Shared datasets - happy path @shared-datasets", () => {
       page.getByTestId("assign-shared-dataset-dialog")
     ).toBeVisible();
 
+    // Step 2 (pin) and Step 3 (mapping) only render once a dataset is
+    // picked — open the dataset combobox first.
+    const datasetSelect = page.getByTestId("assign-shared-dataset-select");
+    await expect(datasetSelect).toBeVisible({ timeout: 10_000 });
+    await datasetSelect.click();
+    await page.getByRole("option", { name: datasetName }).click();
+
     // Pin radio defaults to "current" (RESEARCH.md Pitfall 5 default).
     await expect(page.getByTestId("assign-shared-pin-current")).toBeVisible();
 
     // Save the assignment. The dialog auto-maps matching column names
     // (email, password) on mount; mapping is valid; Save enables.
     const save = page.getByTestId("assign-shared-save");
-    // The dataset-select still needs to be exercised; if the dialog has
-    // a single dataset in the project it may auto-select. Open the
-    // selector and pick the just-created dataset by name.
-    if (await page.getByTestId("assign-shared-dataset-select").isVisible()) {
-      await page.getByTestId("assign-shared-dataset-select").click();
-      await page.getByRole("option", { name: datasetName }).click();
-    }
-
     await expect(save).toBeEnabled({ timeout: 10_000 });
     await save.click();
 

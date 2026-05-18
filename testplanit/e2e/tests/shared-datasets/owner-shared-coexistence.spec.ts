@@ -99,14 +99,15 @@ test.describe("Shared datasets - owner + shared coexistence (Amendment A) @share
     // Amendment A regression guard.
     await expect(page.getByTestId("assign-shared-owner-banner")).toBeVisible();
 
-    // Pick the freshly-created dataset.
-    if (await page.getByTestId("assign-shared-dataset-select").isVisible()) {
-      await page.getByTestId("assign-shared-dataset-select").click();
-      await page
-        .getByRole("option", { name: new RegExp(`Shared dataset`, "i") })
-        .first()
-        .click();
-    }
+    // Pick the freshly-created dataset. The Select only renders once the
+    // datasets list resolves, so wait for it explicitly.
+    const datasetSelect = page.getByTestId("assign-shared-dataset-select");
+    await expect(datasetSelect).toBeVisible({ timeout: 10_000 });
+    await datasetSelect.click();
+    await page
+      .getByRole("option", { name: new RegExp(`Shared dataset`, "i") })
+      .first()
+      .click();
 
     // Save (auto-mapped). The save MUST succeed (no 422 owner-refusal).
     const save = page.getByTestId("assign-shared-save");
