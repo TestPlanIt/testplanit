@@ -178,6 +178,146 @@ export async function assertReviewGatePasses(
 }
 
 /**
+ * Bulk variant of {@link assertReviewGatePasses}. Evaluates strict-transitive
+ * gate semantics for many entities transitioning to the same target state
+ * (e.g. `completeMilestoneCascade` flipping every active TestRun/Session in
+ * a milestone to its DONE state). One transition target shared across N
+ * entities at potentially different current states.
+ *
+ * Contract differences from the single-entity helper:
+ *
+ *   1. **Feature-flag short-circuits are the caller's responsibility.** The
+ *      caller has already loaded the project's `reviewWorkflowEnabled` flag
+ *      and the AppConfig system flag, so this helper accepts pre-loaded
+ *      entity rows with their current state order and skips the per-row
+ *      `project.reviewWorkflowEnabled` lookup that the single-entity helper
+ *      runs. Callers MUST gate this call behind both flag checks themselves
+ *      (matches the existing milestoneActions WR-04 fast path).
+ *
+ *   2. **Caller pre-loads `currentStateOrder`.** Avoids N round-trips to
+ *      fetch entity rows inside the loop. `null` means "before everything"
+ *      (mirrors the single-entity helper's missing-state case — every gate
+ *      applies).
+ *
+ *   3. **One ReviewRequest batch lookup, not N×G.** Approved+unconsumed
+ *      requests for `(entityId IN [...], toStateId IN [gateIds])` come back
+ *      in a single `findMany` and are indexed by `(entityId, toStateId)` for
+ *      O(1) per-gate lookups.
+ *
+ *   4. On the first missing approval the helper throws `ReviewGateError`
+ *      with the FIRST blocking entity's id and the FIRST missing gate id.
+ *      The throw rolls back the caller's transaction, so partial-bulk
+ *      semantics ("fail closed") match the bulk-edit and submit-result
+ *      paths.
+ *
+ *   5. Return shape matches the single-entity helper: `{ approvedRequestIds }`
+ *      is the UNION across every entity × every blocking gate. The caller
+ *      stamps `consumedAt` on the full list in one `updateMany` after the
+ *      bulk entity update commits — same one-shot invariant as Phase 1 D-05.
+ *
+ * Cost: 1× workflow.findUnique (target) + 1× workflow.findMany (gates) +
+ *       1× reviewRequest.findMany (all approvals). Constant in the number
+ *       of entities — same characteristic as the pre-strict batch path.
+ */
+export async function assertBulkReviewGatePasses(
+  tx: Prisma.TransactionClient,
+  entityType: ReviewEntityType,
+  entities: ReadonlyArray<{ id: number; currentStateOrder: number | null }>,
+  toStateId: number
+): Promise<{ approvedRequestIds: string[] } | null> {
+  if (entities.length === 0) {
+    return null;
+  }
+
+  const targetState = await tx.workflows.findUnique({
+    where: { id: toStateId },
+    select: { order: true },
+  });
+  // Missing target — FK violation will surface from the caller's update.
+  if (!targetState) {
+    return null;
+  }
+
+  // Filter to forward transitions; backward / same-state never blocked.
+  const forward = entities.filter(
+    (e) =>
+      e.currentStateOrder === null || e.currentStateOrder < targetState.order
+  );
+  if (forward.length === 0) {
+    return null;
+  }
+
+  const scope = SCOPE_BY_ENTITY_TYPE[entityType];
+  const gatedStates = await tx.workflows.findMany({
+    where: { scope, requiresReview: true, isDeleted: false },
+    select: { id: true, order: true },
+    orderBy: { order: "asc" },
+  });
+
+  // The union of "potentially blocking" gates is anything ≤ target order;
+  // per-entity filtering further narrows by that entity's currentStateOrder.
+  const reachableGates = gatedStates.filter(
+    (g) => g.order <= targetState.order
+  );
+  if (reachableGates.length === 0) {
+    return null;
+  }
+
+  const approvals = await tx.reviewRequest.findMany({
+    where: {
+      entityType,
+      entityId: { in: forward.map((e) => e.id) },
+      toStateId: { in: reachableGates.map((g) => g.id) },
+      status: "APPROVED",
+      consumedAt: null,
+      isDeleted: false,
+    },
+    select: { id: true, entityId: true, toStateId: true },
+  });
+
+  const approvalsByEntity = new Map<number, Map<number, string>>();
+  for (const a of approvals as Array<{
+    id: string;
+    entityId: number;
+    toStateId: number;
+  }>) {
+    let inner = approvalsByEntity.get(a.entityId);
+    if (!inner) {
+      inner = new Map();
+      approvalsByEntity.set(a.entityId, inner);
+    }
+    inner.set(a.toStateId, a.id);
+  }
+
+  const approvedRequestIds: string[] = [];
+  for (const entity of forward) {
+    const entityApprovals = approvalsByEntity.get(entity.id);
+    for (const gate of reachableGates) {
+      const inPath =
+        (entity.currentStateOrder === null ||
+          entity.currentStateOrder < gate.order) &&
+        gate.order <= targetState.order;
+      if (!inPath) continue;
+      const approvalId = entityApprovals?.get(gate.id);
+      if (!approvalId) {
+        // Name the first missing gate so the user-facing message points at
+        // the immediate blocker (matches single-entity helper behavior).
+        throw new ReviewGateError(
+          "REVIEW_REQUIRED",
+          entityType,
+          entity.id,
+          toStateId,
+          gate.id
+        );
+      }
+      approvedRequestIds.push(approvalId);
+    }
+  }
+
+  return approvedRequestIds.length > 0 ? { approvedRequestIds } : null;
+}
+
+/**
  * Map a polymorphic `ReviewEntityType` (CASE/RUN/SESSION) to the matching
  * `WorkflowScope` (CASES/RUNS/SESSIONS) so the gated-states lookup only
  * loads rows relevant to the entity's workflow.

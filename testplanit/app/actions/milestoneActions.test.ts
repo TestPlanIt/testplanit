@@ -1255,8 +1255,8 @@ describe("milestoneActions", () => {
       });
     });
 
-    describe("review gate", () => {
-      it("skips batched preflight when target state does NOT require review", async () => {
+    describe("review gate (strict transitive bulk)", () => {
+      it("skips approval lookup when no gated states exist in the scope (target ungated AND no upstream gates)", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
         vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
           mockMilestone as any
@@ -1266,14 +1266,14 @@ describe("milestoneActions", () => {
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
         vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
         vi.mocked(prisma.testRuns.findMany).mockResolvedValue([
-          { id: 1 },
-          { id: 2 },
+          { id: 1, state: { order: 1 } },
+          { id: 2, state: { order: 1 } },
         ] as any);
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([] as any);
 
-        const txWorkflowsFindUnique = vi
-          .fn()
-          .mockResolvedValue({ requiresReview: false });
+        // Target state resolves with order 5; no gates in scope.
+        const txWorkflowsFindUnique = vi.fn().mockResolvedValue({ order: 5 });
+        const txWorkflowsFindMany = vi.fn().mockResolvedValue([]);
         const txReviewRequestFindMany = vi.fn();
 
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
@@ -1281,7 +1281,10 @@ describe("milestoneActions", () => {
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
-            workflows: { findUnique: txWorkflowsFindUnique },
+            workflows: {
+              findUnique: txWorkflowsFindUnique,
+              findMany: txWorkflowsFindMany,
+            },
             appConfig: {
               findUnique: vi.fn().mockResolvedValue({ value: true }),
             },
@@ -1296,16 +1299,11 @@ describe("milestoneActions", () => {
         });
 
         expect(result.status).toBe("success");
-        // Target-state guard queried for testRuns (run scope).
-        expect(txWorkflowsFindUnique).toHaveBeenCalledWith({
-          where: { id: mockDoneRunWorkflow.id },
-          select: { requiresReview: true },
-        });
-        // No batched ReviewRequest lookup because the target was ungated.
+        // No approvals roundtrip when there are zero reachable gates.
         expect(txReviewRequestFindMany).not.toHaveBeenCalled();
       });
 
-      it("runs a single batched preflight findMany when target state requires review (WR-04)", async () => {
+      it("runs a single batched preflight findMany when a gated state lies in the path (strict transitive bulk)", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
         vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
           mockMilestone as any
@@ -1314,18 +1312,17 @@ describe("milestoneActions", () => {
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
         vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
+        // Both runs sit at order 1; target (DONE) is at order 5; one gate at
+        // order 4 lies in the transitive path.
         vi.mocked(prisma.testRuns.findMany).mockResolvedValue([
-          { id: 1 },
-          { id: 2 },
+          { id: 1, state: { order: 1 } },
+          { id: 2, state: { order: 1 } },
         ] as any);
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([] as any);
 
-        // Both test runs have approvals — findMany returns both rows with
-        // id + entityId so the bulk-consumption stamp can stamp them post-
-        // update.
         const txReviewRequestFindMany = vi.fn().mockResolvedValue([
-          { id: "approval-1", entityId: 1 },
-          { id: "approval-2", entityId: 2 },
+          { id: "approval-1", entityId: 1, toStateId: 40 },
+          { id: "approval-2", entityId: 2, toStateId: 40 },
         ]);
         const txReviewRequestUpdateMany = vi
           .fn()
@@ -1336,7 +1333,8 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
             workflows: {
-              findUnique: vi.fn().mockResolvedValue({ requiresReview: true }),
+              findUnique: vi.fn().mockResolvedValue({ order: 5 }),
+              findMany: vi.fn().mockResolvedValue([{ id: 40, order: 4 }]),
             },
             appConfig: {
               findUnique: vi.fn().mockResolvedValue({ value: true }),
@@ -1355,20 +1353,18 @@ describe("milestoneActions", () => {
         });
 
         expect(result.status).toBe("success");
-        // Single batched preflight call — not N per-entity calls.
+        // Single batched preflight call — covers every entity × every gate.
         expect(txReviewRequestFindMany).toHaveBeenCalledTimes(1);
         expect(txReviewRequestFindMany).toHaveBeenCalledWith({
           where: {
             entityType: "RUN",
             entityId: { in: [1, 2] },
-            toStateId: mockDoneRunWorkflow.id,
+            toStateId: { in: [40] },
             status: "APPROVED",
             consumedAt: null,
             isDeleted: false,
           },
-          // `id` is now selected too so the post-update consumption stamp
-          // knows which ReviewRequest rows to mark consumedAt on.
-          select: { id: true, entityId: true },
+          select: { id: true, entityId: true, toStateId: true },
         });
         // Bulk stamp fires once after the entity update succeeds.
         expect(txReviewRequestUpdateMany).toHaveBeenCalledTimes(1);
@@ -1381,7 +1377,7 @@ describe("milestoneActions", () => {
         });
       });
 
-      it("returns structured error when one entity is missing its approval", async () => {
+      it("returns structured error when one entity is missing an approval for an intermediate gate (strict)", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
         vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
           mockMilestone as any
@@ -1391,7 +1387,7 @@ describe("milestoneActions", () => {
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
         vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
         vi.mocked(prisma.testRuns.findMany).mockResolvedValue([
-          { id: 42 },
+          { id: 42, state: { order: 1 } },
         ] as any);
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([] as any);
 
@@ -1401,12 +1397,13 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
             workflows: {
-              findUnique: vi.fn().mockResolvedValue({ requiresReview: true }),
+              findUnique: vi.fn().mockResolvedValue({ order: 5 }),
+              findMany: vi.fn().mockResolvedValue([{ id: 40, order: 4 }]),
             },
-            // Empty result → entityId 42 is the missing approval.
             appConfig: {
               findUnique: vi.fn().mockResolvedValue({ value: true }),
             },
+            // Empty result → entityId 42 is missing approval for gate 40.
             reviewRequest: { findMany: vi.fn().mockResolvedValue([]) },
           } as any);
         });
@@ -1422,7 +1419,7 @@ describe("milestoneActions", () => {
         expect(result.message).toMatch(/run 42/);
       });
 
-      it("WR-04 — short-circuits the batched preflight when the project disabled reviewWorkflowEnabled", async () => {
+      it("short-circuits the batched preflight when the project disabled reviewWorkflowEnabled", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
         vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
           mockMilestone as any
@@ -1432,22 +1429,25 @@ describe("milestoneActions", () => {
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
         vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
         vi.mocked(prisma.testRuns.findMany).mockResolvedValue([
-          { id: 1 },
+          { id: 1, state: { order: 1 } },
         ] as any);
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([] as any);
-        // Per-project opt-out — flag flipped to false.
         vi.mocked(prisma.projects.findUnique).mockResolvedValue({
           reviewWorkflowEnabled: false,
         } as any);
 
         const txReviewRequestFindMany = vi.fn();
         const txWorkflowsFindUnique = vi.fn();
+        const txWorkflowsFindMany = vi.fn();
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
             milestones: { update: vi.fn(), updateMany: vi.fn() },
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
-            workflows: { findUnique: txWorkflowsFindUnique },
+            workflows: {
+              findUnique: txWorkflowsFindUnique,
+              findMany: txWorkflowsFindMany,
+            },
             appConfig: {
               findUnique: vi.fn().mockResolvedValue({ value: true }),
             },
@@ -1462,8 +1462,9 @@ describe("milestoneActions", () => {
         });
 
         expect(result.status).toBe("success");
-        // No batched preflight AND no target-state probe — both short-circuited.
+        // Helper never invoked when project flag is off.
         expect(txWorkflowsFindUnique).not.toHaveBeenCalled();
+        expect(txWorkflowsFindMany).not.toHaveBeenCalled();
         expect(txReviewRequestFindMany).not.toHaveBeenCalled();
       });
     });

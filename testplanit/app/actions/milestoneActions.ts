@@ -10,6 +10,7 @@ import {
   isReviewGateError,
 } from "~/lib/utils/errors";
 import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
+import { assertBulkReviewGatePasses } from "~/lib/services/reviewGate";
 import { getServerAuthSession } from "~/server/auth";
 import { checkUserPermission } from "./permissions";
 
@@ -168,13 +169,19 @@ export async function completeMilestoneCascade(
     await getAllDescendantMilestoneIds(milestoneId);
   const allRelevantMilestoneIds = [milestoneId, ...descendantMilestoneIds];
 
+  // Strict-transitive gate: caller pre-loads each entity's current state
+  // `order` so the bulk preflight can detect blocking gates in (currentOrder,
+  // targetOrder] per entity without a per-row roundtrip inside the tx.
   const activeTestRuns = await prisma.testRuns.findMany({
     where: {
       milestoneId: { in: allRelevantMilestoneIds },
       isCompleted: false,
       isDeleted: false,
     },
-    select: { id: true }, // Only select IDs for counting and updating
+    select: {
+      id: true,
+      state: { select: { order: true } },
+    },
   });
 
   const activeSessions = await prisma.sessions.findMany({
@@ -183,7 +190,10 @@ export async function completeMilestoneCascade(
       isCompleted: false,
       isDeleted: false,
     },
-    select: { id: true }, // Only select IDs for counting and updating
+    select: {
+      id: true,
+      state: { select: { order: true } },
+    },
   });
 
   // Descendant milestones that are not yet complete (excluding the main one being completed)
@@ -265,21 +275,13 @@ export async function completeMilestoneCascade(
           testRunUpdateData.stateId = completedTestRunStateId;
         }
 
-        // Review & Approval preflight (Plan 01-04). Milestone completion
-        // typically targets DONE workflow states which are unlikely to have
-        // requiresReview === true (review gates land on intermediate states,
-        // not DONE per RESEARCH.md §Q6). Cheap target-state guard first:
-        // skip the gate entirely when the target state is ungated or the
-        // project has opted out. If it IS gated, batch the per-entity
-        // ReviewRequest lookup into a single findMany (WR-04) — the old loop
-        // fired ~3N queries inside this long-lived write tx, which is both
-        // slow and deadlock-prone.
-        // FIXME(milestoneActions): this block still uses the per-state gate
-        // model (single target-state approval lookup). Strict transitive
-        // semantics aren't enforced here — a milestone completion that
-        // crosses multiple gated states bulk-validates only the FINAL
-        // target. Tracked separately; the in-route direct-transition paths
-        // (case page autoAPI, bulk-edit, submit-result) are strict.
+        // Review & Approval preflight. Strict-transitive semantics: a
+        // milestone completion that crosses multiple gated states needs an
+        // approval for EACH gate per entity, not just the target. The bulk
+        // helper batches all of that into 3 queries total (target + gates +
+        // approvals) and returns the union of approval ids to stamp post-
+        // update. Project + system feature flags are short-circuited here
+        // so a no-review project still pays no review cost.
         let consumedApprovalIds: string[] = [];
         if (
           projectReviewEnabled &&
@@ -287,42 +289,18 @@ export async function completeMilestoneCascade(
           completedTestRunStateId !== undefined &&
           testRunUpdateData.stateId !== undefined
         ) {
-          const targetTestRunState = await tx.workflows.findUnique({
-            where: { id: completedTestRunStateId },
-            select: { requiresReview: true },
-          });
-          if (targetTestRunState?.requiresReview) {
-            const trIds = activeTestRuns.map((tr: { id: number }) => tr.id);
-            const approvedRequests = await tx.reviewRequest.findMany({
-              where: {
-                entityType: "RUN",
-                entityId: { in: trIds },
-                toStateId: completedTestRunStateId,
-                status: "APPROVED",
-                consumedAt: null,
-                isDeleted: false,
-              },
-              select: { id: true, entityId: true },
-            });
-            const approvedEntityIds = new Set(
-              approvedRequests.map((r: { entityId: number }) => r.entityId)
-            );
-            const missing = trIds.find(
-              (id: number) => !approvedEntityIds.has(id)
-            );
-            if (missing !== undefined) {
-              const { ReviewGateError } = await import("~/lib/utils/errors");
-              throw new ReviewGateError(
-                "REVIEW_REQUIRED",
-                "RUN",
-                missing,
-                completedTestRunStateId
-              );
-            }
-            consumedApprovalIds = approvedRequests.map(
-              (r: { id: string }) => r.id
-            );
-          }
+          const gateResult = await assertBulkReviewGatePasses(
+            tx,
+            "RUN",
+            activeTestRuns.map(
+              (tr: { id: number; state: { order: number } | null }) => ({
+                id: tr.id,
+                currentStateOrder: tr.state?.order ?? null,
+              })
+            ),
+            completedTestRunStateId
+          );
+          consumedApprovalIds = gateResult?.approvedRequestIds ?? [];
         }
 
         await tx.testRuns.updateMany({
@@ -369,8 +347,6 @@ export async function completeMilestoneCascade(
           sessionUpdateData.stateId = completedSessionStateId;
         }
 
-        // FIXME(milestoneActions): see the testRuns block above — same
-        // per-state caveat under strict transitive semantics.
         let consumedSessionApprovalIds: string[] = [];
         if (
           projectReviewEnabled &&
@@ -378,42 +354,18 @@ export async function completeMilestoneCascade(
           completedSessionStateId !== undefined &&
           sessionUpdateData.stateId !== undefined
         ) {
-          const targetSessionState = await tx.workflows.findUnique({
-            where: { id: completedSessionStateId },
-            select: { requiresReview: true },
-          });
-          if (targetSessionState?.requiresReview) {
-            const sessionIds = activeSessions.map((s: { id: number }) => s.id);
-            const approvedRequests = await tx.reviewRequest.findMany({
-              where: {
-                entityType: "SESSION",
-                entityId: { in: sessionIds },
-                toStateId: completedSessionStateId,
-                status: "APPROVED",
-                consumedAt: null,
-                isDeleted: false,
-              },
-              select: { id: true, entityId: true },
-            });
-            const approvedEntityIds = new Set(
-              approvedRequests.map((r: { entityId: number }) => r.entityId)
-            );
-            const missing = sessionIds.find(
-              (id: number) => !approvedEntityIds.has(id)
-            );
-            if (missing !== undefined) {
-              const { ReviewGateError } = await import("~/lib/utils/errors");
-              throw new ReviewGateError(
-                "REVIEW_REQUIRED",
-                "SESSION",
-                missing,
-                completedSessionStateId
-              );
-            }
-            consumedSessionApprovalIds = approvedRequests.map(
-              (r: { id: string }) => r.id
-            );
-          }
+          const gateResult = await assertBulkReviewGatePasses(
+            tx,
+            "SESSION",
+            activeSessions.map(
+              (s: { id: number; state: { order: number } | null }) => ({
+                id: s.id,
+                currentStateOrder: s.state?.order ?? null,
+              })
+            ),
+            completedSessionStateId
+          );
+          consumedSessionApprovalIds = gateResult?.approvedRequestIds ?? [];
         }
 
         await tx.sessions.updateMany({
