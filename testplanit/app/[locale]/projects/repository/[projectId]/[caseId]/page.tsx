@@ -2082,26 +2082,22 @@ export default function TestCaseDetails() {
                 onExpand={() => setIsCollapsedLeft(false)}
               >
                 <div className="mb-4">
-                  {/* Configure Parameters lives next to Steps in read mode
-                      when the field has content, but the read-mode filter
-                      below hides empty fields — including the Steps field
-                      on a fresh case. Render an empty-state fallback at
-                      the top of the panel so the entry point stays visible
-                      and the user can declare parameters before adding any
-                      steps. */}
-                  {!isEditMode &&
-                    testcase?.template?.caseFields?.some(
-                      (f) => f.caseField.type.type === "Steps"
-                    ) &&
-                    (testcase?.steps?.length ?? 0) === 0 && (
-                      <div className="mb-2 mr-6 flex justify-end">
-                        <ConfigureParametersButton
-                          parameterCount={parameterCount}
-                          canEdit={canAddEdit}
-                          onOpen={() => setIsParamSheetOpen(true)}
-                        />
-                      </div>
-                    )}
+                  {/* Configure Parameters entry point at the top of the
+                      left panel. The placement is unconditional (in both
+                      read and edit modes) so the button stays reachable
+                      regardless of whether the Steps caseField is
+                      filtered out by the read-mode empty-value check
+                      below — a fresh case with no steps yet still needs
+                      a way to declare parameters before adding them.
+                      `ConfigureParametersButton` itself returns null if
+                      the viewer lacks `canAddEdit`. */}
+                  <div className="mb-2 mr-6 flex justify-end">
+                    <ConfigureParametersButton
+                      parameterCount={parameterCount}
+                      canEdit={canAddEdit}
+                      onOpen={() => setIsParamSheetOpen(true)}
+                    />
+                  </div>
                   <ul>
                     {(testcase?.template?.caseFields || []).map(
                       (field, fieldIndex) => {
@@ -2121,15 +2117,6 @@ export default function TestCaseDetails() {
                             key={`case-field-${field.caseField.id}-${fieldIndex}`}
                             className="mb-2 mr-6"
                           >
-                            {field.caseField.type.type === "Steps" && (
-                              <div className="flex justify-end">
-                                <ConfigureParametersButton
-                                  parameterCount={parameterCount}
-                                  canEdit={canAddEdit}
-                                  onOpen={() => setIsParamSheetOpen(true)}
-                                />
-                              </div>
-                            )}
                             {field.caseField.type.type !== "Steps" && (
                               <div className="font-bold flex items-center">
                                 {field.caseField.displayName}
@@ -2203,11 +2190,6 @@ export default function TestCaseDetails() {
                       (f) => f.caseField.type.type === "Steps"
                     ) && (
                       <div className="mb-4 mr-6">
-                        <ConfigureParametersButton
-                          parameterCount={parameterCount}
-                          canEdit={canAddEdit}
-                          onOpen={() => setIsParamSheetOpen(true)}
-                        />
                         <Alert className="border-warning/50 bg-warning/10 mb-2">
                           <AlertCircle className="h-4 w-4 text-warning" />
                           <AlertDescription className="text-sm text-warning-foreground">
