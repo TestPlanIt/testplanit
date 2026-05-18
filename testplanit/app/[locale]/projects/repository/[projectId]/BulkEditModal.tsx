@@ -25,6 +25,11 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   ApplicationArea,
   CaseFields as PrismaCaseField,
   Prisma,
@@ -41,6 +46,7 @@ import {
   LockIcon,
   Trash2,
 } from "lucide-react";
+import { useBulkTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import parseDuration from "parse-duration";
@@ -168,6 +174,7 @@ export function BulkEditModal({
   const t = useTranslations();
   const tCommon = useTranslations("common");
   const tBulkEdit = useTranslations("repository.bulkEdit");
+  const tReviews = useTranslations("reviews.transitionGate");
   const { data: session } = useSession();
 
   const [editedFields, setEditedFields] = useState<Record<string, boolean>>({});
@@ -282,10 +289,66 @@ export function BulkEditModal({
           name: true,
           icon: { select: { name: true } },
           color: { select: { value: true } },
+          // Needed by the bulk review-gate preflight + future Select-option
+          // badge rendering (the case page's Select dropdown already shows
+          // a warning glyph next to gated states via WorkflowStateDisplay).
+          requiresReview: true,
         },
       },
       { enabled: isOpen }
     );
+
+  // Bulk-aware mirror of the strict-transitive review gate. The bulk-edit
+  // modal picks ONE target state and applies it to N selected cases that
+  // may sit at different current states — the hook runs the gate
+  // per-entity using shared workflow + approval data so we can surface a
+  // per-case blocked list inline and disable Save when any case is
+  // blocked. Entities list is memoized so the hook's useMemo dep doesn't
+  // re-fire every render.
+  const bulkGateEntities = useMemo(
+    () =>
+      (casesData ?? []).map((c) => ({
+        id: c.id,
+        currentStateId: c.stateId,
+      })),
+    [casesData]
+  );
+  const bulkTransitionGate = useBulkTransitionGateStatus(
+    "CASE",
+    bulkGateEntities,
+    projectId
+  );
+  const targetStateId =
+    typeof newValues["state"] === "number" ? newValues["state"] : null;
+  const bulkGateCheck = useMemo(
+    () => bulkTransitionGate.canBulkTransitionTo(targetStateId),
+    [bulkTransitionGate, targetStateId]
+  );
+  // Surface a per-case message under the State field when blocked. Build
+  // a short summary ("3 cases would be blocked by gate \"Active\":
+  // CASE-101, CASE-102, …") so the user can act on it without leaving
+  // the modal.
+  const bulkGateInlineMessage = useMemo(() => {
+    if (bulkGateCheck.allowed || bulkGateCheck.blocked.length === 0) {
+      return null;
+    }
+    // Group blocked cases by their (first missing) blocking gate so the
+    // message names the gate; for v1 we surface the FIRST blocking gate
+    // and let the user resolve those, re-validating per gate after.
+    const firstGate = bulkGateCheck.blocked[0]!.blockingGate;
+    const count = bulkGateCheck.blocked.length;
+    const sampleIds = bulkGateCheck.blocked
+      .slice(0, 3)
+      .map((b) => `#${b.entityId}`)
+      .join(", ");
+    const moreCount = Math.max(0, count - 3);
+    return tReviews("bulkBlockedSummary", {
+      count,
+      gateName: firstGate.name,
+      sampleIds,
+      more: moreCount,
+    });
+  }, [bulkGateCheck, tReviews]);
 
   const { data: availableTagsData, isLoading: isLoadingTags } = useFindManyTags(
     {
@@ -1980,6 +2043,16 @@ export function BulkEditModal({
                               {/* Show first error */}
                             </p>
                           )}
+                          {/* Per-entity bulk gate summary on the state row
+                             — surfaces how many of the selected cases the
+                             chosen target would block, plus the FIRST
+                             missing gate's name + a sample of blocked
+                             case ids. */}
+                          {fieldKey === "state" && bulkGateInlineMessage && (
+                            <p className="text-sm font-medium text-destructive mt-1">
+                              {bulkGateInlineMessage}
+                            </p>
+                          )}
                         </>
                       ) : (
                         <div className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground overflow-hidden text-ellipsis whitespace-nowrap">
@@ -2077,22 +2150,43 @@ export function BulkEditModal({
                 {tCommon("cancel")}
               </Button>
             </DialogClose>
-            <Button
-              type="button"
-              onClick={handleSave}
-              disabled={
+            {(() => {
+              const gateBlocks =
+                !bulkGateCheck.allowed && bulkGateCheck.blocked.length > 0;
+              const saveDisabled =
                 isUpdating ||
                 isLoading ||
                 hasFetchError ||
                 !isAnyFieldEditing ||
-                isSaving
-              }
-            >
-              {(isUpdating || isSaving) && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              {tCommon("actions.save")}
-            </Button>
+                isSaving ||
+                gateBlocks;
+              const button = (
+                <Button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saveDisabled}
+                  className={
+                    gateBlocks
+                      ? "ring-2 ring-destructive ring-offset-2 ring-offset-background"
+                      : undefined
+                  }
+                >
+                  {(isUpdating || isSaving) && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  {tCommon("actions.save")}
+                </Button>
+              );
+              if (!gateBlocks) return button;
+              return (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span tabIndex={0}>{button}</span>
+                  </TooltipTrigger>
+                  <TooltipContent>{bulkGateInlineMessage ?? ""}</TooltipContent>
+                </Tooltip>
+              );
+            })()}
           </div>
         </DialogFooter>
       </DialogContent>

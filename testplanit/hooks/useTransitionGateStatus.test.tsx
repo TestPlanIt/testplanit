@@ -1,7 +1,10 @@
 import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { useTransitionGateStatus } from "./useTransitionGateStatus";
+import {
+  useBulkTransitionGateStatus,
+  useTransitionGateStatus,
+} from "./useTransitionGateStatus";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mocks — mirror the server-side gate test pattern: hand-rolled responses
@@ -263,6 +266,155 @@ describe("useTransitionGateStatus", () => {
       const at4 = result.current.canTransitionTo(40);
       expect(at4.allowed).toBe(false);
       expect(at4.blockingGate).toMatchObject({ id: 40, order: 4 });
+    });
+  });
+});
+
+describe("useBulkTransitionGateStatus", () => {
+  beforeEach(() => {
+    mockUseReviewFeatureEnabled.mockReset();
+    mockUseFindManyWorkflows.mockReset();
+    mockUseFindManyReviewRequest.mockReset();
+  });
+
+  function setupBulk({
+    enabled = true,
+    workflows = [],
+    approvedByEntity = {},
+  }: {
+    enabled?: boolean;
+    workflows?: Array<{
+      id: number;
+      name: string;
+      order: number;
+      requiresReview: boolean;
+    }>;
+    /** Map of entityId → list of approved toStateIds. */
+    approvedByEntity?: Record<number, number[]>;
+  }) {
+    mockUseReviewFeatureEnabled.mockReturnValue({ enabled, isLoading: false });
+    mockUseFindManyWorkflows.mockReturnValue({
+      data: workflows,
+      isLoading: false,
+    });
+    const rows: Array<{
+      id: string;
+      entityId: number;
+      toStateId: number;
+    }> = [];
+    for (const [entityIdStr, toStateIds] of Object.entries(approvedByEntity)) {
+      const entityId = Number(entityIdStr);
+      for (const toStateId of toStateIds) {
+        rows.push({
+          id: `approval-${entityId}-${toStateId}`,
+          entityId,
+          toStateId,
+        });
+      }
+    }
+    mockUseFindManyReviewRequest.mockReturnValue({
+      data: rows,
+      isLoading: false,
+    });
+  }
+
+  it("returns allowed=true with no blocked cases when feature is disabled (matches server short-circuit)", () => {
+    setupBulk({
+      enabled: false,
+      workflows: [workflow(40, 4, true)],
+    });
+    const entities = [
+      { id: 1, currentStateId: 10 },
+      { id: 2, currentStateId: 10 },
+    ];
+    const { result } = renderHook(() =>
+      useBulkTransitionGateStatus("CASE", entities, 42)
+    );
+
+    expect(result.current.canBulkTransitionTo(40)).toEqual({
+      allowed: true,
+      blocked: [],
+    });
+  });
+
+  it("blocks each selected case that has no approval for the gate the target crosses", () => {
+    setupBulk({
+      workflows: [workflow(10, 1, false), workflow(40, 4, true, "Active")],
+      // Only case 1 has approval for the gate; cases 2 and 3 are blocked.
+      approvedByEntity: { 1: [40] },
+    });
+    const entities = [
+      { id: 1, currentStateId: 10 },
+      { id: 2, currentStateId: 10 },
+      { id: 3, currentStateId: 10 },
+    ];
+    const { result } = renderHook(() =>
+      useBulkTransitionGateStatus("CASE", entities, 42)
+    );
+    const check = result.current.canBulkTransitionTo(40);
+    expect(check.allowed).toBe(false);
+    expect(check.blocked).toHaveLength(2);
+    expect(check.blocked.map((b) => b.entityId).sort()).toEqual([2, 3]);
+    expect(check.blocked[0]!.blockingGate).toMatchObject({
+      id: 40,
+      name: "Active",
+    });
+  });
+
+  it("backward / same-state transitions per entity never count as blocked", () => {
+    setupBulk({
+      workflows: [
+        workflow(10, 1, false),
+        workflow(40, 4, true),
+        workflow(60, 6, false),
+      ],
+    });
+    const entities = [
+      // current=6, target=4 → backward → allowed regardless of approval.
+      { id: 1, currentStateId: 60 },
+      // current=4, target=4 → same-state → allowed.
+      { id: 2, currentStateId: 40 },
+    ];
+    const { result } = renderHook(() =>
+      useBulkTransitionGateStatus("CASE", entities, 42)
+    );
+    expect(result.current.canBulkTransitionTo(40)).toEqual({
+      allowed: true,
+      blocked: [],
+    });
+  });
+
+  it("Scenario 3 strict: per-entity approval for a later gate does NOT satisfy an earlier gate", () => {
+    setupBulk({
+      workflows: [
+        workflow(10, 1, false),
+        workflow(40, 4, true),
+        workflow(50, 5, true),
+      ],
+      // Case 1 has approval for gate 50 but NOT gate 40 — strict semantics
+      // should still block on gate 40.
+      approvedByEntity: { 1: [50] },
+    });
+    const entities = [{ id: 1, currentStateId: 10 }];
+    const { result } = renderHook(() =>
+      useBulkTransitionGateStatus("CASE", entities, 42)
+    );
+    const check = result.current.canBulkTransitionTo(50);
+    expect(check.allowed).toBe(false);
+    expect(check.blocked).toHaveLength(1);
+    expect(check.blocked[0]!.blockingGate).toMatchObject({ id: 40, order: 4 });
+  });
+
+  it("empty entity list returns allowed=true (no work to do)", () => {
+    setupBulk({
+      workflows: [workflow(40, 4, true)],
+    });
+    const { result } = renderHook(() =>
+      useBulkTransitionGateStatus("CASE", [], 42)
+    );
+    expect(result.current.canBulkTransitionTo(40)).toEqual({
+      allowed: true,
+      blocked: [],
     });
   });
 });

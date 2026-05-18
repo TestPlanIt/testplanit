@@ -186,3 +186,165 @@ export function useTransitionGateStatus(
     currentStateId,
   ]);
 }
+
+export interface BulkBlockedCase {
+  entityId: number;
+  currentStateId: number | null;
+  blockingGate: BlockingGate;
+}
+
+export interface BulkTransitionGateStatus {
+  enabled: boolean;
+  isLoading: boolean;
+  /**
+   * Same lookup as `useTransitionGateStatus.canTransitionTo` but applied
+   * once per entity in the bulk selection. Returns the full list of
+   * entities the strict-transitive gate would block. Callers surface the
+   * count + per-entity blocking-gate message inline and disable submit
+   * until the list is empty.
+   */
+  canBulkTransitionTo(toStateId: number | null | undefined): {
+    allowed: boolean;
+    blocked: BulkBlockedCase[];
+  };
+}
+
+/**
+ * Bulk-aware variant of {@link useTransitionGateStatus}. The bulk-edit
+ * modal picks ONE target state and applies it to N selected entities that
+ * may sit at different current states — so the gate evaluation runs
+ * per-entity even though the workflow + approval data is shared.
+ *
+ * Two queries (both cached, free on re-renders):
+ *   1. Gated workflow states in the entity-type's scope.
+ *   2. Approved + unconsumed ReviewRequests for the FULL selection
+ *      (`entityId: { in: ids }`) — one round trip regardless of how many
+ *      entities the user picked.
+ *
+ * `canBulkTransitionTo(toStateId)` then iterates the entities and applies
+ * the same `(currentOrder < gate.order ≤ targetOrder)` filter for each.
+ * `blocked` is the list of entities that have at least one blocking gate
+ * with no approved + unconsumed request; the first missing gate per
+ * entity surfaces on its row.
+ */
+export function useBulkTransitionGateStatus(
+  entityType: ReviewableEntityType,
+  entities: Array<{ id: number; currentStateId: number | null }>,
+  projectId: number
+): BulkTransitionGateStatus {
+  const { enabled, isLoading: featureLoading } =
+    useReviewFeatureEnabled(projectId);
+
+  const { data: workflows, isLoading: workflowsLoading } = useFindManyWorkflows(
+    {
+      where: {
+        scope: SCOPE_BY_ENTITY_TYPE[entityType],
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+        name: true,
+        order: true,
+        requiresReview: true,
+      },
+      orderBy: { order: "asc" },
+    },
+    { enabled: enabled === true } as any
+  );
+
+  const entityIds = entities.map((e) => e.id);
+  const { data: approvedRequests, isLoading: approvalsLoading } =
+    useFindManyReviewRequest(
+      {
+        where: {
+          entityType,
+          entityId: { in: entityIds },
+          status: "APPROVED",
+          consumedAt: null,
+          isDeleted: false,
+        },
+        select: { id: true, entityId: true, toStateId: true },
+      },
+      { enabled: enabled === true && entityIds.length > 0 } as any
+    );
+
+  return useMemo<BulkTransitionGateStatus>(() => {
+    const allWorkflows = (workflows ?? []) as Array<{
+      id: number;
+      name: string;
+      order: number;
+      requiresReview: boolean;
+    }>;
+    const gatedStates: BlockingGate[] = allWorkflows.filter(
+      (w) => w.requiresReview
+    );
+
+    // Build a per-entity set of approved toStateIds — one map lookup per
+    // entity inside the inner loop instead of an array filter per entity.
+    const approvalsByEntity = new Map<number, Set<number>>();
+    for (const r of (approvedRequests ?? []) as Array<{
+      entityId: number;
+      toStateId: number;
+    }>) {
+      const existing = approvalsByEntity.get(r.entityId);
+      if (existing) {
+        existing.add(r.toStateId);
+      } else {
+        approvalsByEntity.set(r.entityId, new Set([r.toStateId]));
+      }
+    }
+
+    const isLoading =
+      featureLoading || workflowsLoading || approvalsLoading || false;
+
+    return {
+      enabled: enabled === true,
+      isLoading,
+      canBulkTransitionTo(toStateId) {
+        if (enabled !== true || toStateId == null) {
+          return { allowed: true, blocked: [] };
+        }
+        const targetOrder = allWorkflows.find((w) => w.id === toStateId)?.order;
+        if (targetOrder === undefined) {
+          return { allowed: true, blocked: [] };
+        }
+        const blocked: BulkBlockedCase[] = [];
+        for (const entity of entities) {
+          const currentOrder =
+            entity.currentStateId == null
+              ? null
+              : (allWorkflows.find((w) => w.id === entity.currentStateId)
+                  ?.order ?? null);
+          // Backward / same-state — never blocked.
+          if (currentOrder !== null && currentOrder >= targetOrder) continue;
+
+          const approvalsForEntity =
+            approvalsByEntity.get(entity.id) ?? new Set<number>();
+          for (const gate of gatedStates) {
+            const inPath =
+              (currentOrder === null || currentOrder < gate.order) &&
+              gate.order <= targetOrder;
+            if (!inPath) continue;
+            if (!approvalsForEntity.has(gate.id)) {
+              blocked.push({
+                entityId: entity.id,
+                currentStateId: entity.currentStateId,
+                blockingGate: gate,
+              });
+              break; // First missing gate per entity is enough.
+            }
+          }
+        }
+        return { allowed: blocked.length === 0, blocked };
+      },
+    };
+  }, [
+    enabled,
+    featureLoading,
+    workflows,
+    workflowsLoading,
+    approvedRequests,
+    approvalsLoading,
+    entities,
+  ]);
+}
