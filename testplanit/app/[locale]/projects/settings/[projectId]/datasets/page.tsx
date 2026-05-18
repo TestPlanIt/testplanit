@@ -1,19 +1,12 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { useParams } from "next/navigation";
-import { useEffect } from "react";
+import type { Locale } from "~/i18n/navigation";
 
-import { Loading } from "@/components/Loading";
-import { useRouter } from "~/lib/navigation";
-
-export default function LegacyDatasetsRedirect() {
-  const router = useRouter();
-  const params = useParams();
-  const projectId = params.projectId as string;
-
-  useEffect(() => {
-    router.replace(`/projects/settings/${projectId}/parameters#datasets`);
-  }, [router, projectId]);
-
-  return <Loading />;
+export default async function LegacyDatasetsRedirect({
+  params,
+}: {
+  params: Promise<{ locale: Locale; projectId: string }>;
+}) {
+  const { locale, projectId } = await params;
+  redirect(`/${locale}/projects/settings/${projectId}/parameters#datasets`);
 }
