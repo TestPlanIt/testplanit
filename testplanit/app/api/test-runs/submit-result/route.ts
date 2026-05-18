@@ -5,7 +5,11 @@ import { z } from "zod/v4";
 import { authenticateRequest } from "~/lib/api-token-auth";
 import { prisma } from "~/lib/prisma";
 import { assertReviewGatePasses } from "~/lib/services/reviewGate";
-import { isAlreadyPendingError, isReviewGateError } from "~/lib/utils/errors";
+import {
+  isAlreadyPendingError,
+  isReviewGateError,
+  ReviewGateError,
+} from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 
@@ -402,7 +406,7 @@ export async function POST(req: NextRequest) {
           // path; the schema @@deny rule from Plan 01 covers it via the
           // ZenStack runtime, but this route uses raw prisma so we call
           // the app preflight explicitly.
-          await assertReviewGatePasses(
+          const gateApprovals = await assertReviewGatePasses(
             tx,
             "RUN",
             input.testRunId,
@@ -417,6 +421,29 @@ export async function POST(req: NextRequest) {
               stateId: input.inProgressStateId,
             },
           });
+
+          // Stamp consumedAt on every approval the gate consumed. Strict
+          // transitive gates can return multiple ids when one transition
+          // crosses several gated states; a short stamp count means another
+          // caller raced us — surface as REVIEW_REQUIRED so the whole
+          // transaction rolls back.
+          if (gateApprovals && gateApprovals.approvedRequestIds.length > 0) {
+            const stamp = await tx.reviewRequest.updateMany({
+              where: {
+                id: { in: gateApprovals.approvedRequestIds },
+                consumedAt: null,
+              },
+              data: { consumedAt: new Date() },
+            });
+            if (stamp.count !== gateApprovals.approvedRequestIds.length) {
+              throw new ReviewGateError(
+                "REVIEW_REQUIRED",
+                "RUN",
+                input.testRunId,
+                input.inProgressStateId
+              );
+            }
+          }
         }
       }
 

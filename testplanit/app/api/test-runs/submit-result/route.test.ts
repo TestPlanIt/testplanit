@@ -109,6 +109,7 @@ describe("Submit Result API Route", () => {
     };
     reviewRequest: {
       findFirst: ReturnType<typeof vi.fn>;
+      updateMany: ReturnType<typeof vi.fn>;
     };
     appConfig: {
       findUnique: ReturnType<typeof vi.fn>;
@@ -157,6 +158,10 @@ describe("Submit Result API Route", () => {
       },
       reviewRequest: {
         findFirst: vi.fn().mockResolvedValue(null),
+        // Consumption stamp on the gate's returned approvals — defaults to
+        // a successful stamp matching one approval. Tests asserting the
+        // race-loss path override to `{ count: 0 }`.
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
       // System-level review-feature flag (AppConfig). Default to enabled so
       // the gate doesn't short-circuit; tests that need the flag OFF can
@@ -378,6 +383,31 @@ describe("Submit Result API Route", () => {
       expect(txMocks.testRuns.update).toHaveBeenCalledWith({
         where: { id: validBody.testRunId },
         data: { stateId: validBody.inProgressStateId },
+      });
+      // Consumption stamp fires on every approval id the gate returned so
+      // the same approval can't be re-used on a subsequent transition.
+      expect(txMocks.reviewRequest.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: ["approved-1"] }, consumedAt: null },
+        data: { consumedAt: expect.any(Date) },
+      });
+    });
+
+    it("returns 403 REVIEW_REQUIRED when the consumption stamp loses the race (count < expected)", async () => {
+      txMocks.workflows.findUnique.mockResolvedValue({ order: 4 });
+      txMocks.workflows.findMany.mockResolvedValue([
+        { id: validBody.inProgressStateId, order: 4 },
+      ]);
+      txMocks.reviewRequest.findFirst.mockResolvedValue({ id: "approved-1" });
+      // Another caller consumed the approval first — count comes back at 0.
+      txMocks.reviewRequest.updateMany.mockResolvedValue({ count: 0 });
+
+      const response = await POST(createRequest(validBody));
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.error).toMatchObject({
+        code: "REVIEW_REQUIRED",
+        entityType: "RUN",
       });
     });
 

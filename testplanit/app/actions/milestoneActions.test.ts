@@ -1320,11 +1320,16 @@ describe("milestoneActions", () => {
         ] as any);
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([] as any);
 
-        // Both test runs have approvals — findMany returns both entityIds,
-        // the loop completes, and updateMany fires.
-        const txReviewRequestFindMany = vi
+        // Both test runs have approvals — findMany returns both rows with
+        // id + entityId so the bulk-consumption stamp can stamp them post-
+        // update.
+        const txReviewRequestFindMany = vi.fn().mockResolvedValue([
+          { id: "approval-1", entityId: 1 },
+          { id: "approval-2", entityId: 2 },
+        ]);
+        const txReviewRequestUpdateMany = vi
           .fn()
-          .mockResolvedValue([{ entityId: 1 }, { entityId: 2 }]);
+          .mockResolvedValue({ count: 2 });
         vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
           return callback({
             milestones: { update: vi.fn(), updateMany: vi.fn() },
@@ -1336,7 +1341,10 @@ describe("milestoneActions", () => {
             appConfig: {
               findUnique: vi.fn().mockResolvedValue({ value: true }),
             },
-            reviewRequest: { findMany: txReviewRequestFindMany },
+            reviewRequest: {
+              findMany: txReviewRequestFindMany,
+              updateMany: txReviewRequestUpdateMany,
+            },
           } as any);
         });
 
@@ -1347,7 +1355,7 @@ describe("milestoneActions", () => {
         });
 
         expect(result.status).toBe("success");
-        // Single batched call — not N per-entity calls.
+        // Single batched preflight call — not N per-entity calls.
         expect(txReviewRequestFindMany).toHaveBeenCalledTimes(1);
         expect(txReviewRequestFindMany).toHaveBeenCalledWith({
           where: {
@@ -1358,7 +1366,18 @@ describe("milestoneActions", () => {
             consumedAt: null,
             isDeleted: false,
           },
-          select: { entityId: true },
+          // `id` is now selected too so the post-update consumption stamp
+          // knows which ReviewRequest rows to mark consumedAt on.
+          select: { id: true, entityId: true },
+        });
+        // Bulk stamp fires once after the entity update succeeds.
+        expect(txReviewRequestUpdateMany).toHaveBeenCalledTimes(1);
+        expect(txReviewRequestUpdateMany).toHaveBeenCalledWith({
+          where: {
+            id: { in: ["approval-1", "approval-2"] },
+            consumedAt: null,
+          },
+          data: { consumedAt: expect.any(Date) },
         });
       });
 

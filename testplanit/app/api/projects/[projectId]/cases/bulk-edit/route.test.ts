@@ -1255,6 +1255,55 @@ describe("Bulk Edit API Route", () => {
       expect(typeof data.error.entityId).toBe("number");
     });
 
+    it("stamps consumedAt on every approval the strict-transitive gate returns (per case in the loop)", async () => {
+      const txReviewRequestUpdateMany = vi.fn().mockResolvedValue({ count: 1 });
+      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
+        const tx = {
+          repositoryCaseVersions: {
+            create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
+            createMany: vi.fn().mockResolvedValue({ count: 2 }),
+          },
+          repositoryCases: {
+            findUnique: vi.fn().mockResolvedValue(mockCases[0]),
+            update: vi.fn().mockResolvedValue({}),
+          },
+          caseFieldValues: {
+            create: vi.fn(),
+            update: vi.fn(),
+            delete: vi.fn(),
+          },
+          steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
+          workflows: {
+            findUnique: vi.fn().mockResolvedValue({ order: 4 }),
+            findMany: vi.fn().mockResolvedValue([{ id: 99, order: 4 }]),
+          },
+          reviewRequest: {
+            // Gate finds an approved+unconsumed approval for the target gate.
+            findFirst: vi.fn().mockResolvedValue({ id: "case-approval-1" }),
+            // Consumption stamp fires after the case update succeeds.
+            updateMany: txReviewRequestUpdateMany,
+          },
+          appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+        };
+        return callback(tx);
+      });
+
+      const [request, context] = createRequest({
+        caseIds: [1, 2],
+        updates: { state: 99 },
+      });
+      const response = await POST(request, context);
+
+      expect(response.status).toBe(200);
+      // Stamp fires once per case (the loop calls assertReviewGatePasses
+      // per case + stamps its returned approvals inline).
+      expect(txReviewRequestUpdateMany).toHaveBeenCalledTimes(2);
+      expect(txReviewRequestUpdateMany).toHaveBeenCalledWith({
+        where: { id: { in: ["case-approval-1"] }, consumedAt: null },
+        data: { consumedAt: expect.any(Date) },
+      });
+    });
+
     it("returns 409 with PENDING_REVIEW_EXISTS when AlreadyPendingError is thrown", async () => {
       const { AlreadyPendingError } = await import("~/lib/utils/errors");
       (prisma.$transaction as any).mockImplementation(async () => {

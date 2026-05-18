@@ -7,7 +7,11 @@ import { prisma } from "~/lib/prisma";
 import { auditBulkUpdate } from "~/lib/services/auditLog";
 import { assertReviewGatePasses } from "~/lib/services/reviewGate";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
-import { isAlreadyPendingError, isReviewGateError } from "~/lib/utils/errors";
+import {
+  isAlreadyPendingError,
+  isReviewGateError,
+  ReviewGateError,
+} from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
 
 // Schema for bulk edit request
@@ -237,8 +241,9 @@ export const POST = withAuditContext(
             // the sole gate. A throw inside `prisma.$transaction` rolls back
             // every prior case in the loop; partial-bulk semantics ("fail
             // closed") are correct for Phase 1.
+            let gateApprovals: { approvedRequestIds: string[] } | null = null;
             if (updateData.stateId !== undefined) {
-              await assertReviewGatePasses(
+              gateApprovals = await assertReviewGatePasses(
                 tx,
                 "CASE",
                 caseId,
@@ -252,6 +257,29 @@ export const POST = withAuditContext(
               data: updateData,
             });
             updateResults.casesUpdated++;
+
+            // Strict transitive gates can return multiple approvals when one
+            // transition crosses several gates. Stamp every returned id in
+            // one updateMany; a short count means another caller raced us on
+            // at least one approval — surface that as REVIEW_REQUIRED so the
+            // whole transaction rolls back and the client gets the typed 403.
+            if (gateApprovals && gateApprovals.approvedRequestIds.length > 0) {
+              const stamp = await tx.reviewRequest.updateMany({
+                where: {
+                  id: { in: gateApprovals.approvedRequestIds },
+                  consumedAt: null,
+                },
+                data: { consumedAt: new Date() },
+              });
+              if (stamp.count !== gateApprovals.approvedRequestIds.length) {
+                throw new ReviewGateError(
+                  "REVIEW_REQUIRED",
+                  "CASE",
+                  caseId,
+                  updateData.stateId!
+                );
+              }
+            }
 
             // Handle custom field updates
             if (validatedData.customFieldUpdates) {

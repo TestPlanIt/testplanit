@@ -274,6 +274,13 @@ export async function completeMilestoneCascade(
         // ReviewRequest lookup into a single findMany (WR-04) — the old loop
         // fired ~3N queries inside this long-lived write tx, which is both
         // slow and deadlock-prone.
+        // FIXME(milestoneActions): this block still uses the per-state gate
+        // model (single target-state approval lookup). Strict transitive
+        // semantics aren't enforced here — a milestone completion that
+        // crosses multiple gated states bulk-validates only the FINAL
+        // target. Tracked separately; the in-route direct-transition paths
+        // (case page autoAPI, bulk-edit, submit-result) are strict.
+        let consumedApprovalIds: string[] = [];
         if (
           projectReviewEnabled &&
           reviewFeatureSystemEnabled &&
@@ -295,7 +302,7 @@ export async function completeMilestoneCascade(
                 consumedAt: null,
                 isDeleted: false,
               },
-              select: { entityId: true },
+              select: { id: true, entityId: true },
             });
             const approvedEntityIds = new Set(
               approvedRequests.map((r: { entityId: number }) => r.entityId)
@@ -304,9 +311,6 @@ export async function completeMilestoneCascade(
               (id: number) => !approvedEntityIds.has(id)
             );
             if (missing !== undefined) {
-              // Surface the same ReviewGateError shape the per-entity gate
-              // would have thrown for the first missing approval. The outer
-              // catch translates this to the typed error envelope.
               const { ReviewGateError } = await import("~/lib/utils/errors");
               throw new ReviewGateError(
                 "REVIEW_REQUIRED",
@@ -315,6 +319,9 @@ export async function completeMilestoneCascade(
                 completedTestRunStateId
               );
             }
+            consumedApprovalIds = approvedRequests.map(
+              (r: { id: string }) => r.id
+            );
           }
         }
 
@@ -324,6 +331,28 @@ export async function completeMilestoneCascade(
           },
           data: testRunUpdateData,
         });
+
+        // Stamp consumedAt on every approval the bulk gate consumed so
+        // future transitions can't re-use them. Short stamp count means
+        // another caller raced us — surface as REVIEW_REQUIRED.
+        if (consumedApprovalIds.length > 0) {
+          const stamp = await tx.reviewRequest.updateMany({
+            where: {
+              id: { in: consumedApprovalIds },
+              consumedAt: null,
+            },
+            data: { consumedAt: new Date() },
+          });
+          if (stamp.count !== consumedApprovalIds.length) {
+            const { ReviewGateError } = await import("~/lib/utils/errors");
+            throw new ReviewGateError(
+              "REVIEW_REQUIRED",
+              "RUN",
+              activeTestRuns[0]?.id ?? 0,
+              completedTestRunStateId!
+            );
+          }
+        }
       }
 
       // Complete active sessions - only if user opted in
@@ -340,9 +369,9 @@ export async function completeMilestoneCascade(
           sessionUpdateData.stateId = completedSessionStateId;
         }
 
-        // Review & Approval preflight (Plan 01-04). Same pattern as the
-        // testRuns block above — cheap target-state guard, then a single
-        // batched findMany for approvals (WR-04).
+        // FIXME(milestoneActions): see the testRuns block above — same
+        // per-state caveat under strict transitive semantics.
+        let consumedSessionApprovalIds: string[] = [];
         if (
           projectReviewEnabled &&
           reviewFeatureSystemEnabled &&
@@ -364,7 +393,7 @@ export async function completeMilestoneCascade(
                 consumedAt: null,
                 isDeleted: false,
               },
-              select: { entityId: true },
+              select: { id: true, entityId: true },
             });
             const approvedEntityIds = new Set(
               approvedRequests.map((r: { entityId: number }) => r.entityId)
@@ -381,6 +410,9 @@ export async function completeMilestoneCascade(
                 completedSessionStateId
               );
             }
+            consumedSessionApprovalIds = approvedRequests.map(
+              (r: { id: string }) => r.id
+            );
           }
         }
 
@@ -390,6 +422,25 @@ export async function completeMilestoneCascade(
           },
           data: sessionUpdateData,
         });
+
+        if (consumedSessionApprovalIds.length > 0) {
+          const stamp = await tx.reviewRequest.updateMany({
+            where: {
+              id: { in: consumedSessionApprovalIds },
+              consumedAt: null,
+            },
+            data: { consumedAt: new Date() },
+          });
+          if (stamp.count !== consumedSessionApprovalIds.length) {
+            const { ReviewGateError } = await import("~/lib/utils/errors");
+            throw new ReviewGateError(
+              "REVIEW_REQUIRED",
+              "SESSION",
+              activeSessions[0]?.id ?? 0,
+              completedSessionStateId!
+            );
+          }
+        }
       }
     });
 
