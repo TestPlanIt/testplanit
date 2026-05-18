@@ -2082,6 +2082,26 @@ export default function TestCaseDetails() {
                 onExpand={() => setIsCollapsedLeft(false)}
               >
                 <div className="mb-4">
+                  {/* Configure Parameters lives next to Steps in read mode
+                      when the field has content, but the read-mode filter
+                      below hides empty fields — including the Steps field
+                      on a fresh case. Render an empty-state fallback at
+                      the top of the panel so the entry point stays visible
+                      and the user can declare parameters before adding any
+                      steps. */}
+                  {!isEditMode &&
+                    testcase?.template?.caseFields?.some(
+                      (f) => f.caseField.type.type === "Steps"
+                    ) &&
+                    (testcase?.steps?.length ?? 0) === 0 && (
+                      <div className="mb-2 mr-6 flex justify-end">
+                        <ConfigureParametersButton
+                          parameterCount={parameterCount}
+                          canEdit={canAddEdit}
+                          onOpen={() => setIsParamSheetOpen(true)}
+                        />
+                      </div>
+                    )}
                   <ul>
                     {(testcase?.template?.caseFields || []).map(
                       (field, fieldIndex) => {

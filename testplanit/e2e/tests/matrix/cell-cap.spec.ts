@@ -62,26 +62,9 @@ test.describe("Matrix view — cell-cap refusal contract @matrix", () => {
     expect(goodBody).toHaveProperty("statusMap");
   });
 
-  test("matrix page mounts the cell-cap notice testid wrapper when an empty project loads", async ({
-    api,
-    page,
-  }) => {
-    // An empty project has 0 cells — no cap notice. We verify the page
-    // shell mounts correctly, which is the prerequisite for the cap-notice
-    // mount path in the matrix page client.
-    const projectId = await api.createProject(
-      `E2E Matrix Cap UI ${Date.now()}`
-    );
-    await page.goto(`/en-US/projects/${projectId}/matrix`);
-    await page.waitForLoadState("load");
-    // Page shell renders.
-    await expect(page.getByTestId("matrix-page-client")).toBeVisible({
-      timeout: 15000,
-    });
-    await expect(page.getByTestId("matrix-toolbar")).toBeVisible();
-    // The grid mounts even for empty projects (shows headers + empty rail).
-    await expect(page.getByTestId("matrix-grid")).toBeVisible();
-    // No cell-cap notice on a healthy empty project.
-    await expect(page.getByTestId("matrix-cell-cap-notice")).not.toBeVisible();
-  });
+  // The standalone /projects/{id}/matrix UI was removed when the matrix
+  // moved into the Report Builder as a preset. The UI-mount test that
+  // used to live here is now covered by the MatrixReportPreset unit
+  // tests + the broader Report Builder happy-path coverage; the API
+  // contract is still verified by the test above.
 });
