@@ -317,6 +317,12 @@ export function DatasetTab({
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(
     null
   );
+  // Track shift key state for the select-all header tooltip (mirrors the
+  // pattern in repository/columns.tsx). Used only to swap the tooltip
+  // copy between "this page" vs "across all pages"; the actual select
+  // behavior reads e.shiftKey directly from the click event.
+  const [isShiftPressed, setIsShiftPressed] = useState(false);
+  const [isSelectAllPending, setIsSelectAllPending] = useState(false);
   const [showPasteDialog, setShowPasteDialog] = useState(false);
   const [showAddColumnDialog, setShowAddColumnDialog] = useState(false);
   const [newColumnName, setNewColumnName] = useState("");
@@ -584,6 +590,27 @@ export function DatasetTab({
       setEditingCell(false);
     };
   }, [editCell, setEditingCell]);
+
+  // ---------- Shift-key tracking for the select-all header tooltip ----------
+  // Matches the repository/columns.tsx pattern so the tooltip text can swap
+  // between "this page" and "across all pages" while the user holds shift.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Shift") setIsShiftPressed(true);
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "Shift") setIsShiftPressed(false);
+    };
+    const onBlur = () => setIsShiftPressed(false);
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onBlur);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onBlur);
+    };
+  }, []);
 
   // ---------- Permission inference via [REDACTED] sentinel ----------
   const viewerCanReadSensitive = useMemo(() => {
@@ -917,6 +944,92 @@ export function DatasetTab({
     setDeleteColumnUsage(null);
   }, [deleteColumnTarget, onParametersChange, parameters]);
 
+  // ---------- Select-all helpers ----------
+  // Click on the header checkbox toggles the rows currently visible on this
+  // page. Shift-click toggles every row across every page — in shared-editor
+  // mode all rows are in memory (`rows`); in owner-bound mode we fetch every
+  // row id from the dataset endpoint without `?page=` so the page-scoped API
+  // does not gate the operation.
+  const togglePageRowIds = useCallback(
+    (pageRowIds: number[]) => {
+      setSelectedRowIds((prev) => {
+        const next = new Set(prev);
+        const allSelected = pageRowIds.every((id) => next.has(id));
+        if (allSelected) {
+          for (const id of pageRowIds) next.delete(id);
+        } else {
+          for (const id of pageRowIds) next.add(id);
+        }
+        return next;
+      });
+    },
+    []
+  );
+
+  const selectAllAcrossPages = useCallback(
+    async (pageRowIds: number[]) => {
+      // The "is everything already selected?" decision must be made against
+      // the full dataset, not just the visible page. In shared-editor mode
+      // we can read `rows` directly. In owner-bound mode we use `totalRows`
+      // as the source of truth.
+      if (isShared) {
+        const allIds = rows.map((r) => r.id);
+        const allSelected =
+          allIds.length > 0 && allIds.every((id) => selectedRowIds.has(id));
+        setSelectedRowIds(allSelected ? new Set() : new Set(allIds));
+        return;
+      }
+      // Owner-bound mode: figure out current "all selected" state from
+      // selectedRowIds.size vs totalRows. If everything is selected we
+      // just clear without a fetch.
+      if (selectedRowIds.size >= totalRows && totalRows > 0) {
+        setSelectedRowIds(new Set());
+        return;
+      }
+      setIsSelectAllPending(true);
+      try {
+        const res = await fetch(
+          `/api/repository/cases/${caseId}/dataset?pageSize=10000`
+        );
+        if (!res.ok) {
+          // Fall back to selecting just the visible page rather than a
+          // silent no-op.
+          togglePageRowIds(pageRowIds);
+          return;
+        }
+        const json = await res.json();
+        const allRowIds: number[] = Array.isArray(json?.dataset?.rows)
+          ? json.dataset.rows
+              .map((r: { id: number }) => r.id)
+              .filter((id: unknown): id is number => typeof id === "number")
+          : [];
+        if (allRowIds.length === 0) {
+          togglePageRowIds(pageRowIds);
+          return;
+        }
+        setSelectedRowIds(new Set(allRowIds));
+      } catch {
+        togglePageRowIds(pageRowIds);
+      } finally {
+        setIsSelectAllPending(false);
+      }
+    },
+    [caseId, isShared, rows, selectedRowIds, togglePageRowIds, totalRows]
+  );
+
+  const handleSelectAllClick = useCallback(
+    (e: React.MouseEvent, pageRowIds: number[]) => {
+      e.stopPropagation();
+      if (e.shiftKey) {
+        e.preventDefault();
+        void selectAllAcrossPages(pageRowIds);
+        return;
+      }
+      togglePageRowIds(pageRowIds);
+    },
+    [selectAllAcrossPages, togglePageRowIds]
+  );
+
   // ---------- Build columns ----------
   const columns = useMemo<ColumnDef<DatasetRowRecord>[]>(() => {
     const cellHandlers = (
@@ -962,7 +1075,52 @@ export function DatasetTab({
       {
         id: SELECT_COLUMN_ID,
         size: 32,
-        header: () => null,
+        header: ({ table }) => {
+          if (renderReadOnly) return null;
+          const visibleRows = table.getRowModel().rows;
+          const pageRowIds = visibleRows.map((r) => r.original.id);
+          const selectedOnPage = pageRowIds.filter((id) =>
+            selectedRowIds.has(id)
+          ).length;
+          const allOnPageSelected =
+            pageRowIds.length > 0 && selectedOnPage === pageRowIds.length;
+          const someOnPageSelected =
+            selectedOnPage > 0 && !allOnPageSelected;
+          const allAcrossPagesSelected =
+            totalRows > 0 && selectedRowIds.size >= totalRows;
+          const tooltipKey = isShiftPressed
+            ? allAcrossPagesSelected
+              ? "datasetDeselectAllAcrossPagesTooltip"
+              : "datasetSelectAllAcrossPagesTooltip"
+            : "datasetSelectAllPageTooltip";
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center justify-center">
+                  <Checkbox
+                    checked={
+                      someOnPageSelected
+                        ? "indeterminate"
+                        : allOnPageSelected
+                    }
+                    disabled={isSelectAllPending}
+                    onCheckedChange={() => {
+                      /* handled in onClick to capture shiftKey */
+                    }}
+                    onClick={(e) =>
+                      handleSelectAllClick(e, pageRowIds)
+                    }
+                    aria-label={t(tooltipKey, { count: totalRows })}
+                    data-testid="dataset-select-all"
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top" align="start" sideOffset={8}>
+                {t(tooltipKey, { count: totalRows })}
+              </TooltipContent>
+            </Tooltip>
+          );
+        },
         cell: ({ row }) => {
           const handleClick = (e: React.MouseEvent) => {
             e.stopPropagation();
@@ -1184,6 +1342,10 @@ export function DatasetTab({
     projectId,
     router,
     renderReadOnly,
+    isShiftPressed,
+    isSelectAllPending,
+    totalRows,
+    handleSelectAllClick,
   ]);
 
   const table = useReactTable<DatasetRowRecord>({

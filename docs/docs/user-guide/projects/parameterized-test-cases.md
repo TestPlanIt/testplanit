@@ -148,7 +148,7 @@ Open the **Test Result History** panel on a case to see every result it has ever
 
 The **Parameterized Test Iteration Matrix** is a built-in [Report Builder](../reporting.md) preset that lays iteration results out in a 3-axis grid: **case × configuration × parameter row**. Each cell is colored by the iteration's worst-of status across the filtered runs.
 
-Add the preset by clicking **+ Add Report → Parameterized Test Iteration Matrix** inside any Report Builder. The matrix loads aggregated cells server-side and refuses requests over **10 000 cells** (e.g. 200 cases × 50 configurations × 1 parameter row) — narrow the filters when the cap is hit.
+Add the preset by clicking **+ Add Report → Parameterized Test Iteration Matrix** inside any Report Builder. The matrix loads aggregated cells server-side and refuses requests over **10,000 cells** (e.g. 200 cases × 50 configurations × 1 parameter row) — narrow the filters when the cap is hit.
 
 The matrix supports CSV export. Sensitive cells in the export are written as `[REDACTED]` for users without the **Test Run Result Restricted Fields → Read Sensitive** role permission.
 
