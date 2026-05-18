@@ -661,19 +661,27 @@ describe("Phase 2 feature flag short-circuit on entity @@deny update gate (live-
     expect(gateResult).toBeNull();
   });
 
-  it("feature flag OFF: schema @@deny still fires (defense-in-depth limitation documented)", async () => {
-    // Under ZenStack 2.22.2 the post-update relation-traversal check
-    // `{ project: { reviewWorkflowEnabled: true } }` does not behave the
-    // way the @@deny conjunction reads on paper — the rule still denies
-    // even when the project flag is false. The app-layer
-    // assertReviewGatePasses short-circuit (asserted in the previous test)
-    // is the load-bearing enforcement for the feature-flag-off path;
-    // schema enforcement is belt-and-suspenders only.
+  it("feature flag OFF: schema @@deny short-circuits the conjunction (matches the flag-off contract)", async () => {
+    // The @@deny conjunction reads, in plain English, "deny when the future
+    // state requires review AND the project has reviewWorkflowEnabled = true
+    // AND there is no approved + unconsumed ReviewRequest". With the per-
+    // project flag off, the middle clause is false, the conjunction is
+    // false, and the rule must not fire — that's the contract an admin
+    // signs up for when they toggle review enforcement off for a project.
     //
-    // This assertion locks in the current observable behaviour so a future
-    // ZenStack upgrade that changes the policy semantics surfaces visibly,
-    // and explicitly does NOT certify the schema rule as the enforcement
-    // path. See Plan 02-02 SUMMARY "Deviations" section.
+    // Earlier ZenStack versions (2.22.2 era) had a known bug where the
+    // post-update relation-traversal `{ project: { reviewWorkflowEnabled:
+    // true } }` over-fired and denied the update even when the project
+    // flag was false — defense-in-depth, but technically incorrect, and
+    // un-opt-out-able by admins. The previous version of this test locked
+    // in that buggy behaviour with a comment that it should "surface
+    // visibly" on a future ZenStack upgrade that fixed the conjunction.
+    //
+    // The fix has landed. The assertion now codifies the correct
+    // behaviour: schema rule honors the conjunction; flag-off allows the
+    // update at the schema layer. The app-layer chokepoints
+    // (assertReviewGatePasses; previous test) remain the load-bearing
+    // enforcement when the flag is on.
     await prisma.projects.update({
       where: { id: featureProjectId },
       data: { reviewWorkflowEnabled: false },
@@ -682,12 +690,20 @@ describe("Phase 2 feature flag short-circuit on entity @@deny update gate (live-
     const enhanced = await getEnhancedDb(sessionFor(featureUserId));
     const caseId = featureCaseIds[0];
 
-    await expect(
-      enhanced.repositoryCases.update({
-        where: { id: caseId },
-        data: { stateId: gatedToStateId },
-      })
-    ).rejects.toThrow();
+    const updated = await enhanced.repositoryCases.update({
+      where: { id: caseId },
+      data: { stateId: gatedToStateId },
+    });
+    expect(updated?.stateId).toBe(gatedToStateId);
+
+    // Belt: confirm the persisted row matches; the sibling "flag ON" test
+    // works on a different case row (featureCaseIds[1]) so this update
+    // can't contaminate it.
+    const persisted = await prisma.repositoryCases.findUnique({
+      where: { id: caseId },
+      select: { stateId: true },
+    });
+    expect(persisted?.stateId).toBe(gatedToStateId);
   });
 
   it("feature flag ON (default): @@deny DOES block transition to a requiresReview state without an approved ReviewRequest", async () => {
