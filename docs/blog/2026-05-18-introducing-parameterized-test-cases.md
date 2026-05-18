@@ -4,7 +4,13 @@ title: "Introducing Parameterized Test Cases: One Case, Many Runs, Real Coverage
 description: "TestPlanIt v0.28.0 ships parameterized test cases. Drive a single case from a table of input rows, see per-row results, and tell your bug tracker exactly which combination failed — without duplicating cases."
 authors: [bdermanouelian]
 tags: [release, announcement]
+image: /img/blog/iteration-matrix-blog.jpg
 ---
+
+<figure>
+  <img src="/img/blog/iteration-matrix-blog.jpg" alt="The Parameterized Test Iteration Matrix report focused on a Login case with seven parameter rows (Valid user, Locked account, Wrong password, Empty password, SSO user, Expired credentials, Maintenance mode) and configuration columns including CRM Oracle, CRM Salesforce, Edge Windows, and Galaxy S20. A hover popover on the Empty password / no-config cell shows the four runs that contributed: UAT param run, async dup-key repro, async dup-key verify, and Sprint 24 regression." />
+  <figcaption>The Parameterized Test Iteration Matrix — one Login case, seven input scenarios, every configuration, every run that has ever touched it.</figcaption>
+</figure>
 
 Every test team has the same shelf of near-duplicate test cases. "Login — valid user." "Login — empty password." "Login — wrong password." "Login — locked account." "Login — SSO user." Same steps, same expected outcomes, different inputs. Multiply that pattern across a typical product and the repository fills up with copies of the same test case wearing slightly different hats.
 
