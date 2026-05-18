@@ -51,6 +51,8 @@ import {
 } from "@/components/ui/tooltip";
 import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
+import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
+import { MessageSquareWarning } from "lucide-react";
 import { VersionSelect } from "@/components/VersionSelect";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { ApplicationArea, Attachments, Prisma } from "@prisma/client";
@@ -762,12 +764,23 @@ export default function TestCaseDetails() {
     workflows?.map((workflow) => ({
       value: workflow.id.toString(),
       label: (
-        <div className="flex items-center">
-          <DynamicIcon
-            name={workflow.icon.name as IconName}
-            color={workflow.color.value}
-          />
-          <div className="mx-1">{workflow.name}</div>
+        // `justify-between` pushes the "requires review" warning glyph to
+        // the right of each gated option so the trailing badge surfaces
+        // before the user picks the state, not only after.
+        <div className="flex items-center justify-between gap-2 w-full">
+          <div className="flex items-center min-w-0">
+            <DynamicIcon
+              name={workflow.icon.name as IconName}
+              color={workflow.color.value}
+            />
+            <div className="mx-1 truncate">{workflow.name}</div>
+          </div>
+          {workflow.requiresReview && (
+            <MessageSquareWarning
+              className="h-3.5 w-3.5 shrink-0 text-warning"
+              aria-label={t("reviews.transitionGate.gatedOptionBadge")}
+            />
+          )}
         </div>
       ),
     })) || [];
@@ -812,7 +825,46 @@ export default function TestCaseDetails() {
     handleSubmit,
     formState: { errors },
     getValues,
+    watch,
+    setError,
+    clearErrors,
   } = methods;
+
+  // Client mirror of the strict-transitive gate. Lets us pre-validate the
+  // chosen state BEFORE submit so the user gets an inline error instead of
+  // losing every other field edit on a 403 round-trip.
+  const transitionGate = useTransitionGateStatus(
+    "CASE",
+    testcase?.id ?? 0,
+    testcase?.state.id ?? null,
+    Number(projectId)
+  );
+  const watchedWorkflowId = watch("workflowId") as number | undefined;
+  const transitionCheck = transitionGate.canTransitionTo(watchedWorkflowId);
+  useEffect(() => {
+    if (!transitionCheck.allowed && transitionCheck.blockingGate) {
+      setError("workflowId", {
+        type: "review-gate",
+        message: t("reviews.transitionGate.blockedByGate", {
+          gateName: transitionCheck.blockingGate.name,
+        }),
+      });
+    } else {
+      // Only clear errors we owned to avoid stomping the required-field
+      // setError that runs in handleSave when workflowId is missing.
+      if (errors.workflowId?.type === "review-gate") {
+        clearErrors("workflowId");
+      }
+    }
+  }, [
+    transitionCheck.allowed,
+    transitionCheck.blockingGate?.id,
+    transitionCheck.blockingGate?.name,
+    setError,
+    clearErrors,
+    errors.workflowId,
+    t,
+  ]);
 
   // Restore handleTemplateChange
   const handleTemplateChange = useCallback(
@@ -985,6 +1037,22 @@ export default function TestCaseDetails() {
         message: t("common.errors.caseStateRequired"),
       });
       hasErrors = true;
+    } else {
+      // Pre-flight the strict-transitive review gate so the user sees an
+      // inline error instead of losing every other field edit on a 403
+      // round-trip. The server still re-validates — this is purely UX.
+      const preflight = transitionGate.canTransitionTo(
+        data.workflowId as number
+      );
+      if (!preflight.allowed && preflight.blockingGate) {
+        methods.setError("workflowId", {
+          type: "review-gate",
+          message: t("reviews.transitionGate.blockedByGate", {
+            gateName: preflight.blockingGate.name,
+          }),
+        });
+        hasErrors = true;
+      }
     }
 
     if (!data.folderId) {

@@ -8,6 +8,8 @@ import { AttachmentChanges } from "@/components/AttachmentsDisplay";
 import { Loading } from "@/components/Loading";
 import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
+import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
+import { MessageSquareWarning } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -170,6 +172,7 @@ interface Milestone {
 interface WorkflowState {
   id: number;
   name: string;
+  requiresReview?: boolean;
   icon: {
     id: number;
     name: string;
@@ -390,13 +393,25 @@ function SessionFormControls({
                             key={workflow.id}
                             value={workflow.id.toString()}
                           >
-                            <div className="flex items-start gap-1">
-                              <DynamicIcon
-                                name={workflow.icon?.name as IconName}
-                                color={workflow.color?.value}
-                                className="w-4 h-4 shrink-0 mt-0.5"
-                              />
-                              {workflow.name}
+                            <div className="flex items-start justify-between gap-2 w-full">
+                              <div className="flex items-start gap-1 min-w-0">
+                                <DynamicIcon
+                                  name={workflow.icon?.name as IconName}
+                                  color={workflow.color?.value}
+                                  className="w-4 h-4 shrink-0 mt-0.5"
+                                />
+                                <span className="truncate">
+                                  {workflow.name}
+                                </span>
+                              </div>
+                              {workflow.requiresReview && (
+                                <MessageSquareWarning
+                                  className="h-3.5 w-3.5 shrink-0 mt-1 text-warning"
+                                  aria-label={tGlobal(
+                                    "reviews.transitionGate.gatedOptionBadge"
+                                  )}
+                                />
+                              )}
                             </div>
                           </SelectItem>
                         ))}
@@ -1270,8 +1285,43 @@ export default function SessionPage() {
     handleSubmit,
     control,
     setValue,
+    watch,
+    setError,
+    clearErrors,
     formState: { errors },
   } = form;
+
+  // Client mirror of the strict-transitive review gate — surfaces an
+  // inline error when the user picks a target state that would be blocked
+  // server-side, so other field edits aren't lost on a 403 round trip.
+  const transitionGate = useTransitionGateStatus(
+    "SESSION",
+    sessionData?.id ?? 0,
+    sessionData?.stateId ?? null,
+    Number(projectId)
+  );
+  const watchedStateId = watch("stateId") as number | undefined;
+  const stateTransitionCheck = transitionGate.canTransitionTo(watchedStateId);
+  useEffect(() => {
+    if (!stateTransitionCheck.allowed && stateTransitionCheck.blockingGate) {
+      setError("stateId", {
+        type: "review-gate",
+        message: tGlobal("reviews.transitionGate.blockedByGate", {
+          gateName: stateTransitionCheck.blockingGate.name,
+        }),
+      });
+    } else if (errors.stateId?.type === "review-gate") {
+      clearErrors("stateId");
+    }
+  }, [
+    stateTransitionCheck.allowed,
+    stateTransitionCheck.blockingGate?.id,
+    stateTransitionCheck.blockingGate?.name,
+    setError,
+    clearErrors,
+    errors.stateId,
+    tGlobal,
+  ]);
 
   // Add these functions
   const toggleCollapseLeft = () => {
@@ -1346,6 +1396,19 @@ export default function SessionPage() {
 
   // Update onSubmit function
   const onSubmit = async (data: FormValues) => {
+    // Pre-flight the strict-transitive review gate so a blocked target
+    // surfaces inline instead of losing every other edit on a 403 round-trip.
+    const gatePreflight = transitionGate.canTransitionTo(data.stateId);
+    if (!gatePreflight.allowed && gatePreflight.blockingGate) {
+      setError("stateId", {
+        type: "review-gate",
+        message: tGlobal("reviews.transitionGate.blockedByGate", {
+          gateName: gatePreflight.blockingGate.name,
+        }),
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       // Transform the data before sending to the server
