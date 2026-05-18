@@ -11,11 +11,21 @@ vi.mock("~/app/actions/searchProjectMembers", () => ({
     mockSearchProjectMembers(...args),
 }));
 
-// Mock the ZenStack-generated roles hook. The component reads the roles list
-// up front (single page; rare changes) and folds it into the merged options.
-const mockUseFindManyRoles = vi.fn();
-vi.mock("~/lib/hooks", () => ({
-  useFindManyRoles: (...args: unknown[]) => mockUseFindManyRoles(...args),
+// Mock getProjectEligibleRoles. The combobox calls the action via useQuery
+// to keep the roles list project-scoped (only roles with at least one
+// holder who has effective project access).
+const mockGetProjectEligibleRoles = vi.fn();
+vi.mock("~/app/actions/getProjectEligibleRoles", () => ({
+  getProjectEligibleRoles: (...args: unknown[]) =>
+    mockGetProjectEligibleRoles(...args),
+}));
+
+// Mock @tanstack/react-query so the useQuery call inside the combobox
+// returns whatever `setRoles` configured for the test, synchronously —
+// no QueryClientProvider needed in unit tests.
+const mockUseQuery = vi.fn();
+vi.mock("@tanstack/react-query", () => ({
+  useQuery: (...args: unknown[]) => mockUseQuery(...args),
 }));
 
 // Stub Avatar so test assertions can focus on the kind-discriminator, not
@@ -27,9 +37,9 @@ vi.mock("@/components/Avatar", () => ({
 }));
 
 function setRoles(
-  result: Array<{ id: number; name: string; _count?: { users: number } }>
+  result: Array<{ id: number; name: string; userCount: number }>
 ) {
-  mockUseFindManyRoles.mockReturnValue({
+  mockUseQuery.mockReturnValue({
     data: result,
     isLoading: false,
   });
@@ -50,7 +60,8 @@ function setUsers(
 describe("AssigneeCombobox", () => {
   beforeEach(() => {
     mockSearchProjectMembers.mockReset();
-    mockUseFindManyRoles.mockReset();
+    mockUseQuery.mockReset();
+    mockGetProjectEligibleRoles.mockReset();
     // Defaults — overridable per test.
     setRoles([]);
     setUsers([]);
@@ -117,7 +128,7 @@ describe("AssigneeCombobox", () => {
 
   it("(c) selecting a role emits onValueChange with kind: 'role'", async () => {
     const onValueChange = vi.fn<(v: AssigneeOption | null) => void>();
-    setRoles([{ id: 7, name: "Tester", _count: { users: 3 } }]);
+    setRoles([{ id: 7, name: "Tester", userCount: 3 }]);
     setUsers([]);
 
     render(
@@ -151,8 +162,8 @@ describe("AssigneeCombobox", () => {
       { id: "user-2", name: "Bob", email: null, image: null },
     ]);
     setRoles([
-      { id: 7, name: "Tester", _count: { users: 3 } },
-      { id: 8, name: "Manager", _count: { users: 1 } },
+      { id: 7, name: "Tester", userCount: 3 },
+      { id: 8, name: "Manager", userCount: 1 },
     ]);
 
     render(
@@ -184,7 +195,7 @@ describe("AssigneeCombobox", () => {
 
   it("(e) renderOption distinguishes user rows from role rows", async () => {
     setUsers([{ id: "user-1", name: "Alice", email: null, image: null }]);
-    setRoles([{ id: 7, name: "Tester", _count: { users: 3 } }]);
+    setRoles([{ id: 7, name: "Tester", userCount: 3 }]);
 
     render(
       <AssigneeCombobox projectId={42} value={null} onValueChange={vi.fn()} />

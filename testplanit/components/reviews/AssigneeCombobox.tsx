@@ -2,12 +2,13 @@
 
 import { Avatar } from "@/components/Avatar";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
+import { useQuery } from "@tanstack/react-query";
 import { Shield, User as UserIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";
 
+import { getProjectEligibleRoles } from "~/app/actions/getProjectEligibleRoles";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
-import { useFindManyRoles } from "~/lib/hooks";
 
 export type AssigneeOption =
   | {
@@ -39,18 +40,21 @@ export function AssigneeCombobox({
 }: AssigneeComboboxProps) {
   const t = useTranslations();
 
-  // Roles are global (no projectId scoping in the schema). Fetch the full list
-  // up front — TestPlanIt installs typically have a handful of roles, so a
-  // single read suffices. Filtering by `name` substring happens client-side
-  // when the user types into the combobox search.
-  const { data: rolesData } = useFindManyRoles({
-    where: { isDeleted: false },
-    select: {
-      id: true,
-      name: true,
-      _count: { select: { users: true } },
-    },
-    orderBy: { name: "asc" },
+  // Project-scoped roles: only roles whose holders have effective access to
+  // this project. A role with no project-eligible holders is a dead-end
+  // assignment — the decide path would resolve it to zero reviewers — so
+  // hiding it from the picker prevents that footgun. Counts are also
+  // project-scoped so the "{n} users hold this role" subtitle matches the
+  // actual eligible-reviewer count for the assignment.
+  //
+  // Filtering by `name` substring still happens client-side after the
+  // server action returns (TestPlanIt installs typically have a handful
+  // of roles, so a single read suffices).
+  const { data: rolesData } = useQuery({
+    queryKey: ["assignee-combobox", "eligible-roles", projectId],
+    queryFn: () => getProjectEligibleRoles(projectId),
+    enabled: typeof projectId === "number" && projectId > 0,
+    staleTime: 30_000,
   });
 
   const fetchOptions = useCallback(
@@ -89,7 +93,7 @@ export function AssigneeCombobox({
                 kind: "role",
                 id: r.id,
                 name: r.name,
-                userCount: r._count?.users ?? 0,
+                userCount: r.userCount,
               }))
           : [];
 
