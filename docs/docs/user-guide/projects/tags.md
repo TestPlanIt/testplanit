@@ -1,6 +1,6 @@
 ---
 title: Tags
-sidebar_position: 7 # Position after Sessions
+sidebar_position: 8 # Position after Parameterized Test Cases
 ---
 
 # Project Tags List
