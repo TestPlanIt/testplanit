@@ -242,6 +242,11 @@ export function SharedDatasetEditor({
     );
   }, [editorRows, baselineRowsKey, editorParameters, baselineParamsKey]);
 
+  // Allow first save when no DataSetVersion exists yet — a fresh dataset
+  // opens with an empty editor that matches the empty source, so isDirty
+  // never flips on its own.
+  const hasNoCommittedVersion = !latestVersion;
+
   const handleRowsChange = useCallback((rows: DatasetTabRow[]) => {
     setPendingRows(rows);
   }, []);
@@ -408,7 +413,7 @@ export function SharedDatasetEditor({
               />
               <Button
                 onClick={handleSave}
-                disabled={!isDirty || saving}
+                disabled={(!isDirty && !hasNoCommittedVersion) || saving}
                 data-testid="shared-dataset-editor-save"
               >
                 {saving ? (

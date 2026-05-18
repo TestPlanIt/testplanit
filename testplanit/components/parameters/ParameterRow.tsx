@@ -121,6 +121,7 @@ export function ParameterRow({ parameter, caseId }: ParameterRowProps) {
             title={t("renameAria")}
             data-testid="parameter-row-name"
           >
+            {"@"}
             {parameter.name}
           </button>
         )}

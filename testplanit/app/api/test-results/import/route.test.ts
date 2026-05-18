@@ -127,10 +127,7 @@ vi.mock("~/lib/services/testResultsParser", () => ({
 
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import { prisma } from "@/lib/prisma";
-import {
-  IterationCapExceededError,
-  routeToIteration,
-} from "~/lib/services/junitIterationRouter";
+import { routeToIteration } from "~/lib/services/junitIterationRouter";
 import { getServerAuthSession } from "~/server/auth";
 import {
   detectFormat,

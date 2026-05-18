@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
-
 import type { Locale } from "~/i18n/navigation";
+import { redirect } from "~/lib/navigation";
 
 export default async function LegacyJunitRedirect({
   params,
@@ -8,5 +7,8 @@ export default async function LegacyJunitRedirect({
   params: Promise<{ locale: Locale; projectId: string }>;
 }) {
   const { locale, projectId } = await params;
-  redirect(`/${locale}/projects/settings/${projectId}/parameters#junit`);
+  redirect({
+    href: `/projects/settings/${projectId}/parameters#junit`,
+    locale,
+  });
 }

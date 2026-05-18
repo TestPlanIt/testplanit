@@ -1731,7 +1731,8 @@ export default function TestResultHistory({
                                               return (
                                                 <tr key={p.name}>
                                                   <td className="pr-4 py-1 font-mono">
-                                                    @{p.name}
+                                                    {"@"}
+                                                    {p.name}
                                                   </td>
                                                   <td className="py-1 break-all">
                                                     {display}

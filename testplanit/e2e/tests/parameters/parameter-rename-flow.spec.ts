@@ -36,9 +36,10 @@ test.describe("Parameters - rename flow @parameters", () => {
     await page.getByTestId("parameter-form-name").fill("username");
     await page.getByTestId("parameter-form-submit").click();
 
-    // Wait for the row to appear, then click the edit icon.
+    // Click the name to enter inline rename (the pencil icon opens the
+    // full edit dialog, not inline rename).
     await expect(page.getByText("@username").first()).toBeVisible();
-    await page.getByTestId("parameter-row-edit-button").first().click();
+    await page.getByTestId("parameter-row-name").first().click();
 
     // Inline-edit the name; commit by pressing Enter.
     const nameInput = page.getByTestId("parameter-row-name-input");

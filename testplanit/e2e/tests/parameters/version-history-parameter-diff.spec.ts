@@ -53,20 +53,16 @@ test.describe("Parameters - version-history snapshot @parameters", () => {
     const json = await resp.json();
     const latest = (json.data?.[0] || json[0]) as {
       version: number;
-      parametersJson?: unknown;
-      versionData?: unknown;
+      parameters?: unknown;
     };
     expect(latest).toBeDefined();
     // Latest version should be at least 2 (initial = 1, +1 after add).
     expect(latest.version).toBeGreaterThanOrEqual(2);
 
-    // The parameters snapshot may live on a dedicated `parametersJson` column
-    // OR inside the existing `versionData` JSON (per Plan 02-01 schema). Cover
-    // both shapes.
-    const params =
-      (latest.parametersJson as Array<{ name: string }> | undefined) ??
-      ((latest.versionData as { parameters?: Array<{ name: string }> })
-        ?.parameters as Array<{ name: string }> | undefined);
+    // PARAM-06: the parameters array snapshot lives on the version's
+    // top-level `parameters` Json column (RepositoryCaseVersions.parameters
+    // per schema.zmodel).
+    const params = latest.parameters as Array<{ name: string }> | undefined;
     expect(Array.isArray(params)).toBe(true);
     expect(params!.some((p) => p.name === "env")).toBe(true);
   });

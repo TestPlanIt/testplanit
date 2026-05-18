@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/refs */
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
