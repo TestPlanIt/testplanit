@@ -1339,11 +1339,11 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
   // transaction. A lose-the-race outcome must surface as a typed 403.
   // ───────────────────────────────────────────────────────────────────────
 
-  it("CR-04 — stamps consumedAt on the approved request when the gate hits", async () => {
+  it("CR-04 — stamps consumedAt on every approved request the strict transitive gate returned", async () => {
     const { assertReviewGatePasses } =
       await import("~/lib/services/reviewGate");
     (assertReviewGatePasses as any).mockResolvedValue({
-      approvedRequestId: "approval-1",
+      approvedRequestIds: ["approval-1"],
     });
 
     const { prisma } = await import("~/lib/prisma");
@@ -1360,17 +1360,17 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
 
     expect(res.status).toBe(200);
     expect((prisma as any).reviewRequest.updateMany).toHaveBeenCalledWith({
-      where: { id: "approval-1", consumedAt: null },
+      where: { id: { in: ["approval-1"] }, consumedAt: null },
       data: { consumedAt: expect.any(Date) },
     });
     expect(baseHandlerMock).toHaveBeenCalled();
   });
 
-  it("CR-04 — returns 403 REVIEW_REQUIRED when consumedAt stamp loses the race", async () => {
+  it("CR-04 — returns 403 REVIEW_REQUIRED when the stamp count is short (lost the race on at least one approval)", async () => {
     const { assertReviewGatePasses } =
       await import("~/lib/services/reviewGate");
     (assertReviewGatePasses as any).mockResolvedValue({
-      approvedRequestId: "approval-2",
+      approvedRequestIds: ["approval-2"],
     });
 
     const { prisma } = await import("~/lib/prisma");

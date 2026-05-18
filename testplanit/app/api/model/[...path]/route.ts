@@ -547,18 +547,21 @@ async function innerHandler(
                   toStateIdNum
                 );
                 if (gateResult) {
+                  // Strict transitive gates: a single transition can cross
+                  // multiple gates (e.g. target 6 with gates at 4 and 5).
+                  // Stamp every approval the gate matched in one updateMany
+                  // so an interleaved transaction can't slip in and consume
+                  // a stale approval the second loop iteration would expect.
+                  // If `count` < expected, another caller raced us — surface
+                  // REVIEW_REQUIRED so the client sees the typed envelope.
                   const stamp = await tx.reviewRequest.updateMany({
                     where: {
-                      id: gateResult.approvedRequestId,
+                      id: { in: gateResult.approvedRequestIds },
                       consumedAt: null,
                     },
                     data: { consumedAt: new Date() },
                   });
-                  if (stamp.count === 0) {
-                    // Another caller consumed this approval first. Surface
-                    // it as REVIEW_REQUIRED so the client gets the typed
-                    // 403 envelope; a fresh review request is the path
-                    // forward.
+                  if (stamp.count !== gateResult.approvedRequestIds.length) {
                     throw new ReviewGateError(
                       "REVIEW_REQUIRED",
                       gatedEntityType,

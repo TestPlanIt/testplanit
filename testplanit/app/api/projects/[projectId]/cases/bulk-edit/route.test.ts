@@ -1221,11 +1221,16 @@ describe("Bulk Edit API Route", () => {
             delete: vi.fn(),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
-          // Target state requires review — gate engages.
+          // Strict transitive gate setup:
+          //   - target state (id=99) is gated and at order 4
+          //   - gated-states list returns the gate row so the helper sees it
+          //   - mock case row's state.order is unset → treated as "no prior
+          //     state", so any gate at or below target order blocks
+          //   - no approved+unconsumed ReviewRequest → helper throws
           workflows: {
-            findUnique: vi.fn().mockResolvedValue({ requiresReview: true }),
+            findUnique: vi.fn().mockResolvedValue({ order: 4 }),
+            findMany: vi.fn().mockResolvedValue([{ id: 99, order: 4 }]),
           },
-          // No approved + unconsumed ReviewRequest — gate blocks.
           reviewRequest: {
             findFirst: vi.fn().mockResolvedValue(null),
           },

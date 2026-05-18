@@ -105,6 +105,7 @@ describe("Submit Result API Route", () => {
     };
     workflows: {
       findUnique: ReturnType<typeof vi.fn>;
+      findMany: ReturnType<typeof vi.fn>;
     };
     reviewRequest: {
       findFirst: ReturnType<typeof vi.fn>;
@@ -138,16 +139,21 @@ describe("Submit Result API Route", () => {
       testRuns: {
         update: vi.fn().mockResolvedValue({ id: 1 }),
         // Review & Approval per-project flag lookup — default returns the
-        // project with reviewWorkflowEnabled=true so the gate continues
-        // evaluating the requiresReview branch.
+        // project with reviewWorkflowEnabled=true AND a stub current state
+        // (order: 1) so the strict transitive gate can evaluate any
+        // downstream gates without short-circuiting on backward-transition.
         findUnique: vi.fn().mockResolvedValue({
           project: { reviewWorkflowEnabled: true },
+          state: { order: 1 },
         }),
       },
-      // Review & Approval gate dependencies — default to "not gated" so
-      // every pre-existing test path passes the preflight as a no-op.
+      // Review & Approval gate dependencies — default to "no gated states
+      // in scope" so every pre-existing test path passes the preflight as a
+      // no-op. Tests asserting the gate fires override `findMany` to return
+      // a gate row with `order ≥ target.order`.
       workflows: {
         findUnique: vi.fn().mockResolvedValue(null),
+        findMany: vi.fn().mockResolvedValue([]),
       },
       reviewRequest: {
         findFirst: vi.fn().mockResolvedValue(null),
@@ -333,10 +339,16 @@ describe("Submit Result API Route", () => {
   });
 
   describe("review gate", () => {
-    it("returns 403 with structured payload when the in-progress target state requires review and has no approval", async () => {
-      // Target state requires review → preflight engages.
-      txMocks.workflows.findUnique.mockResolvedValue({ requiresReview: true });
-      // No approved + unconsumed ReviewRequest → helper throws ReviewGateError.
+    it("returns 403 with structured payload when the in-progress target state is gated and has no approval", async () => {
+      // Strict transitive gate setup: target state has order 4; the gated
+      // states list contains a single gate AT the target (id matches the
+      // inProgressStateId, order=4); the run is at state order 1 by default
+      // — the gate at order 4 fires.
+      txMocks.workflows.findUnique.mockResolvedValue({ order: 4 });
+      txMocks.workflows.findMany.mockResolvedValue([
+        { id: validBody.inProgressStateId, order: 4 },
+      ]);
+      // No approved+unconsumed ReviewRequest for the gate → helper throws.
       txMocks.reviewRequest.findFirst.mockResolvedValue(null);
 
       const response = await POST(createRequest(validBody));
@@ -353,8 +365,11 @@ describe("Submit Result API Route", () => {
       expect(txMocks.testRuns.update).not.toHaveBeenCalled();
     });
 
-    it("allows the auto-flip when the target state requires review and an approved ReviewRequest exists", async () => {
-      txMocks.workflows.findUnique.mockResolvedValue({ requiresReview: true });
+    it("allows the auto-flip when the gated target state has an approved + unconsumed ReviewRequest", async () => {
+      txMocks.workflows.findUnique.mockResolvedValue({ order: 4 });
+      txMocks.workflows.findMany.mockResolvedValue([
+        { id: validBody.inProgressStateId, order: 4 },
+      ]);
       txMocks.reviewRequest.findFirst.mockResolvedValue({ id: "approved-1" });
 
       const response = await POST(createRequest(validBody));

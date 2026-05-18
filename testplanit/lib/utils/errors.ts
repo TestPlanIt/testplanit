@@ -19,13 +19,31 @@ export function isForeignKeyError(err: unknown): boolean {
 }
 
 export class ReviewGateError extends Error {
+  /**
+   * `toStateId` is the user's intended target. `blockingStateId` is the
+   * gate that actually fired — they differ when transitive gating blocks a
+   * downstream transition: e.g. target 6 blocked by gate at state 4.
+   * Defaults to `toStateId` for callers that don't know about transitive
+   * gating yet; new callers should pass both explicitly so client UI can
+   * surface "approval required for {blockingStateName}" even when the
+   * user picked a different target.
+   */
+  public readonly blockingStateId: number;
+
   constructor(
     public readonly code: "REVIEW_REQUIRED",
     public readonly entityType: string,
     public readonly entityId: number,
-    public readonly toStateId: number
+    public readonly toStateId: number,
+    blockingStateId?: number
   ) {
-    super(`Review gate blocked transition to state ${toStateId}`);
+    const blocking = blockingStateId ?? toStateId;
+    super(
+      blocking === toStateId
+        ? `Review gate blocked transition to state ${toStateId}`
+        : `Review gate at state ${blocking} blocks transition to state ${toStateId}`
+    );
+    this.blockingStateId = blocking;
     this.name = "ReviewGateError";
   }
 }
