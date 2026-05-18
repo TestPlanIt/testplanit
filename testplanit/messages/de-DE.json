@@ -2880,7 +2880,7 @@
       "blockedByGate": "Für \"{gateName}\" ist vor diesem Übergang eine Genehmigung erforderlich. Verwenden Sie \"Überprüfung anfordern\", um eine solche zu starten.",
       "gatedOptionBadge": "Überprüfung erforderlich",
       "saveBlockedByFormErrors": "Beheben Sie die markierten Formularfehler vor dem Speichern.",
-      "bulkBlockedSummary": "{count, plural, one {# Fall} other {# Fälle}} blockiert durch Gate \"{gateName}\": {sampleIds}{more, plural, =0 {} other {, und # weitere}}. Jeder blockierte Fall benötigt vor diesem Übergang eine genehmigte Überprüfung für \"{gateName}\".",
+      "bulkBlockedSummary": "{count, plural, one {# Fall} other {# Fälle}} blockiert durch Gate \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, und # weitere}}. Jeder blockierte Fall benötigt vor diesem Übergang eine genehmigte Überprüfung für \"{gateName}\".",
       "toastReviewRequired": "Für diese Umstellung ist eine Genehmigung erforderlich. Bitte fordern Sie eine Überprüfung an und versuchen Sie es nach der Genehmigung erneut.",
       "toastPendingReviewExists": "Für diesen Übergang wird bereits eine Überprüfung durchgeführt. Warten Sie die Entscheidung ab oder brechen Sie den Vorgang ab, bevor Sie es erneut versuchen."
     },

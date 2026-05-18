@@ -2880,7 +2880,7 @@
       "blockedByGate": "이 전환을 진행하기 전에 \"{gateName}\"에 대한 승인이 필요합니다. \"검토 요청\"을 사용하여 승인을 요청하세요.",
       "gatedOptionBadge": "검토가 필요합니다",
       "saveBlockedByFormErrors": "저장하기 전에 강조 표시된 양식 오류를 해결하세요.",
-      "bulkBlockedSummary": "{count, plural, one {# 사례} other {# 사례}} 게이트 \"{gateName}\"에 의해 차단됨: {sampleIds}{more, plural, =0 {} other {, 그리고 # 더 많은}}. 각 차단된 사례는 이 전환 전에 \"{gateName}\"에 대한 승인된 검토가 필요합니다.",
+      "bulkBlockedSummary": "{count, plural, one {# 사례} other {# 사례}} 게이트 \"{gateName}\"에 의해 차단됨: {sampleNames}{more, plural, =0 {} other {, 그리고 # 더 많은}}. 각 차단된 사례는 이 전환 전에 \"{gateName}\"에 대한 승인된 검토가 필요합니다.",
       "toastReviewRequired": "이 전환을 진행하기 전에 승인이 필요합니다. 검토를 요청하고 승인된 후 다시 시도해 주세요.",
       "toastPendingReviewExists": "이 전환에 대한 검토가 이미 진행 중입니다. 결정이 나올 때까지 기다리시거나, 다시 시도하기 전에 전환을 취소하십시오."
     },

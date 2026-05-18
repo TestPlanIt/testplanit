@@ -24,6 +24,9 @@ vi.mock("~/lib/prisma", () => ({
     },
     workflows: {
       findFirst: vi.fn(),
+      // Used by the catch block to resolve the BLOCKING gate's display name
+      // for the user-facing error toast.
+      findUnique: vi.fn(),
     },
     // WR-04: completeMilestoneCascade pre-fetches the project's
     // reviewWorkflowEnabled flag once outside the transaction.
@@ -1377,7 +1380,7 @@ describe("milestoneActions", () => {
         });
       });
 
-      it("returns structured error when one entity is missing an approval for an intermediate gate (strict)", async () => {
+      it("returns structured error naming entity + blocking gate when an entity is missing an approval (strict)", async () => {
         vi.mocked(getServerAuthSession).mockResolvedValue(mockSession as any);
         vi.mocked(prisma.milestones.findUnique).mockResolvedValue(
           mockMilestone as any
@@ -1385,9 +1388,14 @@ describe("milestoneActions", () => {
         vi.mocked(prisma.workflows.findFirst)
           .mockResolvedValueOnce(mockDoneRunWorkflow as any)
           .mockResolvedValueOnce(mockDoneSessionWorkflow as any);
+        // The catch block looks up the BLOCKING gate's display name from
+        // the top-level prisma client (outside the rolled-back tx).
+        vi.mocked(prisma.workflows.findUnique).mockResolvedValue({
+          name: "Active",
+        } as any);
         vi.mocked(prisma.milestones.findMany).mockResolvedValue([]);
         vi.mocked(prisma.testRuns.findMany).mockResolvedValue([
-          { id: 42, state: { order: 1 } },
+          { id: 42, name: "Sprint 2 - Regression", state: { order: 1 } },
         ] as any);
         vi.mocked(prisma.sessions.findMany).mockResolvedValue([] as any);
 
@@ -1416,7 +1424,12 @@ describe("milestoneActions", () => {
 
         expect(result.status).toBe("error");
         expect(result.message).toMatch(/Review required/i);
-        expect(result.message).toMatch(/run 42/);
+        // Names — NOT IDs — so the toast tells the user which run + which
+        // gate need attention.
+        expect(result.message).toContain('"Sprint 2 - Regression"');
+        expect(result.message).toContain('"Active"');
+        // Sanity: shouldn't expose raw numeric ids in the friendly message.
+        expect(result.message).not.toMatch(/run 42/);
       });
 
       it("short-circuits the batched preflight when the project disabled reviewWorkflowEnabled", async () => {

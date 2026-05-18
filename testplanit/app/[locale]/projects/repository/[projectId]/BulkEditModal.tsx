@@ -325,30 +325,34 @@ export function BulkEditModal({
     [bulkTransitionGate, targetStateId]
   );
   // Surface a per-case message under the State field when blocked. Build
-  // a short summary ("3 cases would be blocked by gate \"Active\":
-  // CASE-101, CASE-102, …") so the user can act on it without leaving
-  // the modal.
+  // a short summary so the user can act on it without leaving the modal,
+  // naming the blocked cases (and the first blocking gate) by name —
+  // never numeric id — so the message is meaningful at a glance. Falls
+  // back to `#<id>` only when a row hasn't loaded yet.
   const bulkGateInlineMessage = useMemo(() => {
     if (bulkGateCheck.allowed || bulkGateCheck.blocked.length === 0) {
       return null;
     }
-    // Group blocked cases by their (first missing) blocking gate so the
-    // message names the gate; for v1 we surface the FIRST blocking gate
-    // and let the user resolve those, re-validating per gate after.
     const firstGate = bulkGateCheck.blocked[0]!.blockingGate;
     const count = bulkGateCheck.blocked.length;
-    const sampleIds = bulkGateCheck.blocked
+    const namesById = new Map(
+      (casesData ?? []).map((c) => [c.id, c.name] as const)
+    );
+    const sampleNames = bulkGateCheck.blocked
       .slice(0, 3)
-      .map((b) => `#${b.entityId}`)
+      .map((b) => {
+        const name = namesById.get(b.entityId);
+        return name ? `"${name}"` : `#${b.entityId}`;
+      })
       .join(", ");
     const moreCount = Math.max(0, count - 3);
     return tReviews("bulkBlockedSummary", {
       count,
       gateName: firstGate.name,
-      sampleIds,
+      sampleNames,
       more: moreCount,
     });
-  }, [bulkGateCheck, tReviews]);
+  }, [bulkGateCheck, tReviews, casesData]);
 
   const { data: availableTagsData, isLoading: isLoadingTags } = useFindManyTags(
     {

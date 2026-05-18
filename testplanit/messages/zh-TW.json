@@ -2880,7 +2880,7 @@
       "blockedByGate": "此轉換需要獲得「{gateName}」的批准。請使用「請求審核」功能發起審核。",
       "gatedOptionBadge": "需要審核",
       "saveBlockedByFormErrors": "儲存前請解決高亮顯示的表單錯誤。",
-      "bulkBlockedSummary": "{count, plural, one {# case} other {# cases}} blocked by gate \"{gateName}\": {sampleIds}{more, plural, =0 {} other {, and # more}}. Each blocked case needs an approved review for \"{gateName}\" before this transition.",
+      "bulkBlockedSummary": "{count, plural, one {# case} other {# cases}} blocked by gate \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, and # more}}. Each blocked case needs an approved review for \"{gateName}\" before this transition.",
       "toastReviewRequired": "此變更需經批准後方可生效。請申請審核，待審核通過後再試。",
       "toastPendingReviewExists": "此次變更申請已進入審核階段。請等待審核結果，或在重試前取消申請。"
     },
