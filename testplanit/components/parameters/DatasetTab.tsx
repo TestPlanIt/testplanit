@@ -21,6 +21,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -68,8 +74,10 @@ import {
   GripVertical,
   Loader2,
   Lock,
+  MoreVertical,
   Plus,
   Table2,
+  Trash2,
   Upload,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -318,6 +326,20 @@ export function DatasetTab({
   const [newColumnRequired, setNewColumnRequired] = useState(false);
   const [newColumnSensitive, setNewColumnSensitive] = useState(false);
   const [addColumnError, setAddColumnError] = useState<string | null>(null);
+
+  // Column-delete dialog state. `deleteColumnTarget` holds the column
+  // name being considered for removal; `deleteColumnUsage` is set after
+  // the usage probe finishes. When usage > 0 the dialog renders the
+  // blocking variant with the referencing case list.
+  const [deleteColumnTarget, setDeleteColumnTarget] = useState<{
+    name: string;
+    paramId: number;
+  } | null>(null);
+  const [deleteColumnUsage, setDeleteColumnUsage] = useState<{
+    count: number;
+    sampleCases: Array<{ id: number; name: string }>;
+  } | null>(null);
+  const [deleteColumnLoading, setDeleteColumnLoading] = useState(false);
 
   // ---------- Source toggle (per-case mode only) ----------
   // The Source segmented control is mounted only when this DatasetTab is
@@ -847,6 +869,54 @@ export function DatasetTab({
     });
   };
 
+  // ---------- Column delete (shared-editor mode) ----------
+  // Probes the server for any CaseSharedDataSetAssignment.mappingJson
+  // that references the column. A non-zero usage count blocks the
+  // delete and surfaces which cases need their mappings updated first.
+  // Newly-added columns (paramId < 0) skip the probe — they can't be
+  // referenced yet because they don't exist on the server.
+  const beginDeleteColumn = useCallback(
+    async (target: { name: string; paramId: number }) => {
+      setDeleteColumnTarget(target);
+      setDeleteColumnUsage(null);
+      if (target.paramId < 0) {
+        setDeleteColumnUsage({ count: 0, sampleCases: [] });
+        return;
+      }
+      setDeleteColumnLoading(true);
+      try {
+        const res = await fetch(
+          `/api/projects/${projectId}/datasets/${caseId}/column-usage?column=${encodeURIComponent(target.name)}`
+        );
+        if (!res.ok) {
+          toast.error(t("datasetColumnDeleteCheckError"));
+          setDeleteColumnTarget(null);
+          return;
+        }
+        const body = (await res.json()) as {
+          count: number;
+          sampleCases: Array<{ id: number; name: string }>;
+        };
+        setDeleteColumnUsage(body);
+      } catch {
+        toast.error(t("datasetColumnDeleteCheckError"));
+        setDeleteColumnTarget(null);
+      } finally {
+        setDeleteColumnLoading(false);
+      }
+    },
+    [caseId, projectId, t]
+  );
+
+  const commitDeleteColumn = useCallback(() => {
+    if (!deleteColumnTarget || !onParametersChange) return;
+    onParametersChange(
+      parameters.filter((p) => p.id !== deleteColumnTarget.paramId)
+    );
+    setDeleteColumnTarget(null);
+    setDeleteColumnUsage(null);
+  }, [deleteColumnTarget, onParametersChange, parameters]);
+
   // ---------- Build columns ----------
   const columns = useMemo<ColumnDef<DatasetRowRecord>[]>(() => {
     const cellHandlers = (
@@ -969,6 +1039,8 @@ export function DatasetTab({
       },
       ...parameters.map((p) => {
         const colId = `param-${p.id}`;
+        const showHeaderMenu =
+          isShared && mode === "shared-editor" && !!onParametersChange;
         return {
           id: colId,
           minSize: 180,
@@ -979,6 +1051,32 @@ export function DatasetTab({
               {p.sensitive ? (
                 <Lock className="w-3 h-3 text-muted-foreground" />
               ) : null}
+              {showHeaderMenu && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="px-1 py-0 h-auto ml-auto"
+                      aria-label={t("datasetColumnMenuLabel", { name: p.name })}
+                      data-testid={`dataset-column-menu-${p.name}`}
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onSelect={() =>
+                        beginDeleteColumn({ name: p.name, paramId: p.id })
+                      }
+                      data-testid={`dataset-column-delete-${p.name}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      {t("datasetColumnDelete")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           ),
           accessorFn: (row: DatasetRowRecord) =>
@@ -1856,6 +1954,77 @@ export function DatasetTab({
               >
                 {t("datasetAddColumnSubmit")}
               </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+
+      {isShared && mode === "shared-editor" && onParametersChange && (
+        <AlertDialog
+          open={deleteColumnTarget !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setDeleteColumnTarget(null);
+              setDeleteColumnUsage(null);
+            }
+          }}
+        >
+          <AlertDialogContent data-testid="dataset-column-delete-dialog">
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {t("datasetColumnDeleteTitle", {
+                  name: deleteColumnTarget?.name ?? "",
+                })}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {deleteColumnLoading
+                  ? t("datasetColumnDeleteChecking")
+                  : deleteColumnUsage && deleteColumnUsage.count > 0
+                    ? t("datasetColumnDeleteBlocked", {
+                        count: deleteColumnUsage.count,
+                      })
+                    : t("datasetColumnDeleteDescription")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            {deleteColumnUsage && deleteColumnUsage.count > 0 && (
+              <ul
+                className="text-sm text-muted-foreground space-y-1 max-h-48 overflow-auto"
+                data-testid="dataset-column-delete-cases"
+              >
+                {deleteColumnUsage.sampleCases.map((c) => (
+                  <li key={c.id}>
+                    <Link
+                      href={`/projects/repository/${projectId}/${c.id}`}
+                      className="hover:underline text-primary"
+                      target="_blank"
+                    >
+                      {c.name}
+                    </Link>
+                  </li>
+                ))}
+                {deleteColumnUsage.count > deleteColumnUsage.sampleCases.length && (
+                  <li className="italic">
+                    {t("datasetColumnDeleteAndMore", {
+                      count:
+                        deleteColumnUsage.count -
+                        deleteColumnUsage.sampleCases.length,
+                    })}
+                  </li>
+                )}
+              </ul>
+            )}
+            <AlertDialogFooter>
+              <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
+              {deleteColumnUsage && deleteColumnUsage.count === 0 && (
+                <Button
+                  variant="destructive"
+                  onClick={commitDeleteColumn}
+                  data-testid="dataset-column-delete-confirm"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {t("datasetColumnDeleteConfirm")}
+                </Button>
+              )}
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
