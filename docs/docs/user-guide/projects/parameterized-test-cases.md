@@ -128,7 +128,14 @@ The **Pass & Next iteration** button is a convenience that records Pass on the c
 
 ### Worst-of rollup
 
-The case-level status in the run rolls up from the iteration statuses: any Failed iteration makes the case Failed, otherwise any Blocked makes it Blocked, otherwise any Untested makes it Untested, etc. Editing one iteration's status recomputes the rollup immediately.
+The case-level status in the run rolls up from its iterations using these rules, in order:
+
+1. **No iteration has a recorded result yet** → the case shows the first untested status configured in the project (lowest `order` whose flags are not success / not failure / not completed).
+2. **At least one iteration is in a failure status** → the case shows the **most-frequent failure status** across iterations. Ties break to the failure status with the lowest `order`.
+3. **No failures, at least one success** → the case shows the most-frequent success status. Same tie-break.
+4. **Some iterations recorded but none are success or failure** → the case shows the most-frequent status among all recorded iterations. Same tie-break.
+
+The algorithm only looks at the `isSuccess` / `isFailure` / `isCompleted` flags and the `order` field on each Status — status _names_ are admin-defined and never consulted. So if your project defines "Blocked" as neither success nor failure (the default), it's treated like any other non-success / non-failure status in rule 4; it doesn't have a built-in tier of its own. Editing one iteration's status recomputes the rollup immediately.
 
 ## Test Result History
 
