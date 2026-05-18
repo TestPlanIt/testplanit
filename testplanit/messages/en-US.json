@@ -2880,7 +2880,9 @@
       "blockedByGate": "Approval required for \"{gateName}\" before this transition. Use \"Request review\" to start one.",
       "gatedOptionBadge": "Requires review",
       "saveBlockedByFormErrors": "Resolve the highlighted form errors before saving.",
-      "bulkBlockedSummary": "{count, plural, one {# case} other {# cases}} blocked by gate \"{gateName}\": {sampleIds}{more, plural, =0 {} other {, and # more}}. Each blocked case needs an approved review for \"{gateName}\" before this transition."
+      "bulkBlockedSummary": "{count, plural, one {# case} other {# cases}} blocked by gate \"{gateName}\": {sampleIds}{more, plural, =0 {} other {, and # more}}. Each blocked case needs an approved review for \"{gateName}\" before this transition.",
+      "toastReviewRequired": "Approval required before this transition. Request a review and try again after it's approved.",
+      "toastPendingReviewExists": "A review is already pending for this transition. Wait for the decision or cancel it before retrying."
     },
     "inbox": {
       "iconAria": "{count, plural, =0 {Review inbox} one {Review inbox, # pending} other {Review inbox, # pending}}",

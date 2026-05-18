@@ -2879,7 +2879,10 @@
     "transitionGate": {
       "blockedByGate": "此轉換需要獲得「{gateName}」的批准。請使用「請求審核」功能發起審核。",
       "gatedOptionBadge": "需要審核",
-      "saveBlockedByFormErrors": "儲存前請解決高亮顯示的表單錯誤。"
+      "saveBlockedByFormErrors": "儲存前請解決高亮顯示的表單錯誤。",
+      "bulkBlockedSummary": "{count, plural, one {# case} other {# cases}} blocked by gate \"{gateName}\": {sampleIds}{more, plural, =0 {} other {, and # more}}. Each blocked case needs an approved review for \"{gateName}\" before this transition.",
+      "toastReviewRequired": "此變更需經批准後方可生效。請申請審核，待審核通過後再試。",
+      "toastPendingReviewExists": "此次變更申請已進入審核階段。請等待審核結果，或在重試前取消申請。"
     },
     "inbox": {
       "iconAria": "{count, plural, =0 {Review inbox} one {Review inbox, # pending} other {Review inbox, # pending}}",
@@ -5610,7 +5613,7 @@
       "isEnabled": "## 已啟用\n指示此工作流程是否已啟用。",
       "isActive": "## 活動\n指示此工作流程狀態是否處於作用中且可供使用。\n\n- 更新測試運行、會話或自動化時，可以選擇活動工作流程。\n- 非活動工作流程將會隱藏，但會保留在現有項目中。",
       "projects": "## 項目\n指示可以使用此工作流程的項目。",
-      "requiresReview": "## 需要審核\n啟用後，案例、測試運行或會話進入此狀態需要經過審核請求並獲得批准。如果沒有獲得批准的請求，則轉換將被阻止。\n\n- 當系統級功能關閉時，現有待審核的請求將靜默保留，並在重新啟用後重新出現。\n- 當測試人員從實體詳情頁點選「要求審核」時，系統會選擇審核者。\n\n若係統級功能已停用，則此開關將被鎖定。若要重新啟用此功能，請從上方的「審核工作流程」卡片中操作。"
+      "requiresReview": "## 需要審核\n啟用後，案例、測試運行或會話進入此狀態需要經過審核請求並獲得批准。如果沒有獲得批准的請求，則轉換將被阻止。\n\n- 當系統級功能關閉時，現有待審核的審核將靜默保留，並在重新啟用後重新出現。\n- 當測試人員從實體詳情頁點選「要求審核」時，系統會選擇審核者。\n\n若係統級功能已停用，則此開關將被鎖定。若要重新啟用此功能，請從上方的「審核工作流程」卡片中操作。"
     },
     "testResult": {
       "status": "## 狀態\n選擇測試執行的總體狀態。您選擇的狀態可能會影響專案指標和報告。",

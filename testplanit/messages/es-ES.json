@@ -2879,7 +2879,10 @@
     "transitionGate": {
       "blockedByGate": "Se requiere aprobación para \"{gateName}\" antes de esta transición. Use \"Solicitar revisión\" para iniciar una.",
       "gatedOptionBadge": "Requiere revisión",
-      "saveBlockedByFormErrors": "Corrija los errores del formulario resaltados antes de guardar."
+      "saveBlockedByFormErrors": "Corrija los errores del formulario resaltados antes de guardar.",
+      "bulkBlockedSummary": "{count, plural, one {# caso} other {# casos}} bloqueados por la puerta \"{gateName}\": {sampleIds}{more, plural, =0 {} other {, y # más}}. Cada caso bloqueado necesita una revisión aprobada para \"{gateName}\" antes de esta transición.",
+      "toastReviewRequired": "Se requiere aprobación antes de esta transición. Solicite una revisión e inténtelo de nuevo una vez aprobada.",
+      "toastPendingReviewExists": "Ya hay una revisión pendiente para esta transición. Espere la decisión o cancélela antes de volver a intentarlo."
     },
     "inbox": {
       "iconAria": "{count, plural, =0 {Bandeja de entrada de revisiones} one {Bandeja de entrada de revisiones, # pendiente} other {Bandeja de entrada de revisiones, # pendiente}}",

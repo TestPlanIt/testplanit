@@ -1570,8 +1570,29 @@ export function BulkEditModal({
       );
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to perform bulk edit");
+        const errBody = await response.json().catch(() => ({}));
+        const errCode =
+          typeof errBody?.error === "object" && errBody.error !== null
+            ? (errBody.error as { code?: unknown }).code
+            : undefined;
+        // Match the global ReviewGateMutationListener for ZenStack mutations:
+        // raw fetch endpoints surface REVIEW_REQUIRED / PENDING_REVIEW_EXISTS
+        // bodies that bypass mutationCache, so detect them inline.
+        if (errCode === "REVIEW_REQUIRED") {
+          throw Object.assign(new Error("REVIEW_REQUIRED"), {
+            reviewGateCode: "REVIEW_REQUIRED" as const,
+          });
+        }
+        if (errCode === "PENDING_REVIEW_EXISTS") {
+          throw Object.assign(new Error("PENDING_REVIEW_EXISTS"), {
+            reviewGateCode: "PENDING_REVIEW_EXISTS" as const,
+          });
+        }
+        throw new Error(
+          typeof errBody?.error === "string"
+            ? errBody.error
+            : "Failed to perform bulk edit"
+        );
       }
 
       await response.json(); // Parse response to ensure no errors
@@ -1583,7 +1604,13 @@ export function BulkEditModal({
       onClose();
     } catch (error: any) {
       console.error("Failed to save bulk edits:", error);
-      toast.error(error.message || tCommon("errors.unknown"));
+      if (error?.reviewGateCode === "REVIEW_REQUIRED") {
+        toast.error(tReviews("toastReviewRequired"));
+      } else if (error?.reviewGateCode === "PENDING_REVIEW_EXISTS") {
+        toast.error(tReviews("toastPendingReviewExists"));
+      } else {
+        toast.error(error.message || tCommon("errors.unknown"));
+      }
     } finally {
       setIsSaving(false);
     }

@@ -2879,7 +2879,10 @@
     "transitionGate": {
       "blockedByGate": "Wymagana jest zgoda na „{gateName}” przed tą zmianą. Użyj „Poproś o weryfikację”, aby ją rozpocząć.",
       "gatedOptionBadge": "Wymaga przeglądu",
-      "saveBlockedByFormErrors": "Przed zapisaniem formularza popraw podświetlone błędy."
+      "saveBlockedByFormErrors": "Przed zapisaniem formularza popraw podświetlone błędy.",
+      "bulkBlockedSummary": "{count, plural, one {# przypadek} other {# przypadków}} zablokowanych przez bramkę \"{gateName}\": {sampleIds}{more, plural, =0 {} other {i # więcej}}. Każdy zablokowany przypadek wymaga zatwierdzonej recenzji dla \"{gateName}\" przed tą zmianą.",
+      "toastReviewRequired": "Wymagana zgoda przed wprowadzeniem tej zmiany. Poproś o weryfikację i spróbuj ponownie po jej zatwierdzeniu.",
+      "toastPendingReviewExists": "W związku z tą zmianą oczekuje już na weryfikację. Poczekaj na decyzję lub anuluj ją przed ponowną próbą."
     },
     "inbox": {
       "iconAria": "{count, plural, =0 {Skrzynka odbiorcza recenzji} one {Skrzynka odbiorcza recenzji, # oczekujące} other {Skrzynka odbiorcza recenzji, # oczekujące}}",

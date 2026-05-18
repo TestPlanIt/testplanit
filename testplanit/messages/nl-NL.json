@@ -2879,7 +2879,10 @@
     "transitionGate": {
       "blockedByGate": "Goedkeuring is vereist voor \"{gateName}\" vóór deze overgang. Gebruik \"Review aanvragen\" om er een te starten.",
       "gatedOptionBadge": "Vereist beoordeling",
-      "saveBlockedByFormErrors": "Los de gemarkeerde formulierfouten op voordat u opslaat."
+      "saveBlockedByFormErrors": "Los de gemarkeerde formulierfouten op voordat u opslaat.",
+      "bulkBlockedSummary": "{count, plural, one {# geval} other {# gevallen}} geblokkeerd door poort \"{gateName}\": {sampleIds}{more, plural, =0 {} other {, en # meer}}. Elk geblokkeerd geval heeft een goedgekeurde beoordeling nodig voor \"{gateName}\" voordat deze overgang plaatsvindt.",
+      "toastReviewRequired": "Goedkeuring is vereist vóór deze overgang. Vraag een beoordeling aan en probeer het opnieuw nadat deze is goedgekeurd.",
+      "toastPendingReviewExists": "Er loopt al een beoordeling voor deze overgang. Wacht op de beslissing of annuleer de overgang voordat u het opnieuw probeert."
     },
     "inbox": {
       "iconAria": "{count, plural, =0 {Review-inbox} one {Review-inbox, # in behandeling} other {Review-inbox, # in behandeling}}",
@@ -5610,7 +5613,7 @@
       "isEnabled": "## Ingeschakeld\nGeeft aan of deze workflow is ingeschakeld.",
       "isActive": "## Actief\nGeeft aan of deze workflowstatus actief en beschikbaar is voor gebruik.\n\n- Actieve workflows kunnen worden geselecteerd bij het bijwerken van testruns, sessies of automatisering.\n- Inactieve workflows zijn niet selecteerbaar, maar blijven behouden in bestaande items.",
       "projects": "## Projecten\nGeeft de projecten aan die deze workflow kunnen gebruiken.",
-      "requiresReview": "## Vereist beoordeling\nWanneer AAN, is de overgang van een case, testrun of sessie NAAR deze status afhankelijk van een goedgekeurd beoordelingsverzoek. Zonder een goedgekeurd verzoek wordt de overgang geblokkeerd.\n\n- Bestaande, nog niet uitgevoerde beoordelingen worden stilzwijgend bewaard wanneer de systeemfunctie UIT staat en verschijnen opnieuw wanneer deze weer wordt ingeschakeld.\n- De beoordelaar wordt geselecteerd wanneer een tester op 'Beoordeling aanvragen' klikt op de detailpagina van de entiteit.\n\nAls de systeemfunctie is uitgeschakeld, is deze schakelaar vergrendeld. Schakel deze opnieuw in via de kaart 'Beoordelingsworkflow' hierboven om deze in te schakelen."
+      "requiresReview": "## Vereist beoordeling\nWanneer AAN, is de overgang van een case, testrun of sessie NAAR deze status afhankelijk van een goedgekeurd beoordelingsverzoek. Zonder een goedgekeurd verzoek wordt de overgang geblokkeerd.\n\n- Bestaande, nog niet voltooide beoordelingen worden stilzwijgend bewaard wanneer de systeemfunctie UIT staat en verschijnen opnieuw wanneer deze weer wordt ingeschakeld.\n- De beoordelaar wordt geselecteerd wanneer een tester op 'Beoordeling aanvragen' klikt op de detailpagina van de entiteit.\n\nAls de systeemfunctie is uitgeschakeld, is deze schakelaar vergrendeld. Schakel deze opnieuw in via de kaart 'Beoordelingsworkflow' hierboven om deze in te schakelen."
     },
     "testResult": {
       "status": "## Status\nSelecteer de algemene status van de testuitvoering. De status die u kiest, kan van invloed zijn op projectstatistieken en -rapporten.",

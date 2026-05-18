@@ -2879,7 +2879,10 @@
     "transitionGate": {
       "blockedByGate": "Cần có sự chấp thuận cho \"{gateName}\" trước khi chuyển đổi này. Sử dụng \"Yêu cầu xem xét\" để bắt đầu.",
       "gatedOptionBadge": "Cần xem xét lại",
-      "saveBlockedByFormErrors": "Hãy khắc phục các lỗi được đánh dấu trong biểu mẫu trước khi lưu."
+      "saveBlockedByFormErrors": "Hãy khắc phục các lỗi được đánh dấu trong biểu mẫu trước khi lưu.",
+      "bulkBlockedSummary": "{count, plural, one {# trường hợp} other {# trường hợp}} bị chặn bởi cổng \"{gateName}\": {sampleIds}{more, plural, =0 {} other {, và # nhiều hơn nữa}}. Mỗi trường hợp bị chặn cần được xem xét phê duyệt cho \"{gateName}\" trước khi chuyển đổi này.",
+      "toastReviewRequired": "Cần có sự chấp thuận trước khi thực hiện chuyển đổi này. Vui lòng yêu cầu xem xét lại và thử lại sau khi được chấp thuận.",
+      "toastPendingReviewExists": "Quá trình xem xét cho giao dịch này đang chờ xử lý. Hãy chờ quyết định hoặc hủy bỏ trước khi thử lại."
     },
     "inbox": {
       "iconAria": "{count, plural, =0 {Hộp thư đến đánh giá} one {Hộp thư đến đánh giá, # đang chờ xử lý} other {Hộp thư đến đánh giá, # đang chờ xử lý}}",
