@@ -1,3 +1,4 @@
+import { ApplicationArea } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -36,12 +37,11 @@ import { authOptions } from "~/server/auth";
  */
 
 /**
- * Resolves whether the authenticated user holds the `canReadSensitive`
- * permission on ANY of their role rows. Mirrors the inline helper in
- * `app/api/repository/cases/[caseId]/dataset/route.ts` (and its three
- * sibling routes) — the rule has not yet been extracted into a shared
- * `lib/auth/sensitiveValues.ts` helper, so this route uses the same local
- * pattern. System admins always have access.
+ * Resolves whether the authenticated user can read sensitive iteration
+ * values for matrix cells. Iteration values are a run-result concern, so
+ * the gate is the existing `TestRunResultRestrictedFields` ApplicationArea's
+ * `canReadSensitive` grant — not a new permission. System admins always
+ * pass.
  */
 async function resolveCanReadSensitive(
   db: any,
@@ -56,7 +56,9 @@ async function resolveCanReadSensitive(
   const perms = user.role?.rolePermissions ?? [];
   return Array.isArray(perms)
     ? perms.some(
-        (p: { canReadSensitive?: boolean }) => p?.canReadSensitive === true
+        (p: { area?: ApplicationArea; canReadSensitive?: boolean }) =>
+          p?.area === ApplicationArea.TestRunResultRestrictedFields &&
+          p?.canReadSensitive === true
       )
     : false;
 }

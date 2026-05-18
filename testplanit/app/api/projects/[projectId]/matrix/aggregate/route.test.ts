@@ -242,8 +242,14 @@ describe("POST /api/projects/[projectId]/matrix/aggregate", () => {
       access: "USER",
       role: {
         rolePermissions: [
-          { canReadSensitive: false },
-          { canReadSensitive: true },
+          {
+            area: "TestCaseRepository",
+            canReadSensitive: true,
+          },
+          {
+            area: "TestRunResultRestrictedFields",
+            canReadSensitive: true,
+          },
         ],
       },
     });

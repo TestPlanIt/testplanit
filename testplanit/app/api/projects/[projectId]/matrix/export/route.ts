@@ -1,3 +1,4 @@
+import { ApplicationArea } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import Papa from "papaparse";
@@ -56,12 +57,11 @@ import { authOptions } from "~/server/auth";
  */
 
 /**
- * Resolves whether the authenticated user holds the `canReadSensitive`
- * permission on their role. Mirrors the inline helper in
- * `app/api/test-runs/submit-result/route.ts` and
- * `app/api/repository/cases/[caseId]/dataset/route.ts` — sensitive
- * parameter values are sensitive across all surfaces, so the rule is the
- * same broad role-permission check (no per-ApplicationArea scoping).
+ * Resolves whether the authenticated user can read sensitive iteration
+ * values when exporting matrix data. Iteration values are a run-result
+ * concern, so the gate is the existing `TestRunResultRestrictedFields`
+ * ApplicationArea's `canReadSensitive` grant — not a new permission.
+ * System admins always pass.
  */
 async function resolveCanReadSensitive(userId: string): Promise<boolean> {
   const u = await prisma.user.findUnique({
@@ -73,7 +73,9 @@ async function resolveCanReadSensitive(userId: string): Promise<boolean> {
   const perms = u.role?.rolePermissions ?? [];
   return Array.isArray(perms)
     ? perms.some(
-        (p: { canReadSensitive?: boolean }) => p?.canReadSensitive === true
+        (p: { area?: ApplicationArea; canReadSensitive?: boolean }) =>
+          p?.area === ApplicationArea.TestRunResultRestrictedFields &&
+          p?.canReadSensitive === true
       )
     : false;
 }

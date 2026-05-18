@@ -1,3 +1,4 @@
+import { ApplicationArea } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -22,6 +23,17 @@ import { authOptions } from "~/server/auth";
  * case's name.
  */
 
+/**
+ * Resolves whether the viewer can read sensitive parameter values on this
+ * case's dataset. Parameters live with test cases, so the gate is the
+ * existing `TestCaseRestrictedFields` ApplicationArea's `canReadSensitive`
+ * grant — not a new permission. System admins always pass.
+ *
+ * The earlier implementation matched `canReadSensitive` on ANY area, which
+ * unintentionally let a role with the grant on e.g. Sessions also read
+ * test-case sensitive values. Filtering by area aligns this with the
+ * existing Restricted Fields gates used elsewhere in the app.
+ */
 async function resolveCanReadSensitive(
   db: any,
   userId: string
@@ -31,12 +43,13 @@ async function resolveCanReadSensitive(
     include: { role: { include: { rolePermissions: true } } },
   });
   if (!user) return false;
-  // System admins always have access.
   if (user.access === "ADMIN") return true;
   const perms = user.role?.rolePermissions ?? [];
   return Array.isArray(perms)
     ? perms.some(
-        (p: { canReadSensitive?: boolean }) => p?.canReadSensitive === true
+        (p: { area?: ApplicationArea; canReadSensitive?: boolean }) =>
+          p?.area === ApplicationArea.TestCaseRestrictedFields &&
+          p?.canReadSensitive === true
       )
     : false;
 }

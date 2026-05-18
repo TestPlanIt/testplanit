@@ -1,3 +1,4 @@
+import { ApplicationArea } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -42,11 +43,16 @@ async function resolveUserContext(
     },
   });
   if (!u) return { canReadSensitive: false, locale: "en_US" };
+  // Iteration values surface as run results, so the gate is the existing
+  // `TestRunResultRestrictedFields` ApplicationArea's `canReadSensitive`
+  // grant — same area used by the matrix and iteration-matrix routes.
   const canReadSensitive =
     u.access === "ADMIN" ||
     (Array.isArray(u.role?.rolePermissions)
       ? u.role.rolePermissions.some(
-          (p: { canReadSensitive?: boolean }) => p?.canReadSensitive === true,
+          (p: { area?: ApplicationArea; canReadSensitive?: boolean }) =>
+            p?.area === ApplicationArea.TestRunResultRestrictedFields &&
+            p?.canReadSensitive === true,
         )
       : false);
   // Locale is a Prisma enum (en_US, es_ES, …). Coerce to string for the
