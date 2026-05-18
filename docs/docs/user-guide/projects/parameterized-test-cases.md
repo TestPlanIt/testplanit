@@ -33,12 +33,16 @@ Declare the parameters your case needs. Each parameter has:
 | Field | What it means |
 |---|---|
 | **Name** | The chip name you'll use in steps (e.g. `username`). Lowercase + numbers + underscore is conventional. |
-| **Type** | `STRING`, `INTEGER`, `BOOLEAN`, or `SELECT`. Controls cell editing and per-row validation. |
+| **Type** | `STRING`, `INTEGER`, `BOOLEAN`, or `SELECT` (see [SELECT availability](#select-parameter-availability)). Controls cell editing and per-row validation. |
 | **Default** | Value to use when no row supplies one. |
 | **Required** | When set, rows with no value for this parameter fail validation on save. |
 | **Sensitive** | When set, values are masked as `••••••` in the UI for users without the right role permission (see [Permissions & Sensitive Values](#permissions--sensitive-values)). |
 
+#### SELECT parameter availability
+
 `SELECT` parameters have two sources for their allowed values: an **inline list** typed into the dialog one-per-line, or a **lookup dataset** — another shared dataset whose first column is treated as the option list (useful when the same dropdown values are reused across many cases).
+
+`SELECT` is offered when adding or editing a parameter through the **Configure Parameters → Parameters tab** on a test case (the owner-bound editing surface). It is intentionally **not** offered in the standalone Shared Dataset Editor's **Add column** dialog because a `SELECT` column needs a secondary list (allowed values or a lookup dataset) that doesn't fit a quick-add inline flow. If you need a SELECT-typed column on a shared dataset today, declare it on a case via Configure Parameters and assign the shared dataset to that case; the cell editor in the shared dataset grid recognizes the SELECT type and renders it as a dropdown driven by the configured options.
 
 ### Dataset tab
 
