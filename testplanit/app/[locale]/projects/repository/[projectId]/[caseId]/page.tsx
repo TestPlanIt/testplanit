@@ -50,6 +50,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
+import { ReviewActionPanel } from "@/components/reviews/ReviewActionPanel";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { VersionSelect } from "@/components/VersionSelect";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
@@ -69,13 +70,7 @@ import {
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import parseDuration from "parse-duration";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { ImperativePanelHandle } from "react-resizable-panels";
 import { z } from "zod/v4";
@@ -1708,7 +1703,6 @@ export default function TestCaseDetails() {
               entityType="CASE"
               entityId={testcase.id}
               projectId={Number(projectId)}
-              entityName={testcase.name}
               reachableGatedStates={reachableGatedStates}
               currentStateId={testcase.state.id}
             />
@@ -1870,7 +1864,7 @@ export default function TestCaseDetails() {
                       )}
                     </div>
                   ) : (
-                    <div className="flex items-center space-x-2 justify-end">
+                    <div className="flex items-center space-x-2">
                       <RequestReviewButton
                         entityType="CASE"
                         entityId={testcase.id}
@@ -1884,12 +1878,11 @@ export default function TestCaseDetails() {
                           variant="outline"
                           onClick={() => setIsQuickScriptModalOpen(true)}
                           data-testid="quickscript-case-button"
-                          className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
                         >
-                          <ScrollText className="h-4 w-4 shrink-0" />
-                          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                            {t("repository.cases.quickScript")}
-                          </span>
+                          <div className="flex items-center">
+                            <ScrollText className="w-5 h-5 mr-2" />
+                            <div>{t("repository.cases.quickScript")}</div>
+                          </div>
                         </Button>
                       )}
                       {canAddEdit && (
@@ -1899,12 +1892,11 @@ export default function TestCaseDetails() {
                           onClick={handleEditModeToggle}
                           disabled={isLoadingSharedStepGroups}
                           data-testid="edit-test-case-button"
-                          className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
                         >
-                          <SquarePen className="h-4 w-4 shrink-0" />
-                          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                            {t("common.actions.edit")}
-                          </span>
+                          <div className="flex items-center">
+                            <SquarePen className="w-5 h-5 mr-2" />
+                            <div>{t("common.actions.edit")}</div>
+                          </div>
                         </Button>
                       )}
                     </div>
@@ -2027,6 +2019,11 @@ export default function TestCaseDetails() {
               </div>
             </CardDescription>
           </CardHeader>
+          <ReviewActionPanel
+            entityType="CASE"
+            entityId={testcase.id}
+            projectId={Number(projectId)}
+          />
           {/* Template not assigned to project warning */}
           {testcase?.template &&
           "projects" in testcase.template &&

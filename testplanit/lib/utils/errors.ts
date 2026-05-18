@@ -23,7 +23,7 @@ export class ReviewGateError extends Error {
     public readonly code: "REVIEW_REQUIRED",
     public readonly entityType: string,
     public readonly entityId: number,
-    public readonly toStateId: number
+    public readonly toStateId: number,
   ) {
     super(`Review gate blocked transition to state ${toStateId}`);
     this.name = "ReviewGateError";
@@ -36,7 +36,7 @@ export class AlreadyPendingError extends Error {
   constructor(
     public readonly entityType: string,
     public readonly entityId: number,
-    public readonly existingRequestId: string
+    public readonly existingRequestId: string,
   ) {
     super(`A pending review request already exists for this entity`);
     this.name = "AlreadyPendingError";
@@ -48,17 +48,17 @@ export class IneligibleReviewerError extends Error {
 
   constructor(
     public readonly userId: string,
-    public readonly reviewRequestId: string
+    public readonly reviewRequestId: string,
   ) {
     super(
-      `User ${userId} is not eligible to decide review request ${reviewRequestId}`
+      `User ${userId} is not eligible to decide review request ${reviewRequestId}`,
     );
     this.name = "IneligibleReviewerError";
   }
 }
 
 export function isIneligibleReviewerError(
-  err: unknown
+  err: unknown,
 ): err is IneligibleReviewerError {
   return err instanceof IneligibleReviewerError;
 }
@@ -68,7 +68,7 @@ export function isReviewGateError(err: unknown): err is ReviewGateError {
 }
 
 export function isAlreadyPendingError(
-  err: unknown
+  err: unknown,
 ): err is AlreadyPendingError | Prisma.PrismaClientKnownRequestError {
   if (err instanceof AlreadyPendingError) return true;
   if (

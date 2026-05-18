@@ -353,8 +353,7 @@
         "edit_results_duration": "Bearbeitungsdauer der Ergebnisse",
         "project_docs_default": "Standardeinstellungen für Projektdokumente",
         "notificationSettings": "Globale Benachrichtigungseinstellungen",
-        "elasticsearch_replicas": "Elasticsearch-Replikate",
-        "review_feature_enabled": "Bewertungsfunktion aktiviert"
+        "elasticsearch_replicas": "Elasticsearch-Replikate"
       },
       "options": {
         "label": "Etikett",
@@ -2859,16 +2858,15 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "Überprüfung angefordert von <assignee></assignee> für Übergang <fromState></fromState> → <toState></toState> <ago></ago>",
+      "pendingMessage": "Rezension angefordert vor {assignee}. {ago}.",
       "changesRequestedTitle": "Änderungen angefordert",
       "rejectedTitle": "Überprüfung abgelehnt",
       "cancelRequest": "Stornierungsanfrage",
-      "requestAgain": "Erneute Überprüfung anfordern",
-      "decidedBy": "Beschlossen von"
+      "requestAgain": "Erneute Überprüfung anfordern"
     },
     "cancel": {
       "title": "Diese Bewertungsanfrage stornieren?",
-      "description": "Der Bearbeiter kann diese Anfrage nicht mehr bearbeiten. Sie können später eine neue Anfrage einreichen.",
+      "description": "Der Bearbeiter kann diese Anfrage nicht mehr bearbeiten. Sie können anschließend eine neue Anfrage einreichen.",
       "confirm": "Stornierungsanfrage",
       "success": "Überprüfungsanfrage storniert.",
       "error": "Die Überprüfungsanfrage konnte nicht abgebrochen werden. Bitte versuchen Sie es in Kürze erneut."
@@ -2880,25 +2878,13 @@
       "iconAria": "{count, plural, =0 {Posteingang für Überprüfungen} one {Posteingang für Überprüfungen, # ausstehend} other {Posteingang für Überprüfungen, # ausstehend}}",
       "pageTitle": "Rezensionen",
       "pageDescription": "Offene Überprüfungsanfragen, die Ihnen (direkt oder über eine von Ihnen bekleidete Rolle) zugewiesen wurden.",
-      "pageDescriptionDecided": "Überprüfen Sie Anfragen, über die Sie bereits entschieden haben.",
-      "tabPending": "Ausstehend",
-      "tabDecided": "Entschieden",
-      "emptyDecided": "Sie haben noch keine Bewertungen abgegeben.",
       "empty": "Keine ausstehenden Überprüfungen. Sie sind auf dem neuesten Stand.",
       "featureDisabled": "Die Funktion „Prüfprozess“ ist derzeit deaktiviert. Ausstehende Prüfungen bleiben erhalten und werden wieder angezeigt, sobald die Funktion erneut aktiviert wird.",
       "columnEntity": "Juristische Person",
       "columnProject": "Projekt",
       "columnRequester": "Anforderer",
       "columnTransition": "Übergang",
-      "columnTransitionFrom": "Aus",
-      "columnTransitionTo": "Zu",
       "columnRequestedAt": "Angefordert bei",
-      "columnDecidedAt": "Beschlossen am",
-      "columnStatus": "Status",
-      "columnActions": "Aktionen",
-      "actionApprove": "Genehmigen",
-      "actionRequestChanges": "Änderungen anfordern",
-      "actionReject": "Ablehnen",
       "filterEntityType": "Entitätstyp",
       "filterProject": "Projekt",
       "filterAllEntityTypes": "Alle Entitätstypen",
@@ -2910,7 +2896,7 @@
     "requester": {
       "openButton": "Überprüfung anfordern",
       "sheetTitle": "Überprüfung anfordern",
-      "sheetDescription": "Vor dem Übergang in den Zielzustand ist eine Genehmigung einzuholen.",
+      "sheetDescription": "Senden Sie diese Entität zur Überprüfung, bevor Sie in den Zielzustand übergehen.",
       "assigneeLabel": "Abtretungsempfänger",
       "assigneePlaceholder": "Wählen Sie einen Benutzer oder eine Rolle aus",
       "usersHoldRole": "{count, plural, one {# Benutzer mit dieser Rolle} other {# Benutzer mit dieser Rolle}}",
@@ -2923,15 +2909,14 @@
       "targetStateRequired": "Wählen Sie einen Zielstaat aus.",
       "submitButton": "Überprüfung anfordern",
       "submitSuccess": "Überprüfungsanfrage erstellt.",
-      "alreadyPendingError": "Für diese Einrichtung ist bereits eine Überprüfung anhängig.",
-      "cannotSelfAssign": "Sie können sich selbst keine Bewertung zuweisen; wählen Sie einen anderen Benutzer oder eine Rolle."
+      "alreadyPendingError": "Für diese Einrichtung ist bereits eine Überprüfung anhängig."
     },
     "reviewer": {
       "approve": "Genehmigen",
       "requestChanges": "Änderungen anfordern",
       "reject": "Ablehnen",
       "approveConfirmTitle": "Soll diese Überprüfungsanfrage genehmigt werden?",
-      "approveConfirmDescription": "Durch die Genehmigung wird es <requester></requester> ermöglicht, in <name></name> zu <state></state> überzugehen.",
+      "approveConfirmDescription": "Durch die Genehmigung wird dem Antragsteller ermöglicht, diesen {entityType} in {targetStateName} umzuwandeln.",
       "approvalNoteLabel": "Genehmigungsvermerk",
       "approvalNotePlaceholder": "Fügen Sie optional eine Notiz für den Antragsteller hinzu (sichtbar neben der Genehmigung).",
       "requestChangesTitle": "Änderungen anfordern",
@@ -2939,7 +2924,7 @@
       "requestChangesCommentLabel": "Kommentar",
       "requestChangesCommentPlaceholder": "Erklären Sie, was sich ändern muss.",
       "rejectTitle": "Diese Überprüfungsanfrage ablehnen?",
-      "rejectDescription": "Die Blöcke <requester></requester> , die zwischen <name></name> und <state></state>wechseln, wurden abgelehnt. Um den Vorgang zu wiederholen, muss eine neue Überprüfungsanfrage erstellt werden.",
+      "rejectDescription": "Die Ablehnung verhindert, dass der Anfragende diesen Zustand {entityType} in den Zustand {targetStateName}überführt. Es muss eine neue Überprüfungsanfrage erstellt werden, um es erneut zu versuchen.",
       "rejectCommentLabel": "Kommentar",
       "rejectCommentPlaceholder": "Begründen Sie, warum Sie diese Anfrage ablehnen.",
       "commentRequired": "Ein Kommentar ist erforderlich.",
@@ -4129,16 +4114,16 @@
     "workflows": {
       "description": "Testfall-Workflows verwalten",
       "systemFeatureCard": {
-        "title": "Arbeitsablauf prüfen",
-        "description": "Erzwingen Sie Prüfungen, indem Sie Workflow-Übergänge bis zur Genehmigung blockieren. Ist diese Option aktiviert, können Projekte sie in ihren erweiterten Einstellungen einzeln aktivieren oder deaktivieren. Deaktivieren Sie diese Option, um Workflow-Genehmigungsbarrieren zu vermeiden.",
-        "toggleAriaLabel": "Funktion zum Aktivieren/Deaktivieren des Überprüfungsworkflows",
-        "adminOnlyNotice": "Nur Administratoren können diese Einstellung ändern.",
-        "updateSuccessEnabled": "Prüf-Workflow aktiviert.",
-        "updateSuccessDisabled": "Prüfworkflow deaktiviert.",
-        "updateError": "Die Aktualisierung der Einstellungen für den Überprüfungsworkflow ist fehlgeschlagen. Bitte versuchen Sie es in Kürze erneut."
+        "title": "Workflow-Funktion überprüfen",
+        "description": "Systemweite Option zur Aktivierung der Prüf- und Genehmigungsfunktion. Ist diese aktiviert, können Projekte sie in ihren erweiterten Einstellungen einzeln ein- oder ausschalten.",
+        "stateEnabled": "Ermöglicht",
+        "stateDisabled": "Deaktiviert",
+        "operatorNotePrefix": "Über eine Umgebungsvariable festgelegt",
+        "operatorNoteSuffix": "Ein Neustart ist erforderlich, um die Änderungen anzuwenden."
       },
       "editWorkflow": {
-        "requiresReviewLabel": "Überprüfung erforderlich"
+        "requiresReviewLabel": "Überprüfung erforderlich",
+        "requiresReviewFeatureDisabled": "Die Funktion für den Überprüfungsworkflow ist systemweit deaktiviert. Um sie wieder zu aktivieren, ändern Sie die erweiterten Projekteinstellungen oder setzen Sie TESTPLANIT_REVIEW_FEATURE_ENABLED."
       },
       "add": {
         "button": "Workflow hinzufügen",
@@ -5604,8 +5589,7 @@
       "isDefault": "## Standard\nGibt an, ob dieser Workflow der Standard-Workflow für Ihr Projekt ist.\n\n– Der Standard-Workflow ist für neue Testläufe, Sitzungen und Automatisierungen vorausgewählt.",
       "isEnabled": "## Aktiviert\nGibt an, ob dieser Workflow aktiviert ist.",
       "isActive": "## Aktiv\nZeigt an, ob dieser Workflow-Status aktiv und verfügbar ist.\n\n– Aktive Workflows können beim Aktualisieren von Testläufen, Sitzungen oder Automatisierungen ausgewählt werden.\n– Inaktive Workflows sind nicht auswählbar, bleiben aber in bestehenden Elementen erhalten.",
-      "projects": "## Projekte\nZeigt die Projekte an, die diesen Workflow nutzen können.",
-      "requiresReview": "## Überprüfung erforderlich\nWenn diese Option aktiviert ist, wird der Übergang eines Falls, Testlaufs oder einer Sitzung in diesen Status durch eine genehmigte Überprüfungsanfrage blockiert. Ohne eine genehmigte Anfrage ist der Übergang nicht möglich.\n\n- Vorhandene ausstehende Überprüfungen bleiben im Hintergrund erhalten, wenn die Systemfunktion deaktiviert ist, und werden nach der Reaktivierung wieder angezeigt.\n- Der Prüfer wird ausgewählt, wenn ein Tester auf der Entitätsdetailseite auf „Überprüfung anfordern“ klickt.\n\nWenn die Systemfunktion deaktiviert ist, ist dieser Schalter gesperrt. Aktivieren Sie ihn über die Karte „Überprüfungs-Workflow“ oben, um ihn einzuschalten."
+      "projects": "## Projekte\nZeigt die Projekte an, die diesen Workflow nutzen können."
     },
     "testResult": {
       "status": "## Status\nWählen Sie den Gesamtstatus der Testausführung. Der gewählte Status kann sich auf Projektkennzahlen und Berichte auswirken.",
@@ -6883,16 +6867,6 @@
     "mentions": {
       "notAMember": "Kein Projektmitglied",
       "noUsersFound": "Keine Benutzer gefunden"
-    },
-    "type": {
-      "reviewRequest": "Überprüfungsanfrage",
-      "reviewDecision": {
-        "approved": "Genehmigt",
-        "changesRequested": "Änderungen angefordert",
-        "rejected": "Abgelehnt",
-        "cancelled": "Abgesagt",
-        "generic": "Entscheidung zur Überprüfung"
-      }
     }
   },
   "Trial": {

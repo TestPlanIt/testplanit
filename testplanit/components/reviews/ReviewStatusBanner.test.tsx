@@ -18,76 +18,6 @@ vi.mock("~/lib/hooks", () => ({
   useUpdateReviewRequest: () => mockUseUpdateReviewRequest(),
 }));
 
-// Stub UserNameCell — it pulls the i18n navigation router (not available
-// in this unit-test environment) and our banner assertions only care that
-// the user-attribution piece renders, not its full chrome.
-vi.mock("~/components/tables/UserNameCell", () => ({
-  UserNameCell: ({ userId }: { userId: string }) => (
-    <span data-testid={`user-name-cell-${userId}`}>{userId}</span>
-  ),
-}));
-
-// Same reason as UserNameCell — UserMention pulls `~/lib/navigation` which
-// requires Next's redirect API at module-load time.
-vi.mock("~/components/UserMention", () => ({
-  UserMention: ({ userId }: { userId: string }) => (
-    <span data-testid={`user-mention-${userId}`}>{userId}</span>
-  ),
-}));
-
-// WorkflowStateDisplay renders the from/to transition pills in the banner.
-// The real component pulls a DynamicIcon registry; stubbing keeps the test
-// focused on banner-level assertions.
-vi.mock("~/components/WorkflowStateDisplay", () => ({
-  WorkflowStateDisplay: ({ state }: { state: { name?: string } | null }) => (
-    <span data-testid="workflow-state-display">{state?.name ?? ""}</span>
-  ),
-}));
-
-// RelativeTimeTooltip pulls the user-preferences-aware DateFormatter chain
-// and a Radix Tooltip; stub to a plain span so the banner test stays
-// hermetic and doesn't depend on session-shape fidelity.
-vi.mock("~/components/RelativeTimeTooltip", () => ({
-  RelativeTimeTooltip: ({ date }: { date: Date | string }) => (
-    <span data-testid="relative-time-tooltip">{String(date)}</span>
-  ),
-}));
-
-// ApproveDialog / RequestChangesDialog / RejectDialog are mounted at banner
-// level but never opened by these unit tests (decision-flow assertions live
-// in ReviewDecisionDialogs.test.tsx). Stub to noop renderers.
-vi.mock("./ReviewDecisionDialogs", () => ({
-  ApproveDialog: () => null,
-  RequestChangesDialog: () => null,
-  RejectDialog: () => null,
-}));
-
-// CancelRequestButton renders only when the viewer is eligible to cancel.
-// We assert via its data-testid so the stub preserves the same surface.
-vi.mock("./CancelRequestButton", () => ({
-  CancelRequestButton: ({ canCancel }: { canCancel: boolean }) =>
-    canCancel ? <button data-testid="cancel-request-button" /> : null,
-}));
-
-// useEffectiveRoleOnProject feeds the role-holder eligibility predicate.
-// Tests pin viewer identity via session + requestedByUserId / assigneeUserId,
-// not role membership, so a static null is sufficient.
-vi.mock("~/hooks/useEffectiveRoleOnProject", () => ({
-  useEffectiveRoleOnProject: () => ({ roleId: null }),
-}));
-
-// `useQueryClient` is called inside the banner to invalidate the
-// ReviewRequest + comments queries after a decision is made. Tests don't
-// open the decision dialogs, so the returned shim only needs to satisfy
-// React Query's type contract.
-vi.mock("@tanstack/react-query", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
-  return {
-    ...actual,
-    useQueryClient: () => ({ invalidateQueries: vi.fn() }),
-  };
-});
-
 const mockUseReviewFeatureEnabled = vi.fn();
 vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
   useReviewFeatureEnabled: (...args: unknown[]) =>
@@ -126,7 +56,7 @@ vi.mock("./RequestReviewSheet", () => ({
 // ─────────────────────────────────────────────────────────────────────────────
 
 function makeRequest(
-  overrides: Record<string, unknown> = {}
+  overrides: Record<string, unknown> = {},
 ): Record<string, unknown> {
   return {
     id: "rev-1",
@@ -182,7 +112,6 @@ const props = {
   entityType: "CASE" as const,
   entityId: 100,
   projectId: 42,
-  entityName: "Test case 100",
   reachableGatedStates: [
     {
       id: 11,
@@ -245,7 +174,7 @@ describe("ReviewStatusBanner", () => {
     render(<ReviewStatusBanner {...props} />);
 
     expect(
-      screen.getByTestId("review-status-banner-pending")
+      screen.getByTestId("review-status-banner-pending"),
     ).toBeInTheDocument();
     expect(screen.getByTestId("cancel-request-button")).toBeInTheDocument();
   });
@@ -258,7 +187,7 @@ describe("ReviewStatusBanner", () => {
     render(<ReviewStatusBanner {...props} />);
 
     expect(
-      screen.getByTestId("review-status-banner-pending")
+      screen.getByTestId("review-status-banner-pending"),
     ).toBeInTheDocument();
     expect(screen.getByTestId("cancel-request-button")).toBeInTheDocument();
   });
@@ -271,10 +200,10 @@ describe("ReviewStatusBanner", () => {
     render(<ReviewStatusBanner {...props} />);
 
     expect(
-      screen.getByTestId("review-status-banner-pending")
+      screen.getByTestId("review-status-banner-pending"),
     ).toBeInTheDocument();
     expect(
-      screen.queryByTestId("cancel-request-button")
+      screen.queryByTestId("cancel-request-button"),
     ).not.toBeInTheDocument();
   });
 
@@ -285,19 +214,19 @@ describe("ReviewStatusBanner", () => {
       makeRequest({
         status: "CHANGES_REQUESTED",
         decisionComment: "Please clarify step 3 expectations",
-      })
+      }),
     );
 
     render(<ReviewStatusBanner {...props} />);
 
     expect(
-      screen.getByTestId("review-status-banner-changes-requested")
+      screen.getByTestId("review-status-banner-changes-requested"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Please clarify step 3 expectations")
+      screen.getByText("Please clarify step 3 expectations"),
     ).toBeInTheDocument();
     expect(
-      screen.getByTestId("request-review-again-button")
+      screen.getByTestId("request-review-again-button"),
     ).toBeInTheDocument();
   });
 
@@ -308,17 +237,17 @@ describe("ReviewStatusBanner", () => {
       makeRequest({
         status: "REJECTED",
         decisionComment: "Insufficient coverage",
-      })
+      }),
     );
 
     render(<ReviewStatusBanner {...props} />);
 
     expect(
-      screen.getByTestId("review-status-banner-rejected")
+      screen.getByTestId("review-status-banner-rejected"),
     ).toBeInTheDocument();
     expect(screen.getByText("Insufficient coverage")).toBeInTheDocument();
     expect(
-      screen.getByTestId("request-review-again-button")
+      screen.getByTestId("request-review-again-button"),
     ).toBeInTheDocument();
   });
 
@@ -332,12 +261,14 @@ describe("ReviewStatusBanner", () => {
         // break the banner layout. Verify the truncation utility classes
         // are present so an oversized paste degrades gracefully.
         decisionComment: "x".repeat(5000),
-      })
+      }),
     );
 
     render(<ReviewStatusBanner {...props} />);
 
-    const para = screen.getByTestId("review-status-banner-decision-comment");
+    const para = screen.getByTestId(
+      "review-status-banner-decision-comment",
+    );
     expect(para.className).toMatch(/line-clamp-6/);
     expect(para.className).toMatch(/break-words/);
     expect(para.className).toMatch(/whitespace-pre-line/);
@@ -353,7 +284,7 @@ describe("ReviewStatusBanner", () => {
         toStateId: 11,
         assigneeUserId: "assignee-1",
         assigneeUser: { id: "assignee-1", name: "Bob Reviewer", image: null },
-      })
+      }),
     );
 
     render(<ReviewStatusBanner {...props} />);
@@ -365,7 +296,9 @@ describe("ReviewStatusBanner", () => {
     // had open=true with the expected initialValues.
     const calls = mockSheetPropsCapture.mock.calls;
     const openedWithPrefill = calls.find(
-      (c) => c[0]?.open === true && c[0]?.initialValues?.targetStateId === 11
+      (c) =>
+        c[0]?.open === true &&
+        c[0]?.initialValues?.targetStateId === 11,
     );
     expect(openedWithPrefill).toBeTruthy();
   });

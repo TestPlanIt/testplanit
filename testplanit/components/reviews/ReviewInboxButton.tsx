@@ -49,7 +49,7 @@ export function ReviewInboxButton() {
         },
       },
     },
-    { enabled: !!session?.user?.id }
+    { enabled: !!session?.user?.id },
   );
 
   // Flatten the user's role IDs across global + SPECIFIC_ROLE assignments.
@@ -60,19 +60,14 @@ export function ReviewInboxButton() {
     const globalRoleId = (userWithRoles as { roleId?: number | null }).roleId;
     if (typeof globalRoleId === "number") ids.add(globalRoleId);
     const projectPerms =
-      (
-        userWithRoles as {
-          projectPermissions?: Array<{
-            roleId: number | null;
-            accessType: string;
-          }>;
-        }
-      ).projectPermissions ?? [];
+      (userWithRoles as {
+        projectPermissions?: Array<{
+          roleId: number | null;
+          accessType: string;
+        }>;
+      }).projectPermissions ?? [];
     for (const perm of projectPerms) {
-      if (
-        perm.accessType === "SPECIFIC_ROLE" &&
-        typeof perm.roleId === "number"
-      ) {
+      if (perm.accessType === "SPECIFIC_ROLE" && typeof perm.roleId === "number") {
         ids.add(perm.roleId);
       }
     }
@@ -90,7 +85,7 @@ export function ReviewInboxButton() {
         ],
       },
     },
-    { enabled: !!session?.user?.id }
+    { enabled: !!session?.user?.id },
   );
 
   // Visibility short-circuits — keep all hooks above to honor Rules of Hooks.
@@ -100,11 +95,7 @@ export function ReviewInboxButton() {
   const numericCount = typeof count === "number" ? count : 0;
 
   return (
-    <Link
-      href="/reviews"
-      data-testid="review-inbox-button"
-      aria-label={t("reviews.inbox.iconAria", { count: numericCount })}
-    >
+    <Link href="/reviews" data-testid="review-inbox-button" aria-label={t("reviews.inbox.iconAria", { count: numericCount })}>
       <Button
         variant="ghost"
         size="icon"

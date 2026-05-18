@@ -129,7 +129,7 @@ export function DeleteConfigCategory({
                 {t.rich("deleteCategoryConfirm", {
                   name: category.name,
                   strong: (chunks: any) => (
-                    <span className="font-bold [overflow-wrap:anywhere]">
+                    <span className="whitespace-nowrap font-bold">
                       {chunks}
                     </span>
                   ),

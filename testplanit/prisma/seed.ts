@@ -438,20 +438,6 @@ async function seedCoreData() {
   });
   console.log("Seeded notification settings config.");
 
-  // --- Review-feature system kill switch (Phase 2 D-19) ---
-  // Default-on; admins toggle from Admin > Workflows. The reviewGate /
-  // milestoneActions helpers also default-on when this row is missing, so
-  // upgraded installations that haven't run seed yet behave correctly.
-  await prisma.appConfig.upsert({
-    where: { key: "review_feature_enabled" },
-    update: {},
-    create: {
-      key: "review_feature_enabled",
-      value: true,
-    },
-  });
-  console.log("Seeded review-feature system flag.");
-
   // --- Field Icons, Case Field Types, Case/Result Fields ---
   await seedFieldIcons();
   await seedCaseFieldTypes();

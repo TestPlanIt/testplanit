@@ -65,12 +65,12 @@ export function CancelRequestButton({
     <>
       <Button
         type="button"
-        variant="outline"
+        variant="ghost"
         size="sm"
         onClick={() => setOpen(true)}
         data-testid="cancel-request-button"
       >
-        {t("common.cancel")}
+        {t("reviews.banner.cancelRequest")}
       </Button>
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent data-testid="cancel-request-dialog">

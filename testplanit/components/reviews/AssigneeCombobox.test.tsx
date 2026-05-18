@@ -1,7 +1,10 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AssigneeCombobox, type AssigneeOption } from "./AssigneeCombobox";
+import {
+  AssigneeCombobox,
+  type AssigneeOption,
+} from "./AssigneeCombobox";
 
 // Mock searchProjectMembers server action so the user-search half of the
 // merged fetch is controllable per test.
@@ -27,7 +30,7 @@ vi.mock("@/components/Avatar", () => ({
 }));
 
 function setRoles(
-  result: Array<{ id: number; name: string; _count?: { users: number } }>
+  result: Array<{ id: number; name: string; _count?: { users: number } }>,
 ) {
   mockUseFindManyRoles.mockReturnValue({
     data: result,
@@ -42,7 +45,7 @@ function setUsers(
     email: string | null;
     image: string | null;
   }>,
-  total = users.length
+  total = users.length,
 ) {
   mockSearchProjectMembers.mockResolvedValue({ results: users, total });
 }
@@ -58,17 +61,29 @@ describe("AssigneeCombobox", () => {
 
   it("renders the trigger with the assignee placeholder", () => {
     render(
-      <AssigneeCombobox projectId={42} value={null} onValueChange={vi.fn()} />
+      <AssigneeCombobox
+        projectId={42}
+        value={null}
+        onValueChange={vi.fn()}
+      />,
     );
 
-    expect(screen.getByTestId("assignee-combobox")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("assignee-combobox"),
+    ).toBeInTheDocument();
   });
 
   it("(a) typing into the search input triggers fetchOptions", async () => {
-    setUsers([{ id: "user-1", name: "Alice", email: null, image: null }]);
+    setUsers([
+      { id: "user-1", name: "Alice", email: null, image: null },
+    ]);
 
     render(
-      <AssigneeCombobox projectId={42} value={null} onValueChange={vi.fn()} />
+      <AssigneeCombobox
+        projectId={42}
+        value={null}
+        onValueChange={vi.fn()}
+      />,
     );
 
     // Open the combobox.
@@ -99,7 +114,7 @@ describe("AssigneeCombobox", () => {
         projectId={42}
         value={null}
         onValueChange={onValueChange}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByTestId("assignee-combobox"));
@@ -125,7 +140,7 @@ describe("AssigneeCombobox", () => {
         projectId={42}
         value={null}
         onValueChange={onValueChange}
-      />
+      />,
     );
 
     fireEvent.click(screen.getByTestId("assignee-combobox"));
@@ -156,7 +171,11 @@ describe("AssigneeCombobox", () => {
     ]);
 
     render(
-      <AssigneeCombobox projectId={42} value={null} onValueChange={vi.fn()} />
+      <AssigneeCombobox
+        projectId={42}
+        value={null}
+        onValueChange={vi.fn()}
+      />,
     );
 
     fireEvent.click(screen.getByTestId("assignee-combobox"));
@@ -171,10 +190,10 @@ describe("AssigneeCombobox", () => {
       .map((el) => el.getAttribute("data-testid") ?? "");
 
     const firstUserIdx = allOptions.findIndex((id) =>
-      id.startsWith("assignee-option-user-")
+      id.startsWith("assignee-option-user-"),
     );
     const firstRoleIdx = allOptions.findIndex((id) =>
-      id.startsWith("assignee-option-role-")
+      id.startsWith("assignee-option-role-"),
     );
 
     expect(firstUserIdx).toBeGreaterThanOrEqual(0);
@@ -183,11 +202,17 @@ describe("AssigneeCombobox", () => {
   });
 
   it("(e) renderOption distinguishes user rows from role rows", async () => {
-    setUsers([{ id: "user-1", name: "Alice", email: null, image: null }]);
+    setUsers([
+      { id: "user-1", name: "Alice", email: null, image: null },
+    ]);
     setRoles([{ id: 7, name: "Tester", _count: { users: 3 } }]);
 
     render(
-      <AssigneeCombobox projectId={42} value={null} onValueChange={vi.fn()} />
+      <AssigneeCombobox
+        projectId={42}
+        value={null}
+        onValueChange={vi.fn()}
+      />,
     );
 
     fireEvent.click(screen.getByTestId("assignee-combobox"));

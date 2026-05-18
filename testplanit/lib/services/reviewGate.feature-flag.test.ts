@@ -1,48 +1,36 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReviewEntityType } from "@prisma/client";
 import { assertReviewGatePasses } from "./reviewGate";
 
 /**
- * Unit tests for the Phase 2 feature-flag short-circuit in
+ * Unit tests for the Phase 2 feature-flag short-circuit added to
  * assertReviewGatePasses.
  *
  * Two short-circuits, evaluated in order at the top of the helper:
  *
- *   (1) System-level kill switch — the `review_feature_enabled` AppConfig row.
- *       When `value === false`, the helper returns `null` immediately. A
- *       missing row (default-on, matching the seed) is treated as enabled so
- *       installations that haven't run the seed yet still gate correctly.
+ *   (1) `process.env.TESTPLANIT_REVIEW_FEATURE_ENABLED === 'false'` —
+ *       system-level kill switch (D-19/D-20). Only the literal string 'false'
+ *       disables; any other value (undefined, 'true', '0', 'no', '') leaves the
+ *       feature enabled.
  *
- *   (2) Per-project opt-out — `project.reviewWorkflowEnabled === false`,
- *       resolved via a single entity-project lookup (`loadEntityProject`
- *       switching on entityType).
+ *   (2) `project.reviewWorkflowEnabled === false` — per-project opt-out
+ *       (D-17/D-18). Resolved via a single entity-project lookup (new
+ *       `loadEntityProject` helper switching on entityType).
  *
- * Both short-circuits return `null` so the gate behaves exactly as it does
- * for an ungated target state. Existing PENDING reviews stay in the DB —
- * the design preserves them silently when either flag is off so re-enabling
- * the feature resurfaces them.
+ * Both short-circuits return `null` so the gate behaves exactly as it does for
+ * an ungated target state. Existing PENDING reviews stay in the DB (D-20
+ * "preserved silently"); the caller continues without throwing.
  *
  * Pattern mirrors lib/services/reviewGate.test.ts createMockTx, extended to
  * include findUnique stubs for the three entity finders (repositoryCases,
- * sessions, testRuns) plus an `appConfig.findUnique` stub for the new
- * system-level read.
+ * sessions, testRuns).
  */
 
-function createMockTx(
-  opts: {
-    workflowsResult?: { requiresReview: boolean } | null;
-    reviewRequestResult?: { id: string } | null;
-    entityProjectResult?: {
-      project: { reviewWorkflowEnabled: boolean };
-    } | null;
-    /**
-     * System-level AppConfig row. Defaults to `{ value: true }` (feature on).
-     * Pass `null` to simulate a missing row (default-on per the helper's
-     * contract); pass `{ value: false }` to simulate the kill switch.
-     */
-    appConfigResult?: { value: boolean } | null;
-  } = {}
-) {
+function createMockTx(opts: {
+  workflowsResult?: { requiresReview: boolean } | null;
+  reviewRequestResult?: { id: string } | null;
+  entityProjectResult?: { project: { reviewWorkflowEnabled: boolean } } | null;
+} = {}) {
   return {
     workflows: {
       findUnique: vi.fn().mockResolvedValue(opts.workflowsResult ?? null),
@@ -60,42 +48,36 @@ function createMockTx(
     testRuns: {
       findUnique: vi.fn().mockResolvedValue(opts.entityProjectResult ?? null),
     },
-    appConfig: {
-      findUnique: vi
-        .fn()
-        .mockResolvedValue(
-          opts.appConfigResult === undefined
-            ? { value: true }
-            : opts.appConfigResult
-        ),
-    },
   } as any;
 }
 
-describe("assertReviewGatePasses — system kill switch (AppConfig)", () => {
-  it("short-circuits to null when review_feature_enabled value is false, with NO downstream DB calls", async () => {
+describe("assertReviewGatePasses — env-var system kill switch", () => {
+  beforeEach(() => {
+    // Default: env-var unset. Each test stubs as needed.
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("short-circuits to null when TESTPLANIT_REVIEW_FEATURE_ENABLED === 'false', with NO DB calls", async () => {
+    vi.stubEnv("TESTPLANIT_REVIEW_FEATURE_ENABLED", "false");
     const tx = createMockTx({
       workflowsResult: { requiresReview: true },
       reviewRequestResult: null,
       entityProjectResult: { project: { reviewWorkflowEnabled: true } },
-      appConfigResult: { value: false },
     });
 
     const result = await assertReviewGatePasses(
       tx,
       ReviewEntityType.CASE,
       1,
-      10
+      10,
     );
 
     expect(result).toBeNull();
-    // System read is the *first* check — entity/workflow/reviewRequest queries
-    // must not fire when the kill switch is active.
-    expect(tx.appConfig.findUnique).toHaveBeenCalledTimes(1);
-    expect(tx.appConfig.findUnique).toHaveBeenCalledWith({
-      where: { key: "review_feature_enabled" },
-      select: { value: true },
-    });
+    // Proves the env-var guard is the *first* check — no entity, workflow, or
+    // review-request queries fired before short-circuit returned null.
     expect(tx.repositoryCases.findUnique).not.toHaveBeenCalled();
     expect(tx.sessions.findUnique).not.toHaveBeenCalled();
     expect(tx.testRuns.findUnique).not.toHaveBeenCalled();
@@ -103,45 +85,68 @@ describe("assertReviewGatePasses — system kill switch (AppConfig)", () => {
     expect(tx.reviewRequest.findFirst).not.toHaveBeenCalled();
   });
 
-  it("treats a missing AppConfig row as enabled (proceeds past system guard)", async () => {
+  it("treats undefined env-var as enabled (proceeds past env-var guard)", async () => {
+    vi.stubEnv("TESTPLANIT_REVIEW_FEATURE_ENABLED", undefined);
     const tx = createMockTx({
       workflowsResult: { requiresReview: false },
       entityProjectResult: { project: { reviewWorkflowEnabled: true } },
-      appConfigResult: null,
     });
 
     const result = await assertReviewGatePasses(
       tx,
       ReviewEntityType.CASE,
       1,
-      10
+      10,
     );
 
     expect(result).toBeNull();
-    // Entity-project lookup ran — proves the system guard did NOT short-circuit.
+    // Entity-project lookup ran (proves env-var guard did NOT short-circuit).
     expect(tx.repositoryCases.findUnique).toHaveBeenCalledTimes(1);
   });
 
-  it("treats value === true as enabled (proceeds past system guard)", async () => {
+  it("treats 'true' env-var as enabled (proceeds past env-var guard)", async () => {
+    vi.stubEnv("TESTPLANIT_REVIEW_FEATURE_ENABLED", "true");
     const tx = createMockTx({
       workflowsResult: { requiresReview: false },
       entityProjectResult: { project: { reviewWorkflowEnabled: true } },
-      appConfigResult: { value: true },
     });
 
     const result = await assertReviewGatePasses(
       tx,
       ReviewEntityType.CASE,
       1,
-      10
+      10,
     );
 
     expect(result).toBeNull();
     expect(tx.repositoryCases.findUnique).toHaveBeenCalledTimes(1);
+  });
+
+  it("treats unrelated env-var values ('0', 'no') as enabled — only the literal 'false' disables", async () => {
+    for (const value of ["0", "no", ""]) {
+      vi.stubEnv("TESTPLANIT_REVIEW_FEATURE_ENABLED", value);
+      const tx = createMockTx({
+        workflowsResult: { requiresReview: false },
+        entityProjectResult: { project: { reviewWorkflowEnabled: true } },
+      });
+
+      await assertReviewGatePasses(tx, ReviewEntityType.CASE, 1, 10);
+
+      expect(tx.repositoryCases.findUnique).toHaveBeenCalledTimes(1);
+      vi.unstubAllEnvs();
+    }
   });
 });
 
 describe("assertReviewGatePasses — per-project feature flag", () => {
+  beforeEach(() => {
+    vi.stubEnv("TESTPLANIT_REVIEW_FEATURE_ENABLED", undefined);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("short-circuits to null when entity's project.reviewWorkflowEnabled === false (only entity lookup fires)", async () => {
     const tx = createMockTx({
       workflowsResult: { requiresReview: true },
@@ -153,7 +158,7 @@ describe("assertReviewGatePasses — per-project feature flag", () => {
       tx,
       ReviewEntityType.CASE,
       42,
-      10
+      10,
     );
 
     expect(result).toBeNull();
@@ -212,7 +217,7 @@ describe("assertReviewGatePasses — per-project feature flag", () => {
       tx,
       ReviewEntityType.CASE,
       1,
-      10
+      10,
     );
 
     expect(result).toEqual({ approvedRequestId: "req-feature-on" });
@@ -236,7 +241,7 @@ describe("assertReviewGatePasses — per-project feature flag", () => {
       tx,
       ReviewEntityType.CASE,
       999,
-      10
+      10,
     );
 
     expect(result).toBeNull();
@@ -245,23 +250,26 @@ describe("assertReviewGatePasses — per-project feature flag", () => {
   });
 });
 
-describe("assertReviewGatePasses — system flag precedes per-project flag", () => {
-  it("system kill switch short-circuits even when per-project flag is true (no entity lookup)", async () => {
+describe("assertReviewGatePasses — env-var precedes per-project flag", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("env-var 'false' short-circuits even when per-project flag is true (no entity lookup)", async () => {
+    vi.stubEnv("TESTPLANIT_REVIEW_FEATURE_ENABLED", "false");
     const tx = createMockTx({
       workflowsResult: { requiresReview: true },
       entityProjectResult: { project: { reviewWorkflowEnabled: true } },
-      appConfigResult: { value: false },
     });
 
     const result = await assertReviewGatePasses(
       tx,
       ReviewEntityType.CASE,
       1,
-      10
+      10,
     );
 
     expect(result).toBeNull();
-    expect(tx.appConfig.findUnique).toHaveBeenCalledTimes(1);
     expect(tx.repositoryCases.findUnique).not.toHaveBeenCalled();
     expect(tx.workflows.findUnique).not.toHaveBeenCalled();
   });

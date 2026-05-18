@@ -3,7 +3,7 @@
 import { JSONContent } from "@tiptap/core";
 import { MessageSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   createComment,
   deleteComment,
@@ -19,18 +19,6 @@ interface Comment {
   createdAt: Date;
   updatedAt: Date;
   isEdited: boolean;
-  // Hybrid-comments (D-21 follow-up): GENERAL is the default; REVIEW_REQUEST
-  // and REVIEW_DECISION rows carry a reviewRequest back-pointer so the badge
-  // renderer can resolve the decision outcome.
-  type?: "GENERAL" | "REVIEW_REQUEST" | "REVIEW_DECISION";
-  reviewRequest?: {
-    status:
-      | "PENDING"
-      | "APPROVED"
-      | "CHANGES_REQUESTED"
-      | "REJECTED"
-      | "CANCELLED";
-  } | null;
   creator: {
     id: string;
     name: string | null;
@@ -62,16 +50,6 @@ export function CommentList({
   const [comments, setComments] = useState<Comment[]>(initialComments);
   const [isCreating, setIsCreating] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
-
-  // Sync local list with `initialComments` whenever the parent useQuery
-  // refetches (post-mutation, paired-Comment landing, etc). Without this
-  // the list is stuck at the first-render snapshot — optimistic CRUD
-  // mutations would still work, but a fresh row from another submit path
-  // (e.g. the review-request Sheet writing a paired REVIEW_REQUEST
-  // Comment) would never appear without a manual page reload.
-  useEffect(() => {
-    setComments(initialComments);
-  }, [initialComments]);
 
   const handleCreate = async (content: JSONContent) => {
     setIsCreating(true);

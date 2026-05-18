@@ -353,8 +353,7 @@
         "edit_results_duration": "编辑结果持续时间",
         "project_docs_default": "项目文档默认",
         "notificationSettings": "通知全局设置",
-        "elasticsearch_replicas": "Elasticsearch 副本",
-        "review_feature_enabled": "评论功能已启用"
+        "elasticsearch_replicas": "Elasticsearch 副本"
       },
       "options": {
         "label": "标签",
@@ -2859,12 +2858,11 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "请求对 <assignee></assignee> 的过渡 <fromState></fromState> → <toState></toState> <ago></ago> 进行审核。",
+      "pendingMessage": "审核请求于 {assignee}. {ago} 年前提出。",
       "changesRequestedTitle": "请求更改",
       "rejectedTitle": "审查被拒绝",
       "cancelRequest": "取消请求",
-      "requestAgain": "再次请求复审",
-      "decidedBy": "由……决定"
+      "requestAgain": "再次请求复审"
     },
     "cancel": {
       "title": "取消此审核请求？",
@@ -2880,25 +2878,13 @@
       "iconAria": "{count, plural, =0 {待审阅收件箱} one {待审阅收件箱，# 待审阅收件箱} other {待审阅收件箱，# 待审阅收件箱}}",
       "pageTitle": "评论",
       "pageDescription": "分配给您的待审核请求（直接分配给您或通过您所担任的角色分配给您）。",
-      "pageDescriptionDecided": "审核您已决定的请求。",
-      "tabPending": "待办的",
-      "tabDecided": "已决定",
-      "emptyDecided": "您尚未决定撰写任何评论。",
       "empty": "没有待审核的评论。您已全部完成审核。",
       "featureDisabled": "审核工作流程功能目前已禁用。待审核的审核内容将被保留，并在该功能重新启用后重新显示。",
       "columnEntity": "实体",
       "columnProject": "项目",
       "columnRequester": "请求者",
       "columnTransition": "过渡",
-      "columnTransitionFrom": "从",
-      "columnTransitionTo": "到",
       "columnRequestedAt": "已请求",
-      "columnDecidedAt": "决定于",
-      "columnStatus": "地位",
-      "columnActions": "行动",
-      "actionApprove": "批准",
-      "actionRequestChanges": "请求更改",
-      "actionReject": "拒绝",
       "filterEntityType": "实体类型",
       "filterProject": "项目",
       "filterAllEntityTypes": "所有实体类型",
@@ -2910,7 +2896,7 @@
     "requester": {
       "openButton": "请求审核",
       "sheetTitle": "请求审核",
-      "sheetDescription": "转换到目标状态前，请先请求批准。",
+      "sheetDescription": "在过渡到目标状态之前，请将此实体发送给我们进行审核。",
       "assigneeLabel": "受让人",
       "assigneePlaceholder": "选择用户或角色",
       "usersHoldRole": "{count, plural, one {# 用户拥有此角色} other {# 用户拥有此角色}}",
@@ -2923,15 +2909,14 @@
       "targetStateRequired": "选择目标州。",
       "submitButton": "请求审核",
       "submitSuccess": "审核请求已创建。",
-      "alreadyPendingError": "目前已有针对该实体的审查正在进行中。",
-      "cannotSelfAssign": "你不能给自己分配评论；请选择其他用户或角色。"
+      "alreadyPendingError": "目前已有针对该实体的审查正在进行中。"
     },
     "reviewer": {
       "approve": "批准",
       "requestChanges": "请求更改",
       "reject": "拒绝",
       "approveConfirmTitle": "批准此审核请求？",
-      "approveConfirmDescription": "批准后，将允许 <requester></requester> 过渡到 <name></name> 到 <state></state>。",
+      "approveConfirmDescription": "批准后，请求者可以将此 {entityType} 过渡到 {targetStateName}。",
       "approvalNoteLabel": "批准说明",
       "approvalNotePlaceholder": "可为请求者添加可选备注（显示在批准信息旁边）。",
       "requestChangesTitle": "请求更改",
@@ -2939,7 +2924,7 @@
       "requestChangesCommentLabel": "评论",
       "requestChangesCommentPlaceholder": "解释需要做出哪些改变。",
       "rejectTitle": "拒绝此审核请求？",
-      "rejectDescription": "Rejecting blocks <requester></requester> from transitioning <name></name> to <state></state>. A new review request must be created to retry.",
+      "rejectDescription": "拒绝请求会阻止请求者将此 {entityType} 转换为 {targetStateName}。必须创建新的审核请求才能重试。",
       "rejectCommentLabel": "评论",
       "rejectCommentPlaceholder": "请解释您拒绝此请求的原因。",
       "commentRequired": "必须发表评论。",
@@ -4129,16 +4114,16 @@
     "workflows": {
       "description": "管理测试用例工作流程",
       "systemFeatureCard": {
-        "title": "审查工作流程",
-        "description": "通过限制工作流程转换直至获得批准来强制执行审核。启用此功能后，项目可以通过其高级设置单独选择启用或禁用。禁用此功能可阻止工作流程审批限制。",
-        "toggleAriaLabel": "切换审核工作流程功能",
-        "adminOnlyNotice": "只有管理员才能更改此设置。",
-        "updateSuccessEnabled": "已启用审核工作流程。",
-        "updateSuccessDisabled": "审核工作流程已禁用。",
-        "updateError": "更新审核工作流程设置失败。请稍后再试。"
+        "title": "审核工作流程功能",
+        "description": "系统级审核批准功能开关。启用后，项目可以通过其高级设置单独选择启用或禁用此功能。",
+        "stateEnabled": "已启用",
+        "stateDisabled": "已禁用",
+        "operatorNotePrefix": "通过环境变量设置",
+        "operatorNoteSuffix": "需要重启系统才能使更改生效。"
       },
       "editWorkflow": {
-        "requiresReviewLabel": "需要审核"
+        "requiresReviewLabel": "需要审核",
+        "requiresReviewFeatureDisabled": "系统级已禁用审阅工作流程功能。请切换项目的“高级设置”或设置 TESTPLANIT_REVIEW_FEATURE_ENABLED 以重新启用该功能。"
       },
       "add": {
         "button": "添加工作流",
@@ -5604,8 +5589,7 @@
       "isDefault": "## 默认值\n指示此工作流程是否为项目的默认工作流程。\n\n- 默认工作流程已预先选中，用于新的测试运行、会话和自动化。",
       "isEnabled": "## 已启用\n指示此工作流程是否已启用。",
       "isActive": "## 活动\n指示此工作流状态是否处于活动状态且可供使用。\n\n- 更新测试运行、会话或自动化时，可以选择活动工作流。\n- 非活动工作流将隐藏，但会保留在现有项中。",
-      "projects": "## 项目\n指示可以使用此工作流程的项目。",
-      "requiresReview": "## 需要审核\n启用后，案例、测试运行或会话进入此状态需要经过审核请求并获得批准。如果没有获得批准的请求，则转换将被阻止。\n\n- 当系统级功能关闭时，现有待审核的请求将静默保留，并在重新启用后重新出现。\n- 当测试人员从实体详情页面点击“请求审核”时，系统将选择审核人。\n\n如果系统级功能已禁用，则此开关将被锁定。要重新启用此功能，请从上方的“审核工作流”卡片中操作。"
+      "projects": "## 项目\n指示可以使用此工作流程的项目。"
     },
     "testResult": {
       "status": "## 状态\n选择测试执行的总体状态。您选择的状态可能会影响项目指标和报告。",
@@ -6883,16 +6867,6 @@
     "mentions": {
       "notAMember": "非项目成员",
       "noUsersFound": "未找到用户"
-    },
-    "type": {
-      "reviewRequest": "审查请求",
-      "reviewDecision": {
-        "approved": "得到正式认可的",
-        "changesRequested": "请求更改",
-        "rejected": "已拒绝",
-        "cancelled": "取消",
-        "generic": "复核决定"
-      }
     }
   },
   "Trial": {
@@ -6932,7 +6906,7 @@
       "footerNewCount": "{newCount, plural, one {# 新标签} other {# 新标签}} 将创建",
       "newTagsPopoverTitle": "要创建的新标签",
       "applying": "正在申请……",
-      "applySuccess": "{tagCount, plural, one {# 标签} other {# 标签}} 应用于 {entityCount, plural, one {# 实体} other {# 实体集}}",
+      "applySuccess": "{tagCount, plural, one {# tag} other {# tags}} applied to {entityCount, plural, one {# entity} other {# entities}}",
       "applySuccessNewTags": "{tagCount, plural, one {# tag} other {# tags}} applied to {entityCount, plural, one {# entity} other {# entities}}, {newCount, plural, one {# new tag} other {# new tags}} created",
       "applyError": "标签应用失败，请重试。",
       "suggestedTags": "建议标签",

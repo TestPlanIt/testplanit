@@ -62,7 +62,7 @@ export function AssigneeCombobox({
         projectId,
         query,
         page,
-        pageSize
+        pageSize,
       );
 
       const userOptions: AssigneeOption[] = userPage.results.map((u) => ({
@@ -83,7 +83,9 @@ export function AssigneeCombobox({
               .filter((r) =>
                 query.trim().length === 0
                   ? true
-                  : r.name.toLowerCase().includes(query.trim().toLowerCase())
+                  : r.name
+                      .toLowerCase()
+                      .includes(query.trim().toLowerCase()),
               )
               .map((r) => ({
                 kind: "role",
@@ -99,7 +101,7 @@ export function AssigneeCombobox({
         total: userPage.total + (page === 0 ? roleOptions.length : 0),
       };
     },
-    [projectId, rolesData]
+    [projectId, rolesData],
   );
 
   return (
@@ -149,12 +151,7 @@ function UserOptionRow({
     >
       <span data-kind-icon="user" className="mr-2 inline-flex h-5 w-5">
         {option.image ? (
-          <Avatar
-            image={option.image}
-            alt={option.name}
-            width={20}
-            height={20}
-          />
+          <Avatar image={option.image} alt={option.name} width={20} height={20} />
         ) : (
           <UserIcon className="h-5 w-5" />
         )}

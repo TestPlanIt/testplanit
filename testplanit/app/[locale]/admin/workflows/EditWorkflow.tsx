@@ -23,6 +23,7 @@ import { FieldIconPicker } from "@/components/FieldIconPicker";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -451,30 +452,33 @@ export function EditWorkflows({
                 </FormItem>
               )}
             />
-            {!reviewFeatureDisabled && (
-              <FormField
-                control={form.control}
-                name="requiresReview"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex items-center space-x-2">
-                      <FormControl>
-                        <Switch
-                          data-testid="requires-review-switch"
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormLabel className="flex items-center">
-                        {t("editWorkflow.requiresReviewLabel")}
-                        <HelpPopover helpKey="workflow.requiresReview" />
-                      </FormLabel>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-            )}
+            <FormField
+              control={form.control}
+              name="requiresReview"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center space-x-2">
+                    <FormControl>
+                      <Switch
+                        data-testid="requires-review-switch"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={reviewFeatureDisabled}
+                      />
+                    </FormControl>
+                    <FormLabel className="flex items-center">
+                      {t("editWorkflow.requiresReviewLabel")}
+                    </FormLabel>
+                    <FormMessage />
+                  </div>
+                  {reviewFeatureDisabled && (
+                    <FormDescription>
+                      {t("editWorkflow.requiresReviewFeatureDisabled")}
+                    </FormDescription>
+                  )}
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}

@@ -78,7 +78,7 @@ export function DeleteWorkflows({
                 {t.rich("delete.confirmMessage", {
                   name: workflows.name,
                   strong: (chunks) => (
-                    <span className="font-bold [overflow-wrap:anywhere]">
+                    <span className="whitespace-nowrap font-bold">
                       {chunks}
                     </span>
                   ),

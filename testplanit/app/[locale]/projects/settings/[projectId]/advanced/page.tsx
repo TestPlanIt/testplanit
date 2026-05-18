@@ -29,7 +29,7 @@ export default function AdvancedPage() {
     },
     {
       enabled: status === "authenticated" && Number.isFinite(projectId),
-    }
+    },
   );
 
   const updateProject = useUpdateProjects();
@@ -67,7 +67,7 @@ export default function AdvancedPage() {
       toast.success(
         enabled
           ? t("reviewWorkflow.enabledToast")
-          : t("reviewWorkflow.disabledToast")
+          : t("reviewWorkflow.disabledToast"),
       );
     } catch {
       toast.error(t("reviewWorkflow.saveError"));

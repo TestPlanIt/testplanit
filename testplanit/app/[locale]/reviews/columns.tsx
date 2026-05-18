@@ -1,88 +1,47 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { ReviewRequest, ReviewStatus } from "@prisma/client";
+import type { ReviewRequest } from "@prisma/client";
 import type { ColumnDef } from "@tanstack/react-table";
+import { formatDistanceToNow } from "date-fns";
 import {
   ArrowRight,
-  Ban,
-  CheckCircle2,
-  MessageCircleWarning,
-  XCircle,
+  FileCheck,
+  ListChecks,
+  Play,
+  Compass,
 } from "lucide-react";
 import { useMemo } from "react";
-
-import { RelativeTimeTooltip } from "~/components/RelativeTimeTooltip";
-import { ProjectNameDisplay } from "~/components/search/ProjectNameDisplay";
-import { SessionNameDisplay } from "~/components/SessionNameDisplay";
-import { TestRunNameDisplay } from "~/components/TestRunNameDisplay";
-import { CaseDisplay } from "~/components/tables/CaseDisplay";
-import { UserNameCell } from "~/components/tables/UserNameCell";
-import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
-import type { IconName } from "~/types/globals";
 
 /**
  * Local alias for `useTranslations()`-returned function. Typed as a plain
  * key-to-string function so this hook bypasses the next-intl
  * `NamespacedMessageKeys` union — its accumulated phase-2 size has
- * crossed the TS complexity ceiling (TS2590).
+ * crossed the TS complexity ceiling (TS2590), and tight key-typing here
+ * would either fail to compile or force every caller to pass `{}` as a
+ * second arg. See `.planning/phases/02-review-workflow-ux-requester-reviewer/deferred-items.md`
+ * for the documented mitigation.
  */
 type TranslateFn = (key: string, params?: Record<string, unknown>) => string;
 
 /**
- * Workflow-state shape `WorkflowStateDisplay` expects. The inbox fetches it
- * via the ReviewRequest include on `fromState` and `toState`.
- */
-interface InboxWorkflowState {
-  id: number;
-  name: string;
-  icon: { name: IconName } | null;
-  color: { value: string } | null;
-}
-
-/**
- * Cached entity-name shapes — keyed by id so the column cells can resolve
- * polymorphic entity refs (CASE/RUN/SESSION) into the right display
- * component without forcing the ReviewRequest query to carry the union.
- */
-export interface InboxCaseRow {
-  id: number;
-  name: string;
-  source: import("@prisma/client").RepositoryCaseSource;
-  automated?: boolean;
-  isDeleted?: boolean;
-}
-
-export interface InboxTestRunRow {
-  id: number;
-  name: string;
-  isDeleted?: boolean;
-}
-
-export interface InboxSessionRow {
-  id: number;
-  name: string;
-  isDeleted?: boolean;
-}
-
-/**
  * Shape of a row in the /reviews inbox page. Mirrors the `include` shipped
  * to useFindManyReviewRequest plus the canonical ReviewRequest fields the
- * generated Prisma type exposes.
+ * generated Prisma type exposes. The Plan keeps the type local to the page
+ * (not exported to the public API surface) — the inbox is the only consumer.
  */
 export interface ExtendedReviewRequest extends ReviewRequest {
-  project: { id: number; name: string; iconUrl: string | null } | null;
+  project: { id: number; name: string } | null;
   requestedBy: {
     id: string;
     name: string | null;
     image: string | null;
   } | null;
-  fromState: InboxWorkflowState | null;
-  toState: InboxWorkflowState | null;
+  fromState: { id: number; name: string } | null;
+  toState: { id: number; name: string } | null;
   assigneeUser: {
     id: string;
     name: string | null;
@@ -92,397 +51,142 @@ export interface ExtendedReviewRequest extends ReviewRequest {
 }
 
 /**
- * `DataTable` requires every row to carry an `id` and `name`. The
- * ReviewRequest id is already a string; `name` is synthesized from the
- * row at the page level (e.g. "CASE #106177") so DataTable's internal
- * selectedItemsForDrag / scroll-to-row plumbing has a stable label.
+ * Lucide icon per entity type. Reuses icons that already render in the app
+ * (PendingReviewBadge uses FileCheck-family iconography, NotificationBell uses
+ * Inbox, etc.). The icon-only column maps cleanly onto D-10's "Entity (name +
+ * type icon)" spec.
  */
-export type InboxTableRow = ExtendedReviewRequest & { name: string };
-
-/**
- * Callbacks the inbox table wires into each row's inline action buttons.
- * The table owns the dialog state — these callbacks just record which row
- * the reviewer is acting on so the right dialog opens with the right id.
- */
-export interface InboxActionHandlers {
-  onApprove: (row: ExtendedReviewRequest) => void;
-  onRequestChanges: (row: ExtendedReviewRequest) => void;
-  onReject: (row: ExtendedReviewRequest) => void;
-}
-
-/**
- * Inbox tab mode. `pending` renders the queue the reviewer still needs to
- * act on (Actions column visible); `decided` renders the reviewer's
- * history (Status column with the outcome badge, Decided-at timestamp,
- * no Actions column).
- */
-export type InboxView = "pending" | "decided";
-
-interface UseColumnsArgs {
-  t: TranslateFn;
-  view: InboxView;
-  /** Required when `view === 'pending'`. Ignored on the Decided tab. */
-  actions?: InboxActionHandlers;
-  caseById: Map<number, InboxCaseRow>;
-  testRunById: Map<number, InboxTestRunRow>;
-  sessionById: Map<number, InboxSessionRow>;
-}
-
-/**
- * Outcome-badge content for the Decided tab. Matches the badge treatment
- * used in `CommentItem` for `REVIEW_DECISION` so the two surfaces read
- * consistently.
- */
-function DecisionStatusBadge({
-  status,
-  t,
+function EntityTypeIcon({
+  entityType,
 }: {
-  status: ReviewStatus | null;
-  t: TranslateFn;
+  entityType: "CASE" | "RUN" | "SESSION";
 }) {
-  // Filled-background badges so the outcome color is the primary visual
-  // signal (success / warning / destructive / neutral), with white text +
-  // icon for readable contrast across light + dark themes. Tokens
-  // `success` and `warning` come from the project Tailwind config; only
-  // `success` has a paired `success-foreground`, so the warning row falls
-  // back to plain `text-white`.
-  if (status === "APPROVED") {
-    return (
-      <Badge className="gap-1 bg-success text-success-foreground border-success hover:bg-success/90">
-        <CheckCircle2 className="h-3 w-3 shrink-0" />
-        {t("comments.type.reviewDecision.approved")}
-      </Badge>
-    );
+  if (entityType === "CASE") {
+    return <FileCheck className="h-4 w-4" aria-hidden="true" />;
   }
-  if (status === "CHANGES_REQUESTED") {
-    return (
-      <Badge className="gap-1 bg-warning text-white border-warning hover:bg-warning/90">
-        <MessageCircleWarning className="h-3 w-3 shrink-0" />
-        {t("comments.type.reviewDecision.changesRequested")}
-      </Badge>
-    );
+  if (entityType === "RUN") {
+    return <Play className="h-4 w-4" aria-hidden="true" />;
   }
-  if (status === "REJECTED") {
-    return (
-      <Badge variant="destructive" className="gap-1">
-        <XCircle className="h-3 w-3 shrink-0" />
-        {t("comments.type.reviewDecision.rejected")}
-      </Badge>
-    );
-  }
-  if (status === "CANCELLED") {
-    return (
-      <Badge className="gap-1 bg-muted-foreground text-background border-muted-foreground hover:bg-muted-foreground/90">
-        <Ban className="h-3 w-3 shrink-0" />
-        {t("comments.type.reviewDecision.cancelled")}
-      </Badge>
-    );
-  }
-  return <span className="text-muted-foreground">-</span>;
+  return <Compass className="h-4 w-4" aria-hidden="true" />;
 }
 
-/**
- * Row action button — small ghost-variant icon button with a tooltip.
- */
-function ActionIconButton({
-  label,
-  testId,
-  icon: Icon,
-  onClick,
-  iconClassName,
-}: {
-  label: string;
-  testId: string;
-  icon: typeof CheckCircle2;
-  onClick: (e: React.MouseEvent) => void;
-  iconClassName?: string;
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={(e) => {
-            // DataTable rows can fire `onTestCaseClick` on row click. Stop
-            // here so inline decision actions never bubble into row-level
-            // navigation.
-            e.stopPropagation();
-            onClick(e);
-          }}
-          data-testid={testId}
-          aria-label={label}
-        >
-          <Icon className={iconClassName ?? "h-4 w-4"} />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
-  );
-}
-
-export const useColumns = ({
-  t,
-  view,
-  actions,
-  caseById,
-  testRunById,
-  sessionById,
-}: UseColumnsArgs): ColumnDef<InboxTableRow>[] => {
-  return useMemo(() => {
-    const baseColumns: ColumnDef<InboxTableRow>[] = [
+export const useColumns = (
+  t: TranslateFn,
+): ColumnDef<ExtendedReviewRequest>[] => {
+  return useMemo(
+    () => [
       {
         id: "entity",
-        accessorKey: "entityId",
+        accessorKey: "entityType",
         header: t("reviews.inbox.columnEntity"),
         enableSorting: true,
-        size: 440,
-        minSize: 320,
+        size: 220,
         cell: ({ row }) => {
           const entityType = row.original.entityType as
             | "CASE"
             | "RUN"
             | "SESSION";
-          const projectId = row.original.projectId;
           const entityId = row.original.entityId;
-          if (entityType === "CASE") {
-            const c = caseById.get(entityId);
-            if (!c) {
-              return (
-                <span className="font-mono text-xs text-muted-foreground">{`CASE #${entityId}`}</span>
-              );
-            }
-            return (
-              <CaseDisplay
-                id={c.id}
-                name={c.name}
-                source={c.source}
-                automated={c.automated}
-                isDeleted={c.isDeleted}
-                link={`/projects/repository/${projectId}/${c.id}`}
-                size="medium"
-                maxLines={2}
-              />
-            );
-          }
-          if (entityType === "RUN") {
-            const r = testRunById.get(entityId);
-            return (
-              <TestRunNameDisplay
-                testRun={r ?? { id: entityId }}
-                projectId={projectId}
-                showIcon
-              />
-            );
-          }
-          const s = sessionById.get(entityId);
           return (
-            <SessionNameDisplay session={s ?? { id: entityId }} showIcon />
+            <div
+              className="flex items-center gap-2"
+              data-testid="reviews-inbox-row-entity"
+            >
+              <EntityTypeIcon entityType={entityType} />
+              <span
+                className="font-mono text-xs text-muted-foreground"
+                data-testid="reviews-inbox-row-entity-type"
+              >
+                {entityType}
+              </span>
+              <span className="text-sm">{`#${entityId}`}</span>
+            </div>
           );
         },
       },
       {
         id: "project",
-        accessorKey: "projectId",
+        accessorKey: "project",
         header: t("reviews.inbox.columnProject"),
         enableSorting: true,
-        size: 220,
+        size: 160,
         cell: ({ row }) => {
           const project = row.original.project;
-          if (!project) {
-            return <span className="text-muted-foreground">-</span>;
-          }
-          return (
-            <ProjectNameDisplay
-              projectName={project.name}
-              projectId={project.id}
-              iconUrl={project.iconUrl}
-              showLink
-            />
+          return project?.name ? (
+            <span className="text-sm">{project.name}</span>
+          ) : (
+            <span className="text-muted-foreground">-</span>
           );
         },
       },
       {
         id: "requester",
-        accessorKey: "requestedByUserId",
+        accessorKey: "requestedBy",
         header: t("reviews.inbox.columnRequester"),
         enableSorting: true,
-        size: 220,
+        size: 180,
         cell: ({ row }) => {
           const requester = row.original.requestedBy;
           if (!requester) {
             return <span className="text-muted-foreground">-</span>;
           }
           return (
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-secondary text-secondary-foreground border border-muted-foreground/50 cursor-pointer hover:bg-secondary/80 transition-colors [&_*]:cursor-pointer [&_a]:no-underline">
-              <UserNameCell userId={requester.id} shrinkLink />
+            <span className="text-sm font-medium">
+              {requester.name ?? requester.id}
             </span>
           );
         },
       },
       {
-        id: "transitionFrom",
-        accessorKey: "fromStateId",
-        header: t("reviews.inbox.columnTransitionFrom"),
-        enableSorting: true,
-        size: 100,
-        maxSize: 140,
-        cell: ({ row }) => (
-          // `data-transition-inner` is the sentinel the page-level wrapper
-          // keys on to hide the vertical column-divider lines that flank
-          // the arrow column.
-          //
-          // The `[&>span]:!shrink [&>span]:!min-w-0` overrides are how we
-          // force WorkflowStateDisplay's outer `shrink-0` span to actually
-          // shrink within the cell so the inner `truncate` on the name
-          // span engages — without forking that shared component.
-          <div
-            data-transition-inner
-            className="flex min-w-0 max-w-full overflow-hidden [&>span]:!shrink [&>span]:!min-w-0"
-          >
-            <WorkflowStateDisplay
-              state={row.original.fromState as any}
-              size="sm"
-            />
-          </div>
-        ),
-      },
-      {
-        id: "transitionArrow",
-        // No header — purely visual separator between from/to columns.
-        header: () => null,
-        enableSorting: false,
-        enableHiding: false,
-        size: 40,
-        maxSize: 40,
-        cell: () => (
-          <div data-transition-inner>
-            <ArrowRight
-              className="h-4 w-4 text-muted-foreground"
-              aria-hidden="true"
-            />
-          </div>
-        ),
-      },
-      {
-        id: "transitionTo",
+        id: "transition",
         accessorKey: "toStateId",
-        header: t("reviews.inbox.columnTransitionTo"),
+        header: t("reviews.inbox.columnTransition"),
         enableSorting: true,
-        size: 100,
-        maxSize: 140,
-        cell: ({ row }) => (
-          <div className="flex min-w-0 max-w-full overflow-hidden [&>span]:!shrink [&>span]:!min-w-0">
-            <WorkflowStateDisplay
-              state={row.original.toState as any}
-              size="sm"
-            />
-          </div>
-        ),
+        size: 240,
+        cell: ({ row }) => {
+          const fromState = row.original.fromState;
+          const toState = row.original.toState;
+          return (
+            <div className="flex items-center gap-2 text-sm">
+              <span>{fromState?.name ?? "?"}</span>
+              <ArrowRight
+                className="h-3.5 w-3.5 text-muted-foreground"
+                aria-hidden="true"
+              />
+              <Badge variant="secondary" className="font-normal">
+                <ListChecks className="h-3 w-3" aria-hidden="true" />
+                {toState?.name ?? "?"}
+              </Badge>
+            </div>
+          );
+        },
       },
-    ];
-
-    // Pending tab → relative `Requested at` + Actions column.
-    // Decided tab → relative `Decided at` + outcome Status badge.
-    const timestampColumn: ColumnDef<InboxTableRow> =
-      view === "pending"
-        ? {
-            id: "requestedAt",
-            accessorKey: "createdAt",
-            header: t("reviews.inbox.columnRequestedAt"),
-            enableSorting: true,
-            size: 160,
-            cell: ({ getValue }) => {
-              const value = getValue() as Date | string | null;
-              if (!value) {
-                return <span className="text-muted-foreground">-</span>;
-              }
-              // Truncate with ellipsis instead of wrapping when the
-              // column is narrow — RelativeTimeTooltip's tooltip still
-              // surfaces the absolute timestamp on hover, so the
-              // ellipsis doesn't hide any actionable info.
-              return (
-                <div className="text-sm text-muted-foreground truncate">
-                  <RelativeTimeTooltip
-                    date={value}
-                    className="truncate block"
-                  />
-                </div>
-              );
-            },
+      {
+        id: "requestedAt",
+        accessorKey: "createdAt",
+        header: t("reviews.inbox.columnRequestedAt"),
+        enableSorting: true,
+        size: 180,
+        cell: ({ getValue }) => {
+          const value = getValue() as Date | string | null;
+          if (!value) {
+            return <span className="text-muted-foreground">-</span>;
           }
-        : {
-            id: "decidedAt",
-            accessorKey: "decidedAt",
-            header: t("reviews.inbox.columnDecidedAt"),
-            enableSorting: true,
-            size: 160,
-            cell: ({ getValue }) => {
-              const value = getValue() as Date | string | null;
-              if (!value) {
-                return <span className="text-muted-foreground">-</span>;
-              }
-              return (
-                <div className="text-sm text-muted-foreground truncate">
-                  <RelativeTimeTooltip
-                    date={value}
-                    className="truncate block"
-                  />
-                </div>
-              );
-            },
-          };
-
-    const tailColumn: ColumnDef<InboxTableRow> =
-      view === "pending"
-        ? {
-            id: "actions",
-            header: t("reviews.inbox.columnActions"),
-            enableSorting: false,
-            enableHiding: false,
-            size: 122,
-            cell: ({ row }) => (
-              <div
-                className="flex items-center gap-1"
-                data-testid="reviews-inbox-row-actions"
-              >
-                <ActionIconButton
-                  label={t("reviews.inbox.actionApprove")}
-                  testId={`reviews-inbox-approve-${row.original.id}`}
-                  icon={CheckCircle2}
-                  onClick={() => actions?.onApprove(row.original)}
-                  iconClassName="h-4 w-4 text-emerald-500"
-                />
-                <ActionIconButton
-                  label={t("reviews.inbox.actionRequestChanges")}
-                  testId={`reviews-inbox-request-changes-${row.original.id}`}
-                  icon={MessageCircleWarning}
-                  onClick={() => actions?.onRequestChanges(row.original)}
-                  iconClassName="h-4 w-4 text-amber-500"
-                />
-                <ActionIconButton
-                  label={t("reviews.inbox.actionReject")}
-                  testId={`reviews-inbox-reject-${row.original.id}`}
-                  icon={XCircle}
-                  onClick={() => actions?.onReject(row.original)}
-                  iconClassName="h-4 w-4 text-destructive"
-                />
-              </div>
-            ),
-          }
-        : {
-            id: "status",
-            accessorKey: "status",
-            header: t("reviews.inbox.columnStatus"),
-            enableSorting: true,
-            size: 180,
-            cell: ({ row }) => (
-              <DecisionStatusBadge status={row.original.status} t={t} />
-            ),
-          };
-
-    return [...baseColumns, timestampColumn, tailColumn];
-  }, [t, view, actions, caseById, testRunById, sessionById]);
+          const date = new Date(value);
+          const ago = formatDistanceToNow(date, { addSuffix: true });
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-sm text-muted-foreground">{ago}</span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{date.toISOString()}</p>
+              </TooltipContent>
+            </Tooltip>
+          );
+        },
+      },
+    ],
+    [t],
+  );
 };

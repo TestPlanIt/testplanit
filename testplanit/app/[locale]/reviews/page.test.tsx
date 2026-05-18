@@ -141,24 +141,6 @@ vi.mock("~/lib/hooks", () => ({
   useFindManyProjects: (...args: unknown[]) => mockUseFindManyProjects(...args),
 }));
 
-// The inbox now mounts `@/components/tables/DataTable` directly with a
-// Pending | Decided Tabs strip — earlier `ReviewsInboxTable` no longer
-// exists. The chrome rewrite happened during the Phase 02 polish wave;
-// the test file's chrome/filter/row assertions were written against the
-// old structure and are skipped below pending a focused rewrite.
-vi.mock("@/components/tables/DataTable", () => ({
-  DataTable: () => <div data-testid="reviews-inbox-data-table-stub" />,
-}));
-
-// Page calls useQueryClient for cache invalidation on tab switch / sort.
-vi.mock("@tanstack/react-query", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@tanstack/react-query")>();
-  return {
-    ...actual,
-    useQueryClient: () => ({ invalidateQueries: vi.fn() }),
-  };
-});
-
 function applyHookFilter(args: any): MockReviewRow[] {
   const where = args?.where ?? {};
   const conditions = where.AND ?? [];
@@ -200,7 +182,9 @@ describe("ReviewsInboxPage (/reviews)", () => {
     mockUseFindUniqueUser.mockReturnValue({
       data: {
         roleId: 7,
-        projectPermissions: [{ roleId: 12, accessType: "SPECIFIC_ROLE" }],
+        projectPermissions: [
+          { roleId: 12, accessType: "SPECIFIC_ROLE" },
+        ],
       },
     });
 
@@ -221,69 +205,66 @@ describe("ReviewsInboxPage (/reviews)", () => {
     }));
   });
 
-  // The chrome rewrote from "title + filter dropdowns" to a tabbed shell
-  // (Pending | Decided) with DataTable. Filter narrowing now happens via
-  // typed column filters inside DataTable. These assertions need a focused
-  // rewrite against the new structure — tracked separately on the todo.
-  it.skip("(a) renders the page chrome with title and both filter dropdowns", () => {
+  it("(a) renders the page chrome with title and both filter dropdowns", () => {
     render(<ReviewsInboxPage />);
     expect(screen.getByTestId("reviews-inbox-page")).toBeInTheDocument();
     expect(
-      screen.getByTestId("reviews-inbox-entity-type-filter")
+      screen.getByTestId("reviews-inbox-entity-type-filter"),
     ).toBeInTheDocument();
     expect(
-      screen.getByTestId("reviews-inbox-project-filter")
+      screen.getByTestId("reviews-inbox-project-filter"),
     ).toBeInTheDocument();
   });
 
-  it.skip("(b) renders rows from the mocked data (one row per ReviewRequest)", () => {
+  it("(b) renders rows from the mocked data (one row per ReviewRequest)", () => {
     render(<ReviewsInboxPage />);
     const rows = screen.getAllByTestId("reviews-inbox-row");
     expect(rows).toHaveLength(3);
   });
 
-  it.skip("(c) PENDING status filter is shipped to useFindManyReviewRequest (assert call args)", () => {
+  it("(c) PENDING status filter is shipped to useFindManyReviewRequest (assert call args)", () => {
     render(<ReviewsInboxPage />);
     expect(mockUseFindManyReviewRequest).toHaveBeenCalled();
     const args = mockUseFindManyReviewRequest.mock.calls[0]![0] as {
       where?: { AND?: Array<Record<string, unknown>> };
     };
     const conditions = args.where?.AND ?? [];
-    const hasPending = conditions.some((c: any) => c.status === "PENDING");
+    const hasPending = conditions.some(
+      (c: any) => c.status === "PENDING",
+    );
     expect(hasPending).toBe(true);
     // isDeleted: false also required
     const hasIsDeletedFalse = conditions.some(
-      (c: any) => c.isDeleted === false
+      (c: any) => c.isDeleted === false,
     );
     expect(hasIsDeletedFalse).toBe(true);
     // OR clause on assignee / role
     const hasAssigneeOr = conditions.some(
       (c: any) =>
         Array.isArray(c.OR) &&
-        c.OR.some((sub: any) => sub.assigneeUserId === "user-1")
+        c.OR.some((sub: any) => sub.assigneeUserId === "user-1"),
     );
     expect(hasAssigneeOr).toBe(true);
   });
 
-  it.skip("(d) entity-type filter narrows results to CASE only", () => {
+  it("(d) entity-type filter narrows results to CASE only", () => {
     render(<ReviewsInboxPage />);
     const filter = screen.getByTestId(
-      "reviews-inbox-entity-type-filter"
+      "reviews-inbox-entity-type-filter",
     ) as HTMLSelectElement;
 
     fireEvent.change(filter, { target: { value: "CASE" } });
 
     const rows = screen.getAllByTestId("reviews-inbox-row");
     expect(rows).toHaveLength(1);
-    expect(
-      within(rows[0]!).getByTestId("reviews-inbox-row-entity-type")
-    ).toHaveTextContent(/CASE/i);
+    expect(within(rows[0]!).getByTestId("reviews-inbox-row-entity-type"))
+      .toHaveTextContent(/CASE/i);
   });
 
-  it.skip("(e) project filter narrows results to one project", () => {
+  it("(e) project filter narrows results to one project", () => {
     render(<ReviewsInboxPage />);
     const filter = screen.getByTestId(
-      "reviews-inbox-project-filter"
+      "reviews-inbox-project-filter",
     ) as HTMLSelectElement;
 
     fireEvent.change(filter, { target: { value: "7" } });
@@ -293,11 +274,11 @@ describe("ReviewsInboxPage (/reviews)", () => {
     expect(rows).toHaveLength(2);
   });
 
-  it.skip("(f) clicking a CASE row deep-links to /projects/repository/{projectId}/{entityId}", () => {
+  it("(f) clicking a CASE row deep-links to /projects/repository/{projectId}/{entityId}", () => {
     render(<ReviewsInboxPage />);
     const rows = screen.getAllByTestId("reviews-inbox-row");
-    const caseRow = rows.find(
-      (r) => r.getAttribute("data-entity-type") === "CASE"
+    const caseRow = rows.find((r) =>
+      r.getAttribute("data-entity-type") === "CASE",
     );
     expect(caseRow).toBeDefined();
     // Row wraps in a Link (mock anchor) — assert the href
@@ -306,14 +287,16 @@ describe("ReviewsInboxPage (/reviews)", () => {
         ? caseRow!
         : caseRow!.querySelector("a[data-mock-link]");
     expect(anchor).not.toBeNull();
-    expect(anchor!.getAttribute("href")).toBe("/projects/repository/7/101");
+    expect(anchor!.getAttribute("href")).toBe(
+      "/projects/repository/7/101",
+    );
   });
 
-  it.skip("(f2) RUN row deep-links to /projects/runs/{projectId}/{entityId}", () => {
+  it("(f2) RUN row deep-links to /projects/runs/{projectId}/{entityId}", () => {
     render(<ReviewsInboxPage />);
     const rows = screen.getAllByTestId("reviews-inbox-row");
     const runRow = rows.find(
-      (r) => r.getAttribute("data-entity-type") === "RUN"
+      (r) => r.getAttribute("data-entity-type") === "RUN",
     );
     expect(runRow).toBeDefined();
     const anchor =
@@ -323,30 +306,34 @@ describe("ReviewsInboxPage (/reviews)", () => {
     expect(anchor!.getAttribute("href")).toBe("/projects/runs/8/202");
   });
 
-  it.skip("(f3) SESSION row deep-links to /projects/sessions/{projectId}/{entityId}", () => {
+  it("(f3) SESSION row deep-links to /projects/sessions/{projectId}/{entityId}", () => {
     render(<ReviewsInboxPage />);
     const rows = screen.getAllByTestId("reviews-inbox-row");
     const sessionRow = rows.find(
-      (r) => r.getAttribute("data-entity-type") === "SESSION"
+      (r) => r.getAttribute("data-entity-type") === "SESSION",
     );
     expect(sessionRow).toBeDefined();
     const anchor =
       sessionRow!.tagName === "A"
         ? sessionRow!
         : sessionRow!.querySelector("a[data-mock-link]");
-    expect(anchor!.getAttribute("href")).toBe("/projects/sessions/7/303");
+    expect(anchor!.getAttribute("href")).toBe(
+      "/projects/sessions/7/303",
+    );
   });
 
-  it.skip("(g) when feature flag is disabled at system level, page chrome renders an empty state (no rows)", () => {
+  it("(g) when feature flag is disabled at system level, page chrome renders an empty state (no rows)", () => {
     mockUseReviewFeatureEnabled.mockReturnValue({
       enabled: false,
       isLoading: false,
     });
     render(<ReviewsInboxPage />);
     expect(screen.getByTestId("reviews-inbox-page")).toBeInTheDocument();
-    expect(screen.queryAllByTestId("reviews-inbox-row")).toHaveLength(0);
     expect(
-      screen.getByTestId("reviews-inbox-feature-disabled")
+      screen.queryAllByTestId("reviews-inbox-row"),
+    ).toHaveLength(0);
+    expect(
+      screen.getByTestId("reviews-inbox-feature-disabled"),
     ).toBeInTheDocument();
   });
 
@@ -357,7 +344,7 @@ describe("ReviewsInboxPage (/reviews)", () => {
     expect(mockRouterPush).toHaveBeenCalledWith("/");
   });
 
-  it.skip("(i) hook is called with refetchOnWindowFocus: true (RESEARCH Pitfall 4)", () => {
+  it("(i) hook is called with refetchOnWindowFocus: true (RESEARCH Pitfall 4)", () => {
     render(<ReviewsInboxPage />);
     expect(mockUseFindManyReviewRequest).toHaveBeenCalled();
     const options = mockUseFindManyReviewRequest.mock.calls[0]![1] as
@@ -366,7 +353,7 @@ describe("ReviewsInboxPage (/reviews)", () => {
     expect(options?.refetchOnWindowFocus).toBe(true);
   });
 
-  it.skip("(j) orderBy is { createdAt: 'desc' } (REVIEWER-01: newest first)", () => {
+  it("(j) orderBy is { createdAt: 'desc' } (REVIEWER-01: newest first)", () => {
     render(<ReviewsInboxPage />);
     const args = mockUseFindManyReviewRequest.mock.calls[0]![0] as {
       orderBy?: { createdAt?: string };

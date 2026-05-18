@@ -16,16 +16,6 @@ vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
     mockUseReviewFeatureEnabled(...args),
 }));
 
-// Stub the ZenStack-generated hook used by the single-entity auto-fetch
-// fallback. Default returns `{ data: undefined }` (no PENDING request). Tests
-// that need to exercise the auto-hide branch can override per-test by
-// reassigning `mockAutoFetchedPendingData`.
-let mockAutoFetchedPendingData: { id: string; status: "PENDING" } | undefined =
-  undefined;
-vi.mock("~/lib/hooks", () => ({
-  useFindFirstReviewRequest: () => ({ data: mockAutoFetchedPendingData }),
-}));
-
 // Stub RequestReviewSheet so we don't re-test its internals here. The stub
 // exposes its current `open` prop as a data attribute the parent test can
 // assert on.
@@ -52,7 +42,7 @@ const reachableState = (id = 11) => ({
 });
 
 function makeProps(
-  overrides: Partial<RequestReviewButtonProps> = {}
+  overrides: Partial<RequestReviewButtonProps> = {},
 ): RequestReviewButtonProps {
   return {
     entityType: "CASE",
@@ -90,14 +80,16 @@ describe("RequestReviewButton", () => {
         {...makeProps({
           pendingRequest: { id: "rev-1", status: "PENDING" },
         })}
-      />
+      />,
     );
     expect(container.firstChild).toBeNull();
   });
 
   it("(c) renders null when reachableGatedStates is empty", () => {
     const { container } = render(
-      <RequestReviewButton {...makeProps({ reachableGatedStates: [] })} />
+      <RequestReviewButton
+        {...makeProps({ reachableGatedStates: [] })}
+      />,
     );
     expect(container.firstChild).toBeNull();
   });

@@ -9,7 +9,6 @@ import {
   isAlreadyPendingError,
   isReviewGateError,
 } from "~/lib/utils/errors";
-import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
 import { getServerAuthSession } from "~/server/auth";
 import { checkUserPermission } from "./permissions";
 
@@ -216,11 +215,6 @@ export async function completeMilestoneCascade(
 
   try {
     await prisma.$transaction(async (tx: any) => {
-      // Resolve the system-level review-feature flag once for both the
-      // testRuns and sessions blocks below. AppConfig read is cheap and
-      // hoisting avoids two roundtrips inside this long-lived write tx.
-      const reviewFeatureSystemEnabled = await isReviewFeatureSystemEnabled(tx);
-
       // Complete main milestone
       await tx.milestones.update({
         where: { id: milestoneId },
@@ -276,7 +270,7 @@ export async function completeMilestoneCascade(
         // slow and deadlock-prone.
         if (
           projectReviewEnabled &&
-          reviewFeatureSystemEnabled &&
+          process.env.TESTPLANIT_REVIEW_FEATURE_ENABLED !== "false" &&
           completedTestRunStateId !== undefined &&
           testRunUpdateData.stateId !== undefined
         ) {
@@ -285,7 +279,9 @@ export async function completeMilestoneCascade(
             select: { requiresReview: true },
           });
           if (targetTestRunState?.requiresReview) {
-            const trIds = activeTestRuns.map((tr: { id: number }) => tr.id);
+            const trIds = activeTestRuns.map(
+              (tr: { id: number }) => tr.id
+            );
             const approvedRequests = await tx.reviewRequest.findMany({
               where: {
                 entityType: "RUN",
@@ -345,7 +341,7 @@ export async function completeMilestoneCascade(
         // batched findMany for approvals (WR-04).
         if (
           projectReviewEnabled &&
-          reviewFeatureSystemEnabled &&
+          process.env.TESTPLANIT_REVIEW_FEATURE_ENABLED !== "false" &&
           completedSessionStateId !== undefined &&
           sessionUpdateData.stateId !== undefined
         ) {
@@ -354,7 +350,9 @@ export async function completeMilestoneCascade(
             select: { requiresReview: true },
           });
           if (targetSessionState?.requiresReview) {
-            const sessionIds = activeSessions.map((s: { id: number }) => s.id);
+            const sessionIds = activeSessions.map(
+              (s: { id: number }) => s.id
+            );
             const approvedRequests = await tx.reviewRequest.findMany({
               where: {
                 entityType: "SESSION",

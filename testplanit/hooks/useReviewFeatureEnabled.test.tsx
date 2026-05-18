@@ -57,7 +57,7 @@ function mockSystemEnabled(enabled: boolean) {
 function mockProjectQuery(
   result:
     | { data: { reviewWorkflowEnabled: boolean }; isLoading: boolean }
-    | { data: undefined; isLoading: boolean }
+    | { data: undefined; isLoading: boolean },
 ) {
   mockUseFindUniqueProjects.mockReturnValue(result);
 }
@@ -209,7 +209,7 @@ describe("useReviewFeatureEnabled", () => {
       mockFetch.mockReturnValueOnce(
         new Promise<Response>((resolve) => {
           resolverBox.resolve = resolve;
-        })
+        }),
       );
 
       const wrapper = createWrapper();

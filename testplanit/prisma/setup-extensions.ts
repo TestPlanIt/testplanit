@@ -29,9 +29,7 @@ async function setupExtensions() {
      ON "ReviewRequest" ("entityType", "entityId")
      WHERE status = 'PENDING' AND "isDeleted" = false`
   );
-  console.log(
-    "Partial unique index review_request_one_pending_per_entity ensured."
-  );
+  console.log("Partial unique index review_request_one_pending_per_entity ensured.");
 }
 
 setupExtensions()

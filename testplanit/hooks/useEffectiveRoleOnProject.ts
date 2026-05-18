@@ -39,12 +39,13 @@ export interface UseEffectiveRoleOnProjectResult {
  * `pnpm zenstack generate` (see [[feedback_no_custom_files_in_lib_hooks]]).
  */
 export function useEffectiveRoleOnProject(
-  projectId?: number
+  projectId?: number,
 ): UseEffectiveRoleOnProjectResult {
   const { data: session } = useSession();
   const userId = session?.user?.id;
 
-  const enabled = typeof projectId === "number" && projectId > 0 && !!userId;
+  const enabled =
+    typeof projectId === "number" && projectId > 0 && !!userId;
 
   const { data, isLoading } = useQuery<{
     effectiveRoleId: number | null;
@@ -58,7 +59,7 @@ export function useEffectiveRoleOnProject(
       });
       if (!response.ok) {
         throw new Error(
-          `Failed to resolve effective role on project: ${response.status}`
+          `Failed to resolve effective role on project: ${response.status}`,
         );
       }
       const result = (await response.json()) as {

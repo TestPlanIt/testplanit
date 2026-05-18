@@ -37,19 +37,17 @@ import { isIneligibleReviewerError } from "~/lib/utils/errors";
 import { decideReviewRequest } from "./reviewDecisions";
 
 const TEST_RUN_ID = `phase2-decide-${Date.now()}-${Math.floor(
-  Math.random() * 1_000_000
+  Math.random() * 1_000_000,
 )}`;
 
-// Real entity rows are required because the paired-Comment write inside
-// decideReviewRequest FKs back to RepositoryCases. The shared Repository +
-// Folder + Template come from beforeAll; each seedPendingRequest call
-// creates its own fresh RepositoryCases row so the partial unique index
-// `review_request_one_pending_per_entity` (WHERE status = 'PENDING' AND
-// isDeleted = false) doesn't collide across tests.
-let repositoryId: number;
-let repositoryFolderId: number;
-let templateId: number;
-const createdCaseIds: number[] = [];
+// Synthetic polymorphic entityIds for the three scenarios.
+const ENTITY_ID_DIRECT_USER = 999_999_810;
+const ENTITY_ID_ROLE_HOLDER = 999_999_811;
+const ENTITY_ID_INELIGIBLE = 999_999_812;
+const ENTITY_ID_APPROVED_PATH = 999_999_813;
+const ENTITY_ID_CHANGES_PATH = 999_999_814;
+const ENTITY_ID_REJECTED_PATH = 999_999_815;
+const ENTITY_ID_NOT_FOUND = 999_999_819;
 
 let projectId: number;
 let requesterUserId: string;
@@ -75,7 +73,7 @@ beforeAll(async () => {
   });
   if (roles.length < 2) {
     throw new Error(
-      "Need at least two Roles seeded for decideReviewRequest test suite (run `pnpm prisma db seed`)."
+      "Need at least two Roles seeded for decideReviewRequest test suite (run `pnpm prisma db seed`).",
     );
   }
   assignedRoleId = roles[0].id;
@@ -186,103 +184,18 @@ beforeAll(async () => {
   });
   if (workflows.length < 2) {
     throw new Error(
-      "Need at least two Workflows rows for decideReviewRequest tests; run `pnpm prisma db seed`."
+      "Need at least two Workflows rows for decideReviewRequest tests; run `pnpm prisma db seed`.",
     );
   }
   fromStateId = workflows[0].id;
   toStateId = workflows[1].id;
-
-  // Pick any seeded Template — Templates are global (not project-scoped) so we
-  // can reuse one for the test case row. RepositoryCases.templateId is
-  // required.
-  const template = await prisma.templates.findFirst({
-    where: { isEnabled: true, isDeleted: false },
-    select: { id: true },
-    orderBy: { id: "asc" },
-  });
-  if (!template) {
-    throw new Error(
-      "Need at least one enabled Templates row for decideReviewRequest tests; run `pnpm prisma db seed`."
-    );
-  }
-  templateId = template.id;
-
-  // Repositories + RepositoryFolders are project-scoped, so we seed our own
-  // under the test project. The Comment FK on RepositoryCases requires a
-  // real case row — the paired-Comment write inside decideReviewRequest
-  // writes `repositoryCaseId: entityId`, which previously used synthetic
-  // entityIds that no longer satisfy the FK constraint.
-  const repository = await prisma.repositories.create({
-    data: {
-      projectId,
-      isActive: true,
-      isArchived: false,
-    },
-  });
-  repositoryId = repository.id;
-
-  const folder = await prisma.repositoryFolders.create({
-    data: {
-      projectId,
-      repositoryId,
-      name: `folder-${TEST_RUN_ID}`,
-      creatorId: requesterUserId,
-    },
-  });
-  repositoryFolderId = folder.id;
 }, 30_000);
 
 afterAll(async () => {
-  // Comments + ReviewRequests both reference each other (Comment.reviewRequestId
-  // SetNull on delete; ReviewRequest has back-relation). Soft-delete the
-  // Comments first so they detach cleanly when the project cascade fires later.
-  try {
-    await prisma.comment.updateMany({
-      where: { reviewRequestId: { in: createdReviewRequestIds } },
-      data: { isDeleted: true },
-    });
-  } catch {
-    /* ignore */
-  }
-
   for (const id of createdReviewRequestIds) {
     try {
       await prisma.reviewRequest.update({
         where: { id },
-        data: { isDeleted: true },
-      });
-    } catch {
-      /* ignore */
-    }
-  }
-
-  // Soft-delete every per-test case row, plus the seeded folder/repository
-  // (project soft-delete doesn't cascade because cascade only fires on
-  // hard delete).
-  for (const id of createdCaseIds) {
-    try {
-      await prisma.repositoryCases.update({
-        where: { id },
-        data: { isDeleted: true },
-      });
-    } catch {
-      /* ignore */
-    }
-  }
-  if (repositoryFolderId) {
-    try {
-      await prisma.repositoryFolders.update({
-        where: { id: repositoryFolderId },
-        data: { isDeleted: true },
-      });
-    } catch {
-      /* ignore */
-    }
-  }
-  if (repositoryId) {
-    try {
-      await prisma.repositories.update({
-        where: { id: repositoryId },
         data: { isDeleted: true },
       });
     } catch {
@@ -337,32 +250,15 @@ function sessionFor(userId: string, access: string = "NONE"): Session {
 }
 
 async function seedPendingRequest(opts: {
+  entityId: number;
   assigneeUserId?: string | null;
   assigneeRoleId?: number | null;
 }): Promise<string> {
-  // Mint a fresh RepositoryCases per call. The partial unique index
-  // `review_request_one_pending_per_entity` (WHERE status = 'PENDING' AND
-  // isDeleted = false) collides if two helpers seed PENDING rows against
-  // the same (entityType, entityId), so per-call isolation is the
-  // cheapest fix.
-  const repoCase = await prisma.repositoryCases.create({
-    data: {
-      projectId,
-      repositoryId,
-      folderId: repositoryFolderId,
-      templateId,
-      name: `case-${TEST_RUN_ID}-${createdCaseIds.length + 1}`,
-      stateId: fromStateId,
-      creatorId: requesterUserId,
-    },
-  });
-  createdCaseIds.push(repoCase.id);
-
   const created = await prisma.reviewRequest.create({
     data: {
       projectId,
       entityType: "CASE",
-      entityId: repoCase.id,
+      entityId: opts.entityId,
       requestedByUserId: requesterUserId,
       assigneeUserId: opts.assigneeUserId ?? null,
       assigneeRoleId: opts.assigneeRoleId ?? null,
@@ -378,6 +274,7 @@ async function seedPendingRequest(opts: {
 describe("decideReviewRequest — direct user-assignee path", () => {
   it("direct user-assignee can transition PENDING -> APPROVED with an optional comment", async () => {
     const requestId = await seedPendingRequest({
+      entityId: ENTITY_ID_DIRECT_USER,
       assigneeUserId: directAssigneeUserId,
     });
 
@@ -385,7 +282,7 @@ describe("decideReviewRequest — direct user-assignee path", () => {
       sessionFor(directAssigneeUserId),
       requestId,
       "APPROVED",
-      "lgtm"
+      "lgtm",
     );
 
     expect(result.status).toBe("APPROVED");
@@ -398,6 +295,7 @@ describe("decideReviewRequest — direct user-assignee path", () => {
 describe("decideReviewRequest — role-holder via SPECIFIC_ROLE permission (CR-02)", () => {
   it("role-holder can transition PENDING -> CHANGES_REQUESTED with required comment", async () => {
     const requestId = await seedPendingRequest({
+      entityId: ENTITY_ID_ROLE_HOLDER,
       assigneeRoleId: assignedRoleId,
     });
 
@@ -405,7 +303,7 @@ describe("decideReviewRequest — role-holder via SPECIFIC_ROLE permission (CR-0
       sessionFor(roleHolderUserId),
       requestId,
       "CHANGES_REQUESTED",
-      "please tighten the assertion"
+      "please tighten the assertion",
     );
 
     expect(result.status).toBe("CHANGES_REQUESTED");
@@ -418,6 +316,7 @@ describe("decideReviewRequest — role-holder via SPECIFIC_ROLE permission (CR-0
 describe("decideReviewRequest — ineligible user is rejected before any mutation", () => {
   it("ineligible user throws IneligibleReviewerError and the request stays PENDING", async () => {
     const requestId = await seedPendingRequest({
+      entityId: ENTITY_ID_INELIGIBLE,
       assigneeUserId: directAssigneeUserId,
     });
 
@@ -427,7 +326,7 @@ describe("decideReviewRequest — ineligible user is rejected before any mutatio
         sessionFor(ineligibleUserId),
         requestId,
         "REJECTED",
-        "noisy reject"
+        "noisy reject",
       );
     } catch (err) {
       caught = err;
@@ -449,13 +348,14 @@ describe("decideReviewRequest — ineligible user is rejected before any mutatio
 describe("decideReviewRequest — all three DecideOutcome values", () => {
   it("APPROVED outcome is written atomically with decidedBy + decidedAt", async () => {
     const requestId = await seedPendingRequest({
+      entityId: ENTITY_ID_APPROVED_PATH,
       assigneeUserId: directAssigneeUserId,
     });
 
     const result = await decideReviewRequest(
       sessionFor(directAssigneeUserId),
       requestId,
-      "APPROVED"
+      "APPROVED",
     );
 
     expect(result.status).toBe("APPROVED");
@@ -466,6 +366,7 @@ describe("decideReviewRequest — all three DecideOutcome values", () => {
 
   it("CHANGES_REQUESTED outcome is written atomically", async () => {
     const requestId = await seedPendingRequest({
+      entityId: ENTITY_ID_CHANGES_PATH,
       assigneeUserId: directAssigneeUserId,
     });
 
@@ -473,7 +374,7 @@ describe("decideReviewRequest — all three DecideOutcome values", () => {
       sessionFor(directAssigneeUserId),
       requestId,
       "CHANGES_REQUESTED",
-      "needs more detail"
+      "needs more detail",
     );
 
     expect(result.status).toBe("CHANGES_REQUESTED");
@@ -482,6 +383,7 @@ describe("decideReviewRequest — all three DecideOutcome values", () => {
 
   it("REJECTED outcome is written atomically", async () => {
     const requestId = await seedPendingRequest({
+      entityId: ENTITY_ID_REJECTED_PATH,
       assigneeUserId: directAssigneeUserId,
     });
 
@@ -489,7 +391,7 @@ describe("decideReviewRequest — all three DecideOutcome values", () => {
       sessionFor(directAssigneeUserId),
       requestId,
       "REJECTED",
-      "out of scope"
+      "out of scope",
     );
 
     expect(result.status).toBe("REJECTED");
@@ -500,13 +402,14 @@ describe("decideReviewRequest — all three DecideOutcome values", () => {
 describe("decideReviewRequest — already-decided + not-found surfaces", () => {
   it("re-deciding an APPROVED row throws 'Review request already decided'", async () => {
     const requestId = await seedPendingRequest({
+      entityId: ENTITY_ID_APPROVED_PATH + 100,
       assigneeUserId: directAssigneeUserId,
     });
 
     await decideReviewRequest(
       sessionFor(directAssigneeUserId),
       requestId,
-      "APPROVED"
+      "APPROVED",
     );
 
     await expect(
@@ -514,8 +417,8 @@ describe("decideReviewRequest — already-decided + not-found surfaces", () => {
         sessionFor(directAssigneeUserId),
         requestId,
         "REJECTED",
-        "second attempt"
-      )
+        "second attempt",
+      ),
     ).rejects.toThrow(/already decided/i);
   });
 
@@ -524,8 +427,8 @@ describe("decideReviewRequest — already-decided + not-found surfaces", () => {
       decideReviewRequest(
         sessionFor(directAssigneeUserId),
         "non-existent-id-xyz",
-        "APPROVED"
-      )
+        "APPROVED",
+      ),
     ).rejects.toThrow();
   });
 });
@@ -533,6 +436,7 @@ describe("decideReviewRequest — already-decided + not-found surfaces", () => {
 describe("decideReviewRequest — admin override", () => {
   it("system ADMIN can decide even when not the direct assignee or role-holder", async () => {
     const requestId = await seedPendingRequest({
+      entityId: ENTITY_ID_NOT_FOUND - 1,
       assigneeUserId: directAssigneeUserId,
     });
 
@@ -540,7 +444,7 @@ describe("decideReviewRequest — admin override", () => {
       sessionFor(adminUserId, "ADMIN"),
       requestId,
       "APPROVED",
-      "admin override"
+      "admin override",
     );
 
     expect(result.status).toBe("APPROVED");
@@ -551,6 +455,7 @@ describe("decideReviewRequest — admin override", () => {
 describe("decideReviewRequest — concurrent decides (CR-01 regression)", () => {
   it("two concurrent decide calls on the same PENDING row cannot both commit", async () => {
     const requestId = await seedPendingRequest({
+      entityId: ENTITY_ID_NOT_FOUND - 2,
       assigneeUserId: directAssigneeUserId,
     });
 
@@ -565,13 +470,13 @@ describe("decideReviewRequest — concurrent decides (CR-01 regression)", () => 
         sessionFor(directAssigneeUserId),
         requestId,
         "APPROVED",
-        "race-A"
+        "race-A",
       ),
       decideReviewRequest(
         sessionFor(adminUserId, "ADMIN"),
         requestId,
         "REJECTED",
-        "race-B"
+        "race-B",
       ),
     ]);
 
@@ -583,7 +488,7 @@ describe("decideReviewRequest — concurrent decides (CR-01 regression)", () => 
     const rejectedReason = (rejected[0] as PromiseRejectedResult).reason;
     expect(rejectedReason).toBeInstanceOf(Error);
     expect((rejectedReason as Error).message.toLowerCase()).toMatch(
-      /already decided/
+      /already decided/,
     );
 
     // DB final state matches whichever decide won — exactly one decision

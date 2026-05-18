@@ -305,9 +305,6 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
           } as any);
         });
 
@@ -349,9 +346,6 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: mockUpdateMany },
             sessions: { updateMany: mockUpdateMany },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
           } as any);
         });
 
@@ -386,9 +380,6 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
           } as any);
         });
 
@@ -427,9 +418,6 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
           } as any);
         });
 
@@ -470,9 +458,6 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
           } as any);
         });
 
@@ -510,9 +495,6 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
           } as any);
         });
 
@@ -581,9 +563,6 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
           } as any);
         });
 
@@ -682,9 +661,6 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: mockTestRunsUpdateMany },
             sessions: { updateMany: vi.fn() },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
           } as any);
         });
 
@@ -727,9 +703,6 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: mockSessionsUpdateMany },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
           } as any);
         });
 
@@ -779,9 +752,6 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
           } as any);
         });
 
@@ -829,9 +799,6 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: mockTestRunsUpdateMany },
             sessions: { updateMany: vi.fn() },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
           } as any);
         });
 
@@ -868,9 +835,6 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: mockTestRunsUpdateMany },
             sessions: { updateMany: vi.fn() },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
           } as any);
         });
 
@@ -906,9 +870,6 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: mockTestRunsUpdateMany },
             sessions: { updateMany: vi.fn() },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
           } as any);
         });
 
@@ -947,9 +908,6 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: mockSessionsUpdateMany },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
           } as any);
         });
 
@@ -986,9 +944,6 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: mockSessionsUpdateMany },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
           } as any);
         });
 
@@ -1024,9 +979,6 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: mockSessionsUpdateMany },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
           } as any);
         });
 
@@ -1064,9 +1016,6 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: mockTestRunsUpdateMany },
             sessions: { updateMany: vi.fn() },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
           } as any);
         });
 
@@ -1109,9 +1058,6 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: mockSessionsUpdateMany },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
           } as any);
         });
 
@@ -1154,9 +1100,6 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: mockTestRunsUpdateMany },
             sessions: { updateMany: vi.fn() },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
           } as any);
         });
 
@@ -1199,9 +1142,6 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: mockTestRunsUpdateMany },
             sessions: { updateMany: mockSessionsUpdateMany },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
           } as any);
         });
 
@@ -1282,9 +1222,6 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
             workflows: { findUnique: txWorkflowsFindUnique },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
             reviewRequest: { findMany: txReviewRequestFindMany },
           } as any);
         });
@@ -1331,10 +1268,9 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
             workflows: {
-              findUnique: vi.fn().mockResolvedValue({ requiresReview: true }),
-            },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
+              findUnique: vi
+                .fn()
+                .mockResolvedValue({ requiresReview: true }),
             },
             reviewRequest: { findMany: txReviewRequestFindMany },
           } as any);
@@ -1382,12 +1318,11 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
             workflows: {
-              findUnique: vi.fn().mockResolvedValue({ requiresReview: true }),
+              findUnique: vi
+                .fn()
+                .mockResolvedValue({ requiresReview: true }),
             },
             // Empty result → entityId 42 is the missing approval.
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
             reviewRequest: { findMany: vi.fn().mockResolvedValue([]) },
           } as any);
         });
@@ -1429,9 +1364,6 @@ describe("milestoneActions", () => {
             testRuns: { updateMany: vi.fn() },
             sessions: { updateMany: vi.fn() },
             workflows: { findUnique: txWorkflowsFindUnique },
-            appConfig: {
-              findUnique: vi.fn().mockResolvedValue({ value: true }),
-            },
             reviewRequest: { findMany: txReviewRequestFindMany },
           } as any);
         });

@@ -17,7 +17,6 @@ import {
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { performOptimisticReorder } from "~/utils/optimistic-updates";
-import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { useColumns } from "./columns";
 
 import { WorkflowDragPreview } from "@/components/dnd/WorkflowDragPreview";
@@ -151,27 +150,6 @@ function WorkflowComponent() {
     }
   };
 
-  const handleToggleRequiresReview = async (
-    id: number,
-    requiresReview: boolean
-  ) => {
-    try {
-      await updateWorkflows({
-        where: { id },
-        data: { requiresReview },
-      });
-    } catch (error) {
-      console.error("Failed to update workflow requiresReview:", error);
-    }
-  };
-
-  // Hide the requiresReview column entirely when the system flag is OFF.
-  // The at-a-glance gate signal only matters while the feature is active —
-  // showing the column with all-false toggles would be misleading.
-  const { systemEnabled: reviewFeatureSystemEnabled } =
-    useReviewFeatureEnabled();
-  const showRequiresReview = reviewFeatureSystemEnabled === true;
-
   const handleToggleDefault = (
     id: number,
     isDefault: boolean,
@@ -186,11 +164,8 @@ function WorkflowComponent() {
     data || [],
     tWorkflowTypes,
     tCommon,
-    t,
     handleToggleEnabled,
     handleToggleDefault,
-    showRequiresReview,
-    handleToggleRequiresReview,
     setEditingWorkflow,
     setDeletingWorkflow
   );

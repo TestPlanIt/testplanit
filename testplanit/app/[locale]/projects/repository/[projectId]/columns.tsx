@@ -1688,11 +1688,6 @@ export const getColumns = (
                 </Tooltip>
               </TooltipProvider>
             )}
-            {renderPendingBadge ? (
-              <div className="mr-1 shrink-0">
-                {renderPendingBadge(row.original.id)}
-              </div>
-            ) : null}
             <div className="min-w-0 flex-1">
               <NameCell
                 name={row.original.name}
@@ -1720,6 +1715,11 @@ export const getColumns = (
                 folderPathMap={folderPathMap}
               />
             </div>
+            {renderPendingBadge ? (
+              <div className="ml-2 shrink-0">
+                {renderPendingBadge(row.original.id)}
+              </div>
+            ) : null}
           </div>
         );
       },

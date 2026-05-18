@@ -11,21 +11,13 @@ import type { AssigneeOption } from "./AssigneeCombobox";
 // Mocks
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Server-action mock — the Sheet now calls `requestReview` directly
-// (hybrid-comments D-21 follow-up). `mockRequestReview` is the spy each
-// test asserts against; it defaults to a success result in beforeEach.
-const mockRequestReview = vi.fn();
-vi.mock("~/app/actions/reviews", () => ({
-  requestReview: (...args: unknown[]) => mockRequestReview(...args),
+const mockMutateAsync = vi.fn();
+const mockUseCreateReviewRequest = vi.fn(() => ({
+  mutateAsync: mockMutateAsync,
 }));
 
-// TanStack Query stub — the Sheet calls `useQueryClient` to invalidate
-// the Comments thread after a successful submit so the paired
-// REVIEW_REQUEST card lands immediately. We only need the invalidate
-// surface for these tests.
-const mockInvalidateQueries = vi.fn().mockResolvedValue(undefined);
-vi.mock("@tanstack/react-query", () => ({
-  useQueryClient: () => ({ invalidateQueries: mockInvalidateQueries }),
+vi.mock("~/lib/hooks", () => ({
+  useCreateReviewRequest: () => mockUseCreateReviewRequest(),
 }));
 
 vi.mock("~/lib/navigation", () => ({
@@ -81,7 +73,7 @@ const reachableState = (
     name: string;
     iconName: string;
     colorValue: string;
-  }> = {}
+  }> = {},
 ) => ({
   id: 11,
   name: "In Review",
@@ -91,7 +83,7 @@ const reachableState = (
 });
 
 function makeProps(
-  overrides: Partial<RequestReviewSheetProps> = {}
+  overrides: Partial<RequestReviewSheetProps> = {},
 ): RequestReviewSheetProps {
   return {
     open: true,
@@ -107,12 +99,8 @@ function makeProps(
 
 describe("RequestReviewSheet", () => {
   beforeEach(() => {
-    mockRequestReview.mockReset();
-    mockRequestReview.mockResolvedValue({
-      success: true,
-      reviewRequestId: "rev-1",
-      commentId: "cmt-1",
-    });
+    mockMutateAsync.mockReset();
+    mockMutateAsync.mockResolvedValue({ id: "rev-1" });
     mockToastSuccess.mockReset();
     mockToastError.mockReset();
   });
@@ -120,26 +108,25 @@ describe("RequestReviewSheet", () => {
   it("(a) renders the Sheet container when open=true", () => {
     render(<RequestReviewSheet {...makeProps()} />);
 
-    expect(screen.getByTestId("request-review-sheet")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("request-review-sheet"),
+    ).toBeInTheDocument();
   });
 
-  it("(b) submits with an empty comment when assignee + targetState are set (comment is optional)", async () => {
+  it("(b) blocks submit until comment is non-empty", async () => {
     render(<RequestReviewSheet {...makeProps()} />);
 
-    // Pick an assignee. Default targetState is the single reachable gated
-    // state (resolved in makeProps). Comment is intentionally left blank.
+    // Select an assignee but leave comment empty.
     fireEvent.click(screen.getByTestId("request-review-assignee"));
 
     const submitButton = screen.getByTestId(
-      "request-review-submit"
+      "request-review-submit",
     ) as HTMLButtonElement;
     fireEvent.click(submitButton);
 
-    await waitFor(() => {
-      expect(mockRequestReview).toHaveBeenCalled();
-    });
-    const arg = mockRequestReview.mock.calls[0]?.[0];
-    expect(arg.commentText).toBe("");
+    // mutateAsync should NOT be called when validation fails.
+    await new Promise((r) => setTimeout(r, 30));
+    expect(mockMutateAsync).not.toHaveBeenCalled();
   });
 
   it("(c) target-state defaults to the single reachable gated state", async () => {
@@ -157,13 +144,13 @@ describe("RequestReviewSheet", () => {
     fireEvent.click(screen.getByTestId("request-review-submit"));
 
     await waitFor(() => {
-      expect(mockRequestReview).toHaveBeenCalled();
+      expect(mockMutateAsync).toHaveBeenCalled();
     });
-    const arg = mockRequestReview.mock.calls[0]?.[0];
-    expect(arg.toStateId).toBe(99);
+    const arg = mockMutateAsync.mock.calls[0]?.[0];
+    expect(arg.data.toStateId).toBe(99);
   });
 
-  it("(d) submitting with user assignee + state + comment calls requestReview with expected payload", async () => {
+  it("(d) submitting with user assignee + state + comment calls useCreateReviewRequest with expected payload", async () => {
     render(<RequestReviewSheet {...makeProps()} />);
 
     fireEvent.click(screen.getByTestId("request-review-assignee"));
@@ -173,11 +160,11 @@ describe("RequestReviewSheet", () => {
     fireEvent.click(screen.getByTestId("request-review-submit"));
 
     await waitFor(() => {
-      expect(mockRequestReview).toHaveBeenCalled();
+      expect(mockMutateAsync).toHaveBeenCalled();
     });
 
-    const arg = mockRequestReview.mock.calls[0]?.[0];
-    expect(arg).toMatchObject({
+    const arg = mockMutateAsync.mock.calls[0]?.[0];
+    expect(arg.data).toMatchObject({
       projectId: 42,
       entityType: "CASE",
       entityId: 100,
@@ -185,11 +172,14 @@ describe("RequestReviewSheet", () => {
       toStateId: 11,
       assigneeUserId: "user-1",
       assigneeRoleId: null,
-      commentText: "Please review carefully",
+      decisionComment: "Please review carefully",
+      status: "PENDING",
     });
+    // Requester captured from useSession (vitest.setup.tsx mocks user "test-user-id").
+    expect(arg.data.requestedByUserId).toBe("test-user-id");
   });
 
-  it("(e) on requestReview success, toast.success fires and onOpenChange(false) is called", async () => {
+  it("(e) on mutateAsync resolve, toast.success fires and onOpenChange(false) is called", async () => {
     const onOpenChange = vi.fn();
     render(<RequestReviewSheet {...makeProps({ onOpenChange })} />);
 
@@ -203,18 +193,18 @@ describe("RequestReviewSheet", () => {
       expect(mockToastSuccess).toHaveBeenCalled();
     });
     expect(mockToastSuccess.mock.calls[0]?.[0]).toContain(
-      "reviews.requester.submitSuccess"
+      "reviews.requester.submitSuccess",
     );
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
-  it("(f) on ALREADY_PENDING result, toast.error fires with the alreadyPendingError key", async () => {
-    // Hybrid-comments path: the server action returns a discriminated
-    // result with `error: 'ALREADY_PENDING'` instead of throwing. The
-    // Sheet branches on the error code rather than parsing message text.
-    mockRequestReview.mockResolvedValueOnce({
-      success: false,
-      error: "ALREADY_PENDING",
+  it("(f) on AlreadyPending error, toast.error fires with the alreadyPendingError key", async () => {
+    // Shape mimics the server-side AlreadyPendingError that flows through
+    // ZenStack's error surface — `info.message` includes the marker so
+    // RequestReviewSheet's detector can branch.
+    mockMutateAsync.mockRejectedValueOnce({
+      info: { message: "A pending review request already exists" },
+      message: "Conflict",
     });
 
     render(<RequestReviewSheet {...makeProps()} />);
@@ -229,7 +219,7 @@ describe("RequestReviewSheet", () => {
       expect(mockToastError).toHaveBeenCalled();
     });
     expect(mockToastError.mock.calls[0]?.[0]).toContain(
-      "reviews.requester.alreadyPendingError"
+      "reviews.requester.alreadyPendingError",
     );
   });
 
@@ -271,8 +261,9 @@ describe("RequestReviewSheet", () => {
       ),
     }));
     // Re-import after the override so the new mock is wired.
-    const { RequestReviewSheet: SheetWithSelfMock } =
-      await import("./RequestReviewSheet");
+    const { RequestReviewSheet: SheetWithSelfMock } = await import(
+      "./RequestReviewSheet"
+    );
 
     render(<SheetWithSelfMock {...makeProps()} />);
 
@@ -282,14 +273,14 @@ describe("RequestReviewSheet", () => {
     });
     fireEvent.click(screen.getByTestId("request-review-submit"));
 
-    // Submit must NOT reach the server action.
+    // Submit must NOT reach the create mutation.
     await new Promise((r) => setTimeout(r, 50));
-    expect(mockRequestReview).not.toHaveBeenCalled();
+    expect(mockMutateAsync).not.toHaveBeenCalled();
 
     // Localized inline error is rendered (FormMessage shows the i18n key in
     // tests since useTranslations returns the key path as the value).
     expect(
-      screen.getByText(/reviews\.requester\.cannotSelfAssign/)
+      screen.getByText(/reviews\.requester\.cannotSelfAssign/),
     ).toBeInTheDocument();
 
     // Restore the default AssigneeCombobox mock for the remaining tests.
@@ -313,7 +304,7 @@ describe("RequestReviewSheet", () => {
           ],
           initialValues: { assignee: initialAssignee, targetStateId: 22 },
         })}
-      />
+      />,
     );
 
     // Assignee stub renders the pre-filled value as data-value attribute.
@@ -322,7 +313,7 @@ describe("RequestReviewSheet", () => {
 
     // Comment is reset (D-08 pre-fill rule).
     const comment = screen.getByTestId(
-      "request-review-comment"
+      "request-review-comment",
     ) as HTMLTextAreaElement;
     expect(comment.value).toBe("");
   });

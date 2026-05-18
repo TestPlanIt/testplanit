@@ -9,7 +9,7 @@ import { useFindUniqueProjects } from "~/lib/hooks";
  * (or when no projectId was provided, in which case it equals systemEnabled).
  */
 export interface UseReviewFeatureEnabledResult {
-  /** System-level flag from GET /api/config/review-feature (AppConfig-backed). */
+  /** System-level flag from GET /api/config/review-feature (env-var-backed). */
   systemEnabled: boolean | undefined;
   /** Per-project flag from Projects.reviewWorkflowEnabled. Undefined when no projectId provided. */
   projectEnabled: boolean | undefined;
@@ -24,10 +24,10 @@ export interface UseReviewFeatureEnabledResult {
  *   "Is the review feature enabled for this user on this project right now?"
  *
  * Composition (per D-18 / D-19):
- *   - systemEnabled — admin-toggleable AppConfig row keyed
- *     `review_feature_enabled`, exposed server-side via
- *     GET /api/config/review-feature (so the AppConfig value itself does not
- *     ship to the client bundle and the read is auth-scoped centrally).
+ *   - systemEnabled — operator-controlled env var, read server-side via
+ *     GET /api/config/review-feature (NOT a NEXT_PUBLIC_ var; see
+ *     RESEARCH §Pitfall 2 and the route handler at
+ *     `app/api/config/review-feature/route.ts`).
  *   - projectEnabled — `Projects.reviewWorkflowEnabled` read via the
  *     ZenStack-generated `useFindUniqueProjects` hook. Only fetched when a
  *     numeric `projectId` is supplied; otherwise reports `undefined` and
@@ -43,27 +43,26 @@ export interface UseReviewFeatureEnabledResult {
  * `pnpm zenstack generate` (see [[feedback_no_custom_files_in_lib_hooks]]).
  */
 export function useReviewFeatureEnabled(
-  projectId?: number
+  projectId?: number,
 ): UseReviewFeatureEnabledResult {
-  // Shorter staleTime than the prior env-var implementation: the AppConfig
-  // row is admin-toggleable from the Workflows admin page, and an admin
-  // flipping it should propagate to other tabs and users within ~30s. The
-  // SystemFeatureCard mutation invalidates this query key on success for
-  // immediate reflection in the same tab.
-  const { data: systemData, isLoading: systemLoading } = useQuery<{
-    enabled: boolean;
-  }>({
+  // Long staleTime: the env var is operator-controlled and changes are rare;
+  // refetching every minute would be wasteful and would make the UI flicker
+  // for users without changing the answer.
+  const {
+    data: systemData,
+    isLoading: systemLoading,
+  } = useQuery<{ enabled: boolean }>({
     queryKey: ["config", "review-feature"],
     queryFn: async () => {
       const response = await fetch("/api/config/review-feature");
       if (!response.ok) {
         throw new Error(
-          `Failed to fetch review-feature config: ${response.status}`
+          `Failed to fetch review-feature config: ${response.status}`,
         );
       }
       return (await response.json()) as { enabled: boolean };
     },
-    staleTime: 30 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   // WR-02: `0` is forbidden as a real projectId — guarding here keeps the
@@ -87,7 +86,7 @@ export function useReviewFeatureEnabled(
         where: { id: hasProjectId ? projectId : PROJECT_ID_SENTINEL },
         select: { reviewWorkflowEnabled: true },
       },
-      { enabled: hasProjectId }
+      { enabled: hasProjectId },
     );
 
   const systemEnabled = systemData?.enabled;

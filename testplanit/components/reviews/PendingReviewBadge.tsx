@@ -18,12 +18,7 @@ import { useTranslations } from "next-intl";
  */
 export interface PendingReviewSummary {
   id: string;
-  status:
-    | "PENDING"
-    | "APPROVED"
-    | "CHANGES_REQUESTED"
-    | "REJECTED"
-    | "CANCELLED";
+  status: "PENDING" | "APPROVED" | "CHANGES_REQUESTED" | "REJECTED" | "CANCELLED";
   assigneeUserId?: string | null;
   assigneeRoleId?: number | null;
   assigneeUser?: { name?: string | null } | null;
@@ -67,7 +62,8 @@ export function PendingReviewBadge({
       <Tooltip>
         <TooltipTrigger asChild>
           <Badge
-            className="inline-flex h-5 w-5 items-center justify-center p-0 bg-warning text-white border-warning hover:bg-warning/90"
+            variant="secondary"
+            className="inline-flex h-5 w-5 items-center justify-center p-0"
             data-testid="pending-review-badge"
             data-assignee={assigneeName}
             aria-label={tooltipText}
