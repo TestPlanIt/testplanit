@@ -1700,7 +1700,7 @@
       },
       "advanced": {
         "title": "Zaawansowany",
-        "description": "Przełączniki dla poszczególnych projektów, umożliwiające tworzenie funkcji, które są brane pod uwagę. Nowe przełączniki będą się pojawiać tutaj w miarę ich wprowadzania.",
+        "description": "Przełączniki dla zaawansowanych funkcji w obrębie projektu.",
         "reviewWorkflow": {
           "label": "Włącz przepływ pracy przeglądu",
           "description": "Po włączeniu, przejścia do stanów wymagających przeglądu są blokowane przez zatwierdzoną prośbę o przegląd. Testerzy widzą przycisk „Poproś o przegląd”, a recenzenci otrzymują powiadomienia.",

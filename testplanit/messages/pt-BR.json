@@ -1700,7 +1700,7 @@
       },
       "advanced": {
         "title": "Avançado",
-        "description": "Opções específicas para cada projeto que definem suas preferências. Novas opções aparecerão aqui conforme forem introduzidas.",
+        "description": "Opções para ativar/desativar recursos avançados por projeto.",
         "reviewWorkflow": {
           "label": "Ativar fluxo de trabalho de revisão",
           "description": "Quando ativada, a transição para estados que exigem revisão é controlada por uma solicitação de revisão aprovada. Os testadores veem o botão \"Solicitar revisão\"; os revisores recebem notificações.",

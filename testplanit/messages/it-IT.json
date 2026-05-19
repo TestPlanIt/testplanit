@@ -1700,7 +1700,7 @@
       },
       "advanced": {
         "title": "Avanzato",
-        "description": "Opzioni di attivazione specifiche per ogni progetto, relative a funzionalità predefinite. Le nuove opzioni verranno visualizzate qui man mano che saranno introdotte.",
+        "description": "Opzioni di attivazione/disattivazione specifiche per ogni progetto per le funzionalità avanzate.",
         "reviewWorkflow": {
           "label": "Abilita il flusso di lavoro di revisione",
           "description": "Quando abilitata, la transizione verso stati che richiedono una revisione è vincolata a una richiesta di revisione approvata. I tester visualizzano il pulsante Richiedi revisione; i revisori ricevono notifiche.",

@@ -1700,7 +1700,7 @@
       },
       "advanced": {
         "title": "Avancé",
-        "description": "Options par projet pour les fonctionnalités spécifiques. Les nouvelles options apparaîtront ici au fur et à mesure de leur introduction.",
+        "description": "Options par projet pour les fonctionnalités avancées.",
         "reviewWorkflow": {
           "label": "Activer le flux de travail de révision",
           "description": "Lorsque cette option est activée, le passage à un état nécessitant une révision est conditionné par l'approbation de la demande de révision. Les testeurs voient le bouton « Demander une révision » ; les réviseurs reçoivent une notification.",

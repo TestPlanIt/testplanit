@@ -1700,7 +1700,7 @@
       },
       "advanced": {
         "title": "Geavanceerd",
-        "description": "Per project kunt u opties in- of uitschakelen voor specifieke functies. Nieuwe opties verschijnen hier zodra ze beschikbaar komen.",
+        "description": "Per project kun je geavanceerde functies in- of uitschakelen.",
         "reviewWorkflow": {
           "label": "Schakel de beoordelingsworkflow in",
           "description": "Wanneer deze functie is ingeschakeld, worden overgangen naar statussen die beoordeling vereisen, geblokkeerd door een goedgekeurd beoordelingsverzoek. Testers zien de knop 'Beoordeling aanvragen'; beoordelaars ontvangen meldingen.",

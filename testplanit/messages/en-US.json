@@ -1700,7 +1700,7 @@
       },
       "advanced": {
         "title": "Advanced",
-        "description": "Per-project toggles for opinionated features. New toggles will appear here as they are introduced.",
+        "description": "Per-project toggles for advanced features.",
         "reviewWorkflow": {
           "label": "Enable review workflow",
           "description": "When enabled, transitions into states that require review are gated by an approved review request. Testers see the Request Review button; reviewers receive notifications.",

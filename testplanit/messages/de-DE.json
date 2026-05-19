@@ -1700,7 +1700,7 @@
       },
       "advanced": {
         "title": "Fortschrittlich",
-        "description": "Projektspezifische Schalter für vordefinierte Funktionen. Neue Schalter werden hier angezeigt, sobald sie eingeführt werden.",
+        "description": "Für jedes Projekt einzeln einstellbare Optionen für erweiterte Funktionen.",
         "reviewWorkflow": {
           "label": "Prüfworkflow aktivieren",
           "description": "Wenn diese Option aktiviert ist, werden Übergänge in Zustände, die eine Überprüfung erfordern, durch eine genehmigte Überprüfungsanfrage blockiert. Tester sehen die Schaltfläche „Überprüfung anfordern“; Prüfer erhalten Benachrichtigungen.",
@@ -2874,7 +2874,7 @@
       "error": "Die Überprüfungsanfrage konnte nicht abgebrochen werden. Bitte versuchen Sie es in Kürze erneut."
     },
     "list": {
-      "pendingTooltip": "Prüfung ausstehend von {assignee}"
+      "pendingTooltip": "Überprüfung ausstehend von {assignee}"
     },
     "transitionGate": {
       "blockedByGate": "Für \"{gateName}\" ist vor diesem Übergang eine Genehmigung erforderlich. Verwenden Sie \"Überprüfung anfordern\", um eine solche zu starten.",

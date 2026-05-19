@@ -1700,7 +1700,7 @@
       },
       "advanced": {
         "title": "Trình độ cao",
-        "description": "Các tùy chọn bật/tắt riêng cho từng dự án đối với các tính năng mang tính chủ quan. Các tùy chọn mới sẽ xuất hiện ở đây khi chúng được giới thiệu.",
+        "description": "Tùy chọn bật/tắt các tính năng nâng cao cho từng dự án.",
         "reviewWorkflow": {
           "label": "Kích hoạt quy trình xem xét",
           "description": "Khi được kích hoạt, quá trình chuyển đổi sang các trạng thái yêu cầu xem xét sẽ được kiểm soát bằng yêu cầu xem xét đã được phê duyệt. Người kiểm thử sẽ thấy nút \"Yêu cầu xem xét\"; người xem xét sẽ nhận được thông báo.",

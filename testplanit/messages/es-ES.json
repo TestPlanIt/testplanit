@@ -1700,7 +1700,7 @@
       },
       "advanced": {
         "title": "Avanzado",
-        "description": "Opciones de configuración específicas para cada proyecto. Las nuevas opciones aparecerán aquí a medida que se vayan implementando.",
+        "description": "Opciones de configuración por proyecto para funciones avanzadas.",
         "reviewWorkflow": {
           "label": "Habilitar el flujo de trabajo de revisión",
           "description": "Cuando está habilitada, la transición a estados que requieren revisión está sujeta a una solicitud de revisión aprobada. Los evaluadores ven el botón \"Solicitar revisión\"; los revisores reciben notificaciones.",
