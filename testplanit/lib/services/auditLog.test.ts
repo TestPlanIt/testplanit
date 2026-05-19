@@ -1,4 +1,3 @@
-import { AuditAction } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { expectAuditRowComplete } from "../testing/auditAssertions";
 import {
@@ -1166,48 +1165,5 @@ describe("AuditLog Service", () => {
         expect.any(Object)
       );
     });
-  });
-});
-
-// D-16: Phase 1 lands the five new AuditAction enum values
-// (REVIEW_REQUESTED, REVIEW_APPROVED, REVIEW_CHANGES_REQUESTED,
-// REVIEW_REJECTED, REVIEW_CANCELLED) and verifies they round-trip
-// through captureAuditEvent's type signature. No production capture
-// sites are wired in Phase 1 — capture sites are Phase 3 work
-// (AUDIT-01/02/03 against the ReviewRequest create/decide/cancel paths).
-describe("captureAuditEvent — review enum acceptance", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("accepts all five new AuditAction review enum values without throwing", async () => {
-    const reviewActions: AuditAction[] = [
-      AuditAction.REVIEW_REQUESTED,
-      AuditAction.REVIEW_APPROVED,
-      AuditAction.REVIEW_CHANGES_REQUESTED,
-      AuditAction.REVIEW_REJECTED,
-      AuditAction.REVIEW_CANCELLED,
-    ];
-
-    mocks.mockQueue.add.mockResolvedValue({ id: "review-enum-job" });
-
-    for (const action of reviewActions) {
-      const event: AuditEvent = {
-        action,
-        entityType: "ReviewRequest",
-        entityId: "review-1",
-      };
-
-      await expect(captureAuditEvent(event)).resolves.toBeUndefined();
-    }
-
-    // All five enum values reached the queue mock — proves the regenerated
-    // @prisma/client AuditAction includes the five new members AND that
-    // captureAuditEvent's surface accepts them.
-    expect(mocks.mockQueue.add).toHaveBeenCalledTimes(reviewActions.length);
-    const queuedActions = mocks.mockQueue.add.mock.calls.map(
-      (call) => (call[1] as { event: AuditEvent }).event.action
-    );
-    expect(queuedActions).toEqual(reviewActions);
   });
 });

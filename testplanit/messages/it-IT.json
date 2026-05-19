@@ -3,10 +3,10 @@
     "name": "Nome",
     "cancel": "Cancellare",
     "dismiss": "Congedare",
-    "of": "di",
-    "on": "su",
-    "at": "a",
-    "in": "in",
+    "of": "Di",
+    "on": "SU",
+    "at": "A",
+    "in": "In",
     "add": "Aggiungere",
     "never": "Mai",
     "select": "Selezionare...",
@@ -638,8 +638,6 @@
       "aiModels": "Modelli di intelligenza artificiale",
       "integrations": "Integrazioni",
       "quickscript": "QuickScript",
-      "advanced": "Avanzato",
-      "reviews": "Recensioni",
       "webhooks": "webhook",
       "shares": "Azioni",
       "repository": "Archivio",
@@ -1326,7 +1324,7 @@
         "secretCopied": "Segreto del webhook copiato negli appunti",
         "nextSteps": "Successivamente: incolla questi elementi nella configurazione del webhook del sistema di tracciamento dei problemi, quindi fai clic su \"Invia webhook di prova\" qui sotto per verificare la pipeline. Fai clic su \"Fine\" dopo aver salvato il segreto: non potrà essere visualizzato di nuovo.",
         "revealDone": "Fatto",
-        "pageTitle": "webhook",
+        "pageTitle": "Webhooks",
         "inboundTab": "In entrata",
         "outboundTab": "In uscita",
         "outboundEmpty": "Nessun webhook in uscita configurato. Aggiungine uno per inviare gli eventi di TestPlanIt a Slack o a qualsiasi URL firmato da HMAC.",
@@ -1696,17 +1694,6 @@
         "disconnectWarning3": "Smetti di includere il contesto del codice nelle esportazioni generate dall'IA",
         "disconnectSuccess": "Repository del codice disconnesso",
         "disconnectError": "Impossibile disconnettere il repository del codice"
-      },
-      "advanced": {
-        "title": "Avanzato",
-        "description": "Opzioni di attivazione specifiche per ogni progetto, relative a funzionalità predefinite. Le nuove opzioni verranno visualizzate qui man mano che saranno introdotte.",
-        "reviewWorkflow": {
-          "label": "Abilita il flusso di lavoro di revisione",
-          "description": "Quando abilitata, la transizione verso stati che richiedono una revisione è vincolata a una richiesta di revisione approvata. I tester visualizzano il pulsante Richiedi revisione; i revisori ricevono notifiche.",
-          "enabledToast": "Revisione del flusso di lavoro abilitata per questo progetto",
-          "disabledToast": "Revisione del flusso di lavoro disabilitata per questo progetto.",
-          "saveError": "Impossibile aggiornare le impostazioni del flusso di lavoro di revisione."
-        }
       }
     }
   },
@@ -2856,91 +2843,6 @@
       "deferredMessage": "Questo allegato verrà eliminato al momento del salvataggio."
     }
   },
-  "reviews": {
-    "banner": {
-      "pendingMessage": "Recensione richiesta da {assignee}. {ago} fa.",
-      "changesRequestedTitle": "Modifiche richieste",
-      "rejectedTitle": "Revisione respinta",
-      "cancelRequest": "Annulla richiesta",
-      "requestAgain": "Richiedi nuovamente la revisione"
-    },
-    "cancel": {
-      "title": "Annullare questa richiesta di revisione?",
-      "description": "Il revisore non potrà più prendere in considerazione questa richiesta. Potrai inviare una nuova richiesta in seguito.",
-      "confirm": "Annulla richiesta",
-      "success": "Richiesta di revisione annullata.",
-      "error": "Impossibile annullare la richiesta di revisione. Riprova tra un attimo."
-    },
-    "list": {
-      "pendingTooltip": "In attesa di revisione da parte di {assignee}"
-    },
-    "inbox": {
-      "iconAria": "{count, plural, =0 {Posta in arrivo per le revisioni} one {Posta in arrivo per le revisioni, # in sospeso} other {Posta in arrivo per le revisioni, # in sospeso}}",
-      "pageTitle": "Recensioni",
-      "pageDescription": "Richieste di revisione in sospeso assegnate a te (direttamente o tramite un ruolo che ricopri).",
-      "empty": "Nessuna revisione in sospeso. Sei in regola con tutto.",
-      "featureDisabled": "La funzionalità di gestione del flusso di lavoro di revisione è attualmente disabilitata. Le revisioni in sospeso vengono conservate e saranno nuovamente disponibili quando la funzionalità verrà riattivata.",
-      "columnEntity": "Entità",
-      "columnProject": "Progetto",
-      "columnRequester": "Richiedente",
-      "columnTransition": "Transizione",
-      "columnRequestedAt": "Richiesto a",
-      "filterEntityType": "Tipo di entità",
-      "filterProject": "Progetto",
-      "filterAllEntityTypes": "Tutti i tipi di entità",
-      "filterEntityTypeCase": "Casi di prova",
-      "filterEntityTypeRun": "Prove di corsa",
-      "filterEntityTypeSession": "Sessioni",
-      "filterAllProjects": "Tutti i progetti"
-    },
-    "requester": {
-      "openButton": "Richiedi recensione",
-      "sheetTitle": "Richiedi recensione",
-      "sheetDescription": "Invia questa entità per la revisione prima di passare allo stato di destinazione.",
-      "assigneeLabel": "Assegnatario",
-      "assigneePlaceholder": "Seleziona un utente o un ruolo",
-      "usersHoldRole": "{count, plural, one {# l'utente detiene questo ruolo} other {# gli utenti detengono questo ruolo}}",
-      "targetStateLabel": "Stato bersaglio",
-      "targetStatePlaceholder": "Seleziona uno stato di destinazione",
-      "commentLabel": "Commento",
-      "commentPlaceholder": "Spiega cosa vuoi che il revisore esamini",
-      "commentRequired": "È necessario inserire un commento.",
-      "assigneeRequired": "Seleziona un assegnatario.",
-      "targetStateRequired": "Seleziona uno stato di destinazione.",
-      "submitButton": "Richiedi recensione",
-      "submitSuccess": "Richiesta di revisione creata.",
-      "alreadyPendingError": "È già in corso una procedura di revisione per questa entità."
-    },
-    "reviewer": {
-      "approve": "Approvare",
-      "requestChanges": "Richiesta di modifiche",
-      "reject": "Rifiutare",
-      "approveConfirmTitle": "Approvare questa richiesta di revisione?",
-      "approveConfirmDescription": "L'approvazione consentirà al richiedente di trasformare questo {entityType} in {targetStateName}.",
-      "approvalNoteLabel": "Nota di approvazione",
-      "approvalNotePlaceholder": "Aggiungi una nota facoltativa per il richiedente (visibile accanto all'approvazione).",
-      "requestChangesTitle": "Richiesta di modifiche",
-      "requestChangesDescription": "Spiega al richiedente quali modifiche sono necessarie prima che tu possa approvare questa transizione.",
-      "requestChangesCommentLabel": "Commento",
-      "requestChangesCommentPlaceholder": "Spiega cosa deve cambiare.",
-      "rejectTitle": "Rifiutare questa richiesta di revisione?",
-      "rejectDescription": "Il rifiuto impedisce al richiedente di effettuare la transizione da {entityType} a {targetStateName}. È necessario creare una nuova richiesta di revisione per riprovare.",
-      "rejectCommentLabel": "Commento",
-      "rejectCommentPlaceholder": "Spiega perché stai rifiutando questa richiesta.",
-      "commentRequired": "È necessario inserire un commento.",
-      "confirmApprove": "Approvare",
-      "confirmRequestChanges": "Inviare",
-      "confirmReject": "Rifiutare",
-      "cancel": "Cancellare",
-      "approveSuccess": "Revisione approvata.",
-      "requestChangesSuccess": "Modifiche richieste.",
-      "rejectSuccess": "Richiesta respinta.",
-      "ineligibleError": "Non hai più i requisiti per decidere su questa richiesta di revisione.",
-      "alreadyDecidedError": "La decisione su questa revisione è già stata presa.",
-      "decideError": "Impossibile registrare la tua decisione. Riprova tra un attimo.",
-      "panelSummary": "Richiesta di revisione da {requesterName}: transizione a {targetStateName}"
-    }
-  },
   "runs": {
     "notFound": "Esecuzione del test non trovata.",
     "add": {
@@ -3115,7 +3017,6 @@
       "exportTemplates": "Esporta modelli",
       "codeRepositories": "Repository di codice",
       "quickScript": "QuickScript",
-      "advanced": "Avanzato",
       "sso": "Autenticazione",
       "security": "Sicurezza",
       "trash": "Spazzatura",
@@ -4113,18 +4014,6 @@
     },
     "workflows": {
       "description": "Gestire i flussi di lavoro dei casi di prova",
-      "systemFeatureCard": {
-        "title": "Revisione della funzionalità del flusso di lavoro",
-        "description": "Interruttore a livello di sistema per la funzione di revisione e approvazione. Quando è abilitata, i progetti possono attivarla o disattivarla individualmente tramite le impostazioni avanzate.",
-        "stateEnabled": "Abilitato",
-        "stateDisabled": "Disabile",
-        "operatorNotePrefix": "Impostato tramite variabile d'ambiente",
-        "operatorNoteSuffix": "È necessario riavviare il sistema per applicare le modifiche."
-      },
-      "editWorkflow": {
-        "requiresReviewLabel": "Richiede revisione",
-        "requiresReviewFeatureDisabled": "La funzionalità di revisione del flusso di lavoro è disabilitata a livello di sistema. Per riattivarla, modifica le impostazioni avanzate del progetto oppure imposta TESTPLANIT_REVIEW_FEATURE_ENABLED."
-      },
       "add": {
         "button": "Aggiungi flusso di lavoro",
         "title": "Aggiungi nuovo flusso di lavoro",

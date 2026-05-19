@@ -5,9 +5,7 @@ import { z } from "zod/v4";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { auditBulkUpdate } from "~/lib/services/auditLog";
-import { assertReviewGatePasses } from "~/lib/services/reviewGate";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
-import { isAlreadyPendingError, isReviewGateError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
 
 // Schema for bulk edit request
@@ -229,23 +227,6 @@ export const POST = withAuditContext(
               updateData.issues = validatedData.updates.issues;
             }
 
-            // Review & Approval preflight (Plan 01-04). When the bulk edit
-            // includes a stateId change, assert the target state's review
-            // gate passes for this specific case BEFORE the update fires.
-            // The bulk-edit route uses raw prisma (not the auto-API), so the
-            // schema `@@deny` rule does NOT fire here — this app preflight is
-            // the sole gate. A throw inside `prisma.$transaction` rolls back
-            // every prior case in the loop; partial-bulk semantics ("fail
-            // closed") are correct for Phase 1.
-            if (updateData.stateId !== undefined) {
-              await assertReviewGatePasses(
-                tx,
-                "CASE",
-                caseId,
-                updateData.stateId
-              );
-            }
-
             // Update the case
             await tx.repositoryCases.update({
               where: { id: caseId },
@@ -432,31 +413,6 @@ export const POST = withAuditContext(
         result,
       });
     } catch (error) {
-      // Review & Approval (Plan 01-04): translate typed errors thrown from
-      // assertReviewGatePasses into structured 403 / 409 responses BEFORE
-      // the generic-error fallback. Detector order: ReviewGateError comes
-      // from this route's preflight; AlreadyPendingError will surface from
-      // ReviewRequest create paths landing in Phase 2.
-      if (isReviewGateError(error)) {
-        return NextResponse.json(
-          {
-            error: {
-              code: error.code,
-              entityType: error.entityType,
-              entityId: error.entityId,
-              toStateId: error.toStateId,
-            },
-          },
-          { status: 403 }
-        );
-      }
-      if (isAlreadyPendingError(error)) {
-        return NextResponse.json(
-          { error: { code: "PENDING_REVIEW_EXISTS" } },
-          { status: 409 }
-        );
-      }
-
       if (error instanceof z.ZodError) {
         return NextResponse.json(
           { error: "Invalid request data", details: error.issues },

@@ -64,10 +64,6 @@ vi.mock("@/components/NotificationBell", () => ({
   NotificationBell: () => <div data-testid="notification-bell-mock" />,
 }));
 
-vi.mock("@/components/reviews/ReviewInboxButton", () => ({
-  ReviewInboxButton: () => <div data-testid="review-inbox-button-mock" />,
-}));
-
 vi.mock("@/components/UserDropdownMenu", () => ({
   UserDropdownMenu: () => <div data-testid="user-dropdown-menu-mock" />,
 }));

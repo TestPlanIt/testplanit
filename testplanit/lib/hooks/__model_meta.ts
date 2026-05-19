@@ -431,24 +431,6 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'accessedBy',
-                }, reviewsRequested: {
-                    name: "reviewsRequested",
-                    type: "ReviewRequest",
-                    isDataModel: true,
-                    isArray: true,
-                    backLink: 'requestedBy',
-                }, reviewsAssigned: {
-                    name: "reviewsAssigned",
-                    type: "ReviewRequest",
-                    isDataModel: true,
-                    isArray: true,
-                    backLink: 'assigneeUser',
-                }, reviewsDecided: {
-                    name: "reviewsDecided",
-                    type: "ReviewRequest",
-                    isDataModel: true,
-                    isArray: true,
-                    backLink: 'decidedBy',
                 }, twoFactorEnabled: {
                     name: "twoFactorEnabled",
                     type: "Boolean",
@@ -806,12 +788,6 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'role',
-                }, reviewRequestAssignments: {
-                    name: "reviewRequestAssignments",
-                    type: "ReviewRequest",
-                    isDataModel: true,
-                    isArray: true,
-                    backLink: 'assigneeRole',
                 },
             }, uniqueConstraints: {
                 id: {
@@ -1099,10 +1075,6 @@ const metadata: ModelMeta = {
                     name: "quickScriptEnabled",
                     type: "Boolean",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
-                }, reviewWorkflowEnabled: {
-                    name: "reviewWorkflowEnabled",
-                    type: "Boolean",
-                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": true }] }],
                 }, duplicateScanResults: {
                     name: "duplicateScanResults",
                     type: "DuplicateScanResult",
@@ -1112,12 +1084,6 @@ const metadata: ModelMeta = {
                 }, stepSequenceMatches: {
                     name: "stepSequenceMatches",
                     type: "StepSequenceMatch",
-                    isDataModel: true,
-                    isArray: true,
-                    backLink: 'project',
-                }, reviewRequests: {
-                    name: "reviewRequests",
-                    type: "ReviewRequest",
                     isDataModel: true,
                     isArray: true,
                     backLink: 'project',
@@ -2559,10 +2525,6 @@ const metadata: ModelMeta = {
                 }, scope: {
                     name: "scope",
                     type: "WorkflowScope",
-                }, requiresReview: {
-                    name: "requiresReview",
-                    type: "Boolean",
-                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
                 }, projects: {
                     name: "projects",
                     type: "ProjectWorkflowAssignment",
@@ -2587,18 +2549,6 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'state',
-                }, reviewRequestsFromState: {
-                    name: "reviewRequestsFromState",
-                    type: "ReviewRequest",
-                    isDataModel: true,
-                    isArray: true,
-                    backLink: 'fromState',
-                }, reviewRequestsToState: {
-                    name: "reviewRequestsToState",
-                    type: "ReviewRequest",
-                    isDataModel: true,
-                    isArray: true,
-                    backLink: 'toState',
                 },
             }, uniqueConstraints: {
                 id: {
@@ -6397,145 +6347,6 @@ const metadata: ModelMeta = {
                     name: "relatedEntityType",
                     type: "String",
                     isOptional: true,
-                }, createdAt: {
-                    name: "createdAt",
-                    type: "DateTime",
-                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
-                }, updatedAt: {
-                    name: "updatedAt",
-                    type: "DateTime",
-                    attributes: [{ "name": "@updatedAt", "args": [] }],
-                },
-            }, uniqueConstraints: {
-                id: {
-                    name: "id",
-                    fields: ["id"]
-                },
-            },
-        },
-        reviewRequest: {
-            name: 'ReviewRequest', fields: {
-                id: {
-                    name: "id",
-                    type: "String",
-                    isId: true,
-                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
-                }, projectId: {
-                    name: "projectId",
-                    type: "Int",
-                    isForeignKey: true,
-                    relationField: 'project',
-                }, project: {
-                    name: "project",
-                    type: "Projects",
-                    isDataModel: true,
-                    backLink: 'reviewRequests',
-                    isRelationOwner: true,
-                    foreignKeyMapping: { "id": "projectId" },
-                }, entityType: {
-                    name: "entityType",
-                    type: "ReviewEntityType",
-                }, entityId: {
-                    name: "entityId",
-                    type: "Int",
-                }, requestedByUserId: {
-                    name: "requestedByUserId",
-                    type: "String",
-                    isForeignKey: true,
-                    relationField: 'requestedBy',
-                }, requestedBy: {
-                    name: "requestedBy",
-                    type: "User",
-                    isDataModel: true,
-                    backLink: 'reviewsRequested',
-                    isRelationOwner: true,
-                    foreignKeyMapping: { "id": "requestedByUserId" },
-                }, assigneeUserId: {
-                    name: "assigneeUserId",
-                    type: "String",
-                    isOptional: true,
-                    isForeignKey: true,
-                    relationField: 'assigneeUser',
-                }, assigneeUser: {
-                    name: "assigneeUser",
-                    type: "User",
-                    isDataModel: true,
-                    isOptional: true,
-                    backLink: 'reviewsAssigned',
-                    isRelationOwner: true,
-                    foreignKeyMapping: { "id": "assigneeUserId" },
-                }, assigneeRoleId: {
-                    name: "assigneeRoleId",
-                    type: "Int",
-                    isOptional: true,
-                    isForeignKey: true,
-                    relationField: 'assigneeRole',
-                }, assigneeRole: {
-                    name: "assigneeRole",
-                    type: "Roles",
-                    isDataModel: true,
-                    isOptional: true,
-                    backLink: 'reviewRequestAssignments',
-                    isRelationOwner: true,
-                    foreignKeyMapping: { "id": "assigneeRoleId" },
-                }, fromStateId: {
-                    name: "fromStateId",
-                    type: "Int",
-                    isForeignKey: true,
-                    relationField: 'fromState',
-                }, fromState: {
-                    name: "fromState",
-                    type: "Workflows",
-                    isDataModel: true,
-                    backLink: 'reviewRequestsFromState',
-                    isRelationOwner: true,
-                    foreignKeyMapping: { "id": "fromStateId" },
-                }, toStateId: {
-                    name: "toStateId",
-                    type: "Int",
-                    isForeignKey: true,
-                    relationField: 'toState',
-                }, toState: {
-                    name: "toState",
-                    type: "Workflows",
-                    isDataModel: true,
-                    backLink: 'reviewRequestsToState',
-                    isRelationOwner: true,
-                    foreignKeyMapping: { "id": "toStateId" },
-                }, status: {
-                    name: "status",
-                    type: "ReviewStatus",
-                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
-                }, decisionComment: {
-                    name: "decisionComment",
-                    type: "String",
-                    isOptional: true,
-                }, decidedByUserId: {
-                    name: "decidedByUserId",
-                    type: "String",
-                    isOptional: true,
-                    isForeignKey: true,
-                    relationField: 'decidedBy',
-                }, decidedBy: {
-                    name: "decidedBy",
-                    type: "User",
-                    isDataModel: true,
-                    isOptional: true,
-                    backLink: 'reviewsDecided',
-                    isRelationOwner: true,
-                    foreignKeyMapping: { "id": "decidedByUserId" },
-                }, decidedAt: {
-                    name: "decidedAt",
-                    type: "DateTime",
-                    isOptional: true,
-                }, consumedAt: {
-                    name: "consumedAt",
-                    type: "DateTime",
-                    isOptional: true,
-                }, isDeleted: {
-                    name: "isDeleted",
-                    type: "Boolean",
-                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
                 }, createdAt: {
                     name: "createdAt",
                     type: "DateTime",

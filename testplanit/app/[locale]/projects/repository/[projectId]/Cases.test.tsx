@@ -106,14 +106,6 @@ vi.mock("~/lib/hooks", () => ({
     mutateAsync: vi.fn(),
     isPending: false,
   })),
-  useFindManyReviewRequest: vi.fn(() => ({ data: [], isLoading: false })),
-}));
-
-vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
-  useReviewFeatureEnabled: vi.fn(() => ({
-    enabled: false,
-    isLoading: false,
-  })),
 }));
 
 vi.mock("~/hooks/useRepositoryCasesWithFilteredFields", () => ({

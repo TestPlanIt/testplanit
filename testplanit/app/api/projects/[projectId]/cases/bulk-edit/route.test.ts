@@ -140,8 +140,6 @@ describe("Bulk Edit API Route", () => {
           update: vi.fn(),
           deleteMany: vi.fn(),
         },
-        workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-        reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
       };
       return callback(tx);
     });
@@ -272,8 +270,6 @@ describe("Bulk Edit API Route", () => {
             update: vi.fn(),
             deleteMany: vi.fn(),
           },
-          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
         };
         return callback(tx);
       });
@@ -315,8 +311,6 @@ describe("Bulk Edit API Route", () => {
           update: vi.fn(),
           deleteMany: vi.fn(),
         },
-        workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-        reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
       };
 
       await transactionCallback(mockTx);
@@ -360,8 +354,6 @@ describe("Bulk Edit API Route", () => {
             update: vi.fn(),
             deleteMany: vi.fn(),
           },
-          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
         };
         return callback(tx);
       });
@@ -399,8 +391,6 @@ describe("Bulk Edit API Route", () => {
           update: vi.fn(),
           deleteMany: vi.fn(),
         },
-        workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-        reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
       };
 
       await transactionCallback(mockTx);
@@ -434,8 +424,6 @@ describe("Bulk Edit API Route", () => {
             delete: vi.fn(),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
-          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
         });
       });
 
@@ -475,8 +463,6 @@ describe("Bulk Edit API Route", () => {
             delete: vi.fn(),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
-          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
         });
       });
 
@@ -512,8 +498,6 @@ describe("Bulk Edit API Route", () => {
             delete: vi.fn(),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
-          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
         });
       });
 
@@ -549,8 +533,6 @@ describe("Bulk Edit API Route", () => {
             delete: vi.fn(),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
-          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
         });
       });
 
@@ -597,8 +579,6 @@ describe("Bulk Edit API Route", () => {
             delete: vi.fn(),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
-          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
         });
       });
 
@@ -640,8 +620,6 @@ describe("Bulk Edit API Route", () => {
             delete: vi.fn(),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
-          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
         });
       });
 
@@ -685,8 +663,6 @@ describe("Bulk Edit API Route", () => {
             delete: vi.fn(),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
-          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
         });
       });
 
@@ -730,8 +706,6 @@ describe("Bulk Edit API Route", () => {
             delete: vi.fn(),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
-          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
         });
       });
 
@@ -782,8 +756,6 @@ describe("Bulk Edit API Route", () => {
             delete: vi.fn(),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
-          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
         });
       });
 
@@ -831,8 +803,6 @@ describe("Bulk Edit API Route", () => {
             delete: mockTxDelete,
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
-          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
         });
       });
 
@@ -870,8 +840,6 @@ describe("Bulk Edit API Route", () => {
             delete: vi.fn(),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
-          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
         });
       });
 
@@ -905,8 +873,6 @@ describe("Bulk Edit API Route", () => {
             delete: vi.fn(),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
-          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
         });
       });
 
@@ -948,8 +914,6 @@ describe("Bulk Edit API Route", () => {
             update: vi.fn(),
             deleteMany: mockDeleteMany,
           },
-          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
         });
       });
 
@@ -1013,8 +977,6 @@ describe("Bulk Edit API Route", () => {
             update: mockStepUpdate,
             deleteMany: vi.fn(),
           },
-          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
         });
       });
 
@@ -1057,8 +1019,6 @@ describe("Bulk Edit API Route", () => {
             delete: vi.fn(),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
-          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
         });
       });
 
@@ -1117,8 +1077,6 @@ describe("Bulk Edit API Route", () => {
               delete: vi.fn(),
             },
             steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
-          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
           });
         }
       );
@@ -1160,8 +1118,6 @@ describe("Bulk Edit API Route", () => {
             delete: vi.fn(),
           },
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
-          workflows: { findUnique: vi.fn().mockResolvedValue(null) },
-          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
         });
       });
 
@@ -1178,106 +1134,6 @@ describe("Bulk Edit API Route", () => {
       expect(prisma.projects.findFirst).toHaveBeenCalledWith({
         where: { id: 1, isDeleted: false },
       });
-    });
-  });
-
-  describe("Review Gate", () => {
-    it("returns 403 with structured payload when ReviewGateError is thrown", async () => {
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
-        const tx = {
-          repositoryCaseVersions: {
-            create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
-            createMany: vi.fn().mockResolvedValue({ count: 2 }),
-          },
-          repositoryCases: {
-            findUnique: vi.fn().mockResolvedValue(mockCases[0]),
-            update: vi.fn().mockResolvedValue({}),
-          },
-          caseFieldValues: {
-            create: vi.fn(),
-            update: vi.fn(),
-            delete: vi.fn(),
-          },
-          steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
-          // Target state requires review — gate engages.
-          workflows: {
-            findUnique: vi.fn().mockResolvedValue({ requiresReview: true }),
-          },
-          // No approved + unconsumed ReviewRequest — gate blocks.
-          reviewRequest: {
-            findFirst: vi.fn().mockResolvedValue(null),
-          },
-        };
-        return callback(tx);
-      });
-
-      const [request, context] = createRequest({
-        caseIds: [1, 2],
-        updates: { state: 99 },
-      });
-      const response = await POST(request, context);
-      const data = await response.json();
-
-      expect(response.status).toBe(403);
-      expect(data.error).toMatchObject({
-        code: "REVIEW_REQUIRED",
-        entityType: "CASE",
-        toStateId: 99,
-      });
-      expect(typeof data.error.entityId).toBe("number");
-    });
-
-    it("returns 409 with PENDING_REVIEW_EXISTS when AlreadyPendingError is thrown", async () => {
-      const { AlreadyPendingError } = await import("~/lib/utils/errors");
-      (prisma.$transaction as any).mockImplementation(async () => {
-        throw new AlreadyPendingError("CASE", 1, "existing-request-id");
-      });
-
-      const [request, context] = createRequest({
-        caseIds: [1, 2],
-        updates: { state: 99 },
-      });
-      const response = await POST(request, context);
-      const data = await response.json();
-
-      expect(response.status).toBe(409);
-      expect(data.error).toEqual({ code: "PENDING_REVIEW_EXISTS" });
-    });
-
-    it("skips the gate when stateId is not part of the update", async () => {
-      const findUniqueMock = vi.fn().mockResolvedValue(null);
-      (prisma.$transaction as any).mockImplementation(async (callback: any) => {
-        const tx = {
-          repositoryCaseVersions: {
-            create: vi.fn().mockResolvedValue({ id: 1, version: 1 }),
-            createMany: vi.fn().mockResolvedValue({ count: 2 }),
-          },
-          repositoryCases: {
-            findUnique: vi.fn().mockResolvedValue(mockCases[0]),
-            update: vi.fn().mockResolvedValue({}),
-          },
-          caseFieldValues: {
-            create: vi.fn(),
-            update: vi.fn(),
-            delete: vi.fn(),
-          },
-          steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
-          workflows: { findUnique: findUniqueMock },
-          reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-        };
-        return callback(tx);
-      });
-
-      const [request, context] = createRequest({
-        caseIds: [1, 2],
-        updates: { name: "renamed only" },
-      });
-      const response = await POST(request, context);
-
-      expect(response.status).toBe(200);
-      // Gate is gated by `updateData.stateId !== undefined`; with no state in the
-      // update, the preflight must not even consult workflows.
-      expect(findUniqueMock).not.toHaveBeenCalled();
     });
   });
 });

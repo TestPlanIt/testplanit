@@ -1,4 +1,4 @@
-import type { AuditAction, ReviewEntityType } from "@prisma/client";
+import type { AuditAction } from "@prisma/client";
 import { enhance } from "@zenstackhq/runtime";
 import { NextRequestHandler } from "@zenstackhq/server/next";
 import { AsyncLocalStorage } from "async_hooks";
@@ -16,12 +16,6 @@ import {
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import { prisma } from "~/lib/prisma";
 import { captureAuditEvent, type AuditEvent } from "~/lib/services/auditLog";
-import { assertReviewGatePasses } from "~/lib/services/reviewGate";
-import {
-  isAlreadyPendingError,
-  isReviewGateError,
-  ReviewGateError,
-} from "~/lib/utils/errors";
 import {
   emitCaseCreated,
   emitCaseDeleted,
@@ -84,61 +78,10 @@ const WEBHOOK_EMIT_MODELS = new Set([
   "sessionResults",
 ]);
 
-// Models whose `stateId` updates are gated by Review & Approval (Plan 01-04).
-// When `parsedPath.operation === "update"` AND `requestBody.data.stateId` is
-// present for one of these models, the auto-API handler calls
-// `assertReviewGatePasses` before invoking the underlying ZenStack handler.
-const REVIEW_GATED_MODELS: Record<string, ReviewEntityType> = {
-  repositoryCases: "CASE",
-  testRuns: "RUN",
-  sessions: "SESSION",
-};
-
-function extractEntityIdFromBody(
-  body: any,
-  operation?: string
-): number | string | null {
+function extractEntityIdFromBody(body: any): number | string | null {
   if (!body) return null;
-  // ZenStack RPC operation shapes:
-  //   update / delete:  { where: { id }, data?: { ... } }
-  //   upsert:           { where: { id }, create: { ... }, update: { ... } }
-  //   updateMany / deleteMany:
-  //                     { where: { id: ... }, data?: { ... } } — `where.id`
-  //                     may be a value or a Prisma filter (e.g. { in: [...] }).
-  //                     We accept the scalar case (single id) and return null
-  //                     otherwise so the caller treats the request as un-keyed.
-  //   create:           { data: { id?, ... } } — server-generated in practice.
-  //
-  // CR-03: precedence used to be `body.data.where.id ?? body.where.id
-  // ?? body.data.id`, which falls through to the right field for `update`
-  // payloads by accident. Make the source explicit per operation so future
-  // refactors don't silently regress.
-  let candidate: unknown = null;
-  switch (operation) {
-    case "update":
-    case "delete":
-    case "upsert":
-      candidate = body?.where?.id ?? null;
-      break;
-    case "updateMany":
-    case "deleteMany": {
-      // updateMany's `where` may carry a Prisma filter; only accept a
-      // scalar id (single-row update) to keep the gate's polymorphic
-      // (entityType, entityId) shape well-defined.
-      const w = body?.where?.id;
-      candidate = typeof w === "number" || typeof w === "string" ? w : null;
-      break;
-    }
-    case "create":
-      candidate = body?.data?.id ?? null;
-      break;
-    default:
-      // Back-compat fallback when the caller doesn't know the operation
-      // (e.g. webhook pre-snapshot path before this signature change).
-      // Probe the same locations the old `??` chain did, in order.
-      candidate =
-        body?.where?.id ?? body?.data?.where?.id ?? body?.data?.id ?? null;
-  }
+  const candidate =
+    body?.data?.where?.id ?? body?.where?.id ?? body?.data?.id ?? null;
   if (typeof candidate === "number" || typeof candidate === "string") {
     return candidate;
   }
@@ -221,17 +164,7 @@ function extractEntityName(
       .join(":");
   }
 
-  const value = result[field];
-
-  // WR-08: ApiToken.name is nullable in the schema. When a token row is
-  // saved without a name, audit rows would otherwise record entityName as
-  // undefined and become harder to triage. Prefer name -> tokenPrefix ->
-  // sentinel so the audit row always carries some human-readable signal.
-  if (entityType === "apiToken" && (value === null || value === undefined)) {
-    return result.tokenPrefix ?? "(unnamed token)";
-  }
-
-  return value;
+  return result[field];
 }
 
 async function getPrisma() {
@@ -448,154 +381,6 @@ async function innerHandler(
       }
     }
 
-    // Review & Approval preflight. For state-changing mutations on
-    // RepositoryCases / TestRuns / Sessions, call `assertReviewGatePasses`
-    // BEFORE the request reaches `tryFastPathCreate` or `baseHandler`. The
-    // schema `@@deny('update', future().state.requiresReview)` rule from
-    // Plan 01 is the schema-layer backstop; the app preflight is the
-    // friendly-error path that produces a structured 403 with the typed code.
-    //
-    // CR-03: the gate now covers `update`, `upsert`, and `updateMany` payloads
-    // that carry a `stateId`. Previously only `update` was checked, so a
-    // caller could route a state flip through `upsert` (data lands in
-    // `body.update.stateId`) or `updateMany` and bypass the friendly-error
-    // path — the schema @@deny still caught it, but the user got a generic
-    // policy-denied response instead of the typed REVIEW_REQUIRED envelope.
-    if (isMutation && parsedPath) {
-      const gatedEntityType = REVIEW_GATED_MODELS[parsedPath.model];
-      // For each operation, locate the stateId field per the ZenStack RPC
-      // body shape:
-      //   update / updateMany: body.data.stateId
-      //   upsert:              body.update.stateId (the update-branch payload;
-      //                        upsert.create.stateId is a fresh row and is
-      //                        gated at row-creation time by FK + workflow
-      //                        rules, not by the review gate which targets
-      //                        transitions of existing entities)
-      const stateIdFromPayload =
-        gatedEntityType !== undefined
-          ? parsedPath.operation === "update" ||
-            parsedPath.operation === "updateMany"
-            ? requestBody?.data?.stateId
-            : parsedPath.operation === "upsert"
-              ? requestBody?.update?.stateId
-              : undefined
-          : undefined;
-      const isGatedUpdate =
-        gatedEntityType !== undefined && stateIdFromPayload !== undefined;
-
-      if (isGatedUpdate) {
-        const rawEntityId = extractEntityIdFromBody(
-          requestBody,
-          parsedPath.operation
-        );
-        const entityIdNum =
-          typeof rawEntityId === "number"
-            ? rawEntityId
-            : typeof rawEntityId === "string" && rawEntityId !== ""
-              ? Number(rawEntityId)
-              : NaN;
-        // CR-03: guard the stateId coercion the same way entityIdNum is
-        // guarded a few lines up — accept number/numeric-string only, NaN
-        // anything else. Today stateId is always a numeric primary key, but
-        // any future nullable-stateId payload (e.g. clearing the field) would
-        // otherwise pass NaN into `assertReviewGatePasses`.
-        const rawStateId = stateIdFromPayload;
-        const toStateIdNum =
-          typeof rawStateId === "number"
-            ? rawStateId
-            : typeof rawStateId === "string" && rawStateId !== ""
-              ? Number(rawStateId)
-              : NaN;
-
-        if (Number.isFinite(entityIdNum) && Number.isFinite(toStateIdNum)) {
-          try {
-            // CR-04: the auto-API path cannot share a transaction with
-            // ZenStack's internal handler (baseHandler manages its own
-            // connection + tx), so it cannot honor the contract that the
-            // sibling chokepoint helpers do — namely "gate-read and
-            // entity-update commit together, then stamp consumedAt
-            // afterward". The previous Serializable wrapper around the
-            // read-only gate provided no atomicity with the later
-            // baseHandler write: the tx committed immediately after the
-            // read, and a concurrent decide/cancel/consume could slip
-            // between commit-of-gate-tx and start-of-entity-tx. Serializable
-            // also only conflicts with other Serializable transactions, and
-            // the decide path runs at default isolation.
-            //
-            // The right move is to make the gate write-locked: stamp
-            // `consumedAt` atomically inside the same tx that did the gate
-            // read, BEFORE handing off to ZenStack. Concurrent callers race
-            // on `updateMany({ where: { id, consumedAt: null } })` — exactly
-            // one wins, the rest get count=0 and surface as REVIEW_REQUIRED.
-            // This preserves the one-shot invariant from Phase 1 D-05.
-            //
-            // Tradeoff documented: a downstream ZenStack failure (FK
-            // violation, policy denial, etc.) leaves an orphan
-            // `consumedAt`-stamped row. The user retries by requesting a
-            // fresh review (the prior request is "consumed but no entity
-            // change shipped" — not the same shape as a clean approval,
-            // but cleaner than a double-consume). The bulk-edit /
-            // submit-result / milestone paths can hold a single tx across
-            // gate + entity update + consume and don't pay this cost; the
-            // auto-API path explicitly accepts it.
-            await prisma.$transaction(
-              async (tx) => {
-                const gateResult = await assertReviewGatePasses(
-                  tx,
-                  gatedEntityType,
-                  entityIdNum,
-                  toStateIdNum
-                );
-                if (gateResult) {
-                  const stamp = await tx.reviewRequest.updateMany({
-                    where: {
-                      id: gateResult.approvedRequestId,
-                      consumedAt: null,
-                    },
-                    data: { consumedAt: new Date() },
-                  });
-                  if (stamp.count === 0) {
-                    // Another caller consumed this approval first. Surface
-                    // it as REVIEW_REQUIRED so the client gets the typed
-                    // 403 envelope; a fresh review request is the path
-                    // forward.
-                    throw new ReviewGateError(
-                      "REVIEW_REQUIRED",
-                      gatedEntityType,
-                      entityIdNum,
-                      toStateIdNum
-                    );
-                  }
-                }
-              },
-              { isolationLevel: "Serializable" }
-            );
-          } catch (err) {
-            if (isReviewGateError(err)) {
-              return NextResponse.json(
-                {
-                  error: {
-                    code: err.code,
-                    entityType: err.entityType,
-                    entityId: err.entityId,
-                    toStateId: err.toStateId,
-                  },
-                },
-                { status: 403 }
-              );
-            }
-            if (isAlreadyPendingError(err)) {
-              return NextResponse.json(
-                { error: { code: "PENDING_REVIEW_EXISTS" } },
-                { status: 409 }
-              );
-            }
-            throw err;
-          }
-        }
-      }
-    }
-
     // Plan 02-08 webhook-emit shim — pre-mutation snapshot capture.
     // For UPDATE / UPSERT / DELETE on emission-eligible models we need the
     // pre-mutation row state to compute state-transition diffs and pass
@@ -604,31 +389,20 @@ async function innerHandler(
     // The post-mutation `lib/prisma.ts` `$extends` middleware emission is
     // suppressed via auditContext.suppressWebhooks (Plan 02-02 D-01a) to
     // prevent double-emission; this shim is the canonical RPC-path emitter.
-    //
-    // WR-05: hoist the narrowed parsedPath into a single non-nullable local
-    // (`webhookMutation`) so we don't rely on `parsedPath!` non-null
-    // assertions to keep the compiler quiet. A future refactor that drops
-    // the `parsedPath !== null` clause from `isWebhookEmittingMutation`
-    // would now surface as a type error instead of silently masking a null
-    // deref at runtime.
     let webhookPreSnapshot: any = null;
-    const webhookMutation =
-      isMutation && parsedPath && WEBHOOK_EMIT_MODELS.has(parsedPath.model)
-        ? parsedPath
-        : null;
-    const isWebhookEmittingMutation = webhookMutation !== null;
+    const isWebhookEmittingMutation =
+      isMutation &&
+      parsedPath !== null &&
+      WEBHOOK_EMIT_MODELS.has(parsedPath.model);
     if (
-      webhookMutation &&
-      ["update", "upsert", "delete"].includes(webhookMutation.operation)
+      isWebhookEmittingMutation &&
+      ["update", "upsert", "delete"].includes(parsedPath!.operation)
     ) {
       try {
-        const whereId = extractEntityIdFromBody(
-          requestBody,
-          webhookMutation.operation
-        );
+        const whereId = extractEntityIdFromBody(requestBody);
         if (whereId !== null) {
           webhookPreSnapshot = await (prisma as any)[
-            webhookMutation.model
+            parsedPath!.model
           ].findUnique({ where: { id: whereId } });
         }
       } catch (e) {
@@ -989,7 +763,7 @@ async function innerHandler(
         const entityId =
           (typeof data?.id === "number" || typeof data?.id === "string"
             ? data.id
-            : null) ?? extractEntityIdFromBody(requestBody, parsedPath.operation);
+            : null) ?? extractEntityIdFromBody(requestBody);
 
         if (entityId !== null) {
           // Refetch the post-mutation row so we have the FULL set of fields

@@ -246,20 +246,6 @@ enum JUnitAttachmentType {
   INLINE
 }
 
-enum ReviewStatus {
-  PENDING
-  APPROVED
-  CHANGES_REQUESTED
-  REJECTED
-  CANCELLED
-}
-
-enum ReviewEntityType {
-  CASE
-  RUN
-  SESSION
-}
-
 enum ShareLinkMode {
   AUTHENTICATED
   PUBLIC
@@ -350,11 +336,6 @@ enum AuditAction {
   WEBHOOK_HEALTH_CHANGED
   WEBHOOK_RETENTION_PURGED
   DUPLICATED
-  REVIEW_REQUESTED
-  REVIEW_APPROVED
-  REVIEW_CHANGES_REQUESTED
-  REVIEW_REJECTED
-  REVIEW_CANCELLED
 }
 
 model AppConfig {
@@ -448,9 +429,6 @@ model User {
   apiTokens               ApiToken[]
   createdShareLinks       ShareLink[]             @relation("ShareLinkCreator")
   shareLinkAccessLogs     ShareLinkAccessLog[]    @relation("ShareLinkAccessor")
-  reviewsRequested        ReviewRequest[]         @relation("ReviewRequestedBy")
-  reviewsAssigned         ReviewRequest[]         @relation("ReviewAssignedToUser")
-  reviewsDecided          ReviewRequest[]         @relation("ReviewDecidedBy")
   twoFactorEnabled        Boolean                 @default(false)
   twoFactorSecret         String?
   twoFactorBackupCodes    String?
@@ -531,16 +509,15 @@ model GroupAssignment {
 }
 
 model Roles {
-  id                       Int                      @id() @default(autoincrement())
-  name                     String                   @unique()
-  isDefault                Boolean                  @default(false)
-  isDeleted                Boolean                  @default(false)
-  users                    User[]
-  rolePermissions          RolePermission[]
-  defaultForProjects       Projects[]               @relation("ProjectDefaultRole")
-  userProjectPermissions   UserProjectPermission[]  @relation("UserProjectRole")
-  groupProjectPermissions  GroupProjectPermission[] @relation("GroupProjectRole")
-  reviewRequestAssignments ReviewRequest[]
+  id                      Int                      @id() @default(autoincrement())
+  name                    String                   @unique()
+  isDefault               Boolean                  @default(false)
+  isDeleted               Boolean                  @default(false)
+  users                   User[]
+  rolePermissions         RolePermission[]
+  defaultForProjects      Projects[]               @relation("ProjectDefaultRole")
+  userProjectPermissions  UserProjectPermission[]  @relation("UserProjectRole")
+  groupProjectPermissions GroupProjectPermission[] @relation("GroupProjectRole")
 }
 
 model Projects {
@@ -592,10 +569,8 @@ model Projects {
   defaultCaseExportTemplateId Int?
   defaultCaseExportTemplate   CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
   quickScriptEnabled          Boolean                               @default(false)
-  reviewWorkflowEnabled       Boolean                               @default(true)
   duplicateScanResults        DuplicateScanResult[]
   stepSequenceMatches         StepSequenceMatch[]
-  reviewRequests              ReviewRequest[]
 
   @@index([isDeleted, isCompleted])
   @@index([createdBy])
@@ -916,25 +891,22 @@ model StatusScopeAssignment {
 }
 
 model Workflows {
-  id                      Int                         @id() @default(autoincrement())
-  order                   Int                         @default(autoincrement())
-  name                    String
-  iconId                  Int
-  icon                    FieldIcon                   @relation(fields: [iconId], references: [id])
-  colorId                 Int
-  color                   Color                       @relation(fields: [colorId], references: [id])
-  isEnabled               Boolean                     @default(true)
-  isDeleted               Boolean                     @default(false)
-  isDefault               Boolean                     @default(false)
-  workflowType            WorkflowType                @default(NOT_STARTED)
-  scope                   WorkflowScope
-  requiresReview          Boolean                     @default(false)
-  projects                ProjectWorkflowAssignment[]
-  repositoryCases         RepositoryCases[]
-  sessions                Sessions[]
-  testRuns                TestRuns[]
-  reviewRequestsFromState ReviewRequest[]             @relation("ReviewFromState")
-  reviewRequestsToState   ReviewRequest[]             @relation("ReviewToState")
+  id              Int                         @id() @default(autoincrement())
+  order           Int                         @default(autoincrement())
+  name            String
+  iconId          Int
+  icon            FieldIcon                   @relation(fields: [iconId], references: [id])
+  colorId         Int
+  color           Color                       @relation(fields: [colorId], references: [id])
+  isEnabled       Boolean                     @default(true)
+  isDeleted       Boolean                     @default(false)
+  isDefault       Boolean                     @default(false)
+  workflowType    WorkflowType                @default(NOT_STARTED)
+  scope           WorkflowScope
+  projects        ProjectWorkflowAssignment[]
+  repositoryCases RepositoryCases[]
+  sessions        Sessions[]
+  testRuns        TestRuns[]
 
   @@index([isDeleted, isEnabled])
   @@index([scope, isDefault])
@@ -1828,38 +1800,6 @@ model Notification {
   @@index([userId, isRead, isDeleted])
   @@index([createdAt])
   @@index([type])
-}
-
-model ReviewRequest {
-  id                String           @id() @default(cuid())
-  projectId         Int
-  project           Projects         @relation(fields: [projectId], references: [id])
-  entityType        ReviewEntityType
-  entityId          Int
-  requestedByUserId String
-  requestedBy       User             @relation("ReviewRequestedBy", fields: [requestedByUserId], references: [id])
-  assigneeUserId    String?
-  assigneeUser      User?            @relation("ReviewAssignedToUser", fields: [assigneeUserId], references: [id])
-  assigneeRoleId    Int?
-  assigneeRole      Roles?           @relation(fields: [assigneeRoleId], references: [id])
-  fromStateId       Int
-  fromState         Workflows        @relation("ReviewFromState", fields: [fromStateId], references: [id])
-  toStateId         Int
-  toState           Workflows        @relation("ReviewToState", fields: [toStateId], references: [id])
-  status            ReviewStatus     @default(PENDING)
-  decisionComment   String?
-  decidedByUserId   String?
-  decidedBy         User?            @relation("ReviewDecidedBy", fields: [decidedByUserId], references: [id])
-  decidedAt         DateTime?
-  consumedAt        DateTime?
-  isDeleted         Boolean          @default(false)
-  createdAt         DateTime         @default(now()) @db.Timestamptz(6)
-  updatedAt         DateTime         @updatedAt()
-
-  @@index([assigneeUserId, status])
-  @@index([assigneeRoleId, status])
-  @@index([entityType, entityId, status, createdAt(sort: Desc)])
-  @@index([projectId, status])
 }
 
 model ShareLink {

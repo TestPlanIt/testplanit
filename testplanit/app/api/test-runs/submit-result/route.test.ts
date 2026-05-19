@@ -101,13 +101,6 @@ describe("Submit Result API Route", () => {
     };
     testRuns: {
       update: ReturnType<typeof vi.fn>;
-      findUnique: ReturnType<typeof vi.fn>;
-    };
-    workflows: {
-      findUnique: ReturnType<typeof vi.fn>;
-    };
-    reviewRequest: {
-      findFirst: ReturnType<typeof vi.fn>;
     };
   };
 
@@ -134,20 +127,6 @@ describe("Submit Result API Route", () => {
       },
       testRuns: {
         update: vi.fn().mockResolvedValue({ id: 1 }),
-        // Review & Approval per-project flag lookup — default returns the
-        // project with reviewWorkflowEnabled=true so the gate continues
-        // evaluating the requiresReview branch.
-        findUnique: vi.fn().mockResolvedValue({
-          project: { reviewWorkflowEnabled: true },
-        }),
-      },
-      // Review & Approval gate dependencies — default to "not gated" so
-      // every pre-existing test path passes the preflight as a no-op.
-      workflows: {
-        findUnique: vi.fn().mockResolvedValue(null),
-      },
-      reviewRequest: {
-        findFirst: vi.fn().mockResolvedValue(null),
       },
     };
 
@@ -320,53 +299,6 @@ describe("Submit Result API Route", () => {
         where: { id: 55 },
         data: { automated: true },
       });
-    });
-  });
-
-  describe("review gate", () => {
-    it("returns 403 with structured payload when the in-progress target state requires review and has no approval", async () => {
-      // Target state requires review → preflight engages.
-      txMocks.workflows.findUnique.mockResolvedValue({ requiresReview: true });
-      // No approved + unconsumed ReviewRequest → helper throws ReviewGateError.
-      txMocks.reviewRequest.findFirst.mockResolvedValue(null);
-
-      const response = await POST(createRequest(validBody));
-      const data = await response.json();
-
-      expect(response.status).toBe(403);
-      expect(data.error).toMatchObject({
-        code: "REVIEW_REQUIRED",
-        entityType: "RUN",
-        entityId: validBody.testRunId,
-        toStateId: validBody.inProgressStateId,
-      });
-      // Auto-flip must NOT have fired when the gate blocked.
-      expect(txMocks.testRuns.update).not.toHaveBeenCalled();
-    });
-
-    it("allows the auto-flip when the target state requires review and an approved ReviewRequest exists", async () => {
-      txMocks.workflows.findUnique.mockResolvedValue({ requiresReview: true });
-      txMocks.reviewRequest.findFirst.mockResolvedValue({ id: "approved-1" });
-
-      const response = await POST(createRequest(validBody));
-
-      expect(response.status).toBe(200);
-      expect(txMocks.testRuns.update).toHaveBeenCalledWith({
-        where: { id: validBody.testRunId },
-        data: { stateId: validBody.inProgressStateId },
-      });
-    });
-
-    it("skips the preflight entirely when there is a previous result (no auto-flip)", async () => {
-      // Existing previous result → the auto-flip block (and the preflight) is
-      // bypassed.
-      txMocks.testRunResults.findFirst.mockResolvedValue({ id: 1 });
-
-      const response = await POST(createRequest(validBody));
-
-      expect(response.status).toBe(200);
-      expect(txMocks.workflows.findUnique).not.toHaveBeenCalled();
-      expect(txMocks.testRuns.update).not.toHaveBeenCalled();
     });
   });
 });
