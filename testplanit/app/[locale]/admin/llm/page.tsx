@@ -288,7 +288,7 @@ function LlmIntegrationList() {
   const [deletingIntegration, setDeletingIntegration] =
     useState<ExtendedLlmIntegration | null>(null);
 
-   
+  // eslint-disable-next-line react-hooks/refs
   const columns = useColumns(
     userPreferences,
     handleToggle,

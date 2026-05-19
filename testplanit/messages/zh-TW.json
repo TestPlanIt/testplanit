@@ -7216,7 +7216,7 @@
     "runProgressCounter": "{done} / {total}",
     "runProgressDismissAria": "駁回進度",
     "runProgressComplete": "生成 {total, plural, =1 {# 迭代} other {# 迭代}} ，用於 \"{runName}\"",
-    "runProgressFailedToast": "無法為“{runName}”產生迭代。 {reason}",
+    "runProgressFailedToast": "無法為「{runName}」產生迭代。 {reason}",
     "runProgressNavAway": "把剩下的部分展示給我",
     "runGeneratingHeading": "生成迭代…",
     "runGeneratingHelper": "這可能需要幾分鐘。",

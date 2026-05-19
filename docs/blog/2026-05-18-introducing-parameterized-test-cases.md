@@ -1,7 +1,7 @@
 ---
 slug: introducing-parameterized-test-cases
 title: "Introducing Parameterized Test Cases: One Case, Many Runs, Real Coverage"
-description: "TestPlanIt v0.28.0 ships parameterized test cases. Drive a single case from a table of input rows, see per-row results, and tell your bug tracker exactly which combination failed — without duplicating cases."
+description: "TestPlanIt v0.29.0 ships parameterized test cases. Drive a single case from a table of input rows, see per-row results, and tell your bug tracker exactly which combination failed — without duplicating cases."
 authors: [bdermanouelian]
 tags: [release, announcement]
 image: /img/blog/iteration-matrix-blog.jpg
@@ -16,7 +16,7 @@ Every test team has the same shelf of near-duplicate test cases. "Login — vali
 
 It's not a quality problem — those scenarios all matter. It's a maintenance problem. When the flow changes, you edit one case and forget the other six. When someone joins the team they can't tell which "Login" case is canonical. When a run completes, the report doesn't surface "which input combinations did we actually cover this sprint?"
 
-TestPlanIt v0.28.0 ships **[parameterized test cases](/docs/user-guide/projects/parameterized-test-cases)**. Write the case once. Attach a table of input rows. Each row becomes an iteration with its own status — and the results roll up to a single case in your report.
+TestPlanIt v0.29.0 ships **[parameterized test cases](/docs/user-guide/projects/parameterized-test-cases)**. Write the case once. Attach a table of input rows. Each row becomes an iteration with its own status — and the results roll up to a single case in your report.
 
 If you're already using [shared steps](/docs/user-guide/shared-steps), this is the missing other half: shared steps reuse the *same steps* across many cases when the flow is identical; [parameterized cases](/docs/user-guide/projects/parameterized-test-cases) reuse the *same case* across many input rows when the steps stay the same but the data changes.
 
@@ -91,7 +91,7 @@ The whole feature surface lives under one menu entry: **Project Settings → Tes
 
 The full user guide is at [Parameterized Test Cases](/docs/user-guide/projects/parameterized-test-cases).
 
-## Upgrade to v0.28.0
+## Upgrade to v0.29.0
 
 Pull the latest, install, generate, and build. Docker users can pull the latest image. Full upgrade notes are in the [release notes](/docs/).
 

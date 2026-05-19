@@ -1,5 +1,5 @@
 // Ordered alphabetically by each language's native name (endonym).
-// Latin-script languages first, CJK at the end (no universal alpha order).
+// Latin-script languages first, then Cyrillic, then CJK (no universal alpha order).
 export const locales = [
   "de-DE",
   "en-US",
@@ -9,7 +9,9 @@ export const locales = [
   "nl-NL",
   "pl-PL",
   "pt-BR",
+  "tr-TR",
   "vi-VN",
+  "ru-RU",
   "zh-CN",
   "zh-TW",
   "ja-JP",
@@ -29,7 +31,9 @@ export const languageNames: Record<string, string> = {
   "nl-NL": "Nederlands (Nederland)",
   "pl-PL": "Polski (Polska)",
   "pt-BR": "Português (Brasil)",
+  "tr-TR": "Türkçe (Türkiye)",
   "vi-VN": "Tiếng Việt",
+  "ru-RU": "Русский (Россия)",
   "zh-CN": "中文（简体）",
   "zh-TW": "中文（繁體）",
   "ja-JP": "日本語",

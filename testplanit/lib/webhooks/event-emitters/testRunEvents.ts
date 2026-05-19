@@ -11,29 +11,21 @@ import {
 import { webhookEvents } from "~/lib/webhooks/events";
 
 /**
- * Per-value cap for parameter values emitted into webhook payloads
- * (Pitfall 5 / T-06-02-02). Long values (e.g., copy-pasted JSON blobs in a
- * test-data row) are replaced with a `<value truncated: N bytes>` sentinel
- * so a single 5000-iteration run-completion payload stays bounded.
- *
- * 4 KB matches the cap chosen for the INT-04 `iteration.result.recorded`
- * emitter (see `iterationEvents.ts`) so both surfaces share one ceiling.
+ * Per-value cap for parameter values emitted into webhook payloads.
+ * Long values (e.g., copy-pasted JSON blobs in a test-data row) are
+ * replaced with a `<value truncated: N bytes>` sentinel so a single
+ * 5000-iteration run-completion payload stays bounded. 4 KB matches the
+ * cap used by the `iteration.result.recorded` emitter so both surfaces
+ * share one ceiling.
  */
 const WEBHOOK_VALUE_MAX_BYTES = 4 * 1024;
 
 /**
  * Replace any value whose serialized UTF-8 byte length exceeds the cap
- * with a truncated sentinel. The byte-count check uses
- * `Buffer.byteLength` (server-only is fine — emitter runs in the Node
- * API runtime). The sentinel format matches the plan's
- * `<value truncated: N bytes>` wording exactly so subscribers can grep
- * for it.
- *
- * WR-05: non-string values (nested objects, arrays) are JSON-serialized
- * before the byte check so an object-shaped parameter value cannot
- * escape the cap. Numbers, booleans, and null pass through unchanged
- * (their JSON form is already short enough that bounding is
- * unnecessary).
+ * with a truncated sentinel. Non-string values (nested objects, arrays)
+ * are JSON-serialized before the byte check so an object-shaped parameter
+ * value cannot escape the cap. Numbers, booleans, and null pass through
+ * unchanged.
  */
 function capValueBytes(
   values: Record<string, unknown>
@@ -67,10 +59,7 @@ function capValueBytes(
 
 /**
  * Coerce a Prisma `Json` parametersJson column into the narrow
- * ParameterSchemaEntry[] redaction shape. Mirrors the helper in
- * `app/api/test-runs/submit-result/route.ts` (kept inline rather than
- * exported because the redactor lives at a different layer and the shape
- * coercion is cheap).
+ * ParameterSchemaEntry[] redaction shape.
  */
 function parseParameterSchema(
   value: Prisma.JsonValue | null | undefined
@@ -233,19 +222,19 @@ export async function emitTestRunUpdateEvents(
     // any other consumer) can render a self-contained message without
     // an API round-trip.
     const summary = await getTestRunSummary(newRow.id, { client: tx });
-    // INT-03 / D-04 — per-case iteration counts read from denormalized
-    // counters on TestRunCases. Non-parameterized cases report
-    // iterationCount: 0 (no false positives). Single SELECT inside the
-    // same tx as getTestRunSummary so the snapshot is consistent.
+    // Per-case iteration counts read from denormalized counters on
+    // TestRunCases. Non-parameterized cases report iterationCount: 0
+    // (no false positives). Single SELECT inside the same tx as
+    // getTestRunSummary so the snapshot is consistent.
     const perCaseIterationCounts = await getPerCaseIterationCounts(
       newRow.id,
       tx
     );
-    // D-13 — for parameterized cases, append per-iteration redacted values
-    // so subscribers can route on parameter context without an API
-    // round-trip. `viewerCanReadSensitive` is HARDCODED `false` here: the
-    // external webhook subscriber is never a viewer. Pitfall 5 — cap each
-    // value to 4 KB to bound payload size for 5000-iteration runs.
+    // For parameterized cases, append per-iteration redacted values so
+    // subscribers can route on parameter context without an API
+    // round-trip. `viewerCanReadSensitive` is hardcoded `false` — the
+    // external webhook subscriber is never a viewer. Each value is
+    // capped at 4 KB to bound payload size for 5000-iteration runs.
     const perCaseRedactedIterations = await assemblePerCaseRedactedIterations(
       newRow.id,
       tx
@@ -274,15 +263,11 @@ export async function emitTestRunUpdateEvents(
 
 /**
  * Per-case redacted iteration values for the `test_run.completed` webhook
- * payload (D-13). For each parameterized run-case we:
- *   1. Read the case's snapshot to get the parameter schema (canonical
- *      in-flight schema, snapshot-at-creation rule).
- *   2. For each iteration on the case, pass `valuesJson` through
- *      `redactValues(values, schema, false)` and cap each value at 4 KB.
- *
- * Non-parameterized cases (no snapshot) are omitted from the array — the
- * subscriber can correlate by `testRunCaseId` against the
- * `perCaseIterationCounts` array which always lists every case.
+ * payload. For each parameterized run-case: read the snapshot for the
+ * parameter schema, then pass each iteration's valuesJson through
+ * `redactValues(values, schema, false)` and cap each value at 4 KB.
+ * Non-parameterized cases (no snapshot) are omitted — the subscriber can
+ * correlate by `testRunCaseId` against `perCaseIterationCounts`.
  */
 async function assemblePerCaseRedactedIterations(
   testRunId: number,
@@ -319,8 +304,7 @@ async function assemblePerCaseRedactedIterations(
       iterations: snap.iterations.map((iter) => {
         const values = (iter.valuesJson ?? {}) as Record<string, unknown>;
         // Order matters: redact first (so the [REDACTED] sentinel is
-        // never accidentally byte-capped), then cap. The sentinel is 10
-        // bytes — well under the cap.
+        // never accidentally byte-capped), then cap.
         const redacted = redactValues(values, schema, false);
         return {
           iterationId: iter.id,

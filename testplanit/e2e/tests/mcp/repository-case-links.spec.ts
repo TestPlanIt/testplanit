@@ -137,7 +137,7 @@ test.describe("MCP repository case links read (Phase 8 REPO-05)", () => {
     baseURL,
   }) => {
     if (ctx.linkId === null || ctx.caseAId === null) {
-       
+      // eslint-disable-next-line no-console
       console.warn(
         "REPO-05 caseId mode skipped: seed has no RepositoryCaseLink in this project"
       );
@@ -184,7 +184,7 @@ test.describe("MCP repository case links read (Phase 8 REPO-05)", () => {
     baseURL,
   }) => {
     if (ctx.caseAId === null) {
-       
+      // eslint-disable-next-line no-console
       console.warn(
         "REPO-05 caseAId mode skipped: seed has no RepositoryCaseLink"
       );
@@ -216,7 +216,7 @@ test.describe("MCP repository case links read (Phase 8 REPO-05)", () => {
     baseURL,
   }) => {
     if (ctx.caseBId === null) {
-       
+      // eslint-disable-next-line no-console
       console.warn(
         "REPO-05 caseBId mode skipped: seed has no RepositoryCaseLink"
       );
@@ -248,7 +248,7 @@ test.describe("MCP repository case links read (Phase 8 REPO-05)", () => {
     baseURL,
   }) => {
     if (ctx.linkType === null || ctx.caseAId === null) {
-       
+      // eslint-disable-next-line no-console
       console.warn("REPO-05 linkType skipped: seed has no RepositoryCaseLink");
       return;
     }

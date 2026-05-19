@@ -7183,7 +7183,7 @@
     "runHardRefuseTitle": "Te veel iteraties om te creëren",
     "runHardRefuseDescription": "Deze run zou {count} iteraties genereren, waarmee de limiet van {cap}wordt overschreden. Verminder het aantal rijen in de dataset, deselecteer gevallen of splits de dataset op in meerdere runs.",
     "runPreflightSync": "Zal {n, plural, =1 {# iteratie} other {# iteraties}} direct creëren",
-    "runPreflightAsync": "Er wordt een iteratie aangemaakt van {n, plural, =1 {# iteratie} other {# iteraties}} (achtergrondtaak)",
+    "runPreflightAsync": "Er wordt {n, plural, =1 {# iteratie} other {# iteraties}} aangemaakt (achtergrondtaak)",
     "runPreflightSoftConfirm": "Er worden {n, plural, =1 {# iteraties} other {# iteraties}} aangemaakt — bevestiging vereist",
     "runPreflightHardRefuse": "Kan niet aanmaken — {n} overschrijdt de limiet van {cap}",
     "runPreflightTooltip": "{iterations, plural, =1 {# iteratie} other {# iteraties}} = {cases, plural, =1 {# geval} other {# gevallen}} × {configs, plural, =1 {# configuratie} other {# configuraties}} × rijen in de dataset",

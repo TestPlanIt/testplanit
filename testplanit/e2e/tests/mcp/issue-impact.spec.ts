@@ -138,7 +138,7 @@ test.describe("MCP issue-impact chain (Phase 7 EXEC-06)", () => {
     baseURL,
   }) => {
     if (ctx.issueId === null) {
-       
+      // eslint-disable-next-line no-console
       console.warn(
         "EXEC-06 chain skipped: seed has no Issue linked to a project's RepositoryCases"
       );
@@ -167,7 +167,7 @@ test.describe("MCP issue-impact chain (Phase 7 EXEC-06)", () => {
     expect(Array.isArray(casesBody.data)).toBe(true);
 
     if (casesBody.data.length === 0) {
-       
+      // eslint-disable-next-line no-console
       console.warn(
         "EXEC-06 partial: issue has 0 linked RepositoryCases (access policy may have filtered)"
       );
@@ -213,7 +213,7 @@ test.describe("MCP issue-impact chain (Phase 7 EXEC-06)", () => {
     expect(Array.isArray(resultsBody.data)).toBe(true);
 
     if (resultsBody.data.length === 0) {
-       
+      // eslint-disable-next-line no-console
       console.warn(
         "EXEC-06 partial: linked cases have 0 TestRunResults yet — chain shape verified but executedBy assertion skipped"
       );

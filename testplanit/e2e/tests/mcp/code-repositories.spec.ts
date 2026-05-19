@@ -132,7 +132,7 @@ test.describe("MCP code-repositories read (Phase 8 REPO-01)", () => {
     expect(Array.isArray(body.data)).toBe(true);
 
     if (body.data.length === 0) {
-       
+      // eslint-disable-next-line no-console
       console.warn(
         "REPO-01 skipped: seed has 0 ProjectCodeRepositoryConfig rows"
       );

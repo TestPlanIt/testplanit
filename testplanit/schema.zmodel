@@ -252,7 +252,9 @@ enum Locale {
     nl_NL
     pl_PL
     pt_BR
+    tr_TR
     vi_VN
+    ru_RU
     zh_CN
     zh_TW
     ja_JP

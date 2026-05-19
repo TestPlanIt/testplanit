@@ -71,12 +71,10 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // CR-03 (T-06-04-01): server-side admin gate on the
-  // `includeParameters` flag. Mirrors the sync + stream routes — the
-  // wizard hides the toggle for non-admins; a crafted request body
-  // must still be rejected here. Returned as a plain JSON 403 (not via
-  // the SSE stream) so the client sees a synchronous failure before
-  // the heartbeat starts.
+  // Server-side admin gate on `includeParameters`. The wizard hides the
+  // toggle for non-admins; a crafted request body must still be rejected
+  // here. Returned as a plain JSON 403 (not via the SSE stream) so the
+  // client sees a synchronous failure before the heartbeat starts.
   if (includeParameters === true && session.user.access !== "ADMIN") {
     return NextResponse.json(
       {

@@ -23,9 +23,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    // INT-06: outline endpoint accepts `includeParameters` for uniform wizard
-    // plumbing but IGNORES it — outlines are titles + summaries only, no
-    // parameter/dataset emission. The expand endpoint applies the flag.
+    // The outline endpoint accepts `includeParameters` for uniform wizard
+    // plumbing but ignores it — outlines are titles + summaries only.
+    // The expand endpoint applies the flag.
     const { projectId, issue, context, quantity } = body as {
       projectId: number;
       issue: IssueData;

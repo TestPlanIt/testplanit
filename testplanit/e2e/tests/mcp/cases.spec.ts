@@ -283,7 +283,7 @@ test.describe("MCP test-case CRUD lifecycle (Phase 6)", () => {
     const body = await r.json();
     expect(Array.isArray(body.data)).toBe(true);
     if (body.data.length === 0) {
-       
+      // eslint-disable-next-line no-console
       console.warn(
         "Phase 8 REPO-02 maintenance smoke: project has 0 automated:true cases — filter shape verified, row-shape assertion skipped"
       );
