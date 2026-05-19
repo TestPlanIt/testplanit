@@ -64,7 +64,7 @@ When viewing your own profile, you can view and edit these preferences:
 #### Display Preferences
 
 - **Theme**: Choose from Light, Dark, System, Green, Orange, or Purple themes (with color indicators)
-- **Locale**: Language preference (English, German, Spanish, French, Italian, Dutch, Polish, Portuguese, Vietnamese, Chinese Simplified, Chinese Traditional, Japanese, Korean)
+- **Locale**: Language preference (English, German, Spanish, French, Italian, Dutch, Polish, Portuguese, Turkish, Vietnamese, Russian, Chinese Simplified, Chinese Traditional, Japanese, Korean)
 - **Items Per Page**: Number of items to show in paginated tables (10, 25, 50, 100)
 
 #### Date & Time Formatting

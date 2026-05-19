@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
+import {
+  Access,
+  DateFormat,
+  ItemsPerPage,
+  Locale,
+  NotificationMode,
+  Theme,
+  TimeFormat,
+} from "@prisma/client";
 import { prisma } from "~/lib/prisma";
 import { getServerAuthSession } from "~/server/auth";
 import { invalidateSessionUserCache } from "~/lib/session-cache";
@@ -24,55 +33,17 @@ const updateUserSchema = z.object({
   isApi: z.boolean().optional(),
   isDeleted: z.boolean().optional(),
   image: z.string().nullable().optional(),
-  access: z.enum(["NONE", "USER", "PROJECTADMIN", "ADMIN"]).optional(),
+  access: z.enum(Access).optional(),
   roleId: z.number().int().optional(),
   userPreferences: z
     .object({
-      theme: z
-        .enum(["Light", "Dark", "System", "Green", "Orange", "Purple"])
-        .optional(),
-      locale: z
-        .enum([
-          "en_US",
-          "es_ES",
-          "fr_FR",
-          "it_IT",
-          "de_DE",
-          "nl_NL",
-          "pl_PL",
-          "pt_BR",
-          "vi_VN",
-          "zh_CN",
-          "zh_TW",
-          "ja_JP",
-          "ko_KR",
-        ])
-        .optional(),
-      itemsPerPage: z.enum(["P10", "P25", "P50", "P100", "P250"]).optional(),
-      dateFormat: z
-        .enum([
-          "MM_DD_YYYY_SLASH",
-          "MM_DD_YYYY_DASH",
-          "DD_MM_YYYY_SLASH",
-          "DD_MM_YYYY_DASH",
-          "YYYY_MM_DD",
-          "MMM_D_YYYY",
-          "D_MMM_YYYY",
-        ])
-        .optional(),
-      timeFormat: z
-        .enum(["HH_MM", "HH_MM_A", "HH_MM_Z", "HH_MM_Z_A"])
-        .optional(),
+      theme: z.enum(Theme).optional(),
+      locale: z.enum(Locale).optional(),
+      itemsPerPage: z.enum(ItemsPerPage).optional(),
+      dateFormat: z.enum(DateFormat).optional(),
+      timeFormat: z.enum(TimeFormat).optional(),
       timezone: z.string().optional(),
-      notificationMode: z
-        .enum([
-          "NONE",
-          "USE_GLOBAL",
-          "IN_APP",
-          "IN_APP_EMAIL_IMMEDIATE",
-          "IN_APP_EMAIL_DAILY",
-        ])
-        .optional(),
+      notificationMode: z.enum(NotificationMode).optional(),
       emailNotifications: z.boolean().optional(),
       inAppNotifications: z.boolean().optional(),
     })

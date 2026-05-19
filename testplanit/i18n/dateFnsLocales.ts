@@ -7,6 +7,8 @@ import { it } from "date-fns/locale/it";
 import { nl } from "date-fns/locale/nl";
 import { pl } from "date-fns/locale/pl";
 import { ptBR } from "date-fns/locale/pt-BR";
+import { ru } from "date-fns/locale/ru";
+import { tr } from "date-fns/locale/tr";
 import { vi } from "date-fns/locale/vi";
 import { zhCN } from "date-fns/locale/zh-CN";
 import { zhTW } from "date-fns/locale/zh-TW";
@@ -24,6 +26,8 @@ export const dateFnsLocaleMap: Record<string, Locale> = {
   "nl-NL": nl,
   "pl-PL": pl,
   "pt-BR": ptBR,
+  "tr-TR": tr,
+  "ru-RU": ru,
   "vi-VN": vi,
   "zh-CN": zhCN,
   "zh-TW": zhTW,
