@@ -18,8 +18,8 @@ import {
  */
 function isTiptapDoc(value: unknown): value is { type: "doc"; content: any[] } {
   return (
-    typeof value === "object" &&
     value !== null &&
+    typeof value === "object" &&
     "type" in value &&
     (value as { type: unknown }).type === "doc"
   );

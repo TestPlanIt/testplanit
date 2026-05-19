@@ -38,10 +38,15 @@ describe("applyMapping", () => {
     // The mapping author tries to pull __proto__ off the raw row — but
     // __proto__ is not an own property, so applyMapping must not write
     // anything for that mapping entry. Built via Object.create(null) +
-    // bracket assignment so the `__proto__` key is a normal own property
-    // (not the prototype-setter literal).
+    // Object.defineProperty so `__proto__` is a normal own data property,
+    // never the prototype-setter literal CodeQL flags.
     const mapping: Record<string, string> = Object.create(null);
-    mapping["__proto__"] = "p";
+    Object.defineProperty(mapping, "__proto__", {
+      value: "p",
+      enumerable: true,
+      configurable: true,
+      writable: true,
+    });
     const result = applyMapping(rawRow, mapping);
     expect(result).toEqual({});
     // Object.prototype must still be a vanilla object (no `p` polluted in).
