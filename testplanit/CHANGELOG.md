@@ -1,56 +1,19 @@
 ## [0.28.0](https://github.com/TestPlanIt/testplanit/compare/v0.27.7...v0.28.0) (2026-05-19)
 
+> **Note:** release-please auto-generated this section based on commit history and initially listed ~30 review-approval features. Those features did **not** ship in this release — the source code was reverted via [#317](https://github.com/TestPlanIt/testplanit/pull/317) before the release, but the original commit messages stayed in git history and were mistakenly picked up as changelog entries. This section has been corrected to reflect what actually shipped.
+
 ### Features
 
-* **01-01:** add partial unique index for ReviewRequest PENDING uniqueness ([8f50415](https://github.com/TestPlanIt/testplanit/commit/8f504156c042ade165b1bea9ee46cf548e118fe0))
-* **01-01:** add Review & Approval data model to schema.zmodel ([48fd7d0](https://github.com/TestPlanIt/testplanit/commit/48fd7d06f73574cd167f02021adf7e643c9f6c50))
-* **01-02:** add ReviewGateError + AlreadyPendingError classes and detectors ([897b23b](https://github.com/TestPlanIt/testplanit/commit/897b23b0e5b63a19f0b4672e5cae280b4c88f6bc))
-* **01-03:** add assertReviewGatePasses preflight helper ([97edf57](https://github.com/TestPlanIt/testplanit/commit/97edf5728632253c34e1c238f0e071feebaa93b1)), closes [9/#10](https://github.com/9/testplanit/issues/10)
-* **01-04:** wire review gate into bulk-edit route per-case loop ([0cd5b77](https://github.com/TestPlanIt/testplanit/commit/0cd5b77be3426bf5f02623183fbdaf64aac10c56))
-* **01-04:** wire review gate into milestoneActions + submit-result ([6903820](https://github.com/TestPlanIt/testplanit/commit/6903820700ecd3182011ff110f2921a2dd728137))
-* **01-04:** wire review gate into ZenStack auto-API handler ([3e7b10d](https://github.com/TestPlanIt/testplanit/commit/3e7b10dfea6fc42e160a911e1c17731861a2345c))
-* **02-01:** add Projects.reviewWorkflowEnabled + extend three gate @[@deny](https://github.com/deny) rules ([c23a835](https://github.com/TestPlanIt/testplanit/commit/c23a8357729983799ca7ecb53b8f0a0ff54bb83c))
-* **02-01:** IneligibleReviewerError class + symmetric AlreadyPending catches ([ff50677](https://github.com/TestPlanIt/testplanit/commit/ff50677fd86c7d0e86515aa43e31af816b145641))
-* **02-02:** add decideReviewRequest service with app-layer role-eligibility check (D-16) ([820b7c6](https://github.com/TestPlanIt/testplanit/commit/820b7c6554697f03e96b87b12cbc6e275e6d8acd)), closes [#2](https://github.com/TestPlanIt/testplanit/issues/2)
-* **02-02:** add POST /api/reviews/[id]/decide route wiring decideReviewRequest ([756632a](https://github.com/TestPlanIt/testplanit/commit/756632af6738aa9a925dd301290ae7b021daf075))
-* **02-02:** extend assertReviewGatePasses with D-20 feature-flag short-circuits ([0e3b1d4](https://github.com/TestPlanIt/testplanit/commit/0e3b1d427d157c92309875870ba2f0259b5276ef))
-* **02-03:** add GET /api/config/review-feature route exposing system flag ([202eb24](https://github.com/TestPlanIt/testplanit/commit/202eb24b62cb5b2b0915382483123cc189efe2b6))
-* **02-03:** add useReviewFeatureEnabled hook composing system + project flags ([815e9d9](https://github.com/TestPlanIt/testplanit/commit/815e9d91f4d5739f73c4268e76562fe276d4acbc))
-* **02-04:** add AssigneeCombobox for D-03 user+role picker ([ebece46](https://github.com/TestPlanIt/testplanit/commit/ebece46d0edc78800c85f16015a3bb1cdceec1e6))
-* **02-04:** add RequestReviewButton with D-02 visibility predicate ([35ab875](https://github.com/TestPlanIt/testplanit/commit/35ab8759757ee48ac5d617d8cae3fbc06939a44e))
-* **02-04:** add RequestReviewSheet for REQUESTER-02 / REQUESTER-03 ([eec53ad](https://github.com/TestPlanIt/testplanit/commit/eec53ad210c259584f1cedbf2fb1e487273a359a))
-* **02-05:** add CancelRequestButton (AlertDialog + status mutation) ([58ff202](https://github.com/TestPlanIt/testplanit/commit/58ff2028206475f494aa290f722fcfdfaee95914))
-* **02-05:** add PendingReviewBadge (stateless cell helper) ([15997d2](https://github.com/TestPlanIt/testplanit/commit/15997d2741aeec0c15aa19b13bea326581700f2b))
-* **02-05:** add ReviewStatusBanner with PENDING/CHANGES_REQUESTED/REJECTED branches ([b9025e0](https://github.com/TestPlanIt/testplanit/commit/b9025e0fcc5b2d5b5e915166561b95c176b75e2d))
-* **02-06:** add ReviewActionPanel (sticky cluster + auto-detect visibility) ([a3916f8](https://github.com/TestPlanIt/testplanit/commit/a3916f8cfcd7b033b114393a3e98c3ab6a8c3832))
-* **02-06:** add ReviewDecisionDialogs (Approve, RequestChanges, Reject) ([45445b8](https://github.com/TestPlanIt/testplanit/commit/45445b819b8f99008b022776ccd392dc28d957e1))
-* **02-06:** add useEffectiveRoleOnProject custom hook ([7621c61](https://github.com/TestPlanIt/testplanit/commit/7621c611a6ee6449c2a8d404a537464b6e30f960))
-* **02-07:** add ReviewInboxButton (icon Link + pending count Badge) ([1e75483](https://github.com/TestPlanIt/testplanit/commit/1e7548360efb6b6d0c70aed5d7cd745a51275a22))
-* **02-07:** mount ReviewInboxButton in global Header ([0468dcb](https://github.com/TestPlanIt/testplanit/commit/0468dcb15d5486a1e8b420044b86d2b4d4ce4fca))
-* **02-08:** implement /reviews inbox page (REVIEWER-01 + D-09/D-10/D-20) ([a975fac](https://github.com/TestPlanIt/testplanit/commit/a975fac96ba089ca0c6f85074806ac6695569fea))
-* **02-09:** mount review surfaces on entity detail pages ([8aa050e](https://github.com/TestPlanIt/testplanit/commit/8aa050ee05f50b035cf0fb3b4705386a8b21ffe0))
-* **02-09:** wire PendingReviewBadge into Cases/Runs/Sessions list views ([e36f108](https://github.com/TestPlanIt/testplanit/commit/e36f108648acb02abaf673f042e43731c2ce00cf))
-* **02-10:** add Advanced project settings tab with reviewWorkflowEnabled toggle ([e3e4bcf](https://github.com/TestPlanIt/testplanit/commit/e3e4bcf5b7c9e715f7d65a58b4f20f5b4ac79c8f))
-* **02-10:** add requiresReview Switch to EditWorkflow (Phase 1 deferred UI) ([043ba1f](https://github.com/TestPlanIt/testplanit/commit/043ba1f0cadb107a14e4c299caa226b81f768179)), closes [#1](https://github.com/TestPlanIt/testplanit/issues/1)
-* **02-10:** add SystemFeatureCard read-only display + wire into admin/workflows ([16a1369](https://github.com/TestPlanIt/testplanit/commit/16a1369397e8b35e0a5f0887e617a9cace2be0e3))
-* **02-11:** narrow CR-01 TOCTOU window in auto-API review-gate preflight ([5d788aa](https://github.com/TestPlanIt/testplanit/commit/5d788aa47d746ed69cd6b1658660e3de00170c74))
+* **i18n:** add Turkish (tr-TR) and Russian (ru-RU) locale support ([#318](https://github.com/TestPlanIt/testplanit/pull/318)) ([a089676](https://github.com/TestPlanIt/testplanit/commit/a0896765f11ca5118c567a48d4f612e849872e60))
 
-### Bug Fixes
+### Enhancements
 
-* **01-06:** handle Prisma 6 array meta.target + guard window in setup ([ead3317](https://github.com/TestPlanIt/testplanit/commit/ead3317f9085610b2f6092aaede75abd24a95aaa))
-* **02-04:** import beforeEach from vitest in plan 02-04 test files ([a38ac1f](https://github.com/TestPlanIt/testplanit/commit/a38ac1f712ce30d7af55488acec959f0f6148093))
-* **02-review:** annotate r.entityId map callbacks to clear implicit any ([13b73ca](https://github.com/TestPlanIt/testplanit/commit/13b73ca5306dda1cc1783c4f0cedb723d3d47920))
-* **02-review:** CR-01 close TOCTOU race in decideReviewRequest ([7d29c3c](https://github.com/TestPlanIt/testplanit/commit/7d29c3cc4793665b92d97a1f8ec8d3f525a4c7a9))
-* **02-review:** CR-02 require caller auth on /api/get-user-permissions ([b983e33](https://github.com/TestPlanIt/testplanit/commit/b983e33254dfe428d28ab9fbcbfa8718c5fec86f))
-* **02-review:** CR-03 tighten auto-API gate entityId/stateId extraction ([c923ae3](https://github.com/TestPlanIt/testplanit/commit/c923ae3eeb9f0f498528a2bab34deae7558b9c88))
-* **02-review:** CR-04 pre-stamp consumedAt in auto-API gate tx ([29fe271](https://github.com/TestPlanIt/testplanit/commit/29fe271934eb018109d610740d461bc5399d3ea2))
-* **02-review:** WR-01 dialog ineligibility matches typed code, not status ([36e213f](https://github.com/TestPlanIt/testplanit/commit/36e213fb0384b32a26cc6a01272ba988d5c22c40))
-* **02-review:** WR-02 use negative sentinel projectId in feature-enabled hook ([79eab81](https://github.com/TestPlanIt/testplanit/commit/79eab8105ddbc4848d547aa8c7aeaef527429872))
-* **02-review:** WR-03 block self-assignment in RequestReviewSheet ([cead3e9](https://github.com/TestPlanIt/testplanit/commit/cead3e9b5f052d43061bb1f56dae810f03fea6dd))
-* **02-review:** WR-06 shorten useEffectiveRoleOnProject staleTime ([5a67065](https://github.com/TestPlanIt/testplanit/commit/5a6706556c6d70c2bc6d3963d1d773130f51a198))
-* **02-review:** WR-08 audit fallback for nullable apiToken.name ([db19680](https://github.com/TestPlanIt/testplanit/commit/db196808a6c5a47dce83c236b0e69350383c17c0))
-* **02-review:** WR-09 clip oversized decisionComment in banner + cap input ([da1a2a7](https://github.com/TestPlanIt/testplanit/commit/da1a2a764fecfacd33601a573a443f942af441e0))
-* **i18n:** add Turkish (tr-TR) and Russian (ru-RU) locales ([#318](https://github.com/TestPlanIt/testplanit/issues/318)) ([a089676](https://github.com/TestPlanIt/testplanit/commit/a0896765f11ca5118c567a48d4f612e849872e60))
+* **queues:** extract shared `defaultJobOptions` presets ([#316](https://github.com/TestPlanIt/testplanit/pull/316)) ([259e16d](https://github.com/TestPlanIt/testplanit/commit/259e16dc))
+
+### Chores
+
+* **i18n:** sync Crowdin translation files ([9d4d27a](https://github.com/TestPlanIt/testplanit/commit/9d4d27aa))
+* drop accidentally-merged work-in-progress commits from `main` ([#317](https://github.com/TestPlanIt/testplanit/pull/317)) ([6eb2245](https://github.com/TestPlanIt/testplanit/commit/6eb2245c))
 
 ## [0.27.7](https://github.com/TestPlanIt/testplanit/compare/v0.27.6...v0.27.7) (2026-05-13)
 
