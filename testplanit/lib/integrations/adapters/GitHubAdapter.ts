@@ -1,3 +1,4 @@
+import { tiptapToMarkdown } from "~/lib/tiptap/tiptapToMarkdown";
 import { BaseAdapter } from "./BaseAdapter";
 import {
   AuthenticationData,
@@ -9,6 +10,34 @@ import {
   LinkedIssueRef,
   UpdateIssueData,
 } from "./IssueAdapter";
+
+/**
+ * Detect a TipTap doc by structural shape. Mirrors the same check the
+ * Jira and Azure DevOps adapters use, so the three adapters agree on
+ * what "rich" input looks like (D-15).
+ */
+function isTiptapDoc(value: unknown): value is { type: "doc"; content: any[] } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "type" in value &&
+    (value as { type: unknown }).type === "doc"
+  );
+}
+
+/**
+ * Coerce a CreateIssueData/UpdateIssueData description into the markdown
+ * string GitHub expects for the issue body. TipTap docs are rendered via
+ * the hand-rolled GFM serializer (INT-05); strings pass through unchanged.
+ */
+function renderGitHubDescription(description: unknown): string {
+  if (description === undefined || description === null) return "";
+  if (isTiptapDoc(description)) return tiptapToMarkdown(description);
+  if (typeof description === "string") return description;
+  // Defensive: stringify any other shape so the issue body is never
+  // `[object Object]` in the tracker.
+  return String(description);
+}
 
 /**
  * GitHub integration adapter using Personal Access Token authentication
@@ -89,9 +118,11 @@ export class GitHubAdapter extends BaseAdapter {
       }
     }
 
+    // INT-05: description may arrive as a TipTap doc (e.g. failed-iteration
+    // body builder). Render to GFM markdown before posting to GitHub.
     const githubPayload = {
       title: data.title,
-      body: data.description || "",
+      body: renderGitHubDescription(data.description),
       labels: data.labels || [],
       assignees: data.assigneeId ? [data.assigneeId] : undefined,
     };
@@ -118,7 +149,7 @@ export class GitHubAdapter extends BaseAdapter {
     }
 
     if (data.description !== undefined) {
-      updatePayload.body = data.description;
+      updatePayload.body = renderGitHubDescription(data.description);
     }
 
     if (data.status !== undefined) {

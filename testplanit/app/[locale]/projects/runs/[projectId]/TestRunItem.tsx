@@ -25,6 +25,7 @@ import {
   CheckCircle,
   Combine,
   Copy,
+  Flame,
   LinkIcon,
   MoreVertical,
   Pencil,
@@ -49,6 +50,7 @@ export interface TestRunItemProps {
     testRunType: string;
     configuration: Configurations | null;
     configurationGroupId: string | null;
+    createdAt?: Date | string;
     state: {
       id: number;
       name: string;
@@ -126,6 +128,10 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
     onDuplicate;
 
   const showMoreMenu = showEditItem || showCompleteItem || showDuplicateItem;
+
+  const isRecentlyCreated =
+    !!testRun.createdAt &&
+    Date.now() - new Date(testRun.createdAt).getTime() < 5 * 60 * 1000;
 
   // Fetch test run cases with their results and assigned users
   const { data: testRunCases } = useFindManyTestRunCases({
@@ -246,6 +252,16 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                 className="group inline-flex items-center gap-1 max-w-full"
               >
                 <h3 className="text-md font-semibold flex items-center gap-1 hover:text-primary min-w-0">
+                  {isRecentlyCreated && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Flame className="h-4 w-4 shrink-0 text-orange-500 fill-orange-500 animate-pulse" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {tCommon("labels.new")}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
                   {isAutomatedRun ? (
                     <Bot className="w-6 h-6 inline mr-1 shrink-0 border-2 text-primary border-primary rounded-full p-0.5" />
                   ) : (

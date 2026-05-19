@@ -66,7 +66,15 @@ interface CreateIssueJiraFormProps {
   onIssueCreated?: (issue: any) => void;
   defaultValues?: {
     title?: string;
-    description?: string;
+    /**
+     * Either a plain string OR a TipTap doc value (object with
+     * `{ type: "doc", content: [...] }`). The TipTap editor on the
+     * description field accepts both and the Jira create-issue endpoint
+     * passes the value through as-is for the adapter's tiptapToAdf to
+     * handle (D-15 — INT-05 ships the body as a TipTap doc and lets
+     * the per-tracker serialization happen at the adapter boundary).
+     */
+    description?: string | Record<string, unknown> | null;
   };
 }
 
@@ -370,12 +378,18 @@ export function CreateIssueJiraForm({
     }
   }, [open, selectedProjectKey, selectedIssueType, integrationId, t]);
 
-  // Initialize form with dynamic schema
+  // Initialize form with dynamic schema. `description` may be a TipTap
+  // doc object — pass it through; the TipTap editor in DynamicJiraField
+  // accepts both shapes.
+  const initialDescription =
+    defaultValues?.description !== undefined && defaultValues?.description !== null
+      ? defaultValues.description
+      : "";
   const form = useForm<any>({
     resolver: fields.length > 0 ? zodResolver(buildSchema(fields)) : undefined,
     defaultValues: {
       summary: defaultValues?.title || "",
-      description: defaultValues?.description || "",
+      description: initialDescription,
     },
   });
 
@@ -384,7 +398,7 @@ export function CreateIssueJiraForm({
     if (fields.length > 0) {
       const newDefaults: Record<string, any> = {
         summary: defaultValues?.title || "",
-        description: defaultValues?.description || "",
+        description: initialDescription,
       };
 
       // Set default values from field metadata
@@ -396,7 +410,7 @@ export function CreateIssueJiraForm({
 
       form.reset(newDefaults);
     }
-  }, [fields, defaultValues, form]);
+  }, [fields, defaultValues, form, initialDescription]);
 
   const onSubmit = async (data: any) => {
     setIsLoading(true);

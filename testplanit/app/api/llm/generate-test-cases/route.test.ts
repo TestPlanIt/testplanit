@@ -491,6 +491,102 @@ describe("TOKEN-05: prompt budget estimation and truncation", () => {
     expect(data.metadata.truncationNote.length).toBeGreaterThan(0);
   });
 
+  // ── INT-06: includeParameters threads through to buildSystemPrompt ────────
+
+  it("INT-06: includeParameters=true threads through to systemPrompt and emits parameter+dataset instructions", async () => {
+    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+      id: 1,
+      llmIntegrationId: 42,
+      maxTokensPerRequest: 128000,
+      defaultMaxTokens: 4096,
+    });
+
+    const body = { ...VALID_BODY, includeParameters: true };
+
+    const { POST } = await import("./route");
+    const res = await POST(makeRequest(body));
+    expect(res.status).toBe(200);
+
+    const chatCall = mockChat.mock.calls[0]!;
+    const systemPromptSent: string = chatCall[1].messages[0].content;
+
+    expect(systemPromptSent).toContain("parameters");
+    expect(systemPromptSent).toContain("starterDataset");
+    expect(systemPromptSent).toContain("allowedValuesJson");
+  });
+
+  it("INT-06: includeParameters omitted defaults to false — no parameter instructions in prompt (legacy unchanged)", async () => {
+    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+      id: 1,
+      llmIntegrationId: 42,
+      maxTokensPerRequest: 128000,
+      defaultMaxTokens: 4096,
+    });
+
+    // Omit includeParameters entirely.
+    const { POST } = await import("./route");
+    const res = await POST(makeRequest(VALID_BODY));
+    expect(res.status).toBe(200);
+
+    const chatCall = mockChat.mock.calls[0]!;
+    const systemPromptSent: string = chatCall[1].messages[0].content;
+
+    expect(systemPromptSent).not.toContain("starterDataset");
+    expect(systemPromptSent).not.toContain("allowedValuesJson");
+  });
+
+  it("INT-06: response surfaces dataset_truncated warning when the LLM emits a broken starterDataset", async () => {
+    // Mock the LLM to return a valid-shape testCase with a TRUNCATED dataset
+    // (string instead of array). Parser should keep the parameters and add a
+    // dataset_truncated warning to the response.
+    const truncatedResponse = JSON.stringify({
+      testCases: [
+        {
+          id: "tc_1",
+          name: "TC",
+          fieldValues: {},
+          parameters: [
+            { name: "env", type: "STRING", sensitive: false },
+          ],
+          starterDataset: "TRUNCATED",
+        },
+      ],
+    });
+
+    mockChat.mockResolvedValue({
+      content: truncatedResponse,
+      model: "gpt-4",
+      promptTokens: 100,
+      completionTokens: 200,
+      totalTokens: 300,
+      finishReason: "stop",
+    });
+
+    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+      id: 1,
+      llmIntegrationId: 42,
+      maxTokensPerRequest: 128000,
+      defaultMaxTokens: 4096,
+    });
+
+    const body = { ...VALID_BODY, includeParameters: true };
+
+    const { POST } = await import("./route");
+    const res = await POST(makeRequest(body));
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(data.testCases).toHaveLength(1);
+    expect(data.testCases[0].parameters).toHaveLength(1);
+    expect(data.warnings).toBeDefined();
+    expect(
+      data.warnings.some((w: { message: string }) =>
+        w.message.includes("dataset_truncated")
+      )
+    ).toBe(true);
+  });
+
   // ── TOKEN-05-e: no truncation when within budget ──────────────────────────
 
   it("TOKEN-05-e: no truncation when prompt fits within budget", async () => {
@@ -525,5 +621,103 @@ describe("TOKEN-05: prompt budget estimation and truncation", () => {
       data.metadata.truncated === false || data.metadata.truncated === undefined
     ).toBe(true);
     expect(data.metadata.truncationNote).toBeUndefined();
+  });
+});
+
+// ─── CR-03 admin gate on includeParameters ───────────────────────────────────
+
+describe("CR-03: includeParameters admin gate (T-06-04-01)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    mockLlmManagerGetInstance.mockReturnValue({
+      resolveIntegration: mockResolveIntegration,
+      chat: mockChat,
+    });
+    mockResolveIntegration.mockResolvedValue({ integrationId: 42 });
+    mockPromptResolverResolve.mockResolvedValue({
+      systemPrompt: "System prompt",
+      userPrompt: "User prompt",
+      temperature: 0.7,
+      maxOutputTokens: 2048,
+      source: "default",
+    });
+    mockPrismaProjectsFindFirst.mockResolvedValue({
+      id: 1,
+      projectLlmIntegrations: [],
+    });
+    mockPrismaLlmProviderConfigFindFirst.mockResolvedValue({
+      id: 1,
+      llmIntegrationId: 42,
+      maxTokensPerRequest: 8192,
+      defaultMaxTokens: 4096,
+    });
+    mockPrismaRepositoryFoldersFindMany.mockResolvedValue([]);
+    mockPrismaRepositoryCasesFindMany.mockResolvedValue([]);
+    mockChat.mockResolvedValue({
+      content: VALID_TEST_CASES_RESPONSE,
+      model: "gpt-4",
+      promptTokens: 100,
+      completionTokens: 200,
+      totalTokens: 300,
+      finishReason: "stop",
+    });
+  });
+
+  it("rejects non-admin POST with includeParameters=true (403 / FORBIDDEN_PARAMETER_GENERATION)", async () => {
+    mockGetServerSession.mockResolvedValue({
+      user: { id: "user-1", access: "USER" },
+    });
+
+    const { POST } = await import("./route");
+    const res = await POST(
+      makeRequest({ ...VALID_BODY, includeParameters: true })
+    );
+
+    expect(res.status).toBe(403);
+    const data = await res.json();
+    expect(data.code).toBe("FORBIDDEN_PARAMETER_GENERATION");
+    // chat must never have been called — the gate fires before LLM I/O.
+    expect(mockChat).not.toHaveBeenCalled();
+  });
+
+  it("rejects PROJECTADMIN with includeParameters=true (the gate is ADMIN-only)", async () => {
+    mockGetServerSession.mockResolvedValue({
+      user: { id: "user-1", access: "PROJECTADMIN" },
+    });
+
+    const { POST } = await import("./route");
+    const res = await POST(
+      makeRequest({ ...VALID_BODY, includeParameters: true })
+    );
+
+    expect(res.status).toBe(403);
+    expect(mockChat).not.toHaveBeenCalled();
+  });
+
+  it("allows non-admin POST when includeParameters is absent / false", async () => {
+    mockGetServerSession.mockResolvedValue({
+      user: { id: "user-1", access: "USER" },
+    });
+
+    const { POST } = await import("./route");
+    const res = await POST(makeRequest(VALID_BODY));
+
+    expect(res.status).toBe(200);
+    expect(mockChat).toHaveBeenCalled();
+  });
+
+  it("allows admin POST with includeParameters=true", async () => {
+    mockGetServerSession.mockResolvedValue({
+      user: { id: "user-1", access: "ADMIN" },
+    });
+
+    const { POST } = await import("./route");
+    const res = await POST(
+      makeRequest({ ...VALID_BODY, includeParameters: true })
+    );
+
+    expect(res.status).toBe(200);
+    expect(mockChat).toHaveBeenCalled();
   });
 });

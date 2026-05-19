@@ -1334,4 +1334,144 @@ describe("GitHubAdapter", () => {
       expect(result.reporter).toBeUndefined();
     });
   });
+
+  describe("createIssue with TipTap doc description (INT-05)", () => {
+    beforeEach(async () => {
+      // Authenticate first
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ login: "testuser" }),
+      });
+      await adapter.authenticate({ type: "api_key", apiKey: "ghp_test_token" });
+    });
+
+    it("renders TipTap doc description as markdown for GitHub", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockGitHubIssue),
+      });
+
+      const tiptapDoc = {
+        type: "doc" as const,
+        content: [
+          {
+            type: "paragraph",
+            content: [
+              { type: "text", text: "Iteration 3 of 5 failed on " },
+              { type: "text", text: "Bad password", marks: [{ type: "code" }] },
+              { type: "text", text: "." },
+            ],
+          },
+          {
+            type: "table",
+            content: [
+              {
+                type: "tableRow",
+                content: [
+                  {
+                    type: "tableHeader",
+                    content: [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "text", text: "Parameter" }],
+                      },
+                    ],
+                  },
+                  {
+                    type: "tableHeader",
+                    content: [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "text", text: "Value" }],
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                type: "tableRow",
+                content: [
+                  {
+                    type: "tableCell",
+                    content: [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "text", text: "username" }],
+                      },
+                    ],
+                  },
+                  {
+                    type: "tableCell",
+                    content: [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "text", text: "alice" }],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      await adapter.createIssue({
+        title: "Failed iteration",
+        description: tiptapDoc,
+        projectId: "testowner/testrepo",
+      });
+
+      // Inspect the POST body to confirm the description was converted to markdown
+      const postCall = mockFetch.mock.calls.find(
+        (c) => c[1]?.method === "POST"
+      );
+      expect(postCall).toBeDefined();
+      const body = JSON.parse(postCall![1].body as string);
+      // The doc was rendered to GFM markdown — pipe table + escaped text
+      expect(body.body).toContain("| Parameter | Value |");
+      expect(body.body).toContain("| --- | --- |");
+      expect(body.body).toContain("| username | alice |");
+      // The trailing period in the prose lead is escaped per the GFM rules
+      expect(body.body).toMatch(/Iteration 3 of 5 failed on `Bad password`\\\./);
+    });
+
+    it("passes plain string description through unchanged (back-compat)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockGitHubIssue),
+      });
+
+      await adapter.createIssue({
+        title: "Plain issue",
+        description: "Just a plain string description",
+        projectId: "testowner/testrepo",
+      });
+
+      const postCall = mockFetch.mock.calls.find(
+        (c) => c[1]?.method === "POST"
+      );
+      const body = JSON.parse(postCall![1].body as string);
+      expect(body.body).toBe("Just a plain string description");
+    });
+
+    it("handles empty string description as before (back-compat)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockGitHubIssue),
+      });
+
+      await adapter.createIssue({
+        title: "No body",
+        description: "",
+        projectId: "testowner/testrepo",
+      });
+
+      const postCall = mockFetch.mock.calls.find(
+        (c) => c[1]?.method === "POST"
+      );
+      const body = JSON.parse(postCall![1].body as string);
+      expect(body.body).toBe("");
+    });
+  });
 });

@@ -46,20 +46,43 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { projectId, issue, template, context, outline, autoGenerateTags } =
-    body as {
-      projectId: number;
-      issue: IssueData;
-      template: TemplateData;
-      context: GenerationContext;
-      outline: TestCaseOutline;
-      autoGenerateTags?: boolean;
-    };
+  const {
+    projectId,
+    issue,
+    template,
+    context,
+    outline,
+    autoGenerateTags,
+    includeParameters,
+  } = body as {
+    projectId: number;
+    issue: IssueData;
+    template: TemplateData;
+    context: GenerationContext;
+    outline: TestCaseOutline;
+    autoGenerateTags?: boolean;
+    includeParameters?: boolean;
+  };
 
   if (!projectId || !issue || !template || !outline) {
     return NextResponse.json(
       { error: "Missing required parameters", errorCode: "invalid_request" },
       { status: 400 }
+    );
+  }
+
+  // Server-side admin gate on `includeParameters`. The wizard hides the
+  // toggle for non-admins; a crafted request body must still be rejected
+  // here. Returned as a plain JSON 403 (not via the SSE stream) so the
+  // client sees a synchronous failure before the heartbeat starts.
+  if (includeParameters === true && session.user.access !== "ADMIN") {
+    return NextResponse.json(
+      {
+        error: "Admin access required for includeParameters",
+        code: "FORBIDDEN_PARAMETER_GENERATION",
+        errorCode: "forbidden",
+      },
+      { status: 403 }
     );
   }
 
@@ -175,7 +198,8 @@ export async function POST(req: NextRequest) {
         const systemPrompt = buildExpandSystemPrompt(
           template,
           autoGenerateTags,
-          systemPromptBase
+          systemPromptBase,
+          includeParameters === true
         );
         const userPrompt = buildExpandUserPrompt(
           issue,

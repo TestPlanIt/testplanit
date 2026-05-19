@@ -1,3 +1,20 @@
+## [0.28.0](https://github.com/TestPlanIt/testplanit/compare/v0.27.7...v0.28.0) (2026-05-19)
+
+> **Note:** release-please auto-generated this section based on commit history and initially listed ~30 review-approval features. Those features did **not** ship in this release — the source code was reverted via [#317](https://github.com/TestPlanIt/testplanit/pull/317) before the release, but the original commit messages stayed in git history and were mistakenly picked up as changelog entries. This section has been corrected to reflect what actually shipped.
+
+### Features
+
+* **i18n:** add Turkish (tr-TR) and Russian (ru-RU) locale support ([#318](https://github.com/TestPlanIt/testplanit/pull/318)) ([a089676](https://github.com/TestPlanIt/testplanit/commit/a0896765f11ca5118c567a48d4f612e849872e60))
+
+### Enhancements
+
+* **queues:** extract shared `defaultJobOptions` presets ([#316](https://github.com/TestPlanIt/testplanit/pull/316)) ([259e16d](https://github.com/TestPlanIt/testplanit/commit/259e16dc))
+
+### Chores
+
+* **i18n:** sync Crowdin translation files ([9d4d27a](https://github.com/TestPlanIt/testplanit/commit/9d4d27aa))
+* drop accidentally-merged work-in-progress commits from `main` ([#317](https://github.com/TestPlanIt/testplanit/pull/317)) ([6eb2245](https://github.com/TestPlanIt/testplanit/commit/6eb2245c))
+
 ## [0.27.7](https://github.com/TestPlanIt/testplanit/compare/v0.27.6...v0.27.7) (2026-05-13)
 
 ### Enhancements

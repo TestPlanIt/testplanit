@@ -10,7 +10,13 @@ import { TextStyle } from "@tiptap/extension-text-style";
 import { Underline } from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Table,
   TableCell,
@@ -94,11 +100,17 @@ import {
 import { useTranslations } from "next-intl";
 import { emptyEditorContent } from "~/app/constants";
 import { useFindManyProjectLlmIntegration } from "~/lib/hooks/project-llm-integration";
+import {
+  createParameterMentionExtension,
+  type ParameterChipMeta,
+} from "~/lib/tiptap/parameterMentionExtension";
 import { cn } from "~/utils";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
 import { tiptapToHtml } from "~/utils/tiptapToHtml";
 import LoadingSpinnerAlert from "../LoadingSpinnerAlert";
 import { Separator } from "../ui/separator";
+import { InsertParameterToolbarButton } from "./InsertParameterToolbarButton";
+import { UndeclaredParameterWarning } from "./UndeclaredParameterWarning";
 
 interface TipTapEditorProps {
   content: object;
@@ -107,6 +119,8 @@ interface TipTapEditorProps {
   className?: string;
   projectId?: string; // Made optional - AI features only work when valid project ID provided
   placeholder?: string;
+  parameters?: ParameterChipMeta[];
+  onOpenParametersSheet?: () => void;
 }
 
 const TipTapEditor: React.FC<TipTapEditorProps> = ({
@@ -116,10 +130,26 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
   className = "h-[150px]",
   projectId,
   placeholder,
+  parameters,
+  onOpenParametersSheet,
 }) => {
   const t = useTranslations("common.editor");
   const tCommon = useTranslations("common");
   const tAi = useTranslations("common.ai");
+  const tParams = useTranslations("parameters");
+
+  const chipMessages = useMemo(
+    () => ({
+      clickToReveal: tParams("chipClickToReveal"),
+      copyValue: tParams("chipCopyValue"),
+      copyAriaLabel: (label: string) =>
+        tParams("chipCopyAriaLabel", { label }),
+      copiedToast: (label: string) => tParams("chipCopiedToast", { label }),
+      copyFailedToast: (label: string) =>
+        tParams("chipCopyFailedToast", { label }),
+    }),
+    [tParams]
+  );
 
   // Get LLM integrations for the project (only if valid projectId provided)
   const projectIdNumber = projectId ? parseInt(projectId) : NaN;
@@ -287,6 +317,9 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
       TableRow,
       TableCell,
       TableHeader,
+      ...(parameters && parameters.length > 0
+        ? [createParameterMentionExtension(parameters, chipMessages)]
+        : []),
     ],
     content: validateContent(content),
     onUpdate: ({ editor }) => {
@@ -328,7 +361,10 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
       },
     },
     editable: !readOnly,
-  });
+    // chipMessages intentionally omitted from deps: useTranslations may return
+    // a new function ref on every render, which would cause an infinite editor
+    // re-mount loop. Locale changes already remount the layout above.
+  }, [parameters]);
 
   useEffect(() => {
     if (editor) {
@@ -1112,6 +1148,14 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             </PopoverContent>
           </Popover>
 
+          {parameters && parameters.length > 0 && editor && (
+            <InsertParameterToolbarButton
+              editor={editor}
+              parameters={parameters}
+              onOpenSheet={onOpenParametersSheet}
+            />
+          )}
+
           <Popover
             open={isEmojiPopoverOpen}
             onOpenChange={setIsEmojiPopoverOpen}
@@ -1192,6 +1236,94 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           </Button>
         </div>
       )}
+      {parameters !== undefined && (
+        <style>{`
+          .parameter-ref-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.125rem;
+            padding: 0 0.375rem;
+            border-radius: 0.25rem;
+            background-color: hsl(var(--primary) / 0.10);
+            color: hsl(var(--primary));
+            font-family: ui-monospace, "SFMono-Regular", monospace;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            line-height: 1.4;
+            vertical-align: baseline;
+            white-space: nowrap;
+            cursor: default;
+            user-select: all;
+          }
+          .parameter-ref-chip[data-undeclared="true"] {
+            background-color: hsl(var(--warning) / 0.10);
+            color: hsl(var(--warning-foreground));
+            text-decoration: underline wavy hsl(var(--warning));
+            text-underline-offset: 2px;
+          }
+          .parameter-ref-chip[data-focused="true"] {
+            outline: 2px solid hsl(var(--ring));
+            outline-offset: 1px;
+          }
+          .parameter-ref-chip-text {
+            user-select: text;
+          }
+          .parameter-ref-chip[data-sensitive="true"] {
+            cursor: pointer;
+          }
+          .parameter-ref-chip[data-sensitive="true"]:hover {
+            background-color: hsl(var(--primary) / 0.18);
+          }
+          /* The parent button is just a positioning/event target — no mask
+             on it, otherwise the ping pseudo-element's scaled output gets
+             clipped to the original icon shape. The icon itself is drawn
+             by ::before; the ping pulse by ::after. */
+          .parameter-ref-chip-copy {
+            position: relative;
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            margin-left: 0.375rem;
+            cursor: pointer;
+            user-select: none;
+          }
+          .parameter-ref-chip-copy::before,
+          .parameter-ref-chip-copy::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-color: currentColor;
+            -webkit-mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='14' height='14' x='8' y='8' rx='2' ry='2'/%3E%3Cpath d='M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2'/%3E%3C/svg%3E") no-repeat center / contain;
+                    mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='14' height='14' x='8' y='8' rx='2' ry='2'/%3E%3Cpath d='M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2'/%3E%3C/svg%3E") no-repeat center / contain;
+            transform-origin: center;
+            pointer-events: none;
+          }
+          /* ::before is the static icon */
+          .parameter-ref-chip-copy::before {
+            opacity: 0.85;
+            transition: opacity 120ms, background-color 120ms;
+          }
+          .parameter-ref-chip-copy:hover::before {
+            opacity: 1;
+          }
+          /* ::after is the ping pulse — invisible by default */
+          .parameter-ref-chip-copy::after {
+            opacity: 0;
+          }
+          .parameter-ref-chip-copy[data-copied="true"]::before {
+            opacity: 1;
+            background-color: hsl(var(--success, 142 70% 45%));
+          }
+          .parameter-ref-chip-copy[data-copied="true"]::after {
+            background-color: hsl(var(--success, 142 70% 45%));
+            animation: chip-copy-ping 600ms cubic-bezier(0, 0, 0.2, 1) 1;
+          }
+          @keyframes chip-copy-ping {
+            0%   { transform: scale(1);   opacity: 0.7; }
+            100% { transform: scale(2.4); opacity: 0;   }
+          }
+        `}</style>
+      )}
       <div className="overflow-y-auto flex-1 w-full relative">
         <ContentItemMenu editor={editor} editable={!readOnly} />
         <EditorContent
@@ -1199,6 +1331,12 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
           className={`mt-0.5 ${!readOnly ? "pl-3 border-4 border-primary/20" : ""} border-accent-foreground/10 border rounded-lg prose prose-xs sm:prose-sm lg:prose xl:prose-lg max-w-none w-full focus:outline-none ${styles.editorContent}`}
         />
       </div>
+      {parameters && parameters.length > 0 && editor && (
+        <UndeclaredParameterWarning
+          editorJson={editor.getJSON() ?? null}
+          declaredNames={parameters.map((p) => p.name)}
+        />
+      )}
       {!readOnly && editor && (
         <>
           <TableRowMenu editor={editor} />

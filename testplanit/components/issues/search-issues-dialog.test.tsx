@@ -117,15 +117,30 @@ vi.mock("@/components/IssueStatusDisplay", () => ({
   ),
 }));
 
-// Stub CreateIssueDialog and CreateIssueJiraForm
+// Stub CreateIssueDialog and CreateIssueJiraForm. Surface
+// `defaultValues` JSON so CR-05 tests can assert prefill threading.
 vi.mock("./create-issue-dialog", () => ({
-  CreateIssueDialog: ({ open }: any) =>
-    open ? <div data-testid="create-issue-dialog" /> : null,
+  CreateIssueDialog: ({ open, defaultValues }: any) =>
+    open ? (
+      <div
+        data-testid="create-issue-dialog"
+        data-default-values={
+          defaultValues ? JSON.stringify(defaultValues) : ""
+        }
+      />
+    ) : null,
 }));
 
 vi.mock("./create-issue-jira-form", () => ({
-  CreateIssueJiraForm: ({ open }: any) =>
-    open ? <div data-testid="create-issue-jira-form" /> : null,
+  CreateIssueJiraForm: ({ open, defaultValues }: any) =>
+    open ? (
+      <div
+        data-testid="create-issue-jira-form"
+        data-default-values={
+          defaultValues ? JSON.stringify(defaultValues) : ""
+        }
+      />
+    ) : null,
 }));
 
 import { SearchIssuesDialog } from "./search-issues-dialog";
@@ -736,6 +751,105 @@ describe("SearchIssuesDialog", () => {
           expect(screen.queryByText(/ABT Only Issue/)).toBeTruthy();
         });
       }
+    });
+  });
+
+  describe("CR-05: iterationContext threading to create-issue dispatcher", () => {
+    const jiraIntegration = {
+      id: 99,
+      integrationId: 7,
+      isActive: true,
+      config: {},
+      integration: { id: 7, name: "My Jira", provider: "JIRA" },
+    };
+
+    const iterationCtx = {
+      iterationId: 11,
+      testRunId: 22,
+      testRunCaseId: 33,
+    };
+
+    function mockFetchPrefill(prefill: {
+      title: string;
+      description: unknown;
+    }) {
+      global.fetch = vi.fn().mockImplementation((url: string) => {
+        if (typeof url === "string" && url.includes("/issue-body")) {
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => prefill,
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: async () => ({ issues: [] }),
+        });
+      });
+    }
+
+    it("routes JIRA + iterationPrefill through CreateIssueJiraForm with the prefilled body", async () => {
+      mockUseFindManyProjectIntegration.mockReturnValue({
+        data: [jiraIntegration],
+      });
+      const prefill = {
+        title: "Iteration 2 of 5 failed: Login flow",
+        description: { type: "doc", content: [] },
+      };
+      mockFetchPrefill(prefill);
+
+      render(
+        <SearchIssuesDialog
+          {...defaultProps}
+          iterationContext={iterationCtx}
+        />,
+      );
+
+      // Click the "Create New Issue" button (only rendered when an
+      // integration is active).
+      const createButton = await screen.findByRole("button", {
+        name: /createNewIssue/i,
+      });
+      fireEvent.click(createButton);
+
+      // JIRA always uses the dedicated CreateIssueJiraForm so the rich
+      // editor + dynamic Jira field metadata loads correctly; the prefill
+      // threads through as `defaultValues`. Routing through the generic
+      // CreateIssueDialog dropped issue-type metadata and the proper
+      // TipTap editor — a CR-05 regression caught during the
+      // cross-adapter UAT.
+      await waitFor(() => {
+        expect(screen.queryByTestId("create-issue-jira-form")).toBeTruthy();
+      });
+      expect(screen.queryByTestId("create-issue-dialog")).toBeNull();
+
+      const dialog = screen.getByTestId("create-issue-jira-form");
+      const defaults = JSON.parse(
+        dialog.getAttribute("data-default-values") ?? "{}",
+      );
+      expect(defaults.title).toBe(prefill.title);
+      expect(defaults.description).toEqual(prefill.description);
+    });
+
+    it("routes JIRA WITHOUT iterationContext through CreateIssueJiraForm (back-compat)", async () => {
+      mockUseFindManyProjectIntegration.mockReturnValue({
+        data: [jiraIntegration],
+      });
+
+      render(<SearchIssuesDialog {...defaultProps} />);
+
+      const createButton = await screen.findByRole("button", {
+        name: /createNewIssue/i,
+      });
+      fireEvent.click(createButton);
+
+      // No iteration context → standard manual-create dispatch picks
+      // the Jira-specific form, unchanged from pre-CR-05 behaviour.
+      await waitFor(() => {
+        expect(screen.queryByTestId("create-issue-jira-form")).toBeTruthy();
+      });
+      expect(screen.queryByTestId("create-issue-dialog")).toBeNull();
     });
   });
 });

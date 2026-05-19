@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest } from "next/server";
+import { cartesianProduct } from "~/lib/matrix/buildAxes";
 import { reportRequestSchema } from "~/lib/schemas/reportRequestSchema";
 
 // Registry for dimensions
@@ -1223,14 +1224,6 @@ const METRIC_REGISTRY: Record<
     },
   },
 };
-
-// Helper: cartesian product
-function cartesianProduct(arrays: any[][]): any[][] {
-  return arrays.reduce(
-    (a, b) => a.flatMap((d) => b.map((e) => [d, e].flat())),
-    [[]]
-  );
-}
 
 export async function POST(req: NextRequest) {
   try {

@@ -184,7 +184,7 @@ export function useAutomationTrendsColumns(
             if (typeof value !== "number") return "-";
 
             // Color code based on percentage
-            let colorClass = "text-red-600";
+            let colorClass = "text-destructive";
             if (value >= 70) colorClass = "text-success";
             else if (value >= 40) colorClass = "text-yellow-600";
 
@@ -221,7 +221,7 @@ export function useAutomationTrendsColumns(
               ? "text-gray-500"
               : isPositive
                 ? "text-success"
-                : "text-red-600";
+                : "text-destructive";
             const sign = isPositive ? "+" : "";
 
             return (
@@ -257,7 +257,7 @@ export function useAutomationTrendsColumns(
             const colorClass = isZero
               ? "text-gray-500"
               : isPositive
-                ? "text-red-600"
+                ? "text-destructive"
                 : "text-success";
             const sign = isPositive ? "+" : "";
 

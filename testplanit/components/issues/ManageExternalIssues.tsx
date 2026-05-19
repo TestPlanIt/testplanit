@@ -90,6 +90,16 @@ interface ManageExternalIssuesProps {
     | "testRunResult"
     | "testRunStepResult"
     | "sessionResult";
+  /**
+   * INT-05: when set, SearchIssuesDialog's "Create New Issue" path
+   * prefills the title + description from the failed-iteration body
+   * builder. Threaded through unchanged.
+   */
+  iterationContext?: {
+    iterationId: number;
+    testRunId: number;
+    testRunCaseId: number;
+  };
 }
 
 // Component for individual linked issue with hover functionality
@@ -353,6 +363,7 @@ export function ManageExternalIssues({
   linkedIssueIds,
   setLinkedIssueIds,
   entityType = "testCase",
+  iterationContext,
 }: ManageExternalIssuesProps) {
   const t = useTranslations();
   const [linkedIssues, setLinkedIssues] = useState<ExternalIssue[]>([]);
@@ -593,6 +604,7 @@ export function ManageExternalIssues({
         onOpenChange={setIsSearchOpen}
         projectId={projectId}
         linkedIssueIds={linkedIssues.map((issue) => issue.key)}
+        iterationContext={iterationContext}
         onIssueSelected={(issue) => {
           if (issue.isExternal) {
             void handleLinkIssue({

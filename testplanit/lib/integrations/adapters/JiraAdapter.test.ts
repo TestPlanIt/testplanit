@@ -303,6 +303,121 @@ describe("JiraAdapter", () => {
       expect(body.fields.description.version).toBe(1);
     });
 
+    it("converts a TipTap doc with a table to ADF table nodes (INT-05 body)", async () => {
+      // The INT-05 issue-body builder ships a TipTap doc whose middle
+      // block is a table (parameter name → value rows). Atlassian's ADF
+      // schema requires the table to be preserved as `type: "table"`
+      // with `tableRow` and `tableCell`/`tableHeader` children — wrapping
+      // it in a paragraph (the previous default-case fallback) produced
+      // an HTTP 400 "INVALID_INPUT" from Jira because paragraph cannot
+      // contain non-text children.
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            id: "10001",
+            key: "TEST-123",
+            self: "https://test.atlassian.net/rest/api/3/issue/10001",
+          }),
+      });
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockJiraIssue),
+      });
+
+      const tiptapDescription = {
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: "Lead paragraph" }],
+          },
+          {
+            type: "table",
+            content: [
+              {
+                type: "tableRow",
+                content: [
+                  {
+                    type: "tableHeader",
+                    content: [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "text", text: "Parameter" }],
+                      },
+                    ],
+                  },
+                  {
+                    type: "tableHeader",
+                    content: [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "text", text: "Value" }],
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                type: "tableRow",
+                content: [
+                  {
+                    type: "tableCell",
+                    content: [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "text", text: "username" }],
+                      },
+                    ],
+                  },
+                  {
+                    type: "tableCell",
+                    content: [
+                      {
+                        type: "paragraph",
+                        content: [{ type: "text", text: "alice" }],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      await adapter.createIssue({
+        title: "Iteration failed",
+        description: tiptapDescription as any,
+        projectId: "TEST",
+      });
+
+      const createCallIndex = mockFetch.mock.calls.findIndex(
+        (call: any) => call[1]?.method === "POST"
+      );
+      const body = JSON.parse(
+        mockFetch.mock.calls[createCallIndex][1].body
+      );
+
+      const adfTable = body.fields.description.content.find(
+        (n: any) => n.type === "table"
+      );
+      expect(adfTable).toBeDefined();
+      expect(adfTable.attrs).toMatchObject({
+        isNumberColumnEnabled: false,
+        layout: "default",
+      });
+      expect(adfTable.content).toHaveLength(2); // header row + 1 data row
+      expect(adfTable.content[0].type).toBe("tableRow");
+      expect(adfTable.content[0].content[0].type).toBe("tableHeader");
+      expect(adfTable.content[1].content[0].type).toBe("tableCell");
+      // Cell content must remain a paragraph (Atlassian rejects raw
+      // text in cells; the schema is row → cell → paragraph → text).
+      expect(adfTable.content[1].content[0].content[0].type).toBe(
+        "paragraph"
+      );
+    });
+
     it("should handle HTML description", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -400,6 +515,66 @@ describe("JiraAdapter", () => {
       const body = JSON.parse(createCall[1].body);
 
       expect(body.fields.assignee).toEqual({ id: "user-123" });
+    });
+
+    describe("priority mapping (dialog tokens vs numeric IDs)", () => {
+      async function captureCreateBody(priority: string | undefined) {
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              id: "10001",
+              key: "TEST-1",
+              self: "https://test.atlassian.net/rest/api/3/issue/10001",
+            }),
+        });
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(mockJiraIssue),
+        });
+        await adapter.createIssue({
+          title: "Priority Test",
+          projectId: "TEST",
+          priority: priority as any,
+        });
+        const idx = mockFetch.mock.calls.findIndex(
+          (call: any) => call[1]?.method === "POST"
+        );
+        return JSON.parse(mockFetch.mock.calls[idx][1].body).fields.priority;
+      }
+
+      it.each([
+        ["low", { name: "Low" }],
+        ["medium", { name: "Medium" }],
+        ["high", { name: "High" }],
+        ["urgent", { name: "Highest" }],
+      ] as const)(
+        "maps dialog token '%s' to %j (Jira looks up by name)",
+        async (token, expected) => {
+          const priority = await captureCreateBody(token);
+          expect(priority).toEqual(expected);
+        }
+      );
+
+      it("passes a numeric string through as { id } (back-compat with callers that already speak Jira-native)", async () => {
+        const priority = await captureCreateBody("3");
+        expect(priority).toEqual({ id: "3" });
+      });
+
+      it("passes an arbitrary non-token string through as { name } (custom Jira priority schemes)", async () => {
+        const priority = await captureCreateBody("Blocker");
+        expect(priority).toEqual({ name: "Blocker" });
+      });
+
+      it("omits the priority field entirely when value is empty (Jira uses project default)", async () => {
+        const priority = await captureCreateBody("");
+        expect(priority).toBeUndefined();
+      });
+
+      it("omits the priority field entirely when value is undefined", async () => {
+        const priority = await captureCreateBody(undefined);
+        expect(priority).toBeUndefined();
+      });
     });
   });
 

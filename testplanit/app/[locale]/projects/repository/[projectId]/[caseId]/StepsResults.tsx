@@ -6,6 +6,7 @@ import React from "react";
 import { emptyEditorContent } from "~/app/constants";
 import { Separator } from "~/components/ui/separator";
 import { useFindManySharedStepItem } from "~/lib/hooks";
+import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 
 interface DisplayStep extends PrismaSteps {
   isShared?: boolean;
@@ -16,16 +17,18 @@ interface DisplayStep extends PrismaSteps {
 interface StepsResultsProps {
   steps: DisplayStep[];
   projectId?: number;
+  parameters?: ParameterChipMeta[];
 }
 
 interface RenderSharedGroupItemsForResultsProps {
   sharedStepGroupId: number;
   projectId?: number;
+  parameters?: ParameterChipMeta[];
 }
 
 const RenderSharedGroupItemsForResults: React.FC<
   RenderSharedGroupItemsForResultsProps
-> = ({ sharedStepGroupId, projectId }) => {
+> = ({ sharedStepGroupId, projectId, parameters }) => {
   const t = useTranslations("repository.steps");
   const { data: items, isLoading } = useFindManySharedStepItem(
     {
@@ -92,6 +95,7 @@ const RenderSharedGroupItemsForResults: React.FC<
                   readOnly={true}
                   projectId={projectId?.toString()}
                   className="bg-muted/30 p-1 rounded"
+                  parameters={parameters}
                 />
               </div>
             </div>
@@ -108,6 +112,7 @@ const RenderSharedGroupItemsForResults: React.FC<
                   readOnly={true}
                   projectId={projectId?.toString()}
                   className="bg-muted/30 p-1 rounded"
+                  parameters={parameters}
                 />
               </div>
             </div>
@@ -121,6 +126,7 @@ const RenderSharedGroupItemsForResults: React.FC<
 export const StepsResults: React.FC<StepsResultsProps> = ({
   steps,
   projectId,
+  parameters,
 }) => {
   const t_repo_steps = useTranslations("repository.steps");
 
@@ -162,6 +168,7 @@ export const StepsResults: React.FC<StepsResultsProps> = ({
                   <RenderSharedGroupItemsForResults
                     sharedStepGroupId={step.sharedStepGroupId}
                     projectId={projectId}
+                    parameters={parameters}
                   />
                 </div>
               </li>
@@ -205,6 +212,7 @@ export const StepsResults: React.FC<StepsResultsProps> = ({
                     readOnly={true}
                     projectId={`step_result_${step.id}`}
                     className="prose-sm"
+                    parameters={parameters}
                   />
                 </div>
               </div>
@@ -216,6 +224,7 @@ export const StepsResults: React.FC<StepsResultsProps> = ({
                     readOnly={true}
                     projectId={`step_result_${step.id}_expected`}
                     className="prose-sm"
+                    parameters={parameters}
                   />
                 </div>
               </div>

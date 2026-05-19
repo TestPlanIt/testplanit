@@ -5,7 +5,14 @@ import type {
   IssueData,
   LinkedIssueRef,
 } from "~/lib/integrations/adapters/IssueAdapter";
-import { fetchLinkedIssuesContext } from "./shared";
+import { parameterCreateSchema } from "~/lib/schemas/parameterSchema";
+import {
+  buildSystemPrompt,
+  fetchLinkedIssuesContext,
+  parseAndValidateTestCases,
+  type TemplateData,
+  type IssueData as LlmIssueData,
+} from "./shared";
 
 type MockOpts = {
   linked?: LinkedIssueRef[];
@@ -346,5 +353,380 @@ describe("fetchLinkedIssuesContext", () => {
     expect(result.included[0].comments).toHaveLength(1);
     expect(result.included[0].comments[0].body).toBe("still here");
     expect(result.dropped).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// INT-06: buildSystemPrompt + parseAndValidateTestCases parameter+dataset
+// extension (D-10 / D-11 / D-12 / Pitfall 6)
+// ---------------------------------------------------------------------------
+
+const sampleTemplate: TemplateData = {
+  id: 1,
+  name: "Functional",
+  fields: [
+    { id: 10, name: "Description", type: "Text Long", required: true },
+    {
+      id: 11,
+      name: "Steps",
+      type: "Steps",
+      required: true,
+    },
+    {
+      id: 12,
+      name: "Priority",
+      type: "Dropdown",
+      required: false,
+      options: ["High", "Medium", "Low"],
+    },
+  ],
+};
+
+const sampleIssue: LlmIssueData = {
+  key: "PROJ-1",
+  title: "Login with valid credentials",
+  description: "Test login flow",
+  status: "Open",
+};
+
+describe("buildSystemPrompt — INT-06 includeParameters extension", () => {
+  it("includeParameters=false produces output equivalent to legacy behavior (no parameter section)", () => {
+    const promptOff = buildSystemPrompt(
+      sampleTemplate,
+      { folderContext: 0 },
+      "few",
+      true,
+      undefined,
+      false
+    );
+
+    // Regression guard: the new toggle off must not introduce parameter
+    // instructions. The arity-extended call site with the new default-false
+    // arg should be indistinguishable from the legacy 5-arg call.
+    expect(promptOff).not.toContain("parameters");
+    expect(promptOff).not.toContain("starterDataset");
+    expect(promptOff).not.toContain("allowedValuesJson");
+
+    // And the explicit-false version equals the omitted version (legacy callers).
+    const promptLegacy = buildSystemPrompt(
+      sampleTemplate,
+      { folderContext: 0 },
+      "few",
+      true,
+      undefined
+    );
+    expect(promptOff).toBe(promptLegacy);
+  });
+
+  it("includeParameters=true appends parameter + dataset instructions referencing allowedValuesJson (not allowedValues)", () => {
+    const prompt = buildSystemPrompt(
+      sampleTemplate,
+      { folderContext: 0 },
+      "few",
+      false,
+      undefined,
+      true
+    );
+
+    expect(prompt).toContain("parameters");
+    expect(prompt).toContain("starterDataset");
+    expect(prompt).toContain("allowedValuesJson");
+    // D-12: SELECT-XOR — prompt must say SELECT requires allowedValuesJson.
+    expect(prompt).toMatch(/SELECT[\s\S]*allowedValuesJson/);
+    // Pitfall 6: parameters emitted BEFORE starterDataset (truncation grace).
+    expect(prompt.indexOf("parameters")).toBeLessThan(
+      prompt.indexOf("starterDataset")
+    );
+    // The prompt MUST NOT use the bare name `allowedValues` as a JSON key
+    // (Phase 1 schema uses `allowedValuesJson` and the parser keys on that
+    // exact name). The instruction text intentionally warns "NOT
+    // 'allowedValues'" — that's the only place the bare name appears.
+    expect(prompt).not.toMatch(/"allowedValues"\s*:/);
+    // Sanity: every occurrence of `allowedValues` should be followed by
+    // `Json` (the canonical field name) or be inside the quoted prohibition
+    // phrase "NOT 'allowedValues'" / "NOT \"allowedValues\"".
+    const bareMatches = Array.from(
+      prompt.matchAll(/allowedValues(?!Json)/g)
+    );
+    for (const m of bareMatches) {
+      const surrounding = prompt.substring(
+        Math.max(0, (m.index ?? 0) - 15),
+        Math.min(prompt.length, (m.index ?? 0) + 30)
+      );
+      expect(surrounding).toMatch(/NOT.*allowedValues/);
+    }
+  });
+
+  it("LLM-side validator imports parameterCreateSchema for structural reference (compile-time + runtime smoke)", () => {
+    // Compile-time: the import line above must resolve. Runtime: the schema is
+    // shaped as expected for the LLM-side superset (SELECT XOR, sensitive
+    // boolean, allowedValuesJson string[]).
+    expect(parameterCreateSchema).toBeDefined();
+    expect(typeof parameterCreateSchema.parse).toBe("function");
+    // Sanity-check the SELECT XOR still rejects an inline+lookup combination
+    // (proves the schema we superset against is the one we think it is).
+    expect(() =>
+      parameterCreateSchema.parse({
+        testCaseId: 1,
+        name: "env",
+        type: "SELECT",
+        allowedValuesJson: ["dev", "prod"],
+        lookupDataSetId: 2,
+      })
+    ).toThrow();
+  });
+});
+
+describe("parseAndValidateTestCases — INT-06 parameter+dataset extraction", () => {
+  function buildResponse(testCases: unknown[]): string {
+    return JSON.stringify({ testCases });
+  }
+
+  it("extracts parameters[] and starterDataset[] when present (happy path with SELECT param using allowedValuesJson)", () => {
+    const raw = buildResponse([
+      {
+        id: "tc_1",
+        name: "Login as different roles",
+        fieldValues: {
+          Description: "Validate login for each role",
+          Steps: [{ step: "Login", expectedResult: "Success" }],
+          Priority: "High",
+        },
+        parameters: [
+          {
+            name: "role",
+            type: "SELECT",
+            sensitive: false,
+            allowedValuesJson: ["admin", "user", "guest"],
+          },
+          { name: "remember_me", type: "BOOLEAN", sensitive: false },
+        ],
+        starterDataset: [
+          { label: "admin row", values: { role: "admin", remember_me: true } },
+          { label: "user row", values: { role: "user", remember_me: false } },
+        ],
+      },
+    ]);
+
+    const { testCases, warnings } = parseAndValidateTestCases(
+      raw,
+      sampleTemplate,
+      sampleIssue,
+      false,
+      "few"
+    );
+
+    expect(testCases).toHaveLength(1);
+    expect(testCases[0].parameters).toHaveLength(2);
+    expect(testCases[0].parameters?.[0]).toMatchObject({
+      name: "role",
+      type: "SELECT",
+      sensitive: false,
+      allowedValuesJson: ["admin", "user", "guest"],
+    });
+    expect(testCases[0].parameters?.[1]).toMatchObject({
+      name: "remember_me",
+      type: "BOOLEAN",
+      sensitive: false,
+    });
+    expect(testCases[0].starterDataset).toHaveLength(2);
+    expect(testCases[0].starterDataset?.[0]).toMatchObject({
+      label: "admin row",
+      values: { role: "admin", remember_me: true },
+    });
+    expect(warnings ?? []).toEqual([]);
+  });
+
+  it("rejects SELECT parameter without allowedValuesJson — per-param warning, not whole-case rejection (D-12)", () => {
+    const raw = buildResponse([
+      {
+        id: "tc_1",
+        name: "Test case",
+        fieldValues: {
+          Description: "x",
+          Steps: [{ step: "s", expectedResult: "r" }],
+        },
+        parameters: [
+          { name: "env", type: "SELECT", sensitive: false }, // missing allowedValuesJson
+          { name: "username", type: "STRING", sensitive: false },
+        ],
+        starterDataset: [{ values: { username: "alice" } }],
+      },
+    ]);
+
+    const { testCases, warnings } = parseAndValidateTestCases(
+      raw,
+      sampleTemplate,
+      sampleIssue,
+      false,
+      "few"
+    );
+
+    expect(testCases).toHaveLength(1);
+    // The invalid SELECT param is dropped, the valid STRING param survives.
+    expect(testCases[0].parameters?.map((p) => p.name)).toEqual(["username"]);
+    expect(warnings).toBeDefined();
+    expect(warnings!.some((w) => w.message.includes("invalid_parameter"))).toBe(
+      true
+    );
+  });
+
+  it("rejects non-SELECT parameter that includes allowedValuesJson (XOR the other direction)", () => {
+    const raw = buildResponse([
+      {
+        id: "tc_1",
+        name: "Test case",
+        fieldValues: {
+          Description: "x",
+          Steps: [{ step: "s", expectedResult: "r" }],
+        },
+        parameters: [
+          {
+            name: "count",
+            type: "INTEGER",
+            sensitive: false,
+            allowedValuesJson: ["1", "2"], // forbidden on non-SELECT
+          },
+          { name: "username", type: "STRING", sensitive: false },
+        ],
+        starterDataset: [{ values: { username: "alice", count: 1 } }],
+      },
+    ]);
+
+    const { testCases, warnings } = parseAndValidateTestCases(
+      raw,
+      sampleTemplate,
+      sampleIssue,
+      false,
+      "few"
+    );
+
+    expect(testCases).toHaveLength(1);
+    expect(testCases[0].parameters?.map((p) => p.name)).toEqual(["username"]);
+    expect(warnings!.some((w) => w.message.includes("invalid_parameter"))).toBe(
+      true
+    );
+  });
+
+  it("truncated starterDataset surfaces dataset_truncated warning but keeps parameters (Pitfall 6)", () => {
+    // Hand-craft a raw response whose `starterDataset` array is structurally
+    // broken (not an array) — parser should keep the parameters and surface a
+    // dataset_truncated warning rather than dropping the whole case.
+    const raw = JSON.stringify({
+      testCases: [
+        {
+          id: "tc_1",
+          name: "TC",
+          fieldValues: {
+            Description: "x",
+            Steps: [{ step: "s", expectedResult: "r" }],
+          },
+          parameters: [{ name: "env", type: "STRING", sensitive: false }],
+          starterDataset: "TRUNCATED", // not an array — recovered as empty
+        },
+      ],
+    });
+
+    const { testCases, warnings } = parseAndValidateTestCases(
+      raw,
+      sampleTemplate,
+      sampleIssue,
+      false,
+      "few"
+    );
+
+    expect(testCases).toHaveLength(1);
+    expect(testCases[0].parameters).toHaveLength(1);
+    expect(testCases[0].starterDataset).toEqual([]);
+    expect(warnings!.some((w) => w.message === "dataset_truncated")).toBe(true);
+  });
+
+  it("starterDataset rows beyond cap (50) are truncated with a warning, not rejected (DoS guard)", () => {
+    const tooMany = Array.from({ length: 75 }, (_, i) => ({
+      values: { env: `env-${i}` },
+    }));
+    const raw = buildResponse([
+      {
+        id: "tc_1",
+        name: "TC",
+        fieldValues: {
+          Description: "x",
+          Steps: [{ step: "s", expectedResult: "r" }],
+        },
+        parameters: [{ name: "env", type: "STRING", sensitive: false }],
+        starterDataset: tooMany,
+      },
+    ]);
+
+    const { testCases, warnings } = parseAndValidateTestCases(
+      raw,
+      sampleTemplate,
+      sampleIssue,
+      false,
+      "few"
+    );
+
+    expect(testCases).toHaveLength(1);
+    expect(testCases[0].starterDataset).toHaveLength(50);
+    expect(warnings!.some((w) => w.message === "dataset_capped")).toBe(true);
+  });
+
+  it("parameter with reserved name (__proto__) is rejected (prototype-pollution guard)", () => {
+    const raw = buildResponse([
+      {
+        id: "tc_1",
+        name: "TC",
+        fieldValues: {
+          Description: "x",
+          Steps: [{ step: "s", expectedResult: "r" }],
+        },
+        parameters: [
+          { name: "__proto__", type: "STRING", sensitive: false },
+          { name: "username", type: "STRING", sensitive: false },
+        ],
+        starterDataset: [{ values: { username: "alice" } }],
+      },
+    ]);
+
+    const { testCases, warnings } = parseAndValidateTestCases(
+      raw,
+      sampleTemplate,
+      sampleIssue,
+      false,
+      "few"
+    );
+
+    expect(testCases).toHaveLength(1);
+    expect(testCases[0].parameters?.map((p) => p.name)).toEqual(["username"]);
+    expect(warnings!.some((w) => w.message.includes("invalid_parameter"))).toBe(
+      true
+    );
+  });
+
+  it("absent parameters/starterDataset keys preserve legacy behavior (no warnings, no new fields)", () => {
+    const raw = buildResponse([
+      {
+        id: "tc_1",
+        name: "TC",
+        fieldValues: {
+          Description: "x",
+          Steps: [{ step: "s", expectedResult: "r" }],
+          Priority: "High",
+        },
+      },
+    ]);
+
+    const { testCases, warnings } = parseAndValidateTestCases(
+      raw,
+      sampleTemplate,
+      sampleIssue,
+      false,
+      "few"
+    );
+
+    expect(testCases).toHaveLength(1);
+    expect(testCases[0].parameters).toBeUndefined();
+    expect(testCases[0].starterDataset).toBeUndefined();
+    expect(warnings ?? []).toEqual([]);
   });
 });

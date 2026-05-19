@@ -27,6 +27,7 @@ import { StepsResults } from "./StepsResults";
 import { Steps as PrismaSteps } from "@prisma/client";
 import { Minus, Plus } from "lucide-react";
 import { Link } from "~/lib/navigation";
+import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
 
 // Re-defining DisplayStep here for clarity, assuming it's similar to StepsDisplay's internal type
@@ -56,6 +57,8 @@ interface FieldValueRendererProps {
   onSharedStepCreated?: () => void;
   stepsForDisplay?: DisplayStep[];
   explicitFieldNameForSteps?: string;
+  parameters?: ParameterChipMeta[];
+  onOpenParametersSheet?: () => void;
 }
 
 const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
@@ -77,6 +80,8 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
   onSharedStepCreated,
   stepsForDisplay,
   explicitFieldNameForSteps,
+  parameters,
+  onOpenParametersSheet,
 }) => {
   const { theme } = useTheme();
   const customStyles = getCustomStyles({ theme });
@@ -582,6 +587,8 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
               readOnly={isEffectivelyReadOnly}
               projectId={projectId!}
               onSharedStepCreated={onSharedStepCreated}
+              parameters={parameters}
+              onOpenParametersSheet={onOpenParametersSheet}
             />
           );
         } else if (isRunMode) {
@@ -589,6 +596,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
             <StepsResults
               steps={stepsForDisplay || fieldValue || []}
               projectId={projectId}
+              parameters={parameters}
             />
           );
         } else {
@@ -596,6 +604,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
             <StepsDisplay
               steps={stepsForDisplay || fieldValue || []}
               previousSteps={previousFieldValue}
+              parameters={parameters}
             />
           );
         }

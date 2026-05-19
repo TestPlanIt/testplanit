@@ -22,6 +22,7 @@ import {
   CheckCircle,
   Combine,
   Copy,
+  Flame,
   LinkIcon,
   MoreVertical,
   Pencil,
@@ -75,6 +76,10 @@ const SessionItem: React.FC<SessionItemProps> = ({
   const showCompleteItem = !testSession.isCompleted && canComplete;
   const showDuplicateItem = canDuplicate ?? canEditSession;
   const showMoreMenu = showEditItem || showCompleteItem || showDuplicateItem;
+
+  const isRecentlyCreated =
+    !!testSession.createdAt &&
+    Date.now() - new Date(testSession.createdAt).getTime() < 5 * 60 * 1000;
 
   // Transform state data to match WorkflowStateDisplay expectations
   const workflowState = {
@@ -136,6 +141,14 @@ const SessionItem: React.FC<SessionItemProps> = ({
               className="group inline-flex items-center gap-1 max-w-full"
             >
               <h3 className="text-md font-semibold flex items-center gap-1 hover:text-primary min-w-0">
+                {isRecentlyCreated && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Flame className="h-4 w-4 shrink-0 text-orange-500 fill-orange-500 animate-pulse" />
+                    </TooltipTrigger>
+                    <TooltipContent>{t("common.labels.new")}</TooltipContent>
+                  </Tooltip>
+                )}
                 <DynamicIcon name="compass" className="min-w-6 min-h-6" />
                 <span className="truncate inline-block">
                   {testSession.name}

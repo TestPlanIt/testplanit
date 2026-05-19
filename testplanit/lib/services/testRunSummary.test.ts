@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getTestRunSummary, TestRunNotFoundError } from "./testRunSummary";
+import {
+  getPerCaseIterationCounts,
+  getTestRunSummary,
+  TestRunNotFoundError,
+} from "./testRunSummary";
 
 /**
  * Plan 02-05 Task 5.1 — smoke tests for the testRunSummary service.
@@ -169,3 +173,125 @@ function makeFakeClient(opts: FakeClientOptions) {
     $queryRaw: queryRaw,
   };
 }
+
+/**
+ * Phase 6 INT-03 / D-04 — `getPerCaseIterationCounts` reads denormalized
+ * counters off TestRunCases and derives `notRun`. These tests guarantee
+ * the canonical acceptance criteria from the plan:
+ *   - Non-parameterized cases (totalIterations: 0) report iterationCount: 0
+ *     and zeros in every bucket — no false positives.
+ *   - notRun = max(total - passed - failed - skipped, 0)
+ *   - skipped + passed + failed + notRun always sum to totalIterations
+ *     (property test on random counters).
+ */
+describe("getPerCaseIterationCounts", () => {
+  function makeCountClient(
+    rows: Array<{
+      id: number;
+      passedIterations: number;
+      failedIterations: number;
+      skippedIterations: number;
+      totalIterations: number;
+    }>
+  ) {
+    return {
+      testRunCases: {
+        findMany: vi.fn(async () => rows),
+      },
+    };
+  }
+
+  it("non-parameterized case reports iterationCount 0 and all buckets at 0", async () => {
+    const client = makeCountClient([
+      {
+        id: 11,
+        passedIterations: 0,
+        failedIterations: 0,
+        skippedIterations: 0,
+        totalIterations: 0,
+      },
+    ]);
+    const counts = await getPerCaseIterationCounts(1, client as any);
+    expect(counts).toEqual([
+      {
+        testRunCaseId: 11,
+        iterationCount: 0,
+        iterationsByStatus: { passed: 0, failed: 0, skipped: 0, notRun: 0 },
+      },
+    ]);
+  });
+
+  it("parameterized case reports passed/failed/skipped/notRun from denormalized counters", async () => {
+    const client = makeCountClient([
+      {
+        id: 21,
+        passedIterations: 3,
+        failedIterations: 1,
+        skippedIterations: 2,
+        totalIterations: 10,
+      },
+    ]);
+    const counts = await getPerCaseIterationCounts(1, client as any);
+    expect(counts[0]).toEqual({
+      testRunCaseId: 21,
+      iterationCount: 10,
+      iterationsByStatus: { passed: 3, failed: 1, skipped: 2, notRun: 4 },
+    });
+  });
+
+  it("notRun is clamped to 0 when counters exceed totalIterations (transient drift)", async () => {
+    const client = makeCountClient([
+      {
+        id: 31,
+        passedIterations: 5,
+        failedIterations: 5,
+        skippedIterations: 5,
+        totalIterations: 10,
+      },
+    ]);
+    const counts = await getPerCaseIterationCounts(1, client as any);
+    // 10 - 5 - 5 - 5 = -5 → clamped to 0 (no negative bucket reaches webhook)
+    expect(counts[0].iterationsByStatus.notRun).toBe(0);
+  });
+
+  it("skipped + passed + failed + notRun always sum to totalIterations (property test)", async () => {
+    // Generate 50 random fixtures where passed + failed + skipped <= total.
+    const fixtures = Array.from({ length: 50 }, (_, i) => {
+      const total = Math.floor(Math.random() * 100);
+      const passed = Math.floor(Math.random() * (total + 1));
+      const failed = Math.floor(Math.random() * (total - passed + 1));
+      const skipped = Math.floor(
+        Math.random() * (total - passed - failed + 1)
+      );
+      return {
+        id: 100 + i,
+        passedIterations: passed,
+        failedIterations: failed,
+        skippedIterations: skipped,
+        totalIterations: total,
+      };
+    });
+    const client = makeCountClient(fixtures);
+    const counts = await getPerCaseIterationCounts(1, client as any);
+    for (let i = 0; i < counts.length; i++) {
+      const c = counts[i];
+      const fx = fixtures[i];
+      const sum =
+        c.iterationsByStatus.passed +
+        c.iterationsByStatus.failed +
+        c.iterationsByStatus.skipped +
+        c.iterationsByStatus.notRun;
+      expect(sum).toBe(fx.totalIterations);
+    }
+  });
+
+  it("scopes findMany by testRunId only (no cross-tenant leak)", async () => {
+    const client = makeCountClient([]);
+    await getPerCaseIterationCounts(777, client as any);
+    expect(client.testRunCases.findMany).toHaveBeenCalledWith({
+      where: { testRunId: 777 },
+      select: expect.any(Object),
+      orderBy: { order: "asc" },
+    });
+  });
+});

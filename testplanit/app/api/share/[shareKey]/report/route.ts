@@ -227,6 +227,13 @@ export const GET = withAuditContext(
 
       const reportData = await reportResponse.json();
 
+      // Iteration matrix is a 3-axis grid, not a tabular report — the proxy
+      // returns the full `AxesShape` ({ caseAxis, configAxis, cells, ... }).
+      // Pass it through verbatim as `matrixAxes` so StaticReportViewer can
+      // hand it to MatrixReportPreset without re-fetching (the matrix has no
+      // public-share aggregation endpoint).
+      const isIterationMatrix = config.reportType === "iteration-matrix";
+
       // Check if this is a pre-built report (empty dimensions/metrics in config)
       // Pre-built reports save empty arrays because they don't use the standard dimension/metric selector
       const isPreBuiltReport =
@@ -238,7 +245,11 @@ export const GET = withAuditContext(
       let results: any[] = [];
       let chartData: any[] = [];
 
-      if (isPreBuiltReport) {
+      if (isIterationMatrix) {
+        // Matrix payload lives entirely in the spread below as `matrixAxes`;
+        // results/chartData stay empty so the standard table/chart code path
+        // is a no-op for the shared matrix surface.
+      } else if (isPreBuiltReport) {
         // Pre-built reports return data in { data: [...] } format
         // Don't generate dimension/metric metadata - let the frontend handle column generation
         results = reportData.data || [];
@@ -297,6 +308,15 @@ export const GET = withAuditContext(
         }),
         ...(reportData.totalFlakyTests && {
           totalFlakyTests: reportData.totalFlakyTests,
+        }),
+        ...(isIterationMatrix && {
+          matrixAxes: {
+            caseAxis: reportData.caseAxis,
+            configAxis: reportData.configAxis,
+            cells: reportData.cells, // Array<[key, value]> — client reconstructs Map
+            cellCount: reportData.cellCount,
+            statusMap: reportData.statusMap,
+          },
         }),
       };
 

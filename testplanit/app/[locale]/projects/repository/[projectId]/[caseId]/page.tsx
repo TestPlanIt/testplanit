@@ -11,6 +11,8 @@ import {
 import LinkedCasesPanel from "@/components/LinkedCasesPanel";
 import { Loading } from "@/components/Loading";
 import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
+import { ConfigureParametersButton } from "@/components/parameters/ConfigureParametersButton";
+import { ConfigureParametersSheet } from "@/components/parameters/ConfigureParametersSheet";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { TemplateNameDisplay } from "@/components/TemplateNameDisplay";
 import TestResultHistory from "@/components/TestResultHistory";
@@ -65,9 +67,15 @@ import {
   Trash2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import parseDuration from "parse-duration";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { ImperativePanelHandle } from "react-resizable-panels";
 import { z } from "zod/v4";
@@ -89,6 +97,7 @@ import {
   useFindManySharedStepGroup,
   useFindManyTags,
   useFindManyTemplates,
+  useFindManyTestCaseParameter,
   useFindManyWorkflows,
   useFindUniqueProjects,
   useUpdateAttachments,
@@ -323,6 +332,7 @@ export default function TestCaseDetails() {
   } = useRequireAuth();
   const router = useRouter();
   const { projectId, caseId } = useParams();
+  const searchParams = useSearchParams();
   const t = useTranslations();
 
   // Parse and validate projectId
@@ -365,6 +375,33 @@ export default function TestCaseDetails() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isDeleteCaseOpen, setIsDeleteCaseOpen] = useState(false);
+  const [isParamSheetOpen, setIsParamSheetOpen] = useState(false);
+
+  const numericCaseId = Number(caseId);
+  const isValidCaseId = !isNaN(numericCaseId);
+  const { data: caseParameters = [] } = useFindManyTestCaseParameter(
+    {
+      where: { testCaseId: numericCaseId, isDeleted: false },
+      orderBy: { order: "asc" },
+    },
+    { enabled: isValidCaseId }
+  );
+  const parameterCount = caseParameters.length;
+  const parameterChipMeta = useMemo(
+    () =>
+      caseParameters.map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        type: p.type as "STRING" | "INTEGER" | "BOOLEAN" | "SELECT",
+        defaultValue:
+          p.defaultValue === null || p.defaultValue === undefined
+            ? null
+            : typeof p.defaultValue === "string"
+              ? p.defaultValue
+              : JSON.stringify(p.defaultValue),
+      })),
+    [caseParameters]
+  );
 
   const [, setFolderHierarchy] = useState<FolderNode[]>([]);
   const [breadcrumbItems, setBreadcrumbItems] = useState<FolderNode[]>([]);
@@ -934,6 +971,21 @@ export default function TestCaseDetails() {
     }
     setIsEditMode(!isEditMode);
   };
+
+  const editParamProcessed = useRef(false);
+  useEffect(() => {
+    if (
+      !editParamProcessed.current &&
+      searchParams.get("edit") === "true" &&
+      canAddEdit &&
+      testcase?.template?.id &&
+      !isEditMode
+    ) {
+      editParamProcessed.current = true;
+      setSelectedTemplateId(testcase.template.id);
+      setIsEditMode(true);
+    }
+  }, [searchParams, canAddEdit, testcase, isEditMode]);
 
   const handleCancel = () => {
     setIsEditMode(false);
@@ -2030,6 +2082,22 @@ export default function TestCaseDetails() {
                 onExpand={() => setIsCollapsedLeft(false)}
               >
                 <div className="mb-4">
+                  {/* Configure Parameters entry point at the top of the
+                      left panel. The placement is unconditional (in both
+                      read and edit modes) so the button stays reachable
+                      regardless of whether the Steps caseField is
+                      filtered out by the read-mode empty-value check
+                      below — a fresh case with no steps yet still needs
+                      a way to declare parameters before adding them.
+                      `ConfigureParametersButton` itself returns null if
+                      the viewer lacks `canAddEdit`. */}
+                  <div className="mb-2 mr-6 flex justify-end">
+                    <ConfigureParametersButton
+                      parameterCount={parameterCount}
+                      canEdit={canAddEdit}
+                      onOpen={() => setIsParamSheetOpen(true)}
+                    />
+                  </div>
                   <ul>
                     {(testcase?.template?.caseFields || []).map(
                       (field, fieldIndex) => {
@@ -2098,6 +2166,10 @@ export default function TestCaseDetails() {
                                   ? "steps"
                                   : undefined
                               }
+                              parameters={parameterChipMeta}
+                              onOpenParametersSheet={() =>
+                                setIsParamSheetOpen(true)
+                              }
                               {...(field.caseField.type.type === "Steps" && {
                                 onSharedStepCreated: refetch,
                               })}
@@ -2132,6 +2204,7 @@ export default function TestCaseDetails() {
                             ...s,
                             sharedStepGroupName: s.sharedStepGroup?.name,
                           }))}
+                          parameters={parameterChipMeta}
                         />
                         <Separator
                           orientation="horizontal"
@@ -2195,6 +2268,10 @@ export default function TestCaseDetails() {
                                   control={control}
                                   errors={errors}
                                   canEditRestricted={false}
+                                  parameters={parameterChipMeta}
+                                  onOpenParametersSheet={() =>
+                                    setIsParamSheetOpen(true)
+                                  }
                                 />
                                 <Separator
                                   orientation="horizontal"
@@ -2386,6 +2463,14 @@ export default function TestCaseDetails() {
           onClose={() => setIsQuickScriptModalOpen(false)}
           selectedCaseIds={[Number(caseId)]}
           projectId={Number(projectId)}
+        />
+      )}
+      {isValidProjectId && isValidCaseId && (
+        <ConfigureParametersSheet
+          isOpen={isParamSheetOpen}
+          onClose={() => setIsParamSheetOpen(false)}
+          caseId={numericCaseId}
+          projectId={numericProjectId}
         />
       )}
     </FormProvider>

@@ -1739,6 +1739,9 @@ export default function Cases({
           startedAt: true,
           completedAt: true,
           elapsed: true,
+          // Phase 3 — surface iteration count so the status cell can detect
+          // parameterized cases and render its read-only sheet-opener.
+          totalIterations: true,
           testRun: {
             select: {
               id: true,
@@ -2549,6 +2552,9 @@ export default function Cases({
         order: trc.order,
         testRunId: trc.testRun?.id,
         testRunConfiguration: trc.testRun?.configuration,
+        // Phase 3 — surface the iteration count so the status cell can
+        // detect parameterized cases and render read-only.
+        totalIterations: (trc as { totalIterations?: number }).totalIterations,
       }));
     }
     // Not in isRunMode. Use 'data' directly (already server-side paginated and filtered).
