@@ -24,7 +24,9 @@ const { mockDb, sessionRef } = vi.hoisted(() => {
   };
   return {
     mockDb: db,
-    sessionRef: { current: { user: { id: "u-1", name: "U", email: "u@e.com" } } },
+    sessionRef: {
+      current: { user: { id: "u-1", name: "U", email: "u@e.com" } },
+    },
   };
 });
 
@@ -54,10 +56,12 @@ describe("DSET-01 — single-attachment-per-case", () => {
       name: "Login flow",
     }));
     mockDb.dataSet.findFirst = vi.fn(async () => null);
-    mockDb.dataSet.create = vi.fn(async (args: { data: Record<string, unknown> }) => ({
-      id: 999,
-      ...args.data,
-    }));
+    mockDb.dataSet.create = vi.fn(
+      async (args: { data: Record<string, unknown> }) => ({
+        id: 999,
+        ...args.data,
+      })
+    );
 
     const res = await datasetPost(jsonRequest(), {
       params: Promise.resolve({ caseId: "5" }),

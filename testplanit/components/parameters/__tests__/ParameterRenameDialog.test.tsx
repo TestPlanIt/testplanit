@@ -4,37 +4,35 @@ import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next-intl", () => ({
-  useTranslations: (namespace?: string) => (
-    key: string,
-    params?: Record<string, unknown>
-  ) => {
-    const parameters: Record<string, string> = {
-      renameTitle: 'Rename "@{oldName}" to "@{newName}"?',
-      renameDescriptionLead:
-        "This will rewrite {totalCount, plural, =1 {# reference} other {# references}}:",
-      renameDescriptionStepCount:
-        "{stepCount, plural, =1 {# step text reference} other {# step text references}}",
-      renameDescriptionExpectedCount:
-        "{expectedCount, plural, =1 {# expected-result reference} other {# expected-result references}}",
-      renameDescriptionRowCount:
-        "{rowCount, plural, =1 {# dataset row} other {# dataset rows}}",
-      renameDescriptionVersion:
-        "This will create version {nextVersion} of this test case.",
-      renameConfirm: "Rename",
-      renameNoRefsToast: "Parameter renamed (no existing references)",
-      updateSuccess: "Parameter saved",
-      toastVersionBumped: "Saved · created version {version}",
-    };
-    const common: Record<string, string> = { cancel: "Cancel" };
-    const dict = namespace === "common" ? common : parameters;
-    let value = dict[key] ?? key;
-    if (params) {
-      Object.entries(params).forEach(([k, v]) => {
-        value = value.replace(`{${k}}`, String(v));
-      });
-    }
-    return value;
-  },
+  useTranslations:
+    (namespace?: string) => (key: string, params?: Record<string, unknown>) => {
+      const parameters: Record<string, string> = {
+        renameTitle: 'Rename "@{oldName}" to "@{newName}"?',
+        renameDescriptionLead:
+          "This will rewrite {totalCount, plural, =1 {# reference} other {# references}}:",
+        renameDescriptionStepCount:
+          "{stepCount, plural, =1 {# step text reference} other {# step text references}}",
+        renameDescriptionExpectedCount:
+          "{expectedCount, plural, =1 {# expected-result reference} other {# expected-result references}}",
+        renameDescriptionRowCount:
+          "{rowCount, plural, =1 {# dataset row} other {# dataset rows}}",
+        renameDescriptionVersion:
+          "This will create version {nextVersion} of this test case.",
+        renameConfirm: "Rename",
+        renameNoRefsToast: "Parameter renamed (no existing references)",
+        updateSuccess: "Parameter saved",
+        toastVersionBumped: "Saved · created version {version}",
+      };
+      const common: Record<string, string> = { cancel: "Cancel" };
+      const dict = namespace === "common" ? common : parameters;
+      let value = dict[key] ?? key;
+      if (params) {
+        Object.entries(params).forEach(([k, v]) => {
+          value = value.replace(`{${k}}`, String(v));
+        });
+      }
+      return value;
+    },
 }));
 
 const toastSuccess = vi.fn();

@@ -109,14 +109,11 @@ export function ParameterRenameDialog({
         if (total === 0 && !silentPatchFiredRef.current) {
           silentPatchFiredRef.current = true;
           // Silent rename: zero-refs path bypasses dialog body entirely.
-          await fetch(
-            `/api/repository/cases/${caseId}/parameters/${paramId}`,
-            {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ name: newName }),
-            }
-          );
+          await fetch(`/api/repository/cases/${caseId}/parameters/${paramId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: newName }),
+          });
           if (cancelled) return;
           toast.message(t("renameNoRefsToast"));
           void queryClient.invalidateQueries({
@@ -147,8 +144,7 @@ export function ParameterRenameDialog({
     return null;
   }
 
-  const totalCount =
-    counts.stepCount + counts.expectedCount + counts.rowCount;
+  const totalCount = counts.stepCount + counts.expectedCount + counts.rowCount;
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -159,9 +155,7 @@ export function ParameterRenameDialog({
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-2">
-              <p>
-                {t("renameDescriptionLead", { totalCount })}
-              </p>
+              <p>{t("renameDescriptionLead", { totalCount })}</p>
               <ul className="list-disc pl-5 text-sm">
                 <li>
                   {t("renameDescriptionStepCount", {

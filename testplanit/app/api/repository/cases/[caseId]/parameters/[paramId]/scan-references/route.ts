@@ -20,7 +20,7 @@ import { authOptions } from "~/server/auth";
  */
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ caseId: string; paramId: string }> },
+  { params }: { params: Promise<{ caseId: string; paramId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);

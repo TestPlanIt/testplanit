@@ -65,7 +65,11 @@ function isExemptFile(file: string): boolean {
   return false;
 }
 
-function hasUpdateHasParametersWithin(file: string, lineNumber: number, window = 30): boolean {
+function hasUpdateHasParametersWithin(
+  file: string,
+  lineNumber: number,
+  window = 30
+): boolean {
   const content = readFileSync(file, "utf-8").split("\n");
   const start = Math.max(0, lineNumber - 1);
   const end = Math.min(content.length, lineNumber - 1 + window);
@@ -121,7 +125,9 @@ describe("PARAM coverage — updateHasParameters must follow every TestCaseParam
       .filter((l) => {
         const file = l.split(":")[0];
         // exclude tests
-        return !file.includes("/__tests__/") && !file.startsWith(TEST_DIR_MARKER);
+        return (
+          !file.includes("/__tests__/") && !file.startsWith(TEST_DIR_MARKER)
+        );
       });
     expect(lines).toEqual([]);
   });

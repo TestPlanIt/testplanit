@@ -49,12 +49,10 @@ describe("PUT /api/projects/[projectId]/junit-iteration-property-names", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (prisma.projects.findFirst as any).mockResolvedValue({ id: 1 });
-    (prisma.projects.update as any).mockImplementation(
-      async (args: any) => ({
-        id: 1,
-        junitIterationPropertyNames: args.data.junitIterationPropertyNames,
-      })
-    );
+    (prisma.projects.update as any).mockImplementation(async (args: any) => ({
+      id: 1,
+      junitIterationPropertyNames: args.data.junitIterationPropertyNames,
+    }));
   });
 
   it("returns 401 when no session", async () => {
@@ -205,10 +203,7 @@ describe("PUT /api/projects/[projectId]/junit-iteration-property-names", () => {
     (getServerSession as any).mockResolvedValue({
       user: { id: "u1", access: "ADMIN" },
     });
-    const res = await PUT(
-      makeRequest({ propertyNames: [] }),
-      makeParams("1")
-    );
+    const res = await PUT(makeRequest({ propertyNames: [] }), makeParams("1"));
     expect(res.status).toBe(200);
   });
 });

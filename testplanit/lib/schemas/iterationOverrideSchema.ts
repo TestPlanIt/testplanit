@@ -38,7 +38,7 @@ export interface OverrideParameterSchemaEntry {
  * the form can submit a "cleared" cell without violating the validator.
  */
 export function buildIterationOverrideSchema(
-  parametersSchema: OverrideParameterSchemaEntry[],
+  parametersSchema: OverrideParameterSchemaEntry[]
 ): z.ZodObject<Record<string, z.ZodTypeAny>> {
   const shape: Record<string, z.ZodTypeAny> = {};
 
@@ -53,7 +53,7 @@ export function buildIterationOverrideSchema(
           ? base.min(1)
           : z.preprocess(
               (v) => (v === "" || v == null ? null : v),
-              base.nullable().optional(),
+              base.nullable().optional()
             );
         break;
       }
@@ -63,7 +63,7 @@ export function buildIterationOverrideSchema(
           ? base
           : z.preprocess(
               (v) => (v === "" || v == null ? null : v),
-              base.nullable().optional(),
+              base.nullable().optional()
             );
         break;
       }
@@ -82,7 +82,7 @@ export function buildIterationOverrideSchema(
             ? z.string().min(1)
             : z.preprocess(
                 (v) => (v === "" || v == null ? null : v),
-                z.string().nullable().optional(),
+                z.string().nullable().optional()
               );
         } else {
           const enumValidator = z.enum(allowed as [string, ...string[]]);
@@ -90,7 +90,7 @@ export function buildIterationOverrideSchema(
             ? enumValidator
             : z.preprocess(
                 (v) => (v === "" || v == null ? null : v),
-                enumValidator.nullable().optional(),
+                enumValidator.nullable().optional()
               );
         }
         break;

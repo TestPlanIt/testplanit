@@ -33,26 +33,23 @@ const describeIntegration =
 describeIntegration("iteration bulk-skip (live DB)", () => {
   const importDeps = async () => {
     const { prisma } = await import("~/lib/prisma");
-    const { materializeIterations } = await import(
-      "~/lib/services/iterationFanOut"
-    );
+    const { materializeIterations } =
+      await import("~/lib/services/iterationFanOut");
     return { prisma, materializeIterations };
   };
 
   const ROLLBACK_SENTINEL = "__BULK_SKIP_TEST_ROLLBACK__";
 
   async function withRollback<T>(
-     
     prisma: any,
-     
+
     body: (tx: any) => Promise<T>,
-    timeoutMs = 60_000,
+    timeoutMs = 60_000
   ): Promise<T> {
     let captured: T | undefined;
     let captureErr: unknown;
     try {
       await prisma.$transaction(
-         
         async (tx: any) => {
           try {
             captured = await body(tx);
@@ -61,7 +58,7 @@ describeIntegration("iteration bulk-skip (live DB)", () => {
           }
           throw new Error(ROLLBACK_SENTINEL);
         },
-        { timeout: timeoutMs },
+        { timeout: timeoutMs }
       );
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -71,12 +68,12 @@ describeIntegration("iteration bulk-skip (live DB)", () => {
     return captured as T;
   }
 
-   
   async function seedFixture(tx: any) {
     const creator = await tx.user.findFirst({ select: { id: true } });
     if (!creator) throw new Error("No User row available — seed the DB first");
     const state = await tx.workflows.findFirst({ select: { id: true } });
-    if (!state) throw new Error("No Workflows row available — seed the DB first");
+    if (!state)
+      throw new Error("No Workflows row available — seed the DB first");
     const template = await tx.templates.findFirst({ select: { id: true } });
     if (!template)
       throw new Error("No Templates row available — seed the DB first");
@@ -181,15 +178,17 @@ describeIntegration("iteration bulk-skip (live DB)", () => {
     };
   }
 
-   
-  async function bulkSkip(tx: any, args: {
-    testRunId: number;
-    testRunCaseId: number;
-    iterationIds: number[];
-    skippedStatusId: number;
-    executedById: string;
-    reason?: string;
-  }) {
+  async function bulkSkip(
+    tx: any,
+    args: {
+      testRunId: number;
+      testRunCaseId: number;
+      iterationIds: number[];
+      skippedStatusId: number;
+      executedById: string;
+      reason?: string;
+    }
+  ) {
     const iterations = await tx.testRunCaseIteration.findMany({
       where: {
         id: { in: args.iterationIds },
@@ -246,21 +245,17 @@ describeIntegration("iteration bulk-skip (live DB)", () => {
       },
     });
     const statusMap = new Map<number, RollupStatus>(
-       
-      allStatuses.map((s: any) => [s.id, s as RollupStatus]),
+      allStatuses.map((s: any) => [s.id, s as RollupStatus])
     );
     const rollupStatusId = computeWorstOfStatus(
-       
       allIterations.map((it: any) => ({ statusId: it.statusId })),
-      statusMap,
+      statusMap
     );
     const passedCount = allIterations.filter(
-       
-      (it: any) => it.status?.isSuccess === true,
+      (it: any) => it.status?.isSuccess === true
     ).length;
     const failedCount = allIterations.filter(
-       
-      (it: any) => it.status?.isFailure === true,
+      (it: any) => it.status?.isFailure === true
     ).length;
     await tx.testRunCases.update({
       where: { id: args.testRunCaseId },
@@ -295,7 +290,7 @@ describeIntegration("iteration bulk-skip (live DB)", () => {
       const skippedCount = await bulkSkip(tx, {
         testRunId: fixture.testRunId,
         testRunCaseId: fixture.testRunCaseId,
-         
+
         iterationIds: iters.map((i: any) => i.id),
         skippedStatusId: skipped!.id,
         executedById: fixture.creatorId,
@@ -312,10 +307,7 @@ describeIntegration("iteration bulk-skip (live DB)", () => {
         select: { id: true, iterationId: true },
       });
       expect(results.length).toBe(3);
-      expect(
-         
-        results.every((r: any) => r.iterationId != null),
-      ).toBe(true);
+      expect(results.every((r: any) => r.iterationId != null)).toBe(true);
 
       const runCase = await tx.testRunCases.findUnique({
         where: { id: fixture.testRunCaseId },
@@ -352,19 +344,16 @@ describeIntegration("iteration bulk-skip (live DB)", () => {
       // committed when the inner call throws.
       let threw = false;
       try {
-        await tx.$transaction(
-           
-          async (innerTx: any) => {
-            await bulkSkip(innerTx, {
-              testRunId: fixture.testRunId,
-              testRunCaseId: fixture.testRunCaseId,
-              iterationIds: [iters[0].id],
-              skippedStatusId: skipped!.id,
-              executedById: fixture.creatorId,
-            });
-            throw new Error("force-rollback");
-          },
-        );
+        await tx.$transaction(async (innerTx: any) => {
+          await bulkSkip(innerTx, {
+            testRunId: fixture.testRunId,
+            testRunCaseId: fixture.testRunCaseId,
+            iterationIds: [iters[0].id],
+            skippedStatusId: skipped!.id,
+            executedById: fixture.creatorId,
+          });
+          throw new Error("force-rollback");
+        });
       } catch {
         threw = true;
       }

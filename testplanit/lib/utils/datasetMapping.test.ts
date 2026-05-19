@@ -37,8 +37,11 @@ describe("applyMapping", () => {
     const rawRow: Record<string, unknown> = { real: "value" };
     // The mapping author tries to pull __proto__ off the raw row — but
     // __proto__ is not an own property, so applyMapping must not write
-    // anything for that mapping entry.
-    const mapping = { __proto__: "p" };
+    // anything for that mapping entry. Built via Object.create(null) +
+    // bracket assignment so the `__proto__` key is a normal own property
+    // (not the prototype-setter literal).
+    const mapping: Record<string, string> = Object.create(null);
+    mapping["__proto__"] = "p";
     const result = applyMapping(rawRow, mapping);
     expect(result).toEqual({});
     // Object.prototype must still be a vanilla object (no `p` polluted in).

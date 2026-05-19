@@ -59,9 +59,7 @@ export function SharedDatasetVersionPicker({
   disabled,
   mode = "editor",
 }: SharedDatasetVersionPickerProps) {
-  const t = useTranslations(
-    "projects.settings.datasets.versionPicker"
-  );
+  const t = useTranslations("projects.settings.datasets.versionPicker");
 
   const { data: versions, isLoading } = useFindManyDataSetVersion({
     where: { dataSetId },
@@ -83,10 +81,7 @@ export function SharedDatasetVersionPicker({
     }));
   }, [versions]);
 
-  const selectValue =
-    value === "current"
-      ? CURRENT_SENTINEL
-      : String(value.id);
+  const selectValue = value === "current" ? CURRENT_SENTINEL : String(value.id);
 
   const handleSelectChange = (next: string) => {
     if (next === CURRENT_SENTINEL) {

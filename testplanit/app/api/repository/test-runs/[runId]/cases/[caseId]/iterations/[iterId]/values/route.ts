@@ -44,13 +44,13 @@ async function resolveCanReadSensitive(userId: string): Promise<boolean> {
   const perms = u.role?.rolePermissions ?? [];
   return Array.isArray(perms)
     ? perms.some(
-        (p: { canReadSensitive?: boolean }) => p?.canReadSensitive === true,
+        (p: { canReadSensitive?: boolean }) => p?.canReadSensitive === true
       )
     : false;
 }
 
 function parseSnapshotParameters(
-  value: unknown,
+  value: unknown
 ): OverrideParameterSchemaEntry[] {
   if (!Array.isArray(value)) return [];
   const out: OverrideParameterSchemaEntry[] = [];
@@ -92,9 +92,12 @@ function parseSnapshotParameters(
 }
 
 function toAuditSchema(
-  entries: OverrideParameterSchemaEntry[],
+  entries: OverrideParameterSchemaEntry[]
 ): ParameterSchemaEntry[] {
-  return entries.map((e) => ({ name: e.name, sensitive: e.sensitive === true }));
+  return entries.map((e) => ({
+    name: e.name,
+    sensitive: e.sensitive === true,
+  }));
 }
 
 export async function PATCH(
@@ -103,7 +106,7 @@ export async function PATCH(
     params,
   }: {
     params: Promise<{ runId: string; caseId: string; iterId: string }>;
-  },
+  }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -111,15 +114,18 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { runId: runIdParam, caseId: caseIdParam, iterId: iterIdParam } =
-      await params;
+    const {
+      runId: runIdParam,
+      caseId: caseIdParam,
+      iterId: iterIdParam,
+    } = await params;
     const runId = parseInt(runIdParam, 10);
     const caseId = parseInt(caseIdParam, 10);
     const iterationId = parseInt(iterIdParam, 10);
     if (isNaN(runId) || isNaN(caseId) || isNaN(iterationId)) {
       return NextResponse.json(
         { error: "Invalid path parameter" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -128,7 +134,7 @@ export async function PATCH(
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid input", details: z.treeifyError(parsed.error) },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -177,7 +183,7 @@ export async function PATCH(
     if (!snapshot) {
       return NextResponse.json(
         { error: "Iteration snapshot missing" },
-        { status: 422 },
+        { status: 422 }
       );
     }
 
@@ -190,7 +196,7 @@ export async function PATCH(
           error: "Invalid values",
           details: z.treeifyError(valuesParsed.error),
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -221,7 +227,7 @@ export async function PATCH(
 
     // Post-commit audit emission. Best-effort — never block the response.
     const viewerCanReadSensitive = await resolveCanReadSensitive(
-      session.user.id,
+      session.user.id
     );
     const auditSchema = toAuditSchema(paramSchema);
     captureAuditEvent({

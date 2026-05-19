@@ -77,7 +77,7 @@ function deriveVersionColumns(version: {
       // Some row shapes inline the values directly on the row object
       // (no `valuesJson` wrapper) — accept that too for resilience.
       return Object.keys(first as Record<string, unknown>).filter(
-        (k) => k !== "label" && k !== "rowIndex" && k !== "id",
+        (k) => k !== "label" && k !== "rowIndex" && k !== "id"
       );
     }
   }
@@ -87,7 +87,7 @@ function deriveVersionColumns(version: {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ caseId: string }> },
+  { params }: { params: Promise<{ caseId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -135,7 +135,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ caseId: string }> },
+  { params }: { params: Promise<{ caseId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -154,7 +154,7 @@ export async function PUT(
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid input", details: z.treeifyError(parsed.error) },
-        { status: 422 },
+        { status: 422 }
       );
     }
     const { sharedDataSetId, pinnedVersionId, mappingJson } = parsed.data;
@@ -180,20 +180,14 @@ export async function PUT(
     if (!sharedDataSet) {
       return NextResponse.json(
         { error: "Shared dataset not found" },
-        { status: 404 },
+        { status: 404 }
       );
     }
     if (!sharedDataSet.isShared) {
-      return NextResponse.json(
-        { error: "not_shared" },
-        { status: 422 },
-      );
+      return NextResponse.json({ error: "not_shared" }, { status: 422 });
     }
     if (sharedDataSet.projectId !== testCase.projectId) {
-      return NextResponse.json(
-        { error: "cross_project" },
-        { status: 422 },
-      );
+      return NextResponse.json({ error: "cross_project" }, { status: 422 });
     }
 
     let resolvedVersion: {
@@ -214,13 +208,13 @@ export async function PUT(
       if (!v) {
         return NextResponse.json(
           { error: "pinned_version_not_found" },
-          { status: 422 },
+          { status: 422 }
         );
       }
       if (v.dataSetId !== sharedDataSetId) {
         return NextResponse.json(
           { error: "pinned_version_dataset_mismatch" },
-          { status: 422 },
+          { status: 422 }
         );
       }
       resolvedVersion = v;
@@ -271,28 +265,28 @@ export async function PUT(
     if (unknownColumns.length > 0) {
       return NextResponse.json(
         { error: "unknown_columns", columns: unknownColumns },
-        { status: 422 },
+        { status: 422 }
       );
     }
     if (unknownParams.length > 0) {
       return NextResponse.json(
         { error: "unknown_parameters", parameters: unknownParams },
-        { status: 422 },
+        { status: 422 }
       );
     }
 
     // Required-coverage: every required parameter must be the target of
     // at least one non-skip column mapping.
     const mappedParamNames = new Set(
-      Object.values(mappingJson).filter((v) => v !== SKIP),
+      Object.values(mappingJson).filter((v) => v !== SKIP)
     );
     const missing = requiredParameterNames.filter(
-      (name) => !mappedParamNames.has(name),
+      (name) => !mappedParamNames.has(name)
     );
     if (missing.length > 0) {
       return NextResponse.json(
         { error: "required_unmapped", missing },
-        { status: 422 },
+        { status: 422 }
       );
     }
 
@@ -347,7 +341,7 @@ export async function PUT(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ caseId: string }> },
+  { params }: { params: Promise<{ caseId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);

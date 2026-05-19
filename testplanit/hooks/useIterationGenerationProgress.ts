@@ -84,9 +84,7 @@ export function useIterationGenerationProgress(): ProgressJob[] {
             ...(progress?.total != null && progress.total > 0
               ? { total: progress.total }
               : {}),
-            ...(body.failedReason
-              ? { failedReason: body.failedReason }
-              : {}),
+            ...(body.failedReason ? { failedReason: body.failedReason } : {}),
           });
         } catch {
           // Network blip — leave state untouched; next tick retries.

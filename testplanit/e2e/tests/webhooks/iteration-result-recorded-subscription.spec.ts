@@ -164,9 +164,8 @@ test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscripti
     testRunCaseId = testRunCase.id;
 
     // Materialize the iterations as the production fan-out worker would.
-    const { materializeIterations } = await import(
-      "~/lib/services/iterationFanOut"
-    );
+    const { materializeIterations } =
+      await import("~/lib/services/iterationFanOut");
     await materializeIterations(testRunId, prisma);
 
     const iters = await prisma.testRunCaseIteration.findMany({

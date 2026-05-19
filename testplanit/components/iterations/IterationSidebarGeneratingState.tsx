@@ -69,7 +69,9 @@ export function IterationSidebarGeneratingState({
           total: String(safeTotal),
         })}
       </p>
-      <p className="text-xs text-muted-foreground">{t("runGeneratingHelper")}</p>
+      <p className="text-xs text-muted-foreground">
+        {t("runGeneratingHelper")}
+      </p>
       <Button
         variant="link"
         size="sm"

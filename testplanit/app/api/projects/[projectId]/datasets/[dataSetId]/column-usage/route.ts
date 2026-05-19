@@ -19,7 +19,7 @@ export async function GET(
     params,
   }: {
     params: Promise<{ projectId: string; dataSetId: string }>;
-  },
+  }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
@@ -32,7 +32,7 @@ export async function GET(
   if (Number.isNaN(projectId) || Number.isNaN(dataSetId)) {
     return NextResponse.json(
       { error: "Invalid path parameter" },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -40,7 +40,7 @@ export async function GET(
   if (column.length === 0 || column.length > 80) {
     return NextResponse.json(
       { error: "Missing or invalid `column` query parameter" },
-      { status: 400 },
+      { status: 400 }
     );
   }
 

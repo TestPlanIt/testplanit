@@ -56,7 +56,7 @@ async function resolveCanReadSensitive(userId: string): Promise<boolean> {
   const perms = u.role?.rolePermissions ?? [];
   return Array.isArray(perms)
     ? perms.some(
-        (p: { canReadSensitive?: boolean }) => p?.canReadSensitive === true,
+        (p: { canReadSensitive?: boolean }) => p?.canReadSensitive === true
       )
     : false;
 }
@@ -87,7 +87,7 @@ export async function POST(
     params,
   }: {
     params: Promise<{ runId: string; caseId: string }>;
-  },
+  }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -101,7 +101,7 @@ export async function POST(
     if (isNaN(runId) || isNaN(caseId)) {
       return NextResponse.json(
         { error: "Invalid path parameter" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -110,7 +110,7 @@ export async function POST(
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid input", details: z.treeifyError(parsed.error) },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -150,7 +150,7 @@ export async function POST(
     if (!chosenStatus) {
       return NextResponse.json(
         { error: "Status not available for this project" },
-        { status: 422 },
+        { status: 422 }
       );
     }
     const appliedStatusId = chosenStatus.id;
@@ -163,7 +163,7 @@ export async function POST(
     });
     const auditSchema = parseAuditSchema(snapshot?.parametersJson);
     const viewerCanReadSensitive = await resolveCanReadSensitive(
-      session.user.id,
+      session.user.id
     );
 
     // Carry executedById; the user is already validated by getEnhancedDb.
@@ -227,7 +227,7 @@ export async function POST(
           redactedValues: redactValues(
             (iter.valuesJson as Record<string, unknown>) ?? {},
             auditSchema,
-            viewerCanReadSensitive,
+            viewerCanReadSensitive
           ),
         });
       }
@@ -270,18 +270,18 @@ export async function POST(
             isCompleted: s.isCompleted,
             order: s.order,
           },
-        ]),
+        ])
       );
       const rollupStatusId = computeWorstOfStatus(
         allIterations.map((it) => ({ statusId: it.statusId })),
-        statusMap,
+        statusMap
       );
 
       const passedCount = allIterations.filter(
-        (it) => it.status?.isSuccess === true,
+        (it) => it.status?.isSuccess === true
       ).length;
       const failedCount = allIterations.filter(
-        (it) => it.status?.isFailure === true,
+        (it) => it.status?.isFailure === true
       ).length;
 
       await tx.testRunCases.update({

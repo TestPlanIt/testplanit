@@ -22,7 +22,9 @@ const { mockDb, txMock, sessionRef } = vi.hoisted(() => {
   return {
     mockDb: db,
     txMock: tx,
-    sessionRef: { current: { user: { id: "u-1", name: "U", email: "u@e.com" } } },
+    sessionRef: {
+      current: { user: { id: "u-1", name: "U", email: "u@e.com" } },
+    },
   };
 });
 
@@ -70,7 +72,7 @@ describe("rename atomicity wiring", () => {
 
   it("propagates helper errors so caller transaction rolls back", async () => {
     helperSpies.updateParameterInTransaction.mockRejectedValueOnce(
-      new Error("simulated rewrite failure"),
+      new Error("simulated rewrite failure")
     );
     const res = await paramPatch(jsonRequest({ name: "newName" }), {
       params: Promise.resolve({ caseId: "5", paramId: "1" }),

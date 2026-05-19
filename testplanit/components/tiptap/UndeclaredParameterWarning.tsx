@@ -19,10 +19,7 @@ function collectMentionLabels(
   out: Set<string>
 ): void {
   if (!doc) return;
-  if (
-    doc.type === "parameterMention" &&
-    typeof doc.attrs?.label === "string"
-  ) {
+  if (doc.type === "parameterMention" && typeof doc.attrs?.label === "string") {
     out.add(doc.attrs.label);
   }
   if (Array.isArray(doc.content)) {

@@ -97,7 +97,9 @@ function tableCell(value: string): any {
   const display = value.length === 0 ? " " : value;
   return {
     type: "tableCell",
-    content: [{ type: "paragraph", content: [{ type: "text", text: display }] }],
+    content: [
+      { type: "paragraph", content: [{ type: "text", text: display }] },
+    ],
   };
 }
 function tableHeader(value: string): any {
@@ -202,11 +204,13 @@ export async function buildIterationIssueBody(
       n: iterationNumber,
       total: totalIterations ?? 0,
       caseName,
-    },
+    }
   );
 
   // 4. Redact values per the viewer permission (D-13).
-  const paramSchema = parseParameterSchema(trc?.dataSetSnapshot?.parametersJson);
+  const paramSchema = parseParameterSchema(
+    trc?.dataSetSnapshot?.parametersJson
+  );
   const rawValues = (iteration.valuesJson ?? {}) as Record<string, unknown>;
   const displayValues = redactValues(
     rawValues,
@@ -236,7 +240,7 @@ export async function buildIterationIssueBody(
       n: iterationNumber,
       total: totalIterations ?? 0,
       label: leadLabel,
-    },
+    }
   );
   content.push(paragraph(text(proseText)));
 
@@ -247,12 +251,9 @@ export async function buildIterationIssueBody(
     const [paramHeader, valueHeader] = await Promise.all([
       getServerTranslation(
         locale,
-        "parameters.iterationIssueTableHeaderParameter",
+        "parameters.iterationIssueTableHeaderParameter"
       ),
-      getServerTranslation(
-        locale,
-        "parameters.iterationIssueTableHeaderValue",
-      ),
+      getServerTranslation(locale, "parameters.iterationIssueTableHeaderValue"),
     ]);
     const rows: any[] = [];
     rows.push(tableRow(tableHeader(paramHeader), tableHeader(valueHeader)));
@@ -278,12 +279,10 @@ export async function buildIterationIssueBody(
   });
   const deepLinkLabel = await getServerTranslation(
     locale,
-    "parameters.iterationIssueDeepLinkLabel",
+    "parameters.iterationIssueDeepLinkLabel"
   );
   content.push(
-    paragraph(
-      text(deepLinkLabel, [{ type: "link", attrs: { href } }])
-    )
+    paragraph(text(deepLinkLabel, [{ type: "link", attrs: { href } }]))
   );
 
   return {

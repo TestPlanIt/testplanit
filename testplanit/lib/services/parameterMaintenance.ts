@@ -17,7 +17,7 @@ import type { Prisma } from "@prisma/client";
  */
 export async function updateHasParameters(
   caseId: number,
-  tx: Prisma.TransactionClient,
+  tx: Prisma.TransactionClient
 ): Promise<void> {
   const count = await tx.testCaseParameter.count({
     where: { testCaseId: caseId, isDeleted: false },

@@ -2,12 +2,7 @@
 
 import { Loading } from "@/components/Loading";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CirclePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
@@ -48,7 +43,7 @@ export default function ProjectParametersSettingsPage() {
         },
       },
     },
-    { enabled: isAuthenticated },
+    { enabled: isAuthenticated }
   );
 
   useEffect(() => {
@@ -119,9 +114,7 @@ export default function ProjectParametersSettingsPage() {
               data-testid="dataset-create-button"
             >
               <CirclePlus className="w-4" />
-              <span className="hidden md:inline">
-                {tDatasets("newButton")}
-              </span>
+              <span className="hidden md:inline">{tDatasets("newButton")}</span>
             </Button>
           </div>
           <p className="text-sm text-muted-foreground pt-2">

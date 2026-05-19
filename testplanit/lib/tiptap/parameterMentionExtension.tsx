@@ -103,9 +103,7 @@ function installChipHandler() {
       if (!target) return;
 
       // Copy icon click — copies the chip's real value to clipboard.
-      const copyBtn = target.closest<HTMLElement>(
-        ".parameter-ref-chip-copy"
-      );
+      const copyBtn = target.closest<HTMLElement>(".parameter-ref-chip-copy");
       if (copyBtn) {
         event.preventDefault();
         event.stopPropagation();
@@ -185,7 +183,10 @@ export function createParameterMentionExtension(
           parseHTML: (element: HTMLElement) =>
             element.getAttribute("data-param-id"),
           renderHTML: (attributes: { paramId: number | string | null }) => {
-            if (attributes.paramId === null || attributes.paramId === undefined) {
+            if (
+              attributes.paramId === null ||
+              attributes.paramId === undefined
+            ) {
               return {};
             }
             return { "data-param-id": String(attributes.paramId) };
@@ -362,9 +363,7 @@ export function createParameterMentionExtension(
             });
           },
 
-          onUpdate(props: {
-            clientRect?: (() => DOMRect | null) | null;
-          }) {
+          onUpdate(props: { clientRect?: (() => DOMRect | null) | null }) {
             component?.updateProps(props as unknown as Record<string, unknown>);
             if (!props.clientRect) return;
             popup?.[0]?.setProps({

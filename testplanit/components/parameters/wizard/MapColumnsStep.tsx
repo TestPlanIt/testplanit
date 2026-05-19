@@ -65,7 +65,7 @@ export function MapColumnsStep({
     const initial: Record<string, string> = {};
     csvHeaders.forEach((h) => {
       const match = parameters.find(
-        (p) => p.name.toLowerCase() === h.toLowerCase(),
+        (p) => p.name.toLowerCase() === h.toLowerCase()
       );
       initial[h] = match ? match.name : SKIP_VALUE;
     });
@@ -75,9 +75,7 @@ export function MapColumnsStep({
 
   const unmappedRequired = useMemo(() => {
     const mappedParams = new Set(Object.values(mapping));
-    return parameters.filter(
-      (p) => p.required && !mappedParams.has(p.name),
-    );
+    return parameters.filter((p) => p.required && !mappedParams.has(p.name));
   }, [mapping, parameters]);
 
   useEffect(() => {
@@ -85,10 +83,7 @@ export function MapColumnsStep({
   }, [unmappedRequired, onValidityChange]);
 
   return (
-    <div
-      className="p-6 space-y-4"
-      data-testid="dataset-import-wizard-step-map"
-    >
+    <div className="p-6 space-y-4" data-testid="dataset-import-wizard-step-map">
       <h3 className="text-base font-semibold">{t("importStep2Heading")}</h3>
 
       {unmappedRequired.length > 0 && (
@@ -117,14 +112,15 @@ export function MapColumnsStep({
         </TableHeader>
         <TableBody>
           {csvHeaders.map((h) => (
-            <TableRow key={h} data-testid={`dataset-import-wizard-map-row-${h}`}>
+            <TableRow
+              key={h}
+              data-testid={`dataset-import-wizard-map-row-${h}`}
+            >
               <TableCell className="font-mono">{h}</TableCell>
               <TableCell>
                 <Select
                   value={mapping[h] ?? SKIP_VALUE}
-                  onValueChange={(v) =>
-                    onMappingChange({ ...mapping, [h]: v })
-                  }
+                  onValueChange={(v) => onMappingChange({ ...mapping, [h]: v })}
                 >
                   <SelectTrigger
                     data-testid={`dataset-import-wizard-map-select-${h}`}

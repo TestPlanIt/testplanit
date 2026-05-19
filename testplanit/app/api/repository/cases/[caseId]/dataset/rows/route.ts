@@ -35,7 +35,7 @@ const rowDeleteBodySchema = z.object({
 
 async function resolveCaseAndDataset(
   db: any,
-  caseId: number,
+  caseId: number
 ): Promise<{
   testCase: { id: number; projectId: number } | null;
   dataset: { id: number; projectId: number } | null;
@@ -59,7 +59,7 @@ async function resolveCaseAndDataset(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ caseId: string }> },
+  { params }: { params: Promise<{ caseId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -84,7 +84,7 @@ export async function POST(
     if (!dataset) {
       return NextResponse.json(
         { error: "Dataset not attached to case" },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
@@ -110,7 +110,7 @@ export async function POST(
     if (err instanceof ZodError) {
       return NextResponse.json(
         { error: "Validation failed", details: err.issues },
-        { status: 400 },
+        { status: 400 }
       );
     }
     console.error("[dataset rows POST]", err);
@@ -120,7 +120,7 @@ export async function POST(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ caseId: string }> },
+  { params }: { params: Promise<{ caseId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -173,7 +173,7 @@ export async function PATCH(
     if (err instanceof ZodError) {
       return NextResponse.json(
         { error: "Validation failed", details: err.issues },
-        { status: 400 },
+        { status: 400 }
       );
     }
     console.error("[dataset rows PATCH]", err);
@@ -183,7 +183,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ caseId: string }> },
+  { params }: { params: Promise<{ caseId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -223,7 +223,7 @@ export async function DELETE(
     if (err instanceof ZodError) {
       return NextResponse.json(
         { error: "Validation failed", details: err.issues },
-        { status: 400 },
+        { status: 400 }
       );
     }
     console.error("[dataset rows DELETE]", err);

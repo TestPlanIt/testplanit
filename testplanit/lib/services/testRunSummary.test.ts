@@ -260,9 +260,7 @@ describe("getPerCaseIterationCounts", () => {
       const total = Math.floor(Math.random() * 100);
       const passed = Math.floor(Math.random() * (total + 1));
       const failed = Math.floor(Math.random() * (total - passed + 1));
-      const skipped = Math.floor(
-        Math.random() * (total - passed - failed + 1)
-      );
+      const skipped = Math.floor(Math.random() * (total - passed - failed + 1));
       return {
         id: 100 + i,
         passedIterations: passed,

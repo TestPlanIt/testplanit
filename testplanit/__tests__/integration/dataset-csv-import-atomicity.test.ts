@@ -56,7 +56,9 @@ const { mockDb, mockTx, sessionRef, txCalls } = vi.hoisted(() => {
   return {
     mockDb: db,
     mockTx: tx,
-    sessionRef: { current: { user: { id: "u-1", name: "U", email: "u@e.com" } } },
+    sessionRef: {
+      current: { user: { id: "u-1", name: "U", email: "u@e.com" } },
+    },
     txCalls: calls,
   };
 });
@@ -124,7 +126,7 @@ describe("CSV import atomicity", () => {
           { Username: "bob", Count: "not-a-number" }, // invalid INTEGER
         ],
       }),
-      { params: Promise.resolve({ caseId: "5" }) },
+      { params: Promise.resolve({ caseId: "5" }) }
     );
     expect(res.status).toBe(400);
     expect(mockDb.$transaction).not.toHaveBeenCalled();
@@ -140,7 +142,7 @@ describe("CSV import atomicity", () => {
           { Username: "bob", Count: "20" },
         ],
       }),
-      { params: Promise.resolve({ caseId: "5" }) },
+      { params: Promise.resolve({ caseId: "5" }) }
     );
     expect(res.status).toBe(200);
     expect(mockDb.$transaction).toHaveBeenCalledTimes(1);
@@ -164,7 +166,7 @@ describe("CSV import atomicity", () => {
           { Username: "dave", Count: "40" },
         ],
       }),
-      { params: Promise.resolve({ caseId: "5" }) },
+      { params: Promise.resolve({ caseId: "5" }) }
     );
     expect(res.status).toBe(200);
     expect(mockTx.dataSetRow.updateMany).not.toHaveBeenCalled();
@@ -184,7 +186,7 @@ describe("CSV import atomicity", () => {
         mapping: { Username: "username", Count: "count" },
         rows: [{ Username: bigString, Count: "1" }],
       }),
-      { params: Promise.resolve({ caseId: "5" }) },
+      { params: Promise.resolve({ caseId: "5" }) }
     );
     expect([400, 413]).toContain(res.status);
   });
@@ -196,7 +198,7 @@ describe("CSV import atomicity", () => {
         mapping: { Username: "username", Count: "count", Comment: "__skip__" },
         rows: [{ Username: "alice", Count: "10", Comment: "ignored" }],
       }),
-      { params: Promise.resolve({ caseId: "5" }) },
+      { params: Promise.resolve({ caseId: "5" }) }
     );
     expect(res.status).toBe(200);
     const created = mockTx.dataSetRow.create.mock.calls[0][0];
@@ -216,7 +218,7 @@ describe("CSV import atomicity", () => {
         mapping: { Username: "username" },
         rows: [{ Username: "alice", Count: "10" }],
       }),
-      { params: Promise.resolve({ caseId: "5" }) },
+      { params: Promise.resolve({ caseId: "5" }) }
     );
     expect(res.status).toBe(400);
     expect(mockDb.$transaction).not.toHaveBeenCalled();
@@ -226,7 +228,7 @@ describe("CSV import atomicity", () => {
     sessionRef.current = null as never;
     const res = await importCsvPost(
       jsonRequest({ mode: "append", mapping: {}, rows: [] }),
-      { params: Promise.resolve({ caseId: "5" }) },
+      { params: Promise.resolve({ caseId: "5" }) }
     );
     expect(res.status).toBe(401);
     sessionRef.current = { user: { id: "u-1", name: "U", email: "u@e.com" } };

@@ -1235,8 +1235,9 @@ const GeneratedTestCaseCard = memo(function GeneratedTestCaseCard({
                 data-testid="wizard-preview-warning"
               >
                 <AlertDescription>
-                  {caseWarnings.some((w) => w.message === "dataset_truncated") &&
-                    _t("generateTestCases.datasetTruncatedWarning")}
+                  {caseWarnings.some(
+                    (w) => w.message === "dataset_truncated"
+                  ) && _t("generateTestCases.datasetTruncatedWarning")}
                   {caseWarnings.some((w) => w.message === "dataset_capped") &&
                     " " + _t("generateTestCases.datasetCappedWarning")}
                   {caseWarnings.some((w) =>
@@ -2455,16 +2456,14 @@ export function GenerateTestCasesWizard({
             status: "Web Content",
           };
 
-          const {
-            testCases: finalPageCases,
-            warnings: pageWarnings,
-          } = parseAndValidateTestCases(
-            accumulated,
-            templateForParsing,
-            issueForParsing,
-            autoGenerateTags,
-            quantity
-          );
+          const { testCases: finalPageCases, warnings: pageWarnings } =
+            parseAndValidateTestCases(
+              accumulated,
+              templateForParsing,
+              issueForParsing,
+              autoGenerateTags,
+              quantity
+            );
           // INT-06: surface parser warnings (dataset_truncated, dataset_capped,
           // invalid_parameter:<name>) on the wizard so the preview can flag them.
           if (pageWarnings && pageWarnings.length > 0) {
@@ -4703,9 +4702,7 @@ export function GenerateTestCasesWizard({
                                 htmlFor="include-parameters"
                                 className="text-sm font-medium cursor-pointer"
                               >
-                                {t(
-                                  "generateTestCases.includeParametersLabel"
-                                )}
+                                {t("generateTestCases.includeParametersLabel")}
                               </Label>
                               <p className="text-xs text-muted-foreground">
                                 {t("generateTestCases.includeParametersHelp")}

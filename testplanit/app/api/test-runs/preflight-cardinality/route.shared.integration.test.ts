@@ -53,7 +53,7 @@ describeIntegration(
     async function withRollback<T>(
       prisma: any,
       body: (tx: any) => Promise<T>,
-      timeoutMs = 60_000,
+      timeoutMs = 60_000
     ): Promise<T> {
       let captured: T | undefined;
       let captureErr: unknown;
@@ -67,7 +67,7 @@ describeIntegration(
             }
             throw new Error(ROLLBACK_SENTINEL);
           },
-          { timeout: timeoutMs },
+          { timeout: timeoutMs }
         );
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -88,7 +88,7 @@ describeIntegration(
       tx: any,
       caseIds: number[],
       configCount: number,
-      projectId: number,
+      projectId: number
     ) {
       const cases = await tx.repositoryCases.findMany({
         where: {
@@ -148,13 +148,13 @@ describeIntegration(
             rowCount: ownerRowCount,
             assignedRowCount,
           };
-        }),
+        })
       );
 
       return computePreflight(
         inputs,
         configCount,
-        DEFAULT_CARDINALITY_THRESHOLDS,
+        DEFAULT_CARDINALITY_THRESHOLDS
       );
     }
 
@@ -163,7 +163,8 @@ describeIntegration(
      */
     async function seedProject(tx: any) {
       const creator = await tx.user.findFirst({ select: { id: true } });
-      if (!creator) throw new Error("No User row available — seed the DB first");
+      if (!creator)
+        throw new Error("No User row available — seed the DB first");
       const state = await tx.workflows.findFirst({ select: { id: true } });
       if (!state)
         throw new Error("No Workflows row available — seed the DB first");
@@ -203,8 +204,15 @@ describeIntegration(
 
     async function createCase(
       tx: any,
-      ctx: { projectId: number; repositoryId: number; folderId: number; templateId: number; stateId: number; creatorId: string },
-      opts: { hasParameters: boolean; nameSuffix: string },
+      ctx: {
+        projectId: number;
+        repositoryId: number;
+        folderId: number;
+        templateId: number;
+        stateId: number;
+        creatorId: string;
+      },
+      opts: { hasParameters: boolean; nameSuffix: string }
     ) {
       return tx.repositoryCases.create({
         data: {
@@ -225,7 +233,7 @@ describeIntegration(
       tx: any,
       ctx: { projectId: number; creatorId: string },
       caseId: number,
-      rowCount: number,
+      rowCount: number
     ) {
       const ds = await tx.dataSet.create({
         data: {
@@ -250,7 +258,7 @@ describeIntegration(
 
     async function createSharedDataset(
       tx: any,
-      ctx: { projectId: number; creatorId: string },
+      ctx: { projectId: number; creatorId: string }
     ) {
       return tx.dataSet.create({
         data: {
@@ -267,7 +275,7 @@ describeIntegration(
       sharedDataSetId: number,
       createdById: string,
       version: number,
-      rowCount: number,
+      rowCount: number
     ) {
       const rows = Array.from({ length: rowCount }, (_, i) => ({ col: i }));
       return tx.dataSetVersion.create({
@@ -288,7 +296,7 @@ describeIntegration(
       caseId: number,
       sharedDataSetId: number,
       pinnedVersionId: number | null,
-      createdById: string,
+      createdById: string
     ) {
       await tx.caseSharedDataSetAssignment.create({
         data: {
@@ -451,7 +459,13 @@ describeIntegration(
         });
         const sharedA = await createSharedDataset(tx, ctx);
         const va1 = await createVersion(tx, sharedA.id, ctx.creatorId, 1, 200);
-        await attachAssignment(tx, cPinned.id, sharedA.id, va1.id, ctx.creatorId);
+        await attachAssignment(
+          tx,
+          cPinned.id,
+          sharedA.id,
+          va1.id,
+          ctx.creatorId
+        );
         // 4) Shared follow-latest (current v3 = 600 rows) × 1 config → 600
         const cFollow = await createCase(tx, ctx, {
           hasParameters: true,
@@ -476,7 +490,7 @@ describeIntegration(
           tx,
           [cPlain.id, cOwner.id, cPinned.id, cFollow.id, cBoth.id],
           1,
-          ctx.projectId,
+          ctx.projectId
         );
         // 0 + 5 + 200 + 600 + 5 = 810. (The plan's table cited 815 and
         // listed an extra contributor we are not exercising in the same
@@ -485,9 +499,9 @@ describeIntegration(
         expect(r.total).toBe(810);
         expect(r.classification).toBe("async");
         // perCase entries: only the parameterized cases are reported.
-        expect(r.perCase.map((p) => p.iterations).sort((a, b) => b - a)).toEqual(
-          [600, 200, 5, 5],
-        );
+        expect(
+          r.perCase.map((p) => p.iterations).sort((a, b) => b - a)
+        ).toEqual([600, 200, 5, 5]);
       });
     });
 
@@ -518,5 +532,5 @@ describeIntegration(
         expect(r.classification).toBe("hardRefuse");
       });
     });
-  },
+  }
 );

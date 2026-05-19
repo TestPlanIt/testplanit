@@ -319,7 +319,9 @@ describe("CreateIssueDialog", () => {
               marks: [
                 {
                   type: "link",
-                  attrs: { href: "/projects/runs/7/42?iteration=3&selectedCase=77" },
+                  attrs: {
+                    href: "/projects/runs/7/42?iteration=3&selectedCase=77",
+                  },
                 },
               ],
             },

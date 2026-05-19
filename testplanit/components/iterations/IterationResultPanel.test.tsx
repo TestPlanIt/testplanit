@@ -1,7 +1,4 @@
-import {
-  QueryClient,
-  QueryClientProvider,
-} from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -103,14 +100,16 @@ function renderPanel(ui: React.ReactElement) {
       mutations: { retry: false },
     },
   });
-  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+  return render(
+    <QueryClientProvider client={client}>{ui}</QueryClientProvider>
+  );
 }
 
 // ── Fixtures ──────────────────────────────────────────────────────────
 
 function mkIteration(
   status: IterationStatusDTO | null,
-  overrides: Partial<IterationDTO> = {},
+  overrides: Partial<IterationDTO> = {}
 ): IterationDTO {
   return {
     id: 777,
@@ -158,13 +157,10 @@ describe("IterationResultPanel — issue-linking lives in Add Result, not here",
     "does NOT render a Create-linked-Issue button regardless of iteration status (%s)",
     (_label, status) => {
       renderPanel(
-        <IterationResultPanel
-          {...baseProps}
-          iteration={mkIteration(status)}
-        />,
+        <IterationResultPanel {...baseProps} iteration={mkIteration(status)} />
       );
       expect(screen.queryByTestId("create-linked-issue-button")).toBeNull();
-    },
+    }
   );
 
   it("does NOT mount SearchIssuesDialog from this panel", () => {
@@ -172,7 +168,7 @@ describe("IterationResultPanel — issue-linking lives in Add Result, not here",
       <IterationResultPanel
         {...baseProps}
         iteration={mkIteration(failureStatus)}
-      />,
+      />
     );
     expect(screen.queryByTestId("search-issues-dialog")).toBeNull();
   });

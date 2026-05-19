@@ -257,9 +257,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                       <TooltipTrigger asChild>
                         <Flame className="h-4 w-4 shrink-0 text-orange-500 fill-orange-500 animate-pulse" />
                       </TooltipTrigger>
-                      <TooltipContent>
-                        {tCommon("labels.new")}
-                      </TooltipContent>
+                      <TooltipContent>{tCommon("labels.new")}</TooltipContent>
                     </Tooltip>
                   )}
                   {isAutomatedRun ? (

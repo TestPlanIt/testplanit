@@ -3,18 +3,17 @@ import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next-intl", () => ({
-  useTranslations: (namespace?: string) => (
-    key: string,
-    _params?: Record<string, unknown>
-  ) => {
-    const parameters: Record<string, string> = {
-      toolbarInsertParameter: "Insert parameter",
-      toolbarInsertParameterPlaceholder: "Search parameters...",
-    };
-    const common: Record<string, string> = { cancel: "Cancel" };
-    const dict = namespace === "common" ? common : parameters;
-    return dict[key] ?? key;
-  },
+  useTranslations:
+    (namespace?: string) =>
+    (key: string, _params?: Record<string, unknown>) => {
+      const parameters: Record<string, string> = {
+        toolbarInsertParameter: "Insert parameter",
+        toolbarInsertParameterPlaceholder: "Search parameters...",
+      };
+      const common: Record<string, string> = { cancel: "Cancel" };
+      const dict = namespace === "common" ? common : parameters;
+      return dict[key] ?? key;
+    },
 }));
 
 // Capture the props AsyncCombobox is invoked with so we can drive its
@@ -97,8 +96,9 @@ describe("InsertParameterToolbarButton", () => {
       />
     );
 
-    const onValueChange = comboboxPropsRef.current
-      ?.onValueChange as (p: ParameterChipMeta | null) => void;
+    const onValueChange = comboboxPropsRef.current?.onValueChange as (
+      p: ParameterChipMeta | null
+    ) => void;
     expect(typeof onValueChange).toBe("function");
 
     onValueChange(PARAMS[1]);

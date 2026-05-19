@@ -349,7 +349,10 @@ describeIntegration("submit-result iteration branch (live DB)", () => {
           .filter(
             (e: any) => e && typeof e === "object" && typeof e.name === "string"
           )
-          .map((e: any) => ({ name: String(e.name), sensitive: e.sensitive === true }))
+          .map((e: any) => ({
+            name: String(e.name),
+            sensitive: e.sensitive === true,
+          }))
       : [];
     const iterValues = (iterBefore?.valuesJson ?? {}) as Record<
       string,

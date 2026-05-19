@@ -17,9 +17,7 @@ test.describe("Parameters - rename flow @parameters", () => {
     api,
     page,
   }) => {
-    const projectId = await api.createProject(
-      `E2E Param Rename ${Date.now()}`
-    );
+    const projectId = await api.createProject(`E2E Param Rename ${Date.now()}`);
     const folderId = await api.createFolder(projectId, "Rename");
     const caseId = await api.createTestCase(
       projectId,

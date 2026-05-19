@@ -395,9 +395,7 @@ describe("JiraAdapter", () => {
       const createCallIndex = mockFetch.mock.calls.findIndex(
         (call: any) => call[1]?.method === "POST"
       );
-      const body = JSON.parse(
-        mockFetch.mock.calls[createCallIndex][1].body
-      );
+      const body = JSON.parse(mockFetch.mock.calls[createCallIndex][1].body);
 
       const adfTable = body.fields.description.content.find(
         (n: any) => n.type === "table"
@@ -413,9 +411,7 @@ describe("JiraAdapter", () => {
       expect(adfTable.content[1].content[0].type).toBe("tableCell");
       // Cell content must remain a paragraph (Atlassian rejects raw
       // text in cells; the schema is row → cell → paragraph → text).
-      expect(adfTable.content[1].content[0].content[0].type).toBe(
-        "paragraph"
-      );
+      expect(adfTable.content[1].content[0].content[0].type).toBe("paragraph");
     });
 
     it("should handle HTML description", async () => {

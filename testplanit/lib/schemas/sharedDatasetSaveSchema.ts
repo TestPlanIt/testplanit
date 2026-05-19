@@ -38,5 +38,7 @@ export const sharedDatasetSaveSchema = z.object({
 });
 
 export type SharedDatasetSavePayload = z.infer<typeof sharedDatasetSaveSchema>;
-export type SharedDatasetParameter = z.infer<typeof sharedDatasetParameterSchema>;
+export type SharedDatasetParameter = z.infer<
+  typeof sharedDatasetParameterSchema
+>;
 export type SharedDatasetRow = z.infer<typeof sharedDatasetRowSchema>;

@@ -73,7 +73,13 @@ function cellSchemaFor(p: ParameterShape): z.ZodTypeAny {
       if (literals.length === 1) {
         return literals[0];
       }
-      return z.union(literals as unknown as readonly [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]]);
+      return z.union(
+        literals as unknown as readonly [
+          z.ZodTypeAny,
+          z.ZodTypeAny,
+          ...z.ZodTypeAny[],
+        ]
+      );
     }
     default:
       return z.unknown();
@@ -81,7 +87,10 @@ function cellSchemaFor(p: ParameterShape): z.ZodTypeAny {
 }
 
 function inferAllowedValues(p: ParameterShape): string[] {
-  if (Array.isArray(p.lookupAllowedValues) && p.lookupAllowedValues.length > 0) {
+  if (
+    Array.isArray(p.lookupAllowedValues) &&
+    p.lookupAllowedValues.length > 0
+  ) {
     return p.lookupAllowedValues.map(String);
   }
   if (Array.isArray(p.allowedValuesJson)) {
@@ -101,7 +110,7 @@ function inferAllowedValues(p: ParameterShape): string[] {
  *   - The dataset grid (Plan 02-04) for client-side per-cell coercion.
  */
 export function buildRowSchemaFromParameters(
-  parameters: ParameterShape[],
+  parameters: ParameterShape[]
 ): z.ZodType {
   const shape: Record<string, z.ZodTypeAny> = {};
   for (const p of parameters) {

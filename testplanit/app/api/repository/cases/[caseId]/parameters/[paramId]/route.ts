@@ -20,7 +20,7 @@ import { authOptions } from "~/server/auth";
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ caseId: string; paramId: string }> },
+  { params }: { params: Promise<{ caseId: string; paramId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -53,7 +53,7 @@ export async function PATCH(
     if (err instanceof ZodError) {
       return NextResponse.json(
         { error: "Validation failed", details: err.issues },
-        { status: 400 },
+        { status: 400 }
       );
     }
     console.error("[parameters PATCH]", err);
@@ -70,7 +70,7 @@ export async function PATCH(
  */
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: Promise<{ caseId: string; paramId: string }> },
+  { params }: { params: Promise<{ caseId: string; paramId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);

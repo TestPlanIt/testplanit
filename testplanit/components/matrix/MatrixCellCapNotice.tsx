@@ -31,7 +31,7 @@ export function MatrixCellCapNotice({
   const { caseCount, configCount, perCaseMaxIterations } = error.axisCounts;
   const maxIters = Math.max(
     ...perCaseMaxIterations.map((p) => p.maxIterations),
-    1,
+    1
   );
 
   const suggestion =

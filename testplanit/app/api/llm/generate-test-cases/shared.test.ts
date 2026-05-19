@@ -445,9 +445,7 @@ describe("buildSystemPrompt — INT-06 includeParameters extension", () => {
     // Sanity: every occurrence of `allowedValues` should be followed by
     // `Json` (the canonical field name) or be inside the quoted prohibition
     // phrase "NOT 'allowedValues'" / "NOT \"allowedValues\"".
-    const bareMatches = Array.from(
-      prompt.matchAll(/allowedValues(?!Json)/g)
-    );
+    const bareMatches = Array.from(prompt.matchAll(/allowedValues(?!Json)/g));
     for (const m of bareMatches) {
       const surrounding = prompt.substring(
         Math.max(0, (m.index ?? 0) - 15),

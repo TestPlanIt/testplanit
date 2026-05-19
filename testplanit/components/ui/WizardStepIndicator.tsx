@@ -37,7 +37,8 @@ export function WizardStepIndicator({
                 className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
                   isComplete && "bg-primary text-primary-foreground",
-                  isActive && "bg-primary/10 text-primary border-2 border-primary",
+                  isActive &&
+                    "bg-primary/10 text-primary border-2 border-primary",
                   !isComplete && !isActive && "bg-muted text-muted-foreground"
                 )}
                 data-testid={`wizard-step-${step}`}

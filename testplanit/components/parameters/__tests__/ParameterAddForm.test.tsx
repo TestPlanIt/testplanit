@@ -5,18 +5,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Per-file next-intl mock returning concrete English copy.
 vi.mock("next-intl", () => ({
-  useTranslations: () => (
-    key: string,
-    params?: Record<string, unknown>
-  ) => {
+  useTranslations: () => (key: string, params?: Record<string, unknown>) => {
     const dict: Record<string, string> = {
       formName: "Name",
       formType: "Type",
       formDefault: "Default",
       formOrder: "Order",
       formRequired: "Required",
-      formRequiredHelp:
-        "Iterations missing this value will fail validation.",
+      formRequiredHelp: "Iterations missing this value will fail validation.",
       formSensitive: "Sensitive",
       formSensitiveHelp:
         "Hide value in audit logs and from users without read-sensitive permission.",
@@ -61,9 +57,7 @@ const wrap = (children: React.ReactNode) => {
   const qc = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  return (
-    <QueryClientProvider client={qc}>{children}</QueryClientProvider>
-  );
+  return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
 };
 
 describe("ParameterAddForm", () => {
@@ -100,7 +94,11 @@ describe("ParameterAddForm", () => {
       status: 200,
       json: async () => ({
         success: true,
-        parameter: { id: 99, name: "username", testCase: { currentVersion: 4 } },
+        parameter: {
+          id: 99,
+          name: "username",
+          testCase: { currentVersion: 4 },
+        },
       }),
     });
     global.fetch = fetchMock as unknown as typeof fetch;

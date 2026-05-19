@@ -22,7 +22,9 @@ const { mockDb, txMock, sessionRef } = vi.hoisted(() => {
   return {
     mockDb: db,
     txMock: tx,
-    sessionRef: { current: { user: { id: "u-1", name: "U", email: "u@e.com" } } },
+    sessionRef: {
+      current: { user: { id: "u-1", name: "U", email: "u@e.com" } },
+    },
   };
 });
 
@@ -43,7 +45,8 @@ const helperSpies = vi.hoisted(() => ({
 vi.mock("~/lib/services/parameterMutations", () => ({
   createParameterInTransaction: helperSpies.createParameterInTransaction,
   updateParameterInTransaction: helperSpies.updateParameterInTransaction,
-  softDeleteParameterInTransaction: helperSpies.softDeleteParameterInTransaction,
+  softDeleteParameterInTransaction:
+    helperSpies.softDeleteParameterInTransaction,
 }));
 
 import { POST as parametersPost } from "~/app/api/repository/cases/[caseId]/parameters/route";
@@ -67,12 +70,12 @@ describe("PARAM-06 — every parameter mutation routes through helpers that bump
   it("POST routes through createParameterInTransaction", async () => {
     const res = await parametersPost(
       jsonRequest({ name: "x", type: "STRING" }),
-      { params: Promise.resolve({ caseId: "5" }) },
+      { params: Promise.resolve({ caseId: "5" }) }
     );
     expect(res.status).toBe(200);
     expect(helperSpies.createParameterInTransaction).toHaveBeenCalledTimes(1);
     expect(helperSpies.createParameterInTransaction.mock.calls[0][0]).toBe(
-      txMock,
+      txMock
     );
   });
 
@@ -83,7 +86,7 @@ describe("PARAM-06 — every parameter mutation routes through helpers that bump
     expect(res.status).toBe(200);
     expect(helperSpies.updateParameterInTransaction).toHaveBeenCalledTimes(1);
     expect(helperSpies.updateParameterInTransaction.mock.calls[0][0]).toBe(
-      txMock,
+      txMock
     );
   });
 
@@ -93,10 +96,10 @@ describe("PARAM-06 — every parameter mutation routes through helpers that bump
     });
     expect(res.status).toBe(200);
     expect(helperSpies.softDeleteParameterInTransaction).toHaveBeenCalledTimes(
-      1,
+      1
     );
     expect(helperSpies.softDeleteParameterInTransaction.mock.calls[0][0]).toBe(
-      txMock,
+      txMock
     );
   });
 });

@@ -101,9 +101,7 @@ describe("buildIterationIssueBody", () => {
       client,
     });
 
-    expect(result.title).toBe(
-      "Iteration 3 (CI-extended) issue: Login flow"
-    );
+    expect(result.title).toBe("Iteration 3 (CI-extended) issue: Login flow");
   });
 
   it("description is a TipTap doc with prose lead + parameter table + deep link", async () => {
@@ -147,8 +145,8 @@ describe("buildIterationIssueBody", () => {
     const table = doc.content.find((n: any) => n.type === "table");
     // Pluck text from each row's cells
     const rowText: string[][] = (table.content as any[]).map((row: any) =>
-      (row.content as any[]).map((cell: any) =>
-        (cell.content[0]?.content?.[0]?.text as string) ?? ""
+      (row.content as any[]).map(
+        (cell: any) => (cell.content[0]?.content?.[0]?.text as string) ?? ""
       )
     );
     // First row is header
@@ -178,8 +176,8 @@ describe("buildIterationIssueBody", () => {
     const doc = result.description as any;
     const table = doc.content.find((n: any) => n.type === "table");
     const rowText: string[][] = (table.content as any[]).map((row: any) =>
-      (row.content as any[]).map((cell: any) =>
-        (cell.content[0]?.content?.[0]?.text as string) ?? ""
+      (row.content as any[]).map(
+        (cell: any) => (cell.content[0]?.content?.[0]?.text as string) ?? ""
       )
     );
     const flat = rowText.slice(1).flat();
@@ -308,9 +306,7 @@ describe("buildIterationIssueBody", () => {
     const lead = doc.content[0];
     expect(lead.type).toBe("paragraph");
     // Concatenate all text nodes
-    const leadText = lead.content
-      .map((n: any) => n.text ?? "")
-      .join("");
+    const leadText = lead.content.map((n: any) => n.text ?? "").join("");
     expect(leadText).toContain("Iteration 3 of 5 on Bad password.");
   });
 
@@ -328,9 +324,7 @@ describe("buildIterationIssueBody", () => {
 
     const doc = result.description as any;
     const lead = doc.content[0];
-    const leadText = lead.content
-      .map((n: any) => n.text ?? "")
-      .join("");
+    const leadText = lead.content.map((n: any) => n.text ?? "").join("");
     expect(leadText).toContain("Row 3");
   });
 
@@ -414,9 +408,8 @@ describe("buildIterationIssueBody", () => {
       client,
     });
 
-    const findFirstFn = (client.testRunCaseIteration as any).findFirst as ReturnType<
-      typeof vi.fn
-    >;
+    const findFirstFn = (client.testRunCaseIteration as any)
+      .findFirst as ReturnType<typeof vi.fn>;
     expect(findFirstFn).toHaveBeenCalledTimes(1);
     const call = findFirstFn.mock.calls[0]![0];
     expect(call.where).toMatchObject({ id: 999, isDeleted: false });

@@ -83,9 +83,7 @@ describe("ParameterRow", () => {
         />
       )
     );
-    expect(
-      screen.getByTestId("parameter-row-edit-button")
-    ).toBeInTheDocument();
+    expect(screen.getByTestId("parameter-row-edit-button")).toBeInTheDocument();
     expect(
       screen.getByTestId("parameter-row-delete-button")
     ).toBeInTheDocument();

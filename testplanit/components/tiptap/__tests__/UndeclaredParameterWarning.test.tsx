@@ -3,22 +3,21 @@ import type { JSONContent } from "@tiptap/core";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next-intl", () => ({
-  useTranslations: (_namespace?: string) => (
-    key: string,
-    params?: Record<string, unknown>
-  ) => {
-    const dict: Record<string, string> = {
-      editorUndeclaredWarning:
-        "Undeclared references: {names}. Add them via Configure parameters to enable iteration substitution.",
-    };
-    let value = dict[key] ?? key;
-    if (params) {
-      Object.entries(params).forEach(([k, v]) => {
-        value = value.replace(`{${k}}`, String(v));
-      });
-    }
-    return value;
-  },
+  useTranslations:
+    (_namespace?: string) =>
+    (key: string, params?: Record<string, unknown>) => {
+      const dict: Record<string, string> = {
+        editorUndeclaredWarning:
+          "Undeclared references: {names}. Add them via Configure parameters to enable iteration substitution.",
+      };
+      let value = dict[key] ?? key;
+      if (params) {
+        Object.entries(params).forEach(([k, v]) => {
+          value = value.replace(`{${k}}`, String(v));
+        });
+      }
+      return value;
+    },
 }));
 
 import { UndeclaredParameterWarning } from "@/components/tiptap/UndeclaredParameterWarning";
@@ -108,9 +107,7 @@ describe("UndeclaredParameterWarning", () => {
         },
       ],
     };
-    render(
-      <UndeclaredParameterWarning editorJson={doc} declaredNames={[]} />
-    );
+    render(<UndeclaredParameterWarning editorJson={doc} declaredNames={[]} />);
     const ribbon = screen.getByTestId("tiptap-undeclared-parameter-warning");
     // Both labels appear, but @foo only once (deduped).
     const fooMatches = (ribbon.textContent?.match(/@foo/g) ?? []).length;

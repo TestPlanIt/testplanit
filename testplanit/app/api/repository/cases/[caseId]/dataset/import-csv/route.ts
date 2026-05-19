@@ -40,7 +40,7 @@ const MAX_BODY_BYTES = 5 * 1024 * 1024;
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ caseId: string }> },
+  { params }: { params: Promise<{ caseId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -62,7 +62,7 @@ export async function POST(
     if (serialized.length > MAX_BODY_BYTES) {
       return NextResponse.json(
         { error: "Payload too large (5 MB cap)" },
-        { status: 413 },
+        { status: 413 }
       );
     }
 
@@ -91,7 +91,7 @@ export async function POST(
 
     // Reject up front if any required parameter is missing from the mapping.
     const mappedTargets = new Set(
-      Object.values(data.mapping).filter((v) => v !== "__skip__"),
+      Object.values(data.mapping).filter((v) => v !== "__skip__")
     );
     const missingRequired = parameters
       .filter((p: { name: string; required: boolean }) => p.required)
@@ -103,7 +103,7 @@ export async function POST(
           error: "Required parameters missing from mapping",
           missing: missingRequired,
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -152,8 +152,8 @@ export async function POST(
             required: p.required,
             allowedValuesJson: p.allowedValuesJson,
           };
-        },
-      ),
+        }
+      )
     );
 
     const rowSchema = buildRowSchemaFromParameters(enrichedParams);
@@ -179,7 +179,7 @@ export async function POST(
     if (errors.length > 0) {
       return NextResponse.json(
         { error: "Validation failed", errors },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -244,7 +244,7 @@ export async function POST(
     if (err instanceof ZodError) {
       return NextResponse.json(
         { error: "Validation failed", details: err.issues },
-        { status: 400 },
+        { status: 400 }
       );
     }
     console.error("[dataset import-csv POST]", err);

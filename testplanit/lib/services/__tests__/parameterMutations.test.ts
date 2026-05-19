@@ -44,16 +44,21 @@ function buildTx(opts: BuildTxOpts = {}) {
         calls.push("testCaseParameter.create");
         return opts.createReturn ?? { id: 1, ...args.data };
       }),
-      update: vi.fn(async (args: { where: { id: number }; data: Record<string, unknown> }) => {
-        calls.push("testCaseParameter.update");
-        return (
-          opts.updateReturn ?? {
-            id: args.where.id,
-            ...(opts.existingParam ?? {}),
-            ...args.data,
-          }
-        );
-      }),
+      update: vi.fn(
+        async (args: {
+          where: { id: number };
+          data: Record<string, unknown>;
+        }) => {
+          calls.push("testCaseParameter.update");
+          return (
+            opts.updateReturn ?? {
+              id: args.where.id,
+              ...(opts.existingParam ?? {}),
+              ...args.data,
+            }
+          );
+        }
+      ),
       findFirst: vi.fn(async () => opts.existingParam ?? null),
     },
     repositoryCases: {
@@ -128,13 +133,7 @@ describe("updateParameterInTransaction", () => {
       existingParam: { id: 7, name: "username", testCaseId: 42 },
     });
 
-    await updateParameterInTransaction(
-      tx,
-      42,
-      7,
-      { sensitive: true },
-      session
-    );
+    await updateParameterInTransaction(tx, 42, 7, { sensitive: true }, session);
 
     expect(tx.testCaseParameter.update).toHaveBeenCalledTimes(1);
     expect(rewriteParameterReferences).not.toHaveBeenCalled();
@@ -147,13 +146,7 @@ describe("updateParameterInTransaction", () => {
       existingParam: { id: 7, name: "old", testCaseId: 42 },
     });
 
-    await updateParameterInTransaction(
-      tx,
-      42,
-      7,
-      { name: "new" },
-      session
-    );
+    await updateParameterInTransaction(tx, 42, 7, { name: "new" }, session);
 
     expect(rewriteParameterReferences).toHaveBeenCalledWith(
       tx,

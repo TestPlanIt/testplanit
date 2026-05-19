@@ -186,10 +186,7 @@ test.describe("INT-06: LLM parameter + dataset generation", () => {
       });
     };
 
-    await page.route(
-      "**/api/llm/generate-test-cases",
-      fulfillTestCases
-    );
+    await page.route("**/api/llm/generate-test-cases", fulfillTestCases);
     await page.route(
       "**/api/llm/generate-test-cases/outline",
       async (route) => {
@@ -202,14 +199,8 @@ test.describe("INT-06: LLM parameter + dataset generation", () => {
         });
       }
     );
-    await page.route(
-      "**/api/llm/generate-test-cases/expand",
-      fulfillTestCases
-    );
-    await page.route(
-      "**/api/llm/generate-test-cases/stream",
-      fulfillTestCases
-    );
+    await page.route("**/api/llm/generate-test-cases/expand", fulfillTestCases);
+    await page.route("**/api/llm/generate-test-cases/stream", fulfillTestCases);
 
     await page.goto(`/en-US/projects/repository/${projectId}`);
     await page.waitForLoadState("networkidle");
@@ -262,16 +253,13 @@ test.describe("INT-06: LLM parameter + dataset generation", () => {
     const folderId = await api.createFolder(projectId, `Folder ${ts}`);
     await api.createTestCase(projectId, folderId, `Existing Case ${ts}`);
 
-    await page.route(
-      "**/api/llm/generate-test-cases",
-      async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify(TRUNCATED_DATASET_RESPONSE),
-        });
-      }
-    );
+    await page.route("**/api/llm/generate-test-cases", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(TRUNCATED_DATASET_RESPONSE),
+      });
+    });
 
     await page.goto(`/en-US/projects/repository/${projectId}`);
     await page.waitForLoadState("networkidle");

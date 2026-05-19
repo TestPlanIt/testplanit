@@ -142,8 +142,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
     () => ({
       clickToReveal: tParams("chipClickToReveal"),
       copyValue: tParams("chipCopyValue"),
-      copyAriaLabel: (label: string) =>
-        tParams("chipCopyAriaLabel", { label }),
+      copyAriaLabel: (label: string) => tParams("chipCopyAriaLabel", { label }),
       copiedToast: (label: string) => tParams("chipCopiedToast", { label }),
       copyFailedToast: (label: string) =>
         tParams("chipCopyFailedToast", { label }),
@@ -250,121 +249,124 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
     return content;
   };
 
-  const editor = useEditor({
-    immediatelyRender: false,
-    extensions: [
-      StarterKit.configure({
-        heading: {
-          levels: [1, 2, 3],
-        },
-        bulletList: {
-          HTMLAttributes: {
-            class: "list-disc list-outside pl-5",
+  const editor = useEditor(
+    {
+      immediatelyRender: false,
+      extensions: [
+        StarterKit.configure({
+          heading: {
+            levels: [1, 2, 3],
           },
-        },
-        orderedList: {
-          HTMLAttributes: {
-            class: "list-decimal list-outside pl-5",
+          bulletList: {
+            HTMLAttributes: {
+              class: "list-disc list-outside pl-5",
+            },
           },
-        },
-        listItem: {
-          HTMLAttributes: {
-            class: "list-item",
+          orderedList: {
+            HTMLAttributes: {
+              class: "list-decimal list-outside pl-5",
+            },
           },
-        },
-        link: false,
-        underline: false,
-      }),
-      Underline,
-      Link.configure({ openOnClick: false }),
-      ImageWithResize.configure({
-        inline: true,
-        allowBase64: true,
-        HTMLAttributes: {
-          class: "tiptap-image",
-        },
-      }),
-      Video,
-      FileHandler.configure({
-        allowedMimeTypes: [
-          "image/png",
-          "image/jpeg",
-          "image/gif",
-          "video/mp4",
-          "video/webm",
-          "video/ogg",
-        ],
-        onDrop: (editor, files, pos) => handleFile(editor, files, pos),
-        onPaste: (editor, files) => handleFile(editor, files),
-      }),
-      Color,
-      TextStyle,
-      Emoji.configure({
-        emojis: gitHubEmojis,
-        enableEmoticons: true,
-      }),
-      Focus.configure({
-        className: "ring-2 ring-offset-2 rounded-md ring-primary",
-        mode: "shallowest",
-      }),
-      Placeholder.configure({
-        placeholder,
-        emptyEditorClass:
-          "before:content-[attr(data-placeholder)] before:text-muted-foreground before:float-left before:pointer-events-none",
-      }),
-      Markdown,
-      Table,
-      TableRow,
-      TableCell,
-      TableHeader,
-      ...(parameters && parameters.length > 0
-        ? [createParameterMentionExtension(parameters, chipMessages)]
-        : []),
-    ],
-    content: validateContent(content),
-    onUpdate: ({ editor }) => {
-      if (onUpdate && editor) {
-        try {
-          const json = editor.getJSON();
-          onUpdate(json);
-        } catch (error) {
-          console.warn(
-            "Error in editor.getJSON, using emptyEditorContent as fallback",
-            error
-          );
-          onUpdate(emptyEditorContent);
-        }
-      }
-    },
-    editorProps: {
-      attributes: {
-        class:
-          "prose prose-xs sm:prose-sm lg:prose max-w-none w-full focus:outline-none p-1",
-        style: "width: 100%; max-width: none;",
-      },
-      handlePaste: (view, event) => {
-        const text = event.clipboardData?.getData("text/plain");
-        if (!text || !isLikelyMarkdown(text)) {
-          return false;
-        }
-        try {
-          const json = convertMarkdownToTipTapJSON(text);
-          const doc = view.state.schema.nodeFromJSON(json);
-          const slice = new Slice(doc.content, 0, 0);
-          const tr = view.state.tr.replaceSelection(slice);
-          view.dispatch(tr);
-          return true;
-        } catch (error) {
-          console.warn("Failed to parse pasted markdown:", error);
-          return false;
+          listItem: {
+            HTMLAttributes: {
+              class: "list-item",
+            },
+          },
+          link: false,
+          underline: false,
+        }),
+        Underline,
+        Link.configure({ openOnClick: false }),
+        ImageWithResize.configure({
+          inline: true,
+          allowBase64: true,
+          HTMLAttributes: {
+            class: "tiptap-image",
+          },
+        }),
+        Video,
+        FileHandler.configure({
+          allowedMimeTypes: [
+            "image/png",
+            "image/jpeg",
+            "image/gif",
+            "video/mp4",
+            "video/webm",
+            "video/ogg",
+          ],
+          onDrop: (editor, files, pos) => handleFile(editor, files, pos),
+          onPaste: (editor, files) => handleFile(editor, files),
+        }),
+        Color,
+        TextStyle,
+        Emoji.configure({
+          emojis: gitHubEmojis,
+          enableEmoticons: true,
+        }),
+        Focus.configure({
+          className: "ring-2 ring-offset-2 rounded-md ring-primary",
+          mode: "shallowest",
+        }),
+        Placeholder.configure({
+          placeholder,
+          emptyEditorClass:
+            "before:content-[attr(data-placeholder)] before:text-muted-foreground before:float-left before:pointer-events-none",
+        }),
+        Markdown,
+        Table,
+        TableRow,
+        TableCell,
+        TableHeader,
+        ...(parameters && parameters.length > 0
+          ? [createParameterMentionExtension(parameters, chipMessages)]
+          : []),
+      ],
+      content: validateContent(content),
+      onUpdate: ({ editor }) => {
+        if (onUpdate && editor) {
+          try {
+            const json = editor.getJSON();
+            onUpdate(json);
+          } catch (error) {
+            console.warn(
+              "Error in editor.getJSON, using emptyEditorContent as fallback",
+              error
+            );
+            onUpdate(emptyEditorContent);
+          }
         }
       },
+      editorProps: {
+        attributes: {
+          class:
+            "prose prose-xs sm:prose-sm lg:prose max-w-none w-full focus:outline-none p-1",
+          style: "width: 100%; max-width: none;",
+        },
+        handlePaste: (view, event) => {
+          const text = event.clipboardData?.getData("text/plain");
+          if (!text || !isLikelyMarkdown(text)) {
+            return false;
+          }
+          try {
+            const json = convertMarkdownToTipTapJSON(text);
+            const doc = view.state.schema.nodeFromJSON(json);
+            const slice = new Slice(doc.content, 0, 0);
+            const tr = view.state.tr.replaceSelection(slice);
+            view.dispatch(tr);
+            return true;
+          } catch (error) {
+            console.warn("Failed to parse pasted markdown:", error);
+            return false;
+          }
+        },
+      },
+      editable: !readOnly,
+      // chipMessages intentionally omitted from deps: useTranslations may return
+      // a new function ref on every render, which would cause an infinite editor
+      // re-mount loop. Locale changes already remount the layout above.
     },
-    editable: !readOnly,
-    // chipMessages intentionally omitted from deps: useTranslations may return
-    // a new function ref on every render, which would cause an infinite editor
-    // re-mount loop. Locale changes already remount the layout above.
-  }, [parameters]);
+    [parameters]
+  );
 
   useEffect(() => {
     if (editor) {

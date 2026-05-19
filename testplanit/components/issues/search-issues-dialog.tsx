@@ -599,11 +599,14 @@ export function SearchIssuesDialog({
                           // opens with an empty body in this case.
                           console.error(
                             "Failed to load iteration issue body",
-                            await res.text(),
+                            await res.text()
                           );
                         }
                       } catch (err) {
-                        console.error("Failed to load iteration issue body", err);
+                        console.error(
+                          "Failed to load iteration issue body",
+                          err
+                        );
                       } finally {
                         setIsLoadingPrefill(false);
                       }

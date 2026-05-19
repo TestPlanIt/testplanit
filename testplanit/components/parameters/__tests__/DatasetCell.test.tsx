@@ -29,7 +29,9 @@ vi.mock("@/components/ui/tooltip", () => ({
   TooltipContent: ({ children }: { children: React.ReactNode }) => (
     <span data-testid="tooltip-content">{children}</span>
   ),
-  TooltipProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  TooltipProvider: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
 }));
 
 import { DatasetCell } from "@/components/parameters/DatasetCell";
@@ -47,7 +49,9 @@ const _baseHandlers = {
 
 import type { DatasetCellParameter } from "@/components/parameters/DatasetCell";
 
-const mkParam = (overrides: Partial<DatasetCellParameter> = {}): DatasetCellParameter => ({
+const mkParam = (
+  overrides: Partial<DatasetCellParameter> = {}
+): DatasetCellParameter => ({
   name: "username",
   type: "STRING",
   sensitive: false,
@@ -74,7 +78,9 @@ describe("DatasetCell — read mode", () => {
         onMoveDown={noop}
       />
     );
-    const input = screen.getByTestId("dataset-cell-display") as HTMLInputElement;
+    const input = screen.getByTestId(
+      "dataset-cell-display"
+    ) as HTMLInputElement;
     expect(input.tagName).toBe("INPUT");
     expect(input.readOnly).toBe(true);
     expect(input.value).toBe("alice");
@@ -98,7 +104,9 @@ describe("DatasetCell — read mode", () => {
         onMoveDown={noop}
       />
     );
-    const input = screen.getByTestId("dataset-cell-display") as HTMLInputElement;
+    const input = screen.getByTestId(
+      "dataset-cell-display"
+    ) as HTMLInputElement;
     expect(input.className).toContain("font-mono");
     expect(input.className).toContain("tabular-nums");
     expect(input.className).toContain("text-right");
@@ -206,7 +214,9 @@ describe("DatasetCell — edit mode", () => {
         onMoveDown={noop}
       />
     );
-    const input = screen.getByTestId("dataset-cell-input-string") as HTMLInputElement;
+    const input = screen.getByTestId(
+      "dataset-cell-input-string"
+    ) as HTMLInputElement;
     expect(input.value).toBe("hello");
   });
 
@@ -228,7 +238,9 @@ describe("DatasetCell — edit mode", () => {
         onMoveDown={noop}
       />
     );
-    const input = screen.getByTestId("dataset-cell-input-integer") as HTMLInputElement;
+    const input = screen.getByTestId(
+      "dataset-cell-input-integer"
+    ) as HTMLInputElement;
     expect(input.type).toBe("number");
     expect(input.inputMode).toBe("numeric");
     expect(input.value).toBe("123");
@@ -416,7 +428,9 @@ describe("DatasetCell — edit mode", () => {
         onMoveDown={noop}
       />
     );
-    const wrapper = screen.getByTestId("dataset-cell-input-integer").parentElement!;
+    const wrapper = screen.getByTestId(
+      "dataset-cell-input-integer"
+    ).parentElement!;
     expect(wrapper.className).toContain("border-destructive");
     expect(screen.getByTestId("dataset-cell-error")).toBeInTheDocument();
   });

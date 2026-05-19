@@ -60,7 +60,7 @@ function parseTipTapJson(raw: unknown): TipTapNode | null {
 function walkNodes(
   node: TipTapNode | null,
   visit: (n: TipTapNode, index: number) => void,
-  index = 0,
+  index = 0
 ): void {
   if (!node) return;
   visit(node, index);
@@ -70,10 +70,7 @@ function walkNodes(
   }
 }
 
-function isMatchingMention(
-  node: TipTapNode,
-  paramName: string,
-): boolean {
+function isMatchingMention(node: TipTapNode, paramName: string): boolean {
   if (node.type !== "parameterMention") return false;
   const label = node.attrs?.label;
   return typeof label === "string" && label === paramName;
@@ -88,7 +85,7 @@ function isMatchingMention(
 function renameInDoc(
   node: TipTapNode | null,
   oldName: string,
-  newName: string,
+  newName: string
 ): { doc: TipTapNode | null; changed: boolean } {
   if (!node) return { doc: null, changed: false };
   let changed = false;
@@ -116,13 +113,16 @@ function renameInDoc(
     }
   }
   if (!changed) return { doc: node, changed: false };
-  return { doc: { ...node, attrs: nextAttrs, content: nextContent }, changed: true };
+  return {
+    doc: { ...node, attrs: nextAttrs, content: nextContent },
+    changed: true,
+  };
 }
 
 export async function scanParameterReferences(
   tx: any,
   caseId: number,
-  paramName: string,
+  paramName: string
 ): Promise<ParameterReferences> {
   const steps = (await tx.steps.findMany({
     where: { testCaseId: caseId, isDeleted: false },
@@ -157,14 +157,20 @@ export async function scanParameterReferences(
   const dataset = await tx.dataSet.findFirst({
     where: { ownerCaseId: caseId, isDeleted: false },
     include: {
-      rows: { where: { isDeleted: false }, select: { id: true, valuesJson: true } },
+      rows: {
+        where: { isDeleted: false },
+        select: { id: true, valuesJson: true },
+      },
     },
   });
 
   const rowHits: ParameterReferences["rows"] = [];
   let rowCount = 0;
   if (dataset && Array.isArray(dataset.rows)) {
-    for (const row of dataset.rows as Array<{ id: number; valuesJson: unknown }>) {
+    for (const row of dataset.rows as Array<{
+      id: number;
+      valuesJson: unknown;
+    }>) {
       const values = (row.valuesJson ?? {}) as Record<string, unknown>;
       if (
         values &&
@@ -190,7 +196,7 @@ export async function rewriteParameterReferences(
   tx: any,
   caseId: number,
   oldName: string,
-  newName: string,
+  newName: string
 ): Promise<void> {
   if (oldName === newName) return;
 
@@ -225,12 +231,18 @@ export async function rewriteParameterReferences(
   const dataset = await tx.dataSet.findFirst({
     where: { ownerCaseId: caseId, isDeleted: false },
     include: {
-      rows: { where: { isDeleted: false }, select: { id: true, valuesJson: true } },
+      rows: {
+        where: { isDeleted: false },
+        select: { id: true, valuesJson: true },
+      },
     },
   });
   if (!dataset || !Array.isArray(dataset.rows)) return;
 
-  for (const row of dataset.rows as Array<{ id: number; valuesJson: unknown }>) {
+  for (const row of dataset.rows as Array<{
+    id: number;
+    valuesJson: unknown;
+  }>) {
     const values = (row.valuesJson ?? {}) as Record<string, unknown>;
     if (
       !values ||

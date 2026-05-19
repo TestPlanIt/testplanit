@@ -113,7 +113,7 @@ export function IterationBulkConfirmDialog({
             statusId: chosenStatus.id,
             reason: reason.trim() ? reason.trim() : undefined,
           }),
-        },
+        }
       );
       if (!res.ok) {
         let message: string | undefined;

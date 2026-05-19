@@ -382,7 +382,8 @@ export function CreateIssueJiraForm({
   // doc object — pass it through; the TipTap editor in DynamicJiraField
   // accepts both shapes.
   const initialDescription =
-    defaultValues?.description !== undefined && defaultValues?.description !== null
+    defaultValues?.description !== undefined &&
+    defaultValues?.description !== null
       ? defaultValues.description
       : "";
   const form = useForm<any>({

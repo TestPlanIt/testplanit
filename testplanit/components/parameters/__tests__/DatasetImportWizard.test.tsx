@@ -5,63 +5,60 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // next-intl mock — surface the keys the wizard uses
 vi.mock("next-intl", () => ({
-  useTranslations: (namespace?: string) => (
-    key: string,
-    params?: Record<string, unknown>,
-  ) => {
-    const parameters: Record<string, string> = {
-      datasetImportCsv: "Import CSV",
-      importStep1Heading: "Upload a CSV file",
-      importStep1Body: "Choose a .csv file. Maximum size 5 MB.",
-      importStep1Choose: "Choose CSV file",
-      importStep1Label: "Upload",
-      importStep2Heading: "Map CSV columns to parameters",
-      importStep2HeaderCsv: "CSV column",
-      importStep2HeaderParameter: "Parameter",
-      importStep2SkipColumn: "Skip column",
-      importStep2RequiredUnmapped:
-        'Required parameter "@{name}" has no mapped CSV column.',
-      importStep2Label: "Map columns",
-      importStep3SummaryOk: "{totalRows} rows parsed, no errors.",
-      importStep3SummaryErrors:
-        "{totalRows} rows parsed; {errorCount} rows have errors.",
-      importStep3PreviewLimit:
-        "Showing first {limit} rows. All rows will be validated on the next step.",
-      importStep3Label: "Preview",
-      importStep4Heading: "Confirm import",
-      importStep4Replace: "Replace all existing rows",
-      importStep4ReplaceDescription:
-        "Existing dataset rows ({existingCount}) will be deleted.",
-      importStep4Append: "Append to existing rows",
-      importStep4AppendDescription:
-        "New rows will be added after row #{existingCount}.",
-      importStep4ErrorBlock:
-        "Resolve {errorCount} error(s) on the previous step before importing.",
-      importStep4Label: "Confirm",
-      confirmSummaryValid: "Valid rows: {count}",
-      confirmSummaryErrors: "Errors: {count}",
-      confirmSummaryMode: "Mode: {mode}",
-      cancelUploadTitle: "Discard upload?",
-      cancelUploadDescription:
-        "The CSV data you uploaded will be lost.",
-      importCommit: "Import",
-      importSuccess: "Imported {count} rows",
-      datasetSaveBlocked: "Fix {count} errors before continuing.",
-    };
-    const commonActions: Record<string, string> = {
-      cancel: "Cancel",
-      back: "Back",
-      next: "Next",
-    };
-    const dict = namespace === "common.actions" ? commonActions : parameters;
-    let v = dict[key] ?? key;
-    if (params) {
-      Object.entries(params).forEach(([k, val]) => {
-        v = v.replace(`{${k}}`, String(val));
-      });
-    }
-    return v;
-  },
+  useTranslations:
+    (namespace?: string) => (key: string, params?: Record<string, unknown>) => {
+      const parameters: Record<string, string> = {
+        datasetImportCsv: "Import CSV",
+        importStep1Heading: "Upload a CSV file",
+        importStep1Body: "Choose a .csv file. Maximum size 5 MB.",
+        importStep1Choose: "Choose CSV file",
+        importStep1Label: "Upload",
+        importStep2Heading: "Map CSV columns to parameters",
+        importStep2HeaderCsv: "CSV column",
+        importStep2HeaderParameter: "Parameter",
+        importStep2SkipColumn: "Skip column",
+        importStep2RequiredUnmapped:
+          'Required parameter "@{name}" has no mapped CSV column.',
+        importStep2Label: "Map columns",
+        importStep3SummaryOk: "{totalRows} rows parsed, no errors.",
+        importStep3SummaryErrors:
+          "{totalRows} rows parsed; {errorCount} rows have errors.",
+        importStep3PreviewLimit:
+          "Showing first {limit} rows. All rows will be validated on the next step.",
+        importStep3Label: "Preview",
+        importStep4Heading: "Confirm import",
+        importStep4Replace: "Replace all existing rows",
+        importStep4ReplaceDescription:
+          "Existing dataset rows ({existingCount}) will be deleted.",
+        importStep4Append: "Append to existing rows",
+        importStep4AppendDescription:
+          "New rows will be added after row #{existingCount}.",
+        importStep4ErrorBlock:
+          "Resolve {errorCount} error(s) on the previous step before importing.",
+        importStep4Label: "Confirm",
+        confirmSummaryValid: "Valid rows: {count}",
+        confirmSummaryErrors: "Errors: {count}",
+        confirmSummaryMode: "Mode: {mode}",
+        cancelUploadTitle: "Discard upload?",
+        cancelUploadDescription: "The CSV data you uploaded will be lost.",
+        importCommit: "Import",
+        importSuccess: "Imported {count} rows",
+        datasetSaveBlocked: "Fix {count} errors before continuing.",
+      };
+      const commonActions: Record<string, string> = {
+        cancel: "Cancel",
+        back: "Back",
+        next: "Next",
+      };
+      const dict = namespace === "common.actions" ? commonActions : parameters;
+      let v = dict[key] ?? key;
+      if (params) {
+        Object.entries(params).forEach(([k, val]) => {
+          v = v.replace(`{${k}}`, String(val));
+        });
+      }
+      return v;
+    },
 }));
 
 const toastSuccess = vi.fn();
@@ -111,13 +108,13 @@ const INVALID_CSV = "username,amount\nalice,not-a-number\n";
 
 async function uploadCsv(text: string) {
   const input = screen.getByTestId(
-    "dataset-import-wizard-file-input",
+    "dataset-import-wizard-file-input"
   ) as HTMLInputElement;
   const file = new File([text], "data.csv", { type: "text/csv" });
   fireEvent.change(input, { target: { files: [file] } });
   await waitFor(() => {
     expect(
-      screen.getByTestId("dataset-import-wizard-step-map"),
+      screen.getByTestId("dataset-import-wizard-step-map")
     ).toBeInTheDocument();
   });
 }
@@ -132,8 +129,8 @@ describe("DatasetImportWizard", () => {
           caseId={1}
           parameters={SAMPLE_PARAMS}
           existingRowCount={3}
-        />,
-      ),
+        />
+      )
     );
     const dialog = screen.getByTestId("dataset-import-wizard");
     expect(dialog).toBeInTheDocument();
@@ -141,7 +138,7 @@ describe("DatasetImportWizard", () => {
     expect(screen.getByTestId("wizard-step-indicator")).toBeInTheDocument();
     // Starts on step 1 (Upload)
     expect(
-      screen.getByTestId("dataset-import-wizard-step-upload"),
+      screen.getByTestId("dataset-import-wizard-step-upload")
     ).toBeInTheDocument();
   });
 
@@ -154,8 +151,8 @@ describe("DatasetImportWizard", () => {
           caseId={1}
           parameters={SAMPLE_PARAMS}
           existingRowCount={0}
-        />,
-      ),
+        />
+      )
     );
     expect(screen.queryByTestId("dataset-import-wizard")).toBeNull();
   });
@@ -169,12 +166,12 @@ describe("DatasetImportWizard", () => {
           caseId={42}
           parameters={SAMPLE_PARAMS}
           existingRowCount={0}
-        />,
-      ),
+        />
+      )
     );
     await uploadCsv(VALID_CSV);
     expect(
-      screen.getByTestId("dataset-import-wizard-step-map"),
+      screen.getByTestId("dataset-import-wizard-step-map")
     ).toBeInTheDocument();
   });
 
@@ -187,22 +184,22 @@ describe("DatasetImportWizard", () => {
           caseId={42}
           parameters={SAMPLE_PARAMS}
           existingRowCount={0}
-        />,
-      ),
+        />
+      )
     );
     await uploadCsv(VALID_CSV);
     // Next on Map (mapping was auto-applied; required 'amount' mapped)
     fireEvent.click(screen.getByTestId("dataset-import-wizard-next"));
     await waitFor(() => {
       expect(
-        screen.getByTestId("dataset-import-wizard-step-preview"),
+        screen.getByTestId("dataset-import-wizard-step-preview")
       ).toBeInTheDocument();
     });
     // Next on Preview
     fireEvent.click(screen.getByTestId("dataset-import-wizard-next"));
     await waitFor(() => {
       expect(
-        screen.getByTestId("dataset-import-wizard-step-confirm"),
+        screen.getByTestId("dataset-import-wizard-step-confirm")
       ).toBeInTheDocument();
     });
     // Import button rendered + enabled
@@ -220,20 +217,20 @@ describe("DatasetImportWizard", () => {
           caseId={42}
           parameters={SAMPLE_PARAMS}
           existingRowCount={0}
-        />,
-      ),
+        />
+      )
     );
     await uploadCsv(INVALID_CSV);
     fireEvent.click(screen.getByTestId("dataset-import-wizard-next")); // Map -> Preview
     await waitFor(() => {
       expect(
-        screen.getByTestId("dataset-import-wizard-step-preview"),
+        screen.getByTestId("dataset-import-wizard-step-preview")
       ).toBeInTheDocument();
     });
     fireEvent.click(screen.getByTestId("dataset-import-wizard-next")); // Preview -> Confirm
     await waitFor(() => {
       expect(
-        screen.getByTestId("dataset-import-wizard-step-confirm"),
+        screen.getByTestId("dataset-import-wizard-step-confirm")
       ).toBeInTheDocument();
     });
     const importBtn = screen.getByTestId("dataset-import-wizard-commit");
@@ -250,27 +247,27 @@ describe("DatasetImportWizard", () => {
           caseId={77}
           parameters={SAMPLE_PARAMS}
           existingRowCount={0}
-        />,
-      ),
+        />
+      )
     );
     await uploadCsv(VALID_CSV);
     fireEvent.click(screen.getByTestId("dataset-import-wizard-next"));
     await waitFor(() => {
       expect(
-        screen.getByTestId("dataset-import-wizard-step-preview"),
+        screen.getByTestId("dataset-import-wizard-step-preview")
       ).toBeInTheDocument();
     });
     fireEvent.click(screen.getByTestId("dataset-import-wizard-next"));
     await waitFor(() => {
       expect(
-        screen.getByTestId("dataset-import-wizard-commit"),
+        screen.getByTestId("dataset-import-wizard-commit")
       ).toBeInTheDocument();
     });
     fireEvent.click(screen.getByTestId("dataset-import-wizard-commit"));
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith(
         "/api/repository/cases/77/dataset/import-csv",
-        expect.objectContaining({ method: "POST" }),
+        expect.objectContaining({ method: "POST" })
       );
     });
     const body = JSON.parse((global.fetch as any).mock.calls[0][1].body);
@@ -301,20 +298,20 @@ describe("DatasetImportWizard", () => {
           caseId={77}
           parameters={SAMPLE_PARAMS}
           existingRowCount={0}
-        />,
-      ),
+        />
+      )
     );
     await uploadCsv(VALID_CSV);
     fireEvent.click(screen.getByTestId("dataset-import-wizard-next"));
     await waitFor(() => {
       expect(
-        screen.getByTestId("dataset-import-wizard-step-preview"),
+        screen.getByTestId("dataset-import-wizard-step-preview")
       ).toBeInTheDocument();
     });
     fireEvent.click(screen.getByTestId("dataset-import-wizard-next"));
     await waitFor(() => {
       expect(
-        screen.getByTestId("dataset-import-wizard-commit"),
+        screen.getByTestId("dataset-import-wizard-commit")
       ).toBeInTheDocument();
     });
     fireEvent.click(screen.getByTestId("dataset-import-wizard-commit"));
@@ -333,8 +330,8 @@ describe("DatasetImportWizard", () => {
           caseId={1}
           parameters={SAMPLE_PARAMS}
           existingRowCount={0}
-        />,
-      ),
+        />
+      )
     );
     await uploadCsv(VALID_CSV); // now on Map step
     fireEvent.click(screen.getByTestId("dataset-import-wizard-cancel"));
@@ -342,7 +339,7 @@ describe("DatasetImportWizard", () => {
       expect(screen.getByText("Discard upload?")).toBeInTheDocument();
     });
     expect(
-      screen.getByText("The CSV data you uploaded will be lost."),
+      screen.getByText("The CSV data you uploaded will be lost.")
     ).toBeInTheDocument();
   });
 });

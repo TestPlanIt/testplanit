@@ -36,7 +36,7 @@ export const SKIP_SENTINEL = "__skip__" as const;
  */
 export function applyMapping(
   rawRow: Record<string, unknown>,
-  mapping: Record<string, string>,
+  mapping: Record<string, string>
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [columnName, paramName] of Object.entries(mapping)) {
@@ -61,12 +61,12 @@ export function applyMapping(
  */
 export function autoMapColumns(
   columns: string[],
-  parameters: { name: string }[],
+  parameters: { name: string }[]
 ): Record<string, string> {
   const out: Record<string, string> = {};
   for (const column of columns) {
     const match = parameters.find(
-      (p) => p.name.toLowerCase() === column.toLowerCase(),
+      (p) => p.name.toLowerCase() === column.toLowerCase()
     );
     out[column] = match ? match.name : SKIP_SENTINEL;
   }
@@ -82,10 +82,10 @@ export function autoMapColumns(
  */
 export function findUnmappedRequiredParameters(
   mapping: Record<string, string>,
-  parameters: { name: string; required: boolean }[],
+  parameters: { name: string; required: boolean }[]
 ): { name: string }[] {
   const mappedParamNames = new Set(
-    Object.values(mapping).filter((v) => v !== SKIP_SENTINEL),
+    Object.values(mapping).filter((v) => v !== SKIP_SENTINEL)
   );
   return parameters
     .filter((p) => p.required && !mappedParamNames.has(p.name))

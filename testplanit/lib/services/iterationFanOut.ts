@@ -287,10 +287,7 @@ export async function materializeForOneCase(
     // creating an assignment whose dataset lives in another project, but
     // this resolver runs against the unenhanced client (orchestration
     // path) so we re-check at read time.
-    if (
-      assignment &&
-      assignment.sharedDataSet.projectId === projectId
-    ) {
+    if (assignment && assignment.sharedDataSet.projectId === projectId) {
       const targetVersion = assignment.pinnedVersionId
         ? await tx.dataSetVersion.findUnique({
             where: { id: assignment.pinnedVersionId },
@@ -303,41 +300,41 @@ export async function materializeForOneCase(
           });
 
       if (targetVersion) {
-        const mapping =
-          (assignment.mappingJson ?? {}) as Record<string, string>;
+        const mapping = (assignment.mappingJson ?? {}) as Record<
+          string,
+          string
+        >;
         const versionRows = (targetVersion.rowsJson ?? []) as Array<unknown>;
-        const mappedRows: ResolvedSourceRow[] = versionRows.map(
-          (row, idx) => {
-            // DataSetVersion.rowsJson can store either the augmented snapshot
-            // shape ({ valuesJson, label, ... }) or a flat raw-row object.
-            // Detect the augmented shape and unwrap.
-            const isAugmented =
-              typeof row === "object" &&
-              row !== null &&
-              "valuesJson" in row &&
-              typeof (row as Record<string, unknown>).valuesJson === "object" &&
-              (row as Record<string, unknown>).valuesJson !== null;
-            const raw = isAugmented
-              ? ((row as Record<string, unknown>).valuesJson as Record<
-                  string,
-                  unknown
-                >)
-              : ((row ?? {}) as Record<string, unknown>);
-            const label =
-              typeof row === "object" &&
-              row !== null &&
-              "label" in row &&
-              typeof (row as Record<string, unknown>).label === "string"
-                ? ((row as Record<string, unknown>).label as string)
-                : null;
-            return {
-              sourceRowId: idx,
-              rowIndex: idx,
-              label,
-              valuesJson: applyMapping(raw, mapping),
-            };
-          },
-        );
+        const mappedRows: ResolvedSourceRow[] = versionRows.map((row, idx) => {
+          // DataSetVersion.rowsJson can store either the augmented snapshot
+          // shape ({ valuesJson, label, ... }) or a flat raw-row object.
+          // Detect the augmented shape and unwrap.
+          const isAugmented =
+            typeof row === "object" &&
+            row !== null &&
+            "valuesJson" in row &&
+            typeof (row as Record<string, unknown>).valuesJson === "object" &&
+            (row as Record<string, unknown>).valuesJson !== null;
+          const raw = isAugmented
+            ? ((row as Record<string, unknown>).valuesJson as Record<
+                string,
+                unknown
+              >)
+            : ((row ?? {}) as Record<string, unknown>);
+          const label =
+            typeof row === "object" &&
+            row !== null &&
+            "label" in row &&
+            typeof (row as Record<string, unknown>).label === "string"
+              ? ((row as Record<string, unknown>).label as string)
+              : null;
+          return {
+            sourceRowId: idx,
+            rowIndex: idx,
+            label,
+            valuesJson: applyMapping(raw, mapping),
+          };
+        });
         resolvedSource = {
           id: assignment.sharedDataSetId,
           name: assignment.sharedDataSet.name,

@@ -2,28 +2,26 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next-intl", () => ({
-  useTranslations: (namespace?: string) => (
-    key: string,
-    params?: Record<string, unknown>
-  ) => {
-    const parameters: Record<string, string> = {
-      chooserTitle: "Insert parameter",
-      chooserDescription:
-        "Choose a parameter to insert at the cursor position.",
-      chooserSearchPlaceholder: "Search parameters...",
-      chooserEmpty: "No parameters declared yet.",
-      chooserConfigureLink: "Configure parameters",
-    };
-    const common: Record<string, string> = { cancel: "Cancel" };
-    const dict = namespace === "common" ? common : parameters;
-    let value = dict[key] ?? key;
-    if (params) {
-      Object.entries(params).forEach(([k, v]) => {
-        value = value.replace(`{${k}}`, String(v));
-      });
-    }
-    return value;
-  },
+  useTranslations:
+    (namespace?: string) => (key: string, params?: Record<string, unknown>) => {
+      const parameters: Record<string, string> = {
+        chooserTitle: "Insert parameter",
+        chooserDescription:
+          "Choose a parameter to insert at the cursor position.",
+        chooserSearchPlaceholder: "Search parameters...",
+        chooserEmpty: "No parameters declared yet.",
+        chooserConfigureLink: "Configure parameters",
+      };
+      const common: Record<string, string> = { cancel: "Cancel" };
+      const dict = namespace === "common" ? common : parameters;
+      let value = dict[key] ?? key;
+      if (params) {
+        Object.entries(params).forEach(([k, v]) => {
+          value = value.replace(`{${k}}`, String(v));
+        });
+      }
+      return value;
+    },
 }));
 
 import { ParameterChooserDialog } from "@/components/tiptap/ParameterChooserDialog";

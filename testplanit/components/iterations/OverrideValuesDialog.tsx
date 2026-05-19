@@ -70,7 +70,7 @@ function valueToFormString(v: unknown): string {
 
 function coerceForSubmit(
   values: Record<string, unknown>,
-  schema: OverrideParameterSchemaEntry[],
+  schema: OverrideParameterSchemaEntry[]
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   const byName = new Map(schema.map((p) => [p.name, p]));
@@ -132,12 +132,12 @@ export function OverrideValuesDialog({
         const bi = (b as { order?: number }).order ?? 0;
         return ai - bi;
       }),
-    [parametersSchema],
+    [parametersSchema]
   );
 
   const zodSchema = useMemo(
     () => buildIterationOverrideSchema(orderedSchema),
-    [orderedSchema],
+    [orderedSchema]
   );
 
   const defaultValues = useMemo(() => {
@@ -156,7 +156,6 @@ export function OverrideValuesDialog({
   }, [orderedSchema, currentValues, snapshotRow]);
 
   const form = useForm<Record<string, unknown>>({
-     
     resolver: zodResolver(zodSchema as any),
     defaultValues,
     mode: "onChange",
@@ -187,7 +186,7 @@ export function OverrideValuesDialog({
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ values: coerced }),
-        },
+        }
       );
       if (!res.ok) {
         let message: string | undefined;

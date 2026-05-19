@@ -82,9 +82,9 @@ test.describe("Parameters - CSV import wizard @parameters", () => {
     await page.getByTestId("dataset-import-wizard-commit").click();
 
     // Wizard closes; rows appear in the dataset grid.
-    await expect(
-      page.getByTestId("dataset-import-wizard")
-    ).not.toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("dataset-import-wizard")).not.toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("BOM-prefixed CSV auto-maps the first column correctly", async ({

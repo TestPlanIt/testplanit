@@ -32,7 +32,7 @@ import { authOptions } from "~/server/auth";
  */
 
 async function resolveUserContext(
-  userId: string,
+  userId: string
 ): Promise<{ canReadSensitive: boolean; locale: string }> {
   const u = await prisma.user.findUnique({
     where: { id: userId },
@@ -52,7 +52,7 @@ async function resolveUserContext(
       ? u.role.rolePermissions.some(
           (p: { area?: ApplicationArea; canReadSensitive?: boolean }) =>
             p?.area === ApplicationArea.TestRunResultRestrictedFields &&
-            p?.canReadSensitive === true,
+            p?.canReadSensitive === true
         )
       : false);
   // Locale is a Prisma enum (en_US, es_ES, …). Coerce to string for the
@@ -66,7 +66,7 @@ export async function GET(
   _request: NextRequest,
   context: {
     params: Promise<{ runId: string; caseId: string; iterId: string }>;
-  },
+  }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -121,7 +121,7 @@ export async function GET(
     console.error("buildIterationIssueBody failed", err);
     return NextResponse.json(
       { error: "Failed to build issue body" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

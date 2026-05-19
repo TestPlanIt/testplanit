@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
           rowCount: ownerRowCount,
           assignedRowCount,
         };
-      }),
+      })
     );
 
     const result = computePreflight(inputs, configIds.length, thresholds);

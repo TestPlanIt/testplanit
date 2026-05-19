@@ -84,7 +84,7 @@ export function PreviewStep({
       Object.entries(mapping)
         .filter(([, p]) => p !== SKIP_VALUE)
         .map(([csvHeader, paramName]) => ({ csvHeader, paramName })),
-    [mapping],
+    [mapping]
   );
 
   return (
@@ -113,10 +113,7 @@ export function PreviewStep({
           <thead className="bg-muted/30 sticky top-0">
             <tr>
               {mappedHeaders.map(({ paramName }) => (
-                <th
-                  key={paramName}
-                  className="px-2 py-1 text-left font-mono"
-                >
+                <th key={paramName} className="px-2 py-1 text-left font-mono">
                   {`@${paramName}`}
                 </th>
               ))}
@@ -133,7 +130,7 @@ export function PreviewStep({
                       key={paramName}
                       className={cn(
                         "px-2 py-1 relative align-top",
-                        error && "border border-destructive",
+                        error && "border border-destructive"
                       )}
                       data-testid={
                         error

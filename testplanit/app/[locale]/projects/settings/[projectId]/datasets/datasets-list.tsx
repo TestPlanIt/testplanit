@@ -195,11 +195,7 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
       header: () => t("columns.actions"),
       cell: ({ row }) => (
         <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
-          <Button
-            variant="ghost"
-            className="px-2 py-1 h-auto"
-            asChild
-          >
+          <Button variant="ghost" className="px-2 py-1 h-auto" asChild>
             <Link
               href={`/projects/settings/${projectId}/datasets/${row.original.id}`}
               aria-label={t("actionOpen")}
@@ -311,7 +307,7 @@ export function DatasetsList({ projectId }: DatasetsListProps) {
           projectId={projectId}
           dataSetId={pendingDelete.id}
           dataSetName={pendingDelete.name}
-          open={pendingDelete !== null}
+          open
           onOpenChange={(open) => {
             if (!open) setPendingDelete(null);
           }}

@@ -10,7 +10,9 @@ const { mockTx, mockDb, sessionRef } = vi.hoisted(() => {
   return {
     mockTx: tx,
     mockDb: db,
-    sessionRef: { current: { user: { id: "u-1", name: "U", email: "u@e.com" } } },
+    sessionRef: {
+      current: { user: { id: "u-1", name: "U", email: "u@e.com" } },
+    },
   };
 });
 
@@ -33,7 +35,8 @@ const helperSpies = vi.hoisted(() => ({
 vi.mock("~/lib/services/parameterMutations", () => ({
   createParameterInTransaction: helperSpies.createParameterInTransaction,
   updateParameterInTransaction: helperSpies.updateParameterInTransaction,
-  softDeleteParameterInTransaction: helperSpies.softDeleteParameterInTransaction,
+  softDeleteParameterInTransaction:
+    helperSpies.softDeleteParameterInTransaction,
 }));
 
 import { POST as parametersPost } from "~/app/api/repository/cases/[caseId]/parameters/route";
@@ -90,7 +93,7 @@ describe("POST /api/repository/cases/[caseId]/parameters", () => {
         allowedValuesJson: ["dev"],
         lookupDataSetId: 99,
       }),
-      { params: Promise.resolve({ caseId: "5" }) },
+      { params: Promise.resolve({ caseId: "5" }) }
     );
     expect(res.status).toBe(400);
     expect(helperSpies.createParameterInTransaction).not.toHaveBeenCalled();
@@ -102,7 +105,7 @@ describe("POST /api/repository/cases/[caseId]/parameters", () => {
         name: "username",
         type: "STRING",
       }),
-      { params: Promise.resolve({ caseId: "5" }) },
+      { params: Promise.resolve({ caseId: "5" }) }
     );
     expect(res.status).toBe(200);
     expect(mockDb.$transaction).toHaveBeenCalledTimes(1);
@@ -116,11 +119,11 @@ describe("POST /api/repository/cases/[caseId]/parameters", () => {
 
   it("rolls up to 500 when helper throws", async () => {
     helperSpies.createParameterInTransaction.mockRejectedValueOnce(
-      new Error("boom"),
+      new Error("boom")
     );
     const res = await parametersPost(
       jsonRequest({ name: "username", type: "STRING" }),
-      { params: Promise.resolve({ caseId: "5" }) },
+      { params: Promise.resolve({ caseId: "5" }) }
     );
     expect(res.status).toBe(500);
   });
@@ -171,7 +174,7 @@ describe("DELETE /api/repository/cases/[caseId]/parameters/[paramId]", () => {
     expect(res.status).toBe(200);
     expect(mockDb.$transaction).toHaveBeenCalledTimes(1);
     expect(helperSpies.softDeleteParameterInTransaction).toHaveBeenCalledTimes(
-      1,
+      1
     );
     const args = helperSpies.softDeleteParameterInTransaction.mock.calls[0];
     expect(args[1]).toBe(5);

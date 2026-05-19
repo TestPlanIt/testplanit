@@ -2,11 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import type {
-  AxesShape,
-  CellSummary,
-  MatrixFilters,
-} from "~/lib/matrix/types";
+import type { AxesShape, CellSummary, MatrixFilters } from "~/lib/matrix/types";
 
 /**
  * Typed payload of a 422 cell-cap refusal from
@@ -81,14 +77,11 @@ export function useMatrixAggregation(
     enabled: projectId != null && projectId > 0,
     retry: false,
     queryFn: async (): Promise<AxesShape> => {
-      const res = await fetch(
-        `/api/projects/${projectId}/matrix/aggregate`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ filters }),
-        }
-      );
+      const res = await fetch(`/api/projects/${projectId}/matrix/aggregate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filters }),
+      });
 
       if (res.status === 422) {
         const body = await res.json().catch(() => ({}));

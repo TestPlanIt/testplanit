@@ -80,7 +80,7 @@ export function SharedDatasetMappingFields({
 
   const unmappedRequired = useMemo(
     () => findUnmappedRequiredParameters(mapping, parameters),
-    [mapping, parameters],
+    [mapping, parameters]
   );
 
   useEffect(() => {
@@ -99,10 +99,7 @@ export function SharedDatasetMappingFields({
   };
 
   return (
-    <div
-      className="space-y-3"
-      data-testid="shared-mapping-fields"
-    >
+    <div className="space-y-3" data-testid="shared-mapping-fields">
       {unmappedRequired.length > 0 && (
         <Alert
           variant="destructive"

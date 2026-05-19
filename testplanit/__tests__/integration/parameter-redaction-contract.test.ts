@@ -93,7 +93,11 @@ describe("parameter-redaction ↔ AuditEvent.metadata contract", () => {
         action: AuditAction.CREATE,
         entityType: "TestRunCaseIteration",
         entityId: "2",
-        metadata: redactValues(original, paramSchema, /* viewerCanReadSensitive */ true),
+        metadata: redactValues(
+          original,
+          paramSchema,
+          /* viewerCanReadSensitive */ true
+        ),
       };
       // Deep-equal by value; redactValues is permitted to return a copy.
       expect(event.metadata).toEqual(original);

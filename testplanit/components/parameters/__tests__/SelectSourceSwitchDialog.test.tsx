@@ -4,27 +4,24 @@ import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next-intl", () => ({
-  useTranslations: (namespace?: string) => (
-    key: string,
-    params?: Record<string, unknown>
-  ) => {
-    const parameters: Record<string, string> = {
-      selectSourceWarningTitle:
-        'Change SELECT source for "@{name}"?',
-      selectSourceWarningDescription:
-        "Existing dataset values for this parameter may not exist in the new list. {invalidCount, plural, =1 {# row will} other {# rows will}} need attention after this change. Continue?",
-      selectSourceConfirm: "Change source",
-    };
-    const common: Record<string, string> = { cancel: "Cancel" };
-    const dict = namespace === "common" ? common : parameters;
-    let value = dict[key] ?? key;
-    if (params) {
-      Object.entries(params).forEach(([k, v]) => {
-        value = value.replace(`{${k}}`, String(v));
-      });
-    }
-    return value;
-  },
+  useTranslations:
+    (namespace?: string) => (key: string, params?: Record<string, unknown>) => {
+      const parameters: Record<string, string> = {
+        selectSourceWarningTitle: 'Change SELECT source for "@{name}"?',
+        selectSourceWarningDescription:
+          "Existing dataset values for this parameter may not exist in the new list. {invalidCount, plural, =1 {# row will} other {# rows will}} need attention after this change. Continue?",
+        selectSourceConfirm: "Change source",
+      };
+      const common: Record<string, string> = { cancel: "Cancel" };
+      const dict = namespace === "common" ? common : parameters;
+      let value = dict[key] ?? key;
+      if (params) {
+        Object.entries(params).forEach(([k, v]) => {
+          value = value.replace(`{${k}}`, String(v));
+        });
+      }
+      return value;
+    },
 }));
 
 const toastSuccess = vi.fn();
@@ -70,9 +67,7 @@ describe("SelectSourceSwitchDialog", () => {
         />
       )
     );
-    expect(
-      screen.queryByTestId("select-source-switch-dialog")
-    ).toBeNull();
+    expect(screen.queryByTestId("select-source-switch-dialog")).toBeNull();
   });
 
   it("renders the warning title and confirm button when open and invalidCount > 0", () => {

@@ -47,11 +47,14 @@ function buildTestCaseFixture(overrides: TestCaseFixtureOverrides = {}) {
 }
 
 function buildTx(testCase: ReturnType<typeof buildTestCaseFixture>) {
-  const create = vi.fn<(args: { data: Record<string, unknown> }) => Promise<unknown>>(
-    async ({ data }) => ({ id: 999, ...data })
-  );
+  const create = vi.fn<
+    (args: { data: Record<string, unknown> }) => Promise<unknown>
+  >(async ({ data }) => ({ id: 999, ...data }));
   const findUnique = vi.fn<
-    (args: { where: { id: number }; include: Record<string, unknown> }) => Promise<unknown>
+    (args: {
+      where: { id: number };
+      include: Record<string, unknown>;
+    }) => Promise<unknown>
   >(async () => testCase);
   return {
     tx: {

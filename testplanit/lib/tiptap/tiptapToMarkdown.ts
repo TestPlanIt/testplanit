@@ -72,9 +72,7 @@ function applyMark(text: string, mark: TiptapMark): string {
         // raw string; the explicit char replace below still runs.
         href = rawHref;
       }
-      href = href
-        .replace(/\(/g, "%28")
-        .replace(/\)/g, "%29");
+      href = href.replace(/\(/g, "%28").replace(/\)/g, "%29");
       return `[${text}](${href})`;
     }
     case "code":
@@ -250,9 +248,7 @@ function serializeNode(node: TiptapNode): string {
     case "hardBreak":
       return "  \n";
     default:
-      throw new Error(
-        `tiptapToMarkdown: unsupported node type: ${node.type}`
-      );
+      throw new Error(`tiptapToMarkdown: unsupported node type: ${node.type}`);
   }
 }
 

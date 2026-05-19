@@ -67,7 +67,10 @@ export function MatrixReportPreset({
   // aggregate hook entirely — viewers of a public share have no session to
   // gate `/api/projects/.../matrix/aggregate`. The provided axes are the
   // snapshot the share was captured at.
-  const query = useMatrixAggregation(prefetchedAxes ? null : projectId, filters);
+  const query = useMatrixAggregation(
+    prefetchedAxes ? null : projectId,
+    filters
+  );
 
   const sharedAxes: AxesShape | null = useMemo(() => {
     if (!prefetchedAxes) return null;

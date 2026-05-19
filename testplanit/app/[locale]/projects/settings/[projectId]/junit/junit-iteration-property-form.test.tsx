@@ -84,9 +84,7 @@ describe("JunitIterationPropertyForm", () => {
   });
 
   it("renders the default hint when the initial list is empty", () => {
-    render(
-      <JunitIterationPropertyForm projectId={42} initialNames={[]} />
-    );
+    render(<JunitIterationPropertyForm projectId={42} initialNames={[]} />);
     expect(
       screen.getByTestId("junit-iteration-property-default-hint")
     ).toBeDefined();
@@ -111,9 +109,7 @@ describe("JunitIterationPropertyForm", () => {
   });
 
   it("adds a tag when Add is clicked", () => {
-    render(
-      <JunitIterationPropertyForm projectId={42} initialNames={[]} />
-    );
+    render(<JunitIterationPropertyForm projectId={42} initialNames={[]} />);
     const input = screen.getByTestId(
       "junit-iteration-property-input"
     ) as HTMLInputElement;
@@ -128,10 +124,7 @@ describe("JunitIterationPropertyForm", () => {
 
   it("removes a tag when its X is clicked", () => {
     render(
-      <JunitIterationPropertyForm
-        projectId={42}
-        initialNames={["iteration"]}
-      />
+      <JunitIterationPropertyForm projectId={42} initialNames={["iteration"]} />
     );
     fireEvent.click(
       screen.getByTestId("junit-iteration-property-remove-iteration")
@@ -152,10 +145,7 @@ describe("JunitIterationPropertyForm", () => {
     });
 
     render(
-      <JunitIterationPropertyForm
-        projectId={42}
-        initialNames={["iteration"]}
-      />
+      <JunitIterationPropertyForm projectId={42} initialNames={["iteration"]} />
     );
     // Save is gated on dirty state — add a tag first so the button enables.
     const input = screen.getByTestId(
@@ -169,9 +159,7 @@ describe("JunitIterationPropertyForm", () => {
       expect((global as any).fetch).toHaveBeenCalledTimes(1);
     });
     const [url, init] = (global as any).fetch.mock.calls[0];
-    expect(url).toBe(
-      "/api/projects/42/junit-iteration-property-names"
-    );
+    expect(url).toBe("/api/projects/42/junit-iteration-property-names");
     expect(init.method).toBe("PUT");
     expect(init.headers["Content-Type"]).toBe("application/json");
     expect(JSON.parse(init.body)).toEqual({
@@ -189,10 +177,7 @@ describe("JunitIterationPropertyForm", () => {
     });
 
     render(
-      <JunitIterationPropertyForm
-        projectId={42}
-        initialNames={["iteration"]}
-      />
+      <JunitIterationPropertyForm projectId={42} initialNames={["iteration"]} />
     );
     // Make the form dirty so Save is enabled.
     const input = screen.getByTestId(
@@ -209,10 +194,7 @@ describe("JunitIterationPropertyForm", () => {
 
   it("dedupes when adding an existing tag (no duplicate badge)", () => {
     render(
-      <JunitIterationPropertyForm
-        projectId={42}
-        initialNames={["iteration"]}
-      />
+      <JunitIterationPropertyForm projectId={42} initialNames={["iteration"]} />
     );
     const input = screen.getByTestId(
       "junit-iteration-property-input"

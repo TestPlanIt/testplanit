@@ -4,27 +4,25 @@ import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next-intl", () => ({
-  useTranslations: (namespace?: string) => (
-    key: string,
-    params?: Record<string, unknown>
-  ) => {
-    const parameters: Record<string, string> = {
-      deleteTitle: 'Delete parameter "{name}"?',
-      deleteDescription:
-        "This parameter is referenced in {stepCount} step(s) and {rowCount} dataset row(s). Deleting will leave those references as plain text and bump this case to version {nextVersion}.",
-      deleteConfirm: "Delete parameter",
-      deleteSuccess: 'Parameter "{name}" deleted',
-    };
-    const common: Record<string, string> = { cancel: "Cancel" };
-    const dict = namespace === "common" ? common : parameters;
-    let value = dict[key] ?? key;
-    if (params) {
-      Object.entries(params).forEach(([k, v]) => {
-        value = value.replace(`{${k}}`, String(v));
-      });
-    }
-    return value;
-  },
+  useTranslations:
+    (namespace?: string) => (key: string, params?: Record<string, unknown>) => {
+      const parameters: Record<string, string> = {
+        deleteTitle: 'Delete parameter "{name}"?',
+        deleteDescription:
+          "This parameter is referenced in {stepCount} step(s) and {rowCount} dataset row(s). Deleting will leave those references as plain text and bump this case to version {nextVersion}.",
+        deleteConfirm: "Delete parameter",
+        deleteSuccess: 'Parameter "{name}" deleted',
+      };
+      const common: Record<string, string> = { cancel: "Cancel" };
+      const dict = namespace === "common" ? common : parameters;
+      let value = dict[key] ?? key;
+      if (params) {
+        Object.entries(params).forEach(([k, v]) => {
+          value = value.replace(`{${k}}`, String(v));
+        });
+      }
+      return value;
+    },
 }));
 
 const toastSuccess = vi.fn();
@@ -92,9 +90,7 @@ describe("ParameterDeleteDialog", () => {
         />
       )
     );
-    expect(
-      screen.getByTestId("parameter-delete-dialog")
-    ).toBeInTheDocument();
+    expect(screen.getByTestId("parameter-delete-dialog")).toBeInTheDocument();
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalled();
     });

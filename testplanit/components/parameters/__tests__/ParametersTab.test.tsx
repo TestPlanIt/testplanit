@@ -19,9 +19,11 @@ vi.mock("@/components/parameters/ParameterAddForm", () => ({
   ParameterAddForm: () => <div data-testid="stub-add-form" />,
 }));
 vi.mock("@/components/parameters/ParameterRow", () => ({
-  ParameterRow: ({ parameter }: { parameter: { id: number; name: string } }) => (
-    <div data-testid={`stub-row-${parameter.id}`}>{parameter.name}</div>
-  ),
+  ParameterRow: ({
+    parameter,
+  }: {
+    parameter: { id: number; name: string };
+  }) => <div data-testid={`stub-row-${parameter.id}`}>{parameter.name}</div>,
 }));
 
 import { ParametersTab } from "@/components/parameters/ParametersTab";
@@ -35,16 +37,12 @@ const wrap = (children: React.ReactNode) => {
 
 describe("ParametersTab", () => {
   it("renders the ParameterAddForm at the top", () => {
-    render(
-      wrap(<ParametersTab caseId={1} projectId={2} parameters={[]} />)
-    );
+    render(wrap(<ParametersTab caseId={1} projectId={2} parameters={[]} />));
     expect(screen.getByTestId("stub-add-form")).toBeInTheDocument();
   });
 
   it("renders the empty-state when no parameters exist", () => {
-    render(
-      wrap(<ParametersTab caseId={1} projectId={2} parameters={[]} />)
-    );
+    render(wrap(<ParametersTab caseId={1} projectId={2} parameters={[]} />));
     expect(screen.getByTestId("parameters-tab-empty")).toBeInTheDocument();
     expect(screen.getByText("No parameters yet")).toBeInTheDocument();
   });

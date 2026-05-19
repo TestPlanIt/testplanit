@@ -30,9 +30,7 @@ import {
   useFindManyTestCaseParameter,
 } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
-import {
-  SKIP_SENTINEL,
-} from "~/lib/utils/datasetMapping";
+import { SKIP_SENTINEL } from "~/lib/utils/datasetMapping";
 
 export interface AssignSharedDatasetDialogProps {
   open: boolean;
@@ -107,7 +105,7 @@ function deriveVersionColumns(version: VersionShape | null): string[] {
         return Object.keys(valuesJson as Record<string, unknown>);
       }
       return Object.keys(first as Record<string, unknown>).filter(
-        (k) => k !== "label" && k !== "rowIndex" && k !== "id",
+        (k) => k !== "label" && k !== "rowIndex" && k !== "id"
       );
     }
   }
@@ -134,12 +132,12 @@ export function AssignSharedDatasetDialog({
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     },
-    { enabled: open },
+    { enabled: open }
   );
   const datasets = (datasetsRaw ?? []) as unknown as DataSetRow[];
 
   const [selectedDataSetId, setSelectedDataSetId] = useState<number | null>(
-    currentAssignment?.sharedDataSetId ?? null,
+    currentAssignment?.sharedDataSetId ?? null
   );
 
   // ---------- Section 2 — Pin version ----------
@@ -150,13 +148,14 @@ export function AssignSharedDatasetDialog({
       : "specific"
     : "current";
   const [pinMode, setPinMode] = useState<PinMode>(initialPinMode);
-  const [specificVersion, setSpecificVersion] = useState<
-    { id: number; version: number } | null
-  >(null);
+  const [specificVersion, setSpecificVersion] = useState<{
+    id: number;
+    version: number;
+  } | null>(null);
 
   // ---------- Section 3 — Mapping ----------
   const [mapping, setMapping] = useState<Record<string, string>>(
-    currentAssignment?.mappingJson ?? {},
+    currentAssignment?.mappingJson ?? {}
   );
   const [mappingValid, setMappingValid] = useState(false);
 
@@ -170,7 +169,7 @@ export function AssignSharedDatasetDialog({
         ? currentAssignment.pinnedVersionId === null
           ? "follow-latest"
           : "specific"
-        : "current",
+        : "current"
     );
     setSpecificVersion(null);
     setMapping(currentAssignment?.mappingJson ?? {});
@@ -195,7 +194,7 @@ export function AssignSharedDatasetDialog({
         rowsJson: true,
       },
     },
-    { enabled: open && selectedDataSetId !== null },
+    { enabled: open && selectedDataSetId !== null }
   );
 
   const { data: specificVersionData } = useFindFirstDataSetVersion(
@@ -208,7 +207,7 @@ export function AssignSharedDatasetDialog({
         rowsJson: true,
       },
     },
-    { enabled: open && pinMode === "specific" && specificVersion !== null },
+    { enabled: open && pinMode === "specific" && specificVersion !== null }
   );
 
   const activeVersion = useMemo<VersionShape | null>(() => {
@@ -220,7 +219,7 @@ export function AssignSharedDatasetDialog({
 
   const datasetColumns = useMemo(
     () => deriveVersionColumns(activeVersion),
-    [activeVersion],
+    [activeVersion]
   );
 
   // We need the case's parameters to render the mapping select. The
@@ -232,15 +231,17 @@ export function AssignSharedDatasetDialog({
       orderBy: { order: "asc" },
       select: { name: true, required: true },
     },
-    { enabled: open },
+    { enabled: open }
   );
   const caseParameters = useMemo(
     () =>
-      ((caseParametersRaw ?? []) as Array<{
-        name: string;
-        required: boolean;
-      }>).map((p) => ({ name: p.name, required: Boolean(p.required) })),
-    [caseParametersRaw],
+      (
+        (caseParametersRaw ?? []) as Array<{
+          name: string;
+          required: boolean;
+        }>
+      ).map((p) => ({ name: p.name, required: Boolean(p.required) })),
+    [caseParametersRaw]
   );
 
   // ---------- Save ----------
@@ -294,7 +295,7 @@ export function AssignSharedDatasetDialog({
             pinnedVersionId,
             mappingJson: filteredMapping,
           }),
-        },
+        }
       );
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
@@ -333,19 +334,12 @@ export function AssignSharedDatasetDialog({
       >
         <DialogHeader>
           <DialogTitle>{t("assignSharedTitle")}</DialogTitle>
-          <DialogDescription>
-            {t("assignSharedDescription")}
-          </DialogDescription>
+          <DialogDescription>{t("assignSharedDescription")}</DialogDescription>
         </DialogHeader>
 
         {hasOwnerDataset && (
-          <Alert
-            variant="default"
-            data-testid="assign-shared-owner-banner"
-          >
-            <AlertDescription>
-              {t("assignSharedHasOwnerInfo")}
-            </AlertDescription>
+          <Alert variant="default" data-testid="assign-shared-owner-banner">
+            <AlertDescription>{t("assignSharedHasOwnerInfo")}</AlertDescription>
           </Alert>
         )}
 

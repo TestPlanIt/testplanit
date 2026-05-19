@@ -36,10 +36,18 @@ function makeTx(opts: FakeTxOptions = {}) {
           expectedResult: s.expectedResult,
         }))
       ),
-      update: vi.fn(async ({ where, data }: { where: { id: number }; data: Record<string, unknown> }) => {
-        stepUpdates.push({ id: where.id, data });
-        return { id: where.id };
-      }),
+      update: vi.fn(
+        async ({
+          where,
+          data,
+        }: {
+          where: { id: number };
+          data: Record<string, unknown>;
+        }) => {
+          stepUpdates.push({ id: where.id, data });
+          return { id: where.id };
+        }
+      ),
     },
     dataSet: {
       findFirst: vi.fn(async () => {
@@ -54,10 +62,18 @@ function makeTx(opts: FakeTxOptions = {}) {
       }),
     },
     dataSetRow: {
-      update: vi.fn(async ({ where, data }: { where: { id: number }; data: Record<string, unknown> }) => {
-        rowUpdates.push({ id: where.id, data });
-        return { id: where.id };
-      }),
+      update: vi.fn(
+        async ({
+          where,
+          data,
+        }: {
+          where: { id: number };
+          data: Record<string, unknown>;
+        }) => {
+          rowUpdates.push({ id: where.id, data });
+          return { id: where.id };
+        }
+      ),
     },
   };
 
@@ -212,8 +228,7 @@ describe("rewriteParameterReferences", () => {
     await rewriteParameterReferences(tx, 1, "old", "new");
     expect(stepUpdates.length).toBe(1);
     const written = stepUpdates[0].data.step;
-    const parsed =
-      typeof written === "string" ? JSON.parse(written) : written;
+    const parsed = typeof written === "string" ? JSON.parse(written) : written;
     const flat = JSON.stringify(parsed);
     expect(flat).not.toContain('"label":"old"');
     expect(flat).toContain('"label":"new"');

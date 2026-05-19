@@ -72,10 +72,7 @@ export async function PUT(
     const { projectId: projectIdParam } = await params;
     const projectId = parseInt(projectIdParam);
     if (Number.isNaN(projectId)) {
-      return NextResponse.json(
-        { error: "Invalid projectId" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid projectId" }, { status: 400 });
     }
 
     // Admin / project-admin gate. Matches the shape used by sibling

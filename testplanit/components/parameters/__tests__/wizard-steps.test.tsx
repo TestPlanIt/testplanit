@@ -58,14 +58,14 @@ describe("UploadStep", () => {
   it("Test 1: renders heading + body + file input with .csv accept", () => {
     render(<UploadStep onFileSelected={vi.fn()} />);
     expect(
-      screen.getByTestId("dataset-import-wizard-step-upload"),
+      screen.getByTestId("dataset-import-wizard-step-upload")
     ).toBeInTheDocument();
     expect(screen.getByText("Upload a CSV file")).toBeInTheDocument();
     expect(
-      screen.getByText("Choose a .csv file. Maximum size 5 MB."),
+      screen.getByText("Choose a .csv file. Maximum size 5 MB.")
     ).toBeInTheDocument();
     const input = screen.getByTestId(
-      "dataset-import-wizard-file-input",
+      "dataset-import-wizard-file-input"
     ) as HTMLInputElement;
     expect(input.type).toBe("file");
     expect(input.accept).toContain(".csv");
@@ -75,14 +75,14 @@ describe("UploadStep", () => {
     const onFileSelected = vi.fn();
     render(<UploadStep onFileSelected={onFileSelected} />);
     const input = screen.getByTestId(
-      "dataset-import-wizard-file-input",
+      "dataset-import-wizard-file-input"
     ) as HTMLInputElement;
     const txt = new File(["hello"], "foo.txt", { type: "text/plain" });
     // fireEvent bypasses the input.accept filter that userEvent.upload enforces.
     fireEvent.change(input, { target: { files: [txt] } });
     await waitFor(() => {
       expect(
-        screen.getByText("Only .csv files are supported."),
+        screen.getByText("Only .csv files are supported.")
       ).toBeInTheDocument();
     });
     expect(onFileSelected).not.toHaveBeenCalled();
@@ -92,7 +92,7 @@ describe("UploadStep", () => {
     const onFileSelected = vi.fn();
     render(<UploadStep onFileSelected={onFileSelected} />);
     const input = screen.getByTestId(
-      "dataset-import-wizard-file-input",
+      "dataset-import-wizard-file-input"
     ) as HTMLInputElement;
     // 6 MB CSV
     const big = new File([new Uint8Array(6 * 1024 * 1024)], "big.csv", {
@@ -101,7 +101,7 @@ describe("UploadStep", () => {
     fireEvent.change(input, { target: { files: [big] } });
     await waitFor(() => {
       expect(
-        screen.getByText("File is too large. Maximum is 5 MB."),
+        screen.getByText("File is too large. Maximum is 5 MB.")
       ).toBeInTheDocument();
     });
     expect(onFileSelected).not.toHaveBeenCalled();
@@ -111,7 +111,7 @@ describe("UploadStep", () => {
     const onFileSelected = vi.fn();
     render(<UploadStep onFileSelected={onFileSelected} />);
     const input = screen.getByTestId(
-      "dataset-import-wizard-file-input",
+      "dataset-import-wizard-file-input"
     ) as HTMLInputElement;
     const csv = new File(["a,b\n1,2\n"], "ok.csv", { type: "text/csv" });
     fireEvent.change(input, { target: { files: [csv] } });
@@ -139,16 +139,16 @@ describe("MapColumnsStep", () => {
         mapping={{ col_user: "username", col_amt: "amount" }}
         onMappingChange={vi.fn()}
         onValidityChange={vi.fn()}
-      />,
+      />
     );
     expect(
-      screen.getByTestId("dataset-import-wizard-step-map"),
+      screen.getByTestId("dataset-import-wizard-step-map")
     ).toBeInTheDocument();
     expect(
-      screen.getByTestId("dataset-import-wizard-map-row-col_user"),
+      screen.getByTestId("dataset-import-wizard-map-row-col_user")
     ).toBeInTheDocument();
     expect(
-      screen.getByTestId("dataset-import-wizard-map-row-col_amt"),
+      screen.getByTestId("dataset-import-wizard-map-row-col_amt")
     ).toBeInTheDocument();
     expect(screen.getByText("col_user")).toBeInTheDocument();
     expect(screen.getByText("col_amt")).toBeInTheDocument();
@@ -163,7 +163,7 @@ describe("MapColumnsStep", () => {
         mapping={{}}
         onMappingChange={onMappingChange}
         onValidityChange={vi.fn()}
-      />,
+      />
     );
     await waitFor(() => {
       expect(onMappingChange).toHaveBeenCalled();
@@ -184,12 +184,12 @@ describe("MapColumnsStep", () => {
         mapping={{ username: "username" }} // 'amount' (required) is NOT mapped
         onMappingChange={vi.fn()}
         onValidityChange={onValidityChange}
-      />,
+      />
     );
     expect(onValidityChange).toHaveBeenCalledWith(false);
     // Warning text is rendered
     expect(
-      screen.getByText(/Required parameter "@amount"/),
+      screen.getByText(/Required parameter "@amount"/)
     ).toBeInTheDocument();
   });
 
@@ -202,7 +202,7 @@ describe("MapColumnsStep", () => {
         mapping={{ username: "username", amount: "amount" }}
         onMappingChange={vi.fn()}
         onValidityChange={onValidityChange}
-      />,
+      />
     );
     expect(onValidityChange).toHaveBeenCalledWith(true);
   });
@@ -233,10 +233,10 @@ describe("PreviewStep", () => {
         mapping={{ username: "username", amount: "amount" }}
         parameters={params}
         onValidityChange={vi.fn()}
-      />,
+      />
     );
     expect(
-      screen.getByTestId("dataset-import-wizard-step-preview"),
+      screen.getByTestId("dataset-import-wizard-step-preview")
     ).toBeInTheDocument();
     expect(screen.getByText(/2 rows parsed/)).toBeInTheDocument();
   });
@@ -252,7 +252,7 @@ describe("PreviewStep", () => {
         mapping={{ username: "username", amount: "amount" }}
         parameters={params}
         onValidityChange={onValidityChange}
-      />,
+      />
     );
     await waitFor(() => {
       expect(onValidityChange).toHaveBeenCalled();
@@ -272,11 +272,9 @@ describe("PreviewStep", () => {
         }}
         parameters={params}
         onValidityChange={vi.fn()}
-      />,
+      />
     );
-    expect(
-      screen.getByText(/Showing first 50 rows/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Showing first 50 rows/)).toBeInTheDocument();
     // The "extra" CSV column should not appear as a header
     expect(screen.queryByText("@extra")).not.toBeInTheDocument();
   });
@@ -292,16 +290,16 @@ describe("ConfirmStep", () => {
         existingRowCount={5}
         mode="replace"
         onModeChange={vi.fn()}
-      />,
+      />
     );
     expect(
-      screen.getByTestId("dataset-import-wizard-step-confirm"),
+      screen.getByTestId("dataset-import-wizard-step-confirm")
     ).toBeInTheDocument();
     expect(screen.getByText("Replace all existing rows")).toBeInTheDocument();
     expect(screen.getByText("Append to existing rows")).toBeInTheDocument();
     // Replace description has the existing count interpolated
     expect(
-      screen.getByText(/Existing dataset rows \(5\) will be deleted/),
+      screen.getByText(/Existing dataset rows \(5\) will be deleted/)
     ).toBeInTheDocument();
   });
 
@@ -313,11 +311,9 @@ describe("ConfirmStep", () => {
         existingRowCount={0}
         mode="replace"
         onModeChange={vi.fn()}
-      />,
+      />
     );
-    expect(
-      screen.getByText(/Resolve 2 error\(s\)/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Resolve 2 error\(s\)/)).toBeInTheDocument();
   });
 
   it("Test 14: switching mode calls onModeChange", () => {
@@ -329,7 +325,7 @@ describe("ConfirmStep", () => {
         existingRowCount={5}
         mode="replace"
         onModeChange={onModeChange}
-      />,
+      />
     );
     const appendRadio = screen.getByLabelText("Append to existing rows");
     fireEvent.click(appendRadio);

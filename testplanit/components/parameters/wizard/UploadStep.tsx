@@ -45,9 +45,7 @@ export function UploadStep({ onFileSelected }: UploadStepProps) {
       data-testid="dataset-import-wizard-step-upload"
     >
       <h3 className="text-base font-semibold">{t("importStep1Heading")}</h3>
-      <p className="text-sm text-muted-foreground">
-        {t("importStep1Body")}
-      </p>
+      <p className="text-sm text-muted-foreground">{t("importStep1Body")}</p>
       <input
         ref={inputRef}
         type="file"
@@ -65,7 +63,10 @@ export function UploadStep({ onFileSelected }: UploadStepProps) {
         {t("importStep1Choose")}
       </Button>
       {error && (
-        <Alert variant="destructive" data-testid="dataset-import-wizard-upload-error">
+        <Alert
+          variant="destructive"
+          data-testid="dataset-import-wizard-upload-error"
+        >
           {error}
         </Alert>
       )}

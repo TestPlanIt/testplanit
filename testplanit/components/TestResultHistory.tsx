@@ -1070,7 +1070,7 @@ export default function TestResultHistory({
               rowIndex: res.iteration.rowIndex,
               valuesJson: res.iteration.valuesJson,
               parameterSchema: Array.isArray(
-                res.iteration.testRunCase?.dataSetSnapshot?.parametersJson,
+                res.iteration.testRunCase?.dataSetSnapshot?.parametersJson
               )
                 ? (
                     res.iteration.testRunCase.dataSetSnapshot
@@ -1078,9 +1078,7 @@ export default function TestResultHistory({
                   )
                     .filter(
                       (p) =>
-                        p &&
-                        typeof p === "object" &&
-                        typeof p.name === "string",
+                        p && typeof p === "object" && typeof p.name === "string"
                     )
                     .map((p) => ({
                       name: String(p.name),
@@ -1536,24 +1534,21 @@ export default function TestResultHistory({
                       )}
                     </TableCell>
                     <TableCell className="max-w-[100px]">
-                      {result.sourceType === "manual" &&
-                        result.iteration && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="flex justify-center">
-                                <SquareStack
-                                  className="h-4 w-4 text-muted-foreground"
-                                  aria-label={tParams(
-                                    "iterationResultRowIcon",
-                                  )}
-                                />
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              {tParams("iterationResultRowIcon")}
-                            </TooltipContent>
-                          </Tooltip>
-                        )}
+                      {result.sourceType === "manual" && result.iteration && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex justify-center">
+                              <SquareStack
+                                className="h-4 w-4 text-muted-foreground"
+                                aria-label={tParams("iterationResultRowIcon")}
+                              />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {tParams("iterationResultRowIcon")}
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                     </TableCell>
                     <TableCell className="max-w-[100px]">
                       <div className="truncate">
@@ -1648,8 +1643,10 @@ export default function TestResultHistory({
                                     <span className="font-medium">
                                       {tCommon("fields.configuration") + ":"}
                                     </span>{" "}
-                                    {result.associatedTestRun.configuration
-                                      .name}
+                                    {
+                                      result.associatedTestRun.configuration
+                                        .name
+                                    }
                                   </div>
                                 </div>
                               )}
@@ -1664,10 +1661,12 @@ export default function TestResultHistory({
                                 result.iteration && (
                                   <div className="px-4 py-2 mb-2 bg-muted/50 rounded-md border text-xs space-y-1">
                                     <div className="font-semibold text-primary flex items-center gap-1">
-                                      <SquareStack className="h-3 w-3" aria-hidden />
-                                      {tParams(
-                                        "iterationResultLabelHeading",
-                                      ) + ` ${result.iteration.rowIndex + 1}`}
+                                      <SquareStack
+                                        className="h-3 w-3"
+                                        aria-hidden
+                                      />
+                                      {tParams("iterationResultLabelHeading") +
+                                        ` ${result.iteration.rowIndex + 1}`}
                                       {result.iteration.label && (
                                         <span className="font-normal text-muted-foreground">
                                           {": "}
@@ -1682,12 +1681,12 @@ export default function TestResultHistory({
                                           <tr className="border-b">
                                             <th className="font-medium pr-4 py-1">
                                               {tParams(
-                                                "iterationIssueTableHeaderParameter",
+                                                "iterationIssueTableHeaderParameter"
                                               )}
                                             </th>
                                             <th className="font-medium py-1">
                                               {tParams(
-                                                "iterationIssueTableHeaderValue",
+                                                "iterationIssueTableHeaderValue"
                                               )}
                                             </th>
                                           </tr>
@@ -1695,13 +1694,11 @@ export default function TestResultHistory({
                                         <tbody>
                                           {result.iteration.parameterSchema.map(
                                             (p) => {
-                                              const raw = (
-                                                (result.iteration!
-                                                  .valuesJson as Record<
-                                                  string,
-                                                  unknown
-                                                > | null) ?? {}
-                                              )[p.name];
+                                              const raw = ((result.iteration!
+                                                .valuesJson as Record<
+                                                string,
+                                                unknown
+                                              > | null) ?? {})[p.name];
                                               const canSee =
                                                 !p.sensitive ||
                                                 session?.user?.access ===
@@ -1715,7 +1712,7 @@ export default function TestResultHistory({
                                                 raw === ""
                                               ) {
                                                 display = tParams(
-                                                  "iterationResultNoValue",
+                                                  "iterationResultNoValue"
                                                 );
                                               } else if (
                                                 typeof raw === "string"
@@ -1739,7 +1736,7 @@ export default function TestResultHistory({
                                                   </td>
                                                 </tr>
                                               );
-                                            },
+                                            }
                                           )}
                                         </tbody>
                                       </table>

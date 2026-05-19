@@ -128,8 +128,7 @@ export function DatasetCell({
   if (!isEditing) {
     // Sensitive masking gate (UI-SPEC D.4)
     if (parameter?.sensitive) {
-      const deniedSentinel =
-        value === "[REDACTED]" || !viewerCanReadSensitive;
+      const deniedSentinel = value === "[REDACTED]" || !viewerCanReadSensitive;
       if (deniedSentinel) {
         return (
           <Tooltip>
@@ -183,8 +182,7 @@ export function DatasetCell({
     // edit mode: same shadcn Input component, same h-9 border-box, same
     // border thickness. Only the colors change (transparent border in
     // view mode, hover-revealed). Clicking switches to edit mode.
-    const display =
-      value === null || value === undefined ? "" : String(value);
+    const display = value === null || value === undefined ? "" : String(value);
     const isEmpty = display === "";
     return (
       <div className="relative">
@@ -283,7 +281,10 @@ export function DatasetCell({
 
 function inferSelectOptions(p?: DatasetCellParameter): string[] {
   if (!p) return [];
-  if (Array.isArray(p.lookupAllowedValues) && p.lookupAllowedValues.length > 0) {
+  if (
+    Array.isArray(p.lookupAllowedValues) &&
+    p.lookupAllowedValues.length > 0
+  ) {
     return p.lookupAllowedValues.map(String);
   }
   if (Array.isArray(p.allowedValuesJson)) {

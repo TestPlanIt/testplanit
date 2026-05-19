@@ -56,13 +56,13 @@ const REDACTION_SENTINEL = "[REDACTED]";
 export function redactValues(
   values: Record<string, unknown>,
   paramSchema: ParameterSchemaEntry[],
-  viewerCanReadSensitive: boolean,
+  viewerCanReadSensitive: boolean
 ): Record<string, unknown> {
   if (viewerCanReadSensitive) {
     return { ...values };
   }
   const sensitiveSet = new Set(
-    paramSchema.filter((p) => p.sensitive).map((p) => p.name),
+    paramSchema.filter((p) => p.sensitive).map((p) => p.name)
   );
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(values)) {

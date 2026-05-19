@@ -57,7 +57,7 @@ describe("parameterCreateSchema - SELECT XOR boundary check", () => {
         type: "SELECT",
         allowedValuesJson: ["yes", "no"],
         lookupDataSetId: null,
-      }),
+      })
     );
 
     expect(result.success).toBe(true);
@@ -69,7 +69,7 @@ describe("parameterCreateSchema - SELECT XOR boundary check", () => {
         type: "SELECT",
         allowedValuesJson: null,
         lookupDataSetId: 99,
-      }),
+      })
     );
 
     expect(result.success).toBe(true);
@@ -81,7 +81,7 @@ describe("parameterCreateSchema - SELECT XOR boundary check", () => {
         type: "SELECT",
         allowedValuesJson: ["yes", "no"],
         lookupDataSetId: 99,
-      }),
+      })
     );
 
     expect(result.success).toBe(false);
@@ -97,7 +97,7 @@ describe("parameterCreateSchema - SELECT XOR boundary check", () => {
         type: "SELECT",
         allowedValuesJson: null,
         lookupDataSetId: null,
-      }),
+      })
     );
 
     expect(result.success).toBe(false);
@@ -112,7 +112,7 @@ describe("parameterCreateSchema - SELECT XOR boundary check", () => {
       buildInput({
         type: "STRING",
         allowedValuesJson: ["yes", "no"],
-      }),
+      })
     );
 
     expect(result.success).toBe(false);
@@ -127,7 +127,7 @@ describe("parameterCreateSchema - SELECT XOR boundary check", () => {
       buildInput({
         type: "STRING",
         lookupDataSetId: 99,
-      }),
+      })
     );
 
     expect(result.success).toBe(false);
@@ -139,7 +139,7 @@ describe("parameterCreateSchema - SELECT XOR boundary check", () => {
 
   it("accepts INTEGER with neither allowedValuesJson nor lookupDataSetId", () => {
     const result = parameterCreateSchema.safeParse(
-      buildInput({ type: "INTEGER" }),
+      buildInput({ type: "INTEGER" })
     );
 
     expect(result.success).toBe(true);
@@ -147,7 +147,7 @@ describe("parameterCreateSchema - SELECT XOR boundary check", () => {
 
   it("accepts BOOLEAN with neither allowedValuesJson nor lookupDataSetId", () => {
     const result = parameterCreateSchema.safeParse(
-      buildInput({ type: "BOOLEAN" }),
+      buildInput({ type: "BOOLEAN" })
     );
 
     expect(result.success).toBe(true);
@@ -155,7 +155,7 @@ describe("parameterCreateSchema - SELECT XOR boundary check", () => {
 
   it("rejects an invalid type string (e.g., FLOAT) with an issue on the type path", () => {
     const result = parameterCreateSchema.safeParse(
-      buildInput({ type: "FLOAT" }),
+      buildInput({ type: "FLOAT" })
     );
 
     expect(result.success).toBe(false);

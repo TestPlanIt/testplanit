@@ -158,9 +158,7 @@ export async function GET(
     for (const c of axes.caseAxis) {
       for (const cfg of axes.configAxis) {
         for (const r of c.paramRows) {
-          const cell = axes.cells.get(
-            cellKey(c.caseId, cfg.configId, r.index)
-          );
+          const cell = axes.cells.get(cellKey(c.caseId, cfg.configId, r.index));
           const status = cell?.worstOfStatusId
             ? axes.statusMap[cell.worstOfStatusId]
             : null;

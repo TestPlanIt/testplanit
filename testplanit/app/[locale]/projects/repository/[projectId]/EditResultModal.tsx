@@ -391,7 +391,7 @@ export function EditResultModal({
         },
       },
     },
-    { enabled: !!resultId },
+    { enabled: !!resultId }
   );
 
   /**
@@ -454,7 +454,7 @@ export function EditResultModal({
       // chip still renders (matches the editor extension's permissive
       // string handling).
       const narrowedType = (VALID_PARAM_TYPES as readonly string[]).includes(
-        p.type,
+        p.type
       )
         ? (p.type as ParameterChipMeta["type"])
         : "STRING";

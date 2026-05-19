@@ -124,9 +124,13 @@ describe("createParameterMentionExtension", () => {
 
   it("suggestion.items filters case-insensitively by name prefix and slices to 8", async () => {
     const extension = createParameterMentionExtension(PARAMS);
-    const items = (extension.options.suggestion as {
-      items: (args: { query: string }) => Promise<ParameterChipMeta[]> | ParameterChipMeta[];
-    }).items;
+    const items = (
+      extension.options.suggestion as {
+        items: (args: {
+          query: string;
+        }) => Promise<ParameterChipMeta[]> | ParameterChipMeta[];
+      }
+    ).items;
 
     const result = await items({ query: "us" });
     expect(result.map((p) => p.name)).toEqual(["username", "userAge"]);
@@ -142,9 +146,13 @@ describe("createParameterMentionExtension", () => {
       defaultValue: null,
     }));
     const ext2 = createParameterMentionExtension(big);
-    const items2 = (ext2.options.suggestion as {
-      items: (args: { query: string }) => Promise<ParameterChipMeta[]> | ParameterChipMeta[];
-    }).items;
+    const items2 = (
+      ext2.options.suggestion as {
+        items: (args: {
+          query: string;
+        }) => Promise<ParameterChipMeta[]> | ParameterChipMeta[];
+      }
+    ).items;
     const sliced = await items2({ query: "param" });
     expect(sliced).toHaveLength(8);
   });
@@ -152,9 +160,13 @@ describe("createParameterMentionExtension", () => {
   it("works with an empty parameters list (PARAM-07: no crash)", async () => {
     const extension = createParameterMentionExtension([]);
     expect(extension.name).toBe("parameterMention");
-    const items = (extension.options.suggestion as {
-      items: (args: { query: string }) => Promise<ParameterChipMeta[]> | ParameterChipMeta[];
-    }).items;
+    const items = (
+      extension.options.suggestion as {
+        items: (args: {
+          query: string;
+        }) => Promise<ParameterChipMeta[]> | ParameterChipMeta[];
+      }
+    ).items;
     const result = await items({ query: "anything" });
     expect(result).toEqual([]);
   });

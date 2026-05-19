@@ -32,7 +32,7 @@ export async function GET(
     params,
   }: {
     params: Promise<{ projectId: string; dataSetId: string }>;
-  },
+  }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -47,7 +47,7 @@ export async function GET(
     if (isNaN(projectId) || isNaN(dataSetId)) {
       return NextResponse.json(
         { error: "Invalid path parameter" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -101,7 +101,7 @@ export async function DELETE(
     params,
   }: {
     params: Promise<{ projectId: string; dataSetId: string }>;
-  },
+  }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -116,7 +116,7 @@ export async function DELETE(
     if (isNaN(projectId) || isNaN(dataSetId)) {
       return NextResponse.json(
         { error: "Invalid path parameter" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -145,7 +145,7 @@ export async function DELETE(
     if (!confirmed && assignmentCount > 0) {
       return NextResponse.json(
         { error: "has_assignments", assignmentCount },
-        { status: 409 },
+        { status: 409 }
       );
     }
 

@@ -3,10 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@/components/ui/radio-group";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -89,7 +86,10 @@ function buildPayload(
   return payload;
 }
 
-export function ParameterAddForm({ caseId, existingCount = 0 }: ParameterAddFormProps) {
+export function ParameterAddForm({
+  caseId,
+  existingCount = 0,
+}: ParameterAddFormProps) {
   const t = useTranslations("parameters");
   const queryClient = useQueryClient();
   const [submitting, setSubmitting] = useState(false);
@@ -130,14 +130,11 @@ export function ParameterAddForm({ caseId, existingCount = 0 }: ParameterAddForm
     setSubmitting(true);
     try {
       const body = buildPayload(values, caseId, existingCount);
-      const res = await fetch(
-        `/api/repository/cases/${caseId}/parameters`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        }
-      );
+      const res = await fetch(`/api/repository/cases/${caseId}/parameters`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
       if (!res.ok) {
         let message: string | undefined;
         try {
@@ -269,13 +266,13 @@ export function ParameterAddForm({ caseId, existingCount = 0 }: ParameterAddForm
               )}
             />
             <label
-            htmlFor="parameter-form-sensitive"
-            className="text-xs font-medium"
-            title={t("formSensitiveHelp")}
-          >
-            {t("formSensitive")}
-          </label>
-        </div>
+              htmlFor="parameter-form-sensitive"
+              className="text-xs font-medium"
+              title={t("formSensitiveHelp")}
+            >
+              {t("formSensitive")}
+            </label>
+          </div>
         </div>
       </div>
 

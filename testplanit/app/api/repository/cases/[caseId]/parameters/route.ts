@@ -23,7 +23,7 @@ import { authOptions } from "~/server/auth";
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ caseId: string }> },
+  { params }: { params: Promise<{ caseId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -55,7 +55,7 @@ export async function POST(
     if (err instanceof ZodError) {
       return NextResponse.json(
         { error: "Validation failed", details: err.issues },
-        { status: 400 },
+        { status: 400 }
       );
     }
     console.error("[parameters POST]", err);

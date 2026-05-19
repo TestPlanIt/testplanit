@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  redactValues,
-  type ParameterSchemaEntry,
-} from "./parameterRedaction";
+import { redactValues, type ParameterSchemaEntry } from "./parameterRedaction";
 
 /**
  * Schema fixture: one sensitive parameter (apiKey) and one non-sensitive
@@ -19,7 +16,7 @@ describe("redactValues", () => {
     const out = redactValues(
       { apiKey: "secret123", username: "alice" },
       schemaWithSensitiveApiKey,
-      true,
+      true
     );
 
     expect(out).toEqual({ apiKey: "secret123", username: "alice" });
@@ -29,7 +26,7 @@ describe("redactValues", () => {
     const out = redactValues(
       { apiKey: "secret123", username: "alice" },
       schemaWithSensitiveApiKey,
-      false,
+      false
     );
 
     expect(out).toEqual({ apiKey: "[REDACTED]", username: "alice" });
@@ -42,7 +39,7 @@ describe("redactValues", () => {
     const out = redactValues(
       { apiKey: "secret123", username: "alice" },
       schemaWithSensitiveApiKey,
-      false,
+      false
     );
 
     expect(out.username).toBe("alice");
@@ -56,7 +53,7 @@ describe("redactValues", () => {
     const out = redactValues(
       { apiKey: "secret123", strangerKey: "whoknows" },
       schemaWithSensitiveApiKey,
-      false,
+      false
     );
 
     expect(out).toEqual({
@@ -75,7 +72,7 @@ describe("redactValues", () => {
     const out = redactValues(
       { apiKey: "secret123", username: "alice" },
       [],
-      false,
+      false
     );
 
     expect(out).toEqual({ apiKey: "secret123", username: "alice" });
@@ -90,7 +87,7 @@ describe("redactValues", () => {
         { name: "secretCount", sensitive: true },
         { name: "label", sensitive: false },
       ],
-      false,
+      false
     );
 
     expect(out).toEqual({ secretCount: "[REDACTED]", label: "ok" });

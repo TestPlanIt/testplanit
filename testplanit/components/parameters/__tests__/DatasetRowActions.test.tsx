@@ -42,7 +42,9 @@ const wrap = (children: React.ReactNode) => {
 describe("DatasetRowActions", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-    global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) }) as any;
+    global.fetch = vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => ({}) }) as any;
   });
 
   it("Test 16: renders {count} selected + Delete + Clear buttons", () => {
@@ -58,7 +60,9 @@ describe("DatasetRowActions", () => {
     expect(screen.getByTestId("dataset-row-actions-count")).toHaveTextContent(
       "3 selected"
     );
-    expect(screen.getByTestId("dataset-row-actions-delete")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("dataset-row-actions-delete")
+    ).toBeInTheDocument();
     expect(screen.getByTestId("dataset-row-actions-clear")).toBeInTheDocument();
   });
 
@@ -66,11 +70,7 @@ describe("DatasetRowActions", () => {
     const onClear = vi.fn();
     render(
       wrap(
-        <DatasetRowActions
-          caseId={1}
-          selectedRowIds={[10]}
-          onClear={onClear}
-        />
+        <DatasetRowActions caseId={1} selectedRowIds={[10]} onClear={onClear} />
       )
     );
     fireEvent.click(screen.getByTestId("dataset-row-actions-clear"));

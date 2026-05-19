@@ -31,26 +31,23 @@ const describeIntegration =
 describeIntegration("iteration values override (live DB)", () => {
   const importDeps = async () => {
     const { prisma } = await import("~/lib/prisma");
-    const { materializeIterations } = await import(
-      "~/lib/services/iterationFanOut"
-    );
+    const { materializeIterations } =
+      await import("~/lib/services/iterationFanOut");
     return { prisma, materializeIterations };
   };
 
   const ROLLBACK_SENTINEL = "__OVERRIDE_VALUES_TEST_ROLLBACK__";
 
-   
   async function withRollback<T>(
     prisma: any,
-     
+
     body: (tx: any) => Promise<T>,
-    timeoutMs = 60_000,
+    timeoutMs = 60_000
   ): Promise<T> {
     let captured: T | undefined;
     let captureErr: unknown;
     try {
       await prisma.$transaction(
-         
         async (tx: any) => {
           try {
             captured = await body(tx);
@@ -59,7 +56,7 @@ describeIntegration("iteration values override (live DB)", () => {
           }
           throw new Error(ROLLBACK_SENTINEL);
         },
-        { timeout: timeoutMs },
+        { timeout: timeoutMs }
       );
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -69,12 +66,12 @@ describeIntegration("iteration values override (live DB)", () => {
     return captured as T;
   }
 
-   
   async function seedParameterizedRunCase(tx: any) {
     const creator = await tx.user.findFirst({ select: { id: true } });
     if (!creator) throw new Error("No User row available — seed the DB first");
     const state = await tx.workflows.findFirst({ select: { id: true } });
-    if (!state) throw new Error("No Workflows row available — seed the DB first");
+    if (!state)
+      throw new Error("No Workflows row available — seed the DB first");
     const template = await tx.templates.findFirst({ select: { id: true } });
     if (!template)
       throw new Error("No Templates row available — seed the DB first");
@@ -214,7 +211,7 @@ describeIntegration("iteration values override (live DB)", () => {
         select: { valuesJson: true },
       });
       expect((after!.valuesJson as Record<string, unknown>).username).toBe(
-        "alice-overridden",
+        "alice-overridden"
       );
 
       // Snapshot must be unchanged.
@@ -230,9 +227,7 @@ describeIntegration("iteration values override (live DB)", () => {
         rowIndex: number;
         valuesJson: Record<string, unknown>;
       }>;
-      const matching = snapRows.find(
-        (r) => r.rowIndex === iteration!.rowIndex,
-      );
+      const matching = snapRows.find((r) => r.rowIndex === iteration!.rowIndex);
       expect(matching).toBeDefined();
       // Iteration may correspond to rowIndex 0 (alice) or 1 (bob) depending
       // on findFirst ordering; assert the original value is unchanged from
@@ -250,7 +245,7 @@ describeIntegration("iteration values override (live DB)", () => {
     const out = redactValues(
       { username: "alice", password: "secret1" },
       schema,
-      false,
+      false
     );
     expect(out.username).toBe("alice");
     expect(out.password).toBe("[REDACTED]");

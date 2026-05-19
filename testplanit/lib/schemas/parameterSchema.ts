@@ -112,7 +112,6 @@ export const parameterUpdateSchema = z
     allowedValuesJson: z.array(z.string()).nullish(),
     lookupDataSetId: z.number().int().positive().nullish(),
   })
-  .refine(
-    (val) => Object.keys(val).length > 0,
-    { message: "At least one field must be provided" },
-  );
+  .refine((val) => Object.keys(val).length > 0, {
+    message: "At least one field must be provided",
+  });

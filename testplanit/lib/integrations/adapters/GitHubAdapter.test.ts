@@ -1433,7 +1433,9 @@ describe("GitHubAdapter", () => {
       expect(body.body).toContain("| --- | --- |");
       expect(body.body).toContain("| username | alice |");
       // The trailing period in the prose lead is escaped per the GFM rules
-      expect(body.body).toMatch(/Iteration 3 of 5 failed on `Bad password`\\\./);
+      expect(body.body).toMatch(
+        /Iteration 3 of 5 failed on `Bad password`\\\./
+      );
     });
 
     it("passes plain string description through unchanged (back-compat)", async () => {

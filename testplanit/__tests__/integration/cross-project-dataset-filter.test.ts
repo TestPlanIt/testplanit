@@ -27,7 +27,9 @@ const { mockDb, sessionRef, dataSetFindFirst } = vi.hoisted(() => {
   };
   return {
     mockDb: db,
-    sessionRef: { current: { user: { id: "u-A", name: "U", email: "u@e.com" } } },
+    sessionRef: {
+      current: { user: { id: "u-A", name: "U", email: "u@e.com" } },
+    },
     dataSetFindFirst: dataSetFindFirstFn,
   };
 });
@@ -114,9 +116,7 @@ describe("cross-project dataset read filter (Phase 1 carry-forward)", () => {
       id: 7,
       projectId: 100,
       ownerCaseId: 5,
-      rows: [
-        { id: 1, valuesJson: { username: "alice", password: "secret" } },
-      ],
+      rows: [{ id: 1, valuesJson: { username: "alice", password: "secret" } }],
     });
     mockDb.testCaseParameter.findMany = vi.fn(async () => [
       { name: "username", sensitive: false },
@@ -148,9 +148,7 @@ describe("cross-project dataset read filter (Phase 1 carry-forward)", () => {
       id: 7,
       projectId: 100,
       ownerCaseId: 5,
-      rows: [
-        { id: 1, valuesJson: { username: "alice", password: "secret" } },
-      ],
+      rows: [{ id: 1, valuesJson: { username: "alice", password: "secret" } }],
     });
     mockDb.testCaseParameter.findMany = vi.fn(async () => [
       { name: "username", sensitive: false },

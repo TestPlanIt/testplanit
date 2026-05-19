@@ -34,9 +34,7 @@ test.describe("Parameters - PARAM-07 invariant @parameters", () => {
 
     // The Configure parameters button IS visible (UI-SPEC Surface A — the
     // only sanctioned addition for editable cases).
-    await expect(
-      page.getByTestId("configure-parameters-button")
-    ).toBeVisible();
+    await expect(page.getByTestId("configure-parameters-button")).toBeVisible();
 
     // Switch into edit mode if the page exposes a separate Edit affordance.
     const editButton = page

@@ -22,10 +22,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-const WIZARD_PATH = path.join(
-  __dirname,
-  "GenerateTestCasesWizard.tsx"
-);
+const WIZARD_PATH = path.join(__dirname, "GenerateTestCasesWizard.tsx");
 
 function readWizard(): string {
   return readFileSync(WIZARD_PATH, "utf8");
@@ -68,9 +65,7 @@ describe("GenerateTestCasesWizard — INT-06 plumbing", () => {
 
   it("threads includeParameters into the expand POST body", () => {
     const src = readWizard();
-    const expandFetchIdx = src.indexOf(
-      '"/api/llm/generate-test-cases/expand"'
-    );
+    const expandFetchIdx = src.indexOf('"/api/llm/generate-test-cases/expand"');
     expect(expandFetchIdx).toBeGreaterThan(-1);
     const expandSnippet = src.slice(expandFetchIdx, expandFetchIdx + 1500);
     expect(expandSnippet).toMatch(
@@ -93,13 +88,17 @@ describe("GenerateTestCasesWizard — INT-06 plumbing", () => {
     const urlFetchIdx = src.indexOf('"/api/llm/generate-from-url/submit"');
     expect(urlFetchIdx).toBeGreaterThan(-1);
     const urlSnippet = src.slice(urlFetchIdx, urlFetchIdx + 1500);
-    expect(urlSnippet).toMatch(/includeParameters: includeParameters \|\| undefined/);
+    expect(urlSnippet).toMatch(
+      /includeParameters: includeParameters \|\| undefined/
+    );
   });
 
   it("captures parser warnings from parseAndValidateTestCases and resets between generations", () => {
     const src = readWizard();
     // The parser callsite destructures `warnings` alongside `testCases`.
-    expect(src).toMatch(/warnings:\s*pageWarnings\s*,?\s*\}\s*=\s*parseAndValidateTestCases/);
+    expect(src).toMatch(
+      /warnings:\s*pageWarnings\s*,?\s*\}\s*=\s*parseAndValidateTestCases/
+    );
     // The reset happens at the top of a fresh `generateTestCases` invocation.
     expect(src).toMatch(/setLlmWarnings\(\[\]\)/);
   });
@@ -126,7 +125,16 @@ describe("en-US.json — INT-06 i18n keys", () => {
   it("contains all new generateTestCases keys", () => {
     const en = JSON.parse(
       readFileSync(
-        path.join(__dirname, "..", "..", "..", "..", "..", "messages", "en-US.json"),
+        path.join(
+          __dirname,
+          "..",
+          "..",
+          "..",
+          "..",
+          "..",
+          "messages",
+          "en-US.json"
+        ),
         "utf8"
       )
     );

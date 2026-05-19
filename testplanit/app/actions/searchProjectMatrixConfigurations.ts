@@ -28,9 +28,7 @@ export async function searchProjectMatrixConfigurations(
     const trimmed = query.trim();
     const nameFilter = trimmed.length > 0 ? trimmed.toLowerCase() : null;
 
-    const whereSql = nameFilter
-      ? `AND LOWER(c.name) LIKE $2`
-      : "";
+    const whereSql = nameFilter ? `AND LOWER(c.name) LIKE $2` : "";
     const params: Array<string | number> = [projectId];
     if (nameFilter) params.push(`%${nameFilter}%`);
 

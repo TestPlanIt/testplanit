@@ -124,9 +124,7 @@ vi.mock("./create-issue-dialog", () => ({
     open ? (
       <div
         data-testid="create-issue-dialog"
-        data-default-values={
-          defaultValues ? JSON.stringify(defaultValues) : ""
-        }
+        data-default-values={defaultValues ? JSON.stringify(defaultValues) : ""}
       />
     ) : null,
 }));
@@ -136,9 +134,7 @@ vi.mock("./create-issue-jira-form", () => ({
     open ? (
       <div
         data-testid="create-issue-jira-form"
-        data-default-values={
-          defaultValues ? JSON.stringify(defaultValues) : ""
-        }
+        data-default-values={defaultValues ? JSON.stringify(defaultValues) : ""}
       />
     ) : null,
 }));
@@ -800,10 +796,7 @@ describe("SearchIssuesDialog", () => {
       mockFetchPrefill(prefill);
 
       render(
-        <SearchIssuesDialog
-          {...defaultProps}
-          iterationContext={iterationCtx}
-        />,
+        <SearchIssuesDialog {...defaultProps} iterationContext={iterationCtx} />
       );
 
       // Click the "Create New Issue" button (only rendered when an
@@ -826,7 +819,7 @@ describe("SearchIssuesDialog", () => {
 
       const dialog = screen.getByTestId("create-issue-jira-form");
       const defaults = JSON.parse(
-        dialog.getAttribute("data-default-values") ?? "{}",
+        dialog.getAttribute("data-default-values") ?? "{}"
       );
       expect(defaults.title).toBe(prefill.title);
       expect(defaults.description).toEqual(prefill.description);

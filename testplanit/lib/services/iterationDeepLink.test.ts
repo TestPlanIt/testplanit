@@ -10,9 +10,7 @@ describe("buildIterationDeepLink", () => {
       repositoryCaseId: 199,
     });
     // Format MUST match `/projects/runs/{projectId}/{runId}?iteration=N&selectedCase=ID`
-    expect(url).toBe(
-      "/projects/runs/7/42?iteration=3&selectedCase=199"
-    );
+    expect(url).toBe("/projects/runs/7/42?iteration=3&selectedCase=199");
   });
 
   it("URL is parseable and round-trips iteration + selectedCase query params", () => {

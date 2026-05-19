@@ -47,20 +47,32 @@ describe("extractIterationIndex", () => {
   });
 
   it("returns null when the value is not a finite positive integer", () => {
-    expect(extractIterationIndex({ iteration: "abc" }, ["iteration"])).toBeNull();
-    expect(extractIterationIndex({ iteration: "-1" }, ["iteration"])).toBeNull();
+    expect(
+      extractIterationIndex({ iteration: "abc" }, ["iteration"])
+    ).toBeNull();
+    expect(
+      extractIterationIndex({ iteration: "-1" }, ["iteration"])
+    ).toBeNull();
     expect(extractIterationIndex({ iteration: "0" }, ["iteration"])).toBeNull();
     expect(extractIterationIndex({ iteration: "" }, ["iteration"])).toBeNull();
-    expect(extractIterationIndex({ iteration: "NaN" }, ["iteration"])).toBeNull();
+    expect(
+      extractIterationIndex({ iteration: "NaN" }, ["iteration"])
+    ).toBeNull();
   });
 
   it("WR-09: rejects non-strict integer forms (3.7, 3.0, 3foo) instead of silently truncating", () => {
     // Previously parseInt accepted these and bucketed them into 3.
     // The strict regex form forces CI emitters to send canonical
     // unsigned integers — anything else surfaces as "no iteration."
-    expect(extractIterationIndex({ iteration: "3.7" }, ["iteration"])).toBeNull();
-    expect(extractIterationIndex({ iteration: "3.0" }, ["iteration"])).toBeNull();
-    expect(extractIterationIndex({ iteration: "3foo" }, ["iteration"])).toBeNull();
+    expect(
+      extractIterationIndex({ iteration: "3.7" }, ["iteration"])
+    ).toBeNull();
+    expect(
+      extractIterationIndex({ iteration: "3.0" }, ["iteration"])
+    ).toBeNull();
+    expect(
+      extractIterationIndex({ iteration: "3foo" }, ["iteration"])
+    ).toBeNull();
     expect(extractIterationIndex({ iteration: " 3" }, ["iteration"])).toBe(3);
     expect(extractIterationIndex({ iteration: "3 " }, ["iteration"])).toBe(3);
   });
@@ -68,16 +80,14 @@ describe("extractIterationIndex", () => {
   it("returns null when no configured property is present", () => {
     expect(extractIterationIndex({}, ["iteration"])).toBeNull();
     expect(extractIterationIndex(undefined, ["iteration"])).toBeNull();
-    expect(
-      extractIterationIndex({ otherKey: "5" }, ["iteration"])
-    ).toBeNull();
+    expect(extractIterationIndex({ otherKey: "5" }, ["iteration"])).toBeNull();
   });
 
   it("returns the first matching property when multiple names are configured", () => {
-    const result = extractIterationIndex(
-      { dataRow: "7", iteration: "3" },
-      ["iteration", "dataRow"]
-    );
+    const result = extractIterationIndex({ dataRow: "7", iteration: "3" }, [
+      "iteration",
+      "dataRow",
+    ]);
     // First match by metadata key iteration order; either is acceptable
     // per the spec ("first parseable iteration value found by iterating
     // Object.entries"), so just assert it picked one of the two.
@@ -158,9 +168,7 @@ describe("routeToIteration — cap enforcement (T-06-01-03)", () => {
     // return one entry, update succeed.
     const tx = {
       testRunCaseIteration: {
-        upsert: vi
-          .fn()
-          .mockResolvedValue({ id: 42, ciExtended: true }),
+        upsert: vi.fn().mockResolvedValue({ id: 42, ciExtended: true }),
         findMany: vi.fn().mockResolvedValue([{ statusId: 10 }]),
       },
       testRunCases: {
@@ -202,9 +210,7 @@ describe("routeToIteration — rollup respects soft-delete (CR-04)", () => {
     // the submit-result filter at submit-result/route.ts:507.
     const tx = {
       testRunCaseIteration: {
-        upsert: vi
-          .fn()
-          .mockResolvedValue({ id: 99, ciExtended: true }),
+        upsert: vi.fn().mockResolvedValue({ id: 99, ciExtended: true }),
         findMany: vi.fn().mockResolvedValue([{ statusId: 10 }]),
       },
       testRunCases: {

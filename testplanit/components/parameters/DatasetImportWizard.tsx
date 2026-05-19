@@ -93,7 +93,7 @@ export function DatasetImportWizard({
       t("importStep3Label"),
       t("importStep4Label"),
     ],
-    [t],
+    [t]
   );
 
   const validRowCount = Math.max(0, csvRows.length - errorRowCount);
@@ -118,13 +118,12 @@ export function DatasetImportWizard({
         allowedValuesJson: p.allowedValuesJson,
         lookupAllowedValues: p.lookupAllowedValues,
       })),
-    [parameters],
+    [parameters]
   );
 
   const mapStepParameters = useMemo(
-    () =>
-      parameters.map((p) => ({ name: p.name, required: p.required })),
-    [parameters],
+    () => parameters.map((p) => ({ name: p.name, required: p.required })),
+    [parameters]
   );
 
   const handleFileSelected = (_file: File, text: string) => {
@@ -167,7 +166,7 @@ export function DatasetImportWizard({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ mode, mapping, rows: csvRows }),
-        },
+        }
       );
       if (!res.ok) {
         const j = await res.json().catch(() => ({}) as Record<string, unknown>);
@@ -184,9 +183,11 @@ export function DatasetImportWizard({
       toast.success(
         t("importSuccess", {
           count: json?.created ?? csvRows.length,
-        }),
+        })
       );
-      void queryClient.invalidateQueries({ queryKey: ["zenstack", "DataSetRow"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["zenstack", "DataSetRow"],
+      });
       void queryClient.invalidateQueries({ queryKey: ["zenstack", "DataSet"] });
       reset();
       onClose();
@@ -252,9 +253,7 @@ export function DatasetImportWizard({
         >
           <DialogHeader className="px-6 pt-6 pb-4 border-b">
             <DialogTitle>{t("datasetImportCsv")}</DialogTitle>
-            <DialogDescription>
-              {stepLabels[currentStep - 1]}
-            </DialogDescription>
+            <DialogDescription>{stepLabels[currentStep - 1]}</DialogDescription>
           </DialogHeader>
 
           <div className="px-6 py-4 border-b bg-muted/30">
@@ -309,13 +308,8 @@ export function DatasetImportWizard({
         </DialogContent>
       </Dialog>
 
-      <AlertDialog
-        open={showCancelConfirm}
-        onOpenChange={setShowCancelConfirm}
-      >
-        <AlertDialogContent
-          data-testid="dataset-import-wizard-cancel-confirm"
-        >
+      <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <AlertDialogContent data-testid="dataset-import-wizard-cancel-confirm">
           <AlertDialogHeader>
             <AlertDialogTitle>{t("cancelUploadTitle")}</AlertDialogTitle>
             <AlertDialogDescription>

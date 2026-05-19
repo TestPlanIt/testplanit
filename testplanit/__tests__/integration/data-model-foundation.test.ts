@@ -57,7 +57,11 @@ async function fetchAuthUser(userId: string) {
 // Module-level findings recorder for the @@validate / @@deny smoke-tests.
 // Emitted in afterAll so the user (and SUMMARY.md author) sees a clear
 // summary of the runtime behavior of policies under enhance().
-type Finding = { check: string; outcome: "FIRES" | "DOES_NOT_FIRE"; note?: string };
+type Finding = {
+  check: string;
+  outcome: "FIRES" | "DOES_NOT_FIRE";
+  note?: string;
+};
 const findings: Finding[] = [];
 function record(check: string, outcome: Finding["outcome"], note?: string) {
   findings.push({ check, outcome, note });
@@ -287,10 +291,8 @@ afterAll(async () => {
   await prisma.$disconnect();
   // Emit findings table so the test summary captures policy runtime behavior.
   if (findings.length > 0) {
-     
     console.log("\n[Plan 01-03] Policy runtime findings:");
     for (const f of findings) {
-       
       console.log(
         `  - ${f.check}: ${f.outcome}${f.note ? ` (${f.note})` : ""}`
       );

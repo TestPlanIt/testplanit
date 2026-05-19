@@ -545,9 +545,7 @@ describe("TOKEN-05: prompt budget estimation and truncation", () => {
           id: "tc_1",
           name: "TC",
           fieldValues: {},
-          parameters: [
-            { name: "env", type: "STRING", sensitive: false },
-          ],
+          parameters: [{ name: "env", type: "STRING", sensitive: false }],
           starterDataset: "TRUNCATED",
         },
       ],

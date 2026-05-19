@@ -124,9 +124,9 @@ describe("computeWorstOfStatus — Rule 1: no recorded results", () => {
 
 describe("computeWorstOfStatus — Rule 2: any failure dominates", () => {
   it("returns the only failure status when one iteration failed", () => {
-    expect(
-      computeWorstOfStatus([iter(STATUSES.failed.id)], MAP)
-    ).toBe(STATUSES.failed.id);
+    expect(computeWorstOfStatus([iter(STATUSES.failed.id)], MAP)).toBe(
+      STATUSES.failed.id
+    );
   });
 
   it("any failure beats any number of successes / skipped / untested", () => {
@@ -150,10 +150,7 @@ describe("computeWorstOfStatus — Rule 2: any failure dominates", () => {
   });
 
   it("on a failure tie, lowest order wins (exception.order=6 < failed.order=7)", () => {
-    const iterations = [
-      iter(STATUSES.failed.id),
-      iter(STATUSES.exception.id),
-    ];
+    const iterations = [iter(STATUSES.failed.id), iter(STATUSES.exception.id)];
     expect(computeWorstOfStatus(iterations, MAP)).toBe(STATUSES.exception.id);
   });
 
@@ -170,9 +167,9 @@ describe("computeWorstOfStatus — Rule 2: any failure dominates", () => {
 
 describe("computeWorstOfStatus — Rule 3: no failures, dominant success wins", () => {
   it("returns the success status when only one iteration passed", () => {
-    expect(
-      computeWorstOfStatus([iter(STATUSES.passed.id)], MAP)
-    ).toBe(STATUSES.passed.id);
+    expect(computeWorstOfStatus([iter(STATUSES.passed.id)], MAP)).toBe(
+      STATUSES.passed.id
+    );
   });
 
   it("ignores untested iterations when at least one success exists (3 passed + 1 untested → passed)", () => {
@@ -196,21 +193,14 @@ describe("computeWorstOfStatus — Rule 3: no failures, dominant success wins", 
   });
 
   it("on a success tie, lowest order wins (passed.order=1 < passed2.order=4)", () => {
-    const iterations = [
-      iter(STATUSES.passed.id),
-      iter(STATUSES.passed2.id),
-    ];
+    const iterations = [iter(STATUSES.passed.id), iter(STATUSES.passed2.id)];
     expect(computeWorstOfStatus(iterations, MAP)).toBe(STATUSES.passed.id);
   });
 });
 
 describe("computeWorstOfStatus — Rule 4: some recorded, no success/failure → dominant", () => {
   it("returns the only recorded status (skipped) ignoring nulls", () => {
-    const iterations = [
-      iter(null),
-      iter(null),
-      iter(STATUSES.skipped.id),
-    ];
+    const iterations = [iter(null), iter(null), iter(STATUSES.skipped.id)];
     expect(computeWorstOfStatus(iterations, MAP)).toBe(STATUSES.skipped.id);
   });
 
@@ -224,10 +214,7 @@ describe("computeWorstOfStatus — Rule 4: some recorded, no success/failure →
   });
 
   it("on a tie among recorded non-success/non-failure, lowest order wins (skipped.order=2 < blocked.order=8)", () => {
-    const iterations = [
-      iter(STATUSES.skipped.id),
-      iter(STATUSES.blocked.id),
-    ];
+    const iterations = [iter(STATUSES.skipped.id), iter(STATUSES.blocked.id)];
     expect(computeWorstOfStatus(iterations, MAP)).toBe(STATUSES.skipped.id);
   });
 });
@@ -254,8 +241,6 @@ describe("computeWorstOfStatus — defensive cases", () => {
     // Iterations with statusId set (but unknown) are NOT 'no result' — they
     // count as recorded but resolve to no known status, so the dominant-by-tier
     // logic finds no candidate and returns null.
-    expect(
-      computeWorstOfStatus([iter(99998), iter(99999)], MAP)
-    ).toBeNull();
+    expect(computeWorstOfStatus([iter(99998), iter(99999)], MAP)).toBeNull();
   });
 });

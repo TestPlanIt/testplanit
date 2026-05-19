@@ -61,7 +61,7 @@ function creatorMeta(session: ParameterMutationSession) {
 async function bumpVersionAndSnapshot(
   tx: any,
   caseId: number,
-  session: ParameterMutationSession,
+  session: ParameterMutationSession
 ) {
   await tx.repositoryCases.update({
     where: { id: caseId },
@@ -74,7 +74,7 @@ export async function createParameterInTransaction(
   tx: any,
   caseId: number,
   data: ParameterCreateData,
-  session: ParameterMutationSession,
+  session: ParameterMutationSession
 ): Promise<unknown> {
   const created = await tx.testCaseParameter.create({ data });
   await updateHasParameters(caseId, tx);
@@ -87,7 +87,7 @@ export async function updateParameterInTransaction(
   caseId: number,
   paramId: number,
   data: ParameterUpdateData,
-  session: ParameterMutationSession,
+  session: ParameterMutationSession
 ): Promise<unknown> {
   const existing = await tx.testCaseParameter.findFirst({
     where: { id: paramId, testCaseId: caseId, isDeleted: false },
@@ -118,7 +118,7 @@ export async function softDeleteParameterInTransaction(
   tx: any,
   caseId: number,
   paramId: number,
-  session: ParameterMutationSession,
+  session: ParameterMutationSession
 ): Promise<void> {
   await tx.testCaseParameter.update({
     where: { id: paramId },

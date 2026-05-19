@@ -76,7 +76,9 @@ describe("IterationSidebarGeneratingState", () => {
     expect(root).toHaveAttribute("data-job-id", "job-2");
     // Progress is rendered via the next-intl-mocked counter key, so we
     // assert the bus state reflects the update instead of the DOM text.
-    const live = iterationProgressBus.snapshot().find((j) => j.jobId === "job-2");
+    const live = iterationProgressBus
+      .snapshot()
+      .find((j) => j.jobId === "job-2");
     expect(live?.processed).toBe(250);
     expect(live?.state).toBe("active");
   });

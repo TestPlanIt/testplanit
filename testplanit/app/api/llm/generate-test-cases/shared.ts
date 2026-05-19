@@ -58,8 +58,7 @@ const llmParameterSchema = z
     if (!isSelect && val.allowedValuesJson != null) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message:
-          "Non-SELECT parameters must not specify allowedValuesJson",
+        message: "Non-SELECT parameters must not specify allowedValuesJson",
         path: ["allowedValuesJson"],
       });
     }
@@ -1359,9 +1358,7 @@ export function parseAndValidateTestCases(
       return out;
     }) || [];
 
-  return warnings.length > 0
-    ? { testCases, warnings }
-    : { testCases };
+  return warnings.length > 0 ? { testCases, warnings } : { testCases };
 }
 
 /**

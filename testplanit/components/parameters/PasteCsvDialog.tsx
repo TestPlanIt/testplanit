@@ -87,8 +87,7 @@ export function PasteCsvDialog({
           if (!result.success) {
             rowErrors.push({
               rowIndex: idx,
-              message:
-                result.error?.issues?.[0]?.message ?? "Invalid value",
+              message: result.error?.issues?.[0]?.message ?? "Invalid value",
             });
           }
         });
@@ -171,10 +170,7 @@ export function PasteCsvDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent
-        className="sm:max-w-2xl"
-        data-testid="paste-csv-dialog"
-      >
+      <DialogContent className="sm:max-w-2xl" data-testid="paste-csv-dialog">
         <DialogHeader>
           <DialogTitle>{t("datasetPasteCsv")}</DialogTitle>
           <DialogDescription>{t("pasteCsvPlaceholder")}</DialogDescription>
@@ -252,9 +248,7 @@ export function PasteCsvDialog({
             variant="default"
             onClick={handleSubmit}
             disabled={
-              submitting ||
-              parsed.rows.length === 0 ||
-              parsed.errors.length > 0
+              submitting || parsed.rows.length === 0 || parsed.errors.length > 0
             }
             data-testid="paste-csv-submit"
           >

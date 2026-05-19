@@ -950,21 +950,18 @@ export function DatasetTab({
   // mode all rows are in memory (`rows`); in owner-bound mode we fetch every
   // row id from the dataset endpoint without `?page=` so the page-scoped API
   // does not gate the operation.
-  const togglePageRowIds = useCallback(
-    (pageRowIds: number[]) => {
-      setSelectedRowIds((prev) => {
-        const next = new Set(prev);
-        const allSelected = pageRowIds.every((id) => next.has(id));
-        if (allSelected) {
-          for (const id of pageRowIds) next.delete(id);
-        } else {
-          for (const id of pageRowIds) next.add(id);
-        }
-        return next;
-      });
-    },
-    []
-  );
+  const togglePageRowIds = useCallback((pageRowIds: number[]) => {
+    setSelectedRowIds((prev) => {
+      const next = new Set(prev);
+      const allSelected = pageRowIds.every((id) => next.has(id));
+      if (allSelected) {
+        for (const id of pageRowIds) next.delete(id);
+      } else {
+        for (const id of pageRowIds) next.add(id);
+      }
+      return next;
+    });
+  }, []);
 
   const selectAllAcrossPages = useCallback(
     async (pageRowIds: number[]) => {
@@ -1084,8 +1081,7 @@ export function DatasetTab({
           ).length;
           const allOnPageSelected =
             pageRowIds.length > 0 && selectedOnPage === pageRowIds.length;
-          const someOnPageSelected =
-            selectedOnPage > 0 && !allOnPageSelected;
+          const someOnPageSelected = selectedOnPage > 0 && !allOnPageSelected;
           const allAcrossPagesSelected =
             totalRows > 0 && selectedRowIds.size >= totalRows;
           const tooltipKey = isShiftPressed
@@ -1099,17 +1095,13 @@ export function DatasetTab({
                 <div className="flex items-center justify-center">
                   <Checkbox
                     checked={
-                      someOnPageSelected
-                        ? "indeterminate"
-                        : allOnPageSelected
+                      someOnPageSelected ? "indeterminate" : allOnPageSelected
                     }
                     disabled={isSelectAllPending}
                     onCheckedChange={() => {
                       /* handled in onClick to capture shiftKey */
                     }}
-                    onClick={(e) =>
-                      handleSelectAllClick(e, pageRowIds)
-                    }
+                    onClick={(e) => handleSelectAllClick(e, pageRowIds)}
                     aria-label={t(tooltipKey, { count: totalRows })}
                     data-testid="dataset-select-all"
                   />
@@ -2164,7 +2156,8 @@ export function DatasetTab({
                     </Link>
                   </li>
                 ))}
-                {deleteColumnUsage.count > deleteColumnUsage.sampleCases.length && (
+                {deleteColumnUsage.count >
+                  deleteColumnUsage.sampleCases.length && (
                   <li className="italic">
                     {t("datasetColumnDeleteAndMore", {
                       count:

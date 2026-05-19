@@ -545,7 +545,8 @@ export function CreateIssueDialog({
         // so Jira/ADO can render their native rich formats. If the user
         // edited, send the edited string (their changes win).
         const submittedDescription: any =
-          originalDocRef.current && values.description === initialMarkdownPreview
+          originalDocRef.current &&
+          values.description === initialMarkdownPreview
             ? originalDocRef.current
             : values.description;
 
