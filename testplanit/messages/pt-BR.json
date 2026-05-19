@@ -1399,7 +1399,7 @@
         "outboundHmacActiveSecret": "Ativo",
         "outboundHmacInactiveSecret": "Inativo",
         "outboundHmacRetiringSecret": "Aposentadoria",
-        "outboundHmacAutoRetireIn": "Aposenta-se automaticamente em {days, number} dias",
+        "outboundHmacAutoRetireIn": "Aposentadoria automática em {days, number} dias",
         "outboundHmacRotateButton": "Segredo de rotação",
         "outboundHmacExtendButton": "Prorrogar por 7 dias",
         "outboundHmacRetireNowButton": "Aposente-se agora",
@@ -3963,7 +3963,7 @@
       "forceAllUsersDialogConfirm": "Mudança de Força",
       "saved": "Configurações de segurança salvas",
       "saveFailed": "Falha ao salvar as configurações de segurança",
-      "forceAllSuccess": "É necessário alterar a senha para {count, number} usuários",
+      "forceAllSuccess": "É necessário alterar a senha para os usuários {count, number}",
       "forceAllFailed": "Falha ao forçar a alteração de senha"
     },
     "apiTokens": {

@@ -620,7 +620,7 @@
       "failedToUpdateRepositoryStatus": "저장소 상태 업데이트에 실패했습니다."
     },
     "pageTitles": {
-      "appName": "TestPlanIt",
+      "appName": "테스트플랜잇",
       "dashboard": "계기반",
       "twoFactorVerification": "2단계 인증",
       "changePassword": "비밀번호 변경",
@@ -1295,7 +1295,7 @@
         "inboundAddButtonAllConfigured": "인바운드 어댑터가 이미 구성되었습니다.",
         "inboundAddButtonNoIntegration": "인바운드 웹훅을 추가하기 전에 이 프로젝트에 이슈 통합을 할당하세요.",
         "inboundEmptyWithIntegration": "구성된 인바운드 웹훅이 없습니다. <link>할당된 이슈 통합에서 이슈 업데이트를 받으려면</link> 하나를 추가하세요.",
-        "inboundEmptyNoIntegration": "An <link>Issue Integration</link> is required to receive inbound issue updates. Assign one to your project to get started.",
+        "inboundEmptyNoIntegration": "이슈 업데이트를 수신하려면 <link>이슈 통합</link> 이 필요합니다. 시작하려면 프로젝트에 이슈 통합 을 할당하세요.",
         "deliveriesEmptyNoConfigs": "아직 웹훅 전송이 없습니다. 수신 또는 발신 웹훅을 다른 탭에서 생성하여 웹훅 수신을 시작하세요.",
         "noConfig": "웹훅이 구성되지 않았습니다.",
         "createButton": "웹훅 생성",
@@ -1440,7 +1440,7 @@
         "inboundGithubTitle": "GitHub 인바운드 웹훅",
         "inboundGithubScopeHint": "GitHub <code>이슈</code> 이벤트는 연결된 TestPlanIt 이슈를 업데이트합니다. 풀 리퀘스트 및 이슈 댓글 이벤트는 허용되지만 아직 이슈를 업데이트하지는 않습니다.",
         "inboundGitlabTitle": "GitLab 인바운드 웹훅",
-        "inboundGitlabScopeHint": "GitLab <code>이슈 훅</code> 이벤트는 연결된 TestPlanIt 이슈를 업데이트합니다. 다른 이벤트 유형도 허용되지만 이슈는 업데이트되지 않습니다.",
+        "inboundGitlabScopeHint": "GitLab <code>이슈 훅</code> 이벤트는 연결된 TestPlanIt 이슈를 업데이트합니다. 다른 이벤트 유형도 허용되지만 이슈는 업데이트하지 않습니다.",
         "inboundGiteaTitle": "Gitea 인바운드 웹훅",
         "inboundGiteaScopeHint": "Gitea <code>이슈</code> 이벤트는 연결된 TestPlanIt 이슈를 업데이트합니다. 다른 이벤트 유형도 허용되지만 이슈는 업데이트되지 않습니다.",
         "inboundAdoTitle": "Azure DevOps 인바운드 웹훅",
@@ -2318,7 +2318,7 @@
         },
         "page4": {
           "title": "미리보기 가져오기",
-          "showing": "{start, number}-{end, number} {total, number} 개의 사례를 표시합니다.",
+          "showing": "{start, number}-{end, number} {total, number} 건을 표시합니다.",
           "case": "케이스 {number, number}"
         }
       }
@@ -3744,7 +3744,7 @@
       },
       "delete": {
         "title": "프로젝트 삭제",
-        "confirmMessage": "<strong>{name}</strong>를 정말로 삭제하시겠습니까?"
+        "confirmMessage": "<strong>{name}</strong>를 삭제하시겠습니까?"
       }
     },
     "templates": {
@@ -4033,7 +4033,7 @@
       },
       "delete": {
         "title": "워크플로 삭제",
-        "confirmMessage": "<strong>{name}</strong>를 정말로 삭제하시겠습니까?"
+        "confirmMessage": "<strong>{name}</strong>를 삭제하시겠습니까?"
       },
       "setDefault": {
         "title": "기본 워크플로 설정",

@@ -620,7 +620,7 @@
       "failedToUpdateRepositoryStatus": "更新儲存庫狀態失敗"
     },
     "pageTitles": {
-      "appName": "TestPlanIt",
+      "appName": "測試計劃",
       "dashboard": "儀表板",
       "twoFactorVerification": "雙重驗證",
       "changePassword": "更改密碼",
@@ -1822,7 +1822,7 @@
     },
     "messages": {
       "createSuccess": "會話創建成功",
-      "createSuccessMultiple": "{count, number} 會話建立成功",
+      "createSuccessMultiple": "{count, number} 會話創建成功",
       "duplicateSuccess": "會話已成功複製",
       "duplicateSuccessMultiple": "{count} 會話已成功複製"
     },

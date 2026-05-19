@@ -620,7 +620,7 @@
       "failedToUpdateRepositoryStatus": "Không thể cập nhật trạng thái kho lưu trữ."
     },
     "pageTitles": {
-      "appName": "TestPlanIt",
+      "appName": "Kế hoạch thử nghiệm",
       "dashboard": "Bảng điều khiển",
       "twoFactorVerification": "Xác thực hai yếu tố",
       "changePassword": "Thay đổi mật khẩu",
@@ -1442,7 +1442,7 @@
         "inboundGitlabTitle": "Webhook đến từ GitLab",
         "inboundGitlabScopeHint": "Sự kiện GitLab <code>Issue Hook</code> cập nhật các vấn đề TestPlanIt được liên kết. Các loại sự kiện khác được chấp nhận nhưng không cập nhật vấn đề.",
         "inboundGiteaTitle": "Webhook đến của Gitea",
-        "inboundGiteaScopeHint": "Gitea <code>issues</code> events cập nhật các vấn đề TestPlanIt được liên kết. Các loại sự kiện khác được chấp nhận nhưng không cập nhật vấn đề.",
+        "inboundGiteaScopeHint": "Sự kiện Gitea <code>cập nhật các sự kiện</code> được liên kết với các sự kiện TestPlanIt. Các loại sự kiện khác được chấp nhận nhưng không cập nhật sự kiện.",
         "inboundAdoTitle": "Webhook đến từ Azure DevOps",
         "inboundAdoScopeHint": "Sự kiện Azure DevOps <code>workitem.updated</code> cập nhật các vấn đề TestPlanIt được liên kết. Các sự kiện khác được chấp nhận nhưng không cập nhật vấn đề.",
         "inboundAdoUsername": "Tên người dùng",

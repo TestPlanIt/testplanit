@@ -1313,7 +1313,7 @@
         "deleteConfirm": "Supprimer cette configuration de webhook ? Les livraisons entrantes seront rejetées.",
         "sendTest": "Envoyer un webhook de test",
         "testSuccess": "Test webhook accepté (HTTP {statusCode, number}, résultat : {outcome})",
-        "testFailure": "Échec du test webhook (HTTP {statusCode, number}): {error}",
+        "testFailure": "Échec du test du webhook (HTTP {statusCode, number}): {error}",
         "saveError": "Échec de l'enregistrement de la configuration du webhook",
         "lastReceived": "Dernière réception : {timestamp}",
         "lastReceivedLabel": "Dernière réception :",

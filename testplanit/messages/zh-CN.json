@@ -620,7 +620,7 @@
       "failedToUpdateRepositoryStatus": "更新存储库状态失败"
     },
     "pageTitles": {
-      "appName": "TestPlanIt",
+      "appName": "测试计划",
       "dashboard": "仪表板",
       "twoFactorVerification": "双因素验证",
       "changePassword": "更改密码",
@@ -6795,7 +6795,7 @@
       "footerNewCount": "{newCount, plural, one {# 新标签} other {# 新标签}} 将创建",
       "newTagsPopoverTitle": "要创建的新标签",
       "applying": "正在申请……",
-      "applySuccess": "{tagCount, plural, one {# tag} other {# tags}} applied to {entityCount, plural, one {# entity} other {# entities}}",
+      "applySuccess": "{tagCount, plural, one {# 标签} other {# 标签}} 应用于 {entityCount, plural, one {# 实体} other {# 实体集}}",
       "applySuccessNewTags": "{tagCount, plural, one {# tag} other {# tags}} applied to {entityCount, plural, one {# entity} other {# entities}}, {newCount, plural, one {# new tag} other {# new tags}} created",
       "applyError": "标签应用失败，请重试。",
       "suggestedTags": "建议标签",

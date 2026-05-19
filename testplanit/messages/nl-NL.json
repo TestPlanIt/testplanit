@@ -629,7 +629,7 @@
       "signIn": "Inloggen",
       "verifyEmail": "E-mailadres verifiëren",
       "trialExpired": "Proefperiode verlopen",
-      "linkSsoAccount": "Koppel SSO-account",
+      "linkSsoAccount": "SSO-account koppelen",
       "userProfile": "Gebruikersprofiel",
       "users": "Gebruikers",
       "issues": "Problemen",
@@ -1313,7 +1313,7 @@
         "deleteConfirm": "Als u deze webhookconfiguratie wilt verwijderen, worden inkomende leveringen geweigerd.",
         "sendTest": "Testwebhook verzenden",
         "testSuccess": "Testwebhook geaccepteerd (HTTP {statusCode, number}, resultaat: {outcome})",
-        "testFailure": "Testwebhook mislukt (HTTP {statusCode, number}): {error}",
+        "testFailure": "Test webhook mislukt (HTTP {statusCode, number}): {error}",
         "saveError": "Het opslaan van de webhookconfiguratie is mislukt.",
         "lastReceived": "Laatst ontvangen: {timestamp}",
         "lastReceivedLabel": "Laatst ontvangen:",
@@ -1542,7 +1542,7 @@
         "toastBulkReplaySuccess": "Bulk replay gestart · batch {batchId}",
         "toastBulkReplayFailed": "Bulk replay mislukt: {error}",
         "toastReEnableSuccess": "Webhook opnieuw ingeschakeld",
-        "toastReEnableFailed": "Het opnieuw inschakelen is mislukt: {error}"
+        "toastReEnableFailed": "Opnieuw inschakelen mislukt: {error}"
       },
       "aiModels": {
         "description": "Configureer AI-modellen voor het genereren en analyseren van intelligente testcases",
@@ -3958,7 +3958,7 @@
       "saveChanges": "Wijzigingen opslaan",
       "forceAllUsers": "Alle gebruikers dwingen hun wachtwoord te wijzigen",
       "forceAllUsersDialogTitle": "Wachtwoordwijziging afdwingen voor alle gebruikers",
-      "forceAllUsersDialogDescription": "This will require {count, number} credential-based users to change their password on next login.",
+      "forceAllUsersDialogDescription": "Dit vereist {count, number} inloggegevens gebaseerde gebruikers om hun wachtwoord te wijzigen bij de volgende login.",
       "forceAllUsersDialogWarning": "Deze actie kan niet ongedaan gemaakt worden.",
       "forceAllUsersDialogConfirm": "Krachtverandering",
       "saved": "Beveiligingsinstellingen opgeslagen",
@@ -4559,7 +4559,7 @@
       },
       "form": {
         "success": "Integratie van het probleem succesvol opgeslagen.",
-        "successDescription": "De integratie met de issue-functionaliteit is geconfigureerd en klaar voor gebruik.",
+        "successDescription": "De issue-integratie is geconfigureerd en klaar voor gebruik.",
         "testing": "Verbinding testen..."
       },
       "oauth": {
