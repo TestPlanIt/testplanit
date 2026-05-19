@@ -78,6 +78,10 @@ Deleting a state marks it as inactive.
 You can neither delete nor disable a Workflow State if it is the last of its type in the scope (Test Cases, Test Runs, Sessions)
 :::
 
+## Review & Approval gates
+
+Any workflow state can be turned into an **approval gate** — testers must request a review and have it approved before a Test Case, Test Run, or Test Session can be transitioned into (or across) the gated state. See the dedicated [Review & Approval](./review-approvals.md) page for the full feature reference, including how to mark a state as gated from the workflow edit form, project- and system-level toggles, the reviewer inbox, and behavior under bulk operations.
+
 ## Using Workflows (End Users)
 
 Once workflow states are configured by administrators, team members use them to track the lifecycle of test cases, runs, and sessions.

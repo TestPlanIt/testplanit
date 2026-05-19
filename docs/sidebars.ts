@@ -65,6 +65,7 @@ const sidebars: SidebarsConfig = {
             'user-guide/templates-fields', // Corresponds to templates-fields.md
             'user-guide/quickscript-templates', // QuickScript templates for test case export
             'user-guide/workflows', // Corresponds to workflows.md
+            'user-guide/review-approvals', // Review & Approval gates on workflow transitions
             'user-guide/statuses', // Corresponds to statuses.md
             'user-guide/milestone-types', // Corresponds to milestone-types.md
             'user-guide/configurations', // Corresponds to configurations.md
