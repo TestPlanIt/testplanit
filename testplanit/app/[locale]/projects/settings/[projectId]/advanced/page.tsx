@@ -1,5 +1,6 @@
 "use client";
 
+import { ProjectIcon } from "@/components/ProjectIcon";
 import {
   Card,
   CardContent,
@@ -25,7 +26,14 @@ export default function AdvancedPage() {
   const { data: project, isLoading: projectLoading } = useFindUniqueProjects(
     {
       where: { id: projectId },
-      select: { id: true, reviewWorkflowEnabled: true },
+      // `name` + `iconUrl` are needed for the shared project-settings header
+      // (matches the quickscript / ai-models sibling pages).
+      select: {
+        id: true,
+        name: true,
+        iconUrl: true,
+        reviewWorkflowEnabled: true,
+      },
     },
     {
       enabled: status === "authenticated" && Number.isFinite(projectId),
@@ -77,9 +85,18 @@ export default function AdvancedPage() {
   return (
     <main data-testid="advanced-settings-page">
       <Card>
-        <CardHeader>
-          <CardTitle>{t("title")}</CardTitle>
-          <CardDescription>{t("description")}</CardDescription>
+        <CardHeader className="w-full">
+          <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
+            <CardTitle>
+              <span>{t("title")}</span>
+            </CardTitle>
+          </div>
+          <CardDescription className="uppercase">
+            <span className="flex items-center gap-2">
+              <ProjectIcon iconUrl={project?.iconUrl} />
+              {project?.name}
+            </span>
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Review workflow toggle (Phase 2's single Advanced toggle).
@@ -87,25 +104,26 @@ export default function AdvancedPage() {
               below without restructuring this layout. */}
           <Card>
             <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label
-                    htmlFor="review-workflow-toggle"
-                    className="text-base font-medium"
-                  >
+              {/* Switch on the LEFT of the label — matches the Admin >
+                  Workflows SystemFeatureCard pattern so toggle placement
+                  is consistent between the system-wide and per-project
+                  controls for the same feature. */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-3">
+                  <Switch
+                    id="review-workflow-toggle"
+                    data-testid="review-workflow-toggle"
+                    checked={reviewWorkflowEnabled}
+                    onCheckedChange={handleToggleReviewWorkflow}
+                    disabled={projectLoading || updateProject.isPending}
+                  />
+                  <span className="text-base font-medium">
                     {t("reviewWorkflow.label")}
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    {t("reviewWorkflow.description")}
-                  </p>
-                </div>
-                <Switch
-                  id="review-workflow-toggle"
-                  data-testid="review-workflow-toggle"
-                  checked={reviewWorkflowEnabled}
-                  onCheckedChange={handleToggleReviewWorkflow}
-                  disabled={projectLoading || updateProject.isPending}
-                />
+                  </span>
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {t("reviewWorkflow.description")}
+                </p>
               </div>
             </CardContent>
           </Card>
