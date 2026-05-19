@@ -52,6 +52,9 @@ test.describe("Parameters - authoring + step mentions @parameters", () => {
     // renders when isEditMode === true.
     await page.getByTestId("edit-test-case-button").click();
 
+    // Fresh cases have no steps; create one so the step-editor renders.
+    await page.getByTestId("add-step-button").click();
+
     // Locate the first step's contenteditable.
     const stepEditor = page
       .locator('[data-testid="step-editor-0"] [contenteditable="true"]')

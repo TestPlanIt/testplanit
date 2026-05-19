@@ -267,9 +267,9 @@ export function AssignSharedDatasetDialog({
             : (specificVersion?.id ?? null);
       // "current" with no version yet would be a no-op pin; the server
       // accepts a null pin and will record the assignment as
-      // follow-latest. Surface this to the user before sending so they
-      // pick a different dataset.
-      if (pinMode === "current" && pinnedVersionId === null) {
+      // follow-latest. Surface this to the user only when the dataset
+      // truly has no saved version (latestVersion missing entirely).
+      if (pinMode === "current" && !latestVersion) {
         setErrorBanner(t("assignSharedNoVersionsYet"));
         setSubmitting(false);
         return;
