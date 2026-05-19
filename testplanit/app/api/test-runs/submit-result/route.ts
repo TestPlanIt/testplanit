@@ -4,8 +4,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { authenticateRequest } from "~/lib/api-token-auth";
 import { prisma } from "~/lib/prisma";
-import { assertReviewGatePasses } from "~/lib/services/reviewGate";
-import { isAlreadyPendingError, isReviewGateError } from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 
@@ -397,18 +395,6 @@ export async function POST(req: NextRequest) {
         });
 
         if (!previousResult) {
-          // Review & Approval preflight (Plan 01-04). The auto-flip to
-          // in-progress on first result submission is a stateId update
-          // path; the schema @@deny rule from Plan 01 covers it via the
-          // ZenStack runtime, but this route uses raw prisma so we call
-          // the app preflight explicitly.
-          await assertReviewGatePasses(
-            tx,
-            "RUN",
-            input.testRunId,
-            input.inProgressStateId
-          );
-
           await tx.testRuns.update({
             where: {
               id: input.testRunId,
@@ -435,30 +421,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ result });
   } catch (error) {
-    // Review & Approval (Plan 01-04): translate the typed ReviewGateError
-    // from the auto-flip preflight into a structured 403 BEFORE the Prisma
-    // P2025 / generic 500 fallbacks.
-    if (isReviewGateError(error)) {
-      return NextResponse.json(
-        {
-          error: {
-            code: error.code,
-            entityType: error.entityType,
-            entityId: error.entityId,
-            toStateId: error.toStateId,
-          },
-        },
-        { status: 403 }
-      );
-    }
-
-    if (isAlreadyPendingError(error)) {
-      return NextResponse.json(
-        { error: { code: "PENDING_REVIEW_EXISTS" } },
-        { status: 409 }
-      );
-    }
-
     if (
       typeof Prisma?.PrismaClientKnownRequestError === "function" &&
       error instanceof Prisma.PrismaClientKnownRequestError

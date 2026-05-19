@@ -8,9 +8,6 @@ import { ForecastDisplay } from "@/components/ForecastDisplay";
 import { transformMilestones } from "@/components/forms/MilestoneSelect";
 import { Loading } from "@/components/Loading";
 import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
-import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
-import { ReviewActionPanel } from "@/components/reviews/ReviewActionPanel";
-import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import {
@@ -602,19 +599,6 @@ export default function TestRunPage() {
 
   // Transform milestones for the select component
   const milestoneOptions = transformMilestones(milestones || []);
-
-  const reachableGatedStates = useMemo(() => {
-    if (!workflows || !testRunData) return [];
-    const currentStateId = testRunData.stateId;
-    return workflows
-      .filter((w) => w.requiresReview === true && w.id !== currentStateId)
-      .map((w) => ({
-        id: w.id,
-        name: w.name,
-        icon: { name: (w.icon?.name ?? "circle") as string },
-        color: { value: w.color?.value ?? "" },
-      }));
-  }, [workflows, testRunData]);
 
   // Update form initialization
   useEffect(() => {
@@ -1469,17 +1453,6 @@ export default function TestRunPage() {
             void handleSubmit(onSubmit)(e);
           }}
         >
-          {testRunData ? (
-            <div className="px-6 pt-6">
-              <ReviewStatusBanner
-                entityType="RUN"
-                entityId={testRunData.id}
-                projectId={Number(projectId)}
-                reachableGatedStates={reachableGatedStates}
-                currentStateId={testRunData.stateId}
-              />
-            </div>
-          ) : null}
           <CardHeader>
             <div className="flex justify-between items-start">
               {!isEditMode && (
@@ -1580,15 +1553,6 @@ export default function TestRunPage() {
                     {!isEditMode ? (
                       // View Mode Buttons for NON-COMPLETED runs
                       <div className="flex items-center gap-1">
-                        {testRunData ? (
-                          <RequestReviewButton
-                            entityType="RUN"
-                            entityId={testRunData.id}
-                            projectId={Number(projectId)}
-                            currentStateId={testRunData.stateId}
-                            reachableGatedStates={reachableGatedStates}
-                          />
-                        ) : null}
                         {canAddEditRun && !isMultiConfigSelected && (
                           <Button
                             type="button"
@@ -1710,14 +1674,6 @@ export default function TestRunPage() {
               />
             </CardDescription>
           </CardHeader>
-
-          {testRunData ? (
-            <ReviewActionPanel
-              entityType="RUN"
-              entityId={testRunData.id}
-              projectId={Number(projectId)}
-            />
-          ) : null}
 
           <CardContent>
             <ResizablePanelGroup

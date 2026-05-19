@@ -36,7 +36,6 @@ import { ExtendedWorkflows } from "~/types/Workflows";
 import { AddWorkflows } from "./AddWorkflow";
 import { DeleteWorkflows } from "./DeleteWorkflow";
 import { EditWorkflows } from "./EditWorkflow";
-import { SystemFeatureCard } from "./SystemFeatureCard";
 
 import {
   AlertDialog,
@@ -340,9 +339,6 @@ function WorkflowComponent() {
               <CardDescription>{t("description")}</CardDescription>
             </CardHeader>
           </Card>
-          <div className="mt-4">
-            <SystemFeatureCard />
-          </div>
           <div className="mt-4">
             {renderWorkflowCard(casesWorkflows, WorkflowScope.CASES)}
           </div>

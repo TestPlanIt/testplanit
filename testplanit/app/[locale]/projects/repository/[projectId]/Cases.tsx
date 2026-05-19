@@ -1,10 +1,6 @@
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { AutoTagWizardDialog } from "@/components/auto-tag/AutoTagWizardDialog";
 import { useDebounce } from "@/components/Debounce";
-import {
-  PendingReviewBadge,
-  type PendingReviewSummary,
-} from "@/components/reviews/PendingReviewBadge";
 import { SelectedTestCasesDrawer } from "@/components/SelectedTestCasesDrawer";
 import {
   ColumnMetadata,
@@ -60,14 +56,12 @@ import {
   useFindFirstTestRuns,
   useFindManyProjectLlmIntegration,
   useFindManyRepositoryFolders,
-  useFindManyReviewRequest,
   useFindManyTemplates,
   useFindManyTestRunCases,
   useFindUniqueProjects,
   useUpdateRepositoryCases,
   useUpdateTestRunCases,
 } from "~/lib/hooks";
-import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { computeLastTestResult } from "~/lib/utils/computeLastTestResult";
 import { AddCaseRow } from "./AddCaseRow";
@@ -2585,52 +2579,6 @@ export default function Cases({
     return Array.from(caseFieldMap.values());
   }, [projectTemplates]);
 
-  // Bulk-fetch PENDING ReviewRequests for the visible page (D-06; one round
-  // trip per page render — never per-row, per RESEARCH §"Pitfall 6").
-  const { enabled: reviewFeatureEnabled } = useReviewFeatureEnabled(projectId);
-  const visibleCaseIds = useMemo(
-    () => cases.map((c: { id: number }) => c.id),
-    [cases]
-  );
-  const { data: pendingReviewsForVisibleCases } = useFindManyReviewRequest(
-    {
-      where: {
-        entityType: "CASE",
-        entityId: { in: visibleCaseIds },
-        status: "PENDING",
-        isDeleted: false,
-      },
-      select: {
-        id: true,
-        status: true,
-        entityId: true,
-        assigneeUserId: true,
-        assigneeRoleId: true,
-        assigneeUser: { select: { name: true } },
-        assigneeRole: { select: { name: true } },
-      },
-    } as any,
-    {
-      enabled: reviewFeatureEnabled === true && visibleCaseIds.length > 0,
-    } as any
-  );
-  const pendingByCaseId = useMemo(() => {
-    const map = new Map<number, PendingReviewSummary>();
-    const rows = pendingReviewsForVisibleCases as
-      | Array<PendingReviewSummary & { entityId: number }>
-      | undefined;
-    rows?.forEach((row) => {
-      map.set(row.entityId, row);
-    });
-    return map;
-  }, [pendingReviewsForVisibleCases]);
-  const renderPendingBadge = useCallback(
-    (caseId: number) => (
-      <PendingReviewBadge pendingRequest={pendingByCaseId.get(caseId)} />
-    ),
-    [pendingByCaseId]
-  );
-
   // Clear optimistic reorder when underlying data changes
   useEffect(() => {
     setOptimisticReorder({ inProgress: false, cases: null });
@@ -3120,8 +3068,7 @@ export default function Cases({
         : undefined,
       // Show descendants mode - display folder badge on each case
       showDescendants,
-      folderPathMap,
-      renderPendingBadge
+      folderPathMap
     );
   }, [
     userPreferencesForColumns,
@@ -3152,7 +3099,6 @@ export default function Cases({
     showCopyMove,
     showDescendants,
     folderPathMap,
-    renderPendingBadge,
   ]);
 
   // Create lightweight column metadata for ColumnSelection component

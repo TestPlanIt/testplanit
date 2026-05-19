@@ -27,7 +27,6 @@ import {
 import { GlobalSearchSheet } from "@/components/GlobalSearchSheet";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ProjectQuickSelector } from "@/components/ProjectQuickSelector";
-import { ReviewInboxButton } from "@/components/reviews/ReviewInboxButton";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -406,7 +405,6 @@ export const Header = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
               <NotificationBell />
-              <ReviewInboxButton />
               <UserDropdownMenu />
             </div>
           </div>

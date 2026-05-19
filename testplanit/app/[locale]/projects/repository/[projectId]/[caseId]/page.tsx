@@ -49,9 +49,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
-import { ReviewActionPanel } from "@/components/reviews/ReviewActionPanel";
-import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { VersionSelect } from "@/components/VersionSelect";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { ApplicationArea, Attachments, Prisma } from "@prisma/client";
@@ -70,7 +67,7 @@ import {
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import parseDuration from "parse-duration";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { ImperativePanelHandle } from "react-resizable-panels";
 import { z } from "zod/v4";
@@ -721,37 +718,27 @@ export default function TestCaseDetails() {
     createFormSchema(testcase?.template?.caseFields || [], t)
   );
 
-  const { data: workflows } = useFindManyWorkflows({
-    where: {
-      isDeleted: false,
-      scope: "CASES",
-      projects: {
-        some: {
-          projectId: Number(projectId),
+  const { data: workflows } = useFindManyWorkflows(
+    {
+      where: {
+        isDeleted: false,
+        scope: "CASES",
+        projects: {
+          some: {
+            projectId: Number(projectId),
+          },
         },
       },
+      include: {
+        icon: true,
+        color: true,
+      },
+      orderBy: {
+        order: "asc",
+      },
     },
-    include: {
-      icon: true,
-      color: true,
-    },
-    orderBy: {
-      order: "asc",
-    },
-  });
-
-  const reachableGatedStates = useMemo(() => {
-    if (!workflows || !testcase) return [];
-    const currentStateId = testcase.state.id;
-    return workflows
-      .filter((w) => w.requiresReview === true && w.id !== currentStateId)
-      .map((w) => ({
-        id: w.id,
-        name: w.name,
-        icon: { name: (w.icon?.name ?? "circle") as string },
-        color: { value: w.color?.value ?? "" },
-      }));
-  }, [workflows, testcase]);
+    { enabled: isEditMode }
+  );
 
   const workflowOptions =
     workflows?.map((workflow) => ({
@@ -1698,15 +1685,6 @@ export default function TestCaseDetails() {
           {isSubmitting && (
             <LoadingSpinnerAlert className="w-[120px] h-[120px] text-primary" />
           )}
-          <div className="px-6 pt-6">
-            <ReviewStatusBanner
-              entityType="CASE"
-              entityId={testcase.id}
-              projectId={Number(projectId)}
-              reachableGatedStates={reachableGatedStates}
-              currentStateId={testcase.state.id}
-            />
-          </div>
           <CardHeader>
             <CardTitle>
               <div>
@@ -1865,13 +1843,6 @@ export default function TestCaseDetails() {
                     </div>
                   ) : (
                     <div className="flex items-center space-x-2">
-                      <RequestReviewButton
-                        entityType="CASE"
-                        entityId={testcase.id}
-                        projectId={Number(projectId)}
-                        currentStateId={testcase.state.id}
-                        reachableGatedStates={reachableGatedStates}
-                      />
                       {quickScriptEnabled && canAddEdit && (
                         <Button
                           type="button"
@@ -2019,11 +1990,6 @@ export default function TestCaseDetails() {
               </div>
             </CardDescription>
           </CardHeader>
-          <ReviewActionPanel
-            entityType="CASE"
-            entityId={testcase.id}
-            projectId={Number(projectId)}
-          />
           {/* Template not assigned to project warning */}
           {testcase?.template &&
           "projects" in testcase.template &&

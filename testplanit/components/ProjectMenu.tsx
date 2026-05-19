@@ -29,7 +29,6 @@ import {
   Plug,
   ScrollText,
   Settings,
-  Settings2,
   Share2,
   Sparkles,
   Tags as TagsIcon,
@@ -287,13 +286,6 @@ export default function ProjectsMenu({
             label: t("admin.menu.quickScript"),
             path: "settings/quickscript",
             id: "settings-quickscript-link",
-            section: "settings" as MenuSection,
-          },
-          {
-            icon: Settings2,
-            label: t("admin.menu.advanced"),
-            path: "settings/advanced",
-            id: "settings-advanced-link",
             section: "settings" as MenuSection,
           },
           {

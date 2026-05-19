@@ -143,7 +143,6 @@ const testProject: ExtendedProjects = {
   promptConfigId: null,
   defaultCaseExportTemplateId: null,
   quickScriptEnabled: false,
-  reviewWorkflowEnabled: true,
   creator: {
     id: "user-1",
     name: "Test User",
