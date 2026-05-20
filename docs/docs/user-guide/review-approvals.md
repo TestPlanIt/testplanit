@@ -67,6 +67,8 @@ This is where the actual gates are defined.
 4. Turn on **Requires review**.
 5. Click **Submit**.
 
+![The Edit Workflow dialog with the Requires Review switch turned on](/img/screenshots/user-guide/review-approvals/requires-review-toggle.png)
+
 A gated state is shown everywhere a workflow state is displayed — case-detail pages, dropdowns, the inbox, etc. — with a small **warning glyph** next to the state name. Hovering reveals "Requires review".
 
 :::tip Pick gates carefully
@@ -85,7 +87,11 @@ When a tester needs to advance a case, run, or session into (or across) a gated 
     - **Comment** — optional message for the reviewer (rich text; supports `@mentions`).
 4. Click **Submit**.
 
+![The Request Review sheet with target state, reviewer, and comment fields populated](/img/screenshots/user-guide/review-approvals/request-review-sheet.png)
+
 The entity now displays a **Pending review** badge with the reviewer's name (or role) and a tooltip showing who is being asked.
+
+![The pending review banner on a test case detail page, naming the reviewer and the target state](/img/screenshots/user-guide/review-approvals/status-banner-pending.png)
 
 ### Cancelling a request
 
@@ -110,6 +116,8 @@ Reviewers find pending requests in their inbox:
     - Current state and target state
     - History of comments on this request
 
+![The reviewer inbox at /reviews showing the Pending tab with three rows and approve / request changes / reject row actions](/img/screenshots/user-guide/review-approvals/reviewer-inbox.png)
+
 To decide:
 
 - **Approve** — the request flips to APPROVED. The next time the entity is transitioned to the target state (by the requester saving the form, by a bulk edit, or by milestone completion), the approval is consumed.
@@ -117,6 +125,8 @@ To decide:
 - **Comment** — leave a note without deciding (useful for asking the requester for clarification). The request stays in PENDING.
 
 Decisions can include a comment, which appears in the request history and in any associated notifications.
+
+![The Approve confirmation dialog with the requester, entity name, target state, and an optional approval note field](/img/screenshots/user-guide/review-approvals/approve-dialog.png)
 
 :::important Roles vs users
 When a request is assigned to a **role**, any project member who holds that role can decide. The first decision wins — there is no need for every role-holder to act. Other role-holders see the request flip to DECIDED in their inbox the next time they refresh.
@@ -174,6 +184,24 @@ Reviewers receive an in-app notification (and an email, if email notifications a
 - A request is **cancelled** by the requester.
 
 Requesters receive a notification when a reviewer decides on a request they submitted.
+
+## Outbound webhooks
+
+Review events can be delivered to external systems (Slack, generic HMAC endpoints) via the project's outbound webhook configuration. Two event verbs are emitted, in three entity-scoped variants:
+
+| Event name | Fires when |
+| --- | --- |
+| `case.review_requested` / `test_run.review_requested` / `session.review_requested` | A reviewer is requested on a Test Case / Test Run / Session |
+| `case.review_completed` / `test_run.review_completed` / `session.review_completed` | The request is approved, sent back for changes, rejected, or cancelled |
+
+To subscribe:
+
+1. Open the project's **Settings → Webhooks**.
+2. Add or edit an outbound config.
+3. Under **Subscribed events**, expand the entity section (Test cases, Test runs, or Sessions) and check **Review requested** and/or **Review completed**.
+4. Save.
+
+The Slack adapter renders each event as a color-coded message (green for approved, red for rejected, yellow for changes-requested, neutral for cancelled or requested) with the requester, assignee, target state, and any comment. Generic HMAC endpoints receive the structured JSON payload — entity identity, requester + assignee identity, transition (from-state + to-state), and decision metadata for completed events.
 
 ## Frequently asked questions
 
