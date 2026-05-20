@@ -3909,18 +3909,24 @@ model ReviewRequest {
     )
 
     // Assignee (direct user or role holder on this project) can decide PENDING.
-    // The role-holder branch authoritatively flows through the app-layer
+    // The role-holder branches authoritatively flow through the app-layer
     // eligibility check in lib/services/reviewDecisions.ts (which uses raw
     // prisma to bypass policy entirely). The schema-layer role-holder
-    // predicate below cannot reference the outer-model `assigneeRoleId`
+    // predicates below cannot reference the outer-model `assigneeRoleId`
     // from inside `project.userPermissions?[...]` under ZenStack 2.22.2,
-    // so it functions as defense-in-depth only.
+    // so they function as defense-in-depth only.
+    //
+    // Group-based role holders are first-class — common provisioning shape
+    // under SAML/SCIM where role access flows through group membership
+    // rather than direct UserProjectPermission rows.
     @@allow('update',
         status == 'PENDING' && (
             (assigneeUserId != null && assigneeUser == auth()) ||
             (assigneeRoleId != null && (
                 project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.id == this.assigneeRoleId] ||
-                project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' && this.assigneeRoleId != null && auth().roleId == this.assigneeRoleId]
+                project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' && this.assigneeRoleId != null && auth().roleId == this.assigneeRoleId] ||
+                project.groupPermissions?[group.assignedUsers?[user == auth()] && accessType == 'SPECIFIC_ROLE' && role.id == this.assigneeRoleId] ||
+                project.groupPermissions?[group.assignedUsers?[user == auth()] && accessType == 'GLOBAL_ROLE' && this.assigneeRoleId != null && auth().roleId == this.assigneeRoleId]
             ))
         )
     )

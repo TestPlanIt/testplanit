@@ -207,12 +207,21 @@ export class NotificationService {
   }
 
   /**
-   * Resolve the user IDs that hold a role on a project, mirroring the
-   * eligibility branches in `decideReviewRequest`:
+   * Resolve the user IDs that hold a role on a project, mirroring every
+   * eligibility branch in `decideReviewRequest` — direct UserProjectPermission
+   * AND indirect via group membership. SCIM/SAML deployments commonly
+   * provision role access at the group level, so fanout MUST include
+   * group-derived holders or those users see no notification for a review
+   * they are perfectly eligible to act on.
    *
-   *   - SPECIFIC_ROLE rows on the project where `roleId === assigneeRoleId`
-   *   - GLOBAL_ROLE rows on the project where the user's global `roleId`
+   * Branches:
+   *   - SPECIFIC_ROLE via UserProjectPermission where `roleId === assigneeRoleId`
+   *   - GLOBAL_ROLE via UserProjectPermission where the user's global `roleId`
    *     matches `assigneeRoleId`
+   *   - SPECIFIC_ROLE via GroupProjectPermission where `roleId === assigneeRoleId`
+   *     and the user is in the group
+   *   - GLOBAL_ROLE via GroupProjectPermission where the user's global
+   *     `roleId` matches `assigneeRoleId` and the user is in the group
    *
    * The requester is excluded — assigning a review to a role you hold
    * yourself shouldn't ping you about your own request. ADMIN users are
@@ -247,9 +256,48 @@ export class NotificationService {
       select: { userId: true },
     });
 
+    // Group-based SPECIFIC_ROLE: every active user in a group that has this
+    // role on the project. The per-relation `assignedUsers.where` keeps the
+    // returned member list filtered to active users only.
+    const groupSpecificRoleRows = await prisma.groupProjectPermission.findMany({
+      where: { projectId, accessType: "SPECIFIC_ROLE", roleId },
+      select: {
+        group: {
+          select: {
+            assignedUsers: {
+              where: { user: { isActive: true, isDeleted: false } },
+              select: { userId: true },
+            },
+          },
+        },
+      },
+    });
+
+    // Group-based GLOBAL_ROLE: every active user in a group with GLOBAL_ROLE
+    // access on the project whose `User.roleId` matches the assigned role.
+    const groupGlobalRoleRows = await prisma.groupProjectPermission.findMany({
+      where: { projectId, accessType: "GLOBAL_ROLE" },
+      select: {
+        group: {
+          select: {
+            assignedUsers: {
+              where: { user: { isActive: true, isDeleted: false, roleId } },
+              select: { userId: true },
+            },
+          },
+        },
+      },
+    });
+
     const ids = new Set<string>();
     for (const row of specificRoleRows) ids.add(row.userId);
     for (const row of globalRoleRows) ids.add(row.userId);
+    for (const row of groupSpecificRoleRows) {
+      for (const a of row.group.assignedUsers) ids.add(a.userId);
+    }
+    for (const row of groupGlobalRoleRows) {
+      for (const a of row.group.assignedUsers) ids.add(a.userId);
+    }
     ids.delete(requesterUserId);
     return Array.from(ids);
   }

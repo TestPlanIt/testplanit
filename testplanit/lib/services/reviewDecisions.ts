@@ -7,6 +7,7 @@ import { CommentService } from "~/lib/services/commentService";
 import { NotificationService } from "~/lib/services/notificationService";
 import { IneligibleReviewerError } from "~/lib/utils/errors";
 import { extractMentionedUserIds } from "~/lib/utils/tiptapMentions";
+import { emitReviewCompletedEvent } from "~/lib/webhooks/event-emitters/reviewEvents";
 
 /**
  * Decision outcomes the requester or reviewer can take on a PENDING
@@ -38,17 +39,26 @@ export type DecideOutcome = "APPROVED" | "CHANGES_REQUESTED" | "REJECTED";
  *
  *        (a) Direct user-assignee: `req.assigneeUserId === session.user.id`.
  *
- *        (b) Role-holder via SPECIFIC_ROLE permission on this project,
- *            where the assigned role matches the holder's permission
- *            role: `userPermission.accessType === 'SPECIFIC_ROLE' &&
- *            userPermission.roleId === req.assigneeRoleId`.
+ *        (b) Role-holder via SPECIFIC_ROLE UserProjectPermission on this
+ *            project where the assigned role matches the holder's
+ *            permission role.
  *
- *        (c) Role-holder via GLOBAL_ROLE permission on this project,
- *            where the caller's global role matches the assigned role:
- *            `userPermission.accessType === 'GLOBAL_ROLE' &&
- *            session.user.roleId === req.assigneeRoleId`.
+ *        (c) Role-holder via GLOBAL_ROLE UserProjectPermission on this
+ *            project where the caller's global role matches the assigned
+ *            role.
  *
- *        (d) System ADMIN override: `session.user.access === 'ADMIN'`.
+ *        (d) Role-holder via SPECIFIC_ROLE GroupProjectPermission — the
+ *            caller is a member of a group that has the assigned role
+ *            on this project. Treated identically to (b); this is the
+ *            common provisioning shape under SAML/SCIM where roles are
+ *            attached to groups, not users directly.
+ *
+ *        (e) Role-holder via GLOBAL_ROLE GroupProjectPermission — the
+ *            caller is a member of a group with GLOBAL_ROLE access on
+ *            this project AND the caller's global role matches the
+ *            assigned role. Mirrors (c) for the group-provisioned case.
+ *
+ *        (f) System ADMIN override: `session.user.access === 'ADMIN'`.
  *
  *      The role-based branches close Phase 1 CR-02 at the app layer —
  *      even if the schema @@allow predicate behaves unexpectedly under a
@@ -103,11 +113,21 @@ export async function decideReviewRequest(
             where: { userId },
             select: { accessType: true, roleId: true },
           },
+          // Group-based project access (indirect role assignment via group
+          // membership — the common pattern when SAML/SCIM provisions role
+          // membership at the group level rather than per-user). Scoped to
+          // groups the caller actually belongs to so the load is bounded.
+          groupPermissions: {
+            where: { group: { assignedUsers: { some: { userId } } } },
+            select: { accessType: true, roleId: true },
+          },
         },
       },
       requestedBy: { select: { id: true, name: true } },
       fromState: { select: { name: true } },
-      toState: { select: { name: true } },
+      toState: {
+        select: { name: true, color: { select: { value: true } } },
+      },
     },
   });
 
@@ -119,15 +139,17 @@ export async function decideReviewRequest(
     req.assigneeUserId !== null && req.assigneeUserId === userId;
 
   const userPermission = req.project.userPermissions[0];
+  const groupPermissions = req.project.groupPermissions;
 
-  // Pull the caller's global roleId from the User row. Only needed for the
-  // GLOBAL_ROLE branch; small extra read is cheaper than always preloading
-  // it through getEnhancedDb-style plumbing for this single service.
+  // Pull the caller's global roleId from the User row. Needed for any
+  // GLOBAL_ROLE branch (direct or via group). Small extra read is cheaper
+  // than always preloading it through getEnhancedDb-style plumbing for
+  // this single service.
+  const hasAnyGlobalRolePermission =
+    userPermission?.accessType === "GLOBAL_ROLE" ||
+    groupPermissions.some((g) => g.accessType === "GLOBAL_ROLE");
   let callerGlobalRoleId: number | null = null;
-  if (
-    req.assigneeRoleId !== null &&
-    userPermission?.accessType === "GLOBAL_ROLE"
-  ) {
+  if (req.assigneeRoleId !== null && hasAnyGlobalRolePermission) {
     const callerUser = await prisma.user.findUnique({
       where: { id: userId },
       select: { roleId: true },
@@ -135,22 +157,39 @@ export async function decideReviewRequest(
     callerGlobalRoleId = callerUser?.roleId ?? null;
   }
 
-  const isRoleHolderViaSpecific =
+  const isRoleHolderViaUserSpecific =
     req.assigneeRoleId !== null &&
     userPermission?.accessType === "SPECIFIC_ROLE" &&
     userPermission.roleId === req.assigneeRoleId;
 
-  const isRoleHolderViaGlobal =
+  const isRoleHolderViaUserGlobal =
     req.assigneeRoleId !== null &&
     userPermission?.accessType === "GLOBAL_ROLE" &&
     callerGlobalRoleId === req.assigneeRoleId;
+
+  // Indirect role eligibility — caller holds the role via group membership.
+  // SCIM/SAML deployments often provision roles at the group level, so a
+  // user with no direct UserProjectPermission row still legitimately holds
+  // the assigned role and must be able to decide.
+  const isRoleHolderViaGroupSpecific =
+    req.assigneeRoleId !== null &&
+    groupPermissions.some(
+      (g) => g.accessType === "SPECIFIC_ROLE" && g.roleId === req.assigneeRoleId
+    );
+
+  const isRoleHolderViaGroupGlobal =
+    req.assigneeRoleId !== null &&
+    callerGlobalRoleId === req.assigneeRoleId &&
+    groupPermissions.some((g) => g.accessType === "GLOBAL_ROLE");
 
   const isAdmin = session.user.access === "ADMIN";
 
   const eligible =
     isDirectAssignee ||
-    isRoleHolderViaSpecific ||
-    isRoleHolderViaGlobal ||
+    isRoleHolderViaUserSpecific ||
+    isRoleHolderViaUserGlobal ||
+    isRoleHolderViaGroupSpecific ||
+    isRoleHolderViaGroupGlobal ||
     isAdmin;
 
   if (!eligible) {
@@ -277,6 +316,37 @@ export async function decideReviewRequest(
     console.error(
       "decideReviewRequest: decision-notification dispatch failed",
       notifyErr
+    );
+  }
+
+  try {
+    const entityName = await loadEntityName(req.entityType, req.entityId);
+    if (entityName !== null) {
+      await emitReviewCompletedEvent(
+        {
+          reviewRequestId,
+          projectId: req.project.id,
+          entityType: req.entityType,
+          entityId: req.entityId,
+          entityName,
+          fromStateId: req.fromStateId,
+          toStateId: req.toStateId,
+          toStateName: req.toState.name,
+          toStateColor: req.toState.color?.value ?? null,
+          decision,
+          decidedByUserId: userId,
+          deciderName: session.user.name ?? "Unknown User",
+          decisionComment: trimmedComment.length > 0 ? trimmedComment : null,
+          requestedByUserId: req.requestedBy.id,
+          requesterName: req.requestedBy.name ?? "Unknown User",
+        },
+        { actorUserId: userId }
+      );
+    }
+  } catch (webhookErr) {
+    console.error(
+      "decideReviewRequest: review-completed webhook emit failed",
+      webhookErr
     );
   }
 
