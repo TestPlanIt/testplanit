@@ -468,6 +468,7 @@ export function EditWorkflows({
                     </FormControl>
                     <FormLabel className="flex items-center">
                       {t("editWorkflow.requiresReviewLabel")}
+                      <HelpPopover helpKey="workflow.requiresReview" />
                     </FormLabel>
                     <FormMessage />
                   </div>

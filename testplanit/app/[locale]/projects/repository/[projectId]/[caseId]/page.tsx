@@ -1998,7 +1998,7 @@ export default function TestCaseDetails() {
                       )}
                     </div>
                   ) : (
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 justify-end">
                       <RequestReviewButton
                         entityType="CASE"
                         entityId={testcase.id}
@@ -2012,11 +2012,12 @@ export default function TestCaseDetails() {
                           variant="outline"
                           onClick={() => setIsQuickScriptModalOpen(true)}
                           data-testid="quickscript-case-button"
+                          className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
                         >
-                          <div className="flex items-center">
-                            <ScrollText className="w-5 h-5 mr-2" />
-                            <div>{t("repository.cases.quickScript")}</div>
-                          </div>
+                          <ScrollText className="h-4 w-4 shrink-0" />
+                          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                            {t("repository.cases.quickScript")}
+                          </span>
                         </Button>
                       )}
                       {canAddEdit && (
@@ -2026,11 +2027,12 @@ export default function TestCaseDetails() {
                           onClick={handleEditModeToggle}
                           disabled={isLoadingSharedStepGroups}
                           data-testid="edit-test-case-button"
+                          className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
                         >
-                          <div className="flex items-center">
-                            <SquarePen className="w-5 h-5 mr-2" />
-                            <div>{t("common.actions.edit")}</div>
-                          </div>
+                          <SquarePen className="h-4 w-4 shrink-0" />
+                          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                            {t("common.actions.edit")}
+                          </span>
                         </Button>
                       )}
                     </div>
