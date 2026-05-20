@@ -1380,7 +1380,9 @@
           "duplicated": "Dupliqué",
           "stateChanged": "État modifié",
           "resultAdded": "Résultat ajouté",
-          "resultRecorded": "Résultat enregistré"
+          "resultRecorded": "Résultat enregistré",
+          "reviewRequested": "Demande d'avis",
+          "reviewCompleted": "Révision terminée"
         },
         "iterationResultHelp": "Se déclenche à chaque enregistrement du résultat d'une itération (succès, échec, ignoré ou tout autre statut). À utiliser avec parcimonie lors d'exécutions d'automatisation longues (un événement par itération).",
         "events": {

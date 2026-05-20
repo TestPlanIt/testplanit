@@ -1380,7 +1380,9 @@
           "duplicated": "複製",
           "stateChanged": "状態が変更されました",
           "resultAdded": "結果を追加しました",
-          "resultRecorded": "結果が記録されました"
+          "resultRecorded": "結果が記録されました",
+          "reviewRequested": "レビュー依頼",
+          "reviewCompleted": "レビューが完了しました"
         },
         "iterationResultHelp": "反復処理の結果（合格、不合格、スキップ、その他のステータス）が記録されるたびに発生します。長時間の自動化実行では、使用頻度を少なくしてください（反復処理ごとに1つのイベント）。",
         "events": {

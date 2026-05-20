@@ -1380,7 +1380,9 @@
           "duplicated": "복제됨",
           "stateChanged": "상태가 변경되었습니다",
           "resultAdded": "결과가 추가되었습니다",
-          "resultRecorded": "결과가 기록되었습니다"
+          "resultRecorded": "결과가 기록되었습니다",
+          "reviewRequested": "리뷰 요청됨",
+          "reviewCompleted": "검토 완료"
         },
         "iterationResultHelp": "반복 결과가 기록될 때마다(통과, 실패, 건너뛰기 또는 기타 상태) 발생합니다. 장시간 자동화 실행 시에는 신중하게 사용하십시오(반복당 하나의 이벤트).",
         "events": {

@@ -1380,7 +1380,9 @@
           "duplicated": "重複",
           "stateChanged": "狀態已改變",
           "resultAdded": "結果已新增",
-          "resultRecorded": "結果已記錄"
+          "resultRecorded": "結果已記錄",
+          "reviewRequested": "請求審查",
+          "reviewCompleted": "審核完成"
         },
         "iterationResultHelp": "每次記錄迭代結果時觸發－無論是通過、失敗、跳過或其他任何狀態。在長時間的自動化運行中應謹慎使用（每次迭代觸發一次事件）。",
         "events": {

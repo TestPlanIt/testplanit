@@ -1380,7 +1380,9 @@
           "duplicated": "Đã sao chép",
           "stateChanged": "Trạng thái đã thay đổi",
           "resultAdded": "Kết quả đã được thêm",
-          "resultRecorded": "Kết quả đã được ghi nhận"
+          "resultRecorded": "Kết quả đã được ghi nhận",
+          "reviewRequested": "Yêu cầu xem xét",
+          "reviewCompleted": "Đánh giá đã hoàn tất"
         },
         "iterationResultHelp": "Sự kiện này được kích hoạt mỗi khi kết quả của một vòng lặp được ghi lại — đạt, không đạt, bỏ qua hoặc bất kỳ trạng thái nào khác. Nên sử dụng tiết kiệm trong các lần chạy tự động hóa dài (một sự kiện cho mỗi vòng lặp).",
         "events": {

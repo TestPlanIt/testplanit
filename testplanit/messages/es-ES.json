@@ -1380,7 +1380,9 @@
           "duplicated": "Duplicado",
           "stateChanged": "El estado cambió",
           "resultAdded": "Resultado añadido",
-          "resultRecorded": "Resultado registrado"
+          "resultRecorded": "Resultado registrado",
+          "reviewRequested": "Se solicita revisión",
+          "reviewCompleted": "Revisión completada"
         },
         "iterationResultHelp": "Se activa cada vez que se registra el resultado de una iteración: aprobado, reprobado, omitido o cualquier otro estado. Úselo con moderación en ejecuciones de automatización largas (un evento por iteración).",
         "events": {

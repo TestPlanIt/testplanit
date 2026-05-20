@@ -1380,7 +1380,9 @@
           "duplicated": "Gedupliceerd",
           "stateChanged": "Staat gewijzigd",
           "resultAdded": "Resultaat toegevoegd",
-          "resultRecorded": "Resultaat vastgelegd"
+          "resultRecorded": "Resultaat vastgelegd",
+          "reviewRequested": "Beoordeling aangevraagd",
+          "reviewCompleted": "Beoordeling voltooid"
         },
         "iterationResultHelp": "Wordt geactiveerd telkens wanneer een iteratieresultaat wordt vastgelegd — geslaagd, mislukt, overgeslagen of een andere status. Gebruik dit spaarzaam bij lange automatiseringsruns (één gebeurtenis per iteratie).",
         "events": {
