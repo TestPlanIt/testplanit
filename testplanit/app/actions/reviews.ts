@@ -4,6 +4,7 @@ import type { JSONContent } from "@tiptap/core";
 import { revalidatePath } from "next/cache";
 
 import { CommentService } from "~/lib/services/commentService";
+import { NotificationService } from "~/lib/services/notificationService";
 import { prisma } from "~/lib/prisma";
 import { extractMentionedUserIds } from "~/lib/utils/tiptapMentions";
 import { AlreadyPendingError } from "~/lib/utils/errors";
@@ -159,38 +160,59 @@ export async function requestReview(
       }
     );
 
-    // Notify the mentioned assignee outside the transaction. The mention
-    // pathway looks up the project + project access for each mentioned user
-    // and writes Notification rows, so it deliberately runs after the
-    // Comment commit. Errors here do NOT roll back the review request —
+    // Persist mention rows (used by the comment renderer to highlight @mentions
+    // in-thread) and dispatch the dedicated REVIEW_REQUESTED notification(s) to
+    // every reviewer the request targets — direct user assignee OR the full
+    // set of role holders on the project. Runs outside the tx because
+    // notification creation depends on the committed Comment.id and queries
+    // role membership. Failures here do NOT roll back the review request —
     // we'd rather have an unannounced review than a lost one.
     try {
       const mentionedUserIds = extractMentionedUserIds(commentContent);
       if (mentionedUserIds.length > 0) {
         await CommentService.createCommentMentions(commentId, mentionedUserIds);
-        const projectAndEntity = await loadProjectAndEntity(
+      }
+
+      const targetUserIds: string[] =
+        input.assigneeUserId !== null
+          ? [input.assigneeUserId]
+          : input.assigneeRoleId !== null
+            ? await NotificationService.resolveRoleHolderUserIds(
+                input.projectId,
+                input.assigneeRoleId,
+                requestedByUserId
+              )
+            : [];
+
+      if (targetUserIds.length > 0) {
+        const context = await loadReviewContext(
           input.projectId,
           input.entityType,
-          input.entityId
+          input.entityId,
+          input.fromStateId,
+          input.toStateId
         );
-        if (projectAndEntity) {
-          await CommentService.processMentions(
-            commentId,
-            commentContent,
-            requestedByUserId,
-            session.user.name ?? "Unknown User",
-            projectAndEntity.project.id,
-            projectAndEntity.project.name,
-            projectAndEntity.entityType,
-            projectAndEntity.entityName,
-            projectAndEntity.entityId
-          );
+        if (context) {
+          await NotificationService.createReviewRequestNotification({
+            targetUserIds,
+            requesterUserId: requestedByUserId,
+            requesterName: session.user.name ?? "Unknown User",
+            projectId: context.projectId,
+            projectName: context.projectName,
+            entityType: input.entityType,
+            entityId: input.entityId,
+            entityName: context.entityName,
+            fromStateName: context.fromStateName,
+            toStateName: context.toStateName,
+            reviewRequestId,
+            commentText: trimmed,
+          });
         }
       }
-    } catch (mentionErr) {
+    } catch (notifyErr) {
       console.error(
-        "requestReview: paired-comment mention processing failed",
-        mentionErr
+        "requestReview: review-request notification dispatch failed",
+        notifyErr
       );
     }
 
@@ -213,60 +235,62 @@ export async function requestReview(
   }
 }
 
-async function loadProjectAndEntity(
+async function loadReviewContext(
   projectId: number,
   entityType: ReviewableEntityType,
-  entityId: number
+  entityId: number,
+  fromStateId: number,
+  toStateId: number
 ): Promise<{
-  project: { id: number; name: string };
-  entityType: "RepositoryCase" | "TestRun" | "Session";
+  projectId: number;
+  projectName: string;
   entityName: string;
-  entityId: string;
+  fromStateName: string;
+  toStateName: string;
 } | null> {
-  const project = await prisma.projects.findUnique({
-    where: { id: projectId },
-    select: { id: true, name: true },
-  });
+  const [project, fromState, toState] = await Promise.all([
+    prisma.projects.findUnique({
+      where: { id: projectId },
+      select: { id: true, name: true },
+    }),
+    prisma.workflows.findUnique({
+      where: { id: fromStateId },
+      select: { name: true },
+    }),
+    prisma.workflows.findUnique({
+      where: { id: toStateId },
+      select: { name: true },
+    }),
+  ]);
   if (!project) return null;
 
+  let entityName: string | null = null;
   if (entityType === "CASE") {
     const row = await prisma.repositoryCases.findUnique({
       where: { id: entityId },
-      select: { id: true, name: true },
+      select: { name: true },
     });
-    return row
-      ? {
-          project,
-          entityType: "RepositoryCase",
-          entityName: row.name,
-          entityId: String(row.id),
-        }
-      : null;
-  }
-  if (entityType === "RUN") {
+    entityName = row?.name ?? null;
+  } else if (entityType === "RUN") {
     const row = await prisma.testRuns.findUnique({
       where: { id: entityId },
-      select: { id: true, name: true },
+      select: { name: true },
     });
-    return row
-      ? {
-          project,
-          entityType: "TestRun",
-          entityName: row.name,
-          entityId: String(row.id),
-        }
-      : null;
+    entityName = row?.name ?? null;
+  } else {
+    const row = await prisma.sessions.findUnique({
+      where: { id: entityId },
+      select: { name: true },
+    });
+    entityName = row?.name ?? null;
   }
-  const row = await prisma.sessions.findUnique({
-    where: { id: entityId },
-    select: { id: true, name: true },
-  });
-  return row
-    ? {
-        project,
-        entityType: "Session",
-        entityName: row.name,
-        entityId: String(row.id),
-      }
-    : null;
+  if (entityName === null) return null;
+
+  return {
+    projectId: project.id,
+    projectName: project.name,
+    entityName,
+    fromStateName: fromState?.name ?? "",
+    toStateName: toState?.name ?? "",
+  };
 }

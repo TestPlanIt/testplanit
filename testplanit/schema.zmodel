@@ -327,6 +327,10 @@ enum NotificationType {
     LLM_BUDGET_ALERT
     COPY_MOVE_COMPLETE
     GENERATE_FROM_URL_COMPLETE
+    REVIEW_REQUESTED
+    REVIEW_APPROVED
+    REVIEW_CHANGES_REQUESTED
+    REVIEW_REJECTED
 
     @@deny('all', !auth())
     @@allow('update', auth().access == 'ADMIN')

@@ -113,6 +113,21 @@ const processor = async (job: Job) => {
         } else if (notification.type === "LLM_BUDGET_ALERT") {
           // Same destination as the bell-icon link (`data.link`) — admin LLM page.
           notificationUrl = `${baseUrl}/${urlLocale}${data.link ?? "/admin/llm"}`;
+        } else if (
+          notification.type === "REVIEW_REQUESTED" ||
+          notification.type === "REVIEW_APPROVED" ||
+          notification.type === "REVIEW_CHANGES_REQUESTED" ||
+          notification.type === "REVIEW_REJECTED"
+        ) {
+          if (data.projectId && data.entityType && data.entityId) {
+            const entityPath =
+              data.entityType === "CASE"
+                ? `repository/${data.projectId}/${data.entityId}`
+                : data.entityType === "RUN"
+                  ? `runs/${data.projectId}/${data.entityId}`
+                  : `sessions/${data.projectId}/${data.entityId}`;
+            notificationUrl = `${baseUrl}/${urlLocale}/projects/${entityPath}`;
+          }
         }
 
         // Get translated title and message
@@ -302,6 +317,74 @@ const processor = async (job: Job) => {
                   budget,
                 }
               );
+        } else if (
+          notification.type === "REVIEW_REQUESTED" ||
+          notification.type === "REVIEW_APPROVED" ||
+          notification.type === "REVIEW_CHANGES_REQUESTED" ||
+          notification.type === "REVIEW_REJECTED"
+        ) {
+          const titleKeyByType = {
+            REVIEW_REQUESTED: "reviewRequestedTitle",
+            REVIEW_APPROVED: "reviewApprovedTitle",
+            REVIEW_CHANGES_REQUESTED: "reviewChangesRequestedTitle",
+            REVIEW_REJECTED: "reviewRejectedTitle",
+          } as const;
+          const emailMessageKeyByType = {
+            REVIEW_REQUESTED: "reviewRequestedEmailMessage",
+            REVIEW_APPROVED: "reviewApprovedEmailMessage",
+            REVIEW_CHANGES_REQUESTED: "reviewChangesRequestedEmailMessage",
+            REVIEW_REJECTED: "reviewRejectedEmailMessage",
+          } as const;
+          const entityLabelKey =
+            data.entityType === "CASE"
+              ? "reviewEntityLabelCase"
+              : data.entityType === "RUN"
+                ? "reviewEntityLabelRun"
+                : "reviewEntityLabelSession";
+          const entityLabel = await getServerTranslation(
+            userLocale,
+            `components.notifications.content.${entityLabelKey}`
+          );
+          translatedTitle = await getServerTranslation(
+            userLocale,
+            `components.notifications.content.${titleKeyByType[notification.type as keyof typeof titleKeyByType]}`
+          );
+          translatedMessage = await getServerTranslation(
+            userLocale,
+            `components.notifications.content.${emailMessageKeyByType[notification.type as keyof typeof emailMessageKeyByType]}`,
+            {
+              actorName:
+                (notification.type === "REVIEW_REQUESTED"
+                  ? data.requesterName
+                  : data.deciderName) ?? "",
+              entityLabel,
+              entityName: data.entityName ?? "",
+              projectName: data.projectName ?? "",
+            }
+          );
+          if (data.fromStateName && data.toStateName) {
+            const transitionLine = await getServerTranslation(
+              userLocale,
+              "components.notifications.content.reviewTransition",
+              { from: data.fromStateName, to: data.toStateName }
+            );
+            translatedMessage += `\n\n${transitionLine}`;
+          }
+          const reviewCommentText =
+            notification.type === "REVIEW_REQUESTED"
+              ? data.commentText
+              : data.decisionComment;
+          if (
+            typeof reviewCommentText === "string" &&
+            reviewCommentText.length > 0
+          ) {
+            const commentLine = await getServerTranslation(
+              userLocale,
+              "components.notifications.content.reviewCommentPreview",
+              { comment: reviewCommentText }
+            );
+            translatedMessage += `\n\n${commentLine}`;
+          }
         }
 
         // Get email template translations
@@ -432,6 +515,21 @@ const processor = async (job: Job) => {
               if (data.projectId && data.jobId && !data.error) {
                 url = `${baseUrl}/${urlLocale}/projects/repository/${data.projectId}?urlJobId=${data.jobId}`;
               }
+            } else if (
+              notification.type === "REVIEW_REQUESTED" ||
+              notification.type === "REVIEW_APPROVED" ||
+              notification.type === "REVIEW_CHANGES_REQUESTED" ||
+              notification.type === "REVIEW_REJECTED"
+            ) {
+              if (data.projectId && data.entityType && data.entityId) {
+                const entityPath =
+                  data.entityType === "CASE"
+                    ? `repository/${data.projectId}/${data.entityId}`
+                    : data.entityType === "RUN"
+                      ? `runs/${data.projectId}/${data.entityId}`
+                      : `sessions/${data.projectId}/${data.entityId}`;
+                url = `${baseUrl}/${urlLocale}/projects/${entityPath}`;
+              }
             }
 
             // Get translated title and message
@@ -513,6 +611,51 @@ const processor = async (job: Job) => {
                   }
                 );
               }
+            } else if (
+              notification.type === "REVIEW_REQUESTED" ||
+              notification.type === "REVIEW_APPROVED" ||
+              notification.type === "REVIEW_CHANGES_REQUESTED" ||
+              notification.type === "REVIEW_REJECTED"
+            ) {
+              const titleKeyByType = {
+                REVIEW_REQUESTED: "reviewRequestedTitle",
+                REVIEW_APPROVED: "reviewApprovedTitle",
+                REVIEW_CHANGES_REQUESTED: "reviewChangesRequestedTitle",
+                REVIEW_REJECTED: "reviewRejectedTitle",
+              } as const;
+              const emailMessageKeyByType = {
+                REVIEW_REQUESTED: "reviewRequestedEmailMessage",
+                REVIEW_APPROVED: "reviewApprovedEmailMessage",
+                REVIEW_CHANGES_REQUESTED: "reviewChangesRequestedEmailMessage",
+                REVIEW_REJECTED: "reviewRejectedEmailMessage",
+              } as const;
+              const entityLabelKey =
+                data.entityType === "CASE"
+                  ? "reviewEntityLabelCase"
+                  : data.entityType === "RUN"
+                    ? "reviewEntityLabelRun"
+                    : "reviewEntityLabelSession";
+              const entityLabel = await getServerTranslation(
+                userLocale,
+                `components.notifications.content.${entityLabelKey}`
+              );
+              translatedTitle = await getServerTranslation(
+                userLocale,
+                `components.notifications.content.${titleKeyByType[notification.type as keyof typeof titleKeyByType]}`
+              );
+              translatedMessage = await getServerTranslation(
+                userLocale,
+                `components.notifications.content.${emailMessageKeyByType[notification.type as keyof typeof emailMessageKeyByType]}`,
+                {
+                  actorName:
+                    (notification.type === "REVIEW_REQUESTED"
+                      ? data.requesterName
+                      : data.deciderName) ?? "",
+                  entityLabel,
+                  entityName: data.entityName ?? "",
+                  projectName: data.projectName ?? "",
+                }
+              );
             }
 
             return {

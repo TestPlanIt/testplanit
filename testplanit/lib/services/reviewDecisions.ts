@@ -4,6 +4,7 @@ import type { Session } from "next-auth";
 
 import { prisma } from "~/lib/prisma";
 import { CommentService } from "~/lib/services/commentService";
+import { NotificationService } from "~/lib/services/notificationService";
 import { IneligibleReviewerError } from "~/lib/utils/errors";
 import { extractMentionedUserIds } from "~/lib/utils/tiptapMentions";
 
@@ -105,6 +106,8 @@ export async function decideReviewRequest(
         },
       },
       requestedBy: { select: { id: true, name: true } },
+      fromState: { select: { name: true } },
+      toState: { select: { name: true } },
     },
   });
 
@@ -241,38 +244,39 @@ export async function decideReviewRequest(
     return { commentId: created.id };
   });
 
-  // Fan out mention notification(s) to the requester outside the tx —
-  // mirrors the requestReview action's contract: notification failures do
-  // NOT roll back the decision. The user can still see the decision in
-  // the UI even if the bell-icon notification never lands.
+  // Persist mention rows (so the decision comment renders its in-thread
+  // @mention highlight) and dispatch the dedicated REVIEW_APPROVED /
+  // REVIEW_CHANGES_REQUESTED / REVIEW_REJECTED notification back to the
+  // requester. Runs outside the tx — notification failures do NOT roll
+  // back the decision. The user can still see the decision in the UI
+  // even if the bell-icon notification never lands.
   try {
     const mentionedUserIds = extractMentionedUserIds(decisionCommentContent);
     if (mentionedUserIds.length > 0) {
       await CommentService.createCommentMentions(commentId, mentionedUserIds);
-      const projectAndEntity = await loadProjectAndEntity(
-        req.project.id,
-        req.project.name,
-        req.entityType,
-        req.entityId
-      );
-      if (projectAndEntity) {
-        await CommentService.processMentions(
-          commentId,
-          decisionCommentContent,
-          userId,
-          session.user.name ?? "Unknown User",
-          projectAndEntity.project.id,
-          projectAndEntity.project.name,
-          projectAndEntity.entityType,
-          projectAndEntity.entityName,
-          projectAndEntity.entityId
-        );
-      }
     }
-  } catch (mentionErr) {
+    const entityName = await loadEntityName(req.entityType, req.entityId);
+    if (entityName !== null) {
+      await NotificationService.createReviewDecisionNotification({
+        requesterUserId: req.requestedBy.id,
+        deciderUserId: userId,
+        deciderName: session.user.name ?? "Unknown User",
+        decision,
+        projectId: req.project.id,
+        projectName: req.project.name,
+        entityType: req.entityType,
+        entityId: req.entityId,
+        entityName,
+        fromStateName: req.fromState.name,
+        toStateName: req.toState.name,
+        reviewRequestId,
+        decisionComment: trimmedComment,
+      });
+    }
+  } catch (notifyErr) {
     console.error(
-      "decideReviewRequest: paired-comment mention processing failed",
-      mentionErr
+      "decideReviewRequest: decision-notification dispatch failed",
+      notifyErr
     );
   }
 
@@ -281,55 +285,27 @@ export async function decideReviewRequest(
   });
 }
 
-async function loadProjectAndEntity(
-  projectId: number,
-  projectName: string,
+async function loadEntityName(
   entityType: "CASE" | "RUN" | "SESSION",
   entityId: number
-): Promise<{
-  project: { id: number; name: string };
-  entityType: "RepositoryCase" | "TestRun" | "Session";
-  entityName: string;
-  entityId: string;
-} | null> {
+): Promise<string | null> {
   if (entityType === "CASE") {
     const row = await prisma.repositoryCases.findUnique({
       where: { id: entityId },
-      select: { id: true, name: true },
+      select: { name: true },
     });
-    return row
-      ? {
-          project: { id: projectId, name: projectName },
-          entityType: "RepositoryCase",
-          entityName: row.name,
-          entityId: String(row.id),
-        }
-      : null;
+    return row?.name ?? null;
   }
   if (entityType === "RUN") {
     const row = await prisma.testRuns.findUnique({
       where: { id: entityId },
-      select: { id: true, name: true },
+      select: { name: true },
     });
-    return row
-      ? {
-          project: { id: projectId, name: projectName },
-          entityType: "TestRun",
-          entityName: row.name,
-          entityId: String(row.id),
-        }
-      : null;
+    return row?.name ?? null;
   }
   const row = await prisma.sessions.findUnique({
     where: { id: entityId },
-    select: { id: true, name: true },
+    select: { name: true },
   });
-  return row
-    ? {
-        project: { id: projectId, name: projectName },
-        entityType: "Session",
-        entityName: row.name,
-        entityId: String(row.id),
-      }
-    : null;
+  return row?.name ?? null;
 }

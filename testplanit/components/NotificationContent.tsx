@@ -497,6 +497,122 @@ export function NotificationContent({
     );
   }
 
+  // Handle review request + review-decision notifications. All four types
+  // share the same entity / project / transition rendering; the title and
+  // subject phrasing differ per type. Persisted `title` and `message` are
+  // fallback-only — the renderer composes localized copy from the data
+  // payload at display time (see workers/emailWorker.ts for the matching
+  // server-side composition).
+  if (
+    notification.type === "REVIEW_REQUESTED" ||
+    notification.type === "REVIEW_APPROVED" ||
+    notification.type === "REVIEW_CHANGES_REQUESTED" ||
+    notification.type === "REVIEW_REJECTED"
+  ) {
+    if (data.projectId && data.entityType && data.entityId) {
+      const entityLink =
+        data.entityType === "CASE"
+          ? `/projects/repository/${data.projectId}/${data.entityId}`
+          : data.entityType === "RUN"
+            ? `/projects/runs/${data.projectId}/${data.entityId}`
+            : `/projects/sessions/${data.projectId}/${data.entityId}`;
+
+      const entityNameDisplay =
+        data.entityType === "CASE" ? (
+          <TestCaseNameDisplay
+            testCase={{ id: data.entityId, name: data.entityName }}
+            showIcon={true}
+          />
+        ) : data.entityType === "RUN" ? (
+          <TestRunNameDisplay
+            testRun={{ id: data.entityId, name: data.entityName }}
+            showIcon={true}
+          />
+        ) : (
+          <SessionNameDisplay
+            session={{ id: data.entityId, name: data.entityName }}
+            showIcon={true}
+          />
+        );
+
+      let title: string;
+      let action: string;
+      let actorUserId: string | undefined;
+      if (notification.type === "REVIEW_REQUESTED") {
+        title = t("reviewRequestedTitle");
+        action = t("reviewRequestedAction");
+        actorUserId = data.requesterUserId;
+      } else if (notification.type === "REVIEW_APPROVED") {
+        title = t("reviewApprovedTitle");
+        action = t("reviewApprovedAction");
+        actorUserId = data.deciderUserId;
+      } else if (notification.type === "REVIEW_CHANGES_REQUESTED") {
+        title = t("reviewChangesRequestedTitle");
+        action = t("reviewChangesRequestedAction");
+        actorUserId = data.deciderUserId;
+      } else {
+        title = t("reviewRejectedTitle");
+        action = t("reviewRejectedAction");
+        actorUserId = data.deciderUserId;
+      }
+
+      const commentText =
+        notification.type === "REVIEW_REQUESTED"
+          ? data.commentText
+          : data.decisionComment;
+
+      return (
+        <div className="space-y-2">
+          <h4 className="font-medium text-sm">{title}</h4>
+          <div className="text-sm text-muted-foreground space-y-1">
+            <div className="flex items-center gap-1 flex-wrap">
+              {actorUserId && <UserNameCell userId={actorUserId} hideLink />}
+              <span>{action}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Link
+                href={entityLink}
+                className="font-medium text-primary hover:underline inline-flex items-center gap-1"
+              >
+                {entityNameDisplay}
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            </div>
+            <div className="flex items-center gap-1 flex-wrap">
+              <span>{t("inProject")}</span>
+              <ProjectNameCell
+                projectId={data.projectId}
+                value={data.projectName}
+                size="sm"
+              />
+            </div>
+            {data.fromStateName && data.toStateName && (
+              <div className="text-xs">
+                {t("reviewTransition", {
+                  from: data.fromStateName,
+                  to: data.toStateName,
+                })}
+              </div>
+            )}
+            {typeof commentText === "string" && commentText.length > 0 && (
+              <div className="text-xs italic line-clamp-2">
+                {t("reviewCommentPreview", { comment: commentText })}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Fallback for notifications without complete data.
+    return (
+      <div className="space-y-1">
+        <h4 className="font-medium text-sm">{notification.title}</h4>
+        <p className="text-sm text-muted-foreground">{notification.message}</p>
+      </div>
+    );
+  }
+
   // Handle system announcements
   if (notification.type === "SYSTEM_ANNOUNCEMENT") {
     const hasRichContent = notification.data?.richContent;
