@@ -3055,13 +3055,25 @@
       "iconAria": "{count, plural, =0 {待审阅收件箱} one {待审阅收件箱，# 待审阅收件箱} other {待审阅收件箱，# 待审阅收件箱}}",
       "pageTitle": "评论",
       "pageDescription": "分配给您的待审核请求（直接分配给您或通过您所担任的角色分配给您）。",
+      "pageDescriptionDecided": "审核您已决定的请求。",
+      "tabPending": "待办的",
+      "tabDecided": "已决定",
+      "emptyDecided": "您尚未决定撰写任何评论。",
       "empty": "没有待审核的评论。您已全部完成审核。",
       "featureDisabled": "审核工作流程功能目前已禁用。待审核的审核内容将被保留，并在该功能重新启用后重新显示。",
       "columnEntity": "实体",
       "columnProject": "项目",
       "columnRequester": "请求者",
       "columnTransition": "过渡",
+      "columnTransitionFrom": "从",
+      "columnTransitionTo": "到",
       "columnRequestedAt": "已请求",
+      "columnDecidedAt": "决定于",
+      "columnStatus": "地位",
+      "columnActions": "行动",
+      "actionApprove": "批准",
+      "actionRequestChanges": "请求更改",
+      "actionReject": "拒绝",
       "filterEntityType": "实体类型",
       "filterProject": "项目",
       "filterAllEntityTypes": "所有实体类型",
@@ -4286,12 +4298,13 @@
     "workflows": {
       "description": "管理测试用例工作流程",
       "systemFeatureCard": {
-        "title": "审核工作流程功能",
-        "description": "系统级审核批准功能开关。启用后，项目可以通过其高级设置单独选择启用或禁用此功能。",
-        "stateEnabled": "已启用",
-        "stateDisabled": "已禁用",
-        "operatorNotePrefix": "通过环境变量设置",
-        "operatorNoteSuffix": "需要重启系统才能使更改生效。"
+        "title": "审查工作流程",
+        "description": "通过限制工作流程转换直至获得批准来强制执行审核。启用此功能后，项目可以通过其高级设置单独选择启用或禁用。禁用此功能可阻止工作流程审批限制。",
+        "toggleAriaLabel": "切换审核工作流程功能",
+        "adminOnlyNotice": "只有管理员才能更改此设置。",
+        "updateSuccessEnabled": "已启用审核工作流程。",
+        "updateSuccessDisabled": "审核工作流程已禁用。",
+        "updateError": "更新审核工作流程设置失败。请稍后再试。"
       },
       "editWorkflow": {
         "requiresReviewLabel": "需要审核",
@@ -5314,8 +5327,8 @@
         "reviewEntityLabelSession": "会议",
         "reviewTransition": "过渡： {from} → {to}",
         "reviewCommentPreview": "评论： {comment}",
-        "reviewRequestedEmailMessage": "{actorName} 请求您对项目“{projectName}”中的 {entityLabel} “{entityName}”进行审核。",
-        "reviewApprovedEmailMessage": "{actorName} 已批准您对 {entityLabel} \"{entityName}\" 的项目 \"{projectName} \" 的审核请求。",
+        "reviewRequestedEmailMessage": "{actorName} 请求您对项目“{projectName} 中的 {entityLabel} \"{entityName}\" 进行审核。",
+        "reviewApprovedEmailMessage": "{actorName} 已批准您对项目 {entityLabel} \"{entityName}\" 的{projectName} \" 的 {entityLabel} \" 的 {entityName} \" 的 {projectName} \" 的 {entityLabel} \" 的 {entityName} \" 的 {projectName} \" 的 {actorName} \" 的 {entityLabel} \" 的 {entityName} \" 的 {entityName} \" 的 {projectName} \" 的 <[⌇⌇1 ...3⌇⌇]> \" 的 <[⌇⌇1�",
         "reviewChangesRequestedEmailMessage": "{actorName} requested changes on your review request for {entityLabel} \"{entityName}\" in project \"{projectName}\".",
         "reviewRejectedEmailMessage": "{actorName} rejected your review request on {entityLabel} \"{entityName}\" in project \"{projectName}\"."
       }
@@ -5779,6 +5792,7 @@
       "isDefault": "## 默认值\n指示此工作流程是否为项目的默认工作流程。\n\n- 默认工作流程已预先选中，用于新的测试运行、会话和自动化。",
       "isEnabled": "## 已启用\n指示此工作流程是否已启用。",
       "isActive": "## 活动\n指示此工作流状态是否处于活动状态且可供使用。\n\n- 更新测试运行、会话或自动化时，可以选择活动工作流。\n- 非活动工作流将隐藏，但会保留在现有项中。",
+      "requiresReview": "## 需要审核\n启用后，案例、测试运行或会话进入此状态需要经过审核请求并获得批准。如果没有获得批准的请求，则转换将被阻止。\n\n- 当系统级功能关闭时，现有待审核的审核将静默保留，并在重新启用后重新出现。\n- 当测试人员从实体详情页面点击“请求审核”时，系统将选择审核人。\n\n如果系统级功能已禁用，则此开关将被锁定。要重新启用此功能，请从上方的“审核工作流”卡片中操作。",
       "projects": "## 项目\n指示可以使用此工作流程的项目。"
     },
     "testResult": {
@@ -7061,6 +7075,16 @@
     "mentions": {
       "notAMember": "非项目成员",
       "noUsersFound": "未找到用户"
+    },
+    "type": {
+      "reviewRequest": "审查请求",
+      "reviewDecision": {
+        "approved": "得到正式认可的",
+        "changesRequested": "请求更改",
+        "rejected": "已拒绝",
+        "cancelled": "取消",
+        "generic": "复核决定"
+      }
     }
   },
   "Trial": {

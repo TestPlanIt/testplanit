@@ -3055,13 +3055,25 @@
       "iconAria": "{count, plural, =0 {İnceleme gelen kutusu} one {İnceleme gelen kutusu, # beklemede} other {İnceleme gelen kutusu, # beklemede}}",
       "pageTitle": "Yorumlar",
       "pageDescription": "Size atanmış (doğrudan veya sahip olduğunuz bir rol aracılığıyla) bekleyen inceleme talepleri.",
+      "pageDescriptionDecided": "Daha önce karar verdiğiniz inceleme taleplerini gözden geçirin.",
+      "tabPending": "Askıda olması",
+      "tabDecided": "Karar verilmiş",
+      "emptyDecided": "Henüz herhangi bir değerlendirme yapmaya karar vermediniz.",
       "empty": "Bekleyen değerlendirme yok. Her şey tamamlandı.",
       "featureDisabled": "İnceleme iş akışı özelliği şu anda devre dışı bırakılmıştır. Bekleyen incelemeler korunacak ve özellik yeniden etkinleştirildiğinde tekrar görünecektir.",
       "columnEntity": "Varlık",
       "columnProject": "Proje",
       "columnRequester": "Talep Eden",
       "columnTransition": "Geçiş",
+      "columnTransitionFrom": "İtibaren",
+      "columnTransitionTo": "İle",
       "columnRequestedAt": "Talep edildiği yer",
+      "columnDecidedAt": "Karar verildi",
+      "columnStatus": "Durum",
+      "columnActions": "Eylemler",
+      "actionApprove": "Onaylamak",
+      "actionRequestChanges": "Değişiklik talebi",
+      "actionReject": "Reddetmek",
       "filterEntityType": "Varlık türü",
       "filterProject": "Proje",
       "filterAllEntityTypes": "Tüm varlık türleri",
@@ -4286,12 +4298,13 @@
     "workflows": {
       "description": "Test senaryosu iş akışlarını yönetin",
       "systemFeatureCard": {
-        "title": "İş akışı özelliğini inceleyin.",
-        "description": "İnceleme ve onaylama özelliği için sistem düzeyinde açma/kapama düğmesi. Etkinleştirildiğinde, projeler Gelişmiş ayarları aracılığıyla bu özelliği ayrı ayrı etkinleştirebilir veya devre dışı bırakabilir.",
-        "stateEnabled": "Etkinleştirilmiş",
-        "stateDisabled": "Engelli",
-        "operatorNotePrefix": "Ortam değişkeni aracılığıyla ayarlanır.",
-        "operatorNoteSuffix": "Değişikliklerin uygulanması için yeniden başlatma gereklidir."
+        "title": "İş Akışını Gözden Geçirin",
+        "description": "Onay verilene kadar iş akışı geçişlerini kilitleyerek incelemeleri zorunlu hale getirin. Etkinleştirildiğinde, projeler Gelişmiş ayarları aracılığıyla ayrı ayrı bu özelliği etkinleştirebilir veya devre dışı bırakabilir. İş akışı onay kilitlerini önlemek için devre dışı bırakın.",
+        "toggleAriaLabel": "İnceleme iş akışı özelliğini açıp kapat",
+        "adminOnlyNotice": "Bu ayarı yalnızca yöneticiler değiştirebilir.",
+        "updateSuccessEnabled": "İnceleme iş akışı etkinleştirildi.",
+        "updateSuccessDisabled": "İnceleme iş akışı devre dışı bırakıldı.",
+        "updateError": "İnceleme iş akışı ayarı güncellenemedi. Lütfen birazdan tekrar deneyin."
       },
       "editWorkflow": {
         "requiresReviewLabel": "İnceleme gerektiriyor",
@@ -5779,6 +5792,7 @@
       "isDefault": "## Varsayılan\nBu iş akışının projeniz için varsayılan olup olmadığını gösterir.\n\n- Varsayılan iş akışı, yeni test çalıştırmaları, oturumlar ve otomasyon için önceden seçilmiştir.",
       "isEnabled": "## Etkin\nBu iş akışının etkin olup olmadığını gösterir.",
       "isActive": "## Aktif\nBu iş akışı durumunun aktif ve kullanıma hazır olup olmadığını gösterir.\n\n- Aktif iş akışları, test çalıştırmaları, oturumlar veya otomasyon güncellenirken seçilebilir.\n- Etkin olmayan iş akışları seçimden gizlenir ancak mevcut öğelerde korunur.",
+      "requiresReview": "## İnceleme Gerektirir\nAÇIK olduğunda, bir vakanın, test çalıştırmasının veya oturumun bu duruma geçişi, onaylanmış bir inceleme isteğiyle engellenir. Onaylanmış bir istek olmadan geçiş engellenir.\n\n- Sistem düzeyindeki özellik KAPALI olduğunda mevcut bekleyen incelemeler sessizce korunur ve yeniden etkinleştirildiğinde tekrar görünür.\n- Bir test uzmanı varlık detay sayfasından İnceleme İsteği'ne tıkladığında inceleyici seçilir.\n\nSistem düzeyindeki özellik devre dışı bırakılmışsa, bu anahtar kilitlenir. Bunu açmak için yukarıdaki İnceleme İş Akışı kartından yeniden etkinleştirin.",
       "projects": "## Projeler\nBu iş akışını kullanabilecek projeleri belirtir."
     },
     "testResult": {
@@ -7061,6 +7075,16 @@
     "mentions": {
       "notAMember": "Proje üyesi değil",
       "noUsersFound": "Hiç kullanıcı bulunamadı."
+    },
+    "type": {
+      "reviewRequest": "İnceleme talebi",
+      "reviewDecision": {
+        "approved": "Onaylı",
+        "changesRequested": "Talep edilen değişiklikler",
+        "rejected": "Reddedilmiş",
+        "cancelled": "İptal edildi",
+        "generic": "İnceleme kararı"
+      }
     }
   },
   "Trial": {

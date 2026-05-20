@@ -3055,13 +3055,25 @@
       "iconAria": "{count, plural, =0 {Boîte de réception à consulter} one {Boîte de réception à consulter, # en attente} other {Boîte de réception à consulter, # en attente}}",
       "pageTitle": "Avis",
       "pageDescription": "Demandes de révision en attente qui vous sont attribuées (directement ou via un rôle que vous occupez).",
+      "pageDescriptionDecided": "Examiner les demandes auxquelles vous avez déjà donné votre décision.",
+      "tabPending": "En attente",
+      "tabDecided": "Décidé",
+      "emptyDecided": "Vous n'avez pas encore décidé de rédiger d'avis.",
       "empty": "Aucun avis en attente. Vous êtes à jour.",
       "featureDisabled": "La fonctionnalité de flux de révision est actuellement désactivée. Les révisions en attente sont conservées et réapparaîtront lorsque la fonctionnalité sera réactivée.",
       "columnEntity": "Entité",
       "columnProject": "Projet",
       "columnRequester": "Demandeur",
       "columnTransition": "Transition",
+      "columnTransitionFrom": "Depuis",
+      "columnTransitionTo": "À",
       "columnRequestedAt": "Demandé à",
+      "columnDecidedAt": "Décidé à",
+      "columnStatus": "Statut",
+      "columnActions": "Actes",
+      "actionApprove": "Approuver",
+      "actionRequestChanges": "Demander des modifications",
+      "actionReject": "Rejeter",
       "filterEntityType": "Type d'entité",
       "filterProject": "Projet",
       "filterAllEntityTypes": "Tous les types d'entités",
@@ -4286,12 +4298,13 @@
     "workflows": {
       "description": "Gérer les flux de travail des cas de test",
       "systemFeatureCard": {
-        "title": "Fonctionnalité de flux de travail de révision",
-        "description": "Activation/désactivation au niveau du système de la fonction de révision et d'approbation. Lorsqu'elle est activée, les projets peuvent l'activer ou la désactiver individuellement via leurs paramètres avancés.",
-        "stateEnabled": "Activé",
-        "stateDisabled": "Désactivé",
-        "operatorNotePrefix": "Défini via une variable d'environnement",
-        "operatorNoteSuffix": "Un redémarrage est nécessaire pour appliquer les modifications."
+        "title": "Flux de travail de révision",
+        "description": "Imposer des révisions en bloquant les transitions du flux de travail jusqu'à approbation. Une fois activée, cette option permet aux projets de l'activer ou de la désactiver individuellement via leurs paramètres avancés. Désactivez-la pour empêcher le blocage des validations dans le flux de travail.",
+        "toggleAriaLabel": "Activer/désactiver la fonctionnalité de flux de travail de révision",
+        "adminOnlyNotice": "Seuls les administrateurs peuvent modifier ce paramètre.",
+        "updateSuccessEnabled": "Flux de travail de révision activé.",
+        "updateSuccessDisabled": "Flux de travail de révision désactivé.",
+        "updateError": "Impossible de mettre à jour les paramètres du flux de travail de révision. Veuillez réessayer dans quelques instants."
       },
       "editWorkflow": {
         "requiresReviewLabel": "Nécessite une révision",
@@ -5779,6 +5792,7 @@
       "isDefault": "## Par défaut\nIndique si ce flux de travail est celui par défaut de votre projet.\n\n- Le flux de travail par défaut est présélectionné pour les nouvelles exécutions de tests, les sessions et l'automatisation.",
       "isEnabled": "## Activé\nIndique si ce flux de travail est activé.",
       "isActive": "## Actif\nIndique si cet état de workflow est actif et disponible.\n\n- Les workflows actifs peuvent être sélectionnés lors de la mise à jour des exécutions de tests, des sessions ou de l'automatisation.\n- Les workflows inactifs sont masqués, mais conservés dans les éléments existants.",
+      "requiresReview": "## Nécessite une révision\nLorsque cette option est activée, le passage d'un cas, d'une exécution de test ou d'une session à cet état est conditionné par une demande de révision approuvée. Sans demande approuvée, la transition est bloquée.\n\n- Les révisions en attente sont conservées silencieusement lorsque la fonctionnalité système est désactivée et réapparaissent lorsqu'elle est réactivée.\n- Le réviseur est sélectionné lorsqu'un testeur clique sur « Demander une révision » depuis la page de détails de l'entité.\n\nSi la fonctionnalité système est désactivée, ce commutateur est verrouillé. Réactivez-le depuis la carte « Flux de travail de révision » ci-dessus pour l'activer.",
       "projects": "## Projets\nIndique les projets qui peuvent utiliser ce flux de travail."
     },
     "testResult": {
@@ -7061,6 +7075,16 @@
     "mentions": {
       "notAMember": "Je ne suis pas membre du projet.",
       "noUsersFound": "Aucun utilisateur trouvé"
+    },
+    "type": {
+      "reviewRequest": "Demande de révision",
+      "reviewDecision": {
+        "approved": "Approuvé",
+        "changesRequested": "Modifications demandées",
+        "rejected": "Rejeté",
+        "cancelled": "Annulé",
+        "generic": "Réviser la décision"
+      }
     }
   },
   "Trial": {

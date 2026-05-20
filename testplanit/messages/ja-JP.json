@@ -3055,13 +3055,25 @@
       "iconAria": "{count, plural, =0 {レビュー受信ボックス} one {レビュー受信ボックス、# 保留中} other {レビュー受信ボックス、# 保留中}}",
       "pageTitle": "レビュー",
       "pageDescription": "あなたに割り当てられた（直接またはあなたが担う役割を通じて割り当てられた）保留中の審査依頼。",
+      "pageDescriptionDecided": "既に決定済みのリクエストを再検討してください。",
+      "tabPending": "保留中",
+      "tabDecided": "決めた",
+      "emptyDecided": "まだレビューを決定していません。",
       "empty": "保留中のレビューはありません。すべて完了しています。",
       "featureDisabled": "レビューワークフロー機能は現在無効になっています。保留中のレビューは保持されており、機能が再度有効になった際に表示されます。",
       "columnEntity": "実在物",
       "columnProject": "プロジェクト",
       "columnRequester": "依頼者",
       "columnTransition": "遷移",
+      "columnTransitionFrom": "から",
+      "columnTransitionTo": "に",
       "columnRequestedAt": "リクエスト先",
+      "columnDecidedAt": "決定日",
+      "columnStatus": "状態",
+      "columnActions": "行動",
+      "actionApprove": "承認する",
+      "actionRequestChanges": "変更をリクエストする",
+      "actionReject": "拒否する",
       "filterEntityType": "エンティティタイプ",
       "filterProject": "プロジェクト",
       "filterAllEntityTypes": "すべてのエンティティタイプ",
@@ -4286,12 +4298,13 @@
     "workflows": {
       "description": "テストケースワークフローを管理する",
       "systemFeatureCard": {
-        "title": "レビューワークフロー機能",
-        "description": "レビューおよび承認機能のシステムレベルの切り替えスイッチです。有効にすると、プロジェクトごとに詳細設定から個別に有効/無効を選択できます。",
-        "stateEnabled": "有効",
-        "stateDisabled": "無効",
-        "operatorNotePrefix": "環境変数で設定",
-        "operatorNoteSuffix": "変更を適用するには再起動が必要です。"
+        "title": "レビューワークフロー",
+        "description": "承認が得られるまでワークフローの遷移を制限することで、レビューを強制します。有効にすると、プロジェクトは詳細設定から個別に有効/無効を選択できます。無効にすると、ワークフローの承認制限が解除されます。",
+        "toggleAriaLabel": "レビューワークフロー機能の切り替え",
+        "adminOnlyNotice": "この設定を変更できるのは管理者のみです。",
+        "updateSuccessEnabled": "レビューワークフローが有効になりました。",
+        "updateSuccessDisabled": "レビューワークフローは無効になっています。",
+        "updateError": "レビューワークフロー設定の更新に失敗しました。しばらくしてからもう一度お試しください。"
       },
       "editWorkflow": {
         "requiresReviewLabel": "審査が必要",
@@ -5779,6 +5792,7 @@
       "isDefault": "## デフォルト\nこのワークフローがプロジェクトのデフォルトかどうかを示します。\n\n- 新しいテスト実行、セッション、および自動化では、デフォルトのワークフローが事前に選択されています。",
       "isEnabled": "## 有効\nこのワークフローが有効かどうかを示します。",
       "isActive": "## アクティブ\nこのワークフローの状態がアクティブで使用可能かどうかを示します。\n\n- アクティブなワークフローは、テスト実行、セッション、または自動化を更新するときに選択できます。\n- 非アクティブなワークフローは選択から非表示になりますが、既存の項目に保持されます。",
+      "requiresReview": "## レビューが必要\nON の場合、ケース、テスト実行、またはセッションをこの状態に移行させるには、承認されたレビュー要求が必要です。承認された要求がない場合、移行はブロックされます。\n\n- システム レベルの機能が OFF の場合、保留中の既存のレビューはサイレントに保持され、再度有効にすると再び表示されます。\n- テスターがエンティティの詳細ページから [レビューを要求] をクリックすると、レビュー担当者が選択されます。\n\nシステム レベルの機能が無効になっている場合、このスイッチはロックされます。上記の [レビュー ワークフロー] カードから再度有効にすると、オンに切り替えることができます。",
       "projects": "## プロジェクト\nこのワークフローを使用できるプロジェクトを示します。"
     },
     "testResult": {
@@ -7061,6 +7075,16 @@
     "mentions": {
       "notAMember": "プロジェクトメンバーではない",
       "noUsersFound": "ユーザーが見つかりません"
+    },
+    "type": {
+      "reviewRequest": "レビュー依頼",
+      "reviewDecision": {
+        "approved": "承認された",
+        "changesRequested": "変更依頼",
+        "rejected": "拒否されました",
+        "cancelled": "キャンセル",
+        "generic": "審査決定"
+      }
     }
   },
   "Trial": {

@@ -3055,13 +3055,25 @@
       "iconAria": "{count, plural, =0 {Review inbox} one {Review inbox, # pending} other {Review inbox, # pending}}",
       "pageTitle": "評論",
       "pageDescription": "指派給您的待審核請求（直接指派給您或透過您所擔任的角色指派給您）。",
+      "pageDescriptionDecided": "審核您已決定的請求。",
+      "tabPending": "待辦的",
+      "tabDecided": "已決定",
+      "emptyDecided": "您尚未決定撰寫任何評論。",
       "empty": "沒有待審核的評論。您已全部完成審核。",
       "featureDisabled": "審核工作流程功能目前已停用。待審核的審核內容將會保留，並在該功能重新啟用後重新顯示。",
       "columnEntity": "實體",
       "columnProject": "專案",
       "columnRequester": "請求者",
       "columnTransition": "過渡",
+      "columnTransitionFrom": "從",
+      "columnTransitionTo": "到",
       "columnRequestedAt": "已請求",
+      "columnDecidedAt": "決定於",
+      "columnStatus": "地位",
+      "columnActions": "行動",
+      "actionApprove": "核准",
+      "actionRequestChanges": "請求更改",
+      "actionReject": "拒絕",
       "filterEntityType": "實體類型",
       "filterProject": "專案",
       "filterAllEntityTypes": "所有實體類型",
@@ -4286,12 +4298,13 @@
     "workflows": {
       "description": "管理測試用例工作流程",
       "systemFeatureCard": {
-        "title": "審核工作流程功能",
-        "description": "系統級審核批准功能開關。啟用後，項目可以透過其進階設定單獨選擇啟用或停用此功能。",
-        "stateEnabled": "已啟用",
-        "stateDisabled": "已停用",
-        "operatorNotePrefix": "透過環境變數設定",
-        "operatorNoteSuffix": "需要重新啟動系統才能使變更生效。"
+        "title": "審查工作流程",
+        "description": "透過限制工作流程轉換直到獲得批准來強制執行審核。啟用此功能後，項目可以透過其進階設定單獨選擇啟用或停用。停用此功能可阻止工作流程核准限制。",
+        "toggleAriaLabel": "切換審核工作流程功能",
+        "adminOnlyNotice": "只有管理員才能更改此設定。",
+        "updateSuccessEnabled": "已啟用審核工作流程。",
+        "updateSuccessDisabled": "審核工作流程已停用。",
+        "updateError": "更新審核工作流程設定失敗。請稍後再試。"
       },
       "editWorkflow": {
         "requiresReviewLabel": "需要審核",
@@ -5779,6 +5792,7 @@
       "isDefault": "## 預設值\n指示此工作流程是否為專案的預設工作流程。\n\n- 預設工作流程已預先選中，用於新的測試運行、會話和自動化。",
       "isEnabled": "## 已啟用\n指示此工作流程是否已啟用。",
       "isActive": "## 活動\n指示此工作流程狀態是否處於作用中且可供使用。\n\n- 更新測試運行、會話或自動化時，可以選擇活動工作流程。\n- 非活動工作流程將會隱藏，但會保留在現有項目中。",
+      "requiresReview": "## 需要審核\n啟用後，案例、測試運行或會話進入此狀態需要經過審核請求並獲得批准。如果沒有獲得批准的請求，則轉換將被阻止。\n\n- 當系統級功能關閉時，現有待審核的審核將靜默保留，並在重新啟用後重新出現。\n- 當測試人員從實體詳情頁點選「要求審核」時，系統會選擇審核者。\n\n若係統級功能已停用，則此開關將被鎖定。若要重新啟用此功能，請從上方的「審核工作流程」卡片中操作。",
       "projects": "## 項目\n指示可以使用此工作流程的項目。"
     },
     "testResult": {
@@ -7061,6 +7075,16 @@
     "mentions": {
       "notAMember": "非專案成員",
       "noUsersFound": "未找到用戶"
+    },
+    "type": {
+      "reviewRequest": "審查請求",
+      "reviewDecision": {
+        "approved": "得到正式認可的",
+        "changesRequested": "請求更改",
+        "rejected": "已拒絕",
+        "cancelled": "取消",
+        "generic": "複核決定"
+      }
     }
   },
   "Trial": {

@@ -3055,13 +3055,25 @@
       "iconAria": "{count, plural, =0 {Bandeja de entrada de revisiones} one {Bandeja de entrada de revisiones, # pendiente} other {Bandeja de entrada de revisiones, # pendiente}}",
       "pageTitle": "Reseñas",
       "pageDescription": "Solicitudes de revisión pendientes que se le hayan asignado (directamente o a través de un cargo que ocupe).",
+      "pageDescriptionDecided": "Revisa las solicitudes que ya has decidido.",
+      "tabPending": "Pendiente",
+      "tabDecided": "Decidido",
+      "emptyDecided": "Todavía no has decidido escribir ninguna reseña.",
       "empty": "No hay revisiones pendientes. Ya estás al día.",
       "featureDisabled": "La función de flujo de trabajo de revisiones está actualmente desactivada. Las revisiones pendientes se conservan y volverán a aparecer cuando se vuelva a activar la función.",
       "columnEntity": "Entidad",
       "columnProject": "Proyecto",
       "columnRequester": "Solicitante",
       "columnTransition": "Transición",
+      "columnTransitionFrom": "De",
+      "columnTransitionTo": "A",
       "columnRequestedAt": "Solicitado en",
+      "columnDecidedAt": "Decidido en",
+      "columnStatus": "Estado",
+      "columnActions": "Comportamiento",
+      "actionApprove": "Aprobar",
+      "actionRequestChanges": "Solicitar cambios",
+      "actionReject": "Rechazar",
       "filterEntityType": "Tipo de entidad",
       "filterProject": "Proyecto",
       "filterAllEntityTypes": "Todos los tipos de entidades",
@@ -4286,12 +4298,13 @@
     "workflows": {
       "description": "Administrar flujos de trabajo de casos de prueba",
       "systemFeatureCard": {
-        "title": "Revisar la función de flujo de trabajo",
-        "description": "Opción a nivel de sistema para la función de revisión y aprobación. Cuando está habilitada, los proyectos pueden activarla o desactivarla individualmente a través de su configuración avanzada.",
-        "stateEnabled": "Activado",
-        "stateDisabled": "Desactivado",
-        "operatorNotePrefix": "Configurado mediante variable de entorno",
-        "operatorNoteSuffix": "Es necesario reiniciar el sistema para aplicar los cambios."
+        "title": "Revisar el flujo de trabajo",
+        "description": "Aplique revisiones restringiendo las transiciones del flujo de trabajo hasta que se otorgue la aprobación. Cuando está habilitada, los proyectos pueden activarla o desactivarla individualmente a través de su configuración avanzada. Desactive esta opción para evitar las restricciones de aprobación del flujo de trabajo.",
+        "toggleAriaLabel": "Activar/desactivar la función de flujo de trabajo de revisión",
+        "adminOnlyNotice": "Solo los administradores pueden cambiar esta configuración.",
+        "updateSuccessEnabled": "Flujo de trabajo de revisión habilitado.",
+        "updateSuccessDisabled": "Revisión del flujo de trabajo deshabilitada.",
+        "updateError": "No se pudo actualizar la configuración del flujo de trabajo de revisión. Inténtelo de nuevo en un momento."
       },
       "editWorkflow": {
         "requiresReviewLabel": "Requiere revisión",
@@ -5779,6 +5792,7 @@
       "isDefault": "## Por defecto\nIndica si este flujo de trabajo es el predeterminado para tu proyecto.\n\n- El flujo de trabajo predeterminado está preseleccionado para nuevas ejecuciones de pruebas, sesiones y automatización.",
       "isEnabled": "## Habilitado\\nIndica si este flujo de trabajo está activo.",
       "isActive": "## Activo\nIndica si este estado de flujo de trabajo está activo y disponible para su uso.\n\n- Los flujos de trabajo activos se pueden seleccionar al actualizar ejecuciones de pruebas, sesiones o automatización.\n- Los flujos de trabajo inactivos se ocultan de la selección, pero se conservan en los elementos existentes.",
+      "requiresReview": "## Requiere revisión\nCuando está ACTIVADO, la transición de un caso, ejecución de prueba o sesión A este estado está sujeta a una solicitud de revisión aprobada. Sin una solicitud aprobada, la transición está bloqueada.\n\n- Las revisiones pendientes existentes se conservan silenciosamente cuando la función a nivel de sistema está DESACTIVADA y reaparecen cuando se vuelve a habilitar.\n- El revisor se selecciona cuando un evaluador hace clic en Solicitar revisión desde la página de detalles de la entidad.\n\nSi la función a nivel de sistema está deshabilitada, este interruptor está bloqueado. Vuelva a habilitarlo desde la tarjeta Flujo de trabajo de revisión anterior para activarlo.",
       "projects": "## Proyecta\nIndica los proyectos que pueden usar este flujo de trabajo."
     },
     "testResult": {
@@ -7061,6 +7075,16 @@
     "mentions": {
       "notAMember": "No es miembro del proyecto",
       "noUsersFound": "No se encontraron usuarios"
+    },
+    "type": {
+      "reviewRequest": "Solicitud de revisión",
+      "reviewDecision": {
+        "approved": "Aprobado",
+        "changesRequested": "Cambios solicitados",
+        "rejected": "Rechazado",
+        "cancelled": "Cancelado",
+        "generic": "Revisar la decisión"
+      }
     }
   },
   "Trial": {
