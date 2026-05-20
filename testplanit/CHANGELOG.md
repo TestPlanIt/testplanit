@@ -1,3 +1,9 @@
+## [0.29.3](https://github.com/TestPlanIt/testplanit/compare/v0.29.2...v0.29.3) (2026-05-20)
+
+### Bug Fixes
+
+* **runs:** soft-delete test run cases to preserve result history ([#323](https://github.com/TestPlanIt/testplanit/issues/323)) ([5457653](https://github.com/TestPlanIt/testplanit/commit/5457653a5b2d0f05340572e4ce74bcd92c151ff7))
+
 ## [0.29.2](https://github.com/TestPlanIt/testplanit/compare/v0.29.1...v0.29.2) (2026-05-20)
 
 ### Bug Fixes
