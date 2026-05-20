@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import { RunGenerationProgressMount } from "@/components/runs/RunGenerationProgressToast";
 import { UpgradeNotificationChecker } from "@/components/UpgradeNotificationChecker";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
@@ -55,6 +56,7 @@ export default async function RootLayout(props: any) {
             </div>
             {props.children}
             <Toaster richColors className="!z-[9999]" />
+            <RunGenerationProgressMount />
           </div>
         </NextStepOnboarding>
       </NextIntlClientProvider>

@@ -143,6 +143,7 @@ const testProject: ExtendedProjects = {
   promptConfigId: null,
   defaultCaseExportTemplateId: null,
   quickScriptEnabled: false,
+  junitIterationPropertyNames: [],
   creator: {
     id: "user-1",
     name: "Test User",

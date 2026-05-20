@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/refs */
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -32,14 +33,26 @@ import { Textarea } from "@/components/ui/textarea";
 import { useCreateIssue } from "@/lib/hooks/issue";
 import { useFindManyProjectIntegration } from "@/lib/hooks/project-integration";
 import { useFindManyIntegrationProject } from "~/lib/hooks";
+import { tiptapToMarkdown } from "~/lib/tiptap/tiptapToMarkdown";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, Asterisk, ExternalLink, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
+
+// INT-05: description accepts either a plain string (manual issue create
+// flow) or a TipTap doc (programmatic prefill from a failed iteration).
+// The form's RHF schema continues to use string — the doc shape is held
+// outside the form, serialized to markdown for the textarea preview, and
+// re-attached at submit time if the user did not edit.
+const tiptapDocSchema = z.object({
+  type: z.literal("doc"),
+  content: z.array(z.unknown()),
+});
+type TiptapDocValue = z.infer<typeof tiptapDocSchema>;
 
 const createIssueSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -51,12 +64,21 @@ const createIssueSchema = z.object({
 
 type CreateIssueFormValues = z.infer<typeof createIssueSchema>;
 
+// Public defaults shape — broadened to accept a TipTap doc on description
+// for the INT-05 prefill path. The dialog narrows internally.
+type CreateIssueDialogDefaults = Omit<
+  Partial<CreateIssueFormValues>,
+  "description"
+> & {
+  description?: string | TiptapDocValue;
+};
+
 interface CreateIssueDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: number;
   onIssueCreated?: (issue: any) => void;
-  defaultValues?: Partial<CreateIssueFormValues>;
+  defaultValues?: CreateIssueDialogDefaults;
   entityType?:
     | "testCase"
     | "session"
@@ -65,6 +87,10 @@ interface CreateIssueDialogProps {
     | "testRunResult"
     | "testRunStepResult";
   entityId?: number;
+}
+
+function isTiptapDocValue(value: unknown): value is TiptapDocValue {
+  return tiptapDocSchema.safeParse(value).success;
 }
 
 export function CreateIssueDialog({
@@ -92,11 +118,36 @@ export function CreateIssueDialog({
     Record<string, any>
   >({});
 
+  // INT-05: when defaultValues.description is a TipTap doc we hold the
+  // doc in a ref + compute its markdown preview to seed the textarea.
+  // If the user does not edit the textarea before submit, we send the
+  // ORIGINAL doc to the API so Jira/ADO can render their native rich
+  // formats (D-15). If the user edits, we send the edited string.
+  const initialDescription = defaultValues?.description;
+  const isInitialDescriptionDoc = isTiptapDocValue(initialDescription);
+  const initialMarkdownPreview = useMemo(() => {
+    if (isInitialDescriptionDoc) {
+      try {
+        return tiptapToMarkdown(initialDescription);
+      } catch (err) {
+        console.error("Failed to render TipTap doc to markdown preview", err);
+        return "";
+      }
+    }
+    return typeof initialDescription === "string" ? initialDescription : "";
+  }, [initialDescription, isInitialDescriptionDoc]);
+
+  // Stable ref to the original doc — used at submit to decide whether to
+  // restore the doc shape.
+  const originalDocRef = useRef<TiptapDocValue | null>(
+    isInitialDescriptionDoc ? (initialDescription as TiptapDocValue) : null
+  );
+
   const form = useForm<CreateIssueFormValues>({
     resolver: zodResolver(createIssueSchema) as any,
     defaultValues: {
       title: defaultValues?.title || "",
-      description: defaultValues?.description || "",
+      description: initialMarkdownPreview,
       priority: defaultValues?.priority || "medium",
       issueType: defaultValues?.issueType || undefined,
       customFields: {},
@@ -488,10 +539,21 @@ export function CreateIssueDialog({
         // Use existing external integration logic for other providers (JIRA, GitHub, etc.)
         const endpoint = `/api/integrations/${activeIntegration.integrationId}/create-issue`;
 
+        // INT-05: if the dialog was opened with a TipTap doc and the user
+        // did NOT edit the textarea (its current value still equals the
+        // markdown preview produced from that doc), send the ORIGINAL doc
+        // so Jira/ADO can render their native rich formats. If the user
+        // edited, send the edited string (their changes win).
+        const submittedDescription: any =
+          originalDocRef.current &&
+          values.description === initialMarkdownPreview
+            ? originalDocRef.current
+            : values.description;
+
         const payload: any = {
           projectId: projectId.toString(),
           title: values.title,
-          description: values.description,
+          description: submittedDescription,
           priority: values.priority,
           customFields: customFieldValues,
           // Include internal TestPlanIt project ID for database storage
@@ -809,6 +871,14 @@ export function CreateIssueDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("common.fields.description")}</FormLabel>
+                  {isInitialDescriptionDoc && (
+                    <p
+                      data-testid="iteration-context-hint"
+                      className="text-xs text-muted-foreground"
+                    >
+                      {t("issues.iterationContextHint")}
+                    </p>
+                  )}
                   <FormControl>
                     <Textarea {...field} rows={4} />
                   </FormControl>

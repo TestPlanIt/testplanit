@@ -278,6 +278,7 @@ export function StaticReportViewer({
             reportData.dateGrouping || config.dateGrouping || "weekly"
           }
           totalFlakyTests={reportData.totalFlakyTests}
+          matrixAxes={reportData.matrixAxes}
           currentPage={currentPage}
           pageSize={pageSize}
           totalCount={

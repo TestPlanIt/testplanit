@@ -62,6 +62,7 @@ import {
   useFindManySharedStepGroup,
   useFindManySharedStepItem,
 } from "~/lib/hooks";
+import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import SortableStep from "./SortableStep";
 
 // Define a type that includes the count for AsyncCombobox
@@ -98,6 +99,8 @@ interface StepsFormProps<T extends FieldValues = FieldValues> {
   projectId: number;
   onSharedStepCreated?: () => void;
   hideSharedStepsButtons?: boolean;
+  parameters?: ParameterChipMeta[];
+  onOpenParametersSheet?: () => void;
 }
 
 interface _EditorUpdateEvent {
@@ -109,7 +112,16 @@ const TipTapEditorWrapper: React.FC<{
   initialContent?: object;
   readOnly?: boolean;
   projectId: number;
-}> = ({ name, initialContent, readOnly = false, projectId }) => {
+  parameters?: ParameterChipMeta[];
+  onOpenParametersSheet?: () => void;
+}> = ({
+  name,
+  initialContent,
+  readOnly = false,
+  projectId,
+  parameters,
+  onOpenParametersSheet,
+}) => {
   const { setValue } = useFormContext();
 
   const handleEditorUpdate = (content: any) => {
@@ -126,6 +138,8 @@ const TipTapEditorWrapper: React.FC<{
       onUpdate={readOnly ? undefined : handleEditorUpdate}
       readOnly={readOnly}
       className="min-h-[100px]"
+      parameters={parameters}
+      onOpenParametersSheet={onOpenParametersSheet}
     />
   );
 };
@@ -143,6 +157,8 @@ interface StepItemProps {
   onToggleSelection: (index: number) => void;
   projectId: number;
   hideCheckboxes?: boolean;
+  parameters?: ParameterChipMeta[];
+  onOpenParametersSheet?: () => void;
 }
 
 const StepItem: React.FC<StepItemProps> = ({
@@ -157,6 +173,8 @@ const StepItem: React.FC<StepItemProps> = ({
   onToggleSelection,
   projectId,
   hideCheckboxes,
+  parameters,
+  onOpenParametersSheet,
 }) => {
   const t = useTranslations("repository.steps");
   const tCommon = useTranslations("common");
@@ -464,6 +482,8 @@ const StepItem: React.FC<StepItemProps> = ({
                 initialContent={memoizedStepContent}
                 readOnly={readOnly}
                 projectId={projectId}
+                parameters={parameters}
+                onOpenParametersSheet={onOpenParametersSheet}
               />
             </FormControl>
           </div>
@@ -478,6 +498,8 @@ const StepItem: React.FC<StepItemProps> = ({
                 initialContent={memoizedExpectedResultContent}
                 readOnly={readOnly}
                 projectId={projectId}
+                parameters={parameters}
+                onOpenParametersSheet={onOpenParametersSheet}
               />
             </FormControl>
           </div>
@@ -496,6 +518,8 @@ function StepsForm<T extends FieldValues = FieldValues>({
   projectId,
   onSharedStepCreated,
   hideSharedStepsButtons = false,
+  parameters,
+  onOpenParametersSheet,
 }: StepsFormProps<T>) {
   const tCommon = useTranslations("common");
   const tRepoSteps = useTranslations("repository.steps");
@@ -879,6 +903,8 @@ function StepsForm<T extends FieldValues = FieldValues>({
                   onToggleSelection={toggleStepSelection}
                   projectId={projectId}
                   hideCheckboxes={hideSharedStepsButtons}
+                  parameters={parameters}
+                  onOpenParametersSheet={onOpenParametersSheet}
                 />
               </div>
             );

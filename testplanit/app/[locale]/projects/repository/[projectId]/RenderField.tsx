@@ -25,6 +25,7 @@ import { useState } from "react";
 import { Control } from "react-hook-form";
 import MultiSelect from "react-select";
 import { emptyEditorContent } from "~/app/constants";
+import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
 import StepsForm from "./StepsForm";
 
@@ -35,6 +36,8 @@ interface RenderFieldProps {
   onBlur?: () => void;
   canEditRestricted?: boolean;
   projectId: number;
+  parameters?: ParameterChipMeta[];
+  onOpenParametersSheet?: () => void;
 }
 
 const RenderField: React.FC<RenderFieldProps> = ({
@@ -44,6 +47,8 @@ const RenderField: React.FC<RenderFieldProps> = ({
   onBlur: _onBlur,
   canEditRestricted = true,
   projectId,
+  parameters,
+  onOpenParametersSheet,
 }) => {
   const tCommon = useTranslations("common");
   const defaultOption = field.caseField.fieldOptions?.find(
@@ -320,6 +325,8 @@ const RenderField: React.FC<RenderFieldProps> = ({
             name={field.caseField.id.toString()}
             readOnly={isDisabled}
             projectId={projectId}
+            parameters={parameters}
+            onOpenParametersSheet={onOpenParametersSheet}
           />
         );
       default:

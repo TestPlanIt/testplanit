@@ -49,7 +49,7 @@ import { ChevronLeft, LinkIcon, Minus, Plus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { emptyEditorContent } from "~/app/constants";
 import {
   useFindFirstRepositoryCaseVersions,
@@ -57,7 +57,9 @@ import {
   useFindManyIssue,
   useFindManyRepositoryCaseVersions,
   useFindManyTemplates,
+  useFindManyTestCaseParameter,
 } from "~/lib/hooks";
+import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { Link, useRouter } from "~/lib/navigation";
 import { IconName } from "~/types/globals";
 import { determineIssueDifferences } from "~/utils/determineIssueDifferences";
@@ -156,6 +158,41 @@ export default function TestCaseVersions() {
       },
     },
   });
+
+  // Parameter chip metadata for the version's snapshotted Tiptap step content.
+  // Without this, `createParameterMentionExtension` is omitted from the TipTap
+  // editor's extensions list (`TipTapEditor.tsx:320-322`), so any `{{paramName}}`
+  // mention nodes in the snapshot's `step.step` JSON render incorrectly. We
+  // fetch the case's live parameters because `RepositoryCaseVersions.parameters`
+  // is `null` for every existing version row — the create-version route doesn't
+  // yet snapshot params alongside steps. This is slightly lossy if parameters
+  // were renamed/deleted after the version, but it matches the case-detail
+  // page's rendering and keeps mentions from showing as raw text.
+  const numericCaseId = Number(caseId);
+  const { data: liveCaseParameters } = useFindManyTestCaseParameter(
+    {
+      where: { testCaseId: numericCaseId, isDeleted: false },
+      orderBy: { order: "asc" },
+    },
+    { enabled: !Number.isNaN(numericCaseId) && numericCaseId > 0 }
+  );
+
+  const parameterChipMeta = useMemo<ParameterChipMeta[]>(
+    () =>
+      (liveCaseParameters ?? []).map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        type: p.type as "STRING" | "INTEGER" | "BOOLEAN" | "SELECT",
+        defaultValue:
+          p.defaultValue === null || p.defaultValue === undefined
+            ? null
+            : typeof p.defaultValue === "string"
+              ? p.defaultValue
+              : JSON.stringify(p.defaultValue),
+        sensitive: Boolean(p.sensitive),
+      })),
+    [liveCaseParameters]
+  );
 
   const testcase = data
     ? {
@@ -851,9 +888,13 @@ export default function TestCaseVersions() {
                           <StepsDisplay
                             steps={transformedSteps}
                             previousSteps={transformedPreviousSteps}
+                            parameters={parameterChipMeta}
                           />
                         ) : (
-                          <StepsDisplay steps={transformedSteps} />
+                          <StepsDisplay
+                            steps={transformedSteps}
+                            parameters={parameterChipMeta}
+                          />
                         )}
                         <Separator
                           orientation="horizontal"

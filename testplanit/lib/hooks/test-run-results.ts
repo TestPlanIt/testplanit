@@ -327,7 +327,7 @@ export function useSuspenseCountTestRunResults<TArgs extends Prisma.TestRunResul
     return useSuspenseModelQuery<TQueryFnData, TData, TError>('TestRunResults', `${endpoint}/testRunResults/count`, args, options, fetch);
 }
 
-export function useCheckTestRunResults<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: number; testRunId?: number; testRunCaseId?: number; testRunCaseVersion?: number; statusId?: number; executedById?: string; editedById?: string; elapsed?: number; attempt?: number; isDeleted?: boolean }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
+export function useCheckTestRunResults<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: number; testRunId?: number; testRunCaseId?: number; testRunCaseVersion?: number; statusId?: number; executedById?: string; editedById?: string; elapsed?: number; attempt?: number; iterationId?: number; isDeleted?: boolean }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
     const { endpoint, fetch } = getHooksContext();
     return useModelQuery<boolean, boolean, TError>('TestRunResults', `${endpoint}/testRunResults/check`, args, options, fetch);
 }

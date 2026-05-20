@@ -328,7 +328,7 @@ export function useSuspenseCountRepositoryCases<TArgs extends Prisma.RepositoryC
 }
 import type { RepositoryCaseSource } from '@prisma/client';
 
-export function useCheckRepositoryCases<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: number; projectId?: number; repositoryId?: number; folderId?: number; templateId?: number; name?: string; className?: string; source?: RepositoryCaseSource; stateId?: number; estimate?: number; forecastManual?: number; order?: number; creatorId?: string; automated?: boolean; isArchived?: boolean; isDeleted?: boolean; currentVersion?: number }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
+export function useCheckRepositoryCases<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: number; projectId?: number; repositoryId?: number; folderId?: number; templateId?: number; name?: string; className?: string; source?: RepositoryCaseSource; stateId?: number; estimate?: number; forecastManual?: number; order?: number; creatorId?: string; automated?: boolean; isArchived?: boolean; isDeleted?: boolean; currentVersion?: number; hasParameters?: boolean }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
     const { endpoint, fetch } = getHooksContext();
     return useModelQuery<boolean, boolean, TError>('RepositoryCases', `${endpoint}/repositoryCases/check`, args, options, fetch);
 }

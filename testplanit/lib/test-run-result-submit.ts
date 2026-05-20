@@ -9,6 +9,12 @@ export interface SubmitTestRunResultInput {
   testRunCaseVersion: number;
   issueIds?: number[];
   inProgressStateId?: number | null;
+  /**
+   * When set, the result is recorded against a specific iteration of a
+   * parameterized test case. The server runs the worst-of rollup, updates
+   * counters, and emits the iteration-scoped audit event.
+   */
+  iterationId?: number;
 }
 
 export interface SubmitTestRunResultResponse {

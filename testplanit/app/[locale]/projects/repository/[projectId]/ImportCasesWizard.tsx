@@ -35,10 +35,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import UploadAttachments from "@/components/UploadAttachments";
+import { WizardStepIndicator } from "@/components/ui/WizardStepIndicator";
 import {
   AlertCircle,
   AlertTriangle,
-  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Star,
@@ -1697,35 +1697,7 @@ export function ImportCasesWizard({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Progress indicator */}
-        <div className="flex items-center gap-2 mb-4 shrink-0">
-          {[1, 2, 3, 4].map((step) => (
-            <div key={step} className="flex items-center">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  step < currentPage
-                    ? "bg-primary text-primary-foreground"
-                    : step === currentPage
-                      ? "bg-primary/10 text-primary border-2 border-primary"
-                      : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {step < currentPage ? (
-                  <CheckCircle2 className="w-4 h-4" />
-                ) : (
-                  step
-                )}
-              </div>
-              {step < 4 && (
-                <div
-                  className={`w-12 h-0.5 mx-2 ${
-                    step < currentPage ? "bg-primary" : "bg-muted"
-                  }`}
-                />
-              )}
-            </div>
-          ))}
-        </div>
+        <WizardStepIndicator currentStep={currentPage} totalSteps={4} />
 
         <div className="flex-1 min-h-0 overflow-y-auto px-0.5">
           {isParsingMarkdown && (

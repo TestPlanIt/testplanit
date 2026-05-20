@@ -720,4 +720,71 @@ describe("WebhookOutboundForm", () => {
       expect(mockToastSuccess).toHaveBeenCalledWith("toastReEnableSuccess");
     });
   });
+
+  // ─── INT-04 — iteration.result.recorded subscription UI ────────────────
+
+  it("INT-04: renders iteration.result.recorded checkbox in the testRuns section of the create form", () => {
+    render(<WebhookOutboundForm projectId={42} />);
+    fireEvent.click(screen.getByTestId("webhook-outbound-add-button"));
+    const testRunsSection = screen.getByTestId(
+      "webhook-outbound-subs-section-testRuns"
+    );
+    expect(
+      within(testRunsSection).getByTestId(
+        "webhook-outbound-subs-event-iteration.result.recorded"
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("INT-04: iteration.result.recorded label resolves via EVENT_VERB_I18N_PATH['result.recorded']", () => {
+    render(<WebhookOutboundForm projectId={42} />);
+    fireEvent.click(screen.getByTestId("webhook-outbound-add-button"));
+    const checkbox = screen.getByTestId(
+      "webhook-outbound-subs-event-iteration.result.recorded"
+    );
+    // The label's text is rendered via the t() mock which returns the key
+    // directly. Proves the splitter ran ("result.recorded") AND the map
+    // hit ("projects.settings.webhooks.eventVerbs.resultRecorded") rather
+    // than the splitter alone (which would render "result.recorded").
+    const label = checkbox.closest("label");
+    expect(label).not.toBeNull();
+    expect(label!.textContent).toContain(
+      "projects.settings.webhooks.eventVerbs.resultRecorded"
+    );
+  });
+
+  it("INT-04 / D-06: iteration.result.recorded is UNCHECKED by default for an existing config with non-empty subscribedEvents (no auto-subscribe)", () => {
+    // baseHmacConfig.subscribedEvents = ["test_run.completed"] — does NOT
+    // include the new event. Existing configs must NOT auto-subscribe.
+    setOutboundConfigs([baseHmacConfig]);
+    render(<WebhookOutboundForm projectId={42} />);
+    const checkbox = screen.getByTestId(
+      `webhook-outbound-config-${baseHmacConfig.id}-event-iteration.result.recorded`
+    ) as HTMLInputElement;
+    expect(checkbox.checked).toBe(false);
+    // And the legacy completed event IS checked, proving the rendering is
+    // honoring the array (not a global default-false short-circuit).
+    const completedCheckbox = screen.getByTestId(
+      `webhook-outbound-config-${baseHmacConfig.id}-event-test_run.completed`
+    ) as HTMLInputElement;
+    expect(completedCheckbox.checked).toBe(true);
+  });
+
+  it("INT-04: checking iteration.result.recorded calls updateOutboundSubscriptions with the new event appended", async () => {
+    setOutboundConfigs([baseHmacConfig]);
+    mockUpdateSubs.mockResolvedValue({ success: true });
+    render(<WebhookOutboundForm projectId={42} />);
+    const checkbox = screen.getByTestId(
+      `webhook-outbound-config-${baseHmacConfig.id}-event-iteration.result.recorded`
+    );
+    fireEvent.click(checkbox);
+    await waitFor(() => {
+      expect(mockUpdateSubs).toHaveBeenCalledTimes(1);
+    });
+    const [configId, nextEvents] = mockUpdateSubs.mock.calls[0];
+    expect(configId).toBe(baseHmacConfig.id);
+    expect(nextEvents).toContain("iteration.result.recorded");
+    // Existing subscriptions preserved.
+    expect(nextEvents).toContain("test_run.completed");
+  });
 });

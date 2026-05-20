@@ -75,7 +75,7 @@ export function EntityList({
               >
                 <span className="flex min-w-0 items-center gap-1.5">
                   {isFailed ? (
-                    <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-red-500" />
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-destructive" />
                   ) : (
                     (() => {
                       const Icon = ENTITY_TYPE_ICONS[entity.entityType];
@@ -85,10 +85,7 @@ export function EntityList({
                     })()
                   )}
                   <span
-                    className={cn(
-                      "truncate",
-                      isFailed && "text-red-600 dark:text-red-400"
-                    )}
+                    className={cn("truncate", isFailed && "text-destructive")}
                   >
                     {entity.entityName}
                   </span>

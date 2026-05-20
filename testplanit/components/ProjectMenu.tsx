@@ -31,6 +31,7 @@ import {
   Settings,
   Share2,
   Sparkles,
+  SquareStack,
   Tags as TagsIcon,
   Webhook,
 } from "lucide-react";
@@ -286,6 +287,13 @@ export default function ProjectsMenu({
             label: t("admin.menu.quickScript"),
             path: "settings/quickscript",
             id: "settings-quickscript-link",
+            section: "settings" as MenuSection,
+          },
+          {
+            icon: SquareStack,
+            label: t("admin.menu.testCaseParameters"),
+            path: "settings/parameters",
+            id: "settings-test-case-parameters-link",
             section: "settings" as MenuSection,
           },
           {

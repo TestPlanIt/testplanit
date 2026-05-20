@@ -441,7 +441,7 @@ function ConfigCategoriesList() {
             }}
             className="flex items-center p-0 h-auto text-sm"
           >
-            <PlusCircle className="w-4 h-4 mr-1" />
+            <PlusCircle className="w-4 h-4" />
             {`${tCommon("add")} Variant`}
           </Button>
         )}

@@ -297,4 +297,85 @@ describe("CreateIssueDialog", () => {
     const selects = screen.getAllByTestId("select");
     expect(selects.length).toBeGreaterThan(0);
   });
+
+  describe("INT-05: TipTap doc prefill", () => {
+    const tiptapDoc = {
+      type: "doc" as const,
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "Iteration 3 of 5 failed on " },
+            { type: "text", text: "Bad password", marks: [{ type: "code" }] },
+            { type: "text", text: "." },
+          ],
+        },
+        {
+          type: "paragraph",
+          content: [
+            {
+              type: "text",
+              text: "View iteration in TestPlanIt",
+              marks: [
+                {
+                  type: "link",
+                  attrs: {
+                    href: "/projects/runs/7/42?iteration=3&selectedCase=77",
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    it("renders the iteration-context hint when description is a TipTap doc", () => {
+      render(
+        <CreateIssueDialog
+          {...defaultProps}
+          defaultValues={{
+            title: "Iteration 3 of 5 failed: Login",
+            description: tiptapDoc,
+          }}
+        />
+      );
+
+      expect(screen.getByTestId("iteration-context-hint")).toBeTruthy();
+    });
+
+    it("does NOT render the iteration-context hint when description is a plain string", () => {
+      render(
+        <CreateIssueDialog
+          {...defaultProps}
+          defaultValues={{
+            title: "Plain title",
+            description: "Plain string body",
+          }}
+        />
+      );
+
+      expect(screen.queryByTestId("iteration-context-hint")).toBeNull();
+    });
+
+    it("accepts TipTap doc default and seeds the form (no crash)", () => {
+      // The textarea is rendered by react-hook-form with the markdown
+      // preview as its initial value. The mocks above use a FormField
+      // shim that does not actually render the field value, so we cannot
+      // assert on the textarea text directly — we assert the dialog
+      // mounts without error (regression guard) and the hint is present.
+      render(
+        <CreateIssueDialog
+          {...defaultProps}
+          defaultValues={{
+            title: "Failed iteration",
+            description: tiptapDoc,
+          }}
+        />
+      );
+
+      expect(screen.getByRole("dialog")).toBeTruthy();
+      expect(screen.getByTestId("iteration-context-hint")).toBeTruthy();
+    });
+  });
 });

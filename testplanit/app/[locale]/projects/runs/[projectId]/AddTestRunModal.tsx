@@ -46,17 +46,23 @@ import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import * as React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import { z } from "zod/v4";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   getAssignmentsForRunCases,
   type GetAssignmentsResponse,
 } from "~/app/actions/getAssignmentsForRunCases";
 import { emptyEditorContent } from "~/app/constants";
+import { iterationProgressBus } from "~/lib/services/iterationProgressBus";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import LoadingSpinnerAlert from "~/components/LoadingSpinnerAlert";
+import { RunPreflightChip } from "@/components/runs/RunPreflightChip";
+import { RunCardinalityHardRefuseDialog } from "@/components/runs/RunCardinalityHardRefuseDialog";
+import { RunCardinalitySoftConfirmDialog } from "@/components/runs/RunCardinalitySoftConfirmDialog";
+import type { PreflightResult } from "~/lib/types/iterationCardinality";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
   useCreateAttachments,
@@ -213,7 +219,7 @@ const BasicInfoDialog = React.memo(
     };
 
     return (
-      <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
+      <>
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
         </DialogHeader>
@@ -547,7 +553,7 @@ const BasicInfoDialog = React.memo(
             canEdit={false}
           />
         )}
-      </DialogContent>
+      </>
     );
   }
 );
@@ -575,8 +581,18 @@ const TestCasesDialog = React.memo(
     form,
     projectId,
     linkedIssueIds,
+    numericProjectId,
+    onPreflightResult,
+    onPreflightChipClick,
+    preflightClassification,
   }: any) => {
     const tRepository = useTranslations("repository");
+    // Live config selection from the parent form — drives the preflight chip
+    // alongside the modal's selectedTestCases. Using `useWatch` keeps the
+    // chip in sync without re-rendering the entire TestCasesDialog tree.
+    const watchedConfigIds: number[] =
+      (useWatch({ control: form.control, name: "configIds" }) as number[]) ??
+      [];
     // Local pagination state for the modal (independent from parent page)
     const [modalCurrentPage, setModalCurrentPage] = useState(1);
     const [modalPageSize, setModalPageSize] = useState<number>(10);
@@ -701,7 +717,7 @@ const TestCasesDialog = React.memo(
     }, [selectedTestCases, form, open]);
 
     return (
-      <DialogContent className="max-w-[1200px] h-[90vh] flex flex-col p-0">
+      <>
         <DialogHeader className="p-6 pb-0 pr-4">
           <DialogTitle>{tRepository("cases.selectCases")}</DialogTitle>
           <DialogDescription asChild>
@@ -771,7 +787,7 @@ const TestCasesDialog = React.memo(
             </div>
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-1">
+        <div className="flex-1 min-h-0 overflow-y-auto">
           <ProjectRepository
             isSelectionMode={true}
             selectedTestCases={selectedTestCases}
@@ -793,19 +809,34 @@ const TestCasesDialog = React.memo(
             skipDndProvider={true}
           />
         </div>
-        <div className="p-6 bg-background border-t flex justify-end gap-2">
+        <div className="p-6 bg-background border-t flex justify-end items-center gap-2">
+          {selectedTestCases.length > 0 && numericProjectId ? (
+            <div className="mr-auto">
+              <RunPreflightChip
+                caseIds={selectedTestCases}
+                configIds={watchedConfigIds}
+                projectId={numericProjectId}
+                onResult={onPreflightResult}
+                onClick={onPreflightChipClick}
+              />
+            </div>
+          ) : null}
           <Button variant="outline" onClick={onPrevious}>
             {tCommon("actions.back")}
           </Button>
           <Button
             onClick={onNext}
-            disabled={isLoadingForecast || isLoadingTestCasesForDrawer}
+            disabled={
+              isLoadingForecast ||
+              isLoadingTestCasesForDrawer ||
+              preflightClassification === "hardRefuse"
+            }
             data-testid="run-save-button"
           >
             {tCommon("actions.save")}
           </Button>
         </div>
-      </DialogContent>
+      </>
     );
   }
 );
@@ -846,13 +877,25 @@ export default function AddTestRunModal({
     initialSelectedCaseIds || []
   );
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  // Latest cardinality preflight result reported by the chip in Step 1.
+  // Drives the soft-confirm gate + hard-refuse breakdown dialog.
+  const [preflightResult, setPreflightResult] = useState<
+    PreflightResult | undefined
+  >(undefined);
+  const [hardRefuseDialogOpen, setHardRefuseDialogOpen] = useState(false);
+  const [softConfirmDialogOpen, setSoftConfirmDialogOpen] = useState(false);
+  // Set to true once the user accepts the soft-confirm dialog, so the next
+  // call to onSubmit bypasses the gate and proceeds to create the run.
+  const softConfirmAcceptedRef = useRef(false);
 
   const { data: session } = useSession();
   const { projectId } = useParams();
   const numericProjectId = Number(projectId);
   const t = useTranslations("runs.add");
   const tCommon = useTranslations("common");
+  const tParameters = useTranslations("parameters");
   const tGlobal = useTranslations();
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [creationProgress, setCreationProgress] = useState({
     current: 0,
@@ -1155,6 +1198,24 @@ export default function AddTestRunModal({
   const handleNext = () => {
     if (step === 1) {
       setValue("testCases", selectedCaseIds); // Ensure selectedCaseIds from state is used
+
+      // Cardinality gate (Surface E.1/E.3): block hardRefuse, soft-confirm in
+      // the warning band. Server-side enforcement still applies — this just
+      // saves a round-trip and surfaces the friction sooner.
+      if (preflightResult && !softConfirmAcceptedRef.current) {
+        if (preflightResult.classification === "hardRefuse") {
+          setHardRefuseDialogOpen(true);
+          return;
+        }
+        if (preflightResult.classification === "softConfirm") {
+          setSoftConfirmDialogOpen(true);
+          return;
+        }
+      }
+      // Reset the soft-confirm latch after one use so subsequent submissions
+      // re-evaluate the (possibly-changed) cardinality band.
+      softConfirmAcceptedRef.current = false;
+
       void handleSubmit(onSubmit, (errors) => {
         console.error("Form validation errors:", errors);
       })();
@@ -1288,6 +1349,70 @@ export default function AddTestRunModal({
           }
 
           await updateTestRunForecast(newTestRun.id);
+
+          // Fan out iteration rows for any parameterized cases. Three
+          // possible response shapes from /generate-iterations:
+          //   - 422 hardRefuse  → toast.error with cap details
+          //   - 200 async:true  → register on iterationProgressBus (Wave 3
+          //                       toast/sidebar consumes the bus)
+          //   - 200 async:false → invalidate ZenStack caches so iteration
+          //                       counts surface immediately in the UI
+          // Failures are non-fatal for the run itself — the run still
+          // exists; only iteration generation failed. Surface the error
+          // but do NOT throw (other configs in the loop should still get
+          // their fan-out attempt).
+          try {
+            const fanOutRes = await fetch(
+              `/api/test-runs/${newTestRun.id}/generate-iterations`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({}),
+              }
+            );
+            const fanOutBody = await fanOutRes.json().catch(() => ({}));
+
+            if (fanOutRes.status === 422 && fanOutBody?.refused) {
+              toast.error(tParameters("runHardRefuseTitle"), {
+                description: tParameters("runHardRefuseDescription", {
+                  count: fanOutBody.iterationCount ?? 0,
+                  cap: fanOutBody.cap ?? 0,
+                }),
+              });
+            } else if (!fanOutRes.ok) {
+              toast.error(tParameters("runProgressFailed"), {
+                description: fanOutBody?.error ?? `HTTP ${fanOutRes.status}`,
+              });
+            } else if (fanOutBody?.async === true) {
+              iterationProgressBus.start({
+                jobId: String(fanOutBody.jobId),
+                runId: newTestRun.id,
+                runName: createData.name,
+                total: fanOutBody.iterationCount ?? 0,
+              });
+            } else {
+              // Sync path — invalidate ZenStack caches so iteration counts
+              // appear in the UI without a manual refresh. Use the locked
+              // ["zenstack", "ModelName"] prefix per Phase 2 carry-forward.
+              await Promise.all([
+                queryClient.invalidateQueries({
+                  queryKey: ["zenstack", "TestRunCases"],
+                }),
+                queryClient.invalidateQueries({
+                  queryKey: ["zenstack", "TestRunCaseIteration"],
+                }),
+              ]);
+            }
+          } catch (fanOutErr) {
+            // Network or JSON-parse failure — surface, don't throw.
+            console.error("[generate-iterations]", fanOutErr);
+            toast.error(tParameters("runProgressFailed"), {
+              description:
+                fanOutErr instanceof Error
+                  ? fanOutErr.message
+                  : String(fanOutErr),
+            });
+          }
         }
       }
 
@@ -1358,6 +1483,14 @@ export default function AddTestRunModal({
             form: form,
             projectId: projectId?.toString() || "",
             linkedIssueIds: linkedIssueIds,
+            numericProjectId: numericProjectId,
+            onPreflightResult: setPreflightResult,
+            onPreflightChipClick: (r: PreflightResult) => {
+              if (r.classification === "hardRefuse") {
+                setHardRefuseDialogOpen(true);
+              }
+            },
+            preflightClassification: preflightResult?.classification,
           }
         : {};
 
@@ -1372,11 +1505,39 @@ export default function AddTestRunModal({
     return <LoadingSpinnerAlert message={progressMessage} />;
   }
 
+  const dialogContentClassName =
+    step === 1
+      ? "max-w-[1200px] h-[90vh] flex flex-col p-0"
+      : "sm:max-w-[600px] lg:max-w-[1000px]";
+
   return (
-    <Dialog open={open} onOpenChange={mainDialogOnOpenChange}>
-      {DialogContentComponent && open && (
-        <DialogContentComponent {...dialogProps} />
-      )}
-    </Dialog>
+    <>
+      <Dialog open={open} onOpenChange={mainDialogOnOpenChange}>
+        {open && (
+          <DialogContent className={dialogContentClassName}>
+            {DialogContentComponent && (
+              <DialogContentComponent {...dialogProps} />
+            )}
+          </DialogContent>
+        )}
+      </Dialog>
+      <RunCardinalityHardRefuseDialog
+        open={hardRefuseDialogOpen}
+        onOpenChange={setHardRefuseDialogOpen}
+        result={preflightResult ?? null}
+        configCount={form.watch("configIds")?.length ?? 0}
+      />
+      <RunCardinalitySoftConfirmDialog
+        open={softConfirmDialogOpen}
+        onOpenChange={setSoftConfirmDialogOpen}
+        result={preflightResult ?? null}
+        configCount={form.watch("configIds")?.length ?? 0}
+        onConfirm={() => {
+          softConfirmAcceptedRef.current = true;
+          // Re-trigger handleNext now that the gate has been accepted.
+          handleNext();
+        }}
+      />
+    </>
   );
 }

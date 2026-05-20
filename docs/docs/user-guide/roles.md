@@ -79,11 +79,11 @@ When a user is assigned to a project, they are also assigned a project-specific 
 - **Documentation**: Creating and editing project documentation.
 - **Milestones**: Creating, editing, and deleting project milestones.
 - **Test Case Repository**: Creating, editing, deleting, and organizing test case folders and test cases.
-- **Test Case Restricted Fields**: Editing restricted field values on test cases.
+- **Test Case Restricted Fields**: Editing restricted field values on test cases, and (via the role's `Read Sensitive` grant on this area) viewing sensitive parameter values in datasets attached to test cases.
 - **Test Runs**: Creating, Editing and Deleting active test runs.
 - **Closed Test Runs**: Deleting completed/archived test runs.
 - **Test Run Results**: Recording and managing results for test cases within a run.
-- **Test Run Result Restricted Fields**: Recording restricted field values on test run results.
+- **Test Run Result Restricted Fields**: Recording restricted field values on test run results, and (via the role's `Read Sensitive` grant on this area) viewing sensitive parameter values on iteration results, matrix cells, matrix CSV exports, and the auto-prefilled body when linking an external issue from a failed iteration.
 - **Sessions**: Creating and managing active test sessions.
 - **Sessions Restricted Fields**: Recording restricted field values on test sessions.
 - **Closed Sessions**: Deleting completed/archived test sessions.
@@ -91,7 +91,9 @@ When a user is assigned to a project, they are also assigned a project-specific 
 - **Tags**: Creating new tags.
 :::
 
-Each role defines specific permissions (e.g., Add/Edit, Delete, Complete) for these areas.
+Each role defines specific permissions (e.g., Add/Edit, Delete, Complete, Read Sensitive) for these areas.
+
+The `Read Sensitive` permission is only honored on the **Test Case Restricted Fields** and **Test Run Result Restricted Fields** areas, where it controls whether the role can view sensitive parameter values; the other areas ignore it. Without this grant, sensitive values render as `••••••` in dataset rows and iteration cells, and as `[REDACTED]` in the issue-prefill body and CSV exports.
 
 **Example:** A "Tester" role might have `Add/Edit` permissions for `TestRunResults` and `SessionResults` but not for `TestCaseRepository` and `Milestones`.
 

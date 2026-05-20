@@ -94,6 +94,10 @@ const EVENT_CATALOG = {
     "test_run.completed",
     "test_run.duplicated",
     "test_run.result_added",
+    // Opt-in per webhook config — existing configs do NOT auto-subscribe.
+    // Appended last so existing form-test selectors that index by
+    // position are unaffected.
+    "iteration.result.recorded",
   ],
   sessions: [
     "session.created",
@@ -167,6 +171,10 @@ const EVENT_VERB_I18N_PATH: Record<string, string> = {
   duplicated: "projects.settings.webhooks.eventVerbs.duplicated",
   state_changed: "projects.settings.webhooks.eventVerbs.stateChanged",
   result_added: "projects.settings.webhooks.eventVerbs.resultAdded",
+  // The splitter in eventVerbI18nPath() returns the substring AFTER the
+  // first ".", so for "iteration.result.recorded" the lookup key is the
+  // literal "result.recorded" (not just "recorded").
+  "result.recorded": "projects.settings.webhooks.eventVerbs.resultRecorded",
 };
 
 function eventVerbI18nPath(eventName: string): string {

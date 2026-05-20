@@ -198,6 +198,7 @@ const sidebars: SidebarsConfig = {
                 'user-guide/projects/sessions-execution', // Corresponds to sessions-execution.md
               ],
             },
+            'user-guide/projects/parameterized-test-cases', // Parameterized Test Cases hub
             'user-guide/projects/tags', // Corresponds to tags.md
             'user-guide/projects/issues', // Add Project Issues page here
             // Add other project-specific pages here later

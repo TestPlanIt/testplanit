@@ -302,6 +302,13 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
       <p>Administrators can access the new page at <strong>Admin → Security</strong>.</p>
     `,
   },
+  "0.29.0": {
+    title: "New Feature: Parameterized Test Cases",
+    message: `
+      <p>Drive a single test case from a table of input rows. Each row runs as its own iteration with its own status, so you stop maintaining six near-duplicate cases for the same flow.</p>
+      <p>See the <a href="https://docs.testplanit.com/docs/user-guide/projects/parameterized-test-cases/" target="_blank">documentation</a> to get started.</p>
+    `,
+  },
 };
 
 /**

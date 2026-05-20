@@ -9,6 +9,7 @@ import { transformMilestones } from "@/components/forms/MilestoneSelect";
 import { Loading } from "@/components/Loading";
 import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
+import { IterationAwareTestRunCaseDetails } from "~/components/iterations/IterationAwareTestRunCaseDetails";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import {
   AlertDialog,
@@ -428,6 +429,9 @@ export default function TestRunPage() {
           select: {
             id: true,
             order: true,
+            totalIterations: true,
+            passedIterations: true,
+            failedIterations: true,
             status: {
               select: {
                 id: true,
@@ -2037,38 +2041,58 @@ export default function TestRunPage() {
             </SheetDescription>
           </SheetHeader>
           {/* Using key to force remount on case change */}
-          {selectedTestCaseId && testRunData && (
-            <TestRunCaseDetails
-              key={selectedTestCaseId} // Force re-render when ID changes
-              caseId={selectedTestCaseId}
-              projectId={Number(projectId)}
-              testRunId={Number(runId)}
-              testRunCaseId={
-                testRunData.testCases.find(
-                  (tc) => tc.repositoryCase.id === selectedTestCaseId
-                )?.id
+          {selectedTestCaseId &&
+            testRunData &&
+            (() => {
+              const trc = testRunData.testCases.find(
+                (tc) => tc.repositoryCase.id === selectedTestCaseId
+              );
+              if (!trc) return null;
+              const innerProps = {
+                caseId: selectedTestCaseId,
+                projectId: Number(projectId),
+                testRunId: Number(runId),
+                testRunCaseId: trc.id,
+                currentStatus: trc.status,
+                onClose: () => handleSheetOpenChange(false),
+                onNextCase: (nextCaseId: number) => {
+                  setIsTransitioning(true);
+                  const params = new URLSearchParams(searchParams.toString());
+                  params.set("selectedCase", nextCaseId.toString());
+                  router.replace(`${pathname}?${params.toString()}`);
+                },
+                isTransitioning,
+                testRunCasesData: testRunData.testCases.map((tc) => ({
+                  id: tc.id,
+                  order: tc.order,
+                  repositoryCaseId: tc.repositoryCase.id,
+                })),
+                isCompleted: testRunData.isCompleted,
+              };
+
+              const totalIterations =
+                (trc as { totalIterations?: number }).totalIterations ?? 0;
+
+              if (totalIterations === 0) {
+                return (
+                  <TestRunCaseDetails
+                    key={selectedTestCaseId}
+                    {...innerProps}
+                  />
+                );
               }
-              currentStatus={
-                testRunData.testCases.find(
-                  (tc) => tc.repositoryCase.id === selectedTestCaseId
-                )?.status
-              }
-              onClose={() => handleSheetOpenChange(false)} // Use the handler to close sheet
-              onNextCase={(nextCaseId) => {
-                setIsTransitioning(true);
-                const params = new URLSearchParams(searchParams.toString());
-                params.set("selectedCase", nextCaseId.toString());
-                router.replace(`${pathname}?${params.toString()}`);
-              }}
-              isTransitioning={isTransitioning}
-              testRunCasesData={testRunData.testCases.map((tc) => ({
-                id: tc.id,
-                order: tc.order,
-                repositoryCaseId: tc.repositoryCase.id,
-              }))}
-              isCompleted={testRunData.isCompleted}
-            />
-          )}
+
+              return (
+                <IterationAwareTestRunCaseDetails
+                  key={selectedTestCaseId}
+                  testRunCaseId={trc.id}
+                  testRunId={Number(runId)}
+                  totalIterations={totalIterations}
+                  isRunCompleted={!!testRunData.isCompleted}
+                  innerProps={innerProps}
+                />
+              );
+            })()}
         </SheetContent>
       </Sheet>
       {/* Dialog: Show if canAddEditRun and not JUNIT (regardless of completion status) */}

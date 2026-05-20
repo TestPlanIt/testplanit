@@ -294,7 +294,7 @@ const ResizableImageComponent = (props: any) => {
             </button>
             <button
               onClick={deleteNode}
-              className="p-1.5 rounded hover:bg-red-600"
+              className="p-1.5 rounded hover:bg-destructive"
               title={t("delete")}
             >
               <Trash2 size={16} />

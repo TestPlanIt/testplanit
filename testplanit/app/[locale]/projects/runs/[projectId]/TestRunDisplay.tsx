@@ -541,6 +541,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                 createdBy: testRun.createdBy,
                 forecastManual: testRun.forecastManual,
                 forecastAutomated: testRun.forecastAutomated,
+                createdAt: testRun.createdAt,
               }}
               milestonePath={testRun.milestone?.name}
               onDuplicate={onDuplicateTestRun}
@@ -733,6 +734,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                           createdBy: testRun.createdBy,
                           forecastManual: testRun.forecastManual,
                           forecastAutomated: testRun.forecastAutomated,
+                          createdAt: testRun.createdAt,
                         }}
                         onComplete={handleOpenDialogParam}
                         isAdmin={isAdminParam}
@@ -845,6 +847,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                       createdBy: testRun.createdBy,
                       forecastManual: testRun.forecastManual,
                       forecastAutomated: testRun.forecastAutomated,
+                      createdAt: testRun.createdAt,
                     }}
                     onComplete={handleOpenDialogParam}
                     isAdmin={isAdminParam}

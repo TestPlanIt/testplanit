@@ -25,15 +25,23 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { projectId, issue, template, context, quantity, autoGenerateTags } =
-      body as {
-        projectId: number;
-        issue: IssueData;
-        template: TemplateData;
-        context: GenerationContext;
-        quantity?: string;
-        autoGenerateTags?: boolean;
-      };
+    const {
+      projectId,
+      issue,
+      template,
+      context,
+      quantity,
+      autoGenerateTags,
+      includeParameters,
+    } = body as {
+      projectId: number;
+      issue: IssueData;
+      template: TemplateData;
+      context: GenerationContext;
+      quantity?: string;
+      autoGenerateTags?: boolean;
+      includeParameters?: boolean;
+    };
 
     if (!projectId || !issue || !template) {
       return NextResponse.json(
@@ -45,6 +53,20 @@ export async function POST(request: NextRequest) {
     // Verify user has access to the project and check for active LLM integration
     const isAdmin = session.user.access === "ADMIN";
     const isProjectAdmin = session.user.access === "PROJECTADMIN";
+
+    // CR-03 (T-06-04-01): server-side admin gate on the
+    // `includeParameters` flag. The wizard hides the toggle for
+    // non-admins, but a crafted request body must still be rejected
+    // here — the UI guard is defense-in-depth, not the authority.
+    if (includeParameters === true && !isAdmin) {
+      return NextResponse.json(
+        {
+          error: "Admin access required for includeParameters",
+          code: "FORBIDDEN_PARAMETER_GENERATION",
+        },
+        { status: 403 }
+      );
+    }
 
     // Build the where clause for project access
     // This needs to account for all access paths: userPermissions, groupPermissions,
@@ -158,7 +180,8 @@ export async function POST(request: NextRequest) {
       context,
       quantity,
       autoGenerateTags,
-      systemPromptBase
+      systemPromptBase,
+      includeParameters === true
     );
 
     // TOKEN-02: Read provider config from the resolved integration (not projectLlmIntegrations[0])
@@ -285,7 +308,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse & validate the LLM response using shared logic
-    const { testCases, parseError } = parseAndValidateTestCases(
+    const { testCases, parseError, warnings } = parseAndValidateTestCases(
       response.content,
       template,
       issue,
@@ -329,6 +352,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       testCases,
+      ...(warnings && warnings.length > 0 ? { warnings } : {}),
       metadata: {
         issueKey: issue.key,
         templateName: template.name,
