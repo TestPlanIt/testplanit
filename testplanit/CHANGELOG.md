@@ -1,3 +1,9 @@
+## [0.29.1](https://github.com/TestPlanIt/testplanit/compare/v0.29.0...v0.29.1) (2026-05-20)
+
+### Bug Fixes
+
+* **docker:** drop inline 8 GB cap on `pnpm zenstack generate` ([b327183](https://github.com/TestPlanIt/testplanit/commit/b3271836a23376d76edd00a7db8a7d224ddbf46f))
+
 ## [0.29.0](https://github.com/TestPlanIt/testplanit/compare/v0.28.0...v0.29.0) (2026-05-20)
 
 ### Features
