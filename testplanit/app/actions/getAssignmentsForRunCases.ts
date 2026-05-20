@@ -56,6 +56,7 @@ export async function getAssignmentsForRunCases(
         repositoryCaseId: {
           in: repositoryCaseIds,
         },
+        isDeleted: false,
       },
       select: {
         repositoryCaseId: true,

@@ -198,6 +198,7 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
             testCases: {
               some: {
                 repositoryCaseId: caseId,
+                isDeleted: false,
               },
             },
           },

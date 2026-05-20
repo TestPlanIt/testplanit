@@ -121,6 +121,7 @@ export async function POST(
       where: {
         id: caseId,
         testRunId: runId,
+        isDeleted: false,
         testRun: { isDeleted: false },
       },
       select: {

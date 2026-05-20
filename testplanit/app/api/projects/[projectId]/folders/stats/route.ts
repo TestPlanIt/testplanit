@@ -79,6 +79,7 @@ export async function GET(
       const testRunCases = await prisma.testRunCases.findMany({
         where: {
           testRunId: parseInt(runId),
+          isDeleted: false,
           repositoryCase: {
             isDeleted: false,
           },

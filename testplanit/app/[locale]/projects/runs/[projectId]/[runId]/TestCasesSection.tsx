@@ -165,6 +165,7 @@ export function TestCasesSection({
           },
         },
         testCases: {
+          where: { isDeleted: false },
           select: {
             repositoryCase: {
               select: {

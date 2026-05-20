@@ -100,8 +100,6 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { PaginationProvider } from "~/lib/contexts/PaginationContext";
 import {
   useCreateAttachments,
-  useDeleteManyTestRunResults,
-  useDeleteManyTestRunStepResults,
   useFindFirstProjects,
   useFindFirstRepositoryCases,
   useFindFirstStatusScope,
@@ -110,6 +108,9 @@ import {
   useFindManyWorkflows,
   useFindUniqueTestRuns,
   useUpdateAttachments,
+  useUpdateManyTestRunCaseIteration,
+  useUpdateManyTestRunResults,
+  useUpdateManyTestRunStepResults,
   useUpdateTestRuns,
 } from "~/lib/hooks";
 import { Link, usePathname, useRouter } from "~/lib/navigation";
@@ -316,9 +317,12 @@ export default function TestRunPage() {
   const [pendingFormData, setPendingFormData] = useState<FormValues | null>(
     null
   );
-  const { mutateAsync: deleteTestRunResults } = useDeleteManyTestRunResults();
-  const { mutateAsync: deleteTestRunStepResults } =
-    useDeleteManyTestRunStepResults();
+  const { mutateAsync: softDeleteTestRunResults } =
+    useUpdateManyTestRunResults();
+  const { mutateAsync: softDeleteTestRunStepResults } =
+    useUpdateManyTestRunStepResults();
+  const { mutateAsync: softDeleteTestRunCaseIterations } =
+    useUpdateManyTestRunCaseIteration();
   const [zoomedChart, setZoomedChart] = useState<null | "donut">(null);
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
 
@@ -426,6 +430,7 @@ export default function TestRunPage() {
         createdBy: true,
         attachments: true,
         testCases: {
+          where: { isDeleted: false },
           select: {
             id: true,
             order: true,
@@ -814,37 +819,47 @@ export default function TestRunPage() {
 
       // Handle test case changes
       if (hasTestCasesChanged) {
-        // First delete all test step results for the test cases that will be removed
-        await deleteTestRunStepResults({
-          where: {
-            testRunResult: {
-              testRunCase: {
-                testRunId: Number(runId),
-                repositoryCaseId: {
-                  in: currentTestCaseIds.filter(
-                    (id: number) => !selectedTestCaseIds.includes(id)
-                  ),
+        const removedCaseIds = currentTestCaseIds.filter(
+          (id: number) => !selectedTestCaseIds.includes(id)
+        );
+        const addedCaseIds = selectedTestCaseIds.filter(
+          (id: number) => !currentTestCaseIds.includes(id)
+        );
+
+        if (removedCaseIds.length > 0) {
+          await softDeleteTestRunStepResults({
+            where: {
+              testRunResult: {
+                testRunCase: {
+                  testRunId: Number(runId),
+                  repositoryCaseId: { in: removedCaseIds },
                 },
               },
             },
-          },
-        });
+            data: { isDeleted: true },
+          });
 
-        // Then delete all test results for the test cases that will be removed
-        await deleteTestRunResults({
-          where: {
-            testRunCase: {
-              testRunId: Number(runId),
-              repositoryCaseId: {
-                in: currentTestCaseIds.filter(
-                  (id: number) => !selectedTestCaseIds.includes(id)
-                ),
+          await softDeleteTestRunResults({
+            where: {
+              testRunCase: {
+                testRunId: Number(runId),
+                repositoryCaseId: { in: removedCaseIds },
               },
             },
-          },
-        });
+            data: { isDeleted: true },
+          });
 
-        // Then update the test run with the new test cases
+          await softDeleteTestRunCaseIterations({
+            where: {
+              testRunCase: {
+                testRunId: Number(runId),
+                repositoryCaseId: { in: removedCaseIds },
+              },
+            },
+            data: { isDeleted: true },
+          });
+        }
+
         await updateTestRuns({
           where: {
             id: Number(runId),
@@ -870,29 +885,37 @@ export default function TestRunPage() {
               set: selectedIssues.map((issueId) => ({ id: issueId })),
             },
             testCases: {
-              deleteMany: {
-                testRunId: Number(runId),
-                repositoryCaseId: {
-                  in: currentTestCaseIds.filter(
-                    (id: number) => !selectedTestCaseIds.includes(id)
-                  ),
-                },
-              },
-              create: selectedTestCaseIds
-                .filter((id: number) => !currentTestCaseIds.includes(id))
-                .map((id: number, index: number) => ({
-                  repositoryCase: {
-                    connect: { id },
+              updateMany:
+                removedCaseIds.length > 0
+                  ? {
+                      where: {
+                        testRunId: Number(runId),
+                        repositoryCaseId: { in: removedCaseIds },
+                      },
+                      data: { isDeleted: true },
+                    }
+                  : undefined,
+              upsert: addedCaseIds.map((id: number, index: number) => ({
+                where: {
+                  testRunId_repositoryCaseId: {
+                    testRunId: Number(runId),
+                    repositoryCaseId: id,
                   },
+                },
+                create: {
+                  repositoryCase: { connect: { id } },
                   order: currentTestCaseIds.length + index,
-                })),
+                },
+                update: {
+                  isDeleted: false,
+                  order: currentTestCaseIds.length + index,
+                },
+              })),
             },
           },
         });
 
-        // --- ADDED: Update forecast after case changes ---
         await updateTestRunForecast(Number(runId));
-        // --------------------------------------------------
       } else {
         // No test case changes, just update the basic info
         await updateTestRuns({

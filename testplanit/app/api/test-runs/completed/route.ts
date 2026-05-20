@@ -243,7 +243,7 @@ export async function GET(req: NextRequest) {
         },
         _count: {
           select: {
-            testCases: true,
+            testCases: { where: { isDeleted: false } },
             results: true,
           },
         },
