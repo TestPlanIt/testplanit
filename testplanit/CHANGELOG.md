@@ -1,3 +1,9 @@
+## [0.29.2](https://github.com/TestPlanIt/testplanit/compare/v0.29.1...v0.29.2) (2026-05-20)
+
+### Bug Fixes
+
+* **access:** enhance role-based permissions for create/update/delete actions ([#322](https://github.com/TestPlanIt/testplanit/issues/322)) ([e01816c](https://github.com/TestPlanIt/testplanit/commit/e01816cedc444514ae2648b36d01aed7e6fdb68f))
+
 ## [0.29.1](https://github.com/TestPlanIt/testplanit/compare/v0.29.0...v0.29.1) (2026-05-20)
 
 ### Bug Fixes
