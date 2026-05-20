@@ -429,6 +429,9 @@ export async function getCommentsForEntity(
             },
           },
         },
+        reviewRequest: {
+          select: { status: true },
+        },
       },
       orderBy: {
         createdAt: "asc",

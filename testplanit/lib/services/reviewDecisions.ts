@@ -311,6 +311,26 @@ export async function decideReviewRequest(
         reviewRequestId,
         decisionComment: trimmedComment,
       });
+
+      if (mentionedUserIds.length > 0) {
+        const commentEntityType: "RepositoryCase" | "TestRun" | "Session" =
+          req.entityType === "CASE"
+            ? "RepositoryCase"
+            : req.entityType === "RUN"
+              ? "TestRun"
+              : "Session";
+        await CommentService.processMentions(
+          commentId,
+          decisionCommentContent,
+          userId,
+          session.user.name ?? "Unknown User",
+          req.project.id,
+          req.project.name,
+          commentEntityType,
+          entityName,
+          String(req.entityId)
+        );
+      }
     }
   } catch (notifyErr) {
     console.error(

@@ -185,30 +185,49 @@ export async function requestReview(
               )
             : [];
 
-      if (targetUserIds.length > 0) {
-        const context = await loadReviewContext(
-          input.projectId,
-          input.entityType,
-          input.entityId,
-          input.fromStateId,
-          input.toStateId
+      const context = await loadReviewContext(
+        input.projectId,
+        input.entityType,
+        input.entityId,
+        input.fromStateId,
+        input.toStateId
+      );
+
+      if (targetUserIds.length > 0 && context) {
+        await NotificationService.createReviewRequestNotification({
+          targetUserIds,
+          requesterUserId: requestedByUserId,
+          requesterName: session.user.name ?? "Unknown User",
+          projectId: context.projectId,
+          projectName: context.projectName,
+          entityType: input.entityType,
+          entityId: input.entityId,
+          entityName: context.entityName,
+          fromStateName: context.fromStateName,
+          toStateName: context.toStateName,
+          reviewRequestId,
+          commentText: trimmed,
+        });
+      }
+
+      if (mentionedUserIds.length > 0 && context) {
+        const commentEntityType: "RepositoryCase" | "TestRun" | "Session" =
+          input.entityType === "CASE"
+            ? "RepositoryCase"
+            : input.entityType === "RUN"
+              ? "TestRun"
+              : "Session";
+        await CommentService.processMentions(
+          commentId,
+          commentContent,
+          requestedByUserId,
+          session.user.name ?? "Unknown User",
+          context.projectId,
+          context.projectName,
+          commentEntityType,
+          context.entityName,
+          String(input.entityId)
         );
-        if (context) {
-          await NotificationService.createReviewRequestNotification({
-            targetUserIds,
-            requesterUserId: requestedByUserId,
-            requesterName: session.user.name ?? "Unknown User",
-            projectId: context.projectId,
-            projectName: context.projectName,
-            entityType: input.entityType,
-            entityId: input.entityId,
-            entityName: context.entityName,
-            fromStateName: context.fromStateName,
-            toStateName: context.toStateName,
-            reviewRequestId,
-            commentText: trimmed,
-          });
-        }
       }
     } catch (notifyErr) {
       console.error(

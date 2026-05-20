@@ -3,11 +3,18 @@
 import { JSONContent } from "@tiptap/core";
 import { AlertCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { getCommentsForEntity } from "~/app/actions/comments";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Skeleton } from "~/components/ui/skeleton";
 import { CommentList } from "./CommentList";
+
+import { commentsQueryKey } from "./commentsQueryKey";
+
+export {
+  commentsQueryKey,
+  reviewableEntityTypeToCommentEntityType,
+} from "./commentsQueryKey";
 
 interface Comment {
   id: string;
@@ -15,6 +22,15 @@ interface Comment {
   createdAt: Date;
   updatedAt: Date;
   isEdited: boolean;
+  type?: "GENERAL" | "REVIEW_REQUEST" | "REVIEW_DECISION";
+  reviewRequest?: {
+    status:
+      | "PENDING"
+      | "APPROVED"
+      | "CHANGES_REQUESTED"
+      | "REJECTED"
+      | "CANCELLED";
+  } | null;
   creator: {
     id: string;
     name: string | null;
@@ -41,29 +57,20 @@ export function CommentsSection({
   isAdmin,
 }: CommentsSectionProps) {
   const t = useTranslations();
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchComments() {
-      try {
-        const result = await getCommentsForEntity(entityType, entityId);
-        if (result.success && result.comments) {
-          setComments(result.comments as Comment[]);
-        } else {
-          setError(result.error || t("comments.errors.loadFailed"));
-        }
-      } catch (err) {
-        console.error("Failed to fetch comments:", err);
-        setError(t("comments.errors.loadFailed"));
-      } finally {
-        setIsLoading(false);
+  const {
+    data: comments = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: commentsQueryKey(entityType, entityId),
+    queryFn: async () => {
+      const result = await getCommentsForEntity(entityType, entityId);
+      if (!result.success || !result.comments) {
+        throw new Error(result.error || t("comments.errors.loadFailed"));
       }
-    }
-
-    void fetchComments();
-  }, [entityType, entityId, t]);
+      return result.comments as Comment[];
+    },
+  });
 
   if (isLoading) {
     return (
@@ -79,7 +86,11 @@ export function CommentsSection({
     return (
       <Alert variant="destructive" className="items-center">
         <AlertCircle className="h-4 w-4" />
-        <AlertDescription>{error}</AlertDescription>
+        <AlertDescription>
+          {error instanceof Error
+            ? error.message
+            : t("comments.errors.loadFailed")}
+        </AlertDescription>
       </Alert>
     );
   }
