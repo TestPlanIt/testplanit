@@ -13,7 +13,13 @@ import {
   computeWorstOfStatus,
   type RollupStatus,
 } from "~/lib/services/iterationRollup";
+import { assertReviewGatePasses } from "~/lib/services/reviewGate";
 import { emitIterationResultRecorded } from "~/lib/webhooks/event-emitters/iterationEvents";
+import {
+  isAlreadyPendingError,
+  isReviewGateError,
+  ReviewGateError,
+} from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 
@@ -667,6 +673,18 @@ export async function POST(req: NextRequest) {
         });
 
         if (!previousResult) {
+          // Review & Approval preflight (Plan 01-04). The auto-flip to
+          // in-progress on first result submission is a stateId update
+          // path; the schema @@deny rule from Plan 01 covers it via the
+          // ZenStack runtime, but this route uses raw prisma so we call
+          // the app preflight explicitly.
+          const gateApprovals = await assertReviewGatePasses(
+            tx,
+            "RUN",
+            input.testRunId,
+            input.inProgressStateId
+          );
+
           await tx.testRuns.update({
             where: {
               id: input.testRunId,
@@ -746,6 +764,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Iteration not found", code: "ITERATION_NOT_FOUND" },
         { status: 404 }
+      );
+    }
+
+    // Review & Approval: translate the typed ReviewGateError from the
+    // auto-flip preflight into a structured 403 BEFORE the Prisma P2025
+    // and generic 500 fallbacks.
+    if (isReviewGateError(error)) {
+      return NextResponse.json(
+        {
+          error: {
+            code: error.code,
+            entityType: error.entityType,
+            entityId: error.entityId,
+            toStateId: error.toStateId,
+          },
+        },
+        { status: 403 }
+      );
+    }
+
+    if (isAlreadyPendingError(error)) {
+      return NextResponse.json(
+        { error: { code: "PENDING_REVIEW_EXISTS" } },
+        { status: 409 }
       );
     }
 

@@ -640,6 +640,8 @@
       "aiModels": "AI-modellen",
       "integrations": "Integraties",
       "quickscript": "QuickScript",
+      "advanced": "Geavanceerd",
+      "reviews": "Recensies",
       "webhooks": "Webhooks",
       "shares": "Aandelen",
       "datasets": "Gedeelde datasets",
@@ -1809,6 +1811,17 @@
         "disconnectWarning3": "Stop met het opnemen van codecontext in door AI gegenereerde exports.",
         "disconnectSuccess": "Codeopslagplaats is losgekoppeld",
         "disconnectError": "Het is niet gelukt om de verbinding met de codeopslagplaats te verbreken."
+      },
+      "advanced": {
+        "title": "Geavanceerd",
+        "description": "Per project kun je geavanceerde functies in- of uitschakelen.",
+        "reviewWorkflow": {
+          "label": "Schakel de beoordelingsworkflow in",
+          "description": "Wanneer deze functie is ingeschakeld, worden overgangen naar statussen die beoordeling vereisen, geblokkeerd door een goedgekeurd beoordelingsverzoek. Testers zien de knop 'Beoordeling aanvragen'; beoordelaars ontvangen meldingen.",
+          "enabledToast": "De beoordelingsworkflow is voor dit project ingeschakeld.",
+          "disabledToast": "De beoordelingsworkflow is voor dit project uitgeschakeld.",
+          "saveError": "Het bijwerken van de beoordelingsworkflow is mislukt."
+        }
       }
     },
     "matrix": {
@@ -3010,6 +3023,99 @@
       "deferredMessage": "Deze bijlage wordt verwijderd wanneer u opslaat."
     }
   },
+  "reviews": {
+    "banner": {
+      "pendingMessage": "Review aangevraagd van {assignee}. {ago} geleden.",
+      "changesRequestedTitle": "Gevraagde wijzigingen",
+      "rejectedTitle": "Beoordeling afgewezen",
+      "cancelRequest": "Verzoek annuleren",
+      "requestAgain": "Verzoek om opnieuw te beoordelen"
+    },
+    "cancel": {
+      "title": "Annuleer dit beoordelingsverzoek?",
+      "description": "De beoordelaar kan dit verzoek niet langer in behandeling nemen. U kunt daarna een nieuw verzoek indienen.",
+      "confirm": "Verzoek annuleren",
+      "success": "Verzoek om beoordeling geannuleerd.",
+      "error": "Het verzoek om beoordeling kon niet worden geannuleerd. Probeer het over een moment opnieuw."
+    },
+    "list": {
+      "pendingTooltip": "In afwachting van beoordeling door {assignee}"
+    },
+    "transitionGate": {
+      "blockedByGate": "Goedkeuring is vereist voor \"{gateName}\" vóór deze overgang. Gebruik \"Review aanvragen\" om er een te starten.",
+      "gatedOptionBadge": "Vereist beoordeling",
+      "saveBlockedByFormErrors": "Los de gemarkeerde formulierfouten op voordat u opslaat.",
+      "bulkBlockedSummary": "{count, plural, one {# geval} other {# gevallen}} geblokkeerd door poort \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, en # meer}}. Elk geblokkeerd geval heeft een goedgekeurde beoordeling nodig voor \"{gateName}\" voordat deze overgang plaatsvindt.",
+      "toastReviewRequired": "Goedkeuring is vereist vóór deze overgang. Vraag een beoordeling aan en probeer het opnieuw nadat deze is goedgekeurd.",
+      "toastPendingReviewExists": "Er loopt al een beoordeling voor deze overgang. Wacht op de beslissing of annuleer de overgang voordat u het opnieuw probeert."
+    },
+    "inbox": {
+      "iconAria": "{count, plural, =0 {Review-inbox} one {Review-inbox, # in behandeling} other {Review-inbox, # in behandeling}}",
+      "pageTitle": "Recensies",
+      "pageDescription": "Lopende beoordelingsverzoeken die aan u zijn toegewezen (direct of via een functie die u bekleedt).",
+      "empty": "Geen openstaande beoordelingen. Alles is weer helemaal bij.",
+      "featureDisabled": "De functie voor het beoordelingsproces is momenteel uitgeschakeld. Lopende beoordelingen worden bewaard en verschijnen weer zodra de functie opnieuw is ingeschakeld.",
+      "columnEntity": "Entiteit",
+      "columnProject": "Project",
+      "columnRequester": "Aanvrager",
+      "columnTransition": "Overgang",
+      "columnRequestedAt": "Aangevraagd bij",
+      "filterEntityType": "Entiteitstype",
+      "filterProject": "Project",
+      "filterAllEntityTypes": "Alle entiteitstypen",
+      "filterEntityTypeCase": "Testgevallen",
+      "filterEntityTypeRun": "Testruns",
+      "filterEntityTypeSession": "Sessies",
+      "filterAllProjects": "Alle projecten"
+    },
+    "requester": {
+      "openButton": "Verzoek om beoordeling",
+      "sheetTitle": "Verzoek om beoordeling",
+      "sheetDescription": "Stuur deze entiteit ter beoordeling door voordat u overgaat naar de doelstatus.",
+      "assigneeLabel": "Cessionaris",
+      "assigneePlaceholder": "Selecteer een gebruiker of rol",
+      "usersHoldRole": "{count, plural, one {# gebruiker heeft deze rol} other {# gebruikers hebben deze rol}}",
+      "targetStateLabel": "Doelstaat",
+      "targetStatePlaceholder": "Selecteer een doeltoestand",
+      "commentLabel": "Opmerking",
+      "commentPlaceholder": "Leg uit waar de beoordelaar naar moet kijken.",
+      "commentRequired": "Een reactie is vereist.",
+      "assigneeRequired": "Selecteer een toegewezen persoon.",
+      "targetStateRequired": "Selecteer een gewenste staat.",
+      "submitButton": "Verzoek om beoordeling",
+      "submitSuccess": "Verzoek tot beoordeling aangemaakt.",
+      "alreadyPendingError": "Er loopt al een beoordelingsprocedure voor deze entiteit."
+    },
+    "reviewer": {
+      "approve": "Goedkeuren",
+      "requestChanges": "Verzoek om wijzigingen",
+      "reject": "Afwijzen",
+      "approveConfirmTitle": "Wilt u dit beoordelingsverzoek goedkeuren?",
+      "approveConfirmDescription": "Goedkeuring geeft de aanvrager toestemming om deze {entityType} om te zetten naar {targetStateName}.",
+      "approvalNoteLabel": "Goedkeuringsnota",
+      "approvalNotePlaceholder": "Voeg een optionele notitie voor de aanvrager toe (zichtbaar naast de goedkeuring).",
+      "requestChangesTitle": "Verzoek om wijzigingen",
+      "requestChangesDescription": "Vertel de aanvrager wat er moet veranderen voordat je deze overgang kunt goedkeuren.",
+      "requestChangesCommentLabel": "Opmerking",
+      "requestChangesCommentPlaceholder": "Leg uit wat er moet veranderen.",
+      "rejectTitle": "Wilt u dit beoordelingsverzoek afwijzen?",
+      "rejectDescription": "Door de aanvraag af te wijzen, wordt voorkomen dat de aanvrager deze {entityType} naar {targetStateName}kan omzetten. Er moet een nieuwe beoordelingsaanvraag worden aangemaakt om het opnieuw te proberen.",
+      "rejectCommentLabel": "Opmerking",
+      "rejectCommentPlaceholder": "Leg uit waarom je dit verzoek afwijst.",
+      "commentRequired": "Een reactie is vereist.",
+      "confirmApprove": "Goedkeuren",
+      "confirmRequestChanges": "Versturen",
+      "confirmReject": "Afwijzen",
+      "cancel": "Annuleren",
+      "approveSuccess": "Beoordeling goedgekeurd.",
+      "requestChangesSuccess": "Gevraagde wijzigingen.",
+      "rejectSuccess": "Beoordeling afgewezen.",
+      "ineligibleError": "U bent niet langer bevoegd om over dit herzieningsverzoek te beslissen.",
+      "alreadyDecidedError": "Over deze beoordeling is al besloten.",
+      "decideError": "Uw beslissing kon niet worden opgeslagen. Probeer het over een moment opnieuw.",
+      "panelSummary": "Reviewverzoek van {requesterName}: overgang naar {targetStateName}"
+    }
+  },
   "runs": {
     "notFound": "Testrun niet gevonden.",
     "add": {
@@ -3187,6 +3293,7 @@
       "exportTemplates": "Export sjablonen",
       "codeRepositories": "Codeopslagplaatsen",
       "quickScript": "QuickScript",
+      "advanced": "Geavanceerd",
       "sso": "Authenticatie",
       "security": "Beveiliging",
       "trash": "Afval",
@@ -4184,6 +4291,18 @@
     },
     "workflows": {
       "description": "Testcase-workflows beheren",
+      "systemFeatureCard": {
+        "title": "Werkstroomfunctie beoordelen",
+        "description": "Systeembrede schakelaar voor de beoordelings- en goedkeuringsfunctie. Indien ingeschakeld, kunnen projecten zich individueel aan- of afmelden via hun geavanceerde instellingen.",
+        "stateEnabled": "Ingeschakeld",
+        "stateDisabled": "Gehandicapt",
+        "operatorNotePrefix": "Ingesteld via omgevingsvariabele",
+        "operatorNoteSuffix": "Een herstart is vereist om de wijzigingen toe te passen."
+      },
+      "editWorkflow": {
+        "requiresReviewLabel": "Vereist beoordeling",
+        "requiresReviewFeatureDisabled": "De functie voor het beoordelen van de workflow is op systeemniveau uitgeschakeld. Schakel de geavanceerde instellingen van een project in of uit, of stel TESTPLANIT_REVIEW_FEATURE_ENABLED in om deze opnieuw in te schakelen."
+      },
       "add": {
         "button": "Workflow toevoegen",
         "title": "Nieuwe workflow toevoegen",
@@ -5649,7 +5768,8 @@
       "isDefault": "## Standaard\nGeeft aan of deze workflow de standaard is voor uw project.\n\n- De standaardworkflow is vooraf geselecteerd voor nieuwe testruns, sessies en automatisering.",
       "isEnabled": "## Ingeschakeld\nGeeft aan of deze workflow is ingeschakeld.",
       "isActive": "## Actief\nGeeft aan of deze workflowstatus actief en beschikbaar is voor gebruik.\n\n- Actieve workflows kunnen worden geselecteerd bij het bijwerken van testruns, sessies of automatisering.\n- Inactieve workflows zijn niet selecteerbaar, maar blijven behouden in bestaande items.",
-      "projects": "## Projecten\nGeeft de projecten aan die deze workflow kunnen gebruiken."
+      "projects": "## Projecten\nGeeft de projecten aan die deze workflow kunnen gebruiken.",
+      "requiresReview": "## Vereist beoordeling\nWanneer AAN, is de overgang van een case, testrun of sessie NAAR deze status afhankelijk van een goedgekeurd beoordelingsverzoek. Zonder een goedgekeurd verzoek wordt de overgang geblokkeerd.\n\n- Bestaande, nog niet voltooide beoordelingen worden stilzwijgend bewaard wanneer de systeemfunctie UIT staat en verschijnen opnieuw wanneer deze weer wordt ingeschakeld.\n- De beoordelaar wordt geselecteerd wanneer een tester op 'Beoordeling aanvragen' klikt op de detailpagina van de entiteit.\n\nAls de systeemfunctie is uitgeschakeld, is deze schakelaar vergrendeld. Schakel deze opnieuw in via de kaart 'Beoordelingsworkflow' hierboven om deze in te schakelen."
     },
     "testResult": {
       "status": "## Status\nSelecteer de algemene status van de testuitvoering. De status die u kiest, kan van invloed zijn op projectstatistieken en -rapporten.",

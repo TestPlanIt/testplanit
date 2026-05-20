@@ -640,6 +640,8 @@
       "aiModels": "人工智慧模型",
       "integrations": "整合",
       "quickscript": "QuickScript",
+      "advanced": "先進的",
+      "reviews": "評論",
       "webhooks": "網路鉤子",
       "shares": "股票",
       "datasets": "共享資料集",
@@ -1809,6 +1811,17 @@
         "disconnectWarning3": "停止在 AI 產生的匯出檔案中包含程式碼上下文",
         "disconnectSuccess": "程式碼庫已斷開連接",
         "disconnectError": "斷開程式碼庫連線失敗"
+      },
+      "advanced": {
+        "title": "先進的",
+        "description": "每個項目都有高級功能的切換開關。",
+        "reviewWorkflow": {
+          "label": "啟用審核工作流程",
+          "description": "啟用此功能後，需要審核的狀態轉換將由已核准的審核請求控制。測試人員會看到「請求審核」按鈕；審核人員會收到通知。",
+          "enabledToast": "此項目已啟用審核工作流程",
+          "disabledToast": "此項目的審核工作流程已停用",
+          "saveError": "更新審核工作流程設定失敗"
+        }
       }
     },
     "matrix": {
@@ -3010,6 +3023,99 @@
       "deferredMessage": "儲存時，此附件將被刪除。"
     }
   },
+  "reviews": {
+    "banner": {
+      "pendingMessage": "審核請求於 {assignee}. {ago} 年前提出。",
+      "changesRequestedTitle": "請求更改",
+      "rejectedTitle": "審查被拒絕",
+      "cancelRequest": "取消請求",
+      "requestAgain": "再次請求復審"
+    },
+    "cancel": {
+      "title": "取消此審核請求？",
+      "description": "審核員將無法再處理此請求。您可以稍後提交新的請求。",
+      "confirm": "取消請求",
+      "success": "審核請求已取消。",
+      "error": "無法取消審核請求。請稍後再試。"
+    },
+    "list": {
+      "pendingTooltip": "待審核來自 {assignee}"
+    },
+    "transitionGate": {
+      "blockedByGate": "此轉換需要獲得「{gateName}」的批准。請使用「請求審核」功能發起審核。",
+      "gatedOptionBadge": "需要審核",
+      "saveBlockedByFormErrors": "儲存前請解決高亮顯示的表單錯誤。",
+      "bulkBlockedSummary": "{count, plural, one {# case} other {# cases}} blocked by gate \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, and # more}}. Each blocked case needs an approved review for \"{gateName}\" before this transition.",
+      "toastReviewRequired": "此變更需經批准後方可生效。請申請審核，待審核通過後再試。",
+      "toastPendingReviewExists": "此次變更申請已進入審核階段。請等待審核結果，或在重試前取消申請。"
+    },
+    "inbox": {
+      "iconAria": "{count, plural, =0 {Review inbox} one {Review inbox, # pending} other {Review inbox, # pending}}",
+      "pageTitle": "評論",
+      "pageDescription": "指派給您的待審核請求（直接指派給您或透過您所擔任的角色指派給您）。",
+      "empty": "沒有待審核的評論。您已全部完成審核。",
+      "featureDisabled": "審核工作流程功能目前已停用。待審核的審核內容將會保留，並在該功能重新啟用後重新顯示。",
+      "columnEntity": "實體",
+      "columnProject": "專案",
+      "columnRequester": "請求者",
+      "columnTransition": "過渡",
+      "columnRequestedAt": "已請求",
+      "filterEntityType": "實體類型",
+      "filterProject": "專案",
+      "filterAllEntityTypes": "所有實體類型",
+      "filterEntityTypeCase": "測試用例",
+      "filterEntityTypeRun": "測試運行",
+      "filterEntityTypeSession": "會議",
+      "filterAllProjects": "所有項目"
+    },
+    "requester": {
+      "openButton": "請求審核",
+      "sheetTitle": "請求審核",
+      "sheetDescription": "在過渡到目標狀態之前，請將此實體傳送給我們進行審核。",
+      "assigneeLabel": "受讓人",
+      "assigneePlaceholder": "選擇使用者或角色",
+      "usersHoldRole": "{count, plural, one {# 使用者擁有此角色} other {# 使用者擁有此角色}}",
+      "targetStateLabel": "目標狀態",
+      "targetStatePlaceholder": "選擇目標狀態",
+      "commentLabel": "評論",
+      "commentPlaceholder": "請說明您希望審閱者關注哪些面向。",
+      "commentRequired": "必鬚髮表評論。",
+      "assigneeRequired": "選擇受讓人。",
+      "targetStateRequired": "選擇目標州。",
+      "submitButton": "請求審核",
+      "submitSuccess": "審核請求已建立。",
+      "alreadyPendingError": "目前已有針對該實體的審查正在進行中。"
+    },
+    "reviewer": {
+      "approve": "核准",
+      "requestChanges": "請求更改",
+      "reject": "拒絕",
+      "approveConfirmTitle": "批准此審核請求？",
+      "approveConfirmDescription": "批准後，請求者可以將此 {entityType} 過渡到 {targetStateName}。",
+      "approvalNoteLabel": "批准說明",
+      "approvalNotePlaceholder": "可為請求者新增選用備註（顯示在核准資訊旁）。",
+      "requestChangesTitle": "請求更改",
+      "requestChangesDescription": "在您批准此變更之前，請告知請求者需要更改哪些內容。",
+      "requestChangesCommentLabel": "評論",
+      "requestChangesCommentPlaceholder": "解釋需要做出哪些改變。",
+      "rejectTitle": "拒絕此審核請求？",
+      "rejectDescription": "拒絕請求會阻止請求者將此 {entityType} 轉換為 {targetStateName}。必須建立新的審核請求才能重試。",
+      "rejectCommentLabel": "評論",
+      "rejectCommentPlaceholder": "請解釋您拒絕此請求的原因。",
+      "commentRequired": "必鬚髮表評論。",
+      "confirmApprove": "核准",
+      "confirmRequestChanges": "傳送",
+      "confirmReject": "拒絕",
+      "cancel": "取消",
+      "approveSuccess": "審核通過。",
+      "requestChangesSuccess": "已提出修改意見。",
+      "rejectSuccess": "審核被駁回。",
+      "ineligibleError": "您已不再具備對此複審請求作出決定的資格。",
+      "alreadyDecidedError": "本次審查結果已確定。",
+      "decideError": "無法記錄您的決定。請稍後再試。",
+      "panelSummary": "來自 {requesterName}的審核請求：過渡到 {targetStateName}"
+    }
+  },
   "runs": {
     "notFound": "未找到測試運行。",
     "add": {
@@ -3187,6 +3293,7 @@
       "exportTemplates": "匯出模板",
       "codeRepositories": "程式碼庫",
       "quickScript": "QuickScript",
+      "advanced": "先進的",
       "sso": "驗證",
       "security": "安全",
       "trash": "垃圾",
@@ -4184,6 +4291,18 @@
     },
     "workflows": {
       "description": "管理測試用例工作流程",
+      "systemFeatureCard": {
+        "title": "審核工作流程功能",
+        "description": "系統級審核批准功能開關。啟用後，項目可以透過其進階設定單獨選擇啟用或停用此功能。",
+        "stateEnabled": "已啟用",
+        "stateDisabled": "已停用",
+        "operatorNotePrefix": "透過環境變數設定",
+        "operatorNoteSuffix": "需要重新啟動系統才能使變更生效。"
+      },
+      "editWorkflow": {
+        "requiresReviewLabel": "需要審核",
+        "requiresReviewFeatureDisabled": "系統級已停用審閱工作流程功能。請切換專案的「進階設定」或設定 TESTPLANIT_REVIEW_FEATURE_ENABLED 以重新啟用此功能。"
+      },
       "add": {
         "button": "新增工作流程",
         "title": "新增工作流程",

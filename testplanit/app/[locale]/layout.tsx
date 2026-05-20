@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import { ReviewGateMutationListener } from "@/components/reviews/ReviewGateMutationListener";
 import { RunGenerationProgressMount } from "@/components/runs/RunGenerationProgressToast";
 import { UpgradeNotificationChecker } from "@/components/UpgradeNotificationChecker";
 import type { Metadata } from "next";

@@ -91,6 +91,7 @@ export * from './data-set-row';
 export * from './data-set-version';
 export * from './case-shared-data-set-assignment';
 export * from './notification';
+export * from './review-request';
 export * from './share-link';
 export * from './share-link-access-log';
 export * from './project-integration';

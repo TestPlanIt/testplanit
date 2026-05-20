@@ -39,6 +39,24 @@ async function ensureSchema() {
   }
 }
 
+async function ensureExtensions() {
+  console.log("🧩 Applying PostgreSQL extensions / custom indexes...");
+
+  const { execSync } = await import("child_process");
+
+  try {
+    execSync("npx tsx prisma/setup-extensions.ts", {
+      cwd: process.cwd(),
+      stdio: "inherit",
+      env: process.env,
+    });
+    console.log("   Extensions applied");
+  } catch (error) {
+    console.error("   Failed to apply extensions:", error);
+    throw error;
+  }
+}
+
 async function resetDatabase() {
   console.log("🗑️  Resetting database...");
 
@@ -173,6 +191,11 @@ async function main() {
   try {
     // Step 0: Ensure schema exists (handles fresh databases)
     await ensureSchema();
+
+    // Step 0.5: Apply PostgreSQL extensions + custom indexes (e.g.,
+    // review_request_one_pending_per_entity partial unique). Idempotent via
+    // IF NOT EXISTS; mirrors docker-entrypoint.sh production invocation.
+    await ensureExtensions();
 
     // Step 1: Reset database
     await resetDatabase();

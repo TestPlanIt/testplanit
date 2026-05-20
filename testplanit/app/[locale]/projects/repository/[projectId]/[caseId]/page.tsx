@@ -50,6 +50,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
+import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
+import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
 import { VersionSelect } from "@/components/VersionSelect";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { ApplicationArea, Attachments, Prisma } from "@prisma/client";
@@ -754,27 +757,37 @@ export default function TestCaseDetails() {
     createFormSchema(testcase?.template?.caseFields || [], t)
   );
 
-  const { data: workflows } = useFindManyWorkflows(
-    {
-      where: {
-        isDeleted: false,
-        scope: "CASES",
-        projects: {
-          some: {
-            projectId: Number(projectId),
-          },
+  const { data: workflows } = useFindManyWorkflows({
+    where: {
+      isDeleted: false,
+      scope: "CASES",
+      projects: {
+        some: {
+          projectId: Number(projectId),
         },
       },
-      include: {
-        icon: true,
-        color: true,
-      },
-      orderBy: {
-        order: "asc",
-      },
     },
-    { enabled: isEditMode }
-  );
+    include: {
+      icon: true,
+      color: true,
+    },
+    orderBy: {
+      order: "asc",
+    },
+  });
+
+  const reachableGatedStates = useMemo(() => {
+    if (!workflows || !testcase) return [];
+    const currentStateId = testcase.state.id;
+    return workflows
+      .filter((w) => w.requiresReview === true && w.id !== currentStateId)
+      .map((w) => ({
+        id: w.id,
+        name: w.name,
+        icon: { name: (w.icon?.name ?? "circle") as string },
+        color: { value: w.color?.value ?? "" },
+      }));
+  }, [workflows, testcase]);
 
   const workflowOptions =
     workflows?.map((workflow) => ({
@@ -1767,6 +1780,16 @@ export default function TestCaseDetails() {
           {isSubmitting && (
             <LoadingSpinnerAlert className="w-[120px] h-[120px] text-primary" />
           )}
+          <div className="px-6 pt-6">
+            <ReviewStatusBanner
+              entityType="CASE"
+              entityId={testcase.id}
+              projectId={Number(projectId)}
+              entityName={testcase.name}
+              reachableGatedStates={reachableGatedStates}
+              currentStateId={testcase.state.id}
+            />
+          </div>
           <CardHeader>
             <CardTitle>
               <div>
@@ -1976,6 +1999,13 @@ export default function TestCaseDetails() {
                     </div>
                   ) : (
                     <div className="flex items-center space-x-2">
+                      <RequestReviewButton
+                        entityType="CASE"
+                        entityId={testcase.id}
+                        projectId={Number(projectId)}
+                        currentStateId={testcase.state.id}
+                        reachableGatedStates={reachableGatedStates}
+                      />
                       {quickScriptEnabled && canAddEdit && (
                         <Button
                           type="button"

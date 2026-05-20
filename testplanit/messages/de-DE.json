@@ -640,6 +640,8 @@
       "aiModels": "KI-Modelle",
       "integrations": "Integrationen",
       "quickscript": "QuickScript",
+      "advanced": "Fortschrittlich",
+      "reviews": "Rezensionen",
       "webhooks": "Webhooks",
       "shares": "Freigaben",
       "datasets": "Gemeinsame Datensätze",
@@ -1809,6 +1811,17 @@
         "disconnectWarning3": "Die Einbeziehung des Codekontexts in KI-generierte Exporte sollte eingestellt werden.",
         "disconnectSuccess": "Code-Repository getrennt",
         "disconnectError": "Fehler beim Trennen des Code-Repositorys"
+      },
+      "advanced": {
+        "title": "Fortschrittlich",
+        "description": "Für jedes Projekt einzeln einstellbare Optionen für erweiterte Funktionen.",
+        "reviewWorkflow": {
+          "label": "Prüfworkflow aktivieren",
+          "description": "Wenn diese Option aktiviert ist, werden Übergänge in Zustände, die eine Überprüfung erfordern, durch eine genehmigte Überprüfungsanfrage blockiert. Tester sehen die Schaltfläche „Überprüfung anfordern“; Prüfer erhalten Benachrichtigungen.",
+          "enabledToast": "Prüfworkflow für dieses Projekt aktiviert",
+          "disabledToast": "Prüf-Workflow für dieses Projekt deaktiviert",
+          "saveError": "Fehler beim Aktualisieren der Einstellungen für den Überprüfungsworkflow"
+        }
       }
     },
     "matrix": {
@@ -3010,6 +3023,99 @@
       "deferredMessage": "Dieser Anhang wird beim Speichern gelöscht."
     }
   },
+  "reviews": {
+    "banner": {
+      "pendingMessage": "Rezension angefordert vor {assignee}. {ago}.",
+      "changesRequestedTitle": "Änderungen angefordert",
+      "rejectedTitle": "Überprüfung abgelehnt",
+      "cancelRequest": "Stornierungsanfrage",
+      "requestAgain": "Erneute Überprüfung anfordern"
+    },
+    "cancel": {
+      "title": "Diese Bewertungsanfrage stornieren?",
+      "description": "Der Bearbeiter kann diese Anfrage nicht mehr bearbeiten. Sie können anschließend eine neue Anfrage einreichen.",
+      "confirm": "Stornierungsanfrage",
+      "success": "Überprüfungsanfrage storniert.",
+      "error": "Die Überprüfungsanfrage konnte nicht abgebrochen werden. Bitte versuchen Sie es in Kürze erneut."
+    },
+    "list": {
+      "pendingTooltip": "Überprüfung ausstehend von {assignee}"
+    },
+    "transitionGate": {
+      "blockedByGate": "Für \"{gateName}\" ist vor diesem Übergang eine Genehmigung erforderlich. Verwenden Sie \"Überprüfung anfordern\", um eine solche zu starten.",
+      "gatedOptionBadge": "Überprüfung erforderlich",
+      "saveBlockedByFormErrors": "Beheben Sie die markierten Formularfehler vor dem Speichern.",
+      "bulkBlockedSummary": "{count, plural, one {# Fall} other {# Fälle}} blockiert durch Gate \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, und # weitere}}. Jeder blockierte Fall benötigt vor diesem Übergang eine genehmigte Überprüfung für \"{gateName}\".",
+      "toastReviewRequired": "Für diese Umstellung ist eine Genehmigung erforderlich. Bitte fordern Sie eine Überprüfung an und versuchen Sie es nach der Genehmigung erneut.",
+      "toastPendingReviewExists": "Für diesen Übergang wird bereits eine Überprüfung durchgeführt. Warten Sie die Entscheidung ab oder brechen Sie den Vorgang ab, bevor Sie es erneut versuchen."
+    },
+    "inbox": {
+      "iconAria": "{count, plural, =0 {Posteingang für Überprüfungen} one {Posteingang für Überprüfungen, # ausstehend} other {Posteingang für Überprüfungen, # ausstehend}}",
+      "pageTitle": "Rezensionen",
+      "pageDescription": "Offene Überprüfungsanfragen, die Ihnen (direkt oder über eine von Ihnen bekleidete Rolle) zugewiesen wurden.",
+      "empty": "Keine ausstehenden Überprüfungen. Sie sind auf dem neuesten Stand.",
+      "featureDisabled": "Die Funktion „Prüfprozess“ ist derzeit deaktiviert. Ausstehende Prüfungen bleiben erhalten und werden wieder angezeigt, sobald die Funktion erneut aktiviert wird.",
+      "columnEntity": "Juristische Person",
+      "columnProject": "Projekt",
+      "columnRequester": "Anforderer",
+      "columnTransition": "Übergang",
+      "columnRequestedAt": "Angefordert bei",
+      "filterEntityType": "Entitätstyp",
+      "filterProject": "Projekt",
+      "filterAllEntityTypes": "Alle Entitätstypen",
+      "filterEntityTypeCase": "Testfälle",
+      "filterEntityTypeRun": "Testläufe",
+      "filterEntityTypeSession": "Sitzungen",
+      "filterAllProjects": "Alle Projekte"
+    },
+    "requester": {
+      "openButton": "Überprüfung anfordern",
+      "sheetTitle": "Überprüfung anfordern",
+      "sheetDescription": "Senden Sie diese Entität zur Überprüfung, bevor Sie in den Zielzustand übergehen.",
+      "assigneeLabel": "Abtretungsempfänger",
+      "assigneePlaceholder": "Wählen Sie einen Benutzer oder eine Rolle aus",
+      "usersHoldRole": "{count, plural, one {# Benutzer mit dieser Rolle} other {# Benutzer mit dieser Rolle}}",
+      "targetStateLabel": "Zielzustand",
+      "targetStatePlaceholder": "Wählen Sie einen Zielzustand aus",
+      "commentLabel": "Kommentar",
+      "commentPlaceholder": "Erläutern Sie, worauf der Gutachter achten soll.",
+      "commentRequired": "Ein Kommentar ist erforderlich.",
+      "assigneeRequired": "Wählen Sie einen Bearbeiter aus.",
+      "targetStateRequired": "Wählen Sie einen Zielstaat aus.",
+      "submitButton": "Überprüfung anfordern",
+      "submitSuccess": "Überprüfungsanfrage erstellt.",
+      "alreadyPendingError": "Für diese Einrichtung ist bereits eine Überprüfung anhängig."
+    },
+    "reviewer": {
+      "approve": "Genehmigen",
+      "requestChanges": "Änderungen anfordern",
+      "reject": "Ablehnen",
+      "approveConfirmTitle": "Soll diese Überprüfungsanfrage genehmigt werden?",
+      "approveConfirmDescription": "Durch die Genehmigung wird dem Antragsteller ermöglicht, diesen {entityType} in {targetStateName} umzuwandeln.",
+      "approvalNoteLabel": "Genehmigungsvermerk",
+      "approvalNotePlaceholder": "Fügen Sie optional eine Notiz für den Antragsteller hinzu (sichtbar neben der Genehmigung).",
+      "requestChangesTitle": "Änderungen anfordern",
+      "requestChangesDescription": "Teilen Sie dem Antragsteller mit, was sich ändern muss, bevor Sie diesen Übergang genehmigen können.",
+      "requestChangesCommentLabel": "Kommentar",
+      "requestChangesCommentPlaceholder": "Erklären Sie, was sich ändern muss.",
+      "rejectTitle": "Diese Überprüfungsanfrage ablehnen?",
+      "rejectDescription": "Die Ablehnung verhindert, dass der Anfragende diesen Zustand {entityType} in den Zustand {targetStateName}überführt. Es muss eine neue Überprüfungsanfrage erstellt werden, um es erneut zu versuchen.",
+      "rejectCommentLabel": "Kommentar",
+      "rejectCommentPlaceholder": "Begründen Sie, warum Sie diese Anfrage ablehnen.",
+      "commentRequired": "Ein Kommentar ist erforderlich.",
+      "confirmApprove": "Genehmigen",
+      "confirmRequestChanges": "Schicken",
+      "confirmReject": "Ablehnen",
+      "cancel": "Stornieren",
+      "approveSuccess": "Prüfung genehmigt.",
+      "requestChangesSuccess": "Änderungen angefordert.",
+      "rejectSuccess": "Die Überprüfung wurde abgelehnt.",
+      "ineligibleError": "Sie sind nicht mehr berechtigt, über diesen Überprüfungsantrag zu entscheiden.",
+      "alreadyDecidedError": "Diese Rezension ist bereits entschieden.",
+      "decideError": "Ihre Entscheidung konnte nicht gespeichert werden. Bitte versuchen Sie es in Kürze erneut.",
+      "panelSummary": "Überprüfungsanfrage von {requesterName}: Übergang zu {targetStateName}"
+    }
+  },
   "runs": {
     "notFound": "Testlauf nicht gefunden.",
     "add": {
@@ -3187,6 +3293,7 @@
       "exportTemplates": "Exportvorlagen",
       "codeRepositories": "Code-Repositories",
       "quickScript": "QuickScript",
+      "advanced": "Fortschrittlich",
       "sso": "Authentifizierung",
       "security": "Sicherheit",
       "trash": "Papierkorb",
@@ -4184,6 +4291,18 @@
     },
     "workflows": {
       "description": "Testfall-Workflows verwalten",
+      "systemFeatureCard": {
+        "title": "Workflow-Funktion überprüfen",
+        "description": "Systemweite Option zur Aktivierung der Prüf- und Genehmigungsfunktion. Ist diese aktiviert, können Projekte sie in ihren erweiterten Einstellungen einzeln ein- oder ausschalten.",
+        "stateEnabled": "Ermöglicht",
+        "stateDisabled": "Deaktiviert",
+        "operatorNotePrefix": "Über eine Umgebungsvariable festgelegt",
+        "operatorNoteSuffix": "Ein Neustart ist erforderlich, um die Änderungen anzuwenden."
+      },
+      "editWorkflow": {
+        "requiresReviewLabel": "Überprüfung erforderlich",
+        "requiresReviewFeatureDisabled": "Die Funktion für den Überprüfungsworkflow ist systemweit deaktiviert. Um sie wieder zu aktivieren, ändern Sie die erweiterten Projekteinstellungen oder setzen Sie TESTPLANIT_REVIEW_FEATURE_ENABLED."
+      },
       "add": {
         "button": "Workflow hinzufügen",
         "title": "Neuen Workflow hinzufügen",

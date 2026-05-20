@@ -125,22 +125,29 @@ vi.mock("next-auth/react", async (importOriginal) => {
   };
 });
 
-// If your tests rely on window.matchMedia, you might need to mock it:
-Object.defineProperty(window, "matchMedia", {
-  writable: true,
-  value: vi.fn().mockImplementation((query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(), // deprecated
-    removeListener: vi.fn(), // deprecated
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })),
-});
+// If your tests rely on window.matchMedia, you might need to mock it.
+// Guarded so the global setup file is safe to load in per-file
+// `// @vitest-environment node` tests (live-DB integration tests have no
+// jsdom window). Without the guard, `Object.defineProperty(window, ...)`
+// throws ReferenceError before any node-env test can run.
+if (typeof window !== "undefined") {
+  Object.defineProperty(window, "matchMedia", {
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(), // deprecated
+      removeListener: vi.fn(), // deprecated
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
+}
 
-// Mock ResizeObserver for components that use it (like async-combobox)
+// Mock ResizeObserver for components that use it (like async-combobox).
+// `global` is defined in both jsdom and node, so this is safe everywhere.
 class MockResizeObserver {
   constructor(_callback?: ResizeObserverCallback) {}
   observe = vi.fn();
@@ -254,14 +261,13 @@ vi.mock("next-intl", () => {
 
     // Mock useTranslations to look up keys in the messages object
     useTranslations: (namespace?: string) => {
-      // Return the actual translation function `t`
-      return (key: string, params?: Record<string, any>) => {
+      const lookup = (key: string): string | undefined => {
         let message: string | undefined;
 
         if (namespace) {
           // Handle namespaces with dots (e.g., "common.status")
           const namespaceParts = namespace.split(".");
-          const topLevelNamespace = namespaceParts[0] as keyof typeof messages; // Namespace Lookup
+          const topLevelNamespace = namespaceParts[0] as keyof typeof messages;
           const nestedNamespacePath = namespaceParts.slice(1).join(".");
           const fullKeyPath = nestedNamespacePath
             ? `${nestedNamespacePath}.${key}`
@@ -272,9 +278,15 @@ vi.mock("next-intl", () => {
             message = getNested(baseMessages, fullKeyPath);
           }
         } else {
-          // No namespace provided, try finding key directly from root (e.g., key is "common.labels.noResults")
-          message = getNested(messages, key); // Root Lookup
+          message = getNested(messages, key);
         }
+
+        return message;
+      };
+
+      // Return the actual translation function `t`
+      const t = (key: string, params?: Record<string, any>) => {
+        let message = lookup(key);
 
         // Fallback if still not found
         if (message === undefined) {
@@ -289,6 +301,59 @@ vi.mock("next-intl", () => {
         }
         // Ensure we return a string even if lookup failed and we ended up with undefined
         return typeof message === "string" ? message : String(message);
+      };
+
+      // `t.rich(key, params)` — minimal renderer that lets tag-style chunks
+      // (e.g. `<assignee></assignee>` in the i18n value) be replaced by
+      // arbitrary React nodes returned by `params[tagName]()`. Tag-style
+      // tokens (anything matching `<tag></tag>`) AND `{var}` placeholders
+      // are both substituted in source order so the rendered output
+      // mirrors what next-intl produces at runtime. This is the shape every
+      // `t.rich(...)` consumer in the codebase needs.
+      (t as any).rich = (
+        key: string,
+        params?: Record<
+          string,
+          ((chunks?: React.ReactNode) => React.ReactNode) | string | number
+        >
+      ): React.ReactNode => {
+        const template =
+          lookup(key) ?? (namespace ? `${namespace}.${key}` : key);
+        const parts: React.ReactNode[] = [];
+        const tokenRegex = /<(\w+)><\/\1>|\{(\w+)\}/g;
+        let lastIndex = 0;
+        let match: RegExpExecArray | null;
+        while ((match = tokenRegex.exec(template)) !== null) {
+          if (match.index > lastIndex) {
+            parts.push(template.slice(lastIndex, match.index));
+          }
+          const tagName = match[1];
+          const placeholderName = match[2];
+          if (tagName) {
+            const renderFn = params?.[tagName];
+            if (typeof renderFn === "function") {
+              parts.push(renderFn());
+            }
+          } else if (placeholderName) {
+            const val = params?.[placeholderName];
+            parts.push(typeof val === "function" ? val() : String(val ?? ""));
+          }
+          lastIndex = tokenRegex.lastIndex;
+        }
+        if (lastIndex < template.length) {
+          parts.push(template.slice(lastIndex));
+        }
+        return parts;
+      };
+
+      return t as ((key: string, params?: Record<string, any>) => string) & {
+        rich: (
+          key: string,
+          params?: Record<
+            string,
+            ((chunks?: React.ReactNode) => React.ReactNode) | string | number
+          >
+        ) => React.ReactNode;
       };
     },
     // Add mocks for any other specific next-intl exports used in tests if needed
