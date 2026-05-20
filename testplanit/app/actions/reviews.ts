@@ -8,6 +8,7 @@ import { NotificationService } from "~/lib/services/notificationService";
 import { prisma } from "~/lib/prisma";
 import { extractMentionedUserIds } from "~/lib/utils/tiptapMentions";
 import { AlreadyPendingError } from "~/lib/utils/errors";
+import { emitReviewRequestedEvent } from "~/lib/webhooks/event-emitters/reviewEvents";
 import { getServerAuthSession } from "~/server/auth";
 
 type ReviewableEntityType = "CASE" | "RUN" | "SESSION";
@@ -216,6 +217,59 @@ export async function requestReview(
       );
     }
 
+    try {
+      const context = await loadReviewContext(
+        input.projectId,
+        input.entityType,
+        input.entityId,
+        input.fromStateId,
+        input.toStateId
+      );
+      if (context) {
+        const [assigneeUser, assigneeRole] = await Promise.all([
+          input.assigneeUserId !== null
+            ? prisma.user.findUnique({
+                where: { id: input.assigneeUserId },
+                select: { name: true },
+              })
+            : Promise.resolve(null),
+          input.assigneeRoleId !== null
+            ? prisma.roles.findUnique({
+                where: { id: input.assigneeRoleId },
+                select: { name: true },
+              })
+            : Promise.resolve(null),
+        ]);
+        await emitReviewRequestedEvent(
+          {
+            reviewRequestId,
+            projectId: input.projectId,
+            entityType: input.entityType,
+            entityId: input.entityId,
+            entityName: context.entityName,
+            fromStateId: input.fromStateId,
+            fromStateName: context.fromStateName,
+            toStateId: input.toStateId,
+            toStateName: context.toStateName,
+            toStateColor: context.toStateColor,
+            requestedByUserId,
+            requesterName: session.user.name ?? "Unknown User",
+            assigneeUserId: input.assigneeUserId,
+            assigneeUserName: assigneeUser?.name ?? null,
+            assigneeRoleId: input.assigneeRoleId,
+            assigneeRoleName: assigneeRole?.name ?? null,
+            commentText: trimmed.length > 0 ? trimmed : null,
+          },
+          { actorUserId: requestedByUserId }
+        );
+      }
+    } catch (webhookErr) {
+      console.error(
+        "requestReview: review-request webhook emit failed",
+        webhookErr
+      );
+    }
+
     revalidatePath("/");
     return { success: true, reviewRequestId, commentId };
   } catch (err) {
@@ -247,6 +301,7 @@ async function loadReviewContext(
   entityName: string;
   fromStateName: string;
   toStateName: string;
+  toStateColor: string | null;
 } | null> {
   const [project, fromState, toState] = await Promise.all([
     prisma.projects.findUnique({
@@ -259,7 +314,7 @@ async function loadReviewContext(
     }),
     prisma.workflows.findUnique({
       where: { id: toStateId },
-      select: { name: true },
+      select: { name: true, color: { select: { value: true } } },
     }),
   ]);
   if (!project) return null;
@@ -292,5 +347,6 @@ async function loadReviewContext(
     entityName,
     fromStateName: fromState?.name ?? "",
     toStateName: toState?.name ?? "",
+    toStateColor: toState?.color?.value ?? null,
   };
 }
