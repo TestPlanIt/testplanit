@@ -326,9 +326,8 @@ export function useSuspenseCountComment<TArgs extends Prisma.CommentCountArgs, T
     const { endpoint, fetch } = getHooksContext();
     return useSuspenseModelQuery<TQueryFnData, TData, TError>('Comment', `${endpoint}/comment/count`, args, options, fetch);
 }
-import type { CommentType } from '@prisma/client';
 
-export function useCheckComment<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: string; projectId?: number; repositoryCaseId?: number; testRunId?: number; sessionId?: number; milestoneId?: number; type?: CommentType; reviewRequestId?: string; creatorId?: string; isEdited?: boolean; isDeleted?: boolean }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
+export function useCheckComment<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: string; projectId?: number; repositoryCaseId?: number; testRunId?: number; sessionId?: number; milestoneId?: number; creatorId?: string; isEdited?: boolean; isDeleted?: boolean }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
     const { endpoint, fetch } = getHooksContext();
     return useModelQuery<boolean, boolean, TError>('Comment', `${endpoint}/comment/check`, args, options, fetch);
 }

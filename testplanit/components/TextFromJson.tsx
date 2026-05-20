@@ -1,17 +1,20 @@
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import React, { useEffect, useState } from "react";
+import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { extractTextFromNode } from "~/utils/extractTextFromJson";
 
 interface TextFromJsonProps {
   jsonString: string | object;
   format?: "text" | "html";
   room: string;
+  parameters?: ParameterChipMeta[];
 }
 
 const TextFromJson: React.FC<TextFromJsonProps> = ({
   jsonString: jsonStringProp,
   format = "text",
   room,
+  parameters,
 }) => {
   const jsonString =
     typeof jsonStringProp === "string"
@@ -33,7 +36,13 @@ const TextFromJson: React.FC<TextFromJsonProps> = ({
     return <span>{plainText}</span>;
   }
 
-  return <TipTapEditorWrapper jsonString={jsonString} room={room} />;
+  return (
+    <TipTapEditorWrapper
+      jsonString={jsonString}
+      room={room}
+      parameters={parameters}
+    />
+  );
 };
 
 const isValidTipTapContent = (content: any): boolean => {
@@ -55,7 +64,8 @@ const isValidTipTapContent = (content: any): boolean => {
 const TipTapEditorWrapper: React.FC<{
   jsonString: string | object;
   room: string;
-}> = ({ jsonString: jsonStringProp, room }) => {
+  parameters?: ParameterChipMeta[];
+}> = ({ jsonString: jsonStringProp, room, parameters }) => {
   const jsonString =
     typeof jsonStringProp === "string"
       ? jsonStringProp
@@ -89,6 +99,7 @@ const TipTapEditorWrapper: React.FC<{
         content={content}
         readOnly={true}
         className="w-full"
+        parameters={parameters}
       />
     </div>
   );

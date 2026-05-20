@@ -236,11 +236,11 @@ Permissions are granted per application area. The complete list of areas is:
 - **Documentation** - Creating and editing project documentation
 - **Milestones** - Creating, editing, and deleting project milestones
 - **TestCaseRepository** - Creating, editing, deleting, and organizing test case folders and test cases (including test steps)
-- **TestCaseRestrictedFields** - Editing restricted field values on test cases
+- **TestCaseRestrictedFields** - Editing restricted field values on test cases, and viewing sensitive parameter values in shared/owner-bound datasets attached to test cases (see [Parameterized Test Cases](./projects/parameterized-test-cases.md))
 - **TestRuns** - Creating, editing, and deleting active test runs
 - **ClosedTestRuns** - Deleting completed or archived test runs
 - **TestRunResults** - Recording and managing results for test cases within a run
-- **TestRunResultRestrictedFields** - Recording restricted field values on test run results
+- **TestRunResultRestrictedFields** - Recording restricted field values on test run results, and viewing sensitive parameter values on iteration results, matrix cells, matrix exports, and the issue-prefill body when linking an external issue from a failed iteration (see [Parameterized Test Cases](./projects/parameterized-test-cases.md))
 - **Sessions** - Creating and managing active test sessions
 - **SessionsRestrictedFields** - Recording restricted field values on test sessions
 - **ClosedSessions** - Deleting completed or archived test sessions
@@ -260,6 +260,7 @@ For each application area, roles can have:
 - **canAddEdit** - Create and modify items
 - **canDelete** - Delete items
 - **canClose** - Mark items as complete/closed
+- **canReadSensitive** - View values otherwise masked as `••••••` or `[REDACTED]`. Honored by the **TestCaseRestrictedFields** and **TestRunResultRestrictedFields** areas; the other areas ignore it. Without this grant on the right area, a user sees `••••••` in dataset rows / iteration cells and `[REDACTED]` in the issue prefill body and matrix exports.
 
 ### Default Roles
 

@@ -109,6 +109,10 @@ model User {
     testRunCasesAssigned    TestRunCases[]
     testRunResults          TestRunResults[]
     editedTestRunResults    TestRunResults[]        @relation("TestRunResultEditor")
+    testRunCaseIterations   TestRunCaseIteration[]
+    createdDataSets         DataSet[]
+    createdDataSetVersions  DataSetVersion[]        @relation("DataSetVersionsCreatedBy")
+    createdSharedDataSetAssignments CaseSharedDataSetAssignment[] @relation("CaseSharedDataSetAssignmentCreatedBy")
     createdIssues           Issue[]                 @relation("IssueCreator")
     projectPermissions      UserProjectPermission[]
     junitTestSuites         JUnitTestSuite[]
@@ -130,9 +134,6 @@ model User {
     apiTokens               ApiToken[]
     createdShareLinks       ShareLink[]             @relation("ShareLinkCreator")
     shareLinkAccessLogs     ShareLinkAccessLog[]    @relation("ShareLinkAccessor")
-    reviewsRequested        ReviewRequest[]         @relation("ReviewRequestedBy")
-    reviewsAssigned         ReviewRequest[]         @relation("ReviewAssignedToUser")
-    reviewsDecided          ReviewRequest[]         @relation("ReviewDecidedBy")
 
     // Two-factor authentication
     twoFactorEnabled        Boolean                 @default(false)
@@ -251,7 +252,9 @@ enum Locale {
     nl_NL
     pl_PL
     pt_BR
+    tr_TR
     vi_VN
+    ru_RU
     zh_CN
     zh_TW
     ja_JP
@@ -355,16 +358,15 @@ model GroupAssignment {
 }
 
 model Roles {
-    id                       Int                      @id @default(autoincrement())
-    name                     String                   @unique @length(1)
-    isDefault                Boolean                  @default(false)
-    isDeleted                Boolean                  @default(false)
-    users                    User[]
-    rolePermissions          RolePermission[]
-    defaultForProjects       Projects[]               @relation("ProjectDefaultRole")
-    userProjectPermissions   UserProjectPermission[]  @relation("UserProjectRole")
-    groupProjectPermissions  GroupProjectPermission[] @relation("GroupProjectRole")
-    reviewRequestAssignments ReviewRequest[]
+    id                      Int                      @id @default(autoincrement())
+    name                    String                   @unique @length(1)
+    isDefault               Boolean                  @default(false)
+    isDeleted               Boolean                  @default(false)
+    users                   User[]
+    rolePermissions         RolePermission[]
+    defaultForProjects      Projects[]               @relation("ProjectDefaultRole")
+    userProjectPermissions  UserProjectPermission[]  @relation("UserProjectRole")
+    groupProjectPermissions GroupProjectPermission[] @relation("GroupProjectRole")
 
     @@deny('all', !auth())
     @@allow('update, create', auth().access == 'ADMIN')
@@ -403,6 +405,7 @@ model Projects {
     userPermissions             UserProjectPermission[]
     groupPermissions            GroupProjectPermission[]
     sharedStepGroups            SharedStepGroup[]
+    dataSets                    DataSet[]
     projectIntegrations         ProjectIntegration[]
     webhookConfigs              WebhookConfig[]
     webhookOutboxEvents         WebhookOutboxEvent[]
@@ -421,10 +424,10 @@ model Projects {
     defaultCaseExportTemplateId Int?
     defaultCaseExportTemplate   CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
     quickScriptEnabled          Boolean                               @default(false)
-    reviewWorkflowEnabled       Boolean                               @default(true)
+    /// Empty = default ['iteration']. Lookup is case-insensitive at read time (D-01).
+    junitIterationPropertyNames String[]                              @default([])
     duplicateScanResults        DuplicateScanResult[]
     stepSequenceMatches         StepSequenceMatch[]
-    reviewRequests              ReviewRequest[]
 
     @@index([isDeleted, isCompleted])
     @@index([createdBy])
@@ -901,26 +904,27 @@ model ResultFieldAssignment {
 }
 
 model Status {
-    id                 Int                       @id @default(autoincrement())
-    order              Int                       @default(autoincrement())
-    name               String                    @length(1)
-    systemName         String                    @unique @length(1)
-    aliases            String?
-    colorId            Int
-    color              Color                     @relation(fields: [colorId], references: [id])
-    isDeleted          Boolean                   @default(false)
-    isEnabled          Boolean
-    isSuccess          Boolean
-    isFailure          Boolean
-    isCompleted        Boolean
-    scope              StatusScopeAssignment[]
-    projects           ProjectStatusAssignment[]
-    sessionResults     SessionResults[]
-    testRunCases       TestRunCases[]
-    testRunResults     TestRunResults[]
-    testRunStepResults TestRunStepResults[]
-    junitTestResults   JUnitTestResult[]
-    junitTestSteps     JUnitTestStep[]           @relation("JUnitTestStepStatus")
+    id                    Int                       @id @default(autoincrement())
+    order                 Int                       @default(autoincrement())
+    name                  String                    @length(1)
+    systemName            String                    @unique @length(1)
+    aliases               String?
+    colorId               Int
+    color                 Color                     @relation(fields: [colorId], references: [id])
+    isDeleted             Boolean                   @default(false)
+    isEnabled             Boolean
+    isSuccess             Boolean
+    isFailure             Boolean
+    isCompleted           Boolean
+    scope                 StatusScopeAssignment[]
+    projects              ProjectStatusAssignment[]
+    sessionResults        SessionResults[]
+    testRunCases          TestRunCases[]
+    testRunResults        TestRunResults[]
+    testRunStepResults    TestRunStepResults[]
+    testRunCaseIterations TestRunCaseIteration[]
+    junitTestResults      JUnitTestResult[]
+    junitTestSteps        JUnitTestStep[]           @relation("JUnitTestStepStatus")
 
     @@index([isDeleted, isEnabled])
     @@index([order])
@@ -965,13 +969,10 @@ model Workflows {
     isDefault       Boolean                     @default(false)
     workflowType    WorkflowType                @default(NOT_STARTED)
     scope           WorkflowScope
-    requiresReview  Boolean                     @default(false)
     projects        ProjectWorkflowAssignment[]
     repositoryCases RepositoryCases[]
     sessions        Sessions[]
     testRuns        TestRuns[]
-    reviewRequestsFromState ReviewRequest[]     @relation("ReviewFromState")
-    reviewRequestsToState   ReviewRequest[]     @relation("ReviewToState")
 
     @@index([isDeleted, isEnabled])
     @@index([scope, isDefault])
@@ -1503,6 +1504,7 @@ model RepositoryCases {
     isArchived             Boolean                  @default(false)
     isDeleted              Boolean                  @default(false)
     currentVersion         Int                      @default(1)
+    hasParameters          Boolean                  @default(false)
     repositoryCaseVersions RepositoryCaseVersions[]
     caseFieldValues        CaseFieldValues[]
     resultFieldValues      ResultFieldValues[]
@@ -1521,6 +1523,9 @@ model RepositoryCases {
     duplicateScanResultsB  DuplicateScanResult[]    @relation("DuplicateCaseB")
     stepSequenceMatchCases StepSequenceMatchCase[]
     comments               Comment[]
+    parameters             TestCaseParameter[]
+    ownedDataSets          DataSet[]                @relation("DataSetOwnerCase")
+    sharedDataSetAssignment CaseSharedDataSetAssignment? @relation("CaseSharedDataSetAssignmentCase")
 
     @@unique([projectId, name, className, source])
     @@index([projectId, isDeleted, isArchived])
@@ -1529,6 +1534,7 @@ model RepositoryCases {
     @@index([stateId])
     @@index([automated])
     @@index([createdAt])
+    @@index([hasParameters])
     @@deny('all', !auth())
     @@deny('all', auth().access == 'NONE')
 
@@ -1580,9 +1586,6 @@ model RepositoryCases {
     )
 
     @@allow('all', auth().access == 'ADMIN')
-
-    // Schema-layer review gate (SCHEMA-05, T-1-02). App preflight in lib/services/reviewGate.ts produces the typed REVIEW_REQUIRED error first.
-    @@deny('update', future().stateId != stateId && future().state.requiresReview && project.reviewWorkflowEnabled)
 }
 
 model RepositoryCaseVersions {
@@ -1618,6 +1621,7 @@ model RepositoryCaseVersions {
     issues                 Json?
     links                  Json?
     attachments            Json?
+    parameters             Json?
 
     @@unique([repositoryCaseId, version])
     @@deny('all', !auth())
@@ -1894,6 +1898,93 @@ model Steps {
     @@allow('all', auth().access == 'ADMIN')
 }
 
+enum ParameterType {
+    STRING
+    INTEGER
+    BOOLEAN
+    SELECT
+
+    @@deny('all', !auth())
+    @@allow('read', auth().access != null)
+}
+
+model TestCaseParameter {
+    id                Int             @id @default(autoincrement())
+    testCaseId        Int
+    testCase          RepositoryCases @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+    name              String          @length(1)
+    description       String?
+    type              ParameterType
+    defaultValue      Json?
+    order             Int             @default(0)
+    required          Boolean         @default(false)
+    sensitive         Boolean         @default(false)
+    allowedValuesJson Json?
+    lookupDataSetId   Int?
+    lookupDataSet     DataSet?        @relation("ParamLookupDataSet", fields: [lookupDataSetId], references: [id], onDelete: SetNull)
+    isDeleted         Boolean         @default(false)
+
+    @@unique([testCaseId, name])
+    @@index([testCaseId])
+
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Inherit read access from test case's project
+    @@deny('read', testCase.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        testCase.project.creator == auth() ||
+        testCase.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        testCase.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        testCase.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (testCase.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (testCase.project.assignedUsers?[user == auth()] &&
+         testCase.project.defaultAccessType == 'SPECIFIC_ROLE' && testCase.project.defaultRole != null)
+    )
+
+    // Create/update/delete access based on repository permissions
+    @@allow('create,update,delete',
+        testCase.project.creator == auth() ||
+    // User with SPECIFIC_ROLE access type
+        testCase.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                          (role.name == 'Project Admin' ||
+                                           role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+    // User with GLOBAL_ROLE access type (use their global role)
+        testCase.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' &&
+                                          auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
+    // System PROJECTADMIN assigned to project
+        testCase.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+    // Group with SPECIFIC_ROLE access type
+        testCase.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                           ((accessType == 'SPECIFIC_ROLE' &&
+                                             role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+                                            (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                             auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]))] ||
+    // Project default GLOBAL_ROLE - user's global role has permission
+        (testCase.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+    // Project default SPECIFIC_ROLE - project's default role has permission
+        (testCase.project.assignedUsers?[user == auth()] &&
+         testCase.project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         testCase.project.defaultRole.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+
+    @@validate(
+        (type == 'SELECT' && ((allowedValuesJson != null && lookupDataSetId == null) ||
+                              (allowedValuesJson == null && lookupDataSetId != null))) ||
+        (type != 'SELECT' && allowedValuesJson == null && lookupDataSetId == null),
+        "SELECT parameters require exactly one of allowedValuesJson or lookupDataSetId; non-SELECT types must specify neither"
+    )
+}
+
 model Sessions {
     id                   Int                  @id @default(autoincrement())
     projectId            Int
@@ -1982,9 +2073,6 @@ model Sessions {
     )
 
     @@allow('all', auth().access == 'ADMIN')
-
-    // Schema-layer review gate (SCHEMA-05, T-1-02). App preflight in lib/services/reviewGate.ts produces the typed REVIEW_REQUIRED error first.
-    @@deny('update', future().stateId != stateId && future().state.requiresReview && project.reviewWorkflowEnabled)
 }
 
 model SessionResults {
@@ -2282,9 +2370,6 @@ model TestRuns {
     )
 
     @@allow('all', auth().access == 'ADMIN')
-
-    // Schema-layer review gate (SCHEMA-05, T-1-02). App preflight in lib/services/reviewGate.ts produces the typed REVIEW_REQUIRED error first.
-    @@deny('update', future().stateId != stateId && future().state.requiresReview && project.reviewWorkflowEnabled)
 }
 
 enum TestRunType {
@@ -2303,23 +2388,29 @@ enum TestRunType {
 }
 
 model TestRunCases {
-    id               Int              @id @default(autoincrement())
+    id               Int                         @id @default(autoincrement())
     testRunId        Int
-    testRun          TestRuns         @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+    testRun          TestRuns                    @relation(fields: [testRunId], references: [id], onDelete: Cascade)
     repositoryCaseId Int
-    repositoryCase   RepositoryCases  @relation(fields: [repositoryCaseId], references: [id], onDelete: Cascade)
-    order            Int              @default(0)
+    repositoryCase   RepositoryCases             @relation(fields: [repositoryCaseId], references: [id], onDelete: Cascade)
+    order            Int                         @default(0)
     statusId         Int?
-    status           Status?          @relation(fields: [statusId], references: [id])
+    status           Status?                     @relation(fields: [statusId], references: [id])
     assignedToId     String?
-    assignedTo       User?            @relation(fields: [assignedToId], references: [id])
-    isCompleted      Boolean          @default(false)
+    assignedTo       User?                       @relation(fields: [assignedToId], references: [id])
+    isCompleted      Boolean                     @default(false)
     notes            Json?
     startedAt        DateTime?
     completedAt      DateTime?
     elapsed          Int?
-    createdAt        DateTime         @default(now()) @db.Timestamptz(6)
+    passedIterations Int                         @default(0)
+    failedIterations Int                         @default(0)
+    skippedIterations Int                        @default(0)
+    totalIterations  Int                         @default(0)
+    createdAt        DateTime                    @default(now()) @db.Timestamptz(6)
     results          TestRunResults[]
+    iterations       TestRunCaseIteration[]
+    dataSetSnapshot  TestRunCaseDataSetSnapshot?
 
     @@unique([testRunId, repositoryCaseId])
     @@index([testRunId])
@@ -2393,28 +2484,30 @@ model TestRunCases {
 }
 
 model TestRunResults {
-    id                 Int                  @id @default(autoincrement())
+    id                 Int                   @id @default(autoincrement())
     testRunId          Int
-    testRun            TestRuns             @relation(fields: [testRunId], references: [id], onDelete: Cascade)
+    testRun            TestRuns              @relation(fields: [testRunId], references: [id], onDelete: Cascade)
     testRunCaseId      Int
-    testRunCase        TestRunCases         @relation(fields: [testRunCaseId], references: [id], onDelete: Cascade)
-    testRunCaseVersion Int                  @default(1)
+    testRunCase        TestRunCases          @relation(fields: [testRunCaseId], references: [id], onDelete: Cascade)
+    testRunCaseVersion Int                   @default(1)
     statusId           Int
-    status             Status               @relation(fields: [statusId], references: [id])
+    status             Status                @relation(fields: [statusId], references: [id])
     executedById       String
-    executedBy         User                 @relation(fields: [executedById], references: [id])
-    executedAt         DateTime             @default(now()) @db.Timestamptz(6)
+    executedBy         User                  @relation(fields: [executedById], references: [id])
+    executedAt         DateTime              @default(now()) @db.Timestamptz(6)
     editedById         String?
-    editedBy           User?                @relation("TestRunResultEditor", fields: [editedById], references: [id])
+    editedBy           User?                 @relation("TestRunResultEditor", fields: [editedById], references: [id])
     editedAt           DateTime?
     elapsed            Int?
     notes              Json?
     evidence           Json?
     attachments        Attachments[]
     resultFieldValues  ResultFieldValues[]
-    attempt            Int                  @default(1)
+    attempt            Int                   @default(1)
+    iterationId        Int?
+    iteration          TestRunCaseIteration? @relation(fields: [iterationId], references: [id], onDelete: SetNull)
     stepResults        TestRunStepResults[]
-    isDeleted          Boolean              @default(false)
+    isDeleted          Boolean               @default(false)
     issues             Issue[]
 
     @@index([testRunCaseId])
@@ -2422,6 +2515,7 @@ model TestRunResults {
     @@index([statusId])
     @@index([executedAt])
     @@index([testRunCaseId, executedAt(sort: Desc)]) // Optimize "latest result per case" queries
+    @@index([iterationId])
     @@deny('all', !auth())
     @@deny('all', auth().access == 'NONE')
 
@@ -2507,6 +2601,146 @@ model TestRunStepResults {
         testRunResult.testRun.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
     )
 
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model TestRunCaseIteration {
+    id                Int                         @id @default(autoincrement())
+    testRunCaseId     Int
+    testRunCase       TestRunCases                @relation(fields: [testRunCaseId], references: [id], onDelete: Cascade)
+    rowIndex          Int
+    label             String?
+    valuesJson        Json
+    /// True when the row was auto-created by JUnit import to extend beyond the snapshot row count (D-02). Snapshot-born rows are false.
+    ciExtended        Boolean                     @default(false)
+    statusId          Int?
+    status            Status?                     @relation(fields: [statusId], references: [id])
+    assignedToId      String?
+    assignedTo        User?                       @relation(fields: [assignedToId], references: [id])
+    isCompleted       Boolean                     @default(false)
+    startedAt         DateTime?
+    completedAt       DateTime?
+    elapsed           Int?
+    notes             Json?
+    isDeleted         Boolean                     @default(false)
+    dataSetSnapshotId Int?
+    dataSetSnapshot   TestRunCaseDataSetSnapshot? @relation(fields: [dataSetSnapshotId], references: [id], onDelete: SetNull)
+    results           TestRunResults[]
+
+    @@unique([testRunCaseId, rowIndex])
+    @@index([testRunCaseId])
+    @@index([statusId])
+    @@index([assignedToId])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Explicit NO_ACCESS denial
+    @@deny('read', testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Inherit read access from test run case's project
+    @@allow('read',
+        testRunCase.testRun.project.creator == auth() ||
+        testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        testRunCase.testRun.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            accessType == 'SPECIFIC_ROLE' && role != null
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (testRunCase.testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (testRunCase.testRun.project.assignedUsers?[user == auth()] &&
+         testRunCase.testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testRunCase.testRun.project.defaultRole != null)
+    )
+
+    // Create access - users with test run result permissions
+    @@allow('create',
+        testRunCase.testRun.project.creator == auth() ||
+        testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                                     (role.name == 'Project Admin' ||
+                                                      role.rolePermissions?[area == 'TestRunResults' && canAddEdit])] ||
+        testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' &&
+                                                     auth().role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
+        testRunCase.testRun.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        testRunCase.testRun.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                                      accessType == 'SPECIFIC_ROLE' &&
+                                                      role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
+        testRunCase.testRun.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                                      accessType == 'GLOBAL_ROLE' &&
+                                                      auth().role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
+        (testRunCase.testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestRunResults' && canAddEdit]) ||
+        (testRunCase.testRun.project.assignedUsers?[user == auth()] &&
+         testRunCase.testRun.project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         testRunCase.testRun.project.defaultRole.rolePermissions?[area == 'TestRunResults' && canAddEdit])
+    )
+
+    // Update access - assignee or users with test run result permissions
+    @@allow('update',
+        auth().id == assignedToId ||
+        testRunCase.testRun.project.creator == auth() ||
+        testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                                     (role.name == 'Project Admin' ||
+                                                      role.rolePermissions?[area == 'TestRunResults' && canAddEdit])] ||
+        testRunCase.testRun.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model TestRunCaseDataSetSnapshot {
+    id                Int                    @id @default(autoincrement())
+    testRunCaseId     Int                    @unique
+    testRunCase       TestRunCases           @relation(fields: [testRunCaseId], references: [id], onDelete: Cascade)
+    sourceDataSetId   Int?
+    sourceDataSet     DataSet?               @relation(fields: [sourceDataSetId], references: [id], onDelete: SetNull)
+    sourceDataSetName String                 @length(1)
+    // Shared Datasets: when the snapshot was resolved from a shared
+    // dataset, this captures the exact DataSetVersion that was active
+    // at run-create time (even when the assignment is "follow latest"),
+    // so audit can answer "which version drove this run?". Null for
+    // owner-dataset and no-dataset cases.
+    sourceVersionId   Int?
+    sourceVersion     DataSetVersion?        @relation("SnapshotPinnedVersion", fields: [sourceVersionId], references: [id], onDelete: SetNull)
+    parametersJson    Json
+    rowsJson          Json
+    snapshotAt        DateTime               @default(now()) @db.Timestamptz(6)
+    isDeleted         Boolean                @default(false)
+    iterations        TestRunCaseIteration[]
+
+    @@index([testRunCaseId])
+    @@index([sourceDataSetId])
+    @@index([sourceVersionId])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Explicit NO_ACCESS denial
+    @@deny('read', testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Cross-project denial: a snapshot may not pin a version whose
+    // parent dataset lives in a different project than the run.
+    // Belt-and-suspenders alongside the ADMIN-only mutation gate below.
+    @@deny('create',
+        sourceVersionId != null &&
+        sourceVersion.dataSet.projectId != testRunCase.testRun.projectId
+    )
+
+    // Inherit read access from test run case's project
+    @@allow('read',
+        testRunCase.testRun.project.creator == auth() ||
+        testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        testRunCase.testRun.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            accessType == 'SPECIFIC_ROLE' && role != null
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (testRunCase.testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (testRunCase.testRun.project.assignedUsers?[user == auth()] &&
+         testRunCase.testRun.project.defaultAccessType == 'SPECIFIC_ROLE' && testRunCase.testRun.project.defaultRole != null)
+    )
+
+    // Mutations are ADMIN-only via the enhanced client; Phase 3 server actions
+    // create snapshots via the unenhanced client during run-creation orchestration.
     @@allow('all', auth().access == 'ADMIN')
 }
 
@@ -2828,12 +3062,13 @@ enum ProjectAccessType {
 }
 
 model RolePermission {
-    roleId     Int
-    role       Roles           @relation(fields: [roleId], references: [id], onDelete: Cascade)
-    area       ApplicationArea
-    canAddEdit Boolean         @default(false)
-    canDelete  Boolean         @default(false)
-    canClose   Boolean         @default(false)
+    roleId           Int
+    role             Roles           @relation(fields: [roleId], references: [id], onDelete: Cascade)
+    area             ApplicationArea
+    canAddEdit       Boolean         @default(false)
+    canDelete        Boolean         @default(false)
+    canClose         Boolean         @default(false)
+    canReadSensitive Boolean         @default(false)
 
     @@id([roleId, area])
     @@deny('all', !auth())
@@ -3259,6 +3494,258 @@ model SharedStepItem {
     @@allow('all', auth().access == 'ADMIN')
 }
 
+model DataSet {
+    id           Int                          @id @default(autoincrement())
+    projectId    Int
+    project      Projects                     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    ownerCaseId  Int?
+    ownerCase    RepositoryCases?             @relation("DataSetOwnerCase", fields: [ownerCaseId], references: [id], onDelete: SetNull)
+    name         String                       @length(1)
+    description  String?
+    isShared     Boolean                      @default(false)
+    version      Int                          @default(1)
+    rows         DataSetRow[]
+    paramLookups TestCaseParameter[]          @relation("ParamLookupDataSet")
+    snapshots    TestRunCaseDataSetSnapshot[]
+    versions     DataSetVersion[]             @relation("DataSetVersions")
+    sharedAssignments CaseSharedDataSetAssignment[] @relation("CaseSharedDataSet")
+    isDeleted    Boolean                      @default(false)
+    createdAt    DateTime                     @default(now()) @db.Timestamptz(6)
+    createdById  String
+    createdBy    User                         @relation(fields: [createdById], references: [id])
+
+    @@index([projectId])
+    @@index([ownerCaseId])
+    @@index([createdById])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // ownerCase must be in the same project (cross-project denial at policy).
+    // The explicit `ownerCase != null` guard prevents ZenStack v2's policy
+    // validator from dereferencing a null relation when ownerCaseId is null
+    // (i.e. shared datasets) — the && short-circuit alone is not enough
+    // because the Zod input schema for the policy expression treats
+    // `ownerCase` as a non-null record.
+    @@deny('create,update', ownerCaseId != null && ownerCase != null && ownerCase.projectId != projectId)
+
+    // Inherit read access from project
+    @@deny('read', project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (project.assignedUsers?[user == auth()] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' && project.defaultRole != null)
+    )
+
+    // Create/update/delete access based on shared steps permissions
+    @@allow('create,update,delete',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                (role.name == 'Project Admin' ||
+                                 role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)])] ||
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                  accessType == 'SPECIFIC_ROLE' &&
+                                  role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)]]
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+model DataSetRow {
+    id         Int     @id @default(autoincrement())
+    dataSetId  Int
+    dataSet    DataSet @relation(fields: [dataSetId], references: [id], onDelete: Cascade)
+    rowIndex   Int     @default(0)
+    label      String?
+    valuesJson Json
+    isDeleted  Boolean @default(false)
+
+    @@unique([dataSetId, rowIndex])
+    @@index([dataSetId])
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Explicit NO_ACCESS denial
+    @@deny('read', dataSet.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Inherit read access from data set's project
+    @@allow('read',
+        dataSet.project.creator == auth() ||
+        dataSet.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        dataSet.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        dataSet.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            accessType == 'SPECIFIC_ROLE' && role != null
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (dataSet.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (dataSet.project.assignedUsers?[user == auth()] &&
+         dataSet.project.defaultAccessType == 'SPECIFIC_ROLE' && dataSet.project.defaultRole != null)
+    )
+
+    // Create/update/delete access based on shared steps permissions
+    @@allow('create,update,delete',
+        dataSet.project.creator == auth() ||
+        dataSet.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                         (role.name == 'Project Admin' ||
+                                          role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)])] ||
+        dataSet.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        dataSet.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                          accessType == 'SPECIFIC_ROLE' &&
+                                          role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)]]
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+// Shared Datasets: immutable per-save history for a DataSet.
+// Every explicit Save in the shared-dataset editor inserts one row here;
+// rows are never edited or soft-deleted. Soft-deleting the parent DataSet
+// is the correct cascade for retiring a shared dataset.
+model DataSetVersion {
+    id             Int                          @id @default(autoincrement())
+    dataSetId      Int
+    dataSet        DataSet                      @relation("DataSetVersions", fields: [dataSetId], references: [id], onDelete: Cascade)
+    version        Int
+    parametersJson Json?
+    rowsJson       Json
+    rowCount       Int                          @default(0)
+    createdAt      DateTime                     @default(now()) @db.Timestamptz(6)
+    createdById    String
+    createdBy      User                         @relation("DataSetVersionsCreatedBy", fields: [createdById], references: [id])
+    snapshots      TestRunCaseDataSetSnapshot[] @relation("SnapshotPinnedVersion")
+    assignments    CaseSharedDataSetAssignment[] @relation("AssignmentPinnedVersion")
+
+    @@unique([dataSetId, version])
+    @@index([dataSetId])
+    @@index([createdById])
+
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Inherit read access from parent DataSet's project (mirrors DataSetRow).
+    @@deny('read', dataSet.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        dataSet.project.creator == auth() ||
+        dataSet.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        dataSet.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        dataSet.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (dataSet.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (dataSet.project.assignedUsers?[user == auth()] &&
+         dataSet.project.defaultAccessType == 'SPECIFIC_ROLE' && dataSet.project.defaultRole != null)
+    )
+
+    // Create/update/delete access based on shared steps permissions (mirrors DataSet).
+    @@allow('create,update,delete',
+        dataSet.project.creator == auth() ||
+        dataSet.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                         (role.name == 'Project Admin' ||
+                                          role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)])] ||
+        dataSet.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        dataSet.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                          accessType == 'SPECIFIC_ROLE' &&
+                                          role.rolePermissions?[area == 'SharedSteps' && (canAddEdit || canDelete)]]
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
+// Shared Datasets: per-case binding to a project-scoped shared dataset.
+// At most one row per case (enforced by @@unique on caseId). This is
+// distinct from TestCaseParameter.lookupDataSetId, which sources
+// SELECT-allowed-values for a single parameter; this binding drives
+// iteration row-set resolution for the whole case.
+model CaseSharedDataSetAssignment {
+    id              Int             @id @default(autoincrement())
+    caseId          Int             @unique
+    case            RepositoryCases @relation("CaseSharedDataSetAssignmentCase", fields: [caseId], references: [id], onDelete: Cascade)
+    sharedDataSetId Int
+    sharedDataSet   DataSet         @relation("CaseSharedDataSet", fields: [sharedDataSetId], references: [id], onDelete: Restrict)
+    pinnedVersionId Int?
+    pinnedVersion   DataSetVersion? @relation("AssignmentPinnedVersion", fields: [pinnedVersionId], references: [id], onDelete: SetNull)
+    mappingJson     Json
+    createdAt       DateTime        @default(now()) @db.Timestamptz(6)
+    createdById     String
+    createdBy       User            @relation("CaseSharedDataSetAssignmentCreatedBy", fields: [createdById], references: [id])
+    updatedAt       DateTime        @updatedAt
+
+    @@index([caseId])
+    @@index([sharedDataSetId])
+    @@index([pinnedVersionId])
+    @@index([createdById])
+
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Cross-project denial (defense-in-depth). The shared dataset must
+    // live in the same project as the case being assigned.
+    @@deny('create,update', sharedDataSet.projectId != case.projectId)
+
+    // Inherit read access from the case's project (mirrors TestCaseParameter).
+    @@deny('read', case.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    @@allow('read',
+        case.project.creator == auth() ||
+        case.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        case.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        case.project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+    // Allow access if project uses GLOBAL_ROLE and user has a valid role
+        (case.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (case.project.assignedUsers?[user == auth()] &&
+         case.project.defaultAccessType == 'SPECIFIC_ROLE' && case.project.defaultRole != null)
+    )
+
+    // Create/update/delete access based on TestCaseRepository permissions
+    // (mirrors TestCaseParameter's write clause).
+    @@allow('create,update,delete',
+        case.project.creator == auth() ||
+    // User with SPECIFIC_ROLE access type
+        case.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                      (role.name == 'Project Admin' ||
+                                       role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+    // User with GLOBAL_ROLE access type (use their global role)
+        case.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' &&
+                                      auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
+    // System PROJECTADMIN assigned to project
+        case.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+    // Group with SPECIFIC_ROLE access type
+        case.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                       ((accessType == 'SPECIFIC_ROLE' &&
+                                         role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+                                        (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                         auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]))] ||
+    // Project default GLOBAL_ROLE - user's global role has permission
+        (case.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+    // Project default SPECIFIC_ROLE - project's default role has permission
+        (case.project.assignedUsers?[user == auth()] &&
+         case.project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         case.project.defaultRole.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
+}
+
 model Notification {
     id                String           @id @default(cuid())
     userId            String
@@ -3282,159 +3769,6 @@ model Notification {
     @@allow('update', (auth().id == userId && (future().isRead != isRead || future().isDeleted != isDeleted)) || auth().access == 'ADMIN')
     @@allow('create', auth().access != null)
     @@allow('delete', auth().access == 'ADMIN')
-}
-
-enum ReviewStatus {
-    PENDING
-    APPROVED
-    CHANGES_REQUESTED
-    REJECTED
-    CANCELLED
-
-    @@deny('all', !auth())
-    @@allow('read', true)
-}
-
-enum ReviewEntityType {
-    CASE
-    RUN
-    SESSION
-
-    @@deny('all', !auth())
-    @@allow('read', true)
-}
-
-// Discriminator on the Comment model so review-related comments can carry a
-// different visual treatment + potentially a different notification template
-// than general entity chatter (D-21 follow-up to the Phase 2 hybrid design).
-// GENERAL is the default for all existing and future ad-hoc comments — no
-// behavioural change. REVIEW_REQUEST is auto-posted when a requester submits
-// the Request Review sheet (paired with the new ReviewRequest row via
-// `reviewRequestId`). REVIEW_DECISION is auto-posted when a reviewer
-// Approves / Requests Changes / Rejects a review.
-enum CommentType {
-    GENERAL
-    REVIEW_REQUEST
-    REVIEW_DECISION
-
-    @@deny('all', !auth())
-    @@allow('read', true)
-}
-
-model ReviewRequest {
-    id                String           @id @default(cuid())
-    projectId         Int
-    project           Projects         @relation(fields: [projectId], references: [id])
-
-    // Polymorphic entity reference (no FK back-relation; mirrors ShareLink/AuditLog pattern). D-14.
-    entityType        ReviewEntityType
-    entityId          Int
-
-    requestedByUserId String
-    requestedBy       User             @relation("ReviewRequestedBy", fields: [requestedByUserId], references: [id])
-
-    // XOR enforced by @@validate: exactly one of assigneeUserId or assigneeRoleId
-    assigneeUserId    String?
-    assigneeUser      User?            @relation("ReviewAssignedToUser", fields: [assigneeUserId], references: [id])
-    assigneeRoleId    Int?
-    assigneeRole      Roles?           @relation(fields: [assigneeRoleId], references: [id])
-
-    fromStateId       Int
-    fromState         Workflows        @relation("ReviewFromState", fields: [fromStateId], references: [id])
-    toStateId         Int
-    toState           Workflows        @relation("ReviewToState", fields: [toStateId], references: [id])
-
-    status            ReviewStatus     @default(PENDING)
-    decisionComment   String?
-    decidedByUserId   String?
-    decidedBy         User?            @relation("ReviewDecidedBy", fields: [decidedByUserId], references: [id])
-    decidedAt         DateTime?
-
-    // D-05 carve-out: consumedAt is the one permitted post-decision mutation.
-    // Field-level @allow override flag (third arg true) carves out the model-level append-only @@deny.
-    consumedAt        DateTime?        @allow('update', status == 'APPROVED', true)
-
-    // Hybrid design (Phase 2 follow-up): the requester's typed prose at submit
-    // time AND the reviewer's optional notes at decide time both live in the
-    // standard Comments thread on the entity, linked back here via
-    // Comment.reviewRequestId. The decisionComment column above remains for
-    // structured audit fidelity (immutable decision narrative); the paired
-    // Comment is the human-readable conversation surface.
-    comments          Comment[]
-
-    isDeleted         Boolean          @default(false)
-    createdAt         DateTime         @default(now()) @db.Timestamptz(6)
-    updatedAt         DateTime         @updatedAt
-
-    @@index([assigneeUserId, status])
-    @@index([assigneeRoleId, status])
-    @@index([entityType, entityId, status, createdAt(sort: Desc)])
-    @@index([projectId, status])
-    // Reviewer-history index — backs the /reviews "Decided" tab query
-    // `where: { decidedByUserId: me, status: { in: [APPROVED, CHANGES_REQUESTED, REJECTED] } }`
-    // ordered by `decidedAt desc`. Without this the query would scan the
-    // whole table as the request volume grows.
-    @@index([decidedByUserId, decidedAt(sort: Desc)])
-
-    // XOR: exactly one of assigneeUserId or assigneeRoleId must be set (SCHEMA-02, D-14).
-    @@validate(
-        (assigneeUserId != null && assigneeRoleId == null) ||
-        (assigneeUserId == null && assigneeRoleId != null),
-        "Exactly one of assigneeUserId or assigneeRoleId must be set"
-    )
-
-    // Self-approval prevention (T-1-01, D-15).
-    @@validate(
-        assigneeUserId == null || assigneeUserId != requestedByUserId,
-        "Requester cannot be the direct assignee"
-    )
-
-    // Append-only invariant (SCHEMA-03, T-1-04). consumedAt is exempted via field-level @allow override above.
-    @@deny('update', status != 'PENDING')
-
-    // Hard deletes forbidden (milestone-wide soft-delete rule).
-    @@deny('delete', true)
-
-    // Access policies (SCHEMA-08, T-1-06/07/08).
-    @@deny('all', auth() == null)
-
-    @@allow('read',
-        project.creator == auth() ||
-        project.userPermissions?[user == auth() && accessType != 'NO_ACCESS'] ||
-        auth().access == 'ADMIN'
-    )
-
-    @@allow('create',
-        auth() != null && (
-            project.creator == auth() ||
-            project.userPermissions?[user == auth() && accessType != 'NO_ACCESS'] ||
-            auth().access == 'ADMIN'
-        )
-    )
-
-    // Assignee (direct user or role holder on this project) can decide PENDING.
-    // The role-holder branch authoritatively flows through the app-layer
-    // eligibility check in lib/services/reviewDecisions.ts (which uses raw
-    // prisma to bypass policy entirely). The schema-layer role-holder
-    // predicate below cannot reference the outer-model `assigneeRoleId`
-    // from inside `project.userPermissions?[...]` under ZenStack 2.22.2,
-    // so it functions as defense-in-depth only.
-    @@allow('update',
-        status == 'PENDING' && (
-            (assigneeUserId != null && assigneeUser == auth()) ||
-            (assigneeRoleId != null && (
-                project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.id == this.assigneeRoleId] ||
-                project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' && this.assigneeRoleId != null && auth().roleId == this.assigneeRoleId]
-            ))
-        )
-    )
-
-    // Requester or admin can cancel PENDING (T-1-08).
-    @@allow('update',
-        status == 'PENDING' && (requestedBy == auth() || auth().access == 'ADMIN')
-    )
-
-    @@allow('all', auth().access == 'ADMIN')
 }
 
 enum ShareLinkMode {
@@ -4326,15 +4660,6 @@ model Comment {
     milestoneId      Int?
     milestone        Milestones?      @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
 
-    // Review-feature hybrid (Phase 2 follow-up): when the requester submits a
-    // Request Review or the reviewer Approves/Requests Changes/Rejects, the
-    // submit path also writes a paired Comment with `type` ≠ GENERAL and
-    // `reviewRequestId` set. GENERAL is the default; existing comments and
-    // any future ad-hoc comments are unaffected.
-    type             CommentType      @default(GENERAL)
-    reviewRequestId  String?
-    reviewRequest    ReviewRequest?   @relation(fields: [reviewRequestId], references: [id], onDelete: SetNull)
-
     // Creator and metadata
     creatorId        String
     creator          User             @relation("CommentCreator", fields: [creatorId], references: [id])
@@ -4351,7 +4676,6 @@ model Comment {
     @@index([testRunId, isDeleted])
     @@index([sessionId, isDeleted])
     @@index([milestoneId, isDeleted])
-    @@index([reviewRequestId])
     @@index([creatorId])
     @@deny('all', !auth())
     @@deny('all', auth().access == 'NONE')
@@ -4465,11 +4789,10 @@ enum AuditAction {
     WEBHOOK_HEALTH_CHANGED
     WEBHOOK_RETENTION_PURGED
     DUPLICATED
-    REVIEW_REQUESTED
-    REVIEW_APPROVED
-    REVIEW_CHANGES_REQUESTED
-    REVIEW_REJECTED
-    REVIEW_CANCELLED
+    // Parameterized Test Cases — iteration audit actions
+    ITERATION_VALUES_OVERRIDDEN
+    ITERATION_BULK_SKIPPED
+    ITERATION_RESULT_RECORDED
 }
 
 model AuditLog {

@@ -429,12 +429,6 @@ export async function getCommentsForEntity(
             },
           },
         },
-        // Hybrid-comments (D-21 follow-up): when type ≠ GENERAL the row
-        // points back to the ReviewRequest it captures. The status drives
-        // the decision-badge label (Approved / Changes Requested / Rejected).
-        reviewRequest: {
-          select: { status: true },
-        },
       },
       orderBy: {
         createdAt: "asc",

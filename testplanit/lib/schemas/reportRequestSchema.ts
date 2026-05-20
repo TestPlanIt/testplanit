@@ -15,6 +15,7 @@ const PRE_BUILT_REPORT_TYPES = [
   "cross-project-issue-test-coverage",
   "execution-log",
   "cross-project-execution-log",
+  "iteration-matrix",
 ] as const;
 
 /**

@@ -148,6 +148,22 @@ export async function createTestCaseVersionInTransaction(
         orderBy: { order: "asc" },
         select: { step: true, expectedResult: true },
       },
+      parameters: {
+        where: { isDeleted: false },
+        orderBy: { order: "asc" },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          type: true,
+          defaultValue: true,
+          order: true,
+          required: true,
+          sensitive: true,
+          allowedValuesJson: true,
+          lookupDataSetId: true,
+        },
+      },
     },
   });
 
@@ -189,6 +205,32 @@ export async function createTestCaseVersionInTransaction(
   // Convert issues to array of objects
   const issuesArray = overrides.issues ?? testCase.issues;
 
+  const parametersJson = (testCase.parameters ?? []).map(
+    (p: {
+      id: number;
+      name: string;
+      description: string | null;
+      type: string;
+      defaultValue: unknown;
+      order: number;
+      required: boolean;
+      sensitive: boolean;
+      allowedValuesJson: unknown;
+      lookupDataSetId: number | null;
+    }) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      type: p.type,
+      defaultValue: p.defaultValue,
+      order: p.order,
+      required: p.required,
+      sensitive: p.sensitive,
+      allowedValuesJson: p.allowedValuesJson,
+      lookupDataSetId: p.lookupDataSetId,
+    })
+  );
+
   // Prepare version data
   const versionData = {
     repositoryCaseId: testCase.id,
@@ -226,6 +268,7 @@ export async function createTestCaseVersionInTransaction(
     issues: issuesArray,
     links: overrides.links ?? [],
     attachments: overrides.attachments ?? [],
+    parameters: parametersJson,
   };
 
   // Create the version with retry logic to handle race conditions

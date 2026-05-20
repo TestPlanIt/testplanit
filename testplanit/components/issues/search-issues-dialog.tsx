@@ -76,6 +76,19 @@ interface SearchIssuesDialogProps {
   multiSelect?: boolean;
   onIssuesSelected?: (issues: IssueItem[]) => void;
   linkedIssueIds?: (string | number)[]; // IDs of already linked issues
+  /**
+   * INT-05: when set, "Create New Issue" opens with the title +
+   * description prefilled from the failed iteration's parameter values
+   * and a deep link. The dialog fetches the prefill from
+   * `/api/repository/test-runs/{runId}/cases/{caseId}/iterations/{iterId}/issue-body`.
+   *
+   * `runId` and `testRunCaseId` are required for the IDOR-defense URL.
+   */
+  iterationContext?: {
+    iterationId: number;
+    testRunId: number;
+    testRunCaseId: number;
+  };
 }
 
 // Helper function to strip HTML tags and get plain text for search preview
@@ -102,6 +115,7 @@ export function SearchIssuesDialog({
   multiSelect = false,
   onIssuesSelected,
   linkedIssueIds = [],
+  iterationContext,
 }: SearchIssuesDialogProps) {
   const t = useTranslations();
   const [searchQuery, setSearchQuery] = useState("");
@@ -112,6 +126,14 @@ export function SearchIssuesDialog({
   // Automatically use external search if project has an active integration
   const [searchExternal, setSearchExternal] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+
+  // INT-05: prefill payload from the failed-iteration body builder. Loaded
+  // lazily when the user opens "Create New Issue" with an iterationContext.
+  const [iterationPrefill, setIterationPrefill] = useState<{
+    title: string;
+    description: unknown;
+  } | null>(null);
+  const [isLoadingPrefill, setIsLoadingPrefill] = useState(false);
 
   // Filter state: null means "All" (fan-out to all projects)
   const [selectedProjectFilter, setSelectedProjectFilter] = useState<
@@ -560,8 +582,39 @@ export function SearchIssuesDialog({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowCreateDialog(true)}
+                  onClick={async () => {
+                    // INT-05: when launching from a failed iteration, fetch
+                    // the prefill payload before mounting the dialog so the
+                    // textarea initialization sees the doc on first render.
+                    if (iterationContext && !iterationPrefill) {
+                      setIsLoadingPrefill(true);
+                      try {
+                        const url = `/api/repository/test-runs/${iterationContext.testRunId}/cases/${iterationContext.testRunCaseId}/iterations/${iterationContext.iterationId}/issue-body`;
+                        const res = await fetch(url);
+                        if (res.ok) {
+                          const body = await res.json();
+                          setIterationPrefill(body);
+                        } else {
+                          // Surface but do not block — the dialog still
+                          // opens with an empty body in this case.
+                          console.error(
+                            "Failed to load iteration issue body",
+                            await res.text()
+                          );
+                        }
+                      } catch (err) {
+                        console.error(
+                          "Failed to load iteration issue body",
+                          err
+                        );
+                      } finally {
+                        setIsLoadingPrefill(false);
+                      }
+                    }
+                    setShowCreateDialog(true);
+                  }}
                   className="mt-2"
+                  disabled={isLoadingPrefill}
                 >
                   <Plus className="h-4 w-4" />
                   {t("issues.createNewIssue")}
@@ -861,6 +914,12 @@ export function SearchIssuesDialog({
         </DialogContent>
       </Dialog>
 
+      {/* Jira always uses the dedicated CreateIssueJiraForm so issue-type
+          metadata, dynamic custom fields, and the rich TipTap description
+          editor all load correctly. When opened from the "create linked
+          Issue" flow (INT-05), the iteration prefill threads through as
+          `defaultValues` — the form already accepts a TipTap doc on the
+          description field, and the adapter converts to ADF (D-15). */}
       {showCreateDialog &&
         activeIntegration?.integration.provider === "JIRA" && (
           <CreateIssueJiraForm
@@ -869,6 +928,17 @@ export function SearchIssuesDialog({
             projectId={projectId}
             integrationId={activeIntegration.integrationId}
             projectIntegrationId={activeIntegration.id}
+            defaultValues={
+              iterationPrefill
+                ? {
+                    title: iterationPrefill.title,
+                    description: iterationPrefill.description as
+                      | string
+                      | Record<string, unknown>
+                      | null,
+                  }
+                : undefined
+            }
             onIssueCreated={(createdIssue) => {
               // Close the create dialog
               setShowCreateDialog(false);
@@ -896,6 +966,14 @@ export function SearchIssuesDialog({
             open={showCreateDialog}
             onOpenChange={setShowCreateDialog}
             projectId={projectId}
+            defaultValues={
+              iterationPrefill
+                ? {
+                    title: iterationPrefill.title,
+                    description: iterationPrefill.description as any,
+                  }
+                : undefined
+            }
             onIssueCreated={(createdIssue) => {
               // Close the create dialog
               setShowCreateDialog(false);

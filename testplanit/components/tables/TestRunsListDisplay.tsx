@@ -63,9 +63,15 @@ interface TestRunLinkDisplayProps {
   className?: string;
   configurationGroupId?: string | null;
   configuration?: { id: number; name: string } | null;
+  /**
+   * Extra query params appended to the run URL — e.g. `?iteration=3` so
+   * deep-link callers (matrix popover) can preselect an iteration / case
+   * on the run page.
+   */
+  searchParams?: Record<string, string | number>;
 }
 
-const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
+export const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
   id,
   name,
   projectId,
@@ -75,6 +81,7 @@ const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
   className,
   configurationGroupId,
   configuration,
+  searchParams,
 }) => {
   const t = useTranslations("common");
   if (!id) return null;
@@ -135,9 +142,18 @@ const TestRunLinkDisplay: React.FC<TestRunLinkDisplayProps> = ({
     );
   }
 
+  const qs = searchParams
+    ? "?" +
+      new URLSearchParams(
+        Object.fromEntries(
+          Object.entries(searchParams).map(([k, v]) => [k, String(v)])
+        )
+      ).toString()
+    : "";
+
   const content = (
     <Link
-      href={`/projects/runs/${projectId}/${id}`}
+      href={`/projects/runs/${projectId}/${id}${qs}`}
       className={cn(
         "flex items-start gap-1 no-underline hover:underline group max-w-full",
         "text-inherit",

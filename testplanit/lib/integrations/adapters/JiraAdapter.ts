@@ -24,6 +24,52 @@ export class JiraAdapter extends BaseAdapter {
   private apiToken?: string;
   private baseUrl?: string;
 
+  /**
+   * Translate the priority value passed by the create-issue dialog to the
+   * shape Jira's REST API accepts.
+   *
+   * The dialog (create-issue-dialog.tsx) ships lowercase tokens:
+   *   "low" | "medium" | "high" | "urgent"
+   * Jira's REST API accepts either `{ id: "<numeric>" }` (the priority's
+   * numeric ID in the priority scheme) OR `{ name: "<exact name>" }`
+   * (looked up server-side against the project's priority scheme).
+   *
+   * Until INT-05 the adapter wrapped the dialog's lowercase token as
+   * `{ id }`, which fails for every Jira project whose priority scheme
+   * doesn't happen to have a priority named "medium" / "high" / etc.
+   * (i.e. every standard scheme — Jira's defaults are "Highest", "High",
+   * "Medium", "Low", "Lowest"). Surfaced during the cross-adapter UAT.
+   *
+   * Behavior:
+   *  - dialog tokens → `{ name: <Capitalized> }`. "urgent" maps to
+   *    "Highest" because that's the upper-tier name in Jira's stock
+   *    scheme; projects that have renamed it will need to either rename
+   *    back or pass a numeric ID directly.
+   *  - numeric-looking strings (e.g. "3") are passed through as `{ id }`
+   *    so callers that already speak the Jira-native protocol keep
+   *    working.
+   *  - any other non-empty string is passed through as `{ name }` so a
+   *    caller can use a custom priority name without further changes
+   *    here.
+   *  - empty / null / undefined → undefined (field omitted; Jira uses
+   *    the project default).
+   */
+  private static mapPriorityField(
+    value: string | null | undefined
+  ): { id: string } | { name: string } | undefined {
+    if (!value) return undefined;
+    const tokenToName: Record<string, string> = {
+      low: "Low",
+      medium: "Medium",
+      high: "High",
+      urgent: "Highest",
+    };
+    const lowered = value.toLowerCase();
+    if (lowered in tokenToName) return { name: tokenToName[lowered]! };
+    if (/^\d+$/.test(value)) return { id: value };
+    return { name: value };
+  }
+
   constructor(config: any) {
     super(config);
 
@@ -385,7 +431,7 @@ export class JiraAdapter extends BaseAdapter {
         summary: data.title,
         description: descriptionField,
         issuetype: { id: data.issueType || "10001" }, // Default to Task
-        priority: data.priority ? { id: data.priority } : undefined,
+        priority: JiraAdapter.mapPriorityField(data.priority),
         assignee: data.assigneeId ? { id: data.assigneeId } : undefined,
         reporter: reporter || undefined, // Reporter is a system field, not custom
         labels: data.labels || [],
@@ -473,7 +519,8 @@ export class JiraAdapter extends BaseAdapter {
     }
 
     if (data.priority !== undefined) {
-      updatePayload.fields.priority = { id: data.priority };
+      const mapped = JiraAdapter.mapPriorityField(data.priority);
+      if (mapped) updatePayload.fields.priority = mapped;
     }
 
     if (data.assigneeId !== undefined) {
@@ -1247,6 +1294,47 @@ export class JiraAdapter extends BaseAdapter {
       case "hardBreak":
         return {
           type: "hardBreak",
+        };
+
+      case "table":
+        // ADF tables require the `attrs` block + tableRow children. Our
+        // TipTap source (e.g. iterationIssueBodyBuilder) already shapes
+        // cells as `tableCell{ content: [paragraph{ text }] }` which is
+        // valid ADF — we just need to pass the structure through with
+        // the right attrs envelope. Without this case, the default
+        // fall-through wraps the table as a paragraph and Atlassian
+        // rejects the doc with HTTP 400 "INVALID_INPUT".
+        return {
+          type: "table",
+          attrs: {
+            isNumberColumnEnabled: false,
+            layout: "default",
+          },
+          content: (node.content || [])
+            .map((item: any) => this.convertTiptapNodeToAdf(item))
+            .filter(Boolean),
+        };
+
+      case "tableRow":
+        return {
+          type: "tableRow",
+          content: (node.content || [])
+            .map((item: any) => this.convertTiptapNodeToAdf(item))
+            .filter(Boolean),
+        };
+
+      case "tableHeader":
+      case "tableCell":
+        return {
+          type: node.type,
+          // attrs intentionally omitted — Atlassian defaults colspan/
+          // rowspan/colwidth/background to sensible values for new docs.
+          // Cells in our source always contain a paragraph (see
+          // iterationIssueBodyBuilder.tableCell/.tableHeader helpers),
+          // so the conversion is a straight recursion.
+          content: (node.content || [])
+            .map((item: any) => this.convertTiptapNodeToAdf(item))
+            .filter(Boolean),
         };
 
       case "text":

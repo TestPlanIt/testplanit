@@ -3,11 +3,110 @@
  * test-case-generation endpoints.
  */
 
+import { z } from "zod/v4";
 import type {
   IssueAdapter,
   IssueComment,
   LinkedIssueRef,
 } from "~/lib/integrations/adapters/IssueAdapter";
+import { parameterCreateSchema } from "~/lib/schemas/parameterSchema";
+
+// Hard cap on starter dataset rows emitted by the LLM (DoS guard).
+// Rows beyond this index are truncated with a `dataset_capped` warning.
+const STARTER_DATASET_ROW_CAP = 50;
+
+// Names the LLM is never allowed to propose as a parameter name (JS
+// prototype-pollution defense in depth on top of the snake_case regex).
+const RESERVED_PARAMETER_NAMES = new Set([
+  "__proto__",
+  "constructor",
+  "prototype",
+]);
+
+// LLM-side superset of parameterCreateSchema (testCaseId is injected at save
+// time, not by the LLM). Mirrors the Phase 1 canonical export from
+// ~/lib/schemas/parameterSchema verbatim for SELECT-XOR semantics and the
+// exact field name `allowedValuesJson`. Keep in sync with that file —
+// the type-only assertion below catches drift at compile time.
+const llmParameterSchema = z
+  .object({
+    name: z
+      .string()
+      .min(1)
+      .regex(/^[a-z][a-z0-9_]*$/, {
+        message: "name must be snake_case lowercase (a-z, 0-9, _)",
+      })
+      .refine((v) => !RESERVED_PARAMETER_NAMES.has(v), {
+        message: "reserved name",
+      }),
+    type: z.enum(["STRING", "INTEGER", "BOOLEAN", "SELECT"]),
+    sensitive: z.boolean().default(false),
+    allowedValuesJson: z.array(z.string()).optional(),
+  })
+  .superRefine((val, ctx) => {
+    const isSelect = val.type === "SELECT";
+    const hasInline =
+      val.allowedValuesJson != null && val.allowedValuesJson.length > 0;
+    if (isSelect && !hasInline) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "SELECT parameters require a non-empty allowedValuesJson array",
+        path: ["allowedValuesJson"],
+      });
+    }
+    if (!isSelect && val.allowedValuesJson != null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Non-SELECT parameters must not specify allowedValuesJson",
+        path: ["allowedValuesJson"],
+      });
+    }
+  });
+
+// Type-only assertion: LLM-side shape must structurally subset the Phase 1
+// canonical type (sans testCaseId, which is injected at save time). This is
+// load-bearing — if parameterCreateSchema is renamed or its fields change,
+// this assertion breaks the build and forces a deliberate sync here.
+type _PhaseOneShape = Omit<z.infer<typeof parameterCreateSchema>, "testCaseId">;
+type _LlmShape = z.infer<typeof llmParameterSchema>;
+// Field-by-field structural check: every LLM-side field must be assignable
+// to the same field on the Phase 1 schema (modulo nullish ⇄ optional).
+type _AssertNameCompatible = _LlmShape["name"] extends _PhaseOneShape["name"]
+  ? true
+  : never;
+type _AssertTypeCompatible = _LlmShape["type"] extends _PhaseOneShape["type"]
+  ? true
+  : never;
+type _AssertSensitiveCompatible =
+  _LlmShape["sensitive"] extends _PhaseOneShape["sensitive"] ? true : never;
+// Force evaluation so unused-type lints don't strip the assertions away.
+const _llmShapeAssertion: _AssertNameCompatible &
+  _AssertTypeCompatible &
+  _AssertSensitiveCompatible = true;
+void _llmShapeAssertion;
+
+const llmStarterDatasetRowSchema = z.object({
+  label: z.string().optional(),
+  values: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])),
+});
+
+export interface ParseWarning {
+  caseIndex: number;
+  message: string;
+}
+
+export interface LlmParameter {
+  name: string;
+  type: "STRING" | "INTEGER" | "BOOLEAN" | "SELECT";
+  sensitive: boolean;
+  allowedValuesJson?: string[];
+}
+
+export interface LlmStarterDatasetRow {
+  label?: string;
+  values: Record<string, string | number | boolean>;
+}
 
 export interface IssueData {
   key: string;
@@ -72,6 +171,20 @@ export interface GeneratedTestCase {
   /** @deprecated No longer produced by LLM */
   automated?: boolean;
   tags?: string[];
+  /**
+   * INT-06: optional parameter schema proposed by the LLM. Present only when
+   * the route was called with includeParameters=true. Validated via the
+   * LLM-side superset of parameterCreateSchema; SELECT entries always carry
+   * an inline `allowedValuesJson` (the LLM has no knowledge of existing
+   * project DataSets, so it never proposes a `lookupDataSetId`).
+   */
+  parameters?: LlmParameter[];
+  /**
+   * INT-06: optional starter dataset rows proposed by the LLM. Row count is
+   * LLM-decided (D-11). Hard cap at STARTER_DATASET_ROW_CAP — excess rows are
+   * truncated with a `dataset_capped` warning.
+   */
+  starterDataset?: LlmStarterDatasetRow[];
 }
 
 // ---------------------------------------------------------------------------
@@ -439,7 +552,8 @@ export function buildSystemPrompt(
   _context: GenerationContext,
   quantity?: string,
   autoGenerateTags?: boolean,
-  baseTemplate?: string
+  baseTemplate?: string,
+  includeParameters?: boolean
 ): string {
   // Separate required and optional fields
   const requiredFields = template.fields.filter((f) => f.required);
@@ -588,8 +702,17 @@ export function buildSystemPrompt(
     ? '- TAGS: Include 2-4 relevant tags per test case that categorize the test (e.g., "UI", "API", "Security", "Performance", "Integration", "Smoke", "Regression", "Functional", "Edge Case", "Mobile", "Desktop", etc.)'
     : "";
 
+  // INT-06: parameter + starter dataset extension. The block is APPENDED
+  // (not interleaved) so omitted/false produces byte-identical output to
+  // legacy callers. CRITICAL: emit `parameters` BEFORE `starterDataset` in
+  // the per-case JSON output — truncation degrades params-last, not first
+  // (Pitfall 6 mitigation).
+  const parameterInstructions = includeParameters
+    ? buildParameterInstructionBlock(STARTER_DATASET_ROW_CAP)
+    : "";
+
   if (baseTemplate) {
-    return baseTemplate
+    const rendered = baseTemplate
       .replace("{{EXAMPLE_STRUCTURE}}", exampleStructure)
       .replace("{{REQUIRED_FIELDS_LIST}}", requiredFieldsList)
       .replace("{{OPTIONAL_FIELDS_LIST}}", optionalFieldsList)
@@ -597,6 +720,9 @@ export function buildSystemPrompt(
       .replace("{{STEPS_INSTRUCTION}}", stepsInstruction)
       .replace("{{PRIORITY_INSTRUCTION}}", priorityInstruction)
       .replace("{{TAG_INSTRUCTIONS}}", tagInstructions);
+    return parameterInstructions
+      ? `${rendered}\n\n${parameterInstructions}`
+      : rendered;
   }
 
   return `You are an expert test case generator. Analyze the provided issue and create specific, targeted test cases that validate the exact requirements and functionality described in that issue.
@@ -636,8 +762,70 @@ ${tagInstructions}
 - DO NOT create generic test cases - they must validate the specific issue requirements
 - DO NOT leave optional text fields empty - they provide critical context for test execution
 - IMPORTANT: If existing test cases are provided, use them to understand the testing patterns, step granularity, and domain terminology used in this project. Generate new cases that complement the existing coverage — do NOT duplicate or substantially overlap with them.
-
+${parameterInstructions ? `\n${parameterInstructions}\n` : ""}
 Return ONLY the JSON.`;
+}
+
+/**
+ * INT-06: append parameter + starterDataset instructions to the case-generation
+ * prompt. Pitfall 6: instructs the LLM to emit `parameters` BEFORE
+ * `starterDataset` so truncation drops the dataset (recoverable) rather than
+ * the parameter schema (foundational).
+ */
+function buildParameterInstructionBlock(rowCap: number): string {
+  return `PARAMETERS AND STARTER DATASET (additional per-case keys):
+- For EACH test case object, add two NEW top-level keys AFTER fieldValues:
+  1. "parameters": an array of parameter objects (emit this BEFORE starterDataset).
+  2. "starterDataset": an array of dataset rows that exercise the parameters.
+- CRITICAL: emit "parameters" BEFORE "starterDataset" in the JSON. If the
+  response is truncated, parameters must still parse — the dataset can be
+  rebuilt manually but the schema cannot.
+
+Parameter object shape (per entry in parameters[]):
+{
+  "name": "snake_case_lowercase",          // letters/digits/underscores, starts with a letter
+  "type": "STRING" | "INTEGER" | "BOOLEAN" | "SELECT",
+  "sensitive": false,                       // true ONLY for secrets/PII
+  "allowedValuesJson": ["a", "b", "c"]     // REQUIRED for SELECT, OMIT for non-SELECT
+}
+
+- Use snake_case lowercase names (e.g., "user_role", "max_attempts").
+- For SELECT type, "allowedValuesJson" MUST be a non-empty array of strings —
+  the values the SELECT can take. Use the field name "allowedValuesJson"
+  exactly (NOT "allowedValues").
+- For STRING, INTEGER, BOOLEAN: OMIT "allowedValuesJson" entirely.
+- Mark "sensitive": true ONLY if the parameter carries credentials, tokens,
+  PII, or similar — sensitive values render as [REDACTED] in audit logs.
+
+Starter dataset row shape (per entry in starterDataset[]):
+{
+  "label": "optional human-readable label",
+  "values": { "param_name_1": <value>, "param_name_2": <value> }
+}
+
+- Row count is your call based on coverage needs:
+  * 2-10 rows for simple scenarios (happy path + one-or-two edge cases).
+  * Up to 20 rows for combinatorial cases that exercise multiple params.
+  * Hard cap: ${rowCap} rows. Anything beyond will be truncated.
+- "values" keys MUST match the "name" fields you defined in parameters[].
+- Value types must match the parameter type: STRING → string, INTEGER → number,
+  BOOLEAN → true/false, SELECT → one of the allowedValuesJson strings.
+
+Worked example (single test case for a login feature with a "role" SELECT and a "remember_me" BOOLEAN):
+{
+  "id": "tc_1",
+  "name": "Login succeeds for each role with remember-me toggled",
+  "fieldValues": { /* template fields here */ },
+  "parameters": [
+    { "name": "role", "type": "SELECT", "sensitive": false, "allowedValuesJson": ["admin", "user", "guest"] },
+    { "name": "remember_me", "type": "BOOLEAN", "sensitive": false }
+  ],
+  "starterDataset": [
+    { "label": "admin, remember on",  "values": { "role": "admin", "remember_me": true } },
+    { "label": "user, remember off",  "values": { "role": "user",  "remember_me": false } },
+    { "label": "guest, remember off", "values": { "role": "guest", "remember_me": false } }
+  ]
+}`;
 }
 
 export function buildUserPrompt(
@@ -806,14 +994,16 @@ STATUS: ${issue.status}${issue.priority ? ` | PRIORITY: ${issue.priority}` : ""}
 export function buildExpandSystemPrompt(
   template: TemplateData,
   autoGenerateTags?: boolean,
-  baseTemplate?: string
+  baseTemplate?: string,
+  includeParameters?: boolean
 ): string {
   return buildSystemPrompt(
     template,
     { folderContext: 0 },
     "just_one",
     autoGenerateTags,
-    baseTemplate
+    baseTemplate,
+    includeParameters
   );
 }
 
@@ -883,6 +1073,7 @@ export function parseAndValidateTestCases(
   quantity?: string
 ): {
   testCases: GeneratedTestCase[];
+  warnings?: ParseWarning[];
   parseError?: {
     userError: string;
     userSuggestions: string[];
@@ -1076,6 +1267,7 @@ export function parseAndValidateTestCases(
   }
 
   // Validate and sanitize
+  const warnings: ParseWarning[] = [];
   const testCases =
     parsedResponse.testCases?.map((tc, index) => {
       const validatedFieldValues = { ...tc.fieldValues };
@@ -1127,7 +1319,14 @@ export function parseAndValidateTestCases(
         }
       }
 
-      return {
+      // INT-06: extract + validate parameters and starterDataset when
+      // present. ABSENT keys preserve legacy behavior (no fields, no
+      // warnings). PRESENT-but-invalid degrades per Pitfall 6.
+      const rawTc = tc as GeneratedTestCase & {
+        parameters?: unknown;
+        starterDataset?: unknown;
+      };
+      const out: GeneratedTestCase = {
         id: tc.id || `generated_${Date.now()}_${index}`,
         name: tc.name || `Test Case ${index + 1}`,
         fieldValues: validatedFieldValues,
@@ -1137,9 +1336,123 @@ export function parseAndValidateTestCases(
               .map((tag) => tag.trim())
           : [],
       };
+
+      if (rawTc.parameters !== undefined) {
+        const { parameters, paramWarnings } = validateLlmParameters(
+          rawTc.parameters,
+          index
+        );
+        out.parameters = parameters;
+        warnings.push(...paramWarnings);
+      }
+
+      if (rawTc.starterDataset !== undefined) {
+        const { rows, datasetWarnings } = validateLlmStarterDataset(
+          rawTc.starterDataset,
+          index
+        );
+        out.starterDataset = rows;
+        warnings.push(...datasetWarnings);
+      }
+
+      return out;
     }) || [];
 
-  return { testCases };
+  return warnings.length > 0 ? { testCases, warnings } : { testCases };
+}
+
+/**
+ * INT-06: validate the LLM-emitted parameters[] array against the LLM-side
+ * superset of parameterCreateSchema. Per-parameter validation failures
+ * surface as `invalid_parameter:<name>` warnings and the bad entry is
+ * dropped — they do NOT reject the whole case (per Pitfall 6 / D-12).
+ */
+function validateLlmParameters(
+  raw: unknown,
+  caseIndex: number
+): { parameters: LlmParameter[]; paramWarnings: ParseWarning[] } {
+  const paramWarnings: ParseWarning[] = [];
+  if (!Array.isArray(raw)) {
+    paramWarnings.push({
+      caseIndex,
+      message: "parameters_truncated",
+    });
+    return { parameters: [], paramWarnings };
+  }
+
+  const parameters: LlmParameter[] = [];
+  for (const entry of raw) {
+    const parsed = llmParameterSchema.safeParse(entry);
+    if (parsed.success) {
+      const value: LlmParameter = {
+        name: parsed.data.name,
+        type: parsed.data.type,
+        sensitive: parsed.data.sensitive,
+      };
+      if (parsed.data.allowedValuesJson) {
+        value.allowedValuesJson = parsed.data.allowedValuesJson;
+      }
+      parameters.push(value);
+    } else {
+      const name =
+        entry && typeof entry === "object" && "name" in entry
+          ? String((entry as { name: unknown }).name)
+          : "<unknown>";
+      paramWarnings.push({
+        caseIndex,
+        message: `invalid_parameter:${name}`,
+      });
+    }
+  }
+
+  return { parameters, paramWarnings };
+}
+
+/**
+ * INT-06: validate the LLM-emitted starterDataset[] array. Pitfall 6:
+ * a structurally-broken dataset (truncation) surfaces a `dataset_truncated`
+ * warning and returns an empty array — the parameters survive. Excess
+ * rows beyond the cap are truncated with a `dataset_capped` warning.
+ */
+function validateLlmStarterDataset(
+  raw: unknown,
+  caseIndex: number
+): { rows: LlmStarterDatasetRow[]; datasetWarnings: ParseWarning[] } {
+  const datasetWarnings: ParseWarning[] = [];
+  if (!Array.isArray(raw)) {
+    datasetWarnings.push({
+      caseIndex,
+      message: "dataset_truncated",
+    });
+    return { rows: [], datasetWarnings };
+  }
+
+  const rows: LlmStarterDatasetRow[] = [];
+  const cap = STARTER_DATASET_ROW_CAP;
+  let capped = false;
+  for (let i = 0; i < raw.length; i++) {
+    if (rows.length >= cap) {
+      capped = true;
+      break;
+    }
+    const parsed = llmStarterDatasetRowSchema.safeParse(raw[i]);
+    if (parsed.success) {
+      const row: LlmStarterDatasetRow = { values: parsed.data.values };
+      if (parsed.data.label !== undefined) row.label = parsed.data.label;
+      rows.push(row);
+    } else {
+      datasetWarnings.push({
+        caseIndex,
+        message: `invalid_dataset_row:${i}`,
+      });
+    }
+  }
+
+  if (capped) {
+    datasetWarnings.push({ caseIndex, message: "dataset_capped" });
+  }
+
+  return { rows, datasetWarnings };
 }
 
 // ---------------------------------------------------------------------------

@@ -42,7 +42,10 @@ RUN if [ -f ".docker-version.json" ]; then \
 # Increase memory limit for build process
 ENV NODE_OPTIONS="--max-old-space-size=16384"
 # Generate ZenStack files with high memory allocation
-RUN NODE_OPTIONS="--max-old-space-size=8192" pnpm zenstack generate
+# Inherits the 16 GB NODE_OPTIONS from the ENV line above — the v0.29
+# schema (parameterized test cases) needs more than 8 GB on the slower
+# Docker builder VMs and hit OOM with the previous inline override.
+RUN pnpm zenstack generate
 # Fix ZenStack symlinks
 RUN node scripts/fix-zenstack-symlink.js
 # Clean up build dependencies (optional, saves space)

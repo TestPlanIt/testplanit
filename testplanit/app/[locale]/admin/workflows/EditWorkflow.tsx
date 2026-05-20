@@ -53,7 +53,6 @@ import { useTheme } from "next-themes";
 import MultiSelect from "react-select";
 import { scopeDisplayData } from "~/app/constants";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
-import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 
 const scopeKeys = Object.keys(scopeDisplayData) as [
   keyof typeof scopeDisplayData,
@@ -149,12 +148,6 @@ export function EditWorkflows({
   const tWorkflowTypes = useTranslations("enums.WorkflowType");
   const workflowTypeOptions = getWorkflowTypeOptions(tWorkflowTypes);
 
-  // D-19: when the system flag is OFF, render the requiresReview Switch as
-  // disabled with a "feature disabled" FormDescription.
-  const { systemEnabled: reviewFeatureSystemEnabled } =
-    useReviewFeatureEnabled();
-  const reviewFeatureDisabled = reviewFeatureSystemEnabled === false;
-
   const FormSchema = z.object({
     scope: z.enum(scopeKeys, {
       message: t("edit.errors.unknownWorkflow"),
@@ -170,7 +163,6 @@ export function EditWorkflows({
     }),
     isDefault: z.boolean().prefault(false).optional(),
     isEnabled: z.boolean().prefault(true).optional(),
-    requiresReview: z.boolean().prefault(false).optional(),
     projects: z.array(z.number()).optional(),
   });
 
@@ -180,7 +172,6 @@ export function EditWorkflows({
       name: workflows.name,
       isEnabled: workflows.isEnabled,
       isDefault: workflows.isDefault,
-      requiresReview: workflows.requiresReview,
       scope: workflows.scope,
       workflowType: workflows.workflowType,
       projects: workflows.projects.map((p) => p.projectId),
@@ -216,7 +207,6 @@ export function EditWorkflows({
           colorId: selectedColorId || undefined,
           isEnabled: data.isEnabled,
           isDefault: data.isDefault,
-          requiresReview: data.requiresReview,
           workflowType: data.workflowType,
         },
       });
@@ -451,30 +441,6 @@ export function EditWorkflows({
                 </FormItem>
               )}
             />
-            {!reviewFeatureDisabled && (
-              <FormField
-                control={form.control}
-                name="requiresReview"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex items-center space-x-2">
-                      <FormControl>
-                        <Switch
-                          data-testid="requires-review-switch"
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormLabel className="flex items-center">
-                        {t("editWorkflow.requiresReviewLabel")}
-                        <HelpPopover helpKey="workflow.requiresReview" />
-                      </FormLabel>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-            )}
 
             <FormField
               control={form.control}

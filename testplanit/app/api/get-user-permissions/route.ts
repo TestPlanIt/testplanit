@@ -4,7 +4,6 @@ import { ApplicationArea, ProjectAccessType, Roles } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { prisma } from "~/lib/prisma";
-import { getServerAuthSession } from "~/server/auth";
 
 // Define the input schema using Zod
 const PermissionCheckSchema = z.object({
@@ -44,18 +43,12 @@ function getPermissionsForArea(
 }
 
 export async function POST(request: Request) {
-  // CR-02 fix: require an authenticated caller and refuse to disclose
-  // another user's effective role unless the caller is a system ADMIN.
-  // The endpoint returns a user's effective project role + access type;
-  // without this gate, anyone reachable to the route could iterate
-  // (userId, projectId) pairs to enumerate the org's role assignments.
-  // The two in-tree callers (`useProjectPermissions`,
-  // `useEffectiveRoleOnProject`) only ever pass their own `session.user.id`
-  // for `userId`, so this restriction is invisible to them in normal use.
-  const session = await getServerAuthSession();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  // Optional: Check if the *caller* is authenticated/authorized to make this request
+  // const session = await getServerSession(authOptions);
+  // if (!session) {
+  //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  // }
+  // Add further checks if needed (e.g., caller must be admin or related to the project)
 
   let data;
   try {
@@ -77,11 +70,6 @@ export async function POST(request: Request) {
   }
 
   const { userId, projectId, area, checkAccessOnly } = validationResult.data;
-
-  const callerIsAdmin = session.user.access === "ADMIN";
-  if (!callerIsAdmin && session.user.id !== userId) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
 
   try {
     // 1. Fetch all necessary data in parallel (or sequentially if dependencies exist)
@@ -273,11 +261,6 @@ export async function POST(request: Request) {
       }
     }
 
-    // Numeric effective-role id for UI gating predicates that need the role
-    // pointer (e.g. review action panel role-holder match). Null for system
-    // admins (they don't hold a project role) and for access-denied users.
-    const effectiveRoleId = effectiveRole?.id ?? null;
-
     // 4. Return Result
     // If checkAccessOnly is true, just return whether the user has access
     if (checkAccessOnly) {
@@ -291,7 +274,6 @@ export async function POST(request: Request) {
           : isSystemProjectAdmin
             ? "System Project Admin"
             : effectiveRole?.name || null,
-        effectiveRoleId,
         accessType: isSystemAdmin
           ? "SYSTEM_ADMIN"
           : isSystemProjectAdmin
@@ -316,7 +298,6 @@ export async function POST(request: Request) {
         : isSystemProjectAdmin
           ? "System Project Admin"
           : effectiveRole?.name || null,
-      effectiveRoleId,
       permissions: resultData,
     });
   } catch (error) {

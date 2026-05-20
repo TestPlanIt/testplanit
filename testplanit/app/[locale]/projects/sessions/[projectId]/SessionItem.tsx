@@ -2,10 +2,6 @@ import { DateTextDisplay } from "@/components/DateTextDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
 import { MemberList } from "@/components/MemberList";
 import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
-import {
-  PendingReviewBadge,
-  type PendingReviewSummary,
-} from "@/components/reviews/PendingReviewBadge";
 import TextFromJson from "@/components/TextFromJson";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +22,7 @@ import {
   CheckCircle,
   Combine,
   Copy,
+  Flame,
   LinkIcon,
   MoreVertical,
   Pencil,
@@ -50,12 +47,6 @@ interface SessionItemProps {
   canDuplicate?: boolean;
   isNew?: boolean;
   showMilestone?: boolean;
-  /**
-   * Pre-fetched PENDING ReviewRequest for this row's entity (bulk-loaded by
-   * the parent SessionDisplay; see RESEARCH §"Pitfall 6"). `undefined` means
-   * no pending review for this row.
-   */
-  pendingRequest?: PendingReviewSummary;
 }
 
 const SessionItem: React.FC<SessionItemProps> = ({
@@ -68,7 +59,6 @@ const SessionItem: React.FC<SessionItemProps> = ({
   canDuplicate,
   isNew,
   showMilestone = true,
-  pendingRequest,
 }) => {
   const { projectId } = useParams();
   const router = useRouter();
@@ -86,6 +76,10 @@ const SessionItem: React.FC<SessionItemProps> = ({
   const showCompleteItem = !testSession.isCompleted && canComplete;
   const showDuplicateItem = canDuplicate ?? canEditSession;
   const showMoreMenu = showEditItem || showCompleteItem || showDuplicateItem;
+
+  const isRecentlyCreated =
+    !!testSession.createdAt &&
+    Date.now() - new Date(testSession.createdAt).getTime() < 5 * 60 * 1000;
 
   // Transform state data to match WorkflowStateDisplay expectations
   const workflowState = {
@@ -147,6 +141,14 @@ const SessionItem: React.FC<SessionItemProps> = ({
               className="group inline-flex items-center gap-1 max-w-full"
             >
               <h3 className="text-md font-semibold flex items-center gap-1 hover:text-primary min-w-0">
+                {isRecentlyCreated && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Flame className="h-4 w-4 shrink-0 text-orange-500 fill-orange-500 animate-pulse" />
+                    </TooltipTrigger>
+                    <TooltipContent>{t("common.labels.new")}</TooltipContent>
+                  </Tooltip>
+                )}
                 <DynamicIcon name="compass" className="min-w-6 min-h-6" />
                 <span className="truncate inline-block">
                   {testSession.name}
@@ -174,9 +176,6 @@ const SessionItem: React.FC<SessionItemProps> = ({
                 <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
               </h3>
             </Link>
-            <div className="inline-flex items-center ml-1 align-middle">
-              <PendingReviewBadge pendingRequest={pendingRequest} />
-            </div>
           </div>
           <div className="text-sm text-muted-foreground line-clamp-1">
             {testSession.note && (

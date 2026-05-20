@@ -57,6 +57,7 @@ import {
   PlusSquare,
   SearchCheck,
   Trash2,
+  SquareStack,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback, useState } from "react";
@@ -110,6 +111,24 @@ interface ManualTestResult extends UnifiedTestResultBase {
   notes?: JsonValue; // Tiptap content
   attempt: number;
   resultFieldValues?: { id: number }[];
+  /**
+   * The iteration this result was recorded against. `null` for
+   * non-parameterized test cases. The row-level icon column shows the
+   * SquareStack icon when this is non-null; the expanded panel renders the
+   * parameter values block from `valuesJson` against the snapshot's
+   * parameter schema.
+   */
+  iteration?: {
+    id: number;
+    label: string | null;
+    rowIndex: number;
+    valuesJson: JsonValue;
+    parameterSchema: Array<{
+      name: string;
+      type: string;
+      sensitive: boolean;
+    }>;
+  } | null;
   stepResults?: Array<{
     id: number;
     status: { name: string; color: { value: string } };
@@ -697,7 +716,7 @@ export default function TestResultHistory({
 }: TestResultHistoryProps) {
   const tCommon = useTranslations("common");
   const tCases = useTranslations("repository.cases");
-  const tComments = useTranslations("comments");
+  const tParams = useTranslations("parameters");
   const locale = useLocale();
   const dateFnsLocale = getDateFnsLocale(locale);
   const [expandedResults, setExpandedResults] = useState<Set<string>>( // Changed to Set<string>
@@ -759,6 +778,25 @@ export default function TestResultHistory({
                   id: true,
                   testRunCaseId: true, // This is TestRunCases.id
                   testRunCaseVersion: true,
+                  // Iteration this result was recorded against (if any).
+                  // Drives the SquareStack-icon row indicator + the Parameter
+                  // Values block in the expanded panel. Non-parameterized
+                  // results have iteration: null.
+                  iteration: {
+                    select: {
+                      id: true,
+                      label: true,
+                      rowIndex: true,
+                      valuesJson: true,
+                      testRunCase: {
+                        select: {
+                          dataSetSnapshot: {
+                            select: { parametersJson: true },
+                          },
+                        },
+                      },
+                    },
+                  },
                   status: {
                     select: { name: true, color: { select: { value: true } } },
                   },
@@ -1022,6 +1060,34 @@ export default function TestResultHistory({
         notes: res.notes,
         attempt: res.attempt,
         resultFieldValues: res.resultFieldValues,
+        // Flatten the snapshot's parametersJson onto the iteration so
+        // downstream consumers (row icon + expanded Parameter Values
+        // block) don't need to traverse through testRunCase.dataSetSnapshot.
+        iteration: res.iteration
+          ? {
+              id: res.iteration.id,
+              label: res.iteration.label,
+              rowIndex: res.iteration.rowIndex,
+              valuesJson: res.iteration.valuesJson,
+              parameterSchema: Array.isArray(
+                res.iteration.testRunCase?.dataSetSnapshot?.parametersJson
+              )
+                ? (
+                    res.iteration.testRunCase.dataSetSnapshot
+                      .parametersJson as Array<Record<string, unknown>>
+                  )
+                    .filter(
+                      (p) =>
+                        p && typeof p === "object" && typeof p.name === "string"
+                    )
+                    .map((p) => ({
+                      name: String(p.name),
+                      type: typeof p.type === "string" ? p.type : "STRING",
+                      sensitive: p.sensitive === true,
+                    }))
+                : [],
+            }
+          : null,
         stepResults: (res.stepResults as any[] | undefined)?.map(
           (stepResItem: any) => ({
             ...stepResItem,
@@ -1251,8 +1317,11 @@ export default function TestResultHistory({
               <TableHead className="w-[150px]">
                 {tCommon("fields.executedAt")}
               </TableHead>
-              <TableHead className="w-[50px] text-center">
-                {tComments("edited")}
+              <TableHead className="w-[80px] text-center">
+                {tCommon("fields.editedHeader")}
+              </TableHead>
+              <TableHead className="w-[100px]">
+                {tCommon("fields.iterations")}
               </TableHead>
               <TableHead className="w-[100px]">
                 {tCommon("fields.duration")}
@@ -1435,7 +1504,7 @@ export default function TestResultHistory({
                         className="truncate"
                       />
                     </TableCell>
-                    <TableCell className="max-w-[50px]">
+                    <TableCell className="max-w-[80px]">
                       {result.sourceType === "manual" && result.editedAt && (
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -1460,6 +1529,23 @@ export default function TestResultHistory({
                                 />
                               </div>
                             </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                    </TableCell>
+                    <TableCell className="max-w-[100px]">
+                      {result.sourceType === "manual" && result.iteration && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex justify-center">
+                              <SquareStack
+                                className="h-4 w-4 text-muted-foreground"
+                                aria-label={tParams("iterationResultRowIcon")}
+                              />
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {tParams("iterationResultRowIcon")}
                           </TooltipContent>
                         </Tooltip>
                       )}
@@ -1535,13 +1621,128 @@ export default function TestResultHistory({
                   </TableRow>
                   {!result.isPending && (
                     <TableRow className="bg-muted/30 hover:bg-muted/30">
-                      <TableCell colSpan={11} className="py-0 px-2">
+                      <TableCell colSpan={12} className="py-0 px-2">
                         {" "}
-                        {/* ColSpan updated to 11 */}
+                        {/* ColSpan must match TableHeader column count (12 with iteration icon column) */}
                         <Collapsible open={isExpanded}>
                           <CollapsibleContent className="overflow-hidden data-[state=open]:animate-slide-down data-[state=closed]:animate-slide-up">
                             <div className="pb-2">
                               <Separator className="my-2" />
+                              {/* Run details block — Configuration name (+
+                                  group context if present). Shown for any
+                                  result that has an associated TestRun
+                                  configuration. Placement: top of the
+                                  expanded panel so it reads like context
+                                  metadata before the result content. */}
+                              {result.associatedTestRun?.configuration && (
+                                <div className="px-4 py-2 mb-2 bg-muted/50 rounded-md border text-xs space-y-1">
+                                  <div className="font-semibold text-primary">
+                                    {tParams("iterationResultRunDetails")}
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">
+                                      {tCommon("fields.configuration") + ":"}
+                                    </span>{" "}
+                                    {
+                                      result.associatedTestRun.configuration
+                                        .name
+                                    }
+                                  </div>
+                                </div>
+                              )}
+                              {/* Parameter values block — per-result
+                                  iteration parameter values from
+                                  TestRunCaseIteration.valuesJson against
+                                  the snapshot's parameter schema. Sensitive
+                                  values redact for non-admin viewers
+                                  (defense-in-depth client gate; server
+                                  audit boundary is the source of truth). */}
+                              {result.sourceType === "manual" &&
+                                result.iteration && (
+                                  <div className="px-4 py-2 mb-2 bg-muted/50 rounded-md border text-xs space-y-1">
+                                    <div className="font-semibold text-primary flex items-center gap-1">
+                                      <SquareStack
+                                        className="h-3 w-3"
+                                        aria-hidden
+                                      />
+                                      {tParams("iterationResultLabelHeading") +
+                                        ` ${result.iteration.rowIndex + 1}`}
+                                      {result.iteration.label && (
+                                        <span className="font-normal text-muted-foreground">
+                                          {": "}
+                                          {result.iteration.label}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {result.iteration.parameterSchema.length >
+                                      0 && (
+                                      <table className="w-full text-left mt-1">
+                                        <thead>
+                                          <tr className="border-b">
+                                            <th className="font-medium pr-4 py-1">
+                                              {tParams(
+                                                "iterationIssueTableHeaderParameter"
+                                              )}
+                                            </th>
+                                            <th className="font-medium py-1">
+                                              {tParams(
+                                                "iterationIssueTableHeaderValue"
+                                              )}
+                                            </th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {result.iteration.parameterSchema.map(
+                                            (p) => {
+                                              const raw = ((result.iteration!
+                                                .valuesJson as Record<
+                                                string,
+                                                unknown
+                                              > | null) ?? {})[p.name];
+                                              const canSee =
+                                                !p.sensitive ||
+                                                session?.user?.access ===
+                                                  "ADMIN";
+                                              let display: string;
+                                              if (!canSee) {
+                                                display = "••••••";
+                                              } else if (
+                                                raw === null ||
+                                                raw === undefined ||
+                                                raw === ""
+                                              ) {
+                                                display = tParams(
+                                                  "iterationResultNoValue"
+                                                );
+                                              } else if (
+                                                typeof raw === "string"
+                                              ) {
+                                                display = raw;
+                                              } else {
+                                                try {
+                                                  display = JSON.stringify(raw);
+                                                } catch {
+                                                  display = String(raw);
+                                                }
+                                              }
+                                              return (
+                                                <tr key={p.name}>
+                                                  <td className="pr-4 py-1 font-mono">
+                                                    {"@"}
+                                                    {p.name}
+                                                  </td>
+                                                  <td className="py-1 break-all">
+                                                    {display}
+                                                  </td>
+                                                </tr>
+                                              );
+                                            }
+                                          )}
+                                        </tbody>
+                                      </table>
+                                    )}
+                                  </div>
+                                )}
                               {result.sourceType === "manual" &&
                                 result.notes &&
                                 JSON.stringify(result.notes) !==

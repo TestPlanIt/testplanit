@@ -2,6 +2,7 @@
 
 import { ReportChart } from "@/components/dataVisualizations/ReportChart";
 import { DateFormatter } from "@/components/DateFormatter";
+import { MatrixReportPreset } from "@/components/matrix/MatrixReportPreset";
 import { DataTable } from "@/components/tables/DataTable";
 import {
   Card,
@@ -83,6 +84,19 @@ interface ReportRendererProps {
   dateGrouping?: string;
   totalFlakyTests?: number;
 
+  // Iteration-matrix shared-link payload: when the share endpoint pre-fetches
+  // the matrix axes server-side, this carries them through so MatrixReportPreset
+  // can render without re-fetching (the matrix has no public-share aggregate
+  // endpoint). `cells` arrives as Array<[key, value]> per JSON-serialization
+  // and is reconstructed into a Map by MatrixReportPreset.
+  matrixAxes?: {
+    caseAxis: any[];
+    configAxis: any[];
+    cells: Array<[string, any]>;
+    cellCount: number;
+    statusMap: Record<number, any>;
+  };
+
   // Pagination
   currentPage: number;
   pageSize: number | "All";
@@ -132,6 +146,7 @@ export function ReportRenderer({
   lookbackDays: _lookbackDays,
   dateGrouping = "weekly",
   totalFlakyTests,
+  matrixAxes,
   currentPage,
   pageSize,
   totalCount,
@@ -225,6 +240,7 @@ export function ReportRenderer({
     "issue-test-coverage"
   );
   const isExecutionLog = matchesReportType(reportType, "execution-log");
+  const isIterationMatrix = matchesReportType(reportType, "iteration-matrix");
 
   // Calculate pagination
   const startIndex = pageSize === "All" ? 1 : (currentPage - 1) * pageSize + 1;
@@ -332,6 +348,25 @@ export function ReportRenderer({
     isTestCaseHealth,
     isIssueTestCoverage,
   ]);
+
+  // Iteration Matrix preset bypasses the chart/table pipeline entirely.
+  // MatrixReportPreset is self-fetching (`useMatrixAggregation` +
+  // `useMatrixFilters`) so it inherits the dedicated `/projects/[id]/matrix`
+  // page's cell-cap handling, filter UX, and URL-backed share state. The
+  // ReportBuilder shell still owns title / save / share chrome; the data
+  // fetch path is independent of the report-builder POST flow.
+  if (isIterationMatrix && projectId) {
+    return (
+      <MatrixReportPreset
+        projectId={
+          typeof projectId === "string" ? parseInt(projectId, 10) : projectId
+        }
+        prefetchedAxes={matrixAxes}
+        readOnly={readOnly}
+        headerActions={headerActions}
+      />
+    );
+  }
 
   if (!results || results.length === 0) {
     return (

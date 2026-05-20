@@ -402,7 +402,7 @@ export function useIssueTestCoverageSummaryColumns(
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="text-red-600 dark:text-red-400 font-mono cursor-default">
+                    <span className="text-destructive font-mono cursor-default">
                       {firstRow.failedTestCases}
                     </span>
                   </TooltipTrigger>
@@ -415,7 +415,7 @@ export function useIssueTestCoverageSummaryColumns(
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="text-gray-500 dark:text-gray-400 font-mono cursor-default">
+                    <span className="text-muted-foreground font-mono cursor-default">
                       {firstRow.untestedTestCases}
                     </span>
                   </TooltipTrigger>
@@ -455,7 +455,7 @@ export function useIssueTestCoverageSummaryColumns(
             if (r >= 90) return "text-success";
             if (r >= 70) return "text-yellow-600 dark:text-yellow-400";
             if (r >= 50) return "text-orange-600 dark:text-orange-400";
-            return "text-red-600 dark:text-red-400";
+            return "text-destructive";
           };
 
           return (

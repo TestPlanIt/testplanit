@@ -24,6 +24,18 @@ interface UnifiedIssueManagerProps {
     | "sessionResult";
   entityId?: number;
   maxBadgeWidth?: string; // Tailwind max-width class for issue badges (e.g., "max-w-xs", "max-w-full")
+  /**
+   * INT-05: when the parent surface is Add Result on a parameterized
+   * iteration, this carries the iteration identity so SearchIssuesDialog
+   * can prefill Create New Issue with the iteration body builder's
+   * output. Threaded through to ManageExternalIssues (committed entity)
+   * or DeferredIssueManager (unsaved entity).
+   */
+  iterationContext?: {
+    iterationId: number;
+    testRunId: number;
+    testRunCaseId: number;
+  };
 }
 
 export function UnifiedIssueManager({
@@ -33,6 +45,7 @@ export function UnifiedIssueManager({
   entityType = "testCase",
   entityId,
   maxBadgeWidth,
+  iterationContext,
 }: UnifiedIssueManagerProps) {
   const t = useTranslations();
 
@@ -67,6 +80,7 @@ export function UnifiedIssueManager({
           setLinkedIssueIds(issueIds);
         }}
         maxBadgeWidth={maxBadgeWidth}
+        iterationContext={iterationContext}
       />
     );
   }
@@ -114,6 +128,7 @@ export function UnifiedIssueManager({
         linkedIssueIds={linkedIssueIds}
         setLinkedIssueIds={setLinkedIssueIds}
         entityType={entityType}
+        iterationContext={iterationContext}
       />
     );
   }

@@ -17,7 +17,6 @@ import {
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { performOptimisticReorder } from "~/utils/optimistic-updates";
-import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { useColumns } from "./columns";
 
 import { WorkflowDragPreview } from "@/components/dnd/WorkflowDragPreview";
@@ -37,7 +36,6 @@ import { ExtendedWorkflows } from "~/types/Workflows";
 import { AddWorkflows } from "./AddWorkflow";
 import { DeleteWorkflows } from "./DeleteWorkflow";
 import { EditWorkflows } from "./EditWorkflow";
-import { SystemFeatureCard } from "./SystemFeatureCard";
 
 import {
   AlertDialog,
@@ -151,27 +149,6 @@ function WorkflowComponent() {
     }
   };
 
-  const handleToggleRequiresReview = async (
-    id: number,
-    requiresReview: boolean
-  ) => {
-    try {
-      await updateWorkflows({
-        where: { id },
-        data: { requiresReview },
-      });
-    } catch (error) {
-      console.error("Failed to update workflow requiresReview:", error);
-    }
-  };
-
-  // Hide the requiresReview column entirely when the system flag is OFF.
-  // The at-a-glance gate signal only matters while the feature is active —
-  // showing the column with all-false toggles would be misleading.
-  const { systemEnabled: reviewFeatureSystemEnabled } =
-    useReviewFeatureEnabled();
-  const showRequiresReview = reviewFeatureSystemEnabled === true;
-
   const handleToggleDefault = (
     id: number,
     isDefault: boolean,
@@ -186,11 +163,8 @@ function WorkflowComponent() {
     data || [],
     tWorkflowTypes,
     tCommon,
-    t,
     handleToggleEnabled,
     handleToggleDefault,
-    showRequiresReview,
-    handleToggleRequiresReview,
     setEditingWorkflow,
     setDeletingWorkflow
   );
@@ -365,9 +339,6 @@ function WorkflowComponent() {
               <CardDescription>{t("description")}</CardDescription>
             </CardHeader>
           </Card>
-          <div className="mt-4">
-            <SystemFeatureCard />
-          </div>
           <div className="mt-4">
             {renderWorkflowCard(casesWorkflows, WorkflowScope.CASES)}
           </div>

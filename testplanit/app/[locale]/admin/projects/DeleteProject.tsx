@@ -72,7 +72,7 @@ export function DeleteProject({ project, open, onClose }: DeleteProjectProps) {
                 {t.rich("confirmMessage", {
                   name: project.name,
                   strong: (chunks: any) => (
-                    <span className="font-bold [overflow-wrap:anywhere]">
+                    <span className="whitespace-nowrap font-bold">
                       {chunks}
                     </span>
                   ),

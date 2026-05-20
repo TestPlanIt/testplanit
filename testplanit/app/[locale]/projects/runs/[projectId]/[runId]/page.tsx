@@ -8,9 +8,8 @@ import { ForecastDisplay } from "@/components/ForecastDisplay";
 import { transformMilestones } from "@/components/forms/MilestoneSelect";
 import { Loading } from "@/components/Loading";
 import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
-import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
-import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
+import { IterationAwareTestRunCaseDetails } from "~/components/iterations/IterationAwareTestRunCaseDetails";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import {
   AlertDialog,
@@ -430,6 +429,9 @@ export default function TestRunPage() {
           select: {
             id: true,
             order: true,
+            totalIterations: true,
+            passedIterations: true,
+            failedIterations: true,
             status: {
               select: {
                 id: true,
@@ -601,19 +603,6 @@ export default function TestRunPage() {
 
   // Transform milestones for the select component
   const milestoneOptions = transformMilestones(milestones || []);
-
-  const reachableGatedStates = useMemo(() => {
-    if (!workflows || !testRunData) return [];
-    const currentStateId = testRunData.stateId;
-    return workflows
-      .filter((w) => w.requiresReview === true && w.id !== currentStateId)
-      .map((w) => ({
-        id: w.id,
-        name: w.name,
-        icon: { name: (w.icon?.name ?? "circle") as string },
-        color: { value: w.color?.value ?? "" },
-      }));
-  }, [workflows, testRunData]);
 
   // Update form initialization
   useEffect(() => {
@@ -1468,18 +1457,6 @@ export default function TestRunPage() {
             void handleSubmit(onSubmit)(e);
           }}
         >
-          {testRunData ? (
-            <div className="px-6 pt-6">
-              <ReviewStatusBanner
-                entityType="RUN"
-                entityId={testRunData.id}
-                projectId={Number(projectId)}
-                entityName={testRunData.name}
-                reachableGatedStates={reachableGatedStates}
-                currentStateId={testRunData.stateId}
-              />
-            </div>
-          ) : null}
           <CardHeader>
             <div className="flex justify-between items-start">
               {!isEditMode && (
@@ -1580,15 +1557,6 @@ export default function TestRunPage() {
                     {!isEditMode ? (
                       // View Mode Buttons for NON-COMPLETED runs
                       <div className="flex items-center gap-1">
-                        {testRunData ? (
-                          <RequestReviewButton
-                            entityType="RUN"
-                            entityId={testRunData.id}
-                            projectId={Number(projectId)}
-                            currentStateId={testRunData.stateId}
-                            reachableGatedStates={reachableGatedStates}
-                          />
-                        ) : null}
                         {canAddEditRun && !isMultiConfigSelected && (
                           <Button
                             type="button"
@@ -1765,7 +1733,7 @@ export default function TestRunPage() {
                                 </FormLabel>
                                 <FormControl>
                                   {contentLoaded ? (
-                                    <div className="min-h-[50px] max-h-[125px] overflow-y-auto border rounded-md">
+                                    <div className="min-h-[50px] border rounded-md">
                                       <TipTapEditor
                                         key={`editing-note-${isEditMode}`}
                                         content={noteContent}
@@ -1811,7 +1779,7 @@ export default function TestRunPage() {
                                 </FormLabel>
                                 <FormControl>
                                   {contentLoaded ? (
-                                    <div className="min-h-[50px] max-h-[250px] overflow-y-auto border rounded-md">
+                                    <div className="min-h-[50px] border rounded-md">
                                       <TipTapEditor
                                         key={`editing-docs-${isEditMode}`}
                                         content={docsContent}
@@ -2073,38 +2041,58 @@ export default function TestRunPage() {
             </SheetDescription>
           </SheetHeader>
           {/* Using key to force remount on case change */}
-          {selectedTestCaseId && testRunData && (
-            <TestRunCaseDetails
-              key={selectedTestCaseId} // Force re-render when ID changes
-              caseId={selectedTestCaseId}
-              projectId={Number(projectId)}
-              testRunId={Number(runId)}
-              testRunCaseId={
-                testRunData.testCases.find(
-                  (tc) => tc.repositoryCase.id === selectedTestCaseId
-                )?.id
+          {selectedTestCaseId &&
+            testRunData &&
+            (() => {
+              const trc = testRunData.testCases.find(
+                (tc) => tc.repositoryCase.id === selectedTestCaseId
+              );
+              if (!trc) return null;
+              const innerProps = {
+                caseId: selectedTestCaseId,
+                projectId: Number(projectId),
+                testRunId: Number(runId),
+                testRunCaseId: trc.id,
+                currentStatus: trc.status,
+                onClose: () => handleSheetOpenChange(false),
+                onNextCase: (nextCaseId: number) => {
+                  setIsTransitioning(true);
+                  const params = new URLSearchParams(searchParams.toString());
+                  params.set("selectedCase", nextCaseId.toString());
+                  router.replace(`${pathname}?${params.toString()}`);
+                },
+                isTransitioning,
+                testRunCasesData: testRunData.testCases.map((tc) => ({
+                  id: tc.id,
+                  order: tc.order,
+                  repositoryCaseId: tc.repositoryCase.id,
+                })),
+                isCompleted: testRunData.isCompleted,
+              };
+
+              const totalIterations =
+                (trc as { totalIterations?: number }).totalIterations ?? 0;
+
+              if (totalIterations === 0) {
+                return (
+                  <TestRunCaseDetails
+                    key={selectedTestCaseId}
+                    {...innerProps}
+                  />
+                );
               }
-              currentStatus={
-                testRunData.testCases.find(
-                  (tc) => tc.repositoryCase.id === selectedTestCaseId
-                )?.status
-              }
-              onClose={() => handleSheetOpenChange(false)} // Use the handler to close sheet
-              onNextCase={(nextCaseId) => {
-                setIsTransitioning(true);
-                const params = new URLSearchParams(searchParams.toString());
-                params.set("selectedCase", nextCaseId.toString());
-                router.replace(`${pathname}?${params.toString()}`);
-              }}
-              isTransitioning={isTransitioning}
-              testRunCasesData={testRunData.testCases.map((tc) => ({
-                id: tc.id,
-                order: tc.order,
-                repositoryCaseId: tc.repositoryCase.id,
-              }))}
-              isCompleted={testRunData.isCompleted}
-            />
-          )}
+
+              return (
+                <IterationAwareTestRunCaseDetails
+                  key={selectedTestCaseId}
+                  testRunCaseId={trc.id}
+                  testRunId={Number(runId)}
+                  totalIterations={totalIterations}
+                  isRunCompleted={!!testRunData.isCompleted}
+                  innerProps={innerProps}
+                />
+              );
+            })()}
         </SheetContent>
       </Sheet>
       {/* Dialog: Show if canAddEditRun and not JUNIT (regardless of completion status) */}

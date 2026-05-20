@@ -18,8 +18,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { AddResultModal } from "@/projects/repository/[projectId]/AddResultModal";
 import FieldValueRenderer from "@/projects/repository/[projectId]/[caseId]/FieldValueRenderer";
+import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { Attachments, Prisma, Status } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -33,6 +40,7 @@ import {
   Combine,
   LayoutTemplate,
   Plus,
+  SquareStack,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -79,6 +87,26 @@ interface TestRunCaseDetailsProps {
   }>;
   isTransitioning?: boolean;
   isCompleted?: boolean;
+  /**
+   * Phase 3 — iteration-aware step text substitution. When set, the inner
+   * step renderer receives the iteration's effective parameter values so
+   * `@name` chips render as their substituted values. When omitted,
+   * behavior is unchanged (PARAM-07 invariant).
+   */
+  stepParameters?: ParameterChipMeta[];
+  /**
+   * Phase 3 — when set, every result submitted from this surface is recorded
+   * against the given iteration (server runs worst-of rollup + counter
+   * updates). Omit on non-parameterized cases (PARAM-07).
+   */
+  activeIterationId?: number;
+  /**
+   * Phase 3 — pre-formatted iteration label (e.g. "Submit result for
+   * Iteration 3 of 10") shown in the AddResultModal title when in iteration
+   * mode so testers can see which iteration the result is being recorded
+   * against. Wrapper formats this from the active iteration + totalIterations.
+   */
+  activeIterationLabel?: string;
 }
 
 export function TestRunCaseDetails({
@@ -92,6 +120,9 @@ export function TestRunCaseDetails({
   testRunCasesData,
   isTransitioning = false,
   isCompleted = false,
+  stepParameters,
+  activeIterationId,
+  activeIterationLabel,
 }: TestRunCaseDetailsProps) {
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
@@ -534,6 +565,7 @@ export function TestRunCaseDetails({
         attempt: 1,
         testRunCaseVersion: testcase.currentVersion,
         inProgressStateId: inProgressWorkflow?.id ?? null,
+        iterationId: activeIterationId,
       });
       await invalidateAfterSubmit();
 
@@ -669,135 +701,146 @@ export function TestRunCaseDetails({
         <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
           {testRunId && canAddEditResults && (
             <>
-              <div className="flex items-center gap-2 shrink-0">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowAddResultModal(true)}
-                  disabled={isDisabled}
-                  className="flex items-center gap-1"
-                >
-                  <Plus className="h-4 w-4" />
-                  {tCommon("actions.addResult")}
-                </Button>
-                <div className="flex">
+              {/* Case-level result buttons hide in iteration mode — those
+                  controls live in IterationResultPanel above. */}
+              {!activeIterationId && (
+                <div className="flex items-center gap-2 shrink-0">
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={handleQuickPass}
+                    onClick={() => setShowAddResultModal(true)}
                     disabled={isDisabled}
-                    className="flex items-center gap-1 rounded-r-none border-r-0"
+                    className="flex items-center"
                   >
-                    <CheckCircle className="h-4 w-4" />
-                    {tCommon("actions.passAndNext")}
+                    <Plus className="h-4 w-4" />
+                    {tCommon("actions.addResult")}
                   </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={isDisabled}
-                        className="flex items-center gap-1 rounded-l-none border-l-0"
-                      >
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-[200px]">
-                      {statuses?.map((status) => (
-                        <DropdownMenuItem
-                          key={status.id}
+                  <div className="flex">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleQuickPass}
+                      disabled={isDisabled}
+                      className="flex items-center rounded-r-none border-r-0"
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                      {tCommon("actions.passAndNext")}
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
                           disabled={isDisabled}
-                          onClick={async () => {
-                            if (
-                              !session?.user?.id ||
-                              !testRunId ||
-                              !testRunCaseId ||
-                              !testcase?.currentVersion
-                            )
-                              return;
+                          className="flex items-center rounded-l-none border-l-0"
+                        >
+                          <ChevronDown className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-[200px]">
+                        {statuses?.map((status) => (
+                          <DropdownMenuItem
+                            key={status.id}
+                            disabled={isDisabled}
+                            onClick={async () => {
+                              if (
+                                !session?.user?.id ||
+                                !testRunId ||
+                                !testRunCaseId ||
+                                !testcase?.currentVersion
+                              )
+                                return;
 
-                            setIsSubmitting(true);
+                              setIsSubmitting(true);
 
-                            try {
-                              await submitTestRunResult({
-                                testRunId,
-                                testRunCaseId,
-                                statusId: status.id,
-                                notes: emptyEditorContent,
-                                evidence: {},
-                                attempt: 1,
-                                testRunCaseVersion: testcase.currentVersion,
-                                inProgressStateId:
-                                  inProgressWorkflow?.id ?? null,
-                              });
-                              await invalidateAfterSubmit();
+                              try {
+                                await submitTestRunResult({
+                                  testRunId,
+                                  testRunCaseId,
+                                  statusId: status.id,
+                                  notes: emptyEditorContent,
+                                  evidence: {},
+                                  attempt: 1,
+                                  testRunCaseVersion: testcase.currentVersion,
+                                  inProgressStateId:
+                                    inProgressWorkflow?.id ?? null,
+                                  iterationId: activeIterationId,
+                                });
+                                await invalidateAfterSubmit();
 
-                              toast.success(tCommon("actions.resultAdded"), {
-                                description: tCommon(
-                                  "actions.resultAddedDescription"
-                                ),
-                              });
+                                toast.success(tCommon("actions.resultAdded"), {
+                                  description: tCommon(
+                                    "actions.resultAddedDescription"
+                                  ),
+                                });
 
-                              // Move to next case if available
-                              if (onNextCase) {
-                                const currentCase = testRunCasesData?.find(
-                                  (trc) => trc.repositoryCaseId === caseId
-                                );
+                                // Move to next case if available
+                                if (onNextCase) {
+                                  const currentCase = testRunCasesData?.find(
+                                    (trc) => trc.repositoryCaseId === caseId
+                                  );
 
-                                if (currentCase) {
-                                  const nextCases = testRunCasesData
-                                    ?.filter(
-                                      (trc) => trc.order > currentCase.order
-                                    )
-                                    .sort((a, b) => a.order - b.order);
+                                  if (currentCase) {
+                                    const nextCases = testRunCasesData
+                                      ?.filter(
+                                        (trc) => trc.order > currentCase.order
+                                      )
+                                      .sort((a, b) => a.order - b.order);
 
-                                  const nextCase = nextCases?.[0];
+                                    const nextCase = nextCases?.[0];
 
-                                  if (nextCase) {
-                                    onNextCase(nextCase.repositoryCaseId);
+                                    if (nextCase) {
+                                      onNextCase(nextCase.repositoryCaseId);
+                                    }
                                   }
                                 }
+                              } catch (error) {
+                                console.error(
+                                  "Error submitting result:",
+                                  error
+                                );
+                                if (
+                                  isPermissionDeniedSubmitResultError(error)
+                                ) {
+                                  toast.error(tCommon("errors.accessDenied"), {
+                                    description: tCommon(
+                                      "errors.resultSubmitPermissionDenied"
+                                    ),
+                                  });
+                                } else {
+                                  toast.error(tCommon("errors.error"), {
+                                    description: tCommon(
+                                      "errors.somethingWentWrong"
+                                    ),
+                                  });
+                                }
+                              } finally {
+                                setIsSubmitting(false);
                               }
-                            } catch (error) {
-                              console.error("Error submitting result:", error);
-                              if (isPermissionDeniedSubmitResultError(error)) {
-                                toast.error(tCommon("errors.accessDenied"), {
-                                  description: tCommon(
-                                    "errors.resultSubmitPermissionDenied"
-                                  ),
-                                });
-                              } else {
-                                toast.error(tCommon("errors.error"), {
-                                  description: tCommon(
-                                    "errors.somethingWentWrong"
-                                  ),
-                                });
-                              }
-                            } finally {
-                              setIsSubmitting(false);
-                            }
-                          }}
-                          className="flex items-center cursor-pointer"
-                        >
-                          <div
-                            className="w-3 h-3 rounded-full mr-2"
-                            style={{
-                              backgroundColor: status.color?.value || "#B1B2B3",
                             }}
-                          />
-                          <span className="flex-1">{status.name}</span>
-                          {status.isSuccess && (
-                            <CheckCircle className="h-4 w-4 ml-2 text-muted-foreground" />
-                          )}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                            className="flex items-center cursor-pointer"
+                          >
+                            <div
+                              className="w-3 h-3 rounded-full mr-2"
+                              style={{
+                                backgroundColor:
+                                  status.color?.value || "#B1B2B3",
+                              }}
+                            />
+                            <span className="flex-1">{status.name}</span>
+                            {status.isSuccess && (
+                              <CheckCircle className="h-4 w-4 ml-2 text-muted-foreground" />
+                            )}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
-              </div>
+              )}
               <div className="min-w-[200px] max-w-[300px]">
                 <AsyncCombobox
                   value={
@@ -830,43 +873,58 @@ export function TestRunCaseDetails({
           )}
         </div>
         {/* --- Previous/Next Buttons --- */}
-        <div className="flex items-center gap-2 shrink-0 mr-8">
-          {/* Prev Button */}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={!previousCase || isNavigationDisabled}
-            onClick={() =>
-              previousCase && onNextCase(previousCase.repositoryCaseId)
-            }
-            aria-label={tCommon("actions.previousCase")}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          {/* Index Indicator */}
-          {testRunCasesData &&
-            currentCaseIndex !== undefined &&
-            currentCaseIndex !== -1 && (
-              <span
-                className="text-sm text-primary-foreground"
-                title={`Index: ${currentCaseIndex}`}
-              >
-                {currentCaseIndex + 1} {tCommon("of")} {testRunCasesData.length}
-              </span>
-            )}
-          {/* Next Button */}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={!nextCase || isNavigationDisabled}
-            onClick={() => nextCase && onNextCase(nextCase.repositoryCaseId)}
-            aria-label={tCommon("actions.nextCase")}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
+        <TooltipProvider>
+          <div className="flex items-center gap-2 shrink-0 mr-8">
+            {/* Prev Button */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!previousCase || isNavigationDisabled}
+                  onClick={() =>
+                    previousCase && onNextCase(previousCase.repositoryCaseId)
+                  }
+                  aria-label={tCommon("actions.previousCase")}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{tCommon("actions.previousCase")}</TooltipContent>
+            </Tooltip>
+            {/* Index Indicator */}
+            {testRunCasesData &&
+              currentCaseIndex !== undefined &&
+              currentCaseIndex !== -1 && (
+                <span
+                  className="text-sm text-primary-foreground"
+                  title={`Index: ${currentCaseIndex}`}
+                >
+                  {currentCaseIndex + 1} {tCommon("of")}{" "}
+                  {testRunCasesData.length}
+                </span>
+              )}
+            {/* Next Button */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!nextCase || isNavigationDisabled}
+                  onClick={() =>
+                    nextCase && onNextCase(nextCase.repositoryCaseId)
+                  }
+                  aria-label={tCommon("actions.nextCase")}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{tCommon("actions.nextCase")}</TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
       </div>
       <div className="flex justify-between items-center px-4">
         <div className="flex-1">
@@ -885,53 +943,80 @@ export function TestRunCaseDetails({
           )}
         </div>
         <div className="flex items-center gap-2">
-          {testRunId && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  disabled={isDisabled}
-                  className="h-8 bg-transparent hover:bg-muted justify-start"
-                >
-                  <div className="flex items-center space-x-1 whitespace-nowrap">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{
-                        backgroundColor: hasColor(displayStatus)
-                          ? displayStatus.color.value
-                          : "#B1B2B3",
-                      }}
-                    />
-                    <div>{displayStatus.name}</div>
-                  </div>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-[140px]">
-                {statuses?.map((statusOption) => (
-                  <DropdownMenuItem
-                    key={statusOption.id}
+          {testRunId && activeIterationId ? (
+            // Iteration mode: case-level status is computed by the worst-of
+            // rollup of iterations — render as a read-only badge so users
+            // don't accidentally write a case-level result that the rollup
+            // would overwrite on the next iteration submit.
+            <div
+              className="inline-flex items-center gap-2 h-8 px-3 rounded-md border bg-muted/50 text-sm"
+              data-testid="case-status-readonly"
+              title="Case status is computed from iteration results"
+            >
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{
+                  backgroundColor: hasColor(displayStatus)
+                    ? displayStatus.color.value
+                    : "#B1B2B3",
+                }}
+              />
+              <div className="whitespace-nowrap">{displayStatus.name}</div>
+              <SquareStack
+                className="h-3.5 w-3.5 text-muted-foreground"
+                aria-hidden
+              />
+            </div>
+          ) : (
+            testRunId && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
                     disabled={isDisabled}
-                    onClick={() =>
-                      handleStatusChange(statusOption.id.toString())
-                    }
-                    className={`flex items-center cursor-pointer ${
-                      statusOption.id === displayStatus.id ? "bg-muted" : ""
-                    }`}
+                    className="h-8 bg-transparent hover:bg-muted justify-start"
                   >
-                    <div
-                      className="w-3 h-3 rounded-full mr-2"
-                      style={{
-                        backgroundColor: statusOption.color?.value || "#B1B2B3",
-                      }}
-                    />
-                    <span className="flex-1">{statusOption.name}</span>
-                    {statusOption.id === displayStatus.id && (
-                      <Check className="h-4 w-4 ml-2 text-muted-foreground" />
-                    )}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                    <div className="flex items-center space-x-1 whitespace-nowrap">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{
+                          backgroundColor: hasColor(displayStatus)
+                            ? displayStatus.color.value
+                            : "#B1B2B3",
+                        }}
+                      />
+                      <div>{displayStatus.name}</div>
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-[140px]">
+                  {statuses?.map((statusOption) => (
+                    <DropdownMenuItem
+                      key={statusOption.id}
+                      disabled={isDisabled}
+                      onClick={() =>
+                        handleStatusChange(statusOption.id.toString())
+                      }
+                      className={`flex items-center cursor-pointer ${
+                        statusOption.id === displayStatus.id ? "bg-muted" : ""
+                      }`}
+                    >
+                      <div
+                        className="w-3 h-3 rounded-full mr-2"
+                        style={{
+                          backgroundColor:
+                            statusOption.color?.value || "#B1B2B3",
+                        }}
+                      />
+                      <span className="flex-1">{statusOption.name}</span>
+                      {statusOption.id === displayStatus.id && (
+                        <Check className="h-4 w-4 ml-2 text-muted-foreground" />
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )
           )}
         </div>
       </div>
@@ -1110,6 +1195,7 @@ export function TestRunCaseDetails({
                       errors={undefined}
                       isRunMode={true}
                       stepsForDisplay={testcase.steps}
+                      parameters={stepParameters}
                     />
                   </div>
                 );
@@ -1152,6 +1238,9 @@ export function TestRunCaseDetails({
           defaultStatusId={selectedStatusId || successStatus?.id?.toString()}
           steps={testcase.steps}
           configuration={testcase.testRuns?.[0]?.testRun?.configuration}
+          iterationId={activeIterationId}
+          iterationLabel={activeIterationLabel}
+          parameters={stepParameters}
         />
       )}
     </div>

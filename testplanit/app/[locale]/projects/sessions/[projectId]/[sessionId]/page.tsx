@@ -6,9 +6,6 @@ import { useRouter } from "~/lib/navigation";
 
 import { AttachmentChanges } from "@/components/AttachmentsDisplay";
 import { Loading } from "@/components/Loading";
-import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
-import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
-import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -1149,19 +1146,6 @@ export default function SessionPage() {
       },
     });
 
-  const reachableGatedStates = useMemo(() => {
-    if (!workflows || !sessionData) return [];
-    const currentStateId = sessionData.stateId;
-    return workflows
-      .filter((w) => w.requiresReview === true && w.id !== currentStateId)
-      .map((w) => ({
-        id: w.id,
-        name: w.name,
-        icon: { name: (w.icon?.name ?? "circle") as string },
-        color: { value: w.color?.value ?? "" },
-      }));
-  }, [workflows, sessionData]);
-
   const { data: milestones, isLoading: isLoadingMilestones } =
     useFindManyMilestones({
       where: {
@@ -1704,18 +1688,6 @@ export default function SessionPage() {
       {isFormLoading && <LoadingSpinnerAlert />}
       <FormProvider {...form}>
         <form onSubmit={handleSubmit(onSubmit)}>
-          {sessionData ? (
-            <div className="px-6 pt-6">
-              <ReviewStatusBanner
-                entityType="SESSION"
-                entityId={sessionData.id}
-                projectId={Number(projectId)}
-                entityName={sessionData.name}
-                reachableGatedStates={reachableGatedStates}
-                currentStateId={sessionData.stateId}
-              />
-            </div>
-          ) : null}
           <CardHeader>
             <div className="flex justify-between items-start">
               {!isEditMode && (
@@ -1817,15 +1789,6 @@ export default function SessionPage() {
                     )}
                     {!isEditMode ? (
                       <div className="flex items-center gap-1">
-                        {sessionData ? (
-                          <RequestReviewButton
-                            entityType="SESSION"
-                            entityId={sessionData.id}
-                            projectId={Number(projectId)}
-                            currentStateId={sessionData.stateId}
-                            reachableGatedStates={reachableGatedStates}
-                          />
-                        ) : null}
                         {showEditButtonPerm && !sessionData?.isCompleted && (
                           <Button
                             type="button"
@@ -1950,7 +1913,7 @@ export default function SessionPage() {
                             </FormLabel>
                             <FormControl>
                               {contentLoaded ? (
-                                <div className="min-h-[50px] max-h-[125px] overflow-y-auto">
+                                <div className="min-h-[50px]">
                                   <TipTapEditor
                                     key={`editing-note-${isEditMode}`}
                                     content={noteContent}
@@ -2001,7 +1964,7 @@ export default function SessionPage() {
                             </FormLabel>
                             <FormControl>
                               {contentLoaded ? (
-                                <div className="min-h-[50px] max-h-[250px] overflow-y-auto">
+                                <div className="min-h-[50px]">
                                   <TipTapEditor
                                     key={`editing-mission-${isEditMode}`}
                                     content={missionContent}

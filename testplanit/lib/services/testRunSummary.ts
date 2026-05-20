@@ -10,9 +10,13 @@ import { isAutomatedTestRunType } from "~/utils/testResultTypes";
 export type {
   TestRunSummaryData,
   RunSummaryAggregates,
+  PerCaseIterationCounts,
 } from "./testRunSummary-shared";
 export { aggregateRunCounts } from "./testRunSummary-shared";
-import type { TestRunSummaryData } from "./testRunSummary-shared";
+import type {
+  TestRunSummaryData,
+  PerCaseIterationCounts,
+} from "./testRunSummary-shared";
 
 /**
  * Accept either the singleton client or a `Prisma.TransactionClient` so the
@@ -457,4 +461,54 @@ export async function getJUnitRunSummary(
       resultSegments,
     },
   };
+}
+
+/**
+ * Read per-case iteration counts from the denormalized counters on
+ * TestRunCases (INT-03 / D-04 / D-14). Non-parameterized cases report
+ * `iterationCount: 0` and zeros across all four buckets — required by the
+ * INT-03 acceptance criterion that non-parameterized cases must not report
+ * false-positive iteration counts.
+ *
+ * `notRun` is derived: `max(total - passed - failed - skipped, 0)`. The
+ * clamp guards against transient inconsistencies between the counters and
+ * `totalIterations` (e.g., the denormalizer wrote a counter higher than
+ * total) so the webhook payload never carries a negative count.
+ *
+ * Pure read — no joins, no aggregates, single SELECT against TestRunCases.
+ * Safe to call inside the same transaction as `getTestRunSummary` so the
+ * webhook emitter sees a consistent post-write snapshot.
+ */
+export async function getPerCaseIterationCounts(
+  testRunId: number,
+  client: PrismaLike = prisma
+): Promise<PerCaseIterationCounts[]> {
+  const rows = await client.testRunCases.findMany({
+    where: { testRunId },
+    select: {
+      id: true,
+      passedIterations: true,
+      failedIterations: true,
+      skippedIterations: true,
+      totalIterations: true,
+    },
+    orderBy: { order: "asc" },
+  });
+  return rows.map((row) => {
+    const total = row.totalIterations;
+    const passed = row.passedIterations;
+    const failed = row.failedIterations;
+    const skipped = row.skippedIterations;
+    const notRun = Math.max(total - passed - failed - skipped, 0);
+    return {
+      testRunCaseId: row.id,
+      iterationCount: total,
+      iterationsByStatus: {
+        passed,
+        failed,
+        skipped,
+        notRun,
+      },
+    };
+  });
 }

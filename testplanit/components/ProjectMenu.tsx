@@ -29,9 +29,9 @@ import {
   Plug,
   ScrollText,
   Settings,
-  Settings2,
   Share2,
   Sparkles,
+  SquareStack,
   Tags as TagsIcon,
   Webhook,
 } from "lucide-react";
@@ -290,10 +290,10 @@ export default function ProjectsMenu({
             section: "settings" as MenuSection,
           },
           {
-            icon: Settings2,
-            label: t("admin.menu.advanced"),
-            path: "settings/advanced",
-            id: "settings-advanced-link",
+            icon: SquareStack,
+            label: t("admin.menu.testCaseParameters"),
+            path: "settings/parameters",
+            id: "settings-test-case-parameters-link",
             section: "settings" as MenuSection,
           },
           {

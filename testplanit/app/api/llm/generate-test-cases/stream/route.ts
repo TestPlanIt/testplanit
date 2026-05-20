@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
     context,
     quantity,
     autoGenerateTags,
+    includeParameters,
     feature: featureOverride,
   } = body as {
     projectId: number;
@@ -67,6 +68,7 @@ export async function POST(req: NextRequest) {
     context: GenerationContext;
     quantity?: string;
     autoGenerateTags?: boolean;
+    includeParameters?: boolean;
     /** Optional LLM feature override (e.g., "generate_from_url" or "generate_from_url_app") */
     feature?: string;
   };
@@ -75,6 +77,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       { error: "Missing required parameters", errorCode: "invalid_request" },
       { status: 400 }
+    );
+  }
+
+  // CR-03 (T-06-04-01): server-side admin gate on the
+  // `includeParameters` flag. Mirrors the sync route — the wizard
+  // hides the toggle for non-admins; a crafted request body must
+  // still be rejected here. Returned as a plain JSON 403 (not via
+  // the SSE stream) so the client sees a synchronous failure before
+  // the heartbeat starts.
+  if (includeParameters === true && session.user.access !== "ADMIN") {
+    return NextResponse.json(
+      {
+        error: "Admin access required for includeParameters",
+        code: "FORBIDDEN_PARAMETER_GENERATION",
+        errorCode: "forbidden",
+      },
+      { status: 403 }
     );
   }
 
@@ -218,7 +237,8 @@ export async function POST(req: NextRequest) {
           context,
           quantity,
           autoGenerateTags,
-          systemPromptBase
+          systemPromptBase,
+          includeParameters === true
         );
 
         // TOKEN-02: Read provider config

@@ -3,10 +3,6 @@ import DynamicIcon from "@/components/DynamicIcon";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
 import { MemberList } from "@/components/MemberList";
 import { MilestoneIconAndName } from "@/components/MilestoneIconAndName";
-import {
-  PendingReviewBadge,
-  type PendingReviewSummary,
-} from "@/components/reviews/PendingReviewBadge";
 import { TestRunCasesSummary } from "@/components/TestRunCasesSummary";
 import TextFromJson from "@/components/TextFromJson";
 import { Button } from "@/components/ui/button";
@@ -29,6 +25,7 @@ import {
   CheckCircle,
   Combine,
   Copy,
+  Flame,
   LinkIcon,
   MoreVertical,
   Pencil,
@@ -53,6 +50,7 @@ export interface TestRunItemProps {
     testRunType: string;
     configuration: Configurations | null;
     configurationGroupId: string | null;
+    createdAt?: Date | string;
     state: {
       id: number;
       name: string;
@@ -96,12 +94,6 @@ export interface TestRunItemProps {
   onComplete?: (testRun: any) => void;
   isAdmin?: boolean;
   summaryData?: TestRunSummaryData; // Pre-fetched summary data for batch mode
-  /**
-   * Pre-fetched PENDING ReviewRequest for this row's entity (bulk-loaded by
-   * the parent TestRunDisplay; see RESEARCH §"Pitfall 6"). `undefined` means
-   * no pending review for this row.
-   */
-  pendingRequest?: PendingReviewSummary;
 }
 
 const TestRunItem: React.FC<TestRunItemProps> = ({
@@ -110,7 +102,6 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
   showMilestone = true,
   onDuplicate,
   summaryData,
-  pendingRequest,
 }) => {
   const tCommon = useTranslations("common");
   const { projectId } = useParams();
@@ -137,6 +128,10 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
     onDuplicate;
 
   const showMoreMenu = showEditItem || showCompleteItem || showDuplicateItem;
+
+  const isRecentlyCreated =
+    !!testRun.createdAt &&
+    Date.now() - new Date(testRun.createdAt).getTime() < 5 * 60 * 1000;
 
   // Fetch test run cases with their results and assigned users
   const { data: testRunCases } = useFindManyTestRunCases({
@@ -257,6 +252,14 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                 className="group inline-flex items-center gap-1 max-w-full"
               >
                 <h3 className="text-md font-semibold flex items-center gap-1 hover:text-primary min-w-0">
+                  {isRecentlyCreated && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Flame className="h-4 w-4 shrink-0 text-orange-500 fill-orange-500 animate-pulse" />
+                      </TooltipTrigger>
+                      <TooltipContent>{tCommon("labels.new")}</TooltipContent>
+                    </Tooltip>
+                  )}
                   {isAutomatedRun ? (
                     <Bot className="w-6 h-6 inline mr-1 shrink-0 border-2 text-primary border-primary rounded-full p-0.5" />
                   ) : (
@@ -298,9 +301,6 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                   <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                 </h3>
               </Link>
-              <div className="inline-flex items-center ml-1 align-middle">
-                <PendingReviewBadge pendingRequest={pendingRequest} />
-              </div>
             </div>
             <div className="text-sm text-muted-foreground line-clamp-1">
               {testRun.note && (

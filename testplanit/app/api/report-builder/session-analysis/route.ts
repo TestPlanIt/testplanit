@@ -715,16 +715,6 @@ const METRIC_REGISTRY: Record<
   },
 };
 
-// Cartesian product utility function
-function _cartesianProduct(arrays: any[][]): any[][] {
-  return arrays.reduce(
-    (acc, curr) => {
-      return acc.flatMap((d) => curr.map((e) => [...d, e]));
-    },
-    [[]] as any[][]
-  );
-}
-
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);

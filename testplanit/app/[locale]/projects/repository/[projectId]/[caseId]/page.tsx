@@ -10,6 +10,8 @@ import {
 import LinkedCasesPanel from "@/components/LinkedCasesPanel";
 import { Loading } from "@/components/Loading";
 import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
+import { ConfigureParametersButton } from "@/components/parameters/ConfigureParametersButton";
+import { ConfigureParametersSheet } from "@/components/parameters/ConfigureParametersSheet";
 import { CaseDisplay } from "@/components/tables/CaseDisplay";
 import { TemplateNameDisplay } from "@/components/TemplateNameDisplay";
 import TestResultHistory from "@/components/TestResultHistory";
@@ -48,9 +50,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
-import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
-import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
 import { VersionSelect } from "@/components/VersionSelect";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { ApplicationArea, Attachments, Prisma } from "@prisma/client";
@@ -67,7 +66,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import parseDuration from "parse-duration";
 import React, {
   useCallback,
@@ -97,6 +96,7 @@ import {
   useFindManySharedStepGroup,
   useFindManyTags,
   useFindManyTemplates,
+  useFindManyTestCaseParameter,
   useFindManyWorkflows,
   useFindUniqueProjects,
   useUpdateAttachments,
@@ -331,6 +331,7 @@ export default function TestCaseDetails() {
   } = useRequireAuth();
   const router = useRouter();
   const { projectId, caseId } = useParams();
+  const searchParams = useSearchParams();
   const t = useTranslations();
 
   // Parse and validate projectId
@@ -373,6 +374,33 @@ export default function TestCaseDetails() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isDeleteCaseOpen, setIsDeleteCaseOpen] = useState(false);
+  const [isParamSheetOpen, setIsParamSheetOpen] = useState(false);
+
+  const numericCaseId = Number(caseId);
+  const isValidCaseId = !isNaN(numericCaseId);
+  const { data: caseParameters = [] } = useFindManyTestCaseParameter(
+    {
+      where: { testCaseId: numericCaseId, isDeleted: false },
+      orderBy: { order: "asc" },
+    },
+    { enabled: isValidCaseId }
+  );
+  const parameterCount = caseParameters.length;
+  const parameterChipMeta = useMemo(
+    () =>
+      caseParameters.map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        type: p.type as "STRING" | "INTEGER" | "BOOLEAN" | "SELECT",
+        defaultValue:
+          p.defaultValue === null || p.defaultValue === undefined
+            ? null
+            : typeof p.defaultValue === "string"
+              ? p.defaultValue
+              : JSON.stringify(p.defaultValue),
+      })),
+    [caseParameters]
+  );
 
   const [, setFolderHierarchy] = useState<FolderNode[]>([]);
   const [breadcrumbItems, setBreadcrumbItems] = useState<FolderNode[]>([]);
@@ -726,37 +754,27 @@ export default function TestCaseDetails() {
     createFormSchema(testcase?.template?.caseFields || [], t)
   );
 
-  const { data: workflows } = useFindManyWorkflows({
-    where: {
-      isDeleted: false,
-      scope: "CASES",
-      projects: {
-        some: {
-          projectId: Number(projectId),
+  const { data: workflows } = useFindManyWorkflows(
+    {
+      where: {
+        isDeleted: false,
+        scope: "CASES",
+        projects: {
+          some: {
+            projectId: Number(projectId),
+          },
         },
       },
+      include: {
+        icon: true,
+        color: true,
+      },
+      orderBy: {
+        order: "asc",
+      },
     },
-    include: {
-      icon: true,
-      color: true,
-    },
-    orderBy: {
-      order: "asc",
-    },
-  });
-
-  const reachableGatedStates = useMemo(() => {
-    if (!workflows || !testcase) return [];
-    const currentStateId = testcase.state.id;
-    return workflows
-      .filter((w) => w.requiresReview === true && w.id !== currentStateId)
-      .map((w) => ({
-        id: w.id,
-        name: w.name,
-        icon: { name: (w.icon?.name ?? "circle") as string },
-        color: { value: w.color?.value ?? "" },
-      }));
-  }, [workflows, testcase]);
+    { enabled: isEditMode }
+  );
 
   const workflowOptions =
     workflows?.map((workflow) => ({
@@ -971,6 +989,21 @@ export default function TestCaseDetails() {
     }
     setIsEditMode(!isEditMode);
   };
+
+  const editParamProcessed = useRef(false);
+  useEffect(() => {
+    if (
+      !editParamProcessed.current &&
+      searchParams.get("edit") === "true" &&
+      canAddEdit &&
+      testcase?.template?.id &&
+      !isEditMode
+    ) {
+      editParamProcessed.current = true;
+      setSelectedTemplateId(testcase.template.id);
+      setIsEditMode(true);
+    }
+  }, [searchParams, canAddEdit, testcase, isEditMode]);
 
   const handleCancel = () => {
     setIsEditMode(false);
@@ -1734,16 +1767,6 @@ export default function TestCaseDetails() {
           {isSubmitting && (
             <LoadingSpinnerAlert className="w-[120px] h-[120px] text-primary" />
           )}
-          <div className="px-6 pt-6">
-            <ReviewStatusBanner
-              entityType="CASE"
-              entityId={testcase.id}
-              projectId={Number(projectId)}
-              entityName={testcase.name}
-              reachableGatedStates={reachableGatedStates}
-              currentStateId={testcase.state.id}
-            />
-          </div>
           <CardHeader>
             <CardTitle>
               <div>
@@ -1952,26 +1975,18 @@ export default function TestCaseDetails() {
                       )}
                     </div>
                   ) : (
-                    <div className="flex items-center space-x-2 justify-end">
-                      <RequestReviewButton
-                        entityType="CASE"
-                        entityId={testcase.id}
-                        projectId={Number(projectId)}
-                        currentStateId={testcase.state.id}
-                        reachableGatedStates={reachableGatedStates}
-                      />
+                    <div className="flex items-center space-x-2">
                       {quickScriptEnabled && canAddEdit && (
                         <Button
                           type="button"
                           variant="outline"
                           onClick={() => setIsQuickScriptModalOpen(true)}
                           data-testid="quickscript-case-button"
-                          className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
                         >
-                          <ScrollText className="h-4 w-4 shrink-0" />
-                          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                            {t("repository.cases.quickScript")}
-                          </span>
+                          <div className="flex items-center">
+                            <ScrollText className="w-5 h-5 mr-2" />
+                            <div>{t("repository.cases.quickScript")}</div>
+                          </div>
                         </Button>
                       )}
                       {canAddEdit && (
@@ -1981,12 +1996,11 @@ export default function TestCaseDetails() {
                           onClick={handleEditModeToggle}
                           disabled={isLoadingSharedStepGroups}
                           data-testid="edit-test-case-button"
-                          className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
                         >
-                          <SquarePen className="h-4 w-4 shrink-0" />
-                          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
-                            {t("common.actions.edit")}
-                          </span>
+                          <div className="flex items-center">
+                            <SquarePen className="w-5 h-5 mr-2" />
+                            <div>{t("common.actions.edit")}</div>
+                          </div>
                         </Button>
                       )}
                     </div>
@@ -2171,6 +2185,22 @@ export default function TestCaseDetails() {
                 onExpand={() => setIsCollapsedLeft(false)}
               >
                 <div className="mb-4">
+                  {/* Configure Parameters entry point at the top of the
+                      left panel. The placement is unconditional (in both
+                      read and edit modes) so the button stays reachable
+                      regardless of whether the Steps caseField is
+                      filtered out by the read-mode empty-value check
+                      below — a fresh case with no steps yet still needs
+                      a way to declare parameters before adding them.
+                      `ConfigureParametersButton` itself returns null if
+                      the viewer lacks `canAddEdit`. */}
+                  <div className="mb-2 mr-6 flex justify-end">
+                    <ConfigureParametersButton
+                      parameterCount={parameterCount}
+                      canEdit={canAddEdit}
+                      onOpen={() => setIsParamSheetOpen(true)}
+                    />
+                  </div>
                   <ul>
                     {(testcase?.template?.caseFields || []).map(
                       (field, fieldIndex) => {
@@ -2239,6 +2269,10 @@ export default function TestCaseDetails() {
                                   ? "steps"
                                   : undefined
                               }
+                              parameters={parameterChipMeta}
+                              onOpenParametersSheet={() =>
+                                setIsParamSheetOpen(true)
+                              }
                               {...(field.caseField.type.type === "Steps" && {
                                 onSharedStepCreated: refetch,
                               })}
@@ -2273,6 +2307,7 @@ export default function TestCaseDetails() {
                             ...s,
                             sharedStepGroupName: s.sharedStepGroup?.name,
                           }))}
+                          parameters={parameterChipMeta}
                         />
                         <Separator
                           orientation="horizontal"
@@ -2336,6 +2371,10 @@ export default function TestCaseDetails() {
                                   control={control}
                                   errors={errors}
                                   canEditRestricted={false}
+                                  parameters={parameterChipMeta}
+                                  onOpenParametersSheet={() =>
+                                    setIsParamSheetOpen(true)
+                                  }
                                 />
                                 <Separator
                                   orientation="horizontal"
@@ -2527,6 +2566,14 @@ export default function TestCaseDetails() {
           onClose={() => setIsQuickScriptModalOpen(false)}
           selectedCaseIds={[Number(caseId)]}
           projectId={Number(projectId)}
+        />
+      )}
+      {isValidProjectId && isValidCaseId && (
+        <ConfigureParametersSheet
+          isOpen={isParamSheetOpen}
+          onClose={() => setIsParamSheetOpen(false)}
+          caseId={numericCaseId}
+          projectId={numericProjectId}
         />
       )}
     </FormProvider>
