@@ -1878,7 +1878,7 @@ export default function SessionPage() {
                             </FormLabel>
                             <FormControl>
                               {contentLoaded ? (
-                                <div className="min-h-[50px] max-h-[125px] overflow-y-auto">
+                                <div className="min-h-[50px]">
                                   <TipTapEditor
                                     key={`editing-note-${isEditMode}`}
                                     content={noteContent}
@@ -1929,7 +1929,7 @@ export default function SessionPage() {
                             </FormLabel>
                             <FormControl>
                               {contentLoaded ? (
-                                <div className="min-h-[50px] max-h-[250px] overflow-y-auto">
+                                <div className="min-h-[50px]">
                                   <TipTapEditor
                                     key={`editing-mission-${isEditMode}`}
                                     content={missionContent}
