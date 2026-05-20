@@ -36,6 +36,14 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PrismaClient, WorkflowScope } from "@prisma/client";
 import { enhance } from "@zenstackhq/runtime";
 
+// Live-DB gate (matches lib/services/iterationFanOut.integration.test.ts).
+// CI runs the default test suite without a DATABASE_URL, so these tests
+// must opt out unless both RUN_DB_INTEGRATION=1 and DATABASE_URL are set.
+const RUN_INTEGRATION = process.env.RUN_DB_INTEGRATION === "1";
+const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
+const describeIntegration =
+  RUN_INTEGRATION && HAS_DB_URL ? describe : describe.skip;
+
 const prisma = new PrismaClient();
 
 // Unique suffix isolates this run from any concurrent / prior test fixture.
@@ -283,10 +291,14 @@ async function cleanupFixture(f: Fixture | null): Promise<void> {
 }
 
 beforeAll(async () => {
+  // Skip fixture build when the live-DB gate is closed — the describes
+  // below are describe.skip in that case and won't read fixture.
+  if (!RUN_INTEGRATION || !HAS_DB_URL) return;
   fixture = await setupTwoProjectFixture();
 }, 30_000);
 
 afterAll(async () => {
+  if (!RUN_INTEGRATION || !HAS_DB_URL) return;
   await cleanupFixture(fixture);
   await prisma.$disconnect();
   // Emit findings table so the test summary captures policy runtime behavior.
@@ -325,7 +337,7 @@ async function expectPolicyDenial(
 // fall back to Zod-only enforcement plan from RESEARCH.md A1 is what Phase 2
 // must adopt. The boundary check at lib/schemas/parameterSchema.ts (Plan
 // 01-02) already implements that fall-back, so the contingency is in place.
-describe("Phase 1 @@validate SELECT XOR runtime smoke-test", () => {
+describeIntegration("Phase 1 @@validate SELECT XOR runtime smoke-test", () => {
   it("smoke 1.1: SELECT with both allowedValuesJson AND lookupDataSetId set should be rejected", async () => {
     if (!fixture) throw new Error("Fixture not initialised");
     const enhancedDb = enhance(prisma, { user: fixture.userInA });
@@ -466,7 +478,7 @@ describe("Phase 1 @@validate SELECT XOR runtime smoke-test", () => {
 // If any model returns rows for the outsider, that is a regression of the
 // Pitfall §9 mitigation and the SUMMARY must flag the offending model so
 // Phase 2 hardens the policy.
-describe("Phase 1 cross-tenant unauthenticated-read denial", () => {
+describeIntegration("Phase 1 cross-tenant unauthenticated-read denial", () => {
   // Plant fresh "outsider" rows scoped to the fixture's projectA.
   let plantedParameterId = 0;
   let plantedDataSetId = 0;
@@ -713,92 +725,97 @@ describe("Phase 1 cross-tenant unauthenticated-read denial", () => {
 // Test 3.1 attempts the cross-project assignment via the enhanced client.
 // Test 3.2 demonstrates the documented gap: raw prisma BYPASSES the @@deny
 // (Phase 2's UI must use the enhanced client). Test 3.3 cleans up the leak.
-describe("Phase 1 DSET-06 cross-project DataSet ownership denial", () => {
-  it("(adaptive) Test 3.1: enhanced-client cross-project DataSet create — record outcome", async () => {
-    if (!fixture) throw new Error("Fixture not initialised");
-    // userInB is the creator of projectB. Use userInB so they have create
-    // rights on a projectB-owned DataSet, making the cross-project field
-    // (ownerCaseId pointing at caseInA in projectA) the load-bearing mistake.
-    const enhancedDb = enhance(prisma, { user: fixture.userInB });
-    const { denied, result } = await expectPolicyDenial(() =>
-      enhancedDb.dataSet.create({
-        data: {
-          projectId: fixture!.projectB.id,
-          ownerCaseId: fixture!.caseInA.id, // <-- case is in projectA
-          name: `${RUN_TAG}-cross-project-attempt`,
-          createdById: fixture!.userInB.id,
-        },
-      })
-    );
-    record(
-      "DSET-06 enhanced-client cross-project DataSet create",
-      denied ? "FIRES" : "DOES_NOT_FIRE",
-      denied
-        ? undefined
-        : "DataSet @@deny('create,update', ownerCase.projectId != projectId) did not fire — Phase 2 UI must rely on Zod-layer + getEnhancedDb"
-    );
-    if (!denied) {
-      const r = result as { id?: number } | undefined;
-      if (r?.id) {
-        await prisma.dataSet
-          .update({ where: { id: r.id }, data: { isDeleted: true } })
-          .catch(() => undefined);
+describeIntegration(
+  "Phase 1 DSET-06 cross-project DataSet ownership denial",
+  () => {
+    it("(adaptive) Test 3.1: enhanced-client cross-project DataSet create — record outcome", async () => {
+      if (!fixture) throw new Error("Fixture not initialised");
+      // userInB is the creator of projectB. Use userInB so they have create
+      // rights on a projectB-owned DataSet, making the cross-project field
+      // (ownerCaseId pointing at caseInA in projectA) the load-bearing mistake.
+      const enhancedDb = enhance(prisma, { user: fixture.userInB });
+      const { denied, result } = await expectPolicyDenial(() =>
+        enhancedDb.dataSet.create({
+          data: {
+            projectId: fixture!.projectB.id,
+            ownerCaseId: fixture!.caseInA.id, // <-- case is in projectA
+            name: `${RUN_TAG}-cross-project-attempt`,
+            createdById: fixture!.userInB.id,
+          },
+        })
+      );
+      record(
+        "DSET-06 enhanced-client cross-project DataSet create",
+        denied ? "FIRES" : "DOES_NOT_FIRE",
+        denied
+          ? undefined
+          : "DataSet @@deny('create,update', ownerCase.projectId != projectId) did not fire — Phase 2 UI must rely on Zod-layer + getEnhancedDb"
+      );
+      if (!denied) {
+        const r = result as { id?: number } | undefined;
+        if (r?.id) {
+          await prisma.dataSet
+            .update({ where: { id: r.id }, data: { isDeleted: true } })
+            .catch(() => undefined);
+        }
       }
-    }
-    expect(typeof denied).toBe("boolean");
-  });
-
-  it("DOCUMENTED GAP: raw prisma BYPASSES the @@deny — DSET-06 enforcement requires the enhanced client (Test 3.2)", async () => {
-    if (!fixture) throw new Error("Fixture not initialised");
-    // EXPECTED BEHAVIOR: raw `prisma` does NOT run @@deny; this write
-    // SUCCEEDS. This is intentional — Phase 2's UI layer MUST go through
-    // `getEnhancedDb(session)` per memory `feedback_default_to_enhanced_db`,
-    // which closes this gap. Phase 1 documents the gap and Phase 2 closes it.
-    //
-    // If you change this test to assert rejection, you've changed the
-    // architecture. Re-read RESEARCH.md "Don't Hand-Roll" + Pitfall G.
-    const leaked = await prisma.dataSet.create({
-      data: {
-        projectId: fixture.projectA.id,
-        ownerCaseId: fixture.caseInB.id, // cross-project, raw prisma allows it
-        name: `${RUN_TAG}-raw-bypass`,
-        createdById: fixture.userInA.id,
-      },
+      expect(typeof denied).toBe("boolean");
     });
-    expect(leaked.id).toBeGreaterThan(0);
-    expect(leaked.projectId).toBe(fixture.projectA.id);
-    expect(leaked.ownerCaseId).toBe(fixture.caseInB.id);
 
-    // Test 3.3 — cleanup the leaked test row immediately (soft-delete per
-    // memory `feedback_soft_delete`) so subsequent runs / queries don't see it.
-    await prisma.dataSet.update({
-      where: { id: leaked.id },
-      data: { isDeleted: true },
-    });
-    const after = await prisma.dataSet.findUnique({ where: { id: leaked.id } });
-    expect(after?.isDeleted).toBe(true);
-  });
+    it("DOCUMENTED GAP: raw prisma BYPASSES the @@deny — DSET-06 enforcement requires the enhanced client (Test 3.2)", async () => {
+      if (!fixture) throw new Error("Fixture not initialised");
+      // EXPECTED BEHAVIOR: raw `prisma` does NOT run @@deny; this write
+      // SUCCEEDS. This is intentional — Phase 2's UI layer MUST go through
+      // `getEnhancedDb(session)` per memory `feedback_default_to_enhanced_db`,
+      // which closes this gap. Phase 1 documents the gap and Phase 2 closes it.
+      //
+      // If you change this test to assert rejection, you've changed the
+      // architecture. Re-read RESEARCH.md "Don't Hand-Roll" + Pitfall G.
+      const leaked = await prisma.dataSet.create({
+        data: {
+          projectId: fixture.projectA.id,
+          ownerCaseId: fixture.caseInB.id, // cross-project, raw prisma allows it
+          name: `${RUN_TAG}-raw-bypass`,
+          createdById: fixture.userInA.id,
+        },
+      });
+      expect(leaked.id).toBeGreaterThan(0);
+      expect(leaked.projectId).toBe(fixture.projectA.id);
+      expect(leaked.ownerCaseId).toBe(fixture.caseInB.id);
 
-  it("accepts DataSet create with same-project ownerCaseId (positive control)", async () => {
-    if (!fixture) throw new Error("Fixture not initialised");
-    const enhancedDb = enhance(prisma, { user: fixture.userInA });
-    const ds = await enhancedDb.dataSet.create({
-      data: {
-        projectId: fixture.projectA.id,
-        ownerCaseId: fixture.caseInA.id, // same project — DSET-06 satisfied
-        name: `${RUN_TAG}-same-project-ok`,
-        createdById: fixture.userInA.id,
-      },
+      // Test 3.3 — cleanup the leaked test row immediately (soft-delete per
+      // memory `feedback_soft_delete`) so subsequent runs / queries don't see it.
+      await prisma.dataSet.update({
+        where: { id: leaked.id },
+        data: { isDeleted: true },
+      });
+      const after = await prisma.dataSet.findUnique({
+        where: { id: leaked.id },
+      });
+      expect(after?.isDeleted).toBe(true);
     });
-    expect(ds.id).toBeGreaterThan(0);
-    expect(ds.ownerCaseId).toBe(fixture.caseInA.id);
-  });
-});
+
+    it("accepts DataSet create with same-project ownerCaseId (positive control)", async () => {
+      if (!fixture) throw new Error("Fixture not initialised");
+      const enhancedDb = enhance(prisma, { user: fixture.userInA });
+      const ds = await enhancedDb.dataSet.create({
+        data: {
+          projectId: fixture.projectA.id,
+          ownerCaseId: fixture.caseInA.id, // same project — DSET-06 satisfied
+          name: `${RUN_TAG}-same-project-ok`,
+          createdById: fixture.userInA.id,
+        },
+      });
+      expect(ds.id).toBeGreaterThan(0);
+      expect(ds.ownerCaseId).toBe(fixture.caseInA.id);
+    });
+  }
+);
 
 // ---------------------------------------------------------------------------
 // Group 4 — hasParameters legacy-query regression (PARAM-07)
 // ---------------------------------------------------------------------------
-describe("Phase 1 hasParameters regression gate", () => {
+describeIntegration("Phase 1 hasParameters regression gate", () => {
   it("RepositoryCases.findMany returns hasParameters=false for fresh fixture cases (Test 4.1)", async () => {
     if (!fixture) throw new Error("Fixture not initialised");
     const rows = await prisma.repositoryCases.findMany({
