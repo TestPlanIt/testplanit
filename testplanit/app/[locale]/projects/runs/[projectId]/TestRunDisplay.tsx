@@ -390,7 +390,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
 
   const { data: testRunCases } = useFindManyTestRunCases(
     {
-      where: { testRunId: { in: testRunIds } },
+      where: { testRunId: { in: testRunIds }, isDeleted: false },
       select: { id: true, testRunId: true, repositoryCaseId: true },
     },
     { enabled: testRunIds.length > 0 }

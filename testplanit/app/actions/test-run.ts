@@ -28,7 +28,7 @@ export async function getMaxOrderInTestRun(
 
   try {
     const maxOrderResult = await prisma.testRunCases.aggregate({
-      where: { testRunId },
+      where: { testRunId, isDeleted: false },
       _max: { order: true },
     });
     return { success: true, data: maxOrderResult._max.order ?? 0 };
@@ -61,12 +61,18 @@ export const addToTestRun = withActionAuditContext(
     }
 
     try {
-      // Create the new test run case with the provided order
-      const result = await prisma.testRunCases.create({
-        data: {
+      const result = await prisma.testRunCases.upsert({
+        where: {
+          testRunId_repositoryCaseId: { testRunId, repositoryCaseId },
+        },
+        create: {
           testRunId,
           repositoryCaseId,
-          order, // Use the provided order
+          order,
+        },
+        update: {
+          isDeleted: false,
+          order,
         },
       });
 

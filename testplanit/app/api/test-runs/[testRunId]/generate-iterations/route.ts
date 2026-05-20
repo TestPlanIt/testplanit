@@ -102,7 +102,7 @@ export async function POST(
         }>;
       };
     }> = await db.testRunCases.findMany({
-      where: { testRunId },
+      where: { testRunId, isDeleted: false },
       select: {
         repositoryCaseId: true,
         repositoryCase: {

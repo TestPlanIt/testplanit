@@ -2,13 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock dependencies
 const mockAggregate = vi.fn();
-const mockCreate = vi.fn();
+const mockUpsert = vi.fn();
 
 vi.mock("~/lib/prisma", () => ({
   prisma: {
     testRunCases: {
       aggregate: (...args: any[]) => mockAggregate(...args),
-      create: (...args: any[]) => mockCreate(...args),
+      upsert: (...args: any[]) => mockUpsert(...args),
     },
   },
 }));
@@ -92,7 +92,7 @@ describe("test-run actions", () => {
         data: 42,
       });
       expect(mockAggregate).toHaveBeenCalledWith({
-        where: { testRunId: 123 },
+        where: { testRunId: 123, isDeleted: false },
         _max: { order: true },
       });
     });
@@ -158,7 +158,7 @@ describe("test-run actions", () => {
         repositoryCaseId: 456,
         order: 5,
       };
-      mockCreate.mockResolvedValue(mockResult);
+      mockUpsert.mockResolvedValue(mockResult);
 
       const result = await addToTestRun(123, 456, 5);
 
@@ -166,17 +166,27 @@ describe("test-run actions", () => {
         success: true,
         data: mockResult,
       });
-      expect(mockCreate).toHaveBeenCalledWith({
-        data: {
+      expect(mockUpsert).toHaveBeenCalledWith({
+        where: {
+          testRunId_repositoryCaseId: {
+            testRunId: 123,
+            repositoryCaseId: 456,
+          },
+        },
+        create: {
           testRunId: 123,
           repositoryCaseId: 456,
+          order: 5,
+        },
+        update: {
+          isDeleted: false,
           order: 5,
         },
       });
     });
 
     it("should handle order 0", async () => {
-      mockCreate.mockResolvedValue({
+      mockUpsert.mockResolvedValue({
         id: 1,
         testRunId: 1,
         repositoryCaseId: 1,
@@ -186,13 +196,16 @@ describe("test-run actions", () => {
       const result = await addToTestRun(1, 1, 0);
 
       expect(result.success).toBe(true);
-      expect(mockCreate).toHaveBeenCalledWith({
-        data: expect.objectContaining({ order: 0 }),
-      });
+      expect(mockUpsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({ order: 0 }),
+          update: expect.objectContaining({ order: 0 }),
+        })
+      );
     });
 
     it("should handle large order values", async () => {
-      mockCreate.mockResolvedValue({
+      mockUpsert.mockResolvedValue({
         id: 1,
         testRunId: 1,
         repositoryCaseId: 1,
@@ -202,13 +215,16 @@ describe("test-run actions", () => {
       const result = await addToTestRun(1, 1, 99999);
 
       expect(result.success).toBe(true);
-      expect(mockCreate).toHaveBeenCalledWith({
-        data: expect.objectContaining({ order: 99999 }),
-      });
+      expect(mockUpsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({ order: 99999 }),
+          update: expect.objectContaining({ order: 99999 }),
+        })
+      );
     });
 
     it("should return error on database failure", async () => {
-      mockCreate.mockRejectedValue(new Error("DB error"));
+      mockUpsert.mockRejectedValue(new Error("DB error"));
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
@@ -225,7 +241,7 @@ describe("test-run actions", () => {
 
     it("should return error on unique constraint violation", async () => {
       const error = new Error("Unique constraint failed");
-      mockCreate.mockRejectedValue(error);
+      mockUpsert.mockRejectedValue(error);
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});

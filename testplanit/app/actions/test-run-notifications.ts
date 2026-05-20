@@ -22,7 +22,7 @@ export async function notifyTestCaseAssignment(
   try {
     // Get test run case details with related information
     const testRunCase = await prisma.testRunCases.findUnique({
-      where: { id: testRunCaseId },
+      where: { id: testRunCaseId, isDeleted: false },
       include: {
         repositoryCase: true,
         testRun: {
@@ -83,6 +83,7 @@ export async function notifyBulkTestCaseAssignment(
     const testRunCases = await prisma.testRunCases.findMany({
       where: {
         id: { in: testRunCaseIds },
+        isDeleted: false,
       },
       include: {
         testRun: {

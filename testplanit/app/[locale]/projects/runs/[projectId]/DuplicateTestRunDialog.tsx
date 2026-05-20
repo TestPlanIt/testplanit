@@ -99,6 +99,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
           docs: true,
           testCases: {
             where: {
+              isDeleted: false,
               repositoryCase: {
                 isDeleted: false,
               },
@@ -130,6 +131,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
     {
       where: {
         testRunId: testRunId,
+        isDeleted: false,
         repositoryCase: {
           isDeleted: false,
         },

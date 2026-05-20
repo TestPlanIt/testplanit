@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
             name: true,
             isDeleted: true,
             project: { select: { name: true } },
-            _count: { select: { testCases: true } },
+            _count: { select: { testCases: { where: { isDeleted: false } } } },
           },
         });
         if (!testRun || testRun.isDeleted) {

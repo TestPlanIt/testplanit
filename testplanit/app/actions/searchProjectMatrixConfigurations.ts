@@ -46,6 +46,7 @@ export async function searchProjectMatrixConfigurations(
           WHERE tr."projectId" = $1
             AND tr."isDeleted" = false
             AND tr."configId" IS NOT NULL
+            AND trc."isDeleted" = false
             AND rc."isDeleted" = false
             AND rc."hasParameters" = true
         )
@@ -72,6 +73,7 @@ export async function searchProjectMatrixConfigurations(
           WHERE tr."projectId" = $1
             AND tr."isDeleted" = false
             AND tr."configId" IS NOT NULL
+            AND trc."isDeleted" = false
             AND rc."isDeleted" = false
             AND rc."hasParameters" = true
         )

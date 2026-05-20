@@ -291,6 +291,7 @@ const processor = async (job: Job<ForecastJobDataBase>) =>
                 select: {
                   createdById: true, // Test run creator
                   testCases: {
+                    where: { isDeleted: false },
                     select: {
                       assignedToId: true, // Assigned user
                       results: {

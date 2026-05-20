@@ -1455,6 +1455,7 @@ model TestRunCases {
   skippedIterations Int                         @default(0)
   totalIterations   Int                         @default(0)
   createdAt         DateTime                    @default(now()) @db.Timestamptz(6)
+  isDeleted         Boolean                     @default(false)
   results           TestRunResults[]
   iterations        TestRunCaseIteration[]
   dataSetSnapshot   TestRunCaseDataSetSnapshot?
@@ -1465,6 +1466,7 @@ model TestRunCases {
   @@index([assignedToId])
   @@index([statusId])
   @@index([isCompleted])
+  @@index([isDeleted])
 }
 
 model TestRunResults {

@@ -4621,6 +4621,7 @@ const importTestRunCases = async (
 
           const persistedPairs = await tx.testRunCases.findMany({
             where: {
+              isDeleted: false,
               OR: mappedRecords.map((item) => ({
                 testRunId: item.data.testRunId,
                 repositoryCaseId: item.data.repositoryCaseId,

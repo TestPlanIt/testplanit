@@ -287,7 +287,7 @@ describe("getPerCaseIterationCounts", () => {
     const client = makeCountClient([]);
     await getPerCaseIterationCounts(777, client as any);
     expect(client.testRunCases.findMany).toHaveBeenCalledWith({
-      where: { testRunId: 777 },
+      where: { testRunId: 777, isDeleted: false },
       select: expect.any(Object),
       orderBy: { order: "asc" },
     });
