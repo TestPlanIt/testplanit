@@ -640,6 +640,8 @@
       "aiModels": "Yapay Zeka Modelleri",
       "integrations": "Entegrasyonlar",
       "quickscript": "QuickScript",
+      "advanced": "Gelişmiş",
+      "reviews": "Yorumlar",
       "webhooks": "Web kancaları",
       "shares": "Hisseler",
       "datasets": "Paylaşılan Veri Kümeleri",
@@ -1809,6 +1811,17 @@
         "disconnectWarning3": "Yapay zeka tarafından oluşturulan dışa aktarımlara kod bağlamını dahil etmeyi bırakın.",
         "disconnectSuccess": "Kod deposu bağlantısı kesildi",
         "disconnectError": "Kod deposunun bağlantısı kesilemedi."
+      },
+      "advanced": {
+        "title": "Gelişmiş",
+        "description": "Proje bazında, kişisel tercihlere dayalı özellikler için geçiş düğmeleri. Yeni geçiş düğmeleri eklendikçe burada görünecektir.",
+        "reviewWorkflow": {
+          "label": "İnceleme iş akışını etkinleştirin",
+          "description": "Etkinleştirildiğinde, inceleme gerektiren durumlara geçişler, onaylanmış bir inceleme talebiyle sınırlandırılır. Test edenler \"İnceleme Talep Et\" düğmesini görür; inceleyenler ise bildirim alır.",
+          "enabledToast": "Bu proje için inceleme iş akışı etkinleştirildi.",
+          "disabledToast": "Bu proje için inceleme iş akışı devre dışı bırakıldı.",
+          "saveError": "İnceleme iş akışı ayarı güncellenemedi."
+        }
       }
     },
     "matrix": {
@@ -3010,6 +3023,101 @@
       "deferredMessage": "Kaydettiğinizde bu ek silinecektir."
     }
   },
+  "reviews": {
+    "banner": {
+      "pendingMessage": "<assignee></assignee> adresinden <fromState></fromState> → <toState></toState> <ago></ago> geçişi için inceleme talep edildi.",
+      "changesRequestedTitle": "Talep edilen değişiklikler",
+      "rejectedTitle": "İnceleme reddedildi",
+      "cancelRequest": "İptal talebi",
+      "requestAgain": "Tekrar inceleme talebinde bulunun",
+      "decidedBy": "Karar veren:"
+    },
+    "cancel": {
+      "title": "Bu inceleme isteğini iptal etmek ister misiniz?",
+      "description": "İncelemeyi yapan kişi artık bu talebi değerlendiremeyecektir. Daha sonra yeni bir talep gönderebilirsiniz.",
+      "confirm": "İptal talebi",
+      "success": "İnceleme talebi iptal edildi.",
+      "error": "İnceleme isteği iptal edilemedi. Lütfen birazdan tekrar deneyin."
+    },
+    "list": {
+      "pendingTooltip": "{assignee} tarafından inceleme bekleniyor."
+    },
+    "transitionGate": {
+      "blockedByGate": "Bu geçişten önce \"{gateName}\" için onay gereklidir. Bir inceleme başlatmak için \"İnceleme isteği gönder\" seçeneğini kullanın.",
+      "gatedOptionBadge": "İnceleme gerektiriyor",
+      "saveBlockedByFormErrors": "Kaydetmeden önce vurgulanan form hatalarını düzeltin.",
+      "bulkBlockedSummary": "{count, plural, one {# durum} other {# durumlar}} \"{gateName}\" kapısı tarafından engellendi: {sampleNames}{more, plural, =0 {} other {ve # daha fazlası}}. Engellenen her durum, bu geçişten önce \"{gateName}\" için onaylanmış bir incelemeye ihtiyaç duyar.",
+      "toastReviewRequired": "Bu geçiş için onay gereklidir. İnceleme talebinde bulunun ve onaylandıktan sonra tekrar deneyin.",
+      "toastPendingReviewExists": "Bu geçiş için zaten bir inceleme süreci başlatıldı. Kararı bekleyin veya tekrar denemeden önce işlemi iptal edin."
+    },
+    "inbox": {
+      "iconAria": "{count, plural, =0 {İnceleme gelen kutusu} one {İnceleme gelen kutusu, # beklemede} other {İnceleme gelen kutusu, # beklemede}}",
+      "pageTitle": "Yorumlar",
+      "pageDescription": "Size atanmış (doğrudan veya sahip olduğunuz bir rol aracılığıyla) bekleyen inceleme talepleri.",
+      "empty": "Bekleyen değerlendirme yok. Her şey tamamlandı.",
+      "featureDisabled": "İnceleme iş akışı özelliği şu anda devre dışı bırakılmıştır. Bekleyen incelemeler korunacak ve özellik yeniden etkinleştirildiğinde tekrar görünecektir.",
+      "columnEntity": "Varlık",
+      "columnProject": "Proje",
+      "columnRequester": "Talep Eden",
+      "columnTransition": "Geçiş",
+      "columnRequestedAt": "Talep edildiği yer",
+      "filterEntityType": "Varlık türü",
+      "filterProject": "Proje",
+      "filterAllEntityTypes": "Tüm varlık türleri",
+      "filterEntityTypeCase": "Test senaryoları",
+      "filterEntityTypeRun": "Test çalışmaları",
+      "filterEntityTypeSession": "Oturumlar",
+      "filterAllProjects": "Tüm projeler"
+    },
+    "requester": {
+      "openButton": "İnceleme talebi",
+      "sheetTitle": "İnceleme talebi",
+      "sheetDescription": "Hedef duruma geçmeden önce bu varlığı incelemeye gönderin.",
+      "assigneeLabel": "Atanan kişi",
+      "assigneePlaceholder": "Bir kullanıcı veya rol seçin",
+      "usersHoldRole": "{count, plural, one {# Bu role sahip kullanıcı sayısı} other {Bu role sahip kullanıcı sayısı}}",
+      "targetStateLabel": "Hedef durum",
+      "targetStatePlaceholder": "Hedef bir eyalet seçin",
+      "commentLabel": "Yorum",
+      "commentPlaceholder": "Değerlendiricinin nelere bakmasını istediğinizi açıklayın.",
+      "commentRequired": "Bir yorum yapılması gerekiyor.",
+      "assigneeRequired": "Bir atama yapılacak kişiyi seçin.",
+      "targetStateRequired": "Hedef eyaleti seçin.",
+      "submitButton": "İnceleme talebi",
+      "submitSuccess": "İnceleme talebi oluşturuldu.",
+      "alreadyPendingError": "Bu kuruluş için halihazırda bir inceleme süreci devam etmektedir.",
+      "cannotSelfAssign": "Kendinize değerlendirme atayamazsınız; başka bir kullanıcı veya rol seçin."
+    },
+    "reviewer": {
+      "approve": "Onaylamak",
+      "requestChanges": "Değişiklik talebi",
+      "reject": "Reddetmek",
+      "approveConfirmTitle": "Bu inceleme talebini onaylıyor musunuz?",
+      "approveConfirmDescription": "Onaylama, <requester></requester> 'in <name></name> 'ten <state></state>'e geçişine izin verecektir.",
+      "approvalNoteLabel": "Onay notu",
+      "approvalNotePlaceholder": "Talep eden kişi için isteğe bağlı bir not ekleyin (onay mesajının yanında görünür).",
+      "requestChangesTitle": "Değişiklik talebi",
+      "requestChangesDescription": "Bu geçişi onaylamadan önce nelerin değişmesi gerektiğini talep edene bildirin.",
+      "requestChangesCommentLabel": "Yorum",
+      "requestChangesCommentPlaceholder": "Nelerin değişmesi gerektiğini açıklayın.",
+      "rejectTitle": "Bu inceleme talebini reddetmek mi istiyorsunuz?",
+      "rejectDescription": "<requester></requester> bloklarının <name></name> bloklarından <state></state>bloklarına geçişi reddediliyor. Yeniden denemek için yeni bir inceleme isteği oluşturulmalıdır.",
+      "rejectCommentLabel": "Yorum",
+      "rejectCommentPlaceholder": "Bu talebi neden reddettiğinizi açıklayın.",
+      "commentRequired": "Bir yorum yapılması gerekiyor.",
+      "confirmApprove": "Onaylamak",
+      "confirmRequestChanges": "Göndermek",
+      "confirmReject": "Reddetmek",
+      "cancel": "İptal etmek",
+      "approveSuccess": "İnceleme onaylandı.",
+      "requestChangesSuccess": "Değişiklik talebi.",
+      "rejectSuccess": "İnceleme reddedildi.",
+      "ineligibleError": "Bu inceleme talebine artık karar verme yetkiniz bulunmamaktadır.",
+      "alreadyDecidedError": "Bu değerlendirmeye ilişkin karar zaten verildi.",
+      "decideError": "Kararınız kaydedilemedi. Lütfen birazdan tekrar deneyin.",
+      "panelSummary": "{requesterName}'dan gelen inceleme isteği: {targetStateName}'e geçiş"
+    }
+  },
   "runs": {
     "notFound": "Test çalıştırması bulunamadı.",
     "add": {
@@ -3187,6 +3295,7 @@
       "exportTemplates": "Şablonları Dışa Aktar",
       "codeRepositories": "Kod Depoları",
       "quickScript": "QuickScript",
+      "advanced": "Gelişmiş",
       "sso": "Kimlik doğrulama",
       "security": "Güvenlik",
       "trash": "Çöp",
@@ -4184,6 +4293,18 @@
     },
     "workflows": {
       "description": "Test senaryosu iş akışlarını yönetin",
+      "systemFeatureCard": {
+        "title": "İş akışı özelliğini inceleyin.",
+        "description": "İnceleme ve onaylama özelliği için sistem düzeyinde açma/kapama düğmesi. Etkinleştirildiğinde, projeler Gelişmiş ayarları aracılığıyla bu özelliği ayrı ayrı etkinleştirebilir veya devre dışı bırakabilir.",
+        "stateEnabled": "Etkinleştirilmiş",
+        "stateDisabled": "Engelli",
+        "operatorNotePrefix": "Ortam değişkeni aracılığıyla ayarlanır.",
+        "operatorNoteSuffix": "Değişikliklerin uygulanması için yeniden başlatma gereklidir."
+      },
+      "editWorkflow": {
+        "requiresReviewLabel": "İnceleme gerektiriyor",
+        "requiresReviewFeatureDisabled": "İnceleme iş akışı özelliği sistem düzeyinde devre dışı bırakılmıştır. Yeniden etkinleştirmek için bir projenin Gelişmiş ayarlarını açıp kapatın veya TESTPLANIT_REVIEW_FEATURE_ENABLED özelliğini ayarlayın."
+      },
       "add": {
         "button": "İş Akışı Ekle",
         "title": "Yeni İş Akışı Ekle",

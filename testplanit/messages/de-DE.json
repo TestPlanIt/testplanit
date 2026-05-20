@@ -1814,7 +1814,7 @@
       },
       "advanced": {
         "title": "Fortschrittlich",
-        "description": "Für jedes Projekt einzeln einstellbare Optionen für erweiterte Funktionen.",
+        "description": "Projektspezifische Schalter für vordefinierte Funktionen. Neue Schalter werden hier angezeigt, sobald sie eingeführt werden.",
         "reviewWorkflow": {
           "label": "Prüfworkflow aktivieren",
           "description": "Wenn diese Option aktiviert ist, werden Übergänge in Zustände, die eine Überprüfung erfordern, durch eine genehmigte Überprüfungsanfrage blockiert. Tester sehen die Schaltfläche „Überprüfung anfordern“; Prüfer erhalten Benachrichtigungen.",
@@ -3025,11 +3025,12 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "Rezension angefordert vor {assignee}. {ago}.",
+      "pendingMessage": "Überprüfung angefordert von <assignee></assignee> für Übergang <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "Änderungen angefordert",
       "rejectedTitle": "Überprüfung abgelehnt",
       "cancelRequest": "Stornierungsanfrage",
-      "requestAgain": "Erneute Überprüfung anfordern"
+      "requestAgain": "Erneute Überprüfung anfordern",
+      "decidedBy": "Beschlossen von"
     },
     "cancel": {
       "title": "Diese Bewertungsanfrage stornieren?",
@@ -3084,14 +3085,15 @@
       "targetStateRequired": "Wählen Sie einen Zielstaat aus.",
       "submitButton": "Überprüfung anfordern",
       "submitSuccess": "Überprüfungsanfrage erstellt.",
-      "alreadyPendingError": "Für diese Einrichtung ist bereits eine Überprüfung anhängig."
+      "alreadyPendingError": "Für diese Einrichtung ist bereits eine Überprüfung anhängig.",
+      "cannotSelfAssign": "Sie können sich selbst keine Bewertung zuweisen; wählen Sie einen anderen Benutzer oder eine Rolle."
     },
     "reviewer": {
       "approve": "Genehmigen",
       "requestChanges": "Änderungen anfordern",
       "reject": "Ablehnen",
       "approveConfirmTitle": "Soll diese Überprüfungsanfrage genehmigt werden?",
-      "approveConfirmDescription": "Durch die Genehmigung wird dem Antragsteller ermöglicht, diesen {entityType} in {targetStateName} umzuwandeln.",
+      "approveConfirmDescription": "Durch die Genehmigung wird es <requester></requester> ermöglicht, in <name></name> zu <state></state> überzugehen.",
       "approvalNoteLabel": "Genehmigungsvermerk",
       "approvalNotePlaceholder": "Fügen Sie optional eine Notiz für den Antragsteller hinzu (sichtbar neben der Genehmigung).",
       "requestChangesTitle": "Änderungen anfordern",
@@ -3099,7 +3101,7 @@
       "requestChangesCommentLabel": "Kommentar",
       "requestChangesCommentPlaceholder": "Erklären Sie, was sich ändern muss.",
       "rejectTitle": "Diese Überprüfungsanfrage ablehnen?",
-      "rejectDescription": "Die Ablehnung verhindert, dass der Anfragende diesen Zustand {entityType} in den Zustand {targetStateName}überführt. Es muss eine neue Überprüfungsanfrage erstellt werden, um es erneut zu versuchen.",
+      "rejectDescription": "Die Blöcke <requester></requester> , die zwischen <name></name> und <state></state>wechseln, wurden abgelehnt. Um den Vorgang zu wiederholen, muss eine neue Überprüfungsanfrage erstellt werden.",
       "rejectCommentLabel": "Kommentar",
       "rejectCommentPlaceholder": "Begründen Sie, warum Sie diese Anfrage ablehnen.",
       "commentRequired": "Ein Kommentar ist erforderlich.",

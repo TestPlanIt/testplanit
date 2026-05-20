@@ -1814,7 +1814,7 @@
       },
       "advanced": {
         "title": "고급의",
-        "description": "프로젝트별로 고급 기능을 켜고 끌 수 있습니다.",
+        "description": "프로젝트별로 특정 기능을 활성화/비활성화할 수 있는 토글 기능입니다. 새로운 토글 기능은 추가되는 대로 여기에 표시됩니다.",
         "reviewWorkflow": {
           "label": "검토 워크플로 활성화",
           "description": "이 기능을 활성화하면 검토가 필요한 상태로의 전환은 승인된 검토 요청에 따라 제한됩니다. 테스터는 '검토 요청' 버튼을 볼 수 있으며, 검토자는 알림을 받습니다.",
@@ -3025,11 +3025,12 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "{assignee}님께서 리뷰를 요청하셨습니다. {ago} 전입니다.",
+      "pendingMessage": "<assignee></assignee> 에서 <fromState></fromState> → <toState></toState> <ago></ago>로의 전환에 대한 검토가 요청되었습니다.",
       "changesRequestedTitle": "요청된 변경 사항",
       "rejectedTitle": "검토가 거부되었습니다.",
       "cancelRequest": "취소 요청",
-      "requestAgain": "다시 검토를 요청합니다"
+      "requestAgain": "다시 검토를 요청합니다",
+      "decidedBy": "결정됨"
     },
     "cancel": {
       "title": "이 리뷰 요청을 취소하시겠습니까?",
@@ -3084,14 +3085,15 @@
       "targetStateRequired": "목표 상태를 선택하세요.",
       "submitButton": "검토 요청",
       "submitSuccess": "검토 요청이 생성되었습니다.",
-      "alreadyPendingError": "해당 기관에 대한 검토가 이미 진행 중입니다."
+      "alreadyPendingError": "해당 기관에 대한 검토가 이미 진행 중입니다.",
+      "cannotSelfAssign": "본인에게 리뷰를 할당할 수는 없습니다. 다른 사용자 또는 역할을 선택하세요."
     },
     "reviewer": {
       "approve": "승인하다",
       "requestChanges": "변경 요청",
       "reject": "거부하다",
       "approveConfirmTitle": "이 검토 요청을 승인하시겠습니까?",
-      "approveConfirmDescription": "승인하면 요청자는 이 {entityType} 을 {targetStateName}으로 전환할 수 있습니다.",
+      "approveConfirmDescription": "승인하면 <requester></requester> 이 <name></name> 에서 <state></state>으로 전환할 수 있습니다.",
       "approvalNoteLabel": "승인 메모",
       "approvalNotePlaceholder": "요청자에게 남길 메모를 선택적으로 추가할 수 있습니다(승인 내용과 함께 표시됨).",
       "requestChangesTitle": "변경 요청",
@@ -3099,7 +3101,7 @@
       "requestChangesCommentLabel": "논평",
       "requestChangesCommentPlaceholder": "무엇을 바꿔야 하는지 설명하세요.",
       "rejectTitle": "이 검토 요청을 거부하시겠습니까?",
-      "rejectDescription": "거부하면 요청자가 이 {entityType} 를 {targetStateName}로 전환할 수 없습니다. 다시 시도하려면 새 검토 요청을 생성해야 합니다.",
+      "rejectDescription": "<requester></requester> 블록이 <name></name> 에서 <state></state>로 전환되는 것을 거부합니다. 다시 시도하려면 새 검토 요청을 생성해야 합니다.",
       "rejectCommentLabel": "논평",
       "rejectCommentPlaceholder": "이 요청을 거부하는 이유를 설명해 주십시오.",
       "commentRequired": "댓글을 남겨주세요.",
@@ -3113,7 +3115,7 @@
       "ineligibleError": "귀하는 더 이상 이 검토 요청에 대한 결정 권한이 없습니다.",
       "alreadyDecidedError": "이번 검토는 이미 결정되었습니다.",
       "decideError": "결정을 기록할 수 없습니다. 잠시 후 다시 시도해 주세요.",
-      "panelSummary": "{requesterName}님의 검토 요청: {targetStateName} 로의 전환"
+      "panelSummary": "{requesterName}님의 검토 요청: {targetStateName} 로 전환"
     }
   },
   "runs": {

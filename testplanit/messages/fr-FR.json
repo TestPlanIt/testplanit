@@ -1814,7 +1814,7 @@
       },
       "advanced": {
         "title": "Avancé",
-        "description": "Options par projet pour les fonctionnalités avancées.",
+        "description": "Options par projet pour les fonctionnalités spécifiques. Les nouvelles options apparaîtront ici au fur et à mesure de leur introduction.",
         "reviewWorkflow": {
           "label": "Activer le flux de travail de révision",
           "description": "Lorsque cette option est activée, le passage à un état nécessitant une révision est conditionné par l'approbation de la demande de révision. Les testeurs voient le bouton « Demander une révision » ; les réviseurs reçoivent une notification.",
@@ -3025,11 +3025,12 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "Demande d'avis effectuée il y a {assignee}. {ago}.",
+      "pendingMessage": "Demande d'examen de <assignee></assignee> pour la transition <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "Modifications demandées",
       "rejectedTitle": "Avis rejeté",
       "cancelRequest": "Demande d'annulation",
-      "requestAgain": "Demander une nouvelle évaluation"
+      "requestAgain": "Demander une nouvelle évaluation",
+      "decidedBy": "Décidé par"
     },
     "cancel": {
       "title": "Annuler cette demande d'évaluation ?",
@@ -3085,14 +3086,14 @@
       "submitButton": "Demande d'avis",
       "submitSuccess": "Demande de révision créée.",
       "alreadyPendingError": "Une évaluation est déjà en cours pour cette entité.",
-      "cannotSelfAssign": "Vous ne pouvez pas vous assigner une révision à vous-même ; choisissez un autre utilisateur ou un rôle."
+      "cannotSelfAssign": "Vous ne pouvez pas vous attribuer une évaluation ; choisissez un autre utilisateur ou un rôle."
     },
     "reviewer": {
       "approve": "Approuver",
       "requestChanges": "Demander des modifications",
       "reject": "Rejeter",
       "approveConfirmTitle": "Approuver cette demande d'examen ?",
-      "approveConfirmDescription": "L'approbation permettra au demandeur de faire passer ce {entityType} à {targetStateName}.",
+      "approveConfirmDescription": "L'approbation permettra à <requester></requester> de passer de <name></name> à <state></state>.",
       "approvalNoteLabel": "Note d'approbation",
       "approvalNotePlaceholder": "Ajoutez une note facultative à l'attention du demandeur (visible à côté de l'approbation).",
       "requestChangesTitle": "Demander des modifications",
@@ -3100,7 +3101,7 @@
       "requestChangesCommentLabel": "Commentaire",
       "requestChangesCommentPlaceholder": "Expliquez ce qui doit changer.",
       "rejectTitle": "Refuser cette demande d'évaluation ?",
-      "rejectDescription": "Le refus empêche le demandeur de faire passer cet élément {entityType} à {targetStateName}. Une nouvelle demande de révision doit être créée pour réessayer.",
+      "rejectDescription": "Rejet des blocs <requester></requester> lors de la transition <name></name> vers <state></state>. Une nouvelle demande de révision doit être créée pour réessayer.",
       "rejectCommentLabel": "Commentaire",
       "rejectCommentPlaceholder": "Expliquez pourquoi vous rejetez cette demande.",
       "commentRequired": "Un commentaire est requis.",

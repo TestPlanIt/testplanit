@@ -1814,7 +1814,7 @@
       },
       "advanced": {
         "title": "Avançado",
-        "description": "Opções para ativar/desativar recursos avançados por projeto.",
+        "description": "Opções específicas para cada projeto que definem suas preferências. Novas opções aparecerão aqui conforme forem introduzidas.",
         "reviewWorkflow": {
           "label": "Ativar fluxo de trabalho de revisão",
           "description": "Quando ativada, a transição para estados que exigem revisão é controlada por uma solicitação de revisão aprovada. Os testadores veem o botão \"Solicitar revisão\"; os revisores recebem notificações.",
@@ -3025,11 +3025,12 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "Avaliação solicitada há {assignee}. {ago} anos.",
+      "pendingMessage": "Revisão solicitada de <assignee></assignee> para a transição <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "Alterações solicitadas",
       "rejectedTitle": "Revisão rejeitada",
       "cancelRequest": "Cancelar solicitação",
-      "requestAgain": "Solicitar revisão novamente"
+      "requestAgain": "Solicitar revisão novamente",
+      "decidedBy": "Decidido por"
     },
     "cancel": {
       "title": "Cancelar este pedido de avaliação?",
@@ -3084,14 +3085,15 @@
       "targetStateRequired": "Selecione um estado de destino.",
       "submitButton": "Solicitar revisão",
       "submitSuccess": "Solicitação de revisão criada.",
-      "alreadyPendingError": "Já existe uma avaliação pendente para esta entidade."
+      "alreadyPendingError": "Já existe uma avaliação pendente para esta entidade.",
+      "cannotSelfAssign": "Você não pode atribuir uma avaliação a si mesmo; escolha outro usuário ou uma função."
     },
     "reviewer": {
       "approve": "Aprovar",
       "requestChanges": "Solicitar alterações",
       "reject": "Rejeitar",
       "approveConfirmTitle": "Aprovar este pedido de revisão?",
-      "approveConfirmDescription": "A aprovação permitirá ao solicitante fazer a transição deste {entityType} para {targetStateName}.",
+      "approveConfirmDescription": "A aprovação permitirá que <requester></requester> faça a transição de <name></name> para <state></state>.",
       "approvalNoteLabel": "Nota de aprovação",
       "approvalNotePlaceholder": "Adicione uma nota opcional para o solicitante (visível junto com a aprovação).",
       "requestChangesTitle": "Solicitar alterações",
@@ -3099,7 +3101,7 @@
       "requestChangesCommentLabel": "Comentário",
       "requestChangesCommentPlaceholder": "Explique o que precisa ser mudado.",
       "rejectTitle": "Deseja rejeitar este pedido de revisão?",
-      "rejectDescription": "A rejeição impede que o solicitante faça a transição deste {entityType} para {targetStateName}. Uma nova solicitação de revisão deve ser criada para tentar novamente.",
+      "rejectDescription": "Os blocos <requester></requester> foram rejeitados durante a transição de <name></name> para <state></state>. Uma nova solicitação de revisão deve ser criada para tentar novamente.",
       "rejectCommentLabel": "Comentário",
       "rejectCommentPlaceholder": "Explique por que você está rejeitando esta solicitação.",
       "commentRequired": "É necessário um comentário.",

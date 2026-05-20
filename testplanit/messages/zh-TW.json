@@ -1814,7 +1814,7 @@
       },
       "advanced": {
         "title": "先進的",
-        "description": "每個項目都有高級功能的切換開關。",
+        "description": "每個項目都設有針對特定功能的開關。新增的開關將在此處顯示。",
         "reviewWorkflow": {
           "label": "啟用審核工作流程",
           "description": "啟用此功能後，需要審核的狀態轉換將由已核准的審核請求控制。測試人員會看到「請求審核」按鈕；審核人員會收到通知。",
@@ -3025,11 +3025,12 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "審核請求於 {assignee}. {ago} 年前提出。",
+      "pendingMessage": "Review requested from <assignee></assignee> for transition <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "請求更改",
       "rejectedTitle": "審查被拒絕",
       "cancelRequest": "取消請求",
-      "requestAgain": "再次請求復審"
+      "requestAgain": "再次請求復審",
+      "decidedBy": "由……決定"
     },
     "cancel": {
       "title": "取消此審核請求？",
@@ -3084,14 +3085,15 @@
       "targetStateRequired": "選擇目標州。",
       "submitButton": "請求審核",
       "submitSuccess": "審核請求已建立。",
-      "alreadyPendingError": "目前已有針對該實體的審查正在進行中。"
+      "alreadyPendingError": "目前已有針對該實體的審查正在進行中。",
+      "cannotSelfAssign": "你不能給自己分配評論；請選擇其他使用者或角色。"
     },
     "reviewer": {
       "approve": "核准",
       "requestChanges": "請求更改",
       "reject": "拒絕",
       "approveConfirmTitle": "批准此審核請求？",
-      "approveConfirmDescription": "批准後，請求者可以將此 {entityType} 過渡到 {targetStateName}。",
+      "approveConfirmDescription": "Approving will permit <requester></requester> to transition <name></name> to <state></state>.",
       "approvalNoteLabel": "批准說明",
       "approvalNotePlaceholder": "可為請求者新增選用備註（顯示在核准資訊旁）。",
       "requestChangesTitle": "請求更改",
@@ -3099,7 +3101,7 @@
       "requestChangesCommentLabel": "評論",
       "requestChangesCommentPlaceholder": "解釋需要做出哪些改變。",
       "rejectTitle": "拒絕此審核請求？",
-      "rejectDescription": "拒絕請求會阻止請求者將此 {entityType} 轉換為 {targetStateName}。必須建立新的審核請求才能重試。",
+      "rejectDescription": "Rejecting blocks <requester></requester> from transitioning <name></name> to <state></state>. A new review request must be created to retry.",
       "rejectCommentLabel": "評論",
       "rejectCommentPlaceholder": "請解釋您拒絕此請求的原因。",
       "commentRequired": "必鬚髮表評論。",
@@ -7335,7 +7337,7 @@
     "runProgressCounter": "{done} / {total}",
     "runProgressDismissAria": "駁回進度",
     "runProgressComplete": "生成 {total, plural, =1 {# 迭代} other {# 迭代}} ，用於 \"{runName}\"",
-    "runProgressFailedToast": "無法為「{runName}」產生迭代。 {reason}",
+    "runProgressFailedToast": "無法為“{runName}”產生迭代。 {reason}",
     "runProgressNavAway": "把剩下的部分展示給我",
     "runGeneratingHeading": "生成迭代…",
     "runGeneratingHelper": "這可能需要幾分鐘。",

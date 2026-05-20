@@ -1814,7 +1814,7 @@
       },
       "advanced": {
         "title": "Trình độ cao",
-        "description": "Tùy chọn bật/tắt các tính năng nâng cao cho từng dự án.",
+        "description": "Các tùy chọn bật/tắt riêng cho từng dự án đối với các tính năng mang tính chủ quan. Các tùy chọn mới sẽ xuất hiện ở đây khi chúng được giới thiệu.",
         "reviewWorkflow": {
           "label": "Kích hoạt quy trình xem xét",
           "description": "Khi được kích hoạt, quá trình chuyển đổi sang các trạng thái yêu cầu xem xét sẽ được kiểm soát bằng yêu cầu xem xét đã được phê duyệt. Người kiểm thử sẽ thấy nút \"Yêu cầu xem xét\"; người xem xét sẽ nhận được thông báo.",
@@ -3025,11 +3025,12 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "Yêu cầu đánh giá được gửi từ {assignee}. {ago} trước.",
+      "pendingMessage": "Yêu cầu xem xét từ <assignee></assignee> cho quá trình chuyển đổi <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "Những thay đổi được yêu cầu",
       "rejectedTitle": "Đánh giá bị từ chối",
       "cancelRequest": "Yêu cầu hủy bỏ",
-      "requestAgain": "Yêu cầu xem xét lại"
+      "requestAgain": "Yêu cầu xem xét lại",
+      "decidedBy": "Được quyết định bởi"
     },
     "cancel": {
       "title": "Bạn muốn hủy yêu cầu đánh giá này?",
@@ -3084,14 +3085,15 @@
       "targetStateRequired": "Chọn tiểu bang mục tiêu.",
       "submitButton": "Yêu cầu xem xét",
       "submitSuccess": "Yêu cầu xem xét đã được tạo.",
-      "alreadyPendingError": "Hiện tại, đơn vị này đang chờ được xem xét."
+      "alreadyPendingError": "Hiện tại, đơn vị này đang chờ được xem xét.",
+      "cannotSelfAssign": "Bạn không thể tự mình viết đánh giá; hãy chọn người dùng khác hoặc vai trò khác."
     },
     "reviewer": {
       "approve": "Chấp thuận",
       "requestChanges": "Yêu cầu thay đổi",
       "reject": "Từ chối",
       "approveConfirmTitle": "Bạn có đồng ý yêu cầu xem xét này không?",
-      "approveConfirmDescription": "Việc phê duyệt sẽ cho phép người yêu cầu chuyển đổi {entityType} này thành {targetStateName}.",
+      "approveConfirmDescription": "Phê duyệt sẽ cho phép <requester></requester> chuyển đổi <name></name> sang <state></state>.",
       "approvalNoteLabel": "Ghi chú phê duyệt",
       "approvalNotePlaceholder": "Thêm ghi chú tùy chọn cho người yêu cầu (hiển thị bên cạnh phần phê duyệt).",
       "requestChangesTitle": "Yêu cầu thay đổi",
@@ -3099,7 +3101,7 @@
       "requestChangesCommentLabel": "Bình luận",
       "requestChangesCommentPlaceholder": "Hãy giải thích những gì cần thay đổi.",
       "rejectTitle": "Bạn muốn từ chối yêu cầu đánh giá này?",
-      "rejectDescription": "Việc từ chối sẽ ngăn người yêu cầu chuyển đổi trạng thái {entityType} này sang {targetStateName}. Cần phải tạo một yêu cầu xem xét mới để thử lại.",
+      "rejectDescription": "Từ chối các khối <requester></requester> khi chuyển đổi từ <name></name> sang <state></state>. Cần tạo yêu cầu xem xét mới để thử lại.",
       "rejectCommentLabel": "Bình luận",
       "rejectCommentPlaceholder": "Hãy giải thích lý do tại sao bạn từ chối yêu cầu này.",
       "commentRequired": "Cần phải có bình luận.",

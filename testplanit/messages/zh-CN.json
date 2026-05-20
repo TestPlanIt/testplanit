@@ -1814,7 +1814,7 @@
       },
       "advanced": {
         "title": "先进的",
-        "description": "每个项目都有高级功能的切换开关。",
+        "description": "每个项目都设有针对特定功能的开关。新增的开关将在此处显示。",
         "reviewWorkflow": {
           "label": "启用审核工作流程",
           "description": "启用此功能后，需要审核的状态转换将由已批准的审核请求控制。测试人员会看到“请求审核”按钮；审核人员会收到通知。",
@@ -3025,11 +3025,12 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "审核请求于 {assignee}. {ago} 年前提出。",
+      "pendingMessage": "请求对 <assignee></assignee> 的过渡 <fromState></fromState> → <toState></toState> <ago></ago> 进行审核。",
       "changesRequestedTitle": "请求更改",
       "rejectedTitle": "审查被拒绝",
       "cancelRequest": "取消请求",
-      "requestAgain": "再次请求复审"
+      "requestAgain": "再次请求复审",
+      "decidedBy": "由……决定"
     },
     "cancel": {
       "title": "取消此审核请求？",
@@ -3084,14 +3085,15 @@
       "targetStateRequired": "选择目标州。",
       "submitButton": "请求审核",
       "submitSuccess": "审核请求已创建。",
-      "alreadyPendingError": "目前已有针对该实体的审查正在进行中。"
+      "alreadyPendingError": "目前已有针对该实体的审查正在进行中。",
+      "cannotSelfAssign": "你不能给自己分配评论；请选择其他用户或角色。"
     },
     "reviewer": {
       "approve": "批准",
       "requestChanges": "请求更改",
       "reject": "拒绝",
       "approveConfirmTitle": "批准此审核请求？",
-      "approveConfirmDescription": "批准后，请求者可以将此 {entityType} 过渡到 {targetStateName}。",
+      "approveConfirmDescription": "批准后，将允许 <requester></requester> 过渡到 <name></name> 到 <state></state>。",
       "approvalNoteLabel": "批准说明",
       "approvalNotePlaceholder": "可为请求者添加可选备注（显示在批准信息旁边）。",
       "requestChangesTitle": "请求更改",
@@ -3099,7 +3101,7 @@
       "requestChangesCommentLabel": "评论",
       "requestChangesCommentPlaceholder": "解释需要做出哪些改变。",
       "rejectTitle": "拒绝此审核请求？",
-      "rejectDescription": "拒绝请求会阻止请求者将此 {entityType} 转换为 {targetStateName}。必须创建新的审核请求才能重试。",
+      "rejectDescription": "Rejecting blocks <requester></requester> from transitioning <name></name> to <state></state>. A new review request must be created to retry.",
       "rejectCommentLabel": "评论",
       "rejectCommentPlaceholder": "请解释您拒绝此请求的原因。",
       "commentRequired": "必须发表评论。",

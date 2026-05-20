@@ -1718,7 +1718,7 @@
           "historicalItemBy": "przez {name}",
           "noVersionsYet": "Brak zapisanych wersji"
         },
-        "datasetTabSharedReadOnlyHint": "Tylko do odczytu widok wersji {version, number}. Przełącz się do bieżącej wersji, aby ją edytować.",
+        "datasetTabSharedReadOnlyHint": "Tylko do odczytu widok wersji {version, number}. Aby edytować, przejdź do bieżącej wersji.",
         "datasetTabSharedEditorHint": "Kliknij Zapisz, gdy skończysz. Każdy zapis tworzy nową wersję."
       },
       "quickScript": {
@@ -1814,7 +1814,7 @@
       },
       "advanced": {
         "title": "Zaawansowany",
-        "description": "Przełączniki dla zaawansowanych funkcji w obrębie projektu.",
+        "description": "Przełączniki dla poszczególnych projektów, umożliwiające tworzenie funkcji, które są brane pod uwagę. Nowe przełączniki będą się pojawiać tutaj w miarę ich wprowadzania.",
         "reviewWorkflow": {
           "label": "Włącz przepływ pracy przeglądu",
           "description": "Po włączeniu, przejścia do stanów wymagających przeglądu są blokowane przez zatwierdzoną prośbę o przegląd. Testerzy widzą przycisk „Poproś o przegląd”, a recenzenci otrzymują powiadomienia.",
@@ -3025,11 +3025,12 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "Prośba o recenzję z dnia {assignee}. {ago} temu.",
+      "pendingMessage": "Zażądano przeglądu od <assignee></assignee> w celu przejścia <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "Żądane zmiany",
       "rejectedTitle": "Recenzja odrzucona",
       "cancelRequest": "Anuluj prośbę",
-      "requestAgain": "Poproś ponownie o recenzję"
+      "requestAgain": "Poproś ponownie o recenzję",
+      "decidedBy": "Zdecydowano przez"
     },
     "cancel": {
       "title": "Anulować tę prośbę o recenzję?",
@@ -3084,14 +3085,15 @@
       "targetStateRequired": "Wybierz stan docelowy.",
       "submitButton": "Poproś o recenzję",
       "submitSuccess": "Utworzono prośbę o recenzję.",
-      "alreadyPendingError": "W przypadku tego podmiotu oczekuje się już na kontrolę."
+      "alreadyPendingError": "W przypadku tego podmiotu oczekuje się już na kontrolę.",
+      "cannotSelfAssign": "Nie możesz przypisać recenzji sobie; wybierz innego użytkownika lub rolę."
     },
     "reviewer": {
       "approve": "Zatwierdzić",
       "requestChanges": "Poproś o zmiany",
       "reject": "Odrzucić",
       "approveConfirmTitle": "Zatwierdzić tę prośbę o recenzję?",
-      "approveConfirmDescription": "Zatwierdzenie umożliwi wnioskodawcy przekształcenie tego {entityType} na {targetStateName}.",
+      "approveConfirmDescription": "Zatwierdzenie umożliwi <requester></requester> przejście z <name></name> do <state></state>.",
       "approvalNoteLabel": "Notatka zatwierdzająca",
       "approvalNotePlaceholder": "Dodaj opcjonalną notatkę dla wnioskodawcy (widoczną obok zatwierdzenia).",
       "requestChangesTitle": "Poproś o zmiany",
@@ -3099,7 +3101,7 @@
       "requestChangesCommentLabel": "Komentarz",
       "requestChangesCommentPlaceholder": "Wyjaśnij, co należy zmienić.",
       "rejectTitle": "Odrzucić tę prośbę o recenzję?",
-      "rejectDescription": "Odrzucenie blokuje wnioskodawcy możliwość przejścia z {entityType} do {targetStateName}. Aby ponowić próbę, należy utworzyć nowe żądanie przeglądu.",
+      "rejectDescription": "Odrzucanie bloków <requester></requester> z przejścia <name></name> do <state></state>. Aby spróbować ponownie, należy utworzyć nowe żądanie przeglądu.",
       "rejectCommentLabel": "Komentarz",
       "rejectCommentPlaceholder": "Wyjaśnij, dlaczego odrzucasz tę prośbę.",
       "commentRequired": "Komentarz jest wymagany.",

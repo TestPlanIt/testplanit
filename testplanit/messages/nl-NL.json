@@ -1814,7 +1814,7 @@
       },
       "advanced": {
         "title": "Geavanceerd",
-        "description": "Per project kun je geavanceerde functies in- of uitschakelen.",
+        "description": "Per project kunt u opties in- of uitschakelen voor specifieke functies. Nieuwe opties verschijnen hier zodra ze beschikbaar komen.",
         "reviewWorkflow": {
           "label": "Schakel de beoordelingsworkflow in",
           "description": "Wanneer deze functie is ingeschakeld, worden overgangen naar statussen die beoordeling vereisen, geblokkeerd door een goedgekeurd beoordelingsverzoek. Testers zien de knop 'Beoordeling aanvragen'; beoordelaars ontvangen meldingen.",
@@ -3025,11 +3025,12 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "Review aangevraagd van {assignee}. {ago} geleden.",
+      "pendingMessage": "Review aangevraagd van <assignee></assignee> voor overgang <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "Gevraagde wijzigingen",
       "rejectedTitle": "Beoordeling afgewezen",
       "cancelRequest": "Verzoek annuleren",
-      "requestAgain": "Verzoek om opnieuw te beoordelen"
+      "requestAgain": "Verzoek om opnieuw te beoordelen",
+      "decidedBy": "Besloten door"
     },
     "cancel": {
       "title": "Annuleer dit beoordelingsverzoek?",
@@ -3084,14 +3085,15 @@
       "targetStateRequired": "Selecteer een gewenste staat.",
       "submitButton": "Verzoek om beoordeling",
       "submitSuccess": "Verzoek tot beoordeling aangemaakt.",
-      "alreadyPendingError": "Er loopt al een beoordelingsprocedure voor deze entiteit."
+      "alreadyPendingError": "Er loopt al een beoordelingsprocedure voor deze entiteit.",
+      "cannotSelfAssign": "Je kunt jezelf geen beoordeling toewijzen; kies een andere gebruiker of een rol."
     },
     "reviewer": {
       "approve": "Goedkeuren",
       "requestChanges": "Verzoek om wijzigingen",
       "reject": "Afwijzen",
       "approveConfirmTitle": "Wilt u dit beoordelingsverzoek goedkeuren?",
-      "approveConfirmDescription": "Goedkeuring geeft de aanvrager toestemming om deze {entityType} om te zetten naar {targetStateName}.",
+      "approveConfirmDescription": "Goedkeuring zal toestaan dat <requester></requester> overgaat van <name></name> naar <state></state>.",
       "approvalNoteLabel": "Goedkeuringsnota",
       "approvalNotePlaceholder": "Voeg een optionele notitie voor de aanvrager toe (zichtbaar naast de goedkeuring).",
       "requestChangesTitle": "Verzoek om wijzigingen",
@@ -3099,7 +3101,7 @@
       "requestChangesCommentLabel": "Opmerking",
       "requestChangesCommentPlaceholder": "Leg uit wat er moet veranderen.",
       "rejectTitle": "Wilt u dit beoordelingsverzoek afwijzen?",
-      "rejectDescription": "Door de aanvraag af te wijzen, wordt voorkomen dat de aanvrager deze {entityType} naar {targetStateName}kan omzetten. Er moet een nieuwe beoordelingsaanvraag worden aangemaakt om het opnieuw te proberen.",
+      "rejectDescription": "Blokken <requester></requester> worden afgewezen tijdens de overgang van <name></name> naar <state></state>. Er moet een nieuw beoordelingsverzoek worden aangemaakt om het opnieuw te proberen.",
       "rejectCommentLabel": "Opmerking",
       "rejectCommentPlaceholder": "Leg uit waarom je dit verzoek afwijst.",
       "commentRequired": "Een reactie is vereist.",
@@ -5768,8 +5770,7 @@
       "isDefault": "## Standaard\nGeeft aan of deze workflow de standaard is voor uw project.\n\n- De standaardworkflow is vooraf geselecteerd voor nieuwe testruns, sessies en automatisering.",
       "isEnabled": "## Ingeschakeld\nGeeft aan of deze workflow is ingeschakeld.",
       "isActive": "## Actief\nGeeft aan of deze workflowstatus actief en beschikbaar is voor gebruik.\n\n- Actieve workflows kunnen worden geselecteerd bij het bijwerken van testruns, sessies of automatisering.\n- Inactieve workflows zijn niet selecteerbaar, maar blijven behouden in bestaande items.",
-      "projects": "## Projecten\nGeeft de projecten aan die deze workflow kunnen gebruiken.",
-      "requiresReview": "## Vereist beoordeling\nWanneer AAN, is de overgang van een case, testrun of sessie NAAR deze status afhankelijk van een goedgekeurd beoordelingsverzoek. Zonder een goedgekeurd verzoek wordt de overgang geblokkeerd.\n\n- Bestaande, nog niet voltooide beoordelingen worden stilzwijgend bewaard wanneer de systeemfunctie UIT staat en verschijnen opnieuw wanneer deze weer wordt ingeschakeld.\n- De beoordelaar wordt geselecteerd wanneer een tester op 'Beoordeling aanvragen' klikt op de detailpagina van de entiteit.\n\nAls de systeemfunctie is uitgeschakeld, is deze schakelaar vergrendeld. Schakel deze opnieuw in via de kaart 'Beoordelingsworkflow' hierboven om deze in te schakelen."
+      "projects": "## Projecten\nGeeft de projecten aan die deze workflow kunnen gebruiken."
     },
     "testResult": {
       "status": "## Status\nSelecteer de algemene status van de testuitvoering. De status die u kiest, kan van invloed zijn op projectstatistieken en -rapporten.",

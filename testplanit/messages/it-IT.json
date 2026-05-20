@@ -1814,7 +1814,7 @@
       },
       "advanced": {
         "title": "Avanzato",
-        "description": "Opzioni di attivazione/disattivazione specifiche per ogni progetto per le funzionalità avanzate.",
+        "description": "Opzioni di attivazione specifiche per ogni progetto, relative a funzionalità predefinite. Le nuove opzioni verranno visualizzate qui man mano che saranno introdotte.",
         "reviewWorkflow": {
           "label": "Abilita il flusso di lavoro di revisione",
           "description": "Quando abilitata, la transizione verso stati che richiedono una revisione è vincolata a una richiesta di revisione approvata. I tester visualizzano il pulsante Richiedi revisione; i revisori ricevono notifiche.",
@@ -3025,11 +3025,12 @@
   },
   "reviews": {
     "banner": {
-      "pendingMessage": "Recensione richiesta da {assignee}. {ago} fa.",
+      "pendingMessage": "Revisione richiesta da <assignee></assignee> per la transizione <fromState></fromState> → <toState></toState> <ago></ago>",
       "changesRequestedTitle": "Modifiche richieste",
       "rejectedTitle": "Revisione respinta",
       "cancelRequest": "Annulla richiesta",
-      "requestAgain": "Richiedi nuovamente la revisione"
+      "requestAgain": "Richiedi nuovamente la revisione",
+      "decidedBy": "Decisa da"
     },
     "cancel": {
       "title": "Annullare questa richiesta di revisione?",
@@ -3084,14 +3085,15 @@
       "targetStateRequired": "Seleziona uno stato di destinazione.",
       "submitButton": "Richiedi recensione",
       "submitSuccess": "Richiesta di revisione creata.",
-      "alreadyPendingError": "È già in corso una procedura di revisione per questa entità."
+      "alreadyPendingError": "È già in corso una procedura di revisione per questa entità.",
+      "cannotSelfAssign": "Non puoi assegnare una recensione a te stesso; scegli un altro utente o un ruolo."
     },
     "reviewer": {
       "approve": "Approvare",
       "requestChanges": "Richiesta di modifiche",
       "reject": "Rifiutare",
       "approveConfirmTitle": "Approvare questa richiesta di revisione?",
-      "approveConfirmDescription": "L'approvazione consentirà al richiedente di trasformare questo {entityType} in {targetStateName}.",
+      "approveConfirmDescription": "L'approvazione consentirà a <requester></requester> di passare da <name></name> a <state></state>.",
       "approvalNoteLabel": "Nota di approvazione",
       "approvalNotePlaceholder": "Aggiungi una nota facoltativa per il richiedente (visibile accanto all'approvazione).",
       "requestChangesTitle": "Richiesta di modifiche",
@@ -3099,7 +3101,7 @@
       "requestChangesCommentLabel": "Commento",
       "requestChangesCommentPlaceholder": "Spiega cosa deve cambiare.",
       "rejectTitle": "Rifiutare questa richiesta di revisione?",
-      "rejectDescription": "Il rifiuto impedisce al richiedente di effettuare la transizione da {entityType} a {targetStateName}. È necessario creare una nuova richiesta di revisione per riprovare.",
+      "rejectDescription": "Rifiuto dei blocchi <requester></requester> dalla transizione <name></name> a <state></state>. È necessario creare una nuova richiesta di revisione per riprovare.",
       "rejectCommentLabel": "Commento",
       "rejectCommentPlaceholder": "Spiega perché stai rifiutando questa richiesta.",
       "commentRequired": "È necessario inserire un commento.",
