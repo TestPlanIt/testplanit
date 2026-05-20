@@ -1,3 +1,19 @@
+## [0.29.0](https://github.com/TestPlanIt/testplanit/compare/v0.28.0...v0.29.0) (2026-05-20)
+
+### Features
+
+* **datasets:** per-case local datasets and project-scoped shared datasets with version pinning ([7e1e9d8](https://github.com/TestPlanIt/testplanit/commit/7e1e9d8f6875b4b33556491a551cd078c12ef044))
+* **i18n:** Turkish (tr-TR) and Russian (ru-RU) locale support ([d326973](https://github.com/TestPlanIt/testplanit/commit/d326973e243e61dbbcc0d03bc1c4a60ac5e914c6))
+* **import:** configurable JUnit iteration-property names ([123d887](https://github.com/TestPlanIt/testplanit/commit/123d8872a0094e8c491aeb9d7333bc9ebfd77755))
+* **llm:** includeParameters toggle in the test case generation wizard ([1774f0c](https://github.com/TestPlanIt/testplanit/commit/1774f0c675ba0f0cc2e418ea8d94a7428a4ca370))
+* parameterized test cases — drive a single case from a table of input rows ([a0fdfb5](https://github.com/TestPlanIt/testplanit/commit/a0fdfb5a04b689a66cafb9388dbb74afd18d9cfc))
+* **reports:** Parameter Iteration Matrix report preset ([12f8161](https://github.com/TestPlanIt/testplanit/commit/12f8161c49e647a1fe8a997031146b1b8b361c0f))
+* **webhooks:** iteration.result.recorded outbound event + per-iteration redacted values on test_run.completed ([c16cf84](https://github.com/TestPlanIt/testplanit/commit/c16cf845286e9fa1835f9f4d6af1ae03cc83fb5b))
+
+### Bug Fixes
+
+* **editor:** let TipTap editor wrappers expand instead of scrolling internally ([73fd69e](https://github.com/TestPlanIt/testplanit/commit/73fd69e67acc17d2a6aeeae55bb1c580b34ad5e1))
+
 ## [0.28.0](https://github.com/TestPlanIt/testplanit/compare/v0.27.7...v0.28.0) (2026-05-19)
 
 > **Note:** release-please auto-generated this section based on commit history and initially listed ~30 review-approval features. Those features did **not** ship in this release — the source code was reverted via [#317](https://github.com/TestPlanIt/testplanit/pull/317) before the release, but the original commit messages stayed in git history and were mistakenly picked up as changelog entries. This section has been corrected to reflect what actually shipped.
