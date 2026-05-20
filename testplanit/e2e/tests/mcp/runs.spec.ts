@@ -442,11 +442,11 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
     expect(detail).not.toBeNull();
     expect(detail.id).toBe(ctx.runId);
 
-    // 2. Status rollup via groupBy (R1: NO isDeleted on TestRunCases).
+    // 2. Status rollup via groupBy.
     const groupQ = encodeURIComponent(
       JSON.stringify({
         by: ["statusId"],
-        where: { testRunId: ctx.runId },
+        where: { testRunId: ctx.runId, isDeleted: false },
         _count: { id: true },
       })
     );
@@ -483,7 +483,7 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
 
   // -- EXEC-03: list testRunCases for a run ----------------------------------
 
-  test("EXEC-03 — list testRunCases for a run (R1: no isDeleted column)", async ({
+  test("EXEC-03 — list testRunCases for a run (excludes soft-deleted rows)", async ({
     request,
     baseURL,
   }) => {
@@ -494,7 +494,7 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
     }
     const q = encodeURIComponent(
       JSON.stringify({
-        where: { testRunId: ctx.runId },
+        where: { testRunId: ctx.runId, isDeleted: false },
         orderBy: [{ order: "asc" }, { id: "asc" }],
         take: 26,
       })
@@ -520,12 +520,7 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
     expect(row.testRunId).toBe(ctx.runId);
     expect(typeof row.repositoryCaseId).toBe("number");
     expect(typeof row.order).toBe("number");
-    // R1 / Pitfall 1: TestRunCases has NO isDeleted column. The host should NOT
-    // emit one in the response. Adding it to a where clause would TS2353 in the
-    // MCP package per Prisma.TestRunCasesWhereInput.
-    // (Asserted via strict-equality check so the schema regression invariant is
-    // greppable: `row.isDeleted === undefined`.)
-    expect(row.isDeleted === undefined).toBe(true);
+    expect(row.isDeleted).toBe(false);
   });
 
   // -- EXEC-04: list testRunResults filtered by runId ------------------------
