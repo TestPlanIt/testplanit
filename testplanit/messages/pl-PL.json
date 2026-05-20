@@ -1716,7 +1716,7 @@
           "historicalItemBy": "przez {name}",
           "noVersionsYet": "Brak zapisanych wersji"
         },
-        "datasetTabSharedReadOnlyHint": "Tylko do odczytu widok wersji {version, number}. Przełącz się do bieżącej wersji, aby ją edytować.",
+        "datasetTabSharedReadOnlyHint": "Tylko do odczytu widok wersji {version, number}. Aby edytować, przejdź do bieżącej wersji.",
         "datasetTabSharedEditorHint": "Kliknij Zapisz, gdy skończysz. Każdy zapis tworzy nową wersję."
       },
       "quickScript": {
