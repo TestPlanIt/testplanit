@@ -140,6 +140,7 @@ export function ApproveDialog({
   onSuccess,
 }: BaseDialogProps) {
   const t = useTranslations("reviews.reviewer");
+  const tCommon = useTranslations("common");
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -248,7 +249,7 @@ export function ApproveDialog({
             onClick={() => onOpenChange(false)}
             disabled={submitting}
           >
-            {t("cancel")}
+            {tCommon("cancel")}
           </Button>
           <Button
             type="button"
@@ -256,7 +257,7 @@ export function ApproveDialog({
             onClick={handleConfirm}
             disabled={submitting}
           >
-            {t("confirmApprove")}
+            {t("approve")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -275,6 +276,7 @@ export function RequestChangesDialog({
   onSuccess,
 }: BaseDialogProps) {
   const t = useTranslations("reviews.reviewer");
+  const tCommon = useTranslations("common");
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -319,14 +321,14 @@ export function RequestChangesDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent data-testid="request-changes-dialog">
         <DialogHeader>
-          <DialogTitle>{t("requestChangesTitle")}</DialogTitle>
+          <DialogTitle>{t("requestChanges")}</DialogTitle>
           <DialogDescription>
             {t("requestChangesDescription")}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
           <Label htmlFor={`request-changes-comment-${reviewRequestId}`}>
-            {t("requestChangesCommentLabel")}
+            {t("commentLabel")}
           </Label>
           <Textarea
             id={`request-changes-comment-${reviewRequestId}`}
@@ -345,7 +347,7 @@ export function RequestChangesDialog({
             onClick={() => onOpenChange(false)}
             disabled={submitting}
           >
-            {t("cancel")}
+            {tCommon("cancel")}
           </Button>
           <Button
             type="button"
@@ -377,6 +379,7 @@ export function RejectDialog({
   onSuccess,
 }: BaseDialogProps) {
   const t = useTranslations("reviews.reviewer");
+  const tCommon = useTranslations("common");
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -455,7 +458,7 @@ export function RejectDialog({
         </DialogHeader>
         <div className="space-y-2">
           <Label htmlFor={`reject-comment-${reviewRequestId}`}>
-            {t("rejectCommentLabel")}
+            {t("commentLabel")}
           </Label>
           <Textarea
             id={`reject-comment-${reviewRequestId}`}
@@ -474,7 +477,7 @@ export function RejectDialog({
             onClick={() => onOpenChange(false)}
             disabled={submitting}
           >
-            {t("cancel")}
+            {tCommon("cancel")}
           </Button>
           <Button
             type="button"
@@ -483,7 +486,7 @@ export function RejectDialog({
             disabled={!canSubmit}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {t("confirmReject")}
+            {t("reject")}
           </Button>
         </DialogFooter>
       </DialogContent>

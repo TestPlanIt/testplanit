@@ -261,7 +261,7 @@ export function RequestReviewSheet({
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <MessageSquareWarning className="h-5 w-5" />
-            {t("reviews.requester.sheetTitle")}
+            {t("reviews.requester.openButton")}
           </SheetTitle>
           <SheetDescription>
             {t("reviews.requester.sheetDescription")}
@@ -373,7 +373,7 @@ export function RequestReviewSheet({
                 {t("common.cancel")}
               </Button>
               <Button type="submit" data-testid="request-review-submit">
-                {t("reviews.requester.submitButton")}
+                {t("reviews.requester.openButton")}
               </Button>
             </div>
           </form>
