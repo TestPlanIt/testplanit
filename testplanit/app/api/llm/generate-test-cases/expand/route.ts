@@ -273,10 +273,33 @@ export async function POST(req: NextRequest) {
         );
 
         if (parseError || testCases.length === 0) {
+          if (parseError) {
+            console.error("\n=== EXPAND PARSE ERROR ===");
+            console.error("User error:", parseError.userError);
+            console.error("Raw error:", parseError.errorMessage);
+            console.error("Finish reason:", finishReason ?? "<none>");
+            console.error("Response length:", parseError.responseLength);
+            console.error("Seems truncated:", parseError.seemsTruncated);
+            console.error("Response preview:", parseError.responsePreview);
+          }
           send(controller, {
             type: "error",
             code: "generic" satisfies LlmStreamErrorCode,
             message: parseError?.userError ?? "No test case generated",
+            details: parseError
+              ? parseError.seemsTruncated
+                ? `Response appears truncated${
+                    finishReason === "length"
+                      ? " (hit the max-tokens limit)"
+                      : ""
+                  } at ${parseError.responseLength} chars.`
+                : `Parser error: ${parseError.errorMessage}`
+              : "The model returned no test case content.",
+            suggestions: parseError?.userSuggestions,
+            finishReason,
+            responsePreview: parseError?.responsePreview,
+            responseLength: parseError?.responseLength,
+            seemsTruncated: parseError?.seemsTruncated,
           });
           return;
         }
