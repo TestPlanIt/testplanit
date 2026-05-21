@@ -1,4 +1,3 @@
-import DynamicIcon from "@/components/DynamicIcon";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { ManageTags } from "@/components/ManageTags";
@@ -14,6 +13,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -433,9 +433,16 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
       label: template.templateName,
     })) || [];
 
+  const firstGatedOrder = (workflows ?? [])
+    .filter((w) => w.requiresReview === true)
+    .reduce<
+      number | null
+    >((acc, w) => (acc === null || w.order < acc ? w.order : acc), null);
   const workflowOptions =
     workflows?.map((workflow) => ({
       value: workflow.id.toString(),
+      disabledForCreate:
+        firstGatedOrder !== null && workflow.order >= firstGatedOrder,
       label: (
         <WorkflowStateDisplay
           state={{
@@ -448,6 +455,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
         />
       ),
     })) || [];
+  const hasGatedWorkflow = firstGatedOrder !== null;
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema) as any,
     mode: "onSubmit",
@@ -1238,7 +1246,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
                                   onValueChange={(val) => onChange(Number(val))}
                                   value={value ? value.toString() : ""}
                                 >
-                                  <SelectTrigger>
+                                  <SelectTrigger className="w-fit">
                                     <SelectValue
                                       placeholder={t(
                                         "repository.addCase.selectState"
@@ -1251,6 +1259,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
                                         <SelectItem
                                           key={workflow.value}
                                           value={workflow.value}
+                                          disabled={workflow.disabledForCreate}
                                         >
                                           {workflow.label}
                                         </SelectItem>
@@ -1261,6 +1270,13 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
                               )}
                             />
                           </FormControl>
+                          {hasGatedWorkflow && (
+                            <FormDescription>
+                              {t(
+                                "reviews.transitionGate.gatedStatesNotSelectable"
+                              )}
+                            </FormDescription>
+                          )}
                           <FormMessage />
                         </FormItem>
                       )}

@@ -20,6 +20,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -85,6 +86,7 @@ interface WorkflowOption {
   icon?: string;
   color?: string;
   requiresReview?: boolean;
+  disabledForCreate?: boolean;
 }
 
 interface ConfigurationOption {
@@ -464,6 +466,7 @@ const BasicInfoDialog = React.memo(
                               <SelectItem
                                 key={option.value}
                                 value={option.value}
+                                disabled={option.disabledForCreate === true}
                               >
                                 <WorkflowStateDisplay
                                   state={{
@@ -481,6 +484,15 @@ const BasicInfoDialog = React.memo(
                           </SelectGroup>
                         </SelectContent>
                       </Select>
+                      {workflowsOptions.some(
+                        (o: WorkflowOption) => o.disabledForCreate === true
+                      ) && (
+                        <FormDescription>
+                          {tGlobal(
+                            "reviews.transitionGate.gatedStatesNotSelectable"
+                          )}
+                        </FormDescription>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -943,6 +955,14 @@ export default function AddTestRunModal({
   const defaultWorkflow = workflows?.find((workflow) => workflow.isDefault);
   const configurationsOptions: ConfigurationOption[] =
     configurations?.map((c) => ({ id: c.id, name: c.name })) || [];
+  const firstGatedRunOrder = useMemo(() => {
+    return (workflows ?? [])
+      .filter((w) => w.requiresReview === true)
+      .reduce<number | null>(
+        (acc, w) => (acc === null || w.order < acc ? w.order : acc),
+        null
+      );
+  }, [workflows]);
   const workflowsOptions = useMemo(() => {
     return (
       workflows?.map((w) => ({
@@ -951,9 +971,11 @@ export default function AddTestRunModal({
         icon: w.icon?.name,
         color: w.color?.value,
         requiresReview: w.requiresReview,
+        disabledForCreate:
+          firstGatedRunOrder !== null && w.order >= firstGatedRunOrder,
       })) || []
     );
-  }, [workflows]);
+  }, [workflows, firstGatedRunOrder]);
   const milestonesOptions = (milestones || []).map((m: any) => ({
     value: m.id.toString(),
     label: m.name,

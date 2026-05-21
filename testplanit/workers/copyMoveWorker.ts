@@ -1,4 +1,5 @@
 import { Job, Worker } from "bullmq";
+import { WorkflowScope } from "@prisma/client";
 import { runWithAuditContext } from "../lib/auditContext";
 import type { ActorContextJobData } from "../lib/auditContextEnqueue";
 import {
@@ -10,6 +11,7 @@ import {
 } from "../lib/multiTenantPrisma";
 import { COPY_MOVE_QUEUE_NAME } from "../lib/queueNames";
 import { captureAuditEvent } from "../lib/services/auditLog";
+import { resolveCreateStateRemap } from "../lib/services/reviewGate";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { createTestCaseVersionInTransaction } from "../lib/services/testCaseVersionService";
@@ -658,7 +660,38 @@ const processor = async (
             // Move: preserve full version history with updated FKs
             const sourceVersions = sourceVersionsMap.get(sourceCase.id) ?? [];
             let lastVersionNumber = 1;
+            const versionStateRemap = new Map<
+              number,
+              { id: number; name: string }
+            >();
             for (const ver of sourceVersions) {
+              let effectiveVerStateId = ver.stateId;
+              let effectiveVerStateName = ver.stateName;
+              const cached = versionStateRemap.get(ver.stateId);
+              if (cached) {
+                effectiveVerStateId = cached.id;
+                effectiveVerStateName = cached.name;
+              } else {
+                const remapped =
+                  (await resolveCreateStateRemap(
+                    tx,
+                    job.data.targetProjectId,
+                    WorkflowScope.CASES,
+                    ver.stateId
+                  )) ?? ver.stateId;
+                if (remapped !== ver.stateId) {
+                  const remappedRow = await tx.workflows.findUnique({
+                    where: { id: remapped },
+                    select: { name: true },
+                  });
+                  effectiveVerStateId = remapped;
+                  effectiveVerStateName = remappedRow?.name ?? ver.stateName;
+                }
+                versionStateRemap.set(ver.stateId, {
+                  id: effectiveVerStateId,
+                  name: effectiveVerStateName,
+                });
+              }
               await tx.repositoryCaseVersions.create({
                 data: {
                   repositoryCaseId: newCase.id,
@@ -673,8 +706,8 @@ const processor = async (
                   templateId: ver.templateId,
                   templateName: ver.templateName,
                   name: ver.name,
-                  stateId: ver.stateId,
-                  stateName: ver.stateName,
+                  stateId: effectiveVerStateId,
+                  stateName: effectiveVerStateName,
                   estimate: ver.estimate,
                   forecastManual: ver.forecastManual,
                   forecastAutomated: ver.forecastAutomated,

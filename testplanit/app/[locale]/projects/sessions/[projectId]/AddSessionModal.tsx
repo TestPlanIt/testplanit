@@ -22,6 +22,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -209,6 +210,12 @@ export function AddSessionModal({
       label: template.templateName,
     })) || [];
 
+  const firstGatedSessionOrder = (workflows ?? [])
+    .filter((w) => w.requiresReview === true)
+    .reduce<number | null>(
+      (acc, w) => (acc === null || w.order < acc ? w.order : acc),
+      null
+    );
   const workflowsOptions =
     workflows?.map((workflow) => ({
       value: workflow.id.toString(),
@@ -216,6 +223,9 @@ export function AddSessionModal({
       icon: workflow.icon?.name,
       color: workflow.color?.value,
       requiresReview: workflow.requiresReview,
+      disabledForCreate:
+        firstGatedSessionOrder !== null &&
+        workflow.order >= firstGatedSessionOrder,
     })) || [];
 
   const milestonesOptions = transformMilestones(milestones || []);
@@ -1000,6 +1010,7 @@ export function AddSessionModal({
                                     <SelectItem
                                       key={workflow.value}
                                       value={workflow.value}
+                                      disabled={workflow.disabledForCreate}
                                     >
                                       <WorkflowStateDisplay
                                         state={{
@@ -1021,6 +1032,13 @@ export function AddSessionModal({
                           )}
                         />
                       </FormControl>
+                      {firstGatedSessionOrder !== null && (
+                        <FormDescription>
+                          {t(
+                            "reviews.transitionGate.gatedStatesNotSelectable"
+                          )}
+                        </FormDescription>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}

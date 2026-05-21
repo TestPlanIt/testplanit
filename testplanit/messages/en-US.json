@@ -3046,6 +3046,7 @@
     "transitionGate": {
       "blockedByGate": "Approval required for \"{gateName}\" before this transition. Use \"Request review\" to start one.",
       "gatedOptionBadge": "Requires review",
+      "gatedStatesNotSelectable": "States at or beyond a gated state can't be selected when creating. Pick a state before the first gate, then use Request review to cross it.",
       "saveBlockedByFormErrors": "Resolve the highlighted form errors before saving.",
       "bulkBlockedSummary": "{count, plural, one {# case} other {# cases}} blocked by gate \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, and # more}}. Each blocked case needs an approved review for \"{gateName}\" before this transition.",
       "toastReviewRequired": "Approval required before this transition. Request a review and try again after it's approved.",

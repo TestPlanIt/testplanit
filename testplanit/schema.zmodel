@@ -1608,6 +1608,7 @@ model RepositoryCases {
 
     // Schema-layer review gate (SCHEMA-05, T-1-02). App preflight in lib/services/reviewGate.ts produces the typed REVIEW_REQUIRED error first.
     @@deny('update', future().stateId != stateId && future().state.requiresReview && project.reviewWorkflowEnabled)
+    @@deny('create', state.requiresReview && project.reviewWorkflowEnabled && auth() != null)
 }
 
 model RepositoryCaseVersions {
@@ -2098,6 +2099,7 @@ model Sessions {
 
     // Schema-layer review gate (SCHEMA-05, T-1-02). App preflight in lib/services/reviewGate.ts produces the typed REVIEW_REQUIRED error first.
     @@deny('update', future().stateId != stateId && future().state.requiresReview && project.reviewWorkflowEnabled)
+    @@deny('create', state.requiresReview && project.reviewWorkflowEnabled && auth() != null)
 }
 
 model SessionResults {
@@ -2398,6 +2400,7 @@ model TestRuns {
 
     // Schema-layer review gate (SCHEMA-05, T-1-02). App preflight in lib/services/reviewGate.ts produces the typed REVIEW_REQUIRED error first.
     @@deny('update', future().stateId != stateId && future().state.requiresReview && project.reviewWorkflowEnabled)
+    @@deny('create', state.requiresReview && project.reviewWorkflowEnabled && auth() != null)
 }
 
 enum TestRunType {

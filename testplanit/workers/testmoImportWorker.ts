@@ -33,6 +33,7 @@ import {
   TESTMO_IMPORT_QUEUE_NAME,
 } from "../lib/queues";
 import { captureAuditEvent } from "../lib/services/auditLog";
+import { resolveCreateStateRemap } from "../lib/services/reviewGate";
 import { createTestCaseVersionInTransaction } from "../lib/services/testCaseVersionService.js";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
@@ -2155,13 +2156,13 @@ const importSessions = async (
       stateSourceId !== null
         ? (workflowIdMap.get(stateSourceId) ?? null)
         : null;
-    const resolvedStateId = await workflowResolver.resolve(
+    const resolvedStateIdRaw = await workflowResolver.resolve(
       projectId,
       WorkflowScope.SESSIONS,
       candidateStateId
     );
 
-    if (!resolvedStateId) {
+    if (!resolvedStateIdRaw) {
       logMessage(context, "Skipping session due to missing workflow state", {
         sourceId,
         stateSourceId,
@@ -2169,6 +2170,14 @@ const importSessions = async (
       decrementEntityTotal(context, "sessions");
       continue;
     }
+
+    const resolvedStateId =
+      (await resolveCreateStateRemap(
+        tx,
+        projectId,
+        WorkflowScope.SESSIONS,
+        resolvedStateIdRaw
+      )) ?? resolvedStateIdRaw;
 
     const name = toStringValue(record.name) ?? `Imported Session ${sourceId}`;
     const note = convertToTipTapJsonString(record.note);
@@ -3624,11 +3633,20 @@ const importRepositoryCases = async (
             stateSourceId !== null
               ? (workflowIdMap.get(stateSourceId) ?? null)
               : null;
-          const workflowId = await workflowResolver.resolve(
+          const workflowIdRaw = await workflowResolver.resolve(
             projectId,
             WorkflowScope.CASES,
             candidateWorkflowId
           );
+          const workflowId =
+            workflowIdRaw != null
+              ? ((await resolveCreateStateRemap(
+                  tx,
+                  projectId,
+                  WorkflowScope.CASES,
+                  workflowIdRaw
+                )) ?? workflowIdRaw)
+              : workflowIdRaw;
 
           if (templateId == null || workflowId == null) {
             logMessage(
@@ -4241,13 +4259,13 @@ const importTestRuns = async (
       workflowSourceId !== null
         ? (workflowIdMap.get(workflowSourceId) ?? null)
         : null;
-    const stateId = await workflowResolver.resolve(
+    const stateIdRaw = await workflowResolver.resolve(
       projectId,
       WorkflowScope.RUNS,
       candidateStateId
     );
 
-    if (!stateId) {
+    if (!stateIdRaw) {
       logMessage(context, "Skipping test run due to missing workflow mapping", {
         sourceId,
         workflowSourceId,
@@ -4255,6 +4273,14 @@ const importTestRuns = async (
       decrementEntityTotal(context, "testRuns");
       continue;
     }
+
+    const stateId =
+      (await resolveCreateStateRemap(
+        tx,
+        projectId,
+        WorkflowScope.RUNS,
+        stateIdRaw
+      )) ?? stateIdRaw;
 
     const configurationSourceId = toNumberValue(record.config_id);
     const configurationId =

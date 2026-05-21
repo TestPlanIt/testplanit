@@ -366,3 +366,76 @@ async function loadEntityForGate(
     }
   }
 }
+
+/**
+ * Remap a chosen `stateId` to the project's default state for the given
+ * scope when the chosen state would put a brand-new entity at or beyond
+ * a gated state. The schema gate fires only on `update`; without this
+ * remap, any caller (server action, worker import, AI generation, copy
+ * source preservation) could birth an entity directly past a gate.
+ *
+ * Strict-transitive rule mirrors the UI: when the project + system flags
+ * are both ON and the candidate state's `order` is >= the first gated
+ * state's `order` in the same scope, the helper returns the default
+ * state's id instead. Otherwise the candidate is returned unchanged.
+ *
+ * Returns `null` when no default state exists for the scope on the
+ * project — the caller should treat that as an exceptional condition
+ * (seed gap) rather than swallow it.
+ */
+export async function resolveCreateStateRemap(
+  tx: Prisma.TransactionClient,
+  projectId: number,
+  scope: WorkflowScope,
+  candidateStateId: number
+): Promise<number | null> {
+  if (!(await isReviewFeatureSystemEnabled(tx))) {
+    return candidateStateId;
+  }
+
+  const project = await tx.projects.findUnique({
+    where: { id: projectId },
+    select: { reviewWorkflowEnabled: true },
+  });
+  if (project?.reviewWorkflowEnabled === false) {
+    return candidateStateId;
+  }
+
+  const workflows = await tx.workflows.findMany({
+    where: {
+      isDeleted: false,
+      isEnabled: true,
+      scope,
+      projects: { some: { projectId } },
+    },
+    select: {
+      id: true,
+      order: true,
+      isDefault: true,
+      requiresReview: true,
+    },
+    orderBy: { order: "asc" },
+  });
+
+  const firstGatedOrder = workflows
+    .filter((w) => w.requiresReview === true)
+    .reduce<number | null>(
+      (acc, w) => (acc === null || w.order < acc ? w.order : acc),
+      null
+    );
+
+  if (firstGatedOrder === null) {
+    return candidateStateId;
+  }
+
+  const candidate = workflows.find((w) => w.id === candidateStateId);
+  if (!candidate) {
+    return candidateStateId;
+  }
+  if (candidate.order < firstGatedOrder) {
+    return candidateStateId;
+  }
+
+  const defaultWorkflow = workflows.find((w) => w.isDefault === true);
+  return defaultWorkflow?.id ?? null;
+}

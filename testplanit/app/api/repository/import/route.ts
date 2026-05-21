@@ -3,6 +3,7 @@ import {
   CaseFieldTypes,
   Prisma,
   RepositoryCaseSource,
+  WorkflowScope,
 } from "@prisma/client";
 import { enhance } from "@zenstackhq/runtime";
 import { getServerSession } from "next-auth";
@@ -13,6 +14,7 @@ import { prisma } from "~/lib/prisma";
 import { auditBulkCreate } from "~/lib/services/auditLog";
 import { DuplicateScanService } from "~/lib/services/duplicateScanService";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
+import { resolveCreateStateRemap } from "~/lib/services/reviewGate";
 import { createTestCaseVersionInTransaction } from "~/lib/services/testCaseVersionService";
 import { authOptions } from "~/server/auth";
 import { db } from "~/server/db";
@@ -501,6 +503,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
             // Look up workflow state if specified
             let stateId = caseData.stateId;
+            let resolvedWorkflowStateName = caseData.workflowStateName;
             if (caseData.workflowStateName) {
               const workflowState = await enhancedDb.workflows.findFirst({
                 where: {
@@ -517,6 +520,23 @@ export const POST = withAuditContext(async (request: NextRequest) => {
               if (workflowState) {
                 stateId = workflowState.id;
               }
+            }
+
+            const remappedStateId =
+              (await resolveCreateStateRemap(
+                prisma,
+                body.projectId,
+                WorkflowScope.CASES,
+                stateId
+              )) ?? stateId;
+            if (remappedStateId !== stateId) {
+              const remappedWorkflow = await prisma.workflows.findUnique({
+                where: { id: remappedStateId },
+                select: { name: true },
+              });
+              resolvedWorkflowStateName =
+                remappedWorkflow?.name ?? defaultWorkflow.name;
+              stateId = remappedStateId;
             }
 
             // Look up creator if specified
@@ -702,7 +722,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
               overrides: {
                 name: caseData.name,
                 stateId: stateId,
-                stateName: caseData.workflowStateName || defaultWorkflow.name,
+                stateName: resolvedWorkflowStateName || defaultWorkflow.name,
                 estimate: caseData.estimate,
                 forecastManual: caseData.forecastManual,
                 automated: caseData.automated,

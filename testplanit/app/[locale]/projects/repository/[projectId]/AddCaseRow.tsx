@@ -137,9 +137,17 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
     (workflow) => workflow.isDefault
   )?.id;
 
+  const firstGatedOrder = (workflows ?? [])
+    .filter((w) => w.requiresReview === true)
+    .reduce<number | null>(
+      (acc, w) => (acc === null || w.order < acc ? w.order : acc),
+      null
+    );
   const workflowOptions =
     workflows?.map((workflow) => ({
       value: workflow.id.toString(),
+      disabledForCreate:
+        firstGatedOrder !== null && workflow.order >= firstGatedOrder,
       label: (
         <WorkflowStateDisplay
           state={{
@@ -370,6 +378,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
                                 <SelectItem
                                   key={workflow.value}
                                   value={workflow.value}
+                                  disabled={workflow.disabledForCreate}
                                 >
                                   {workflow.label}
                                 </SelectItem>
