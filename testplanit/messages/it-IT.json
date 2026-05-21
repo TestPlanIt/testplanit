@@ -3046,6 +3046,7 @@
     "transitionGate": {
       "blockedByGate": "È necessaria l'approvazione per \"{gateName}\" prima di questa transizione. Utilizza \"Richiedi revisione\" per avviarne una.",
       "gatedOptionBadge": "Richiede revisione",
+      "gatedStatesNotSelectable": "Gli stati che si trovano in prossimità o oltre un punto di controllo non possono essere selezionati durante la creazione. Scegli uno stato prima del primo punto di controllo, quindi utilizza la funzione Richiedi revisione per superarlo.",
       "saveBlockedByFormErrors": "Risolvi gli errori evidenziati nel modulo prima di salvare.",
       "bulkBlockedSummary": "{count, plural, one {# caso} other {# casi}} bloccati dal gate \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, e # altro}}. Ogni caso bloccato necessita di una revisione approvata per \"{gateName}\" prima di questa transizione.",
       "toastReviewRequired": "È necessaria l'approvazione prima di procedere con la transizione. Richiedi una revisione e riprova dopo l'approvazione.",

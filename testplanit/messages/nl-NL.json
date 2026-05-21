@@ -3046,6 +3046,7 @@
     "transitionGate": {
       "blockedByGate": "Goedkeuring is vereist voor \"{gateName}\" vóór deze overgang. Gebruik \"Review aanvragen\" om er een te starten.",
       "gatedOptionBadge": "Vereist beoordeling",
+      "gatedStatesNotSelectable": "Staten die zich op of voorbij een afgesloten staat bevinden, kunnen niet worden geselecteerd bij het aanmaken van een aanvraag. Kies een staat vóór de eerste afgesloten staat en gebruik vervolgens 'Beoordeling aanvragen' om deze te passeren.",
       "saveBlockedByFormErrors": "Los de gemarkeerde formulierfouten op voordat u opslaat.",
       "bulkBlockedSummary": "{count, plural, one {# geval} other {# gevallen}} geblokkeerd door poort \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, en # meer}}. Elk geblokkeerd geval heeft een goedgekeurde beoordeling nodig voor \"{gateName}\" voordat deze overgang plaatsvindt.",
       "toastReviewRequired": "Goedkeuring is vereist vóór deze overgang. Vraag een beoordeling aan en probeer het opnieuw nadat deze is goedgekeurd.",

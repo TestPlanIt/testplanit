@@ -3046,6 +3046,7 @@
     "transitionGate": {
       "blockedByGate": "此转换需要获得“{gateName}”的批准。请使用“请求审核”功能发起审核。",
       "gatedOptionBadge": "需要审核",
+      "gatedStatesNotSelectable": "创建时无法选择位于或超出限制状态的状态。请选择第一个限制状态之前的状态，然后使用“请求审核”功能跨越该限制。",
       "saveBlockedByFormErrors": "保存前请解决高亮显示的表单错误。",
       "bulkBlockedSummary": "{count, plural, one {# 案例} other {# 案例}} 被门禁“{gateName}”阻止： {sampleNames}{more, plural, =0 {} other {，以及 # 更多}}。每个被阻止的案例都需要经过“{gateName}”的批准审核才能进行此转换。",
       "toastReviewRequired": "此变更需经批准后方可生效。请申请审核，待审核通过后再试。",

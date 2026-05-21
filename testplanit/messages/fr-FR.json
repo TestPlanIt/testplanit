@@ -3046,6 +3046,7 @@
     "transitionGate": {
       "blockedByGate": "L'approbation est requise pour «{gateName}» avant cette transition. Utilisez « Demander une révision » pour en lancer une.",
       "gatedOptionBadge": "Nécessite une révision",
+      "gatedStatesNotSelectable": "Il est impossible de sélectionner un état situé au-delà d'un état prédéfini lors de la création d'un tel état. Choisissez un état avant le premier seuil, puis utilisez « Demander une révision » pour le franchir.",
       "saveBlockedByFormErrors": "Corrigez les erreurs de formulaire mises en évidence avant d'enregistrer.",
       "bulkBlockedSummary": "{count, plural, one {# cas} other {# cas}} bloqués par la porte \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, et # autres}}. Chaque cas bloqué nécessite une approbation pour \"{gateName}\" avant cette transition.",
       "toastReviewRequired": "Une approbation est requise avant cette transition. Veuillez demander une vérification et réessayer une fois l'approbation obtenue.",

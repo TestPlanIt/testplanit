@@ -3046,6 +3046,7 @@
     "transitionGate": {
       "blockedByGate": "이 전환을 진행하기 전에 \"{gateName}\"에 대한 승인이 필요합니다. \"검토 요청\"을 사용하여 승인을 요청하세요.",
       "gatedOptionBadge": "검토가 필요합니다",
+      "gatedStatesNotSelectable": "생성 시 제한 구역에 도달했거나 그 이후의 상태는 선택할 수 없습니다. 첫 번째 제한 구역 이전의 상태를 선택한 다음, 검토 요청을 사용하여 해당 구역을 통과하세요.",
       "saveBlockedByFormErrors": "저장하기 전에 강조 표시된 양식 오류를 해결하세요.",
       "bulkBlockedSummary": "{count, plural, one {# 사례} other {# 사례}} 게이트 \"{gateName}\"에 의해 차단됨: {sampleNames}{more, plural, =0 {} other {, 그리고 # 더 많은}}. 각 차단된 사례는 이 전환 전에 \"{gateName}\"에 대한 승인된 검토가 필요합니다.",
       "toastReviewRequired": "이 전환을 진행하기 전에 승인이 필요합니다. 검토를 요청하고 승인된 후 다시 시도해 주세요.",

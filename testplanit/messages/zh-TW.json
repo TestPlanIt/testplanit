@@ -3046,6 +3046,7 @@
     "transitionGate": {
       "blockedByGate": "此轉換需要獲得「{gateName}」的批准。請使用「請求審核」功能發起審核。",
       "gatedOptionBadge": "需要審核",
+      "gatedStatesNotSelectable": "建立時無法選擇位於或超出限制狀態的狀態。請選擇第一個限制狀態之前的狀態，然後使用「請求審核」功能跨越該限制。",
       "saveBlockedByFormErrors": "儲存前請解決高亮顯示的表單錯誤。",
       "bulkBlockedSummary": "{count, plural, one {# case} other {# cases}} blocked by gate \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, and # more}}. Each blocked case needs an approved review for \"{gateName}\" before this transition.",
       "toastReviewRequired": "此變更需經批准後方可生效。請申請審核，待審核通過後再試。",

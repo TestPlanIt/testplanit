@@ -3046,6 +3046,7 @@
     "transitionGate": {
       "blockedByGate": "Bu geçişten önce \"{gateName}\" için onay gereklidir. Bir inceleme başlatmak için \"İnceleme isteği gönder\" seçeneğini kullanın.",
       "gatedOptionBadge": "İnceleme gerektiriyor",
+      "gatedStatesNotSelectable": "Oluşturma sırasında, kilitli bir durumun bulunduğu veya ötesindeki durumlar seçilemez. İlk kilitli durumdan önceki bir durumu seçin, ardından \"İnceleme isteği\"ni kullanarak o durumu geçin.",
       "saveBlockedByFormErrors": "Kaydetmeden önce vurgulanan form hatalarını düzeltin.",
       "bulkBlockedSummary": "{count, plural, one {# durum} other {# durumlar}} \"{gateName}\" kapısı tarafından engellendi: {sampleNames}{more, plural, =0 {} other {ve # daha fazlası}}. Engellenen her durum, bu geçişten önce \"{gateName}\" için onaylanmış bir incelemeye ihtiyaç duyar.",
       "toastReviewRequired": "Bu geçiş için onay gereklidir. İnceleme talebinde bulunun ve onaylandıktan sonra tekrar deneyin.",

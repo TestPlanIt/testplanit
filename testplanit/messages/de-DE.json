@@ -3046,6 +3046,7 @@
     "transitionGate": {
       "blockedByGate": "Für \"{gateName}\" ist vor diesem Übergang eine Genehmigung erforderlich. Verwenden Sie \"Überprüfung anfordern\", um eine solche zu starten.",
       "gatedOptionBadge": "Überprüfung erforderlich",
+      "gatedStatesNotSelectable": "Zustände, die sich an oder jenseits eines festgelegten Zustands befinden, können beim Erstellen nicht ausgewählt werden. Wählen Sie einen Zustand vor dem ersten festgelegten Zustand und verwenden Sie dann die Funktion „Überprüfung anfordern“, um diesen zu überschreiten.",
       "saveBlockedByFormErrors": "Beheben Sie die markierten Formularfehler vor dem Speichern.",
       "bulkBlockedSummary": "{count, plural, one {# Fall} other {# Fälle}} blockiert durch Gate \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, und # weitere}}. Jeder blockierte Fall benötigt vor diesem Übergang eine genehmigte Überprüfung für \"{gateName}\".",
       "toastReviewRequired": "Für diese Umstellung ist eine Genehmigung erforderlich. Bitte fordern Sie eine Überprüfung an und versuchen Sie es nach der Genehmigung erneut.",

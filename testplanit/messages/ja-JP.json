@@ -3046,6 +3046,7 @@
     "transitionGate": {
       "blockedByGate": "この移行を行う前に、「{gateName}」の承認が必要です。「レビューをリクエスト」を使用して承認を開始してください。",
       "gatedOptionBadge": "審査が必要",
+      "gatedStatesNotSelectable": "ゲート状態にある、またはゲート状態より先の州は、作成時に選択できません。最初のゲートより前の州を選択し、「レビューをリクエスト」を使用してゲートを越えてください。",
       "saveBlockedByFormErrors": "保存する前に、強調表示されているフォームエラーを解決してください。",
       "bulkBlockedSummary": "{count, plural, one {# ケース} other {# ケース}} ゲート \"{gateName}\" によってブロックされています: {sampleNames}{more, plural, =0 {} other {、その他 # ケース}}。この移行の前に、ブロックされた各ケースについて \"{gateName}\" の承認済みレビューが必要です。",
       "toastReviewRequired": "この移行には承認が必要です。審査を依頼し、承認後に再度お試しください。",
