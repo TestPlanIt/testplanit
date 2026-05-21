@@ -390,7 +390,7 @@ function SessionFormControls({
                     value={field.value?.toString()}
                     disabled={isSubmitting}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-fit">
                       <SelectValue
                         placeholder={tCommon("placeholders.selectState")}
                       />

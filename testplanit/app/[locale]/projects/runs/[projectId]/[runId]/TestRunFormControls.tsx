@@ -212,7 +212,7 @@ function TestRunFormControls({
                     value={field.value?.toString()}
                     disabled={isSubmitting || !canAddEdit}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-fit">
                       <SelectValue
                         placeholder={t("common.placeholders.selectState")}
                       />
