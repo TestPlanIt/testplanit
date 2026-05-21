@@ -33,6 +33,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -418,24 +419,33 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
               <FormField
                 control={form.control}
                 name="requiresReview"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="flex items-center space-x-2">
-                      <FormControl>
-                        <Switch
-                          data-testid="add-requires-review-switch"
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormLabel className="flex items-center">
-                        {t("editWorkflow.requiresReviewLabel")}
-                        <HelpPopover helpKey="workflow.requiresReview" />
-                      </FormLabel>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const isDefault = form.watch("isDefault");
+                  return (
+                    <FormItem>
+                      <div className="flex items-center space-x-2">
+                        <FormControl>
+                          <Switch
+                            data-testid="add-requires-review-switch"
+                            checked={field.value && !isDefault}
+                            onCheckedChange={field.onChange}
+                            disabled={isDefault}
+                          />
+                        </FormControl>
+                        <FormLabel className="flex items-center">
+                          {t("editWorkflow.requiresReviewLabel")}
+                          <HelpPopover helpKey="workflow.requiresReview" />
+                        </FormLabel>
+                        <FormMessage />
+                      </div>
+                      {isDefault && (
+                        <FormDescription>
+                          {t("editWorkflow.requiresReviewDefaultDisabled")}
+                        </FormDescription>
+                      )}
+                    </FormItem>
+                  );
+                }}
               />
             )}
 

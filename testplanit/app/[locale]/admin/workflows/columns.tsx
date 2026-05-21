@@ -130,10 +130,20 @@ export const useColumns = (
                 <div
                   className="text-center"
                   data-testid={`requires-review-cell-${row.original.id}`}
+                  title={
+                    row.original.isDefault
+                      ? tAdminWorkflows(
+                          "editWorkflow.requiresReviewDefaultDisabled"
+                        )
+                      : undefined
+                  }
                 >
                   <Switch
                     data-testid={`requires-review-switch-${row.original.id}`}
-                    checked={row.original.requiresReview}
+                    checked={
+                      row.original.requiresReview && !row.original.isDefault
+                    }
+                    disabled={row.original.isDefault}
                     onCheckedChange={(checked) =>
                       handleToggleRequiresReview(row.original.id, checked)
                     }

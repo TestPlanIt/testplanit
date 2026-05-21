@@ -990,6 +990,12 @@ model Workflows {
     @@index([isDeleted, isEnabled])
     @@index([scope, isDefault])
     @@index([order])
+
+    @@validate(
+        !(isDefault && requiresReview),
+        "The default workflow state cannot require review — new entities land here and the schema gate only fires on transitions."
+    )
+
     @@deny('all', !auth())
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)

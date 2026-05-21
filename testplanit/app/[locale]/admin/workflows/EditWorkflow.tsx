@@ -455,30 +455,40 @@ export function EditWorkflows({
             <FormField
               control={form.control}
               name="requiresReview"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center space-x-2">
-                    <FormControl>
-                      <Switch
-                        data-testid="requires-review-switch"
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        disabled={reviewFeatureDisabled}
-                      />
-                    </FormControl>
-                    <FormLabel className="flex items-center">
-                      {t("editWorkflow.requiresReviewLabel")}
-                      <HelpPopover helpKey="workflow.requiresReview" />
-                    </FormLabel>
-                    <FormMessage />
-                  </div>
-                  {reviewFeatureDisabled && (
-                    <FormDescription>
-                      {t("editWorkflow.requiresReviewFeatureDisabled")}
-                    </FormDescription>
-                  )}
-                </FormItem>
-              )}
+              render={({ field }) => {
+                const isDefault = form.watch("isDefault");
+                const requiresReviewDisabled =
+                  reviewFeatureDisabled || isDefault;
+                return (
+                  <FormItem>
+                    <div className="flex items-center space-x-2">
+                      <FormControl>
+                        <Switch
+                          data-testid="requires-review-switch"
+                          checked={field.value && !isDefault}
+                          onCheckedChange={field.onChange}
+                          disabled={requiresReviewDisabled}
+                        />
+                      </FormControl>
+                      <FormLabel className="flex items-center">
+                        {t("editWorkflow.requiresReviewLabel")}
+                        <HelpPopover helpKey="workflow.requiresReview" />
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
+                    {reviewFeatureDisabled && (
+                      <FormDescription>
+                        {t("editWorkflow.requiresReviewFeatureDisabled")}
+                      </FormDescription>
+                    )}
+                    {!reviewFeatureDisabled && isDefault && (
+                      <FormDescription>
+                        {t("editWorkflow.requiresReviewDefaultDisabled")}
+                      </FormDescription>
+                    )}
+                  </FormItem>
+                );
+              }}
             />
 
             <FormField
