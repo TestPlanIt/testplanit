@@ -1,6 +1,7 @@
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
+import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
 import { MilestoneSelect } from "@/components/forms/MilestoneSelect";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
@@ -83,6 +84,7 @@ interface WorkflowOption {
   label: string;
   icon?: string;
   color?: string;
+  requiresReview?: boolean;
 }
 
 interface ConfigurationOption {
@@ -463,16 +465,17 @@ const BasicInfoDialog = React.memo(
                                 key={option.value}
                                 value={option.value}
                               >
-                                <div className="flex items-center gap-2">
-                                  {option.icon && (
-                                    <DynamicIcon
-                                      name={option.icon as IconName}
-                                      className="h-4 w-4"
-                                      style={{ color: option.color }}
-                                    />
-                                  )}
-                                  {option.label}
-                                </div>
+                                <WorkflowStateDisplay
+                                  state={{
+                                    name: option.label,
+                                    icon: {
+                                      name: (option.icon ?? "") as IconName,
+                                    },
+                                    color: { value: option.color ?? "" },
+                                    requiresReview: option.requiresReview,
+                                  }}
+                                  size="sm"
+                                />
                               </SelectItem>
                             ))}
                           </SelectGroup>
@@ -947,6 +950,7 @@ export default function AddTestRunModal({
         label: w.name,
         icon: w.icon?.name,
         color: w.color?.value,
+        requiresReview: w.requiresReview,
       })) || []
     );
   }, [workflows]);

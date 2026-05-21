@@ -1,6 +1,7 @@
 "use client";
 
 import DynamicIcon from "@/components/DynamicIcon";
+import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { DatePickerField } from "@/components/forms/DatePickerField";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -432,16 +433,22 @@ export function CompleteMilestoneDialog({
                                         key={workflow.id}
                                         value={workflow.id.toString()}
                                       >
-                                        <div className="flex items-center gap-2">
-                                          <DynamicIcon
-                                            name={
-                                              workflow.icon?.name as IconName
-                                            }
-                                            color={workflow.color?.value}
-                                            className="h-4 w-4"
-                                          />
-                                          {workflow.name}
-                                        </div>
+                                        <WorkflowStateDisplay
+                                          state={{
+                                            name: workflow.name,
+                                            icon: {
+                                              name: workflow.icon
+                                                ?.name as IconName,
+                                            },
+                                            color: {
+                                              value:
+                                                workflow.color?.value ?? "",
+                                            },
+                                            requiresReview:
+                                              workflow.requiresReview,
+                                          }}
+                                          size="sm"
+                                        />
                                       </SelectItem>
                                     ))}
                                   </SelectContent>
@@ -507,16 +514,22 @@ export function CompleteMilestoneDialog({
                                         key={workflow.id}
                                         value={workflow.id.toString()}
                                       >
-                                        <div className="flex items-center gap-2">
-                                          <DynamicIcon
-                                            name={
-                                              workflow.icon?.name as IconName
-                                            }
-                                            color={workflow.color?.value}
-                                            className="h-4 w-4"
-                                          />
-                                          {workflow.name}
-                                        </div>
+                                        <WorkflowStateDisplay
+                                          state={{
+                                            name: workflow.name,
+                                            icon: {
+                                              name: workflow.icon
+                                                ?.name as IconName,
+                                            },
+                                            color: {
+                                              value:
+                                                workflow.color?.value ?? "",
+                                            },
+                                            requiresReview:
+                                              workflow.requiresReview,
+                                          }}
+                                          size="sm"
+                                        />
                                       </SelectItem>
                                     ))}
                                   </SelectContent>

@@ -1,6 +1,7 @@
 "use client";
 
 import DynamicIcon from "@/components/DynamicIcon";
+import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -242,14 +243,15 @@ export function CompleteSessionDialog({
               <SelectContent>
                 {workflows?.map((workflow) => (
                   <SelectItem key={workflow.id} value={workflow.id.toString()}>
-                    <div className="flex items-center gap-2">
-                      <DynamicIcon
-                        name={workflow.icon?.name as IconName}
-                        color={workflow.color?.value}
-                        className="h-4 w-4"
-                      />
-                      {workflow.name}
-                    </div>
+                    <WorkflowStateDisplay
+                      state={{
+                        name: workflow.name,
+                        icon: { name: workflow.icon?.name as IconName },
+                        color: { value: workflow.color?.value ?? "" },
+                        requiresReview: workflow.requiresReview,
+                      }}
+                      size="sm"
+                    />
                   </SelectItem>
                 ))}
               </SelectContent>

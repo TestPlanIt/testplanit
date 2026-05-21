@@ -1,4 +1,5 @@
 import DynamicIcon from "@/components/DynamicIcon";
+import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { ManageTags } from "@/components/ManageTags";
 import { Button } from "@/components/ui/button";
@@ -415,6 +416,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
       icon: true,
       color: true,
     },
+    orderBy: { order: "asc" },
   });
 
   const defaultWorkflowId = workflows?.find(
@@ -435,13 +437,15 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
     workflows?.map((workflow) => ({
       value: workflow.id.toString(),
       label: (
-        <div className="flex items-center">
-          <DynamicIcon
-            name={workflow.icon.name as IconName}
-            color={workflow.color.value}
-          />
-          <div className="mx-1">{workflow.name}</div>
-        </div>
+        <WorkflowStateDisplay
+          state={{
+            name: workflow.name,
+            icon: { name: workflow.icon.name as IconName },
+            color: { value: workflow.color.value },
+            requiresReview: workflow.requiresReview,
+          }}
+          size="sm"
+        />
       ),
     })) || [];
   const form = useForm<FormValues>({

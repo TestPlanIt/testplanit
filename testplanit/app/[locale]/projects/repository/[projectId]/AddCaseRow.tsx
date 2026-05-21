@@ -1,4 +1,5 @@
 import DynamicIcon from "@/components/DynamicIcon";
+import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
@@ -140,14 +141,15 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
     workflows?.map((workflow) => ({
       value: workflow.id.toString(),
       label: (
-        <div className="flex items-center shrink-0 max-w-full truncate">
-          <DynamicIcon
-            name={workflow.icon.name as IconName}
-            color={workflow.color.value}
-            className="shrink-0 w-5 h-5"
-          />
-          <div className="mx-1 truncate">{workflow.name}</div>
-        </div>
+        <WorkflowStateDisplay
+          state={{
+            name: workflow.name,
+            icon: { name: workflow.icon.name as IconName },
+            color: { value: workflow.color.value },
+            requiresReview: workflow.requiresReview,
+          }}
+          size="sm"
+        />
       ),
     })) || [];
 

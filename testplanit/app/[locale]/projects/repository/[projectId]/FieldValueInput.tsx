@@ -162,20 +162,17 @@ export function FieldValueInput({
     const workflowOptions =
       workflowsData?.map((workflow) => ({
         value: workflow.id.toString(),
-        label:
-          workflow.icon && workflow.color ? (
-            <WorkflowStateDisplay
-              state={{
-                name: workflow.name,
-                icon: { name: workflow.icon.name as IconName },
-                color: { value: workflow.color.value },
-                requiresReview: workflow.requiresReview,
-              }}
-              size="sm"
-            />
-          ) : (
-            <div className="flex items-center">{workflow.name}</div>
-          ),
+        label: (
+          <WorkflowStateDisplay
+            state={{
+              name: workflow.name,
+              icon: { name: (workflow.icon?.name ?? "circle") as IconName },
+              color: { value: workflow.color?.value ?? "" },
+              requiresReview: workflow.requiresReview,
+            }}
+            size="sm"
+          />
+        ),
       })) || [];
     return (
       <Select

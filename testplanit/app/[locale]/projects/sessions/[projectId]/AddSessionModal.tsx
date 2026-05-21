@@ -1,5 +1,6 @@
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import DynamicIcon from "@/components/DynamicIcon";
+import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import {
   MilestoneSelect,
@@ -214,6 +215,7 @@ export function AddSessionModal({
       label: workflow.name,
       icon: workflow.icon?.name,
       color: workflow.color?.value,
+      requiresReview: workflow.requiresReview,
     })) || [];
 
   const milestonesOptions = transformMilestones(milestones || []);
@@ -999,14 +1001,18 @@ export function AddSessionModal({
                                       key={workflow.value}
                                       value={workflow.value}
                                     >
-                                      <div className="flex items-center gap-1">
-                                        <DynamicIcon
-                                          className="w-4 h-4 shrink-0"
-                                          name={workflow.icon as IconName}
-                                          color={workflow.color}
-                                        />
-                                        {workflow.label}
-                                      </div>
+                                      <WorkflowStateDisplay
+                                        state={{
+                                          name: workflow.label,
+                                          icon: {
+                                            name: workflow.icon as IconName,
+                                          },
+                                          color: { value: workflow.color ?? "" },
+                                          requiresReview:
+                                            workflow.requiresReview,
+                                        }}
+                                        size="sm"
+                                      />
                                     </SelectItem>
                                   ))}
                                 </SelectGroup>
