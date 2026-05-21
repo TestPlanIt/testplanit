@@ -1,3 +1,9 @@
+## [0.29.5](https://github.com/TestPlanIt/testplanit/compare/v0.29.4...v0.29.5) (2026-05-21)
+
+### Bug Fixes
+
+* **export:** include expectedResult content in test case exports ([#329](https://github.com/TestPlanIt/testplanit/issues/329)) ([bce26a4](https://github.com/TestPlanIt/testplanit/commit/bce26a456c36910a609aafb3fce8e2a5e542fabd))
+
 ## [0.29.4](https://github.com/TestPlanIt/testplanit/compare/v0.29.3...v0.29.4) (2026-05-21)
 
 ### Bug Fixes
