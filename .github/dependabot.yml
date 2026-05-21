@@ -1,7 +1,11 @@
 version: 2
 updates:
+  # Single npm entry for the pnpm workspace. The root pnpm-lock.yaml is the
+  # source of truth for testplanit, cli, packages/*, docs, and forge-app —
+  # per-subdirectory entries produced stale-lockfile PRs because Dependabot's
+  # per-subdir mode doesn't update the shared root lockfile.
   - package-ecosystem: "npm"
-    directory: "/testplanit"
+    directory: "/"
     schedule:
       interval: "weekly"
     ignore:
@@ -19,36 +23,6 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "react-resizable-panels"
         update-types: ["version-update:semver-major"]
-    groups:
-      dev-dependencies:
-        dependency-type: "development"
-        exclude-patterns:
-          - "@types/node"
-      minor-and-patch:
-        dependency-type: "production"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "npm"
-    directory: "/packages/api"
-    schedule:
-      interval: "weekly"
-    groups:
-      dev-dependencies:
-        dependency-type: "development"
-        exclude-patterns:
-          - "@types/node"
-      minor-and-patch:
-        dependency-type: "production"
-        update-types:
-          - "minor"
-          - "patch"
-
-  - package-ecosystem: "npm"
-    directory: "/cli"
-    schedule:
-      interval: "weekly"
     groups:
       dev-dependencies:
         dependency-type: "development"
