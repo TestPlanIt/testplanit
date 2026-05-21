@@ -235,9 +235,7 @@ export function EditWorkflows({
             })),
           });
         }
-      }
-
-      if (Array.isArray(data.projects)) {
+      } else if (Array.isArray(data.projects)) {
         await createManyProjectWorkflowAssignment({
           data: data.projects.map((projectId: number) => ({
             projectId: projectId,
