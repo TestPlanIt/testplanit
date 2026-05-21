@@ -1,3 +1,9 @@
+## [0.29.4](https://github.com/TestPlanIt/testplanit/compare/v0.29.3...v0.29.4) (2026-05-21)
+
+### Bug Fixes
+
+* **llm:** surface details on test-case generation parse failures ([#327](https://github.com/TestPlanIt/testplanit/issues/327)) ([b2064f4](https://github.com/TestPlanIt/testplanit/commit/b2064f480698b19d225e665b10b5bafc84d9c2aa))
+
 ## [0.29.3](https://github.com/TestPlanIt/testplanit/compare/v0.29.2...v0.29.3) (2026-05-20)
 
 ### Bug Fixes
