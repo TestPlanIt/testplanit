@@ -4308,7 +4308,8 @@
       },
       "editWorkflow": {
         "requiresReviewLabel": "Überprüfung erforderlich",
-        "requiresReviewFeatureDisabled": "Die Funktion für den Überprüfungsworkflow ist systemweit deaktiviert. Um sie wieder zu aktivieren, ändern Sie die erweiterten Projekteinstellungen oder setzen Sie TESTPLANIT_REVIEW_FEATURE_ENABLED."
+        "requiresReviewFeatureDisabled": "Die Funktion für den Überprüfungsworkflow ist systemweit deaktiviert. Um sie wieder zu aktivieren, ändern Sie die erweiterten Projekteinstellungen oder setzen Sie TESTPLANIT_REVIEW_FEATURE_ENABLED.",
+        "requiresReviewDefaultDisabled": "Der Standard-Workflow-Status darf keine Überprüfung erfordern – neue Entitäten landen hier und haben keinen vorherigen Status, der geprüft werden muss."
       },
       "add": {
         "button": "Workflow hinzufügen",

@@ -4308,7 +4308,8 @@
       },
       "editWorkflow": {
         "requiresReviewLabel": "需要審核",
-        "requiresReviewFeatureDisabled": "系統級已停用審閱工作流程功能。請切換專案的「進階設定」或設定 TESTPLANIT_REVIEW_FEATURE_ENABLED 以重新啟用此功能。"
+        "requiresReviewFeatureDisabled": "系統級已停用審閱工作流程功能。請切換專案的「進階設定」或設定 TESTPLANIT_REVIEW_FEATURE_ENABLED 以重新啟用此功能。",
+        "requiresReviewDefaultDisabled": "預設工作流程狀態不需要審核－新實體進入此狀態，且沒有先前的狀態需要控制。"
       },
       "add": {
         "button": "新增工作流程",

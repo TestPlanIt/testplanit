@@ -4308,7 +4308,8 @@
       },
       "editWorkflow": {
         "requiresReviewLabel": "İnceleme gerektiriyor",
-        "requiresReviewFeatureDisabled": "İnceleme iş akışı özelliği sistem düzeyinde devre dışı bırakılmıştır. Yeniden etkinleştirmek için bir projenin Gelişmiş ayarlarını açıp kapatın veya TESTPLANIT_REVIEW_FEATURE_ENABLED özelliğini ayarlayın."
+        "requiresReviewFeatureDisabled": "İnceleme iş akışı özelliği sistem düzeyinde devre dışı bırakılmıştır. Yeniden etkinleştirmek için bir projenin Gelişmiş ayarlarını açıp kapatın veya TESTPLANIT_REVIEW_FEATURE_ENABLED özelliğini ayarlayın.",
+        "requiresReviewDefaultDisabled": "Varsayılan iş akışı durumu inceleme gerektiremez; yeni varlıklar buraya gelir ve kontrol edilmesi gereken önceden belirlenmiş bir durumları yoktur."
       },
       "add": {
         "button": "İş Akışı Ekle",

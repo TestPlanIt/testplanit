@@ -4308,7 +4308,8 @@
       },
       "editWorkflow": {
         "requiresReviewLabel": "審査が必要",
-        "requiresReviewFeatureDisabled": "レビューワークフロー機能はシステムレベルで無効になっています。プロジェクトの詳細設定を切り替えるか、TESTPLANIT_REVIEW_FEATURE_ENABLED を設定して再度有効にしてください。"
+        "requiresReviewFeatureDisabled": "レビューワークフロー機能はシステムレベルで無効になっています。プロジェクトの詳細設定を切り替えるか、TESTPLANIT_REVIEW_FEATURE_ENABLED を設定して再度有効にしてください。",
+        "requiresReviewDefaultDisabled": "デフォルトのワークフロー状態ではレビューを要求できません。新しいエンティティはここに到着し、ゲートするための以前の状態がありません。"
       },
       "add": {
         "button": "ワークフローを追加",

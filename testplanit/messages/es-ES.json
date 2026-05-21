@@ -4308,7 +4308,8 @@
       },
       "editWorkflow": {
         "requiresReviewLabel": "Requiere revisión",
-        "requiresReviewFeatureDisabled": "La función de flujo de trabajo de revisión está deshabilitada a nivel del sistema. Para volver a habilitarla, modifique la configuración avanzada del proyecto o establezca TESTPLANIT_REVIEW_FEATURE_ENABLED."
+        "requiresReviewFeatureDisabled": "La función de flujo de trabajo de revisión está deshabilitada a nivel del sistema. Para volver a habilitarla, modifique la configuración avanzada del proyecto o establezca TESTPLANIT_REVIEW_FEATURE_ENABLED.",
+        "requiresReviewDefaultDisabled": "El estado predeterminado del flujo de trabajo no puede requerir revisión: las nuevas entidades llegan aquí y no tienen un estado previo que controlar."
       },
       "add": {
         "button": "Añadir flujo de trabajo",

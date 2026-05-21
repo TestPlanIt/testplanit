@@ -4308,7 +4308,8 @@
       },
       "editWorkflow": {
         "requiresReviewLabel": "Cần xem xét lại",
-        "requiresReviewFeatureDisabled": "Tính năng quy trình xem xét đã bị vô hiệu hóa ở cấp độ hệ thống. Hãy bật/tắt cài đặt Nâng cao của dự án hoặc đặt TESTPLANIT_REVIEW_FEATURE_ENABLED để kích hoạt lại."
+        "requiresReviewFeatureDisabled": "Tính năng quy trình xem xét đã bị vô hiệu hóa ở cấp độ hệ thống. Hãy bật/tắt cài đặt Nâng cao của dự án hoặc đặt TESTPLANIT_REVIEW_FEATURE_ENABLED để kích hoạt lại.",
+        "requiresReviewDefaultDisabled": "Trạng thái quy trình làm việc mặc định không thể yêu cầu xem xét — các thực thể mới được đưa vào đây và không có trạng thái trước đó để được kiểm soát."
       },
       "add": {
         "button": "Thêm quy trình làm việc",

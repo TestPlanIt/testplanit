@@ -4308,7 +4308,8 @@
       },
       "editWorkflow": {
         "requiresReviewLabel": "Richiede revisione",
-        "requiresReviewFeatureDisabled": "La funzionalità di revisione del flusso di lavoro è disabilitata a livello di sistema. Per riattivarla, modifica le impostazioni avanzate del progetto oppure imposta TESTPLANIT_REVIEW_FEATURE_ENABLED."
+        "requiresReviewFeatureDisabled": "La funzionalità di revisione del flusso di lavoro è disabilitata a livello di sistema. Per riattivarla, modifica le impostazioni avanzate del progetto oppure imposta TESTPLANIT_REVIEW_FEATURE_ENABLED.",
+        "requiresReviewDefaultDisabled": "Lo stato predefinito del flusso di lavoro non richiede revisione: le nuove entità vengono inserite qui e non hanno uno stato precedente da controllare."
       },
       "add": {
         "button": "Aggiungi flusso di lavoro",

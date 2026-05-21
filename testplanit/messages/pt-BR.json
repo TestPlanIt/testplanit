@@ -4308,7 +4308,8 @@
       },
       "editWorkflow": {
         "requiresReviewLabel": "Requer revisão",
-        "requiresReviewFeatureDisabled": "O recurso de fluxo de trabalho de revisão está desativado no nível do sistema. Alterne as configurações avançadas de um projeto ou defina TESTPLANIT_REVIEW_FEATURE_ENABLED para reativá-lo."
+        "requiresReviewFeatureDisabled": "O recurso de fluxo de trabalho de revisão está desativado no nível do sistema. Alterne as configurações avançadas de um projeto ou defina TESTPLANIT_REVIEW_FEATURE_ENABLED para reativá-lo.",
+        "requiresReviewDefaultDisabled": "O estado padrão do fluxo de trabalho não pode exigir revisão — novas entidades chegam aqui e não têm um estado anterior para serem verificadas."
       },
       "add": {
         "button": "Adicionar fluxo de trabalho",

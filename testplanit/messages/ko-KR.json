@@ -4308,7 +4308,8 @@
       },
       "editWorkflow": {
         "requiresReviewLabel": "검토가 필요합니다",
-        "requiresReviewFeatureDisabled": "시스템 수준에서 검토 워크플로 기능이 비활성화되어 있습니다. 프로젝트의 고급 설정을 변경하거나 TESTPLANIT_REVIEW_FEATURE_ENABLED를 설정하여 다시 활성화하십시오."
+        "requiresReviewFeatureDisabled": "시스템 수준에서 검토 워크플로 기능이 비활성화되어 있습니다. 프로젝트의 고급 설정을 변경하거나 TESTPLANIT_REVIEW_FEATURE_ENABLED를 설정하여 다시 활성화하십시오.",
+        "requiresReviewDefaultDisabled": "기본 워크플로 상태에서는 검토가 필요하지 않습니다. 새로운 엔티티는 이 상태에 도달하며, 검토를 거쳐야 할 이전 상태가 없습니다."
       },
       "add": {
         "button": "워크플로 추가",

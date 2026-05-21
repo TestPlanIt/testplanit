@@ -4308,7 +4308,8 @@
       },
       "editWorkflow": {
         "requiresReviewLabel": "Vereist beoordeling",
-        "requiresReviewFeatureDisabled": "De functie voor het beoordelen van de workflow is op systeemniveau uitgeschakeld. Schakel de geavanceerde instellingen van een project in of uit, of stel TESTPLANIT_REVIEW_FEATURE_ENABLED in om deze opnieuw in te schakelen."
+        "requiresReviewFeatureDisabled": "De functie voor het beoordelen van de workflow is op systeemniveau uitgeschakeld. Schakel de geavanceerde instellingen van een project in of uit, of stel TESTPLANIT_REVIEW_FEATURE_ENABLED in om deze opnieuw in te schakelen.",
+        "requiresReviewDefaultDisabled": "De standaard workflowstatus vereist geen beoordeling; nieuwe entiteiten komen hier terecht en hebben geen voorafgaande status die gecontroleerd moet worden."
       },
       "add": {
         "button": "Workflow toevoegen",

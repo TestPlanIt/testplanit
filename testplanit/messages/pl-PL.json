@@ -4308,7 +4308,8 @@
       },
       "editWorkflow": {
         "requiresReviewLabel": "Wymaga przeglądu",
-        "requiresReviewFeatureDisabled": "Funkcja przeglądu przepływu pracy jest wyłączona na poziomie systemu. Przełącz ustawienia zaawansowane projektu lub ustaw opcję TESTPLANIT_REVIEW_FEATURE_ENABLED, aby ją ponownie włączyć."
+        "requiresReviewFeatureDisabled": "Funkcja przeglądu przepływu pracy jest wyłączona na poziomie systemu. Przełącz ustawienia zaawansowane projektu lub ustaw opcję TESTPLANIT_REVIEW_FEATURE_ENABLED, aby ją ponownie włączyć.",
+        "requiresReviewDefaultDisabled": "Domyślny stan przepływu pracy nie może wymagać przeglądu — nowe jednostki trafiają tutaj i nie mają żadnego poprzedniego stanu do przejęcia."
       },
       "add": {
         "button": "Dodaj przepływ pracy",

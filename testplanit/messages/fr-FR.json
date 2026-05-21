@@ -4308,7 +4308,8 @@
       },
       "editWorkflow": {
         "requiresReviewLabel": "Nécessite une révision",
-        "requiresReviewFeatureDisabled": "La fonctionnalité de flux de travail de révision est désactivée au niveau du système. Modifiez les paramètres avancés d'un projet ou définissez la variable d'environnement TESTPLANIT_REVIEW_FEATURE_ENABLED pour la réactiver."
+        "requiresReviewFeatureDisabled": "La fonctionnalité de flux de travail de révision est désactivée au niveau du système. Modifiez les paramètres avancés d'un projet ou définissez la variable d'environnement TESTPLANIT_REVIEW_FEATURE_ENABLED pour la réactiver.",
+        "requiresReviewDefaultDisabled": "L'état par défaut du flux de travail ne peut pas nécessiter de révision ; les nouvelles entités arrivent ici sans avoir d'état préalable à contrôler."
       },
       "add": {
         "button": "Ajouter un flux de travail",
