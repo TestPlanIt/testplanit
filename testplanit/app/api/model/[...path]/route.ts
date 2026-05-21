@@ -16,7 +16,10 @@ import {
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import { prisma } from "~/lib/prisma";
 import { captureAuditEvent, type AuditEvent } from "~/lib/services/auditLog";
-import { assertReviewGatePasses } from "~/lib/services/reviewGate";
+import {
+  assertReviewGatePasses,
+  resolveCreateStateRemap,
+} from "~/lib/services/reviewGate";
 import {
   isAlreadyPendingError,
   isReviewGateError,
@@ -92,6 +95,15 @@ const REVIEW_GATED_MODELS: Record<string, ReviewEntityType> = {
   repositoryCases: "CASE",
   testRuns: "RUN",
   sessions: "SESSION",
+};
+
+// Scope each gated model maps to for create-time `resolveCreateStateRemap`
+// lookups. Mirrors `REVIEW_GATED_MODELS` but in the WorkflowScope dimension
+// so the remap can find the right pool of workflows.
+const GATED_MODEL_SCOPE: Record<string, "CASES" | "RUNS" | "SESSIONS"> = {
+  repositoryCases: "CASES",
+  testRuns: "RUNS",
+  sessions: "SESSIONS",
 };
 
 function extractEntityIdFromBody(
@@ -445,6 +457,63 @@ async function innerHandler(
         }
       } catch {
         // Ignore body parsing errors
+      }
+    }
+
+    // Review & Approval create-time remap. For creates on the three gated
+    // models (RepositoryCases / TestRuns / Sessions), rewrite a gated/past-
+    // gate stateId to the project default state BEFORE the request reaches
+    // ZenStack. The schema `@@deny('create', state.requiresReview && ...)`
+    // does not navigate the `state` relation reliably on connect-style
+    // inputs in ZenStack 2.x, so we enforce strict-transitive create
+    // semantics here. Behavior matches `resolveCreateStateRemap` consumers
+    // in the worker/import paths: when gating is active and the candidate
+    // is at-or-beyond a gate, the create silently lands in the default
+    // state. When gating is off (system flag, project flag, or no gated
+    // state in scope), the helper returns the candidate unchanged.
+    if (
+      isMutation &&
+      parsedPath &&
+      parsedPath.operation === "create" &&
+      GATED_MODEL_SCOPE[parsedPath.model] !== undefined
+    ) {
+      const scope = GATED_MODEL_SCOPE[parsedPath.model];
+      const data = requestBody?.data;
+      const candidateStateId =
+        typeof data?.stateId === "number"
+          ? data.stateId
+          : typeof data?.state?.connect?.id === "number"
+            ? data.state.connect.id
+            : null;
+      const projectId =
+        typeof data?.projectId === "number"
+          ? data.projectId
+          : typeof data?.project?.connect?.id === "number"
+            ? data.project.connect.id
+            : null;
+      if (
+        candidateStateId !== null &&
+        projectId !== null &&
+        scope !== undefined
+      ) {
+        const remapped = await resolveCreateStateRemap(
+          prisma,
+          projectId,
+          scope,
+          candidateStateId
+        );
+        if (
+          typeof remapped === "number" &&
+          remapped !== candidateStateId &&
+          requestBody?.data
+        ) {
+          if (typeof data.stateId === "number") {
+            requestBody.data.stateId = remapped;
+          }
+          if (typeof data.state?.connect?.id === "number") {
+            requestBody.data.state.connect.id = remapped;
+          }
+        }
       }
     }
 
