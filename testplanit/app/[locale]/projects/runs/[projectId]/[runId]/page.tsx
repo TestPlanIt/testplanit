@@ -11,6 +11,8 @@ import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
 import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
+import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
+import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
 import { IterationAwareTestRunCaseDetails } from "~/components/iterations/IterationAwareTestRunCaseDetails";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import {
@@ -202,6 +204,7 @@ type WorkflowStateWithRelations = {
   isDefault: boolean;
   workflowType: string;
   scope: string;
+  requiresReview?: boolean | null;
   icon: {
     id: number;
     name: string;
@@ -618,6 +621,15 @@ export default function TestRunPage() {
         color: { value: w.color?.value ?? "" },
       }));
   }, [workflows, testRunData]);
+
+  const transitionGate = useTransitionGateStatus(
+    "RUN",
+    testRunData?.id ?? 0,
+    testRunData?.stateId ?? null,
+    Number(projectId)
+  );
+  const watchedStateId = form.watch("stateId");
+  const transitionCheck = transitionGate.canTransitionTo(watchedStateId);
 
   // Update form initialization
   useEffect(() => {
@@ -1664,14 +1676,55 @@ export default function TestRunPage() {
                       // Edit Mode Buttons for NON-COMPLETED runs
                       <div className="flex flex-col gap-2">
                         <div className="flex gap-2">
-                          <Button
-                            type="submit"
-                            variant="default"
-                            disabled={isSubmitting || !canAddEditRun}
-                          >
-                            <Save className="h-4 w-4 mr-2" />{" "}
-                            {t("common.actions.save")}
-                          </Button>
+                          {(() => {
+                            const gateBlocked =
+                              !transitionCheck.allowed &&
+                              transitionCheck.blockingGate;
+                            const formHasErrors =
+                              Object.keys(errors).length > 0;
+                            const saveBlocked = gateBlocked || formHasErrors;
+                            const tooltipMessage = gateBlocked
+                              ? t("reviews.transitionGate.blockedByGate", {
+                                  gateName: transitionCheck.blockingGate!.name,
+                                })
+                              : t(
+                                  "reviews.transitionGate.saveBlockedByFormErrors"
+                                );
+
+                            if (!saveBlocked) {
+                              return (
+                                <Button
+                                  type="submit"
+                                  variant="default"
+                                  disabled={isSubmitting || !canAddEditRun}
+                                >
+                                  <Save className="h-4 w-4 mr-2" />{" "}
+                                  {t("common.actions.save")}
+                                </Button>
+                              );
+                            }
+
+                            return (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span tabIndex={0}>
+                                    <Button
+                                      type="submit"
+                                      variant="default"
+                                      disabled
+                                      className="ring-2 ring-destructive ring-offset-2 ring-offset-background"
+                                    >
+                                      <Save className="h-4 w-4 mr-2" />{" "}
+                                      {t("common.actions.save")}
+                                    </Button>
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {tooltipMessage}
+                                </TooltipContent>
+                              </Tooltip>
+                            );
+                          })()}
                           <Button
                             type="button"
                             variant="outline"
@@ -1998,6 +2051,7 @@ export default function TestRunPage() {
                     canCreateTags={showAddEditTagsPerm}
                     selectedConfigurationsForDisplay={selectedConfigurations}
                     onAttachmentPendingChanges={setPendingAttachmentChanges}
+                    transitionCheck={transitionCheck}
                   />
                   {selectedAttachmentIndex !== null && (
                     <AttachmentsCarousel

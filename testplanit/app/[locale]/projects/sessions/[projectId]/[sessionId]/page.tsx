@@ -80,6 +80,11 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import UploadAttachments from "@/components/UploadAttachments";
 import { VersionSelect } from "@/components/VersionSelect";
 import type { Attachments, Sessions } from "@prisma/client";
@@ -261,6 +266,10 @@ interface SessionFormControlsProps {
   projectIntegration?: any;
   canAddEditTags: boolean;
   onAttachmentPendingChanges?: (changes: AttachmentChanges) => void;
+  transitionCheck?: {
+    allowed: boolean;
+    blockingGate: { id: number; name: string } | null;
+  };
 }
 
 function SessionFormControls({
@@ -282,6 +291,7 @@ function SessionFormControls({
   projectIntegration,
   canAddEditTags,
   onAttachmentPendingChanges,
+  transitionCheck,
 }: SessionFormControlsProps) {
   const t = useTranslations("sessions");
   const tGlobal = useTranslations();
@@ -425,6 +435,16 @@ function SessionFormControls({
                 )}
               </FormControl>
               <FormMessage />
+              {isEditMode &&
+                transitionCheck &&
+                !transitionCheck.allowed &&
+                transitionCheck.blockingGate && (
+                  <p className="text-[0.8rem] font-medium text-destructive mt-1">
+                    {tGlobal("reviews.transitionGate.blockedByGate", {
+                      gateName: transitionCheck.blockingGate.name,
+                    })}
+                  </p>
+                )}
             </FormItem>
           );
         }}
@@ -1279,22 +1299,22 @@ export default function SessionPage() {
     handleSubmit,
     control,
     setValue,
-    setError,
     formState: { errors },
   } = form;
 
-  // Client mirror of the strict-transitive review gate. `onSubmit` re-runs
-  // the preflight before firing the mutation; the previous `useEffect`
-  // version that mirrored the gate result into `setError` caused an
-  // infinite render loop via the `errors.stateId` dep, and was redundant
-  // since the form's `FormMessage` reads from the same setError call we
-  // already do in `onSubmit`.
+  // Client mirror of the strict-transitive review gate. The live inline
+  // error rendered under the state Select reads off `transitionCheck`;
+  // `onSubmit` re-runs the preflight before firing the mutation. We do NOT
+  // mirror the gate result through `setError` — that previously caused an
+  // infinite render loop via the `errors.stateId` dep.
   const transitionGate = useTransitionGateStatus(
     "SESSION",
     sessionData?.id ?? 0,
     sessionData?.stateId ?? null,
     Number(projectId)
   );
+  const watchedStateId = form.watch("stateId");
+  const transitionCheck = transitionGate.canTransitionTo(watchedStateId);
 
   // Add these functions
   const toggleCollapseLeft = () => {
@@ -1369,16 +1389,13 @@ export default function SessionPage() {
 
   // Update onSubmit function
   const onSubmit = async (data: FormValues) => {
-    // Pre-flight the strict-transitive review gate so a blocked target
-    // surfaces inline instead of losing every other edit on a 403 round-trip.
+    // Strict-transitive review-gate preflight. The live inline error
+    // rendered under the state Select reads off the same `transitionGate`,
+    // so we DON'T also `setError` here — that double-renders the message
+    // (once inline + once via `FormMessage`) and previously caused an
+    // infinite render loop via the `errors.stateId` dep.
     const gatePreflight = transitionGate.canTransitionTo(data.stateId);
     if (!gatePreflight.allowed && gatePreflight.blockingGate) {
-      setError("stateId", {
-        type: "review-gate",
-        message: tGlobal("reviews.transitionGate.blockedByGate", {
-          gateName: gatePreflight.blockingGate.name,
-        }),
-      });
       return;
     }
 
@@ -1871,14 +1888,59 @@ export default function SessionPage() {
                     ) : (
                       <div className="flex flex-col gap-2">
                         <div className="flex gap-2">
-                          <Button
-                            type="submit"
-                            variant="default"
-                            disabled={isSubmitting}
-                          >
-                            <Save className="h-4 w-4" />
-                            {tCommon("actions.save")}
-                          </Button>
+                          {(() => {
+                            const gateBlocked =
+                              !transitionCheck.allowed &&
+                              transitionCheck.blockingGate;
+                            const formHasErrors =
+                              Object.keys(errors).length > 0;
+                            const saveBlocked = gateBlocked || formHasErrors;
+                            const tooltipMessage = gateBlocked
+                              ? tGlobal(
+                                  "reviews.transitionGate.blockedByGate",
+                                  {
+                                    gateName:
+                                      transitionCheck.blockingGate!.name,
+                                  }
+                                )
+                              : tGlobal(
+                                  "reviews.transitionGate.saveBlockedByFormErrors"
+                                );
+
+                            if (!saveBlocked) {
+                              return (
+                                <Button
+                                  type="submit"
+                                  variant="default"
+                                  disabled={isSubmitting}
+                                >
+                                  <Save className="h-4 w-4" />
+                                  {tCommon("actions.save")}
+                                </Button>
+                              );
+                            }
+
+                            return (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span tabIndex={0}>
+                                    <Button
+                                      type="submit"
+                                      variant="default"
+                                      disabled
+                                      className="ring-2 ring-destructive ring-offset-2 ring-offset-background"
+                                    >
+                                      <Save className="h-4 w-4" />
+                                      {tCommon("actions.save")}
+                                    </Button>
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {tooltipMessage}
+                                </TooltipContent>
+                              </Tooltip>
+                            );
+                          })()}
                           <Button
                             type="button"
                             variant="outline"
@@ -2204,6 +2266,7 @@ export default function SessionPage() {
                     projectIntegration={projectData?.projectIntegrations?.[0]}
                     canAddEditTags={showAddEditTagsPerm}
                     onAttachmentPendingChanges={setPendingAttachmentChanges}
+                    transitionCheck={transitionCheck}
                   />
                   {selectedAttachmentIndex !== null && (
                     <AttachmentsCarousel
