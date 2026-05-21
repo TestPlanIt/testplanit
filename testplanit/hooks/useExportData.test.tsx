@@ -62,7 +62,7 @@ type SampleDataType = {
   steps?: {
     id: number;
     step: any;
-    expectedResult?: { expectedResult: any; isDeleted?: boolean };
+    expectedResult?: any;
     isDeleted?: boolean;
   }[];
   attachments?: {
@@ -187,15 +187,13 @@ const sampleData: SampleDataType[] = [
           ],
         },
         expectedResult: {
-          expectedResult: {
-            type: "doc",
-            content: [
-              {
-                type: "paragraph",
-                content: [{ type: "text", text: "Result 1 content" }],
-              },
-            ],
-          },
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [{ type: "text", text: "Result 1 content" }],
+            },
+          ],
         },
         isDeleted: false,
       },
@@ -738,6 +736,68 @@ describe("useExportData", () => {
     expect(unparsedData[0]["Expected Result"]).toBe("Result 1 content");
     expect(unparsedData[1]["Step Content"]).toBe("Step 2 content");
     expect(unparsedData[1]["Expected Result"]).toBe("");
+  });
+
+  it("should include expectedResult when the step text is empty (regression)", async () => {
+    mockExtractText.mockImplementation((node) => {
+      if (node?.content?.[0]?.content?.[0]?.text) {
+        return node.content[0].content[0].text;
+      }
+      return "";
+    });
+    const caseWithEmptyStep: SampleDataType = {
+      id: 99,
+      name: "Empty Step Case",
+      steps: [
+        {
+          id: 901,
+          step: { type: "doc", content: [{ type: "paragraph" }] },
+          expectedResult: {
+            type: "doc",
+            content: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: "Expected only" }],
+              },
+            ],
+          },
+          isDeleted: false,
+        },
+      ],
+    };
+    const { result } = renderExportHook({
+      selectedIds: [99],
+      currentData: [caseWithEmptyStep],
+    });
+    mockFetchAllData.mockResolvedValueOnce([caseWithEmptyStep]);
+
+    const multiOptions: ExportOptions = {
+      format: "csv",
+      scope: "selected",
+      columns: "all",
+      delimiter: ",",
+      rowMode: "multi",
+      stepsFormat: "plainText",
+      textLongFormat: "json",
+      attachmentFormat: "json",
+    };
+    await act(async () => {
+      await result.current.handleExport(multiOptions);
+    });
+    const multiRows = mockUnparse.mock.calls[0][0];
+    expect(multiRows).toHaveLength(1);
+    expect(multiRows[0]["Step Content"]).toBe("");
+    expect(multiRows[0]["Expected Result"]).toBe("Expected only");
+
+    mockUnparse.mockClear();
+    mockFetchAllData.mockResolvedValueOnce([caseWithEmptyStep]);
+    await act(async () => {
+      await result.current.handleExport({ ...multiOptions, rowMode: "single" });
+    });
+    const singleRow = mockUnparse.mock.calls[0][0];
+    expect(singleRow[0]["Steps Data"]).toBe(
+      "Expected Result 1:\nExpected only"
+    );
   });
 
   // --- Add tests for attachmentFormat, textLongFormat, custom fields, delimiters, etc. ---

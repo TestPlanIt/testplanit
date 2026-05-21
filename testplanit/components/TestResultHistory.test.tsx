@@ -434,6 +434,67 @@ describe("TestResultHistory", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders expectedResult when step text is empty (regression)", async () => {
+    const user = userEvent.setup();
+    const expectedResultDoc = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Verify login succeeds" }],
+        },
+      ],
+    };
+    const resultWithSteps = {
+      ...mockManualResult,
+      id: 2,
+      stepResults: [
+        {
+          id: 901,
+          stepStatus: { name: "Passed", color: { value: "#22C55E" } },
+          notes: null,
+          evidence: null,
+          elapsed: 0,
+          sharedStepItemId: null,
+          step: {
+            id: 401,
+            step: { type: "doc", content: [{ type: "paragraph" }] },
+            // Steps.expectedResult is a Json? scalar — not a nested relation
+            expectedResult: expectedResultDoc,
+            sharedStepGroupId: null,
+            sharedStepGroup: null,
+          },
+          issues: [],
+        },
+      ],
+    };
+    const testCaseWithStepResults = {
+      ...mockTestCase,
+      testRuns: [
+        {
+          ...mockTestCase.testRuns[0],
+          results: [resultWithSteps],
+        },
+      ],
+      junitResults: [],
+    };
+    mockUseFindFirstRepositoryCases.mockReturnValue({
+      data: testCaseWithStepResults,
+      isLoading: false,
+    });
+
+    renderWithQueryClient(<TestResultHistory {...defaultProps} />);
+
+    await user.click(screen.getByTestId("expand-result-manual-2"));
+
+    const editorContents = screen
+      .getAllByTestId("tiptap-editor")
+      .map((el) => el.textContent ?? "");
+    expect(
+      editorContents.some((text) => text.includes("Verify login succeeds"))
+    ).toBe(true);
+  });
+
   it("hides Add to Test Run button when user lacks permission", () => {
     const testCaseNoResults = {
       ...mockTestCase,

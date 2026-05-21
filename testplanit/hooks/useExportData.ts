@@ -392,10 +392,7 @@ export function useExportData<
     steps?: {
       id: number;
       step: any;
-      expectedResult?: {
-        expectedResult: any;
-        isDeleted?: boolean;
-      } | null;
+      expectedResult?: any;
       isDeleted?: boolean;
     }[];
     attachments?: any[];
@@ -563,13 +560,9 @@ export function useExportData<
                   activeSteps.map((step, index) => ({
                     stepNumber: index + 1,
                     step: formatStepContent(step.step, "json"),
-                    expectedResult:
-                      !step.expectedResult || step.expectedResult.isDeleted
-                        ? null
-                        : formatStepContent(
-                            step.expectedResult.expectedResult,
-                            "json"
-                          ),
+                    expectedResult: !step.expectedResult
+                      ? null
+                      : formatStepContent(step.expectedResult, "json"),
                   })) || [];
                 combinedStepData = JSON.stringify(stepsArray);
               } else {
@@ -580,14 +573,12 @@ export function useExportData<
                         step.step,
                         effectiveOptions.stepsFormat
                       );
-                      // Check isDeleted before formatting expectedResult
-                      const expectedText =
-                        !step.expectedResult || step.expectedResult.isDeleted
-                          ? ""
-                          : formatStepContent(
-                              step.expectedResult.expectedResult,
-                              effectiveOptions.stepsFormat
-                            );
+                      const expectedText = !step.expectedResult
+                        ? ""
+                        : formatStepContent(
+                            step.expectedResult,
+                            effectiveOptions.stepsFormat
+                          );
                       const stepStr = stepText
                         ? `Step ${index + 1}:\n${stepText}`
                         : "";
@@ -633,14 +624,12 @@ export function useExportData<
                     step.step,
                     effectiveOptions.stepsFormat
                   );
-                  // Check isDeleted before formatting expectedResult
-                  const expectedResultContent =
-                    !step.expectedResult || step.expectedResult.isDeleted
-                      ? ""
-                      : formatStepContent(
-                          step.expectedResult.expectedResult,
-                          effectiveOptions.stepsFormat
-                        );
+                  const expectedResultContent = !step.expectedResult
+                    ? ""
+                    : formatStepContent(
+                        step.expectedResult,
+                        effectiveOptions.stepsFormat
+                      );
                   if (index === 0) {
                     multiRows.push({
                       formatted: formatItemData(
