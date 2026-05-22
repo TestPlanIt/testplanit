@@ -10,6 +10,7 @@ import { authOptions } from "~/server/auth";
 import {
   buildOutlineSystemPrompt,
   buildOutlineUserPrompt,
+  fetchHierarchyContext,
   type GenerationContext,
   type IssueData,
   type TestCaseOutline,
@@ -107,18 +108,53 @@ export async function POST(request: NextRequest) {
     }
 
     const systemPrompt = buildOutlineSystemPrompt(quantity);
-    const userPrompt = buildOutlineUserPrompt(issue, context);
 
     let maxTokens = resolvedPrompt.maxOutputTokens ?? 2048;
+    let maxTokensPerRequest = 4096;
     const providerConfig = await (prisma as any).llmProviderConfig.findFirst({
       where: { llmIntegrationId: resolved.integrationId },
     });
     if (providerConfig) {
+      maxTokensPerRequest = providerConfig.maxTokensPerRequest ?? 4096;
       maxTokens =
         providerConfig.defaultMaxTokens ??
         resolvedPrompt.maxOutputTokens ??
         2048;
     }
+
+    // Fetch sibling/ancestor folder cases so the outline LLM avoids producing
+    // titles that duplicate already-existing coverage — matches what the
+    // single-shot generator (route.ts) does. Token budget mirrors that path:
+    // 65% of the request budget minus what the system + base user prompt cost.
+    const CONTENT_BUDGET_RATIO = 0.65;
+    const systemPromptTokens = Math.ceil(systemPrompt.length / 4);
+    const baseUserPrompt = buildOutlineUserPrompt(issue, {
+      ...context,
+      existingTestCases: [],
+    });
+    const basePromptTokens = Math.ceil(baseUserPrompt.length / 4);
+    const contextTokenBudget = Math.max(
+      0,
+      Math.floor(maxTokensPerRequest * CONTENT_BUDGET_RATIO) -
+        systemPromptTokens -
+        basePromptTokens
+    );
+
+    const hierarchyContext =
+      contextTokenBudget > 0 && typeof context.folderContext === "number"
+        ? await fetchHierarchyContext(
+            prisma,
+            projectId,
+            context.folderContext,
+            contextTokenBudget
+          )
+        : [];
+
+    const enrichedContext: GenerationContext = {
+      ...context,
+      existingTestCases: hierarchyContext,
+    };
+    const userPrompt = buildOutlineUserPrompt(issue, enrichedContext);
 
     const llmRequest: LlmRequest = {
       messages: [

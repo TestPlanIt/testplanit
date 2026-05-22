@@ -987,6 +987,18 @@ STATUS: ${issue.status}${issue.priority ? ` | PRIORITY: ${issue.priority}` : ""}
     prompt += `\n\nADDITIONAL TESTING GUIDANCE: ${context.userNotes}`;
   }
 
+  if (context.existingTestCases && context.existingTestCases.length > 0) {
+    prompt += `\n\nEXISTING TEST CASES — DO NOT DUPLICATE OR SUBSTANTIALLY OVERLAP:`;
+    context.existingTestCases.forEach((tc, i) => {
+      prompt += `\n${i + 1}. ${tc.name}`;
+      if (tc.description) {
+        const trimmed = tc.description.trim().slice(0, 200);
+        if (trimmed) prompt += `\n   ${trimmed}`;
+      }
+    });
+    prompt += `\n\nThe titles and summaries you generate must cover scenarios NOT already represented above. Skip any scenario that is already covered, even if your wording would be slightly different.`;
+  }
+
   prompt += `\n\nGenerate a list of test case titles and one-sentence summaries that cover the key scenarios for this issue.`;
   return prompt;
 }

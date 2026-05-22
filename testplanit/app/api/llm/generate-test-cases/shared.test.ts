@@ -7,6 +7,7 @@ import type {
 } from "~/lib/integrations/adapters/IssueAdapter";
 import { parameterCreateSchema } from "~/lib/schemas/parameterSchema";
 import {
+  buildOutlineUserPrompt,
   buildSystemPrompt,
   fetchLinkedIssuesContext,
   parseAndValidateTestCases,
@@ -726,5 +727,66 @@ describe("parseAndValidateTestCases — INT-06 parameter+dataset extraction", ()
     expect(testCases[0].parameters).toBeUndefined();
     expect(testCases[0].starterDataset).toBeUndefined();
     expect(warnings ?? []).toEqual([]);
+  });
+});
+
+describe("buildOutlineUserPrompt — existing cases context", () => {
+  it("omits the existing-cases block when no cases are supplied", () => {
+    const prompt = buildOutlineUserPrompt(sampleIssue, {
+      folderContext: 0,
+      userNotes: "edge cases",
+    });
+    expect(prompt).not.toContain("DO NOT DUPLICATE");
+    expect(prompt).not.toContain("EXISTING TEST CASES");
+    expect(prompt).toContain("ADDITIONAL TESTING GUIDANCE: edge cases");
+  });
+
+  it("renders each existing case as a numbered item with description", () => {
+    const prompt = buildOutlineUserPrompt(sampleIssue, {
+      folderContext: 0,
+      existingTestCases: [
+        {
+          name: "Login with valid credentials",
+          template: "Default",
+          description: "Happy path",
+        },
+        {
+          name: "Login with locked account",
+          template: "Default",
+          description: "Account is locked after 5 failures",
+        },
+      ],
+    });
+    expect(prompt).toContain(
+      "EXISTING TEST CASES — DO NOT DUPLICATE OR SUBSTANTIALLY OVERLAP"
+    );
+    expect(prompt).toContain("1. Login with valid credentials");
+    expect(prompt).toContain("   Happy path");
+    expect(prompt).toContain("2. Login with locked account");
+    expect(prompt).toContain("must cover scenarios NOT already represented");
+  });
+
+  it("truncates long descriptions to 200 chars", () => {
+    const longDesc = "a".repeat(400);
+    const prompt = buildOutlineUserPrompt(sampleIssue, {
+      folderContext: 0,
+      existingTestCases: [
+        { name: "Case A", template: "Default", description: longDesc },
+      ],
+    });
+    expect(prompt).toContain("a".repeat(200));
+    expect(prompt).not.toContain("a".repeat(201));
+  });
+
+  it("renders the title only when an existing case has no description", () => {
+    const prompt = buildOutlineUserPrompt(sampleIssue, {
+      folderContext: 0,
+      existingTestCases: [
+        { name: "Case without description", template: "Default" },
+      ],
+    });
+    expect(prompt).toContain("1. Case without description");
+    // No stray blank-description line
+    expect(prompt).not.toMatch(/Case without description\n {3}\n/);
   });
 });
