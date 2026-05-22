@@ -1,3 +1,9 @@
+## [0.29.9](https://github.com/TestPlanIt/testplanit/compare/v0.29.8...v0.29.9) (2026-05-22)
+
+### Bug Fixes
+
+* **llm:** pass existing folder cases into outline prompt to avoid duplicates ([#335](https://github.com/TestPlanIt/testplanit/issues/335)) ([4b0c3a3](https://github.com/TestPlanIt/testplanit/commit/4b0c3a37094f85e2e64a869b8a3448a8dbf85243))
+
 ## [0.29.8](https://github.com/TestPlanIt/testplanit/compare/v0.29.7...v0.29.8) (2026-05-22)
 
 ### Bug Fixes
