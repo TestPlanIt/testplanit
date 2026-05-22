@@ -24,6 +24,7 @@ import {
   parseLabeledSteps,
   tryParseJsonSteps,
 } from "~/lib/utils/parseExportedSteps";
+import { aggregateMultiRowSteps } from "~/lib/utils/aggregateMultiRowSteps";
 
 function parseTags(value: any): string[] {
   if (!value) return [];
@@ -296,6 +297,11 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
           rows = parseResult.data as any[];
         }
+
+        if (body.rowMode === "multi") {
+          rows = aggregateMultiRowSteps(rows, body.fieldMappings);
+        }
+
         const errors: ImportError[] = [];
         const casesToImport: any[] = [];
 
@@ -405,6 +411,16 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                 }
               }
             }
+          }
+
+          if (Array.isArray(row._aggregatedSteps)) {
+            caseData.steps = row._aggregatedSteps.map((s: any) => ({
+              step: ensureTipTapJSON(s.step),
+              expectedResult: s.expectedResult
+                ? ensureTipTapJSON(s.expectedResult)
+                : null,
+              order: s.order,
+            }));
           }
 
           // Validate required fields
