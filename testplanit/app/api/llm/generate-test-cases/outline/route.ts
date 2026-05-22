@@ -109,12 +109,15 @@ export async function POST(request: NextRequest) {
     const systemPrompt = buildOutlineSystemPrompt(quantity);
     const userPrompt = buildOutlineUserPrompt(issue, context);
 
-    let maxTokens = resolvedPrompt.maxOutputTokens ?? 1024;
+    let maxTokens = resolvedPrompt.maxOutputTokens ?? 2048;
     const providerConfig = await (prisma as any).llmProviderConfig.findFirst({
       where: { llmIntegrationId: resolved.integrationId },
     });
     if (providerConfig) {
-      maxTokens = Math.min(providerConfig.defaultMaxTokens ?? 1024, 1024);
+      maxTokens =
+        providerConfig.defaultMaxTokens ??
+        resolvedPrompt.maxOutputTokens ??
+        2048;
     }
 
     const llmRequest: LlmRequest = {
