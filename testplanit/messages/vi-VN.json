@@ -2477,7 +2477,13 @@
         "page4": {
           "title": "Xem trước khi nhập",
           "showing": "Hiển thị {start, number}-{end, number} trong số {total, number} trường hợp",
-          "case": "Trường hợp {number, number}"
+          "case": "Trường hợp {number, number}",
+          "multiRow": {
+            "aggregated": "Chế độ nhiều hàng đã nhóm {rows, number} hàng CSV thành {cases, plural, one {# trường hợp thử nghiệm} other {# trường hợp thử nghiệm}}.",
+            "noStepColumn": "Chế độ nhiều hàng đã được bật nhưng không phát hiện thấy cột bước nào. Dự kiến một trong các định dạng sau: Nội dung bước, Bước, Các bước, Hành động, Mô tả (không phân biệt chữ hoa chữ thường). Mỗi hàng trong tệp CSV sẽ được nhập dưới dạng một trường hợp kiểm thử riêng biệt.",
+            "noKeyColumn": "Chế độ nhiều hàng đã được bật nhưng chưa có cột ID hoặc Tên nào được ánh xạ. Hãy ánh xạ cột ID hoặc Tên ở bước trước đó để các hàng có thể được nhóm thành các trường hợp.",
+            "noGrouping": "Chế độ nhiều hàng đã được bật nhưng chưa có hàng nào được nhóm lại. Mỗi hàng có một ID/Tên khác nhau, vì vậy mỗi hàng sẽ trở thành một trường hợp kiểm thử riêng biệt. Hãy để trống ID và Tên trên các hàng tiếp theo, hoặc lặp lại cùng một ID/Tên trên các hàng thuộc cùng một trường hợp."
+          }
         }
       }
     },

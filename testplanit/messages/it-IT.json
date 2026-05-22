@@ -2477,7 +2477,13 @@
         "page4": {
           "title": "Anteprima importazione",
           "showing": "Visualizzazione di {start, number}-{end, number} di {total, number} casi",
-          "case": "Caso {number, number}"
+          "case": "Caso {number, number}",
+          "multiRow": {
+            "aggregated": "Modalità multi-riga raggruppata {rows, number} righe CSV in {cases, plural, one {# caso di test} other {# casi di test}}.",
+            "noStepColumn": "La modalità multi-riga è abilitata, ma non è stata rilevata alcuna colonna \"Passo\". Previsto uno dei seguenti valori: Contenuto passaggio, Passaggio, Passaggi, Azione, Descrizione (senza distinzione tra maiuscole e minuscole). Ogni riga CSV verrà importata come caso di test separato.",
+            "noKeyColumn": "La modalità multi-riga è abilitata, ma non è mappata alcuna colonna ID o Nome. Mappa una colonna ID o Nome nel passaggio precedente in modo che le righe possano essere raggruppate in casi.",
+            "noGrouping": "La modalità multi-riga è abilitata, ma non sono state raggruppate righe. Ogni riga ha un ID/nome diverso, quindi ognuna diventerà un caso di test separato. Lasciare vuoti i campi ID e Nome nelle righe di continuazione, oppure ripetere lo stesso ID/Nome nelle righe che appartengono a un singolo caso."
+          }
         }
       }
     },

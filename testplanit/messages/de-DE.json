@@ -2477,7 +2477,13 @@
         "page4": {
           "title": "Vorschau Import",
           "showing": "Zeigt {start, number}-{end, number} von {total, number} Fällen",
-          "case": "Fall {number, number}"
+          "case": "Fall {number, number}",
+          "multiRow": {
+            "aggregated": "Mehrzeilenmodus gruppiert {rows, number} CSV-Zeilen in {cases, plural, one {# Testfall} other {# Testfälle}}.",
+            "noStepColumn": "Der Mehrzeilenmodus ist aktiviert, es wurde jedoch keine Spalte „Schritt“ erkannt. Erwartet wird eine der folgenden Spalten: „Schrittinhalt“, „Schritt“, „Schritte“, „Aktion“ oder „Beschreibung“ (Groß-/Kleinschreibung wird nicht beachtet). Jede CSV-Zeile wird als separater Testfall importiert.",
+            "noKeyColumn": "Der Mehrzeilenmodus ist aktiviert, aber es ist keine ID- oder Namensspalte zugeordnet. Ordnen Sie im vorherigen Schritt eine ID- oder Namensspalte zu, damit die Zeilen in Fälle gruppiert werden können.",
+            "noGrouping": "Der Mehrzeilenmodus ist aktiviert, aber es wurden keine Zeilen gruppiert. Jede Zeile hat eine andere ID/einen anderen Namen und wird somit zu einem separaten Testfall. Lassen Sie ID und Namen in den Folgezeilen leer oder verwenden Sie dieselbe ID/denselben Namen in allen Zeilen, die zu einem Testfall gehören."
+          }
         }
       }
     },

@@ -2477,7 +2477,13 @@
         "page4": {
           "title": "Pré-visualização Importação",
           "showing": "Exibindo {start, number}-{end, number} de {total, number} casos",
-          "case": "Caso {number, number}"
+          "case": "Caso {number, number}",
+          "multiRow": {
+            "aggregated": "O modo de múltiplas linhas agrupou {rows, number} linhas CSV em {cases, plural, one {# caso de teste} other {# casos de teste}}.",
+            "noStepColumn": "O modo de múltiplas linhas está ativado, mas nenhuma coluna de etapas foi detectada. Esperava-se uma das seguintes colunas: Conteúdo da Etapa, Etapa, Etapas, Ação, Descrição (sem distinção entre maiúsculas e minúsculas). Cada linha do arquivo CSV será importada como um caso de teste separado.",
+            "noKeyColumn": "O modo de múltiplas linhas está ativado, mas nenhuma coluna de ID ou Nome foi mapeada. Mapeie uma coluna de ID ou Nome na etapa anterior para que as linhas possam ser agrupadas em casos.",
+            "noGrouping": "O modo de múltiplas linhas está ativado, mas nenhuma linha foi agrupada. Cada linha possui um ID/Nome diferente, portanto, cada uma se tornará um caso de teste separado. Deixe o ID e o Nome em branco nas linhas de continuação ou repita o mesmo ID/Nome nas linhas que pertencem a um mesmo caso."
+          }
         }
       }
     },
