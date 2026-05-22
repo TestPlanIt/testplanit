@@ -9,19 +9,65 @@ export interface AggregatedStep {
   order: number;
 }
 
-// CSV column names emitted by the exporter in multi-row mode.
-const STEP_CONTENT_COLUMNS = ["Step Content"];
-const EXPECTED_RESULT_COLUMNS = ["Expected Result"];
-const STEP_NUMBER_COLUMNS = ["Step #", "Step Number"];
+export interface AggregateDiagnostics {
+  stepContentColumn: string | null;
+  expectedResultColumn: string | null;
+  stepNumberColumn: string | null;
+  idColumn: string | null;
+  nameColumn: string | null;
+  inputRows: number;
+  outputCases: number;
+}
 
-function findColumn(row: any, candidates: string[]): string | null {
+// Common CSV column headers for step content across exporters (TestPlanIt,
+// TestRail, Testmo, Zephyr, generic). Matched case-insensitively. Generic
+// names like "Description" / "Result" are intentionally excluded — they
+// collide with case-level fields too often. Users with non-standard headers
+// should map the column to the "steps" system field instead.
+const STEP_CONTENT_ALIASES = [
+  "Step Content",
+  "Step",
+  "Steps",
+  "Action",
+  "Actions",
+  "Step Description",
+];
+
+const EXPECTED_RESULT_ALIASES = [
+  "Expected Result",
+  "Expected Results",
+  "Expected",
+  "Expected Outcome",
+];
+
+const STEP_NUMBER_ALIASES = ["Step #", "Step Number", "Step No", "Step Order"];
+
+function findColumn(
+  row: any,
+  candidates: string[],
+  excludedColumns: Set<string>
+): string | null {
   if (!row || typeof row !== "object") return null;
+  const keys = Object.keys(row).filter((k) => !excludedColumns.has(k));
   for (const candidate of candidates) {
-    if (Object.prototype.hasOwnProperty.call(row, candidate)) {
-      return candidate;
-    }
+    const match = keys.find((k) => k.toLowerCase() === candidate.toLowerCase());
+    if (match) return match;
   }
   return null;
+}
+
+// Columns already mapped to non-step template fields shouldn't be auto-claimed
+// as the step content / expected result column.
+function buildExcludedColumns(
+  fieldMappings: MultiRowFieldMapping[]
+): Set<string> {
+  const excluded = new Set<string>();
+  for (const m of fieldMappings) {
+    if (m.templateField && m.templateField !== "steps") {
+      excluded.add(m.csvColumn);
+    }
+  }
+  return excluded;
 }
 
 function nonEmpty(v: any): boolean {
@@ -40,18 +86,39 @@ function parseStepOrder(raw: any, fallback: number): number {
   return Number.isFinite(n) ? n - 1 : fallback;
 }
 
+function detectStepContentColumn(
+  row: any,
+  fieldMappings: MultiRowFieldMapping[],
+  excludedColumns: Set<string>
+): string | null {
+  // Prefer an explicit user mapping to the "steps" system field. In multi-row
+  // mode each cell holds one step's content, so the user marking that column
+  // as "steps" is the strongest signal.
+  const stepsMapping = fieldMappings.find((m) => m.templateField === "steps");
+  if (
+    stepsMapping &&
+    row &&
+    Object.prototype.hasOwnProperty.call(row, stepsMapping.csvColumn)
+  ) {
+    return stepsMapping.csvColumn;
+  }
+  return findColumn(row, STEP_CONTENT_ALIASES, excludedColumns);
+}
+
 /**
- * Collapses an exporter-style multi-row CSV (one row per step, with `Step #`,
- * `Step Content`, `Expected Result` columns) into one row per case. The head
+ * Collapses a multi-row CSV (one row per step) into one row per case. The head
  * row keeps all its existing fields; continuation rows are absorbed into the
  * head row's `_aggregatedSteps` array.
  *
- * A row is considered a continuation when it shares the same value as the
- * previous head row in the `id`-mapped column (or, if no id mapping, the
- * `name`-mapped column). Rows that don't match any previous head become new
- * head rows.
+ * A row is treated as a continuation when it doesn't introduce a new non-empty
+ * identity in either the id-mapped or name-mapped column. That means rows with
+ * blank id/name are absorbed into the previous case — the common "fill the
+ * case columns only on the first row" CSV pattern.
  *
- * If no step-content / expected-result column is present, the input is
+ * Column detection is forgiving: the user's mapping for the `steps` system
+ * field takes precedence, then a list of common header aliases is tried
+ * case-insensitively (Step Content, Step, Steps, Action, Description, ...).
+ * If neither yields a step content nor expected result column, the input is
  * returned unchanged.
  */
 export function aggregateMultiRowSteps(
@@ -60,14 +127,21 @@ export function aggregateMultiRowSteps(
 ): any[] {
   if (!Array.isArray(rows) || rows.length === 0) return rows;
 
-  const stepContentCol = findColumn(rows[0], STEP_CONTENT_COLUMNS);
-  const expectedCol = findColumn(rows[0], EXPECTED_RESULT_COLUMNS);
-  const stepNumberCol = findColumn(rows[0], STEP_NUMBER_COLUMNS);
+  const excluded = buildExcludedColumns(fieldMappings);
+  const stepContentCol = detectStepContentColumn(
+    rows[0],
+    fieldMappings,
+    excluded
+  );
+  const expectedCol = findColumn(rows[0], EXPECTED_RESULT_ALIASES, excluded);
+  const stepNumberCol = findColumn(rows[0], STEP_NUMBER_ALIASES, excluded);
 
   if (!stepContentCol && !expectedCol) return rows;
 
   const idMapping = fieldMappings.find((m) => m.templateField === "id");
   const nameMapping = fieldMappings.find((m) => m.templateField === "name");
+
+  if (!idMapping && !nameMapping) return rows;
 
   const aggregated: any[] = [];
 
@@ -85,10 +159,13 @@ export function aggregateMultiRowSteps(
     const prevName =
       prev && nameMapping ? toKey(prev[nameMapping.csvColumn]) : null;
 
-    const isContinuation =
-      prev &&
-      ((id != null && id === prevId) ||
-        (id == null && name != null && name === prevName));
+    // A row continues the previous case unless it introduces a new non-empty
+    // identity (different id or different name). Blank id/name on a row is
+    // treated as "continuation", matching the common CSV shape where case
+    // columns are filled only on the first row.
+    const idStartsNewCase = idMapping && id != null && id !== prevId;
+    const nameStartsNewCase = nameMapping && name != null && name !== prevName;
+    const isContinuation = !!prev && !idStartsNewCase && !nameStartsNewCase;
 
     if (isContinuation) {
       if (hasStep) {
@@ -116,4 +193,41 @@ export function aggregateMultiRowSteps(
   }
 
   return aggregated;
+}
+
+/**
+ * Returns what the aggregator would detect for the given rows + mappings,
+ * without actually aggregating. Used by the import wizard to surface a
+ * "X rows → Y cases" banner and warn when no step column is detected.
+ */
+export function inspectMultiRowAggregation(
+  rows: any[],
+  fieldMappings: MultiRowFieldMapping[]
+): AggregateDiagnostics {
+  const inputRows = Array.isArray(rows) ? rows.length : 0;
+  const sample = inputRows > 0 ? rows[0] : null;
+  const idMapping = fieldMappings.find((m) => m.templateField === "id");
+  const nameMapping = fieldMappings.find((m) => m.templateField === "name");
+  const excluded = buildExcludedColumns(fieldMappings);
+  const stepContentColumn = sample
+    ? detectStepContentColumn(sample, fieldMappings, excluded)
+    : null;
+  const expectedResultColumn = sample
+    ? findColumn(sample, EXPECTED_RESULT_ALIASES, excluded)
+    : null;
+  const stepNumberColumn = sample
+    ? findColumn(sample, STEP_NUMBER_ALIASES, excluded)
+    : null;
+
+  const aggregated = aggregateMultiRowSteps(rows, fieldMappings);
+
+  return {
+    stepContentColumn,
+    expectedResultColumn,
+    stepNumberColumn,
+    idColumn: idMapping?.csvColumn ?? null,
+    nameColumn: nameMapping?.csvColumn ?? null,
+    inputRows,
+    outputCases: aggregated.length,
+  };
 }

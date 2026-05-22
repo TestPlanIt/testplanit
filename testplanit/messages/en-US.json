@@ -2477,7 +2477,13 @@
         "page4": {
           "title": "Preview Import",
           "showing": "Showing {start, number}-{end, number} of {total, number} cases",
-          "case": "Case {number, number}"
+          "case": "Case {number, number}",
+          "multiRow": {
+            "aggregated": "Multi-row mode grouped {rows, number} CSV rows into {cases, plural, one {# test case} other {# test cases}}.",
+            "noStepColumn": "Multi-row mode is enabled but no step column was detected. Expected one of: Step Content, Step, Steps, Action, Description (case-insensitive). Each CSV row will be imported as a separate test case.",
+            "noKeyColumn": "Multi-row mode is enabled but no ID or Name column is mapped. Map an ID or Name column on the previous step so rows can be grouped into cases.",
+            "noGrouping": "Multi-row mode is enabled but no rows were grouped. Each row has a different ID/Name, so each will become a separate test case. Leave the ID and Name blank on continuation rows, or repeat the same ID/Name across the rows that belong to one case."
+          }
         }
       }
     },

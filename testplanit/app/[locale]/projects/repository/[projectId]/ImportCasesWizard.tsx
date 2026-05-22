@@ -54,6 +54,7 @@ import {
   useFindManyRepositoryFolders,
   useFindManyTemplates,
 } from "~/lib/hooks";
+import { inspectMultiRowAggregation } from "~/lib/utils/aggregateMultiRowSteps";
 import {
   convertMarkdownCasesToImportData,
   parseMarkdownTestCases,
@@ -1526,9 +1527,45 @@ export function ImportCasesWizard({
   const renderPage4 = () => {
     const previewData = getPreviewData();
     const mappedFields = getMappedFields();
+    const multiRowDiagnostics =
+      fileType === "csv" && rowMode === "multi"
+        ? inspectMultiRowAggregation(parsedData, getMappedFields())
+        : null;
+    const multiRowAggregated =
+      multiRowDiagnostics !== null &&
+      multiRowDiagnostics.outputCases < multiRowDiagnostics.inputRows;
+    const multiRowFailed =
+      multiRowDiagnostics !== null &&
+      multiRowDiagnostics.outputCases === multiRowDiagnostics.inputRows &&
+      multiRowDiagnostics.inputRows > 0;
 
     return (
       <div className="space-y-4">
+        {multiRowDiagnostics && multiRowAggregated && (
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {t("importWizard.page4.multiRow.aggregated", {
+                rows: multiRowDiagnostics.inputRows,
+                cases: multiRowDiagnostics.outputCases,
+              })}
+            </AlertDescription>
+          </Alert>
+        )}
+        {multiRowDiagnostics && multiRowFailed && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {!multiRowDiagnostics.stepContentColumn &&
+              !multiRowDiagnostics.expectedResultColumn
+                ? t("importWizard.page4.multiRow.noStepColumn")
+                : !multiRowDiagnostics.idColumn &&
+                    !multiRowDiagnostics.nameColumn
+                  ? t("importWizard.page4.multiRow.noKeyColumn")
+                  : t("importWizard.page4.multiRow.noGrouping")}
+            </AlertDescription>
+          </Alert>
+        )}
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             {t("importWizard.page4.showing", {

@@ -2477,7 +2477,13 @@
         "page4": {
           "title": "Aperçu de l'importation",
           "showing": "Affichage des cas {start, number}-{end, number} sur {total, number}",
-          "case": "Cas {number, number}"
+          "case": "Cas {number, number}",
+          "multiRow": {
+            "aggregated": "Mode multi-lignes groupées {rows, number} lignes CSV en {cases, plural, one {# cas de test} other {# cas de test}}.",
+            "noStepColumn": "Le mode multi-lignes est activé, mais aucune colonne « Étape » n'a été détectée. Les colonnes suivantes sont attendues : Contenu de l'étape, Étape, Étapes, Action, Description (sans distinction de casse). Chaque ligne du fichier CSV sera importée comme un cas de test distinct.",
+            "noKeyColumn": "Le mode multi-lignes est activé, mais aucune colonne ID ou Nom n'est associée. Associez une colonne ID ou Nom à l'étape précédente afin de pouvoir regrouper les lignes par cas.",
+            "noGrouping": "Le mode multi-lignes est activé, mais aucune ligne n'a été groupée. Chaque ligne possède un identifiant/nom différent ; chacune constituera donc un cas de test distinct. Laissez les champs « Identifiant » et « Nom » vides pour les lignes suivantes, ou répétez l'identifiant/nom pour les lignes appartenant à un même cas."
+          }
         }
       }
     },

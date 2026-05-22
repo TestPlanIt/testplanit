@@ -2477,7 +2477,13 @@
         "page4": {
           "title": "Voorbeeld importeren",
           "showing": "Toont {start, number}-{end, number} van {total, number} gevallen",
-          "case": "Geval {number, number}"
+          "case": "Geval {number, number}",
+          "multiRow": {
+            "aggregated": "Meerdere rijen in de modus gegroepeerd {rows, number} CSV-rijen in {cases, plural, one {# testgeval} other {# testgevallen}}.",
+            "noStepColumn": "De modus voor meerdere rijen is ingeschakeld, maar er is geen kolom voor stappen gedetecteerd. Verwacht wordt een van de volgende kolommen: Stapinhoud, Stap, Stappen, Actie, Beschrijving (hoofdlettergevoeligheid speelt geen rol). Elke rij in het CSV-bestand wordt als een aparte testcase geïmporteerd.",
+            "noKeyColumn": "De modus voor meerdere rijen is ingeschakeld, maar er is geen ID- of Naam-kolom toegewezen. Wijs in de vorige stap een ID- of Naam-kolom toe, zodat rijen in cases kunnen worden gegroepeerd.",
+            "noGrouping": "De modus voor meerdere rijen is ingeschakeld, maar er zijn geen rijen gegroepeerd. Elke rij heeft een andere ID/naam, dus elke rij wordt een afzonderlijk testgeval. Laat de ID en naam leeg in vervolgrijen, of herhaal dezelfde ID/naam in alle rijen die bij één testgeval horen."
+          }
         }
       }
     },
