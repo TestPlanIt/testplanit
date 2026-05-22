@@ -815,6 +815,50 @@ describe("CSV Import API Route", () => {
       });
     });
 
+    it("imports labeled-format Steps cell as a single step + expected result (regression)", async () => {
+      // Verbatim shape of the cell produced by the CSV exporter in single-row
+      // plainText mode. Customer reported the labeled lines were being split
+      // into four separate Steps rows on re-import.
+      const cell = [
+        "Step 1:",
+        "Navigate to the Tasks Page",
+        "Expected Result 1:",
+        'Verify ""My Open Tasks"" on the Tasks page has been updated to ""Your Open Tasks""',
+      ].join("\n");
+      const file =
+        "Name,Description,Steps Data\n" +
+        `Verify task page text,Test Description,"${cell.replace(/"/g, '""')}"`;
+
+      const request = createRequest({
+        projectId: 1,
+        file,
+        delimiter: ",",
+        hasHeaders: true,
+        encoding: "UTF-8",
+        templateId: 1,
+        importLocation: "single_folder",
+        folderId: 1,
+        fieldMappings: [
+          { csvColumn: "Name", templateField: "name" },
+          { csvColumn: "Description", templateField: "description" },
+          { csvColumn: "Steps Data", templateField: "steps" },
+        ],
+      });
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
+      expect(result.complete).toBeDefined();
+      expect(mockEnhancedDb.steps.create).toHaveBeenCalledTimes(1);
+      expect(mockEnhancedDb.steps.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          step: expect.objectContaining({ type: "doc" }),
+          expectedResult: expect.objectContaining({ type: "doc" }),
+          order: 0,
+        }),
+      });
+    });
+
     it("imports test cases with workflow state", async () => {
       mockEnhancedDb.workflows.findFirst.mockImplementation(({ where }) => {
         if (where.name === "In Progress") {

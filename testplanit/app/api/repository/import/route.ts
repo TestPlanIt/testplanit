@@ -19,6 +19,11 @@ import { db } from "~/server/db";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 import { getElasticsearchClient } from "~/services/elasticsearchService";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
+import {
+  hasLabeledStepFormat,
+  parseLabeledSteps,
+  tryParseJsonSteps,
+} from "~/lib/utils/parseExportedSteps";
 
 function parseTags(value: any): string[] {
   if (!value) return [];
@@ -1076,16 +1081,35 @@ function validateFieldValue(
         throw new Error(`Invalid URL: ${value}`);
       }
 
-    case "Steps":
-      // Parse pipe-separated format: "1. Step text | Expected result"
+    case "Steps": {
       const stepsText = value.toString();
+
+      const jsonParsed = tryParseJsonSteps(stepsText);
+      if (jsonParsed) {
+        return jsonParsed.map((s) => ({
+          step: ensureTipTapJSON(s.step),
+          expectedResult: s.expectedResult
+            ? ensureTipTapJSON(s.expectedResult)
+            : null,
+          order: s.order,
+        }));
+      }
+
+      if (hasLabeledStepFormat(stepsText)) {
+        return parseLabeledSteps(stepsText).map((s) => ({
+          step: ensureTipTapJSON(s.step),
+          expectedResult: s.expectedResult
+            ? ensureTipTapJSON(s.expectedResult)
+            : null,
+          order: s.order,
+        }));
+      }
+
+      // Legacy: one step per line, pipe-separated "1. Step | Expected"
       const lines = stepsText.split(/\n/).filter((line: string) => line.trim());
 
       return lines.map((line: string, index: number) => {
-        // Remove step number prefix if present (e.g., "1. ", "2. ")
         const withoutNumber = line.replace(/^\d+\.\s*/, "").trim();
-
-        // Split by pipe to get step and expected result
         const parts = withoutNumber.split("|").map((p: string) => p.trim());
         const stepText = parts[0] || "";
         const expectedResultText = parts[1] || null;
@@ -1098,6 +1122,7 @@ function validateFieldValue(
           order: index,
         };
       });
+    }
 
     default:
       return value;
