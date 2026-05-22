@@ -988,13 +988,13 @@ STATUS: ${issue.status}${issue.priority ? ` | PRIORITY: ${issue.priority}` : ""}
   }
 
   if (context.existingTestCases && context.existingTestCases.length > 0) {
-    prompt += `\n\nEXISTING TEST CASES — DO NOT DUPLICATE OR SUBSTANTIALLY OVERLAP:`;
+    // Names-only on purpose: keeps the outline prompt small so the LLM
+    // returns quickly even when the folder has many cases. Titles are
+    // enough signal for the model to avoid generating overlapping
+    // outlines — full case detail would just inflate latency.
+    prompt += `\n\nEXISTING TEST CASE TITLES — DO NOT DUPLICATE OR SUBSTANTIALLY OVERLAP:`;
     context.existingTestCases.forEach((tc, i) => {
       prompt += `\n${i + 1}. ${tc.name}`;
-      if (tc.description) {
-        const trimmed = tc.description.trim().slice(0, 200);
-        if (trimmed) prompt += `\n   ${trimmed}`;
-      }
     });
     prompt += `\n\nThe titles and summaries you generate must cover scenarios NOT already represented above. Skip any scenario that is already covered, even if your wording would be slightly different.`;
   }

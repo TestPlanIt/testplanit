@@ -110,12 +110,10 @@ export async function POST(request: NextRequest) {
     const systemPrompt = buildOutlineSystemPrompt(quantity);
 
     let maxTokens = resolvedPrompt.maxOutputTokens ?? 2048;
-    let maxTokensPerRequest = 4096;
     const providerConfig = await (prisma as any).llmProviderConfig.findFirst({
       where: { llmIntegrationId: resolved.integrationId },
     });
     if (providerConfig) {
-      maxTokensPerRequest = providerConfig.maxTokensPerRequest ?? 4096;
       maxTokens =
         providerConfig.defaultMaxTokens ??
         resolvedPrompt.maxOutputTokens ??
@@ -123,30 +121,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch sibling/ancestor folder cases so the outline LLM avoids producing
-    // titles that duplicate already-existing coverage — matches what the
-    // single-shot generator (route.ts) does. Token budget mirrors that path:
-    // 65% of the request budget minus what the system + base user prompt cost.
-    const CONTENT_BUDGET_RATIO = 0.65;
-    const systemPromptTokens = Math.ceil(systemPrompt.length / 4);
-    const baseUserPrompt = buildOutlineUserPrompt(issue, {
-      ...context,
-      existingTestCases: [],
-    });
-    const basePromptTokens = Math.ceil(baseUserPrompt.length / 4);
-    const contextTokenBudget = Math.max(
-      0,
-      Math.floor(maxTokensPerRequest * CONTENT_BUDGET_RATIO) -
-        systemPromptTokens -
-        basePromptTokens
-    );
-
+    // titles that duplicate already-existing coverage. The outline phase only
+    // renders titles — see buildOutlineUserPrompt — so a tight budget is
+    // enough: 1500 tokens fits roughly 100–200 case names without bloating
+    // the prompt or pushing the LLM toward the configured request timeout.
+    const OUTLINE_CONTEXT_TOKEN_BUDGET = 1500;
     const hierarchyContext =
-      contextTokenBudget > 0 && typeof context.folderContext === "number"
+      typeof context.folderContext === "number"
         ? await fetchHierarchyContext(
             prisma,
             projectId,
             context.folderContext,
-            contextTokenBudget
+            OUTLINE_CONTEXT_TOKEN_BUDGET
           )
         : [];
 

@@ -741,7 +741,7 @@ describe("buildOutlineUserPrompt — existing cases context", () => {
     expect(prompt).toContain("ADDITIONAL TESTING GUIDANCE: edge cases");
   });
 
-  it("renders each existing case as a numbered item with description", () => {
+  it("renders each existing case as a numbered title-only item", () => {
     const prompt = buildOutlineUserPrompt(sampleIssue, {
       folderContext: 0,
       existingTestCases: [
@@ -758,35 +758,34 @@ describe("buildOutlineUserPrompt — existing cases context", () => {
       ],
     });
     expect(prompt).toContain(
-      "EXISTING TEST CASES — DO NOT DUPLICATE OR SUBSTANTIALLY OVERLAP"
+      "EXISTING TEST CASE TITLES — DO NOT DUPLICATE OR SUBSTANTIALLY OVERLAP"
     );
     expect(prompt).toContain("1. Login with valid credentials");
-    expect(prompt).toContain("   Happy path");
     expect(prompt).toContain("2. Login with locked account");
     expect(prompt).toContain("must cover scenarios NOT already represented");
   });
 
-  it("truncates long descriptions to 200 chars", () => {
-    const longDesc = "a".repeat(400);
+  it("does not render case descriptions in the outline prompt", () => {
+    // Outlines deliberately stay title-only — the LLM doesn't need full
+    // case detail to avoid title collisions, and keeping the prompt small
+    // matters for latency under the integration's request timeout.
     const prompt = buildOutlineUserPrompt(sampleIssue, {
       folderContext: 0,
       existingTestCases: [
-        { name: "Case A", template: "Default", description: longDesc },
+        {
+          name: "Case A",
+          template: "Default",
+          description: "Some description that should never appear",
+          steps: [
+            { step: "Open page", expectedResult: "Page loads" },
+            { step: "Click button", expectedResult: "Modal opens" },
+          ],
+        },
       ],
     });
-    expect(prompt).toContain("a".repeat(200));
-    expect(prompt).not.toContain("a".repeat(201));
-  });
-
-  it("renders the title only when an existing case has no description", () => {
-    const prompt = buildOutlineUserPrompt(sampleIssue, {
-      folderContext: 0,
-      existingTestCases: [
-        { name: "Case without description", template: "Default" },
-      ],
-    });
-    expect(prompt).toContain("1. Case without description");
-    // No stray blank-description line
-    expect(prompt).not.toMatch(/Case without description\n {3}\n/);
+    expect(prompt).toContain("1. Case A");
+    expect(prompt).not.toContain("Some description");
+    expect(prompt).not.toContain("Open page");
+    expect(prompt).not.toContain("Modal opens");
   });
 });
