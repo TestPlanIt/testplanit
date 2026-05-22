@@ -2492,7 +2492,13 @@
         "page4": {
           "title": "İçe Aktarma Önizlemesi",
           "showing": "{start, number}-{end, number} / {total, number} vaka gösteriliyor.",
-          "case": "Durum {number, number}"
+          "case": "Durum {number, number}",
+          "multiRow": {
+            "aggregated": "Çok satırlı mod, {rows, number} CSV satırlarını {cases, plural, one {# test durumu} other {# test durumları}} şeklinde gruplandırdı.",
+            "noStepColumn": "Çok satırlı mod etkinleştirildi ancak adım sütunu algılanmadı. Beklenenler: Adım İçeriği, Adım, Adımlar, Eylem, Açıklama (büyük/küçük harf duyarsız). Her CSV satırı ayrı bir test durumu olarak içe aktarılacaktır.",
+            "noKeyColumn": "Çoklu satır modu etkinleştirilmiş ancak hiçbir Kimlik veya Ad sütunu eşleştirilmemiş. Satırların vakalara gruplandırılabilmesi için önceki adımda bir Kimlik veya Ad sütunu eşleştirin.",
+            "noGrouping": "Çoklu satır modu etkinleştirildi ancak hiçbir satır gruplandırılmadı. Her satırın farklı bir Kimliği/Adı var, bu nedenle her biri ayrı bir test durumu haline gelecek. Devam satırlarında Kimlik ve Ad alanlarını boş bırakın veya aynı Kimliği/Adı tek bir duruma ait satırlarda tekrarlayın."
+          }
         }
       }
     },

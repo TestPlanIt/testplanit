@@ -2492,7 +2492,13 @@
         "page4": {
           "title": "预览导入",
           "showing": "显示 {start, number}-{end, number} 共 {total, number} 个案例",
-          "case": "案例 {number, number}"
+          "case": "案例 {number, number}",
+          "multiRow": {
+            "aggregated": "多行模式将 {rows, number} 行 CSV 分组到 {cases, plural, one {# 测试用例} other {# 测试用例}}。",
+            "noStepColumn": "已启用多行模式，但未检测到步骤列。预期列类型为：步骤内容、步骤、步骤、操作、描述（不区分大小写）。每个 CSV 行将作为单独的测试用例导入。",
+            "noKeyColumn": "已启用多行模式，但未映射 ID 或名称列。请在上一步映射 ID 或名称列，以便将行分组到案例中。",
+            "noGrouping": "已启用多行模式，但未对任何行进行分组。每行都有不同的 ID/名称，因此每一行都将成为单独的测试用例。对于后续行，请将 ID 和名称留空，或者在属于同一测试用例的行中重复使用相同的 ID/名称。"
+          }
         }
       }
     },

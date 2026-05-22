@@ -1,3 +1,9 @@
+## [0.29.7](https://github.com/TestPlanIt/testplanit/compare/v0.29.6...v0.29.7) (2026-05-22)
+
+### Bug Fixes
+
+* **import:** forgive non-exporter CSVs in multi-row mode ([#332](https://github.com/TestPlanIt/testplanit/issues/332)) ([012ec3e](https://github.com/TestPlanIt/testplanit/commit/012ec3e4857dc528e9e504725aa9a8504c22bd55))
+
 ## [0.29.6](https://github.com/TestPlanIt/testplanit/compare/v0.29.5...v0.29.6) (2026-05-22)
 
 ### Bug Fixes

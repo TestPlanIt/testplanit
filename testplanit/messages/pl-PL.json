@@ -2492,7 +2492,13 @@
         "page4": {
           "title": "Podgląd importu",
           "showing": "Wyświetlanie {start, number}-{end, number} z {total, number} przypadków",
-          "case": "Przypadek {number, number}"
+          "case": "Przypadek {number, number}",
+          "multiRow": {
+            "aggregated": "Grupowanie w trybie wielowierszowym {rows, number} wierszy CSV w {cases, plural, one {# przypadek testowy} other {# przypadki testowe}}.",
+            "noStepColumn": "Tryb wielowierszowy jest włączony, ale nie wykryto kolumny kroków. Oczekiwano jednej z następujących wartości: Zawartość kroku, Krok, Kroki, Akcja, Opis (bez uwzględniania wielkości liter). Każdy wiersz pliku CSV zostanie zaimportowany jako osobny przypadek testowy.",
+            "noKeyColumn": "Tryb wielowierszowy jest włączony, ale kolumna ID lub Nazwa nie jest mapowana. Zmapuj kolumnę ID lub Nazwa w poprzednim kroku, aby wiersze mogły być grupowane w sprawy.",
+            "noGrouping": "Tryb wielowierszowy jest włączony, ale żadne wiersze nie zostały zgrupowane. Każdy wiersz ma inny identyfikator/nazwę, więc każdy stanie się oddzielnym przypadkiem testowym. Pozostaw identyfikator i nazwę puste w wierszach kontynuacji lub powtórz ten sam identyfikator/nazwę w wierszach należących do jednego przypadku."
+          }
         }
       }
     },

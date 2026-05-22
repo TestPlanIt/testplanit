@@ -2492,7 +2492,13 @@
         "page4": {
           "title": "預覽導入",
           "showing": "顯示 {start, number}-{end, number} 共 {total, number} 個案",
-          "case": "案例 {number, number}"
+          "case": "案例 {number, number}",
+          "multiRow": {
+            "aggregated": "Multi-row mode grouped {rows, number} CSV rows into {cases, plural, one {# test case} other {# test cases}}.",
+            "noStepColumn": "已啟用多行模式，但未偵測到步驟列。預期列類型為：步驟內容、步驟、步驟、操作、描述（不區分大小寫）。每個 CSV 行將作為單獨的測試案例匯入。",
+            "noKeyColumn": "已啟用多行模式，但未對應 ID 或名稱列。請在上一步對應 ID 或名稱列，以便將行分組到案例中。",
+            "noGrouping": "已啟用多行模式，但未對任何行進行分組。每行都有不同的 ID/名稱，因此每一行都將成為單獨的測試案例。對於後續行，請將 ID 和名稱留空，或在屬於相同測試案例的行中重複使用相同的 ID/名稱。"
+          }
         }
       }
     },

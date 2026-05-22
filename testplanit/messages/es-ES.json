@@ -2492,7 +2492,13 @@
         "page4": {
           "title": "Previsualizar importación",
           "showing": "Mostrando {start, number}-{end, number} de {total, number} casos",
-          "case": "Caso {number, number}"
+          "case": "Caso {number, number}",
+          "multiRow": {
+            "aggregated": "El modo de varias filas agrupó {rows, number} filas CSV en {cases, plural, one {# caso de prueba} other {# casos de prueba}}.",
+            "noStepColumn": "El modo de varias filas está activado, pero no se detectó ninguna columna de pasos. Se esperaba uno de los siguientes elementos: Contenido del paso, Paso, Pasos, Acción, Descripción (sin distinción entre mayúsculas y minúsculas). Cada fila del archivo CSV se importará como un caso de prueba independiente.",
+            "noKeyColumn": "El modo de varias filas está habilitado, pero no se ha asignado ninguna columna de ID o Nombre. Asigne una columna de ID o Nombre en el paso anterior para que las filas se puedan agrupar en casos.",
+            "noGrouping": "El modo de varias filas está activado, pero no se ha agrupado ninguna fila. Cada fila tiene un ID/nombre diferente, por lo que cada una constituirá un caso de prueba independiente. Deje el ID y el nombre en blanco en las filas siguientes, o repita el mismo ID/nombre en todas las filas que pertenezcan a un mismo caso."
+          }
         }
       }
     },

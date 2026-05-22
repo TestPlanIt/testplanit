@@ -2492,7 +2492,13 @@
         "page4": {
           "title": "プレビューインポート",
           "showing": "{start, number}-{end, number} を表示中（全 {total, number} ケース）",
-          "case": "ケース {number, number}"
+          "case": "ケース {number, number}",
+          "multiRow": {
+            "aggregated": "複数行モードでは、 {rows, number} CSV 行が {cases, plural, one {# テストケース} other {# テストケース}} にグループ化されます。",
+            "noStepColumn": "複数行モードが有効になっていますが、ステップ列が検出されませんでした。期待される列は、Step Content、Step、Steps、Action、Descriptionのいずれかです（大文字小文字は区別されません）。各CSV行は個別のテストケースとしてインポートされます。",
+            "noKeyColumn": "複数行モードが有効になっていますが、ID列または名前列がマッピングされていません。行をケースごとにグループ化できるように、前の手順でID列または名前列をマッピングしてください。",
+            "noGrouping": "複数行モードが有効になっていますが、行はグループ化されていません。各行には異なるID/名前が割り当てられているため、それぞれが個別のテストケースになります。継続行のIDと名前は空白のままにするか、1つのケースに属する行に同じID/名前を繰り返してください。"
+          }
         }
       }
     },

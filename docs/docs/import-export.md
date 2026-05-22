@@ -96,7 +96,11 @@ Format detection happens automatically — you don't need to specify which forma
 
 #### Step Format in CSV
 
-Test steps can be formatted in several ways:
+There are two ways to import test steps from a CSV: **single row per case** (all steps in one cell, separated by markers) or **multiple rows per case** (one step per row). You choose between them with the "Test Case Rows" toggle on the first wizard page.
+
+##### Single Row per Case
+
+Test steps in a single cell can be formatted in several ways:
 
 **Simple Format:**
 
@@ -106,7 +110,7 @@ Test steps can be formatted in several ways:
 3. Step three
 ```
 
-**Detailed Format with Expected Results:**
+**Detailed Format with Expected Results** — separate the step from its expected result with a pipe (`|`):
 
 ```
 1. Navigate to login page | Login page displays
@@ -124,6 +128,58 @@ Steps can also contain markdown formatting:
 3. Click **Submit** | User is redirected to [Dashboard](/dashboard)
 ```
 
+**JSON Format** — round-trips losslessly from a TestPlanIt single-row export:
+
+```json
+[{"step":{"type":"doc","content":[...]},"expectedResult":{"type":"doc","content":[...]}}]
+```
+
+##### Multiple Rows per Case (Multi-Row Mode)
+
+Choose **"Test cases can span multiple rows"** on the first wizard page to import CSVs where one test case spans several rows — one row per step. This is the shape TestPlanIt's own multi-row export emits, and it matches the format used by many third-party tools.
+
+**Required columns** (header names matched case-insensitively):
+
+| Purpose | Recognized headers |
+| ------- | ------------------ |
+| Step content | `Step Content`, `Step`, `Steps`, `Action`, `Actions`, `Step Description` |
+| Expected result *(optional)* | `Expected Result`, `Expected Results`, `Expected`, `Expected Outcome` |
+| Step number *(optional)* | `Step #`, `Step Number`, `Step No`, `Step Order` |
+
+If your CSV uses a different header for step content, map that column to the **Steps** system field on the mapping page — that mapping always takes precedence over the alias list.
+
+**Row-grouping rules:**
+
+- You must map either an **ID** column or a **Name** column. Rows are grouped into a single test case by matching values in that column.
+- A row continues the previous case if its ID/Name matches the previous row, **or** if its ID/Name cells are blank. This matches the common pattern of filling the case columns only on the first row of each test case.
+- A row with a *different* non-empty ID or Name starts a new test case.
+
+**Example** — same ID across all steps:
+
+```csv
+ID,Name,Step #,Step Content,Expected Result
+1,Login flow,1,Open the login page,Form is rendered
+1,Login flow,2,Enter credentials,Submit button enables
+1,Login flow,3,Click submit,User lands on dashboard
+2,Logout flow,1,Click the user menu,Menu opens
+2,Logout flow,2,Click logout,User is signed out
+```
+
+**Example** — case columns only on the first row:
+
+```csv
+ID,Name,Step #,Step Content,Expected Result
+1,Login flow,1,Open the login page,Form is rendered
+,,2,Enter credentials,Submit button enables
+,,3,Click submit,User lands on dashboard
+2,Logout flow,1,Click the user menu,Menu opens
+,,2,Click logout,User is signed out
+```
+
+Both produce two test cases with three and two steps respectively.
+
+The preview page tells you how many CSV rows were grouped into how many test cases, and warns when multi-row mode is on but grouping didn't happen — for example because no step column was detected or no ID/Name column was mapped.
+
 #### Import Process
 
 1. **Upload CSV File**
@@ -138,10 +194,9 @@ Steps can also contain markdown formatting:
    - Rich text fields show a formatted preview (rendered markdown/HTML)
 
 3. **Options Configuration**
-   - Choose folder for imported cases
-   - Select template to apply
-   - Configure tag handling (merge/replace)
-   - Set attachment handling options
+   - Choose a destination folder (or import to multiple folders and let the wizard auto-create the hierarchy)
+   - Select a template to apply
+   - Choose single-row or multi-row mode (CSV only)
 
 4. **Import Execution**
    - Review import summary
@@ -165,13 +220,27 @@ Steps can also contain markdown formatting:
 **Template Custom Fields:**
 
 - All custom fields from the selected template are available
-- Automatic type conversion based on field type (text, number, date, checkbox, etc.)
+- Type conversion happens automatically based on the field type (text, number, date, checkbox, select, etc.)
 
 **Special Handling:**
 
-- **Folders**: Auto-create folder hierarchy based on folder split mode
-- **Tags**: Comma-separated values are split into individual tags
-- **Auto-matching**: Column names are automatically matched to similar field names
+- **Folders**: Auto-create folder hierarchy based on the folder split mode (see below)
+- **Tags**: Comma-separated values are split into individual tags; existing tags are reused, new ones are created
+- **Auto-matching**: Column names are automatically matched to similar field names; you can override any auto-match
+- **ID column**: If you map an `ID` column and a value matches an existing test case, that case is updated in place. Without a matching ID, a new case is created.
+
+#### Multi-Folder Import and Folder Split Modes
+
+When you choose **"Add all cases and folders to a root folder"** or **"Add all cases and folders to the top level"** on the first wizard page, you also need to map one CSV column to the **Folder** field. The wizard can then auto-create a folder hierarchy from the folder path values, controlled by the **Folder Hierarchy Mode** option:
+
+| Mode | Behavior | Example input | Resulting folder tree |
+| ---- | -------- | ------------- | --------------------- |
+| **Plain text** | No splitting; the whole value is one folder name | `This/is.a>Folder` | `This/is.a>Folder` |
+| **Split by slash** | `/` separates nested folders | `This/is.a>Folder` | `This` → `is.a>Folder` |
+| **Split by dot** | `.` separates nested folders | `This/is.a>Folder` | `This/is` → `a>Folder` |
+| **Split by greater than** | `>` separates nested folders | `This/is.a>Folder` | `This/is.a` → `Folder` |
+
+Folders are reused if they already exist at the same parent; otherwise they're created.
 
 ### CSV Export
 
@@ -436,18 +505,16 @@ The Auto-detect feature examines file content and extension to determine the for
 
 #### CSV Import with Attachments
 
-Reference external files in CSV:
+The CSV importer accepts attachment references as a JSON array in the cell mapped to the **Attachments** system field. Each entry describes a file that's already accessible to TestPlanIt by URL:
 
 ```csv
-title,description,attachments
-"Screenshot Test","Test with images","screenshot1.png;screenshot2.png"
+"Name","Attachments"
+"Screenshot Test","[{""name"":""screenshot.png"",""url"":""https://example.com/screenshot.png"",""mimeType"":""image/png"",""size"":12345}]"
 ```
 
-Requirements:
+The importer does **not** fetch local file paths or arbitrary filenames — only the JSON shape above is consumed. This is the same shape the CSV exporter emits, so attachment metadata round-trips through an export/import cycle.
 
-- Files must be accessible via URL or local path
-- Supported file types only
-- File size within limits
+Cells in any other format (semicolon-separated filenames, comma-separated, plain text) are silently treated as having no attachments.
 
 #### JUnit Import with Attachments
 
@@ -465,20 +532,17 @@ Include test artifacts in JUnit XML:
 
 #### Bulk Test Case Updates
 
-Update multiple test cases via CSV:
+To update existing test cases via CSV:
 
-1. Export existing test cases
-2. Modify CSV data
-3. Import with "Update existing" option
-4. Changes applied to matching cases
+1. Export the test cases you want to update
+2. Edit the CSV — keep the `ID` column intact
+3. Re-import the CSV with the `ID` column mapped to the **ID** system field
+
+Rows whose ID matches an existing test case update that case in place; rows without a matching ID (or without an ID mapping) create new cases. There is no separate "Update existing" mode; the importer's behavior is driven entirely by whether an ID is mapped and matches.
 
 #### Bulk Tag Management
 
-Import/export operations support bulk tag operations:
-
-- Add tags to multiple test cases
-- Remove tags from filtered cases
-- Replace tag sets entirely
+Tags imported from a CSV are split on commas and matched against existing tags by name. Unknown tag names are created on import.
 
 ### Error Handling
 
@@ -494,22 +558,17 @@ Common validation errors:
 
 #### Error Resolution
 
-1. **Preview Mode**: Validate before importing
-2. **Skip Invalid Rows**: Continue with valid data
-3. **Fix and Retry**: Correct CSV and re-import
-4. **Partial Import**: Import successful rows only
+1. **Preview**: The fourth wizard page previews the parsed rows so you can spot mapping mistakes before clicking Import
+2. **Validation is all-or-nothing**: if any row fails validation, the import aborts and no test cases are created — fix the offending rows in your CSV and retry
+3. **Duplicate warnings are non-blocking**: the preview flags rows that share a name with an existing case (or another row in the same import), but they don't block the import
 
 ## Export Features
 
-### Comprehensive Data Export
+### What You Can Export
 
-Export complete project data including:
-
-- Test cases with all fields and attachments
-- Test runs and results
-- Sessions and outcomes
-- Issues and milestones
-- User assignments and history
+- **Test cases** from the Repository, including all template custom fields and attachment metadata
+- **Test results** from a Test Run, in CSV or PDF
+- **Audit log** entries from project administration
 
 ### Export Formats
 
@@ -543,18 +602,6 @@ Export complete project data including:
 
 - **Names**: Display attachment file names as text (default for PDF)
 - **Embed Images**: Embed image attachments directly in the PDF document. Non-image files are listed by name. Supported image formats: JPEG, PNG, GIF, WebP, BMP.
-
-#### Excel Export (Future)
-
-- Multi-sheet workbooks
-- Formatted data with styles
-- Charts and pivot tables
-
-#### JSON Export (API)
-
-- Complete data structure
-- Relationship preservation
-- API-compatible format
 
 ## Integration Examples
 
@@ -653,18 +700,39 @@ python convert-to-csv.py testcases.json testcases.csv
 
 ### CSV Import API
 
+The CSV import endpoint is consumed by the in-app wizard. It accepts a JSON body (not multipart) and streams progress back as Server-Sent Events.
+
 ```http
 POST /api/repository/import
-Content-Type: multipart/form-data
+Content-Type: application/json
 
-file: [CSV file]
-options: {
-  "folder": "/Imported Tests",
-  "template": "Standard Template",
-  "createFolders": true,
-  "mergeTags": true
+{
+  "projectId": 123,
+  "fileType": "csv",
+  "file": "ID,Name,Steps\n1,Login,...",
+  "delimiter": ",",
+  "hasHeaders": true,
+  "encoding": "UTF-8",
+  "templateId": 456,
+  "importLocation": "single_folder",
+  "folderId": 789,
+  "folderSplitMode": null,
+  "rowMode": "single",
+  "fieldMappings": [
+    {"csvColumn": "ID", "templateField": "id"},
+    {"csvColumn": "Name", "templateField": "name"},
+    {"csvColumn": "Steps", "templateField": "steps"}
+  ]
 }
 ```
+
+Key fields:
+
+- `importLocation` — `"single_folder"`, `"root_folder"`, or `"top_level"`
+- `rowMode` — `"single"` (one row per case) or `"multi"` (one row per step)
+- `folderSplitMode` — `"plain"`, `"slash"`, `"dot"`, or `"greater_than"` (required when `importLocation` is `root_folder` or `top_level` and a folder column is mapped)
+
+The response is an SSE stream of progress events followed by a `{"complete": true}` or `{"error": "..."}` payload.
 
 ### Automated Test Results Import API
 
@@ -692,11 +760,9 @@ Response is Server-Sent Events (SSE) with progress updates:
 {"complete": true, "testRunId": 12345}
 ```
 
-### Export API
+### Export
 
-```http
-GET /api/repository/export?format=csv&folder=/&includeSubfolders=true
-```
+There is no server-side export endpoint. CSV, PDF, and other exports are generated in the browser from data already loaded by the Repository view — the export reflects the current filter, scope, and column selection in the UI. Use the **Export** button in the Repository toolbar to configure and download.
 
 ## Best Practices
 
@@ -740,14 +806,10 @@ GET /api/repository/export?format=csv&folder=/&includeSubfolders=true
 **Solution**: Verify column headers match expected format, check data types
 
 **Issue**: Duplicate test cases
-**Solution**: Use update mode instead of create, check duplicate detection settings
+**Solution**: Map your CSV's `ID` column to the **ID** system field — rows with a matching ID update the existing case instead of creating a duplicate
 
-**Issue**: Attachment import failures
-**Solution**: Verify file accessibility, check file size limits, validate file types
+**Issue**: Multi-row CSV imports each step as a separate case
+**Solution**: On the first wizard page, choose **"Test cases can span multiple rows"**, then make sure (1) the CSV has a recognized step content column (`Step Content`, `Step`, `Steps`, `Action`, `Actions`, `Step Description`, or any column mapped to the **Steps** system field), and (2) an **ID** or **Name** column is mapped so rows can be grouped. The preview page shows whether grouping happened.
 
-### Performance Optimization
-
-- **Batch Size**: Adjust import batch size for optimal performance
-- **Parallel Processing**: Enable parallel import for large datasets
-- **Resource Monitoring**: Monitor database and storage during imports
-- **Cleanup**: Remove temporary files after import completion
+**Issue**: Attachments don't appear after import
+**Solution**: The CSV importer only accepts attachments as the JSON array shape emitted by the exporter — see [CSV Import with Attachments](#csv-import-with-attachments). Plain filenames or URLs in attachment cells are silently dropped.
