@@ -2758,8 +2758,11 @@ export function GenerateTestCasesWizard({
 
       if (!outlineRes.ok) {
         const errData = await outlineRes.json().catch(() => ({}));
+        // Pass the whole payload through so the toast handler picks up
+        // `details`, `suggestions`, and `code` — not just the headline.
         throw new Error(
           JSON.stringify({
+            ...errData,
             message:
               errData.error || t("generateTestCases.errors.generateFailed"),
           })

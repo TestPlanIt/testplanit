@@ -615,6 +615,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
     {
       where: {
         testRunId: Number(params.runId),
+        isDeleted: false,
       },
       select: {
         id: true,
@@ -1306,7 +1307,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
   // Fetch minimal case position data for auto-paging in run mode
   const { data: casePositions } = useFindManyTestRunCases(
     {
-      where: { testRunId: Number(params.runId) },
+      where: { testRunId: Number(params.runId), isDeleted: false },
       orderBy: { order: "asc" },
       select: { repositoryCaseId: true },
     },

@@ -1,3 +1,33 @@
+## [0.29.6](https://github.com/TestPlanIt/testplanit/compare/v0.29.5...v0.29.6) (2026-05-22)
+
+### Bug Fixes
+
+* **import:** round-trip support for labeled + multi-row CSV step exports ([#330](https://github.com/TestPlanIt/testplanit/issues/330)) ([176aa5e](https://github.com/TestPlanIt/testplanit/commit/176aa5e12eb9e8fce3a0247d2ad3b4b02ce0621c))
+
+## [0.29.5](https://github.com/TestPlanIt/testplanit/compare/v0.29.4...v0.29.5) (2026-05-21)
+
+### Bug Fixes
+
+* **export:** include expectedResult content in test case exports ([#329](https://github.com/TestPlanIt/testplanit/issues/329)) ([bce26a4](https://github.com/TestPlanIt/testplanit/commit/bce26a456c36910a609aafb3fce8e2a5e542fabd))
+
+## [0.29.4](https://github.com/TestPlanIt/testplanit/compare/v0.29.3...v0.29.4) (2026-05-21)
+
+### Bug Fixes
+
+* **llm:** surface details on test-case generation parse failures ([#327](https://github.com/TestPlanIt/testplanit/issues/327)) ([b2064f4](https://github.com/TestPlanIt/testplanit/commit/b2064f480698b19d225e665b10b5bafc84d9c2aa))
+
+## [0.29.3](https://github.com/TestPlanIt/testplanit/compare/v0.29.2...v0.29.3) (2026-05-20)
+
+### Bug Fixes
+
+* **runs:** soft-delete test run cases to preserve result history ([#323](https://github.com/TestPlanIt/testplanit/issues/323)) ([5457653](https://github.com/TestPlanIt/testplanit/commit/5457653a5b2d0f05340572e4ce74bcd92c151ff7))
+
+## [0.29.2](https://github.com/TestPlanIt/testplanit/compare/v0.29.1...v0.29.2) (2026-05-20)
+
+### Bug Fixes
+
+* **access:** enhance role-based permissions for create/update/delete actions ([#322](https://github.com/TestPlanIt/testplanit/issues/322)) ([e01816c](https://github.com/TestPlanIt/testplanit/commit/e01816cedc444514ae2648b36d01aed7e6fdb68f))
+
 ## [0.29.1](https://github.com/TestPlanIt/testplanit/compare/v0.29.0...v0.29.1) (2026-05-20)
 
 ### Bug Fixes

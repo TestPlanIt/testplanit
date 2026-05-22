@@ -288,6 +288,7 @@ export async function POST(req: NextRequest) {
       where: {
         id: input.testRunCaseId,
         testRunId: input.testRunId,
+        isDeleted: false,
         testRun: {
           isDeleted: false,
           project: {

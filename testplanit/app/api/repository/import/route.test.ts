@@ -825,6 +825,94 @@ describe("CSV Import API Route", () => {
       });
     });
 
+    it("imports labeled-format Steps cell as a single step + expected result (regression)", async () => {
+      // Verbatim shape of the cell produced by the CSV exporter in single-row
+      // plainText mode. Customer reported the labeled lines were being split
+      // into four separate Steps rows on re-import.
+      const cell = [
+        "Step 1:",
+        "Navigate to the Tasks Page",
+        "Expected Result 1:",
+        'Verify ""My Open Tasks"" on the Tasks page has been updated to ""Your Open Tasks""',
+      ].join("\n");
+      const file =
+        "Name,Description,Steps Data\n" +
+        `Verify task page text,Test Description,"${cell.replace(/"/g, '""')}"`;
+
+      const request = createRequest({
+        projectId: 1,
+        file,
+        delimiter: ",",
+        hasHeaders: true,
+        encoding: "UTF-8",
+        templateId: 1,
+        importLocation: "single_folder",
+        folderId: 1,
+        fieldMappings: [
+          { csvColumn: "Name", templateField: "name" },
+          { csvColumn: "Description", templateField: "description" },
+          { csvColumn: "Steps Data", templateField: "steps" },
+        ],
+      });
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
+      expect(result.complete).toBeDefined();
+      expect(mockEnhancedDb.steps.create).toHaveBeenCalledTimes(1);
+      expect(mockEnhancedDb.steps.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          step: expect.objectContaining({ type: "doc" }),
+          expectedResult: expect.objectContaining({ type: "doc" }),
+          order: 0,
+        }),
+      });
+    });
+
+    it("imports multi-row CSV by collapsing continuation rows into one case (regression)", async () => {
+      const file = [
+        "ID,Name,Description,Step #,Step Content,Expected Result",
+        "1,Login flow,Verify login,1,Open login page,Login form renders",
+        "1,Login flow,,2,Enter credentials,Dashboard appears",
+        "1,Login flow,,3,Click logout,Login page returns",
+        "2,Password reset,Verify reset email,1,Click forgot password,Reset email sent",
+      ].join("\n");
+
+      const request = createRequest({
+        projectId: 1,
+        file,
+        delimiter: ",",
+        hasHeaders: true,
+        encoding: "UTF-8",
+        templateId: 1,
+        importLocation: "single_folder",
+        folderId: 1,
+        rowMode: "multi",
+        fieldMappings: [
+          { csvColumn: "ID", templateField: "id" },
+          { csvColumn: "Name", templateField: "name" },
+          { csvColumn: "Description", templateField: "description" },
+        ],
+      });
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
+      expect(result.complete).toBeDefined();
+      // Two cases (Login flow + Password reset), four steps total (3 + 1)
+      expect(mockEnhancedDb.repositoryCases.create).toHaveBeenCalledTimes(2);
+      expect(mockEnhancedDb.steps.create).toHaveBeenCalledTimes(4);
+      // Each created step has both fields populated
+      for (const call of mockEnhancedDb.steps.create.mock.calls) {
+        expect(call[0].data.step).toEqual(
+          expect.objectContaining({ type: "doc" })
+        );
+        expect(call[0].data.expectedResult).toEqual(
+          expect.objectContaining({ type: "doc" })
+        );
+      }
+    });
+
     it("imports test cases with workflow state", async () => {
       mockEnhancedDb.workflows.findFirst.mockImplementation(({ where }) => {
         if (where.name === "In Progress") {

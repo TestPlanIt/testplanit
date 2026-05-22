@@ -52,7 +52,7 @@ export async function mergeCases(
     // (same testRunId on both survivor and victim)
     // -----------------------------------------------------------------------
     const survivorRuns = await tx.testRunCases.findMany({
-      where: { repositoryCaseId: survivorId },
+      where: { repositoryCaseId: survivorId, isDeleted: false },
       select: { testRunId: true },
     });
     const conflictRunIds = survivorRuns.map(

@@ -140,6 +140,7 @@ describe("getAssignmentsForRunCases", () => {
           repositoryCaseId: {
             in: [10, 20, 30],
           },
+          isDeleted: false,
         },
         select: {
           repositoryCaseId: true,
@@ -222,6 +223,7 @@ describe("getAssignmentsForRunCases", () => {
           repositoryCaseId: {
             in: largeArray,
           },
+          isDeleted: false,
         },
         select: {
           repositoryCaseId: true,

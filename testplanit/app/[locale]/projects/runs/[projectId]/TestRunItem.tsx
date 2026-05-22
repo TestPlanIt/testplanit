@@ -148,6 +148,7 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
   const { data: testRunCases } = useFindManyTestRunCases({
     where: {
       testRunId: testRun.id,
+      isDeleted: false,
     },
     include: {
       assignedTo: {

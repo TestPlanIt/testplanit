@@ -11,6 +11,10 @@ import {
   convertTextToTipTapJSON,
   ensureTipTapJSON,
 } from "~/utils/tiptapConversion";
+import {
+  parseLabeledSteps,
+  tryParseJsonSteps,
+} from "~/lib/utils/parseExportedSteps";
 
 // Helper function to safely parse JSON
 const safeJsonParse = (jsonString: any, defaultValue: any = null): any => {
@@ -23,81 +27,28 @@ const safeJsonParse = (jsonString: any, defaultValue: any = null): any => {
   }
 };
 
-// Helper function to extract text from TipTap JSON
-const extractTextFromTipTap = (jsonContent: any): string => {
-  if (!jsonContent) return "";
-
-  if (typeof jsonContent === "string") {
-    // Try to parse as JSON first
-    const parsed = safeJsonParse(jsonContent);
-    if (typeof parsed === "string") return parsed;
-    jsonContent = parsed;
-  }
-
-  if (jsonContent.text && typeof jsonContent.text === "string") {
-    return jsonContent.text;
-  }
-
-  if (jsonContent.content && Array.isArray(jsonContent.content)) {
-    return jsonContent.content.map(extractTextFromTipTap).join("");
-  }
-
-  return "";
-};
-
-// Parse combined step data (single row mode with all steps in one field)
 const parseCombinedStepData = (
   combinedData: string,
   _rowMode: string
 ): Array<{ step: string; expectedResult?: string; order: number }> => {
   if (!combinedData || combinedData.trim() === "") return [];
 
-  try {
-    // Try to parse as JSON first (export format)
-    const parsed = safeJsonParse(combinedData);
-    if (Array.isArray(parsed)) {
-      return parsed.map((item, index) => ({
-        step:
-          typeof item.step === "string"
-            ? item.step
-            : extractTextFromTipTap(item.step),
-        expectedResult: item.expectedResult
-          ? typeof item.expectedResult === "string"
-            ? item.expectedResult
-            : extractTextFromTipTap(item.expectedResult)
-          : undefined,
-        order: item.stepNumber || index,
-      }));
-    }
-  } catch {
-    // Fall back to plain text parsing
+  const jsonParsed = tryParseJsonSteps(combinedData);
+  if (jsonParsed) {
+    return jsonParsed.map((s) => ({
+      step: s.step,
+      expectedResult: s.expectedResult || undefined,
+      order: s.order,
+    }));
   }
 
-  // Parse plain text format
-  const steps: Array<{ step: string; expectedResult?: string; order: number }> =
-    [];
-  const sections = combinedData
-    .split("---")
-    .map((s) => s.trim())
-    .filter((s) => s);
-
-  for (let i = 0; i < sections.length; i++) {
-    const section = sections[i];
-    const stepMatch = section.match(
-      /Step \d+:\s*(.*?)(?=Expected Result \d+:|$)/s
-    );
-    const expectedMatch = section.match(/Expected Result \d+:\s*(.*?)$/s);
-
-    if (stepMatch) {
-      steps.push({
-        step: stepMatch[1].trim(),
-        expectedResult: expectedMatch ? expectedMatch[1].trim() : undefined,
-        order: i,
-      });
-    }
-  }
-
-  return steps;
+  return parseLabeledSteps(combinedData)
+    .filter((s) => s.step || s.expectedResult)
+    .map((s) => ({
+      step: s.step,
+      expectedResult: s.expectedResult || undefined,
+      order: s.order,
+    }));
 };
 
 interface FieldMapping {

@@ -139,7 +139,7 @@ interface ManualTestResult extends UnifiedTestResultBase {
     step: {
       id: number;
       step: JsonValue;
-      expectedResult: { expectedResult: JsonValue } | null;
+      expectedResult: JsonValue;
       sharedStepGroupId?: number | null;
       sharedStepGroup?: { name: string | null } | null;
     };
@@ -198,6 +198,7 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
             testCases: {
               some: {
                 repositoryCaseId: caseId,
+                isDeleted: false,
               },
             },
           },
@@ -472,14 +473,11 @@ const StepResultsDisplay = ({
             let expectedResultContent;
             try {
               expectedResultContent = stepResult.step.expectedResult
-                ?.expectedResult
-                ? typeof stepResult.step.expectedResult.expectedResult ===
-                  "string"
-                  ? JSON.parse(stepResult.step.expectedResult.expectedResult)
-                  : stepResult.step.expectedResult.expectedResult
+                ? typeof stepResult.step.expectedResult === "string"
+                  ? JSON.parse(stepResult.step.expectedResult)
+                  : stepResult.step.expectedResult
                 : emptyEditorContent;
             } catch {
-              // console.warn("Error parsing expected result content:", error);
               expectedResultContent = emptyEditorContent;
             }
 
@@ -1406,6 +1404,7 @@ export default function TestResultHistory({
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6"
+                          data-testid={`expand-result-${result.displayId}`}
                           onClick={() => toggleExpanded(result.displayId)}
                         >
                           {isExpanded ? (

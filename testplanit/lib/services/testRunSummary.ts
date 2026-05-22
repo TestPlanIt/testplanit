@@ -484,7 +484,7 @@ export async function getPerCaseIterationCounts(
   client: PrismaLike = prisma
 ): Promise<PerCaseIterationCounts[]> {
   const rows = await client.testRunCases.findMany({
-    where: { testRunId },
+    where: { testRunId, isDeleted: false },
     select: {
       id: true,
       passedIterations: true,

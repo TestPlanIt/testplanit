@@ -241,7 +241,7 @@ const METRIC_REGISTRY: Record<
                 isDeleted: false,
               },
               include: {
-                testCases: true,
+                testCases: { where: { isDeleted: false } },
                 results: {
                   where: {
                     isDeleted: false,
@@ -376,6 +376,7 @@ const METRIC_REGISTRY: Record<
           // Get total test cases (TestRunCases) in test runs for milestones in this group
           const totalTestCases = await prisma.testRunCases.count({
             where: {
+              isDeleted: false,
               testRun: {
                 milestone: milestoneWhere,
                 isDeleted: false,

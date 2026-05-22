@@ -193,6 +193,7 @@ async function getBatchRegularRunSummaries(
     LEFT JOIN "Status" s ON trc."statusId" = s.id
     LEFT JOIN "Color" c ON s."colorId" = c.id
     WHERE trc."testRunId" = ANY(${testRunIds})
+      AND trc."isDeleted" = false
     GROUP BY trc."testRunId", trc."statusId", s.name, c.value, s."isCompleted"
     ORDER BY trc."testRunId", trc."statusId" ASC NULLS LAST
   `;
@@ -214,6 +215,7 @@ async function getBatchRegularRunSummaries(
     FROM "TestRunResults" trr
     JOIN "TestRunCases" trc ON trr."testRunCaseId" = trc.id
     WHERE trc."testRunId" = ANY(${testRunIds})
+      AND trc."isDeleted" = false
       AND trr."isDeleted" = false
     GROUP BY trc."testRunId"
   `;
@@ -229,6 +231,7 @@ async function getBatchRegularRunSummaries(
     JOIN "RepositoryCases" rc ON trc."repositoryCaseId" = rc.id
     LEFT JOIN "TestRunResults" trr ON trr."testRunCaseId" = trc.id AND trr."isDeleted" = false
     WHERE trc."testRunId" = ANY(${testRunIds})
+      AND trc."isDeleted" = false
       AND trr.id IS NULL
     GROUP BY trc."testRunId"
   `;
@@ -268,6 +271,7 @@ async function getBatchRegularRunSummaries(
     LEFT JOIN "Status" s ON trc."statusId" = s.id
     LEFT JOIN "Color" c ON s."colorId" = c.id
     WHERE trc."testRunId" = ANY(${testRunIds})
+      AND trc."isDeleted" = false
     ORDER BY trc."testRunId", trc."order" ASC
   `;
 

@@ -4926,6 +4926,10 @@ const metadata: ModelMeta = {
                     name: "createdAt",
                     type: "DateTime",
                     attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, isDeleted: {
+                    name: "isDeleted",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
                 }, results: {
                     name: "results",
                     type: "TestRunResults",

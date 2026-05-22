@@ -88,6 +88,7 @@ const DIMENSION_REGISTRY: Record<
     getValues: async (prisma: any, projectId: number) => {
       const testCases = await prisma.testRunCases.findMany({
         where: {
+          isDeleted: false,
           testRun: { projectId: Number(projectId), isDeleted: false },
         },
         select: {
@@ -631,6 +632,7 @@ const METRIC_REGISTRY: Record<
       if (dims?.includes("testCase")) {
         const results = await prisma.testRunCases.findMany({
           where: {
+            isDeleted: false,
             testRun: { projectId: Number(projectId), isDeleted: false },
           },
           select: { id: true, testRunId: true }, // id here is testRunCases.id
@@ -684,6 +686,7 @@ const METRIC_REGISTRY: Record<
       if (groupBy.includes("milestoneId")) {
         const results = await prisma.testRunCases.findMany({
           where: {
+            isDeleted: false,
             testRun: {
               projectId: Number(projectId),
               isDeleted: false,
@@ -761,6 +764,7 @@ const METRIC_REGISTRY: Record<
       if (groupBy.includes("statusId")) {
         const cases = await prisma.testRunCases.findMany({
           where: {
+            isDeleted: false,
             testRun: { projectId: Number(projectId), isDeleted: false },
           },
           include: {
@@ -788,6 +792,7 @@ const METRIC_REGISTRY: Record<
       if (groupBy.includes("configId")) {
         const cases = await prisma.testRunCases.findMany({
           where: {
+            isDeleted: false,
             testRun: {
               projectId: Number(projectId),
               isDeleted: false,

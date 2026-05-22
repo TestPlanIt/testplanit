@@ -1711,6 +1711,7 @@ export default function Cases({
             effectiveRunIds.length === 1
               ? effectiveRunIds[0]
               : { in: effectiveRunIds },
+          isDeleted: false,
           ...testRunCaseWhereClause,
           repositoryCase: repositoryCaseWhereClause,
         },
@@ -2036,6 +2037,7 @@ export default function Cases({
           effectiveRunIds.length === 1
             ? effectiveRunIds[0]
             : { in: effectiveRunIds },
+        isDeleted: false,
         ...testRunCaseWhereClause,
         repositoryCase: repositoryCaseWhereClause,
       },

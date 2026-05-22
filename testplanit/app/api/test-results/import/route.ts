@@ -980,6 +980,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                       where: {
                         testRunId: testRunId,
                         repositoryCaseId: repositoryCase.id,
+                        isDeleted: false,
                       },
                       select: { id: true },
                     });
@@ -1041,6 +1042,7 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                     where: {
                       testRunId: testRunId,
                       repositoryCaseId: repositoryCase.id,
+                      isDeleted: false,
                     },
                   });
 

@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { getMaxOrderInTestRun } from "~/app/actions/test-run";
-import { useCreateTestRunCases, useFindManyTestRuns } from "~/lib/hooks";
+import { useFindManyTestRuns, useUpsertTestRunCases } from "~/lib/hooks";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { cn } from "~/utils";
 
@@ -860,7 +860,7 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
   projectId: number;
 }) {
   const t = useTranslations();
-  const { mutateAsync: createTestRunCases } = useCreateTestRunCases();
+  const { mutateAsync: upsertTestRunCase } = useUpsertTestRunCases();
 
   const {
     data: testRuns,
@@ -877,6 +877,7 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
             testCases: {
               some: {
                 repositoryCaseId: caseId,
+                isDeleted: false,
               },
             },
           },
@@ -892,10 +893,20 @@ const AddToTestRunDropdown = React.memo(function AddToTestRunDropdown({
       const maxOrder = await getMaxOrderInTestRun(testRunId);
       const newOrder = maxOrder.data + 1;
 
-      await createTestRunCases({
-        data: {
-          testRunId: testRunId,
+      await upsertTestRunCase({
+        where: {
+          testRunId_repositoryCaseId: {
+            testRunId,
+            repositoryCaseId: caseId,
+          },
+        },
+        create: {
+          testRunId,
           repositoryCaseId: caseId,
+          order: newOrder,
+        },
+        update: {
+          isDeleted: false,
           order: newOrder,
         },
       });
@@ -1919,6 +1930,7 @@ export const getColumns = (
                       testCases: {
                         some: {
                           repositoryCaseId: row.original.id,
+                          isDeleted: false,
                         },
                       },
                     }}

@@ -238,6 +238,7 @@ export async function GET(request: NextRequest) {
                 },
               },
               testCases: {
+                where: { isDeleted: false },
                 include: {
                   repositoryCase: {
                     select: {
@@ -305,6 +306,7 @@ export async function GET(request: NextRequest) {
                     },
                   },
                   testCases: {
+                    where: { isDeleted: false },
                     include: {
                       repositoryCase: {
                         select: {
@@ -376,6 +378,7 @@ export async function GET(request: NextRequest) {
                         },
                       },
                       testCases: {
+                        where: { isDeleted: false },
                         include: {
                           repositoryCase: {
                             select: {

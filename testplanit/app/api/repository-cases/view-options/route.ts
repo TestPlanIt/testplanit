@@ -86,6 +86,7 @@ export async function POST(request: Request) {
       const testRunCases = await prisma.testRunCases.findMany({
         where: {
           testRunId: { in: effectiveRunIds },
+          isDeleted: false,
         },
         select: {
           repositoryCaseId: true,
@@ -418,6 +419,7 @@ export async function POST(request: Request) {
         ? prisma.testRunCases.findMany({
             where: {
               testRunId: { in: effectiveRunIds },
+              isDeleted: false,
             },
             select: {
               repositoryCaseId: true,

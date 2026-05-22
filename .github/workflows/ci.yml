@@ -36,6 +36,13 @@ jobs:
         with:
           node-version: '24'
 
+      - name: Verify workspace lockfile mirror
+        # testplanit/pnpm-lock.yaml is a load-bearing byte-for-byte duplicate
+        # of the root pnpm-lock.yaml — the testplanit Dockerfile copies it
+        # from its build context. Fail loudly when they diverge (typically
+        # after a Dependabot bump) so the mirror is fixed before merge.
+        run: diff -q pnpm-lock.yaml testplanit/pnpm-lock.yaml
+
       - name: Install dependencies
         run: |
           cd testplanit
@@ -62,17 +69,12 @@ jobs:
           cd testplanit
           pnpm test run
 
-      - name: Install packages dependencies
-        run: pnpm install --frozen-lockfile
-        working-directory: packages/api
-
+      # packages/api and cli are pnpm workspace members — they were already
+      # installed by the workspace-aware install above. No second install
+      # step needed.
       - name: Run packages unit tests
         run: pnpm test run
         working-directory: packages/api
-
-      - name: Install CLI dependencies
-        run: pnpm install --frozen-lockfile --ignore-scripts
-        working-directory: cli
 
       - name: Run CLI unit tests
         run: pnpm test

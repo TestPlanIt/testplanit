@@ -1668,16 +1668,33 @@ model RepositoryCaseVersions {
          project.defaultAccessType == 'SPECIFIC_ROLE' && project.defaultRole != null)
     )
 
-    // Create/update/delete access for users with repository permissions
+    // Create/update/delete access based on role permissions
     @@allow('create,update,delete',
         project.creator == auth() ||
+    // User with SPECIFIC_ROLE access type
         project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
                                 (role.name == 'Project Admin' ||
                                  role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])] ||
+    // User with GLOBAL_ROLE access type (use their global role)
+        project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' &&
+                                auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
+    // System PROJECTADMIN assigned to project
         project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+    // Group with SPECIFIC_ROLE access type
         project.groupPermissions?[group.assignedUsers?[user == auth()] &&
                                   accessType == 'SPECIFIC_ROLE' &&
-                                  role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]]
+                                  role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
+    // Group with GLOBAL_ROLE access type
+        project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                  accessType == 'GLOBAL_ROLE' &&
+                                  auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]] ||
+    // Project default GLOBAL_ROLE - user's global role has permission
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestCaseRepository' && canAddEdit]) ||
+    // Project default SPECIFIC_ROLE - project's default role has permission
+        (project.assignedUsers?[user == auth()] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         project.defaultRole.rolePermissions?[area == 'TestCaseRepository' && canAddEdit])
     )
 
     @@allow('all', auth().access == 'ADMIN')
@@ -2085,14 +2102,34 @@ model Sessions {
                                   role.rolePermissions?[area == 'Sessions' && canAddEdit]]
     )
 
-    // Update/delete access
+    // Update/delete access based on role permissions
     @@allow('update,delete',
         auth().id == createdById ||
         project.creator == auth() ||
+    // User with SPECIFIC_ROLE access type
         project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
                                 (role.name == 'Project Admin' ||
                                  role.rolePermissions?[area == 'Sessions' && (canAddEdit || canDelete)])] ||
-        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    // User with GLOBAL_ROLE access type (use their global role)
+        project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' &&
+                                auth().role.rolePermissions?[area == 'Sessions' && (canAddEdit || canDelete)]] ||
+    // System PROJECTADMIN assigned to project
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+    // Group with SPECIFIC_ROLE access type
+        project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                  accessType == 'SPECIFIC_ROLE' &&
+                                  role.rolePermissions?[area == 'Sessions' && (canAddEdit || canDelete)]] ||
+    // Group with GLOBAL_ROLE access type
+        project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                  accessType == 'GLOBAL_ROLE' &&
+                                  auth().role.rolePermissions?[area == 'Sessions' && (canAddEdit || canDelete)]] ||
+    // Project default GLOBAL_ROLE - user's global role has permission
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'Sessions' && (canAddEdit || canDelete)]) ||
+    // Project default SPECIFIC_ROLE - project's default role has permission
+        (project.assignedUsers?[user == auth()] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         project.defaultRole.rolePermissions?[area == 'Sessions' && (canAddEdit || canDelete)])
     )
 
     @@allow('all', auth().access == 'ADMIN')
@@ -2171,12 +2208,34 @@ model SessionResults {
          session.project.defaultRole.rolePermissions?[area == 'SessionResults' && canAddEdit])
     )
 
-    // Update/delete access
+    // Update/delete access based on role permissions
     @@allow('update,delete',
         auth().id == createdById ||
         session.project.creator == auth() ||
-        session.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.name == 'Project Admin'] ||
-        session.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    // User with SPECIFIC_ROLE access type
+        session.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                         (role.name == 'Project Admin' ||
+                                          role.rolePermissions?[area == 'SessionResults' && (canAddEdit || canDelete)])] ||
+    // User with GLOBAL_ROLE access type (use their global role)
+        session.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' &&
+                                         auth().role.rolePermissions?[area == 'SessionResults' && (canAddEdit || canDelete)]] ||
+    // System PROJECTADMIN assigned to project
+        session.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+    // Group with SPECIFIC_ROLE access type
+        session.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                          accessType == 'SPECIFIC_ROLE' &&
+                                          role.rolePermissions?[area == 'SessionResults' && (canAddEdit || canDelete)]] ||
+    // Group with GLOBAL_ROLE access type
+        session.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                          accessType == 'GLOBAL_ROLE' &&
+                                          auth().role.rolePermissions?[area == 'SessionResults' && (canAddEdit || canDelete)]] ||
+    // Project default GLOBAL_ROLE - user's global role has permission
+        (session.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'SessionResults' && (canAddEdit || canDelete)]) ||
+    // Project default SPECIFIC_ROLE - project's default role has permission
+        (session.project.assignedUsers?[user == auth()] &&
+         session.project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         session.project.defaultRole.rolePermissions?[area == 'SessionResults' && (canAddEdit || canDelete)])
     )
 
     @@allow('all', auth().access == 'ADMIN')
@@ -2305,10 +2364,30 @@ model SessionFieldValues {
     // Create/update/delete access inherits from session permissions
     @@allow('create,update,delete',
         session.project.creator == auth() ||
+    // User with SPECIFIC_ROLE access type
         session.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
                                         (role.name == 'Project Admin' ||
                                          role.rolePermissions?[area == 'Sessions' && canAddEdit])] ||
-        session.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    // User with GLOBAL_ROLE access type (use their global role)
+        session.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' &&
+                                        auth().role.rolePermissions?[area == 'Sessions' && canAddEdit]] ||
+    // System PROJECTADMIN assigned to project
+        session.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+    // Group with SPECIFIC_ROLE access type
+        session.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                          accessType == 'SPECIFIC_ROLE' &&
+                                          role.rolePermissions?[area == 'Sessions' && canAddEdit]] ||
+    // Group with GLOBAL_ROLE access type
+        session.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                          accessType == 'GLOBAL_ROLE' &&
+                                          auth().role.rolePermissions?[area == 'Sessions' && canAddEdit]] ||
+    // Project default GLOBAL_ROLE - user's global role has permission
+        (session.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'Sessions' && canAddEdit]) ||
+    // Project default SPECIFIC_ROLE - project's default role has permission
+        (session.project.assignedUsers?[user == auth()] &&
+         session.project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         session.project.defaultRole.rolePermissions?[area == 'Sessions' && canAddEdit])
     )
 
     @@allow('all', auth().access == 'ADMIN')
@@ -2386,14 +2465,34 @@ model TestRuns {
                                   role.rolePermissions?[area == 'TestRuns' && canAddEdit]]
     )
 
-    // Update/delete access
+    // Update/delete access based on role permissions
     @@allow('update,delete',
         auth().id == createdById ||
         project.creator == auth() ||
+    // User with SPECIFIC_ROLE access type
         project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
                                 (role.name == 'Project Admin' ||
                                  role.rolePermissions?[area == 'TestRuns' && (canAddEdit || canDelete)])] ||
-        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    // User with GLOBAL_ROLE access type (use their global role)
+        project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' &&
+                                auth().role.rolePermissions?[area == 'TestRuns' && (canAddEdit || canDelete)]] ||
+    // System PROJECTADMIN assigned to project
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+    // Group with SPECIFIC_ROLE access type
+        project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                  accessType == 'SPECIFIC_ROLE' &&
+                                  role.rolePermissions?[area == 'TestRuns' && (canAddEdit || canDelete)]] ||
+    // Group with GLOBAL_ROLE access type
+        project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                  accessType == 'GLOBAL_ROLE' &&
+                                  auth().role.rolePermissions?[area == 'TestRuns' && (canAddEdit || canDelete)]] ||
+    // Project default GLOBAL_ROLE - user's global role has permission
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestRuns' && (canAddEdit || canDelete)]) ||
+    // Project default SPECIFIC_ROLE - project's default role has permission
+        (project.assignedUsers?[user == auth()] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         project.defaultRole.rolePermissions?[area == 'TestRuns' && (canAddEdit || canDelete)])
     )
 
     @@allow('all', auth().access == 'ADMIN')
@@ -2439,6 +2538,7 @@ model TestRunCases {
     skippedIterations Int                        @default(0)
     totalIterations  Int                         @default(0)
     createdAt        DateTime                    @default(now()) @db.Timestamptz(6)
+    isDeleted        Boolean                     @default(false)
     results          TestRunResults[]
     iterations       TestRunCaseIteration[]
     dataSetSnapshot  TestRunCaseDataSetSnapshot?
@@ -2449,6 +2549,7 @@ model TestRunCases {
     @@index([assignedToId])
     @@index([statusId])
     @@index([isCompleted])
+    @@index([isDeleted])
     @@deny('all', !auth())
     @@deny('all', auth().access == 'NONE')
 
@@ -2500,15 +2601,35 @@ model TestRunCases {
          testRun.project.defaultRole.rolePermissions?[area == 'TestRuns' && canAddEdit])
     )
 
-    // Update access - creator, assignee, or admin
+    // Update access - creator, assignee, or users with test run permissions
     @@allow('update',
         auth().id == testRun.createdById ||
         auth().id == assignedToId ||
         testRun.project.creator == auth() ||
+    // User with SPECIFIC_ROLE access type
         testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
                                          (role.name == 'Project Admin' ||
                                           role.rolePermissions?[area == 'TestRuns' && canAddEdit])] ||
-        testRun.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    // User with GLOBAL_ROLE access type (use their global role)
+        testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' &&
+                                         auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+    // System PROJECTADMIN assigned to project
+        testRun.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+    // Group with SPECIFIC_ROLE access type
+        testRun.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                          accessType == 'SPECIFIC_ROLE' &&
+                                          role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+    // Group with GLOBAL_ROLE access type
+        testRun.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                          accessType == 'GLOBAL_ROLE' &&
+                                          auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]] ||
+    // Project default GLOBAL_ROLE - user's global role has permission
+        (testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestRuns' && canAddEdit]) ||
+    // Project default SPECIFIC_ROLE - project's default role has permission
+        (testRun.project.assignedUsers?[user == auth()] &&
+         testRun.project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         testRun.project.defaultRole.rolePermissions?[area == 'TestRuns' && canAddEdit])
     )
 
     @@allow('all', auth().access == 'ADMIN')
@@ -2572,10 +2693,30 @@ model TestRunResults {
     @@allow('create,update',
         auth().id == executedById ||
         testRun.project.creator == auth() ||
+    // User with SPECIFIC_ROLE access type
         testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
                                          (role.name == 'Project Admin' ||
                                           role.rolePermissions?[area == 'TestRunResults' && canAddEdit])] ||
-        testRun.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    // User with GLOBAL_ROLE access type (use their global role)
+        testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' &&
+                                         auth().role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
+    // System PROJECTADMIN assigned to project
+        testRun.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+    // Group with SPECIFIC_ROLE access type
+        testRun.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                          accessType == 'SPECIFIC_ROLE' &&
+                                          role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
+    // Group with GLOBAL_ROLE access type
+        testRun.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                          accessType == 'GLOBAL_ROLE' &&
+                                          auth().role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
+    // Project default GLOBAL_ROLE - user's global role has permission
+        (testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestRunResults' && canAddEdit]) ||
+    // Project default SPECIFIC_ROLE - project's default role has permission
+        (testRun.project.assignedUsers?[user == auth()] &&
+         testRun.project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         testRun.project.defaultRole.rolePermissions?[area == 'TestRunResults' && canAddEdit])
     )
 
     @@allow('all', auth().access == 'ADMIN')
@@ -2626,10 +2767,30 @@ model TestRunStepResults {
     @@allow('create,update',
         auth().id == testRunResult.executedById ||
         testRunResult.testRun.project.creator == auth() ||
+    // User with SPECIFIC_ROLE access type
         testRunResult.testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
                                                        (role.name == 'Project Admin' ||
                                                         role.rolePermissions?[area == 'TestRunResults' && canAddEdit])] ||
-        testRunResult.testRun.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    // User with GLOBAL_ROLE access type (use their global role)
+        testRunResult.testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' &&
+                                                       auth().role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
+    // System PROJECTADMIN assigned to project
+        testRunResult.testRun.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+    // Group with SPECIFIC_ROLE access type
+        testRunResult.testRun.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                                        accessType == 'SPECIFIC_ROLE' &&
+                                                        role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
+    // Group with GLOBAL_ROLE access type
+        testRunResult.testRun.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                                        accessType == 'GLOBAL_ROLE' &&
+                                                        auth().role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
+    // Project default GLOBAL_ROLE - user's global role has permission
+        (testRunResult.testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestRunResults' && canAddEdit]) ||
+    // Project default SPECIFIC_ROLE - project's default role has permission
+        (testRunResult.testRun.project.assignedUsers?[user == auth()] &&
+         testRunResult.testRun.project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         testRunResult.testRun.project.defaultRole.rolePermissions?[area == 'TestRunResults' && canAddEdit])
     )
 
     @@allow('all', auth().access == 'ADMIN')
@@ -2709,10 +2870,30 @@ model TestRunCaseIteration {
     @@allow('update',
         auth().id == assignedToId ||
         testRunCase.testRun.project.creator == auth() ||
+    // User with SPECIFIC_ROLE access type
         testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
                                                      (role.name == 'Project Admin' ||
                                                       role.rolePermissions?[area == 'TestRunResults' && canAddEdit])] ||
-        testRunCase.testRun.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN']
+    // User with GLOBAL_ROLE access type (use their global role)
+        testRunCase.testRun.project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' &&
+                                                     auth().role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
+    // System PROJECTADMIN assigned to project
+        testRunCase.testRun.project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+    // Group with SPECIFIC_ROLE access type
+        testRunCase.testRun.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                                      accessType == 'SPECIFIC_ROLE' &&
+                                                      role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
+    // Group with GLOBAL_ROLE access type
+        testRunCase.testRun.project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                                      accessType == 'GLOBAL_ROLE' &&
+                                                      auth().role.rolePermissions?[area == 'TestRunResults' && canAddEdit]] ||
+    // Project default GLOBAL_ROLE - user's global role has permission
+        (testRunCase.testRun.project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE' &&
+         auth().role.rolePermissions?[area == 'TestRunResults' && canAddEdit]) ||
+    // Project default SPECIFIC_ROLE - project's default role has permission
+        (testRunCase.testRun.project.assignedUsers?[user == auth()] &&
+         testRunCase.testRun.project.defaultAccessType == 'SPECIFIC_ROLE' &&
+         testRunCase.testRun.project.defaultRole.rolePermissions?[area == 'TestRunResults' && canAddEdit])
     )
 
     @@allow('all', auth().access == 'ADMIN')

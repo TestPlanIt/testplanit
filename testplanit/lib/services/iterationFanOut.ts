@@ -116,6 +116,7 @@ export async function materializeIterations(
   const runCases = await tx.testRunCases.findMany({
     where: {
       testRunId,
+      isDeleted: false,
       repositoryCase: { hasParameters: true, isDeleted: false },
     },
     select: {
