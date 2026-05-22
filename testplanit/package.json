@@ -351,7 +351,7 @@
     "import": "^0.0.6",
     "lucide-react": "^0.577.0",
     "pdf-parse": "^2.4.5",
-    "pm2": "^6.0.14",
+    "pm2": "^7.0.1",
     "postcss": "^8.5.14",
     "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.7.4",

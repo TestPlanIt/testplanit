@@ -158,7 +158,7 @@ RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nextjs -u 1001
 
 # Install PM2 globally with log rotation module
-RUN npm install -g pm2 && pm2 install pm2-logrotate && \
+RUN npm install -g pm2@7 && pm2 install pm2-logrotate && \
     pm2 set pm2-logrotate:max_size 50M && \
     pm2 set pm2-logrotate:retain 3 && \
     pm2 set pm2-logrotate:compress true && \
@@ -247,7 +247,7 @@ WORKDIR /app
 RUN apk add --no-cache postgresql-client
 
 # Install PM2 globally with log rotation module
-RUN npm install -g pm2 && pm2 install pm2-logrotate && \
+RUN npm install -g pm2@7 && pm2 install pm2-logrotate && \
     pm2 set pm2-logrotate:max_size 50M && \
     pm2 set pm2-logrotate:retain 3 && \
     pm2 set pm2-logrotate:compress true && \
