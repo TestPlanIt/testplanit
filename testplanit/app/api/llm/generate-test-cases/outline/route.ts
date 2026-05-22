@@ -10,6 +10,7 @@ import { authOptions } from "~/server/auth";
 import {
   buildOutlineSystemPrompt,
   buildOutlineUserPrompt,
+  fetchHierarchyContext,
   type GenerationContext,
   type IssueData,
   type TestCaseOutline,
@@ -107,7 +108,6 @@ export async function POST(request: NextRequest) {
     }
 
     const systemPrompt = buildOutlineSystemPrompt(quantity);
-    const userPrompt = buildOutlineUserPrompt(issue, context);
 
     let maxTokens = resolvedPrompt.maxOutputTokens ?? 2048;
     const providerConfig = await (prisma as any).llmProviderConfig.findFirst({
@@ -119,6 +119,28 @@ export async function POST(request: NextRequest) {
         resolvedPrompt.maxOutputTokens ??
         2048;
     }
+
+    // Fetch sibling/ancestor folder cases so the outline LLM avoids producing
+    // titles that duplicate already-existing coverage. The outline phase only
+    // renders titles — see buildOutlineUserPrompt — so a tight budget is
+    // enough: 1500 tokens fits roughly 100–200 case names without bloating
+    // the prompt or pushing the LLM toward the configured request timeout.
+    const OUTLINE_CONTEXT_TOKEN_BUDGET = 1500;
+    const hierarchyContext =
+      typeof context.folderContext === "number"
+        ? await fetchHierarchyContext(
+            prisma,
+            projectId,
+            context.folderContext,
+            OUTLINE_CONTEXT_TOKEN_BUDGET
+          )
+        : [];
+
+    const enrichedContext: GenerationContext = {
+      ...context,
+      existingTestCases: hierarchyContext,
+    };
+    const userPrompt = buildOutlineUserPrompt(issue, enrichedContext);
 
     const llmRequest: LlmRequest = {
       messages: [
