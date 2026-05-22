@@ -1,3 +1,9 @@
+## [0.29.6](https://github.com/TestPlanIt/testplanit/compare/v0.29.5...v0.29.6) (2026-05-22)
+
+### Bug Fixes
+
+* **import:** round-trip support for labeled + multi-row CSV step exports ([#330](https://github.com/TestPlanIt/testplanit/issues/330)) ([176aa5e](https://github.com/TestPlanIt/testplanit/commit/176aa5e12eb9e8fce3a0247d2ad3b4b02ce0621c))
+
 ## [0.29.5](https://github.com/TestPlanIt/testplanit/compare/v0.29.4...v0.29.5) (2026-05-21)
 
 ### Bug Fixes
