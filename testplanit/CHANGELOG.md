@@ -1,3 +1,9 @@
+## [0.29.8](https://github.com/TestPlanIt/testplanit/compare/v0.29.7...v0.29.8) (2026-05-22)
+
+### Bug Fixes
+
+* **llm:** honor configured max-output-tokens in outline endpoint ([#334](https://github.com/TestPlanIt/testplanit/issues/334)) ([a27e63e](https://github.com/TestPlanIt/testplanit/commit/a27e63e4ad6e3806e3dfdc43b7c6ad639758bcb0))
+
 ## [0.29.7](https://github.com/TestPlanIt/testplanit/compare/v0.29.6...v0.29.7) (2026-05-22)
 
 ### Bug Fixes
