@@ -1172,8 +1172,17 @@ export default function SessionPage() {
   const reachableGatedStates = useMemo(() => {
     if (!workflows || !sessionData) return [];
     const currentStateId = sessionData.stateId;
+    // Only gates STRICTLY AFTER the current state — see the matching
+    // comment on the test-case detail page.
+    const currentStateOrder =
+      workflows.find((w) => w.id === currentStateId)?.order ?? -Infinity;
     return workflows
-      .filter((w) => w.requiresReview === true && w.id !== currentStateId)
+      .filter(
+        (w) =>
+          w.requiresReview === true &&
+          w.id !== currentStateId &&
+          w.order > currentStateOrder
+      )
       .map((w) => ({
         id: w.id,
         name: w.name,

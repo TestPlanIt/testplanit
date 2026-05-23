@@ -33,7 +33,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
 
-import DynamicIcon from "@/components/DynamicIcon";
+import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
 import { MessageSquareWarning } from "lucide-react";
 import { requestReview } from "~/app/actions/reviews";
 import {
@@ -327,14 +327,20 @@ export function RequestReviewSheet({
                             value={String(state.id)}
                             data-testid={`request-review-target-state-option-${state.id}`}
                           >
-                            <span className="flex items-center space-x-1">
-                              <DynamicIcon
-                                name={state.icon.name as IconName}
-                                className="h-4 w-4"
-                                style={{ color: state.color.value }}
-                              />
-                              <span className="text-sm">{state.name}</span>
-                            </span>
+                            {/* Reachable gated states are gated by
+                                definition — set requiresReview so the
+                                shared WorkflowStateDisplay shows the
+                                warning glyph consistent with other
+                                surfaces. */}
+                            <WorkflowStateDisplay
+                              state={{
+                                name: state.name,
+                                icon: { name: state.icon.name as IconName },
+                                color: { value: state.color.value },
+                                requiresReview: true,
+                              }}
+                              size="sm"
+                            />
                           </SelectItem>
                         ))}
                       </SelectContent>

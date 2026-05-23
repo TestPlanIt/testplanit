@@ -199,11 +199,19 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
     // the assigned roles). Decided tab → rows I've decided regardless of
     // the resulting status. The two scopes are mutually exclusive so the
     // queue and the history never double-count a row.
+    //
+    // Project-flag scoping: hide requests from projects whose review
+    // workflow toggle is OFF. Stale rows persist in the table (cancel +
+    // decide flips status; a project toggling its review workflow off
+    // doesn't touch existing rows) so the filter has to live at query
+    // time. The system-level kill switch short-circuits the whole query
+    // via `enabled: featureEnabled === true` below.
     const conditions: any[] =
       view === "pending"
         ? [
             { status: "PENDING" },
             { isDeleted: false },
+            { project: { reviewWorkflowEnabled: true } },
             {
               OR: [
                 { assigneeUserId: userId },
@@ -219,6 +227,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
               },
             },
             { isDeleted: false },
+            { project: { reviewWorkflowEnabled: true } },
           ];
     if (entityTypeFilter !== "all") {
       conditions.push({ entityType: entityTypeFilter });
@@ -268,6 +277,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
           select: {
             id: true,
             name: true,
+            requiresReview: true,
             icon: { select: { name: true } },
             color: { select: { value: true } },
           },
@@ -276,6 +286,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
           select: {
             id: true,
             name: true,
+            requiresReview: true,
             icon: { select: { name: true } },
             color: { select: { value: true } },
           },
@@ -285,8 +296,12 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
       },
     },
     {
+      // Skip the inbox query entirely when the system-level kill switch is
+      // off (L2 in the audit). The featureDisabled empty state already
+      // covers the UI surface; running the query would just be wasted RTT.
+      enabled: featureEnabled === true,
       refetchOnWindowFocus: true,
-    }
+    } as any
   );
 
   const featureDisabled = featureLoading ? false : featureEnabled === false;

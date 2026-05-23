@@ -2,6 +2,7 @@
 
 import { formatSeconds } from "@/components/DurationDisplay";
 import DynamicIcon from "@/components/DynamicIcon";
+import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -860,17 +861,19 @@ export function BulkEditModal({
       if (fieldKey === "state") {
         const wf = workflowsData?.find((w) => w.id === firstValue);
         if (!wf) return firstValue ?? "-"; // Fallback if workflow not found
+        // Use the shared WorkflowStateDisplay so the gated-state warning
+        // glyph appears alongside the icon + name everywhere a workflow
+        // state renders, including the bulk-edit preview cell.
         return (
-          <div className="flex items-center">
-            {wf.icon && (
-              <DynamicIcon
-                className="shrink-0 mr-1 h-4 w-4"
-                name={wf.icon.name as IconName}
-                color={wf.color?.value}
-              />
-            )}
-            {wf.name}
-          </div>
+          <WorkflowStateDisplay
+            state={{
+              name: wf.name,
+              icon: { name: (wf.icon?.name ?? "circle") as IconName },
+              color: { value: wf.color?.value ?? "" },
+              requiresReview: wf.requiresReview ?? false,
+            }}
+            size="sm"
+          />
         );
       } else if (fieldKey === "automated") {
         return <Switch checked={!!firstValue} disabled />;

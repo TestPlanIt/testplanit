@@ -779,8 +779,18 @@ export default function TestCaseDetails() {
   const reachableGatedStates = useMemo(() => {
     if (!workflows || !testcase) return [];
     const currentStateId = testcase.state.id;
+    // Only target states that are STRICTLY AFTER the current state in the
+    // workflow ordering — gates the entity hasn't already passed. Workflow
+    // rows expose `order` so we can compare directly.
+    const currentStateOrder =
+      workflows.find((w) => w.id === currentStateId)?.order ?? -Infinity;
     return workflows
-      .filter((w) => w.requiresReview === true && w.id !== currentStateId)
+      .filter(
+        (w) =>
+          w.requiresReview === true &&
+          w.id !== currentStateId &&
+          w.order > currentStateOrder
+      )
       .map((w) => ({
         id: w.id,
         name: w.name,
