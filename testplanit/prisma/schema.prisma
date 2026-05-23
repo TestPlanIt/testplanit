@@ -94,6 +94,7 @@ enum NotificationType {
   REVIEW_APPROVED
   REVIEW_CHANGES_REQUESTED
   REVIEW_REJECTED
+  REVIEW_CANCELLED
 }
 
 enum WorkflowType {

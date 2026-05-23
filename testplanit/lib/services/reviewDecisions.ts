@@ -1,11 +1,16 @@
-import { Prisma, type ReviewRequest } from "@prisma/client";
+import { Prisma, type AuditAction, type ReviewRequest } from "@prisma/client";
 import type { JSONContent } from "@tiptap/core";
 import type { Session } from "next-auth";
 
 import { prisma } from "~/lib/prisma";
+import { captureAuditEvent } from "~/lib/services/auditLog";
 import { CommentService } from "~/lib/services/commentService";
 import { NotificationService } from "~/lib/services/notificationService";
-import { IneligibleReviewerError } from "~/lib/utils/errors";
+import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
+import {
+  FeatureDisabledError,
+  IneligibleReviewerError,
+} from "~/lib/utils/errors";
 import { extractMentionedUserIds } from "~/lib/utils/tiptapMentions";
 import { emitReviewCompletedEvent } from "~/lib/webhooks/event-emitters/reviewEvents";
 
@@ -97,6 +102,15 @@ export async function decideReviewRequest(
 ): Promise<ReviewRequest> {
   const userId = session.user.id;
 
+  // Feature-flag guard. System flag is checked first because it costs the
+  // same round-trip whether the request exists or not; project flag is
+  // checked alongside the main load below to keep the request-lookup
+  // single-statement.
+  const systemEnabled = await isReviewFeatureSystemEnabled(prisma);
+  if (!systemEnabled) {
+    throw new FeatureDisabledError();
+  }
+
   // Load the request + project + caller's UserProjectPermission row. The
   // permission is needed to evaluate the SPECIFIC_ROLE / GLOBAL_ROLE
   // branches without making a second query. `project.name` and
@@ -109,6 +123,7 @@ export async function decideReviewRequest(
         select: {
           id: true,
           name: true,
+          reviewWorkflowEnabled: true,
           userPermissions: {
             where: { userId },
             select: { accessType: true, roleId: true },
@@ -130,6 +145,10 @@ export async function decideReviewRequest(
       },
     },
   });
+
+  if (req.project.reviewWorkflowEnabled !== true) {
+    throw new FeatureDisabledError();
+  }
 
   if (req.status !== "PENDING") {
     throw new Error("Review request already decided");
@@ -367,6 +386,36 @@ export async function decideReviewRequest(
     console.error(
       "decideReviewRequest: review-completed webhook emit failed",
       webhookErr
+    );
+  }
+
+  try {
+    const auditAction: AuditAction =
+      decision === "APPROVED"
+        ? "REVIEW_APPROVED"
+        : decision === "CHANGES_REQUESTED"
+          ? "REVIEW_CHANGES_REQUESTED"
+          : "REVIEW_REJECTED";
+    await captureAuditEvent({
+      action: auditAction,
+      entityType: "ReviewRequest",
+      entityId: reviewRequestId,
+      projectId: req.project.id,
+      metadata: {
+        decision,
+        fromStateId: req.fromStateId,
+        toStateId: req.toStateId,
+        decidedByUserId: userId,
+        requestedByUserId: req.requestedBy.id,
+        entityType: req.entityType,
+        entityId: req.entityId,
+        decisionComment: trimmedComment.slice(0, 4096),
+      },
+    });
+  } catch (auditErr) {
+    console.error(
+      "decideReviewRequest: audit emission failed",
+      auditErr
     );
   }
 

@@ -81,6 +81,26 @@ export function isIneligibleReviewerError(
   return err instanceof IneligibleReviewerError;
 }
 
+/**
+ * Thrown by review-decision / review-cancel server paths when the system-level
+ * or project-level review feature flag is OFF. Surfaces as a 403 with the
+ * typed `FEATURE_DISABLED` envelope; callers translate to UI copy.
+ */
+export class FeatureDisabledError extends Error {
+  readonly code = "FEATURE_DISABLED" as const;
+
+  constructor(public readonly feature: string = "review") {
+    super(`Feature "${feature}" is disabled`);
+    this.name = "FeatureDisabledError";
+  }
+}
+
+export function isFeatureDisabledError(
+  err: unknown
+): err is FeatureDisabledError {
+  return err instanceof FeatureDisabledError;
+}
+
 export function isReviewGateError(err: unknown): err is ReviewGateError {
   return err instanceof ReviewGateError;
 }

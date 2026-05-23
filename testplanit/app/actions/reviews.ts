@@ -3,8 +3,10 @@
 import type { JSONContent } from "@tiptap/core";
 import { revalidatePath } from "next/cache";
 
+import { captureAuditEvent } from "~/lib/services/auditLog";
 import { CommentService } from "~/lib/services/commentService";
 import { NotificationService } from "~/lib/services/notificationService";
+import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
 import { prisma } from "~/lib/prisma";
 import { extractMentionedUserIds } from "~/lib/utils/tiptapMentions";
 import { AlreadyPendingError } from "~/lib/utils/errors";
@@ -43,6 +45,7 @@ interface RequestReviewFailure {
     | "INVALID_INPUT"
     | "ALREADY_PENDING"
     | "UNAUTHORIZED"
+    | "FEATURE_DISABLED"
     | "INTERNAL_ERROR";
   message?: string;
 }
@@ -80,6 +83,25 @@ export async function requestReview(
     return { success: false, error: "UNAUTHORIZED" };
   }
   const requestedByUserId = session.user.id;
+
+  // Defense-in-depth: the schema-layer @@deny rules no longer reference the
+  // project / system feature flags, so the app preflight is the only seam
+  // that short-circuits a request when the feature is off. Mirror the
+  // chokepoint helpers (`assertReviewGatePasses`, `decideReviewRequest`)
+  // by failing fast here with a typed FEATURE_DISABLED before we touch the
+  // database. Project flag is loaded via the same query so a single
+  // round-trip answers both checks.
+  const systemEnabled = await isReviewFeatureSystemEnabled(prisma);
+  if (!systemEnabled) {
+    return { success: false, error: "FEATURE_DISABLED" };
+  }
+  const project = await prisma.projects.findUnique({
+    where: { id: input.projectId },
+    select: { reviewWorkflowEnabled: true },
+  });
+  if (!project || project.reviewWorkflowEnabled !== true) {
+    return { success: false, error: "FEATURE_DISABLED" };
+  }
 
   const trimmed = input.commentText.trim();
 
@@ -287,6 +309,27 @@ export async function requestReview(
         "requestReview: review-request webhook emit failed",
         webhookErr
       );
+    }
+
+    try {
+      await captureAuditEvent({
+        action: "REVIEW_REQUESTED",
+        entityType: "ReviewRequest",
+        entityId: reviewRequestId,
+        projectId: input.projectId,
+        metadata: {
+          fromStateId: input.fromStateId,
+          toStateId: input.toStateId,
+          assigneeUserId: input.assigneeUserId,
+          assigneeRoleId: input.assigneeRoleId,
+          requestedByUserId,
+          entityType: input.entityType,
+          entityId: input.entityId,
+          commentText: trimmed.slice(0, 4096),
+        },
+      });
+    } catch (auditErr) {
+      console.error("requestReview: audit emission failed", auditErr);
     }
 
     revalidatePath("/");

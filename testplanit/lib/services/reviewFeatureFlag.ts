@@ -16,7 +16,8 @@ export const REVIEW_FEATURE_FLAG_KEY = "review_feature_enabled";
  *
  * Server-side helper used by:
  *   - `assertReviewGatePasses` in `lib/services/reviewGate.ts`
- *   - `decideReviewRequest` in `lib/services/reviewDecisions.ts`
+ *   - `requestReview` in `app/actions/reviews.ts`
+ *   - `decideReviewRequest` / `cancelReviewRequest` in `lib/services/reviewDecisions.ts`
  *   - the milestone-completion preflight in `app/actions/milestoneActions.ts`
  *
  * Accepts either a Prisma transaction client or the singleton `prisma` (any

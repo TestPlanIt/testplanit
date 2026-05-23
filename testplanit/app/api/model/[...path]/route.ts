@@ -177,6 +177,12 @@ const AUDITED_ENTITIES = new Set([
   "comment",
   "attachment",
   "apiToken",
+  // ReviewRequest cancel path flips status to CANCELLED via the auto-API
+  // (the only review-state mutation not routed through the dedicated server
+  // actions). We audit the cancel here via REVIEW_CANCELLED; the request /
+  // decide paths emit REVIEW_REQUESTED / REVIEW_APPROVED / etc. from their
+  // own action handlers.
+  "reviewRequest",
 ]);
 
 // Map ZenStack operations to audit actions
@@ -1216,6 +1222,7 @@ async function innerHandler(
               comment: "Comment",
               attachment: "Attachment",
               apiToken: "ApiToken",
+              reviewRequest: "ReviewRequest",
             };
 
             // Special handling for API token operations - use specific audit actions
@@ -1232,6 +1239,23 @@ async function innerHandler(
                   finalAuditAction = "API_KEY_REVOKED";
                 }
               }
+            }
+
+            // ReviewRequest cancel — the only review status mutation routed
+            // through the auto-API. The request / decide paths emit their
+            // own audit events from the server action and service layer; the
+            // cancel path hits this route as a generic ReviewRequest UPDATE,
+            // so we promote it to REVIEW_CANCELLED when the payload sets
+            // status to CANCELLED. Other ReviewRequest updates fall through
+            // to the default UPDATE action — none ship today (status is the
+            // only writable field) but the fall-through keeps the rule
+            // safe under future schema additions.
+            if (
+              parsedPath.model === "reviewRequest" &&
+              parsedPath.operation === "update" &&
+              requestBody?.data?.status === "CANCELLED"
+            ) {
+              finalAuditAction = "REVIEW_CANCELLED";
             }
 
             const event: AuditEvent = {

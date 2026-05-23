@@ -331,6 +331,7 @@ enum NotificationType {
     REVIEW_APPROVED
     REVIEW_CHANGES_REQUESTED
     REVIEW_REJECTED
+    REVIEW_CANCELLED
 
     @@deny('all', !auth())
     @@allow('update', auth().access == 'ADMIN')
@@ -1606,9 +1607,9 @@ model RepositoryCases {
 
     @@allow('all', auth().access == 'ADMIN')
 
-    // Schema-layer review gate (SCHEMA-05, T-1-02). App preflight in lib/services/reviewGate.ts produces the typed REVIEW_REQUIRED error first.
-    @@deny('update', future().stateId != stateId && future().state.requiresReview && project.reviewWorkflowEnabled)
-    @@deny('create', state.requiresReview && project.reviewWorkflowEnabled && auth() != null)
+    // Schema-layer review gate. Always denies any transition into a requires-review state at the policy layer; the project + system feature-flag bypasses are handled in the app preflight (lib/services/reviewGate.ts + isReviewFeatureSystemEnabled) which produces the typed REVIEW_REQUIRED envelope BEFORE the schema rule fires.
+    @@deny('update', future().stateId != stateId && future().state.requiresReview)
+    @@deny('create', state.requiresReview && auth() != null)
 }
 
 model RepositoryCaseVersions {
@@ -2134,9 +2135,9 @@ model Sessions {
 
     @@allow('all', auth().access == 'ADMIN')
 
-    // Schema-layer review gate (SCHEMA-05, T-1-02). App preflight in lib/services/reviewGate.ts produces the typed REVIEW_REQUIRED error first.
-    @@deny('update', future().stateId != stateId && future().state.requiresReview && project.reviewWorkflowEnabled)
-    @@deny('create', state.requiresReview && project.reviewWorkflowEnabled && auth() != null)
+    // Schema-layer review gate. Always denies any transition into a requires-review state at the policy layer; the project + system feature-flag bypasses are handled in the app preflight (lib/services/reviewGate.ts + isReviewFeatureSystemEnabled) which produces the typed REVIEW_REQUIRED envelope BEFORE the schema rule fires.
+    @@deny('update', future().stateId != stateId && future().state.requiresReview)
+    @@deny('create', state.requiresReview && auth() != null)
 }
 
 model SessionResults {
@@ -2497,9 +2498,9 @@ model TestRuns {
 
     @@allow('all', auth().access == 'ADMIN')
 
-    // Schema-layer review gate (SCHEMA-05, T-1-02). App preflight in lib/services/reviewGate.ts produces the typed REVIEW_REQUIRED error first.
-    @@deny('update', future().stateId != stateId && future().state.requiresReview && project.reviewWorkflowEnabled)
-    @@deny('create', state.requiresReview && project.reviewWorkflowEnabled && auth() != null)
+    // Schema-layer review gate. Always denies any transition into a requires-review state at the policy layer; the project + system feature-flag bypasses are handled in the app preflight (lib/services/reviewGate.ts + isReviewFeatureSystemEnabled) which produces the typed REVIEW_REQUIRED envelope BEFORE the schema rule fires.
+    @@deny('update', future().stateId != stateId && future().state.requiresReview)
+    @@deny('create', state.requiresReview && auth() != null)
 }
 
 enum TestRunType {
