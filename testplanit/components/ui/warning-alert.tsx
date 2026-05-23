@@ -17,6 +17,13 @@ import { cn } from "~/utils";
  * Tokens (`text-warning`, `bg-warning`, `border-warning`) are already
  * defined in the project's Tailwind config; consumers should NOT redefine
  * them here.
+ *
+ * Color contract: the warning treatment lives on the border + icon + alert
+ * title only. Body text inherits `text-foreground` so the description stays
+ * readable in every theme — the amber body text shipped originally fell
+ * below WCAG AA contrast on several themes (Light + System tokens both
+ * suffered). The icon and AlertTitle still carry the amber accent so the
+ * "warning" signal is preserved.
  */
 const WarningAlert = React.forwardRef<
   HTMLDivElement,
@@ -25,7 +32,7 @@ const WarningAlert = React.forwardRef<
   <Alert
     ref={ref}
     className={cn(
-      "border-warning/50 bg-warning/5 text-warning [&>svg]:text-warning",
+      "border-warning/50 bg-warning/15 text-foreground [&>svg]:text-warning [&_h5]:text-warning",
       className
     )}
     {...props}
