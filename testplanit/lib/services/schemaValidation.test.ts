@@ -661,27 +661,16 @@ describe("Phase 2 feature flag short-circuit on entity @@deny update gate (live-
     expect(gateResult).toBeNull();
   });
 
-  it("feature flag OFF: schema @@deny short-circuits the conjunction (matches the flag-off contract)", async () => {
-    // The @@deny conjunction reads, in plain English, "deny when the future
-    // state requires review AND the project has reviewWorkflowEnabled = true
-    // AND there is no approved + unconsumed ReviewRequest". With the per-
-    // project flag off, the middle clause is false, the conjunction is
-    // false, and the rule must not fire — that's the contract an admin
-    // signs up for when they toggle review enforcement off for a project.
-    //
-    // Earlier ZenStack versions (2.22.2 era) had a known bug where the
-    // post-update relation-traversal `{ project: { reviewWorkflowEnabled:
-    // true } }` over-fired and denied the update even when the project
-    // flag was false — defense-in-depth, but technically incorrect, and
-    // un-opt-out-able by admins. The previous version of this test locked
-    // in that buggy behaviour with a comment that it should "surface
-    // visibly" on a future ZenStack upgrade that fixed the conjunction.
-    //
-    // The fix has landed. The assertion now codifies the correct
-    // behaviour: schema rule honors the conjunction; flag-off allows the
-    // update at the schema layer. The app-layer chokepoints
-    // (assertReviewGatePasses; previous test) remain the load-bearing
-    // enforcement when the flag is on.
+  it("feature flag OFF: enhanced schema-layer update passes through (matches the flag-off contract)", async () => {
+    // Review-gate enforcement lives entirely at the app layer. The schema
+    // has no @@deny rule for requiresReview transitions — that decision is
+    // documented on the RepositoryCases/Sessions/TestRuns models. With
+    // every chokepoint route consulting `assertReviewGatePasses` before
+    // the write, the enhanced client can be called directly here only as
+    // a "what does the schema see" probe. Per the flag-off contract the
+    // schema layer must let the transition through; the app preflight is
+    // the gate, and it short-circuits when the flag is off (covered by
+    // the sibling test above).
     await prisma.projects.update({
       where: { id: featureProjectId },
       data: { reviewWorkflowEnabled: false },
@@ -706,24 +695,39 @@ describe("Phase 2 feature flag short-circuit on entity @@deny update gate (live-
     expect(persisted?.stateId).toBe(gatedToStateId);
   });
 
-  it("feature flag ON (default): @@deny DOES block transition to a requiresReview state without an approved ReviewRequest", async () => {
-    // Restore the per-project flag.
+  it("feature flag ON (default): app-layer assertReviewGatePasses throws REVIEW_REQUIRED when no approved request exists", async () => {
+    // Schema-layer @@deny rules for review gating were removed (they
+    // couldn't read the AppConfig kill switch and over-fired when it was
+    // off). The single source of truth is now `assertReviewGatePasses`,
+    // wired into every write chokepoint (auto-API route, bulk-edit,
+    // submit-result, milestoneActions). This test pins that contract: with
+    // the flag on and no approved request, the helper throws a structured
+    // ReviewGateError that the chokepoints translate into a 403
+    // REVIEW_REQUIRED envelope.
     await prisma.projects.update({
       where: { id: featureProjectId },
       data: { reviewWorkflowEnabled: true },
     });
 
-    const enhanced = await getEnhancedDb(sessionFor(featureUserId));
+    const { assertReviewGatePasses } = await import("./reviewGate");
+    const { isReviewGateError } = await import("~/lib/utils/errors");
     const caseId = featureCaseIds[1];
 
-    await expect(
-      enhanced.repositoryCases.update({
-        where: { id: caseId },
-        data: { stateId: gatedToStateId },
-      })
-    ).rejects.toThrow();
+    let caught: unknown = null;
+    try {
+      await assertReviewGatePasses(prisma, "CASE", caseId, gatedToStateId);
+    } catch (err) {
+      caught = err;
+    }
+    expect(caught).not.toBeNull();
+    expect(isReviewGateError(caught)).toBe(true);
+    if (isReviewGateError(caught)) {
+      expect(caught.code).toBe("REVIEW_REQUIRED");
+    }
 
-    // Row untouched.
+    // Belt: row untouched at the DB layer — the schema layer wouldn't
+    // block, but no chokepoint ever called the enhanced update because the
+    // preflight threw first.
     const after = await prisma.repositoryCases.findUnique({
       where: { id: caseId },
       select: { stateId: true },
