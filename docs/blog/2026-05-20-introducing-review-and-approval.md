@@ -4,11 +4,11 @@ title: "Introducing Review & Approval: Sign-Off, Built Into the Workflow"
 description: "TestPlanIt v0.30.0 ships review & approval. Any workflow state — Active, Done, Approved — can require a designated reviewer's sign-off before a test case, run, or session can land there."
 authors: [bdermanouelian]
 tags: [release, announcement]
-image: /img/blog/review-approval-blog.jpg
+image: /img/screenshots/user-guide/review-approvals/reviewer-inbox.png
 ---
 
 <figure>
-  <img src="/img/blog/review-approval-blog.jpg" alt="A reviewer inbox showing three pending review requests with their requesters, target workflow states, and approve / request changes / reject buttons. A warning glyph appears next to the 'Active' state in a workflow dropdown to signal that transition is gated." />
+  <img src="/img/screenshots/user-guide/review-approvals/reviewer-inbox.png" alt="The reviewer inbox showing four pending review requests with their requesters, target workflow states, and approve / request changes / reject row actions." />
   <figcaption>The reviewer inbox surfaces pending approvals across every project a reviewer is assigned to — directly or via a role they hold.</figcaption>
 </figure>
 
