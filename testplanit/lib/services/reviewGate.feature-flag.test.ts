@@ -8,8 +8,9 @@ import { assertReviewGatePasses } from "./reviewGate";
  * Two short-circuits, evaluated in order at the top of the helper:
  *
  *   (1) System-level kill switch — the `review_feature_enabled` AppConfig row.
- *       When `value === false`, the helper returns `null` immediately. A
- *       missing row (default-on, matching the seed) is treated as enabled.
+ *       When `value !== true`, the helper returns `null` immediately. A
+ *       missing row is treated as DISABLED (default-off; admins opt in
+ *       via Admin → Workflows → System Feature card).
  *
  *   (2) Per-project opt-out — `project.reviewWorkflowEnabled === false`,
  *       resolved via a single entity-project lookup
@@ -44,8 +45,9 @@ function createMockTx(
     /** Approved+unconsumed ReviewRequests keyed by gate id. */
     approvalsByGateId?: Record<number, { id: string } | null>;
     /**
-     * System-level AppConfig row. Defaults to enabled. Pass `null` for
-     * "missing row" (also enabled), `{ value: false }` for kill switch.
+     * System-level AppConfig row. Defaults to enabled (`{ value: true }`).
+     * Pass `null` for "missing row" (DISABLED — default-off) or
+     * `{ value: false }` for the explicit kill switch.
      */
     appConfigResult?: { value: boolean } | null;
   } = {}
@@ -121,11 +123,11 @@ describe("assertReviewGatePasses — system kill switch (AppConfig)", () => {
     expect(tx.reviewRequest.findFirst).not.toHaveBeenCalled();
   });
 
-  it("treats a missing AppConfig row as enabled (proceeds past system guard)", async () => {
+  it("treats a missing AppConfig row as DISABLED (short-circuits with NO downstream DB calls)", async () => {
     const tx = createMockTx({
       appConfigResult: null,
       targetState: { order: 4 },
-      gatedStates: [],
+      gatedStates: [{ id: 40, order: 4 }],
     });
 
     const result = await assertReviewGatePasses(
@@ -136,7 +138,14 @@ describe("assertReviewGatePasses — system kill switch (AppConfig)", () => {
     );
 
     expect(result).toBeNull();
-    expect(tx.repositoryCases.findUnique).toHaveBeenCalledTimes(1);
+    // Default-off: short-circuit must be identical to the explicit
+    // `{ value: false }` case above — entity lookup and gate enumeration
+    // never fire.
+    expect(tx.appConfig.findUnique).toHaveBeenCalledTimes(1);
+    expect(tx.repositoryCases.findUnique).not.toHaveBeenCalled();
+    expect(tx.workflows.findUnique).not.toHaveBeenCalled();
+    expect(tx.workflows.findMany).not.toHaveBeenCalled();
+    expect(tx.reviewRequest.findFirst).not.toHaveBeenCalled();
   });
 
   it("treats value === true as enabled (proceeds past system guard)", async () => {

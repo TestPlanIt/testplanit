@@ -143,13 +143,16 @@ beforeAll(async () => {
   });
   adminUserId = admin.id;
 
-  // Project owned by the requester. Note: reviewWorkflowEnabled defaults to
-  // true (Plan 02-01 schema delta), so decideReviewRequest does NOT
-  // short-circuit on the feature flag here.
+  // Project owned by the requester. `reviewWorkflowEnabled` is set
+  // explicitly to true so decideReviewRequest does NOT short-circuit on
+  // the per-project feature flag. The schema default is false (opt-in
+  // posture) so the field must be set explicitly here for the gate-on
+  // tests to exercise the real path.
   const project = await prisma.projects.create({
     data: {
       name: `proj-${TEST_RUN_ID}`,
       createdBy: requester.id,
+      reviewWorkflowEnabled: true,
     },
   });
   projectId = project.id;

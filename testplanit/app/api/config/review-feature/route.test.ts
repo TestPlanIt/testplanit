@@ -10,10 +10,10 @@ import { GET } from "./route";
  * server-side and serves the resolved boolean to clients so the value
  * never ships in the client bundle.
  *
- * Default-on convention (matches assertReviewGatePasses):
- *   - row missing       → enabled (true)
- *   - value === false   → disabled (false)
- *   - anything else     → enabled (true)
+ * Default-off convention (matches assertReviewGatePasses):
+ *   - row missing       → disabled (false)
+ *   - value === true    → enabled (true)
+ *   - anything else     → disabled (false)
  */
 vi.mock("~/lib/prisma", () => ({
   prisma: {
@@ -32,14 +32,14 @@ describe("GET /api/config/review-feature", () => {
     findUnique.mockReset();
   });
 
-  it("returns { enabled: true } when the AppConfig row is missing", async () => {
+  it("returns { enabled: false } when the AppConfig row is missing (default-off, admin opts in)", async () => {
     findUnique.mockResolvedValue(null);
 
     const response = await GET();
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body).toEqual({ enabled: true });
+    expect(body).toEqual({ enabled: false });
     expect(findUnique).toHaveBeenCalledWith({
       where: { key: "review_feature_enabled" },
       select: { value: true },
@@ -66,12 +66,12 @@ describe("GET /api/config/review-feature", () => {
     expect(body).toEqual({ enabled: true });
   });
 
-  it("returns { enabled: true } for any non-false JSON value (forward-compat with future shapes)", async () => {
-    for (const value of [0, "false", { enabled: false }, []]) {
+  it("returns { enabled: false } for any value that isn't strictly true (default-off, forward-compat)", async () => {
+    for (const value of [0, 1, "true", "false", { enabled: true }, [true]]) {
       findUnique.mockResolvedValue({ value });
       const response = await GET();
       const body = await response.json();
-      expect(body).toEqual({ enabled: true });
+      expect(body).toEqual({ enabled: false });
     }
   });
 

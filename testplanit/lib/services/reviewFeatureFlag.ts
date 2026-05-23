@@ -3,11 +3,11 @@ import type { Prisma } from "@prisma/client";
 /**
  * AppConfig key that stores the system-level review-feature kill switch.
  *
- * Value semantics (deliberately mirrors the previous env-var convention):
- *   - row missing       → enabled (default-on; no-op for installations that
- *                         haven't seeded the row yet)
- *   - value === false   → disabled (the literal JSON boolean false)
- *   - anything else     → enabled
+ * Value semantics:
+ *   - row missing       → disabled (default-off; admin must opt in via
+ *                         Admin → Workflows → System Feature card)
+ *   - value === true    → enabled
+ *   - anything else     → disabled
  */
 export const REVIEW_FEATURE_FLAG_KEY = "review_feature_enabled";
 
@@ -26,12 +26,12 @@ export const REVIEW_FEATURE_FLAG_KEY = "review_feature_enabled";
  * transaction's snapshot isolation; non-transactional callers can pass
  * `prisma` directly.
  *
- * Default-on semantics: when the AppConfig row is absent (e.g. fresh install
- * before the seed has run) the feature is treated as enabled. This matches
- * the previous env-var convention where only the literal string `"false"`
- * disabled the feature. The same row missing on a configured install is
- * extremely unlikely — the seed creates it at install time — so the
- * default-on choice optimizes for the common case.
+ * Default-off semantics: when the AppConfig row is absent the feature is
+ * treated as disabled. Review & Approval gates every workflow transition
+ * into a gated state and that is a meaningful behavior change for every
+ * existing project — turning it on by default would surprise admins on
+ * upgrade. Admins opt in by flipping the system kill switch on, then per
+ * project via Project Settings → Advanced.
  */
 export async function isReviewFeatureSystemEnabled(
   tx: Pick<Prisma.TransactionClient, "appConfig">
@@ -40,6 +40,6 @@ export async function isReviewFeatureSystemEnabled(
     where: { key: REVIEW_FEATURE_FLAG_KEY },
     select: { value: true },
   });
-  if (!row) return true;
-  return row.value !== false;
+  if (!row) return false;
+  return row.value === true;
 }

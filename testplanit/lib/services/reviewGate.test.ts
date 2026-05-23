@@ -77,7 +77,9 @@ function createMockTx(opts: MockTxOptions) {
     appConfig: {
       findUnique: vi
         .fn()
-        .mockResolvedValue(systemFeatureEnabled ? null : { value: false }),
+        .mockResolvedValue(
+          systemFeatureEnabled ? { value: true } : { value: false }
+        ),
     },
   } as any;
 }

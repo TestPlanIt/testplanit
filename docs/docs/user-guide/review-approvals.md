@@ -39,21 +39,21 @@ Moving an entity **back** along the workflow order, or saving it without changin
 
 ### Step 1 — Turn on the system-level feature
 
-The Review & Approval feature has a system kill switch. By default it is **on**; switching it off disables every project, hides the request and reviewer UIs, and pauses any pending requests (they reappear when the feature is re-enabled).
+The Review & Approval feature has a system kill switch. By default it is **off** — gating workflow transitions is a meaningful behavior change, so admins explicitly opt in. Turning the switch on enables the feature globally; turning it off disables every project, hides the request and reviewer UIs, and pauses any pending requests (they reappear when the feature is re-enabled).
 
 1. Open **Administration → Workflows**.
 2. At the top of the page, find the **Review Workflow** card.
-3. Toggle the switch on or off.
+3. Toggle the switch on.
 
 Only system administrators can change this setting. Project administrators see the current state read-only.
 
-### Step 2 — Opt projects in or out
+### Step 2 — Opt projects in
 
-Each project carries its own `Review Workflow` toggle. By default new projects are opted in. Project administrators can opt out per project (for example, to give one team an unenforced sandbox while the rest of the org runs gated workflows).
+Each project carries its own `Review Workflow` toggle. By default new projects are **opted out**. Project administrators flip the toggle on per project — that way the org can roll the feature out gradually instead of every project enforcing gates the moment the system switch flips.
 
 1. Open the project.
 2. Navigate to **Settings → Advanced**.
-3. Toggle **Review Workflow** on or off.
+3. Toggle **Review Workflow** on.
 
 When the system-level kill switch is off, the per-project toggle has no effect. When it is on, only projects with their own toggle on actually enforce gates.
 

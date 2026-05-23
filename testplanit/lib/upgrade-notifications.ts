@@ -309,6 +309,14 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
       <p>See the <a href="https://docs.testplanit.com/docs/user-guide/projects/parameterized-test-cases/" target="_blank">documentation</a> to get started.</p>
     `,
   },
+  "0.30.0": {
+    title: "New Feature: Review & Approval",
+    message: `
+      <p>Gate workflow transitions behind reviewer sign-off. Mark any state as <strong>requires review</strong> and transitions into (or across) that state need an approved request from the assigned reviewer — a specific user or any holder of a chosen role — before they can land.</p>
+      <p><strong>Opt in to enable:</strong> turn on the system kill switch at <strong>Administration → Workflows</strong>, then flip <strong>Review Workflow</strong> on each project at <strong>Project Settings → Advanced</strong>. The feature is off by default on upgrade so nothing changes for your existing projects until you choose to enable it.</p>
+      <p>See the <a href="https://docs.testplanit.com/docs/user-guide/review-approvals" target="_blank">documentation</a> or the <a href="https://docs.testplanit.com/blog/introducing-review-and-approval" target="_blank">announcement post</a>.</p>
+    `,
+  },
 };
 
 /**

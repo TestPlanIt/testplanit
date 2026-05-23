@@ -1137,7 +1137,7 @@ const metadata: ModelMeta = {
                 }, reviewWorkflowEnabled: {
                     name: "reviewWorkflowEnabled",
                     type: "Boolean",
-                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": true }] }],
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
                 }, duplicateScanResults: {
                     name: "duplicateScanResults",
                     type: "DuplicateScanResult",

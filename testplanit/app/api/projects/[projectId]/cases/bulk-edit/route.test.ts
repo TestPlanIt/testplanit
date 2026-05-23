@@ -142,7 +142,7 @@ describe("Bulk Edit API Route", () => {
         },
         workflows: { findUnique: vi.fn().mockResolvedValue(null) },
         reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-        appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+        appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
       };
       return callback(tx);
     });
@@ -275,7 +275,7 @@ describe("Bulk Edit API Route", () => {
           },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-          appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         };
         return callback(tx);
       });
@@ -319,7 +319,7 @@ describe("Bulk Edit API Route", () => {
         },
         workflows: { findUnique: vi.fn().mockResolvedValue(null) },
         reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-        appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+        appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
       };
 
       await transactionCallback(mockTx);
@@ -365,7 +365,7 @@ describe("Bulk Edit API Route", () => {
           },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-          appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         };
         return callback(tx);
       });
@@ -405,7 +405,7 @@ describe("Bulk Edit API Route", () => {
         },
         workflows: { findUnique: vi.fn().mockResolvedValue(null) },
         reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-        appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+        appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
       };
 
       await transactionCallback(mockTx);
@@ -441,7 +441,7 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-          appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
 
@@ -483,7 +483,7 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-          appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
 
@@ -521,7 +521,7 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-          appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
 
@@ -559,7 +559,7 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-          appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
 
@@ -608,7 +608,7 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-          appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
 
@@ -652,7 +652,7 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-          appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
 
@@ -698,7 +698,7 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-          appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
 
@@ -744,7 +744,7 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-          appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
 
@@ -797,7 +797,7 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-          appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
 
@@ -847,7 +847,7 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-          appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
 
@@ -887,7 +887,7 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-          appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
 
@@ -923,7 +923,7 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-          appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
 
@@ -967,7 +967,7 @@ describe("Bulk Edit API Route", () => {
           },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-          appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
 
@@ -1033,7 +1033,7 @@ describe("Bulk Edit API Route", () => {
           },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-          appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
 
@@ -1078,7 +1078,7 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-          appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
 
@@ -1139,7 +1139,7 @@ describe("Bulk Edit API Route", () => {
             steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
             reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-            appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+            appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
           });
         }
       );
@@ -1183,7 +1183,7 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: vi.fn().mockResolvedValue(null) },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-          appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         });
       });
 
@@ -1234,7 +1234,7 @@ describe("Bulk Edit API Route", () => {
           reviewRequest: {
             findFirst: vi.fn().mockResolvedValue(null),
           },
-          appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         };
         return callback(tx);
       });
@@ -1283,7 +1283,7 @@ describe("Bulk Edit API Route", () => {
             // Consumption stamp fires after the case update succeeds.
             updateMany: txReviewRequestUpdateMany,
           },
-          appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         };
         return callback(tx);
       });
@@ -1341,7 +1341,7 @@ describe("Bulk Edit API Route", () => {
           steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
           workflows: { findUnique: findUniqueMock },
           reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-          appConfig: { findUnique: vi.fn().mockResolvedValue(null) },
+          appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
         };
         return callback(tx);
       });

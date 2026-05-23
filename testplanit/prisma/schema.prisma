@@ -622,7 +622,10 @@ model Projects {
   quickScriptEnabled          Boolean                               @default(false)
   /// Empty = default ['iteration']. Lookup is case-insensitive at read time.
   junitIterationPropertyNames String[]                              @default([])
-  reviewWorkflowEnabled       Boolean                               @default(true)
+  /// Per-project opt-in for Review & Approval. Defaults to false so the
+  /// feature stays dormant on upgrade — admins flip the system kill switch
+  /// AND each project's toggle explicitly. New projects start opted out.
+  reviewWorkflowEnabled       Boolean                               @default(false)
   duplicateScanResults        DuplicateScanResult[]
   stepSequenceMatches         StepSequenceMatch[]
   reviewRequests              ReviewRequest[]
