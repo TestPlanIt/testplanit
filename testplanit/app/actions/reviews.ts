@@ -3,6 +3,7 @@
 import type { JSONContent } from "@tiptap/core";
 import { revalidatePath } from "next/cache";
 
+import { withActionAuditContext } from "~/lib/auditContextWrappers";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { CommentService } from "~/lib/services/commentService";
 import { NotificationService } from "~/lib/services/notificationService";
@@ -78,281 +79,285 @@ export type RequestReviewResult = RequestReviewSuccess | RequestReviewFailure;
  * notification path can't address a role. Role-targeted notifications fan
  * out via the bespoke role-aware pathway Phase 3 will build.
  */
-export async function requestReview(
-  input: RequestReviewInput
-): Promise<RequestReviewResult> {
-  const session = await getServerAuthSession();
-  if (!session?.user?.id) {
-    return { success: false, error: "UNAUTHORIZED" };
-  }
-  const requestedByUserId = session.user.id;
+export const requestReview = withActionAuditContext(
+  async (input: RequestReviewInput): Promise<RequestReviewResult> => {
+    const session = await getServerAuthSession();
+    if (!session?.user?.id) {
+      return { success: false, error: "UNAUTHORIZED" };
+    }
+    const requestedByUserId = session.user.id;
 
-  // Defense-in-depth: the schema-layer @@deny rules no longer reference the
-  // project / system feature flags, so the app preflight is the only seam
-  // that short-circuits a request when the feature is off. Mirror the
-  // chokepoint helpers (`assertReviewGatePasses`, `decideReviewRequest`)
-  // by failing fast here with a typed FEATURE_DISABLED before we touch the
-  // database. Project flag is loaded via the same query so a single
-  // round-trip answers both checks.
-  const systemEnabled = await isReviewFeatureSystemEnabled(prisma);
-  if (!systemEnabled) {
-    return { success: false, error: "FEATURE_DISABLED" };
-  }
-  const project = await prisma.projects.findUnique({
-    where: { id: input.projectId },
-    select: { reviewWorkflowEnabled: true },
-  });
-  if (!project || project.reviewWorkflowEnabled !== true) {
-    return { success: false, error: "FEATURE_DISABLED" };
-  }
-
-  const trimmed = input.commentText.trim();
-
-  // Build the TipTap doc that will become the Comment.content. For direct
-  // user-assignees, prepend a mention node so the existing comment-mention
-  // notification fires for the assignee without extra wiring. Role assignees
-  // fall through with no mention node (see method docstring).
-  let assigneeMentionNode: JSONContent | null = null;
-  if (input.assigneeUserId !== null) {
-    const assigneeUser = await prisma.user.findUnique({
-      where: { id: input.assigneeUserId },
-      select: { id: true, name: true },
+    // Defense-in-depth: the schema-layer @@deny rules no longer reference the
+    // project / system feature flags, so the app preflight is the only seam
+    // that short-circuits a request when the feature is off. Mirror the
+    // chokepoint helpers (`assertReviewGatePasses`, `decideReviewRequest`)
+    // by failing fast here with a typed FEATURE_DISABLED before we touch the
+    // database. Project flag is loaded via the same query so a single
+    // round-trip answers both checks.
+    const systemEnabled = await isReviewFeatureSystemEnabled(prisma);
+    if (!systemEnabled) {
+      return { success: false, error: "FEATURE_DISABLED" };
+    }
+    const project = await prisma.projects.findUnique({
+      where: { id: input.projectId },
+      select: { reviewWorkflowEnabled: true },
     });
-    if (assigneeUser) {
-      assigneeMentionNode = {
-        type: "mention",
-        attrs: { id: assigneeUser.id, label: assigneeUser.name ?? "user" },
-      };
+    if (!project || project.reviewWorkflowEnabled !== true) {
+      return { success: false, error: "FEATURE_DISABLED" };
     }
-  }
 
-  const paragraphChildren: JSONContent[] = [];
-  if (assigneeMentionNode) {
-    paragraphChildren.push(assigneeMentionNode);
-    if (trimmed.length > 0) {
-      paragraphChildren.push({ type: "text", text: " " });
-    }
-  }
-  if (trimmed.length > 0) {
-    paragraphChildren.push({ type: "text", text: trimmed });
-  }
+    const trimmed = input.commentText.trim();
 
-  const commentContent: JSONContent = {
-    type: "doc",
-    content: [{ type: "paragraph", content: paragraphChildren }],
-  };
-
-  const entityFkField: "repositoryCaseId" | "testRunId" | "sessionId" =
-    input.entityType === "CASE"
-      ? "repositoryCaseId"
-      : input.entityType === "RUN"
-        ? "testRunId"
-        : "sessionId";
-
-  try {
-    const { reviewRequestId, commentId } = await prisma.$transaction(
-      async (tx) => {
-        const reviewRequest = await tx.reviewRequest.create({
-          data: {
-            projectId: input.projectId,
-            entityType: input.entityType,
-            entityId: input.entityId,
-            fromStateId: input.fromStateId,
-            toStateId: input.toStateId,
-            requestedByUserId,
-            assigneeUserId: input.assigneeUserId,
-            assigneeRoleId: input.assigneeRoleId,
-            status: "PENDING",
-          },
-          select: { id: true },
-        });
-
-        const comment = await tx.comment.create({
-          data: {
-            projectId: input.projectId,
-            type: "REVIEW_REQUEST",
-            reviewRequestId: reviewRequest.id,
-            content: commentContent as any,
-            creatorId: requestedByUserId,
-            [entityFkField]: input.entityId,
-          },
-          select: { id: true },
-        });
-
-        return {
-          reviewRequestId: reviewRequest.id,
-          commentId: comment.id,
+    // Build the TipTap doc that will become the Comment.content. For direct
+    // user-assignees, prepend a mention node so the existing comment-mention
+    // notification fires for the assignee without extra wiring. Role assignees
+    // fall through with no mention node (see method docstring).
+    let assigneeMentionNode: JSONContent | null = null;
+    if (input.assigneeUserId !== null) {
+      const assigneeUser = await prisma.user.findUnique({
+        where: { id: input.assigneeUserId },
+        select: { id: true, name: true },
+      });
+      if (assigneeUser) {
+        assigneeMentionNode = {
+          type: "mention",
+          attrs: { id: assigneeUser.id, label: assigneeUser.name ?? "user" },
         };
       }
-    );
-
-    // Persist mention rows (used by the comment renderer to highlight @mentions
-    // in-thread) and dispatch the dedicated REVIEW_REQUESTED notification(s) to
-    // every reviewer the request targets — direct user assignee OR the full
-    // set of role holders on the project. Runs outside the tx because
-    // notification creation depends on the committed Comment.id and queries
-    // role membership. Failures here do NOT roll back the review request —
-    // we'd rather have an unannounced review than a lost one.
-    try {
-      const mentionedUserIds = extractMentionedUserIds(commentContent);
-      if (mentionedUserIds.length > 0) {
-        await CommentService.createCommentMentions(commentId, mentionedUserIds);
-      }
-
-      const targetUserIds: string[] =
-        input.assigneeUserId !== null
-          ? [input.assigneeUserId]
-          : input.assigneeRoleId !== null
-            ? await NotificationService.resolveRoleHolderUserIds(
-                input.projectId,
-                input.assigneeRoleId,
-                requestedByUserId
-              )
-            : [];
-
-      const context = await loadReviewContext(
-        input.projectId,
-        input.entityType,
-        input.entityId,
-        input.fromStateId,
-        input.toStateId
-      );
-
-      if (targetUserIds.length > 0 && context) {
-        await NotificationService.createReviewRequestNotification({
-          targetUserIds,
-          requesterUserId: requestedByUserId,
-          requesterName: session.user.name ?? "Unknown User",
-          projectId: context.projectId,
-          projectName: context.projectName,
-          entityType: input.entityType,
-          entityId: input.entityId,
-          entityName: context.entityName,
-          fromStateName: context.fromStateName,
-          toStateName: context.toStateName,
-          reviewRequestId,
-          commentText: trimmed,
-        });
-      }
-
-      if (mentionedUserIds.length > 0 && context) {
-        const commentEntityType: "RepositoryCase" | "TestRun" | "Session" =
-          input.entityType === "CASE"
-            ? "RepositoryCase"
-            : input.entityType === "RUN"
-              ? "TestRun"
-              : "Session";
-        await CommentService.processMentions(
-          commentId,
-          commentContent,
-          requestedByUserId,
-          session.user.name ?? "Unknown User",
-          context.projectId,
-          context.projectName,
-          commentEntityType,
-          context.entityName,
-          String(input.entityId)
-        );
-      }
-    } catch (notifyErr) {
-      console.error(
-        "requestReview: review-request notification dispatch failed",
-        notifyErr
-      );
     }
 
+    const paragraphChildren: JSONContent[] = [];
+    if (assigneeMentionNode) {
+      paragraphChildren.push(assigneeMentionNode);
+      if (trimmed.length > 0) {
+        paragraphChildren.push({ type: "text", text: " " });
+      }
+    }
+    if (trimmed.length > 0) {
+      paragraphChildren.push({ type: "text", text: trimmed });
+    }
+
+    const commentContent: JSONContent = {
+      type: "doc",
+      content: [{ type: "paragraph", content: paragraphChildren }],
+    };
+
+    const entityFkField: "repositoryCaseId" | "testRunId" | "sessionId" =
+      input.entityType === "CASE"
+        ? "repositoryCaseId"
+        : input.entityType === "RUN"
+          ? "testRunId"
+          : "sessionId";
+
     try {
-      const context = await loadReviewContext(
-        input.projectId,
-        input.entityType,
-        input.entityId,
-        input.fromStateId,
-        input.toStateId
+      const { reviewRequestId, commentId } = await prisma.$transaction(
+        async (tx) => {
+          const reviewRequest = await tx.reviewRequest.create({
+            data: {
+              projectId: input.projectId,
+              entityType: input.entityType,
+              entityId: input.entityId,
+              fromStateId: input.fromStateId,
+              toStateId: input.toStateId,
+              requestedByUserId,
+              assigneeUserId: input.assigneeUserId,
+              assigneeRoleId: input.assigneeRoleId,
+              status: "PENDING",
+            },
+            select: { id: true },
+          });
+
+          const comment = await tx.comment.create({
+            data: {
+              projectId: input.projectId,
+              type: "REVIEW_REQUEST",
+              reviewRequestId: reviewRequest.id,
+              content: commentContent as any,
+              creatorId: requestedByUserId,
+              [entityFkField]: input.entityId,
+            },
+            select: { id: true },
+          });
+
+          return {
+            reviewRequestId: reviewRequest.id,
+            commentId: comment.id,
+          };
+        }
       );
-      if (context) {
-        const [assigneeUser, assigneeRole] = await Promise.all([
+
+      // Persist mention rows (used by the comment renderer to highlight @mentions
+      // in-thread) and dispatch the dedicated REVIEW_REQUESTED notification(s) to
+      // every reviewer the request targets — direct user assignee OR the full
+      // set of role holders on the project. Runs outside the tx because
+      // notification creation depends on the committed Comment.id and queries
+      // role membership. Failures here do NOT roll back the review request —
+      // we'd rather have an unannounced review than a lost one.
+      try {
+        const mentionedUserIds = extractMentionedUserIds(commentContent);
+        if (mentionedUserIds.length > 0) {
+          await CommentService.createCommentMentions(
+            commentId,
+            mentionedUserIds
+          );
+        }
+
+        const targetUserIds: string[] =
           input.assigneeUserId !== null
-            ? prisma.user.findUnique({
-                where: { id: input.assigneeUserId },
-                select: { name: true },
-              })
-            : Promise.resolve(null),
-          input.assigneeRoleId !== null
-            ? prisma.roles.findUnique({
-                where: { id: input.assigneeRoleId },
-                select: { name: true },
-              })
-            : Promise.resolve(null),
-        ]);
-        await emitReviewRequestedEvent(
-          {
-            reviewRequestId,
-            projectId: input.projectId,
+            ? [input.assigneeUserId]
+            : input.assigneeRoleId !== null
+              ? await NotificationService.resolveRoleHolderUserIds(
+                  input.projectId,
+                  input.assigneeRoleId,
+                  requestedByUserId
+                )
+              : [];
+
+        const context = await loadReviewContext(
+          input.projectId,
+          input.entityType,
+          input.entityId,
+          input.fromStateId,
+          input.toStateId
+        );
+
+        if (targetUserIds.length > 0 && context) {
+          await NotificationService.createReviewRequestNotification({
+            targetUserIds,
+            requesterUserId: requestedByUserId,
+            requesterName: session.user.name ?? "Unknown User",
+            projectId: context.projectId,
+            projectName: context.projectName,
             entityType: input.entityType,
             entityId: input.entityId,
             entityName: context.entityName,
-            fromStateId: input.fromStateId,
             fromStateName: context.fromStateName,
-            toStateId: input.toStateId,
             toStateName: context.toStateName,
-            toStateColor: context.toStateColor,
+            reviewRequestId,
+            commentText: trimmed,
+          });
+        }
+
+        if (mentionedUserIds.length > 0 && context) {
+          const commentEntityType: "RepositoryCase" | "TestRun" | "Session" =
+            input.entityType === "CASE"
+              ? "RepositoryCase"
+              : input.entityType === "RUN"
+                ? "TestRun"
+                : "Session";
+          await CommentService.processMentions(
+            commentId,
+            commentContent,
             requestedByUserId,
-            requesterName: session.user.name ?? "Unknown User",
-            assigneeUserId: input.assigneeUserId,
-            assigneeUserName: assigneeUser?.name ?? null,
-            assigneeRoleId: input.assigneeRoleId,
-            assigneeRoleName: assigneeRole?.name ?? null,
-            commentText: trimmed.length > 0 ? trimmed : null,
-          },
-          { actorUserId: requestedByUserId }
+            session.user.name ?? "Unknown User",
+            context.projectId,
+            context.projectName,
+            commentEntityType,
+            context.entityName,
+            String(input.entityId)
+          );
+        }
+      } catch (notifyErr) {
+        console.error(
+          "requestReview: review-request notification dispatch failed",
+          notifyErr
         );
       }
-    } catch (webhookErr) {
-      console.error(
-        "requestReview: review-request webhook emit failed",
-        webhookErr
-      );
-    }
 
-    try {
-      await captureAuditEvent({
-        action: "REVIEW_REQUESTED",
-        entityType: "ReviewRequest",
-        entityId: reviewRequestId,
-        projectId: input.projectId,
-        metadata: {
-          fromStateId: input.fromStateId,
-          toStateId: input.toStateId,
-          assigneeUserId: input.assigneeUserId,
-          assigneeRoleId: input.assigneeRoleId,
-          requestedByUserId,
-          entityType: input.entityType,
-          entityId: input.entityId,
-          commentText: trimmed.slice(0, 4096),
-        },
-      });
-    } catch (auditErr) {
-      console.error("requestReview: audit emission failed", auditErr);
-    }
+      try {
+        const context = await loadReviewContext(
+          input.projectId,
+          input.entityType,
+          input.entityId,
+          input.fromStateId,
+          input.toStateId
+        );
+        if (context) {
+          const [assigneeUser, assigneeRole] = await Promise.all([
+            input.assigneeUserId !== null
+              ? prisma.user.findUnique({
+                  where: { id: input.assigneeUserId },
+                  select: { name: true },
+                })
+              : Promise.resolve(null),
+            input.assigneeRoleId !== null
+              ? prisma.roles.findUnique({
+                  where: { id: input.assigneeRoleId },
+                  select: { name: true },
+                })
+              : Promise.resolve(null),
+          ]);
+          await emitReviewRequestedEvent(
+            {
+              reviewRequestId,
+              projectId: input.projectId,
+              entityType: input.entityType,
+              entityId: input.entityId,
+              entityName: context.entityName,
+              fromStateId: input.fromStateId,
+              fromStateName: context.fromStateName,
+              toStateId: input.toStateId,
+              toStateName: context.toStateName,
+              toStateColor: context.toStateColor,
+              requestedByUserId,
+              requesterName: session.user.name ?? "Unknown User",
+              assigneeUserId: input.assigneeUserId,
+              assigneeUserName: assigneeUser?.name ?? null,
+              assigneeRoleId: input.assigneeRoleId,
+              assigneeRoleName: assigneeRole?.name ?? null,
+              commentText: trimmed.length > 0 ? trimmed : null,
+            },
+            { actorUserId: requestedByUserId }
+          );
+        }
+      } catch (webhookErr) {
+        console.error(
+          "requestReview: review-request webhook emit failed",
+          webhookErr
+        );
+      }
 
-    revalidatePath("/");
-    return { success: true, reviewRequestId, commentId };
-  } catch (err) {
-    if (err instanceof AlreadyPendingError) {
-      return { success: false, error: "ALREADY_PENDING" };
+      try {
+        await captureAuditEvent({
+          action: "REVIEW_REQUESTED",
+          entityType: "ReviewRequest",
+          entityId: reviewRequestId,
+          projectId: input.projectId,
+          userId: requestedByUserId,
+          metadata: {
+            fromStateId: input.fromStateId,
+            toStateId: input.toStateId,
+            assigneeUserId: input.assigneeUserId,
+            assigneeRoleId: input.assigneeRoleId,
+            requestedByUserId,
+            entityType: input.entityType,
+            entityId: input.entityId,
+            commentText: trimmed.slice(0, 4096),
+          },
+        });
+      } catch (auditErr) {
+        console.error("requestReview: audit emission failed", auditErr);
+      }
+
+      revalidatePath("/");
+      return { success: true, reviewRequestId, commentId };
+    } catch (err) {
+      if (err instanceof AlreadyPendingError) {
+        return { success: false, error: "ALREADY_PENDING" };
+      }
+      if (
+        err instanceof Error &&
+        err.message
+          .toLowerCase()
+          .includes("a pending review request already exists")
+      ) {
+        return { success: false, error: "ALREADY_PENDING" };
+      }
+      console.error("requestReview failed", err);
+      return { success: false, error: "INTERNAL_ERROR" };
     }
-    if (
-      err instanceof Error &&
-      err.message
-        .toLowerCase()
-        .includes("a pending review request already exists")
-    ) {
-      return { success: false, error: "ALREADY_PENDING" };
-    }
-    console.error("requestReview failed", err);
-    return { success: false, error: "INTERNAL_ERROR" };
   }
-}
+);
 
 async function loadReviewContext(
   projectId: number,
@@ -447,165 +452,166 @@ export type CancelReviewResult = CancelReviewSuccess | CancelReviewFailure;
  *
  * Soft-delete invariant: this is a STATUS flip, not a row deletion.
  */
-export async function cancelReviewRequest(
-  reviewRequestId: string
-): Promise<CancelReviewResult> {
-  const session = await getServerAuthSession();
-  if (!session?.user?.id) {
-    return { success: false, error: "UNAUTHORIZED" };
-  }
-  const userId = session.user.id;
+export const cancelReviewRequest = withActionAuditContext(
+  async (reviewRequestId: string): Promise<CancelReviewResult> => {
+    const session = await getServerAuthSession();
+    if (!session?.user?.id) {
+      return { success: false, error: "UNAUTHORIZED" };
+    }
+    const userId = session.user.id;
 
-  const systemEnabled = await isReviewFeatureSystemEnabled(prisma);
-  if (!systemEnabled) {
-    return { success: false, error: "FEATURE_DISABLED" };
-  }
+    const systemEnabled = await isReviewFeatureSystemEnabled(prisma);
+    if (!systemEnabled) {
+      return { success: false, error: "FEATURE_DISABLED" };
+    }
 
-  const req = await prisma.reviewRequest.findUnique({
-    where: { id: reviewRequestId },
-    include: {
-      project: {
-        select: { id: true, name: true, reviewWorkflowEnabled: true },
-      },
-      fromState: { select: { id: true, name: true } },
-      toState: {
-        select: {
-          id: true,
-          name: true,
-          color: { select: { value: true } },
+    const req = await prisma.reviewRequest.findUnique({
+      where: { id: reviewRequestId },
+      include: {
+        project: {
+          select: { id: true, name: true, reviewWorkflowEnabled: true },
+        },
+        fromState: { select: { id: true, name: true } },
+        toState: {
+          select: {
+            id: true,
+            name: true,
+            color: { select: { value: true } },
+          },
         },
       },
-    },
-  });
-  if (!req) {
-    return { success: false, error: "NOT_FOUND" };
-  }
-  if (req.project.reviewWorkflowEnabled !== true) {
-    return { success: false, error: "FEATURE_DISABLED" };
-  }
-  if (req.status !== "PENDING") {
-    return { success: false, error: "ALREADY_DECIDED" };
-  }
-
-  const isAdmin = session.user.access === "ADMIN";
-  const isRequester = req.requestedByUserId === userId;
-  if (!isAdmin && !isRequester) {
-    return { success: false, error: "FORBIDDEN" };
-  }
-
-  try {
-    // Atomic flip — `updateMany` scoped to status=PENDING so a concurrent
-    // decide on the same row can't co-commit. Loser sees count === 0 and
-    // surfaces as ALREADY_DECIDED.
-    const result = await prisma.reviewRequest.updateMany({
-      where: { id: reviewRequestId, status: "PENDING" },
-      data: { status: "CANCELLED" },
     });
-    if (result.count === 0) {
+    if (!req) {
+      return { success: false, error: "NOT_FOUND" };
+    }
+    if (req.project.reviewWorkflowEnabled !== true) {
+      return { success: false, error: "FEATURE_DISABLED" };
+    }
+    if (req.status !== "PENDING") {
       return { success: false, error: "ALREADY_DECIDED" };
     }
-  } catch (err) {
-    console.error("cancelReviewRequest: status flip failed", err);
-    return { success: false, error: "INTERNAL_ERROR" };
-  }
 
-  // Resolve recipients: direct user-assignee or every role holder, minus
-  // the canceler themselves.
-  let targetUserIds: string[] = [];
-  try {
-    if (req.assigneeUserId !== null && req.assigneeUserId !== userId) {
-      targetUserIds = [req.assigneeUserId];
-    } else if (req.assigneeRoleId !== null) {
-      targetUserIds = await NotificationService.resolveRoleHolderUserIds(
-        req.project.id,
-        req.assigneeRoleId,
-        userId
+    const isAdmin = session.user.access === "ADMIN";
+    const isRequester = req.requestedByUserId === userId;
+    if (!isAdmin && !isRequester) {
+      return { success: false, error: "FORBIDDEN" };
+    }
+
+    try {
+      // Atomic flip — `updateMany` scoped to status=PENDING so a concurrent
+      // decide on the same row can't co-commit. Loser sees count === 0 and
+      // surfaces as ALREADY_DECIDED.
+      const result = await prisma.reviewRequest.updateMany({
+        where: { id: reviewRequestId, status: "PENDING" },
+        data: { status: "CANCELLED" },
+      });
+      if (result.count === 0) {
+        return { success: false, error: "ALREADY_DECIDED" };
+      }
+    } catch (err) {
+      console.error("cancelReviewRequest: status flip failed", err);
+      return { success: false, error: "INTERNAL_ERROR" };
+    }
+
+    // Resolve recipients: direct user-assignee or every role holder, minus
+    // the canceler themselves.
+    let targetUserIds: string[] = [];
+    try {
+      if (req.assigneeUserId !== null && req.assigneeUserId !== userId) {
+        targetUserIds = [req.assigneeUserId];
+      } else if (req.assigneeRoleId !== null) {
+        targetUserIds = await NotificationService.resolveRoleHolderUserIds(
+          req.project.id,
+          req.assigneeRoleId,
+          userId
+        );
+      }
+    } catch (resolveErr) {
+      console.error(
+        "cancelReviewRequest: role-holder resolution failed",
+        resolveErr
       );
     }
-  } catch (resolveErr) {
-    console.error(
-      "cancelReviewRequest: role-holder resolution failed",
-      resolveErr
-    );
-  }
 
-  try {
-    const entityName = await loadEntityName(req.entityType, req.entityId);
-    if (entityName !== null && targetUserIds.length > 0) {
-      await NotificationService.createReviewCancelledNotification({
-        targetUserIds,
-        cancelerUserId: userId,
-        cancelerName: session.user.name ?? "Unknown User",
-        projectId: req.project.id,
-        projectName: req.project.name,
-        entityType: req.entityType,
-        entityId: req.entityId,
-        entityName,
-        fromStateName: req.fromState.name,
-        toStateName: req.toState.name,
-        reviewRequestId,
-      });
-    }
-  } catch (notifyErr) {
-    console.error(
-      "cancelReviewRequest: cancel-notification dispatch failed",
-      notifyErr
-    );
-  }
-
-  try {
-    const entityName = await loadEntityName(req.entityType, req.entityId);
-    if (entityName !== null) {
-      await emitReviewCompletedEvent(
-        {
-          reviewRequestId,
+    try {
+      const entityName = await loadEntityName(req.entityType, req.entityId);
+      if (entityName !== null && targetUserIds.length > 0) {
+        await NotificationService.createReviewCancelledNotification({
+          targetUserIds,
+          cancelerUserId: userId,
+          cancelerName: session.user.name ?? "Unknown User",
           projectId: req.project.id,
+          projectName: req.project.name,
           entityType: req.entityType,
           entityId: req.entityId,
           entityName,
-          fromStateId: req.fromStateId,
-          toStateId: req.toStateId,
+          fromStateName: req.fromState.name,
           toStateName: req.toState.name,
-          toStateColor: req.toState.color?.value ?? null,
-          decision: "CANCELLED",
-          decidedByUserId: userId,
-          deciderName: session.user.name ?? "Unknown User",
-          decisionComment: null,
-          requestedByUserId: req.requestedByUserId,
-          requesterName: session.user.name ?? "Unknown User",
-        },
-        { actorUserId: userId }
+          reviewRequestId,
+        });
+      }
+    } catch (notifyErr) {
+      console.error(
+        "cancelReviewRequest: cancel-notification dispatch failed",
+        notifyErr
       );
     }
-  } catch (webhookErr) {
-    console.error(
-      "cancelReviewRequest: review-cancelled webhook emit failed",
-      webhookErr
-    );
-  }
 
-  try {
-    await captureAuditEvent({
-      action: "REVIEW_CANCELLED",
-      entityType: "ReviewRequest",
-      entityId: reviewRequestId,
-      projectId: req.project.id,
-      metadata: {
-        fromStateId: req.fromStateId,
-        toStateId: req.toStateId,
-        cancelerUserId: userId,
-        requestedByUserId: req.requestedByUserId,
-        entityType: req.entityType,
-        entityId: req.entityId,
-      },
-    });
-  } catch (auditErr) {
-    console.error("cancelReviewRequest: audit emission failed", auditErr);
-  }
+    try {
+      const entityName = await loadEntityName(req.entityType, req.entityId);
+      if (entityName !== null) {
+        await emitReviewCompletedEvent(
+          {
+            reviewRequestId,
+            projectId: req.project.id,
+            entityType: req.entityType,
+            entityId: req.entityId,
+            entityName,
+            fromStateId: req.fromStateId,
+            toStateId: req.toStateId,
+            toStateName: req.toState.name,
+            toStateColor: req.toState.color?.value ?? null,
+            decision: "CANCELLED",
+            decidedByUserId: userId,
+            deciderName: session.user.name ?? "Unknown User",
+            decisionComment: null,
+            requestedByUserId: req.requestedByUserId,
+            requesterName: session.user.name ?? "Unknown User",
+          },
+          { actorUserId: userId }
+        );
+      }
+    } catch (webhookErr) {
+      console.error(
+        "cancelReviewRequest: review-cancelled webhook emit failed",
+        webhookErr
+      );
+    }
 
-  revalidatePath("/");
-  return { success: true, reviewRequestId };
-}
+    try {
+      await captureAuditEvent({
+        action: "REVIEW_CANCELLED",
+        entityType: "ReviewRequest",
+        entityId: reviewRequestId,
+        projectId: req.project.id,
+        userId,
+        metadata: {
+          fromStateId: req.fromStateId,
+          toStateId: req.toStateId,
+          cancelerUserId: userId,
+          requestedByUserId: req.requestedByUserId,
+          entityType: req.entityType,
+          entityId: req.entityId,
+        },
+      });
+    } catch (auditErr) {
+      console.error("cancelReviewRequest: audit emission failed", auditErr);
+    }
+
+    revalidatePath("/");
+    return { success: true, reviewRequestId };
+  }
+);
 
 async function loadEntityName(
   entityType: ReviewableEntityType,
