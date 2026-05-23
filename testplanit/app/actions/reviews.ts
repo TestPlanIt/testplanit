@@ -2,6 +2,7 @@
 
 import type { JSONContent } from "@tiptap/core";
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 
 import { withActionAuditContext } from "~/lib/auditContextWrappers";
 import { captureAuditEvent } from "~/lib/services/auditLog";
@@ -126,15 +127,61 @@ export const requestReview = withActionAuditContext(
       }
     }
 
+    // Default-text fallback: when the requester leaves the comment blank we
+    // still want a useful body on the persisted Comment row — both for the
+    // assignee's context and for the comment thread to show something other
+    // than an empty bubble. Build a "Please review the transition from
+    // {from} → {to}" string with the role name appended when role-assigned.
+    // Skip the round-trip when the requester actually typed something.
+    //
+    // The text is localized to the requester's session locale via
+    // `getTranslations()` — the locale comes from the same next-intl
+    // request scope the layout uses. The persisted Comment.content carries
+    // whichever language the requester saw at submit time; the comment
+    // thread renders it verbatim so a French reviewer reading an English
+    // requester's default comment sees the English version (consistent
+    // with how user-typed comments work).
+    let defaultCommentText: string | null = null;
+    if (trimmed.length === 0) {
+      const [fromState, toState, assigneeRole, t] = await Promise.all([
+        prisma.workflows.findUnique({
+          where: { id: input.fromStateId },
+          select: { name: true },
+        }),
+        prisma.workflows.findUnique({
+          where: { id: input.toStateId },
+          select: { name: true },
+        }),
+        input.assigneeRoleId !== null
+          ? prisma.roles.findUnique({
+              where: { id: input.assigneeRoleId },
+              select: { name: true },
+            })
+          : Promise.resolve(null),
+        getTranslations("reviews.requester"),
+      ]);
+      const fromName = fromState?.name ?? "";
+      const toName = toState?.name ?? "";
+      defaultCommentText = assigneeRole
+        ? t("defaultCommentRole", {
+            fromState: fromName,
+            toState: toName,
+            roleName: assigneeRole.name,
+          })
+        : t("defaultComment", { fromState: fromName, toState: toName });
+    }
+
+    const bodyText = trimmed.length > 0 ? trimmed : (defaultCommentText ?? "");
+
     const paragraphChildren: JSONContent[] = [];
     if (assigneeMentionNode) {
       paragraphChildren.push(assigneeMentionNode);
-      if (trimmed.length > 0) {
+      if (bodyText.length > 0) {
         paragraphChildren.push({ type: "text", text: " " });
       }
     }
-    if (trimmed.length > 0) {
-      paragraphChildren.push({ type: "text", text: trimmed });
+    if (bodyText.length > 0) {
+      paragraphChildren.push({ type: "text", text: bodyText });
     }
 
     const commentContent: JSONContent = {
