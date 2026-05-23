@@ -11,11 +11,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { useUpdateReviewRequest } from "~/lib/hooks";
+import { cancelReviewRequest } from "~/app/actions/reviews";
 
 export interface CancelRequestButtonProps {
   /** ID of the PENDING ReviewRequest to cancel. */
@@ -34,31 +35,38 @@ export interface CancelRequestButtonProps {
  *
  * Confirmation flows through a shadcn `AlertDialog` per
  * [[feedback_no_native_dialogs]] — NEVER `window.confirm`. Confirm action
- * calls `useUpdateReviewRequest` with `{ status: 'CANCELLED' }` — a status
- * mutation, not a row deletion (soft-delete-only invariant per
- * [[feedback_soft_delete]]).
+ * calls the `cancelReviewRequest` server action which mirrors the decide
+ * path (status flip + notification + webhook + audit). Soft-delete invariant
+ * is preserved — this is a STATUS flip, not a row deletion.
  */
 export function CancelRequestButton({
   reviewRequestId,
   canCancel,
 }: CancelRequestButtonProps) {
   const t = useTranslations();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const { mutateAsync: updateReviewRequest } = useUpdateReviewRequest();
+  const [isPending, startTransition] = useTransition();
 
   if (!canCancel) return null;
 
-  const handleConfirm = async () => {
-    try {
-      await updateReviewRequest({
-        where: { id: reviewRequestId },
-        data: { status: "CANCELLED" },
-      } as any);
-      toast.success(t("reviews.cancel.success"));
-      setOpen(false);
-    } catch {
-      toast.error(t("reviews.cancel.error"));
-    }
+  const handleConfirm = () => {
+    startTransition(async () => {
+      try {
+        const result = await cancelReviewRequest(reviewRequestId);
+        if (!result.success) {
+          toast.error(t("reviews.cancel.error"));
+          return;
+        }
+        void queryClient.invalidateQueries({
+          queryKey: ["zenstack", "ReviewRequest"],
+        });
+        toast.success(t("reviews.cancel.success"));
+        setOpen(false);
+      } catch {
+        toast.error(t("reviews.cancel.error"));
+      }
+    });
   };
 
   return (
@@ -84,6 +92,7 @@ export function CancelRequestButton({
             <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirm}
+              disabled={isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               data-testid="cancel-request-confirm"
             >

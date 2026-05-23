@@ -117,7 +117,8 @@ const processor = async (job: Job) => {
           notification.type === "REVIEW_REQUESTED" ||
           notification.type === "REVIEW_APPROVED" ||
           notification.type === "REVIEW_CHANGES_REQUESTED" ||
-          notification.type === "REVIEW_REJECTED"
+          notification.type === "REVIEW_REJECTED" ||
+          notification.type === "REVIEW_CANCELLED"
         ) {
           if (data.projectId && data.entityType && data.entityId) {
             const entityPath =
@@ -321,19 +322,22 @@ const processor = async (job: Job) => {
           notification.type === "REVIEW_REQUESTED" ||
           notification.type === "REVIEW_APPROVED" ||
           notification.type === "REVIEW_CHANGES_REQUESTED" ||
-          notification.type === "REVIEW_REJECTED"
+          notification.type === "REVIEW_REJECTED" ||
+          notification.type === "REVIEW_CANCELLED"
         ) {
           const titleKeyByType = {
             REVIEW_REQUESTED: "reviewRequestedTitle",
             REVIEW_APPROVED: "reviewApprovedTitle",
             REVIEW_CHANGES_REQUESTED: "reviewChangesRequestedTitle",
             REVIEW_REJECTED: "reviewRejectedTitle",
+            REVIEW_CANCELLED: "reviewCancelledTitle",
           } as const;
           const emailMessageKeyByType = {
             REVIEW_REQUESTED: "reviewRequestedEmailMessage",
             REVIEW_APPROVED: "reviewApprovedEmailMessage",
             REVIEW_CHANGES_REQUESTED: "reviewChangesRequestedEmailMessage",
             REVIEW_REJECTED: "reviewRejectedEmailMessage",
+            REVIEW_CANCELLED: "reviewCancelledEmailMessage",
           } as const;
           const entityLabelKey =
             data.entityType === "CASE"
@@ -356,7 +360,9 @@ const processor = async (job: Job) => {
               actorName:
                 (notification.type === "REVIEW_REQUESTED"
                   ? data.requesterName
-                  : data.deciderName) ?? "",
+                  : notification.type === "REVIEW_CANCELLED"
+                    ? data.cancelerName
+                    : data.deciderName) ?? "",
               entityLabel,
               entityName: data.entityName ?? "",
               projectName: data.projectName ?? "",
@@ -373,7 +379,9 @@ const processor = async (job: Job) => {
           const reviewCommentText =
             notification.type === "REVIEW_REQUESTED"
               ? data.commentText
-              : data.decisionComment;
+              : notification.type === "REVIEW_CANCELLED"
+                ? undefined
+                : data.decisionComment;
           if (
             typeof reviewCommentText === "string" &&
             reviewCommentText.length > 0
@@ -519,7 +527,8 @@ const processor = async (job: Job) => {
               notification.type === "REVIEW_REQUESTED" ||
               notification.type === "REVIEW_APPROVED" ||
               notification.type === "REVIEW_CHANGES_REQUESTED" ||
-              notification.type === "REVIEW_REJECTED"
+              notification.type === "REVIEW_REJECTED" ||
+              notification.type === "REVIEW_CANCELLED"
             ) {
               if (data.projectId && data.entityType && data.entityId) {
                 const entityPath =
@@ -615,19 +624,22 @@ const processor = async (job: Job) => {
               notification.type === "REVIEW_REQUESTED" ||
               notification.type === "REVIEW_APPROVED" ||
               notification.type === "REVIEW_CHANGES_REQUESTED" ||
-              notification.type === "REVIEW_REJECTED"
+              notification.type === "REVIEW_REJECTED" ||
+              notification.type === "REVIEW_CANCELLED"
             ) {
               const titleKeyByType = {
                 REVIEW_REQUESTED: "reviewRequestedTitle",
                 REVIEW_APPROVED: "reviewApprovedTitle",
                 REVIEW_CHANGES_REQUESTED: "reviewChangesRequestedTitle",
                 REVIEW_REJECTED: "reviewRejectedTitle",
+                REVIEW_CANCELLED: "reviewCancelledTitle",
               } as const;
               const emailMessageKeyByType = {
                 REVIEW_REQUESTED: "reviewRequestedEmailMessage",
                 REVIEW_APPROVED: "reviewApprovedEmailMessage",
                 REVIEW_CHANGES_REQUESTED: "reviewChangesRequestedEmailMessage",
                 REVIEW_REJECTED: "reviewRejectedEmailMessage",
+                REVIEW_CANCELLED: "reviewCancelledEmailMessage",
               } as const;
               const entityLabelKey =
                 data.entityType === "CASE"
@@ -650,7 +662,9 @@ const processor = async (job: Job) => {
                   actorName:
                     (notification.type === "REVIEW_REQUESTED"
                       ? data.requesterName
-                      : data.deciderName) ?? "",
+                      : notification.type === "REVIEW_CANCELLED"
+                        ? data.cancelerName
+                        : data.deciderName) ?? "",
                   entityLabel,
                   entityName: data.entityName ?? "",
                   projectName: data.projectName ?? "",

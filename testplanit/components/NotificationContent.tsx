@@ -497,17 +497,18 @@ export function NotificationContent({
     );
   }
 
-  // Handle review request + review-decision notifications. All four types
-  // share the same entity / project / transition rendering; the title and
-  // subject phrasing differ per type. Persisted `title` and `message` are
-  // fallback-only — the renderer composes localized copy from the data
-  // payload at display time (see workers/emailWorker.ts for the matching
-  // server-side composition).
+  // Handle review request + review-decision + review-cancelled notifications.
+  // All five types share the same entity / project / transition rendering;
+  // the title and subject phrasing differ per type. Persisted `title` and
+  // `message` are fallback-only — the renderer composes localized copy from
+  // the data payload at display time (see workers/emailWorker.ts for the
+  // matching server-side composition).
   if (
     notification.type === "REVIEW_REQUESTED" ||
     notification.type === "REVIEW_APPROVED" ||
     notification.type === "REVIEW_CHANGES_REQUESTED" ||
-    notification.type === "REVIEW_REJECTED"
+    notification.type === "REVIEW_REJECTED" ||
+    notification.type === "REVIEW_CANCELLED"
   ) {
     if (data.projectId && data.entityType && data.entityId) {
       const entityLink =
@@ -550,16 +551,22 @@ export function NotificationContent({
         title = t("reviewChangesRequestedTitle");
         action = t("reviewChangesRequestedAction");
         actorUserId = data.deciderUserId;
-      } else {
+      } else if (notification.type === "REVIEW_REJECTED") {
         title = t("reviewRejectedTitle");
         action = t("reviewRejectedAction");
         actorUserId = data.deciderUserId;
+      } else {
+        title = t("reviewCancelledTitle");
+        action = t("reviewCancelledAction");
+        actorUserId = data.cancelerUserId;
       }
 
       const commentText =
         notification.type === "REVIEW_REQUESTED"
           ? data.commentText
-          : data.decisionComment;
+          : notification.type === "REVIEW_CANCELLED"
+            ? undefined
+            : data.decisionComment;
 
       return (
         <div className="space-y-2">

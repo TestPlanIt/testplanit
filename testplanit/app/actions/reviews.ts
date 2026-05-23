@@ -10,7 +10,10 @@ import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
 import { prisma } from "~/lib/prisma";
 import { extractMentionedUserIds } from "~/lib/utils/tiptapMentions";
 import { AlreadyPendingError } from "~/lib/utils/errors";
-import { emitReviewRequestedEvent } from "~/lib/webhooks/event-emitters/reviewEvents";
+import {
+  emitReviewCompletedEvent,
+  emitReviewRequestedEvent,
+} from "~/lib/webhooks/event-emitters/reviewEvents";
 import { getServerAuthSession } from "~/server/auth";
 
 type ReviewableEntityType = "CASE" | "RUN" | "SESSION";
@@ -411,4 +414,220 @@ async function loadReviewContext(
     toStateName: toState?.name ?? "",
     toStateColor: toState?.color?.value ?? null,
   };
+}
+
+interface CancelReviewSuccess {
+  success: true;
+  reviewRequestId: string;
+}
+
+interface CancelReviewFailure {
+  success: false;
+  error:
+    | "UNAUTHORIZED"
+    | "NOT_FOUND"
+    | "ALREADY_DECIDED"
+    | "FORBIDDEN"
+    | "FEATURE_DISABLED"
+    | "INTERNAL_ERROR";
+  message?: string;
+}
+
+export type CancelReviewResult = CancelReviewSuccess | CancelReviewFailure;
+
+/**
+ * Cancel a PENDING ReviewRequest. Mirrors `decideReviewRequest`'s shape: the
+ * status flip lands inside a tx, then notification + webhook + audit fan out
+ * outside the tx so transient downstream failures don't roll back the row
+ * change.
+ *
+ * Permission model: only the original requester or a system admin can
+ * cancel. (Phase 1 the cancel affordance is gated on the same predicate
+ * client-side; the server-side check is the authoritative one.)
+ *
+ * Soft-delete invariant: this is a STATUS flip, not a row deletion.
+ */
+export async function cancelReviewRequest(
+  reviewRequestId: string
+): Promise<CancelReviewResult> {
+  const session = await getServerAuthSession();
+  if (!session?.user?.id) {
+    return { success: false, error: "UNAUTHORIZED" };
+  }
+  const userId = session.user.id;
+
+  const systemEnabled = await isReviewFeatureSystemEnabled(prisma);
+  if (!systemEnabled) {
+    return { success: false, error: "FEATURE_DISABLED" };
+  }
+
+  const req = await prisma.reviewRequest.findUnique({
+    where: { id: reviewRequestId },
+    include: {
+      project: {
+        select: { id: true, name: true, reviewWorkflowEnabled: true },
+      },
+      fromState: { select: { id: true, name: true } },
+      toState: {
+        select: {
+          id: true,
+          name: true,
+          color: { select: { value: true } },
+        },
+      },
+    },
+  });
+  if (!req) {
+    return { success: false, error: "NOT_FOUND" };
+  }
+  if (req.project.reviewWorkflowEnabled !== true) {
+    return { success: false, error: "FEATURE_DISABLED" };
+  }
+  if (req.status !== "PENDING") {
+    return { success: false, error: "ALREADY_DECIDED" };
+  }
+
+  const isAdmin = session.user.access === "ADMIN";
+  const isRequester = req.requestedByUserId === userId;
+  if (!isAdmin && !isRequester) {
+    return { success: false, error: "FORBIDDEN" };
+  }
+
+  try {
+    // Atomic flip — `updateMany` scoped to status=PENDING so a concurrent
+    // decide on the same row can't co-commit. Loser sees count === 0 and
+    // surfaces as ALREADY_DECIDED.
+    const result = await prisma.reviewRequest.updateMany({
+      where: { id: reviewRequestId, status: "PENDING" },
+      data: { status: "CANCELLED" },
+    });
+    if (result.count === 0) {
+      return { success: false, error: "ALREADY_DECIDED" };
+    }
+  } catch (err) {
+    console.error("cancelReviewRequest: status flip failed", err);
+    return { success: false, error: "INTERNAL_ERROR" };
+  }
+
+  // Resolve recipients: direct user-assignee or every role holder, minus
+  // the canceler themselves.
+  let targetUserIds: string[] = [];
+  try {
+    if (req.assigneeUserId !== null && req.assigneeUserId !== userId) {
+      targetUserIds = [req.assigneeUserId];
+    } else if (req.assigneeRoleId !== null) {
+      targetUserIds = await NotificationService.resolveRoleHolderUserIds(
+        req.project.id,
+        req.assigneeRoleId,
+        userId
+      );
+    }
+  } catch (resolveErr) {
+    console.error(
+      "cancelReviewRequest: role-holder resolution failed",
+      resolveErr
+    );
+  }
+
+  try {
+    const entityName = await loadEntityName(req.entityType, req.entityId);
+    if (entityName !== null && targetUserIds.length > 0) {
+      await NotificationService.createReviewCancelledNotification({
+        targetUserIds,
+        cancelerUserId: userId,
+        cancelerName: session.user.name ?? "Unknown User",
+        projectId: req.project.id,
+        projectName: req.project.name,
+        entityType: req.entityType,
+        entityId: req.entityId,
+        entityName,
+        fromStateName: req.fromState.name,
+        toStateName: req.toState.name,
+        reviewRequestId,
+      });
+    }
+  } catch (notifyErr) {
+    console.error(
+      "cancelReviewRequest: cancel-notification dispatch failed",
+      notifyErr
+    );
+  }
+
+  try {
+    const entityName = await loadEntityName(req.entityType, req.entityId);
+    if (entityName !== null) {
+      await emitReviewCompletedEvent(
+        {
+          reviewRequestId,
+          projectId: req.project.id,
+          entityType: req.entityType,
+          entityId: req.entityId,
+          entityName,
+          fromStateId: req.fromStateId,
+          toStateId: req.toStateId,
+          toStateName: req.toState.name,
+          toStateColor: req.toState.color?.value ?? null,
+          decision: "CANCELLED",
+          decidedByUserId: userId,
+          deciderName: session.user.name ?? "Unknown User",
+          decisionComment: null,
+          requestedByUserId: req.requestedByUserId,
+          requesterName: session.user.name ?? "Unknown User",
+        },
+        { actorUserId: userId }
+      );
+    }
+  } catch (webhookErr) {
+    console.error(
+      "cancelReviewRequest: review-cancelled webhook emit failed",
+      webhookErr
+    );
+  }
+
+  try {
+    await captureAuditEvent({
+      action: "REVIEW_CANCELLED",
+      entityType: "ReviewRequest",
+      entityId: reviewRequestId,
+      projectId: req.project.id,
+      metadata: {
+        fromStateId: req.fromStateId,
+        toStateId: req.toStateId,
+        cancelerUserId: userId,
+        requestedByUserId: req.requestedByUserId,
+        entityType: req.entityType,
+        entityId: req.entityId,
+      },
+    });
+  } catch (auditErr) {
+    console.error("cancelReviewRequest: audit emission failed", auditErr);
+  }
+
+  revalidatePath("/");
+  return { success: true, reviewRequestId };
+}
+
+async function loadEntityName(
+  entityType: ReviewableEntityType,
+  entityId: number
+): Promise<string | null> {
+  if (entityType === "CASE") {
+    const row = await prisma.repositoryCases.findUnique({
+      where: { id: entityId },
+      select: { name: true },
+    });
+    return row?.name ?? null;
+  }
+  if (entityType === "RUN") {
+    const row = await prisma.testRuns.findUnique({
+      where: { id: entityId },
+      select: { name: true },
+    });
+    return row?.name ?? null;
+  }
+  const row = await prisma.sessions.findUnique({
+    where: { id: entityId },
+    select: { name: true },
+  });
+  return row?.name ?? null;
 }

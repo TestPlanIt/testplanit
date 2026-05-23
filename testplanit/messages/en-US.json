@@ -5326,10 +5326,12 @@
         "reviewApprovedTitle": "Review approved",
         "reviewChangesRequestedTitle": "Changes requested",
         "reviewRejectedTitle": "Review rejected",
+        "reviewCancelledTitle": "Review request cancelled",
         "reviewRequestedAction": "requested your review of",
         "reviewApprovedAction": "approved your review request on",
         "reviewChangesRequestedAction": "requested changes on your review request for",
         "reviewRejectedAction": "rejected your review request on",
+        "reviewCancelledAction": "cancelled the review request on",
         "reviewEntityLabelCase": "test case",
         "reviewEntityLabelRun": "test run",
         "reviewEntityLabelSession": "session",
@@ -5338,7 +5340,8 @@
         "reviewRequestedEmailMessage": "{actorName} requested your review of {entityLabel} \"{entityName}\" in project \"{projectName}\".",
         "reviewApprovedEmailMessage": "{actorName} approved your review request on {entityLabel} \"{entityName}\" in project \"{projectName}\".",
         "reviewChangesRequestedEmailMessage": "{actorName} requested changes on your review request for {entityLabel} \"{entityName}\" in project \"{projectName}\".",
-        "reviewRejectedEmailMessage": "{actorName} rejected your review request on {entityLabel} \"{entityName}\" in project \"{projectName}\"."
+        "reviewRejectedEmailMessage": "{actorName} rejected your review request on {entityLabel} \"{entityName}\" in project \"{projectName}\".",
+        "reviewCancelledEmailMessage": "{actorName} cancelled the review request on {entityLabel} \"{entityName}\" in project \"{projectName}\"."
       }
     },
     "issues": {

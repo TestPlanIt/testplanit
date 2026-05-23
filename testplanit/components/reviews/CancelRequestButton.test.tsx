@@ -7,13 +7,14 @@ import { CancelRequestButton } from "./CancelRequestButton";
 // Mocks
 // ─────────────────────────────────────────────────────────────────────────────
 
-const mockMutateAsync = vi.fn();
-const mockUseUpdateReviewRequest = vi.fn(() => ({
-  mutateAsync: mockMutateAsync,
+const mockCancelReviewRequest = vi.fn();
+vi.mock("~/app/actions/reviews", () => ({
+  cancelReviewRequest: (...args: unknown[]) => mockCancelReviewRequest(...args),
 }));
 
-vi.mock("~/lib/hooks", () => ({
-  useUpdateReviewRequest: () => mockUseUpdateReviewRequest(),
+const mockInvalidateQueries = vi.fn();
+vi.mock("@tanstack/react-query", () => ({
+  useQueryClient: () => ({ invalidateQueries: mockInvalidateQueries }),
 }));
 
 const mockToastSuccess = vi.fn();
@@ -41,8 +42,12 @@ function makeProps(overrides: Record<string, unknown> = {}) {
 
 describe("CancelRequestButton", () => {
   beforeEach(() => {
-    mockMutateAsync.mockReset();
-    mockMutateAsync.mockResolvedValue({ id: REVIEW_REQUEST_ID });
+    mockCancelReviewRequest.mockReset();
+    mockCancelReviewRequest.mockResolvedValue({
+      success: true,
+      reviewRequestId: REVIEW_REQUEST_ID,
+    });
+    mockInvalidateQueries.mockReset();
     mockToastSuccess.mockReset();
     mockToastError.mockReset();
   });
@@ -78,22 +83,19 @@ describe("CancelRequestButton", () => {
     expect(screen.getByTestId("cancel-request-confirm")).toBeInTheDocument();
   });
 
-  it("(d) clicking confirm calls useUpdateReviewRequest.mutateAsync with status: CANCELLED", async () => {
+  it("(d) clicking confirm calls cancelReviewRequest with the request id", async () => {
     render(<CancelRequestButton {...makeProps()} />);
 
     fireEvent.click(screen.getByTestId("cancel-request-button"));
     fireEvent.click(screen.getByTestId("cancel-request-confirm"));
 
-    await waitFor(() => expect(mockMutateAsync).toHaveBeenCalledTimes(1));
-
-    const arg = mockMutateAsync.mock.calls[0]?.[0];
-    expect(arg).toMatchObject({
-      where: { id: REVIEW_REQUEST_ID },
-      data: { status: "CANCELLED" },
-    });
+    await waitFor(() =>
+      expect(mockCancelReviewRequest).toHaveBeenCalledTimes(1)
+    );
+    expect(mockCancelReviewRequest.mock.calls[0]?.[0]).toBe(REVIEW_REQUEST_ID);
   });
 
-  it("(e) on success, toast.success fires", async () => {
+  it("(e) on success, toast.success fires and queries are invalidated", async () => {
     render(<CancelRequestButton {...makeProps()} />);
 
     fireEvent.click(screen.getByTestId("cancel-request-button"));
@@ -103,11 +105,12 @@ describe("CancelRequestButton", () => {
     expect(mockToastSuccess.mock.calls[0]?.[0]).toContain(
       "reviews.cancel.success"
     );
+    expect(mockInvalidateQueries).toHaveBeenCalled();
   });
 
-  it("(f) on error, toast.error fires", async () => {
-    mockMutateAsync.mockReset();
-    mockMutateAsync.mockRejectedValueOnce(new Error("Network blew up"));
+  it("(f) on rejected promise, toast.error fires", async () => {
+    mockCancelReviewRequest.mockReset();
+    mockCancelReviewRequest.mockRejectedValueOnce(new Error("Network blew up"));
 
     render(<CancelRequestButton {...makeProps()} />);
 
@@ -116,5 +119,21 @@ describe("CancelRequestButton", () => {
 
     await waitFor(() => expect(mockToastError).toHaveBeenCalledTimes(1));
     expect(mockToastError.mock.calls[0]?.[0]).toContain("reviews.cancel.error");
+  });
+
+  it("(g) on success: false result, toast.error fires (no invalidate)", async () => {
+    mockCancelReviewRequest.mockReset();
+    mockCancelReviewRequest.mockResolvedValueOnce({
+      success: false,
+      error: "FORBIDDEN",
+    });
+
+    render(<CancelRequestButton {...makeProps()} />);
+
+    fireEvent.click(screen.getByTestId("cancel-request-button"));
+    fireEvent.click(screen.getByTestId("cancel-request-confirm"));
+
+    await waitFor(() => expect(mockToastError).toHaveBeenCalledTimes(1));
+    expect(mockInvalidateQueries).not.toHaveBeenCalled();
   });
 });

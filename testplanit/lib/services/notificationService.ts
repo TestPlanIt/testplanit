@@ -440,6 +440,68 @@ export class NotificationService {
   }
 
   /**
+   * Dispatch a REVIEW_CANCELLED notification to each prospective reviewer of
+   * a request that was just cancelled by the requester (or an admin). Direct
+   * user-assignee receives one notification; role-assigned requests fan out
+   * to every active role holder on the project. The requester themselves is
+   * excluded — they took the action and don't need to be told about it.
+   *
+   * Persisted `title` / `message` are English fallback only; bell + email
+   * worker re-render localized copy at display time per the
+   * `feedback_localize_new_notifications` contract.
+   */
+  static async createReviewCancelledNotification(params: {
+    targetUserIds: string[];
+    cancelerUserId: string;
+    cancelerName: string;
+    projectId: number;
+    projectName: string;
+    entityType: "CASE" | "RUN" | "SESSION";
+    entityId: number;
+    entityName: string;
+    fromStateName: string;
+    toStateName: string;
+    reviewRequestId: string;
+  }) {
+    if (params.targetUserIds.length === 0) return;
+
+    const entityLabel =
+      params.entityType === "CASE"
+        ? "test case"
+        : params.entityType === "RUN"
+          ? "test run"
+          : "session";
+
+    const title = "Review request cancelled";
+    const message = `${params.cancelerName} cancelled the review request on ${entityLabel} "${params.entityName}" in project "${params.projectName}"`;
+
+    await Promise.all(
+      params.targetUserIds.map((userId) =>
+        this.createNotification({
+          userId,
+          type: NotificationType.REVIEW_CANCELLED,
+          title,
+          message,
+          relatedEntityId: params.reviewRequestId,
+          relatedEntityType: "ReviewRequest",
+          data: {
+            reviewRequestId: params.reviewRequestId,
+            cancelerUserId: params.cancelerUserId,
+            cancelerName: params.cancelerName,
+            projectId: params.projectId,
+            projectName: params.projectName,
+            entityType: params.entityType,
+            entityId: params.entityId,
+            entityName: params.entityName,
+            fromStateName: params.fromStateName,
+            toStateName: params.toStateName,
+          },
+        })
+      )
+    );
+  }
+
+  /**
    * Create a share link accessed notification
    */
   static async createShareLinkAccessedNotification(

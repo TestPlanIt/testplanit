@@ -5,23 +5,22 @@ import { ReviewStatusBanner } from "./ReviewStatusBanner";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Integration test: ReviewStatusBanner (PENDING) → CancelRequestButton →
-// AlertDialog → useUpdateReviewRequest({ status: 'CANCELLED' }) → banner
-// disappears on rerender.
+// AlertDialog → cancelReviewRequest server action → banner disappears on
+// rerender.
 //
-// Exercises the full requester-side cancel flow end-to-end, mirroring the
-// VALIDATION.md TBD-cancel-status-mutation row.
+// Exercises the full requester-side cancel flow end-to-end.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const mockUseFindFirstReviewRequest = vi.fn();
-const mockUpdateMutateAsync = vi.fn();
-const mockUseUpdateReviewRequest = vi.fn(() => ({
-  mutateAsync: mockUpdateMutateAsync,
-}));
 
 vi.mock("~/lib/hooks", () => ({
   useFindFirstReviewRequest: (...args: unknown[]) =>
     mockUseFindFirstReviewRequest(...args),
-  useUpdateReviewRequest: () => mockUseUpdateReviewRequest(),
+}));
+
+const mockCancelReviewRequest = vi.fn();
+vi.mock("~/app/actions/reviews", () => ({
+  cancelReviewRequest: (...args: unknown[]) => mockCancelReviewRequest(...args),
 }));
 
 const mockUseReviewFeatureEnabled = vi.fn();
@@ -130,13 +129,16 @@ const bannerProps = {
 describe("CancelReviewRequestFlow (Banner + CancelRequestButton)", () => {
   beforeEach(() => {
     mockUseFindFirstReviewRequest.mockReset();
-    mockUpdateMutateAsync.mockReset();
+    mockCancelReviewRequest.mockReset();
     mockUseReviewFeatureEnabled.mockReset();
     mockUseSession.mockReset();
     mockToastSuccess.mockReset();
     mockToastError.mockReset();
 
-    mockUpdateMutateAsync.mockResolvedValue({ id: "rev-cancel-1" });
+    mockCancelReviewRequest.mockResolvedValue({
+      success: true,
+      reviewRequestId: "rev-cancel-1",
+    });
     mockUseReviewFeatureEnabled.mockReturnValue({
       enabled: true,
       isLoading: false,
@@ -149,7 +151,7 @@ describe("CancelReviewRequestFlow (Banner + CancelRequestButton)", () => {
     });
   });
 
-  it("PENDING → Cancel → confirm → status: CANCELLED → banner removed on rerender", async () => {
+  it("PENDING → Cancel → confirm → server action invoked → banner removed on rerender", async () => {
     mockUseFindFirstReviewRequest.mockReturnValue({
       data: pending(),
       isLoading: false,
@@ -172,13 +174,11 @@ describe("CancelReviewRequestFlow (Banner + CancelRequestButton)", () => {
     // Confirm the cancel.
     fireEvent.click(screen.getByTestId("cancel-request-confirm"));
 
-    // Status mutation called with CANCELLED.
-    await waitFor(() => expect(mockUpdateMutateAsync).toHaveBeenCalledTimes(1));
-    const arg = mockUpdateMutateAsync.mock.calls[0]?.[0];
-    expect(arg).toMatchObject({
-      where: { id: "rev-cancel-1" },
-      data: { status: "CANCELLED" },
-    });
+    // Server action called with the request id.
+    await waitFor(() =>
+      expect(mockCancelReviewRequest).toHaveBeenCalledTimes(1)
+    );
+    expect(mockCancelReviewRequest.mock.calls[0]?.[0]).toBe("rev-cancel-1");
 
     // Simulate the post-mutation state — hook now returns the CANCELLED row.
     mockUseFindFirstReviewRequest.mockReturnValue({
