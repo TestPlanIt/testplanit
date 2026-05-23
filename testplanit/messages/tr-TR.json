@@ -3103,7 +3103,13 @@
       "targetStateRequired": "Hedef eyaleti seçin.",
       "submitSuccess": "İnceleme talebi oluşturuldu.",
       "alreadyPendingError": "Bu kuruluş için halihazırda bir inceleme süreci devam etmektedir.",
-      "cannotSelfAssign": "Kendinize değerlendirme atayamazsınız; başka bir kullanıcı veya rol seçin."
+      "cannotSelfAssign": "Kendinize değerlendirme atayamazsınız; başka bir kullanıcı veya rol seçin.",
+      "defaultComment": "Lütfen {fromState} → {toState} geçişini inceleyin.",
+      "defaultCommentRole": "Requesting approval from the {roleName} group to transition from {fromState} → {toState}."
+    },
+    "assigneeChip": {
+      "emptyMembers": "Proje için uygun olan üyelerden hiçbiri bu görevi üstlenmiyor.",
+      "unnamedUser": "(adı belirtilmeyen kullanıcı)"
     },
     "reviewer": {
       "approve": "Onaylamak",

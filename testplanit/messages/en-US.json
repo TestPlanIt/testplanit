@@ -3103,7 +3103,13 @@
       "targetStateRequired": "Select a target state.",
       "submitSuccess": "Review request created.",
       "alreadyPendingError": "A review is already pending for this entity.",
-      "cannotSelfAssign": "You can't assign a review to yourself; pick another user or a role."
+      "cannotSelfAssign": "You can't assign a review to yourself; pick another user or a role.",
+      "defaultComment": "Please review the transition from {fromState} → {toState}.",
+      "defaultCommentRole": "Requesting approval from the {roleName} group to transition from {fromState} → {toState}."
+    },
+    "assigneeChip": {
+      "emptyMembers": "No project-eligible members hold this role.",
+      "unnamedUser": "(unnamed user)"
     },
     "reviewer": {
       "approve": "Approve",

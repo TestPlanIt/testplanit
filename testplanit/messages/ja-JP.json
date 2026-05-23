@@ -3103,7 +3103,13 @@
       "targetStateRequired": "対象とする州を選択してください。",
       "submitSuccess": "レビュー依頼が作成されました。",
       "alreadyPendingError": "この団体については既に審査が保留中です。",
-      "cannotSelfAssign": "自分自身にレビューを割り当てることはできません。他のユーザーまたは役割を選択してください。"
+      "cannotSelfAssign": "自分自身にレビューを割り当てることはできません。他のユーザーまたは役割を選択してください。",
+      "defaultComment": "{fromState} → {toState} への遷移を確認してください。",
+      "defaultCommentRole": "{roleName} グループに {fromState} から {toState}への移行の承認を要請します。"
+    },
+    "assigneeChip": {
+      "emptyMembers": "プロジェクト参加資格のあるメンバーで、この役職に就いている者はいません。",
+      "unnamedUser": "（匿名ユーザー）"
     },
     "reviewer": {
       "approve": "承認する",

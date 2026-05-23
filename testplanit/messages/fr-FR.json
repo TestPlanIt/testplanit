@@ -3103,7 +3103,13 @@
       "targetStateRequired": "Sélectionnez un état cible.",
       "submitSuccess": "Demande de révision créée.",
       "alreadyPendingError": "Une évaluation est déjà en cours pour cette entité.",
-      "cannotSelfAssign": "Vous ne pouvez pas vous attribuer une évaluation ; choisissez un autre utilisateur ou un rôle."
+      "cannotSelfAssign": "Vous ne pouvez pas vous attribuer une évaluation ; choisissez un autre utilisateur ou un rôle.",
+      "defaultComment": "Veuillez examiner la transition de {fromState} → {toState}.",
+      "defaultCommentRole": "Demande d'approbation du groupe {roleName} pour la transition de {fromState} → {toState}."
+    },
+    "assigneeChip": {
+      "emptyMembers": "Aucun membre éligible au projet n'occupe ce rôle.",
+      "unnamedUser": "(utilisateur anonyme)"
     },
     "reviewer": {
       "approve": "Approuver",

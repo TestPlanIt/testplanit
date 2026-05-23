@@ -3,7 +3,7 @@
 import { Avatar } from "@/components/Avatar";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { useQuery } from "@tanstack/react-query";
-import { Shield, User as UserIcon } from "lucide-react";
+import { Drama } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";
 
@@ -134,10 +134,43 @@ export function AssigneeCombobox({
           data-testid="assignee-combobox"
           className="flex w-full items-center justify-start rounded-md border bg-background px-3 py-2 text-sm hover:bg-accent"
         >
-          {defaultContent}
+          {/*
+            When a value is selected, render a single-line compact summary
+            (icon + name only) instead of the two-line dropdown layout. The
+            dropdown rows want the "4 users hold this role" / role-name
+            subtitle to disambiguate options at scan time; the trigger
+            already commits to one choice so the subtitle just inflates the
+            button height and makes the inline icon look adrift inside the
+            extra space. `defaultContent` (used for the unset placeholder)
+            stays as the AsyncCombobox default.
+          */}
+          {value ? <AssigneeTriggerSummary option={value} /> : defaultContent}
         </button>
       )}
     />
+  );
+}
+
+function AssigneeTriggerSummary({ option }: { option: AssigneeOption }) {
+  if (option.kind === "user") {
+    return (
+      <span className="flex items-center gap-2 min-w-0">
+        <Avatar
+          image={option.image}
+          alt={option.name}
+          width={20}
+          height={20}
+          showTooltip={false}
+        />
+        <span className="truncate">{option.name}</span>
+      </span>
+    );
+  }
+  return (
+    <span className="flex items-center gap-2 min-w-0">
+      <Drama className="h-5 w-5 shrink-0" />
+      <span className="truncate">{option.name}</span>
+    </span>
   );
 }
 
@@ -151,17 +184,21 @@ function UserOptionRow({
       data-testid={`assignee-option-user-${option.id}`}
       className="flex w-full items-center"
     >
+      {/*
+        Always route avatar rendering through the shared Avatar component
+        — it falls back to a colored-initials disc when `image` is null,
+        which keeps the visual cadence identical for image-less and
+        image-having users (no generic UserIcon fallback that breaks the
+        line up).
+      */}
       <span data-kind-icon="user" className="mr-2 inline-flex h-5 w-5">
-        {option.image ? (
-          <Avatar
-            image={option.image}
-            alt={option.name}
-            width={20}
-            height={20}
-          />
-        ) : (
-          <UserIcon className="h-5 w-5" />
-        )}
+        <Avatar
+          image={option.image}
+          alt={option.name}
+          width={20}
+          height={20}
+          showTooltip={false}
+        />
       </span>
       <div className="flex flex-col">
         <span className="text-sm">{option.name}</span>
@@ -187,8 +224,13 @@ function RoleOptionRow({
       data-testid={`assignee-option-role-${option.id}`}
       className="flex w-full items-center"
     >
+      {/*
+        `Drama` is TestPlanIt's canonical role icon (see RoleNameDisplay
+        and the Admin menu) — using it here keeps roles visually
+        identifiable everywhere a role is named.
+      */}
       <span data-kind-icon="role" className="mr-2 inline-flex h-5 w-5">
-        <Shield className="h-5 w-5" />
+        <Drama className="h-5 w-5" />
       </span>
       <div className="flex flex-col">
         <span className="text-sm">{option.name}</span>

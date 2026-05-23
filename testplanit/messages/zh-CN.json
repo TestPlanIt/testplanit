@@ -3103,7 +3103,13 @@
       "targetStateRequired": "选择目标州。",
       "submitSuccess": "审核请求已创建。",
       "alreadyPendingError": "目前已有针对该实体的审查正在进行中。",
-      "cannotSelfAssign": "你不能给自己分配评论；请选择其他用户或角色。"
+      "cannotSelfAssign": "你不能给自己分配评论；请选择其他用户或角色。",
+      "defaultComment": "请检查从 {fromState} 到 {toState}的过渡。",
+      "defaultCommentRole": "请求 {roleName} 组批准从 {fromState} 过渡到 {toState}。"
+    },
+    "assigneeChip": {
+      "emptyMembers": "目前没有符合项目资格的成员担任此职务。",
+      "unnamedUser": "（匿名用户）"
     },
     "reviewer": {
       "approve": "批准",

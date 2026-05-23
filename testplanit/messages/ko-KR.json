@@ -3103,7 +3103,13 @@
       "targetStateRequired": "목표 상태를 선택하세요.",
       "submitSuccess": "검토 요청이 생성되었습니다.",
       "alreadyPendingError": "해당 기관에 대한 검토가 이미 진행 중입니다.",
-      "cannotSelfAssign": "본인에게 리뷰를 할당할 수는 없습니다. 다른 사용자 또는 역할을 선택하세요."
+      "cannotSelfAssign": "본인에게 리뷰를 할당할 수는 없습니다. 다른 사용자 또는 역할을 선택하세요.",
+      "defaultComment": "{fromState} → {toState} 전환 과정을 검토해 주십시오.",
+      "defaultCommentRole": "{roleName} 그룹의 승인을 받아 {fromState} 에서 {toState}로 전환합니다."
+    },
+    "assigneeChip": {
+      "emptyMembers": "프로젝트 참여 자격이 있는 구성원 중 이 역할을 맡은 사람은 없습니다.",
+      "unnamedUser": "(익명의 사용자)"
     },
     "reviewer": {
       "approve": "승인하다",

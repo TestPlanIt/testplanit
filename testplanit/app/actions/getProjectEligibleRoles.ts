@@ -1,22 +1,26 @@
 "use server";
 
 import { prisma } from "~/lib/prisma";
-import { getProjectEffectiveMembers } from "./getProjectEffectiveMembers";
 
 /**
  * Resolve the roles that are pickable as a review assignee for a project.
  *
- * A role appears in the list only when at least one of its holders has
- * effective access to the project. When you assign a review to a role, the
- * decide path resolves the role to its (project-eligible) holders; a role
- * with zero project-eligible holders is a dead-end assignment — the
- * request would have no one able to act on it. Hiding those roles from
- * the picker prevents that footgun.
+ * A role appears in the list only when at least one user actually holds
+ * the role on this project per the same eligibility union the decide
+ * path uses (`NotificationService.resolveRoleHolderUserIds` /
+ * `getProjectRoleHolders`). Four paths grant role-holder status:
  *
- * Counts are also project-scoped: `userCount` is the number of holders
- * who are effective project members, not the global role membership.
- * Matches the count the requester will actually see in their "Pending"
- * column for that role.
+ *   1. UserProjectPermission with accessType = SPECIFIC_ROLE and matching roleId
+ *   2. UserProjectPermission with accessType = GLOBAL_ROLE and the user's
+ *      global User.roleId matches
+ *   3. Group SPECIFIC_ROLE assignment with matching roleId (group member)
+ *   4. Group GLOBAL_ROLE assignment (group member) with matching User.roleId
+ *
+ * The previous implementation collapsed to paths 2 + 4 only — it counted
+ * users whose global role matched AND who had any effective project
+ * access. That undercounted any user assigned the role per-project (path
+ * 1 or 3) and produced a number that didn't match the actual reviewer
+ * pool the decide path would resolve to.
  *
  * Returns an empty array on any failure rather than throwing — the
  * AssigneeCombobox already falls back to the users page when roles are
@@ -31,45 +35,114 @@ export async function getProjectEligibleRoles(projectId: number): Promise<
   }>
 > {
   try {
-    const effectiveMemberIds = await getProjectEffectiveMembers(projectId);
-    if (effectiveMemberIds.length === 0) {
-      return [];
+    // Union-of-paths reducer: walk every active role and ask "how many
+    // distinct active users hold this role on this project?" The four
+    // membership paths above each contribute to the per-role Set; we keep
+    // only roles whose Set is non-empty so dead-end roles never reach the
+    // picker.
+    const allRoles = await prisma.roles.findMany({
+      where: { isDeleted: false },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    });
+    if (allRoles.length === 0) return [];
+
+    const roleIds = allRoles.map((r) => r.id);
+    const holdersByRole = new Map<number, Set<string>>();
+    for (const id of roleIds) holdersByRole.set(id, new Set<string>());
+
+    // Path 1 — UserProjectPermission SPECIFIC_ROLE.
+    const specificRoleRows = await prisma.userProjectPermission.findMany({
+      where: {
+        projectId,
+        accessType: "SPECIFIC_ROLE",
+        roleId: { in: roleIds },
+        user: { isActive: true, isDeleted: false },
+      },
+      select: { roleId: true, userId: true },
+    });
+    for (const r of specificRoleRows) {
+      if (r.roleId !== null) holdersByRole.get(r.roleId)?.add(r.userId);
     }
 
-    const roles = await prisma.roles.findMany({
+    // Path 2 — UserProjectPermission GLOBAL_ROLE (user's global roleId
+    // is the role).
+    const globalRoleRows = await prisma.userProjectPermission.findMany({
       where: {
-        isDeleted: false,
-        users: {
-          some: {
-            id: { in: effectiveMemberIds },
-            isActive: true,
-            isDeleted: false,
+        projectId,
+        accessType: "GLOBAL_ROLE",
+        user: { isActive: true, isDeleted: false, roleId: { in: roleIds } },
+      },
+      select: { userId: true, user: { select: { roleId: true } } },
+    });
+    for (const r of globalRoleRows) {
+      const rid = r.user?.roleId;
+      if (rid != null) holdersByRole.get(rid)?.add(r.userId);
+    }
+
+    // Path 3 — Group SPECIFIC_ROLE.
+    const groupSpecific = await prisma.groupProjectPermission.findMany({
+      where: {
+        projectId,
+        accessType: "SPECIFIC_ROLE",
+        roleId: { in: roleIds },
+      },
+      select: {
+        roleId: true,
+        group: {
+          select: {
+            assignedUsers: {
+              where: { user: { isActive: true, isDeleted: false } },
+              select: { userId: true },
+            },
           },
         },
       },
+    });
+    for (const perm of groupSpecific) {
+      if (perm.roleId === null) continue;
+      const bucket = holdersByRole.get(perm.roleId);
+      if (!bucket) continue;
+      perm.group?.assignedUsers.forEach((a) => bucket.add(a.userId));
+    }
+
+    // Path 4 — Group GLOBAL_ROLE (group member's global roleId is the role).
+    const groupGlobal = await prisma.groupProjectPermission.findMany({
+      where: { projectId, accessType: "GLOBAL_ROLE" },
       select: {
-        id: true,
-        name: true,
-        _count: {
+        group: {
           select: {
-            users: {
+            assignedUsers: {
               where: {
-                id: { in: effectiveMemberIds },
-                isActive: true,
-                isDeleted: false,
+                user: {
+                  isActive: true,
+                  isDeleted: false,
+                  roleId: { in: roleIds },
+                },
+              },
+              select: {
+                userId: true,
+                user: { select: { roleId: true } },
               },
             },
           },
         },
       },
-      orderBy: { name: "asc" },
     });
+    for (const perm of groupGlobal) {
+      perm.group?.assignedUsers.forEach((a) => {
+        const rid = a.user?.roleId;
+        if (rid != null) holdersByRole.get(rid)?.add(a.userId);
+      });
+    }
 
-    return roles.map((r) => ({
-      id: r.id,
-      name: r.name,
-      userCount: r._count?.users ?? 0,
-    }));
+    return allRoles
+      .map((r) => ({
+        id: r.id,
+        name: r.name,
+        userCount: holdersByRole.get(r.id)?.size ?? 0,
+      }))
+      .filter((r) => r.userCount > 0);
   } catch (error) {
     console.error("Error fetching project eligible roles:", error);
     return [];

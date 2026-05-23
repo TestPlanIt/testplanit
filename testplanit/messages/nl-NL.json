@@ -3103,7 +3103,13 @@
       "targetStateRequired": "Selecteer een gewenste staat.",
       "submitSuccess": "Verzoek tot beoordeling aangemaakt.",
       "alreadyPendingError": "Er loopt al een beoordelingsprocedure voor deze entiteit.",
-      "cannotSelfAssign": "Je kunt jezelf geen beoordeling toewijzen; kies een andere gebruiker of een rol."
+      "cannotSelfAssign": "Je kunt jezelf geen beoordeling toewijzen; kies een andere gebruiker of een rol.",
+      "defaultComment": "Bekijk de overgang van {fromState} → {toState}.",
+      "defaultCommentRole": "Goedkeuring aanvragen van de {roleName} -groep voor de overgang van {fromState} → {toState}."
+    },
+    "assigneeChip": {
+      "emptyMembers": "Geen enkel projectlid bekleedt deze functie.",
+      "unnamedUser": "(onbekende gebruiker)"
     },
     "reviewer": {
       "approve": "Goedkeuren",

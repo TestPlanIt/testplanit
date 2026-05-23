@@ -3103,7 +3103,13 @@
       "targetStateRequired": "選擇目標州。",
       "submitSuccess": "審核請求已建立。",
       "alreadyPendingError": "目前已有針對該實體的審查正在進行中。",
-      "cannotSelfAssign": "你不能給自己分配評論；請選擇其他使用者或角色。"
+      "cannotSelfAssign": "你不能給自己分配評論；請選擇其他使用者或角色。",
+      "defaultComment": "請檢查從 {fromState} 到 {toState}的過渡。",
+      "defaultCommentRole": "請求 {roleName} 群組批准從 {fromState} 過渡到 {toState}。"
+    },
+    "assigneeChip": {
+      "emptyMembers": "目前沒有符合專案資格的成員擔任此職務。",
+      "unnamedUser": "（匿名用戶）"
     },
     "reviewer": {
       "approve": "核准",

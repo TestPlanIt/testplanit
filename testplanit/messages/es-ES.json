@@ -3103,7 +3103,13 @@
       "targetStateRequired": "Seleccione un estado de destino.",
       "submitSuccess": "Solicitud de revisión creada.",
       "alreadyPendingError": "Ya hay una revisión pendiente para esta entidad.",
-      "cannotSelfAssign": "No puedes asignarte una reseña a ti mismo; elige otro usuario o un rol."
+      "cannotSelfAssign": "No puedes asignarte una reseña a ti mismo; elige otro usuario o un rol.",
+      "defaultComment": "Por favor, revise la transición de {fromState} → {toState}.",
+      "defaultCommentRole": "Solicitando la aprobación del grupo {roleName} para pasar de {fromState} → {toState}."
+    },
+    "assigneeChip": {
+      "emptyMembers": "Ningún miembro que cumpla los requisitos del proyecto desempeña esta función.",
+      "unnamedUser": "(usuario anónimo)"
     },
     "reviewer": {
       "approve": "Aprobar",

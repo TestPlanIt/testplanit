@@ -3103,7 +3103,13 @@
       "targetStateRequired": "Selecione um estado de destino.",
       "submitSuccess": "Solicitação de revisão criada.",
       "alreadyPendingError": "Já existe uma avaliação pendente para esta entidade.",
-      "cannotSelfAssign": "Você não pode atribuir uma avaliação a si mesmo; escolha outro usuário ou uma função."
+      "cannotSelfAssign": "Você não pode atribuir uma avaliação a si mesmo; escolha outro usuário ou uma função.",
+      "defaultComment": "Por favor, revise a transição de {fromState} → {toState}.",
+      "defaultCommentRole": "Solicitando aprovação do grupo {roleName} para transição de {fromState} → {toState}."
+    },
+    "assigneeChip": {
+      "emptyMembers": "Nenhum membro elegível para o projeto ocupa essa função.",
+      "unnamedUser": "(usuário não identificado)"
     },
     "reviewer": {
       "approve": "Aprovar",

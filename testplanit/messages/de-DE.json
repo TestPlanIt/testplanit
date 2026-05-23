@@ -3103,7 +3103,13 @@
       "targetStateRequired": "Wählen Sie einen Zielstaat aus.",
       "submitSuccess": "Überprüfungsanfrage erstellt.",
       "alreadyPendingError": "Für diese Einrichtung ist bereits eine Überprüfung anhängig.",
-      "cannotSelfAssign": "Sie können sich selbst keine Bewertung zuweisen; wählen Sie einen anderen Benutzer oder eine Rolle."
+      "cannotSelfAssign": "Sie können sich selbst keine Bewertung zuweisen; wählen Sie einen anderen Benutzer oder eine Rolle.",
+      "defaultComment": "Bitte überprüfen Sie den Übergang von {fromState} → {toState}.",
+      "defaultCommentRole": "Anfrage an die Gruppe {roleName} , um von {fromState} → {toState} zu wechseln."
+    },
+    "assigneeChip": {
+      "emptyMembers": "Diese Position ist bei keinem projektberechtigten Mitglied inne.",
+      "unnamedUser": "(unbenannter Benutzer)"
     },
     "reviewer": {
       "approve": "Genehmigen",

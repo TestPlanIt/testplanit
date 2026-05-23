@@ -3103,7 +3103,13 @@
       "targetStateRequired": "Chọn tiểu bang mục tiêu.",
       "submitSuccess": "Yêu cầu xem xét đã được tạo.",
       "alreadyPendingError": "Hiện tại, đơn vị này đang chờ được xem xét.",
-      "cannotSelfAssign": "Bạn không thể tự mình viết đánh giá; hãy chọn người dùng khác hoặc vai trò khác."
+      "cannotSelfAssign": "Bạn không thể tự mình viết đánh giá; hãy chọn người dùng khác hoặc vai trò khác.",
+      "defaultComment": "Vui lòng xem lại quá trình chuyển đổi từ {fromState} → {toState}.",
+      "defaultCommentRole": "Tôi đang yêu cầu sự chấp thuận từ nhóm {roleName} để chuyển đổi từ {fromState} → {toState}."
+    },
+    "assigneeChip": {
+      "emptyMembers": "Hiện không có thành viên nào đủ điều kiện tham gia dự án nắm giữ vai trò này.",
+      "unnamedUser": "(Người dùng ẩn danh)"
     },
     "reviewer": {
       "approve": "Chấp thuận",

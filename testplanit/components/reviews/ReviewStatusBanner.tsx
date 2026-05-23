@@ -32,6 +32,7 @@ import { useFindFirstReviewRequest } from "~/lib/hooks";
 
 import type { AssigneeOption } from "./AssigneeCombobox";
 import { CancelRequestButton } from "./CancelRequestButton";
+import { RoleAssigneeChip } from "./RoleAssigneeChip";
 import {
   RequestReviewSheet,
   type ReachableGatedState,
@@ -224,6 +225,12 @@ export function ReviewStatusBanner({
                 assignee: () =>
                   latest.assigneeUser ? (
                     <UserMention userId={latest.assigneeUser.id} />
+                  ) : latest.assigneeRole ? (
+                    <RoleAssigneeChip
+                      projectId={projectId}
+                      roleId={latest.assigneeRole.id}
+                      roleName={latest.assigneeRole.name}
+                    />
                   ) : (
                     <>{assigneeLabel}</>
                   ),

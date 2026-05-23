@@ -3103,7 +3103,13 @@
       "targetStateRequired": "Wybierz stan docelowy.",
       "submitSuccess": "Utworzono prośbę o recenzję.",
       "alreadyPendingError": "W przypadku tego podmiotu oczekuje się już na kontrolę.",
-      "cannotSelfAssign": "Nie możesz przypisać recenzji sobie; wybierz innego użytkownika lub rolę."
+      "cannotSelfAssign": "Nie możesz przypisać recenzji sobie; wybierz innego użytkownika lub rolę.",
+      "defaultComment": "Proszę przejrzeć przejście z {fromState} → {toState}.",
+      "defaultCommentRole": "Prośba o zatwierdzenie przez grupę {roleName} przejścia z {fromState} → {toState}."
+    },
+    "assigneeChip": {
+      "emptyMembers": "Rola ta nie należy do członków kwalifikujących się do projektu.",
+      "unnamedUser": "(nienazwany użytkownik)"
     },
     "reviewer": {
       "approve": "Zatwierdzić",
