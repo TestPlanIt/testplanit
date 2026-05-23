@@ -55,7 +55,12 @@ export function formatReviewRequestedBlocks(
 ): FormattedHttpRequest {
   const data = envelope.data as unknown as ReviewRequestedData;
   const entityType = data.entityType;
-  const href = entityHref(entityType, data.projectId, data.entityId, data.entityUrl);
+  const href = entityHref(
+    entityType,
+    data.projectId,
+    data.entityId,
+    data.entityUrl
+  );
   const requester = data.requesterName ?? "Someone";
   const assignee = describeAssignee(data);
 

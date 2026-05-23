@@ -413,10 +413,7 @@ export async function decideReviewRequest(
       },
     });
   } catch (auditErr) {
-    console.error(
-      "decideReviewRequest: audit emission failed",
-      auditErr
-    );
+    console.error("decideReviewRequest: audit emission failed", auditErr);
   }
 
   return prisma.reviewRequest.findUniqueOrThrow({

@@ -1,5 +1,4 @@
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
-import DynamicIcon from "@/components/DynamicIcon";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import {
@@ -212,10 +211,9 @@ export function AddSessionModal({
 
   const firstGatedSessionOrder = (workflows ?? [])
     .filter((w) => w.requiresReview === true)
-    .reduce<number | null>(
-      (acc, w) => (acc === null || w.order < acc ? w.order : acc),
-      null
-    );
+    .reduce<
+      number | null
+    >((acc, w) => (acc === null || w.order < acc ? w.order : acc), null);
   const workflowsOptions =
     workflows?.map((workflow) => ({
       value: workflow.id.toString(),
@@ -1018,7 +1016,9 @@ export function AddSessionModal({
                                           icon: {
                                             name: workflow.icon as IconName,
                                           },
-                                          color: { value: workflow.color ?? "" },
+                                          color: {
+                                            value: workflow.color ?? "",
+                                          },
                                           requiresReview:
                                             workflow.requiresReview,
                                         }}
@@ -1034,9 +1034,7 @@ export function AddSessionModal({
                       </FormControl>
                       {firstGatedSessionOrder !== null && (
                         <FormDescription>
-                          {t(
-                            "reviews.transitionGate.gatedStatesNotSelectable"
-                          )}
+                          {t("reviews.transitionGate.gatedStatesNotSelectable")}
                         </FormDescription>
                       )}
                       <FormMessage />

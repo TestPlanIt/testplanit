@@ -34,7 +34,9 @@ test.describe("create-time state remap (gated create bypass)", () => {
     api,
   }) => {
     const url = baseURL!;
-    const projectId = await api.createProject(`Reviews-CreateRemap ${Date.now()}`);
+    const projectId = await api.createProject(
+      `Reviews-CreateRemap ${Date.now()}`
+    );
 
     // Two case-scope workflows: ids[0] (default — first by order) is where
     // the remap should land; ids[1] is the gated target the request hands in.
@@ -53,17 +55,14 @@ test.describe("create-time state remap (gated create bypass)", () => {
     await setWorkflowRequiresReview(request, url, gatedWorkflowId, true);
 
     // Resolve repository + template + folder so the create payload is valid.
-    const repoRes = await request.get(
-      `${url}/api/model/repository/findFirst`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: { projectId, isDeleted: false },
-            select: { id: true },
-          }),
-        },
-      }
-    );
+    const repoRes = await request.get(`${url}/api/model/repository/findFirst`, {
+      params: {
+        q: JSON.stringify({
+          where: { projectId, isDeleted: false },
+          select: { id: true },
+        }),
+      },
+    });
     const repositoryId = (await repoRes.json())?.data?.id as number;
     expect(repositoryId).toBeTruthy();
 
@@ -89,27 +88,24 @@ test.describe("create-time state remap (gated create bypass)", () => {
 
     // POST a create with state.connect.id pointing at the gated workflow.
     // The auto-API path should remap to the default state.
-    const res = await request.post(
-      `${url}/api/model/repositoryCases/create`,
-      {
+    const res = await request.post(`${url}/api/model/repositoryCases/create`, {
+      data: {
         data: {
-          data: {
-            name: caseName,
-            order: 0,
-            automated: false,
-            isArchived: false,
-            isDeleted: false,
-            currentVersion: 1,
-            source: "MANUAL",
-            project: { connect: { id: projectId } },
-            repository: { connect: { id: repositoryId } },
-            folder: { connect: { id: folderId } },
-            template: { connect: { id: templateId } },
-            state: { connect: { id: gatedWorkflowId } },
-          },
+          name: caseName,
+          order: 0,
+          automated: false,
+          isArchived: false,
+          isDeleted: false,
+          currentVersion: 1,
+          source: "MANUAL",
+          project: { connect: { id: projectId } },
+          repository: { connect: { id: repositoryId } },
+          folder: { connect: { id: folderId } },
+          template: { connect: { id: templateId } },
+          state: { connect: { id: gatedWorkflowId } },
         },
-      }
-    );
+      },
+    });
 
     expect(res.status()).toBeLessThan(300);
     const body = await res.json();

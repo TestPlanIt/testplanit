@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import type { OutboundEnvelope } from "../../types";
 import { formatReviewRequestedBlocks } from "./review-requested";
 
-function baseEnvelope(overrides: Record<string, unknown> = {}): OutboundEnvelope {
+function baseEnvelope(
+  overrides: Record<string, unknown> = {}
+): OutboundEnvelope {
   return {
     eventId: "evt_00000000-0000-4000-8000-000000000000",
     eventName: "case.review_requested",
@@ -71,7 +73,9 @@ describe("formatReviewRequestedBlocks", () => {
 
   it("renders requester + assignee identity line for CASE entity", () => {
     const blocks = blocksOf(baseEnvelope());
-    expect(blocks[2].text.text).toContain("Test case review requested by *Alice* from *Bob*");
+    expect(blocks[2].text.text).toContain(
+      "Test case review requested by *Alice* from *Bob*"
+    );
   });
 
   it("falls back to role-name suffix when user assignee is absent", () => {
@@ -92,7 +96,8 @@ describe("formatReviewRequestedBlocks", () => {
   it("renders the requester comment when present", () => {
     const blocks = blocksOf(baseEnvelope());
     const commentBlock = blocks.find(
-      (b) => b.type === "section" && String(b.text?.text ?? "") === "Please review."
+      (b) =>
+        b.type === "section" && String(b.text?.text ?? "") === "Please review."
     );
     expect(commentBlock).toBeDefined();
   });

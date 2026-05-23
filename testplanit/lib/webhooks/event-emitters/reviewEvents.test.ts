@@ -277,9 +277,9 @@ describe("emitReviewCompletedEvent", () => {
         { ...baseCompletedInput(), decision },
         { tx: tx as never }
       );
-      expect((emitMock.mock.calls[0][1] as Record<string, unknown>).decision).toBe(
-        decision
-      );
+      expect(
+        (emitMock.mock.calls[0][1] as Record<string, unknown>).decision
+      ).toBe(decision);
     }
   });
 });

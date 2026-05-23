@@ -1,7 +1,6 @@
 "use client";
 
 import { formatSeconds } from "@/components/DurationDisplay";
-import DynamicIcon from "@/components/DynamicIcon";
 import { WorkflowStateDisplay } from "~/components/WorkflowStateDisplay";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";

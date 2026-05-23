@@ -1,4 +1,3 @@
-import DynamicIcon from "@/components/DynamicIcon";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
@@ -139,10 +138,9 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
 
   const firstGatedOrder = (workflows ?? [])
     .filter((w) => w.requiresReview === true)
-    .reduce<number | null>(
-      (acc, w) => (acc === null || w.order < acc ? w.order : acc),
-      null
-    );
+    .reduce<
+      number | null
+    >((acc, w) => (acc === null || w.order < acc ? w.order : acc), null);
   const workflowOptions =
     workflows?.map((workflow) => ({
       value: workflow.id.toString(),

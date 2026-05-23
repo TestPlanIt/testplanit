@@ -25,17 +25,14 @@ test.describe("Admin Workflows — default workflow edit-save idempotency", () =
     // Find the first default CASES workflow — the one every project picks up
     // by default. The bug originally surfaced on the default workflow because
     // it's the most-edited.
-    const wfRes = await request.get(
-      `${url}/api/model/workflows/findFirst`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: { scope: "CASES", isDeleted: false, isDefault: true },
-            select: { id: true, name: true },
-          }),
-        },
-      }
-    );
+    const wfRes = await request.get(`${url}/api/model/workflows/findFirst`, {
+      params: {
+        q: JSON.stringify({
+          where: { scope: "CASES", isDeleted: false, isDefault: true },
+          select: { id: true, name: true },
+        }),
+      },
+    });
     const wf = (await wfRes.json())?.data as
       | { id: number; name: string }
       | undefined;
@@ -69,9 +66,7 @@ test.describe("Admin Workflows — default workflow edit-save idempotency", () =
     // Try the menu trigger first, fall back to a direct edit button.
     const menuTrigger = row.getByRole("button").first();
     await menuTrigger.click().catch(() => {});
-    const editOption = page
-      .getByRole("menuitem", { name: /edit/i })
-      .first();
+    const editOption = page.getByRole("menuitem", { name: /edit/i }).first();
     if (await editOption.isVisible().catch(() => false)) {
       await editOption.click();
     } else {
@@ -97,7 +92,9 @@ test.describe("Admin Workflows — default workflow edit-save idempotency", () =
     // role="status" element with the destructive variant — absence is the
     // success signal.
     const errorToast = page.getByText(/error|failed/i).first();
-    await expect(errorToast).not.toBeVisible({ timeout: 1000 }).catch(() => {});
+    await expect(errorToast)
+      .not.toBeVisible({ timeout: 1000 })
+      .catch(() => {});
 
     // Post-edit assignment count matches pre-edit count.
     const afterRes = await request.get(

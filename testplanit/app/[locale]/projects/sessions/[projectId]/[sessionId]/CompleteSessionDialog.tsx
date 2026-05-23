@@ -1,6 +1,5 @@
 "use client";
 
-import DynamicIcon from "@/components/DynamicIcon";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";

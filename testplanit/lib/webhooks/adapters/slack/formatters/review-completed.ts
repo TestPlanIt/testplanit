@@ -64,7 +64,12 @@ export function formatReviewCompletedBlocks(
   envelope: OutboundEnvelope
 ): FormattedHttpRequest {
   const data = envelope.data as unknown as ReviewCompletedData;
-  const href = entityHref(data.entityType, data.projectId, data.entityId, data.entityUrl);
+  const href = entityHref(
+    data.entityType,
+    data.projectId,
+    data.entityId,
+    data.entityUrl
+  );
   const decider = data.deciderName ?? "Someone";
   const requester = data.requesterName ?? "the requester";
   const headerText = headerFor(data.decision);

@@ -419,10 +419,9 @@ export async function resolveCreateStateRemap(
 
   const firstGatedOrder = workflows
     .filter((w) => w.requiresReview === true)
-    .reduce<number | null>(
-      (acc, w) => (acc === null || w.order < acc ? w.order : acc),
-      null
-    );
+    .reduce<
+      number | null
+    >((acc, w) => (acc === null || w.order < acc ? w.order : acc), null);
 
   if (firstGatedOrder === null) {
     return candidateStateId;

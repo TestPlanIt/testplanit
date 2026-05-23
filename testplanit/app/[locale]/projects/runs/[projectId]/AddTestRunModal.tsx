@@ -1,6 +1,5 @@
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
-import DynamicIcon from "@/components/DynamicIcon";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
 import { MilestoneSelect } from "@/components/forms/MilestoneSelect";
@@ -958,10 +957,9 @@ export default function AddTestRunModal({
   const firstGatedRunOrder = useMemo(() => {
     return (workflows ?? [])
       .filter((w) => w.requiresReview === true)
-      .reduce<number | null>(
-        (acc, w) => (acc === null || w.order < acc ? w.order : acc),
-        null
-      );
+      .reduce<
+        number | null
+      >((acc, w) => (acc === null || w.order < acc ? w.order : acc), null);
   }, [workflows]);
   const workflowsOptions = useMemo(() => {
     return (
