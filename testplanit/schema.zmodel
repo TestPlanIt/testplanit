@@ -1607,9 +1607,14 @@ model RepositoryCases {
 
     @@allow('all', auth().access == 'ADMIN')
 
-    // Schema-layer review gate. Always denies any transition into a requires-review state at the policy layer; the project + system feature-flag bypasses are handled in the app preflight (lib/services/reviewGate.ts + isReviewFeatureSystemEnabled) which produces the typed REVIEW_REQUIRED envelope BEFORE the schema rule fires.
-    @@deny('update', future().stateId != stateId && future().state.requiresReview)
-    @@deny('create', state.requiresReview && auth() != null)
+    // Review-gate enforcement lives entirely at the app layer
+    // (lib/services/reviewGate.ts + the auto-API route handler).
+    // ZenStack @@deny expressions can't read the AppConfig system kill
+    // switch, so schema-layer rules here would either fire even when the
+    // system flag is OFF (incorrect) or duplicate the app check
+    // imperfectly (drift risk). The app preflight is the single source
+    // of truth and produces structured REVIEW_REQUIRED responses; raw
+    // prisma + ZenStack-enhanced server actions both route through it.
 }
 
 model RepositoryCaseVersions {
@@ -2135,9 +2140,14 @@ model Sessions {
 
     @@allow('all', auth().access == 'ADMIN')
 
-    // Schema-layer review gate. Always denies any transition into a requires-review state at the policy layer; the project + system feature-flag bypasses are handled in the app preflight (lib/services/reviewGate.ts + isReviewFeatureSystemEnabled) which produces the typed REVIEW_REQUIRED envelope BEFORE the schema rule fires.
-    @@deny('update', future().stateId != stateId && future().state.requiresReview)
-    @@deny('create', state.requiresReview && auth() != null)
+    // Review-gate enforcement lives entirely at the app layer
+    // (lib/services/reviewGate.ts + the auto-API route handler).
+    // ZenStack @@deny expressions can't read the AppConfig system kill
+    // switch, so schema-layer rules here would either fire even when the
+    // system flag is OFF (incorrect) or duplicate the app check
+    // imperfectly (drift risk). The app preflight is the single source
+    // of truth and produces structured REVIEW_REQUIRED responses; raw
+    // prisma + ZenStack-enhanced server actions both route through it.
 }
 
 model SessionResults {
@@ -2498,9 +2508,14 @@ model TestRuns {
 
     @@allow('all', auth().access == 'ADMIN')
 
-    // Schema-layer review gate. Always denies any transition into a requires-review state at the policy layer; the project + system feature-flag bypasses are handled in the app preflight (lib/services/reviewGate.ts + isReviewFeatureSystemEnabled) which produces the typed REVIEW_REQUIRED envelope BEFORE the schema rule fires.
-    @@deny('update', future().stateId != stateId && future().state.requiresReview)
-    @@deny('create', state.requiresReview && auth() != null)
+    // Review-gate enforcement lives entirely at the app layer
+    // (lib/services/reviewGate.ts + the auto-API route handler).
+    // ZenStack @@deny expressions can't read the AppConfig system kill
+    // switch, so schema-layer rules here would either fire even when the
+    // system flag is OFF (incorrect) or duplicate the app check
+    // imperfectly (drift risk). The app preflight is the single source
+    // of truth and produces structured REVIEW_REQUIRED responses; raw
+    // prisma + ZenStack-enhanced server actions both route through it.
 }
 
 enum TestRunType {
