@@ -44,12 +44,6 @@ Approvals are one-shot. Once consumed by an actual transition, they can't be reu
 
 If a requester closes the loop on their own request before a reviewer gets to it, the request moves to CANCELLED and quietly leaves the reviewer's Pending tab. No false-positive ping, no clutter in the Decided audit trail.
 
-## The Bulk-Edit Footgun, Defused
-
-TestPlanIt's bulk-edit modal evaluates the gate **per case** before you can click Save. If the target state is gated and any selected case lacks an approval, the Save button stays disabled with an inline message listing exactly which cases need a review first. Fix those (request review on them, get them approved), then re-open bulk-edit and Save works.
-
-Milestone completion does the same thing one level up: when you complete a milestone and choose to cascade active runs and sessions to a "Done" state, every entity is gate-checked individually. One missing approval rolls back the whole cascade with a message naming the specific run or session and the specific gate that blocked it.
-
 ## Strict Transitive: Each Gate, Its Own Approval
 
 If your workflow has two gated states — say, "Active" and "Done" — a case moving from "Draft" directly to "Done" crosses *both* gates. TestPlanIt requires an approved request for **each** of them. An approval for "Done" doesn't grant transit through "Active."
