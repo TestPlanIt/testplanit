@@ -20,13 +20,15 @@ vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
     mockUseReviewFeatureEnabled(...args),
 }));
 
-// ZenStack hooks: count + user role lookup
+// ZenStack hooks: count + user role lookup + access-visible project count
 const mockUseCountReviewRequest = vi.fn();
 const mockUseFindUniqueUser = vi.fn();
+const mockUseCountProjects = vi.fn();
 vi.mock("~/lib/hooks", () => ({
   useCountReviewRequest: (...args: unknown[]) =>
     mockUseCountReviewRequest(...args),
   useFindUniqueUser: (...args: unknown[]) => mockUseFindUniqueUser(...args),
+  useCountProjects: (...args: unknown[]) => mockUseCountProjects(...args),
 }));
 
 // ~/lib/navigation Link — required wrapper, NEVER next/link.
@@ -55,11 +57,15 @@ function setupDefaults({
   count = 0,
   authenticated = true,
   roleIds = [7],
+  reviewEnabledProjectCount = 1,
+  reviewEnabledProjectCountLoading = false,
 }: {
   enabled?: boolean;
   count?: number;
   authenticated?: boolean;
   roleIds?: number[];
+  reviewEnabledProjectCount?: number | undefined;
+  reviewEnabledProjectCountLoading?: boolean;
 } = {}) {
   mockUseReviewFeatureEnabled.mockReturnValue({
     enabled,
@@ -86,6 +92,11 @@ function setupDefaults({
   });
 
   mockUseCountReviewRequest.mockReturnValue({ data: count });
+
+  mockUseCountProjects.mockReturnValue({
+    data: reviewEnabledProjectCount,
+    isLoading: reviewEnabledProjectCountLoading,
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -98,6 +109,7 @@ describe("ReviewInboxButton", () => {
     mockUseReviewFeatureEnabled.mockReset();
     mockUseCountReviewRequest.mockReset();
     mockUseFindUniqueUser.mockReset();
+    mockUseCountProjects.mockReset();
   });
 
   it("(a) renders null when feature flag is disabled", () => {
@@ -110,6 +122,31 @@ describe("ReviewInboxButton", () => {
     setupDefaults({ authenticated: false });
     const { container } = render(<ReviewInboxButton />);
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("(b2) renders null when the viewer has no review-enabled projects visible", () => {
+    setupDefaults({ count: 0, reviewEnabledProjectCount: 0 });
+    const { container } = render(<ReviewInboxButton />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("(b3) renders null while the review-enabled-project count is still loading", () => {
+    setupDefaults({
+      count: 0,
+      reviewEnabledProjectCount: undefined,
+      reviewEnabledProjectCountLoading: true,
+    });
+    const { container } = render(<ReviewInboxButton />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("(b4) skips the project-count query while the feature flag is off", () => {
+    setupDefaults({ enabled: false });
+    render(<ReviewInboxButton />);
+    const projectCountCall = mockUseCountProjects.mock.calls[0];
+    expect(projectCountCall).toBeDefined();
+    const opts = projectCountCall![1] as { enabled?: boolean } | undefined;
+    expect(opts?.enabled).toBe(false);
   });
 
   it("(c) renders the icon Link with NO Badge when count === 0", () => {

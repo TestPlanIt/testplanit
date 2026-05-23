@@ -7,7 +7,11 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
-import { useCountReviewRequest, useFindUniqueUser } from "~/lib/hooks";
+import {
+  useCountProjects,
+  useCountReviewRequest,
+  useFindUniqueUser,
+} from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 
 /**
@@ -23,6 +27,9 @@ import { Link } from "~/lib/navigation";
  *     button is system-level, so no projectId is passed to
  *     useReviewFeatureEnabled).
  *   - Hidden while the session is loading OR the viewer is unauthenticated.
+ *   - Hidden when the viewer has no access to any project with the
+ *     per-project Review Workflow toggle on. Access-policy-enforced count;
+ *     viewers who can't act on any gated project don't see the icon.
  *
  * Count source (D-09):
  *   - PENDING ReviewRequests where the viewer is direct assignee OR holds
@@ -84,18 +91,37 @@ export function ReviewInboxButton() {
       where: {
         status: "PENDING",
         isDeleted: false,
+        project: { reviewWorkflowEnabled: true },
         OR: [
           { assigneeUserId: session?.user?.id ?? "" },
           { assigneeRoleId: { in: currentUserRoleIds } },
         ],
       },
     },
-    { enabled: !!session?.user?.id }
+    { enabled: !!session?.user?.id && enabled === true }
   );
+
+  // Count of access-visible projects with the per-project toggle on. The
+  // enhanced auto-API enforces project access policies, so this naturally
+  // reflects "projects this user can act in." Used to hide the icon entirely
+  // when the viewer has no review-enabled project to act in.
+  const { data: enabledProjectCount, isLoading: projectCountLoading } =
+    useCountProjects(
+      {
+        where: {
+          reviewWorkflowEnabled: true,
+          isDeleted: false,
+        },
+      },
+      { enabled: !!session?.user?.id && enabled === true }
+    );
 
   // Visibility short-circuits — keep all hooks above to honor Rules of Hooks.
   if (status === "loading" || !session?.user?.id) return null;
   if (featureLoading || !enabled) return null;
+  if (projectCountLoading) return null;
+  if (typeof enabledProjectCount === "number" && enabledProjectCount === 0)
+    return null;
 
   const numericCount = typeof count === "number" ? count : 0;
 
