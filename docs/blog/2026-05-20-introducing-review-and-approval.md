@@ -28,7 +28,7 @@ You already have workflow states. Cases move from "Draft" to "Under Review" to "
 
 Open **Administration → Workflows**, edit any state, and toggle **Requires review**. That's the entire setup. A small warning icon now appears next to that state so authors and reviewers both see the signal.
 
-Now anyone who tries to flip a case to "Active," or a run to "Done," gets a different UI: a note telling them what gate they're crossing, a **Request review** button, and a Save button that won't fire until the request is approved.
+Now anyone who tries to flip a case to "Active," or a run to "Done," gets a different UI: a note telling them what gate they're crossing, a **Request review** button, and a Save button that stays disabled while the gate is unsatisfied.
 
 ## One Request, One Decision
 

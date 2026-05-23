@@ -101,7 +101,7 @@ If the requester changes their mind before a decision lands, they can cancel:
 2. Click the **Pending review** banner.
 3. Click **Cancel request**.
 
-Cancelling does not affect the entity's current state.
+Cancelling does not affect the entity's current state. Anyone who was asked to review the request — the direct assignee or every role holder — is notified so they can drop the item from their queue, and the cancellation is emitted as a `review_completed` webhook event with `decision: "CANCELLED"`.
 
 ## Reviewing a request
 

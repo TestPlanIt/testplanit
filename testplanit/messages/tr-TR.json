@@ -5326,10 +5326,12 @@
         "reviewApprovedTitle": "İnceleme onaylandı.",
         "reviewChangesRequestedTitle": "Talep edilen değişiklikler",
         "reviewRejectedTitle": "İnceleme reddedildi",
+        "reviewCancelledTitle": "İnceleme talebi iptal edildi.",
         "reviewRequestedAction": "İncelemenizi rica ettik.",
         "reviewApprovedAction": "İnceleme talebinizi onayladım.",
         "reviewChangesRequestedAction": "İnceleme talebinize ilişkin istenen değişiklikler",
         "reviewRejectedAction": "İnceleme talebinizi reddettim.",
+        "reviewCancelledAction": "inceleme talebi iptal edildi",
         "reviewEntityLabelCase": "test durumu",
         "reviewEntityLabelRun": "test çalıştırması",
         "reviewEntityLabelSession": "oturum",
@@ -5338,7 +5340,8 @@
         "reviewRequestedEmailMessage": "{actorName} , \"{projectName} \" projesindeki {entityLabel} \"{entityName}\" incelemenizi talep etti.",
         "reviewApprovedEmailMessage": "{actorName} , {entityLabel} tarihinde \"{entityName}\" projesindeki \"{projectName} \" inceleme isteğinizi onayladı.",
         "reviewChangesRequestedEmailMessage": "{actorName} , \" {entityLabel} \"{entityName}\" projesindeki \"{projectName} \" inceleme talebinizde değişiklikler istedi.",
-        "reviewRejectedEmailMessage": "{actorName} , {entityLabel} tarihinde \"{entityName}\" projesindeki \"{projectName} \" inceleme isteğinizi reddetti."
+        "reviewRejectedEmailMessage": "{actorName} , {entityLabel} tarihinde \"{entityName}\" projesindeki \"{projectName} \" inceleme isteğinizi reddetti.",
+        "reviewCancelledEmailMessage": "{actorName} , {entityLabel} \"{entityName}\" projesindeki \"{projectName} \" inceleme isteğini iptal etti."
       }
     },
     "issues": {

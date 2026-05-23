@@ -5326,19 +5326,22 @@
         "reviewApprovedTitle": "审核已获批准",
         "reviewChangesRequestedTitle": "请求更改",
         "reviewRejectedTitle": "审查被拒绝",
+        "reviewCancelledTitle": "审查请求已取消",
         "reviewRequestedAction": "请您审阅",
         "reviewApprovedAction": "已批准您的审查请求",
         "reviewChangesRequestedAction": "您在审核请求中提出的更改要求",
         "reviewRejectedAction": "您的复审请求已被拒绝。",
+        "reviewCancelledAction": "取消了审查请求",
         "reviewEntityLabelCase": "测试用例",
         "reviewEntityLabelRun": "测试运行",
         "reviewEntityLabelSession": "会议",
         "reviewTransition": "过渡： {from} → {to}",
         "reviewCommentPreview": "评论： {comment}",
-        "reviewRequestedEmailMessage": "{actorName} 请求您对项目“{projectName} 中的 {entityLabel} \"{entityName}\" 进行审核。",
-        "reviewApprovedEmailMessage": "{actorName} 已批准您对项目 {entityLabel} \"{entityName}\" 的{projectName} \" 的 {entityLabel} \" 的 {entityName} \" 的 {projectName} \" 的 {entityLabel} \" 的 {entityName} \" 的 {projectName} \" 的 {actorName} \" 的 {entityLabel} \" 的 {entityName} \" 的 {entityName} \" 的 {projectName} \" 的 <[⌇⌇1 ...3⌇⌇]> \" 的 <[⌇⌇1�",
+        "reviewRequestedEmailMessage": "{actorName} 请求您对项目“{projectName}”中的 {entityLabel} “{entityName}”进行审核。",
+        "reviewApprovedEmailMessage": "{actorName} 已批准您对 {entityLabel} \"{entityName}\" 的项目 \"{projectName} \" 的审核请求。",
         "reviewChangesRequestedEmailMessage": "{actorName} requested changes on your review request for {entityLabel} \"{entityName}\" in project \"{projectName}\".",
-        "reviewRejectedEmailMessage": "{actorName} rejected your review request on {entityLabel} \"{entityName}\" in project \"{projectName}\"."
+        "reviewRejectedEmailMessage": "{actorName} rejected your review request on {entityLabel} \"{entityName}\" in project \"{projectName}\".",
+        "reviewCancelledEmailMessage": "{actorName} 取消了对 {entityLabel} \"{entityName}\" 在项目 \"{projectName} \" 中的审查请求。"
       }
     },
     "issues": {

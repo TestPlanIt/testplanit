@@ -5326,10 +5326,12 @@
         "reviewApprovedTitle": "Prüfung genehmigt",
         "reviewChangesRequestedTitle": "Änderungen angefordert",
         "reviewRejectedTitle": "Überprüfung abgelehnt",
+        "reviewCancelledTitle": "Überprüfungsantrag storniert",
         "reviewRequestedAction": "Wir bitten um Ihre Bewertung von",
         "reviewApprovedAction": "Ich habe Ihre Überprüfungsanfrage genehmigt am",
         "reviewChangesRequestedAction": "angeforderte Änderungen an Ihrer Überprüfungsanfrage für",
         "reviewRejectedAction": "Ihre Überprüfungsanfrage wurde abgelehnt am",
+        "reviewCancelledAction": "Die Überprüfungsanfrage wurde storniert am",
         "reviewEntityLabelCase": "Testfall",
         "reviewEntityLabelRun": "Probelauf",
         "reviewEntityLabelSession": "Sitzung",
@@ -5338,7 +5340,8 @@
         "reviewRequestedEmailMessage": "{actorName} hat um Ihre Bewertung von {entityLabel} \"{entityName}\" im Projekt \"{projectName} \" gebeten.",
         "reviewApprovedEmailMessage": "{actorName} hat Ihre Überprüfungsanfrage am {entityLabel} \"{entityName}\" im Projekt \"{projectName} \" genehmigt.",
         "reviewChangesRequestedEmailMessage": "{actorName} hat Änderungen an Ihrer Überprüfungsanfrage für {entityLabel} \"{entityName}\" im Projekt \"{projectName} \" angefordert.",
-        "reviewRejectedEmailMessage": "{actorName} hat Ihre Überprüfungsanfrage für {entityLabel} \"{entityName}\" im Projekt \"{projectName} \" abgelehnt."
+        "reviewRejectedEmailMessage": "{actorName} hat Ihre Überprüfungsanfrage für {entityLabel} \"{entityName}\" im Projekt \"{projectName} \" abgelehnt.",
+        "reviewCancelledEmailMessage": "{actorName} hat die Überprüfungsanfrage für {entityLabel} \"{entityName}\" im Projekt \"{projectName} \" abgebrochen."
       }
     },
     "issues": {

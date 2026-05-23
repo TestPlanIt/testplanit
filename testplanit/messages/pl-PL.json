@@ -5326,10 +5326,12 @@
         "reviewApprovedTitle": "Recenzja zatwierdzona",
         "reviewChangesRequestedTitle": "Żądane zmiany",
         "reviewRejectedTitle": "Recenzja odrzucona",
+        "reviewCancelledTitle": "Prośba o recenzję została anulowana",
         "reviewRequestedAction": "poprosiłem o twoją recenzję",
         "reviewApprovedAction": "zatwierdził Twoją prośbę o recenzję",
         "reviewChangesRequestedAction": "żądane zmiany w Twoim wniosku o przegląd",
         "reviewRejectedAction": "odrzuciłem Twoją prośbę o recenzję",
+        "reviewCancelledAction": "anulował prośbę o przegląd",
         "reviewEntityLabelCase": "przypadek testowy",
         "reviewEntityLabelRun": "przebieg próbny",
         "reviewEntityLabelSession": "sesja",
@@ -5338,7 +5340,8 @@
         "reviewRequestedEmailMessage": "{actorName} poprosił o Twoją recenzję {entityLabel} „{entityName}” w projekcie „{projectName}”.",
         "reviewApprovedEmailMessage": "{actorName} zatwierdził Twoją prośbę o recenzję w dniu {entityLabel} „{entityName}” w projekcie „{projectName}”.",
         "reviewChangesRequestedEmailMessage": "{actorName} zażądał wprowadzenia zmian w żądaniu przeglądu {entityLabel} „{entityName}” w projekcie „{projectName}”.",
-        "reviewRejectedEmailMessage": "{actorName} odrzucił Twoją prośbę o recenzję w {entityLabel} „{entityName}” w projekcie „{projectName}”."
+        "reviewRejectedEmailMessage": "{actorName} odrzucił Twoją prośbę o recenzję w {entityLabel} „{entityName}” w projekcie „{projectName}”.",
+        "reviewCancelledEmailMessage": "{actorName} anulował prośbę o recenzję w {entityLabel} „{entityName}” w projekcie „{projectName}”."
       }
     },
     "issues": {

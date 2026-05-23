@@ -5326,10 +5326,12 @@
         "reviewApprovedTitle": "Проверка одобрена",
         "reviewChangesRequestedTitle": "Запрошены изменения",
         "reviewRejectedTitle": "Отзыв отклонен",
+        "reviewCancelledTitle": "Запрос на пересмотр отменен.",
         "reviewRequestedAction": "запросили ваш отзыв о",
         "reviewApprovedAction": "Ваш запрос на проверку одобрен.",
         "reviewChangesRequestedAction": "запрошенные изменения в вашем запросе на проверку",
         "reviewRejectedAction": "ваш запрос на проверку отклонен",
+        "reviewCancelledAction": "отменил запрос на пересмотр",
         "reviewEntityLabelCase": "тестовый пример",
         "reviewEntityLabelRun": "тестовый запуск",
         "reviewEntityLabelSession": "сессия",
@@ -5338,7 +5340,8 @@
         "reviewRequestedEmailMessage": "{actorName} запросил ваш отзыв на {entityLabel} \"{entityName}\" в проекте \"{projectName}\".",
         "reviewApprovedEmailMessage": "{actorName} одобрил ваш запрос на рецензирование в {entityLabel} \"{entityName}\" в проекте \"{projectName}\".",
         "reviewChangesRequestedEmailMessage": "{actorName} запросил изменения в вашем запросе на рецензирование для {entityLabel} \"{entityName}\" в проекте \"{projectName}\".",
-        "reviewRejectedEmailMessage": "{actorName} отклонил ваш запрос на рецензирование в {entityLabel} \"{entityName}\" в проекте \"{projectName}\"."
+        "reviewRejectedEmailMessage": "{actorName} отклонил ваш запрос на рецензирование в {entityLabel} \"{entityName}\" в проекте \"{projectName}\".",
+        "reviewCancelledEmailMessage": "{actorName} отменил запрос на рецензирование по {entityLabel} \"{entityName}\" в проекте \"{projectName}\"."
       }
     },
     "issues": {

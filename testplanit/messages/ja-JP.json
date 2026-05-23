@@ -5326,10 +5326,12 @@
         "reviewApprovedTitle": "レビュー承認済み",
         "reviewChangesRequestedTitle": "変更依頼",
         "reviewRejectedTitle": "審査が却下されました",
+        "reviewCancelledTitle": "レビューリクエストがキャンセルされました",
         "reviewRequestedAction": "レビューを依頼しました",
         "reviewApprovedAction": "レビューリクエストを承認しました",
         "reviewChangesRequestedAction": "レビュー依頼に対する変更をリクエストしました",
         "reviewRejectedAction": "レビューリクエストを拒否しました",
+        "reviewCancelledAction": "レビューリクエストをキャンセルしました",
         "reviewEntityLabelCase": "テストケース",
         "reviewEntityLabelRun": "試運転",
         "reviewEntityLabelSession": "セッション",
@@ -5338,7 +5340,8 @@
         "reviewRequestedEmailMessage": "{actorName} は、プロジェクト \"{projectName} \" の {entityLabel} \"{entityName}\" のレビューを依頼しました。",
         "reviewApprovedEmailMessage": "{actorName} がプロジェクト \"{projectName} \" のレビュー依頼を {entityLabel} \"{entityName}\" で承認しました。",
         "reviewChangesRequestedEmailMessage": "{actorName} requested changes on your review request for {entityLabel} \"{entityName}\" in project \"{projectName}\".",
-        "reviewRejectedEmailMessage": "{actorName} rejected your review request on {entityLabel} \"{entityName}\" in project \"{projectName}\"."
+        "reviewRejectedEmailMessage": "{actorName} rejected your review request on {entityLabel} \"{entityName}\" in project \"{projectName}\".",
+        "reviewCancelledEmailMessage": "{actorName} は、プロジェクト \"{projectName} \" の {entityLabel} \"{entityName}\" のレビュー要求をキャンセルしました。"
       }
     },
     "issues": {

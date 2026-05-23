@@ -5326,10 +5326,12 @@
         "reviewApprovedTitle": "Đánh giá đã được phê duyệt",
         "reviewChangesRequestedTitle": "Những thay đổi được yêu cầu",
         "reviewRejectedTitle": "Đánh giá bị từ chối",
+        "reviewCancelledTitle": "Yêu cầu xem xét đã bị hủy bỏ",
         "reviewRequestedAction": "Tôi đã yêu cầu bạn xem xét lại",
         "reviewApprovedAction": "Đã phê duyệt yêu cầu xem xét của bạn vào ngày...",
         "reviewChangesRequestedAction": "Tôi đã yêu cầu thay đổi yêu cầu xem xét của bạn.",
         "reviewRejectedAction": "Yêu cầu xem xét của bạn đã bị từ chối vào ngày...",
+        "reviewCancelledAction": "đã hủy yêu cầu xem xét vào",
         "reviewEntityLabelCase": "trường hợp thử nghiệm",
         "reviewEntityLabelRun": "chạy thử nghiệm",
         "reviewEntityLabelSession": "phiên họp",
@@ -5338,7 +5340,8 @@
         "reviewRequestedEmailMessage": "{actorName} đã yêu cầu bạn xem xét {entityLabel} \"{entityName}\" trong dự án \"{projectName}\".",
         "reviewApprovedEmailMessage": "{actorName} đã chấp thuận yêu cầu đánh giá của bạn vào ngày {entityLabel} \"{entityName}\" trong dự án \"{projectName}\".",
         "reviewChangesRequestedEmailMessage": "{actorName} đã yêu cầu thay đổi đối với yêu cầu xem xét của bạn cho {entityLabel} \"{entityName}\" trong dự án \"{projectName}\".",
-        "reviewRejectedEmailMessage": "{actorName} đã từ chối yêu cầu đánh giá của bạn vào {entityLabel} \"{entityName}\" trong dự án \"{projectName}\"."
+        "reviewRejectedEmailMessage": "{actorName} đã từ chối yêu cầu đánh giá của bạn vào {entityLabel} \"{entityName}\" trong dự án \"{projectName}\".",
+        "reviewCancelledEmailMessage": "{actorName} đã hủy yêu cầu xem xét trên {entityLabel} \"{entityName}\" trong dự án \"{projectName}\"."
       }
     },
     "issues": {

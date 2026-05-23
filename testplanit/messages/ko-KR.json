@@ -5326,10 +5326,12 @@
         "reviewApprovedTitle": "검토 승인됨",
         "reviewChangesRequestedTitle": "요청된 변경 사항",
         "reviewRejectedTitle": "검토가 거부되었습니다.",
+        "reviewCancelledTitle": "리뷰 요청이 취소되었습니다.",
         "reviewRequestedAction": "귀하의 리뷰를 요청드립니다.",
         "reviewApprovedAction": "귀하의 리뷰 요청을 승인했습니다.",
         "reviewChangesRequestedAction": "리뷰 요청에 대한 변경 사항을 요청하셨습니다.",
         "reviewRejectedAction": "귀하의 리뷰 요청이 거부되었습니다.",
+        "reviewCancelledAction": "리뷰 요청을 취소했습니다.",
         "reviewEntityLabelCase": "테스트 케이스",
         "reviewEntityLabelRun": "테스트 실행",
         "reviewEntityLabelSession": "세션",
@@ -5338,7 +5340,8 @@
         "reviewRequestedEmailMessage": "{actorName} 님이 프로젝트 \"{projectName} \"에서 {entityLabel} \" \"{entityName}\"에 대한 리뷰를 요청했습니다.",
         "reviewApprovedEmailMessage": "{actorName} approved your review request on {entityLabel} \"{entityName}\" in project \"{projectName}\".",
         "reviewChangesRequestedEmailMessage": "{actorName} requested changes on your review request for {entityLabel} \"{entityName}\" in project \"{projectName}\".",
-        "reviewRejectedEmailMessage": "{actorName} 님이 프로젝트 \"{projectName} \"에서 {entityLabel} \"{entityName}\"에 대한 검토 요청을 거부했습니다."
+        "reviewRejectedEmailMessage": "{actorName} 님이 프로젝트 \"{projectName} \"에서 {entityLabel} \"{entityName}\"에 대한 검토 요청을 거부했습니다.",
+        "reviewCancelledEmailMessage": "{actorName} 님이 프로젝트 \"{projectName} \"에서 {entityLabel} \"{entityName}\"에 대한 검토 요청을 취소했습니다."
       }
     },
     "issues": {

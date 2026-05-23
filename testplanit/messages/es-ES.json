@@ -5326,10 +5326,12 @@
         "reviewApprovedTitle": "Revisión aprobada",
         "reviewChangesRequestedTitle": "Cambios solicitados",
         "reviewRejectedTitle": "Revisión rechazada",
+        "reviewCancelledTitle": "Solicitud de revisión cancelada",
         "reviewRequestedAction": "Solicité su revisión de",
         "reviewApprovedAction": "Aprobamos su solicitud de revisión el",
         "reviewChangesRequestedAction": "cambios solicitados en su solicitud de revisión para",
         "reviewRejectedAction": "Rechacé su solicitud de revisión en",
+        "reviewCancelledAction": "canceló la solicitud de revisión el",
         "reviewEntityLabelCase": "caso de prueba",
         "reviewEntityLabelRun": "ejecución de prueba",
         "reviewEntityLabelSession": "sesión",
@@ -5338,7 +5340,8 @@
         "reviewRequestedEmailMessage": "{actorName} solicitó su revisión de {entityLabel} \"{entityName}\" en el proyecto \"{projectName}\".",
         "reviewApprovedEmailMessage": "{actorName} aprobó su solicitud de revisión en {entityLabel} \"{entityName}\" en el proyecto \"{projectName}\".",
         "reviewChangesRequestedEmailMessage": "{actorName} solicitó cambios en su solicitud de revisión para {entityLabel} \"{entityName}\" en el proyecto \"{projectName}\".",
-        "reviewRejectedEmailMessage": "{actorName} rechazó su solicitud de revisión en {entityLabel} \"{entityName}\" en el proyecto \"{projectName}\"."
+        "reviewRejectedEmailMessage": "{actorName} rechazó su solicitud de revisión en {entityLabel} \"{entityName}\" en el proyecto \"{projectName}\".",
+        "reviewCancelledEmailMessage": "{actorName} canceló la solicitud de revisión en {entityLabel} \"{entityName}\" en el proyecto \"{projectName}\"."
       }
     },
     "issues": {
