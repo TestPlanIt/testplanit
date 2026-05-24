@@ -4,6 +4,7 @@ import * as z from "zod/v4";
 import { zenstack } from "../../api.js";
 import type { EnvConfig } from "../../env.js";
 import { mapHttpErrorToToolResult } from "../../errors.js";
+import { resolveCustomFields } from "./customFields.js";
 import { mapCaseRow } from "./shared.js";
 
 export interface CasesListDeps {
@@ -82,7 +83,7 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
     "testplanit_cases_list",
     {
       description:
-        "List test cases scoped to a project. Filters: folderId, tagIds, name (case-insensitive substring), stateId, customField (by display name), issueId (linked Issue numeric id — see issues_list for resolution from external keys). Cursor pagination via the `cursor` returned in `nextCursor`. (per CASE-01 + EXEC-06 chain via D7-03) " +
+        "List test cases scoped to a project. Filters: folderId, tagIds, name (case-insensitive substring), stateId, customField, issueId (linked Issue numeric id — see issues_list for resolution from external keys). customField takes {name} to match cases that have the field set, or {name, value} to match by value (Dropdown/Multi-Select accept the option name or id; an unknown field name or option returns a validation error rather than unfiltered results). Cursor pagination via the `cursor` returned in `nextCursor`. (per CASE-01 + EXEC-06 chain via D7-03) " +
         "Phase-8 maintenance filters: automated (user-controlled flag), source (single or array of RepositoryCaseSource), repositoryId, hasNeverExecuted (no junitResults AND no TestRunResults via TestRunCases), staleSinceUpdate (handler-side post-filter — bounded scan of POST_FILTER_SCAN_CAP=400; surfaces truncated:true when scan cap hit), updatedAfter/updatedBefore (filter via the repositoryCaseVersions relation since RepositoryCases has no updatedAt column). Each row carries lastUpdatedAt and latestResult (union of latest junitResults / TestRunResults). " +
         "Creator and date filters: creatorIds (array of user ids — matches any; deliberately array-shaped while runs_list/sessions_list use single-string createdById), from/to (ISO 8601 createdAt range).",
       inputSchema: {
@@ -91,17 +92,23 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
         tagIds: z.array(z.number().int().positive()).optional(),
         name: z.string().min(1).optional(),
         stateId: z.number().int().positive().optional(),
-        // BL-02: only `name` is supported. Value-equality on the Json?
-        // `caseFieldValues.value` column is unreliable across field types
-        // (Dropdown stores option IDs, Multi-Select stores arrays, Text
-        // stores strings). Silently swallowing an agent-supplied `value`
-        // (the prior behavior) would let the agent act on incorrect data.
-        // Dropping it from the schema makes the unsupported dimension
-        // explicit; agents that need value filtering should call
-        // testplanit_cases_get on candidate IDs and filter locally.
+        // `{ name }` alone matches cases that have the field set (presence).
+        // `{ name, value }` filters by value: resolveCustomFields canonicalizes
+        // the value the same way the write path stores it (Dropdown/Multi-Select
+        // option name -> option id), so the equality check matches what is
+        // actually persisted in caseFieldValues.value. strictObject rejects any
+        // other key with a validation error instead of silently dropping it.
         customField: z
-          .object({
+          .strictObject({
             name: z.string().min(1),
+            value: z
+              .union([
+                z.string(),
+                z.number(),
+                z.boolean(),
+                z.array(z.union([z.string(), z.number()])),
+              ])
+              .optional(),
           })
           .optional(),
         // D7-03: filter cases linked to a specific issue. Pass the internal
@@ -151,9 +158,32 @@ export function registerCasesList(server: McpServer, deps: CasesListDeps): void 
         }
         if (input.stateId !== undefined) where.stateId = input.stateId;
         if (input.customField) {
-          where.caseFieldValues = {
-            some: { field: { displayName: input.customField.name } },
-          };
+          if (input.customField.value === undefined) {
+            // Presence filter — cases that have this field set (any value).
+            where.caseFieldValues = {
+              some: { field: { displayName: input.customField.name } },
+            };
+          } else {
+            // Value filter — resolve {name, value} to the canonical
+            // {fieldId, value} the write path persists. resolveCustomFields
+            // throws 422 for unknown/ambiguous fields and invalid option
+            // values, so an unmatched filter surfaces an error rather than
+            // returning unfiltered results. It returns exactly one entry per
+            // input key or throws, so [resolved] is always defined here.
+            const [resolved] = await resolveCustomFields(
+              { [input.customField.name]: input.customField.value },
+              deps.env,
+            );
+            const canonical = resolved!.value as Prisma.InputJsonValue;
+            where.caseFieldValues = {
+              some: {
+                fieldId: resolved!.fieldId,
+                value: Array.isArray(resolved!.value)
+                  ? { array_contains: canonical }
+                  : { equals: canonical },
+              },
+            };
+          }
         }
         if (input.issueId !== undefined) {
           // D7-03: RepositoryCases.issues is many-to-many to Issue. Filtering
