@@ -13,6 +13,7 @@ import { captureAuditEvent } from "../lib/services/auditLog";
 import { NotificationService } from "../lib/services/notificationService";
 import { getReviewReminderThresholdHours } from "../lib/services/reviewReminderConfig";
 import { withTenantContext } from "../lib/tenantContext";
+import { emitReviewReminderEvent } from "../lib/webhooks/event-emitters/reviewEvents";
 import valkeyConnection from "../lib/valkey";
 import {
   getUniqueCaseGroupIds,
@@ -66,6 +67,8 @@ async function loadReviewContextForReminder(
     fromStateId: number;
     toStateId: number;
     requestedByUserId: string;
+    assigneeUserId: string | null;
+    assigneeRoleId: number | null;
   }
 ): Promise<{
   projectId: number;
@@ -73,26 +76,42 @@ async function loadReviewContextForReminder(
   entityName: string;
   fromStateName: string;
   toStateName: string;
+  toStateColor: string | null;
   requesterName: string;
+  assigneeUserName: string | null;
+  assigneeRoleName: string | null;
 } | null> {
-  const [project, fromState, toState, requester] = await Promise.all([
-    prisma.projects.findUnique({
-      where: { id: req.projectId },
-      select: { id: true, name: true },
-    }),
-    prisma.workflows.findUnique({
-      where: { id: req.fromStateId },
-      select: { name: true },
-    }),
-    prisma.workflows.findUnique({
-      where: { id: req.toStateId },
-      select: { name: true },
-    }),
-    prisma.user.findUnique({
-      where: { id: req.requestedByUserId },
-      select: { name: true },
-    }),
-  ]);
+  const [project, fromState, toState, requester, assigneeUser, assigneeRole] =
+    await Promise.all([
+      prisma.projects.findUnique({
+        where: { id: req.projectId },
+        select: { id: true, name: true },
+      }),
+      prisma.workflows.findUnique({
+        where: { id: req.fromStateId },
+        select: { name: true },
+      }),
+      prisma.workflows.findUnique({
+        where: { id: req.toStateId },
+        select: { name: true, color: { select: { value: true } } },
+      }),
+      prisma.user.findUnique({
+        where: { id: req.requestedByUserId },
+        select: { name: true },
+      }),
+      req.assigneeUserId !== null
+        ? prisma.user.findUnique({
+            where: { id: req.assigneeUserId },
+            select: { name: true },
+          })
+        : Promise.resolve(null),
+      req.assigneeRoleId !== null
+        ? prisma.roles.findUnique({
+            where: { id: req.assigneeRoleId },
+            select: { name: true },
+          })
+        : Promise.resolve(null),
+    ]);
   if (!project) return null;
 
   let entityName: string | null = null;
@@ -123,7 +142,10 @@ async function loadReviewContextForReminder(
     entityName,
     fromStateName: fromState?.name ?? "",
     toStateName: toState?.name ?? "",
+    toStateColor: toState?.color?.value ?? null,
     requesterName: requester?.name ?? "",
+    assigneeUserName: assigneeUser?.name ?? null,
+    assigneeRoleName: assigneeRole?.name ?? null,
   };
 }
 
@@ -631,15 +653,41 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
                 tenantId: job.data.tenantId,
               }).catch(() => {});
 
-              // Raw prisma (not enhanced): the
-              // @@deny('update', status != 'PENDING') user-scope policy
-              // on ReviewRequest would block this system-actor stamp if
-              // the row's status transitioned between the scan read and
-              // this update (race). System-scope writes legitimately
-              // bypass user-scope policies.
-              await prisma.reviewRequest.update({
-                where: { id: req.id },
-                data: { lastRemindedAt: now },
+              // Atomically emit the outbound webhook AND stamp
+              // lastRemindedAt — if the outbox write fails, the stamp
+              // doesn't land and the next scan retries; if both succeed,
+              // the row won't be reminded again until the threshold
+              // elapses. Raw prisma here (not enhanced) so the
+              // system-actor stamp bypasses the user-scope
+              // @@deny('update', status != 'PENDING') policy on
+              // ReviewRequest in race-condition windows.
+              await prisma.$transaction(async (tx: any) => {
+                await emitReviewReminderEvent(
+                  {
+                    reviewRequestId: req.id,
+                    projectId: context.projectId,
+                    entityType: req.entityType as "CASE" | "RUN" | "SESSION",
+                    entityId: req.entityId,
+                    entityName: context.entityName,
+                    fromStateId: req.fromStateId,
+                    fromStateName: context.fromStateName,
+                    toStateId: req.toStateId,
+                    toStateName: context.toStateName,
+                    toStateColor: context.toStateColor,
+                    requestedByUserId: req.requestedByUserId,
+                    requesterName: context.requesterName,
+                    assigneeUserId: req.assigneeUserId,
+                    assigneeUserName: context.assigneeUserName,
+                    assigneeRoleId: req.assigneeRoleId,
+                    assigneeRoleName: context.assigneeRoleName,
+                    hoursPending,
+                  },
+                  { tx, actorUserId: null }
+                );
+                await tx.reviewRequest.update({
+                  where: { id: req.id },
+                  data: { lastRemindedAt: now },
+                });
               });
 
               successCount++;

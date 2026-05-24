@@ -22,6 +22,7 @@ import { prisma } from "~/lib/prisma";
 import { webhookEvents } from "~/lib/webhooks/events";
 import {
   emitReviewCompletedEvent,
+  emitReviewReminderEvent,
   emitReviewRequestedEvent,
 } from "./reviewEvents";
 
@@ -281,5 +282,94 @@ describe("emitReviewCompletedEvent", () => {
         (emitMock.mock.calls[0][1] as Record<string, unknown>).decision
       ).toBe(decision);
     }
+  });
+});
+
+function baseReminderInput() {
+  return {
+    reviewRequestId: "rr_1",
+    projectId: 7,
+    entityType: "CASE" as const,
+    entityId: 42,
+    entityName: "Login flow",
+    fromStateId: 10,
+    fromStateName: "Draft",
+    toStateId: 11,
+    toStateName: "Ready",
+    toStateColor: "#22c55e",
+    requestedByUserId: "u-req",
+    requesterName: "Alice",
+    assigneeUserId: "u-rev",
+    assigneeUserName: "Bob",
+    assigneeRoleId: null,
+    assigneeRoleName: null,
+    hoursPending: 36,
+  };
+}
+
+describe("emitReviewReminderEvent", () => {
+  beforeEach(() => {
+    emitMock.mockClear();
+    txMock.mockClear();
+  });
+
+  it("CASE entity fans out to case.review_reminder", async () => {
+    const tx = Symbol("test-tx");
+    await emitReviewReminderEvent(
+      { ...baseReminderInput(), entityType: "CASE" },
+      { tx: tx as never }
+    );
+    expect(emitMock).toHaveBeenCalledTimes(1);
+    expect(emitMock.mock.calls[0][0]).toBe("case.review_reminder");
+    expect(emitMock.mock.calls[0][2]).toMatchObject({ projectId: 7, tx });
+  });
+
+  it("RUN entity fans out to test_run.review_reminder", async () => {
+    const tx = Symbol("test-tx");
+    await emitReviewReminderEvent(
+      { ...baseReminderInput(), entityType: "RUN" },
+      { tx: tx as never }
+    );
+    expect(emitMock.mock.calls[0][0]).toBe("test_run.review_reminder");
+  });
+
+  it("SESSION entity fans out to session.review_reminder", async () => {
+    const tx = Symbol("test-tx");
+    await emitReviewReminderEvent(
+      { ...baseReminderInput(), entityType: "SESSION" },
+      { tx: tx as never }
+    );
+    expect(emitMock.mock.calls[0][0]).toBe("session.review_reminder");
+  });
+
+  it("payload carries hoursPending verbatim", async () => {
+    const tx = Symbol("test-tx");
+    await emitReviewReminderEvent(
+      { ...baseReminderInput(), hoursPending: 36 },
+      { tx: tx as never }
+    );
+    const payload = emitMock.mock.calls[0][1] as Record<string, unknown>;
+    expect(payload.hoursPending).toBe(36);
+  });
+
+  it("payload includes entityUrl computed via entityUrlFor", async () => {
+    process.env.NEXTAUTH_URL = "http://app.example.com";
+    const tx = Symbol("test-tx");
+    await emitReviewReminderEvent(
+      { ...baseReminderInput(), entityType: "CASE", entityId: 42 },
+      { tx: tx as never }
+    );
+    const payload = emitMock.mock.calls[0][1] as Record<string, unknown>;
+    expect(payload.entityUrl).toBe(
+      "http://app.example.com/projects/repository/7/42"
+    );
+  });
+
+  it("opts.tx pass-through: emit is called inside the supplied tx without opening a new $transaction", async () => {
+    const tx = Symbol("test-tx");
+    await emitReviewReminderEvent(baseReminderInput(), { tx: tx as never });
+    expect(txMock).not.toHaveBeenCalled();
+    expect(emitMock).toHaveBeenCalledTimes(1);
+    expect(emitMock.mock.calls[0][2]).toMatchObject({ tx });
   });
 });

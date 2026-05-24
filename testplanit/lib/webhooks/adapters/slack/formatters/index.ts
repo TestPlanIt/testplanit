@@ -9,6 +9,7 @@ import { formatIssueUpdatedBlocks } from "./issue-updated";
 import { formatCaseCreatedBlocks } from "./case-created";
 import { formatReviewRequestedBlocks } from "./review-requested";
 import { formatReviewCompletedBlocks } from "./review-completed";
+import { formatReviewReminderBlocks } from "./review-reminder";
 import { formatWebhookTestBlocks } from "./webhook-test";
 import { formatGenericBlocks } from "./generic";
 
@@ -36,6 +37,9 @@ export const SLACK_FORMATTERS: Record<string, SlackFormatter> = {
   "test_run.review_completed": formatReviewCompletedBlocks,
   "session.review_requested": formatReviewRequestedBlocks,
   "session.review_completed": formatReviewCompletedBlocks,
+  "case.review_reminder": formatReviewReminderBlocks,
+  "test_run.review_reminder": formatReviewReminderBlocks,
+  "session.review_reminder": formatReviewReminderBlocks,
   "webhook.test": formatWebhookTestBlocks,
 };
 

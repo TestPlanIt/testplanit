@@ -32,6 +32,9 @@ const mockPrisma = {
   user: {
     findUnique: vi.fn(),
   },
+  roles: {
+    findUnique: vi.fn(),
+  },
   repositoryCases: {
     findUnique: vi.fn(),
   },
@@ -41,6 +44,10 @@ const mockPrisma = {
   appConfig: {
     findUnique: vi.fn(),
   },
+  // Default: invoke the callback with a tx whose reviewRequest.update is the
+  // same spy as prisma.reviewRequest.update — so tests can assert on the
+  // stamp call regardless of whether it happens inside or outside the tx.
+  $transaction: vi.fn(),
 };
 
 vi.mock("../lib/prisma", () => ({
@@ -100,6 +107,14 @@ const mockGetReviewReminderThresholdHours = vi.fn().mockResolvedValue(24);
 vi.mock("../lib/services/reviewReminderConfig", () => ({
   getReviewReminderThresholdHours: (...args: any[]) =>
     mockGetReviewReminderThresholdHours(...args),
+}));
+
+// Webhook event emitter — wired to a spy so reminder tests can assert
+// on outbound emission and the in-transaction call order.
+const mockEmitReviewReminderEvent = vi.fn().mockResolvedValue(undefined);
+vi.mock("../lib/webhooks/event-emitters/reviewEvents", () => ({
+  emitReviewReminderEvent: (...args: any[]) =>
+    mockEmitReviewReminderEvent(...args),
 }));
 
 describe("ForecastWorker", () => {
@@ -238,15 +253,29 @@ describe("JOB_REVIEW_REMINDERS", () => {
     mockPrisma.workflows.findUnique.mockImplementation((args: any) =>
       Promise.resolve({
         name: args.where.id === 10 ? "Draft" : "Approved",
+        color: { value: "#22c55e" },
       })
     );
     mockPrisma.user.findUnique.mockResolvedValue({ name: "Requester Name" });
+    mockPrisma.roles.findUnique.mockResolvedValue({ name: "QA Reviewers" });
     mockPrisma.repositoryCases.findUnique.mockResolvedValue({
       name: "Login flow",
     });
     mockPrisma.testRuns.findUnique.mockResolvedValue({ name: "Smoke Run" });
     mockPrisma.sessions.findUnique.mockResolvedValue({ name: "Exploration" });
     mockPrisma.reviewRequest.update.mockResolvedValue({});
+    // Default $transaction handler: invoke the callback with a tx whose
+    // reviewRequest.update is the same spy as prisma.reviewRequest.update so
+    // tests can assert on the stamp call regardless of whether it landed
+    // inside or outside the transaction.
+    mockPrisma.$transaction.mockImplementation(
+      async (fn: (tx: unknown) => Promise<unknown>) => {
+        const tx = {
+          reviewRequest: { update: mockPrisma.reviewRequest.update },
+        };
+        return fn(tx);
+      }
+    );
   };
 
   beforeEach(() => {
@@ -493,5 +522,154 @@ describe("JOB_REVIEW_REMINDERS", () => {
     const arg = mockPrisma.reviewRequest.findMany.mock.calls[0][0];
     const expectedCutoff = new Date(FIXED_NOW.getTime() - 48 * 60 * 60 * 1000);
     expect(arg.where.createdAt).toEqual({ lt: expectedCutoff });
+  });
+
+  it("Test 9: webhook emission per dispatched row — fires once with the eventName-aligned payload", async () => {
+    mockPrisma.reviewRequest.findMany.mockResolvedValue([
+      {
+        id: "rr-emit",
+        projectId: 1,
+        entityType: "CASE",
+        entityId: 5,
+        fromStateId: 10,
+        toStateId: 11,
+        requestedByUserId: "user-r",
+        assigneeUserId: "user-a",
+        assigneeRoleId: null,
+        createdAt: THIRTY_SIX_HOURS_AGO,
+      },
+    ]);
+
+    await runProcessor();
+
+    expect(mockEmitReviewReminderEvent).toHaveBeenCalledTimes(1);
+    const [input, opts] = mockEmitReviewReminderEvent.mock.calls[0];
+    expect(input).toMatchObject({
+      reviewRequestId: "rr-emit",
+      projectId: 1,
+      entityType: "CASE",
+      entityId: 5,
+      fromStateId: 10,
+      toStateId: 11,
+      requestedByUserId: "user-r",
+      assigneeUserId: "user-a",
+      assigneeRoleId: null,
+      hoursPending: 36,
+      assigneeUserName: "Requester Name",
+      toStateColor: "#22c55e",
+    });
+    // System actor: outbox row has no user attribution.
+    expect(opts).toMatchObject({ actorUserId: null });
+    expect(opts.tx).toBeDefined();
+  });
+
+  it("Test 10: transactional atomicity (success) — emit and stamp both run inside the same $transaction callback", async () => {
+    const callOrder: string[] = [];
+    mockPrisma.$transaction.mockImplementationOnce(
+      async (fn: (tx: unknown) => Promise<unknown>) => {
+        callOrder.push("tx-open");
+        const tx = {
+          reviewRequest: {
+            update: vi.fn(async (args: any) => {
+              callOrder.push("stamp");
+              return mockPrisma.reviewRequest.update(args);
+            }),
+          },
+        };
+        const result = await fn(tx);
+        callOrder.push("tx-close");
+        return result;
+      }
+    );
+    mockEmitReviewReminderEvent.mockImplementationOnce(async () => {
+      callOrder.push("emit");
+    });
+    mockPrisma.reviewRequest.findMany.mockResolvedValue([
+      {
+        id: "rr-tx",
+        projectId: 1,
+        entityType: "CASE",
+        entityId: 5,
+        fromStateId: 10,
+        toStateId: 11,
+        requestedByUserId: "user-r",
+        assigneeUserId: "user-a",
+        assigneeRoleId: null,
+        createdAt: THIRTY_SIX_HOURS_AGO,
+      },
+    ]);
+
+    await runProcessor();
+
+    // Both writes commit inside the same callback boundary.
+    expect(callOrder).toEqual(["tx-open", "emit", "stamp", "tx-close"]);
+    expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.reviewRequest.update).toHaveBeenCalledWith({
+      where: { id: "rr-tx" },
+      data: { lastRemindedAt: FIXED_NOW },
+    });
+  });
+
+  it("Test 11: transactional atomicity (failure) — emit throws → stamp not called → failCount incremented", async () => {
+    mockEmitReviewReminderEvent.mockRejectedValueOnce(
+      new Error("outbox unavailable")
+    );
+    mockPrisma.reviewRequest.findMany.mockResolvedValue([
+      {
+        id: "rr-fail",
+        projectId: 1,
+        entityType: "CASE",
+        entityId: 5,
+        fromStateId: 10,
+        toStateId: 11,
+        requestedByUserId: "user-r",
+        assigneeUserId: "user-a",
+        assigneeRoleId: null,
+        createdAt: THIRTY_SIX_HOURS_AGO,
+      },
+    ]);
+
+    const { processor } = await import("./forecastWorker");
+    const job = {
+      id: "job-rr-fail",
+      name: "review-reminders",
+      data: { tenantId: undefined, actorContext: {} },
+    } as unknown as Job;
+    const result = (await processor(job)) as {
+      successCount: number;
+      failCount: number;
+    };
+
+    // No stamp landed (neither inside tx nor standalone).
+    expect(mockPrisma.reviewRequest.update).not.toHaveBeenCalled();
+    expect(result.successCount).toBe(0);
+    expect(result.failCount).toBe(1);
+  });
+
+  it("Test 12: empty-target-list keeps the standalone stamp and does NOT call the webhook emitter", async () => {
+    mockPrisma.reviewRequest.findMany.mockResolvedValue([
+      {
+        id: "rr-empty",
+        projectId: 1,
+        entityType: "CASE",
+        entityId: 5,
+        fromStateId: 10,
+        toStateId: 11,
+        requestedByUserId: "user-r",
+        // Self-assignment edge case → recipient list is empty.
+        assigneeUserId: "user-r",
+        assigneeRoleId: null,
+        createdAt: THIRTY_SIX_HOURS_AGO,
+      },
+    ]);
+
+    await runProcessor();
+
+    expect(mockEmitReviewReminderEvent).not.toHaveBeenCalled();
+    expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    expect(mockPrisma.reviewRequest.update).toHaveBeenCalledWith({
+      where: { id: "rr-empty" },
+      data: { lastRemindedAt: FIXED_NOW },
+    });
   });
 });
