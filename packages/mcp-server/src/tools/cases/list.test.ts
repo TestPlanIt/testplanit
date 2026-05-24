@@ -154,27 +154,87 @@ describe("registerCasesList", () => {
     });
   });
 
-  it("BL-02: customField filter rejects unsupported `value` key (additionalProperties)", async () => {
+  it("filter: customField {name,value} resolves a Dropdown value to an option-id equals filter", async () => {
+    const priorityDropdown = {
+      id: 50,
+      displayName: "Priority",
+      type: { type: "Dropdown" },
+      fieldOptions: [
+        { fieldOption: { id: 99, name: "High" } },
+        { fieldOption: { id: 98, name: "Low" } },
+      ],
+    };
+    // First call: resolveCustomFields -> caseFields.findMany. Second: the list.
+    mockZenstack
+      .mockResolvedValueOnce([priorityDropdown])
+      .mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: {
+        projectId: 7,
+        customField: { name: "Priority", value: "High" },
+      },
+    });
+    const where = getLastCallBody()?.where as Record<string, unknown>;
+    expect(where.caseFieldValues).toEqual({
+      some: { fieldId: 50, value: { equals: 99 } },
+    });
+  });
+
+  it("filter: customField {name,value:[...]} resolves a Multi-Select to an array_contains filter", async () => {
+    const components = {
+      id: 60,
+      displayName: "Components",
+      type: { type: "Multi-Select" },
+      fieldOptions: [
+        { fieldOption: { id: 11, name: "Auth" } },
+        { fieldOption: { id: 12, name: "Billing" } },
+      ],
+    };
+    mockZenstack.mockResolvedValueOnce([components]).mockResolvedValueOnce([]);
+    const { client } = await setupClient();
+    await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: {
+        projectId: 7,
+        customField: { name: "Components", value: ["Auth"] },
+      },
+    });
+    const where = getLastCallBody()?.where as Record<string, unknown>;
+    expect(where.caseFieldValues).toEqual({
+      some: { fieldId: 60, value: { array_contains: [11] } },
+    });
+  });
+
+  it("filter: customField {name,value} with an unknown field returns an error, not unfiltered results", async () => {
+    // resolveCustomFields -> caseFields.findMany finds no match -> throws 422.
     mockZenstack.mockResolvedValueOnce([]);
     const { client } = await setupClient();
-    // Zod object schemas are strict by default — passing an unknown
-    // `value` key surfaces a validation error rather than being silently
-    // swallowed (the prior bug).
     const result = await client.callTool({
       name: "testplanit_cases_list",
-      arguments: { projectId: 7, customField: { name: "Priority", value: "High" } },
+      arguments: {
+        projectId: 7,
+        customField: { name: "DoesNotExist", value: "x" },
+      },
     });
-    // The MCP framework returns isError:true with the Zod validation message
-    // when the input is rejected. Accept either an isError result or a
-    // successful call where the unknown key was stripped — what we care
-    // about is that `value` is NOT silently included in the where clause.
-    if (!result.isError) {
-      const body = getLastCallBody();
-      const where = body?.where as Record<string, unknown>;
-      expect(where.caseFieldValues).toEqual({
-        some: { field: { displayName: "Priority" } },
-      });
-    }
+    expect(result.isError).toBeTruthy();
+    // The list query must never run with a dropped/ignored filter.
+    expect(mockZenstack).toHaveBeenCalledTimes(1);
+  });
+
+  it("#333: customField rejects unknown keys (strict schema) instead of silently dropping them", async () => {
+    const { client } = await setupClient();
+    const result = await client.callTool({
+      name: "testplanit_cases_list",
+      arguments: {
+        projectId: 7,
+        customField: { name: "Priority", bogus: "High" },
+      },
+    });
+    expect(result.isError).toBeTruthy();
+    // Strict-object validation fails before the handler runs — no query fired.
+    expect(mockZenstack).not.toHaveBeenCalled();
   });
 
   it("pagination: default limit=25, take=26, no cursor in body", async () => {
