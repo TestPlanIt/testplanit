@@ -4319,6 +4319,16 @@
         "updateSuccessDisabled": "Flux de travail de révision désactivé.",
         "updateError": "Impossible de mettre à jour les paramètres du flux de travail de révision. Veuillez réessayer dans quelques instants."
       },
+      "projectReviewToggleList": {
+        "title": "Flux de travail d'examen de projet",
+        "description": "Activez ou désactivez la fonctionnalité de flux de travail de révision pour chaque projet. Les administrateurs de projet peuvent également gérer cette option dans les paramètres avancés de chaque projet.",
+        "columnHeader": "Flux de travail de révision",
+        "filterPlaceholder": "Filtrer les projets...",
+        "enabledToast": "Flux de travail de révision activé pour {name}",
+        "disabledToast": "Flux de travail de révision désactivé pour {name}",
+        "saveError": "Impossible de mettre à jour les paramètres du flux de travail de révision. Veuillez réessayer dans quelques instants.",
+        "emptyState": "Aucun projet ne correspond à vos critères de filtrage."
+      },
       "editWorkflow": {
         "requiresReviewLabel": "Nécessite une révision",
         "requiresReviewFeatureDisabled": "La fonctionnalité de flux de travail de révision est désactivée au niveau du système. Modifiez les paramètres avancés d'un projet ou définissez la variable d'environnement TESTPLANIT_REVIEW_FEATURE_ENABLED pour la réactiver.",

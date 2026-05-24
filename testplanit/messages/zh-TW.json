@@ -4319,6 +4319,16 @@
         "updateSuccessDisabled": "審核工作流程已停用。",
         "updateError": "更新審核工作流程設定失敗。請稍後再試。"
       },
+      "projectReviewToggleList": {
+        "title": "專案評審工作流程",
+        "description": "您可以為每個專案啟用或停用審核工作流程功能。專案管理員也可以在每個專案的「進階設定」中進行管理。",
+        "columnHeader": "審核工作流程",
+        "filterPlaceholder": "篩選項目...",
+        "enabledToast": "已啟用審核工作流程 {name}",
+        "disabledToast": "審核工作流程已停用 {name}",
+        "saveError": "更新審核工作流程設定失敗。請稍後再試。",
+        "emptyState": "沒有項目符合您的篩選條件。"
+      },
       "editWorkflow": {
         "requiresReviewLabel": "需要審核",
         "requiresReviewFeatureDisabled": "系統級已停用審閱工作流程功能。請切換專案的「進階設定」或設定 TESTPLANIT_REVIEW_FEATURE_ENABLED 以重新啟用此功能。",

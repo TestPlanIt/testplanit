@@ -4319,6 +4319,16 @@
         "updateSuccessDisabled": "Review workflow disabled.",
         "updateError": "Failed to update review workflow setting. Try again in a moment."
       },
+      "projectReviewToggleList": {
+        "title": "Project review workflow",
+        "description": "Toggle the review workflow feature on or off for each project. Project administrators can also manage this from each project's Advanced settings.",
+        "columnHeader": "Review workflow",
+        "filterPlaceholder": "Filter projects...",
+        "enabledToast": "Review workflow enabled for {name}",
+        "disabledToast": "Review workflow disabled for {name}",
+        "saveError": "Failed to update review workflow setting. Try again in a moment.",
+        "emptyState": "No projects match your filter."
+      },
       "editWorkflow": {
         "requiresReviewLabel": "Requires review",
         "requiresReviewFeatureDisabled": "The review workflow feature is disabled at the system level. Toggle a project's Advanced settings or set TESTPLANIT_REVIEW_FEATURE_ENABLED to re-enable.",

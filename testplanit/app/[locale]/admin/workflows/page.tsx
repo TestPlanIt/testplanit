@@ -18,7 +18,9 @@ import {
 import { useRouter } from "~/lib/navigation";
 import { performOptimisticReorder } from "~/utils/optimistic-updates";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
+import { PaginationProvider } from "~/lib/contexts/PaginationContext";
 import { useColumns } from "./columns";
+import { ProjectReviewToggleList } from "./ProjectReviewToggleList";
 
 import { WorkflowDragPreview } from "@/components/dnd/WorkflowDragPreview";
 import { Button } from "@/components/ui/button";
@@ -364,6 +366,11 @@ function WorkflowComponent() {
           </Card>
           <div className="mt-4">
             <SystemFeatureCard />
+          </div>
+          <div className="mt-4">
+            <PaginationProvider defaultPageSize={10}>
+              <ProjectReviewToggleList />
+            </PaginationProvider>
           </div>
           <div className="mt-4">
             {renderWorkflowCard(casesWorkflows, WorkflowScope.CASES)}

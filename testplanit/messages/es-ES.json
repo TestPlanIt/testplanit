@@ -4319,6 +4319,16 @@
         "updateSuccessDisabled": "Revisión del flujo de trabajo deshabilitada.",
         "updateError": "No se pudo actualizar la configuración del flujo de trabajo de revisión. Inténtelo de nuevo en un momento."
       },
+      "projectReviewToggleList": {
+        "title": "Flujo de trabajo de revisión del proyecto",
+        "description": "Activa o desactiva la función de flujo de trabajo de revisión para cada proyecto. Los administradores de proyecto también pueden gestionar esto desde la configuración avanzada de cada proyecto.",
+        "columnHeader": "Revisar el flujo de trabajo",
+        "filterPlaceholder": "Filtrar proyectos...",
+        "enabledToast": "Flujo de trabajo de revisión habilitado para {name}",
+        "disabledToast": "Revisión del flujo de trabajo deshabilitada para {name}",
+        "saveError": "No se pudo actualizar la configuración del flujo de trabajo de revisión. Inténtelo de nuevo en un momento.",
+        "emptyState": "No hay proyectos que coincidan con tu filtro."
+      },
       "editWorkflow": {
         "requiresReviewLabel": "Requiere revisión",
         "requiresReviewFeatureDisabled": "La función de flujo de trabajo de revisión está deshabilitada a nivel del sistema. Para volver a habilitarla, modifique la configuración avanzada del proyecto o establezca TESTPLANIT_REVIEW_FEATURE_ENABLED.",

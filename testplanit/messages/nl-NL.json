@@ -4319,6 +4319,16 @@
         "updateSuccessDisabled": "Beoordelingsworkflow uitgeschakeld.",
         "updateError": "Het bijwerken van de beoordelingsworkflow is mislukt. Probeer het over een moment opnieuw."
       },
+      "projectReviewToggleList": {
+        "title": "Werkproces voor projectevaluatie",
+        "description": "Schakel de functie voor de beoordelingsworkflow voor elk project in of uit. Projectbeheerders kunnen dit ook beheren via de geavanceerde instellingen van elk project.",
+        "columnHeader": "Werkproces beoordelen",
+        "filterPlaceholder": "Filterprojecten...",
+        "enabledToast": "Review-workflow ingeschakeld voor {name}",
+        "disabledToast": "Review-workflow uitgeschakeld voor {name}",
+        "saveError": "Het bijwerken van de beoordelingsworkflow is mislukt. Probeer het over een moment opnieuw.",
+        "emptyState": "Er zijn geen projecten die aan uw filter voldoen."
+      },
       "editWorkflow": {
         "requiresReviewLabel": "Vereist beoordeling",
         "requiresReviewFeatureDisabled": "De functie voor het beoordelen van de workflow is op systeemniveau uitgeschakeld. Schakel de geavanceerde instellingen van een project in of uit, of stel TESTPLANIT_REVIEW_FEATURE_ENABLED in om deze opnieuw in te schakelen.",

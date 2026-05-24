@@ -4319,6 +4319,16 @@
         "updateSuccessDisabled": "审核工作流程已禁用。",
         "updateError": "更新审核工作流程设置失败。请稍后再试。"
       },
+      "projectReviewToggleList": {
+        "title": "项目评审工作流程",
+        "description": "您可以为每个项目启用或禁用审核工作流程功能。项目管理员也可以在每个项目的“高级设置”中进行管理。",
+        "columnHeader": "审核工作流程",
+        "filterPlaceholder": "筛选项目...",
+        "enabledToast": "已启用审核工作流程 {name}",
+        "disabledToast": "审核工作流程已禁用 {name}",
+        "saveError": "更新审核工作流程设置失败。请稍后再试。",
+        "emptyState": "没有项目符合您的筛选条件。"
+      },
       "editWorkflow": {
         "requiresReviewLabel": "需要审核",
         "requiresReviewFeatureDisabled": "系统级已禁用审阅工作流程功能。请切换项目的“高级设置”或设置 TESTPLANIT_REVIEW_FEATURE_ENABLED 以重新启用该功能。",

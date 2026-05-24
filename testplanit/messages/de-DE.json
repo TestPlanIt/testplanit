@@ -4319,6 +4319,16 @@
         "updateSuccessDisabled": "Prüfworkflow deaktiviert.",
         "updateError": "Die Aktualisierung der Einstellungen für den Überprüfungsworkflow ist fehlgeschlagen. Bitte versuchen Sie es in Kürze erneut."
       },
+      "projectReviewToggleList": {
+        "title": "Arbeitsablauf zur Projektprüfung",
+        "description": "Die Funktion „Überprüfungs-Workflow“ kann für jedes Projekt einzeln aktiviert oder deaktiviert werden. Projektadministratoren können dies auch in den erweiterten Einstellungen jedes Projekts verwalten.",
+        "columnHeader": "Arbeitsablauf prüfen",
+        "filterPlaceholder": "Filterprojekte...",
+        "enabledToast": "Prüf-Workflow für {name} aktiviert",
+        "disabledToast": "Prüfworkflow für {name} deaktiviert.",
+        "saveError": "Die Aktualisierung der Einstellungen für den Überprüfungsworkflow ist fehlgeschlagen. Bitte versuchen Sie es in Kürze erneut.",
+        "emptyState": "Keine Projekte entsprechen Ihren Filtern."
+      },
       "editWorkflow": {
         "requiresReviewLabel": "Überprüfung erforderlich",
         "requiresReviewFeatureDisabled": "Die Funktion für den Überprüfungsworkflow ist systemweit deaktiviert. Um sie wieder zu aktivieren, ändern Sie die erweiterten Projekteinstellungen oder setzen Sie TESTPLANIT_REVIEW_FEATURE_ENABLED.",

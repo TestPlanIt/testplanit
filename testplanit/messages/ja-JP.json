@@ -4319,6 +4319,16 @@
         "updateSuccessDisabled": "レビューワークフローは無効になっています。",
         "updateError": "レビューワークフロー設定の更新に失敗しました。しばらくしてからもう一度お試しください。"
       },
+      "projectReviewToggleList": {
+        "title": "プロジェクトレビューのワークフロー",
+        "description": "プロジェクトごとにレビューワークフロー機能をオンまたはオフに切り替えることができます。プロジェクト管理者は、各プロジェクトの詳細設定からもこの設定を管理できます。",
+        "columnHeader": "レビューワークフロー",
+        "filterPlaceholder": "プロジェクトを絞り込む...",
+        "enabledToast": "レビューワークフローが有効になりました {name}",
+        "disabledToast": "レビューワークフローは {name}に対して無効になっています。",
+        "saveError": "レビューワークフロー設定の更新に失敗しました。しばらくしてからもう一度お試しください。",
+        "emptyState": "条件に一致するプロジェクトはありません。"
+      },
       "editWorkflow": {
         "requiresReviewLabel": "審査が必要",
         "requiresReviewFeatureDisabled": "レビューワークフロー機能はシステムレベルで無効になっています。プロジェクトの詳細設定を切り替えるか、TESTPLANIT_REVIEW_FEATURE_ENABLED を設定して再度有効にしてください。",

@@ -4319,6 +4319,16 @@
         "updateSuccessDisabled": "Quy trình xem xét đã bị vô hiệu hóa.",
         "updateError": "Không thể cập nhật cài đặt quy trình xem xét. Vui lòng thử lại sau."
       },
+      "projectReviewToggleList": {
+        "title": "Quy trình đánh giá dự án",
+        "description": "Bạn có thể bật hoặc tắt tính năng quy trình đánh giá cho từng dự án. Quản trị viên dự án cũng có thể quản lý tính năng này từ phần Cài đặt nâng cao của mỗi dự án.",
+        "columnHeader": "Quy trình xem xét",
+        "filterPlaceholder": "Lọc các dự án...",
+        "enabledToast": "Quy trình xem xét đã được bật cho {name}",
+        "disabledToast": "Quy trình xem xét đã bị vô hiệu hóa cho {name}",
+        "saveError": "Không thể cập nhật cài đặt quy trình xem xét. Vui lòng thử lại sau.",
+        "emptyState": "Không có dự án nào phù hợp với bộ lọc của bạn."
+      },
       "editWorkflow": {
         "requiresReviewLabel": "Cần xem xét lại",
         "requiresReviewFeatureDisabled": "Tính năng quy trình xem xét đã bị vô hiệu hóa ở cấp độ hệ thống. Hãy bật/tắt cài đặt Nâng cao của dự án hoặc đặt TESTPLANIT_REVIEW_FEATURE_ENABLED để kích hoạt lại.",

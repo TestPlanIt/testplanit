@@ -4319,6 +4319,16 @@
         "updateSuccessDisabled": "Przegląd przepływu pracy wyłączony.",
         "updateError": "Nie udało się zaktualizować ustawień przepływu pracy recenzji. Spróbuj ponownie za chwilę."
       },
+      "projectReviewToggleList": {
+        "title": "Przepływ pracy przeglądu projektu",
+        "description": "Włącz lub wyłącz funkcję przeglądu przepływu pracy dla każdego projektu. Administratorzy projektów mogą również zarządzać tą funkcją w ustawieniach zaawansowanych każdego projektu.",
+        "columnHeader": "Przejrzyj przepływ pracy",
+        "filterPlaceholder": "Filtruj projekty...",
+        "enabledToast": "Przepływ pracy przeglądu włączony dla {name}",
+        "disabledToast": "Przegląd przepływu pracy wyłączony dla {name}",
+        "saveError": "Nie udało się zaktualizować ustawień przepływu pracy recenzji. Spróbuj ponownie za chwilę.",
+        "emptyState": "Brak projektów spełniających kryteria filtra."
+      },
       "editWorkflow": {
         "requiresReviewLabel": "Wymaga przeglądu",
         "requiresReviewFeatureDisabled": "Funkcja przeglądu przepływu pracy jest wyłączona na poziomie systemu. Przełącz ustawienia zaawansowane projektu lub ustaw opcję TESTPLANIT_REVIEW_FEATURE_ENABLED, aby ją ponownie włączyć.",

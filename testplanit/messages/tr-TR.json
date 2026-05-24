@@ -4319,6 +4319,16 @@
         "updateSuccessDisabled": "İnceleme iş akışı devre dışı bırakıldı.",
         "updateError": "İnceleme iş akışı ayarı güncellenemedi. Lütfen birazdan tekrar deneyin."
       },
+      "projectReviewToggleList": {
+        "title": "Proje inceleme iş akışı",
+        "description": "Her proje için inceleme iş akışı özelliğini açıp kapatabilirsiniz. Proje yöneticileri bunu her projenin Gelişmiş ayarlarından da yönetebilir.",
+        "columnHeader": "İş akışını gözden geçirin",
+        "filterPlaceholder": "Filtreleme projeleri...",
+        "enabledToast": "{name} için inceleme iş akışı etkinleştirildi.",
+        "disabledToast": "{name} için inceleme iş akışı devre dışı bırakıldı.",
+        "saveError": "İnceleme iş akışı ayarı güncellenemedi. Lütfen birazdan tekrar deneyin.",
+        "emptyState": "Filtrenize uyan proje bulunamadı."
+      },
       "editWorkflow": {
         "requiresReviewLabel": "İnceleme gerektiriyor",
         "requiresReviewFeatureDisabled": "İnceleme iş akışı özelliği sistem düzeyinde devre dışı bırakılmıştır. Yeniden etkinleştirmek için bir projenin Gelişmiş ayarlarını açıp kapatın veya TESTPLANIT_REVIEW_FEATURE_ENABLED özelliğini ayarlayın.",
