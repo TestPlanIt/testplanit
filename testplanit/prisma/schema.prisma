@@ -95,6 +95,7 @@ enum NotificationType {
   REVIEW_CHANGES_REQUESTED
   REVIEW_REJECTED
   REVIEW_CANCELLED
+  REVIEW_REMINDER
 }
 
 enum WorkflowType {
@@ -378,6 +379,7 @@ enum AuditAction {
   REVIEW_CHANGES_REQUESTED
   REVIEW_REJECTED
   REVIEW_CANCELLED
+  REVIEW_REMINDED
 }
 
 model AppConfig {
@@ -2051,6 +2053,7 @@ model ReviewRequest {
   decidedAt         DateTime?
   consumedAt        DateTime?
   comments          Comment[]
+  lastRemindedAt    DateTime?        @db.Timestamptz(6)
   isDeleted         Boolean          @default(false)
   createdAt         DateTime         @default(now()) @db.Timestamptz(6)
   updatedAt         DateTime         @updatedAt()

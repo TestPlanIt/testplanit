@@ -502,6 +502,73 @@ export class NotificationService {
   }
 
   /**
+   * Dispatch a REVIEW_REMINDER notification to each target reviewer after a
+   * pending review request has been waiting longer than the configured
+   * threshold. Recipients are pre-resolved by the caller (the review-reminder
+   * worker case in `workers/forecastWorker.ts`) — requester exclusion is
+   * enforced upstream by `resolveRoleHolderUserIds` for role assignments and
+   * by a defense-in-depth filter for direct assignments.
+   *
+   * Persisted `title` / `message` are English fallback only; the bell-icon
+   * UI (`components/NotificationContent.tsx`) and email worker
+   * (`workers/emailWorker.ts`, both immediate and digest paths) re-render
+   * localized copy from the `data` payload at display time per the
+   * `feedback_localize_new_notifications` contract.
+   */
+  static async createReviewReminderNotification(params: {
+    targetUserIds: string[];
+    requesterUserId: string;
+    requesterName: string;
+    projectId: number;
+    projectName: string;
+    entityType: "CASE" | "RUN" | "SESSION";
+    entityId: number;
+    entityName: string;
+    fromStateName: string;
+    toStateName: string;
+    reviewRequestId: string;
+    hoursPending: number;
+  }) {
+    if (params.targetUserIds.length === 0) return;
+
+    const entityLabel =
+      params.entityType === "CASE"
+        ? "test case"
+        : params.entityType === "RUN"
+          ? "test run"
+          : "session";
+
+    const title = "Review still pending";
+    const message = `Reminder: ${params.requesterName}'s review request on ${entityLabel} "${params.entityName}" in project "${params.projectName}" is still waiting on you (${params.hoursPending}h pending).`;
+
+    await Promise.all(
+      params.targetUserIds.map((userId) =>
+        this.createNotification({
+          userId,
+          type: NotificationType.REVIEW_REMINDER,
+          title,
+          message,
+          relatedEntityId: params.reviewRequestId,
+          relatedEntityType: "ReviewRequest",
+          data: {
+            reviewRequestId: params.reviewRequestId,
+            requesterUserId: params.requesterUserId,
+            requesterName: params.requesterName,
+            projectId: params.projectId,
+            projectName: params.projectName,
+            entityType: params.entityType,
+            entityId: params.entityId,
+            entityName: params.entityName,
+            fromStateName: params.fromStateName,
+            toStateName: params.toStateName,
+            hoursPending: params.hoursPending,
+          },
+        })
+      )
+    );
+  }
+
+  /**
    * Create a share link accessed notification
    */
   static async createShareLinkAccessedNotification(

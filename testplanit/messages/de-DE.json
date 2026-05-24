@@ -5357,7 +5357,11 @@
         "reviewApprovedEmailMessage": "{actorName} hat Ihre Überprüfungsanfrage am {entityLabel} \"{entityName}\" im Projekt \"{projectName} \" genehmigt.",
         "reviewChangesRequestedEmailMessage": "{actorName} hat Änderungen an Ihrer Überprüfungsanfrage für {entityLabel} \"{entityName}\" im Projekt \"{projectName} \" angefordert.",
         "reviewRejectedEmailMessage": "{actorName} hat Ihre Überprüfungsanfrage für {entityLabel} \"{entityName}\" im Projekt \"{projectName} \" abgelehnt.",
-        "reviewCancelledEmailMessage": "{actorName} hat die Überprüfungsanfrage für {entityLabel} \"{entityName}\" im Projekt \"{projectName} \" abgebrochen."
+        "reviewCancelledEmailMessage": "{actorName} hat die Überprüfungsanfrage für {entityLabel} \"{entityName}\" im Projekt \"{projectName} \" abgebrochen.",
+        "reviewReminderTitle": "Die Überprüfung steht noch aus.",
+        "reviewReminderAction": "wartet noch auf Ihre Bewertung von",
+        "reviewReminderEmailMessage": "Zur Erinnerung: Die Überprüfungsanfrage von {actorName}am {entityLabel} \"{entityName}\" im Projekt \"{projectName}\" ist seit {hoursPending} Stunden ausstehend.",
+        "reviewReminderHoursPending": "Ausstehend für {hoursPending, plural, one {# Stunde} other {# Stunden}}"
       }
     },
     "issues": {

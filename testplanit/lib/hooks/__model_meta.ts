@@ -7254,6 +7254,10 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'reviewRequest',
+                }, lastRemindedAt: {
+                    name: "lastRemindedAt",
+                    type: "DateTime",
+                    isOptional: true,
                 }, isDeleted: {
                     name: "isDeleted",
                     type: "Boolean",

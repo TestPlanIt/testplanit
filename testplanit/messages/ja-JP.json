@@ -5357,7 +5357,11 @@
         "reviewApprovedEmailMessage": "{actorName} がプロジェクト \"{projectName} \" のレビュー依頼を {entityLabel} \"{entityName}\" で承認しました。",
         "reviewChangesRequestedEmailMessage": "{actorName} requested changes on your review request for {entityLabel} \"{entityName}\" in project \"{projectName}\".",
         "reviewRejectedEmailMessage": "{actorName} rejected your review request on {entityLabel} \"{entityName}\" in project \"{projectName}\".",
-        "reviewCancelledEmailMessage": "{actorName} は、プロジェクト \"{projectName} \" の {entityLabel} \"{entityName}\" のレビュー要求をキャンセルしました。"
+        "reviewCancelledEmailMessage": "{actorName} は、プロジェクト \"{projectName} \" の {entityLabel} \"{entityName}\" のレビュー要求をキャンセルしました。",
+        "reviewReminderTitle": "審査はまだ保留中です",
+        "reviewReminderAction": "まだレビューをお待ちしています",
+        "reviewReminderEmailMessage": "リマインダー: {actorName}によるプロジェクト \"{projectName}\" の {entityLabel} \"{entityName}\" のレビュー依頼は、 {hoursPending} 時間保留されています。",
+        "reviewReminderHoursPending": "{hoursPending, plural, one {# 時間} other {# 時間}} 保留中"
       }
     },
     "issues": {

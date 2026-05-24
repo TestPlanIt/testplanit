@@ -11,6 +11,7 @@ import {
 import { FORECAST_QUEUE_NAME } from "../lib/queueNames";
 import { captureAuditEvent } from "../lib/services/auditLog";
 import { NotificationService } from "../lib/services/notificationService";
+import { getReviewReminderThresholdHours } from "../lib/services/reviewReminderConfig";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import {
@@ -43,12 +44,94 @@ export const JOB_UPDATE_SINGLE_CASE = "update-single-case-forecast";
 export const JOB_UPDATE_ALL_CASES = "update-all-cases-forecast";
 export const JOB_AUTO_COMPLETE_MILESTONES = "auto-complete-milestones";
 export const JOB_MILESTONE_DUE_NOTIFICATIONS = "milestone-due-notifications";
+export const JOB_REVIEW_REMINDERS = "review-reminders";
+
+/**
+ * Load the context required to compose a REVIEW_REMINDER notification for a
+ * single PENDING review row. Mirrors the structure of `loadReviewContext`
+ * in `app/actions/reviews.ts` but accepts a `prisma` argument so the
+ * per-tenant client handed to the worker is used. Adds a `requesterName`
+ * lookup that the action-side helper doesn't need.
+ *
+ * Returns null when the project or entity row is missing (deleted in flight
+ * between the scan and the load) so the caller skips dispatch for that row
+ * without throwing.
+ */
+async function loadReviewContextForReminder(
+  prisma: any,
+  req: {
+    projectId: number;
+    entityType: "CASE" | "RUN" | "SESSION";
+    entityId: number;
+    fromStateId: number;
+    toStateId: number;
+    requestedByUserId: string;
+  }
+): Promise<{
+  projectId: number;
+  projectName: string;
+  entityName: string;
+  fromStateName: string;
+  toStateName: string;
+  requesterName: string;
+} | null> {
+  const [project, fromState, toState, requester] = await Promise.all([
+    prisma.projects.findUnique({
+      where: { id: req.projectId },
+      select: { id: true, name: true },
+    }),
+    prisma.workflows.findUnique({
+      where: { id: req.fromStateId },
+      select: { name: true },
+    }),
+    prisma.workflows.findUnique({
+      where: { id: req.toStateId },
+      select: { name: true },
+    }),
+    prisma.user.findUnique({
+      where: { id: req.requestedByUserId },
+      select: { name: true },
+    }),
+  ]);
+  if (!project) return null;
+
+  let entityName: string | null = null;
+  if (req.entityType === "CASE") {
+    const row = await prisma.repositoryCases.findUnique({
+      where: { id: req.entityId },
+      select: { name: true },
+    });
+    entityName = row?.name ?? null;
+  } else if (req.entityType === "RUN") {
+    const row = await prisma.testRuns.findUnique({
+      where: { id: req.entityId },
+      select: { name: true },
+    });
+    entityName = row?.name ?? null;
+  } else {
+    const row = await prisma.sessions.findUnique({
+      where: { id: req.entityId },
+      select: { name: true },
+    });
+    entityName = row?.name ?? null;
+  }
+  if (entityName === null) return null;
+
+  return {
+    projectId: project.id,
+    projectName: project.name,
+    entityName,
+    fromStateName: fromState?.name ?? "",
+    toStateName: toState?.name ?? "",
+    requesterName: requester?.name ?? "",
+  };
+}
 
 // re-establish the ALS frame from job.data.actorContext so
 // downstream captureAuditEvent calls in this processor pick up the
 // originating user's context (or the systemReason for scheduled jobs, via
 // W5 Option A — no per-worker systemReason handling needed).
-const processor = async (job: Job<ForecastJobDataBase>) =>
+export const processor = async (job: Job<ForecastJobDataBase>) =>
   runWithAuditContext(job.data.actorContext ?? {}, async () => {
     console.log(
       `Processing job ${job.id} of type ${job.name}${job.data.tenantId ? ` for tenant ${job.data.tenantId}` : ""}`
@@ -431,6 +514,149 @@ const processor = async (job: Job<ForecastJobDataBase>) =>
             `Job ${job.id}: Error in milestone due notifications job`,
             error
           );
+          throw error;
+        }
+        break;
+
+      case JOB_REVIEW_REMINDERS:
+        console.log(`Job ${job.id}: Starting review-reminder scan.`);
+        try {
+          const thresholdHours = await getReviewReminderThresholdHours(prisma);
+          const now = new Date();
+          const cutoff = new Date(
+            now.getTime() - thresholdHours * 60 * 60 * 1000
+          );
+
+          const pendingReviews = await prisma.reviewRequest.findMany({
+            where: {
+              status: "PENDING",
+              isDeleted: false,
+              createdAt: { lt: cutoff },
+              OR: [
+                { lastRemindedAt: null },
+                { lastRemindedAt: { lt: cutoff } },
+              ],
+            },
+            select: {
+              id: true,
+              projectId: true,
+              entityType: true,
+              entityId: true,
+              fromStateId: true,
+              toStateId: true,
+              requestedByUserId: true,
+              assigneeUserId: true,
+              assigneeRoleId: true,
+              createdAt: true,
+            },
+          });
+
+          console.log(
+            `Job ${job.id}: Found ${pendingReviews.length} pending review requests overdue for reminder.`
+          );
+
+          for (const req of pendingReviews) {
+            try {
+              // Recipients: direct assignee XOR all role holders.
+              // Requester exclusion is enforced upstream by
+              // resolveRoleHolderUserIds for role assignments and by the
+              // explicit self-assignment filter for direct assignments
+              // (defense-in-depth — the schema @@validate also blocks
+              // self-assignment at create time).
+              const targetUserIds: string[] =
+                req.assigneeUserId !== null
+                  ? req.assigneeUserId === req.requestedByUserId
+                    ? []
+                    : [req.assigneeUserId]
+                  : req.assigneeRoleId !== null
+                    ? await NotificationService.resolveRoleHolderUserIds(
+                        req.projectId,
+                        req.assigneeRoleId,
+                        req.requestedByUserId
+                      )
+                    : [];
+
+              const hoursPending = Math.floor(
+                (now.getTime() - new Date(req.createdAt).getTime()) /
+                  (1000 * 60 * 60)
+              );
+
+              if (targetUserIds.length === 0) {
+                // Stamp anyway so we don't re-scan this row every interval
+                // (e.g., requester self-assignment edge case, or a role
+                // that currently has no holders).
+                await prisma.reviewRequest.update({
+                  where: { id: req.id },
+                  data: { lastRemindedAt: now },
+                });
+                continue;
+              }
+
+              const context = await loadReviewContextForReminder(prisma, req);
+              if (!context) {
+                // Entity or project deleted in flight; skip without
+                // stamping so a future repair could re-target.
+                continue;
+              }
+
+              await NotificationService.createReviewReminderNotification({
+                targetUserIds,
+                requesterUserId: req.requestedByUserId,
+                requesterName: context.requesterName,
+                projectId: context.projectId,
+                projectName: context.projectName,
+                entityType: req.entityType as "CASE" | "RUN" | "SESSION",
+                entityId: req.entityId,
+                entityName: context.entityName,
+                fromStateName: context.fromStateName,
+                toStateName: context.toStateName,
+                reviewRequestId: req.id,
+                hoursPending,
+              });
+
+              // Audit emission is best-effort — `.catch(() => {})` so a
+              // transient audit pipeline failure cannot block the reminder
+              // dispatch path. System actor (userId: null).
+              await captureAuditEvent({
+                action: "REVIEW_REMINDED" as any,
+                entityType: "ReviewRequest",
+                entityId: req.id,
+                projectId: req.projectId,
+                metadata: {
+                  source: "review-reminder-worker",
+                  jobId: job.id,
+                  recipientCount: targetUserIds.length,
+                  hoursPending,
+                },
+                tenantId: job.data.tenantId,
+              }).catch(() => {});
+
+              // Raw prisma (not enhanced): the
+              // @@deny('update', status != 'PENDING') user-scope policy
+              // on ReviewRequest would block this system-actor stamp if
+              // the row's status transitioned between the scan read and
+              // this update (race). System-scope writes legitimately
+              // bypass user-scope policies.
+              await prisma.reviewRequest.update({
+                where: { id: req.id },
+                data: { lastRemindedAt: now },
+              });
+
+              successCount++;
+            } catch (err) {
+              failCount++;
+              console.error(
+                `Job ${job.id}: review-reminder for ${req.id} failed`,
+                err
+              );
+            }
+          }
+
+          console.log(
+            `Job ${job.id} completed: ${successCount} reminded, ${failCount} failed.`
+          );
+        } catch (error) {
+          console.error(`Job ${job.id}: review-reminder scan failed`, error);
           throw error;
         }
         break;

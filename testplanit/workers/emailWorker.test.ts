@@ -683,4 +683,148 @@ describe("EmailWorker", () => {
       );
     });
   });
+
+  describe("REVIEW_REMINDER email", () => {
+    const reminderNotification = {
+      ...baseNotification,
+      id: "notif-reminder",
+      type: "REVIEW_REMINDER",
+      title: "Review still pending",
+      message: "fallback",
+      data: {
+        reviewRequestId: "rr-1",
+        requesterUserId: "user-r",
+        requesterName: "Alice Requester",
+        projectId: "proj-1",
+        projectName: "Project Alpha",
+        entityType: "CASE",
+        entityId: "case-1",
+        entityName: "Login flow",
+        fromStateName: "Draft",
+        toStateName: "Approved",
+        hoursPending: 36,
+      },
+    };
+
+    it("immediate path: calls getServerTranslation with reviewReminderTitle + reviewReminderEmailMessage and routes actorName from requesterName", async () => {
+      mockPrisma.notification.findUnique.mockResolvedValue(
+        reminderNotification
+      );
+
+      const { processor } = await import("./emailWorker");
+      const { getServerTranslation } =
+        await import("../lib/server-translations");
+
+      const mockJob = {
+        id: "job-rr-imm",
+        name: "send-notification-email",
+        data: {
+          notificationId: "notif-reminder",
+          userId: "user-1",
+          immediate: true,
+        },
+      } as Job;
+
+      await processor(mockJob);
+
+      expect(getServerTranslation).toHaveBeenCalledWith(
+        expect.anything(),
+        "components.notifications.content.reviewReminderTitle"
+      );
+      const messageCall = vi
+        .mocked(getServerTranslation)
+        .mock.calls.find(
+          (c: any) =>
+            c[1] ===
+            "components.notifications.content.reviewReminderEmailMessage"
+        );
+      expect(messageCall).toBeDefined();
+      const placeholders = messageCall?.[2] as any;
+      expect(placeholders.actorName).toBe("Alice Requester");
+      expect(placeholders.hoursPending).toBe(36);
+      expect(placeholders.entityName).toBe("Login flow");
+      expect(placeholders.projectName).toBe("Project Alpha");
+    });
+
+    it("immediate path: composes the URL using projects/repository/{projectId}/{entityId} for CASE", async () => {
+      mockPrisma.notification.findUnique.mockResolvedValue(
+        reminderNotification
+      );
+
+      const { processor } = await import("./emailWorker");
+
+      const mockJob = {
+        id: "job-rr-url",
+        name: "send-notification-email",
+        data: {
+          notificationId: "notif-reminder",
+          userId: "user-1",
+          immediate: true,
+        },
+      } as Job;
+
+      await processor(mockJob);
+
+      const callArgs = mockSendNotificationEmail.mock.calls[0][0];
+      expect(callArgs.notificationUrl).toContain(
+        "/en-US/projects/repository/proj-1/case-1"
+      );
+    });
+
+    it("digest path: calls getServerTranslation with reviewReminderTitle + reviewReminderEmailMessage and routes actorName from requesterName", async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: "user-1",
+        email: "user@example.com",
+        name: "Test User",
+        userPreferences: { locale: "en_US" },
+      });
+      mockPrisma.notification.findMany.mockResolvedValue([
+        reminderNotification,
+      ]);
+
+      const { processor } = await import("./emailWorker");
+      const { getServerTranslation } =
+        await import("../lib/server-translations");
+
+      const mockJob = {
+        id: "job-rr-digest",
+        name: "send-digest-email",
+        data: {
+          userId: "user-1",
+          notifications: [
+            {
+              id: "notif-reminder",
+              title: "t",
+              message: "m",
+              createdAt: new Date(),
+            },
+          ],
+        },
+      } as Job;
+
+      await processor(mockJob);
+
+      expect(getServerTranslation).toHaveBeenCalledWith(
+        expect.anything(),
+        "components.notifications.content.reviewReminderTitle"
+      );
+      const messageCall = vi
+        .mocked(getServerTranslation)
+        .mock.calls.find(
+          (c: any) =>
+            c[1] ===
+            "components.notifications.content.reviewReminderEmailMessage"
+        );
+      expect(messageCall).toBeDefined();
+      const placeholders = messageCall?.[2] as any;
+      expect(placeholders.actorName).toBe("Alice Requester");
+      expect(placeholders.hoursPending).toBe(36);
+
+      // URL composed for the digest entry
+      const digestArgs = mockSendDigestEmail.mock.calls[0][0];
+      expect(digestArgs.notifications[0].url).toContain(
+        "/en-US/projects/repository/proj-1/case-1"
+      );
+    });
+  });
 });

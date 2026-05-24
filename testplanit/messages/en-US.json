@@ -5357,7 +5357,11 @@
         "reviewApprovedEmailMessage": "{actorName} approved your review request on {entityLabel} \"{entityName}\" in project \"{projectName}\".",
         "reviewChangesRequestedEmailMessage": "{actorName} requested changes on your review request for {entityLabel} \"{entityName}\" in project \"{projectName}\".",
         "reviewRejectedEmailMessage": "{actorName} rejected your review request on {entityLabel} \"{entityName}\" in project \"{projectName}\".",
-        "reviewCancelledEmailMessage": "{actorName} cancelled the review request on {entityLabel} \"{entityName}\" in project \"{projectName}\"."
+        "reviewCancelledEmailMessage": "{actorName} cancelled the review request on {entityLabel} \"{entityName}\" in project \"{projectName}\".",
+        "reviewReminderTitle": "Review still pending",
+        "reviewReminderAction": "is still waiting on your review of",
+        "reviewReminderEmailMessage": "Reminder: {actorName}'s review request on {entityLabel} \"{entityName}\" in project \"{projectName}\" has been pending for {hoursPending} hours.",
+        "reviewReminderHoursPending": "Pending for {hoursPending, plural, one {# hour} other {# hours}}"
       }
     },
     "issues": {

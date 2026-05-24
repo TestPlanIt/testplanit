@@ -5357,7 +5357,11 @@
         "reviewApprovedEmailMessage": "{actorName} aprovou sua solicitação de revisão em {entityLabel} \"{entityName}\" no projeto \"{projectName}\".",
         "reviewChangesRequestedEmailMessage": "{actorName} solicitou alterações em sua solicitação de revisão para {entityLabel} \"{entityName}\" no projeto \"{projectName}\".",
         "reviewRejectedEmailMessage": "{actorName} rejeitou sua solicitação de revisão em {entityLabel} \"{entityName}\" no projeto \"{projectName}\".",
-        "reviewCancelledEmailMessage": "{actorName} cancelou a solicitação de revisão em {entityLabel} \"{entityName}\" no projeto \"{projectName}\"."
+        "reviewCancelledEmailMessage": "{actorName} cancelou a solicitação de revisão em {entityLabel} \"{entityName}\" no projeto \"{projectName}\".",
+        "reviewReminderTitle": "Análise ainda pendente",
+        "reviewReminderAction": "Ainda aguardamos sua avaliação de",
+        "reviewReminderEmailMessage": "Lembrete: a solicitação de revisão de {actorName}em {entityLabel} \"{entityName}\" no projeto \"{projectName}\" está pendente há {hoursPending} horas.",
+        "reviewReminderHoursPending": "Aguardando {hoursPending, plural, one {# hora} other {# horas}}"
       }
     },
     "issues": {

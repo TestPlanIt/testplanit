@@ -5357,7 +5357,11 @@
         "reviewApprovedEmailMessage": "{actorName} approved your review request on {entityLabel} \"{entityName}\" in project \"{projectName}\".",
         "reviewChangesRequestedEmailMessage": "{actorName} requested changes on your review request for {entityLabel} \"{entityName}\" in project \"{projectName}\".",
         "reviewRejectedEmailMessage": "{actorName} 님이 프로젝트 \"{projectName} \"에서 {entityLabel} \"{entityName}\"에 대한 검토 요청을 거부했습니다.",
-        "reviewCancelledEmailMessage": "{actorName} 님이 프로젝트 \"{projectName} \"에서 {entityLabel} \"{entityName}\"에 대한 검토 요청을 취소했습니다."
+        "reviewCancelledEmailMessage": "{actorName} 님이 프로젝트 \"{projectName} \"에서 {entityLabel} \"{entityName}\"에 대한 검토 요청을 취소했습니다.",
+        "reviewReminderTitle": "검토는 아직 진행 중입니다.",
+        "reviewReminderAction": "아직 귀하의 리뷰를 기다리고 있습니다.",
+        "reviewReminderEmailMessage": "알림: {actorName}님의 {entityLabel} \"{entityName}\" 프로젝트 \"{projectName}\"에 대한 검토 요청이 {hoursPending} 시간 동안 보류 중입니다.",
+        "reviewReminderHoursPending": "대기 시간: {hoursPending, plural, one {#시간} other {#시간}}"
       }
     },
     "issues": {

@@ -5357,7 +5357,11 @@
         "reviewApprovedEmailMessage": "{actorName} одобрил ваш запрос на рецензирование в {entityLabel} \"{entityName}\" в проекте \"{projectName}\".",
         "reviewChangesRequestedEmailMessage": "{actorName} запросил изменения в вашем запросе на рецензирование для {entityLabel} \"{entityName}\" в проекте \"{projectName}\".",
         "reviewRejectedEmailMessage": "{actorName} отклонил ваш запрос на рецензирование в {entityLabel} \"{entityName}\" в проекте \"{projectName}\".",
-        "reviewCancelledEmailMessage": "{actorName} отменил запрос на рецензирование по {entityLabel} \"{entityName}\" в проекте \"{projectName}\"."
+        "reviewCancelledEmailMessage": "{actorName} отменил запрос на рецензирование по {entityLabel} \"{entityName}\" в проекте \"{projectName}\".",
+        "reviewReminderTitle": "Рассмотрение вопроса еще не завершено.",
+        "reviewReminderAction": "всё ещё ждёт вашего отзыва",
+        "reviewReminderEmailMessage": "Напоминание: Запрос на проверку проекта {actorName}по проекту {entityLabel} \"{entityName}\" в проекте \"{projectName}\" находится в ожидании уже {hoursPending} часов.",
+        "reviewReminderHoursPending": "Ожидается в течение {hoursPending, plural, one {# часов} other {# часов}}"
       }
     },
     "issues": {

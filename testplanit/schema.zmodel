@@ -332,6 +332,7 @@ enum NotificationType {
     REVIEW_CHANGES_REQUESTED
     REVIEW_REJECTED
     REVIEW_CANCELLED
+    REVIEW_REMINDER
 
     @@deny('all', !auth())
     @@allow('update', auth().access == 'ADMIN')
@@ -4072,6 +4073,11 @@ model ReviewRequest {
     // conversation surface.
     comments          Comment[]
 
+    // Stamped by the review-reminder scheduler after a reminder notification
+    // fires for this PENDING row. Null = never reminded; the scan predicate
+    // treats null and "older than threshold" identically.
+    lastRemindedAt    DateTime?        @db.Timestamptz(6)
+
     isDeleted         Boolean          @default(false)
     createdAt         DateTime         @default(now()) @db.Timestamptz(6)
     updatedAt         DateTime         @updatedAt
@@ -5186,6 +5192,7 @@ enum AuditAction {
     REVIEW_CHANGES_REQUESTED
     REVIEW_REJECTED
     REVIEW_CANCELLED
+    REVIEW_REMINDED
 }
 
 model AuditLog {

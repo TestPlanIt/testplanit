@@ -508,7 +508,8 @@ export function NotificationContent({
     notification.type === "REVIEW_APPROVED" ||
     notification.type === "REVIEW_CHANGES_REQUESTED" ||
     notification.type === "REVIEW_REJECTED" ||
-    notification.type === "REVIEW_CANCELLED"
+    notification.type === "REVIEW_CANCELLED" ||
+    notification.type === "REVIEW_REMINDER"
   ) {
     if (data.projectId && data.entityType && data.entityId) {
       const entityLink =
@@ -555,16 +556,22 @@ export function NotificationContent({
         title = t("reviewRejectedTitle");
         action = t("reviewRejectedAction");
         actorUserId = data.deciderUserId;
-      } else {
+      } else if (notification.type === "REVIEW_CANCELLED") {
         title = t("reviewCancelledTitle");
         action = t("reviewCancelledAction");
         actorUserId = data.cancelerUserId;
+      } else {
+        // REVIEW_REMINDER
+        title = t("reviewReminderTitle");
+        action = t("reviewReminderAction");
+        actorUserId = data.requesterUserId;
       }
 
       const commentText =
         notification.type === "REVIEW_REQUESTED"
           ? data.commentText
-          : notification.type === "REVIEW_CANCELLED"
+          : notification.type === "REVIEW_CANCELLED" ||
+              notification.type === "REVIEW_REMINDER"
             ? undefined
             : data.decisionComment;
 
@@ -598,6 +605,13 @@ export function NotificationContent({
                 {t("reviewTransition", {
                   from: data.fromStateName,
                   to: data.toStateName,
+                })}
+              </div>
+            )}
+            {notification.type === "REVIEW_REMINDER" && data.hoursPending && (
+              <div className="text-xs">
+                {t("reviewReminderHoursPending", {
+                  hoursPending: data.hoursPending,
                 })}
               </div>
             )}

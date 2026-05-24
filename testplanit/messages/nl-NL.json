@@ -5357,7 +5357,11 @@
         "reviewApprovedEmailMessage": "{actorName} heeft uw beoordelingsverzoek goedgekeurd voor {entityLabel} \"{entityName}\" in project \"{projectName}\".",
         "reviewChangesRequestedEmailMessage": "{actorName} heeft wijzigingen aangevraagd in uw beoordelingsverzoek voor {entityLabel} \"{entityName}\" in project \"{projectName}\".",
         "reviewRejectedEmailMessage": "{actorName} heeft uw beoordelingsverzoek voor {entityLabel} \"{entityName}\" in project \"{projectName} \" afgewezen.",
-        "reviewCancelledEmailMessage": "{actorName} heeft het beoordelingsverzoek voor {entityLabel} \"{entityName}\" in project \"{projectName} \" geannuleerd."
+        "reviewCancelledEmailMessage": "{actorName} heeft het beoordelingsverzoek voor {entityLabel} \"{entityName}\" in project \"{projectName} \" geannuleerd.",
+        "reviewReminderTitle": "Beoordeling nog in behandeling",
+        "reviewReminderAction": "wacht nog steeds op uw beoordeling van",
+        "reviewReminderEmailMessage": "Herinnering: Het beoordelingsverzoek van {actorName}voor {entityLabel} \"{entityName}\" in project \"{projectName}\" is al {hoursPending} uur in behandeling.",
+        "reviewReminderHoursPending": "In afwachting van {hoursPending, plural, one {# uur} other {# uur}}"
       }
     },
     "issues": {

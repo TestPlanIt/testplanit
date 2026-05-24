@@ -5357,7 +5357,11 @@
         "reviewApprovedEmailMessage": "{actorName} , {entityLabel} tarihinde \"{entityName}\" projesindeki \"{projectName} \" inceleme isteğinizi onayladı.",
         "reviewChangesRequestedEmailMessage": "{actorName} , \" {entityLabel} \"{entityName}\" projesindeki \"{projectName} \" inceleme talebinizde değişiklikler istedi.",
         "reviewRejectedEmailMessage": "{actorName} , {entityLabel} tarihinde \"{entityName}\" projesindeki \"{projectName} \" inceleme isteğinizi reddetti.",
-        "reviewCancelledEmailMessage": "{actorName} , {entityLabel} \"{entityName}\" projesindeki \"{projectName} \" inceleme isteğini iptal etti."
+        "reviewCancelledEmailMessage": "{actorName} , {entityLabel} \"{entityName}\" projesindeki \"{projectName} \" inceleme isteğini iptal etti.",
+        "reviewReminderTitle": "İnceleme henüz sonuçlanmadı.",
+        "reviewReminderAction": "Hâlâ sizin değerlendirmenizi bekliyor.",
+        "reviewReminderEmailMessage": "Hatırlatma: {actorName}'ın {entityLabel} \"{entityName}\" hakkındaki inceleme isteği, \"{projectName}\" projesinde {hoursPending} saattir beklemede.",
+        "reviewReminderHoursPending": "Beklemede {hoursPending, plural, one {saat} other {saat}}"
       }
     },
     "issues": {

@@ -5357,7 +5357,11 @@
         "reviewApprovedEmailMessage": "{actorName} đã chấp thuận yêu cầu đánh giá của bạn vào ngày {entityLabel} \"{entityName}\" trong dự án \"{projectName}\".",
         "reviewChangesRequestedEmailMessage": "{actorName} đã yêu cầu thay đổi đối với yêu cầu xem xét của bạn cho {entityLabel} \"{entityName}\" trong dự án \"{projectName}\".",
         "reviewRejectedEmailMessage": "{actorName} đã từ chối yêu cầu đánh giá của bạn vào {entityLabel} \"{entityName}\" trong dự án \"{projectName}\".",
-        "reviewCancelledEmailMessage": "{actorName} đã hủy yêu cầu xem xét trên {entityLabel} \"{entityName}\" trong dự án \"{projectName}\"."
+        "reviewCancelledEmailMessage": "{actorName} đã hủy yêu cầu xem xét trên {entityLabel} \"{entityName}\" trong dự án \"{projectName}\".",
+        "reviewReminderTitle": "Đang chờ xem xét",
+        "reviewReminderAction": "vẫn đang chờ đánh giá của bạn về",
+        "reviewReminderEmailMessage": "Nhắc nhở: Yêu cầu xem xét của {actorName}đối với {entityLabel} \"{entityName}\" trong dự án \"{projectName}\" đã bị chờ xử lý trong {hoursPending} giờ.",
+        "reviewReminderHoursPending": "Đang chờ xử lý trong {hoursPending, plural, one {# giờ} other {# giờ}}"
       }
     },
     "issues": {

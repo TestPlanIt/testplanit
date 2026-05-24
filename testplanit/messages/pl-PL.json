@@ -5357,7 +5357,11 @@
         "reviewApprovedEmailMessage": "{actorName} zatwierdził Twoją prośbę o recenzję w dniu {entityLabel} „{entityName}” w projekcie „{projectName}”.",
         "reviewChangesRequestedEmailMessage": "{actorName} zażądał wprowadzenia zmian w żądaniu przeglądu {entityLabel} „{entityName}” w projekcie „{projectName}”.",
         "reviewRejectedEmailMessage": "{actorName} odrzucił Twoją prośbę o recenzję w {entityLabel} „{entityName}” w projekcie „{projectName}”.",
-        "reviewCancelledEmailMessage": "{actorName} anulował prośbę o recenzję w {entityLabel} „{entityName}” w projekcie „{projectName}”."
+        "reviewCancelledEmailMessage": "{actorName} anulował prośbę o recenzję w {entityLabel} „{entityName}” w projekcie „{projectName}”.",
+        "reviewReminderTitle": "Recenzja wciąż w toku",
+        "reviewReminderAction": "nadal czekam na Twoją recenzję",
+        "reviewReminderEmailMessage": "Przypomnienie: prośba użytkownika {actorName}z dnia {entityLabel} „{entityName}” w projekcie „{projectName}” oczekuje na rozpatrzenie przez {hoursPending} godzin.",
+        "reviewReminderHoursPending": "Oczekiwanie na {hoursPending, plural, one {# godzina} other {# godzina}}"
       }
     },
     "issues": {

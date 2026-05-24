@@ -12,6 +12,7 @@ import {
 import {
   JOB_AUTO_COMPLETE_MILESTONES,
   JOB_MILESTONE_DUE_NOTIFICATIONS,
+  JOB_REVIEW_REMINDERS,
   JOB_UPDATE_ALL_CASES,
 } from "./workers/forecastWorker";
 import { JOB_SEND_DAILY_DIGEST } from "./workers/notificationWorker";
@@ -24,6 +25,7 @@ const CRON_SCHEDULE_DAILY_6AM = "0 6 * * *"; // For milestone auto-completion an
 const CRON_SCHEDULE_DAILY_8AM = "0 8 * * *"; // For daily digest emails
 const CRON_SCHEDULE_DAILY_4AM = "0 4 * * *"; // For code repository cache refresh
 const CRON_SCHEDULE_DAILY_2AM = "0 2 * * *"; // Plan 02-06 / D-04 — auto-retire expired WebhookConfigSecret rows
+const CRON_SCHEDULE_HOURLY = "0 * * * *"; // Top of every hour — review-reminder scan
 const JOB_RETIRE_EXPIRED_SECRETS = "retire-expired-secrets";
 
 async function scheduleJobs() {
@@ -103,6 +105,26 @@ async function scheduleJobs() {
 
       console.log(
         `Upserted job scheduler "${JOB_MILESTONE_DUE_NOTIFICATIONS}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_DAILY_6AM}" on queue "${FORECAST_QUEUE_NAME}".`
+      );
+
+      // Hourly scan for PENDING review requests older than the configurable
+      // threshold (default 24h via AppConfig.review_reminder_threshold_hours)
+      // that have not been reminded within the same window.
+      const reminderId = tenantId
+        ? `${JOB_REVIEW_REMINDERS}-${tenantId}`
+        : JOB_REVIEW_REMINDERS;
+
+      await forecastQueue.upsertJobScheduler(
+        reminderId,
+        { pattern: CRON_SCHEDULE_HOURLY },
+        {
+          name: JOB_REVIEW_REMINDERS,
+          data: { tenantId },
+        }
+      );
+
+      console.log(
+        `Upserted job scheduler "${JOB_REVIEW_REMINDERS}"${tenantId ? ` for tenant ${tenantId}` : ""} with pattern "${CRON_SCHEDULE_HOURLY}" on queue "${FORECAST_QUEUE_NAME}".`
       );
     }
 

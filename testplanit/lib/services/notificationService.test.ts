@@ -825,6 +825,102 @@ describe("NotificationService", () => {
     });
   });
 
+  describe("createReviewReminderNotification", () => {
+    const baseParams = {
+      requesterUserId: "requester-1",
+      requesterName: "Alice Requester",
+      projectId: 42,
+      projectName: "Project X",
+      entityType: "CASE" as const,
+      entityId: 7,
+      entityName: "Login flow",
+      fromStateName: "Draft",
+      toStateName: "Approved",
+      reviewRequestId: "rr-1",
+      hoursPending: 36,
+    };
+
+    it("is a no-op when targetUserIds is empty", async () => {
+      await NotificationService.createReviewReminderNotification({
+        ...baseParams,
+        targetUserIds: [],
+      });
+
+      expect(mockQueue.add).not.toHaveBeenCalled();
+    });
+
+    it("enqueues one job per recipient with REVIEW_REMINDER type and full data payload", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-reminder-1" } as any);
+
+      await NotificationService.createReviewReminderNotification({
+        ...baseParams,
+        targetUserIds: ["user-a", "user-b", "user-c"],
+      });
+
+      expect(mockQueue.add).toHaveBeenCalledTimes(3);
+
+      const recipientIds = mockQueue.add.mock.calls.map(
+        (call) => (call[1] as any).userId
+      );
+      expect(recipientIds.sort()).toEqual(["user-a", "user-b", "user-c"]);
+
+      for (const call of mockQueue.add.mock.calls) {
+        const payload = call[1] as any;
+        expect(payload.type).toBe(NotificationType.REVIEW_REMINDER);
+        expect(payload.relatedEntityId).toBe("rr-1");
+        expect(payload.relatedEntityType).toBe("ReviewRequest");
+        expect(payload.data.hoursPending).toBe(36);
+        expect(payload.data.requesterUserId).toBe("requester-1");
+        expect(payload.data.requesterName).toBe("Alice Requester");
+        expect(payload.data.reviewRequestId).toBe("rr-1");
+        expect(payload.data.projectId).toBe(42);
+        expect(payload.data.projectName).toBe("Project X");
+        expect(payload.data.entityType).toBe("CASE");
+        expect(payload.data.entityId).toBe(7);
+        expect(payload.data.entityName).toBe("Login flow");
+        expect(payload.data.fromStateName).toBe("Draft");
+        expect(payload.data.toStateName).toBe("Approved");
+        // commentText is omitted (reminder carries no fresh comment)
+        expect(payload.data.commentText).toBeUndefined();
+      }
+    });
+
+    it.each([
+      ["CASE", "test case"],
+      ["RUN", "test run"],
+      ["SESSION", "session"],
+    ] as const)(
+      "derives the correct entityLabel for entityType %s",
+      async (entityType, label) => {
+        mockQueue.add.mockResolvedValue({ id: "job-label" } as any);
+
+        await NotificationService.createReviewReminderNotification({
+          ...baseParams,
+          entityType,
+          targetUserIds: ["user-a"],
+        });
+
+        const payload = mockQueue.add.mock.calls[0][1] as any;
+        expect(payload.message).toContain(label);
+        expect(payload.message).toContain('"Login flow"');
+        expect(payload.message).toContain('"Project X"');
+        expect(payload.message).toContain("36h pending");
+      }
+    );
+
+    it("uses the English fallback title 'Review still pending'", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-title" } as any);
+
+      await NotificationService.createReviewReminderNotification({
+        ...baseParams,
+        targetUserIds: ["user-a"],
+      });
+
+      const payload = mockQueue.add.mock.calls[0][1] as any;
+      expect(payload.title).toBe("Review still pending");
+    });
+  });
+
   describe("markNotificationsAsRead", () => {
     it("should return the provided notification IDs", async () => {
       const ids = ["notif-1", "notif-2", "notif-3"];

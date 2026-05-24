@@ -5357,7 +5357,11 @@
         "reviewApprovedEmailMessage": "{actorName} 已批准您對 {entityLabel} \"{entityName}\" 的項目 \"{projectName} \" 的審核請求。",
         "reviewChangesRequestedEmailMessage": "{actorName} requested changes on your review request for {entityLabel} \"{entityName}\" in project \"{projectName}\".",
         "reviewRejectedEmailMessage": "{actorName} rejected your review request on {entityLabel} \"{entityName}\" in project \"{projectName}\".",
-        "reviewCancelledEmailMessage": "{actorName} 取消了對 {entityLabel} \"{entityName}\" 在項目 \"{projectName} \" 中的審查請求。"
+        "reviewCancelledEmailMessage": "{actorName} 取消了對 {entityLabel} \"{entityName}\" 在項目 \"{projectName} \" 中的審查請求。",
+        "reviewReminderTitle": "審核仍在進行中",
+        "reviewReminderAction": "仍在等待您的評論",
+        "reviewReminderEmailMessage": "Reminder: {actorName}'s review request on {entityLabel} \"{entityName}\" in project \"{projectName}\" has been pending for {hoursPending} hours.",
+        "reviewReminderHoursPending": "等待 {hoursPending, plural, one {小時} other {小時}}"
       }
     },
     "issues": {
