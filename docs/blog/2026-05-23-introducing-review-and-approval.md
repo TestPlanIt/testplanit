@@ -60,13 +60,17 @@ Requesters also see live status on the entity itself: a pending banner while the
 
 No new notification plumbing for admins to learn. The existing global and per-user notification preferences gate review notifications the same way they gate every other notification in the product.
 
-## Two Levers, Per Project and System-Wide
+## Two Levers, Per Project and System-Wide — Off By Default
 
-We assume not every project needs gated workflows. Project administrators have a **Review Workflow** toggle in **Project Settings → Advanced** to opt out per project. A team running an unenforced sandbox can keep moving fast while the rest of the org runs gated workflows.
+Gating workflow transitions is a meaningful behavior change for every existing project, so we ship the feature **off by default**. Admins enable it explicitly — nothing changes for your existing test cases, runs, or sessions until you choose to turn it on.
 
-System administrators have a global flag one level up — visible on **Administration → Workflows**. Turning that off pauses every project's gating, hides the **Request review** button and inbox everywhere, and preserves any in-flight requests silently. Flip it back on and they reappear in their reviewers' inboxes.
+System administrators flip the global switch on **Administration → Workflows**. That makes the feature available org-wide; nothing is gated yet because…
 
-Toggle either flag off mid-flight and nothing is lost. Toggle either back on and pending requests resume from exactly where they were.
+…each project carries its own **Review Workflow** toggle in **Project Settings → Advanced**, also off by default. Project administrators opt in per project. A team can pilot the feature on one project while the rest of the org keeps moving without gates.
+
+Marking workflow states as **Requires review** is the third lever — even with both switches on, only states you've explicitly gated trigger the request flow.
+
+Flipping either lever off mid-flight is non-destructive: in-flight requests are preserved silently and reappear in their reviewers' inboxes the moment the lever flips back on.
 
 Full reference at [Review & Approval](/docs/user-guide/review-approvals).
 

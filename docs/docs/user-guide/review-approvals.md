@@ -83,8 +83,8 @@ When a tester needs to advance a case, run, or session into (or across) a gated 
 2. Click **Request review**.
 3. In the dialog:
     - **Target state** — the workflow state you want the entity to land on. The dropdown shows gated states clearly with the warning glyph.
-    - **Reviewer** — pick a specific user **or** a role (e.g. "QA Lead"). Roles only list members who have access to this project, so you can't accidentally assign a review to someone who couldn't act on it.
-    - **Comment** — optional message for the reviewer (rich text; supports `@mentions`).
+    - **Reviewer** — pick a specific user **or** a role (e.g. "QA Lead"). Roles only list members who have access to this project, so you can't accidentally assign a review to someone who couldn't act on it. The role chip on the pending banner exposes a hover tooltip naming every project-eligible holder of that role, so the requester always knows who can act.
+    - **Comment** — optional message for the reviewer (rich text; supports `@mentions`). If you leave the comment blank, TestPlanIt fills it in with a sensible default — `Please review the transition from {fromState} → {toState}.` (and, for role-assigned reviews, appends `Requesting approval from the {roleName} group.`) — so the reviewer always sees something useful in the comment thread.
 4. Click **Submit**.
 
 ![The Request Review sheet with target state, reviewer, and comment fields populated](/img/screenshots/user-guide/review-approvals/request-review-sheet.png)
@@ -107,7 +107,7 @@ Cancelling does not affect the entity's current state. Anyone who was asked to r
 
 Reviewers find pending requests in their inbox:
 
-1. Click the **Review inbox** icon in the top navigation bar (a chat-bubble icon with a count badge when there are pending items).
+1. Click the **Review inbox** icon in the top navigation bar (an inbox icon with a count badge when there are pending items). The icon is hidden for users who have no access to any project with **Review Workflow** turned on — there's nothing for them to act on.
 2. The inbox shows two tabs:
     - **Pending** — requests assigned to you, directly or via a role you hold.
     - **Decided** — requests you've already decided on.
