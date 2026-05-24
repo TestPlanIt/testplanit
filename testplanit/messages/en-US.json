@@ -1822,7 +1822,9 @@
           "description": "When enabled, transitions into states that require review are gated by an approved review request. Testers see the Request Review button; reviewers receive notifications.",
           "enabledToast": "Review workflow enabled for this project",
           "disabledToast": "Review workflow disabled for this project",
-          "saveError": "Failed to update review workflow setting"
+          "saveError": "Failed to update review workflow setting",
+          "systemDisabledTitle": "Review workflow is off system-wide",
+          "systemDisabledDescription": "Your project's preference is saved, but nothing will be gated until a system administrator turns the feature on under Administration → Workflows."
         }
       }
     },
@@ -4320,8 +4322,6 @@
         "updateError": "Failed to update review workflow setting. Try again in a moment."
       },
       "projectReviewToggleList": {
-        "title": "Project review workflow",
-        "description": "Toggle the review workflow feature on or off for each project. Project administrators can also manage this from each project's Advanced settings.",
         "columnHeader": "Review workflow",
         "filterPlaceholder": "Filter projects...",
         "enabledToast": "Review workflow enabled for {name}",

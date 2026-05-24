@@ -64,7 +64,29 @@ let toStateId: number;
 
 const createdReviewRequestIds: string[] = [];
 
+// AppConfig review_feature_enabled key — opt-in default-off means every test in
+// this file would otherwise short-circuit with FeatureDisabledError. We capture
+// the prior row (if any) so afterAll can restore exact state for the next test
+// run that may not want the flag forced on.
+const REVIEW_FEATURE_KEY = "review_feature_enabled";
+let priorReviewFeatureValue: unknown = undefined;
+let priorReviewFeatureExisted = false;
+
 beforeAll(async () => {
+  const existing = await prisma.appConfig.findUnique({
+    where: { key: REVIEW_FEATURE_KEY },
+    select: { value: true },
+  });
+  if (existing) {
+    priorReviewFeatureExisted = true;
+    priorReviewFeatureValue = existing.value;
+  }
+  await prisma.appConfig.upsert({
+    where: { key: REVIEW_FEATURE_KEY },
+    create: { key: REVIEW_FEATURE_KEY, value: true },
+    update: { value: true },
+  });
+
   // Reuse seeded Roles. We need at least TWO roles so the role-holder branch
   // can prove "user holds role X" while the ineligible user holds role Y.
   const roles = await prisma.roles.findMany({
@@ -327,6 +349,22 @@ afterAll(async () => {
     } catch {
       /* ignore */
     }
+  }
+
+  // Restore the original AppConfig row (or delete it if we created it).
+  try {
+    if (priorReviewFeatureExisted) {
+      await prisma.appConfig.update({
+        where: { key: REVIEW_FEATURE_KEY },
+        data: { value: priorReviewFeatureValue as never },
+      });
+    } else {
+      await prisma.appConfig.delete({
+        where: { key: REVIEW_FEATURE_KEY },
+      });
+    }
+  } catch {
+    /* ignore */
   }
 
   await prisma.$disconnect();

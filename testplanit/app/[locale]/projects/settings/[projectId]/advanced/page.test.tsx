@@ -65,6 +65,15 @@ vi.mock("~/lib/hooks", () => ({
   }),
 }));
 
+let mockSystemEnabled: boolean | undefined = true;
+vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
+  useReviewFeatureEnabled: () => ({
+    systemEnabled: mockSystemEnabled,
+    enabled: mockSystemEnabled,
+    isLoading: false,
+  }),
+}));
+
 import AdvancedPage from "./page";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -81,6 +90,7 @@ describe("AdvancedPage (per-project advanced settings)", () => {
     currentSessionStatus = "authenticated";
     mockProjectData = { id: 42, reviewWorkflowEnabled: true };
     mockProjectLoading = false;
+    mockSystemEnabled = true;
   });
 
   it("(a) ADMIN sees the Advanced page", () => {
@@ -129,6 +139,33 @@ describe("AdvancedPage (per-project advanced settings)", () => {
         data: { reviewWorkflowEnabled: false },
       });
     });
+  });
+
+  it("(g) hides the system-disabled warning when the system flag is ON", () => {
+    mockSystemEnabled = true;
+    mockProjectData = { id: 42, reviewWorkflowEnabled: true };
+    render(<AdvancedPage />);
+    expect(
+      screen.queryByTestId("review-workflow-system-disabled-warning")
+    ).not.toBeInTheDocument();
+  });
+
+  it("(h) shows the system-disabled warning when system is OFF and project toggle is ON", () => {
+    mockSystemEnabled = false;
+    mockProjectData = { id: 42, reviewWorkflowEnabled: true };
+    render(<AdvancedPage />);
+    expect(
+      screen.getByTestId("review-workflow-system-disabled-warning")
+    ).toBeInTheDocument();
+  });
+
+  it("(i) hides the system-disabled warning when system is OFF and project toggle is OFF", () => {
+    mockSystemEnabled = false;
+    mockProjectData = { id: 42, reviewWorkflowEnabled: false };
+    render(<AdvancedPage />);
+    expect(
+      screen.queryByTestId("review-workflow-system-disabled-warning")
+    ).not.toBeInTheDocument();
   });
 
   it("(f) shows success toast on resolve", async () => {

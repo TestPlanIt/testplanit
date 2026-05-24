@@ -1822,7 +1822,9 @@
           "description": "啟用此功能後，需要審核的狀態轉換將由已核准的審核請求控制。測試人員會看到「請求審核」按鈕；審核人員會收到通知。",
           "enabledToast": "此項目已啟用審核工作流程",
           "disabledToast": "此項目的審核工作流程已停用",
-          "saveError": "更新審核工作流程設定失敗"
+          "saveError": "更新審核工作流程設定失敗",
+          "systemDisabledTitle": "全系統審核工作流程已關閉。",
+          "systemDisabledDescription": "您的專案偏好設定已儲存，但只有在系統管理員在「管理」→「工作流程」下啟用功能後，才會啟用任何功能。"
         }
       }
     },
@@ -4320,8 +4322,6 @@
         "updateError": "更新審核工作流程設定失敗。請稍後再試。"
       },
       "projectReviewToggleList": {
-        "title": "專案評審工作流程",
-        "description": "您可以為每個專案啟用或停用審核工作流程功能。專案管理員也可以在每個專案的「進階設定」中進行管理。",
         "columnHeader": "審核工作流程",
         "filterPlaceholder": "篩選項目...",
         "enabledToast": "已啟用審核工作流程 {name}",

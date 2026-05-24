@@ -66,7 +66,7 @@ Gating workflow transitions is a meaningful behavior change for every existing p
 
 System administrators flip the global switch on **Administration → Workflows**. That makes the feature available org-wide; nothing is gated yet because…
 
-…each project carries its own **Review Workflow** toggle in **Project Settings → Advanced**, also off by default. Project administrators opt in per project. A team can pilot the feature on one project while the rest of the org keeps moving without gates.
+…each project carries its own **Review Workflow** toggle in **Project Settings → Advanced**, also off by default. Project administrators opt in per project. A team can pilot the feature on one project while the rest of the org keeps moving without gates. System administrators rolling the feature out at scale can flip every project's toggle from one searchable, sortable list on the same **Administration → Workflows** card — no need to walk through dozens of project Settings pages.
 
 Marking workflow states as **Requires review** is the third lever — even with both switches on, only states you've explicitly gated trigger the request flow.
 

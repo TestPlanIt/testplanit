@@ -1822,7 +1822,9 @@
           "description": "Po włączeniu, przejścia do stanów wymagających przeglądu są blokowane przez zatwierdzoną prośbę o przegląd. Testerzy widzą przycisk „Poproś o przegląd”, a recenzenci otrzymują powiadomienia.",
           "enabledToast": "Przepływ pracy przeglądu włączony dla tego projektu",
           "disabledToast": "Przebieg przeglądu wyłączony dla tego projektu",
-          "saveError": "Nie udało się zaktualizować ustawień przepływu pracy przeglądu"
+          "saveError": "Nie udało się zaktualizować ustawień przepływu pracy przeglądu",
+          "systemDisabledTitle": "Przepływ pracy przeglądu jest wyłączony w całym systemie",
+          "systemDisabledDescription": "Preferencje Twojego projektu zostaną zapisane, ale nic nie będzie zablokowane, dopóki administrator systemu nie włączy tej funkcji w obszarze Administracja → Przepływy pracy."
         }
       }
     },
@@ -4320,8 +4322,6 @@
         "updateError": "Nie udało się zaktualizować ustawień przepływu pracy recenzji. Spróbuj ponownie za chwilę."
       },
       "projectReviewToggleList": {
-        "title": "Przepływ pracy przeglądu projektu",
-        "description": "Włącz lub wyłącz funkcję przeglądu przepływu pracy dla każdego projektu. Administratorzy projektów mogą również zarządzać tą funkcją w ustawieniach zaawansowanych każdego projektu.",
         "columnHeader": "Przejrzyj przepływ pracy",
         "filterPlaceholder": "Filtruj projekty...",
         "enabledToast": "Przepływ pracy przeglądu włączony dla {name}",

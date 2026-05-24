@@ -51,11 +51,14 @@ Only system administrators can change this setting. Project administrators see t
 
 Each project carries its own `Review Workflow` toggle. By default new projects are **opted out**. Project administrators flip the toggle on per project — that way the org can roll the feature out gradually instead of every project enforcing gates the moment the system switch flips.
 
-1. Open the project.
-2. Navigate to **Settings → Advanced**.
-3. Toggle **Review Workflow** on.
+Either path works:
+
+- **Per project** — open the project, navigate to **Settings → Advanced**, toggle **Review Workflow** on. Useful for project administrators managing their own project.
+- **Bulk from the admin surface** — open **Administration → Workflows**. While the system feature is on, the Review Workflow card lists every project with an inline switch; flip any project on or off without leaving the page. The list is searchable, sortable, and paginated. Useful for system administrators rolling the feature out across many projects.
 
 When the system-level kill switch is off, the per-project toggle has no effect. When it is on, only projects with their own toggle on actually enforce gates.
+
+If a project is opted in while the system feature is off, the project's Advanced settings page surfaces a warning under the toggle so admins know the preference is saved but inactive until a system administrator turns the feature on.
 
 ### Step 3 — Mark workflow states as gated
 

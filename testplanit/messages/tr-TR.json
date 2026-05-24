@@ -1822,7 +1822,9 @@
           "description": "Etkinleştirildiğinde, inceleme gerektiren durumlara geçişler, onaylanmış bir inceleme talebiyle sınırlandırılır. Test edenler \"İnceleme Talep Et\" düğmesini görür; inceleyenler ise bildirim alır.",
           "enabledToast": "Bu proje için inceleme iş akışı etkinleştirildi.",
           "disabledToast": "Bu proje için inceleme iş akışı devre dışı bırakıldı.",
-          "saveError": "İnceleme iş akışı ayarı güncellenemedi."
+          "saveError": "İnceleme iş akışı ayarı güncellenemedi.",
+          "systemDisabledTitle": "İnceleme iş akışı sistem genelinde devre dışı.",
+          "systemDisabledDescription": "Projenizin tercihi kaydedilir, ancak sistem yöneticisi Yönetim → İş Akışları altında bu özelliği etkinleştirene kadar hiçbir şey kilitlenmeyecektir."
         }
       }
     },
@@ -4320,8 +4322,6 @@
         "updateError": "İnceleme iş akışı ayarı güncellenemedi. Lütfen birazdan tekrar deneyin."
       },
       "projectReviewToggleList": {
-        "title": "Proje inceleme iş akışı",
-        "description": "Her proje için inceleme iş akışı özelliğini açıp kapatabilirsiniz. Proje yöneticileri bunu her projenin Gelişmiş ayarlarından da yönetebilir.",
         "columnHeader": "İş akışını gözden geçirin",
         "filterPlaceholder": "Filtreleme projeleri...",
         "enabledToast": "{name} için inceleme iş akışı etkinleştirildi.",

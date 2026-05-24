@@ -53,6 +53,23 @@ vi.mock("sonner", () => ({
   },
 }));
 
+// PaginationProvider depends on next-intl navigation context; render its
+// children as-is so SystemFeatureCard mounts in tests.
+vi.mock("~/lib/contexts/PaginationContext", () => ({
+  PaginationProvider: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+}));
+
+// Stub the project list — tests assert presence via this marker, not full
+// child behavior (the list has its own test file).
+vi.mock("./ProjectReviewToggleList", () => ({
+  ProjectReviewToggleList: () => (
+    <div data-testid="project-review-toggle-list-stub" />
+  ),
+}));
+
+import React from "react";
 import { SystemFeatureCard } from "./SystemFeatureCard";
 
 describe("SystemFeatureCard (AppConfig-backed)", () => {
@@ -214,6 +231,52 @@ describe("SystemFeatureCard (AppConfig-backed)", () => {
 
     await waitFor(() => expect(mockToastError).toHaveBeenCalledTimes(1));
     expect(mockToastSuccess).not.toHaveBeenCalled();
+  });
+
+  it("(k) renders the project review toggle list when admin + system flag is ON", () => {
+    mockUseReviewFeatureEnabled.mockReturnValue({
+      systemEnabled: true,
+      enabled: true,
+      isLoading: false,
+    });
+
+    render(<SystemFeatureCard />);
+
+    expect(
+      screen.getByTestId("project-review-toggle-list-stub")
+    ).toBeInTheDocument();
+  });
+
+  it("(l) hides the project review toggle list when admin but system flag is OFF", () => {
+    mockUseReviewFeatureEnabled.mockReturnValue({
+      systemEnabled: false,
+      enabled: false,
+      isLoading: false,
+    });
+
+    render(<SystemFeatureCard />);
+
+    expect(
+      screen.queryByTestId("project-review-toggle-list-stub")
+    ).not.toBeInTheDocument();
+  });
+
+  it("(m) hides the project review toggle list for non-admin users (admin notice replaces it)", () => {
+    currentSession = { user: { id: "user-2", access: "USER" } };
+    mockUseReviewFeatureEnabled.mockReturnValue({
+      systemEnabled: true,
+      enabled: true,
+      isLoading: false,
+    });
+
+    render(<SystemFeatureCard />);
+
+    expect(
+      screen.queryByTestId("project-review-toggle-list-stub")
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId("system-feature-admin-only-notice")
+    ).toBeInTheDocument();
   });
 
   it("(j) no env-var name leaks into the rendered DOM", () => {

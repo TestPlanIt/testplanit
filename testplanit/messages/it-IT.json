@@ -1822,7 +1822,9 @@
           "description": "Quando abilitata, la transizione verso stati che richiedono una revisione è vincolata a una richiesta di revisione approvata. I tester visualizzano il pulsante Richiedi revisione; i revisori ricevono notifiche.",
           "enabledToast": "Revisione del flusso di lavoro abilitata per questo progetto",
           "disabledToast": "Revisione del flusso di lavoro disabilitata per questo progetto.",
-          "saveError": "Impossibile aggiornare le impostazioni del flusso di lavoro di revisione."
+          "saveError": "Impossibile aggiornare le impostazioni del flusso di lavoro di revisione.",
+          "systemDisabledTitle": "Il flusso di lavoro di revisione è disattivato a livello di sistema.",
+          "systemDisabledDescription": "Le preferenze del tuo progetto sono state salvate, ma nulla verrà bloccato finché un amministratore di sistema non attiverà la funzione in Amministrazione → Flussi di lavoro."
         }
       }
     },
@@ -4320,8 +4322,6 @@
         "updateError": "Impossibile aggiornare le impostazioni del flusso di lavoro di revisione. Riprova tra un attimo."
       },
       "projectReviewToggleList": {
-        "title": "Flusso di lavoro per la revisione del progetto",
-        "description": "Attiva o disattiva la funzionalità di revisione del flusso di lavoro per ciascun progetto. Gli amministratori di progetto possono gestire questa impostazione anche dalle impostazioni avanzate di ciascun progetto.",
         "columnHeader": "Revisione del flusso di lavoro",
         "filterPlaceholder": "Filtra i progetti...",
         "enabledToast": "Revisione del flusso di lavoro abilitata per {name}",

@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import { useUpsertAppConfig } from "~/lib/hooks";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { Label } from "~/components/ui/label";
+import { PaginationProvider } from "~/lib/contexts/PaginationContext";
+import { ProjectReviewToggleList } from "./ProjectReviewToggleList";
 
 export function SystemFeatureCard() {
   const t = useTranslations("admin.workflows.systemFeatureCard");
@@ -69,6 +71,13 @@ export function SystemFeatureCard() {
           >
             {t("adminOnlyNotice")}
           </p>
+        </CardContent>
+      )}
+      {isAdmin && isEnabled && (
+        <CardContent>
+          <PaginationProvider defaultPageSize={10}>
+            <ProjectReviewToggleList />
+          </PaginationProvider>
         </CardContent>
       )}
     </Card>

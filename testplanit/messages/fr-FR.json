@@ -1822,7 +1822,9 @@
           "description": "Lorsque cette option est activée, le passage à un état nécessitant une révision est conditionné par l'approbation de la demande de révision. Les testeurs voient le bouton « Demander une révision » ; les réviseurs reçoivent une notification.",
           "enabledToast": "Le flux de travail de révision est activé pour ce projet.",
           "disabledToast": "Le flux de travail de révision est désactivé pour ce projet.",
-          "saveError": "Échec de la mise à jour des paramètres du flux de travail de révision"
+          "saveError": "Échec de la mise à jour des paramètres du flux de travail de révision",
+          "systemDisabledTitle": "Le flux de travail de révision est interrompu à l'échelle du système.",
+          "systemDisabledDescription": "La préférence de votre projet est enregistrée, mais rien ne sera bloqué tant qu'un administrateur système n'aura pas activé la fonctionnalité sous Administration → Flux de travail."
         }
       }
     },
@@ -4320,8 +4322,6 @@
         "updateError": "Impossible de mettre à jour les paramètres du flux de travail de révision. Veuillez réessayer dans quelques instants."
       },
       "projectReviewToggleList": {
-        "title": "Flux de travail d'examen de projet",
-        "description": "Activez ou désactivez la fonctionnalité de flux de travail de révision pour chaque projet. Les administrateurs de projet peuvent également gérer cette option dans les paramètres avancés de chaque projet.",
         "columnHeader": "Flux de travail de révision",
         "filterPlaceholder": "Filtrer les projets...",
         "enabledToast": "Flux de travail de révision activé pour {name}",

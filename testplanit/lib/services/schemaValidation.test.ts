@@ -78,7 +78,28 @@ let toStateId: number;
 // IDs of ReviewRequest rows created during tests — soft-deleted in afterAll.
 const createdReviewRequestIds: string[] = [];
 
+// AppConfig review_feature_enabled key — opt-in default-off means the feature-flag
+// tests in this file would otherwise short-circuit. Capture the prior row (if any)
+// so afterAll can restore it for subsequent runs.
+const REVIEW_FEATURE_KEY = "review_feature_enabled";
+let priorReviewFeatureValue: unknown = undefined;
+let priorReviewFeatureExisted = false;
+
 beforeAll(async () => {
+  const existingFlag = await prisma.appConfig.findUnique({
+    where: { key: REVIEW_FEATURE_KEY },
+    select: { value: true },
+  });
+  if (existingFlag) {
+    priorReviewFeatureExisted = true;
+    priorReviewFeatureValue = existingFlag.value;
+  }
+  await prisma.appConfig.upsert({
+    where: { key: REVIEW_FEATURE_KEY },
+    create: { key: REVIEW_FEATURE_KEY, value: true },
+    update: { value: true },
+  });
+
   // 1. Confirm the partial unique index is present. If setup-extensions.ts
   //    has not been run, the #16 race test would silently pass for the wrong
   //    reason (both inserts would succeed). Fail loudly here instead.
@@ -202,6 +223,22 @@ afterAll(async () => {
     } catch {
       /* ignore */
     }
+  }
+
+  // Restore the original AppConfig row (or delete it if we created it).
+  try {
+    if (priorReviewFeatureExisted) {
+      await prisma.appConfig.update({
+        where: { key: REVIEW_FEATURE_KEY },
+        data: { value: priorReviewFeatureValue as never },
+      });
+    } else {
+      await prisma.appConfig.delete({
+        where: { key: REVIEW_FEATURE_KEY },
+      });
+    }
+  } catch {
+    /* ignore */
   }
 
   // Release the connection so the Vitest worker exits cleanly.

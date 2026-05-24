@@ -1822,7 +1822,9 @@
           "description": "Cuando está habilitada, la transición a estados que requieren revisión está sujeta a una solicitud de revisión aprobada. Los evaluadores ven el botón \"Solicitar revisión\"; los revisores reciben notificaciones.",
           "enabledToast": "Flujo de trabajo de revisión habilitado para este proyecto",
           "disabledToast": "El flujo de trabajo de revisión está deshabilitado para este proyecto.",
-          "saveError": "No se pudo actualizar la configuración del flujo de trabajo de revisión."
+          "saveError": "No se pudo actualizar la configuración del flujo de trabajo de revisión.",
+          "systemDisabledTitle": "El flujo de trabajo de revisión está desactivado en todo el sistema.",
+          "systemDisabledDescription": "Se guarda la preferencia de tu proyecto, pero no se bloqueará nada hasta que un administrador del sistema active la función en Administración → Flujos de trabajo."
         }
       }
     },
@@ -4320,8 +4322,6 @@
         "updateError": "No se pudo actualizar la configuración del flujo de trabajo de revisión. Inténtelo de nuevo en un momento."
       },
       "projectReviewToggleList": {
-        "title": "Flujo de trabajo de revisión del proyecto",
-        "description": "Activa o desactiva la función de flujo de trabajo de revisión para cada proyecto. Los administradores de proyecto también pueden gestionar esto desde la configuración avanzada de cada proyecto.",
         "columnHeader": "Revisar el flujo de trabajo",
         "filterPlaceholder": "Filtrar proyectos...",
         "enabledToast": "Flujo de trabajo de revisión habilitado para {name}",

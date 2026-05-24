@@ -1822,7 +1822,9 @@
           "description": "Quando ativada, a transição para estados que exigem revisão é controlada por uma solicitação de revisão aprovada. Os testadores veem o botão \"Solicitar revisão\"; os revisores recebem notificações.",
           "enabledToast": "Fluxo de trabalho de revisão ativado para este projeto",
           "disabledToast": "Fluxo de trabalho de revisão desativado para este projeto",
-          "saveError": "Falha ao atualizar a configuração do fluxo de trabalho de revisão"
+          "saveError": "Falha ao atualizar a configuração do fluxo de trabalho de revisão",
+          "systemDisabledTitle": "O fluxo de trabalho de revisão está desativado em todo o sistema.",
+          "systemDisabledDescription": "As preferências do seu projeto foram salvas, mas nada será bloqueado até que um administrador do sistema ative o recurso em Administração → Fluxos de trabalho."
         }
       }
     },
@@ -4320,8 +4322,6 @@
         "updateError": "Falha ao atualizar a configuração do fluxo de trabalho de revisão. Tente novamente em instantes."
       },
       "projectReviewToggleList": {
-        "title": "Fluxo de trabalho de revisão de projetos",
-        "description": "Ative ou desative o recurso de fluxo de trabalho de revisão para cada projeto. Os administradores do projeto também podem gerenciar isso nas configurações avançadas de cada projeto.",
         "columnHeader": "Fluxo de trabalho de revisão",
         "filterPlaceholder": "Filtrar projetos...",
         "enabledToast": "Fluxo de trabalho de revisão ativado para {name}",

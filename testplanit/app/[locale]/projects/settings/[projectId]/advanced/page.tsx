@@ -1,6 +1,7 @@
 "use client";
 
 import { ProjectIcon } from "@/components/ProjectIcon";
+import { AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Card,
   CardContent,
@@ -10,11 +11,14 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { WarningAlert } from "@/components/ui/warning-alert";
+import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useSession } from "next-auth/react";
 import { notFound, useParams } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
 import { useFindUniqueProjects, useUpdateProjects } from "~/lib/hooks";
 
 export default function AdvancedPage() {
@@ -39,6 +43,10 @@ export default function AdvancedPage() {
       enabled: status === "authenticated" && Number.isFinite(projectId),
     }
   );
+
+  const { systemEnabled: reviewFeatureSystemEnabled } =
+    useReviewFeatureEnabled();
+  const systemReviewWorkflowDisabled = reviewFeatureSystemEnabled === false;
 
   const updateProject = useUpdateProjects();
 
@@ -108,7 +116,7 @@ export default function AdvancedPage() {
                   Workflows SystemFeatureCard pattern so toggle placement
                   is consistent between the system-wide and per-project
                   controls for the same feature. */}
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <Label className="flex items-center gap-3">
                   <Switch
                     id="review-workflow-toggle"
@@ -124,6 +132,17 @@ export default function AdvancedPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("reviewWorkflow.description")}
                 </p>
+                {reviewWorkflowEnabled && systemReviewWorkflowDisabled && (
+                  <WarningAlert data-testid="review-workflow-system-disabled-warning">
+                    <TriangleAlert className="h-4 w-4" />
+                    <AlertTitle>
+                      {t("reviewWorkflow.systemDisabledTitle")}
+                    </AlertTitle>
+                    <AlertDescription>
+                      {t("reviewWorkflow.systemDisabledDescription")}
+                    </AlertDescription>
+                  </WarningAlert>
+                )}
               </div>
             </CardContent>
           </Card>

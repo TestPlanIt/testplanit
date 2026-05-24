@@ -1822,7 +1822,9 @@
           "description": "Wenn diese Option aktiviert ist, werden Übergänge in Zustände, die eine Überprüfung erfordern, durch eine genehmigte Überprüfungsanfrage blockiert. Tester sehen die Schaltfläche „Überprüfung anfordern“; Prüfer erhalten Benachrichtigungen.",
           "enabledToast": "Prüfworkflow für dieses Projekt aktiviert",
           "disabledToast": "Prüf-Workflow für dieses Projekt deaktiviert",
-          "saveError": "Fehler beim Aktualisieren der Einstellungen für den Überprüfungsworkflow"
+          "saveError": "Fehler beim Aktualisieren der Einstellungen für den Überprüfungsworkflow",
+          "systemDisabledTitle": "Der Überprüfungsworkflow ist systemweit deaktiviert.",
+          "systemDisabledDescription": "Die Einstellungen Ihres Projekts werden gespeichert, aber es wird nichts gesperrt, bis ein Systemadministrator die Funktion unter Administration → Workflows aktiviert."
         }
       }
     },
@@ -4320,8 +4322,6 @@
         "updateError": "Die Aktualisierung der Einstellungen für den Überprüfungsworkflow ist fehlgeschlagen. Bitte versuchen Sie es in Kürze erneut."
       },
       "projectReviewToggleList": {
-        "title": "Arbeitsablauf zur Projektprüfung",
-        "description": "Die Funktion „Überprüfungs-Workflow“ kann für jedes Projekt einzeln aktiviert oder deaktiviert werden. Projektadministratoren können dies auch in den erweiterten Einstellungen jedes Projekts verwalten.",
         "columnHeader": "Arbeitsablauf prüfen",
         "filterPlaceholder": "Filterprojekte...",
         "enabledToast": "Prüf-Workflow für {name} aktiviert",

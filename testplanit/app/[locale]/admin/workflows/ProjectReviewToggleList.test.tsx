@@ -51,23 +51,43 @@ vi.mock("~/lib/contexts/PaginationContext", () => ({
 
 // Render columns through a passthrough DataTable so the Switch cells (and
 // their data-testids) appear in the DOM, without DataTable's own internal
-// effects firing.
+// effects firing. Also exposes a sort-header proxy so tests can trigger the
+// onSortChange callback the real DataTable invokes on header click.
+const dataTableLastProps: { current: any } = { current: null };
 vi.mock("@/components/tables/DataTable", () => ({
-  DataTable: ({ columns, data }: any) => (
-    <table data-testid="data-table">
-      <tbody>
-        {data.map((row: any, rowIndex: number) => (
-          <tr key={row.id ?? rowIndex}>
-            {columns.map((col: any, colIndex: number) => (
-              <td key={col.id ?? colIndex}>
-                {col.cell ? col.cell({ row: { original: row } }) : null}
-              </td>
+  DataTable: (props: any) => {
+    dataTableLastProps.current = props;
+    const { columns, data, onSortChange } = props;
+    return (
+      <table data-testid="data-table">
+        <thead>
+          <tr>
+            {columns.map((col: any) => (
+              <th key={col.id}>
+                <button
+                  data-testid={`sort-header-${col.id}`}
+                  onClick={() => onSortChange?.(col.id)}
+                >
+                  {col.id}
+                </button>
+              </th>
             ))}
           </tr>
-        ))}
-      </tbody>
-    </table>
-  ),
+        </thead>
+        <tbody>
+          {data.map((row: any, rowIndex: number) => (
+            <tr key={row.id ?? rowIndex}>
+              {columns.map((col: any, colIndex: number) => (
+                <td key={col.id ?? colIndex}>
+                  {col.cell ? col.cell({ row: { original: row } }) : null}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  },
 }));
 
 vi.mock("@/components/tables/Pagination", () => ({
@@ -86,6 +106,14 @@ vi.mock("@/components/tables/Filter", () => ({
 
 vi.mock("@/components/ProjectIcon", () => ({
   ProjectIcon: () => <span data-testid="project-icon" />,
+}));
+
+// ProjectNameCell uses next-intl's Link via ~/lib/navigation which requires
+// an intl context; render a plain anchor in tests so the cell still mounts.
+vi.mock("~/lib/navigation", () => ({
+  Link: ({ children, href }: { children: React.ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  ),
 }));
 
 import { ProjectReviewToggleList } from "./ProjectReviewToggleList";
@@ -209,6 +237,54 @@ describe("ProjectReviewToggleList", () => {
     });
     await waitFor(() => expect(mockToastSuccess).toHaveBeenCalledTimes(1));
     expect(mockToastError).not.toHaveBeenCalled();
+  });
+
+  it("defaults to orderBy { name: 'asc' } and flips to desc on clicking the Name header", async () => {
+    mockUseReviewFeatureEnabled.mockReturnValue({
+      systemEnabled: true,
+      enabled: true,
+      isLoading: false,
+    });
+
+    render(<ProjectReviewToggleList />);
+
+    // Initial query should sort by name asc.
+    expect(mockUseFindManyProjects).toHaveBeenLastCalledWith(
+      expect.objectContaining({ orderBy: { name: "asc" } }),
+      expect.any(Object)
+    );
+
+    const user = userEvent.setup();
+    await user.click(screen.getByTestId("sort-header-name"));
+
+    await waitFor(() => {
+      expect(mockUseFindManyProjects).toHaveBeenLastCalledWith(
+        expect.objectContaining({ orderBy: { name: "desc" } }),
+        expect.any(Object)
+      );
+    });
+  });
+
+  it("sorts by reviewWorkflowEnabled when that column header is clicked", async () => {
+    mockUseReviewFeatureEnabled.mockReturnValue({
+      systemEnabled: true,
+      enabled: true,
+      isLoading: false,
+    });
+
+    render(<ProjectReviewToggleList />);
+
+    const user = userEvent.setup();
+    await user.click(screen.getByTestId("sort-header-reviewWorkflowEnabled"));
+
+    await waitFor(() => {
+      expect(mockUseFindManyProjects).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          orderBy: { reviewWorkflowEnabled: "asc" },
+        }),
+        expect.any(Object)
+      );
+    });
   });
 
   it("surfaces a localized error toast when the update mutation rejects", async () => {

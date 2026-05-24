@@ -1822,7 +1822,9 @@
           "description": "Wanneer deze functie is ingeschakeld, worden overgangen naar statussen die beoordeling vereisen, geblokkeerd door een goedgekeurd beoordelingsverzoek. Testers zien de knop 'Beoordeling aanvragen'; beoordelaars ontvangen meldingen.",
           "enabledToast": "De beoordelingsworkflow is voor dit project ingeschakeld.",
           "disabledToast": "De beoordelingsworkflow is voor dit project uitgeschakeld.",
-          "saveError": "Het bijwerken van de beoordelingsworkflow is mislukt."
+          "saveError": "Het bijwerken van de beoordelingsworkflow is mislukt.",
+          "systemDisabledTitle": "De beoordelingsworkflow is systeembreed uitgeschakeld.",
+          "systemDisabledDescription": "De voorkeur van uw project wordt opgeslagen, maar er worden geen beperkingen opgelegd totdat een systeembeheerder de functie inschakelt onder Beheer → Werkstromen."
         }
       }
     },
@@ -4320,8 +4322,6 @@
         "updateError": "Het bijwerken van de beoordelingsworkflow is mislukt. Probeer het over een moment opnieuw."
       },
       "projectReviewToggleList": {
-        "title": "Werkproces voor projectevaluatie",
-        "description": "Schakel de functie voor de beoordelingsworkflow voor elk project in of uit. Projectbeheerders kunnen dit ook beheren via de geavanceerde instellingen van elk project.",
         "columnHeader": "Werkproces beoordelen",
         "filterPlaceholder": "Filterprojecten...",
         "enabledToast": "Review-workflow ingeschakeld voor {name}",

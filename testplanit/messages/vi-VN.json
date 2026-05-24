@@ -1822,7 +1822,9 @@
           "description": "Khi được kích hoạt, quá trình chuyển đổi sang các trạng thái yêu cầu xem xét sẽ được kiểm soát bằng yêu cầu xem xét đã được phê duyệt. Người kiểm thử sẽ thấy nút \"Yêu cầu xem xét\"; người xem xét sẽ nhận được thông báo.",
           "enabledToast": "Quy trình xem xét đã được kích hoạt cho dự án này.",
           "disabledToast": "Quy trình xem xét đã bị vô hiệu hóa cho dự án này.",
-          "saveError": "Không thể cập nhật cài đặt quy trình đánh giá."
+          "saveError": "Không thể cập nhật cài đặt quy trình đánh giá.",
+          "systemDisabledTitle": "Quy trình xem xét đã bị tắt trên toàn hệ thống.",
+          "systemDisabledDescription": "Tùy chọn dự án của bạn đã được lưu, nhưng quá trình sẽ không được kích hoạt cho đến khi quản trị viên hệ thống bật tính năng này trong mục Quản trị → Quy trình làm việc."
         }
       }
     },
@@ -4320,8 +4322,6 @@
         "updateError": "Không thể cập nhật cài đặt quy trình xem xét. Vui lòng thử lại sau."
       },
       "projectReviewToggleList": {
-        "title": "Quy trình đánh giá dự án",
-        "description": "Bạn có thể bật hoặc tắt tính năng quy trình đánh giá cho từng dự án. Quản trị viên dự án cũng có thể quản lý tính năng này từ phần Cài đặt nâng cao của mỗi dự án.",
         "columnHeader": "Quy trình xem xét",
         "filterPlaceholder": "Lọc các dự án...",
         "enabledToast": "Quy trình xem xét đã được bật cho {name}",
