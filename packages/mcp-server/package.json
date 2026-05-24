@@ -1,6 +1,6 @@
 {
   "name": "@testplanit/mcp-server",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Model Context Protocol server for TestPlanIt — exposes test-case data to AI agents over stdio.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
