@@ -150,7 +150,6 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
       ctx.issueExternalKey === null ||
       ctx.issueExternalSystem === null
     ) {
-      // eslint-disable-next-line no-console
       console.warn(
         "ISSUE-01 skipped: seed has no Issue with externalKey + integration.provider in this project"
       );
@@ -204,7 +203,6 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
     const body = await r.json();
     expect(Array.isArray(body.data)).toBe(true);
     if (body.data.length === 0) {
-      // eslint-disable-next-line no-console
       console.warn(
         "ISSUE-02: seed project has 0 Issues — order assertion skipped"
       );
@@ -225,7 +223,6 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
     baseURL,
   }) => {
     if (ctx.issueId === null) {
-      // eslint-disable-next-line no-console
       console.warn("ISSUE-03 skipped: seed has 0 Issues in project");
       return;
     }
@@ -289,7 +286,6 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
     // Overflow detection probe: if any one array is exactly 101 the MCP tool
     // would surface truncated:true. We document it but do not require it.
     if (data.repositoryCases.length === 101) {
-      // eslint-disable-next-line no-console
       console.warn(
         "ISSUE-03: linkedCases overflow probe HIT (>= 100 — MCP would surface truncated)"
       );
@@ -303,7 +299,6 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
     baseURL,
   }) => {
     if (ctx.issueId === null) {
-      // eslint-disable-next-line no-console
       console.warn("ISSUE-04 outbound skipped: seed has 0 Issues");
       return;
     }
@@ -327,7 +322,6 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
     const body = await r.json();
     expect(Array.isArray(body.data)).toBe(true);
     if (body.data.length === 0) {
-      // eslint-disable-next-line no-console
       console.warn(
         "ISSUE-04 outbound: issue has 0 linked cases (or filtered by access policy)"
       );
@@ -339,7 +333,6 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
     baseURL,
   }) => {
     if (ctx.caseIdLinkedToAnyIssue === null) {
-      // eslint-disable-next-line no-console
       console.warn(
         "ISSUE-04 inbound skipped: no RepositoryCase has any Issue link in this project"
       );
@@ -380,7 +373,6 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
       ctx.issueExternalSystem === null ||
       ctx.issueId === null
     ) {
-      // eslint-disable-next-line no-console
       console.warn(
         "ISSUE chain skipped: seed has no Issue with externalKey + integration.provider in this project"
       );
@@ -430,7 +422,6 @@ test.describe("MCP issue read tools (Phase 8 ISSUE-01..04)", () => {
     const casesBody = await casesR.json();
     expect(Array.isArray(casesBody.data)).toBe(true);
     if (casesBody.data.length === 0) {
-      // eslint-disable-next-line no-console
       console.warn(
         "ISSUE chain partial: issue has 0 linked RepositoryCases — chain shape verified, non-empty assertion skipped"
       );

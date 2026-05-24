@@ -204,7 +204,6 @@ function RoleList() {
   );
 
   const columns = useColumns(
-    // eslint-disable-next-line react-hooks/refs
     handleToggleDefault,
     tCommon,
     setEditingRole,
