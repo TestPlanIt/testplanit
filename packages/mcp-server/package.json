@@ -52,7 +52,7 @@
   "publishConfig": {
     "provenance": true,
     "access": "public",
-    "tag": "beta"
+    "tag": "latest"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
