@@ -432,7 +432,7 @@ function ProjectAdmin() {
 
   const columns: CustomColumnDef<ExtendedProjects>[] = useColumns(
     userPreferences,
-    // eslint-disable-next-line react-hooks/refs
+
     handleToggleCompleted,
     handleOpenEditModal,
     tCommon,

@@ -314,7 +314,6 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
     const body = await r.json();
     expect(Array.isArray(body.data)).toBe(true);
     if (body.data.length === 0) {
-      // eslint-disable-next-line no-console
       console.warn(
         "EXEC-01 part A: seed project has 0 TestRuns — RPC accepts the query shape but returned empty"
       );
@@ -338,7 +337,6 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
     );
 
     if (list.data.length === 0) {
-      // eslint-disable-next-line no-console
       console.warn(
         "EXEC-01 list-row statusCounts assertion skipped: seed project has 0 runs"
       );
@@ -382,7 +380,6 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
     baseURL,
   }) => {
     if (ctx.runId === null) {
-      // eslint-disable-next-line no-console
       console.warn("EXEC-02 skipped: seed project has 0 TestRuns");
       return;
     }
@@ -463,7 +460,6 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
         _count: { id: number };
       }>;
     if (groups.length === 0) {
-      // eslint-disable-next-line no-console
       console.warn(
         "EXEC-02 partial: run has 0 TestRunCases — rollup assertion skipped"
       );
@@ -488,7 +484,6 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
     baseURL,
   }) => {
     if (ctx.runId === null) {
-      // eslint-disable-next-line no-console
       console.warn("EXEC-03 skipped: seed project has 0 TestRuns");
       return;
     }
@@ -509,7 +504,6 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
     const body = await r.json();
     expect(Array.isArray(body.data)).toBe(true);
     if (body.data.length === 0) {
-      // eslint-disable-next-line no-console
       console.warn(
         "EXEC-03 partial: run has 0 TestRunCases — row-shape assertion skipped"
       );
@@ -530,7 +524,6 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
     baseURL,
   }) => {
     if (ctx.runId === null) {
-      // eslint-disable-next-line no-console
       console.warn("EXEC-04 skipped: seed project has 0 TestRuns");
       return;
     }
@@ -551,7 +544,6 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
     const body = await r.json();
     expect(Array.isArray(body.data)).toBe(true);
     if (body.data.length === 0) {
-      // eslint-disable-next-line no-console
       console.warn(
         "EXEC-04 partial: run has 0 TestRunResults — row-shape assertion skipped"
       );
@@ -572,7 +564,6 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
     baseURL,
   }) => {
     if (ctx.testRunResultId === null) {
-      // eslint-disable-next-line no-console
       console.warn("EXEC-05 skipped: seed has 0 TestRunResults");
       return;
     }
@@ -638,7 +629,6 @@ test.describe("MCP test-run read tools (Phase 7 EXEC-01..05)", () => {
     expect(data.id).toBe(ctx.testRunResultId);
     expect(Array.isArray(data.stepResults)).toBe(true);
     if (data.stepResults.length === 0) {
-      // eslint-disable-next-line no-console
       console.warn(
         "EXEC-05 partial: result has 0 stepResults — R2/D7-08 assertions skipped"
       );
