@@ -1,5 +1,11 @@
 # @testplanit/mcp-server
 
+## 0.1.1
+
+### Patch Changes
+
+- [#342](https://github.com/TestPlanIt/testplanit/pull/342) [`ea13125`](https://github.com/TestPlanIt/testplanit/commit/ea13125ad1354c6dab439871e6ec9ad6972fc700) Thanks [@therealbrad](https://github.com/therealbrad)! - Honor the `customField` value filter in `cases_list`. Passing `{ name, value }` now filters by value (resolving Dropdown/Multi-Select option names to the stored option ids), unknown keys are rejected by a strict schema, and an unknown field name or invalid option returns a validation error instead of silently returning unfiltered results. Fixes #333.
+
 ## 0.1.0
 
 ### Minor Changes
