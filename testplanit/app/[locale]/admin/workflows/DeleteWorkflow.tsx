@@ -78,9 +78,7 @@ export function DeleteWorkflows({
                 {t.rich("delete.confirmMessage", {
                   name: workflows.name,
                   strong: (chunks) => (
-                    <span className="whitespace-nowrap font-bold">
-                      {chunks}
-                    </span>
+                    <span className="font-bold break-all">{chunks}</span>
                   ),
                 })}
               </AlertDialogDescription>

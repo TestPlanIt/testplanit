@@ -78,7 +78,7 @@ export function DeleteQuickScriptTemplate({
                 {t.rich("confirmMessage", {
                   name: template.name,
                   strong: (chunks: any) => (
-                    <span className="font-bold">{chunks}</span>
+                    <span className="font-bold break-all">{chunks}</span>
                   ),
                 })}
               </AlertDialogDescription>

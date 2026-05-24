@@ -73,7 +73,9 @@ export function DeleteStatus({ status, open, onClose }: DeleteStatusProps) {
               <AlertDialogDescription>
                 {t.rich("confirmMessage", {
                   name: status.name,
-                  strong: (chunks: any) => <strong>{chunks}</strong>,
+                  strong: (chunks: any) => (
+                    <strong className="break-all">{chunks}</strong>
+                  ),
                 })}
               </AlertDialogDescription>
             </AlertDialogHeader>
