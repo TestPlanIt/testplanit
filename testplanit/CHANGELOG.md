@@ -1,3 +1,10 @@
+## [0.29.10](https://github.com/TestPlanIt/testplanit/compare/v0.29.9...v0.29.10) (2026-05-24)
+
+### Bug Fixes
+
+* **llm:** adaptive context budget for outline phase to avoid timeouts ([#336](https://github.com/TestPlanIt/testplanit/issues/336)) ([138e035](https://github.com/TestPlanIt/testplanit/commit/138e035aa7603deeecc41bfa8189b0622f87ba90)), closes [#335](https://github.com/TestPlanIt/testplanit/issues/335) [pre-PR-#335](https://github.com/TestPlanIt/pre-PR-/issues/335)
+* **webhooks:** skip tenant key fetch for retire-expired-secrets cron ([#337](https://github.com/TestPlanIt/testplanit/issues/337)) ([653cacf](https://github.com/TestPlanIt/testplanit/commit/653cacf8f6eb5c7588e206f88fb1b363832f39d5))
+
 ## [0.29.9](https://github.com/TestPlanIt/testplanit/compare/v0.29.8...v0.29.9) (2026-05-22)
 
 ### Bug Fixes
