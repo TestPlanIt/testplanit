@@ -2227,22 +2227,6 @@ export default function TestCaseDetails() {
                 onExpand={() => setIsCollapsedLeft(false)}
               >
                 <div className="mb-4">
-                  {/* Configure Parameters entry point at the top of the
-                      left panel. The placement is unconditional (in both
-                      read and edit modes) so the button stays reachable
-                      regardless of whether the Steps caseField is
-                      filtered out by the read-mode empty-value check
-                      below — a fresh case with no steps yet still needs
-                      a way to declare parameters before adding them.
-                      `ConfigureParametersButton` itself returns null if
-                      the viewer lacks `canAddEdit`. */}
-                  <div className="mb-2 mr-6 flex justify-end">
-                    <ConfigureParametersButton
-                      parameterCount={parameterCount}
-                      canEdit={canAddEdit}
-                      onOpen={() => setIsParamSheetOpen(true)}
-                    />
-                  </div>
                   <ul>
                     {(testcase?.template?.caseFields || []).map(
                       (field, fieldIndex) => {
@@ -2278,6 +2262,24 @@ export default function TestCaseDetails() {
                                     <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                                   </span>
                                 )}
+                              </div>
+                            )}
+                            {/* Configure Parameters entry point lives with
+                                the Steps caseField — parameters bind to
+                                step rows so they have no meaning when the
+                                template omits Steps. Right-aligned above
+                                the steps list mirrors how the previous
+                                top-of-panel placement read visually, just
+                                scoped to the right caseField. The button
+                                itself returns null if the viewer lacks
+                                `canAddEdit`. */}
+                            {field.caseField.type.type === "Steps" && (
+                              <div className="flex justify-end">
+                                <ConfigureParametersButton
+                                  parameterCount={parameterCount}
+                                  canEdit={canAddEdit}
+                                  onOpen={() => setIsParamSheetOpen(true)}
+                                />
                               </div>
                             )}
                             <FieldValueRenderer
