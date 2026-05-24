@@ -93,6 +93,10 @@ The entity now displays a **Pending review** badge with the reviewer's name (or 
 
 ![The pending review banner on a test case detail page, naming the reviewer and the target state](/img/screenshots/user-guide/review-approvals/status-banner-pending.png)
 
+When the reviewer is a role, the banner renders a role chip with a small role icon. Hovering it surfaces the list of project-eligible holders so the requester knows exactly who can act on the request — no hunting through project members to figure out who got pinged.
+
+![The role chip on a pending review banner expanded to its hover tooltip, listing every project-eligible holder of the role](/img/screenshots/user-guide/review-approvals/role-assignee-chip-tooltip.png)
+
 ### Cancelling a request
 
 If the requester changes their mind before a decision lands, they can cancel:
