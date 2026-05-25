@@ -1,7 +1,7 @@
 "use client";
 import { ApplicationArea, Roles } from "@prisma/client";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   useFindManyRolePermission,
   useUpdateManyRoles,
@@ -139,11 +139,16 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
     setError,
   } = form;
 
-  // Reset the form once existingPermissions have loaded. Component is mounted
-  // fresh on each open by the parent, so this only runs once per edit cycle.
+  // Reset the form ONCE per dialog open — when existingPermissions first
+  // resolves. Re-running reset on every defaultFormValues identity change
+  // wipes mid-edit input if React Query refetches in the background and
+  // returns a new array reference (same values, fresh ref). A ref guard
+  // ensures we only seed the form once per mount.
+  const hasSeededRef = useRef(false);
   useEffect(() => {
-    if (!isLoadingPermissions) {
+    if (!isLoadingPermissions && !hasSeededRef.current) {
       reset(defaultFormValues);
+      hasSeededRef.current = true;
     }
   }, [defaultFormValues, reset, isLoadingPermissions]);
 
