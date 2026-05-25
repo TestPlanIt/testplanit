@@ -85,20 +85,6 @@ test.describe("Request review on a case", () => {
     await setProjectReviewWorkflowEnabled(request, url, projectId, true);
     await setWorkflowRequiresReview(request, url, gatedWorkflowId, true);
 
-    // Look up the gated workflow's name — we click the target-state option by
-    // visible text rather than by id, because leftover gated workflows from
-    // prior runs can co-occur in the picker and make id-targeting fragile.
-    const wfRes = await request.get(`${url}/api/model/workflows/findFirst`, {
-      params: {
-        q: JSON.stringify({
-          where: { id: gatedWorkflowId },
-          select: { name: true },
-        }),
-      },
-    });
-    const gatedName = (await wfRes.json())?.data?.name as string;
-    expect(gatedName).toBeTruthy();
-
     const folderId = await api.createFolder(
       projectId,
       `Req-Review ${Date.now()}`
@@ -120,12 +106,13 @@ test.describe("Request review on a case", () => {
     const sheet = page.getByTestId("request-review-sheet");
     await expect(sheet).toBeVisible();
 
-    // Target state — pick the gated workflow by its visible name.
+    // Target the option by its per-state testid — the visible label now
+    // includes a "Requires review" badge (aria-label on the gated glyph),
+    // so name-based matching no longer works.
     const targetTrigger = page.getByTestId("request-review-target-state");
     await targetTrigger.click();
     await page
-      .getByRole("option", { name: new RegExp(`^${gatedName}$`, "i") })
-      .first()
+      .getByTestId(`request-review-target-state-option-${gatedWorkflowId}`)
       .click();
 
     // Assign to the separate reviewer (assignee != requester). The combobox
