@@ -16,7 +16,13 @@ jobs:
     # Skip CI on release commits from semantic-release
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      # env.js (t3-env) validates DATABASE_URL at import time with
+      # emptyStringAsUndefined: true, so an unset or empty secret crashes
+      # any test that transitively imports the prisma client (3 review
+      # specs currently). The placeholder satisfies Zod; unit tests mock
+      # prisma anyway, and integration tests that need a real DB get the
+      # real secret when it's configured.
+      DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost:5432/test' }}
       NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
       NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL || 'https://testplanit.test' }}
       NODE_OPTIONS: "--max-old-space-size=12288"
