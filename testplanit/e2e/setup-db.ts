@@ -113,6 +113,28 @@ async function seedCoreData() {
 }
 
 /**
+ * Flip the system-level Review & Approval feature flag on for E2E.
+ *
+ * v0.30.0 ships with the system flag opt-in-default-off — a missing
+ * `AppConfig.review_feature_enabled` row resolves to disabled, hiding the
+ * Request review button, the reviewer inbox, and the requires-review
+ * toggle. Existing review specs predate the opt-in flip and assume the
+ * feature is implicitly available; flipping it on here matches the
+ * pre-opt-in baseline they were written against. Production stays
+ * restrictive — fresh installs still ship with the feature off until an
+ * administrator explicitly enables it.
+ */
+async function enableSystemReviewFeatureForE2E() {
+  console.log("🚦 Enabling system Review feature flag for E2E...");
+  await prisma.appConfig.upsert({
+    where: { key: "review_feature_enabled" },
+    update: { value: true },
+    create: { key: "review_feature_enabled", value: true },
+  });
+  console.log("   AppConfig.review_feature_enabled = true");
+}
+
+/**
  * Open up the seeded `user` role with the two per-area opt-in permissions
  * v0.30.0 added — `canApprove` (Review & Approval reviewer eligibility) and
  * `canReadSensitive` (Parameterized Test Cases restricted-field viewer
@@ -255,6 +277,11 @@ async function main() {
     // Step 2.5: E2E-only widening of seeded user-role permissions for the two
     // per-area opt-in grants v0.30.0 added (canApprove, canReadSensitive).
     await openUserRolePermissionsForE2E();
+
+    // Step 2.6: Flip the system Review & Approval feature flag on so the
+    // pre-Phase-2-opt-in review specs continue to find the request /
+    // reviewer-inbox surfaces by default.
+    await enableSystemReviewFeatureForE2E();
 
     // Step 3: Ensure admin user with correct settings
     await ensureAdminUser();
