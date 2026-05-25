@@ -2236,9 +2236,18 @@ export default function TestCaseDetails() {
                         if (field.caseField.type.type === "Steps") {
                           fieldValue = testcase.steps || [];
                         }
+                        // Skip empty fields in view mode — except Steps when
+                        // the viewer can edit. The Configure Parameters
+                        // button lives inside the Steps field row, so
+                        // collapsing an empty Steps row in view mode would
+                        // leave a fresh case with no path to author
+                        // parameters without first clicking Edit.
+                        const isEditableStepsField =
+                          field.caseField.type.type === "Steps" && canAddEdit;
                         if (
                           !isEditMode &&
-                          (!fieldValue || fieldValue === emptyEditorContent)
+                          (!fieldValue || fieldValue === emptyEditorContent) &&
+                          !isEditableStepsField
                         )
                           return null;
                         return (
