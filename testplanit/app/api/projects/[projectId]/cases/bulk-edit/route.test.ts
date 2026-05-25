@@ -1139,7 +1139,9 @@ describe("Bulk Edit API Route", () => {
             steps: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
             workflows: { findUnique: vi.fn().mockResolvedValue(null) },
             reviewRequest: { findFirst: vi.fn().mockResolvedValue(null) },
-            appConfig: { findUnique: vi.fn().mockResolvedValue({ value: true }) },
+            appConfig: {
+              findUnique: vi.fn().mockResolvedValue({ value: true }),
+            },
           });
         }
       );

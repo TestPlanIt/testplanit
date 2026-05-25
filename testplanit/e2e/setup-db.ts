@@ -145,7 +145,9 @@ async function enableSystemReviewFeatureForE2E() {
  * shared `prisma/seed.ts` (also used by docker / dev installs) is unchanged.
  */
 async function openUserRolePermissionsForE2E() {
-  console.log("🔓 Opening user-role permissions for E2E (canApprove + canReadSensitive)...");
+  console.log(
+    "🔓 Opening user-role permissions for E2E (canApprove + canReadSensitive)..."
+  );
 
   const userRole = await prisma.roles.findFirst({ where: { name: "user" } });
   if (!userRole) {

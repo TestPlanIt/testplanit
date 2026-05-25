@@ -55,19 +55,22 @@ test.describe("create-time state remap (gated create bypass)", () => {
     await setWorkflowRequiresReview(request, url, gatedWorkflowId, true);
 
     // Resolve repository + template + folder so the create payload is valid.
-    const repoRes = await request.get(`${url}/api/model/repository/findFirst`, {
-      params: {
-        q: JSON.stringify({
-          where: { projectId, isDeleted: false },
-          select: { id: true },
-        }),
-      },
-    });
+    const repoRes = await request.get(
+      `${url}/api/model/repositories/findFirst`,
+      {
+        params: {
+          q: JSON.stringify({
+            where: { projectId, isDeleted: false },
+            select: { id: true },
+          }),
+        },
+      }
+    );
     const repositoryId = (await repoRes.json())?.data?.id as number;
     expect(repositoryId).toBeTruthy();
 
     const tplRes = await request.get(
-      `${url}/api/model/projectTemplate/findFirst`,
+      `${url}/api/model/templateProjectAssignment/findFirst`,
       {
         params: {
           q: JSON.stringify({

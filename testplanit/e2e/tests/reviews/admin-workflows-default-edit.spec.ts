@@ -61,18 +61,11 @@ test.describe("Admin Workflows — default workflow edit-save idempotency", () =
     const row = page.locator("tr").filter({ hasText: workflowName }).first();
     await expect(row).toBeVisible({ timeout: 10000 });
 
-    // Click the edit affordance — the row has a kebab/three-dot menu with
-    // an "Edit" option, or a direct edit pencil icon depending on layout.
-    // Try the menu trigger first, fall back to a direct edit button.
-    const menuTrigger = row.getByRole("button").first();
-    await menuTrigger.click().catch(() => {});
-    const editOption = page.getByRole("menuitem", { name: /edit/i }).first();
-    if (await editOption.isVisible().catch(() => false)) {
-      await editOption.click();
-    } else {
-      // Fall back: direct edit icon in the row.
-      await row.getByRole("button", { name: /edit/i }).first().click();
-    }
+    // The action column renders an icon-only SquarePen button (no
+    // accessible name), so we target the first button in the last cell —
+    // same pattern as requires-review-toggle.spec.ts.
+    const editBtn = row.locator("td").last().locator("button").first();
+    await editBtn.click();
 
     const dialog = page.locator('[role="dialog"]');
     await expect(dialog).toBeVisible({ timeout: 5000 });
