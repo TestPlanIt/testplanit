@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Prisma } from "@prisma/client";
+import { ApplicationArea, Prisma } from "@prisma/client";
 import {
   isUniqueConstraintError,
   isNotFoundError,
@@ -7,9 +7,11 @@ import {
   ReviewGateError,
   AlreadyPendingError,
   IneligibleReviewerError,
+  IneligibleAssigneeError,
   isReviewGateError,
   isAlreadyPendingError,
   isIneligibleReviewerError,
+  isIneligibleAssigneeError,
 } from "./errors";
 
 function makePrismaError(code: string): Prisma.PrismaClientKnownRequestError {
@@ -178,5 +180,36 @@ describe("ineligible reviewer error helpers", () => {
     for (const value of [null, undefined, 42, "str", {}, [], new Error("e")]) {
       expect(isIneligibleReviewerError(value)).toBe(false);
     }
+  });
+});
+
+describe("IneligibleAssigneeError", () => {
+  it("carries assigneeRef, area, code='INELIGIBLE_ASSIGNEE', and English message", () => {
+    const err = new IneligibleAssigneeError(
+      "user-abc",
+      ApplicationArea.TestCaseRepository
+    );
+    expect(err).toBeInstanceOf(Error);
+    expect(err.code).toBe("INELIGIBLE_ASSIGNEE");
+    expect(err.assigneeRef).toBe("user-abc");
+    expect(err.area).toBe(ApplicationArea.TestCaseRepository);
+    expect(err.name).toBe("IneligibleAssigneeError");
+    expect(err.message).toContain("user-abc");
+    expect(err.message).toContain("TestCaseRepository");
+  });
+
+  it("isIneligibleAssigneeError detects IneligibleAssigneeError instances", () => {
+    const err = new IneligibleAssigneeError("42", ApplicationArea.TestRuns);
+    expect(isIneligibleAssigneeError(err)).toBe(true);
+  });
+
+  it("isIneligibleAssigneeError rejects a plain Error", () => {
+    expect(isIneligibleAssigneeError(new Error("plain"))).toBe(false);
+  });
+
+  it("isIneligibleAssigneeError rejects IneligibleReviewerError (different discriminant)", () => {
+    expect(
+      isIneligibleAssigneeError(new IneligibleReviewerError("u", "r"))
+    ).toBe(false);
   });
 });

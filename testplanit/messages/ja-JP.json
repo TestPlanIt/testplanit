@@ -171,7 +171,8 @@
       "reconfigure": "再設定して再試行"
     },
     "permissions": {
-      "addEdit": "追加/編集"
+      "addEdit": "追加/編集",
+      "approve": "承認する"
     },
     "auth": {
       "internal": "メールアドレス/パスワード",
@@ -678,7 +679,8 @@
       "newerVersion": "最新バージョン",
       "deletedUser": "削除されたユーザー",
       "restrictedField": "制限付きフィールド",
-      "backToTestCase": "テストケースに戻る"
+      "backToTestCase": "テストケースに戻る",
+      "selectDeselectAllApprove": "関連するすべての領域について承認を選択または選択解除します。"
     },
     "labels": {
       "projects": "{count, plural, =1 {# プロジェクト} other {# プロジェクト}}",
@@ -3107,7 +3109,10 @@
       "alreadyPendingError": "この団体については既に審査が保留中です。",
       "cannotSelfAssign": "自分自身にレビューを割り当てることはできません。他のユーザーまたは役割を選択してください。",
       "defaultComment": "{fromState} → {toState} への遷移を確認してください。",
-      "defaultCommentRole": "{roleName} グループに {fromState} から {toState}への移行の承認を要請します。"
+      "defaultCommentRole": "{roleName} グループに {fromState} から {toState}への移行の承認を要請します。",
+      "ineligibleAssigneeError": "このユーザー/役割では、このエリアのレビューを承認できません。別のユーザーを選択してください。",
+      "ineligibleAssigneeErrorUser": "{name} このエリアのレビューを承認できません。別のユーザーまたは役割を選択してください。",
+      "ineligibleAssigneeErrorRole": "{roleName} ロールでは、このエリアのレビューを承認できません。別のロールまたはユーザーを選択してください。"
     },
     "assigneeChip": {
       "emptyMembers": "プロジェクト参加資格のあるメンバーで、この役職に就いている者はいません。",
@@ -5717,7 +5722,8 @@
       "permissions": {
         "canAddEdit": "## 追加/編集\nこのロールが関連するアプリケーション領域を追加および編集できるかどうかを示します。",
         "canDelete": "## 削除\nこのロールが関連するアプリケーション領域を削除できるかどうかを示します。",
-        "canClose": "## 閉じる\nこのロールが関連するアプリケーション領域を閉じることができるかどうかを示します。"
+        "canClose": "## 閉じる\nこのロールが関連するアプリケーション領域を閉じることができるかどうかを示します。",
+        "canApprove": "## 承認\nこのロールが関連するアプリケーション領域のレビュー要求を承認できるかどうかを示します。テストケースリポジトリ、テスト実行、およびセッションにのみ適用されます。"
       }
     },
     "group": {

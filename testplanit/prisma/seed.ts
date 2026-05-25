@@ -12,6 +12,7 @@ const adminPermissions = {
   canAddEdit: true,
   canDelete: true,
   canClose: true,
+  canApprove: true,
 };
 
 const userPermissions: {

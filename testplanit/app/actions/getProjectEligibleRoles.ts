@@ -1,5 +1,6 @@
 "use server";
 
+import { ApplicationArea } from "@prisma/client";
 import { prisma } from "~/lib/prisma";
 
 /**
@@ -27,7 +28,10 @@ import { prisma } from "~/lib/prisma";
  * unavailable, and an unhealthy roles fetch should not block the user
  * from picking a user-kind reviewer.
  */
-export async function getProjectEligibleRoles(projectId: number): Promise<
+export async function getProjectEligibleRoles(
+  projectId: number,
+  options?: { requireCanApproveOn?: ApplicationArea }
+): Promise<
   Array<{
     id: number;
     name: string;
@@ -41,7 +45,17 @@ export async function getProjectEligibleRoles(projectId: number): Promise<
     // only roles whose Set is non-empty so dead-end roles never reach the
     // picker.
     const allRoles = await prisma.roles.findMany({
-      where: { isDeleted: false },
+      where: {
+        isDeleted: false,
+        ...(options?.requireCanApproveOn && {
+          rolePermissions: {
+            some: {
+              area: options.requireCanApproveOn,
+              canApprove: true,
+            },
+          },
+        }),
+      },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     });

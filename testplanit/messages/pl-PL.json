@@ -171,7 +171,8 @@
       "reconfigure": "Skonfiguruj ponownie i spróbuj ponownie"
     },
     "permissions": {
-      "addEdit": "Dodaj/Edytuj"
+      "addEdit": "Dodaj/Edytuj",
+      "approve": "Zatwierdzić"
     },
     "auth": {
       "internal": "E-mail/Hasło",
@@ -678,7 +679,8 @@
       "newerVersion": "Nowsza wersja",
       "deletedUser": "Usunięty użytkownik",
       "restrictedField": "Pole ograniczone",
-      "backToTestCase": "Powrót do przypadku testowego"
+      "backToTestCase": "Powrót do przypadku testowego",
+      "selectDeselectAllApprove": "Zaznacz lub odznacz opcję zatwierdzenia dla wszystkich odpowiednich obszarów"
     },
     "labels": {
       "projects": "{count, plural, =1 {# Projekt} other {# Projekty}}",
@@ -3107,7 +3109,10 @@
       "alreadyPendingError": "W przypadku tego podmiotu oczekuje się już na kontrolę.",
       "cannotSelfAssign": "Nie możesz przypisać recenzji sobie; wybierz innego użytkownika lub rolę.",
       "defaultComment": "Proszę przejrzeć przejście z {fromState} → {toState}.",
-      "defaultCommentRole": "Prośba o zatwierdzenie przez grupę {roleName} przejścia z {fromState} → {toState}."
+      "defaultCommentRole": "Prośba o zatwierdzenie przez grupę {roleName} przejścia z {fromState} → {toState}.",
+      "ineligibleAssigneeError": "Ten użytkownik/rola nie może zatwierdzać recenzji dla tego obszaru. Wybierz kogoś innego.",
+      "ineligibleAssigneeErrorUser": "{name} nie może zatwierdzać recenzji dla tego obszaru. Wybierz innego użytkownika lub rolę.",
+      "ineligibleAssigneeErrorRole": "Rola {roleName} nie może zatwierdzać recenzji dla tego obszaru. Wybierz inną rolę lub użytkownika."
     },
     "assigneeChip": {
       "emptyMembers": "Rola ta nie należy do członków kwalifikujących się do projektu.",
@@ -5717,7 +5722,8 @@
       "permissions": {
         "canAddEdit": "## Dodaj/Edytuj\nWskazuje, czy ta rola może dodawać i edytować powiązany obszar aplikacji.",
         "canDelete": "## Usuń\nWskazuje, czy ta rola może usunąć powiązany obszar aplikacji.",
-        "canClose": "## Zamknij\nWskazuje, czy ta rola może zamknąć powiązany obszar aplikacji."
+        "canClose": "## Zamknij\nWskazuje, czy ta rola może zamknąć powiązany obszar aplikacji.",
+        "canApprove": "## Zatwierdź\nWskazuje, czy ta rola może zatwierdzać prośby o recenzję dla powiązanego obszaru aplikacji. Dotyczy tylko repozytorium przypadków testowych, przebiegów testów i sesji."
       }
     },
     "group": {

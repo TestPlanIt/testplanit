@@ -7,6 +7,7 @@ import {
   useUpdateManyRoles,
   useUpsertRolePermission,
 } from "~/lib/hooks";
+import { REVIEW_RELEVANT_AREAS } from "~/lib/utils/reviewAreas";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -54,6 +55,7 @@ function buildAddRoleFormSchema(t: (key: any) => string) {
         canAddEdit: z.boolean(),
         canDelete: z.boolean(),
         canClose: z.boolean(),
+        canApprove: z.boolean(),
       })
     ),
   });
@@ -79,7 +81,12 @@ export function AddRole({ open, onClose }: AddRoleProps) {
     () =>
       applicationAreaValues.reduce(
         (acc, area) => {
-          acc[area] = { canAddEdit: false, canDelete: false, canClose: false };
+          acc[area] = {
+            canAddEdit: false,
+            canDelete: false,
+            canClose: false,
+            canApprove: false,
+          };
           return acc;
         },
         {} as AddRoleFormData["permissions"]
@@ -108,7 +115,7 @@ export function AddRole({ open, onClose }: AddRoleProps) {
 
   // --- Start Re-added Handlers and Watcher ---
   const handleSelectAll = (
-    field: "canAddEdit" | "canDelete" | "canClose",
+    field: "canAddEdit" | "canDelete" | "canClose" | "canApprove",
     checked: boolean
   ) => {
     applicationAreaValues.forEach((area) => {
@@ -125,7 +132,9 @@ export function AddRole({ open, onClose }: AddRoleProps) {
           area !== ApplicationArea.Tags) ||
         (field === "canClose" &&
           (area === ApplicationArea.TestRuns ||
-            area === ApplicationArea.Sessions));
+            area === ApplicationArea.Sessions)) ||
+        (field === "canApprove" &&
+          (REVIEW_RELEVANT_AREAS as readonly ApplicationArea[]).includes(area));
 
       if (isRelevant) {
         setValue(`permissions.${area}.${field}`, checked, {
@@ -137,7 +146,7 @@ export function AddRole({ open, onClose }: AddRoleProps) {
 
   const watchedPermissions = watch("permissions");
   const getHeaderCheckboxState = (
-    field: "canAddEdit" | "canDelete" | "canClose"
+    field: "canAddEdit" | "canDelete" | "canClose" | "canApprove"
   ): { checked: boolean; indeterminate: boolean } => {
     let relevantCount = 0;
     let checkedCount = 0;
@@ -155,7 +164,9 @@ export function AddRole({ open, onClose }: AddRoleProps) {
           area !== ApplicationArea.Tags) ||
         (field === "canClose" &&
           (area === ApplicationArea.TestRuns ||
-            area === ApplicationArea.Sessions));
+            area === ApplicationArea.Sessions)) ||
+        (field === "canApprove" &&
+          (REVIEW_RELEVANT_AREAS as readonly ApplicationArea[]).includes(area));
 
       if (isRelevant) {
         relevantCount++;
@@ -359,6 +370,27 @@ export function AddRole({ open, onClose }: AddRoleProps) {
                         <HelpPopover helpKey="role.permissions.canClose" />
                       </Label>
                     </th>
+                    {/* Approve Header Checkbox */}
+                    <th className="p-2 text-center font-medium text-muted-foreground w-24">
+                      <Label className="flex items-center gap-1 justify-center">
+                        <Checkbox
+                          checked={getHeaderCheckboxState("canApprove").checked}
+                          onCheckedChange={(checked) =>
+                            handleSelectAll("canApprove", !!checked)
+                          }
+                          aria-label={t("common.aria.selectDeselectAllApprove")}
+                          data-state={
+                            getHeaderCheckboxState("canApprove").indeterminate
+                              ? "indeterminate"
+                              : getHeaderCheckboxState("canApprove").checked
+                                ? "checked"
+                                : "unchecked"
+                          }
+                        />
+                        {t("common.permissions.approve")}
+                        <HelpPopover helpKey="role.permissions.canApprove" />
+                      </Label>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -382,6 +414,10 @@ export function AddRole({ open, onClose }: AddRoleProps) {
                     const showAddEdit =
                       area !== ApplicationArea.ClosedTestRuns &&
                       area !== ApplicationArea.ClosedSessions;
+
+                    const showCanApprove = (
+                      REVIEW_RELEVANT_AREAS as readonly ApplicationArea[]
+                    ).includes(area);
 
                     return (
                       <tr
@@ -449,6 +485,28 @@ export function AddRole({ open, onClose }: AddRoleProps) {
                                       checked={field.value}
                                       onCheckedChange={field.onChange}
                                       aria-label={`${tAreas(area)} ${t("common.actions.complete")}`}
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </td>
+                        {/* Approve Switch */}
+                        <td className="p-2 align-middle text-center">
+                          {showCanApprove ? (
+                            <FormField
+                              control={control}
+                              name={`permissions.${area}.canApprove`}
+                              render={({ field }) => (
+                                <FormItem className="flex justify-center items-center space-x-0 space-y-0">
+                                  <FormControl>
+                                    <Switch
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                      aria-label={`${tAreas(area)} ${t("common.permissions.approve")}`}
                                     />
                                   </FormControl>
                                 </FormItem>

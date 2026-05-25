@@ -171,7 +171,8 @@
       "reconfigure": "Reconfigure e tente novamente."
     },
     "permissions": {
-      "addEdit": "Adicionar/Editar"
+      "addEdit": "Adicionar/Editar",
+      "approve": "Aprovar"
     },
     "auth": {
       "internal": "E-mail/Senha",
@@ -678,7 +679,8 @@
       "newerVersion": "Nova versão",
       "deletedUser": "Usuário excluído",
       "restrictedField": "Campo restrito",
-      "backToTestCase": "Voltar ao caso de teste"
+      "backToTestCase": "Voltar ao caso de teste",
+      "selectDeselectAllApprove": "Selecione ou desmarque \"Aprovar\" para todas as áreas relevantes."
     },
     "labels": {
       "projects": "{count, plural, =1 {# Projeto} other {# Projetos}}",
@@ -3107,7 +3109,10 @@
       "alreadyPendingError": "Já existe uma avaliação pendente para esta entidade.",
       "cannotSelfAssign": "Você não pode atribuir uma avaliação a si mesmo; escolha outro usuário ou uma função.",
       "defaultComment": "Por favor, revise a transição de {fromState} → {toState}.",
-      "defaultCommentRole": "Solicitando aprovação do grupo {roleName} para transição de {fromState} → {toState}."
+      "defaultCommentRole": "Solicitando aprovação do grupo {roleName} para transição de {fromState} → {toState}.",
+      "ineligibleAssigneeError": "Este usuário/função não pode aprovar avaliações para esta área. Escolha outra pessoa.",
+      "ineligibleAssigneeErrorUser": "{name} Não é possível aprovar avaliações para esta área. Escolha outro usuário ou função.",
+      "ineligibleAssigneeErrorRole": "A função {roleName} não pode aprovar avaliações para esta área. Selecione outra função ou um usuário."
     },
     "assigneeChip": {
       "emptyMembers": "Nenhum membro elegível para o projeto ocupa essa função.",
@@ -5717,7 +5722,8 @@
       "permissions": {
         "canAddEdit": "## Adicionar/Editar\nIndica se esta função pode adicionar e editar a área de aplicação relacionada.",
         "canDelete": "## Excluir\nIndica se esta função pode excluir a área de aplicação relacionada.",
-        "canClose": "## Fechar\nIndica se esta função pode fechar a área de aplicação relacionada."
+        "canClose": "## Fechar\nIndica se esta função pode fechar a área de aplicação relacionada.",
+        "canApprove": "## Aprovar\nIndica se esta função pode aprovar solicitações de revisão para a área de aplicação relacionada. Aplica-se somente ao Repositório de Casos de Teste, Execuções de Teste e Sessões."
       }
     },
     "group": {

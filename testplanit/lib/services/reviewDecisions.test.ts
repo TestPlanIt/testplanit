@@ -30,11 +30,23 @@
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Session } from "next-auth";
-import type { ReviewRequest } from "@prisma/client";
+import { ApplicationArea, type ReviewRequest } from "@prisma/client";
 
 import { prisma } from "~/lib/prisma";
 import { isIneligibleReviewerError } from "~/lib/utils/errors";
 import { decideReviewRequest } from "./reviewDecisions";
+
+async function ensureRoleCanApprove(
+  roleId: number,
+  area: ApplicationArea,
+  canApprove: boolean
+): Promise<void> {
+  await prisma.rolePermission.upsert({
+    where: { roleId_area: { roleId, area } },
+    update: { canApprove },
+    create: { roleId, area, canApprove },
+  });
+}
 
 const TEST_RUN_ID = `phase2-decide-${Date.now()}-${Math.floor(
   Math.random() * 1_000_000
@@ -102,6 +114,23 @@ beforeAll(async () => {
   }
   assignedRoleId = roles[0].id;
   otherRoleId = roles[1].id;
+
+  // Ensure both roles carry canApprove=true on TestCaseRepository for the
+  // existing tests below. The fixtures all create CASE-type review requests,
+  // so the decide-time canApprove gate consults the (roleId, TestCaseRepository)
+  // RolePermission row of the caller's effective project role. Without this
+  // upsert the entire test file fails with IneligibleReviewerError because
+  // the seeded role does not carry canApprove by default.
+  await ensureRoleCanApprove(
+    assignedRoleId,
+    ApplicationArea.TestCaseRepository,
+    true
+  );
+  await ensureRoleCanApprove(
+    otherRoleId,
+    ApplicationArea.TestCaseRepository,
+    true
+  );
 
   // Requester (NONE access; trivially passes Project read because they own
   // the project; cannot self-approve per @@validate).
@@ -644,5 +673,132 @@ describe("decideReviewRequest — concurrent decides (CR-01 regression)", () => 
     expect(after?.status).toBe(winner.status);
     expect(after?.decisionComment).toBe(winner.decisionComment);
     expect(after?.decidedByUserId).toBe(winner.decidedByUserId);
+  });
+});
+
+describe("decideReviewRequest — canApprove eligibility", () => {
+  it("caller with canApprove=true on the area is accepted on the direct-assignee branch", async () => {
+    // The directAssigneeUserId has effective role otherRoleId which we
+    // already set to canApprove=true in beforeAll. Pin that explicit
+    // expectation here too.
+    await ensureRoleCanApprove(
+      otherRoleId,
+      ApplicationArea.TestCaseRepository,
+      true
+    );
+    const requestId = await seedPendingRequest({
+      assigneeUserId: directAssigneeUserId,
+    });
+    const result = await decideReviewRequest(
+      sessionFor(directAssigneeUserId),
+      requestId,
+      "APPROVED",
+      "yes"
+    );
+    expect(result.status).toBe("APPROVED");
+  });
+
+  it("rejects caller whose effective role lacks canApprove on the area, even when they are otherwise a role-holder", async () => {
+    // Flip canApprove off on the assigned role so the role-holder
+    // (roleHolderUserId, SPECIFIC_ROLE permission for assignedRoleId)
+    // can no longer pass the gate.
+    await ensureRoleCanApprove(
+      assignedRoleId,
+      ApplicationArea.TestCaseRepository,
+      false
+    );
+    const requestId = await seedPendingRequest({
+      assigneeRoleId: assignedRoleId,
+    });
+    let caught: unknown;
+    try {
+      await decideReviewRequest(
+        sessionFor(roleHolderUserId),
+        requestId,
+        "APPROVED",
+        "nope"
+      );
+    } catch (err) {
+      caught = err;
+    }
+    expect(isIneligibleReviewerError(caught)).toBe(true);
+
+    const after = await prisma.reviewRequest.findUnique({
+      where: { id: requestId },
+      select: { status: true },
+    });
+    expect(after?.status).toBe("PENDING");
+
+    // Restore canApprove=true so subsequent tests still authorize.
+    await ensureRoleCanApprove(
+      assignedRoleId,
+      ApplicationArea.TestCaseRepository,
+      true
+    );
+  });
+
+  it("admin override bypasses the canApprove check (admin role itself has no canApprove on the project area)", async () => {
+    // The admin user holds otherRoleId globally and has no project role
+    // mapping that would carry canApprove. Force the area row off to
+    // prove the override does not consult it.
+    await ensureRoleCanApprove(
+      otherRoleId,
+      ApplicationArea.TestCaseRepository,
+      false
+    );
+    const requestId = await seedPendingRequest({
+      assigneeUserId: directAssigneeUserId,
+    });
+    const result = await decideReviewRequest(
+      sessionFor(adminUserId, "ADMIN"),
+      requestId,
+      "APPROVED",
+      "admin override"
+    );
+    expect(result.status).toBe("APPROVED");
+
+    // Restore.
+    await ensureRoleCanApprove(
+      otherRoleId,
+      ApplicationArea.TestCaseRepository,
+      true
+    );
+  });
+
+  it("race: canApprove revoked between request and decide → IneligibleReviewerError", async () => {
+    await ensureRoleCanApprove(
+      assignedRoleId,
+      ApplicationArea.TestCaseRepository,
+      true
+    );
+    const requestId = await seedPendingRequest({
+      assigneeRoleId: assignedRoleId,
+    });
+    // Admin revokes mid-flight.
+    await ensureRoleCanApprove(
+      assignedRoleId,
+      ApplicationArea.TestCaseRepository,
+      false
+    );
+
+    let caught: unknown;
+    try {
+      await decideReviewRequest(
+        sessionFor(roleHolderUserId),
+        requestId,
+        "APPROVED",
+        "too late"
+      );
+    } catch (err) {
+      caught = err;
+    }
+    expect(isIneligibleReviewerError(caught)).toBe(true);
+
+    // Restore for subsequent tests.
+    await ensureRoleCanApprove(
+      assignedRoleId,
+      ApplicationArea.TestCaseRepository,
+      true
+    );
   });
 });

@@ -1,5 +1,6 @@
 "use server";
 
+import { ApplicationArea } from "@prisma/client";
 import { prisma } from "~/lib/prisma";
 
 /**
@@ -26,7 +27,8 @@ import { prisma } from "~/lib/prisma";
  */
 export async function getProjectRoleHolders(
   projectId: number,
-  roleId: number
+  roleId: number,
+  options?: { requireCanApproveOn?: ApplicationArea }
 ): Promise<
   Array<{
     id: string;
@@ -35,6 +37,19 @@ export async function getProjectRoleHolders(
   }>
 > {
   try {
+    // When the canApprove filter is requested, short-circuit when the role
+    // itself lacks the permission on the supplied area. The tooltip should
+    // not advertise holders of a role that cannot decide the review.
+    if (options?.requireCanApproveOn) {
+      const perm = await prisma.rolePermission.findUnique({
+        where: {
+          roleId_area: { roleId, area: options.requireCanApproveOn },
+        },
+        select: { canApprove: true },
+      });
+      if (!perm?.canApprove) return [];
+    }
+
     const userIds = new Set<string>();
 
     // Direct user assignments: SPECIFIC_ROLE rows whose roleId matches.

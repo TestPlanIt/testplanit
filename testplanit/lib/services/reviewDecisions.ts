@@ -5,12 +5,14 @@ import type { Session } from "next-auth";
 import { prisma } from "~/lib/prisma";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { CommentService } from "~/lib/services/commentService";
+import { resolveEffectiveProjectRoleId } from "~/lib/services/effectiveRole";
 import { NotificationService } from "~/lib/services/notificationService";
 import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
 import {
   FeatureDisabledError,
   IneligibleReviewerError,
 } from "~/lib/utils/errors";
+import { areaForEntityType } from "~/lib/utils/reviewAreas";
 import { extractMentionedUserIds } from "~/lib/utils/tiptapMentions";
 import { emitReviewCompletedEvent } from "~/lib/webhooks/event-emitters/reviewEvents";
 
@@ -203,13 +205,39 @@ export async function decideReviewRequest(
 
   const isAdmin = session.user.access === "ADMIN";
 
+  // canApprove gate — every non-admin eligibility branch is AND-joined with
+  // the caller's canApprove permission on the entity's area. The system
+  // ADMIN override stays unconditional (admins can decide regardless of
+  // their project role's permission grid). The check is short-circuited
+  // for the admin path so we never spend a round-trip resolving the
+  // effective role for them.
+  let callerCanApprove = false;
+  if (!isAdmin) {
+    const area = areaForEntityType(
+      req.entityType as "CASE" | "RUN" | "SESSION"
+    );
+    const callerEffectiveRoleId = await resolveEffectiveProjectRoleId(
+      userId,
+      req.projectId,
+      prisma
+    );
+    if (callerEffectiveRoleId !== null) {
+      const perm = await prisma.rolePermission.findUnique({
+        where: { roleId_area: { roleId: callerEffectiveRoleId, area } },
+        select: { canApprove: true },
+      });
+      callerCanApprove = perm?.canApprove === true;
+    }
+  }
+
   const eligible =
-    isDirectAssignee ||
-    isRoleHolderViaUserSpecific ||
-    isRoleHolderViaUserGlobal ||
-    isRoleHolderViaGroupSpecific ||
-    isRoleHolderViaGroupGlobal ||
-    isAdmin;
+    isAdmin ||
+    (callerCanApprove &&
+      (isDirectAssignee ||
+        isRoleHolderViaUserSpecific ||
+        isRoleHolderViaUserGlobal ||
+        isRoleHolderViaGroupSpecific ||
+        isRoleHolderViaGroupGlobal));
 
   if (!eligible) {
     throw new IneligibleReviewerError(userId, reviewRequestId);

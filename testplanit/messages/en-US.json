@@ -171,7 +171,8 @@
       "reconfigure": "Reconfigure and retry"
     },
     "permissions": {
-      "addEdit": "Add/Edit"
+      "addEdit": "Add/Edit",
+      "approve": "Approve"
     },
     "auth": {
       "internal": "Email/Password",
@@ -678,7 +679,8 @@
       "newerVersion": "Newer Version",
       "deletedUser": "Deleted User",
       "restrictedField": "Restricted Field",
-      "backToTestCase": "Back to Test Case"
+      "backToTestCase": "Back to Test Case",
+      "selectDeselectAllApprove": "Select or deselect approve for all relevant areas"
     },
     "labels": {
       "projects": "{count, plural, =1 {# Project} other {# Projects}}",
@@ -3107,7 +3109,10 @@
       "alreadyPendingError": "A review is already pending for this entity.",
       "cannotSelfAssign": "You can't assign a review to yourself; pick another user or a role.",
       "defaultComment": "Please review the transition from {fromState} → {toState}.",
-      "defaultCommentRole": "Requesting approval from the {roleName} group to transition from {fromState} → {toState}."
+      "defaultCommentRole": "Requesting approval from the {roleName} group to transition from {fromState} → {toState}.",
+      "ineligibleAssigneeError": "This user/role can't approve reviews for this area. Pick someone else.",
+      "ineligibleAssigneeErrorUser": "{name} can't approve reviews for this area. Pick another user or a role.",
+      "ineligibleAssigneeErrorRole": "The {roleName} role can't approve reviews for this area. Pick another role or a user."
     },
     "assigneeChip": {
       "emptyMembers": "No project-eligible members hold this role.",
@@ -5717,7 +5722,8 @@
       "permissions": {
         "canAddEdit": "## Add/Edit\nIndicates whether this role can add and edit the related application area.",
         "canDelete": "## Delete\nIndicates whether this role can delete the related application area.",
-        "canClose": "## Close\nIndicates whether this role can close the related application area."
+        "canClose": "## Close\nIndicates whether this role can close the related application area.",
+        "canApprove": "## Approve\nIndicates whether this role can approve review requests for the related application area. Applies only to Test Case Repository, Test Runs, and Sessions."
       }
     },
     "group": {

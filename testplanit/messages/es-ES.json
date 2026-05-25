@@ -171,7 +171,8 @@
       "reconfigure": "Reconfigurar y volver a intentarlo."
     },
     "permissions": {
-      "addEdit": "Añadir/Editar"
+      "addEdit": "Añadir/Editar",
+      "approve": "Aprobar"
     },
     "auth": {
       "internal": "Correo/Contraseña",
@@ -678,7 +679,8 @@
       "newerVersion": "Versión más reciente",
       "deletedUser": "Usuario eliminado",
       "restrictedField": "Campo restringido",
-      "backToTestCase": "Volver al caso de prueba"
+      "backToTestCase": "Volver al caso de prueba",
+      "selectDeselectAllApprove": "Seleccione o deseleccione la opción \"Aprobar\" para todas las áreas relevantes."
     },
     "labels": {
       "projects": "{count, plural, =1 {# Proyecto} other {# Proyectos}}",
@@ -3107,7 +3109,10 @@
       "alreadyPendingError": "Ya hay una revisión pendiente para esta entidad.",
       "cannotSelfAssign": "No puedes asignarte una reseña a ti mismo; elige otro usuario o un rol.",
       "defaultComment": "Por favor, revise la transición de {fromState} → {toState}.",
-      "defaultCommentRole": "Solicitando la aprobación del grupo {roleName} para pasar de {fromState} → {toState}."
+      "defaultCommentRole": "Solicitando la aprobación del grupo {roleName} para pasar de {fromState} → {toState}.",
+      "ineligibleAssigneeError": "Este usuario/rol no puede aprobar reseñas para esta área. Elija a otra persona.",
+      "ineligibleAssigneeErrorUser": "{name} no puede aprobar las reseñas de esta área. Elija otro usuario o rol.",
+      "ineligibleAssigneeErrorRole": "El rol {roleName} no puede aprobar las revisiones de esta área. Elija otro rol o un usuario."
     },
     "assigneeChip": {
       "emptyMembers": "Ningún miembro que cumpla los requisitos del proyecto desempeña esta función.",
@@ -5717,7 +5722,8 @@
       "permissions": {
         "canAddEdit": "## Añadir/Editar\nIndica si este rol puede agregar y editar el área de la aplicación relacionada.",
         "canDelete": "## Cerrar\\nIndica si este rol puede cerrar el área de aplicación relacionada.",
-        "canClose": "## Cerrar\nIndica si este rol puede cerrar el área de aplicación relacionada."
+        "canClose": "## Cerrar\nIndica si este rol puede cerrar el área de aplicación relacionada.",
+        "canApprove": "## Aprobar\nIndica si este rol puede aprobar las solicitudes de revisión para el área de aplicación correspondiente. Se aplica únicamente al Repositorio de casos de prueba, Ejecuciones de prueba y Sesiones."
       }
     },
     "group": {

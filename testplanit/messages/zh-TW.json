@@ -171,7 +171,8 @@
       "reconfigure": "重新配置並重試"
     },
     "permissions": {
-      "addEdit": "新增/編輯"
+      "addEdit": "新增/編輯",
+      "approve": "核准"
     },
     "auth": {
       "internal": "電子郵件/密碼",
@@ -678,7 +679,8 @@
       "newerVersion": "新版本",
       "deletedUser": "已刪除用戶",
       "restrictedField": "受限字段",
-      "backToTestCase": "返回測試用例"
+      "backToTestCase": "返回測試用例",
+      "selectDeselectAllApprove": "選取或取消選取「核准」以確認所有相關區域"
     },
     "labels": {
       "projects": "{count, plural, =1 {# 項目} other {# 項目集}}",
@@ -3107,7 +3109,10 @@
       "alreadyPendingError": "目前已有針對該實體的審查正在進行中。",
       "cannotSelfAssign": "你不能給自己分配評論；請選擇其他使用者或角色。",
       "defaultComment": "請檢查從 {fromState} 到 {toState}的過渡。",
-      "defaultCommentRole": "請求 {roleName} 群組批准從 {fromState} 過渡到 {toState}。"
+      "defaultCommentRole": "請求 {roleName} 群組批准從 {fromState} 過渡到 {toState}。",
+      "ineligibleAssigneeError": "此使用者/角色無權審核此區域的評論。請選擇其他人。",
+      "ineligibleAssigneeErrorUser": "{name} 無法審核此區域的評論。請選擇其他使用者或角色。",
+      "ineligibleAssigneeErrorRole": "{roleName} 角色無權審查此區域的評論。請選擇其他角色或使用者。"
     },
     "assigneeChip": {
       "emptyMembers": "目前沒有符合專案資格的成員擔任此職務。",
@@ -5717,7 +5722,8 @@
       "permissions": {
         "canAddEdit": "## 新增/編輯\n指示此角色是否可以新增和編輯相關的應用程式區域。",
         "canDelete": "## 刪除\n指示此角色是否可以刪除相關的應用程式區域。",
-        "canClose": "## 關閉\n指示此角色是否可以關閉相關的應用程式區域。"
+        "canClose": "## 關閉\n指示此角色是否可以關閉相關的應用程式區域。",
+        "canApprove": "## 批准\n指示此角色是否可以批准相關應用程式領域的審核請求。僅適用於測試案例庫、測試運行和會話。"
       }
     },
     "group": {

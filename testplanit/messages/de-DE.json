@@ -171,7 +171,8 @@
       "reconfigure": "Neu konfigurieren und erneut versuchen"
     },
     "permissions": {
-      "addEdit": "Hinzufügen/Bearbeiten"
+      "addEdit": "Hinzufügen/Bearbeiten",
+      "approve": "Genehmigen"
     },
     "auth": {
       "internal": "E-Mail/Passwort",
@@ -678,7 +679,8 @@
       "newerVersion": "Neuere Version",
       "deletedUser": "Gelöschter Benutzer",
       "restrictedField": "Eingeschränktes Feld",
-      "backToTestCase": "Zurück zum Testfall"
+      "backToTestCase": "Zurück zum Testfall",
+      "selectDeselectAllApprove": "Wählen Sie die Genehmigung für alle relevanten Bereiche aus oder heben Sie die Auswahl auf."
     },
     "labels": {
       "projects": "{count, plural, =1 {# Projekt} other {# Projekte}}",
@@ -3107,7 +3109,10 @@
       "alreadyPendingError": "Für diese Einrichtung ist bereits eine Überprüfung anhängig.",
       "cannotSelfAssign": "Sie können sich selbst keine Bewertung zuweisen; wählen Sie einen anderen Benutzer oder eine Rolle.",
       "defaultComment": "Bitte überprüfen Sie den Übergang von {fromState} → {toState}.",
-      "defaultCommentRole": "Anfrage an die Gruppe {roleName} , um von {fromState} → {toState} zu wechseln."
+      "defaultCommentRole": "Anfrage an die Gruppe {roleName} , um von {fromState} → {toState} zu wechseln.",
+      "ineligibleAssigneeError": "Dieser Benutzer/diese Rolle kann Bewertungen für diesen Bereich nicht genehmigen. Bitte wählen Sie eine andere Person.",
+      "ineligibleAssigneeErrorUser": "{name} kann Bewertungen für diesen Bereich nicht genehmigen. Wählen Sie einen anderen Benutzer oder eine andere Rolle.",
+      "ineligibleAssigneeErrorRole": "Die Rolle {roleName} kann in diesem Bereich keine Bewertungen genehmigen. Wählen Sie eine andere Rolle oder einen anderen Benutzer."
     },
     "assigneeChip": {
       "emptyMembers": "Diese Position ist bei keinem projektberechtigten Mitglied inne.",
@@ -5717,7 +5722,8 @@
       "permissions": {
         "canAddEdit": "## Hinzufügen/Bearbeiten\nGibt an, ob diese Rolle den zugehörigen Anwendungsbereich hinzufügen und bearbeiten kann.",
         "canDelete": "## Löschen\nGibt an, ob diese Rolle den zugehörigen Anwendungsbereich löschen kann.",
-        "canClose": "## Schließen\nGibt an, ob diese Rolle den zugehörigen Anwendungsbereich schließen kann."
+        "canClose": "## Schließen\nGibt an, ob diese Rolle den zugehörigen Anwendungsbereich schließen kann.",
+        "canApprove": "## Genehmigen\nGibt an, ob diese Rolle Überprüfungsanfragen für den zugehörigen Anwendungsbereich genehmigen kann. Gilt nur für Testfall-Repository, Testläufe und Sitzungen."
       }
     },
     "group": {

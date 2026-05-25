@@ -171,7 +171,8 @@
       "reconfigure": "Herconfigureer en probeer het opnieuw."
     },
     "permissions": {
-      "addEdit": "Toevoegen/bewerken"
+      "addEdit": "Toevoegen/bewerken",
+      "approve": "Goedkeuren"
     },
     "auth": {
       "internal": "E-mailadres/wachtwoord",
@@ -678,7 +679,8 @@
       "newerVersion": "Nieuwere versie",
       "deletedUser": "Verwijderde gebruiker",
       "restrictedField": "Beperkt veld",
-      "backToTestCase": "Terug naar testcase"
+      "backToTestCase": "Terug naar testcase",
+      "selectDeselectAllApprove": "Selecteer of deselecteer 'goedkeuren' voor alle relevante gebieden."
     },
     "labels": {
       "projects": "{count, plural, =1 {# Project} other {# Projecten}}",
@@ -3107,7 +3109,10 @@
       "alreadyPendingError": "Er loopt al een beoordelingsprocedure voor deze entiteit.",
       "cannotSelfAssign": "Je kunt jezelf geen beoordeling toewijzen; kies een andere gebruiker of een rol.",
       "defaultComment": "Bekijk de overgang van {fromState} → {toState}.",
-      "defaultCommentRole": "Goedkeuring aanvragen van de {roleName} -groep voor de overgang van {fromState} → {toState}."
+      "defaultCommentRole": "Goedkeuring aanvragen van de {roleName} -groep voor de overgang van {fromState} → {toState}.",
+      "ineligibleAssigneeError": "Deze gebruiker/rol kan geen beoordelingen voor dit gebied goedkeuren. Kies iemand anders.",
+      "ineligibleAssigneeErrorUser": "{name} kan geen beoordelingen voor dit gebied goedkeuren. Kies een andere gebruiker of een rol.",
+      "ineligibleAssigneeErrorRole": "De rol {roleName} kan geen beoordelingen voor dit gebied goedkeuren. Kies een andere rol of een gebruiker."
     },
     "assigneeChip": {
       "emptyMembers": "Geen enkel projectlid bekleedt deze functie.",
@@ -5717,7 +5722,8 @@
       "permissions": {
         "canAddEdit": "## Toevoegen/bewerken\nGeeft aan of deze rol het gerelateerde toepassingsgebied kan toevoegen en bewerken.",
         "canDelete": "## Verwijderen\nGeeft aan of deze rol het gerelateerde toepassingsgebied kan verwijderen.",
-        "canClose": "## Close\nGeeft aan of deze rol het gerelateerde toepassingsgebied kan sluiten."
+        "canClose": "## Close\nGeeft aan of deze rol het gerelateerde toepassingsgebied kan sluiten.",
+        "canApprove": "## Goedkeuren\nGeeft aan of deze rol beoordelingsverzoeken voor het betreffende toepassingsgebied mag goedkeuren. Is alleen van toepassing op Test Case Repository, Test Runs en Sessions."
       }
     },
     "group": {

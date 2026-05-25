@@ -1779,6 +1779,7 @@ model RolePermission {
   canDelete        Boolean         @default(false)
   canClose         Boolean         @default(false)
   canReadSensitive Boolean         @default(false)
+  canApprove       Boolean         @default(false)
 
   @@id([roleId, area])
 }

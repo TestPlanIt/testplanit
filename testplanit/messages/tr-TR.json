@@ -171,7 +171,8 @@
       "reconfigure": "Yeniden yapılandırın ve tekrar deneyin"
     },
     "permissions": {
-      "addEdit": "Ekle/Düzenle"
+      "addEdit": "Ekle/Düzenle",
+      "approve": "Onaylamak"
     },
     "auth": {
       "internal": "E-posta/Şifre",
@@ -678,7 +679,8 @@
       "newerVersion": "Yeni Sürüm",
       "deletedUser": "Silinmiş Kullanıcı",
       "restrictedField": "Kısıtlı Alan",
-      "backToTestCase": "Test Durumuna Geri Dön"
+      "backToTestCase": "Test Durumuna Geri Dön",
+      "selectDeselectAllApprove": "İlgili tüm alanlar için onay seçeneğini işaretleyin veya işaretini kaldırın."
     },
     "labels": {
       "projects": "{count, plural, =1 {# Proje} other {# Projeler}}",
@@ -3107,7 +3109,10 @@
       "alreadyPendingError": "Bu kuruluş için halihazırda bir inceleme süreci devam etmektedir.",
       "cannotSelfAssign": "Kendinize değerlendirme atayamazsınız; başka bir kullanıcı veya rol seçin.",
       "defaultComment": "Lütfen {fromState} → {toState} geçişini inceleyin.",
-      "defaultCommentRole": "Requesting approval from the {roleName} group to transition from {fromState} → {toState}."
+      "defaultCommentRole": "Requesting approval from the {roleName} group to transition from {fromState} → {toState}.",
+      "ineligibleAssigneeError": "Bu kullanıcı/rol bu alan için yorumları onaylayamaz. Lütfen başka birini seçin.",
+      "ineligibleAssigneeErrorUser": "{name} Bu alan için yorumları onaylayamıyor. Lütfen başka bir kullanıcı veya rol seçin.",
+      "ineligibleAssigneeErrorRole": "{roleName} rolü bu alan için yorumları onaylayamaz. Başka bir rol veya kullanıcı seçin."
     },
     "assigneeChip": {
       "emptyMembers": "Proje için uygun olan üyelerden hiçbiri bu görevi üstlenmiyor.",
@@ -5717,7 +5722,8 @@
       "permissions": {
         "canAddEdit": "## Ekle/Düzenle\nBu rolün ilgili uygulama alanını ekleyip düzenleyebileceğini gösterir.",
         "canDelete": "## Sil\nBu rolün ilgili uygulama alanını silip silemeyeceğini gösterir.",
-        "canClose": "## Kapat\nBu rolün ilgili uygulama alanını kapatıp kapatamayacağını gösterir."
+        "canClose": "## Kapat\nBu rolün ilgili uygulama alanını kapatıp kapatamayacağını gösterir.",
+        "canApprove": "## Onayla\nBu rolün ilgili uygulama alanı için inceleme isteklerini onaylayıp onaylayamayacağını gösterir. Yalnızca Test Durumu Deposu, Test Çalıştırmaları ve Oturumlar için geçerlidir."
       }
     },
     "group": {

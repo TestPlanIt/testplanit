@@ -7,11 +7,17 @@ import { getTranslations } from "next-intl/server";
 import { withActionAuditContext } from "~/lib/auditContextWrappers";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { CommentService } from "~/lib/services/commentService";
+import { resolveEffectiveProjectRoleId } from "~/lib/services/effectiveRole";
 import { NotificationService } from "~/lib/services/notificationService";
 import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
 import { prisma } from "~/lib/prisma";
 import { extractMentionedUserIds } from "~/lib/utils/tiptapMentions";
-import { AlreadyPendingError } from "~/lib/utils/errors";
+import {
+  AlreadyPendingError,
+  IneligibleAssigneeError,
+  isIneligibleAssigneeError,
+} from "~/lib/utils/errors";
+import { areaForEntityType } from "~/lib/utils/reviewAreas";
 import {
   emitReviewCompletedEvent,
   emitReviewRequestedEvent,
@@ -51,8 +57,58 @@ interface RequestReviewFailure {
     | "ALREADY_PENDING"
     | "UNAUTHORIZED"
     | "FEATURE_DISABLED"
+    | "INELIGIBLE_ASSIGNEE"
     | "INTERNAL_ERROR";
   message?: string;
+}
+
+/**
+ * Server-side eligibility chokepoint for review assignees. The UI combobox
+ * already filters out roles/users without canApprove on the entity area, but
+ * a client can call this server action directly and bypass the combobox, so
+ * the same gate runs here before the transaction.
+ *
+ * Role assignees: load the (roleId, area) RolePermission row and reject when
+ * canApprove !== true.
+ * User assignees: resolve the user's effective project role and reject when
+ * effective role is null OR the (roleId, area) row's canApprove is not true.
+ */
+async function assertAssigneeCanApprove(params: {
+  projectId: number;
+  entityType: ReviewableEntityType;
+  assigneeUserId: string | null;
+  assigneeRoleId: number | null;
+}): Promise<void> {
+  const area = areaForEntityType(params.entityType);
+
+  if (params.assigneeRoleId !== null) {
+    const perm = await prisma.rolePermission.findUnique({
+      where: { roleId_area: { roleId: params.assigneeRoleId, area } },
+      select: { canApprove: true },
+    });
+    if (!perm?.canApprove) {
+      throw new IneligibleAssigneeError(params.assigneeRoleId.toString(), area);
+    }
+    return;
+  }
+
+  if (params.assigneeUserId !== null) {
+    const effectiveRoleId = await resolveEffectiveProjectRoleId(
+      params.assigneeUserId,
+      params.projectId,
+      prisma
+    );
+    if (effectiveRoleId === null) {
+      throw new IneligibleAssigneeError(params.assigneeUserId, area);
+    }
+    const perm = await prisma.rolePermission.findUnique({
+      where: { roleId_area: { roleId: effectiveRoleId, area } },
+      select: { canApprove: true },
+    });
+    if (!perm?.canApprove) {
+      throw new IneligibleAssigneeError(params.assigneeUserId, area);
+    }
+  }
 }
 
 export type RequestReviewResult = RequestReviewSuccess | RequestReviewFailure;
@@ -105,6 +161,20 @@ export const requestReview = withActionAuditContext(
     });
     if (!project || project.reviewWorkflowEnabled !== true) {
       return { success: false, error: "FEATURE_DISABLED" };
+    }
+
+    try {
+      await assertAssigneeCanApprove({
+        projectId: input.projectId,
+        entityType: input.entityType,
+        assigneeUserId: input.assigneeUserId,
+        assigneeRoleId: input.assigneeRoleId,
+      });
+    } catch (eligibilityErr) {
+      if (isIneligibleAssigneeError(eligibilityErr)) {
+        return { success: false, error: "INELIGIBLE_ASSIGNEE" };
+      }
+      throw eligibilityErr;
     }
 
     const trimmed = input.commentText.trim();

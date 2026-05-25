@@ -1,4 +1,4 @@
-import { NotificationType } from "@prisma/client";
+import { ApplicationArea, NotificationType } from "@prisma/client";
 import { JOB_CREATE_NOTIFICATION } from "../../workers/notificationWorker";
 import { getCurrentTenantId } from "../multiTenantPrisma";
 import { getNotificationQueue } from "../queues";
@@ -233,9 +233,23 @@ export class NotificationService {
   static async resolveRoleHolderUserIds(
     projectId: number,
     roleId: number,
-    requesterUserId: string
+    requesterUserId: string,
+    options?: { requireCanApproveOn?: ApplicationArea }
   ): Promise<string[]> {
     const { prisma } = await import("~/lib/prisma");
+
+    // Optional canApprove gate on the assigned role itself — when the role
+    // doesn't carry canApprove on the requested area, the fanout is empty
+    // by construction. Short-circuit instead of running four findManys.
+    if (options?.requireCanApproveOn) {
+      const perm = await prisma.rolePermission.findUnique({
+        where: {
+          roleId_area: { roleId, area: options.requireCanApproveOn },
+        },
+        select: { canApprove: true },
+      });
+      if (!perm?.canApprove) return [];
+    }
 
     const specificRoleRows = await prisma.userProjectPermission.findMany({
       where: {

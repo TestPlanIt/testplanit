@@ -6078,6 +6078,10 @@ const metadata: ModelMeta = {
                     name: "canReadSensitive",
                     type: "Boolean",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, canApprove: {
+                    name: "canApprove",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
                 },
             }, uniqueConstraints: {
                 roleId_area: {

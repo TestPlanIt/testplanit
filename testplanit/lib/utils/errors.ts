@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { ApplicationArea, Prisma } from "@prisma/client";
 
 export function isUniqueConstraintError(err: unknown): boolean {
   return (
@@ -79,6 +79,31 @@ export function isIneligibleReviewerError(
   err: unknown
 ): err is IneligibleReviewerError {
   return err instanceof IneligibleReviewerError;
+}
+
+/**
+ * Thrown by the request-time `assertAssigneeCanApprove` helper when the
+ * chosen assignee (user or role) lacks the canApprove permission on the
+ * entity's ApplicationArea. Distinct from IneligibleReviewerError
+ * (decide-time) so observability and tests stay sharp on request-vs-decide
+ * failures.
+ */
+export class IneligibleAssigneeError extends Error {
+  readonly code = "INELIGIBLE_ASSIGNEE" as const;
+
+  constructor(
+    public readonly assigneeRef: string,
+    public readonly area: ApplicationArea
+  ) {
+    super(`Assignee ${assigneeRef} lacks canApprove on ${area}`);
+    this.name = "IneligibleAssigneeError";
+  }
+}
+
+export function isIneligibleAssigneeError(
+  err: unknown
+): err is IneligibleAssigneeError {
+  return err instanceof IneligibleAssigneeError;
 }
 
 /**

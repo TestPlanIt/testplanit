@@ -42,6 +42,8 @@ import {
 } from "~/components/comments/commentsQueryKey";
 import type { IconName } from "~/types/globals";
 
+import { areaForEntityType } from "~/lib/utils/reviewAreas";
+
 import { AssigneeCombobox, type AssigneeOption } from "./AssigneeCombobox";
 
 export type ReviewableEntityType = "CASE" | "RUN" | "SESSION";
@@ -211,6 +213,8 @@ export function RequestReviewSheet({
       if (!result.success) {
         if (result.error === "ALREADY_PENDING") {
           toast.error(t("reviews.requester.alreadyPendingError"));
+        } else if (result.error === "INELIGIBLE_ASSIGNEE") {
+          toast.error(t("reviews.requester.ineligibleAssigneeError"));
         } else {
           toast.error(t("common.errors.somethingWentWrong"));
         }
@@ -293,6 +297,7 @@ export function RequestReviewSheet({
                       projectId={projectId}
                       value={selectedAssignee}
                       onValueChange={handleAssigneeChange}
+                      requireCanApproveOn={areaForEntityType(entityType)}
                     />
                   </FormControl>
                   <FormMessage />

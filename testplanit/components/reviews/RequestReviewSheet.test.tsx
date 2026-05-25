@@ -297,6 +297,81 @@ describe("RequestReviewSheet", () => {
     vi.resetModules();
   });
 
+  it("(canApprove-1) on INELIGIBLE_ASSIGNEE result, toast.error fires with the ineligibleAssigneeError key", async () => {
+    mockRequestReview.mockResolvedValueOnce({
+      success: false,
+      error: "INELIGIBLE_ASSIGNEE",
+    });
+
+    render(<RequestReviewSheet {...makeProps()} />);
+
+    fireEvent.click(screen.getByTestId("request-review-assignee"));
+    fireEvent.change(screen.getByTestId("request-review-comment"), {
+      target: { value: "Please review" },
+    });
+    fireEvent.click(screen.getByTestId("request-review-submit"));
+
+    await waitFor(() => {
+      expect(mockToastError).toHaveBeenCalled();
+    });
+    expect(mockToastError.mock.calls[0]?.[0]).toContain(
+      "reviews.requester.ineligibleAssigneeError"
+    );
+  });
+
+  it("(canApprove-2) passes requireCanApproveOn derived from entityType into AssigneeCombobox (CASE→TestCaseRepository, RUN→TestRuns, SESSION→Sessions)", async () => {
+    vi.resetModules();
+    const captured: Array<{ requireCanApproveOn?: string }> = [];
+    vi.doMock("./AssigneeCombobox", () => ({
+      AssigneeCombobox: (props: {
+        requireCanApproveOn?: string;
+        value: AssigneeOption | null;
+        onValueChange: (v: AssigneeOption | null) => void;
+      }) => {
+        captured.push({ requireCanApproveOn: props.requireCanApproveOn });
+        return (
+          <button
+            type="button"
+            data-testid="request-review-assignee"
+            onClick={() =>
+              props.onValueChange({
+                kind: "user",
+                id: "user-1",
+                name: "Alice",
+                image: null,
+                roleName: null,
+              })
+            }
+          >
+            assignee-captured-stub
+          </button>
+        );
+      },
+    }));
+    const { RequestReviewSheet: Sheet } = await import("./RequestReviewSheet");
+
+    const { unmount: u1 } = render(
+      <Sheet {...makeProps({ entityType: "CASE" })} />
+    );
+    expect(captured.at(-1)?.requireCanApproveOn).toBe("TestCaseRepository");
+    u1();
+
+    const { unmount: u2 } = render(
+      <Sheet {...makeProps({ entityType: "RUN" })} />
+    );
+    expect(captured.at(-1)?.requireCanApproveOn).toBe("TestRuns");
+    u2();
+
+    const { unmount: u3 } = render(
+      <Sheet {...makeProps({ entityType: "SESSION" })} />
+    );
+    expect(captured.at(-1)?.requireCanApproveOn).toBe("Sessions");
+    u3();
+
+    vi.doUnmock("./AssigneeCombobox");
+    vi.resetModules();
+  });
+
   it("(g) initialValues prefills assignee + targetStateId but not comment", () => {
     const initialAssignee: AssigneeOption = {
       kind: "role",

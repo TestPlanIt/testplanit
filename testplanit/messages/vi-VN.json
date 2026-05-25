@@ -171,7 +171,8 @@
       "reconfigure": "Cấu hình lại và thử lại"
     },
     "permissions": {
-      "addEdit": "Thêm/Chỉnh sửa"
+      "addEdit": "Thêm/Chỉnh sửa",
+      "approve": "Chấp thuận"
     },
     "auth": {
       "internal": "Email/Mật khẩu",
@@ -678,7 +679,8 @@
       "newerVersion": "Phiên bản mới hơn",
       "deletedUser": "Người dùng đã bị xóa",
       "restrictedField": "Trường hạn chế",
-      "backToTestCase": "Quay lại trường hợp kiểm thử"
+      "backToTestCase": "Quay lại trường hợp kiểm thử",
+      "selectDeselectAllApprove": "Chọn hoặc bỏ chọn phê duyệt cho tất cả các khu vực liên quan."
     },
     "labels": {
       "projects": "{count, plural, =1 {# Dự án} other {# Dự án}}",
@@ -3107,7 +3109,10 @@
       "alreadyPendingError": "Hiện tại, đơn vị này đang chờ được xem xét.",
       "cannotSelfAssign": "Bạn không thể tự mình viết đánh giá; hãy chọn người dùng khác hoặc vai trò khác.",
       "defaultComment": "Vui lòng xem lại quá trình chuyển đổi từ {fromState} → {toState}.",
-      "defaultCommentRole": "Tôi đang yêu cầu sự chấp thuận từ nhóm {roleName} để chuyển đổi từ {fromState} → {toState}."
+      "defaultCommentRole": "Tôi đang yêu cầu sự chấp thuận từ nhóm {roleName} để chuyển đổi từ {fromState} → {toState}.",
+      "ineligibleAssigneeError": "Người dùng/vai trò này không thể phê duyệt đánh giá cho khu vực này. Hãy chọn người khác.",
+      "ineligibleAssigneeErrorUser": "{name} Không thể phê duyệt đánh giá cho khu vực này. Vui lòng chọn người dùng hoặc vai trò khác.",
+      "ineligibleAssigneeErrorRole": "Vai trò {roleName} không thể phê duyệt đánh giá cho khu vực này. Hãy chọn một vai trò hoặc người dùng khác."
     },
     "assigneeChip": {
       "emptyMembers": "Hiện không có thành viên nào đủ điều kiện tham gia dự án nắm giữ vai trò này.",
@@ -5717,7 +5722,8 @@
       "permissions": {
         "canAddEdit": "## Thêm/Chỉnh sửa\nCho biết liệu vai trò này có thể thêm và chỉnh sửa khu vực ứng dụng liên quan hay không.",
         "canDelete": "## Xóa\nCho biết liệu vai trò này có thể xóa khu vực ứng dụng liên quan hay không.",
-        "canClose": "## Đóng\nCho biết liệu vai trò này có thể đóng khu vực ứng dụng liên quan hay không."
+        "canClose": "## Đóng\nCho biết liệu vai trò này có thể đóng khu vực ứng dụng liên quan hay không.",
+        "canApprove": "## Phê duyệt\nCho biết liệu vai trò này có thể phê duyệt các yêu cầu xem xét cho khu vực ứng dụng liên quan hay không. Chỉ áp dụng cho Kho lưu trữ trường hợp thử nghiệm, Chạy thử nghiệm và Phiên."
       }
     },
     "group": {

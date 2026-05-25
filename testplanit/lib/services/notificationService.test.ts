@@ -1,4 +1,4 @@
-import { NotificationType } from "@prisma/client";
+import { ApplicationArea, NotificationType } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getNotificationQueue } from "../queues";
 import { NotificationService } from "./notificationService";
@@ -9,6 +9,27 @@ vi.mock("~/server/db", () => ({
   db: {
     user: {
       findMany: mockFindMany,
+    },
+  },
+}));
+
+// Mock ~/lib/prisma for resolveRoleHolderUserIds (uses await import internally)
+const mockPrismaUserProjectPermissionFindMany = vi.fn();
+const mockPrismaGroupProjectPermissionFindMany = vi.fn();
+const mockPrismaRolePermissionFindUnique = vi.fn();
+vi.mock("~/lib/prisma", () => ({
+  prisma: {
+    userProjectPermission: {
+      findMany: (...args: unknown[]) =>
+        mockPrismaUserProjectPermissionFindMany(...args),
+    },
+    groupProjectPermission: {
+      findMany: (...args: unknown[]) =>
+        mockPrismaGroupProjectPermissionFindMany(...args),
+    },
+    rolePermission: {
+      findUnique: (...args: unknown[]) =>
+        mockPrismaRolePermissionFindUnique(...args),
     },
   },
 }));
@@ -944,6 +965,83 @@ describe("NotificationService", () => {
     it("should return 0 as placeholder implementation", async () => {
       const count = await NotificationService.getUnreadCount("user-123");
       expect(count).toBe(0);
+    });
+  });
+
+  describe("resolveRoleHolderUserIds canApprove option", () => {
+    beforeEach(() => {
+      mockPrismaUserProjectPermissionFindMany.mockReset().mockResolvedValue([]);
+      mockPrismaGroupProjectPermissionFindMany
+        .mockReset()
+        .mockResolvedValue([]);
+      mockPrismaRolePermissionFindUnique.mockReset();
+    });
+
+    it("when option is omitted, does not consult rolePermission.findUnique and runs all four findManys", async () => {
+      mockPrismaUserProjectPermissionFindMany
+        .mockResolvedValueOnce([{ userId: "u-1" }])
+        .mockResolvedValueOnce([{ userId: "u-2" }]);
+      mockPrismaGroupProjectPermissionFindMany
+        .mockResolvedValueOnce([
+          { group: { assignedUsers: [{ userId: "u-3" }] } },
+        ])
+        .mockResolvedValueOnce([
+          { group: { assignedUsers: [{ userId: "u-4" }] } },
+        ]);
+
+      const result = await NotificationService.resolveRoleHolderUserIds(
+        10,
+        99,
+        "requester"
+      );
+      expect(mockPrismaRolePermissionFindUnique).not.toHaveBeenCalled();
+      expect(mockPrismaUserProjectPermissionFindMany).toHaveBeenCalledTimes(2);
+      expect(mockPrismaGroupProjectPermissionFindMany).toHaveBeenCalledTimes(2);
+      expect(new Set(result)).toEqual(new Set(["u-1", "u-2", "u-3", "u-4"]));
+    });
+
+    it("when option is present and the role lacks canApprove, returns [] and skips the four findManys", async () => {
+      mockPrismaRolePermissionFindUnique.mockResolvedValue({
+        canApprove: false,
+      });
+      const result = await NotificationService.resolveRoleHolderUserIds(
+        10,
+        99,
+        "requester",
+        { requireCanApproveOn: ApplicationArea.TestCaseRepository }
+      );
+      expect(mockPrismaRolePermissionFindUnique).toHaveBeenCalledWith({
+        where: {
+          roleId_area: {
+            roleId: 99,
+            area: ApplicationArea.TestCaseRepository,
+          },
+        },
+        select: { canApprove: true },
+      });
+      expect(mockPrismaUserProjectPermissionFindMany).not.toHaveBeenCalled();
+      expect(mockPrismaGroupProjectPermissionFindMany).not.toHaveBeenCalled();
+      expect(result).toEqual([]);
+    });
+
+    it("when option is present and the role has canApprove, requester is still excluded from the fanout", async () => {
+      mockPrismaRolePermissionFindUnique.mockResolvedValue({
+        canApprove: true,
+      });
+      mockPrismaUserProjectPermissionFindMany
+        .mockResolvedValueOnce([{ userId: "u-1" }, { userId: "requester" }])
+        .mockResolvedValueOnce([]);
+      mockPrismaGroupProjectPermissionFindMany
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
+
+      const result = await NotificationService.resolveRoleHolderUserIds(
+        10,
+        99,
+        "requester",
+        { requireCanApproveOn: ApplicationArea.TestRuns }
+      );
+      expect(result).toEqual(["u-1"]);
     });
   });
 });

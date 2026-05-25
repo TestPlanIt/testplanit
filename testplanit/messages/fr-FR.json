@@ -171,7 +171,8 @@
       "reconfigure": "Reconfigurez et réessayez"
     },
     "permissions": {
-      "addEdit": "Ajouter/Modifier"
+      "addEdit": "Ajouter/Modifier",
+      "approve": "Approuver"
     },
     "auth": {
       "internal": "Adresse électronique/Mot de passe",
@@ -678,7 +679,8 @@
       "newerVersion": "Version plus récente",
       "deletedUser": "Utilisateur supprimé",
       "restrictedField": "Champ restreint",
-      "backToTestCase": "Retour au cas de test"
+      "backToTestCase": "Retour au cas de test",
+      "selectDeselectAllApprove": "Sélectionnez ou désélectionnez « Approuver » pour toutes les zones concernées."
     },
     "labels": {
       "projects": "{count, plural, =1 {# Projet} other {# Projets}}",
@@ -3107,7 +3109,10 @@
       "alreadyPendingError": "Une évaluation est déjà en cours pour cette entité.",
       "cannotSelfAssign": "Vous ne pouvez pas vous attribuer une évaluation ; choisissez un autre utilisateur ou un rôle.",
       "defaultComment": "Veuillez examiner la transition de {fromState} → {toState}.",
-      "defaultCommentRole": "Demande d'approbation du groupe {roleName} pour la transition de {fromState} → {toState}."
+      "defaultCommentRole": "Demande d'approbation du groupe {roleName} pour la transition de {fromState} → {toState}.",
+      "ineligibleAssigneeError": "Cet utilisateur/rôle ne peut pas approuver les avis pour cette zone. Veuillez choisir quelqu'un d'autre.",
+      "ineligibleAssigneeErrorUser": "{name} ne peut pas approuver les avis pour cette zone. Veuillez choisir un autre utilisateur ou un rôle.",
+      "ineligibleAssigneeErrorRole": "Le rôle {roleName} ne permet pas d'approuver les avis pour cette zone. Veuillez choisir un autre rôle ou un utilisateur."
     },
     "assigneeChip": {
       "emptyMembers": "Aucun membre éligible au projet n'occupe ce rôle.",
@@ -5717,7 +5722,8 @@
       "permissions": {
         "canAddEdit": "## Ajouter/Modifier\nIndique si ce rôle peut ajouter et modifier la zone d'application associée.",
         "canDelete": "## Supprimer\nIndique si ce rôle peut supprimer la zone d'application associée.",
-        "canClose": "## Fermer\nIndique si ce rôle peut fermer la zone d'application associée."
+        "canClose": "## Fermer\nIndique si ce rôle peut fermer la zone d'application associée.",
+        "canApprove": "## Approuver\nIndique si ce rôle peut approuver les demandes de révision pour le domaine d'application concerné. S'applique uniquement au référentiel de cas de test, aux exécutions de tests et aux sessions."
       }
     },
     "group": {

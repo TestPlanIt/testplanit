@@ -171,7 +171,8 @@
       "reconfigure": "Riconfigura e riprova"
     },
     "permissions": {
-      "addEdit": "Aggiungi/Modifica"
+      "addEdit": "Aggiungi/Modifica",
+      "approve": "Approvare"
     },
     "auth": {
       "internal": "E-mail/Password",
@@ -678,7 +679,8 @@
       "newerVersion": "Versione più recente",
       "deletedUser": "Utente eliminato",
       "restrictedField": "Campo riservato",
-      "backToTestCase": "Torna al caso di test"
+      "backToTestCase": "Torna al caso di test",
+      "selectDeselectAllApprove": "Seleziona o deseleziona l'opzione \"approva\" per tutte le aree pertinenti."
     },
     "labels": {
       "projects": "{count, plural, =1 {# Progetto} other {# Progetti}}",
@@ -3107,7 +3109,10 @@
       "alreadyPendingError": "È già in corso una procedura di revisione per questa entità.",
       "cannotSelfAssign": "Non puoi assegnare una recensione a te stesso; scegli un altro utente o un ruolo.",
       "defaultComment": "Si prega di rivedere la transizione da {fromState} → {toState}.",
-      "defaultCommentRole": "Richiesta di approvazione al gruppo {roleName} per la transizione da {fromState} → {toState}."
+      "defaultCommentRole": "Richiesta di approvazione al gruppo {roleName} per la transizione da {fromState} → {toState}.",
+      "ineligibleAssigneeError": "Questo utente/ruolo non può approvare le recensioni per quest'area. Scegli un altro utente.",
+      "ineligibleAssigneeErrorUser": "{name} non può approvare le recensioni per quest'area. Scegli un altro utente o un ruolo.",
+      "ineligibleAssigneeErrorRole": "Il ruolo {roleName} non può approvare le recensioni per quest'area. Scegli un altro ruolo o un altro utente."
     },
     "assigneeChip": {
       "emptyMembers": "Nessun membro idoneo al progetto ricopre questo ruolo.",
@@ -5717,7 +5722,8 @@
       "permissions": {
         "canAddEdit": "## Aggiungi/Modifica\nIndica se questo ruolo può aggiungere e modificare l'area di applicazione correlata.",
         "canDelete": "## Elimina\nIndica se questo ruolo può eliminare l'area di applicazione correlata.",
-        "canClose": "## Chiudi\nIndica se questo ruolo può chiudere l'area dell'applicazione correlata."
+        "canClose": "## Chiudi\nIndica se questo ruolo può chiudere l'area dell'applicazione correlata.",
+        "canApprove": "## Approva\nIndica se questo ruolo può approvare le richieste di revisione per l'area applicativa correlata. Si applica solo a Repository dei casi di test, Esecuzioni di test e Sessioni."
       }
     },
     "group": {

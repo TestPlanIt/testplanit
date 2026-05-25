@@ -171,7 +171,8 @@
       "reconfigure": "재구성 후 다시 시도"
     },
     "permissions": {
-      "addEdit": "추가/편집"
+      "addEdit": "추가/편집",
+      "approve": "승인하다"
     },
     "auth": {
       "internal": "이메일/비밀번호",
@@ -678,7 +679,8 @@
       "newerVersion": "최신 버전",
       "deletedUser": "삭제된 사용자",
       "restrictedField": "제한된 필드",
-      "backToTestCase": "테스트 케이스로 돌아가기"
+      "backToTestCase": "테스트 케이스로 돌아가기",
+      "selectDeselectAllApprove": "관련된 모든 영역에 대해 승인을 선택하거나 선택 해제하십시오."
     },
     "labels": {
       "projects": "{count, plural, =1 {# 프로젝트} other {# 프로젝트}}",
@@ -3107,7 +3109,10 @@
       "alreadyPendingError": "해당 기관에 대한 검토가 이미 진행 중입니다.",
       "cannotSelfAssign": "본인에게 리뷰를 할당할 수는 없습니다. 다른 사용자 또는 역할을 선택하세요.",
       "defaultComment": "{fromState} → {toState} 전환 과정을 검토해 주십시오.",
-      "defaultCommentRole": "{roleName} 그룹의 승인을 받아 {fromState} 에서 {toState}로 전환합니다."
+      "defaultCommentRole": "{roleName} 그룹의 승인을 받아 {fromState} 에서 {toState}로 전환합니다.",
+      "ineligibleAssigneeError": "이 사용자/역할은 이 영역의 리뷰를 승인할 수 없습니다. 다른 사용자를 선택하세요.",
+      "ineligibleAssigneeErrorUser": "{name} 님은 이 영역의 리뷰를 승인할 수 없습니다. 다른 사용자 또는 역할을 선택하세요.",
+      "ineligibleAssigneeErrorRole": "{roleName} 역할로는 이 영역의 리뷰를 승인할 수 없습니다. 다른 역할이나 사용자를 선택하세요."
     },
     "assigneeChip": {
       "emptyMembers": "프로젝트 참여 자격이 있는 구성원 중 이 역할을 맡은 사람은 없습니다.",
@@ -5717,7 +5722,8 @@
       "permissions": {
         "canAddEdit": "## 추가/편집\n이 역할이 관련 애플리케이션 영역을 추가하고 편집할 수 있는지 여부를 나타냅니다.",
         "canDelete": "## 삭제\n이 역할이 관련 애플리케이션 영역을 삭제할 수 있는지 여부를 나타냅니다.",
-        "canClose": "## 닫기\n이 역할이 관련 애플리케이션 영역을 닫을 수 있는지 여부를 나타냅니다."
+        "canClose": "## 닫기\n이 역할이 관련 애플리케이션 영역을 닫을 수 있는지 여부를 나타냅니다.",
+        "canApprove": "## 승인\n이 역할이 관련 애플리케이션 영역에 대한 검토 요청을 승인할 수 있는지 여부를 나타냅니다. 테스트 케이스 저장소, 테스트 실행 및 세션에만 적용됩니다."
       }
     },
     "group": {

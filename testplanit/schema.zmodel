@@ -3301,6 +3301,9 @@ model RolePermission {
     canDelete        Boolean         @default(false)
     canClose         Boolean         @default(false)
     canReadSensitive Boolean         @default(false)
+    // Gates reviewer eligibility for the Review & Approval feature. Applies on
+    // TestCaseRepository / TestRuns / Sessions; meaningless on other areas.
+    canApprove       Boolean         @default(false)
 
     @@id([roleId, area])
     @@deny('all', !auth())

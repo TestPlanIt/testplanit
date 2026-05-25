@@ -3,6 +3,7 @@
 import { Avatar } from "@/components/Avatar";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { useQuery } from "@tanstack/react-query";
+import { ApplicationArea } from "@prisma/client";
 import { Drama } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback } from "react";
@@ -30,6 +31,12 @@ interface AssigneeComboboxProps {
   value: AssigneeOption | null;
   onValueChange: (value: AssigneeOption | null) => void;
   disabled?: boolean;
+  /**
+   * Narrow the roles and users in the picker to those whose effective
+   * project role carries canApprove=true on the supplied ApplicationArea.
+   * When undefined, no canApprove filtering is applied (legacy callers).
+   */
+  requireCanApproveOn?: ApplicationArea;
 }
 
 export function AssigneeCombobox({
@@ -37,6 +44,7 @@ export function AssigneeCombobox({
   value,
   onValueChange,
   disabled,
+  requireCanApproveOn,
 }: AssigneeComboboxProps) {
   const t = useTranslations();
 
@@ -51,8 +59,17 @@ export function AssigneeCombobox({
   // server action returns (TestPlanIt installs typically have a handful
   // of roles, so a single read suffices).
   const { data: rolesData } = useQuery({
-    queryKey: ["assignee-combobox", "eligible-roles", projectId],
-    queryFn: () => getProjectEligibleRoles(projectId),
+    queryKey: [
+      "assignee-combobox",
+      "eligible-roles",
+      projectId,
+      requireCanApproveOn ?? null,
+    ],
+    queryFn: () =>
+      getProjectEligibleRoles(
+        projectId,
+        requireCanApproveOn ? { requireCanApproveOn } : undefined
+      ),
     enabled: typeof projectId === "number" && projectId > 0,
     staleTime: 30_000,
   });
@@ -66,7 +83,8 @@ export function AssigneeCombobox({
         projectId,
         query,
         page,
-        pageSize
+        pageSize,
+        requireCanApproveOn ? { requireCanApproveOn } : undefined
       );
 
       const userOptions: AssigneeOption[] = userPage.results.map((u) => ({
@@ -103,7 +121,7 @@ export function AssigneeCombobox({
         total: userPage.total + (page === 0 ? roleOptions.length : 0),
       };
     },
-    [projectId, rolesData]
+    [projectId, rolesData, requireCanApproveOn]
   );
 
   return (
