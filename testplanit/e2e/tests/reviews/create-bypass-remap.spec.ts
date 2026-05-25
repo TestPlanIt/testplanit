@@ -1,8 +1,9 @@
 import { expect, test } from "../../fixtures";
 import {
+  createGatedTestWorkflow,
   getProjectWorkflowIds,
   setProjectReviewWorkflowEnabled,
-  setWorkflowRequiresReview,
+  softDeleteWorkflow,
 } from "./helpers";
 
 /**
@@ -23,7 +24,7 @@ test.describe("create-time state remap (gated create bypass)", () => {
   test.afterEach(async ({ request, baseURL }) => {
     const url = baseURL!;
     if (gatedWorkflowId) {
-      await setWorkflowRequiresReview(request, url, gatedWorkflowId, false);
+      await softDeleteWorkflow(request, url, gatedWorkflowId);
       gatedWorkflowId = null;
     }
   });
@@ -47,12 +48,17 @@ test.describe("create-time state remap (gated create bypass)", () => {
       "CASES",
       5
     );
-    expect(ids.length).toBeGreaterThanOrEqual(2);
+    expect(ids.length).toBeGreaterThanOrEqual(1);
     const defaultStateId = ids[0];
-    gatedWorkflowId = ids[1];
 
     await setProjectReviewWorkflowEnabled(request, url, projectId, true);
-    await setWorkflowRequiresReview(request, url, gatedWorkflowId, true);
+    const gated = await createGatedTestWorkflow(
+      request,
+      url,
+      projectId,
+      "CASES"
+    );
+    gatedWorkflowId = gated.id;
 
     // Resolve repository + template + folder so the create payload is valid.
     const repoRes = await request.get(

@@ -1,11 +1,12 @@
 import { expect, test } from "../../fixtures";
 import {
+  createGatedTestWorkflow,
   createReviewRequest,
   deleteReviewRequest,
   decideReviewRequest,
   getProjectWorkflowIds,
   setProjectReviewWorkflowEnabled,
-  setWorkflowRequiresReview,
+  softDeleteWorkflow,
 } from "./helpers";
 
 /**
@@ -33,7 +34,7 @@ test.describe("Bulk-edit strict transitive gating", () => {
     }
     while (gatedWorkflowIds.length) {
       const id = gatedWorkflowIds.pop();
-      if (id) await setWorkflowRequiresReview(request, url, id, false);
+      if (id) await softDeleteWorkflow(request, url, id);
     }
     while (createdUserIds.length) {
       const id = createdUserIds.pop();
@@ -63,14 +64,32 @@ test.describe("Bulk-edit strict transitive gating", () => {
       "CASES",
       5
     );
-    expect(ids.length).toBeGreaterThanOrEqual(3);
+    expect(ids.length).toBeGreaterThanOrEqual(1);
     const currentStateId = ids[0];
-    const gateAId = ids[1];
-    const gateBId = ids[2];
 
     await setProjectReviewWorkflowEnabled(request, url, projectId, true);
-    await setWorkflowRequiresReview(request, url, gateAId, true);
-    await setWorkflowRequiresReview(request, url, gateBId, true);
+    // Two dedicated gated workflows with strict ordering: gateA before
+    // gateB so the page predicate `order > currentStateOrder` accepts both,
+    // and the case-page filter treats A as the FIRST blocking gate when
+    // jumping to B.
+    const gateA = await createGatedTestWorkflow(
+      request,
+      url,
+      projectId,
+      "CASES",
+      { orderOffset: 1000 }
+    );
+    const gateB = await createGatedTestWorkflow(
+      request,
+      url,
+      projectId,
+      "CASES",
+      { orderOffset: 2000 }
+    );
+    const gateAId = gateA.id;
+    const gateBId = gateB.id;
+    const gateAName = gateA.name;
+    const gateBName = gateB.name;
     gatedWorkflowIds.push(gateAId, gateBId);
 
     // Separate requester so the schema "assignee != requester" validate doesn't
@@ -85,21 +104,6 @@ test.describe("Bulk-edit strict transitive gating", () => {
     });
     createdUserIds.push(requester.data.id);
     const requesterId = requester.data.id;
-
-    // Look up the gate name for inline-message assertion.
-    const gateANameRes = await request.get(
-      `${url}/api/model/workflows/findFirst`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: { id: gateAId },
-            select: { name: true },
-          }),
-        },
-      }
-    );
-    const gateAName = (await gateANameRes.json())?.data?.name as string;
-    expect(gateAName).toBeTruthy();
 
     const folderId = await api.createFolder(
       projectId,
@@ -140,20 +144,6 @@ test.describe("Bulk-edit strict transitive gating", () => {
 
     const dialog = page.locator('[role="dialog"]').first();
     await expect(dialog).toBeVisible({ timeout: 5000 });
-
-    // Look up the gate B name once now (used twice — here and below).
-    const gateBNameRes = await request.get(
-      `${url}/api/model/workflows/findFirst`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: { id: gateBId },
-            select: { name: true },
-          }),
-        },
-      }
-    );
-    const gateBName = (await gateBNameRes.json())?.data?.name as string;
 
     // Activate State editing by ticking its enable checkbox (id `edit-state`).
     // That toggle reveals the State Select inside the row.

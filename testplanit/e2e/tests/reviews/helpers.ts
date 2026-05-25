@@ -27,6 +27,122 @@ export async function setWorkflowRequiresReview(
   }
 }
 
+/**
+ * Create a fresh project-scoped workflow with `requiresReview: true` and
+ * assign it to the project. Use this in place of toggling requiresReview on
+ * a shared seeded workflow — every review spec was racing the same
+ * Workflows.requiresReview column otherwise (it's global, not per-project),
+ * so concurrent specs flipped it on and off under each other and only the
+ * winner ever saw the gated option render in the UI.
+ *
+ * The created workflow's `order` is bumped past every seeded order in its
+ * scope so the case-page predicate (`order > currentStateOrder`) treats it
+ * as a forward transition from any seeded starting state.
+ *
+ * Cleanup: call `softDeleteWorkflow` in the spec's afterEach so we don't
+ * accumulate per-test workflows across the run.
+ */
+export async function createGatedTestWorkflow(
+  request: APIRequestContext,
+  baseURL: string,
+  projectId: number,
+  scope: "CASES" | "RUNS" | "SESSIONS",
+  opts: {
+    requiresReview?: boolean;
+    workflowType?: "NOT_STARTED" | "IN_PROGRESS" | "DONE";
+    /**
+     * Offset added to the reference workflow's `order`. Tests that need
+     * multiple gated workflows with a strict ordering (e.g., bulk-edit
+     * transitive gating) pass increasing offsets so gateA.order < gateB.order.
+     * Defaults to 1000 which puts the new row past every seeded order.
+     */
+    orderOffset?: number;
+  } = {}
+): Promise<{ id: number; name: string; order: number }> {
+  // Borrow icon + color from the seeded "Under Review" workflow in this scope
+  // so the new row matches existing visual treatment. Fall back to the first
+  // non-deleted workflow if "Under Review" isn't present in this scope.
+  const refRes = await request.get(`${baseURL}/api/model/workflows/findFirst`, {
+    params: {
+      q: JSON.stringify({
+        where: {
+          scope,
+          isDeleted: false,
+          OR: [{ name: "Under Review" }, { isDefault: true }],
+        },
+        orderBy: { id: "asc" },
+        select: { iconId: true, colorId: true, order: true },
+      }),
+    },
+  });
+  const ref = (await refRes.json())?.data as {
+    iconId: number;
+    colorId: number;
+    order: number;
+  } | null;
+  if (!ref) {
+    throw new Error(
+      `No reference workflow found for scope ${scope} — seed missing?`
+    );
+  }
+
+  const uniqueName = `E2E-Gated-${scope}-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+  const newOrder = ref.order + (opts.orderOffset ?? 1000);
+  const createRes = await request.post(
+    `${baseURL}/api/model/workflows/create`,
+    {
+      data: {
+        data: {
+          name: uniqueName,
+          order: newOrder,
+          iconId: ref.iconId,
+          colorId: ref.colorId,
+          isEnabled: true,
+          isDefault: false,
+          scope,
+          workflowType: opts.workflowType ?? "IN_PROGRESS",
+          requiresReview: opts.requiresReview ?? true,
+        },
+      },
+    }
+  );
+  if (!createRes.ok()) {
+    throw new Error(
+      `Failed to create gated workflow: ${await createRes.text()}`
+    );
+  }
+  const workflowId = ((await createRes.json())?.data?.id as number) ?? 0;
+  if (!workflowId) {
+    throw new Error(`Gated workflow create returned no id`);
+  }
+
+  const assignRes = await request.post(
+    `${baseURL}/api/model/projectWorkflowAssignment/create`,
+    {
+      data: { data: { workflowId, projectId } },
+    }
+  );
+  if (!assignRes.ok()) {
+    throw new Error(
+      `Failed to assign gated workflow ${workflowId} to project ${projectId}: ${await assignRes.text()}`
+    );
+  }
+
+  return { id: workflowId, name: uniqueName, order: newOrder };
+}
+
+export async function softDeleteWorkflow(
+  request: APIRequestContext,
+  baseURL: string,
+  workflowId: number
+): Promise<void> {
+  await request
+    .patch(`${baseURL}/api/model/workflows/update`, {
+      data: { where: { id: workflowId }, data: { isDeleted: true } },
+    })
+    .catch(() => {});
+}
+
 export async function setProjectReviewWorkflowEnabled(
   request: APIRequestContext,
   baseURL: string,

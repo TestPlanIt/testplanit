@@ -19,6 +19,15 @@ const SEEDED_CASES_WORKFLOW_NAMES = [
 ] as const;
 
 /**
+ * Name of the seeded default template (prisma/seed.ts upsert key). Lookups
+ * filter to this exact name rather than the `isDefault` flag because parallel
+ * tests can — and do — create their own templates with `isDefault: true`,
+ * which either races our findFirst or (in some surfaces) flips the seeded
+ * row's flag off via single-default cascade.
+ */
+const SEEDED_DEFAULT_TEMPLATE_NAME = "Default Template";
+
+/**
  * API Helper for creating and cleaning up test data via the TestPlanIt API.
  * Uses ZenStack auto-generated API endpoints.
  */
@@ -85,15 +94,12 @@ export class ApiHelper {
       return this.cachedTemplateIds.get(projectId)!;
     }
 
-    // The seeded "Default Template" (prisma/seed.ts) is the only template with
-    // the Steps caseField + the standard four fields the case page renders.
-    // Parallel tests that create their own templates (e.g.,
-    // result-creation-with-fields, case-creation-with-fields) end up assigned
-    // to other projects too via shared isDefault races; without an explicit
-    // filter, this lookup is non-deterministic and parameter tests intermittently
-    // load a fields-less template that has no Configure Parameters button.
-    // Order by id ASC as a secondary so the seeded row (always lowest id since
-    // setup-db TRUNCATEs + seed runs first) wins on a tie.
+    // Match the seeded "Default Template" by its exact name (the upsert key in
+    // prisma/seed.ts). It's the only template with the Steps caseField +
+    // standard four fields the case-page renders. Parallel tests that create
+    // their own templates with isDefault: true would otherwise race this
+    // lookup, handing back a fields-less template that has no Configure
+    // Parameters button.
     const response = await this.request.get(
       `${this.baseURL}/api/model/templates/findFirst`,
       {
@@ -101,12 +107,11 @@ export class ApiHelper {
           q: JSON.stringify({
             where: {
               isDeleted: false,
-              isDefault: true,
+              templateName: SEEDED_DEFAULT_TEMPLATE_NAME,
               projects: {
                 some: { projectId },
               },
             },
-            orderBy: { id: "asc" },
           }),
         },
       }
@@ -118,7 +123,9 @@ export class ApiHelper {
 
     const result = await response.json();
     if (!result.data) {
-      throw new Error("No default template found for project. Run seed first.");
+      throw new Error(
+        `Seeded "${SEEDED_DEFAULT_TEMPLATE_NAME}" not assigned to project ${projectId} — was createProject called first?`
+      );
     }
 
     const templateId = result.data.id;
@@ -1024,17 +1031,19 @@ export class ApiHelper {
     // Get current user ID to set as creator
     const userId = await this.getCurrentUserId();
 
-    // Get the seeded Default Template (required for test cases). Tests that
-    // create their own templates with isDefault: true would otherwise race this
-    // lookup; ordering by id ASC picks the seeded row, since setup-db TRUNCATEs
-    // and seed runs first — the seeded row always has the lowest id.
+    // Get the seeded Default Template (required for test cases). Match by
+    // the seeded name rather than isDefault: true — parallel tests that
+    // create their own templates as default would otherwise win this lookup
+    // (and ship a fields-less template to every fresh project).
     const templateResponse = await this.request.get(
       `${this.baseURL}/api/model/templates/findFirst`,
       {
         params: {
           q: JSON.stringify({
-            where: { isDefault: true, isDeleted: false },
-            orderBy: { id: "asc" },
+            where: {
+              templateName: SEEDED_DEFAULT_TEMPLATE_NAME,
+              isDeleted: false,
+            },
           }),
         },
       }

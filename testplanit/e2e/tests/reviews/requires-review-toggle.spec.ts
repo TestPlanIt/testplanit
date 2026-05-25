@@ -1,8 +1,9 @@
 import { expect, test } from "../../fixtures";
 import {
+  createGatedTestWorkflow,
   getProjectWorkflowIds,
   setProjectReviewWorkflowEnabled,
-  setWorkflowRequiresReview,
+  softDeleteWorkflow,
 } from "./helpers";
 
 /**
@@ -17,14 +18,15 @@ import {
 
 test.describe("Admin requires-review toggle", () => {
   let workflowId: number | null = null;
-  let restoreWorkflow: (() => Promise<void>) | null = null;
+  let workflowName: string | null = null;
 
-  test.afterEach(async () => {
-    if (restoreWorkflow) {
-      await restoreWorkflow();
-      restoreWorkflow = null;
+  test.afterEach(async ({ request, baseURL }) => {
+    const url = baseURL!;
+    if (workflowId) {
+      await softDeleteWorkflow(request, url, workflowId);
+      workflowId = null;
+      workflowName = null;
     }
-    workflowId = null;
   });
 
   test("requires-review-switch persists and warning glyph appears in case state combobox", async ({
@@ -36,9 +38,7 @@ test.describe("Admin requires-review toggle", () => {
     const url = baseURL!;
     const projectId = await api.createProject(`Reviews-Glyph ${Date.now()}`);
 
-    // Grab two case-scope workflow IDs: index 0 is current state, index 1 is
-    // the one we'll gate. createProject assigns all enabled workflows, so
-    // CASES will always have multiple after seed.
+    // Borrow ids[0] as the case's starting state (seeded Draft).
     const ids = await getProjectWorkflowIds(
       request,
       url,
@@ -46,17 +46,23 @@ test.describe("Admin requires-review toggle", () => {
       "CASES",
       5
     );
-    expect(ids.length).toBeGreaterThanOrEqual(2);
+    expect(ids.length).toBeGreaterThanOrEqual(1);
     const currentStateId = ids[0];
-    workflowId = ids[1];
 
-    // Ensure the project gating is enabled (default) and the workflow is not
-    // already gated (so the toggle starts OFF visually).
     await setProjectReviewWorkflowEnabled(request, url, projectId, true);
-    await setWorkflowRequiresReview(request, url, workflowId, false);
-    restoreWorkflow = async () => {
-      await setWorkflowRequiresReview(request, url, workflowId!, false);
-    };
+    // Create a dedicated, uniquely-named workflow starting NON-gated so the
+    // admin UI shows the requires-review switch OFF — flipping it ON is the
+    // user flow under test. A unique name keeps parallel runs from racing
+    // each others edit-dialog (the spec finds the row by name).
+    const dedicated = await createGatedTestWorkflow(
+      request,
+      url,
+      projectId,
+      "CASES",
+      { requiresReview: false }
+    );
+    workflowId = dedicated.id;
+    workflowName = dedicated.name;
 
     // Seed a folder + case so we have a stable case detail page to assert
     // the glyph against.
@@ -72,28 +78,13 @@ test.describe("Admin requires-review toggle", () => {
       currentStateId
     );
 
-    // 1) Flip the toggle in the admin UI.
+    // 1) Flip the toggle in the admin UI. Find the row by our dedicated
+    //    workflow's unique name — no API lookup, no shared-row race.
     await page.goto("/en-US/admin/workflows");
     await page.waitForLoadState("networkidle");
 
-    const _row = page.locator("tr").filter({ hasText: caseName }).first();
-    // Find target workflow's row by its name (look up first to avoid
-    // depending on shifting ordering).
-    const wfNameRes = await request.get(
-      `${url}/api/model/workflows/findFirst`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: { id: workflowId },
-            select: { name: true },
-          }),
-        },
-      }
-    );
-    const wfName = (await wfNameRes.json())?.data?.name as string;
-    expect(wfName).toBeTruthy();
-
-    const wfRow = page.locator("tr").filter({ hasText: wfName }).first();
+    expect(workflowName).toBeTruthy();
+    const wfRow = page.locator("tr").filter({ hasText: workflowName! }).first();
     await expect(wfRow).toBeVisible({ timeout: 10000 });
 
     // Edit button is the first action button in the last cell.
@@ -105,13 +96,9 @@ test.describe("Admin requires-review toggle", () => {
 
     const toggle = dialog.getByTestId("requires-review-switch");
     await expect(toggle).toBeVisible();
-    // We forced requiresReview=false on the workflow earlier, but parallel
-    // workers can race that value back to true between the API write and
-    // the modal mount. Read the current state, then drive it ON regardless.
-    const startState = await toggle.getAttribute("data-state");
-    if (startState !== "checked") {
-      await toggle.click();
-    }
+    // Dedicated workflow starts non-gated; toggle should be unchecked.
+    await expect(toggle).toHaveAttribute("data-state", "unchecked");
+    await toggle.click();
     await expect(toggle).toHaveAttribute("data-state", "checked");
 
     await dialog.getByRole("button", { name: /submit/i }).click();

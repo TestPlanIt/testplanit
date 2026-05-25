@@ -1,10 +1,11 @@
 import { expect, test } from "../../fixtures";
 import {
+  createGatedTestWorkflow,
   createReviewRequest,
   deleteReviewRequest,
   getProjectWorkflowIds,
   setProjectReviewWorkflowEnabled,
-  setWorkflowRequiresReview,
+  softDeleteWorkflow,
 } from "./helpers";
 
 /**
@@ -32,7 +33,7 @@ test.describe("Role-eligible assignees", () => {
       if (id) await deleteReviewRequest(request, url, id);
     }
     if (gatedWorkflowId) {
-      await setWorkflowRequiresReview(request, url, gatedWorkflowId, false);
+      await softDeleteWorkflow(request, url, gatedWorkflowId);
       gatedWorkflowId = null;
     }
     for (const userId of createdUserIds) {
@@ -71,9 +72,14 @@ test.describe("Role-eligible assignees", () => {
       5
     );
     const currentStateId = ids[0];
-    gatedWorkflowId = ids[1];
     await setProjectReviewWorkflowEnabled(request, url, projectId, true);
-    await setWorkflowRequiresReview(request, url, gatedWorkflowId, true);
+    const gated = await createGatedTestWorkflow(
+      request,
+      url,
+      projectId,
+      "CASES"
+    );
+    gatedWorkflowId = gated.id;
 
     const roleName = `RA-Role-${Date.now()}`;
     createdRoleId = await api.createRole(roleName);
@@ -174,9 +180,14 @@ test.describe("Role-eligible assignees", () => {
       5
     );
     const currentStateId = ids[0];
-    gatedWorkflowId = ids[1];
     await setProjectReviewWorkflowEnabled(request, url, projectId, true);
-    await setWorkflowRequiresReview(request, url, gatedWorkflowId, true);
+    const decideGated = await createGatedTestWorkflow(
+      request,
+      url,
+      projectId,
+      "CASES"
+    );
+    gatedWorkflowId = decideGated.id;
 
     const roleName = `RA-Two-${Date.now()}`;
     createdRoleId = await api.createRole(roleName);

@@ -1,10 +1,11 @@
 import { expect, test } from "../../fixtures";
 import {
+  createGatedTestWorkflow,
   createReviewRequest,
   deleteReviewRequest,
   getProjectWorkflowIds,
   setProjectReviewWorkflowEnabled,
-  setWorkflowRequiresReview,
+  softDeleteWorkflow,
 } from "./helpers";
 
 /**
@@ -30,7 +31,7 @@ test.describe("Reviewer inbox decisions", () => {
       if (id) await deleteReviewRequest(request, url, id);
     }
     if (gatedWorkflowId) {
-      await setWorkflowRequiresReview(request, url, gatedWorkflowId, false);
+      await softDeleteWorkflow(request, url, gatedWorkflowId);
       gatedWorkflowId = null;
     }
     while (createdUserIds.length) {
@@ -64,10 +65,17 @@ test.describe("Reviewer inbox decisions", () => {
       5
     );
     const currentStateId = ids[0];
-    gatedWorkflowId = ids[1];
 
     await setProjectReviewWorkflowEnabled(request, url, projectId, true);
-    await setWorkflowRequiresReview(request, url, gatedWorkflowId, true);
+    {
+      const gated = await createGatedTestWorkflow(
+        request,
+        url,
+        projectId,
+        "CASES"
+      );
+      gatedWorkflowId = gated.id;
+    }
 
     // Admin is the assignee/reviewer; create a separate requester so the
     // schema's "assignee != requester" validate doesn't reject the seed.
@@ -156,10 +164,17 @@ test.describe("Reviewer inbox decisions", () => {
       5
     );
     const currentStateId = ids[0];
-    gatedWorkflowId = ids[1];
 
     await setProjectReviewWorkflowEnabled(request, url, projectId, true);
-    await setWorkflowRequiresReview(request, url, gatedWorkflowId, true);
+    {
+      const gated = await createGatedTestWorkflow(
+        request,
+        url,
+        projectId,
+        "CASES"
+      );
+      gatedWorkflowId = gated.id;
+    }
 
     const requester = await api.createUser({
       name: `ID-Req ${Date.now()}`,

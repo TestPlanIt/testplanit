@@ -1,8 +1,9 @@
 import { expect, test } from "../../fixtures";
 import {
+  createGatedTestWorkflow,
   deleteReviewRequest,
   setProjectReviewWorkflowEnabled,
-  setWorkflowRequiresReview,
+  softDeleteWorkflow,
 } from "./helpers";
 
 /**
@@ -40,7 +41,7 @@ test.describe("Milestone cascade rollback", () => {
       }
     }
     if (gatedRunStateId) {
-      await setWorkflowRequiresReview(request, url, gatedRunStateId, false);
+      await softDeleteWorkflow(request, url, gatedRunStateId);
       gatedRunStateId = null;
     }
     while (createdUserIds.length) {
@@ -63,33 +64,10 @@ test.describe("Milestone cascade rollback", () => {
   }) => {
     const url = baseURL!;
     const projectId = await api.createProject(`Reviews-Cascade ${Date.now()}`);
-    // The cascade dialog filters its destination dropdown to workflows whose
-    // workflowType is DONE, so we have to gate a DONE-typed RUNS workflow
-    // (not just any RUNS state) for the dropdown to surface our pick.
-    const allRunsRes = await request.get(
-      `${url}/api/model/workflows/findMany`,
-      {
-        params: {
-          q: JSON.stringify({
-            where: {
-              isDeleted: false,
-              isEnabled: true,
-              scope: "RUNS",
-              workflowType: "DONE",
-              projects: { some: { projectId } },
-            },
-            orderBy: { order: "asc" },
-            select: { id: true },
-            take: 5,
-          }),
-        },
-      }
-    );
-    const doneRunsIds = ((await allRunsRes.json())?.data ?? []).map(
-      (w: { id: number }) => w.id
-    );
-    expect(doneRunsIds.length).toBeGreaterThanOrEqual(1);
-
+    // Cascade-completion needs a DONE-typed workflow (it gates milestone
+    // completion). Pick the seeded "New" NOT_STARTED row as the run's
+    // starting state, then mint a fresh DONE-typed gated workflow scoped to
+    // this project — no shared-row race.
     const allStartingRes = await request.get(
       `${url}/api/model/workflows/findMany`,
       {
@@ -115,11 +93,17 @@ test.describe("Milestone cascade rollback", () => {
     expect(startingIds.length).toBeGreaterThanOrEqual(1);
 
     const startRunStateId = startingIds[0];
-    const gatedId: number = doneRunsIds[0];
-    gatedRunStateId = gatedId;
 
     await setProjectReviewWorkflowEnabled(request, url, projectId, true);
-    await setWorkflowRequiresReview(request, url, gatedId, true);
+    const gatedDone = await createGatedTestWorkflow(
+      request,
+      url,
+      projectId,
+      "RUNS",
+      { workflowType: "DONE" }
+    );
+    const gatedId = gatedDone.id;
+    gatedRunStateId = gatedId;
 
     const gateNameRes = await request.get(
       `${url}/api/model/workflows/findFirst`,

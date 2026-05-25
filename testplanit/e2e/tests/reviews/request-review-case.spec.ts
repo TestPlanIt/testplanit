@@ -1,9 +1,10 @@
 import { expect, test } from "../../fixtures";
 import {
+  createGatedTestWorkflow,
   deleteReviewRequest,
   getProjectWorkflowIds,
   setProjectReviewWorkflowEnabled,
-  setWorkflowRequiresReview,
+  softDeleteWorkflow,
 } from "./helpers";
 
 /**
@@ -29,7 +30,7 @@ test.describe("Request review on a case", () => {
       createdReviewRequestId = null;
     }
     if (gatedWorkflowId) {
-      await setWorkflowRequiresReview(request, url, gatedWorkflowId, false);
+      await softDeleteWorkflow(request, url, gatedWorkflowId);
       gatedWorkflowId = null;
     }
     while (createdUserIds.length) {
@@ -80,10 +81,17 @@ test.describe("Request review on a case", () => {
     );
     expect(ids.length).toBeGreaterThanOrEqual(2);
     const currentStateId = ids[0];
-    gatedWorkflowId = ids[1];
 
     await setProjectReviewWorkflowEnabled(request, url, projectId, true);
-    await setWorkflowRequiresReview(request, url, gatedWorkflowId, true);
+    // Each test gets its own gated workflow to avoid racing
+    // Workflows.requiresReview (global column) with parallel review specs.
+    const gated = await createGatedTestWorkflow(
+      request,
+      url,
+      projectId,
+      "CASES"
+    );
+    gatedWorkflowId = gated.id;
 
     const folderId = await api.createFolder(
       projectId,
@@ -183,10 +191,15 @@ test.describe("Request review on a case", () => {
       5
     );
     const currentStateId = ids[0];
-    gatedWorkflowId = ids[1];
 
     await setProjectReviewWorkflowEnabled(request, url, projectId, true);
-    await setWorkflowRequiresReview(request, url, gatedWorkflowId, true);
+    const dupGated = await createGatedTestWorkflow(
+      request,
+      url,
+      projectId,
+      "CASES"
+    );
+    gatedWorkflowId = dupGated.id;
 
     // Need a separate reviewer — schema validates assignee != requester.
     const reviewer = await api.createUser({

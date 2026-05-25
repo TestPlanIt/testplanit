@@ -1,8 +1,9 @@
 import { expect, test } from "../../fixtures";
 import {
+  createGatedTestWorkflow,
   getProjectWorkflowIds,
   setProjectReviewWorkflowEnabled,
-  setWorkflowRequiresReview,
+  softDeleteWorkflow,
 } from "./helpers";
 
 /**
@@ -21,7 +22,7 @@ test.describe("Project review-workflow toggle", () => {
   test.afterEach(async ({ request, baseURL }) => {
     const url = baseURL!;
     if (gatedWorkflowId) {
-      await setWorkflowRequiresReview(request, url, gatedWorkflowId, false);
+      await softDeleteWorkflow(request, url, gatedWorkflowId);
       gatedWorkflowId = null;
     }
   });
@@ -42,12 +43,17 @@ test.describe("Project review-workflow toggle", () => {
       "CASES",
       5
     );
-    expect(ids.length).toBeGreaterThanOrEqual(2);
+    expect(ids.length).toBeGreaterThanOrEqual(1);
     const currentStateId = ids[0];
-    gatedWorkflowId = ids[1];
 
     await setProjectReviewWorkflowEnabled(request, url, projectId, true);
-    await setWorkflowRequiresReview(request, url, gatedWorkflowId, true);
+    const gated = await createGatedTestWorkflow(
+      request,
+      url,
+      projectId,
+      "CASES"
+    );
+    gatedWorkflowId = gated.id;
 
     const folderId = await api.createFolder(
       projectId,

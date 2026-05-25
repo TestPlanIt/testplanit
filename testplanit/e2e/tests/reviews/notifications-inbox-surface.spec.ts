@@ -1,11 +1,12 @@
 import { expect, test } from "../../fixtures";
 import {
+  createGatedTestWorkflow,
   createReviewRequest,
   decideReviewRequest,
   deleteReviewRequest,
   getProjectWorkflowIds,
   setProjectReviewWorkflowEnabled,
-  setWorkflowRequiresReview,
+  softDeleteWorkflow,
 } from "./helpers";
 
 /**
@@ -33,7 +34,7 @@ test.describe("Notification surfaces", () => {
       if (id) await deleteReviewRequest(request, url, id);
     }
     if (gatedWorkflowId) {
-      await setWorkflowRequiresReview(request, url, gatedWorkflowId, false);
+      await softDeleteWorkflow(request, url, gatedWorkflowId);
       gatedWorkflowId = null;
     }
     while (createdUserIds.length) {
@@ -65,9 +66,14 @@ test.describe("Notification surfaces", () => {
       5
     );
     const currentStateId = ids[0];
-    gatedWorkflowId = ids[1];
     await setProjectReviewWorkflowEnabled(request, url, projectId, true);
-    await setWorkflowRequiresReview(request, url, gatedWorkflowId, true);
+    const gated = await createGatedTestWorkflow(
+      request,
+      url,
+      projectId,
+      "CASES"
+    );
+    gatedWorkflowId = gated.id;
 
     const folderId = await api.createFolder(
       projectId,
