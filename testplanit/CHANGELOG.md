@@ -1,3 +1,15 @@
+## [0.30.0](https://github.com/TestPlanIt/testplanit/compare/v0.29.10...v0.30.0) (2026-05-25)
+
+### Features
+
+* **reviews:** review and approval workflows ([#347](https://github.com/TestPlanIt/testplanit/issues/347)) ([a774d43](https://github.com/TestPlanIt/testplanit/commit/a774d431c43956b932b135671bc1fd7044ecef9a)), closes [#1](https://github.com/TestPlanIt/testplanit/issues/1) [#2](https://github.com/TestPlanIt/testplanit/issues/2) [#3](https://github.com/TestPlanIt/testplanit/issues/3) [#317](https://github.com/TestPlanIt/testplanit/issues/317)
+
+### Bug Fixes
+
+* **deps:** bump ws to >=8.20.1 to resolve uninitialized memory disclosure ([#340](https://github.com/TestPlanIt/testplanit/issues/340)) ([f1bceba](https://github.com/TestPlanIt/testplanit/commit/f1bceba27e14d3b877ffd17a904720323fab8779)), closes [#403](https://github.com/TestPlanIt/testplanit/issues/403) [#397](https://github.com/TestPlanIt/testplanit/issues/397)
+* **deps:** resolve qs, brace-expansion, and pm2 security advisories ([#339](https://github.com/TestPlanIt/testplanit/issues/339)) ([75712b3](https://github.com/TestPlanIt/testplanit/commit/75712b397f61c5e8b152cdd046612577628f39e7))
+* **mcp:** honor customField value filter in cases_list instead of dropping it ([#341](https://github.com/TestPlanIt/testplanit/issues/341)) ([de9bd78](https://github.com/TestPlanIt/testplanit/commit/de9bd78f870439ca371bf554aacaa49eac607634))
+
 ## [0.29.10](https://github.com/TestPlanIt/testplanit/compare/v0.29.9...v0.29.10) (2026-05-24)
 
 ### Bug Fixes
