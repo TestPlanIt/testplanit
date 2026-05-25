@@ -112,6 +112,55 @@ async function seedCoreData() {
   }
 }
 
+/**
+ * Open up the seeded `user` role with the two per-area opt-in permissions
+ * v0.30.0 added — `canApprove` (Review & Approval reviewer eligibility) and
+ * `canReadSensitive` (Parameterized Test Cases restricted-field viewer
+ * gate). The production seed deliberately leaves these off by default so a
+ * fresh install ships restrictive, but E2E specs assume any test user the
+ * spec creates can act as a reviewer / read sensitive values without per-
+ * spec fixture setup. This override only runs in the E2E setup path; the
+ * shared `prisma/seed.ts` (also used by docker / dev installs) is unchanged.
+ */
+async function openUserRolePermissionsForE2E() {
+  console.log("🔓 Opening user-role permissions for E2E (canApprove + canReadSensitive)...");
+
+  const userRole = await prisma.roles.findFirst({ where: { name: "user" } });
+  if (!userRole) {
+    console.warn("   No `user` role found — skipping E2E permission widening");
+    return;
+  }
+
+  const reviewAreas = [
+    "TestCaseRepository" as const,
+    "TestRuns" as const,
+    "Sessions" as const,
+  ];
+  for (const area of reviewAreas) {
+    await prisma.rolePermission.upsert({
+      where: { roleId_area: { roleId: userRole.id, area } },
+      update: { canApprove: true },
+      create: { roleId: userRole.id, area, canApprove: true },
+    });
+  }
+
+  const restrictedAreas = [
+    "TestCaseRestrictedFields" as const,
+    "TestRunResultRestrictedFields" as const,
+  ];
+  for (const area of restrictedAreas) {
+    await prisma.rolePermission.upsert({
+      where: { roleId_area: { roleId: userRole.id, area } },
+      update: { canReadSensitive: true },
+      create: { roleId: userRole.id, area, canReadSensitive: true },
+    });
+  }
+
+  console.log(
+    `   user-role canApprove granted on [${reviewAreas.join(", ")}]; canReadSensitive granted on [${restrictedAreas.join(", ")}]`
+  );
+}
+
 async function ensureAdminUser() {
   console.log("👤 Ensuring admin user exists with correct settings...");
 
@@ -202,6 +251,10 @@ async function main() {
 
     // Step 2: Seed core data (this runs prisma db seed)
     await seedCoreData();
+
+    // Step 2.5: E2E-only widening of seeded user-role permissions for the two
+    // per-area opt-in grants v0.30.0 added (canApprove, canReadSensitive).
+    await openUserRolePermissionsForE2E();
 
     // Step 3: Ensure admin user with correct settings
     await ensureAdminUser();

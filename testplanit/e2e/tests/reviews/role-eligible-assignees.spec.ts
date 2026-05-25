@@ -77,6 +77,15 @@ test.describe("Role-eligible assignees", () => {
 
     const roleName = `RA-Role-${Date.now()}`;
     createdRoleId = await api.createRole(roleName);
+    // Phase 7 added a per-area `canApprove` gate on the reviewer picker;
+    // without this grant the role would be excluded by the canApprove filter
+    // even when a project-eligible holder exists, masking the holder-only
+    // filter this test asserts.
+    await api.setRolePermission({
+      roleId: createdRoleId,
+      area: "TestCaseRepository",
+      canApprove: true,
+    });
 
     const folderId = await api.createFolder(
       projectId,
@@ -159,6 +168,14 @@ test.describe("Role-eligible assignees", () => {
 
     const roleName = `RA-Two-${Date.now()}`;
     createdRoleId = await api.createRole(roleName);
+    // Phase 7 canApprove gate: this role must hold canApprove on the entity's
+    // area (TestCaseRepository, since the request below is on a CASE) so its
+    // holders pass the reviewer-eligibility filter.
+    await api.setRolePermission({
+      roleId: createdRoleId,
+      area: "TestCaseRepository",
+      canApprove: true,
+    });
 
     // Two role holders, both project members. Admin user is already eligible
     // via global access. We add admin to the role too, and create a second

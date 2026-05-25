@@ -3868,6 +3868,8 @@ export class ApiHelper {
     canAddEdit?: boolean;
     canDelete?: boolean;
     canClose?: boolean;
+    canApprove?: boolean;
+    canReadSensitive?: boolean;
   }): Promise<void> {
     const response = await this.request.post(
       `${this.baseURL}/api/model/rolePermission/create`,
@@ -3879,6 +3881,8 @@ export class ApiHelper {
             canAddEdit: options.canAddEdit ?? false,
             canDelete: options.canDelete ?? false,
             canClose: options.canClose ?? false,
+            canApprove: options.canApprove ?? false,
+            canReadSensitive: options.canReadSensitive ?? false,
           },
         },
       }
