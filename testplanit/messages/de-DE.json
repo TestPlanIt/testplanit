@@ -172,7 +172,8 @@
     },
     "permissions": {
       "addEdit": "Hinzufügen/Bearbeiten",
-      "approve": "Genehmigen"
+      "approve": "Genehmigen",
+      "readSensitive": "Lesen Sie sensibel"
     },
     "auth": {
       "internal": "E-Mail/Passwort",
@@ -680,7 +681,8 @@
       "deletedUser": "Gelöschter Benutzer",
       "restrictedField": "Eingeschränktes Feld",
       "backToTestCase": "Zurück zum Testfall",
-      "selectDeselectAllApprove": "Wählen Sie die Genehmigung für alle relevanten Bereiche aus oder heben Sie die Auswahl auf."
+      "selectDeselectAllApprove": "Wählen Sie die Genehmigung für alle relevanten Bereiche aus oder heben Sie die Auswahl auf.",
+      "selectDeselectAllReadSensitive": "Aktivieren oder deaktivieren Sie die Option „Lesensibel“ für alle relevanten Bereiche."
     },
     "labels": {
       "projects": "{count, plural, =1 {# Projekt} other {# Projekte}}",
@@ -4324,7 +4326,15 @@
         "adminOnlyNotice": "Nur Administratoren können diese Einstellung ändern.",
         "updateSuccessEnabled": "Prüf-Workflow aktiviert.",
         "updateSuccessDisabled": "Prüfworkflow deaktiviert.",
-        "updateError": "Die Aktualisierung der Einstellungen für den Überprüfungsworkflow ist fehlgeschlagen. Bitte versuchen Sie es in Kürze erneut."
+        "updateError": "Die Aktualisierung der Einstellungen für den Überprüfungsworkflow ist fehlgeschlagen. Bitte versuchen Sie es in Kürze erneut.",
+        "remindersToggleLabel": "Senden Sie Erinnerungsbenachrichtigungen für ausstehende Überprüfungen.",
+        "remindersToggleAriaLabel": "Erinnerungsbenachrichtigungen für Überprüfungen aktivieren/deaktivieren",
+        "thresholdLabel": "Erinnern Sie die Rezensenten anschließend",
+        "thresholdUnit": "Tag(e)",
+        "thresholdSaveButton": "Speichern",
+        "thresholdHelp": "Wie viele Tage kann eine Überprüfungsanfrage ausstehen, bevor die Prüfer eine Erinnerungsbenachrichtigung erhalten? Die Frist für neue Anfragen beginnt mit der Einreichung.",
+        "thresholdUpdateSuccess": "Überprüfungserinnerungseinstellungen aktualisiert.",
+        "thresholdUpdateError": "Die Aktualisierung der Erinnerungseinstellungen ist fehlgeschlagen. Bitte versuchen Sie es in Kürze erneut."
       },
       "projectReviewToggleList": {
         "columnHeader": "Arbeitsablauf prüfen",
@@ -5723,7 +5733,8 @@
         "canAddEdit": "## Hinzufügen/Bearbeiten\nGibt an, ob diese Rolle den zugehörigen Anwendungsbereich hinzufügen und bearbeiten kann.",
         "canDelete": "## Löschen\nGibt an, ob diese Rolle den zugehörigen Anwendungsbereich löschen kann.",
         "canClose": "## Schließen\nGibt an, ob diese Rolle den zugehörigen Anwendungsbereich schließen kann.",
-        "canApprove": "## Genehmigen\nGibt an, ob diese Rolle Überprüfungsanfragen für den zugehörigen Anwendungsbereich genehmigen kann. Gilt nur für Testfall-Repository, Testläufe und Sitzungen."
+        "canApprove": "## Genehmigen\nGibt an, ob diese Rolle Überprüfungsanfragen für den zugehörigen Anwendungsbereich genehmigen kann. Gilt nur für Testfall-Repository, Testläufe und Sitzungen.",
+        "canReadSensitive": "## Sensible Daten lesen\nGibt an, ob diese Rolle beim Lesen von Daten aus eingeschränkten Feldern sensible Parameterwerte einsehen darf. Ohne diese Berechtigung werden sensible Werte in Datensatzzeilen und Iterationszellen als ●●●●●● und in Problem-Vorausfülltexten und CSV-Exporten als [REDACTED] dargestellt. Gilt nur für eingeschränkte Felder in Testfällen und Testlaufergebnissen."
       }
     },
     "group": {

@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { ApplicationArea, Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -53,11 +53,12 @@ class IterationNotFoundError extends Error {
 }
 
 /**
- * Resolves whether the authenticated user holds the `canReadSensitive`
- * permission on ANY of their role rows. Mirrors `resolveCanReadSensitive`
- * in `app/api/repository/cases/[caseId]/dataset/route.ts` — same broad
- * check (sensitive parameter values are sensitive across all surfaces, not
- * scoped per ApplicationArea).
+ * Resolves whether the authenticated user can see sensitive parameter
+ * values on iteration audit payloads. Iteration values surface as run
+ * results, so the gate is the `TestRunResultRestrictedFields`
+ * ApplicationArea's `canReadSensitive` grant — matching the gates already
+ * used by the iteration-matrix, iteration-values, and issue-body routes.
+ * System admins always pass.
  */
 async function resolveCanReadSensitive(userId: string): Promise<boolean> {
   const u = await prisma.user.findUnique({
@@ -69,7 +70,9 @@ async function resolveCanReadSensitive(userId: string): Promise<boolean> {
   const perms = u.role?.rolePermissions ?? [];
   return Array.isArray(perms)
     ? perms.some(
-        (p: { canReadSensitive?: boolean }) => p?.canReadSensitive === true
+        (p: { area?: ApplicationArea; canReadSensitive?: boolean }) =>
+          p?.area === ApplicationArea.TestRunResultRestrictedFields &&
+          p?.canReadSensitive === true
       )
     : false;
 }

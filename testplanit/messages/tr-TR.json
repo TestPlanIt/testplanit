@@ -172,7 +172,8 @@
     },
     "permissions": {
       "addEdit": "Ekle/Düzenle",
-      "approve": "Onaylamak"
+      "approve": "Onaylamak",
+      "readSensitive": "Hassas içerik okuyun"
     },
     "auth": {
       "internal": "E-posta/Şifre",
@@ -680,7 +681,8 @@
       "deletedUser": "Silinmiş Kullanıcı",
       "restrictedField": "Kısıtlı Alan",
       "backToTestCase": "Test Durumuna Geri Dön",
-      "selectDeselectAllApprove": "İlgili tüm alanlar için onay seçeneğini işaretleyin veya işaretini kaldırın."
+      "selectDeselectAllApprove": "İlgili tüm alanlar için onay seçeneğini işaretleyin veya işaretini kaldırın.",
+      "selectDeselectAllReadSensitive": "İlgili tüm alanlar için \"okumaya duyarlı\" seçeneğini işaretleyin veya işaretini kaldırın."
     },
     "labels": {
       "projects": "{count, plural, =1 {# Proje} other {# Projeler}}",
@@ -2038,7 +2040,7 @@
       }
     },
     "complete": {
-      "confirmMessage": "Are you sure you want to complete the Session {name}?",
+      "confirmMessage": "Oturumu {name} tamamlamak istediğinizden emin misiniz?",
       "warning": "Oturum tamamlandıktan sonra kalıcı olarak arşivlenecek ve artık güncellenemeyecektir.",
       "fields": {
         "completionDate": "Tamamlanma Tarihi"
@@ -4324,7 +4326,15 @@
         "adminOnlyNotice": "Bu ayarı yalnızca yöneticiler değiştirebilir.",
         "updateSuccessEnabled": "İnceleme iş akışı etkinleştirildi.",
         "updateSuccessDisabled": "İnceleme iş akışı devre dışı bırakıldı.",
-        "updateError": "İnceleme iş akışı ayarı güncellenemedi. Lütfen birazdan tekrar deneyin."
+        "updateError": "İnceleme iş akışı ayarı güncellenemedi. Lütfen birazdan tekrar deneyin.",
+        "remindersToggleLabel": "Bekleyen incelemeler için hatırlatma bildirimleri gönder",
+        "remindersToggleAriaLabel": "İnceleme hatırlatıcı bildirimlerini açıp kapat",
+        "thresholdLabel": "Değerlendiricilere sonrasında hatırlatın.",
+        "thresholdUnit": "gün(ler)",
+        "thresholdSaveButton": "Kaydetmek",
+        "thresholdHelp": "İnceleme taleplerinin inceleyicilere hatırlatma bildirimi gönderilmeden önce kaç gün beklemede kalabileceği. Yeni talepler, gönderim anından itibaren süreyi başlatır.",
+        "thresholdUpdateSuccess": "Hatırlatma ayarlarının güncellendiğini gözden geçirin.",
+        "thresholdUpdateError": "Hatırlatma ayarları güncellenemedi. Lütfen birazdan tekrar deneyin."
       },
       "projectReviewToggleList": {
         "columnHeader": "İş akışını gözden geçirin",
@@ -5723,7 +5733,8 @@
         "canAddEdit": "## Ekle/Düzenle\nBu rolün ilgili uygulama alanını ekleyip düzenleyebileceğini gösterir.",
         "canDelete": "## Sil\nBu rolün ilgili uygulama alanını silip silemeyeceğini gösterir.",
         "canClose": "## Kapat\nBu rolün ilgili uygulama alanını kapatıp kapatamayacağını gösterir.",
-        "canApprove": "## Onayla\nBu rolün ilgili uygulama alanı için inceleme isteklerini onaylayıp onaylayamayacağını gösterir. Yalnızca Test Durumu Deposu, Test Çalıştırmaları ve Oturumlar için geçerlidir."
+        "canApprove": "## Onayla\nBu rolün ilgili uygulama alanı için inceleme isteklerini onaylayıp onaylayamayacağını gösterir. Yalnızca Test Durumu Deposu, Test Çalıştırmaları ve Oturumlar için geçerlidir.",
+        "canReadSensitive": "## Hassas Verileri Oku\nBu rolün, kısıtlı alan verilerini okurken hassas parametre değerlerini görüntüleyip görüntüleyemeyeceğini belirtir. Bu yetki olmadan, hassas değerler veri kümesi satırlarında ve yineleme hücrelerinde ●●●●●● olarak, sorun ön doldurma gövdelerinde ve CSV dışa aktarımlarında ise [REDACTED] olarak görüntülenir. Yalnızca Test Durumu Kısıtlı Alanları ve Test Çalıştırma Sonucu Kısıtlı Alanları için geçerlidir."
       }
     },
     "group": {

@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { ApplicationArea, Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -34,6 +34,14 @@ const bodySchema = z.object({
   values: z.record(z.string(), z.unknown()),
 });
 
+/**
+ * Resolves whether the viewer can read sensitive parameter values on this
+ * iteration's redacted snapshot rows. Test-run-result restricted fields
+ * live under the `TestRunResultRestrictedFields` ApplicationArea — gate the
+ * `canReadSensitive` check on that area only so a role with the grant on,
+ * for example, `TestCaseRestrictedFields` does not also unlock iteration
+ * values. System admins always pass.
+ */
 async function resolveCanReadSensitive(userId: string): Promise<boolean> {
   const u = await prisma.user.findUnique({
     where: { id: userId },
@@ -44,7 +52,9 @@ async function resolveCanReadSensitive(userId: string): Promise<boolean> {
   const perms = u.role?.rolePermissions ?? [];
   return Array.isArray(perms)
     ? perms.some(
-        (p: { canReadSensitive?: boolean }) => p?.canReadSensitive === true
+        (p: { area?: ApplicationArea; canReadSensitive?: boolean }) =>
+          p?.area === ApplicationArea.TestRunResultRestrictedFields &&
+          p?.canReadSensitive === true
       )
     : false;
 }

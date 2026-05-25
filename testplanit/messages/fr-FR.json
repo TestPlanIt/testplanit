@@ -172,7 +172,8 @@
     },
     "permissions": {
       "addEdit": "Ajouter/Modifier",
-      "approve": "Approuver"
+      "approve": "Approuver",
+      "readSensitive": "Lire les informations sensibles"
     },
     "auth": {
       "internal": "Adresse électronique/Mot de passe",
@@ -680,7 +681,8 @@
       "deletedUser": "Utilisateur supprimé",
       "restrictedField": "Champ restreint",
       "backToTestCase": "Retour au cas de test",
-      "selectDeselectAllApprove": "Sélectionnez ou désélectionnez « Approuver » pour toutes les zones concernées."
+      "selectDeselectAllApprove": "Sélectionnez ou désélectionnez « Approuver » pour toutes les zones concernées.",
+      "selectDeselectAllReadSensitive": "Sélectionnez ou désélectionnez l'option « Lecture sensible » pour toutes les zones concernées."
     },
     "labels": {
       "projects": "{count, plural, =1 {# Projet} other {# Projets}}",
@@ -4324,7 +4326,15 @@
         "adminOnlyNotice": "Seuls les administrateurs peuvent modifier ce paramètre.",
         "updateSuccessEnabled": "Flux de travail de révision activé.",
         "updateSuccessDisabled": "Flux de travail de révision désactivé.",
-        "updateError": "Impossible de mettre à jour les paramètres du flux de travail de révision. Veuillez réessayer dans quelques instants."
+        "updateError": "Impossible de mettre à jour les paramètres du flux de travail de révision. Veuillez réessayer dans quelques instants.",
+        "remindersToggleLabel": "Envoyer des notifications de rappel pour les évaluations en attente",
+        "remindersToggleAriaLabel": "Activer/désactiver les notifications de rappel de révision",
+        "thresholdLabel": "Rappelez aux réviseurs après",
+        "thresholdUnit": "jours)",
+        "thresholdSaveButton": "Sauvegarder",
+        "thresholdHelp": "Combien de jours une demande d'évaluation peut-elle rester en attente avant que les évaluateurs ne reçoivent une notification de rappel ? Le délai commence à courir dès la soumission des nouvelles demandes.",
+        "thresholdUpdateSuccess": "Paramètres de rappel de révision mis à jour.",
+        "thresholdUpdateError": "Impossible de mettre à jour les paramètres de rappel. Veuillez réessayer dans quelques instants."
       },
       "projectReviewToggleList": {
         "columnHeader": "Flux de travail de révision",
@@ -5723,7 +5733,8 @@
         "canAddEdit": "## Ajouter/Modifier\nIndique si ce rôle peut ajouter et modifier la zone d'application associée.",
         "canDelete": "## Supprimer\nIndique si ce rôle peut supprimer la zone d'application associée.",
         "canClose": "## Fermer\nIndique si ce rôle peut fermer la zone d'application associée.",
-        "canApprove": "## Approuver\nIndique si ce rôle peut approuver les demandes de révision pour le domaine d'application concerné. S'applique uniquement au référentiel de cas de test, aux exécutions de tests et aux sessions."
+        "canApprove": "## Approuver\nIndique si ce rôle peut approuver les demandes de révision pour le domaine d'application concerné. S'applique uniquement au référentiel de cas de test, aux exécutions de tests et aux sessions.",
+        "canReadSensitive": "## Autorisation de lecture des données sensibles\nIndique si ce rôle est autorisé à consulter les valeurs des paramètres sensibles lors de la lecture des données des champs restreints. Sans cette autorisation, les valeurs sensibles s'affichent sous forme de ●●●●●● dans les lignes de l'ensemble de données et les cellules d'itération, et sous forme de [REDACTED] dans le corps des préremplissages des problèmes et les exportations CSV. S'applique uniquement aux champs restreints des cas de test et aux champs restreints des résultats d'exécution de test."
       }
     },
     "group": {

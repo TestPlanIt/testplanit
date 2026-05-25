@@ -172,7 +172,8 @@
     },
     "permissions": {
       "addEdit": "新增/編輯",
-      "approve": "核准"
+      "approve": "核准",
+      "readSensitive": "請閱讀敏感內容"
     },
     "auth": {
       "internal": "電子郵件/密碼",
@@ -680,7 +681,8 @@
       "deletedUser": "已刪除用戶",
       "restrictedField": "受限字段",
       "backToTestCase": "返回測試用例",
-      "selectDeselectAllApprove": "選取或取消選取「核准」以確認所有相關區域"
+      "selectDeselectAllApprove": "選取或取消選取「核准」以確認所有相關區域",
+      "selectDeselectAllReadSensitive": "選取或取消選取所有相關區域的「讀取敏感資訊」選項"
     },
     "labels": {
       "projects": "{count, plural, =1 {# 項目} other {# 項目集}}",
@@ -4324,7 +4326,15 @@
         "adminOnlyNotice": "只有管理員才能更改此設定。",
         "updateSuccessEnabled": "已啟用審核工作流程。",
         "updateSuccessDisabled": "審核工作流程已停用。",
-        "updateError": "更新審核工作流程設定失敗。請稍後再試。"
+        "updateError": "更新審核工作流程設定失敗。請稍後再試。",
+        "remindersToggleLabel": "發送待審核提醒通知",
+        "remindersToggleAriaLabel": "切換評論提醒通知",
+        "thresholdLabel": "提醒審稿人",
+        "thresholdUnit": "天）",
+        "thresholdSaveButton": "節省",
+        "thresholdHelp": "審核請求最多可以保留多少天才會向審核員發送提醒通知？新請求從提交之日起開始計時。",
+        "thresholdUpdateSuccess": "查看提醒設定是否已更新。",
+        "thresholdUpdateError": "更新提醒設定失敗，請稍後再試。"
       },
       "projectReviewToggleList": {
         "columnHeader": "審核工作流程",
@@ -5723,7 +5733,8 @@
         "canAddEdit": "## 新增/編輯\n指示此角色是否可以新增和編輯相關的應用程式區域。",
         "canDelete": "## 刪除\n指示此角色是否可以刪除相關的應用程式區域。",
         "canClose": "## 關閉\n指示此角色是否可以關閉相關的應用程式區域。",
-        "canApprove": "## 批准\n指示此角色是否可以批准相關應用程式領域的審核請求。僅適用於測試案例庫、測試運行和會話。"
+        "canApprove": "## 批准\n指示此角色是否可以批准相關應用程式領域的審核請求。僅適用於測試案例庫、測試運行和會話。",
+        "canReadSensitive": "## 讀取敏感資料\n指示此角色在讀取受限欄位資料時是否可以查看敏感參數值。如果沒有此權限，敏感值會在資料集行和迭代單元格中顯示為 ●●●●●●，在 issue-prefill 正文和 CSV 匯出中將顯示為 [REDACTED]。僅適用於測試用例受限欄位和測試運行結果受限欄位。"
       }
     },
     "group": {

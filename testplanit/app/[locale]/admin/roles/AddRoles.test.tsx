@@ -180,5 +180,55 @@ describe("AddRole", () => {
         expect(typeof args.create.canApprove).toBe("boolean");
       }
     });
+
+    test("header checkbox toggles canReadSensitive across the two Restricted Fields areas via handleSelectAll", async () => {
+      const { user } = renderWithProvider();
+      await waitFor(() => {
+        expect(screen.getByRole("table")).toBeInTheDocument();
+      });
+
+      const nameInput = screen.getByPlaceholderText("common.name");
+      await user.type(nameInput, "Reader");
+
+      const readSensitiveHeader = screen.getByLabelText(
+        "common.aria.selectDeselectAllReadSensitive"
+      );
+      fireEvent.click(readSensitiveHeader);
+
+      const submitButton = screen.getByRole("button", {
+        name: "common.actions.submit",
+      });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockUpsertRolePermission).toHaveBeenCalled();
+      });
+      const grantedAreas = mockUpsertRolePermission.mock.calls
+        .filter((call) => call[0]?.create?.canReadSensitive === true)
+        .map((call) => call[0]?.create?.area as string);
+      expect(grantedAreas.sort()).toEqual(
+        ["TestCaseRestrictedFields", "TestRunResultRestrictedFields"].sort()
+      );
+    });
+
+    test("form submit forwards canReadSensitive field for each area to useUpsertRolePermission", async () => {
+      const { user } = renderWithProvider();
+
+      const nameInput = screen.getByPlaceholderText("common.name");
+      await user.type(nameInput, "ReadSensitive");
+
+      const submitButton = screen.getByRole("button", {
+        name: "common.actions.submit",
+      });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockUpsertRolePermission).toHaveBeenCalled();
+      });
+      for (const [args] of mockUpsertRolePermission.mock.calls) {
+        expect(args.create).toHaveProperty("canReadSensitive");
+        expect(typeof args.create.canReadSensitive).toBe("boolean");
+      }
+    });
   });
 });

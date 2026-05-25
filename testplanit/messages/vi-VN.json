@@ -172,7 +172,8 @@
     },
     "permissions": {
       "addEdit": "Thêm/Chỉnh sửa",
-      "approve": "Chấp thuận"
+      "approve": "Chấp thuận",
+      "readSensitive": "Đọc kỹ thông tin nhạy cảm"
     },
     "auth": {
       "internal": "Email/Mật khẩu",
@@ -680,7 +681,8 @@
       "deletedUser": "Người dùng đã bị xóa",
       "restrictedField": "Trường hạn chế",
       "backToTestCase": "Quay lại trường hợp kiểm thử",
-      "selectDeselectAllApprove": "Chọn hoặc bỏ chọn phê duyệt cho tất cả các khu vực liên quan."
+      "selectDeselectAllApprove": "Chọn hoặc bỏ chọn phê duyệt cho tất cả các khu vực liên quan.",
+      "selectDeselectAllReadSensitive": "Chọn hoặc bỏ chọn chế độ đọc cho tất cả các khu vực liên quan."
     },
     "labels": {
       "projects": "{count, plural, =1 {# Dự án} other {# Dự án}}",
@@ -4324,7 +4326,15 @@
         "adminOnlyNotice": "Chỉ quản trị viên mới có thể thay đổi cài đặt này.",
         "updateSuccessEnabled": "Quy trình xem xét đã được kích hoạt.",
         "updateSuccessDisabled": "Quy trình xem xét đã bị vô hiệu hóa.",
-        "updateError": "Không thể cập nhật cài đặt quy trình xem xét. Vui lòng thử lại sau."
+        "updateError": "Không thể cập nhật cài đặt quy trình xem xét. Vui lòng thử lại sau.",
+        "remindersToggleLabel": "Gửi thông báo nhắc nhở cho các đánh giá đang chờ xử lý",
+        "remindersToggleAriaLabel": "Bật/tắt thông báo nhắc nhở đánh giá",
+        "thresholdLabel": "Nhắc nhở người đánh giá sau",
+        "thresholdUnit": "ngày(s)",
+        "thresholdSaveButton": "Cứu",
+        "thresholdHelp": "Yêu cầu xem xét có thể chờ xử lý bao nhiêu ngày trước khi người đánh giá nhận được thông báo nhắc nhở? Yêu cầu mới bắt đầu tính thời gian từ khi gửi.",
+        "thresholdUpdateSuccess": "Cài đặt nhắc nhở xem lại đã được cập nhật.",
+        "thresholdUpdateError": "Không thể cập nhật cài đặt nhắc nhở. Vui lòng thử lại sau."
       },
       "projectReviewToggleList": {
         "columnHeader": "Quy trình xem xét",
@@ -5723,7 +5733,8 @@
         "canAddEdit": "## Thêm/Chỉnh sửa\nCho biết liệu vai trò này có thể thêm và chỉnh sửa khu vực ứng dụng liên quan hay không.",
         "canDelete": "## Xóa\nCho biết liệu vai trò này có thể xóa khu vực ứng dụng liên quan hay không.",
         "canClose": "## Đóng\nCho biết liệu vai trò này có thể đóng khu vực ứng dụng liên quan hay không.",
-        "canApprove": "## Phê duyệt\nCho biết liệu vai trò này có thể phê duyệt các yêu cầu xem xét cho khu vực ứng dụng liên quan hay không. Chỉ áp dụng cho Kho lưu trữ trường hợp thử nghiệm, Chạy thử nghiệm và Phiên."
+        "canApprove": "## Phê duyệt\nCho biết liệu vai trò này có thể phê duyệt các yêu cầu xem xét cho khu vực ứng dụng liên quan hay không. Chỉ áp dụng cho Kho lưu trữ trường hợp thử nghiệm, Chạy thử nghiệm và Phiên.",
+        "canReadSensitive": "## Đọc thông tin nhạy cảm\nCho biết liệu vai trò này có thể xem các giá trị tham số nhạy cảm khi đọc dữ liệu trường bị hạn chế hay không. Nếu không có quyền này, các giá trị nhạy cảm sẽ hiển thị dưới dạng ●●●●●● trong các hàng của tập dữ liệu và các ô lặp, và dưới dạng [ĐÃ BỊ ẨN] trong phần thân điền trước sự cố và xuất CSV. Chỉ áp dụng cho Trường bị hạn chế của Trường hợp kiểm thử và Trường bị hạn chế của Kết quả chạy kiểm thử."
       }
     },
     "group": {

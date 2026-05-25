@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  getReviewReminderThresholdHours,
-  REVIEW_REMINDER_THRESHOLD_HOURS_DEFAULT,
-  REVIEW_REMINDER_THRESHOLD_HOURS_KEY,
+  getReviewReminderThresholdDays,
+  REVIEW_REMINDER_THRESHOLD_DAYS_DEFAULT,
+  REVIEW_REMINDER_THRESHOLD_DAYS_KEY,
 } from "./reviewReminderConfig";
 
 type FindUniqueReturn = { value: unknown } | null;
@@ -26,75 +26,83 @@ describe("reviewReminderConfig", () => {
 
   describe("constants", () => {
     it("exports the AppConfig key constant", () => {
-      expect(REVIEW_REMINDER_THRESHOLD_HOURS_KEY).toBe(
-        "review_reminder_threshold_hours"
+      expect(REVIEW_REMINDER_THRESHOLD_DAYS_KEY).toBe(
+        "review_reminder_threshold_days"
       );
     });
 
-    it("exports the default threshold (24h)", () => {
-      expect(REVIEW_REMINDER_THRESHOLD_HOURS_DEFAULT).toBe(24);
+    it("exports the default threshold (1 day)", () => {
+      expect(REVIEW_REMINDER_THRESHOLD_DAYS_DEFAULT).toBe(1);
     });
   });
 
-  describe("getReviewReminderThresholdHours", () => {
+  describe("getReviewReminderThresholdDays", () => {
     it("returns the default when the AppConfig row is absent", async () => {
       const { tx, findUnique } = makeTx(null);
 
-      const result = await getReviewReminderThresholdHours(tx);
+      const result = await getReviewReminderThresholdDays(tx);
 
-      expect(result).toBe(24);
+      expect(result).toBe(1);
       expect(findUnique).toHaveBeenCalledWith({
-        where: { key: REVIEW_REMINDER_THRESHOLD_HOURS_KEY },
+        where: { key: REVIEW_REMINDER_THRESHOLD_DAYS_KEY },
         select: { value: true },
       });
     });
 
     it("returns the configured positive numeric override", async () => {
-      const { tx } = makeTx({ value: 48 });
+      const { tx } = makeTx({ value: 3 });
 
-      const result = await getReviewReminderThresholdHours(tx);
+      const result = await getReviewReminderThresholdDays(tx);
 
-      expect(result).toBe(48);
+      expect(result).toBe(3);
     });
 
-    it("falls back to default when value is zero", async () => {
+    it("returns 0 when value is exactly zero (reminders disabled)", async () => {
       const { tx } = makeTx({ value: 0 });
 
-      const result = await getReviewReminderThresholdHours(tx);
+      const result = await getReviewReminderThresholdDays(tx);
 
-      expect(result).toBe(24);
+      expect(result).toBe(0);
     });
 
     it("falls back to default when value is negative", async () => {
       const { tx } = makeTx({ value: -5 });
 
-      const result = await getReviewReminderThresholdHours(tx);
+      const result = await getReviewReminderThresholdDays(tx);
 
-      expect(result).toBe(24);
+      expect(result).toBe(1);
     });
 
     it("falls back to default when value is a string", async () => {
-      const { tx } = makeTx({ value: "48" });
+      const { tx } = makeTx({ value: "3" });
 
-      const result = await getReviewReminderThresholdHours(tx);
+      const result = await getReviewReminderThresholdDays(tx);
 
-      expect(result).toBe(24);
+      expect(result).toBe(1);
     });
 
     it("falls back to default when value is NaN", async () => {
       const { tx } = makeTx({ value: Number.NaN });
 
-      const result = await getReviewReminderThresholdHours(tx);
+      const result = await getReviewReminderThresholdDays(tx);
 
-      expect(result).toBe(24);
+      expect(result).toBe(1);
     });
 
-    it("accepts the structured { hours: <number> } shape", async () => {
-      const { tx } = makeTx({ value: { hours: 12 } });
+    it("accepts the structured { days: <number> } shape", async () => {
+      const { tx } = makeTx({ value: { days: 7 } });
 
-      const result = await getReviewReminderThresholdHours(tx);
+      const result = await getReviewReminderThresholdDays(tx);
 
-      expect(result).toBe(12);
+      expect(result).toBe(7);
+    });
+
+    it("accepts { days: 0 } as a disable signal", async () => {
+      const { tx } = makeTx({ value: { days: 0 } });
+
+      const result = await getReviewReminderThresholdDays(tx);
+
+      expect(result).toBe(0);
     });
   });
 });

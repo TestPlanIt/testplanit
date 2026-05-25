@@ -172,7 +172,8 @@
     },
     "permissions": {
       "addEdit": "Add/Edit",
-      "approve": "Approve"
+      "approve": "Approve",
+      "readSensitive": "Read sensitive"
     },
     "auth": {
       "internal": "Email/Password",
@@ -680,7 +681,8 @@
       "deletedUser": "Deleted User",
       "restrictedField": "Restricted Field",
       "backToTestCase": "Back to Test Case",
-      "selectDeselectAllApprove": "Select or deselect approve for all relevant areas"
+      "selectDeselectAllApprove": "Select or deselect approve for all relevant areas",
+      "selectDeselectAllReadSensitive": "Select or deselect read sensitive for all relevant areas"
     },
     "labels": {
       "projects": "{count, plural, =1 {# Project} other {# Projects}}",
@@ -4324,7 +4326,15 @@
         "adminOnlyNotice": "Only administrators can change this setting.",
         "updateSuccessEnabled": "Review workflow enabled.",
         "updateSuccessDisabled": "Review workflow disabled.",
-        "updateError": "Failed to update review workflow setting. Try again in a moment."
+        "updateError": "Failed to update review workflow setting. Try again in a moment.",
+        "remindersToggleLabel": "Send reminder notifications for pending reviews",
+        "remindersToggleAriaLabel": "Toggle review reminder notifications",
+        "thresholdLabel": "Remind reviewers after",
+        "thresholdUnit": "day(s)",
+        "thresholdSaveButton": "Save",
+        "thresholdHelp": "How many days a review request can sit pending before reviewers get a reminder notification. New requests start the clock at submission.",
+        "thresholdUpdateSuccess": "Review reminder settings updated.",
+        "thresholdUpdateError": "Failed to update reminder settings. Try again in a moment."
       },
       "projectReviewToggleList": {
         "columnHeader": "Review workflow",
@@ -5723,7 +5733,8 @@
         "canAddEdit": "## Add/Edit\nIndicates whether this role can add and edit the related application area.",
         "canDelete": "## Delete\nIndicates whether this role can delete the related application area.",
         "canClose": "## Close\nIndicates whether this role can close the related application area.",
-        "canApprove": "## Approve\nIndicates whether this role can approve review requests for the related application area. Applies only to Test Case Repository, Test Runs, and Sessions."
+        "canApprove": "## Approve\nIndicates whether this role can approve review requests for the related application area. Applies only to Test Case Repository, Test Runs, and Sessions.",
+        "canReadSensitive": "## Read sensitive\nIndicates whether this role can view sensitive parameter values when reading restricted-fields data. Without this grant, sensitive values render as ●●●●●● in dataset rows and iteration cells, and as [REDACTED] in issue-prefill bodies and CSV exports. Applies only to Test Case Restricted Fields and Test Run Result Restricted Fields."
       }
     },
     "group": {

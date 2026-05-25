@@ -172,7 +172,8 @@
     },
     "permissions": {
       "addEdit": "추가/편집",
-      "approve": "승인하다"
+      "approve": "승인하다",
+      "readSensitive": "민감한 정보를 읽어보세요."
     },
     "auth": {
       "internal": "이메일/비밀번호",
@@ -680,7 +681,8 @@
       "deletedUser": "삭제된 사용자",
       "restrictedField": "제한된 필드",
       "backToTestCase": "테스트 케이스로 돌아가기",
-      "selectDeselectAllApprove": "관련된 모든 영역에 대해 승인을 선택하거나 선택 해제하십시오."
+      "selectDeselectAllApprove": "관련된 모든 영역에 대해 승인을 선택하거나 선택 해제하십시오.",
+      "selectDeselectAllReadSensitive": "관련 영역 모두에 대해 읽기 민감도 설정을 선택하거나 선택 해제합니다."
     },
     "labels": {
       "projects": "{count, plural, =1 {# 프로젝트} other {# 프로젝트}}",
@@ -4324,7 +4326,15 @@
         "adminOnlyNotice": "이 설정은 관리자만 변경할 수 있습니다.",
         "updateSuccessEnabled": "검토 워크플로가 활성화되었습니다.",
         "updateSuccessDisabled": "검토 워크플로가 비활성화되었습니다.",
-        "updateError": "검토 워크플로 설정 업데이트에 실패했습니다. 잠시 후 다시 시도해 주세요."
+        "updateError": "검토 워크플로 설정 업데이트에 실패했습니다. 잠시 후 다시 시도해 주세요.",
+        "remindersToggleLabel": "검토 대기 중인 항목에 대한 알림 메시지를 보냅니다.",
+        "remindersToggleAriaLabel": "리뷰 알림 토글",
+        "thresholdLabel": "리뷰어에게 알림",
+        "thresholdUnit": "날)",
+        "thresholdSaveButton": "구하다",
+        "thresholdHelp": "검토 요청이 접수된 후 검토자에게 알림 메시지가 전송되기까지 며칠이 걸릴 수 있나요? 새 요청은 제출 시점부터 기한이 계산됩니다.",
+        "thresholdUpdateSuccess": "리뷰 알림 설정이 업데이트되었습니다.",
+        "thresholdUpdateError": "알림 설정 업데이트에 실패했습니다. 잠시 후 다시 시도해 주세요."
       },
       "projectReviewToggleList": {
         "columnHeader": "워크플로 검토",
@@ -5723,7 +5733,8 @@
         "canAddEdit": "## 추가/편집\n이 역할이 관련 애플리케이션 영역을 추가하고 편집할 수 있는지 여부를 나타냅니다.",
         "canDelete": "## 삭제\n이 역할이 관련 애플리케이션 영역을 삭제할 수 있는지 여부를 나타냅니다.",
         "canClose": "## 닫기\n이 역할이 관련 애플리케이션 영역을 닫을 수 있는지 여부를 나타냅니다.",
-        "canApprove": "## 승인\n이 역할이 관련 애플리케이션 영역에 대한 검토 요청을 승인할 수 있는지 여부를 나타냅니다. 테스트 케이스 저장소, 테스트 실행 및 세션에만 적용됩니다."
+        "canApprove": "## 승인\n이 역할이 관련 애플리케이션 영역에 대한 검토 요청을 승인할 수 있는지 여부를 나타냅니다. 테스트 케이스 저장소, 테스트 실행 및 세션에만 적용됩니다.",
+        "canReadSensitive": "## 민감한 값 읽기\n이 역할이 제한된 필드 데이터를 읽을 때 민감한 매개변수 값을 볼 수 있는지 여부를 나타냅니다. 이 권한이 없으면 민감한 값은 데이터 세트 행과 반복 셀에서 ●●●●●●로 표시되고, 이슈 사전 입력 본문과 CSV 내보내기에서는 [REDACTED]로 표시됩니다. 테스트 케이스 제한 필드 및 테스트 실행 결과 제한 필드에만 적용됩니다."
       }
     },
     "group": {

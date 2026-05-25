@@ -172,7 +172,8 @@
     },
     "permissions": {
       "addEdit": "Añadir/Editar",
-      "approve": "Aprobar"
+      "approve": "Aprobar",
+      "readSensitive": "Lea información sensible"
     },
     "auth": {
       "internal": "Correo/Contraseña",
@@ -680,7 +681,8 @@
       "deletedUser": "Usuario eliminado",
       "restrictedField": "Campo restringido",
       "backToTestCase": "Volver al caso de prueba",
-      "selectDeselectAllApprove": "Seleccione o deseleccione la opción \"Aprobar\" para todas las áreas relevantes."
+      "selectDeselectAllApprove": "Seleccione o deseleccione la opción \"Aprobar\" para todas las áreas relevantes.",
+      "selectDeselectAllReadSensitive": "Seleccione o deseleccione la opción de lectura confidencial para todas las áreas pertinentes."
     },
     "labels": {
       "projects": "{count, plural, =1 {# Proyecto} other {# Proyectos}}",
@@ -4324,7 +4326,15 @@
         "adminOnlyNotice": "Solo los administradores pueden cambiar esta configuración.",
         "updateSuccessEnabled": "Flujo de trabajo de revisión habilitado.",
         "updateSuccessDisabled": "Revisión del flujo de trabajo deshabilitada.",
-        "updateError": "No se pudo actualizar la configuración del flujo de trabajo de revisión. Inténtelo de nuevo en un momento."
+        "updateError": "No se pudo actualizar la configuración del flujo de trabajo de revisión. Inténtelo de nuevo en un momento.",
+        "remindersToggleLabel": "Enviar notificaciones de recordatorio para revisiones pendientes",
+        "remindersToggleAriaLabel": "Activar/desactivar las notificaciones de recordatorio de revisión",
+        "thresholdLabel": "Recordatorio para los revisores después",
+        "thresholdUnit": "días)",
+        "thresholdSaveButton": "Ahorrar",
+        "thresholdHelp": "¿Cuántos días puede permanecer pendiente una solicitud de revisión antes de que los revisores reciban una notificación recordatoria? Las nuevas solicitudes comienzan a contar desde el momento de su envío.",
+        "thresholdUpdateSuccess": "Se han actualizado los ajustes de recordatorio de la revisión.",
+        "thresholdUpdateError": "No se pudieron actualizar los ajustes de recordatorios. Inténtalo de nuevo en un momento."
       },
       "projectReviewToggleList": {
         "columnHeader": "Revisar el flujo de trabajo",
@@ -5723,7 +5733,8 @@
         "canAddEdit": "## Añadir/Editar\nIndica si este rol puede agregar y editar el área de la aplicación relacionada.",
         "canDelete": "## Cerrar\\nIndica si este rol puede cerrar el área de aplicación relacionada.",
         "canClose": "## Cerrar\nIndica si este rol puede cerrar el área de aplicación relacionada.",
-        "canApprove": "## Aprobar\nIndica si este rol puede aprobar las solicitudes de revisión para el área de aplicación correspondiente. Se aplica únicamente al Repositorio de casos de prueba, Ejecuciones de prueba y Sesiones."
+        "canApprove": "## Aprobar\nIndica si este rol puede aprobar las solicitudes de revisión para el área de aplicación correspondiente. Se aplica únicamente al Repositorio de casos de prueba, Ejecuciones de prueba y Sesiones.",
+        "canReadSensitive": "## Leer valores confidenciales\nIndica si este rol puede ver valores de parámetros confidenciales al leer datos de campos restringidos. Sin este permiso, los valores confidenciales se muestran como ●●●●●● en las filas del conjunto de datos y las celdas de iteración, y como [REDACTED] en los cuerpos de precarga de incidencias y exportaciones CSV. Se aplica solo a los campos restringidos de casos de prueba y a los campos restringidos de resultados de ejecución de pruebas."
       }
     },
     "group": {

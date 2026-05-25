@@ -172,7 +172,8 @@
     },
     "permissions": {
       "addEdit": "Adicionar/Editar",
-      "approve": "Aprovar"
+      "approve": "Aprovar",
+      "readSensitive": "Leia informações sensíveis"
     },
     "auth": {
       "internal": "E-mail/Senha",
@@ -680,7 +681,8 @@
       "deletedUser": "Usuário excluído",
       "restrictedField": "Campo restrito",
       "backToTestCase": "Voltar ao caso de teste",
-      "selectDeselectAllApprove": "Selecione ou desmarque \"Aprovar\" para todas as áreas relevantes."
+      "selectDeselectAllApprove": "Selecione ou desmarque \"Aprovar\" para todas as áreas relevantes.",
+      "selectDeselectAllReadSensitive": "Selecione ou desmarque a opção \"Leitura sensível\" para todas as áreas relevantes."
     },
     "labels": {
       "projects": "{count, plural, =1 {# Projeto} other {# Projetos}}",
@@ -4324,7 +4326,15 @@
         "adminOnlyNotice": "Somente administradores podem alterar essa configuração.",
         "updateSuccessEnabled": "Fluxo de trabalho de revisão ativado.",
         "updateSuccessDisabled": "Fluxo de trabalho de revisão desativado.",
-        "updateError": "Falha ao atualizar a configuração do fluxo de trabalho de revisão. Tente novamente em instantes."
+        "updateError": "Falha ao atualizar a configuração do fluxo de trabalho de revisão. Tente novamente em instantes.",
+        "remindersToggleLabel": "Enviar notificações de lembrete para revisões pendentes.",
+        "remindersToggleAriaLabel": "Ativar/desativar notificações de lembrete de revisão",
+        "thresholdLabel": "Lembre os avaliadores depois",
+        "thresholdUnit": "dia(s)",
+        "thresholdSaveButton": "Salvar",
+        "thresholdHelp": "Quantos dias uma solicitação de revisão pode ficar pendente antes que os revisores recebam uma notificação de lembrete? A contagem regressiva para novas solicitações começa no momento do envio.",
+        "thresholdUpdateSuccess": "Revisar configurações de lembrete atualizadas.",
+        "thresholdUpdateError": "Falha ao atualizar as configurações de lembrete. Tente novamente em instantes."
       },
       "projectReviewToggleList": {
         "columnHeader": "Fluxo de trabalho de revisão",
@@ -5723,7 +5733,8 @@
         "canAddEdit": "## Adicionar/Editar\nIndica se esta função pode adicionar e editar a área de aplicação relacionada.",
         "canDelete": "## Excluir\nIndica se esta função pode excluir a área de aplicação relacionada.",
         "canClose": "## Fechar\nIndica se esta função pode fechar a área de aplicação relacionada.",
-        "canApprove": "## Aprovar\nIndica se esta função pode aprovar solicitações de revisão para a área de aplicação relacionada. Aplica-se somente ao Repositório de Casos de Teste, Execuções de Teste e Sessões."
+        "canApprove": "## Aprovar\nIndica se esta função pode aprovar solicitações de revisão para a área de aplicação relacionada. Aplica-se somente ao Repositório de Casos de Teste, Execuções de Teste e Sessões.",
+        "canReadSensitive": "## Ler valores sensíveis\nIndica se esta função pode visualizar valores de parâmetros sensíveis ao ler dados de campos restritos. Sem essa permissão, os valores sensíveis são exibidos como ●●●●●● nas linhas do conjunto de dados e nas células de iteração, e como [REDACTED] nos corpos de preenchimento automático de problemas e nas exportações CSV. Aplica-se somente a Campos Restritos de Casos de Teste e Campos Restritos de Resultados de Execução de Teste."
       }
     },
     "group": {

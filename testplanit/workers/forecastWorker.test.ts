@@ -102,11 +102,12 @@ vi.mock("../lib/services/notificationService", () => ({
   },
 }));
 
-// Threshold loader — default to 24h; tests override via mockResolvedValueOnce.
-const mockGetReviewReminderThresholdHours = vi.fn().mockResolvedValue(24);
+// Threshold loader — default to 1 day; tests override via mockResolvedValueOnce.
+// Value of 0 means reminders are disabled and the worker short-circuits.
+const mockGetReviewReminderThresholdDays = vi.fn().mockResolvedValue(1);
 vi.mock("../lib/services/reviewReminderConfig", () => ({
-  getReviewReminderThresholdHours: (...args: any[]) =>
-    mockGetReviewReminderThresholdHours(...args),
+  getReviewReminderThresholdDays: (...args: any[]) =>
+    mockGetReviewReminderThresholdDays(...args),
 }));
 
 // Webhook event emitter — wired to a spy so reminder tests can assert
@@ -282,7 +283,7 @@ describe("JOB_REVIEW_REMINDERS", () => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     vi.setSystemTime(FIXED_NOW);
-    mockGetReviewReminderThresholdHours.mockResolvedValue(24);
+    mockGetReviewReminderThresholdDays.mockResolvedValue(1);
     seedContextHappyPath();
   });
 
@@ -513,15 +514,26 @@ describe("JOB_REVIEW_REMINDERS", () => {
     expect(auditArgs.metadata.hoursPending).toBe(36);
   });
 
-  it("respects a custom AppConfig threshold from getReviewReminderThresholdHours", async () => {
-    mockGetReviewReminderThresholdHours.mockResolvedValueOnce(48);
+  it("respects a custom AppConfig threshold from getReviewReminderThresholdDays", async () => {
+    mockGetReviewReminderThresholdDays.mockResolvedValueOnce(2);
     mockPrisma.reviewRequest.findMany.mockResolvedValue([]);
 
     await runProcessor();
 
     const arg = mockPrisma.reviewRequest.findMany.mock.calls[0][0];
-    const expectedCutoff = new Date(FIXED_NOW.getTime() - 48 * 60 * 60 * 1000);
+    const expectedCutoff = new Date(
+      FIXED_NOW.getTime() - 2 * 24 * 60 * 60 * 1000
+    );
     expect(arg.where.createdAt).toEqual({ lt: expectedCutoff });
+  });
+
+  it("short-circuits without scanning when threshold is 0 (reminders disabled)", async () => {
+    mockGetReviewReminderThresholdDays.mockResolvedValueOnce(0);
+    mockPrisma.reviewRequest.findMany.mockClear();
+
+    await runProcessor();
+
+    expect(mockPrisma.reviewRequest.findMany).not.toHaveBeenCalled();
   });
 
   it("Test 9: webhook emission per dispatched row — fires once with the eventName-aligned payload", async () => {

@@ -9,10 +9,16 @@ vi.mock("~/hooks/useReviewFeatureEnabled", () => ({
 
 const mockMutateAsync = vi.fn();
 let mockMutationPending = false;
+let mockThresholdConfig: { value: unknown } | undefined | null = null;
+let mockThresholdLoading = false;
 vi.mock("~/lib/hooks", () => ({
   useUpsertAppConfig: () => ({
     mutateAsync: mockMutateAsync,
     isPending: mockMutationPending,
+  }),
+  useFindUniqueAppConfig: () => ({
+    data: mockThresholdConfig,
+    isLoading: mockThresholdLoading,
   }),
 }));
 
@@ -81,6 +87,8 @@ describe("SystemFeatureCard (AppConfig-backed)", () => {
     mockToastSuccess.mockReset();
     mockToastError.mockReset();
     mockMutationPending = false;
+    mockThresholdConfig = null;
+    mockThresholdLoading = false;
     currentSession = { user: { id: "user-1", access: "ADMIN" } };
   });
 
@@ -277,6 +285,108 @@ describe("SystemFeatureCard (AppConfig-backed)", () => {
     expect(
       screen.getByTestId("system-feature-admin-only-notice")
     ).toBeInTheDocument();
+  });
+
+  it("(n) reminders toggle is OFF when threshold is 0 and the threshold input is hidden", () => {
+    mockUseReviewFeatureEnabled.mockReturnValue({
+      systemEnabled: true,
+      enabled: true,
+      isLoading: false,
+    });
+    mockThresholdConfig = { value: 0 };
+
+    render(<SystemFeatureCard />);
+
+    const toggle = screen.getByTestId("reminders-enabled-toggle");
+    expect(toggle).toHaveAttribute("data-state", "unchecked");
+    expect(
+      screen.queryByTestId("reminder-threshold-input")
+    ).not.toBeInTheDocument();
+  });
+
+  it("(o) reminders toggle is ON when threshold is >= 1 and the input shows the persisted value", () => {
+    mockUseReviewFeatureEnabled.mockReturnValue({
+      systemEnabled: true,
+      enabled: true,
+      isLoading: false,
+    });
+    mockThresholdConfig = { value: 3 };
+
+    render(<SystemFeatureCard />);
+
+    const toggle = screen.getByTestId("reminders-enabled-toggle");
+    expect(toggle).toHaveAttribute("data-state", "checked");
+    const input = screen.getByTestId(
+      "reminder-threshold-input"
+    ) as HTMLInputElement;
+    expect(input.value).toBe("3");
+  });
+
+  it("(p) toggling reminders OFF persists value 0 via useUpsertAppConfig", async () => {
+    mockUseReviewFeatureEnabled.mockReturnValue({
+      systemEnabled: true,
+      enabled: true,
+      isLoading: false,
+    });
+    mockThresholdConfig = { value: 2 };
+
+    render(<SystemFeatureCard />);
+
+    fireEvent.click(screen.getByTestId("reminders-enabled-toggle"));
+
+    await waitFor(() =>
+      expect(mockMutateAsync).toHaveBeenCalledWith({
+        where: { key: "review_reminder_threshold_days" },
+        create: { key: "review_reminder_threshold_days", value: 0 },
+        update: { value: 0 },
+      })
+    );
+  });
+
+  it("(q) toggling reminders ON from disabled state persists default value 1", async () => {
+    mockUseReviewFeatureEnabled.mockReturnValue({
+      systemEnabled: true,
+      enabled: true,
+      isLoading: false,
+    });
+    mockThresholdConfig = { value: 0 };
+
+    render(<SystemFeatureCard />);
+
+    fireEvent.click(screen.getByTestId("reminders-enabled-toggle"));
+
+    await waitFor(() =>
+      expect(mockMutateAsync).toHaveBeenCalledWith({
+        where: { key: "review_reminder_threshold_days" },
+        create: { key: "review_reminder_threshold_days", value: 1 },
+        update: { value: 1 },
+      })
+    );
+  });
+
+  it("(r) Save button persists the integer input value", async () => {
+    mockUseReviewFeatureEnabled.mockReturnValue({
+      systemEnabled: true,
+      enabled: true,
+      isLoading: false,
+    });
+    mockThresholdConfig = { value: 1 };
+
+    render(<SystemFeatureCard />);
+
+    const input = screen.getByTestId(
+      "reminder-threshold-input"
+    ) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "5" } });
+    fireEvent.click(screen.getByTestId("reminder-threshold-save"));
+
+    await waitFor(() =>
+      expect(mockMutateAsync).toHaveBeenCalledWith({
+        where: { key: "review_reminder_threshold_days" },
+        create: { key: "review_reminder_threshold_days", value: 5 },
+        update: { value: 5 },
+      })
+    );
   });
 
   it("(j) no env-var name leaks into the rendered DOM", () => {

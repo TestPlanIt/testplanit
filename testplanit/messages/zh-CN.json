@@ -172,7 +172,8 @@
     },
     "permissions": {
       "addEdit": "添加/编辑",
-      "approve": "批准"
+      "approve": "批准",
+      "readSensitive": "请阅读敏感内容"
     },
     "auth": {
       "internal": "电子邮件/密码",
@@ -680,7 +681,8 @@
       "deletedUser": "已删除用户",
       "restrictedField": "受限字段",
       "backToTestCase": "返回测试用例",
-      "selectDeselectAllApprove": "选中或取消选中“批准”以确认所有相关区域"
+      "selectDeselectAllApprove": "选中或取消选中“批准”以确认所有相关区域",
+      "selectDeselectAllReadSensitive": "选中或取消选中所有相关区域的“读取敏感信息”选项"
     },
     "labels": {
       "projects": "{count, plural, =1 {# 项目} other {# 项目集}}",
@@ -4324,7 +4326,15 @@
         "adminOnlyNotice": "只有管理员才能更改此设置。",
         "updateSuccessEnabled": "已启用审核工作流程。",
         "updateSuccessDisabled": "审核工作流程已禁用。",
-        "updateError": "更新审核工作流程设置失败。请稍后再试。"
+        "updateError": "更新审核工作流程设置失败。请稍后再试。",
+        "remindersToggleLabel": "发送待审核提醒通知",
+        "remindersToggleAriaLabel": "切换评论提醒通知",
+        "thresholdLabel": "提醒审稿人",
+        "thresholdUnit": "天）",
+        "thresholdSaveButton": "节省",
+        "thresholdHelp": "审核请求最多可以保留多少天才会向审核员发送提醒通知？新请求从提交之日起开始计时。",
+        "thresholdUpdateSuccess": "查看提醒设置是否已更新。",
+        "thresholdUpdateError": "更新提醒设置失败，请稍后再试。"
       },
       "projectReviewToggleList": {
         "columnHeader": "审核工作流程",
@@ -5723,7 +5733,8 @@
         "canAddEdit": "## 添加/编辑\n指示此角色是否可以添加和编辑相关的应用程序区域。",
         "canDelete": "## 删除\n指示此角色是否可以删除相关的应用程序区域。",
         "canClose": "## 关闭\n指示此角色是否可以关闭相关的应用程序区域。",
-        "canApprove": "## 批准\n指示此角色是否可以批准相关应用程序领域的审核请求。仅适用于测试用例库、测试运行和会话。"
+        "canApprove": "## 批准\n指示此角色是否可以批准相关应用程序领域的审核请求。仅适用于测试用例库、测试运行和会话。",
+        "canReadSensitive": "## 读取敏感数据\n指示此角色在读取受限字段数据时是否可以查看敏感参数值。如果没有此权限，敏感值在数据集行和迭代单元格中将显示为 ●●●●●●，在 issue-prefill 正文和 CSV 导出中将显示为 [REDACTED]。仅适用于测试用例受限字段和测试运行结果受限字段。"
       }
     },
     "group": {

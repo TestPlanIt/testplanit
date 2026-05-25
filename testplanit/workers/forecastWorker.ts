@@ -11,7 +11,7 @@ import {
 import { FORECAST_QUEUE_NAME } from "../lib/queueNames";
 import { captureAuditEvent } from "../lib/services/auditLog";
 import { NotificationService } from "../lib/services/notificationService";
-import { getReviewReminderThresholdHours } from "../lib/services/reviewReminderConfig";
+import { getReviewReminderThresholdDays } from "../lib/services/reviewReminderConfig";
 import { withTenantContext } from "../lib/tenantContext";
 import { emitReviewReminderEvent } from "../lib/webhooks/event-emitters/reviewEvents";
 import valkeyConnection from "../lib/valkey";
@@ -543,10 +543,16 @@ export const processor = async (job: Job<ForecastJobDataBase>) =>
       case JOB_REVIEW_REMINDERS:
         console.log(`Job ${job.id}: Starting review-reminder scan.`);
         try {
-          const thresholdHours = await getReviewReminderThresholdHours(prisma);
+          const thresholdDays = await getReviewReminderThresholdDays(prisma);
+          if (thresholdDays === 0) {
+            console.log(
+              `Job ${job.id}: review_reminder_threshold_days is 0; reminders disabled.`
+            );
+            break;
+          }
           const now = new Date();
           const cutoff = new Date(
-            now.getTime() - thresholdHours * 60 * 60 * 1000
+            now.getTime() - thresholdDays * 24 * 60 * 60 * 1000
           );
 
           const pendingReviews = await prisma.reviewRequest.findMany({

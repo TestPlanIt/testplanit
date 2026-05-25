@@ -108,8 +108,9 @@ async function scheduleJobs() {
       );
 
       // Hourly scan for PENDING review requests older than the configurable
-      // threshold (default 24h via AppConfig.review_reminder_threshold_hours)
-      // that have not been reminded within the same window.
+      // threshold (default 1 day via AppConfig.review_reminder_threshold_days;
+      // 0 disables reminders) that have not been reminded within the same
+      // window.
       const reminderId = tenantId
         ? `${JOB_REVIEW_REMINDERS}-${tenantId}`
         : JOB_REVIEW_REMINDERS;

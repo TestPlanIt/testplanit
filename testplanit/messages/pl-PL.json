@@ -172,7 +172,8 @@
     },
     "permissions": {
       "addEdit": "Dodaj/Edytuj",
-      "approve": "Zatwierdzić"
+      "approve": "Zatwierdzić",
+      "readSensitive": "Przeczytaj wrażliwe"
     },
     "auth": {
       "internal": "E-mail/Hasło",
@@ -680,7 +681,8 @@
       "deletedUser": "Usunięty użytkownik",
       "restrictedField": "Pole ograniczone",
       "backToTestCase": "Powrót do przypadku testowego",
-      "selectDeselectAllApprove": "Zaznacz lub odznacz opcję zatwierdzenia dla wszystkich odpowiednich obszarów"
+      "selectDeselectAllApprove": "Zaznacz lub odznacz opcję zatwierdzenia dla wszystkich odpowiednich obszarów",
+      "selectDeselectAllReadSensitive": "Zaznacz lub odznacz opcję „Odczyt wrażliwy” dla wszystkich odpowiednich obszarów"
     },
     "labels": {
       "projects": "{count, plural, =1 {# Projekt} other {# Projekty}}",
@@ -4324,7 +4326,15 @@
         "adminOnlyNotice": "Tylko administratorzy mogą zmienić to ustawienie.",
         "updateSuccessEnabled": "Przegląd przepływu pracy włączony.",
         "updateSuccessDisabled": "Przegląd przepływu pracy wyłączony.",
-        "updateError": "Nie udało się zaktualizować ustawień przepływu pracy recenzji. Spróbuj ponownie za chwilę."
+        "updateError": "Nie udało się zaktualizować ustawień przepływu pracy recenzji. Spróbuj ponownie za chwilę.",
+        "remindersToggleLabel": "Wyślij przypomnienia o oczekujących recenzjach",
+        "remindersToggleAriaLabel": "Przełącz powiadomienia o przypomnieniu o recenzji",
+        "thresholdLabel": "Przypomnij recenzentom po",
+        "thresholdUnit": "dni)",
+        "thresholdSaveButton": "Ratować",
+        "thresholdHelp": "Ile dni prośba o recenzję może czekać, zanim recenzenci otrzymają przypomnienie? Czas na rozpatrzenie nowych próśb rozpoczyna się od momentu ich przesłania.",
+        "thresholdUpdateSuccess": "Zaktualizowano ustawienia przypomnień.",
+        "thresholdUpdateError": "Nie udało się zaktualizować ustawień przypomnień. Spróbuj ponownie za chwilę."
       },
       "projectReviewToggleList": {
         "columnHeader": "Przejrzyj przepływ pracy",
@@ -5723,7 +5733,8 @@
         "canAddEdit": "## Dodaj/Edytuj\nWskazuje, czy ta rola może dodawać i edytować powiązany obszar aplikacji.",
         "canDelete": "## Usuń\nWskazuje, czy ta rola może usunąć powiązany obszar aplikacji.",
         "canClose": "## Zamknij\nWskazuje, czy ta rola może zamknąć powiązany obszar aplikacji.",
-        "canApprove": "## Zatwierdź\nWskazuje, czy ta rola może zatwierdzać prośby o recenzję dla powiązanego obszaru aplikacji. Dotyczy tylko repozytorium przypadków testowych, przebiegów testów i sesji."
+        "canApprove": "## Zatwierdź\nWskazuje, czy ta rola może zatwierdzać prośby o recenzję dla powiązanego obszaru aplikacji. Dotyczy tylko repozytorium przypadków testowych, przebiegów testów i sesji.",
+        "canReadSensitive": "## Odczyt poufnych\nWskazuje, czy ta rola może wyświetlać poufne wartości parametrów podczas odczytu danych z pól zastrzeżonych. Bez tego nadania poufne wartości są wyświetlane jako ●●●●●● w wierszach zestawu danych i komórkach iteracji oraz jako [USUNIĘTO] w treściach wstępnie wypełnianych zgłoszeń i eksportach CSV. Dotyczy tylko pól zastrzeżonych przypadków testowych i pól zastrzeżonych wyników przebiegów testowych."
       }
     },
     "group": {

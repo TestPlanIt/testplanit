@@ -172,7 +172,8 @@
     },
     "permissions": {
       "addEdit": "Toevoegen/bewerken",
-      "approve": "Goedkeuren"
+      "approve": "Goedkeuren",
+      "readSensitive": "Lees gevoelige informatie"
     },
     "auth": {
       "internal": "E-mailadres/wachtwoord",
@@ -680,7 +681,8 @@
       "deletedUser": "Verwijderde gebruiker",
       "restrictedField": "Beperkt veld",
       "backToTestCase": "Terug naar testcase",
-      "selectDeselectAllApprove": "Selecteer of deselecteer 'goedkeuren' voor alle relevante gebieden."
+      "selectDeselectAllApprove": "Selecteer of deselecteer 'goedkeuren' voor alle relevante gebieden.",
+      "selectDeselectAllReadSensitive": "Selecteer of deselecteer leesgevoeligheid voor alle relevante gebieden."
     },
     "labels": {
       "projects": "{count, plural, =1 {# Project} other {# Projecten}}",
@@ -4324,7 +4326,15 @@
         "adminOnlyNotice": "Alleen beheerders kunnen deze instelling wijzigen.",
         "updateSuccessEnabled": "Beoordelingsworkflow ingeschakeld.",
         "updateSuccessDisabled": "Beoordelingsworkflow uitgeschakeld.",
-        "updateError": "Het bijwerken van de beoordelingsworkflow is mislukt. Probeer het over een moment opnieuw."
+        "updateError": "Het bijwerken van de beoordelingsworkflow is mislukt. Probeer het over een moment opnieuw.",
+        "remindersToggleLabel": "Verstuur herinneringsmeldingen voor lopende beoordelingen",
+        "remindersToggleAriaLabel": "Meldingen voor beoordelingsherinneringen in- of uitschakelen",
+        "thresholdLabel": "Herinner de beoordelaars eraan na",
+        "thresholdUnit": "dag(en)",
+        "thresholdSaveButton": "Redden",
+        "thresholdHelp": "Hoeveel dagen een beoordelingsverzoek in behandeling mag blijven voordat beoordelaars een herinneringsmelding ontvangen. Voor nieuwe verzoeken begint de teller te lopen vanaf het moment van indiening.",
+        "thresholdUpdateSuccess": "Controleer of de herinneringsinstellingen zijn bijgewerkt.",
+        "thresholdUpdateError": "Het bijwerken van de herinneringsinstellingen is mislukt. Probeer het over een moment opnieuw."
       },
       "projectReviewToggleList": {
         "columnHeader": "Werkproces beoordelen",
@@ -5723,7 +5733,8 @@
         "canAddEdit": "## Toevoegen/bewerken\nGeeft aan of deze rol het gerelateerde toepassingsgebied kan toevoegen en bewerken.",
         "canDelete": "## Verwijderen\nGeeft aan of deze rol het gerelateerde toepassingsgebied kan verwijderen.",
         "canClose": "## Close\nGeeft aan of deze rol het gerelateerde toepassingsgebied kan sluiten.",
-        "canApprove": "## Goedkeuren\nGeeft aan of deze rol beoordelingsverzoeken voor het betreffende toepassingsgebied mag goedkeuren. Is alleen van toepassing op Test Case Repository, Test Runs en Sessions."
+        "canApprove": "## Goedkeuren\nGeeft aan of deze rol beoordelingsverzoeken voor het betreffende toepassingsgebied mag goedkeuren. Is alleen van toepassing op Test Case Repository, Test Runs en Sessions.",
+        "canReadSensitive": "## Gevoelige waarden lezen\nGeeft aan of deze rol gevoelige parameterwaarden kan bekijken bij het lezen van gegevens met beperkte velden. Zonder deze machtiging worden gevoelige waarden weergegeven als ●●●●●● in datasetrijen en iteratiecellen, en als [GEREDACTEERD] in issue-prefill-teksten en CSV-exports. Dit geldt alleen voor beperkte velden in testcases en beperkte velden in testresultaten."
       }
     },
     "group": {
