@@ -337,14 +337,14 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                 </div>
               ) : (
                 // Actual Permissions Table
-                <table className="w-full border-collapse">
-                  <thead>
+                <table className="w-full border-collape border-2">
+                  <thead className="bg-primary/10 border">
                     <tr className="border-b">
-                      <th className="p-2 text-left font-medium text-muted-foreground">
+                      <th className="p-2 text-left text-sm font-medium">
                         {t("admin.roles.edit.areaHeader")}
                       </th>
                       {/* Add/Edit Header Checkbox */}
-                      <th className="p-2 text-center font-medium text-muted-foreground w-24">
+                      <th className="p-2 text-center text-sm font-medium">
                         <Label className="flex items-center gap-1 justify-center">
                           <Checkbox
                             checked={
@@ -364,12 +364,15 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                                   : "unchecked"
                             }
                           />
-                          {t("common.permissions.addEdit")}
-                          <HelpPopover helpKey="role.permissions.canAddEdit" />
+                          <span className="flex items-center">
+                            {t("common.permissions.addEdit")}
+
+                            <HelpPopover helpKey="role.permissions.canAddEdit" />
+                          </span>
                         </Label>
                       </th>
                       {/* Delete Header Checkbox */}
-                      <th className="p-2 text-center font-medium text-muted-foreground w-24">
+                      <th className="p-2 text-center text-sm font-medium">
                         <Label className="flex items-center gap-1 justify-center">
                           <Checkbox
                             checked={
@@ -389,12 +392,14 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                                   : "unchecked"
                             }
                           />
-                          {t("common.actions.delete")}
-                          <HelpPopover helpKey="role.permissions.canDelete" />
+                          <span className="flex items-center">
+                            {t("common.actions.delete")}
+                            <HelpPopover helpKey="role.permissions.canDelete" />
+                          </span>
                         </Label>
                       </th>
                       {/* Close Header Checkbox */}
-                      <th className="p-2 text-center font-medium text-muted-foreground w-24">
+                      <th className="p-2 text-center text-sm font-medium">
                         <Label className="flex items-center gap-1 justify-center">
                           <Checkbox
                             checked={getHeaderCheckboxState("canClose").checked}
@@ -410,12 +415,14 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                                   : "unchecked"
                             }
                           />
-                          {t("common.actions.complete")}
-                          <HelpPopover helpKey="role.permissions.canClose" />
+                          <span className="flex items-center">
+                            {t("common.actions.complete")}
+                            <HelpPopover helpKey="role.permissions.canClose" />
+                          </span>
                         </Label>
                       </th>
                       {/* Approve Header Checkbox */}
-                      <th className="p-2 text-center font-medium text-muted-foreground w-24">
+                      <th className="p-2 text-center text-sm font-medium">
                         <Label className="flex items-center gap-1 justify-center">
                           <Checkbox
                             checked={
@@ -435,12 +442,14 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                                   : "unchecked"
                             }
                           />
-                          {t("common.permissions.approve")}
-                          <HelpPopover helpKey="role.permissions.canApprove" />
+                          <span className="flex items-center">
+                            {t("common.permissions.approve")}
+                            <HelpPopover helpKey="role.permissions.canApprove" />
+                          </span>
                         </Label>
                       </th>
                       {/* Read Sensitive Header Checkbox */}
-                      <th className="p-2 text-center font-medium text-muted-foreground w-24">
+                      <th className="p-2 text-center text-sm font-medium">
                         <Label className="flex items-center gap-1 justify-center">
                           <Checkbox
                             checked={
@@ -462,8 +471,10 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                                   : "unchecked"
                             }
                           />
-                          {t("common.permissions.readSensitive")}
-                          <HelpPopover helpKey="role.permissions.canReadSensitive" />
+                          <span className="flex items-center">
+                            {t("common.permissions.readSensitive")}
+                            <HelpPopover helpKey="role.permissions.canReadSensitive" />
+                          </span>
                         </Label>
                       </th>
                     </tr>
