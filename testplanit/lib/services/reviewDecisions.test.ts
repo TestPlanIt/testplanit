@@ -475,140 +475,152 @@ describeIntegration("decideReviewRequest — direct user-assignee path", () => {
   });
 });
 
-describeIntegration("decideReviewRequest — role-holder via SPECIFIC_ROLE permission (CR-02)", () => {
-  it("role-holder can transition PENDING -> CHANGES_REQUESTED with required comment", async () => {
-    const requestId = await seedPendingRequest({
-      assigneeRoleId: assignedRoleId,
-    });
+describeIntegration(
+  "decideReviewRequest — role-holder via SPECIFIC_ROLE permission (CR-02)",
+  () => {
+    it("role-holder can transition PENDING -> CHANGES_REQUESTED with required comment", async () => {
+      const requestId = await seedPendingRequest({
+        assigneeRoleId: assignedRoleId,
+      });
 
-    const result = await decideReviewRequest(
-      sessionFor(roleHolderUserId),
-      requestId,
-      "CHANGES_REQUESTED",
-      "please tighten the assertion"
-    );
-
-    expect(result.status).toBe("CHANGES_REQUESTED");
-    expect(result.decisionComment).toBe("please tighten the assertion");
-    expect(result.decidedByUserId).toBe(roleHolderUserId);
-    expect(result.decidedAt).not.toBeNull();
-  });
-});
-
-describeIntegration("decideReviewRequest — ineligible user is rejected before any mutation", () => {
-  it("ineligible user throws IneligibleReviewerError and the request stays PENDING", async () => {
-    const requestId = await seedPendingRequest({
-      assigneeUserId: directAssigneeUserId,
-    });
-
-    let caught: unknown;
-    try {
-      await decideReviewRequest(
-        sessionFor(ineligibleUserId),
+      const result = await decideReviewRequest(
+        sessionFor(roleHolderUserId),
         requestId,
-        "REJECTED",
-        "noisy reject"
+        "CHANGES_REQUESTED",
+        "please tighten the assertion"
       );
-    } catch (err) {
-      caught = err;
-    }
 
-    expect(isIneligibleReviewerError(caught)).toBe(true);
-
-    // Row was NOT mutated.
-    const after = await prisma.reviewRequest.findUnique({
-      where: { id: requestId },
-      select: { status: true, decisionComment: true, decidedByUserId: true },
+      expect(result.status).toBe("CHANGES_REQUESTED");
+      expect(result.decisionComment).toBe("please tighten the assertion");
+      expect(result.decidedByUserId).toBe(roleHolderUserId);
+      expect(result.decidedAt).not.toBeNull();
     });
-    expect(after?.status).toBe("PENDING");
-    expect(after?.decisionComment).toBeNull();
-    expect(after?.decidedByUserId).toBeNull();
-  });
-});
+  }
+);
 
-describeIntegration("decideReviewRequest — all three DecideOutcome values", () => {
-  it("APPROVED outcome is written atomically with decidedBy + decidedAt", async () => {
-    const requestId = await seedPendingRequest({
-      assigneeUserId: directAssigneeUserId,
+describeIntegration(
+  "decideReviewRequest — ineligible user is rejected before any mutation",
+  () => {
+    it("ineligible user throws IneligibleReviewerError and the request stays PENDING", async () => {
+      const requestId = await seedPendingRequest({
+        assigneeUserId: directAssigneeUserId,
+      });
+
+      let caught: unknown;
+      try {
+        await decideReviewRequest(
+          sessionFor(ineligibleUserId),
+          requestId,
+          "REJECTED",
+          "noisy reject"
+        );
+      } catch (err) {
+        caught = err;
+      }
+
+      expect(isIneligibleReviewerError(caught)).toBe(true);
+
+      // Row was NOT mutated.
+      const after = await prisma.reviewRequest.findUnique({
+        where: { id: requestId },
+        select: { status: true, decisionComment: true, decidedByUserId: true },
+      });
+      expect(after?.status).toBe("PENDING");
+      expect(after?.decisionComment).toBeNull();
+      expect(after?.decidedByUserId).toBeNull();
     });
+  }
+);
 
-    const result = await decideReviewRequest(
-      sessionFor(directAssigneeUserId),
-      requestId,
-      "APPROVED"
-    );
+describeIntegration(
+  "decideReviewRequest — all three DecideOutcome values",
+  () => {
+    it("APPROVED outcome is written atomically with decidedBy + decidedAt", async () => {
+      const requestId = await seedPendingRequest({
+        assigneeUserId: directAssigneeUserId,
+      });
 
-    expect(result.status).toBe("APPROVED");
-    expect(result.decisionComment).toBeNull();
-    expect(result.decidedByUserId).toBe(directAssigneeUserId);
-    expect(result.decidedAt).toBeInstanceOf(Date);
-  });
+      const result = await decideReviewRequest(
+        sessionFor(directAssigneeUserId),
+        requestId,
+        "APPROVED"
+      );
 
-  it("CHANGES_REQUESTED outcome is written atomically", async () => {
-    const requestId = await seedPendingRequest({
-      assigneeUserId: directAssigneeUserId,
-    });
-
-    const result = await decideReviewRequest(
-      sessionFor(directAssigneeUserId),
-      requestId,
-      "CHANGES_REQUESTED",
-      "needs more detail"
-    );
-
-    expect(result.status).toBe("CHANGES_REQUESTED");
-    expect(result.decisionComment).toBe("needs more detail");
-  });
-
-  it("REJECTED outcome is written atomically", async () => {
-    const requestId = await seedPendingRequest({
-      assigneeUserId: directAssigneeUserId,
-    });
-
-    const result = await decideReviewRequest(
-      sessionFor(directAssigneeUserId),
-      requestId,
-      "REJECTED",
-      "out of scope"
-    );
-
-    expect(result.status).toBe("REJECTED");
-    expect(result.decisionComment).toBe("out of scope");
-  });
-});
-
-describeIntegration("decideReviewRequest — already-decided + not-found surfaces", () => {
-  it("re-deciding an APPROVED row throws 'Review request already decided'", async () => {
-    const requestId = await seedPendingRequest({
-      assigneeUserId: directAssigneeUserId,
+      expect(result.status).toBe("APPROVED");
+      expect(result.decisionComment).toBeNull();
+      expect(result.decidedByUserId).toBe(directAssigneeUserId);
+      expect(result.decidedAt).toBeInstanceOf(Date);
     });
 
-    await decideReviewRequest(
-      sessionFor(directAssigneeUserId),
-      requestId,
-      "APPROVED"
-    );
+    it("CHANGES_REQUESTED outcome is written atomically", async () => {
+      const requestId = await seedPendingRequest({
+        assigneeUserId: directAssigneeUserId,
+      });
 
-    await expect(
-      decideReviewRequest(
+      const result = await decideReviewRequest(
+        sessionFor(directAssigneeUserId),
+        requestId,
+        "CHANGES_REQUESTED",
+        "needs more detail"
+      );
+
+      expect(result.status).toBe("CHANGES_REQUESTED");
+      expect(result.decisionComment).toBe("needs more detail");
+    });
+
+    it("REJECTED outcome is written atomically", async () => {
+      const requestId = await seedPendingRequest({
+        assigneeUserId: directAssigneeUserId,
+      });
+
+      const result = await decideReviewRequest(
         sessionFor(directAssigneeUserId),
         requestId,
         "REJECTED",
-        "second attempt"
-      )
-    ).rejects.toThrow(/already decided/i);
-  });
+        "out of scope"
+      );
 
-  it("missing review request id throws a not-found error", async () => {
-    await expect(
-      decideReviewRequest(
+      expect(result.status).toBe("REJECTED");
+      expect(result.decisionComment).toBe("out of scope");
+    });
+  }
+);
+
+describeIntegration(
+  "decideReviewRequest — already-decided + not-found surfaces",
+  () => {
+    it("re-deciding an APPROVED row throws 'Review request already decided'", async () => {
+      const requestId = await seedPendingRequest({
+        assigneeUserId: directAssigneeUserId,
+      });
+
+      await decideReviewRequest(
         sessionFor(directAssigneeUserId),
-        "non-existent-id-xyz",
+        requestId,
         "APPROVED"
-      )
-    ).rejects.toThrow();
-  });
-});
+      );
+
+      await expect(
+        decideReviewRequest(
+          sessionFor(directAssigneeUserId),
+          requestId,
+          "REJECTED",
+          "second attempt"
+        )
+      ).rejects.toThrow(/already decided/i);
+    });
+
+    it("missing review request id throws a not-found error", async () => {
+      await expect(
+        decideReviewRequest(
+          sessionFor(directAssigneeUserId),
+          "non-existent-id-xyz",
+          "APPROVED"
+        )
+      ).rejects.toThrow();
+    });
+  }
+);
 
 describeIntegration("decideReviewRequest — admin override", () => {
   it("system ADMIN can decide even when not the direct assignee or role-holder", async () => {
@@ -628,63 +640,66 @@ describeIntegration("decideReviewRequest — admin override", () => {
   });
 });
 
-describeIntegration("decideReviewRequest — concurrent decides (CR-01 regression)", () => {
-  it("two concurrent decide calls on the same PENDING row cannot both commit", async () => {
-    const requestId = await seedPendingRequest({
-      assigneeUserId: directAssigneeUserId,
+describeIntegration(
+  "decideReviewRequest — concurrent decides (CR-01 regression)",
+  () => {
+    it("two concurrent decide calls on the same PENDING row cannot both commit", async () => {
+      const requestId = await seedPendingRequest({
+        assigneeUserId: directAssigneeUserId,
+      });
+
+      // Fire both decides concurrently. With the CR-01 fix the precheck +
+      // update collapse into a single atomic statement
+      // (`updateMany({ where: { id, status: 'PENDING' } })`), so exactly one
+      // call must win and the loser must throw "Review request already decided".
+      // Before the fix, both calls could pass the load-time PENDING check and
+      // both commit, clobbering each other.
+      const results = await Promise.allSettled([
+        decideReviewRequest(
+          sessionFor(directAssigneeUserId),
+          requestId,
+          "APPROVED",
+          "race-A"
+        ),
+        decideReviewRequest(
+          sessionFor(adminUserId, "ADMIN"),
+          requestId,
+          "REJECTED",
+          "race-B"
+        ),
+      ]);
+
+      const fulfilled = results.filter((r) => r.status === "fulfilled");
+      const rejected = results.filter((r) => r.status === "rejected");
+      expect(fulfilled.length).toBe(1);
+      expect(rejected.length).toBe(1);
+
+      const rejectedReason = (rejected[0] as PromiseRejectedResult).reason;
+      expect(rejectedReason).toBeInstanceOf(Error);
+      expect((rejectedReason as Error).message.toLowerCase()).toMatch(
+        /already decided/
+      );
+
+      // DB final state matches whichever decide won — exactly one decision
+      // was applied, no clobbering.
+      const after = await prisma.reviewRequest.findUnique({
+        where: { id: requestId },
+        select: {
+          status: true,
+          decisionComment: true,
+          decidedByUserId: true,
+        },
+      });
+      expect(after?.status).not.toBe("PENDING");
+      // The winner is whichever call resolved; verify its comment landed.
+      const winner = (fulfilled[0] as PromiseFulfilledResult<ReviewRequest>)
+        .value;
+      expect(after?.status).toBe(winner.status);
+      expect(after?.decisionComment).toBe(winner.decisionComment);
+      expect(after?.decidedByUserId).toBe(winner.decidedByUserId);
     });
-
-    // Fire both decides concurrently. With the CR-01 fix the precheck +
-    // update collapse into a single atomic statement
-    // (`updateMany({ where: { id, status: 'PENDING' } })`), so exactly one
-    // call must win and the loser must throw "Review request already decided".
-    // Before the fix, both calls could pass the load-time PENDING check and
-    // both commit, clobbering each other.
-    const results = await Promise.allSettled([
-      decideReviewRequest(
-        sessionFor(directAssigneeUserId),
-        requestId,
-        "APPROVED",
-        "race-A"
-      ),
-      decideReviewRequest(
-        sessionFor(adminUserId, "ADMIN"),
-        requestId,
-        "REJECTED",
-        "race-B"
-      ),
-    ]);
-
-    const fulfilled = results.filter((r) => r.status === "fulfilled");
-    const rejected = results.filter((r) => r.status === "rejected");
-    expect(fulfilled.length).toBe(1);
-    expect(rejected.length).toBe(1);
-
-    const rejectedReason = (rejected[0] as PromiseRejectedResult).reason;
-    expect(rejectedReason).toBeInstanceOf(Error);
-    expect((rejectedReason as Error).message.toLowerCase()).toMatch(
-      /already decided/
-    );
-
-    // DB final state matches whichever decide won — exactly one decision
-    // was applied, no clobbering.
-    const after = await prisma.reviewRequest.findUnique({
-      where: { id: requestId },
-      select: {
-        status: true,
-        decisionComment: true,
-        decidedByUserId: true,
-      },
-    });
-    expect(after?.status).not.toBe("PENDING");
-    // The winner is whichever call resolved; verify its comment landed.
-    const winner = (fulfilled[0] as PromiseFulfilledResult<ReviewRequest>)
-      .value;
-    expect(after?.status).toBe(winner.status);
-    expect(after?.decisionComment).toBe(winner.decisionComment);
-    expect(after?.decidedByUserId).toBe(winner.decidedByUserId);
-  });
-});
+  }
+);
 
 describeIntegration("decideReviewRequest — canApprove eligibility", () => {
   it("caller with canApprove=true on the area is accepted on the direct-assignee branch", async () => {
