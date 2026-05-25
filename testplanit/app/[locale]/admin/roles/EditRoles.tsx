@@ -337,7 +337,7 @@ export function EditRole({ role, open, onClose }: EditRoleProps) {
                 </div>
               ) : (
                 // Actual Permissions Table
-                <table className="w-full border-collape border-2">
+                <table className="w-full border-collapse border-2">
                   <thead className="bg-primary/10 border">
                     <tr className="border-b">
                       <th className="p-2 text-left text-sm font-medium">

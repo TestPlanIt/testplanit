@@ -295,7 +295,7 @@ export function AddRole({ open, onClose }: AddRoleProps) {
               <h3 className="text-lg font-medium">
                 {t("admin.roles.edit.permissionsTitle")}
               </h3>
-              <table className="w-full border-collape border-2">
+              <table className="w-full border-collapse border-2">
                 <thead className="bg-primary/10 border">
                   <tr className="border-b">
                     <th className="p-2 text-left text-sm font-medium">
