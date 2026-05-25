@@ -52,6 +52,10 @@ const mockTx = {
   repositoryCaseVersions: { create: vi.fn(), findMany: vi.fn() },
   comment: { create: vi.fn() },
   repositoryCaseLink: { create: vi.fn() },
+  // resolveCreateStateRemap short-circuit: feature disabled returns candidate unchanged.
+  appConfig: { findUnique: vi.fn().mockResolvedValue({ value: false }) },
+  projects: { findUnique: vi.fn() },
+  workflows: { findMany: vi.fn().mockResolvedValue([]), findUnique: vi.fn() },
 };
 
 const mockPrisma = {

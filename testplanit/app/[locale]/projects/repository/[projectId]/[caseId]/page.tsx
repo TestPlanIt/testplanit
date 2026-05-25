@@ -3,7 +3,6 @@
 import { AttachmentChanges } from "@/components/AttachmentsDisplay";
 import BreadcrumbComponent from "@/components/BreadcrumbComponent";
 import { formatSeconds } from "@/components/DurationDisplay";
-import DynamicIcon from "@/components/DynamicIcon";
 import {
   FolderSelect,
   transformFolders,
@@ -51,6 +50,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
+import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
+import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
 import { VersionSelect } from "@/components/VersionSelect";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { ApplicationArea, Attachments, Prisma } from "@prisma/client";
@@ -755,39 +757,63 @@ export default function TestCaseDetails() {
     createFormSchema(testcase?.template?.caseFields || [], t)
   );
 
-  const { data: workflows } = useFindManyWorkflows(
-    {
-      where: {
-        isDeleted: false,
-        scope: "CASES",
-        projects: {
-          some: {
-            projectId: Number(projectId),
-          },
+  const { data: workflows } = useFindManyWorkflows({
+    where: {
+      isDeleted: false,
+      scope: "CASES",
+      projects: {
+        some: {
+          projectId: Number(projectId),
         },
       },
-      include: {
-        icon: true,
-        color: true,
-      },
-      orderBy: {
-        order: "asc",
-      },
     },
-    { enabled: isEditMode }
-  );
+    include: {
+      icon: true,
+      color: true,
+    },
+    orderBy: {
+      order: "asc",
+    },
+  });
+
+  const reachableGatedStates = useMemo(() => {
+    if (!workflows || !testcase) return [];
+    const currentStateId = testcase.state.id;
+    // Only target states that are STRICTLY AFTER the current state in the
+    // workflow ordering — gates the entity hasn't already passed. Workflow
+    // rows expose `order` so we can compare directly.
+    const currentStateOrder =
+      workflows.find((w) => w.id === currentStateId)?.order ?? -Infinity;
+    return workflows
+      .filter(
+        (w) =>
+          w.requiresReview === true &&
+          w.id !== currentStateId &&
+          w.order > currentStateOrder
+      )
+      .map((w) => ({
+        id: w.id,
+        name: w.name,
+        icon: { name: (w.icon?.name ?? "circle") as string },
+        color: { value: w.color?.value ?? "" },
+      }));
+  }, [workflows, testcase]);
 
   const workflowOptions =
     workflows?.map((workflow) => ({
       value: workflow.id.toString(),
       label: (
-        <div className="flex items-center">
-          <DynamicIcon
-            name={workflow.icon.name as IconName}
-            color={workflow.color.value}
-          />
-          <div className="mx-1">{workflow.name}</div>
-        </div>
+        // Use the shared WorkflowStateDisplay so the gated-state warning
+        // glyph stays consistent everywhere a workflow state renders.
+        <WorkflowStateDisplay
+          state={{
+            name: workflow.name,
+            icon: { name: workflow.icon.name as IconName },
+            color: { value: workflow.color.value },
+            requiresReview: workflow.requiresReview,
+          }}
+          size="sm"
+        />
       ),
     })) || [];
 
@@ -831,7 +857,22 @@ export default function TestCaseDetails() {
     handleSubmit,
     formState: { errors },
     getValues,
+    watch,
   } = methods;
+
+  // Client mirror of the strict-transitive gate. The inline error JSX
+  // below the state Select renders directly off `transitionCheck`, and
+  // `handleSave` re-runs the preflight before firing the mutation — no
+  // `setError` effect required (and the previous version caused an
+  // infinite render loop by depending on `errors.workflowId`).
+  const transitionGate = useTransitionGateStatus(
+    "CASE",
+    testcase?.id ?? 0,
+    testcase?.state.id ?? null,
+    Number(projectId)
+  );
+  const watchedWorkflowId = watch("workflowId") as number | undefined;
+  const transitionCheck = transitionGate.canTransitionTo(watchedWorkflowId);
 
   // Restore handleTemplateChange
   const handleTemplateChange = useCallback(
@@ -1019,6 +1060,18 @@ export default function TestCaseDetails() {
         message: t("common.errors.caseStateRequired"),
       });
       hasErrors = true;
+    } else {
+      // Strict-transitive review-gate preflight. The live inline error
+      // rendered under the state Select reads off the same `transitionGate`,
+      // so we DON'T also `setError` here — that would double-render the
+      // message (once inline + once via `FormMessage`). Just flip
+      // `hasErrors` to keep the submit guard from firing the mutation.
+      const preflight = transitionGate.canTransitionTo(
+        data.workflowId as number
+      );
+      if (!preflight.allowed && preflight.blockingGate) {
+        hasErrors = true;
+      }
     }
 
     if (!data.folderId) {
@@ -1737,6 +1790,16 @@ export default function TestCaseDetails() {
           {isSubmitting && (
             <LoadingSpinnerAlert className="w-[120px] h-[120px] text-primary" />
           )}
+          <div className="px-6 pt-6">
+            <ReviewStatusBanner
+              entityType="CASE"
+              entityId={testcase.id}
+              projectId={Number(projectId)}
+              entityName={testcase.name}
+              reachableGatedStates={reachableGatedStates}
+              currentStateId={testcase.state.id}
+            />
+          </div>
           <CardHeader>
             <CardTitle>
               <div>
@@ -1845,12 +1908,63 @@ export default function TestCaseDetails() {
                   {isEditMode && !isSubmitting ? (
                     <div className="space-y-2 w-full">
                       <div className="flex items-center space-x-2">
-                        <Button type="submit" variant="default">
-                          <div className="flex items-center">
-                            <Save className="w-5 h-5 mr-2" />
-                            <div>{t("common.actions.save")}</div>
-                          </div>
-                        </Button>
+                        {(() => {
+                          // Save-blocked detection: either the strict-
+                          // transitive gate is firing OR react-hook-form
+                          // has at least one error from the previous
+                          // validation pass. Either path puts the button
+                          // in the red-ring + disabled + hover-tooltip
+                          // state so the user doesn't keep clicking on a
+                          // submit that won't fire.
+                          const gateBlocked =
+                            !transitionCheck.allowed &&
+                            transitionCheck.blockingGate;
+                          const formHasErrors = Object.keys(errors).length > 0;
+                          const saveBlocked = gateBlocked || formHasErrors;
+                          const tooltipMessage = gateBlocked
+                            ? t("reviews.transitionGate.blockedByGate", {
+                                gateName: transitionCheck.blockingGate!.name,
+                              })
+                            : t(
+                                "reviews.transitionGate.saveBlockedByFormErrors"
+                              );
+
+                          if (!saveBlocked) {
+                            return (
+                              <Button type="submit" variant="default">
+                                <div className="flex items-center">
+                                  <Save className="w-5 h-5 mr-2" />
+                                  <div>{t("common.actions.save")}</div>
+                                </div>
+                              </Button>
+                            );
+                          }
+
+                          // Wrap in a `span` so the Tooltip still
+                          // receives pointer events even when the inner
+                          // Button is `disabled` (disabled buttons swallow
+                          // pointer events in most browsers).
+                          return (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span tabIndex={0}>
+                                  <Button
+                                    type="submit"
+                                    variant="default"
+                                    disabled
+                                    className="ring-2 ring-destructive ring-offset-2 ring-offset-background"
+                                  >
+                                    <div className="flex items-center">
+                                      <Save className="w-5 h-5 mr-2" />
+                                      <div>{t("common.actions.save")}</div>
+                                    </div>
+                                  </Button>
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>{tooltipMessage}</TooltipContent>
+                            </Tooltip>
+                          );
+                        })()}
                         <Button
                           type="button"
                           variant="outline"
@@ -1894,18 +2008,26 @@ export default function TestCaseDetails() {
                       )}
                     </div>
                   ) : (
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 justify-end">
+                      <RequestReviewButton
+                        entityType="CASE"
+                        entityId={testcase.id}
+                        projectId={Number(projectId)}
+                        currentStateId={testcase.state.id}
+                        reachableGatedStates={reachableGatedStates}
+                      />
                       {quickScriptEnabled && canAddEdit && (
                         <Button
                           type="button"
                           variant="outline"
                           onClick={() => setIsQuickScriptModalOpen(true)}
                           data-testid="quickscript-case-button"
+                          className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
                         >
-                          <div className="flex items-center">
-                            <ScrollText className="w-5 h-5 mr-2" />
-                            <div>{t("repository.cases.quickScript")}</div>
-                          </div>
+                          <ScrollText className="h-4 w-4 shrink-0" />
+                          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                            {t("repository.cases.quickScript")}
+                          </span>
                         </Button>
                       )}
                       {canAddEdit && (
@@ -1915,11 +2037,12 @@ export default function TestCaseDetails() {
                           onClick={handleEditModeToggle}
                           disabled={isLoadingSharedStepGroups}
                           data-testid="edit-test-case-button"
+                          className="group px-4 hover:px-4 transition-all duration-200 gap-0 hover:gap-2"
                         >
-                          <div className="flex items-center">
-                            <SquarePen className="w-5 h-5 mr-2" />
-                            <div>{t("common.actions.edit")}</div>
-                          </div>
+                          <SquarePen className="h-4 w-4 shrink-0" />
+                          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                            {t("common.actions.edit")}
+                          </span>
                         </Button>
                       )}
                     </div>
@@ -1936,12 +2059,22 @@ export default function TestCaseDetails() {
                       name="workflowId"
                       render={({ field: _field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center">
+                          {/*
+                            The State FormField lives inside `CardDescription`
+                            which forces `text-sm text-muted-foreground` on
+                            every child — that's why this label looked
+                            smaller / faded compared to its peers. Override
+                            the inherited size + color (and pin font-bold)
+                            so the row matches the case-page's other
+                            section labels (Steps / Attachments / Properties
+                            / custom-field display labels).
+                          */}
+                          <div className="font-bold text-base text-foreground mb-1 flex items-center">
                             {t("common.fields.state")}
                             <sup>
                               <Asterisk className="w-3 h-3 text-destructive" />
                             </sup>{" "}
-                          </FormLabel>
+                          </div>
                           <FormControl>
                             <Controller
                               control={control}
@@ -1975,6 +2108,18 @@ export default function TestCaseDetails() {
                             />
                           </FormControl>
                           <FormMessage />
+                          {/* Strict-transitive gate preview: render the
+                             blocking-gate message directly so the user sees
+                             it whether or not the manually-set FormMessage
+                             error has been picked up by the form context. */}
+                          {!transitionCheck.allowed &&
+                            transitionCheck.blockingGate && (
+                              <p className="text-[0.8rem] font-medium text-destructive mt-1">
+                                {t("reviews.transitionGate.blockedByGate", {
+                                  gateName: transitionCheck.blockingGate.name,
+                                })}
+                              </p>
+                            )}
                         </FormItem>
                       )}
                     />
@@ -2082,22 +2227,6 @@ export default function TestCaseDetails() {
                 onExpand={() => setIsCollapsedLeft(false)}
               >
                 <div className="mb-4">
-                  {/* Configure Parameters entry point at the top of the
-                      left panel. The placement is unconditional (in both
-                      read and edit modes) so the button stays reachable
-                      regardless of whether the Steps caseField is
-                      filtered out by the read-mode empty-value check
-                      below — a fresh case with no steps yet still needs
-                      a way to declare parameters before adding them.
-                      `ConfigureParametersButton` itself returns null if
-                      the viewer lacks `canAddEdit`. */}
-                  <div className="mb-2 mr-6 flex justify-end">
-                    <ConfigureParametersButton
-                      parameterCount={parameterCount}
-                      canEdit={canAddEdit}
-                      onOpen={() => setIsParamSheetOpen(true)}
-                    />
-                  </div>
                   <ul>
                     {(testcase?.template?.caseFields || []).map(
                       (field, fieldIndex) => {
@@ -2107,9 +2236,18 @@ export default function TestCaseDetails() {
                         if (field.caseField.type.type === "Steps") {
                           fieldValue = testcase.steps || [];
                         }
+                        // Skip empty fields in view mode — except Steps when
+                        // the viewer can edit. The Configure Parameters
+                        // button lives inside the Steps field row, so
+                        // collapsing an empty Steps row in view mode would
+                        // leave a fresh case with no path to author
+                        // parameters without first clicking Edit.
+                        const isEditableStepsField =
+                          field.caseField.type.type === "Steps" && canAddEdit;
                         if (
                           !isEditMode &&
-                          (!fieldValue || fieldValue === emptyEditorContent)
+                          (!fieldValue || fieldValue === emptyEditorContent) &&
+                          !isEditableStepsField
                         )
                           return null;
                         return (
@@ -2133,6 +2271,24 @@ export default function TestCaseDetails() {
                                     <LockIcon className="w-4 h-4 shrink-0 text-muted-foreground/50" />
                                   </span>
                                 )}
+                              </div>
+                            )}
+                            {/* Configure Parameters entry point lives with
+                                the Steps caseField — parameters bind to
+                                step rows so they have no meaning when the
+                                template omits Steps. Right-aligned above
+                                the steps list mirrors how the previous
+                                top-of-panel placement read visually, just
+                                scoped to the right caseField. The button
+                                itself returns null if the viewer lacks
+                                `canAddEdit`. */}
+                            {field.caseField.type.type === "Steps" && (
+                              <div className="flex justify-end">
+                                <ConfigureParametersButton
+                                  parameterCount={parameterCount}
+                                  canEdit={canAddEdit}
+                                  onOpen={() => setIsParamSheetOpen(true)}
+                                />
                               </div>
                             )}
                             <FieldValueRenderer

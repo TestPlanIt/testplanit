@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { ApplicationArea, Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -13,7 +13,13 @@ import {
   computeWorstOfStatus,
   type RollupStatus,
 } from "~/lib/services/iterationRollup";
+import { assertReviewGatePasses } from "~/lib/services/reviewGate";
 import { emitIterationResultRecorded } from "~/lib/webhooks/event-emitters/iterationEvents";
+import {
+  isAlreadyPendingError,
+  isReviewGateError,
+  ReviewGateError,
+} from "~/lib/utils/errors";
 import { authOptions } from "~/server/auth";
 import { syncRepositoryCaseToElasticsearch } from "~/services/repositoryCaseSync";
 
@@ -47,11 +53,12 @@ class IterationNotFoundError extends Error {
 }
 
 /**
- * Resolves whether the authenticated user holds the `canReadSensitive`
- * permission on ANY of their role rows. Mirrors `resolveCanReadSensitive`
- * in `app/api/repository/cases/[caseId]/dataset/route.ts` — same broad
- * check (sensitive parameter values are sensitive across all surfaces, not
- * scoped per ApplicationArea).
+ * Resolves whether the authenticated user can see sensitive parameter
+ * values on iteration audit payloads. Iteration values surface as run
+ * results, so the gate is the `TestRunResultRestrictedFields`
+ * ApplicationArea's `canReadSensitive` grant — matching the gates already
+ * used by the iteration-matrix, iteration-values, and issue-body routes.
+ * System admins always pass.
  */
 async function resolveCanReadSensitive(userId: string): Promise<boolean> {
   const u = await prisma.user.findUnique({
@@ -63,7 +70,9 @@ async function resolveCanReadSensitive(userId: string): Promise<boolean> {
   const perms = u.role?.rolePermissions ?? [];
   return Array.isArray(perms)
     ? perms.some(
-        (p: { canReadSensitive?: boolean }) => p?.canReadSensitive === true
+        (p: { area?: ApplicationArea; canReadSensitive?: boolean }) =>
+          p?.area === ApplicationArea.TestRunResultRestrictedFields &&
+          p?.canReadSensitive === true
       )
     : false;
 }
@@ -668,6 +677,18 @@ export async function POST(req: NextRequest) {
         });
 
         if (!previousResult) {
+          // Review & Approval preflight (Plan 01-04). The auto-flip to
+          // in-progress on first result submission is a stateId update
+          // path; the schema @@deny rule from Plan 01 covers it via the
+          // ZenStack runtime, but this route uses raw prisma so we call
+          // the app preflight explicitly.
+          const gateApprovals = await assertReviewGatePasses(
+            tx,
+            "RUN",
+            input.testRunId,
+            input.inProgressStateId
+          );
+
           await tx.testRuns.update({
             where: {
               id: input.testRunId,
@@ -676,6 +697,29 @@ export async function POST(req: NextRequest) {
               stateId: input.inProgressStateId,
             },
           });
+
+          // Stamp consumedAt on every approval the gate consumed. Strict
+          // transitive gates can return multiple ids when one transition
+          // crosses several gated states; a short stamp count means another
+          // caller raced us — surface as REVIEW_REQUIRED so the whole
+          // transaction rolls back.
+          if (gateApprovals && gateApprovals.approvedRequestIds.length > 0) {
+            const stamp = await tx.reviewRequest.updateMany({
+              where: {
+                id: { in: gateApprovals.approvedRequestIds },
+                consumedAt: null,
+              },
+              data: { consumedAt: new Date() },
+            });
+            if (stamp.count !== gateApprovals.approvedRequestIds.length) {
+              throw new ReviewGateError(
+                "REVIEW_REQUIRED",
+                "RUN",
+                input.testRunId,
+                input.inProgressStateId
+              );
+            }
+          }
         }
       }
 
@@ -724,6 +768,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Iteration not found", code: "ITERATION_NOT_FOUND" },
         { status: 404 }
+      );
+    }
+
+    // Review & Approval: translate the typed ReviewGateError from the
+    // auto-flip preflight into a structured 403 BEFORE the Prisma P2025
+    // and generic 500 fallbacks.
+    if (isReviewGateError(error)) {
+      return NextResponse.json(
+        {
+          error: {
+            code: error.code,
+            entityType: error.entityType,
+            entityId: error.entityId,
+            toStateId: error.toStateId,
+          },
+        },
+        { status: 403 }
+      );
+    }
+
+    if (isAlreadyPendingError(error)) {
+      return NextResponse.json(
+        { error: { code: "PENDING_REVIEW_EXISTS" } },
+        { status: 409 }
       );
     }
 

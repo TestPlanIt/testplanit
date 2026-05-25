@@ -5,6 +5,7 @@ import DynamicIcon from "@/components/DynamicIcon";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { ManageTags } from "@/components/ManageTags";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
+import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -63,6 +64,7 @@ interface FieldValueInputProps {
   workflowsData?: (Pick<PrismaWorkflow, "id" | "name"> & {
     icon?: { name: string } | null;
     color?: { value: string } | null;
+    requiresReview?: boolean | null;
   })[]; // Correct shape based on schema
   availableTagsData?: Pick<PrismaTag, "id" | "name">[];
   canCreateTags?: boolean; // Add permission prop
@@ -152,20 +154,24 @@ export function FieldValueInput({
   }
 
   if (fieldKey === "state") {
+    // Reuse the shared WorkflowStateDisplay so the "requires review" warning
+    // glyph appears consistently here (bulk-edit Select) and on the case /
+    // session pages. Falls back to the plain label when icon/color rows are
+    // missing for a workflow — same defensive behavior as the prior inline
+    // render.
     const workflowOptions =
       workflowsData?.map((workflow) => ({
         value: workflow.id.toString(),
         label: (
-          <div className="flex items-center">
-            {workflow.icon && (
-              <DynamicIcon
-                className="shrink-0 mr-1 h-4 w-4"
-                name={workflow.icon.name as IconName}
-                color={workflow.color?.value}
-              />
-            )}
-            {workflow.name}
-          </div>
+          <WorkflowStateDisplay
+            state={{
+              name: workflow.name,
+              icon: { name: (workflow.icon?.name ?? "circle") as IconName },
+              color: { value: workflow.color?.value ?? "" },
+              requiresReview: workflow.requiresReview,
+            }}
+            size="sm"
+          />
         ),
       })) || [];
     return (

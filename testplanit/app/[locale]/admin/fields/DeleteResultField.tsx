@@ -102,7 +102,7 @@ export function DeleteResultField({
                 {t.rich("confirmMessage", {
                   name: resultfield.displayName,
                   strong: (chunks: any) => (
-                    <span className="font-bold">{chunks}</span>
+                    <span className="font-bold break-all">{chunks}</span>
                   ),
                 })}
               </AlertDialogDescription>

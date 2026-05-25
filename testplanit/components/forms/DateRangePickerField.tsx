@@ -280,7 +280,13 @@ export function DateRangePickerField<T extends FieldValues = FieldValues>({
       render={({ field }) => (
         <FormItem className={cn("flex flex-col", className)}>
           {label && (
-            <FormLabel className="flex items-center">
+            // `w-fit` constrains the label's hit area to its visible content.
+            // FormLabel auto-attaches `htmlFor={formItemId}` pointing at the
+            // trigger button below; a `flex` label without `w-fit` stretches
+            // full-width and turns the empty space to the right of the text
+            // into a hidden trigger — that "phantom" hit area also fights
+            // with outside-click-to-close once the picker is open.
+            <FormLabel className="flex w-fit items-center">
               {label}
               {helpKey && <HelpPopover helpKey={helpKey} />}
             </FormLabel>

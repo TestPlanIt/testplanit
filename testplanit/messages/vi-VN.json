@@ -171,7 +171,9 @@
       "reconfigure": "Cấu hình lại và thử lại"
     },
     "permissions": {
-      "addEdit": "Thêm/Chỉnh sửa"
+      "addEdit": "Thêm/Chỉnh sửa",
+      "approve": "Chấp thuận",
+      "readSensitive": "Đọc kỹ thông tin nhạy cảm"
     },
     "auth": {
       "internal": "Email/Mật khẩu",
@@ -640,6 +642,8 @@
       "aiModels": "Mô hình AI",
       "integrations": "Tích hợp",
       "quickscript": "QuickScript",
+      "advanced": "Trình độ cao",
+      "reviews": "Đánh giá",
       "webhooks": "Webhooks",
       "shares": "Cổ phiếu",
       "datasets": "Bộ dữ liệu được chia sẻ",
@@ -676,7 +680,9 @@
       "newerVersion": "Phiên bản mới hơn",
       "deletedUser": "Người dùng đã bị xóa",
       "restrictedField": "Trường hạn chế",
-      "backToTestCase": "Quay lại trường hợp kiểm thử"
+      "backToTestCase": "Quay lại trường hợp kiểm thử",
+      "selectDeselectAllApprove": "Chọn hoặc bỏ chọn phê duyệt cho tất cả các khu vực liên quan.",
+      "selectDeselectAllReadSensitive": "Chọn hoặc bỏ chọn chế độ đọc cho tất cả các khu vực liên quan."
     },
     "labels": {
       "projects": "{count, plural, =1 {# Dự án} other {# Dự án}}",
@@ -1378,7 +1384,9 @@
           "duplicated": "Đã sao chép",
           "stateChanged": "Trạng thái đã thay đổi",
           "resultAdded": "Kết quả đã được thêm",
-          "resultRecorded": "Kết quả đã được ghi nhận"
+          "resultRecorded": "Kết quả đã được ghi nhận",
+          "reviewRequested": "Yêu cầu xem xét",
+          "reviewCompleted": "Đánh giá đã hoàn tất"
         },
         "iterationResultHelp": "Sự kiện này được kích hoạt mỗi khi kết quả của một vòng lặp được ghi lại — đạt, không đạt, bỏ qua hoặc bất kỳ trạng thái nào khác. Nên sử dụng tiết kiệm trong các lần chạy tự động hóa dài (một sự kiện cho mỗi vòng lặp).",
         "events": {
@@ -1809,6 +1817,19 @@
         "disconnectWarning3": "Ngừng việc đưa ngữ cảnh mã vào các bản xuất do AI tạo ra.",
         "disconnectSuccess": "Kho lưu trữ mã nguồn đã bị ngắt kết nối",
         "disconnectError": "Không thể ngắt kết nối kho lưu trữ mã."
+      },
+      "advanced": {
+        "title": "Trình độ cao",
+        "description": "Các tùy chọn bật/tắt riêng cho từng dự án đối với các tính năng mang tính chủ quan. Các tùy chọn mới sẽ xuất hiện ở đây khi chúng được giới thiệu.",
+        "reviewWorkflow": {
+          "label": "Kích hoạt quy trình xem xét",
+          "description": "Khi được kích hoạt, quá trình chuyển đổi sang các trạng thái yêu cầu xem xét sẽ được kiểm soát bằng yêu cầu xem xét đã được phê duyệt. Người kiểm thử sẽ thấy nút \"Yêu cầu xem xét\"; người xem xét sẽ nhận được thông báo.",
+          "enabledToast": "Quy trình xem xét đã được kích hoạt cho dự án này.",
+          "disabledToast": "Quy trình xem xét đã bị vô hiệu hóa cho dự án này.",
+          "saveError": "Không thể cập nhật cài đặt quy trình đánh giá.",
+          "systemDisabledTitle": "Quy trình xem xét đã bị tắt trên toàn hệ thống.",
+          "systemDisabledDescription": "Tùy chọn dự án của bạn đã được lưu, nhưng quá trình sẽ không được kích hoạt cho đến khi quản trị viên hệ thống bật tính năng này trong mục Quản trị → Quy trình làm việc."
+        }
       }
     },
     "matrix": {
@@ -3016,6 +3037,113 @@
       "deferredMessage": "Tệp đính kèm này sẽ bị xóa khi bạn lưu."
     }
   },
+  "reviews": {
+    "banner": {
+      "pendingMessage": "Yêu cầu xem xét từ <assignee></assignee> cho quá trình chuyển đổi <fromState></fromState> → <toState></toState> <ago></ago>",
+      "changesRequestedTitle": "Những thay đổi được yêu cầu",
+      "rejectedTitle": "Đánh giá bị từ chối",
+      "requestAgain": "Yêu cầu xem xét lại",
+      "decidedBy": "Được quyết định bởi"
+    },
+    "cancel": {
+      "title": "Bạn muốn hủy yêu cầu đánh giá này?",
+      "description": "Người thẩm định sẽ không thể xử lý yêu cầu này nữa. Bạn có thể gửi yêu cầu mới sau đó.",
+      "confirm": "Yêu cầu hủy bỏ",
+      "success": "Yêu cầu xem xét đã bị hủy bỏ.",
+      "error": "Không thể hủy yêu cầu xem xét. Vui lòng thử lại sau."
+    },
+    "list": {
+      "pendingTooltip": "Đang chờ xem xét từ {assignee}"
+    },
+    "transitionGate": {
+      "blockedByGate": "Cần có sự chấp thuận cho \"{gateName}\" trước khi chuyển đổi này. Sử dụng \"Yêu cầu xem xét\" để bắt đầu.",
+      "gatedOptionBadge": "Cần xem xét lại",
+      "gatedStatesNotSelectable": "Không thể chọn các tiểu bang nằm ở hoặc vượt qua một tiểu bang bị chặn khi tạo. Hãy chọn một tiểu bang trước cửa kiểm soát đầu tiên, sau đó sử dụng Yêu cầu xem xét để vượt qua nó.",
+      "saveBlockedByFormErrors": "Hãy khắc phục các lỗi được đánh dấu trong biểu mẫu trước khi lưu.",
+      "bulkBlockedSummary": "{count, plural, one {# trường hợp} other {# trường hợp}} bị chặn bởi cổng \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, và # nhiều hơn nữa}}. Mỗi trường hợp bị chặn cần được xem xét phê duyệt cho \"{gateName}\" trước khi chuyển đổi này.",
+      "toastReviewRequired": "Cần có sự chấp thuận trước khi thực hiện chuyển đổi này. Vui lòng yêu cầu xem xét lại và thử lại sau khi được chấp thuận.",
+      "toastPendingReviewExists": "Quá trình xem xét cho giao dịch này đang chờ xử lý. Hãy chờ quyết định hoặc hủy bỏ trước khi thử lại."
+    },
+    "inbox": {
+      "iconAria": "{count, plural, =0 {Hộp thư đến đánh giá} one {Hộp thư đến đánh giá, # đang chờ xử lý} other {Hộp thư đến đánh giá, # đang chờ xử lý}}",
+      "pageTitle": "Đánh giá",
+      "pageDescription": "Các yêu cầu xem xét đang chờ xử lý được giao cho bạn (trực tiếp hoặc thông qua vai trò bạn nắm giữ).",
+      "pageDescriptionDecided": "Xem lại các yêu cầu mà bạn đã quyết định.",
+      "tabPending": "Chưa giải quyết",
+      "tabDecided": "Quyết định",
+      "emptyDecided": "Bạn vẫn chưa quyết định viết bài đánh giá nào.",
+      "empty": "Không còn đánh giá nào đang chờ xử lý. Bạn đã hoàn tất mọi thủ tục.",
+      "featureDisabled": "Tính năng quy trình đánh giá hiện đang bị vô hiệu hóa. Các đánh giá đang chờ xử lý vẫn được lưu giữ và sẽ xuất hiện trở lại khi tính năng này được kích hoạt lại.",
+      "columnEntity": "Thực thể",
+      "columnProject": "Dự án",
+      "columnRequester": "Người yêu cầu",
+      "columnTransition": "Chuyển đổi",
+      "columnTransitionFrom": "Từ",
+      "columnTransitionTo": "ĐẾN",
+      "columnRequestedAt": "Yêu cầu tại",
+      "columnDecidedAt": "Quyết định tại",
+      "columnStatus": "Trạng thái",
+      "columnActions": "Hành động",
+      "actionApprove": "Chấp thuận",
+      "actionRequestChanges": "Yêu cầu thay đổi",
+      "actionReject": "Từ chối",
+      "filterEntityType": "Loại thực thể",
+      "filterProject": "Dự án",
+      "filterAllEntityTypes": "Tất cả các loại thực thể",
+      "filterEntityTypeCase": "Các trường hợp thử nghiệm",
+      "filterEntityTypeRun": "Chạy thử nghiệm",
+      "filterEntityTypeSession": "Phiên họp",
+      "filterAllProjects": "Tất cả các dự án"
+    },
+    "requester": {
+      "openButton": "Yêu cầu xem xét",
+      "sheetDescription": "Hãy gửi thực thể này để xem xét trước khi chuyển sang trạng thái mục tiêu.",
+      "assigneeLabel": "Người được chỉ định",
+      "assigneePlaceholder": "Chọn người dùng hoặc vai trò",
+      "usersHoldRole": "{count, plural, one {# người dùng giữ vai trò này} other {# người dùng giữ vai trò này}}",
+      "targetStateLabel": "Trạng thái mục tiêu",
+      "targetStatePlaceholder": "Chọn tiểu bang mục tiêu",
+      "commentLabel": "Bình luận",
+      "commentPlaceholder": "Hãy giải thích bạn cần người đánh giá xem xét điều gì.",
+      "assigneeRequired": "Chọn người được chỉ định.",
+      "targetStateRequired": "Chọn tiểu bang mục tiêu.",
+      "submitSuccess": "Yêu cầu xem xét đã được tạo.",
+      "alreadyPendingError": "Hiện tại, đơn vị này đang chờ được xem xét.",
+      "cannotSelfAssign": "Bạn không thể tự mình viết đánh giá; hãy chọn người dùng khác hoặc vai trò khác.",
+      "defaultComment": "Vui lòng xem lại quá trình chuyển đổi từ {fromState} → {toState}.",
+      "defaultCommentRole": "Tôi đang yêu cầu sự chấp thuận từ nhóm {roleName} để chuyển đổi từ {fromState} → {toState}.",
+      "ineligibleAssigneeError": "Người dùng/vai trò này không thể phê duyệt đánh giá cho khu vực này. Hãy chọn người khác.",
+      "ineligibleAssigneeErrorUser": "{name} Không thể phê duyệt đánh giá cho khu vực này. Vui lòng chọn người dùng hoặc vai trò khác.",
+      "ineligibleAssigneeErrorRole": "Vai trò {roleName} không thể phê duyệt đánh giá cho khu vực này. Hãy chọn một vai trò hoặc người dùng khác."
+    },
+    "assigneeChip": {
+      "emptyMembers": "Hiện không có thành viên nào đủ điều kiện tham gia dự án nắm giữ vai trò này.",
+      "unnamedUser": "(Người dùng ẩn danh)"
+    },
+    "reviewer": {
+      "approve": "Chấp thuận",
+      "requestChanges": "Yêu cầu thay đổi",
+      "reject": "Từ chối",
+      "approveConfirmTitle": "Bạn có đồng ý yêu cầu xem xét này không?",
+      "approveConfirmDescription": "Phê duyệt sẽ cho phép <requester></requester> chuyển đổi <name></name> sang <state></state>.",
+      "approvalNoteLabel": "Ghi chú phê duyệt",
+      "approvalNotePlaceholder": "Thêm ghi chú tùy chọn cho người yêu cầu (hiển thị bên cạnh phần phê duyệt).",
+      "requestChangesDescription": "Hãy cho người yêu cầu biết những thay đổi cần thiết trước khi bạn có thể phê duyệt quá trình chuyển đổi này.",
+      "requestChangesCommentPlaceholder": "Hãy giải thích những gì cần thay đổi.",
+      "rejectTitle": "Bạn muốn từ chối yêu cầu đánh giá này?",
+      "rejectDescription": "Từ chối các khối <requester></requester> khi chuyển đổi từ <name></name> sang <state></state>. Cần tạo yêu cầu xem xét mới để thử lại.",
+      "rejectCommentPlaceholder": "Hãy giải thích lý do tại sao bạn từ chối yêu cầu này.",
+      "commentLabel": "Bình luận",
+      "confirmRequestChanges": "Gửi",
+      "approveSuccess": "Đánh giá đã được chấp thuận.",
+      "requestChangesSuccess": "Yêu cầu thay đổi.",
+      "rejectSuccess": "Đánh giá bị từ chối.",
+      "ineligibleError": "Bạn không còn đủ điều kiện để quyết định yêu cầu xem xét này nữa.",
+      "alreadyDecidedError": "Quyết định về việc xem xét này đã được đưa ra.",
+      "decideError": "Không thể ghi nhận quyết định của bạn. Vui lòng thử lại sau.",
+      "panelSummary": "Yêu cầu xem xét từ {requesterName}: chuyển sang {targetStateName}"
+    }
+  },
   "runs": {
     "notFound": "Không tìm thấy kết quả chạy thử nghiệm.",
     "add": {
@@ -3193,6 +3321,7 @@
       "exportTemplates": "Mẫu xuất khẩu",
       "codeRepositories": "Kho lưu trữ mã nguồn",
       "quickScript": "QuickScript",
+      "advanced": "Trình độ cao",
       "sso": "Xác thực",
       "security": "Bảo vệ",
       "trash": "Rác",
@@ -4190,6 +4319,36 @@
     },
     "workflows": {
       "description": "Quản lý quy trình làm việc của trường hợp kiểm thử",
+      "systemFeatureCard": {
+        "title": "Quy trình xem xét",
+        "description": "Thực thi quy trình xem xét bằng cách kiểm soát các bước chuyển đổi trong quy trình làm việc cho đến khi được phê duyệt. Khi được bật, các dự án có thể chọn tham gia hoặc không tham gia riêng lẻ thông qua cài đặt Nâng cao của chúng. Tắt tính năng này để ngăn chặn việc kiểm soát phê duyệt quy trình làm việc.",
+        "toggleAriaLabel": "Bật/tắt tính năng quy trình đánh giá",
+        "adminOnlyNotice": "Chỉ quản trị viên mới có thể thay đổi cài đặt này.",
+        "updateSuccessEnabled": "Quy trình xem xét đã được kích hoạt.",
+        "updateSuccessDisabled": "Quy trình xem xét đã bị vô hiệu hóa.",
+        "updateError": "Không thể cập nhật cài đặt quy trình xem xét. Vui lòng thử lại sau.",
+        "remindersToggleLabel": "Gửi thông báo nhắc nhở cho các đánh giá đang chờ xử lý",
+        "remindersToggleAriaLabel": "Bật/tắt thông báo nhắc nhở đánh giá",
+        "thresholdLabel": "Nhắc nhở người đánh giá sau",
+        "thresholdUnit": "ngày(s)",
+        "thresholdSaveButton": "Cứu",
+        "thresholdHelp": "Yêu cầu xem xét có thể chờ xử lý bao nhiêu ngày trước khi người đánh giá nhận được thông báo nhắc nhở? Yêu cầu mới bắt đầu tính thời gian từ khi gửi.",
+        "thresholdUpdateSuccess": "Cài đặt nhắc nhở xem lại đã được cập nhật.",
+        "thresholdUpdateError": "Không thể cập nhật cài đặt nhắc nhở. Vui lòng thử lại sau."
+      },
+      "projectReviewToggleList": {
+        "columnHeader": "Quy trình xem xét",
+        "filterPlaceholder": "Lọc các dự án...",
+        "enabledToast": "Quy trình xem xét đã được bật cho {name}",
+        "disabledToast": "Quy trình xem xét đã bị vô hiệu hóa cho {name}",
+        "saveError": "Không thể cập nhật cài đặt quy trình xem xét. Vui lòng thử lại sau.",
+        "emptyState": "Không có dự án nào phù hợp với bộ lọc của bạn."
+      },
+      "editWorkflow": {
+        "requiresReviewLabel": "Cần xem xét lại",
+        "requiresReviewFeatureDisabled": "Tính năng quy trình xem xét đã bị vô hiệu hóa ở cấp độ hệ thống. Hãy bật/tắt cài đặt Nâng cao của dự án hoặc đặt TESTPLANIT_REVIEW_FEATURE_ENABLED để kích hoạt lại.",
+        "requiresReviewDefaultDisabled": "Trạng thái quy trình làm việc mặc định không thể yêu cầu xem xét — các thực thể mới được đưa vào đây và không có trạng thái trước đó để được kiểm soát."
+      },
       "add": {
         "button": "Thêm quy trình làm việc",
         "title": "Thêm quy trình làm việc mới",
@@ -5193,7 +5352,31 @@
         "reviewGeneratedCases": "Xem xét các trường hợp kiểm thử được tạo ra",
         "generateFromUrlCompleteTitle": "Các trang đã được thu thập thông tin thành công",
         "generateFromUrlCompleteMessage": "{pages, plural, one {# trang} other {# trang}} được thu thập từ {url} trong dự án \"{projectName}\". Nhấp vào để xem lại và tạo các trường hợp kiểm thử.",
-        "generateFromUrlFailedTitle": "Quá trình thu thập dữ liệu URL thất bại"
+        "generateFromUrlFailedTitle": "Quá trình thu thập dữ liệu URL thất bại",
+        "reviewRequestedTitle": "Yêu cầu xem xét",
+        "reviewApprovedTitle": "Đánh giá đã được phê duyệt",
+        "reviewChangesRequestedTitle": "Những thay đổi được yêu cầu",
+        "reviewRejectedTitle": "Đánh giá bị từ chối",
+        "reviewCancelledTitle": "Yêu cầu xem xét đã bị hủy bỏ",
+        "reviewRequestedAction": "Tôi đã yêu cầu bạn xem xét lại",
+        "reviewApprovedAction": "Đã phê duyệt yêu cầu xem xét của bạn vào ngày...",
+        "reviewChangesRequestedAction": "Tôi đã yêu cầu thay đổi yêu cầu xem xét của bạn.",
+        "reviewRejectedAction": "Yêu cầu xem xét của bạn đã bị từ chối vào ngày...",
+        "reviewCancelledAction": "đã hủy yêu cầu xem xét vào",
+        "reviewEntityLabelCase": "trường hợp thử nghiệm",
+        "reviewEntityLabelRun": "chạy thử nghiệm",
+        "reviewEntityLabelSession": "phiên họp",
+        "reviewTransition": "Chuyển đổi: {from} → {to}",
+        "reviewCommentPreview": "Bình luận: {comment}",
+        "reviewRequestedEmailMessage": "{actorName} đã yêu cầu bạn xem xét {entityLabel} \"{entityName}\" trong dự án \"{projectName}\".",
+        "reviewApprovedEmailMessage": "{actorName} đã chấp thuận yêu cầu đánh giá của bạn vào ngày {entityLabel} \"{entityName}\" trong dự án \"{projectName}\".",
+        "reviewChangesRequestedEmailMessage": "{actorName} đã yêu cầu thay đổi đối với yêu cầu xem xét của bạn cho {entityLabel} \"{entityName}\" trong dự án \"{projectName}\".",
+        "reviewRejectedEmailMessage": "{actorName} đã từ chối yêu cầu đánh giá của bạn vào {entityLabel} \"{entityName}\" trong dự án \"{projectName}\".",
+        "reviewCancelledEmailMessage": "{actorName} đã hủy yêu cầu xem xét trên {entityLabel} \"{entityName}\" trong dự án \"{projectName}\".",
+        "reviewReminderTitle": "Đang chờ xem xét",
+        "reviewReminderAction": "vẫn đang chờ đánh giá của bạn về",
+        "reviewReminderEmailMessage": "Nhắc nhở: Yêu cầu xem xét của {actorName}đối với {entityLabel} \"{entityName}\" trong dự án \"{projectName}\" đã bị chờ xử lý trong {hoursPending} giờ.",
+        "reviewReminderHoursPending": "Đang chờ xử lý trong {hoursPending, plural, one {# giờ} other {# giờ}}"
       }
     },
     "issues": {
@@ -5549,7 +5732,9 @@
       "permissions": {
         "canAddEdit": "## Thêm/Chỉnh sửa\nCho biết liệu vai trò này có thể thêm và chỉnh sửa khu vực ứng dụng liên quan hay không.",
         "canDelete": "## Xóa\nCho biết liệu vai trò này có thể xóa khu vực ứng dụng liên quan hay không.",
-        "canClose": "## Đóng\nCho biết liệu vai trò này có thể đóng khu vực ứng dụng liên quan hay không."
+        "canClose": "## Đóng\nCho biết liệu vai trò này có thể đóng khu vực ứng dụng liên quan hay không.",
+        "canApprove": "## Phê duyệt\nCho biết liệu vai trò này có thể phê duyệt các yêu cầu xem xét cho khu vực ứng dụng liên quan hay không. Chỉ áp dụng cho Kho lưu trữ trường hợp thử nghiệm, Chạy thử nghiệm và Phiên.",
+        "canReadSensitive": "## Đọc thông tin nhạy cảm\nCho biết liệu vai trò này có thể xem các giá trị tham số nhạy cảm khi đọc dữ liệu trường bị hạn chế hay không. Nếu không có quyền này, các giá trị nhạy cảm sẽ hiển thị dưới dạng ●●●●●● trong các hàng của tập dữ liệu và các ô lặp, và dưới dạng [ĐÃ BỊ ẨN] trong phần thân điền trước sự cố và xuất CSV. Chỉ áp dụng cho Trường bị hạn chế của Trường hợp kiểm thử và Trường bị hạn chế của Kết quả chạy kiểm thử."
       }
     },
     "group": {
@@ -5655,6 +5840,7 @@
       "isDefault": "## Mặc định\nCho biết liệu quy trình làm việc này có phải là mặc định cho dự án của bạn hay không.\n\n- Quy trình làm việc mặc định được chọn trước cho các lần chạy thử nghiệm, phiên và tự động hóa mới.",
       "isEnabled": "## Đã bật\nCho biết liệu quy trình làm việc này có được bật hay không.",
       "isActive": "## Hoạt động\nCho biết trạng thái quy trình công việc này có đang hoạt động và sẵn sàng sử dụng hay không.\n\n- Các quy trình công việc đang hoạt động có thể được chọn khi cập nhật các lần chạy thử nghiệm, phiên hoặc tự động hóa.\n- Các quy trình công việc không hoạt động sẽ bị ẩn khỏi lựa chọn nhưng vẫn được lưu giữ trong các mục hiện có.",
+      "requiresReview": "## Yêu cầu xem xét\nKhi BẬT, việc chuyển đổi một trường hợp, lần chạy thử nghiệm hoặc phiên sang trạng thái này sẽ bị chặn bởi yêu cầu xem xét đã được phê duyệt. Nếu không có yêu cầu được phê duyệt, quá trình chuyển đổi sẽ bị chặn.\n\n- Các yêu cầu xem xét đang chờ xử lý hiện có sẽ được giữ nguyên một cách im lặng khi tính năng cấp hệ thống TẮT và sẽ xuất hiện lại khi được bật lại.\n- Người xem xét được chọn khi người kiểm thử nhấp vào Yêu cầu xem xét từ trang chi tiết thực thể.\n\nNếu tính năng cấp hệ thống bị vô hiệu hóa, công tắc này sẽ bị khóa. Hãy bật lại công tắc này từ thẻ Quy trình xem xét ở trên để bật tính năng này.",
       "projects": "## Dự án\nCho biết các dự án có thể sử dụng quy trình làm việc này."
     },
     "testResult": {
@@ -6937,6 +7123,16 @@
     "mentions": {
       "notAMember": "Không phải là thành viên dự án",
       "noUsersFound": "Không tìm thấy người dùng nào"
+    },
+    "type": {
+      "reviewRequest": "Yêu cầu xem xét",
+      "reviewDecision": {
+        "approved": "Tán thành",
+        "changesRequested": "Những thay đổi được yêu cầu",
+        "rejected": "Vật bị loại bỏ",
+        "cancelled": "Đã hủy",
+        "generic": "Quyết định xem xét lại"
+      }
     }
   },
   "Trial": {

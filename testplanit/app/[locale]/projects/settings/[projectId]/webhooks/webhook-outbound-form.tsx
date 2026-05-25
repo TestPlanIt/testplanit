@@ -98,6 +98,8 @@ const EVENT_CATALOG = {
     // Appended last so existing form-test selectors that index by
     // position are unaffected.
     "iteration.result.recorded",
+    "test_run.review_requested",
+    "test_run.review_completed",
   ],
   sessions: [
     "session.created",
@@ -105,9 +107,17 @@ const EVENT_CATALOG = {
     "session.completed",
     "session.duplicated",
     "session.result_added",
+    "session.review_requested",
+    "session.review_completed",
   ],
   issues: ["issue.created", "issue.updated", "issue.deleted"],
-  cases: ["case.created", "case.updated", "case.deleted"],
+  cases: [
+    "case.created",
+    "case.updated",
+    "case.deleted",
+    "case.review_requested",
+    "case.review_completed",
+  ],
 } as const;
 
 const DEFAULT_PRESET: string[] = [];
@@ -175,6 +185,8 @@ const EVENT_VERB_I18N_PATH: Record<string, string> = {
   // first ".", so for "iteration.result.recorded" the lookup key is the
   // literal "result.recorded" (not just "recorded").
   "result.recorded": "projects.settings.webhooks.eventVerbs.resultRecorded",
+  review_requested: "projects.settings.webhooks.eventVerbs.reviewRequested",
+  review_completed: "projects.settings.webhooks.eventVerbs.reviewCompleted",
 };
 
 function eventVerbI18nPath(eventName: string): string {

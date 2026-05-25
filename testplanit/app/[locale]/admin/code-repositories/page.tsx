@@ -413,7 +413,7 @@ function CodeRepositoryList() {
                 {t.rich("delete.confirmMessage", {
                   name: repoToDelete?.name ?? t("delete.fallbackName"),
                   strong: (chunks) => (
-                    <span className="font-medium">{chunks}</span>
+                    <span className="font-medium break-all">{chunks}</span>
                   ),
                 })}
               </p>

@@ -20,6 +20,10 @@ vi.mock("@/lib/prisma", () => {
   const prismaMock: any = {
     workflows: {
       findFirst: vi.fn(),
+      // `resolveCreateStateRemap` enumerates gated states via findMany to
+      // walk the strict-transitive chain. Returning an empty array keeps
+      // the smoke flow on the no-gates-in-scope branch.
+      findMany: vi.fn().mockResolvedValue([]),
     },
     templates: {
       findFirst: vi.fn(),
@@ -68,6 +72,14 @@ vi.mock("@/lib/prisma", () => {
     },
     projects: {
       findUnique: vi.fn(),
+    },
+    // `resolveCreateStateRemap` (wired into the import route by the v0.30.0
+    // strict-transitive create-gate fix) calls `isReviewFeatureSystemEnabled`
+    // which reads AppConfig. A `findUnique` that resolves to `null` keeps the
+    // helper on the default-on path and lets the import flow proceed without
+    // exercising any review-gate semantics in these smokes.
+    appConfig: {
+      findUnique: vi.fn().mockResolvedValue(null),
     },
   };
   prismaMock.$transaction = vi.fn(async (cb: (tx: any) => Promise<any>) =>

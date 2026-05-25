@@ -1,8 +1,9 @@
 "use server";
 
-import { RepositoryCaseSource } from "@prisma/client";
+import { RepositoryCaseSource, WorkflowScope } from "@prisma/client";
 import { z } from "zod/v4";
 import { prisma } from "~/lib/prisma";
+import { resolveCreateStateRemap } from "~/lib/services/reviewGate";
 import { getServerAuthSession } from "~/server/auth";
 import { emptyEditorContent } from "~/app/constants/backend";
 import { ensureTipTapJSON } from "~/utils/tiptapConversion";
@@ -353,6 +354,27 @@ export async function importGeneratedTestCases(
           }
         }
 
+        // Strict-transitive gate: if the caller picked a state at or past
+        // the first gated state in this project's CASES scope, remap to the
+        // default state. The schema gate only fires on `update`, so without
+        // this remap a server-action create could birth a case beyond a
+        // gate without any approval.
+        const effectiveStateId =
+          (await resolveCreateStateRemap(
+            tx,
+            data.projectId,
+            WorkflowScope.CASES,
+            data.stateId
+          )) ?? data.stateId;
+        let effectiveStateName = data.stateName;
+        if (effectiveStateId !== data.stateId) {
+          const remapped = await tx.workflows.findUnique({
+            where: { id: effectiveStateId },
+            select: { name: true },
+          });
+          effectiveStateName = remapped?.name ?? data.stateName;
+        }
+
         for (const testCase of data.testCases) {
           try {
             const calculatedOrder = data.maxOrder + importedCount + 1;
@@ -387,7 +409,7 @@ export async function importGeneratedTestCases(
                 templateId: data.templateId,
                 name: testCase.name.slice(0, 255),
                 source: data.source ?? RepositoryCaseSource.API,
-                stateId: data.stateId,
+                stateId: effectiveStateId,
                 order: calculatedOrder,
                 creatorId: userId,
                 automated: testCase.automated ?? false,
@@ -496,8 +518,8 @@ export async function importGeneratedTestCases(
                 templateId: data.templateId,
                 templateName: data.templateName,
                 name: testCase.name.slice(0, 255),
-                stateId: data.stateId,
-                stateName: data.stateName,
+                stateId: effectiveStateId,
+                stateName: effectiveStateName,
                 estimate: testCase.estimate ?? 0,
                 order: calculatedOrder,
                 creatorId: userId,

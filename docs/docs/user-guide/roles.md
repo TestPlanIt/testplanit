@@ -26,11 +26,8 @@ The Roles page displays a table listing all defined roles (excluding those marke
 2. A modal dialog will appear.
 3. Enter a unique **Name** for the new Role (e.g., "Tester", "Test Lead", "Read Only").
 4. Use the **Default** switch to designate this role as the default for new users. If another role is currently the default, setting this will automatically unset the default status for the other role.
-5. Click **Submit**.
-
-    :::info Permissions Note
-    Currently, the specific permissions associated with each Role are predefined within the application's codebase and are not configurable through the UI. This section only allows managing the Role names and the default assignment.
-    :::
+5. Click **Submit** to create the role.
+6. Edit the new role to set per-area permissions — see [Editing an Existing Role](#editing-an-existing-role) below. Newly-created roles start with every permission off; assign them deliberately.
 
 ## Editing an Existing Role
 
@@ -39,7 +36,8 @@ The Roles page displays a table listing all defined roles (excluding those marke
 3. A modal dialog will appear. You can modify:
     - **Name**: Change the name of the Role.
     - **Default**: Change the default status (cannot be unset directly if it is the current default; set another role as default instead).
-4. Click **Submit**.
+    - **Per-area permissions**: For every Application Area (see the list below), toggle which actions the role can perform — **Add/Edit**, **Delete**, **Complete**, **Read Sensitive**, and **Approve**. Not every column is meaningful on every row; the UI hides toggles that don't apply (for example, **Approve** only shows on Test Case Repository, Test Runs, and Sessions, and **Read Sensitive** only shows on the two Restricted Fields areas).
+4. Click **Submit**. Changes apply immediately to every user who effectively holds this role on a project.
 
 ## Deleting a Role
 
@@ -91,9 +89,11 @@ When a user is assigned to a project, they are also assigned a project-specific 
 - **Tags**: Creating new tags.
 :::
 
-Each role defines specific permissions (e.g., Add/Edit, Delete, Complete, Read Sensitive) for these areas.
+Each role defines specific permissions (e.g., Add/Edit, Delete, Complete, Read Sensitive, Approve) for these areas.
 
 The `Read Sensitive` permission is only honored on the **Test Case Restricted Fields** and **Test Run Result Restricted Fields** areas, where it controls whether the role can view sensitive parameter values; the other areas ignore it. Without this grant, sensitive values render as `••••••` in dataset rows and iteration cells, and as `[REDACTED]` in the issue-prefill body and CSV exports.
+
+The `Approve` permission is only honored on the **Test Case Repository**, **Test Runs**, and **Sessions** areas (approval is meaningless outside the three review-relevant scopes, so the UI hides the toggle on every other area row). It gates eligibility under [Review & Approval](./review-approvals.md): only users whose effective project role grants `Approve` on the entity's area appear in the assignee picker, the `requestReview` server action rejects mismatched assignees with a typed error, and the same check runs again at decision time on the reviewer's side. System administrators (access = `ADMIN`) bypass the decision-time check so they can always unblock stalled reviews — but they still only appear as eligible assignees if their role grants `Approve` for the area.
 
 **Example:** A "Tester" role might have `Add/Edit` permissions for `TestRunResults` and `SessionResults` but not for `TestCaseRepository` and `Milestones`.
 

@@ -19,6 +19,19 @@ async function setupExtensions() {
      WHERE "isDeleted" = false`
   );
   console.log("GIN trigram index on RepositoryCases.name ensured.");
+
+  // Partial unique index: at most one PENDING ReviewRequest per (entityType, entityId)
+  // across all toStateId values (D-11, D-12). Prisma's schema language can't express
+  // partial unique indexes. UNIQUE indexes cannot use CONCURRENTLY inside a transaction;
+  // $executeRawUnsafe runs outside a Prisma transaction and IF NOT EXISTS makes it idempotent.
+  await prisma.$executeRawUnsafe(
+    `CREATE UNIQUE INDEX IF NOT EXISTS review_request_one_pending_per_entity
+     ON "ReviewRequest" ("entityType", "entityId")
+     WHERE status = 'PENDING' AND "isDeleted" = false`
+  );
+  console.log(
+    "Partial unique index review_request_one_pending_per_entity ensured."
+  );
 }
 
 setupExtensions()

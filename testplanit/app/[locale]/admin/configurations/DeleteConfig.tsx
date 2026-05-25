@@ -75,7 +75,7 @@ export function DeleteConfiguration({
               <AlertDialogDescription>
                 {t.rich("delete.message", {
                   strong: (chunks) => (
-                    <span className="font-bold">{chunks}</span>
+                    <span className="font-bold break-all">{chunks}</span>
                   ),
                   name: configuration.name,
                 })}

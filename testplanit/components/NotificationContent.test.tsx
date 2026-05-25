@@ -641,6 +641,72 @@ describe("NotificationContent", () => {
     });
   });
 
+  describe("REVIEW_REMINDER", () => {
+    it("renders the localized reminder title and hoursPending line", () => {
+      const notification = {
+        id: "rr-1",
+        type: "REVIEW_REMINDER",
+        title: "Review still pending",
+        message: "fallback",
+        data: {
+          reviewRequestId: "rr-1",
+          requesterUserId: "user-r",
+          requesterName: "Alice",
+          projectId: 100,
+          projectName: "Project Alpha",
+          entityType: "CASE",
+          entityId: 7,
+          entityName: "Login flow",
+          fromStateName: "Draft",
+          toStateName: "Approved",
+          hoursPending: 36,
+        },
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(screen.getByText("reviewReminderTitle")).toBeInTheDocument();
+      expect(
+        screen.getByText("reviewReminderHoursPending")
+      ).toBeInTheDocument();
+      expect(screen.getByText("reviewReminderAction")).toBeInTheDocument();
+      // Actor is the requester whose review is still pending.
+      expect(screen.getByText("User user-r")).toBeInTheDocument();
+      // Entity link composed from data.projectId / entityId for CASE type.
+      const link = screen.getByRole("link");
+      expect(link).toHaveAttribute("href", "/projects/repository/100/7");
+    });
+
+    it("does not render the hoursPending line when data.hoursPending is absent", () => {
+      const notification = {
+        id: "rr-2",
+        type: "REVIEW_REMINDER",
+        title: "Review still pending",
+        message: "fallback",
+        data: {
+          reviewRequestId: "rr-2",
+          requesterUserId: "user-r",
+          requesterName: "Alice",
+          projectId: 100,
+          projectName: "Project Alpha",
+          entityType: "CASE",
+          entityId: 7,
+          entityName: "Login flow",
+          fromStateName: "Draft",
+          toStateName: "Approved",
+          // hoursPending intentionally omitted
+        },
+      };
+
+      render(<NotificationContent notification={notification} />);
+
+      expect(screen.getByText("reviewReminderTitle")).toBeInTheDocument();
+      expect(
+        screen.queryByText("reviewReminderHoursPending")
+      ).not.toBeInTheDocument();
+    });
+  });
+
   describe("Fallback rendering", () => {
     it("should render generic notification for unknown types", () => {
       const notification = {

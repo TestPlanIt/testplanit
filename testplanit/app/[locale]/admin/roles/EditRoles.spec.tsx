@@ -82,6 +82,8 @@ const {
     canAddEdit: false,
     canDelete: false,
     canClose: false,
+    canApprove: false,
+    canReadSensitive: false,
   }));
   const stableLoadingState = { isLoading: false };
   return {
@@ -308,6 +310,148 @@ describe("EditRole", () => {
 
     await waitFor(() => {
       expect(mockUpdateRole).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("approve column", () => {
+    test("renders the Approve column header", async () => {
+      renderWithProvider();
+      await waitFor(() => {
+        expect(
+          screen.getByLabelText("common.aria.selectDeselectAllApprove")
+        ).toBeInTheDocument();
+      });
+    });
+
+    test("renders a Switch in rows for TestCaseRepository / TestRuns / Sessions and dash placeholder elsewhere", async () => {
+      renderWithProvider();
+      await waitFor(() => {
+        expect(screen.getByRole("table")).toBeInTheDocument();
+      });
+
+      const rows = screen.getAllByRole("row");
+
+      // Three review-relevant rows MUST each carry an Approve switch.
+      for (const areaName of ["TestCaseRepository", "TestRuns", "Sessions"]) {
+        const row = rows.find((r) => {
+          if (!r.textContent) return false;
+          if (
+            areaName === "TestRuns" &&
+            r.textContent.includes("ClosedTestRuns")
+          )
+            return false;
+          if (
+            areaName === "Sessions" &&
+            (r.textContent.includes("ClosedSessions") ||
+              r.textContent.includes("SessionsRestrictedFields") ||
+              r.textContent.includes("SessionResults"))
+          )
+            return false;
+          return r.textContent.includes(areaName);
+        });
+        expect(row, `expected row for ${areaName}`).toBeTruthy();
+        const approveSwitches = row?.querySelectorAll(
+          '[aria-label$="common.permissions.approve"]'
+        );
+        expect(approveSwitches?.length ?? 0).toBeGreaterThan(0);
+      }
+
+      // Non-relevant rows (e.g. Documentation) MUST NOT carry an Approve switch.
+      const docRow = rows.find((r) => r.textContent?.includes("Documentation"));
+      expect(docRow).toBeTruthy();
+      const docApprove = docRow?.querySelectorAll(
+        '[aria-label$="common.permissions.approve"]'
+      );
+      expect(docApprove?.length ?? 0).toBe(0);
+    });
+
+    test("header checkbox toggles canApprove across the three review-relevant areas via handleSelectAll", async () => {
+      const { user } = renderWithProvider();
+      await waitFor(() => {
+        expect(screen.getByRole("table")).toBeInTheDocument();
+      });
+
+      const approveHeader = screen.getByLabelText(
+        "common.aria.selectDeselectAllApprove"
+      );
+      fireEvent.click(approveHeader);
+
+      const submitButton = screen.getByRole("button", {
+        name: "common.actions.submit",
+      });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockUpsertRolePermission).toHaveBeenCalled();
+      });
+      const upsertCalls = mockUpsertRolePermission.mock.calls;
+      const approvedAreas = upsertCalls
+        .filter((call) => call[0]?.create?.canApprove === true)
+        .map((call) => call[0]?.create?.area as string);
+      expect(approvedAreas.sort()).toEqual(
+        ["Sessions", "TestCaseRepository", "TestRuns"].sort()
+      );
+    });
+
+    test("form submit forwards canApprove field for each area to useUpsertRolePermission", async () => {
+      const { user } = renderWithProvider();
+      const submitButton = screen.getByRole("button", {
+        name: "common.actions.submit",
+      });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockUpsertRolePermission).toHaveBeenCalled();
+      });
+      // Every call carries a canApprove property on its `create` payload.
+      const upsertCalls = mockUpsertRolePermission.mock.calls;
+      for (const [args] of upsertCalls) {
+        expect(args.create).toHaveProperty("canApprove");
+        expect(typeof args.create.canApprove).toBe("boolean");
+      }
+    });
+
+    test("header checkbox toggles canReadSensitive across the two Restricted Fields areas via handleSelectAll", async () => {
+      const { user } = renderWithProvider();
+      await waitFor(() => {
+        expect(screen.getByRole("table")).toBeInTheDocument();
+      });
+
+      const readSensitiveHeader = screen.getByLabelText(
+        "common.aria.selectDeselectAllReadSensitive"
+      );
+      fireEvent.click(readSensitiveHeader);
+
+      const submitButton = screen.getByRole("button", {
+        name: "common.actions.submit",
+      });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockUpsertRolePermission).toHaveBeenCalled();
+      });
+      const grantedAreas = mockUpsertRolePermission.mock.calls
+        .filter((call) => call[0]?.create?.canReadSensitive === true)
+        .map((call) => call[0]?.create?.area as string);
+      expect(grantedAreas.sort()).toEqual(
+        ["TestCaseRestrictedFields", "TestRunResultRestrictedFields"].sort()
+      );
+    });
+
+    test("form submit forwards canReadSensitive field for each area to useUpsertRolePermission", async () => {
+      const { user } = renderWithProvider();
+      const submitButton = screen.getByRole("button", {
+        name: "common.actions.submit",
+      });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockUpsertRolePermission).toHaveBeenCalled();
+      });
+      for (const [args] of mockUpsertRolePermission.mock.calls) {
+        expect(args.create).toHaveProperty("canReadSensitive");
+        expect(typeof args.create.canReadSensitive).toBe("boolean");
+      }
     });
   });
 

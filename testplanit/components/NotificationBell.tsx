@@ -332,7 +332,7 @@ export function NotificationBell() {
               <Bell className="inline mr-1 w-5 shrink-0" />
               {tCommon("fields.notificationMode")}
             </h3>
-            <div className="flex justify-between -ml-3 -mr-3">
+            <div className="flex justify-between">
               <Button
                 variant="ghost"
                 size="sm"

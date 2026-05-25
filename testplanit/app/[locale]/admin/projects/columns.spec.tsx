@@ -144,6 +144,7 @@ const testProject: ExtendedProjects = {
   defaultCaseExportTemplateId: null,
   quickScriptEnabled: false,
   junitIterationPropertyNames: [],
+  reviewWorkflowEnabled: true,
   creator: {
     id: "user-1",
     name: "Test User",

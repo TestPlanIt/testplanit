@@ -171,7 +171,9 @@
       "reconfigure": "Reconfigurez et réessayez"
     },
     "permissions": {
-      "addEdit": "Ajouter/Modifier"
+      "addEdit": "Ajouter/Modifier",
+      "approve": "Approuver",
+      "readSensitive": "Lire les informations sensibles"
     },
     "auth": {
       "internal": "Adresse électronique/Mot de passe",
@@ -640,6 +642,8 @@
       "aiModels": "Modèles d'IA",
       "integrations": "Intégrations",
       "quickscript": "QuickScript",
+      "advanced": "Avancé",
+      "reviews": "Avis",
       "webhooks": "Webhooks",
       "shares": "Actions",
       "datasets": "Ensembles de données partagés",
@@ -676,7 +680,9 @@
       "newerVersion": "Version plus récente",
       "deletedUser": "Utilisateur supprimé",
       "restrictedField": "Champ restreint",
-      "backToTestCase": "Retour au cas de test"
+      "backToTestCase": "Retour au cas de test",
+      "selectDeselectAllApprove": "Sélectionnez ou désélectionnez « Approuver » pour toutes les zones concernées.",
+      "selectDeselectAllReadSensitive": "Sélectionnez ou désélectionnez l'option « Lecture sensible » pour toutes les zones concernées."
     },
     "labels": {
       "projects": "{count, plural, =1 {# Projet} other {# Projets}}",
@@ -1378,7 +1384,9 @@
           "duplicated": "Dupliqué",
           "stateChanged": "État modifié",
           "resultAdded": "Résultat ajouté",
-          "resultRecorded": "Résultat enregistré"
+          "resultRecorded": "Résultat enregistré",
+          "reviewRequested": "Demande d'avis",
+          "reviewCompleted": "Révision terminée"
         },
         "iterationResultHelp": "Se déclenche à chaque enregistrement du résultat d'une itération (succès, échec, ignoré ou tout autre statut). À utiliser avec parcimonie lors d'exécutions d'automatisation longues (un événement par itération).",
         "events": {
@@ -1809,6 +1817,19 @@
         "disconnectWarning3": "Cessez d'inclure le contexte du code dans les exportations générées par l'IA",
         "disconnectSuccess": "Dépôt de code déconnecté",
         "disconnectError": "Échec de la déconnexion du dépôt de code"
+      },
+      "advanced": {
+        "title": "Avancé",
+        "description": "Options par projet pour les fonctionnalités spécifiques. Les nouvelles options apparaîtront ici au fur et à mesure de leur introduction.",
+        "reviewWorkflow": {
+          "label": "Activer le flux de travail de révision",
+          "description": "Lorsque cette option est activée, le passage à un état nécessitant une révision est conditionné par l'approbation de la demande de révision. Les testeurs voient le bouton « Demander une révision » ; les réviseurs reçoivent une notification.",
+          "enabledToast": "Le flux de travail de révision est activé pour ce projet.",
+          "disabledToast": "Le flux de travail de révision est désactivé pour ce projet.",
+          "saveError": "Échec de la mise à jour des paramètres du flux de travail de révision",
+          "systemDisabledTitle": "Le flux de travail de révision est interrompu à l'échelle du système.",
+          "systemDisabledDescription": "La préférence de votre projet est enregistrée, mais rien ne sera bloqué tant qu'un administrateur système n'aura pas activé la fonctionnalité sous Administration → Flux de travail."
+        }
       }
     },
     "matrix": {
@@ -3016,6 +3037,113 @@
       "deferredMessage": "Cette pièce jointe sera supprimée lors de l'enregistrement."
     }
   },
+  "reviews": {
+    "banner": {
+      "pendingMessage": "Demande d'examen de <assignee></assignee> pour la transition <fromState></fromState> → <toState></toState> <ago></ago>",
+      "changesRequestedTitle": "Modifications demandées",
+      "rejectedTitle": "Avis rejeté",
+      "requestAgain": "Demander une nouvelle évaluation",
+      "decidedBy": "Décidé par"
+    },
+    "cancel": {
+      "title": "Annuler cette demande d'évaluation ?",
+      "description": "L'examinateur ne pourra plus donner suite à cette demande. Vous pourrez soumettre une nouvelle demande ultérieurement.",
+      "confirm": "Demande d'annulation",
+      "success": "Demande de révision annulée.",
+      "error": "Impossible d'annuler la demande de révision. Veuillez réessayer dans quelques instants."
+    },
+    "list": {
+      "pendingTooltip": "En attente d'examen par {assignee}"
+    },
+    "transitionGate": {
+      "blockedByGate": "L'approbation est requise pour «{gateName}» avant cette transition. Utilisez « Demander une révision » pour en lancer une.",
+      "gatedOptionBadge": "Nécessite une révision",
+      "gatedStatesNotSelectable": "Il est impossible de sélectionner un état situé au-delà d'un état prédéfini lors de la création d'un tel état. Choisissez un état avant le premier seuil, puis utilisez « Demander une révision » pour le franchir.",
+      "saveBlockedByFormErrors": "Corrigez les erreurs de formulaire mises en évidence avant d'enregistrer.",
+      "bulkBlockedSummary": "{count, plural, one {# cas} other {# cas}} bloqués par la porte \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, et # autres}}. Chaque cas bloqué nécessite une approbation pour \"{gateName}\" avant cette transition.",
+      "toastReviewRequired": "Une approbation est requise avant cette transition. Veuillez demander une vérification et réessayer une fois l'approbation obtenue.",
+      "toastPendingReviewExists": "Cette demande de changement est déjà en cours d'examen. Veuillez patienter jusqu'à la décision ou annuler la demande avant de réessayer."
+    },
+    "inbox": {
+      "iconAria": "{count, plural, =0 {Boîte de réception à consulter} one {Boîte de réception à consulter, # en attente} other {Boîte de réception à consulter, # en attente}}",
+      "pageTitle": "Avis",
+      "pageDescription": "Demandes de révision en attente qui vous sont attribuées (directement ou via un rôle que vous occupez).",
+      "pageDescriptionDecided": "Examiner les demandes auxquelles vous avez déjà donné votre décision.",
+      "tabPending": "En attente",
+      "tabDecided": "Décidé",
+      "emptyDecided": "Vous n'avez pas encore décidé de rédiger d'avis.",
+      "empty": "Aucun avis en attente. Vous êtes à jour.",
+      "featureDisabled": "La fonctionnalité de flux de révision est actuellement désactivée. Les révisions en attente sont conservées et réapparaîtront lorsque la fonctionnalité sera réactivée.",
+      "columnEntity": "Entité",
+      "columnProject": "Projet",
+      "columnRequester": "Demandeur",
+      "columnTransition": "Transition",
+      "columnTransitionFrom": "Depuis",
+      "columnTransitionTo": "À",
+      "columnRequestedAt": "Demandé à",
+      "columnDecidedAt": "Décidé à",
+      "columnStatus": "Statut",
+      "columnActions": "Actes",
+      "actionApprove": "Approuver",
+      "actionRequestChanges": "Demander des modifications",
+      "actionReject": "Rejeter",
+      "filterEntityType": "Type d'entité",
+      "filterProject": "Projet",
+      "filterAllEntityTypes": "Tous les types d'entités",
+      "filterEntityTypeCase": "cas de test",
+      "filterEntityTypeRun": "essais",
+      "filterEntityTypeSession": "Séances",
+      "filterAllProjects": "Tous les projets"
+    },
+    "requester": {
+      "openButton": "Demande d'avis",
+      "sheetDescription": "Soumettez cette entité pour examen avant de passer à l'état cible.",
+      "assigneeLabel": "Cessionnaire",
+      "assigneePlaceholder": "Sélectionnez un utilisateur ou un rôle",
+      "usersHoldRole": "{count, plural, one {# utilisateur détient ce rôle} other {# utilisateurs détiennent ce rôle}}",
+      "targetStateLabel": "État cible",
+      "targetStatePlaceholder": "Sélectionnez un état cible",
+      "commentLabel": "Commentaire",
+      "commentPlaceholder": "Expliquez ce que vous souhaitez que le réviseur examine.",
+      "assigneeRequired": "Sélectionnez un responsable.",
+      "targetStateRequired": "Sélectionnez un état cible.",
+      "submitSuccess": "Demande de révision créée.",
+      "alreadyPendingError": "Une évaluation est déjà en cours pour cette entité.",
+      "cannotSelfAssign": "Vous ne pouvez pas vous attribuer une évaluation ; choisissez un autre utilisateur ou un rôle.",
+      "defaultComment": "Veuillez examiner la transition de {fromState} → {toState}.",
+      "defaultCommentRole": "Demande d'approbation du groupe {roleName} pour la transition de {fromState} → {toState}.",
+      "ineligibleAssigneeError": "Cet utilisateur/rôle ne peut pas approuver les avis pour cette zone. Veuillez choisir quelqu'un d'autre.",
+      "ineligibleAssigneeErrorUser": "{name} ne peut pas approuver les avis pour cette zone. Veuillez choisir un autre utilisateur ou un rôle.",
+      "ineligibleAssigneeErrorRole": "Le rôle {roleName} ne permet pas d'approuver les avis pour cette zone. Veuillez choisir un autre rôle ou un utilisateur."
+    },
+    "assigneeChip": {
+      "emptyMembers": "Aucun membre éligible au projet n'occupe ce rôle.",
+      "unnamedUser": "(utilisateur anonyme)"
+    },
+    "reviewer": {
+      "approve": "Approuver",
+      "requestChanges": "Demander des modifications",
+      "reject": "Rejeter",
+      "approveConfirmTitle": "Approuver cette demande d'examen ?",
+      "approveConfirmDescription": "L'approbation permettra à <requester></requester> de passer de <name></name> à <state></state>.",
+      "approvalNoteLabel": "Note d'approbation",
+      "approvalNotePlaceholder": "Ajoutez une note facultative à l'attention du demandeur (visible à côté de l'approbation).",
+      "requestChangesDescription": "Indiquez au demandeur ce qui doit changer avant que vous puissiez approuver cette transition.",
+      "requestChangesCommentPlaceholder": "Expliquez ce qui doit changer.",
+      "rejectTitle": "Refuser cette demande d'évaluation ?",
+      "rejectDescription": "Rejet des blocs <requester></requester> lors de la transition <name></name> vers <state></state>. Une nouvelle demande de révision doit être créée pour réessayer.",
+      "rejectCommentPlaceholder": "Expliquez pourquoi vous rejetez cette demande.",
+      "commentLabel": "Commentaire",
+      "confirmRequestChanges": "Envoyer",
+      "approveSuccess": "Examen approuvé.",
+      "requestChangesSuccess": "Modifications demandées.",
+      "rejectSuccess": "Avis rejeté.",
+      "ineligibleError": "Vous n'êtes plus en mesure de statuer sur cette demande de révision.",
+      "alreadyDecidedError": "Cette évaluation est déjà décidée.",
+      "decideError": "Impossible d'enregistrer votre décision. Veuillez réessayer dans un instant.",
+      "panelSummary": "Demande de révision de {requesterName}: transition vers {targetStateName}"
+    }
+  },
   "runs": {
     "notFound": "Exécution de test introuvable.",
     "add": {
@@ -3193,6 +3321,7 @@
       "exportTemplates": "Modèles d'exportation",
       "codeRepositories": "Dépôts de code",
       "quickScript": "QuickScript",
+      "advanced": "Avancé",
       "sso": "Authentification",
       "security": "Sécurité",
       "trash": "Poubelle",
@@ -4190,6 +4319,36 @@
     },
     "workflows": {
       "description": "Gérer les flux de travail des cas de test",
+      "systemFeatureCard": {
+        "title": "Flux de travail de révision",
+        "description": "Imposer des révisions en bloquant les transitions du flux de travail jusqu'à approbation. Une fois activée, cette option permet aux projets de l'activer ou de la désactiver individuellement via leurs paramètres avancés. Désactivez-la pour empêcher le blocage des validations dans le flux de travail.",
+        "toggleAriaLabel": "Activer/désactiver la fonctionnalité de flux de travail de révision",
+        "adminOnlyNotice": "Seuls les administrateurs peuvent modifier ce paramètre.",
+        "updateSuccessEnabled": "Flux de travail de révision activé.",
+        "updateSuccessDisabled": "Flux de travail de révision désactivé.",
+        "updateError": "Impossible de mettre à jour les paramètres du flux de travail de révision. Veuillez réessayer dans quelques instants.",
+        "remindersToggleLabel": "Envoyer des notifications de rappel pour les évaluations en attente",
+        "remindersToggleAriaLabel": "Activer/désactiver les notifications de rappel de révision",
+        "thresholdLabel": "Rappelez aux réviseurs après",
+        "thresholdUnit": "jours)",
+        "thresholdSaveButton": "Sauvegarder",
+        "thresholdHelp": "Combien de jours une demande d'évaluation peut-elle rester en attente avant que les évaluateurs ne reçoivent une notification de rappel ? Le délai commence à courir dès la soumission des nouvelles demandes.",
+        "thresholdUpdateSuccess": "Paramètres de rappel de révision mis à jour.",
+        "thresholdUpdateError": "Impossible de mettre à jour les paramètres de rappel. Veuillez réessayer dans quelques instants."
+      },
+      "projectReviewToggleList": {
+        "columnHeader": "Flux de travail de révision",
+        "filterPlaceholder": "Filtrer les projets...",
+        "enabledToast": "Flux de travail de révision activé pour {name}",
+        "disabledToast": "Flux de travail de révision désactivé pour {name}",
+        "saveError": "Impossible de mettre à jour les paramètres du flux de travail de révision. Veuillez réessayer dans quelques instants.",
+        "emptyState": "Aucun projet ne correspond à vos critères de filtrage."
+      },
+      "editWorkflow": {
+        "requiresReviewLabel": "Nécessite une révision",
+        "requiresReviewFeatureDisabled": "La fonctionnalité de flux de travail de révision est désactivée au niveau du système. Modifiez les paramètres avancés d'un projet ou définissez la variable d'environnement TESTPLANIT_REVIEW_FEATURE_ENABLED pour la réactiver.",
+        "requiresReviewDefaultDisabled": "L'état par défaut du flux de travail ne peut pas nécessiter de révision ; les nouvelles entités arrivent ici sans avoir d'état préalable à contrôler."
+      },
       "add": {
         "button": "Ajouter un flux de travail",
         "title": "Ajouter un nouveau flux de travail",
@@ -5193,7 +5352,31 @@
         "reviewGeneratedCases": "Examiner les cas de test générés",
         "generateFromUrlCompleteTitle": "Pages explorées avec succès",
         "generateFromUrlCompleteMessage": "{pages, plural, one {# page} other {# pages}} extraites de {url} dans le projet «{projectName}». Cliquez pour consulter et générer des cas de test.",
-        "generateFromUrlFailedTitle": "Échec de l'exploration de l'URL"
+        "generateFromUrlFailedTitle": "Échec de l'exploration de l'URL",
+        "reviewRequestedTitle": "Demande d'avis",
+        "reviewApprovedTitle": "Avis approuvé",
+        "reviewChangesRequestedTitle": "Modifications demandées",
+        "reviewRejectedTitle": "Avis rejeté",
+        "reviewCancelledTitle": "Demande de révision annulée",
+        "reviewRequestedAction": "nous avons demandé votre avis sur",
+        "reviewApprovedAction": "Nous avons approuvé votre demande de révision le",
+        "reviewChangesRequestedAction": "modifications demandées à votre demande de révision",
+        "reviewRejectedAction": "Nous avons rejeté votre demande d'examen le",
+        "reviewCancelledAction": "a annulé la demande de révision le",
+        "reviewEntityLabelCase": "cas de test",
+        "reviewEntityLabelRun": "essai",
+        "reviewEntityLabelSession": "session",
+        "reviewTransition": "Transition : {from} → {to}",
+        "reviewCommentPreview": "Commentaire : {comment}",
+        "reviewRequestedEmailMessage": "{actorName} a demandé votre avis sur {entityLabel} \"{entityName}\" dans le projet \"{projectName}\".",
+        "reviewApprovedEmailMessage": "{actorName} a approuvé votre demande de révision le {entityLabel} \"{entityName}\" dans le projet \"{projectName}\".",
+        "reviewChangesRequestedEmailMessage": "{actorName} a demandé des modifications à votre demande de révision pour {entityLabel} \"{entityName}\" dans le projet \"{projectName}\".",
+        "reviewRejectedEmailMessage": "{actorName} a rejeté votre demande de révision le {entityLabel} \"{entityName}\" dans le projet \"{projectName}\".",
+        "reviewCancelledEmailMessage": "{actorName} a annulé la demande de révision le {entityLabel} \"{entityName}\" dans le projet \"{projectName}\".",
+        "reviewReminderTitle": "Examen toujours en cours",
+        "reviewReminderAction": "attend toujours votre avis sur",
+        "reviewReminderEmailMessage": "Rappel : la demande de révision de {actorName}sur {entityLabel} \"{entityName}\" dans le projet \"{projectName}\" est en attente depuis {hoursPending} heures.",
+        "reviewReminderHoursPending": "En attente depuis {hoursPending, plural, one {# heure} other {# heures}}"
       }
     },
     "issues": {
@@ -5549,7 +5732,9 @@
       "permissions": {
         "canAddEdit": "## Ajouter/Modifier\nIndique si ce rôle peut ajouter et modifier la zone d'application associée.",
         "canDelete": "## Supprimer\nIndique si ce rôle peut supprimer la zone d'application associée.",
-        "canClose": "## Fermer\nIndique si ce rôle peut fermer la zone d'application associée."
+        "canClose": "## Fermer\nIndique si ce rôle peut fermer la zone d'application associée.",
+        "canApprove": "## Approuver\nIndique si ce rôle peut approuver les demandes de révision pour le domaine d'application concerné. S'applique uniquement au référentiel de cas de test, aux exécutions de tests et aux sessions.",
+        "canReadSensitive": "## Autorisation de lecture des données sensibles\nIndique si ce rôle est autorisé à consulter les valeurs des paramètres sensibles lors de la lecture des données des champs restreints. Sans cette autorisation, les valeurs sensibles s'affichent sous forme de ●●●●●● dans les lignes de l'ensemble de données et les cellules d'itération, et sous forme de [REDACTED] dans le corps des préremplissages des problèmes et les exportations CSV. S'applique uniquement aux champs restreints des cas de test et aux champs restreints des résultats d'exécution de test."
       }
     },
     "group": {
@@ -5655,6 +5840,7 @@
       "isDefault": "## Par défaut\nIndique si ce flux de travail est celui par défaut de votre projet.\n\n- Le flux de travail par défaut est présélectionné pour les nouvelles exécutions de tests, les sessions et l'automatisation.",
       "isEnabled": "## Activé\nIndique si ce flux de travail est activé.",
       "isActive": "## Actif\nIndique si cet état de workflow est actif et disponible.\n\n- Les workflows actifs peuvent être sélectionnés lors de la mise à jour des exécutions de tests, des sessions ou de l'automatisation.\n- Les workflows inactifs sont masqués, mais conservés dans les éléments existants.",
+      "requiresReview": "## Nécessite une révision\nLorsque cette option est activée, le passage d'un cas, d'une exécution de test ou d'une session à cet état est conditionné par une demande de révision approuvée. Sans demande approuvée, la transition est bloquée.\n\n- Les révisions en attente sont conservées silencieusement lorsque la fonctionnalité système est désactivée et réapparaissent lorsqu'elle est réactivée.\n- Le réviseur est sélectionné lorsqu'un testeur clique sur « Demander une révision » depuis la page de détails de l'entité.\n\nSi la fonctionnalité système est désactivée, ce commutateur est verrouillé. Réactivez-le depuis la carte « Flux de travail de révision » ci-dessus pour l'activer.",
       "projects": "## Projets\nIndique les projets qui peuvent utiliser ce flux de travail."
     },
     "testResult": {
@@ -6937,6 +7123,16 @@
     "mentions": {
       "notAMember": "Je ne suis pas membre du projet.",
       "noUsersFound": "Aucun utilisateur trouvé"
+    },
+    "type": {
+      "reviewRequest": "Demande de révision",
+      "reviewDecision": {
+        "approved": "Approuvé",
+        "changesRequested": "Modifications demandées",
+        "rejected": "Rejeté",
+        "cancelled": "Annulé",
+        "generic": "Réviser la décision"
+      }
     }
   },
   "Trial": {

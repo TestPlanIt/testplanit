@@ -7,6 +7,8 @@ import {
   useUpdateManyRoles,
   useUpsertRolePermission,
 } from "~/lib/hooks";
+import { RESTRICTED_FIELDS_AREAS } from "~/lib/utils/restrictedFieldsAreas";
+import { REVIEW_RELEVANT_AREAS } from "~/lib/utils/reviewAreas";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -54,6 +56,8 @@ function buildAddRoleFormSchema(t: (key: any) => string) {
         canAddEdit: z.boolean(),
         canDelete: z.boolean(),
         canClose: z.boolean(),
+        canApprove: z.boolean(),
+        canReadSensitive: z.boolean(),
       })
     ),
   });
@@ -79,7 +83,13 @@ export function AddRole({ open, onClose }: AddRoleProps) {
     () =>
       applicationAreaValues.reduce(
         (acc, area) => {
-          acc[area] = { canAddEdit: false, canDelete: false, canClose: false };
+          acc[area] = {
+            canAddEdit: false,
+            canDelete: false,
+            canClose: false,
+            canApprove: false,
+            canReadSensitive: false,
+          };
           return acc;
         },
         {} as AddRoleFormData["permissions"]
@@ -106,28 +116,38 @@ export function AddRole({ open, onClose }: AddRoleProps) {
     setError,
   } = form;
 
-  // --- Start Re-added Handlers and Watcher ---
-  const handleSelectAll = (
-    field: "canAddEdit" | "canDelete" | "canClose",
-    checked: boolean
-  ) => {
-    applicationAreaValues.forEach((area) => {
-      // Determine relevance
-      const isRelevant =
-        (field === "canAddEdit" &&
-          area !== ApplicationArea.ClosedTestRuns &&
-          area !== ApplicationArea.ClosedSessions) ||
-        (field === "canDelete" &&
-          area !== ApplicationArea.Documentation &&
-          area !== ApplicationArea.TestCaseRestrictedFields &&
-          area !== ApplicationArea.TestRunResultRestrictedFields &&
-          area !== ApplicationArea.SessionsRestrictedFields &&
-          area !== ApplicationArea.Tags) ||
-        (field === "canClose" &&
-          (area === ApplicationArea.TestRuns ||
-            area === ApplicationArea.Sessions));
+  type PermissionField =
+    | "canAddEdit"
+    | "canDelete"
+    | "canClose"
+    | "canApprove"
+    | "canReadSensitive";
 
-      if (isRelevant) {
+  const fieldAppliesToArea = (
+    field: PermissionField,
+    area: ApplicationArea
+  ): boolean =>
+    (field === "canAddEdit" &&
+      area !== ApplicationArea.ClosedTestRuns &&
+      area !== ApplicationArea.ClosedSessions) ||
+    (field === "canDelete" &&
+      area !== ApplicationArea.Documentation &&
+      area !== ApplicationArea.TestCaseRestrictedFields &&
+      area !== ApplicationArea.TestRunResultRestrictedFields &&
+      area !== ApplicationArea.SessionsRestrictedFields &&
+      area !== ApplicationArea.Tags) ||
+    (field === "canClose" &&
+      (area === ApplicationArea.TestRuns ||
+        area === ApplicationArea.Sessions)) ||
+    (field === "canApprove" &&
+      (REVIEW_RELEVANT_AREAS as readonly ApplicationArea[]).includes(area)) ||
+    (field === "canReadSensitive" &&
+      (RESTRICTED_FIELDS_AREAS as readonly ApplicationArea[]).includes(area));
+
+  // --- Start Re-added Handlers and Watcher ---
+  const handleSelectAll = (field: PermissionField, checked: boolean) => {
+    applicationAreaValues.forEach((area) => {
+      if (fieldAppliesToArea(field, area)) {
         setValue(`permissions.${area}.${field}`, checked, {
           shouldDirty: true,
         });
@@ -137,27 +157,12 @@ export function AddRole({ open, onClose }: AddRoleProps) {
 
   const watchedPermissions = watch("permissions");
   const getHeaderCheckboxState = (
-    field: "canAddEdit" | "canDelete" | "canClose"
+    field: PermissionField
   ): { checked: boolean; indeterminate: boolean } => {
     let relevantCount = 0;
     let checkedCount = 0;
     applicationAreaValues.forEach((area) => {
-      const isRelevant =
-        (field === "canAddEdit" &&
-          area !== ApplicationArea.ClosedTestRuns &&
-          area !== ApplicationArea.ClosedSessions) ||
-        (field === "canDelete" &&
-          area !== ApplicationArea.Documentation &&
-          area !== ApplicationArea.TestCaseRestrictedFields &&
-          area !== ApplicationArea.TestRunResultRestrictedFields &&
-          area !== ApplicationArea.SessionsRestrictedFields &&
-          // Exclude Tags and Issues for Delete
-          area !== ApplicationArea.Tags) ||
-        (field === "canClose" &&
-          (area === ApplicationArea.TestRuns ||
-            area === ApplicationArea.Sessions));
-
-      if (isRelevant) {
+      if (fieldAppliesToArea(field, area)) {
         relevantCount++;
         // Use optional chaining as watchedPermissions might initially be undefined briefly
         if (watchedPermissions?.[area]?.[field]) {
@@ -290,14 +295,14 @@ export function AddRole({ open, onClose }: AddRoleProps) {
               <h3 className="text-lg font-medium">
                 {t("admin.roles.edit.permissionsTitle")}
               </h3>
-              <table className="w-full border-collapse">
-                <thead>
+              <table className="w-full border-collapse border-2">
+                <thead className="bg-primary/10 border">
                   <tr className="border-b">
-                    <th className="p-2 text-left font-medium text-muted-foreground">
+                    <th className="p-2 text-left text-sm font-medium">
                       {t("admin.roles.edit.areaHeader")}
                     </th>
                     {/* Add/Edit Header Checkbox */}
-                    <th className="p-2 text-center font-medium text-muted-foreground w-24">
+                    <th className="p-2 text-center text-sm font-medium">
                       <Label className="flex items-center gap-1 justify-center">
                         <Checkbox
                           checked={getHeaderCheckboxState("canAddEdit").checked}
@@ -313,12 +318,15 @@ export function AddRole({ open, onClose }: AddRoleProps) {
                                 : "unchecked"
                           }
                         />
-                        {t("common.permissions.addEdit")}
-                        <HelpPopover helpKey="role.permissions.canAddEdit" />
+                        <span className="flex items-center">
+                          {t("common.permissions.addEdit")}
+
+                          <HelpPopover helpKey="role.permissions.canAddEdit" />
+                        </span>
                       </Label>
                     </th>
                     {/* Delete Header Checkbox */}
-                    <th className="p-2 text-center font-medium text-muted-foreground w-24">
+                    <th className="p-2 text-center text-sm font-medium">
                       <Label className="flex items-center gap-1 justify-center">
                         <Checkbox
                           checked={getHeaderCheckboxState("canDelete").checked}
@@ -334,12 +342,14 @@ export function AddRole({ open, onClose }: AddRoleProps) {
                                 : "unchecked"
                           }
                         />
-                        {t("common.actions.delete")}
-                        <HelpPopover helpKey="role.permissions.canDelete" />
+                        <span className="flex items-center">
+                          {t("common.actions.delete")}
+                          <HelpPopover helpKey="role.permissions.canDelete" />
+                        </span>
                       </Label>
                     </th>
                     {/* Close Header Checkbox */}
-                    <th className="p-2 text-center font-medium text-muted-foreground w-24">
+                    <th className="p-2 text-center text-sm font-medium">
                       <Label className="flex items-center gap-1 justify-center">
                         <Checkbox
                           checked={getHeaderCheckboxState("canClose").checked}
@@ -355,8 +365,62 @@ export function AddRole({ open, onClose }: AddRoleProps) {
                                 : "unchecked"
                           }
                         />
-                        {t("common.actions.complete")}
-                        <HelpPopover helpKey="role.permissions.canClose" />
+                        <span className="flex items-center">
+                          {t("common.actions.complete")}
+                          <HelpPopover helpKey="role.permissions.canClose" />
+                        </span>
+                      </Label>
+                    </th>
+                    {/* Approve Header Checkbox */}
+                    <th className="p-2 text-center text-sm font-medium">
+                      <Label className="flex items-center gap-1 justify-center">
+                        <Checkbox
+                          checked={getHeaderCheckboxState("canApprove").checked}
+                          onCheckedChange={(checked) =>
+                            handleSelectAll("canApprove", !!checked)
+                          }
+                          aria-label={t("common.aria.selectDeselectAllApprove")}
+                          data-state={
+                            getHeaderCheckboxState("canApprove").indeterminate
+                              ? "indeterminate"
+                              : getHeaderCheckboxState("canApprove").checked
+                                ? "checked"
+                                : "unchecked"
+                          }
+                        />
+                        <span className="flex items-center">
+                          {t("common.permissions.approve")}
+                          <HelpPopover helpKey="role.permissions.canApprove" />
+                        </span>
+                      </Label>
+                    </th>
+                    {/* Read Sensitive Header Checkbox */}
+                    <th className="p-2 text-center text-sm font-medium">
+                      <Label className="flex items-center gap-1 justify-center">
+                        <Checkbox
+                          checked={
+                            getHeaderCheckboxState("canReadSensitive").checked
+                          }
+                          onCheckedChange={(checked) =>
+                            handleSelectAll("canReadSensitive", !!checked)
+                          }
+                          aria-label={t(
+                            "common.aria.selectDeselectAllReadSensitive"
+                          )}
+                          data-state={
+                            getHeaderCheckboxState("canReadSensitive")
+                              .indeterminate
+                              ? "indeterminate"
+                              : getHeaderCheckboxState("canReadSensitive")
+                                    .checked
+                                ? "checked"
+                                : "unchecked"
+                          }
+                        />
+                        <span className="flex items-center">
+                          {t("common.permissions.readSensitive")}
+                          <HelpPopover helpKey="role.permissions.canReadSensitive" />
+                        </span>
                       </Label>
                     </th>
                   </tr>
@@ -382,6 +446,14 @@ export function AddRole({ open, onClose }: AddRoleProps) {
                     const showAddEdit =
                       area !== ApplicationArea.ClosedTestRuns &&
                       area !== ApplicationArea.ClosedSessions;
+
+                    const showCanApprove = (
+                      REVIEW_RELEVANT_AREAS as readonly ApplicationArea[]
+                    ).includes(area);
+
+                    const showCanReadSensitive = (
+                      RESTRICTED_FIELDS_AREAS as readonly ApplicationArea[]
+                    ).includes(area);
 
                     return (
                       <tr
@@ -449,6 +521,50 @@ export function AddRole({ open, onClose }: AddRoleProps) {
                                       checked={field.value}
                                       onCheckedChange={field.onChange}
                                       aria-label={`${tAreas(area)} ${t("common.actions.complete")}`}
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </td>
+                        {/* Approve Switch */}
+                        <td className="p-2 align-middle text-center">
+                          {showCanApprove ? (
+                            <FormField
+                              control={control}
+                              name={`permissions.${area}.canApprove`}
+                              render={({ field }) => (
+                                <FormItem className="flex justify-center items-center space-x-0 space-y-0">
+                                  <FormControl>
+                                    <Switch
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                      aria-label={`${tAreas(area)} ${t("common.permissions.approve")}`}
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </td>
+                        {/* Read Sensitive Switch */}
+                        <td className="p-2 align-middle text-center">
+                          {showCanReadSensitive ? (
+                            <FormField
+                              control={control}
+                              name={`permissions.${area}.canReadSensitive`}
+                              render={({ field }) => (
+                                <FormItem className="flex justify-center items-center space-x-0 space-y-0">
+                                  <FormControl>
+                                    <Switch
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                      aria-label={`${tAreas(area)} ${t("common.permissions.readSensitive")}`}
                                     />
                                   </FormControl>
                                 </FormItem>

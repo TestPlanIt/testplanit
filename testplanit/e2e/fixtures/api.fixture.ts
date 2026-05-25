@@ -3,6 +3,31 @@ import { randomBytes } from "node:crypto";
 import { APIRequestContext } from "@playwright/test";
 
 /**
+ * The CASES-scope workflow names seeded by prisma/seed.ts. State-lookup helpers
+ * filter to this set so a parallel test that creates its own workflow can't
+ * pollute the project-assigned pool and hand back a non-seeded workflow with
+ * an unexpected `order`. Mirrors the order/list in seed.ts; if seed adds or
+ * renames a CASES workflow, update this constant too.
+ */
+const SEEDED_CASES_WORKFLOW_NAMES = [
+  "Draft",
+  "Under Review",
+  "Rejected",
+  "Active",
+  "Done",
+  "Archived",
+] as const;
+
+/**
+ * Name of the seeded default template (prisma/seed.ts upsert key). Lookups
+ * filter to this exact name rather than the `isDefault` flag because parallel
+ * tests can — and do — create their own templates with `isDefault: true`,
+ * which either races our findFirst or (in some surfaces) flips the seeded
+ * row's flag off via single-default cascade.
+ */
+const SEEDED_DEFAULT_TEMPLATE_NAME = "Default Template";
+
+/**
  * API Helper for creating and cleaning up test data via the TestPlanIt API.
  * Uses ZenStack auto-generated API endpoints.
  */
@@ -69,18 +94,24 @@ export class ApiHelper {
       return this.cachedTemplateIds.get(projectId)!;
     }
 
+    // Match the seeded "Default Template" by its exact name (the upsert key in
+    // prisma/seed.ts). It's the only template with the Steps caseField +
+    // standard four fields the case-page renders. Parallel tests that create
+    // their own templates with isDefault: true would otherwise race this
+    // lookup, handing back a fields-less template that has no Configure
+    // Parameters button.
     const response = await this.request.get(
-      `${this.baseURL}/api/model/templates/findMany`,
+      `${this.baseURL}/api/model/templates/findFirst`,
       {
         params: {
           q: JSON.stringify({
             where: {
               isDeleted: false,
+              templateName: SEEDED_DEFAULT_TEMPLATE_NAME,
               projects: {
                 some: { projectId },
               },
             },
-            take: 1,
           }),
         },
       }
@@ -91,11 +122,13 @@ export class ApiHelper {
     }
 
     const result = await response.json();
-    if (result.data.length === 0) {
-      throw new Error("No templates found for project. Run seed first.");
+    if (!result.data) {
+      throw new Error(
+        `Seeded "${SEEDED_DEFAULT_TEMPLATE_NAME}" not assigned to project ${projectId} — was createProject called first?`
+      );
     }
 
-    const templateId = result.data[0].id;
+    const templateId = result.data.id;
     this.cachedTemplateIds.set(projectId, templateId);
     return templateId;
   }
@@ -110,18 +143,23 @@ export class ApiHelper {
       return this.cachedStateIds.get(projectId)!;
     }
 
+    // Restrict to the seeded CASES workflows (see SEEDED_CASES_WORKFLOW_NAMES
+    // below) so a parallel test that creates its own workflow can't slip in
+    // ahead of "Draft" and hand back a state with a non-matching `order`.
     const response = await this.request.get(
-      `${this.baseURL}/api/model/workflows/findMany`,
+      `${this.baseURL}/api/model/workflows/findFirst`,
       {
         params: {
           q: JSON.stringify({
             where: {
               isDeleted: false,
+              scope: "CASES",
+              name: { in: SEEDED_CASES_WORKFLOW_NAMES },
               projects: {
                 some: { projectId },
               },
             },
-            take: 1,
+            orderBy: { order: "asc" },
           }),
         },
       }
@@ -132,11 +170,11 @@ export class ApiHelper {
     }
 
     const result = await response.json();
-    if (result.data.length === 0) {
+    if (!result.data) {
       throw new Error("No workflows found for project. Run seed first.");
     }
 
-    const stateId = result.data[0].id;
+    const stateId = result.data.id;
     this.cachedStateIds.set(projectId, stateId);
     return stateId;
   }
@@ -152,10 +190,13 @@ export class ApiHelper {
           q: JSON.stringify({
             where: {
               isDeleted: false,
+              scope: "CASES",
+              name: { in: SEEDED_CASES_WORKFLOW_NAMES },
               projects: {
                 some: { projectId },
               },
             },
+            orderBy: { order: "asc" },
             take: count,
           }),
         },
@@ -990,13 +1031,19 @@ export class ApiHelper {
     // Get current user ID to set as creator
     const userId = await this.getCurrentUserId();
 
-    // Get default template (required for test cases)
+    // Get the seeded Default Template (required for test cases). Match by
+    // the seeded name rather than isDefault: true — parallel tests that
+    // create their own templates as default would otherwise win this lookup
+    // (and ship a fields-less template to every fresh project).
     const templateResponse = await this.request.get(
       `${this.baseURL}/api/model/templates/findFirst`,
       {
         params: {
           q: JSON.stringify({
-            where: { isDefault: true, isDeleted: false },
+            where: {
+              templateName: SEEDED_DEFAULT_TEMPLATE_NAME,
+              isDeleted: false,
+            },
           }),
         },
       }
@@ -1106,13 +1153,22 @@ export class ApiHelper {
       );
     }
 
-    // Assign all workflows to project (matching setup-db.ts)
+    // Assign workflows to project. Exclude any workflow whose name starts
+    // with the "E2E-" prefix used by review-helper-created gated workflows
+    // — those are owned by another in-flight test and must not be adopted
+    // here, otherwise unrelated specs (add-case, sessions, api/steps) end
+    // up with extra workflows assigned to their project and either pick
+    // the wrong default state or fail downstream invariants.
     const workflowsResponse = await this.request.get(
       `${this.baseURL}/api/model/workflows/findMany`,
       {
         params: {
           q: JSON.stringify({
-            where: { isDeleted: false, isEnabled: true },
+            where: {
+              isDeleted: false,
+              isEnabled: true,
+              NOT: { name: { startsWith: "E2E-" } },
+            },
           }),
         },
       }
@@ -3868,6 +3924,8 @@ export class ApiHelper {
     canAddEdit?: boolean;
     canDelete?: boolean;
     canClose?: boolean;
+    canApprove?: boolean;
+    canReadSensitive?: boolean;
   }): Promise<void> {
     const response = await this.request.post(
       `${this.baseURL}/api/model/rolePermission/create`,
@@ -3879,6 +3937,8 @@ export class ApiHelper {
             canAddEdit: options.canAddEdit ?? false,
             canDelete: options.canDelete ?? false,
             canClose: options.canClose ?? false,
+            canApprove: options.canApprove ?? false,
+            canReadSensitive: options.canReadSensitive ?? false,
           },
         },
       }

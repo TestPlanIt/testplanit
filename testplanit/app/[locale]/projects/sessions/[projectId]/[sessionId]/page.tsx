@@ -6,6 +6,9 @@ import { useRouter } from "~/lib/navigation";
 
 import { AttachmentChanges } from "@/components/AttachmentsDisplay";
 import { Loading } from "@/components/Loading";
+import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
+import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
+import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -77,6 +80,11 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import UploadAttachments from "@/components/UploadAttachments";
 import { VersionSelect } from "@/components/VersionSelect";
 import type { Attachments, Sessions } from "@prisma/client";
@@ -168,6 +176,7 @@ interface Milestone {
 interface WorkflowState {
   id: number;
   name: string;
+  requiresReview?: boolean;
   icon: {
     id: number;
     name: string;
@@ -257,6 +266,10 @@ interface SessionFormControlsProps {
   projectIntegration?: any;
   canAddEditTags: boolean;
   onAttachmentPendingChanges?: (changes: AttachmentChanges) => void;
+  transitionCheck?: {
+    allowed: boolean;
+    blockingGate: { id: number; name: string } | null;
+  };
 }
 
 function SessionFormControls({
@@ -278,6 +291,7 @@ function SessionFormControls({
   projectIntegration,
   canAddEditTags,
   onAttachmentPendingChanges,
+  transitionCheck,
 }: SessionFormControlsProps) {
   const t = useTranslations("sessions");
   const tGlobal = useTranslations();
@@ -376,7 +390,7 @@ function SessionFormControls({
                     value={field.value?.toString()}
                     disabled={isSubmitting}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-fit">
                       <SelectValue
                         placeholder={tCommon("placeholders.selectState")}
                       />
@@ -388,14 +402,20 @@ function SessionFormControls({
                             key={workflow.id}
                             value={workflow.id.toString()}
                           >
-                            <div className="flex items-start gap-1">
-                              <DynamicIcon
-                                name={workflow.icon?.name as IconName}
-                                color={workflow.color?.value}
-                                className="w-4 h-4 shrink-0 mt-0.5"
-                              />
-                              {workflow.name}
-                            </div>
+                            <WorkflowStateDisplay
+                              state={{
+                                name: workflow.name,
+                                icon: {
+                                  name: (workflow.icon?.name ??
+                                    "circle") as IconName,
+                                },
+                                color: {
+                                  value: workflow.color?.value ?? "",
+                                },
+                                requiresReview: workflow.requiresReview,
+                              }}
+                              size="sm"
+                            />
                           </SelectItem>
                         ))}
                       </SelectGroup>
@@ -409,11 +429,22 @@ function SessionFormControls({
                         ? { name: testSession.state.icon.name as IconName }
                         : { name: "circle" as IconName },
                       color: testSession.state.color || { value: "" },
+                      requiresReview: testSession.state.requiresReview,
                     }}
                   />
                 )}
               </FormControl>
               <FormMessage />
+              {isEditMode &&
+                transitionCheck &&
+                !transitionCheck.allowed &&
+                transitionCheck.blockingGate && (
+                  <p className="text-[0.8rem] font-medium text-destructive mt-1">
+                    {tGlobal("reviews.transitionGate.blockedByGate", {
+                      gateName: transitionCheck.blockingGate.name,
+                    })}
+                  </p>
+                )}
             </FormItem>
           );
         }}
@@ -1138,6 +1169,28 @@ export default function SessionPage() {
       },
     });
 
+  const reachableGatedStates = useMemo(() => {
+    if (!workflows || !sessionData) return [];
+    const currentStateId = sessionData.stateId;
+    // Only gates STRICTLY AFTER the current state — see the matching
+    // comment on the test-case detail page.
+    const currentStateOrder =
+      workflows.find((w) => w.id === currentStateId)?.order ?? -Infinity;
+    return workflows
+      .filter(
+        (w) =>
+          w.requiresReview === true &&
+          w.id !== currentStateId &&
+          w.order > currentStateOrder
+      )
+      .map((w) => ({
+        id: w.id,
+        name: w.name,
+        icon: { name: (w.icon?.name ?? "circle") as string },
+        color: { value: w.color?.value ?? "" },
+      }));
+  }, [workflows, sessionData]);
+
   const { data: milestones, isLoading: isLoadingMilestones } =
     useFindManyMilestones({
       where: {
@@ -1258,6 +1311,20 @@ export default function SessionPage() {
     formState: { errors },
   } = form;
 
+  // Client mirror of the strict-transitive review gate. The live inline
+  // error rendered under the state Select reads off `transitionCheck`;
+  // `onSubmit` re-runs the preflight before firing the mutation. We do NOT
+  // mirror the gate result through `setError` — that previously caused an
+  // infinite render loop via the `errors.stateId` dep.
+  const transitionGate = useTransitionGateStatus(
+    "SESSION",
+    sessionData?.id ?? 0,
+    sessionData?.stateId ?? null,
+    Number(projectId)
+  );
+  const watchedStateId = form.watch("stateId");
+  const transitionCheck = transitionGate.canTransitionTo(watchedStateId);
+
   // Add these functions
   const toggleCollapseLeft = () => {
     setIsTransitioningLeft(true);
@@ -1331,6 +1398,16 @@ export default function SessionPage() {
 
   // Update onSubmit function
   const onSubmit = async (data: FormValues) => {
+    // Strict-transitive review-gate preflight. The live inline error
+    // rendered under the state Select reads off the same `transitionGate`,
+    // so we DON'T also `setError` here — that double-renders the message
+    // (once inline + once via `FormMessage`) and previously caused an
+    // infinite render loop via the `errors.stateId` dep.
+    const gatePreflight = transitionGate.canTransitionTo(data.stateId);
+    if (!gatePreflight.allowed && gatePreflight.blockingGate) {
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       // Transform the data before sending to the server
@@ -1653,6 +1730,18 @@ export default function SessionPage() {
       {isFormLoading && <LoadingSpinnerAlert />}
       <FormProvider {...form}>
         <form onSubmit={handleSubmit(onSubmit)}>
+          {sessionData ? (
+            <div className="px-6 pt-6">
+              <ReviewStatusBanner
+                entityType="SESSION"
+                entityId={sessionData.id}
+                projectId={Number(projectId)}
+                entityName={sessionData.name}
+                reachableGatedStates={reachableGatedStates}
+                currentStateId={sessionData.stateId}
+              />
+            </div>
+          ) : null}
           <CardHeader>
             <div className="flex justify-between items-start">
               {!isEditMode && (
@@ -1754,6 +1843,15 @@ export default function SessionPage() {
                     )}
                     {!isEditMode ? (
                       <div className="flex items-center gap-1">
+                        {sessionData ? (
+                          <RequestReviewButton
+                            entityType="SESSION"
+                            entityId={sessionData.id}
+                            projectId={Number(projectId)}
+                            currentStateId={sessionData.stateId}
+                            reachableGatedStates={reachableGatedStates}
+                          />
+                        ) : null}
                         {showEditButtonPerm && !sessionData?.isCompleted && (
                           <Button
                             type="button"
@@ -1799,14 +1897,59 @@ export default function SessionPage() {
                     ) : (
                       <div className="flex flex-col gap-2">
                         <div className="flex gap-2">
-                          <Button
-                            type="submit"
-                            variant="default"
-                            disabled={isSubmitting}
-                          >
-                            <Save className="h-4 w-4" />
-                            {tCommon("actions.save")}
-                          </Button>
+                          {(() => {
+                            const gateBlocked =
+                              !transitionCheck.allowed &&
+                              transitionCheck.blockingGate;
+                            const formHasErrors =
+                              Object.keys(errors).length > 0;
+                            const saveBlocked = gateBlocked || formHasErrors;
+                            const tooltipMessage = gateBlocked
+                              ? tGlobal(
+                                  "reviews.transitionGate.blockedByGate",
+                                  {
+                                    gateName:
+                                      transitionCheck.blockingGate!.name,
+                                  }
+                                )
+                              : tGlobal(
+                                  "reviews.transitionGate.saveBlockedByFormErrors"
+                                );
+
+                            if (!saveBlocked) {
+                              return (
+                                <Button
+                                  type="submit"
+                                  variant="default"
+                                  disabled={isSubmitting}
+                                >
+                                  <Save className="h-4 w-4" />
+                                  {tCommon("actions.save")}
+                                </Button>
+                              );
+                            }
+
+                            return (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span tabIndex={0}>
+                                    <Button
+                                      type="submit"
+                                      variant="default"
+                                      disabled
+                                      className="ring-2 ring-destructive ring-offset-2 ring-offset-background"
+                                    >
+                                      <Save className="h-4 w-4" />
+                                      {tCommon("actions.save")}
+                                    </Button>
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {tooltipMessage}
+                                </TooltipContent>
+                              </Tooltip>
+                            );
+                          })()}
                           <Button
                             type="button"
                             variant="outline"
@@ -1878,7 +2021,7 @@ export default function SessionPage() {
                             </FormLabel>
                             <FormControl>
                               {contentLoaded ? (
-                                <div className="min-h-[50px]">
+                                <div className="min-h-[50px] max-h-[125px] overflow-y-auto">
                                   <TipTapEditor
                                     key={`editing-note-${isEditMode}`}
                                     content={noteContent}
@@ -1929,7 +2072,7 @@ export default function SessionPage() {
                             </FormLabel>
                             <FormControl>
                               {contentLoaded ? (
-                                <div className="min-h-[50px]">
+                                <div className="min-h-[50px] max-h-[250px] overflow-y-auto">
                                   <TipTapEditor
                                     key={`editing-mission-${isEditMode}`}
                                     content={missionContent}
@@ -2132,6 +2275,7 @@ export default function SessionPage() {
                     projectIntegration={projectData?.projectIntegrations?.[0]}
                     canAddEditTags={showAddEditTagsPerm}
                     onAttachmentPendingChanges={setPendingAttachmentChanges}
+                    transitionCheck={transitionCheck}
                   />
                   {selectedAttachmentIndex !== null && (
                     <AttachmentsCarousel

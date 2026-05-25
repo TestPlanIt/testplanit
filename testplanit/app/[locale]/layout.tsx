@@ -1,4 +1,5 @@
 import { Header } from "@/components/Header";
+import { ReviewGateMutationListener } from "@/components/reviews/ReviewGateMutationListener";
 import { RunGenerationProgressMount } from "@/components/runs/RunGenerationProgressToast";
 import { UpgradeNotificationChecker } from "@/components/UpgradeNotificationChecker";
 import type { Metadata } from "next";
@@ -50,6 +51,7 @@ export default async function RootLayout(props: any) {
       <NextIntlClientProvider messages={messages} locale={locale}>
         <NextStepOnboarding>
           <UpgradeNotificationChecker />
+          <ReviewGateMutationListener />
           <div className="m-4">
             <div>
               <Header />

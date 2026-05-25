@@ -171,7 +171,9 @@
       "reconfigure": "재구성 후 다시 시도"
     },
     "permissions": {
-      "addEdit": "추가/편집"
+      "addEdit": "추가/편집",
+      "approve": "승인하다",
+      "readSensitive": "민감한 정보를 읽어보세요."
     },
     "auth": {
       "internal": "이메일/비밀번호",
@@ -640,6 +642,8 @@
       "aiModels": "AI 모델",
       "integrations": "통합",
       "quickscript": "퀵스크립트",
+      "advanced": "고급의",
+      "reviews": "리뷰",
       "webhooks": "웹훅",
       "shares": "주식",
       "datasets": "공유 데이터 세트",
@@ -676,7 +680,9 @@
       "newerVersion": "최신 버전",
       "deletedUser": "삭제된 사용자",
       "restrictedField": "제한된 필드",
-      "backToTestCase": "테스트 케이스로 돌아가기"
+      "backToTestCase": "테스트 케이스로 돌아가기",
+      "selectDeselectAllApprove": "관련된 모든 영역에 대해 승인을 선택하거나 선택 해제하십시오.",
+      "selectDeselectAllReadSensitive": "관련 영역 모두에 대해 읽기 민감도 설정을 선택하거나 선택 해제합니다."
     },
     "labels": {
       "projects": "{count, plural, =1 {# 프로젝트} other {# 프로젝트}}",
@@ -1378,7 +1384,9 @@
           "duplicated": "복제됨",
           "stateChanged": "상태가 변경되었습니다",
           "resultAdded": "결과가 추가되었습니다",
-          "resultRecorded": "결과가 기록되었습니다"
+          "resultRecorded": "결과가 기록되었습니다",
+          "reviewRequested": "리뷰 요청됨",
+          "reviewCompleted": "검토 완료"
         },
         "iterationResultHelp": "반복 결과가 기록될 때마다(통과, 실패, 건너뛰기 또는 기타 상태) 발생합니다. 장시간 자동화 실행 시에는 신중하게 사용하십시오(반복당 하나의 이벤트).",
         "events": {
@@ -1809,6 +1817,19 @@
         "disconnectWarning3": "AI가 생성한 내보내기에 코드 컨텍스트를 포함하지 마세요.",
         "disconnectSuccess": "코드 저장소 연결이 끊어졌습니다.",
         "disconnectError": "코드 저장소 연결 해제에 실패했습니다."
+      },
+      "advanced": {
+        "title": "고급의",
+        "description": "프로젝트별로 특정 기능을 활성화/비활성화할 수 있는 토글 기능입니다. 새로운 토글 기능은 추가되는 대로 여기에 표시됩니다.",
+        "reviewWorkflow": {
+          "label": "검토 워크플로 활성화",
+          "description": "이 기능을 활성화하면 검토가 필요한 상태로의 전환은 승인된 검토 요청에 따라 제한됩니다. 테스터는 '검토 요청' 버튼을 볼 수 있으며, 검토자는 알림을 받습니다.",
+          "enabledToast": "이 프로젝트에 대해 검토 워크플로가 활성화되었습니다.",
+          "disabledToast": "이 프로젝트에 대한 검토 워크플로가 비활성화되었습니다.",
+          "saveError": "검토 워크플로 설정 업데이트에 실패했습니다.",
+          "systemDisabledTitle": "검토 워크플로가 시스템 전체에서 비활성화되었습니다.",
+          "systemDisabledDescription": "프로젝트 기본 설정은 저장되지만, 시스템 관리자가 관리 → 워크플로에서 해당 기능을 활성화하기 전까지는 아무것도 제한되지 않습니다."
+        }
       }
     },
     "matrix": {
@@ -3016,6 +3037,113 @@
       "deferredMessage": "이 첨부 파일은 저장하면 삭제됩니다."
     }
   },
+  "reviews": {
+    "banner": {
+      "pendingMessage": "<assignee></assignee> 에서 <fromState></fromState> → <toState></toState> <ago></ago>로의 전환에 대한 검토가 요청되었습니다.",
+      "changesRequestedTitle": "요청된 변경 사항",
+      "rejectedTitle": "검토가 거부되었습니다.",
+      "requestAgain": "다시 검토를 요청합니다",
+      "decidedBy": "결정됨"
+    },
+    "cancel": {
+      "title": "이 리뷰 요청을 취소하시겠습니까?",
+      "description": "검토자는 더 이상 이 요청에 대해 조치를 취할 수 없습니다. 나중에 새로운 요청을 제출할 수 있습니다.",
+      "confirm": "취소 요청",
+      "success": "리뷰 요청이 취소되었습니다.",
+      "error": "리뷰 요청을 취소할 수 없습니다. 잠시 후 다시 시도해 주세요."
+    },
+    "list": {
+      "pendingTooltip": "{assignee}의 검토 대기 중"
+    },
+    "transitionGate": {
+      "blockedByGate": "이 전환을 진행하기 전에 \"{gateName}\"에 대한 승인이 필요합니다. \"검토 요청\"을 사용하여 승인을 요청하세요.",
+      "gatedOptionBadge": "검토가 필요합니다",
+      "gatedStatesNotSelectable": "생성 시 제한 구역에 도달했거나 그 이후의 상태는 선택할 수 없습니다. 첫 번째 제한 구역 이전의 상태를 선택한 다음, 검토 요청을 사용하여 해당 구역을 통과하세요.",
+      "saveBlockedByFormErrors": "저장하기 전에 강조 표시된 양식 오류를 해결하세요.",
+      "bulkBlockedSummary": "{count, plural, one {# 사례} other {# 사례}} 게이트 \"{gateName}\"에 의해 차단됨: {sampleNames}{more, plural, =0 {} other {, 그리고 # 더 많은}}. 각 차단된 사례는 이 전환 전에 \"{gateName}\"에 대한 승인된 검토가 필요합니다.",
+      "toastReviewRequired": "이 전환을 진행하기 전에 승인이 필요합니다. 검토를 요청하고 승인된 후 다시 시도해 주세요.",
+      "toastPendingReviewExists": "이 전환에 대한 검토가 이미 진행 중입니다. 결정이 나올 때까지 기다리시거나, 다시 시도하기 전에 전환을 취소하십시오."
+    },
+    "inbox": {
+      "iconAria": "{count, plural, =0 {리뷰 받은 편지함} one {리뷰 받은 편지함, 대기 중인 리뷰 수} other {리뷰 받은 편지함, 대기 중인 리뷰 수}}",
+      "pageTitle": "리뷰",
+      "pageDescription": "귀하에게 배정된 (직접 또는 귀하가 맡은 역할을 통해) 보류 중인 검토 요청 목록입니다.",
+      "pageDescriptionDecided": "이미 결정하신 검토 요청입니다.",
+      "tabPending": "보류 중",
+      "tabDecided": "결정했다",
+      "emptyDecided": "아직 리뷰를 선택하지 않으셨습니다.",
+      "empty": "보류 중인 리뷰가 없습니다. 모든 리뷰가 완료되었습니다.",
+      "featureDisabled": "현재 검토 워크플로 기능이 비활성화되어 있습니다. 보류 중인 검토는 보존되며 기능이 다시 활성화되면 다시 표시됩니다.",
+      "columnEntity": "실재",
+      "columnProject": "프로젝트",
+      "columnRequester": "요청자",
+      "columnTransition": "이행",
+      "columnTransitionFrom": "에서",
+      "columnTransitionTo": "에게",
+      "columnRequestedAt": "요청됨",
+      "columnDecidedAt": "결정됨",
+      "columnStatus": "상태",
+      "columnActions": "행위",
+      "actionApprove": "승인하다",
+      "actionRequestChanges": "변경 요청",
+      "actionReject": "거부하다",
+      "filterEntityType": "엔티티 유형",
+      "filterProject": "프로젝트",
+      "filterAllEntityTypes": "모든 엔티티 유형",
+      "filterEntityTypeCase": "테스트 케이스",
+      "filterEntityTypeRun": "테스트 실행",
+      "filterEntityTypeSession": "세션",
+      "filterAllProjects": "모든 프로젝트"
+    },
+    "requester": {
+      "openButton": "검토 요청",
+      "sheetDescription": "목표 상태로 전환하기 전에 이 엔티티를 검토를 위해 보내십시오.",
+      "assigneeLabel": "양수인",
+      "assigneePlaceholder": "사용자 또는 역할을 선택하세요",
+      "usersHoldRole": "{count, plural, one {# 사용자가 이 역할을 맡고 있습니다} other {# 사용자들이 이 역할을 맡고 있습니다}}",
+      "targetStateLabel": "목표 상태",
+      "targetStatePlaceholder": "목표 상태를 선택하세요",
+      "commentLabel": "논평",
+      "commentPlaceholder": "검토자가 살펴봐야 할 부분을 설명하세요.",
+      "assigneeRequired": "담당자를 선택하세요.",
+      "targetStateRequired": "목표 상태를 선택하세요.",
+      "submitSuccess": "검토 요청이 생성되었습니다.",
+      "alreadyPendingError": "해당 기관에 대한 검토가 이미 진행 중입니다.",
+      "cannotSelfAssign": "본인에게 리뷰를 할당할 수는 없습니다. 다른 사용자 또는 역할을 선택하세요.",
+      "defaultComment": "{fromState} → {toState} 전환 과정을 검토해 주십시오.",
+      "defaultCommentRole": "{roleName} 그룹의 승인을 받아 {fromState} 에서 {toState}로 전환합니다.",
+      "ineligibleAssigneeError": "이 사용자/역할은 이 영역의 리뷰를 승인할 수 없습니다. 다른 사용자를 선택하세요.",
+      "ineligibleAssigneeErrorUser": "{name} 님은 이 영역의 리뷰를 승인할 수 없습니다. 다른 사용자 또는 역할을 선택하세요.",
+      "ineligibleAssigneeErrorRole": "{roleName} 역할로는 이 영역의 리뷰를 승인할 수 없습니다. 다른 역할이나 사용자를 선택하세요."
+    },
+    "assigneeChip": {
+      "emptyMembers": "프로젝트 참여 자격이 있는 구성원 중 이 역할을 맡은 사람은 없습니다.",
+      "unnamedUser": "(익명의 사용자)"
+    },
+    "reviewer": {
+      "approve": "승인하다",
+      "requestChanges": "변경 요청",
+      "reject": "거부하다",
+      "approveConfirmTitle": "이 검토 요청을 승인하시겠습니까?",
+      "approveConfirmDescription": "승인하면 <requester></requester> 이 <name></name> 에서 <state></state>으로 전환할 수 있습니다.",
+      "approvalNoteLabel": "승인 메모",
+      "approvalNotePlaceholder": "요청자에게 남길 메모를 선택적으로 추가할 수 있습니다(승인 내용과 함께 표시됨).",
+      "requestChangesDescription": "요청자에게 이 전환을 승인하기 전에 변경해야 할 사항을 알려주세요.",
+      "requestChangesCommentPlaceholder": "무엇을 바꿔야 하는지 설명하세요.",
+      "rejectTitle": "이 검토 요청을 거부하시겠습니까?",
+      "rejectDescription": "<requester></requester> 블록이 <name></name> 에서 <state></state>로 전환되는 것을 거부합니다. 다시 시도하려면 새 검토 요청을 생성해야 합니다.",
+      "rejectCommentPlaceholder": "이 요청을 거부하는 이유를 설명해 주십시오.",
+      "commentLabel": "논평",
+      "confirmRequestChanges": "보내다",
+      "approveSuccess": "검토 승인되었습니다.",
+      "requestChangesSuccess": "변경 요청 사항입니다.",
+      "rejectSuccess": "검토가 거부되었습니다.",
+      "ineligibleError": "귀하는 더 이상 이 검토 요청에 대한 결정 권한이 없습니다.",
+      "alreadyDecidedError": "이번 검토는 이미 결정되었습니다.",
+      "decideError": "결정을 기록할 수 없습니다. 잠시 후 다시 시도해 주세요.",
+      "panelSummary": "{requesterName}님의 검토 요청: {targetStateName} 로 전환"
+    }
+  },
   "runs": {
     "notFound": "테스트 실행을 찾을 수 없습니다.",
     "add": {
@@ -3193,6 +3321,7 @@
       "exportTemplates": "내보내기 템플릿",
       "codeRepositories": "코드 저장소",
       "quickScript": "퀵스크립트",
+      "advanced": "고급의",
       "sso": "입증",
       "security": "보안",
       "trash": "쓰레기",
@@ -4190,6 +4319,36 @@
     },
     "workflows": {
       "description": "테스트 케이스 워크플로우 관리",
+      "systemFeatureCard": {
+        "title": "검토 워크플로",
+        "description": "승인이 부여될 때까지 워크플로 전환을 차단하여 검토 절차를 시행합니다. 이 기능을 활성화하면 각 프로젝트는 고급 설정에서 개별적으로 활성화 또는 비활성화할 수 있습니다. 워크플로 승인 차단을 비활성화하려면 이 기능을 비활성화하십시오.",
+        "toggleAriaLabel": "검토 워크플로 기능 토글",
+        "adminOnlyNotice": "이 설정은 관리자만 변경할 수 있습니다.",
+        "updateSuccessEnabled": "검토 워크플로가 활성화되었습니다.",
+        "updateSuccessDisabled": "검토 워크플로가 비활성화되었습니다.",
+        "updateError": "검토 워크플로 설정 업데이트에 실패했습니다. 잠시 후 다시 시도해 주세요.",
+        "remindersToggleLabel": "검토 대기 중인 항목에 대한 알림 메시지를 보냅니다.",
+        "remindersToggleAriaLabel": "리뷰 알림 토글",
+        "thresholdLabel": "리뷰어에게 알림",
+        "thresholdUnit": "날)",
+        "thresholdSaveButton": "구하다",
+        "thresholdHelp": "검토 요청이 접수된 후 검토자에게 알림 메시지가 전송되기까지 며칠이 걸릴 수 있나요? 새 요청은 제출 시점부터 기한이 계산됩니다.",
+        "thresholdUpdateSuccess": "리뷰 알림 설정이 업데이트되었습니다.",
+        "thresholdUpdateError": "알림 설정 업데이트에 실패했습니다. 잠시 후 다시 시도해 주세요."
+      },
+      "projectReviewToggleList": {
+        "columnHeader": "워크플로 검토",
+        "filterPlaceholder": "프로젝트 필터링...",
+        "enabledToast": "{name}에 대한 검토 워크플로가 활성화되었습니다.",
+        "disabledToast": "{name}에 대한 검토 워크플로가 비활성화되었습니다.",
+        "saveError": "검토 워크플로 설정 업데이트에 실패했습니다. 잠시 후 다시 시도해 주세요.",
+        "emptyState": "필터 조건에 맞는 프로젝트가 없습니다."
+      },
+      "editWorkflow": {
+        "requiresReviewLabel": "검토가 필요합니다",
+        "requiresReviewFeatureDisabled": "시스템 수준에서 검토 워크플로 기능이 비활성화되어 있습니다. 프로젝트의 고급 설정을 변경하거나 TESTPLANIT_REVIEW_FEATURE_ENABLED를 설정하여 다시 활성화하십시오.",
+        "requiresReviewDefaultDisabled": "기본 워크플로 상태에서는 검토가 필요하지 않습니다. 새로운 엔티티는 이 상태에 도달하며, 검토를 거쳐야 할 이전 상태가 없습니다."
+      },
       "add": {
         "button": "워크플로 추가",
         "title": "새 워크플로 추가",
@@ -5193,7 +5352,31 @@
         "reviewGeneratedCases": "생성된 테스트 케이스를 검토합니다.",
         "generateFromUrlCompleteTitle": "페이지 크롤링이 성공적으로 완료되었습니다.",
         "generateFromUrlCompleteMessage": "{pages, plural, one {# 페이지} other {# 페이지}} 프로젝트 \"{projectName}\"의 {url} 에서 크롤링되었습니다. 클릭하여 검토하고 테스트 케이스를 생성하세요.",
-        "generateFromUrlFailedTitle": "URL 크롤링 실패"
+        "generateFromUrlFailedTitle": "URL 크롤링 실패",
+        "reviewRequestedTitle": "리뷰 요청됨",
+        "reviewApprovedTitle": "검토 승인됨",
+        "reviewChangesRequestedTitle": "요청된 변경 사항",
+        "reviewRejectedTitle": "검토가 거부되었습니다.",
+        "reviewCancelledTitle": "리뷰 요청이 취소되었습니다.",
+        "reviewRequestedAction": "귀하의 리뷰를 요청드립니다.",
+        "reviewApprovedAction": "귀하의 리뷰 요청을 승인했습니다.",
+        "reviewChangesRequestedAction": "리뷰 요청에 대한 변경 사항을 요청하셨습니다.",
+        "reviewRejectedAction": "귀하의 리뷰 요청이 거부되었습니다.",
+        "reviewCancelledAction": "리뷰 요청을 취소했습니다.",
+        "reviewEntityLabelCase": "테스트 케이스",
+        "reviewEntityLabelRun": "테스트 실행",
+        "reviewEntityLabelSession": "세션",
+        "reviewTransition": "전환: {from} → {to}",
+        "reviewCommentPreview": "댓글: {comment}",
+        "reviewRequestedEmailMessage": "{actorName} 님이 프로젝트 \"{projectName} \"에서 {entityLabel} \" \"{entityName}\"에 대한 리뷰를 요청했습니다.",
+        "reviewApprovedEmailMessage": "{actorName} approved your review request on {entityLabel} \"{entityName}\" in project \"{projectName}\".",
+        "reviewChangesRequestedEmailMessage": "{actorName} requested changes on your review request for {entityLabel} \"{entityName}\" in project \"{projectName}\".",
+        "reviewRejectedEmailMessage": "{actorName} 님이 프로젝트 \"{projectName} \"에서 {entityLabel} \"{entityName}\"에 대한 검토 요청을 거부했습니다.",
+        "reviewCancelledEmailMessage": "{actorName} 님이 프로젝트 \"{projectName} \"에서 {entityLabel} \"{entityName}\"에 대한 검토 요청을 취소했습니다.",
+        "reviewReminderTitle": "검토는 아직 진행 중입니다.",
+        "reviewReminderAction": "아직 귀하의 리뷰를 기다리고 있습니다.",
+        "reviewReminderEmailMessage": "알림: {actorName}님의 {entityLabel} \"{entityName}\" 프로젝트 \"{projectName}\"에 대한 검토 요청이 {hoursPending} 시간 동안 보류 중입니다.",
+        "reviewReminderHoursPending": "대기 시간: {hoursPending, plural, one {#시간} other {#시간}}"
       }
     },
     "issues": {
@@ -5549,7 +5732,9 @@
       "permissions": {
         "canAddEdit": "## 추가/편집\n이 역할이 관련 애플리케이션 영역을 추가하고 편집할 수 있는지 여부를 나타냅니다.",
         "canDelete": "## 삭제\n이 역할이 관련 애플리케이션 영역을 삭제할 수 있는지 여부를 나타냅니다.",
-        "canClose": "## 닫기\n이 역할이 관련 애플리케이션 영역을 닫을 수 있는지 여부를 나타냅니다."
+        "canClose": "## 닫기\n이 역할이 관련 애플리케이션 영역을 닫을 수 있는지 여부를 나타냅니다.",
+        "canApprove": "## 승인\n이 역할이 관련 애플리케이션 영역에 대한 검토 요청을 승인할 수 있는지 여부를 나타냅니다. 테스트 케이스 저장소, 테스트 실행 및 세션에만 적용됩니다.",
+        "canReadSensitive": "## 민감한 값 읽기\n이 역할이 제한된 필드 데이터를 읽을 때 민감한 매개변수 값을 볼 수 있는지 여부를 나타냅니다. 이 권한이 없으면 민감한 값은 데이터 세트 행과 반복 셀에서 ●●●●●●로 표시되고, 이슈 사전 입력 본문과 CSV 내보내기에서는 [REDACTED]로 표시됩니다. 테스트 케이스 제한 필드 및 테스트 실행 결과 제한 필드에만 적용됩니다."
       }
     },
     "group": {
@@ -5655,6 +5840,7 @@
       "isDefault": "## 기본값\n이 워크플로가 프로젝트의 기본값인지 여부를 나타냅니다.\n\n- 새 테스트 실행, 세션 및 자동화에 대해 기본 워크플로가 미리 선택됩니다.",
       "isEnabled": "## 활성화됨\n이 워크플로가 활성화되었는지 여부를 나타냅니다.",
       "isActive": "## 활성\n이 워크플로 상태가 활성화되어 사용 가능한지 여부를 나타냅니다.\n\n- 활성 워크플로는 테스트 실행, 세션 또는 자동화를 업데이트할 때 선택할 수 있습니다.\n- 비활성 워크플로는 선택 항목에서 숨겨지지만 기존 항목에는 유지됩니다.",
+      "requiresReview": "## 검토 필요\n이 기능이 켜져 있으면 케이스, 테스트 실행 또는 세션을 이 상태로 전환하려면 승인된 검토 요청이 있어야 합니다. 승인된 요청이 없으면 전환이 차단됩니다.\n\n- 시스템 수준 기능이 꺼져 있을 때 기존의 보류 중인 검토는 자동으로 유지되며 다시 활성화하면 다시 나타납니다.\n- 테스터가 엔티티 세부 정보 페이지에서 검토 요청을 클릭하면 검토자가 선택됩니다.\n\n시스템 수준 기능이 비활성화된 경우 이 스위치는 잠깁니다. 위의 검토 워크플로 카드에서 다시 활성화하여 이 기능을 켜십시오.",
       "projects": "## 프로젝트\n이 워크플로를 사용할 수 있는 프로젝트를 나타냅니다."
     },
     "testResult": {
@@ -6937,6 +7123,16 @@
     "mentions": {
       "notAMember": "프로젝트 멤버가 아닙니다",
       "noUsersFound": "사용자를 찾을 수 없습니다."
+    },
+    "type": {
+      "reviewRequest": "검토 요청",
+      "reviewDecision": {
+        "approved": "승인됨",
+        "changesRequested": "요청된 변경 사항",
+        "rejected": "거절됨",
+        "cancelled": "취소",
+        "generic": "검토 결정"
+      }
     }
   },
   "Trial": {

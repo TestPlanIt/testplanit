@@ -1,4 +1,4 @@
-import { NotificationType } from "@prisma/client";
+import { ApplicationArea, NotificationType } from "@prisma/client";
 import { JOB_CREATE_NOTIFICATION } from "../../workers/notificationWorker";
 import { getCurrentTenantId } from "../multiTenantPrisma";
 import { getNotificationQueue } from "../queues";
@@ -204,6 +204,382 @@ export class NotificationService {
       console.error("Failed to create user registration notifications:", error);
       // Don't throw error as this is a non-critical operation
     }
+  }
+
+  /**
+   * Resolve the user IDs that hold a role on a project, mirroring every
+   * eligibility branch in `decideReviewRequest` — direct UserProjectPermission
+   * AND indirect via group membership. SCIM/SAML deployments commonly
+   * provision role access at the group level, so fanout MUST include
+   * group-derived holders or those users see no notification for a review
+   * they are perfectly eligible to act on.
+   *
+   * Branches:
+   *   - SPECIFIC_ROLE via UserProjectPermission where `roleId === assigneeRoleId`
+   *   - GLOBAL_ROLE via UserProjectPermission where the user's global `roleId`
+   *     matches `assigneeRoleId`
+   *   - SPECIFIC_ROLE via GroupProjectPermission where `roleId === assigneeRoleId`
+   *     and the user is in the group
+   *   - GLOBAL_ROLE via GroupProjectPermission where the user's global
+   *     `roleId` matches `assigneeRoleId` and the user is in the group
+   *
+   * The requester is excluded — assigning a review to a role you hold
+   * yourself shouldn't ping you about your own request. ADMIN users are
+   * NOT pre-fanned here: the schema admin-override applies at decide time,
+   * but blasting every system admin on every role-assigned review would be
+   * spam. If a non-role-holder admin wants to act, they can do so from the
+   * review inbox.
+   */
+  static async resolveRoleHolderUserIds(
+    projectId: number,
+    roleId: number,
+    requesterUserId: string,
+    options?: { requireCanApproveOn?: ApplicationArea }
+  ): Promise<string[]> {
+    const { prisma } = await import("~/lib/prisma");
+
+    // Optional canApprove gate on the assigned role itself — when the role
+    // doesn't carry canApprove on the requested area, the fanout is empty
+    // by construction. Short-circuit instead of running four findManys.
+    if (options?.requireCanApproveOn) {
+      const perm = await prisma.rolePermission.findUnique({
+        where: {
+          roleId_area: { roleId, area: options.requireCanApproveOn },
+        },
+        select: { canApprove: true },
+      });
+      if (!perm?.canApprove) return [];
+    }
+
+    const specificRoleRows = await prisma.userProjectPermission.findMany({
+      where: {
+        projectId,
+        accessType: "SPECIFIC_ROLE",
+        roleId,
+        user: { isActive: true, isDeleted: false },
+      },
+      select: { userId: true },
+    });
+
+    const globalRoleRows = await prisma.userProjectPermission.findMany({
+      where: {
+        projectId,
+        accessType: "GLOBAL_ROLE",
+        user: { isActive: true, isDeleted: false, roleId },
+      },
+      select: { userId: true },
+    });
+
+    // Group-based SPECIFIC_ROLE: every active user in a group that has this
+    // role on the project. The per-relation `assignedUsers.where` keeps the
+    // returned member list filtered to active users only.
+    const groupSpecificRoleRows = await prisma.groupProjectPermission.findMany({
+      where: { projectId, accessType: "SPECIFIC_ROLE", roleId },
+      select: {
+        group: {
+          select: {
+            assignedUsers: {
+              where: { user: { isActive: true, isDeleted: false } },
+              select: { userId: true },
+            },
+          },
+        },
+      },
+    });
+
+    // Group-based GLOBAL_ROLE: every active user in a group with GLOBAL_ROLE
+    // access on the project whose `User.roleId` matches the assigned role.
+    const groupGlobalRoleRows = await prisma.groupProjectPermission.findMany({
+      where: { projectId, accessType: "GLOBAL_ROLE" },
+      select: {
+        group: {
+          select: {
+            assignedUsers: {
+              where: { user: { isActive: true, isDeleted: false, roleId } },
+              select: { userId: true },
+            },
+          },
+        },
+      },
+    });
+
+    const ids = new Set<string>();
+    for (const row of specificRoleRows) ids.add(row.userId);
+    for (const row of globalRoleRows) ids.add(row.userId);
+    for (const row of groupSpecificRoleRows) {
+      for (const a of row.group.assignedUsers) ids.add(a.userId);
+    }
+    for (const row of groupGlobalRoleRows) {
+      for (const a of row.group.assignedUsers) ids.add(a.userId);
+    }
+    ids.delete(requesterUserId);
+    return Array.from(ids);
+  }
+
+  /**
+   * Dispatch a REVIEW_REQUESTED notification to each target reviewer.
+   *
+   * The persisted `title` and `message` columns hold an English fallback
+   * for older clients and for environments where `getServerTranslation`
+   * can't resolve a locale; the bell-icon (NotificationContent.tsx) and
+   * the email worker re-render localized copy at display time from the
+   * `data` payload. Mirrors the `feedback_localize_new_notifications`
+   * contract for any new NotificationType.
+   */
+  static async createReviewRequestNotification(params: {
+    targetUserIds: string[];
+    requesterUserId: string;
+    requesterName: string;
+    projectId: number;
+    projectName: string;
+    entityType: "CASE" | "RUN" | "SESSION";
+    entityId: number;
+    entityName: string;
+    fromStateName: string;
+    toStateName: string;
+    reviewRequestId: string;
+    commentText: string;
+  }) {
+    if (params.targetUserIds.length === 0) return;
+
+    const entityLabel =
+      params.entityType === "CASE"
+        ? "test case"
+        : params.entityType === "RUN"
+          ? "test run"
+          : "session";
+
+    const title = "Review requested";
+    const message = `${params.requesterName} requested your review of ${entityLabel} "${params.entityName}" in project "${params.projectName}"`;
+
+    await Promise.all(
+      params.targetUserIds.map((userId) =>
+        this.createNotification({
+          userId,
+          type: NotificationType.REVIEW_REQUESTED,
+          title,
+          message,
+          relatedEntityId: params.reviewRequestId,
+          relatedEntityType: "ReviewRequest",
+          data: {
+            reviewRequestId: params.reviewRequestId,
+            requesterUserId: params.requesterUserId,
+            requesterName: params.requesterName,
+            projectId: params.projectId,
+            projectName: params.projectName,
+            entityType: params.entityType,
+            entityId: params.entityId,
+            entityName: params.entityName,
+            fromStateName: params.fromStateName,
+            toStateName: params.toStateName,
+            commentText: params.commentText,
+          },
+        })
+      )
+    );
+  }
+
+  /**
+   * Dispatch a REVIEW_APPROVED / REVIEW_CHANGES_REQUESTED / REVIEW_REJECTED
+   * notification to the original requester after a decision lands. Decision
+   * outcomes share a single dispatch surface because they all target the
+   * same recipient and carry the same payload shape; the
+   * NotificationType discriminator drives renderer/email copy.
+   */
+  static async createReviewDecisionNotification(params: {
+    requesterUserId: string;
+    deciderUserId: string;
+    deciderName: string;
+    decision: "APPROVED" | "CHANGES_REQUESTED" | "REJECTED";
+    projectId: number;
+    projectName: string;
+    entityType: "CASE" | "RUN" | "SESSION";
+    entityId: number;
+    entityName: string;
+    fromStateName: string;
+    toStateName: string;
+    reviewRequestId: string;
+    decisionComment: string;
+  }) {
+    // Don't notify the decider if they decided their own request (admin
+    // self-approval edge case).
+    if (params.requesterUserId === params.deciderUserId) return;
+
+    const entityLabel =
+      params.entityType === "CASE"
+        ? "test case"
+        : params.entityType === "RUN"
+          ? "test run"
+          : "session";
+
+    let type: NotificationType;
+    let title: string;
+    let message: string;
+    if (params.decision === "APPROVED") {
+      type = NotificationType.REVIEW_APPROVED;
+      title = "Review approved";
+      message = `${params.deciderName} approved your review request on ${entityLabel} "${params.entityName}" in project "${params.projectName}"`;
+    } else if (params.decision === "CHANGES_REQUESTED") {
+      type = NotificationType.REVIEW_CHANGES_REQUESTED;
+      title = "Changes requested";
+      message = `${params.deciderName} requested changes on your review request for ${entityLabel} "${params.entityName}" in project "${params.projectName}"`;
+    } else {
+      type = NotificationType.REVIEW_REJECTED;
+      title = "Review rejected";
+      message = `${params.deciderName} rejected your review request on ${entityLabel} "${params.entityName}" in project "${params.projectName}"`;
+    }
+
+    await this.createNotification({
+      userId: params.requesterUserId,
+      type,
+      title,
+      message,
+      relatedEntityId: params.reviewRequestId,
+      relatedEntityType: "ReviewRequest",
+      data: {
+        reviewRequestId: params.reviewRequestId,
+        deciderUserId: params.deciderUserId,
+        deciderName: params.deciderName,
+        decision: params.decision,
+        projectId: params.projectId,
+        projectName: params.projectName,
+        entityType: params.entityType,
+        entityId: params.entityId,
+        entityName: params.entityName,
+        fromStateName: params.fromStateName,
+        toStateName: params.toStateName,
+        decisionComment: params.decisionComment,
+      },
+    });
+  }
+
+  /**
+   * Dispatch a REVIEW_CANCELLED notification to each prospective reviewer of
+   * a request that was just cancelled by the requester (or an admin). Direct
+   * user-assignee receives one notification; role-assigned requests fan out
+   * to every active role holder on the project. The requester themselves is
+   * excluded — they took the action and don't need to be told about it.
+   *
+   * Persisted `title` / `message` are English fallback only; bell + email
+   * worker re-render localized copy at display time per the
+   * `feedback_localize_new_notifications` contract.
+   */
+  static async createReviewCancelledNotification(params: {
+    targetUserIds: string[];
+    cancelerUserId: string;
+    cancelerName: string;
+    projectId: number;
+    projectName: string;
+    entityType: "CASE" | "RUN" | "SESSION";
+    entityId: number;
+    entityName: string;
+    fromStateName: string;
+    toStateName: string;
+    reviewRequestId: string;
+  }) {
+    if (params.targetUserIds.length === 0) return;
+
+    const entityLabel =
+      params.entityType === "CASE"
+        ? "test case"
+        : params.entityType === "RUN"
+          ? "test run"
+          : "session";
+
+    const title = "Review request cancelled";
+    const message = `${params.cancelerName} cancelled the review request on ${entityLabel} "${params.entityName}" in project "${params.projectName}"`;
+
+    await Promise.all(
+      params.targetUserIds.map((userId) =>
+        this.createNotification({
+          userId,
+          type: NotificationType.REVIEW_CANCELLED,
+          title,
+          message,
+          relatedEntityId: params.reviewRequestId,
+          relatedEntityType: "ReviewRequest",
+          data: {
+            reviewRequestId: params.reviewRequestId,
+            cancelerUserId: params.cancelerUserId,
+            cancelerName: params.cancelerName,
+            projectId: params.projectId,
+            projectName: params.projectName,
+            entityType: params.entityType,
+            entityId: params.entityId,
+            entityName: params.entityName,
+            fromStateName: params.fromStateName,
+            toStateName: params.toStateName,
+          },
+        })
+      )
+    );
+  }
+
+  /**
+   * Dispatch a REVIEW_REMINDER notification to each target reviewer after a
+   * pending review request has been waiting longer than the configured
+   * threshold. Recipients are pre-resolved by the caller (the review-reminder
+   * worker case in `workers/forecastWorker.ts`) — requester exclusion is
+   * enforced upstream by `resolveRoleHolderUserIds` for role assignments and
+   * by a defense-in-depth filter for direct assignments.
+   *
+   * Persisted `title` / `message` are English fallback only; the bell-icon
+   * UI (`components/NotificationContent.tsx`) and email worker
+   * (`workers/emailWorker.ts`, both immediate and digest paths) re-render
+   * localized copy from the `data` payload at display time per the
+   * `feedback_localize_new_notifications` contract.
+   */
+  static async createReviewReminderNotification(params: {
+    targetUserIds: string[];
+    requesterUserId: string;
+    requesterName: string;
+    projectId: number;
+    projectName: string;
+    entityType: "CASE" | "RUN" | "SESSION";
+    entityId: number;
+    entityName: string;
+    fromStateName: string;
+    toStateName: string;
+    reviewRequestId: string;
+    hoursPending: number;
+  }) {
+    if (params.targetUserIds.length === 0) return;
+
+    const entityLabel =
+      params.entityType === "CASE"
+        ? "test case"
+        : params.entityType === "RUN"
+          ? "test run"
+          : "session";
+
+    const title = "Review still pending";
+    const message = `Reminder: ${params.requesterName}'s review request on ${entityLabel} "${params.entityName}" in project "${params.projectName}" is still waiting on you (${params.hoursPending}h pending).`;
+
+    await Promise.all(
+      params.targetUserIds.map((userId) =>
+        this.createNotification({
+          userId,
+          type: NotificationType.REVIEW_REMINDER,
+          title,
+          message,
+          relatedEntityId: params.reviewRequestId,
+          relatedEntityType: "ReviewRequest",
+          data: {
+            reviewRequestId: params.reviewRequestId,
+            requesterUserId: params.requesterUserId,
+            requesterName: params.requesterName,
+            projectId: params.projectId,
+            projectName: params.projectName,
+            entityType: params.entityType,
+            entityId: params.entityId,
+            entityName: params.entityName,
+            fromStateName: params.fromStateName,
+            toStateName: params.toStateName,
+            hoursPending: params.hoursPending,
+          },
+        })
+      )
+    );
   }
 
   /**

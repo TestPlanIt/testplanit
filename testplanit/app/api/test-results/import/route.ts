@@ -16,6 +16,7 @@ import {
   JUnitResultType,
   RepositoryCaseSource,
   TestRunType,
+  WorkflowScope,
 } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
@@ -25,6 +26,7 @@ import {
 } from "~/lib/auditContextWrappers";
 import { auditBulkCreate } from "~/lib/services/auditLog";
 import { DuplicateScanService } from "~/lib/services/duplicateScanService";
+import { resolveCreateStateRemap } from "~/lib/services/reviewGate";
 import type { RollupStatus } from "~/lib/services/iterationRollup";
 import {
   extractIterationIndex,
@@ -416,11 +418,19 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
         // Create or verify test run
         if (!testRunId) {
+          const candidateRunStateId = stateIdFromForm || defaultRunStateId;
+          const effectiveRunStateId =
+            (await resolveCreateStateRemap(
+              prisma,
+              projectId,
+              WorkflowScope.RUNS,
+              candidateRunStateId
+            )) ?? candidateRunStateId;
           const testRun = await prisma.testRuns.create({
             data: {
               name,
               projectId,
-              stateId: stateIdFromForm || defaultRunStateId,
+              stateId: effectiveRunStateId,
               configId: configId || null,
               milestoneId: milestoneId || null,
               testRunType: testRunType,

@@ -328,7 +328,7 @@ export function useSuspenseCountWorkflows<TArgs extends Prisma.WorkflowsCountArg
 }
 import type { WorkflowType, WorkflowScope } from '@prisma/client';
 
-export function useCheckWorkflows<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: number; order?: number; name?: string; iconId?: number; colorId?: number; isEnabled?: boolean; isDeleted?: boolean; isDefault?: boolean; workflowType?: WorkflowType; scope?: WorkflowScope }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
+export function useCheckWorkflows<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: number; order?: number; name?: string; iconId?: number; colorId?: number; isEnabled?: boolean; isDeleted?: boolean; isDefault?: boolean; workflowType?: WorkflowType; scope?: WorkflowScope; requiresReview?: boolean }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
     const { endpoint, fetch } = getHooksContext();
     return useModelQuery<boolean, boolean, TError>('Workflows', `${endpoint}/workflows/check`, args, options, fetch);
 }

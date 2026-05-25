@@ -1,6 +1,8 @@
 "use server";
 
+import { ApplicationArea } from "@prisma/client";
 import { prisma } from "~/lib/prisma";
+import { resolveEffectiveProjectRolesForUsers } from "~/lib/services/effectiveRole";
 import { getProjectEffectiveMembers } from "./getProjectEffectiveMembers";
 
 /**
@@ -11,13 +13,17 @@ import { getProjectEffectiveMembers } from "./getProjectEffectiveMembers";
  * @param query - Search query to filter users by name or email
  * @param page - Page number (0-indexed)
  * @param pageSize - Number of results per page
+ * @param options - Optional refinement; when `requireCanApproveOn` is set
+ *   the candidate list is narrowed to users whose effective project role
+ *   has `canApprove: true` on the given ApplicationArea.
  * @returns Paginated results with total count
  */
 export async function searchProjectMembers(
   projectId: number,
   query: string,
   page: number,
-  pageSize: number
+  pageSize: number,
+  options?: { requireCanApproveOn?: ApplicationArea }
 ): Promise<{
   results: Array<{
     id: string;
@@ -29,10 +35,36 @@ export async function searchProjectMembers(
 }> {
   try {
     // Get all user IDs with effective access to the project
-    const effectiveMemberIds = await getProjectEffectiveMembers(projectId);
+    let effectiveMemberIds = await getProjectEffectiveMembers(projectId);
 
     if (effectiveMemberIds.length === 0) {
       return { results: [], total: 0 };
+    }
+
+    // Optional per-user canApprove filter. Pre-compute eligible roleIds for
+    // the requested area, resolve each candidate's effective project role,
+    // then intersect. Short-circuit when no role at all has the permission.
+    if (options?.requireCanApproveOn) {
+      const eligibleRoleRows = await prisma.rolePermission.findMany({
+        where: {
+          area: options.requireCanApproveOn,
+          canApprove: true,
+        },
+        select: { roleId: true },
+      });
+      const eligibleRoleIds = new Set(eligibleRoleRows.map((r) => r.roleId));
+      if (eligibleRoleIds.size === 0) return { results: [], total: 0 };
+
+      const effectiveRoleByUser = await resolveEffectiveProjectRolesForUsers(
+        effectiveMemberIds,
+        projectId,
+        prisma
+      );
+      effectiveMemberIds = effectiveMemberIds.filter((uid) => {
+        const rid = effectiveRoleByUser.get(uid);
+        return rid !== null && rid !== undefined && eligibleRoleIds.has(rid);
+      });
+      if (effectiveMemberIds.length === 0) return { results: [], total: 0 };
     }
 
     // Build where clause for search

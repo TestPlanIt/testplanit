@@ -1,6 +1,6 @@
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
-import DynamicIcon from "@/components/DynamicIcon";
+import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
 import { MilestoneSelect } from "@/components/forms/MilestoneSelect";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
@@ -19,6 +19,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -83,6 +84,8 @@ interface WorkflowOption {
   label: string;
   icon?: string;
   color?: string;
+  requiresReview?: boolean;
+  disabledForCreate?: boolean;
 }
 
 interface ConfigurationOption {
@@ -462,22 +465,33 @@ const BasicInfoDialog = React.memo(
                               <SelectItem
                                 key={option.value}
                                 value={option.value}
+                                disabled={option.disabledForCreate === true}
                               >
-                                <div className="flex items-center gap-2">
-                                  {option.icon && (
-                                    <DynamicIcon
-                                      name={option.icon as IconName}
-                                      className="h-4 w-4"
-                                      style={{ color: option.color }}
-                                    />
-                                  )}
-                                  {option.label}
-                                </div>
+                                <WorkflowStateDisplay
+                                  state={{
+                                    name: option.label,
+                                    icon: {
+                                      name: (option.icon ?? "") as IconName,
+                                    },
+                                    color: { value: option.color ?? "" },
+                                    requiresReview: option.requiresReview,
+                                  }}
+                                  size="sm"
+                                />
                               </SelectItem>
                             ))}
                           </SelectGroup>
                         </SelectContent>
                       </Select>
+                      {workflowsOptions.some(
+                        (o: WorkflowOption) => o.disabledForCreate === true
+                      ) && (
+                        <FormDescription>
+                          {tGlobal(
+                            "reviews.transitionGate.gatedStatesNotSelectable"
+                          )}
+                        </FormDescription>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -940,6 +954,13 @@ export default function AddTestRunModal({
   const defaultWorkflow = workflows?.find((workflow) => workflow.isDefault);
   const configurationsOptions: ConfigurationOption[] =
     configurations?.map((c) => ({ id: c.id, name: c.name })) || [];
+  const firstGatedRunOrder = useMemo(() => {
+    return (workflows ?? [])
+      .filter((w) => w.requiresReview === true)
+      .reduce<
+        number | null
+      >((acc, w) => (acc === null || w.order < acc ? w.order : acc), null);
+  }, [workflows]);
   const workflowsOptions = useMemo(() => {
     return (
       workflows?.map((w) => ({
@@ -947,9 +968,12 @@ export default function AddTestRunModal({
         label: w.name,
         icon: w.icon?.name,
         color: w.color?.value,
+        requiresReview: w.requiresReview,
+        disabledForCreate:
+          firstGatedRunOrder !== null && w.order >= firstGatedRunOrder,
       })) || []
     );
-  }, [workflows]);
+  }, [workflows, firstGatedRunOrder]);
   const milestonesOptions = (milestones || []).map((m: any) => ({
     value: m.id.toString(),
     label: m.name,

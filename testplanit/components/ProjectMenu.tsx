@@ -29,6 +29,7 @@ import {
   Plug,
   ScrollText,
   Settings,
+  Settings2,
   Share2,
   Sparkles,
   SquareStack,
@@ -294,6 +295,13 @@ export default function ProjectsMenu({
             label: t("admin.menu.testCaseParameters"),
             path: "settings/parameters",
             id: "settings-test-case-parameters-link",
+            section: "settings" as MenuSection,
+          },
+          {
+            icon: Settings2,
+            label: t("admin.menu.advanced"),
+            path: "settings/advanced",
+            id: "settings-advanced-link",
             section: "settings" as MenuSection,
           },
           {

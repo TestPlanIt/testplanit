@@ -1,6 +1,6 @@
 "use client";
 
-import DynamicIcon from "@/components/DynamicIcon";
+import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -28,6 +28,7 @@ import { CalendarIcon, CircleCheckBig, TriangleAlert } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
+import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
 import { useFindManyWorkflows, useUpdateTestRuns } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 import { cn } from "~/utils";
@@ -81,6 +82,18 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
   });
 
   const [selectedStateId, setSelectedStateId] = useState<number>(stateId);
+
+  // Client mirror of the strict-transitive review gate. Disables the
+  // Complete button (and surfaces an inline warning) when the picked
+  // target state would be blocked server-side, so the user doesn't fire
+  // the mutation only to receive a 403.
+  const transitionGate = useTransitionGateStatus(
+    "RUN",
+    testRunId,
+    stateId,
+    projectId
+  );
+  const stateTransitionCheck = transitionGate.canTransitionTo(selectedStateId);
 
   useEffect(() => {
     if (workflows && workflows.length > 0) {
@@ -145,18 +158,29 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
               <SelectContent>
                 {workflows?.map((workflow) => (
                   <SelectItem key={workflow.id} value={workflow.id.toString()}>
-                    <div className="flex items-center gap-2">
-                      <DynamicIcon
-                        name={workflow.icon?.name as IconName}
-                        color={workflow.color?.value}
-                        className="h-4 w-4"
-                      />
-                      {workflow.name}
-                    </div>
+                    <WorkflowStateDisplay
+                      state={{
+                        name: workflow.name,
+                        icon: {
+                          name: (workflow.icon?.name ?? "circle") as IconName,
+                        },
+                        color: { value: workflow.color?.value ?? "" },
+                        requiresReview: workflow.requiresReview,
+                      }}
+                      size="sm"
+                    />
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {!stateTransitionCheck.allowed &&
+              stateTransitionCheck.blockingGate && (
+                <p className="text-sm text-destructive">
+                  {t("reviews.transitionGate.blockedByGate", {
+                    gateName: stateTransitionCheck.blockingGate.name,
+                  })}
+                </p>
+              )}
           </div>
 
           <div className="space-y-2">
@@ -203,7 +227,7 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
           <Button
             variant="destructive"
             onClick={handleComplete}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !stateTransitionCheck.allowed}
           >
             {t("common.dialogs.complete.title")}
           </Button>

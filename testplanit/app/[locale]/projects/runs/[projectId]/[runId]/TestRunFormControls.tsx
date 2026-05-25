@@ -81,6 +81,7 @@ type WorkflowStateWithRelations = {
   isDefault: boolean;
   workflowType: string;
   scope: string;
+  requiresReview?: boolean | null;
   icon: {
     id: number;
     name: string;
@@ -91,6 +92,11 @@ type WorkflowStateWithRelations = {
     value: string;
     colorFamilyId: number;
   } | null;
+};
+
+type TransitionCheck = {
+  allowed: boolean;
+  blockingGate: { id: number; name: string } | null;
 };
 
 type TestRunWithRelations = {
@@ -160,6 +166,7 @@ interface TestRunFormControlsProps {
   canCreateTags?: boolean;
   selectedConfigurationsForDisplay?: SelectedConfigurationInfo[];
   onAttachmentPendingChanges?: (changes: AttachmentChanges) => void;
+  transitionCheck?: TransitionCheck;
 }
 
 function TestRunFormControls({
@@ -182,6 +189,7 @@ function TestRunFormControls({
   canCreateTags = false,
   selectedConfigurationsForDisplay = [],
   onAttachmentPendingChanges,
+  transitionCheck,
 }: TestRunFormControlsProps) {
   const t = useTranslations();
 
@@ -204,7 +212,7 @@ function TestRunFormControls({
                     value={field.value?.toString()}
                     disabled={isSubmitting || !canAddEdit}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-fit">
                       <SelectValue
                         placeholder={t("common.placeholders.selectState")}
                       />
@@ -216,14 +224,20 @@ function TestRunFormControls({
                             key={workflow.id}
                             value={workflow.id.toString()}
                           >
-                            <div className="flex items-start gap-1">
-                              <DynamicIcon
-                                name={workflow.icon?.name as IconName}
-                                color={workflow.color?.value}
-                                className="w-4 h-4 shrink-0"
-                              />
-                              {workflow.name}
-                            </div>
+                            <WorkflowStateDisplay
+                              state={{
+                                name: workflow.name,
+                                icon: {
+                                  name: (workflow.icon?.name ??
+                                    "circle") as IconName,
+                                },
+                                color: {
+                                  value: workflow.color?.value ?? "",
+                                },
+                                requiresReview: workflow.requiresReview,
+                              }}
+                              size="sm"
+                            />
                           </SelectItem>
                         ))}
                       </SelectGroup>
@@ -237,11 +251,22 @@ function TestRunFormControls({
                         ? { name: testRun.state.icon.name as IconName }
                         : { name: "circle" as IconName },
                       color: testRun.state.color || { value: "" },
+                      requiresReview: testRun.state.requiresReview,
                     }}
                   />
                 )}
               </FormControl>
               <FormMessage />
+              {isEditMode &&
+                transitionCheck &&
+                !transitionCheck.allowed &&
+                transitionCheck.blockingGate && (
+                  <p className="text-[0.8rem] font-medium text-destructive mt-1">
+                    {t("reviews.transitionGate.blockedByGate", {
+                      gateName: transitionCheck.blockingGate.name,
+                    })}
+                  </p>
+                )}
             </FormItem>
           );
         }}

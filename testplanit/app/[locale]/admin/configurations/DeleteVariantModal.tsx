@@ -100,7 +100,9 @@ export function DeleteVariantModal({
               <div>
                 {t.rich("message", {
                   name: variant.name,
-                  strong: (chunks) => <strong>{chunks}</strong>,
+                  strong: (chunks) => (
+                    <strong className="break-all">{chunks}</strong>
+                  ),
                 })}
               </div>
             </AlertDialogDescription>

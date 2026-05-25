@@ -26,6 +26,16 @@ vi.mock("~/lib/prisma", () => ({
     user: {
       findUnique: vi.fn(),
     },
+    appConfig: {
+      findUnique: vi.fn().mockResolvedValue({ value: false }),
+    },
+    projects: {
+      findUnique: vi.fn(),
+    },
+    workflows: {
+      findMany: vi.fn().mockResolvedValue([]),
+      findUnique: vi.fn(),
+    },
   },
 }));
 

@@ -328,7 +328,7 @@ export function useSuspenseCountRolePermission<TArgs extends Prisma.RolePermissi
 }
 import type { ApplicationArea } from '@prisma/client';
 
-export function useCheckRolePermission<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { roleId?: number; area?: ApplicationArea; canAddEdit?: boolean; canDelete?: boolean; canClose?: boolean; canReadSensitive?: boolean }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
+export function useCheckRolePermission<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { roleId?: number; area?: ApplicationArea; canAddEdit?: boolean; canDelete?: boolean; canClose?: boolean; canReadSensitive?: boolean; canApprove?: boolean }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
     const { endpoint, fetch } = getHooksContext();
     return useModelQuery<boolean, boolean, TError>('RolePermission', `${endpoint}/rolePermission/check`, args, options, fetch);
 }

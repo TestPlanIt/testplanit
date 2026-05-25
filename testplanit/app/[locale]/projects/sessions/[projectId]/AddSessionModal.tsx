@@ -1,5 +1,5 @@
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
-import DynamicIcon from "@/components/DynamicIcon";
+import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import {
   MilestoneSelect,
@@ -21,6 +21,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -208,12 +209,21 @@ export function AddSessionModal({
       label: template.templateName,
     })) || [];
 
+  const firstGatedSessionOrder = (workflows ?? [])
+    .filter((w) => w.requiresReview === true)
+    .reduce<
+      number | null
+    >((acc, w) => (acc === null || w.order < acc ? w.order : acc), null);
   const workflowsOptions =
     workflows?.map((workflow) => ({
       value: workflow.id.toString(),
       label: workflow.name,
       icon: workflow.icon?.name,
       color: workflow.color?.value,
+      requiresReview: workflow.requiresReview,
+      disabledForCreate:
+        firstGatedSessionOrder !== null &&
+        workflow.order >= firstGatedSessionOrder,
     })) || [];
 
   const milestonesOptions = transformMilestones(milestones || []);
@@ -998,15 +1008,22 @@ export function AddSessionModal({
                                     <SelectItem
                                       key={workflow.value}
                                       value={workflow.value}
+                                      disabled={workflow.disabledForCreate}
                                     >
-                                      <div className="flex items-center gap-1">
-                                        <DynamicIcon
-                                          className="w-4 h-4 shrink-0"
-                                          name={workflow.icon as IconName}
-                                          color={workflow.color}
-                                        />
-                                        {workflow.label}
-                                      </div>
+                                      <WorkflowStateDisplay
+                                        state={{
+                                          name: workflow.label,
+                                          icon: {
+                                            name: workflow.icon as IconName,
+                                          },
+                                          color: {
+                                            value: workflow.color ?? "",
+                                          },
+                                          requiresReview:
+                                            workflow.requiresReview,
+                                        }}
+                                        size="sm"
+                                      />
                                     </SelectItem>
                                   ))}
                                 </SelectGroup>
@@ -1015,6 +1032,11 @@ export function AddSessionModal({
                           )}
                         />
                       </FormControl>
+                      {firstGatedSessionOrder !== null && (
+                        <FormDescription>
+                          {t("reviews.transitionGate.gatedStatesNotSelectable")}
+                        </FormDescription>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}

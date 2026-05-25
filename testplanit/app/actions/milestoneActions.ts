@@ -4,6 +4,13 @@ import { ApplicationArea } from "@prisma/client";
 import { z } from "zod/v4";
 import { prisma } from "~/lib/prisma";
 import { getAllDescendantMilestoneIds } from "~/lib/services/milestoneDescendants";
+import {
+  AlreadyPendingError,
+  isAlreadyPendingError,
+  isReviewGateError,
+} from "~/lib/utils/errors";
+import { isReviewFeatureSystemEnabled } from "~/lib/services/reviewFeatureFlag";
+import { assertBulkReviewGatePasses } from "~/lib/services/reviewGate";
 import { getServerAuthSession } from "~/server/auth";
 import { checkUserPermission } from "./permissions";
 
@@ -146,18 +153,38 @@ export async function completeMilestoneCascade(
     }
   }
 
+  // WR-04: pre-fetch the project's reviewWorkflowEnabled flag ONCE here so
+  // the per-entity preflight loop inside the transaction can short-circuit
+  // when the project has opted out of review. Doing this outside the tx
+  // keeps a contended write transaction short under deadlock-prone
+  // conditions (project memory `Deadlock Issues (40P01)`).
+  const projectReviewFlag = await prisma.projects.findUnique({
+    where: { id: projectId },
+    select: { reviewWorkflowEnabled: true },
+  });
+  const projectReviewEnabled = projectReviewFlag?.reviewWorkflowEnabled ?? true;
+
   // --- Database Logic ---
   const descendantMilestoneIds =
     await getAllDescendantMilestoneIds(milestoneId);
   const allRelevantMilestoneIds = [milestoneId, ...descendantMilestoneIds];
 
+  // Strict-transitive gate: caller pre-loads each entity's current state
+  // `order` so the bulk preflight can detect blocking gates in (currentOrder,
+  // targetOrder] per entity without a per-row roundtrip inside the tx.
+  // `name` is loaded so a gate-rejected error message can refer to the
+  // entity by name (e.g. "run 'Sprint 2 - Regression'") instead of numeric id.
   const activeTestRuns = await prisma.testRuns.findMany({
     where: {
       milestoneId: { in: allRelevantMilestoneIds },
       isCompleted: false,
       isDeleted: false,
     },
-    select: { id: true }, // Only select IDs for counting and updating
+    select: {
+      id: true,
+      name: true,
+      state: { select: { order: true } },
+    },
   });
 
   const activeSessions = await prisma.sessions.findMany({
@@ -166,7 +193,11 @@ export async function completeMilestoneCascade(
       isCompleted: false,
       isDeleted: false,
     },
-    select: { id: true }, // Only select IDs for counting and updating
+    select: {
+      id: true,
+      name: true,
+      state: { select: { order: true } },
+    },
   });
 
   // Descendant milestones that are not yet complete (excluding the main one being completed)
@@ -199,6 +230,11 @@ export async function completeMilestoneCascade(
 
   try {
     await prisma.$transaction(async (tx: any) => {
+      // Resolve the system-level review-feature flag once for both the
+      // testRuns and sessions blocks below. AppConfig read is cheap and
+      // hoisting avoids two roundtrips inside this long-lived write tx.
+      const reviewFeatureSystemEnabled = await isReviewFeatureSystemEnabled(tx);
+
       // Complete main milestone
       await tx.milestones.update({
         where: { id: milestoneId },
@@ -242,12 +278,63 @@ export async function completeMilestoneCascade(
         if (completedTestRunStateId !== undefined) {
           testRunUpdateData.stateId = completedTestRunStateId;
         }
+
+        // Review & Approval preflight. Strict-transitive semantics: a
+        // milestone completion that crosses multiple gated states needs an
+        // approval for EACH gate per entity, not just the target. The bulk
+        // helper batches all of that into 3 queries total (target + gates +
+        // approvals) and returns the union of approval ids to stamp post-
+        // update. Project + system feature flags are short-circuited here
+        // so a no-review project still pays no review cost.
+        let consumedApprovalIds: string[] = [];
+        if (
+          projectReviewEnabled &&
+          reviewFeatureSystemEnabled &&
+          completedTestRunStateId !== undefined &&
+          testRunUpdateData.stateId !== undefined
+        ) {
+          const gateResult = await assertBulkReviewGatePasses(
+            tx,
+            "RUN",
+            activeTestRuns.map(
+              (tr: { id: number; state: { order: number } | null }) => ({
+                id: tr.id,
+                currentStateOrder: tr.state?.order ?? null,
+              })
+            ),
+            completedTestRunStateId
+          );
+          consumedApprovalIds = gateResult?.approvedRequestIds ?? [];
+        }
+
         await tx.testRuns.updateMany({
           where: {
             id: { in: activeTestRuns.map((tr: { id: number }) => tr.id) },
           },
           data: testRunUpdateData,
         });
+
+        // Stamp consumedAt on every approval the bulk gate consumed so
+        // future transitions can't re-use them. Short stamp count means
+        // another caller raced us — surface as REVIEW_REQUIRED.
+        if (consumedApprovalIds.length > 0) {
+          const stamp = await tx.reviewRequest.updateMany({
+            where: {
+              id: { in: consumedApprovalIds },
+              consumedAt: null,
+            },
+            data: { consumedAt: new Date() },
+          });
+          if (stamp.count !== consumedApprovalIds.length) {
+            const { ReviewGateError } = await import("~/lib/utils/errors");
+            throw new ReviewGateError(
+              "REVIEW_REQUIRED",
+              "RUN",
+              activeTestRuns[0]?.id ?? 0,
+              completedTestRunStateId!
+            );
+          }
+        }
       }
 
       // Complete active sessions - only if user opted in
@@ -263,12 +350,53 @@ export async function completeMilestoneCascade(
         if (completedSessionStateId !== undefined) {
           sessionUpdateData.stateId = completedSessionStateId;
         }
+
+        let consumedSessionApprovalIds: string[] = [];
+        if (
+          projectReviewEnabled &&
+          reviewFeatureSystemEnabled &&
+          completedSessionStateId !== undefined &&
+          sessionUpdateData.stateId !== undefined
+        ) {
+          const gateResult = await assertBulkReviewGatePasses(
+            tx,
+            "SESSION",
+            activeSessions.map(
+              (s: { id: number; state: { order: number } | null }) => ({
+                id: s.id,
+                currentStateOrder: s.state?.order ?? null,
+              })
+            ),
+            completedSessionStateId
+          );
+          consumedSessionApprovalIds = gateResult?.approvedRequestIds ?? [];
+        }
+
         await tx.sessions.updateMany({
           where: {
             id: { in: activeSessions.map((s: { id: number }) => s.id) },
           },
           data: sessionUpdateData,
         });
+
+        if (consumedSessionApprovalIds.length > 0) {
+          const stamp = await tx.reviewRequest.updateMany({
+            where: {
+              id: { in: consumedSessionApprovalIds },
+              consumedAt: null,
+            },
+            data: { consumedAt: new Date() },
+          });
+          if (stamp.count !== consumedSessionApprovalIds.length) {
+            const { ReviewGateError } = await import("~/lib/utils/errors");
+            throw new ReviewGateError(
+              "REVIEW_REQUIRED",
+              "SESSION",
+              activeSessions[0]?.id ?? 0,
+              completedSessionStateId!
+            );
+          }
+        }
       }
     });
 
@@ -276,6 +404,61 @@ export async function completeMilestoneCascade(
     // toast based on whether dependencies were involved.
     return { status: "success" };
   } catch (error) {
+    // Review & Approval (Plan 01-04). When a per-entity preflight rejects
+    // an in-flight cascade, surface the typed code through the server
+    // action's existing failure shape so the client can render a "review
+    // required" message instead of a generic "Failed to complete" toast.
+    if (isReviewGateError(error)) {
+      // Build a human-readable message: name the FAILED entity and the
+      // BLOCKING gate (which may differ from `toStateId` under strict-
+      // transitive semantics — e.g. target "Done" but the first missing
+      // approval is for "Active"). `entityName` comes from the in-memory
+      // arrays we already fetched above; `blockingStateName` is looked up
+      // once here so the catch block doesn't pay for it on the happy path.
+      const entityName = findEntityName(
+        error.entityType,
+        error.entityId,
+        activeTestRuns,
+        activeSessions
+      );
+      const blockingStateId = error.blockingStateId ?? error.toStateId;
+      const blockingState = await prisma.workflows.findUnique({
+        where: { id: blockingStateId },
+        select: { name: true },
+      });
+      const blockingStateName =
+        blockingState?.name ?? `state ${blockingStateId}`;
+      const entityLabel = entityName
+        ? `${error.entityType.toLowerCase()} "${entityName}"`
+        : `${error.entityType.toLowerCase()} ${error.entityId}`;
+      return {
+        status: "error",
+        message: `Review required for ${entityLabel} before transitioning to "${blockingStateName}".`,
+      };
+    }
+
+    if (isAlreadyPendingError(error)) {
+      const entityName =
+        error instanceof AlreadyPendingError
+          ? findEntityName(
+              error.entityType,
+              error.entityId,
+              activeTestRuns,
+              activeSessions
+            )
+          : null;
+      const message =
+        error instanceof AlreadyPendingError
+          ? entityName
+            ? `A pending review already exists for the ${error.entityType.toLowerCase()} "${entityName}".`
+            : `A pending review already exists for the ${error.entityType.toLowerCase()} ${error.entityId}.`
+          : "A pending review already exists for this entity.";
+      return {
+        status: "error",
+        message,
+      };
+    }
+
     console.error("Error during actual milestone completion:", error);
     let message = "Failed to complete milestone.";
     if (error instanceof Error) {
@@ -285,8 +468,25 @@ export async function completeMilestoneCascade(
   }
 }
 
-// Remove the old placeholder helper function if it exists at the end of the file
-// async function getAllDescendantMilestoneIds(milestoneId: number): Promise<number[]> {
-//   // Recursive query to get all descendant IDs
-//   return [];
-// }
+/**
+ * Resolve the entity's display name for a gate-rejected error message.
+ * Reads from the in-memory arrays the caller fetched before the tx so
+ * the catch block doesn't pay for a separate roundtrip on the unhappy path.
+ * Returns `null` when the entity isn't in either array (shouldn't happen
+ * for the milestone-cascade path, but the catch block falls back to the
+ * raw id in that case).
+ */
+function findEntityName(
+  entityType: string,
+  entityId: number,
+  testRuns: Array<{ id: number; name: string | null }>,
+  sessions: Array<{ id: number; name: string | null }>
+): string | null {
+  if (entityType === "RUN") {
+    return testRuns.find((r) => r.id === entityId)?.name ?? null;
+  }
+  if (entityType === "SESSION") {
+    return sessions.find((s) => s.id === entityId)?.name ?? null;
+  }
+  return null;
+}

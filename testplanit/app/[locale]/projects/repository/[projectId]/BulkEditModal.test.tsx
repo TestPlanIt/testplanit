@@ -123,6 +123,17 @@ vi.mock("~/lib/hooks", () => ({
   })),
 }));
 
+// The strict-transitive bulk gate hook fans out to `useReviewFeatureEnabled`
+// which calls `useQuery` directly — the test harness here has no
+// QueryClientProvider, so stub the hook to a neutral "all allowed" shape.
+vi.mock("~/hooks/useTransitionGateStatus", () => ({
+  useBulkTransitionGateStatus: () => ({
+    enabled: true,
+    isLoading: false,
+    canBulkTransitionTo: () => ({ allowed: true, blocked: [] }),
+  }),
+}));
+
 vi.mock("~/hooks/useProjectPermissions", () => ({
   useProjectPermissions: vi.fn(),
 }));

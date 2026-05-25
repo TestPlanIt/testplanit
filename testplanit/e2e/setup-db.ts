@@ -39,6 +39,24 @@ async function ensureSchema() {
   }
 }
 
+async function ensureExtensions() {
+  console.log("🧩 Applying PostgreSQL extensions / custom indexes...");
+
+  const { execSync } = await import("child_process");
+
+  try {
+    execSync("npx tsx prisma/setup-extensions.ts", {
+      cwd: process.cwd(),
+      stdio: "inherit",
+      env: process.env,
+    });
+    console.log("   Extensions applied");
+  } catch (error) {
+    console.error("   Failed to apply extensions:", error);
+    throw error;
+  }
+}
+
 async function resetDatabase() {
   console.log("🗑️  Resetting database...");
 
@@ -92,6 +110,79 @@ async function seedCoreData() {
   } catch {
     console.error("   Failed to run prisma db seed, continuing...");
   }
+}
+
+/**
+ * Flip the system-level Review & Approval feature flag on for E2E.
+ *
+ * v0.30.0 ships with the system flag opt-in-default-off — a missing
+ * `AppConfig.review_feature_enabled` row resolves to disabled, hiding the
+ * Request review button, the reviewer inbox, and the requires-review
+ * toggle. Existing review specs predate the opt-in flip and assume the
+ * feature is implicitly available; flipping it on here matches the
+ * pre-opt-in baseline they were written against. Production stays
+ * restrictive — fresh installs still ship with the feature off until an
+ * administrator explicitly enables it.
+ */
+async function enableSystemReviewFeatureForE2E() {
+  console.log("🚦 Enabling system Review feature flag for E2E...");
+  await prisma.appConfig.upsert({
+    where: { key: "review_feature_enabled" },
+    update: { value: true },
+    create: { key: "review_feature_enabled", value: true },
+  });
+  console.log("   AppConfig.review_feature_enabled = true");
+}
+
+/**
+ * Open up the seeded `user` role with the two per-area opt-in permissions
+ * v0.30.0 added — `canApprove` (Review & Approval reviewer eligibility) and
+ * `canReadSensitive` (Parameterized Test Cases restricted-field viewer
+ * gate). The production seed deliberately leaves these off by default so a
+ * fresh install ships restrictive, but E2E specs assume any test user the
+ * spec creates can act as a reviewer / read sensitive values without per-
+ * spec fixture setup. This override only runs in the E2E setup path; the
+ * shared `prisma/seed.ts` (also used by docker / dev installs) is unchanged.
+ */
+async function openUserRolePermissionsForE2E() {
+  console.log(
+    "🔓 Opening user-role permissions for E2E (canApprove + canReadSensitive)..."
+  );
+
+  const userRole = await prisma.roles.findFirst({ where: { name: "user" } });
+  if (!userRole) {
+    console.warn("   No `user` role found — skipping E2E permission widening");
+    return;
+  }
+
+  const reviewAreas = [
+    "TestCaseRepository" as const,
+    "TestRuns" as const,
+    "Sessions" as const,
+  ];
+  for (const area of reviewAreas) {
+    await prisma.rolePermission.upsert({
+      where: { roleId_area: { roleId: userRole.id, area } },
+      update: { canApprove: true },
+      create: { roleId: userRole.id, area, canApprove: true },
+    });
+  }
+
+  const restrictedAreas = [
+    "TestCaseRestrictedFields" as const,
+    "TestRunResultRestrictedFields" as const,
+  ];
+  for (const area of restrictedAreas) {
+    await prisma.rolePermission.upsert({
+      where: { roleId_area: { roleId: userRole.id, area } },
+      update: { canReadSensitive: true },
+      create: { roleId: userRole.id, area, canReadSensitive: true },
+    });
+  }
+
+  console.log(
+    `   user-role canApprove granted on [${reviewAreas.join(", ")}]; canReadSensitive granted on [${restrictedAreas.join(", ")}]`
+  );
 }
 
 async function ensureAdminUser() {
@@ -174,11 +265,25 @@ async function main() {
     // Step 0: Ensure schema exists (handles fresh databases)
     await ensureSchema();
 
+    // Step 0.5: Apply PostgreSQL extensions + custom indexes (e.g.,
+    // review_request_one_pending_per_entity partial unique). Idempotent via
+    // IF NOT EXISTS; mirrors docker-entrypoint.sh production invocation.
+    await ensureExtensions();
+
     // Step 1: Reset database
     await resetDatabase();
 
     // Step 2: Seed core data (this runs prisma db seed)
     await seedCoreData();
+
+    // Step 2.5: E2E-only widening of seeded user-role permissions for the two
+    // per-area opt-in grants v0.30.0 added (canApprove, canReadSensitive).
+    await openUserRolePermissionsForE2E();
+
+    // Step 2.6: Flip the system Review & Approval feature flag on so the
+    // pre-Phase-2-opt-in review specs continue to find the request /
+    // reviewer-inbox surfaces by default.
+    await enableSystemReviewFeatureForE2E();
 
     // Step 3: Ensure admin user with correct settings
     await ensureAdminUser();

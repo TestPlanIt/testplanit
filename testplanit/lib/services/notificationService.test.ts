@@ -1,4 +1,4 @@
-import { NotificationType } from "@prisma/client";
+import { ApplicationArea, NotificationType } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getNotificationQueue } from "../queues";
 import { NotificationService } from "./notificationService";
@@ -9,6 +9,27 @@ vi.mock("~/server/db", () => ({
   db: {
     user: {
       findMany: mockFindMany,
+    },
+  },
+}));
+
+// Mock ~/lib/prisma for resolveRoleHolderUserIds (uses await import internally)
+const mockPrismaUserProjectPermissionFindMany = vi.fn();
+const mockPrismaGroupProjectPermissionFindMany = vi.fn();
+const mockPrismaRolePermissionFindUnique = vi.fn();
+vi.mock("~/lib/prisma", () => ({
+  prisma: {
+    userProjectPermission: {
+      findMany: (...args: unknown[]) =>
+        mockPrismaUserProjectPermissionFindMany(...args),
+    },
+    groupProjectPermission: {
+      findMany: (...args: unknown[]) =>
+        mockPrismaGroupProjectPermissionFindMany(...args),
+    },
+    rolePermission: {
+      findUnique: (...args: unknown[]) =>
+        mockPrismaRolePermissionFindUnique(...args),
     },
   },
 }));
@@ -825,6 +846,102 @@ describe("NotificationService", () => {
     });
   });
 
+  describe("createReviewReminderNotification", () => {
+    const baseParams = {
+      requesterUserId: "requester-1",
+      requesterName: "Alice Requester",
+      projectId: 42,
+      projectName: "Project X",
+      entityType: "CASE" as const,
+      entityId: 7,
+      entityName: "Login flow",
+      fromStateName: "Draft",
+      toStateName: "Approved",
+      reviewRequestId: "rr-1",
+      hoursPending: 36,
+    };
+
+    it("is a no-op when targetUserIds is empty", async () => {
+      await NotificationService.createReviewReminderNotification({
+        ...baseParams,
+        targetUserIds: [],
+      });
+
+      expect(mockQueue.add).not.toHaveBeenCalled();
+    });
+
+    it("enqueues one job per recipient with REVIEW_REMINDER type and full data payload", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-reminder-1" } as any);
+
+      await NotificationService.createReviewReminderNotification({
+        ...baseParams,
+        targetUserIds: ["user-a", "user-b", "user-c"],
+      });
+
+      expect(mockQueue.add).toHaveBeenCalledTimes(3);
+
+      const recipientIds = mockQueue.add.mock.calls.map(
+        (call) => (call[1] as any).userId
+      );
+      expect(recipientIds.sort()).toEqual(["user-a", "user-b", "user-c"]);
+
+      for (const call of mockQueue.add.mock.calls) {
+        const payload = call[1] as any;
+        expect(payload.type).toBe(NotificationType.REVIEW_REMINDER);
+        expect(payload.relatedEntityId).toBe("rr-1");
+        expect(payload.relatedEntityType).toBe("ReviewRequest");
+        expect(payload.data.hoursPending).toBe(36);
+        expect(payload.data.requesterUserId).toBe("requester-1");
+        expect(payload.data.requesterName).toBe("Alice Requester");
+        expect(payload.data.reviewRequestId).toBe("rr-1");
+        expect(payload.data.projectId).toBe(42);
+        expect(payload.data.projectName).toBe("Project X");
+        expect(payload.data.entityType).toBe("CASE");
+        expect(payload.data.entityId).toBe(7);
+        expect(payload.data.entityName).toBe("Login flow");
+        expect(payload.data.fromStateName).toBe("Draft");
+        expect(payload.data.toStateName).toBe("Approved");
+        // commentText is omitted (reminder carries no fresh comment)
+        expect(payload.data.commentText).toBeUndefined();
+      }
+    });
+
+    it.each([
+      ["CASE", "test case"],
+      ["RUN", "test run"],
+      ["SESSION", "session"],
+    ] as const)(
+      "derives the correct entityLabel for entityType %s",
+      async (entityType, label) => {
+        mockQueue.add.mockResolvedValue({ id: "job-label" } as any);
+
+        await NotificationService.createReviewReminderNotification({
+          ...baseParams,
+          entityType,
+          targetUserIds: ["user-a"],
+        });
+
+        const payload = mockQueue.add.mock.calls[0][1] as any;
+        expect(payload.message).toContain(label);
+        expect(payload.message).toContain('"Login flow"');
+        expect(payload.message).toContain('"Project X"');
+        expect(payload.message).toContain("36h pending");
+      }
+    );
+
+    it("uses the English fallback title 'Review still pending'", async () => {
+      mockQueue.add.mockResolvedValue({ id: "job-title" } as any);
+
+      await NotificationService.createReviewReminderNotification({
+        ...baseParams,
+        targetUserIds: ["user-a"],
+      });
+
+      const payload = mockQueue.add.mock.calls[0][1] as any;
+      expect(payload.title).toBe("Review still pending");
+    });
+  });
+
   describe("markNotificationsAsRead", () => {
     it("should return the provided notification IDs", async () => {
       const ids = ["notif-1", "notif-2", "notif-3"];
@@ -848,6 +965,83 @@ describe("NotificationService", () => {
     it("should return 0 as placeholder implementation", async () => {
       const count = await NotificationService.getUnreadCount("user-123");
       expect(count).toBe(0);
+    });
+  });
+
+  describe("resolveRoleHolderUserIds canApprove option", () => {
+    beforeEach(() => {
+      mockPrismaUserProjectPermissionFindMany.mockReset().mockResolvedValue([]);
+      mockPrismaGroupProjectPermissionFindMany
+        .mockReset()
+        .mockResolvedValue([]);
+      mockPrismaRolePermissionFindUnique.mockReset();
+    });
+
+    it("when option is omitted, does not consult rolePermission.findUnique and runs all four findManys", async () => {
+      mockPrismaUserProjectPermissionFindMany
+        .mockResolvedValueOnce([{ userId: "u-1" }])
+        .mockResolvedValueOnce([{ userId: "u-2" }]);
+      mockPrismaGroupProjectPermissionFindMany
+        .mockResolvedValueOnce([
+          { group: { assignedUsers: [{ userId: "u-3" }] } },
+        ])
+        .mockResolvedValueOnce([
+          { group: { assignedUsers: [{ userId: "u-4" }] } },
+        ]);
+
+      const result = await NotificationService.resolveRoleHolderUserIds(
+        10,
+        99,
+        "requester"
+      );
+      expect(mockPrismaRolePermissionFindUnique).not.toHaveBeenCalled();
+      expect(mockPrismaUserProjectPermissionFindMany).toHaveBeenCalledTimes(2);
+      expect(mockPrismaGroupProjectPermissionFindMany).toHaveBeenCalledTimes(2);
+      expect(new Set(result)).toEqual(new Set(["u-1", "u-2", "u-3", "u-4"]));
+    });
+
+    it("when option is present and the role lacks canApprove, returns [] and skips the four findManys", async () => {
+      mockPrismaRolePermissionFindUnique.mockResolvedValue({
+        canApprove: false,
+      });
+      const result = await NotificationService.resolveRoleHolderUserIds(
+        10,
+        99,
+        "requester",
+        { requireCanApproveOn: ApplicationArea.TestCaseRepository }
+      );
+      expect(mockPrismaRolePermissionFindUnique).toHaveBeenCalledWith({
+        where: {
+          roleId_area: {
+            roleId: 99,
+            area: ApplicationArea.TestCaseRepository,
+          },
+        },
+        select: { canApprove: true },
+      });
+      expect(mockPrismaUserProjectPermissionFindMany).not.toHaveBeenCalled();
+      expect(mockPrismaGroupProjectPermissionFindMany).not.toHaveBeenCalled();
+      expect(result).toEqual([]);
+    });
+
+    it("when option is present and the role has canApprove, requester is still excluded from the fanout", async () => {
+      mockPrismaRolePermissionFindUnique.mockResolvedValue({
+        canApprove: true,
+      });
+      mockPrismaUserProjectPermissionFindMany
+        .mockResolvedValueOnce([{ userId: "u-1" }, { userId: "requester" }])
+        .mockResolvedValueOnce([]);
+      mockPrismaGroupProjectPermissionFindMany
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
+
+      const result = await NotificationService.resolveRoleHolderUserIds(
+        10,
+        99,
+        "requester",
+        { requireCanApproveOn: ApplicationArea.TestRuns }
+      );
+      expect(result).toEqual(["u-1"]);
     });
   });
 });

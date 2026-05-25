@@ -171,7 +171,9 @@
       "reconfigure": "Reconfigure and retry"
     },
     "permissions": {
-      "addEdit": "Add/Edit"
+      "addEdit": "Add/Edit",
+      "approve": "Approve",
+      "readSensitive": "Read sensitive"
     },
     "auth": {
       "internal": "Email/Password",
@@ -640,6 +642,8 @@
       "aiModels": "AI Models",
       "integrations": "Integrations",
       "quickscript": "QuickScript",
+      "advanced": "Advanced",
+      "reviews": "Reviews",
       "webhooks": "Webhooks",
       "shares": "Shares",
       "datasets": "Shared Datasets",
@@ -676,7 +680,9 @@
       "newerVersion": "Newer Version",
       "deletedUser": "Deleted User",
       "restrictedField": "Restricted Field",
-      "backToTestCase": "Back to Test Case"
+      "backToTestCase": "Back to Test Case",
+      "selectDeselectAllApprove": "Select or deselect approve for all relevant areas",
+      "selectDeselectAllReadSensitive": "Select or deselect read sensitive for all relevant areas"
     },
     "labels": {
       "projects": "{count, plural, =1 {# Project} other {# Projects}}",
@@ -1378,7 +1384,9 @@
           "duplicated": "Duplicated",
           "stateChanged": "State changed",
           "resultAdded": "Result added",
-          "resultRecorded": "Result Recorded"
+          "resultRecorded": "Result Recorded",
+          "reviewRequested": "Review requested",
+          "reviewCompleted": "Review completed"
         },
         "iterationResultHelp": "Fires every time an iteration result is recorded — pass, fail, skip, or any other status. Use sparingly on long automation runs (one event per iteration).",
         "events": {
@@ -1809,6 +1817,19 @@
         "disconnectWarning3": "Stop including code context in AI-generated exports",
         "disconnectSuccess": "Code repository disconnected",
         "disconnectError": "Failed to disconnect code repository"
+      },
+      "advanced": {
+        "title": "Advanced",
+        "description": "Per-project toggles for opinionated features. New toggles will appear here as they are introduced.",
+        "reviewWorkflow": {
+          "label": "Enable review workflow",
+          "description": "When enabled, transitions into states that require review are gated by an approved review request. Testers see the Request Review button; reviewers receive notifications.",
+          "enabledToast": "Review workflow enabled for this project",
+          "disabledToast": "Review workflow disabled for this project",
+          "saveError": "Failed to update review workflow setting",
+          "systemDisabledTitle": "Review workflow is off system-wide",
+          "systemDisabledDescription": "Your project's preference is saved, but nothing will be gated until a system administrator turns the feature on under Administration → Workflows."
+        }
       }
     },
     "matrix": {
@@ -3016,6 +3037,113 @@
       "deferredMessage": "This attachment will be deleted when you save."
     }
   },
+  "reviews": {
+    "banner": {
+      "pendingMessage": "Review requested from <assignee></assignee> for transition <fromState></fromState> → <toState></toState> <ago></ago>",
+      "changesRequestedTitle": "Changes requested",
+      "rejectedTitle": "Review rejected",
+      "requestAgain": "Request review again",
+      "decidedBy": "Decided by"
+    },
+    "cancel": {
+      "title": "Cancel this review request?",
+      "description": "The reviewer will no longer be able to act on this request. You can submit a new request afterward.",
+      "confirm": "Cancel request",
+      "success": "Review request cancelled.",
+      "error": "Could not cancel the review request. Try again in a moment."
+    },
+    "list": {
+      "pendingTooltip": "Pending review from {assignee}"
+    },
+    "transitionGate": {
+      "blockedByGate": "Approval required for \"{gateName}\" before this transition. Use \"Request review\" to start one.",
+      "gatedOptionBadge": "Requires review",
+      "gatedStatesNotSelectable": "States at or beyond a gated state can't be selected when creating. Pick a state before the first gate, then use Request review to cross it.",
+      "saveBlockedByFormErrors": "Resolve the highlighted form errors before saving.",
+      "bulkBlockedSummary": "{count, plural, one {# case} other {# cases}} blocked by gate \"{gateName}\": {sampleNames}{more, plural, =0 {} other {, and # more}}. Each blocked case needs an approved review for \"{gateName}\" before this transition.",
+      "toastReviewRequired": "Approval required before this transition. Request a review and try again after it's approved.",
+      "toastPendingReviewExists": "A review is already pending for this transition. Wait for the decision or cancel it before retrying."
+    },
+    "inbox": {
+      "iconAria": "{count, plural, =0 {Review inbox} one {Review inbox, # pending} other {Review inbox, # pending}}",
+      "pageTitle": "Reviews",
+      "pageDescription": "Pending review requests assigned to you (directly or via a role you hold).",
+      "pageDescriptionDecided": "Review requests you've already decided.",
+      "tabPending": "Pending",
+      "tabDecided": "Decided",
+      "emptyDecided": "You haven't decided any reviews yet.",
+      "empty": "No pending reviews. You're all caught up.",
+      "featureDisabled": "The review workflow feature is currently disabled. Pending reviews are preserved and will reappear when the feature is re-enabled.",
+      "columnEntity": "Entity",
+      "columnProject": "Project",
+      "columnRequester": "Requester",
+      "columnTransition": "Transition",
+      "columnTransitionFrom": "From",
+      "columnTransitionTo": "To",
+      "columnRequestedAt": "Requested at",
+      "columnDecidedAt": "Decided at",
+      "columnStatus": "Status",
+      "columnActions": "Actions",
+      "actionApprove": "Approve",
+      "actionRequestChanges": "Request changes",
+      "actionReject": "Reject",
+      "filterEntityType": "Entity type",
+      "filterProject": "Project",
+      "filterAllEntityTypes": "All entity types",
+      "filterEntityTypeCase": "Test cases",
+      "filterEntityTypeRun": "Test runs",
+      "filterEntityTypeSession": "Sessions",
+      "filterAllProjects": "All projects"
+    },
+    "requester": {
+      "openButton": "Request review",
+      "sheetDescription": "Send this entity for review before transitioning to the target state.",
+      "assigneeLabel": "Assignee",
+      "assigneePlaceholder": "Select a user or role",
+      "usersHoldRole": "{count, plural, one {# user holds this role} other {# users hold this role}}",
+      "targetStateLabel": "Target state",
+      "targetStatePlaceholder": "Select a target state",
+      "commentLabel": "Comment",
+      "commentPlaceholder": "Explain what you need the reviewer to look at",
+      "assigneeRequired": "Select an assignee.",
+      "targetStateRequired": "Select a target state.",
+      "submitSuccess": "Review request created.",
+      "alreadyPendingError": "A review is already pending for this entity.",
+      "cannotSelfAssign": "You can't assign a review to yourself; pick another user or a role.",
+      "defaultComment": "Please review the transition from {fromState} → {toState}.",
+      "defaultCommentRole": "Requesting approval from the {roleName} group to transition from {fromState} → {toState}.",
+      "ineligibleAssigneeError": "This user/role can't approve reviews for this area. Pick someone else.",
+      "ineligibleAssigneeErrorUser": "{name} can't approve reviews for this area. Pick another user or a role.",
+      "ineligibleAssigneeErrorRole": "The {roleName} role can't approve reviews for this area. Pick another role or a user."
+    },
+    "assigneeChip": {
+      "emptyMembers": "No project-eligible members hold this role.",
+      "unnamedUser": "(unnamed user)"
+    },
+    "reviewer": {
+      "approve": "Approve",
+      "requestChanges": "Request changes",
+      "reject": "Reject",
+      "approveConfirmTitle": "Approve this review request?",
+      "approveConfirmDescription": "Approving will permit <requester></requester> to transition <name></name> to <state></state>.",
+      "approvalNoteLabel": "Approval note",
+      "approvalNotePlaceholder": "Add an optional note for the requester (visible alongside the approval).",
+      "requestChangesDescription": "Tell the requester what needs to change before you can approve this transition.",
+      "requestChangesCommentPlaceholder": "Explain what needs to change.",
+      "rejectTitle": "Reject this review request?",
+      "rejectDescription": "Rejecting blocks <requester></requester> from transitioning <name></name> to <state></state>. A new review request must be created to retry.",
+      "rejectCommentPlaceholder": "Explain why you are rejecting this request.",
+      "commentLabel": "Comment",
+      "confirmRequestChanges": "Send",
+      "approveSuccess": "Review approved.",
+      "requestChangesSuccess": "Changes requested.",
+      "rejectSuccess": "Review rejected.",
+      "ineligibleError": "You are no longer eligible to decide this review request.",
+      "alreadyDecidedError": "This review has already been decided.",
+      "decideError": "Could not record your decision. Try again in a moment.",
+      "panelSummary": "Review request from {requesterName}: transition to {targetStateName}"
+    }
+  },
   "runs": {
     "notFound": "Test run not found.",
     "add": {
@@ -3193,6 +3321,7 @@
       "exportTemplates": "Export Templates",
       "codeRepositories": "Code Repositories",
       "quickScript": "QuickScript",
+      "advanced": "Advanced",
       "sso": "Authentication",
       "security": "Security",
       "trash": "Trash",
@@ -4190,6 +4319,36 @@
     },
     "workflows": {
       "description": "Manage test case workflows",
+      "systemFeatureCard": {
+        "title": "Review Workflow",
+        "description": "Enforce reviews by gating workflow transitions until approval is granted. When enabled, projects may opt in or out individually via their Advanced settings. Disable to prevent workflow approval gates.",
+        "toggleAriaLabel": "Toggle review workflow feature",
+        "adminOnlyNotice": "Only administrators can change this setting.",
+        "updateSuccessEnabled": "Review workflow enabled.",
+        "updateSuccessDisabled": "Review workflow disabled.",
+        "updateError": "Failed to update review workflow setting. Try again in a moment.",
+        "remindersToggleLabel": "Send reminder notifications for pending reviews",
+        "remindersToggleAriaLabel": "Toggle review reminder notifications",
+        "thresholdLabel": "Remind reviewers after",
+        "thresholdUnit": "day(s)",
+        "thresholdSaveButton": "Save",
+        "thresholdHelp": "How many days a review request can sit pending before reviewers get a reminder notification. New requests start the clock at submission.",
+        "thresholdUpdateSuccess": "Review reminder settings updated.",
+        "thresholdUpdateError": "Failed to update reminder settings. Try again in a moment."
+      },
+      "projectReviewToggleList": {
+        "columnHeader": "Review workflow",
+        "filterPlaceholder": "Filter projects...",
+        "enabledToast": "Review workflow enabled for {name}",
+        "disabledToast": "Review workflow disabled for {name}",
+        "saveError": "Failed to update review workflow setting. Try again in a moment.",
+        "emptyState": "No projects match your filter."
+      },
+      "editWorkflow": {
+        "requiresReviewLabel": "Requires review",
+        "requiresReviewFeatureDisabled": "The review workflow feature is disabled at the system level. Toggle a project's Advanced settings or set TESTPLANIT_REVIEW_FEATURE_ENABLED to re-enable.",
+        "requiresReviewDefaultDisabled": "The default workflow state cannot require review — new entities land here and have no prior state to gate."
+      },
       "add": {
         "button": "Add Workflow",
         "title": "Add New Workflow",
@@ -5193,7 +5352,31 @@
         "reviewGeneratedCases": "Review generated test cases",
         "generateFromUrlCompleteTitle": "Pages crawled successfully",
         "generateFromUrlCompleteMessage": "{pages, plural, one {# page} other {# pages}} crawled from {url} in project \"{projectName}\". Click to review and generate test cases.",
-        "generateFromUrlFailedTitle": "URL crawl failed"
+        "generateFromUrlFailedTitle": "URL crawl failed",
+        "reviewRequestedTitle": "Review requested",
+        "reviewApprovedTitle": "Review approved",
+        "reviewChangesRequestedTitle": "Changes requested",
+        "reviewRejectedTitle": "Review rejected",
+        "reviewCancelledTitle": "Review request cancelled",
+        "reviewRequestedAction": "requested your review of",
+        "reviewApprovedAction": "approved your review request on",
+        "reviewChangesRequestedAction": "requested changes on your review request for",
+        "reviewRejectedAction": "rejected your review request on",
+        "reviewCancelledAction": "cancelled the review request on",
+        "reviewEntityLabelCase": "test case",
+        "reviewEntityLabelRun": "test run",
+        "reviewEntityLabelSession": "session",
+        "reviewTransition": "Transition: {from} → {to}",
+        "reviewCommentPreview": "Comment: {comment}",
+        "reviewRequestedEmailMessage": "{actorName} requested your review of {entityLabel} \"{entityName}\" in project \"{projectName}\".",
+        "reviewApprovedEmailMessage": "{actorName} approved your review request on {entityLabel} \"{entityName}\" in project \"{projectName}\".",
+        "reviewChangesRequestedEmailMessage": "{actorName} requested changes on your review request for {entityLabel} \"{entityName}\" in project \"{projectName}\".",
+        "reviewRejectedEmailMessage": "{actorName} rejected your review request on {entityLabel} \"{entityName}\" in project \"{projectName}\".",
+        "reviewCancelledEmailMessage": "{actorName} cancelled the review request on {entityLabel} \"{entityName}\" in project \"{projectName}\".",
+        "reviewReminderTitle": "Review still pending",
+        "reviewReminderAction": "is still waiting on your review of",
+        "reviewReminderEmailMessage": "Reminder: {actorName}'s review request on {entityLabel} \"{entityName}\" in project \"{projectName}\" has been pending for {hoursPending} hours.",
+        "reviewReminderHoursPending": "Pending for {hoursPending, plural, one {# hour} other {# hours}}"
       }
     },
     "issues": {
@@ -5549,7 +5732,9 @@
       "permissions": {
         "canAddEdit": "## Add/Edit\nIndicates whether this role can add and edit the related application area.",
         "canDelete": "## Delete\nIndicates whether this role can delete the related application area.",
-        "canClose": "## Close\nIndicates whether this role can close the related application area."
+        "canClose": "## Close\nIndicates whether this role can close the related application area.",
+        "canApprove": "## Approve\nIndicates whether this role can approve review requests for the related application area. Applies only to Test Case Repository, Test Runs, and Sessions.",
+        "canReadSensitive": "## Read sensitive\nIndicates whether this role can view sensitive parameter values when reading restricted-fields data. Without this grant, sensitive values render as ●●●●●● in dataset rows and iteration cells, and as [REDACTED] in issue-prefill bodies and CSV exports. Applies only to Test Case Restricted Fields and Test Run Result Restricted Fields."
       }
     },
     "group": {
@@ -5655,6 +5840,7 @@
       "isDefault": "## Default\nIndicates whether this workflow is the default for your project.\n\n- Default workflow is pre-selected for new test runs, sessions and automation.",
       "isEnabled": "## Enabled\nIndicates whether this workflow is enabled.",
       "isActive": "## Active\nIndicates whether this workflow state is active and available for use.\n\n- Active workflows can be selected when updating test runs, sessions, or automation\n- Inactive workflows are hidden from selection but preserved in existing items",
+      "requiresReview": "## Requires review\nWhen ON, transitioning a case, test run, or session INTO this state is gated by an approved review request. Without an approved request, the transition is blocked.\n\n- Existing pending reviews are preserved silently when the system-level feature is OFF and reappear when re-enabled.\n- Reviewer is picked when a tester clicks Request Review from the entity detail page.\n\nIf the system-level feature is disabled, this switch is locked. Re-enable it from the Review Workflow card above to toggle this on.",
       "projects": "## Projects\nIndicates the projects that can use this workflow."
     },
     "testResult": {
@@ -6937,6 +7123,16 @@
     "mentions": {
       "notAMember": "Not a project member",
       "noUsersFound": "No users found"
+    },
+    "type": {
+      "reviewRequest": "Review request",
+      "reviewDecision": {
+        "approved": "Approved",
+        "changesRequested": "Changes requested",
+        "rejected": "Rejected",
+        "cancelled": "Cancelled",
+        "generic": "Review decision"
+      }
     }
   },
   "Trial": {

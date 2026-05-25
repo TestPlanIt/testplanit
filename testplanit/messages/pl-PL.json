@@ -171,7 +171,9 @@
       "reconfigure": "Skonfiguruj ponownie i spróbuj ponownie"
     },
     "permissions": {
-      "addEdit": "Dodaj/Edytuj"
+      "addEdit": "Dodaj/Edytuj",
+      "approve": "Zatwierdzić",
+      "readSensitive": "Przeczytaj wrażliwe"
     },
     "auth": {
       "internal": "E-mail/Hasło",
@@ -640,6 +642,8 @@
       "aiModels": "Modele AI",
       "integrations": "Integracje",
       "quickscript": "QuickScript",
+      "advanced": "Zaawansowany",
+      "reviews": "Recenzje",
       "webhooks": "Webhooki",
       "shares": "Akcje",
       "datasets": "Udostępniane zestawy danych",
@@ -676,7 +680,9 @@
       "newerVersion": "Nowsza wersja",
       "deletedUser": "Usunięty użytkownik",
       "restrictedField": "Pole ograniczone",
-      "backToTestCase": "Powrót do przypadku testowego"
+      "backToTestCase": "Powrót do przypadku testowego",
+      "selectDeselectAllApprove": "Zaznacz lub odznacz opcję zatwierdzenia dla wszystkich odpowiednich obszarów",
+      "selectDeselectAllReadSensitive": "Zaznacz lub odznacz opcję „Odczyt wrażliwy” dla wszystkich odpowiednich obszarów"
     },
     "labels": {
       "projects": "{count, plural, =1 {# Projekt} other {# Projekty}}",
@@ -1378,7 +1384,9 @@
           "duplicated": "Duplikat",
           "stateChanged": "Stan zmieniony",
           "resultAdded": "Wynik dodany",
-          "resultRecorded": "Wynik zapisany"
+          "resultRecorded": "Wynik zapisany",
+          "reviewRequested": "Poproszono o recenzję",
+          "reviewCompleted": "Recenzja ukończona"
         },
         "iterationResultHelp": "Uruchamia się za każdym razem, gdy rejestrowany jest wynik iteracji — zaliczony, niezaliczony, pominięty lub o dowolnym innym statusie. Używaj oszczędnie w przypadku długich przebiegów automatyzacji (jedno zdarzenie na iterację).",
         "events": {
@@ -1809,6 +1817,19 @@
         "disconnectWarning3": "Przestań uwzględniać kontekst kodu w eksportach generowanych przez sztuczną inteligencję",
         "disconnectSuccess": "Repozytorium kodu odłączone",
         "disconnectError": "Nie udało się odłączyć repozytorium kodu"
+      },
+      "advanced": {
+        "title": "Zaawansowany",
+        "description": "Przełączniki dla poszczególnych projektów, umożliwiające tworzenie funkcji, które są brane pod uwagę. Nowe przełączniki będą się pojawiać tutaj w miarę ich wprowadzania.",
+        "reviewWorkflow": {
+          "label": "Włącz przepływ pracy przeglądu",
+          "description": "Po włączeniu, przejścia do stanów wymagających przeglądu są blokowane przez zatwierdzoną prośbę o przegląd. Testerzy widzą przycisk „Poproś o przegląd”, a recenzenci otrzymują powiadomienia.",
+          "enabledToast": "Przepływ pracy przeglądu włączony dla tego projektu",
+          "disabledToast": "Przebieg przeglądu wyłączony dla tego projektu",
+          "saveError": "Nie udało się zaktualizować ustawień przepływu pracy przeglądu",
+          "systemDisabledTitle": "Przepływ pracy przeglądu jest wyłączony w całym systemie",
+          "systemDisabledDescription": "Preferencje Twojego projektu zostaną zapisane, ale nic nie będzie zablokowane, dopóki administrator systemu nie włączy tej funkcji w obszarze Administracja → Przepływy pracy."
+        }
       }
     },
     "matrix": {
@@ -3016,6 +3037,113 @@
       "deferredMessage": "Ten załącznik zostanie usunięty po zapisaniu."
     }
   },
+  "reviews": {
+    "banner": {
+      "pendingMessage": "Zażądano przeglądu od <assignee></assignee> w celu przejścia <fromState></fromState> → <toState></toState> <ago></ago>",
+      "changesRequestedTitle": "Żądane zmiany",
+      "rejectedTitle": "Recenzja odrzucona",
+      "requestAgain": "Poproś ponownie o recenzję",
+      "decidedBy": "Zdecydowano przez"
+    },
+    "cancel": {
+      "title": "Anulować tę prośbę o recenzję?",
+      "description": "Recenzent nie będzie już mógł podjąć działań w związku z tym żądaniem. Możesz później przesłać nowe żądanie.",
+      "confirm": "Anuluj prośbę",
+      "success": "Prośba o sprawdzenie została anulowana.",
+      "error": "Nie udało się anulować prośby o recenzję. Spróbuj ponownie za chwilę."
+    },
+    "list": {
+      "pendingTooltip": "Oczekuje na sprawdzenie od {assignee}"
+    },
+    "transitionGate": {
+      "blockedByGate": "Wymagana jest zgoda na „{gateName}” przed tą zmianą. Użyj „Poproś o weryfikację”, aby ją rozpocząć.",
+      "gatedOptionBadge": "Wymaga przeglądu",
+      "gatedStatesNotSelectable": "Podczas tworzenia nie można wybierać stanów znajdujących się na terenie stanu z bramą lub za nim. Wybierz stan przed pierwszą bramą, a następnie użyj opcji „Poproś o weryfikację”, aby go przekroczyć.",
+      "saveBlockedByFormErrors": "Przed zapisaniem formularza popraw podświetlone błędy.",
+      "bulkBlockedSummary": "{count, plural, one {# przypadek} other {# przypadków}} zablokowanych przez bramkę \"{gateName}\": {sampleNames}{more, plural, =0 {} other {i # więcej}}. Każdy zablokowany przypadek wymaga zatwierdzonej recenzji dla \"{gateName}\" przed tą zmianą.",
+      "toastReviewRequired": "Wymagana zgoda przed wprowadzeniem tej zmiany. Poproś o weryfikację i spróbuj ponownie po jej zatwierdzeniu.",
+      "toastPendingReviewExists": "W związku z tą zmianą oczekuje już na weryfikację. Poczekaj na decyzję lub anuluj ją przed ponowną próbą."
+    },
+    "inbox": {
+      "iconAria": "{count, plural, =0 {Skrzynka odbiorcza recenzji} one {Skrzynka odbiorcza recenzji, # oczekujące} other {Skrzynka odbiorcza recenzji, # oczekujące}}",
+      "pageTitle": "Recenzje",
+      "pageDescription": "Oczekujące prośby o recenzję przypisane do Ciebie (bezpośrednio lub za pośrednictwem pełnionej przez Ciebie roli).",
+      "pageDescriptionDecided": "Przejrzyj prośby, na które już podjąłeś decyzję.",
+      "tabPending": "Aż do",
+      "tabDecided": "Zdecydowany",
+      "emptyDecided": "Nie podjąłeś jeszcze decyzji co do recenzji.",
+      "empty": "Brak oczekujących recenzji. Jesteście na bieżąco.",
+      "featureDisabled": "Funkcja przepływu pracy recenzji jest obecnie wyłączona. Oczekujące recenzje zostaną zachowane i pojawią się ponownie po ponownym włączeniu tej funkcji.",
+      "columnEntity": "Podmiot",
+      "columnProject": "Projekt",
+      "columnRequester": "Wnioskodawca",
+      "columnTransition": "Przemiana",
+      "columnTransitionFrom": "Z",
+      "columnTransitionTo": "Do",
+      "columnRequestedAt": "Poproszono o",
+      "columnDecidedAt": "Zdecydowano o",
+      "columnStatus": "Status",
+      "columnActions": "Akcje",
+      "actionApprove": "Zatwierdzić",
+      "actionRequestChanges": "Poproś o zmiany",
+      "actionReject": "Odrzucić",
+      "filterEntityType": "Typ jednostki",
+      "filterProject": "Projekt",
+      "filterAllEntityTypes": "Wszystkie typy jednostek",
+      "filterEntityTypeCase": "Przypadki testowe",
+      "filterEntityTypeRun": "Przebiegi testowe",
+      "filterEntityTypeSession": "Sesje",
+      "filterAllProjects": "Wszystkie projekty"
+    },
+    "requester": {
+      "openButton": "Poproś o recenzję",
+      "sheetDescription": "Prześlij tę jednostkę do przeglądu przed przejściem do stanu docelowego.",
+      "assigneeLabel": "Mandatariusz",
+      "assigneePlaceholder": "Wybierz użytkownika lub rolę",
+      "usersHoldRole": "{count, plural, one {# użytkownik ma tę rolę} other {# użytkownicy mają tę rolę}}",
+      "targetStateLabel": "Stan docelowy",
+      "targetStatePlaceholder": "Wybierz stan docelowy",
+      "commentLabel": "Komentarz",
+      "commentPlaceholder": "Wyjaśnij, na co recenzent powinien zwrócić uwagę",
+      "assigneeRequired": "Wybierz osobę odpowiedzialną.",
+      "targetStateRequired": "Wybierz stan docelowy.",
+      "submitSuccess": "Utworzono prośbę o recenzję.",
+      "alreadyPendingError": "W przypadku tego podmiotu oczekuje się już na kontrolę.",
+      "cannotSelfAssign": "Nie możesz przypisać recenzji sobie; wybierz innego użytkownika lub rolę.",
+      "defaultComment": "Proszę przejrzeć przejście z {fromState} → {toState}.",
+      "defaultCommentRole": "Prośba o zatwierdzenie przez grupę {roleName} przejścia z {fromState} → {toState}.",
+      "ineligibleAssigneeError": "Ten użytkownik/rola nie może zatwierdzać recenzji dla tego obszaru. Wybierz kogoś innego.",
+      "ineligibleAssigneeErrorUser": "{name} nie może zatwierdzać recenzji dla tego obszaru. Wybierz innego użytkownika lub rolę.",
+      "ineligibleAssigneeErrorRole": "Rola {roleName} nie może zatwierdzać recenzji dla tego obszaru. Wybierz inną rolę lub użytkownika."
+    },
+    "assigneeChip": {
+      "emptyMembers": "Rola ta nie należy do członków kwalifikujących się do projektu.",
+      "unnamedUser": "(nienazwany użytkownik)"
+    },
+    "reviewer": {
+      "approve": "Zatwierdzić",
+      "requestChanges": "Poproś o zmiany",
+      "reject": "Odrzucić",
+      "approveConfirmTitle": "Zatwierdzić tę prośbę o recenzję?",
+      "approveConfirmDescription": "Zatwierdzenie umożliwi <requester></requester> przejście z <name></name> do <state></state>.",
+      "approvalNoteLabel": "Notatka zatwierdzająca",
+      "approvalNotePlaceholder": "Dodaj opcjonalną notatkę dla wnioskodawcy (widoczną obok zatwierdzenia).",
+      "requestChangesDescription": "Poinformuj wnioskodawcę, co należy zmienić, zanim zatwierdzisz tę zmianę.",
+      "requestChangesCommentPlaceholder": "Wyjaśnij, co należy zmienić.",
+      "rejectTitle": "Odrzucić tę prośbę o recenzję?",
+      "rejectDescription": "Odrzucanie bloków <requester></requester> z przejścia <name></name> do <state></state>. Aby spróbować ponownie, należy utworzyć nowe żądanie przeglądu.",
+      "rejectCommentPlaceholder": "Wyjaśnij, dlaczego odrzucasz tę prośbę.",
+      "commentLabel": "Komentarz",
+      "confirmRequestChanges": "Wysłać",
+      "approveSuccess": "Recenzja zatwierdzona.",
+      "requestChangesSuccess": "Żądane zmiany.",
+      "rejectSuccess": "Recenzja odrzucona.",
+      "ineligibleError": "Nie masz już możliwości decydowania o tej prośbie o sprawdzenie.",
+      "alreadyDecidedError": "Decyzja w tej sprawie już zapadła.",
+      "decideError": "Nie udało się zapisać Twojej decyzji. Spróbuj ponownie za chwilę.",
+      "panelSummary": "Prośba o sprawdzenie od {requesterName}: przejście do {targetStateName}"
+    }
+  },
   "runs": {
     "notFound": "Nie znaleziono przebiegu testowego.",
     "add": {
@@ -3193,6 +3321,7 @@
       "exportTemplates": "Eksportuj szablony",
       "codeRepositories": "Repozytoria kodu",
       "quickScript": "QuickScript",
+      "advanced": "Zaawansowany",
       "sso": "Uwierzytelnianie",
       "security": "Bezpieczeństwo",
       "trash": "Śmieci",
@@ -4190,6 +4319,36 @@
     },
     "workflows": {
       "description": "Zarządzaj przepływami pracy przypadków testowych",
+      "systemFeatureCard": {
+        "title": "Przejrzyj przepływ pracy",
+        "description": "Wymuszaj przeglądy, blokując przejścia w przepływie pracy do momentu uzyskania zatwierdzenia. Po włączeniu tej opcji projekty mogą indywidualnie włączać się lub wyłączać w ustawieniach zaawansowanych. Wyłącz tę opcję, aby zapobiec blokowaniu przejść w przepływie pracy.",
+        "toggleAriaLabel": "Przełącz funkcję przepływu pracy recenzji",
+        "adminOnlyNotice": "Tylko administratorzy mogą zmienić to ustawienie.",
+        "updateSuccessEnabled": "Przegląd przepływu pracy włączony.",
+        "updateSuccessDisabled": "Przegląd przepływu pracy wyłączony.",
+        "updateError": "Nie udało się zaktualizować ustawień przepływu pracy recenzji. Spróbuj ponownie za chwilę.",
+        "remindersToggleLabel": "Wyślij przypomnienia o oczekujących recenzjach",
+        "remindersToggleAriaLabel": "Przełącz powiadomienia o przypomnieniu o recenzji",
+        "thresholdLabel": "Przypomnij recenzentom po",
+        "thresholdUnit": "dni)",
+        "thresholdSaveButton": "Ratować",
+        "thresholdHelp": "Ile dni prośba o recenzję może czekać, zanim recenzenci otrzymają przypomnienie? Czas na rozpatrzenie nowych próśb rozpoczyna się od momentu ich przesłania.",
+        "thresholdUpdateSuccess": "Zaktualizowano ustawienia przypomnień.",
+        "thresholdUpdateError": "Nie udało się zaktualizować ustawień przypomnień. Spróbuj ponownie za chwilę."
+      },
+      "projectReviewToggleList": {
+        "columnHeader": "Przejrzyj przepływ pracy",
+        "filterPlaceholder": "Filtruj projekty...",
+        "enabledToast": "Przepływ pracy przeglądu włączony dla {name}",
+        "disabledToast": "Przegląd przepływu pracy wyłączony dla {name}",
+        "saveError": "Nie udało się zaktualizować ustawień przepływu pracy recenzji. Spróbuj ponownie za chwilę.",
+        "emptyState": "Brak projektów spełniających kryteria filtra."
+      },
+      "editWorkflow": {
+        "requiresReviewLabel": "Wymaga przeglądu",
+        "requiresReviewFeatureDisabled": "Funkcja przeglądu przepływu pracy jest wyłączona na poziomie systemu. Przełącz ustawienia zaawansowane projektu lub ustaw opcję TESTPLANIT_REVIEW_FEATURE_ENABLED, aby ją ponownie włączyć.",
+        "requiresReviewDefaultDisabled": "Domyślny stan przepływu pracy nie może wymagać przeglądu — nowe jednostki trafiają tutaj i nie mają żadnego poprzedniego stanu do przejęcia."
+      },
       "add": {
         "button": "Dodaj przepływ pracy",
         "title": "Dodaj nowy przepływ pracy",
@@ -5193,7 +5352,31 @@
         "reviewGeneratedCases": "Przejrzyj wygenerowane przypadki testowe",
         "generateFromUrlCompleteTitle": "Strony przeszukane pomyślnie",
         "generateFromUrlCompleteMessage": "{pages, plural, one {# strona} other {# strony}} pobrane z {url} w projekcie „{projectName}”. Kliknij, aby przejrzeć i wygenerować przypadki testowe.",
-        "generateFromUrlFailedTitle": "Nie udało się przeszukać adresu URL"
+        "generateFromUrlFailedTitle": "Nie udało się przeszukać adresu URL",
+        "reviewRequestedTitle": "Poproszono o recenzję",
+        "reviewApprovedTitle": "Recenzja zatwierdzona",
+        "reviewChangesRequestedTitle": "Żądane zmiany",
+        "reviewRejectedTitle": "Recenzja odrzucona",
+        "reviewCancelledTitle": "Prośba o recenzję została anulowana",
+        "reviewRequestedAction": "poprosiłem o twoją recenzję",
+        "reviewApprovedAction": "zatwierdził Twoją prośbę o recenzję",
+        "reviewChangesRequestedAction": "żądane zmiany w Twoim wniosku o przegląd",
+        "reviewRejectedAction": "odrzuciłem Twoją prośbę o recenzję",
+        "reviewCancelledAction": "anulował prośbę o przegląd",
+        "reviewEntityLabelCase": "przypadek testowy",
+        "reviewEntityLabelRun": "przebieg próbny",
+        "reviewEntityLabelSession": "sesja",
+        "reviewTransition": "Przejście: {from} → {to}",
+        "reviewCommentPreview": "Komentarz: {comment}",
+        "reviewRequestedEmailMessage": "{actorName} poprosił o Twoją recenzję {entityLabel} „{entityName}” w projekcie „{projectName}”.",
+        "reviewApprovedEmailMessage": "{actorName} zatwierdził Twoją prośbę o recenzję w dniu {entityLabel} „{entityName}” w projekcie „{projectName}”.",
+        "reviewChangesRequestedEmailMessage": "{actorName} zażądał wprowadzenia zmian w żądaniu przeglądu {entityLabel} „{entityName}” w projekcie „{projectName}”.",
+        "reviewRejectedEmailMessage": "{actorName} odrzucił Twoją prośbę o recenzję w {entityLabel} „{entityName}” w projekcie „{projectName}”.",
+        "reviewCancelledEmailMessage": "{actorName} anulował prośbę o recenzję w {entityLabel} „{entityName}” w projekcie „{projectName}”.",
+        "reviewReminderTitle": "Recenzja wciąż w toku",
+        "reviewReminderAction": "nadal czekam na Twoją recenzję",
+        "reviewReminderEmailMessage": "Przypomnienie: prośba użytkownika {actorName}z dnia {entityLabel} „{entityName}” w projekcie „{projectName}” oczekuje na rozpatrzenie przez {hoursPending} godzin.",
+        "reviewReminderHoursPending": "Oczekiwanie na {hoursPending, plural, one {# godzina} other {# godzina}}"
       }
     },
     "issues": {
@@ -5549,7 +5732,9 @@
       "permissions": {
         "canAddEdit": "## Dodaj/Edytuj\nWskazuje, czy ta rola może dodawać i edytować powiązany obszar aplikacji.",
         "canDelete": "## Usuń\nWskazuje, czy ta rola może usunąć powiązany obszar aplikacji.",
-        "canClose": "## Zamknij\nWskazuje, czy ta rola może zamknąć powiązany obszar aplikacji."
+        "canClose": "## Zamknij\nWskazuje, czy ta rola może zamknąć powiązany obszar aplikacji.",
+        "canApprove": "## Zatwierdź\nWskazuje, czy ta rola może zatwierdzać prośby o recenzję dla powiązanego obszaru aplikacji. Dotyczy tylko repozytorium przypadków testowych, przebiegów testów i sesji.",
+        "canReadSensitive": "## Odczyt poufnych\nWskazuje, czy ta rola może wyświetlać poufne wartości parametrów podczas odczytu danych z pól zastrzeżonych. Bez tego nadania poufne wartości są wyświetlane jako ●●●●●● w wierszach zestawu danych i komórkach iteracji oraz jako [USUNIĘTO] w treściach wstępnie wypełnianych zgłoszeń i eksportach CSV. Dotyczy tylko pól zastrzeżonych przypadków testowych i pól zastrzeżonych wyników przebiegów testowych."
       }
     },
     "group": {
@@ -5655,6 +5840,7 @@
       "isDefault": "## Domyślny\nWskazuje, czy ten przepływ pracy jest domyślny dla Twojego projektu.\n\n— Domyślny przepływ pracy jest wstępnie wybierany dla nowych przebiegów testów, sesji i automatyzacji.",
       "isEnabled": "## Włączone\nWskazuje, czy ten przepływ pracy jest włączony.",
       "isActive": "## Aktywny\nWskazuje, czy ten stan przepływu pracy jest aktywny i dostępny do użycia.\n\n— Aktywne przepływy pracy można wybierać podczas aktualizowania przebiegów testów, sesji lub automatyzacji.\n— Nieaktywne przepływy pracy są ukryte przed wyborem, ale zachowywane w istniejących elementach.",
+      "requiresReview": "## Wymaga przeglądu\nPo włączeniu tej opcji, przejście sprawy, testu lub sesji DO tego stanu jest zablokowane przez zatwierdzoną prośbę o przegląd. Bez zatwierdzonej prośby przejście jest zablokowane.\n\n– Istniejące oczekujące recenzje są zachowywane w trybie cichym, gdy funkcja na poziomie systemu jest WYŁĄCZONA, i pojawiają się ponownie po ponownym włączeniu.\n– Recenzent jest wybierany, gdy tester kliknie opcję „Poproś o przegląd” na stronie szczegółów jednostki.\n\nJeśli funkcja na poziomie systemu jest wyłączona, ten przełącznik jest zablokowany. Aby włączyć tę opcję, należy go ponownie włączyć na karcie „Przepływ pracy przeglądu” powyżej.",
       "projects": "## Projekty\nWskazuje projekty, które mogą korzystać z tego przepływu pracy."
     },
     "testResult": {
@@ -6937,6 +7123,16 @@
     "mentions": {
       "notAMember": "Nie jestem członkiem projektu",
       "noUsersFound": "Nie znaleziono użytkowników"
+    },
+    "type": {
+      "reviewRequest": "Prośba o przegląd",
+      "reviewDecision": {
+        "approved": "Zatwierdzony",
+        "changesRequested": "Żądane zmiany",
+        "rejected": "Odrzucony",
+        "cancelled": "Odwołany",
+        "generic": "Decyzja o przeglądzie"
+      }
     }
   },
   "Trial": {

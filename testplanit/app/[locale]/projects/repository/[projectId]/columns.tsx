@@ -1393,7 +1393,8 @@ export const getColumns = (
   onQuickScript?: (caseId: number) => void,
   onCopyMove?: (caseId: number) => void,
   showDescendants?: boolean,
-  folderPathMap?: Map<number, string> | null
+  folderPathMap?: Map<number, string> | null,
+  renderPendingBadge?: (caseId: number) => React.ReactNode
 ): ColumnDef<ExtendedCases>[] => {
   const isStepsFieldPresent = uniqueCaseFieldList.some(
     (field) => field.displayName === "Steps"
@@ -1784,6 +1785,11 @@ export const getColumns = (
                 folderPathMap={folderPathMap}
               />
             </div>
+            {renderPendingBadge ? (
+              <div className="ml-2 shrink-0">
+                {renderPendingBadge(row.original.id)}
+              </div>
+            ) : null}
           </div>
         );
       },

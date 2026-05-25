@@ -129,9 +129,7 @@ export function DeleteConfigCategory({
                 {t.rich("deleteCategoryConfirm", {
                   name: category.name,
                   strong: (chunks: any) => (
-                    <span className="whitespace-nowrap font-bold">
-                      {chunks}
-                    </span>
+                    <span className="font-bold break-all">{chunks}</span>
                   ),
                 })}
               </AlertDialogDescription>

@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { ApplicationArea, Prisma } from "@prisma/client";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
@@ -46,6 +46,14 @@ const bodySchema = z.object({
   reason: z.string().max(500).optional(),
 });
 
+/**
+ * Resolves whether the authenticated user can see sensitive parameter
+ * values on the bulk-skip audit payloads. Iteration values surface as run
+ * results, so the gate is the `TestRunResultRestrictedFields`
+ * ApplicationArea's `canReadSensitive` grant — matching the gates already
+ * used by the iteration-matrix, iteration-values, submit-result, and
+ * issue-body routes. System admins always pass.
+ */
 async function resolveCanReadSensitive(userId: string): Promise<boolean> {
   const u = await prisma.user.findUnique({
     where: { id: userId },
@@ -56,7 +64,9 @@ async function resolveCanReadSensitive(userId: string): Promise<boolean> {
   const perms = u.role?.rolePermissions ?? [];
   return Array.isArray(perms)
     ? perms.some(
-        (p: { canReadSensitive?: boolean }) => p?.canReadSensitive === true
+        (p: { area?: ApplicationArea; canReadSensitive?: boolean }) =>
+          p?.area === ApplicationArea.TestRunResultRestrictedFields &&
+          p?.canReadSensitive === true
       )
     : false;
 }

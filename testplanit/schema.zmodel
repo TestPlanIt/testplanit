@@ -134,6 +134,9 @@ model User {
     apiTokens               ApiToken[]
     createdShareLinks       ShareLink[]             @relation("ShareLinkCreator")
     shareLinkAccessLogs     ShareLinkAccessLog[]    @relation("ShareLinkAccessor")
+    reviewsRequested        ReviewRequest[]         @relation("ReviewRequestedBy")
+    reviewsAssigned         ReviewRequest[]         @relation("ReviewAssignedToUser")
+    reviewsDecided          ReviewRequest[]         @relation("ReviewDecidedBy")
 
     // Two-factor authentication
     twoFactorEnabled        Boolean                 @default(false)
@@ -324,6 +327,12 @@ enum NotificationType {
     LLM_BUDGET_ALERT
     COPY_MOVE_COMPLETE
     GENERATE_FROM_URL_COMPLETE
+    REVIEW_REQUESTED
+    REVIEW_APPROVED
+    REVIEW_CHANGES_REQUESTED
+    REVIEW_REJECTED
+    REVIEW_CANCELLED
+    REVIEW_REMINDER
 
     @@deny('all', !auth())
     @@allow('update', auth().access == 'ADMIN')
@@ -358,15 +367,16 @@ model GroupAssignment {
 }
 
 model Roles {
-    id                      Int                      @id @default(autoincrement())
-    name                    String                   @unique @length(1)
-    isDefault               Boolean                  @default(false)
-    isDeleted               Boolean                  @default(false)
-    users                   User[]
-    rolePermissions         RolePermission[]
-    defaultForProjects      Projects[]               @relation("ProjectDefaultRole")
-    userProjectPermissions  UserProjectPermission[]  @relation("UserProjectRole")
-    groupProjectPermissions GroupProjectPermission[] @relation("GroupProjectRole")
+    id                       Int                      @id @default(autoincrement())
+    name                     String                   @unique @length(1)
+    isDefault                Boolean                  @default(false)
+    isDeleted                Boolean                  @default(false)
+    users                    User[]
+    rolePermissions          RolePermission[]
+    defaultForProjects       Projects[]               @relation("ProjectDefaultRole")
+    userProjectPermissions   UserProjectPermission[]  @relation("UserProjectRole")
+    groupProjectPermissions  GroupProjectPermission[] @relation("GroupProjectRole")
+    reviewRequestAssignments ReviewRequest[]
 
     @@deny('all', !auth())
     @@allow('update, create', auth().access == 'ADMIN')
@@ -424,10 +434,15 @@ model Projects {
     defaultCaseExportTemplateId Int?
     defaultCaseExportTemplate   CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
     quickScriptEnabled          Boolean                               @default(false)
-    /// Empty = default ['iteration']. Lookup is case-insensitive at read time (D-01).
+    /// Empty = default ['iteration']. Lookup is case-insensitive at read time.
     junitIterationPropertyNames String[]                              @default([])
+    /// Per-project opt-in for Review & Approval. Defaults to false so the
+    /// feature stays dormant on upgrade — admins flip the system kill switch
+    /// AND each project's toggle explicitly. New projects start opted out.
+    reviewWorkflowEnabled       Boolean                               @default(false)
     duplicateScanResults        DuplicateScanResult[]
     stepSequenceMatches         StepSequenceMatch[]
+    reviewRequests              ReviewRequest[]
 
     @@index([isDeleted, isCompleted])
     @@index([createdBy])
@@ -969,14 +984,23 @@ model Workflows {
     isDefault       Boolean                     @default(false)
     workflowType    WorkflowType                @default(NOT_STARTED)
     scope           WorkflowScope
+    requiresReview  Boolean                     @default(false)
     projects        ProjectWorkflowAssignment[]
     repositoryCases RepositoryCases[]
     sessions        Sessions[]
     testRuns        TestRuns[]
+    reviewRequestsFromState ReviewRequest[]     @relation("ReviewFromState")
+    reviewRequestsToState   ReviewRequest[]     @relation("ReviewToState")
 
     @@index([isDeleted, isEnabled])
     @@index([scope, isDefault])
     @@index([order])
+
+    @@validate(
+        !(isDefault && requiresReview),
+        "The default workflow state cannot require review — new entities land here and the schema gate only fires on transitions."
+    )
+
     @@deny('all', !auth())
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
@@ -1586,6 +1610,15 @@ model RepositoryCases {
     )
 
     @@allow('all', auth().access == 'ADMIN')
+
+    // Review-gate enforcement lives entirely at the app layer
+    // (lib/services/reviewGate.ts + the auto-API route handler).
+    // ZenStack @@deny expressions can't read the AppConfig system kill
+    // switch, so schema-layer rules here would either fire even when the
+    // system flag is OFF (incorrect) or duplicate the app check
+    // imperfectly (drift risk). The app preflight is the single source
+    // of truth and produces structured REVIEW_REQUIRED responses; raw
+    // prisma + ZenStack-enhanced server actions both route through it.
 }
 
 model RepositoryCaseVersions {
@@ -2110,6 +2143,15 @@ model Sessions {
     )
 
     @@allow('all', auth().access == 'ADMIN')
+
+    // Review-gate enforcement lives entirely at the app layer
+    // (lib/services/reviewGate.ts + the auto-API route handler).
+    // ZenStack @@deny expressions can't read the AppConfig system kill
+    // switch, so schema-layer rules here would either fire even when the
+    // system flag is OFF (incorrect) or duplicate the app check
+    // imperfectly (drift risk). The app preflight is the single source
+    // of truth and produces structured REVIEW_REQUIRED responses; raw
+    // prisma + ZenStack-enhanced server actions both route through it.
 }
 
 model SessionResults {
@@ -2469,6 +2511,15 @@ model TestRuns {
     )
 
     @@allow('all', auth().access == 'ADMIN')
+
+    // Review-gate enforcement lives entirely at the app layer
+    // (lib/services/reviewGate.ts + the auto-API route handler).
+    // ZenStack @@deny expressions can't read the AppConfig system kill
+    // switch, so schema-layer rules here would either fire even when the
+    // system flag is OFF (incorrect) or duplicate the app check
+    // imperfectly (drift risk). The app preflight is the single source
+    // of truth and produces structured REVIEW_REQUIRED responses; raw
+    // prisma + ZenStack-enhanced server actions both route through it.
 }
 
 enum TestRunType {
@@ -3250,6 +3301,9 @@ model RolePermission {
     canDelete        Boolean         @default(false)
     canClose         Boolean         @default(false)
     canReadSensitive Boolean         @default(false)
+    // Gates reviewer eligibility for the Review & Approval feature. Applies on
+    // TestCaseRepository / TestRuns / Sessions; meaningless on other areas.
+    canApprove       Boolean         @default(false)
 
     @@id([roleId, area])
     @@deny('all', !auth())
@@ -3950,6 +4004,157 @@ model Notification {
     @@allow('update', (auth().id == userId && (future().isRead != isRead || future().isDeleted != isDeleted)) || auth().access == 'ADMIN')
     @@allow('create', auth().access != null)
     @@allow('delete', auth().access == 'ADMIN')
+}
+
+enum ReviewStatus {
+    PENDING
+    APPROVED
+    CHANGES_REQUESTED
+    REJECTED
+    CANCELLED
+
+    @@deny('all', !auth())
+    @@allow('read', true)
+}
+
+enum ReviewEntityType {
+    CASE
+    RUN
+    SESSION
+
+    @@deny('all', !auth())
+    @@allow('read', true)
+}
+
+enum CommentType {
+    GENERAL
+    REVIEW_REQUEST
+    REVIEW_DECISION
+
+    @@deny('all', !auth())
+    @@allow('read', true)
+}
+
+model ReviewRequest {
+    id                String           @id @default(cuid())
+    projectId         Int
+    project           Projects         @relation(fields: [projectId], references: [id])
+
+    // Polymorphic entity reference (no FK back-relation; mirrors ShareLink/AuditLog pattern). D-14.
+    entityType        ReviewEntityType
+    entityId          Int
+
+    requestedByUserId String
+    requestedBy       User             @relation("ReviewRequestedBy", fields: [requestedByUserId], references: [id])
+
+    // XOR enforced by @@validate: exactly one of assigneeUserId or assigneeRoleId
+    assigneeUserId    String?
+    assigneeUser      User?            @relation("ReviewAssignedToUser", fields: [assigneeUserId], references: [id])
+    assigneeRoleId    Int?
+    assigneeRole      Roles?           @relation(fields: [assigneeRoleId], references: [id])
+
+    fromStateId       Int
+    fromState         Workflows        @relation("ReviewFromState", fields: [fromStateId], references: [id])
+    toStateId         Int
+    toState           Workflows        @relation("ReviewToState", fields: [toStateId], references: [id])
+
+    status            ReviewStatus     @default(PENDING)
+    decisionComment   String?
+    decidedByUserId   String?
+    decidedBy         User?            @relation("ReviewDecidedBy", fields: [decidedByUserId], references: [id])
+    decidedAt         DateTime?
+
+    // D-05 carve-out: consumedAt is the one permitted post-decision mutation.
+    // Field-level @allow override flag (third arg true) carves out the model-level append-only @@deny.
+    consumedAt        DateTime?        @allow('update', status == 'APPROVED', true)
+
+    // Hybrid design (Phase 2 follow-up): the requester's typed prose at submit
+    // time AND the reviewer's optional notes at decide time both live in the
+    // standard Comments thread on the entity, linked back here via
+    // Comment.reviewRequestId. The decisionComment column above remains for
+    // structured audit fidelity; the paired Comment is the human-readable
+    // conversation surface.
+    comments          Comment[]
+
+    // Stamped by the review-reminder scheduler after a reminder notification
+    // fires for this PENDING row. Null = never reminded; the scan predicate
+    // treats null and "older than threshold" identically.
+    lastRemindedAt    DateTime?        @db.Timestamptz(6)
+
+    isDeleted         Boolean          @default(false)
+    createdAt         DateTime         @default(now()) @db.Timestamptz(6)
+    updatedAt         DateTime         @updatedAt
+
+    @@index([assigneeUserId, status])
+    @@index([assigneeRoleId, status])
+    @@index([entityType, entityId, status, createdAt(sort: Desc)])
+    @@index([projectId, status])
+
+    // XOR: exactly one of assigneeUserId or assigneeRoleId must be set (SCHEMA-02, D-14).
+    @@validate(
+        (assigneeUserId != null && assigneeRoleId == null) ||
+        (assigneeUserId == null && assigneeRoleId != null),
+        "Exactly one of assigneeUserId or assigneeRoleId must be set"
+    )
+
+    // Self-approval prevention (T-1-01, D-15).
+    @@validate(
+        assigneeUserId == null || assigneeUserId != requestedByUserId,
+        "Requester cannot be the direct assignee"
+    )
+
+    // Append-only invariant (SCHEMA-03, T-1-04). consumedAt is exempted via field-level @allow override above.
+    @@deny('update', status != 'PENDING')
+
+    // Hard deletes forbidden (milestone-wide soft-delete rule).
+    @@deny('delete', true)
+
+    // Access policies (SCHEMA-08, T-1-06/07/08).
+    @@deny('all', auth() == null)
+
+    @@allow('read',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType != 'NO_ACCESS'] ||
+        auth().access == 'ADMIN'
+    )
+
+    @@allow('create',
+        auth() != null && (
+            project.creator == auth() ||
+            project.userPermissions?[user == auth() && accessType != 'NO_ACCESS'] ||
+            auth().access == 'ADMIN'
+        )
+    )
+
+    // Assignee (direct user or role holder on this project) can decide PENDING.
+    // The role-holder branches authoritatively flow through the app-layer
+    // eligibility check in lib/services/reviewDecisions.ts (which uses raw
+    // prisma to bypass policy entirely). The schema-layer role-holder
+    // predicates below cannot reference the outer-model `assigneeRoleId`
+    // from inside `project.userPermissions?[...]` under ZenStack 2.22.2,
+    // so they function as defense-in-depth only.
+    //
+    // Group-based role holders are first-class — common provisioning shape
+    // under SAML/SCIM where role access flows through group membership
+    // rather than direct UserProjectPermission rows.
+    @@allow('update',
+        status == 'PENDING' && (
+            (assigneeUserId != null && assigneeUser == auth()) ||
+            (assigneeRoleId != null && (
+                project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' && role.id == this.assigneeRoleId] ||
+                project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE' && this.assigneeRoleId != null && auth().roleId == this.assigneeRoleId] ||
+                project.groupPermissions?[group.assignedUsers?[user == auth()] && accessType == 'SPECIFIC_ROLE' && role.id == this.assigneeRoleId] ||
+                project.groupPermissions?[group.assignedUsers?[user == auth()] && accessType == 'GLOBAL_ROLE' && this.assigneeRoleId != null && auth().roleId == this.assigneeRoleId]
+            ))
+        )
+    )
+
+    // Requester or admin can cancel PENDING (T-1-08).
+    @@allow('update',
+        status == 'PENDING' && (requestedBy == auth() || auth().access == 'ADMIN')
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
 }
 
 enum ShareLinkMode {
@@ -4841,6 +5046,15 @@ model Comment {
     milestoneId      Int?
     milestone        Milestones?      @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
 
+    // Review-feature hybrid (Phase 2 follow-up): when the requester submits a
+    // Request Review or the reviewer Approves/Requests Changes/Rejects, the
+    // submit path also writes a paired Comment with `type` != GENERAL and
+    // `reviewRequestId` set. GENERAL is the default; existing comments and
+    // any future ad-hoc comments are unaffected.
+    type             CommentType      @default(GENERAL)
+    reviewRequestId  String?
+    reviewRequest    ReviewRequest?   @relation(fields: [reviewRequestId], references: [id], onDelete: SetNull)
+
     // Creator and metadata
     creatorId        String
     creator          User             @relation("CommentCreator", fields: [creatorId], references: [id])
@@ -4857,6 +5071,7 @@ model Comment {
     @@index([testRunId, isDeleted])
     @@index([sessionId, isDeleted])
     @@index([milestoneId, isDeleted])
+    @@index([reviewRequestId])
     @@index([creatorId])
     @@deny('all', !auth())
     @@deny('all', auth().access == 'NONE')
@@ -4974,6 +5189,13 @@ enum AuditAction {
     ITERATION_VALUES_OVERRIDDEN
     ITERATION_BULK_SKIPPED
     ITERATION_RESULT_RECORDED
+    // Review & Approval audit actions
+    REVIEW_REQUESTED
+    REVIEW_APPROVED
+    REVIEW_CHANGES_REQUESTED
+    REVIEW_REJECTED
+    REVIEW_CANCELLED
+    REVIEW_REMINDED
 }
 
 model AuditLog {

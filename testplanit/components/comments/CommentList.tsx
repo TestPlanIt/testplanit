@@ -3,7 +3,7 @@
 import { JSONContent } from "@tiptap/core";
 import { MessageSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   createComment,
   deleteComment,
@@ -19,6 +19,15 @@ interface Comment {
   createdAt: Date;
   updatedAt: Date;
   isEdited: boolean;
+  type?: "GENERAL" | "REVIEW_REQUEST" | "REVIEW_DECISION";
+  reviewRequest?: {
+    status:
+      | "PENDING"
+      | "APPROVED"
+      | "CHANGES_REQUESTED"
+      | "REJECTED"
+      | "CANCELLED";
+  } | null;
   creator: {
     id: string;
     name: string | null;
@@ -50,6 +59,14 @@ export function CommentList({
   const [comments, setComments] = useState<Comment[]>(initialComments);
   const [isCreating, setIsCreating] = useState(false);
   const [editorKey, setEditorKey] = useState(0);
+
+  // Sync local list with `initialComments` whenever the parent useQuery
+  // refetches — without this a paired-Comment landing from another submit
+  // path (e.g. RequestReviewSheet writing a REVIEW_REQUEST row) would never
+  // appear without a manual reload.
+  useEffect(() => {
+    setComments(initialComments);
+  }, [initialComments]);
 
   const handleCreate = async (content: JSONContent) => {
     setIsCreating(true);
