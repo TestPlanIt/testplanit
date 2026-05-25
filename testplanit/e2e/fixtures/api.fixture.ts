@@ -1153,13 +1153,22 @@ export class ApiHelper {
       );
     }
 
-    // Assign all workflows to project (matching setup-db.ts)
+    // Assign workflows to project. Exclude any workflow whose name starts
+    // with the "E2E-" prefix used by review-helper-created gated workflows
+    // — those are owned by another in-flight test and must not be adopted
+    // here, otherwise unrelated specs (add-case, sessions, api/steps) end
+    // up with extra workflows assigned to their project and either pick
+    // the wrong default state or fail downstream invariants.
     const workflowsResponse = await this.request.get(
       `${this.baseURL}/api/model/workflows/findMany`,
       {
         params: {
           q: JSON.stringify({
-            where: { isDeleted: false, isEnabled: true },
+            where: {
+              isDeleted: false,
+              isEnabled: true,
+              NOT: { name: { startsWith: "E2E-" } },
+            },
           }),
         },
       }
