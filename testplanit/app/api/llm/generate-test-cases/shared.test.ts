@@ -7,6 +7,7 @@ import type {
 } from "~/lib/integrations/adapters/IssueAdapter";
 import { parameterCreateSchema } from "~/lib/schemas/parameterSchema";
 import {
+  buildOutlineUserPrompt,
   buildSystemPrompt,
   fetchLinkedIssuesContext,
   parseAndValidateTestCases,
@@ -726,5 +727,65 @@ describe("parseAndValidateTestCases — INT-06 parameter+dataset extraction", ()
     expect(testCases[0].parameters).toBeUndefined();
     expect(testCases[0].starterDataset).toBeUndefined();
     expect(warnings ?? []).toEqual([]);
+  });
+});
+
+describe("buildOutlineUserPrompt — existing cases context", () => {
+  it("omits the existing-cases block when no cases are supplied", () => {
+    const prompt = buildOutlineUserPrompt(sampleIssue, {
+      folderContext: 0,
+      userNotes: "edge cases",
+    });
+    expect(prompt).not.toContain("DO NOT DUPLICATE");
+    expect(prompt).not.toContain("EXISTING TEST CASES");
+    expect(prompt).toContain("ADDITIONAL TESTING GUIDANCE: edge cases");
+  });
+
+  it("renders each existing case as a numbered title-only item", () => {
+    const prompt = buildOutlineUserPrompt(sampleIssue, {
+      folderContext: 0,
+      existingTestCases: [
+        {
+          name: "Login with valid credentials",
+          template: "Default",
+          description: "Happy path",
+        },
+        {
+          name: "Login with locked account",
+          template: "Default",
+          description: "Account is locked after 5 failures",
+        },
+      ],
+    });
+    expect(prompt).toContain(
+      "EXISTING TEST CASE TITLES — DO NOT DUPLICATE OR SUBSTANTIALLY OVERLAP"
+    );
+    expect(prompt).toContain("1. Login with valid credentials");
+    expect(prompt).toContain("2. Login with locked account");
+    expect(prompt).toContain("must cover scenarios NOT already represented");
+  });
+
+  it("does not render case descriptions in the outline prompt", () => {
+    // Outlines deliberately stay title-only — the LLM doesn't need full
+    // case detail to avoid title collisions, and keeping the prompt small
+    // matters for latency under the integration's request timeout.
+    const prompt = buildOutlineUserPrompt(sampleIssue, {
+      folderContext: 0,
+      existingTestCases: [
+        {
+          name: "Case A",
+          template: "Default",
+          description: "Some description that should never appear",
+          steps: [
+            { step: "Open page", expectedResult: "Page loads" },
+            { step: "Click button", expectedResult: "Modal opens" },
+          ],
+        },
+      ],
+    });
+    expect(prompt).toContain("1. Case A");
+    expect(prompt).not.toContain("Some description");
+    expect(prompt).not.toContain("Open page");
+    expect(prompt).not.toContain("Modal opens");
   });
 });

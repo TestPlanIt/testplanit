@@ -1,6 +1,6 @@
 {
   "name": "testplanit",
-  "version": "0.29.7",
+  "version": "0.29.10",
   "private": true,
   "scripts": {
     "audit:coverage": "tsx scripts/audit-coverage.ts",
@@ -351,7 +351,7 @@
     "import": "^0.0.6",
     "lucide-react": "^0.577.0",
     "pdf-parse": "^2.4.5",
-    "pm2": "^6.0.14",
+    "pm2": "^7.0.0",
     "postcss": "^8.5.14",
     "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.7.4",
@@ -395,7 +395,9 @@
     "path-to-regexp": "^3.3.0",
     "prismjs": "^1.30.0",
     "systeminformation": "^5.31.1",
-    "qs": ">=6.14.2",
+    "qs": ">=6.15.2",
+    "brace-expansion@5": ">=5.0.6",
+    "ws@8": ">=8.20.1",
     "@modelcontextprotocol/sdk": ">=1.26.0",
     "preact": ">=10.28.2",
     "@remix-run/router": ">=1.23.2",

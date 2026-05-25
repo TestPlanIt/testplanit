@@ -249,6 +249,14 @@ function toCaseContext(row: any): ExistingTestCaseContext {
   };
 }
 
+/** Lightweight context shape used by the outline path (names only). */
+function toNameOnlyCaseContext(row: any): ExistingTestCaseContext {
+  return {
+    name: row.name,
+    template: row.template?.templateName ?? "",
+  };
+}
+
 /** Rough token estimate for a single context case. */
 function estimateCaseTokens(c: ExistingTestCaseContext): number {
   let chars =
@@ -261,9 +269,26 @@ function estimateCaseTokens(c: ExistingTestCaseContext): number {
   return Math.ceil(chars / 4);
 }
 
+/** Token estimate for a name-only context entry. */
+function estimateNameOnlyTokens(c: ExistingTestCaseContext): number {
+  // Mirror what the outline prompt actually renders: "N. <name>\n" — so
+  // budget by the name length plus a few overhead chars per line.
+  return Math.ceil((c.name.length + 6) / 4);
+}
+
+export type HierarchyContextMode = "full" | "names";
+
 /**
  * Fetch existing test cases from the folder hierarchy as context for LLM
- * generation, prioritised:  current folder → ancestors → descendants.
+ * generation, prioritised: current folder → ancestors → descendants.
+ *
+ * `mode: "full"` (default) loads names, descriptions, steps, and field
+ * values — used by the single-shot and stream generators where the LLM
+ * benefits from rich examples.
+ *
+ * `mode: "names"` loads names only and bills the budget per name length.
+ * Use this for the outline phase where the prompt only renders titles
+ * (descriptions and steps would add latency without improving dedup).
  *
  * Returns at most `tokenBudget` estimated tokens worth of cases.
  * `prisma` must be the *raw* (non-enhanced) client so access control
@@ -273,25 +298,30 @@ export async function fetchHierarchyContext(
   prisma: any,
   projectId: number,
   folderId: number,
-  tokenBudget: number
+  tokenBudget: number,
+  mode: HierarchyContextMode = "full"
 ): Promise<ExistingTestCaseContext[]> {
+  const namesOnly = mode === "names";
+
   // Shared select shape for case queries
-  const caseSelect = {
+  const caseSelect: Record<string, any> = {
     name: true,
     template: { select: { templateName: true } },
-    caseFieldValues: {
+  };
+  if (!namesOnly) {
+    caseSelect.caseFieldValues = {
       select: {
         value: true,
         field: {
           select: { displayName: true, type: { select: { type: true } } },
         },
       },
-    },
-    steps: {
+    };
+    caseSelect.steps = {
       select: { step: true, expectedResult: true, order: true },
       orderBy: { order: "asc" as const },
-    },
-  };
+    };
+  }
 
   const caseWhere = {
     projectId,
@@ -365,8 +395,10 @@ export async function fetchHierarchyContext(
     }
 
     for (const row of rows) {
-      const ctx = toCaseContext(row);
-      const tokens = estimateCaseTokens(ctx);
+      const ctx = namesOnly ? toNameOnlyCaseContext(row) : toCaseContext(row);
+      const tokens = namesOnly
+        ? estimateNameOnlyTokens(ctx)
+        : estimateCaseTokens(ctx);
       if (tokensUsed + tokens > tokenBudget) break;
       results.push(ctx);
       tokensUsed += tokens;
@@ -985,6 +1017,18 @@ STATUS: ${issue.status}${issue.priority ? ` | PRIORITY: ${issue.priority}` : ""}
 
   if (context.userNotes) {
     prompt += `\n\nADDITIONAL TESTING GUIDANCE: ${context.userNotes}`;
+  }
+
+  if (context.existingTestCases && context.existingTestCases.length > 0) {
+    // Names-only on purpose: keeps the outline prompt small so the LLM
+    // returns quickly even when the folder has many cases. Titles are
+    // enough signal for the model to avoid generating overlapping
+    // outlines — full case detail would just inflate latency.
+    prompt += `\n\nEXISTING TEST CASE TITLES — DO NOT DUPLICATE OR SUBSTANTIALLY OVERLAP:`;
+    context.existingTestCases.forEach((tc, i) => {
+      prompt += `\n${i + 1}. ${tc.name}`;
+    });
+    prompt += `\n\nThe titles and summaries you generate must cover scenarios NOT already represented above. Skip any scenario that is already covered, even if your wording would be slightly different.`;
   }
 
   prompt += `\n\nGenerate a list of test case titles and one-sentence summaries that cover the key scenarios for this issue.`;

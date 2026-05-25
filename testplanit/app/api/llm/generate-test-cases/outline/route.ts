@@ -1,7 +1,7 @@
 import { LLM_FEATURES, SYNC_RETRY_PROFILE } from "@/lib/llm/constants";
 import { LlmManager } from "@/lib/llm/services/llm-manager.service";
 import { PromptResolver } from "@/lib/llm/services/prompt-resolver.service";
-import type { LlmRequest } from "@/lib/llm/types";
+import type { LlmRequest, LlmResponse } from "@/lib/llm/types";
 import { prisma } from "@/lib/prisma";
 import { ProjectAccessType } from "@prisma/client";
 import { getServerSession } from "next-auth";
@@ -10,10 +10,18 @@ import { authOptions } from "~/server/auth";
 import {
   buildOutlineSystemPrompt,
   buildOutlineUserPrompt,
+  fetchHierarchyContext,
   type GenerationContext,
   type IssueData,
   type TestCaseOutline,
 } from "../shared";
+import {
+  OUTLINE_CTX_MIN_USEFUL,
+  OUTLINE_RETRY_MAX_DEPTH,
+  getStartingBudget,
+  isTimeoutError,
+  recordWorkingBudget,
+} from "./adaptive-budget";
 
 export async function POST(request: NextRequest) {
   try {
@@ -107,38 +115,94 @@ export async function POST(request: NextRequest) {
     }
 
     const systemPrompt = buildOutlineSystemPrompt(quantity);
-    const userPrompt = buildOutlineUserPrompt(issue, context);
 
-    let maxTokens = resolvedPrompt.maxOutputTokens ?? 1024;
+    let maxTokens = resolvedPrompt.maxOutputTokens ?? 2048;
     const providerConfig = await (prisma as any).llmProviderConfig.findFirst({
       where: { llmIntegrationId: resolved.integrationId },
     });
     if (providerConfig) {
-      maxTokens = Math.min(providerConfig.defaultMaxTokens ?? 1024, 1024);
+      maxTokens =
+        providerConfig.defaultMaxTokens ??
+        resolvedPrompt.maxOutputTokens ??
+        2048;
     }
 
-    const llmRequest: LlmRequest = {
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: resolvedPrompt.temperature,
-      maxTokens,
-      userId: session.user.id,
-      feature: "test_case_generation",
-      ...(resolved.model ? { model: resolved.model } : {}),
-      metadata: {
-        projectId,
-        issueKey: issue.key,
-        timestamp: new Date().toISOString(),
-      },
+    const integrationId = resolved.integrationId;
+    const { maxRetries, baseDelayMs } = SYNC_RETRY_PROFILE;
+
+    // Run the LLM with an adaptive existing-cases context budget. On a
+    // timeout we halve the budget and retry within the same request, up to
+    // OUTLINE_RETRY_MAX_DEPTH halvings. The smaller working budget is
+    // remembered for subsequent calls; a clean success grows it back up.
+    const runWithBudget = async (
+      budget: number,
+      depth: number
+    ): Promise<{ response: LlmResponse; finalBudget: number }> => {
+      const effectiveBudget = budget < OUTLINE_CTX_MIN_USEFUL ? 0 : budget;
+
+      const hierarchyContext =
+        effectiveBudget > 0 && typeof context.folderContext === "number"
+          ? await fetchHierarchyContext(
+              prisma,
+              projectId,
+              context.folderContext,
+              effectiveBudget,
+              "names"
+            )
+          : [];
+
+      const enrichedContext: GenerationContext = {
+        ...context,
+        existingTestCases: hierarchyContext,
+      };
+      const userPrompt = buildOutlineUserPrompt(issue, enrichedContext);
+
+      const llmRequest: LlmRequest = {
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: resolvedPrompt.temperature,
+        maxTokens,
+        userId: session.user.id,
+        feature: "test_case_generation",
+        ...(resolved.model ? { model: resolved.model } : {}),
+        metadata: {
+          projectId,
+          issueKey: issue.key,
+          timestamp: new Date().toISOString(),
+        },
+      };
+
+      try {
+        const response = await manager.chat(integrationId, llmRequest, {
+          maxRetries,
+          baseDelayMs,
+        });
+        return { response, finalBudget: effectiveBudget };
+      } catch (err) {
+        if (
+          isTimeoutError(err) &&
+          effectiveBudget > 0 &&
+          depth < OUTLINE_RETRY_MAX_DEPTH
+        ) {
+          const next = Math.floor(effectiveBudget / 2);
+          console.warn(
+            `[outline] Timeout with context budget=${effectiveBudget}, retrying with budget=${next} (depth ${depth + 1}/${OUTLINE_RETRY_MAX_DEPTH})`
+          );
+          recordWorkingBudget(integrationId, next);
+          return runWithBudget(next, depth + 1);
+        }
+        throw err;
+      }
     };
 
-    const { maxRetries, baseDelayMs } = SYNC_RETRY_PROFILE;
-    const response = await manager.chat(resolved.integrationId, llmRequest, {
-      maxRetries,
-      baseDelayMs,
-    });
+    const startingBudget = getStartingBudget(integrationId);
+    const { response, finalBudget } = await runWithBudget(startingBudget, 0);
+
+    // Remember the budget that worked so the next call starts at a sane size
+    // (then grows on subsequent successes via getStartingBudget).
+    recordWorkingBudget(integrationId, finalBudget);
 
     const raw = response.content.trim();
     const finishReason = response.finishReason;

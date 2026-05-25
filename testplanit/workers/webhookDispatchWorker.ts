@@ -84,6 +84,22 @@ const processor = async (job: Job<DispatchJobData | { tenantId?: string }>) => {
   }
 };
 
+// Queue-level dispatch wrapper. retire-expired-secrets resolves its own
+// tenant-scoped Prisma client from job.data and decrypts nothing, so it must
+// NOT go through withTenantContext: that wrapper eagerly fetches the tenant
+// ENCRYPTION_KEY from the Kubernetes secrets API for every job with a
+// tenantId. For this cron the key is unnecessary, and the fetch throws (then
+// retries forever) for tenants whose secret is absent or unreadable. All
+// other jobs still run inside tenant context.
+const contextAwareProcessor = withTenantContext(processor);
+
+export const dispatch = (
+  job: Job<DispatchJobData | { tenantId?: string }>
+): Promise<unknown> =>
+  job.name === "retire-expired-secrets"
+    ? processor(job)
+    : contextAwareProcessor(job);
+
 export async function handleCompleted(
   job: Job,
   result?: { outcome?: string } | null
@@ -141,26 +157,22 @@ const startWorker = async () => {
     console.log("[WebhookDispatchWorker] Starting in SINGLE-TENANT mode");
   }
   if (valkeyConnection) {
-    worker = new Worker(
-      WEBHOOK_DISPATCH_QUEUE_NAME,
-      withTenantContext(processor),
-      {
-        connection: valkeyConnection as any,
-        concurrency: parseInt(
-          process.env.WEBHOOK_DISPATCH_CONCURRENCY || "5",
-          10
-        ),
-        // Retry curve — strategy MUST live on Worker.settings (not Queue).
-        // BullMQ 5.x signature: (attemptsMade, type?, err?, job?) => number | Promise<number>.
-        // The `attemptsMade` here is `job.attemptsMade + 1` per BullMQ source
-        // (the 1-indexed "next attempt about to start"). retryDelayForAttempt
-        // is also 1-indexed — direct passthrough works.
-        settings: {
-          backoffStrategy: (attemptsMade: number) =>
-            retryDelayForAttempt(attemptsMade),
-        },
-      }
-    );
+    worker = new Worker(WEBHOOK_DISPATCH_QUEUE_NAME, dispatch, {
+      connection: valkeyConnection as any,
+      concurrency: parseInt(
+        process.env.WEBHOOK_DISPATCH_CONCURRENCY || "5",
+        10
+      ),
+      // Retry curve — strategy MUST live on Worker.settings (not Queue).
+      // BullMQ 5.x signature: (attemptsMade, type?, err?, job?) => number | Promise<number>.
+      // The `attemptsMade` here is `job.attemptsMade + 1` per BullMQ source
+      // (the 1-indexed "next attempt about to start"). retryDelayForAttempt
+      // is also 1-indexed — direct passthrough works.
+      settings: {
+        backoffStrategy: (attemptsMade: number) =>
+          retryDelayForAttempt(attemptsMade),
+      },
+    });
     worker.on("completed", (job, result) => {
       // handleCompleted writes lastSuccessAt + resets consecutiveFailureCount
       // + flips DEGRADED/DISABLED → HEALTHY via lib/webhooks/health.transition.

@@ -74,6 +74,12 @@ jobs:
           pnpm --filter "@testplanit/wdio-reporter" build
           pnpm --filter "@testplanit/mcp-server" build
 
+      # Trusted publishing (OIDC) requires npm CLI >= 11.5.1. Node 24 ships
+      # npm 11.x, but pin to latest so the OIDC handshake can't silently fall
+      # back to anonymous auth — the cause of E404 on scoped-package publishes.
+      - name: Ensure npm supports trusted publishing
+        run: npm install -g npm@latest
+
       - name: Create Release Pull Request or Publish
         id: changesets
         uses: changesets/action@v1
@@ -85,8 +91,8 @@ jobs:
           createGithubReleases: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # No NPM_TOKEN — publishing authenticates via OIDC trusted publishing
+          # (id-token: write above + the trusted publisher configured on npm).
 
       - name: Summary
         if: steps.changesets.outputs.published == 'true'
