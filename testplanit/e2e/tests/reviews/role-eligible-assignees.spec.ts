@@ -124,12 +124,24 @@ test.describe("Role-eligible assignees", () => {
     });
     createdUserIds.push(newUser.data.id);
 
-    // Assign user to the project so they're a project-eligible member.
+    // Assign user to the project AND create the GLOBAL_ROLE
+    // UserProjectPermission row that getProjectEligibleRoles path 2
+    // looks for. A bare projectAssignment grants access but no role-
+    // eligibility under any of the four union paths.
     await request.post(`${url}/api/model/projectAssignment/create`, {
       data: {
         data: {
           project: { connect: { id: projectId } },
           user: { connect: { id: newUser.data.id } },
+        },
+      },
+    });
+    await request.post(`${url}/api/model/userProjectPermission/create`, {
+      data: {
+        data: {
+          projectId,
+          userId: newUser.data.id,
+          accessType: "GLOBAL_ROLE",
         },
       },
     });
