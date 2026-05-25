@@ -97,6 +97,16 @@ let nonApproverUserId: string;
 const createdCaseIds: number[] = [];
 const createdReviewRequestIds: string[] = [];
 
+// Live-DB gate (matches __tests__/integration/data-model-foundation.test.ts).
+// CI runs the default test suite without a real DATABASE_URL, so this suite
+// must opt out unless both RUN_DB_INTEGRATION=1 and a real DATABASE_URL are
+// set. Without the gate the top-level beforeAll crashes the CI test job at
+// Prisma.appConfig.findUnique trying to reach localhost:5432.
+const RUN_INTEGRATION = process.env.RUN_DB_INTEGRATION === "1";
+const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
+const SKIP_INTEGRATION = !(RUN_INTEGRATION && HAS_DB_URL);
+const describeIntegration = SKIP_INTEGRATION ? describe.skip : describe;
+
 const REVIEW_FEATURE_KEY = "review_feature_enabled";
 let priorReviewFeatureValue: unknown = undefined;
 let priorReviewFeatureExisted = false;
@@ -114,6 +124,7 @@ async function ensureRoleCanApprove(
 }
 
 beforeAll(async () => {
+  if (SKIP_INTEGRATION) return;
   const existing = await prisma.appConfig.findUnique({
     where: { key: REVIEW_FEATURE_KEY },
     select: { value: true },
@@ -256,6 +267,7 @@ beforeAll(async () => {
 }, 60_000);
 
 afterAll(async () => {
+  if (SKIP_INTEGRATION) return;
   try {
     await prisma.comment.updateMany({
       where: { reviewRequestId: { in: createdReviewRequestIds } },
@@ -370,7 +382,7 @@ beforeEach(() => {
   setRequester(requesterUserId);
 });
 
-describe("requestReview canApprove gate", () => {
+describeIntegration("requestReview canApprove gate", () => {
   it("Test 1: role-assignee whose role has canApprove=true on TestCaseRepository is accepted", async () => {
     const caseId = await freshCase();
     const result = await requestReview({

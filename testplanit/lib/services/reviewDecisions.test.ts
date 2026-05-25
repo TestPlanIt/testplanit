@@ -84,7 +84,16 @@ const REVIEW_FEATURE_KEY = "review_feature_enabled";
 let priorReviewFeatureValue: unknown = undefined;
 let priorReviewFeatureExisted = false;
 
+// Live-DB gate (matches __tests__/integration/data-model-foundation.test.ts).
+// Without it, CI's default test job crashes at the top-level beforeAll trying
+// to reach a non-existent localhost:5432.
+const RUN_INTEGRATION = process.env.RUN_DB_INTEGRATION === "1";
+const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
+const SKIP_INTEGRATION = !(RUN_INTEGRATION && HAS_DB_URL);
+const describeIntegration = SKIP_INTEGRATION ? describe.skip : describe;
+
 beforeAll(async () => {
+  if (SKIP_INTEGRATION) return;
   const existing = await prisma.appConfig.findUnique({
     where: { key: REVIEW_FEATURE_KEY },
     select: { value: true },
@@ -287,6 +296,7 @@ beforeAll(async () => {
 }, 30_000);
 
 afterAll(async () => {
+  if (SKIP_INTEGRATION) return;
   // Comments + ReviewRequests both reference each other (Comment.reviewRequestId
   // SetNull on delete; ReviewRequest has back-relation). Soft-delete the
   // Comments first so they detach cleanly when the project cascade fires later.
@@ -445,7 +455,7 @@ async function seedPendingRequest(opts: {
   return created.id;
 }
 
-describe("decideReviewRequest — direct user-assignee path", () => {
+describeIntegration("decideReviewRequest — direct user-assignee path", () => {
   it("direct user-assignee can transition PENDING -> APPROVED with an optional comment", async () => {
     const requestId = await seedPendingRequest({
       assigneeUserId: directAssigneeUserId,
@@ -465,7 +475,7 @@ describe("decideReviewRequest — direct user-assignee path", () => {
   });
 });
 
-describe("decideReviewRequest — role-holder via SPECIFIC_ROLE permission (CR-02)", () => {
+describeIntegration("decideReviewRequest — role-holder via SPECIFIC_ROLE permission (CR-02)", () => {
   it("role-holder can transition PENDING -> CHANGES_REQUESTED with required comment", async () => {
     const requestId = await seedPendingRequest({
       assigneeRoleId: assignedRoleId,
@@ -485,7 +495,7 @@ describe("decideReviewRequest — role-holder via SPECIFIC_ROLE permission (CR-0
   });
 });
 
-describe("decideReviewRequest — ineligible user is rejected before any mutation", () => {
+describeIntegration("decideReviewRequest — ineligible user is rejected before any mutation", () => {
   it("ineligible user throws IneligibleReviewerError and the request stays PENDING", async () => {
     const requestId = await seedPendingRequest({
       assigneeUserId: directAssigneeUserId,
@@ -516,7 +526,7 @@ describe("decideReviewRequest — ineligible user is rejected before any mutatio
   });
 });
 
-describe("decideReviewRequest — all three DecideOutcome values", () => {
+describeIntegration("decideReviewRequest — all three DecideOutcome values", () => {
   it("APPROVED outcome is written atomically with decidedBy + decidedAt", async () => {
     const requestId = await seedPendingRequest({
       assigneeUserId: directAssigneeUserId,
@@ -567,7 +577,7 @@ describe("decideReviewRequest — all three DecideOutcome values", () => {
   });
 });
 
-describe("decideReviewRequest — already-decided + not-found surfaces", () => {
+describeIntegration("decideReviewRequest — already-decided + not-found surfaces", () => {
   it("re-deciding an APPROVED row throws 'Review request already decided'", async () => {
     const requestId = await seedPendingRequest({
       assigneeUserId: directAssigneeUserId,
@@ -600,7 +610,7 @@ describe("decideReviewRequest — already-decided + not-found surfaces", () => {
   });
 });
 
-describe("decideReviewRequest — admin override", () => {
+describeIntegration("decideReviewRequest — admin override", () => {
   it("system ADMIN can decide even when not the direct assignee or role-holder", async () => {
     const requestId = await seedPendingRequest({
       assigneeUserId: directAssigneeUserId,
@@ -618,7 +628,7 @@ describe("decideReviewRequest — admin override", () => {
   });
 });
 
-describe("decideReviewRequest — concurrent decides (CR-01 regression)", () => {
+describeIntegration("decideReviewRequest — concurrent decides (CR-01 regression)", () => {
   it("two concurrent decide calls on the same PENDING row cannot both commit", async () => {
     const requestId = await seedPendingRequest({
       assigneeUserId: directAssigneeUserId,
@@ -676,7 +686,7 @@ describe("decideReviewRequest — concurrent decides (CR-01 regression)", () => 
   });
 });
 
-describe("decideReviewRequest — canApprove eligibility", () => {
+describeIntegration("decideReviewRequest — canApprove eligibility", () => {
   it("caller with canApprove=true on the area is accepted on the direct-assignee branch", async () => {
     // The directAssigneeUserId has effective role otherRoleId which we
     // already set to canApprove=true in beforeAll. Pin that explicit

@@ -85,7 +85,16 @@ const REVIEW_FEATURE_KEY = "review_feature_enabled";
 let priorReviewFeatureValue: unknown = undefined;
 let priorReviewFeatureExisted = false;
 
+// Live-DB gate (matches __tests__/integration/data-model-foundation.test.ts).
+// Without it, CI's default test job crashes at the top-level beforeAll trying
+// to reach a non-existent localhost:5432.
+const RUN_INTEGRATION = process.env.RUN_DB_INTEGRATION === "1";
+const HAS_DB_URL = Boolean(process.env.DATABASE_URL);
+const SKIP_INTEGRATION = !(RUN_INTEGRATION && HAS_DB_URL);
+const describeIntegration = SKIP_INTEGRATION ? describe.skip : describe;
+
 beforeAll(async () => {
+  if (SKIP_INTEGRATION) return;
   const existingFlag = await prisma.appConfig.findUnique({
     where: { key: REVIEW_FEATURE_KEY },
     select: { value: true },
@@ -184,6 +193,7 @@ beforeAll(async () => {
 }, 30_000);
 
 afterAll(async () => {
+  if (SKIP_INTEGRATION) return;
   // Soft-delete every ReviewRequest row this run created. Hard-delete is
   // forbidden by `@@deny('delete', true)` on the ReviewRequest model and by
   // the milestone-wide soft-delete rule — use raw prisma update().
@@ -256,7 +266,7 @@ function sessionFor(userId: string): Session {
   } as unknown as Session;
 }
 
-describe("ReviewRequest XOR assignee @@validate (live-DB)", () => {
+describeIntegration("ReviewRequest XOR assignee @@validate (live-DB)", () => {
   it("XOR assignee rejects create when both assigneeUserId and assigneeRoleId are null", async () => {
     const enhanced = await getEnhancedDb(sessionFor(requesterUserId));
     await expect(
@@ -318,7 +328,7 @@ describe("ReviewRequest XOR assignee @@validate (live-DB)", () => {
   });
 });
 
-describe("ReviewRequest self-approval @@validate (live-DB)", () => {
+describeIntegration("ReviewRequest self-approval @@validate (live-DB)", () => {
   it("self-approval rejects create when assigneeUserId equals requestedByUserId", async () => {
     const enhanced = await getEnhancedDb(sessionFor(requesterUserId));
     await expect(
@@ -338,7 +348,7 @@ describe("ReviewRequest self-approval @@validate (live-DB)", () => {
   });
 });
 
-describe("ReviewRequest append-only @@deny (live-DB)", () => {
+describeIntegration("ReviewRequest append-only @@deny (live-DB)", () => {
   let approvedRequestId: string;
 
   // Local setup: create a PENDING row via raw prisma, then flip it to
@@ -402,7 +412,7 @@ describe("ReviewRequest append-only @@deny (live-DB)", () => {
   });
 });
 
-describe("ReviewRequest partial unique index — one PENDING per entity (live-DB)", () => {
+describeIntegration("ReviewRequest partial unique index — one PENDING per entity (live-DB)", () => {
   it("partial unique index rejects duplicate PENDING create with P2002 / AlreadyPendingError surface", async () => {
     // First PENDING: must succeed. Raw prisma is used for both inserts —
     // the partial unique index is a DB-layer constraint that fires regardless
@@ -490,7 +500,7 @@ describe("ReviewRequest partial unique index — one PENDING per entity (live-DB
   });
 });
 
-describe("Phase 2 feature flag short-circuit on entity @@deny update gate (live-DB)", () => {
+describeIntegration("Phase 2 feature flag short-circuit on entity @@deny update gate (live-DB)", () => {
   // Validates D-20 part (b) and documents the observed schema-rule behaviour
   // under ZenStack 2.22.2.
   //
