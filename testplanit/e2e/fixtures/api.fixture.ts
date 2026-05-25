@@ -3,6 +3,22 @@ import { randomBytes } from "node:crypto";
 import { APIRequestContext } from "@playwright/test";
 
 /**
+ * The CASES-scope workflow names seeded by prisma/seed.ts. State-lookup helpers
+ * filter to this set so a parallel test that creates its own workflow can't
+ * pollute the project-assigned pool and hand back a non-seeded workflow with
+ * an unexpected `order`. Mirrors the order/list in seed.ts; if seed adds or
+ * renames a CASES workflow, update this constant too.
+ */
+const SEEDED_CASES_WORKFLOW_NAMES = [
+  "Draft",
+  "Under Review",
+  "Rejected",
+  "Active",
+  "Done",
+  "Archived",
+] as const;
+
+/**
  * API Helper for creating and cleaning up test data via the TestPlanIt API.
  * Uses ZenStack auto-generated API endpoints.
  */
@@ -69,18 +85,28 @@ export class ApiHelper {
       return this.cachedTemplateIds.get(projectId)!;
     }
 
+    // The seeded "Default Template" (prisma/seed.ts) is the only template with
+    // the Steps caseField + the standard four fields the case page renders.
+    // Parallel tests that create their own templates (e.g.,
+    // result-creation-with-fields, case-creation-with-fields) end up assigned
+    // to other projects too via shared isDefault races; without an explicit
+    // filter, this lookup is non-deterministic and parameter tests intermittently
+    // load a fields-less template that has no Configure Parameters button.
+    // Order by id ASC as a secondary so the seeded row (always lowest id since
+    // setup-db TRUNCATEs + seed runs first) wins on a tie.
     const response = await this.request.get(
-      `${this.baseURL}/api/model/templates/findMany`,
+      `${this.baseURL}/api/model/templates/findFirst`,
       {
         params: {
           q: JSON.stringify({
             where: {
               isDeleted: false,
+              isDefault: true,
               projects: {
                 some: { projectId },
               },
             },
-            take: 1,
+            orderBy: { id: "asc" },
           }),
         },
       }
@@ -91,11 +117,11 @@ export class ApiHelper {
     }
 
     const result = await response.json();
-    if (result.data.length === 0) {
-      throw new Error("No templates found for project. Run seed first.");
+    if (!result.data) {
+      throw new Error("No default template found for project. Run seed first.");
     }
 
-    const templateId = result.data[0].id;
+    const templateId = result.data.id;
     this.cachedTemplateIds.set(projectId, templateId);
     return templateId;
   }
@@ -110,18 +136,23 @@ export class ApiHelper {
       return this.cachedStateIds.get(projectId)!;
     }
 
+    // Restrict to the seeded CASES workflows (see SEEDED_CASES_WORKFLOW_NAMES
+    // below) so a parallel test that creates its own workflow can't slip in
+    // ahead of "Draft" and hand back a state with a non-matching `order`.
     const response = await this.request.get(
-      `${this.baseURL}/api/model/workflows/findMany`,
+      `${this.baseURL}/api/model/workflows/findFirst`,
       {
         params: {
           q: JSON.stringify({
             where: {
               isDeleted: false,
+              scope: "CASES",
+              name: { in: SEEDED_CASES_WORKFLOW_NAMES },
               projects: {
                 some: { projectId },
               },
             },
-            take: 1,
+            orderBy: { order: "asc" },
           }),
         },
       }
@@ -132,11 +163,11 @@ export class ApiHelper {
     }
 
     const result = await response.json();
-    if (result.data.length === 0) {
+    if (!result.data) {
       throw new Error("No workflows found for project. Run seed first.");
     }
 
-    const stateId = result.data[0].id;
+    const stateId = result.data.id;
     this.cachedStateIds.set(projectId, stateId);
     return stateId;
   }
@@ -152,10 +183,13 @@ export class ApiHelper {
           q: JSON.stringify({
             where: {
               isDeleted: false,
+              scope: "CASES",
+              name: { in: SEEDED_CASES_WORKFLOW_NAMES },
               projects: {
                 some: { projectId },
               },
             },
+            orderBy: { order: "asc" },
             take: count,
           }),
         },
@@ -990,13 +1024,17 @@ export class ApiHelper {
     // Get current user ID to set as creator
     const userId = await this.getCurrentUserId();
 
-    // Get default template (required for test cases)
+    // Get the seeded Default Template (required for test cases). Tests that
+    // create their own templates with isDefault: true would otherwise race this
+    // lookup; ordering by id ASC picks the seeded row, since setup-db TRUNCATEs
+    // and seed runs first — the seeded row always has the lowest id.
     const templateResponse = await this.request.get(
       `${this.baseURL}/api/model/templates/findFirst`,
       {
         params: {
           q: JSON.stringify({
             where: { isDefault: true, isDeleted: false },
+            orderBy: { id: "asc" },
           }),
         },
       }

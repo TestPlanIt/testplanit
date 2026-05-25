@@ -92,6 +92,21 @@ export async function setSystemReviewFeatureEnabled(
   return { created, previous };
 }
 
+/**
+ * Seeded workflow names per scope (mirrors prisma/seed.ts). Filtering the
+ * picker to these names ensures `ids[0]` / `ids[1]` always reference the
+ * known-good seeded states with stable `order` relationships — without it,
+ * a parallel test that creates its own workflow (or mutates an existing
+ * one's order) pollutes the project-assignment pool and breaks the
+ * "currentStateOrder < gatedOrder" invariant the case-page review
+ * predicate depends on.
+ */
+const SEEDED_WORKFLOW_NAMES: Record<"CASES" | "RUNS" | "SESSIONS", string[]> = {
+  CASES: ["Draft", "Under Review", "Rejected", "Active", "Done", "Archived"],
+  RUNS: ["New", "In Progress", "Under Review", "Done", "Rejected"],
+  SESSIONS: ["New", "In Progress", "Under Review", "Done", "Rejected"],
+};
+
 export async function getProjectWorkflowIds(
   request: APIRequestContext,
   baseURL: string,
@@ -106,6 +121,7 @@ export async function getProjectWorkflowIds(
           isDeleted: false,
           isEnabled: true,
           scope,
+          name: { in: SEEDED_WORKFLOW_NAMES[scope] },
           projects: { some: { projectId } },
         },
         orderBy: { order: "asc" },
