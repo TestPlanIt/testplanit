@@ -60,7 +60,21 @@ When the system-level kill switch is off, the per-project toggle has no effect. 
 
 If a project is opted in while the system feature is off, the project's Advanced settings page surfaces a warning under the toggle so admins know the preference is saved but inactive until a system administrator turns the feature on.
 
-### Step 3 — Mark workflow states as gated
+### Step 3 — Grant the Can Approve permission to reviewer roles
+
+Reviewer eligibility is gated by a role-level **Can approve** permission, scoped per entity area (Test Cases, Test Runs, Sessions). Only users whose effective project role holds `Can approve` for the entity being reviewed appear in the assignee dropdown; the same check runs server-side on submit and again at decision time, so the gate cannot be bypassed via direct API.
+
+By default the seeded `admin` role carries Can approve on all three review-relevant areas. Other roles start at off, so most teams will need to grant the permission to whichever role does the actual reviewing (for example, "Tech Lead" or "QA Lead").
+
+1. Open **Administration → Roles**.
+2. Click **Edit** on the role you want to grant approval rights to.
+3. In the permission grid, find the rows for **Test Case Repository**, **Test Runs**, and **Sessions** — each carries an **Approve** column alongside Add/Edit, Delete, and Complete. The column is hidden on other areas (approval is meaningless outside the three review-relevant scopes).
+4. Toggle **Approve** on for whichever areas this role should approve.
+5. Save.
+
+System administrators (access = ADMIN) bypass the Can Approve check at decision time, so an admin can always decide on a pending review even if their project role doesn't carry the permission. This is intentional — admins can unblock stalled reviews — but they still only appear in the assignee dropdown if their role grants Can approve, so the day-to-day reviewer pool stays predictable.
+
+### Step 4 — Mark workflow states as gated
 
 This is where the actual gates are defined.
 
@@ -86,7 +100,7 @@ When a tester needs to advance a case, run, or session into (or across) a gated 
 2. Click **Request review**.
 3. In the dialog:
     - **Target state** — the workflow state you want the entity to land on. The dropdown shows gated states clearly with the warning glyph.
-    - **Reviewer** — pick a specific user **or** a role (e.g. "QA Lead"). Roles only list members who have access to this project, so you can't accidentally assign a review to someone who couldn't act on it. The role chip on the pending banner exposes a hover tooltip naming every project-eligible holder of that role, so the requester always knows who can act.
+    - **Reviewer** — pick a specific user **or** a role (e.g. "QA Lead"). The dropdown is filtered down to those that hold the **Can approve** permission for the entity area you're requesting on (Test Cases, Test Runs, or Sessions). Users whose effective project role does not grant Can approve, and roles that do not grant the permission for that area, are hidden from the picker entirely — there's no way to assign a review to a user or role that wouldn't be able to act on it. The role chip on the pending banner exposes a hover tooltip naming every project-eligible holder of that role, so the requester always knows who can act. If the person you expect isn't there, ask an administrator to grant their role Can approve for the relevant area on **Administration → Roles**.
     - **Comment** — optional message for the reviewer (rich text; supports `@mentions`). If you leave the comment blank, TestPlanIt fills it in with a sensible default — `Please review the transition from {fromState} → {toState}.` (and, for role-assigned reviews, appends `Requesting approval from the {roleName} group.`) — so the reviewer always sees something useful in the comment thread.
 4. Click **Submit**.
 
@@ -139,6 +153,36 @@ Decisions can include a comment, which appears in the request history and in any
 When a request is assigned to a **role**, any project member who holds that role can decide. The first decision wins — there is no need for every role-holder to act. Other role-holders see the request flip to DECIDED in their inbox the next time they refresh.
 :::
 
+## Review reminders
+
+If a review request sits in `PENDING` for too long, TestPlanIt nudges the reviewer so the request doesn't get lost. A scheduled job runs hourly and scans for `PENDING` requests older than a configurable threshold; for each one it sends the reviewer a **Review still pending** notification — in-app, and via email if their preferences allow it.
+
+The default threshold is **1 day**. Reminders are recurring: once a reminder fires, TestPlanIt stamps the request and waits another full threshold before re-pinging, so reviewers aren't spammed but stale requests do continue to surface.
+
+### Who gets reminded
+
+- The **direct user assignee**, if the request named one specific reviewer.
+- **Every project-eligible role holder**, if the request was role-assigned (same fan-out as the original request notification).
+
+The original **requester is never pinged** — they already know they sent it. Soft-deleted requests are excluded from the scan.
+
+### Configuring reminders
+
+The reminder controls live inside the **Review Workflow** card on **Administration → Workflows**, just below the system feature toggle (visible to system administrators only, and only when the system feature is on):
+
+1. Flip **Send reminder notifications for pending reviews** off to disable reminders entirely. The scheduled job still runs, but it short-circuits without scanning. Existing reminder rows stay in their recipients' inboxes; no new ones fire.
+2. With reminders enabled, set **Remind reviewers after** *N* **day(s)** to the cadence you want. Minimum 1 day. Click **Save** to persist.
+
+The reminder threshold (`review_reminder_threshold_days`) and the on/off state are stored together as a single integer in `AppConfig`: `0` means disabled, any positive integer means "remind after this many days of inactivity, and again every *N* days after that until the request is decided."
+
+:::caution Pairing reminder cadence with the daily-digest email mode
+If users on this instance use the daily-digest email mode and you set the reminder threshold to a value shorter than 24 hours of real time (not currently possible — minimum is 1 day — but worth knowing for future flexibility), the same reminder could land in their digest multiple times. The 1-day minimum on the UI makes this a non-issue in practice: even with `threshold = 1`, the daily digest can include at most one reminder row per pending request.
+:::
+
+### Slack and webhook subscribers (stretch)
+
+Each reminder also emits an outbound webhook event, in three entity-scoped variants — `case.review_reminder`, `test_run.review_reminder`, and `session.review_reminder`. Subscribers configured on a project's **Settings → Webhooks** can route these to Slack (formatted with a "Review reminder" header showing the pending duration alongside the entity / requester / assignee context) or to any generic HMAC endpoint as structured JSON.
+
 ## Bulk operations
 
 ### Bulk-edit test cases
@@ -189,6 +233,7 @@ Reviewers receive an in-app notification (and an email, if email notifications a
 - A request is **assigned** to them directly, or to a role they hold.
 - A request they own (or are watching) is **decided**.
 - A request is **cancelled** by the requester.
+- A request they're assigned to has **been pending past the reminder threshold** (see [Review reminders](#review-reminders) above).
 
 Requesters receive a notification when a reviewer decides on a request they submitted.
 
@@ -200,6 +245,7 @@ Review events can be delivered to external systems (Slack, generic HMAC endpoint
 | --- | --- |
 | `case.review_requested` / `test_run.review_requested` / `session.review_requested` | A reviewer is requested on a Test Case / Test Run / Session |
 | `case.review_completed` / `test_run.review_completed` / `session.review_completed` | The request is approved, sent back for changes, rejected, or cancelled |
+| `case.review_reminder` / `test_run.review_reminder` / `session.review_reminder` | The scheduled reminder fires on a request that's been pending past the configured threshold (see [Review reminders](#review-reminders)) |
 
 To subscribe:
 

@@ -22,57 +22,27 @@ TestPlanIt v0.30.0 ships **[Review & Approval](/docs/user-guide/review-approvals
 
 <!-- truncate -->
 
-## Gate the States That Matter
+## Stop Documenting the Rule — Enforce It
 
-You already have workflow states. Cases move from "Draft" to "Under Review" to "Active" to "Archived." Runs go from "Not Started" to "In Progress" to "Done." Sessions follow a similar shape. Some of those states are checkpoints — the rest are intermediate.
+The checkpoints you already care about — Active, Done, Approved, whatever your team calls them — can now refuse to be reached without sign-off. Mark a workflow state as **Requires review** and TestPlanIt does the rest. Authors see the gate. Reviewers see the gate. Nobody has to remember it's there.
 
-Open **Administration → Workflows**, edit any state, and toggle **Requires review**. That's the entire setup. A small warning icon now appears next to that state so authors and reviewers both see the signal.
+## Every Decision, Attributed
 
-Now anyone who tries to flip a case to "Active," or a run to "Done," gets a different UI: a note telling them what gate they're crossing, a **Request review** button, and a Save button that stays disabled while the gate is unsatisfied.
+Approvals are tied to a specific reviewer, on a specific date, for a specific transition. Assignees can be named individuals or roles — "QA Lead," "Compliance Reviewer" — and a new **Can approve** permission lets administrators decide exactly who's eligible per area: Test Cases, Test Runs, Sessions. Approvals are one-shot and consumed by the transition they were granted for. The record an auditor sees is the record that actually happened.
 
-## One Request, One Decision
+## Each Gate, Its Own Signature
 
-Click **Request review**, pick an assignee, pick the target state, type a short note for the reviewer, submit. The assignee can be a specific user — your team lead — or a **role** like "QA Lead" or "Compliance Reviewer." If you pick a role, anyone holding that role can decide; the first decision wins, and TestPlanIt only shows roles whose holders actually have access to the current project, so requests can't dead-end on an empty assignee list.
+If your workflow has two gated states, a case that crosses both gates needs both signatures — not just the last one. When your compliance posture says "tech lead approves Active, release manager approves Done," that's what shows up on the record. We considered the looser model and rejected it. The auditors who matter would too.
 
-The reviewer sees a count badge on the review inbox icon in the top nav. They open the inbox, see the request alongside the requester's note and the proposed transition, and pick one of:
+## Nobody Has to Chase Anyone
 
-- **Approve** — the request flips to APPROVED. The next time the entity moves to the target state, the approval is consumed.
-- **Request changes** — sends the request back with a comment. The case stays where it was.
-- **Reject** — the transition is blocked. A new request is needed to retry.
+Reviewers know the moment work lands on their plate. Requesters know the moment a decision lands on theirs. Requests that sit too long get nudged automatically — in-app, by email, and over webhooks into Slack — until they're decided. No spreadsheet of pending reviews. No Friday-afternoon "hey, did you ever look at…" DMs. The workflow chases itself.
 
-Approvals are one-shot. Once consumed by an actual transition, they can't be reused. You always know that the workflow state your auditor is looking at corresponds to a specific reviewer's specific decision on a specific date.
+## Safe to Turn On
 
-If a requester closes the loop on their own request before a reviewer gets to it, the request moves to CANCELLED and quietly leaves the reviewer's Pending tab. No false-positive ping, no clutter in the Decided audit trail.
+Gating workflow transitions is a meaningful behavior change, so the feature ships **off by default** at every level. A system admin opts the org in. Each project administrator opts that project in — pilot one team without disturbing the rest. Only the states you explicitly mark Requires review trigger anything. And every switch is non-destructive: turn the feature off mid-flight and in-flight requests wait quietly until you turn it back on.
 
-## Strict Transitive: Each Gate, Its Own Approval
-
-If your workflow has two gated states — say, "Active" and "Done" — a case moving from "Draft" directly to "Done" crosses *both* gates. TestPlanIt requires an approved request for **each** of them. An approval for "Done" doesn't grant transit through "Active."
-
-This sounds strict because it is. Each gate is its own checkpoint with its own reviewer decision. If your compliance posture says "a tech lead approves Active and a release manager approves Done," that's what you get — both signatures on the record, not just the last one. The model is deliberate. We considered "approval for any later state satisfies earlier gates" and chose against it; auditors who matter don't accept the looser version.
-
-## Notifications, In-App and Email
-
-Reviewers get an in-app notification — and an email, if email notifications are enabled in their preferences — the moment a request is assigned to them. Requesters get the same shape when their request is decided: approved, changes requested, or rejected each fan out as their own notification type so the recipient sees the outcome without reading every line.
-
-The persistent surface is the same one: the review inbox icon in the top navigation carries a count badge of everything pending for the reviewer — directly assigned or via a role they hold — refreshed on a short polling cadence. Pending tab while they work through requests; Decided tab for the audit trail.
-
-Requesters also see live status on the entity itself: a pending banner while the request is open, an attribution banner after a decision, with the reviewer's name, the decision, and any comment they left. No separate dashboard to learn — the state lives next to the case, run, or session it gates.
-
-No new notification plumbing for admins to learn. The existing global and per-user notification preferences gate review notifications the same way they gate every other notification in the product.
-
-## Two Levers, Per Project and System-Wide — Off By Default
-
-Gating workflow transitions is a meaningful behavior change for every existing project, so we ship the feature **off by default**. Admins enable it explicitly — nothing changes for your existing test cases, runs, or sessions until you choose to turn it on.
-
-System administrators flip the global switch on **Administration → Workflows**. That makes the feature available org-wide; nothing is gated yet because…
-
-…each project carries its own **Review Workflow** toggle in **Project Settings → Advanced**, also off by default. Project administrators opt in per project. A team can pilot the feature on one project while the rest of the org keeps moving without gates. System administrators rolling the feature out at scale can flip every project's toggle from one searchable, sortable list on the same **Administration → Workflows** card — no need to walk through dozens of project Settings pages.
-
-Marking workflow states as **Requires review** is the third lever — even with both switches on, only states you've explicitly gated trigger the request flow.
-
-Flipping either lever off mid-flight is non-destructive: in-flight requests are preserved silently and reappear in their reviewers' inboxes the moment the lever flips back on.
-
-Full reference at [Review & Approval](/docs/user-guide/review-approvals).
+Full reference in the [Review & Approval guide](/docs/user-guide/review-approvals).
 
 ## Upgrade to v0.30.0
 
