@@ -1,5 +1,11 @@
 # @testplanit/mcp-server
 
+## 0.1.2
+
+### Patch Changes
+
+- [#345](https://github.com/TestPlanIt/testplanit/pull/345) [`0d98a50`](https://github.com/TestPlanIt/testplanit/commit/0d98a50fa5b61a6ebbe071713ffaed3584b470ee) Thanks [@therealbrad](https://github.com/therealbrad)! - Rewrite the README as concise, plain-English usage documentation: quick start, configuration, client setup, and a compact tool reference. Removes internal planning jargon and the 1000+ line per-tool schema dump (the MCP client discovers parameters at runtime).
+
 ## 0.1.1
 
 ### Patch Changes
