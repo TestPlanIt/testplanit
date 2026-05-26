@@ -66,3 +66,19 @@ Deleting a status marks it as inactive and removes its assignments.
 2. Click the **Delete** icon in the **Actions** column. (Note: The "Untested" status cannot be deleted).
 3. A confirmation dialog will appear, warning that this action cannot be undone.
 4. Click **Delete** to confirm.
+
+## Result Editing Policy
+
+The **Result editing policy** card on the Statuses page controls how long after a result is recorded it can still be edited **in place**, across all projects. Recorded results are never overwritten silently — once the editing window closes, a correction is captured as a new attempt, preserving the full result history.
+
+Choose one of three modes:
+
+- **No restriction (projects decide)**: There is no system-wide limit. Each project decides its own behavior in its [Advanced settings](./projects.md#advanced-settings). This is the default.
+- **Disable editing everywhere**: In-place editing is turned off for every project, and projects **cannot** re-enable it. Corrections always require a new attempt.
+- **Allow editing up to a maximum window**: Set a **Maximum window (minutes)**. Projects may edit results up to this limit, and may **tighten** it (a shorter window, or disabling editing entirely) in their Advanced settings, but never **loosen** it beyond the system maximum.
+
+After choosing a mode (and a window, where applicable), click **Save policy**.
+
+:::info System administrators
+System administrators can always edit a recorded result, regardless of the policy. The editing window applies to project administrators and other users. All edits are recorded in the [Audit Log](./audit-logs.md) with the before and after values.
+:::

@@ -52,3 +52,11 @@ This view typically includes:
 7. **Set Overall Result**: If not automatically set by step failures, use the overall result buttons at the top.
 8. **Add Overall Details (Optional)**: Add overall comments or attachments.
 9. **Navigate/Close**: Use the Previous/Next buttons or Close button to move to another case or return to the run overview.
+
+## Result Validation and Editing
+
+A project can apply rules that govern how results are recorded and corrected. These are configured by administrators and surface during execution:
+
+- **Required result fields**: If the case's template includes a [required Result Field](../templates-fields.md#required-result-fields), the result can't be saved without it. The quick **Pass & Next** button (and per-iteration quick-status buttons) open the full **Add Result** dialog, pre-set to the chosen status, so you can fill in the required field before saving.
+- **Result edit window**: After a result is recorded, it can be edited in place only for as long as the project's [Result Edit Window](../projects.md#advanced-settings) allows. Once that window closes, recording a correction creates a new attempt instead of overwriting the existing result, so the full history is preserved. System administrators can always edit a result.
+- **Flip justification**: If the project [requires justification on a result flip](../projects.md#advanced-settings), changing a completed outcome to a different completed outcome (for example Passed to Failed) prompts for **Result Details** explaining the change before the result is saved.

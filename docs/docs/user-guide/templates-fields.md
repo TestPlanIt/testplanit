@@ -116,3 +116,9 @@ The Case Fields table lists all defined fields with columns for:
 ## Result Fields
 
 Result Fields define the custom data points you want to capture when recording the outcome of a Test Case run. They use the same available Field Types and configuration options as Case Fields except Steps are only available as a Case Field. The management process (Viewing, Adding, Editing, Deleting) is identical, using the "Add Result Field", "Edit", and "Delete" buttons within the Result Fields table.
+
+### Required Result Fields
+
+When a Result Field is marked **Required**, a value must be supplied before a result can be recorded for any case whose template includes that field. This is enforced when the result is saved — through the application, the API, or connected agents — so a result cannot be recorded without it.
+
+Because the **Pass & Next** shortcut and per-iteration quick-status buttons don't capture custom fields on their own, clicking one for a case that has a required Result Field opens the full **Add Result** dialog (pre-set to the chosen status) so the required field can be filled in before the result is saved. See [Test Case Execution](./projects/test-case-execution.md) for details.

@@ -295,3 +295,33 @@ View and manage all Share Links created for reports and other content within the
 - Document password distribution for protected shares
 
 [Learn more about Share Links →](./share-links.md)
+
+## Advanced Settings
+
+A project's **Advanced** settings tab governs how reviews and results are handled within that project. To open it, navigate to your project, click **Settings** in the project menu, and choose **Advanced** in the settings navigation.
+
+### Enable Review Workflow
+
+When enabled, transitions into states that require review are gated by an approved review request: testers see a **Request Review** button, and reviewers receive notifications. This is on by default for each project.
+
+The review workflow must also be turned on system-wide. If a system administrator has disabled it under **Administration → Workflows**, the project's preference is still saved, but nothing is gated until the feature is re-enabled — a warning is shown in that case.
+
+[Learn more about Review & Approvals →](./review-approvals.md)
+
+### Result Edit Window
+
+Controls how long after a result is recorded it can still be edited in place within this project. After the window closes, corrections require a new attempt rather than overwriting the existing result.
+
+- **Inherit system default**: Follow the system-wide [Result editing policy](./statuses.md#result-editing-policy). This is the default.
+- **Disable editing for this project**: Turn off in-place editing here, even if the system policy would allow it.
+- **Custom window**: Set how many minutes a result stays editable.
+
+When the system administrator has set a maximum window, the project can only **tighten** it — a shorter window or disabled editing. The current ceiling is shown as a **System maximum** hint, and a custom value cannot exceed it. If editing has been disabled system-wide, this setting is locked and the project cannot re-enable it.
+
+System administrators can always edit a result regardless of this setting, and every edit is recorded in the [Audit Log](./audit-logs.md).
+
+### Require Justification on Result Flip
+
+When enabled, recording a result that **flips** a completed outcome — for example changing a case from Passed to Failed — requires **Result Details** explaining the change. This is mandatory only when both the previous and new statuses are completed outcomes and their pass/fail judgment differs; recording a first result, or moving to or from a non-completed status (such as Untested or In Progress), is never blocked.
+
+This setting is off by default and applies to results recorded through the application, the API, and connected agents. Automated result imports (for example CLI or CI result uploads) are not affected.
