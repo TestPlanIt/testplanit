@@ -35,7 +35,6 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import {
   useCreateAttachments,
-  useCreateResultFieldValues,
   useCreateTestRunStepResults,
   useFindFirstProjects,
   useFindFirstRepositoryCases,
@@ -521,7 +520,6 @@ export function AddResultModal({
 
   const { mutateAsync: createAttachments } = useCreateAttachments();
   const { mutateAsync: updateTestRunCase } = useUpdateTestRunCases();
-  const { mutateAsync: createResultFieldValue } = useCreateResultFieldValues();
   const { mutateAsync: createTestRunStepResult } =
     useCreateTestRunStepResults();
 
@@ -735,6 +733,23 @@ export function AddResultModal({
 
       // Issues are already created by DeferredIssueManager, just use the IDs directly
       const issueIdsToConnect: number[] = selectedMainIssues;
+
+      // Build the custom result field values once. submit-result persists them
+      // atomically with the result and enforces required fields server-side, so
+      // they no longer need a separate write step.
+      const resultFieldValues = templateFields
+        .map((field) => {
+          const fieldData = values[field.resultField.id.toString()];
+          if (fieldData === undefined || fieldData === null) return null;
+          return {
+            fieldId: Number(field.resultField.id),
+            value:
+              typeof fieldData === "object"
+                ? JSON.stringify(fieldData)
+                : String(fieldData as string | number | boolean),
+          };
+        })
+        .filter((fv): fv is { fieldId: number; value: string } => fv !== null);
       // console.log("Selected main issue IDs to connect:", selectedMainIssues);
 
       // console.log("Issue IDs to connect:", issueIdsToConnect);
@@ -756,31 +771,8 @@ export function AddResultModal({
             testRunCaseVersion: caseVersion,
             issueIds: issueIdsToConnect,
             inProgressStateId: inProgressWorkflow?.id ?? null,
+            fieldValues: resultFieldValues,
           });
-
-          // Save template field values if any exist
-          if (result && templateFields.length > 0) {
-            const fieldValuesPromises = templateFields.map((field) => {
-              const fieldId = field.resultField.id.toString();
-              const fieldData = values[fieldId];
-
-              if (fieldData !== undefined && fieldData !== null) {
-                return createResultFieldValue({
-                  data: {
-                    fieldId: parseInt(fieldId),
-                    value:
-                      typeof fieldData === "object"
-                        ? JSON.stringify(fieldData)
-                        : String(fieldData as string | number | boolean),
-                    testRunResultsId: result.id,
-                  },
-                });
-              }
-              return Promise.resolve();
-            });
-
-            await Promise.all(fieldValuesPromises);
-          }
 
           // Save step results if any exist
           if (result && steps.length > 0) {
@@ -1010,31 +1002,8 @@ export function AddResultModal({
           issueIds: issueIdsToConnect,
           inProgressStateId: inProgressWorkflow?.id ?? null,
           iterationId,
+          fieldValues: resultFieldValues,
         });
-
-        // Save template field values if any exist
-        if (result && templateFields.length > 0) {
-          const fieldValuesPromises = templateFields.map((field) => {
-            const fieldId = field.resultField.id.toString();
-            const fieldData = values[fieldId];
-
-            if (fieldData !== undefined && fieldData !== null) {
-              return createResultFieldValue({
-                data: {
-                  fieldId: parseInt(fieldId),
-                  value:
-                    typeof fieldData === "object"
-                      ? JSON.stringify(fieldData)
-                      : String(fieldData as string | number | boolean),
-                  testRunResultsId: result.id,
-                },
-              });
-            }
-            return Promise.resolve();
-          });
-
-          await Promise.all(fieldValuesPromises);
-        }
 
         // Save step results if any exist
         if (result && steps.length > 0) {

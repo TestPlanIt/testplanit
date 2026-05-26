@@ -28,6 +28,9 @@ vi.mock("~/lib/prisma", () => ({
     status: {
       findMany: vi.fn(),
     },
+    templateResultAssignment: {
+      findMany: vi.fn(),
+    },
     $transaction: vi.fn(),
   },
 }));
@@ -70,7 +73,7 @@ describe("Submit Result API Route", () => {
     id: 10,
     assignedToId: null,
     repositoryCaseId: 55,
-    repositoryCase: { automated: false },
+    repositoryCase: { automated: false, templateId: 7 },
     testRun: {
       id: 1,
       createdById: "run-owner",
@@ -99,6 +102,9 @@ describe("Submit Result API Route", () => {
     testRunResults: {
       create: ReturnType<typeof vi.fn>;
       findFirst: ReturnType<typeof vi.fn>;
+    };
+    resultFieldValues: {
+      createMany: ReturnType<typeof vi.fn>;
     };
     testRunCases: {
       update: ReturnType<typeof vi.fn>;
@@ -136,11 +142,17 @@ describe("Submit Result API Route", () => {
     // so every pre-existing test path is unaffected.
     (prisma.testRunResults.findFirst as any).mockResolvedValue(null);
     (prisma.status.findMany as any).mockResolvedValue([]);
+    // Required-result-fields default: no required fields → check is a no-op,
+    // so every pre-existing test path is unaffected.
+    (prisma.templateResultAssignment.findMany as any).mockResolvedValue([]);
 
     txMocks = {
       testRunResults: {
         create: vi.fn().mockResolvedValue({ id: 999 }),
         findFirst: vi.fn().mockResolvedValue(null),
+      },
+      resultFieldValues: {
+        createMany: vi.fn().mockResolvedValue({ count: 0 }),
       },
       testRunCases: {
         update: vi.fn().mockResolvedValue({ id: 10 }),
@@ -614,6 +626,73 @@ describe("Submit Result API Route", () => {
         })
       );
       expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("mandatory result fields", () => {
+    const requireField = (fieldId: number) =>
+      (prisma.templateResultAssignment.findMany as any).mockResolvedValue([
+        { resultFieldId: fieldId },
+      ]);
+
+    it("rejects a submission missing a required result field", async () => {
+      requireField(100);
+
+      const response = await POST(createRequest(validBody));
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.code).toBe("REQUIRED_FIELDS_MISSING");
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it("rejects when a required field value is empty", async () => {
+      requireField(100);
+
+      const response = await POST(
+        createRequest({
+          ...validBody,
+          fieldValues: [{ fieldId: 100, value: "" }],
+        })
+      );
+
+      expect(response.status).toBe(400);
+      expect((await response.json()).code).toBe("REQUIRED_FIELDS_MISSING");
+    });
+
+    it("accepts when the required field is provided and persists the values", async () => {
+      requireField(100);
+
+      const response = await POST(
+        createRequest({
+          ...validBody,
+          fieldValues: [{ fieldId: 100, value: "High" }],
+        })
+      );
+
+      expect(response.status).toBe(200);
+      expect(txMocks.resultFieldValues.createMany).toHaveBeenCalledWith({
+        data: [{ fieldId: 100, value: "High", testRunResultsId: 999 }],
+      });
+    });
+
+    it("does not enforce when the template has no required fields", async () => {
+      const response = await POST(
+        createRequest({
+          ...validBody,
+          fieldValues: [{ fieldId: 100, value: "x" }],
+        })
+      );
+
+      expect(response.status).toBe(200);
+      expect(txMocks.resultFieldValues.createMany).toHaveBeenCalled();
+    });
+
+    it("writes no field values when none are submitted", async () => {
+      const response = await POST(createRequest(validBody));
+
+      expect(response.status).toBe(200);
+      expect(txMocks.resultFieldValues.createMany).not.toHaveBeenCalled();
     });
   });
 });

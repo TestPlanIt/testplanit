@@ -39,6 +39,17 @@ const submitResultSchema = z.object({
   // iteration of a parameterized run-case. Activates the worst-of rollup
   // path; absence preserves the byte-identical legacy behavior (PARAM-07).
   iterationId: z.number().int().positive().optional(),
+  // Custom result field values, persisted atomically with the result. `value`
+  // is the client-encoded field value (a stringified doc/JSON for rich types,
+  // a primitive string otherwise) and is stored as-is.
+  fieldValues: z
+    .array(
+      z.object({
+        fieldId: z.number().int().positive(),
+        value: z.unknown(),
+      })
+    )
+    .optional(),
 });
 
 /**
@@ -327,7 +338,7 @@ export async function POST(req: NextRequest) {
         assignedToId: true,
         repositoryCaseId: true,
         repositoryCase: {
-          select: { automated: true },
+          select: { automated: true, templateId: true },
         },
         testRun: {
           select: {
@@ -489,6 +500,39 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Mandatory result fields. When the run-case's template marks any result
+    // field required, the submission must carry a non-empty value for each.
+    // Enforced server-side so the UI, CLI, and MCP all honor it (the client
+    // checks are advisory). Read-only and pre-transaction so a rejection never
+    // creates a result row; skipped entirely when no required fields exist.
+    const requiredFieldAssignments =
+      await prisma.templateResultAssignment.findMany({
+        where: {
+          templateId: runCase.repositoryCase.templateId,
+          resultField: { isRequired: true, isEnabled: true, isDeleted: false },
+        },
+        select: { resultFieldId: true },
+      });
+    if (requiredFieldAssignments.length > 0) {
+      const submittedValues = new Map(
+        (input.fieldValues ?? []).map((fv) => [fv.fieldId, fv.value])
+      );
+      const missingRequiredField = requiredFieldAssignments.some(
+        ({ resultFieldId }) =>
+          !submittedValues.has(resultFieldId) ||
+          isTiptapEmpty(submittedValues.get(resultFieldId))
+      );
+      if (missingRequiredField) {
+        return NextResponse.json(
+          {
+            error: "A required result field is missing a value",
+            code: "REQUIRED_FIELDS_MISSING",
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     const notesInput:
       | Prisma.InputJsonValue
       | Prisma.NullableJsonNullValueInput
@@ -552,6 +596,18 @@ export async function POST(req: NextRequest) {
               : undefined,
         },
       });
+
+      // Persist custom result field values atomically with the result. Values
+      // arrive already client-encoded and are stored as-is in the Json column.
+      if (input.fieldValues && input.fieldValues.length > 0) {
+        await tx.resultFieldValues.createMany({
+          data: input.fieldValues.map((fv) => ({
+            fieldId: fv.fieldId,
+            value: (fv.value ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+            testRunResultsId: createdResult.id,
+          })),
+        });
+      }
 
       if (input.iterationId) {
         // ─── Iteration branch (Phase 3 Wave 2 Task 6) ─────────────────

@@ -15,6 +15,13 @@ export interface SubmitTestRunResultInput {
    * counters, and emits the iteration-scoped audit event.
    */
   iterationId?: number;
+  /**
+   * Custom result field values to persist atomically with the result. Each
+   * `value` is the client-encoded field value (stringified for rich/object
+   * types, a primitive string otherwise). The server enforces any required
+   * fields on the case's template and rejects with REQUIRED_FIELDS_MISSING.
+   */
+  fieldValues?: Array<{ fieldId: number; value: unknown }>;
 }
 
 export interface SubmitTestRunResultResponse {
