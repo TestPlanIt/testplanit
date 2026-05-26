@@ -1833,6 +1833,13 @@
           "saveError": "更新審核工作流程設定失敗",
           "systemDisabledTitle": "全系統審核工作流程已關閉。",
           "systemDisabledDescription": "您的專案偏好設定已儲存，但只有在系統管理員在「管理」→「工作流程」下啟用功能後，才會啟用任何功能。"
+        },
+        "overrideJustification": {
+          "label": "要求對結果覆蓋進行解釋",
+          "description": "啟用此功能後，將已完成的結果變更為其他結果需要新增註解來解釋變更原因。",
+          "enabledToast": "本項目需提供覆蓋理由。",
+          "disabledToast": "本項目不再需要提供覆蓋理由。",
+          "saveError": "更新覆蓋理由設定失敗"
         }
       }
     },

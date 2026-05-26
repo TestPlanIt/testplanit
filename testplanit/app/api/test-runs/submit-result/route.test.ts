@@ -78,6 +78,7 @@ describe("Submit Result API Route", () => {
       project: {
         createdBy: "project-owner",
         defaultAccessType: "DEFAULT",
+        requireOverrideJustification: true,
         defaultRole: null,
         assignedUsers: [],
         userPermissions: [
@@ -467,6 +468,35 @@ describe("Submit Result API Route", () => {
         },
       ],
     };
+
+    it("does not enforce justification when the project setting is disabled", async () => {
+      (prisma.testRunCases.findFirst as any).mockResolvedValue({
+        ...baseRunCase,
+        testRun: {
+          ...baseRunCase.testRun,
+          project: {
+            ...baseRunCase.testRun.project,
+            requireOverrideJustification: false,
+          },
+        },
+      });
+      // A different-outcome override with empty notes would normally be
+      // rejected, but the setting is off so it is accepted.
+      (prisma.testRunResults.findFirst as any).mockResolvedValue({
+        statusId: 7,
+      });
+      (prisma.status.findMany as any).mockResolvedValue([
+        passedStatus,
+        failedStatus,
+      ]);
+
+      const response = await POST(createRequest(validBody));
+
+      expect(response.status).toBe(200);
+      // The prior-attempt lookup is skipped entirely when the setting is off.
+      expect(prisma.testRunResults.findFirst).not.toHaveBeenCalled();
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    });
 
     it("accepts a first-ever submission with empty notes", async () => {
       // No prior attempt (default mock) → the override check is a no-op.

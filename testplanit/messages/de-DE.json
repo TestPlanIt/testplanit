@@ -1833,6 +1833,13 @@
           "saveError": "Fehler beim Aktualisieren der Einstellungen für den Überprüfungsworkflow",
           "systemDisabledTitle": "Der Überprüfungsworkflow ist systemweit deaktiviert.",
           "systemDisabledDescription": "Die Einstellungen Ihres Projekts werden gespeichert, aber es wird nichts gesperrt, bis ein Systemadministrator die Funktion unter Administration → Workflows aktiviert."
+        },
+        "overrideJustification": {
+          "label": "Begründung für Ergebnisüberschreibung erforderlich",
+          "description": "Wenn diese Option aktiviert ist, muss für die Änderung eines abgeschlossenen Ergebnisses in ein anderes Ergebnis ein Hinweis angegeben werden, der die Überschreibung erläutert.",
+          "enabledToast": "Für dieses Projekt ist eine Begründung für die Überschreibung erforderlich.",
+          "disabledToast": "Eine Begründung für die Überschreibung ist für dieses Projekt nicht mehr erforderlich.",
+          "saveError": "Fehler beim Aktualisieren der Überschreibungsbegründungseinstellung"
         }
       }
     },

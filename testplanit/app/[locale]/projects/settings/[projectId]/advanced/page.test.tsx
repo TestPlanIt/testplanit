@@ -47,7 +47,11 @@ vi.mock("next-auth/react", async (importOriginal) => {
 
 const mockMutateAsync = vi.fn();
 let mockProjectData:
-  | { id: number; reviewWorkflowEnabled: boolean }
+  | {
+      id: number;
+      reviewWorkflowEnabled: boolean;
+      requireOverrideJustification?: boolean;
+    }
   | undefined = {
   id: 42,
   reviewWorkflowEnabled: true,
@@ -137,6 +141,37 @@ describe("AdvancedPage (per-project advanced settings)", () => {
       expect(mockMutateAsync).toHaveBeenCalledWith({
         where: { id: 42 },
         data: { reviewWorkflowEnabled: false },
+      });
+    });
+  });
+
+  it("(e2) override-justification switch reflects the current value", () => {
+    mockProjectData = {
+      id: 42,
+      reviewWorkflowEnabled: true,
+      requireOverrideJustification: true,
+    };
+    render(<AdvancedPage />);
+    const toggle = screen.getByTestId("override-justification-toggle");
+    expect(toggle).toHaveAttribute("data-state", "checked");
+  });
+
+  it("(e3) toggling override justification calls mutateAsync with the new value", async () => {
+    mockProjectData = {
+      id: 42,
+      reviewWorkflowEnabled: true,
+      requireOverrideJustification: false,
+    };
+    render(<AdvancedPage />);
+    const toggle = screen.getByTestId("override-justification-toggle");
+    expect(toggle).toHaveAttribute("data-state", "unchecked");
+
+    fireEvent.click(toggle);
+
+    await waitFor(() => {
+      expect(mockMutateAsync).toHaveBeenCalledWith({
+        where: { id: 42 },
+        data: { requireOverrideJustification: true },
       });
     });
   });

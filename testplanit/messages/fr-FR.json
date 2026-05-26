@@ -1833,6 +1833,13 @@
           "saveError": "Échec de la mise à jour des paramètres du flux de travail de révision",
           "systemDisabledTitle": "Le flux de travail de révision est interrompu à l'échelle du système.",
           "systemDisabledDescription": "La préférence de votre projet est enregistrée, mais rien ne sera bloqué tant qu'un administrateur système n'aura pas activé la fonctionnalité sous Administration → Flux de travail."
+        },
+        "overrideJustification": {
+          "label": "Exiger une justification en cas de modification du résultat",
+          "description": "Lorsque cette option est activée, la modification d'un résultat final en un résultat différent nécessite une note expliquant la modification.",
+          "enabledToast": "Justification de remplacement requise pour ce projet",
+          "disabledToast": "La justification de remplacement n'est plus requise pour ce projet.",
+          "saveError": "Échec de la mise à jour du paramètre de justification de remplacement"
         }
       }
     },

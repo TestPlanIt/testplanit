@@ -1833,6 +1833,13 @@
           "saveError": "Không thể cập nhật cài đặt quy trình đánh giá.",
           "systemDisabledTitle": "Quy trình xem xét đã bị tắt trên toàn hệ thống.",
           "systemDisabledDescription": "Tùy chọn dự án của bạn đã được lưu, nhưng quá trình sẽ không được kích hoạt cho đến khi quản trị viên hệ thống bật tính năng này trong mục Quản trị → Quy trình làm việc."
+        },
+        "overrideJustification": {
+          "label": "Yêu cầu phải có lý do chính đáng khi ghi đè kết quả.",
+          "description": "Khi được kích hoạt, việc thay đổi kết quả đã hoàn thành thành một kết quả khác yêu cầu một ghi chú giải thích lý do ghi đè.",
+          "enabledToast": "Cần có lý do chính đáng để vượt quyền trong dự án này.",
+          "disabledToast": "Không cần phải đưa ra lý do biện minh cho việc ghi đè đối với dự án này nữa.",
+          "saveError": "Không thể cập nhật cài đặt ghi đè căn chỉnh."
         }
       }
     },

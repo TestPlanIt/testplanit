@@ -37,6 +37,7 @@ export default function AdvancedPage() {
         name: true,
         iconUrl: true,
         reviewWorkflowEnabled: true,
+        requireOverrideJustification: true,
       },
     },
     {
@@ -73,6 +74,8 @@ export default function AdvancedPage() {
   }
 
   const reviewWorkflowEnabled = project?.reviewWorkflowEnabled ?? true;
+  const requireOverrideJustification =
+    project?.requireOverrideJustification ?? false;
 
   const handleToggleReviewWorkflow = async (enabled: boolean) => {
     try {
@@ -87,6 +90,22 @@ export default function AdvancedPage() {
       );
     } catch {
       toast.error(t("reviewWorkflow.saveError"));
+    }
+  };
+
+  const handleToggleOverrideJustification = async (enabled: boolean) => {
+    try {
+      await updateProject.mutateAsync({
+        where: { id: projectId },
+        data: { requireOverrideJustification: enabled },
+      });
+      toast.success(
+        enabled
+          ? t("overrideJustification.enabledToast")
+          : t("overrideJustification.disabledToast")
+      );
+    } catch {
+      toast.error(t("overrideJustification.saveError"));
     }
   };
 
@@ -143,6 +162,28 @@ export default function AdvancedPage() {
                     </AlertDescription>
                   </WarningAlert>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-3">
+                <Label className="flex items-center gap-3">
+                  <Switch
+                    id="override-justification-toggle"
+                    data-testid="override-justification-toggle"
+                    checked={requireOverrideJustification}
+                    onCheckedChange={handleToggleOverrideJustification}
+                    disabled={projectLoading || updateProject.isPending}
+                  />
+                  <span className="text-base font-medium">
+                    {t("overrideJustification.label")}
+                  </span>
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {t("overrideJustification.description")}
+                </p>
               </div>
             </CardContent>
           </Card>

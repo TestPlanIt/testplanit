@@ -1833,6 +1833,13 @@
           "saveError": "No se pudo actualizar la configuración del flujo de trabajo de revisión.",
           "systemDisabledTitle": "El flujo de trabajo de revisión está desactivado en todo el sistema.",
           "systemDisabledDescription": "Se guarda la preferencia de tu proyecto, pero no se bloqueará nada hasta que un administrador del sistema active la función en Administración → Flujos de trabajo."
+        },
+        "overrideJustification": {
+          "label": "Se requiere justificación para la anulación del resultado.",
+          "description": "Cuando está habilitada, cambiar un resultado completado por un resultado diferente requiere una nota que explique la anulación.",
+          "enabledToast": "Se requiere justificación para anular este proyecto.",
+          "disabledToast": "Ya no se requiere justificación para anular este proyecto.",
+          "saveError": "No se pudo actualizar la configuración de justificación de anulación."
         }
       }
     },

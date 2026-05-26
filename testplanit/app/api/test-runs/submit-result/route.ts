@@ -339,6 +339,7 @@ export async function POST(req: NextRequest) {
               select: {
                 createdBy: true,
                 defaultAccessType: true,
+                requireOverrideJustification: true,
                 assignedUsers: {
                   where: {
                     userId: user.id,
@@ -438,47 +439,53 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Mandatory justification on override. When this submission changes the
-    // judgment relative to the latest prior *completed* attempt on the same
-    // run-case (and iteration, when parameterized), a non-empty `notes`
-    // justification is required. First completed results, same-outcome
+    // Mandatory justification on override (opt-in per project). When the
+    // project has `requireOverrideJustification` enabled and this submission
+    // changes the judgment relative to the latest prior *completed* attempt on
+    // the same run-case (and iteration, when parameterized), a non-empty
+    // `notes` justification is required. First completed results, same-outcome
     // re-submissions, and clears back to an untested/blocked status are
-    // unaffected. Read-only and pre-transaction so a rejection never creates
-    // a result that must then be rolled back.
-    const priorAttempt = await prisma.testRunResults.findFirst({
-      where: {
-        testRunCaseId: input.testRunCaseId,
-        iterationId: input.iterationId ?? null,
-        isDeleted: false,
-      },
-      orderBy: { executedAt: "desc" },
-      select: { statusId: true },
-    });
-    if (priorAttempt && isTiptapEmpty(input.notes)) {
-      const statuses = await prisma.status.findMany({
-        where: { id: { in: [priorAttempt.statusId, input.statusId] } },
-        select: {
-          id: true,
-          isSuccess: true,
-          isFailure: true,
-          isCompleted: true,
+    // unaffected. Read-only and pre-transaction so a rejection never creates a
+    // result that must then be rolled back; the prior-attempt query is skipped
+    // entirely when the setting is off.
+    if (runCase.testRun.project.requireOverrideJustification) {
+      const priorAttempt = await prisma.testRunResults.findFirst({
+        where: {
+          testRunCaseId: input.testRunCaseId,
+          iterationId: input.iterationId ?? null,
+          isDeleted: false,
         },
+        orderBy: { executedAt: "desc" },
+        select: { statusId: true },
       });
-      const priorStatus = statuses.find((s) => s.id === priorAttempt.statusId);
-      const nextStatus = statuses.find((s) => s.id === input.statusId);
-      if (
-        priorStatus &&
-        nextStatus &&
-        isOutcomeOverride(priorStatus, nextStatus)
-      ) {
-        return NextResponse.json(
-          {
-            error:
-              "A justification is required when changing the result outcome",
-            code: "JUSTIFICATION_REQUIRED",
+      if (priorAttempt && isTiptapEmpty(input.notes)) {
+        const statuses = await prisma.status.findMany({
+          where: { id: { in: [priorAttempt.statusId, input.statusId] } },
+          select: {
+            id: true,
+            isSuccess: true,
+            isFailure: true,
+            isCompleted: true,
           },
-          { status: 400 }
+        });
+        const priorStatus = statuses.find(
+          (s) => s.id === priorAttempt.statusId
         );
+        const nextStatus = statuses.find((s) => s.id === input.statusId);
+        if (
+          priorStatus &&
+          nextStatus &&
+          isOutcomeOverride(priorStatus, nextStatus)
+        ) {
+          return NextResponse.json(
+            {
+              error:
+                "A justification is required when changing the result outcome",
+              code: "JUSTIFICATION_REQUIRED",
+            },
+            { status: 400 }
+          );
+        }
       }
     }
 

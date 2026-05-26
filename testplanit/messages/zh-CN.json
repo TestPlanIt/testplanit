@@ -1833,6 +1833,13 @@
           "saveError": "更新审核工作流程设置失败",
           "systemDisabledTitle": "全系统审核工作流程已关闭。",
           "systemDisabledDescription": "您的项目偏好设置已保存，但只有在系统管理员在“管理”→“工作流”下启用该功能后，才会启用任何功能。"
+        },
+        "overrideJustification": {
+          "label": "要求对结果覆盖进行解释",
+          "description": "启用此功能后，将已完成的结果更改为其他结果需要添加注释来解释更改原因。",
+          "enabledToast": "本项目需要提供覆盖理由。",
+          "disabledToast": "本项目不再需要提供覆盖理由。",
+          "saveError": "更新覆盖理由设置失败"
         }
       }
     },

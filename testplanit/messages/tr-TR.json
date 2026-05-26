@@ -1833,6 +1833,13 @@
           "saveError": "İnceleme iş akışı ayarı güncellenemedi.",
           "systemDisabledTitle": "İnceleme iş akışı sistem genelinde devre dışı.",
           "systemDisabledDescription": "Projenizin tercihi kaydedilir, ancak sistem yöneticisi Yönetim → İş Akışları altında bu özelliği etkinleştirene kadar hiçbir şey kilitlenmeyecektir."
+        },
+        "overrideJustification": {
+          "label": "Sonuç geçersiz kılma işleminde gerekçe isteniyor.",
+          "description": "Etkinleştirildiğinde, tamamlanmış bir sonucu farklı bir sonuca değiştirmek, geçersiz kılmayı açıklayan bir not gerektirir.",
+          "enabledToast": "Bu proje için geçersiz kılma gerekçesi gereklidir.",
+          "disabledToast": "Bu proje için geçersiz kılma gerekçesi artık gerekli değil.",
+          "saveError": "Geçersiz kılma gerekçelendirme ayarını güncelleme başarısız oldu."
         }
       }
     },

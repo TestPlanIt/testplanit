@@ -1833,6 +1833,13 @@
           "saveError": "Nie udało się zaktualizować ustawień przepływu pracy przeglądu",
           "systemDisabledTitle": "Przepływ pracy przeglądu jest wyłączony w całym systemie",
           "systemDisabledDescription": "Preferencje Twojego projektu zostaną zapisane, ale nic nie będzie zablokowane, dopóki administrator systemu nie włączy tej funkcji w obszarze Administracja → Przepływy pracy."
+        },
+        "overrideJustification": {
+          "label": "Wymagaj uzasadnienia przy nadpisywaniu wyniku",
+          "description": "Po włączeniu tej opcji zmiana zakończonego wyniku na inny wynik wymaga notatki wyjaśniającej zmianę.",
+          "enabledToast": "W przypadku tego projektu wymagane jest nadpisanie uzasadnienia",
+          "disabledToast": "Uzasadnienie nadpisywania nie jest już wymagane w tym projekcie",
+          "saveError": "Nie udało się zaktualizować ustawienia nadpisywania uzasadnienia"
         }
       }
     },

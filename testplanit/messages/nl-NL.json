@@ -1833,6 +1833,13 @@
           "saveError": "Het bijwerken van de beoordelingsworkflow is mislukt.",
           "systemDisabledTitle": "De beoordelingsworkflow is systeembreed uitgeschakeld.",
           "systemDisabledDescription": "De voorkeur van uw project wordt opgeslagen, maar er worden geen beperkingen opgelegd totdat een systeembeheerder de functie inschakelt onder Beheer → Werkstromen."
+        },
+        "overrideJustification": {
+          "label": "Vereist een rechtvaardiging voor het overschrijven van het resultaat.",
+          "description": "Indien ingeschakeld, vereist het wijzigen van een voltooid resultaat naar een andere uitkomst een toelichting op de wijziging.",
+          "enabledToast": "Voor dit project is een rechtvaardiging voor het overrulen van de regels vereist.",
+          "disabledToast": "Voor dit project is geen rechtvaardiging voor het overschrijven van regels meer vereist.",
+          "saveError": "Het bijwerken van de instelling voor het overschrijven van de uitlijning is mislukt."
         }
       }
     },

@@ -1833,6 +1833,13 @@
           "saveError": "Impossibile aggiornare le impostazioni del flusso di lavoro di revisione.",
           "systemDisabledTitle": "Il flusso di lavoro di revisione è disattivato a livello di sistema.",
           "systemDisabledDescription": "Le preferenze del tuo progetto sono state salvate, ma nulla verrà bloccato finché un amministratore di sistema non attiverà la funzione in Amministrazione → Flussi di lavoro."
+        },
+        "overrideJustification": {
+          "label": "Richiedere una giustificazione per la sovrascrittura del risultato",
+          "description": "Quando questa opzione è abilitata, la modifica di un risultato completato con un esito diverso richiede una nota che spieghi la modifica.",
+          "enabledToast": "Per questo progetto è richiesta una giustificazione per l'override.",
+          "disabledToast": "Per questo progetto non è più necessaria una giustificazione per l'override.",
+          "saveError": "Impossibile aggiornare l'impostazione di giustificazione di override."
         }
       }
     },

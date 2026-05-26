@@ -1138,6 +1138,10 @@ const metadata: ModelMeta = {
                     name: "reviewWorkflowEnabled",
                     type: "Boolean",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, requireOverrideJustification: {
+                    name: "requireOverrideJustification",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
                 }, duplicateScanResults: {
                     name: "duplicateScanResults",
                     type: "DuplicateScanResult",

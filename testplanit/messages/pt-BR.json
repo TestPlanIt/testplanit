@@ -1833,6 +1833,13 @@
           "saveError": "Falha ao atualizar a configuração do fluxo de trabalho de revisão",
           "systemDisabledTitle": "O fluxo de trabalho de revisão está desativado em todo o sistema.",
           "systemDisabledDescription": "As preferências do seu projeto foram salvas, mas nada será bloqueado até que um administrador do sistema ative o recurso em Administração → Fluxos de trabalho."
+        },
+        "overrideJustification": {
+          "label": "Exigir justificativa para a substituição do resultado",
+          "description": "Quando ativada, a alteração de um resultado concluído para um resultado diferente requer uma nota explicando a substituição.",
+          "enabledToast": "É necessária uma justificativa para a alteração deste projeto.",
+          "disabledToast": "A justificativa para a alteração não é mais necessária para este projeto.",
+          "saveError": "Falha ao atualizar a configuração de justificativa de substituição"
         }
       }
     },

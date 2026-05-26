@@ -1833,6 +1833,13 @@
           "saveError": "Failed to update review workflow setting",
           "systemDisabledTitle": "Review workflow is off system-wide",
           "systemDisabledDescription": "Your project's preference is saved, but nothing will be gated until a system administrator turns the feature on under Administration → Workflows."
+        },
+        "overrideJustification": {
+          "label": "Require justification on result override",
+          "description": "When enabled, changing a completed result to a different outcome requires a note explaining the override.",
+          "enabledToast": "Override justification required for this project",
+          "disabledToast": "Override justification no longer required for this project",
+          "saveError": "Failed to update override justification setting"
         }
       }
     },
