@@ -357,7 +357,9 @@
         "edit_results_duration": "편집 결과 기간",
         "project_docs_default": "프로젝트 문서 기본값",
         "notificationSettings": "알림 전역 설정",
-        "elasticsearch_replicas": "엘라스틱서치 복제본"
+        "elasticsearch_replicas": "엘라스틱서치 복제본",
+        "review_feature_enabled": "검토 및 승인 기능 활성화됨",
+        "review_reminder_threshold_days": "검토자에게 마감일을 다시 알림"
       },
       "options": {
         "label": "상표",
@@ -617,6 +619,10 @@
       "failedToDeleteRepository": "저장소를 삭제하는 데 실패했습니다.",
       "permissionDenied": "이 페이지에 접근할 권한이 없습니다.",
       "resultSubmitPermissionDenied": "이 사례에 대한 결과를 제출할 수 없습니다. 프로젝트 관리자에게 배정해 달라고 요청하세요.",
+      "justificationRequired": "정당성 제시 필요",
+      "justificationRequiredDescription": "완료된 결과를 다른 결과로 변경하려면 변경 사항을 설명하는 결과 세부 정보가 필요합니다.",
+      "requiredFieldMissing": "필수 결과 필드에 값이 누락되었습니다.",
+      "editWindowExpired": "이 결과의 편집 창이 닫혔습니다. 새 시도를 기록하세요.",
       "noModelsFound": "모델을 찾을 수 없습니다.",
       "failedToFetchModels": "모델을 가져오는 데 실패했습니다.",
       "failedToCopyToClipboard": "클립보드에 복사하는 데 실패했습니다.",
@@ -1829,6 +1835,28 @@
           "saveError": "검토 워크플로 설정 업데이트에 실패했습니다.",
           "systemDisabledTitle": "검토 워크플로가 시스템 전체에서 비활성화되었습니다.",
           "systemDisabledDescription": "프로젝트 기본 설정은 저장되지만, 시스템 관리자가 관리 → 워크플로에서 해당 기능을 활성화하기 전까지는 아무것도 제한되지 않습니다."
+        },
+        "flipJustification": {
+          "label": "결과 반전에 대한 정당성을 요구합니다",
+          "description": "이 기능을 활성화하면 완료된 결과가 변경되는 경우(예: 통과에서 실패로) 변경 사항을 설명하는 결과 세부 정보를 기록해야 합니다.",
+          "enabledToast": "이 프로젝트에는 뒤집기 이유 설명이 필요합니다.",
+          "disabledToast": "이 프로젝트에서는 뒤집기 이유 설명이 더 이상 필요하지 않습니다.",
+          "saveError": "플립 정렬 설정 업데이트에 실패했습니다."
+        },
+        "editWindow": {
+          "label": "결과 편집 창",
+          "description": "결과가 기록된 후에도 수정이 가능한 시간은 얼마나 됩니까? 수정 가능 시간이 지나면 수정하려면 다시 시도해야 합니다. 시스템 관리자는 언제든지 수정할 수 있습니다.",
+          "modeInherit": "시스템 기본값을 상속합니다",
+          "modeDisable": "이 프로젝트의 편집 기능을 비활성화합니다.",
+          "modeCustom": "사용자 정의 창",
+          "minutesLabel": "편집 가능 시간(분)",
+          "systemMaxHint": "시스템 최대값: {minutes} 분",
+          "systemLockedTitle": "시스템 전체적으로 편집 기능이 비활성화되었습니다.",
+          "systemLockedDescription": "시스템 관리자가 모든 프로젝트에 대해 결과 편집 기능을 비활성화했으므로 이 프로젝트에서는 해당 기능을 활성화할 수 없습니다.",
+          "invalidMinutes": "0보다 큰 분 단위 숫자를 입력하세요.",
+          "save": "저장 편집 창",
+          "savedToast": "이 프로젝트에 맞게 편집 창이 업데이트되었습니다.",
+          "saveError": "편집 창 설정을 업데이트하는 데 실패했습니다."
         }
       }
     },
@@ -2090,7 +2118,7 @@
       "editDescription": "세션 결과를 변경하고 완료되면 저장을 클릭하십시오.",
       "details": "결과에 대한 자세한 내용을 여기에 입력하세요...",
       "noResults": "아직 검색 결과가 추가되지 않았습니다.",
-      "noNotes": "이 결과에 대한 추가 메모는 없습니다.",
+      "noNotes": "결과 세부 정보가 추가되지 않았습니다.",
       "deleteSuccess": "세션 결과가 성공적으로 삭제되었습니다.",
       "deleteError": "세션 결과 삭제 실패",
       "updateSuccess": "세션 결과가 성공적으로 업데이트되었습니다.",
@@ -4405,6 +4433,18 @@
     },
     "statuses": {
       "description": "테스트 상태 관리",
+      "editPolicy": {
+        "title": "결과 편집 정책",
+        "description": "프로젝트 전체에 걸쳐 결과가 기록된 후 해당 결과를 제자리에서 편집할 수 있는 시간을 제어합니다. 프로젝트는 고급 설정에서 이 시간을 단축할 수 있지만, 단축할 수는 없습니다. 시스템 관리자는 언제든지 이 설정을 편집할 수 있습니다.",
+        "modeNone": "제한 없음 (프로젝트에서 결정)",
+        "modeDisabled": "모든 곳에서 편집 기능을 비활성화합니다.",
+        "modeMax": "최대 창 범위까지 편집을 허용합니다.",
+        "minutesLabel": "최대 대기 시간(분)",
+        "invalidMinutes": "0보다 큰 분 단위 숫자를 입력하세요.",
+        "save": "정책 저장",
+        "savedToast": "결과 편집 정책이 업데이트되었습니다.",
+        "saveError": "결과 편집 정책 업데이트에 실패했습니다."
+      },
       "add": {
         "button": "상태 추가",
         "title": "새 상태 추가",

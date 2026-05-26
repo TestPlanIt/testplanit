@@ -9,6 +9,7 @@ import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
 import { useFindManyStatus, useUpdateStatus } from "~/lib/hooks";
 import { getColumns } from "./columns";
+import { ResultEditingPolicyCard } from "./ResultEditingPolicyCard";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -173,6 +174,7 @@ function Status() {
 
   return (
     <main>
+      <ResultEditingPolicyCard />
       <Card>
         <CardHeader className="w-full">
           <div className="flex items-center justify-between text-primary text-2xl md:text-4xl">

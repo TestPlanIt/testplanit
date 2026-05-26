@@ -27,6 +27,7 @@ import { useTheme } from "next-themes";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { emptyEditorContent } from "~/app/constants";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import {
   useFindManyColor,
   useFindManyMilestones,
@@ -369,9 +370,7 @@ export default function MilestoneFormControls({
         render={({ field }) => (
           <FormItem>
             <FormLabel>{tCommon("fields.description")}</FormLabel>
-            {isEditMode ||
-            (milestone?.note &&
-              milestone?.note !== JSON.stringify(emptyEditorContent)) ? (
+            {isEditMode || !isTiptapEmpty(milestone?.note) ? (
               <FormControl>
                 <TipTapEditor
                   key={`editing-note-${isEditMode}`}

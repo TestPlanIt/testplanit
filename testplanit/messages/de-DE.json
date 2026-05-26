@@ -357,7 +357,9 @@
         "edit_results_duration": "Bearbeitungsdauer der Ergebnisse",
         "project_docs_default": "Standardeinstellungen für Projektdokumente",
         "notificationSettings": "Globale Benachrichtigungseinstellungen",
-        "elasticsearch_replicas": "Elasticsearch-Replikate"
+        "elasticsearch_replicas": "Elasticsearch-Replikate",
+        "review_feature_enabled": "Überprüfung und Genehmigung aktiviert",
+        "review_reminder_threshold_days": "Erinnern Sie die Prüfer an die Schwellenwerte"
       },
       "options": {
         "label": "Etikett",
@@ -617,6 +619,10 @@
       "failedToDeleteRepository": "Fehler beim Löschen des Repositorys",
       "permissionDenied": "Sie haben keine Berechtigung, auf diese Seite zuzugreifen.",
       "resultSubmitPermissionDenied": "Sie können für diesen Fall keine Ergebnisse einreichen. Bitten Sie einen Projektadministrator, Ihnen den Fall zuzuweisen.",
+      "justificationRequired": "Begründung erforderlich",
+      "justificationRequiredDescription": "Um ein abgeschlossenes Ergebnis in ein anderes Ergebnis umzuwandeln, sind Ergebnisdetails erforderlich, die die Änderung erläutern.",
+      "requiredFieldMissing": "Ein erforderliches Ergebnisfeld hat keinen Wert.",
+      "editWindowExpired": "Das Bearbeitungsfenster für dieses Ergebnis wurde geschlossen. Bitte starten Sie stattdessen einen neuen Versuch.",
       "noModelsFound": "Keine Modelle gefunden",
       "failedToFetchModels": "Modelle konnten nicht abgerufen werden",
       "failedToCopyToClipboard": "Fehler beim Kopieren in die Zwischenablage",
@@ -1829,6 +1835,28 @@
           "saveError": "Fehler beim Aktualisieren der Einstellungen für den Überprüfungsworkflow",
           "systemDisabledTitle": "Der Überprüfungsworkflow ist systemweit deaktiviert.",
           "systemDisabledDescription": "Die Einstellungen Ihres Projekts werden gespeichert, aber es wird nichts gesperrt, bis ein Systemadministrator die Funktion unter Administration → Workflows aktiviert."
+        },
+        "flipJustification": {
+          "label": "Begründung für die Ergebnisumkehr erforderlich",
+          "description": "Wenn diese Option aktiviert ist, erfordert das Aufzeichnen eines Ergebnisses, das ein abgeschlossenes Ergebnis umkehrt (z. B. von Bestanden zu Nicht bestanden), Ergebnisdetails, die die Änderung erläutern.",
+          "enabledToast": "Für dieses Projekt ist eine Flip-Begründung erforderlich.",
+          "disabledToast": "Eine Flip-Begründung ist für dieses Projekt nicht mehr erforderlich.",
+          "saveError": "Fehler beim Aktualisieren der Einstellung für die Spiegelungsausrichtung"
+        },
+        "editWindow": {
+          "label": "Ergebnisbearbeitungsfenster",
+          "description": "Wie lange nach der Ergebnisspeicherung kann ein Ergebnis noch direkt bearbeitet werden? Nach Ablauf des Bearbeitungszeitraums ist für Korrekturen ein neuer Versuch erforderlich. Systemadministratoren können jederzeit Änderungen vornehmen.",
+          "modeInherit": "Systemstandard übernehmen",
+          "modeDisable": "Bearbeitung für dieses Projekt deaktivieren",
+          "modeCustom": "Benutzerdefiniertes Fenster",
+          "minutesLabel": "Bearbeitbar für (Minuten)",
+          "systemMaxHint": "Systemmaximum: {minutes} Minuten",
+          "systemLockedTitle": "Die Bearbeitung ist systemweit deaktiviert.",
+          "systemLockedDescription": "Ein Systemadministrator hat die Bearbeitung von Ergebnissen direkt im Projekt für alle Projekte deaktiviert, daher kann diese Funktion in diesem Projekt nicht aktiviert werden.",
+          "invalidMinutes": "Geben Sie eine Anzahl von Minuten größer als null ein.",
+          "save": "Bearbeitungsfenster speichern",
+          "savedToast": "Bearbeitungsfenster für dieses Projekt aktualisiert",
+          "saveError": "Die Aktualisierung der Bearbeitungsfenstereinstellung ist fehlgeschlagen."
         }
       }
     },
@@ -2090,7 +2118,7 @@
       "editDescription": "Nehmen Sie die gewünschten Änderungen am Sitzungsergebnis vor und klicken Sie anschließend auf Speichern.",
       "details": "Geben Sie hier Details zum Ergebnis ein...",
       "noResults": "Es wurden noch keine Ergebnisse hinzugefügt.",
-      "noNotes": "Für dieses Ergebnis wurden keine Anmerkungen hinzugefügt.",
+      "noNotes": "Es wurden keine Ergebnisdetails hinzugefügt.",
       "deleteSuccess": "Sitzungsergebnis erfolgreich gelöscht",
       "deleteError": "Sitzungsergebnis konnte nicht gelöscht werden",
       "updateSuccess": "Sitzungsergebnis erfolgreich aktualisiert",
@@ -4405,6 +4433,18 @@
     },
     "statuses": {
       "description": "Teststatus verwalten",
+      "editPolicy": {
+        "title": "Richtlinie zur Ergebnisbearbeitung",
+        "description": "Legen Sie fest, wie lange nach der Ergebnisspeicherung ein Ergebnis projektübergreifend noch bearbeitet werden kann. Projekte können diese Frist in ihren erweiterten Einstellungen verkürzen, aber nicht verlängern. Systemadministratoren können die Frist jederzeit anpassen.",
+        "modeNone": "Keine Einschränkung (Projekte entscheiden)",
+        "modeDisabled": "Bearbeitung überall deaktivieren",
+        "modeMax": "Bearbeitung bis zu einem maximalen Fenster zulassen",
+        "minutesLabel": "Maximales Zeitfenster (Minuten)",
+        "invalidMinutes": "Geben Sie eine Anzahl von Minuten größer als null ein.",
+        "save": "Speicherrichtlinie",
+        "savedToast": "Die Richtlinie zur Ergebnisbearbeitung wurde aktualisiert.",
+        "saveError": "Die Aktualisierung der Ergebnisbearbeitungsrichtlinie ist fehlgeschlagen."
+      },
       "add": {
         "button": "Status hinzufügen",
         "title": "Neuen Status hinzufügen",

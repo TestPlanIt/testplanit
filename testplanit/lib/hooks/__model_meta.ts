@@ -1138,6 +1138,14 @@ const metadata: ModelMeta = {
                     name: "reviewWorkflowEnabled",
                     type: "Boolean",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, requireResultFlipJustification: {
+                    name: "requireResultFlipJustification",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, editResultsDurationSeconds: {
+                    name: "editResultsDurationSeconds",
+                    type: "Int",
+                    isOptional: true,
                 }, duplicateScanResults: {
                     name: "duplicateScanResults",
                     type: "DuplicateScanResult",

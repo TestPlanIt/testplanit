@@ -15,11 +15,19 @@ import {
 } from "~/lib/auditContextWrappers";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import { prisma } from "~/lib/prisma";
-import { captureAuditEvent, type AuditEvent } from "~/lib/services/auditLog";
+import {
+  calculateDiff,
+  captureAuditEvent,
+  type AuditEvent,
+} from "~/lib/services/auditLog";
 import {
   assertReviewGatePasses,
   resolveCreateStateRemap,
 } from "~/lib/services/reviewGate";
+import {
+  assertResultEditWindowOpen,
+  isEditWindowExpiredError,
+} from "~/lib/services/editWindow";
 import {
   isAlreadyPendingError,
   isReviewGateError,
@@ -173,7 +181,7 @@ const AUDITED_ENTITIES = new Set([
   "allowedEmailDomain",
   "appConfig",
   "userIntegrationAuth",
-  "testRunResult",
+  "testRunResults",
   "comment",
   "attachment",
   "apiToken",
@@ -674,6 +682,48 @@ async function innerHandler(
       }
     }
 
+    // Edit-window guard. Enforce the admin-configured `edit_results_duration`
+    // server-side for in-place result edits (and soft-deletes, which arrive as
+    // an `isDeleted` update). System admins always pass; for everyone else the
+    // edit is rejected once the window has elapsed since the result was
+    // recorded. The client (TestResultHistory) hides the Edit button on the
+    // same rule, but this chokepoint makes it structural so a direct model-
+    // route call cannot bypass it.
+    if (
+      isMutation &&
+      parsedPath &&
+      parsedPath.model === "testRunResults" &&
+      ["update", "delete"].includes(parsedPath.operation)
+    ) {
+      const rawResultId = extractEntityIdFromBody(
+        requestBody,
+        parsedPath.operation
+      );
+      const resultId =
+        typeof rawResultId === "number"
+          ? rawResultId
+          : typeof rawResultId === "string" && rawResultId !== ""
+            ? Number(rawResultId)
+            : NaN;
+      if (Number.isFinite(resultId) && authenticatedUserId) {
+        const actor = await prisma.user.findUnique({
+          where: { id: authenticatedUserId },
+          select: { access: true },
+        });
+        try {
+          await assertResultEditWindowOpen(prisma, resultId, actor?.access);
+        } catch (err) {
+          if (isEditWindowExpiredError(err)) {
+            return NextResponse.json(
+              { error: { code: "EDIT_WINDOW_EXPIRED" } },
+              { status: 403 }
+            );
+          }
+          throw err;
+        }
+      }
+    }
+
     // Plan 02-08 webhook-emit shim — pre-mutation snapshot capture.
     // For UPDATE / UPSERT / DELETE on emission-eligible models we need the
     // pre-mutation row state to compute state-transition diffs and pass
@@ -711,6 +761,32 @@ async function innerHandler(
         }
       } catch (e) {
         console.error("[Webhooks] Failed to capture pre-snapshot:", e);
+      }
+    }
+
+    // Audit before-snapshot. For audited update/delete we capture the full
+    // pre-mutation row so the audit event can record before/after values.
+    // Reuses the webhook snapshot when the model is both webhook-emitting and
+    // audited to avoid a second read; uses the request's own `where` so it
+    // works for any primary key (id or key).
+    let auditPreSnapshot: any = null;
+    if (
+      isMutation &&
+      parsedPath &&
+      AUDITED_ENTITIES.has(parsedPath.model) &&
+      ["update", "delete"].includes(parsedPath.operation) &&
+      requestBody?.where
+    ) {
+      if (webhookPreSnapshot && webhookMutation?.model === parsedPath.model) {
+        auditPreSnapshot = webhookPreSnapshot;
+      } else {
+        try {
+          auditPreSnapshot = await (prisma as any)[parsedPath.model].findUnique(
+            { where: requestBody.where }
+          );
+        } catch (e) {
+          console.error("[AuditLog] Failed to capture pre-snapshot:", e);
+        }
       }
     }
 
@@ -1218,7 +1294,7 @@ async function innerHandler(
               allowedEmailDomain: "AllowedEmailDomain",
               appConfig: "AppConfig",
               userIntegrationAuth: "UserIntegrationAuth",
-              testRunResult: "TestRunResult",
+              testRunResults: "TestRunResult",
               comment: "Comment",
               attachment: "Attachment",
               apiToken: "ApiToken",
@@ -1258,11 +1334,36 @@ async function innerHandler(
               finalAuditAction = "REVIEW_CANCELLED";
             }
 
+            // Before/after capture (best-effort; never breaks the response).
+            // For an update, re-read the row (the RPC response is often a
+            // partial `{ id }`) and diff it against the pre-snapshot. For a
+            // delete, diff the removed row against null. `calculateDiff` masks
+            // sensitive fields and skips timestamp churn.
+            let auditChanges: AuditEvent["changes"];
+            try {
+              if (parsedPath.operation === "update" && auditPreSnapshot) {
+                const afterRow = requestBody?.where
+                  ? await (prisma as any)[parsedPath.model].findUnique({
+                      where: requestBody.where,
+                    })
+                  : null;
+                auditChanges = calculateDiff(auditPreSnapshot, afterRow);
+              } else if (
+                parsedPath.operation === "delete" &&
+                auditPreSnapshot
+              ) {
+                auditChanges = calculateDiff(auditPreSnapshot, null);
+              }
+            } catch (e) {
+              console.error("[AuditLog] Failed to compute before/after:", e);
+            }
+
             const event: AuditEvent = {
               action: finalAuditAction,
               entityType: entityTypeMap[parsedPath.model] || parsedPath.model,
               entityId: String(entityId),
               entityName,
+              ...(auditChanges ? { changes: auditChanges } : {}),
               projectId: typeof projectId === "number" ? projectId : undefined,
               metadata: {
                 operation: parsedPath.operation,

@@ -68,6 +68,7 @@ import {
 } from "react";
 import { ImperativePanelHandle } from "react-resizable-panels";
 import { emptyEditorContent } from "~/app/constants";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { ProjectIcon } from "~/components/ProjectIcon";
 import { usePageFileDrop } from "~/hooks/usePageFileDrop";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
@@ -1760,10 +1761,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
                                     const docsContent = parseTipTapContent(
                                       selectedFolderNode.data.docs
                                     );
-                                    // Check if docsContent is effectively empty by comparing with emptyEditorContent
-                                    const isEmpty =
-                                      JSON.stringify(docsContent) ===
-                                      JSON.stringify(emptyEditorContent);
+                                    const isEmpty = isTiptapEmpty(docsContent);
 
                                     if (!isEmpty) {
                                       return (

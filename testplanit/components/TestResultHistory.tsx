@@ -63,6 +63,7 @@ import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { emptyEditorContent } from "~/app/constants";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { EditResultModal } from "~/app/[locale]/projects/repository/[projectId]/EditResultModal";
 import FieldValueRenderer from "~/app/[locale]/projects/repository/[projectId]/[caseId]/FieldValueRenderer";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
@@ -73,7 +74,9 @@ import {
   useFindManyResultFieldValues,
   useFindManySharedStepItem,
   useFindManyTestRuns,
+  useFindUniqueProjects,
 } from "~/lib/hooks";
+import { resolveEffectiveWindowSeconds } from "~/lib/services/editWindow";
 import { Link } from "~/lib/navigation";
 import { getDateFnsLocale } from "~/utils/locales";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
@@ -523,21 +526,19 @@ const StepResultsDisplay = ({
                       className="prose-sm"
                     />
                   </div>
-                  {stepResult.notes &&
-                    JSON.stringify(stepResult.notes) !==
-                      JSON.stringify(emptyEditorContent) && (
-                      <div className="bg-muted/30 rounded-lg p-2">
-                        <div className="text-xs text-muted-foreground mb-1">
-                          {tCommon("fields.notes")}
-                        </div>
-                        <TipTapEditor
-                          content={stepResult.notes as object}
-                          readOnly={true}
-                          projectId={projectId ? String(projectId) : undefined}
-                          className="prose-sm"
-                        />
+                  {stepResult.notes && !isTiptapEmpty(stepResult.notes) && (
+                    <div className="bg-muted/30 rounded-lg p-2">
+                      <div className="text-xs text-muted-foreground mb-1">
+                        {tCommon("actions.resultDetails")}
                       </div>
-                    )}
+                      <TipTapEditor
+                        content={stepResult.notes as object}
+                        readOnly={true}
+                        projectId={projectId ? String(projectId) : undefined}
+                        className="prose-sm"
+                      />
+                    </div>
+                  )}
                   {stepResult.elapsed && stepResult.elapsed > 0 && (
                     <div className="text-xs text-muted-foreground mt-2">
                       {tCommon("fields.elapsed")}:{" "}
@@ -668,21 +669,19 @@ const RenderSharedGroupInHistoryList: React.FC<{
                 </Badge>
               )}
             </div>
-            {itemResult?.notes &&
-              JSON.stringify(itemResult.notes) !==
-                JSON.stringify(emptyEditorContent) && (
-                <div className="mt-2 p-2 bg-background rounded-md">
-                  <div className="text-xs text-muted-foreground mb-1">
-                    {tCommon("fields.notes")}
-                  </div>
-                  <TipTapEditor
-                    content={itemResult.notes as object}
-                    readOnly={true}
-                    projectId={projectId ? String(projectId) : undefined}
-                    className="prose-sm"
-                  />
+            {itemResult?.notes && !isTiptapEmpty(itemResult.notes) && (
+              <div className="mt-2 p-2 bg-background rounded-md">
+                <div className="text-xs text-muted-foreground mb-1">
+                  {tCommon("actions.resultDetails")}
                 </div>
-              )}
+                <TipTapEditor
+                  content={itemResult.notes as object}
+                  readOnly={true}
+                  projectId={projectId ? String(projectId) : undefined}
+                  className="prose-sm"
+                />
+              </div>
+            )}
             {itemResult?.elapsed && itemResult.elapsed > 0 && (
               <div className="text-xs text-muted-foreground mt-1">
                 {tCommon("fields.elapsed")}:{" "}
@@ -740,6 +739,18 @@ export default function TestResultHistory({
   const editResultsDurationSeconds = appConfigData?.find(
     (config) => config.key === "edit_results_duration"
   )?.value as number | undefined;
+
+  // Per-project edit-window override, resolved against the system ceiling so
+  // the Edit button matches the server guard in submit-result's sibling path.
+  const { data: editWindowProject } = useFindUniqueProjects(
+    {
+      where: { id: Number(projectId) },
+      select: { editResultsDurationSeconds: true },
+    },
+    { enabled: Boolean(projectId) }
+  );
+  const projectEditWindowSeconds =
+    editWindowProject?.editResultsDurationSeconds ?? null;
 
   // Fetch test case data
   const { data: fetchedTestCase, isLoading: isLoadingTestCase } =
@@ -1357,24 +1368,27 @@ export default function TestResultHistory({
               const isAssociatedTestRunCompleted =
                 result.associatedTestRun?.isCompleted ?? false;
 
+              // System admins always edit (matches the server guard); for
+              // everyone else resolve the effective window from the system
+              // ceiling + the project override.
+              const isSystemAdmin = session?.user.access === "ADMIN";
               let isEditingAllowedByTime = true;
               if (
-                editResultsDurationSeconds !== undefined &&
-                editResultsDurationSeconds !== null &&
-                result.sourceType === "manual" // Editing only for manual
+                !isSystemAdmin &&
+                result.sourceType === "manual" && // Editing only for manual
+                !result.isPending
               ) {
-                if (editResultsDurationSeconds === 0) {
+                const effectiveWindowSeconds = resolveEffectiveWindowSeconds(
+                  editResultsDurationSeconds ?? null,
+                  projectEditWindowSeconds
+                );
+                if (effectiveWindowSeconds === 0) {
                   isEditingAllowedByTime = false;
-                } else if (
-                  editResultsDurationSeconds > 0 &&
-                  !result.isPending
-                ) {
-                  const executedAtDate = new Date(result.executedAt);
-                  const now = new Date();
+                } else if (effectiveWindowSeconds !== null) {
                   const timeDifferenceSeconds =
-                    (now.getTime() - executedAtDate.getTime()) / 1000;
+                    (Date.now() - new Date(result.executedAt).getTime()) / 1000;
                   isEditingAllowedByTime =
-                    timeDifferenceSeconds <= editResultsDurationSeconds;
+                    timeDifferenceSeconds <= effectiveWindowSeconds;
                 }
               }
 
@@ -1744,8 +1758,7 @@ export default function TestResultHistory({
                                 )}
                               {result.sourceType === "manual" &&
                                 result.notes &&
-                                JSON.stringify(result.notes) !==
-                                  JSON.stringify(emptyEditorContent) && (
+                                !isTiptapEmpty(result.notes) && (
                                   <div>
                                     <div className="px-4 text-xs text-muted-foreground">
                                       {tCommon("actions.resultDetails")}

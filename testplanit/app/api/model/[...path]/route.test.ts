@@ -126,7 +126,7 @@ const AUDITED_ENTITIES = new Set([
   "allowedEmailDomain",
   "appConfig",
   "userIntegrationAuth",
-  "testRunResult",
+  "testRunResults",
   "comment",
   "attachment",
   "apiToken",
@@ -249,6 +249,13 @@ describe("ZenStack API Route Audit Interception", () => {
 
     it("should include apiToken entity", () => {
       expect(AUDITED_ENTITIES.has("apiToken")).toBe(true);
+    });
+
+    it("audits test run results under the correct model key", () => {
+      // The ZenStack model path is plural (`testRunResults`); the previous
+      // singular `testRunResult` never matched, so result edits went unaudited.
+      expect(AUDITED_ENTITIES.has("testRunResults")).toBe(true);
+      expect(AUDITED_ENTITIES.has("testRunResult")).toBe(false);
     });
 
     it("should not include non-audited entities", () => {

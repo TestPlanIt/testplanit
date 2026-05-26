@@ -357,7 +357,9 @@
         "edit_results_duration": "Edytuj czas trwania wyników",
         "project_docs_default": "Domyślne dokumenty projektu",
         "notificationSettings": "Globalne ustawienie powiadomień",
-        "elasticsearch_replicas": "Repliki Elasticsearch"
+        "elasticsearch_replicas": "Repliki Elasticsearch",
+        "review_feature_enabled": "Włączono przegląd i zatwierdzenia",
+        "review_reminder_threshold_days": "Przypomnij recenzentom o dniach progowych"
       },
       "options": {
         "label": "Etykieta",
@@ -617,6 +619,10 @@
       "failedToDeleteRepository": "Nie udało się usunąć repozytorium",
       "permissionDenied": "Nie masz uprawnień dostępu do tej strony.",
       "resultSubmitPermissionDenied": "Nie możesz przesłać wyników dla tej sprawy. Poproś administratora projektu o jej przypisanie.",
+      "justificationRequired": "Wymagane uzasadnienie",
+      "justificationRequiredDescription": "Aby zmienić zakończony wynik na inny, należy zapoznać się ze szczegółami wyniku wyjaśniającymi zmianę.",
+      "requiredFieldMissing": "Wymagane pole wyniku nie zawiera wartości.",
+      "editWindowExpired": "Okno edycji tego wyniku zostało zamknięte. Zamiast tego zarejestruj nową próbę.",
       "noModelsFound": "Nie znaleziono modeli",
       "failedToFetchModels": "Nie udało się pobrać modeli",
       "failedToCopyToClipboard": "Nie udało się skopiować do schowka",
@@ -1829,6 +1835,28 @@
           "saveError": "Nie udało się zaktualizować ustawień przepływu pracy przeglądu",
           "systemDisabledTitle": "Przepływ pracy przeglądu jest wyłączony w całym systemie",
           "systemDisabledDescription": "Preferencje Twojego projektu zostaną zapisane, ale nic nie będzie zablokowane, dopóki administrator systemu nie włączy tej funkcji w obszarze Administracja → Przepływy pracy."
+        },
+        "flipJustification": {
+          "label": "Wymagaj uzasadnienia przy odwracaniu wyniku",
+          "description": "Po włączeniu tej opcji zapisanie wyniku, który zamienia wynik zakończony (np. Zaliczony na Niezaliczony), wymaga podania szczegółów wyniku wyjaśniających zmianę.",
+          "enabledToast": "W tym projekcie wymagane jest wyrównanie odwrócone",
+          "disabledToast": "W tym projekcie wyrównanie odwrócone nie jest już wymagane",
+          "saveError": "Nie udało się zaktualizować ustawienia wyrównywania odwrócenia"
+        },
+        "editWindow": {
+          "label": "Okno edycji wyników",
+          "description": "Jak długo po zarejestrowaniu wyniku można go nadal edytować. Po zamknięciu okna poprawki wymagają ponownej próby. Administratorzy systemu zawsze mogą edytować.",
+          "modeInherit": "Dziedzicz domyślne ustawienia systemu",
+          "modeDisable": "Wyłącz edycję tego projektu",
+          "modeCustom": "Okno niestandardowe",
+          "minutesLabel": "Można edytować przez (minuty)",
+          "systemMaxHint": "Maksymalnie w systemie: {minutes} minut",
+          "systemLockedTitle": "Edycja jest wyłączona w całym systemie",
+          "systemLockedDescription": "Administrator systemu wyłączył możliwość edycji wyników na miejscu dla wszystkich projektów, dlatego ten projekt nie może jej włączyć.",
+          "invalidMinutes": "Wprowadź liczbę minut większą od zera",
+          "save": "Zapisz okno edycji",
+          "savedToast": "Okno edycji zostało zaktualizowane dla tego projektu",
+          "saveError": "Nie udało się zaktualizować ustawień okna edycji"
         }
       }
     },
@@ -2090,7 +2118,7 @@
       "editDescription": "Wprowadź zmiany w wynikach sesji i po zakończeniu kliknij przycisk Zapisz.",
       "details": "Wprowadź tutaj szczegóły wyniku...",
       "noResults": "Nie dodano jeszcze żadnych wyników.",
-      "noNotes": "Do tego wyniku nie dodano żadnych notatek.",
+      "noNotes": "Nie dodano szczegółów wyników.",
       "deleteSuccess": "Wynik sesji został pomyślnie usunięty",
       "deleteError": "Nie udało się usunąć wyniku sesji",
       "updateSuccess": "Wynik sesji został pomyślnie zaktualizowany",
@@ -4405,6 +4433,18 @@
     },
     "statuses": {
       "description": "Zarządzaj statusami testów",
+      "editPolicy": {
+        "title": "Zasady edycji wyników",
+        "description": "Kontroluj, jak długo po zarejestrowaniu wyniku można go nadal edytować na miejscu, we wszystkich projektach. Projekty mogą zaostrzyć to ustawienie w ustawieniach zaawansowanych, ale nigdy go nie poluzować. Administratorzy systemu zawsze mogą je edytować.",
+        "modeNone": "Brak ograniczeń (decydują projekty)",
+        "modeDisabled": "Wyłącz edycję wszędzie",
+        "modeMax": "Zezwalaj na edycję do maksymalnego okna",
+        "minutesLabel": "Maksymalne okno (minuty)",
+        "invalidMinutes": "Wprowadź liczbę minut większą od zera",
+        "save": "Zapisz zasady",
+        "savedToast": "Zaktualizowano zasady edycji wyników",
+        "saveError": "Nie udało się zaktualizować zasad edycji wyników"
+      },
       "add": {
         "button": "Dodaj status",
         "title": "Dodaj nowy status",

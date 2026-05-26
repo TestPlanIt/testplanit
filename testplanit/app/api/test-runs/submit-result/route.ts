@@ -4,7 +4,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { authenticateRequest } from "~/lib/api-token-auth";
 import { prisma } from "~/lib/prisma";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { captureAuditEvent } from "~/lib/services/auditLog";
+import {
+  hasMissingRequiredResultField,
+  hasResultMutationPermission,
+  isOutcomeFlip,
+} from "~/lib/services/resultGuards";
 import {
   redactValues,
   type ParameterSchemaEntry,
@@ -38,6 +44,17 @@ const submitResultSchema = z.object({
   // iteration of a parameterized run-case. Activates the worst-of rollup
   // path; absence preserves the byte-identical legacy behavior (PARAM-07).
   iterationId: z.number().int().positive().optional(),
+  // Custom result field values, persisted atomically with the result. `value`
+  // is the client-encoded field value (a stringified doc/JSON for rich types,
+  // a primitive string otherwise) and is stored as-is.
+  fieldValues: z
+    .array(
+      z.object({
+        fieldId: z.number().int().positive(),
+        value: z.unknown(),
+      })
+    )
+    .optional(),
 });
 
 /**
@@ -105,134 +122,6 @@ function parseParameterSchema(
     }
   }
   return out;
-}
-
-type RolePermissionSnapshot =
-  | {
-      name?: string | null;
-      rolePermissions?: Array<{ canAddEdit: boolean }> | null;
-    }
-  | null
-  | undefined;
-
-type ProjectAccessTypeValue =
-  | "DEFAULT"
-  | "NO_ACCESS"
-  | "GLOBAL_ROLE"
-  | "SPECIFIC_ROLE";
-
-function roleCanAddEditTestRunResults(role: RolePermissionSnapshot): boolean {
-  return Boolean(
-    role?.rolePermissions?.some((permission) => permission.canAddEdit)
-  );
-}
-
-function hasSubmitResultPermission({
-  user,
-  testRunCreatedById,
-  assignedToId,
-  project,
-}: {
-  user: {
-    id: string;
-    access: string;
-    role: {
-      rolePermissions: Array<{ canAddEdit: boolean }>;
-    } | null;
-  };
-  testRunCreatedById: string;
-  assignedToId: string | null;
-  project: {
-    createdBy: string;
-    defaultAccessType: ProjectAccessTypeValue;
-    defaultRole: RolePermissionSnapshot;
-    assignedUsers: Array<{ userId: string }>;
-    userPermissions: Array<{
-      accessType: ProjectAccessTypeValue;
-      role: RolePermissionSnapshot;
-    }>;
-    groupPermissions: Array<{
-      accessType: ProjectAccessTypeValue;
-      role: RolePermissionSnapshot;
-    }>;
-  };
-}): boolean {
-  if (user.access === "ADMIN") {
-    return true;
-  }
-
-  if (project.createdBy === user.id) {
-    return true;
-  }
-
-  if (testRunCreatedById === user.id) {
-    return true;
-  }
-
-  if (assignedToId === user.id) {
-    return true;
-  }
-
-  if (
-    user.access === "PROJECTADMIN" &&
-    project.assignedUsers.some((assignment) => assignment.userId === user.id)
-  ) {
-    return true;
-  }
-
-  const hasGlobalRoleResultPermission = roleCanAddEditTestRunResults(user.role);
-
-  const explicitUserPermission = project.userPermissions[0];
-  if (explicitUserPermission) {
-    if (explicitUserPermission.accessType === "NO_ACCESS") {
-      return false;
-    }
-
-    if (explicitUserPermission.accessType === "SPECIFIC_ROLE") {
-      return (
-        explicitUserPermission.role?.name === "Project Admin" ||
-        roleCanAddEditTestRunResults(explicitUserPermission.role)
-      );
-    }
-
-    if (explicitUserPermission.accessType === "GLOBAL_ROLE") {
-      return user.access !== "NONE" && hasGlobalRoleResultPermission;
-    }
-  }
-
-  const groupPermissionAllows = project.groupPermissions.some(
-    (groupPermission) => {
-      if (groupPermission.accessType === "SPECIFIC_ROLE") {
-        return (
-          groupPermission.role?.name === "Project Admin" ||
-          roleCanAddEditTestRunResults(groupPermission.role)
-        );
-      }
-
-      if (groupPermission.accessType === "GLOBAL_ROLE") {
-        return user.access !== "NONE" && hasGlobalRoleResultPermission;
-      }
-
-      return false;
-    }
-  );
-  if (groupPermissionAllows) {
-    return true;
-  }
-
-  if (project.defaultAccessType === "GLOBAL_ROLE") {
-    return user.access !== "NONE" && hasGlobalRoleResultPermission;
-  }
-
-  if (project.defaultAccessType === "SPECIFIC_ROLE") {
-    return (
-      project.assignedUsers.some(
-        (assignment) => assignment.userId === user.id
-      ) && roleCanAddEditTestRunResults(project.defaultRole)
-    );
-  }
-
-  return false;
 }
 
 export async function POST(req: NextRequest) {
@@ -304,7 +193,7 @@ export async function POST(req: NextRequest) {
         assignedToId: true,
         repositoryCaseId: true,
         repositoryCase: {
-          select: { automated: true },
+          select: { automated: true, templateId: true },
         },
         testRun: {
           select: {
@@ -316,6 +205,7 @@ export async function POST(req: NextRequest) {
               select: {
                 createdBy: true,
                 defaultAccessType: true,
+                requireResultFlipJustification: true,
                 assignedUsers: {
                   where: {
                     userId: user.id,
@@ -402,7 +292,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const canSubmit = hasSubmitResultPermission({
+    const canSubmit = hasResultMutationPermission({
       user,
       testRunCreatedById: runCase.testRun.createdById,
       assignedToId: runCase.assignedToId,
@@ -412,6 +302,76 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Permission denied", code: "PERMISSION_DENIED" },
         { status: 403 }
+      );
+    }
+
+    // Mandatory result-flip justification (opt-in per project). When the
+    // project has `requireResultFlipJustification` enabled and this submission
+    // changes the judgment relative to the latest prior *completed* attempt on
+    // the same run-case (and iteration, when parameterized), a non-empty
+    // `notes` justification is required. First completed results, same-outcome
+    // re-submissions, and clears back to an untested/blocked status are
+    // unaffected. Read-only and pre-transaction so a rejection never creates a
+    // result that must then be rolled back; the prior-attempt query is skipped
+    // entirely when the setting is off.
+    if (runCase.testRun.project.requireResultFlipJustification) {
+      const priorAttempt = await prisma.testRunResults.findFirst({
+        where: {
+          testRunCaseId: input.testRunCaseId,
+          iterationId: input.iterationId ?? null,
+          isDeleted: false,
+        },
+        orderBy: { executedAt: "desc" },
+        select: { statusId: true },
+      });
+      if (priorAttempt && isTiptapEmpty(input.notes)) {
+        const statuses = await prisma.status.findMany({
+          where: { id: { in: [priorAttempt.statusId, input.statusId] } },
+          select: {
+            id: true,
+            isSuccess: true,
+            isFailure: true,
+            isCompleted: true,
+          },
+        });
+        const priorStatus = statuses.find(
+          (s) => s.id === priorAttempt.statusId
+        );
+        const nextStatus = statuses.find((s) => s.id === input.statusId);
+        if (
+          priorStatus &&
+          nextStatus &&
+          isOutcomeFlip(priorStatus, nextStatus)
+        ) {
+          return NextResponse.json(
+            {
+              error:
+                "A justification is required when changing the result outcome",
+              code: "JUSTIFICATION_REQUIRED",
+            },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
+    // Mandatory result fields. When the run-case's template marks any result
+    // field required, the submission must carry a non-empty value for each.
+    // Enforced server-side so the UI, CLI, and MCP all honor it (the client
+    // checks are advisory). Read-only and pre-transaction so a rejection never
+    // creates a result row; skipped entirely when no required fields exist.
+    const missingRequiredField = await hasMissingRequiredResultField(
+      prisma,
+      runCase.repositoryCase.templateId,
+      input.fieldValues
+    );
+    if (missingRequiredField) {
+      return NextResponse.json(
+        {
+          error: "A required result field is missing a value",
+          code: "REQUIRED_FIELDS_MISSING",
+        },
+        { status: 400 }
       );
     }
 
@@ -478,6 +438,18 @@ export async function POST(req: NextRequest) {
               : undefined,
         },
       });
+
+      // Persist custom result field values atomically with the result. Values
+      // arrive already client-encoded and are stored as-is in the Json column.
+      if (input.fieldValues && input.fieldValues.length > 0) {
+        await tx.resultFieldValues.createMany({
+          data: input.fieldValues.map((fv) => ({
+            fieldId: fv.fieldId,
+            value: (fv.value ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+            testRunResultsId: createdResult.id,
+          })),
+        });
+      }
 
       if (input.iterationId) {
         // ─── Iteration branch (Phase 3 Wave 2 Task 6) ─────────────────

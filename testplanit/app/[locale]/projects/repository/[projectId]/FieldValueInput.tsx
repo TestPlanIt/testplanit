@@ -49,6 +49,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import MultiSelect from "react-select";
 import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
 import { IconName } from "~/types/globals";
 import { cn } from "~/utils";
@@ -442,9 +443,9 @@ export function FieldValueInput({
       const handleEditorUpdate = (content: any) => {
         try {
           const contentString = JSON.stringify(content);
-          // Only call onChange if the stringified content is not the empty state,
-          // otherwise send null to signify clearing the field.
-          const isEmpty = contentString === JSON.stringify(emptyEditorContent);
+          // Store null when the editor holds no renderable content so the
+          // field reads as cleared; otherwise persist the serialized doc.
+          const isEmpty = isTiptapEmpty(content);
           onChange(isEmpty ? null : contentString);
         } catch (error) {
           console.warn("Error stringifying editor content:", error);

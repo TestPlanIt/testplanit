@@ -357,7 +357,9 @@
         "edit_results_duration": "Editar Duração dos Resultados",
         "project_docs_default": "Documentação do projeto padrão",
         "notificationSettings": "Configuração global de notificações",
-        "elasticsearch_replicas": "Réplicas do Elasticsearch"
+        "elasticsearch_replicas": "Réplicas do Elasticsearch",
+        "review_feature_enabled": "Revisão e aprovações ativadas",
+        "review_reminder_threshold_days": "Lembre os avaliadores sobre os dias limite."
       },
       "options": {
         "label": "Rótulo",
@@ -617,6 +619,10 @@
       "failedToDeleteRepository": "Falha ao excluir o repositório",
       "permissionDenied": "Você não tem permissão para acessar esta página.",
       "resultSubmitPermissionDenied": "Você não pode enviar resultados para este caso. Peça a um administrador do projeto para atribuí-lo a você.",
+      "justificationRequired": "Justificativa necessária",
+      "justificationRequiredDescription": "Para inverter um resultado já concluído e transformá-lo em um resultado diferente, é necessário fornecer os Detalhes do Resultado explicando a mudança.",
+      "requiredFieldMissing": "Um campo de resultado obrigatório está sem valor.",
+      "editWindowExpired": "A janela de edição deste resultado foi fechada. Em vez disso, registre uma nova tentativa.",
       "noModelsFound": "Nenhum modelo encontrado",
       "failedToFetchModels": "Falha ao buscar modelos",
       "failedToCopyToClipboard": "Falha ao copiar para a área de transferência",
@@ -1829,6 +1835,28 @@
           "saveError": "Falha ao atualizar a configuração do fluxo de trabalho de revisão",
           "systemDisabledTitle": "O fluxo de trabalho de revisão está desativado em todo o sistema.",
           "systemDisabledDescription": "As preferências do seu projeto foram salvas, mas nada será bloqueado até que um administrador do sistema ative o recurso em Administração → Fluxos de trabalho."
+        },
+        "flipJustification": {
+          "label": "Exigir justificativa para a inversão do resultado",
+          "description": "Quando ativada, a opção de registrar um resultado que inverte um desfecho concluído (por exemplo, de Aprovado para Reprovado) requer Detalhes do Resultado explicando a mudança.",
+          "enabledToast": "É necessária uma justificativa para a inversão deste projeto.",
+          "disabledToast": "A justificativa de inversão não é mais necessária para este projeto.",
+          "saveError": "Falha ao atualizar a configuração de justificação de inversão"
+        },
+        "editWindow": {
+          "label": "Janela de edição de resultados",
+          "description": "Mesmo após o registro de um resultado, ele ainda pode ser editado. Após o fechamento da janela, as correções exigem uma nova tentativa. Os administradores do sistema sempre podem editar.",
+          "modeInherit": "Herdar o padrão do sistema",
+          "modeDisable": "Desative a edição para este projeto.",
+          "modeCustom": "Janela personalizada",
+          "minutesLabel": "Editável por (minutos)",
+          "systemMaxHint": "Tempo máximo do sistema: {minutes} minutos",
+          "systemLockedTitle": "A edição está desativada em todo o sistema.",
+          "systemLockedDescription": "Um administrador de sistema desativou a edição de resultados no local para todos os projetos, portanto, este projeto não pode ativá-la.",
+          "invalidMinutes": "Digite um número de minutos maior que zero.",
+          "save": "Salvar janela de edição",
+          "savedToast": "A janela de edição foi atualizada para este projeto.",
+          "saveError": "Falha ao atualizar as configurações da janela de edição"
         }
       }
     },
@@ -2090,7 +2118,7 @@
       "editDescription": "Faça as alterações desejadas no resultado da sessão e clique em Salvar quando terminar.",
       "details": "Insira aqui os detalhes sobre o resultado...",
       "noResults": "Nenhum resultado foi adicionado ainda.",
-      "noNotes": "Nenhuma observação adicional para este resultado.",
+      "noNotes": "Nenhum detalhe sobre os resultados foi adicionado.",
       "deleteSuccess": "Resultado da sessão excluído com sucesso",
       "deleteError": "Falha ao excluir o resultado da sessão",
       "updateSuccess": "Resultado da sessão atualizado com sucesso",
@@ -4405,6 +4433,18 @@
     },
     "statuses": {
       "description": "Gerenciar status de testes",
+      "editPolicy": {
+        "title": "Política de edição de resultados",
+        "description": "Controle por quanto tempo, após o registro de um resultado, ele ainda poderá ser editado, em todos os projetos. Os projetos podem restringir esse limite em suas configurações avançadas, mas nunca o flexibilizar. Os administradores do sistema sempre poderão editar.",
+        "modeNone": "Sem restrições (os projetos decidem)",
+        "modeDisabled": "Desativar a edição em todos os lugares",
+        "modeMax": "Permitir edição até uma janela máxima",
+        "minutesLabel": "Janela máxima (minutos)",
+        "invalidMinutes": "Digite um número de minutos maior que zero.",
+        "save": "Política de economia",
+        "savedToast": "Política de edição de resultados atualizada",
+        "saveError": "Falha ao atualizar a política de edição de resultados"
+      },
       "add": {
         "button": "Adicionar status",
         "title": "Adicionar novo status",

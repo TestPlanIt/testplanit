@@ -64,6 +64,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
   useCreateAttachments,
@@ -1048,20 +1049,7 @@ export function SessionResultsList({
   );
 
   // Helper function to check if content is empty
-  const isEmptyContent = (content: any): boolean => {
-    if (!content) return true;
-
-    try {
-      const parsedContent =
-        typeof content === "string" ? JSON.parse(content) : content;
-      return (
-        JSON.stringify(parsedContent) === JSON.stringify(emptyEditorContent)
-      );
-    } catch {
-      // Error parsing content
-      return false;
-    }
-  };
+  const isEmptyContent = (content: any): boolean => isTiptapEmpty(content);
 
   // Add helper to render field editors based on field type
   const renderDynamicFieldEditor = (field: any, formField: any) => {
@@ -1731,13 +1719,13 @@ export function SessionResultsList({
                   )}
                 />
 
-                {/* Notes */}
+                {/* Result Details */}
                 <FormField
                   control={form.control}
                   name="resultData"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("details")}</FormLabel>
+                      <FormLabel>{tCommon("actions.resultDetails")}</FormLabel>
                       <FormControl>
                         <TipTapEditor
                           key={`editor-${editorKey}`}

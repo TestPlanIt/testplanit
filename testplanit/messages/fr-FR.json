@@ -357,7 +357,9 @@
         "edit_results_duration": "Durée de modification des résultats",
         "project_docs_default": "Documentation du projet par défaut",
         "notificationSettings": "Paramètres globaux de notification",
-        "elasticsearch_replicas": "Réplicas Elasticsearch"
+        "elasticsearch_replicas": "Réplicas Elasticsearch",
+        "review_feature_enabled": "Examen et approbation activés",
+        "review_reminder_threshold_days": "Rappelez aux réviseurs le délai imparti pour les jours limites"
       },
       "options": {
         "label": "Étiquette",
@@ -617,6 +619,10 @@
       "failedToDeleteRepository": "Échec de la suppression du dépôt",
       "permissionDenied": "Vous n'êtes pas autorisé à accéder à cette page.",
       "resultSubmitPermissionDenied": "Vous ne pouvez pas soumettre de résultats pour ce dossier. Veuillez demander à un administrateur de projet de vous l'attribuer.",
+      "justificationRequired": "Justification requise",
+      "justificationRequiredDescription": "Pour modifier un résultat final, il est nécessaire de fournir des détails sur le résultat expliquant le changement.",
+      "requiredFieldMissing": "Un champ de résultat obligatoire est vide.",
+      "editWindowExpired": "La fenêtre de modification de ce résultat est fermée. Veuillez effectuer une nouvelle tentative.",
       "noModelsFound": "Aucun modèle trouvé",
       "failedToFetchModels": "Impossible de récupérer les modèles",
       "failedToCopyToClipboard": "Impossible de copier dans le presse-papiers",
@@ -1829,6 +1835,28 @@
           "saveError": "Échec de la mise à jour des paramètres du flux de travail de révision",
           "systemDisabledTitle": "Le flux de travail de révision est interrompu à l'échelle du système.",
           "systemDisabledDescription": "La préférence de votre projet est enregistrée, mais rien ne sera bloqué tant qu'un administrateur système n'aura pas activé la fonctionnalité sous Administration → Flux de travail."
+        },
+        "flipJustification": {
+          "label": "Exiger une justification pour tout changement de résultat",
+          "description": "Lorsque cette option est activée, l'enregistrement d'un résultat qui inverse un résultat déjà validé (par exemple, Réussi à Échec) nécessite des détails de résultat expliquant le changement.",
+          "enabledToast": "Justification du retournement requise pour ce projet",
+          "disabledToast": "La justification de retournement n'est plus requise pour ce projet.",
+          "saveError": "Échec de la mise à jour du paramètre de justification du retournement"
+        },
+        "editWindow": {
+          "label": "Fenêtre d'édition des résultats",
+          "description": "Il est possible de modifier un résultat pendant un certain temps après son enregistrement. Une fois la fenêtre fermée, toute correction nécessitera une nouvelle tentative. Les administrateurs système peuvent toujours le modifier.",
+          "modeInherit": "Hériter des paramètres par défaut du système",
+          "modeDisable": "Désactiver la modification pour ce projet",
+          "modeCustom": "Fenêtre personnalisée",
+          "minutesLabel": "Modifiable pendant (minutes)",
+          "systemMaxHint": "Durée maximale du système : {minutes} minutes",
+          "systemLockedTitle": "La modification est désactivée dans l'ensemble du système.",
+          "systemLockedDescription": "Un administrateur système a désactivé la modification des résultats sur place pour tous les projets ; ce projet ne peut donc pas l’activer.",
+          "invalidMinutes": "Saisissez un nombre de minutes supérieur à zéro",
+          "save": "Enregistrer la fenêtre d'édition",
+          "savedToast": "La fenêtre d'édition a été mise à jour pour ce projet.",
+          "saveError": "Échec de la mise à jour des paramètres de la fenêtre d'édition"
         }
       }
     },
@@ -2090,7 +2118,7 @@
       "editDescription": "Apportez les modifications nécessaires au résultat de la session, puis cliquez sur Enregistrer une fois terminé.",
       "details": "Veuillez saisir ici les détails du résultat...",
       "noResults": "Aucun résultat n'a encore été ajouté.",
-      "noNotes": "Aucune note ajoutée pour ce résultat.",
+      "noNotes": "Aucun détail de résultat n'a été ajouté.",
       "deleteSuccess": "Résultat de la session supprimé avec succès",
       "deleteError": "Échec de la suppression du résultat de la session",
       "updateSuccess": "Résultat de la session mis à jour avec succès",
@@ -4405,6 +4433,18 @@
     },
     "statuses": {
       "description": "Gérer les statuts des tests",
+      "editPolicy": {
+        "title": "Politique de modification des résultats",
+        "description": "Contrôlez la durée pendant laquelle un résultat peut encore être modifié après son enregistrement, pour tous les projets. Les projets peuvent restreindre ce délai dans leurs paramètres avancés, mais ne peuvent jamais l'assouplir. Les administrateurs système peuvent toujours le modifier.",
+        "modeNone": "Aucune restriction (les projets décident)",
+        "modeDisabled": "Désactiver la modification partout",
+        "modeMax": "Autoriser la modification jusqu'à une fenêtre maximale",
+        "minutesLabel": "Fenêtre maximale (minutes)",
+        "invalidMinutes": "Saisissez un nombre de minutes supérieur à zéro",
+        "save": "Politique de sauvegarde",
+        "savedToast": "Politique de modification des résultats mise à jour",
+        "saveError": "Échec de la mise à jour de la politique de modification des résultats"
+      },
       "add": {
         "button": "Ajouter un statut",
         "title": "Ajouter un nouveau statut",

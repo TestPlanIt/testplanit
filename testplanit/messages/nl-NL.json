@@ -357,7 +357,9 @@
         "edit_results_duration": "Bewerken Resultaten Duur",
         "project_docs_default": "Projectdocumenten Standaard",
         "notificationSettings": "Globale instellingen voor meldingen",
-        "elasticsearch_replicas": "Elasticsearch-replica's"
+        "elasticsearch_replicas": "Elasticsearch-replica's",
+        "review_feature_enabled": "Beoordeling en goedkeuring ingeschakeld",
+        "review_reminder_threshold_days": "Herinner beoordelaars aan de drempeldagen"
       },
       "options": {
         "label": "Label",
@@ -617,6 +619,10 @@
       "failedToDeleteRepository": "Het verwijderen van de repository is mislukt.",
       "permissionDenied": "U hebt geen toestemming om deze pagina te bezoeken.",
       "resultSubmitPermissionDenied": "Je kunt voor deze zaak geen resultaten indienen. Vraag een projectbeheerder om deze zaak aan je toe te wijzen.",
+      "justificationRequired": "Rechtvaardiging vereist",
+      "justificationRequiredDescription": "Om een voltooid resultaat om te zetten naar een andere uitkomst, zijn resultaatdetails nodig die de wijziging toelichten.",
+      "requiredFieldMissing": "Een verplicht resultaatveld mist een waarde.",
+      "editWindowExpired": "Het bewerkingsvenster voor dit resultaat is gesloten. Probeer het opnieuw.",
       "noModelsFound": "Geen modellen gevonden",
       "failedToFetchModels": "Het ophalen van modellen is mislukt",
       "failedToCopyToClipboard": "Kopiëren naar klembord mislukt",
@@ -1829,6 +1835,28 @@
           "saveError": "Het bijwerken van de beoordelingsworkflow is mislukt.",
           "systemDisabledTitle": "De beoordelingsworkflow is systeembreed uitgeschakeld.",
           "systemDisabledDescription": "De voorkeur van uw project wordt opgeslagen, maar er worden geen beperkingen opgelegd totdat een systeembeheerder de functie inschakelt onder Beheer → Werkstromen."
+        },
+        "flipJustification": {
+          "label": "Vereist een rechtvaardiging voor het omkeren van het resultaat.",
+          "description": "Wanneer deze optie is ingeschakeld, vereist het vastleggen van een resultaat dat een voltooide uitkomst omkeert (bijvoorbeeld van Geslaagd naar Mislukt) dat de resultaatdetails de wijziging toelichten.",
+          "enabledToast": "Voor dit project is een rechtvaardiging op basis van een spiegelbeeld vereist.",
+          "disabledToast": "Voor dit project is het niet langer nodig om de afbeelding om te draaien.",
+          "saveError": "Het bijwerken van de instelling voor spiegeluitlijning is mislukt."
+        },
+        "editWindow": {
+          "label": "Resultaatbewerkingsvenster",
+          "description": "Een resultaat kan nog steeds direct na het vastleggen worden bewerkt. Na het sluiten van het venster is een nieuwe poging nodig om een correctie door te voeren. Systeembeheerders kunnen de resultaten altijd bewerken.",
+          "modeInherit": "De systeemstandaard overnemen",
+          "modeDisable": "Bewerken voor dit project uitschakelen",
+          "modeCustom": "Aangepast venster",
+          "minutesLabel": "Bewerkbaar voor (minuten)",
+          "systemMaxHint": "Systeemmaximum: {minutes} minuten",
+          "systemLockedTitle": "Bewerken is systeembreed uitgeschakeld.",
+          "systemLockedDescription": "Een systeembeheerder heeft het direct bewerken van resultaten voor alle projecten uitgeschakeld, waardoor dit project deze functie niet kan inschakelen.",
+          "invalidMinutes": "Voer een aantal minuten in dat groter is dan nul.",
+          "save": "Bewerkingsvenster opslaan",
+          "savedToast": "Het bewerkingsvenster is bijgewerkt voor dit project.",
+          "saveError": "Het bijwerken van de instellingen van het bewerkingsvenster is mislukt."
         }
       }
     },
@@ -2090,7 +2118,7 @@
       "editDescription": "Breng wijzigingen aan in het sessieresultaat en klik op Opslaan als u klaar bent.",
       "details": "Voer hier details over het resultaat in...",
       "noResults": "Er zijn nog geen resultaten toegevoegd.",
-      "noNotes": "Er zijn geen notities toegevoegd voor dit resultaat.",
+      "noNotes": "Er zijn geen resultaatdetails toegevoegd.",
       "deleteSuccess": "Sessieresultaat succesvol verwijderd",
       "deleteError": "Sessieresultaat kan niet worden verwijderd",
       "updateSuccess": "Sessieresultaat succesvol bijgewerkt",
@@ -4405,6 +4433,18 @@
     },
     "statuses": {
       "description": "Teststatussen beheren",
+      "editPolicy": {
+        "title": "Beleid voor het bewerken van resultaten",
+        "description": "Bepaal hoe lang na het vastleggen van een resultaat dit nog ter plekke kan worden bewerkt, voor alle projecten. Projecten kunnen deze instelling in de geavanceerde instellingen aanscherpen, maar nooit versoepelen. Systeembeheerders kunnen de instelling altijd wijzigen.",
+        "modeNone": "Geen beperkingen (projecten bepalen dit)",
+        "modeDisabled": "Bewerken overal uitschakelen",
+        "modeMax": "Bewerken toestaan tot een maximale venstergrootte",
+        "minutesLabel": "Maximale venstertijd (minuten)",
+        "invalidMinutes": "Voer een aantal minuten in dat groter is dan nul.",
+        "save": "Beleid opslaan",
+        "savedToast": "Beleid voor het bewerken van resultaten bijgewerkt",
+        "saveError": "Het bijwerken van het beleid voor het bewerken van resultaten is mislukt."
+      },
       "add": {
         "button": "Status toevoegen",
         "title": "Nieuwe status toevoegen",

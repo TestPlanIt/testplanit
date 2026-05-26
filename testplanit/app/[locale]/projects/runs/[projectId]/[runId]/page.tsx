@@ -97,6 +97,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { ImperativePanelHandle } from "react-resizable-panels";
 import { z } from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { CommentsSection } from "~/components/comments/CommentsSection";
 import TestRunCasesSummary from "~/components/TestRunCasesSummary";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
@@ -1840,9 +1841,7 @@ export default function TestRunPage() {
                     ) : (
                       <>
                         {isEditMode ||
-                        (contentLoaded &&
-                          JSON.stringify(noteContent) !==
-                            JSON.stringify(emptyEditorContent)) ? (
+                        (contentLoaded && !isTiptapEmpty(noteContent)) ? (
                           <FormField
                             control={form.control}
                             name="note"
@@ -1886,9 +1885,7 @@ export default function TestRunPage() {
                         ) : null}
                         {/* Documentation */}
                         {isEditMode ||
-                        (contentLoaded &&
-                          JSON.stringify(docsContent) !==
-                            JSON.stringify(emptyEditorContent)) ? (
+                        (contentLoaded && !isTiptapEmpty(docsContent)) ? (
                           <FormField
                             control={form.control}
                             name="docs"
@@ -1933,10 +1930,8 @@ export default function TestRunPage() {
                         {/* Add separator after notes/docs if they exist */}
                         {!isEditMode &&
                           contentLoaded &&
-                          (JSON.stringify(noteContent) !==
-                            JSON.stringify(emptyEditorContent) ||
-                            JSON.stringify(docsContent) !==
-                              JSON.stringify(emptyEditorContent)) && (
+                          (!isTiptapEmpty(noteContent) ||
+                            !isTiptapEmpty(docsContent)) && (
                             <Separator className="my-4" />
                           )}
 

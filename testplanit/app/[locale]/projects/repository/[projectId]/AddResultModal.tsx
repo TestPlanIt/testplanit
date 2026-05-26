@@ -33,9 +33,9 @@ import * as z from "zod/v4";
 import { emptyEditorContent } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import {
   useCreateAttachments,
-  useCreateResultFieldValues,
   useCreateTestRunStepResults,
   useFindFirstProjects,
   useFindFirstRepositoryCases,
@@ -48,6 +48,7 @@ import {
   useUpdateTestRunCases,
 } from "~/lib/hooks";
 import {
+  isJustificationRequiredSubmitResultError,
   isPermissionDeniedSubmitResultError,
   submitTestRunResult,
 } from "~/lib/test-run-result-submit";
@@ -84,43 +85,53 @@ import {
 import { MAX_DURATION } from "~/app/constants";
 
 // Helper function to map field types to Zod schemas
-const mapFieldToZodType = (field: any) => {
+const mapFieldToZodType = (
+  field: any,
+  tCommon: ReturnType<typeof useTranslations<"common">>
+) => {
   const fieldType = field.resultField.type?.type;
   const isRequired = field.resultField.isRequired;
+  const requiredMessage = tCommon("validation.required", {
+    field: field.resultField.displayName,
+  });
 
-  let schema;
-
-  switch (fieldType) {
-    case "Text":
-    case "Dropdown":
-    case "Radio":
-    case "Checkbox":
-      schema = z.string();
-      break;
-    case "Number":
-      schema = z.number();
-      if (field.resultField.minValue !== null) {
-        schema = schema.min(field.resultField.minValue);
-      }
-      if (field.resultField.maxValue !== null) {
-        schema = schema.max(field.resultField.maxValue);
-      }
-      break;
-    case "Text Long":
-    case "RichText":
-      // Allow any for rich text and text long because they're handled by TipTap
-      schema = z.any();
-      break;
-    default:
-      schema = z.string();
+  // Rich text / long text are TipTap documents — emptiness is decided by the
+  // shared isTiptapEmpty check (whitespace-only and empty docs count as empty).
+  if (fieldType === "Text Long" || fieldType === "RichText") {
+    if (isRequired) {
+      return z.any().refine((value) => !isTiptapEmpty(value), {
+        message: requiredMessage,
+      });
+    }
+    return z.any();
   }
 
-  // Make it nullable if not required
-  if (!isRequired) {
-    return schema.nullable().optional();
+  if (fieldType === "Number") {
+    let schema = z.number();
+    if (field.resultField.minValue !== null) {
+      schema = schema.min(field.resultField.minValue);
+    }
+    if (field.resultField.maxValue !== null) {
+      schema = schema.max(field.resultField.maxValue);
+    }
+    return isRequired ? schema : schema.nullable().optional();
   }
 
-  return schema;
+  if (fieldType === "Checkbox") {
+    const schema = z.string();
+    return isRequired ? schema : schema.nullable().optional();
+  }
+
+  // String-like fields (Text String, Text, Dropdown, Radio, Link, Date, …).
+  // A required one must be a non-empty value — coerce null/undefined to "" so
+  // an unfilled field fails the min(1) check with the friendly required label.
+  if (isRequired) {
+    return z.preprocess(
+      (value) => (value == null ? "" : value),
+      z.string().min(1, { message: requiredMessage })
+    );
+  }
+  return z.string().nullable().optional();
 };
 
 // Define the form schema
@@ -177,7 +188,7 @@ const formSchema = (
   const dynamicSchema = templateFields.reduce(
     (schema, field) => {
       const fieldId = field.resultField.id.toString();
-      schema[fieldId] = mapFieldToZodType(field);
+      schema[fieldId] = mapFieldToZodType(field, tCommon);
       return schema;
     },
     {} as Record<string, z.ZodTypeAny>
@@ -246,6 +257,20 @@ interface AddResultModalProps {
    * instead of just `@username`. Matches the case-detail surface.
    */
   parameters?: ParameterChipMeta[];
+  /**
+   * When the modal is opened by a quick-action escalation (Pass & Next or a
+   * quick status on a case that has a required result field), validate
+   * immediately on open so the required field shows its error and is focused —
+   * making clear why the shortcut opened the full form instead of submitting.
+   */
+  validateOnOpen?: boolean;
+  /**
+   * When opened by a Pass & Next / quick-status escalation where the server
+   * rejected the change as a flip needing justification, show the inline
+   * "justification required" error on Result Details on open so the tester has
+   * something to correct in place (instead of a toast).
+   */
+  flipJustificationError?: boolean;
 }
 
 export function AddResultModal({
@@ -264,6 +289,8 @@ export function AddResultModal({
   iterationId,
   iterationLabel,
   parameters,
+  validateOnOpen = false,
+  flipJustificationError = false,
 }: AddResultModalProps) {
   const t = useTranslations();
   const tCommon = useTranslations("common");
@@ -280,6 +307,8 @@ export function AddResultModal({
   const [uploadAttachmentsKey, setUploadAttachmentsKey] = useState<number>(0);
   const [, setTrackedSeconds] = useState(0);
   const timeTrackerRef = useRef<TimeTrackerRef>(null);
+  // Ensures the validate-on-open pass runs once per escalation open.
+  const validatedOnOpenRef = useRef(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedAttachmentIndex, setSelectedAttachmentIndex] = useState<
     number | null
@@ -488,6 +517,54 @@ export function AddResultModal({
     }
   }, [templateFields, locale, tCommon, form]);
 
+  // When opened by a required-field escalation, validate immediately so the
+  // required field surfaces its error (and gets focus) on open. Waits for the
+  // template fields + their defaults to settle, and runs once per open.
+  useEffect(() => {
+    if (!isOpen) {
+      validatedOnOpenRef.current = false;
+      return;
+    }
+    if (
+      !validateOnOpen ||
+      validatedOnOpenRef.current ||
+      templateFields.length === 0
+    ) {
+      return;
+    }
+    validatedOnOpenRef.current = true;
+    const timeoutId = setTimeout(() => {
+      void form.trigger().then((isValid) => {
+        if (isValid) return;
+        const firstErrorField = Object.keys(form.formState.errors)[0];
+        if (firstErrorField) {
+          try {
+            form.setFocus(firstErrorField);
+          } catch {
+            // Custom field components may not be focusable; the inline error
+            // message is the primary signal.
+          }
+        }
+      });
+    }, 50);
+    return () => clearTimeout(timeoutId);
+  }, [isOpen, validateOnOpen, templateFields, form]);
+
+  // When opened by a flip-justification escalation (the server rejected a quick
+  // flip that lacked Result Details), show the justification error inline on
+  // open so the tester has something to correct. Depends on templateFields so
+  // it re-asserts after the template-field reset above (which clears errors);
+  // it won't clobber details the tester has already entered, and the field's
+  // onUpdate clears the error once they start typing.
+  useEffect(() => {
+    if (!isOpen || !flipJustificationError) return;
+    if (!isTiptapEmpty(form.getValues("resultData"))) return;
+    form.setError("resultData", {
+      type: "manual",
+      message: tCommon("errors.justificationRequiredDescription"),
+    });
+  }, [isOpen, flipJustificationError, templateFields, form, tCommon]);
+
   // Fetch available statuses
   const { data: statuses } = useFindManyStatus({
     where: {
@@ -520,7 +597,6 @@ export function AddResultModal({
 
   const { mutateAsync: createAttachments } = useCreateAttachments();
   const { mutateAsync: updateTestRunCase } = useUpdateTestRunCases();
-  const { mutateAsync: createResultFieldValue } = useCreateResultFieldValues();
   const { mutateAsync: createTestRunStepResult } =
     useCreateTestRunStepResults();
 
@@ -734,6 +810,23 @@ export function AddResultModal({
 
       // Issues are already created by DeferredIssueManager, just use the IDs directly
       const issueIdsToConnect: number[] = selectedMainIssues;
+
+      // Build the custom result field values once. submit-result persists them
+      // atomically with the result and enforces required fields server-side, so
+      // they no longer need a separate write step.
+      const resultFieldValues = templateFields
+        .map((field) => {
+          const fieldData = values[field.resultField.id.toString()];
+          if (fieldData === undefined || fieldData === null) return null;
+          return {
+            fieldId: Number(field.resultField.id),
+            value:
+              typeof fieldData === "object"
+                ? JSON.stringify(fieldData)
+                : String(fieldData as string | number | boolean),
+          };
+        })
+        .filter((fv): fv is { fieldId: number; value: string } => fv !== null);
       // console.log("Selected main issue IDs to connect:", selectedMainIssues);
 
       // console.log("Issue IDs to connect:", issueIdsToConnect);
@@ -755,31 +848,8 @@ export function AddResultModal({
             testRunCaseVersion: caseVersion,
             issueIds: issueIdsToConnect,
             inProgressStateId: inProgressWorkflow?.id ?? null,
+            fieldValues: resultFieldValues,
           });
-
-          // Save template field values if any exist
-          if (result && templateFields.length > 0) {
-            const fieldValuesPromises = templateFields.map((field) => {
-              const fieldId = field.resultField.id.toString();
-              const fieldData = values[fieldId];
-
-              if (fieldData !== undefined && fieldData !== null) {
-                return createResultFieldValue({
-                  data: {
-                    fieldId: parseInt(fieldId),
-                    value:
-                      typeof fieldData === "object"
-                        ? JSON.stringify(fieldData)
-                        : String(fieldData as string | number | boolean),
-                    testRunResultsId: result.id,
-                  },
-                });
-              }
-              return Promise.resolve();
-            });
-
-            await Promise.all(fieldValuesPromises);
-          }
 
           // Save step results if any exist
           if (result && steps.length > 0) {
@@ -1009,31 +1079,8 @@ export function AddResultModal({
           issueIds: issueIdsToConnect,
           inProgressStateId: inProgressWorkflow?.id ?? null,
           iterationId,
+          fieldValues: resultFieldValues,
         });
-
-        // Save template field values if any exist
-        if (result && templateFields.length > 0) {
-          const fieldValuesPromises = templateFields.map((field) => {
-            const fieldId = field.resultField.id.toString();
-            const fieldData = values[fieldId];
-
-            if (fieldData !== undefined && fieldData !== null) {
-              return createResultFieldValue({
-                data: {
-                  fieldId: parseInt(fieldId),
-                  value:
-                    typeof fieldData === "object"
-                      ? JSON.stringify(fieldData)
-                      : String(fieldData as string | number | boolean),
-                  testRunResultsId: result.id,
-                },
-              });
-            }
-            return Promise.resolve();
-          });
-
-          await Promise.all(fieldValuesPromises);
-        }
 
         // Save step results if any exist
         if (result && steps.length > 0) {
@@ -1282,8 +1329,6 @@ export function AddResultModal({
       setSelectedStepIssues({});
       setSelectedSharedItemIssues({}); // Reset shared item issues
 
-      await invalidateAfterSubmit();
-
       toast.success(
         isBulkResult
           ? tCommon("actions.resultsAdded", {
@@ -1300,11 +1345,24 @@ export function AddResultModal({
       );
 
       onClose();
+
+      // The result is already persisted, so close immediately and refresh
+      // caches in the background. Awaiting a keyless invalidate here would hold
+      // the modal open (button stuck on "Submitting…") until every refetched
+      // query settles — many seconds on large datasets.
+      void invalidateAfterSubmit();
     } catch (error) {
       console.error("Error submitting result:", error);
       if (isPermissionDeniedSubmitResultError(error)) {
         toast.error(tCommon("errors.accessDenied"), {
           description: tCommon("errors.resultSubmitPermissionDenied"),
+        });
+      } else if (isJustificationRequiredSubmitResultError(error)) {
+        // Surface as an inline error on Result Details (not a toast) and keep
+        // the modal open so the tester can add the justification and resubmit.
+        form.setError("resultData", {
+          type: "manual",
+          message: tCommon("errors.justificationRequiredDescription"),
         });
       } else {
         toast.error(tCommon("errors.error"), {
@@ -1821,7 +1879,13 @@ export function AddResultModal({
                       <TipTapEditor
                         key={editorKey}
                         content={field.value as any}
-                        onUpdate={field.onChange}
+                        onUpdate={(content) => {
+                          field.onChange(content);
+                          // Clear the justification error as the tester types.
+                          if (form.formState.errors.resultData) {
+                            form.clearErrors("resultData");
+                          }
+                        }}
                         placeholder={t(
                           "common.actions.resultDetailsPlaceholder"
                         )}

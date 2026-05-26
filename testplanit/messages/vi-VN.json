@@ -357,7 +357,9 @@
         "edit_results_duration": "Chỉnh sửa kết quả Thời lượng",
         "project_docs_default": "Tài liệu dự án mặc định",
         "notificationSettings": "Thông báo Cài đặt toàn cầu",
-        "elasticsearch_replicas": "Bản sao Elasticsearch"
+        "elasticsearch_replicas": "Bản sao Elasticsearch",
+        "review_feature_enabled": "Chức năng xem xét và phê duyệt đã được bật.",
+        "review_reminder_threshold_days": "Nhắc nhở người đánh giá về số ngày ngưỡng"
       },
       "options": {
         "label": "Nhãn",
@@ -617,6 +619,10 @@
       "failedToDeleteRepository": "Không thể xóa kho lưu trữ",
       "permissionDenied": "Bạn không có quyền truy cập vào trang này.",
       "resultSubmitPermissionDenied": "Bạn không thể gửi kết quả cho trường hợp này. Hãy yêu cầu quản trị viên dự án chỉ định cho bạn.",
+      "justificationRequired": "Cần có sự giải thích.",
+      "justificationRequiredDescription": "Việc thay đổi kết quả đã hoàn thành sang một kết quả khác đòi hỏi phải có Chi tiết Kết quả giải thích sự thay đổi đó.",
+      "requiredFieldMissing": "Một trường kết quả bắt buộc bị thiếu giá trị.",
+      "editWindowExpired": "Cửa sổ chỉnh sửa kết quả này đã đóng. Vui lòng thực hiện lại thao tác ghi nhận kết quả mới.",
       "noModelsFound": "Không tìm thấy mô hình nào.",
       "failedToFetchModels": "Không thể tải mô hình",
       "failedToCopyToClipboard": "Không thể sao chép vào clipboard",
@@ -1829,6 +1835,28 @@
           "saveError": "Không thể cập nhật cài đặt quy trình đánh giá.",
           "systemDisabledTitle": "Quy trình xem xét đã bị tắt trên toàn hệ thống.",
           "systemDisabledDescription": "Tùy chọn dự án của bạn đã được lưu, nhưng quá trình sẽ không được kích hoạt cho đến khi quản trị viên hệ thống bật tính năng này trong mục Quản trị → Quy trình làm việc."
+        },
+        "flipJustification": {
+          "label": "Cần có lời giải thích cho sự đảo ngược kết quả.",
+          "description": "Khi được bật, việc ghi lại kết quả làm thay đổi trạng thái đã hoàn thành (ví dụ: Từ Đạt sang Không đạt) yêu cầu phải có Chi tiết Kết quả giải thích sự thay đổi.",
+          "enabledToast": "Cần có lý do lật trang cho dự án này.",
+          "disabledToast": "Việc căn chỉnh lật trang không còn cần thiết cho dự án này nữa.",
+          "saveError": "Không thể cập nhật cài đặt căn chỉnh lật."
+        },
+        "editWindow": {
+          "label": "Cửa sổ chỉnh sửa kết quả",
+          "description": "Bạn vẫn có thể chỉnh sửa kết quả ngay tại chỗ sau một thời gian nhất định. Sau khi cửa sổ chỉnh sửa đóng lại, việc sửa lỗi yêu cầu phải thực hiện lại. Quản trị viên hệ thống luôn có thể chỉnh sửa.",
+          "modeInherit": "Kế thừa mặc định của hệ thống",
+          "modeDisable": "Vô hiệu hóa chế độ chỉnh sửa cho dự án này.",
+          "modeCustom": "Cửa sổ tùy chỉnh",
+          "minutesLabel": "Có thể chỉnh sửa trong (phút)",
+          "systemMaxHint": "Thời gian tối đa của hệ thống: {minutes} phút",
+          "systemLockedTitle": "Chức năng chỉnh sửa đã bị vô hiệu hóa trên toàn hệ thống.",
+          "systemLockedDescription": "Quản trị viên hệ thống đã vô hiệu hóa tính năng chỉnh sửa kết quả trực tiếp cho tất cả các dự án, vì vậy dự án này không thể kích hoạt tính năng đó.",
+          "invalidMinutes": "Nhập số phút lớn hơn không.",
+          "save": "Lưu cửa sổ chỉnh sửa",
+          "savedToast": "Cửa sổ chỉnh sửa đã được cập nhật cho dự án này.",
+          "saveError": "Không thể cập nhật cài đặt cửa sổ chỉnh sửa."
         }
       }
     },
@@ -2090,7 +2118,7 @@
       "editDescription": "Hãy chỉnh sửa kết quả phiên và nhấn lưu khi hoàn tất.",
       "details": "Vui lòng nhập thông tin chi tiết về kết quả tại đây...",
       "noResults": "Chưa có kết quả nào được thêm vào.",
-      "noNotes": "Không có ghi chú nào được thêm cho kết quả này.",
+      "noNotes": "Chưa có thông tin chi tiết về kết quả nào được thêm vào.",
       "deleteSuccess": "Kết quả phiên đã được xóa thành công",
       "deleteError": "Không thể xóa kết quả phiên.",
       "updateSuccess": "Kết quả phiên được cập nhật thành công",
@@ -4405,6 +4433,18 @@
     },
     "statuses": {
       "description": "Quản lý trạng thái kiểm thử",
+      "editPolicy": {
+        "title": "Chính sách chỉnh sửa kết quả",
+        "description": "Kiểm soát khoảng thời gian sau khi kết quả được ghi lại mà vẫn có thể chỉnh sửa trực tiếp, trên tất cả các dự án. Các dự án có thể điều chỉnh thời gian này trong cài đặt Nâng cao nhưng không thể nới lỏng. Quản trị viên hệ thống luôn có thể chỉnh sửa.",
+        "modeNone": "Không có hạn chế (dự án tự quyết định)",
+        "modeDisabled": "Vô hiệu hóa chế độ chỉnh sửa ở mọi nơi",
+        "modeMax": "Cho phép chỉnh sửa tối đa một cửa sổ.",
+        "minutesLabel": "Khoảng thời gian tối đa (phút)",
+        "invalidMinutes": "Nhập số phút lớn hơn không.",
+        "save": "Lưu chính sách",
+        "savedToast": "Chính sách chỉnh sửa kết quả đã được cập nhật",
+        "saveError": "Không thể cập nhật chính sách chỉnh sửa kết quả."
+      },
       "add": {
         "button": "Thêm trạng thái",
         "title": "Thêm trạng thái mới",

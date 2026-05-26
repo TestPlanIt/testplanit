@@ -9,6 +9,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { createMentionExtension } from "~/lib/tiptap/mentionExtension";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { cn } from "~/utils";
 
 interface CommentEditorProps {
@@ -71,15 +72,7 @@ export function CommentEditor({
     const content = editor.getJSON();
 
     // Check if editor is empty
-    const isEmpty =
-      !content.content ||
-      content.content.length === 0 ||
-      (content.content.length === 1 &&
-        content.content[0]?.type === "paragraph" &&
-        (!content.content[0].content ||
-          content.content[0].content.length === 0));
-
-    if (isEmpty) {
+    if (isTiptapEmpty(content)) {
       return;
     }
 

@@ -44,6 +44,7 @@ vi.mock("~/lib/hooks", () => ({
   useFindFirstWorkflows: mockUseFindFirstWorkflows,
   useFindManyStatus: mockUseFindManyStatus,
   useFindManyTestRunResults: mockUseFindManyTestRunResults,
+  useFindManyTemplateResultAssignment: () => ({ data: [] }),
   useUpdateTestRunCases: mockUseUpdateTestRunCases,
   useUpdateTestRuns: mockUseUpdateTestRuns,
 }));

@@ -357,7 +357,9 @@
         "edit_results_duration": "Editar Duración de Resultados",
         "project_docs_default": "Projektdokument",
         "notificationSettings": "Configuración global de notificación",
-        "elasticsearch_replicas": "Réplicas de Elasticsearch"
+        "elasticsearch_replicas": "Réplicas de Elasticsearch",
+        "review_feature_enabled": "Revisión y aprobación habilitadas",
+        "review_reminder_threshold_days": "Recordatorio para los revisores de los días umbral"
       },
       "options": {
         "label": "Etiqueta",
@@ -617,6 +619,10 @@
       "failedToDeleteRepository": "Error al eliminar el repositorio",
       "permissionDenied": "No tienes permiso para acceder a esta página.",
       "resultSubmitPermissionDenied": "No puedes enviar los resultados de este caso. Pídele a un administrador del proyecto que te lo asigne.",
+      "justificationRequired": "Se requiere justificación",
+      "justificationRequiredDescription": "Para cambiar un resultado ya completado a un resultado diferente, se requieren Detalles del resultado que expliquen el cambio.",
+      "requiredFieldMissing": "Falta un valor en un campo de resultado obligatorio.",
+      "editWindowExpired": "La ventana de edición de este resultado se ha cerrado. Intente grabar un nuevo intento.",
       "noModelsFound": "No se encontraron modelos",
       "failedToFetchModels": "No se pudieron obtener los modelos",
       "failedToCopyToClipboard": "No se pudo copiar al portapapeles.",
@@ -1829,6 +1835,28 @@
           "saveError": "No se pudo actualizar la configuración del flujo de trabajo de revisión.",
           "systemDisabledTitle": "El flujo de trabajo de revisión está desactivado en todo el sistema.",
           "systemDisabledDescription": "Se guarda la preferencia de tu proyecto, pero no se bloqueará nada hasta que un administrador del sistema active la función en Administración → Flujos de trabajo."
+        },
+        "flipJustification": {
+          "label": "Se requiere justificación en caso de cambio de resultado.",
+          "description": "Cuando está habilitada, registrar un resultado que cambia un resultado completado (por ejemplo, de Aprobado a Suspenso) requiere que los Detalles del Resultado expliquen el cambio.",
+          "enabledToast": "Se requiere justificación para invertir este proyecto.",
+          "disabledToast": "Ya no se requiere justificación de volteo para este proyecto.",
+          "saveError": "Error al actualizar la configuración de justificación de volteo."
+        },
+        "editWindow": {
+          "label": "Ventana de edición de resultados",
+          "description": "¿Cuánto tiempo después de registrar un resultado aún se puede editar directamente? Una vez que se cierra la ventana, las correcciones requieren un nuevo intento. Los administradores del sistema siempre pueden editar.",
+          "modeInherit": "Heredar la configuración predeterminada del sistema",
+          "modeDisable": "Deshabilitar la edición para este proyecto.",
+          "modeCustom": "Ventana personalizada",
+          "minutesLabel": "Editable durante (minutos)",
+          "systemMaxHint": "Máximo del sistema: {minutes} minutos",
+          "systemLockedTitle": "La edición está deshabilitada en todo el sistema.",
+          "systemLockedDescription": "Un administrador del sistema ha deshabilitado la edición de resultados en tiempo real para todos los proyectos, por lo que este proyecto no puede habilitarla.",
+          "invalidMinutes": "Introduzca un número de minutos mayor que cero.",
+          "save": "Guardar ventana de edición",
+          "savedToast": "Se ha actualizado la ventana de edición para este proyecto.",
+          "saveError": "No se pudo actualizar la configuración de la ventana de edición."
         }
       }
     },
@@ -2090,7 +2118,7 @@
       "editDescription": "Haga cambios en el resultado de la Sesión y haga clic en guardar cuando haya terminado.",
       "details": "Introduzca los detalles sobre el resultado aquí...",
       "noResults": "Aún no se han añadido resultados.",
-      "noNotes": "No se han añadido notas para este resultado.",
+      "noNotes": "No se han añadido detalles de los resultados.",
       "deleteSuccess": "Resultado de la sesión eliminado correctamente",
       "deleteError": "No se pudo eliminar el resultado de la sesión",
       "updateSuccess": "Resultado de la sesión actualizado correctamente",
@@ -4405,6 +4433,18 @@
     },
     "statuses": {
       "description": "Administrar estados de prueba",
+      "editPolicy": {
+        "title": "Política de edición de resultados",
+        "description": "Controla cuánto tiempo después de registrar un resultado se puede editar directamente en todos los proyectos. Los proyectos pueden ajustar este límite en su configuración avanzada, pero nunca modificarlo. Los administradores del sistema siempre pueden editarlo.",
+        "modeNone": "Sin restricciones (los proyectos deciden)",
+        "modeDisabled": "Deshabilitar la edición en todas partes",
+        "modeMax": "Permitir la edición hasta una ventana máxima",
+        "minutesLabel": "Ventana máxima (minutos)",
+        "invalidMinutes": "Introduzca un número de minutos mayor que cero.",
+        "save": "Política de ahorro",
+        "savedToast": "Se ha actualizado la política de edición de resultados.",
+        "saveError": "No se pudo actualizar la política de edición de resultados."
+      },
       "add": {
         "button": "Añadir estado",
         "title": "Añadir nuevo estado",

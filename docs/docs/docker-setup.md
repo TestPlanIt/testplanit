@@ -34,19 +34,21 @@ The Docker Compose setup starts these containerized services:
   | **Building**             | 24GB    | 24GB+       | Required during initial build and updates  |
   | **Running (Full Stack)** | 7GB     | 11GB        | All services combined                      |
 
-  **Memory-constrained systems:** Allocate 24GB to Docker for building, then reduce to 7-11GB for running after build completes.
+  **Memory-constrained systems:** Allocate 24GB to Docker for building, then reduce to 7-12GB for running after build completes.
 
   **Per-service breakdown (running):**
 
   | Service                | Minimum  | Recommended |
   | ------------------------ | ---------- | ------------- |
   | TestPlanIt Application | 3GB      | 4GB         |
-  | Background Workers     | 512MB    | 1GB         |
+  | Background Workers     | 512MB    | 2GB         |
   | PostgreSQL             | 1GB      | 2GB         |
   | Elasticsearch          | 2GB      | 3GB         |
   | MinIO                  | 512MB    | 1GB         |
   | Valkey (Redis)         | 32MB     | 64MB        |
-  | **Total**              | **~7GB** | **~11GB**   |
+  | **Total**              | **~7GB** | **~12GB**   |
+
+  The Background Workers figure is steady-state for the whole fleet; individual workers restart at higher ceilings under load (the forecast worker at 2GB, the webhook workers at 3GB each). See the [worker memory tiers](./background-processes.md) for the per-worker breakdown.
 
 - 25GB+ disk space for data and images
 

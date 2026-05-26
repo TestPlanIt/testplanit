@@ -49,15 +49,18 @@ import { toast } from "sonner";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { notifyTestCaseAssignment } from "~/app/actions/test-run-notifications";
 import { emptyEditorContent } from "~/app/constants";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useFindFirstRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import {
   useFindFirstWorkflows,
   useFindManyStatus,
+  useFindManyTemplateResultAssignment,
   useUpdateTestRunCases,
 } from "~/lib/hooks";
 import { useFindManyTemplates } from "~/lib/hooks/templates";
 import {
+  isJustificationRequiredSubmitResultError,
   isPermissionDeniedSubmitResultError,
   submitTestRunResult,
 } from "~/lib/test-run-result-submit";
@@ -136,6 +139,13 @@ export function TestRunCaseDetails({
   );
   const [showAddResultModal, setShowAddResultModal] = useState(false);
   const [selectedStatusId, setSelectedStatusId] = useState<string>();
+  // True when the modal was opened by a required-field escalation, so it can
+  // validate on open and surface the required field.
+  const [escalatedForRequiredField, setEscalatedForRequiredField] =
+    useState(false);
+  // True when the modal was opened because a quick flip was rejected for
+  // missing justification, so it shows the justification error on open.
+  const [flipErrorOnOpen, setFlipErrorOnOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [_showAssignModal, _setShowAssignModal] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
@@ -400,6 +410,23 @@ export function TestRunCaseDetails({
     isLoading: boolean;
   };
 
+  // Does this case's template require a result field? Quick-pass / quick-status
+  // can't capture one, so when it does we escalate to the full Add Result modal
+  // (which captures the field) rather than letting submit-result reject it.
+  const { data: requiredResultFieldAssignments } =
+    useFindManyTemplateResultAssignment(
+      {
+        where: {
+          templateId: testcase?.template?.id,
+          resultField: { isRequired: true, isEnabled: true, isDeleted: false },
+        },
+        take: 1,
+      },
+      { enabled: !!testcase?.template?.id }
+    );
+  const hasRequiredResultField =
+    (requiredResultFieldAssignments?.length ?? 0) > 0;
+
   const { data: _templates } = useFindManyTemplates({
     where: {
       isDeleted: false,
@@ -476,6 +503,8 @@ export function TestRunCaseDetails({
   const handleAddResultModalClose = () => {
     setShowAddResultModal(false);
     setSelectedStatusId(undefined);
+    setEscalatedForRequiredField(false);
+    setFlipErrorOnOpen(false);
   };
 
   const hasColor = (
@@ -508,9 +537,7 @@ export function TestRunCaseDetails({
     if (fieldType === "Text Long" && typeof fieldValue === "string") {
       try {
         const parsedContent = JSON.parse(fieldValue);
-        const isEmptyEditor =
-          JSON.stringify(parsedContent) === JSON.stringify(emptyEditorContent);
-        if (isEmptyEditor) {
+        if (isTiptapEmpty(parsedContent)) {
           return false;
         }
       } catch {
@@ -544,18 +571,22 @@ export function TestRunCaseDetails({
     )
       return;
 
+    if (!successStatus) {
+      toast.error(tCommon("errors.noSuccessStatus"));
+      return;
+    }
+
+    // Quick-pass can't capture a required result field, so escalate to the
+    // full Add Result modal (pre-set to the success status) when one exists.
+    if (hasRequiredResultField) {
+      setEscalatedForRequiredField(true);
+      handleStatusChange(successStatus.id.toString());
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      // Find the success status
-      const successStatus = statuses?.find(
-        (status) => status.isSuccess === true
-      );
-      if (!successStatus) {
-        toast.error(tCommon("errors.noSuccessStatus"));
-        return;
-      }
-
       await submitTestRunResult({
         testRunId,
         testRunCaseId,
@@ -600,6 +631,12 @@ export function TestRunCaseDetails({
         toast.error(tCommon("errors.accessDenied"), {
           description: tCommon("errors.resultSubmitPermissionDenied"),
         });
+      } else if (isJustificationRequiredSubmitResultError(error)) {
+        // Open the full modal pre-set to this status with the justification
+        // error shown inline, so the tester can add Result Details and resubmit.
+        setSelectedStatusId(successStatus.id.toString());
+        setFlipErrorOnOpen(true);
+        setShowAddResultModal(true);
       } else {
         toast.error(tCommon("errors.error"), {
           description: tCommon("errors.somethingWentWrong"),
@@ -709,7 +746,11 @@ export function TestRunCaseDetails({
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setShowAddResultModal(true)}
+                    onClick={() => {
+                      setEscalatedForRequiredField(false);
+                      setFlipErrorOnOpen(false);
+                      setShowAddResultModal(true);
+                    }}
                     disabled={isDisabled}
                     className="flex items-center"
                   >
@@ -753,6 +794,15 @@ export function TestRunCaseDetails({
                                 !testcase?.currentVersion
                               )
                                 return;
+
+                              // Quick-status can't capture a required result
+                              // field; escalate to the full Add Result modal
+                              // (pre-set to this status) when one exists.
+                              if (hasRequiredResultField) {
+                                setEscalatedForRequiredField(true);
+                                handleStatusChange(status.id.toString());
+                                return;
+                              }
 
                               setIsSubmitting(true);
 
@@ -810,6 +860,16 @@ export function TestRunCaseDetails({
                                       "errors.resultSubmitPermissionDenied"
                                     ),
                                   });
+                                } else if (
+                                  isJustificationRequiredSubmitResultError(
+                                    error
+                                  )
+                                ) {
+                                  // Open the full modal pre-set to this status
+                                  // with the justification error shown inline.
+                                  setSelectedStatusId(status.id.toString());
+                                  setFlipErrorOnOpen(true);
+                                  setShowAddResultModal(true);
                                 } else {
                                   toast.error(tCommon("errors.error"), {
                                     description: tCommon(
@@ -1140,14 +1200,7 @@ export function TestRunCaseDetails({
                   ) {
                     try {
                       const parsedContent = JSON.parse(value);
-                      // Check if it's an empty Text Long field (has only one paragraph with no content)
-                      if (
-                        parsedContent.type === "doc" &&
-                        parsedContent.content?.length === 1 &&
-                        parsedContent.content[0].type === "paragraph" &&
-                        (!parsedContent.content[0].content ||
-                          parsedContent.content[0].content.length === 0)
-                      ) {
+                      if (isTiptapEmpty(parsedContent)) {
                         return true;
                       }
                     } catch {
@@ -1236,6 +1289,8 @@ export function TestRunCaseDetails({
           caseName={testcase.name}
           projectId={projectId}
           defaultStatusId={selectedStatusId || successStatus?.id?.toString()}
+          validateOnOpen={escalatedForRequiredField}
+          flipJustificationError={flipErrorOnOpen}
           steps={testcase.steps}
           configuration={testcase.testRuns?.[0]?.testRun?.configuration}
           iterationId={activeIterationId}

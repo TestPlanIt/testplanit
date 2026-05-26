@@ -303,4 +303,59 @@ test.describe("Test Case Execution", () => {
       }
     }
   });
+
+  test("Pass & Next escalates to the Add Result modal when a required result field exists", async ({
+    api,
+    page,
+  }) => {
+    const ts = Date.now();
+    const projectId = await api.createProject(`E2E Required Escalate ${ts}`);
+    const folderId = await api.createFolder(projectId, `Escalate Folder ${ts}`);
+
+    // A required result field on the template the case uses. Quick-pass can't
+    // capture it, so clicking Pass & Next should open the full modal instead
+    // of silently being rejected by the server.
+    const resultFieldId = await api.createResultField({
+      displayName: `Escalate Reason ${ts}`,
+      systemName: `escalate_reason_${ts}`,
+      typeName: "Text String",
+      isRequired: true,
+    });
+    const templateId = await api.createTemplate({
+      name: `Escalate Template ${ts}`,
+      projectIds: [projectId],
+    });
+    await api.assignResultFieldToTemplate(templateId, resultFieldId);
+
+    const caseId = await api.createTestCase(
+      projectId,
+      folderId,
+      `Escalate Case ${ts}`,
+      templateId
+    );
+    const runId = await api.createTestRun(projectId, `Escalate Run ${ts}`);
+    await api.addTestCaseToTestRun(runId, caseId);
+
+    await page.goto(
+      `/en-US/projects/runs/${projectId}/${runId}?selectedCase=${caseId}`
+    );
+    await page.waitForLoadState("load");
+    await page.waitForTimeout(2000);
+
+    const sheet = page.locator(".test-run-details-sheet");
+    await expect(sheet).toBeVisible({ timeout: 15000 });
+
+    const passButton = sheet.locator('button:has-text("Pass")').first();
+    await expect(passButton).toBeVisible({ timeout: 10000 });
+    await passButton.click();
+
+    // Escalation: the Add Result modal opens (a plain quick-pass shows only a
+    // toast and never a dialog), and it surfaces the required field. The
+    // case-details sheet is also role="dialog", so scope to the Add Result one.
+    const dialog = page.getByRole("dialog", { name: "Add Result" });
+    await expect(dialog).toBeVisible({ timeout: 10000 });
+    await expect(
+      dialog.locator(`text="Escalate Reason ${ts}"`).first()
+    ).toBeVisible({ timeout: 10000 });
+  });
 });

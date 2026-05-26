@@ -357,7 +357,9 @@
         "edit_results_duration": "Edit Results Duration",
         "project_docs_default": "Project Docs Default",
         "notificationSettings": "Notification Global Setting",
-        "elasticsearch_replicas": "Elasticsearch Replicas"
+        "elasticsearch_replicas": "Elasticsearch Replicas",
+        "review_feature_enabled": "Review and Approvals Enabled",
+        "review_reminder_threshold_days": "Remind Reviewers Threshold Days"
       },
       "options": {
         "label": "Label",
@@ -617,6 +619,10 @@
       "failedToDeleteRepository": "Failed to delete repository",
       "permissionDenied": "You do not have permission to access this page.",
       "resultSubmitPermissionDenied": "You can’t submit results for this case. Ask a project admin to assign it to you.",
+      "justificationRequired": "Justification required",
+      "justificationRequiredDescription": "Flipping a completed result to a different outcome requires Result Details explaining the change.",
+      "requiredFieldMissing": "A required result field is missing a value.",
+      "editWindowExpired": "This result's edit window has closed. Record a new attempt instead.",
       "noModelsFound": "No models found",
       "failedToFetchModels": "Failed to fetch models",
       "failedToCopyToClipboard": "Failed to copy to clipboard",
@@ -1829,6 +1835,28 @@
           "saveError": "Failed to update review workflow setting",
           "systemDisabledTitle": "Review workflow is off system-wide",
           "systemDisabledDescription": "Your project's preference is saved, but nothing will be gated until a system administrator turns the feature on under Administration → Workflows."
+        },
+        "flipJustification": {
+          "label": "Require justification on result flip",
+          "description": "When enabled, recording a result that flips a completed outcome (e.g. Passed to Failed) requires Result Details explaining the change.",
+          "enabledToast": "Flip justification required for this project",
+          "disabledToast": "Flip justification no longer required for this project",
+          "saveError": "Failed to update flip justification setting"
+        },
+        "editWindow": {
+          "label": "Result edit window",
+          "description": "How long after a result is recorded it can still be edited in place. After the window closes, corrections require a new attempt. System administrators can always edit.",
+          "modeInherit": "Inherit system default",
+          "modeDisable": "Disable editing for this project",
+          "modeCustom": "Custom window",
+          "minutesLabel": "Editable for (minutes)",
+          "systemMaxHint": "System maximum: {minutes} minutes",
+          "systemLockedTitle": "Editing is disabled system-wide",
+          "systemLockedDescription": "A system administrator has disabled in-place result editing for all projects, so this project cannot enable it.",
+          "invalidMinutes": "Enter a number of minutes greater than zero",
+          "save": "Save edit window",
+          "savedToast": "Edit window updated for this project",
+          "saveError": "Failed to update the edit window setting"
         }
       }
     },
@@ -2090,7 +2118,7 @@
       "editDescription": "Make changes to the Session result and click save when done.",
       "details": "Enter details about the result here...",
       "noResults": "No results have been added yet.",
-      "noNotes": "No notes added for this result.",
+      "noNotes": "No result details have been added.",
       "deleteSuccess": "Session result deleted successfully",
       "deleteError": "Failed to delete Session result",
       "updateSuccess": "Session result updated successfully",
@@ -4405,6 +4433,18 @@
     },
     "statuses": {
       "description": "Manage test statuses",
+      "editPolicy": {
+        "title": "Result editing policy",
+        "description": "Control how long after a result is recorded it can still be edited in place, across all projects. Projects can tighten this in their Advanced settings but never loosen it. System administrators can always edit.",
+        "modeNone": "No restriction (projects decide)",
+        "modeDisabled": "Disable editing everywhere",
+        "modeMax": "Allow editing up to a maximum window",
+        "minutesLabel": "Maximum window (minutes)",
+        "invalidMinutes": "Enter a number of minutes greater than zero",
+        "save": "Save policy",
+        "savedToast": "Result editing policy updated",
+        "saveError": "Failed to update the result editing policy"
+      },
       "add": {
         "button": "Add Status",
         "title": "Add New Status",

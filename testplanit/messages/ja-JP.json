@@ -357,7 +357,9 @@
         "edit_results_duration": "結果の期間を編集",
         "project_docs_default": "プロジェクトドキュメントのデフォルト",
         "notificationSettings": "通知のグローバル設定",
-        "elasticsearch_replicas": "Elasticsearchレプリカ"
+        "elasticsearch_replicas": "Elasticsearchレプリカ",
+        "review_feature_enabled": "レビューと承認が有効になりました",
+        "review_reminder_threshold_days": "レビュー担当者に期限日数を思い出させる"
       },
       "options": {
         "label": "ラベル",
@@ -617,6 +619,10 @@
       "failedToDeleteRepository": "リポジトリの削除に失敗しました",
       "permissionDenied": "このページにアクセスする権限がありません。",
       "resultSubmitPermissionDenied": "この案件については、結果を提出できません。プロジェクト管理者に依頼して、あなたに割り当ててもらってください。",
+      "justificationRequired": "正当化が必要",
+      "justificationRequiredDescription": "完了した結果を別の結果に変更するには、変更内容を説明する結果の詳細が必要です。",
+      "requiredFieldMissing": "必須項目である結果フィールドに値が入力されていません。",
+      "editWindowExpired": "この結果の編集ウィンドウは閉じました。代わりに新しい試行を記録してください。",
       "noModelsFound": "モデルが見つかりません",
       "failedToFetchModels": "モデルの取得に失敗しました",
       "failedToCopyToClipboard": "クリップボードへのコピーに失敗しました",
@@ -1829,6 +1835,28 @@
           "saveError": "レビューワークフロー設定の更新に失敗しました",
           "systemDisabledTitle": "レビューワークフローがシステム全体で停止しています",
           "systemDisabledDescription": "プロジェクトの設定は保存されますが、システム管理者が「管理」→「ワークフロー」でこの機能を有効にするまでは、何も制限されません。"
+        },
+        "flipJustification": {
+          "label": "結果反転の正当化が必要",
+          "description": "有効にすると、完了した結果を反転させる結果（例：合格から不合格へ）を記録する場合、変更内容を説明する結果の詳細が必要になります。",
+          "enabledToast": "このプロジェクトには反転の正当性が必要です",
+          "disabledToast": "このプロジェクトでは反転の正当化は不要になりました",
+          "saveError": "反転位置合わせ設定の更新に失敗しました"
+        },
+        "editWindow": {
+          "label": "結果編集ウィンドウ",
+          "description": "結果が記録されてから一定期間内であれば、その場で編集できます。期間が終了すると、修正には再入力が必要になります。システム管理者はいつでも編集できます。",
+          "modeInherit": "システムデフォルトを継承する",
+          "modeDisable": "このプロジェクトの編集を無効にする",
+          "modeCustom": "カスタムウィンドウ",
+          "minutesLabel": "編集可能時間（分）",
+          "systemMaxHint": "システム最大: {minutes} 分",
+          "systemLockedTitle": "システム全体で編集が無効になっています",
+          "systemLockedDescription": "システム管理者がすべてのプロジェクトでインプレース結果編集を無効にしているため、このプロジェクトでは有効にできません。",
+          "invalidMinutes": "0より大きい分数を入力してください",
+          "save": "保存編集ウィンドウ",
+          "savedToast": "このプロジェクトの編集ウィンドウが更新されました。",
+          "saveError": "編集ウィンドウの設定の更新に失敗しました"
         }
       }
     },
@@ -2090,7 +2118,7 @@
       "editDescription": "セッション結果に変更を加え、完了したら「保存」をクリックします。",
       "details": "結果の詳細をここに入力してください...",
       "noResults": "まだ結果が追加されていません。",
-      "noNotes": "この結果に対してメモは追加されていません。",
+      "noNotes": "結果の詳細は追加されていません。",
       "deleteSuccess": "セッション結果が正常に削除されました",
       "deleteError": "セッション結果の削除に失敗しました",
       "updateSuccess": "セッション結果が正常に更新されました",
@@ -4405,6 +4433,18 @@
     },
     "statuses": {
       "description": "テストステータスの管理",
+      "editPolicy": {
+        "title": "結果編集ポリシー",
+        "description": "結果が記録された後、その場で編集できる期間を、すべてのプロジェクトで制御できます。プロジェクトの詳細設定でこの制限を厳しくすることはできますが、緩めることはできません。システム管理者はいつでも編集できます。",
+        "modeNone": "制限なし（プロジェクト次第）",
+        "modeDisabled": "編集をあらゆる場所で無効にする",
+        "modeMax": "最大ウィンドウまでの編集を許可する",
+        "minutesLabel": "最大ウィンドウサイズ（分）",
+        "invalidMinutes": "0より大きい分数を入力してください",
+        "save": "保存ポリシー",
+        "savedToast": "結果編集ポリシーが更新されました",
+        "saveError": "結果編集ポリシーの更新に失敗しました"
+      },
       "add": {
         "button": "ステータスを追加",
         "title": "新しいステータスを追加",

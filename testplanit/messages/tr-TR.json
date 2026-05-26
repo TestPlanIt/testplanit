@@ -357,7 +357,9 @@
         "edit_results_duration": "Sonuçları Düzenle Süre",
         "project_docs_default": "Proje Belgeleri Varsayılan",
         "notificationSettings": "Bildirim Genel Ayarı",
-        "elasticsearch_replicas": "Elasticsearch Replikaları"
+        "elasticsearch_replicas": "Elasticsearch Replikaları",
+        "review_feature_enabled": "İnceleme ve Onaylar Etkinleştirildi",
+        "review_reminder_threshold_days": "Değerlendiricilere Eşik Günlerini Hatırlatın"
       },
       "options": {
         "label": "Etiket",
@@ -617,6 +619,10 @@
       "failedToDeleteRepository": "Depoyu silme işlemi başarısız oldu.",
       "permissionDenied": "Bu sayfaya erişim izniniz yok.",
       "resultSubmitPermissionDenied": "Bu vaka için sonuçları gönderemezsiniz. Lütfen bir proje yöneticisinden size atamasını isteyin.",
+      "justificationRequired": "Gerekçe gerekli",
+      "justificationRequiredDescription": "Tamamlanmış bir sonucu farklı bir sonuca dönüştürmek için, değişikliği açıklayan Sonuç Ayrıntıları gereklidir.",
+      "requiredFieldMissing": "Gerekli sonuç alanlarından birinde değer eksik.",
+      "editWindowExpired": "Bu sonucun düzenleme penceresi kapandı. Bunun yerine yeni bir deneme kaydedin.",
       "noModelsFound": "Hiçbir model bulunamadı.",
       "failedToFetchModels": "Modeller alınamadı.",
       "failedToCopyToClipboard": "Panoya kopyalama başarısız oldu.",
@@ -1829,6 +1835,28 @@
           "saveError": "İnceleme iş akışı ayarı güncellenemedi.",
           "systemDisabledTitle": "İnceleme iş akışı sistem genelinde devre dışı.",
           "systemDisabledDescription": "Projenizin tercihi kaydedilir, ancak sistem yöneticisi Yönetim → İş Akışları altında bu özelliği etkinleştirene kadar hiçbir şey kilitlenmeyecektir."
+        },
+        "flipJustification": {
+          "label": "Sonuç değişikliğine ilişkin gerekçe talep edin.",
+          "description": "Etkinleştirildiğinde, tamamlanmış bir sonucu tersine çeviren bir sonucu kaydetmek (örneğin, Başarılı'dan Başarısız'a) değişikliği açıklayan Sonuç Ayrıntıları gerektirir.",
+          "enabledToast": "Bu proje için ters yüz etme gerekçesi gereklidir.",
+          "disabledToast": "Bu proje için artık ters çevirme gerekçelendirmesine gerek yok.",
+          "saveError": "Sayfa hizalama ayarını güncelleme başarısız oldu."
+        },
+        "editWindow": {
+          "label": "Sonuç düzenleme penceresi",
+          "description": "Sonuç kaydedildikten ne kadar süre sonra hala yerinde düzenleme yapılabilir? Pencere kapandıktan sonra düzeltmeler için yeni bir deneme gerekir. Sistem yöneticileri her zaman düzenleme yapabilir.",
+          "modeInherit": "Sistem varsayılanını devral",
+          "modeDisable": "Bu proje için düzenlemeyi devre dışı bırak.",
+          "modeCustom": "Özel pencere",
+          "minutesLabel": "(Dakika) süreyle düzenlenebilir.",
+          "systemMaxHint": "Sistem maksimumu: {minutes} dakika",
+          "systemLockedTitle": "Düzenleme sistem genelinde devre dışı bırakıldı.",
+          "systemLockedDescription": "Sistem yöneticisi tüm projeler için yerinde sonuç düzenleme özelliğini devre dışı bıraktığı için bu proje bu özelliği etkinleştiremez.",
+          "invalidMinutes": "Sıfırdan büyük bir dakika sayısı girin.",
+          "save": "Kaydet düzenleme penceresi",
+          "savedToast": "Bu proje için düzenleme penceresi güncellendi.",
+          "saveError": "Düzenleme penceresi ayarlarını güncelleme başarısız oldu."
         }
       }
     },
@@ -2090,7 +2118,7 @@
       "editDescription": "Oturum sonucunda değişiklikler yapın ve işiniz bittiğinde kaydet'e tıklayın.",
       "details": "Sonuçla ilgili ayrıntıları buraya girin...",
       "noResults": "Henüz hiçbir sonuç eklenmedi.",
-      "noNotes": "Bu sonuç için herhangi bir not eklenmedi.",
+      "noNotes": "Henüz sonuç detayları eklenmedi.",
       "deleteSuccess": "Oturum sonucu başarıyla silindi.",
       "deleteError": "Oturum sonucunu silme işlemi başarısız oldu.",
       "updateSuccess": "Oturum sonucu başarıyla güncellendi.",
@@ -4405,6 +4433,18 @@
     },
     "statuses": {
       "description": "Test durumlarını yönetin",
+      "editPolicy": {
+        "title": "Sonuç düzenleme politikası",
+        "description": "Sonuç kaydedildikten sonra ne kadar süre geçtiğini kontrol edin; sonuç tüm projelerde yerinde düzenlenebilir. Projeler bunu Gelişmiş ayarlarından sıkılaştırabilir ancak asla gevşetemezler. Sistem yöneticileri her zaman düzenleme yapabilir.",
+        "modeNone": "Herhangi bir kısıtlama yok (projeler karar verir)",
+        "modeDisabled": "Her yerde düzenlemeyi devre dışı bırak",
+        "modeMax": "Düzenlemeye maksimum pencere boyutuna kadar izin verin.",
+        "minutesLabel": "Maksimum süre (dakika)",
+        "invalidMinutes": "Sıfırdan büyük bir dakika sayısı girin.",
+        "save": "Kaydetme politikası",
+        "savedToast": "Sonuç düzenleme politikası güncellendi",
+        "saveError": "Sonuç düzenleme politikası güncellenemedi."
+      },
       "add": {
         "button": "Durum Ekle",
         "title": "Yeni Durum Ekle",

@@ -357,7 +357,9 @@
         "edit_results_duration": "编辑结果持续时间",
         "project_docs_default": "项目文档默认",
         "notificationSettings": "通知全局设置",
-        "elasticsearch_replicas": "Elasticsearch 副本"
+        "elasticsearch_replicas": "Elasticsearch 副本",
+        "review_feature_enabled": "已启用审核和批准功能",
+        "review_reminder_threshold_days": "提醒审稿人阈值日"
       },
       "options": {
         "label": "标签",
@@ -617,6 +619,10 @@
       "failedToDeleteRepository": "删除存储库失败",
       "permissionDenied": "您没有权限访问此页面。",
       "resultSubmitPermissionDenied": "您无法提交此案例的结果。请联系项目管理员将其分配给您。",
+      "justificationRequired": "需要提供理由",
+      "justificationRequiredDescription": "将已完成的结果更改为不同的结果需要结果详情来解释更改。",
+      "requiredFieldMissing": "必填结果字段缺少值。",
+      "editWindowExpired": "此结果的编辑窗口已关闭。请重新录制一次。",
       "noModelsFound": "未找到模型",
       "failedToFetchModels": "获取模型失败",
       "failedToCopyToClipboard": "复制到剪贴板失败",
@@ -1829,6 +1835,28 @@
           "saveError": "更新审核工作流程设置失败",
           "systemDisabledTitle": "全系统审核工作流程已关闭。",
           "systemDisabledDescription": "您的项目偏好设置已保存，但只有在系统管理员在“管理”→“工作流”下启用该功能后，才会启用任何功能。"
+        },
+        "flipJustification": {
+          "label": "需要对结果反转做出解释",
+          "description": "启用此功能后，记录将已完成结果翻转的结果（例如，从“通过”变为“失败”）需要结果详细信息来解释更改。",
+          "enabledToast": "本项目需要翻转理由。",
+          "disabledToast": "本项目不再需要翻转理由说明",
+          "saveError": "更新翻转对齐设置失败"
+        },
+        "editWindow": {
+          "label": "结果编辑窗口",
+          "description": "结果记录后，仍可在一段时间内进行编辑。窗口关闭后，修改需要重新尝试。系统管理员始终可以进行编辑。",
+          "modeInherit": "继承系统默认值",
+          "modeDisable": "禁用此项目的编辑功能",
+          "modeCustom": "自定义窗口",
+          "minutesLabel": "可编辑时长（分钟）",
+          "systemMaxHint": "系统最大值： {minutes} 分钟",
+          "systemLockedTitle": "系统范围内已禁用编辑功能",
+          "systemLockedDescription": "系统管理员已禁用所有项目的就地结果编辑功能，因此本项目无法启用该功能。",
+          "invalidMinutes": "请输入大于零的分钟数。",
+          "save": "保存编辑窗口",
+          "savedToast": "已更新此项目的编辑窗口",
+          "saveError": "更新编辑窗口设置失败"
         }
       }
     },
@@ -2090,7 +2118,7 @@
       "editDescription": "对会话结果进行更改，完成后点击保存。",
       "details": "请在此处输入结果详情……",
       "noResults": "目前还没有结果。",
-      "noNotes": "此结果未添加任何备注。",
+      "noNotes": "尚未添加结果详情。",
       "deleteSuccess": "会话结果已成功删除",
       "deleteError": "删除会话结果失败",
       "updateSuccess": "会话结果已成功更新",
@@ -4405,6 +4433,18 @@
     },
     "statuses": {
       "description": "管理测试状态",
+      "editPolicy": {
+        "title": "结果编辑政策",
+        "description": "控制结果记录后多长时间内仍可进行原地编辑，此限制适用于所有项目。项目可以在其高级设置中收紧此限制，但无法放宽。系统管理员始终可以进行编辑。",
+        "modeNone": "无限制（项目决定）",
+        "modeDisabled": "禁用所有编辑功能",
+        "modeMax": "允许在最大窗口范围内编辑",
+        "minutesLabel": "最大窗口期（分钟）",
+        "invalidMinutes": "请输入大于零的分钟数。",
+        "save": "保存策略",
+        "savedToast": "结果编辑政策已更新",
+        "saveError": "更新结果编辑策略失败"
+      },
       "add": {
         "button": "添加状态",
         "title": "添加新状态",
