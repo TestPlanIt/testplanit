@@ -1,3 +1,9 @@
+## [0.31.0](https://github.com/TestPlanIt/testplanit/compare/v0.30.0...v0.31.0) (2026-05-26)
+
+### Features
+
+* **test-runs:** server-enforced result governance — required fields, edit window & flip justification ([#348](https://github.com/TestPlanIt/testplanit/issues/348)) ([715a831](https://github.com/TestPlanIt/testplanit/commit/715a831170379ec8d40089a3d0511abf649c340a))
+
 ## [0.30.0](https://github.com/TestPlanIt/testplanit/compare/v0.29.10...v0.30.0) (2026-05-25)
 
 ### Features
