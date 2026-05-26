@@ -620,7 +620,7 @@
       "permissionDenied": "Non hai l'autorizzazione per accedere a questa pagina.",
       "resultSubmitPermissionDenied": "Non puoi inviare i risultati per questo caso. Chiedi a un amministratore di progetto di assegnartelo.",
       "justificationRequired": "È richiesta una giustificazione.",
-      "justificationRequiredDescription": "Modificare un risultato già ottenuto richiede una nota che spieghi la modifica.",
+      "justificationRequiredDescription": "Per modificare un risultato già completato, è necessario specificare i dettagli del risultato, spiegando la modifica.",
       "noModelsFound": "Nessun modello trovato",
       "failedToFetchModels": "Impossibile recuperare i modelli",
       "failedToCopyToClipboard": "Impossibile copiare negli appunti",
@@ -1836,7 +1836,7 @@
         },
         "flipJustification": {
           "label": "Richiedere una giustificazione per il ribaltamento del risultato",
-          "description": "Quando questa opzione è abilitata, la registrazione di un risultato che inverte un esito già completato (ad esempio, da Superato a Non superato) richiede una nota che spieghi la modifica.",
+          "description": "Quando questa opzione è abilitata, la registrazione di un risultato che inverte un esito già completato (ad esempio, da Superato a Non superato) richiede che i Dettagli del risultato spieghino la modifica.",
           "enabledToast": "Per questo progetto è necessaria la giustificazione del capovolgimento.",
           "disabledToast": "Per questo progetto non è più necessaria la giustificazione del capovolgimento.",
           "saveError": "Impossibile aggiornare l'impostazione di allineamento capovolgimento"
@@ -2116,7 +2116,7 @@
       "editDescription": "Apportare modifiche al risultato della sessione e fare clic su Salva al termine.",
       "details": "Inserisci qui i dettagli sul risultato...",
       "noResults": "Non sono ancora stati aggiunti risultati.",
-      "noNotes": "Nessuna nota aggiunta per questo risultato.",
+      "noNotes": "Non sono stati aggiunti dettagli sui risultati.",
       "deleteSuccess": "Risultato della sessione eliminato con successo",
       "deleteError": "Impossibile eliminare il risultato della sessione",
       "updateSuccess": "Risultato della sessione aggiornato con successo",

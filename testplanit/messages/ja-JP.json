@@ -620,7 +620,7 @@
       "permissionDenied": "このページにアクセスする権限がありません。",
       "resultSubmitPermissionDenied": "この案件については、結果を提出できません。プロジェクト管理者に依頼して、あなたに割り当ててもらってください。",
       "justificationRequired": "正当化が必要",
-      "justificationRequiredDescription": "完了した結果を別の結果に変更するには、変更内容を説明するメモが必要です。",
+      "justificationRequiredDescription": "完了した結果を別の結果に変更するには、変更内容を説明する結果の詳細が必要です。",
       "noModelsFound": "モデルが見つかりません",
       "failedToFetchModels": "モデルの取得に失敗しました",
       "failedToCopyToClipboard": "クリップボードへのコピーに失敗しました",
@@ -1836,7 +1836,7 @@
         },
         "flipJustification": {
           "label": "結果反転の正当化が必要",
-          "description": "有効にすると、完了した結果を反転させる結果（例：合格から不合格へ）を記録する場合、変更内容を説明するメモが必要になります。",
+          "description": "有効にすると、完了した結果を反転させる結果（例：合格から不合格へ）を記録する場合、変更内容を説明する結果の詳細が必要になります。",
           "enabledToast": "このプロジェクトには反転の正当性が必要です",
           "disabledToast": "このプロジェクトでは反転の正当化は不要になりました",
           "saveError": "反転位置合わせ設定の更新に失敗しました"
@@ -2116,7 +2116,7 @@
       "editDescription": "セッション結果に変更を加え、完了したら「保存」をクリックします。",
       "details": "結果の詳細をここに入力してください...",
       "noResults": "まだ結果が追加されていません。",
-      "noNotes": "この結果に対してメモは追加されていません。",
+      "noNotes": "結果の詳細は追加されていません。",
       "deleteSuccess": "セッション結果が正常に削除されました",
       "deleteError": "セッション結果の削除に失敗しました",
       "updateSuccess": "セッション結果が正常に更新されました",

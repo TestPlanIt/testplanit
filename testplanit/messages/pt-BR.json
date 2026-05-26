@@ -620,7 +620,7 @@
       "permissionDenied": "Você não tem permissão para acessar esta página.",
       "resultSubmitPermissionDenied": "Você não pode enviar resultados para este caso. Peça a um administrador do projeto para atribuí-lo a você.",
       "justificationRequired": "Justificativa necessária",
-      "justificationRequiredDescription": "Para inverter um resultado já concluído e transformá-lo em um resultado diferente, é necessário incluir uma nota explicativa sobre a mudança.",
+      "justificationRequiredDescription": "Para inverter um resultado já concluído e transformá-lo em um resultado diferente, é necessário fornecer os Detalhes do Resultado explicando a mudança.",
       "noModelsFound": "Nenhum modelo encontrado",
       "failedToFetchModels": "Falha ao buscar modelos",
       "failedToCopyToClipboard": "Falha ao copiar para a área de transferência",
@@ -1836,7 +1836,7 @@
         },
         "flipJustification": {
           "label": "Exigir justificativa para a inversão do resultado",
-          "description": "Quando ativada, a função de registrar um resultado que inverte um desfecho já concluído (por exemplo, de Aprovado para Reprovado) exige uma nota explicando a mudança.",
+          "description": "Quando ativada, a opção de registrar um resultado que inverte um desfecho concluído (por exemplo, de Aprovado para Reprovado) requer Detalhes do Resultado explicando a mudança.",
           "enabledToast": "É necessária uma justificativa para a inversão deste projeto.",
           "disabledToast": "A justificativa de inversão não é mais necessária para este projeto.",
           "saveError": "Falha ao atualizar a configuração de justificação de inversão"
@@ -2116,7 +2116,7 @@
       "editDescription": "Faça as alterações desejadas no resultado da sessão e clique em Salvar quando terminar.",
       "details": "Insira aqui os detalhes sobre o resultado...",
       "noResults": "Nenhum resultado foi adicionado ainda.",
-      "noNotes": "Nenhuma observação adicional para este resultado.",
+      "noNotes": "Nenhum detalhe sobre os resultados foi adicionado.",
       "deleteSuccess": "Resultado da sessão excluído com sucesso",
       "deleteError": "Falha ao excluir o resultado da sessão",
       "updateSuccess": "Resultado da sessão atualizado com sucesso",

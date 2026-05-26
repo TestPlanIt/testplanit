@@ -620,7 +620,7 @@
       "permissionDenied": "Sie haben keine Berechtigung, auf diese Seite zuzugreifen.",
       "resultSubmitPermissionDenied": "Sie können für diesen Fall keine Ergebnisse einreichen. Bitten Sie einen Projektadministrator, Ihnen den Fall zuzuweisen.",
       "justificationRequired": "Begründung erforderlich",
-      "justificationRequiredDescription": "Wenn ein abgeschlossenes Ergebnis in ein anderes Ergebnis umgewandelt werden soll, ist eine Notiz erforderlich, in der die Änderung erläutert wird.",
+      "justificationRequiredDescription": "Um ein abgeschlossenes Ergebnis in ein anderes Ergebnis umzuwandeln, sind Ergebnisdetails erforderlich, die die Änderung erläutern.",
       "noModelsFound": "Keine Modelle gefunden",
       "failedToFetchModels": "Modelle konnten nicht abgerufen werden",
       "failedToCopyToClipboard": "Fehler beim Kopieren in die Zwischenablage",
@@ -1836,7 +1836,7 @@
         },
         "flipJustification": {
           "label": "Begründung für die Ergebnisumkehr erforderlich",
-          "description": "Wenn diese Option aktiviert ist, muss beim Protokollieren eines Ergebnisses, das ein abgeschlossenes Ergebnis umkehrt (z. B. von Bestanden zu Nicht bestanden), eine Notiz hinzugefügt werden, in der die Änderung erläutert wird.",
+          "description": "Wenn diese Option aktiviert ist, erfordert das Aufzeichnen eines Ergebnisses, das ein abgeschlossenes Ergebnis umkehrt (z. B. von Bestanden zu Nicht bestanden), Ergebnisdetails, die die Änderung erläutern.",
           "enabledToast": "Für dieses Projekt ist eine Flip-Begründung erforderlich.",
           "disabledToast": "Eine Flip-Begründung ist für dieses Projekt nicht mehr erforderlich.",
           "saveError": "Fehler beim Aktualisieren der Einstellung für die Spiegelungsausrichtung"
@@ -2116,7 +2116,7 @@
       "editDescription": "Nehmen Sie die gewünschten Änderungen am Sitzungsergebnis vor und klicken Sie anschließend auf Speichern.",
       "details": "Geben Sie hier Details zum Ergebnis ein...",
       "noResults": "Es wurden noch keine Ergebnisse hinzugefügt.",
-      "noNotes": "Für dieses Ergebnis wurden keine Anmerkungen hinzugefügt.",
+      "noNotes": "Es wurden keine Ergebnisdetails hinzugefügt.",
       "deleteSuccess": "Sitzungsergebnis erfolgreich gelöscht",
       "deleteError": "Sitzungsergebnis konnte nicht gelöscht werden",
       "updateSuccess": "Sitzungsergebnis erfolgreich aktualisiert",

@@ -620,7 +620,7 @@
       "permissionDenied": "No tienes permiso para acceder a esta página.",
       "resultSubmitPermissionDenied": "No puedes enviar los resultados de este caso. Pídele a un administrador del proyecto que te lo asigne.",
       "justificationRequired": "Se requiere justificación",
-      "justificationRequiredDescription": "Si se modifica un resultado ya obtenido para obtener un resultado diferente, es necesario incluir una nota que explique el cambio.",
+      "justificationRequiredDescription": "Para cambiar un resultado ya completado a un resultado diferente, se requieren Detalles del resultado que expliquen el cambio.",
       "noModelsFound": "No se encontraron modelos",
       "failedToFetchModels": "No se pudieron obtener los modelos",
       "failedToCopyToClipboard": "No se pudo copiar al portapapeles.",
@@ -1836,7 +1836,7 @@
         },
         "flipJustification": {
           "label": "Se requiere justificación en caso de cambio de resultado.",
-          "description": "Cuando está habilitada, registrar un resultado que invierte un resultado completado (por ejemplo, de Aprobado a Suspenso) requiere una nota que explique el cambio.",
+          "description": "Cuando está habilitada, registrar un resultado que cambia un resultado completado (por ejemplo, de Aprobado a Suspenso) requiere que los Detalles del Resultado expliquen el cambio.",
           "enabledToast": "Se requiere justificación para invertir este proyecto.",
           "disabledToast": "Ya no se requiere justificación de volteo para este proyecto.",
           "saveError": "Error al actualizar la configuración de justificación de volteo."
@@ -2116,7 +2116,7 @@
       "editDescription": "Haga cambios en el resultado de la Sesión y haga clic en guardar cuando haya terminado.",
       "details": "Introduzca los detalles sobre el resultado aquí...",
       "noResults": "Aún no se han añadido resultados.",
-      "noNotes": "No se han añadido notas para este resultado.",
+      "noNotes": "No se han añadido detalles de los resultados.",
       "deleteSuccess": "Resultado de la sesión eliminado correctamente",
       "deleteError": "No se pudo eliminar el resultado de la sesión",
       "updateSuccess": "Resultado de la sesión actualizado correctamente",

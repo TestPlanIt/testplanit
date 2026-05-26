@@ -620,7 +620,7 @@
       "permissionDenied": "Nie masz uprawnień dostępu do tej strony.",
       "resultSubmitPermissionDenied": "Nie możesz przesłać wyników dla tej sprawy. Poproś administratora projektu o jej przypisanie.",
       "justificationRequired": "Wymagane uzasadnienie",
-      "justificationRequiredDescription": "Aby zmienić zakończony wynik, należy zamieścić notatkę wyjaśniającą zmianę.",
+      "justificationRequiredDescription": "Aby zmienić zakończony wynik na inny, należy zapoznać się ze szczegółami wyniku wyjaśniającymi zmianę.",
       "noModelsFound": "Nie znaleziono modeli",
       "failedToFetchModels": "Nie udało się pobrać modeli",
       "failedToCopyToClipboard": "Nie udało się skopiować do schowka",
@@ -1836,7 +1836,7 @@
         },
         "flipJustification": {
           "label": "Wymagaj uzasadnienia przy odwracaniu wyniku",
-          "description": "Po włączeniu tej opcji zapisanie wyniku, który zmienia wynik zakończony (np. zaliczony na niezaliczony), wymaga notatki wyjaśniającej zmianę.",
+          "description": "Po włączeniu tej opcji zapisanie wyniku, który zamienia wynik zakończony (np. Zaliczony na Niezaliczony), wymaga podania szczegółów wyniku wyjaśniających zmianę.",
           "enabledToast": "W tym projekcie wymagane jest wyrównanie odwrócone",
           "disabledToast": "W tym projekcie wyrównanie odwrócone nie jest już wymagane",
           "saveError": "Nie udało się zaktualizować ustawienia wyrównywania odwrócenia"
@@ -2116,7 +2116,7 @@
       "editDescription": "Wprowadź zmiany w wynikach sesji i po zakończeniu kliknij przycisk Zapisz.",
       "details": "Wprowadź tutaj szczegóły wyniku...",
       "noResults": "Nie dodano jeszcze żadnych wyników.",
-      "noNotes": "Do tego wyniku nie dodano żadnych notatek.",
+      "noNotes": "Nie dodano szczegółów wyników.",
       "deleteSuccess": "Wynik sesji został pomyślnie usunięty",
       "deleteError": "Nie udało się usunąć wyniku sesji",
       "updateSuccess": "Wynik sesji został pomyślnie zaktualizowany",

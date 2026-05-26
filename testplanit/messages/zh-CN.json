@@ -620,7 +620,7 @@
       "permissionDenied": "您没有权限访问此页面。",
       "resultSubmitPermissionDenied": "您无法提交此案例的结果。请联系项目管理员将其分配给您。",
       "justificationRequired": "需要提供理由",
-      "justificationRequiredDescription": "将已完成的结果改为其他结果需要附上说明解释更改原因的注释。",
+      "justificationRequiredDescription": "将已完成的结果更改为不同的结果需要结果详情来解释更改。",
       "noModelsFound": "未找到模型",
       "failedToFetchModels": "获取模型失败",
       "failedToCopyToClipboard": "复制到剪贴板失败",
@@ -1836,7 +1836,7 @@
         },
         "flipJustification": {
           "label": "需要对结果反转做出解释",
-          "description": "启用此功能后，记录将已完成结果翻转的结果（例如，从“通过”变为“失败”）需要添加注释来解释更改。",
+          "description": "启用此功能后，记录将已完成结果翻转的结果（例如，从“通过”变为“失败”）需要结果详细信息来解释更改。",
           "enabledToast": "本项目需要翻转理由。",
           "disabledToast": "本项目不再需要翻转理由说明",
           "saveError": "更新翻转对齐设置失败"
@@ -2116,7 +2116,7 @@
       "editDescription": "对会话结果进行更改，完成后点击保存。",
       "details": "请在此处输入结果详情……",
       "noResults": "目前还没有结果。",
-      "noNotes": "此结果未添加任何备注。",
+      "noNotes": "尚未添加结果详情。",
       "deleteSuccess": "会话结果已成功删除",
       "deleteError": "删除会话结果失败",
       "updateSuccess": "会话结果已成功更新",

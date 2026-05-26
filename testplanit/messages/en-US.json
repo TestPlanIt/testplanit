@@ -620,7 +620,7 @@
       "permissionDenied": "You do not have permission to access this page.",
       "resultSubmitPermissionDenied": "You can’t submit results for this case. Ask a project admin to assign it to you.",
       "justificationRequired": "Justification required",
-      "justificationRequiredDescription": "Flipping a completed result to a different outcome requires a note explaining the change.",
+      "justificationRequiredDescription": "Flipping a completed result to a different outcome requires Result Details explaining the change.",
       "noModelsFound": "No models found",
       "failedToFetchModels": "Failed to fetch models",
       "failedToCopyToClipboard": "Failed to copy to clipboard",
@@ -1836,7 +1836,7 @@
         },
         "flipJustification": {
           "label": "Require justification on result flip",
-          "description": "When enabled, recording a result that flips a completed outcome (e.g. Passed to Failed) requires a note explaining the change.",
+          "description": "When enabled, recording a result that flips a completed outcome (e.g. Passed to Failed) requires Result Details explaining the change.",
           "enabledToast": "Flip justification required for this project",
           "disabledToast": "Flip justification no longer required for this project",
           "saveError": "Failed to update flip justification setting"
@@ -2116,7 +2116,7 @@
       "editDescription": "Make changes to the Session result and click save when done.",
       "details": "Enter details about the result here...",
       "noResults": "No results have been added yet.",
-      "noNotes": "No notes added for this result.",
+      "noNotes": "No result details have been added.",
       "deleteSuccess": "Session result deleted successfully",
       "deleteError": "Failed to delete Session result",
       "updateSuccess": "Session result updated successfully",

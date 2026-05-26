@@ -529,7 +529,7 @@ const StepResultsDisplay = ({
                   {stepResult.notes && !isTiptapEmpty(stepResult.notes) && (
                     <div className="bg-muted/30 rounded-lg p-2">
                       <div className="text-xs text-muted-foreground mb-1">
-                        {tCommon("fields.notes")}
+                        {tCommon("actions.resultDetails")}
                       </div>
                       <TipTapEditor
                         content={stepResult.notes as object}
@@ -672,7 +672,7 @@ const RenderSharedGroupInHistoryList: React.FC<{
             {itemResult?.notes && !isTiptapEmpty(itemResult.notes) && (
               <div className="mt-2 p-2 bg-background rounded-md">
                 <div className="text-xs text-muted-foreground mb-1">
-                  {tCommon("fields.notes")}
+                  {tCommon("actions.resultDetails")}
                 </div>
                 <TipTapEditor
                   content={itemResult.notes as object}

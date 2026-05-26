@@ -620,7 +620,7 @@
       "permissionDenied": "Vous n'êtes pas autorisé à accéder à cette page.",
       "resultSubmitPermissionDenied": "Vous ne pouvez pas soumettre de résultats pour ce dossier. Veuillez demander à un administrateur de projet de vous l'attribuer.",
       "justificationRequired": "Justification requise",
-      "justificationRequiredDescription": "Pour modifier un résultat final, il faut ajouter une note expliquant le changement.",
+      "justificationRequiredDescription": "Pour modifier un résultat final, il est nécessaire de fournir des détails sur le résultat expliquant le changement.",
       "noModelsFound": "Aucun modèle trouvé",
       "failedToFetchModels": "Impossible de récupérer les modèles",
       "failedToCopyToClipboard": "Impossible de copier dans le presse-papiers",
@@ -1836,7 +1836,7 @@
         },
         "flipJustification": {
           "label": "Exiger une justification pour tout changement de résultat",
-          "description": "Lorsque cette option est activée, l'enregistrement d'un résultat qui inverse un résultat déjà validé (par exemple, Réussi à Échec) nécessite une note expliquant le changement.",
+          "description": "Lorsque cette option est activée, l'enregistrement d'un résultat qui inverse un résultat déjà validé (par exemple, Réussi à Échec) nécessite des détails de résultat expliquant le changement.",
           "enabledToast": "Justification du retournement requise pour ce projet",
           "disabledToast": "La justification de retournement n'est plus requise pour ce projet.",
           "saveError": "Échec de la mise à jour du paramètre de justification du retournement"
@@ -2116,7 +2116,7 @@
       "editDescription": "Apportez les modifications nécessaires au résultat de la session, puis cliquez sur Enregistrer une fois terminé.",
       "details": "Veuillez saisir ici les détails du résultat...",
       "noResults": "Aucun résultat n'a encore été ajouté.",
-      "noNotes": "Aucune note ajoutée pour ce résultat.",
+      "noNotes": "Aucun détail de résultat n'a été ajouté.",
       "deleteSuccess": "Résultat de la session supprimé avec succès",
       "deleteError": "Échec de la suppression du résultat de la session",
       "updateSuccess": "Résultat de la session mis à jour avec succès",

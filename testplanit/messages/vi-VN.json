@@ -620,7 +620,7 @@
       "permissionDenied": "Bạn không có quyền truy cập vào trang này.",
       "resultSubmitPermissionDenied": "Bạn không thể gửi kết quả cho trường hợp này. Hãy yêu cầu quản trị viên dự án chỉ định cho bạn.",
       "justificationRequired": "Cần có sự giải thích.",
-      "justificationRequiredDescription": "Việc thay đổi kết quả đã hoàn thành sang một kết quả khác đòi hỏi phải có ghi chú giải thích sự thay đổi đó.",
+      "justificationRequiredDescription": "Việc thay đổi kết quả đã hoàn thành sang một kết quả khác đòi hỏi phải có Chi tiết Kết quả giải thích sự thay đổi đó.",
       "noModelsFound": "Không tìm thấy mô hình nào.",
       "failedToFetchModels": "Không thể tải mô hình",
       "failedToCopyToClipboard": "Không thể sao chép vào clipboard",
@@ -1836,7 +1836,7 @@
         },
         "flipJustification": {
           "label": "Cần có lời giải thích cho sự đảo ngược kết quả.",
-          "description": "Khi được bật, việc ghi lại kết quả làm thay đổi trạng thái đã hoàn thành (ví dụ: Từ Đạt sang Không đạt) yêu cầu phải có ghi chú giải thích sự thay đổi.",
+          "description": "Khi được bật, việc ghi lại kết quả làm thay đổi trạng thái đã hoàn thành (ví dụ: Từ Đạt sang Không đạt) yêu cầu phải có Chi tiết Kết quả giải thích sự thay đổi.",
           "enabledToast": "Cần có lý do lật trang cho dự án này.",
           "disabledToast": "Việc căn chỉnh lật trang không còn cần thiết cho dự án này nữa.",
           "saveError": "Không thể cập nhật cài đặt căn chỉnh lật."
@@ -2116,7 +2116,7 @@
       "editDescription": "Hãy chỉnh sửa kết quả phiên và nhấn lưu khi hoàn tất.",
       "details": "Vui lòng nhập thông tin chi tiết về kết quả tại đây...",
       "noResults": "Chưa có kết quả nào được thêm vào.",
-      "noNotes": "Không có ghi chú nào được thêm cho kết quả này.",
+      "noNotes": "Chưa có thông tin chi tiết về kết quả nào được thêm vào.",
       "deleteSuccess": "Kết quả phiên đã được xóa thành công",
       "deleteError": "Không thể xóa kết quả phiên.",
       "updateSuccess": "Kết quả phiên được cập nhật thành công",

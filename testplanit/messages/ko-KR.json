@@ -620,7 +620,7 @@
       "permissionDenied": "이 페이지에 접근할 권한이 없습니다.",
       "resultSubmitPermissionDenied": "이 사례에 대한 결과를 제출할 수 없습니다. 프로젝트 관리자에게 배정해 달라고 요청하세요.",
       "justificationRequired": "정당성 제시 필요",
-      "justificationRequiredDescription": "완료된 결과를 다른 결과로 바꾸려면 변경 사항을 설명하는 메모가 필요합니다.",
+      "justificationRequiredDescription": "완료된 결과를 다른 결과로 변경하려면 변경 사항을 설명하는 결과 세부 정보가 필요합니다.",
       "noModelsFound": "모델을 찾을 수 없습니다.",
       "failedToFetchModels": "모델을 가져오는 데 실패했습니다.",
       "failedToCopyToClipboard": "클립보드에 복사하는 데 실패했습니다.",
@@ -1836,7 +1836,7 @@
         },
         "flipJustification": {
           "label": "결과 반전에 대한 정당성을 요구합니다",
-          "description": "이 기능을 활성화하면 완료된 결과가 변경되는 경우(예: 통과에서 실패로) 변경 사항을 설명하는 메모를 기록해야 합니다.",
+          "description": "이 기능을 활성화하면 완료된 결과가 변경되는 경우(예: 통과에서 실패로) 변경 사항을 설명하는 결과 세부 정보를 기록해야 합니다.",
           "enabledToast": "이 프로젝트에는 뒤집기 이유 설명이 필요합니다.",
           "disabledToast": "이 프로젝트에서는 뒤집기 이유 설명이 더 이상 필요하지 않습니다.",
           "saveError": "플립 정렬 설정 업데이트에 실패했습니다."
@@ -2116,7 +2116,7 @@
       "editDescription": "세션 결과를 변경하고 완료되면 저장을 클릭하십시오.",
       "details": "결과에 대한 자세한 내용을 여기에 입력하세요...",
       "noResults": "아직 검색 결과가 추가되지 않았습니다.",
-      "noNotes": "이 결과에 대한 추가 메모는 없습니다.",
+      "noNotes": "결과 세부 정보가 추가되지 않았습니다.",
       "deleteSuccess": "세션 결과가 성공적으로 삭제되었습니다.",
       "deleteError": "세션 결과 삭제 실패",
       "updateSuccess": "세션 결과가 성공적으로 업데이트되었습니다.",

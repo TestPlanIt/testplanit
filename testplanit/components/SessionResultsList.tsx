@@ -1719,13 +1719,13 @@ export function SessionResultsList({
                   )}
                 />
 
-                {/* Notes */}
+                {/* Result Details */}
                 <FormField
                   control={form.control}
                   name="resultData"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("details")}</FormLabel>
+                      <FormLabel>{tCommon("actions.resultDetails")}</FormLabel>
                       <FormControl>
                         <TipTapEditor
                           key={`editor-${editorKey}`}
