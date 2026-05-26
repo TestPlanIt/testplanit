@@ -18,6 +18,7 @@ import {
   useFindFirstTestRuns,
   useFindFirstWorkflows,
   useFindManyStatus,
+  useFindManyTemplateResultAssignment,
 } from "~/lib/hooks";
 import {
   isJustificationRequiredSubmitResultError,
@@ -81,6 +82,8 @@ export function IterationResultPanel({
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAddResultModal, setShowAddResultModal] = useState(false);
+  // Pre-selected status when a quick-status click escalates to the modal.
+  const [escalatedStatusId, setEscalatedStatusId] = useState<string>();
 
   // Fetch the case (for name + currentVersion + steps) — React Query
   // dedupes with the same query already running inside TestRunCaseDetails.
@@ -94,10 +97,27 @@ export function IterationResultPanel({
         name: true,
         currentVersion: true,
         steps: true,
+        template: { select: { id: true } },
       },
     },
     { enabled: !!caseId }
   );
+
+  // Quick-status can't capture a required result field; when the case's
+  // template requires one, escalate to the full Add Result modal instead.
+  const { data: requiredResultFieldAssignments } =
+    useFindManyTemplateResultAssignment(
+      {
+        where: {
+          templateId: testcase?.template?.id,
+          resultField: { isRequired: true, isEnabled: true, isDeleted: false },
+        },
+        take: 1,
+      },
+      { enabled: !!testcase?.template?.id }
+    );
+  const hasRequiredResultField =
+    (requiredResultFieldAssignments?.length ?? 0) > 0;
 
   // Fetch the test run for its configuration (passed to AddResultModal).
   const { data: testRun } = useFindFirstTestRuns(
@@ -150,6 +170,13 @@ export function IterationResultPanel({
   const submitWithStatus = async (statusId: number, wasSuccess: boolean) => {
     if (!canAddEditResults || isDisabled) return;
     if (!testcase?.currentVersion) return;
+
+    if (hasRequiredResultField) {
+      setEscalatedStatusId(statusId.toString());
+      setShowAddResultModal(true);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await submitTestRunResult({
@@ -275,12 +302,15 @@ export function IterationResultPanel({
       {showAddResultModal && testcase?.name && (
         <AddResultModal
           isOpen={showAddResultModal}
-          onClose={() => setShowAddResultModal(false)}
+          onClose={() => {
+            setShowAddResultModal(false);
+            setEscalatedStatusId(undefined);
+          }}
           testRunId={testRunId}
           testRunCaseId={testRunCaseId}
           caseName={testcase.name}
           projectId={projectId}
-          defaultStatusId={successStatus?.id?.toString()}
+          defaultStatusId={escalatedStatusId ?? successStatus?.id?.toString()}
           configuration={testRun?.configuration ?? undefined}
           iterationId={iteration.id}
           iterationLabel={t("iterationResultPanelHeading", {

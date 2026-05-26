@@ -56,6 +56,7 @@ vi.mock("~/lib/hooks", () => ({
   useFindManyStatus: () => ({
     data: [successStatus, failureStatus, skippedStatus],
   }),
+  useFindManyTemplateResultAssignment: () => ({ data: [] }),
 }));
 
 vi.mock("~/lib/test-run-result-submit", () => ({

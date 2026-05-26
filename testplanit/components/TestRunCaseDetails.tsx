@@ -55,6 +55,7 @@ import { useFindFirstRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesW
 import {
   useFindFirstWorkflows,
   useFindManyStatus,
+  useFindManyTemplateResultAssignment,
   useUpdateTestRunCases,
 } from "~/lib/hooks";
 import { useFindManyTemplates } from "~/lib/hooks/templates";
@@ -402,6 +403,23 @@ export function TestRunCaseDetails({
     isLoading: boolean;
   };
 
+  // Does this case's template require a result field? Quick-pass / quick-status
+  // can't capture one, so when it does we escalate to the full Add Result modal
+  // (which captures the field) rather than letting submit-result reject it.
+  const { data: requiredResultFieldAssignments } =
+    useFindManyTemplateResultAssignment(
+      {
+        where: {
+          templateId: testcase?.template?.id,
+          resultField: { isRequired: true, isEnabled: true, isDeleted: false },
+        },
+        take: 1,
+      },
+      { enabled: !!testcase?.template?.id }
+    );
+  const hasRequiredResultField =
+    (requiredResultFieldAssignments?.length ?? 0) > 0;
+
   const { data: _templates } = useFindManyTemplates({
     where: {
       isDeleted: false,
@@ -544,18 +562,21 @@ export function TestRunCaseDetails({
     )
       return;
 
+    if (!successStatus) {
+      toast.error(tCommon("errors.noSuccessStatus"));
+      return;
+    }
+
+    // Quick-pass can't capture a required result field, so escalate to the
+    // full Add Result modal (pre-set to the success status) when one exists.
+    if (hasRequiredResultField) {
+      handleStatusChange(successStatus.id.toString());
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      // Find the success status
-      const successStatus = statuses?.find(
-        (status) => status.isSuccess === true
-      );
-      if (!successStatus) {
-        toast.error(tCommon("errors.noSuccessStatus"));
-        return;
-      }
-
       await submitTestRunResult({
         testRunId,
         testRunCaseId,
@@ -757,6 +778,14 @@ export function TestRunCaseDetails({
                                 !testcase?.currentVersion
                               )
                                 return;
+
+                              // Quick-status can't capture a required result
+                              // field; escalate to the full Add Result modal
+                              // (pre-set to this status) when one exists.
+                              if (hasRequiredResultField) {
+                                handleStatusChange(status.id.toString());
+                                return;
+                              }
 
                               setIsSubmitting(true);
 
