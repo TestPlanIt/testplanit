@@ -21,7 +21,6 @@ import { emptyEditorContent } from "~/app/constants";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
   useCreateAttachments,
-  useCreateResultFieldValues,
   useCreateTestRunStepResults,
   useFindFirstProjects,
   useFindFirstRepositoryCases,
@@ -29,10 +28,17 @@ import {
   useFindManyStatus,
   useFindManyTemplateResultAssignment,
   useFindManyTestRunResults,
-  useUpdateResultFieldValues,
   useUpdateTestRunResults,
   useUpdateTestRunStepResults,
 } from "~/lib/hooks";
+import {
+  editTestRunResult,
+  isEditWindowExpiredResultError,
+  isJustificationRequiredSubmitResultError,
+  isPermissionDeniedSubmitResultError,
+  isRequiredFieldsMissingSubmitResultError,
+} from "~/lib/test-run-result-submit";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import type { ParameterChipMeta } from "~/lib/tiptap/parameterMentionExtension";
 import { toHumanReadable } from "~/utils/duration";
 import { fetchSignedUrl } from "~/utils/fetchSignedUrl";
@@ -135,43 +141,47 @@ const mapFieldToZodType = (
 ) => {
   const fieldType = field.resultField.type?.type;
   const isRequired = field.resultField.isRequired;
+  const requiredMessage = tCommon("validation.required", {
+    field: displayName,
+  });
 
-  let schema;
-
-  switch (fieldType) {
-    case "Text":
-    case "Dropdown":
-    case "Radio":
-    case "Checkbox":
-      schema = z.string();
-      if (isRequired) {
-        schema = schema.min(1, {
-          message: tCommon("validation.required", { field: displayName }),
-        });
-      }
-      break;
-    case "Number":
-      schema = z.number();
-      if (field.resultField.minValue !== null) {
-        schema = schema.min(field.resultField.minValue);
-      }
-      if (field.resultField.maxValue !== null) {
-        schema = schema.max(field.resultField.maxValue);
-      }
-      break;
-    case "Text Long":
-    case "RichText":
-      schema = z.any();
-      break;
-    default:
-      schema = z.string();
+  // Rich text / long text are TipTap documents — emptiness is decided by the
+  // shared isTiptapEmpty check (whitespace-only and empty docs count as empty).
+  if (fieldType === "Text Long" || fieldType === "RichText") {
+    if (isRequired) {
+      return z.any().refine((value) => !isTiptapEmpty(value), {
+        message: requiredMessage,
+      });
+    }
+    return z.any();
   }
 
-  if (!isRequired) {
-    return schema.nullable().optional();
+  if (fieldType === "Number") {
+    let schema = z.number();
+    if (field.resultField.minValue !== null) {
+      schema = schema.min(field.resultField.minValue);
+    }
+    if (field.resultField.maxValue !== null) {
+      schema = schema.max(field.resultField.maxValue);
+    }
+    return isRequired ? schema : schema.nullable().optional();
   }
 
-  return schema;
+  if (fieldType === "Checkbox") {
+    const schema = z.string();
+    return isRequired ? schema : schema.nullable().optional();
+  }
+
+  // String-like fields (Text String, Text, Dropdown, Radio, Link, Date, …).
+  // A required one must be a non-empty value — coerce null/undefined to "" so
+  // an unfilled field fails the min(1) check with the friendly required label.
+  if (isRequired) {
+    return z.preprocess(
+      (value) => (value == null ? "" : value),
+      z.string().min(1, { message: requiredMessage })
+    );
+  }
+  return z.string().nullable().optional();
 };
 
 // @ts-expect-error - No type definitions for parse-duration locales
@@ -716,12 +726,10 @@ export function EditResultModal({
 
   const { mutateAsync: updateTestRunResults } = useUpdateTestRunResults();
   const { mutateAsync: createAttachments } = useCreateAttachments();
-  const { mutateAsync: createResultFieldValues } = useCreateResultFieldValues();
   const { mutateAsync: updateTestRunStepResults } =
     useUpdateTestRunStepResults();
   const { mutateAsync: createTestRunStepResults } =
     useCreateTestRunStepResults();
-  const { mutateAsync: updateResultFieldValues } = useUpdateResultFieldValues();
 
   const _handleStatusChange = (statusId: number) => {
     form.setValue("statusId", statusId);
@@ -845,22 +853,34 @@ export function EditResultModal({
         }
       }
 
-      const updateData = {
+      // Encode custom field values the same way AddResultModal does, so both
+      // paths store them identically. The guarded edit-result endpoint writes
+      // them atomically with the result and enforces required fields.
+      const resultFieldValues = templateFields
+        .map((field) => {
+          const fieldData = (values as any)[field.resultField.id.toString()];
+          if (fieldData === undefined || fieldData === null) return null;
+          return {
+            fieldId: Number(field.resultField.id),
+            value:
+              typeof fieldData === "object"
+                ? JSON.stringify(fieldData)
+                : String(fieldData as string | number | boolean),
+          };
+        })
+        .filter((fv): fv is { fieldId: number; value: string } => fv !== null);
+
+      // Update the result through the guarded endpoint (edit window, required
+      // fields, and flip justification are enforced server-side, atomically
+      // with the result + field-value writes).
+      const result = await editTestRunResult({
+        resultId: Number(resultId),
         statusId: parseInt(values.statusId as any as string),
         notes: values.notes,
         elapsed: elapsedInSeconds,
-        editedAt: new Date(),
-        editedById: session.user.id,
         testRunCaseVersion: repositoryCase.currentVersion,
-        issues: {
-          set: selectedMainIssues.map((id) => ({ id })),
-        },
-      };
-
-      // Update the test run result
-      const result = await updateTestRunResults({
-        where: { id: Number(resultId) },
-        data: updateData as any,
+        issueIds: selectedMainIssues,
+        fieldValues: resultFieldValues,
       });
 
       if (!result) {
@@ -929,62 +949,47 @@ export function EditResultModal({
         }
       }
 
-      // Update field values
-      if (templateFields.length > 0) {
-        for (const field of templateFields) {
-          const fieldId = field.resultField.id;
-          const value = (values as any)[fieldId];
-          const fieldType = field.resultField.type?.type;
-
-          // Find existing field value from the existingResult
-          const existingFieldValue = existingResult
-            ?.find((r: TestRunResult) => r.id === Number(resultId))
-            ?.resultFieldValues?.find((fv: any) => fv.fieldId === fieldId);
-
-          // Handle Text Long fields specially - no need to stringify
-          const processedValue =
-            fieldType === "Text Long"
-              ? value // Already in the correct format
-              : value;
-
-          if (existingFieldValue) {
-            // Update existing field value
-            await updateResultFieldValues({
-              where: { id: existingFieldValue.id },
-              data: {
-                value: processedValue,
-              },
-            });
-          } else if (value !== undefined && value !== null) {
-            // Create new field value
-            await createResultFieldValues({
-              data: {
-                testRunResultsId: result.id,
-                fieldId: fieldId,
-                value: processedValue,
-              },
-            });
-          }
-        }
-      }
+      // Field values were written atomically by the edit-result endpoint above.
 
       // Upload attachments if there are any
       if (selectedFiles.length > 0) {
         await uploadFiles(result.id);
       }
 
-      // Invalidate queries to refresh the data
-      void queryClient.invalidateQueries({
-        queryKey: ["testRunResults", testRunId, testRunCaseId],
-      });
+      // Refresh caches in the background. The edit now goes through a raw
+      // fetch (not a ZenStack mutation hook), so nothing auto-invalidates the
+      // ZenStack query keys the result history reads from — a keyless
+      // invalidate covers them. Fire-and-forget so the modal closes at once.
+      void queryClient.invalidateQueries();
 
       toast.success(tCommon("actions.resultUpdated"));
       onClose();
     } catch (error) {
       console.error("Error updating result:", error);
-      toast.error(tCommon("errors.error"), {
-        description: tCommon("errors.somethingWentWrong"),
-      });
+      if (isJustificationRequiredSubmitResultError(error)) {
+        // Surface inline on Result Details (matches AddResultModal); the tester
+        // adds the justification and saves again.
+        form.setError("notes", {
+          type: "manual",
+          message: tCommon("errors.justificationRequiredDescription"),
+        });
+      } else if (isRequiredFieldsMissingSubmitResultError(error)) {
+        toast.error(tCommon("errors.error"), {
+          description: tCommon("errors.requiredFieldMissing"),
+        });
+      } else if (isEditWindowExpiredResultError(error)) {
+        toast.error(tCommon("errors.error"), {
+          description: tCommon("errors.editWindowExpired"),
+        });
+      } else if (isPermissionDeniedSubmitResultError(error)) {
+        toast.error(tCommon("errors.accessDenied"), {
+          description: tCommon("errors.resultSubmitPermissionDenied"),
+        });
+      } else {
+        toast.error(tCommon("errors.error"), {
+          description: tCommon("errors.somethingWentWrong"),
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -1599,7 +1604,13 @@ export function EditResultModal({
                       <TipTapEditor
                         key={editorKey}
                         content={field.value as any}
-                        onUpdate={field.onChange}
+                        onUpdate={(content) => {
+                          field.onChange(content);
+                          // Clear the justification error as the tester types.
+                          if (form.formState.errors.notes) {
+                            form.clearErrors("notes");
+                          }
+                        }}
                         placeholder={tCommon(
                           "actions.resultDetailsPlaceholder"
                         )}

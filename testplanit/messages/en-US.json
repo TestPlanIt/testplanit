@@ -621,6 +621,8 @@
       "resultSubmitPermissionDenied": "You can’t submit results for this case. Ask a project admin to assign it to you.",
       "justificationRequired": "Justification required",
       "justificationRequiredDescription": "Flipping a completed result to a different outcome requires Result Details explaining the change.",
+      "requiredFieldMissing": "A required result field is missing a value.",
+      "editWindowExpired": "This result's edit window has closed. Record a new attempt instead.",
       "noModelsFound": "No models found",
       "failedToFetchModels": "Failed to fetch models",
       "failedToCopyToClipboard": "Failed to copy to clipboard",

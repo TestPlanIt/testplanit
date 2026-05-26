@@ -621,6 +621,8 @@
       "resultSubmitPermissionDenied": "No puedes enviar los resultados de este caso. Pídele a un administrador del proyecto que te lo asigne.",
       "justificationRequired": "Se requiere justificación",
       "justificationRequiredDescription": "Para cambiar un resultado ya completado a un resultado diferente, se requieren Detalles del resultado que expliquen el cambio.",
+      "requiredFieldMissing": "Falta un valor en un campo de resultado obligatorio.",
+      "editWindowExpired": "La ventana de edición de este resultado se ha cerrado. Intente grabar un nuevo intento.",
       "noModelsFound": "No se encontraron modelos",
       "failedToFetchModels": "No se pudieron obtener los modelos",
       "failedToCopyToClipboard": "No se pudo copiar al portapapeles.",

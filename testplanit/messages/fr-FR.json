@@ -621,6 +621,8 @@
       "resultSubmitPermissionDenied": "Vous ne pouvez pas soumettre de résultats pour ce dossier. Veuillez demander à un administrateur de projet de vous l'attribuer.",
       "justificationRequired": "Justification requise",
       "justificationRequiredDescription": "Pour modifier un résultat final, il est nécessaire de fournir des détails sur le résultat expliquant le changement.",
+      "requiredFieldMissing": "Un champ de résultat obligatoire est vide.",
+      "editWindowExpired": "La fenêtre de modification de ce résultat est fermée. Veuillez effectuer une nouvelle tentative.",
       "noModelsFound": "Aucun modèle trouvé",
       "failedToFetchModels": "Impossible de récupérer les modèles",
       "failedToCopyToClipboard": "Impossible de copier dans le presse-papiers",

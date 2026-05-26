@@ -621,6 +621,8 @@
       "resultSubmitPermissionDenied": "Je kunt voor deze zaak geen resultaten indienen. Vraag een projectbeheerder om deze zaak aan je toe te wijzen.",
       "justificationRequired": "Rechtvaardiging vereist",
       "justificationRequiredDescription": "Om een voltooid resultaat om te zetten naar een andere uitkomst, zijn resultaatdetails nodig die de wijziging toelichten.",
+      "requiredFieldMissing": "Een verplicht resultaatveld mist een waarde.",
+      "editWindowExpired": "Het bewerkingsvenster voor dit resultaat is gesloten. Probeer het opnieuw.",
       "noModelsFound": "Geen modellen gevonden",
       "failedToFetchModels": "Het ophalen van modellen is mislukt",
       "failedToCopyToClipboard": "Kopiëren naar klembord mislukt",

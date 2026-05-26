@@ -621,6 +621,8 @@
       "resultSubmitPermissionDenied": "您無法提交此案例的結果。請聯絡專案管理員將其分配給您。",
       "justificationRequired": "需要提供理由",
       "justificationRequiredDescription": "將已完成的結果變更為不同的結果需要結果詳情來解釋變更。",
+      "requiredFieldMissing": "必填結果欄位缺少值。",
+      "editWindowExpired": "此結果的編輯視窗已關閉。請重新錄製一次。",
       "noModelsFound": "未找到模型",
       "failedToFetchModels": "取得模型失敗",
       "failedToCopyToClipboard": "複製到剪貼簿失敗",

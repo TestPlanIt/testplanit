@@ -621,6 +621,8 @@
       "resultSubmitPermissionDenied": "Bạn không thể gửi kết quả cho trường hợp này. Hãy yêu cầu quản trị viên dự án chỉ định cho bạn.",
       "justificationRequired": "Cần có sự giải thích.",
       "justificationRequiredDescription": "Việc thay đổi kết quả đã hoàn thành sang một kết quả khác đòi hỏi phải có Chi tiết Kết quả giải thích sự thay đổi đó.",
+      "requiredFieldMissing": "Một trường kết quả bắt buộc bị thiếu giá trị.",
+      "editWindowExpired": "Cửa sổ chỉnh sửa kết quả này đã đóng. Vui lòng thực hiện lại thao tác ghi nhận kết quả mới.",
       "noModelsFound": "Không tìm thấy mô hình nào.",
       "failedToFetchModels": "Không thể tải mô hình",
       "failedToCopyToClipboard": "Không thể sao chép vào clipboard",

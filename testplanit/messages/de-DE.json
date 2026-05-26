@@ -621,6 +621,8 @@
       "resultSubmitPermissionDenied": "Sie können für diesen Fall keine Ergebnisse einreichen. Bitten Sie einen Projektadministrator, Ihnen den Fall zuzuweisen.",
       "justificationRequired": "Begründung erforderlich",
       "justificationRequiredDescription": "Um ein abgeschlossenes Ergebnis in ein anderes Ergebnis umzuwandeln, sind Ergebnisdetails erforderlich, die die Änderung erläutern.",
+      "requiredFieldMissing": "Ein erforderliches Ergebnisfeld hat keinen Wert.",
+      "editWindowExpired": "Das Bearbeitungsfenster für dieses Ergebnis wurde geschlossen. Bitte starten Sie stattdessen einen neuen Versuch.",
       "noModelsFound": "Keine Modelle gefunden",
       "failedToFetchModels": "Modelle konnten nicht abgerufen werden",
       "failedToCopyToClipboard": "Fehler beim Kopieren in die Zwischenablage",

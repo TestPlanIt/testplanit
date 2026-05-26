@@ -621,6 +621,8 @@
       "resultSubmitPermissionDenied": "Nie możesz przesłać wyników dla tej sprawy. Poproś administratora projektu o jej przypisanie.",
       "justificationRequired": "Wymagane uzasadnienie",
       "justificationRequiredDescription": "Aby zmienić zakończony wynik na inny, należy zapoznać się ze szczegółami wyniku wyjaśniającymi zmianę.",
+      "requiredFieldMissing": "Wymagane pole wyniku nie zawiera wartości.",
+      "editWindowExpired": "Okno edycji tego wyniku zostało zamknięte. Zamiast tego zarejestruj nową próbę.",
       "noModelsFound": "Nie znaleziono modeli",
       "failedToFetchModels": "Nie udało się pobrać modeli",
       "failedToCopyToClipboard": "Nie udało się skopiować do schowka",

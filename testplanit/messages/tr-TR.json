@@ -621,6 +621,8 @@
       "resultSubmitPermissionDenied": "Bu vaka için sonuçları gönderemezsiniz. Lütfen bir proje yöneticisinden size atamasını isteyin.",
       "justificationRequired": "Gerekçe gerekli",
       "justificationRequiredDescription": "Tamamlanmış bir sonucu farklı bir sonuca dönüştürmek için, değişikliği açıklayan Sonuç Ayrıntıları gereklidir.",
+      "requiredFieldMissing": "Gerekli sonuç alanlarından birinde değer eksik.",
+      "editWindowExpired": "Bu sonucun düzenleme penceresi kapandı. Bunun yerine yeni bir deneme kaydedin.",
       "noModelsFound": "Hiçbir model bulunamadı.",
       "failedToFetchModels": "Modeller alınamadı.",
       "failedToCopyToClipboard": "Panoya kopyalama başarısız oldu.",

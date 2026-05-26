@@ -621,6 +621,8 @@
       "resultSubmitPermissionDenied": "Você não pode enviar resultados para este caso. Peça a um administrador do projeto para atribuí-lo a você.",
       "justificationRequired": "Justificativa necessária",
       "justificationRequiredDescription": "Para inverter um resultado já concluído e transformá-lo em um resultado diferente, é necessário fornecer os Detalhes do Resultado explicando a mudança.",
+      "requiredFieldMissing": "Um campo de resultado obrigatório está sem valor.",
+      "editWindowExpired": "A janela de edição deste resultado foi fechada. Em vez disso, registre uma nova tentativa.",
       "noModelsFound": "Nenhum modelo encontrado",
       "failedToFetchModels": "Falha ao buscar modelos",
       "failedToCopyToClipboard": "Falha ao copiar para a área de transferência",

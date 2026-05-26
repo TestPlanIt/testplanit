@@ -621,6 +621,8 @@
       "resultSubmitPermissionDenied": "Non puoi inviare i risultati per questo caso. Chiedi a un amministratore di progetto di assegnartelo.",
       "justificationRequired": "È richiesta una giustificazione.",
       "justificationRequiredDescription": "Per modificare un risultato già completato, è necessario specificare i dettagli del risultato, spiegando la modifica.",
+      "requiredFieldMissing": "Un campo obbligatorio dei risultati non contiene un valore.",
+      "editWindowExpired": "La finestra di modifica di questo risultato è chiusa. Registra invece un nuovo tentativo.",
       "noModelsFound": "Nessun modello trovato",
       "failedToFetchModels": "Impossibile recuperare i modelli",
       "failedToCopyToClipboard": "Impossibile copiare negli appunti",
