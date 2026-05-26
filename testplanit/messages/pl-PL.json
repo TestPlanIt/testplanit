@@ -619,6 +619,8 @@
       "failedToDeleteRepository": "Nie udało się usunąć repozytorium",
       "permissionDenied": "Nie masz uprawnień dostępu do tej strony.",
       "resultSubmitPermissionDenied": "Nie możesz przesłać wyników dla tej sprawy. Poproś administratora projektu o jej przypisanie.",
+      "justificationRequired": "Wymagane uzasadnienie",
+      "justificationRequiredDescription": "Zmiana wyniku wymaga notatki wyjaśniającej zmianę.",
       "noModelsFound": "Nie znaleziono modeli",
       "failedToFetchModels": "Nie udało się pobrać modeli",
       "failedToCopyToClipboard": "Nie udało się skopiować do schowka",

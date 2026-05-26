@@ -619,6 +619,8 @@
       "failedToDeleteRepository": "Depoyu silme işlemi başarısız oldu.",
       "permissionDenied": "Bu sayfaya erişim izniniz yok.",
       "resultSubmitPermissionDenied": "Bu vaka için sonuçları gönderemezsiniz. Lütfen bir proje yöneticisinden size atamasını isteyin.",
+      "justificationRequired": "Gerekçe gerekli",
+      "justificationRequiredDescription": "Sonucu değiştirmek için, geçersiz kılmayı açıklayan bir not gereklidir.",
       "noModelsFound": "Hiçbir model bulunamadı.",
       "failedToFetchModels": "Modeller alınamadı.",
       "failedToCopyToClipboard": "Panoya kopyalama başarısız oldu.",

@@ -22,6 +22,12 @@ vi.mock("~/lib/prisma", () => ({
     testRunCases: {
       findFirst: vi.fn(),
     },
+    testRunResults: {
+      findFirst: vi.fn(),
+    },
+    status: {
+      findMany: vi.fn(),
+    },
     $transaction: vi.fn(),
   },
 }));
@@ -125,6 +131,10 @@ describe("Submit Result API Route", () => {
     });
     (prisma.user.findUnique as any).mockResolvedValue(baseUser);
     (prisma.testRunCases.findFirst as any).mockResolvedValue(baseRunCase);
+    // Justification-on-override defaults: no prior attempt → check is a no-op,
+    // so every pre-existing test path is unaffected.
+    (prisma.testRunResults.findFirst as any).mockResolvedValue(null);
+    (prisma.status.findMany as any).mockResolvedValue([]);
 
     txMocks = {
       testRunResults: {
@@ -421,6 +431,159 @@ describe("Submit Result API Route", () => {
       expect(response.status).toBe(200);
       expect(txMocks.workflows.findUnique).not.toHaveBeenCalled();
       expect(txMocks.testRuns.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("mandatory justification on override", () => {
+    // validBody submits statusId 2 (a failure-class outcome).
+    const failedStatus = {
+      id: 2,
+      isSuccess: false,
+      isFailure: true,
+      isCompleted: true,
+    };
+    const passedStatus = {
+      id: 7,
+      isSuccess: true,
+      isFailure: false,
+      isCompleted: true,
+    };
+    // A not-completed status (untested/blocked): clearing to it, or recording
+    // the first result from it, is not an override.
+    const untestedStatus = {
+      id: 2,
+      isSuccess: false,
+      isFailure: false,
+      isCompleted: false,
+    };
+    const notesWithText = {
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "Overrode after re-run on a fixed env" },
+          ],
+        },
+      ],
+    };
+
+    it("accepts a first-ever submission with empty notes", async () => {
+      // No prior attempt (default mock) → the override check is a no-op.
+      const response = await POST(createRequest(validBody));
+
+      expect(response.status).toBe(200);
+      expect(prisma.status.findMany).not.toHaveBeenCalled();
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it("accepts a same-outcome re-submission with empty notes", async () => {
+      (prisma.testRunResults.findFirst as any).mockResolvedValue({
+        statusId: 2,
+      });
+      (prisma.status.findMany as any).mockResolvedValue([failedStatus]);
+
+      const response = await POST(createRequest(validBody));
+
+      expect(response.status).toBe(200);
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it("rejects a different-outcome override with empty notes", async () => {
+      (prisma.testRunResults.findFirst as any).mockResolvedValue({
+        statusId: 7,
+      });
+      (prisma.status.findMany as any).mockResolvedValue([
+        passedStatus,
+        failedStatus,
+      ]);
+
+      const response = await POST(createRequest(validBody));
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.code).toBe("JUSTIFICATION_REQUIRED");
+      // Rejection is pre-transaction — no result row is ever created.
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it("accepts a different-outcome override when notes are provided", async () => {
+      (prisma.testRunResults.findFirst as any).mockResolvedValue({
+        statusId: 7,
+      });
+      (prisma.status.findMany as any).mockResolvedValue([
+        passedStatus,
+        failedStatus,
+      ]);
+
+      const response = await POST(
+        createRequest({ ...validBody, notes: notesWithText })
+      );
+
+      expect(response.status).toBe(200);
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it("accepts clearing a completed result to a non-completed status without notes", async () => {
+      // Prior is completed (passed); submission clears to untested (statusId 2).
+      (prisma.testRunResults.findFirst as any).mockResolvedValue({
+        statusId: 7,
+      });
+      (prisma.status.findMany as any).mockResolvedValue([
+        passedStatus,
+        untestedStatus,
+      ]);
+
+      const response = await POST(createRequest(validBody));
+
+      expect(response.status).toBe(200);
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it("accepts the first completed result after a non-completed attempt without notes", async () => {
+      // Prior is not completed → recording the first real result is not an
+      // override and needs no justification.
+      (prisma.testRunResults.findFirst as any).mockResolvedValue({
+        statusId: 9,
+      });
+      (prisma.status.findMany as any).mockResolvedValue([
+        { id: 9, isSuccess: false, isFailure: false, isCompleted: false },
+        failedStatus,
+      ]);
+
+      const response = await POST(createRequest(validBody));
+
+      expect(response.status).toBe(200);
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it("scopes the prior-attempt lookup to the submitted iteration", async () => {
+      // Different-outcome override with empty notes → rejected pre-transaction,
+      // so this also confirms the lookup is scoped to iteration 42.
+      (prisma.testRunResults.findFirst as any).mockResolvedValue({
+        statusId: 7,
+      });
+      (prisma.status.findMany as any).mockResolvedValue([
+        passedStatus,
+        failedStatus,
+      ]);
+
+      const response = await POST(
+        createRequest({ ...validBody, iterationId: 42 })
+      );
+
+      expect(response.status).toBe(400);
+      expect(prisma.testRunResults.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            testRunCaseId: validBody.testRunCaseId,
+            iterationId: 42,
+            isDeleted: false,
+          }),
+          orderBy: { executedAt: "desc" },
+        })
+      );
+      expect(prisma.$transaction).not.toHaveBeenCalled();
     });
   });
 });

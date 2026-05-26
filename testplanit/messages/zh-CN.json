@@ -619,6 +619,8 @@
       "failedToDeleteRepository": "删除存储库失败",
       "permissionDenied": "您没有权限访问此页面。",
       "resultSubmitPermissionDenied": "您无法提交此案例的结果。请联系项目管理员将其分配给您。",
+      "justificationRequired": "需要提供理由",
+      "justificationRequiredDescription": "更改结果需要添加说明解释更改原因。",
       "noModelsFound": "未找到模型",
       "failedToFetchModels": "获取模型失败",
       "failedToCopyToClipboard": "复制到剪贴板失败",

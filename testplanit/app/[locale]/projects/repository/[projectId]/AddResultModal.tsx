@@ -48,6 +48,7 @@ import {
   useUpdateTestRunCases,
 } from "~/lib/hooks";
 import {
+  isJustificationRequiredSubmitResultError,
   isPermissionDeniedSubmitResultError,
   submitTestRunResult,
 } from "~/lib/test-run-result-submit";
@@ -1305,6 +1306,10 @@ export function AddResultModal({
       if (isPermissionDeniedSubmitResultError(error)) {
         toast.error(tCommon("errors.accessDenied"), {
           description: tCommon("errors.resultSubmitPermissionDenied"),
+        });
+      } else if (isJustificationRequiredSubmitResultError(error)) {
+        toast.error(tCommon("errors.justificationRequired"), {
+          description: tCommon("errors.justificationRequiredDescription"),
         });
       } else {
         toast.error(tCommon("errors.error"), {

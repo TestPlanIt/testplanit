@@ -619,6 +619,8 @@
       "failedToDeleteRepository": "リポジトリの削除に失敗しました",
       "permissionDenied": "このページにアクセスする権限がありません。",
       "resultSubmitPermissionDenied": "この案件については、結果を提出できません。プロジェクト管理者に依頼して、あなたに割り当ててもらってください。",
+      "justificationRequired": "正当化が必要",
+      "justificationRequiredDescription": "結果を変更する場合は、変更理由を説明する注記が必要です。",
       "noModelsFound": "モデルが見つかりません",
       "failedToFetchModels": "モデルの取得に失敗しました",
       "failedToCopyToClipboard": "クリップボードへのコピーに失敗しました",

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { getUserAccessibleProjects } from "~/app/actions/getUserAccessibleProjects";
 import { prisma } from "~/lib/prisma";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { authOptions } from "~/server/auth";
 
 interface ViewOptionsRequest {
@@ -1193,30 +1194,11 @@ export async function POST(request: Request) {
           },
         });
 
-        // Count non-empty text values
+        // Count field values that carry any renderable content.
         let withTextCount = 0;
         fieldValues.forEach((fv) => {
-          if (fv.value !== null && fv.value !== undefined) {
-            // Check if it's a non-empty string or non-empty TipTap document
-            if (typeof fv.value === "string") {
-              if (fv.value.trim() !== "") {
-                withTextCount++;
-              }
-            } else if (typeof fv.value === "object") {
-              // TipTap JSON format - check if it has content
-              const doc = fv.value as any;
-              if (doc.content && Array.isArray(doc.content)) {
-                const hasContent = doc.content.some(
-                  (node: any) =>
-                    node.content &&
-                    Array.isArray(node.content) &&
-                    node.content.length > 0
-                );
-                if (hasContent) {
-                  withTextCount++;
-                }
-              }
-            }
+          if (!isTiptapEmpty(fv.value)) {
+            withTextCount++;
           }
         });
 

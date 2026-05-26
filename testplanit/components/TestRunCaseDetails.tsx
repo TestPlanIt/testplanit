@@ -49,6 +49,7 @@ import { toast } from "sonner";
 import { searchProjectMembers } from "~/app/actions/searchProjectMembers";
 import { notifyTestCaseAssignment } from "~/app/actions/test-run-notifications";
 import { emptyEditorContent } from "~/app/constants";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useFindFirstRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import {
@@ -58,6 +59,7 @@ import {
 } from "~/lib/hooks";
 import { useFindManyTemplates } from "~/lib/hooks/templates";
 import {
+  isJustificationRequiredSubmitResultError,
   isPermissionDeniedSubmitResultError,
   submitTestRunResult,
 } from "~/lib/test-run-result-submit";
@@ -508,9 +510,7 @@ export function TestRunCaseDetails({
     if (fieldType === "Text Long" && typeof fieldValue === "string") {
       try {
         const parsedContent = JSON.parse(fieldValue);
-        const isEmptyEditor =
-          JSON.stringify(parsedContent) === JSON.stringify(emptyEditorContent);
-        if (isEmptyEditor) {
+        if (isTiptapEmpty(parsedContent)) {
           return false;
         }
       } catch {
@@ -599,6 +599,10 @@ export function TestRunCaseDetails({
       if (isPermissionDeniedSubmitResultError(error)) {
         toast.error(tCommon("errors.accessDenied"), {
           description: tCommon("errors.resultSubmitPermissionDenied"),
+        });
+      } else if (isJustificationRequiredSubmitResultError(error)) {
+        toast.error(tCommon("errors.justificationRequired"), {
+          description: tCommon("errors.justificationRequiredDescription"),
         });
       } else {
         toast.error(tCommon("errors.error"), {
@@ -810,6 +814,19 @@ export function TestRunCaseDetails({
                                       "errors.resultSubmitPermissionDenied"
                                     ),
                                   });
+                                } else if (
+                                  isJustificationRequiredSubmitResultError(
+                                    error
+                                  )
+                                ) {
+                                  toast.error(
+                                    tCommon("errors.justificationRequired"),
+                                    {
+                                      description: tCommon(
+                                        "errors.justificationRequiredDescription"
+                                      ),
+                                    }
+                                  );
                                 } else {
                                   toast.error(tCommon("errors.error"), {
                                     description: tCommon(
@@ -1140,14 +1157,7 @@ export function TestRunCaseDetails({
                   ) {
                     try {
                       const parsedContent = JSON.parse(value);
-                      // Check if it's an empty Text Long field (has only one paragraph with no content)
-                      if (
-                        parsedContent.type === "doc" &&
-                        parsedContent.content?.length === 1 &&
-                        parsedContent.content[0].type === "paragraph" &&
-                        (!parsedContent.content[0].content ||
-                          parsedContent.content[0].content.length === 0)
-                      ) {
+                      if (isTiptapEmpty(parsedContent)) {
                         return true;
                       }
                     } catch {

@@ -619,6 +619,8 @@
       "failedToDeleteRepository": "Het verwijderen van de repository is mislukt.",
       "permissionDenied": "U hebt geen toestemming om deze pagina te bezoeken.",
       "resultSubmitPermissionDenied": "Je kunt voor deze zaak geen resultaten indienen. Vraag een projectbeheerder om deze zaak aan je toe te wijzen.",
+      "justificationRequired": "Rechtvaardiging vereist",
+      "justificationRequiredDescription": "Als de uitkomst van het resultaat wordt gewijzigd, is een toelichting op de wijziging vereist.",
       "noModelsFound": "Geen modellen gevonden",
       "failedToFetchModels": "Het ophalen van modellen is mislukt",
       "failedToCopyToClipboard": "Kopiëren naar klembord mislukt",

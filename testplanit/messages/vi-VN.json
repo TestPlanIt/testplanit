@@ -619,6 +619,8 @@
       "failedToDeleteRepository": "Không thể xóa kho lưu trữ",
       "permissionDenied": "Bạn không có quyền truy cập vào trang này.",
       "resultSubmitPermissionDenied": "Bạn không thể gửi kết quả cho trường hợp này. Hãy yêu cầu quản trị viên dự án chỉ định cho bạn.",
+      "justificationRequired": "Cần có sự giải thích.",
+      "justificationRequiredDescription": "Việc thay đổi kết quả yêu cầu phải có ghi chú giải thích lý do ghi đè.",
       "noModelsFound": "Không tìm thấy mô hình nào.",
       "failedToFetchModels": "Không thể tải mô hình",
       "failedToCopyToClipboard": "Không thể sao chép vào clipboard",

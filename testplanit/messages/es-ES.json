@@ -619,6 +619,8 @@
       "failedToDeleteRepository": "Error al eliminar el repositorio",
       "permissionDenied": "No tienes permiso para acceder a esta página.",
       "resultSubmitPermissionDenied": "No puedes enviar los resultados de este caso. Pídele a un administrador del proyecto que te lo asigne.",
+      "justificationRequired": "Se requiere justificación",
+      "justificationRequiredDescription": "Para modificar el resultado, es necesario incluir una nota que explique la anulación.",
       "noModelsFound": "No se encontraron modelos",
       "failedToFetchModels": "No se pudieron obtener los modelos",
       "failedToCopyToClipboard": "No se pudo copiar al portapapeles.",

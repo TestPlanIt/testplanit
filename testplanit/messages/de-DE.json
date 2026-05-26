@@ -619,6 +619,8 @@
       "failedToDeleteRepository": "Fehler beim Löschen des Repositorys",
       "permissionDenied": "Sie haben keine Berechtigung, auf diese Seite zuzugreifen.",
       "resultSubmitPermissionDenied": "Sie können für diesen Fall keine Ergebnisse einreichen. Bitten Sie einen Projektadministrator, Ihnen den Fall zuzuweisen.",
+      "justificationRequired": "Begründung erforderlich",
+      "justificationRequiredDescription": "Eine Änderung des Ergebnisses erfordert einen Vermerk, der die Überschreibung erläutert.",
       "noModelsFound": "Keine Modelle gefunden",
       "failedToFetchModels": "Modelle konnten nicht abgerufen werden",
       "failedToCopyToClipboard": "Fehler beim Kopieren in die Zwischenablage",

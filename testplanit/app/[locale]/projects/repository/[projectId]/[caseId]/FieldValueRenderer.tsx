@@ -18,6 +18,7 @@ import React from "react";
 import { Controller } from "react-hook-form";
 import MultiSelect from "react-select";
 import { emptyEditorContent } from "~/app/constants";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { getCustomStyles } from "~/styles/multiSelectStyles";
 import { IconName } from "~/types/globals";
 import StepsForm from "../StepsForm";
@@ -93,9 +94,7 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
     if (fieldType === "Text Long" && typeof value === "string") {
       try {
         const parsedContent = JSON.parse(value);
-        const isEmptyEditor =
-          JSON.stringify(parsedContent) === JSON.stringify(emptyEditorContent);
-        if (isEmptyEditor) {
+        if (isTiptapEmpty(parsedContent)) {
           return true;
         }
       } catch {

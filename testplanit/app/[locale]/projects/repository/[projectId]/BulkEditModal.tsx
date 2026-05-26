@@ -54,6 +54,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod/v4";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
   useFindManyTags,
@@ -1234,10 +1235,7 @@ export function BulkEditModal({
                 (val) => {
                   if (!val) return false;
                   try {
-                    return (
-                      JSON.stringify(JSON.parse(val as string)) !==
-                      JSON.stringify(emptyEditorContent)
-                    );
+                    return !isTiptapEmpty(JSON.parse(val as string));
                   } catch {
                     return false;
                   } // Invalid JSON doesn't satisfy required

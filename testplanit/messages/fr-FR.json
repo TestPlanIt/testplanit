@@ -619,6 +619,8 @@
       "failedToDeleteRepository": "Échec de la suppression du dépôt",
       "permissionDenied": "Vous n'êtes pas autorisé à accéder à cette page.",
       "resultSubmitPermissionDenied": "Vous ne pouvez pas soumettre de résultats pour ce dossier. Veuillez demander à un administrateur de projet de vous l'attribuer.",
+      "justificationRequired": "Justification requise",
+      "justificationRequiredDescription": "Toute modification du résultat obtenu nécessite une note expliquant la modification.",
       "noModelsFound": "Aucun modèle trouvé",
       "failedToFetchModels": "Impossible de récupérer les modèles",
       "failedToCopyToClipboard": "Impossible de copier dans le presse-papiers",

@@ -82,6 +82,7 @@ import { Controller, FormProvider, useForm } from "react-hook-form";
 import { ImperativePanelHandle } from "react-resizable-panels";
 import { z } from "zod/v4";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { useFindFirstRepositoryCasesFiltered } from "~/hooks/useRepositoryCasesWithFilteredFields";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
@@ -211,9 +212,7 @@ const mapFieldToZodType = (field: any, t: (key: any) => string) => {
             try {
               const parsed = JSON.parse(val);
               if (isRequired) {
-                return (
-                  JSON.stringify(parsed) !== JSON.stringify(emptyEditorContent)
-                );
+                return !isTiptapEmpty(parsed);
               }
               return true; // If optional and not empty/null/undefined, it's valid if parsable
             } catch {

@@ -50,6 +50,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases";
 import {
@@ -182,9 +183,7 @@ const mapFieldToZodType = (field: any, t: (key: any) => string) => {
             (val) => {
               try {
                 const parsed = JSON.parse(val);
-                return (
-                  JSON.stringify(parsed) !== JSON.stringify(emptyEditorContent)
-                );
+                return !isTiptapEmpty(parsed);
               } catch {
                 return false;
               }

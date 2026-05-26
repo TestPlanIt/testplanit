@@ -619,6 +619,8 @@
       "failedToDeleteRepository": "Не удалось удалить репозиторий.",
       "permissionDenied": "У вас нет разрешения на доступ к этой странице.",
       "resultSubmitPermissionDenied": "Вы не можете отправить результаты по этому делу. Попросите администратора проекта назначить его вам.",
+      "justificationRequired": "Требуется обоснование",
+      "justificationRequiredDescription": "Для изменения результата необходимо добавить примечание с объяснением причины изменения.",
       "noModelsFound": "Модели не найдены",
       "failedToFetchModels": "Не удалось получить модели.",
       "failedToCopyToClipboard": "Не удалось скопировать в буфер обмена.",

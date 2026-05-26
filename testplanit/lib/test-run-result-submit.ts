@@ -40,6 +40,20 @@ export function isPermissionDeniedSubmitResultError(
   return submitError.status === 403 || submitError.code === "PERMISSION_DENIED";
 }
 
+/**
+ * True when the server rejected the submission because the outcome changed
+ * relative to the prior attempt but no justification was supplied.
+ */
+export function isJustificationRequiredSubmitResultError(
+  error: unknown
+): error is SubmitResultError {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  return (error as SubmitResultError).code === "JUSTIFICATION_REQUIRED";
+}
+
 export async function submitTestRunResult(
   input: SubmitTestRunResultInput
 ): Promise<SubmitTestRunResultResponse["result"]> {

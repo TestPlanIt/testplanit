@@ -619,6 +619,8 @@
       "failedToDeleteRepository": "Failed to delete repository",
       "permissionDenied": "You do not have permission to access this page.",
       "resultSubmitPermissionDenied": "You can’t submit results for this case. Ask a project admin to assign it to you.",
+      "justificationRequired": "Justification required",
+      "justificationRequiredDescription": "Changing the result outcome requires a note explaining the override.",
       "noModelsFound": "No models found",
       "failedToFetchModels": "Failed to fetch models",
       "failedToCopyToClipboard": "Failed to copy to clipboard",

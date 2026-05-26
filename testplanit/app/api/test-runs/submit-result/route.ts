@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { authenticateRequest } from "~/lib/api-token-auth";
 import { prisma } from "~/lib/prisma";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import {
   redactValues,
@@ -124,6 +125,28 @@ type ProjectAccessTypeValue =
 function roleCanAddEditTestRunResults(role: RolePermissionSnapshot): boolean {
   return Boolean(
     role?.rolePermissions?.some((permission) => permission.canAddEdit)
+  );
+}
+
+type OutcomeFlags = {
+  isSuccess: boolean;
+  isFailure: boolean;
+  isCompleted: boolean;
+};
+
+/**
+ * Whether moving from `prior` to `next` is an override that requires a
+ * justification. Only a change between two *completed* judgments counts —
+ * recording the first completed result (prior not completed) or clearing
+ * back to an untested/blocked status (next not completed) is not an
+ * override and never demands a note.
+ */
+function isOutcomeOverride(prior: OutcomeFlags, next: OutcomeFlags): boolean {
+  if (!prior.isCompleted || !next.isCompleted) {
+    return false;
+  }
+  return (
+    prior.isSuccess !== next.isSuccess || prior.isFailure !== next.isFailure
   );
 }
 
@@ -413,6 +436,50 @@ export async function POST(req: NextRequest) {
         { error: "Permission denied", code: "PERMISSION_DENIED" },
         { status: 403 }
       );
+    }
+
+    // Mandatory justification on override. When this submission changes the
+    // judgment relative to the latest prior *completed* attempt on the same
+    // run-case (and iteration, when parameterized), a non-empty `notes`
+    // justification is required. First completed results, same-outcome
+    // re-submissions, and clears back to an untested/blocked status are
+    // unaffected. Read-only and pre-transaction so a rejection never creates
+    // a result that must then be rolled back.
+    const priorAttempt = await prisma.testRunResults.findFirst({
+      where: {
+        testRunCaseId: input.testRunCaseId,
+        iterationId: input.iterationId ?? null,
+        isDeleted: false,
+      },
+      orderBy: { executedAt: "desc" },
+      select: { statusId: true },
+    });
+    if (priorAttempt && isTiptapEmpty(input.notes)) {
+      const statuses = await prisma.status.findMany({
+        where: { id: { in: [priorAttempt.statusId, input.statusId] } },
+        select: {
+          id: true,
+          isSuccess: true,
+          isFailure: true,
+          isCompleted: true,
+        },
+      });
+      const priorStatus = statuses.find((s) => s.id === priorAttempt.statusId);
+      const nextStatus = statuses.find((s) => s.id === input.statusId);
+      if (
+        priorStatus &&
+        nextStatus &&
+        isOutcomeOverride(priorStatus, nextStatus)
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "A justification is required when changing the result outcome",
+            code: "JUSTIFICATION_REQUIRED",
+          },
+          { status: 400 }
+        );
+      }
     }
 
     const notesInput:
