@@ -699,6 +699,61 @@ test.describe("Case Creation - Text Long Fields", () => {
     ).not.toBeVisible({ timeout: 10000 });
   });
 
+  test("Required text long field rejects whitespace-only content", async ({
+    api,
+  }) => {
+    // Regression for the unified rich-text empty check: a required Text Long
+    // field whose only content is whitespace must fail validation (previously
+    // a whitespace-only doc slipped past the exact-match-to-empty-doc check).
+    const systemName = `textlong_field_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
+    const fieldId = await api.createCaseField({
+      displayName: `Required Text Long ${Date.now()}`,
+      systemName: systemName,
+      typeName: "Text Long",
+      isRequired: true,
+    });
+
+    const templateName = `Template ${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+    const templateId = await api.createTemplate({
+      name: templateName,
+      projectIds: [projectId],
+    });
+
+    await api.assignFieldToTemplate(templateId, fieldId);
+
+    await repositoryPage.goto(projectId);
+    await repositoryPage.getPage().reload({ waitUntil: "networkidle" });
+    await repositoryPage.openAddCaseModal();
+    await repositoryPage.expectAddCaseDialogVisible();
+
+    await repositoryPage.selectTemplate(templateName);
+
+    const fieldElement = repositoryPage
+      .getPage()
+      .getByTestId(`field-${systemName}`);
+    await expect(fieldElement).toBeVisible({ timeout: 10000 });
+
+    const nameInput = repositoryPage.getPage().getByTestId("case-name-input");
+    await nameInput.fill(`Test Case ${Date.now()}`);
+
+    // Enter only whitespace into the rich-text editor.
+    const editor = fieldElement.locator(".tiptap");
+    await editor.click();
+    await repositoryPage.getPage().keyboard.type("    ");
+
+    // Submission must be blocked — whitespace is not meaningful content.
+    const submitButton = repositoryPage
+      .getPage()
+      .getByTestId("case-submit-button");
+    await submitButton.click();
+
+    // Dialog stays open because the required-field validation failed.
+    await expect(
+      repositoryPage.getPage().getByTestId("add-case-dialog")
+    ).toBeVisible();
+  });
+
   test("Create case with empty text long field (optional)", async ({ api }) => {
     const systemName = `textlong_field_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
