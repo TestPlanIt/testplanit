@@ -1840,6 +1840,21 @@
           "enabledToast": "Per questo progetto è richiesta una giustificazione per l'override.",
           "disabledToast": "Per questo progetto non è più necessaria una giustificazione per l'override.",
           "saveError": "Impossibile aggiornare l'impostazione di giustificazione di override."
+        },
+        "editWindow": {
+          "label": "Finestra di modifica dei risultati",
+          "description": "Per quanto tempo dopo la registrazione di un risultato è ancora possibile modificarlo direttamente. Una volta chiusa la finestra, per apportare correzioni è necessario un nuovo tentativo. Gli amministratori di sistema possono sempre effettuare modifiche.",
+          "modeInherit": "Eredita le impostazioni predefinite del sistema",
+          "modeDisable": "Disabilita la modifica per questo progetto",
+          "modeCustom": "Finestra personalizzata",
+          "minutesLabel": "Modificabile per (minuti)",
+          "systemMaxHint": "Massimo del sistema: {minutes} minuti",
+          "systemLockedTitle": "La modifica è disabilitata a livello di sistema.",
+          "systemLockedDescription": "Un amministratore di sistema ha disabilitato la modifica dei risultati in loco per tutti i progetti, pertanto questo progetto non può abilitarla.",
+          "invalidMinutes": "Inserisci un numero di minuti maggiore di zero",
+          "save": "Salva finestra di modifica",
+          "savedToast": "Finestra di modifica aggiornata per questo progetto",
+          "saveError": "Impossibile aggiornare le impostazioni della finestra di modifica."
         }
       }
     },
@@ -4416,6 +4431,18 @@
     },
     "statuses": {
       "description": "Gestire gli stati dei test",
+      "editPolicy": {
+        "title": "Politica di modifica dei risultati",
+        "description": "Controlla per quanto tempo dopo la registrazione di un risultato è ancora possibile modificarlo, in tutti i progetti. I progetti possono restringere questo limite nelle impostazioni avanzate, ma non possono mai allentarlo. Gli amministratori di sistema possono sempre apportare modifiche.",
+        "modeNone": "Nessuna restrizione (decidono i progetti)",
+        "modeDisabled": "Disabilita la modifica ovunque",
+        "modeMax": "Consenti la modifica fino a una finestra massima",
+        "minutesLabel": "Intervallo massimo (minuti)",
+        "invalidMinutes": "Inserisci un numero di minuti maggiore di zero",
+        "save": "Salva le politiche",
+        "savedToast": "Politica di modifica dei risultati aggiornata",
+        "saveError": "Impossibile aggiornare la politica di modifica dei risultati"
+      },
       "add": {
         "button": "Aggiungi stato",
         "title": "Aggiungi nuovo stato",

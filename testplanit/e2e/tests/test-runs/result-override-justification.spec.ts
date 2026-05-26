@@ -23,7 +23,7 @@ test.describe("Result override justification", () => {
   async function seedRunCase(
     api: any,
     request: any,
-    baseURL: string,
+    baseURL: string | undefined,
     opts: { requireJustification?: boolean } = {}
   ) {
     // Unique suffix (timestamp + random) so parallel workers never collide on

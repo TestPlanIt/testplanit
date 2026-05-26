@@ -1840,6 +1840,21 @@
           "enabledToast": "本項目需提供覆蓋理由。",
           "disabledToast": "本項目不再需要提供覆蓋理由。",
           "saveError": "更新覆蓋理由設定失敗"
+        },
+        "editWindow": {
+          "label": "結果編輯視窗",
+          "description": "結果記錄後，仍可在一段時間內進行編輯。視窗關閉後，修改需要重新嘗試。系統管理員始終可以進行編輯。",
+          "modeInherit": "繼承系統預設值",
+          "modeDisable": "停用此項目的編輯功能",
+          "modeCustom": "自訂視窗",
+          "minutesLabel": "可編輯時長（分鐘）",
+          "systemMaxHint": "系統最大值： {minutes} 分鐘",
+          "systemLockedTitle": "系統範圍內已停用編輯功能",
+          "systemLockedDescription": "系統管理員已停用所有項目的就地結果編輯功能，因此本項目無法啟用此功能。",
+          "invalidMinutes": "請輸入大於零的分鐘數。",
+          "save": "儲存編輯視窗",
+          "savedToast": "已更新此項目的編輯視窗",
+          "saveError": "更新編輯視窗設定失敗"
         }
       }
     },
@@ -4416,6 +4431,18 @@
     },
     "statuses": {
       "description": "管理測試狀態",
+      "editPolicy": {
+        "title": "結果編輯政策",
+        "description": "控制結果記錄後多長時間內仍可進行原地編輯，此限制適用於所有項目。項目可以在其高級設定中收緊此限制，但無法放寬。系統管理員始終可以進行編輯。",
+        "modeNone": "無限制（專案決定）",
+        "modeDisabled": "停用所有編輯功能",
+        "modeMax": "允許在最大視窗範圍內編輯",
+        "minutesLabel": "最大窗口期（分鐘）",
+        "invalidMinutes": "請輸入大於零的分鐘數。",
+        "save": "保存策略",
+        "savedToast": "結果編輯政策已更新",
+        "saveError": "更新結果編輯策略失敗"
+      },
       "add": {
         "button": "新增狀態",
         "title": "新增狀態",

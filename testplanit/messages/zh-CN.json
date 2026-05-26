@@ -1840,6 +1840,21 @@
           "enabledToast": "本项目需要提供覆盖理由。",
           "disabledToast": "本项目不再需要提供覆盖理由。",
           "saveError": "更新覆盖理由设置失败"
+        },
+        "editWindow": {
+          "label": "结果编辑窗口",
+          "description": "结果记录后，仍可在一段时间内进行编辑。窗口关闭后，修改需要重新尝试。系统管理员始终可以进行编辑。",
+          "modeInherit": "继承系统默认值",
+          "modeDisable": "禁用此项目的编辑功能",
+          "modeCustom": "自定义窗口",
+          "minutesLabel": "可编辑时长（分钟）",
+          "systemMaxHint": "系统最大值： {minutes} 分钟",
+          "systemLockedTitle": "系统范围内已禁用编辑功能",
+          "systemLockedDescription": "系统管理员已禁用所有项目的就地结果编辑功能，因此本项目无法启用该功能。",
+          "invalidMinutes": "请输入大于零的分钟数。",
+          "save": "保存编辑窗口",
+          "savedToast": "已更新此项目的编辑窗口",
+          "saveError": "更新编辑窗口设置失败"
         }
       }
     },
@@ -4416,6 +4431,18 @@
     },
     "statuses": {
       "description": "管理测试状态",
+      "editPolicy": {
+        "title": "结果编辑政策",
+        "description": "控制结果记录后多长时间内仍可进行原地编辑，此限制适用于所有项目。项目可以在其高级设置中收紧此限制，但无法放宽。系统管理员始终可以进行编辑。",
+        "modeNone": "无限制（项目决定）",
+        "modeDisabled": "禁用所有编辑功能",
+        "modeMax": "允许在最大窗口范围内编辑",
+        "minutesLabel": "最大窗口期（分钟）",
+        "invalidMinutes": "请输入大于零的分钟数。",
+        "save": "保存策略",
+        "savedToast": "结果编辑政策已更新",
+        "saveError": "更新结果编辑策略失败"
+      },
       "add": {
         "button": "添加状态",
         "title": "添加新状态",

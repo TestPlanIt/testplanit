@@ -9,17 +9,30 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { WarningAlert } from "@/components/ui/warning-alert";
 import { TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useSession } from "next-auth/react";
 import { notFound, useParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useReviewFeatureEnabled } from "~/hooks/useReviewFeatureEnabled";
-import { useFindUniqueProjects, useUpdateProjects } from "~/lib/hooks";
+import {
+  useFindUniqueAppConfig,
+  useFindUniqueProjects,
+  useUpdateProjects,
+} from "~/lib/hooks";
 
 export default function AdvancedPage() {
   const params = useParams();
@@ -38,6 +51,7 @@ export default function AdvancedPage() {
         iconUrl: true,
         reviewWorkflowEnabled: true,
         requireOverrideJustification: true,
+        editResultsDurationSeconds: true,
       },
     },
     {
@@ -48,6 +62,22 @@ export default function AdvancedPage() {
   const { systemEnabled: reviewFeatureSystemEnabled } =
     useReviewFeatureEnabled();
   const systemReviewWorkflowDisabled = reviewFeatureSystemEnabled === false;
+
+  // System edit-window policy (ceiling). value: 0 = locked everywhere, N =
+  // max seconds (projects may tighten), absent = no policy.
+  const { data: editWindowConfig } = useFindUniqueAppConfig(
+    { where: { key: "edit_results_duration" } },
+    { enabled: status === "authenticated" }
+  );
+  const systemEditWindowSeconds =
+    typeof editWindowConfig?.value === "number"
+      ? (editWindowConfig.value as number)
+      : null;
+  const systemEditingLocked = systemEditWindowSeconds === 0;
+  const systemMaxMinutes =
+    systemEditWindowSeconds && systemEditWindowSeconds > 0
+      ? Math.floor(systemEditWindowSeconds / 60)
+      : null;
 
   const updateProject = useUpdateProjects();
 
@@ -106,6 +136,57 @@ export default function AdvancedPage() {
       );
     } catch {
       toast.error(t("overrideJustification.saveError"));
+    }
+  };
+
+  // Edit-window override controls. The persisted value is seconds (null =
+  // inherit system, 0 = disable for this project, N = custom window).
+  const [editWindowMode, setEditWindowMode] = useState<
+    "inherit" | "disable" | "custom"
+  >("inherit");
+  const [customMinutes, setCustomMinutes] = useState("");
+
+  useEffect(() => {
+    const seconds = project?.editResultsDurationSeconds;
+    if (seconds === undefined) return;
+    if (seconds === null) {
+      setEditWindowMode("inherit");
+      setCustomMinutes("");
+    } else if (seconds === 0) {
+      setEditWindowMode("disable");
+      setCustomMinutes("");
+    } else {
+      setEditWindowMode("custom");
+      setCustomMinutes(String(Math.max(1, Math.round(seconds / 60))));
+    }
+  }, [project?.editResultsDurationSeconds]);
+
+  const handleSaveEditWindow = async () => {
+    let nextSeconds: number | null;
+    if (editWindowMode === "inherit") {
+      nextSeconds = null;
+    } else if (editWindowMode === "disable") {
+      nextSeconds = 0;
+    } else {
+      const minutes = Number(customMinutes);
+      if (!Number.isFinite(minutes) || minutes <= 0) {
+        toast.error(t("editWindow.invalidMinutes"));
+        return;
+      }
+      const capped =
+        systemMaxMinutes !== null
+          ? Math.min(minutes, systemMaxMinutes)
+          : minutes;
+      nextSeconds = Math.round(capped * 60);
+    }
+    try {
+      await updateProject.mutateAsync({
+        where: { id: projectId },
+        data: { editResultsDurationSeconds: nextSeconds },
+      });
+      toast.success(t("editWindow.savedToast"));
+    } catch {
+      toast.error(t("editWindow.saveError"));
     }
   };
 
@@ -184,6 +265,93 @@ export default function AdvancedPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("overrideJustification.description")}
                 </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-3">
+                <span className="text-base font-medium">
+                  {t("editWindow.label")}
+                </span>
+                <p className="text-sm text-muted-foreground">
+                  {t("editWindow.description")}
+                </p>
+                {systemEditingLocked ? (
+                  <WarningAlert data-testid="edit-window-system-locked-warning">
+                    <TriangleAlert className="h-4 w-4" />
+                    <AlertTitle>{t("editWindow.systemLockedTitle")}</AlertTitle>
+                    <AlertDescription>
+                      {t("editWindow.systemLockedDescription")}
+                    </AlertDescription>
+                  </WarningAlert>
+                ) : (
+                  <div className="space-y-3">
+                    <Select
+                      value={editWindowMode}
+                      onValueChange={(value) =>
+                        setEditWindowMode(
+                          value as "inherit" | "disable" | "custom"
+                        )
+                      }
+                      disabled={projectLoading || updateProject.isPending}
+                    >
+                      <SelectTrigger
+                        className="max-w-xs"
+                        data-testid="edit-window-mode-select"
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="inherit">
+                          {t("editWindow.modeInherit")}
+                        </SelectItem>
+                        <SelectItem value="disable">
+                          {t("editWindow.modeDisable")}
+                        </SelectItem>
+                        <SelectItem value="custom">
+                          {t("editWindow.modeCustom")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {editWindowMode === "custom" && (
+                      <div className="space-y-1">
+                        <Label htmlFor="edit-window-minutes">
+                          {t("editWindow.minutesLabel")}
+                        </Label>
+                        <Input
+                          id="edit-window-minutes"
+                          data-testid="edit-window-minutes-input"
+                          type="number"
+                          min={1}
+                          max={systemMaxMinutes ?? undefined}
+                          value={customMinutes}
+                          onChange={(event) =>
+                            setCustomMinutes(event.target.value)
+                          }
+                          className="max-w-xs"
+                        />
+                        {systemMaxMinutes !== null && (
+                          <p className="text-xs text-muted-foreground">
+                            {t("editWindow.systemMaxHint", {
+                              minutes: String(systemMaxMinutes),
+                            })}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleSaveEditWindow}
+                      disabled={projectLoading || updateProject.isPending}
+                      data-testid="edit-window-save"
+                    >
+                      {t("editWindow.save")}
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

@@ -1840,6 +1840,21 @@
           "enabledToast": "Für dieses Projekt ist eine Begründung für die Überschreibung erforderlich.",
           "disabledToast": "Eine Begründung für die Überschreibung ist für dieses Projekt nicht mehr erforderlich.",
           "saveError": "Fehler beim Aktualisieren der Überschreibungsbegründungseinstellung"
+        },
+        "editWindow": {
+          "label": "Ergebnisbearbeitungsfenster",
+          "description": "Wie lange nach der Ergebnisspeicherung kann ein Ergebnis noch direkt bearbeitet werden? Nach Ablauf des Bearbeitungszeitraums ist für Korrekturen ein neuer Versuch erforderlich. Systemadministratoren können jederzeit Änderungen vornehmen.",
+          "modeInherit": "Systemstandard übernehmen",
+          "modeDisable": "Bearbeitung für dieses Projekt deaktivieren",
+          "modeCustom": "Benutzerdefiniertes Fenster",
+          "minutesLabel": "Bearbeitbar für (Minuten)",
+          "systemMaxHint": "Systemmaximum: {minutes} Minuten",
+          "systemLockedTitle": "Die Bearbeitung ist systemweit deaktiviert.",
+          "systemLockedDescription": "Ein Systemadministrator hat die Bearbeitung von Ergebnissen direkt im Projekt für alle Projekte deaktiviert, daher kann diese Funktion in diesem Projekt nicht aktiviert werden.",
+          "invalidMinutes": "Geben Sie eine Anzahl von Minuten größer als null ein.",
+          "save": "Bearbeitungsfenster speichern",
+          "savedToast": "Bearbeitungsfenster für dieses Projekt aktualisiert",
+          "saveError": "Die Aktualisierung der Bearbeitungsfenstereinstellung ist fehlgeschlagen."
         }
       }
     },
@@ -4416,6 +4431,18 @@
     },
     "statuses": {
       "description": "Teststatus verwalten",
+      "editPolicy": {
+        "title": "Richtlinie zur Ergebnisbearbeitung",
+        "description": "Legen Sie fest, wie lange nach der Ergebnisspeicherung ein Ergebnis projektübergreifend noch bearbeitet werden kann. Projekte können diese Frist in ihren erweiterten Einstellungen verkürzen, aber nicht verlängern. Systemadministratoren können die Frist jederzeit anpassen.",
+        "modeNone": "Keine Einschränkung (Projekte entscheiden)",
+        "modeDisabled": "Bearbeitung überall deaktivieren",
+        "modeMax": "Bearbeitung bis zu einem maximalen Fenster zulassen",
+        "minutesLabel": "Maximales Zeitfenster (Minuten)",
+        "invalidMinutes": "Geben Sie eine Anzahl von Minuten größer als null ein.",
+        "save": "Speicherrichtlinie",
+        "savedToast": "Die Richtlinie zur Ergebnisbearbeitung wurde aktualisiert.",
+        "saveError": "Die Aktualisierung der Ergebnisbearbeitungsrichtlinie ist fehlgeschlagen."
+      },
       "add": {
         "button": "Status hinzufügen",
         "title": "Neuen Status hinzufügen",

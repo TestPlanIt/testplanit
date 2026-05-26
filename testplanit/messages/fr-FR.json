@@ -1840,6 +1840,21 @@
           "enabledToast": "Justification de remplacement requise pour ce projet",
           "disabledToast": "La justification de remplacement n'est plus requise pour ce projet.",
           "saveError": "Échec de la mise à jour du paramètre de justification de remplacement"
+        },
+        "editWindow": {
+          "label": "Fenêtre d'édition des résultats",
+          "description": "Il est possible de modifier un résultat pendant un certain temps après son enregistrement. Une fois la fenêtre fermée, toute correction nécessitera une nouvelle tentative. Les administrateurs système peuvent toujours le modifier.",
+          "modeInherit": "Hériter des paramètres par défaut du système",
+          "modeDisable": "Désactiver la modification pour ce projet",
+          "modeCustom": "Fenêtre personnalisée",
+          "minutesLabel": "Modifiable pendant (minutes)",
+          "systemMaxHint": "Durée maximale du système : {minutes} minutes",
+          "systemLockedTitle": "La modification est désactivée dans l'ensemble du système.",
+          "systemLockedDescription": "Un administrateur système a désactivé la modification des résultats sur place pour tous les projets ; ce projet ne peut donc pas l’activer.",
+          "invalidMinutes": "Saisissez un nombre de minutes supérieur à zéro",
+          "save": "Enregistrer la fenêtre d'édition",
+          "savedToast": "La fenêtre d'édition a été mise à jour pour ce projet.",
+          "saveError": "Échec de la mise à jour des paramètres de la fenêtre d'édition"
         }
       }
     },
@@ -4416,6 +4431,18 @@
     },
     "statuses": {
       "description": "Gérer les statuts des tests",
+      "editPolicy": {
+        "title": "Politique de modification des résultats",
+        "description": "Contrôlez la durée pendant laquelle un résultat peut encore être modifié après son enregistrement, pour tous les projets. Les projets peuvent restreindre ce délai dans leurs paramètres avancés, mais ne peuvent jamais l'assouplir. Les administrateurs système peuvent toujours le modifier.",
+        "modeNone": "Aucune restriction (les projets décident)",
+        "modeDisabled": "Désactiver la modification partout",
+        "modeMax": "Autoriser la modification jusqu'à une fenêtre maximale",
+        "minutesLabel": "Fenêtre maximale (minutes)",
+        "invalidMinutes": "Saisissez un nombre de minutes supérieur à zéro",
+        "save": "Politique de sauvegarde",
+        "savedToast": "Politique de modification des résultats mise à jour",
+        "saveError": "Échec de la mise à jour de la politique de modification des résultats"
+      },
       "add": {
         "button": "Ajouter un statut",
         "title": "Ajouter un nouveau statut",

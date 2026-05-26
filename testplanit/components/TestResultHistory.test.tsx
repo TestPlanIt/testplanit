@@ -12,6 +12,7 @@ const {
   mockUseFindManySharedStepItem,
   mockUseFindManyTestRuns,
   mockUseCreateTestRunCases,
+  mockUseFindUniqueProjects,
   mockUseProjectPermissions,
   mockUseSession,
   mockUseQueryClient,
@@ -22,6 +23,7 @@ const {
   mockUseFindManySharedStepItem: vi.fn(),
   mockUseFindManyTestRuns: vi.fn(),
   mockUseCreateTestRunCases: vi.fn(),
+  mockUseFindUniqueProjects: vi.fn(),
   mockUseProjectPermissions: vi.fn(),
   mockUseSession: vi.fn(),
   mockUseQueryClient: vi.fn(),
@@ -36,6 +38,7 @@ vi.mock("~/lib/hooks", () => ({
   useFindManySharedStepItem: mockUseFindManySharedStepItem,
   useFindManyTestRuns: mockUseFindManyTestRuns,
   useCreateTestRunCases: mockUseCreateTestRunCases,
+  useFindUniqueProjects: mockUseFindUniqueProjects,
 }));
 
 vi.mock("~/hooks/useProjectPermissions", () => ({
@@ -258,6 +261,7 @@ function setupDefaultMocks() {
   });
   mockUseFindManyTestRuns.mockReturnValue({ data: [] });
   mockUseCreateTestRunCases.mockReturnValue({ mutateAsync: vi.fn() });
+  mockUseFindUniqueProjects.mockReturnValue({ data: undefined });
   mockUseProjectPermissions.mockReturnValue({
     permissions: { canAddEdit: true, canView: true, canDelete: true },
     isLoading: false,

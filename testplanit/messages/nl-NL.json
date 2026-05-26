@@ -1840,6 +1840,21 @@
           "enabledToast": "Voor dit project is een rechtvaardiging voor het overrulen van de regels vereist.",
           "disabledToast": "Voor dit project is geen rechtvaardiging voor het overschrijven van regels meer vereist.",
           "saveError": "Het bijwerken van de instelling voor het overschrijven van de uitlijning is mislukt."
+        },
+        "editWindow": {
+          "label": "Resultaatbewerkingsvenster",
+          "description": "Een resultaat kan nog steeds direct na het vastleggen worden bewerkt. Na het sluiten van het venster is een nieuwe poging nodig om een correctie door te voeren. Systeembeheerders kunnen de resultaten altijd bewerken.",
+          "modeInherit": "De systeemstandaard overnemen",
+          "modeDisable": "Bewerken voor dit project uitschakelen",
+          "modeCustom": "Aangepast venster",
+          "minutesLabel": "Bewerkbaar voor (minuten)",
+          "systemMaxHint": "Systeemmaximum: {minutes} minuten",
+          "systemLockedTitle": "Bewerken is systeembreed uitgeschakeld.",
+          "systemLockedDescription": "Een systeembeheerder heeft het direct bewerken van resultaten voor alle projecten uitgeschakeld, waardoor dit project deze functie niet kan inschakelen.",
+          "invalidMinutes": "Voer een aantal minuten in dat groter is dan nul.",
+          "save": "Bewerkingsvenster opslaan",
+          "savedToast": "Het bewerkingsvenster is bijgewerkt voor dit project.",
+          "saveError": "Het bijwerken van de instellingen van het bewerkingsvenster is mislukt."
         }
       }
     },
@@ -4416,6 +4431,18 @@
     },
     "statuses": {
       "description": "Teststatussen beheren",
+      "editPolicy": {
+        "title": "Beleid voor het bewerken van resultaten",
+        "description": "Bepaal hoe lang na het vastleggen van een resultaat dit nog ter plekke kan worden bewerkt, voor alle projecten. Projecten kunnen deze instelling in de geavanceerde instellingen aanscherpen, maar nooit versoepelen. Systeembeheerders kunnen de instelling altijd wijzigen.",
+        "modeNone": "Geen beperkingen (projecten bepalen dit)",
+        "modeDisabled": "Bewerken overal uitschakelen",
+        "modeMax": "Bewerken toestaan tot een maximale venstergrootte",
+        "minutesLabel": "Maximale venstertijd (minuten)",
+        "invalidMinutes": "Voer een aantal minuten in dat groter is dan nul.",
+        "save": "Beleid opslaan",
+        "savedToast": "Beleid voor het bewerken van resultaten bijgewerkt",
+        "saveError": "Het bijwerken van het beleid voor het bewerken van resultaten is mislukt."
+      },
       "add": {
         "button": "Status toevoegen",
         "title": "Nieuwe status toevoegen",

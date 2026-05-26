@@ -74,7 +74,9 @@ import {
   useFindManyResultFieldValues,
   useFindManySharedStepItem,
   useFindManyTestRuns,
+  useFindUniqueProjects,
 } from "~/lib/hooks";
+import { resolveEffectiveWindowSeconds } from "~/lib/services/editWindow";
 import { Link } from "~/lib/navigation";
 import { getDateFnsLocale } from "~/utils/locales";
 import { isAutomatedCaseSource } from "~/utils/testResultTypes";
@@ -738,6 +740,18 @@ export default function TestResultHistory({
     (config) => config.key === "edit_results_duration"
   )?.value as number | undefined;
 
+  // Per-project edit-window override, resolved against the system ceiling so
+  // the Edit button matches the server guard in submit-result's sibling path.
+  const { data: editWindowProject } = useFindUniqueProjects(
+    {
+      where: { id: Number(projectId) },
+      select: { editResultsDurationSeconds: true },
+    },
+    { enabled: Boolean(projectId) }
+  );
+  const projectEditWindowSeconds =
+    editWindowProject?.editResultsDurationSeconds ?? null;
+
   // Fetch test case data
   const { data: fetchedTestCase, isLoading: isLoadingTestCase } =
     useFindFirstRepositoryCases(
@@ -1354,24 +1368,27 @@ export default function TestResultHistory({
               const isAssociatedTestRunCompleted =
                 result.associatedTestRun?.isCompleted ?? false;
 
+              // System admins always edit (matches the server guard); for
+              // everyone else resolve the effective window from the system
+              // ceiling + the project override.
+              const isSystemAdmin = session?.user.access === "ADMIN";
               let isEditingAllowedByTime = true;
               if (
-                editResultsDurationSeconds !== undefined &&
-                editResultsDurationSeconds !== null &&
-                result.sourceType === "manual" // Editing only for manual
+                !isSystemAdmin &&
+                result.sourceType === "manual" && // Editing only for manual
+                !result.isPending
               ) {
-                if (editResultsDurationSeconds === 0) {
+                const effectiveWindowSeconds = resolveEffectiveWindowSeconds(
+                  editResultsDurationSeconds ?? null,
+                  projectEditWindowSeconds
+                );
+                if (effectiveWindowSeconds === 0) {
                   isEditingAllowedByTime = false;
-                } else if (
-                  editResultsDurationSeconds > 0 &&
-                  !result.isPending
-                ) {
-                  const executedAtDate = new Date(result.executedAt);
-                  const now = new Date();
+                } else if (effectiveWindowSeconds !== null) {
                   const timeDifferenceSeconds =
-                    (now.getTime() - executedAtDate.getTime()) / 1000;
+                    (Date.now() - new Date(result.executedAt).getTime()) / 1000;
                   isEditingAllowedByTime =
-                    timeDifferenceSeconds <= editResultsDurationSeconds;
+                    timeDifferenceSeconds <= effectiveWindowSeconds;
                 }
               }
 

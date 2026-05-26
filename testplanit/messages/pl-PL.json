@@ -1840,6 +1840,21 @@
           "enabledToast": "W przypadku tego projektu wymagane jest nadpisanie uzasadnienia",
           "disabledToast": "Uzasadnienie nadpisywania nie jest już wymagane w tym projekcie",
           "saveError": "Nie udało się zaktualizować ustawienia nadpisywania uzasadnienia"
+        },
+        "editWindow": {
+          "label": "Okno edycji wyników",
+          "description": "Jak długo po zarejestrowaniu wyniku można go nadal edytować. Po zamknięciu okna poprawki wymagają ponownej próby. Administratorzy systemu zawsze mogą edytować.",
+          "modeInherit": "Dziedzicz domyślne ustawienia systemu",
+          "modeDisable": "Wyłącz edycję tego projektu",
+          "modeCustom": "Okno niestandardowe",
+          "minutesLabel": "Można edytować przez (minuty)",
+          "systemMaxHint": "Maksymalnie w systemie: {minutes} minut",
+          "systemLockedTitle": "Edycja jest wyłączona w całym systemie",
+          "systemLockedDescription": "Administrator systemu wyłączył możliwość edycji wyników na miejscu dla wszystkich projektów, dlatego ten projekt nie może jej włączyć.",
+          "invalidMinutes": "Wprowadź liczbę minut większą od zera",
+          "save": "Zapisz okno edycji",
+          "savedToast": "Okno edycji zostało zaktualizowane dla tego projektu",
+          "saveError": "Nie udało się zaktualizować ustawień okna edycji"
         }
       }
     },
@@ -4416,6 +4431,18 @@
     },
     "statuses": {
       "description": "Zarządzaj statusami testów",
+      "editPolicy": {
+        "title": "Zasady edycji wyników",
+        "description": "Kontroluj, jak długo po zarejestrowaniu wyniku można go nadal edytować na miejscu, we wszystkich projektach. Projekty mogą zaostrzyć to ustawienie w ustawieniach zaawansowanych, ale nigdy go nie poluzować. Administratorzy systemu zawsze mogą je edytować.",
+        "modeNone": "Brak ograniczeń (decydują projekty)",
+        "modeDisabled": "Wyłącz edycję wszędzie",
+        "modeMax": "Zezwalaj na edycję do maksymalnego okna",
+        "minutesLabel": "Maksymalne okno (minuty)",
+        "invalidMinutes": "Wprowadź liczbę minut większą od zera",
+        "save": "Zapisz zasady",
+        "savedToast": "Zaktualizowano zasady edycji wyników",
+        "saveError": "Nie udało się zaktualizować zasad edycji wyników"
+      },
       "add": {
         "button": "Dodaj status",
         "title": "Dodaj nowy status",

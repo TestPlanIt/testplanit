@@ -21,6 +21,10 @@ import {
   resolveCreateStateRemap,
 } from "~/lib/services/reviewGate";
 import {
+  assertResultEditWindowOpen,
+  isEditWindowExpiredError,
+} from "~/lib/services/editWindow";
+import {
   isAlreadyPendingError,
   isReviewGateError,
   ReviewGateError,
@@ -670,6 +674,48 @@ async function innerHandler(
             }
             throw err;
           }
+        }
+      }
+    }
+
+    // Edit-window guard. Enforce the admin-configured `edit_results_duration`
+    // server-side for in-place result edits (and soft-deletes, which arrive as
+    // an `isDeleted` update). System admins always pass; for everyone else the
+    // edit is rejected once the window has elapsed since the result was
+    // recorded. The client (TestResultHistory) hides the Edit button on the
+    // same rule, but this chokepoint makes it structural so a direct model-
+    // route call cannot bypass it.
+    if (
+      isMutation &&
+      parsedPath &&
+      parsedPath.model === "testRunResults" &&
+      ["update", "delete"].includes(parsedPath.operation)
+    ) {
+      const rawResultId = extractEntityIdFromBody(
+        requestBody,
+        parsedPath.operation
+      );
+      const resultId =
+        typeof rawResultId === "number"
+          ? rawResultId
+          : typeof rawResultId === "string" && rawResultId !== ""
+            ? Number(rawResultId)
+            : NaN;
+      if (Number.isFinite(resultId) && authenticatedUserId) {
+        const actor = await prisma.user.findUnique({
+          where: { id: authenticatedUserId },
+          select: { access: true },
+        });
+        try {
+          await assertResultEditWindowOpen(prisma, resultId, actor?.access);
+        } catch (err) {
+          if (isEditWindowExpiredError(err)) {
+            return NextResponse.json(
+              { error: { code: "EDIT_WINDOW_EXPIRED" } },
+              { status: 403 }
+            );
+          }
+          throw err;
         }
       }
     }

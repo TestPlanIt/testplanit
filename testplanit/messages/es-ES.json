@@ -1840,6 +1840,21 @@
           "enabledToast": "Se requiere justificación para anular este proyecto.",
           "disabledToast": "Ya no se requiere justificación para anular este proyecto.",
           "saveError": "No se pudo actualizar la configuración de justificación de anulación."
+        },
+        "editWindow": {
+          "label": "Ventana de edición de resultados",
+          "description": "¿Cuánto tiempo después de registrar un resultado aún se puede editar directamente? Una vez que se cierra la ventana, las correcciones requieren un nuevo intento. Los administradores del sistema siempre pueden editar.",
+          "modeInherit": "Heredar la configuración predeterminada del sistema",
+          "modeDisable": "Deshabilitar la edición para este proyecto.",
+          "modeCustom": "Ventana personalizada",
+          "minutesLabel": "Editable durante (minutos)",
+          "systemMaxHint": "Máximo del sistema: {minutes} minutos",
+          "systemLockedTitle": "La edición está deshabilitada en todo el sistema.",
+          "systemLockedDescription": "Un administrador del sistema ha deshabilitado la edición de resultados en tiempo real para todos los proyectos, por lo que este proyecto no puede habilitarla.",
+          "invalidMinutes": "Introduzca un número de minutos mayor que cero.",
+          "save": "Guardar ventana de edición",
+          "savedToast": "Se ha actualizado la ventana de edición para este proyecto.",
+          "saveError": "No se pudo actualizar la configuración de la ventana de edición."
         }
       }
     },
@@ -4416,6 +4431,18 @@
     },
     "statuses": {
       "description": "Administrar estados de prueba",
+      "editPolicy": {
+        "title": "Política de edición de resultados",
+        "description": "Controla cuánto tiempo después de registrar un resultado se puede editar directamente en todos los proyectos. Los proyectos pueden ajustar este límite en su configuración avanzada, pero nunca modificarlo. Los administradores del sistema siempre pueden editarlo.",
+        "modeNone": "Sin restricciones (los proyectos deciden)",
+        "modeDisabled": "Deshabilitar la edición en todas partes",
+        "modeMax": "Permitir la edición hasta una ventana máxima",
+        "minutesLabel": "Ventana máxima (minutos)",
+        "invalidMinutes": "Introduzca un número de minutos mayor que cero.",
+        "save": "Política de ahorro",
+        "savedToast": "Se ha actualizado la política de edición de resultados.",
+        "saveError": "No se pudo actualizar la política de edición de resultados."
+      },
       "add": {
         "button": "Añadir estado",
         "title": "Añadir nuevo estado",

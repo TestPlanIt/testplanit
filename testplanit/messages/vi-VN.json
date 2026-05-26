@@ -1840,6 +1840,21 @@
           "enabledToast": "Cần có lý do chính đáng để vượt quyền trong dự án này.",
           "disabledToast": "Không cần phải đưa ra lý do biện minh cho việc ghi đè đối với dự án này nữa.",
           "saveError": "Không thể cập nhật cài đặt ghi đè căn chỉnh."
+        },
+        "editWindow": {
+          "label": "Cửa sổ chỉnh sửa kết quả",
+          "description": "Bạn vẫn có thể chỉnh sửa kết quả ngay tại chỗ sau một thời gian nhất định. Sau khi cửa sổ chỉnh sửa đóng lại, việc sửa lỗi yêu cầu phải thực hiện lại. Quản trị viên hệ thống luôn có thể chỉnh sửa.",
+          "modeInherit": "Kế thừa mặc định của hệ thống",
+          "modeDisable": "Vô hiệu hóa chế độ chỉnh sửa cho dự án này.",
+          "modeCustom": "Cửa sổ tùy chỉnh",
+          "minutesLabel": "Có thể chỉnh sửa trong (phút)",
+          "systemMaxHint": "Thời gian tối đa của hệ thống: {minutes} phút",
+          "systemLockedTitle": "Chức năng chỉnh sửa đã bị vô hiệu hóa trên toàn hệ thống.",
+          "systemLockedDescription": "Quản trị viên hệ thống đã vô hiệu hóa tính năng chỉnh sửa kết quả trực tiếp cho tất cả các dự án, vì vậy dự án này không thể kích hoạt tính năng đó.",
+          "invalidMinutes": "Nhập số phút lớn hơn không.",
+          "save": "Lưu cửa sổ chỉnh sửa",
+          "savedToast": "Cửa sổ chỉnh sửa đã được cập nhật cho dự án này.",
+          "saveError": "Không thể cập nhật cài đặt cửa sổ chỉnh sửa."
         }
       }
     },
@@ -4416,6 +4431,18 @@
     },
     "statuses": {
       "description": "Quản lý trạng thái kiểm thử",
+      "editPolicy": {
+        "title": "Chính sách chỉnh sửa kết quả",
+        "description": "Kiểm soát khoảng thời gian sau khi kết quả được ghi lại mà vẫn có thể chỉnh sửa trực tiếp, trên tất cả các dự án. Các dự án có thể điều chỉnh thời gian này trong cài đặt Nâng cao nhưng không thể nới lỏng. Quản trị viên hệ thống luôn có thể chỉnh sửa.",
+        "modeNone": "Không có hạn chế (dự án tự quyết định)",
+        "modeDisabled": "Vô hiệu hóa chế độ chỉnh sửa ở mọi nơi",
+        "modeMax": "Cho phép chỉnh sửa tối đa một cửa sổ.",
+        "minutesLabel": "Khoảng thời gian tối đa (phút)",
+        "invalidMinutes": "Nhập số phút lớn hơn không.",
+        "save": "Lưu chính sách",
+        "savedToast": "Chính sách chỉnh sửa kết quả đã được cập nhật",
+        "saveError": "Không thể cập nhật chính sách chỉnh sửa kết quả."
+      },
       "add": {
         "button": "Thêm trạng thái",
         "title": "Thêm trạng thái mới",

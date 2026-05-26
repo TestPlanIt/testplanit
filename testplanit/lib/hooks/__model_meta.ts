@@ -1142,6 +1142,10 @@ const metadata: ModelMeta = {
                     name: "requireOverrideJustification",
                     type: "Boolean",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, editResultsDurationSeconds: {
+                    name: "editResultsDurationSeconds",
+                    type: "Int",
+                    isOptional: true,
                 }, duplicateScanResults: {
                     name: "duplicateScanResults",
                     type: "DuplicateScanResult",
