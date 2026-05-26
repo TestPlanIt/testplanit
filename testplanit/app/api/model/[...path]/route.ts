@@ -15,7 +15,11 @@ import {
 } from "~/lib/auditContextWrappers";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import { prisma } from "~/lib/prisma";
-import { captureAuditEvent, type AuditEvent } from "~/lib/services/auditLog";
+import {
+  calculateDiff,
+  captureAuditEvent,
+  type AuditEvent,
+} from "~/lib/services/auditLog";
 import {
   assertReviewGatePasses,
   resolveCreateStateRemap,
@@ -177,7 +181,7 @@ const AUDITED_ENTITIES = new Set([
   "allowedEmailDomain",
   "appConfig",
   "userIntegrationAuth",
-  "testRunResult",
+  "testRunResults",
   "comment",
   "attachment",
   "apiToken",
@@ -760,6 +764,32 @@ async function innerHandler(
       }
     }
 
+    // Audit before-snapshot. For audited update/delete we capture the full
+    // pre-mutation row so the audit event can record before/after values.
+    // Reuses the webhook snapshot when the model is both webhook-emitting and
+    // audited to avoid a second read; uses the request's own `where` so it
+    // works for any primary key (id or key).
+    let auditPreSnapshot: any = null;
+    if (
+      isMutation &&
+      parsedPath &&
+      AUDITED_ENTITIES.has(parsedPath.model) &&
+      ["update", "delete"].includes(parsedPath.operation) &&
+      requestBody?.where
+    ) {
+      if (webhookPreSnapshot && webhookMutation?.model === parsedPath.model) {
+        auditPreSnapshot = webhookPreSnapshot;
+      } else {
+        try {
+          auditPreSnapshot = await (prisma as any)[parsedPath.model].findUnique(
+            { where: requestBody.where }
+          );
+        } catch (e) {
+          console.error("[AuditLog] Failed to capture pre-snapshot:", e);
+        }
+      }
+    }
+
     // Fast path: bypass ZenStack's policy engine for project-scoped creates
     // where the user's cached access manifest already answers the question.
     // Returns null when the fast path doesn't apply (wrong model/op, missing
@@ -1264,7 +1294,7 @@ async function innerHandler(
               allowedEmailDomain: "AllowedEmailDomain",
               appConfig: "AppConfig",
               userIntegrationAuth: "UserIntegrationAuth",
-              testRunResult: "TestRunResult",
+              testRunResults: "TestRunResult",
               comment: "Comment",
               attachment: "Attachment",
               apiToken: "ApiToken",
@@ -1304,11 +1334,36 @@ async function innerHandler(
               finalAuditAction = "REVIEW_CANCELLED";
             }
 
+            // Before/after capture (best-effort; never breaks the response).
+            // For an update, re-read the row (the RPC response is often a
+            // partial `{ id }`) and diff it against the pre-snapshot. For a
+            // delete, diff the removed row against null. `calculateDiff` masks
+            // sensitive fields and skips timestamp churn.
+            let auditChanges: AuditEvent["changes"];
+            try {
+              if (parsedPath.operation === "update" && auditPreSnapshot) {
+                const afterRow = requestBody?.where
+                  ? await (prisma as any)[parsedPath.model].findUnique({
+                      where: requestBody.where,
+                    })
+                  : null;
+                auditChanges = calculateDiff(auditPreSnapshot, afterRow);
+              } else if (
+                parsedPath.operation === "delete" &&
+                auditPreSnapshot
+              ) {
+                auditChanges = calculateDiff(auditPreSnapshot, null);
+              }
+            } catch (e) {
+              console.error("[AuditLog] Failed to compute before/after:", e);
+            }
+
             const event: AuditEvent = {
               action: finalAuditAction,
               entityType: entityTypeMap[parsedPath.model] || parsedPath.model,
               entityId: String(entityId),
               entityName,
+              ...(auditChanges ? { changes: auditChanges } : {}),
               projectId: typeof projectId === "number" ? projectId : undefined,
               metadata: {
                 operation: parsedPath.operation,
