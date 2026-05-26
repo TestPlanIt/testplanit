@@ -7,6 +7,11 @@ import { prisma } from "~/lib/prisma";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import {
+  hasMissingRequiredResultField,
+  hasResultMutationPermission,
+  isOutcomeFlip,
+} from "~/lib/services/resultGuards";
+import {
   redactValues,
   type ParameterSchemaEntry,
 } from "~/lib/services/parameterRedaction";
@@ -117,156 +122,6 @@ function parseParameterSchema(
     }
   }
   return out;
-}
-
-type RolePermissionSnapshot =
-  | {
-      name?: string | null;
-      rolePermissions?: Array<{ canAddEdit: boolean }> | null;
-    }
-  | null
-  | undefined;
-
-type ProjectAccessTypeValue =
-  | "DEFAULT"
-  | "NO_ACCESS"
-  | "GLOBAL_ROLE"
-  | "SPECIFIC_ROLE";
-
-function roleCanAddEditTestRunResults(role: RolePermissionSnapshot): boolean {
-  return Boolean(
-    role?.rolePermissions?.some((permission) => permission.canAddEdit)
-  );
-}
-
-type OutcomeFlags = {
-  isSuccess: boolean;
-  isFailure: boolean;
-  isCompleted: boolean;
-};
-
-/**
- * Whether moving from `prior` to `next` is an outcome flip that requires a
- * justification. Only a change between two *completed* judgments counts —
- * recording the first completed result (prior not completed) or clearing
- * back to an untested/blocked status (next not completed) is not a flip and
- * never demands a note.
- */
-function isOutcomeFlip(prior: OutcomeFlags, next: OutcomeFlags): boolean {
-  if (!prior.isCompleted || !next.isCompleted) {
-    return false;
-  }
-  return (
-    prior.isSuccess !== next.isSuccess || prior.isFailure !== next.isFailure
-  );
-}
-
-function hasSubmitResultPermission({
-  user,
-  testRunCreatedById,
-  assignedToId,
-  project,
-}: {
-  user: {
-    id: string;
-    access: string;
-    role: {
-      rolePermissions: Array<{ canAddEdit: boolean }>;
-    } | null;
-  };
-  testRunCreatedById: string;
-  assignedToId: string | null;
-  project: {
-    createdBy: string;
-    defaultAccessType: ProjectAccessTypeValue;
-    defaultRole: RolePermissionSnapshot;
-    assignedUsers: Array<{ userId: string }>;
-    userPermissions: Array<{
-      accessType: ProjectAccessTypeValue;
-      role: RolePermissionSnapshot;
-    }>;
-    groupPermissions: Array<{
-      accessType: ProjectAccessTypeValue;
-      role: RolePermissionSnapshot;
-    }>;
-  };
-}): boolean {
-  if (user.access === "ADMIN") {
-    return true;
-  }
-
-  if (project.createdBy === user.id) {
-    return true;
-  }
-
-  if (testRunCreatedById === user.id) {
-    return true;
-  }
-
-  if (assignedToId === user.id) {
-    return true;
-  }
-
-  if (
-    user.access === "PROJECTADMIN" &&
-    project.assignedUsers.some((assignment) => assignment.userId === user.id)
-  ) {
-    return true;
-  }
-
-  const hasGlobalRoleResultPermission = roleCanAddEditTestRunResults(user.role);
-
-  const explicitUserPermission = project.userPermissions[0];
-  if (explicitUserPermission) {
-    if (explicitUserPermission.accessType === "NO_ACCESS") {
-      return false;
-    }
-
-    if (explicitUserPermission.accessType === "SPECIFIC_ROLE") {
-      return (
-        explicitUserPermission.role?.name === "Project Admin" ||
-        roleCanAddEditTestRunResults(explicitUserPermission.role)
-      );
-    }
-
-    if (explicitUserPermission.accessType === "GLOBAL_ROLE") {
-      return user.access !== "NONE" && hasGlobalRoleResultPermission;
-    }
-  }
-
-  const groupPermissionAllows = project.groupPermissions.some(
-    (groupPermission) => {
-      if (groupPermission.accessType === "SPECIFIC_ROLE") {
-        return (
-          groupPermission.role?.name === "Project Admin" ||
-          roleCanAddEditTestRunResults(groupPermission.role)
-        );
-      }
-
-      if (groupPermission.accessType === "GLOBAL_ROLE") {
-        return user.access !== "NONE" && hasGlobalRoleResultPermission;
-      }
-
-      return false;
-    }
-  );
-  if (groupPermissionAllows) {
-    return true;
-  }
-
-  if (project.defaultAccessType === "GLOBAL_ROLE") {
-    return user.access !== "NONE" && hasGlobalRoleResultPermission;
-  }
-
-  if (project.defaultAccessType === "SPECIFIC_ROLE") {
-    return (
-      project.assignedUsers.some(
-        (assignment) => assignment.userId === user.id
-      ) && roleCanAddEditTestRunResults(project.defaultRole)
-    );
-  }
-
-  return false;
 }
 
 export async function POST(req: NextRequest) {
@@ -437,7 +292,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const canSubmit = hasSubmitResultPermission({
+    const canSubmit = hasResultMutationPermission({
       user,
       testRunCreatedById: runCase.testRun.createdById,
       assignedToId: runCase.assignedToId,
@@ -505,32 +360,19 @@ export async function POST(req: NextRequest) {
     // Enforced server-side so the UI, CLI, and MCP all honor it (the client
     // checks are advisory). Read-only and pre-transaction so a rejection never
     // creates a result row; skipped entirely when no required fields exist.
-    const requiredFieldAssignments =
-      await prisma.templateResultAssignment.findMany({
-        where: {
-          templateId: runCase.repositoryCase.templateId,
-          resultField: { isRequired: true, isEnabled: true, isDeleted: false },
+    const missingRequiredField = await hasMissingRequiredResultField(
+      prisma,
+      runCase.repositoryCase.templateId,
+      input.fieldValues
+    );
+    if (missingRequiredField) {
+      return NextResponse.json(
+        {
+          error: "A required result field is missing a value",
+          code: "REQUIRED_FIELDS_MISSING",
         },
-        select: { resultFieldId: true },
-      });
-    if (requiredFieldAssignments.length > 0) {
-      const submittedValues = new Map(
-        (input.fieldValues ?? []).map((fv) => [fv.fieldId, fv.value])
+        { status: 400 }
       );
-      const missingRequiredField = requiredFieldAssignments.some(
-        ({ resultFieldId }) =>
-          !submittedValues.has(resultFieldId) ||
-          isTiptapEmpty(submittedValues.get(resultFieldId))
-      );
-      if (missingRequiredField) {
-        return NextResponse.json(
-          {
-            error: "A required result field is missing a value",
-            code: "REQUIRED_FIELDS_MISSING",
-          },
-          { status: 400 }
-        );
-      }
     }
 
     const notesInput:
