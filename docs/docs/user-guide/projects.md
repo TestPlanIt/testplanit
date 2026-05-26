@@ -322,6 +322,8 @@ System administrators can always edit a result regardless of this setting, and e
 
 ### Require Justification on Result Flip
 
-When enabled, recording a result that **flips** a completed outcome — for example changing a case from Passed to Failed — requires **Result Details** explaining the change. This is mandatory only when both the previous and new statuses are completed outcomes and their pass/fail judgment differs; recording a first result, or moving to or from a non-completed status (such as Untested or In Progress), is never blocked.
+When enabled, recording a result that **flips** a completed outcome — for example changing a case from Passed to Failed — requires **Result Details** explaining the change.
+
+The result details note is mandatory only when **both** the previous and new statuses are *completed* statuses **and** their pass/fail judgment differs. A status counts as completed when its **Completed** flag is set on the [Statuses](./statuses.md) admin page. In the default configuration **Skipped** is a completed status, so changing between Skipped and a Passed or Failed result is treated as a flip and requires justification too, not just Passed ↔ Failed. Recording the first result, or moving to or from a *non-completed* status (such as Untested, Retest, or Blocked), is never blocked.
 
 This setting is off by default and applies to results recorded through the application, the API, and connected agents. Automated result imports (for example CLI or CI result uploads) are not affected.
