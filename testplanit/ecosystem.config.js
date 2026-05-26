@@ -53,8 +53,8 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "512M",
-      node_args: "--max-old-space-size=384",
+      max_memory_restart: "2G",
+      node_args: "--max-old-space-size=1536",
       env: {
         NODE_ENV: "production",
       },
