@@ -620,7 +620,7 @@
       "permissionDenied": "このページにアクセスする権限がありません。",
       "resultSubmitPermissionDenied": "この案件については、結果を提出できません。プロジェクト管理者に依頼して、あなたに割り当ててもらってください。",
       "justificationRequired": "正当化が必要",
-      "justificationRequiredDescription": "結果を変更する場合は、変更理由を説明する注記が必要です。",
+      "justificationRequiredDescription": "完了した結果を別の結果に変更するには、変更内容を説明するメモが必要です。",
       "noModelsFound": "モデルが見つかりません",
       "failedToFetchModels": "モデルの取得に失敗しました",
       "failedToCopyToClipboard": "クリップボードへのコピーに失敗しました",
@@ -1834,12 +1834,12 @@
           "systemDisabledTitle": "レビューワークフローがシステム全体で停止しています",
           "systemDisabledDescription": "プロジェクトの設定は保存されますが、システム管理者が「管理」→「ワークフロー」でこの機能を有効にするまでは、何も制限されません。"
         },
-        "overrideJustification": {
-          "label": "結果の上書きには正当化が必要",
-          "description": "有効にすると、完了した結果を別の結果に変更するには、変更理由を説明するメモが必要になります。",
-          "enabledToast": "このプロジェクトには、例外措置の正当性を示す必要があります。",
-          "disabledToast": "このプロジェクトでは、上書きの正当化は不要になりました。",
-          "saveError": "上書き位置合わせ設定の更新に失敗しました"
+        "flipJustification": {
+          "label": "結果反転の正当化が必要",
+          "description": "有効にすると、完了した結果を反転させる結果（例：合格から不合格へ）を記録する場合、変更内容を説明するメモが必要になります。",
+          "enabledToast": "このプロジェクトには反転の正当性が必要です",
+          "disabledToast": "このプロジェクトでは反転の正当化は不要になりました",
+          "saveError": "反転位置合わせ設定の更新に失敗しました"
         },
         "editWindow": {
           "label": "結果編集ウィンドウ",

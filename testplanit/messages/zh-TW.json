@@ -620,7 +620,7 @@
       "permissionDenied": "您沒有權限存取此頁面。",
       "resultSubmitPermissionDenied": "您無法提交此案例的結果。請聯絡專案管理員將其分配給您。",
       "justificationRequired": "需要提供理由",
-      "justificationRequiredDescription": "更改結果需要添加說明解釋更改原因。",
+      "justificationRequiredDescription": "將已完成的結果改為其他結果需要附上說明解釋更改原因的註釋。",
       "noModelsFound": "未找到模型",
       "failedToFetchModels": "取得模型失敗",
       "failedToCopyToClipboard": "複製到剪貼簿失敗",
@@ -1834,12 +1834,12 @@
           "systemDisabledTitle": "全系統審核工作流程已關閉。",
           "systemDisabledDescription": "您的專案偏好設定已儲存，但只有在系統管理員在「管理」→「工作流程」下啟用功能後，才會啟用任何功能。"
         },
-        "overrideJustification": {
-          "label": "要求對結果覆蓋進行解釋",
-          "description": "啟用此功能後，將已完成的結果變更為其他結果需要新增註解來解釋變更原因。",
-          "enabledToast": "本項目需提供覆蓋理由。",
-          "disabledToast": "本項目不再需要提供覆蓋理由。",
-          "saveError": "更新覆蓋理由設定失敗"
+        "flipJustification": {
+          "label": "需要對結果反轉做出解釋",
+          "description": "啟用此功能後，記錄將已完成結果翻轉的結果（例如，從“通過”變為“失敗”）需要添加註釋來解釋更改。",
+          "enabledToast": "本項目需要翻轉理由。",
+          "disabledToast": "本項目不再需要翻轉理由說明",
+          "saveError": "更新翻轉對齊設定失敗"
         },
         "editWindow": {
           "label": "結果編輯視窗",

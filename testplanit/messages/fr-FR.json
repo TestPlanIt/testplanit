@@ -620,7 +620,7 @@
       "permissionDenied": "Vous n'êtes pas autorisé à accéder à cette page.",
       "resultSubmitPermissionDenied": "Vous ne pouvez pas soumettre de résultats pour ce dossier. Veuillez demander à un administrateur de projet de vous l'attribuer.",
       "justificationRequired": "Justification requise",
-      "justificationRequiredDescription": "Toute modification du résultat obtenu nécessite une note expliquant la modification.",
+      "justificationRequiredDescription": "Pour modifier un résultat final, il faut ajouter une note expliquant le changement.",
       "noModelsFound": "Aucun modèle trouvé",
       "failedToFetchModels": "Impossible de récupérer les modèles",
       "failedToCopyToClipboard": "Impossible de copier dans le presse-papiers",
@@ -1834,12 +1834,12 @@
           "systemDisabledTitle": "Le flux de travail de révision est interrompu à l'échelle du système.",
           "systemDisabledDescription": "La préférence de votre projet est enregistrée, mais rien ne sera bloqué tant qu'un administrateur système n'aura pas activé la fonctionnalité sous Administration → Flux de travail."
         },
-        "overrideJustification": {
-          "label": "Exiger une justification en cas de modification du résultat",
-          "description": "Lorsque cette option est activée, la modification d'un résultat final en un résultat différent nécessite une note expliquant la modification.",
-          "enabledToast": "Justification de remplacement requise pour ce projet",
-          "disabledToast": "La justification de remplacement n'est plus requise pour ce projet.",
-          "saveError": "Échec de la mise à jour du paramètre de justification de remplacement"
+        "flipJustification": {
+          "label": "Exiger une justification pour tout changement de résultat",
+          "description": "Lorsque cette option est activée, l'enregistrement d'un résultat qui inverse un résultat déjà validé (par exemple, Réussi à Échec) nécessite une note expliquant le changement.",
+          "enabledToast": "Justification du retournement requise pour ce projet",
+          "disabledToast": "La justification de retournement n'est plus requise pour ce projet.",
+          "saveError": "Échec de la mise à jour du paramètre de justification du retournement"
         },
         "editWindow": {
           "label": "Fenêtre d'édition des résultats",

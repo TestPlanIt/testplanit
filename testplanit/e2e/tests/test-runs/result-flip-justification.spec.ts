@@ -1,10 +1,10 @@
 import { expect, test } from "../../fixtures";
 
 /**
- * Result Override Justification E2E (API contract)
+ * Result Flip Justification E2E (API contract)
  *
  * Exercises the live submit-result route end to end: when a project has
- * `requireOverrideJustification` enabled, a non-empty justification (notes) is
+ * `requireResultFlipJustification` enabled, a non-empty justification (notes) is
  * required only when a submission changes the judgment between two COMPLETED
  * outcomes on the same run-case. First results, same-outcome re-submissions,
  * clears to a non-completed status, and projects with the setting OFF are
@@ -14,7 +14,7 @@ import { expect, test } from "../../fixtures";
  * which is not gated, so each test sets up its starting state without tripping
  * the rule under test.
  */
-test.describe("Result override justification", () => {
+test.describe("Result flip justification", () => {
   const noteDoc = (text: string) => ({
     type: "doc",
     content: [{ type: "paragraph", content: [{ type: "text", text }] }],
@@ -36,7 +36,7 @@ test.describe("Result override justification", () => {
       await request.patch(`${baseURL}/api/model/projects/update`, {
         data: {
           where: { id: projectId },
-          data: { requireOverrideJustification: true },
+          data: { requireResultFlipJustification: true },
         },
       });
     }
@@ -52,7 +52,7 @@ test.describe("Result override justification", () => {
     return { runId, testRunCaseId };
   }
 
-  test("rejects an outcome override submitted without a justification", async ({
+  test("rejects an outcome flip submitted without a justification", async ({
     api,
     request,
     baseURL,
@@ -82,7 +82,7 @@ test.describe("Result override justification", () => {
     expect(body.code).toBe("JUSTIFICATION_REQUIRED");
   });
 
-  test("accepts an outcome override when a justification is provided", async ({
+  test("accepts an outcome flip when a justification is provided", async ({
     api,
     request,
     baseURL,
@@ -173,7 +173,7 @@ test.describe("Result override justification", () => {
     const failedId = await api.getStatusId("failed");
     await api.createTestResult(runId, testRunCaseId, passedId);
 
-    // A different-outcome override with no notes is accepted because the
+    // A different-outcome flip with no notes is accepted because the
     // project has not opted into mandatory justification.
     const response = await request.post(
       `${baseURL}/api/test-runs/submit-result`,

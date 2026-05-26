@@ -135,13 +135,13 @@ type OutcomeFlags = {
 };
 
 /**
- * Whether moving from `prior` to `next` is an override that requires a
+ * Whether moving from `prior` to `next` is an outcome flip that requires a
  * justification. Only a change between two *completed* judgments counts —
  * recording the first completed result (prior not completed) or clearing
- * back to an untested/blocked status (next not completed) is not an
- * override and never demands a note.
+ * back to an untested/blocked status (next not completed) is not a flip and
+ * never demands a note.
  */
-function isOutcomeOverride(prior: OutcomeFlags, next: OutcomeFlags): boolean {
+function isOutcomeFlip(prior: OutcomeFlags, next: OutcomeFlags): boolean {
   if (!prior.isCompleted || !next.isCompleted) {
     return false;
   }
@@ -339,7 +339,7 @@ export async function POST(req: NextRequest) {
               select: {
                 createdBy: true,
                 defaultAccessType: true,
-                requireOverrideJustification: true,
+                requireResultFlipJustification: true,
                 assignedUsers: {
                   where: {
                     userId: user.id,
@@ -439,8 +439,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Mandatory justification on override (opt-in per project). When the
-    // project has `requireOverrideJustification` enabled and this submission
+    // Mandatory result-flip justification (opt-in per project). When the
+    // project has `requireResultFlipJustification` enabled and this submission
     // changes the judgment relative to the latest prior *completed* attempt on
     // the same run-case (and iteration, when parameterized), a non-empty
     // `notes` justification is required. First completed results, same-outcome
@@ -448,7 +448,7 @@ export async function POST(req: NextRequest) {
     // unaffected. Read-only and pre-transaction so a rejection never creates a
     // result that must then be rolled back; the prior-attempt query is skipped
     // entirely when the setting is off.
-    if (runCase.testRun.project.requireOverrideJustification) {
+    if (runCase.testRun.project.requireResultFlipJustification) {
       const priorAttempt = await prisma.testRunResults.findFirst({
         where: {
           testRunCaseId: input.testRunCaseId,
@@ -475,7 +475,7 @@ export async function POST(req: NextRequest) {
         if (
           priorStatus &&
           nextStatus &&
-          isOutcomeOverride(priorStatus, nextStatus)
+          isOutcomeFlip(priorStatus, nextStatus)
         ) {
           return NextResponse.json(
             {

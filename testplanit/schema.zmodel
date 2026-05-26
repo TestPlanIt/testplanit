@@ -385,73 +385,73 @@ model Roles {
 }
 
 model Projects {
-    id                           Int                                   @id @default(autoincrement())
-    name                         String                                @unique @length(1)
-    iconUrl                      String?
-    note                         String?
-    docs                         String?
-    isCompleted                  Boolean                               @default(false)
-    isDeleted                    Boolean                               @default(false)
-    completedAt                  DateTime?                             @db.Date
-    createdAt                    DateTime                              @default(now()) @db.Timestamptz(6)
-    createdBy                    String
-    creator                      User                                  @relation("ProjectCreator", fields: [createdBy], references: [id])
-    assignedUsers                ProjectAssignment[]
-    assignedStatuses             ProjectStatusAssignment[]
-    milestoneTypes               MilestoneTypesAssignment[]
-    assignedTemplates            TemplateProjectAssignment[]
-    assignedWorkflows            ProjectWorkflowAssignment[]
-    milestones                   Milestones[]
-    repositories                 Repositories[]
-    repositoryFolders            RepositoryFolders[]
-    repositoryCases              RepositoryCases[]
-    repositoryCaseVersions       RepositoryCaseVersions[]
-    sessions                     Sessions[]
-    sessionVersions              SessionVersions[]
-    testRuns                     TestRuns[]
-    defaultAccessType            ProjectAccessType                     @default(GLOBAL_ROLE)
-    defaultRoleId                Int?
-    defaultRole                  Roles?                                @relation("ProjectDefaultRole", fields: [defaultRoleId], references: [id])
-    userPermissions              UserProjectPermission[]
-    groupPermissions             GroupProjectPermission[]
-    sharedStepGroups             SharedStepGroup[]
-    dataSets                     DataSet[]
-    projectIntegrations          ProjectIntegration[]
-    webhookConfigs               WebhookConfig[]
-    webhookOutboxEvents          WebhookOutboxEvent[]
-    projectLlmIntegrations       ProjectLlmIntegration[]
-    codeRepositoryConfig         ProjectCodeRepositoryConfig?
-    promptConfigId               String?
-    promptConfig                 PromptConfig?                         @relation(fields: [promptConfigId], references: [id])
-    issues                       Issue[]
-    llmUsages                    LlmUsage[]
-    llmFeatureConfigs            LlmFeatureConfig[]
-    llmResponseCaches            LlmResponseCache[]
-    comments                     Comment[]
-    auditLogs                    AuditLog[]
-    shareLinks                   ShareLink[]
-    assignedExportTemplates      CaseExportTemplateProjectAssignment[]
-    defaultCaseExportTemplateId  Int?
-    defaultCaseExportTemplate    CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
-    quickScriptEnabled           Boolean                               @default(false)
+    id                             Int                                   @id @default(autoincrement())
+    name                           String                                @unique @length(1)
+    iconUrl                        String?
+    note                           String?
+    docs                           String?
+    isCompleted                    Boolean                               @default(false)
+    isDeleted                      Boolean                               @default(false)
+    completedAt                    DateTime?                             @db.Date
+    createdAt                      DateTime                              @default(now()) @db.Timestamptz(6)
+    createdBy                      String
+    creator                        User                                  @relation("ProjectCreator", fields: [createdBy], references: [id])
+    assignedUsers                  ProjectAssignment[]
+    assignedStatuses               ProjectStatusAssignment[]
+    milestoneTypes                 MilestoneTypesAssignment[]
+    assignedTemplates              TemplateProjectAssignment[]
+    assignedWorkflows              ProjectWorkflowAssignment[]
+    milestones                     Milestones[]
+    repositories                   Repositories[]
+    repositoryFolders              RepositoryFolders[]
+    repositoryCases                RepositoryCases[]
+    repositoryCaseVersions         RepositoryCaseVersions[]
+    sessions                       Sessions[]
+    sessionVersions                SessionVersions[]
+    testRuns                       TestRuns[]
+    defaultAccessType              ProjectAccessType                     @default(GLOBAL_ROLE)
+    defaultRoleId                  Int?
+    defaultRole                    Roles?                                @relation("ProjectDefaultRole", fields: [defaultRoleId], references: [id])
+    userPermissions                UserProjectPermission[]
+    groupPermissions               GroupProjectPermission[]
+    sharedStepGroups               SharedStepGroup[]
+    dataSets                       DataSet[]
+    projectIntegrations            ProjectIntegration[]
+    webhookConfigs                 WebhookConfig[]
+    webhookOutboxEvents            WebhookOutboxEvent[]
+    projectLlmIntegrations         ProjectLlmIntegration[]
+    codeRepositoryConfig           ProjectCodeRepositoryConfig?
+    promptConfigId                 String?
+    promptConfig                   PromptConfig?                         @relation(fields: [promptConfigId], references: [id])
+    issues                         Issue[]
+    llmUsages                      LlmUsage[]
+    llmFeatureConfigs              LlmFeatureConfig[]
+    llmResponseCaches              LlmResponseCache[]
+    comments                       Comment[]
+    auditLogs                      AuditLog[]
+    shareLinks                     ShareLink[]
+    assignedExportTemplates        CaseExportTemplateProjectAssignment[]
+    defaultCaseExportTemplateId    Int?
+    defaultCaseExportTemplate      CaseExportTemplate?                   @relation("ProjectDefaultExportTemplate", fields: [defaultCaseExportTemplateId], references: [id], onDelete: SetNull)
+    quickScriptEnabled             Boolean                               @default(false)
     /// Empty = default ['iteration']. Lookup is case-insensitive at read time.
-    junitIterationPropertyNames  String[]                              @default([])
+    junitIterationPropertyNames    String[]                              @default([])
     /// Per-project opt-in for Review & Approval. Defaults to false so the
     /// feature stays dormant on upgrade — admins flip the system kill switch
     /// AND each project's toggle explicitly. New projects start opted out.
-    reviewWorkflowEnabled        Boolean                               @default(false)
-    /// Per-project opt-in for mandatory override justification. When true, a
-    /// result submission that changes a completed outcome must carry notes.
+    reviewWorkflowEnabled          Boolean                               @default(false)
+    /// Per-project opt-in for mandatory result-flip justification. When true,
+    /// recording a result that flips a completed outcome must carry notes.
     /// Defaults to false so existing projects are unaffected on upgrade.
-    requireOverrideJustification Boolean                               @default(false)
+    requireResultFlipJustification Boolean                               @default(false)
     /// Per-project override for the in-place result edit window, in seconds.
     /// Resolved against the system `edit_results_duration` ceiling: null =
     /// inherit system; 0 = editing disabled for this project; N = editable for
     /// N seconds, capped at the system max when one is set.
-    editResultsDurationSeconds   Int?
-    duplicateScanResults         DuplicateScanResult[]
-    stepSequenceMatches          StepSequenceMatch[]
-    reviewRequests               ReviewRequest[]
+    editResultsDurationSeconds     Int?
+    duplicateScanResults           DuplicateScanResult[]
+    stepSequenceMatches            StepSequenceMatch[]
+    reviewRequests                 ReviewRequest[]
 
     @@index([isDeleted, isCompleted])
     @@index([createdBy])

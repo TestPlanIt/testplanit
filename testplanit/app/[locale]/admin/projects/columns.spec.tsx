@@ -145,7 +145,7 @@ const testProject: ExtendedProjects = {
   quickScriptEnabled: false,
   junitIterationPropertyNames: [],
   reviewWorkflowEnabled: true,
-  requireOverrideJustification: false,
+  requireResultFlipJustification: false,
   editResultsDurationSeconds: null,
   creator: {
     id: "user-1",

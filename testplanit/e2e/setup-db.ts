@@ -27,7 +27,9 @@ async function ensureSchema() {
   const { execSync } = await import("child_process");
 
   try {
-    execSync("pnpm prisma db push --skip-generate", {
+    // The E2E database is ephemeral (reset + reseeded every run), so accept
+    // destructive schema changes (column drops/renames) without prompting.
+    execSync("pnpm prisma db push --skip-generate --accept-data-loss", {
       cwd: process.cwd(),
       stdio: "inherit",
       env: process.env,

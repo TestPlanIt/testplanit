@@ -620,7 +620,7 @@
       "permissionDenied": "Você não tem permissão para acessar esta página.",
       "resultSubmitPermissionDenied": "Você não pode enviar resultados para este caso. Peça a um administrador do projeto para atribuí-lo a você.",
       "justificationRequired": "Justificativa necessária",
-      "justificationRequiredDescription": "Alterar o resultado exige uma nota explicando a alteração.",
+      "justificationRequiredDescription": "Para inverter um resultado já concluído e transformá-lo em um resultado diferente, é necessário incluir uma nota explicativa sobre a mudança.",
       "noModelsFound": "Nenhum modelo encontrado",
       "failedToFetchModels": "Falha ao buscar modelos",
       "failedToCopyToClipboard": "Falha ao copiar para a área de transferência",
@@ -1834,12 +1834,12 @@
           "systemDisabledTitle": "O fluxo de trabalho de revisão está desativado em todo o sistema.",
           "systemDisabledDescription": "As preferências do seu projeto foram salvas, mas nada será bloqueado até que um administrador do sistema ative o recurso em Administração → Fluxos de trabalho."
         },
-        "overrideJustification": {
-          "label": "Exigir justificativa para a substituição do resultado",
-          "description": "Quando ativada, a alteração de um resultado concluído para um resultado diferente requer uma nota explicando a substituição.",
-          "enabledToast": "É necessária uma justificativa para a alteração deste projeto.",
-          "disabledToast": "A justificativa para a alteração não é mais necessária para este projeto.",
-          "saveError": "Falha ao atualizar a configuração de justificativa de substituição"
+        "flipJustification": {
+          "label": "Exigir justificativa para a inversão do resultado",
+          "description": "Quando ativada, a função de registrar um resultado que inverte um desfecho já concluído (por exemplo, de Aprovado para Reprovado) exige uma nota explicando a mudança.",
+          "enabledToast": "É necessária uma justificativa para a inversão deste projeto.",
+          "disabledToast": "A justificativa de inversão não é mais necessária para este projeto.",
+          "saveError": "Falha ao atualizar a configuração de justificação de inversão"
         },
         "editWindow": {
           "label": "Janela de edição de resultados",

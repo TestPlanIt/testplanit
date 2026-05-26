@@ -620,7 +620,7 @@
       "permissionDenied": "Bu sayfaya erişim izniniz yok.",
       "resultSubmitPermissionDenied": "Bu vaka için sonuçları gönderemezsiniz. Lütfen bir proje yöneticisinden size atamasını isteyin.",
       "justificationRequired": "Gerekçe gerekli",
-      "justificationRequiredDescription": "Sonucu değiştirmek için, geçersiz kılmayı açıklayan bir not gereklidir.",
+      "justificationRequiredDescription": "Tamamlanmış bir sonucu farklı bir sonuca çevirmek için, değişikliği açıklayan bir not eklenmesi gerekir.",
       "noModelsFound": "Hiçbir model bulunamadı.",
       "failedToFetchModels": "Modeller alınamadı.",
       "failedToCopyToClipboard": "Panoya kopyalama başarısız oldu.",
@@ -1834,12 +1834,12 @@
           "systemDisabledTitle": "İnceleme iş akışı sistem genelinde devre dışı.",
           "systemDisabledDescription": "Projenizin tercihi kaydedilir, ancak sistem yöneticisi Yönetim → İş Akışları altında bu özelliği etkinleştirene kadar hiçbir şey kilitlenmeyecektir."
         },
-        "overrideJustification": {
-          "label": "Sonuç geçersiz kılma işleminde gerekçe isteniyor.",
-          "description": "Etkinleştirildiğinde, tamamlanmış bir sonucu farklı bir sonuca değiştirmek, geçersiz kılmayı açıklayan bir not gerektirir.",
-          "enabledToast": "Bu proje için geçersiz kılma gerekçesi gereklidir.",
-          "disabledToast": "Bu proje için geçersiz kılma gerekçesi artık gerekli değil.",
-          "saveError": "Geçersiz kılma gerekçelendirme ayarını güncelleme başarısız oldu."
+        "flipJustification": {
+          "label": "Sonuç değişikliğine ilişkin gerekçe talep edin.",
+          "description": "Etkinleştirildiğinde, tamamlanmış bir sonucu tersine çeviren bir sonucun (örneğin Başarılı'dan Başarısız'a) kaydedilmesi, değişikliği açıklayan bir not gerektirir.",
+          "enabledToast": "Bu proje için ters yüz etme gerekçesi gereklidir.",
+          "disabledToast": "Bu proje için artık ters çevirme gerekçelendirmesine gerek yok.",
+          "saveError": "Sayfa hizalama ayarını güncelleme başarısız oldu."
         },
         "editWindow": {
           "label": "Sonuç düzenleme penceresi",

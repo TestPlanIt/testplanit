@@ -1138,8 +1138,8 @@ const metadata: ModelMeta = {
                     name: "reviewWorkflowEnabled",
                     type: "Boolean",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
-                }, requireOverrideJustification: {
-                    name: "requireOverrideJustification",
+                }, requireResultFlipJustification: {
+                    name: "requireResultFlipJustification",
                     type: "Boolean",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
                 }, editResultsDurationSeconds: {

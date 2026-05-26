@@ -78,7 +78,7 @@ describe("Submit Result API Route", () => {
       project: {
         createdBy: "project-owner",
         defaultAccessType: "DEFAULT",
-        requireOverrideJustification: true,
+        requireResultFlipJustification: true,
         defaultRole: null,
         assignedUsers: [],
         userPermissions: [
@@ -476,7 +476,7 @@ describe("Submit Result API Route", () => {
           ...baseRunCase.testRun,
           project: {
             ...baseRunCase.testRun.project,
-            requireOverrideJustification: false,
+            requireResultFlipJustification: false,
           },
         },
       });

@@ -50,7 +50,7 @@ let mockProjectData:
   | {
       id: number;
       reviewWorkflowEnabled: boolean;
-      requireOverrideJustification?: boolean;
+      requireResultFlipJustification?: boolean;
       editResultsDurationSeconds?: number | null;
     }
   | undefined = {
@@ -153,14 +153,14 @@ describe("AdvancedPage (per-project advanced settings)", () => {
     });
   });
 
-  it("(e2) override-justification switch reflects the current value", () => {
+  it("(e2) result-flip-justification switch reflects the current value", () => {
     mockProjectData = {
       id: 42,
       reviewWorkflowEnabled: true,
-      requireOverrideJustification: true,
+      requireResultFlipJustification: true,
     };
     render(<AdvancedPage />);
-    const toggle = screen.getByTestId("override-justification-toggle");
+    const toggle = screen.getByTestId("result-flip-justification-toggle");
     expect(toggle).toHaveAttribute("data-state", "checked");
   });
 
@@ -168,10 +168,10 @@ describe("AdvancedPage (per-project advanced settings)", () => {
     mockProjectData = {
       id: 42,
       reviewWorkflowEnabled: true,
-      requireOverrideJustification: false,
+      requireResultFlipJustification: false,
     };
     render(<AdvancedPage />);
-    const toggle = screen.getByTestId("override-justification-toggle");
+    const toggle = screen.getByTestId("result-flip-justification-toggle");
     expect(toggle).toHaveAttribute("data-state", "unchecked");
 
     fireEvent.click(toggle);
@@ -179,7 +179,7 @@ describe("AdvancedPage (per-project advanced settings)", () => {
     await waitFor(() => {
       expect(mockMutateAsync).toHaveBeenCalledWith({
         where: { id: 42 },
-        data: { requireOverrideJustification: true },
+        data: { requireResultFlipJustification: true },
       });
     });
   });

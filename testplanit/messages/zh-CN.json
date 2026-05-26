@@ -620,7 +620,7 @@
       "permissionDenied": "您没有权限访问此页面。",
       "resultSubmitPermissionDenied": "您无法提交此案例的结果。请联系项目管理员将其分配给您。",
       "justificationRequired": "需要提供理由",
-      "justificationRequiredDescription": "更改结果需要添加说明解释更改原因。",
+      "justificationRequiredDescription": "将已完成的结果改为其他结果需要附上说明解释更改原因的注释。",
       "noModelsFound": "未找到模型",
       "failedToFetchModels": "获取模型失败",
       "failedToCopyToClipboard": "复制到剪贴板失败",
@@ -1834,12 +1834,12 @@
           "systemDisabledTitle": "全系统审核工作流程已关闭。",
           "systemDisabledDescription": "您的项目偏好设置已保存，但只有在系统管理员在“管理”→“工作流”下启用该功能后，才会启用任何功能。"
         },
-        "overrideJustification": {
-          "label": "要求对结果覆盖进行解释",
-          "description": "启用此功能后，将已完成的结果更改为其他结果需要添加注释来解释更改原因。",
-          "enabledToast": "本项目需要提供覆盖理由。",
-          "disabledToast": "本项目不再需要提供覆盖理由。",
-          "saveError": "更新覆盖理由设置失败"
+        "flipJustification": {
+          "label": "需要对结果反转做出解释",
+          "description": "启用此功能后，记录将已完成结果翻转的结果（例如，从“通过”变为“失败”）需要添加注释来解释更改。",
+          "enabledToast": "本项目需要翻转理由。",
+          "disabledToast": "本项目不再需要翻转理由说明",
+          "saveError": "更新翻转对齐设置失败"
         },
         "editWindow": {
           "label": "结果编辑窗口",

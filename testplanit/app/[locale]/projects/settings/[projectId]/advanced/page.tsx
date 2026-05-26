@@ -50,7 +50,7 @@ export default function AdvancedPage() {
         name: true,
         iconUrl: true,
         reviewWorkflowEnabled: true,
-        requireOverrideJustification: true,
+        requireResultFlipJustification: true,
         editResultsDurationSeconds: true,
       },
     },
@@ -104,8 +104,8 @@ export default function AdvancedPage() {
   }
 
   const reviewWorkflowEnabled = project?.reviewWorkflowEnabled ?? true;
-  const requireOverrideJustification =
-    project?.requireOverrideJustification ?? false;
+  const requireResultFlipJustification =
+    project?.requireResultFlipJustification ?? false;
 
   const handleToggleReviewWorkflow = async (enabled: boolean) => {
     try {
@@ -123,19 +123,19 @@ export default function AdvancedPage() {
     }
   };
 
-  const handleToggleOverrideJustification = async (enabled: boolean) => {
+  const handleToggleResultFlipJustification = async (enabled: boolean) => {
     try {
       await updateProject.mutateAsync({
         where: { id: projectId },
-        data: { requireOverrideJustification: enabled },
+        data: { requireResultFlipJustification: enabled },
       });
       toast.success(
         enabled
-          ? t("overrideJustification.enabledToast")
-          : t("overrideJustification.disabledToast")
+          ? t("flipJustification.enabledToast")
+          : t("flipJustification.disabledToast")
       );
     } catch {
-      toast.error(t("overrideJustification.saveError"));
+      toast.error(t("flipJustification.saveError"));
     }
   };
 
@@ -252,18 +252,18 @@ export default function AdvancedPage() {
               <div className="space-y-3">
                 <Label className="flex items-center gap-3">
                   <Switch
-                    id="override-justification-toggle"
-                    data-testid="override-justification-toggle"
-                    checked={requireOverrideJustification}
-                    onCheckedChange={handleToggleOverrideJustification}
+                    id="result-flip-justification-toggle"
+                    data-testid="result-flip-justification-toggle"
+                    checked={requireResultFlipJustification}
+                    onCheckedChange={handleToggleResultFlipJustification}
                     disabled={projectLoading || updateProject.isPending}
                   />
                   <span className="text-base font-medium">
-                    {t("overrideJustification.label")}
+                    {t("flipJustification.label")}
                   </span>
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  {t("overrideJustification.description")}
+                  {t("flipJustification.description")}
                 </p>
               </div>
             </CardContent>

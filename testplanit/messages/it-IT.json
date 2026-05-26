@@ -620,7 +620,7 @@
       "permissionDenied": "Non hai l'autorizzazione per accedere a questa pagina.",
       "resultSubmitPermissionDenied": "Non puoi inviare i risultati per questo caso. Chiedi a un amministratore di progetto di assegnartelo.",
       "justificationRequired": "È richiesta una giustificazione.",
-      "justificationRequiredDescription": "Per modificare il risultato è necessaria una nota che spieghi la modifica.",
+      "justificationRequiredDescription": "Modificare un risultato già ottenuto richiede una nota che spieghi la modifica.",
       "noModelsFound": "Nessun modello trovato",
       "failedToFetchModels": "Impossibile recuperare i modelli",
       "failedToCopyToClipboard": "Impossibile copiare negli appunti",
@@ -1834,12 +1834,12 @@
           "systemDisabledTitle": "Il flusso di lavoro di revisione è disattivato a livello di sistema.",
           "systemDisabledDescription": "Le preferenze del tuo progetto sono state salvate, ma nulla verrà bloccato finché un amministratore di sistema non attiverà la funzione in Amministrazione → Flussi di lavoro."
         },
-        "overrideJustification": {
-          "label": "Richiedere una giustificazione per la sovrascrittura del risultato",
-          "description": "Quando questa opzione è abilitata, la modifica di un risultato completato con un esito diverso richiede una nota che spieghi la modifica.",
-          "enabledToast": "Per questo progetto è richiesta una giustificazione per l'override.",
-          "disabledToast": "Per questo progetto non è più necessaria una giustificazione per l'override.",
-          "saveError": "Impossibile aggiornare l'impostazione di giustificazione di override."
+        "flipJustification": {
+          "label": "Richiedere una giustificazione per il ribaltamento del risultato",
+          "description": "Quando questa opzione è abilitata, la registrazione di un risultato che inverte un esito già completato (ad esempio, da Superato a Non superato) richiede una nota che spieghi la modifica.",
+          "enabledToast": "Per questo progetto è necessaria la giustificazione del capovolgimento.",
+          "disabledToast": "Per questo progetto non è più necessaria la giustificazione del capovolgimento.",
+          "saveError": "Impossibile aggiornare l'impostazione di allineamento capovolgimento"
         },
         "editWindow": {
           "label": "Finestra di modifica dei risultati",

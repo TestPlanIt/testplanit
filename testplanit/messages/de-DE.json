@@ -620,7 +620,7 @@
       "permissionDenied": "Sie haben keine Berechtigung, auf diese Seite zuzugreifen.",
       "resultSubmitPermissionDenied": "Sie können für diesen Fall keine Ergebnisse einreichen. Bitten Sie einen Projektadministrator, Ihnen den Fall zuzuweisen.",
       "justificationRequired": "Begründung erforderlich",
-      "justificationRequiredDescription": "Eine Änderung des Ergebnisses erfordert einen Vermerk, der die Überschreibung erläutert.",
+      "justificationRequiredDescription": "Wenn ein abgeschlossenes Ergebnis in ein anderes Ergebnis umgewandelt werden soll, ist eine Notiz erforderlich, in der die Änderung erläutert wird.",
       "noModelsFound": "Keine Modelle gefunden",
       "failedToFetchModels": "Modelle konnten nicht abgerufen werden",
       "failedToCopyToClipboard": "Fehler beim Kopieren in die Zwischenablage",
@@ -1834,12 +1834,12 @@
           "systemDisabledTitle": "Der Überprüfungsworkflow ist systemweit deaktiviert.",
           "systemDisabledDescription": "Die Einstellungen Ihres Projekts werden gespeichert, aber es wird nichts gesperrt, bis ein Systemadministrator die Funktion unter Administration → Workflows aktiviert."
         },
-        "overrideJustification": {
-          "label": "Begründung für Ergebnisüberschreibung erforderlich",
-          "description": "Wenn diese Option aktiviert ist, muss für die Änderung eines abgeschlossenen Ergebnisses in ein anderes Ergebnis ein Hinweis angegeben werden, der die Überschreibung erläutert.",
-          "enabledToast": "Für dieses Projekt ist eine Begründung für die Überschreibung erforderlich.",
-          "disabledToast": "Eine Begründung für die Überschreibung ist für dieses Projekt nicht mehr erforderlich.",
-          "saveError": "Fehler beim Aktualisieren der Überschreibungsbegründungseinstellung"
+        "flipJustification": {
+          "label": "Begründung für die Ergebnisumkehr erforderlich",
+          "description": "Wenn diese Option aktiviert ist, muss beim Protokollieren eines Ergebnisses, das ein abgeschlossenes Ergebnis umkehrt (z. B. von Bestanden zu Nicht bestanden), eine Notiz hinzugefügt werden, in der die Änderung erläutert wird.",
+          "enabledToast": "Für dieses Projekt ist eine Flip-Begründung erforderlich.",
+          "disabledToast": "Eine Flip-Begründung ist für dieses Projekt nicht mehr erforderlich.",
+          "saveError": "Fehler beim Aktualisieren der Einstellung für die Spiegelungsausrichtung"
         },
         "editWindow": {
           "label": "Ergebnisbearbeitungsfenster",
