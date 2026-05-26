@@ -50,7 +50,7 @@ import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { emptyEditorContent } from "~/app/constants";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import {
   useFindFirstRepositoryCaseVersions,
   useFindFirstWorkflows,
@@ -814,12 +814,8 @@ export default function TestCaseVersions() {
                         (value) => value.field === field.caseField.displayName
                       )?.value;
                     if (
-                      (!fieldValue ||
-                        JSON.stringify(fieldValue) ===
-                          JSON.stringify(emptyEditorContent)) &&
-                      (!previousFieldValue ||
-                        JSON.stringify(previousFieldValue) ===
-                          JSON.stringify(emptyEditorContent))
+                      isTiptapEmpty(fieldValue) &&
+                      isTiptapEmpty(previousFieldValue)
                     ) {
                       return null;
                     }

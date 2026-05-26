@@ -63,6 +63,7 @@ import { useLocale, useTranslations } from "next-intl";
 import React, { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { emptyEditorContent } from "~/app/constants";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { EditResultModal } from "~/app/[locale]/projects/repository/[projectId]/EditResultModal";
 import FieldValueRenderer from "~/app/[locale]/projects/repository/[projectId]/[caseId]/FieldValueRenderer";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
@@ -523,21 +524,19 @@ const StepResultsDisplay = ({
                       className="prose-sm"
                     />
                   </div>
-                  {stepResult.notes &&
-                    JSON.stringify(stepResult.notes) !==
-                      JSON.stringify(emptyEditorContent) && (
-                      <div className="bg-muted/30 rounded-lg p-2">
-                        <div className="text-xs text-muted-foreground mb-1">
-                          {tCommon("fields.notes")}
-                        </div>
-                        <TipTapEditor
-                          content={stepResult.notes as object}
-                          readOnly={true}
-                          projectId={projectId ? String(projectId) : undefined}
-                          className="prose-sm"
-                        />
+                  {stepResult.notes && !isTiptapEmpty(stepResult.notes) && (
+                    <div className="bg-muted/30 rounded-lg p-2">
+                      <div className="text-xs text-muted-foreground mb-1">
+                        {tCommon("fields.notes")}
                       </div>
-                    )}
+                      <TipTapEditor
+                        content={stepResult.notes as object}
+                        readOnly={true}
+                        projectId={projectId ? String(projectId) : undefined}
+                        className="prose-sm"
+                      />
+                    </div>
+                  )}
                   {stepResult.elapsed && stepResult.elapsed > 0 && (
                     <div className="text-xs text-muted-foreground mt-2">
                       {tCommon("fields.elapsed")}:{" "}
@@ -668,21 +667,19 @@ const RenderSharedGroupInHistoryList: React.FC<{
                 </Badge>
               )}
             </div>
-            {itemResult?.notes &&
-              JSON.stringify(itemResult.notes) !==
-                JSON.stringify(emptyEditorContent) && (
-                <div className="mt-2 p-2 bg-background rounded-md">
-                  <div className="text-xs text-muted-foreground mb-1">
-                    {tCommon("fields.notes")}
-                  </div>
-                  <TipTapEditor
-                    content={itemResult.notes as object}
-                    readOnly={true}
-                    projectId={projectId ? String(projectId) : undefined}
-                    className="prose-sm"
-                  />
+            {itemResult?.notes && !isTiptapEmpty(itemResult.notes) && (
+              <div className="mt-2 p-2 bg-background rounded-md">
+                <div className="text-xs text-muted-foreground mb-1">
+                  {tCommon("fields.notes")}
                 </div>
-              )}
+                <TipTapEditor
+                  content={itemResult.notes as object}
+                  readOnly={true}
+                  projectId={projectId ? String(projectId) : undefined}
+                  className="prose-sm"
+                />
+              </div>
+            )}
             {itemResult?.elapsed && itemResult.elapsed > 0 && (
               <div className="text-xs text-muted-foreground mt-1">
                 {tCommon("fields.elapsed")}:{" "}
@@ -1744,8 +1741,7 @@ export default function TestResultHistory({
                                 )}
                               {result.sourceType === "manual" &&
                                 result.notes &&
-                                JSON.stringify(result.notes) !==
-                                  JSON.stringify(emptyEditorContent) && (
+                                !isTiptapEmpty(result.notes) && (
                                   <div>
                                     <div className="px-4 text-xs text-muted-foreground">
                                       {tCommon("actions.resultDetails")}

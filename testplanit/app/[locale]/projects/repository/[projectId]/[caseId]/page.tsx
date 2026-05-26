@@ -2245,7 +2245,7 @@ export default function TestCaseDetails() {
                           field.caseField.type.type === "Steps" && canAddEdit;
                         if (
                           !isEditMode &&
-                          (!fieldValue || fieldValue === emptyEditorContent) &&
+                          isTiptapEmpty(fieldValue) &&
                           !isEditableStepsField
                         )
                           return null;

@@ -107,6 +107,7 @@ import parseDuration from "parse-duration";
 import type { Control, FieldErrors, Resolver } from "react-hook-form";
 import { ImperativePanelHandle } from "react-resizable-panels";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { useExportSessionPdf } from "~/hooks/pdf/useExportSessionPdf";
 import SessionResultsSummary from "~/components/SessionResultsSummary";
 import { Link } from "~/lib/navigation";
@@ -2008,9 +2009,7 @@ export default function SessionPage() {
                   <div className="space-y-4">
                     {/* Description - hide completely if empty in view mode */}
                     {isEditMode ||
-                    (contentLoaded &&
-                      JSON.stringify(noteContent) !==
-                        JSON.stringify(emptyEditorContent)) ? (
+                    (contentLoaded && !isTiptapEmpty(noteContent)) ? (
                       <FormField
                         control={control}
                         name="note"
@@ -2059,9 +2058,7 @@ export default function SessionPage() {
 
                     {/* Mission - hide completely if empty in view mode */}
                     {isEditMode ||
-                    (contentLoaded &&
-                      JSON.stringify(missionContent) !==
-                        JSON.stringify(emptyEditorContent)) ? (
+                    (contentLoaded && !isTiptapEmpty(missionContent)) ? (
                       <FormField
                         control={control}
                         name="mission"
@@ -2112,10 +2109,8 @@ export default function SessionPage() {
                     <div className="w-full space-y-4">
                       {/* Only show separator if either description or mission is not empty */}
                       {contentLoaded &&
-                        (JSON.stringify(noteContent) !==
-                          JSON.stringify(emptyEditorContent) ||
-                          JSON.stringify(missionContent) !==
-                            JSON.stringify(emptyEditorContent)) && (
+                        (!isTiptapEmpty(noteContent) ||
+                          !isTiptapEmpty(missionContent)) && (
                           <Separator className="my-4" />
                         )}
 

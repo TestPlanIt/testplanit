@@ -51,6 +51,7 @@ import { toast } from "sonner";
 import { z } from "zod/v4";
 import type { BatchTestRunSummaryResponse } from "~/app/api/test-runs/summaries/route";
 import { emptyEditorContent } from "~/app/constants";
+import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { CommentsSection } from "~/components/comments/CommentsSection";
 import LoadingSpinner from "~/components/LoadingSpinner";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
@@ -681,10 +682,7 @@ export default function MilestoneDetailsPage() {
                         <FormLabel>
                           {tGlobal("common.fields.documentation")}
                         </FormLabel>
-                        {isEditMode ||
-                        (milestone?.docs &&
-                          milestone?.docs !==
-                            JSON.stringify(emptyEditorContent)) ? (
+                        {isEditMode || !isTiptapEmpty(milestone?.docs) ? (
                           <FormControl>
                             <TipTapEditor
                               key={`editing-docs-${isEditMode}`}
