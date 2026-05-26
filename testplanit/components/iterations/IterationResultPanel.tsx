@@ -84,6 +84,9 @@ export function IterationResultPanel({
   const [showAddResultModal, setShowAddResultModal] = useState(false);
   // Pre-selected status when a quick-status click escalates to the modal.
   const [escalatedStatusId, setEscalatedStatusId] = useState<string>();
+  // True when the escalation was triggered by a rejected flip, so the modal
+  // shows the justification error on open.
+  const [flipErrorOnOpen, setFlipErrorOnOpen] = useState(false);
 
   // Fetch the case (for name + currentVersion + steps) — React Query
   // dedupes with the same query already running inside TestRunCaseDetails.
@@ -202,9 +205,11 @@ export function IterationResultPanel({
           description: tCommon("errors.resultSubmitPermissionDenied"),
         });
       } else if (isJustificationRequiredSubmitResultError(error)) {
-        toast.error(tCommon("errors.justificationRequired"), {
-          description: tCommon("errors.justificationRequiredDescription"),
-        });
+        // Open the full modal pre-set to this status with the justification
+        // error shown inline, so the tester can add Result Details and resubmit.
+        setEscalatedStatusId(statusId.toString());
+        setFlipErrorOnOpen(true);
+        setShowAddResultModal(true);
       } else {
         toast.error(tCommon("errors.error"), {
           description: tCommon("errors.somethingWentWrong"),
@@ -234,7 +239,11 @@ export function IterationResultPanel({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => setShowAddResultModal(true)}
+            onClick={() => {
+              setEscalatedStatusId(undefined);
+              setFlipErrorOnOpen(false);
+              setShowAddResultModal(true);
+            }}
             disabled={isDisabled || isSubmitting}
             data-testid="iteration-add-result-button"
           >
@@ -305,12 +314,15 @@ export function IterationResultPanel({
           onClose={() => {
             setShowAddResultModal(false);
             setEscalatedStatusId(undefined);
+            setFlipErrorOnOpen(false);
           }}
           testRunId={testRunId}
           testRunCaseId={testRunCaseId}
           caseName={testcase.name}
           projectId={projectId}
           defaultStatusId={escalatedStatusId ?? successStatus?.id?.toString()}
+          validateOnOpen={escalatedStatusId != null && !flipErrorOnOpen}
+          flipJustificationError={flipErrorOnOpen}
           configuration={testRun?.configuration ?? undefined}
           iterationId={iteration.id}
           iterationLabel={t("iterationResultPanelHeading", {
