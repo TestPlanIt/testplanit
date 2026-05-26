@@ -357,7 +357,9 @@
         "edit_results_duration": "編輯結果持續時間",
         "project_docs_default": "專案文件預設",
         "notificationSettings": "通知全域設定",
-        "elasticsearch_replicas": "Elasticsearch 副本"
+        "elasticsearch_replicas": "Elasticsearch 副本",
+        "review_feature_enabled": "已啟用審核和批准功能",
+        "review_reminder_threshold_days": "提醒審稿者閾值日"
       },
       "options": {
         "label": "標籤",

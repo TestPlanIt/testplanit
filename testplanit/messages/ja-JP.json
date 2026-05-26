@@ -357,7 +357,9 @@
         "edit_results_duration": "結果の期間を編集",
         "project_docs_default": "プロジェクトドキュメントのデフォルト",
         "notificationSettings": "通知のグローバル設定",
-        "elasticsearch_replicas": "Elasticsearchレプリカ"
+        "elasticsearch_replicas": "Elasticsearchレプリカ",
+        "review_feature_enabled": "レビューと承認が有効になりました",
+        "review_reminder_threshold_days": "レビュー担当者に期限日数を思い出させる"
       },
       "options": {
         "label": "ラベル",

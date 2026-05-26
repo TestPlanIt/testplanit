@@ -357,7 +357,9 @@
         "edit_results_duration": "Bewerken Resultaten Duur",
         "project_docs_default": "Projectdocumenten Standaard",
         "notificationSettings": "Globale instellingen voor meldingen",
-        "elasticsearch_replicas": "Elasticsearch-replica's"
+        "elasticsearch_replicas": "Elasticsearch-replica's",
+        "review_feature_enabled": "Beoordeling en goedkeuring ingeschakeld",
+        "review_reminder_threshold_days": "Herinner beoordelaars aan de drempeldagen"
       },
       "options": {
         "label": "Label",

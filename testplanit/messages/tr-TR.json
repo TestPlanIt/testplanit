@@ -357,7 +357,9 @@
         "edit_results_duration": "Sonuçları Düzenle Süre",
         "project_docs_default": "Proje Belgeleri Varsayılan",
         "notificationSettings": "Bildirim Genel Ayarı",
-        "elasticsearch_replicas": "Elasticsearch Replikaları"
+        "elasticsearch_replicas": "Elasticsearch Replikaları",
+        "review_feature_enabled": "İnceleme ve Onaylar Etkinleştirildi",
+        "review_reminder_threshold_days": "Değerlendiricilere Eşik Günlerini Hatırlatın"
       },
       "options": {
         "label": "Etiket",

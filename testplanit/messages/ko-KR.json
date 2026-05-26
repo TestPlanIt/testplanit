@@ -357,7 +357,9 @@
         "edit_results_duration": "편집 결과 기간",
         "project_docs_default": "프로젝트 문서 기본값",
         "notificationSettings": "알림 전역 설정",
-        "elasticsearch_replicas": "엘라스틱서치 복제본"
+        "elasticsearch_replicas": "엘라스틱서치 복제본",
+        "review_feature_enabled": "검토 및 승인 기능 활성화됨",
+        "review_reminder_threshold_days": "검토자에게 마감일을 다시 알림"
       },
       "options": {
         "label": "상표",

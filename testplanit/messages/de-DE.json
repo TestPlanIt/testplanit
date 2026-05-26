@@ -357,7 +357,9 @@
         "edit_results_duration": "Bearbeitungsdauer der Ergebnisse",
         "project_docs_default": "Standardeinstellungen für Projektdokumente",
         "notificationSettings": "Globale Benachrichtigungseinstellungen",
-        "elasticsearch_replicas": "Elasticsearch-Replikate"
+        "elasticsearch_replicas": "Elasticsearch-Replikate",
+        "review_feature_enabled": "Überprüfung und Genehmigung aktiviert",
+        "review_reminder_threshold_days": "Erinnern Sie die Prüfer an die Schwellenwerte"
       },
       "options": {
         "label": "Etikett",

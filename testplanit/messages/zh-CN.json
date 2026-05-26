@@ -357,7 +357,9 @@
         "edit_results_duration": "编辑结果持续时间",
         "project_docs_default": "项目文档默认",
         "notificationSettings": "通知全局设置",
-        "elasticsearch_replicas": "Elasticsearch 副本"
+        "elasticsearch_replicas": "Elasticsearch 副本",
+        "review_feature_enabled": "已启用审核和批准功能",
+        "review_reminder_threshold_days": "提醒审稿人阈值日"
       },
       "options": {
         "label": "标签",

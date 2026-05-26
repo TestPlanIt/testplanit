@@ -357,7 +357,9 @@
         "edit_results_duration": "Редактировать результаты Продолжительность",
         "project_docs_default": "Документация проекта (по умолчанию)",
         "notificationSettings": "Глобальные настройки уведомления",
-        "elasticsearch_replicas": "Реплики Elasticsearch"
+        "elasticsearch_replicas": "Реплики Elasticsearch",
+        "review_feature_enabled": "Доступны функции проверки и утверждения.",
+        "review_reminder_threshold_days": "Напомнить рецензентам о пороговых днях"
       },
       "options": {
         "label": "Этикетка",

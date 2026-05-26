@@ -357,7 +357,9 @@
         "edit_results_duration": "Durée de modification des résultats",
         "project_docs_default": "Documentation du projet par défaut",
         "notificationSettings": "Paramètres globaux de notification",
-        "elasticsearch_replicas": "Réplicas Elasticsearch"
+        "elasticsearch_replicas": "Réplicas Elasticsearch",
+        "review_feature_enabled": "Examen et approbation activés",
+        "review_reminder_threshold_days": "Rappelez aux réviseurs le délai imparti pour les jours limites"
       },
       "options": {
         "label": "Étiquette",

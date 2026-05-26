@@ -357,7 +357,9 @@
         "edit_results_duration": "Edit Results Duration",
         "project_docs_default": "Project Docs Default",
         "notificationSettings": "Notification Global Setting",
-        "elasticsearch_replicas": "Elasticsearch Replicas"
+        "elasticsearch_replicas": "Elasticsearch Replicas",
+        "review_feature_enabled": "Review and Approvals Enabled",
+        "review_reminder_threshold_days": "Remind Reviewers Threshold Days"
       },
       "options": {
         "label": "Label",

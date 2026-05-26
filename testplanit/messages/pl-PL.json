@@ -357,7 +357,9 @@
         "edit_results_duration": "Edytuj czas trwania wyników",
         "project_docs_default": "Domyślne dokumenty projektu",
         "notificationSettings": "Globalne ustawienie powiadomień",
-        "elasticsearch_replicas": "Repliki Elasticsearch"
+        "elasticsearch_replicas": "Repliki Elasticsearch",
+        "review_feature_enabled": "Włączono przegląd i zatwierdzenia",
+        "review_reminder_threshold_days": "Przypomnij recenzentom o dniach progowych"
       },
       "options": {
         "label": "Etykieta",

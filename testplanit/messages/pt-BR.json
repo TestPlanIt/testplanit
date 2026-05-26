@@ -357,7 +357,9 @@
         "edit_results_duration": "Editar Duração dos Resultados",
         "project_docs_default": "Documentação do projeto padrão",
         "notificationSettings": "Configuração global de notificações",
-        "elasticsearch_replicas": "Réplicas do Elasticsearch"
+        "elasticsearch_replicas": "Réplicas do Elasticsearch",
+        "review_feature_enabled": "Revisão e aprovações ativadas",
+        "review_reminder_threshold_days": "Lembre os avaliadores sobre os dias limite."
       },
       "options": {
         "label": "Rótulo",

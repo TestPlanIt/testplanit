@@ -357,7 +357,9 @@
         "edit_results_duration": "Chỉnh sửa kết quả Thời lượng",
         "project_docs_default": "Tài liệu dự án mặc định",
         "notificationSettings": "Thông báo Cài đặt toàn cầu",
-        "elasticsearch_replicas": "Bản sao Elasticsearch"
+        "elasticsearch_replicas": "Bản sao Elasticsearch",
+        "review_feature_enabled": "Chức năng xem xét và phê duyệt đã được bật.",
+        "review_reminder_threshold_days": "Nhắc nhở người đánh giá về số ngày ngưỡng"
       },
       "options": {
         "label": "Nhãn",

@@ -357,7 +357,9 @@
         "edit_results_duration": "Editar Duración de Resultados",
         "project_docs_default": "Projektdokument",
         "notificationSettings": "Configuración global de notificación",
-        "elasticsearch_replicas": "Réplicas de Elasticsearch"
+        "elasticsearch_replicas": "Réplicas de Elasticsearch",
+        "review_feature_enabled": "Revisión y aprobación habilitadas",
+        "review_reminder_threshold_days": "Recordatorio para los revisores de los días umbral"
       },
       "options": {
         "label": "Etiqueta",
