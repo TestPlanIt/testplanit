@@ -1,3 +1,9 @@
+## [0.31.2](https://github.com/TestPlanIt/testplanit/compare/v0.31.1...v0.31.2) (2026-05-27)
+
+### Enhancements
+
+* **reports:** add folder and tag report dimensions ([#350](https://github.com/TestPlanIt/testplanit/issues/350)) ([d8cb96e](https://github.com/TestPlanIt/testplanit/commit/d8cb96e565a9809a3bbd2f368bb889c15d72bc08))
+
 ## [0.31.1](https://github.com/TestPlanIt/testplanit/compare/v0.31.0...v0.31.1) (2026-05-27)
 
 ### Enhancements
