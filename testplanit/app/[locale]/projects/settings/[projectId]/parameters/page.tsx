@@ -1,8 +1,15 @@
 "use client";
 
 import { Loading } from "@/components/Loading";
+import { ProjectIcon } from "@/components/ProjectIcon";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { CirclePlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { notFound, useParams } from "next/navigation";
@@ -80,49 +87,68 @@ export default function ProjectParametersSettingsPage() {
 
   return (
     <main className="space-y-6">
-      <Card id="junit">
+      <Card>
         <CardHeader className="w-full">
           <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
             <CardTitle>
-              <span>{tParameters("tabJunit")}</span>
+              <span>{tParameters("title")}</span>
             </CardTitle>
           </div>
-          <p className="text-sm text-muted-foreground pt-2">
-            {tJunit("description")}
-          </p>
+          <CardDescription className="uppercase">
+            <span className="flex items-center gap-2">
+              <ProjectIcon iconUrl={project.iconUrl} />
+              {project.name}
+            </span>
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <JunitIterationPropertyForm
-            projectId={projectId}
-            initialNames={
-              (project.junitIterationPropertyNames as
-                | readonly string[]
-                | undefined) ?? []
-            }
-          />
-        </CardContent>
-      </Card>
+          <Card id="junit">
+            <CardHeader className="w-full">
+              <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
+                <CardTitle>
+                  <span>{tParameters("tabJunit")}</span>
+                </CardTitle>
+              </div>
+              <p className="text-sm text-muted-foreground pt-2">
+                {tJunit("description")}
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <JunitIterationPropertyForm
+                projectId={projectId}
+                initialNames={
+                  (project.junitIterationPropertyNames as
+                    | readonly string[]
+                    | undefined) ?? []
+                }
+              />
+            </CardContent>
+          </Card>
 
-      <Card id="datasets">
-        <CardHeader className="w-full">
-          <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
-            <CardTitle>
-              <span>{tDatasets("title")}</span>
-            </CardTitle>
-            <Button
-              onClick={() => setCreateOpen(true)}
-              data-testid="dataset-create-button"
-            >
-              <CirclePlus className="w-4" />
-              <span className="hidden md:inline">{tDatasets("newButton")}</span>
-            </Button>
-          </div>
-          <p className="text-sm text-muted-foreground pt-2">
-            {tDatasets("description")}
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <DatasetsList projectId={projectId} />
+          <Card id="datasets">
+            <CardHeader className="w-full">
+              <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
+                <CardTitle>
+                  <span>{tDatasets("title")}</span>
+                </CardTitle>
+                <Button
+                  onClick={() => setCreateOpen(true)}
+                  data-testid="dataset-create-button"
+                >
+                  <CirclePlus className="w-4" />
+                  <span className="hidden md:inline">
+                    {tDatasets("newButton")}
+                  </span>
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground pt-2">
+                {tDatasets("description")}
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <DatasetsList projectId={projectId} />
+            </CardContent>
+          </Card>
         </CardContent>
       </Card>
 
