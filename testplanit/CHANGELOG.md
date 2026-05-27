@@ -1,3 +1,9 @@
+## [0.31.4](https://github.com/TestPlanIt/testplanit/compare/v0.31.3...v0.31.4) (2026-05-27)
+
+### Enhancements
+
+* **audit:** audit all admin configuration changes ([#352](https://github.com/TestPlanIt/testplanit/issues/352)) ([b7f3570](https://github.com/TestPlanIt/testplanit/commit/b7f357080f62791bb1a02f3a0b7397a99104c8a9))
+
 ## [0.31.3](https://github.com/TestPlanIt/testplanit/compare/v0.31.2...v0.31.3) (2026-05-27)
 
 ### Enhancements
