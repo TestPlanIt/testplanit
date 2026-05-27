@@ -21,7 +21,9 @@ import {
   auditBulkUpdate,
   auditBulkDelete,
   captureAuditEvent,
+  AUDITED_CONFIG_MODELS,
 } from "./services/auditLog";
+import { buildConfigAuditHooks } from "./services/configAuditHooks";
 import { invalidateApiTokenCache } from "./api-token-cache";
 // Plan 02-05 — outbound webhook emitters spliced alongside the existing
 // audit/ES-sync calls. Each emit is bound to a Prisma.TransactionClient
@@ -62,9 +64,24 @@ let dbClient: any;
 function createPrismaClient(errorFormat: "pretty" | "colorless") {
   const baseClient = new PrismaClient({ errorFormat });
 
+  // Generic audit hooks for admin-managed configuration/catalog models. These
+  // models need only audit logging (no Elasticsearch sync, webhook emit, or
+  // transaction wrapping), so a single factory (lib/services/configAuditHooks)
+  // mirrors the per-model pattern used by the hand-written blocks below. The
+  // driving list lives in AUDITED_CONFIG_MODELS (lib/services/auditLog.ts) and
+  // is validated against the datamodel in tests — a mistyped accessor would
+  // otherwise be silent dead code because the `$extends` block is cast `as any`.
+  const configAuditHooks: Record<string, unknown> = Object.fromEntries(
+    AUDITED_CONFIG_MODELS.map((cfg) => [
+      cfg.accessor,
+      buildConfigAuditHooks(cfg, (baseClient as any)[cfg.accessor]),
+    ])
+  );
+
   // Add Elasticsearch sync using client extensions
   const client = baseClient.$extends({
     query: {
+      ...configAuditHooks,
       repositoryCases: {
         // Plan 02-05 Blocker 3 — wrap entity write + emit in an explicit
         // baseClient.$transaction so both commit-or-rollback atomically.
