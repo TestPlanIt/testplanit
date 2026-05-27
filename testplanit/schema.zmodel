@@ -2586,6 +2586,11 @@ model TestRunCases {
     @@deny('all', !auth())
     @@deny('all', auth().access == 'NONE')
 
+    // Structural completion lock: once a run is completed its case set is
+    // frozen — no adding, removing, or reordering. There is no in-app reopen;
+    // the only reversal is clearing isCompleted directly in the database.
+    @@deny('create,update,delete', testRun.isCompleted)
+
     // Explicit NO_ACCESS denial
     @@deny('read', testRun.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
 
@@ -2704,6 +2709,10 @@ model TestRunResults {
     @@deny('all', !auth())
     @@deny('all', auth().access == 'NONE')
 
+    // Structural completion lock: results on a completed run are frozen
+    // (no recording or editing). Mirrors the case-level lock on TestRunCases.
+    @@deny('create,update,delete', testRun.isCompleted)
+
     // Explicit NO_ACCESS denial
     @@deny('read', testRun.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
 
@@ -2777,6 +2786,9 @@ model TestRunStepResults {
     @@unique([testRunResultId, stepId, sharedStepItemId], map: "uq_tsr_res_step_shareditem")
     @@deny('all', !auth())
     @@deny('all', auth().access == 'NONE')
+
+    // Structural completion lock: step results on a completed run are frozen.
+    @@deny('create,update,delete', testRunResult.testRun.isCompleted)
 
     // Explicit NO_ACCESS denial
     @@deny('read', testRunResult.testRun.project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])

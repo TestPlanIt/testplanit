@@ -137,12 +137,24 @@ export async function POST(
       select: {
         id: true,
         testRun: {
-          select: { projectId: true },
+          select: { projectId: true, isCompleted: true },
         },
       },
     });
     if (!runCase) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    // A completed run is frozen. The writes below run on the raw client, so
+    // enforce the same lock the ZenStack policy applies to model-API writes.
+    if (runCase.testRun.isCompleted) {
+      return NextResponse.json(
+        {
+          error: "This test run is completed and can no longer be modified",
+          code: "RUN_COMPLETED",
+        },
+        { status: 409 }
+      );
     }
 
     // Validate the chosen status is a Test-Run-scoped status enabled for

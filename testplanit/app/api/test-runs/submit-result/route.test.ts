@@ -257,6 +257,20 @@ describe("Submit Result API Route", () => {
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
+  it("returns 409 RUN_COMPLETED when the test run is completed", async () => {
+    (prisma.testRunCases.findFirst as any).mockResolvedValue({
+      ...baseRunCase,
+      testRun: { ...baseRunCase.testRun, isCompleted: true },
+    });
+
+    const response = await POST(createRequest(validBody));
+    const data = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(data.code).toBe("RUN_COMPLETED");
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
   it("submits result and updates test run case atomically when permission is valid", async () => {
     const response = await POST(createRequest(validBody));
     const data = await response.json();
