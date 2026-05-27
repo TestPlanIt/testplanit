@@ -1,3 +1,9 @@
+## [0.31.1](https://github.com/TestPlanIt/testplanit/compare/v0.31.0...v0.31.1) (2026-05-27)
+
+### Enhancements
+
+* Require a linked issue on failure (per-project, opt-in) ([#349](https://github.com/TestPlanIt/testplanit/issues/349)) ([0fea500](https://github.com/TestPlanIt/testplanit/commit/0fea5007a7ca3ca9fa37520fe7e39f4660fbc68c))
+
 ## [0.31.0](https://github.com/TestPlanIt/testplanit/compare/v0.30.0...v0.31.0) (2026-05-26)
 
 ### Features
