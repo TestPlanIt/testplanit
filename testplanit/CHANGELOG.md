@@ -1,3 +1,9 @@
+## [0.31.5](https://github.com/TestPlanIt/testplanit/compare/v0.31.4...v0.31.5) (2026-05-27)
+
+### Enhancements
+
+* **test-runs:** make completed runs structurally immutable ([#353](https://github.com/TestPlanIt/testplanit/issues/353)) ([4beeca2](https://github.com/TestPlanIt/testplanit/commit/4beeca2653b7812af625efb741e41a6af6cfd4ea))
+
 ## [0.31.4](https://github.com/TestPlanIt/testplanit/compare/v0.31.3...v0.31.4) (2026-05-27)
 
 ### Enhancements
