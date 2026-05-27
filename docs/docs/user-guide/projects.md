@@ -327,3 +327,15 @@ When enabled, recording a result that **flips** a completed outcome — for exam
 The result details note is mandatory only when **both** the previous and new statuses are *completed* statuses **and** their pass/fail judgment differs. A status counts as completed when its **Completed** flag is set on the [Statuses](./statuses.md) admin page. In the default configuration **Skipped** is a completed status, so changing between Skipped and a Passed or Failed result is treated as a flip and requires justification too, not just Passed ↔ Failed. Recording the first result, or moving to or from a *non-completed* status (such as Untested, Retest, or Blocked), is never blocked.
 
 This setting is off by default and applies to results recorded through the application, the API, and connected agents. Automated result imports (for example CLI or CI result uploads) are not affected.
+
+### Require a Linked Issue on Failure
+
+When enabled, recording a **failure** result requires at least one linked issue, so every failure is tied to a tracked defect.
+
+A status counts as a failure when its **Failure** flag is set on the [Statuses](./statuses.md) admin page so any custom failed-type status is covered. An issue satisfies the requirement whether it is linked to the result itself or to one of its failing steps. Non-failure results (Passed, Blocked, and the like) are never blocked.
+
+This setting depends on an [issue integration](./integrations.md). A project can only enforce it if it has an active issue integration to link issues from; without one the toggle is disabled and a warning is shown, since there would be no way to attach an issue.
+
+When a tester selects a failure status from the quick-status menu on a project that requires an issue, TestPlanIt opens the **Add Result** dialog with an inline prompt to link an issue rather than silently rejecting the result. The prompt clears as soon as an issue is linked.
+
+This setting is off by default and applies to results recorded through the application, the API, and connected agents. Automated result imports (for example CLI or CI result uploads) are not affected.
