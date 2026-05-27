@@ -1,3 +1,9 @@
+## [0.31.3](https://github.com/TestPlanIt/testplanit/compare/v0.31.2...v0.31.3) (2026-05-27)
+
+### Enhancements
+
+* **test-runs:** expand step details in Test Run PDF export ([#351](https://github.com/TestPlanIt/testplanit/issues/351)) ([3a51981](https://github.com/TestPlanIt/testplanit/commit/3a519815c9c86c55b6d12486ef632ed1c7f57d86))
+
 ## [0.31.2](https://github.com/TestPlanIt/testplanit/compare/v0.31.1...v0.31.2) (2026-05-27)
 
 ### Enhancements
