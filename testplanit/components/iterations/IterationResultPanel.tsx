@@ -21,6 +21,7 @@ import {
   useFindManyTemplateResultAssignment,
 } from "~/lib/hooks";
 import {
+  isIssueRequiredOnFailureSubmitResultError,
   isJustificationRequiredSubmitResultError,
   isPermissionDeniedSubmitResultError,
   submitTestRunResult,
@@ -87,6 +88,9 @@ export function IterationResultPanel({
   // True when the escalation was triggered by a rejected flip, so the modal
   // shows the justification error on open.
   const [flipErrorOnOpen, setFlipErrorOnOpen] = useState(false);
+  // True when the escalation was triggered by a failure missing a linked
+  // issue, so the modal shows the issue-required error on open.
+  const [issueErrorOnOpen, setIssueErrorOnOpen] = useState(false);
 
   // Fetch the case (for name + currentVersion + steps) — React Query
   // dedupes with the same query already running inside TestRunCaseDetails.
@@ -210,6 +214,12 @@ export function IterationResultPanel({
         setEscalatedStatusId(statusId.toString());
         setFlipErrorOnOpen(true);
         setShowAddResultModal(true);
+      } else if (isIssueRequiredOnFailureSubmitResultError(error)) {
+        // Failure status needs a linked issue: open the modal pre-set so the
+        // tester links one and resubmits.
+        setEscalatedStatusId(statusId.toString());
+        setIssueErrorOnOpen(true);
+        setShowAddResultModal(true);
       } else {
         toast.error(tCommon("errors.error"), {
           description: tCommon("errors.somethingWentWrong"),
@@ -242,6 +252,7 @@ export function IterationResultPanel({
             onClick={() => {
               setEscalatedStatusId(undefined);
               setFlipErrorOnOpen(false);
+              setIssueErrorOnOpen(false);
               setShowAddResultModal(true);
             }}
             disabled={isDisabled || isSubmitting}
@@ -315,14 +326,18 @@ export function IterationResultPanel({
             setShowAddResultModal(false);
             setEscalatedStatusId(undefined);
             setFlipErrorOnOpen(false);
+            setIssueErrorOnOpen(false);
           }}
           testRunId={testRunId}
           testRunCaseId={testRunCaseId}
           caseName={testcase.name}
           projectId={projectId}
           defaultStatusId={escalatedStatusId ?? successStatus?.id?.toString()}
-          validateOnOpen={escalatedStatusId != null && !flipErrorOnOpen}
+          validateOnOpen={
+            escalatedStatusId != null && !flipErrorOnOpen && !issueErrorOnOpen
+          }
           flipJustificationError={flipErrorOnOpen}
+          issueOnFailureError={issueErrorOnOpen}
           configuration={testRun?.configuration ?? undefined}
           iterationId={iteration.id}
           iterationLabel={t("iterationResultPanelHeading", {

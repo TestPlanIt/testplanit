@@ -623,6 +623,8 @@
       "justificationRequiredDescription": "Flipping a completed result to a different outcome requires Result Details explaining the change.",
       "requiredFieldMissing": "A required result field is missing a value.",
       "editWindowExpired": "This result's edit window has closed. Record a new attempt instead.",
+      "issueRequiredOnFailure": "Linked issue required",
+      "issueRequiredOnFailureDescription": "A failure result requires at least one linked issue. Link an issue before saving.",
       "noModelsFound": "No models found",
       "failedToFetchModels": "Failed to fetch models",
       "failedToCopyToClipboard": "Failed to copy to clipboard",
@@ -1842,6 +1844,15 @@
           "enabledToast": "Flip justification required for this project",
           "disabledToast": "Flip justification no longer required for this project",
           "saveError": "Failed to update flip justification setting"
+        },
+        "issueOnFailure": {
+          "label": "Require a linked issue on failure",
+          "description": "When enabled, recording a failure result requires at least one linked issue.",
+          "enabledToast": "A linked issue is now required on failure for this project",
+          "disabledToast": "A linked issue is no longer required on failure for this project",
+          "saveError": "Failed to update the require-issue-on-failure setting",
+          "noIntegrationTitle": "No issue integration",
+          "noIntegrationDescription": "This project has no active issue integration, so results can't link an issue. Assign an issue integration to enable this setting."
         },
         "editWindow": {
           "label": "Result edit window",

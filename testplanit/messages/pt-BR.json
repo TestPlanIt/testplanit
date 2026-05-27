@@ -623,6 +623,8 @@
       "justificationRequiredDescription": "Para inverter um resultado já concluído e transformá-lo em um resultado diferente, é necessário fornecer os Detalhes do Resultado explicando a mudança.",
       "requiredFieldMissing": "Um campo de resultado obrigatório está sem valor.",
       "editWindowExpired": "A janela de edição deste resultado foi fechada. Em vez disso, registre uma nova tentativa.",
+      "issueRequiredOnFailure": "Problema relacionado necessário",
+      "issueRequiredOnFailureDescription": "Um resultado de falha requer pelo menos uma ocorrência vinculada. Vincule uma ocorrência antes de salvar.",
       "noModelsFound": "Nenhum modelo encontrado",
       "failedToFetchModels": "Falha ao buscar modelos",
       "failedToCopyToClipboard": "Falha ao copiar para a área de transferência",
@@ -1842,6 +1844,15 @@
           "enabledToast": "É necessária uma justificativa para a inversão deste projeto.",
           "disabledToast": "A justificativa de inversão não é mais necessária para este projeto.",
           "saveError": "Falha ao atualizar a configuração de justificação de inversão"
+        },
+        "issueOnFailure": {
+          "label": "Exigir um problema vinculado em caso de falha",
+          "description": "Quando ativada, a função de registrar um resultado de falha requer pelo menos um problema vinculado.",
+          "enabledToast": "Agora é necessário um problema relacionado em caso de falha para este projeto.",
+          "disabledToast": "Não é mais necessário vincular um problema a ele em caso de falha neste projeto.",
+          "saveError": "Falha ao atualizar a configuração require-issue-on-failure",
+          "noIntegrationTitle": "Integração sem problemas",
+          "noIntegrationDescription": "Este projeto não possui integração de problemas ativa, portanto os resultados não podem ser vinculados a um problema. Atribua uma integração de problemas para habilitar essa configuração."
         },
         "editWindow": {
           "label": "Janela de edição de resultados",

@@ -623,6 +623,8 @@
       "justificationRequiredDescription": "Tamamlanmış bir sonucu farklı bir sonuca dönüştürmek için, değişikliği açıklayan Sonuç Ayrıntıları gereklidir.",
       "requiredFieldMissing": "Gerekli sonuç alanlarından birinde değer eksik.",
       "editWindowExpired": "Bu sonucun düzenleme penceresi kapandı. Bunun yerine yeni bir deneme kaydedin.",
+      "issueRequiredOnFailure": "Bağlantılı sorun gerekli",
+      "issueRequiredOnFailureDescription": "Başarısız bir sonuç için en az bir bağlantılı sorun gereklidir. Kaydetmeden önce bir sorunla bağlantı kurun.",
       "noModelsFound": "Hiçbir model bulunamadı.",
       "failedToFetchModels": "Modeller alınamadı.",
       "failedToCopyToClipboard": "Panoya kopyalama başarısız oldu.",
@@ -1842,6 +1844,15 @@
           "enabledToast": "Bu proje için ters yüz etme gerekçesi gereklidir.",
           "disabledToast": "Bu proje için artık ters çevirme gerekçelendirmesine gerek yok.",
           "saveError": "Sayfa hizalama ayarını güncelleme başarısız oldu."
+        },
+        "issueOnFailure": {
+          "label": "Başarısızlık durumunda bağlantılı bir sorun gereklidir.",
+          "description": "Etkinleştirildiğinde, bir hata sonucunun kaydedilmesi için en az bir bağlantılı sorun gereklidir.",
+          "enabledToast": "Bu proje için artık başarısızlık durumunda bağlantılı bir sorun bildirilmesi gerekiyor.",
+          "disabledToast": "Bu proje için başarısızlık durumunda artık bağlantılı bir sorun bildirilmesi gerekmiyor.",
+          "saveError": "Hata durumunda sorun oluşmasını gerektirme ayarını güncelleme başarısız oldu.",
+          "noIntegrationTitle": "Entegrasyonda sorun yok.",
+          "noIntegrationDescription": "Bu projede aktif bir sorun entegrasyonu bulunmadığından, sonuçlar bir sorunla ilişkilendirilemez. Bu ayarı etkinleştirmek için bir sorun entegrasyonu atayın."
         },
         "editWindow": {
           "label": "Sonuç düzenleme penceresi",

@@ -34,6 +34,7 @@ import {
 import {
   editTestRunResult,
   isEditWindowExpiredResultError,
+  isIssueRequiredOnFailureSubmitResultError,
   isJustificationRequiredSubmitResultError,
   isPermissionDeniedSubmitResultError,
   isRequiredFieldsMissingSubmitResultError,
@@ -314,6 +315,8 @@ export function EditResultModal({
   const [templateFields, setTemplateFields] = useState<any[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedMainIssues, setSelectedMainIssues] = useState<number[]>([]);
+  // Inline "a linked issue is required on failure" error by the Issues section.
+  const [showIssueRequiredError, setShowIssueRequiredError] = useState(false);
   const [selectedStepIssues, setSelectedStepIssues] = useState<
     Record<number, number[]>
   >({});
@@ -880,6 +883,7 @@ export function EditResultModal({
         elapsed: elapsedInSeconds,
         testRunCaseVersion: repositoryCase.currentVersion,
         issueIds: selectedMainIssues,
+        stepIssueCount: Object.values(selectedStepIssues).flat().length,
         fieldValues: resultFieldValues,
       });
 
@@ -981,6 +985,9 @@ export function EditResultModal({
         toast.error(tCommon("errors.error"), {
           description: tCommon("errors.editWindowExpired"),
         });
+      } else if (isIssueRequiredOnFailureSubmitResultError(error)) {
+        // Surface inline by the Issues section so the tester links one.
+        setShowIssueRequiredError(true);
       } else if (isPermissionDeniedSubmitResultError(error)) {
         toast.error(tCommon("errors.accessDenied"), {
           description: tCommon("errors.resultSubmitPermissionDenied"),
@@ -1787,10 +1794,18 @@ export function EditResultModal({
                   <UnifiedIssueManager
                     projectId={Number(projectId)}
                     linkedIssueIds={selectedMainIssues}
-                    setLinkedIssueIds={setSelectedMainIssues}
+                    setLinkedIssueIds={(ids) => {
+                      setSelectedMainIssues(ids);
+                      if (ids.length > 0) setShowIssueRequiredError(false);
+                    }}
                     entityType="testRunResult"
                   />
                 </FormControl>
+                {showIssueRequiredError && (
+                  <p className="text-sm font-medium text-destructive">
+                    {tCommon("errors.issueRequiredOnFailureDescription")}
+                  </p>
+                )}
               </FormItem>
             )}
           </form>

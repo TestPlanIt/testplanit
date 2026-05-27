@@ -623,6 +623,8 @@
       "justificationRequiredDescription": "완료된 결과를 다른 결과로 변경하려면 변경 사항을 설명하는 결과 세부 정보가 필요합니다.",
       "requiredFieldMissing": "필수 결과 필드에 값이 누락되었습니다.",
       "editWindowExpired": "이 결과의 편집 창이 닫혔습니다. 새 시도를 기록하세요.",
+      "issueRequiredOnFailure": "관련 이슈 필요",
+      "issueRequiredOnFailureDescription": "실패 결과가 나오려면 하나 이상의 연결된 문제가 필요합니다. 저장하기 전에 문제를 연결하세요.",
       "noModelsFound": "모델을 찾을 수 없습니다.",
       "failedToFetchModels": "모델을 가져오는 데 실패했습니다.",
       "failedToCopyToClipboard": "클립보드에 복사하는 데 실패했습니다.",
@@ -1842,6 +1844,15 @@
           "enabledToast": "이 프로젝트에는 뒤집기 이유 설명이 필요합니다.",
           "disabledToast": "이 프로젝트에서는 뒤집기 이유 설명이 더 이상 필요하지 않습니다.",
           "saveError": "플립 정렬 설정 업데이트에 실패했습니다."
+        },
+        "issueOnFailure": {
+          "label": "오류 발생 시 연결된 이슈를 요구합니다.",
+          "description": "이 기능을 활성화하면 실패 결과를 기록하기 위해 최소 하나 이상의 연결된 문제가 필요합니다.",
+          "enabledToast": "이 프로젝트에서 실패할 경우 연결된 이슈가 필수적으로 기록되어야 합니다.",
+          "disabledToast": "이 프로젝트에서는 실패 시 연결된 이슈를 더 이상 생성할 필요가 없습니다.",
+          "saveError": "실패 시 문제 발생 요구 설정을 업데이트하는 데 실패했습니다.",
+          "noIntegrationTitle": "통합에 문제가 없습니다.",
+          "noIntegrationDescription": "이 프로젝트에는 활성화된 이슈 연동 기능이 없으므로 결과에 이슈를 연결할 수 없습니다. 이슈 연동 기능을 활성화하려면 이슈 연동 기능을 할당하세요."
         },
         "editWindow": {
           "label": "결과 편집 창",

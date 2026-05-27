@@ -22,6 +22,12 @@ export interface SubmitTestRunResultInput {
    * fields on the case's template and rejects with REQUIRED_FIELDS_MISSING.
    */
   fieldValues?: Array<{ fieldId: number; value: unknown }>;
+  /**
+   * Count of issues linked at the step / shared-step level for this result.
+   * The require-issue-on-failure gate counts these alongside `issueIds`, since
+   * step results are written in separate calls after this one.
+   */
+  stepIssueCount?: number;
 }
 
 export interface SubmitTestRunResultResponse {
@@ -76,6 +82,20 @@ export function isRequiredFieldsMissingSubmitResultError(
 }
 
 /**
+ * True when the server rejected the submission because the project requires a
+ * linked issue on a failure-class result and none was provided.
+ */
+export function isIssueRequiredOnFailureSubmitResultError(
+  error: unknown
+): error is SubmitResultError {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  return (error as SubmitResultError).code === "ISSUE_REQUIRED_ON_FAILURE";
+}
+
+/**
  * True when an edit was rejected because the result's in-place edit window
  * has closed (a correction must be a new attempt instead).
  */
@@ -104,6 +124,11 @@ export interface EditTestRunResultInput {
    * rejects with REQUIRED_FIELDS_MISSING.
    */
   fieldValues?: Array<{ fieldId: number; value: unknown }>;
+  /**
+   * Count of step / shared-step issues linked for this result after the edit.
+   * Counted alongside `issueIds` by the require-issue-on-failure gate.
+   */
+  stepIssueCount?: number;
 }
 
 /**

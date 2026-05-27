@@ -623,6 +623,8 @@
       "justificationRequiredDescription": "將已完成的結果變更為不同的結果需要結果詳情來解釋變更。",
       "requiredFieldMissing": "必填結果欄位缺少值。",
       "editWindowExpired": "此結果的編輯視窗已關閉。請重新錄製一次。",
+      "issueRequiredOnFailure": "需要關聯問題",
+      "issueRequiredOnFailureDescription": "失敗結果至少需要關聯一個問題。請在保存前關聯問題。",
       "noModelsFound": "未找到模型",
       "failedToFetchModels": "取得模型失敗",
       "failedToCopyToClipboard": "複製到剪貼簿失敗",
@@ -1842,6 +1844,15 @@
           "enabledToast": "本項目需要翻轉理由。",
           "disabledToast": "本項目不再需要翻轉理由說明",
           "saveError": "更新翻轉對齊設定失敗"
+        },
+        "issueOnFailure": {
+          "label": "失敗時需要關聯問題",
+          "description": "啟用此功能後，記錄失敗結果至少需要一個關聯問題。",
+          "enabledToast": "如果此項目失敗，現在需要提交一個關聯問題。",
+          "disabledToast": "此項目失敗後不再需要關聯問題。",
+          "saveError": "更新 require-issue-on-failure 設定失敗",
+          "noIntegrationTitle": "整合無問題",
+          "noIntegrationDescription": "此項目未啟用問題集成，因此結果無法關聯問題。請指派問題整合以啟用此設定。"
         },
         "editWindow": {
           "label": "結果編輯視窗",
