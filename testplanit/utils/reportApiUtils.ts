@@ -8,10 +8,12 @@ import { authOptions } from "~/server/auth";
 // Type for Prisma client
 type Prisma = typeof prisma;
 
-// Date filter interface
+// Filters passed through to a metric's aggregate. Date bounds plus
+// per-dimension options (folder subtree roll-up) carried like dateGrouping.
 interface DateFilters {
   startDate?: string;
   endDate?: string;
+  folderIncludeDescendants?: boolean;
 }
 
 // Dimension value display result
@@ -160,6 +162,7 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
       metrics,
       startDate,
       endDate,
+      folderIncludeDescendants,
       page = 1,
       pageSize,
       sortColumn,
@@ -240,6 +243,7 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
         metricRegistry: validMetricRegistry,
         startDate,
         endDate,
+        folderIncludeDescendants,
         page,
         pageSize,
         sortColumn,
@@ -256,6 +260,7 @@ export async function handleReportPOST(req: NextRequest, config: ReportConfig) {
       metricRegistry: validMetricRegistry,
       startDate,
       endDate,
+      folderIncludeDescendants,
       page,
       pageSize,
       sortColumn,
@@ -274,6 +279,7 @@ async function handleCrossProjectAggregation({
   metricRegistry,
   startDate,
   endDate,
+  folderIncludeDescendants,
   page = 1,
   pageSize,
   sortColumn,
@@ -285,6 +291,7 @@ async function handleCrossProjectAggregation({
   metricRegistry: MetricRegistry;
   startDate?: string;
   endDate?: string;
+  folderIncludeDescendants?: boolean;
   page?: number;
   pageSize?: number | "All";
   sortColumn?: string;
@@ -316,7 +323,7 @@ async function handleCrossProjectAggregation({
         prisma,
         undefined, // No projectId for cross-project
         groupBy,
-        { startDate, endDate },
+        { startDate, endDate, folderIncludeDescendants },
         dimensions
       )
     )
@@ -599,6 +606,7 @@ async function handleProjectSpecificAggregation({
   metricRegistry,
   startDate,
   endDate,
+  folderIncludeDescendants,
   page = 1,
   pageSize,
   sortColumn,
@@ -611,6 +619,7 @@ async function handleProjectSpecificAggregation({
   metricRegistry: MetricRegistry;
   startDate?: string;
   endDate?: string;
+  folderIncludeDescendants?: boolean;
   page?: number;
   pageSize?: number | "All";
   sortColumn?: string;
@@ -642,7 +651,7 @@ async function handleProjectSpecificAggregation({
         prisma,
         projectId,
         groupBy,
-        { startDate, endDate },
+        { startDate, endDate, folderIncludeDescendants },
         dimensions
       )
     )

@@ -50,6 +50,11 @@ export interface DrillDownContext {
   /** Date range filters applied to the report */
   startDate?: string;
   endDate?: string;
+  /**
+   * When the folder dimension was grouped with descendants rolled up, a clicked
+   * folder must drill into its whole subtree to match the displayed count.
+   */
+  folderIncludeDescendants?: boolean;
 }
 
 /**

@@ -22,6 +22,7 @@ import { RelativeTimeTooltip } from "~/components/RelativeTimeTooltip";
 import { RoleNameDisplay } from "~/components/RoleNameDisplay";
 import StatusDotDisplay from "~/components/StatusDotDisplay";
 import { CaseDisplay } from "~/components/tables/CaseDisplay";
+import { TagsDisplay } from "~/components/tables/TagDisplay";
 import { GroupNameCell } from "~/components/tables/GroupNameCell";
 import { UserNameCell } from "~/components/tables/UserNameCell";
 import { TemplateNameDisplay } from "~/components/TemplateNameDisplay";
@@ -390,7 +391,44 @@ export function useReportColumns(
               case "folder": {
                 // Get the full object from the row data
                 const folderData = info.row.original[dimensionId];
-                return <FolderNameDisplay folder={folderData} />;
+                const folderProjectId =
+                  info.row.original.projectId ||
+                  info.row.original.project?.id ||
+                  projectId;
+                const folderId = folderData?.id;
+                // Link to the repository with this folder selected (?node=).
+                const folderLink =
+                  folderProjectId && folderId != null
+                    ? `/projects/repository/${folderProjectId}?node=${folderId}`
+                    : undefined;
+                return (
+                  <FolderNameDisplay
+                    folder={folderData}
+                    maxLines={2}
+                    link={folderLink}
+                  />
+                );
+              }
+              case "tag": {
+                // Read the full object (the accessor only exposes the id).
+                // Untagged cases group under a null "None" value; TagsDisplay
+                // needs both id and name, so render "None" plainly there.
+                const tagData = info.row.original[dimensionId];
+                const tagName = tagData?.name;
+                if (!tagData?.id || !tagName || tagName === "None") {
+                  return <span>{tCommon("access.none")}</span>;
+                }
+                const tagProjectId =
+                  info.row.original.projectId ||
+                  info.row.original.project?.id ||
+                  projectId;
+                // Link to the project-scoped tag page.
+                const tagLink = tagProjectId
+                  ? `/projects/tags/${tagProjectId}/${tagData.id}`
+                  : undefined;
+                return (
+                  <TagsDisplay id={tagData.id} name={tagName} link={tagLink} />
+                );
               }
               case "role": {
                 // Get the full object from the row data
@@ -740,7 +778,9 @@ export function useReportColumns(
           // Set column size based on dimension type
           ...(dimensionId === "testCase"
             ? { size: 500, minSize: 150, maxSize: 1500 }
-            : {}),
+            : dimensionId === "folder" || dimensionId === "tag"
+              ? { size: 400, minSize: 150, maxSize: 1500 }
+              : {}),
         })
       );
     });

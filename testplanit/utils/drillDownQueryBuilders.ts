@@ -123,6 +123,33 @@ export function buildTestExecutionQuery(
     where.testRunCaseId = Number(context.dimensions.testCase.id);
   }
 
+  // Folder and tag both filter on the executed case. Build a single
+  // repositoryCase filter so they compose.
+  const repositoryCaseFilter: any = {};
+  if (context.dimensions.folder) {
+    const folder = context.dimensions.folder;
+    if (folder.id === null || folder.id === "") {
+      repositoryCaseFilter.folderId = null;
+    } else if (Array.isArray((folder as any).subtreeIds)) {
+      // Descendants rolled up: match the clicked folder and its subtree.
+      repositoryCaseFilter.folderId = {
+        in: (folder as any).subtreeIds.map(Number),
+      };
+    } else {
+      repositoryCaseFilter.folderId = Number(folder.id);
+    }
+  }
+  if (context.dimensions.tag) {
+    const tag = context.dimensions.tag;
+    repositoryCaseFilter.tags =
+      tag.id === null || tag.id === ""
+        ? { none: {} }
+        : { some: { id: Number(tag.id) } };
+  }
+  if (Object.keys(repositoryCaseFilter).length > 0) {
+    where.testRunCase = { repositoryCase: repositoryCaseFilter };
+  }
+
   // Apply date filter
   if (context.dimensions.date?.executedAt) {
     const date = new Date(context.dimensions.date.executedAt);
@@ -354,9 +381,22 @@ export function buildRepositoryStatsQuery(
     where.creatorId = String(context.dimensions.user.id);
   }
 
-  // Apply folder filter
-  if (context.dimensions.folder) {
-    where.folderId = Number(context.dimensions.folder.id);
+  // Apply folder filter (a rolled-up subtree, or a single folder). Cases always
+  // belong to a folder, so there is no null "None" case here.
+  if (context.dimensions.folder && context.dimensions.folder.id != null) {
+    const folder = context.dimensions.folder;
+    where.folderId = Array.isArray((folder as any).subtreeIds)
+      ? { in: (folder as any).subtreeIds.map(Number) }
+      : Number(folder.id);
+  }
+
+  // Apply tag filter
+  if (context.dimensions.tag) {
+    const tag = context.dimensions.tag;
+    where.tags =
+      tag.id === null || tag.id === ""
+        ? { none: {} }
+        : { some: { id: Number(tag.id) } };
   }
 
   // Apply state filter

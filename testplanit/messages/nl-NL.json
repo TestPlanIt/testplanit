@@ -6603,6 +6603,10 @@
           "label": "Uitvoeringslogboek voor meerdere projecten",
           "description": "Platte lijst met individuele testresultaten, inclusief status, uitvoerder en tijdstempel, per project."
         }
+      },
+      "folderDescendants": {
+        "label": "Submappen meenemen",
+        "description": "Tel de resultaten van submappen naar elke bovenliggende map."
       }
     },
     "errors": {
@@ -6646,7 +6650,8 @@
       "automationStatus": "Automatiseringsstatus",
       "issueType": "Probleemtype",
       "issueTracker": "Probleemtracker",
-      "issueStatus": "Probleemstatus"
+      "issueStatus": "Probleemstatus",
+      "tag": "Tag"
     },
     "metrics": {
       "testResults": "Testresultaten",

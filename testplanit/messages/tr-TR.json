@@ -6603,6 +6603,10 @@
           "label": "Projeler Arası Yürütme Günlüğü",
           "description": "Projeler genelinde durum, yürütücü ve zaman damgası bilgilerini içeren bireysel test sonucu kayıtlarının düz listesi."
         }
+      },
+      "folderDescendants": {
+        "label": "Alt klasörleri dahil et",
+        "description": "Alt klasörlerdeki sonuçları her bir üst klasöre doğru sayın."
       }
     },
     "errors": {
@@ -6646,7 +6650,8 @@
       "automationStatus": "Otomasyon Durumu",
       "issueType": "Sorun Türü",
       "issueTracker": "Sorun Takip Sistemi",
-      "issueStatus": "Sorun Durumu"
+      "issueStatus": "Sorun Durumu",
+      "tag": "Etiket"
     },
     "metrics": {
       "testResults": "Test Sonuçları",

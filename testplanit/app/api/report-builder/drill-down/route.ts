@@ -15,6 +15,7 @@ import {
   getModelForMetric,
   getQueryBuilderForMetric,
 } from "~/utils/drillDownQueryBuilders";
+import { getFolderSubtreeIds } from "~/utils/reportGrouping";
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,6 +42,20 @@ export async function POST(req: NextRequest) {
       return Response.json(
         { error: "Admin access required for cross-project drill-down" },
         { status: 403 }
+      );
+    }
+
+    // When the folder dimension was rolled up (descendants included), resolve
+    // the clicked folder's subtree so the drill-down matches the shown count.
+    const folderDimension = context.dimensions?.folder;
+    if (
+      context.folderIncludeDescendants &&
+      folderDimension?.id != null &&
+      folderDimension.id !== ""
+    ) {
+      folderDimension.subtreeIds = await getFolderSubtreeIds(
+        prisma,
+        Number(folderDimension.id)
       );
     }
 

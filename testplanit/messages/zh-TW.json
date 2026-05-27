@@ -6603,6 +6603,10 @@
           "label": "跨專案執行日誌",
           "description": "包含專案狀態、執行者和時間戳記的各個測試結果記錄的扁平化列表"
         }
+      },
+      "folderDescendants": {
+        "label": "包含子資料夾",
+        "description": "統計每個父資料夾中子資料夾的結果數量。"
       }
     },
     "errors": {
@@ -6646,7 +6650,8 @@
       "automationStatus": "自動化狀態",
       "issueType": "問題類型",
       "issueTracker": "問題追蹤器",
-      "issueStatus": "問題狀態"
+      "issueStatus": "問題狀態",
+      "tag": "標籤"
     },
     "metrics": {
       "testResults": "測試結果",

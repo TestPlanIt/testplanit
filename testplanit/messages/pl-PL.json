@@ -6603,6 +6603,10 @@
           "label": "Dziennik realizacji międzyprojektowej",
           "description": "Płaska lista indywidualnych rekordów wyników testów ze statusem, wykonawcą i znacznikiem czasu dla wszystkich projektów"
         }
+      },
+      "folderDescendants": {
+        "label": "Uwzględnij podfoldery",
+        "description": "Zlicz wyniki z podfolderów w kierunku każdego folderu nadrzędnego."
       }
     },
     "errors": {
@@ -6646,7 +6650,8 @@
       "automationStatus": "Status automatyzacji",
       "issueType": "Typ problemu",
       "issueTracker": "Śledzenie problemów",
-      "issueStatus": "Status wydania"
+      "issueStatus": "Status wydania",
+      "tag": "Etykietka"
     },
     "metrics": {
       "testResults": "Wyniki testów",

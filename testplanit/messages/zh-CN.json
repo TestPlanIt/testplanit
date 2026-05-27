@@ -6603,6 +6603,10 @@
           "label": "跨项目执行日志",
           "description": "包含项目状态、执行者和时间戳的各个测试结果记录的扁平化列表"
         }
+      },
+      "folderDescendants": {
+        "label": "包含子文件夹",
+        "description": "统计每个父文件夹中子文件夹的结果数量。"
       }
     },
     "errors": {
@@ -6646,7 +6650,8 @@
       "automationStatus": "自动化状态",
       "issueType": "问题类型",
       "issueTracker": "问题跟踪器",
-      "issueStatus": "问题状态"
+      "issueStatus": "问题状态",
+      "tag": "标签"
     },
     "metrics": {
       "testResults": "测试结果",

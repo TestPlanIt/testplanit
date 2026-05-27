@@ -6603,6 +6603,10 @@
           "label": "Registro de Execução entre Projetos",
           "description": "Lista simples de registros individuais de resultados de testes com status, executor e data/hora em todos os projetos."
         }
+      },
+      "folderDescendants": {
+        "label": "Incluir subpastas",
+        "description": "Contabilize os resultados das subpastas em relação a cada pasta principal."
       }
     },
     "errors": {
@@ -6646,7 +6650,8 @@
       "automationStatus": "Status da automação",
       "issueType": "Tipo de problema",
       "issueTracker": "Rastreador de Problemas",
-      "issueStatus": "Status do problema"
+      "issueStatus": "Status do problema",
+      "tag": "Marcação"
     },
     "metrics": {
       "testResults": "Resultados dos testes",

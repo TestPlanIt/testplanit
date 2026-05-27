@@ -1,6 +1,7 @@
 "use client";
 import { DraggableList } from "@/components/DraggableCaseFields";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { HelpPopover } from "@/components/ui/help-popover";
 import {
   ResizableHandle,
@@ -306,6 +307,10 @@ function ReportBuilderContent({
   const [lastUsedDateGrouping, setLastUsedDateGrouping] = useState<
     "daily" | "weekly" | "monthly" | "quarterly" | "annually"
   >("weekly");
+  // When the folder dimension is grouped, roll results up into ancestor
+  // folders so a parent folder includes its whole subtree.
+  const [folderIncludeDescendants, setFolderIncludeDescendants] =
+    useState(false);
   const [lastUsedDateRange, setLastUsedDateRange] = useState<
     DateRange | undefined
   >(undefined);
@@ -617,11 +622,20 @@ function ReportBuilderContent({
         dimensions: dimensionFilters,
         startDate: dateRange?.from?.toISOString(),
         endDate: dateRange?.to?.toISOString(),
+        folderIncludeDescendants,
       };
 
       drillDown.handleMetricClick(context);
     },
-    [lastUsedDimensions, reportType, mode, projectId, form, drillDown]
+    [
+      lastUsedDimensions,
+      reportType,
+      mode,
+      projectId,
+      form,
+      drillDown,
+      folderIncludeDescendants,
+    ]
   );
 
   // Use the custom hook for generating columns
@@ -1199,6 +1213,12 @@ function ReportBuilderContent({
 
         if (mode === "project" && projectId) {
           body.projectId = projectId;
+        }
+
+        // When grouping by folder, carry the subtree roll-up choice so a parent
+        // folder can include its descendants.
+        if (selectedDimensions.some((d) => d.value === "folder")) {
+          body.folderIncludeDescendants = folderIncludeDescendants;
         }
 
         // For automation trends, add selected filter values and date grouping
@@ -2541,6 +2561,28 @@ function ReportBuilderContent({
                           data-testid="dimensions-select"
                         />
                       </div>
+
+                      {/* Folder subtree roll-up — only relevant when grouping
+                          by folder. */}
+                      {dimensions.some((d) => d.value === "folder") && (
+                        <label className="flex items-start gap-2">
+                          <Checkbox
+                            checked={folderIncludeDescendants}
+                            onCheckedChange={(checked) =>
+                              setFolderIncludeDescendants(checked === true)
+                            }
+                            data-testid="folder-include-descendants"
+                          />
+                          <span className="grid gap-0.5">
+                            <span className="text-sm font-medium">
+                              {tReports("folderDescendants.label")}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {tReports("folderDescendants.description")}
+                            </span>
+                          </span>
+                        </label>
+                      )}
 
                       {/* Priority Filter for Automation Trends */}
                       {matchesReportType(reportType, "automation-trends") &&
