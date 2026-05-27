@@ -623,6 +623,8 @@
       "justificationRequiredDescription": "Para cambiar un resultado ya completado a un resultado diferente, se requieren Detalles del resultado que expliquen el cambio.",
       "requiredFieldMissing": "Falta un valor en un campo de resultado obligatorio.",
       "editWindowExpired": "La ventana de edición de este resultado se ha cerrado. Intente grabar un nuevo intento.",
+      "issueRequiredOnFailure": "Se requiere un problema vinculado",
+      "issueRequiredOnFailureDescription": "Para que se produzca un error, se requiere al menos un problema vinculado. Vincule un problema antes de guardar.",
       "noModelsFound": "No se encontraron modelos",
       "failedToFetchModels": "No se pudieron obtener los modelos",
       "failedToCopyToClipboard": "No se pudo copiar al portapapeles.",
@@ -1842,6 +1844,15 @@
           "enabledToast": "Se requiere justificación para invertir este proyecto.",
           "disabledToast": "Ya no se requiere justificación de volteo para este proyecto.",
           "saveError": "Error al actualizar la configuración de justificación de volteo."
+        },
+        "issueOnFailure": {
+          "label": "Requerir un problema vinculado en caso de fallo",
+          "description": "Cuando está habilitada, el registro de un resultado de fallo requiere al menos un problema vinculado.",
+          "enabledToast": "Ahora se requiere un problema vinculado en caso de fallo de este proyecto.",
+          "disabledToast": "Ya no se requiere un problema vinculado en caso de fallo para este proyecto.",
+          "saveError": "No se pudo actualizar la configuración require-issue-on-failure.",
+          "noIntegrationTitle": "Integración sin problemas",
+          "noIntegrationDescription": "Este proyecto no tiene ninguna integración de incidencias activa, por lo que los resultados no pueden vincularse a ninguna incidencia. Asigne una integración de incidencias para habilitar esta configuración."
         },
         "editWindow": {
           "label": "Ventana de edición de resultados",

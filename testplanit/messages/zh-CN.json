@@ -623,6 +623,8 @@
       "justificationRequiredDescription": "将已完成的结果更改为不同的结果需要结果详情来解释更改。",
       "requiredFieldMissing": "必填结果字段缺少值。",
       "editWindowExpired": "此结果的编辑窗口已关闭。请重新录制一次。",
+      "issueRequiredOnFailure": "需要关联问题",
+      "issueRequiredOnFailureDescription": "失败结果至少需要关联一个问题。请在保存前关联问题。",
       "noModelsFound": "未找到模型",
       "failedToFetchModels": "获取模型失败",
       "failedToCopyToClipboard": "复制到剪贴板失败",
@@ -1842,6 +1844,15 @@
           "enabledToast": "本项目需要翻转理由。",
           "disabledToast": "本项目不再需要翻转理由说明",
           "saveError": "更新翻转对齐设置失败"
+        },
+        "issueOnFailure": {
+          "label": "失败时需要关联问题",
+          "description": "启用此功能后，记录失败结果至少需要一个关联问题。",
+          "enabledToast": "如果此项目失败，现在需要提交一个关联问题。",
+          "disabledToast": "此项目失败后不再需要关联问题。",
+          "saveError": "更新 require-issue-on-failure 设置失败",
+          "noIntegrationTitle": "集成无问题",
+          "noIntegrationDescription": "此项目未启用问题集成，因此结果无法关联问题。请分配问题集成以启用此设置。"
         },
         "editWindow": {
           "label": "结果编辑窗口",

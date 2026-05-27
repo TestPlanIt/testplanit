@@ -11,6 +11,7 @@ import {
   isEditWindowExpiredError,
 } from "~/lib/services/editWindow";
 import {
+  failsIssueOnFailureGate,
   hasMissingRequiredResultField,
   hasResultMutationPermission,
   isOutcomeFlip,
@@ -38,6 +39,11 @@ const editResultSchema = z.object({
   elapsed: z.number().int().nonnegative().nullable().optional(),
   testRunCaseVersion: z.number().int().positive().optional(),
   issueIds: z.array(z.number().int().positive()).optional(),
+  // Count of step / shared-step issues linked for this result after the edit.
+  // Counted alongside result-level issues by the require-issue-on-failure gate.
+  // Omitted (raw API edits not touching step issues) falls back to the result's
+  // current step-issue count.
+  stepIssueCount: z.number().int().nonnegative().optional(),
   fieldValues: z
     .array(
       z.object({
@@ -112,6 +118,8 @@ export async function POST(req: NextRequest) {
         statusId: true,
         testRunCaseId: true,
         resultFieldValues: { select: { id: true, fieldId: true } },
+        issues: { select: { id: true } },
+        stepResults: { select: { _count: { select: { issues: true } } } },
         testRunCase: {
           select: {
             assignedToId: true,
@@ -125,6 +133,15 @@ export async function POST(req: NextRequest) {
                     createdBy: true,
                     defaultAccessType: true,
                     requireResultFlipJustification: true,
+                    requireIssueOnFailure: true,
+                    projectIntegrations: {
+                      where: {
+                        isActive: true,
+                        integration: { status: "ACTIVE" },
+                      },
+                      select: { id: true },
+                      take: 1,
+                    },
                     assignedUsers: {
                       where: { userId: user.id },
                       select: { userId: true },
@@ -237,6 +254,45 @@ export async function POST(req: NextRequest) {
         },
         { status: 400 }
       );
+    }
+
+    // Mandatory defect link on failure (opt-in per project), mirroring
+    // submit-result. Counts result-level and step/shared issues. When a count
+    // is omitted the edit leaves those links untouched, so fall back to the
+    // result's current counts.
+    if (project.requireIssueOnFailure) {
+      const submittedStatus = await prisma.status.findUnique({
+        where: { id: input.statusId },
+        select: { isFailure: true },
+      });
+      const mainIssueCount =
+        input.issueIds !== undefined
+          ? input.issueIds.length
+          : existing.issues.length;
+      const existingStepIssueCount = existing.stepResults.reduce(
+        (sum, sr) => sum + sr._count.issues,
+        0
+      );
+      const stepIssueCount =
+        input.stepIssueCount !== undefined
+          ? input.stepIssueCount
+          : existingStepIssueCount;
+      if (
+        failsIssueOnFailureGate({
+          requireIssueOnFailure: true,
+          hasIssueIntegration: project.projectIntegrations.length > 0,
+          statusIsFailure: submittedStatus?.isFailure ?? false,
+          linkedIssueCount: mainIssueCount + stepIssueCount,
+        })
+      ) {
+        return NextResponse.json(
+          {
+            error: "A linked issue is required when the result is a failure",
+            code: "ISSUE_REQUIRED_ON_FAILURE",
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // Flip justification — compare the new status to the result's current one.

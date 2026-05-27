@@ -48,6 +48,7 @@ import {
   useUpdateTestRunCases,
 } from "~/lib/hooks";
 import {
+  isIssueRequiredOnFailureSubmitResultError,
   isJustificationRequiredSubmitResultError,
   isPermissionDeniedSubmitResultError,
   submitTestRunResult,
@@ -271,6 +272,12 @@ interface AddResultModalProps {
    * something to correct in place (instead of a toast).
    */
   flipJustificationError?: boolean;
+  /**
+   * When opened by a quick-status escalation on a failure-class status where
+   * the project requires a linked issue, show the inline "issue required"
+   * error by the Issues section on open so the tester knows to link one.
+   */
+  issueOnFailureError?: boolean;
 }
 
 export function AddResultModal({
@@ -291,6 +298,7 @@ export function AddResultModal({
   parameters,
   validateOnOpen = false,
   flipJustificationError = false,
+  issueOnFailureError = false,
 }: AddResultModalProps) {
   const t = useTranslations();
   const tCommon = useTranslations("common");
@@ -318,6 +326,8 @@ export function AddResultModal({
   );
   const [templateFields, setTemplateFields] = useState<any[]>([]);
   const [selectedMainIssues, setSelectedMainIssues] = useState<number[]>([]);
+  // Inline "a linked issue is required on failure" error by the Issues section.
+  const [showIssueRequiredError, setShowIssueRequiredError] = useState(false);
   const [selectedStepIssues, setSelectedStepIssues] = useState<
     Record<number, number[]>
   >({});
@@ -565,6 +575,27 @@ export function AddResultModal({
     });
   }, [isOpen, flipJustificationError, templateFields, form, tCommon]);
 
+  // Show the issue-required error on open when escalated for it; clear it once
+  // the tester links any issue (result, step, or shared step), and reset
+  // whenever the modal reopens.
+  const totalLinkedIssueCount =
+    selectedMainIssues.length +
+    Object.values(selectedStepIssues).flat().length +
+    Object.values(selectedSharedItemIssues).flat().length;
+  useEffect(() => {
+    if (!isOpen) {
+      setShowIssueRequiredError(false);
+      return;
+    }
+    if (totalLinkedIssueCount > 0) {
+      setShowIssueRequiredError(false);
+      return;
+    }
+    if (issueOnFailureError) {
+      setShowIssueRequiredError(true);
+    }
+  }, [isOpen, issueOnFailureError, totalLinkedIssueCount]);
+
   // Fetch available statuses
   const { data: statuses } = useFindManyStatus({
     where: {
@@ -810,6 +841,11 @@ export function AddResultModal({
 
       // Issues are already created by DeferredIssueManager, just use the IDs directly
       const issueIdsToConnect: number[] = selectedMainIssues;
+      // Step + shared-step issues are written in separate calls after the
+      // submit, so report their count for the require-issue-on-failure gate.
+      const stepIssueCount =
+        Object.values(selectedStepIssues).flat().length +
+        Object.values(selectedSharedItemIssues).flat().length;
 
       // Build the custom result field values once. submit-result persists them
       // atomically with the result and enforces required fields server-side, so
@@ -847,6 +883,7 @@ export function AddResultModal({
             attempt: values.attempt as number,
             testRunCaseVersion: caseVersion,
             issueIds: issueIdsToConnect,
+            stepIssueCount,
             inProgressStateId: inProgressWorkflow?.id ?? null,
             fieldValues: resultFieldValues,
           });
@@ -1077,6 +1114,7 @@ export function AddResultModal({
           attempt: values.attempt as number,
           testRunCaseVersion: repositoryCase.currentVersion,
           issueIds: issueIdsToConnect,
+          stepIssueCount,
           inProgressStateId: inProgressWorkflow?.id ?? null,
           iterationId,
           fieldValues: resultFieldValues,
@@ -1364,6 +1402,10 @@ export function AddResultModal({
           type: "manual",
           message: tCommon("errors.justificationRequiredDescription"),
         });
+      } else if (isIssueRequiredOnFailureSubmitResultError(error)) {
+        // Surface inline by the Issues section so the tester links one and
+        // resubmits, keeping the modal open.
+        setShowIssueRequiredError(true);
       } else {
         toast.error(tCommon("errors.error"), {
           description: tCommon("errors.somethingWentWrong"),
@@ -1862,6 +1904,11 @@ export function AddResultModal({
                   }
                 />
               </FormControl>
+              {showIssueRequiredError && (
+                <p className="text-sm font-medium text-destructive">
+                  {tCommon("errors.issueRequiredOnFailureDescription")}
+                </p>
+              )}
             </FormItem>
 
             {/* --- Result Details --- */}

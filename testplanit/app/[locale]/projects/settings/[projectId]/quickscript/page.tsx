@@ -555,25 +555,22 @@ export default function QuickScriptPage() {
           {/* QuickScript Enable/Disable */}
           <Card>
             <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label
-                    htmlFor="quickscript-enabled-toggle"
-                    className="text-base font-medium"
-                  >
+              <div className="space-y-3">
+                <Label className="flex items-center gap-3">
+                  <Switch
+                    id="quickscript-enabled-toggle"
+                    checked={project?.quickScriptEnabled ?? false}
+                    onCheckedChange={handleToggleQuickScript}
+                    disabled={updateProject.isPending}
+                    data-testid="quickscript-enabled-toggle"
+                  />
+                  <span className="text-base font-medium">
                     {t("enableLabel")}
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    {t("enableDescription")}
-                  </p>
-                </div>
-                <Switch
-                  id="quickscript-enabled-toggle"
-                  checked={project?.quickScriptEnabled ?? false}
-                  onCheckedChange={handleToggleQuickScript}
-                  disabled={updateProject.isPending}
-                  data-testid="quickscript-enabled-toggle"
-                />
+                  </span>
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {t("enableDescription")}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -621,7 +618,7 @@ export default function QuickScriptPage() {
                 {/* Repository Selector */}
                 <Card>
                   <CardHeader>
-                    <div className="flex items-center justify-between text-primary text-xl md:text-2xl pb-2 pt-1">
+                    <div className="flex items-center justify-between">
                       <CardTitle>{t("repository.title")}</CardTitle>
                       {existingConfig && (
                         <Button

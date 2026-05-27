@@ -623,6 +623,8 @@
       "justificationRequiredDescription": "Aby zmienić zakończony wynik na inny, należy zapoznać się ze szczegółami wyniku wyjaśniającymi zmianę.",
       "requiredFieldMissing": "Wymagane pole wyniku nie zawiera wartości.",
       "editWindowExpired": "Okno edycji tego wyniku zostało zamknięte. Zamiast tego zarejestruj nową próbę.",
+      "issueRequiredOnFailure": "Wymagany powiązany problem",
+      "issueRequiredOnFailureDescription": "Wynik niepowodzenia wymaga co najmniej jednego powiązanego problemu. Powiąż problem przed zapisaniem.",
       "noModelsFound": "Nie znaleziono modeli",
       "failedToFetchModels": "Nie udało się pobrać modeli",
       "failedToCopyToClipboard": "Nie udało się skopiować do schowka",
@@ -1842,6 +1844,15 @@
           "enabledToast": "W tym projekcie wymagane jest wyrównanie odwrócone",
           "disabledToast": "W tym projekcie wyrównanie odwrócone nie jest już wymagane",
           "saveError": "Nie udało się zaktualizować ustawienia wyrównywania odwrócenia"
+        },
+        "issueOnFailure": {
+          "label": "Wymagaj powiązanego problemu w przypadku awarii",
+          "description": "Po włączeniu tej opcji zapisanie wyniku awarii wymaga co najmniej jednego powiązanego problemu.",
+          "enabledToast": "W przypadku niepowodzenia tego projektu wymagane jest teraz zgłoszenie powiązanego problemu",
+          "disabledToast": "W przypadku niepowodzenia tego projektu nie jest już wymagane powiązanie problemu",
+          "saveError": "Nie udało się zaktualizować ustawienia „require-issue-on-failure”",
+          "noIntegrationTitle": "Brak problemów z integracją",
+          "noIntegrationDescription": "Ten projekt nie ma aktywnej integracji problemów, więc wyniki nie mogą łączyć problemów. Aby włączyć to ustawienie, przypisz integrację problemów."
         },
         "editWindow": {
           "label": "Okno edycji wyników",

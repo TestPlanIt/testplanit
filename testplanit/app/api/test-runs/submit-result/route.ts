@@ -7,6 +7,7 @@ import { prisma } from "~/lib/prisma";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import {
+  failsIssueOnFailureGate,
   hasMissingRequiredResultField,
   hasResultMutationPermission,
   isOutcomeFlip,
@@ -39,6 +40,11 @@ const submitResultSchema = z.object({
   attempt: z.number().int().positive(),
   testRunCaseVersion: z.number().int().positive(),
   issueIds: z.array(z.number().int().positive()).optional(),
+  // Count of issues the client is linking at the step / shared-step level for
+  // this result. Step results (and their issues) are written in separate calls
+  // after this one, so the require-issue-on-failure gate counts them via this
+  // hint in addition to the result-level `issueIds`.
+  stepIssueCount: z.number().int().nonnegative().optional(),
   inProgressStateId: z.number().int().positive().nullable().optional(),
   // Phase 3 Wave 2 (Task 6): when set, the result is attributed to a specific
   // iteration of a parameterized run-case. Activates the worst-of rollup
@@ -206,6 +212,12 @@ export async function POST(req: NextRequest) {
                 createdBy: true,
                 defaultAccessType: true,
                 requireResultFlipJustification: true,
+                requireIssueOnFailure: true,
+                projectIntegrations: {
+                  where: { isActive: true, integration: { status: "ACTIVE" } },
+                  select: { id: true },
+                  take: 1,
+                },
                 assignedUsers: {
                   where: {
                     userId: user.id,
@@ -373,6 +385,36 @@ export async function POST(req: NextRequest) {
         },
         { status: 400 }
       );
+    }
+
+    // Mandatory defect link on failure (opt-in per project). When the project
+    // has `requireIssueOnFailure` enabled, has an active issue integration, and
+    // the submitted status is failure-class (its `isFailure` flag is set), at
+    // least one Issue must be linked. Read-only and pre-transaction; the status
+    // flag is resolved by id and the check is skipped entirely when off.
+    if (runCase.testRun.project.requireIssueOnFailure) {
+      const submittedStatus = await prisma.status.findUnique({
+        where: { id: input.statusId },
+        select: { isFailure: true },
+      });
+      if (
+        failsIssueOnFailureGate({
+          requireIssueOnFailure: true,
+          hasIssueIntegration:
+            runCase.testRun.project.projectIntegrations.length > 0,
+          statusIsFailure: submittedStatus?.isFailure ?? false,
+          linkedIssueCount:
+            (input.issueIds?.length ?? 0) + (input.stepIssueCount ?? 0),
+        })
+      ) {
+        return NextResponse.json(
+          {
+            error: "A linked issue is required when the result is a failure",
+            code: "ISSUE_REQUIRED_ON_FAILURE",
+          },
+          { status: 400 }
+        );
+      }
     }
 
     const notesInput:

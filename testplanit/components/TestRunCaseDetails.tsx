@@ -60,6 +60,7 @@ import {
 } from "~/lib/hooks";
 import { useFindManyTemplates } from "~/lib/hooks/templates";
 import {
+  isIssueRequiredOnFailureSubmitResultError,
   isJustificationRequiredSubmitResultError,
   isPermissionDeniedSubmitResultError,
   submitTestRunResult,
@@ -146,6 +147,9 @@ export function TestRunCaseDetails({
   // True when the modal was opened because a quick flip was rejected for
   // missing justification, so it shows the justification error on open.
   const [flipErrorOnOpen, setFlipErrorOnOpen] = useState(false);
+  // True when the modal was opened because a quick failure was rejected for a
+  // missing linked issue, so it shows the issue-required error on open.
+  const [issueErrorOnOpen, setIssueErrorOnOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [_showAssignModal, _setShowAssignModal] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
@@ -505,6 +509,7 @@ export function TestRunCaseDetails({
     setSelectedStatusId(undefined);
     setEscalatedForRequiredField(false);
     setFlipErrorOnOpen(false);
+    setIssueErrorOnOpen(false);
   };
 
   const hasColor = (
@@ -749,6 +754,7 @@ export function TestRunCaseDetails({
                     onClick={() => {
                       setEscalatedForRequiredField(false);
                       setFlipErrorOnOpen(false);
+                      setIssueErrorOnOpen(false);
                       setShowAddResultModal(true);
                     }}
                     disabled={isDisabled}
@@ -869,6 +875,16 @@ export function TestRunCaseDetails({
                                   // with the justification error shown inline.
                                   setSelectedStatusId(status.id.toString());
                                   setFlipErrorOnOpen(true);
+                                  setShowAddResultModal(true);
+                                } else if (
+                                  isIssueRequiredOnFailureSubmitResultError(
+                                    error
+                                  )
+                                ) {
+                                  // Failure status needs a linked issue: open
+                                  // the modal pre-set so the tester links one.
+                                  setSelectedStatusId(status.id.toString());
+                                  setIssueErrorOnOpen(true);
                                   setShowAddResultModal(true);
                                 } else {
                                   toast.error(tCommon("errors.error"), {
@@ -1291,6 +1307,7 @@ export function TestRunCaseDetails({
           defaultStatusId={selectedStatusId || successStatus?.id?.toString()}
           validateOnOpen={escalatedForRequiredField}
           flipJustificationError={flipErrorOnOpen}
+          issueOnFailureError={issueErrorOnOpen}
           steps={testcase.steps}
           configuration={testcase.testRuns?.[0]?.testRun?.configuration}
           iterationId={activeIterationId}

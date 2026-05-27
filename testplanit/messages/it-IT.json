@@ -623,6 +623,8 @@
       "justificationRequiredDescription": "Per modificare un risultato già completato, è necessario specificare i dettagli del risultato, spiegando la modifica.",
       "requiredFieldMissing": "Un campo obbligatorio dei risultati non contiene un valore.",
       "editWindowExpired": "La finestra di modifica di questo risultato è chiusa. Registra invece un nuovo tentativo.",
+      "issueRequiredOnFailure": "È necessario collegare il problema",
+      "issueRequiredOnFailureDescription": "Un risultato di errore richiede almeno un problema collegato. Collega un problema prima di salvare.",
       "noModelsFound": "Nessun modello trovato",
       "failedToFetchModels": "Impossibile recuperare i modelli",
       "failedToCopyToClipboard": "Impossibile copiare negli appunti",
@@ -1842,6 +1844,15 @@
           "enabledToast": "Per questo progetto è necessaria la giustificazione del capovolgimento.",
           "disabledToast": "Per questo progetto non è più necessaria la giustificazione del capovolgimento.",
           "saveError": "Impossibile aggiornare l'impostazione di allineamento capovolgimento"
+        },
+        "issueOnFailure": {
+          "label": "Richiedi un problema collegato in caso di errore",
+          "description": "Quando abilitata, la registrazione di un risultato di errore richiede almeno un problema collegato.",
+          "enabledToast": "Ora è necessario un problema collegato in caso di errore per questo progetto",
+          "disabledToast": "In caso di errore di questo progetto, non è più necessario un problema collegato.",
+          "saveError": "Impossibile aggiornare l'impostazione require-issue-on-failure",
+          "noIntegrationTitle": "Nessun problema di integrazione",
+          "noIntegrationDescription": "Questo progetto non ha alcuna integrazione attiva con i problemi, quindi i risultati non possono essere collegati a un problema. Assegna un'integrazione con i problemi per abilitare questa impostazione."
         },
         "editWindow": {
           "label": "Finestra di modifica dei risultati",

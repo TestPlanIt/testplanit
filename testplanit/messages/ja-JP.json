@@ -623,6 +623,8 @@
       "justificationRequiredDescription": "完了した結果を別の結果に変更するには、変更内容を説明する結果の詳細が必要です。",
       "requiredFieldMissing": "必須項目である結果フィールドに値が入力されていません。",
       "editWindowExpired": "この結果の編集ウィンドウは閉じました。代わりに新しい試行を記録してください。",
+      "issueRequiredOnFailure": "関連する課題が必要です",
+      "issueRequiredOnFailureDescription": "失敗結果には、少なくとも1つの関連する課題が必要です。保存する前に課題をリンクしてください。",
       "noModelsFound": "モデルが見つかりません",
       "failedToFetchModels": "モデルの取得に失敗しました",
       "failedToCopyToClipboard": "クリップボードへのコピーに失敗しました",
@@ -1842,6 +1844,15 @@
           "enabledToast": "このプロジェクトには反転の正当性が必要です",
           "disabledToast": "このプロジェクトでは反転の正当化は不要になりました",
           "saveError": "反転位置合わせ設定の更新に失敗しました"
+        },
+        "issueOnFailure": {
+          "label": "失敗時に関連する問題が発生するようにする",
+          "description": "有効にした場合、失敗結果を記録するには、少なくとも1つの関連する問題が必要です。",
+          "enabledToast": "このプロジェクトでは、失敗時に関連する課題を報告することが必須となりました。",
+          "disabledToast": "このプロジェクトでは、失敗時に関連する課題を報告する必要はなくなりました。",
+          "saveError": "require-issue-on-failure設定の更新に失敗しました",
+          "noIntegrationTitle": "統合に問題なし",
+          "noIntegrationDescription": "このプロジェクトには有効な課題連携が設定されていないため、結果に課題をリンクさせることができません。この設定を有効にするには、課題連携を設定してください。"
         },
         "editWindow": {
           "label": "結果編集ウィンドウ",

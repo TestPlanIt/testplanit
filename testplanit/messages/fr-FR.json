@@ -623,6 +623,8 @@
       "justificationRequiredDescription": "Pour modifier un résultat final, il est nécessaire de fournir des détails sur le résultat expliquant le changement.",
       "requiredFieldMissing": "Un champ de résultat obligatoire est vide.",
       "editWindowExpired": "La fenêtre de modification de ce résultat est fermée. Veuillez effectuer une nouvelle tentative.",
+      "issueRequiredOnFailure": "Problème lié requis",
+      "issueRequiredOnFailureDescription": "Un résultat d'échec nécessite au moins un problème lié. Liez un problème avant d'enregistrer.",
       "noModelsFound": "Aucun modèle trouvé",
       "failedToFetchModels": "Impossible de récupérer les modèles",
       "failedToCopyToClipboard": "Impossible de copier dans le presse-papiers",
@@ -1842,6 +1844,15 @@
           "enabledToast": "Justification du retournement requise pour ce projet",
           "disabledToast": "La justification de retournement n'est plus requise pour ce projet.",
           "saveError": "Échec de la mise à jour du paramètre de justification du retournement"
+        },
+        "issueOnFailure": {
+          "label": "Exiger un problème lié en cas d'échec",
+          "description": "Lorsqu'elle est activée, l'enregistrement d'un résultat d'échec nécessite au moins un problème lié.",
+          "enabledToast": "Un problème lié est désormais requis en cas d'échec pour ce projet.",
+          "disabledToast": "Il n'est plus nécessaire de signaler un problème lié en cas d'échec pour ce projet.",
+          "saveError": "Échec de la mise à jour du paramètre require-issue-on-failure",
+          "noIntegrationTitle": "Intégration sans problème",
+          "noIntegrationDescription": "Ce projet ne dispose d'aucune intégration de problèmes active ; les résultats ne peuvent donc pas être liés à un problème. Attribuez une intégration de problèmes pour activer ce paramètre."
         },
         "editWindow": {
           "label": "Fenêtre d'édition des résultats",

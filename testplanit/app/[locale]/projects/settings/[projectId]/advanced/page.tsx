@@ -52,6 +52,12 @@ export default function AdvancedPage() {
         reviewWorkflowEnabled: true,
         requireResultFlipJustification: true,
         editResultsDurationSeconds: true,
+        requireIssueOnFailure: true,
+        projectIntegrations: {
+          where: { isActive: true, integration: { status: "ACTIVE" } },
+          select: { id: true },
+          take: 1,
+        },
       },
     },
     {
@@ -106,6 +112,10 @@ export default function AdvancedPage() {
   const reviewWorkflowEnabled = project?.reviewWorkflowEnabled ?? true;
   const requireResultFlipJustification =
     project?.requireResultFlipJustification ?? false;
+  const requireIssueOnFailure = project?.requireIssueOnFailure ?? false;
+  // Requiring a linked issue is only meaningful when the project has an active
+  // issue integration to link from; without one the toggle is forced off.
+  const hasIssueIntegration = (project?.projectIntegrations?.length ?? 0) > 0;
 
   const handleToggleReviewWorkflow = async (enabled: boolean) => {
     try {
@@ -136,6 +146,22 @@ export default function AdvancedPage() {
       );
     } catch {
       toast.error(t("flipJustification.saveError"));
+    }
+  };
+
+  const handleToggleIssueOnFailure = async (enabled: boolean) => {
+    try {
+      await updateProject.mutateAsync({
+        where: { id: projectId },
+        data: { requireIssueOnFailure: enabled },
+      });
+      toast.success(
+        enabled
+          ? t("issueOnFailure.enabledToast")
+          : t("issueOnFailure.disabledToast")
+      );
+    } catch {
+      toast.error(t("issueOnFailure.saveError"));
     }
   };
 
@@ -265,6 +291,42 @@ export default function AdvancedPage() {
                 <p className="text-sm text-muted-foreground">
                   {t("flipJustification.description")}
                 </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-3">
+                <Label className="flex items-center gap-3">
+                  <Switch
+                    id="require-issue-on-failure-toggle"
+                    data-testid="require-issue-on-failure-toggle"
+                    checked={requireIssueOnFailure && hasIssueIntegration}
+                    onCheckedChange={handleToggleIssueOnFailure}
+                    disabled={
+                      projectLoading ||
+                      updateProject.isPending ||
+                      !hasIssueIntegration
+                    }
+                  />
+                  <span className="text-base font-medium">
+                    {t("issueOnFailure.label")}
+                  </span>
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {t("issueOnFailure.description")}
+                </p>
+                {!hasIssueIntegration && (
+                  <WarningAlert data-testid="issue-on-failure-no-integration-warning">
+                    <AlertTitle>
+                      {t("issueOnFailure.noIntegrationTitle")}
+                    </AlertTitle>
+                    <AlertDescription>
+                      {t("issueOnFailure.noIntegrationDescription")}
+                    </AlertDescription>
+                  </WarningAlert>
+                )}
               </div>
             </CardContent>
           </Card>

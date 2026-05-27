@@ -623,6 +623,8 @@
       "justificationRequiredDescription": "Um ein abgeschlossenes Ergebnis in ein anderes Ergebnis umzuwandeln, sind Ergebnisdetails erforderlich, die die Änderung erläutern.",
       "requiredFieldMissing": "Ein erforderliches Ergebnisfeld hat keinen Wert.",
       "editWindowExpired": "Das Bearbeitungsfenster für dieses Ergebnis wurde geschlossen. Bitte starten Sie stattdessen einen neuen Versuch.",
+      "issueRequiredOnFailure": "Verknüpftes Problem erforderlich",
+      "issueRequiredOnFailureDescription": "Ein Fehlerergebnis erfordert mindestens ein verknüpftes Problem. Verknüpfen Sie ein Problem, bevor Sie speichern.",
       "noModelsFound": "Keine Modelle gefunden",
       "failedToFetchModels": "Modelle konnten nicht abgerufen werden",
       "failedToCopyToClipboard": "Fehler beim Kopieren in die Zwischenablage",
@@ -1842,6 +1844,15 @@
           "enabledToast": "Für dieses Projekt ist eine Flip-Begründung erforderlich.",
           "disabledToast": "Eine Flip-Begründung ist für dieses Projekt nicht mehr erforderlich.",
           "saveError": "Fehler beim Aktualisieren der Einstellung für die Spiegelungsausrichtung"
+        },
+        "issueOnFailure": {
+          "label": "Bei einem Fehler muss ein verknüpftes Problem gemeldet werden.",
+          "description": "Wenn diese Option aktiviert ist, muss für die Protokollierung eines Fehlerergebnisses mindestens ein verknüpftes Problem vorliegen.",
+          "enabledToast": "Bei einem Fehler ist für dieses Projekt nun ein verknüpftes Problem erforderlich.",
+          "disabledToast": "Bei diesem Projekt ist im Fehlerfall keine Verknüpfung eines Problems mehr erforderlich.",
+          "saveError": "Die Aktualisierung der Einstellung „require-issue-on-failure“ ist fehlgeschlagen.",
+          "noIntegrationTitle": "Keine Integrationsprobleme",
+          "noIntegrationDescription": "Dieses Projekt verfügt über keine aktive Problemintegration, daher können Ergebnisse kein Problem verknüpfen. Weisen Sie eine Problemintegration zu, um diese Einstellung zu aktivieren."
         },
         "editWindow": {
           "label": "Ergebnisbearbeitungsfenster",

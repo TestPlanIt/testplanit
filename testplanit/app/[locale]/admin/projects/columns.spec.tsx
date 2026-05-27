@@ -147,6 +147,7 @@ const testProject: ExtendedProjects = {
   reviewWorkflowEnabled: true,
   requireResultFlipJustification: false,
   editResultsDurationSeconds: null,
+  requireIssueOnFailure: false,
   creator: {
     id: "user-1",
     name: "Test User",

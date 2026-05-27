@@ -1146,6 +1146,10 @@ const metadata: ModelMeta = {
                     name: "editResultsDurationSeconds",
                     type: "Int",
                     isOptional: true,
+                }, requireIssueOnFailure: {
+                    name: "requireIssueOnFailure",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
                 }, duplicateScanResults: {
                     name: "duplicateScanResults",
                     type: "DuplicateScanResult",

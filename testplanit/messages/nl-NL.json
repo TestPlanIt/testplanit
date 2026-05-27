@@ -623,6 +623,8 @@
       "justificationRequiredDescription": "Om een voltooid resultaat om te zetten naar een andere uitkomst, zijn resultaatdetails nodig die de wijziging toelichten.",
       "requiredFieldMissing": "Een verplicht resultaatveld mist een waarde.",
       "editWindowExpired": "Het bewerkingsvenster voor dit resultaat is gesloten. Probeer het opnieuw.",
+      "issueRequiredOnFailure": "Gekoppeld probleem vereist",
+      "issueRequiredOnFailureDescription": "Een foutmelding vereist ten minste één gekoppeld probleem. Koppel een probleem voordat u opslaat.",
       "noModelsFound": "Geen modellen gevonden",
       "failedToFetchModels": "Het ophalen van modellen is mislukt",
       "failedToCopyToClipboard": "Kopiëren naar klembord mislukt",
@@ -1842,6 +1844,15 @@
           "enabledToast": "Voor dit project is een rechtvaardiging op basis van een spiegelbeeld vereist.",
           "disabledToast": "Voor dit project is het niet langer nodig om de afbeelding om te draaien.",
           "saveError": "Het bijwerken van de instelling voor spiegeluitlijning is mislukt."
+        },
+        "issueOnFailure": {
+          "label": "Een gekoppeld probleem is vereist bij een fout.",
+          "description": "Wanneer deze functie is ingeschakeld, is er minimaal één gekoppeld probleem nodig om een foutmelding vast te leggen.",
+          "enabledToast": "Bij een fout is nu een gekoppeld probleem vereist voor dit project.",
+          "disabledToast": "Een gekoppeld probleem is niet langer vereist bij een fout voor dit project.",
+          "saveError": "Het bijwerken van de instelling 'require-issue-on-failure' is mislukt.",
+          "noIntegrationTitle": "Geen problemen met de integratie",
+          "noIntegrationDescription": "Dit project heeft geen actieve issue-integratie, waardoor resultaten geen issue kunnen koppelen. Wijs een issue-integratie toe om deze instelling in te schakelen."
         },
         "editWindow": {
           "label": "Resultaatbewerkingsvenster",

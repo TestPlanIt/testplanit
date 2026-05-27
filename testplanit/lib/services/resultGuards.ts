@@ -206,3 +206,28 @@ export async function hasMissingRequiredResultField(
       isTiptapEmpty(submittedValues.get(resultFieldId))
   );
 }
+
+/**
+ * True when the project requires a linked Issue on failure, the submitted
+ * status is failure-class (its `isFailure` flag is set, not a hardcoded
+ * status name), and no Issue is linked. The caller resolves the status flag
+ * and the linked-issue count.
+ *
+ * The gate is inert unless the project has an active issue integration: with
+ * no integration the result UI can't link an issue, so enforcing the rule
+ * would block submissions the tester can't satisfy. A stored `true` therefore
+ * does nothing until an integration is attached (no destructive reset needed).
+ */
+export function failsIssueOnFailureGate(args: {
+  requireIssueOnFailure: boolean;
+  hasIssueIntegration: boolean;
+  statusIsFailure: boolean;
+  linkedIssueCount: number;
+}): boolean {
+  return (
+    args.requireIssueOnFailure &&
+    args.hasIssueIntegration &&
+    args.statusIsFailure &&
+    args.linkedIssueCount === 0
+  );
+}
