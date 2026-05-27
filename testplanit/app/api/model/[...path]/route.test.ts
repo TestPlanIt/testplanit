@@ -1,5 +1,9 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  AUDITED_CONFIG_MODELS,
+  ENTITY_NAME_FIELDS,
+} from "~/lib/services/auditLog";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Hoisted mocks for the chokepoint route-level mode:read enforcement tests
@@ -63,9 +67,17 @@ vi.mock("~/lib/access-fast-path", () => ({
   tryFastPathCreate: vi.fn(async () => null),
 }));
 
-vi.mock("~/lib/services/auditLog", () => ({
-  captureAuditEvent: vi.fn(async () => undefined),
-}));
+vi.mock("~/lib/services/auditLog", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("~/lib/services/auditLog")>();
+  // Keep the real AUDITED_CONFIG_MODELS / ENTITY_NAME_FIELDS / calculateDiff
+  // (consumed at module load to build the route's audit maps); only the
+  // queue-backed emitter is stubbed.
+  return {
+    ...actual,
+    captureAuditEvent: vi.fn(async () => undefined),
+  };
+});
 
 vi.mock("~/lib/services/reviewGate", () => ({
   assertReviewGatePasses: vi.fn(async () => null),
@@ -130,6 +142,10 @@ const AUDITED_ENTITIES = new Set([
   "comment",
   "attachment",
   "apiToken",
+  // Admin-config catalog + access models — mirror the route, which spreads the
+  // shared source so the two cannot drift. Guards that every config model is
+  // audited canonically on the RPC path.
+  ...AUDITED_CONFIG_MODELS.map((c) => c.accessor),
 ]);
 
 // Replicate getAuditAction
@@ -174,6 +190,12 @@ function extractEntityName(
     allowedEmailDomain: "domain",
     appConfig: "key",
     apiToken: "name",
+    ...Object.fromEntries(
+      AUDITED_CONFIG_MODELS.flatMap((c) => {
+        const f = ENTITY_NAME_FIELDS[c.entityType];
+        return f ? [[c.accessor, f] as const] : [];
+      })
+    ),
   };
 
   const field = nameFields[entityType];
@@ -223,6 +245,9 @@ const entityTypeMap: Record<string, string> = {
   comment: "Comment",
   attachment: "Attachment",
   apiToken: "ApiToken",
+  ...Object.fromEntries(
+    AUDITED_CONFIG_MODELS.map((c) => [c.accessor, c.entityType])
+  ),
 };
 
 describe("ZenStack API Route Audit Interception", () => {
@@ -262,6 +287,31 @@ describe("ZenStack API Route Audit Interception", () => {
       expect(AUDITED_ENTITIES.has("verificationToken")).toBe(false);
       expect(AUDITED_ENTITIES.has("session")).toBe(false);
       expect(AUDITED_ENTITIES.has("account")).toBe(false);
+    });
+
+    it("audits every admin-config model on the RPC path", () => {
+      // The canonical fix: each config model must be in the route's audited
+      // set so the post-RPC shim emits the single full-diff row (the $extends
+      // hook is suppressed for these on the RPC path). Spot-check the catalog,
+      // access-join, and project-scoped-join categories.
+      for (const accessor of [
+        "workflows",
+        "status",
+        "configurations",
+        "roles",
+        "tags",
+        "caseFields",
+        "samlConfiguration",
+        "rolePermission",
+        "groupAssignment",
+        "projectStatusAssignment",
+      ]) {
+        expect(AUDITED_ENTITIES.has(accessor)).toBe(true);
+      }
+      // Exhaustive: nothing in the shared source is missing from the set.
+      for (const cfg of AUDITED_CONFIG_MODELS) {
+        expect(AUDITED_ENTITIES.has(cfg.accessor)).toBe(true);
+      }
     });
   });
 
@@ -428,6 +478,32 @@ describe("ZenStack API Route Audit Interception", () => {
       expect(
         extractEntityName("attachment", { id: 1, filename: "test.pdf" })
       ).toBeUndefined();
+    });
+
+    it("resolves names for admin-config catalog models", () => {
+      expect(
+        extractEntityName("workflows", { id: 1, name: "Release Flow" })
+      ).toBe("Release Flow");
+      expect(
+        extractEntityName("caseFields", { id: 1, displayName: "Priority" })
+      ).toBe("Priority");
+      expect(
+        extractEntityName("samlConfiguration", {
+          id: "c1",
+          issuer: "https://idp.example.com",
+        })
+      ).toBe("https://idp.example.com");
+    });
+
+    it("resolves composite names for admin-config join models", () => {
+      // Join tables lack a scalar id; the shim derives a readable name from the
+      // composite key (mirrors the audit entry's entityName).
+      expect(
+        extractEntityName("rolePermission", { roleId: 75, area: "TestRuns" })
+      ).toBe("75:TestRuns");
+      expect(
+        extractEntityName("groupAssignment", { userId: "u1", groupId: 3 })
+      ).toBe("u1:3");
     });
 
     it("should return undefined for null result", () => {

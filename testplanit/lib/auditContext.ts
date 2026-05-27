@@ -46,6 +46,18 @@ export interface AuditContext {
    * Defaults to undefined (= no suppression) so existing callers are unchanged.
    */
   suppressWebhooks?: boolean;
+  /**
+   * Suppression hatch for the generic entity-audit helpers (auditCreate/
+   * auditUpdate/auditDelete and the auditBulk* variants) emitted by the
+   * lib/prisma.ts `$extends` hooks. The ZenStack RPC route sets this for
+   * mutations it audits canonically via its own post-RPC shim, so the
+   * `$extends` hook does not double-emit a (partial, `select:{id:true}`-shaped)
+   * generic row on that path. Specialized helpers (auditRoleChange,
+   * auditSsoConfigChange, etc.) are intentionally NOT gated. Defaults to
+   * undefined (= no suppression); non-RPC paths (workers, custom routes,
+   * direct prisma) leave it unset so the hooks audit normally.
+   */
+  suppressEntityAudit?: boolean;
 }
 
 /**

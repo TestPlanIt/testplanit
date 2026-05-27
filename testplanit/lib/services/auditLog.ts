@@ -61,7 +61,150 @@ export const ENTITY_NAME_FIELDS: Record<string, string | string[]> = {
   GroupProjectPermission: ["groupId", "projectId"],
   Account: ["provider", "providerAccountId"],
   UserIntegrationAuth: ["userId", "integrationType"],
+  // Admin-config catalog models (see AUDITED_CONFIG_MODELS below).
+  Workflows: "name",
+  Status: "name",
+  Configurations: "name",
+  ConfigVariants: "name",
+  ConfigCategories: "name",
+  Roles: "name",
+  Tags: "name",
+  Templates: "templateName",
+  CaseExportTemplate: "name",
+  CaseFields: "displayName",
+  ResultFields: "displayName",
+  FieldOptions: "name",
+  MilestoneTypes: "name",
+  Groups: "name",
+  LlmIntegration: "name",
+  CodeRepository: "name",
+  SamlConfiguration: "issuer",
+  LlmProviderConfig: "defaultModel",
+  LlmFeatureConfig: "feature",
+  OllamaModelRegistry: "modelName",
+  // Admin-config join / assignment models (composite keys).
+  RolePermission: ["roleId", "area"],
+  GroupAssignment: ["userId", "groupId"],
+  ProjectAssignment: ["userId", "projectId"],
+  ProjectStatusAssignment: ["statusId", "projectId"],
+  ProjectWorkflowAssignment: ["workflowId", "projectId"],
+  MilestoneTypesAssignment: ["milestoneTypeId", "projectId"],
+  ProjectLlmIntegration: ["llmIntegrationId", "projectId"],
+  ProjectCodeRepositoryConfig: ["repositoryId", "projectId"],
 };
+
+/**
+ * Describes an admin-managed configuration/catalog model whose CRUD should be
+ * audited via the generic hook factory in `lib/prisma.ts`. This array is the
+ * single source of truth for the admin-config audit sweep and is cross-checked
+ * against the live Prisma datamodel in tests so a mistyped `accessor` (the
+ * historical `issue`/`issues` dead-hook bug) fails loudly instead of silently
+ * skipping audit.
+ */
+export interface AuditedConfigModel {
+  /** Audit entityType; must match an ENTITY_NAME_FIELDS key (PascalCase model). */
+  entityType: string;
+  /** Prisma client accessor (camelCase model name) — the `$extends` query key. */
+  accessor: string;
+  /** Forward the row's `projectId` to the audit entry when present. */
+  hasProjectId?: boolean;
+  /**
+   * "catalog" → single-entity models: create + update (also captures the
+   * soft-delete `isDeleted` flip) + upsert + delete.
+   * "join" → assignment/link models the admin UI mutates in bulk
+   * (useCreateMany* / useDeleteMany*); also get createMany + deleteMany, and
+   * derive entityId from their composite key when they lack a scalar `id`.
+   */
+  kind: "catalog" | "join";
+}
+
+export const AUDITED_CONFIG_MODELS: AuditedConfigModel[] = [
+  // Catalog / config models
+  { entityType: "Workflows", accessor: "workflows", kind: "catalog" },
+  { entityType: "Status", accessor: "status", kind: "catalog" },
+  { entityType: "Configurations", accessor: "configurations", kind: "catalog" },
+  { entityType: "ConfigVariants", accessor: "configVariants", kind: "catalog" },
+  {
+    entityType: "ConfigCategories",
+    accessor: "configCategories",
+    kind: "catalog",
+  },
+  { entityType: "Roles", accessor: "roles", kind: "catalog" },
+  { entityType: "Tags", accessor: "tags", kind: "catalog" },
+  { entityType: "Templates", accessor: "templates", kind: "catalog" },
+  {
+    entityType: "CaseExportTemplate",
+    accessor: "caseExportTemplate",
+    kind: "catalog",
+  },
+  { entityType: "CaseFields", accessor: "caseFields", kind: "catalog" },
+  { entityType: "ResultFields", accessor: "resultFields", kind: "catalog" },
+  { entityType: "FieldOptions", accessor: "fieldOptions", kind: "catalog" },
+  { entityType: "MilestoneTypes", accessor: "milestoneTypes", kind: "catalog" },
+  { entityType: "Groups", accessor: "groups", kind: "catalog" },
+  { entityType: "LlmIntegration", accessor: "llmIntegration", kind: "catalog" },
+  { entityType: "CodeRepository", accessor: "codeRepository", kind: "catalog" },
+  {
+    entityType: "SamlConfiguration",
+    accessor: "samlConfiguration",
+    kind: "catalog",
+  },
+  {
+    entityType: "LlmProviderConfig",
+    accessor: "llmProviderConfig",
+    kind: "catalog",
+  },
+  {
+    entityType: "LlmFeatureConfig",
+    accessor: "llmFeatureConfig",
+    hasProjectId: true,
+    kind: "catalog",
+  },
+  {
+    entityType: "OllamaModelRegistry",
+    accessor: "ollamaModelRegistry",
+    kind: "catalog",
+  },
+  // Join / assignment models (access control + project-scoped config links)
+  { entityType: "RolePermission", accessor: "rolePermission", kind: "join" },
+  { entityType: "GroupAssignment", accessor: "groupAssignment", kind: "join" },
+  {
+    entityType: "ProjectAssignment",
+    accessor: "projectAssignment",
+    hasProjectId: true,
+    kind: "join",
+  },
+  {
+    entityType: "ProjectStatusAssignment",
+    accessor: "projectStatusAssignment",
+    hasProjectId: true,
+    kind: "join",
+  },
+  {
+    entityType: "ProjectWorkflowAssignment",
+    accessor: "projectWorkflowAssignment",
+    hasProjectId: true,
+    kind: "join",
+  },
+  {
+    entityType: "MilestoneTypesAssignment",
+    accessor: "milestoneTypesAssignment",
+    hasProjectId: true,
+    kind: "join",
+  },
+  {
+    entityType: "ProjectLlmIntegration",
+    accessor: "projectLlmIntegration",
+    hasProjectId: true,
+    kind: "join",
+  },
+  {
+    entityType: "ProjectCodeRepositoryConfig",
+    accessor: "projectCodeRepositoryConfig",
+    hasProjectId: true,
+    kind: "join",
+  },
+];
 
 /**
  * Fields that should be masked in audit logs for security.
@@ -336,6 +479,17 @@ export async function captureAuditEvent(event: AuditEvent): Promise<void> {
 }
 
 /**
+ * Whether the current request has opted out of generic entity-audit emission
+ * (set by the ZenStack RPC route, which audits canonically via its own shim).
+ * Only the generic CREATE/UPDATE/DELETE + BULK_* helpers honor this; the
+ * specialized semantic helpers (role change, SSO/system config, permission
+ * grant/revoke) intentionally do not.
+ */
+function isEntityAuditSuppressed(): boolean {
+  return getAuditContext()?.suppressEntityAudit === true;
+}
+
+/**
  * Capture a CREATE action audit event.
  */
 export async function auditCreate(
@@ -343,7 +497,13 @@ export async function auditCreate(
   entity: Record<string, unknown>,
   projectId?: number
 ): Promise<void> {
-  const entityId = String(entity.id || entity.key || "unknown");
+  if (isEntityAuditSuppressed()) return;
+  const entityId = String(
+    entity.id ||
+      entity.key ||
+      extractEntityName(entityType, entity) ||
+      "unknown"
+  );
   await captureAuditEvent({
     action: "CREATE",
     entityType,
@@ -363,7 +523,13 @@ export async function auditUpdate(
   newEntity: Record<string, unknown>,
   projectId?: number
 ): Promise<void> {
-  const entityId = String(newEntity.id || newEntity.key || "unknown");
+  if (isEntityAuditSuppressed()) return;
+  const entityId = String(
+    newEntity.id ||
+      newEntity.key ||
+      extractEntityName(entityType, newEntity) ||
+      "unknown"
+  );
   const changes = calculateDiff(oldEntity, newEntity);
 
   // Only log if there are actual changes
@@ -389,7 +555,13 @@ export async function auditDelete(
   entity: Record<string, unknown>,
   projectId?: number
 ): Promise<void> {
-  const entityId = String(entity.id || entity.key || "unknown");
+  if (isEntityAuditSuppressed()) return;
+  const entityId = String(
+    entity.id ||
+      entity.key ||
+      extractEntityName(entityType, entity) ||
+      "unknown"
+  );
   await captureAuditEvent({
     action: "DELETE",
     entityType,
@@ -572,6 +744,7 @@ export async function auditBulkCreate(
   projectId?: number,
   metadata?: Record<string, unknown>
 ): Promise<void> {
+  if (isEntityAuditSuppressed()) return;
   await captureAuditEvent({
     action: "BULK_CREATE",
     entityType,
@@ -594,6 +767,7 @@ export async function auditBulkUpdate(
   where: Record<string, unknown>,
   projectId?: number
 ): Promise<void> {
+  if (isEntityAuditSuppressed()) return;
   await captureAuditEvent({
     action: "BULK_UPDATE",
     entityType,
@@ -616,6 +790,7 @@ export async function auditBulkDelete(
   where: Record<string, unknown>,
   projectId?: number
 ): Promise<void> {
+  if (isEntityAuditSuppressed()) return;
   await captureAuditEvent({
     action: "BULK_DELETE",
     entityType,

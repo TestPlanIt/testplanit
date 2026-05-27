@@ -1,8 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("~/lib/services/auditLog", () => ({
-  captureAuditEvent: vi.fn().mockResolvedValue(undefined),
-}));
+vi.mock("~/lib/services/auditLog", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("~/lib/services/auditLog")>();
+  return {
+    ...actual,
+    captureAuditEvent: vi.fn().mockResolvedValue(undefined),
+  };
+});
 
 const mockQueueAdd = vi.fn();
 const mockGetQueue = vi.fn(() => ({ add: mockQueueAdd }));

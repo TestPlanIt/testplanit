@@ -114,14 +114,18 @@ Only users with administrative privileges can access the audit log viewer.
 
 ## Tracked Entities
 
-The following entity types are tracked in the audit log:
+All administrator-managed configuration changes are tracked, alongside the core
+test, project, and user entities. The following entity types are recorded in the
+audit log:
 
 - **Test Management**: Test Cases, Test Runs, Test Run Cases, Test Results, Sessions, Shared Steps
 - **Project Management**: Projects, Milestones, Issues, Tags
-- **User Management**: Users, Groups, Permissions
-- **Security**: API Tokens
-- **Configuration**: SSO Providers, Email Domains, App Config
-- **Integrations**: Integrations, Project Integrations, Prompt Configurations
+- **User Management**: Users, Groups, Group Assignments, Roles, Role Permissions, Project Assignments, Permissions
+- **Security**: API Tokens, SSO Providers, SAML Configuration, Email Domains
+- **Workspace Configuration**: Workflows, Statuses, Configurations (Categories & Variants), Milestone Types, Project Status / Workflow / Milestone-Type Assignments
+- **Fields & Templates**: Case Fields, Result Fields, Field Options, Templates, Export Templates
+- **System Configuration**: App Config
+- **AI & Integrations**: Integrations, Project Integrations, Prompt Configurations, LLM Integrations, LLM Provider & Feature Configurations, Ollama Model Registry, Code Repositories
 - **Content**: Comments, Attachments
 
 ## Filtering Audit Logs

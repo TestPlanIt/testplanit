@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { Prisma } from "@prisma/client";
 import { prisma } from "~/lib/prisma";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { getServerAuthSession } from "~/server/auth";
 
 /**
@@ -38,7 +39,11 @@ const createSchema = z.object({
   name: z.string().min(1),
 });
 
-export async function POST(req: NextRequest) {
+// Wrapped in withAuditContext so the audit entry emitted by the prisma.tags
+// create hook carries the actor: the wrapper seeds the ALS frame and the
+// NextAuth session callback (fired by getServerAuthSession below) enriches it
+// with userId/userEmail/userName. Without the frame that enrichment is a no-op.
+export const POST = withAuditContext(async (req: NextRequest) => {
   const session = await getServerAuthSession();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -127,4 +132,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

@@ -16,8 +16,10 @@ import {
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import { prisma } from "~/lib/prisma";
 import {
+  AUDITED_CONFIG_MODELS,
   calculateDiff,
   captureAuditEvent,
+  ENTITY_NAME_FIELDS,
   type AuditEvent,
 } from "~/lib/services/auditLog";
 import {
@@ -191,7 +193,27 @@ const AUDITED_ENTITIES = new Set([
   // decide paths emit REVIEW_REQUESTED / REVIEW_APPROVED / etc. from their
   // own action handlers.
   "reviewRequest",
+  // Admin-config catalog + access models. Audited canonically here on the RPC
+  // path (the dominant admin mutation path); the lib/prisma.ts `$extends` hooks
+  // cover non-RPC paths (workers, custom routes, direct prisma) and are
+  // suppressed on this path via suppressEntityAudit to avoid a double, partial
+  // (`select:{id:true}`-shaped) generic row. Driven from AUDITED_CONFIG_MODELS.
+  ...AUDITED_CONFIG_MODELS.map((c) => c.accessor),
 ]);
+
+// Derived from AUDITED_CONFIG_MODELS so the shim's entity-type and display-name
+// lookups stay in sync with the single source of truth in auditLog.ts.
+const CONFIG_ENTITY_TYPE_BY_ACCESSOR: Record<string, string> =
+  Object.fromEntries(
+    AUDITED_CONFIG_MODELS.map((c) => [c.accessor, c.entityType])
+  );
+const CONFIG_NAME_FIELD_BY_ACCESSOR: Record<string, string | string[]> =
+  Object.fromEntries(
+    AUDITED_CONFIG_MODELS.flatMap((c) => {
+      const field = ENTITY_NAME_FIELDS[c.entityType];
+      return field ? [[c.accessor, field] as const] : [];
+    })
+  );
 
 // Map ZenStack operations to audit actions
 function getAuditAction(operation: string): AuditAction | null {
@@ -235,6 +257,7 @@ function extractEntityName(
     allowedEmailDomain: "domain",
     appConfig: "key",
     apiToken: "name",
+    ...CONFIG_NAME_FIELD_BY_ACCESSOR,
   };
 
   const field = nameFields[entityType];
@@ -805,8 +828,21 @@ async function innerHandler(
     // copies the parent's identity/correlation fields so they remain visible
     // to audit code paths inside the RPC handler.
     const parentAuditCtx = getAuditContext() ?? {};
+    // Suppress the lib/prisma.ts `$extends` generic entity-audit emission for
+    // models this route audits canonically below (AUDITED_ENTITIES). On the RPC
+    // path the `$extends` hook only sees a partial `select:{id:true}` row, so
+    // letting it emit would add a second, malformed audit record. Scoped to the
+    // audited set so hooked-but-not-shimmed models keep their hook-side audit.
+    const auditedByShim =
+      isMutation &&
+      parsedPath !== null &&
+      AUDITED_ENTITIES.has(parsedPath.model);
     let response = await runWithAuditContext(
-      { ...parentAuditCtx, suppressWebhooks: true },
+      {
+        ...parentAuditCtx,
+        suppressWebhooks: true,
+        suppressEntityAudit: auditedByShim,
+      },
       async () => {
         let r = await tryFastPathCreate({
           parsedPath,
@@ -1299,6 +1335,7 @@ async function innerHandler(
               attachment: "Attachment",
               apiToken: "ApiToken",
               reviewRequest: "ReviewRequest",
+              ...CONFIG_ENTITY_TYPE_BY_ACCESSOR,
             };
 
             // Special handling for API token operations - use specific audit actions
