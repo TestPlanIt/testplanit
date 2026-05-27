@@ -6603,6 +6603,10 @@
           "label": "Projektübergreifendes Ausführungsprotokoll",
           "description": "Flache Liste einzelner Testergebnisdatensätze mit Status, Ausführer und Zeitstempel über alle Projekte hinweg"
         }
+      },
+      "folderDescendants": {
+        "label": "Unterordner einbeziehen",
+        "description": "Ergebnisse aus Unterordnern werden den jeweiligen übergeordneten Ordnern zugeordnet."
       }
     },
     "errors": {
@@ -6646,7 +6650,8 @@
       "automationStatus": "Automatisierungsstatus",
       "issueType": "Ausgabetyp",
       "issueTracker": "Problemverfolgung",
-      "issueStatus": "Ausgabestatus"
+      "issueStatus": "Ausgabestatus",
+      "tag": "Etikett"
     },
     "metrics": {
       "testResults": "Testergebnisse",

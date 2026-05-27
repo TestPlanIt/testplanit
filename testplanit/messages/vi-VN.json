@@ -6603,6 +6603,10 @@
           "label": "Nhật ký thực thi liên dự án",
           "description": "Danh sách dạng phẳng các bản ghi kết quả kiểm thử riêng lẻ, bao gồm trạng thái, người thực hiện và dấu thời gian, trên nhiều dự án."
         }
+      },
+      "folderDescendants": {
+        "label": "Bao gồm các thư mục con",
+        "description": "Đếm số kết quả từ các thư mục con cho mỗi thư mục cha."
       }
     },
     "errors": {
@@ -6646,7 +6650,8 @@
       "automationStatus": "Trạng thái tự động hóa",
       "issueType": "Loại sự cố",
       "issueTracker": "Trình theo dõi sự cố",
-      "issueStatus": "Trạng thái vấn đề"
+      "issueStatus": "Trạng thái vấn đề",
+      "tag": "Nhãn"
     },
     "metrics": {
       "testResults": "Kết quả kiểm tra",

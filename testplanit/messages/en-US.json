@@ -6603,6 +6603,10 @@
           "label": "Cross-Project Execution Log",
           "description": "Flat list of individual test result records with status, executor, and timestamp across projects"
         }
+      },
+      "folderDescendants": {
+        "label": "Include subfolders",
+        "description": "Count results from subfolders toward each parent folder."
       }
     },
     "errors": {
@@ -6646,7 +6650,8 @@
       "automationStatus": "Automation Status",
       "issueType": "Issue Type",
       "issueTracker": "Issue Tracker",
-      "issueStatus": "Issue Status"
+      "issueStatus": "Issue Status",
+      "tag": "Tag"
     },
     "metrics": {
       "testResults": "Test Results",

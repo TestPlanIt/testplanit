@@ -6603,6 +6603,10 @@
           "label": "프로젝트 간 실행 로그",
           "description": "프로젝트 전반에 걸쳐 상태, 실행자 및 타임스탬프가 포함된 개별 테스트 결과 기록의 평면 목록"
         }
+      },
+      "folderDescendants": {
+        "label": "하위 폴더를 포함하세요",
+        "description": "하위 폴더의 결과를 각 상위 폴더에 포함시킵니다."
       }
     },
     "errors": {
@@ -6646,7 +6650,8 @@
       "automationStatus": "자동화 상태",
       "issueType": "문제 유형",
       "issueTracker": "이슈 트래커",
-      "issueStatus": "문제 상태"
+      "issueStatus": "문제 상태",
+      "tag": "꼬리표"
     },
     "metrics": {
       "testResults": "시험 결과",

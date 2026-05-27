@@ -43,6 +43,9 @@ export const reportRequestSchema = z
       .enum(["daily", "weekly", "monthly", "quarterly", "annually"])
       .optional()
       .default("weekly"),
+    // When the folder dimension is grouped, roll each result up into its
+    // ancestor folders so a parent folder includes its whole subtree.
+    folderIncludeDescendants: z.boolean().optional().default(false),
   })
   .superRefine((data, ctx) => {
     // Rule: If endDate is provided, startDate must also be provided

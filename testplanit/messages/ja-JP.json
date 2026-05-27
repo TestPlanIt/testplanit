@@ -6603,6 +6603,10 @@
           "label": "プロジェクト横断実行ログ",
           "description": "プロジェクト全体にわたる、ステータス、実行者、タイムスタンプを含む個々のテスト結果レコードのフラットリスト"
         }
+      },
+      "folderDescendants": {
+        "label": "サブフォルダーを含める",
+        "description": "各親フォルダに対して、サブフォルダ内の結果をカウントします。"
       }
     },
     "errors": {
@@ -6646,7 +6650,8 @@
       "automationStatus": "自動化ステータス",
       "issueType": "問題の種類",
       "issueTracker": "課題追跡システム",
-      "issueStatus": "問題ステータス"
+      "issueStatus": "問題ステータス",
+      "tag": "タグ"
     },
     "metrics": {
       "testResults": "検査結果",

@@ -148,6 +148,7 @@ export const DIMENSION_LABEL_KEYS: Record<string, string> = {
   role: "reports.dimensions.role",
   group: "reports.dimensions.group",
   folder: "reports.dimensions.folder",
+  tag: "reports.dimensions.tag",
   session: "reports.dimensions.session",
   assignedTo: "common.fields.assignedTo",
   issueType: "reports.dimensions.issueType",

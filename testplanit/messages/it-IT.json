@@ -6603,6 +6603,10 @@
           "label": "Registro di esecuzione tra progetti",
           "description": "Elenco semplice dei singoli record dei risultati dei test con stato, esecutore e data/ora per progetto"
         }
+      },
+      "folderDescendants": {
+        "label": "Includi sottocartelle",
+        "description": "Conta i risultati delle sottocartelle rispetto a ciascuna cartella principale."
       }
     },
     "errors": {
@@ -6646,7 +6650,8 @@
       "automationStatus": "Stato dell'automazione",
       "issueType": "Tipo di problema",
       "issueTracker": "Strumento di tracciamento dei problemi",
-      "issueStatus": "Stato del problema"
+      "issueStatus": "Stato del problema",
+      "tag": "Etichetta"
     },
     "metrics": {
       "testResults": "Risultati del test",

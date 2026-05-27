@@ -1,3 +1,95 @@
+import {
+  buildFolderAncestorMap,
+  groupResults,
+  type GroupingOptions,
+} from "~/utils/reportGrouping";
+
+/**
+ * Conditional `select` fragment for the executed case, included only when a
+ * dimension needs case-level data (folder, tag, or the case id). Tag is the
+ * implicit many-to-many to Tags; folder is a scalar FK on the case.
+ */
+function caseSelectFor(groupBy: string[]) {
+  const needsFolder = groupBy.includes("folderId");
+  const needsTag = groupBy.includes("tagId");
+  const needsCaseId =
+    groupBy.includes("testRunCaseId") || groupBy.includes("repositoryCaseId");
+  if (!needsFolder && !needsTag && !needsCaseId) return {};
+  return {
+    testRunCase: {
+      select: {
+        repositoryCaseId: true,
+        ...(needsFolder || needsTag
+          ? {
+              repositoryCase: {
+                select: {
+                  ...(needsFolder ? { folderId: true } : {}),
+                  ...(needsTag
+                    ? {
+                        tags: {
+                          where: { isDeleted: false },
+                          select: { id: true },
+                        },
+                      }
+                    : {}),
+                },
+              },
+            }
+          : {}),
+      },
+    },
+  };
+}
+
+/**
+ * `select` for repository-stats rows (the case is the row). Always carries the
+ * scalar dimension columns; tags only when grouping by tag; metric-specific
+ * fields (e.g. `automated`, `steps`) come in via `extra`.
+ */
+function repositoryCaseSelect(
+  groupBy: string[],
+  extra: Record<string, any> = {}
+) {
+  return {
+    id: true,
+    projectId: true,
+    templateId: true,
+    creatorId: true,
+    stateId: true,
+    source: true,
+    folderId: true,
+    createdAt: true,
+    ...(groupBy.includes("tagId")
+      ? { tags: { where: { isDeleted: false }, select: { id: true } } }
+      : {}),
+    ...extra,
+  };
+}
+
+/**
+ * Builds the folder ancestor map when, and only when, the folder dimension is
+ * grouped with descendants enabled. Returned as grouping options ready to pass
+ * to `groupResults`.
+ */
+async function folderGroupingOptions(
+  prisma: any,
+  projectId: number | undefined,
+  isProjectSpecific: boolean,
+  groupBy: string[],
+  filters?: { folderIncludeDescendants?: boolean }
+): Promise<GroupingOptions> {
+  if (groupBy.includes("folderId") && filters?.folderIncludeDescendants) {
+    return {
+      folderAncestors: await buildFolderAncestorMap(
+        prisma,
+        projectId,
+        isProjectSpecific
+      ),
+    };
+  }
+  return {};
+}
+
 // Helper to generate a human-readable summary
 export function getReportSummary(
   dimensions: any[],
@@ -442,6 +534,55 @@ export function createTestExecutionDimensionRegistry(
         milestoneType: val.milestoneType,
       }),
     },
+    folder: {
+      id: "folder",
+      label: "Folder",
+      // All non-deleted folders in scope, so both direct and rolled-up
+      // (descendants) folder rows resolve to a name in the display lookup.
+      getValues: async (prisma: any, projectId?: number) => {
+        const folders = await prisma.repositoryFolders.findMany({
+          where: {
+            ...(isProjectSpecific && projectId
+              ? { projectId: Number(projectId) }
+              : {}),
+            isDeleted: false,
+          },
+          select: { id: true, name: true },
+          orderBy: { name: "asc" },
+        });
+        return folders;
+      },
+      groupBy: "folderId",
+      join: {},
+      display: (val: any) => ({ name: val.name, id: val.id }),
+    },
+    tag: {
+      id: "tag",
+      label: "Tag",
+      // Tags carried by executed cases in scope. A case with no tags falls into
+      // a null "None" group handled by the response formatter.
+      getValues: async (prisma: any, projectId?: number) => {
+        const tags = await prisma.tags.findMany({
+          where: {
+            isDeleted: false,
+            repositoryCases: {
+              some: {
+                ...(isProjectSpecific && projectId
+                  ? { projectId: Number(projectId) }
+                  : {}),
+                isDeleted: false,
+              },
+            },
+          },
+          select: { id: true, name: true },
+          orderBy: { name: "asc" },
+        });
+        return tags;
+      },
+      groupBy: "tagId",
+      join: {},
+      display: (val: any) => ({ name: val.name, id: val.id }),
+    },
   };
 }
 
@@ -460,209 +601,63 @@ export function createTestExecutionMetricRegistry(
         filters?: any,
         _dims?: string[]
       ) => {
-        // Type guard to ensure groupBy is defined
         if (!groupBy || !Array.isArray(groupBy)) {
           return [];
         }
 
-        if (groupBy.includes("executedAt")) {
-          const results = await prisma.testRunResults.findMany({
-            where: {
-              testRun: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
-              },
-              status: {
-                systemName: { not: "untested" },
-              },
-              ...buildDateFilter(filters, "executedAt"),
-            },
-            select: {
-              executedAt: true,
-              executedById: true,
-              statusId: true,
-              testRunId: true,
-              testRunCaseId: true,
-              status: {
-                select: {
-                  id: true,
-                  name: true,
-                  color: { select: { value: true } },
-                },
-              },
-              testRun: {
-                select: {
-                  projectId: true,
-                  configId: true,
-                  milestoneId: true,
-                },
-              },
-            },
-          });
+        const where = {
+          testRun: {
+            ...(isProjectSpecific && projectId
+              ? { projectId: Number(projectId) }
+              : {}),
+            isDeleted: false,
+          },
+          status: {
+            systemName: { not: "untested" },
+          },
+          ...buildDateFilter(filters, "executedAt"),
+        };
 
-          const groupedResults = results.reduce((acc: any, result: any) => {
-            const key = groupBy
-              .map((field) => {
-                if (field === "executedAt") {
-                  const date = new Date(result.executedAt);
-                  date.setUTCHours(0, 0, 0, 0);
-                  return date.toISOString();
-                } else if (field === "executedById") {
-                  return result.executedById;
-                } else if (field === "statusId") {
-                  return result.statusId;
-                } else if (field === "projectId") {
-                  return result.testRun.projectId;
-                } else if (field === "configId") {
-                  return result.testRun.configId;
-                } else if (field === "milestoneId") {
-                  return result.testRun.milestoneId;
-                } else if (field === "testRunId") {
-                  return result.testRunId;
-                } else if (field === "testRunCaseId") {
-                  return result.testRunCaseId;
-                }
-                return null;
-              })
-              .join("|");
-
-            if (!acc[key]) {
-              acc[key] = {
-                ...groupBy.reduce((obj: any, field) => {
-                  if (field === "executedAt") {
-                    const date = new Date(result.executedAt);
-                    date.setUTCHours(0, 0, 0, 0);
-                    obj[field] = date.toISOString();
-                  } else if (field === "executedById") {
-                    obj[field] = result.executedById;
-                  } else if (field === "statusId") {
-                    obj[field] = result.statusId;
-                  } else if (field === "projectId") {
-                    obj[field] = result.testRun.projectId;
-                  } else if (field === "configId") {
-                    obj[field] = result.testRun.configId;
-                  } else if (field === "milestoneId") {
-                    obj[field] = result.testRun.milestoneId;
-                  } else if (field === "testRunId") {
-                    obj[field] = result.testRunId;
-                  } else if (field === "testRunCaseId") {
-                    obj[field] = result.testRunCaseId;
-                  }
-                  return obj;
-                }, {}),
-                testResults: 0,
-              };
-            }
-            acc[key].testResults++;
-            return acc;
-          }, {});
-
-          return Object.values(groupedResults);
-        }
-
-        // Handle case where groupBy is empty
         if (groupBy.length === 0) {
-          const count = await prisma.testRunResults.count({
-            where: {
-              testRun: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
-              },
-              status: {
-                systemName: { not: "untested" },
-              },
-              ...buildDateFilter(filters, "executedAt"),
-            },
-          });
+          const count = await prisma.testRunResults.count({ where });
           return [{ testResults: count }];
         }
 
-        // Use Prisma ORM for safe data access with ZenStack
         const results = await prisma.testRunResults.findMany({
-          where: {
-            testRun: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-            },
-            status: {
-              systemName: { not: "untested" },
-            },
-            ...buildDateFilter(filters, "executedAt"),
-          },
+          where,
           select: {
+            executedAt: true,
             executedById: true,
             statusId: true,
             testRunId: true,
             testRunCaseId: true,
-            status: {
-              select: {
-                id: true,
-                name: true,
-                color: { select: { value: true } },
-              },
-            },
             testRun: {
-              select: {
-                projectId: true,
-                configId: true,
-                milestoneId: true,
-              },
+              select: { projectId: true, configId: true, milestoneId: true },
             },
+            ...caseSelectFor(groupBy),
           },
         });
 
-        // Group results manually
-        const grouped = new Map<string, any>();
-        results.forEach((result: any) => {
-          const key = groupBy
-            .map((field) => {
-              if (field === "projectId") return result.testRun.projectId;
-              if (field === "configId") return result.testRun.configId;
-              if (field === "milestoneId") return result.testRun.milestoneId;
-              if (field === "executedById") return result.executedById;
-              if (field === "statusId") return result.statusId;
-              if (field === "testRunId") return result.testRunId;
-              if (field === "testRunCaseId") return result.testRunCaseId;
-              return null;
-            })
-            .join("|");
+        const options = await folderGroupingOptions(
+          prisma,
+          projectId,
+          isProjectSpecific,
+          groupBy,
+          filters
+        );
 
-          if (!grouped.has(key)) {
-            const groupData: any = {};
-            groupBy.forEach((field) => {
-              if (field === "projectId") {
-                groupData.projectId = result.testRun.projectId;
-              } else if (field === "configId") {
-                groupData.configId = result.testRun.configId;
-              } else if (field === "milestoneId") {
-                groupData.milestoneId = result.testRun.milestoneId;
-              } else if (field === "executedById") {
-                groupData.executedById = result.executedById;
-              } else if (field === "statusId") {
-                groupData.statusId = result.statusId;
-              } else if (field === "testRunId") {
-                groupData.testRunId = result.testRunId;
-              } else if (field === "testRunCaseId") {
-                groupData.testRunCaseId = result.testRunCaseId;
-              }
-            });
-            groupData.testResults = 0;
-            grouped.set(key, groupData);
-          }
-
-          grouped.get(key).testResults++;
-        });
-
-        return Array.from(grouped.values()).map((r: any) => ({
-          ...r,
-          testResults: Number(r.testResults),
-        }));
+        return groupResults(
+          results,
+          groupBy,
+          {
+            create: () => ({ count: 0 }),
+            add: (acc: { count: number }) => {
+              acc.count++;
+            },
+            finalize: (acc: { count: number }) => ({ testResults: acc.count }),
+          },
+          options
+        );
       },
     },
     passRate: {
@@ -675,245 +670,70 @@ export function createTestExecutionMetricRegistry(
         filters?: any,
         _dims?: string[]
       ) => {
-        if (groupBy.includes("executedAt")) {
-          const results = await prisma.testRunResults.findMany({
-            where: {
-              testRun: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
-              },
-              status: {
-                systemName: { not: "untested" },
-              },
-              ...buildDateFilter(filters, "executedAt"),
-            },
-            select: {
-              executedAt: true,
-              executedById: true,
-              statusId: true,
-              testRunId: true,
-              testRunCaseId: true,
-              status: {
-                select: {
-                  id: true,
-                  name: true,
-                  color: { select: { value: true } },
-                  isSuccess: true,
-                },
-              },
-              testRun: {
-                select: {
-                  projectId: true,
-                  configId: true,
-                  milestoneId: true,
-                },
-              },
-            },
-          });
-
-          const groupedResults = results.reduce((acc: any, result: any) => {
-            const key = groupBy
-              .map((field) => {
-                if (field === "executedAt") {
-                  const date = new Date(result.executedAt);
-                  date.setUTCHours(0, 0, 0, 0);
-                  return date.toISOString();
-                } else if (field === "executedById") {
-                  return result.executedById;
-                } else if (field === "statusId") {
-                  return result.statusId;
-                } else if (field === "projectId") {
-                  return result.testRun.projectId;
-                } else if (field === "configId") {
-                  return result.testRun.configId;
-                } else if (field === "milestoneId") {
-                  return result.testRun.milestoneId;
-                } else if (field === "testRunId") {
-                  return result.testRunId;
-                } else if (field === "testRunCaseId") {
-                  return result.testRunCaseId;
-                }
-                return null;
-              })
-              .join("|");
-
-            if (!acc[key]) {
-              acc[key] = {
-                ...groupBy.reduce((obj: any, field) => {
-                  if (field === "executedAt") {
-                    const date = new Date(result.executedAt);
-                    date.setUTCHours(0, 0, 0, 0);
-                    obj[field] = date.toISOString();
-                  } else if (field === "executedById") {
-                    obj[field] = result.executedById;
-                  } else if (field === "statusId") {
-                    obj[field] = result.statusId;
-                  } else if (field === "projectId") {
-                    obj[field] = result.testRun.projectId;
-                  } else if (field === "configId") {
-                    obj[field] = result.testRun.configId;
-                  } else if (field === "milestoneId") {
-                    obj[field] = result.testRun.milestoneId;
-                  } else if (field === "testRunId") {
-                    obj[field] = result.testRunId;
-                  } else if (field === "testRunCaseId") {
-                    obj[field] = result.testRunCaseId;
-                  }
-                  return obj;
-                }, {}),
-                totalResults: 0,
-                passedResults: 0,
-              };
-            }
-            acc[key].totalResults++;
-            if (result.status.isSuccess) {
-              acc[key].passedResults++;
-            }
-            return acc;
-          }, {});
-
-          return Object.values(groupedResults).map((group: any) => ({
-            ...group,
-            passRate:
-              group.totalResults > 0
-                ? (group.passedResults / group.totalResults) * 100
-                : 0,
-            totalResults: undefined,
-            passedResults: undefined,
-          }));
+        if (!groupBy || !Array.isArray(groupBy)) {
+          return [];
         }
 
-        // Handle case where groupBy is empty
+        const where = {
+          testRun: {
+            ...(isProjectSpecific && projectId
+              ? { projectId: Number(projectId) }
+              : {}),
+            isDeleted: false,
+          },
+          status: {
+            systemName: { not: "untested" },
+          },
+          ...buildDateFilter(filters, "executedAt"),
+        };
+
         if (groupBy.length === 0) {
-          const total = await prisma.testRunResults.count({
-            where: {
-              testRun: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
-              },
-              status: {
-                systemName: { not: "untested" },
-              },
-              ...buildDateFilter(filters, "executedAt"),
-            },
-          });
+          const total = await prisma.testRunResults.count({ where });
           const passed = await prisma.testRunResults.count({
-            where: {
-              testRun: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
-              },
-              status: {
-                systemName: { not: "untested" },
-                isSuccess: true,
-              },
-              ...buildDateFilter(filters, "executedAt"),
-            },
+            where: { ...where, status: { ...where.status, isSuccess: true } },
           });
           return [{ passRate: total > 0 ? (passed / total) * 100 : 0 }];
         }
 
-        // Use Prisma ORM for safe data access with ZenStack
         const results = await prisma.testRunResults.findMany({
-          where: {
-            testRun: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-            },
-            status: {
-              systemName: { not: "untested" },
-            },
-            ...buildDateFilter(filters, "executedAt"),
-          },
+          where,
           select: {
+            executedAt: true,
             executedById: true,
             statusId: true,
             testRunId: true,
             testRunCaseId: true,
-            status: {
-              select: {
-                id: true,
-                name: true,
-                color: { select: { value: true } },
-                isSuccess: true,
-              },
-            },
+            status: { select: { isSuccess: true } },
             testRun: {
-              select: {
-                projectId: true,
-                configId: true,
-                milestoneId: true,
-              },
+              select: { projectId: true, configId: true, milestoneId: true },
             },
+            ...caseSelectFor(groupBy),
           },
         });
 
-        // Group results manually and calculate pass rate
-        const grouped = new Map<string, any>();
-        results.forEach((result: any) => {
-          const key = groupBy
-            .map((field) => {
-              if (field === "projectId") return result.testRun.projectId;
-              if (field === "configId") return result.testRun.configId;
-              if (field === "milestoneId") return result.testRun.milestoneId;
-              if (field === "executedById") return result.executedById;
-              if (field === "statusId") return result.statusId;
-              if (field === "testRunId") return result.testRunId;
-              if (field === "testRunCaseId") return result.testRunCaseId;
-              return null;
-            })
-            .join("|");
+        const options = await folderGroupingOptions(
+          prisma,
+          projectId,
+          isProjectSpecific,
+          groupBy,
+          filters
+        );
 
-          if (!grouped.has(key)) {
-            const groupData: any = {};
-            groupBy.forEach((field) => {
-              if (field === "projectId") {
-                groupData.projectId = result.testRun.projectId;
-              } else if (field === "configId") {
-                groupData.configId = result.testRun.configId;
-              } else if (field === "milestoneId") {
-                groupData.milestoneId = result.testRun.milestoneId;
-              } else if (field === "executedById") {
-                groupData.executedById = result.executedById;
-              } else if (field === "statusId") {
-                groupData.statusId = result.statusId;
-              } else if (field === "testRunId") {
-                groupData.testRunId = result.testRunId;
-              } else if (field === "testRunCaseId") {
-                groupData.testRunCaseId = result.testRunCaseId;
-              }
-            });
-            groupData.totalResults = 0;
-            groupData.passedResults = 0;
-            grouped.set(key, groupData);
-          }
-
-          const group = grouped.get(key);
-          group.totalResults++;
-          if (result.status?.isSuccess) {
-            group.passedResults++;
-          }
-        });
-
-        return Array.from(grouped.values()).map((group: any) => ({
-          ...Object.fromEntries(
-            Object.entries(group).filter(
-              ([key]) => !["totalResults", "passedResults"].includes(key)
-            )
-          ),
-          passRate:
-            group.totalResults > 0
-              ? (group.passedResults / group.totalResults) * 100
-              : 0,
-        }));
+        return groupResults(
+          results,
+          groupBy,
+          {
+            create: () => ({ total: 0, passed: 0 }),
+            add: (acc: { total: number; passed: number }, result: any) => {
+              acc.total++;
+              if (result.status?.isSuccess) acc.passed++;
+            },
+            finalize: (acc: { total: number; passed: number }) => ({
+              passRate: acc.total > 0 ? (acc.passed / acc.total) * 100 : 0,
+            }),
+          },
+          options
+        );
       },
     },
     avgElapsedTime: {
@@ -926,32 +746,26 @@ export function createTestExecutionMetricRegistry(
         filters?: any,
         _dims?: string[]
       ) => {
-        // Type guard to ensure groupBy is defined
         if (!groupBy || !Array.isArray(groupBy)) {
           return [];
         }
 
-        // Handle case where groupBy is empty
+        const where = {
+          testRun: {
+            ...(isProjectSpecific && projectId
+              ? { projectId: Number(projectId) }
+              : {}),
+            isDeleted: false,
+          },
+          elapsed: { not: null },
+          ...buildDateFilter(filters, "executedAt"),
+        };
+
         if (groupBy.length === 0) {
           const result = await prisma.testRunResults.aggregate({
-            where: {
-              testRun: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
-              },
-              elapsed: {
-                not: null,
-              },
-              ...buildDateFilter(filters, "executedAt"),
-            },
-            _avg: {
-              elapsed: true,
-            },
+            where,
+            _avg: { elapsed: true },
           });
-          // If no results with elapsed time, return 0
-          // Otherwise, return the average (null values are already filtered out)
           return [
             {
               avgElapsedTime: result._avg.elapsed
@@ -961,218 +775,48 @@ export function createTestExecutionMetricRegistry(
           ];
         }
 
-        if (groupBy.includes("executedAt")) {
-          const results = await prisma.testRunResults.findMany({
-            where: {
-              testRun: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
-              },
-              elapsed: {
-                not: null,
-              },
-              ...buildDateFilter(filters, "executedAt"),
-            },
-            select: {
-              executedAt: true,
-              executedById: true,
-              statusId: true,
-              status: {
-                select: {
-                  id: true,
-                  name: true,
-                  color: { select: { value: true } },
-                },
-              },
-              elapsed: true,
-              testRunId: true,
-              testRunCaseId: true,
-              testRun: {
-                select: {
-                  projectId: true,
-                  configId: true,
-                  milestoneId: true,
-                },
-              },
-            },
-          });
-
-          const groupedResults = results.reduce((acc: any, result: any) => {
-            const key = groupBy
-              .map((field) => {
-                if (field === "executedAt") {
-                  const date = new Date(result.executedAt);
-                  date.setUTCHours(0, 0, 0, 0);
-                  return date.toISOString();
-                } else if (field === "executedById") {
-                  return result.executedById;
-                } else if (field === "statusId") {
-                  return result.statusId;
-                } else if (field === "projectId") {
-                  return result.testRun.projectId;
-                } else if (field === "configId") {
-                  return result.testRun.configId;
-                } else if (field === "milestoneId") {
-                  return result.testRun.milestoneId;
-                } else if (field === "testRunId") {
-                  return result.testRunId;
-                } else if (field === "testRunCaseId") {
-                  return result.testRunCaseId;
-                }
-                return null;
-              })
-              .join("|");
-
-            if (!acc[key]) {
-              acc[key] = {
-                ...groupBy.reduce((obj: any, field) => {
-                  if (field === "executedAt") {
-                    const date = new Date(result.executedAt);
-                    date.setUTCHours(0, 0, 0, 0);
-                    obj[field] = date.toISOString();
-                  } else if (field === "executedById") {
-                    obj[field] = result.executedById;
-                  } else if (field === "statusId") {
-                    obj[field] = result.statusId;
-                  } else if (field === "projectId") {
-                    obj[field] = result.testRun.projectId;
-                  } else if (field === "configId") {
-                    obj[field] = result.testRun.configId;
-                  } else if (field === "milestoneId") {
-                    obj[field] = result.testRun.milestoneId;
-                  } else if (field === "testRunId") {
-                    obj[field] = result.testRunId;
-                  } else if (field === "testRunCaseId") {
-                    obj[field] = result.testRunCaseId;
-                  }
-                  return obj;
-                }, {}),
-                totalElapsed: 0,
-                count: 0,
-              };
-            }
-            // Only count results with non-null elapsed time
-            if (result.elapsed !== null && result.elapsed !== undefined) {
-              acc[key].totalElapsed += result.elapsed;
-              acc[key].count++;
-            }
-            return acc;
-          }, {});
-
-          return Object.values(groupedResults).map((group: any) => ({
-            ...Object.fromEntries(
-              Object.entries(group).filter(
-                ([key]) => !["totalElapsed", "count"].includes(key)
-              )
-            ),
-            avgElapsedTime:
-              group.count > 0
-                ? Math.round(group.totalElapsed / group.count)
-                : 0,
-          }));
-        }
-
-        // Handle non-executedAt grouping
         const results = await prisma.testRunResults.findMany({
-          where: {
-            testRun: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-            },
-            elapsed: {
-              not: null,
-            },
-            ...buildDateFilter(filters, "executedAt"),
-          },
+          where,
           select: {
+            executedAt: true,
             executedById: true,
             statusId: true,
-            status: {
-              select: {
-                id: true,
-                name: true,
-                color: { select: { value: true } },
-              },
-            },
             elapsed: true,
             testRunId: true,
             testRunCaseId: true,
             testRun: {
-              select: {
-                projectId: true,
-                configId: true,
-                milestoneId: true,
-              },
+              select: { projectId: true, configId: true, milestoneId: true },
             },
+            ...caseSelectFor(groupBy),
           },
         });
 
-        // If no results, return empty array
-        if (!results.length) {
-          return [];
-        }
+        const options = await folderGroupingOptions(
+          prisma,
+          projectId,
+          isProjectSpecific,
+          groupBy,
+          filters
+        );
 
-        // Group results manually and calculate average elapsed time
-        const grouped = new Map<string, any>();
-        results.forEach((result: any) => {
-          const key = groupBy
-            .map((field) => {
-              if (field === "projectId") return result.testRun.projectId;
-              if (field === "configId") return result.testRun.configId;
-              if (field === "milestoneId") return result.testRun.milestoneId;
-              if (field === "executedById") return result.executedById;
-              if (field === "statusId") return result.statusId;
-              if (field === "testRunId") return result.testRunId;
-              if (field === "testRunCaseId") return result.testRunCaseId;
-              return null;
-            })
-            .join("|");
-
-          if (!grouped.has(key)) {
-            const groupData: any = {};
-            groupBy.forEach((field) => {
-              if (field === "projectId") {
-                groupData.projectId = result.testRun.projectId;
-              } else if (field === "configId") {
-                groupData.configId = result.testRun.configId;
-              } else if (field === "milestoneId") {
-                groupData.milestoneId = result.testRun.milestoneId;
-              } else if (field === "executedById") {
-                groupData.executedById = result.executedById;
-              } else if (field === "statusId") {
-                groupData.statusId = result.statusId;
-              } else if (field === "testRunId") {
-                groupData.testRunId = result.testRunId;
-              } else if (field === "testRunCaseId") {
-                groupData.testRunCaseId = result.testRunCaseId;
+        return groupResults(
+          results,
+          groupBy,
+          {
+            create: () => ({ total: 0, count: 0 }),
+            add: (acc: { total: number; count: number }, result: any) => {
+              if (result.elapsed !== null && result.elapsed !== undefined) {
+                acc.total += result.elapsed;
+                acc.count++;
               }
-            });
-            groupData.totalElapsed = 0;
-            groupData.count = 0;
-            grouped.set(key, groupData);
-          }
-
-          const group = grouped.get(key);
-          // Only count results with non-null elapsed time
-          if (result.elapsed !== null && result.elapsed !== undefined) {
-            group.totalElapsed += result.elapsed;
-            group.count++;
-          }
-        });
-
-        return Array.from(grouped.values()).map((group: any) => ({
-          ...Object.fromEntries(
-            Object.entries(group).filter(
-              ([key]) => !["totalElapsed", "count"].includes(key)
-            )
-          ),
-          avgElapsedTime:
-            group.count > 0 ? Math.round(group.totalElapsed / group.count) : 0,
-        }));
+            },
+            finalize: (acc: { total: number; count: number }) => ({
+              avgElapsedTime:
+                acc.count > 0 ? Math.round(acc.total / acc.count) : 0,
+            }),
+          },
+          options
+        );
       },
     },
     totalElapsedTime: {
@@ -1185,212 +829,67 @@ export function createTestExecutionMetricRegistry(
         filters?: any,
         _dims?: string[]
       ) => {
-        if (groupBy.includes("executedAt")) {
-          const results = await prisma.testRunResults.findMany({
-            where: {
-              testRun: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
-              },
-              elapsed: {
-                not: null,
-              },
-              ...buildDateFilter(filters, "executedAt"),
-            },
-            select: {
-              executedAt: true,
-              executedById: true,
-              statusId: true,
-              status: {
-                select: {
-                  id: true,
-                  name: true,
-                  color: { select: { value: true } },
-                },
-              },
-              elapsed: true,
-              testRunId: true,
-              testRunCaseId: true,
-              testRun: {
-                select: {
-                  projectId: true,
-                  configId: true,
-                  milestoneId: true,
-                },
-              },
-            },
-          });
-
-          const groupedResults = results.reduce((acc: any, result: any) => {
-            const key = groupBy
-              .map((field) => {
-                if (field === "executedAt") {
-                  const date = new Date(result.executedAt);
-                  date.setUTCHours(0, 0, 0, 0);
-                  return date.toISOString();
-                } else if (field === "executedById") {
-                  return result.executedById;
-                } else if (field === "statusId") {
-                  return result.statusId;
-                } else if (field === "projectId") {
-                  return result.testRun.projectId;
-                } else if (field === "configId") {
-                  return result.testRun.configId;
-                } else if (field === "milestoneId") {
-                  return result.testRun.milestoneId;
-                } else if (field === "testRunId") {
-                  return result.testRunId;
-                } else if (field === "testRunCaseId") {
-                  return result.testRunCaseId;
-                }
-                return null;
-              })
-              .join("|");
-
-            if (!acc[key]) {
-              acc[key] = {
-                ...groupBy.reduce((obj: any, field) => {
-                  if (field === "executedAt") {
-                    const date = new Date(result.executedAt);
-                    date.setUTCHours(0, 0, 0, 0);
-                    obj[field] = date.toISOString();
-                  } else if (field === "executedById") {
-                    obj[field] = result.executedById;
-                  } else if (field === "statusId") {
-                    obj[field] = result.statusId;
-                  } else if (field === "projectId") {
-                    obj[field] = result.testRun.projectId;
-                  } else if (field === "configId") {
-                    obj[field] = result.testRun.configId;
-                  } else if (field === "milestoneId") {
-                    obj[field] = result.testRun.milestoneId;
-                  } else if (field === "testRunId") {
-                    obj[field] = result.testRunId;
-                  } else if (field === "testRunCaseId") {
-                    obj[field] = result.testRunCaseId;
-                  }
-                  return obj;
-                }, {}),
-                totalElapsedTime: 0,
-              };
-            }
-            acc[key].totalElapsedTime += result.elapsed || 0;
-            return acc;
-          }, {});
-
-          return Object.values(groupedResults);
+        if (!groupBy || !Array.isArray(groupBy)) {
+          return [];
         }
 
-        // Handle case where groupBy is empty
+        const where = {
+          testRun: {
+            ...(isProjectSpecific && projectId
+              ? { projectId: Number(projectId) }
+              : {}),
+            isDeleted: false,
+          },
+          elapsed: { not: null },
+          ...buildDateFilter(filters, "executedAt"),
+        };
+
         if (groupBy.length === 0) {
           const result = await prisma.testRunResults.aggregate({
-            where: {
-              testRun: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
-              },
-              elapsed: {
-                not: null,
-              },
-              ...buildDateFilter(filters, "executedAt"),
-            },
-            _sum: {
-              elapsed: true,
-            },
+            where,
+            _sum: { elapsed: true },
           });
           return [{ totalElapsedTime: result._sum.elapsed || 0 }];
         }
 
-        // Use Prisma ORM for safe data access with ZenStack
         const results = await prisma.testRunResults.findMany({
-          where: {
-            testRun: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-            },
-            elapsed: {
-              not: null,
-            },
-            ...buildDateFilter(filters, "executedAt"),
-          },
+          where,
           select: {
+            executedAt: true,
             executedById: true,
             statusId: true,
-            status: {
-              select: {
-                id: true,
-                name: true,
-                color: { select: { value: true } },
-              },
-            },
             elapsed: true,
             testRunId: true,
             testRunCaseId: true,
             testRun: {
-              select: {
-                projectId: true,
-                configId: true,
-                milestoneId: true,
-              },
+              select: { projectId: true, configId: true, milestoneId: true },
             },
+            ...caseSelectFor(groupBy),
           },
         });
 
-        // Group results manually and calculate total elapsed time
-        const grouped = new Map<string, any>();
-        results.forEach((result: any) => {
-          const key = groupBy
-            .map((field) => {
-              if (field === "projectId") return result.testRun.projectId;
-              if (field === "configId") return result.testRun.configId;
-              if (field === "milestoneId") return result.testRun.milestoneId;
-              if (field === "executedById") return result.executedById;
-              if (field === "statusId") return result.statusId;
-              if (field === "testRunId") return result.testRunId;
-              if (field === "testRunCaseId") return result.testRunCaseId;
-              return null;
-            })
-            .join("|");
+        const options = await folderGroupingOptions(
+          prisma,
+          projectId,
+          isProjectSpecific,
+          groupBy,
+          filters
+        );
 
-          if (!grouped.has(key)) {
-            const groupData: any = {};
-            groupBy.forEach((field) => {
-              if (field === "projectId") {
-                groupData.projectId = result.testRun.projectId;
-              } else if (field === "configId") {
-                groupData.configId = result.testRun.configId;
-              } else if (field === "milestoneId") {
-                groupData.milestoneId = result.testRun.milestoneId;
-              } else if (field === "executedById") {
-                groupData.executedById = result.executedById;
-              } else if (field === "statusId") {
-                groupData.statusId = result.statusId;
-              } else if (field === "testRunId") {
-                groupData.testRunId = result.testRunId;
-              } else if (field === "testRunCaseId") {
-                groupData.testRunCaseId = result.testRunCaseId;
-              }
-            });
-            groupData.totalElapsedTime = 0;
-            grouped.set(key, groupData);
-          }
-
-          const group = grouped.get(key);
-          group.totalElapsedTime += result.elapsed || 0;
-        });
-
-        return Array.from(grouped.values()).map((group: any) => ({
-          ...Object.fromEntries(
-            Object.entries(group).filter(([key]) => key !== "totalElapsedTime")
-          ),
-          totalElapsedTime: group.totalElapsedTime,
-        }));
+        return groupResults(
+          results,
+          groupBy,
+          {
+            create: () => ({ total: 0 }),
+            add: (acc: { total: number }, result: any) => {
+              acc.total += result.elapsed || 0;
+            },
+            finalize: (acc: { total: number }) => ({
+              totalElapsedTime: acc.total,
+            }),
+          },
+          options
+        );
       },
     },
     // Alias metrics for test compatibility
@@ -1427,16 +926,29 @@ export function createTestExecutionMetricRegistry(
         prisma: any,
         projectId: number | undefined,
         groupBy: string[],
-        _filters?: any,
+        filters?: any,
         _dims?: string[]
       ) => {
-        if (
-          groupBy.includes("executedAt") ||
-          groupBy.includes("executedById") ||
-          groupBy.includes("statusId")
-        ) {
-          // When grouping by executedAt, executedById, or statusId, count unique test runs from actual execution data
-          // Note: statusId is a property of TestRunResults, not TestRuns, so we must query results
+        if (!groupBy || !Array.isArray(groupBy)) {
+          return [];
+        }
+
+        // Result-level groupings (and case-level folder/tag) require execution
+        // data so we can count the distinct runs that touched each group. A run
+        // spans many cases, so its folder/tag membership is only knowable here.
+        const needsResultLevel = groupBy.some((field) =>
+          [
+            "executedAt",
+            "executedById",
+            "statusId",
+            "folderId",
+            "tagId",
+            "testRunCaseId",
+            "repositoryCaseId",
+          ].includes(field)
+        );
+
+        if (needsResultLevel) {
           const results = await prisma.testRunResults.findMany({
             where: {
               testRun: {
@@ -1452,88 +964,44 @@ export function createTestExecutionMetricRegistry(
               statusId: true,
               testRunId: true,
               testRun: {
-                select: {
-                  id: true,
-                  projectId: true,
-                  configId: true,
-                  milestoneId: true,
-                },
+                select: { projectId: true, configId: true, milestoneId: true },
               },
+              ...caseSelectFor(groupBy),
             },
           });
 
-          const groupedResults = results.reduce((acc: any, result: any) => {
-            // Skip if executedAt is required but missing or invalid
-            if (groupBy.includes("executedAt")) {
-              if (
-                !result.executedAt ||
-                isNaN(new Date(result.executedAt).getTime())
-              ) {
-                return acc;
-              }
-            }
-            const key = groupBy
-              .map((field) => {
-                if (field === "executedAt") {
-                  const date = new Date(result.executedAt);
-                  date.setUTCHours(0, 0, 0, 0);
-                  return date.toISOString();
-                } else if (field === "executedById") {
-                  return result.executedById;
-                } else if (field === "statusId") {
-                  return result.statusId;
-                } else if (field === "projectId") {
-                  return result.testRun.projectId;
-                } else if (field === "configId") {
-                  return result.testRun.configId;
-                } else if (field === "milestoneId") {
-                  return result.testRun.milestoneId;
-                } else if (field === "testRunId") {
-                  return result.testRunId;
-                } else if (field === "testRunCaseId") {
-                  return result.testRunCaseId;
-                }
-                return null;
-              })
-              .join("|");
+          // Preserve the prior behavior of dropping results with no valid
+          // execution date when the date dimension is in play.
+          const rows = groupBy.includes("executedAt")
+            ? results.filter(
+                (result: any) =>
+                  result.executedAt &&
+                  !isNaN(new Date(result.executedAt).getTime())
+              )
+            : results;
 
-            if (!acc[key]) {
-              acc[key] = {
-                ...groupBy.reduce((obj: any, field) => {
-                  if (field === "executedAt") {
-                    const date = new Date(result.executedAt);
-                    date.setUTCHours(0, 0, 0, 0);
-                    obj[field] = date.toISOString();
-                  } else if (field === "executedById") {
-                    obj[field] = result.executedById;
-                  } else if (field === "statusId") {
-                    obj[field] = result.statusId;
-                  } else if (field === "projectId") {
-                    obj[field] = result.testRun.projectId;
-                  } else if (field === "configId") {
-                    obj[field] = result.testRun.configId;
-                  } else if (field === "milestoneId") {
-                    obj[field] = result.testRun.milestoneId;
-                  } else if (field === "testRunId") {
-                    obj[field] = result.testRunId;
-                  } else if (field === "testRunCaseId") {
-                    obj[field] = result.testRunCaseId;
-                  }
-                  return obj;
-                }, {}),
-                uniqueTestRuns: new Set(),
-              };
-            }
-            // Track unique test run IDs
-            acc[key].uniqueTestRuns.add(result.testRunId);
-            return acc;
-          }, {});
+          const options = await folderGroupingOptions(
+            prisma,
+            projectId,
+            isProjectSpecific,
+            groupBy,
+            filters
+          );
 
-          return Object.values(groupedResults).map((group: any) => ({
-            ...group,
-            testRunCount: group.uniqueTestRuns.size,
-            uniqueTestRuns: undefined, // Remove the Set from output
-          }));
+          return groupResults(
+            rows,
+            groupBy,
+            {
+              create: () => ({ runs: new Set<number>() }),
+              add: (acc: { runs: Set<number> }, result: any) => {
+                if (result.testRunId != null) acc.runs.add(result.testRunId);
+              },
+              finalize: (acc: { runs: Set<number> }) => ({
+                testRunCount: acc.runs.size,
+              }),
+            },
+            options
+          );
         }
 
         if (groupBy.length === 0) {
@@ -1612,145 +1080,30 @@ export function createTestExecutionMetricRegistry(
         filters?: any,
         _dims?: string[]
       ) => {
-        // Type guard to ensure groupBy is defined
         if (!groupBy || !Array.isArray(groupBy)) {
           return [];
         }
 
-        if (groupBy.includes("executedAt")) {
-          const results = await prisma.testRunResults.findMany({
-            where: {
-              testRun: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
-              },
-              status: {
-                systemName: { not: "untested" },
-              },
-              testRunCase: {
-                repositoryCase: {
-                  isDeleted: false,
-                },
-              },
-              ...buildDateFilter(filters, "executedAt"),
-            },
-            select: {
-              executedAt: true,
-              executedById: true,
-              statusId: true,
-              testRunId: true,
-              testRunCase: {
-                select: {
-                  repositoryCaseId: true,
-                },
-              },
-              testRun: {
-                select: {
-                  projectId: true,
-                  configId: true,
-                  milestoneId: true,
-                },
-              },
-            },
-          });
-
-          const groupedResults = results.reduce((acc: any, result: any) => {
-            const key = groupBy
-              .map((field) => {
-                if (field === "executedAt") {
-                  const date = new Date(result.executedAt);
-                  date.setUTCHours(0, 0, 0, 0);
-                  return date.toISOString();
-                } else if (field === "executedById") {
-                  return result.executedById;
-                } else if (field === "statusId") {
-                  return result.statusId;
-                } else if (field === "projectId") {
-                  return result.testRun.projectId;
-                } else if (field === "configId") {
-                  return result.testRun.configId;
-                } else if (field === "milestoneId") {
-                  return result.testRun.milestoneId;
-                } else if (field === "testRunId") {
-                  return result.testRunId;
-                } else if (field === "repositoryCaseId") {
-                  return result.testRunCase?.repositoryCaseId;
-                }
-                return null;
-              })
-              .join("|");
-
-            if (!acc[key]) {
-              acc[key] = {
-                ...groupBy.reduce((obj: any, field) => {
-                  if (field === "executedAt") {
-                    const date = new Date(result.executedAt);
-                    date.setUTCHours(0, 0, 0, 0);
-                    obj[field] = date.toISOString();
-                  } else if (field === "executedById") {
-                    obj[field] = result.executedById;
-                  } else if (field === "statusId") {
-                    obj[field] = result.statusId;
-                  } else if (field === "projectId") {
-                    obj[field] = result.testRun.projectId;
-                  } else if (field === "configId") {
-                    obj[field] = result.testRun.configId;
-                  } else if (field === "milestoneId") {
-                    obj[field] = result.testRun.milestoneId;
-                  } else if (field === "testRunId") {
-                    obj[field] = result.testRunId;
-                  } else if (field === "repositoryCaseId") {
-                    obj[field] = result.testRunCase?.repositoryCaseId;
-                  }
-                  return obj;
-                }, {}),
-                uniqueCases: new Set<number>(),
-              };
-            }
-            // Track unique repository case IDs
-            if (result.testRunCase?.repositoryCaseId) {
-              acc[key].uniqueCases.add(result.testRunCase.repositoryCaseId);
-            }
-            return acc;
-          }, {});
-
-          // Convert Sets to counts
-          return Object.values(groupedResults).map((group: any) => ({
-            ...group,
-            testCaseCount: group.uniqueCases.size,
-            uniqueCases: undefined, // Remove the Set from output
-          }));
-        }
+        const where = {
+          testRun: {
+            ...(isProjectSpecific && projectId
+              ? { projectId: Number(projectId) }
+              : {}),
+            isDeleted: false,
+          },
+          status: {
+            systemName: { not: "untested" },
+          },
+          testRunCase: {
+            repositoryCase: { isDeleted: false },
+          },
+          ...buildDateFilter(filters, "executedAt"),
+        };
 
         if (groupBy.length === 0) {
-          // Count distinct repository case IDs from execution results
           const results = await prisma.testRunResults.findMany({
-            where: {
-              testRun: {
-                ...(isProjectSpecific && projectId
-                  ? { projectId: Number(projectId) }
-                  : {}),
-                isDeleted: false,
-              },
-              status: {
-                systemName: { not: "untested" },
-              },
-              testRunCase: {
-                repositoryCase: {
-                  isDeleted: false,
-                },
-              },
-              ...buildDateFilter(filters, "executedAt"),
-            },
-            select: {
-              testRunCase: {
-                select: {
-                  repositoryCaseId: true,
-                },
-              },
-            },
+            where,
+            select: { testRunCase: { select: { repositoryCaseId: true } } },
           });
           const uniqueCases = new Set(
             results
@@ -1761,96 +1114,44 @@ export function createTestExecutionMetricRegistry(
         }
 
         const results = await prisma.testRunResults.findMany({
-          where: {
-            testRun: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-            },
-            status: {
-              systemName: { not: "untested" },
-            },
-            testRunCase: {
-              repositoryCase: {
-                isDeleted: false,
-              },
-            },
-            ...buildDateFilter(filters, "executedAt"),
-          },
+          where,
           select: {
+            executedAt: true,
             executedById: true,
             statusId: true,
             testRunId: true,
-            testRunCase: {
-              select: {
-                repositoryCaseId: true,
-              },
-            },
             testRun: {
-              select: {
-                projectId: true,
-                configId: true,
-                milestoneId: true,
-              },
+              select: { projectId: true, configId: true, milestoneId: true },
             },
+            // Always carry the repository case id (to count unique cases) plus
+            // whatever folder/tag selects the grouping requires.
+            ...caseSelectFor([...groupBy, "repositoryCaseId"]),
           },
         });
 
-        const grouped = new Map<string, any>();
-        results.forEach((result: any) => {
-          const key = groupBy
-            .map((field) => {
-              if (field === "projectId") return result.testRun.projectId;
-              if (field === "configId") return result.testRun.configId;
-              if (field === "executedById") return result.executedById;
-              if (field === "statusId") return result.statusId;
-              if (field === "milestoneId") return result.testRun.milestoneId;
-              if (field === "testRunId") return result.testRunId;
-              if (field === "repositoryCaseId")
-                return result.testRunCase?.repositoryCaseId;
-              return null;
-            })
-            .join("|");
+        const options = await folderGroupingOptions(
+          prisma,
+          projectId,
+          isProjectSpecific,
+          groupBy,
+          filters
+        );
 
-          if (!grouped.has(key)) {
-            const groupData: any = {};
-            groupBy.forEach((field) => {
-              if (field === "projectId") {
-                groupData.projectId = result.testRun.projectId;
-              } else if (field === "configId") {
-                groupData.configId = result.testRun.configId;
-              } else if (field === "milestoneId") {
-                groupData.milestoneId = result.testRun.milestoneId;
-              } else if (field === "executedById") {
-                groupData.executedById = result.executedById;
-              } else if (field === "statusId") {
-                groupData.statusId = result.statusId;
-              } else if (field === "testRunId") {
-                groupData.testRunId = result.testRunId;
-              } else if (field === "repositoryCaseId") {
-                groupData.repositoryCaseId =
-                  result.testRunCase?.repositoryCaseId;
-              }
-            });
-            groupData.uniqueCases = new Set<number>();
-            grouped.set(key, groupData);
-          }
-
-          // Track unique repository case IDs
-          if (result.testRunCase?.repositoryCaseId) {
-            grouped
-              .get(key)
-              .uniqueCases.add(result.testRunCase.repositoryCaseId);
-          }
-        });
-
-        // Convert Sets to counts
-        return Array.from(grouped.values()).map((group) => ({
-          ...group,
-          testCaseCount: group.uniqueCases.size,
-          uniqueCases: undefined, // Remove the Set from output
-        }));
+        return groupResults(
+          results,
+          groupBy,
+          {
+            create: () => ({ cases: new Set<number>() }),
+            add: (acc: { cases: Set<number> }, result: any) => {
+              const id = result.testRunCase?.repositoryCaseId;
+              if (id != null) acc.cases.add(id);
+            },
+            finalize: (acc: { cases: Set<number> }) => ({
+              testCaseCount: acc.cases.size,
+            }),
+          },
+          options
+        );
       },
     },
   };
@@ -2011,6 +1312,8 @@ export function createRepositoryStatsDimensionRegistry(
     folder: {
       id: "folder",
       label: "Folder",
+      // All non-deleted folders so rolled-up (descendants) ancestor folders
+      // still resolve to a name in the display lookup.
       getValues: async (prisma: any, projectId?: number) => {
         const folders = await prisma.repositoryFolders.findMany({
           where: {
@@ -2018,11 +1321,6 @@ export function createRepositoryStatsDimensionRegistry(
               ? { projectId: Number(projectId) }
               : {}),
             isDeleted: false,
-            cases: {
-              some: {
-                isDeleted: false,
-              },
-            },
           },
           select: { id: true, name: true },
           orderBy: { name: "asc" },
@@ -2031,6 +1329,31 @@ export function createRepositoryStatsDimensionRegistry(
       },
       groupBy: "folderId",
       join: { folder: true },
+      display: (val: any) => ({ name: val.name, id: val.id }),
+    },
+    tag: {
+      id: "tag",
+      label: "Tag",
+      getValues: async (prisma: any, projectId?: number) => {
+        const tags = await prisma.tags.findMany({
+          where: {
+            isDeleted: false,
+            repositoryCases: {
+              some: {
+                ...(isProjectSpecific && projectId
+                  ? { projectId: Number(projectId) }
+                  : {}),
+                isDeleted: false,
+              },
+            },
+          },
+          select: { id: true, name: true },
+          orderBy: { name: "asc" },
+        });
+        return tags;
+      },
+      groupBy: "tagId",
+      join: {},
       display: (val: any) => ({ name: val.name, id: val.id }),
     },
     date: {
@@ -2112,89 +1435,50 @@ export function createRepositoryStatsMetricRegistry(
         filters?: any,
         _dims?: string[]
       ) => {
-        if (groupBy.includes("createdAt")) {
-          const results = await prisma.repositoryCases.findMany({
-            where: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-              ...buildDateFilter(filters, "createdAt"),
-            },
-            select: {
-              createdAt: true,
-              projectId: true,
-              templateId: true,
-              creatorId: true,
-              stateId: true,
-              source: true,
-              folderId: true,
-            },
-          });
-
-          const groupedResults = results.reduce((acc: any, result: any) => {
-            const key = groupBy
-              .map((field) => {
-                if (field === "createdAt") {
-                  const date = new Date(result.createdAt);
-                  date.setUTCHours(0, 0, 0, 0);
-                  return date.toISOString();
-                }
-                return result[field];
-              })
-              .join("|");
-
-            if (!acc[key]) {
-              acc[key] = {
-                ...groupBy.reduce((obj: any, field) => {
-                  if (field === "createdAt") {
-                    const date = new Date(result.createdAt);
-                    date.setUTCHours(0, 0, 0, 0);
-                    obj[field] = date.toISOString();
-                  } else {
-                    obj[field] = result[field];
-                  }
-                  return obj;
-                }, {}),
-                testCaseCount: 0,
-              };
-            }
-            acc[key].testCaseCount++;
-            return acc;
-          }, {});
-
-          return Object.values(groupedResults);
+        if (!groupBy || !Array.isArray(groupBy)) {
+          return [];
         }
 
+        const where = {
+          ...(isProjectSpecific && projectId
+            ? { projectId: Number(projectId) }
+            : {}),
+          isDeleted: false,
+          ...buildDateFilter(filters, "createdAt"),
+        };
+
         if (groupBy.length === 0) {
-          const count = await prisma.repositoryCases.count({
-            where: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-              ...buildDateFilter(filters, "createdAt"),
-            },
-          });
+          const count = await prisma.repositoryCases.count({ where });
           return [{ testCaseCount: count }];
         }
 
-        // Use Prisma groupBy for other cases
-        return prisma.repositoryCases
-          .groupBy({
-            by: groupBy,
-            where: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-              ...buildDateFilter(filters, "createdAt"),
+        const cases = await prisma.repositoryCases.findMany({
+          where,
+          select: repositoryCaseSelect(groupBy),
+        });
+
+        const options = await folderGroupingOptions(
+          prisma,
+          projectId,
+          isProjectSpecific,
+          groupBy,
+          filters
+        );
+
+        return groupResults(
+          cases,
+          groupBy,
+          {
+            create: () => ({ count: 0 }),
+            add: (acc: { count: number }) => {
+              acc.count++;
             },
-            _count: { _all: true },
-          })
-          .then((results: any[]) =>
-            results.map((r: any) => ({ ...r, testCaseCount: r._count._all }))
-          );
+            finalize: (acc: { count: number }) => ({
+              testCaseCount: acc.count,
+            }),
+          },
+          options
+        );
       },
     },
     automationRate: {
@@ -2207,153 +1491,57 @@ export function createRepositoryStatsMetricRegistry(
         filters?: any,
         _dims?: string[]
       ) => {
-        // Type guard to ensure groupBy is defined
         if (!groupBy || !Array.isArray(groupBy)) {
           return [];
         }
 
-        if (groupBy.includes("createdAt")) {
-          const results = await prisma.repositoryCases.findMany({
-            where: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-              ...buildDateFilter(filters, "createdAt"),
-            },
-            select: {
-              createdAt: true,
-              projectId: true,
-              templateId: true,
-              creatorId: true,
-              stateId: true,
-              source: true,
-              automated: true,
-              folderId: true,
-            },
-          });
-
-          const groupedResults = results.reduce((acc: any, result: any) => {
-            const key = groupBy
-              .map((field) => {
-                if (field === "createdAt") {
-                  const date = new Date(result.createdAt);
-                  date.setUTCHours(0, 0, 0, 0);
-                  return date.toISOString();
-                }
-                return result[field];
-              })
-              .join("|");
-
-            if (!acc[key]) {
-              acc[key] = {
-                ...groupBy.reduce((obj: any, field) => {
-                  if (field === "createdAt") {
-                    const date = new Date(result.createdAt);
-                    date.setUTCHours(0, 0, 0, 0);
-                    obj[field] = date.toISOString();
-                  } else {
-                    obj[field] = result[field];
-                  }
-                  return obj;
-                }, {}),
-                totalCases: 0,
-                automatedCases: 0,
-              };
-            }
-            acc[key].totalCases++;
-            if (result.automated) {
-              acc[key].automatedCases++;
-            }
-            return acc;
-          }, {});
-
-          return Object.values(groupedResults).map((group: any) => ({
-            ...group,
-            automationRate:
-              group.totalCases > 0
-                ? (group.automatedCases / group.totalCases) * 100
-                : 0,
-            totalCases: undefined,
-            automatedCases: undefined,
-          }));
-        }
+        const where = {
+          ...(isProjectSpecific && projectId
+            ? { projectId: Number(projectId) }
+            : {}),
+          isDeleted: false,
+          ...buildDateFilter(filters, "createdAt"),
+        };
 
         if (groupBy.length === 0) {
-          const total = await prisma.repositoryCases.count({
-            where: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-            },
-          });
+          const total = await prisma.repositoryCases.count({ where });
           const automated = await prisma.repositoryCases.count({
-            where: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-              automated: true,
-              ...buildDateFilter(filters, "createdAt"),
-            },
+            where: { ...where, automated: true },
           });
           return [
             { automationRate: total > 0 ? (automated / total) * 100 : 0 },
           ];
         }
 
-        // Manual grouping for automation rate calculation
-        const results = await prisma.repositoryCases.findMany({
-          where: {
-            ...(isProjectSpecific && projectId
-              ? { projectId: Number(projectId) }
-              : {}),
-            isDeleted: false,
-          },
-          select: {
-            projectId: true,
-            templateId: true,
-            creatorId: true,
-            stateId: true,
-            source: true,
-            automated: true,
-            folderId: true,
-          },
+        const cases = await prisma.repositoryCases.findMany({
+          where,
+          select: repositoryCaseSelect(groupBy, { automated: true }),
         });
 
-        const grouped = new Map<string, any>();
-        results.forEach((result: any) => {
-          const key = groupBy.map((field) => result[field]).join("|");
+        const options = await folderGroupingOptions(
+          prisma,
+          projectId,
+          isProjectSpecific,
+          groupBy,
+          filters
+        );
 
-          if (!grouped.has(key)) {
-            const groupData: any = {};
-            groupBy.forEach((field) => {
-              groupData[field] = result[field];
-            });
-            groupData.totalCases = 0;
-            groupData.automatedCases = 0;
-            grouped.set(key, groupData);
-          }
-
-          const group = grouped.get(key);
-          group.totalCases++;
-          if (result.automated) {
-            group.automatedCases++;
-          }
-        });
-
-        return Array.from(grouped.values()).map((group: any) => ({
-          ...Object.fromEntries(
-            Object.entries(group).filter(
-              ([key]) => !["totalCases", "automatedCases"].includes(key)
-            )
-          ),
-          automationRate:
-            group.totalCases > 0
-              ? (group.automatedCases / group.totalCases) * 100
-              : 0,
-        }));
+        return groupResults(
+          cases,
+          groupBy,
+          {
+            create: () => ({ total: 0, automated: 0 }),
+            add: (acc: { total: number; automated: number }, result: any) => {
+              acc.total++;
+              if (result.automated) acc.automated++;
+            },
+            finalize: (acc: { total: number; automated: number }) => ({
+              automationRate:
+                acc.total > 0 ? (acc.automated / acc.total) * 100 : 0,
+            }),
+          },
+          options
+        );
       },
     },
     automatedCount: {
@@ -2366,91 +1554,51 @@ export function createRepositoryStatsMetricRegistry(
         filters?: any,
         _dims?: string[]
       ) => {
-        if (groupBy.includes("createdAt")) {
-          const results = await prisma.repositoryCases.findMany({
-            where: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-              automated: true,
-              ...buildDateFilter(filters, "createdAt"),
-            },
-            select: {
-              createdAt: true,
-              projectId: true,
-              templateId: true,
-              creatorId: true,
-              stateId: true,
-              source: true,
-              folderId: true,
-            },
-          });
-
-          const groupedResults = results.reduce((acc: any, result: any) => {
-            const key = groupBy
-              .map((field) => {
-                if (field === "createdAt") {
-                  const date = new Date(result.createdAt);
-                  date.setUTCHours(0, 0, 0, 0);
-                  return date.toISOString();
-                }
-                return result[field];
-              })
-              .join("|");
-
-            if (!acc[key]) {
-              acc[key] = {
-                ...groupBy.reduce((obj: any, field) => {
-                  if (field === "createdAt") {
-                    const date = new Date(result.createdAt);
-                    date.setUTCHours(0, 0, 0, 0);
-                    obj[field] = date.toISOString();
-                  } else {
-                    obj[field] = result[field];
-                  }
-                  return obj;
-                }, {}),
-                automatedCount: 0,
-              };
-            }
-            acc[key].automatedCount++;
-            return acc;
-          }, {});
-
-          return Object.values(groupedResults);
+        if (!groupBy || !Array.isArray(groupBy)) {
+          return [];
         }
 
+        const where = {
+          ...(isProjectSpecific && projectId
+            ? { projectId: Number(projectId) }
+            : {}),
+          isDeleted: false,
+          automated: true,
+          ...buildDateFilter(filters, "createdAt"),
+        };
+
         if (groupBy.length === 0) {
-          const count = await prisma.repositoryCases.count({
-            where: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-              automated: true,
-              ...buildDateFilter(filters, "createdAt"),
-            },
-          });
+          const count = await prisma.repositoryCases.count({ where });
           return [{ automatedCount: count }];
         }
 
-        return prisma.repositoryCases
-          .groupBy({
-            by: groupBy,
-            where: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-              automated: true,
-              ...buildDateFilter(filters, "createdAt"),
+        const cases = await prisma.repositoryCases.findMany({
+          where,
+          select: repositoryCaseSelect(groupBy),
+        });
+
+        const options = await folderGroupingOptions(
+          prisma,
+          projectId,
+          isProjectSpecific,
+          groupBy,
+          filters
+        );
+
+        return groupResults(
+          cases,
+          groupBy,
+          {
+            create: () => ({ count: 0 }),
+            add: (acc: { count: number }) => {
+              acc.count++;
             },
-            _count: { _all: true },
-          })
-          .then((results: any[]) =>
-            results.map((r: any) => ({ ...r, automatedCount: r._count._all }))
-          );
+            finalize: (acc: { count: number }) => ({
+              automatedCount: acc.count,
+            }),
+          },
+          options
+        );
       },
     },
     manualCount: {
@@ -2463,91 +1611,49 @@ export function createRepositoryStatsMetricRegistry(
         filters?: any,
         _dims?: string[]
       ) => {
-        if (groupBy.includes("createdAt")) {
-          const results = await prisma.repositoryCases.findMany({
-            where: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-              automated: false,
-              ...buildDateFilter(filters, "createdAt"),
-            },
-            select: {
-              createdAt: true,
-              projectId: true,
-              templateId: true,
-              creatorId: true,
-              stateId: true,
-              source: true,
-              folderId: true,
-            },
-          });
-
-          const groupedResults = results.reduce((acc: any, result: any) => {
-            const key = groupBy
-              .map((field) => {
-                if (field === "createdAt") {
-                  const date = new Date(result.createdAt);
-                  date.setUTCHours(0, 0, 0, 0);
-                  return date.toISOString();
-                }
-                return result[field];
-              })
-              .join("|");
-
-            if (!acc[key]) {
-              acc[key] = {
-                ...groupBy.reduce((obj: any, field) => {
-                  if (field === "createdAt") {
-                    const date = new Date(result.createdAt);
-                    date.setUTCHours(0, 0, 0, 0);
-                    obj[field] = date.toISOString();
-                  } else {
-                    obj[field] = result[field];
-                  }
-                  return obj;
-                }, {}),
-                manualCount: 0,
-              };
-            }
-            acc[key].manualCount++;
-            return acc;
-          }, {});
-
-          return Object.values(groupedResults);
+        if (!groupBy || !Array.isArray(groupBy)) {
+          return [];
         }
 
+        const where = {
+          ...(isProjectSpecific && projectId
+            ? { projectId: Number(projectId) }
+            : {}),
+          isDeleted: false,
+          automated: false,
+          ...buildDateFilter(filters, "createdAt"),
+        };
+
         if (groupBy.length === 0) {
-          const count = await prisma.repositoryCases.count({
-            where: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-              automated: false,
-              ...buildDateFilter(filters, "createdAt"),
-            },
-          });
+          const count = await prisma.repositoryCases.count({ where });
           return [{ manualCount: count }];
         }
 
-        return prisma.repositoryCases
-          .groupBy({
-            by: groupBy,
-            where: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-              automated: false,
-              ...buildDateFilter(filters, "createdAt"),
+        const cases = await prisma.repositoryCases.findMany({
+          where,
+          select: repositoryCaseSelect(groupBy),
+        });
+
+        const options = await folderGroupingOptions(
+          prisma,
+          projectId,
+          isProjectSpecific,
+          groupBy,
+          filters
+        );
+
+        return groupResults(
+          cases,
+          groupBy,
+          {
+            create: () => ({ count: 0 }),
+            add: (acc: { count: number }) => {
+              acc.count++;
             },
-            _count: { _all: true },
-          })
-          .then((results: any[]) =>
-            results.map((r: any) => ({ ...r, manualCount: r._count._all }))
-          );
+            finalize: (acc: { count: number }) => ({ manualCount: acc.count }),
+          },
+          options
+        );
       },
     },
     averageSteps: {
@@ -2560,112 +1666,64 @@ export function createRepositoryStatsMetricRegistry(
         filters?: any,
         _dims?: string[]
       ) => {
+        if (!groupBy || !Array.isArray(groupBy)) {
+          return [];
+        }
+
+        const where = {
+          ...(isProjectSpecific && projectId
+            ? { projectId: Number(projectId) }
+            : {}),
+          isDeleted: false,
+          ...buildDateFilter(filters, "createdAt"),
+        };
+        const stepsSelect = {
+          steps: { where: { isDeleted: false }, select: { id: true } },
+        };
+
         if (groupBy.length === 0) {
           const repositoryCases = await prisma.repositoryCases.findMany({
-            where: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-              ...buildDateFilter(filters, "createdAt"),
-            },
-            select: {
-              id: true,
-              steps: {
-                where: {
-                  isDeleted: false,
-                },
-                select: {
-                  id: true,
-                },
-              },
-            },
+            where,
+            select: { id: true, ...stepsSelect },
           });
-
           const totalCases = repositoryCases.length;
           const totalSteps = repositoryCases.reduce(
             (sum: number, testCase: any) => sum + testCase.steps.length,
             0
           );
-
           return [
-            {
-              averageSteps: totalCases > 0 ? totalSteps / totalCases : 0,
-            },
+            { averageSteps: totalCases > 0 ? totalSteps / totalCases : 0 },
           ];
         }
 
-        const repositoryCases = await prisma.repositoryCases.findMany({
-          where: {
-            ...(isProjectSpecific && projectId
-              ? { projectId: Number(projectId) }
-              : {}),
-            isDeleted: false,
-            ...buildDateFilter(filters, "createdAt"),
-          },
-          select: {
-            id: true,
-            projectId: true,
-            templateId: true,
-            creatorId: true,
-            stateId: true,
-            source: true,
-            createdAt: true,
-            folderId: true,
-            steps: {
-              where: {
-                isDeleted: false,
-              },
-              select: {
-                id: true,
-              },
+        const cases = await prisma.repositoryCases.findMany({
+          where,
+          select: repositoryCaseSelect(groupBy, stepsSelect),
+        });
+
+        const options = await folderGroupingOptions(
+          prisma,
+          projectId,
+          isProjectSpecific,
+          groupBy,
+          filters
+        );
+
+        return groupResults(
+          cases,
+          groupBy,
+          {
+            create: () => ({ cases: 0, steps: 0 }),
+            add: (acc: { cases: number; steps: number }, result: any) => {
+              acc.cases++;
+              acc.steps += result.steps?.length ?? 0;
             },
+            finalize: (acc: { cases: number; steps: number }) => ({
+              averageSteps: acc.cases > 0 ? acc.steps / acc.cases : 0,
+            }),
           },
-        });
-
-        const grouped = new Map<string, any>();
-        repositoryCases.forEach((testCase: any) => {
-          const key = groupBy
-            .map((field) => {
-              if (field === "createdAt") {
-                const date = new Date(testCase.createdAt);
-                date.setUTCHours(0, 0, 0, 0);
-                return date.toISOString();
-              }
-              return testCase[field];
-            })
-            .join("|");
-
-          if (!grouped.has(key)) {
-            const groupData: any = {};
-            groupBy.forEach((field) => {
-              if (field === "createdAt") {
-                const date = new Date(testCase.createdAt);
-                date.setUTCHours(0, 0, 0, 0);
-                groupData.createdAt = date.toISOString();
-              } else {
-                groupData[field] = testCase[field];
-              }
-            });
-            groupData.totalCases = 0;
-            groupData.totalSteps = 0;
-            grouped.set(key, groupData);
-          }
-
-          const group = grouped.get(key);
-          group.totalCases++;
-          group.totalSteps += testCase.steps.length;
-        });
-
-        return Array.from(grouped.values()).map((group: any) => ({
-          ...Object.fromEntries(
-            Object.entries(group).filter(
-              ([key]) => !["totalCases", "totalSteps"].includes(key)
-            )
-          ),
-          averageSteps:
-            group.totalCases > 0 ? group.totalSteps / group.totalCases : 0,
-        }));
+          options
+        );
       },
     },
     totalSteps: {
@@ -2678,163 +1736,58 @@ export function createRepositoryStatsMetricRegistry(
         filters?: any,
         _dims?: string[]
       ) => {
-        if (groupBy.includes("createdAt")) {
-          const results = await prisma.repositoryCases.findMany({
-            where: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-              ...buildDateFilter(filters, "createdAt"),
-            },
-            select: {
-              createdAt: true,
-              projectId: true,
-              templateId: true,
-              creatorId: true,
-              stateId: true,
-              source: true,
-              folderId: true,
-              steps: {
-                where: {
-                  isDeleted: false,
-                },
-                select: {
-                  id: true,
-                },
-              },
-            },
-          });
-
-          const groupedResults = results.reduce((acc: any, result: any) => {
-            const key = groupBy
-              .map((field) => {
-                if (field === "createdAt") {
-                  const date = new Date(result.createdAt);
-                  date.setUTCHours(0, 0, 0, 0);
-                  return date.toISOString();
-                }
-                return result[field];
-              })
-              .join("|");
-
-            if (!acc[key]) {
-              acc[key] = {
-                ...groupBy.reduce((obj: any, field) => {
-                  if (field === "createdAt") {
-                    const date = new Date(result.createdAt);
-                    date.setUTCHours(0, 0, 0, 0);
-                    obj[field] = date.toISOString();
-                  } else {
-                    obj[field] = result[field];
-                  }
-                  return obj;
-                }, {}),
-                totalSteps: 0,
-              };
-            }
-            acc[key].totalSteps += result.steps.length;
-            return acc;
-          }, {});
-
-          return Object.values(groupedResults);
+        if (!groupBy || !Array.isArray(groupBy)) {
+          return [];
         }
+
+        const where = {
+          ...(isProjectSpecific && projectId
+            ? { projectId: Number(projectId) }
+            : {}),
+          isDeleted: false,
+          ...buildDateFilter(filters, "createdAt"),
+        };
+        const stepsSelect = {
+          steps: { where: { isDeleted: false }, select: { id: true } },
+        };
 
         if (groupBy.length === 0) {
           const repositoryCases = await prisma.repositoryCases.findMany({
-            where: {
-              ...(isProjectSpecific && projectId
-                ? { projectId: Number(projectId) }
-                : {}),
-              isDeleted: false,
-              ...buildDateFilter(filters, "createdAt"),
-            },
-            select: {
-              steps: {
-                where: {
-                  isDeleted: false,
-                },
-                select: {
-                  id: true,
-                },
-              },
-            },
+            where,
+            select: stepsSelect,
           });
-
           const totalSteps = repositoryCases.reduce(
             (sum: number, testCase: any) => sum + testCase.steps.length,
             0
           );
-
           return [{ totalSteps }];
         }
 
-        const repositoryCases = await prisma.repositoryCases.findMany({
-          where: {
-            ...(isProjectSpecific && projectId
-              ? { projectId: Number(projectId) }
-              : {}),
-            isDeleted: false,
-            ...buildDateFilter(filters, "createdAt"),
-          },
-          select: {
-            id: true,
-            projectId: true,
-            templateId: true,
-            creatorId: true,
-            stateId: true,
-            source: true,
-            createdAt: true,
-            folderId: true,
-            steps: {
-              where: {
-                isDeleted: false,
-              },
-              select: {
-                id: true,
-              },
+        const cases = await prisma.repositoryCases.findMany({
+          where,
+          select: repositoryCaseSelect(groupBy, stepsSelect),
+        });
+
+        const options = await folderGroupingOptions(
+          prisma,
+          projectId,
+          isProjectSpecific,
+          groupBy,
+          filters
+        );
+
+        return groupResults(
+          cases,
+          groupBy,
+          {
+            create: () => ({ steps: 0 }),
+            add: (acc: { steps: number }, result: any) => {
+              acc.steps += result.steps?.length ?? 0;
             },
+            finalize: (acc: { steps: number }) => ({ totalSteps: acc.steps }),
           },
-        });
-
-        const grouped = new Map<string, any>();
-        repositoryCases.forEach((testCase: any) => {
-          const key = groupBy
-            .map((field) => {
-              if (field === "createdAt") {
-                const date = new Date(testCase.createdAt);
-                date.setUTCHours(0, 0, 0, 0);
-                return date.toISOString();
-              }
-              return testCase[field];
-            })
-            .join("|");
-
-          if (!grouped.has(key)) {
-            const groupData: any = {};
-            groupBy.forEach((field) => {
-              if (field === "createdAt") {
-                const date = new Date(testCase.createdAt);
-                date.setUTCHours(0, 0, 0, 0);
-                groupData.createdAt = date.toISOString();
-              } else {
-                groupData[field] = testCase[field];
-              }
-            });
-            groupData.totalSteps = 0;
-            grouped.set(key, groupData);
-          }
-
-          const group = grouped.get(key);
-          group.totalSteps += testCase.steps.length;
-        });
-
-        return Array.from(grouped.values()).map((group: any) => ({
-          ...Object.fromEntries(
-            Object.entries(group).filter(([key]) => key !== "totalSteps")
-          ),
-          totalSteps: group.totalSteps,
-        }));
+          options
+        );
       },
     },
   };

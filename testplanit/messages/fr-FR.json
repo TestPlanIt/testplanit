@@ -6603,6 +6603,10 @@
           "label": "Journal d'exécution inter-projets",
           "description": "Liste plate des enregistrements de résultats de tests individuels avec statut, exécuteur et horodatage pour l'ensemble des projets"
         }
+      },
+      "folderDescendants": {
+        "label": "Inclure les sous-dossiers",
+        "description": "Compter les résultats des sous-dossiers vers chaque dossier parent."
       }
     },
     "errors": {
@@ -6646,7 +6650,8 @@
       "automationStatus": "État de l'automatisation",
       "issueType": "Type de problème",
       "issueTracker": "Suivi des problèmes",
-      "issueStatus": "État du problème"
+      "issueStatus": "État du problème",
+      "tag": "Étiqueter"
     },
     "metrics": {
       "testResults": "Résultats des tests",
