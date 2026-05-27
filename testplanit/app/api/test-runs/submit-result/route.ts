@@ -207,6 +207,7 @@ export async function POST(req: NextRequest) {
             projectId: true,
             createdById: true,
             testRunType: true,
+            isCompleted: true,
             project: {
               select: {
                 createdBy: true,
@@ -314,6 +315,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Permission denied", code: "PERMISSION_DENIED" },
         { status: 403 }
+      );
+    }
+
+    // A completed run is frozen: no recording results. This route uses the
+    // raw client, so it enforces the same lock the ZenStack policy applies to
+    // model-API writes.
+    if (runCase.testRun.isCompleted) {
+      return NextResponse.json(
+        {
+          error: "This test run is completed and can no longer be modified",
+          code: "RUN_COMPLETED",
+        },
+        { status: 409 }
       );
     }
 
