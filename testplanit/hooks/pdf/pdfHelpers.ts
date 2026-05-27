@@ -201,14 +201,24 @@ export class PdfRenderer {
     this.doc.setFont("helvetica", "normal");
   }
 
-  /** Render a labeled field (bold label + normal value) */
-  renderField(label: string, value: string | null | undefined) {
+  /**
+   * Render a labeled field (bold label + normal value). An optional RGB color
+   * is applied to the value only (e.g. a status color); the label stays black.
+   */
+  renderField(
+    label: string,
+    value: string | null | undefined,
+    opts?: { color?: [number, number, number] }
+  ) {
     if (!value || value.trim() === "") return;
 
     this.ensureSpace(30);
     this.doc.setFont("helvetica", "bold");
     this.doc.text(`${label}:`, this.margin, this.yPosition);
     this.doc.setFont("helvetica", "normal");
+    if (opts?.color) {
+      this.doc.setTextColor(opts.color[0], opts.color[1], opts.color[2]);
+    }
 
     const displayValue = sanitizeTextForPdf(String(value));
     const lines: string[] = this.doc.splitTextToSize(
@@ -227,6 +237,8 @@ export class PdfRenderer {
       this.doc.text(String(lines[0] || ""), this.margin + 45, this.yPosition);
       this.yPosition += 6;
     }
+
+    if (opts?.color) this.doc.setTextColor(0, 0, 0);
   }
 
   /** Render a multi-line text block (for descriptions, notes, missions) */
@@ -249,6 +261,73 @@ export class PdfRenderer {
       this.yPosition += 5;
     });
     this.yPosition += 3;
+  }
+
+  /**
+   * Render a numbered step heading: "N. <step text>" in bold, wrapped with a
+   * hanging indent so continuation lines align under the text.
+   */
+  renderStepHeading(num: number, text: string) {
+    this.ensureSpace(14);
+    this.yPosition += 2;
+    this.doc.setFontSize(10);
+    this.doc.setFont("helvetica", "bold");
+    const prefix = `${num}. `;
+    const prefixWidth = this.doc.getTextWidth(prefix);
+    const textX = this.margin + 4 + prefixWidth;
+    const lines: string[] = this.doc.splitTextToSize(
+      sanitizeTextForPdf(text || "(no description)"),
+      this.contentWidth - 4 - prefixWidth
+    );
+    this.doc.text(prefix, this.margin + 4, this.yPosition);
+    lines.forEach((line: string, i: number) => {
+      if (i > 0) this.ensureSpace(8);
+      this.doc.text(String(line), textX, this.yPosition);
+      this.yPosition += 5;
+    });
+    this.doc.setFont("helvetica", "normal");
+  }
+
+  /**
+   * Render an indented detail line under a step ("Label: value"), with a muted
+   * label and an optional RGB color for the value (e.g. a status color).
+   */
+  renderDetail(
+    label: string,
+    value: string | null | undefined,
+    opts?: { color?: [number, number, number] }
+  ) {
+    if (!value || String(value).trim() === "") return;
+    this.ensureSpace(8);
+    const indent = this.margin + 9;
+    this.doc.setFontSize(9);
+
+    this.doc.setFont("helvetica", "bold");
+    this.doc.setTextColor(120, 120, 120);
+    const labelText = `${label}: `;
+    this.doc.text(labelText, indent, this.yPosition);
+    const labelWidth = this.doc.getTextWidth(labelText);
+
+    this.doc.setFont("helvetica", "normal");
+    if (opts?.color) {
+      this.doc.setTextColor(opts.color[0], opts.color[1], opts.color[2]);
+    } else {
+      this.doc.setTextColor(0, 0, 0);
+    }
+
+    const valueX = indent + labelWidth;
+    const lines: string[] = this.doc.splitTextToSize(
+      sanitizeTextForPdf(String(value)),
+      Math.max(this.pageWidth - this.margin - valueX, 40)
+    );
+    lines.forEach((line: string, i: number) => {
+      if (i > 0) this.ensureSpace(8);
+      this.doc.text(String(line), valueX, this.yPosition);
+      this.yPosition += 4.5;
+    });
+
+    this.doc.setTextColor(0, 0, 0);
+    this.doc.setFontSize(10);
   }
 
   /** Render a separator line */

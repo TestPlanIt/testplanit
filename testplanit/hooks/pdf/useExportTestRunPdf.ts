@@ -1,97 +1,156 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useFindUniqueTestRuns } from "~/lib/hooks";
 import { logDataExport } from "~/lib/services/auditClient";
-import { extractTextFromNode } from "~/utils/extractTextFromJson";
 import { toHumanReadable } from "~/utils/duration";
-import { PdfRenderer, preloadImages, formatFieldValue } from "./pdfHelpers";
+import { extractTextFromNode } from "~/utils/extractTextFromJson";
+import { formatFieldValue, PdfRenderer, preloadImages } from "./pdfHelpers";
 
-interface TestRunExportData {
-  id: number;
-  name: string;
-  testRunType?: string;
-  configuration?: { name?: string } | null;
-  milestone?: { name?: string } | null;
-  state?: { name?: string } | null;
-  createdBy?: { name?: string | null } | null;
-  note?: any;
-  docs?: any;
-  isCompleted?: boolean;
-  completedAt?: Date | string | null;
-  createdAt?: Date | string | null;
-  forecastManual?: number | null;
-  forecastAutomated?: number | null;
-  tags?: { id: number; name: string }[];
-  issues?: {
-    name?: string;
-    title?: string | null;
-    externalId?: string | null;
-    externalKey?: string | null;
-  }[];
-  attachments?: {
-    url?: string;
-    name?: string;
-    mimeType?: string | null;
-    isDeleted?: boolean;
-  }[];
-  testCases?: {
-    id: number;
-    order?: number;
-    repositoryCase?: {
-      id: number;
-      name: string;
-    };
-    assignedTo?: { name?: string | null } | null;
-    status?: { name?: string; color?: { value?: string } | null } | null;
-    results?: {
-      id: number;
-      executedAt?: Date | string;
-      executedBy?: { name?: string | null } | null;
-      status?: { name?: string; color?: { value?: string } | null } | null;
-      elapsed?: number | null;
-      comment?: any;
-      attachments?: {
-        url?: string;
-        name?: string;
-        mimeType?: string | null;
-        isDeleted?: boolean;
-      }[];
-      stepResults?: {
-        step?: { step?: any; expectedResult?: any; order?: number };
-        status?: { name?: string } | null;
-        comment?: any;
-      }[];
-      resultFieldValues?: {
-        fieldId: number;
-        value: any;
-        field?: {
-          displayName?: string;
-          type?: { type?: string };
-        };
-      }[];
-    }[];
-  }[];
-  project?: { id?: number; name?: string } | null;
-}
+/**
+ * Relations fetched for the PDF export. This is heavier than the run page's
+ * own query (it pulls each case's authored steps plus the latest result and
+ * its per-step results), so it is fetched on demand when the user exports
+ * rather than on every run-page load.
+ */
+const EXPORT_INCLUDE = {
+  project: { select: { id: true, name: true } },
+  configuration: { select: { name: true } },
+  milestone: { select: { name: true } },
+  state: { select: { name: true } },
+  createdBy: { select: { name: true } },
+  attachments: true,
+  tags: { select: { id: true, name: true } },
+  issues: {
+    select: {
+      name: true,
+      title: true,
+      externalId: true,
+      externalKey: true,
+    },
+  },
+  testCases: {
+    where: { isDeleted: false },
+    select: {
+      id: true,
+      order: true,
+      status: {
+        select: { name: true, color: { select: { value: true } } },
+      },
+      assignedTo: { select: { name: true } },
+      repositoryCase: {
+        select: {
+          id: true,
+          name: true,
+          steps: {
+            where: { isDeleted: false },
+            orderBy: { order: "asc" as const },
+            select: {
+              id: true,
+              order: true,
+              step: true,
+              expectedResult: true,
+              sharedStepGroupId: true,
+              sharedStepGroup: {
+                select: {
+                  id: true,
+                  name: true,
+                  items: {
+                    orderBy: { order: "asc" as const },
+                    select: {
+                      id: true,
+                      order: true,
+                      step: true,
+                      expectedResult: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      results: {
+        where: { isDeleted: false },
+        orderBy: { executedAt: "desc" as const },
+        take: 1,
+        select: {
+          id: true,
+          executedAt: true,
+          elapsed: true,
+          notes: true,
+          executedBy: { select: { name: true } },
+          status: {
+            select: { name: true, color: { select: { value: true } } },
+          },
+          attachments: true,
+          stepResults: {
+            where: { isDeleted: false },
+            select: {
+              stepId: true,
+              sharedStepItemId: true,
+              notes: true,
+              elapsed: true,
+              stepStatus: {
+                select: { name: true, color: { select: { value: true } } },
+              },
+              attachments: true,
+              issues: {
+                select: {
+                  name: true,
+                  title: true,
+                  externalId: true,
+                  externalKey: true,
+                },
+              },
+            },
+          },
+          resultFieldValues: {
+            select: {
+              fieldId: true,
+              value: true,
+              field: {
+                select: { displayName: true, type: { select: { type: true } } },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+} as const;
 
 interface UseExportTestRunPdfProps {
-  testRunData: TestRunExportData | null;
+  testRunId: number | null | undefined;
+  /** Used for the export audit entry; falls back to the run's project. */
+  projectId?: number;
   embedImages?: boolean;
   locale?: string;
 }
 
 export function useExportTestRunPdf({
-  testRunData,
+  testRunId,
+  projectId,
   embedImages = true,
   locale = "en-US",
 }: UseExportTestRunPdfProps) {
   const [isExporting, setIsExporting] = useState(false);
 
+  // Disabled query; the heavy data is fetched only when the user exports.
+  const { refetch } = useFindUniqueTestRuns(
+    { where: { id: testRunId ?? 0 }, include: EXPORT_INCLUDE },
+    { enabled: false }
+  );
+
   const handleExport = useCallback(async () => {
-    if (!testRunData) return;
+    if (!testRunId) return;
     setIsExporting(true);
 
     try {
+      const { data } = await refetch();
+      const testRunData = data as any;
+      if (!testRunData) return;
+
       const { default: jsPDF } = await import("jspdf");
       const doc = new jsPDF({
         orientation: "portrait",
@@ -154,22 +213,15 @@ export function useExportTestRunPdf({
 
       // --- Tags ---
       if (testRunData.tags && testRunData.tags.length > 0) {
-        pdf.renderField("Tags", testRunData.tags.map((t) => t.name).join(", "));
+        pdf.renderField(
+          "Tags",
+          testRunData.tags.map((t: any) => t.name).join(", ")
+        );
       }
 
       // --- Issues ---
       if (testRunData.issues && testRunData.issues.length > 0) {
-        pdf.renderField(
-          "Issues",
-          testRunData.issues
-            .map((i) => {
-              const key = i.externalKey || i.externalId || "";
-              const title = i.title || i.name || "";
-              return key && title ? `${key}: ${title}` : title || key;
-            })
-            .filter(Boolean)
-            .join(", ")
-        );
+        pdf.renderField("Issues", formatIssues(testRunData.issues));
       }
 
       // --- Description / Note ---
@@ -200,30 +252,27 @@ export function useExportTestRunPdf({
         testRunData.attachments.length > 0
       ) {
         const names = testRunData.attachments
-          .filter((a) => !a.isDeleted && a.name)
-          .map((a) => a.name!);
+          .filter((a: any) => !a.isDeleted && a.name)
+          .map((a: any) => a.name);
         if (names.length > 0) {
           pdf.renderField("Attachments", names.join(", "));
         }
       }
 
-      // --- Test Cases Summary ---
+      // --- Test Cases ---
       const testCases = [...(testRunData.testCases || [])].sort(
-        (a, b) => (a.order ?? 0) - (b.order ?? 0)
+        (a: any, b: any) => (a.order ?? 0) - (b.order ?? 0)
       );
       if (testCases.length > 0) {
         pdf.addSpace(5);
 
-        // Calculate summary stats
+        // Summary stats from the latest result (or case-level) status.
         const statusCounts: Record<string, number> = {};
-        testCases.forEach((tc) => {
-          // Use latest result status, or case-level status, or "Untested"
-          const latestResult = tc.results?.[0];
+        testCases.forEach((tc: any) => {
           const statusName =
-            latestResult?.status?.name || tc.status?.name || "Untested";
+            tc.results?.[0]?.status?.name || tc.status?.name || "Untested";
           statusCounts[statusName] = (statusCounts[statusName] || 0) + 1;
         });
-
         const summaryParts = Object.entries(statusCounts)
           .map(([name, count]) => `${name}: ${count}`)
           .join("  |  ");
@@ -232,22 +281,22 @@ export function useExportTestRunPdf({
         pdf.renderField("Summary", summaryParts);
         pdf.addSpace(3);
 
-        // Individual test cases
         for (const tc of testCases) {
           const caseName = tc.repositoryCase?.name || `Test Case #${tc.id}`;
           const latestResult = tc.results?.[0];
-          const statusName =
-            latestResult?.status?.name || tc.status?.name || "Untested";
+          const statusObj = latestResult?.status || tc.status;
+          const statusName = statusObj?.name || "Untested";
 
           pdf.ensureSpace(20);
           pdf.renderSubHeader(caseName);
-          pdf.renderField("Status", statusName);
-
+          pdf.renderField("Status", statusName, {
+            color: hexToRgb(statusObj?.color?.value),
+          });
           if (tc.assignedTo?.name) {
             pdf.renderField("Assigned To", tc.assignedTo.name);
           }
 
-          // Latest result details
+          // Case-level result details
           if (latestResult) {
             if (latestResult.executedBy?.name) {
               pdf.renderField("Executed By", latestResult.executedBy.name);
@@ -267,76 +316,93 @@ export function useExportTestRunPdf({
                 })
               );
             }
-
-            // Result comment
-            const commentText = extractJsonText(latestResult.comment);
-            if (commentText) {
-              pdf.renderTextBlock("Comment", commentText);
+            const resultNotes = extractJsonText(latestResult.notes);
+            if (resultNotes) {
+              pdf.renderTextBlock("Comment", resultNotes);
             }
+          }
 
-            // Step results
-            if (
-              latestResult.stepResults &&
-              latestResult.stepResults.length > 0
-            ) {
-              const sortedSteps = [...latestResult.stepResults].sort(
-                (a, b) => (a.step?.order || 0) - (b.step?.order || 0)
-              );
+          // Steps: every authored step (shared groups expanded), with the
+          // recorded result overlaid when the step has one.
+          const stepRows = buildStepRows(
+            tc.repositoryCase?.steps,
+            latestResult?.stepResults
+          );
+          if (stepRows.length > 0) {
+            pdf.addSpace(2);
+            pdf.renderField("Steps", `${stepRows.length}`);
+            for (const row of stepRows) {
+              pdf.ensureSpace(18);
+              pdf.renderStepHeading(row.num, row.stepText || "");
+              if (row.sharedGroup) {
+                pdf.renderDetail("Shared step", row.sharedGroup);
+              }
+              if (row.expectedText) {
+                pdf.renderDetail("Expected", row.expectedText);
+              }
 
-              for (const sr of sortedSteps) {
-                const stepText = extractJsonText(sr.step?.step);
-                const expectedText = extractJsonText(sr.step?.expectedResult);
-                const stepStatus = sr.status?.name || "";
-
-                if (stepText || expectedText) {
-                  pdf.ensureSpace(15);
-                  pdf.renderField(
-                    `Step ${sr.step?.order ?? ""}`,
-                    stepText || ""
+              const sr = row.result;
+              if (sr) {
+                if (sr.stepStatus?.name) {
+                  pdf.renderDetail("Result", sr.stepStatus.name, {
+                    color: hexToRgb(sr.stepStatus?.color?.value),
+                  });
+                }
+                if (sr.elapsed) {
+                  pdf.renderDetail(
+                    "Time",
+                    toHumanReadable(sr.elapsed, { isSeconds: true, locale })
                   );
-                  if (expectedText) {
-                    pdf.renderField("Expected", expectedText);
-                  }
-                  if (stepStatus) {
-                    pdf.renderField("Status", stepStatus);
-                  }
-                  const stepComment = extractJsonText(sr.comment);
-                  if (stepComment) {
-                    pdf.renderField("Comment", stepComment);
-                  }
+                }
+                const stepNotes = extractJsonText(sr.notes);
+                if (stepNotes) {
+                  pdf.renderDetail("Notes", stepNotes);
+                }
+                if (sr.issues && sr.issues.length > 0) {
+                  pdf.renderDetail("Issues", formatIssues(sr.issues));
+                }
+                if (
+                  embedImages &&
+                  sr.attachments &&
+                  sr.attachments.length > 0
+                ) {
+                  const { images, nonImageNames } = await preloadImages(
+                    sr.attachments
+                  );
+                  pdf.renderImages(images);
+                  pdf.renderAttachmentNames(nonImageNames);
                 }
               }
             }
+          }
 
-            // Result custom fields
-            if (
-              latestResult.resultFieldValues &&
-              latestResult.resultFieldValues.length > 0
-            ) {
-              for (const rfv of latestResult.resultFieldValues) {
-                if (rfv.value === null || rfv.value === undefined) continue;
-                const displayName =
-                  rfv.field?.displayName || `Field ${rfv.fieldId}`;
-                const fieldType = rfv.field?.type?.type;
-                const formatted = formatFieldValue(rfv.value, fieldType);
-                if (formatted) {
-                  pdf.renderField(displayName, formatted);
-                }
-              }
-            }
-
-            // Result attachments
-            if (
-              embedImages &&
-              latestResult.attachments &&
-              latestResult.attachments.length > 0
-            ) {
-              const { images, nonImageNames } = await preloadImages(
-                latestResult.attachments
+          // Result custom fields
+          if (latestResult?.resultFieldValues?.length) {
+            for (const rfv of latestResult.resultFieldValues) {
+              if (rfv.value === null || rfv.value === undefined) continue;
+              const displayName =
+                rfv.field?.displayName || `Field ${rfv.fieldId}`;
+              const formatted = formatFieldValue(
+                rfv.value,
+                rfv.field?.type?.type
               );
-              pdf.renderImages(images);
-              pdf.renderAttachmentNames(nonImageNames);
+              if (formatted) {
+                pdf.renderField(displayName, formatted);
+              }
             }
+          }
+
+          // Result attachments
+          if (
+            embedImages &&
+            latestResult?.attachments &&
+            latestResult.attachments.length > 0
+          ) {
+            const { images, nonImageNames } = await preloadImages(
+              latestResult.attachments
+            );
+            pdf.renderImages(images);
+            pdf.renderAttachmentNames(nonImageNames);
           }
 
           pdf.renderSeparator();
@@ -352,19 +418,102 @@ export function useExportTestRunPdf({
         exportType: "PDF",
         entityType: "test-run",
         recordCount: 1,
-        projectId: testRunData.project?.id,
+        projectId: projectId ?? testRunData.project?.id,
       });
     } catch (error) {
       console.error("Test Run PDF export failed:", error);
     } finally {
       setIsExporting(false);
     }
-  }, [testRunData, embedImages, locale]);
+  }, [testRunId, projectId, refetch, embedImages, locale]);
 
   return { isExporting, handleExport };
 }
 
-/** Extract plain text from a Tiptap JSON field (string or object) */
+interface StepRow {
+  num: number;
+  stepText: string | null;
+  expectedText: string | null;
+  sharedGroup?: string;
+  result?: any;
+}
+
+/**
+ * Flattens a case's authored steps into display rows, expanding shared-step
+ * placeholders into their group items, and matches each row to its recorded
+ * step result (by step id, plus shared-step item id for shared steps).
+ *
+ * Exported for unit testing.
+ */
+export function buildStepRows(
+  steps: any[] | undefined,
+  stepResults: any[] | undefined
+): StepRow[] {
+  if (!steps || steps.length === 0) return [];
+
+  const resultByKey = new Map<string, any>();
+  for (const sr of stepResults ?? []) {
+    resultByKey.set(`${sr.stepId}:${sr.sharedStepItemId ?? ""}`, sr);
+  }
+
+  const rows: StepRow[] = [];
+  let num = 0;
+  const ordered = [...steps].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+  for (const step of ordered) {
+    const sharedItems = step.sharedStepGroup?.items;
+    if (sharedItems && sharedItems.length > 0) {
+      const items = [...sharedItems].sort(
+        (a, b) => (a.order ?? 0) - (b.order ?? 0)
+      );
+      for (const item of items) {
+        num++;
+        rows.push({
+          num,
+          stepText: extractJsonText(item.step),
+          expectedText: extractJsonText(item.expectedResult),
+          sharedGroup: step.sharedStepGroup?.name,
+          result: resultByKey.get(`${step.id}:${item.id}`),
+        });
+      }
+    } else {
+      num++;
+      rows.push({
+        num,
+        stepText: extractJsonText(step.step),
+        expectedText: extractJsonText(step.expectedResult),
+        result: resultByKey.get(`${step.id}:`),
+      });
+    }
+  }
+
+  return rows;
+}
+
+/** Parse a `#rrggbb` color into an RGB tuple for jsPDF, if valid. */
+function hexToRgb(
+  hex: string | null | undefined
+): [number, number, number] | undefined {
+  if (!hex) return undefined;
+  const match = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!match) return undefined;
+  const value = parseInt(match[1], 16);
+  return [(value >> 16) & 255, (value >> 8) & 255, value & 255];
+}
+
+/** Format linked issues as "KEY: Title" (or whichever parts exist). */
+function formatIssues(issues: any[]): string {
+  return issues
+    .map((i) => {
+      const key = i.externalKey || i.externalId || "";
+      const title = i.title || i.name || "";
+      return key && title ? `${key}: ${title}` : title || key;
+    })
+    .filter(Boolean)
+    .join(", ");
+}
+
+/** Extract plain text from a Tiptap JSON field (string or object). */
 function extractJsonText(value: any): string | null {
   if (!value) return null;
   try {
