@@ -499,10 +499,11 @@ export default function TestRunPage() {
     refetch: () => void;
   };
 
-  // PDF export hook
+  // PDF export hook — fetches its own (heavier) data on demand when exporting.
   const { isExporting: isExportingPdf, handleExport: handleExportPdf } =
     useExportTestRunPdf({
-      testRunData: testRunData as any,
+      testRunId: Number(runId),
+      projectId: Number(projectId),
     });
 
   // Fetch JUnit test suites if this is a JUNIT run
@@ -1596,7 +1597,7 @@ export default function TestRunPage() {
                       )}
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="secondary"
                       onClick={handleExportPdf}
                       disabled={isExportingPdf}
                       className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
@@ -1666,7 +1667,7 @@ export default function TestRunPage() {
                           )}
                         <Button
                           type="button"
-                          variant="outline"
+                          variant="secondary"
                           onClick={handleExportPdf}
                           disabled={isExportingPdf}
                           className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
