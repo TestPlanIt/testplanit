@@ -275,6 +275,13 @@ export function BulkEditConfigurations({
                             maxMenuHeight={300}
                             className="grow w-[400px] sm:w-[500px] lg:w-[900px]"
                             classNamePrefix="select"
+                            // Keep the menu inline (no portal): the shared
+                            // `customStyles` already sets the menu's z-index
+                            // to 9999 so it stacks above other dialog content,
+                            // and the dialog's `min-h` reserves room for it.
+                            // Portaling it to the body broke wheel-scrolling
+                            // because Radix Dialog's scroll-lock captures
+                            // wheel events outside the dialog tree.
                             styles={customStyles}
                             options={projectOptions}
                             onChange={(selected: any) => {
