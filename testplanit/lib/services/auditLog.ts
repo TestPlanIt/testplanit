@@ -88,6 +88,7 @@ export const ENTITY_NAME_FIELDS: Record<string, string | string[]> = {
   ProjectAssignment: ["userId", "projectId"],
   ProjectStatusAssignment: ["statusId", "projectId"],
   ProjectWorkflowAssignment: ["workflowId", "projectId"],
+  ProjectConfigurationAssignment: ["configurationId", "projectId"],
   MilestoneTypesAssignment: ["milestoneTypeId", "projectId"],
   ProjectLlmIntegration: ["llmIntegrationId", "projectId"],
   ProjectCodeRepositoryConfig: ["repositoryId", "projectId"],
@@ -183,6 +184,12 @@ export const AUDITED_CONFIG_MODELS: AuditedConfigModel[] = [
   {
     entityType: "ProjectWorkflowAssignment",
     accessor: "projectWorkflowAssignment",
+    hasProjectId: true,
+    kind: "join",
+  },
+  {
+    entityType: "ProjectConfigurationAssignment",
+    accessor: "projectConfigurationAssignment",
     hasProjectId: true,
     kind: "join",
   },
