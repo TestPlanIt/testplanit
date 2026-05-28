@@ -1,6 +1,7 @@
 import { ProjectIcon } from "@/components/ProjectIcon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
   Popover,
@@ -8,6 +9,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Configurations } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
 import {
@@ -19,7 +26,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 export type ConfigWithVariants = Configurations & {
   variants: {
@@ -36,14 +43,152 @@ export type ConfigWithVariants = Configurations & {
   }[];
 };
 
+// Header checkbox with a shift-aware tooltip. Hovering shows the default
+// "Select/Deselect all on this page" message; while Shift is held it switches
+// to "across all pages" + the configuration count, matching the Cases table.
+//
+// Intentionally NOT React.memo'd: tanstack-table's `table` reference is stable
+// across renders, so memoising would skip re-renders when the underlying
+// selection state changes — leaving the checked indicator stale until some
+// other prop happens to change.
+function SelectAllCheckbox({
+  table,
+  handleSelectAllClick,
+  selectAllLabel,
+  totalItems,
+  isAllFilteredSelected,
+}: {
+  table: any;
+  handleSelectAllClick?: (event: React.MouseEvent) => void;
+  selectAllLabel: string;
+  totalItems: number;
+  isAllFilteredSelected: boolean;
+}) {
+  const tAdmin = useTranslations("admin.configurations");
+  const [isShiftPressed, setIsShiftPressed] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Shift") setIsShiftPressed(true);
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === "Shift") setIsShiftPressed(false);
+    };
+    const handleBlur = () => setIsShiftPressed(false);
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", handleBlur);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", handleBlur);
+    };
+  }, []);
+
+  const tooltipContent = isShiftPressed
+    ? isAllFilteredSelected
+      ? tAdmin("deselectAllShiftTooltip")
+      : tAdmin("selectAllShiftTooltip", { count: totalItems })
+    : tAdmin("selectAllTooltip");
+
+  return (
+    <TooltipProvider delayDuration={1000}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="cursor-pointer">
+            <Checkbox
+              checked={
+                table.getIsAllPageRowsSelected() ||
+                (table.getIsSomePageRowsSelected() && "indeterminate")
+              }
+              onCheckedChange={(value) => {
+                if (!handleSelectAllClick)
+                  table.toggleAllPageRowsSelected(!!value);
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (handleSelectAllClick) {
+                  e.preventDefault();
+                  handleSelectAllClick(e);
+                }
+              }}
+              aria-label={selectAllLabel}
+            />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent
+          side="top"
+          align="start"
+          sideOffset={12}
+          className="max-w-xs"
+          style={{ zIndex: 9999 }}
+        >
+          <p className="text-xs">{tooltipContent}</p>
+          {!isShiftPressed && (
+            <p className="text-xs text-primary-foreground/65 mt-1">
+              {tAdmin("shiftClickHint")}
+            </p>
+          )}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 export const useColumns = (
   t: ReturnType<typeof useTranslations<"common">>,
   handleToggle: (id: number, isEnabled: boolean) => void,
   onEditConfiguration?: (config: ConfigWithVariants) => void,
-  onDeleteConfiguration?: (config: ConfigWithVariants) => void
+  onDeleteConfiguration?: (config: ConfigWithVariants) => void,
+  /** Shift-aware row selection handler. Plain click toggles; shift-click
+   * range-selects from the last clicked row. */
+  handleCheckboxClick?: (rowIndex: number, event: React.MouseEvent) => void,
+  /** Shift-aware select-all handler. Plain click toggles the current page;
+   * shift-click toggles ALL filtered rows across pages. */
+  handleSelectAllClick?: (event: React.MouseEvent) => void,
+  /** Total filtered count, used by the select-all tooltip when shift is held. */
+  totalFilteredItems: number = 0,
+  /** Whether every filtered row (across pages) is selected, used by the
+   * shift+select-all tooltip to swap between "Select/Deselect all" copy. */
+  isAllFilteredSelected: boolean = false
 ): ColumnDef<ConfigWithVariants>[] =>
   useMemo(
     () => [
+      {
+        id: "select",
+        header: ({ table }) => (
+          <SelectAllCheckbox
+            table={table}
+            handleSelectAllClick={handleSelectAllClick}
+            selectAllLabel={t("actions.selectAll")}
+            totalItems={totalFilteredItems}
+            isAllFilteredSelected={isAllFilteredSelected}
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => {
+              if (!handleCheckboxClick) row.toggleSelected(!!value);
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (handleCheckboxClick) {
+                e.preventDefault();
+                handleCheckboxClick(row.index, e);
+              }
+            }}
+            aria-label={t("actions.select")}
+            data-testid={`config-checkbox-${row.original.id}`}
+          />
+        ),
+        enableSorting: false,
+        enableResizing: false,
+        enableHiding: false,
+        meta: { isPinned: "left" },
+        size: 40,
+      },
       {
         id: "name",
         accessorKey: "name",
@@ -198,5 +343,14 @@ export const useColumns = (
         ),
       },
     ],
-    [t, handleToggle, onEditConfiguration, onDeleteConfiguration]
+    [
+      t,
+      handleToggle,
+      onEditConfiguration,
+      onDeleteConfiguration,
+      handleCheckboxClick,
+      handleSelectAllClick,
+      totalFilteredItems,
+      isAllFilteredSelected,
+    ]
   );
