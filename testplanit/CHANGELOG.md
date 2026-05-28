@@ -1,3 +1,9 @@
+## [0.32.3](https://github.com/TestPlanIt/testplanit/compare/v0.32.2...v0.32.3) (2026-05-28)
+
+### Enhancements
+
+* **auto-tag:** include linked-issue context (Jira labels + components) ([#360](https://github.com/TestPlanIt/testplanit/issues/360)) ([c4f2695](https://github.com/TestPlanIt/testplanit/commit/c4f2695409e1a3787b2c3df123d8090973d84f56))
+
 ## [0.32.2](https://github.com/TestPlanIt/testplanit/compare/v0.32.1...v0.32.2) (2026-05-28)
 
 ### Enhancements
