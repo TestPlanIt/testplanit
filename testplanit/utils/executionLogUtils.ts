@@ -3,6 +3,16 @@ import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { authenticateRequest } from "~/lib/api-token-auth";
 import { authOptions } from "~/server/auth";
+import {
+  buildExpectedSlotsByCaseId,
+  mergeResultsIntoSlots,
+  type ExecutionLogStepRow,
+  type SharedGroupRow,
+  type SharedItemRow,
+  type StepRow,
+} from "./executionLogSlots";
+
+export type { ExecutionLogStepRow } from "./executionLogSlots";
 
 export interface ExecutionLogRow {
   id: number;
@@ -18,6 +28,7 @@ export interface ExecutionLogRow {
   elapsed: number | null;
   testRunCaseVersion: number;
   project?: { id: number; name: string; iconUrl?: string | null };
+  steps?: ExecutionLogStepRow[];
 }
 
 export async function handleExecutionLogPOST(
@@ -116,6 +127,19 @@ export async function handleExecutionLogPOST(
               project: { select: { id: true, name: true, iconUrl: true } },
             },
           },
+          stepResults: {
+            where: { isDeleted: false },
+            select: {
+              id: true,
+              executedAt: true,
+              elapsed: true,
+              stepId: true,
+              sharedStepItemId: true,
+              stepStatus: {
+                select: { name: true, color: { select: { value: true } } },
+              },
+            },
+          },
         },
         orderBy,
         skip,
@@ -144,33 +168,104 @@ export async function handleExecutionLogPOST(
       count: s._count.id,
     }));
 
-    const data: ExecutionLogRow[] = rawResults.map((r: any) => ({
-      id: r.id,
-      testCaseId: r.testRunCase.repositoryCase.id,
-      testCaseName: r.testRunCase.repositoryCase.name,
-      testCaseSource: r.testRunCase.repositoryCase.source,
-      testRunId: r.testRun.id,
-      testRunName: r.testRun.name,
-      testRunIsDeleted: r.testRun.isDeleted,
-      status: {
-        name: r.status.name,
-        color: r.status.color?.value ?? "#6b7280",
-      },
-      executedBy: {
-        id: r.executedBy.id,
-        name: r.executedBy.name,
-      },
-      executedAt: r.executedAt.toISOString(),
-      elapsed: r.elapsed ?? null,
-      testRunCaseVersion: r.testRunCaseVersion,
-      project: r.testRun.project
-        ? {
-            id: r.testRun.project.id,
-            name: r.testRun.project.name,
-            iconUrl: r.testRun.project.iconUrl,
-          }
-        : undefined,
-    }));
+    // Materialise the full step list for every test case in the page so
+    // sub-rows can include slots that have no TestRunStepResult yet (rendered
+    // as Untested). Otherwise the report would silently drop unrecorded steps.
+    const testCaseIds = new Set<number>();
+    for (const r of rawResults as any[]) {
+      testCaseIds.add(r.testRunCase.repositoryCase.id);
+    }
+
+    const caseSteps: StepRow[] =
+      testCaseIds.size > 0
+        ? ((await prisma.steps.findMany({
+            where: {
+              testCaseId: { in: [...testCaseIds] },
+              isDeleted: false,
+            },
+            select: {
+              id: true,
+              order: true,
+              testCaseId: true,
+              sharedStepGroupId: true,
+              step: true,
+              expectedResult: true,
+            },
+            orderBy: [{ order: "asc" }, { id: "asc" }],
+          })) as StepRow[])
+        : [];
+
+    const sharedGroupIds = new Set<number>();
+    for (const s of caseSteps) {
+      if (s.sharedStepGroupId != null) sharedGroupIds.add(s.sharedStepGroupId);
+    }
+
+    const [sharedItems, sharedGroups] = await Promise.all([
+      sharedGroupIds.size > 0
+        ? (prisma.sharedStepItem.findMany({
+            where: { sharedStepGroupId: { in: [...sharedGroupIds] } },
+            select: {
+              id: true,
+              order: true,
+              sharedStepGroupId: true,
+              step: true,
+              expectedResult: true,
+            },
+            orderBy: [{ order: "asc" }, { id: "asc" }],
+          }) as Promise<SharedItemRow[]>)
+        : Promise.resolve<SharedItemRow[]>([]),
+      sharedGroupIds.size > 0
+        ? prisma.sharedStepGroup.findMany({
+            where: { id: { in: [...sharedGroupIds] } },
+            select: { id: true, name: true },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const expectedSlotsByCaseId = buildExpectedSlotsByCaseId(
+      caseSteps,
+      sharedItems,
+      sharedGroups as SharedGroupRow[]
+    );
+
+    const data: ExecutionLogRow[] = rawResults.map((r: any) => {
+      const caseId = r.testRunCase.repositoryCase.id;
+      const expectedSlots = expectedSlotsByCaseId.get(caseId) ?? [];
+      const steps = mergeResultsIntoSlots(
+        expectedSlots,
+        r.stepResults ?? [],
+        r.id
+      );
+
+      return {
+        id: r.id,
+        testCaseId: r.testRunCase.repositoryCase.id,
+        testCaseName: r.testRunCase.repositoryCase.name,
+        testCaseSource: r.testRunCase.repositoryCase.source,
+        testRunId: r.testRun.id,
+        testRunName: r.testRun.name,
+        testRunIsDeleted: r.testRun.isDeleted,
+        status: {
+          name: r.status.name,
+          color: r.status.color?.value ?? "#6b7280",
+        },
+        executedBy: {
+          id: r.executedBy.id,
+          name: r.executedBy.name,
+        },
+        executedAt: r.executedAt.toISOString(),
+        elapsed: r.elapsed ?? null,
+        testRunCaseVersion: r.testRunCaseVersion,
+        project: r.testRun.project
+          ? {
+              id: r.testRun.project.id,
+              name: r.testRun.project.name,
+              iconUrl: r.testRun.project.iconUrl,
+            }
+          : undefined,
+        steps: steps.length > 0 ? steps : undefined,
+      };
+    });
 
     return Response.json({ data, total, statusBreakdown });
   } catch (e: unknown) {

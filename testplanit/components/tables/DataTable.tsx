@@ -8,6 +8,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Column,
   ColumnDef,
   ColumnPinningState,
@@ -89,6 +95,7 @@ interface DataTableProps<TData extends DataRow, TValue> {
   itemType?: string;
   getSubRows?: (originalRow: TData, index: number) => TData[] | undefined;
   subRowColumns?: ColumnDef<any, any>[];
+  subRowsLabel?: string;
   rowTestIdPrefix?: string;
 }
 
@@ -149,11 +156,13 @@ export function DataTable<TData extends DataRow, TValue>({
   itemType,
   getSubRows,
   subRowColumns: _subRowColumns,
+  subRowsLabel,
   rowTestIdPrefix = "case-row",
 }: DataTableProps<TData, TValue>) {
   const t = useTranslations("common.table");
   const tLabels = useTranslations("common.labels");
   const tCommon = useTranslations("common");
+  const tActions = useTranslations("common.actions");
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -405,28 +414,38 @@ export function DataTable<TData extends DataRow, TValue>({
     () => ({
       id: "expander",
       header: () => null,
-      cell: ({ row }) =>
-        row.getCanExpand() ? (
-          <button
-            {...{
-              onClick: row.getToggleExpandedHandler(),
-              style: { cursor: "pointer" },
-              className: "mr-2",
-            }}
-          >
-            <span
-              className="inline-flex items-center justify-center w-4 transition-transform duration-200"
-              style={{
-                transform: row.getIsExpanded()
-                  ? "rotate(90deg)"
-                  : "rotate(0deg)",
-              }}
-              aria-label={row.getIsExpanded() ? "Collapse" : "Expand"}
-            >
-              {"\u25B6"}
-            </span>
-          </button>
-        ) : null,
+      cell: ({ row }) => {
+        if (!row.getCanExpand()) return null;
+        const isExpanded = row.getIsExpanded();
+        const subRowsCount = row.subRows?.length ?? 0;
+        const tooltipText = isExpanded
+          ? tActions("collapse")
+          : `${tActions("expand")}${subRowsLabel && subRowsCount > 0 ? ` \u2022 ${subRowsCount} ${subRowsLabel}` : ""}`;
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={row.getToggleExpandedHandler()}
+                  style={{ cursor: "pointer" }}
+                  className="mr-2"
+                  aria-label={tooltipText}
+                >
+                  <span
+                    className="inline-flex items-center justify-center w-4 transition-transform duration-200"
+                    style={{
+                      transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
+                    }}
+                  >
+                    {"\u25B6"}
+                  </span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>{tooltipText}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      },
       size: 24,
       minSize: 24,
       maxSize: 24,
@@ -434,14 +453,14 @@ export function DataTable<TData extends DataRow, TValue>({
       enableHiding: false,
       meta: { isPinned: "left" },
     }),
-    []
+    [tActions, subRowsLabel]
   );
   const finalColumns = useMemo(() => {
-    if (grouping && grouping.length > 0) {
+    if ((grouping && grouping.length > 0) || getSubRows) {
       return [expanderColumn, ...columns];
     }
     return columns;
-  }, [columns, grouping, expanderColumn]);
+  }, [columns, grouping, expanderColumn, getSubRows]);
 
   const table = useReactTable({
     data: localData,
@@ -863,8 +882,9 @@ export function DataTable<TData extends DataRow, TValue>({
                     const { column } = cell;
                     let cellContent: React.ReactNode = null;
                     const _shouldIndent = cellIndex === 0 && isSubRow;
+                    const groupingActive = !!(grouping && grouping.length > 0);
 
-                    if (cell.getIsGrouped()) {
+                    if (groupingActive && cell.getIsGrouped()) {
                       // If grouped, show group label and count
                       // Only show count if there's no custom aggregatedCell (which handles its own display)
                       const showCount = !cell.column.columnDef.aggregatedCell;
@@ -904,14 +924,14 @@ export function DataTable<TData extends DataRow, TValue>({
                           )}
                         </div>
                       );
-                    } else if (cell.getIsAggregated()) {
+                    } else if (groupingActive && cell.getIsAggregated()) {
                       // If aggregated, show aggregate value
                       cellContent = flexRender(
                         cell.column.columnDef.aggregatedCell ??
                           cell.column.columnDef.cell,
                         cell.getContext()
                       );
-                    } else if (cell.getIsPlaceholder()) {
+                    } else if (groupingActive && cell.getIsPlaceholder()) {
                       cellContent = null;
                     } else {
                       cellContent = flexRender(
@@ -924,10 +944,11 @@ export function DataTable<TData extends DataRow, TValue>({
                         key={String(column.id)}
                         style={cellPinningStyleFn(column)}
                         className={`${column.getIsPinned() ? "bg-background shadow-md" : isSelected ? "bg-primary/20" : "bg-primary-foreground/80"} ${
-                          column.getIsPinned() &&
-                          !column.getIsLastColumn(
-                            column.getIsPinned() as "left" | "right"
-                          )
+                          column.id === "expander" ||
+                          (column.getIsPinned() &&
+                            !column.getIsLastColumn(
+                              column.getIsPinned() as "left" | "right"
+                            ))
                             ? "border-r-0"
                             : "border-r border-accent"
                         }`}
