@@ -1,3 +1,9 @@
+## [0.32.0](https://github.com/TestPlanIt/testplanit/compare/v0.31.8...v0.32.0) (2026-05-28)
+
+### Features
+
+* **integrations:** support GitHub Enterprise Server via configurable API base URL ([#357](https://github.com/TestPlanIt/testplanit/issues/357)) ([a8dfb24](https://github.com/TestPlanIt/testplanit/commit/a8dfb24330b1270deeaf8457bb3c1f45a72a2af0))
+
 ## [0.31.8](https://github.com/TestPlanIt/testplanit/compare/v0.31.7...v0.31.8) (2026-05-28)
 
 ### Bug Fixes
