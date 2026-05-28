@@ -125,7 +125,7 @@ Creating configurations involves picking Variants, choosing which combinations t
 4. **Step 3 — Assign Projects**
     - Pick the Projects the new Configurations should be available in. Projects are listed in three columns with their icons, sorted alphabetically.
     - **Select All** / **Deselect All** toggles every Project; **Shift+click** a Project checkbox to range-select.
-    - This step is optional — leaving it empty creates the Configurations unassigned and you can attach them to Projects later from this admin page or from the Project itself.
+    - This step is optional — leaving it empty creates the Configurations unassigned and you can attach them to Projects later from this admin page.
     - Click **Next**.
 5. **Step 4 — Review Configurations**
     - The dialog lists every Configuration that will be created (with the standard configuration icon) and the Projects they'll be assigned to.

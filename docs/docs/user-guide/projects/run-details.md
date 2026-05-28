@@ -82,7 +82,7 @@ This feature is useful for:
 
 - **Default View / Edit Mode**: Displays metadata and controls:
   - **State**: Shows the current workflow state. In Edit mode, it becomes a dropdown to change the state.
-  - **Configuration**: Shows the linked configuration. In Edit mode, it becomes a dropdown.
+  - **Configuration**: Shows the linked configuration. In Edit mode, it becomes a dropdown limited to [Configurations](../configurations.md) assigned to this project.
   - **Milestone**: Shows the linked milestone. In Edit mode, it becomes a dropdown (only active milestones are shown; completed milestones are excluded).
   - **Tags**: Displays assigned tags. In Edit mode, allows managing tags.
   - **Attachments**: Displays attachments. In Edit mode, allows uploading and managing attachments.

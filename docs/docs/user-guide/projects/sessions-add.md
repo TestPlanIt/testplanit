@@ -23,7 +23,7 @@ The dialog uses a two-column layout:
 - **Name** (Required): A unique name for the session.
 - **Description**: A rich-text editor for adding details or context about the session's purpose or observations.
 - **Mission**: A rich-text editor to define the goals, charter, or specific areas to explore during the session.
-- **Configurations**: A multi-select combobox to select one or more project [Configurations](../configurations.md). See [Multi-Configuration Support](#multi-configuration-support) below.
+- **Configurations**: A multi-select combobox to select one or more [Configurations](../configurations.md) assigned to this project. See [Multi-Configuration Support](#multi-configuration-support) below.
 - **Attachments**: Area to upload files relevant to the session definition (e.g., setup guides, relevant specifications).
 
 **Right Column:**

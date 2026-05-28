@@ -25,6 +25,8 @@ This step collects the core details for the new test run. The form is split into
   - **Multiple Configurations**: Use the multi-select combobox to select multiple configurations simultaneously
   - **None**: Select "None" if no specific configuration applies
 
+  Only Configurations [assigned to this project](../configurations.md) appear in the picker — if a Configuration you expect is missing, assign it to the project from the Configurations admin page.
+
   When multiple configurations are selected, a separate test run will be created for each configuration, all sharing the same test cases. These runs are grouped together in a "Configuration Group" allowing you to view aggregated data across all configurations. See [Multi-Configuration Support](./run-details.md#multi-configuration-support) for details on viewing multi-configuration data.
 - **Milestone**: A dropdown to link the test run to a specific project [Milestone](./milestones.md). Select "None" if it's not tied to a milestone.
   - If the modal was opened using the `+` button on a specific milestone group on the Test Runs page, that milestone will be pre-selected here.

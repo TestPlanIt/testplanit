@@ -77,7 +77,7 @@ Click the filter icon to access advanced filtering options:
 **Test Runs:**
 
 - Test Run Type - Regular or JUnit imports
-- Configurations - Filter by test configurations
+- Configurations - Filter by test [Configurations](./configurations.md); when scoped to a specific project, only Configurations assigned to that project are listed
 - Milestones - Filter by associated milestones
 - Completed - Show only completed runs
 - Elapsed Time - Filter by execution time
