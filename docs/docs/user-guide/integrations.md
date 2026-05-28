@@ -89,6 +89,7 @@ Connect to GitHub for issue tracking and repository integration.
 - Track issue status across both platforms
 - Personal Access Token authentication
 - Inbound webhook support for real-time status sync
+- Works with both github.com and **GitHub Enterprise Server** — set the integration's optional **API Base URL** to your GHES API root (typically `https://<your-host>/api/v3`) to point the adapter, scope probes, and repository sync at your enterprise instance instead of github.com
 
 ### 3. **GitLab Integration**
 

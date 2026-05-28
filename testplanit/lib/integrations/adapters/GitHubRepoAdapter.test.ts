@@ -5,6 +5,16 @@ import { GitHubRepoAdapter } from "./GitHubRepoAdapter";
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
+// SSRF protection does live DNS resolution in the GitRepoAdapter base class
+// (utils/ssrf.assertSsrfSafeResolved). api.github.com resolves at test time
+// so the existing happy-path tests work, but unresolved hostnames like
+// github.example.com fail with ENOTFOUND. Stub the SSRF checks so the GHES
+// tests below can use a non-resolving demo hostname.
+vi.mock("~/utils/ssrf", () => ({
+  assertSsrfSafeResolved: vi.fn().mockResolvedValue(undefined),
+  isSsrfSafe: vi.fn().mockReturnValue(true),
+}));
+
 function makeResponse(
   data: any,
   status = 200,
@@ -141,6 +151,67 @@ describe("GitHubRepoAdapter", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
+    });
+  });
+
+  describe("GitHub Enterprise Server (custom base URL)", () => {
+    it("hits the configured baseUrl instead of api.github.com", async () => {
+      const ghesAdapter = new GitHubRepoAdapter(
+        { personalAccessToken: "ghp_test123" },
+        {
+          owner: "myorg",
+          repo: "myrepo",
+          baseUrl: "https://github.example.com/api/v3",
+        }
+      );
+      (ghesAdapter as any).rateLimitDelay = 0;
+      (ghesAdapter as any).lastRequestTime = 0;
+      mockFetch.mockResolvedValueOnce(makeResponse({ default_branch: "main" }));
+
+      await ghesAdapter.getDefaultBranch();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://github.example.com/api/v3/repos/myorg/myrepo",
+        expect.any(Object)
+      );
+    });
+
+    it("normalizes a trailing slash on the baseUrl", async () => {
+      const ghesAdapter = new GitHubRepoAdapter(
+        { personalAccessToken: "ghp_test123" },
+        {
+          owner: "myorg",
+          repo: "myrepo",
+          baseUrl: "https://github.example.com/api/v3/",
+        }
+      );
+      (ghesAdapter as any).rateLimitDelay = 0;
+      (ghesAdapter as any).lastRequestTime = 0;
+      mockFetch.mockResolvedValueOnce(makeResponse({ default_branch: "main" }));
+
+      await ghesAdapter.getDefaultBranch();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://github.example.com/api/v3/repos/myorg/myrepo",
+        expect.any(Object)
+      );
+    });
+
+    it("defaults to api.github.com when baseUrl is omitted", async () => {
+      const ghComAdapter = new GitHubRepoAdapter(
+        { personalAccessToken: "ghp_test123" },
+        { owner: "myorg", repo: "myrepo" }
+      );
+      (ghComAdapter as any).rateLimitDelay = 0;
+      (ghComAdapter as any).lastRequestTime = 0;
+      mockFetch.mockResolvedValueOnce(makeResponse({ default_branch: "main" }));
+
+      await ghComAdapter.getDefaultBranch();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://api.github.com/repos/myorg/myrepo",
+        expect.any(Object)
+      );
     });
   });
 });

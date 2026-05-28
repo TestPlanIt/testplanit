@@ -48,6 +48,16 @@ const providerFields: Record<string, FieldConfig[]> = {
       isCredential: false,
       helpKey: "codeRepository.repo",
     },
+    {
+      // Optional — leave blank for github.com. GitHub Enterprise Server
+      // admins paste their API root here (typically ends in /api/v3).
+      name: "baseUrl",
+      label: "API Base URL (GitHub Enterprise Server only)",
+      placeholder: "https://github.example.com/api/v3",
+      isCredential: false,
+      helpKey: "codeRepository.githubBaseUrl",
+      isUrl: true,
+    },
   ],
   GITLAB: [
     {

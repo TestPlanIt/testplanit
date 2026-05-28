@@ -302,6 +302,69 @@ describe("POST /api/integrations/test-connection", () => {
       expect(data.success).toBe(false);
       expect(data.error).toContain("personal access token");
     });
+
+    it("probes the GitHub Enterprise Server base URL when settings.baseUrl is provided", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        json: async () => ({}),
+      });
+
+      const response = await POST(
+        createRequest({
+          provider: "GITHUB",
+          credentials: { personalAccessToken: "ghp_token123" },
+          settings: { baseUrl: "https://github.example.com/api/v3" },
+        })
+      );
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      // Auth probe + search probe + read probe all hit the GHES host
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://github.example.com/api/v3/user",
+        expect.any(Object)
+      );
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://github.example.com/api/v3/search/issues?q=is:issue&per_page=1",
+        expect.any(Object)
+      );
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://github.example.com/api/v3/issues?per_page=1&filter=all&state=open",
+        expect.any(Object)
+      );
+      // And no probe leaked to public github.com
+      const calledUrls = mockFetch.mock.calls.map((c: any[]) => c[0]);
+      expect(
+        calledUrls.some((u: string) => u.startsWith("https://api.github.com"))
+      ).toBe(false);
+    });
+
+    it("normalizes a trailing slash on settings.baseUrl", async () => {
+      (getServerSession as any).mockResolvedValue(mockSession);
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        json: async () => ({}),
+      });
+
+      await POST(
+        createRequest({
+          provider: "GITHUB",
+          credentials: { personalAccessToken: "ghp_token123" },
+          settings: { baseUrl: "https://github.example.com/api/v3/" },
+        })
+      );
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://github.example.com/api/v3/user",
+        expect.any(Object)
+      );
+    });
   });
 
   describe("AZURE_DEVOPS provider", () => {
