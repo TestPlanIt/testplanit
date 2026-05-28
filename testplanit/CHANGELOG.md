@@ -1,3 +1,9 @@
+## [0.31.8](https://github.com/TestPlanIt/testplanit/compare/v0.31.7...v0.31.8) (2026-05-28)
+
+### Bug Fixes
+
+* **copy-move:** prevent self-collision during same-project moves and enhance template preservation ([#356](https://github.com/TestPlanIt/testplanit/issues/356)) ([103c0a0](https://github.com/TestPlanIt/testplanit/commit/103c0a0dd14a8c1e6f10c5115e8173d4703488ca))
+
 ## [0.31.7](https://github.com/TestPlanIt/testplanit/compare/v0.31.6...v0.31.7) (2026-05-28)
 
 ### Bug Fixes
