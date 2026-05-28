@@ -237,9 +237,16 @@ export async function POST(request: Request) {
       where: {
         projectId: body.targetProjectId,
         isDeleted: false,
+        // A move within the same project would otherwise self-collide: the
+        // sources match themselves on (name, className, source). Exclude
+        // them so we only flag real conflicts with other cases. Copy keeps
+        // them included because the unique constraint really would block.
+        ...(body.operation === "move" ? { id: { notIn: body.caseIds } } : {}),
         OR: sourceNames.map((n) => ({
           name: n.name,
-          ...(n.className === null ? {} : { className: n.className }),
+          // Match NULL className explicitly — omitting the filter would
+          // match any className and flag unrelated cases as collisions.
+          className: n.className === null ? { equals: null } : n.className,
           source: n.source,
         })),
       },

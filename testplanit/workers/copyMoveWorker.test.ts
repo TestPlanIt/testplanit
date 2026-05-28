@@ -73,6 +73,10 @@ const mockPrisma = {
   },
   templateCaseAssignment: { findMany: vi.fn() },
   caseFieldAssignment: { findMany: vi.fn() },
+  // Worker pre-fetches target project's assigned templates so source
+  // templates can be preserved per case when still assigned. Default to
+  // empty so existing tests fall through to job.data.targetTemplateId.
+  templateProjectAssignment: { findMany: vi.fn().mockResolvedValue([]) },
   $transaction: vi.fn((fn: Function) => fn(mockTx)),
   $disconnect: vi.fn(),
 };
@@ -222,10 +226,11 @@ async function loadWorker() {
 
 type JobData = Omit<
   typeof baseCopyJobData,
-  "operation" | "sharedStepGroupResolution"
+  "operation" | "sharedStepGroupResolution" | "conflictResolution"
 > & {
   operation: "copy" | "move";
   sharedStepGroupResolution: "reuse" | "create_new";
+  conflictResolution: "skip" | "rename";
 };
 
 function makeMockJob(
@@ -803,29 +808,30 @@ describe("CopyMoveWorker", () => {
       expect(mockPrisma.repositoryCases.updateMany).toHaveBeenCalledTimes(1);
     });
 
-    it("DATA-LOSS-01: should NOT soft-delete source cases when all are skipped (same-project move + skip)", async () => {
-      // Regression guard: same-project self-collision with conflictResolution:"skip"
-      // previously caused copiedCount=0 but the unconditional updateMany still ran,
-      // silently deleting originals. The fix gates soft-delete on createdTargetIds.
-      const sameProjSkipMoveJobData = {
+    it("DATA-LOSS-01: should NOT soft-delete source cases when all are skipped (real collision + skip)", async () => {
+      // Regression guard: when every case is skipped, the unconditional
+      // updateMany used to fire and silently soft-delete the originals.
+      // The fix gates soft-delete on createdTargetIds. Note: a same-project
+      // move no longer self-collides (see SELF-COLLISION-01), so to actually
+      // exercise the "all skipped" branch the collision has to be a real
+      // non-source case with the same name.
+      const skipMoveJobData = {
         ...baseMoveJobData,
-        sourceProjectId: 20,
-        targetProjectId: 20,
         caseIds: [1],
         conflictResolution: "skip" as const,
       };
 
       // First findFirst = max-order pre-fetch → null.
-      // Second findFirst = collision check → source case found (self-collision).
+      // Second findFirst = collision check → unrelated case with same name.
       mockPrisma.repositoryCases.findFirst
         .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce({ id: 1 });
+        .mockResolvedValueOnce({ id: 9999 });
 
       mockPrisma.repositoryCaseVersions.findMany.mockResolvedValue([]);
 
       const { processor } = await loadWorker();
       const result = await processor(
-        makeMockJob({ data: sameProjSkipMoveJobData }) as Job
+        makeMockJob({ data: skipMoveJobData }) as Job
       );
 
       // Every case was skipped — source should NOT be soft-deleted
@@ -833,6 +839,64 @@ describe("CopyMoveWorker", () => {
       expect(result.skippedCount).toBe(1);
       expect(result.copiedCount).toBe(0);
       expect(result.movedCount).toBe(0);
+    });
+
+    it("SELF-COLLISION-01: same-project move does NOT treat source as its own collision", async () => {
+      // Customer-reported: moving a case within the same project showed a
+      // Skip/Rename conflict because the (name, className, source) tuple
+      // matched the case being moved. Fix excludes the move source IDs
+      // from the collision lookup.
+      const sameProjMoveJobData = {
+        ...baseMoveJobData,
+        sourceProjectId: 20,
+        targetProjectId: 20,
+        caseIds: [1],
+        conflictResolution: "skip" as const,
+      };
+
+      mockPrisma.repositoryCaseVersions.findMany.mockResolvedValue([]);
+
+      const { processor } = await loadWorker();
+      const result = await processor(
+        makeMockJob({ data: sameProjMoveJobData }) as Job
+      );
+
+      // The collision query must scope out the source case
+      const collisionCall =
+        mockPrisma.repositoryCases.findFirst.mock.calls[1]?.[0];
+      expect(collisionCall?.where?.id).toEqual({ notIn: [1] });
+
+      // Case is actually moved, not skipped
+      expect(mockTx.repositoryCases.create).toHaveBeenCalledTimes(1);
+      expect(result.movedCount).toBe(1);
+      expect(result.skippedCount).toBe(0);
+      expect(mockPrisma.repositoryCases.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: [1] } },
+        data: { isDeleted: true },
+      });
+    });
+
+    it("SELF-COLLISION-02: same-project move + rename does NOT append (copy) suffix when no real collision exists", async () => {
+      // Companion to SELF-COLLISION-01: Rename used to land "Foo (copy)"
+      // because the source matched itself. Post-fix the name is preserved.
+      const sameProjRenameMoveJobData = {
+        ...baseMoveJobData,
+        sourceProjectId: 20,
+        targetProjectId: 20,
+        caseIds: [1],
+        conflictResolution: "rename" as const,
+      };
+
+      mockPrisma.repositoryCaseVersions.findMany.mockResolvedValue([]);
+
+      const { processor } = await loadWorker();
+      await processor(makeMockJob({ data: sameProjRenameMoveJobData }) as Job);
+
+      expect(mockTx.repositoryCases.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ name: "Test Case 1" }),
+        })
+      );
     });
 
     it("should set movedCount equal to copiedCount on successful move", async () => {
@@ -843,6 +907,46 @@ describe("CopyMoveWorker", () => {
 
       expect(result.movedCount).toBe(1);
       expect(result.copiedCount).toBe(0);
+    });
+  });
+
+  // ─── Per-case template preservation ───────────────────────────────────────
+
+  describe("target template selection", () => {
+    it("TEMPLATE-01: preserves the source case's template when it is assigned to the target project", async () => {
+      // Customer-reported: moving a "Case (steps)" case landed in the
+      // target as "Case (exploratory)" because the worker overwrote
+      // templateId with job.data.targetTemplateId (the target's first
+      // assignment) regardless of what was assigned. Now we preserve the
+      // source template when it is still assigned to the target.
+      mockPrisma.templateProjectAssignment.findMany.mockResolvedValue([
+        { templateId: 30 }, // source case uses templateId 30
+        { templateId: 50 }, // job.data.targetTemplateId — would have been used previously
+      ]);
+
+      const { processor } = await loadWorker();
+      await processor(makeMockJob() as Job);
+
+      expect(mockTx.repositoryCases.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ templateId: 30 }),
+        })
+      );
+    });
+
+    it("TEMPLATE-02: falls back to job.data.targetTemplateId when the source template is not assigned to the target project", async () => {
+      mockPrisma.templateProjectAssignment.findMany.mockResolvedValue([
+        { templateId: 50 }, // only job.data.targetTemplateId is assigned
+      ]);
+
+      const { processor } = await loadWorker();
+      await processor(makeMockJob() as Job);
+
+      expect(mockTx.repositoryCases.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ templateId: 50 }),
+        })
+      );
     });
   });
 
