@@ -88,6 +88,7 @@
       "addToTestRun": "Dodaj do uruchomienia testowego",
       "status": "Status",
       "resultDetailsPlaceholder": "Wprowadź szczegóły wyników...",
+      "select": "Wybierać",
       "selectAll": "Zaznacz wszystko",
       "deselectAll": "Odznacz wszystko",
       "clearAll": "Wyczyść wszystko",
@@ -4023,7 +4024,9 @@
           "noIntegrations": "Obecnie nie skonfigurowano żadnych integracji. Możesz pominąć ten krok lub skonfigurować integracje później.",
           "aiModels": "Włącz modele AI do generowania przypadków testowych i inteligentnych sugestii.",
           "permissions": "Skonfiguruj dostęp użytkowników i uprawnienia grupy dla tego projektu.",
-          "milestoneTypes": "Wybierz typy kamieni milowych, aby śledzić postęp projektu i terminy."
+          "milestoneTypes": "Wybierz typy kamieni milowych, aby śledzić postęp projektu i terminy.",
+          "configurations": "Wybierz konfiguracje dostępne w tym projekcie. Projekty zaczynają bez konfiguracji i wybierają konfiguracje, których potrzebują.",
+          "noConfigurations": "Obecnie nie zdefiniowano żadnych konfiguracji. Możesz je dodać później w Administracji."
         },
         "actions": {
           "selectDefault": "Użyj domyślnego",
@@ -4515,6 +4518,21 @@
       "addConfiguration": "Dodaj konfigurację",
       "editConfiguration": "Edytuj konfigurację",
       "filterPlaceholder": "Konfiguracje filtrów...",
+      "allProjects": "Wszystkie projekty",
+      "selectAllTooltip": "Zaznacz/Odznacz wszystkie konfiguracje na tej stronie",
+      "selectAllShiftTooltip": "{count, plural, =0 {Zaznacz/Odznacz wszystkie konfiguracje na wszystkich stronach} one {Zaznacz/Odznacz # konfiguracji na wszystkich stronach} other {Zaznacz/Odznacz # konfiguracji na wszystkich stronach}}",
+      "deselectAllShiftTooltip": "Odznacz/Zaznacz wszystkie konfiguracje na wszystkich stronach",
+      "shiftClickHint": "Przytrzymaj klawisz Shift, aby zaznaczyć/odznaczyć wszystkie strony",
+      "bulkEdit": {
+        "button": "{count, plural, one {Edytuj 1 konfigurację} other {Edytuj # konfiguracji}}",
+        "title": "{count, plural, one {Edytuj projekty w 1 konfiguracji} other {Edytuj projekty w # konfiguracjach}}",
+        "description": "Zastąp przypisania projektu w wybranych konfiguracjach. Nazwy konfiguracji nie można edytować zbiorczo.",
+        "applyButton": "{count, plural, one {Zastosuj do 1 konfiguracji} other {Zastosuj do # konfiguracji}}",
+        "deleteButton": "{count, plural, one {Usuń 1 konfigurację} other {Usuń # konfiguracji}}",
+        "deleteConfirmTitle": "{count, plural, one {Usunąć 1 konfigurację?} other {Usunąć # konfiguracji?}}",
+        "deleteConfirmMessage": "{count, plural, one {Spowoduje to usunięcie 1 konfiguracji. Tej czynności nie można cofnąć.} other {Spowoduje to usunięcie # konfiguracji. Tej czynności nie można cofnąć.}}",
+        "applyEnabledLabel": "Zmień stan włączenia"
+      },
       "categories": {
         "title": "Kategorie",
         "description": "Zarządzaj kategoriami globalnymi",
@@ -5839,7 +5857,9 @@
       "platform": "## Platforma\nSamodzielnie hostowana platforma Git, z którą się łączysz.\n\n- **Gitea**: instancje oparte na gitea.io\n- **Forgejo**: instancje oparte na forgejo.org (fork Gitea)\n- **Gogs**: instancje oparte na gogs.io\n\nKontroluje, która ikona jest wyświetlana, i może mieć wpływ na zgodność z API."
     },
     "config": {
-      "name": "## Nazwa konfiguracji\nJasna, opisowa nazwa używana we wszystkich projektach.\n\n— pomaga opisać warianty konfiguracji (np. „Chrome, Windows 10”, „Safari/macOS 15.5”, „Edge/Windows 11” itd.)."
+      "name": "## Nazwa konfiguracji\nJasna, opisowa nazwa tej konfiguracji.\n\n— Pomaga opisać warianty konfiguracji (np. „Chrome, Windows 10”, „Safari/macOS 15.5”, „Edge/Windows 11” itd.).",
+      "projects": "## Projekty\nWskazuje projekty, które mogą korzystać z tej konfiguracji.",
+      "bulkEnabledState": "## Ustaw stan włączenia\nPozostaw pole wyboru niezaznaczone, aby pozostawić stan włączenia każdej wybranej konfiguracji bez zmian.\n\n- Zaznacz pole wyboru, aby zastosować wartość przełącznika do każdej wybranej konfiguracji podczas przesyłania.\n- Wyłączenie wyłącza konfiguracje; włączenie je włącza."
     },
     "configCategory": {
       "name": "## Nazwa kategorii\nJasna, opisowa nazwa używana we wszystkich projektach.\n\n— pomaga organizować warianty (np. Chrome, Firefox, Safari, Edge itd.) w kategorie (np. przeglądarki)."

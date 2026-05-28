@@ -88,6 +88,7 @@
       "addToTestRun": "Thêm vào Chạy thử",
       "status": "Trạng thái",
       "resultDetailsPlaceholder": "Nhập chi tiết kết quả...",
+      "select": "Lựa chọn",
       "selectAll": "Chọn tất cả",
       "deselectAll": "Bỏ chọn tất cả",
       "clearAll": "Xóa tất cả",
@@ -4023,7 +4024,9 @@
           "noIntegrations": "Hiện tại chưa có tích hợp nào được cấu hình. Bạn có thể bỏ qua bước này hoặc cấu hình tích hợp sau.",
           "aiModels": "Kích hoạt các mô hình AI để tạo trường hợp thử nghiệm và đưa ra các đề xuất thông minh.",
           "permissions": "Cấu hình quyền truy cập người dùng và quyền nhóm cho dự án này.",
-          "milestoneTypes": "Chọn các loại mốc quan trọng để theo dõi tiến độ dự án và thời hạn."
+          "milestoneTypes": "Chọn các loại mốc quan trọng để theo dõi tiến độ dự án và thời hạn.",
+          "configurations": "Hãy chọn các cấu hình có sẵn trong dự án này. Các dự án bắt đầu với không có cấu hình nào và sẽ tự động chọn các cấu hình cần thiết.",
+          "noConfigurations": "Hiện tại chưa có cấu hình nào được thiết lập. Bạn có thể thêm chúng sau trong phần Quản trị."
         },
         "actions": {
           "selectDefault": "Sử dụng mặc định",
@@ -4515,6 +4518,21 @@
       "addConfiguration": "Thêm cấu hình",
       "editConfiguration": "Chỉnh sửa cấu hình",
       "filterPlaceholder": "Cấu hình bộ lọc...",
+      "allProjects": "Tất cả các dự án",
+      "selectAllTooltip": "Chọn/Bỏ chọn tất cả các cấu hình trên trang này",
+      "selectAllShiftTooltip": "{count, plural, =0 {Chọn/Bỏ chọn tất cả cấu hình trên tất cả các trang} one {Chọn/Bỏ chọn # cấu hình trên tất cả các trang} other {Chọn/Bỏ chọn # cấu hình trên tất cả các trang}}",
+      "deselectAllShiftTooltip": "Bỏ chọn/Chọn tất cả cấu hình trên tất cả các trang.",
+      "shiftClickHint": "Giữ phím Shift để chọn/bỏ chọn tất cả các trang.",
+      "bulkEdit": {
+        "button": "{count, plural, one {Chỉnh sửa cấu hình 1} other {Chỉnh sửa # cấu hình}}",
+        "title": "{count, plural, one {Chỉnh sửa dự án trên 1 cấu hình} other {Chỉnh sửa dự án trên # cấu hình}}",
+        "description": "Thay thế các nhiệm vụ dự án trên các cấu hình đã chọn. Không thể chỉnh sửa tên cấu hình hàng loạt.",
+        "applyButton": "{count, plural, one {Áp dụng cho 1 cấu hình} other {Áp dụng cho # cấu hình}}",
+        "deleteButton": "{count, plural, one {Xóa 1 cấu hình} other {Xóa # cấu hình}}",
+        "deleteConfirmTitle": "{count, plural, one {Xóa 1 cấu hình?} other {Xóa # cấu hình?}}",
+        "deleteConfirmMessage": "{count, plural, one {Thao tác này sẽ xóa 1 cấu hình. Không thể hoàn tác.} other {Thao tác này sẽ xóa # cấu hình. Không thể hoàn tác.}}",
+        "applyEnabledLabel": "Thay đổi trạng thái được kích hoạt"
+      },
       "categories": {
         "title": "Thể loại",
         "description": "Quản lý các danh mục toàn cầu",
@@ -5839,7 +5857,9 @@
       "platform": "## Nền tảng\nNền tảng Git tự lưu trữ mà bạn đang kết nối.\n\n- **Gitea**: các phiên bản dựa trên gitea.io\n- **Forgejo**: các phiên bản dựa trên forgejo.org (phiên bản phân nhánh của Gitea)\n- **Gogs**: các phiên bản dựa trên gogs.io\n\nĐiều này kiểm soát biểu tượng nào được hiển thị và có thể ảnh hưởng đến khả năng tương thích API."
     },
     "config": {
-      "name": "## Tên Cấu hình\nMột tên rõ ràng, mô tả được sử dụng trong tất cả các dự án.\n\n- Giúp mô tả các tổ hợp biến thể tạo nên Cấu hình (ví dụ: \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", v.v.)."
+      "name": "## Tên Cấu Hình\nMột tên rõ ràng, mô tả cho cấu hình này.\n\n- Giúp mô tả các tổ hợp biến thể tạo nên Cấu Hình (ví dụ: \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", v.v.).",
+      "projects": "## Dự án\nCho biết các dự án có thể sử dụng cấu hình này.",
+      "bulkEnabledState": "## Thiết lập trạng thái kích hoạt\nĐể trống ô kiểm để giữ nguyên trạng thái kích hoạt của mỗi cấu hình đã chọn.\n\n- Chọn ô để áp dụng giá trị của công tắc cho mọi cấu hình đã chọn khi gửi.\n- Tắt công tắc sẽ vô hiệu hóa các cấu hình; bật công tắc sẽ kích hoạt chúng."
     },
     "configCategory": {
       "name": "## Tên Danh mục\nMột tên rõ ràng, mô tả được sử dụng trong tất cả các dự án.\n\n- Giúp sắp xếp các biến thể (ví dụ: Chrome, Firefox, Safari, Edge, v.v.) vào các danh mục (ví dụ: Trình duyệt)."

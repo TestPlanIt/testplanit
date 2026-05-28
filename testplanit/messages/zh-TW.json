@@ -88,6 +88,7 @@
       "addToTestRun": "新增到測試運行",
       "status": "地位",
       "resultDetailsPlaceholder": "請輸入結果詳情…",
+      "select": "選擇",
       "selectAll": "全選",
       "deselectAll": "取消選擇所有",
       "clearAll": "全部清除",
@@ -4023,7 +4024,9 @@
           "noIntegrations": "目前尚未配置任何整合。您可以跳過此步驟或稍後配置整合。",
           "aiModels": "啟用人工智慧模型，用於產生測試用例和提供智慧建議。",
           "permissions": "配置此項目的使用者存取權限和群組權限。",
-          "milestoneTypes": "選擇里程碑類型以追蹤專案進度和截止日期。"
+          "milestoneTypes": "選擇里程碑類型以追蹤專案進度和截止日期。",
+          "configurations": "請選擇此項目中可用的配置。專案初始狀態下不包含任何配置，然後根據需要選擇啟用哪些配置。",
+          "noConfigurations": "目前尚未定義任何配置。您可以稍後在管理背景新增配置。"
         },
         "actions": {
           "selectDefault": "使用預設值",
@@ -4515,6 +4518,21 @@
       "addConfiguration": "新增配置",
       "editConfiguration": "編輯配置",
       "filterPlaceholder": "過濾器配置...",
+      "allProjects": "所有項目",
+      "selectAllTooltip": "選取/取消選取此頁面上的所有配置",
+      "selectAllShiftTooltip": "{count, plural, =0 {Select/Deselect all configurations across all pages} one {Select/Deselect # configuration across all pages} other {Select/Deselect # configurations across all pages}}",
+      "deselectAllShiftTooltip": "取消選擇/選擇所有頁面上的所有配置",
+      "shiftClickHint": "按住 Shift 鍵可選擇/取消選擇所有頁面",
+      "bulkEdit": {
+        "button": "{count, plural, one {編輯 1 個設定} other {編輯 # 個設定}}",
+        "title": "{count, plural, one {編輯 1 個配置上的項目} other {編輯 # 個配置上的項目}}",
+        "description": "取代所選配置中的項目分配。配置名稱無法批次編輯。",
+        "applyButton": "{count, plural, one {應用於 1 個配置} other {應用於 # 個配置}}",
+        "deleteButton": "{count, plural, one {刪除 1 個設定} other {刪除 # 個設定}}",
+        "deleteConfirmTitle": "{count, plural, one {Delete 1 configuration?} other {Delete # configurations?}}",
+        "deleteConfirmMessage": "{count, plural, one {This will delete 1 configuration. This action cannot be undone.} other {This will delete # configurations. This action cannot be undone.}}",
+        "applyEnabledLabel": "更改已啟用狀態"
+      },
       "categories": {
         "title": "類別",
         "description": "管理全球類別",
@@ -5839,7 +5857,9 @@
       "platform": "## Platform\nThe self-hosted Git platform you are connecting to.\n\n- **Gitea**: gitea.io-based instances\n- **Forgejo**: forgejo.org-based instances (Gitea fork)\n- **Gogs**: gogs.io-based instances\n\nThis controls which icon is shown and may affect API compatibility."
     },
     "config": {
-      "name": "## 設定名稱\n一個清晰、描述性的名稱，在所有項目中使用。\n\n- 有助於描述構成配置的變體組合（例如「Chrome，Windows 10」、「Safari/macOS 15.5」、「Edge/Windows 11」等）。"
+      "name": "## 設定名稱\n此組態的清晰、描述性名稱。\n\n- 有助於描述構成配置的變體組合（例如「Chrome，Windows 10」、「Safari/macOS 15.5」、「Edge/Windows 11」等）。",
+      "projects": "## 項目\n指示可以使用此配置的項目。",
+      "bulkEnabledState": "## 設定啟用狀態\n取消選取此複選框，將保持每個選取配置的啟用狀態不變。\n\n- 勾選此複選框，提交時將開關的值套用至每個選取的配置。\n- 關閉此複選框將停用設定；開啟此複選框將啟用設定。"
     },
     "configCategory": {
       "name": "## 類別名稱\n一個清晰、描述性的名稱，用於所有項目。\n\n- 有助於將變體（例如 Chrome、Firefox、Safari、Edge 等）組織到類別（例如瀏覽器）中。"

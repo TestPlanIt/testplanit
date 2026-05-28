@@ -4530,9 +4530,8 @@
         "applyButton": "{count, plural, one {Apply to 1 configuration} other {Apply to # configurations}}",
         "deleteButton": "{count, plural, one {Delete 1 configuration} other {Delete # configurations}}",
         "deleteConfirmTitle": "{count, plural, one {Delete 1 configuration?} other {Delete # configurations?}}",
-        "deleteConfirmMessage": "{count, plural, one {This will delete 1 configuration. This action cannot be undone from the UI.} other {This will delete # configurations. This action cannot be undone from the UI.}}",
-        "enableButton": "{count, plural, one {Enable 1 configuration} other {Enable # configurations}}",
-        "disableButton": "{count, plural, one {Disable 1 configuration} other {Disable # configurations}}"
+        "deleteConfirmMessage": "{count, plural, one {This will delete 1 configuration. This action cannot be undone.} other {This will delete # configurations. This action cannot be undone.}}",
+        "applyEnabledLabel": "Change enabled state"
       },
       "categories": {
         "title": "Categories",
@@ -5859,7 +5858,8 @@
     },
     "config": {
       "name": "## Configuration Name\nA clear, descriptive name for this configuration.\n\n- Helps describe the variant cominations that make up the Configuration (e.g. \"Chrome, Windows 10\",  \"Safari/macOS 15.5\", \"Edge/Windows 11\", etc.).",
-      "projects": "## Projects\nIndicates the projects that can use this configuration."
+      "projects": "## Projects\nIndicates the projects that can use this configuration.",
+      "bulkEnabledState": "## Set Enabled State\nLeave the checkbox unchecked to leave each selected configuration's enabled state untouched.\n\n- Check the box to apply the switch's value to every selected configuration on submit.\n- Switch off disables the configurations; switch on enables them."
     },
     "configCategory": {
       "name": "## Category Name\nA clear, descriptive name that is used across all projects.\n\n- Helps organize variants (e.g. Chrome, Firefox, Safari, Edge, etc.) into categories (e.g. Browsers)."

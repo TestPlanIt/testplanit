@@ -15,6 +15,9 @@ import {
 import { getCustomStyles } from "~/styles/multiSelectStyles";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 
 import {
   AlertDialog,
@@ -50,6 +53,15 @@ import { HelpPopover } from "@/components/ui/help-popover";
 
 const FormSchema = z.object({
   projects: z.array(z.number()),
+  // Opt-in: when `applyProjects` is true, the project assignments on every
+  // selected configuration are replaced with `projects`. When false, the
+  // project assignments are left untouched.
+  applyProjects: z.boolean(),
+  // Opt-in: when `applyEnabled` is true, the bulk-edit also sets isEnabled
+  // on every selected configuration to the value of `enabledState`. When false
+  // the enabled state is left untouched.
+  applyEnabled: z.boolean(),
+  enabledState: z.boolean(),
 });
 
 type BulkEditFormData = z.infer<typeof FormSchema>;
@@ -76,30 +88,7 @@ export function BulkEditConfigurations({
 }: BulkEditConfigurationsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isToggling, setIsToggling] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-
-  async function bulkSetEnabled(isEnabled: boolean) {
-    if (configurationIds.length === 0) {
-      onClose();
-      return;
-    }
-    setIsToggling(true);
-    try {
-      await updateManyConfigurations({
-        where: { id: { in: configurationIds } },
-        data: { isEnabled },
-      });
-      onClose();
-    } catch {
-      form.setError("root", {
-        type: "custom",
-        message: tCommon("errors.unknown"),
-      });
-    } finally {
-      setIsToggling(false);
-    }
-  }
   const tCommon = useTranslations("common");
   const t = useTranslations("admin.configurations");
   const { mutateAsync: createManyProjectConfigurationAssignment } =
@@ -127,8 +116,19 @@ export function BulkEditConfigurations({
 
   const form = useForm<BulkEditFormData>({
     resolver: zodResolver(FormSchema),
-    defaultValues: { projects: [] },
+    defaultValues: {
+      projects: [],
+      // Defaults are unchecked, which makes both project and enabled-state
+      // changes opt-in. Without checking the gate the corresponding field is
+      // disabled and the submit leaves that aspect untouched.
+      applyProjects: false,
+      applyEnabled: false,
+      enabledState: true,
+    },
   });
+  const applyProjects = form.watch("applyProjects");
+  const applyEnabled = form.watch("applyEnabled");
+  const enabledState = form.watch("enabledState");
 
   const { control } = form;
 
@@ -150,19 +150,32 @@ export function BulkEditConfigurations({
     }
     setIsSubmitting(true);
     try {
-      // Replace assignments for all selected configurations.
-      await deleteManyProjectConfigurationAssignment({
-        where: { configurationId: { in: configurationIds } },
-      });
+      // Replace project assignments only when the gate is checked; leaves the
+      // existing assignments untouched when the user only wants to flip the
+      // enabled state.
+      if (data.applyProjects) {
+        await deleteManyProjectConfigurationAssignment({
+          where: { configurationId: { in: configurationIds } },
+        });
 
-      if (data.projects.length > 0) {
-        await createManyProjectConfigurationAssignment({
-          data: configurationIds.flatMap((configurationId) =>
-            data.projects.map((projectId) => ({
-              configurationId,
-              projectId,
-            }))
-          ),
+        if (data.projects.length > 0) {
+          await createManyProjectConfigurationAssignment({
+            data: configurationIds.flatMap((configurationId) =>
+              data.projects.map((projectId) => ({
+                configurationId,
+                projectId,
+              }))
+            ),
+          });
+        }
+      }
+
+      // Opt-in: flip isEnabled on every selected configuration when the user
+      // checked the "Set enabled state" gate.
+      if (data.applyEnabled) {
+        await updateManyConfigurations({
+          where: { id: { in: configurationIds } },
+          data: { isEnabled: data.enabledState },
         });
       }
 
@@ -181,13 +194,47 @@ export function BulkEditConfigurations({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] lg:max-w-[1000px]">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-8 flex flex-col min-h-[480px]"
+          >
             <DialogHeader>
               <DialogTitle>
                 {t("bulkEdit.title", { count: configurationIds.length })}
               </DialogTitle>
               <DialogDescription>{t("bulkEdit.description")}</DialogDescription>
             </DialogHeader>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="bulk-apply-enabled"
+                className="flex justify-between items-center"
+              >
+                <span className="flex items-center">
+                  {t("bulkEdit.applyEnabledLabel")}
+                  <HelpPopover helpKey="config.bulkEnabledState" />
+                </span>
+              </Label>
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  id="bulk-apply-enabled"
+                  checked={applyEnabled}
+                  onCheckedChange={(value) => {
+                    form.setValue("applyEnabled", !!value);
+                  }}
+                  data-testid="bulk-apply-enabled-checkbox"
+                />
+                <Switch
+                  checked={enabledState}
+                  onCheckedChange={(value) =>
+                    form.setValue("enabledState", value)
+                  }
+                  disabled={!applyEnabled}
+                  data-testid="bulk-enabled-state-switch"
+                />
+              </div>
+            </div>
+
             <FormField
               control={form.control}
               name="projects"
@@ -198,45 +245,58 @@ export function BulkEditConfigurations({
                       {tCommon("fields.projects")}
                       <HelpPopover helpKey="config.projects" />
                     </span>
-                    <div
-                      onClick={selectAllProjects}
-                      style={{ cursor: "pointer" }}
-                    >
-                      {tCommon("actions.selectAll")}
-                    </div>
+                    {applyProjects && (
+                      <div
+                        onClick={selectAllProjects}
+                        style={{ cursor: "pointer" }}
+                      >
+                        {tCommon("actions.selectAll")}
+                      </div>
+                    )}
                   </FormLabel>
                   <FormControl>
-                    <Controller
-                      control={control}
-                      name="projects"
-                      render={({ field }) => (
-                        <MultiSelect
-                          {...field}
-                          isMulti
-                          maxMenuHeight={300}
-                          className="w-[445px] sm:w-[550px] lg:w-[950px]"
-                          classNamePrefix="select"
-                          styles={customStyles}
-                          options={projectOptions}
-                          onChange={(selected: any) => {
-                            const value = selected
-                              ? selected.map((option: any) => option.value)
-                              : [];
-                            field.onChange(value);
-                          }}
-                          value={projectOptions.filter((option) =>
-                            field.value?.includes(option.value)
-                          )}
-                        />
-                      )}
-                    />
+                    <div className="flex items-center gap-3">
+                      <Checkbox
+                        id="bulk-apply-projects"
+                        checked={applyProjects}
+                        onCheckedChange={(value) => {
+                          form.setValue("applyProjects", !!value);
+                        }}
+                        data-testid="bulk-apply-projects-checkbox"
+                      />
+                      <Controller
+                        control={control}
+                        name="projects"
+                        render={({ field }) => (
+                          <MultiSelect
+                            {...field}
+                            isMulti
+                            isDisabled={!applyProjects}
+                            maxMenuHeight={300}
+                            className="grow w-[400px] sm:w-[500px] lg:w-[900px]"
+                            classNamePrefix="select"
+                            styles={customStyles}
+                            options={projectOptions}
+                            onChange={(selected: any) => {
+                              const value = selected
+                                ? selected.map((option: any) => option.value)
+                                : [];
+                              field.onChange(value);
+                            }}
+                            value={projectOptions.filter((option) =>
+                              field.value?.includes(option.value)
+                            )}
+                          />
+                        )}
+                      />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <DialogFooter className="sm:justify-between">
+            <DialogFooter className="sm:justify-between mt-auto">
               {errors.root && (
                 <div
                   className="bg-destructive text-destructive-foreground text-sm p-2"
@@ -245,49 +305,22 @@ export function BulkEditConfigurations({
                   {errors.root.message || tCommon("errors.unknown")}
                 </div>
               )}
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  variant="destructive"
-                  disabled={isSubmitting || isDeleting || isToggling}
-                  onClick={() => setIsDeleteConfirmOpen(true)}
-                  data-testid="bulk-delete-configurations-button"
-                >
-                  {t("bulkEdit.deleteButton", {
-                    count: configurationIds.length,
-                  })}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={isSubmitting || isDeleting || isToggling}
-                  onClick={() => bulkSetEnabled(false)}
-                  data-testid="bulk-disable-configurations-button"
-                >
-                  {t("bulkEdit.disableButton", {
-                    count: configurationIds.length,
-                  })}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={isSubmitting || isDeleting || isToggling}
-                  onClick={() => bulkSetEnabled(true)}
-                  data-testid="bulk-enable-configurations-button"
-                >
-                  {t("bulkEdit.enableButton", {
-                    count: configurationIds.length,
-                  })}
-                </Button>
-              </div>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={isSubmitting || isDeleting}
+                onClick={() => setIsDeleteConfirmOpen(true)}
+                data-testid="bulk-delete-configurations-button"
+              >
+                {t("bulkEdit.deleteButton", {
+                  count: configurationIds.length,
+                })}
+              </Button>
               <div className="flex gap-2 sm:gap-2">
                 <Button variant="outline" type="button" onClick={onClose}>
                   {tCommon("cancel")}
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting || isDeleting || isToggling}
-                >
+                <Button type="submit" disabled={isSubmitting || isDeleting}>
                   {isSubmitting
                     ? tCommon("actions.submitting")
                     : t("bulkEdit.applyButton", {
@@ -325,7 +358,7 @@ export function BulkEditConfigurations({
             <AlertDialogAction
               type="button"
               disabled={isDeleting}
-              className="bg-destructive hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={async (e) => {
                 // Prevent the default AlertDialog close so we can keep it open
                 // until the async soft-delete resolves.

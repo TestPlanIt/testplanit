@@ -88,6 +88,7 @@
       "addToTestRun": "Test Çalıştırmasına Ekle",
       "status": "Durum",
       "resultDetailsPlaceholder": "Sonuç detaylarını girin...",
+      "select": "Seçme",
       "selectAll": "Tümünü Seç",
       "deselectAll": "Tümünü Seçimi Kaldır",
       "clearAll": "Tümünü Temizle",
@@ -4023,7 +4024,9 @@
           "noIntegrations": "Şu anda hiçbir entegrasyon yapılandırılmamış. Bu adımı atlayabilir veya entegrasyonları daha sonra yapılandırabilirsiniz.",
           "aiModels": "Test senaryosu oluşturma ve akıllı öneriler sunma amacıyla yapay zeka modellerini etkinleştirin.",
           "permissions": "Bu proje için kullanıcı erişimini ve grup izinlerini yapılandırın.",
-          "milestoneTypes": "Proje ilerlemesini ve son teslim tarihlerini takip etmek için kilometre taşı türlerini seçin."
+          "milestoneTypes": "Proje ilerlemesini ve son teslim tarihlerini takip etmek için kilometre taşı türlerini seçin.",
+          "configurations": "Bu projede hangi yapılandırmaların mevcut olduğunu seçin. Projeler \"hiçbiri\" ile başlar ve ihtiyaç duydukları yapılandırmaları seçerler.",
+          "noConfigurations": "Şu anda hiçbir yapılandırma tanımlanmamıştır. Bunları daha sonra Yönetim bölümünden ekleyebilirsiniz."
         },
         "actions": {
           "selectDefault": "Varsayılanı Kullan",
@@ -4515,6 +4518,21 @@
       "addConfiguration": "Yapılandırma Ekle",
       "editConfiguration": "Yapılandırmayı Düzenle",
       "filterPlaceholder": "Filtre yapılandırmaları...",
+      "allProjects": "Tüm projeler",
+      "selectAllTooltip": "Bu sayfadaki tüm yapılandırmaları seçin/seçimi kaldırın.",
+      "selectAllShiftTooltip": "{count, plural, =0 {Tüm sayfalardaki tüm yapılandırmaları seçin/seçimi kaldırın} one {Tüm sayfalardaki # yapılandırmayı seçin/seçimi kaldırın} other {Tüm sayfalardaki # yapılandırmayı seçin/seçimi kaldırın}}",
+      "deselectAllShiftTooltip": "Tüm sayfalardaki tüm yapılandırmaların seçimini kaldır/seçimi kaldır",
+      "shiftClickHint": "Tüm sayfaları seçmek/seçimi kaldırmak için Shift tuşunu basılı tutun.",
+      "bulkEdit": {
+        "button": "{count, plural, one {1. yapılandırmayı düzenle} other {#. yapılandırmaları düzenle}}",
+        "title": "{count, plural, one {1 yapılandırmada projeleri düzenle} other {# yapılandırmada projeleri düzenle}}",
+        "description": "Seçilen yapılandırmalardaki proje atamalarını değiştirin. Yapılandırma adı toplu olarak düzenlenemez.",
+        "applyButton": "{count, plural, one {1 yapılandırmaya uygula} other {# yapılandırmaya uygula}}",
+        "deleteButton": "{count, plural, one {1 yapılandırma silindi} other {# yapılandırma silindi}}",
+        "deleteConfirmTitle": "{count, plural, one {1 yapılandırma silinsin mi?} other {# yapılandırma silinsin mi?}}",
+        "deleteConfirmMessage": "{count, plural, one {Bu işlem 1 yapılandırmayı silecektir. Bu işlem geri alınamaz.} other {Bu işlem # yapılandırmayı silecektir. Bu işlem geri alınamaz.}}",
+        "applyEnabledLabel": "Etkinleştirilmiş durumu değiştir"
+      },
       "categories": {
         "title": "Kategoriler",
         "description": "Küresel kategorileri yönetin",
@@ -5839,7 +5857,9 @@
       "platform": "## Platform\nBağlandığınız kendi sunucunuzda barındırdığınız Git platformu.\n\n- **Gitea**: gitea.io tabanlı örnekler\n- **Forgejo**: forgejo.org tabanlı örnekler (Gitea çatalı)\n- **Gogs**: gogs.io tabanlı örnekler\n\nBu, hangi simgenin gösterileceğini kontrol eder ve API uyumluluğunu etkileyebilir."
     },
     "config": {
-      "name": "## Yapılandırma Adı\nTüm projelerde kullanılan açık ve açıklayıcı bir ad.\n\n- Yapılandırmayı oluşturan varyant kombinasyonlarını açıklamaya yardımcı olur (örneğin \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", vb.)."
+      "name": "## Yapılandırma Adı\nBu yapılandırma için açık ve açıklayıcı bir ad.\n\n- Yapılandırmayı oluşturan varyant kombinasyonlarını açıklamaya yardımcı olur (örneğin \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", vb.).",
+      "projects": "## Projeler\nBu yapılandırmayı kullanabilecek projeleri belirtir.",
+      "bulkEnabledState": "## Etkin Durumu Ayarla\nSeçilen her yapılandırmanın etkin durumunu değiştirmeden bırakmak için onay kutusunu işaretlemeyin.\n\n- Gönderim sırasında anahtarın değerini seçilen her yapılandırmaya uygulamak için kutuyu işaretleyin.\n- Kapatma, yapılandırmaları devre dışı bırakır; açma ise etkinleştirir."
     },
     "configCategory": {
       "name": "## Kategori Adı\nTüm projelerde kullanılan açık ve açıklayıcı bir ad.\n\n- Varyantları (örneğin Chrome, Firefox, Safari, Edge, vb.) kategorilere (örneğin Tarayıcılar) ayırmaya yardımcı olur."

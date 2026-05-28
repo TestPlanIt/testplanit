@@ -88,6 +88,7 @@
       "addToTestRun": "Ajouter à l'exécution de test",
       "status": "Statut",
       "resultDetailsPlaceholder": "Saisissez les détails du résultat...",
+      "select": "Sélectionner",
       "selectAll": "Tout sélectionner",
       "deselectAll": "Désélectionnez tout",
       "clearAll": "Effacer tout",
@@ -4023,7 +4024,9 @@
           "noIntegrations": "Aucune intégration n'est actuellement configurée. Vous pouvez ignorer cette étape ou configurer les intégrations ultérieurement.",
           "aiModels": "Activer les modèles d'IA pour la génération de cas de test et les suggestions intelligentes.",
           "permissions": "Configurez les autorisations d'accès des utilisateurs et des groupes pour ce projet.",
-          "milestoneTypes": "Sélectionnez les types d'étapes clés pour suivre l'avancement du projet et les échéances."
+          "milestoneTypes": "Sélectionnez les types d'étapes clés pour suivre l'avancement du projet et les échéances.",
+          "configurations": "Sélectionnez les configurations disponibles pour ce projet. Les projets commencent sans aucune configuration et ajoutent ensuite celles dont ils ont besoin.",
+          "noConfigurations": "Aucune configuration n'est définie pour le moment. Vous pourrez les ajouter ultérieurement dans l'Administration."
         },
         "actions": {
           "selectDefault": "Utiliser la valeur par défaut",
@@ -4515,6 +4518,21 @@
       "addConfiguration": "Ajouter une configuration",
       "editConfiguration": "Modifier la configuration",
       "filterPlaceholder": "Configurations de filtre...",
+      "allProjects": "Tous les projets",
+      "selectAllTooltip": "Sélectionnez/Désélectionnez toutes les configurations sur cette page",
+      "selectAllShiftTooltip": "{count, plural, =0 {Sélectionner/Désélectionner toutes les configurations sur toutes les pages} one {Sélectionner/Désélectionner # configuration sur toutes les pages} other {Sélectionner/Désélectionner # configurations sur toutes les pages}}",
+      "deselectAllShiftTooltip": "Désélectionner/Sélectionner toutes les configurations sur toutes les pages",
+      "shiftClickHint": "Maintenez la touche Maj enfoncée pour sélectionner/désélectionner toutes les pages.",
+      "bulkEdit": {
+        "button": "{count, plural, one {Modifier 1 configuration} other {Modifier # configurations}}",
+        "title": "{count, plural, one {Modifier les projets sur 1 configuration} other {Modifier les projets sur # configurations}}",
+        "description": "Remplacez les affectations de projet sur les configurations sélectionnées. Le nom de la configuration n'est pas modifiable en masse.",
+        "applyButton": "{count, plural, one {Appliquer à 1 configuration} other {Appliquer à # configurations}}",
+        "deleteButton": "{count, plural, one {Supprimer 1 configuration} other {Supprimer # configurations}}",
+        "deleteConfirmTitle": "{count, plural, one {Delete 1 configuration?} other {Delete # configurations?}}",
+        "deleteConfirmMessage": "{count, plural, one {Ceci supprimera 1 configuration. Cette action est irréversible.} other {Ceci supprimera # configurations. Cette action est irréversible.}}",
+        "applyEnabledLabel": "État activé de la modification"
+      },
       "categories": {
         "title": "Catégories",
         "description": "Gérer les catégories globales",
@@ -5839,7 +5857,9 @@
       "platform": "## Plateforme\nLa plateforme Git auto-hébergée à laquelle vous vous connectez.\n\n- **Gitea** : instances basées sur gitea.io\n- **Forgejo** : instances basées sur forgejo.org (fork de Gitea)\n- **Gogs** : instances basées sur gogs.io\n\nCeci détermine l’icône affichée et peut affecter la compatibilité de l’API."
     },
     "config": {
-      "name": "## Nom de la configuration\nUn nom clair et descriptif utilisé dans tous les projets.\n\n- Permet de décrire les combinaisons de variantes qui composent la configuration (par exemple « Chrome, Windows 10 », « Safari/macOS 15.5 », « Edge/Windows 11 », etc.)."
+      "name": "## Nom de la configuration\nUn nom clair et descriptif pour cette configuration.\n\n- Permet de décrire les combinaisons de variantes qui composent la configuration (par exemple « Chrome, Windows 10 », « Safari/macOS 15.5 », « Edge/Windows 11 », etc.).",
+      "projects": "## Projets\nIndique les projets qui peuvent utiliser cette configuration.",
+      "bulkEnabledState": "## Définir l'état d'activation\nLaissez la case décochée pour que l'état d'activation de chaque configuration sélectionnée reste inchangé.\n\n- Cochez la case pour appliquer la valeur du commutateur à chaque configuration sélectionnée lors de la validation.\n- Désactiver désactive les configurations ; activer les active."
     },
     "configCategory": {
       "name": "## Nom de la catégorie\nUn nom clair et descriptif utilisé dans tous les projets.\n\n- Permet d'organiser les variantes (par exemple Chrome, Firefox, Safari, Edge, etc.) en catégories (par exemple Navigateurs)."

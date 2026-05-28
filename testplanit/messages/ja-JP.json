@@ -88,6 +88,7 @@
       "addToTestRun": "テスト実行に追加",
       "status": "状態",
       "resultDetailsPlaceholder": "結果の詳細を入力してください…",
+      "select": "選択",
       "selectAll": "すべて選択",
       "deselectAll": "すべて選択解除",
       "clearAll": "すべてクリア",
@@ -4023,7 +4024,9 @@
           "noIntegrations": "現在、統合が設定されていません。この手順をスキップするか、後で統合を設定することもできます。",
           "aiModels": "テストケースの生成とインテリジェントな提案のための AI モデルを有効にします。",
           "permissions": "このプロジェクトのユーザー アクセスとグループ権限を構成します。",
-          "milestoneTypes": "プロジェクトの進捗状況と期限を追跡するには、マイルストーンの種類を選択します。"
+          "milestoneTypes": "プロジェクトの進捗状況と期限を追跡するには、マイルストーンの種類を選択します。",
+          "configurations": "このプロジェクトで使用可能な構成を選択してください。プロジェクトは最初は何も構成されていない状態で開始し、必要な構成を選択して追加していきます。",
+          "noConfigurations": "現在、設定は何も定義されていません。設定は後で管理画面から追加できます。"
         },
         "actions": {
           "selectDefault": "デフォルトを使用する",
@@ -4515,6 +4518,21 @@
       "addConfiguration": "設定を追加する",
       "editConfiguration": "設定を編集する",
       "filterPlaceholder": "フィルター構成...",
+      "allProjects": "すべてのプロジェクト",
+      "selectAllTooltip": "このページのすべての設定を選択/選択解除します",
+      "selectAllShiftTooltip": "{count, plural, =0 {すべてのページですべての設定を選択/選択解除} one {すべてのページで#個の設定を選択/選択解除} other {すべてのページで#個の設定を選択/選択解除}}",
+      "deselectAllShiftTooltip": "すべてのページにわたるすべての設定の選択を解除/選択する",
+      "shiftClickHint": "Shiftキーを押しながら操作すると、すべてのページを選択/選択解除できます。",
+      "bulkEdit": {
+        "button": "{count, plural, one {1 つの設定を編集} other {# つの設定を編集}}",
+        "title": "{count, plural, one {1 つの構成でプロジェクトを編集} other {# つの構成でプロジェクトを編集}}",
+        "description": "選択した構成のプロジェクト割り当てを置き換えます。構成名は一括編集できません。",
+        "applyButton": "{count, plural, one {1 つの設定に適用} other {# つの設定に適用}}",
+        "deleteButton": "{count, plural, one {1 つの設定を削除} other {# つの設定を削除}}",
+        "deleteConfirmTitle": "{count, plural, one {設定を 1 つ削除しますか?} other {設定を # つ削除しますか?}}",
+        "deleteConfirmMessage": "{count, plural, one {これにより1つの設定が削除されます。この操作は元に戻せません。} other {これにより#個の設定が削除されます。この操作は元に戻せません。}}",
+        "applyEnabledLabel": "有効状態を変更する"
+      },
       "categories": {
         "title": "カテゴリー",
         "description": "グローバルカテゴリを管理する",
@@ -5839,7 +5857,9 @@
       "platform": "## プラットフォーム\n接続先の自己ホスト型 Git プラットフォーム。\n\n- **Gitea**: gitea.io ベースのインスタンス\n- **Forgejo**: forgejo.org ベースのインスタンス (Gitea フォーク)\n- **Gogs**: gogs.io ベースのインスタンス\n\nこれにより、表示されるアイコンが制御され、API の互換性に影響する場合があります。"
     },
     "config": {
-      "name": "## 構成名\nすべてのプロジェクトで使用される、明確で説明的な名前。\n\n- 構成を構成するバリアントの組み合わせを説明するのに役立ちます (例: 「Chrome、Windows 10」、「Safari/macOS 15.5」、「Edge/Windows 11」など)。"
+      "name": "## 構成名\nこの構成の明確で分かりやすい名前。\n\n- 構成を構成するバリアントの組み合わせを説明するのに役立ちます (例: \"Chrome、Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", など)。",
+      "projects": "## プロジェクト\nこの構成を使用できるプロジェクトを示します。",
+      "bulkEnabledState": "## 有効状態の設定\nチェックボックスをオフにすると、選択した各構成の有効状態は変更されません。\n\n- スイッチの値を、送信時に選択したすべての構成に適用するには、このボックスをオンにします。\n- スイッチをオフにすると構成が無効になり、スイッチをオンにすると構成が有効になります。"
     },
     "configCategory": {
       "name": "## カテゴリ名\nすべてのプロジェクトで使用される、明確で説明的な名前。\n\n- バリアント (例: Chrome、Firefox、Safari、Edge など) をカテゴリ (例: ブラウザー) に整理するのに役立ちます。"
