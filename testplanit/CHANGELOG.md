@@ -1,3 +1,9 @@
+## [0.32.1](https://github.com/TestPlanIt/testplanit/compare/v0.32.0...v0.32.1) (2026-05-28)
+
+### Bug Fixes
+
+* **audit:** wire ProjectConfigurationAssignment into the admin-config audit sweep ([#358](https://github.com/TestPlanIt/testplanit/issues/358)) ([6727155](https://github.com/TestPlanIt/testplanit/commit/67271552052c07e63bc476d59df84958cc699b1e)), closes [#354](https://github.com/TestPlanIt/testplanit/issues/354)
+
 ## [0.32.0](https://github.com/TestPlanIt/testplanit/compare/v0.31.8...v0.32.0) (2026-05-28)
 
 ### Features
