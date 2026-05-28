@@ -74,7 +74,9 @@ function Configurations(): React.ReactElement | null {
   const { data: allConfigurations, isLoading } = useFindManyConfigurations(
     {
       orderBy: sortConfig
-        ? { [sortConfig.column]: sortConfig.direction }
+        ? sortConfig.column === "variants" || sortConfig.column === "projects"
+          ? { [sortConfig.column]: { _count: sortConfig.direction } }
+          : { [sortConfig.column]: sortConfig.direction }
         : { name: "asc" },
       where: {
         isDeleted: false,

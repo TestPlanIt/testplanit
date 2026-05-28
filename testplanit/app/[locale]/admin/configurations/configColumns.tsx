@@ -83,9 +83,9 @@ export const useColumns = (
       {
         id: "variants",
         accessorKey: "variants",
-        accessorFn: (row) => row.name,
+        accessorFn: (row) => row.variants?.length ?? 0,
         header: t("fields.variants"),
-        enableSorting: false,
+        enableSorting: true,
         enableResizing: true,
         size: 100,
         cell: ({ row }) => {
@@ -126,8 +126,9 @@ export const useColumns = (
       },
       {
         id: "projects",
+        accessorFn: (row) => row.projects?.length ?? 0,
         header: t("fields.projects"),
-        enableSorting: false,
+        enableSorting: true,
         enableResizing: true,
         size: 100,
         cell: ({ row }) => {
