@@ -440,15 +440,34 @@ const processor = async (
       }
     }
 
-    // 7. Pre-fetch template field definitions for both source and target templates
-    // Source template ID comes from the first source case (assume all share same template)
-    const sourceTemplateId = sourceCases[0]?.templateId;
-    const [sourceTemplateFields, targetTemplateFields] = await Promise.all([
-      sourceTemplateId
-        ? fetchTemplateFields(prisma, sourceTemplateId)
-        : Promise.resolve([]),
-      fetchTemplateFields(prisma, job.data.targetTemplateId),
-    ]);
+    // 7. Pre-fetch template assignments for the target project so we can
+    // preserve each source case's template when it's still available there
+    // (instead of silently rewriting every case to job.data.targetTemplateId,
+    // which would, e.g., swap a "Case (steps)" case to whatever happens to
+    // be the target's first assigned template). Field definitions are
+    // cached lazily per template since the source set may now span several.
+    const targetTemplateAssignments =
+      await prisma.templateProjectAssignment.findMany({
+        where: { projectId: job.data.targetProjectId },
+        select: { templateId: true },
+      });
+    const targetAssignedTemplateIds = new Set<number>(
+      targetTemplateAssignments.map((a: { templateId: number }) => a.templateId)
+    );
+
+    const templateFieldsCache = new Map<
+      number,
+      Awaited<ReturnType<typeof fetchTemplateFields>>
+    >();
+    const getTemplateFields = async (templateId: number) => {
+      if (!templateFieldsCache.has(templateId)) {
+        templateFieldsCache.set(
+          templateId,
+          await fetchTemplateFields(prisma, templateId)
+        );
+      }
+      return templateFieldsCache.get(templateId)!;
+    };
 
     // 8. Initialize state
     const sharedGroupMap = new Map<number, number>();
@@ -482,6 +501,16 @@ const processor = async (
             ? { className: { equals: null as any } }
             : { className: sourceCase.className };
 
+        // A move within the same project would otherwise self-collide: the
+        // source case still satisfies (name, className, source) until its
+        // soft-delete after the loop. Exclude the move source IDs so we only
+        // see real conflicts. Copy keeps them included — the unique
+        // constraint would genuinely block a same-name duplicate.
+        const movingSourceFilter =
+          job.data.operation === "move"
+            ? { id: { notIn: job.data.caseIds } }
+            : {};
+
         const existingCase = await prisma.repositoryCases.findFirst({
           where: {
             projectId: job.data.targetProjectId,
@@ -489,6 +518,7 @@ const processor = async (
             ...classNameWhere,
             source: sourceCase.source,
             isDeleted: false,
+            ...movingSourceFilter,
           },
           select: { id: true },
         });
@@ -510,6 +540,7 @@ const processor = async (
                   ...classNameWhere,
                   source: sourceCase.source,
                   isDeleted: false,
+                  ...movingSourceFilter,
                 },
                 select: { id: true },
               });
@@ -539,6 +570,23 @@ const processor = async (
           nextOrder++;
         }
 
+        // Preserve the source case's template when it's still assigned to
+        // the target project; otherwise fall back to the resolved
+        // job.data.targetTemplateId. Field option remapping uses the
+        // matching source/target field snapshots so the values land on the
+        // right options when the template differs.
+        const effectiveTargetTemplateId = targetAssignedTemplateIds.has(
+          sourceCase.templateId
+        )
+          ? sourceCase.templateId
+          : job.data.targetTemplateId;
+        const sourceTemplateFields = await getTemplateFields(
+          sourceCase.templateId
+        );
+        const targetTemplateFields = await getTemplateFields(
+          effectiveTargetTemplateId
+        );
+
         const newCaseId = await prisma.$transaction(async (tx: any) => {
           // a. Create the target RepositoryCases row
           const newCase = await tx.repositoryCases.create({
@@ -546,7 +594,7 @@ const processor = async (
               projectId: job.data.targetProjectId,
               repositoryId: job.data.targetRepositoryId,
               folderId: caseFolderId,
-              templateId: job.data.targetTemplateId,
+              templateId: effectiveTargetTemplateId,
               stateId: job.data.targetDefaultWorkflowStateId,
               name: caseName,
               className: sourceCase.className,

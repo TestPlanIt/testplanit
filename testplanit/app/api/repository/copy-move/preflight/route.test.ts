@@ -408,6 +408,40 @@ describe("POST /api/repository/copy-move/preflight", () => {
     expect(data.collisions).toHaveLength(0);
   });
 
+  it("SELF-COLLISION: scopes the collision query out of moving source ids on move", async () => {
+    // Customer-reported: moving a case within the same project surfaced a
+    // Skip/Rename conflict because the (name, className, source) tuple
+    // matched the moving case itself. Fix excludes the source IDs from
+    // the collision lookup when operation === 'move'.
+    setupDefaultMocks();
+    const { POST } = await import("./route");
+    const res = await POST(
+      makeRequest({
+        operation: "move",
+        caseIds: [1, 2],
+        sourceProjectId: 10,
+        targetProjectId: 10,
+      })
+    );
+    expect(res.status).toBe(200);
+
+    // Collision check is the second findMany on the admin path
+    const collisionCall = mockPrismaRepositoryCasesFindMany.mock.calls[1]?.[0];
+    expect(collisionCall?.where?.id).toEqual({ notIn: [1, 2] });
+  });
+
+  it("SELF-COLLISION: does NOT scope the collision query out of source ids on copy", async () => {
+    // For copy the source rows are real collision targets — the unique
+    // (projectId, name, className, source) constraint would block.
+    setupDefaultMocks();
+    const { POST } = await import("./route");
+    const res = await POST(makeRequest(validBody));
+    expect(res.status).toBe(200);
+
+    const collisionCall = mockPrismaRepositoryCasesFindMany.mock.calls[1]?.[0];
+    expect(collisionCall?.where?.id).toBeUndefined();
+  });
+
   // Test 15
   it("returns targetRepositoryId resolved from active repository in target project", async () => {
     setupDefaultMocks();
