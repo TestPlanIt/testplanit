@@ -499,6 +499,16 @@ export function ReportRenderer({
               onGroupingChange={onGroupingChange}
               expanded={expanded}
               onExpandedChange={onExpandedChange}
+              getSubRows={
+                isExecutionLog
+                  ? (row: any) => row.steps as any[] | undefined
+                  : undefined
+              }
+              subRowsLabel={
+                isExecutionLog
+                  ? tCommon("fields.steps").toLowerCase()
+                  : undefined
+              }
             />
           </CardContent>
         </Card>

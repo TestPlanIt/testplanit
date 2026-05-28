@@ -14,86 +14,169 @@ import {
 import { RepositoryCaseSource } from "@prisma/client";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { formatDistanceToNow } from "date-fns";
+import { Layers } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
-import type { ExecutionLogRow } from "~/utils/executionLogUtils";
+import type {
+  ExecutionLogRow,
+  ExecutionLogStepRow,
+} from "~/utils/executionLogUtils";
+
+type ExecutionLogRowOrStep = ExecutionLogRow | ExecutionLogStepRow;
+
+function isStepRow(row: any): row is ExecutionLogStepRow {
+  return row && row.isStep === true;
+}
 
 export function useExecutionLogColumns(
   projectId?: number | string,
   isCrossProject?: boolean
-): ColumnDef<ExecutionLogRow, any>[] {
+): ColumnDef<ExecutionLogRowOrStep, any>[] {
   const t = useTranslations();
   const tCommon = useTranslations("common");
-  const columnHelper = createColumnHelper<ExecutionLogRow>();
+  const columnHelper = createColumnHelper<ExecutionLogRowOrStep>();
 
   return useMemo(() => {
-    const columns: ColumnDef<ExecutionLogRow, any>[] = [];
+    const columns: ColumnDef<ExecutionLogRowOrStep, any>[] = [];
 
     if (isCrossProject) {
       columns.push(
-        columnHelper.accessor((row) => row.project?.name ?? "", {
-          id: "project",
-          header: () => <span>{t("reports.dimensions.project")}</span>,
-          cell: (info) => {
-            const project = info.row.original.project;
-            if (!project)
+        columnHelper.accessor(
+          (row) => (isStepRow(row) ? "" : (row.project?.name ?? "")),
+          {
+            id: "project",
+            header: () => <span>{t("reports.dimensions.project")}</span>,
+            cell: (info) => {
+              const row = info.row.original;
+              if (isStepRow(row)) return null;
+              const project = row.project;
+              if (!project)
+                return (
+                  <span className="text-muted-foreground">
+                    {tCommon("labels.unknown")}
+                  </span>
+                );
               return (
-                <span className="text-muted-foreground">
-                  {tCommon("labels.unknown")}
-                </span>
+                <ProjectNameDisplay
+                  projectName={project.name}
+                  projectId={project.id}
+                  iconUrl={project.iconUrl}
+                  showLink
+                />
               );
-            return (
-              <ProjectNameDisplay
-                projectName={project.name}
-                projectId={project.id}
-                iconUrl={project.iconUrl}
-                showLink
-              />
-            );
-          },
-          enableSorting: true,
-          size: 180,
-          minSize: 120,
-        }) as ColumnDef<ExecutionLogRow, any>
+            },
+            enableSorting: true,
+            size: 180,
+            minSize: 120,
+          }
+        ) as ColumnDef<ExecutionLogRowOrStep, any>
       );
     }
 
     columns.push(
-      columnHelper.accessor("testCaseName", {
-        id: "testCaseName",
-        header: () => <span>{t("reports.dimensions.testCase")}</span>,
-        cell: (info) => {
-          const rowProjectId = info.row.original.project?.id || projectId;
-          return (
-            <CaseDisplay
-              id={info.row.original.testCaseId}
-              name={info.row.original.testCaseName}
-              source={info.row.original.testCaseSource as RepositoryCaseSource}
-              link={
-                rowProjectId
-                  ? `/projects/repository/${rowProjectId}/${info.row.original.testCaseId}`
-                  : undefined
-              }
-              size="medium"
-              maxLines={2}
-            />
-          );
-        },
-        enableSorting: true,
-        size: 320,
-        minSize: 200,
-        maxSize: 800,
-      }) as ColumnDef<ExecutionLogRow, any>
+      columnHelper.accessor(
+        (row) => (isStepRow(row) ? row.stepText : row.testCaseName),
+        {
+          id: "testCaseName",
+          header: () => <span>{t("reports.dimensions.testCase")}</span>,
+          cell: (info) => {
+            const row = info.row.original;
+            if (isStepRow(row)) {
+              return (
+                <div className="pl-6 text-sm space-y-1 py-1">
+                  <div className="flex gap-2 items-start">
+                    <span className="text-muted-foreground shrink-0 inline-flex items-center gap-1">
+                      {row.sharedGroupName && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Layers
+                                size={14}
+                                className="text-primary shrink-0"
+                              />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {t("repository.steps.sharedStepGroupTitle", {
+                                name: row.sharedGroupName,
+                              })}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                      {t("common.fields.step")} {row.stepNumber}
+                    </span>
+                    {row.stepText ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="line-clamp-2 cursor-default">
+                              {row.stepText}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-md whitespace-pre-wrap">
+                            {row.stepText}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </div>
+                  {row.expectedResult && (
+                    <div className="flex gap-2">
+                      <span className="text-muted-foreground shrink-0">
+                        {t("common.fields.expectedResult")}
+                      </span>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="line-clamp-2 cursor-default">
+                              {row.expectedResult}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-md whitespace-pre-wrap">
+                            {row.expectedResult}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+            const rowProjectId = row.project?.id || projectId;
+            return (
+              <CaseDisplay
+                id={row.testCaseId}
+                name={row.testCaseName}
+                source={row.testCaseSource as RepositoryCaseSource}
+                link={
+                  rowProjectId
+                    ? `/projects/repository/${rowProjectId}/${row.testCaseId}`
+                    : undefined
+                }
+                size="medium"
+                maxLines={2}
+              />
+            );
+          },
+          enableSorting: true,
+          size: 320,
+          minSize: 200,
+          maxSize: 800,
+        }
+      ) as ColumnDef<ExecutionLogRowOrStep, any>
     );
 
     columns.push(
-      columnHelper.accessor("testRunName", {
+      columnHelper.accessor((row) => (isStepRow(row) ? "" : row.testRunName), {
         id: "testRunName",
         header: () => <span>{t("reports.dimensions.testRun")}</span>,
         cell: (info) => {
-          const { testRunId, testRunName, testRunIsDeleted } =
-            info.row.original;
-          const rowProjectId = info.row.original.project?.id || projectId;
+          const row = info.row.original;
+          if (isStepRow(row)) return null;
+          const { testRunId, testRunName, testRunIsDeleted } = row;
+          const rowProjectId = row.project?.id || projectId;
           return (
             <TestRunNameDisplay
               testRun={{
@@ -110,7 +193,7 @@ export function useExecutionLogColumns(
         size: 240,
         minSize: 150,
         maxSize: 500,
-      }) as ColumnDef<ExecutionLogRow, any>
+      }) as ColumnDef<ExecutionLogRowOrStep, any>
     );
 
     columns.push(
@@ -119,37 +202,42 @@ export function useExecutionLogColumns(
         header: () => <span>{tCommon("actions.status")}</span>,
         cell: (info) => {
           const { status } = info.row.original;
-          if (!status) return null;
+          if (!status?.name) return null;
           return <StatusDotDisplay name={status.name} color={status.color} />;
         },
         enableSorting: true,
         size: 140,
         minSize: 100,
-      }) as ColumnDef<ExecutionLogRow, any>
+      }) as ColumnDef<ExecutionLogRowOrStep, any>
     );
 
     columns.push(
-      columnHelper.accessor((row) => row.executedBy?.name ?? "", {
-        id: "executedBy",
-        header: () => <span>{tCommon("fields.executedBy")}</span>,
-        cell: (info) => {
-          const { executedBy } = info.row.original;
-          if (!executedBy?.id)
+      columnHelper.accessor(
+        (row) => (isStepRow(row) ? "" : (row.executedBy?.name ?? "")),
+        {
+          id: "executedBy",
+          header: () => <span>{tCommon("fields.executedBy")}</span>,
+          cell: (info) => {
+            const row = info.row.original;
+            if (isStepRow(row)) return null;
+            const { executedBy } = row;
+            if (!executedBy?.id)
+              return (
+                <span className="text-muted-foreground">
+                  {executedBy?.name || "-"}
+                </span>
+              );
             return (
-              <span className="text-muted-foreground">
-                {executedBy?.name || "-"}
-              </span>
+              <div className="truncate">
+                <UserNameCell userId={executedBy.id} />
+              </div>
             );
-          return (
-            <div className="truncate">
-              <UserNameCell userId={executedBy.id} />
-            </div>
-          );
-        },
-        enableSorting: true,
-        size: 160,
-        minSize: 120,
-      }) as ColumnDef<ExecutionLogRow, any>
+          },
+          enableSorting: true,
+          size: 160,
+          minSize: 120,
+        }
+      ) as ColumnDef<ExecutionLogRowOrStep, any>
     );
 
     columns.push(
@@ -186,7 +274,7 @@ export function useExecutionLogColumns(
         },
         size: 160,
         minSize: 120,
-      }) as ColumnDef<ExecutionLogRow, any>
+      }) as ColumnDef<ExecutionLogRowOrStep, any>
     );
 
     columns.push(
@@ -202,7 +290,7 @@ export function useExecutionLogColumns(
         enableSorting: true,
         size: 110,
         minSize: 80,
-      }) as ColumnDef<ExecutionLogRow, any>
+      }) as ColumnDef<ExecutionLogRowOrStep, any>
     );
 
     return columns;

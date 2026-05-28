@@ -50,6 +50,8 @@ Shows test coverage for issues tracked in integrated systems (Jira, GitHub, Azur
 
 A flat, chronological log of individual test result records. See who executed each test case, when it was executed, which test run it belonged to, and what status was recorded. Useful for audit trails, team activity reviews, and tracking execution patterns over time.
 
+Each row can be expanded to reveal step-level results for that test case execution. Every expected step in the case definition appears as a sub-row — including steps that were not recorded during the run (shown as **Untested**) — with the step action, expected result, per-step status, executed-at timestamp, and duration. Steps that belong to a shared step group are marked with a Shared Step icon and the group name surfaces in a tooltip. Long step or expected-result text is truncated to two lines with the full content (plain text-only) available on hover.
+
 Filters:
 
 - **Date Range** — Limit results to a specific time window
