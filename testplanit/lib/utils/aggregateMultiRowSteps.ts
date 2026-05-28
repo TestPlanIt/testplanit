@@ -57,13 +57,19 @@ function findColumn(
 }
 
 // Columns already mapped to non-step template fields shouldn't be auto-claimed
-// as the step content / expected result column.
+// as the step content / expected result column. "steps" and "expectedResult"
+// are exempt — those are exactly the multi-row step columns this aggregator
+// wants to claim from the user's explicit mapping.
 function buildExcludedColumns(
   fieldMappings: MultiRowFieldMapping[]
 ): Set<string> {
   const excluded = new Set<string>();
   for (const m of fieldMappings) {
-    if (m.templateField && m.templateField !== "steps") {
+    if (
+      m.templateField &&
+      m.templateField !== "steps" &&
+      m.templateField !== "expectedResult"
+    ) {
       excluded.add(m.csvColumn);
     }
   }
@@ -105,6 +111,27 @@ function detectStepContentColumn(
   return findColumn(row, STEP_CONTENT_ALIASES, excludedColumns);
 }
 
+function detectExpectedResultColumn(
+  row: any,
+  fieldMappings: MultiRowFieldMapping[],
+  excludedColumns: Set<string>
+): string | null {
+  // Mirror detectStepContentColumn: an explicit "expectedResult" user mapping
+  // wins over the alias scan. This lets users surface custom column names
+  // (e.g. "Outcome", "Acceptance") that wouldn't match the alias list.
+  const erMapping = fieldMappings.find(
+    (m) => m.templateField === "expectedResult"
+  );
+  if (
+    erMapping &&
+    row &&
+    Object.prototype.hasOwnProperty.call(row, erMapping.csvColumn)
+  ) {
+    return erMapping.csvColumn;
+  }
+  return findColumn(row, EXPECTED_RESULT_ALIASES, excludedColumns);
+}
+
 /**
  * Collapses a multi-row CSV (one row per step) into one row per case. The head
  * row keeps all its existing fields; continuation rows are absorbed into the
@@ -133,7 +160,11 @@ export function aggregateMultiRowSteps(
     fieldMappings,
     excluded
   );
-  const expectedCol = findColumn(rows[0], EXPECTED_RESULT_ALIASES, excluded);
+  const expectedCol = detectExpectedResultColumn(
+    rows[0],
+    fieldMappings,
+    excluded
+  );
   const stepNumberCol = findColumn(rows[0], STEP_NUMBER_ALIASES, excluded);
 
   if (!stepContentCol && !expectedCol) return rows;
@@ -213,7 +244,7 @@ export function inspectMultiRowAggregation(
     ? detectStepContentColumn(sample, fieldMappings, excluded)
     : null;
   const expectedResultColumn = sample
-    ? findColumn(sample, EXPECTED_RESULT_ALIASES, excluded)
+    ? detectExpectedResultColumn(sample, fieldMappings, excluded)
     : null;
   const stepNumberColumn = sample
     ? findColumn(sample, STEP_NUMBER_ALIASES, excluded)

@@ -913,6 +913,87 @@ describe("CSV Import API Route", () => {
       }
     });
 
+    it("collapses an N-row, 1-name CSV into a single case with N steps (multi-row + name-only)", async () => {
+      // Customer repro: CSV has the same Name on every row, 6 rows total.
+      // Without an ID column the aggregator must group by Name and emit ONE
+      // case with six steps — not six separate cases. (Description is mapped
+      // here only because the test fixture's template marks it required.)
+      const file = [
+        "Name,Description,Step Content,Expected Result",
+        "Login flow,Verify login,Open page,Page loads",
+        "Login flow,,Enter username,Field accepts text",
+        "Login flow,,Enter password,Field masks input",
+        "Login flow,,Click login,Dashboard loads",
+        "Login flow,,Click logout,Login page returns",
+        "Login flow,,Close tab,Session ends",
+      ].join("\n");
+
+      const request = createRequest({
+        projectId: 1,
+        file,
+        delimiter: ",",
+        hasHeaders: true,
+        encoding: "UTF-8",
+        templateId: 1,
+        importLocation: "single_folder",
+        folderId: 1,
+        rowMode: "multi",
+        fieldMappings: [
+          { csvColumn: "Name", templateField: "name" },
+          { csvColumn: "Description", templateField: "description" },
+        ],
+      });
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
+      expect(result.complete).toBeDefined();
+      expect(mockEnhancedDb.repositoryCases.create).toHaveBeenCalledTimes(1);
+      expect(mockEnhancedDb.steps.create).toHaveBeenCalledTimes(6);
+    });
+
+    it("honors an explicit expectedResult mapping for a custom-named column (multi-row)", async () => {
+      // "Outcome" isn't in the aggregator's alias list. Mapping it explicitly
+      // to templateField=expectedResult must make the aggregator pick it up
+      // as the per-step expected result column.
+      const file = [
+        "ID,Name,Description,Step Content,Outcome",
+        "1,Login,Verify login,Open page,Page loads",
+        "1,Login,,Submit,Welcome",
+      ].join("\n");
+
+      const request = createRequest({
+        projectId: 1,
+        file,
+        delimiter: ",",
+        hasHeaders: true,
+        encoding: "UTF-8",
+        templateId: 1,
+        importLocation: "single_folder",
+        folderId: 1,
+        rowMode: "multi",
+        fieldMappings: [
+          { csvColumn: "ID", templateField: "id" },
+          { csvColumn: "Name", templateField: "name" },
+          { csvColumn: "Description", templateField: "description" },
+          { csvColumn: "Outcome", templateField: "expectedResult" },
+        ],
+      });
+
+      const response = await POST(request);
+      const result = await parseSSEResponse(response);
+
+      expect(result.complete).toBeDefined();
+      expect(mockEnhancedDb.repositoryCases.create).toHaveBeenCalledTimes(1);
+      expect(mockEnhancedDb.steps.create).toHaveBeenCalledTimes(2);
+      // Both steps have their expected result populated from the Outcome column
+      for (const call of mockEnhancedDb.steps.create.mock.calls) {
+        expect(call[0].data.expectedResult).toEqual(
+          expect.objectContaining({ type: "doc" })
+        );
+      }
+    });
+
     it("imports test cases with workflow state", async () => {
       mockEnhancedDb.workflows.findFirst.mockImplementation(({ where }) => {
         if (where.name === "In Progress") {
