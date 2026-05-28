@@ -11,6 +11,10 @@ This section explains how to manage Categories, their associated Variants, and t
 
 To access this page, enter the Administration area and select **Configurations** from the left-hand navigation menu. The page displays two main tables: Categories and Configurations.
 
+:::info Configurations are project-scoped
+Each Configuration is associated with one or more Projects, and it only appears in the Test Run, Session, and Search pickers for the Projects it is assigned to. New Configurations start with no Project assignments and opt in to the Projects that should use them. Existing Configurations from before this change are assigned to every existing Project on upgrade so behaviour stays the same; new Projects start with no Configurations and pick the ones they need.
+:::
+
 ## Categories & Variants
 
 Categories group related Variants together (e.g., Category "Operating System" might have Variants "Windows 11", "macOS Sonoma", "Ubuntu 22.04").
@@ -79,38 +83,58 @@ Configurations are specific combinations of enabled Variants, one from each rele
 
 ### Viewing Configurations
 
-The Configurations table lists all generated configurations with columns for:
+The Configurations table lists all defined configurations with columns for:
 
+- **Select**: A row checkbox used for [bulk actions](#bulk-actions). The header checkbox toggles the current page; **Shift+click** on the header toggles every Configuration that matches the current filter across all pages, and **Shift+click** on a row checkbox range-selects every row between the last clicked row and the current one.
 - **Name**: The name of the Configuration, typically auto-generated as a comma-separated list of its Variants (e.g., "Chrome, Windows 11, English"). A switch allows enabling/disabling the Configuration. A Configuration is automatically disabled if any of its constituent Variants are disabled.
-- **Variants**: A count of Variants included in this Configuration. Hovering shows a popover list.
-- **Actions**: Buttons to **Edit** the Configuration name or **Delete** the Configuration.
+- **Variants**: A count of Variants included in this Configuration. Click the column header to sort by the variant count; hovering the badge shows a popover list of the variants.
+- **Projects**: A count of Projects this Configuration is assigned to. Click the column header to sort by the project count; hovering the badge shows the project names and icons.
+- **Actions**: Buttons to **Edit** the Configuration or **Delete** the Configuration.
+
+Above the table:
+
+- The **Filter configurations…** field narrows the list by name.
+- The **All projects** selector restricts the table to Configurations assigned to a specific Project. Choose **All projects** to show every Configuration regardless of assignment.
+
+### Bulk Actions
+
+Selecting one or more rows reveals an **Edit N configurations** button next to the project filter. Clicking it opens a single dialog where you can apply any combination of the following to every selected Configuration:
+
+- **Replace Projects**: Tick the **Projects** checkbox and pick the Projects the selected Configurations should be assigned to. Submitting *replaces* their existing assignments with the chosen set. Leave the checkbox unchecked to leave Project assignments untouched.
+- **Set enabled state**: Tick the **Set enabled state** checkbox and use the switch to enable or disable every selected Configuration on submit. Leave the checkbox unchecked to leave the enabled state untouched.
+- **Delete**: The destructive **Delete N configurations** button (with confirmation) marks every selected Configuration as deleted at once.
+
+Clicking **Apply to N configurations** runs the selected changes; **Cancel** discards them.
 
 ### Adding New Configurations (Wizard)
 
-Creating configurations involves selecting Variants and generating valid combinations using a multi-step wizard.
+Creating configurations involves picking Variants, choosing which combinations to create, and assigning the resulting Configurations to Projects. The wizard has four steps with a step indicator at the top; previous steps stay clickable so you can jump back without losing data.
 
-1. Click the **Add Configuration** button above the Configurations table.
-2. **Step 1: Select Variants**
-    - A dialog appears listing all Categories and their enabled Variants.
-    - Expand/collapse Categories using the chevron icons (▶️/▼).
-    - Check the boxes next to the Variants you want to include in potential combinations.
-    - Use the "Select All" / "Deselect All" buttons per Category for convenience.
+1. Click the **Add Configurations** button above the Configurations table.
+2. **Step 1 — Variants**
+    - The dialog lists every Category and its enabled Variants in three columns sorted alphabetically. Expand/collapse a Category using the chevron next to its name.
+    - Tick the Variants you want to include. Use **Select All** / **Deselect All** in the Category header to toggle a whole Category at once.
+    - **Shift+click** a Variant checkbox to range-select every Variant between the last clicked one and this one within the same Category.
+    - Click **Next** when at least one Variant is selected.
+3. **Step 2 — Combinations**
+    - The wizard generates every possible unique combination of the Variants you picked (one Variant per Category involved).
+    - Combinations that already match a saved Configuration are kept in the list, but rendered with a disabled checkbox and an *(already exists)* hint so you can see what is already configured without leaving the wizard.
+    - New combinations default to checked; uncheck any you don't want to create.
+    - If every derived combination already exists, the wizard tells you so.
     - Click **Next**.
-3. **Step 2: Select Combinations**
-    - The wizard generates all possible unique combinations based on your selected Variants (one Variant per Category involved).
-    - Existing configurations are automatically filtered out.
-    - Check the boxes next to the combinations you want to create. By default, all new, valid combinations are selected.
-    - If no new combinations can be generated (e.g., all possible ones already exist), a message will indicate this.
-    - Click **Submit**.
-4. **Step 3: Confirmation**
-    - A final dialog lists the combinations you are about to create.
-    - Review the list.
-    - Click **Submit** to create the Configurations or **Previous** to go back.
+4. **Step 3 — Assign Projects**
+    - Pick the Projects the new Configurations should be available in. Projects are listed in three columns with their icons, sorted alphabetically.
+    - **Select All** / **Deselect All** toggles every Project; **Shift+click** a Project checkbox to range-select.
+    - This step is optional — leaving it empty creates the Configurations unassigned and you can attach them to Projects later from this admin page or from the Project itself.
+    - Click **Next**.
+5. **Step 4 — Review Configurations**
+    - The dialog lists every Configuration that will be created (with the standard configuration icon) and the Projects they'll be assigned to.
+    - Click **Create N Configurations** to commit, or **Previous** to step back and edit.
 
-### Editing a Configuration Name
+### Editing a Configuration
 
 1. Click the **Edit** icon in the Actions column for the desired Configuration.
-2. Modify the name in the modal dialog. (Note: This only changes the display name; the underlying Variant combination remains the same).
+2. The dialog lets you update the **Name** (display name only — the underlying Variant combination doesn't change) and the **Projects** the Configuration is assigned to. Removing a Project here removes the Configuration from that Project's pickers; adding one makes it available again.
 3. Click **Submit**.
 
 ### Enabling/Disabling a Configuration
