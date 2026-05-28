@@ -4559,8 +4559,9 @@
         "confirmDescription": "The following {count, number} combinations will be created.",
         "addCombination": "Add Combination",
         "editCombination": "Edit Combination",
-        "selectCombination": "Select Combination",
-        "selectCombinationDescription": "Select a combination of variants to add to the configuration.",
+        "selectCombination": "Select Combinations",
+        "selectCombinationDescription": "Select the variant combinations to add. Any combinations that already exist are shown disabled.",
+        "alreadyExists": "(already exists)",
         "allExist": "All combinations already exist.",
         "selectAtLeast": "Please select at least one combination."
       },

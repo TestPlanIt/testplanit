@@ -68,9 +68,11 @@ const AddConfigurationWizard = (): React.ReactElement => {
     new Set()
   );
 
-  // Step 2 state — per-combination selection.
+  // Step 2 state — per-combination selection. `exists` flags combinations
+  // that already match a saved configuration; they're rendered disabled so
+  // the user can see which combinations are already configured.
   const [allCombinations, setAllCombinations] = useState<
-    { combination: number[]; selected: boolean }[]
+    { combination: number[]; selected: boolean; exists: boolean }[]
   >([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -122,9 +124,9 @@ const AddConfigurationWizard = (): React.ReactElement => {
     [getVariantName]
   );
 
-  // Derive every viable combination from the variants the user picked in step
-  // 1, excluding combinations that already match an existing configuration.
-  const filteredCombinations = useMemo(() => {
+  // Derive every viable combination from the variants the user picked in
+  // step 1 and mark which ones already match an existing configuration.
+  const derivedCombinations = useMemo(() => {
     if (!categories || selectedVariants.length === 0) return [];
     const categoryMap = new Map<number, number[]>();
     selectedVariants.forEach((variantId) => {
@@ -138,24 +140,27 @@ const AddConfigurationWizard = (): React.ReactElement => {
     });
 
     const combinations = generateCombinations([...categoryMap.values()]);
-    return combinations.filter(
-      (combination) =>
-        !existingConfigurations?.some((config) =>
-          arraysEqual(
-            config.variants.map((v) => v.variantId).sort(),
-            [...combination].sort()
-          )
+    return combinations.map((combination) => ({
+      combination,
+      exists: !!existingConfigurations?.some((config) =>
+        arraysEqual(
+          config.variants.map((v) => v.variantId).sort(),
+          [...combination].sort()
         )
-    );
+      ),
+    }));
   }, [selectedVariants, existingConfigurations, categories]);
 
   // Hydrate / re-hydrate the per-combination checkbox state when the user
-  // re-enters step 2. New combinations default to selected.
+  // re-enters step 2. New combinations default to selected; combinations that
+  // already exist are kept visible but never selected (their checkbox is
+  // disabled in the UI).
   useEffect(() => {
     if (currentStep !== WizardStep.COMBINATIONS) return;
-    const items = filteredCombinations.map((combination) => ({
+    const items = derivedCombinations.map(({ combination, exists }) => ({
       combination,
-      selected: true,
+      selected: !exists,
+      exists,
     }));
     items.sort((a, b) =>
       getCombinationLabel(a.combination).localeCompare(
@@ -163,7 +168,7 @@ const AddConfigurationWizard = (): React.ReactElement => {
       )
     );
     setAllCombinations(items);
-  }, [currentStep, filteredCombinations, getCombinationLabel]);
+  }, [currentStep, derivedCombinations, getCombinationLabel]);
 
   const handleClose = () => {
     setOpen(false);
@@ -207,7 +212,7 @@ const AddConfigurationWizard = (): React.ReactElement => {
   const handleCombinationToggle = (combination: number[]) => {
     setAllCombinations((prev) =>
       prev.map((item) =>
-        arraysEqual(item.combination, combination)
+        arraysEqual(item.combination, combination) && !item.exists
           ? { ...item, selected: !item.selected }
           : item
       )
@@ -217,12 +222,16 @@ const AddConfigurationWizard = (): React.ReactElement => {
   const selectedCombinations = useMemo(
     () =>
       allCombinations
-        .filter((item) => item.selected)
+        .filter((item) => item.selected && !item.exists)
         .map((item) => item.combination),
     [allCombinations]
   );
 
-  const noCombinationsAvailable = allCombinations.length === 0;
+  // No combinations are available to add when every derived combination
+  // already exists (each one is rendered disabled).
+  const noCombinationsAvailable =
+    allCombinations.length === 0 ||
+    allCombinations.every((item) => item.exists);
 
   const canProceed = () => {
     switch (currentStep) {
@@ -421,20 +430,32 @@ const AddConfigurationWizard = (): React.ReactElement => {
                     <p className="text-sm text-muted-foreground">
                       {tCombinations("selectCombinationDescription")}
                     </p>
-                    {noCombinationsAvailable ? (
+                    {allCombinations.length === 0 ? (
                       <div>{tCombinations("allExist")}</div>
                     ) : (
                       allCombinations.map(
-                        ({ combination, selected }, index) => (
+                        ({ combination, selected, exists }, index) => (
                           <FormControl key={index}>
-                            <Label className="flex items-center space-x-2 space-y-0">
+                            <Label
+                              className={`flex items-center space-x-2 space-y-0 ${
+                                exists
+                                  ? "cursor-not-allowed opacity-60"
+                                  : "cursor-pointer"
+                              }`}
+                            >
                               <Checkbox
                                 checked={selected}
+                                disabled={exists}
                                 onCheckedChange={() =>
                                   handleCombinationToggle(combination)
                                 }
                               />
                               <span>{getCombinationLabel(combination)}</span>
+                              {exists && (
+                                <span className="text-xs text-muted-foreground italic">
+                                  {tCombinations("alreadyExists")}
+                                </span>
+                              )}
                             </Label>
                           </FormControl>
                         )
