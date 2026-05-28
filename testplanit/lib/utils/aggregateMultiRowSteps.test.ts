@@ -273,6 +273,47 @@ describe("aggregateMultiRowSteps", () => {
     expect(result[0]._aggregatedSteps[0].expectedResult).toBe("Loads");
   });
 
+  it("honors a user mapping of templateField=expectedResult for a custom expected-result column name", () => {
+    // "Outcome" isn't in EXPECTED_RESULT_ALIASES, but the user explicitly
+    // maps it to expectedResult — that mapping should win.
+    const rows = [
+      { ID: "1", Name: "Login", "Step Content": "Open page", Outcome: "Loads" },
+      { ID: "1", Name: "Login", "Step Content": "Submit", Outcome: "Welcome" },
+    ];
+
+    const result = aggregateMultiRowSteps(rows, [
+      { csvColumn: "ID", templateField: "id" },
+      { csvColumn: "Name", templateField: "name" },
+      { csvColumn: "Outcome", templateField: "expectedResult" },
+    ]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]._aggregatedSteps).toEqual([
+      { step: "Open page", expectedResult: "Loads", order: 0 },
+      { step: "Submit", expectedResult: "Welcome", order: 1 },
+    ]);
+  });
+
+  it("does not exclude an expectedResult-mapped column from step detection", () => {
+    // Regression: buildExcludedColumns used to exclude every mapped column
+    // except 'steps', so mapping "Outcome" -> expectedResult would have
+    // hidden it from the expected-result alias scan AND from the explicit
+    // detector. Now the aggregator still finds it via the explicit mapping.
+    const rows = [
+      { Name: "Login", "Step Content": "Open page", Outcome: "Loads" },
+      { Name: "Login", "Step Content": "Click", Outcome: "Done" },
+    ];
+
+    const result = aggregateMultiRowSteps(rows, [
+      { csvColumn: "Name", templateField: "name" },
+      { csvColumn: "Outcome", templateField: "expectedResult" },
+    ]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]._aggregatedSteps[0].expectedResult).toBe("Loads");
+    expect(result[0]._aggregatedSteps[1].expectedResult).toBe("Done");
+  });
+
   it("does not claim a column already mapped to a non-step template field", () => {
     // "Action" is in the step-content alias list, but it's been explicitly
     // mapped to a custom "description" field — leave it alone, no step

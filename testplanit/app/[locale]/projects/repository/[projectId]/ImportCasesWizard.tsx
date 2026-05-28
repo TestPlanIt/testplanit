@@ -54,7 +54,10 @@ import {
   useFindManyRepositoryFolders,
   useFindManyTemplates,
 } from "~/lib/hooks";
-import { inspectMultiRowAggregation } from "~/lib/utils/aggregateMultiRowSteps";
+import {
+  aggregateMultiRowSteps,
+  inspectMultiRowAggregation,
+} from "~/lib/utils/aggregateMultiRowSteps";
 import {
   convertMarkdownCasesToImportData,
   parseMarkdownTestCases,
@@ -189,6 +192,20 @@ export function ImportCasesWizard({
   const [validationErrors, setValidationErrors] =
     useState<Page1ValidationErrors>({});
 
+  // What the preview, pagination, and submit counts should reflect. In
+  // multi-row mode this is the aggregated case rows (one per case), not the
+  // raw CSV rows — otherwise the wizard would render every continuation row
+  // as its own card and the "Import N Test Cases" button would lie about the
+  // count of cases that will actually be created. The duplicate-check
+  // useEffect below also keys its warnings by index into this array.
+  const effectiveImportRows = useMemo(() => {
+    if (rowMode !== "multi" || parsedData.length === 0) return parsedData;
+    return aggregateMultiRowSteps(
+      parsedData,
+      fieldMappings.filter((m) => m.templateField !== null)
+    );
+  }, [parsedData, fieldMappings, rowMode]);
+
   // Seed selectedFile from initialFile when dialog opens externally
   useEffect(() => {
     if (open && initialFile) {
@@ -236,9 +253,12 @@ export function ImportCasesWizard({
     }
   }, [open, defaultTemplate, selectedTemplateId]);
 
-  // Check for duplicates when reaching page 4 (preview page)
+  // Check for duplicates when reaching page 4 (preview page). The warnings
+  // map is keyed by index into the array the preview is iterating — that's
+  // effectiveImportRows (aggregated in multi-row mode), not the raw parsedData.
   useEffect(() => {
-    if (currentPage !== 4 || parsedData.length === 0 || !projectId) return;
+    if (currentPage !== 4 || effectiveImportRows.length === 0 || !projectId)
+      return;
 
     const checkDuplicates = async () => {
       setIsCheckingDuplicates(true);
@@ -262,9 +282,11 @@ export function ImportCasesWizard({
       }
       const nameColumn = nameMapping.csvColumn;
 
-      // Build name-to-row-indices map for intra-import detection
+      // Build name-to-row-indices map for intra-import detection.
+      // Walk effectiveImportRows so the indices line up with what the
+      // preview iterates (aggregated rows in multi-row mode).
       const nameToRows = new Map<string, number[]>();
-      parsedData.forEach((row, idx) => {
+      effectiveImportRows.forEach((row, idx) => {
         const name = (row[nameColumn] || "").toString().trim().toLowerCase();
         if (!name) return;
         const existing = nameToRows.get(name) || [];
@@ -289,7 +311,7 @@ export function ImportCasesWizard({
       // Check against existing cases via API — batch by unique names, max 50
       const uniqueNames = [
         ...new Set(
-          parsedData
+          effectiveImportRows
             .map((row) => (row[nameColumn] || "").toString().trim())
             .filter(Boolean)
         ),
@@ -302,7 +324,7 @@ export function ImportCasesWizard({
       for (const name of uniqueNames) {
         try {
           const tagsValue = tagsColumn
-            ? parsedData.find(
+            ? effectiveImportRows.find(
                 (r) => (r[nameColumn] || "").toString().trim() === name
               )?.[tagsColumn]
             : undefined;
@@ -326,8 +348,9 @@ export function ImportCasesWizard({
           if (!res.ok) continue;
           const data = await res.json();
           if (data.cases && data.cases.length > 0) {
-            // Apply to all rows with this name
-            parsedData.forEach((row, idx) => {
+            // Apply to all rows with this name — indices match the array the
+            // preview iterates (effectiveImportRows).
+            effectiveImportRows.forEach((row, idx) => {
               if ((row[nameColumn] || "").toString().trim() === name) {
                 const entry = warnings.get(idx) || {
                   existingSimilar: [],
@@ -348,7 +371,7 @@ export function ImportCasesWizard({
     };
 
     void checkDuplicates();
-  }, [currentPage, parsedData, fieldMappings, projectId]);
+  }, [currentPage, effectiveImportRows, fieldMappings, projectId]);
 
   // Check if project has an active LLM integration (for markdown parsing)
   const { data: projectLlmIntegrations } = useFindManyProjectLlmIntegration({
@@ -412,6 +435,15 @@ export function ImportCasesWizard({
         displayName: tCommon("fields.steps"),
         isRequired: false,
         type: "Steps",
+      },
+      {
+        // Multi-row mode only: pairs with the row's "steps" column so users
+        // can map a custom column header (e.g. "Outcome") to the per-step
+        // expected result instead of relying on alias-based auto-detection.
+        id: "expectedResult",
+        displayName: tCommon("fields.expectedResult"),
+        isRequired: false,
+        type: "ExpectedResult",
       },
       {
         id: "attachments",
@@ -499,6 +531,10 @@ export function ImportCasesWizard({
     tag: "tags",
     step: "steps",
     "test steps": "steps",
+    expected: "expectedResult",
+    "expected result": "expectedResult",
+    "expected results": "expectedResult",
+    "expected outcome": "expectedResult",
     estimated: "estimate",
     estimation: "estimate",
     "is automated": "automated",
@@ -809,15 +845,15 @@ export function ImportCasesWizard({
   };
 
   const getPreviewData = () => {
-    if (parsedData.length === 0) return [];
+    if (effectiveImportRows.length === 0) return [];
 
     const startIndex = Math.max(
       0,
-      Math.min(previewIndex * 25, parsedData.length - 25)
+      Math.min(previewIndex * 25, effectiveImportRows.length - 25)
     );
-    const endIndex = Math.min(startIndex + 25, parsedData.length);
+    const endIndex = Math.min(startIndex + 25, effectiveImportRows.length);
 
-    return parsedData.slice(startIndex, endIndex);
+    return effectiveImportRows.slice(startIndex, endIndex);
   };
 
   const validatePage1 = () => {
@@ -1570,8 +1606,11 @@ export function ImportCasesWizard({
           <p className="text-sm text-muted-foreground">
             {t("importWizard.page4.showing", {
               start: previewIndex * 25 + 1,
-              end: Math.min((previewIndex + 1) * 25, parsedData.length),
-              total: parsedData.length,
+              end: Math.min(
+                (previewIndex + 1) * 25,
+                effectiveImportRows.length
+              ),
+              total: effectiveImportRows.length,
             })}
           </p>
           <div className="flex gap-2">
@@ -1587,7 +1626,7 @@ export function ImportCasesWizard({
               variant="outline"
               size="sm"
               onClick={() => setPreviewIndex(previewIndex + 1)}
-              disabled={(previewIndex + 1) * 25 >= parsedData.length}
+              disabled={(previewIndex + 1) * 25 >= effectiveImportRows.length}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -1745,7 +1784,7 @@ export function ImportCasesWizard({
           {isImporting && (
             <LoadingSpinnerAlert
               message={tGlobal("repository.generateTestCases.importing", {
-                count: parsedData.length - importProgress,
+                count: effectiveImportRows.length - importProgress,
               })}
             />
           )}
@@ -1784,10 +1823,10 @@ export function ImportCasesWizard({
             >
               {isImporting
                 ? tGlobal("repository.generateTestCases.importing", {
-                    count: parsedData.length - importProgress,
+                    count: effectiveImportRows.length - importProgress,
                   })
                 : tGlobal("repository.generateTestCases.import", {
-                    count: parsedData.length,
+                    count: effectiveImportRows.length,
                   })}
             </Button>
           )}
