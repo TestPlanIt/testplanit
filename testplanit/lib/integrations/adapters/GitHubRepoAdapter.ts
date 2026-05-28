@@ -9,6 +9,9 @@ export class GitHubRepoAdapter extends GitRepoAdapter {
   private personalAccessToken: string;
   private owner: string;
   private repo: string;
+  // Public GitHub by default; GitHub Enterprise Server installations override
+  // this via settings.baseUrl (e.g. "https://ghes.example.com/api/v3").
+  private baseUrl: string;
 
   constructor(
     credentials: Record<string, string>,
@@ -18,6 +21,10 @@ export class GitHubRepoAdapter extends GitRepoAdapter {
     this.personalAccessToken = credentials.personalAccessToken;
     this.owner = settings?.owner ?? "";
     this.repo = settings?.repo ?? "";
+    this.baseUrl = (settings?.baseUrl ?? "https://api.github.com").replace(
+      /\/$/,
+      ""
+    );
   }
 
   private get authHeaders() {
@@ -29,7 +36,7 @@ export class GitHubRepoAdapter extends GitRepoAdapter {
 
   async getDefaultBranch(): Promise<string> {
     const data = await this.makeRequest<any>(
-      `https://api.github.com/repos/${this.owner}/${this.repo}`,
+      `${this.baseUrl}/repos/${this.owner}/${this.repo}`,
       { headers: this.authHeaders }
     );
     return data.default_branch;
@@ -38,14 +45,14 @@ export class GitHubRepoAdapter extends GitRepoAdapter {
   async listAllFiles(branch: string): Promise<ListFilesResult> {
     // Step 1: Get branch SHA
     const branchData = await this.makeRequest<any>(
-      `https://api.github.com/repos/${this.owner}/${this.repo}/branches/${encodeURIComponent(branch)}`,
+      `${this.baseUrl}/repos/${this.owner}/${this.repo}/branches/${encodeURIComponent(branch)}`,
       { headers: this.authHeaders }
     );
     const treeSha: string = branchData.commit.commit.tree.sha;
 
     // Step 2: Fetch recursive tree
     const treeData = await this.makeRequest<any>(
-      `https://api.github.com/repos/${this.owner}/${this.repo}/git/trees/${treeSha}?recursive=1`,
+      `${this.baseUrl}/repos/${this.owner}/${this.repo}/git/trees/${treeSha}?recursive=1`,
       { headers: this.authHeaders }
     );
 
@@ -68,7 +75,7 @@ export class GitHubRepoAdapter extends GitRepoAdapter {
 
   async getFileContent(path: string, branch: string): Promise<string> {
     const data = await this.makeRequest<any>(
-      `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(branch)}`,
+      `${this.baseUrl}/repos/${this.owner}/${this.repo}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(branch)}`,
       { headers: this.authHeaders }
     );
     return Buffer.from(data.content, "base64").toString("utf-8");
@@ -77,7 +84,7 @@ export class GitHubRepoAdapter extends GitRepoAdapter {
   async testConnection(): Promise<TestConnectionResult> {
     try {
       const data = await this.makeRequest<any>(
-        `https://api.github.com/repos/${this.owner}/${this.repo}`,
+        `${this.baseUrl}/repos/${this.owner}/${this.repo}`,
         { headers: this.authHeaders }
       );
       return { success: true, defaultBranch: data.default_branch };

@@ -128,6 +128,72 @@ describe("GitHubAdapter", () => {
         })
       ).rejects.toThrow();
     });
+
+    it("hits the GitHub Enterprise Server base URL when provided in config", async () => {
+      // Construction-time baseUrl (the IntegrationManager spreads
+      // settings.baseUrl into the adapter config when getAdapter runs).
+      const ghesAdapter = new GitHubAdapter({
+        repository: "testowner/testrepo",
+        provider: "GITHUB",
+        baseUrl: "https://github.example.com/api/v3",
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ login: "testuser" }),
+      });
+
+      await ghesAdapter.authenticate({
+        type: "api_key",
+        apiKey: "ghp_valid_token",
+      });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://github.example.com/api/v3/user",
+        expect.any(Object)
+      );
+    });
+
+    it("hits the GHES base URL when provided via authData (fallback path)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ login: "testuser" }),
+      });
+
+      await adapter.authenticate({
+        type: "api_key",
+        apiKey: "ghp_valid_token",
+        baseUrl: "https://github.example.com/api/v3",
+      });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://github.example.com/api/v3/user",
+        expect.any(Object)
+      );
+    });
+
+    it("normalizes a trailing slash on the GHES base URL", async () => {
+      const ghesAdapter = new GitHubAdapter({
+        repository: "testowner/testrepo",
+        provider: "GITHUB",
+        baseUrl: "https://github.example.com/api/v3/",
+      });
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ login: "testuser" }),
+      });
+
+      await ghesAdapter.authenticate({
+        type: "api_key",
+        apiKey: "ghp_valid_token",
+      });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://github.example.com/api/v3/user",
+        expect.any(Object)
+      );
+    });
   });
 
   describe("createIssue", () => {

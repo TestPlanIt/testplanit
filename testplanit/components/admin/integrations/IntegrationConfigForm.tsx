@@ -131,6 +131,16 @@ const providerFields: Record<IntegrationProvider, FieldConfig[]> = {
       isCredential: true,
       required: true,
     },
+    {
+      // Optional — leave blank for github.com. GitHub Enterprise Server users
+      // paste their API root here (e.g. https://ghes.example.com/api/v3).
+      name: "baseUrl",
+      label: "config.githubBaseUrl",
+      placeholder: "config.githubBaseUrlPlaceholder",
+      help: "config.githubBaseUrlHelp",
+      isCredential: false,
+      required: false,
+    },
   ],
   [IntegrationProvider.AZURE_DEVOPS]: [
     {

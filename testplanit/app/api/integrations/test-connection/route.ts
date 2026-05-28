@@ -220,19 +220,29 @@ async function testJiraConnection(
 }
 
 async function testGithubConnection(
-  credentials: Record<string, string>
+  credentials: Record<string, string>,
+  settings: Record<string, string>
 ): Promise<TestConnectionResult> {
   const { personalAccessToken } = credentials;
   if (!personalAccessToken) {
     return { success: false, error: "Missing personal access token" };
   }
 
+  // settings.baseUrl is set by GitHub Enterprise Server installations
+  // (e.g. "https://ghes.example.com/api/v3"); omitted on public github.com.
+  // Probe URLs are built from it so the connection test exercises the same
+  // host the adapters will hit, not the public API.
+  const baseUrl = (settings?.baseUrl || "https://api.github.com").replace(
+    /\/$/,
+    ""
+  );
+
   const headers = {
     Authorization: `token ${personalAccessToken}`,
     Accept: "application/vnd.github.v3+json",
   };
 
-  const connection = await probe("https://api.github.com/user", { headers });
+  const connection = await probe(`${baseUrl}/user`, { headers });
   if (!connection.ok) {
     return {
       success: false,
@@ -248,7 +258,7 @@ async function testGithubConnection(
   // resources. Catching it here surfaces the misconfiguration before
   // first hover / first webhook receipt instead of after.
   const searchIssues = await probe(
-    "https://api.github.com/search/issues?q=is:issue&per_page=1",
+    `${baseUrl}/search/issues?q=is:issue&per_page=1`,
     { headers }
   );
 
@@ -257,7 +267,7 @@ async function testGithubConnection(
   // public repo + number. Returns 200 with an array on success; 403
   // surfaces token-policy issues (e.g. PAT lifetime > org max).
   const readIssue = await probe(
-    "https://api.github.com/issues?per_page=1&filter=all&state=open",
+    `${baseUrl}/issues?per_page=1&filter=all&state=open`,
     { headers }
   );
 
@@ -618,7 +628,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         );
         break;
       case IntegrationProvider.GITHUB:
-        result = await testGithubConnection(testCredentials);
+        result = await testGithubConnection(testCredentials, testSettings);
         break;
       case IntegrationProvider.AZURE_DEVOPS:
         result = await testAzureDevOpsConnection(testCredentials, testSettings);

@@ -45,6 +45,10 @@ function renderGitHubDescription(description: unknown): string {
 export class GitHubAdapter extends BaseAdapter {
   private owner?: string;
   private repo?: string;
+  // Public GitHub by default; GitHub Enterprise Server installations override
+  // this with the full API root (e.g. "https://ghes.example.com/api/v3") via
+  // the integration's settings.baseUrl. Trailing slash is normalized off so
+  // url-template concatenation stays well-formed.
   private baseUrl = "https://api.github.com";
 
   constructor(config: any) {
@@ -55,6 +59,10 @@ export class GitHubAdapter extends BaseAdapter {
       const [owner, repo] = config.repository.split("/");
       this.owner = owner;
       this.repo = repo;
+    }
+
+    if (config.baseUrl) {
+      this.baseUrl = config.baseUrl.replace(/\/$/, "");
     }
   }
 
@@ -86,6 +94,13 @@ export class GitHubAdapter extends BaseAdapter {
       throw new Error(
         "Personal Access Token is required for GitHub authentication"
       );
+    }
+
+    // authData carries the per-instance baseUrl plumbed by IntegrationManager
+    // (settings.baseUrl). Re-apply it here so token validation hits the right
+    // server even if the adapter was constructed without it.
+    if (authData.baseUrl) {
+      this.baseUrl = authData.baseUrl.replace(/\/$/, "");
     }
 
     // Validate the token by making a test request
