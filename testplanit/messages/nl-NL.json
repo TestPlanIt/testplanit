@@ -4515,7 +4515,14 @@
     },
     "configurations": {
       "description": "Configuraties zijn een combinatie van categorieën en varianten die worden gebruikt om een testomgeving te definiëren. Bijvoorbeeld: besturingssysteem/browser, testserver, taal, enz.",
-      "addConfiguration": "Configuratie toevoegen",
+      "projectAssignment": {
+        "title": "Projecten toewijzen",
+        "reviewLabel": "De volgende configuraties worden toegepast op deze projecten:",
+        "description": "Kies in welke projecten deze configuraties beschikbaar moeten zijn. U kunt deze stap overslaan en projecten later toewijzen via het configuratiebeheer.",
+        "noProjects": "Geen projecten beschikbaar.",
+        "noneAssigned": "Niet toegewezen aan projecten (u kunt ze later toewijzen via het configuratiebeheer)."
+      },
+      "addConfiguration": "Configuraties toevoegen",
       "editConfiguration": "Configuratie bewerken",
       "filterPlaceholder": "Filterconfiguraties...",
       "allProjects": "Alle projecten",
@@ -4556,11 +4563,15 @@
       "combinations": {
         "title": "Combinaties",
         "description": "Beheer globale combinaties",
-        "confirmDescription": "De volgende {count, number} combinaties zullen worden gecreëerd.",
+        "confirmDescription": "De volgende {count, number} configuraties zullen worden aangemaakt:",
         "addCombination": "Combinatie toevoegen",
         "editCombination": "Combinatie bewerken",
-        "selectCombination": "Selecteer combinatie",
-        "selectCombinationDescription": "Selecteer een combinatie van varianten die u aan de configuratie wilt toevoegen.",
+        "selectCombination": "Selecteer combinaties",
+        "selectCombinationDescription": "Selecteer de variantcombinaties die u wilt toevoegen. Combinaties die al bestaan, worden uitgeschakeld weergegeven.",
+        "alreadyExists": "(bestaat al)",
+        "reviewTitle": "Configuraties controleren",
+        "createButton": "{count, plural, one {Maak 1 configuratie aan} other {Maak # configuraties aan}}",
+        "creating": "{count, plural, one {1 configuratie aanmaken...} other {# configuraties aanmaken...}}",
         "allExist": "Alle combinaties bestaan al.",
         "selectAtLeast": "Selecteer minimaal één combinatie."
       },
@@ -4580,8 +4591,8 @@
           "suggestion": "Overweeg in plaats daarvan de variant uit te schakelen."
         },
         "selection": {
-          "title": "Varianten selecteren",
-          "description": "Selecteer de varianten die u aan de configuratie wilt toevoegen."
+          "title": "Selecteer de varianten die u aan de configuraties wilt toevoegen.",
+          "description": "Stel een of meer configuraties samen door varianten te kiezen, te bepalen welke combinaties u wilt maken en deze toe te wijzen aan de projecten die ze zullen gebruiken."
         }
       }
     },

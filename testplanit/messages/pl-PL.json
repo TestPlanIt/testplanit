@@ -4515,7 +4515,14 @@
     },
     "configurations": {
       "description": "Konfiguracje to kombinacja kategorii i wariantów używanych do definiowania środowiska testowego. Na przykład system operacyjny/przeglądarka, serwer testowy, język itp.",
-      "addConfiguration": "Dodaj konfigurację",
+      "projectAssignment": {
+        "title": "Przypisz projekty",
+        "reviewLabel": "Nowe konfiguracje zostaną zastosowane do następujących projektów:",
+        "description": "Wybierz projekty, w których te konfiguracje mają być dostępne. Możesz pominąć ten krok i przypisać projekty później z poziomu administratora konfiguracji.",
+        "noProjects": "Brak dostępnych projektów.",
+        "noneAssigned": "Nie przypisano do żadnych projektów (możesz je przypisać później z poziomu administratora konfiguracji)."
+      },
+      "addConfiguration": "Dodaj konfiguracje",
       "editConfiguration": "Edytuj konfigurację",
       "filterPlaceholder": "Konfiguracje filtrów...",
       "allProjects": "Wszystkie projekty",
@@ -4556,11 +4563,15 @@
       "combinations": {
         "title": "Kombinacje",
         "description": "Zarządzaj kombinacjami globalnymi",
-        "confirmDescription": "Zostaną utworzone następujące kombinacje {count, number}.",
+        "confirmDescription": "Zostaną utworzone następujące konfiguracje {count, number}:",
         "addCombination": "Dodaj kombinację",
         "editCombination": "Edytuj kombinację",
-        "selectCombination": "Wybierz kombinację",
-        "selectCombinationDescription": "Wybierz kombinację wariantów, aby dodać ją do konfiguracji.",
+        "selectCombination": "Wybierz kombinacje",
+        "selectCombinationDescription": "Wybierz kombinacje wariantów, które chcesz dodać. Wszystkie kombinacje, które już istnieją, są wyświetlane jako wyłączone.",
+        "alreadyExists": "(już istnieje)",
+        "reviewTitle": "Przegląd konfiguracji",
+        "createButton": "{count, plural, one {Utwórz 1 konfigurację} other {Utwórz # konfiguracji}}",
+        "creating": "{count, plural, one {Tworzenie 1 konfiguracji...} other {Tworzenie # konfiguracji...}}",
         "allExist": "Wszystkie kombinacje już istnieją.",
         "selectAtLeast": "Proszę wybrać co najmniej jedną kombinację."
       },
@@ -4580,8 +4591,8 @@
           "suggestion": "Zamiast tego należy rozważyć wyłączenie tej opcji."
         },
         "selection": {
-          "title": "Wybierz warianty",
-          "description": "Wybierz warianty, które chcesz dodać do konfiguracji."
+          "title": "Wybierz warianty, które chcesz dodać do konfiguracji.",
+          "description": "Utwórz jedną lub więcej konfiguracji, wybierając warianty, decydując, które kombinacje utworzyć, a następnie przypisując je do projektów, które będą z nich korzystać."
         }
       }
     },

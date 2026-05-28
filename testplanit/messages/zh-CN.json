@@ -4515,6 +4515,13 @@
     },
     "configurations": {
       "description": "配置是用于定义测试环境的各种类别和变体的组合。例如，操作系统/浏览器、测试服务器、语言等。",
+      "projectAssignment": {
+        "title": "分配项目",
+        "reviewLabel": "新的配置将应用于这些项目：",
+        "description": "选择这些配置应在哪些项目中可用。您可以跳过此步骤，稍后在配置管理后台分配项目。",
+        "noProjects": "暂无项目。",
+        "noneAssigned": "未分配到任何项目（您可以稍后从配置管理中分配）。"
+      },
       "addConfiguration": "添加配置",
       "editConfiguration": "编辑配置",
       "filterPlaceholder": "过滤器配置...",
@@ -4556,11 +4563,15 @@
       "combinations": {
         "title": "组合",
         "description": "管理全局组合",
-        "confirmDescription": "将创建以下 {count, number} 组合。",
+        "confirmDescription": "The following {count, number} Configurations will be created:",
         "addCombination": "添加组合",
         "editCombination": "编辑组合",
         "selectCombination": "选择组合",
-        "selectCombinationDescription": "选择要添加到配置中的变体组合。",
+        "selectCombinationDescription": "请选择要添加的变体组合。已存在的组合将显示为禁用状态。",
+        "alreadyExists": "（已存在）",
+        "reviewTitle": "查看配置",
+        "createButton": "{count, plural, one {创建 1 个配置} other {创建 # 个配置}}",
+        "creating": "{count, plural, one {正在创建 1 个配置...} other {正在创建 # 个配置...}}",
         "allExist": "所有组合都已存在。",
         "selectAtLeast": "请至少选择一种组合。"
       },
@@ -4580,8 +4591,8 @@
           "suggestion": "考虑禁用该变体。"
         },
         "selection": {
-          "title": "选择变体",
-          "description": "选择要添加到配置中的变体。"
+          "title": "选择要添加到配置中的变体。",
+          "description": "通过选择变体、选择要创建的组合，并将它们分配给将要使用它们的项目，来构建一个或多个配置。"
         }
       }
     },

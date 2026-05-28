@@ -4515,7 +4515,14 @@
     },
     "configurations": {
       "description": "Konfigürasyonlar, bir test ortamını tanımlamak için kullanılan kategori ve varyantların birleşimidir. Örneğin, İşletim Sistemi/Tarayıcı, Test Sunucusu, Dil vb.",
-      "addConfiguration": "Yapılandırma Ekle",
+      "projectAssignment": {
+        "title": "Projeleri Ata",
+        "reviewLabel": "Bu projelere yeni yapılandırmalar uygulanacaktır:",
+        "description": "Bu yapılandırmaların hangi projelerde kullanılabileceğini seçin. Bu adımı atlayabilir ve daha sonra yapılandırma yöneticisinden projelere atama yapabilirsiniz.",
+        "noProjects": "Mevcut proje yok.",
+        "noneAssigned": "Herhangi bir projeye atanmamıştır (daha sonra yapılandırma yöneticisinden atama yapabilirsiniz)."
+      },
+      "addConfiguration": "Yapılandırmaları Ekle",
       "editConfiguration": "Yapılandırmayı Düzenle",
       "filterPlaceholder": "Filtre yapılandırmaları...",
       "allProjects": "Tüm projeler",
@@ -4556,11 +4563,15 @@
       "combinations": {
         "title": "Kombinasyonlar",
         "description": "Küresel kombinasyonları yönetin",
-        "confirmDescription": "Aşağıdaki {count, number} kombinasyonları oluşturulacaktır.",
+        "confirmDescription": "Aşağıdaki {count, number} Konfigürasyonları oluşturulacaktır:",
         "addCombination": "Kombinasyon Ekle",
         "editCombination": "Kombinasyonu Düzenle",
-        "selectCombination": "Kombinasyonu Seçin",
-        "selectCombinationDescription": "Yapılandırmaya eklemek için varyantların bir kombinasyonunu seçin.",
+        "selectCombination": "Kombinasyonları Seçin",
+        "selectCombinationDescription": "Eklenecek varyant kombinasyonlarını seçin. Zaten mevcut olan tüm kombinasyonlar devre dışı bırakılmış olarak gösterilir.",
+        "alreadyExists": "(zaten mevcut)",
+        "reviewTitle": "Yapılandırmaları Gözden Geçirin",
+        "createButton": "{count, plural, one {1 Yapılandırma Oluştur} other {# Yapılandırma Oluştur}}",
+        "creating": "{count, plural, one {1 Yapılandırma Oluşturuluyor...} other {# Yapılandırma Oluşturuluyor...}}",
         "allExist": "Tüm kombinasyonlar zaten mevcut.",
         "selectAtLeast": "Lütfen en az bir kombinasyon seçin."
       },
@@ -4580,8 +4591,8 @@
           "suggestion": "Bunun yerine ilgili varyantı devre dışı bırakmayı düşünün."
         },
         "selection": {
-          "title": "Varyantları Seçin",
-          "description": "Yapılandırmaya eklemek istediğiniz varyantları seçin."
+          "title": "Konfigürasyonlara eklemek istediğiniz varyantları seçin.",
+          "description": "Varyantları seçerek, oluşturulacak kombinasyonları belirleyerek ve bunları kullanacak projelere atayarak bir veya daha fazla yapılandırma oluşturun."
         }
       }
     },

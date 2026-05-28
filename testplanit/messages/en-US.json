@@ -4515,7 +4515,14 @@
     },
     "configurations": {
       "description": "Configurations are a combination of categories and variants used to define a test environment. For example, OS/Browser, Test Server, Language, etc.",
-      "addConfiguration": "Add Configuration",
+      "projectAssignment": {
+        "title": "Assign Projects",
+        "reviewLabel": "New Configurations will be applied to these projects:",
+        "description": "Choose which projects these configurations should be available in. You can skip this step and assign projects later from the configurations admin.",
+        "noProjects": "No projects available.",
+        "noneAssigned": "Not assigned to any projects (you can assign them from the configurations admin later)."
+      },
+      "addConfiguration": "Add Configurations",
       "editConfiguration": "Edit Configuration",
       "filterPlaceholder": "Filter configurations...",
       "allProjects": "All projects",
@@ -4556,12 +4563,15 @@
       "combinations": {
         "title": "Combinations",
         "description": "Manage global combinations",
-        "confirmDescription": "The following {count, number} combinations will be created.",
+        "confirmDescription": "The following {count, number} Configurations will be created:",
         "addCombination": "Add Combination",
         "editCombination": "Edit Combination",
         "selectCombination": "Select Combinations",
         "selectCombinationDescription": "Select the variant combinations to add. Any combinations that already exist are shown disabled.",
         "alreadyExists": "(already exists)",
+        "reviewTitle": "Review Configurations",
+        "createButton": "{count, plural, one {Create 1 Configuration} other {Create # Configurations}}",
+        "creating": "{count, plural, one {Creating 1 Configuration...} other {Creating # Configurations...}}",
         "allExist": "All combinations already exist.",
         "selectAtLeast": "Please select at least one combination."
       },
@@ -4581,8 +4591,8 @@
           "suggestion": "Consider disabling the variant instead."
         },
         "selection": {
-          "title": "Select Variants",
-          "description": "Select the variants you want to add to the configuration."
+          "title": "Select the variants you want to add to the configurations.",
+          "description": "Build one or more configurations by choosing variants, picking which combinations to create, and assigning them to the projects that will use them."
         }
       }
     },

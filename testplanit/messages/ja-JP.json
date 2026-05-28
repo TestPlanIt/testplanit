@@ -4515,6 +4515,13 @@
     },
     "configurations": {
       "description": "構成とは、テスト環境を定義するために使用されるカテゴリとバリアントの組み合わせです。例えば、OS/ブラウザ、テストサーバー、言語などです。",
+      "projectAssignment": {
+        "title": "プロジェクトを割り当てる",
+        "reviewLabel": "以下のプロジェクトに新しい設定が適用されます。",
+        "description": "これらの設定をどのプロジェクトで利用可能にするかを選択してください。この手順はスキップして、後で設定管理画面からプロジェクトを割り当てることもできます。",
+        "noProjects": "利用可能なプロジェクトはありません。",
+        "noneAssigned": "どのプロジェクトにも割り当てられていません（後で設定管理画面から割り当てることができます）。"
+      },
       "addConfiguration": "設定を追加する",
       "editConfiguration": "設定を編集する",
       "filterPlaceholder": "フィルター構成...",
@@ -4556,11 +4563,15 @@
       "combinations": {
         "title": "組み合わせ",
         "description": "グローバルな組み合わせを管理する",
-        "confirmDescription": "以下の {count, number} 組み合わせが作成されます。",
+        "confirmDescription": "以下の {count, number} 設定が作成されます。",
         "addCombination": "組み合わせを追加",
         "editCombination": "組み合わせを編集",
         "selectCombination": "組み合わせを選択",
-        "selectCombinationDescription": "構成に追加するバリアントの組み合わせを選択します。",
+        "selectCombinationDescription": "追加するバリエーションの組み合わせを選択してください。既に存在する組み合わせは無効になっています。",
+        "alreadyExists": "（既に存在します）",
+        "reviewTitle": "設定を確認する",
+        "createButton": "{count, plural, one {設定を 1 つ作成} other {設定を # つ作成}}",
+        "creating": "{count, plural, one {1 つの設定を作成しています...} other {# つの設定を作成しています...}}",
         "allExist": "すべての組み合わせはすでに存在します。",
         "selectAtLeast": "少なくとも 1 つの組み合わせを選択してください。"
       },
@@ -4580,8 +4591,8 @@
           "suggestion": "代わりにバリアントを無効にすることを検討してください。"
         },
         "selection": {
-          "title": "バリエーションを選択",
-          "description": "構成に追加するバリアントを選択します。"
+          "title": "設定に追加したいバリエーションを選択してください。",
+          "description": "バリアントを選択し、作成する組み合わせを選び、それらを使用するプロジェクトに割り当てることで、1つまたは複数の構成を作成します。"
         }
       }
     },

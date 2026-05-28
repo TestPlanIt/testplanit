@@ -4515,6 +4515,13 @@
     },
     "configurations": {
       "description": "配置是用於定義測試環境的類別和變體的組合。例如，作業系統/瀏覽器、測試伺服器、語言等。",
+      "projectAssignment": {
+        "title": "分配項目",
+        "reviewLabel": "新的配置將應用於這些項目：",
+        "description": "選擇這些配置應在哪些項目中可用。您可以跳過此步驟，稍後在設定管理背景指派專案。",
+        "noProjects": "暫無項目。",
+        "noneAssigned": "未指派到任何專案（您可以稍後從組態管理中指派）。"
+      },
       "addConfiguration": "新增配置",
       "editConfiguration": "編輯配置",
       "filterPlaceholder": "過濾器配置...",
@@ -4556,11 +4563,15 @@
       "combinations": {
         "title": "組合",
         "description": "管理全域組合",
-        "confirmDescription": "將建立以下 {count, number} 組合。",
+        "confirmDescription": "The following {count, number} Configurations will be created:",
         "addCombination": "新增組合",
         "editCombination": "編輯組合",
         "selectCombination": "選擇組合",
-        "selectCombinationDescription": "選擇要新增至配置中的變體組合。",
+        "selectCombinationDescription": "請選擇要新增的變體組合。已存在的組合將顯示為停用狀態。",
+        "alreadyExists": "（已存在）",
+        "reviewTitle": "查看配置",
+        "createButton": "{count, plural, one {建立 1 個設定} other {建立 # 個設定}}",
+        "creating": "{count, plural, one {正在建立 1 個設定...} other {正在建立 # 個設定...}}",
         "allExist": "所有組合都已存在。",
         "selectAtLeast": "請至少選擇一種組合。"
       },
@@ -4580,8 +4591,8 @@
           "suggestion": "考慮禁用該變體。"
         },
         "selection": {
-          "title": "選擇變體",
-          "description": "選擇要新增至配置中的變體。"
+          "title": "選擇要新增至配置中的變體。",
+          "description": "透過選擇變體、選擇要建立的組合，並將它們指派給將要使用它們的項目，來建立一個或多個配置。"
         }
       }
     },

@@ -4515,7 +4515,14 @@
     },
     "configurations": {
       "description": "Les configurations sont une combinaison de catégories et de variantes utilisées pour définir un environnement de test. Par exemple : système d’exploitation/navigateur, serveur de test, langage, etc.",
-      "addConfiguration": "Ajouter une configuration",
+      "projectAssignment": {
+        "title": "Attribuer des projets",
+        "reviewLabel": "De nouvelles configurations seront appliquées à ces projets :",
+        "description": "Choisissez les projets dans lesquels ces configurations doivent être disponibles. Vous pouvez ignorer cette étape et attribuer les projets ultérieurement depuis l'interface d'administration des configurations.",
+        "noProjects": "Aucun projet disponible.",
+        "noneAssigned": "Non affecté à aucun projet (vous pourrez les affecter ultérieurement depuis l'interface d'administration des configurations)."
+      },
+      "addConfiguration": "Ajouter des configurations",
       "editConfiguration": "Modifier la configuration",
       "filterPlaceholder": "Configurations de filtre...",
       "allProjects": "Tous les projets",
@@ -4556,11 +4563,15 @@
       "combinations": {
         "title": "Combinaisons",
         "description": "Gérer les combinaisons globales",
-        "confirmDescription": "Les combinaisons suivantes {count, number} seront créées.",
+        "confirmDescription": "Les configurations suivantes {count, number} seront créées :",
         "addCombination": "Ajouter une combinaison",
         "editCombination": "Combinaison de modification",
-        "selectCombination": "Sélectionner une combinaison",
-        "selectCombinationDescription": "Sélectionnez une combinaison de variantes à ajouter à la configuration.",
+        "selectCombination": "Sélectionner les combinaisons",
+        "selectCombinationDescription": "Sélectionnez les combinaisons de variantes à ajouter. Les combinaisons déjà existantes sont désactivées.",
+        "alreadyExists": "(existe déjà)",
+        "reviewTitle": "Examiner les configurations",
+        "createButton": "{count, plural, one {Créer 1 configuration} other {Créer # configurations}}",
+        "creating": "{count, plural, one {Création de 1 configuration...} other {Création de # configurations...}}",
         "allExist": "Toutes les combinaisons existent déjà.",
         "selectAtLeast": "Veuillez sélectionner au moins une combinaison."
       },
@@ -4580,8 +4591,8 @@
           "suggestion": "Envisagez plutôt de désactiver cette variante."
         },
         "selection": {
-          "title": "Sélectionner les variantes",
-          "description": "Sélectionnez les variantes que vous souhaitez ajouter à la configuration."
+          "title": "Sélectionnez les variantes que vous souhaitez ajouter aux configurations.",
+          "description": "Créez une ou plusieurs configurations en choisissant des variantes, en sélectionnant les combinaisons à créer et en les affectant aux projets qui les utiliseront."
         }
       }
     },

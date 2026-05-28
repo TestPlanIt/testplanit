@@ -4515,7 +4515,14 @@
     },
     "configurations": {
       "description": "Las configuraciones son una combinación de categorías y variantes utilizadas para definir un entorno de prueba. Por ejemplo, OS/Browser, Servidor de pruebas, Idioma, etc.",
-      "addConfiguration": "Añadir configuración",
+      "projectAssignment": {
+        "title": "Asignar proyectos",
+        "reviewLabel": "Se aplicarán nuevas configuraciones a estos proyectos:",
+        "description": "Seleccione en qué proyectos deben estar disponibles estas configuraciones. Puede omitir este paso y asignar los proyectos posteriormente desde el administrador de configuraciones.",
+        "noProjects": "No hay proyectos disponibles.",
+        "noneAssigned": "No está asignado a ningún proyecto (puede asignarlo más adelante desde el administrador de configuraciones)."
+      },
+      "addConfiguration": "Agregar configuraciones",
       "editConfiguration": "Editar configuración",
       "filterPlaceholder": "Filtrar configuraciones...",
       "allProjects": "Todos los proyectos",
@@ -4556,11 +4563,15 @@
       "combinations": {
         "title": "Combinaciones",
         "description": "Administrar combinaciones globales",
-        "confirmDescription": "Se crearán las siguientes combinaciones {count, number}.",
+        "confirmDescription": "The following {count, number} Configurations will be created:",
         "addCombination": "Añadir combinación",
         "editCombination": "Editar combinación",
-        "selectCombination": "Seleccionar combinación",
-        "selectCombinationDescription": "Seleccione una combinación de variantes para añadir a la configuración.",
+        "selectCombination": "Seleccione combinaciones",
+        "selectCombinationDescription": "Seleccione las combinaciones de variantes que desea agregar. Las combinaciones que ya existen se muestran deshabilitadas.",
+        "alreadyExists": "(ya existe)",
+        "reviewTitle": "Revisar configuraciones",
+        "createButton": "{count, plural, one {Crear 1 configuración} other {Crear # configuraciones}}",
+        "creating": "{count, plural, one {Creando 1 configuración...} other {Creando # configuraciones...}}",
         "allExist": "Todas las combinaciones ya existen.",
         "selectAtLeast": "Por favor, seleccione al menos una combinación."
       },
@@ -4580,8 +4591,8 @@
           "suggestion": "Considere desactivar la variante en su lugar."
         },
         "selection": {
-          "title": "Seleccionar variantes",
-          "description": "Seleccione las variantes que desea añadir a la configuración."
+          "title": "Seleccione las variantes que desea agregar a las configuraciones.",
+          "description": "Crea una o más configuraciones eligiendo variantes, seleccionando las combinaciones que deseas crear y asignándolas a los proyectos que las utilizarán."
         }
       }
     },
