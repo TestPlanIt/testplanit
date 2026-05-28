@@ -8,12 +8,16 @@ import { prisma } from "~/lib/prisma";
  * @param query - Search query to filter by name
  * @param page - Page number (0-indexed)
  * @param pageSize - Number of results per page
+ * @param projectId - When set, restrict to configurations assigned to this
+ *   project (configurations are project-scoped via ProjectConfigurationAssignment).
+ *   Omit for global/cross-project contexts.
  * @returns Paginated results with total count
  */
 export async function searchConfigurations(
   query: string,
   page: number,
-  pageSize: number
+  pageSize: number,
+  projectId?: number
 ): Promise<{
   results: Array<{
     id: number;
@@ -26,6 +30,10 @@ export async function searchConfigurations(
       isDeleted: false,
       isEnabled: true,
     };
+
+    if (projectId !== undefined) {
+      whereClause.projects = { some: { projectId } };
+    }
 
     if (query && query.trim().length > 0) {
       whereClause.name = { contains: query.trim(), mode: "insensitive" };

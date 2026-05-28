@@ -300,8 +300,8 @@ test.describe("Test Run Bulk Operations and Completion", () => {
     const projectId = await api.createProject(`E2E NavConfig ${ts}`);
     const config1Name = `NavConfig Chrome ${ts}`;
     const config2Name = `NavConfig Firefox ${ts}`;
-    const config1Id = await api.createConfiguration(config1Name);
-    const config2Id = await api.createConfiguration(config2Name);
+    const config1Id = await api.createConfiguration(config1Name, projectId);
+    const config2Id = await api.createConfiguration(config2Name, projectId);
 
     const groupId = randomUUID();
     const run1Id = await api.createTestRun(projectId, `Nav Chrome Run ${ts}`, {
@@ -392,8 +392,14 @@ test.describe("Test Run Bulk Operations and Completion", () => {
     // Setup: create project with two configurations and two sibling runs with different case counts
     const ts = Date.now();
     const projectId = await api.createProject(`E2E CaseCount ${ts}`);
-    const config1Id = await api.createConfiguration(`CaseCount Safari ${ts}`);
-    const config2Id = await api.createConfiguration(`CaseCount Edge ${ts}`);
+    const config1Id = await api.createConfiguration(
+      `CaseCount Safari ${ts}`,
+      projectId
+    );
+    const config2Id = await api.createConfiguration(
+      `CaseCount Edge ${ts}`,
+      projectId
+    );
 
     const groupId = randomUUID();
     const run1Id = await api.createTestRun(

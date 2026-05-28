@@ -27,6 +27,9 @@ vi.mock("~/app/actions/searchConfigurations", () => ({
 
 // Mock AsyncCombobox — renders a simplified select that calls onValueChange
 const mockAsyncComboboxOnValueChange = vi.fn();
+let capturedFetchOptions:
+  | ((q: string, p: number, s: number) => unknown)
+  | null = null;
 vi.mock("@/components/ui/async-combobox", () => ({
   AsyncCombobox: ({
     value,
@@ -35,7 +38,9 @@ vi.mock("@/components/ui/async-combobox", () => ({
     disabled,
     showUnassigned,
     unassignedLabel,
+    fetchOptions,
   }: any) => {
+    capturedFetchOptions = fetchOptions;
     // Store the callback for test use
     mockAsyncComboboxOnValueChange.mockImplementation(onValueChange);
     return (
@@ -67,10 +72,12 @@ vi.mock("@/components/ui/async-combobox", () => ({
 }));
 
 import { ConfigurationSelect } from "./ConfigurationSelect";
+import { searchConfigurations } from "~/app/actions/searchConfigurations";
 
 describe("ConfigurationSelect", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    capturedFetchOptions = null;
     mockUseFindFirstConfigurations.mockReturnValue({ data: null });
   });
 
@@ -161,5 +168,25 @@ describe("ConfigurationSelect", () => {
         where: { id: undefined },
       })
     );
+  });
+
+  it("scopes fetchOptions to the provided projectId", () => {
+    render(
+      <ConfigurationSelect value={null} onChange={vi.fn()} projectId={7} />
+    );
+
+    expect(capturedFetchOptions).toBeTypeOf("function");
+    capturedFetchOptions!("query", 0, 20);
+
+    expect(searchConfigurations).toHaveBeenCalledWith("query", 0, 20, 7);
+  });
+
+  it("passes undefined projectId when none is provided (global scope)", () => {
+    render(<ConfigurationSelect value={null} onChange={vi.fn()} />);
+
+    expect(capturedFetchOptions).toBeTypeOf("function");
+    capturedFetchOptions!("q", 1, 10);
+
+    expect(searchConfigurations).toHaveBeenCalledWith("q", 1, 10, undefined);
   });
 });

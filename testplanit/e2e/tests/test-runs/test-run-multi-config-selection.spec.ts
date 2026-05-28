@@ -21,8 +21,14 @@ test.describe("Multi-Config Test Run Selection", () => {
   }) => {
     // Setup: Create project with two configurations and two sibling test runs
     const projectId = await api.createProject(`E2E MultiConfig ${Date.now()}`);
-    const config1Id = await api.createConfiguration(`Chrome ${Date.now()}`);
-    const config2Id = await api.createConfiguration(`Firefox ${Date.now()}`);
+    const config1Id = await api.createConfiguration(
+      `Chrome ${Date.now()}`,
+      projectId
+    );
+    const config2Id = await api.createConfiguration(
+      `Firefox ${Date.now()}`,
+      projectId
+    );
 
     const groupId = randomUUID();
     const run1Id = await api.createTestRun(
@@ -78,7 +84,8 @@ test.describe("Multi-Config Test Run Selection", () => {
   }) => {
     const projectId = await api.createProject(`E2E SingleConfig ${Date.now()}`);
     const configId = await api.createConfiguration(
-      `SingleConfig ${Date.now()}`
+      `SingleConfig ${Date.now()}`,
+      projectId
     );
 
     // Create a single test run (no configurationGroupId)
@@ -118,8 +125,8 @@ test.describe("Multi-Config Test Run Selection", () => {
     const ts = Date.now();
     const config1Name = `Safari ${ts}`;
     const config2Name = `Edge ${ts}`;
-    const config1Id = await api.createConfiguration(config1Name);
-    const config2Id = await api.createConfiguration(config2Name);
+    const config1Id = await api.createConfiguration(config1Name, projectId);
+    const config2Id = await api.createConfiguration(config2Name, projectId);
 
     const groupId = randomUUID();
     const run1Id = await api.createTestRun(projectId, `Safari Run ${ts}`, {
@@ -219,8 +226,8 @@ test.describe("Multi-Config Test Run Selection", () => {
     // false positives when locating the Edit button by text
     const projectId = await api.createProject(`E2E HidBtn ${Date.now()}`);
     const ts = Date.now();
-    const config1Id = await api.createConfiguration(`Config1 ${ts}`);
-    const config2Id = await api.createConfiguration(`Config2 ${ts}`);
+    const config1Id = await api.createConfiguration(`Config1 ${ts}`, projectId);
+    const config2Id = await api.createConfiguration(`Config2 ${ts}`, projectId);
 
     const groupId = randomUUID();
     const run1Id = await api.createTestRun(projectId, `Run1 ${ts}`, {

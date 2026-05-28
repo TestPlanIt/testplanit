@@ -928,6 +928,12 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'project',
+                }, assignedConfigurations: {
+                    name: "assignedConfigurations",
+                    type: "ProjectConfigurationAssignment",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'project',
                 }, milestones: {
                     name: "milestones",
                     type: "Milestones",
@@ -1250,6 +1256,44 @@ const metadata: ModelMeta = {
                 statusId_projectId: {
                     name: "statusId_projectId",
                     fields: ["statusId", "projectId"]
+                },
+            },
+        },
+        projectConfigurationAssignment: {
+            name: 'ProjectConfigurationAssignment', fields: {
+                configurationId: {
+                    name: "configurationId",
+                    type: "Int",
+                    isId: true,
+                    isForeignKey: true,
+                    relationField: 'configuration',
+                }, configuration: {
+                    name: "configuration",
+                    type: "Configurations",
+                    isDataModel: true,
+                    backLink: 'projects',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "configurationId" },
+                }, projectId: {
+                    name: "projectId",
+                    type: "Int",
+                    isId: true,
+                    isForeignKey: true,
+                    relationField: 'project',
+                }, project: {
+                    name: "project",
+                    type: "Projects",
+                    isDataModel: true,
+                    backLink: 'assignedConfigurations',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "projectId" },
+                },
+            }, uniqueConstraints: {
+                configurationId_projectId: {
+                    name: "configurationId_projectId",
+                    fields: ["configurationId", "projectId"]
                 },
             },
         },
@@ -2769,6 +2813,12 @@ const metadata: ModelMeta = {
                 }, testRuns: {
                     name: "testRuns",
                     type: "TestRuns",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'configuration',
+                }, projects: {
+                    name: "projects",
+                    type: "ProjectConfigurationAssignment",
                     isDataModel: true,
                     isArray: true,
                     backLink: 'configuration',
@@ -9500,7 +9550,7 @@ const metadata: ModelMeta = {
         user: ['Account', 'PasswordHistory', 'UserPreferences', 'ApiToken', 'GroupAssignment', 'UserIntegrationAuth', 'UserProjectPermission', 'Notification', 'ShareLink', 'CommentMention'],
         groups: ['GroupAssignment', 'GroupProjectPermission'],
         roles: ['RolePermission'],
-        projects: ['ProjectAssignment', 'ProjectStatusAssignment', 'ProjectWorkflowAssignment', 'Milestones', 'MilestoneTypesAssignment', 'TemplateProjectAssignment', 'CaseExportTemplateProjectAssignment', 'Repositories', 'RepositoryFolders', 'DuplicateScanResult', 'StepSequenceMatch', 'RepositoryCases', 'RepositoryCaseVersions', 'Sessions', 'SessionVersions', 'TestRuns', 'Issue', 'ProjectCodeRepositoryConfig', 'ProjectLlmIntegration', 'UserProjectPermission', 'GroupProjectPermission', 'SharedStepGroup', 'DataSet', 'ShareLink', 'ProjectIntegration', 'WebhookConfig', 'WebhookOutboxEvent', 'LlmFeatureConfig', 'LlmResponseCache', 'Comment'],
+        projects: ['ProjectAssignment', 'ProjectStatusAssignment', 'ProjectConfigurationAssignment', 'ProjectWorkflowAssignment', 'Milestones', 'MilestoneTypesAssignment', 'TemplateProjectAssignment', 'CaseExportTemplateProjectAssignment', 'Repositories', 'RepositoryFolders', 'DuplicateScanResult', 'StepSequenceMatch', 'RepositoryCases', 'RepositoryCaseVersions', 'Sessions', 'SessionVersions', 'TestRuns', 'Issue', 'ProjectCodeRepositoryConfig', 'ProjectLlmIntegration', 'UserProjectPermission', 'GroupProjectPermission', 'SharedStepGroup', 'DataSet', 'ShareLink', 'ProjectIntegration', 'WebhookConfig', 'WebhookOutboxEvent', 'LlmFeatureConfig', 'LlmResponseCache', 'Comment'],
         milestones: ['Comment'],
         caseFields: ['TemplateCaseAssignment', 'CaseFieldAssignment', 'CaseFieldValues', 'SessionFieldValues'],
         resultFields: ['TemplateResultAssignment', 'ResultFieldAssignment', 'ResultFieldValues'],
@@ -9510,7 +9560,7 @@ const metadata: ModelMeta = {
         status: ['StatusScopeAssignment'],
         configCategories: ['ConfigVariants'],
         configVariants: ['ConfigurationConfigVariant'],
-        configurations: ['ConfigurationConfigVariant'],
+        configurations: ['ProjectConfigurationAssignment', 'ConfigurationConfigVariant'],
         repositories: ['RepositoryFolders', 'RepositoryCases'],
         repositoryFolders: ['RepositoryCases'],
         stepSequenceMatch: ['StepSequenceMatchCase'],

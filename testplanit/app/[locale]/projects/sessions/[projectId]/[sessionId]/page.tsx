@@ -464,6 +464,7 @@ function SessionFormControls({
                   value={field.value}
                   onChange={(val) => field.onChange(val)}
                   disabled={isSubmitting}
+                  projectId={Number(projectId)}
                 />
               ) : (
                 <div className="flex items-center gap-1">

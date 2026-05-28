@@ -767,6 +767,56 @@ export async function importConfigurations(
   return summary;
 }
 
+/**
+ * Configurations are project-scoped (via ProjectConfigurationAssignment), but
+ * the Testmo importer creates them globally. After test runs are imported,
+ * assign each configuration to the projects whose runs actually use it — the
+ * same usage-based scoping the parameterized matrix relies on. Without this,
+ * imported configurations would be invisible in their projects' run/session
+ * pickers even though existing runs still render their stored configuration.
+ *
+ * Idempotent (skips pairs already assigned), so re-running an import is safe.
+ */
+export async function assignImportedConfigurationsToProjects(
+  tx: Prisma.TransactionClient,
+  projectIds: number[]
+): Promise<{ created: number }> {
+  if (projectIds.length === 0) {
+    return { created: 0 };
+  }
+
+  const pairs = await tx.testRuns.findMany({
+    where: {
+      projectId: { in: projectIds },
+      configId: { not: null },
+      isDeleted: false,
+    },
+    select: { projectId: true, configId: true },
+    distinct: ["projectId", "configId"],
+  });
+
+  const data = pairs
+    .filter(
+      (pair): pair is { projectId: number; configId: number } =>
+        pair.configId !== null
+    )
+    .map((pair) => ({
+      projectId: pair.projectId,
+      configurationId: pair.configId,
+    }));
+
+  if (data.length === 0) {
+    return { created: 0 };
+  }
+
+  const result = await tx.projectConfigurationAssignment.createMany({
+    data,
+    skipDuplicates: true,
+  });
+
+  return { created: result.count };
+}
+
 export async function importUserGroups(
   tx: Prisma.TransactionClient,
   configuration: TestmoMappingConfiguration,

@@ -22,7 +22,7 @@ test.describe("Session Multi-Configuration Creation", () => {
       `E2E MultiConfig Session ${Date.now()}`
     );
     const configName = `MultiConfig ${Date.now()}`;
-    await api.createConfiguration(configName);
+    await api.createConfiguration(configName, projectId);
 
     await page.goto(`/en-US/projects/sessions/${projectId}`);
     await page.waitForLoadState("load");
@@ -61,8 +61,8 @@ test.describe("Session Multi-Configuration Creation", () => {
     const projectId = await api.createProject(`E2E MultiSelect ${ts}`);
     const config1Name = `Chrome ${ts}`;
     const config2Name = `Firefox ${ts}`;
-    await api.createConfiguration(config1Name);
-    await api.createConfiguration(config2Name);
+    await api.createConfiguration(config1Name, projectId);
+    await api.createConfiguration(config2Name, projectId);
 
     await page.goto(`/en-US/projects/sessions/${projectId}`);
     await page.waitForLoadState("load");
@@ -110,8 +110,8 @@ test.describe("Session Multi-Configuration Creation", () => {
     const projectId = await api.createProject(`E2E MultiCreate ${ts}`);
     const config1Name = `Safari ${ts}`;
     const config2Name = `Edge ${ts}`;
-    await api.createConfiguration(config1Name);
-    await api.createConfiguration(config2Name);
+    await api.createConfiguration(config1Name, projectId);
+    await api.createConfiguration(config2Name, projectId);
     const sessionName = `Multi-Config Session ${ts}`;
 
     await page.goto(`/en-US/projects/sessions/${projectId}`);
@@ -189,7 +189,7 @@ test.describe("Session Multi-Configuration Creation", () => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E ClearAll ${ts}`);
     const configName = `ClearMe ${ts}`;
-    await api.createConfiguration(configName);
+    await api.createConfiguration(configName, projectId);
 
     await page.goto(`/en-US/projects/sessions/${projectId}`);
     await page.waitForLoadState("load");

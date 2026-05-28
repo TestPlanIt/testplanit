@@ -480,6 +480,7 @@ export default function TestResultsImportDialog({
                             field.onChange(val ? val.toString() : "")
                           }
                           disabled={isImporting}
+                          projectId={projectId}
                         />
                       </FormControl>
                       <FormMessage />

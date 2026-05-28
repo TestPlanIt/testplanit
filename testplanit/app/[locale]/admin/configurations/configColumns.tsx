@@ -1,3 +1,4 @@
+import { ProjectIcon } from "@/components/ProjectIcon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -10,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Configurations } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
 import {
+  Boxes,
   CircleCheckBig,
   CircleSlash2,
   Component,
@@ -27,6 +29,10 @@ export type ConfigWithVariants = Configurations & {
       isEnabled: boolean;
       categoryId: number;
     };
+  }[];
+  projects?: {
+    projectId: number;
+    project: { id: number; name: string; iconUrl: string | null };
   }[];
 };
 
@@ -109,6 +115,51 @@ export const useColumns = (
                           <CircleSlash2 className="w-4 h-4 text-destructive" />
                         )}
                         <span className="ml-1">{variant.variant.name}</span>
+                      </Badge>
+                    ))}
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        id: "projects",
+        header: t("fields.projects"),
+        enableSorting: false,
+        enableResizing: true,
+        size: 100,
+        cell: ({ row }) => {
+          const projects = row.original.projects ?? [];
+          return (
+            <div className="text-center">
+              {projects.length > 0 && (
+                <Popover>
+                  <PopoverTrigger
+                    className="cursor-default"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                  >
+                    <Badge>
+                      <Boxes className="w-4 h-4 mr-1" />
+                      {projects.length}
+                    </Badge>
+                  </PopoverTrigger>
+                  <PopoverContent className="flex flex-wrap gap-1">
+                    {projects.map((p) => (
+                      <Badge
+                        key={p.projectId}
+                        variant="secondary"
+                        className="gap-1"
+                      >
+                        <ProjectIcon
+                          iconUrl={p.project.iconUrl}
+                          width={14}
+                          height={14}
+                        />
+                        {p.project.name}
                       </Badge>
                     ))}
                   </PopoverContent>

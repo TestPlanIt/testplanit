@@ -401,6 +401,7 @@ model Projects {
     milestoneTypes                 MilestoneTypesAssignment[]
     assignedTemplates              TemplateProjectAssignment[]
     assignedWorkflows              ProjectWorkflowAssignment[]
+    assignedConfigurations         ProjectConfigurationAssignment[]
     milestones                     Milestones[]
     repositories                   Repositories[]
     repositoryFolders              RepositoryFolders[]
@@ -567,6 +568,18 @@ model ProjectStatusAssignment {
     project   Projects @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
     @@id([statusId, projectId])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
+model ProjectConfigurationAssignment {
+    configurationId Int
+    configuration   Configurations @relation(fields: [configurationId], references: [id], onDelete: Cascade)
+    projectId       Int
+    project         Projects       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+    @@id([configurationId, projectId])
     @@deny('all', !auth())
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
@@ -1065,13 +1078,14 @@ model ConfigVariants {
 }
 
 model Configurations {
-    id        Int                          @id @default(autoincrement())
-    name      String                       @length(1)
-    isEnabled Boolean                      @default(true)
-    isDeleted Boolean                      @default(false)
+    id        Int                              @id @default(autoincrement())
+    name      String                           @length(1)
+    isEnabled Boolean                          @default(true)
+    isDeleted Boolean                          @default(false)
     variants  ConfigurationConfigVariant[]
     sessions  Sessions[]
     testRuns  TestRuns[]
+    projects  ProjectConfigurationAssignment[]
 
     @@deny('all', !auth())
     @@allow('all', auth().access == 'ADMIN')

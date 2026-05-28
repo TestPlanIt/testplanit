@@ -4,9 +4,13 @@ import { DataTable } from "@/components/tables/DataTable";
 import { Filter } from "@/components/tables/Filter";
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { ProjectIcon } from "@/components/ProjectIcon";
+import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Boxes } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { searchProjects } from "~/app/actions/searchProjects";
 import { useRequireAuth } from "~/hooks/useRequireAuth";
 import { usePagination } from "~/lib/contexts/PaginationContext";
 import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
@@ -55,6 +59,11 @@ function Configurations(): React.ReactElement | null {
   });
   const [searchString, setSearchString] = useState("");
   const debouncedSearchString = useDebounce(searchString, 500);
+  const [projectFilter, setProjectFilter] = useState<{
+    id: number;
+    name: string;
+    iconUrl: string | null;
+  } | null>(null);
 
   // Calculate skip and take based on pageSize
   const effectivePageSize =
@@ -70,7 +79,15 @@ function Configurations(): React.ReactElement | null {
       where: {
         isDeleted: false,
       },
-      include: { variants: { include: { variant: true } } },
+      include: {
+        variants: { include: { variant: true } },
+        projects: {
+          select: {
+            projectId: true,
+            project: { select: { id: true, name: true, iconUrl: true } },
+          },
+        },
+      },
     },
     {
       enabled: !!session?.user,
@@ -78,19 +95,27 @@ function Configurations(): React.ReactElement | null {
     }
   );
 
-  // Filter configurations client-side based on search string
+  // Filter configurations client-side based on search string and project
   const filteredConfigurations = useMemo(() => {
     if (!allConfigurations) return [];
 
-    if (!debouncedSearchString.trim()) {
-      return allConfigurations;
+    let result = allConfigurations;
+
+    if (projectFilter) {
+      result = result.filter((config) =>
+        config.projects?.some((p) => p.projectId === projectFilter.id)
+      );
     }
 
     const searchLower = debouncedSearchString.trim().toLowerCase();
-    return allConfigurations.filter((config) =>
-      config.name.toLowerCase().includes(searchLower)
-    );
-  }, [allConfigurations, debouncedSearchString]);
+    if (searchLower) {
+      result = result.filter((config) =>
+        config.name.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return result;
+  }, [allConfigurations, debouncedSearchString, projectFilter]);
 
   // Update total items based on filtered configurations count
   useEffect(() => {
@@ -142,10 +167,10 @@ function Configurations(): React.ReactElement | null {
 
   const pageSizeOptions = usePageSizeOptions(totalItems);
 
-  // Reset to first page when search changes
+  // Reset to first page when search or project filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchString, setCurrentPage]);
+  }, [searchString, projectFilter, setCurrentPage]);
 
   // Reset to first page when page size changes
   useEffect(() => {
@@ -183,8 +208,8 @@ function Configurations(): React.ReactElement | null {
           </CardHeader>
           <CardContent>
             <div className="flex flex-row items-start">
-              <div className="flex flex-col grow w-full sm:w-1/2 min-w-[250px]">
-                <div className="text-muted-foreground w-full text-nowrap">
+              <div className="flex flex-row items-center grow w-full sm:w-2/3 min-w-[250px] gap-2">
+                <div className="text-muted-foreground grow text-nowrap">
                   <Filter
                     key="configuration-filter"
                     placeholder={t("filterPlaceholder")}
@@ -192,6 +217,33 @@ function Configurations(): React.ReactElement | null {
                     onSearchChange={setSearchString}
                   />
                 </div>
+                <AsyncCombobox<{
+                  id: number;
+                  name: string;
+                  iconUrl: string | null;
+                }>
+                  value={projectFilter}
+                  onValueChange={setProjectFilter}
+                  fetchOptions={searchProjects}
+                  renderOption={(project) => (
+                    <div className="flex items-center gap-1 min-w-0">
+                      <ProjectIcon
+                        iconUrl={project.iconUrl}
+                        width={16}
+                        height={16}
+                      />
+                      <span className="truncate">{project.name}</span>
+                    </div>
+                  )}
+                  getOptionValue={(project) => project.id}
+                  placeholder={tCommon("fields.projects")}
+                  className="w-[200px] shrink-0 sm:w-[280px]"
+                  pageSize={20}
+                  showTotal={true}
+                  showUnassigned={true}
+                  unassignedLabel={t("allProjects")}
+                  unassignedIcon={<Boxes className="mr-2 h-4 w-4" />}
+                />
               </div>
 
               <div className="flex flex-col w-full sm:w-2/3 items-end">

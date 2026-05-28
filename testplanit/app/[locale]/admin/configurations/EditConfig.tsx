@@ -2,10 +2,18 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Configurations } from "@prisma/client";
 import { useTranslations } from "next-intl";
+import { useTheme } from "next-themes";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
+import MultiSelect from "react-select";
 import { z } from "zod/v4";
-import { useUpdateConfigurations } from "~/lib/hooks";
+import {
+  useCreateManyProjectConfigurationAssignment,
+  useDeleteManyProjectConfigurationAssignment,
+  useFindManyProjects,
+  useUpdateConfigurations,
+} from "~/lib/hooks";
+import { getCustomStyles } from "~/styles/multiSelectStyles";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,10 +43,15 @@ const FormSchema = (t: any) =>
     name: z.string().min(1, {
       message: t("fields.validation.nameRequired"),
     }),
+    projects: z.array(z.number()).optional(),
   });
 
+interface ConfigurationWithProjects extends Configurations {
+  projects?: { projectId: number }[];
+}
+
 interface EditConfigurationProps {
-  configuration: Configurations;
+  configuration: ConfigurationWithProjects;
   open: boolean;
   onClose: () => void;
 }
@@ -50,14 +63,44 @@ export function EditConfiguration({
 }: EditConfigurationProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutateAsync: updateConfiguration } = useUpdateConfigurations();
+  const { mutateAsync: createManyProjectConfigurationAssignment } =
+    useCreateManyProjectConfigurationAssignment();
+  const { mutateAsync: deleteManyProjectConfigurationAssignment } =
+    useDeleteManyProjectConfigurationAssignment();
   const tCommon = useTranslations("common");
+
+  const { theme } = useTheme();
+  const customStyles = getCustomStyles({ theme });
+
+  const { data: projects } = useFindManyProjects({
+    where: { isDeleted: false },
+    orderBy: { name: "asc" },
+  });
+
+  const projectOptions =
+    projects && projects.length > 0
+      ? projects.map((project) => ({
+          value: project.id,
+          label: `${project.name}`,
+        }))
+      : [];
 
   const form = useForm<z.infer<ReturnType<typeof FormSchema>>>({
     resolver: zodResolver(FormSchema(tCommon)),
     defaultValues: {
       name: configuration.name,
+      projects: configuration.projects?.map((p) => p.projectId) ?? [],
     },
   });
+
+  const { control } = form;
+
+  const selectAllProjects = () => {
+    form.setValue(
+      "projects",
+      projectOptions.map((option) => option.value)
+    );
+  };
 
   const {
     formState: { errors },
@@ -72,6 +115,19 @@ export function EditConfiguration({
           name: data.name,
         },
       });
+
+      await deleteManyProjectConfigurationAssignment({
+        where: { configurationId: configuration.id },
+      });
+
+      if (Array.isArray(data.projects) && data.projects.length > 0) {
+        await createManyProjectConfigurationAssignment({
+          data: data.projects.map((projectId: number) => ({
+            configurationId: configuration.id,
+            projectId,
+          })),
+        });
+      }
 
       onClose();
       setIsSubmitting(false);
@@ -114,6 +170,54 @@ export function EditConfiguration({
                   </FormLabel>
                   <FormControl>
                     <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="projects"
+              render={() => (
+                <FormItem>
+                  <FormLabel className="flex justify-between items-center">
+                    <span className="flex items-center">
+                      {tCommon("fields.projects")}
+                      <HelpPopover helpKey="config.projects" />
+                    </span>
+                    <div
+                      onClick={selectAllProjects}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {tCommon("actions.selectAll")}
+                    </div>
+                  </FormLabel>
+                  <FormControl>
+                    <Controller
+                      control={control}
+                      name="projects"
+                      render={({ field }) => (
+                        <MultiSelect
+                          {...field}
+                          isMulti
+                          maxMenuHeight={300}
+                          className="w-[445px] sm:w-[550px] lg:w-[950px]"
+                          classNamePrefix="select"
+                          styles={customStyles}
+                          options={projectOptions}
+                          onChange={(selected: any) => {
+                            const value = selected
+                              ? selected.map((option: any) => option.value)
+                              : [];
+                            field.onChange(value);
+                          }}
+                          value={projectOptions.filter((option) =>
+                            field.value?.includes(option.value)
+                          )}
+                        />
+                      )}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

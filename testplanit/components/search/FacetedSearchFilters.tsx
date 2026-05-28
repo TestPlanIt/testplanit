@@ -271,6 +271,9 @@ export function FacetedSearchFilters({
   const { data: configurations } = useFindManyConfigurations({
     where: {
       isDeleted: false,
+      // When searching within a project, only surface configurations assigned
+      // to that project (configurations are project-scoped).
+      ...(projectId ? { projects: { some: { projectId } } } : {}),
     },
     orderBy: { name: "asc" },
   });

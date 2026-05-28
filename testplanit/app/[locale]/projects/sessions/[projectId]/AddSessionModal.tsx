@@ -867,7 +867,14 @@ export function AddSessionModal({
                               setSelectedConfigs(configs);
                               field.onChange(configs.map((c) => c.id));
                             }}
-                            fetchOptions={searchConfigurations}
+                            fetchOptions={(query, page, pageSize) =>
+                              searchConfigurations(
+                                query,
+                                page,
+                                pageSize,
+                                numericProjectId
+                              )
+                            }
                             renderOption={(config) => (
                               <div className="flex items-center gap-2">
                                 <Combine className="w-4 h-4" />

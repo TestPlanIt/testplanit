@@ -59,6 +59,7 @@ import {
   importAutomationRunTests,
 } from "./testmoImport/automationImports";
 import {
+  assignImportedConfigurationsToProjects,
   importConfigurations,
   importGroups,
   importMilestoneTypes,
@@ -6933,6 +6934,17 @@ async function processImportMode(
       formatSummaryStatus(testRunImport.summary)
     );
     releaseDatasetRows(datasetRowsByName, "runs");
+
+    // Configurations are global in Testmo but project-scoped here. Assign each
+    // imported configuration to the projects whose runs use it so it appears in
+    // their run/session pickers.
+    logMessage(context, "Assigning configurations to projects");
+    await withTransaction((tx) =>
+      assignImportedConfigurationsToProjects(
+        tx,
+        Array.from(projectImport.projectIdMap.values())
+      )
+    );
 
     // Import run_links
     logMessage(context, "Processing run links");

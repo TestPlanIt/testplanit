@@ -4023,7 +4023,9 @@
           "noIntegrations": "No integrations are currently configured. You can skip this step or configure integrations later.",
           "aiModels": "Enable AI models for test case generation and intelligent suggestions.",
           "permissions": "Configure user access and group permissions for this project.",
-          "milestoneTypes": "Select milestone types to track project progress and deadlines."
+          "milestoneTypes": "Select milestone types to track project progress and deadlines.",
+          "configurations": "Select which configurations are available in this project. Projects start with none and opt in to the configurations they need.",
+          "noConfigurations": "No configurations are currently defined. You can add them later in Administration."
         },
         "actions": {
           "selectDefault": "Use Default",
@@ -4515,6 +4517,7 @@
       "addConfiguration": "Add Configuration",
       "editConfiguration": "Edit Configuration",
       "filterPlaceholder": "Filter configurations...",
+      "allProjects": "All projects",
       "categories": {
         "title": "Categories",
         "description": "Manage global categories",
@@ -5839,7 +5842,8 @@
       "platform": "## Platform\nThe self-hosted Git platform you are connecting to.\n\n- **Gitea**: gitea.io-based instances\n- **Forgejo**: forgejo.org-based instances (Gitea fork)\n- **Gogs**: gogs.io-based instances\n\nThis controls which icon is shown and may affect API compatibility."
     },
     "config": {
-      "name": "## Configuration Name\nA clear, descriptive name that is used across all projects.\n\n- Helps describe the variant cominations that make up the Configuration (e.g. \"Chrome, Windows 10\",  \"Safari/macOS 15.5\", \"Edge/Windows 11\", etc.)."
+      "name": "## Configuration Name\nA clear, descriptive name for this configuration.\n\n- Helps describe the variant cominations that make up the Configuration (e.g. \"Chrome, Windows 10\",  \"Safari/macOS 15.5\", \"Edge/Windows 11\", etc.).",
+      "projects": "## Projects\nIndicates the projects that can use this configuration."
     },
     "configCategory": {
       "name": "## Category Name\nA clear, descriptive name that is used across all projects.\n\n- Helps organize variants (e.g. Chrome, Firefox, Safari, Edge, etc.) into categories (e.g. Browsers)."
