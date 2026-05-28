@@ -1,3 +1,9 @@
+## [0.31.6](https://github.com/TestPlanIt/testplanit/compare/v0.31.5...v0.31.6) (2026-05-28)
+
+### Enhancements
+
+* **configurations:** scope to projects + admin UX overhaul ([#354](https://github.com/TestPlanIt/testplanit/issues/354)) ([fa1049c](https://github.com/TestPlanIt/testplanit/commit/fa1049cb71722f96250ce888a4f3f84b266287a9))
+
 ## [0.31.5](https://github.com/TestPlanIt/testplanit/compare/v0.31.4...v0.31.5) (2026-05-27)
 
 ### Enhancements
