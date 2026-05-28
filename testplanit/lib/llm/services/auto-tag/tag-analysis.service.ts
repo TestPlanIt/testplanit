@@ -324,6 +324,22 @@ export class TagAnalysisService {
     entityIds: number[],
     entityType: EntityType
   ): Promise<any[]> {
+    // Linked-issue fields surfaced to the auto-tag LLM as prompt context.
+    // Scalars (priority, issueTypeName, externalKey, title, externalStatus)
+    // are persisted on every Issue regardless of provider. `data` carries
+    // the non-customfield tracker metadata (labels, components) written
+    // by SyncService — extracted opportunistically by content-extractor.
+    // Kept to a `select` (not nested includes) so the join stays single-
+    // level and the ZenStack alias budget isn't squeezed.
+    const linkedIssueSelect = {
+      externalKey: true,
+      title: true,
+      priority: true,
+      issueTypeName: true,
+      externalStatus: true,
+      data: true,
+    } as const;
+
     switch (entityType) {
       case "repositoryCase":
         return (this.prisma as any).repositoryCases.findMany({
@@ -336,13 +352,17 @@ export class TagAnalysisService {
             caseFieldValues: { include: { field: true } },
             tags: true,
             folder: true,
+            issues: { where: { isDeleted: false }, select: linkedIssueSelect },
           },
         });
 
       case "testRun":
         return (this.prisma as any).testRuns.findMany({
           where: { id: { in: entityIds }, isDeleted: false },
-          include: { tags: true },
+          include: {
+            tags: true,
+            issues: { where: { isDeleted: false }, select: linkedIssueSelect },
+          },
         });
 
       case "session":
@@ -351,6 +371,7 @@ export class TagAnalysisService {
           include: {
             sessionFieldValues: { include: { field: true } },
             tags: true,
+            issues: { where: { isDeleted: false }, select: linkedIssueSelect },
           },
         });
 

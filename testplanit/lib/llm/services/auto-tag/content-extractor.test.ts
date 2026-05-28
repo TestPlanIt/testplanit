@@ -4,6 +4,7 @@ import {
   extractEntityContent,
   extractFieldValue,
   extractTiptapText,
+  formatLinkedIssueLine,
 } from "./content-extractor";
 
 describe("extractTiptapText", () => {
@@ -55,6 +56,32 @@ describe("extractTiptapText", () => {
   it("returns empty string for empty content array", () => {
     const doc = { type: "doc", content: [] };
     expect(extractTiptapText(doc)).toBe("");
+  });
+
+  it("parses stringified TipTap JSON and extracts its text (regression)", () => {
+    // Some upstream queries hand TipTap content back as a JSON string
+    // instead of a parsed object. Without parsing, the auto-tag prompt
+    // would surface the raw `{"type":"doc",…}` blob instead of the
+    // actual step prose.
+    const stringified = JSON.stringify({
+      type: "doc",
+      content: [
+        {
+          type: "paragraph",
+          content: [{ type: "text", text: "Click Forgot Password" }],
+        },
+      ],
+    });
+    expect(extractTiptapText(stringified)).toBe("Click Forgot Password");
+  });
+
+  it("leaves a non-JSON-shaped string that happens to start with { unchanged", () => {
+    // Defensive: don't break a user note like `{this is intentional}` —
+    // JSON.parse will throw, the catch clause keeps the original string.
+    expect(extractTiptapText("{not valid json")).toBe("{not valid json");
+    expect(extractTiptapText("{looks shaped but bad}")).toBe(
+      "{looks shaped but bad}"
+    );
   });
 });
 
@@ -265,6 +292,162 @@ describe("extractEntityContent", () => {
 
       const result = extractEntityContent(entity, "session");
       expect(result.textContent).toBe("Quick session");
+    });
+  });
+
+  // Linked-issue context — see formatLinkedIssueLine + the per-entity-type
+  // branches that fan it into textParts.
+  describe("linked-issue context", () => {
+    const issueWithEverything = {
+      externalKey: "PROJ-42",
+      title: "Login button unresponsive on Safari",
+      priority: "High",
+      issueTypeName: "Bug",
+      externalStatus: "Open",
+      data: {
+        labels: ["regression", "ui"],
+        components: ["Auth", "Frontend"],
+      },
+    };
+
+    it("appears in textContent for repositoryCase when issues are linked", () => {
+      const result = extractEntityContent(
+        {
+          id: 1,
+          name: "Login test case",
+          steps: [],
+          caseFieldValues: [],
+          tags: [],
+          issues: [issueWithEverything],
+        },
+        "repositoryCase"
+      );
+      expect(result.textContent).toContain(
+        'Linked issue PROJ-42 (Bug, High priority, Open): "Login button unresponsive on Safari" [labels: regression, ui] [components: Auth, Frontend]'
+      );
+    });
+
+    it("appears in textContent for testRun when issues are linked", () => {
+      const result = extractEntityContent(
+        {
+          id: 5,
+          name: "Regression run",
+          note: null,
+          docs: null,
+          tags: [],
+          issues: [issueWithEverything],
+        },
+        "testRun"
+      );
+      expect(result.textContent).toContain("Linked issue PROJ-42");
+    });
+
+    it("appears in textContent for session when issues are linked", () => {
+      const result = extractEntityContent(
+        {
+          id: 7,
+          name: "Exploratory session",
+          note: null,
+          mission: null,
+          sessionFieldValues: [],
+          tags: [],
+          issues: [issueWithEverything],
+        },
+        "session"
+      );
+      expect(result.textContent).toContain("Linked issue PROJ-42");
+    });
+
+    it("emits one line per linked issue", () => {
+      const result = extractEntityContent(
+        {
+          id: 1,
+          name: "Multi-link case",
+          steps: [],
+          caseFieldValues: [],
+          tags: [],
+          issues: [
+            issueWithEverything,
+            { ...issueWithEverything, externalKey: "PROJ-43" },
+          ],
+        },
+        "repositoryCase"
+      );
+      expect(result.textContent).toContain("PROJ-42");
+      expect(result.textContent).toContain("PROJ-43");
+    });
+
+    it("leaves textContent unchanged when no issues are linked", () => {
+      const noIssues = extractEntityContent(
+        {
+          id: 1,
+          name: "Solo",
+          steps: [],
+          caseFieldValues: [],
+          tags: [],
+        },
+        "repositoryCase"
+      );
+      const emptyIssues = extractEntityContent(
+        {
+          id: 1,
+          name: "Solo",
+          steps: [],
+          caseFieldValues: [],
+          tags: [],
+          issues: [],
+        },
+        "repositoryCase"
+      );
+      expect(noIssues.textContent).toBe("Solo");
+      expect(emptyIssues.textContent).toBe("Solo");
+    });
+
+    it("omits labels and components blocks when data is empty/missing", () => {
+      const line = formatLinkedIssueLine({
+        externalKey: "PROJ-10",
+        title: "Empty data",
+        priority: "Medium",
+        issueTypeName: "Bug",
+        externalStatus: "Open",
+        data: null,
+      });
+      expect(line).toBe(
+        'Linked issue PROJ-10 (Bug, Medium priority, Open): "Empty data"'
+      );
+    });
+
+    it("survives partial issue rows (only key + title)", () => {
+      const line = formatLinkedIssueLine({
+        externalKey: "PROJ-11",
+        title: "Minimal",
+      });
+      expect(line).toBe('Linked issue PROJ-11: "Minimal"');
+    });
+
+    it("falls back to '(linked)' when externalKey is missing but a title is present", () => {
+      const line = formatLinkedIssueLine({ title: "Untracked" });
+      expect(line).toBe('Linked issue (linked): "Untracked"');
+    });
+
+    it("returns null when both externalKey and title are missing — no signal to surface", () => {
+      expect(
+        formatLinkedIssueLine({ priority: "High", issueTypeName: "Bug" })
+      ).toBeNull();
+    });
+
+    it("ignores non-string entries in data.labels and data.components", () => {
+      const line = formatLinkedIssueLine({
+        externalKey: "PROJ-12",
+        title: "Mixed",
+        data: {
+          labels: ["ui", 42, null, "regression"],
+          components: ["Frontend", {}, "Auth"],
+        },
+      });
+      expect(line).toBe(
+        'Linked issue PROJ-12: "Mixed" [labels: ui, regression] [components: Frontend, Auth]'
+      );
     });
   });
 });

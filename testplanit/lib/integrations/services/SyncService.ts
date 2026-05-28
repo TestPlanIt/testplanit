@@ -76,6 +76,29 @@ export interface IssueRefreshResult {
 }
 
 /**
+ * The shape Issue.data takes for synced rows. Distinct from externalData
+ * (Jira customfield space) because labels/components are first-class
+ * tracker concepts present across adapters, and downstream consumers
+ * (auto-tag prompt extraction) need a stable key regardless of provider.
+ *
+ * Existing rows in the wild get this backfilled lazily on their next
+ * sync — no migration needed because Issue.data has always been Json?.
+ * Other writers of Issue.data (JiraLinkService manual-link path) layer
+ * their own keys (jiraKey/jiraId/linkedAt) and don't collide.
+ */
+export interface SyncedIssueData {
+  labels: string[];
+  components: string[];
+}
+
+export function buildSyncedIssueData(issueData: IssueData): SyncedIssueData {
+  return {
+    labels: Array.isArray(issueData.labels) ? issueData.labels : [],
+    components: Array.isArray(issueData.components) ? issueData.components : [],
+  };
+}
+
+/**
  * Per-issue Redis lock for `performIssueRefresh` — prevents two concurrent
  * syncs from the same issue from each pulling Jira's API. The TTL is the
  * safety release: if the holder crashes mid-sync, the next caller can
@@ -1165,6 +1188,11 @@ export class SyncService {
         externalUrl: issueData.url,
         externalStatus: issueData.status,
         externalData: issueData.customFields || {},
+        // Non-customfield tracker metadata that auto-tag's prompt
+        // extractor reads to surface linked-issue context. Kept distinct
+        // from externalData (which is custom-fields only) so the shape is
+        // stable across providers regardless of their customfield space.
+        data: buildSyncedIssueData(issueData),
         issueTypeId: issueData.issueType?.id,
         issueTypeName: issueData.issueType?.name,
         issueTypeIconUrl: issueData.issueType?.iconUrl,
@@ -1242,6 +1270,14 @@ export class SyncService {
       );
     }
 
+    // Merge so manual-link writers (jira-link-service writes jiraKey/jiraId/
+    // linkedAt to Issue.data) survive a subsequent sync — wholesale replace
+    // would drop their keys.
+    const existingData =
+      existingIssue.data && typeof existingIssue.data === "object"
+        ? (existingIssue.data as Record<string, unknown>)
+        : {};
+
     const issuePayload = {
       name: issueData.key || issueData.id, // Use key if available, otherwise use id
       title: issueData.title,
@@ -1253,6 +1289,10 @@ export class SyncService {
       externalUrl: issueData.url,
       externalStatus: issueData.status,
       externalData: issueData.customFields || {},
+      // See createNewIssue above — keep the non-customfield tracker metadata
+      // (labels, components) fresh on every sync. Existing rows in the wild
+      // get backfilled here lazily on their next sync.
+      data: { ...existingData, ...buildSyncedIssueData(issueData) },
       issueTypeId: issueData.issueType?.id,
       issueTypeName: issueData.issueType?.name,
       issueTypeIconUrl: issueData.issueType?.iconUrl,

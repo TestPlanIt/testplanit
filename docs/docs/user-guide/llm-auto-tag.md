@@ -107,6 +107,7 @@ For each item, the AI receives:
 - **Test steps** and expected results (for test cases)
 - **Custom field values** from your templates
 - **Existing tags** (to avoid suggesting duplicates)
+- **Linked-issue context** from any linked Jira / GitHub / GitLab / Azure DevOps / Gitea issues — the issue key, title, type (e.g. _Bug_, _Story_), priority, status, and (for Jira) any labels and components assigned to the issue. This is often the highest-leverage signal: Jira labels are pre-made taxonomy and map almost directly to test tags. The auto-tag picker only sees the linked-issue context that's already been synced into TestPlanIt — manually-linked issues get this metadata on their next sync.
 
 ### Intelligent Tag Matching
 

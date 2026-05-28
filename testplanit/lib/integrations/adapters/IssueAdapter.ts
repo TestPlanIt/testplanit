@@ -49,6 +49,13 @@ export interface IssueData {
     email?: string;
   };
   labels?: string[];
+  /**
+   * Jira components (or the provider's equivalent area/ownership taxonomy)
+   * by display name. Empty array when the provider has no concept of
+   * components or the issue has none assigned. Surfaced as auto-tag prompt
+   * context alongside labels — see [[#17 Jira metadata]].
+   */
+  components?: string[];
   customFields?: Record<string, any>;
   createdAt: Date;
   updatedAt: Date;
