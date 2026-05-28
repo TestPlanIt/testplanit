@@ -1,3 +1,9 @@
+## [0.31.7](https://github.com/TestPlanIt/testplanit/compare/v0.31.6...v0.31.7) (2026-05-28)
+
+### Bug Fixes
+
+* **repository-import:** align multi-row preview/counts with what is imported ([#355](https://github.com/TestPlanIt/testplanit/issues/355)) ([953030d](https://github.com/TestPlanIt/testplanit/commit/953030d3093227e3ead64085c97b2a8044f88ef6))
+
 ## [0.31.6](https://github.com/TestPlanIt/testplanit/compare/v0.31.5...v0.31.6) (2026-05-28)
 
 ### Enhancements
