@@ -93,6 +93,35 @@ describe("admin-config audit sweep", () => {
       const accessors = AUDITED_CONFIG_MODELS.map((c) => c.accessor);
       expect(new Set(accessors).size).toBe(accessors.length);
     });
+
+    // Coverage guard. Every Project*Assignment join model in the schema is, by
+    // its name, an admin-managed project-scope link (a project opting in to a
+    // catalog item). Each new one needs an entry in AUDITED_CONFIG_MODELS or
+    // its create/delete mutations silently bypass the audit log — the gap
+    // that v0.31.6's ProjectConfigurationAssignment had until this PR.
+    //
+    // If a future Project*Assignment is genuinely *not* meant to be audited
+    // (it's a runtime/derived link, not admin-managed), register the
+    // exception here with the reason rather than removing the guard.
+    const EXEMPT_PROJECT_ASSIGNMENT_JOINS = new Set<string>([
+      // (none today)
+    ]);
+    const projectAssignmentJoinModels = [...modelNames].filter(
+      (m) =>
+        m.startsWith("Project") &&
+        m.endsWith("Assignment") &&
+        !EXEMPT_PROJECT_ASSIGNMENT_JOINS.has(m)
+    );
+
+    it("every Project*Assignment join model in the schema is audited", () => {
+      const registered = new Set(
+        AUDITED_CONFIG_MODELS.map((c) => c.entityType)
+      );
+      const missing = projectAssignmentJoinModels.filter(
+        (m) => !registered.has(m)
+      );
+      expect(missing).toEqual([]);
+    });
   });
 
   describe("catalog hooks", () => {
