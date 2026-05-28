@@ -1,3 +1,9 @@
+## [0.32.2](https://github.com/TestPlanIt/testplanit/compare/v0.32.1...v0.32.2) (2026-05-28)
+
+### Enhancements
+
+* **reports:** expand step results in execution log ([#359](https://github.com/TestPlanIt/testplanit/issues/359)) ([4fa486f](https://github.com/TestPlanIt/testplanit/commit/4fa486f31468e5fcd2bf9a842178c54e01470735))
+
 ## [0.32.1](https://github.com/TestPlanIt/testplanit/compare/v0.32.0...v0.32.1) (2026-05-28)
 
 ### Bug Fixes
