@@ -807,7 +807,17 @@
         "altText": {
           "emoji": "絵文字"
         },
-        "count": "{count, plural, =1 {# ファイル} other {# ファイル}}"
+        "count": "{count, plural, =1 {# ファイル} other {# ファイル}}",
+        "link": {
+          "addButton": "リンクを追加",
+          "urlLabel": "URL",
+          "urlPlaceholder": "https://example.com/...",
+          "nameLabel": "表示名",
+          "namePlaceholder": "空欄の場合はデフォルトでURLが表示されます",
+          "noteLabel": "説明（任意）",
+          "notePlaceholder": "このリンクが重要な理由",
+          "invalidUrl": "有効なHTTP(S) URLを入力してください。"
+        }
       }
     },
     "fileDropZone": {

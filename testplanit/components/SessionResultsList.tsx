@@ -87,7 +87,9 @@ import { SimpleUnifiedIssueManager } from "./issues/UnifiedIssueManager";
 import LoadingSpinner from "./LoadingSpinner";
 import { IssuesListDisplay } from "./tables/IssuesListDisplay";
 import { UserNameCell } from "./tables/UserNameCell";
-import UploadAttachments from "./UploadAttachments";
+import UploadAttachments, {
+  type LinkAttachmentInput,
+} from "./UploadAttachments";
 
 // Define the ExtendedSessionResults interface to match the query structure
 interface ExtendedSessionResults extends SessionResults {
@@ -263,6 +265,7 @@ export function SessionResultsList({
     useState<ExtendedSessionResults | null>(null);
   const [editSelectedIssues, setEditSelectedIssues] = useState<number[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedLinks, setSelectedLinks] = useState<LinkAttachmentInput[]>([]);
   const [pendingAttachmentChanges, setPendingAttachmentChanges] =
     useState<AttachmentChanges>({ edits: [], deletes: [] });
   const [uploadAttachmentsKey, setUploadAttachmentsKey] = useState(0);
@@ -669,8 +672,9 @@ export function SessionResultsList({
         }
       });
 
-      // Clear any previously selected files
+      // Clear any previously selected files + staged links
       setSelectedFiles([]);
+      setSelectedLinks([]);
 
       // Reset keys to force re-render of components
       setEditorKey((prev) => prev + 1);
@@ -688,6 +692,7 @@ export function SessionResultsList({
     setEditDialogOpen(false);
     setResultToEdit(null);
     setSelectedFiles([]);
+    setSelectedLinks([]);
     setPendingAttachmentChanges({ edits: [], deletes: [] });
     userHasSelectedFilesRef.current = false; // Reset ref when dialog closes
   }, []);
@@ -864,6 +869,24 @@ export function SessionResultsList({
           await Promise.all(uploadAttachmentsPromises);
         }
 
+        // External-link attachments staged alongside the file uploads.
+        if (selectedLinks.length > 0) {
+          const linkPromises = selectedLinks.map((link) =>
+            createAttachments({
+              data: {
+                sessionResults: { connect: { id: resultToEdit.id } },
+                url: link.url,
+                name: link.name,
+                note: link.note ?? "",
+                mimeType: link.mimeType,
+                size: BigInt(link.size),
+                createdBy: { connect: { id: session.user.id } },
+              },
+            })
+          );
+          await Promise.all(linkPromises);
+        }
+
         // Apply pending attachment changes (edits and deletes)
         if (
           pendingAttachmentChanges.edits.length > 0 ||
@@ -909,6 +932,7 @@ export function SessionResultsList({
         setEditDialogOpen(false);
         setResultToEdit(null);
         setSelectedFiles([]);
+        setSelectedLinks([]);
         userHasSelectedFilesRef.current = false; // Reset ref after successful save
       } catch {
         // Error updating session result
@@ -923,6 +947,7 @@ export function SessionResultsList({
       updateSessionResult,
       editTemplateFields,
       selectedFiles,
+      selectedLinks,
       refetch,
       t,
       updateResultFieldValue,
@@ -1609,6 +1634,7 @@ export function SessionResultsList({
               // Reset all local dialog state so the next open is clean.
               setResultToEdit(null);
               setSelectedFiles([]);
+              setSelectedLinks([]);
               setPendingAttachmentChanges({ edits: [], deletes: [] });
               setDynamicFieldValues({});
               setEditSelectedIssues([]);
@@ -1817,6 +1843,8 @@ export function SessionResultsList({
                       <UploadAttachments
                         key={uploadAttachmentsKey}
                         onFileSelect={handleFileSelect}
+                        allowLinks
+                        onLinksChange={setSelectedLinks}
                         compact={true}
                       />
                       {selectedFiles.length > 0 && (

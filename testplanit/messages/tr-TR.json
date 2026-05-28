@@ -807,7 +807,17 @@
         "altText": {
           "emoji": "emoji"
         },
-        "count": "{count, plural, =1 {# dosya} other {# dosyalar}}"
+        "count": "{count, plural, =1 {# dosya} other {# dosyalar}}",
+        "link": {
+          "addButton": "Bağlantı Ekle",
+          "urlLabel": "URL",
+          "urlPlaceholder": "https://example.com/...",
+          "nameLabel": "Ekran adı",
+          "namePlaceholder": "Boş bırakıldığında varsayılan olarak URL kullanılır.",
+          "noteLabel": "Açıklama (isteğe bağlı)",
+          "notePlaceholder": "Bu bağlantının önemi",
+          "invalidUrl": "Geçerli bir http(s) URL'si girin."
+        }
       }
     },
     "fileDropZone": {

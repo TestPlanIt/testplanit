@@ -26,7 +26,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import UploadAttachments from "@/components/UploadAttachments";
+import UploadAttachments, {
+  type LinkAttachmentInput,
+} from "@/components/UploadAttachments";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { Attachments, RepositoryCases, Tags } from "@prisma/client";
 import { useTranslations } from "next-intl";
@@ -158,6 +160,7 @@ interface TestRunFormControlsProps {
   setSelectedTags: (tags: number[]) => void;
   projectId: string | string[];
   handleFileSelect: (files: File[]) => void;
+  handleLinksChange?: (links: LinkAttachmentInput[]) => void;
   handleSelect: (attachments: Attachments[], index: number) => void;
   projectIntegration?: any;
   selectedIssues: number[];
@@ -181,6 +184,7 @@ function TestRunFormControls({
   setSelectedTags,
   projectId,
   handleFileSelect,
+  handleLinksChange,
   handleSelect,
   projectIntegration,
   selectedIssues,
@@ -426,6 +430,8 @@ function TestRunFormControls({
                   {isEditMode && (
                     <UploadAttachments
                       onFileSelect={handleFileSelect}
+                      allowLinks={!!handleLinksChange}
+                      onLinksChange={handleLinksChange}
                       disabled={!canAddEdit}
                     />
                   )}

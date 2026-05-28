@@ -807,7 +807,17 @@
         "altText": {
           "emoji": "emoji"
         },
-        "count": "{count, plural, =1 {# file} other {# files}}"
+        "count": "{count, plural, =1 {# file} other {# files}}",
+        "link": {
+          "addButton": "Add Link",
+          "urlLabel": "URL",
+          "urlPlaceholder": "https://example.com/...",
+          "nameLabel": "Display name",
+          "namePlaceholder": "Defaults to the URL when blank",
+          "noteLabel": "Description (optional)",
+          "notePlaceholder": "Why this link is relevant",
+          "invalidUrl": "Enter a valid http(s) URL."
+        }
       }
     },
     "fileDropZone": {

@@ -3,7 +3,9 @@ import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { TimeTracker, TimeTrackerRef } from "@/components/TimeTracker";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { HelpPopover } from "@/components/ui/help-popover";
-import UploadAttachments from "@/components/UploadAttachments";
+import UploadAttachments, {
+  type LinkAttachmentInput,
+} from "@/components/UploadAttachments";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ApplicationArea,
@@ -318,6 +320,7 @@ export function AddResultModal({
   // Ensures the validate-on-open pass runs once per escalation open.
   const validatedOnOpenRef = useRef(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedLinks, setSelectedLinks] = useState<LinkAttachmentInput[]>([]);
   const [selectedAttachmentIndex, setSelectedAttachmentIndex] = useState<
     number | null
   >(null);
@@ -756,7 +759,40 @@ export function AddResultModal({
       };
     });
 
-    const attachments = await Promise.all(attachmentsPromises);
+    // External-link attachments (text/uri-list) need no S3 upload; create
+    // the rows directly with the same connect-to-result shape.
+    const linkPromises = selectedLinks.map(async (link) => {
+      const attachment = await createAttachments({
+        data: {
+          testRunResults: {
+            connect: { id: testRunResultId },
+          },
+          url: link.url,
+          name: link.name,
+          note: link.note ?? "",
+          mimeType: link.mimeType,
+          size: BigInt(link.size),
+          createdBy: {
+            connect: { id: session.user.id },
+          },
+        },
+      });
+
+      return {
+        id: attachment?.id,
+        url: link.url,
+        name: link.name,
+        note: link.note ?? "",
+        mimeType: link.mimeType,
+        size: link.size,
+        createdBy: session.user.name,
+      };
+    });
+
+    const attachments = await Promise.all([
+      ...attachmentsPromises,
+      ...linkPromises,
+    ]);
     return attachments;
   };
 
@@ -1092,7 +1128,10 @@ export function AddResultModal({
           }
 
           // Upload attachments if there are any
-          if (selectedFiles.length > 0 && result) {
+          if (
+            (selectedFiles.length > 0 || selectedLinks.length > 0) &&
+            result
+          ) {
             await uploadFiles(result.id);
           }
 
@@ -1355,8 +1394,9 @@ export function AddResultModal({
       // Reset the TimeTracker
       timeTrackerRef.current?.reset();
 
-      // Reset selected files
+      // Reset selected files + staged external links
       setSelectedFiles([]);
+      setSelectedLinks([]);
 
       // Increment keys to force re-render
       setEditorKey((prevKey) => prevKey + 1);
@@ -2207,6 +2247,8 @@ export function AddResultModal({
               <UploadAttachments
                 key={uploadAttachmentsKey}
                 onFileSelect={setSelectedFiles}
+                allowLinks
+                onLinksChange={setSelectedLinks}
               />
             </div>
 

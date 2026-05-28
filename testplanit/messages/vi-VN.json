@@ -807,7 +807,17 @@
         "altText": {
           "emoji": "biểu tượng cảm xúc"
         },
-        "count": "{count, plural, =1 {# tập tin} other {# tập tin}}"
+        "count": "{count, plural, =1 {# tập tin} other {# tập tin}}",
+        "link": {
+          "addButton": "Thêm liên kết",
+          "urlLabel": "URL",
+          "urlPlaceholder": "https://example.com/...",
+          "nameLabel": "Tên hiển thị",
+          "namePlaceholder": "Mặc định là URL nếu để trống.",
+          "noteLabel": "Mô tả (tùy chọn)",
+          "notePlaceholder": "Vì sao liên kết này lại quan trọng",
+          "invalidUrl": "Nhập URL http(s) hợp lệ."
+        }
       }
     },
     "fileDropZone": {

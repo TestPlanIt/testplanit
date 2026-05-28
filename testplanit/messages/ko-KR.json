@@ -807,7 +807,17 @@
         "altText": {
           "emoji": "이모지"
         },
-        "count": "{count, plural, =1 {# 파일} other {# 파일들}}"
+        "count": "{count, plural, =1 {# 파일} other {# 파일들}}",
+        "link": {
+          "addButton": "링크 추가",
+          "urlLabel": "URL",
+          "urlPlaceholder": "https://example.com/...",
+          "nameLabel": "표시 이름",
+          "namePlaceholder": "비워두면 URL이 기본값으로 사용됩니다.",
+          "noteLabel": "설명 (선택 사항)",
+          "notePlaceholder": "이 링크가 중요한 이유",
+          "invalidUrl": "유효한 http(s) URL을 입력하세요."
+        }
       }
     },
     "fileDropZone": {

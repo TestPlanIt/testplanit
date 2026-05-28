@@ -134,6 +134,7 @@ import {
   SelectedConfigurationInfo,
   TestCasesSection,
 } from "./TestCasesSection";
+import { type LinkAttachmentInput } from "@/components/UploadAttachments";
 import TestRunFormControls from "./TestRunFormControls";
 
 // Form Values interface
@@ -303,6 +304,7 @@ export default function TestRunPage() {
   const [isFormInitialized, setIsFormInitialized] = useState(false);
   const panelLeftRef = useRef<ImperativePanelHandle>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedLinks, setSelectedLinks] = useState<LinkAttachmentInput[]>([]);
   const [selectedAttachments, setSelectedAttachments] = useState<Attachments[]>(
     []
   );
@@ -1007,14 +1009,15 @@ export default function TestRunPage() {
       // Wait for all pending changes to be applied
       await Promise.all([...editPromises, ...deletePromises]);
 
-      // Handle new attachments
-      if (selectedFiles.length > 0) {
+      // Handle new attachments (files OR external links)
+      if (selectedFiles.length > 0 || selectedLinks.length > 0) {
         const _attachmentUrls = await uploadFiles(Number(runId));
       }
 
       // Reset pending changes
       setPendingAttachmentChanges({ edits: [], deletes: [] });
       setSelectedFiles([]);
+      setSelectedLinks([]);
 
       await refetchTestRun();
       const params = new URLSearchParams(searchParams);
@@ -1105,6 +1108,7 @@ export default function TestRunPage() {
     // Reset pending attachment changes
     setPendingAttachmentChanges({ edits: [], deletes: [] });
     setSelectedFiles([]);
+    setSelectedLinks([]);
     // Exit edit mode
     const params = new URLSearchParams(searchParams.toString());
     params.delete("selectedCase"); // Also close sheet on cancel
@@ -1176,7 +1180,41 @@ export default function TestRunPage() {
       };
     });
 
-    const attachments = await Promise.all(attachmentsPromises);
+    const linkPromises = selectedLinks.map(async (link) => {
+      const attachment = await createAttachments({
+        data: {
+          testRuns: {
+            connect: { id: testRunId },
+          },
+          url: link.url,
+          name: link.name,
+          note: link.note ?? "",
+          mimeType: link.mimeType,
+          size: BigInt(link.size),
+          createdBy: {
+            connect: { id: session!.user.id },
+          },
+        },
+      });
+
+      return {
+        id: attachment?.id,
+        url: link.url,
+        name: link.name,
+        note: link.note ?? "",
+        mimeType: link.mimeType,
+        size: attachment?.size.toString(),
+        createdBy: session!.user.name,
+        createdAt: new Date().toISOString(),
+        isDeleted: false,
+        createdById: session!.user.id,
+      };
+    });
+
+    const attachments = await Promise.all([
+      ...attachmentsPromises,
+      ...linkPromises,
+    ]);
     return attachments;
   };
 
@@ -2070,6 +2108,7 @@ export default function TestRunPage() {
                     setSelectedTags={setSelectedTags}
                     projectId={safeProjectId}
                     handleFileSelect={handleFileSelect}
+                    handleLinksChange={setSelectedLinks}
                     handleSelect={handleSelect}
                     projectIntegration={projectData?.projectIntegrations?.[0]}
                     selectedIssues={selectedIssues}
