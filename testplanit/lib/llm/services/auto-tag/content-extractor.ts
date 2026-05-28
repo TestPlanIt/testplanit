@@ -2,11 +2,29 @@ import type { EntityContent, EntityType } from "./types";
 
 /**
  * Recursively extract plain text from a Tiptap JSON document.
- * Handles null/undefined (returns "") and plain string input (returns as-is).
+ * Handles null/undefined (returns ""), plain string input (returns as-is),
+ * and the stringified-TipTap-doc shape some upstream paths emit.
+ *
+ * The stringified shape is real: certain Prisma queries (and some DB
+ * drivers' Json column handling) hand TipTap content back as a JSON
+ * string instead of a parsed object. Without the parse fallback below,
+ * the auto-tag LLM prompt would see entire steps as `Step: {"type":"doc",
+ * "content":[...]}` instead of `Step: Click Forgot Password`, bloating
+ * tokens and losing the actual signal.
  */
 export function extractTiptapText(json: unknown): string {
   if (json == null) return "";
-  if (typeof json === "string") return json;
+  if (typeof json === "string") {
+    const trimmed = json.trim();
+    if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+      try {
+        return extractTiptapText(JSON.parse(trimmed));
+      } catch {
+        // Not actually JSON; treat as the plain string we received.
+      }
+    }
+    return json;
+  }
   if (typeof json !== "object") return String(json);
 
   const node = json as Record<string, unknown>;
@@ -47,6 +65,80 @@ export function extractFieldValue(fieldValue: {
   if (Array.isArray(val)) return val.map(String).join(", ");
   if (typeof val === "object") return JSON.stringify(val);
   return String(val);
+}
+
+/**
+ * Format one linked Issue row as a single prompt line for the auto-tag LLM,
+ * or return null when the row carries no useful signal. The shape mirrors
+ * what's persisted by SyncService.create/updateExistingIssue plus what
+ * JiraAdapter.mapJiraIssue extracts (labels + components in `data`).
+ *
+ * Field selection rationale:
+ * - externalKey + title give the model human-readable context.
+ * - issueTypeName + priority + externalStatus are categorical signals
+ *   that map cleanly to tags ("bug", "p1", "regression"…).
+ * - labels + components are pre-made taxonomy from the tracker and are
+ *   often the highest-leverage signal — they ARE tags.
+ *
+ * `description` is intentionally excluded: it's verbose, low-marginal-
+ * signal relative to title + labels + components, and would dominate the
+ * per-issue token budget for cases with many linked issues.
+ */
+export function formatLinkedIssueLine(issue: {
+  externalKey?: string | null;
+  title?: string | null;
+  priority?: string | null;
+  issueTypeName?: string | null;
+  externalStatus?: string | null;
+  data?: unknown;
+}): string | null {
+  const key = issue.externalKey?.trim();
+  const title = issue.title?.trim();
+  if (!key && !title) return null;
+
+  const meta: string[] = [];
+  if (issue.issueTypeName?.trim()) meta.push(issue.issueTypeName.trim());
+  if (issue.priority?.trim()) meta.push(`${issue.priority.trim()} priority`);
+  if (issue.externalStatus?.trim()) meta.push(issue.externalStatus.trim());
+
+  const dataObj =
+    issue.data && typeof issue.data === "object"
+      ? (issue.data as Record<string, unknown>)
+      : {};
+  const labels = Array.isArray(dataObj.labels)
+    ? (dataObj.labels as unknown[]).filter(
+        (l): l is string => typeof l === "string" && l.trim() !== ""
+      )
+    : [];
+  const components = Array.isArray(dataObj.components)
+    ? (dataObj.components as unknown[]).filter(
+        (c): c is string => typeof c === "string" && c.trim() !== ""
+      )
+    : [];
+
+  const identifier = key ?? "(linked)";
+  const head = meta.length
+    ? `Linked issue ${identifier} (${meta.join(", ")})`
+    : `Linked issue ${identifier}`;
+  const titlePart = title ? `: "${title}"` : "";
+  const labelsPart = labels.length ? ` [labels: ${labels.join(", ")}]` : "";
+  const componentsPart = components.length
+    ? ` [components: ${components.join(", ")}]`
+    : "";
+
+  return `${head}${titlePart}${labelsPart}${componentsPart}`;
+}
+
+/** Builds one prompt line per linked issue; drops issues that yield no signal. */
+function extractLinkedIssuesText(issues: unknown): string[] {
+  if (!Array.isArray(issues)) return [];
+  return issues
+    .map((issue) =>
+      issue && typeof issue === "object"
+        ? formatLinkedIssueLine(issue as any)
+        : null
+    )
+    .filter((line): line is string => line !== null);
 }
 
 /**
@@ -97,6 +189,10 @@ export function extractEntityContent(
       if (Array.isArray(entity.tags)) {
         existingTagNames = entity.tags.map((t: any) => t.name ?? String(t));
       }
+
+      // Linked-issue context (Jira labels/components are pre-made taxonomy
+      // and often the strongest signal for tag suggestions).
+      textParts.push(...extractLinkedIssuesText(entity.issues));
       break;
     }
 
@@ -110,6 +206,8 @@ export function extractEntityContent(
       if (Array.isArray(entity.tags)) {
         existingTagNames = entity.tags.map((t: any) => t.name ?? String(t));
       }
+
+      textParts.push(...extractLinkedIssuesText(entity.issues));
       break;
     }
 
@@ -134,6 +232,8 @@ export function extractEntityContent(
       if (Array.isArray(entity.tags)) {
         existingTagNames = entity.tags.map((t: any) => t.name ?? String(t));
       }
+
+      textParts.push(...extractLinkedIssuesText(entity.issues));
       break;
     }
   }

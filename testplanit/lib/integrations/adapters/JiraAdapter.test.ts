@@ -708,6 +708,40 @@ describe("JiraAdapter", () => {
       expect(result.labels).toEqual(["bug", "priority"]);
     });
 
+    it("maps Jira fields.components[].name into IssueData.components", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            ...mockJiraIssue,
+            fields: {
+              ...mockJiraIssue.fields,
+              components: [
+                { id: "1", name: "Auth", self: "https://x/1" },
+                { id: "2", name: "Frontend", self: "https://x/2" },
+                // Defensive: drop entries without a usable name.
+                { id: "3", self: "https://x/3" },
+              ],
+            },
+          }),
+      });
+
+      const result = await adapter.getIssue("TEST-123");
+
+      expect(result.components).toEqual(["Auth", "Frontend"]);
+    });
+
+    it("returns [] for components when the Jira response omits the field", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockJiraIssue),
+      });
+
+      const result = await adapter.getIssue("TEST-123");
+
+      expect(result.components).toEqual([]);
+    });
+
     it("should throw error for invalid issue structure", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,

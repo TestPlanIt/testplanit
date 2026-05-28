@@ -788,6 +788,14 @@ export class JiraAdapter extends BaseAdapter {
           }
         : undefined,
       labels: fields.labels || [],
+      // Jira components: [{ self, id, name, description? }, ...]. Map to a
+      // flat list of display names — that's what's useful as auto-tag
+      // prompt context. Empty array when the issue has none.
+      components: Array.isArray(fields.components)
+        ? fields.components
+            .map((c: any) => (typeof c?.name === "string" ? c.name : null))
+            .filter((n: string | null): n is string => n !== null)
+        : [],
       customFields: this.extractCustomFields(fields),
       createdAt: new Date(fields.created),
       updatedAt: new Date(fields.updated),
