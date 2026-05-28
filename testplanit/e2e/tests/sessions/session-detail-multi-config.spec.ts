@@ -20,8 +20,8 @@ test.describe("Session Detail Multi-Config Selector", () => {
   }) => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E SessMultiCfg ${ts}`);
-    const config1Id = await api.createConfiguration(`Chrome ${ts}`);
-    const config2Id = await api.createConfiguration(`Firefox ${ts}`);
+    const config1Id = await api.createConfiguration(`Chrome ${ts}`, projectId);
+    const config2Id = await api.createConfiguration(`Firefox ${ts}`, projectId);
 
     const groupId = randomUUID();
     const session1Id = await api.createSession(
@@ -66,7 +66,10 @@ test.describe("Session Detail Multi-Config Selector", () => {
   }) => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E SessSingleCfg ${ts}`);
-    const configId = await api.createConfiguration(`Solo Config ${ts}`);
+    const configId = await api.createConfiguration(
+      `Solo Config ${ts}`,
+      projectId
+    );
 
     // Create a single session (no configurationGroupId)
     const sessionId = await api.createSession(projectId, `Solo Session ${ts}`, {
@@ -96,8 +99,8 @@ test.describe("Session Detail Multi-Config Selector", () => {
     const projectId = await api.createProject(`E2E SessNavCfg ${ts}`);
     const config1Name = `Safari ${ts}`;
     const config2Name = `Edge ${ts}`;
-    const config1Id = await api.createConfiguration(config1Name);
-    const config2Id = await api.createConfiguration(config2Name);
+    const config1Id = await api.createConfiguration(config1Name, projectId);
+    const config2Id = await api.createConfiguration(config2Name, projectId);
 
     const groupId = randomUUID();
     const session1Id = await api.createSession(

@@ -90,7 +90,7 @@ test.describe("Test Run Edit Configuration", () => {
     // Setup: Create project, configuration, and test run
     const projectId = await api.createProject(`E2E EditCfg ${Date.now()}`);
     const configName = `EditCfg Config ${Date.now()}`;
-    await api.createConfiguration(configName);
+    await api.createConfiguration(configName, projectId);
 
     // Create a test run
     const testRunId = await api.createTestRun(
@@ -125,8 +125,8 @@ test.describe("Test Run Edit Configuration", () => {
     const ts = Date.now();
     const config1Name = `Original Config ${ts}`;
     const config2Name = `New Config ${ts}`;
-    await api.createConfiguration(config1Name);
-    await api.createConfiguration(config2Name);
+    await api.createConfiguration(config1Name, projectId);
+    await api.createConfiguration(config2Name, projectId);
 
     const testRunId = await api.createTestRun(
       projectId,
@@ -161,8 +161,8 @@ test.describe("Test Run Edit Configuration", () => {
     const ts = Date.now();
     const configMatch = `Searchable Edit ${ts}`;
     const configNoMatch = `Other Edit ${ts}`;
-    await api.createConfiguration(configMatch);
-    await api.createConfiguration(configNoMatch);
+    await api.createConfiguration(configMatch, projectId);
+    await api.createConfiguration(configNoMatch, projectId);
 
     const testRunId = await api.createTestRun(
       projectId,

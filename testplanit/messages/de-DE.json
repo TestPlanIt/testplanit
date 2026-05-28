@@ -88,6 +88,7 @@
       "addToTestRun": "Zum Testlauf hinzufügen",
       "status": "Status",
       "resultDetailsPlaceholder": "Ergebnisdetails eingeben...",
+      "select": "Wählen",
       "selectAll": "Alle auswählen",
       "deselectAll": "Alle abwählen",
       "clearAll": "Alles löschen",
@@ -4023,7 +4024,9 @@
           "noIntegrations": "Es sind derzeit keine Integrationen konfiguriert. Sie können diesen Schritt überspringen oder die Integrationen später konfigurieren.",
           "aiModels": "Aktivieren Sie KI-Modelle zur Generierung von Testfällen und intelligenten Vorschlägen.",
           "permissions": "Konfigurieren Sie Benutzerzugriffs- und Gruppenberechtigungen für dieses Projekt.",
-          "milestoneTypes": "Wählen Sie Meilensteintypen aus, um den Projektfortschritt und die Termine zu verfolgen."
+          "milestoneTypes": "Wählen Sie Meilensteintypen aus, um den Projektfortschritt und die Termine zu verfolgen.",
+          "configurations": "Wählen Sie die in diesem Projekt verfügbaren Konfigurationen aus. Projekte beginnen ohne Konfigurationen und können die benötigten Konfigurationen auswählen.",
+          "noConfigurations": "Es sind derzeit keine Konfigurationen definiert. Sie können diese später in der Administration hinzufügen."
         },
         "actions": {
           "selectDefault": "Standardwert verwenden",
@@ -4512,9 +4515,31 @@
     },
     "configurations": {
       "description": "Konfigurationen sind eine Kombination aus Kategorien und Varianten, die zur Definition einer Testumgebung verwendet werden. Beispiele hierfür sind Betriebssystem/Browser, Testserver, Sprache usw.",
-      "addConfiguration": "Konfiguration hinzufügen",
+      "projectAssignment": {
+        "title": "Projekte zuweisen",
+        "reviewLabel": "Neue Konfigurationen werden auf diese Projekte angewendet:",
+        "description": "Wählen Sie aus, in welchen Projekten diese Konfigurationen verfügbar sein sollen. Sie können diesen Schritt überspringen und die Projekte später über die Konfigurationsverwaltung zuweisen.",
+        "noProjects": "Es sind keine Projekte verfügbar.",
+        "noneAssigned": "Keine Projekte zugewiesen (Sie können sie später über die Konfigurationsverwaltung zuweisen)."
+      },
+      "addConfiguration": "Konfigurationen hinzufügen",
       "editConfiguration": "Konfiguration bearbeiten",
       "filterPlaceholder": "Filterkonfigurationen...",
+      "allProjects": "Alle Projekte",
+      "selectAllTooltip": "Alle Konfigurationen auf dieser Seite auswählen/abwählen",
+      "selectAllShiftTooltip": "{count, plural, =0 {Alle Konfigurationen auf allen Seiten auswählen/abwählen} one {# Konfigurationen auf allen Seiten auswählen/abwählen} other {# Konfigurationen auf allen Seiten auswählen/abwählen}}",
+      "deselectAllShiftTooltip": "Alle Konfigurationen auf allen Seiten abwählen/auswählen",
+      "shiftClickHint": "Halten Sie die Umschalttaste gedrückt, um alle Seiten auszuwählen/die Auswahl aufzuheben",
+      "bulkEdit": {
+        "button": "{count, plural, one {1 Konfiguration bearbeiten} other {# Konfigurationen bearbeiten}}",
+        "title": "{count, plural, one {Projekte mit 1 Konfiguration bearbeiten} other {Projekte mit # Konfigurationen bearbeiten}}",
+        "description": "Ersetzen Sie die Projektzuordnungen in den ausgewählten Konfigurationen. Der Konfigurationsname kann nicht in großen Mengen bearbeitet werden.",
+        "applyButton": "{count, plural, one {Auf 1 Konfiguration anwenden} other {Auf # Konfigurationen anwenden}}",
+        "deleteButton": "{count, plural, one {1 Konfiguration löschen} other {# Konfigurationen löschen}}",
+        "deleteConfirmTitle": "{count, plural, one {1 Konfiguration löschen?} other {# Konfigurationen löschen?}}",
+        "deleteConfirmMessage": "{count, plural, one {Dadurch wird 1 Konfiguration gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.} other {Dadurch werden # Konfigurationen gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.}}",
+        "applyEnabledLabel": "Änderungsstatus"
+      },
       "categories": {
         "title": "Kategorien",
         "description": "Globale Kategorien verwalten",
@@ -4538,11 +4563,15 @@
       "combinations": {
         "title": "Kombinationen",
         "description": "Globale Kombinationen verwalten",
-        "confirmDescription": "Es werden die folgenden {count, number} Kombinationen erstellt.",
+        "confirmDescription": "Folgende {count, number} Konfigurationen werden erstellt:",
         "addCombination": "Kombination hinzufügen",
         "editCombination": "Bearbeitungskombination",
-        "selectCombination": "Kombination auswählen",
-        "selectCombinationDescription": "Wählen Sie eine Kombination von Varianten aus, die Sie der Konfiguration hinzufügen möchten.",
+        "selectCombination": "Kombinationen auswählen",
+        "selectCombinationDescription": "Wählen Sie die hinzuzufügenden Variantenkombinationen aus. Bereits vorhandene Kombinationen werden deaktiviert angezeigt.",
+        "alreadyExists": "(existiert bereits)",
+        "reviewTitle": "Konfigurationen überprüfen",
+        "createButton": "{count, plural, one {1 Konfiguration erstellen} other {# Konfigurationen erstellen}}",
+        "creating": "{count, plural, one {Erstelle 1 Konfiguration...} other {Erstelle # Konfigurationen...}}",
         "allExist": "Alle Kombinationen existieren bereits.",
         "selectAtLeast": "Bitte wählen Sie mindestens eine Kombination aus."
       },
@@ -4562,8 +4591,8 @@
           "suggestion": "Erwägen Sie stattdessen, die Variante zu deaktivieren."
         },
         "selection": {
-          "title": "Varianten auswählen",
-          "description": "Wählen Sie die Varianten aus, die Sie der Konfiguration hinzufügen möchten."
+          "title": "Wählen Sie die Varianten aus, die Sie den Konfigurationen hinzufügen möchten.",
+          "description": "Erstellen Sie eine oder mehrere Konfigurationen, indem Sie Varianten auswählen, die gewünschten Kombinationen festlegen und diese den Projekten zuweisen, die sie verwenden sollen."
         }
       }
     },
@@ -5839,7 +5868,9 @@
       "platform": "## Plattform\nDie selbstgehostete Git-Plattform, mit der Sie sich verbinden.\n\n- **Gitea**: gitea.io-basierte Instanzen\n- **Forgejo**: forgejo.org-basierte Instanzen (Gitea-Fork)\n- **Gogs**: gogs.io-basierte Instanzen\n\nDies steuert, welches Symbol angezeigt wird und kann die API-Kompatibilität beeinflussen."
     },
     "config": {
-      "name": "## Konfigurationsname\nEin klarer, beschreibender Name, der in allen Projekten verwendet wird.\n\n- Beschreibt die verschiedenen Kombinationen, aus denen sich die Konfiguration zusammensetzt (z. B. \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\" usw.)."
+      "name": "## Konfigurationsname\nEin klarer, beschreibender Name für diese Konfiguration.\n\n- Hilft dabei, die verschiedenen Kombinationen zu beschreiben, aus denen die Konfiguration besteht (z. B. \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\" usw.).",
+      "projects": "## Projekte\nZeigt die Projekte an, die diese Konfiguration verwenden können.",
+      "bulkEnabledState": "## Aktivierungsstatus festlegen\nLassen Sie das Kontrollkästchen deaktiviert, um den Aktivierungsstatus der ausgewählten Konfigurationen beizubehalten.\n\n– Aktivieren Sie das Kontrollkästchen, um den Wert des Schalters beim Absenden auf alle ausgewählten Konfigurationen anzuwenden.\n– Durch Deaktivieren werden die Konfigurationen deaktiviert; durch Aktivieren werden sie aktiviert."
     },
     "configCategory": {
       "name": "## Kategoriename\nEin klarer, beschreibender Name, der in allen Projekten verwendet wird.\n\n- Hilft dabei, Varianten (z. B. Chrome, Firefox, Safari, Edge usw.) in Kategorien (z. B. Browser) zu organisieren."

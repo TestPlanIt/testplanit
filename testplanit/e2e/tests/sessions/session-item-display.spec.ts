@@ -17,7 +17,7 @@ test.describe("Session Item Display", () => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E ItemConfig ${ts}`);
     const configName = `Item Config ${ts}`;
-    const configId = await api.createConfiguration(configName);
+    const configId = await api.createConfiguration(configName, projectId);
     const sessionId = await api.createSession(
       projectId,
       `Config Session ${ts}`,
@@ -72,8 +72,8 @@ test.describe("Session Item Display", () => {
   }) => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E ItemMulti ${ts}`);
-    const config1Id = await api.createConfiguration(`Multi1 ${ts}`);
-    const config2Id = await api.createConfiguration(`Multi2 ${ts}`);
+    const config1Id = await api.createConfiguration(`Multi1 ${ts}`, projectId);
+    const config2Id = await api.createConfiguration(`Multi2 ${ts}`, projectId);
 
     const groupId = randomUUID();
     const session1Id = await api.createSession(
@@ -94,16 +94,11 @@ test.describe("Session Item Display", () => {
     const sessionItem1 = page.locator(`#session-${session1Id}`);
     await expect(sessionItem1).toBeVisible({ timeout: 15000 });
 
-    // The session name link area should contain a Combine icon (the multi-config indicator)
-    // The Combine icon is an SVG within the h3 that contains the session name
+    // The multi-config indicator is a Combine icon rendered inside the name
+    // heading; it only appears for sessions in a configuration group.
     const nameArea = sessionItem1.locator("h3").first();
     await expect(nameArea).toBeVisible({ timeout: 5000 });
-
-    // The Combine icon is rendered as an SVG next to the name
-    // Check that there are at least 2 SVGs in the name area (compass icon + combine icon + link icon)
-    const svgCount = await nameArea.locator("svg").count();
-    // compass icon + combine icon + link icon = 3 SVGs minimum
-    expect(svgCount).toBeGreaterThanOrEqual(3);
+    await expect(nameArea.locator("svg.lucide-combine")).toHaveCount(1);
 
     // Cleanup
     await api.deleteSession(session1Id);
@@ -116,7 +111,7 @@ test.describe("Session Item Display", () => {
   }) => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E ItemSingle ${ts}`);
-    const configId = await api.createConfiguration(`Single ${ts}`);
+    const configId = await api.createConfiguration(`Single ${ts}`, projectId);
     const sessionId = await api.createSession(
       projectId,
       `Single Session ${ts}`,
@@ -129,12 +124,13 @@ test.describe("Session Item Display", () => {
     const sessionItem = page.locator(`#session-${sessionId}`);
     await expect(sessionItem).toBeVisible({ timeout: 15000 });
 
-    // Single sessions should have only 2 SVGs in name area (compass + link icon)
-    // No Combine icon since there's no configurationGroupId
+    // A single-config session does not belong to a configuration group, so the
+    // multi-config Combine indicator must not appear in the name heading.
+    // (The heading may still contain a compass icon, a link icon, and a
+    // "recently created" flame, so assert on the indicator specifically rather
+    // than a raw SVG count.)
     const nameArea = sessionItem.locator("h3").first();
-    const svgCount = await nameArea.locator("svg").count();
-    // compass icon + link icon = 2 SVGs (no combine icon)
-    expect(svgCount).toBe(2);
+    await expect(nameArea.locator("svg.lucide-combine")).toHaveCount(0);
 
     // Cleanup
     await api.deleteSession(sessionId);

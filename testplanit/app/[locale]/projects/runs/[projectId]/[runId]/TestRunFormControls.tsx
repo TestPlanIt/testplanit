@@ -288,6 +288,7 @@ function TestRunFormControls({
                   value={field.value}
                   onChange={(val) => field.onChange(val)}
                   disabled={isSubmitting || !canAddEdit}
+                  projectId={Number(projectId)}
                 />
               ) : selectedConfigurationsForDisplay.length > 1 ? (
                 <div className="flex flex-col gap-1">

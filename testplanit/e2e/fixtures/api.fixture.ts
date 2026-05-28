@@ -1436,7 +1436,7 @@ export class ApiHelper {
   /**
    * Create a configuration via API
    */
-  async createConfiguration(name: string): Promise<number> {
+  async createConfiguration(name: string, projectId?: number): Promise<number> {
     const response = await this.request.post(
       `${this.baseURL}/api/model/configurations/create`,
       {
@@ -1458,7 +1458,40 @@ export class ApiHelper {
     const result = await response.json();
     const configId = result.data.id;
     this.createdConfigurationIds.push(configId);
+
+    // Configurations are project-scoped: assign to the project so it shows up
+    // in that project's run/session/matrix pickers.
+    if (projectId !== undefined) {
+      await this.assignConfigurationToProject(configId, projectId);
+    }
+
     return configId;
+  }
+
+  /**
+   * Assign a configuration to a project so it appears in that project's
+   * configuration pickers. Idempotent at the API level (the join row has a
+   * composite primary key).
+   */
+  async assignConfigurationToProject(
+    configurationId: number,
+    projectId: number
+  ): Promise<void> {
+    const response = await this.request.post(
+      `${this.baseURL}/api/model/projectConfigurationAssignment/create`,
+      {
+        data: {
+          data: { configurationId, projectId },
+        },
+      }
+    );
+
+    if (!response.ok()) {
+      const error = await response.text();
+      throw new Error(
+        `Failed to assign configuration ${configurationId} to project ${projectId}: ${error}`
+      );
+    }
   }
 
   /**

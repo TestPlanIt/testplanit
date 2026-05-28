@@ -88,6 +88,7 @@
       "addToTestRun": "Toevoegen aan testrun",
       "status": "Status",
       "resultDetailsPlaceholder": "Voer resultaatdetails in...",
+      "select": "Select",
       "selectAll": "Selecteer alles",
       "deselectAll": "Alles deselecteren",
       "clearAll": "Alles wissen",
@@ -4023,7 +4024,9 @@
           "noIntegrations": "Er zijn momenteel geen integraties geconfigureerd. U kunt deze stap overslaan of later integraties configureren.",
           "aiModels": "Schakel AI-modellen in voor het genereren van testcases en intelligente suggesties.",
           "permissions": "Configureer gebruikers- en groepsmachtigingen voor dit project.",
-          "milestoneTypes": "Selecteer mijlpaaltypen om de voortgang en deadlines van het project bij te houden."
+          "milestoneTypes": "Selecteer mijlpaaltypen om de voortgang en deadlines van het project bij te houden.",
+          "configurations": "Selecteer welke configuraties beschikbaar zijn in dit project. Projecten beginnen zonder configuraties en kunnen vervolgens de gewenste configuraties toevoegen.",
+          "noConfigurations": "Er zijn momenteel geen configuraties gedefinieerd. U kunt deze later toevoegen in het beheerderspaneel."
         },
         "actions": {
           "selectDefault": "Standaard gebruiken",
@@ -4512,9 +4515,31 @@
     },
     "configurations": {
       "description": "Configuraties zijn een combinatie van categorieën en varianten die worden gebruikt om een testomgeving te definiëren. Bijvoorbeeld: besturingssysteem/browser, testserver, taal, enz.",
-      "addConfiguration": "Configuratie toevoegen",
+      "projectAssignment": {
+        "title": "Projecten toewijzen",
+        "reviewLabel": "De volgende configuraties worden toegepast op deze projecten:",
+        "description": "Kies in welke projecten deze configuraties beschikbaar moeten zijn. U kunt deze stap overslaan en projecten later toewijzen via het configuratiebeheer.",
+        "noProjects": "Geen projecten beschikbaar.",
+        "noneAssigned": "Niet toegewezen aan projecten (u kunt ze later toewijzen via het configuratiebeheer)."
+      },
+      "addConfiguration": "Configuraties toevoegen",
       "editConfiguration": "Configuratie bewerken",
       "filterPlaceholder": "Filterconfiguraties...",
+      "allProjects": "Alle projecten",
+      "selectAllTooltip": "Selecteer/deselecteer alle configuraties op deze pagina",
+      "selectAllShiftTooltip": "{count, plural, =0 {Selecteer/deselecteer alle configuraties op alle pagina's} one {Selecteer/deselecteer # configuratie op alle pagina's} other {Selecteer/deselecteer # configuraties op alle pagina's}}",
+      "deselectAllShiftTooltip": "Alle configuraties op alle pagina's deselecteren/selecteren",
+      "shiftClickHint": "Houd Shift ingedrukt om alle pagina's te selecteren/deselecteren.",
+      "bulkEdit": {
+        "button": "{count, plural, one {Bewerk 1 configuratie} other {Bewerk # configuraties}}",
+        "title": "{count, plural, one {Projecten bewerken op 1 configuratie} other {Projecten bewerken op # configuraties}}",
+        "description": "Vervang de projecttoewijzingen op de geselecteerde configuraties. De configuratienaam kan niet in bulk worden gewijzigd.",
+        "applyButton": "{count, plural, one {Toepassen op 1 configuratie} other {Toepassen op # configuraties}}",
+        "deleteButton": "{count, plural, one {Verwijder 1 configuratie} other {Verwijder # configuraties}}",
+        "deleteConfirmTitle": "{count, plural, one {1 configuratie verwijderen?} other {# configuraties verwijderen?}}",
+        "deleteConfirmMessage": "{count, plural, one {Hiermee wordt 1 configuratie verwijderd. Deze actie kan niet ongedaan worden gemaakt.} other {Hiermee worden # configuraties verwijderd. Deze actie kan niet ongedaan worden gemaakt.}}",
+        "applyEnabledLabel": "Wijzig de ingeschakelde status"
+      },
       "categories": {
         "title": "Categorieën",
         "description": "Globale categorieën beheren",
@@ -4538,11 +4563,15 @@
       "combinations": {
         "title": "Combinaties",
         "description": "Beheer globale combinaties",
-        "confirmDescription": "De volgende {count, number} combinaties zullen worden gecreëerd.",
+        "confirmDescription": "De volgende {count, number} configuraties zullen worden aangemaakt:",
         "addCombination": "Combinatie toevoegen",
         "editCombination": "Combinatie bewerken",
-        "selectCombination": "Selecteer combinatie",
-        "selectCombinationDescription": "Selecteer een combinatie van varianten die u aan de configuratie wilt toevoegen.",
+        "selectCombination": "Selecteer combinaties",
+        "selectCombinationDescription": "Selecteer de variantcombinaties die u wilt toevoegen. Combinaties die al bestaan, worden uitgeschakeld weergegeven.",
+        "alreadyExists": "(bestaat al)",
+        "reviewTitle": "Configuraties controleren",
+        "createButton": "{count, plural, one {Maak 1 configuratie aan} other {Maak # configuraties aan}}",
+        "creating": "{count, plural, one {1 configuratie aanmaken...} other {# configuraties aanmaken...}}",
         "allExist": "Alle combinaties bestaan al.",
         "selectAtLeast": "Selecteer minimaal één combinatie."
       },
@@ -4562,8 +4591,8 @@
           "suggestion": "Overweeg in plaats daarvan de variant uit te schakelen."
         },
         "selection": {
-          "title": "Varianten selecteren",
-          "description": "Selecteer de varianten die u aan de configuratie wilt toevoegen."
+          "title": "Selecteer de varianten die u aan de configuraties wilt toevoegen.",
+          "description": "Stel een of meer configuraties samen door varianten te kiezen, te bepalen welke combinaties u wilt maken en deze toe te wijzen aan de projecten die ze zullen gebruiken."
         }
       }
     },
@@ -5839,7 +5868,9 @@
       "platform": "## Platform\nHet zelfgehoste Git-platform waarmee u verbinding maakt.\n\n- **Gitea**: instanties gebaseerd op gitea.io\n- **Forgejo**: instanties gebaseerd op forgejo.org (fork van Gitea)\n- **Gogs**: instanties gebaseerd op gogs.io\n\nDit bepaalt welk pictogram wordt weergegeven en kan de API-compatibiliteit beïnvloeden."
     },
     "config": {
-      "name": "## Configuratie Naam\nEen duidelijke, beschrijvende naam die in alle projecten wordt gebruikt.\n\n- Helpt bij het beschrijven van de variantencombinaties waaruit de configuratie bestaat (bijv. \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", enz.)."
+      "name": "## Configuratienaam\nEen duidelijke, beschrijvende naam voor deze configuratie.\n\n- Helpt bij het beschrijven van de variantcombinaties waaruit de configuratie bestaat (bijv. \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", enz.).",
+      "projects": "## Projecten\nGeeft de projecten aan die deze configuratie kunnen gebruiken.",
+      "bulkEnabledState": "## Ingeschakelde status instellen\nLaat het selectievakje uitgeschakeld om de ingeschakelde status van elke geselecteerde configuratie ongewijzigd te laten.\n\n- Vink het vakje aan om de waarde van de schakelaar bij het verzenden op elke geselecteerde configuratie toe te passen.\n- Uitschakelen schakelt de configuraties uit; inschakelen schakelt ze in."
     },
     "configCategory": {
       "name": "## Categorienaam\nEen duidelijke, beschrijvende naam die in alle projecten wordt gebruikt.\n\n- Helpt bij het organiseren van varianten (bijv. Chrome, Firefox, Safari, Edge, enz.) in categorieën (bijv. browsers)."

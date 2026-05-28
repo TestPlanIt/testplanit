@@ -74,6 +74,7 @@ Select the templates and workflows to use with this project:
 - **Workflows:** Select which workflows will be available for test execution.
 - **Milestone Types:** Choose the types of milestones that can be created in this project.
 - **Statuses:** Select which test statuses will be available.
+- **Configurations:** (Optional) Tick the [Configurations](./configurations.md) you want available in this project's run, session, and search pickers. New projects start with no Configurations and opt in to the ones they need; you can add or remove assignments later from the Configurations admin page.
 
 ### Step 5: Review & Create
 

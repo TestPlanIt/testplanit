@@ -88,6 +88,7 @@
       "addToTestRun": "添加到测试运行",
       "status": "地位",
       "resultDetailsPlaceholder": "请输入结果详情……",
+      "select": "选择",
       "selectAll": "全选",
       "deselectAll": "取消选择所有",
       "clearAll": "全部清除",
@@ -4023,7 +4024,9 @@
           "noIntegrations": "目前尚未配置任何集成。您可以跳过此步骤或稍后配置集成。",
           "aiModels": "启用人工智能模型，用于生成测试用例和提供智能建议。",
           "permissions": "配置此项目的用户访问权限和组权限。",
-          "milestoneTypes": "选择里程碑类型以跟踪项目进度和截止日期。"
+          "milestoneTypes": "选择里程碑类型以跟踪项目进度和截止日期。",
+          "configurations": "请选择此项目中可用的配置。项目初始状态下不包含任何配置，然后根据需要选择启用哪些配置。",
+          "noConfigurations": "目前尚未定义任何配置。您可以稍后在管理后台添加配置。"
         },
         "actions": {
           "selectDefault": "使用默认值",
@@ -4512,9 +4515,31 @@
     },
     "configurations": {
       "description": "配置是用于定义测试环境的各种类别和变体的组合。例如，操作系统/浏览器、测试服务器、语言等。",
+      "projectAssignment": {
+        "title": "分配项目",
+        "reviewLabel": "新的配置将应用于这些项目：",
+        "description": "选择这些配置应在哪些项目中可用。您可以跳过此步骤，稍后在配置管理后台分配项目。",
+        "noProjects": "暂无项目。",
+        "noneAssigned": "未分配到任何项目（您可以稍后从配置管理中分配）。"
+      },
       "addConfiguration": "添加配置",
       "editConfiguration": "编辑配置",
       "filterPlaceholder": "过滤器配置...",
+      "allProjects": "所有项目",
+      "selectAllTooltip": "选中/取消选中此页面上的所有配置",
+      "selectAllShiftTooltip": "{count, plural, =0 {选择/取消选择所有页面上的所有配置} one {选择/取消选择所有页面上的 # 个配置} other {选择/取消选择所有页面上的 # 个配置}}",
+      "deselectAllShiftTooltip": "取消选择/选择所有页面上的所有配置",
+      "shiftClickHint": "按住 Shift 键可选择/取消选择所有页面",
+      "bulkEdit": {
+        "button": "{count, plural, one {编辑 1 个配置} other {编辑 # 个配置}}",
+        "title": "{count, plural, one {编辑 1 个配置上的项目} other {编辑 # 个配置上的项目}}",
+        "description": "替换所选配置中的项目分配。配置名称无法批量编辑。",
+        "applyButton": "{count, plural, one {应用于 1 个配置} other {应用于 # 个配置}}",
+        "deleteButton": "{count, plural, one {删除 1 个配置} other {删除 # 个配置}}",
+        "deleteConfirmTitle": "{count, plural, one {Delete 1 configuration?} other {Delete # configurations?}}",
+        "deleteConfirmMessage": "{count, plural, one {This will delete 1 configuration. This action cannot be undone.} other {This will delete # configurations. This action cannot be undone.}}",
+        "applyEnabledLabel": "更改已启用状态"
+      },
       "categories": {
         "title": "类别",
         "description": "管理全球类别",
@@ -4538,11 +4563,15 @@
       "combinations": {
         "title": "组合",
         "description": "管理全局组合",
-        "confirmDescription": "将创建以下 {count, number} 组合。",
+        "confirmDescription": "The following {count, number} Configurations will be created:",
         "addCombination": "添加组合",
         "editCombination": "编辑组合",
         "selectCombination": "选择组合",
-        "selectCombinationDescription": "选择要添加到配置中的变体组合。",
+        "selectCombinationDescription": "请选择要添加的变体组合。已存在的组合将显示为禁用状态。",
+        "alreadyExists": "（已存在）",
+        "reviewTitle": "查看配置",
+        "createButton": "{count, plural, one {创建 1 个配置} other {创建 # 个配置}}",
+        "creating": "{count, plural, one {正在创建 1 个配置...} other {正在创建 # 个配置...}}",
         "allExist": "所有组合都已存在。",
         "selectAtLeast": "请至少选择一种组合。"
       },
@@ -4562,8 +4591,8 @@
           "suggestion": "考虑禁用该变体。"
         },
         "selection": {
-          "title": "选择变体",
-          "description": "选择要添加到配置中的变体。"
+          "title": "选择要添加到配置中的变体。",
+          "description": "通过选择变体、选择要创建的组合，并将它们分配给将要使用它们的项目，来构建一个或多个配置。"
         }
       }
     },
@@ -5839,7 +5868,9 @@
       "platform": "## 平台\n您正在连接的自托管 Git 平台。\n\n- **Gitea**：基于 gitea.io 的实例\n- **Forgejo**：基于 forgejo.org 的实例（Gitea 的分支）\n- **Gogs**：基于 gogs.io 的实例\n\n此设置控制显示的图标，并可能影响 API 兼容性。"
     },
     "config": {
-      "name": "## 配置名称\n一个清晰、描述性的名称，在所有项目中使用。\n\n- 有助于描述构成配置的变体组合（例如“Chrome，Windows 10”、“Safari/macOS 15.5”、“Edge/Windows 11”等）。"
+      "name": "## 配置名称\n此配置的清晰、描述性名称。\n\n- 有助于描述构成配置的变体组合（例如“Chrome，Windows 10”、“Safari/macOS 15.5”、“Edge/Windows 11”等）。",
+      "projects": "## 项目\n指示可以使用此配置的项目。",
+      "bulkEnabledState": "## 设置启用状态\n取消选中此复选框，将保持每个选定配置的启用状态不变。\n\n- 选中此复选框，提交时将开关的值应用于每个选定的配置。\n- 关闭此复选框将禁用配置；打开此复选框将启用配置。"
     },
     "configCategory": {
       "name": "## 类别名称\n一个清晰、描述性的名称，用于所有项目。\n\n- 有助于将变体（例如 Chrome、Firefox、Safari、Edge 等）组织到类别（例如浏览器）中。"

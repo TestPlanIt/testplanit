@@ -88,6 +88,7 @@
       "addToTestRun": "테스트 실행에 추가",
       "status": "상태",
       "resultDetailsPlaceholder": "결과 세부 정보를 입력하세요...",
+      "select": "선택하다",
       "selectAll": "모두 선택",
       "deselectAll": "모두 선택 해제",
       "clearAll": "모두 지우기",
@@ -4023,7 +4024,9 @@
           "noIntegrations": "현재 구성된 연동 기능이 없습니다. 이 단계를 건너뛰거나 나중에 연동 기능을 구성할 수 있습니다.",
           "aiModels": "테스트 케이스 생성 및 지능형 제안을 위해 AI 모델을 활성화하세요.",
           "permissions": "이 프로젝트에 대한 사용자 액세스 및 그룹 권한을 구성하십시오.",
-          "milestoneTypes": "프로젝트 진행 상황 및 마감일을 추적하려면 마일스톤 유형을 선택하세요."
+          "milestoneTypes": "프로젝트 진행 상황 및 마감일을 추적하려면 마일스톤 유형을 선택하세요.",
+          "configurations": "이 프로젝트에서 사용할 수 있는 구성을 선택하십시오. 프로젝트는 구성 없이 시작하며 필요한 구성을 선택적으로 추가할 수 있습니다.",
+          "noConfigurations": "현재 정의된 구성이 없습니다. 나중에 관리 페이지에서 추가할 수 있습니다."
         },
         "actions": {
           "selectDefault": "기본값 사용",
@@ -4512,9 +4515,31 @@
     },
     "configurations": {
       "description": "구성은 테스트 환경을 정의하는 데 사용되는 범주와 변형의 조합입니다. 예를 들어 운영 체제/브라우저, 테스트 서버, 언어 등이 있습니다.",
-      "addConfiguration": "추가 구성",
+      "projectAssignment": {
+        "title": "프로젝트 할당",
+        "reviewLabel": "다음 프로젝트들에 새로운 구성이 적용될 예정입니다:",
+        "description": "이러한 구성 기능을 사용할 프로젝트를 선택하세요. 이 단계를 건너뛰고 나중에 구성 관리자에서 프로젝트를 할당할 수도 있습니다.",
+        "noProjects": "이용 가능한 프로젝트가 없습니다.",
+        "noneAssigned": "어떤 프로젝트에도 할당되지 않았습니다(나중에 구성 관리자에서 할당할 수 있습니다)."
+      },
+      "addConfiguration": "구성 추가",
       "editConfiguration": "편집 구성",
       "filterPlaceholder": "필터 구성...",
+      "allProjects": "모든 프로젝트",
+      "selectAllTooltip": "이 페이지의 모든 설정을 선택/선택 해제하세요.",
+      "selectAllShiftTooltip": "{count, plural, =0 {모든 페이지의 모든 설정을 선택/선택 해제합니다.} one {모든 페이지의 # 설정을 선택/선택 해제합니다.} other {모든 페이지의 # 설정을 선택/선택 해제합니다.}}",
+      "deselectAllShiftTooltip": "모든 페이지에서 모든 설정을 선택/선택 해제",
+      "shiftClickHint": "Shift 키를 누른 상태로 모든 페이지를 선택/선택 해제하세요.",
+      "bulkEdit": {
+        "button": "{count, plural, one {1번째 설정 편집} other {#번째 설정 편집}}",
+        "title": "{count, plural, one {1개 구성에서 프로젝트 편집} other {#개 구성에서 프로젝트 편집}}",
+        "description": "선택한 구성에 대한 프로젝트 할당을 바꿉니다. 구성 이름은 일괄적으로 편집할 수 없습니다.",
+        "applyButton": "{count, plural, one {1개 구성에 적용} other {#개 구성에 적용}}",
+        "deleteButton": "{count, plural, one {설정 1개 삭제} other {설정 #개 삭제}}",
+        "deleteConfirmTitle": "{count, plural, one {설정 1개를 삭제하시겠습니까?} other {설정 #개를 삭제하시겠습니까?}}",
+        "deleteConfirmMessage": "{count, plural, one {이 작업은 설정을 1개 삭제합니다. 이 작업은 되돌릴 수 없습니다.} other {이 작업은 설정을 #개 삭제합니다. 이 작업은 되돌릴 수 없습니다.}}",
+        "applyEnabledLabel": "활성화 상태 변경"
+      },
       "categories": {
         "title": "카테고리",
         "description": "글로벌 카테고리 관리",
@@ -4538,11 +4563,15 @@
       "combinations": {
         "title": "조합",
         "description": "글로벌 조합 관리",
-        "confirmDescription": "The following {count, number} combinations will be created.",
+        "confirmDescription": "The following {count, number} Configurations will be created:",
         "addCombination": "조합을 추가하세요",
         "editCombination": "조합 편집",
         "selectCombination": "조합을 선택하세요",
-        "selectCombinationDescription": "구성에 추가할 변형 조합을 선택하십시오.",
+        "selectCombinationDescription": "추가할 변형 조합을 선택하세요. 이미 존재하는 조합은 비활성화된 상태로 표시됩니다.",
+        "alreadyExists": "(이미 존재합니다)",
+        "reviewTitle": "구성 검토",
+        "createButton": "{count, plural, one {구성 1개 생성} other {구성 #개 생성}}",
+        "creating": "{count, plural, one {구성 1개 생성 중...} other {구성 #개 생성 중...}}",
         "allExist": "모든 조합이 이미 존재합니다.",
         "selectAtLeast": "최소 한 가지 조합을 선택해 주세요."
       },
@@ -4562,8 +4591,8 @@
           "suggestion": "해당 변형을 비활성화하는 것을 고려해 보세요."
         },
         "selection": {
-          "title": "변형 선택",
-          "description": "구성에 추가할 변형을 선택하십시오."
+          "title": "구성에 추가할 변형을 선택하십시오.",
+          "description": "변형을 선택하고, 생성할 조합을 고르고, 이를 사용할 프로젝트에 할당하여 하나 이상의 구성을 만드세요."
         }
       }
     },
@@ -5839,7 +5868,9 @@
       "platform": "## 플랫폼\n연결할 자체 호스팅 Git 플랫폼입니다.\n\n- **Gitea**: gitea.io 기반 인스턴스\n- **Forgejo**: forgejo.org 기반 인스턴스(Gitea 포크)\n- **Gogs**: gogs.io 기반 인스턴스\n\n이 설정은 표시되는 아이콘을 제어하며 API 호환성에 영향을 줄 수 있습니다."
     },
     "config": {
-      "name": "## 구성 이름\n모든 프로젝트에서 사용되는 명확하고 설명적인 이름입니다.\n\n- 구성을 이루는 다양한 조합을 설명하는 데 도움이 됩니다(예: \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\" 등)."
+      "name": "## 구성 이름\n이 구성에 대한 명확하고 설명적인 이름입니다.\n\n- 구성을 구성하는 변형 조합을 설명하는 데 도움이 됩니다(예: \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\" 등).",
+      "projects": "## 프로젝트\n이 구성을 사용할 수 있는 프로젝트를 나타냅니다.",
+      "bulkEnabledState": "## 활성화 상태 설정\n체크박스를 선택하지 않으면 선택된 각 구성의 활성화 상태를 그대로 유지합니다.\n\n- 체크박스를 선택하면 제출 시 선택된 모든 구성에 스위치 값이 적용됩니다.\n- 스위치를 끄면 구성이 비활성화되고, 켜면 활성화됩니다."
     },
     "configCategory": {
       "name": "## 카테고리 이름\n모든 프로젝트에서 사용되는 명확하고 설명적인 이름입니다.\n\n- 변형(예: Chrome, Firefox, Safari, Edge 등)을 카테고리(예: 브라우저)로 정리하는 데 도움이 됩니다."

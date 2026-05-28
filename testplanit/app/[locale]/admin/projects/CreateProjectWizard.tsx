@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { z } from "zod/v4";
 import {
   useCreateManyProjectAssignment,
+  useCreateManyProjectConfigurationAssignment,
   useCreateManyProjectStatusAssignment,
   useCreateManyProjectWorkflowAssignment,
   useCreateMilestoneTypesAssignment,
@@ -18,6 +19,7 @@ import {
   useCreateProjects,
   useCreateRepositories,
   useCreateTemplateProjectAssignment,
+  useFindManyConfigurations,
   useFindManyGroups,
   useFindManyIntegration,
   useFindManyLlmIntegration,
@@ -96,6 +98,7 @@ import {
   ChevronRight,
   CircleCheckBig,
   CirclePlus,
+  Combine,
   Compass,
   ExternalLink,
   LayoutList,
@@ -190,6 +193,7 @@ const FormSchema = z.object({
   selectedWorkflows: z.array(z.number()),
   selectedStatuses: z.array(z.number()),
   selectedMilestoneTypes: z.array(z.number()),
+  selectedConfigurations: z.array(z.number()),
 
   // Step 4: Integrations
   selectedIntegration: z.number().nullable(),
@@ -258,6 +262,8 @@ export function CreateProjectWizard({
     useCreateManyProjectWorkflowAssignment();
   const { mutateAsync: createManyProjectStatusAssignment } =
     useCreateManyProjectStatusAssignment();
+  const { mutateAsync: createManyProjectConfigurationAssignment } =
+    useCreateManyProjectConfigurationAssignment();
   const { mutateAsync: createManyProjectAssignment } =
     useCreateManyProjectAssignment();
   const { mutateAsync: createProjectIntegration } =
@@ -319,6 +325,15 @@ export function CreateProjectWizard({
       include: {
         color: true,
       },
+    },
+    { enabled: isOpen }
+  );
+
+  const { data: configurations } = useFindManyConfigurations(
+    {
+      where: { isDeleted: false, isEnabled: true },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
     },
     { enabled: isOpen }
   );
@@ -456,6 +471,7 @@ export function CreateProjectWizard({
       selectedStatuses:
         statuses?.filter((s) => s.isEnabled)?.map((s) => s.id) || [],
       selectedMilestoneTypes: allMilestoneTypeIds, // Select ALL milestone types
+      selectedConfigurations: [], // Opt-in: new projects start with no configurations
       selectedIntegration: null,
       selectedLlmIntegration: null,
       quickScriptEnabled: true,
@@ -485,6 +501,7 @@ export function CreateProjectWizard({
   const selectedWorkflows = watch("selectedWorkflows");
   const selectedStatuses = watch("selectedStatuses");
   const selectedMilestoneTypes = watch("selectedMilestoneTypes");
+  const selectedConfigurations = watch("selectedConfigurations");
   const selectedIntegration = watch("selectedIntegration");
   const selectedLlmIntegration = watch("selectedLlmIntegration");
   const quickScriptEnabled = watch("quickScriptEnabled");
@@ -680,6 +697,18 @@ export function CreateProjectWizard({
     }
   };
 
+  const toggleConfiguration = (configurationId: number) => {
+    const current = getValues("selectedConfigurations");
+    if (current.includes(configurationId)) {
+      setValue(
+        "selectedConfigurations",
+        current.filter((id) => id !== configurationId)
+      );
+    } else {
+      setValue("selectedConfigurations", [...current, configurationId]);
+    }
+  };
+
   const selectIntegration = (integrationId: number) => {
     setValue("selectedIntegration", integrationId);
   };
@@ -803,6 +832,18 @@ export function CreateProjectWizard({
           createManyProjectStatusAssignment({
             data: data.selectedStatuses.map((statusId) => ({
               statusId,
+              projectId: newProjectId!,
+            })),
+          })
+        );
+      }
+
+      // Assign configurations
+      if (data.selectedConfigurations.length > 0) {
+        setupPromises.push(
+          createManyProjectConfigurationAssignment({
+            data: data.selectedConfigurations.map((configurationId) => ({
+              configurationId,
               projectId: newProjectId!,
             })),
           })
@@ -1602,6 +1643,43 @@ export function CreateProjectWizard({
                       )}
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* Configurations Section */}
+              <div className="space-y-2">
+                <Label className="text-base flex items-center gap-2">
+                  <Combine className="h-4 w-4" />
+                  {tCommon("fields.configurations")}
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {t("admin.projects.wizard.descriptions.configurations")}
+                </p>
+                <div className="space-y-2">
+                  {configurations && configurations.length > 0 ? (
+                    configurations.map((configuration) => (
+                      <div
+                        key={configuration.id}
+                        className="flex items-center justify-between p-2 hover:bg-muted/50"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Checkbox
+                            checked={selectedConfigurations.includes(
+                              configuration.id
+                            )}
+                            onCheckedChange={() =>
+                              toggleConfiguration(configuration.id)
+                            }
+                          />
+                          <Label>{configuration.name}</Label>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {t("admin.projects.wizard.descriptions.noConfigurations")}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

@@ -19,7 +19,7 @@ test.describe("Session Configuration Select All", () => {
     for (let i = 1; i <= 12; i++) {
       const name = `SelectAll Config ${String(i).padStart(2, "0")} ${ts}`;
       configNames.push(name);
-      await api.createConfiguration(name);
+      await api.createConfiguration(name, projectId);
     }
 
     await page.goto(`/en-US/projects/sessions/${projectId}`);
@@ -75,7 +75,8 @@ test.describe("Session Configuration Select All", () => {
     // Create 12 configurations
     for (let i = 1; i <= 12; i++) {
       await api.createConfiguration(
-        `AllClick Config ${String(i).padStart(2, "0")} ${ts}`
+        `AllClick Config ${String(i).padStart(2, "0")} ${ts}`,
+        projectId
       );
     }
 

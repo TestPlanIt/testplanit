@@ -74,7 +74,7 @@ test.describe("Session Lifecycle", () => {
     const milestoneName = `Lifecycle Milestone ${ts}`;
     const sessionName = `Config+Milestone Session ${ts}`;
 
-    await api.createConfiguration(configName);
+    await api.createConfiguration(configName, projectId);
     const milestoneId = await api.createMilestone(projectId, milestoneName);
 
     await page.goto(`/en-US/projects/sessions/${projectId}`);

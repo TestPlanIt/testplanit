@@ -124,7 +124,7 @@ test.describe("Test Run Creation Wizard", () => {
     const folderId = await api.createFolder(projectId, `Config Folder ${ts}`);
     await api.createTestCase(projectId, folderId, `Config Case ${ts}`);
     const configName = `Browser ${ts}`;
-    await api.createConfiguration(configName);
+    await api.createConfiguration(configName, projectId);
 
     const runName = `Config Run ${ts}`;
 

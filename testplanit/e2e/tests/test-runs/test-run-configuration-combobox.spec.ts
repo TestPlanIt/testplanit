@@ -84,8 +84,8 @@ test.describe("Test Run Configuration Combobox", () => {
     );
     const configName1 = `Config Alpha ${Date.now()}`;
     const configName2 = `Config Beta ${Date.now()}`;
-    await api.createConfiguration(configName1);
-    await api.createConfiguration(configName2);
+    await api.createConfiguration(configName1, projectId);
+    await api.createConfiguration(configName2, projectId);
 
     // Navigate to test runs page
     await page.goto(`/en-US/projects/runs/${projectId}`);
@@ -109,7 +109,7 @@ test.describe("Test Run Configuration Combobox", () => {
   }) => {
     const projectId = await api.createProject(`E2E Config Badge ${Date.now()}`);
     const configName = `Badge Config ${Date.now()}`;
-    await api.createConfiguration(configName);
+    await api.createConfiguration(configName, projectId);
 
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
@@ -141,7 +141,7 @@ test.describe("Test Run Configuration Combobox", () => {
       `E2E Config Remove ${Date.now()}`
     );
     const configName = `Remove Config ${Date.now()}`;
-    await api.createConfiguration(configName);
+    await api.createConfiguration(configName, projectId);
 
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
@@ -188,8 +188,8 @@ test.describe("Test Run Configuration Combobox", () => {
     const ts = Date.now();
     const configNameMatch = `Searchable Config ${ts}`;
     const configNameNoMatch = `Other Widget ${ts}`;
-    await api.createConfiguration(configNameMatch);
-    await api.createConfiguration(configNameNoMatch);
+    await api.createConfiguration(configNameMatch, projectId);
+    await api.createConfiguration(configNameNoMatch, projectId);
 
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
@@ -223,15 +223,50 @@ test.describe("Test Run Configuration Combobox", () => {
     ).not.toBeVisible({ timeout: 3000 });
   });
 
+  test("only shows configurations assigned to the current project", async ({
+    api,
+    page,
+  }) => {
+    // Two projects, each with its own configuration. The picker for project A
+    // must show A's config and must NOT show B's (configurations are
+    // project-scoped).
+    const ts = Date.now();
+    const projectAId = await api.createProject(`E2E Scope A ${ts}`);
+    const projectBId = await api.createProject(`E2E Scope B ${ts}`);
+    const configInA = `ScopedToA ${ts}`;
+    const configInB = `ScopedToB ${ts}`;
+    await api.createConfiguration(configInA, projectAId);
+    await api.createConfiguration(configInB, projectBId);
+
+    await page.goto(`/en-US/projects/runs/${projectAId}`);
+    await page.waitForLoadState("load");
+
+    const { configCombobox } = await openModalAndGetConfigCombobox(page);
+    await openComboboxDropdown(page, configCombobox);
+
+    // Search by the shared timestamp so both candidate configs would match by
+    // name; only the project-assigned one should actually appear.
+    const searchInput = page.locator("[cmdk-input]").first();
+    await searchInput.fill(String(ts));
+    await page.waitForTimeout(500);
+
+    await expect(
+      page.locator(`[role="option"]:has-text("${configInA}")`)
+    ).toBeVisible({ timeout: 5000 });
+    await expect(
+      page.locator(`[role="option"]:has-text("${configInB}")`)
+    ).not.toBeVisible({ timeout: 3000 });
+  });
+
   test("should select multiple configurations", async ({ api, page }) => {
     const projectId = await api.createProject(`E2E Multi Config ${Date.now()}`);
     const ts = Date.now();
     const config1 = `Multi A ${ts}`;
     const config2 = `Multi B ${ts}`;
     const config3 = `Multi C ${ts}`;
-    await api.createConfiguration(config1);
-    await api.createConfiguration(config2);
-    await api.createConfiguration(config3);
+    await api.createConfiguration(config1, projectId);
+    await api.createConfiguration(config2, projectId);
+    await api.createConfiguration(config3, projectId);
 
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
@@ -269,8 +304,8 @@ test.describe("Test Run Configuration Combobox", () => {
     const ts = Date.now();
     const config1 = `SelectAll A ${ts}`;
     const config2 = `SelectAll B ${ts}`;
-    await api.createConfiguration(config1);
-    await api.createConfiguration(config2);
+    await api.createConfiguration(config1, projectId);
+    await api.createConfiguration(config2, projectId);
 
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
@@ -312,7 +347,7 @@ test.describe("Test Run Configuration Combobox", () => {
   }) => {
     const projectId = await api.createProject(`E2E Clear All ${Date.now()}`);
     const configName = `ClearAll Config ${Date.now()}`;
-    await api.createConfiguration(configName);
+    await api.createConfiguration(configName, projectId);
 
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
@@ -351,7 +386,7 @@ test.describe("Test Run Configuration Combobox", () => {
     );
 
     const configName = `Paginated Config ${Date.now()}`;
-    await api.createConfiguration(configName);
+    await api.createConfiguration(configName, projectId);
 
     await page.goto(`/en-US/projects/runs/${projectId}`);
     await page.waitForLoadState("load");
@@ -386,7 +421,7 @@ test.describe("Test Run Configuration Combobox", () => {
       `E2E Config Next Step ${Date.now()}`
     );
     const configName = `NextStep Config ${Date.now()}`;
-    await api.createConfiguration(configName);
+    await api.createConfiguration(configName, projectId);
 
     // Create a folder and test case so step 2 has cases to show
     const folderId = await api.createFolder(projectId, "Test Folder");

@@ -167,6 +167,7 @@ The configuration step allows you to:
 **Test Configurations:**
 - Map Testmo test configurations to TestPlanIt
 - Set up configuration options
+- Imported Configurations are global in Testmo but [project-scoped](./user-guide/configurations.md) in TestPlanIt, so each imported Configuration is automatically assigned to the imported Projects whose runs use it. Configurations that aren't referenced by any imported run are left unassigned and can be attached to Projects later.
 
 **Tags:**
 - Map Testmo tags to TestPlanIt tags

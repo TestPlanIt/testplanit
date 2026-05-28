@@ -88,6 +88,7 @@
       "addToTestRun": "Aggiungi al test",
       "status": "Stato",
       "resultDetailsPlaceholder": "Inserisci i dettagli del risultato...",
+      "select": "Selezionare",
       "selectAll": "Seleziona tutto",
       "deselectAll": "Deseleziona tutto",
       "clearAll": "Cancella tutto",
@@ -4023,7 +4024,9 @@
           "noIntegrations": "Al momento non è configurata alcuna integrazione. Puoi saltare questo passaggio o configurare le integrazioni in seguito.",
           "aiModels": "Abilita modelli di intelligenza artificiale per la generazione di casi di test e suggerimenti intelligenti.",
           "permissions": "Configura l'accesso utente e le autorizzazioni di gruppo per questo progetto.",
-          "milestoneTypes": "Seleziona i tipi di milestone per monitorare l'avanzamento e le scadenze del progetto."
+          "milestoneTypes": "Seleziona i tipi di milestone per monitorare l'avanzamento e le scadenze del progetto.",
+          "configurations": "Seleziona le configurazioni disponibili per questo progetto. I progetti iniziano senza alcuna configurazione e possono essere configurati in seguito, a seconda delle necessità.",
+          "noConfigurations": "Al momento non sono definite configurazioni. È possibile aggiungerle in seguito nella sezione Amministrazione."
         },
         "actions": {
           "selectDefault": "Usa predefinito",
@@ -4512,9 +4515,31 @@
     },
     "configurations": {
       "description": "Le configurazioni sono una combinazione di categorie e varianti utilizzate per definire un ambiente di test. Ad esempio, sistema operativo/browser, server di test, lingua, ecc.",
-      "addConfiguration": "Aggiungi configurazione",
+      "projectAssignment": {
+        "title": "Assegna progetti",
+        "reviewLabel": "Le nuove configurazioni verranno applicate ai seguenti progetti:",
+        "description": "Scegli in quali progetti queste configurazioni devono essere disponibili. Puoi saltare questo passaggio e assegnare i progetti in seguito dall'amministrazione delle configurazioni.",
+        "noProjects": "Nessun progetto disponibile.",
+        "noneAssigned": "Non assegnati ad alcun progetto (è possibile assegnarli in seguito dalla sezione di amministrazione delle configurazioni)."
+      },
+      "addConfiguration": "Aggiungi configurazioni",
       "editConfiguration": "Modifica configurazione",
       "filterPlaceholder": "Configurazioni del filtro...",
+      "allProjects": "Tutti i progetti",
+      "selectAllTooltip": "Seleziona/Deseleziona tutte le configurazioni in questa pagina",
+      "selectAllShiftTooltip": "{count, plural, =0 {Seleziona/Deseleziona tutte le configurazioni su tutte le pagine} one {Seleziona/Deseleziona # configurazioni su tutte le pagine} other {Seleziona/Deseleziona # configurazioni su tutte le pagine}}",
+      "deselectAllShiftTooltip": "Deseleziona/Seleziona tutte le configurazioni in tutte le pagine",
+      "shiftClickHint": "Tieni premuto Maiusc per selezionare/deselezionare tutte le pagine",
+      "bulkEdit": {
+        "button": "{count, plural, one {Modifica 1 configurazione} other {Modifica # configurazioni}}",
+        "title": "{count, plural, one {Modifica progetti su 1 configurazione} other {Modifica progetti su # configurazioni}}",
+        "description": "Sostituire le assegnazioni di progetto sulle configurazioni selezionate. Il nome della configurazione non è modificabile in blocco.",
+        "applyButton": "{count, plural, one {Applica a 1 configurazione} other {Applica a # configurazioni}}",
+        "deleteButton": "{count, plural, one {Elimina 1 configurazione} other {Elimina # configurazioni}}",
+        "deleteConfirmTitle": "{count, plural, one {Eliminare 1 configurazione?} other {Eliminare # configurazioni?}}",
+        "deleteConfirmMessage": "{count, plural, one {Questa operazione eliminerà 1 configurazione. Questa azione non può essere annullata.} other {Questa operazione eliminerà # configurazioni. Questa azione non può essere annullata.}}",
+        "applyEnabledLabel": "Modifica lo stato abilitato"
+      },
       "categories": {
         "title": "Categorie",
         "description": "Gestisci categorie globali",
@@ -4538,11 +4563,15 @@
       "combinations": {
         "title": "Combinazioni",
         "description": "Gestisci combinazioni globali",
-        "confirmDescription": "Verranno create le seguenti combinazioni {count, number}.",
+        "confirmDescription": "Verranno create le seguenti configurazioni: {count, number}",
         "addCombination": "Aggiungi combinazione",
         "editCombination": "Modifica combinazione",
-        "selectCombination": "Seleziona combinazione",
-        "selectCombinationDescription": "Seleziona una combinazione di varianti da aggiungere alla configurazione.",
+        "selectCombination": "Seleziona combinazioni",
+        "selectCombinationDescription": "Seleziona le combinazioni di varianti da aggiungere. Le combinazioni già esistenti vengono visualizzate disabilitate.",
+        "alreadyExists": "(già esistente)",
+        "reviewTitle": "Revisione delle configurazioni",
+        "createButton": "{count, plural, one {Crea 1 configurazione} other {Crea # configurazioni}}",
+        "creating": "{count, plural, one {Creazione di 1 configurazione...} other {Creazione di # configurazioni...}}",
         "allExist": "Tutte le combinazioni esistono già.",
         "selectAtLeast": "Seleziona almeno una combinazione."
       },
@@ -4562,8 +4591,8 @@
           "suggestion": "Si consiglia invece di disabilitare la variante."
         },
         "selection": {
-          "title": "Seleziona varianti",
-          "description": "Seleziona le varianti che vuoi aggiungere alla configurazione."
+          "title": "Seleziona le varianti che desideri aggiungere alle configurazioni.",
+          "description": "Crea una o più configurazioni scegliendo le varianti, selezionando le combinazioni da realizzare e assegnandole ai progetti che le utilizzeranno."
         }
       }
     },
@@ -5839,7 +5868,9 @@
       "platform": "## Piattaforma\nLa piattaforma Git self-hosted a cui ti stai connettendo.\n\n- **Gitea**: istanze basate su gitea.io\n- **Forgejo**: istanze basate su forgejo.org (fork di Gitea)\n- **Gogs**: istanze basate su gogs.io\n\nQuesto controlla quale icona viene mostrata e potrebbe influire sulla compatibilità API."
     },
     "config": {
-      "name": "## Nome configurazione\nUn nome chiaro e descrittivo che viene utilizzato in tutti i progetti.\n\n- Aiuta a descrivere le varianti che compongono la configurazione (ad esempio \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", ecc.)."
+      "name": "## Nome della configurazione\nUn nome chiaro e descrittivo per questa configurazione.\n\n- Aiuta a descrivere le combinazioni di varianti che compongono la configurazione (ad esempio \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", ecc.).",
+      "projects": "## Progetti\nIndica i progetti che possono utilizzare questa configurazione.",
+      "bulkEnabledState": "## Imposta lo stato di abilitazione\nLascia la casella deselezionata per lasciare invariato lo stato di abilitazione di ciascuna configurazione selezionata.\n\n- Seleziona la casella per applicare il valore dell'interruttore a tutte le configurazioni selezionate all'invio.\n- Spegnendo l'interruttore si disabilitano le configurazioni; accendendole si abilitano."
     },
     "configCategory": {
       "name": "## Nome categoria\nUn nome chiaro e descrittivo che viene utilizzato in tutti i progetti.\n\n- Aiuta a organizzare le varianti (ad esempio Chrome, Firefox, Safari, Edge, ecc.) in categorie (ad esempio Browser)."

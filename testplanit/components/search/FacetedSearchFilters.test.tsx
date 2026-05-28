@@ -17,6 +17,7 @@ const {
   mockFoldersData,
   mockUsersData,
   mockConfigurationsData,
+  configurationsHookSpy,
 } = vi.hoisted(() => ({
   mockProjectsData: { data: [] as any[] },
   mockTagsData: { data: [] as any[] },
@@ -27,6 +28,7 @@ const {
   mockFoldersData: { data: [] as any[] },
   mockUsersData: { data: [] as any[] },
   mockConfigurationsData: { data: [] as any[] },
+  configurationsHookSpy: vi.fn(),
 }));
 
 // ---------------------------------------------------------------------------
@@ -41,7 +43,10 @@ vi.mock("~/lib/hooks", () => ({
   useFindManyProjectAssignment: () => mockProjectAssignmentData,
   useFindManyRepositoryFolders: () => mockFoldersData,
   useFindManyUser: () => mockUsersData,
-  useFindManyConfigurations: () => mockConfigurationsData,
+  useFindManyConfigurations: (args: unknown) => {
+    configurationsHookSpy(args);
+    return mockConfigurationsData;
+  },
 }));
 
 // ---------------------------------------------------------------------------
@@ -322,5 +327,35 @@ describe("FacetedSearchFilters", () => {
     );
 
     expect(screen.getByTestId("faceted-search-filters")).toBeInTheDocument();
+  });
+
+  it("scopes the configuration facet to the project when searching within one", () => {
+    render(
+      <FacetedSearchFilters
+        entityTypes={[SearchableEntityType.TEST_RUN]}
+        filters={defaultFilters}
+        onFiltersChange={vi.fn()}
+        projectId={5}
+      />
+    );
+
+    const where = configurationsHookSpy.mock.calls.at(-1)?.[0]?.where;
+    expect(where).toMatchObject({
+      isDeleted: false,
+      projects: { some: { projectId: 5 } },
+    });
+  });
+
+  it("does not scope the configuration facet in a global (cross-project) search", () => {
+    render(
+      <FacetedSearchFilters
+        entityTypes={[SearchableEntityType.TEST_RUN]}
+        filters={defaultFilters}
+        onFiltersChange={vi.fn()}
+      />
+    );
+
+    const where = configurationsHookSpy.mock.calls.at(-1)?.[0]?.where;
+    expect(where).not.toHaveProperty("projects");
   });
 });

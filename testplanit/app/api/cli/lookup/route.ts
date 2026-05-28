@@ -130,12 +130,15 @@ export async function POST(request: NextRequest) {
       }
 
       case "config": {
-        // Look up configuration by name
+        // Look up configuration by name. When a projectId is supplied, scope to
+        // configurations assigned to that project (configurations are
+        // project-scoped); otherwise fall back to a global lookup.
         const config = await prisma.configurations.findFirst({
           where: {
             name: name,
             isDeleted: false,
             isEnabled: true,
+            ...(projectId ? { projects: { some: { projectId } } } : {}),
           },
           select: { id: true, name: true },
         });

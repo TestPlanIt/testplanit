@@ -15,7 +15,7 @@ test.describe("Session Duplication Metadata", () => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E DupConfig ${ts}`);
     const configName = `Dup Config ${ts}`;
-    const configId = await api.createConfiguration(configName);
+    const configId = await api.createConfiguration(configName, projectId);
     const sessionId = await api.createSession(
       projectId,
       `Config Source ${ts}`,

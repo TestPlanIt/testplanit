@@ -13,6 +13,8 @@ export interface ConfigurationSelectProps {
   onChange: (value: number | null) => void;
   disabled?: boolean;
   className?: ClassValue;
+  /** Restrict options to configurations assigned to this project. */
+  projectId?: number;
 }
 
 export const ConfigurationSelect: React.FC<ConfigurationSelectProps> = ({
@@ -20,6 +22,7 @@ export const ConfigurationSelect: React.FC<ConfigurationSelectProps> = ({
   onChange,
   disabled = false,
   className,
+  projectId,
 }) => {
   const tCommon = useTranslations("common");
 
@@ -39,7 +42,7 @@ export const ConfigurationSelect: React.FC<ConfigurationSelectProps> = ({
       value={resolvedValue}
       onValueChange={(opt) => onChange(opt ? opt.id : null)}
       fetchOptions={(query, page, pageSize) =>
-        searchConfigurations(query, page, pageSize)
+        searchConfigurations(query, page, pageSize, projectId)
       }
       renderOption={(opt) => (
         <div className="flex items-center gap-1 min-w-0">

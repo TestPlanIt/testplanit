@@ -43,8 +43,8 @@ test.describe("Multi-Config Run Interaction", () => {
     const projectId = await api.createProject(`E2E MC ${ts}`);
     const config1Name = `Chrome-${ts}`;
     const config2Name = `Firefox-${ts}`;
-    const config1Id = await api.createConfiguration(config1Name);
-    const config2Id = await api.createConfiguration(config2Name);
+    const config1Id = await api.createConfiguration(config1Name, projectId);
+    const config2Id = await api.createConfiguration(config2Name, projectId);
 
     const groupId = randomUUID();
     const run1Id = await api.createTestRun(projectId, `Chrome Run ${ts}`, {

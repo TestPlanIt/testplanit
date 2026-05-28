@@ -60,7 +60,7 @@ test.describe("Session Add Modal Instance", () => {
     const ts = Date.now();
     const projectId = await api.createProject(`E2E ModalReset ${ts}`);
     const configName = `Reset Config ${ts}`;
-    await api.createConfiguration(configName);
+    await api.createConfiguration(configName, projectId);
 
     await page.goto(`/en-US/projects/sessions/${projectId}`);
     await page.waitForLoadState("load");

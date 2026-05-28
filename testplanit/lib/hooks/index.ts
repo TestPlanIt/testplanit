@@ -17,6 +17,7 @@ export * from './roles';
 export * from './projects';
 export * from './project-assignment';
 export * from './project-status-assignment';
+export * from './project-configuration-assignment';
 export * from './project-workflow-assignment';
 export * from './milestones';
 export * from './milestone-types';

@@ -88,6 +88,7 @@
       "addToTestRun": "Add to Test Run",
       "status": "Status",
       "resultDetailsPlaceholder": "Enter result details...",
+      "select": "Select",
       "selectAll": "Select All",
       "deselectAll": "Deselect All",
       "clearAll": "Clear All",
@@ -4023,7 +4024,9 @@
           "noIntegrations": "No integrations are currently configured. You can skip this step or configure integrations later.",
           "aiModels": "Enable AI models for test case generation and intelligent suggestions.",
           "permissions": "Configure user access and group permissions for this project.",
-          "milestoneTypes": "Select milestone types to track project progress and deadlines."
+          "milestoneTypes": "Select milestone types to track project progress and deadlines.",
+          "configurations": "Select which configurations are available in this project. Projects start with none and opt in to the configurations they need.",
+          "noConfigurations": "No configurations are currently defined. You can add them later in Administration."
         },
         "actions": {
           "selectDefault": "Use Default",
@@ -4512,9 +4515,31 @@
     },
     "configurations": {
       "description": "Configurations are a combination of categories and variants used to define a test environment. For example, OS/Browser, Test Server, Language, etc.",
-      "addConfiguration": "Add Configuration",
+      "projectAssignment": {
+        "title": "Assign Projects",
+        "reviewLabel": "New Configurations will be applied to these projects:",
+        "description": "Choose which projects these configurations should be available in. You can skip this step and assign projects later from the configurations admin.",
+        "noProjects": "No projects available.",
+        "noneAssigned": "Not assigned to any projects (you can assign them from the configurations admin later)."
+      },
+      "addConfiguration": "Add Configurations",
       "editConfiguration": "Edit Configuration",
       "filterPlaceholder": "Filter configurations...",
+      "allProjects": "All projects",
+      "selectAllTooltip": "Select/Deselect all configurations on this page",
+      "selectAllShiftTooltip": "{count, plural, =0 {Select/Deselect all configurations across all pages} one {Select/Deselect # configuration across all pages} other {Select/Deselect # configurations across all pages}}",
+      "deselectAllShiftTooltip": "Deselect/Select all configurations across all pages",
+      "shiftClickHint": "Hold Shift to select/deselect all pages",
+      "bulkEdit": {
+        "button": "{count, plural, one {Edit 1 configuration} other {Edit # configurations}}",
+        "title": "{count, plural, one {Edit projects on 1 configuration} other {Edit projects on # configurations}}",
+        "description": "Replace the project assignments on the selected configurations. The configuration name is not editable in bulk.",
+        "applyButton": "{count, plural, one {Apply to 1 configuration} other {Apply to # configurations}}",
+        "deleteButton": "{count, plural, one {Delete 1 configuration} other {Delete # configurations}}",
+        "deleteConfirmTitle": "{count, plural, one {Delete 1 configuration?} other {Delete # configurations?}}",
+        "deleteConfirmMessage": "{count, plural, one {This will delete 1 configuration. This action cannot be undone.} other {This will delete # configurations. This action cannot be undone.}}",
+        "applyEnabledLabel": "Change enabled state"
+      },
       "categories": {
         "title": "Categories",
         "description": "Manage global categories",
@@ -4538,11 +4563,15 @@
       "combinations": {
         "title": "Combinations",
         "description": "Manage global combinations",
-        "confirmDescription": "The following {count, number} combinations will be created.",
+        "confirmDescription": "The following {count, number} Configurations will be created:",
         "addCombination": "Add Combination",
         "editCombination": "Edit Combination",
-        "selectCombination": "Select Combination",
-        "selectCombinationDescription": "Select a combination of variants to add to the configuration.",
+        "selectCombination": "Select Combinations",
+        "selectCombinationDescription": "Select the variant combinations to add. Any combinations that already exist are shown disabled.",
+        "alreadyExists": "(already exists)",
+        "reviewTitle": "Review Configurations",
+        "createButton": "{count, plural, one {Create 1 Configuration} other {Create # Configurations}}",
+        "creating": "{count, plural, one {Creating 1 Configuration...} other {Creating # Configurations...}}",
         "allExist": "All combinations already exist.",
         "selectAtLeast": "Please select at least one combination."
       },
@@ -4562,8 +4591,8 @@
           "suggestion": "Consider disabling the variant instead."
         },
         "selection": {
-          "title": "Select Variants",
-          "description": "Select the variants you want to add to the configuration."
+          "title": "Select the variants you want to add to the configurations.",
+          "description": "Build one or more configurations by choosing variants, picking which combinations to create, and assigning them to the projects that will use them."
         }
       }
     },
@@ -5839,7 +5868,9 @@
       "platform": "## Platform\nThe self-hosted Git platform you are connecting to.\n\n- **Gitea**: gitea.io-based instances\n- **Forgejo**: forgejo.org-based instances (Gitea fork)\n- **Gogs**: gogs.io-based instances\n\nThis controls which icon is shown and may affect API compatibility."
     },
     "config": {
-      "name": "## Configuration Name\nA clear, descriptive name that is used across all projects.\n\n- Helps describe the variant cominations that make up the Configuration (e.g. \"Chrome, Windows 10\",  \"Safari/macOS 15.5\", \"Edge/Windows 11\", etc.)."
+      "name": "## Configuration Name\nA clear, descriptive name for this configuration.\n\n- Helps describe the variant cominations that make up the Configuration (e.g. \"Chrome, Windows 10\",  \"Safari/macOS 15.5\", \"Edge/Windows 11\", etc.).",
+      "projects": "## Projects\nIndicates the projects that can use this configuration.",
+      "bulkEnabledState": "## Set Enabled State\nLeave the checkbox unchecked to leave each selected configuration's enabled state untouched.\n\n- Check the box to apply the switch's value to every selected configuration on submit.\n- Switch off disables the configurations; switch on enables them."
     },
     "configCategory": {
       "name": "## Category Name\nA clear, descriptive name that is used across all projects.\n\n- Helps organize variants (e.g. Chrome, Firefox, Safari, Edge, etc.) into categories (e.g. Browsers)."

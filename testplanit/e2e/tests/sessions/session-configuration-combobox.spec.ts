@@ -22,7 +22,7 @@ test.describe("Session Configuration Combobox", () => {
       `E2E Session Config ${Date.now()}`
     );
     const configName = `Session Config ${Date.now()}`;
-    await api.createConfiguration(configName);
+    await api.createConfiguration(configName, projectId);
 
     // Navigate to sessions page
     await page.goto(`/en-US/projects/sessions/${projectId}`);
@@ -64,7 +64,7 @@ test.describe("Session Configuration Combobox", () => {
       `E2E Session Select ${Date.now()}`
     );
     const configName = `Select Config ${Date.now()}`;
-    await api.createConfiguration(configName);
+    await api.createConfiguration(configName, projectId);
 
     await page.goto(`/en-US/projects/sessions/${projectId}`);
     await page.waitForLoadState("load");
@@ -104,8 +104,8 @@ test.describe("Session Configuration Combobox", () => {
     const ts = Date.now();
     const configMatch = `Findable Config ${ts}`;
     const configNoMatch = `Hidden Widget ${ts}`;
-    await api.createConfiguration(configMatch);
-    await api.createConfiguration(configNoMatch);
+    await api.createConfiguration(configMatch, projectId);
+    await api.createConfiguration(configNoMatch, projectId);
 
     await page.goto(`/en-US/projects/sessions/${projectId}`);
     await page.waitForLoadState("load");
@@ -149,6 +149,50 @@ test.describe("Session Configuration Combobox", () => {
     ).not.toBeVisible({ timeout: 3000 });
   });
 
+  test("only shows configurations assigned to the current project", async ({
+    api,
+    page,
+  }) => {
+    // A config assigned to a different project must not appear in this
+    // project's session configuration picker.
+    const ts = Date.now();
+    const projectAId = await api.createProject(`E2E Session Scope A ${ts}`);
+    const projectBId = await api.createProject(`E2E Session Scope B ${ts}`);
+    const configInA = `SessionScopedA ${ts}`;
+    const configInB = `SessionScopedB ${ts}`;
+    await api.createConfiguration(configInA, projectAId);
+    await api.createConfiguration(configInB, projectBId);
+
+    await page.goto(`/en-US/projects/sessions/${projectAId}`);
+    await page.waitForLoadState("load");
+
+    const newSessionButton = page.getByTestId("new-session-button");
+    await expect(newSessionButton).toBeVisible({ timeout: 15000 });
+    await newSessionButton.click();
+
+    const dialog = page.locator('[role="dialog"]').first();
+    await expect(dialog).toBeVisible({ timeout: 10000 });
+
+    const configLabel = dialog.locator('label:has-text("Configurations")');
+    const configCombobox = configLabel
+      .locator("..")
+      .locator('button[role="combobox"]');
+    await expect(configCombobox).toBeVisible({ timeout: 5000 });
+    await configCombobox.click();
+
+    const searchInput = page.locator("[cmdk-input]");
+    await expect(searchInput).toBeVisible({ timeout: 5000 });
+    await searchInput.fill(String(ts));
+    await page.waitForTimeout(500);
+
+    await expect(
+      page.locator(`[role="option"]:has-text("${configInA}")`)
+    ).toBeVisible({ timeout: 5000 });
+    await expect(
+      page.locator(`[role="option"]:has-text("${configInB}")`)
+    ).not.toBeVisible({ timeout: 3000 });
+  });
+
   test("should show pagination controls with Previous/Next buttons", async ({
     api,
     page,
@@ -157,7 +201,7 @@ test.describe("Session Configuration Combobox", () => {
       `E2E Session Paging ${Date.now()}`
     );
     const configName = `Paging Config ${Date.now()}`;
-    await api.createConfiguration(configName);
+    await api.createConfiguration(configName, projectId);
 
     await page.goto(`/en-US/projects/sessions/${projectId}`);
     await page.waitForLoadState("load");
@@ -200,7 +244,7 @@ test.describe("Session Configuration Combobox", () => {
       `E2E Session Create ${Date.now()}`
     );
     const configName = `Create Config ${Date.now()}`;
-    await api.createConfiguration(configName);
+    await api.createConfiguration(configName, projectId);
 
     await page.goto(`/en-US/projects/sessions/${projectId}`);
     await page.waitForLoadState("load");

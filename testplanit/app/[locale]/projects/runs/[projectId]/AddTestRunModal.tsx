@@ -922,7 +922,11 @@ export default function AddTestRunModal({
   const { mutateAsync: createTestRuns } = useCreateTestRuns();
   const { mutateAsync: createAttachments } = useCreateAttachments();
   const { data: configurations } = useFindManyConfigurations({
-    where: { isDeleted: false, isEnabled: true },
+    where: {
+      isDeleted: false,
+      isEnabled: true,
+      projects: { some: { projectId: Number(projectId) } },
+    },
     orderBy: { name: "asc" },
   });
   const { data: workflows } = useFindManyWorkflows({

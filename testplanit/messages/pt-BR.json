@@ -88,6 +88,7 @@
       "addToTestRun": "Adicionar à Execução de Teste",
       "status": "Status",
       "resultDetailsPlaceholder": "Insira os detalhes do resultado...",
+      "select": "Selecione",
       "selectAll": "Selecionar tudo",
       "deselectAll": "Desmarcar tudo",
       "clearAll": "Limpar tudo",
@@ -4023,7 +4024,9 @@
           "noIntegrations": "Nenhuma integração está configurada no momento. Você pode pular esta etapa ou configurar as integrações posteriormente.",
           "aiModels": "Habilite modelos de IA para geração de casos de teste e sugestões inteligentes.",
           "permissions": "Configure o acesso de usuários e as permissões de grupo para este projeto.",
-          "milestoneTypes": "Selecione tipos de marcos para acompanhar o progresso e os prazos do projeto."
+          "milestoneTypes": "Selecione tipos de marcos para acompanhar o progresso e os prazos do projeto.",
+          "configurations": "Selecione quais configurações estão disponíveis neste projeto. Os projetos começam sem nenhuma configuração e o usuário pode optar pelas configurações necessárias.",
+          "noConfigurations": "Nenhuma configuração está definida no momento. Você poderá adicioná-las posteriormente na Administração."
         },
         "actions": {
           "selectDefault": "Usar padrão",
@@ -4512,9 +4515,31 @@
     },
     "configurations": {
       "description": "As configurações são uma combinação de categorias e variantes usadas para definir um ambiente de teste. Por exemplo, SO/Navegador, Servidor de Teste, Idioma, etc.",
-      "addConfiguration": "Adicionar configuração",
+      "projectAssignment": {
+        "title": "Atribuir projetos",
+        "reviewLabel": "Novas configurações serão aplicadas a estes projetos:",
+        "description": "Escolha em quais projetos essas configurações devem estar disponíveis. Você pode pular esta etapa e atribuir projetos posteriormente no painel de administração de configurações.",
+        "noProjects": "Nenhum projeto disponível.",
+        "noneAssigned": "Não atribuído a nenhum projeto (você poderá atribuí-lo posteriormente no painel de administração de configurações)."
+      },
+      "addConfiguration": "Adicionar configurações",
       "editConfiguration": "Editar configuração",
       "filterPlaceholder": "Configurações de filtro...",
+      "allProjects": "Todos os projetos",
+      "selectAllTooltip": "Selecione/Desmarque todas as configurações nesta página.",
+      "selectAllShiftTooltip": "{count, plural, =0 {Selecionar/Desmarcar todas as configurações em todas as páginas} one {Selecionar/Desmarcar # configurações em todas as páginas} other {Selecionar/Desmarcar # configurações em todas as páginas}}",
+      "deselectAllShiftTooltip": "Desmarcar/Selecionar todas as configurações em todas as páginas",
+      "shiftClickHint": "Mantenha a tecla Shift pressionada para selecionar/desmarcar todas as páginas.",
+      "bulkEdit": {
+        "button": "{count, plural, one {Editar 1 configuração} other {Editar # configurações}}",
+        "title": "{count, plural, one {Editar projetos em 1 configuração} other {Editar projetos em # configurações}}",
+        "description": "Substitua as atribuições de projeto nas configurações selecionadas. O nome da configuração não pode ser editado em massa.",
+        "applyButton": "{count, plural, one {Aplicar a 1 configuração} other {Aplicar a # configurações}}",
+        "deleteButton": "{count, plural, one {Excluir 1 configuração} other {Excluir # configurações}}",
+        "deleteConfirmTitle": "{count, plural, one {Excluir 1 configuração?} other {Excluir # configurações?}}",
+        "deleteConfirmMessage": "{count, plural, one {Isso excluirá 1 configuração. Esta ação não pode ser desfeita.} other {Isso excluirá # configurações. Esta ação não pode ser desfeita.}}",
+        "applyEnabledLabel": "Alterar estado ativado"
+      },
       "categories": {
         "title": "Categorias",
         "description": "Gerenciar categorias globais",
@@ -4538,11 +4563,15 @@
       "combinations": {
         "title": "Combinações",
         "description": "Gerenciar combinações globais",
-        "confirmDescription": "As seguintes combinações {count, number} serão criadas.",
+        "confirmDescription": "As seguintes configurações {count, number} serão criadas:",
         "addCombination": "Adicionar combinação",
         "editCombination": "Combinação de edição",
-        "selectCombination": "Selecione a combinação",
-        "selectCombinationDescription": "Selecione uma combinação de variantes para adicionar à configuração.",
+        "selectCombination": "Selecione as combinações",
+        "selectCombinationDescription": "Selecione as combinações de variantes que deseja adicionar. Quaisquer combinações já existentes serão exibidas desativadas.",
+        "alreadyExists": "(já existe)",
+        "reviewTitle": "Revisar configurações",
+        "createButton": "{count, plural, one {Criar 1 configuração} other {Criar # configurações}}",
+        "creating": "{count, plural, one {Criando 1 configuração...} other {Criando # configurações...}}",
         "allExist": "Todas as combinações já existem.",
         "selectAtLeast": "Por favor, selecione pelo menos uma combinação."
       },
@@ -4562,8 +4591,8 @@
           "suggestion": "Considere desativar a variante."
         },
         "selection": {
-          "title": "Selecione as variantes",
-          "description": "Selecione as variantes que deseja adicionar à configuração."
+          "title": "Selecione as variantes que deseja adicionar às configurações.",
+          "description": "Crie uma ou mais configurações escolhendo variantes, selecionando as combinações a serem criadas e atribuindo-as aos projetos que as utilizarão."
         }
       }
     },
@@ -5839,7 +5868,9 @@
       "platform": "## Plataforma\nA plataforma Git auto-hospedada à qual você está se conectando.\n\n- **Gitea**: instâncias baseadas em gitea.io\n- **Forgejo**: instâncias baseadas em forgejo.org (fork do Gitea)\n- **Gogs**: instâncias baseadas em gogs.io\n\nIsso controla qual ícone é exibido e pode afetar a compatibilidade da API."
     },
     "config": {
-      "name": "## Nome da Configuração\nUm nome claro e descritivo que é usado em todos os projetos.\n\n- Ajuda a descrever as combinações de variantes que compõem a Configuração (por exemplo, \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", etc.)."
+      "name": "## Nome da Configuração\nUm nome claro e descritivo para esta configuração.\n\n- Ajuda a descrever as combinações variantes que compõem a Configuração (ex.: \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", etc.).",
+      "projects": "## Projetos\nIndica os projetos que podem usar esta configuração.",
+      "bulkEnabledState": "## Definir estado ativado\nDeixe a caixa de seleção desmarcada para manter o estado ativado de cada configuração selecionada.\n\n- Marque a caixa para aplicar o valor da opção a todas as configurações selecionadas ao enviar.\n- Desativar desativa as configurações; ativar as ativa."
     },
     "configCategory": {
       "name": "## Nome da Categoria\nUm nome claro e descritivo que é usado em todos os projetos.\n\n- Ajuda a organizar variantes (por exemplo, Chrome, Firefox, Safari, Edge, etc.) em categorias (por exemplo, Navegadores)."

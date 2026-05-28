@@ -22,7 +22,8 @@ test.describe("Matrix view — happy path @matrix", () => {
     const folderId = await api.createFolder(projectId, "Export");
     const caseId = await api.createTestCase(projectId, folderId, "Export Case");
     const configId = await api.createConfiguration(
-      `Matrix-Export-Cfg-${Date.now()}`
+      `Matrix-Export-Cfg-${Date.now()}`,
+      projectId
     );
     const testRunId = await api.createTestRun(projectId, "Matrix Export Run", {
       configId,
