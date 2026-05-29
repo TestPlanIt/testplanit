@@ -130,8 +130,7 @@ export async function PUT(
     await connection.set(
       `generate-from-url:generated:${jobId}`,
       JSON.stringify(body),
-      "EX",
-      604800 // 7 day TTL
+      { EX: 604800 } // 7 day TTL
     );
 
     return NextResponse.json({ message: "Saved" });

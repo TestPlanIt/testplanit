@@ -82,9 +82,8 @@ export async function GET(request: NextRequest) {
         }
         const hasPageContent =
           state === "completed" && !hasGeneratedResults
-            ? Boolean(
-                await connection.exists(`generate-from-url:pages:${job.id}`)
-              )
+            ? (await connection.get(`generate-from-url:pages:${job.id}`)) !==
+              null
             : false;
 
         let result = null;

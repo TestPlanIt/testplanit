@@ -67,7 +67,7 @@ export async function POST(
 
     // Active — set Redis cancellation flag for worker to pick up
     const connection = await queue.client;
-    await connection.set(`step-scan:cancel:${jobId}`, "1", "EX", 3600);
+    await connection.set(`step-scan:cancel:${jobId}`, "1", { EX: 3600 });
 
     return NextResponse.json({ cancelled: true, method: "signalled" });
   } catch (error) {

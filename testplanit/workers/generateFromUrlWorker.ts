@@ -275,8 +275,7 @@ export const processor = async (
           markdown: p.markdown,
         }))
       ),
-      "EX",
-      604800 // 7 day TTL
+      { EX: 604800 } // 7 day TTL
     );
 
     // No success notification — the user is in the wizard watching the crawl
