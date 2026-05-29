@@ -15,18 +15,18 @@ RUN apk add --no-cache postgresql-client
 RUN apk add --no-cache curl
 # Install pnpm globally
 RUN npm install -g pnpm@latest
-# Disable pnpm v10's minimum-release-age gate (default 24h), which rejects
-# freshly-published lockfile entries. .npmrc is gitignored so it isn't in the
-# build context; write the setting where pnpm reads it. Pre-merge CI is our
-# supply-chain verification.
-RUN echo "minimum-release-age=0" >> .npmrc
 # Copy package files first for better caching
 # COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
-# Install dependencies first
+# Install dependencies first.
+# --config.minimumReleaseAge=0 disables pnpm 11's supply-chain cooling-off gate
+# (default 1440min), which otherwise rejects freshly-published lockfile entries
+# during the release build. pnpm 11 only honors this via the CLI flag or
+# pnpm-workspace.yaml — not .npmrc or package.json#pnpm. Pre-merge CI (lint +
+# format + unit tests) is our supply-chain verification.
 RUN \
     if [ -f yarn.lock ]; then yarn install --frozen-lockfile --ignore-scripts; \
     elif [ -f package-lock.json ]; then npm ci --ignore-scripts; \
-    elif [ -f pnpm-lock.yaml ]; then pnpm i --ignore-scripts; \
+    elif [ -f pnpm-lock.yaml ]; then pnpm i --ignore-scripts --config.minimumReleaseAge=0; \
     else echo "Lockfile not found." && exit 1; \
     fi
 
@@ -76,11 +76,10 @@ RUN apk add --no-cache libc6-compat
 RUN apk add --no-cache --virtual .gyp python3 make g++
 RUN npm install -g pnpm@latest
 COPY package.json pnpm-lock.yaml* .npmrc* ./
-# Disable pnpm v10's minimum-release-age gate (see base stage).
-RUN echo "minimum-release-age=0" >> .npmrc
 # Install only production dependencies
 # --ignore-scripts skips postinstall (which needs zenstack, a dev dep)
-RUN pnpm install --prod --ignore-scripts
+# --config.minimumReleaseAge=0 disables pnpm 11's supply-chain gate (see base stage)
+RUN pnpm install --prod --ignore-scripts --config.minimumReleaseAge=0
 # Rebuild native modules (bcrypt, sharp, etc.) using npm rebuild
 # This avoids pnpm's lifecycle scripts that require dev dependencies
 RUN npm rebuild bcrypt sharp 2>/dev/null || true
