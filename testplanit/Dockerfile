@@ -15,6 +15,11 @@ RUN apk add --no-cache postgresql-client
 RUN apk add --no-cache curl
 # Install pnpm globally
 RUN npm install -g pnpm@latest
+# Disable pnpm v10's minimum-release-age gate (default 24h), which rejects
+# freshly-published lockfile entries. .npmrc is gitignored so it isn't in the
+# build context; write the setting where pnpm reads it. Pre-merge CI is our
+# supply-chain verification.
+RUN echo "minimum-release-age=0" >> .npmrc
 # Copy package files first for better caching
 # COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
 # Install dependencies first
@@ -71,6 +76,8 @@ RUN apk add --no-cache libc6-compat
 RUN apk add --no-cache --virtual .gyp python3 make g++
 RUN npm install -g pnpm@latest
 COPY package.json pnpm-lock.yaml* .npmrc* ./
+# Disable pnpm v10's minimum-release-age gate (see base stage).
+RUN echo "minimum-release-age=0" >> .npmrc
 # Install only production dependencies
 # --ignore-scripts skips postinstall (which needs zenstack, a dev dep)
 RUN pnpm install --prod --ignore-scripts
