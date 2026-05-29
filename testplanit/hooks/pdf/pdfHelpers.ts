@@ -99,6 +99,43 @@ export const PDF_CONFIG = {
   pixelsToMm: 0.264583,
 };
 
+/**
+ * Per-page header/footer metadata for evidence-grade reports. When set via
+ * {@link PdfRenderer.setReportMeta}, every page gets a generation header
+ * (document name + when/by-whom it was produced) on top of the page-number
+ * footer.
+ */
+export type PdfReportMeta = {
+  documentName: string;
+  generatedAt: string;
+  generatedByName?: string | null;
+};
+
+/** A piece of inline text with an optional RGB color (e.g. a status label). */
+export type StatusToken = { text: string; color?: [number, number, number] };
+
+/** A table cell: plain text, or a run of individually-colored status tokens. */
+export type TableCell = string | StatusToken[];
+
+/** Parse a `#rgb`/`#rrggbb` color into an RGB tuple for jsPDF, if valid. */
+export function hexToRgb(
+  hex: string | null | undefined
+): [number, number, number] | undefined {
+  if (!hex) return undefined;
+  let h = hex.trim().replace(/^#/, "");
+  if (h.length === 3)
+    h = h
+      .split("")
+      .map((c) => c + c)
+      .join("");
+  if (!/^[0-9a-fA-F]{6}$/.test(h)) return undefined;
+  return [
+    parseInt(h.slice(0, 2), 16),
+    parseInt(h.slice(2, 4), 16),
+    parseInt(h.slice(4, 6), 16),
+  ];
+}
+
 /** Helper class wrapping jsPDF with common rendering operations */
 export class PdfRenderer {
   doc: jsPDF;
@@ -109,6 +146,9 @@ export class PdfRenderer {
   contentWidth: number;
   maxImageWidth: number;
   maxImageHeight: number;
+  /** Top y a fresh page starts at — raised below the header band when meta is set. */
+  topOffset: number;
+  reportMeta: PdfReportMeta | null;
 
   constructor(doc: jsPDF) {
     this.doc = doc;
@@ -118,6 +158,8 @@ export class PdfRenderer {
     this.contentWidth = this.pageWidth - 2 * this.margin;
     this.maxImageWidth = this.contentWidth - 10;
     this.maxImageHeight = PDF_CONFIG.maxImageHeight;
+    this.topOffset = this.margin;
+    this.reportMeta = null;
     this.yPosition = this.margin;
     doc.setCharSpace(0);
   }
@@ -126,7 +168,7 @@ export class PdfRenderer {
   ensureSpace(needed: number) {
     if (this.yPosition > this.pageHeight - needed) {
       this.doc.addPage();
-      this.yPosition = this.margin;
+      this.yPosition = this.topOffset;
     }
   }
 
@@ -369,7 +411,7 @@ export class PdfRenderer {
 
       if (this.yPosition + imgHeightMm + 10 > this.pageHeight - 20) {
         this.doc.addPage();
-        this.yPosition = this.margin;
+        this.yPosition = this.topOffset;
       }
 
       try {
@@ -431,6 +473,276 @@ export class PdfRenderer {
       this.doc.setPage(i);
       this.doc.setFontSize(8);
       this.doc.setFont("helvetica", "normal");
+      this.doc.text(
+        `Page ${i} of ${pageCount}`,
+        this.pageWidth / 2,
+        this.pageHeight - 10,
+        { align: "center" }
+      );
+    }
+  }
+
+  /**
+   * Enable a per-page generation header. Reserves space at the top of every
+   * page so body content does not overlap the header band. Call before
+   * rendering body content; render the header/footer text in a finishing pass
+   * via {@link addHeadersAndFooters}.
+   */
+  setReportMeta(meta: PdfReportMeta) {
+    this.reportMeta = meta;
+    this.topOffset = this.margin + 7;
+    if (this.yPosition < this.topOffset) this.yPosition = this.topOffset;
+  }
+
+  /**
+   * Render a paginated table with a bold header row that repeats at the top of
+   * each continuation page. Columns are sized by relative `width` weights and
+   * cells wrap within their column.
+   */
+  renderTable(opts: {
+    columns: { header: string; width: number; align?: "left" | "right" }[];
+    rows: TableCell[][];
+    fontSize?: number;
+  }) {
+    const { columns, rows } = opts;
+    const fontSize = opts.fontSize ?? 9;
+    const lineHeight = fontSize * 0.45;
+    const cellPadX = 1.5;
+    const cellPadY = 2;
+    const tokenGap = 1.5;
+
+    const totalWeight = columns.reduce((s, c) => s + c.width, 0) || 1;
+    const colWidths = columns.map(
+      (c) => (c.width / totalWeight) * this.contentWidth
+    );
+    const colX: number[] = [];
+    let acc = this.margin;
+    for (const w of colWidths) {
+      colX.push(acc);
+      acc += w;
+    }
+
+    const wrapCell = (text: string, colIndex: number): string[] =>
+      this.doc.splitTextToSize(
+        sanitizeTextForPdf(text ?? ""),
+        Math.max(colWidths[colIndex] - 2 * cellPadX, 6)
+      );
+
+    // Flow colored tokens into lines that fit the column width (tokens never
+    // split mid-word; each keeps its color).
+    const layoutTokens = (
+      tokens: StatusToken[],
+      colIndex: number
+    ): StatusToken[][] => {
+      const avail = Math.max(colWidths[colIndex] - 2 * cellPadX, 6);
+      this.doc.setFontSize(fontSize);
+      this.doc.setFont("helvetica", "normal");
+      const lines: StatusToken[][] = [[]];
+      let curW = 0;
+      for (const tok of tokens) {
+        const text = sanitizeTextForPdf(tok.text);
+        const tw = this.doc.getTextWidth(text);
+        const line = lines[lines.length - 1];
+        const needed = (line.length ? tokenGap : 0) + tw;
+        if (line.length && curW + needed > avail) {
+          lines.push([{ ...tok, text }]);
+          curW = tw;
+        } else {
+          line.push({ ...tok, text });
+          curW += needed;
+        }
+      }
+      return lines;
+    };
+
+    const drawHeaderRow = () => {
+      const headerHeight = lineHeight + 2 * cellPadY;
+      this.doc.setFillColor(240, 240, 240);
+      this.doc.rect(
+        this.margin,
+        this.yPosition,
+        this.contentWidth,
+        headerHeight,
+        "F"
+      );
+      this.doc.setFontSize(fontSize);
+      this.doc.setFont("helvetica", "bold");
+      this.doc.setTextColor(0, 0, 0);
+      columns.forEach((col, i) => {
+        const align = col.align ?? "left";
+        const x =
+          align === "right"
+            ? colX[i] + colWidths[i] - cellPadX
+            : colX[i] + cellPadX;
+        this.doc.text(
+          sanitizeTextForPdf(col.header),
+          x,
+          this.yPosition + cellPadY + lineHeight - 1,
+          {
+            align,
+          }
+        );
+      });
+      this.yPosition += headerHeight;
+      this.doc.setDrawColor(200, 200, 200);
+      this.doc.line(
+        this.margin,
+        this.yPosition,
+        this.margin + this.contentWidth,
+        this.yPosition
+      );
+      this.doc.setFont("helvetica", "normal");
+    };
+
+    this.ensureSpace(30);
+    drawHeaderRow();
+
+    this.doc.setFontSize(fontSize);
+    this.doc.setFont("helvetica", "normal");
+
+    for (const row of rows) {
+      // Lay out every cell up front (text wraps to lines; token cells flow to
+      // lines) so the row height accounts for the tallest cell.
+      const laid = row.map((cell, i) =>
+        Array.isArray(cell)
+          ? { kind: "tokens" as const, lines: layoutTokens(cell, i) }
+          : { kind: "text" as const, lines: wrapCell(cell, i) }
+      );
+      const maxLines = laid.reduce((m, c) => Math.max(m, c.lines.length), 1);
+      const rowHeight = maxLines * lineHeight + 2 * cellPadY;
+
+      // Break to a new page (re-drawing the header) when the row won't fit.
+      if (this.yPosition + rowHeight > this.pageHeight - 18) {
+        this.doc.addPage();
+        this.yPosition = this.topOffset;
+        drawHeaderRow();
+        this.doc.setFontSize(fontSize);
+        this.doc.setFont("helvetica", "normal");
+      }
+
+      const textTop = this.yPosition + cellPadY + lineHeight - 1;
+      laid.forEach((cell, i) => {
+        const align = columns[i]?.align ?? "left";
+        const leftX = colX[i] + cellPadX;
+        if (cell.kind === "text") {
+          const x =
+            align === "right" ? colX[i] + colWidths[i] - cellPadX : leftX;
+          cell.lines.forEach((line, li) => {
+            this.doc.text(String(line), x, textTop + li * lineHeight, {
+              align,
+            });
+          });
+        } else {
+          // Colored tokens are always left-aligned and flow left-to-right.
+          cell.lines.forEach((tokens, li) => {
+            let cx = leftX;
+            const y = textTop + li * lineHeight;
+            for (const tok of tokens) {
+              if (tok.color)
+                this.doc.setTextColor(tok.color[0], tok.color[1], tok.color[2]);
+              else this.doc.setTextColor(0, 0, 0);
+              this.doc.text(tok.text, cx, y);
+              cx += this.doc.getTextWidth(tok.text) + tokenGap;
+            }
+          });
+          this.doc.setTextColor(0, 0, 0);
+        }
+      });
+
+      this.yPosition += rowHeight;
+      this.doc.setDrawColor(230, 230, 230);
+      this.doc.line(
+        this.margin,
+        this.yPosition,
+        this.margin + this.contentWidth,
+        this.yPosition
+      );
+    }
+
+    this.doc.setTextColor(0, 0, 0);
+    this.doc.setFontSize(10);
+    this.yPosition += 4;
+  }
+
+  /**
+   * Render a labeled, color-coded status breakdown (bold label, then each
+   * status token in its own color, flowing across the content width).
+   */
+  renderStatusBreakdown(label: string, tokens: StatusToken[]) {
+    if (tokens.length === 0) return;
+    this.ensureSpace(16);
+    this.doc.setFont("helvetica", "bold");
+    this.doc.setFontSize(10);
+    this.doc.text(`${label}:`, this.margin, this.yPosition);
+    this.yPosition += 5;
+
+    this.doc.setFont("helvetica", "normal");
+    this.doc.setFontSize(9);
+    const lineHeight = 9 * 0.5;
+    const tokenGap = 2;
+    const indent = this.margin + 5;
+    const maxRight = this.pageWidth - this.margin;
+    let cx = indent;
+    for (const tok of tokens) {
+      const text = sanitizeTextForPdf(tok.text);
+      const tw = this.doc.getTextWidth(text);
+      if (cx > indent && cx + tw > maxRight) {
+        this.yPosition += lineHeight;
+        this.ensureSpace(10);
+        cx = indent;
+      }
+      if (tok.color)
+        this.doc.setTextColor(tok.color[0], tok.color[1], tok.color[2]);
+      else this.doc.setTextColor(0, 0, 0);
+      this.doc.text(text, cx, this.yPosition);
+      cx += tw + tokenGap;
+    }
+    this.doc.setTextColor(0, 0, 0);
+    this.doc.setFontSize(10);
+    this.yPosition += 6;
+  }
+
+  /**
+   * Finishing pass: draw the generation header band (when report meta is set)
+   * and a page-numbered footer on every page.
+   */
+  addHeadersAndFooters() {
+    const meta = this.reportMeta;
+    const pageCount = this.doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      this.doc.setPage(i);
+
+      if (meta) {
+        this.doc.setFontSize(8);
+        this.doc.setFont("helvetica", "normal");
+        this.doc.setTextColor(120, 120, 120);
+
+        const leftMax = this.contentWidth * 0.55;
+        const left = this.doc.splitTextToSize(
+          sanitizeTextForPdf(meta.documentName),
+          leftMax
+        )[0];
+        this.doc.text(String(left || ""), this.margin, 9);
+
+        const rightText = meta.generatedByName
+          ? `Generated ${meta.generatedAt} by ${meta.generatedByName}`
+          : `Generated ${meta.generatedAt}`;
+        const right = this.doc.splitTextToSize(
+          sanitizeTextForPdf(rightText),
+          this.contentWidth * 0.45
+        )[0];
+        this.doc.text(String(right || ""), this.pageWidth - this.margin, 9, {
+          align: "right",
+        });
+
+        this.doc.setDrawColor(220, 220, 220);
+        this.doc.line(this.margin, 12, this.pageWidth - this.margin, 12);
+        this.doc.setTextColor(0, 0, 0);
+      }
+
+      this.doc.setFontSize(8);
+      this.doc.setFont("helvetica", "normal");
+      this.doc.setTextColor(0, 0, 0);
       this.doc.text(
         `Page ${i} of ${pageCount}`,
         this.pageWidth / 2,

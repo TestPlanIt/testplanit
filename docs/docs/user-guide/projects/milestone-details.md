@@ -28,6 +28,7 @@ In the default view mode:
 - All fields are read-only.
 - A **Back Arrow** button in the header navigates back to the main Milestones list.
 - An **Edit** button (icon: SquarePen) is available for users with **ADMIN** or **PROJECTADMIN** access.
+- An **Export PDF** button generates a print/evidence-grade PDF report of the milestone (see [Exporting to PDF](#exporting-to-pdf)).
 - The right panel displays:
   - **Status Badge**: Shows the calculated status (Not Started, In Progress, Completed, Overdue).
   - **Completion Rate**: Displays the percentage of completed test results out of total test cases in test runs associated with this milestone and all descendant milestones.
@@ -54,6 +55,22 @@ Clicking the **Edit** button (or accessing via an edit link) activates Edit Mode
 - **Editing:** Requires the `Add/Edit` permission for the `Milestones` application area. Users without this permission cannot enter edit mode or save changes.
 - **Deleting:** Requires the `Delete` permission for the `Milestones` application area. Users without this permission will not see the Delete button.
 :::
+
+## Exporting to PDF
+
+The **Export PDF** button in the header generates a print- and evidence-grade PDF report of the milestone. Unlike screenshotting the page, the report is laid out aggregate-first, paginates cleanly with table headers that repeat on continuation pages, and stamps every page with a generation header (milestone name, generation date, and the user who produced it) plus a page-numbered footer — so an auditor can see when and by whom the report was produced.
+
+The report aggregates the milestone **and all of its descendant sub-milestones**, and includes:
+
+- **Milestone metadata**: name, status, start/due/created dates, owner, type, and parent path.
+- **Summary**: completion rate, executed vs. total items, total elapsed and estimated time, and a status-count rollup (e.g. Passed / Failed / Blocked).
+- **Contributing Test Runs**: one row per run with its per-status breakdown.
+- **Contributing Sessions**: each session with its latest status.
+- **Sub-milestones**: descendant milestones with their status.
+- **Linked Issues**: issues linked to the contributing runs and sessions.
+- **Review & Approval Decisions**: the decision (approved, rejected, etc.), reviewer, date, and comment for contributing runs and sessions that went through review.
+
+Dates and durations are formatted for your locale. As with the test run and session PDF exports, the document body text is in English by design — see [Exported PDFs are in English](../../import-export.md#pdf-export).
 
 ## Automatic Completion
 
