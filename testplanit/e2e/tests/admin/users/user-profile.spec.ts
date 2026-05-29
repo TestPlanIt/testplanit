@@ -637,7 +637,7 @@ test.describe("User Profile Management", () => {
     await expect(englishOption).toBeVisible({ timeout: 5000 });
 
     const spanishOption = page.getByRole("option", {
-      name: "Español (ES)",
+      name: "Español (España)",
       exact: true,
     });
     await expect(spanishOption).toBeVisible();
@@ -659,6 +659,8 @@ test.describe("User Profile Management", () => {
       page.getByRole("option", { name: "es_ES", exact: true })
     ).not.toBeVisible();
 
+    // Read-only display uses the same localized labels.
+
     // Close dropdown by pressing Escape
     await page.keyboard.press("Escape");
 
@@ -673,7 +675,7 @@ test.describe("User Profile Management", () => {
     // The displayed language should be one of the proper labels, not raw enum
     await expect(
       localeDisplay.locator(
-        "text=/English \\(US\\)|Español \\(ES\\)|Français \\(France\\)/"
+        "text=/English \\(US\\)|Español \\(España\\)|Français \\(France\\)/"
       )
     ).toBeVisible();
   });

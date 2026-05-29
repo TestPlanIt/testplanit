@@ -202,8 +202,16 @@ export function AddSessionModal({
     },
   });
 
-  const defaultTemplate = templates?.find((template) => template.isDefault);
-  const defaultWorkflow = workflows?.find((workflow) => workflow.isDefault);
+  // Fall back to the first available template / workflow when nothing is
+  // currently flagged as default. The seeded "Default Template" / "Draft"
+  // workflow's `isDefault` flag can be flipped by the single-default
+  // cascade when an admin (or a parallel E2E test) marks something else as
+  // default — leaving `defaultTemplate` undefined makes the Create button
+  // permanently disabled even though a perfectly usable template exists.
+  const defaultTemplate =
+    templates?.find((template) => template.isDefault) ?? templates?.[0];
+  const defaultWorkflow =
+    workflows?.find((workflow) => workflow.isDefault) ?? workflows?.[0];
 
   const templatesOptions =
     templates?.map((template) => ({

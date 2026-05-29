@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 
+import { materializeIterations } from "~/lib/services/iterationFanOut";
 import { expect, test } from "../../fixtures/index";
 import {
   startStubServer,
@@ -164,8 +165,9 @@ test.describe("Outbound webhook — iteration.result.recorded (INT-04 subscripti
     testRunCaseId = testRunCase.id;
 
     // Materialize the iterations as the production fan-out worker would.
-    const { materializeIterations } =
-      await import("~/lib/services/iterationFanOut");
+    // (Statically imported up top — a dynamic `await import("~/..")` of a
+    // TS file is loaded by Node as CommonJS and dies on the ESM `import`
+    // statements inside iterationFanOut.ts.)
     await materializeIterations(testRunId, prisma);
 
     const iters = await prisma.testRunCaseIteration.findMany({

@@ -72,8 +72,16 @@ test.describe("Parameters - authoring + step mentions @parameters", () => {
       stepEditor.locator(".parameter-ref-chip").first()
     ).toContainText("@username");
 
-    // Use the toolbar { } button to insert @amount.
-    await page.getByTestId("tiptap-insert-parameter-button").click();
+    // Use the toolbar { } button to insert @amount. The step block renders
+    // TWO TipTap editors (step text + expectedResult), each with its own
+    // tiptap-insert-parameter-button — and the Description editor on the
+    // same page renders a third one. Scope to step-editor-0 + take .first()
+    // (the step-text toolbar, rendered before the expectedResult toolbar).
+    await page
+      .locator('[data-testid="step-editor-0"]')
+      .getByTestId("tiptap-insert-parameter-button")
+      .first()
+      .click();
     await expect(page.getByTestId("parameter-chooser-dialog")).toBeVisible();
     await page.getByTestId("parameter-chooser-search-input").fill("amo");
     await page.getByTestId("parameter-chooser-item-amount").click();
