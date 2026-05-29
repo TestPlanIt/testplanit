@@ -25,7 +25,7 @@ import { importGeneratedTestCases } from "~/app/actions/importGeneratedTestCases
 import {
   useFindFirstRepositoryCases,
   useFindFirstRepositoryFolders,
-  useFindFirstTemplates,
+  useFindManyTemplates,
   useFindManyWorkflows,
 } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
@@ -96,11 +96,18 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
     }
   );
 
-  const { data: template } = useFindFirstTemplates(
+  // Fetch every template assigned to the project, then pick the default
+  // client-side with a fallback to the first one. Filtering by
+  // `isDefault: true` server-side is racy: when an admin (or a parallel
+  // E2E test) creates another default template, the server cascade flips
+  // every other template's `isDefault` to `false`. A server-side filter
+  // would briefly return nothing for projects whose only assigned template
+  // is the seeded "Default Template", which leaves `template.id` as 0 and
+  // silently breaks case creation. Matches the AddCase modal's lookup.
+  const { data: templates } = useFindManyTemplates(
     {
       where: {
         isDeleted: false,
-        isDefault: true,
         projects: {
           some: {
             projectId: Number(projectId),
@@ -112,6 +119,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
       enabled: !!folderId,
     }
   );
+  const template = templates?.find((t) => t.isDefault) ?? templates?.[0];
 
   const { data: workflows } = useFindManyWorkflows({
     where: {

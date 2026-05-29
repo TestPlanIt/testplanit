@@ -22,13 +22,15 @@ test.describe("Admin Workflows — default workflow edit-save idempotency", () =
   }) => {
     const url = baseURL!;
 
-    // Find the first default CASES workflow — the one every project picks up
-    // by default. The bug originally surfaced on the default workflow because
-    // it's the most-edited.
+    // Find the seeded "Draft" CASES workflow — the seed file ships it as the
+    // default and every project picks it up. Lookup by name, not by
+    // `isDefault: true`, because parallel admin/workflows specs can toggle
+    // the flag mid-run; a flag-based findFirst can hand back a custom
+    // workflow whose edit dialog doesn't exist at the expected admin URL.
     const wfRes = await request.get(`${url}/api/model/workflows/findFirst`, {
       params: {
         q: JSON.stringify({
-          where: { scope: "CASES", isDeleted: false, isDefault: true },
+          where: { scope: "CASES", isDeleted: false, name: "Draft" },
           select: { id: true, name: true },
         }),
       },
@@ -40,18 +42,27 @@ test.describe("Admin Workflows — default workflow edit-save idempotency", () =
     const workflowId = wf!.id;
     const workflowName = wf!.name;
 
-    // Count projectWorkflowAssignment rows for this workflow BEFORE the
-    // edit. We compare against the post-edit count.
+    // Snapshot the set of project IDs that the workflow is currently
+    // assigned to. We compare against the post-edit set, scoped to these
+    // same projects, so a parallel test creating its own project (which
+    // would auto-assign every default workflow) can't bump the count.
     const beforeRes = await request.get(
-      `${url}/api/model/projectWorkflowAssignment/count`,
+      `${url}/api/model/projectWorkflowAssignment/findMany`,
       {
         params: {
-          q: JSON.stringify({ where: { workflowId } }),
+          q: JSON.stringify({
+            where: { workflowId },
+            select: { projectId: true },
+          }),
         },
       }
     );
     expect(beforeRes.ok()).toBeTruthy();
-    const before = (await beforeRes.json())?.data as number;
+    const beforeAssignments = ((await beforeRes.json())?.data ?? []) as Array<{
+      projectId: number;
+    }>;
+    const beforeProjectIds = beforeAssignments.map((a) => a.projectId);
+    const before = beforeProjectIds.length;
 
     // Open the admin workflows page, find the row for this workflow, edit
     // it, save without changes.
@@ -89,12 +100,19 @@ test.describe("Admin Workflows — default workflow edit-save idempotency", () =
       .not.toBeVisible({ timeout: 1000 })
       .catch(() => {});
 
-    // Post-edit assignment count matches pre-edit count.
+    // Post-edit assignment count matches pre-edit count, scoped to the
+    // exact projects we snapshotted. A new project from a parallel test
+    // would land outside this set and not skew the comparison.
     const afterRes = await request.get(
       `${url}/api/model/projectWorkflowAssignment/count`,
       {
         params: {
-          q: JSON.stringify({ where: { workflowId } }),
+          q: JSON.stringify({
+            where: {
+              workflowId,
+              projectId: { in: beforeProjectIds },
+            },
+          }),
         },
       }
     );

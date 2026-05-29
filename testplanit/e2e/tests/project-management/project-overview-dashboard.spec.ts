@@ -37,10 +37,13 @@ test.describe("Project Overview Dashboard", () => {
     await page.goto(`/en-US/projects/overview/${testProjectId}`);
     await page.waitForLoadState("networkidle");
 
-    // ProjectHeader renders the project name in a CardDescription
-    // The name appears as uppercase text in the header area
+    // ProjectHeader renders the project ID via next-intl's `{id, number}`
+    // ICU formatter, which inserts thousand separators (e.g. "57,996").
+    // Build a regex that splits each digit with an optional non-digit
+    // (matches "57996", "57,996", "57 996", etc.).
+    const idPattern = String(testProjectId).split("").join("\\D?");
     const projectIdText = page.getByText(
-      new RegExp(`id[:\\s#]*${testProjectId}`, "i")
+      new RegExp(`id[:\\s#]*${idPattern}`, "i")
     );
     await expect(projectIdText).toBeVisible({ timeout: 15000 });
   });

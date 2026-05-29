@@ -44,12 +44,21 @@ test.describe("Steps CRUD", () => {
       throw new Error("Could not get admin user ID for beforeAll setup");
     }
 
-    // Find the default template
+    // Look up the seeded "Default Template" by NAME — not by `isDefault: true`,
+    // because parallel admin/templates-fields tests create their own templates
+    // with `isDefault: true`, and the server-side cascade flips the seeded
+    // template's flag to `false` mid-run. A `findFirst({where:{isDefault:true}})`
+    // would then return a custom template with no caseFields, and downstream
+    // `api.createTestCase` (which filters strictly by templateName) would fail
+    // with "Seeded 'Default Template' not assigned to project ..." once that
+    // wrong template is the only one this spec wires up to its shared project.
     const templateResponse = await request.get(
       `${baseURL}/api/model/templates/findFirst`,
       {
         params: {
-          q: JSON.stringify({ where: { isDefault: true, isDeleted: false } }),
+          q: JSON.stringify({
+            where: { templateName: "Default Template", isDeleted: false },
+          }),
         },
       }
     );

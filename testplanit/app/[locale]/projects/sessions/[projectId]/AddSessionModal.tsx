@@ -202,8 +202,38 @@ export function AddSessionModal({
     },
   });
 
-  const defaultTemplate = templates?.find((template) => template.isDefault);
-  const defaultWorkflow = workflows?.find((workflow) => workflow.isDefault);
+  // Fall back to the first available template / workflow when nothing is
+  // currently flagged as default. The seeded "Default Template" / "Draft"
+  // workflow's `isDefault` flag can be flipped by the single-default
+  // cascade when an admin (or a parallel E2E test) marks something else as
+  // default — leaving `defaultTemplate` undefined makes the Create button
+  // permanently disabled even though a perfectly usable template exists.
+  const defaultTemplate =
+    templates?.find((template) => template.isDefault) ?? templates?.[0];
+  const defaultWorkflow =
+    workflows?.find((workflow) => workflow.isDefault) ?? workflows?.[0];
+
+  // Surface a banner in the duplicate dialog when the source session's
+  // template or workflow state is no longer assigned to / enabled for the
+  // project. The form silently swaps to the project's default in that case
+  // (so the create won't fail with an empty templateName); the banner tells
+  // the user the swap happened.
+  const templatesLoaded = Array.isArray(templates);
+  const workflowsLoaded = Array.isArray(workflows);
+  const sourceTemplateUnassigned = Boolean(
+    duplicationPreset?.originalTemplateId &&
+    templatesLoaded &&
+    !templates!.some(
+      (template) => template.id === duplicationPreset.originalTemplateId
+    )
+  );
+  const sourceStateUnassigned = Boolean(
+    duplicationPreset?.originalStateId &&
+    workflowsLoaded &&
+    !workflows!.some(
+      (workflow) => workflow.id === duplicationPreset.originalStateId
+    )
+  );
 
   const templatesOptions =
     templates?.map((template) => ({
@@ -339,13 +369,27 @@ export function AddSessionModal({
     }
     if (formInitRef.current) return;
 
+    // Only adopt the source session's template / workflow ID when it's
+    // actually present in this project's assigned templates / workflows.
+    // Sessions can carry a `templateId` that's no longer assigned to the
+    // project (template unassigned, workflow disabled, project moved,
+    // etc.). Carrying that stale ID through into the form means the
+    // combobox shows the visible default but the submitted payload uses
+    // an ID that lookup tables can't resolve — server then rejects the
+    // session-version create with an empty `templateName` ZodError.
+    const sourceTemplateValid =
+      duplicationPreset?.originalTemplateId &&
+      templates?.some((t) => t.id === duplicationPreset.originalTemplateId);
+    const sourceStateValid =
+      duplicationPreset?.originalStateId &&
+      workflows?.some((w) => w.id === duplicationPreset.originalStateId);
     const initialTemplateId =
-      duplicationPreset?.originalTemplateId ||
+      (sourceTemplateValid && duplicationPreset!.originalTemplateId) ||
       defaultTemplate?.id ||
       (templates && templates[0]?.id) ||
       0;
     const initialWorkflowId =
-      duplicationPreset?.originalStateId ||
+      (sourceStateValid && duplicationPreset!.originalStateId) ||
       defaultWorkflow?.id ||
       (workflows && workflows[0]?.id) ||
       0;
@@ -651,9 +695,18 @@ export function AddSessionModal({
               connect: { id: Number(projectId!) },
             },
             templateId: data.templateId,
+            // Resolve the name from the project's templates list; fall
+            // back to the default template (or anything else that's
+            // assigned) so a form-state pointing at an unassigned ID still
+            // submits a non-empty templateName. The server enforces
+            // `templateName >= 1 char`, and the previous code returned
+            // "" silently when the ID had no match.
             templateName:
               templates?.find((template) => template.id === data.templateId)
-                ?.templateName || "",
+                ?.templateName ||
+              defaultTemplate?.templateName ||
+              templates?.[0]?.templateName ||
+              "",
             configId: configId || null,
             configurationName: null,
             milestoneId: data.milestoneId || null,
@@ -662,7 +715,10 @@ export function AddSessionModal({
             stateId: data.stateId,
             stateName:
               workflows?.find((workflow) => workflow.id === data.stateId)
-                ?.name || "",
+                ?.name ||
+              defaultWorkflow?.name ||
+              workflows?.[0]?.name ||
+              "",
             assignedToId: data.assignedToId || null,
             assignedToName: null,
             createdById: session.user.id,
@@ -1021,6 +1077,20 @@ export function AddSessionModal({
                           )}
                         />
                       </FormControl>
+                      {sourceTemplateUnassigned && defaultTemplate && (
+                        <p
+                          className="text-xs text-amber-600 dark:text-amber-400"
+                          data-testid="duplicate-template-unassigned-warning"
+                        >
+                          {t.rich(
+                            "sessions.duplicateDialog.templateUnassignedWarning",
+                            {
+                              name: defaultTemplate.templateName,
+                              strong: (chunks) => <strong>{chunks}</strong>,
+                            }
+                          )}
+                        </p>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -1087,6 +1157,20 @@ export function AddSessionModal({
                         <FormDescription>
                           {t("reviews.transitionGate.gatedStatesNotSelectable")}
                         </FormDescription>
+                      )}
+                      {sourceStateUnassigned && defaultWorkflow && (
+                        <p
+                          className="text-xs text-amber-600 dark:text-amber-400"
+                          data-testid="duplicate-state-unassigned-warning"
+                        >
+                          {t.rich(
+                            "sessions.duplicateDialog.stateUnassignedWarning",
+                            {
+                              name: defaultWorkflow.name,
+                              strong: (chunks) => <strong>{chunks}</strong>,
+                            }
+                          )}
+                        </p>
                       )}
                       <FormMessage />
                     </FormItem>

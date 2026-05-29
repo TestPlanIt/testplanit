@@ -2057,7 +2057,9 @@
     },
     "duplicateDialog": {
       "title": "Phiên trùng lặp",
-      "description": "Tạo bản sao của phiên <nameStyle>{name}</nameStyle> với tất cả siêu dữ liệu nhưng không có kết quả."
+      "description": "Tạo bản sao của phiên <nameStyle>{name}</nameStyle> với tất cả siêu dữ liệu nhưng không có kết quả.",
+      "templateUnassignedWarning": "Phiên họp ban đầu sử dụng một mẫu không còn được chỉ định cho dự án này nữa. Phiên họp mới sẽ sử dụng <strong>{name}</strong> thay thế.",
+      "stateUnassignedWarning": "Phiên làm việc ban đầu sử dụng trạng thái quy trình công việc hiện không còn được kích hoạt cho dự án này. Phiên làm việc mới sẽ sử dụng <strong>{name}</strong> thay thế."
     },
     "errors": {
       "failedToCreate": "Không thể tạo phiên mới",

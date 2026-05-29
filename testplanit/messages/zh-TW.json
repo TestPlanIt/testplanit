@@ -2057,7 +2057,9 @@
     },
     "duplicateDialog": {
       "title": "重複會話",
-      "description": "建立會話 <nameStyle>{name}</nameStyle> 的副本，包含所有元數據，但不包含任何結果。"
+      "description": "建立會話 <nameStyle>{name}</nameStyle> 的副本，包含所有元數據，但不包含任何結果。",
+      "templateUnassignedWarning": "原始會話使用的範本已不再指派給此項目。新會話將使用 <strong>{name}</strong> 來代替。",
+      "stateUnassignedWarning": "原始會話使用的工作流程狀態已不再適用於此項目。新會話將改用 <strong>{name}</strong>。"
     },
     "errors": {
       "failedToCreate": "建立新會話失敗",

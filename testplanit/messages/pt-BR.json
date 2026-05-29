@@ -2057,7 +2057,9 @@
     },
     "duplicateDialog": {
       "title": "Sessão duplicada",
-      "description": "Crie uma cópia da sessão <nameStyle>{name}</nameStyle> com todos os metadados, mas sem resultados."
+      "description": "Crie uma cópia da sessão <nameStyle>{name}</nameStyle> com todos os metadados, mas sem resultados.",
+      "templateUnassignedWarning": "A sessão original usou um modelo que não está mais atribuído a este projeto. A nova sessão usará <strong>{name}</strong> em vez disso.",
+      "stateUnassignedWarning": "A sessão original usava um estado de fluxo de trabalho que não está mais habilitado para este projeto. A nova sessão usará <strong>{name}</strong> em vez disso."
     },
     "errors": {
       "failedToCreate": "Falha ao criar nova sessão",

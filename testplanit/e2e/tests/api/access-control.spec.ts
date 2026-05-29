@@ -484,11 +484,16 @@ test.describe("Access Control - Role-Based Area Permissions (ACL-05)", () => {
     const repoResult = await repoResp.json();
     repositoryId = repoResult.data.id;
 
+    // Match by templateName, not isDefault — parallel
+    // admin/templates-fields specs flip the seeded template's `isDefault`
+    // mid-run; lookups by flag can return a fields-less custom template.
     const templateResp = await request.get(
       `${baseURL}/api/model/templates/findFirst`,
       {
         params: {
-          q: JSON.stringify({ where: { isDefault: true, isDeleted: false } }),
+          q: JSON.stringify({
+            where: { templateName: "Default Template", isDeleted: false },
+          }),
         },
       }
     );

@@ -88,23 +88,62 @@ export async function POST(
       );
     }
 
-    let rowIndex = data.rowIndex;
-    if (rowIndex === undefined) {
-      const max = await db.dataSetRow.aggregate({
-        where: { dataSetId: dataset.id, isDeleted: false },
-        _max: { rowIndex: true },
-      });
-      rowIndex = (max._max.rowIndex ?? -1) + 1;
-    }
+    // Compute-then-insert with retry. Aggregate + create is not atomic,
+    // so two concurrent POSTs (e.g. a rapid double-click on "Add row")
+    // both observe the same `max.rowIndex` and race the unique
+    // constraint `@@unique([dataSetId, rowIndex])`. When the constraint
+    // fires (P2002), re-read max and try again with a fresh rowIndex.
+    // A small bounded retry is enough — by the time we retry, the other
+    // insert has committed and the new max reflects it. The caller can
+    // still pass an explicit `rowIndex` to opt out of auto-assignment.
+    let created: any = null;
+    let lastErr: any = null;
+    const RETRY_BUDGET = 5;
+    for (let attempt = 0; attempt < RETRY_BUDGET; attempt++) {
+      let rowIndex = data.rowIndex;
+      if (rowIndex === undefined) {
+        // findFirst sorted desc, not aggregate({_max}), so we include
+        // soft-deleted rows — the unique constraint covers ALL rows
+        // regardless of `isDeleted`, so reusing a soft-deleted index
+        // would also race the constraint.
+        const max = await db.dataSetRow.findFirst({
+          where: { dataSetId: dataset.id },
+          orderBy: { rowIndex: "desc" },
+          select: { rowIndex: true },
+        });
+        rowIndex = (max?.rowIndex ?? -1) + 1 + attempt;
+      }
 
-    const created = await db.dataSetRow.create({
-      data: {
-        dataSetId: dataset.id,
-        label: data.label ?? null,
-        rowIndex,
-        valuesJson: data.valuesJson as never,
-      },
-    });
+      try {
+        created = await db.dataSetRow.create({
+          data: {
+            dataSetId: dataset.id,
+            label: data.label ?? null,
+            rowIndex,
+            valuesJson: data.valuesJson as never,
+          },
+        });
+        lastErr = null;
+        break;
+      } catch (e: any) {
+        // Caller-supplied rowIndex collisions are programmer errors —
+        // surface them rather than silently retrying with a different
+        // index than the caller asked for.
+        if (data.rowIndex !== undefined) throw e;
+        const msg = e?.message ?? "";
+        const code = e?.code ?? e?.info?.code;
+        const isUnique =
+          code === "P2002" ||
+          msg.includes("Unique constraint failed") ||
+          msg.includes("(`dataSetId`,`rowIndex`)");
+        if (!isUnique) throw e;
+        lastErr = e;
+        // fall through to retry with next attempt
+      }
+    }
+    if (!created) {
+      throw lastErr ?? new Error("Failed to insert dataset row");
+    }
     return NextResponse.json({ row: created });
   } catch (err) {
     if (err instanceof ZodError) {

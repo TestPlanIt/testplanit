@@ -2057,7 +2057,9 @@
     },
     "duplicateDialog": {
       "title": "Duplikat sesji",
-      "description": "Utwórz kopię sesji <nameStyle>{name}</nameStyle> ze wszystkimi metadanymi, ale bez wyników."
+      "description": "Utwórz kopię sesji <nameStyle>{name}</nameStyle> ze wszystkimi metadanymi, ale bez wyników.",
+      "templateUnassignedWarning": "Oryginalna sesja używała szablonu, który nie jest już przypisany do tego projektu. Nowa sesja będzie używać szablonu <strong>{name}</strong>.",
+      "stateUnassignedWarning": "Oryginalna sesja używała stanu przepływu pracy, który nie jest już włączony dla tego projektu. Nowa sesja będzie używać stanu <strong>{name}</strong>."
     },
     "errors": {
       "failedToCreate": "Nie udało się utworzyć nowej sesji",
