@@ -7343,6 +7343,7 @@
   "parameters": {
     "configureButtonEmpty": "Configure parameters",
     "configureButtonSet": "Parameters ({count})",
+    "hasParametersBadgeTooltip": "Has parameterized steps",
     "sheetTitle": "Configure Parameters",
     "sheetDescription": "Declare named parameters to be used in test steps for this test case and (optionally) attach a dataset of values to use during execution.",
     "tabParameters": "Parameters",

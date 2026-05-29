@@ -150,6 +150,7 @@ export function useExecutionLogColumns(
                 id={row.testCaseId}
                 name={row.testCaseName}
                 source={row.testCaseSource as RepositoryCaseSource}
+                hasParameters={row.testCaseHasParameters}
                 link={
                   rowProjectId
                     ? `/projects/repository/${rowProjectId}/${row.testCaseId}`

@@ -243,6 +243,52 @@ export interface ExtendedCases extends RepositoryCases {
   } | null;
 }
 
+/**
+ * Renders the case-type icon (Bot / ListChecks / Trash2) and, when the
+ * case carries parameterized steps, an adjacent SquareStack glyph
+ * tinted in primary. Same shape the Tiptap toolbar's
+ * InsertParameterToolbarButton uses, so the association is already
+ * familiar. Kept inline here because the cells-table render path
+ * doesn't go through TestCaseNameDisplay.
+ */
+function TypeIconWithParamBadge({
+  isSoftDeletedInRun,
+  automated,
+  source,
+  hasParameters,
+  colorClass,
+}: {
+  isSoftDeletedInRun?: boolean;
+  automated?: boolean;
+  source?: RepositoryCaseSource;
+  hasParameters?: boolean;
+  colorClass: string;
+}) {
+  const t = useTranslations("parameters");
+  if (isSoftDeletedInRun) {
+    return <Trash2 className="w-4 h-4 mr-1 text-muted-foreground shrink-0" />;
+  }
+  const Base = automated || isAutomatedCaseSource(source) ? Bot : ListChecks;
+  return (
+    <span className="inline-flex items-center gap-1 shrink-0 mr-1">
+      <Base className={cn("w-4 h-4 shrink-0", colorClass)} />
+      {hasParameters && (
+        <span
+          title={t("hasParametersBadgeTooltip")}
+          aria-label={t("hasParametersBadgeTooltip")}
+          className="inline-flex shrink-0"
+        >
+          <SquareStack
+            data-testid="has-parameters-badge"
+            aria-hidden="true"
+            className="w-4 h-4 shrink-0 text-primary"
+          />
+        </span>
+      )}
+    </span>
+  );
+}
+
 interface NameCellProps {
   name: string;
   id: number;
@@ -259,6 +305,7 @@ interface NameCellProps {
   viewType?: string;
   canAddEditResults?: boolean;
   automated?: boolean;
+  hasParameters?: boolean;
   source?: RepositoryCaseSource;
   isSoftDeletedInRun?: boolean;
   showDescendants?: boolean;
@@ -276,6 +323,7 @@ const NameCell = React.memo(function NameCell({
   folder,
   viewType,
   automated,
+  hasParameters,
   canAddEditResults,
   source,
   isSoftDeletedInRun,
@@ -344,13 +392,17 @@ const NameCell = React.memo(function NameCell({
 
     return (
       <div className="flex items-center">
-        {isSoftDeletedInRun ? (
-          <Trash2 className="w-4 h-4 mr-1 text-muted-foreground shrink-0" />
-        ) : automated || isAutomatedCaseSource(source) ? (
-          <Bot className="w-4 h-4 mr-1 text-primary shrink-0" />
-        ) : (
-          <ListChecks className="w-4 h-4 mr-1 text-muted-foreground shrink-0" />
-        )}
+        <TypeIconWithParamBadge
+          isSoftDeletedInRun={isSoftDeletedInRun}
+          automated={automated}
+          source={source}
+          hasParameters={hasParameters}
+          colorClass={
+            automated || isAutomatedCaseSource(source)
+              ? "text-primary"
+              : "text-muted-foreground"
+          }
+        />
         <div
           className={cn(
             "truncate whitespace-nowrap overflow-hidden group",
@@ -404,13 +456,13 @@ const NameCell = React.memo(function NameCell({
 
   return (
     <div className="flex items-center">
-      {isSoftDeletedInRun ? (
-        <Trash2 className="w-4 h-4 mr-1 text-muted-foreground shrink-0" />
-      ) : automated || isAutomatedCaseSource(source) ? (
-        <Bot className="w-4 h-4 mr-1 text-primary shrink-0" />
-      ) : (
-        <ListChecks className="w-4 h-4 mr-1 text-primary shrink-0" />
-      )}
+      <TypeIconWithParamBadge
+        isSoftDeletedInRun={isSoftDeletedInRun}
+        automated={automated}
+        source={source}
+        hasParameters={hasParameters}
+        colorClass="text-primary"
+      />
       <Link
         href={`/projects/repository/${projectId}/${id}`}
         className={cn(
@@ -1778,6 +1830,7 @@ export const getColumns = (
                 }
                 viewType={viewType}
                 automated={row.original.automated}
+                hasParameters={row.original.hasParameters}
                 canAddEditResults={canAddEditResults}
                 source={row.original.source}
                 isSoftDeletedInRun={isRunMode && row.original.isDeleted}

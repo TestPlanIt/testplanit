@@ -7343,6 +7343,7 @@
   "parameters": {
     "configureButtonEmpty": "Konfiguruj parametry",
     "configureButtonSet": "Parametry ({count})",
+    "hasParametersBadgeTooltip": "Posiada sparametryzowane kroki",
     "sheetTitle": "Konfiguruj parametry",
     "sheetDescription": "Zadeklaruj nazwane parametry, które mają zostać użyte w krokach testowych dla tego przypadku testowego i (opcjonalnie) dołącz zestaw danych wartości, które mają zostać użyte podczas wykonywania.",
     "tabParameters": "Parametry",

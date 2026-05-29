@@ -19,10 +19,12 @@ export interface DuplicateCandidateRow {
   caseAName: string;
   caseASource: string;
   caseAAutomated: boolean;
+  caseAHasParameters: boolean;
   caseBId: number;
   caseBName: string;
   caseBSource: string;
   caseBAutomated: boolean;
+  caseBHasParameters: boolean;
   score: number;
   matchedFields: string[];
   status: string;
@@ -118,6 +120,7 @@ export const getColumns = (
           name={row.original.caseAName}
           source={row.original.caseASource as RepositoryCaseSource}
           automated={row.original.caseAAutomated}
+          hasParameters={row.original.caseAHasParameters}
           maxLines={1}
         />
       </div>
@@ -141,6 +144,7 @@ export const getColumns = (
           name={row.original.caseBName}
           source={row.original.caseBSource as RepositoryCaseSource}
           automated={row.original.caseBAutomated}
+          hasParameters={row.original.caseBHasParameters}
           maxLines={1}
         />
       </div>

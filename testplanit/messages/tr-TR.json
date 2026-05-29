@@ -7343,6 +7343,7 @@
   "parameters": {
     "configureButtonEmpty": "Parametreleri yapılandırın",
     "configureButtonSet": "Parametreler ({count})",
+    "hasParametersBadgeTooltip": "Parametreli adımlara sahiptir.",
     "sheetTitle": "Parametreleri Yapılandır",
     "sheetDescription": "Bu test senaryosu için test adımlarında kullanılacak adlandırılmış parametreleri tanımlayın ve (isteğe bağlı olarak) yürütme sırasında kullanılacak bir değer veri kümesi ekleyin.",
     "tabParameters": "Parametreler",

@@ -134,6 +134,7 @@ The following data is **not transferred** during copy or move operations:
 | **Automated test results** | Imported JUnit, TestNG, xUnit, NUnit, and other automated test results are linked to source project test runs. |
 | **Cross-project case links** | Links between test cases in different projects are dropped. The result summary reports the count of dropped links. |
 | **Forecast data** | Manual and automated forecast estimates are reset to defaults in the target. |
+| **Parameters and parameter rows** | Test case parameter definitions and their saved value rows are not carried over. The copied or moved case appears in the target as a non-parameterized case. To preserve parameterization, recreate the parameters and rows on the target case after the operation. |
 
 ## Copy vs Move Differences
 

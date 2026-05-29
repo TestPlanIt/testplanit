@@ -74,7 +74,13 @@ function TestCaseCount({ groupId, t }: { groupId: number; t: any }) {
       },
       isDeleted: false,
     },
-    select: { id: true, name: true, source: true, automated: true },
+    select: {
+      id: true,
+      name: true,
+      source: true,
+      automated: true,
+      hasParameters: true,
+    },
     orderBy: { createdAt: "desc" },
   });
   const count = steps?.length ?? 0;
@@ -101,6 +107,7 @@ function TestCaseCount({ groupId, t }: { groupId: number; t: any }) {
                   link={`/case/${testcase.id}`}
                   source={testcase.source}
                   automated={testcase.automated}
+                  hasParameters={testcase.hasParameters}
                 />
               </Badge>
             ))

@@ -340,6 +340,7 @@ function ReviewsInboxContent({ userId }: { userId: string }) {
         name: true,
         source: true,
         automated: true,
+        hasParameters: true,
         isDeleted: true,
       },
     } as any,

@@ -15,6 +15,7 @@ export interface TestCaseHealthRow {
   testCaseId: number;
   testCaseName: string;
   testCaseSource: string;
+  testCaseHasParameters: boolean;
   createdAt: string;
   lastExecutedAt: string | null;
   daysSinceLastExecution: number | null;
@@ -35,6 +36,7 @@ interface RawHealthResult {
   test_case_id: number;
   test_case_name: string;
   test_case_source: string;
+  test_case_has_parameters: boolean;
   created_at: Date;
   last_executed_at: Date | null;
   total_executions: bigint;
@@ -318,6 +320,7 @@ export async function handleTestCaseHealthPOST(
         rc.id as test_case_id,
         rc.name as test_case_name,
         rc.source::text as test_case_source,
+        rc."hasParameters" as test_case_has_parameters,
         rc."createdAt" as created_at,
         ae.last_executed_at,
         COALESCE(ae.total_executions, 0) as total_executions,
@@ -378,6 +381,7 @@ export async function handleTestCaseHealthPOST(
         testCaseId: row.test_case_id,
         testCaseName: row.test_case_name,
         testCaseSource: row.test_case_source,
+        testCaseHasParameters: row.test_case_has_parameters,
         createdAt: row.created_at.toISOString(),
         lastExecutedAt: row.last_executed_at
           ? row.last_executed_at.toISOString()

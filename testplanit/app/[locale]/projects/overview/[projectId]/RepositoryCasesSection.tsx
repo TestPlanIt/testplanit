@@ -173,6 +173,7 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
         name: true,
         source: true,
         automated: true,
+        hasParameters: true,
         stateId: true,
         state: {
           select: {
@@ -277,6 +278,7 @@ const RepositoryCasesSection: React.FC<RepositoryCasesSectionProps> = ({
                       size="large"
                       source={caseItem.source}
                       automated={caseItem.automated}
+                      hasParameters={caseItem.hasParameters}
                       className="line-clamp-2"
                     />
                     <LinkIcon className="w-4 h-4 inline ml-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />

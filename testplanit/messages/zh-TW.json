@@ -7343,6 +7343,7 @@
   "parameters": {
     "configureButtonEmpty": "配置參數",
     "configureButtonSet": "參數（{count}）",
+    "hasParametersBadgeTooltip": "具有參數化步驟",
     "sheetTitle": "配置參數",
     "sheetDescription": "聲明此測試案例測試步驟中要使用的命名參數，並（可選擇性地）附加一個要在執行期間使用的資料集。",
     "tabParameters": "參數",

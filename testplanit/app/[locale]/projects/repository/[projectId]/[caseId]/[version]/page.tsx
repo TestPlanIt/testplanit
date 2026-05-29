@@ -123,6 +123,7 @@ export default function TestCaseVersions() {
       repositoryCase: {
         select: {
           source: true,
+          hasParameters: true,
         },
       },
     },
@@ -154,6 +155,7 @@ export default function TestCaseVersions() {
       repositoryCase: {
         select: {
           source: true,
+          hasParameters: true,
         },
       },
     },
@@ -198,12 +200,14 @@ export default function TestCaseVersions() {
     ? {
         ...(data as CaseVersionExtended),
         source: (data as any).repositoryCase?.source,
+        hasParameters: (data as any).repositoryCase?.hasParameters,
       }
     : undefined;
   const previousTestcase = previousData
     ? {
         ...(previousData as CaseVersionExtended),
         source: (previousData as any).repositoryCase?.source,
+        hasParameters: (previousData as any).repositoryCase?.hasParameters,
       }
     : undefined;
 
@@ -653,6 +657,7 @@ export default function TestCaseVersions() {
                     size="large"
                     source={testcase.source}
                     automated={testcase.automated}
+                    hasParameters={testcase.hasParameters}
                   />,
                   previousTestcase ? (
                     <CaseDisplay
@@ -661,6 +666,7 @@ export default function TestCaseVersions() {
                       size="large"
                       source={previousTestcase.source}
                       automated={previousTestcase.automated}
+                      hasParameters={previousTestcase.hasParameters}
                     />
                   ) : null
                 )}

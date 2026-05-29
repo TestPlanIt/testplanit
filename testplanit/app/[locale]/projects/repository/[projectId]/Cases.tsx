@@ -102,6 +102,7 @@ const REPOSITORY_CASE_LIST_SELECT = {
   createdAt: true,
   creatorId: true,
   automated: true,
+  hasParameters: true,
   isArchived: true,
   isDeleted: true,
   currentVersion: true,
@@ -1779,6 +1780,7 @@ export default function Cases({
               createdAt: true,
               creatorId: true,
               automated: true,
+              hasParameters: true,
               isArchived: true,
               isDeleted: true,
               currentVersion: true,
@@ -1941,6 +1943,7 @@ export default function Cases({
                   createdAt: true;
                   creatorId: true;
                   automated: true;
+                  hasParameters: true;
                   isArchived: true;
                   isDeleted: true;
                   source: true;
@@ -2190,6 +2193,7 @@ export default function Cases({
             createdAt: true;
             creatorId: true;
             automated: true;
+            hasParameters: true;
             isArchived: true;
             isDeleted: true;
             currentVersion: true;

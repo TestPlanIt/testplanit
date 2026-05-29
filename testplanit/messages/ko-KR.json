@@ -7343,6 +7343,7 @@
   "parameters": {
     "configureButtonEmpty": "구성 매개변수",
     "configureButtonSet": "매개변수({count})",
+    "hasParametersBadgeTooltip": "매개변수화된 단계를 가지고 있습니다",
     "sheetTitle": "구성 매개변수",
     "sheetDescription": "이 테스트 케이스의 테스트 단계에서 사용할 명명된 매개변수를 선언하고 (선택적으로) 실행 중에 사용할 값 데이터 세트를 첨부합니다.",
     "tabParameters": "매개변수",

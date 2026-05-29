@@ -7343,6 +7343,7 @@
   "parameters": {
     "configureButtonEmpty": "Cấu hình tham số",
     "configureButtonSet": "Tham số ({count})",
+    "hasParametersBadgeTooltip": "Có các bước tham số hóa",
     "sheetTitle": "Cấu hình tham số",
     "sheetDescription": "Khai báo các tham số có tên sẽ được sử dụng trong các bước kiểm thử cho trường hợp kiểm thử này và (tùy chọn) đính kèm một tập dữ liệu các giá trị sẽ được sử dụng trong quá trình thực thi.",
     "tabParameters": "Thông số",

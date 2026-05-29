@@ -422,6 +422,8 @@ export function createTestExecutionDimensionRegistry(
                 name: true,
                 isDeleted: true,
                 source: true,
+                automated: true,
+                hasParameters: true,
               },
             },
           },
@@ -430,12 +432,20 @@ export function createTestExecutionDimensionRegistry(
         return testCases.map(
           (tc: {
             id: any;
-            repositoryCase: { name: any; isDeleted: boolean; source: string };
+            repositoryCase: {
+              name: any;
+              isDeleted: boolean;
+              source: string;
+              automated: boolean;
+              hasParameters: boolean;
+            };
           }) => ({
             id: tc.id,
             name: tc.repositoryCase?.name || `Case ${tc.id}`,
             isDeleted: tc.repositoryCase?.isDeleted || false,
             source: tc.repositoryCase?.source || "MANUAL",
+            automated: tc.repositoryCase?.automated || false,
+            hasParameters: tc.repositoryCase?.hasParameters || false,
           })
         );
       },
@@ -449,6 +459,8 @@ export function createTestExecutionDimensionRegistry(
                 name: true,
                 isDeleted: true,
                 source: true,
+                automated: true,
+                hasParameters: true,
               },
             },
           },
@@ -462,6 +474,8 @@ export function createTestExecutionDimensionRegistry(
             id: val.id,
             isDeleted: val.isDeleted || false,
             source: val.source || "MANUAL",
+            automated: val.automated || false,
+            hasParameters: val.hasParameters || false,
           };
         }
 
@@ -471,6 +485,8 @@ export function createTestExecutionDimensionRegistry(
           id: val.id,
           isDeleted: val.repositoryCase?.isDeleted || false,
           source: val.repositoryCase?.source || "MANUAL",
+          automated: val.repositoryCase?.automated || false,
+          hasParameters: val.repositoryCase?.hasParameters || false,
         };
       },
     },

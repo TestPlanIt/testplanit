@@ -7343,6 +7343,7 @@
   "parameters": {
     "configureButtonEmpty": "Configurar parâmetros",
     "configureButtonSet": "Parâmetros ({count})",
+    "hasParametersBadgeTooltip": "Possui etapas parametrizadas",
     "sheetTitle": "Configurar parâmetros",
     "sheetDescription": "Declare os parâmetros nomeados a serem usados nas etapas de teste para este caso de teste e (opcionalmente) anexe um conjunto de dados com os valores a serem usados durante a execução.",
     "tabParameters": "Parâmetros",

@@ -7343,6 +7343,7 @@
   "parameters": {
     "configureButtonEmpty": "パラメータを設定する",
     "configureButtonSet": "パラメータ ({count})",
+    "hasParametersBadgeTooltip": "パラメータ化されたステップがあります",
     "sheetTitle": "パラメータの設定",
     "sheetDescription": "このテストケースのテストステップで使用する名前付きパラメータを宣言し、（オプションで）実行中に使用する値のデータセットを添付します。",
     "tabParameters": "パラメータ",

@@ -243,6 +243,7 @@ function TagDetail() {
           name: true,
           source: true,
           automated: true,
+          hasParameters: true,
         },
         orderBy: { name: "asc" as const },
         skip: (casesPage - 1) * effectiveCasesPageSize,
@@ -326,6 +327,7 @@ function TagDetail() {
         name: testCase.name,
         source: testCase.source,
         automated: testCase.automated,
+        hasParameters: testCase.hasParameters,
         projectId: Number(projectId),
       })) || []
     );
