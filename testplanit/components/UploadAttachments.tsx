@@ -1,3 +1,4 @@
+import { LinkFavicon } from "@/components/LinkFavicon";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -449,9 +450,7 @@ export default function UploadAttachments({
       }}
       disabled={disabled}
     >
-      <LinkIcon
-        className={size === "sm" ? "w-4 h-4" : "w-5 h-5 text-primary"}
-      />
+      <LinkIcon className={size === "sm" ? "w-4 h-4" : "w-5 h-5"} />
       {tLink("addButton")}
     </Button>
   );
@@ -489,7 +488,7 @@ export default function UploadAttachments({
               htmlFor={fileInputId}
               className={`flex items-center flex-1 min-w-0 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
             >
-              <CloudUpload className="w-5 h-5 text-primary mr-1" />
+              <CloudUpload className="w-5 h-5 mr-1" />
               <span className="text-sm truncate inline-block">
                 {uploading
                   ? tGlobal("common.status.uploading")
@@ -535,14 +534,16 @@ export default function UploadAttachments({
                     {filesize(file.size)}
                   </span>
                   {!disabled && (
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => removeFile(index)}
                       aria-label={tGlobal("common.actions.remove")}
-                      className="shrink-0"
+                      className="shrink-0 h-6 w-6 p-0.5 text-foreground/70 hover:text-destructive"
                     >
-                      <XCircle className="w-4 h-4 text-muted-foreground hover:text-destructive" />
-                    </button>
+                      <XCircle className="w-4 h-4" />
+                    </Button>
                   )}
                 </span>
               </li>
@@ -554,20 +555,22 @@ export default function UploadAttachments({
                 title={link.url}
               >
                 <span className="flex items-center gap-1 min-w-0">
-                  <LinkIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <LinkFavicon url={link.url} className="w-4 h-4" />
                   <span className="truncate text-muted-foreground">
                     {link.name}
                   </span>
                 </span>
                 {!disabled && (
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => removeLink(index)}
                     aria-label={tGlobal("common.actions.remove")}
-                    className="shrink-0"
+                    className="shrink-0 h-6 w-6 p-0.5 text-foreground/70 hover:text-destructive"
                   >
-                    <XCircle className="w-4 h-4 text-muted-foreground hover:text-destructive" />
-                  </button>
+                    <XCircle className="w-4 h-4" />
+                  </Button>
                 )}
               </li>
             ))}
@@ -620,7 +623,7 @@ export default function UploadAttachments({
               asChild
             >
               <span>
-                <CloudUpload className="w-5 h-5 text-primary" />
+                <CloudUpload className="w-5 h-5" />
                 {uploading
                   ? tGlobal("common.status.uploading")
                   : tGlobal(
@@ -651,14 +654,16 @@ export default function UploadAttachments({
                     {getThumbnail(file)}
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <button
+                        <Button
                           type="button"
-                          className="absolute top-0 left-14 transform -translate-y-2 -translate-x-2"
+                          variant="outline"
+                          size="icon"
                           onClick={() => removeFile(index)}
                           aria-label={tGlobal("common.cancel")}
+                          className="absolute top-0 left-14 -translate-y-2 -translate-x-2 h-7 w-7 rounded-full p-0.5 text-destructive hover:bg-destructive hover:text-destructive-foreground"
                         >
-                          <XCircle className="w-6 h-6 text-destructive" />
-                        </button>
+                          <XCircle className="w-5 h-5" />
+                        </Button>
                       </TooltipTrigger>
                       <TooltipContent>
                         {tGlobal("common.cancel")}
@@ -679,17 +684,19 @@ export default function UploadAttachments({
                   title={link.url}
                 >
                   <div className="mt-2 relative w-16 h-16 bg-accent rounded-full flex items-center justify-center">
-                    <LinkIcon className="w-8 h-8 text-primary" />
+                    <LinkFavicon url={link.url} className="w-8 h-8" />
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <button
+                        <Button
                           type="button"
-                          className="absolute top-0 left-14 transform -translate-y-2 -translate-x-2"
+                          variant="outline"
+                          size="icon"
                           onClick={() => removeLink(index)}
                           aria-label={tGlobal("common.cancel")}
+                          className="absolute top-0 left-14 -translate-y-2 -translate-x-2 h-7 w-7 rounded-full p-0.5 text-destructive hover:bg-destructive hover:text-destructive-foreground"
                         >
-                          <XCircle className="w-6 h-6 text-destructive" />
-                        </button>
+                          <XCircle className="w-5 h-5" />
+                        </Button>
                       </TooltipTrigger>
                       <TooltipContent>
                         {tGlobal("common.cancel")}
@@ -717,13 +724,16 @@ export default function UploadAttachments({
                     <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
                     {file.name}
                   </span>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => removeFile(index)}
                     aria-label={tGlobal("common.cancel")}
+                    className="shrink-0 h-7 w-7 p-0.5 text-destructive hover:bg-destructive/10"
                   >
-                    <XCircle className="w-5 h-5 text-destructive" />
-                  </button>
+                    <XCircle className="w-5 h-5" />
+                  </Button>
                 </li>
               ))}
               {selectedLinks.map((link, index) => (
@@ -733,16 +743,19 @@ export default function UploadAttachments({
                   title={link.url}
                 >
                   <span className="flex items-center gap-1 truncate max-w-xs">
-                    <LinkIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <LinkFavicon url={link.url} className="w-4 h-4" />
                     {link.name}
                   </span>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => removeLink(index)}
                     aria-label={tGlobal("common.cancel")}
+                    className="shrink-0 h-7 w-7 p-0.5 text-destructive hover:bg-destructive/10"
                   >
-                    <XCircle className="w-5 h-5 text-destructive" />
-                  </button>
+                    <XCircle className="w-5 h-5" />
+                  </Button>
                 </li>
               ))}
             </ul>

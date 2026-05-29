@@ -278,19 +278,47 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                     previousAttachment?.name
                   )}
                 </div>
-                <div className="flex flex-col md:flex-row w-full max-h-96 overflow-hidden">
+                <div
+                  className={`flex w-full max-h-96 overflow-hidden ${
+                    attachment.mimeType === "text/uri-list"
+                      ? "flex-col"
+                      : "flex-col md:flex-row"
+                  }`}
+                >
                   <div
                     onClick={() => handleSelect(sortedAttachments, index)}
-                    className="md:w-2/3 w-full h-full flex justify-center cursor-pointer"
+                    className={`w-full h-full flex justify-center cursor-pointer ${
+                      attachment.mimeType === "text/uri-list"
+                        ? "py-2"
+                        : "md:w-2/3"
+                    }`}
                   >
                     <AttachmentPreview attachment={attachment} size="large" />
                   </div>
                   <Separator
-                    orientation="vertical"
-                    className="h-full bg-primary/50 m-1"
+                    orientation={
+                      attachment.mimeType === "text/uri-list"
+                        ? "horizontal"
+                        : "vertical"
+                    }
+                    className={
+                      attachment.mimeType === "text/uri-list"
+                        ? "w-full bg-primary/50 my-1"
+                        : "h-full bg-primary/50 m-1"
+                    }
                   />
-                  <div className="md:w-1/3 w-full flex flex-col justify-start items-start p-4 overflow-hidden">
-                    <div className="text-left space-y-2 min-w-[50px] w-full">
+                  <div
+                    className={`w-full flex flex-col justify-start items-start p-4 overflow-hidden ${
+                      attachment.mimeType === "text/uri-list" ? "" : "md:w-1/3"
+                    }`}
+                  >
+                    <div
+                      className={`text-left min-w-[50px] w-full ${
+                        attachment.mimeType === "text/uri-list"
+                          ? "grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-x-6 gap-y-2"
+                          : "space-y-2"
+                      }`}
+                    >
                       {/* Name field - editable in deferred mode */}
                       <div className="text-sm">
                         <strong>{t("common.name")}</strong>
@@ -345,7 +373,9 @@ export const AttachmentsDisplay: React.FC<AttachmentsProps> = ({
                           </div>
                         )}
                       </div>
-                      <Separator className="w-full" />
+                      {attachment.mimeType !== "text/uri-list" && (
+                        <Separator className="w-full" />
+                      )}
                       <div className="text-sm truncate">
                         <strong>{t("common.fields.size")}</strong>{" "}
                         {filesize(Number(attachment.size))}

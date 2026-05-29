@@ -1358,8 +1358,8 @@ export function AddResultModal({
           );
         }
 
-        // Upload attachments if there are any
-        if (selectedFiles.length > 0 && result) {
+        // Upload attachments if there are any (files OR external links)
+        if ((selectedFiles.length > 0 || selectedLinks.length > 0) && result) {
           await uploadFiles(result.id);
         }
 

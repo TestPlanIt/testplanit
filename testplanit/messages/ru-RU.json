@@ -43,6 +43,7 @@
       "previous": "Предыдущий",
       "finish": "Заканчивать",
       "download": "Скачать",
+      "openLink": "Открыть ссылку",
       "apply": "Применять",
       "confirm": "Подтверждать",
       "confirmDelete": "Подтвердить удаление",
@@ -807,7 +808,7 @@
         "altText": {
           "emoji": "эмодзи"
         },
-        "count": "{count, plural, =1 {# файл} other {# файлы}}",
+        "count": "{count, plural, =1 {# вложение} other {# вложения}}",
         "link": {
           "addButton": "Добавить ссылку",
           "urlLabel": "URL",

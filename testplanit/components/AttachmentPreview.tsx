@@ -1,6 +1,7 @@
+import { LinkFavicon } from "@/components/LinkFavicon";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { Attachments } from "@prisma/client";
-import { File } from "lucide-react";
+import { ExternalLink, File } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { Components } from "react-markdown";
@@ -82,18 +83,36 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
 
   if (fileType.startsWith("image/")) {
     const { height, width } = getSizeClasses(100);
+    // SVGs bypass next/image: the built-in optimizer refuses SVG unless
+    // `images.dangerouslyAllowSVG` is enabled, and we don't want to opt into
+    // that (SVG can carry inline <script>). Browsers don't execute scripts in
+    // SVGs loaded via <img>, so plain <img> is the safe rendering path.
+    const isSvg =
+      fileType === "image/svg+xml" ||
+      attachment.name.toLowerCase().endsWith(".svg");
     return (
       <div
         className="flex justify-center items-center max-h-[350px]"
         style={{ height, width }}
       >
-        <Image
-          src={fileURL}
-          alt={attachment.name}
-          height={height}
-          width={width}
-          className="object-contain"
-        />
+        {isSvg ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={fileURL}
+            alt={attachment.name}
+            height={height}
+            width={width}
+            className="object-contain"
+          />
+        ) : (
+          <Image
+            src={fileURL}
+            alt={attachment.name}
+            height={height}
+            width={width}
+            className="object-contain"
+          />
+        )}
       </div>
     );
   } else if (fileType === "application/pdf") {
@@ -106,9 +125,34 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
       />
     );
   } else if (fileType.startsWith("text/uri")) {
+    // Self-contained styling: explicit `text-foreground` + `bg-background` so
+    // we don't inherit `text-primary` / `bg-accent` from wrappers like the
+    // compact badge in AttachmentsListDisplay (which produced a low-contrast
+    // violet pill across themes).
+    const isLarge = size === "large";
     return (
-      <Link href={fileURL} target="_blank">
-        {attachment.name}
+      <Link
+        href={fileURL}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        title={fileURL}
+        className={`inline-flex items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5 text-foreground hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring max-w-full ${
+          isLarge ? "text-base" : "text-sm"
+        }`}
+      >
+        <LinkFavicon
+          url={fileURL}
+          className={isLarge ? "w-5 h-5" : "w-4 h-4"}
+        />
+        <span className="truncate underline underline-offset-2">
+          {attachment.name}
+        </span>
+        <ExternalLink
+          className={`shrink-0 text-muted-foreground ${
+            isLarge ? "w-4 h-4" : "w-3.5 h-3.5"
+          }`}
+        />
       </Link>
     );
   } else if (fileType.startsWith("text/")) {

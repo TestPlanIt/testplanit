@@ -413,9 +413,14 @@ describe("LastTestResultCell via getColumns", () => {
       await user.hover(statusElement);
 
       // Wait for tooltip to appear - it contains the "Last Tested" text
-      // Use getAllByText since Radix may render duplicates
+      // Use getAllByText since Radix may render duplicates. Bumped timeout
+      // beyond the testing-library default (1s) because the CI runner has
+      // been observed taking >19× longer than local for the full suite,
+      // squeezing Radix's hover-delay + portal-mount race window past 1s.
       const testedOnElements = await screen.findAllByText(
-        /\[t\]repository\.columns\.testedOn/
+        /\[t\]repository\.columns\.testedOn/,
+        undefined,
+        { timeout: 5000 }
       );
       expect(testedOnElements.length).toBeGreaterThan(0);
     });
@@ -444,8 +449,13 @@ describe("LastTestResultCell via getColumns", () => {
       const statusElement = screen.getByText("Passed");
       await user.hover(statusElement);
 
-      // Should display the test run name (may be multiple due to Radix rendering)
-      const testRunElements = await screen.findAllByText("Sprint 10 Test Run");
+      // Should display the test run name (may be multiple due to Radix rendering).
+      // See above — bumped timeout for CI load resilience.
+      const testRunElements = await screen.findAllByText(
+        "Sprint 10 Test Run",
+        undefined,
+        { timeout: 5000 }
+      );
       expect(testRunElements.length).toBeGreaterThan(0);
     });
 
@@ -473,9 +483,12 @@ describe("LastTestResultCell via getColumns", () => {
       const statusElement = screen.getByText("Passed");
       await user.hover(statusElement);
 
-      // Should show the date but no link to a test run page
+      // Should show the date but no link to a test run page.
+      // See above — bumped timeout for CI load resilience.
       const testedOnElements = await screen.findAllByText(
-        /\[t\]repository\.columns\.testedOn/
+        /\[t\]repository\.columns\.testedOn/,
+        undefined,
+        { timeout: 5000 }
       );
       expect(testedOnElements.length).toBeGreaterThan(0);
 
@@ -537,8 +550,13 @@ describe("LastTestResultCell via getColumns", () => {
       const statusElement = screen.getByText("Passed");
       await user.hover(statusElement);
 
-      // Wait for tooltip content (may be multiple due to Radix rendering)
-      const testRunElements = await screen.findAllByText("Sprint 10 Test Run");
+      // Wait for tooltip content (may be multiple due to Radix rendering).
+      // See above — bumped timeout for CI load resilience.
+      const testRunElements = await screen.findAllByText(
+        "Sprint 10 Test Run",
+        undefined,
+        { timeout: 5000 }
+      );
       expect(testRunElements.length).toBeGreaterThan(0);
 
       // Two links rendered: the cell wrapper (case history) + the test run name

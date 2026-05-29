@@ -43,6 +43,7 @@
       "previous": "이전의",
       "finish": "마치다",
       "download": "다운로드",
+      "openLink": "링크 열기",
       "apply": "적용하다",
       "confirm": "확인하다",
       "confirmDelete": "삭제 확인",
@@ -807,7 +808,7 @@
         "altText": {
           "emoji": "이모지"
         },
-        "count": "{count, plural, =1 {# 파일} other {# 파일들}}",
+        "count": "{count, plural, =1 {# 첨부파일} other {# 첨부파일}}",
         "link": {
           "addButton": "링크 추가",
           "urlLabel": "URL",

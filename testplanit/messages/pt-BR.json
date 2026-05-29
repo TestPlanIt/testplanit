@@ -43,6 +43,7 @@
       "previous": "Anterior",
       "finish": "Terminar",
       "download": "Download",
+      "openLink": "Abrir link",
       "apply": "Aplicar",
       "confirm": "Confirmar",
       "confirmDelete": "Confirmar exclusão",
@@ -807,7 +808,7 @@
         "altText": {
           "emoji": "emoji"
         },
-        "count": "{count, plural, =1 {# arquivo} other {# arquivos}}",
+        "count": "{count, plural, =1 {# anexo} other {# anexos}}",
         "link": {
           "addButton": "Adicionar link",
           "urlLabel": "URL",

@@ -43,6 +43,7 @@
       "previous": "以前的",
       "finish": "结束",
       "download": "下载",
+      "openLink": "打开链接",
       "apply": "申请",
       "confirm": "确认",
       "confirmDelete": "确认删除",
@@ -807,7 +808,7 @@
         "altText": {
           "emoji": "表情符号"
         },
-        "count": "{count, plural, =1 {# 文件} other {# 文件集}}",
+        "count": "{count, plural, =1 {# 附件} other {# 附件}}",
         "link": {
           "addButton": "添加链接",
           "urlLabel": "URL",
