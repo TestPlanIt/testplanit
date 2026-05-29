@@ -43,6 +43,7 @@
       "previous": "前の",
       "finish": "仕上げる",
       "download": "ダウンロード",
+      "openLink": "リンクを開く",
       "apply": "適用する",
       "confirm": "確認する",
       "confirmDelete": "削除を確認",
@@ -807,7 +808,17 @@
         "altText": {
           "emoji": "絵文字"
         },
-        "count": "{count, plural, =1 {# ファイル} other {# ファイル}}"
+        "count": "{count, plural, =1 {# 添付ファイル} other {# 添付ファイル}}",
+        "link": {
+          "addButton": "リンクを追加",
+          "urlLabel": "URL",
+          "urlPlaceholder": "https://example.com/...",
+          "nameLabel": "表示名",
+          "namePlaceholder": "空欄の場合はデフォルトでURLが表示されます",
+          "noteLabel": "説明（任意）",
+          "notePlaceholder": "このリンクが重要な理由",
+          "invalidUrl": "有効なHTTP(S) URLを入力してください。"
+        }
       }
     },
     "fileDropZone": {

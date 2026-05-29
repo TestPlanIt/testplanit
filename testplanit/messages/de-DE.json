@@ -43,6 +43,7 @@
       "previous": "Vorherige",
       "finish": "Beenden",
       "download": "Herunterladen",
+      "openLink": "Link öffnen",
       "apply": "Anwenden",
       "confirm": "Bestätigen",
       "confirmDelete": "Löschen bestätigen",
@@ -807,7 +808,17 @@
         "altText": {
           "emoji": "Emoji"
         },
-        "count": "{count, plural, =1 {# Datei} other {# Dateien}}"
+        "count": "{count, plural, =1 {# Anhang} other {# Anhänge}}",
+        "link": {
+          "addButton": "Link hinzufügen",
+          "urlLabel": "URL",
+          "urlPlaceholder": "https://example.com/...",
+          "nameLabel": "Anzeigename",
+          "namePlaceholder": "Wird standardmäßig die URL verwendet, wenn leer ist.",
+          "noteLabel": "Beschreibung (optional)",
+          "notePlaceholder": "Warum dieser Link relevant ist",
+          "invalidUrl": "Geben Sie eine gültige http(s)-URL ein."
+        }
       }
     },
     "fileDropZone": {

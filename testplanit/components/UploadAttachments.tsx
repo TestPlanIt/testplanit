@@ -1,3 +1,4 @@
+import { LinkFavicon } from "@/components/LinkFavicon";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -6,7 +7,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
@@ -17,12 +21,28 @@ import {
   CloudUpload,
   FileStack,
   FileText,
+  Link as LinkIcon,
   Loader2,
   XCircle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import React, { useEffect, useId, useRef, useState } from "react";
+
+/**
+ * Shape staged by the inline "Add Link" affordance and surfaced to parents
+ * via `onLinksChange`. Mirrors the persisted Attachments row enough that
+ * parents can drop it straight into their attachments payload alongside
+ * uploaded files. `mimeType: "text/uri-list"` is the existing in-codebase
+ * discriminator (see Testmo importer, AttachmentsDisplay, AttachmentPreview).
+ */
+export interface LinkAttachmentInput {
+  url: string;
+  name: string;
+  note?: string;
+  mimeType: "text/uri-list";
+  size: number;
+}
 
 interface UploadAttachmentsProps {
   onFileSelect: (files: File[]) => void;
@@ -33,6 +53,25 @@ interface UploadAttachmentsProps {
   allowedTypes?: string[];
   initialFiles?: File[];
   multiple?: boolean;
+  /**
+   * Opt in to the "Add Link" affordance. When true, the upload UI renders a
+   * second button that expands an inline URL form. Defaults to false so the
+   * import wizards (file-only by purpose) don't pick it up accidentally.
+   */
+  allowLinks?: boolean;
+  /** Notified whenever the user adds or removes a staged link. */
+  onLinksChange?: (links: LinkAttachmentInput[]) => void;
+  /** Mirrors `initialFiles`: seed the staged-links list once on mount. */
+  initialLinks?: LinkAttachmentInput[];
+}
+
+function isValidHttpUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 export default function UploadAttachments({
@@ -44,14 +83,26 @@ export default function UploadAttachments({
   allowedTypes,
   initialFiles,
   multiple = true,
+  allowLinks = false,
+  onLinksChange,
+  initialLinks,
 }: UploadAttachmentsProps) {
   const t = useTranslations("common.upload.attachments");
+  const tLink = useTranslations("common.upload.attachments.link");
   const tGlobal = useTranslations();
 
   const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Link-mode state — only meaningful when `allowLinks` is true.
+  const [selectedLinks, setSelectedLinks] = useState<LinkAttachmentInput[]>([]);
+  const [isLinkFormOpen, setIsLinkFormOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkName, setLinkName] = useState("");
+  const [linkNote, setLinkNote] = useState("");
+  const [linkError, setLinkError] = useState<string | null>(null);
 
   // Seed selectedFiles from initialFiles prop when it changes from empty to non-empty
   const initialFilesAppliedRef = useRef(false);
@@ -69,6 +120,22 @@ export default function UploadAttachments({
       initialFilesAppliedRef.current = false;
     }
   }, [initialFiles]);
+
+  // Mirror initialFiles' one-shot seed behavior for staged links.
+  const initialLinksAppliedRef = useRef(false);
+  useEffect(() => {
+    if (
+      initialLinks &&
+      initialLinks.length > 0 &&
+      !initialLinksAppliedRef.current
+    ) {
+      initialLinksAppliedRef.current = true;
+      setSelectedLinks(initialLinks);
+    }
+    if (!initialLinks || initialLinks.length === 0) {
+      initialLinksAppliedRef.current = false;
+    }
+  }, [initialLinks]);
 
   // Generate unique IDs for file inputs to prevent conflicts when multiple instances exist
   const uniqueId = useId();
@@ -146,6 +213,56 @@ export default function UploadAttachments({
       onFileSelect(selectedFiles);
     }
   }, [selectedFiles, onFileSelect]);
+
+  // Mirror the mount-suppress + change-detect pattern used for files so we
+  // don't fire a spurious empty-array notification on mount/remount.
+  const prevSelectedLinksRef = React.useRef<LinkAttachmentInput[]>([]);
+  const hasEverHadLinksRef = React.useRef(false);
+  useEffect(() => {
+    if (!onLinksChange) return;
+    if (selectedLinks.length > 0) hasEverHadLinksRef.current = true;
+    if (selectedLinks.length === 0 && !hasEverHadLinksRef.current) return;
+    if (prevSelectedLinksRef.current !== selectedLinks) {
+      prevSelectedLinksRef.current = selectedLinks;
+      onLinksChange(selectedLinks);
+    }
+  }, [selectedLinks, onLinksChange]);
+
+  const resetLinkForm = () => {
+    setLinkUrl("");
+    setLinkName("");
+    setLinkNote("");
+    setLinkError(null);
+    setIsLinkFormOpen(false);
+  };
+
+  const handleAddLink = () => {
+    const trimmedUrl = linkUrl.trim();
+    if (!isValidHttpUrl(trimmedUrl)) {
+      setLinkError(tLink("invalidUrl"));
+      return;
+    }
+    const link: LinkAttachmentInput = {
+      url: trimmedUrl,
+      name: linkName.trim() || trimmedUrl,
+      note: linkNote.trim() || undefined,
+      mimeType: "text/uri-list",
+      // Size convention: store the URL's character length so the row is
+      // never zero-sized (matches what the Testmo importer writes).
+      size: trimmedUrl.length,
+    };
+    setSelectedLinks((prev) => {
+      // De-dupe by URL — pasting the same link twice shouldn't multiply rows.
+      const isDuplicate = prev.some((l) => l.url === link.url);
+      if (isDuplicate) return prev;
+      return multiple ? [...prev, link] : [link];
+    });
+    resetLinkForm();
+  };
+
+  const removeLink = (index: number) => {
+    setSelectedLinks((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -245,6 +362,99 @@ export default function UploadAttachments({
 
   const _isImageFile = (file: File) => file.type.startsWith("image/");
 
+  // ─── Link-mode render helpers ──────────────────────────────────────────────
+  // Kept here (vs. a separate component) so the link state lives next to the
+  // file state and the two surfaces share the same `disabled` / `multiple`
+  // semantics without prop drilling.
+
+  const showLinkAffordance = allowLinks && !uploading;
+  const linkUrlIsValid = isValidHttpUrl(linkUrl.trim());
+
+  const renderLinkForm = () => (
+    <div className="w-full space-y-2 rounded-md border border-dashed border-muted p-3">
+      <div className="space-y-1">
+        <Label htmlFor={`${fileInputId}-link-url`} className="text-xs">
+          {tLink("urlLabel")}
+        </Label>
+        <Input
+          id={`${fileInputId}-link-url`}
+          type="url"
+          autoFocus
+          inputMode="url"
+          placeholder={tLink("urlPlaceholder")}
+          value={linkUrl}
+          onChange={(e) => {
+            setLinkUrl(e.target.value);
+            if (linkError) setLinkError(null);
+          }}
+          disabled={disabled}
+        />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor={`${fileInputId}-link-name`} className="text-xs">
+          {tLink("nameLabel")}
+        </Label>
+        <Input
+          id={`${fileInputId}-link-name`}
+          type="text"
+          placeholder={tLink("namePlaceholder")}
+          value={linkName}
+          onChange={(e) => setLinkName(e.target.value)}
+          disabled={disabled}
+        />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor={`${fileInputId}-link-note`} className="text-xs">
+          {tLink("noteLabel")}
+        </Label>
+        <Textarea
+          id={`${fileInputId}-link-note`}
+          rows={2}
+          placeholder={tLink("notePlaceholder")}
+          value={linkNote}
+          onChange={(e) => setLinkNote(e.target.value)}
+          disabled={disabled}
+        />
+      </div>
+      {linkError && <div className="text-destructive text-xs">{linkError}</div>}
+      <div className="flex items-center justify-end gap-2 pt-1">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={resetLinkForm}
+          disabled={disabled}
+        >
+          {tGlobal("common.cancel")}
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          onClick={handleAddLink}
+          disabled={disabled || !linkUrlIsValid}
+        >
+          {tLink("addButton")}
+        </Button>
+      </div>
+    </div>
+  );
+
+  const renderAddLinkButton = (size: "sm" | "default") => (
+    <Button
+      type="button"
+      variant="outline"
+      size={size}
+      onClick={() => {
+        setIsLinkFormOpen(true);
+        setLinkError(null);
+      }}
+      disabled={disabled}
+    >
+      <LinkIcon className={size === "sm" ? "w-4 h-4" : "w-5 h-5"} />
+      {tLink("addButton")}
+    </Button>
+  );
+
   if (compact) {
     return (
       <div className="flex flex-col gap-1">
@@ -273,46 +483,48 @@ export default function UploadAttachments({
             style={{ display: "none" }}
             id={fileInputId}
           />
-          <label
-            htmlFor={fileInputId}
-            className={`flex items-center w-full ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
-          >
-            <CloudUpload className="w-5 h-5 text-primary mr-1" />
-            <span className="text-sm truncate inline-block">
-              {uploading
-                ? tGlobal("common.status.uploading")
-                : selectedFiles.length > 0
-                  ? multiple
-                    ? tGlobal("common.upload.attachments.addMoreFiles")
-                    : tGlobal("common.upload.attachments.replaceFile")
-                  : tGlobal(
-                      multiple
-                        ? "common.upload.attachments.selectFiles"
-                        : "common.upload.attachments.selectFile",
-                      { count: selectedFiles.length }
-                    )}
-            </span>
-            {selectedFiles.length > 1 && (
-              <span className="ml-auto flex items-center gap-0.5 text-sm text-muted-foreground">
-                <FileStack className="w-4 h-4" />
-                {String(
-                  filesize(selectedFiles.reduce((sum, f) => sum + f.size, 0))
-                )}
+          <div className="flex items-center w-full gap-2">
+            <label
+              htmlFor={fileInputId}
+              className={`flex items-center flex-1 min-w-0 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
+            >
+              <CloudUpload className="w-5 h-5 mr-1" />
+              <span className="text-sm truncate inline-block">
+                {uploading
+                  ? tGlobal("common.status.uploading")
+                  : selectedFiles.length > 0
+                    ? multiple
+                      ? tGlobal("common.upload.attachments.addMoreFiles")
+                      : tGlobal("common.upload.attachments.replaceFile")
+                    : tGlobal(
+                        multiple
+                          ? "common.upload.attachments.selectFiles"
+                          : "common.upload.attachments.selectFile",
+                        { count: selectedFiles.length }
+                      )}
               </span>
-            )}
-          </label>
+              {selectedFiles.length > 1 && (
+                <span className="ml-auto flex items-center gap-0.5 text-sm text-muted-foreground">
+                  <FileStack className="w-4 h-4" />
+                  {String(
+                    filesize(selectedFiles.reduce((sum, f) => sum + f.size, 0))
+                  )}
+                </span>
+              )}
+            </label>
+            {showLinkAffordance && !isLinkFormOpen && renderAddLinkButton("sm")}
+          </div>
         </div>
-        {selectedFiles.length > 0 && (
+        {showLinkAffordance && isLinkFormOpen && renderLinkForm()}
+        {(selectedFiles.length > 0 || selectedLinks.length > 0) && (
           <ul className="flex flex-col gap-0.5">
             {selectedFiles.map((file, index) => (
               <li
-                key={index}
+                key={`file-${index}`}
                 className="flex items-center justify-between gap-1 text-sm px-1 py-0.5 rounded hover:bg-accent"
               >
-                <span className="flex items-center gap-1">
-                  <span>
-                    <FileText className="w-4 h-4 text-muted-foreground" />
-                  </span>
+                <span className="flex items-center gap-1 min-w-0">
+                  <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
                   <span className="truncate text-muted-foreground">
                     {file.name}
                   </span>
@@ -322,16 +534,44 @@ export default function UploadAttachments({
                     {filesize(file.size)}
                   </span>
                   {!disabled && (
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => removeFile(index)}
                       aria-label={tGlobal("common.actions.remove")}
-                      className="shrink-0"
+                      className="shrink-0 h-6 w-6 p-0.5 text-foreground/70 hover:text-destructive"
                     >
-                      <XCircle className="w-4 h-4 text-muted-foreground hover:text-destructive" />
-                    </button>
+                      <XCircle className="w-4 h-4" />
+                    </Button>
                   )}
                 </span>
+              </li>
+            ))}
+            {selectedLinks.map((link, index) => (
+              <li
+                key={`link-${index}`}
+                className="flex items-center justify-between gap-1 text-sm px-1 py-0.5 rounded hover:bg-accent"
+                title={link.url}
+              >
+                <span className="flex items-center gap-1 min-w-0">
+                  <LinkFavicon url={link.url} className="w-4 h-4" />
+                  <span className="truncate text-muted-foreground">
+                    {link.name}
+                  </span>
+                </span>
+                {!disabled && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeLink(index)}
+                    aria-label={tGlobal("common.actions.remove")}
+                    className="shrink-0 h-6 w-6 p-0.5 text-foreground/70 hover:text-destructive"
+                  >
+                    <XCircle className="w-4 h-4" />
+                  </Button>
+                )}
               </li>
             ))}
           </ul>
@@ -371,49 +611,59 @@ export default function UploadAttachments({
           style={{ display: "none" }}
           id={fileInputId}
         />
-        <label
-          htmlFor={fileInputId}
-          className={`${disabled ? "pointer-events-none cursor-not-allowed" : "cursor-pointer"}`}
-        >
-          <Button
-            type="button"
-            variant="outline"
-            disabled={uploading || disabled}
-            asChild
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <label
+            htmlFor={fileInputId}
+            className={`${disabled ? "pointer-events-none cursor-not-allowed" : "cursor-pointer"}`}
           >
-            <span>
-              <CloudUpload className="w-5 h-5 text-primary" />
-              {uploading
-                ? tGlobal("common.status.uploading")
-                : tGlobal(
-                    multiple
-                      ? "common.upload.attachments.selectFiles"
-                      : "common.upload.attachments.selectFile",
-                    { count: selectedFiles.length }
-                  )}
-            </span>
-          </Button>
-        </label>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={uploading || disabled}
+              asChild
+            >
+              <span>
+                <CloudUpload className="w-5 h-5" />
+                {uploading
+                  ? tGlobal("common.status.uploading")
+                  : tGlobal(
+                      multiple
+                        ? "common.upload.attachments.selectFiles"
+                        : "common.upload.attachments.selectFile",
+                      { count: selectedFiles.length }
+                    )}
+              </span>
+            </Button>
+          </label>
+          {showLinkAffordance &&
+            !isLinkFormOpen &&
+            renderAddLinkButton("default")}
+        </div>
+        {showLinkAffordance && isLinkFormOpen && (
+          <div className="w-full max-w-md">{renderLinkForm()}</div>
+        )}
         {previews !== false ? (
           <ScrollArea className="w-full max-h-60">
             <div className="flex flex-wrap justify-between">
               {selectedFiles.map((file, index) => (
                 <div
-                  key={index}
+                  key={`file-${index}`}
                   className="relative flex flex-col items-center m-2"
                 >
                   <div className="mt-2 relative w-16 h-16 bg-accent rounded-full flex items-center justify-center">
                     {getThumbnail(file)}
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <button
+                        <Button
                           type="button"
-                          className="absolute top-0 left-14 transform -translate-y-2 -translate-x-2"
+                          variant="outline"
+                          size="icon"
                           onClick={() => removeFile(index)}
                           aria-label={tGlobal("common.cancel")}
+                          className="absolute top-0 left-14 -translate-y-2 -translate-x-2 h-7 w-7 rounded-full p-0.5 text-destructive hover:bg-destructive hover:text-destructive-foreground"
                         >
-                          <XCircle className="w-6 h-6 text-destructive" />
-                        </button>
+                          <XCircle className="w-5 h-5" />
+                        </Button>
                       </TooltipTrigger>
                       <TooltipContent>
                         {tGlobal("common.cancel")}
@@ -427,6 +677,39 @@ export default function UploadAttachments({
                   </div>
                 </div>
               ))}
+              {selectedLinks.map((link, index) => (
+                <div
+                  key={`link-${index}`}
+                  className="relative flex flex-col items-center m-2"
+                  title={link.url}
+                >
+                  <div className="mt-2 relative w-16 h-16 bg-accent rounded-full flex items-center justify-center">
+                    <LinkFavicon url={link.url} className="w-8 h-8" />
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => removeLink(index)}
+                          aria-label={tGlobal("common.cancel")}
+                          className="absolute top-0 left-14 -translate-y-2 -translate-x-2 h-7 w-7 rounded-full p-0.5 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                        >
+                          <XCircle className="w-5 h-5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {tGlobal("common.cancel")}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <div className="w-[100px] lg:w-[150px]">
+                    <div className="mb-2 mx-4 text-sm truncate text-center">
+                      {link.name}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </ScrollArea>
         ) : (
@@ -434,17 +717,45 @@ export default function UploadAttachments({
             <ul className="flex flex-col gap-1">
               {selectedFiles.map((file, index) => (
                 <li
-                  key={index}
+                  key={`file-${index}`}
                   className="flex items-center justify-between gap-0.5 hover:bg-accent p-2"
                 >
-                  <span className="truncate max-w-xs">{file.name}</span>
-                  <button
+                  <span className="flex items-center gap-1 truncate max-w-xs">
+                    <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                    {file.name}
+                  </span>
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => removeFile(index)}
                     aria-label={tGlobal("common.cancel")}
+                    className="shrink-0 h-7 w-7 p-0.5 text-destructive hover:bg-destructive/10"
                   >
-                    <XCircle className="w-5 h-5 text-destructive" />
-                  </button>
+                    <XCircle className="w-5 h-5" />
+                  </Button>
+                </li>
+              ))}
+              {selectedLinks.map((link, index) => (
+                <li
+                  key={`link-${index}`}
+                  className="flex items-center justify-between gap-0.5 hover:bg-accent p-2"
+                  title={link.url}
+                >
+                  <span className="flex items-center gap-1 truncate max-w-xs">
+                    <LinkFavicon url={link.url} className="w-4 h-4" />
+                    {link.name}
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeLink(index)}
+                    aria-label={tGlobal("common.cancel")}
+                    className="shrink-0 h-7 w-7 p-0.5 text-destructive hover:bg-destructive/10"
+                  >
+                    <XCircle className="w-5 h-5" />
+                  </Button>
                 </li>
               ))}
             </ul>

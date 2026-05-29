@@ -268,4 +268,196 @@ describe("UploadAttachments", () => {
 
     expect(screen.queryByText("invalidFileType")).not.toBeInTheDocument();
   });
+
+  // ─── Link mode ──────────────────────────────────────────────────────────
+  // The `allowLinks` prop is opt-in (defaults to false) so the import
+  // wizards that mount UploadAttachments file-only stay untouched.
+
+  describe("link mode (allowLinks)", () => {
+    it("does not render the Add Link button when allowLinks is false", () => {
+      render(<UploadAttachments onFileSelect={mockOnFileSelect} />);
+      // Two `addButton` instances would mean the form-submit button is
+      // also rendered; we just want to confirm the opt-in button is absent.
+      expect(screen.queryAllByText("addButton")).toHaveLength(0);
+    });
+
+    it("renders the Add Link button when allowLinks is true", () => {
+      const onLinksChange = vi.fn();
+      render(
+        <UploadAttachments
+          onFileSelect={mockOnFileSelect}
+          allowLinks
+          onLinksChange={onLinksChange}
+        />
+      );
+      // The toggle button — the form-submit button is hidden until clicked.
+      expect(screen.getAllByText("addButton").length).toBeGreaterThan(0);
+    });
+
+    it("expands the inline link form when the toggle is clicked", () => {
+      const onLinksChange = vi.fn();
+      render(
+        <UploadAttachments
+          onFileSelect={mockOnFileSelect}
+          allowLinks
+          onLinksChange={onLinksChange}
+        />
+      );
+      // Before clicking: form fields are not in the DOM.
+      expect(screen.queryByText("urlLabel")).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getAllByText("addButton")[0]);
+
+      // After clicking: URL, name, and note fields appear.
+      expect(screen.getByText("urlLabel")).toBeInTheDocument();
+      expect(screen.getByText("nameLabel")).toBeInTheDocument();
+      expect(screen.getByText("noteLabel")).toBeInTheDocument();
+    });
+
+    it("rejects an invalid URL and surfaces the error message", () => {
+      const onLinksChange = vi.fn();
+      render(
+        <UploadAttachments
+          onFileSelect={mockOnFileSelect}
+          allowLinks
+          onLinksChange={onLinksChange}
+        />
+      );
+      fireEvent.click(screen.getAllByText("addButton")[0]);
+
+      // Submit Add button is disabled when URL is empty; type a non-URL.
+      const urlInput = document.getElementById(
+        // The component generates ids of shape `<fileInputId>-link-url`.
+        // Targeting by query rather than by id since useId() is opaque.
+        document.querySelector('input[type="url"]')!.id
+      ) as HTMLInputElement;
+      fireEvent.change(urlInput, { target: { value: "not a url" } });
+      // The Add button is the SECOND `addButton` (toggle + submit, in order).
+      const buttons = screen.getAllByText("addButton");
+      const submit = buttons[buttons.length - 1].closest(
+        "button"
+      ) as HTMLButtonElement;
+      // Invalid URL → button disabled, callback never fires.
+      expect(submit.disabled).toBe(true);
+      expect(onLinksChange).not.toHaveBeenCalled();
+    });
+
+    it("emits a link on submit with mimeType text/uri-list and size = url length", () => {
+      const onLinksChange = vi.fn();
+      render(
+        <UploadAttachments
+          onFileSelect={mockOnFileSelect}
+          allowLinks
+          onLinksChange={onLinksChange}
+        />
+      );
+      fireEvent.click(screen.getAllByText("addButton")[0]);
+
+      const urlInput = document.querySelector(
+        'input[type="url"]'
+      ) as HTMLInputElement;
+      const nameInput = document.querySelector(
+        'input[type="text"]'
+      ) as HTMLInputElement;
+
+      const URL = "https://example.com/runbook";
+      fireEvent.change(urlInput, { target: { value: URL } });
+      fireEvent.change(nameInput, { target: { value: "Runbook" } });
+
+      const buttons = screen.getAllByText("addButton");
+      const submit = buttons[buttons.length - 1].closest(
+        "button"
+      ) as HTMLButtonElement;
+      fireEvent.click(submit);
+
+      expect(onLinksChange).toHaveBeenCalledWith([
+        {
+          url: URL,
+          name: "Runbook",
+          note: undefined,
+          mimeType: "text/uri-list",
+          size: URL.length,
+        },
+      ]);
+    });
+
+    it("defaults the display name to the URL when blank", () => {
+      const onLinksChange = vi.fn();
+      render(
+        <UploadAttachments
+          onFileSelect={mockOnFileSelect}
+          allowLinks
+          onLinksChange={onLinksChange}
+        />
+      );
+      fireEvent.click(screen.getAllByText("addButton")[0]);
+
+      const urlInput = document.querySelector(
+        'input[type="url"]'
+      ) as HTMLInputElement;
+      fireEvent.change(urlInput, {
+        target: { value: "https://example.com/x" },
+      });
+
+      const buttons = screen.getAllByText("addButton");
+      const submit = buttons[buttons.length - 1].closest(
+        "button"
+      ) as HTMLButtonElement;
+      fireEvent.click(submit);
+
+      expect(onLinksChange).toHaveBeenCalledWith([
+        expect.objectContaining({
+          url: "https://example.com/x",
+          name: "https://example.com/x",
+        }),
+      ]);
+    });
+
+    it("de-dupes by URL — pasting the same link twice yields one entry", () => {
+      const onLinksChange = vi.fn();
+      render(
+        <UploadAttachments
+          onFileSelect={mockOnFileSelect}
+          allowLinks
+          onLinksChange={onLinksChange}
+        />
+      );
+
+      const addOnce = () => {
+        fireEvent.click(screen.getAllByText("addButton")[0]);
+        const urlInput = document.querySelector(
+          'input[type="url"]'
+        ) as HTMLInputElement;
+        fireEvent.change(urlInput, {
+          target: { value: "https://example.com/dup" },
+        });
+        const buttons = screen.getAllByText("addButton");
+        const submit = buttons[buttons.length - 1].closest(
+          "button"
+        ) as HTMLButtonElement;
+        fireEvent.click(submit);
+      };
+
+      addOnce();
+      addOnce();
+
+      // The most recent onLinksChange payload should still contain one entry.
+      const last =
+        onLinksChange.mock.calls[onLinksChange.mock.calls.length - 1][0];
+      expect(last).toHaveLength(1);
+    });
+
+    it("does not invoke onLinksChange when no link has ever been added", () => {
+      // Mount-suppress: parent shouldn't see a spurious empty-array call.
+      const onLinksChange = vi.fn();
+      render(
+        <UploadAttachments
+          onFileSelect={mockOnFileSelect}
+          allowLinks
+          onLinksChange={onLinksChange}
+        />
+      );
+      expect(onLinksChange).not.toHaveBeenCalled();
+    });
+  });
 });

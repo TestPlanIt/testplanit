@@ -85,7 +85,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import UploadAttachments from "@/components/UploadAttachments";
+import UploadAttachments, {
+  type LinkAttachmentInput,
+} from "@/components/UploadAttachments";
 import { VersionSelect } from "@/components/VersionSelect";
 import type { Attachments, Sessions } from "@prisma/client";
 import { ApplicationArea } from "@prisma/client";
@@ -243,6 +245,7 @@ interface SessionFormControlsProps {
   setSelectedTags: (tags: number[]) => void;
   projectId: string | string[];
   handleFileSelect: (files: File[]) => void;
+  handleLinksChange?: (links: LinkAttachmentInput[]) => void;
   handleSelect: (attachments: Attachments[], index: number) => void;
   issues:
     | {
@@ -287,6 +290,7 @@ function SessionFormControls({
   setSelectedTags,
   projectId,
   handleFileSelect,
+  handleLinksChange,
   handleSelect,
   issues,
   projectIntegration,
@@ -744,7 +748,11 @@ function SessionFormControls({
               <FormControl>
                 <div className="space-y-4">
                   {isEditMode && (
-                    <UploadAttachments onFileSelect={handleFileSelect} />
+                    <UploadAttachments
+                      onFileSelect={handleFileSelect}
+                      allowLinks={!!handleLinksChange}
+                      onLinksChange={handleLinksChange}
+                    />
                   )}
                   <AttachmentsDisplay
                     attachments={
@@ -809,6 +817,7 @@ export default function SessionPage() {
   const [isFormInitialized, setIsFormInitialized] = useState(false);
   const panelLeftRef = useRef<ImperativePanelHandle>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedLinks, setSelectedLinks] = useState<LinkAttachmentInput[]>([]);
   const [selectedAttachments, setSelectedAttachments] = useState<Attachments[]>(
     []
   );
@@ -1567,6 +1576,7 @@ export default function SessionPage() {
       // Reset pending changes
       setPendingAttachmentChanges({ edits: [], deletes: [] });
       setSelectedFiles([]);
+      setSelectedLinks([]);
 
       await refetchSession();
       const params = new URLSearchParams(searchParams);
@@ -1673,6 +1683,29 @@ export default function SessionPage() {
         console.error(`Failed to upload file ${file.name}:`, error);
       }
     }
+
+    for (const link of selectedLinks) {
+      try {
+        const createdAttachment = await createAttachments({
+          data: {
+            session: { connect: { id: sessionId } },
+            url: link.url,
+            name: link.name,
+            note: link.note ?? "",
+            mimeType: link.mimeType,
+            size: BigInt(link.size),
+            createdBy: { connect: { id: session!.user.id } },
+          },
+        });
+
+        if (createdAttachment) {
+          uploadedAttachments.push(createdAttachment as Attachments);
+        }
+      } catch (error) {
+        console.error(`Failed to register link ${link.url}:`, error);
+      }
+    }
+
     return uploadedAttachments;
   };
 
@@ -2266,6 +2299,7 @@ export default function SessionPage() {
                     setSelectedTags={setSelectedTags}
                     projectId={safeProjectId}
                     handleFileSelect={handleFileSelect}
+                    handleLinksChange={setSelectedLinks}
                     handleSelect={handleSelect}
                     issues={sessionData.issues}
                     projectIntegration={projectData?.projectIntegrations?.[0]}

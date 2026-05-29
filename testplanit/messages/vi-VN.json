@@ -43,6 +43,7 @@
       "previous": "Trước",
       "finish": "Hoàn thành",
       "download": "Tải xuống",
+      "openLink": "Mở liên kết",
       "apply": "Áp dụng",
       "confirm": "Xác nhận",
       "confirmDelete": "Xác nhận xóa",
@@ -807,7 +808,17 @@
         "altText": {
           "emoji": "biểu tượng cảm xúc"
         },
-        "count": "{count, plural, =1 {# tập tin} other {# tập tin}}"
+        "count": "{count, plural, =1 {# tệp đính kèm} other {# tệp đính kèm}}",
+        "link": {
+          "addButton": "Thêm liên kết",
+          "urlLabel": "URL",
+          "urlPlaceholder": "https://example.com/...",
+          "nameLabel": "Tên hiển thị",
+          "namePlaceholder": "Mặc định là URL nếu để trống.",
+          "noteLabel": "Mô tả (tùy chọn)",
+          "notePlaceholder": "Vì sao liên kết này lại quan trọng",
+          "invalidUrl": "Nhập URL http(s) hợp lệ."
+        }
       }
     },
     "fileDropZone": {

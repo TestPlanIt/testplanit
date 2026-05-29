@@ -36,7 +36,9 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import UploadAttachments from "@/components/UploadAttachments";
+import UploadAttachments, {
+  type LinkAttachmentInput,
+} from "@/components/UploadAttachments";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ApplicationArea, Prisma } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -309,6 +311,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [linkedIssueIds, setLinkedIssueIds] = useState<number[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedLinks, setSelectedLinks] = useState<LinkAttachmentInput[]>([]);
 
   const {
     data: sharedStepGroupsData,
@@ -510,6 +513,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
 
   const handleCancel = () => {
     setSelectedFiles([]);
+    setSelectedLinks([]);
     onClose();
   };
 
@@ -658,6 +662,7 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
       }
       reset(defaultValues as FormValues);
       setSelectedFiles([]);
+      setSelectedLinks([]);
       setSelectedTags([]);
       setLinkedIssueIds([]);
     }
@@ -970,8 +975,19 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
           }
         }
 
-        const uploadedAttachments =
-          selectedFiles.length > 0 ? await uploadFiles() : [];
+        // Files upload to S3 first; external links (text/uri-list) need no
+        // upload — they're already in the IssueData-shaped form the
+        // backend persists.
+        const uploadedAttachments = [
+          ...(selectedFiles.length > 0 ? await uploadFiles() : []),
+          ...selectedLinks.map((link) => ({
+            url: link.url,
+            name: link.name,
+            mimeType: link.mimeType,
+            size: link.size,
+            note: link.note ?? "",
+          })),
+        ];
 
         const tagNamesForVersion = selectedTags.map(
           (tagId) => tags?.find((tag) => tag.id === tagId)?.name || ""
@@ -1393,7 +1409,11 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
                     </p>
                   )}
                   <div className="my-8">
-                    <UploadAttachments onFileSelect={handleFileSelect} />
+                    <UploadAttachments
+                      onFileSelect={handleFileSelect}
+                      allowLinks
+                      onLinksChange={setSelectedLinks}
+                    />
                   </div>
                 </ResizablePanel>
               </ResizablePanelGroup>

@@ -39,7 +39,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import UploadAttachments from "@/components/UploadAttachments";
+import UploadAttachments, {
+  type LinkAttachmentInput,
+} from "@/components/UploadAttachments";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Attachments } from "@prisma/client";
 import { ApplicationArea } from "@prisma/client";
@@ -410,6 +412,7 @@ export function AddSessionModal({
         : []
     );
     setSelectedFiles([]);
+    setSelectedLinks([]);
   }, [
     open,
     reset,
@@ -447,6 +450,7 @@ export function AddSessionModal({
   };
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedLinks, setSelectedLinks] = useState<LinkAttachmentInput[]>([]);
 
   const handleFileSelect = (files: File[]) => {
     setSelectedFiles(files);
@@ -494,7 +498,42 @@ export function AddSessionModal({
       };
     });
 
-    const attachments = await Promise.all(attachmentsPromises);
+    const linkPromises = selectedLinks.map(async (link) => {
+      const attachment = await createAttachments({
+        data: {
+          session: {
+            connect: { id: sessionId },
+          },
+          url: link.url,
+          name: link.name,
+          note: link.note ?? "",
+          mimeType: link.mimeType,
+          size: BigInt(link.size),
+          createdBy: {
+            connect: { id: session!.user.id },
+          },
+        },
+      });
+
+      return {
+        id: attachment?.id || 0,
+        testCaseId: null,
+        sessionId: sessionId,
+        url: link.url,
+        name: link.name,
+        note: link.note ?? "",
+        isDeleted: false,
+        mimeType: link.mimeType,
+        size: attachment?.size.toString(),
+        createdAt: new Date().toISOString(),
+        createdById: session!.user.id,
+      };
+    });
+
+    const attachments = await Promise.all([
+      ...attachmentsPromises,
+      ...linkPromises,
+    ]);
     return attachments;
   };
 
@@ -592,9 +631,10 @@ export function AddSessionModal({
 
         if (!newSession) throw new Error(t("sessions.errors.failedToCreate"));
 
-        // Only upload files to the first session
+        // Only upload files / register external links on the first session
         const uploadedAttachments =
-          createdSessions.length === 0 && selectedFiles.length > 0
+          createdSessions.length === 0 &&
+          (selectedFiles.length > 0 || selectedLinks.length > 0)
             ? await uploadFiles(newSession.id)
             : [];
 
@@ -911,7 +951,11 @@ export function AddSessionModal({
                       </FormLabel>
                       <FormControl>
                         <div className="space-y-4">
-                          <UploadAttachments onFileSelect={handleFileSelect} />
+                          <UploadAttachments
+                            onFileSelect={handleFileSelect}
+                            allowLinks
+                            onLinksChange={setSelectedLinks}
+                          />
                           {selectedFiles.length > 0 && (
                             <div className="mt-2 text-sm text-muted-foreground">
                               {t("common.labels.filesSelectedForUpload", {

@@ -43,6 +43,7 @@
       "previous": "Vorig",
       "finish": "Finish",
       "download": "Download",
+      "openLink": "Open link",
       "apply": "Toepassen",
       "confirm": "Bevestigen",
       "confirmDelete": "Bevestig Verwijderen",
@@ -807,7 +808,17 @@
         "altText": {
           "emoji": "emoji"
         },
-        "count": "{count, plural, =1 {# bestand} other {# bestanden}}"
+        "count": "{count, plural, =1 {# bijlage} other {# bijlagen}}",
+        "link": {
+          "addButton": "Link toevoegen",
+          "urlLabel": "URL",
+          "urlPlaceholder": "https://example.com/...",
+          "nameLabel": "Weergavenaam",
+          "namePlaceholder": "Als het veld leeg is, wordt standaard de URL gebruikt.",
+          "noteLabel": "Beschrijving (optioneel)",
+          "notePlaceholder": "Waarom deze link relevant is",
+          "invalidUrl": "Voer een geldige http(s)-URL in."
+        }
       }
     },
     "fileDropZone": {

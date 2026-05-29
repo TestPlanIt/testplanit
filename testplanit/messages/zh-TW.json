@@ -43,6 +43,7 @@
       "previous": "以前的",
       "finish": "結束",
       "download": "下載",
+      "openLink": "打開連結",
       "apply": "申請",
       "confirm": "確認",
       "confirmDelete": "確認刪除",
@@ -807,7 +808,17 @@
         "altText": {
           "emoji": "表情符號"
         },
-        "count": "{count, plural, =1 {# 文件} other {# 文件集}}"
+        "count": "{count, plural, =1 {# 附件} other {# 附件}}",
+        "link": {
+          "addButton": "添加連結",
+          "urlLabel": "URL",
+          "urlPlaceholder": "https://example.com/...",
+          "nameLabel": "顯示名稱",
+          "namePlaceholder": "預設為空 URL",
+          "noteLabel": "描述（可選）",
+          "notePlaceholder": "此連結為何相關",
+          "invalidUrl": "請輸入有效的http(s)網址。"
+        }
       }
     },
     "fileDropZone": {

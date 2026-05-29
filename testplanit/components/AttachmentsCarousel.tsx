@@ -21,6 +21,7 @@ import {
   ChevronRight,
   CircleSlash2,
   Download,
+  ExternalLink,
   SquarePen,
   Trash2,
 } from "lucide-react";
@@ -244,8 +245,20 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                         </div>
                       )}
                     </div>
-                    <div className="flex flex-col md:flex-row w-full h-full">
-                      <div className="md:w-2/3 flex flex-col items-center">
+                    <div
+                      className={`flex w-full h-full ${
+                        attachment.mimeType === "text/uri-list"
+                          ? "flex-col"
+                          : "flex-col md:flex-row"
+                      }`}
+                    >
+                      <div
+                        className={`flex flex-col items-center ${
+                          attachment.mimeType === "text/uri-list"
+                            ? "w-full py-2"
+                            : "md:w-2/3"
+                        }`}
+                      >
                         <div className="w-full flex justify-center items-start">
                           <AttachmentPreview
                             attachment={attachment}
@@ -253,11 +266,29 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                           />
                         </div>
                       </div>
-                      <div className="md:w-1/3 w-full flex flex-col justify-start items-start p-4 overflow-auto">
-                        <div className="text-left space-y-2 w-full">
+                      <div
+                        className={`w-full flex flex-col justify-start items-start p-4 overflow-auto ${
+                          attachment.mimeType === "text/uri-list"
+                            ? ""
+                            : "md:w-1/3"
+                        }`}
+                      >
+                        <div
+                          className={`text-left w-full ${
+                            attachment.mimeType === "text/uri-list"
+                              ? "grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-x-6 gap-y-2"
+                              : "space-y-2"
+                          }`}
+                        >
                           <div>
                             <strong>{t("common.fields.description")}</strong>
-                            <div className="flex items-center w-full h-24 max-h-24 md:max-h-48 overflow-auto">
+                            <div
+                              className={`flex items-center w-full overflow-auto ${
+                                attachment.mimeType === "text/uri-list"
+                                  ? "min-h-[1.5rem]"
+                                  : "h-24 max-h-24 md:max-h-48"
+                              }`}
+                            >
                               {isEditing && index === current ? (
                                 <Textarea
                                   className="text-md h-24"
@@ -267,7 +298,13 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                                   }
                                 />
                               ) : (
-                                <span className="w-full h-24">
+                                <span
+                                  className={
+                                    attachment.mimeType === "text/uri-list"
+                                      ? "w-full"
+                                      : "w-full h-24"
+                                  }
+                                >
                                   {attachment.note
                                     ? attachment.note
                                     : t("common.access.none")}
@@ -275,7 +312,9 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
                               )}
                             </div>
                           </div>
-                          <Separator className="w-full" />
+                          {attachment.mimeType !== "text/uri-list" && (
+                            <Separator className="w-full" />
+                          )}
                           <div className="text-sm">
                             <strong>{t("common.fields.size")}</strong>{" "}
                             {filesize(Number(attachment.size))}
@@ -323,20 +362,31 @@ export const AttachmentsCarousel: React.FC<AttachmentsCarouselProps> = ({
         </div>
         <DialogFooter>
           <div className="flex items-center gap-4">
-            <a
-              href={
-                getStorageUrlClient(attachments[current].url) ||
-                attachments[current].url
-              }
-              download={attachments[current].name}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Button variant="default" disabled={isEditing}>
-                <Download className="inline w-5 h-5" />
-                {t("common.actions.download")}
-              </Button>
-            </a>
+            {(() => {
+              const isLink = attachments[current].mimeType === "text/uri-list";
+              return (
+                <a
+                  href={
+                    getStorageUrlClient(attachments[current].url) ||
+                    attachments[current].url
+                  }
+                  {...(isLink ? {} : { download: attachments[current].name })}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button variant="default" disabled={isEditing}>
+                    {isLink ? (
+                      <ExternalLink className="inline w-5 h-5" />
+                    ) : (
+                      <Download className="inline w-5 h-5" />
+                    )}
+                    {isLink
+                      ? t("common.actions.openLink")
+                      : t("common.actions.download")}
+                  </Button>
+                </a>
+              );
+            })()}
             {canEdit && (
               <>
                 {isEditing ? (

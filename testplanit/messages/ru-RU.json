@@ -43,6 +43,7 @@
       "previous": "Предыдущий",
       "finish": "Заканчивать",
       "download": "Скачать",
+      "openLink": "Открыть ссылку",
       "apply": "Применять",
       "confirm": "Подтверждать",
       "confirmDelete": "Подтвердить удаление",
@@ -807,7 +808,17 @@
         "altText": {
           "emoji": "эмодзи"
         },
-        "count": "{count, plural, =1 {# файл} other {# файлы}}"
+        "count": "{count, plural, =1 {# вложение} other {# вложения}}",
+        "link": {
+          "addButton": "Добавить ссылку",
+          "urlLabel": "URL",
+          "urlPlaceholder": "https://example.com/...",
+          "nameLabel": "Отображаемое имя",
+          "namePlaceholder": "Если поле пустое, по умолчанию используется URL-адрес.",
+          "noteLabel": "Описание (необязательно)",
+          "notePlaceholder": "Почему эта ссылка актуальна",
+          "invalidUrl": "Введите действительный URL-адрес http(s)."
+        }
       }
     },
     "fileDropZone": {

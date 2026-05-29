@@ -43,6 +43,7 @@
       "previous": "Anterior",
       "finish": "Terminar",
       "download": "Download",
+      "openLink": "Abrir link",
       "apply": "Aplicar",
       "confirm": "Confirmar",
       "confirmDelete": "Confirmar exclusão",
@@ -807,7 +808,17 @@
         "altText": {
           "emoji": "emoji"
         },
-        "count": "{count, plural, =1 {# arquivo} other {# arquivos}}"
+        "count": "{count, plural, =1 {# anexo} other {# anexos}}",
+        "link": {
+          "addButton": "Adicionar link",
+          "urlLabel": "URL",
+          "urlPlaceholder": "https://example.com/...",
+          "nameLabel": "Nome de exibição",
+          "namePlaceholder": "O valor padrão é a URL quando o campo está em branco.",
+          "noteLabel": "Descrição (opcional)",
+          "notePlaceholder": "Por que este link é relevante?",
+          "invalidUrl": "Insira um URL http(s) válido."
+        }
       }
     },
     "fileDropZone": {

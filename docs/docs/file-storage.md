@@ -139,6 +139,14 @@ Users can attach files in several ways:
 3. **Rich Text Editor**: Paste images directly into rich text fields
 4. **Bulk Upload**: Select multiple files at once
 
+### External Links as Attachments
+
+Anywhere you can upload a file as an attachment — test cases, test runs, results, exploratory sessions — you can also attach an **external link** instead of a file. Click **Add Link** next to the file picker, paste the URL, optionally give it a display name and a short description, and click Add. The link appears in the attachment list alongside any uploaded files.
+
+External-link attachments are stored as regular `Attachments` rows with `mimeType: "text/uri-list"` — no file is uploaded to S3/MinIO, the URL itself is the payload. The attachment list renders them with a link icon (instead of a file thumbnail) and opens them in a new tab when clicked. Display, edit, and delete behave the same as for file attachments.
+
+Use this when the evidence lives in another system — a Jira ticket, a CI build, a Looker dashboard, a Confluence runbook, a recorded session — rather than as a downloadable file.
+
 ### Storage Modes
 
 TestPlanIt supports two upload modes depending on your deployment:

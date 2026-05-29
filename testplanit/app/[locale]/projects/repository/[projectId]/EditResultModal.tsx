@@ -3,7 +3,9 @@ import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { TimeTracker, TimeTrackerRef } from "@/components/TimeTracker";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
 import { HelpPopover } from "@/components/ui/help-popover";
-import UploadAttachments from "@/components/UploadAttachments";
+import UploadAttachments, {
+  type LinkAttachmentInput,
+} from "@/components/UploadAttachments";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Issue } from "@prisma/client";
 import { ApplicationArea, Attachments } from "@prisma/client";
@@ -306,6 +308,7 @@ export function EditResultModal({
   const [, setTrackedSeconds] = useState(0);
   const timeTrackerRef = useRef<TimeTrackerRef>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedLinks, setSelectedLinks] = useState<LinkAttachmentInput[]>([]);
   const [selectedAttachmentIndex, setSelectedAttachmentIndex] = useState<
     number | null
   >(null);
@@ -825,7 +828,39 @@ export function EditResultModal({
       };
     });
 
-    const attachments = await Promise.all(attachmentsPromises);
+    // External-link attachments — no S3 upload, just persist the row.
+    const linkPromises = selectedLinks.map(async (link) => {
+      const attachment = await createAttachments({
+        data: {
+          testRunResults: {
+            connect: { id: testRunResultId },
+          },
+          url: link.url,
+          name: link.name,
+          note: link.note ?? "",
+          mimeType: link.mimeType,
+          size: BigInt(link.size),
+          createdBy: {
+            connect: { id: session.user.id },
+          },
+        },
+      });
+
+      return {
+        id: attachment?.id,
+        url: link.url,
+        name: link.name,
+        note: link.note ?? "",
+        mimeType: link.mimeType,
+        size: link.size,
+        createdBy: session.user.name,
+      };
+    });
+
+    const attachments = await Promise.all([
+      ...attachmentsPromises,
+      ...linkPromises,
+    ]);
     return attachments;
   };
 
@@ -955,8 +990,8 @@ export function EditResultModal({
 
       // Field values were written atomically by the edit-result endpoint above.
 
-      // Upload attachments if there are any
-      if (selectedFiles.length > 0) {
+      // Upload attachments if there are any (files OR external links)
+      if (selectedFiles.length > 0 || selectedLinks.length > 0) {
         await uploadFiles(result.id);
       }
 
@@ -1725,6 +1760,8 @@ export function EditResultModal({
               <UploadAttachments
                 key={uploadAttachmentsKey}
                 onFileSelect={setSelectedFiles}
+                allowLinks
+                onLinksChange={setSelectedLinks}
               />
             </div>
 

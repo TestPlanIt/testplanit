@@ -118,6 +118,7 @@ import { QuickScriptModal } from "../QuickScriptModal";
 import { FolderNode } from "../TreeView";
 import FieldValueRenderer from "./FieldValueRenderer";
 import { StepsDisplay } from "./StepsDisplay";
+import { type LinkAttachmentInput } from "@/components/UploadAttachments";
 import TestCaseFormControls from "./TestCaseFormControl";
 
 // Type Definitions (ensure these are present and correct)
@@ -829,6 +830,7 @@ export default function TestCaseDetails() {
     []
   );
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedLinks, setSelectedLinks] = useState<LinkAttachmentInput[]>([]);
   const [pendingAttachmentChanges, setPendingAttachmentChanges] =
     useState<AttachmentChanges>({ edits: [], deletes: [] });
 
@@ -1032,6 +1034,7 @@ export default function TestCaseDetails() {
     setSelectedTemplateId(testcase.template.id ?? null);
     setPendingAttachmentChanges({ edits: [], deletes: [] });
     setSelectedFiles([]);
+    setSelectedLinks([]);
     // Form will be reset through the template change effect
   };
 
@@ -1414,7 +1417,35 @@ export default function TestCaseDetails() {
           createdById: session!.user.id,
         };
       });
-      const newAttachments = await Promise.all(createAttachmentsPromises);
+      const createLinkPromises = selectedLinks.map(async (link) => {
+        const newAttachment = await createAttachments({
+          data: {
+            testCase: { connect: { id: Number(caseId) } },
+            url: link.url,
+            name: link.name,
+            note: link.note ?? "",
+            mimeType: link.mimeType,
+            size: BigInt(link.size),
+            createdBy: { connect: { id: session!.user.id } },
+          },
+        });
+        return {
+          id: newAttachment?.id || 0,
+          testCaseId: newAttachment?.testCaseId || 0,
+          url: link.url,
+          name: link.name,
+          note: link.note ?? "",
+          isDeleted: false,
+          mimeType: link.mimeType,
+          size: BigInt(link.size),
+          createdAt: new Date(),
+          createdById: session!.user.id,
+        };
+      });
+      const newAttachments = await Promise.all([
+        ...createAttachmentsPromises,
+        ...createLinkPromises,
+      ]);
 
       // Get existing attachments, applying pending edits and filtering out deleted ones
       // Explicitly pick only primitive fields to avoid relation objects
@@ -1686,6 +1717,7 @@ export default function TestCaseDetails() {
       setIsEditMode(false);
       setPendingAttachmentChanges({ edits: [], deletes: [] });
       setSelectedFiles([]);
+      setSelectedLinks([]);
       void refetch();
     } catch (error) {
       console.error("Error in handleSave:", error);
@@ -2580,6 +2612,8 @@ export default function TestCaseDetails() {
                     testcase={testcase}
                     setSelectedFiles={setSelectedFiles}
                     selectedFiles={selectedFiles}
+                    setSelectedLinks={setSelectedLinks}
+                    selectedLinks={selectedLinks}
                     handleSelect={handleSelect}
                     selectedAttachmentIndex={selectedAttachmentIndex}
                     selectedAttachments={selectedAttachments}

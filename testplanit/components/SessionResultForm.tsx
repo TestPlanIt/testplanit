@@ -22,7 +22,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import UploadAttachments from "@/components/UploadAttachments";
+import UploadAttachments, {
+  type LinkAttachmentInput,
+} from "@/components/UploadAttachments";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Attachments } from "@prisma/client";
 import { Bug, CircleCheckBig, Clock, Paperclip, Save } from "lucide-react";
@@ -194,6 +196,7 @@ export function SessionResultForm({
   const [_trackedSeconds, setTrackedSeconds] = useState(0);
   const timeTrackerRef = useRef<TimeTrackerRef>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedLinks, setSelectedLinks] = useState<LinkAttachmentInput[]>([]);
   const [selectedAttachmentIndex, setSelectedAttachmentIndex] = useState<
     number | null
   >(null);
@@ -512,7 +515,38 @@ export function SessionResultForm({
       };
     });
 
-    const attachments = await Promise.all(attachmentsPromises);
+    const linkPromises = selectedLinks.map(async (link) => {
+      const attachment = await createAttachments({
+        data: {
+          sessionResults: {
+            connect: { id: sessionResultId },
+          },
+          url: link.url,
+          name: link.name,
+          note: link.note ?? "",
+          mimeType: link.mimeType,
+          size: BigInt(link.size),
+          createdBy: {
+            connect: { id: session.user.id },
+          },
+        },
+      });
+
+      return {
+        id: attachment?.id,
+        url: link.url,
+        name: link.name,
+        note: link.note ?? "",
+        mimeType: link.mimeType,
+        size: link.size,
+        createdBy: session.user.name,
+      };
+    });
+
+    const attachments = await Promise.all([
+      ...attachmentsPromises,
+      ...linkPromises,
+    ]);
     return attachments;
   };
 
@@ -591,8 +625,8 @@ export function SessionResultForm({
         await Promise.all(fieldValuesPromises);
       }
 
-      // Upload attachments if there are any
-      if (selectedFiles.length > 0 && result) {
+      // Upload attachments if there are any (files OR external links)
+      if ((selectedFiles.length > 0 || selectedLinks.length > 0) && result) {
         await uploadFiles(result.id);
       }
 
@@ -613,8 +647,9 @@ export function SessionResultForm({
       // Reset the TimeTracker
       timeTrackerRef.current?.reset();
 
-      // Reset selected files
+      // Reset selected files + staged external links
       setSelectedFiles([]);
+      setSelectedLinks([]);
       // Reset selected issues
       setSelectedIssues([]);
 
@@ -1018,6 +1053,8 @@ export function SessionResultForm({
                           <UploadAttachments
                             key={uploadAttachmentsKey}
                             onFileSelect={handleFileSelect}
+                            allowLinks
+                            onLinksChange={setSelectedLinks}
                             compact={true}
                           />
                           {selectedFiles.length > 0 && (

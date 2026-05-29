@@ -15,7 +15,9 @@ import { FormControl, FormField, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import UploadAttachments from "@/components/UploadAttachments";
+import UploadAttachments, {
+  type LinkAttachmentInput,
+} from "@/components/UploadAttachments";
 import { Attachments, Tags } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import React from "react";
@@ -29,6 +31,10 @@ interface TestCaseFormControlsProps {
   testcase: any;
   setSelectedFiles: React.Dispatch<React.SetStateAction<File[]>>;
   selectedFiles: File[];
+  setSelectedLinks?: React.Dispatch<
+    React.SetStateAction<LinkAttachmentInput[]>
+  >;
+  selectedLinks?: LinkAttachmentInput[];
   handleSelect: (attachments: Attachments[], index: number) => void;
   selectedAttachmentIndex: number | null;
   selectedAttachments: Attachments[];
@@ -47,6 +53,8 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
   testcase,
   setSelectedFiles,
   selectedFiles: _selectedFiles,
+  setSelectedLinks,
+  selectedLinks: _selectedLinks,
   handleSelect,
   selectedAttachmentIndex,
   selectedAttachments,
@@ -190,6 +198,8 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                   onFileSelect={(files: File[]) => {
                     setSelectedFiles(files);
                   }}
+                  allowLinks={!!setSelectedLinks}
+                  onLinksChange={setSelectedLinks}
                 />
               </div>
               {testcase.attachments.length > 0 && (

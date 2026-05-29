@@ -37,7 +37,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import UploadAttachments from "@/components/UploadAttachments";
+import UploadAttachments, {
+  type LinkAttachmentInput,
+} from "@/components/UploadAttachments";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ApplicationArea, Attachments, TestRunType } from "@prisma/client";
 import { DialogDescription } from "@radix-ui/react-dialog";
@@ -143,6 +145,7 @@ const BasicInfoDialog = React.memo(
     setSelectedTags,
     selectedFiles: _selectedFiles,
     handleFileSelect,
+    handleLinksChange,
     handleSelect,
     selectedAttachmentIndex,
     handleAttachmentClose,
@@ -531,7 +534,11 @@ const BasicInfoDialog = React.memo(
                       </FormLabel>
                       <FormControl>
                         <div className="space-y-4">
-                          <UploadAttachments onFileSelect={handleFileSelect} />
+                          <UploadAttachments
+                            onFileSelect={handleFileSelect}
+                            allowLinks
+                            onLinksChange={handleLinksChange}
+                          />
                           <AttachmentsDisplay
                             attachments={(field.value as Attachments[]) || []}
                             preventEditing={false}
@@ -891,6 +898,7 @@ export default function AddTestRunModal({
     initialSelectedCaseIds || []
   );
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedLinks, setSelectedLinks] = useState<LinkAttachmentInput[]>([]);
   // Latest cardinality preflight result reported by the chip in Step 1.
   // Drives the soft-confirm gate + hard-refuse breakdown dialog.
   const [preflightResult, setPreflightResult] = useState<
@@ -1215,7 +1223,29 @@ export default function AddTestRunModal({
         createdBy: session!.user.name,
       };
     });
-    return Promise.all(attachmentsPromises);
+    const linkPromises = selectedLinks.map(async (link) => {
+      const attachment = await createAttachments({
+        data: {
+          testRuns: { connect: { id: testRunId } },
+          url: link.url,
+          name: link.name,
+          note: link.note ?? "",
+          mimeType: link.mimeType,
+          size: BigInt(link.size),
+          createdBy: { connect: { id: session!.user.id } },
+        },
+      });
+      return {
+        id: attachment?.id,
+        url: link.url,
+        name: link.name,
+        note: link.note ?? "",
+        mimeType: link.mimeType,
+        size: link.size,
+        createdBy: session!.user.name,
+      };
+    });
+    return Promise.all([...attachmentsPromises, ...linkPromises]);
   };
 
   const _handleConfirmSelection = (selectedIds: number[]) => {
@@ -1372,7 +1402,10 @@ export default function AddTestRunModal({
           });
 
           // Only upload files to the first run (or we could duplicate to all)
-          if (createdRuns.length === 1 && selectedFiles.length > 0) {
+          if (
+            createdRuns.length === 1 &&
+            (selectedFiles.length > 0 || selectedLinks.length > 0)
+          ) {
             await uploadFiles(newTestRun.id);
           }
 
@@ -1489,6 +1522,7 @@ export default function AddTestRunModal({
           setSelectedTags: setSelectedTags,
           selectedFiles: selectedFiles,
           handleFileSelect: handleFileSelect,
+          handleLinksChange: setSelectedLinks,
           handleSelect: handleSelect,
           selectedAttachmentIndex: selectedAttachmentIndex,
           handleAttachmentClose: handleAttachmentClose,
