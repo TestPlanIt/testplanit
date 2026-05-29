@@ -306,6 +306,8 @@
       "automated": "자동화된",
       "manual": "수동",
       "notAutomated": "자동화되지 않음",
+      "parameterized": "매개변수화된",
+      "notParameterized": "매개변수화되지 않음",
       "testRuns": "테스트 실행",
       "title": "제목",
       "project": "프로젝트",
@@ -2605,6 +2607,7 @@
     },
     "views": {
       "byAutomation": "오토메이션",
+      "byParameterized": "매개변수화",
       "allTemplates": "모든 템플릿",
       "allStates": "모든 주",
       "allCreators": "모든 크리에이터",

@@ -306,6 +306,8 @@
       "automated": "Otomatik",
       "manual": "Manuel",
       "notAutomated": "Otomatikleştirilmemiş",
+      "parameterized": "Parametreli",
+      "notParameterized": "Parametrelendirilmemiş",
       "testRuns": "Test Çalışmaları",
       "title": "Başlık",
       "project": "Proje",
@@ -2605,6 +2607,7 @@
     },
     "views": {
       "byAutomation": "Otomasyon",
+      "byParameterized": "Parametrizasyon",
       "allTemplates": "Tüm Şablonlar",
       "allStates": "Tüm Eyaletler",
       "allCreators": "Tüm Yaratıcılar",

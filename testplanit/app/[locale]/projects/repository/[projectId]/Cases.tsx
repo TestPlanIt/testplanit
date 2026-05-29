@@ -1465,6 +1465,11 @@ export default function Cases({
                   automated: (singleFilterId as number) === 1 ? true : false,
                 });
                 break;
+              case "parameterized":
+                filterConditions.push({
+                  hasParameters: (singleFilterId as number) === 1,
+                });
+                break;
               case "tags":
                 if (singleFilterId === "any") {
                   filterConditions.push({

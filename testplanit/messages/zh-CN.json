@@ -306,6 +306,8 @@
       "automated": "自动化",
       "manual": "手动的",
       "notAutomated": "非自动化",
+      "parameterized": "参数化",
+      "notParameterized": "未参数化",
       "testRuns": "测试运行",
       "title": "标题",
       "project": "项目",
@@ -2605,6 +2607,7 @@
     },
     "views": {
       "byAutomation": "自动化",
+      "byParameterized": "参数化",
       "allTemplates": "所有模板",
       "allStates": "所有州",
       "allCreators": "所有创作者",

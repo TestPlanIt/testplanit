@@ -306,6 +306,8 @@
       "automated": "Zautomatyzowany",
       "manual": "Podręcznik",
       "notAutomated": "Niezautomatyzowane",
+      "parameterized": "Sparametryzowane",
+      "notParameterized": "Nie sparametryzowane",
       "testRuns": "Testy biegowe",
       "title": "Tytuł",
       "project": "Projekt",
@@ -2605,6 +2607,7 @@
     },
     "views": {
       "byAutomation": "Automatyzacja",
+      "byParameterized": "Parametryzacja",
       "allTemplates": "Wszystkie szablony",
       "allStates": "Wszystkie stany",
       "allCreators": "Wszyscy twórcy",

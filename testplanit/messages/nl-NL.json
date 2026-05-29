@@ -306,6 +306,8 @@
       "automated": "Geautomatiseerd",
       "manual": "Handmatig",
       "notAutomated": "Niet geautomatiseerd",
+      "parameterized": "Geparameteriseerd",
+      "notParameterized": "Niet geparameteriseerd",
       "testRuns": "Testruns",
       "title": "Titel",
       "project": "Project",
@@ -2605,6 +2607,7 @@
     },
     "views": {
       "byAutomation": "Automatisering",
+      "byParameterized": "Parameterisering",
       "allTemplates": "Alle sjablonen",
       "allStates": "Alle staten",
       "allCreators": "Alle makers",

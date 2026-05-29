@@ -306,6 +306,8 @@
       "automated": "Automatisiert",
       "manual": "Handbuch",
       "notAutomated": "Nicht automatisiert",
+      "parameterized": "Parametrisiert",
+      "notParameterized": "Nicht parametrisiert",
       "testRuns": "Testläufe",
       "title": "Titel",
       "project": "Projekt",
@@ -2605,6 +2607,7 @@
     },
     "views": {
       "byAutomation": "Automatisierung",
+      "byParameterized": "Parametrisierung",
       "allTemplates": "Alle Vorlagen",
       "allStates": "Alle Staaten",
       "allCreators": "Alle Schöpfer",
