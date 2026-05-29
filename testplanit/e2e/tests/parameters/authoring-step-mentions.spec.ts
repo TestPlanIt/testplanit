@@ -82,12 +82,15 @@ test.describe("Parameters - authoring + step mentions @parameters", () => {
       .getByTestId("tiptap-insert-parameter-button")
       .first()
       .click();
-    await expect(page.getByTestId("parameter-chooser-dialog")).toBeVisible();
-    await page.getByTestId("parameter-chooser-search-input").fill("amo");
-    await page.getByTestId("parameter-chooser-item-amount").click();
-    await expect(
-      page.getByTestId("parameter-chooser-dialog")
-    ).not.toBeVisible();
+    // The toolbar opens an AsyncCombobox (Radix Popover + cmdk), not a
+    // standalone Dialog — find the search input by placeholder and the
+    // option by accessible name. The previous `parameter-chooser-*`
+    // testids were from an earlier dedicated-chooser implementation.
+    const chooserSearch = page.getByPlaceholder(/search parameter/i);
+    await expect(chooserSearch).toBeVisible();
+    await chooserSearch.fill("amo");
+    await page.getByRole("option", { name: /@?amount/i }).click();
+    await expect(chooserSearch).not.toBeVisible();
 
     // Type an undeclared @foo — warning ribbon should surface below the editor.
     await stepEditor.click();

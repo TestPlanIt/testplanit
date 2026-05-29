@@ -2057,7 +2057,9 @@
     },
     "duplicateDialog": {
       "title": "Duplicate Session",
-      "description": "Create a copy of session <nameStyle>{name}</nameStyle> with all metadata but no results."
+      "description": "Create a copy of session <nameStyle>{name}</nameStyle> with all metadata but no results.",
+      "templateUnassignedWarning": "The original session used a template that's no longer assigned to this project. The new session will use <strong>{name}</strong> instead.",
+      "stateUnassignedWarning": "The original session used a workflow state that's no longer enabled for this project. The new session will use <strong>{name}</strong> instead."
     },
     "errors": {
       "failedToCreate": "Failed to create new session",

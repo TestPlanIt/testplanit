@@ -2057,7 +2057,9 @@
     },
     "duplicateDialog": {
       "title": "Doppelte Sitzung",
-      "description": "Erstelle eine Kopie der Sitzung <nameStyle>{name}</nameStyle> mit allen Metadaten, aber ohne Ergebnisse."
+      "description": "Erstelle eine Kopie der Sitzung <nameStyle>{name}</nameStyle> mit allen Metadaten, aber ohne Ergebnisse.",
+      "templateUnassignedWarning": "Die ursprüngliche Sitzung verwendete eine Vorlage, die diesem Projekt nicht mehr zugewiesen ist. Die neue Sitzung verwendet stattdessen <strong>{name}</strong>.",
+      "stateUnassignedWarning": "Die ursprüngliche Sitzung verwendete einen Workflow-Status, der für dieses Projekt nicht mehr aktiviert ist. Die neue Sitzung verwendet stattdessen <strong>{name}</strong>."
     },
     "errors": {
       "failedToCreate": "Es konnte keine neue Sitzung erstellt werden.",

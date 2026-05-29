@@ -2057,7 +2057,9 @@
     },
     "duplicateDialog": {
       "title": "Yinelenen Oturum",
-      "description": "<nameStyle>{name}</nameStyle> oturumunun tüm meta verilerini içeren ancak sonuç içermeyen bir kopyasını oluşturun."
+      "description": "<nameStyle>{name}</nameStyle> oturumunun tüm meta verilerini içeren ancak sonuç içermeyen bir kopyasını oluşturun.",
+      "templateUnassignedWarning": "Orijinal oturumda artık bu projeye atanmamış bir şablon kullanılıyordu. Yeni oturumda bunun yerine <strong>{name}</strong> kullanılacaktır.",
+      "stateUnassignedWarning": "Orijinal oturumda, bu proje için artık etkin olmayan bir iş akışı durumu kullanılıyordu. Yeni oturum bunun yerine <strong>{name}</strong> kullanacaktır."
     },
     "errors": {
       "failedToCreate": "Yeni oturum oluşturulamadı.",

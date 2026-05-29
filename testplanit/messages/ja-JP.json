@@ -2057,7 +2057,9 @@
     },
     "duplicateDialog": {
       "title": "セッションの重複",
-      "description": "すべてのメタデータを含み、結果を含まないセッション <nameStyle>{name}</nameStyle> のコピーを作成します。"
+      "description": "すべてのメタデータを含み、結果を含まないセッション <nameStyle>{name}</nameStyle> のコピーを作成します。",
+      "templateUnassignedWarning": "元のセッションでは、このプロジェクトに割り当てられなくなったテンプレートが使用されていました。新しいセッションでは、代わりに <strong>{name}</strong> を使用します。",
+      "stateUnassignedWarning": "元のセッションでは、このプロジェクトで有効ではなくなったワークフロー状態が使用されていました。新しいセッションでは、代わりに <strong>{name}</strong> を使用します。"
     },
     "errors": {
       "failedToCreate": "新しいセッションを作成できませんでした",

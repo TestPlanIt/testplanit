@@ -2057,7 +2057,9 @@
     },
     "duplicateDialog": {
       "title": "중복 세션",
-      "description": "모든 메타데이터는 포함하되 결과는 포함하지 않는 세션 <nameStyle>{name}</nameStyle> 의 복사본을 생성합니다."
+      "description": "모든 메타데이터는 포함하되 결과는 포함하지 않는 세션 <nameStyle>{name}</nameStyle> 의 복사본을 생성합니다.",
+      "templateUnassignedWarning": "기존 세션에서는 더 이상 이 프로젝트에 할당되지 않은 템플릿을 사용했습니다. 새 세션에서는 <strong>{name}</strong> 템플릿을 대신 사용합니다.",
+      "stateUnassignedWarning": "기존 세션은 이 프로젝트에서 더 이상 사용 가능하지 않은 워크플로 상태를 사용했습니다. 새 세션에서는 대신 <strong>{name}</strong> 를 사용합니다."
     },
     "errors": {
       "failedToCreate": "새 세션을 생성하는 데 실패했습니다.",

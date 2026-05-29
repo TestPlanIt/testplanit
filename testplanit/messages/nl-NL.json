@@ -2057,7 +2057,9 @@
     },
     "duplicateDialog": {
       "title": "Dubbele sessie",
-      "description": "Maak een kopie van sessie <nameStyle>{name}</nameStyle> met alle metadata, maar zonder resultaten."
+      "description": "Maak een kopie van sessie <nameStyle>{name}</nameStyle> met alle metadata, maar zonder resultaten.",
+      "templateUnassignedWarning": "De oorspronkelijke sessie gebruikte een sjabloon dat niet langer aan dit project is toegewezen. De nieuwe sessie zal in plaats daarvan <strong>{name}</strong> gebruiken.",
+      "stateUnassignedWarning": "De oorspronkelijke sessie gebruikte een workflowstatus die niet langer is ingeschakeld voor dit project. De nieuwe sessie zal in plaats daarvan <strong>{name}</strong> gebruiken."
     },
     "errors": {
       "failedToCreate": "Het is niet gelukt om een nieuwe sessie te maken",
