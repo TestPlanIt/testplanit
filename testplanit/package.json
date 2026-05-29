@@ -377,9 +377,6 @@
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
-  "pnpm": {
-    "minimumReleaseAge": 0
-  },
   "overrides": {
     "csstype": "^3.2.0",
     "@csstools/css-syntax-patches-for-csstree": "^1.0.20",

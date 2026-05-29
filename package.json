@@ -17,7 +17,6 @@
         "vite": "^7.3.2"
     },
     "pnpm": {
-        "minimumReleaseAge": 0,
         "onlyBuiltDependencies": [
             "@forge/cli",
             "@parcel/watcher",
