@@ -6,6 +6,17 @@ TestPlanIt uses third-party libraries and components. We acknowledge and are gra
 
 The following third-party packages are used in TestPlanIt. Full license texts are included at the end of this document.
 
+### Scope
+
+This document covers third-party dependencies across all distributed TestPlanIt workspaces:
+
+- **Main application** (`testplanit/`) — the Next.js app, background workers, and API
+- **CLI** (`cli/`) — published as a standalone npm package
+- **Documentation site** (`docs/`) — Docusaurus-powered docs
+- **Atlassian Forge plugin** (`forge-app/`) — Jira integration shipped via Atlassian Marketplace
+
+Workspace-internal packages under `@testplanit/*` and `packages/*` are first-party and not listed here.
+
 ---
 
 ## Frontend Dependencies
@@ -37,6 +48,20 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 - **License**: MIT
 - **Repository**: <https://github.com/tailwindlabs/tailwindcss>
 - **Copyright**: Copyright (c) Tailwind Labs, Inc.
+
+### @tailwindcss/aspect-ratio
+
+- **Version**: 0.4.x
+- **License**: MIT
+- **Repository**: <https://github.com/tailwindlabs/tailwindcss-aspect-ratio>
+- **Copyright**: Copyright (c) Tailwind Labs, Inc.
+
+### tw-animate-css
+
+- **Version**: 1.x
+- **License**: MIT
+- **Repository**: <https://github.com/Wombosvideo/tw-animate-css>
+- **Copyright**: Copyright (c) Wombosvideo
 
 ### Radix UI
 
@@ -108,6 +133,13 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 - **Repository**: <https://github.com/reduxjs/react-redux>
 - **Copyright**: Copyright (c) 2015-present Dan Abramov
 
+### Nanostores
+
+- **Version**: 1.x
+- **License**: MIT
+- **Repository**: <https://github.com/nanostores/nanostores>
+- **Copyright**: Copyright (c) 2021 Andrey Sitnik
+
 ### Emotion
 
 - **Version**: 11.x
@@ -177,8 +209,8 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 
 - **Version**: 1.x
 - **License**: MIT
-- **Repository**: <https://github.com/nicksanford2/tiptap-extension-resize-image>
-- **Copyright**: Copyright (c) TipTap contributors
+- **Repository**: <https://github.com/bae-sh/tiptap-extension-resize-image>
+- **Copyright**: Copyright (c) bae-sh and contributors
 
 ### PrismJS
 
@@ -256,8 +288,8 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 
 - **Version**: 3.x
 - **License**: MIT
-- **Repository**: <https://github.com/brimdata/react-arborist>
-- **Copyright**: Copyright (c) Brim Data, Inc.
+- **Repository**: <https://github.com/jameskerr/react-arborist>
+- **Copyright**: Copyright (c) 2022 James Kerr
 
 ### React Resizable Panels
 
@@ -319,7 +351,7 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 
 - **Version**: 5.x
 - **License**: MIT
-- **Repository**: <https://github.com/davidjerleke/iframe-resizer>
+- **Repository**: <https://github.com/davidjbradshaw/iframe-resizer>
 - **Copyright**: Copyright (c) 2013-2024 David J. Bradshaw
 
 ### Swagger UI React
@@ -354,7 +386,7 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 
 - **Version**: 3.x
 - **License**: MIT
-- **Repository**: <https://github.com/nicksanford2/react-lite-youtube-embed>
+- **Repository**: <https://github.com/ibrahimcesar/react-lite-youtube-embed>
 - **Copyright**: Copyright (c) 2020 Ibrahim Cesar
 
 ### React Tweet
@@ -377,6 +409,35 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 - **License**: MIT
 - **Repository**: <https://github.com/ianstormtaylor/slate>
 - **Copyright**: Copyright (c) 2016 Ian Storm Taylor
+
+### Motion
+
+- **Version**: 12.x
+- **License**: MIT
+- **Repository**: <https://github.com/motiondivision/motion>
+- **Copyright**: Copyright (c) Motion Division
+- **Note**: Sister package to Framer Motion; both are installed for animation primitives.
+
+### React DnD HTML5 Backend
+
+- **Version**: 16.x
+- **License**: MIT
+- **Repository**: <https://github.com/react-dnd/react-dnd>
+- **Copyright**: Copyright (c) 2015 Dan Abramov
+
+### React DnD Multi Backend
+
+- **Version**: 9.x
+- **License**: MIT
+- **Repository**: <https://github.com/LouisBrunner/dnd-multi-backend>
+- **Copyright**: Copyright (c) Louis Brunner
+
+### resize-observer-polyfill
+
+- **Version**: 1.x
+- **License**: MIT
+- **Repository**: <https://github.com/que-etc/resize-observer-polyfill>
+- **Copyright**: Copyright (c) 2016 Denis Rul
 
 ## Data Visualization
 
@@ -405,7 +466,7 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 
 ### Node.js
 
-- **Version**: 18.x LTS
+- **Version**: 24.x LTS
 - **License**: MIT
 - **Repository**: <https://github.com/nodejs/node>
 - **Copyright**: Copyright Node.js contributors. All rights reserved.
@@ -443,7 +504,7 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 - **Version**: 6.x
 - **License**: MIT
 - **Repository**: <https://github.com/kelektiv/node.bcrypt.js>
-- **Copyright**: Copyright (c) 2010 Nicholas Campbell
+- **Copyright**: Copyright (c) 2010 Nicolás Hernández and kelektiv contributors
 
 ### node-saml
 
@@ -454,7 +515,7 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 
 ### otplib
 
-- **Version**: 12.x
+- **Version**: 13.x
 - **License**: MIT
 - **Repository**: <https://github.com/yeojz/otplib>
 - **Copyright**: Copyright (c) 2016 Gerald Yeo
@@ -468,7 +529,7 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 
 ### Nodemailer
 
-- **Version**: 7.x
+- **Version**: 8.x
 - **License**: MIT
 - **Repository**: <https://github.com/nodemailer/nodemailer>
 - **Copyright**: Copyright (c) 2011-2023 Andris Reinman
@@ -565,7 +626,7 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 
 ### Atlaskit Editor Jira Transformer
 
-- **Version**: 14.x
+- **Version**: 15.x
 - **License**: Apache-2.0
 - **Repository**: <https://bitbucket.org/atlassian/atlassian-frontend-mirror>
 - **Copyright**: Copyright (c) Atlassian Pty Ltd
@@ -627,7 +688,7 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 
 ### jsPDF
 
-- **Version**: 3.x
+- **Version**: 4.x
 - **License**: MIT
 - **Repository**: <https://github.com/parallax/jsPDF>
 - **Copyright**: Copyright (c) 2010-2021 James Hall, <https://github.com/MrRio/jsPDF>
@@ -762,8 +823,8 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 
 - **Version**: 0.1.x
 - **License**: MIT
-- **Repository**: <https://github.com/nicksanford2/stacktrace-parser>
-- **Copyright**: Copyright (c) 2014 George Zahariev
+- **Repository**: <https://github.com/errwischt/stacktrace-parser>
+- **Copyright**: Copyright (c) 2014 Georg Zahariev
 
 ### Formidable
 
@@ -797,8 +858,64 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 
 - **Version**: 1.x
 - **License**: MIT
-- **Repository**: <https://github.com/nicksanford2/typescript-string-operations>
-- **Copyright**: Copyright (c) 2017 Erich Baumbusch
+- **Repository**: <https://github.com/sevensc/typescript-string-operations>
+- **Copyright**: Copyright (c) Lars Pelzer and SevenSC contributors
+
+### cheerio
+
+- **Version**: 1.x
+- **License**: MIT
+- **Repository**: <https://github.com/cheeriojs/cheerio>
+- **Copyright**: Copyright (c) cheerio contributors
+
+### JSZip
+
+- **Version**: 3.x
+- **License**: MIT or GPL-3.0-or-later (dual-licensed; we comply with MIT)
+- **Repository**: <https://github.com/Stuk/jszip>
+- **Copyright**: Copyright (c) 2009-2016 Stuart Knightley, David Duponchel, Franz Buchinger, António Afonso
+
+### micromatch
+
+- **Version**: 4.x
+- **License**: MIT
+- **Repository**: <https://github.com/micromatch/micromatch>
+- **Copyright**: Copyright (c) 2014-present, Jon Schlinkert
+
+### Mustache.js
+
+- **Version**: 4.x
+- **License**: MIT
+- **Repository**: <https://github.com/janl/mustache.js>
+- **Copyright**: Copyright (c) 2009 Chris Wanstrath, Jan Lehnardt, and contributors
+
+### robots-parser
+
+- **Version**: 3.x
+- **License**: MIT
+- **Repository**: <https://github.com/samclarke/robots-parser>
+- **Copyright**: Copyright (c) Sam Clarke
+
+### undici
+
+- **Version**: 7.x
+- **License**: MIT
+- **Repository**: <https://github.com/nodejs/undici>
+- **Copyright**: Copyright (c) Node.js contributors
+
+### @mozilla/readability
+
+- **Version**: 0.6.x
+- **License**: Apache-2.0
+- **Repository**: <https://github.com/mozilla/readability>
+- **Copyright**: Copyright (c) Mozilla and contributors
+
+### @zxcvbn-ts/core + @zxcvbn-ts/language-en
+
+- **Version**: 3.x
+- **License**: MIT
+- **Repository**: <https://github.com/zxcvbn-ts/zxcvbn>
+- **Copyright**: Copyright (c) zxcvbn-ts contributors
 
 ## Testing Dependencies
 
@@ -839,7 +956,7 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 
 ### JSDOM
 
-- **Version**: 27.x
+- **Version**: 29.x
 - **License**: MIT
 - **Repository**: <https://github.com/jsdom/jsdom>
 - **Copyright**: Copyright (c) 2010-2023 jsdom contributors
@@ -891,7 +1008,7 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 
 ### esbuild
 
-- **Version**: 0.27.x
+- **Version**: 0.28.x
 - **License**: MIT
 - **Repository**: <https://github.com/evanw/esbuild>
 - **Copyright**: Copyright (c) 2020 Evan Wallace
@@ -945,19 +1062,136 @@ The following third-party packages are used in TestPlanIt. Full license texts ar
 - **Repository**: <https://github.com/shadcn-ui/ui>
 - **Copyright**: Copyright (c) 2023 shadcn
 
-### nanostores
+---
+
+## CLI Dependencies
+
+The TestPlanIt CLI (`cli/` workspace package, published separately to npm) bundles the following runtime dependencies in addition to the application listing above.
+
+### chalk
+
+- **Version**: 5.x
+- **License**: MIT
+- **Repository**: <https://github.com/chalk/chalk>
+- **Copyright**: Copyright (c) Sindre Sorhus
+
+### commander
+
+- **Version**: 14.x
+- **License**: MIT
+- **Repository**: <https://github.com/tj/commander.js>
+- **Copyright**: Copyright (c) 2011 TJ Holowaychuk
+
+### conf
+
+- **Version**: 15.x
+- **License**: MIT
+- **Repository**: <https://github.com/sindresorhus/conf>
+- **Copyright**: Copyright (c) Sindre Sorhus
+
+### form-data
+
+- **Version**: 4.x
+- **License**: MIT
+- **Repository**: <https://github.com/form-data/form-data>
+- **Copyright**: Copyright (c) 2012 Felix Geisendörfer
+
+### ora
+
+- **Version**: 9.x
+- **License**: MIT
+- **Repository**: <https://github.com/sindresorhus/ora>
+- **Copyright**: Copyright (c) Sindre Sorhus
+
+---
+
+## Documentation Site Dependencies
+
+The TestPlanIt documentation site (`docs/` workspace package) is built with Docusaurus.
+
+### Docusaurus
+
+- **Version**: 3.x
+- **License**: MIT
+- **Repository**: <https://github.com/facebook/docusaurus>
+- **Copyright**: Copyright (c) Meta Platforms, Inc. and affiliates
+- **Note**: Includes `@docusaurus/core`, `@docusaurus/preset-classic`, and `@docusaurus/plugin-client-redirects`.
+
+### @mdx-js/react
+
+- **Version**: 3.x
+- **License**: MIT
+- **Repository**: <https://github.com/mdx-js/mdx>
+- **Copyright**: Copyright (c) MDX contributors
+
+### prism-react-renderer
+
+- **Version**: 2.x
+- **License**: MIT
+- **Repository**: <https://github.com/FormidableLabs/prism-react-renderer>
+- **Copyright**: Copyright (c) 2018 Formidable Labs
+
+### embla-carousel-autoplay
+
+- **Version**: 8.x
+- **License**: MIT
+- **Repository**: <https://github.com/davidjerleke/embla-carousel>
+- **Copyright**: Copyright (c) 2019 David Jerleke
+
+### @acid-info/docusaurus-og
+
+- **Version**: 1.0.x
+- **License**: MIT
+- **Repository**: <https://github.com/acid-info/logos-docusaurus-plugins>
+- **Copyright**: Copyright (c) Acid Info
+
+---
+
+## Atlassian Forge Plugin Dependencies
+
+The TestPlanIt Forge plugin (`forge-app/` workspace package) runs inside Atlassian's Forge runtime. SDK packages are subject to the [Atlassian Developer Terms](https://www.atlassian.com/legal/developer-terms).
+
+### @forge/api
+
+- **Version**: 7.x
+- **License**: UNLICENSED (Atlassian Developer Terms)
+- **Repository**: <https://www.npmjs.com/package/@forge/api>
+- **Copyright**: Copyright (c) Atlassian Pty Ltd
+
+### @forge/bridge
+
+- **Version**: 5.x
+- **License**: UNLICENSED (Atlassian Developer Terms)
+- **Repository**: <https://www.npmjs.com/package/@forge/bridge>
+- **Copyright**: Copyright (c) Atlassian Pty Ltd
+
+### @forge/kvs
 
 - **Version**: 1.x
-- **License**: MIT
-- **Repository**: <https://github.com/nanostores/nanostores>
-- **Copyright**: Copyright (c) 2021 Andrey Sitnik
+- **License**: UNLICENSED (Atlassian Developer Terms)
+- **Repository**: <https://www.npmjs.com/package/@forge/kvs>
+- **Copyright**: Copyright (c) Atlassian Pty Ltd
 
-### resize-observer-polyfill
+### @forge/react
+
+- **Version**: 11.x
+- **License**: UNLICENSED (Atlassian Developer Terms)
+- **Repository**: <https://www.npmjs.com/package/@forge/react>
+- **Copyright**: Copyright (c) Atlassian Pty Ltd
+
+### @forge/resolver
 
 - **Version**: 1.x
-- **License**: MIT
-- **Repository**: <https://github.com/que-etc/resize-observer-polyfill>
-- **Copyright**: Copyright (c) 2016 Denis Rul
+- **License**: UNLICENSED (Atlassian Developer Terms)
+- **Repository**: <https://www.npmjs.com/package/@forge/resolver>
+- **Copyright**: Copyright (c) Atlassian Pty Ltd
+
+### @forge/cli (dev only)
+
+- **Version**: 12.x
+- **License**: UNLICENSED (Atlassian Developer Terms)
+- **Repository**: <https://www.npmjs.com/package/@forge/cli>
+- **Copyright**: Copyright (c) Atlassian Pty Ltd
 
 ---
 
@@ -1156,5 +1390,5 @@ For our commercial license, we ensure all dependencies allow commercial use and 
 
 ---
 
-*Last updated: February 2026*
+*Last updated: May 2026*
 *This document is automatically generated and manually reviewed quarterly.*

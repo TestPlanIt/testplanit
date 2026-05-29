@@ -287,8 +287,7 @@ describe("GenerateFromUrlWorker", () => {
       expect(mockRedisSet).toHaveBeenCalledWith(
         "generate-from-url:pages:job-redis-1",
         expect.any(String),
-        "EX",
-        604800
+        { EX: 604800 }
       );
     });
 

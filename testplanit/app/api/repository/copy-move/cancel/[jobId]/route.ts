@@ -64,7 +64,7 @@ export async function POST(
 
     // Active -- set Redis cancellation flag for worker to pick up between cases
     const connection = await queue.client;
-    await connection.set(`copy-move:cancel:${jobId}`, "1", "EX", 3600);
+    await connection.set(`copy-move:cancel:${jobId}`, "1", { EX: 3600 });
 
     return NextResponse.json({
       message: "Cancellation requested, job will stop after current case",

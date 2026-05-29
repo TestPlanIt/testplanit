@@ -51,7 +51,7 @@
             "js-yaml": "^4.1.1",
             "gray-matter>js-yaml": "^3.14.1",
             "read-yaml-file>js-yaml": "^3.14.1",
-            "tmp": "^0.2.4",
+            "tmp": "^0.2.6",
             "mdast-util-to-hast": "^13.2.1",
             "content-security-policy-parser": "^0.6.0",
             "webpack-dev-server": "^5.2.4",

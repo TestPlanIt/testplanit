@@ -180,8 +180,7 @@ describe("POST /api/repository/copy-move/cancel/[jobId]", () => {
     expect(mockConnection.set).toHaveBeenCalledWith(
       "copy-move:cancel:job-123",
       "1",
-      "EX",
-      3600
+      { EX: 3600 }
     );
   });
 });
