@@ -1,3 +1,9 @@
+## [0.32.5](https://github.com/TestPlanIt/testplanit/compare/v0.32.4...v0.32.5) (2026-05-29)
+
+### Bug Fixes
+
+* default template/workflow lookup tolerates flipped isDefault flag + stable E2E specs ([#364](https://github.com/TestPlanIt/testplanit/issues/364)) ([9f05b86](https://github.com/TestPlanIt/testplanit/commit/9f05b86697d62f93c6a7e0cd6cac36b1a5f46b29))
+
 ## [0.32.4](https://github.com/TestPlanIt/testplanit/compare/v0.32.3...v0.32.4) (2026-05-29)
 
 ### Enhancements
