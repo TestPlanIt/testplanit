@@ -15,18 +15,20 @@ RUN apk add --no-cache postgresql-client
 RUN apk add --no-cache curl
 # Install pnpm globally
 RUN npm install -g pnpm@latest
+# Disable pnpm 11's supply-chain cooling-off gate (minimumReleaseAge, default
+# 1440min), which otherwise rejects freshly-published lockfile entries during
+# the release build. An env var is inherited by every pnpm invocation —
+# including the `pnpm install` that `pnpm zenstack generate` spawns — which a
+# per-command flag, .npmrc, or package.json#pnpm setting does not cover in
+# pnpm 11. Pre-merge CI (lint + format + unit tests) is our supply-chain check.
+ENV PNPM_CONFIG_MINIMUM_RELEASE_AGE=0
 # Copy package files first for better caching
 # COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
-# Install dependencies first.
-# --config.minimumReleaseAge=0 disables pnpm 11's supply-chain cooling-off gate
-# (default 1440min), which otherwise rejects freshly-published lockfile entries
-# during the release build. pnpm 11 only honors this via the CLI flag or
-# pnpm-workspace.yaml — not .npmrc or package.json#pnpm. Pre-merge CI (lint +
-# format + unit tests) is our supply-chain verification.
+# Install dependencies first
 RUN \
     if [ -f yarn.lock ]; then yarn install --frozen-lockfile --ignore-scripts; \
     elif [ -f package-lock.json ]; then npm ci --ignore-scripts; \
-    elif [ -f pnpm-lock.yaml ]; then pnpm i --ignore-scripts --config.minimumReleaseAge=0; \
+    elif [ -f pnpm-lock.yaml ]; then pnpm i --ignore-scripts; \
     else echo "Lockfile not found." && exit 1; \
     fi
 
@@ -75,11 +77,12 @@ RUN apk add --no-cache libc6-compat
 # Add build tools for native addons like bcrypt
 RUN apk add --no-cache --virtual .gyp python3 make g++
 RUN npm install -g pnpm@latest
+# Disable pnpm 11's supply-chain cooling-off gate (see base stage).
+ENV PNPM_CONFIG_MINIMUM_RELEASE_AGE=0
 COPY package.json pnpm-lock.yaml* .npmrc* ./
 # Install only production dependencies
 # --ignore-scripts skips postinstall (which needs zenstack, a dev dep)
-# --config.minimumReleaseAge=0 disables pnpm 11's supply-chain gate (see base stage)
-RUN pnpm install --prod --ignore-scripts --config.minimumReleaseAge=0
+RUN pnpm install --prod --ignore-scripts
 # Rebuild native modules (bcrypt, sharp, etc.) using npm rebuild
 # This avoids pnpm's lifecycle scripts that require dev dependencies
 RUN npm rebuild bcrypt sharp 2>/dev/null || true
