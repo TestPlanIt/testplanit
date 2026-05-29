@@ -586,10 +586,10 @@ importers:
         version: 3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))
       '@tiptap/extension-drag-handle':
         specifier: ^3.23.6
-        version: 3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/extension-collaboration@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27))(yjs@13.6.27))(@tiptap/extension-node-range@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27))
+        version: 3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/extension-collaboration@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27))(yjs@13.6.27))(@tiptap/extension-node-range@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27))
       '@tiptap/extension-drag-handle-react':
         specifier: ^3.23.6
-        version: 3.23.6(@tiptap/extension-drag-handle@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/extension-collaboration@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27))(yjs@13.6.27))(@tiptap/extension-node-range@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27)))(@tiptap/pm@3.23.6)(@tiptap/react@3.23.6(@floating-ui/dom@1.7.6)(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        version: 3.23.6(@tiptap/extension-drag-handle@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/extension-collaboration@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27))(yjs@13.6.27))(@tiptap/extension-node-range@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27)))(@tiptap/pm@3.23.6)(@tiptap/react@3.23.6(@floating-ui/dom@1.7.6)(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@tiptap/extension-dropcursor':
         specifier: ^3.23.6
         version: 3.23.6(@tiptap/extensions@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6))
@@ -744,7 +744,7 @@ importers:
         specifier: ^1.0.1
         version: 1.0.1
       cheerio:
-        specifier: ^1.2.0
+        specifier: '>=1.0.0'
         version: 1.2.0
       class-variance-authority:
         specifier: ^0.7.1
@@ -771,7 +771,7 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0(date-fns@4.3.0)
       dompurify:
-        specifier: ^3.4.7
+        specifier: ^3.3.2
         version: 3.4.7
       embla-carousel-react:
         specifier: ^8.6.0
@@ -792,7 +792,7 @@ importers:
         specifier: ^20.9.0
         version: 20.9.0
       hono:
-        specifier: ^4.12.23
+        specifier: '>=4.12.18'
         version: 4.12.23
       html-to-adf-converter:
         specifier: ^1.0.2
@@ -822,7 +822,7 @@ importers:
         specifier: ^3.10.1
         version: 3.10.1
       lodash:
-        specifier: ^4.18.1
+        specifier: '>=4.18.0'
         version: 4.18.1
       lowlight:
         specifier: ^3.3.0
@@ -864,7 +864,7 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0(motion@12.40.0(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(next@16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.60.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       nodemailer:
-        specifier: ^8.0.10
+        specifier: '>=8.0.5'
         version: 8.0.10
       openai:
         specifier: ^6.39.1
@@ -993,13 +993,13 @@ importers:
         specifier: ^1.6.1
         version: 1.6.1
       undici:
-        specifier: ^7.26.0
+        specifier: ^7.24.7
         version: 7.26.0
       use-debounce:
         specifier: ^10.1.1
         version: 10.1.1(react@19.2.6)
       uuid:
-        specifier: ^14.0.0
+        specifier: '>=14.0.0'
         version: 14.0.0
       vaul:
         specifier: ^1.1.2
@@ -1183,7 +1183,7 @@ importers:
         specifier: ^11.0.0
         version: 11.0.0
       esbuild:
-        specifier: ^0.28.0
+        specifier: '>=0.25.0'
         version: 0.28.0
       eslint:
         specifier: ^9.39.4
@@ -1222,7 +1222,7 @@ importers:
         specifier: ^7.0.1
         version: 7.0.1
       postcss:
-        specifier: ^8.5.15
+        specifier: ^8.5.10
         version: 8.5.15
       prettier:
         specifier: ^3.8.3
@@ -19604,7 +19604,7 @@ snapshots:
 
   '@atlaskit/adf-schema@47.7.1(react@19.2.6)':
     dependencies:
-      '@atlaskit/editor-prosemirror': 7.0.0
+      '@atlaskit/editor-prosemirror': 7.3.0
       '@atlaskit/feature-gate-js-client': 4.26.5(react@19.2.6)
       '@babel/runtime': 7.29.7
       css-color-names: 0.0.4
@@ -23485,11 +23485,11 @@ snapshots:
       '@atlaskit/analytics-next': 11.2.2(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@atlaskit/app-provider': 2.3.0(@types/react@19.2.15)(react@19.2.6)
       '@atlaskit/css': 0.10.7(@types/react@19.2.15)(react@19.2.6)
-      '@atlaskit/ds-lib': 4.0.0(@types/react@19.2.15)(react@19.2.6)
-      '@atlaskit/interaction-context': 3.0.0(react@19.2.6)
+      '@atlaskit/ds-lib': 4.2.0(@types/react@19.2.15)(react@19.2.6)
+      '@atlaskit/interaction-context': 3.1.0(react@19.2.6)
       '@atlaskit/platform-feature-flags': 1.1.3(react@19.2.6)
       '@atlaskit/tokens': 4.9.1(@types/react@19.2.15)(react@19.2.6)
-      '@atlaskit/visually-hidden': 3.0.2(react@19.2.6)
+      '@atlaskit/visually-hidden': 3.1.0(react@19.2.6)
       '@babel/runtime': 7.29.7
       '@compiled/react': 0.18.6(react@19.2.6)
       '@emotion/react': 11.14.0(@types/react@19.2.15)(react@19.2.6)
@@ -23508,10 +23508,10 @@ snapshots:
       '@atlaskit/app-provider': 2.3.0(@types/react@19.2.15)(react@19.2.6)
       '@atlaskit/css': 0.10.7(@types/react@19.2.15)(react@19.2.6)
       '@atlaskit/ds-lib': 4.2.0(@types/react@19.2.15)(react@19.2.6)
-      '@atlaskit/interaction-context': 3.0.0(react@19.2.6)
+      '@atlaskit/interaction-context': 3.1.0(react@19.2.6)
       '@atlaskit/platform-feature-flags': 1.1.3(react@19.2.6)
       '@atlaskit/tokens': 4.9.1(@types/react@19.2.15)(react@19.2.6)
-      '@atlaskit/visually-hidden': 3.0.2(react@19.2.6)
+      '@atlaskit/visually-hidden': 3.1.0(react@19.2.6)
       '@babel/runtime': 7.29.7
       '@compiled/react': 0.18.6(react@19.2.6)
       '@emotion/react': 11.14.0(@types/react@19.2.15)(react@19.2.6)
@@ -24361,7 +24361,7 @@ snapshots:
 
   '@atlaskit/spinner@18.0.3(@types/react@19.2.15)(react@19.2.6)':
     dependencies:
-      '@atlaskit/interaction-context': 3.0.0(react@19.2.6)
+      '@atlaskit/interaction-context': 3.1.0(react@19.2.6)
       '@atlaskit/theme': 18.0.3(@types/react@19.2.15)(react@19.2.6)
       '@atlaskit/tokens': 4.9.1(@types/react@19.2.15)(react@19.2.6)
       '@babel/runtime': 7.29.7
@@ -24713,7 +24713,7 @@ snapshots:
   '@atlaskit/theme@18.0.1(@types/react@19.2.15)(react@19.2.6)':
     dependencies:
       '@atlaskit/codemod-utils': 4.3.0
-      '@atlaskit/ds-lib': 4.0.0(@types/react@19.2.15)(react@19.2.6)
+      '@atlaskit/ds-lib': 4.2.0(@types/react@19.2.15)(react@19.2.6)
       '@atlaskit/tokens': 4.9.1(@types/react@19.2.15)(react@19.2.6)
       '@babel/runtime': 7.29.7
       react: 19.2.6
@@ -24986,7 +24986,7 @@ snapshots:
 
   '@atlaskit/tokens@4.5.2(@types/react@19.2.15)(react@19.2.6)':
     dependencies:
-      '@atlaskit/ds-lib': 4.0.0(@types/react@19.2.15)(react@19.2.6)
+      '@atlaskit/ds-lib': 4.2.0(@types/react@19.2.15)(react@19.2.6)
       '@atlaskit/platform-feature-flags': 1.1.3(react@19.2.6)
       '@babel/runtime': 7.29.7
       '@babel/traverse': 7.29.7
@@ -25072,7 +25072,7 @@ snapshots:
   '@atlaskit/tooltip@20.0.4(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
       '@atlaskit/analytics-next': 11.2.2(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      '@atlaskit/ds-lib': 4.0.0(@types/react@19.2.15)(react@19.2.6)
+      '@atlaskit/ds-lib': 4.2.0(@types/react@19.2.15)(react@19.2.6)
       '@atlaskit/layering': 2.2.1(@types/react@19.2.15)(react@19.2.6)
       '@atlaskit/motion': 5.7.0(react@19.2.6)
       '@atlaskit/popper': 7.2.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -29995,7 +29995,7 @@ snapshots:
 
   '@manypkg/find-root@1.1.0':
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.7
       '@types/node': 12.20.55
       find-up: 4.1.0
       fs-extra: 8.1.0
@@ -32759,11 +32759,11 @@ snapshots:
     dependencies:
       '@tiptap/core': 3.23.6(@tiptap/pm@3.23.6)
 
-  '@tiptap/extension-collaboration@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27))(yjs@13.6.27)':
+  '@tiptap/extension-collaboration@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27))(yjs@13.6.27)':
     dependencies:
       '@tiptap/core': 3.23.6(@tiptap/pm@3.23.6)
       '@tiptap/pm': 3.23.6
-      '@tiptap/y-tiptap': 3.0.1(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27)
+      '@tiptap/y-tiptap': 3.0.1(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27)
       yjs: 13.6.27
 
   '@tiptap/extension-color@3.23.6(@tiptap/extension-text-style@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6)))':
@@ -32774,22 +32774,22 @@ snapshots:
     dependencies:
       '@tiptap/core': 3.23.6(@tiptap/pm@3.23.6)
 
-  '@tiptap/extension-drag-handle-react@3.23.6(@tiptap/extension-drag-handle@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/extension-collaboration@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27))(yjs@13.6.27))(@tiptap/extension-node-range@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27)))(@tiptap/pm@3.23.6)(@tiptap/react@3.23.6(@floating-ui/dom@1.7.6)(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+  '@tiptap/extension-drag-handle-react@3.23.6(@tiptap/extension-drag-handle@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/extension-collaboration@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27))(yjs@13.6.27))(@tiptap/extension-node-range@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27)))(@tiptap/pm@3.23.6)(@tiptap/react@3.23.6(@floating-ui/dom@1.7.6)(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
-      '@tiptap/extension-drag-handle': 3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/extension-collaboration@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27))(yjs@13.6.27))(@tiptap/extension-node-range@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27))
+      '@tiptap/extension-drag-handle': 3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/extension-collaboration@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27))(yjs@13.6.27))(@tiptap/extension-node-range@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27))
       '@tiptap/pm': 3.23.6
       '@tiptap/react': 3.23.6(@floating-ui/dom@1.7.6)(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 
-  '@tiptap/extension-drag-handle@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/extension-collaboration@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27))(yjs@13.6.27))(@tiptap/extension-node-range@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27))':
+  '@tiptap/extension-drag-handle@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/extension-collaboration@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27))(yjs@13.6.27))(@tiptap/extension-node-range@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27))':
     dependencies:
       '@floating-ui/dom': 1.7.6
       '@tiptap/core': 3.23.6(@tiptap/pm@3.23.6)
-      '@tiptap/extension-collaboration': 3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27))(yjs@13.6.27)
+      '@tiptap/extension-collaboration': 3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)(@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27))(yjs@13.6.27)
       '@tiptap/extension-node-range': 3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6)
       '@tiptap/pm': 3.23.6
-      '@tiptap/y-tiptap': 3.0.1(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27)
+      '@tiptap/y-tiptap': 3.0.1(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27)
 
   '@tiptap/extension-dropcursor@3.23.6(@tiptap/extensions@3.23.6(@tiptap/core@3.23.6(@tiptap/pm@3.23.6))(@tiptap/pm@3.23.6))':
     dependencies:
@@ -33056,10 +33056,10 @@ snapshots:
       '@tiptap/core': 3.23.6(@tiptap/pm@3.23.6)
       '@tiptap/pm': 3.23.6
 
-  '@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.7)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27)':
+  '@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.8)(y-protocols@1.0.6(yjs@13.6.27))(yjs@13.6.27)':
     dependencies:
       lib0: 0.2.117
-      prosemirror-model: 1.25.7
+      prosemirror-model: 1.25.4
       prosemirror-state: 1.4.4
       prosemirror-view: 1.41.8
       y-protocols: 1.0.6(yjs@13.6.27)
@@ -41777,9 +41777,9 @@ snapshots:
 
   prosemirror-commands@1.6.2:
     dependencies:
-      prosemirror-model: 1.24.1
-      prosemirror-state: 1.4.3
-      prosemirror-transform: 1.10.2
+      prosemirror-model: 1.25.7
+      prosemirror-state: 1.4.4
+      prosemirror-transform: 1.12.0
 
   prosemirror-commands@1.7.1:
     dependencies:
@@ -41789,9 +41789,9 @@ snapshots:
 
   prosemirror-dropcursor@1.8.1:
     dependencies:
-      prosemirror-state: 1.4.3
-      prosemirror-transform: 1.10.2
-      prosemirror-view: 1.37.1
+      prosemirror-state: 1.4.4
+      prosemirror-transform: 1.12.0
+      prosemirror-view: 1.41.8
 
   prosemirror-dropcursor@1.8.2:
     dependencies:
@@ -41808,9 +41808,9 @@ snapshots:
 
   prosemirror-history@1.4.1:
     dependencies:
-      prosemirror-state: 1.4.3
-      prosemirror-transform: 1.10.2
-      prosemirror-view: 1.37.1
+      prosemirror-state: 1.4.4
+      prosemirror-transform: 1.12.0
+      prosemirror-view: 1.41.8
       rope-sequence: 1.3.4
 
   prosemirror-history@1.5.0:
@@ -41822,7 +41822,7 @@ snapshots:
 
   prosemirror-keymap@1.2.2:
     dependencies:
-      prosemirror-state: 1.4.3
+      prosemirror-state: 1.4.4
       w3c-keyname: 2.2.8
 
   prosemirror-keymap@1.2.3:
@@ -41834,7 +41834,7 @@ snapshots:
     dependencies:
       '@types/markdown-it': 14.1.2
       markdown-it: 14.2.0
-      prosemirror-model: 1.24.1
+      prosemirror-model: 1.25.7
 
   prosemirror-markdown@1.13.2:
     dependencies:
@@ -41862,9 +41862,9 @@ snapshots:
 
   prosemirror-state@1.4.3:
     dependencies:
-      prosemirror-model: 1.24.1
-      prosemirror-transform: 1.10.2
-      prosemirror-view: 1.37.1
+      prosemirror-model: 1.25.7
+      prosemirror-transform: 1.12.0
+      prosemirror-view: 1.41.8
 
   prosemirror-state@1.4.4:
     dependencies:
@@ -41882,7 +41882,7 @@ snapshots:
 
   prosemirror-transform@1.10.2:
     dependencies:
-      prosemirror-model: 1.24.1
+      prosemirror-model: 1.25.7
 
   prosemirror-transform@1.10.5:
     dependencies:
@@ -41904,9 +41904,9 @@ snapshots:
 
   prosemirror-view@1.37.1:
     dependencies:
-      prosemirror-model: 1.24.1
-      prosemirror-state: 1.4.3
-      prosemirror-transform: 1.10.2
+      prosemirror-model: 1.25.7
+      prosemirror-state: 1.4.4
+      prosemirror-transform: 1.12.0
 
   prosemirror-view@1.41.5:
     dependencies:
