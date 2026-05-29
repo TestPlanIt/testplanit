@@ -1,3 +1,9 @@
+## [0.32.4](https://github.com/TestPlanIt/testplanit/compare/v0.32.3...v0.32.4) (2026-05-29)
+
+### Enhancements
+
+* **attachments:** first-class external-link attachments across all surfaces ([#361](https://github.com/TestPlanIt/testplanit/issues/361)) ([641bf58](https://github.com/TestPlanIt/testplanit/commit/641bf5872b4e8f661822d1da64dba706279d4ed5))
+
 ## [0.32.3](https://github.com/TestPlanIt/testplanit/compare/v0.32.2...v0.32.3) (2026-05-28)
 
 ### Enhancements
