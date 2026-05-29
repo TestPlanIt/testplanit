@@ -1,3 +1,9 @@
+## [0.32.6](https://github.com/TestPlanIt/testplanit/compare/v0.32.5...v0.32.6) (2026-05-29)
+
+### Enhancements
+
+* **milestones:** PDF export from milestone details page ([#366](https://github.com/TestPlanIt/testplanit/issues/366)) ([85afd23](https://github.com/TestPlanIt/testplanit/commit/85afd2396f1a61e587ae2bc23549b5235d74aa03))
+
 ## [0.32.5](https://github.com/TestPlanIt/testplanit/compare/v0.32.4...v0.32.5) (2026-05-29)
 
 ### Bug Fixes
