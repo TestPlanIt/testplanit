@@ -568,6 +568,8 @@ Common validation errors:
 
 - **Test cases** from the Repository, including all template custom fields and attachment metadata
 - **Test results** from a Test Run, in CSV or PDF
+- **Sessions** as a PDF report from the session details page
+- **Milestone reports** as a PDF from the [milestone details page](./user-guide/projects/milestone-details.md#exporting-to-pdf) — an aggregated, evidence-grade summary of the milestone and its sub-milestones
 - **Audit log** entries from project administration
 
 ### Export Formats
@@ -602,6 +604,12 @@ Common validation errors:
 
 - **Names**: Display attachment file names as text (default for PDF)
 - **Embed Images**: Embed image attachments directly in the PDF document. Non-image files are listed by name. Supported image formats: JPEG, PNG, GIF, WebP, BMP.
+
+:::note Exported PDFs are in English
+
+PDF exports (test case, test run, session, and milestone reports) are generated in **English by design**, regardless of the application's display language. Dates and durations are formatted for your locale, but the document body — titles, section headings, table headers, and field labels — is always English. These documents are intended as canonical, archival evidence artifacts, so their language is kept consistent rather than localized.
+
+:::
 
 ## Integration Examples
 

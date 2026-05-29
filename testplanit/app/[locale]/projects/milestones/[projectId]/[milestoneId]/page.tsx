@@ -36,13 +36,14 @@ import {
   CircleCheckBig,
   CircleSlash2,
   Compass,
+  FileDown,
   PlayCircle,
   Save,
   SquarePen,
   Trash2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useParams, useSearchParams } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
@@ -54,6 +55,7 @@ import { emptyEditorContent } from "~/app/constants";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { CommentsSection } from "~/components/comments/CommentsSection";
 import LoadingSpinner from "~/components/LoadingSpinner";
+import { useExportMilestonePdf } from "~/hooks/pdf/useExportMilestonePdf";
 import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import {
   useFindFirstMilestones,
@@ -110,6 +112,15 @@ export default function MilestoneDetailsPage() {
   const { resolvedTheme } = useTheme();
 
   const { data: sessionAuth } = useSession();
+  const locale = useLocale();
+
+  const { isExporting: isExportingPdf, handleExport: handleExportPdf } =
+    useExportMilestonePdf({
+      milestoneId: Number(milestoneId),
+      projectId: Number(projectId),
+      locale,
+      generatedByName: sessionAuth?.user?.name,
+    });
 
   const {
     permissions: milestonePermissions,
@@ -544,7 +555,16 @@ export default function MilestoneDetailsPage() {
 
   return (
     <FormProvider {...methods}>
-      <form onSubmit={methods.handleSubmit(onSubmit)}>
+      <form
+        key={`milestone-form-${isEditMode ? "edit" : "view"}`}
+        onSubmit={(e) => {
+          e.preventDefault();
+          // Ignore stray submits fired while in view mode (e.g. clicking Edit
+          // swaps the trigger for the edit-mode Save button under the cursor).
+          if (!isEditMode) return;
+          void methods.handleSubmit(onSubmit)(e);
+        }}
+      >
         <Card
           className={`group-hover:bg-accent/50 transition-colors ${
             milestone?.isCompleted
@@ -593,6 +613,7 @@ export default function MilestoneDetailsPage() {
                         type="submit"
                         variant="default"
                         disabled={isSubmitting}
+                        data-testid="milestone-save"
                       >
                         <Save className="h-4 w-4" />
                         {isSubmitting
@@ -623,31 +644,57 @@ export default function MilestoneDetailsPage() {
                     )}
                   </>
                 ) : (
-                  showEditButtonPerm && (
-                    <Button
-                      type="button"
-                      onClick={handleEditClick}
-                      variant="secondary"
-                    >
-                      <SquarePen className="h-4 w-4" />
-                      {tCommon("actions.edit")}
-                    </Button>
-                  )
+                  <div className="flex items-center gap-1">
+                    {showEditButtonPerm && (
+                      <Button
+                        type="button"
+                        onClick={handleEditClick}
+                        variant="secondary"
+                        data-testid="milestone-edit"
+                        className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                      >
+                        <SquarePen className="h-4 w-4 shrink-0" />
+                        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                          {tCommon("actions.edit")}
+                        </span>
+                      </Button>
+                    )}
+                    {milestone && (
+                      <Button
+                        type="button"
+                        onClick={handleExportPdf}
+                        variant="secondary"
+                        disabled={isExportingPdf}
+                        data-testid="milestone-export-pdf"
+                        className={`group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2 ${
+                          isExportingPdf ? "animate-pulse" : ""
+                        }`}
+                      >
+                        <FileDown className="h-4 w-4 shrink-0" />
+                        <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                          {isExportingPdf
+                            ? tCommon("actions.exportingPdf")
+                            : tCommon("actions.exportPdf")}
+                        </span>
+                      </Button>
+                    )}
+                    {milestone &&
+                      !milestone.isCompleted &&
+                      canCompleteMilestonePerm && (
+                        <Button
+                          type="button"
+                          onClick={() => setIsCompleteDialogOpen(true)}
+                          variant="secondary"
+                          className="group px-3 hover:px-3 transition-all duration-200 gap-0 hover:gap-2"
+                        >
+                          <CircleCheckBig className="h-4 w-4 shrink-0" />
+                          <span className="max-w-0 overflow-hidden whitespace-nowrap transition-all duration-200 group-hover:max-w-40">
+                            {tCommon("actions.complete")}
+                          </span>
+                        </Button>
+                      )}
+                  </div>
                 )}
-                {!isEditMode &&
-                  milestone &&
-                  !milestone.isCompleted &&
-                  canCompleteMilestonePerm && (
-                    <Button
-                      type="button"
-                      onClick={() => setIsCompleteDialogOpen(true)}
-                      variant="secondary"
-                      className="mt-2"
-                    >
-                      <CircleCheckBig className="h-4 w-4" />
-                      {tCommon("actions.complete")}
-                    </Button>
-                  )}
               </div>
             </div>
           </CardHeader>
