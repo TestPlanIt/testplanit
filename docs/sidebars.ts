@@ -230,6 +230,7 @@ const sidebars: SidebarsConfig = {
       },
       items: [
         'api-reference', // Add api-reference.md
+        'data-lake-export', // NDJSON bulk-export endpoints + webhook event catalog
         'sdk/api-client', // @testplanit/api package
         'sdk/jira-forge-app', // Jira Forge app (Marketplace plugin)
         {
