@@ -102,6 +102,7 @@ const REPOSITORY_CASE_LIST_SELECT = {
   createdAt: true,
   creatorId: true,
   automated: true,
+  hasParameters: true,
   isArchived: true,
   isDeleted: true,
   currentVersion: true,
@@ -1464,6 +1465,11 @@ export default function Cases({
                   automated: (singleFilterId as number) === 1 ? true : false,
                 });
                 break;
+              case "parameterized":
+                filterConditions.push({
+                  hasParameters: (singleFilterId as number) === 1,
+                });
+                break;
               case "tags":
                 if (singleFilterId === "any") {
                   filterConditions.push({
@@ -1779,6 +1785,7 @@ export default function Cases({
               createdAt: true,
               creatorId: true,
               automated: true,
+              hasParameters: true,
               isArchived: true,
               isDeleted: true,
               currentVersion: true,
@@ -1941,6 +1948,7 @@ export default function Cases({
                   createdAt: true;
                   creatorId: true;
                   automated: true;
+                  hasParameters: true;
                   isArchived: true;
                   isDeleted: true;
                   source: true;
@@ -2190,6 +2198,7 @@ export default function Cases({
             createdAt: true;
             creatorId: true;
             automated: true;
+            hasParameters: true;
             isArchived: true;
             isDeleted: true;
             currentVersion: true;

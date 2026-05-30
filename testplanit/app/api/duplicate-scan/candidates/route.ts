@@ -41,10 +41,22 @@ export async function GET(request: Request) {
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       include: {
         caseA: {
-          select: { id: true, name: true, source: true, automated: true },
+          select: {
+            id: true,
+            name: true,
+            source: true,
+            automated: true,
+            hasParameters: true,
+          },
         },
         caseB: {
-          select: { id: true, name: true, source: true, automated: true },
+          select: {
+            id: true,
+            name: true,
+            source: true,
+            automated: true,
+            hasParameters: true,
+          },
         },
       },
     });

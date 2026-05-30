@@ -19,6 +19,7 @@ export interface ExecutionLogRow {
   testCaseId: number;
   testCaseName: string;
   testCaseSource: string;
+  testCaseHasParameters: boolean;
   testRunId: number;
   testRunName: string;
   testRunIsDeleted: boolean;
@@ -115,7 +116,12 @@ export async function handleExecutionLogPOST(
           testRunCase: {
             select: {
               repositoryCase: {
-                select: { id: true, name: true, source: true },
+                select: {
+                  id: true,
+                  name: true,
+                  source: true,
+                  hasParameters: true,
+                },
               },
             },
           },
@@ -242,6 +248,7 @@ export async function handleExecutionLogPOST(
         testCaseId: r.testRunCase.repositoryCase.id,
         testCaseName: r.testRunCase.repositoryCase.name,
         testCaseSource: r.testRunCase.repositoryCase.source,
+        testCaseHasParameters: r.testRunCase.repositoryCase.hasParameters,
         testRunId: r.testRun.id,
         testRunName: r.testRun.name,
         testRunIsDeleted: r.testRun.isDeleted,

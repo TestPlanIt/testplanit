@@ -306,6 +306,8 @@
       "automated": "Automated",
       "manual": "Manual",
       "notAutomated": "Not Automated",
+      "parameterized": "Parameterized",
+      "notParameterized": "Not Parameterized",
       "testRuns": "Test Runs",
       "title": "Title",
       "project": "Project",
@@ -2605,6 +2607,7 @@
     },
     "views": {
       "byAutomation": "Automation",
+      "byParameterized": "Parameterization",
       "allTemplates": "All Templates",
       "allStates": "All States",
       "allCreators": "All Creators",
@@ -7343,6 +7346,7 @@
   "parameters": {
     "configureButtonEmpty": "Configure parameters",
     "configureButtonSet": "Parameters ({count})",
+    "hasParametersBadgeTooltip": "Has parameterized steps",
     "sheetTitle": "Configure Parameters",
     "sheetDescription": "Declare named parameters to be used in test steps for this test case and (optionally) attach a dataset of values to use during execution.",
     "tabParameters": "Parameters",

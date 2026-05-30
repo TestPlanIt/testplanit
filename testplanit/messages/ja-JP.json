@@ -306,6 +306,8 @@
       "automated": "自動化",
       "manual": "マニュアル",
       "notAutomated": "自動化されていない",
+      "parameterized": "パラメータ化",
+      "notParameterized": "パラメータ化されていません",
       "testRuns": "テスト実行",
       "title": "タイトル",
       "project": "プロジェクト",
@@ -2605,6 +2607,7 @@
     },
     "views": {
       "byAutomation": "オートメーション",
+      "byParameterized": "パラメータ化",
       "allTemplates": "すべてのテンプレート",
       "allStates": "すべての州",
       "allCreators": "すべてのクリエイター",
@@ -7343,6 +7346,7 @@
   "parameters": {
     "configureButtonEmpty": "パラメータを設定する",
     "configureButtonSet": "パラメータ ({count})",
+    "hasParametersBadgeTooltip": "パラメータ化されたステップがあります",
     "sheetTitle": "パラメータの設定",
     "sheetDescription": "このテストケースのテストステップで使用する名前付きパラメータを宣言し、（オプションで）実行中に使用する値のデータセットを添付します。",
     "tabParameters": "パラメータ",

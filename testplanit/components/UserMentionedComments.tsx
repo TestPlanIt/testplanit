@@ -109,6 +109,7 @@ function CommentDisplay({ comment }: CommentDisplayProps) {
           name: comment.repositoryCase.name,
           isDeleted,
           source: comment.repositoryCase.source,
+          hasParameters: (comment.repositoryCase as any).hasParameters,
         }}
         projectId={isDeleted ? undefined : comment.projectId}
         showIcon={true}

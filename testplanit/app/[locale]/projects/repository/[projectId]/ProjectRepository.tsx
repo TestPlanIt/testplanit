@@ -46,6 +46,7 @@ import {
   Search,
   Sparkles,
   SquareCheckBig,
+  SquareStack,
   Tags,
   Type,
   User,
@@ -250,6 +251,10 @@ interface ViewOptions {
     count?: number;
   }>;
   automated: Array<{
+    value: boolean;
+    count: number;
+  }>;
+  parameterized: Array<{
     value: boolean;
     count: number;
   }>;
@@ -706,6 +711,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         states: [],
         creators: [],
         automated: [],
+        parameterized: [],
         dynamicFields: {},
         tags: [],
         issues: [],
@@ -758,6 +764,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       states: viewOptionsData.states,
       creators: viewOptionsData.creators,
       automated: viewOptionsData.automated || [],
+      parameterized: viewOptionsData.parameterized || [],
       dynamicFields,
       tags: tagOptions,
       issues: issueOptions,
@@ -791,6 +798,11 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
         id: "automated",
         name: t("repository.views.byAutomation"),
         icon: Bot,
+      },
+      {
+        id: "parameterized",
+        name: t("repository.views.byParameterized"),
+        icon: SquareStack,
       },
       // Always include Tags view
       {
@@ -913,6 +925,7 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       "states",
       "creators",
       "automated",
+      "parameterized",
       "status",
       "assignedTo",
       "tags",
@@ -1212,6 +1225,8 @@ const ProjectRepository: React.FC<ProjectRepositoryProps> = ({
       } else if (value === "creators" && viewOptions.creators.length > 0) {
         setSelectedFilter([viewOptions.creators[0].id]);
       } else if (value === "automated") {
+        setSelectedFilter([1]);
+      } else if (value === "parameterized") {
         setSelectedFilter([1]);
       } else if (value === "assignedTo") {
         const assignedToView = viewItems.find(

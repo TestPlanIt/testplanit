@@ -19,9 +19,21 @@ interface DuplicateCandidate {
   id: number;
   projectId: number;
   caseAId: number;
-  caseA: { id: number; name: string; source: string; automated: boolean };
+  caseA: {
+    id: number;
+    name: string;
+    source: string;
+    automated: boolean;
+    hasParameters?: boolean;
+  };
   caseBId: number;
-  caseB: { id: number; name: string; source: string; automated: boolean };
+  caseB: {
+    id: number;
+    name: string;
+    source: string;
+    automated: boolean;
+    hasParameters?: boolean;
+  };
   score: number;
   matchedFields: string[];
   status: string;
@@ -115,10 +127,12 @@ export function DuplicateResultsTable({
       caseAName: item.caseA.name,
       caseASource: item.caseA.source,
       caseAAutomated: item.caseA.automated,
+      caseAHasParameters: item.caseA.hasParameters ?? false,
       caseBId: item.caseBId,
       caseBName: item.caseB.name,
       caseBSource: item.caseB.source,
       caseBAutomated: item.caseB.automated,
+      caseBHasParameters: item.caseB.hasParameters ?? false,
       score: item.score,
       matchedFields: item.matchedFields,
       status: item.status,

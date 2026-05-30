@@ -1,4 +1,4 @@
-import { Bot, ListChecks, Trash2 } from "lucide-react";
+import { Bot, ListChecks, SquareStack, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "~/lib/navigation";
 import { cn, type ClassValue } from "~/utils";
@@ -17,10 +17,12 @@ interface TestCaseNameDisplayProps {
           automated?: boolean;
           isDeleted?: boolean;
           source?: string;
+          hasParameters?: boolean;
         };
         automated?: boolean;
         isDeleted?: boolean;
         source?: string;
+        hasParameters?: boolean;
       }
     | null
     | undefined;
@@ -38,6 +40,13 @@ const iconSizeClasses: Record<TestCaseNameDisplaySize, string> = {
   xl: "h-6 w-6",
 };
 
+// Adjacent SquareStack glyph rendered next to the type icon for
+// parameterized cases. Same shape the Tiptap toolbar's
+// InsertParameterToolbarButton uses, so the stacked-squares mark is
+// already associated with "parameter". Matched in size to the type
+// icon and tinted with `text-primary` so it reads as a related
+// indicator without competing for visual weight.
+
 export function TestCaseNameDisplay({
   testCase,
   projectId,
@@ -47,6 +56,7 @@ export function TestCaseNameDisplay({
   size = "medium",
 }: TestCaseNameDisplayProps) {
   const t = useTranslations("common.labels");
+  const tParams = useTranslations("parameters");
 
   if (!testCase) {
     return <span>{t("unknown")}</span>;
@@ -60,8 +70,14 @@ export function TestCaseNameDisplay({
   const source = testCase.source || testCase.repositoryCase?.source || "MANUAL";
   const automated =
     testCase.automated || testCase.repositoryCase?.automated || false;
+  const hasParameters =
+    testCase.hasParameters || testCase.repositoryCase?.hasParameters || false;
 
-  // Determine which icon to show
+  // Determine which icon to show. Soft-deleted wins over everything
+  // (the row is being represented as gone); for live cases, we render
+  // either the manual or automated type icon and optionally overlay a
+  // small Braces badge in the top-right corner when the case has
+  // parameterized steps.
   let icon = null;
   const iconSize = iconSizeClasses[size];
   if (showIcon) {
@@ -71,10 +87,31 @@ export function TestCaseNameDisplay({
           className={cn("shrink-0 mt-0.5 text-muted-foreground", iconSize)}
         />
       );
-    } else if (automated || isAutomatedCaseSource(source)) {
-      icon = <Bot className={cn("shrink-0 mt-0.5", iconSize)} />;
     } else {
-      icon = <ListChecks className={cn("shrink-0 mt-0.5", iconSize)} />;
+      const baseIcon =
+        automated || isAutomatedCaseSource(source) ? (
+          <Bot className={cn("shrink-0", iconSize)} />
+        ) : (
+          <ListChecks className={cn("shrink-0", iconSize)} />
+        );
+      icon = (
+        <span className="inline-flex items-center gap-1 shrink-0 mt-0.5">
+          {baseIcon}
+          {hasParameters && (
+            <span
+              title={tParams("hasParametersBadgeTooltip")}
+              aria-label={tParams("hasParametersBadgeTooltip")}
+              className="inline-flex shrink-0"
+            >
+              <SquareStack
+                data-testid="has-parameters-badge"
+                aria-hidden="true"
+                className={cn("shrink-0 text-primary", iconSize)}
+              />
+            </span>
+          )}
+        </span>
+      );
     }
   }
 

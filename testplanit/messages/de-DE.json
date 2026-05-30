@@ -306,6 +306,8 @@
       "automated": "Automatisiert",
       "manual": "Handbuch",
       "notAutomated": "Nicht automatisiert",
+      "parameterized": "Parametrisiert",
+      "notParameterized": "Nicht parametrisiert",
       "testRuns": "Testläufe",
       "title": "Titel",
       "project": "Projekt",
@@ -2605,6 +2607,7 @@
     },
     "views": {
       "byAutomation": "Automatisierung",
+      "byParameterized": "Parametrisierung",
       "allTemplates": "Alle Vorlagen",
       "allStates": "Alle Staaten",
       "allCreators": "Alle Schöpfer",
@@ -7343,6 +7346,7 @@
   "parameters": {
     "configureButtonEmpty": "Parameter konfigurieren",
     "configureButtonSet": "Parameter ({count})",
+    "hasParametersBadgeTooltip": "Hat parametrisierte Schritte",
     "sheetTitle": "Parameter konfigurieren",
     "sheetDescription": "Deklarieren Sie benannte Parameter, die in den Testschritten für diesen Testfall verwendet werden sollen, und fügen Sie (optional) einen Datensatz mit Werten hinzu, die während der Ausführung verwendet werden sollen.",
     "tabParameters": "Parameter",

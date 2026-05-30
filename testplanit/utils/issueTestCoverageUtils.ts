@@ -30,6 +30,7 @@ export interface IssueTestCoverageRow {
   testCaseId: number;
   testCaseName: string;
   testCaseSource: string;
+  testCaseHasParameters: boolean;
 
   // Test case metrics
   lastStatusId: number | null;
@@ -62,6 +63,7 @@ export interface IssueTestCaseDetailRow {
   testCaseId: number;
   testCaseName: string;
   testCaseSource: string;
+  testCaseHasParameters: boolean;
   lastStatusId: number | null;
   lastStatusName: string | null;
   lastStatusColor: string | null;
@@ -93,6 +95,7 @@ interface RawIssueTestCaseResult {
   test_case_id: number;
   test_case_name: string;
   test_case_source: string;
+  test_case_has_parameters: boolean;
   last_status_id: number | null;
   last_status_name: string | null;
   last_status_color: string | null;
@@ -246,6 +249,7 @@ export async function handleIssueTestCoveragePOST(
         rc.id as test_case_id,
         rc.name as test_case_name,
         rc.source::text as test_case_source,
+        rc."hasParameters" as test_case_has_parameters,
         lr.status_id as last_status_id,
         lr.status_name as last_status_name,
         lr.status_color as last_status_color,
@@ -343,6 +347,7 @@ export async function handleIssueTestCoveragePOST(
         testCaseId: row.test_case_id,
         testCaseName: row.test_case_name,
         testCaseSource: row.test_case_source,
+        testCaseHasParameters: row.test_case_has_parameters,
 
         // Test case metrics
         lastStatusId: row.last_status_id,

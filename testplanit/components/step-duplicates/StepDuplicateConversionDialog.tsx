@@ -303,6 +303,7 @@ export function StepDuplicateConversionDialog({
                   name={member.case.name}
                   source={member.case.source}
                   automated={member.case.automated}
+                  hasParameters={(member.case as any).hasParameters}
                   link={`/projects/repository/${match.projectId}/${member.caseId}`}
                   linkTarget="_blank"
                   maxLines={2}

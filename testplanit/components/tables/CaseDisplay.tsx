@@ -18,6 +18,8 @@ interface Case {
   source: RepositoryCaseSource;
   automated?: boolean;
   isDeleted?: boolean;
+  /** When true, the type icon gains a `{}` corner badge. Source: RepositoryCases.hasParameters. */
+  hasParameters?: boolean;
   link?: string;
   linkTarget?: "_blank" | "_self";
   size?: CaseDisplaySize;
@@ -33,6 +35,7 @@ export const CaseDisplay: React.FC<Case> = ({
   source,
   automated,
   isDeleted,
+  hasParameters,
   linkTarget,
   className,
   maxLines,
@@ -66,6 +69,7 @@ export const CaseDisplay: React.FC<Case> = ({
         source,
         automated,
         isDeleted,
+        hasParameters,
       }}
       showIcon={true}
       className={cn(className, clampClass)}

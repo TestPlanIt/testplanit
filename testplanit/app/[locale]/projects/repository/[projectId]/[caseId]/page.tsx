@@ -1923,6 +1923,7 @@ export default function TestCaseDetails() {
                       size="xl"
                       source={testcase.source}
                       automated={testcase.automated}
+                      hasParameters={testcase.hasParameters}
                     />
                   </div>
                 )}

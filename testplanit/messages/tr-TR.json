@@ -306,6 +306,8 @@
       "automated": "Otomatik",
       "manual": "Manuel",
       "notAutomated": "Otomatikleştirilmemiş",
+      "parameterized": "Parametreli",
+      "notParameterized": "Parametrelendirilmemiş",
       "testRuns": "Test Çalışmaları",
       "title": "Başlık",
       "project": "Proje",
@@ -2605,6 +2607,7 @@
     },
     "views": {
       "byAutomation": "Otomasyon",
+      "byParameterized": "Parametrizasyon",
       "allTemplates": "Tüm Şablonlar",
       "allStates": "Tüm Eyaletler",
       "allCreators": "Tüm Yaratıcılar",
@@ -7343,6 +7346,7 @@
   "parameters": {
     "configureButtonEmpty": "Parametreleri yapılandırın",
     "configureButtonSet": "Parametreler ({count})",
+    "hasParametersBadgeTooltip": "Parametreli adımlara sahiptir.",
     "sheetTitle": "Parametreleri Yapılandır",
     "sheetDescription": "Bu test senaryosu için test adımlarında kullanılacak adlandırılmış parametreleri tanımlayın ve (isteğe bağlı olarak) yürütme sırasında kullanılacak bir değer veri kümesi ekleyin.",
     "tabParameters": "Parametreler",

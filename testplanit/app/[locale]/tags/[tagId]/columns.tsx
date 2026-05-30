@@ -48,6 +48,7 @@ export const useCaseColumns = (translations: {
   name: string;
   source: any;
   automated?: boolean;
+  hasParameters?: boolean;
   projectId?: number;
   projectName?: string;
   iconUrl?: string | null;
@@ -73,6 +74,7 @@ export const useCaseColumns = (translations: {
                 link={`/projects/repository/${row.original.projectId}/${row.original.id}`}
                 source={row.original.source}
                 automated={row.original.automated}
+                hasParameters={row.original.hasParameters}
                 maxLines={2}
               />
             </div>

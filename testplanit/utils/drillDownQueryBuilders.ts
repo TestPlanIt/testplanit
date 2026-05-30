@@ -212,6 +212,7 @@ export function buildTestExecutionQuery(
             select: {
               id: true,
               name: true,
+              hasParameters: true,
             },
           },
         },
@@ -1081,6 +1082,7 @@ export function buildMilestoneCompletionQuery(
         select: {
           id: true,
           name: true,
+          hasParameters: true,
           project: {
             select: {
               id: true,

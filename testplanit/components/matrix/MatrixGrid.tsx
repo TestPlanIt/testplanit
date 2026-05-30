@@ -50,6 +50,7 @@ interface SubRow {
   caseName: string;
   caseSource: string;
   caseAutomated: boolean;
+  caseHasParameters: boolean;
   rowIndex: number;
   label: string | null;
   kind: "header" | "data";
@@ -102,6 +103,7 @@ export function MatrixGrid({
           caseName: c.caseName,
           caseSource: c.source,
           caseAutomated: c.automated,
+          caseHasParameters: c.hasParameters,
           rowIndex: -1,
           label: null,
           kind: "header",
@@ -114,6 +116,7 @@ export function MatrixGrid({
             caseName: c.caseName,
             caseSource: c.source,
             caseAutomated: c.automated,
+            caseHasParameters: c.hasParameters,
             rowIndex: r.index,
             label: r.label,
             kind: "data",
@@ -128,6 +131,7 @@ export function MatrixGrid({
           caseName: c.caseName,
           caseSource: c.source,
           caseAutomated: c.automated,
+          caseHasParameters: c.hasParameters,
           rowIndex: r.index,
           label: r.label,
           kind: "data",
@@ -256,6 +260,7 @@ export function MatrixGrid({
                       name={sr.caseName}
                       source={sr.caseSource as RepositoryCaseSource}
                       automated={sr.caseAutomated}
+                      hasParameters={sr.caseHasParameters}
                       link={`/projects/repository/${projectId}/${sr.caseId}`}
                       linkTarget="_blank"
                       size="small"

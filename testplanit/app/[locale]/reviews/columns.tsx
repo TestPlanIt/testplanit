@@ -54,6 +54,7 @@ export interface InboxCaseRow {
   name: string;
   source: import("@prisma/client").RepositoryCaseSource;
   automated?: boolean;
+  hasParameters?: boolean;
   isDeleted?: boolean;
 }
 
@@ -260,6 +261,7 @@ export const useColumns = ({
                 name={c.name}
                 source={c.source}
                 automated={c.automated}
+                hasParameters={c.hasParameters}
                 isDeleted={c.isDeleted}
                 link={`/projects/repository/${projectId}/${c.id}`}
                 size="medium"

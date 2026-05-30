@@ -186,6 +186,7 @@ export function SelectedTestCasesDrawer({
               name={testCase.name}
               source={testCase.source || RepositoryCaseSource.MANUAL}
               automated={testCase.automated}
+              hasParameters={testCase.hasParameters}
               size="large"
               link={`/projects/repository/${projectId}/${testCase.id}`}
               linkTarget="_blank"

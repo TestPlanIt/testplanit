@@ -156,6 +156,7 @@ function CasePanel({
             name={caseDetails.name}
             source={caseDetails.source as any}
             automated={caseDetails.automated}
+            hasParameters={(caseDetails as any).hasParameters}
             size="large"
           />
           <a

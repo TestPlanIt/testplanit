@@ -81,6 +81,7 @@ The **View Selector** in the left panel provides powerful ways to slice your tes
 * **By State**: Groups cases by their current workflow state.
 * **By Creator**: Groups cases by the user who created them.
 * **By Automation**: Filters cases based on whether they are marked as automated.
+* **By Parameterization**: Filters cases by whether they have parameters declared (Parameterized / Not Parameterized). Each option shows a live count of matching cases. See [Parameterized Test Cases](./parameterized-test-cases.md) for what makes a case parameterized.
 * **By Tag**: Filters cases based on assigned tags (Any Tag, No Tags, or a specific tag).
 * **By Issue**: Filters cases based on linked issues (Any Issue, No Issues, or a specific issue). This view only appears when there are test cases with issues attached.
 * **By Custom Field**: If custom fields (Dropdown, Multi-Select, Link, Steps, Checkbox types) are defined in templates, views will be available to filter by the values of those fields.
@@ -90,7 +91,7 @@ The **View Selector** in the left panel provides powerful ways to slice your tes
 The main table displays the following information for each test case:
 
 * **Checkbox**: For selecting multiple cases for bulk actions (like adding to a test run or deleting).
-* **Name**: The title of the test case. Clicking the name navigates to the [Test Case Details](./repository-case-details.mdx) page.
+* **Name**: The title of the test case. Each row shows a type icon — robot for automated cases, checklist for manual cases — followed by a stacked-squares badge when the case is [parameterized](./parameterized-test-cases.md). Clicking the name navigates to the [Test Case Details](./repository-case-details.mdx) page.
 * **Template**: The template used by the test case.
 * **State**: The current workflow state of the test case.
 * **Priority**: The assigned priority level.

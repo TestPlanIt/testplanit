@@ -116,6 +116,8 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
           name: true,
           source: true,
           isDeleted: true,
+          automated: true,
+          hasParameters: true,
           testRuns: {
             select: {
               results: {
@@ -150,6 +152,8 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
           name: true,
           source: true,
           isDeleted: true,
+          automated: true,
+          hasParameters: true,
           testRuns: {
             select: {
               results: {
@@ -453,6 +457,7 @@ const LinkedCasesPanel: React.FC<LinkedCasesPanelProps> = ({
                             name: otherCase.name,
                             source: otherCaseSource,
                             isDeleted: otherCase.isDeleted,
+                            hasParameters: (otherCase as any).hasParameters,
                           }}
                           projectId={
                             otherCase.isDeleted
@@ -724,6 +729,7 @@ function AddLinkDialog({
                   name={option.name}
                   source={option.source}
                   automated={option.automated}
+                  hasParameters={option.hasParameters}
                   size="large"
                 />
               )}

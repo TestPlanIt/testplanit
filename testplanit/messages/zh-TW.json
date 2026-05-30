@@ -306,6 +306,8 @@
       "automated": "自動化",
       "manual": "手動的",
       "notAutomated": "非自動化",
+      "parameterized": "參數化",
+      "notParameterized": "未參數化",
       "testRuns": "測試運行",
       "title": "標題",
       "project": "專案",
@@ -2605,6 +2607,7 @@
     },
     "views": {
       "byAutomation": "自動化",
+      "byParameterized": "參數化",
       "allTemplates": "所有模板",
       "allStates": "所有州",
       "allCreators": "所有創作者",
@@ -7343,6 +7346,7 @@
   "parameters": {
     "configureButtonEmpty": "配置參數",
     "configureButtonSet": "參數（{count}）",
+    "hasParametersBadgeTooltip": "具有參數化步驟",
     "sheetTitle": "配置參數",
     "sheetDescription": "聲明此測試案例測試步驟中要使用的命名參數，並（可選擇性地）附加一個要在執行期間使用的資料集。",
     "tabParameters": "參數",

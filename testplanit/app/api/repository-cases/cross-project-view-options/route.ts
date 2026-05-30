@@ -202,78 +202,89 @@ export async function POST(request: NextRequest) {
     delete baseWhereWithoutProjectFilter.projectId;
 
     // Execute all aggregation queries in parallel across all projects
-    const [projects, templates, states, automatedCounts, dynamicFieldInfo] =
-      await Promise.all([
-        // Projects aggregation - exclude projectId filter so all projects remain selectable
-        prisma.repositoryCases.groupBy({
-          by: ["projectId"],
-          where: baseWhereWithoutProjectFilter,
-          _count: true,
-        }),
-        // Templates aggregation
-        prisma.repositoryCases.groupBy({
-          by: ["templateId"],
-          where: baseWhere,
-          _count: true,
-        }),
-        // States aggregation
-        prisma.repositoryCases.groupBy({
-          by: ["stateId"],
-          where: baseWhere,
-          _count: true,
-        }),
-        // Automated aggregation
-        prisma.repositoryCases.groupBy({
-          by: ["automated"],
-          where: baseWhere,
-          _count: true,
-        }),
-        // Get all templates across all projects with their field configurations
-        prisma.templates.findMany({
-          where: {
-            isDeleted: false,
+    const [
+      projects,
+      templates,
+      states,
+      automatedCounts,
+      parameterizedCounts,
+      dynamicFieldInfo,
+    ] = await Promise.all([
+      // Projects aggregation - exclude projectId filter so all projects remain selectable
+      prisma.repositoryCases.groupBy({
+        by: ["projectId"],
+        where: baseWhereWithoutProjectFilter,
+        _count: true,
+      }),
+      // Templates aggregation
+      prisma.repositoryCases.groupBy({
+        by: ["templateId"],
+        where: baseWhere,
+        _count: true,
+      }),
+      // States aggregation
+      prisma.repositoryCases.groupBy({
+        by: ["stateId"],
+        where: baseWhere,
+        _count: true,
+      }),
+      // Automated aggregation
+      prisma.repositoryCases.groupBy({
+        by: ["automated"],
+        where: baseWhere,
+        _count: true,
+      }),
+      // Parameterized aggregation
+      prisma.repositoryCases.groupBy({
+        by: ["hasParameters"],
+        where: baseWhere,
+        _count: true,
+      }),
+      // Get all templates across all projects with their field configurations
+      prisma.templates.findMany({
+        where: {
+          isDeleted: false,
+        },
+        select: {
+          id: true,
+          templateName: true,
+          projects: {
+            select: {
+              projectId: true,
+            },
           },
-          select: {
-            id: true,
-            templateName: true,
-            projects: {
-              select: {
-                projectId: true,
+          caseFields: {
+            where: {
+              caseField: {
+                isEnabled: true,
+                isDeleted: false,
               },
             },
-            caseFields: {
-              where: {
-                caseField: {
-                  isEnabled: true,
-                  isDeleted: false,
-                },
-              },
-              select: {
-                caseField: {
-                  select: {
-                    id: true,
-                    displayName: true,
-                    type: {
-                      select: {
-                        type: true,
-                      },
+            select: {
+              caseField: {
+                select: {
+                  id: true,
+                  displayName: true,
+                  type: {
+                    select: {
+                      type: true,
                     },
-                    fieldOptions: {
-                      select: {
-                        fieldOption: {
-                          select: {
-                            id: true,
-                            name: true,
-                            order: true,
-                            icon: {
-                              select: {
-                                name: true,
-                              },
+                  },
+                  fieldOptions: {
+                    select: {
+                      fieldOption: {
+                        select: {
+                          id: true,
+                          name: true,
+                          order: true,
+                          icon: {
+                            select: {
+                              name: true,
                             },
-                            iconColor: {
-                              select: {
-                                value: true,
-                              },
+                          },
+                          iconColor: {
+                            select: {
+                              value: true,
                             },
                           },
                         },
@@ -284,8 +295,9 @@ export async function POST(request: NextRequest) {
               },
             },
           },
-        }),
-      ]);
+        },
+      }),
+    ]);
 
     // Get project details (exclude deleted projects)
     const projectIds_result = projects.map((p) => p.projectId);
@@ -350,6 +362,12 @@ export async function POST(request: NextRequest) {
     const automatedWithCounts = automatedCounts.map((a) => ({
       value: a.automated,
       count: a._count,
+    }));
+
+    // Build parameterized counts
+    const parameterizedWithCounts = parameterizedCounts.map((p) => ({
+      value: p.hasParameters,
+      count: p._count,
     }));
 
     // Build dynamic fields map across all projects
@@ -528,6 +546,7 @@ export async function POST(request: NextRequest) {
       templates: templatesWithCounts,
       states: statesWithCounts,
       automated: automatedWithCounts,
+      parameterized: parameterizedWithCounts,
       dynamicFields,
       totalCount,
     });

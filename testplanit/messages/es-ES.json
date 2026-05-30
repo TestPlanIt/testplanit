@@ -306,6 +306,8 @@
       "automated": "Automatizado",
       "manual": "Manual",
       "notAutomated": "No Automatizado",
+      "parameterized": "Parametrizado",
+      "notParameterized": "No parametrizado",
       "testRuns": "Prueba de ejecuciones",
       "title": "Título",
       "project": "Proyecto",
@@ -2605,6 +2607,7 @@
     },
     "views": {
       "byAutomation": "Automatización",
+      "byParameterized": "Parametrización",
       "allTemplates": "Todas las plantillas",
       "allStates": "Todos los Estados",
       "allCreators": "Todos los Creadores",
@@ -7343,6 +7346,7 @@
   "parameters": {
     "configureButtonEmpty": "Configurar parámetros",
     "configureButtonSet": "Parámetros ({count})",
+    "hasParametersBadgeTooltip": "Tiene pasos parametrizados",
     "sheetTitle": "Configurar parámetros",
     "sheetDescription": "Declare los parámetros con nombre que se utilizarán en los pasos de prueba para este caso de prueba y (opcionalmente) adjunte un conjunto de datos con valores que se utilizarán durante la ejecución.",
     "tabParameters": "Parámetros",

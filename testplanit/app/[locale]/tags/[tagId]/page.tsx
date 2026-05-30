@@ -249,6 +249,7 @@ function TagDetail() {
           name: true,
           source: true,
           automated: true,
+          hasParameters: true,
           projectId: true,
           project: {
             select: {
@@ -356,6 +357,7 @@ function TagDetail() {
         name: testCase.name,
         source: testCase.source,
         automated: testCase.automated,
+        hasParameters: testCase.hasParameters,
         projectId: testCase.projectId,
         projectName: testCase.project?.name || t("tags.noProject"),
         iconUrl: testCase.project?.iconUrl || null,

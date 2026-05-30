@@ -212,6 +212,7 @@ export function useDrillDownColumns({
                 testCase={{
                   id: row.repositoryCase?.id || row.repositoryCaseId || 0,
                   name: row.repositoryCase?.name || "",
+                  hasParameters: row.repositoryCase?.hasParameters,
                 }}
                 projectId={projectId}
               />
@@ -338,6 +339,8 @@ export function useDrillDownColumns({
                   testCase={{
                     id: row.testRunCase?.repositoryCase?.id || 0,
                     name: row.testRunCase?.repositoryCase?.name || "",
+                    hasParameters:
+                      row.testRunCase?.repositoryCase?.hasParameters,
                   }}
                   projectId={projectId}
                   className="truncate"
@@ -490,6 +493,8 @@ export function useDrillDownColumns({
                   testCase={{
                     id: row.testRunCase?.repositoryCase?.id || 0,
                     name: row.testRunCase?.repositoryCase?.name || "",
+                    hasParameters:
+                      row.testRunCase?.repositoryCase?.hasParameters,
                   }}
                   projectId={projectId}
                   className="truncate"
@@ -592,6 +597,8 @@ export function useDrillDownColumns({
                   testCase={{
                     id: row.testRunCase?.repositoryCase?.id || 0,
                     name: row.testRunCase?.repositoryCase?.name || "",
+                    hasParameters:
+                      row.testRunCase?.repositoryCase?.hasParameters,
                   }}
                   projectId={projectId}
                   className="truncate"
@@ -797,6 +804,7 @@ export function useDrillDownColumns({
                 testCase={{
                   id: row.id,
                   name: row.name,
+                  hasParameters: row.hasParameters,
                 }}
                 projectId={projectId}
                 className="truncate"
@@ -843,6 +851,7 @@ export function useDrillDownColumns({
                 testCase={{
                   id: row.id,
                   name: row.name,
+                  hasParameters: row.hasParameters,
                 }}
                 projectId={projectId}
                 className="truncate"
@@ -922,6 +931,7 @@ export function useDrillDownColumns({
                 testCase={{
                   id: row.id,
                   name: row.name,
+                  hasParameters: row.hasParameters,
                 }}
                 projectId={projectId}
                 className="truncate"
@@ -1457,11 +1467,16 @@ export function useDrillDownColumns({
                 "";
               const projectId =
                 row.projectId || row.project?.id || row.testRun?.projectId;
+              const hasParameters =
+                row.hasParameters ??
+                row.testCase?.hasParameters ??
+                row.testRunCase?.repositoryCase?.hasParameters;
               return (
                 <TestCaseNameDisplay
                   testCase={{
                     id: testCaseId,
                     name: testCaseName,
+                    hasParameters,
                   }}
                   projectId={projectId}
                   className="truncate"

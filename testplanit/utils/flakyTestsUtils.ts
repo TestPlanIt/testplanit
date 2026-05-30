@@ -19,6 +19,7 @@ interface FlakyTestRow {
   testCaseId: number;
   testCaseName: string;
   testCaseSource: string;
+  testCaseHasParameters: boolean;
   flipCount: number;
   executions: ExecutionStatus[];
   project?: {
@@ -31,6 +32,7 @@ interface RawExecutionResult {
   test_case_id: number;
   test_case_name: string;
   test_case_source: string;
+  test_case_has_parameters: boolean;
   result_id: number;
   test_run_id: number | null;
   status_name: string;
@@ -193,6 +195,7 @@ export async function handleFlakyTestsPOST(
               rc.id as test_case_id,
               rc.name as test_case_name,
               rc.source::text as test_case_source,
+              rc."hasParameters" as test_case_has_parameters,
               trr.id as result_id,
               CASE WHEN tr."isDeleted" = false THEN trc."testRunId" ELSE NULL END as test_run_id,
               s.name as status_name,
@@ -219,6 +222,7 @@ export async function handleFlakyTestsPOST(
               rc.id as test_case_id,
               rc.name as test_case_name,
               rc.source::text as test_case_source,
+              rc."hasParameters" as test_case_has_parameters,
               jr.id as result_id,
               CASE WHEN tr."isDeleted" = false THEN jts."testRunId" ELSE NULL END as test_run_id,
               COALESCE(s.name, jr.type::text) as status_name,
@@ -253,6 +257,7 @@ export async function handleFlakyTestsPOST(
               test_case_id,
               test_case_name,
               test_case_source,
+              test_case_has_parameters,
               result_id,
               test_run_id,
               status_name,
@@ -273,6 +278,7 @@ export async function handleFlakyTestsPOST(
               rc.id as test_case_id,
               rc.name as test_case_name,
               rc.source::text as test_case_source,
+              rc."hasParameters" as test_case_has_parameters,
               trr.id as result_id,
               CASE WHEN tr."isDeleted" = false THEN trc."testRunId" ELSE NULL END as test_run_id,
               s.name as status_name,
@@ -298,6 +304,7 @@ export async function handleFlakyTestsPOST(
               rc.id as test_case_id,
               rc.name as test_case_name,
               rc.source::text as test_case_source,
+              rc."hasParameters" as test_case_has_parameters,
               jr.id as result_id,
               CASE WHEN tr."isDeleted" = false THEN jts."testRunId" ELSE NULL END as test_run_id,
               COALESCE(s.name, jr.type::text) as status_name,
@@ -331,6 +338,7 @@ export async function handleFlakyTestsPOST(
               test_case_id,
               test_case_name,
               test_case_source,
+              test_case_has_parameters,
               result_id,
               test_run_id,
               status_name,
@@ -351,6 +359,7 @@ export async function handleFlakyTestsPOST(
               rc.id as test_case_id,
               rc.name as test_case_name,
               rc.source::text as test_case_source,
+              rc."hasParameters" as test_case_has_parameters,
               trr.id as result_id,
               CASE WHEN tr."isDeleted" = false THEN trc."testRunId" ELSE NULL END as test_run_id,
               s.name as status_name,
@@ -376,6 +385,7 @@ export async function handleFlakyTestsPOST(
               rc.id as test_case_id,
               rc.name as test_case_name,
               rc.source::text as test_case_source,
+              rc."hasParameters" as test_case_has_parameters,
               jr.id as result_id,
               CASE WHEN tr."isDeleted" = false THEN jts."testRunId" ELSE NULL END as test_run_id,
               COALESCE(s.name, jr.type::text) as status_name,
@@ -409,6 +419,7 @@ export async function handleFlakyTestsPOST(
               test_case_id,
               test_case_name,
               test_case_source,
+              test_case_has_parameters,
               result_id,
               test_run_id,
               status_name,
@@ -429,6 +440,7 @@ export async function handleFlakyTestsPOST(
               rc.id as test_case_id,
               rc.name as test_case_name,
               rc.source::text as test_case_source,
+              rc."hasParameters" as test_case_has_parameters,
               trr.id as result_id,
               CASE WHEN tr."isDeleted" = false THEN trc."testRunId" ELSE NULL END as test_run_id,
               s.name as status_name,
@@ -453,6 +465,7 @@ export async function handleFlakyTestsPOST(
               rc.id as test_case_id,
               rc.name as test_case_name,
               rc.source::text as test_case_source,
+              rc."hasParameters" as test_case_has_parameters,
               jr.id as result_id,
               CASE WHEN tr."isDeleted" = false THEN jts."testRunId" ELSE NULL END as test_run_id,
               COALESCE(s.name, jr.type::text) as status_name,
@@ -485,6 +498,7 @@ export async function handleFlakyTestsPOST(
               test_case_id,
               test_case_name,
               test_case_source,
+              test_case_has_parameters,
               result_id,
               test_run_id,
               status_name,
@@ -508,6 +522,7 @@ export async function handleFlakyTestsPOST(
               rc.id as test_case_id,
               rc.name as test_case_name,
               rc.source::text as test_case_source,
+              rc."hasParameters" as test_case_has_parameters,
               trr.id as result_id,
               CASE WHEN tr."isDeleted" = false THEN trc."testRunId" ELSE NULL END as test_run_id,
               s.name as status_name,
@@ -533,6 +548,7 @@ export async function handleFlakyTestsPOST(
               rc.id as test_case_id,
               rc.name as test_case_name,
               rc.source::text as test_case_source,
+              rc."hasParameters" as test_case_has_parameters,
               jr.id as result_id,
               CASE WHEN tr."isDeleted" = false THEN jts."testRunId" ELSE NULL END as test_run_id,
               COALESCE(s.name, jr.type::text) as status_name,
@@ -566,6 +582,7 @@ export async function handleFlakyTestsPOST(
               test_case_id,
               test_case_name,
               test_case_source,
+              test_case_has_parameters,
               result_id,
               test_run_id,
               status_name,
@@ -585,6 +602,7 @@ export async function handleFlakyTestsPOST(
               rc.id as test_case_id,
               rc.name as test_case_name,
               rc.source::text as test_case_source,
+              rc."hasParameters" as test_case_has_parameters,
               trr.id as result_id,
               CASE WHEN tr."isDeleted" = false THEN trc."testRunId" ELSE NULL END as test_run_id,
               s.name as status_name,
@@ -609,6 +627,7 @@ export async function handleFlakyTestsPOST(
               rc.id as test_case_id,
               rc.name as test_case_name,
               rc.source::text as test_case_source,
+              rc."hasParameters" as test_case_has_parameters,
               jr.id as result_id,
               CASE WHEN tr."isDeleted" = false THEN jts."testRunId" ELSE NULL END as test_run_id,
               COALESCE(s.name, jr.type::text) as status_name,
@@ -641,6 +660,7 @@ export async function handleFlakyTestsPOST(
               test_case_id,
               test_case_name,
               test_case_source,
+              test_case_has_parameters,
               result_id,
               test_run_id,
               status_name,
@@ -660,6 +680,7 @@ export async function handleFlakyTestsPOST(
               rc.id as test_case_id,
               rc.name as test_case_name,
               rc.source::text as test_case_source,
+              rc."hasParameters" as test_case_has_parameters,
               trr.id as result_id,
               CASE WHEN tr."isDeleted" = false THEN trc."testRunId" ELSE NULL END as test_run_id,
               s.name as status_name,
@@ -684,6 +705,7 @@ export async function handleFlakyTestsPOST(
               rc.id as test_case_id,
               rc.name as test_case_name,
               rc.source::text as test_case_source,
+              rc."hasParameters" as test_case_has_parameters,
               jr.id as result_id,
               CASE WHEN tr."isDeleted" = false THEN jts."testRunId" ELSE NULL END as test_run_id,
               COALESCE(s.name, jr.type::text) as status_name,
@@ -716,6 +738,7 @@ export async function handleFlakyTestsPOST(
               test_case_id,
               test_case_name,
               test_case_source,
+              test_case_has_parameters,
               result_id,
               test_run_id,
               status_name,
@@ -735,6 +758,7 @@ export async function handleFlakyTestsPOST(
               rc.id as test_case_id,
               rc.name as test_case_name,
               rc.source::text as test_case_source,
+              rc."hasParameters" as test_case_has_parameters,
               trr.id as result_id,
               CASE WHEN tr."isDeleted" = false THEN trc."testRunId" ELSE NULL END as test_run_id,
               s.name as status_name,
@@ -758,6 +782,7 @@ export async function handleFlakyTestsPOST(
               rc.id as test_case_id,
               rc.name as test_case_name,
               rc.source::text as test_case_source,
+              rc."hasParameters" as test_case_has_parameters,
               jr.id as result_id,
               CASE WHEN tr."isDeleted" = false THEN jts."testRunId" ELSE NULL END as test_run_id,
               COALESCE(s.name, jr.type::text) as status_name,
@@ -789,6 +814,7 @@ export async function handleFlakyTestsPOST(
               test_case_id,
               test_case_name,
               test_case_source,
+              test_case_has_parameters,
               result_id,
               test_run_id,
               status_name,
@@ -811,6 +837,7 @@ export async function handleFlakyTestsPOST(
         testCaseId: number;
         testCaseName: string;
         testCaseSource: string;
+        testCaseHasParameters: boolean;
         projectId?: number;
         projectName?: string;
         executions: ExecutionStatus[];
@@ -830,6 +857,7 @@ export async function handleFlakyTestsPOST(
           testCaseId,
           testCaseName: row.test_case_name,
           testCaseSource: row.test_case_source,
+          testCaseHasParameters: row.test_case_has_parameters,
           projectId: includeProject ? row.project_id : undefined,
           projectName: includeProject ? row.project_name : undefined,
           executions: [],
@@ -870,6 +898,7 @@ export async function handleFlakyTestsPOST(
           testCaseId: testCase.testCaseId,
           testCaseName: testCase.testCaseName,
           testCaseSource: testCase.testCaseSource,
+          testCaseHasParameters: testCase.testCaseHasParameters,
           flipCount,
           executions: testCase.executions,
           project:

@@ -40,6 +40,7 @@ interface IssueTestCoverageRow {
   testCaseId: number;
   testCaseName: string;
   testCaseSource: string;
+  testCaseHasParameters: boolean;
 
   // Test case metrics
   lastStatusId: number | null;
@@ -201,6 +202,7 @@ export function useIssueTestCoverageSummaryColumns(
               id={row.testCaseId}
               name={row.testCaseName}
               source={row.testCaseSource as RepositoryCaseSource}
+              hasParameters={row.testCaseHasParameters}
               link={
                 parentProjectId
                   ? `/projects/repository/${parentProjectId}/${row.testCaseId}`

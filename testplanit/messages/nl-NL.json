@@ -306,6 +306,8 @@
       "automated": "Geautomatiseerd",
       "manual": "Handmatig",
       "notAutomated": "Niet geautomatiseerd",
+      "parameterized": "Geparameteriseerd",
+      "notParameterized": "Niet geparameteriseerd",
       "testRuns": "Testruns",
       "title": "Titel",
       "project": "Project",
@@ -2605,6 +2607,7 @@
     },
     "views": {
       "byAutomation": "Automatisering",
+      "byParameterized": "Parameterisering",
       "allTemplates": "Alle sjablonen",
       "allStates": "Alle staten",
       "allCreators": "Alle makers",
@@ -7343,6 +7346,7 @@
   "parameters": {
     "configureButtonEmpty": "Configureer parameters",
     "configureButtonSet": "Parameters ({count})",
+    "hasParametersBadgeTooltip": "Heeft geparameteriseerde stappen",
     "sheetTitle": "Parameters configureren",
     "sheetDescription": "Declareer benoemde parameters die in de teststappen voor deze testcase gebruikt zullen worden en (optioneel) voeg een dataset met waarden toe die tijdens de uitvoering gebruikt zullen worden.",
     "tabParameters": "Parameters",

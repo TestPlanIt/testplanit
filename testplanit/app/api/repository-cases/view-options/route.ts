@@ -226,6 +226,7 @@ export async function POST(request: Request) {
       states,
       creators,
       automatedCounts,
+      parameterizedCounts,
       tags,
       issues,
       dynamicFieldInfo,
@@ -256,6 +257,13 @@ export async function POST(request: Request) {
       // Automated counts
       prisma.repositoryCases.groupBy({
         by: ["automated"],
+        where: baseWhere,
+        _count: true,
+      }),
+
+      // Parameterized counts
+      prisma.repositoryCases.groupBy({
+        by: ["hasParameters"],
         where: baseWhere,
         _count: true,
       }),
@@ -539,6 +547,7 @@ export async function POST(request: Request) {
         stateId: number;
         creatorId: string;
         automated: boolean;
+        hasParameters: boolean;
       }
     > | null = null;
 
@@ -555,6 +564,7 @@ export async function POST(request: Request) {
           stateId: true,
           creatorId: true,
           automated: true,
+          hasParameters: true,
         },
       });
 
@@ -566,6 +576,7 @@ export async function POST(request: Request) {
             stateId: c.stateId,
             creatorId: c.creatorId,
             automated: c.automated,
+            hasParameters: c.hasParameters,
           },
         ])
       );
@@ -1306,6 +1317,34 @@ export async function POST(request: Request) {
       }));
     }
 
+    // Calculate parameterized counts for multi-config
+    let parameterizedWithCounts: Array<{ value: boolean; count: number }>;
+
+    if (casePropertiesMap && allTestRunCaseIds.length > 0) {
+      const parameterizedCountMap = new Map<boolean, number>();
+      allTestRunCaseIds.forEach((caseId) => {
+        const props = casePropertiesMap!.get(caseId);
+        if (props) {
+          parameterizedCountMap.set(
+            props.hasParameters,
+            (parameterizedCountMap.get(props.hasParameters) || 0) + 1
+          );
+        }
+      });
+
+      parameterizedWithCounts = Array.from(parameterizedCountMap.entries()).map(
+        ([value, count]) => ({
+          value,
+          count,
+        })
+      );
+    } else {
+      parameterizedWithCounts = parameterizedCounts.map((pc) => ({
+        value: pc.hasParameters,
+        count: pc._count,
+      }));
+    }
+
     return NextResponse.json({
       templates: templatesWithCounts.sort((a, b) =>
         a.name.localeCompare(b.name)
@@ -1313,6 +1352,7 @@ export async function POST(request: Request) {
       states: statesWithCounts.sort((a, b) => a.name.localeCompare(b.name)),
       creators: creatorsWithCounts.sort((a, b) => a.name.localeCompare(b.name)),
       automated: automatedWithCounts,
+      parameterized: parameterizedWithCounts,
       tags: tagsWithCounts,
       issues: issuesWithCounts,
       dynamicFields,

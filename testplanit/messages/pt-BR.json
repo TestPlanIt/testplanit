@@ -306,6 +306,8 @@
       "automated": "Automatizado",
       "manual": "Manual",
       "notAutomated": "Não automatizado",
+      "parameterized": "Parametrizado",
+      "notParameterized": "Não parametrizado",
       "testRuns": "Testes de execução",
       "title": "Título",
       "project": "Projeto",
@@ -2605,6 +2607,7 @@
     },
     "views": {
       "byAutomation": "Automação",
+      "byParameterized": "Parametrização",
       "allTemplates": "Todos os modelos",
       "allStates": "Todos os estados",
       "allCreators": "Todos os Criadores",
@@ -7343,6 +7346,7 @@
   "parameters": {
     "configureButtonEmpty": "Configurar parâmetros",
     "configureButtonSet": "Parâmetros ({count})",
+    "hasParametersBadgeTooltip": "Possui etapas parametrizadas",
     "sheetTitle": "Configurar parâmetros",
     "sheetDescription": "Declare os parâmetros nomeados a serem usados nas etapas de teste para este caso de teste e (opcionalmente) anexe um conjunto de dados com os valores a serem usados durante a execução.",
     "tabParameters": "Parâmetros",

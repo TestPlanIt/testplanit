@@ -23,6 +23,7 @@ interface CaseOption {
   name: string;
   source: RepositoryCaseSource;
   automated?: boolean;
+  hasParameters?: boolean;
 }
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -99,6 +100,8 @@ export const CasesListDisplay: React.FC<CasesListProps> = ({
           id: true,
           name: true,
           source: true,
+          automated: true,
+          hasParameters: true,
         },
       };
 
@@ -175,6 +178,7 @@ export const CasesListDisplay: React.FC<CasesListProps> = ({
           link={`/case/${option.id}`}
           source={option.source}
           automated={option.automated}
+          hasParameters={option.hasParameters}
           maxLines={2}
         />
       )}
