@@ -6,7 +6,6 @@ const decoder = new TextDecoder();
 async function readAll(res: Response): Promise<string> {
   const reader = res.body!.getReader();
   let out = "";
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;

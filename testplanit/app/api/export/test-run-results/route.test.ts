@@ -28,8 +28,6 @@ import { authenticateRequest } from "~/lib/api-token-auth";
 import { prisma } from "~/lib/prisma";
 import { GET } from "./route";
 
-const decoder = new TextDecoder();
-
 async function readNdjson(res: Response): Promise<unknown[]> {
   const text = await res.text();
   return text
