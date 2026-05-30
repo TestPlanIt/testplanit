@@ -33,6 +33,14 @@
     {
       "name": "Integrations",
       "description": "External integrations (Jira, etc.)"
+    },
+    {
+      "name": "Data Lake Export",
+      "description": "Bulk NDJSON streaming endpoints for incremental data-lake / ETL ingestion (test-run results, repository cases, audit log)."
+    },
+    {
+      "name": "Webhooks",
+      "description": "Outbound webhook configuration and the published event catalog."
     }
   ],
   "paths": {
@@ -817,6 +825,201 @@
               }
             }
           }
+        }
+      }
+    },
+    "/export/test-run-results": {
+      "get": {
+        "tags": ["Data Lake Export"],
+        "summary": "Stream test-run results as NDJSON",
+        "description": "Bulk export of the test-execution fact table for data-lake ingestion. Returns NDJSON (one JSON object per line) with a manifest line first and an end-trailer line last. Cursor-paged: when the trailer carries a non-null cursor, call again with `cursor=<value>` to fetch the next page. Sorted by (executedAt asc, id asc). Admin tokens read across all projects; non-admin tokens must supply `projectId` and have access to it.",
+        "operationId": "exportTestRunResults",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "description": "ISO-8601 timestamp; only rows with executedAt >= since are emitted.",
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "description": "Opaque base64url continuation token from the previous page's trailer.",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "1..5000 (default 1000). Values outside the range are clamped.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5000,
+              "default": 1000
+            }
+          },
+          {
+            "name": "projectId",
+            "in": "query",
+            "description": "Optional for admins, required for non-admin tokens.",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "NDJSON stream — first line is a manifest, last is an end-trailer, rows in between.",
+            "content": {
+              "application/x-ndjson": {
+                "schema": { "type": "string" }
+              }
+            }
+          },
+          "400": { "description": "projectId required (non-admin)" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "No access to the requested project" }
+        }
+      }
+    },
+    "/export/repository-cases": {
+      "get": {
+        "tags": ["Data Lake Export"],
+        "summary": "Stream repository cases as NDJSON",
+        "description": "Bulk export of the test-case dimension table. `since` filters by case CREATION time (RepositoryCases has no updatedAt column; edits are tracked on RepositoryCaseVersions). Each row carries `currentVersion` so consumers can detect updates by tracking version increments between runs. Same auth/cursor/paging semantics as /export/test-run-results.",
+        "operationId": "exportRepositoryCases",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          { "name": "cursor", "in": "query", "schema": { "type": "string" } },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5000,
+              "default": 1000
+            }
+          },
+          {
+            "name": "projectId",
+            "in": "query",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "NDJSON stream",
+            "content": {
+              "application/x-ndjson": { "schema": { "type": "string" } }
+            }
+          },
+          "400": { "description": "projectId required (non-admin)" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "No access to the requested project" }
+        }
+      }
+    },
+    "/export/audit-log": {
+      "get": {
+        "tags": ["Data Lake Export"],
+        "summary": "Stream audit-log entries as NDJSON",
+        "description": "Bulk export of the compliance/change-history feed. Each row carries the actor, the entity touched, the action, the diff (when captured), and the metadata blob recorded at the time of the event. Sorted by (timestamp asc, id asc). Cursors carry the cuid id as a string. Same auth model as the other export endpoints.",
+        "operationId": "exportAuditLog",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "schema": { "type": "string", "format": "date-time" }
+          },
+          { "name": "cursor", "in": "query", "schema": { "type": "string" } },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5000,
+              "default": 1000
+            }
+          },
+          {
+            "name": "projectId",
+            "in": "query",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "NDJSON stream",
+            "content": {
+              "application/x-ndjson": { "schema": { "type": "string" } }
+            }
+          },
+          "400": { "description": "projectId required (non-admin)" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "No access to the requested project" }
+        }
+      }
+    },
+    "/webhooks/events": {
+      "get": {
+        "tags": ["Webhooks"],
+        "summary": "List webhook event catalog",
+        "description": "Returns the published catalog of outbound webhook event names TestPlanIt emits — the answer to 'what events fire when?'. Optionally filter by category.",
+        "operationId": "listWebhookEvents",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "description": "Restrict to one category.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "test-case",
+                "test-run",
+                "iteration",
+                "session",
+                "issue",
+                "review",
+                "system"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Catalog payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "generatedAt": { "type": "string", "format": "date-time" },
+                    "count": { "type": "integer" },
+                    "events": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": { "type": "string" },
+                          "category": { "type": "string" },
+                          "description": { "type": "string" },
+                          "payloadKeys": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" }
         }
       }
     }

@@ -32,6 +32,8 @@ export const API_CATEGORIES = {
       "Search",
       "Admin",
       "User Management",
+      "Data Lake Export",
+      "Webhooks",
     ],
   },
   projects: {
