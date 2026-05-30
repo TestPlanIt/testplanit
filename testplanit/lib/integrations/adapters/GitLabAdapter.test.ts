@@ -91,10 +91,30 @@ describe("GitLabAdapter", () => {
       );
     });
 
-    it("should throw for non-api_key auth type", async () => {
+    it("should authenticate with an OAuth access token (Bearer header)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ id: 1, username: "oauth-user" }),
+      });
+
+      await adapter.authenticate({ type: "oauth", accessToken: "gl-oauth" });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://gitlab.com/api/v4/user",
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: "Bearer gl-oauth",
+          }),
+        })
+      );
+    });
+
+    it("should throw for an unsupported auth type", async () => {
       await expect(
-        adapter.authenticate({ type: "oauth", accessToken: "tok" })
-      ).rejects.toThrow("Personal Access Token");
+        adapter.authenticate({ type: "basic", username: "u", password: "p" })
+      ).rejects.toThrow(
+        "GitLab adapter only supports OAuth and Personal Access Token authentication"
+      );
     });
 
     it("should throw when PAT is missing", async () => {
@@ -113,6 +133,82 @@ describe("GitLabAdapter", () => {
       await expect(
         adapter.authenticate({ type: "api_key", apiKey: "bad-token" })
       ).rejects.toThrow("Invalid GitLab Personal Access Token");
+    });
+  });
+
+  describe("OAuth", () => {
+    const oauthAdapter = (instance?: string) =>
+      new GitLabAdapter({
+        provider: "GITLAB",
+        clientId: "client-123",
+        clientSecret: "secret-456",
+        redirectUri: "https://app/cb",
+        ...(instance ? { instanceUrl: instance } : {}),
+      });
+
+    it("advertises OAuth support", () => {
+      expect(oauthAdapter().supportsOAuth).toBe(true);
+    });
+
+    it("builds the authorization URL on gitlab.com by default", () => {
+      const url = new URL(oauthAdapter().getAuthorizationUrl("st"));
+      expect(url.origin + url.pathname).toBe(
+        "https://gitlab.com/oauth/authorize"
+      );
+      expect(url.searchParams.get("client_id")).toBe("client-123");
+      expect(url.searchParams.get("response_type")).toBe("code");
+      expect(url.searchParams.get("scope")).toBe("api");
+      expect(url.searchParams.get("state")).toBe("st");
+    });
+
+    it("uses the self-managed instance URL for the authorization URL", () => {
+      const url = new URL(
+        oauthAdapter("https://gitlab.example.com").getAuthorizationUrl("st")
+      );
+      expect(url.origin + url.pathname).toBe(
+        "https://gitlab.example.com/oauth/authorize"
+      );
+    });
+
+    it("exchanges an authorization code for tokens", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            access_token: "at",
+            refresh_token: "rt",
+            expires_in: 7200,
+          }),
+      });
+
+      const tokens = await oauthAdapter().exchangeCodeForTokens("code");
+
+      expect(tokens.accessToken).toBe("at");
+      expect(tokens.refreshToken).toBe("rt");
+      expect(tokens.expiresAt).toBeInstanceOf(Date);
+      const [calledUrl, options] = mockFetch.mock.calls[0];
+      expect(calledUrl).toBe("https://gitlab.com/oauth/token");
+      expect(JSON.parse(options.body)).toMatchObject({
+        grant_type: "authorization_code",
+        code: "code",
+        client_id: "client-123",
+      });
+    });
+
+    it("refreshes tokens with the refresh_token grant", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({ access_token: "at2", refresh_token: "rt2" }),
+      });
+
+      const tokens = await oauthAdapter().refreshTokens("old-rt");
+
+      expect(tokens.accessToken).toBe("at2");
+      expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toMatchObject({
+        grant_type: "refresh_token",
+        refresh_token: "old-rt",
+      });
     });
   });
 

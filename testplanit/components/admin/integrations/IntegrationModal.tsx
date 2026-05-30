@@ -60,13 +60,22 @@ const providerAuthTypes: Record<IntegrationProvider, IntegrationAuthType[]> = {
     IntegrationAuthType.API_KEY,
     IntegrationAuthType.OAUTH2,
   ],
-  [IntegrationProvider.GITHUB]: [IntegrationAuthType.PERSONAL_ACCESS_TOKEN],
+  [IntegrationProvider.GITHUB]: [
+    IntegrationAuthType.PERSONAL_ACCESS_TOKEN,
+    IntegrationAuthType.OAUTH2,
+  ],
   [IntegrationProvider.AZURE_DEVOPS]: [
     IntegrationAuthType.PERSONAL_ACCESS_TOKEN,
   ],
   [IntegrationProvider.SIMPLE_URL]: [IntegrationAuthType.NONE],
-  [IntegrationProvider.GITLAB]: [IntegrationAuthType.PERSONAL_ACCESS_TOKEN],
-  [IntegrationProvider.GITEA]: [IntegrationAuthType.PERSONAL_ACCESS_TOKEN],
+  [IntegrationProvider.GITLAB]: [
+    IntegrationAuthType.PERSONAL_ACCESS_TOKEN,
+    IntegrationAuthType.OAUTH2,
+  ],
+  [IntegrationProvider.GITEA]: [
+    IntegrationAuthType.PERSONAL_ACCESS_TOKEN,
+    IntegrationAuthType.OAUTH2,
+  ],
 };
 
 export function IntegrationModal({

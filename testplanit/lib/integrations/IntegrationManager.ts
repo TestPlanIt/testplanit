@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prismaBase";
 import { EncryptionService, getMasterKey } from "@/utils/encryption";
 import type { Integration, IntegrationProvider } from "@prisma/client";
+import { AuthenticationService } from "./AuthenticationService";
 import { AzureDevOpsAdapter } from "./adapters/AzureDevOpsAdapter";
 import { GiteaAdapter } from "./adapters/GiteaAdapter";
 import { GitHubAdapter } from "./adapters/GitHubAdapter";
@@ -62,11 +63,15 @@ export class IntegrationManager {
    */
   async getAdapter(
     integrationId: string,
-    prismaClient?: typeof prisma
+    prismaClient?: typeof prisma,
+    userId?: string
   ): Promise<IssueAdapter | null> {
+    // OAuth adapters carry a per-user token, so they must be cached per user
+    const cacheKey = userId ? `${integrationId}:${userId}` : integrationId;
+
     // Check cache first
-    if (this.adapterCache.has(integrationId)) {
-      return this.adapterCache.get(integrationId)!;
+    if (this.adapterCache.has(cacheKey)) {
+      return this.adapterCache.get(cacheKey)!;
     }
 
     // Fetch integration from database (use provided client for multi-tenant support)
@@ -75,7 +80,7 @@ export class IntegrationManager {
       where: { id: parseInt(integrationId) },
       include: {
         userIntegrationAuths: {
-          where: { isActive: true },
+          where: { isActive: true, ...(userId ? { userId } : {}) },
           orderBy: { updatedAt: "desc" },
           take: 1,
         },
@@ -145,24 +150,47 @@ export class IntegrationManager {
       authData.expiresAt = auth.tokenExpiresAt || undefined;
 
       // Decrypt sensitive fields
-      if (auth.accessToken) {
-        authData.accessToken = EncryptionService.decrypt(
-          auth.accessToken,
-          masterKey
-        );
+      let accessToken = auth.accessToken
+        ? EncryptionService.decrypt(auth.accessToken, masterKey)
+        : undefined;
+      let refreshToken = auth.refreshToken
+        ? EncryptionService.decrypt(auth.refreshToken, masterKey)
+        : undefined;
+
+      // Transparently refresh an expired access token when the adapter
+      // supports it and we have both a refresh token and the owning user.
+      // The new token is persisted so subsequent requests skip the refresh.
+      const isExpired =
+        !!auth.tokenExpiresAt && auth.tokenExpiresAt < new Date();
+      if (isExpired && refreshToken && userId && adapter.refreshTokens) {
+        try {
+          const refreshed = await adapter.refreshTokens(refreshToken);
+          accessToken = refreshed.accessToken;
+          refreshToken = refreshed.refreshToken || refreshToken;
+          authData.expiresAt = refreshed.expiresAt;
+          await AuthenticationService.storeUserAuth(userId, integration.id, {
+            accessToken: refreshed.accessToken,
+            refreshToken,
+            expiresAt: refreshed.expiresAt,
+          });
+        } catch (error) {
+          // Leave the stale token in place; the downstream request will fail
+          // with 401 and the UI surfaces the re-authorization prompt.
+          console.error(
+            `Failed to refresh OAuth token for integration ${integration.id}:`,
+            error
+          );
+        }
       }
-      if (auth.refreshToken) {
-        authData.refreshToken = EncryptionService.decrypt(
-          auth.refreshToken,
-          masterKey
-        );
-      }
+
+      authData.accessToken = accessToken;
+      authData.refreshToken = refreshToken;
 
       await adapter.authenticate(authData);
     }
 
     // Cache the adapter
-    this.adapterCache.set(integrationId, adapter);
+    this.adapterCache.set(cacheKey, adapter);
 
     return adapter;
   }
@@ -197,6 +225,25 @@ export class IntegrationManager {
       Object.assign(config, integration.settings);
     }
 
+    // OAuth integrations store their client credentials per-integration so that
+    // self-hosted instances (Gitea/Forgejo, self-managed GitLab, GHES) can each
+    // register their own OAuth app. Decrypt them and pass them to the adapter
+    // along with the redirect URI for the generic OAuth callback route.
+    if (integration.authType === "OAUTH2" && integration.credentials) {
+      let credentials = integration.credentials as any;
+      if (typeof credentials === "object" && "encrypted" in credentials) {
+        const decrypted = EncryptionService.decrypt(
+          credentials.encrypted as string,
+          getMasterKey()
+        );
+        credentials = JSON.parse(decrypted);
+      }
+      if (credentials.clientId) config.clientId = credentials.clientId;
+      if (credentials.clientSecret)
+        config.clientSecret = credentials.clientSecret;
+      config.redirectUri = `${process.env.NEXTAUTH_URL}/api/integrations/oauth/${integration.provider.toLowerCase()}/callback`;
+    }
+
     return config;
   }
 
@@ -204,7 +251,12 @@ export class IntegrationManager {
    * Clear adapter from cache
    */
   clearAdapter(integrationId: string): void {
-    this.adapterCache.delete(integrationId);
+    // Remove the shared entry plus any per-user OAuth variants (`<id>:<userId>`)
+    for (const key of this.adapterCache.keys()) {
+      if (key === integrationId || key.startsWith(`${integrationId}:`)) {
+        this.adapterCache.delete(key);
+      }
+    }
   }
 
   /**

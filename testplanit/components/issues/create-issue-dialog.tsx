@@ -768,7 +768,8 @@ export function CreateIssueDialog({
                 <AlertTitle>{t("issues.authenticationRequired")}</AlertTitle>
                 <AlertDescription className="flex items-center justify-between">
                   <span>{t("issues.authRequiredDescription")}</span>
-                  {authError.startsWith("http") && (
+                  {(authError.startsWith("http") ||
+                    authError.startsWith("/")) && (
                     <Button
                       type="button"
                       variant="outline"

@@ -43,6 +43,8 @@ function renderGitHubDescription(description: unknown): string {
  * GitHub integration adapter using Personal Access Token authentication
  */
 export class GitHubAdapter extends BaseAdapter {
+  public supportsOAuth = true;
+
   private owner?: string;
   private repo?: string;
   // Public GitHub by default; GitHub Enterprise Server installations override
@@ -50,6 +52,11 @@ export class GitHubAdapter extends BaseAdapter {
   // the integration's settings.baseUrl. Trailing slash is normalized off so
   // url-template concatenation stays well-formed.
   private baseUrl = "https://api.github.com";
+
+  // OAuth client credentials, plumbed per-integration by IntegrationManager.
+  private clientId?: string;
+  private clientSecret?: string;
+  private redirectUri?: string;
 
   constructor(config: any) {
     super(config);
@@ -64,6 +71,20 @@ export class GitHubAdapter extends BaseAdapter {
     if (config.baseUrl) {
       this.baseUrl = config.baseUrl.replace(/\/$/, "");
     }
+
+    this.clientId = config.clientId;
+    this.clientSecret = config.clientSecret;
+    this.redirectUri = config.redirectUri;
+  }
+
+  /**
+   * OAuth authorize/token endpoints live on the web host, not the API host.
+   * github.com → https://github.com; GitHub Enterprise Server exposes them at
+   * the instance root (API root with the trailing "/api/v3" removed).
+   */
+  private getOAuthBaseUrl(): string {
+    if (this.baseUrl === "https://api.github.com") return "https://github.com";
+    return this.baseUrl.replace(/\/api\/v3$/, "");
   }
 
   getCapabilities(): IssueAdapterCapabilities {
@@ -84,9 +105,30 @@ export class GitHubAdapter extends BaseAdapter {
   protected async performAuthentication(
     authData: AuthenticationData
   ): Promise<void> {
+    // authData carries the per-instance baseUrl plumbed by IntegrationManager
+    // (settings.baseUrl). Re-apply it here so token validation hits the right
+    // server even if the adapter was constructed without it.
+    if (authData.baseUrl) {
+      this.baseUrl = authData.baseUrl.replace(/\/$/, "");
+    }
+
+    if (authData.type === "oauth") {
+      if (!authData.accessToken) {
+        throw new Error("GitHub OAuth authentication requires an access token");
+      }
+      // Validate the token. makeRequest sends `Authorization: Bearer <token>`
+      // for the oauth auth type, which GitHub accepts for user tokens.
+      try {
+        await this.makeRequest(`${this.baseUrl}/user`);
+      } catch {
+        throw new Error("Invalid GitHub OAuth access token");
+      }
+      return;
+    }
+
     if (authData.type !== "api_key") {
       throw new Error(
-        "GitHub adapter only supports Personal Access Token authentication"
+        "GitHub adapter only supports OAuth and Personal Access Token authentication"
       );
     }
 
@@ -96,19 +138,72 @@ export class GitHubAdapter extends BaseAdapter {
       );
     }
 
-    // authData carries the per-instance baseUrl plumbed by IntegrationManager
-    // (settings.baseUrl). Re-apply it here so token validation hits the right
-    // server even if the adapter was constructed without it.
-    if (authData.baseUrl) {
-      this.baseUrl = authData.baseUrl.replace(/\/$/, "");
-    }
-
     // Validate the token by making a test request
     try {
       await this.makeRequest(`${this.baseUrl}/user`);
     } catch {
       throw new Error("Invalid GitHub Personal Access Token");
     }
+  }
+
+  /**
+   * Build the OAuth authorization URL the user is redirected to for consent.
+   */
+  getAuthorizationUrl(state: string): string {
+    const params = new URLSearchParams({
+      client_id: this.clientId || "",
+      redirect_uri: this.redirectUri || "",
+      scope: "repo read:user",
+      state,
+    });
+    return `${this.getOAuthBaseUrl()}/login/oauth/authorize?${params.toString()}`;
+  }
+
+  /**
+   * Exchange the authorization code for an access token. GitHub OAuth App
+   * tokens do not expire by default, so no refresh token is returned.
+   */
+  async exchangeCodeForTokens(code: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  }> {
+    const response = await fetch(
+      `${this.getOAuthBaseUrl()}/login/oauth/access_token`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          client_id: this.clientId,
+          client_secret: this.clientSecret,
+          code,
+          redirect_uri: this.redirectUri,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Failed to exchange code for tokens: ${error}`);
+    }
+
+    const data = await response.json();
+    if (data.error) {
+      throw new Error(
+        `Failed to exchange code for tokens: ${data.error_description || data.error}`
+      );
+    }
+
+    return {
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token,
+      expiresAt: data.expires_in
+        ? new Date(Date.now() + data.expires_in * 1000)
+        : undefined,
+    };
   }
 
   protected buildUrl(path: string): string {

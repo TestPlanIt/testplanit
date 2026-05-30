@@ -11,13 +11,27 @@ import {
 } from "./IssueAdapter";
 
 export class GitLabAdapter extends BaseAdapter {
+  public supportsOAuth = true;
+
   private projectPath?: string;
   private baseUrl: string = "https://gitlab.com";
+
+  // OAuth client credentials, plumbed per-integration by IntegrationManager.
+  private clientId?: string;
+  private clientSecret?: string;
+  private redirectUri?: string;
 
   constructor(config: any) {
     super(config);
     if (config.projectPath) this.projectPath = config.projectPath;
-    if (config.baseUrl) this.baseUrl = config.baseUrl.replace(/\/$/, "");
+    // The config form stores the self-managed URL as `instanceUrl`; accept
+    // either key so the OAuth endpoints and API calls hit the right instance.
+    const instance = config.baseUrl || config.instanceUrl;
+    if (instance) this.baseUrl = instance.replace(/\/$/, "");
+
+    this.clientId = config.clientId;
+    this.clientSecret = config.clientSecret;
+    this.redirectUri = config.redirectUri;
   }
 
   getCapabilities(): IssueAdapterCapabilities {
@@ -38,9 +52,27 @@ export class GitLabAdapter extends BaseAdapter {
   protected async performAuthentication(
     authData: AuthenticationData
   ): Promise<void> {
+    if (authData.baseUrl) {
+      this.baseUrl = authData.baseUrl.replace(/\/$/, "");
+    }
+
+    if (authData.type === "oauth") {
+      if (!authData.accessToken) {
+        throw new Error("GitLab OAuth authentication requires an access token");
+      }
+      // makeRequest sends `Authorization: Bearer <token>` for the oauth auth
+      // type, which GitLab uses for OAuth (PAT uses the PRIVATE-TOKEN header).
+      try {
+        await this.makeRequest(`${this.baseUrl}/api/v4/user`);
+      } catch {
+        throw new Error("Invalid GitLab OAuth access token");
+      }
+      return;
+    }
+
     if (authData.type !== "api_key") {
       throw new Error(
-        "GitLab adapter only supports Personal Access Token authentication"
+        "GitLab adapter only supports OAuth and Personal Access Token authentication"
       );
     }
     if (!authData.apiKey) {
@@ -48,14 +80,84 @@ export class GitLabAdapter extends BaseAdapter {
         "Personal Access Token is required for GitLab authentication"
       );
     }
-    if (authData.baseUrl) {
-      this.baseUrl = authData.baseUrl.replace(/\/$/, "");
-    }
     try {
       await this.makeRequest(`${this.baseUrl}/api/v4/user`);
     } catch {
       throw new Error("Invalid GitLab Personal Access Token");
     }
+  }
+
+  /**
+   * Build the OAuth authorization URL the user is redirected to for consent.
+   */
+  getAuthorizationUrl(state: string): string {
+    const params = new URLSearchParams({
+      client_id: this.clientId || "",
+      redirect_uri: this.redirectUri || "",
+      response_type: "code",
+      scope: "api",
+      state,
+    });
+    return `${this.baseUrl}/oauth/authorize?${params.toString()}`;
+  }
+
+  /**
+   * Exchange the authorization code for access and refresh tokens.
+   */
+  async exchangeCodeForTokens(code: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  }> {
+    return this.requestToken({
+      grant_type: "authorization_code",
+      code,
+      redirect_uri: this.redirectUri || "",
+    });
+  }
+
+  /**
+   * Refresh an expired access token using the stored refresh token.
+   */
+  async refreshTokens(refreshToken: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  }> {
+    return this.requestToken({
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+    });
+  }
+
+  private async requestToken(extra: Record<string, string>): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  }> {
+    const response = await fetch(`${this.baseUrl}/oauth/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        client_id: this.clientId,
+        client_secret: this.clientSecret,
+        ...extra,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Failed to obtain GitLab tokens: ${error}`);
+    }
+
+    const data = await response.json();
+    return {
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token,
+      expiresAt: data.expires_in
+        ? new Date(Date.now() + data.expires_in * 1000)
+        : undefined,
+    };
   }
 
   async createIssue(data: CreateIssueData): Promise<IssueData> {

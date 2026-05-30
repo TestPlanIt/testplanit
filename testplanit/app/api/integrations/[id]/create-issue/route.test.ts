@@ -157,6 +157,7 @@ describe("POST /api/integrations/[id]/create-issue", () => {
       (prisma.userIntegrationAuth.findFirst as any).mockResolvedValue(null);
       (prisma.integration.findUnique as any).mockResolvedValue({
         id: 1,
+        provider: "JIRA",
         authType: "OAUTH2",
         status: "ACTIVE",
       });
@@ -196,7 +197,7 @@ describe("POST /api/integrations/[id]/create-issue", () => {
       expect(data.title).toBe("Test Issue");
     });
 
-    it("calls IntegrationManager.getAdapter with integration id", async () => {
+    it("calls getAdapter without a user id so API key integrations share one adapter", async () => {
       const mockGetAdapter = vi.fn().mockResolvedValue(mockAdapter);
       (IntegrationManager.getInstance as any).mockReturnValue({
         getAdapter: mockGetAdapter,
@@ -207,7 +208,7 @@ describe("POST /api/integrations/[id]/create-issue", () => {
         params
       );
 
-      expect(mockGetAdapter).toHaveBeenCalledWith("1");
+      expect(mockGetAdapter).toHaveBeenCalledWith("1", undefined, undefined);
     });
   });
 
@@ -220,7 +221,12 @@ describe("POST /api/integrations/[id]/create-issue", () => {
         integrationId: 1,
         isActive: true,
         accessToken: "oauth-token",
-        integration: { id: 1, authType: "OAUTH2", status: "ACTIVE" },
+        integration: {
+          id: 1,
+          provider: "JIRA",
+          authType: "OAUTH2",
+          status: "ACTIVE",
+        },
       });
     });
 
@@ -233,6 +239,20 @@ describe("POST /api/integrations/[id]/create-issue", () => {
 
       expect(response.status).toBe(200);
       expect(mockAdapter.createIssue).toHaveBeenCalledOnce();
+    });
+
+    it("passes the requesting user id to getAdapter so the issue is reported as that user", async () => {
+      const mockGetAdapter = vi.fn().mockResolvedValue(mockAdapter);
+      (IntegrationManager.getInstance as any).mockReturnValue({
+        getAdapter: mockGetAdapter,
+      });
+
+      await POST(
+        createRequest({ title: "OAuth Issue", projectId: "PROJ" }),
+        params
+      );
+
+      expect(mockGetAdapter).toHaveBeenCalledWith("1", undefined, "user-1");
     });
   });
 

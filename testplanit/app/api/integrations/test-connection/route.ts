@@ -219,6 +219,28 @@ async function testJiraConnection(
   };
 }
 
+/**
+ * OAuth client credentials can't be verified from the admin side — the real
+ * connection is established per-user via the OAuth authorization flow after the
+ * integration is saved. Validate that the client ID/secret are present and
+ * report that user authorization is the next step.
+ */
+function checkOAuthClientConfig(
+  credentials: Record<string, string>
+): TestConnectionResult {
+  const { clientId, clientSecret } = credentials;
+  if (!clientId || !clientSecret) {
+    return {
+      success: false,
+      error: "Missing required OAuth configuration (clientId, clientSecret)",
+    };
+  }
+  return {
+    success: true,
+    error: undefined,
+  };
+}
+
 async function testGithubConnection(
   credentials: Record<string, string>,
   settings: Record<string, string>
@@ -628,16 +650,25 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         );
         break;
       case IntegrationProvider.GITHUB:
-        result = await testGithubConnection(testCredentials, testSettings);
+        result =
+          authType === "OAUTH2"
+            ? checkOAuthClientConfig(testCredentials)
+            : await testGithubConnection(testCredentials, testSettings);
         break;
       case IntegrationProvider.AZURE_DEVOPS:
         result = await testAzureDevOpsConnection(testCredentials, testSettings);
         break;
       case IntegrationProvider.GITLAB:
-        result = await testGitLabConnection(testCredentials, testSettings);
+        result =
+          authType === "OAUTH2"
+            ? checkOAuthClientConfig(testCredentials)
+            : await testGitLabConnection(testCredentials, testSettings);
         break;
       case IntegrationProvider.GITEA:
-        result = await testGiteaConnection(testCredentials, testSettings);
+        result =
+          authType === "OAUTH2"
+            ? checkOAuthClientConfig(testCredentials)
+            : await testGiteaConnection(testCredentials, testSettings);
         break;
       case IntegrationProvider.SIMPLE_URL:
         result = await testSimpleUrlConnection(testCredentials, testSettings);

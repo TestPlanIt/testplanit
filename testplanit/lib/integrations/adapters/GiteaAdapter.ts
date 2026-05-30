@@ -11,15 +11,29 @@ import {
 } from "./IssueAdapter";
 
 export class GiteaAdapter extends BaseAdapter {
+  public supportsOAuth = true;
+
   private owner?: string;
   private repo?: string;
   private baseUrl: string = "";
+
+  // OAuth client credentials, plumbed per-integration by IntegrationManager.
+  private clientId?: string;
+  private clientSecret?: string;
+  private redirectUri?: string;
 
   constructor(config: any) {
     super(config);
     if (config.owner) this.owner = config.owner;
     if (config.repo) this.repo = config.repo;
-    if (config.baseUrl) this.baseUrl = config.baseUrl.replace(/\/$/, "");
+    // The config form stores the instance URL as `instanceUrl`; accept either
+    // key so OAuth endpoints and API calls hit the right self-hosted instance.
+    const instance = config.baseUrl || config.instanceUrl;
+    if (instance) this.baseUrl = instance.replace(/\/$/, "");
+
+    this.clientId = config.clientId;
+    this.clientSecret = config.clientSecret;
+    this.redirectUri = config.redirectUri;
   }
 
   getCapabilities(): IssueAdapterCapabilities {
@@ -40,16 +54,6 @@ export class GiteaAdapter extends BaseAdapter {
   protected async performAuthentication(
     authData: AuthenticationData
   ): Promise<void> {
-    if (authData.type !== "api_key") {
-      throw new Error(
-        "Gitea adapter only supports Personal Access Token authentication"
-      );
-    }
-    if (!authData.apiKey) {
-      throw new Error(
-        "Personal Access Token is required for Gitea authentication"
-      );
-    }
     if (authData.baseUrl) {
       this.baseUrl = authData.baseUrl.replace(/\/$/, "");
     }
@@ -58,11 +62,111 @@ export class GiteaAdapter extends BaseAdapter {
         "Gitea instance URL is required (e.g. https://gitea.example.com)"
       );
     }
+
+    if (authData.type === "oauth") {
+      if (!authData.accessToken) {
+        throw new Error("Gitea OAuth authentication requires an access token");
+      }
+      // makeRequest sends `Authorization: Bearer <token>` for the oauth auth
+      // type, which Gitea/Forgejo accept for OAuth access tokens.
+      try {
+        await this.makeRequest(`${this.baseUrl}/api/v1/user`);
+      } catch {
+        throw new Error("Invalid Gitea OAuth access token or instance URL");
+      }
+      return;
+    }
+
+    if (authData.type !== "api_key") {
+      throw new Error(
+        "Gitea adapter only supports OAuth and Personal Access Token authentication"
+      );
+    }
+    if (!authData.apiKey) {
+      throw new Error(
+        "Personal Access Token is required for Gitea authentication"
+      );
+    }
     try {
       await this.makeRequest(`${this.baseUrl}/api/v1/user`);
     } catch {
       throw new Error("Invalid Gitea Personal Access Token or instance URL");
     }
+  }
+
+  /**
+   * Build the OAuth authorization URL the user is redirected to for consent.
+   */
+  getAuthorizationUrl(state: string): string {
+    const params = new URLSearchParams({
+      client_id: this.clientId || "",
+      redirect_uri: this.redirectUri || "",
+      response_type: "code",
+      state,
+    });
+    return `${this.baseUrl}/login/oauth/authorize?${params.toString()}`;
+  }
+
+  /**
+   * Exchange the authorization code for access and refresh tokens.
+   */
+  async exchangeCodeForTokens(code: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  }> {
+    return this.requestToken({
+      grant_type: "authorization_code",
+      code,
+      redirect_uri: this.redirectUri || "",
+    });
+  }
+
+  /**
+   * Refresh an expired access token using the stored refresh token.
+   */
+  async refreshTokens(refreshToken: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  }> {
+    return this.requestToken({
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+    });
+  }
+
+  private async requestToken(extra: Record<string, string>): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  }> {
+    const response = await fetch(`${this.baseUrl}/login/oauth/access_token`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        client_id: this.clientId,
+        client_secret: this.clientSecret,
+        ...extra,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Failed to obtain Gitea tokens: ${error}`);
+    }
+
+    const data = await response.json();
+    return {
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token,
+      expiresAt: data.expires_in
+        ? new Date(Date.now() + data.expires_in * 1000)
+        : undefined,
+    };
   }
 
   async createIssue(data: CreateIssueData): Promise<IssueData> {

@@ -23,6 +23,7 @@ import {
   AlertTriangle,
   Check,
   Copy,
+  Info,
   Lock,
   Edit,
   RefreshCw,
@@ -50,6 +51,39 @@ interface FieldConfig {
   isCredential?: boolean;
   required?: boolean;
 }
+
+// Shared credential field for the PERSONAL_ACCESS_TOKEN auth type.
+const PAT_FIELD: FieldConfig = {
+  name: "personalAccessToken",
+  label: "authType.personal_access_token",
+  placeholder: "config.personalAccessTokenPlaceholder",
+  help: "config.personalAccessTokenHelp",
+  type: "password",
+  isCredential: true,
+  required: true,
+};
+
+// Shared OAuth client credential fields. Stored per-integration so self-hosted
+// instances can register their own OAuth app.
+const OAUTH_CLIENT_FIELDS: FieldConfig[] = [
+  {
+    name: "clientId",
+    label: "config.clientId",
+    placeholder: "config.clientIdPlaceholder",
+    help: "config.clientIdHelp",
+    isCredential: true,
+    required: true,
+  },
+  {
+    name: "clientSecret",
+    label: "config.clientSecret",
+    placeholder: "config.clientSecretPlaceholder",
+    help: "config.clientSecretHelp",
+    type: "password",
+    isCredential: true,
+    required: true,
+  },
+];
 
 // Provider + AuthType specific fields
 const authTypeFields: Record<string, FieldConfig[]> = {
@@ -107,6 +141,18 @@ const authTypeFields: Record<string, FieldConfig[]> = {
       required: true,
     },
   ],
+  [`${IntegrationProvider.GITHUB}_${IntegrationAuthType.PERSONAL_ACCESS_TOKEN}`]:
+    [PAT_FIELD],
+  [`${IntegrationProvider.GITHUB}_${IntegrationAuthType.OAUTH2}`]:
+    OAUTH_CLIENT_FIELDS,
+  [`${IntegrationProvider.GITLAB}_${IntegrationAuthType.PERSONAL_ACCESS_TOKEN}`]:
+    [PAT_FIELD],
+  [`${IntegrationProvider.GITLAB}_${IntegrationAuthType.OAUTH2}`]:
+    OAUTH_CLIENT_FIELDS,
+  [`${IntegrationProvider.GITEA}_${IntegrationAuthType.PERSONAL_ACCESS_TOKEN}`]:
+    [PAT_FIELD],
+  [`${IntegrationProvider.GITEA}_${IntegrationAuthType.OAUTH2}`]:
+    OAUTH_CLIENT_FIELDS,
 };
 
 const providerFields: Record<IntegrationProvider, FieldConfig[]> = {
@@ -122,15 +168,6 @@ const providerFields: Record<IntegrationProvider, FieldConfig[]> = {
     },
   ],
   [IntegrationProvider.GITHUB]: [
-    {
-      name: "personalAccessToken",
-      label: "authType.personal_access_token",
-      placeholder: "config.personalAccessTokenPlaceholder",
-      help: "config.personalAccessTokenHelp",
-      type: "password",
-      isCredential: true,
-      required: true,
-    },
     {
       // Optional — leave blank for github.com. GitHub Enterprise Server users
       // paste their API root here (e.g. https://ghes.example.com/api/v3).
@@ -163,15 +200,6 @@ const providerFields: Record<IntegrationProvider, FieldConfig[]> = {
   ],
   [IntegrationProvider.GITLAB]: [
     {
-      name: "personalAccessToken",
-      label: "authType.personal_access_token",
-      placeholder: "config.personalAccessTokenPlaceholder",
-      help: "config.personalAccessTokenHelp",
-      type: "password",
-      isCredential: true,
-      required: true,
-    },
-    {
       name: "projectPath",
       label: "config.projectPath",
       placeholder: "config.projectPathPlaceholder",
@@ -201,15 +229,6 @@ const providerFields: Record<IntegrationProvider, FieldConfig[]> = {
         { value: "gogs", label: "config.platformGogs" },
       ],
       isCredential: false,
-      required: true,
-    },
-    {
-      name: "personalAccessToken",
-      label: "authType.personal_access_token",
-      placeholder: "config.personalAccessTokenPlaceholder",
-      help: "config.personalAccessTokenHelp",
-      type: "password",
-      isCredential: true,
       required: true,
     },
     {
@@ -303,6 +322,10 @@ export function IntegrationConfigForm({
     provider === IntegrationProvider.JIRA &&
     authType === IntegrationAuthType.API_KEY;
 
+  // Token-based issue trackers always record the token owner as the creator
+  const showTokenCreatorNotice =
+    authType === IntegrationAuthType.PERSONAL_ACCESS_TOKEN;
+
   return (
     <div className="space-y-4">
       {showApiKeyWarning && (
@@ -318,8 +341,18 @@ export function IntegrationConfigForm({
                 <li>{t("config.apiKeyWarningPoint1")}</li>
                 <li>{t("config.apiKeyWarningPoint2")}</li>
                 <li>{t("config.apiKeyWarningPoint3")}</li>
+                <li>{t("config.apiKeyWarningPoint4")}</li>
               </ul>
             </div>
+          </AlertDescription>
+        </Alert>
+      )}
+      {showTokenCreatorNotice && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertTitle>{t("config.tokenCreatorNoticeTitle")}</AlertTitle>
+          <AlertDescription>
+            <p className="mt-2">{t("config.tokenCreatorNoticeDescription")}</p>
           </AlertDescription>
         </Alert>
       )}

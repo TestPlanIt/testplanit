@@ -34,6 +34,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Re-authorization URL for OAuth integrations, resolved once the provider is
+  // known. Surfaced on 401s so the client can prompt the user to re-authorize.
+  let authUrl: string | undefined;
   try {
     // Check authentication
     const session = await getServerSession(authOptions);
@@ -65,6 +68,10 @@ export async function POST(
       },
     });
 
+    if (userIntegrationAuth) {
+      authUrl = `/api/integrations/oauth/${userIntegrationAuth.integration.provider.toLowerCase()}/auth?integrationId=${integrationId}`;
+    }
+
     // If no user auth, check if the integration supports API key auth
     if (!userIntegrationAuth) {
       const integration = await prisma.integration.findUnique({
@@ -87,8 +94,9 @@ export async function POST(
           {
             error: "User authentication required",
             message:
-              "This integration requires individual user authentication. Please authenticate with Jira in the integration settings.",
+              "This integration requires individual user authentication. Please authorize it in the integration settings.",
             authType: integration.authType,
+            authUrl: `/api/integrations/oauth/${integration.provider.toLowerCase()}/auth?integrationId=${integrationId}`,
           },
           { status: 401 }
         );
@@ -154,9 +162,14 @@ export async function POST(
       }
     }
 
-    // Initialize adapter through IntegrationManager
+    // Initialize adapter through IntegrationManager. OAuth integrations carry a
+    // per-user token, so the issue is reported as the user who created it.
     const manager = IntegrationManager.getInstance();
-    const adapter = await manager.getAdapter(integrationId);
+    const adapter = await manager.getAdapter(
+      integrationId,
+      undefined,
+      userIntegrationAuth ? session.user.id : undefined
+    );
 
     if (!adapter) {
       return NextResponse.json(
@@ -464,6 +477,7 @@ export async function POST(
       return NextResponse.json(
         {
           error: "Integration authentication expired. Please re-authenticate.",
+          authUrl,
         },
         { status: 401 }
       );
