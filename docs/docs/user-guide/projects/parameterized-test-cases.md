@@ -9,6 +9,12 @@ Parameterized test cases let a single test case run multiple times in one test r
 
 This page covers the whole feature top to bottom: authoring, datasets, execution, reporting, CI imports, issue linking, settings, and permissions.
 
+## Spotting Parameterized Cases
+
+Parameterized cases carry a **stacked-squares badge** next to their type icon wherever a case is rendered — the repository list, test run case lists, the case detail header, tag pages, the matrix grid, comment mentions, the selected-cases drawer, review queues, and report drill-downs. Hover the badge for the "Has parameterized steps" tooltip.
+
+To find every parameterized case in a project at once, switch the repository's view selector to **By Parameterization**. The list collapses to just the cases you want (or just the cases that aren't parameterized when you pick the inverse), with live counts on each option. See [Repository → Views & Filtering](./repository.md#views--filtering).
+
 ## Concepts
 
 A **parameter** is a named typed input declared on a test case (e.g. `username`, `attempts`, `isAdmin`). Parameters are referenced inside step text using `@param` chips and resolve to values at run time.
