@@ -1,3 +1,9 @@
+## [0.33.0](https://github.com/TestPlanIt/testplanit/compare/v0.32.7...v0.33.0) (2026-05-30)
+
+### Features
+
+* **export:** Data Lake Export endpoints + Webhook Event Catalog ([#373](https://github.com/TestPlanIt/testplanit/issues/373)) ([b7fb88e](https://github.com/TestPlanIt/testplanit/commit/b7fb88ead4c76e041c1385009037616b71709c86))
+
 ## [0.32.7](https://github.com/TestPlanIt/testplanit/compare/v0.32.6...v0.32.7) (2026-05-30)
 
 ### Enhancements
