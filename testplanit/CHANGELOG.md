@@ -1,3 +1,9 @@
+## [0.32.7](https://github.com/TestPlanIt/testplanit/compare/v0.32.6...v0.32.7) (2026-05-30)
+
+### Enhancements
+
+* **cases:** parameterized indicator + Parameterization view ([#372](https://github.com/TestPlanIt/testplanit/issues/372)) ([3be8fdf](https://github.com/TestPlanIt/testplanit/commit/3be8fdf09f09026ce6f0a0abb7fd50d40948ddba))
+
 ## [0.32.6](https://github.com/TestPlanIt/testplanit/compare/v0.32.5...v0.32.6) (2026-05-29)
 
 ### Enhancements
