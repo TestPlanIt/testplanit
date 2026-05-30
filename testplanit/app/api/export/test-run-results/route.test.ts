@@ -181,7 +181,7 @@ describe("GET /api/export/test-run-results", () => {
       const decoded = JSON.parse(
         Buffer.from(trailer.cursor, "base64url").toString("utf-8")
       );
-      expect(decoded).toEqual({ e: ts.toISOString(), i: 3 });
+      expect(decoded).toEqual({ k: ts.toISOString(), i: 3 });
     });
 
     it("applies the `since` filter to executedAt", async () => {
@@ -203,7 +203,7 @@ describe("GET /api/export/test-run-results", () => {
     it("applies the decoded cursor as a strict forward filter", async () => {
       vi.mocked(prisma.testRunResults.findMany).mockResolvedValue([] as never);
       const cursor = Buffer.from(
-        JSON.stringify({ e: "2026-05-01T10:00:00.000Z", i: 42 })
+        JSON.stringify({ k: "2026-05-01T10:00:00.000Z", i: 42 })
       ).toString("base64url");
 
       await GET(

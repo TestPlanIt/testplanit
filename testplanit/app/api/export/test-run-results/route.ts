@@ -26,42 +26,15 @@ import { authenticateRequest } from "~/lib/api-token-auth";
 import { prisma } from "~/lib/prisma";
 import { authOptions } from "~/server/auth";
 import { ndjsonResponse, type PageSource } from "~/lib/export/ndjson";
-
-const DEFAULT_PAGE_SIZE = 1000;
-const MAX_PAGE_SIZE = 5000;
-
-interface Cursor {
-  e: string; // executedAt ISO-8601
-  i: number; // result id (tiebreak)
-}
-
-function encodeCursor(c: Cursor): string {
-  return Buffer.from(JSON.stringify(c)).toString("base64url");
-}
-
-function decodeCursor(raw: string | null): Cursor | null {
-  if (!raw) return null;
-  try {
-    const obj = JSON.parse(Buffer.from(raw, "base64url").toString("utf-8"));
-    if (typeof obj?.e === "string" && typeof obj?.i === "number") return obj;
-  } catch {
-    /* fall through */
-  }
-  return null;
-}
-
-function parsePageSize(raw: string | null): number {
-  if (!raw) return DEFAULT_PAGE_SIZE;
-  const n = Number.parseInt(raw, 10);
-  if (!Number.isFinite(n) || n < 1) return DEFAULT_PAGE_SIZE;
-  return Math.min(n, MAX_PAGE_SIZE);
-}
-
-function parseSince(raw: string | null): Date | null {
-  if (!raw) return null;
-  const d = new Date(raw);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
+import {
+  buildManifest,
+  buildTrailer,
+  cursorWhere,
+  decodeCursor,
+  encodeCursor,
+  parsePageSize,
+  parseSince,
+} from "~/lib/export/queryParams";
 
 interface ResultRow {
   id: number;
@@ -124,8 +97,6 @@ export async function GET(request: NextRequest) {
     }
     reader = enhance(prisma, { user: userRecord }) as unknown as typeof prisma;
 
-    // Verify project access up-front to fail fast with a clear 403, rather
-    // than silently streaming an empty body.
     const accessible = await reader.projects.findFirst({
       where: { id: projectId!, isDeleted: false },
       select: { id: true },
@@ -146,15 +117,7 @@ export async function GET(request: NextRequest) {
     where.executedAt = { gte: since };
   }
   if (cursor) {
-    const cursorDate = new Date(cursor.e);
-    // (executedAt, id) > (cursorE, cursorI) — strict forward iteration with
-    // stable tiebreak so identical timestamps don't get skipped or duplicated.
-    where.OR = [
-      { executedAt: { gt: cursorDate } },
-      { executedAt: cursorDate, id: { gt: cursor.i } },
-    ];
-    // Stripping the top-level executedAt filter is unnecessary — the OR is
-    // ANDed with everything else; the cursor is strictly tighter than `since`.
+    Object.assign(where, cursorWhere("executedAt", cursor));
   }
 
   let exportedCount = 0;
@@ -206,41 +169,23 @@ export async function GET(request: NextRequest) {
     yield page;
   })();
 
-  const manifest = {
-    type: "manifest",
-    schemaVersion: 1,
+  const manifest = buildManifest({
     resource: "test-run-results",
-    exportedAt: new Date().toISOString(),
-    since: since?.toISOString() ?? null,
+    since,
     pageSize,
-    projectId: projectId ?? null,
-  };
-
-  // The trailer is computed after the page generator runs, so we wrap the
-  // generator and append the trailer line as part of the stream itself.
-  // ndjsonResponse streams pages directly; for the trailer we wrap with a
-  // generator that yields rows then a one-element page containing the
-  // trailer record.
-  const wrapped: PageSource<
-    ResultRow | { type: string; [k: string]: unknown }
-  > = (async function* () {
-    for await (const page of pages) yield page;
-    let nextCursor: string | null = null;
-    if (exportedCount === pageSize && lastRow !== null) {
-      const row: ResultRow = lastRow;
-      nextCursor = encodeCursor({ e: row.executedAt, i: row.id });
-    }
-    yield [
-      {
-        type: "end",
-        count: exportedCount,
-        cursor: nextCursor,
-      },
-    ];
-  })();
-
-  return ndjsonResponse({
-    manifest,
-    pages: wrapped,
+    projectId,
   });
+
+  const wrapped: PageSource<ResultRow | Record<string, unknown>> =
+    (async function* () {
+      for await (const page of pages) yield page;
+      let nextCursor: string | null = null;
+      if (exportedCount === pageSize && lastRow !== null) {
+        const row: ResultRow = lastRow;
+        nextCursor = encodeCursor({ k: row.executedAt, i: row.id });
+      }
+      yield [buildTrailer({ count: exportedCount, cursor: nextCursor })];
+    })();
+
+  return ndjsonResponse({ manifest, pages: wrapped });
 }
