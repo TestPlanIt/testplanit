@@ -56,6 +56,7 @@ export const LastActiveDisplay: React.FC<LastActiveDisplayProps> = ({
           date={dateObj}
           formatString={formatString}
           timezone={preferredTimezone}
+          tooltip={false}
         />
       </TooltipContent>
     </Tooltip>
