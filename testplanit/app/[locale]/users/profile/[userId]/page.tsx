@@ -811,6 +811,46 @@ const UserProfile: React.FC<UserProfileProps> = ({
                               <div className="space-y-3">
                                 <div className="flex items-center justify-between">
                                   <span className="text-sm">
+                                    {tGlobal(
+                                      "home.initialPreferences.dateFormat"
+                                    )}
+                                  </span>
+                                  <Badge variant="secondary">
+                                    <DateFormatter
+                                      date={sampleDate}
+                                      formatString={
+                                        user.userPreferences.dateFormat
+                                      }
+                                      timezone={user.userPreferences.timezone}
+                                      tooltip={false}
+                                    />
+                                  </Badge>
+                                </div>
+
+                                <Separator className="opacity-50" />
+
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm">
+                                    {tGlobal(
+                                      "home.initialPreferences.timeFormat"
+                                    )}
+                                  </span>
+                                  <Badge variant="secondary">
+                                    <DateFormatter
+                                      date={sampleDate}
+                                      formatString={
+                                        user.userPreferences.timeFormat
+                                      }
+                                      timezone={user.userPreferences.timezone}
+                                      tooltip={false}
+                                    />
+                                  </Badge>
+                                </div>
+
+                                <Separator className="opacity-50" />
+
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm">
                                     {tCommon("fields.timezone")}
                                   </span>
                                   <span className="text-sm text-muted-foreground">
@@ -847,7 +887,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                           </div>
                         ) : (
                           <Form {...form}>
-                            <div className="grid gap-4 sm:grid-cols-2 px-0.5">
+                            <div className="grid gap-4 sm:grid-cols-2 px-4">
                               <FormField
                                 control={form.control}
                                 name="theme"
@@ -1036,6 +1076,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                                     session?.user?.preferences
                                                       ?.timezone
                                                   }
+                                                  tooltip={false}
                                                 />
                                               </SelectItem>
                                             )
@@ -1091,6 +1132,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                                     session?.user?.preferences
                                                       ?.timezone
                                                   }
+                                                  tooltip={false}
                                                 />
                                               </SelectItem>
                                             )
