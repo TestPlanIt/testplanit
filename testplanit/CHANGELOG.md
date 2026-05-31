@@ -1,3 +1,9 @@
+## [0.33.2](https://github.com/TestPlanIt/testplanit/compare/v0.33.1...v0.33.2) (2026-05-31)
+
+### Enhancements
+
+* **ui:** full preferences in profile view mode + date/time hover tooltips ([#375](https://github.com/TestPlanIt/testplanit/issues/375)) ([1c7cb9d](https://github.com/TestPlanIt/testplanit/commit/1c7cb9d71a36657cd280baa01f2cca8b6ba3839a))
+
 ## [0.33.1](https://github.com/TestPlanIt/testplanit/compare/v0.33.0...v0.33.1) (2026-05-31)
 
 ### Enhancements
