@@ -8,6 +8,7 @@ import {
   redactValues,
   type ParameterSchemaEntry,
 } from "~/lib/services/parameterRedaction";
+import { publishTestRunWakeUp } from "~/lib/live/publish";
 import { webhookEvents } from "~/lib/webhooks/events";
 
 /**
@@ -214,6 +215,10 @@ export async function emitTestRunUpdateEvents(
         actorUserId: opts.actorUserId,
       }
     );
+    publishTestRunWakeUp({
+      event: "test_run.state_changed",
+      runId: newRow.id,
+    });
   }
 
   if (completedTransition) {
@@ -258,6 +263,10 @@ export async function emitTestRunUpdateEvents(
         actorUserId: opts.actorUserId,
       }
     );
+    publishTestRunWakeUp({
+      event: "test_run.completed",
+      runId: newRow.id,
+    });
   }
 }
 
@@ -386,6 +395,11 @@ export async function emitTestRunResultAdded(
       actorUserId: opts.actorUserId,
     }
   );
+  publishTestRunWakeUp({
+    event: "test_run.result_added",
+    runId: run.id,
+    targetId: row.testRunCaseId,
+  });
 }
 
 export async function emitTestRunDuplicated(
