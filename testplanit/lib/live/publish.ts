@@ -49,15 +49,13 @@ export function publishTestRunWakeUp(payload: TestRunWakeUp): void {
   // Defer past the surrounding tx commit boundary so consumers' refetches
   // observe the committed write.
   setImmediate(() => {
-    valkeyConnection
-      ?.publish(channel, body)
-      .catch((err: unknown) =>
-        console.warn(`[live/publish] testRun wake-up failed`, {
-          channel,
-          event: payload.event,
-          runId: payload.runId,
-          error: err instanceof Error ? err.message : String(err),
-        })
-      );
+    valkeyConnection?.publish(channel, body).catch((err: unknown) =>
+      console.warn(`[live/publish] testRun wake-up failed`, {
+        channel,
+        event: payload.event,
+        runId: payload.runId,
+        error: err instanceof Error ? err.message : String(err),
+      })
+    );
   });
 }
