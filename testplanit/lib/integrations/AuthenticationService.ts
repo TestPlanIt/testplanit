@@ -126,23 +126,25 @@ export class AuthenticationService {
       ? EncryptionService.encrypt(authData.refreshToken, masterKey)
       : null;
 
-    // Deactivate existing auth for this user/integration
-    await prisma.userIntegrationAuth.updateMany({
+    // Upsert the per-user auth record. The unique constraint is
+    // (userId, integrationId) and does not include isActive, so re-authorizing
+    // or refreshing tokens must update the existing row rather than create a
+    // second one (which would violate the constraint).
+    await prisma.userIntegrationAuth.upsert({
       where: {
+        userId_integrationId: { userId, integrationId },
+      },
+      create: {
         userId,
         integrationId,
+        accessToken: encryptedAccessToken,
+        refreshToken: encryptedRefreshToken,
+        tokenExpiresAt: authData.expiresAt,
+        additionalData: authData.additionalData,
         isActive: true,
+        lastUsedAt: new Date(),
       },
-      data: {
-        isActive: false,
-      },
-    });
-
-    // Create new auth record
-    await prisma.userIntegrationAuth.create({
-      data: {
-        userId,
-        integrationId,
+      update: {
         accessToken: encryptedAccessToken,
         refreshToken: encryptedRefreshToken,
         tokenExpiresAt: authData.expiresAt,

@@ -95,11 +95,39 @@ describe("GitHubAdapter", () => {
     it("should throw error for invalid authentication type", async () => {
       await expect(
         adapter.authenticate({
-          type: "oauth",
-          accessToken: "some_token",
+          type: "basic",
+          username: "u",
+          password: "p",
         })
       ).rejects.toThrow(
-        "GitHub adapter only supports Personal Access Token authentication"
+        "GitHub adapter only supports OAuth and Personal Access Token authentication"
+      );
+    });
+
+    it("should authenticate successfully with an OAuth access token", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ login: "oauth-user" }),
+      });
+
+      await adapter.authenticate({
+        type: "oauth",
+        accessToken: "gho_oauth_token",
+      });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://api.github.com/user",
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: "Bearer gho_oauth_token",
+          }),
+        })
+      );
+    });
+
+    it("should throw when OAuth access token is missing", async () => {
+      await expect(adapter.authenticate({ type: "oauth" })).rejects.toThrow(
+        "GitHub OAuth authentication requires an access token"
       );
     });
 
@@ -193,6 +221,83 @@ describe("GitHubAdapter", () => {
         "https://github.example.com/api/v3/user",
         expect.any(Object)
       );
+    });
+  });
+
+  describe("OAuth", () => {
+    const oauthAdapter = () =>
+      new GitHubAdapter({
+        provider: "GITHUB",
+        clientId: "client-123",
+        clientSecret: "secret-456",
+        redirectUri:
+          "https://app.example.com/api/integrations/oauth/github/callback",
+      });
+
+    it("advertises OAuth support", () => {
+      expect(oauthAdapter().supportsOAuth).toBe(true);
+    });
+
+    it("builds the github.com authorization URL with client id, scope, and state", () => {
+      const url = new URL(oauthAdapter().getAuthorizationUrl("state-xyz"));
+      expect(url.origin + url.pathname).toBe(
+        "https://github.com/login/oauth/authorize"
+      );
+      expect(url.searchParams.get("client_id")).toBe("client-123");
+      expect(url.searchParams.get("redirect_uri")).toBe(
+        "https://app.example.com/api/integrations/oauth/github/callback"
+      );
+      expect(url.searchParams.get("scope")).toBe("repo read:user");
+      expect(url.searchParams.get("state")).toBe("state-xyz");
+    });
+
+    it("derives the GHES web host for the authorization URL", () => {
+      const ghes = new GitHubAdapter({
+        provider: "GITHUB",
+        clientId: "c",
+        clientSecret: "s",
+        redirectUri: "https://app/cb",
+        baseUrl: "https://github.example.com/api/v3",
+      });
+      const url = new URL(ghes.getAuthorizationUrl("st"));
+      expect(url.origin + url.pathname).toBe(
+        "https://github.example.com/login/oauth/authorize"
+      );
+    });
+
+    it("exchanges an authorization code for an access token", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ access_token: "gho_new_token" }),
+      });
+
+      const tokens = await oauthAdapter().exchangeCodeForTokens("auth-code");
+
+      expect(tokens.accessToken).toBe("gho_new_token");
+      const [calledUrl, options] = mockFetch.mock.calls[0];
+      expect(calledUrl).toBe("https://github.com/login/oauth/access_token");
+      expect(options.method).toBe("POST");
+      const body = JSON.parse(options.body);
+      expect(body).toMatchObject({
+        client_id: "client-123",
+        client_secret: "secret-456",
+        code: "auth-code",
+      });
+    });
+
+    it("throws when the token exchange returns an error payload", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            error: "bad_verification_code",
+            error_description: "The code is invalid.",
+          }),
+      });
+
+      await expect(
+        oauthAdapter().exchangeCodeForTokens("bad-code")
+      ).rejects.toThrow("The code is invalid.");
     });
   });
 

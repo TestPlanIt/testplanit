@@ -87,7 +87,7 @@ Connect to GitHub for issue tracking and repository integration.
 - Link test cases to GitHub issues
 - Search issues by text or by exact number format (e.g., `#42`)
 - Track issue status across both platforms
-- Personal Access Token authentication
+- Personal Access Token or OAuth 2.0 authentication (OAuth attributes issues to the individual user)
 - Inbound webhook support for real-time status sync
 - Works with both github.com and **GitHub Enterprise Server** — set the integration's optional **API Base URL** to your GHES API root (typically `https://<your-host>/api/v3`) to point the adapter, scope probes, and repository sync at your enterprise instance instead of github.com
 
@@ -101,7 +101,7 @@ Connect to GitLab for issue tracking across GitLab.com and self-managed GitLab i
 - Support for issue types: Issue and Incident
 - Search issues by text or by exact key format (e.g., `group/project#42`)
 - Track issue status across both platforms
-- Personal Access Token authentication
+- Personal Access Token or OAuth 2.0 authentication (OAuth attributes issues to the individual user)
 - Works with both GitLab.com and self-managed instances
 
 ### 4. **Gitea / Forgejo / Gogs Integration**
@@ -112,7 +112,7 @@ Connect to self-hosted Gitea, Forgejo, or Gogs instances for lightweight issue t
 
 - Create issues in any repository on your instance
 - Search issues by text or by exact key format (e.g., `owner/repo#7`)
-- Personal Access Token authentication
+- Personal Access Token authentication, or OAuth 2.0 on Gitea/Forgejo (OAuth attributes issues to the individual user)
 - Configurable instance URL — works with any self-hosted deployment
 
 ### 5. **Azure DevOps Integration**
@@ -175,11 +175,21 @@ API Token: Generated from Atlassian account settings
 Jira URL: https://your-domain.atlassian.net
 ```
 
-**Important:** When using API key authentication, the issue reporter will be determined by:
+:::warning Reporter attribution requires Jira admin permissions
+
+Setting the **reporter** on a created issue calls Jira's `reporter` field, which is only honored when the API token account holds the Jira administrator (**Modify Reporter**) permission. Most accounts with create-issue access do **not** have this permission.
+
+When the account lacks it, Jira silently ignores the supplied reporter and records the **API token owner** as the creator — **even when the TestPlanIt user's email matches a Jira user's email.** This is the most common cause of "all issues are created by the same user" reports.
+
+To get accurate per-user reporter attribution, either grant the API token account the Modify Reporter permission, or use [OAuth 2.0](#jira-with-oauth-20) instead.
+
+:::
+
+When using API key authentication, and assuming the account has the required permission, the issue reporter is determined by:
 
 1. Matching TestPlanIt user email with Jira user email
 2. If no email match, matching display names
-3. If no match found, the API key owner becomes the reporter
+3. If no match found (or the account lacks the Modify Reporter permission), the API token owner becomes the reporter
 
 #### Jira with OAuth 2.0
 
@@ -200,7 +210,7 @@ Benefits:
 - Each user authorizes their own Jira access
 - Issues created with the actual user as reporter
 
-#### GitHub
+#### GitHub with Personal Access Token
 
 1. Create Personal Access Token in GitHub Settings
 2. Required scopes:
@@ -212,7 +222,23 @@ Benefits:
 Personal Access Token: Generated from GitHub settings
 ```
 
-#### GitLab
+**Note:** With Personal Access Token authentication, issues are always created as the account that owns the token, regardless of which TestPlanIt user created them — the GitHub API does not allow setting the issue author on another user's behalf. For per-user attribution, use OAuth 2.0 below.
+
+#### GitHub with OAuth 2.0
+
+OAuth 2.0 gives **per-user attribution**: each user authorizes individually and issues are created as that user. Works with github.com and GitHub Enterprise Server.
+
+1. In GitHub, create an OAuth App under **Settings → Developer settings → OAuth Apps** (for an org, **Organization settings → Developer settings**).
+2. Set the **Authorization callback URL** to:
+
+   ```text
+   <your-testplanit-url>/api/integrations/oauth/github/callback
+   ```
+
+3. In TestPlanIt, add a GitHub integration, choose **OAuth 2.0**, and enter the **Client ID** and **Client Secret** from the OAuth App. For GitHub Enterprise Server, also set the optional API Base URL to your GHES API root. TestPlanIt requests the `repo` and `read:user` scopes.
+4. Finish the shared steps in [Completing the OAuth setup](#completing-the-oauth-setup-all-providers) — the integration must be activated, assigned to a project, and have a linked repository before issues can be created.
+
+#### GitLab with Personal Access Token
 
 1. Generate a Personal Access Token in **GitLab** → **User Settings** → **Access Tokens**
 2. Required scopes:
@@ -226,12 +252,29 @@ GitLab URL: https://gitlab.com (or your self-managed instance URL)
 ```
 
 **Notes:**
+
 - Leave GitLab URL blank to default to `https://gitlab.com`
 - For self-managed instances, enter the full base URL (e.g., `https://gitlab.yourcompany.com`)
 - The **Issue Type** field supports `Issue` and `Incident` types
 - Priority is not a native GitLab concept and is not shown in the Create Issue form
+- With Personal Access Token authentication, issues are always created as the account that owns the token, regardless of which TestPlanIt user created them. For per-user attribution, use OAuth 2.0 below.
 
-#### Gitea / Forgejo / Gogs
+#### GitLab with OAuth 2.0
+
+OAuth 2.0 gives **per-user attribution**: each user authorizes individually and issues are created as that user. Works with GitLab.com and self-managed instances.
+
+1. In GitLab, create an OAuth application under **User Settings → Applications** (or **Admin → Applications** for an instance-wide app).
+2. Set the **Redirect URI** to:
+
+   ```text
+   <your-testplanit-url>/api/integrations/oauth/gitlab/callback
+   ```
+
+3. Select the `api` scope.
+4. In TestPlanIt, add a GitLab integration, choose **OAuth 2.0**, and enter the **Client ID** (Application ID) and **Client Secret**, plus the instance URL for self-managed deployments.
+5. Finish the shared steps in [Completing the OAuth setup](#completing-the-oauth-setup-all-providers) — the integration must be activated, assigned to a project, and have a linked project before issues can be created.
+
+#### Gitea / Forgejo / Gogs with Personal Access Token
 
 1. Generate a Personal Access Token in your instance's **Settings** → **Applications**
 2. No specific scopes required — the token inherits your user's repository permissions
@@ -244,6 +287,31 @@ Instance URL: https://your-gitea-instance.com
 
 **Note:** The instance URL is required for Gitea/Forgejo/Gogs. TestPlanIt uses it to
 construct all API calls to your self-hosted instance.
+
+With Personal Access Token authentication, issues are always created as the account that owns the token, regardless of which TestPlanIt user created them. For per-user attribution, use OAuth 2.0 below.
+
+#### Gitea / Forgejo with OAuth 2.0
+
+OAuth 2.0 gives **per-user attribution**: each user authorizes individually and issues are created as that user. Supported on Gitea and Forgejo (Gogs has limited OAuth support — use a Personal Access Token there).
+
+1. In Gitea/Forgejo, create an OAuth2 application under **Settings → Applications** (or **Site Administration → Applications** for an instance-wide app).
+2. Set the **Redirect URI** to:
+
+   ```text
+   <your-testplanit-url>/api/integrations/oauth/gitea/callback
+   ```
+
+3. In TestPlanIt, add a Gitea integration, choose **OAuth 2.0**, and enter the **Client ID** and **Client Secret** along with the instance URL.
+4. Finish the shared steps in [Completing the OAuth setup](#completing-the-oauth-setup-all-providers) — the integration must be activated, assigned to a project, and have a linked repository before issues can be created.
+
+#### Completing the OAuth setup (all providers)
+
+Creating the OAuth app and entering the Client ID/Secret is only half the setup. Issue creation stays blocked until an administrator (or project manager) finishes these steps **in order**:
+
+1. **Activate the integration.** In **Administration → Issue Integrations**, click **Test Connection** on the new integration. This validates the configuration and marks it **Active**. An inactive integration does not appear when assigning to a project.
+2. **Assign it to a project.** In **Project Settings → Issue Integrations**, click **Assign** on the integration.
+3. **Link an external project (repository).** In the integration's settings panel, use **Linked External Projects → Add Projects**, select the target repository (e.g. `owner/repo`), click **Add Selected**, then **Save Settings**. This step is required — without a linked external project the Create Issue dialog reports **"Integration Not Configured"** and the **Create** button stays disabled.
+4. **Authorize — once per user.** Each person who will create issues opens **Project → Integrations**, clicks **Authorize**, and grants access on the provider's consent screen. Because authorization is per-user, every issue is attributed to the individual who created it.
 
 #### Azure DevOps
 
@@ -259,9 +327,11 @@ Organization URL: https://dev.azure.com/your-organization
 ```
 
 **Notes:**
+
 - The Organization URL is required (e.g., `https://dev.azure.com/myorg` or `https://myserver/tfs/DefaultCollection` for on-premises)
 - Work item types are discovered dynamically from your Azure DevOps process template
 - Priority values (1–4) map directly to Azure DevOps priority field values
+- Work items are always created as the account that owns the personal access token, regardless of which TestPlanIt user created them — Azure DevOps populates `System.CreatedBy` from the authenticating identity and does not allow setting it on another user's behalf
 
 #### Simple URL
 
@@ -307,7 +377,7 @@ After creating an integration, assign it to projects:
 
 ### Linking External Projects
 
-A single TestPlanIt project can connect to **multiple external projects** through one integration. For example, one Jira integration can link to three different Jira projects (e.g., a bug tracking project, a feature project, and an ops project).
+**Linking at least one external project is required before you can create issues** through an integration — until you do, the Create Issue dialog reports "Integration Not Configured". A single TestPlanIt project can also connect to **multiple external projects** through one integration. For example, one Jira integration can link to three different Jira projects (e.g., a bug tracking project, a feature project, and an ops project).
 
 **To link external projects:**
 
@@ -343,13 +413,16 @@ For OAuth integrations, users must:
 4. Grant permissions to TestPlanIt
 5. Return to TestPlanIt automatically
 
-### Token Refresh
+### Token Refresh and Re-authorization
 
-OAuth tokens are automatically refreshed when:
+When an OAuth access token has expired, TestPlanIt refreshes it automatically the next time the integration is used, as long as a refresh token is on record (GitLab and Gitea/Forgejo issue these; GitHub OAuth App tokens do not expire). The refreshed token is saved transparently, so users normally never notice expiration.
 
-- Token is near expiration (< 5 minutes)
-- API call fails with 401 error
-- User manually re-authorizes
+Re-authorization is only required when there is no usable refresh token — for example, the refresh token was revoked, or the OAuth app was not granted offline access. In that case:
+
+- When creating an issue, the dialog shows an **Authenticate** button that opens the consent window in place.
+- At any time, a user can re-authorize from **Project → Integrations** using the **Authorize** button.
+
+Each user authorizes and refreshes independently, so re-authorizing only affects the user who does it.
 
 ## Creating External Issues
 
@@ -484,12 +557,14 @@ For API key integrations, TestPlanIt attempts to match users between systems:
 2. **Name Matching**: Falls back to display name comparison
 3. **API Key Owner**: Uses integration owner as last resort
 
+For Jira specifically, applying the matched user as the reporter requires the API token account to hold the Jira administrator (**Modify Reporter**) permission. Without it, the reporter falls back to the API key owner regardless of any email or name match. See [Jira with API Key](#jira-with-api-key).
+
 ### OAuth Benefits
 
-OAuth integrations provide:
+OAuth integrations (available for Jira, GitHub, GitLab, and Gitea/Forgejo) provide:
 
-- Individual user authentication
-- Accurate reporter/assignee attribution
+- Individual user authentication — each user authorizes their own access
+- Accurate reporter/author attribution — issues are created as the actual TestPlanIt user, not a shared service account
 - User-specific permissions
 - No shared credentials
 
@@ -590,7 +665,8 @@ curl -u ":YOUR_PAT" \
 **Issue: Created issues show wrong reporter**
 
 - Ensure TestPlanIt and external system users have matching emails
-- Consider using OAuth instead of API keys
+- **For Jira API key integrations:** confirm the API token account has the Jira administrator (**Modify Reporter**) permission. Without it, Jira ignores the reporter and records the token owner as the creator even when emails match — this is the most common cause.
+- Consider using OAuth instead of API keys for accurate per-user attribution without administrator permissions
 - Check user permissions in the external system
 
 **Issue: Rich text formatting lost**
@@ -644,7 +720,7 @@ curl -u ":YOUR_PAT" \
 
 ## Best Practices
 
-1. **Use OAuth for Jira** when possible — it provides per-user reporter attribution and granular scoping; other providers use Personal Access Tokens
+1. **Prefer OAuth 2.0** when possible — for Jira, GitHub, GitLab, and Gitea/Forgejo it provides per-user attribution (issues are reported as the actual user) and granular scoping. Personal Access Tokens create every issue as a single shared account.
 2. **Standardize naming** between TestPlanIt and external systems
 3. **Configure field mappings** to capture all relevant data
 4. **Enable status sync** for automated workflow

@@ -13,7 +13,9 @@ export async function GET(
     // Check if user is authenticated
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.redirect("/signin?error=unauthorized");
+      return NextResponse.redirect(
+        new URL("/signin?error=unauthorized", request.url)
+      );
     }
 
     // Get OAuth parameters
@@ -29,13 +31,16 @@ export async function GET(
       const { type } = await params;
       console.error(`OAuth error for ${type}:`, error, errorDescription);
       return NextResponse.redirect(
-        `/projects/settings?error=${encodeURIComponent(errorDescription)}`
+        new URL(
+          `/projects/settings?error=${encodeURIComponent(errorDescription)}`,
+          request.url
+        )
       );
     }
 
     if (!code || !state) {
       return NextResponse.redirect(
-        "/projects/settings?error=missing_oauth_params"
+        new URL("/projects/settings?error=missing_oauth_params", request.url)
       );
     }
 
@@ -66,7 +71,9 @@ export async function GET(
     }
 
     if (!validIntegration) {
-      return NextResponse.redirect("/projects/settings?error=invalid_state");
+      return NextResponse.redirect(
+        new URL("/projects/settings?error=invalid_state", request.url)
+      );
     }
 
     // Get the appropriate adapter
@@ -75,7 +82,7 @@ export async function GET(
 
     if (!adapter || !adapter.exchangeCodeForTokens) {
       return NextResponse.redirect(
-        "/projects/settings?error=adapter_init_failed"
+        new URL("/projects/settings?error=adapter_init_failed", request.url)
       );
     }
 
@@ -88,6 +95,11 @@ export async function GET(
       refreshToken: tokens.refreshToken,
       expiresAt: tokens.expiresAt,
     });
+
+    // The adapter resolved above was cached before the user's token existed,
+    // so it is unauthenticated. Evict it so subsequent requests rebuild the
+    // adapter with the freshly stored token.
+    manager.clearAdapter(integrationId!.toString());
 
     // Clean up the OAuth state
     await AuthenticationService.cleanupOAuthState(integrationId!, state);
@@ -111,16 +123,21 @@ export async function GET(
       ?.id;
     if (projectId) {
       return NextResponse.redirect(
-        `/projects/settings/${projectId}/integrations?success=connected`
+        new URL(
+          `/projects/settings/${projectId}/integrations?success=connected`,
+          request.url
+        )
       );
     } else {
-      return NextResponse.redirect("/admin/integrations?success=connected");
+      return NextResponse.redirect(
+        new URL("/admin/integrations?success=connected", request.url)
+      );
     }
   } catch (error) {
     const { type } = await params;
     console.error(`Error in OAuth callback endpoint for ${type}:`, error);
     return NextResponse.redirect(
-      "/projects/settings?error=oauth_callback_failed"
+      new URL("/projects/settings?error=oauth_callback_failed", request.url)
     );
   }
 }

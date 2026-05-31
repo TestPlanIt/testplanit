@@ -46,16 +46,28 @@ export async function GET(
       },
     });
 
+    // URL the client opens to (re)authorize this integration as the current user.
+    const authUrl = `/api/integrations/oauth/${integration.provider.toLowerCase()}/auth?integrationId=${integrationId}`;
+
     if (!userAuth) {
       return NextResponse.json(
-        { error: "No authentication found" },
+        { error: "No authentication found", authUrl },
         { status: 401 }
       );
     }
 
-    // Check if token is expired
+    // If the access token has expired, it can be transparently refreshed on
+    // first use when a refresh token is on record. Treat that as authenticated
+    // here and let the adapter refresh when the request is actually made. Only
+    // prompt for re-authorization when there is no refresh token to fall back on.
     if (userAuth.tokenExpiresAt && userAuth.tokenExpiresAt < new Date()) {
-      return NextResponse.json({ error: "Token expired" }, { status: 401 });
+      if (userAuth.refreshToken) {
+        return NextResponse.json({ authenticated: true });
+      }
+      return NextResponse.json(
+        { error: "Token expired", authUrl },
+        { status: 401 }
+      );
     }
 
     return NextResponse.json({ authenticated: true });

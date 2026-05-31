@@ -21,9 +21,18 @@ vi.mock("@/utils/encryption", () => ({
   getMasterKey: vi.fn(() => "test-master-key"),
 }));
 
+// Mock AuthenticationService so token persistence during refresh is observable
+// without touching the database.
+vi.mock("./AuthenticationService", () => ({
+  AuthenticationService: {
+    storeUserAuth: vi.fn(),
+  },
+}));
+
 // Get the mocked prisma
 import { prisma } from "@/lib/prismaBase";
 import { EncryptionService } from "@/utils/encryption";
+import { AuthenticationService } from "./AuthenticationService";
 
 const mockPrisma = prisma as unknown as {
   integration: {
@@ -89,6 +98,168 @@ describe("IntegrationManager", () => {
       manager.registerAdapter("JIRA", MockAdapter);
 
       expect(manager.isTypeRegistered("JIRA")).toBe(true);
+    });
+  });
+
+  describe("buildAdapterConfig (OAuth)", () => {
+    it("decrypts per-integration OAuth client credentials and computes the redirect URI", async () => {
+      vi.stubEnv("NEXTAUTH_URL", "https://app.example.com");
+      vi.mocked(EncryptionService.decrypt).mockReturnValue(
+        JSON.stringify({ clientId: "gh-client", clientSecret: "gh-secret" })
+      );
+
+      const integration = {
+        id: 1,
+        name: "GitHub OAuth",
+        provider: "GITHUB",
+        authType: "OAUTH2",
+        credentials: { encrypted: "ignored-by-mock" },
+        settings: { baseUrl: "https://api.github.com" },
+      };
+
+      const config = await (manager as any).buildAdapterConfig(integration);
+
+      expect(config.clientId).toBe("gh-client");
+      expect(config.clientSecret).toBe("gh-secret");
+      expect(config.redirectUri).toBe(
+        "https://app.example.com/api/integrations/oauth/github/callback"
+      );
+
+      vi.unstubAllEnvs();
+    });
+
+    it("does not add OAuth fields for non-OAuth integrations", async () => {
+      const integration = {
+        id: 2,
+        name: "GitHub PAT",
+        provider: "GITHUB",
+        authType: "PERSONAL_ACCESS_TOKEN",
+        credentials: { encrypted: "x" },
+        settings: {},
+      };
+
+      const config = await (manager as any).buildAdapterConfig(integration);
+
+      expect(config.clientId).toBeUndefined();
+      expect(config.clientSecret).toBeUndefined();
+      expect(config.redirectUri).toBeUndefined();
+    });
+  });
+
+  describe("getAdapter OAuth token refresh", () => {
+    it("refreshes an expired OAuth token and persists the new one", async () => {
+      vi.stubEnv("NEXTAUTH_URL", "https://app.example.com");
+      vi.mocked(EncryptionService.decrypt).mockImplementation(
+        (value: string) => value
+      );
+
+      const integration = {
+        id: 50,
+        name: "GitLab OAuth",
+        provider: "GITLAB",
+        status: "ACTIVE",
+        authType: "OAUTH2",
+        credentials: {
+          encrypted: JSON.stringify({
+            clientId: "gl-client",
+            clientSecret: "gl-secret",
+          }),
+        },
+        settings: { instanceUrl: "https://gitlab.com" },
+        userIntegrationAuths: [
+          {
+            isActive: true,
+            accessToken: "old-access",
+            refreshToken: "the-refresh-token",
+            tokenExpiresAt: new Date(Date.now() - 1000),
+            updatedAt: new Date(),
+          },
+        ],
+      };
+      mockPrisma.integration.findUnique.mockResolvedValue(integration);
+
+      const mockFetch = vi
+        .fn()
+        // 1) refresh token exchange
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              access_token: "fresh-access",
+              refresh_token: "fresh-refresh",
+              expires_in: 7200,
+            }),
+        })
+        // 2) token validation (/api/v4/user)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ id: 1, username: "u" }),
+        });
+      global.fetch = mockFetch;
+
+      await manager.getAdapter("50", undefined, "user-1");
+
+      // Refresh was attempted against the GitLab token endpoint
+      expect(mockFetch.mock.calls[0][0]).toBe("https://gitlab.com/oauth/token");
+      expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toMatchObject({
+        grant_type: "refresh_token",
+        refresh_token: "the-refresh-token",
+      });
+      // The refreshed token was persisted for the requesting user
+      expect(AuthenticationService.storeUserAuth).toHaveBeenCalledWith(
+        "user-1",
+        50,
+        expect.objectContaining({
+          accessToken: "fresh-access",
+          refreshToken: "fresh-refresh",
+        })
+      );
+
+      vi.unstubAllEnvs();
+    });
+
+    it("does not refresh a still-valid OAuth token", async () => {
+      vi.stubEnv("NEXTAUTH_URL", "https://app.example.com");
+      vi.mocked(EncryptionService.decrypt).mockImplementation(
+        (value: string) => value
+      );
+
+      const integration = {
+        id: 51,
+        name: "GitLab OAuth",
+        provider: "GITLAB",
+        status: "ACTIVE",
+        authType: "OAUTH2",
+        credentials: {
+          encrypted: JSON.stringify({
+            clientId: "gl-client",
+            clientSecret: "gl-secret",
+          }),
+        },
+        settings: { instanceUrl: "https://gitlab.com" },
+        userIntegrationAuths: [
+          {
+            isActive: true,
+            accessToken: "valid-access",
+            refreshToken: "the-refresh-token",
+            tokenExpiresAt: new Date(Date.now() + 3600_000),
+            updatedAt: new Date(),
+          },
+        ],
+      };
+      mockPrisma.integration.findUnique.mockResolvedValue(integration);
+
+      // Only the validation request should fire — no refresh exchange.
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ id: 1, username: "u" }),
+      });
+
+      await manager.getAdapter("51", undefined, "user-1");
+
+      expect(AuthenticationService.storeUserAuth).not.toHaveBeenCalled();
+
+      vi.unstubAllEnvs();
     });
   });
 
@@ -275,6 +446,103 @@ describe("IntegrationManager", () => {
       vi.unstubAllEnvs();
     });
 
+    it("should scope the OAuth token lookup to the requesting user", async () => {
+      vi.stubEnv("JIRA_CLIENT_ID", "test-client-id");
+      vi.stubEnv("JIRA_CLIENT_SECRET", "test-client-secret");
+      vi.stubEnv("JIRA_REDIRECT_URI", "https://app.com/callback");
+
+      const mockIntegration = {
+        id: 7,
+        name: "Test OAuth Jira",
+        provider: "JIRA",
+        status: "ACTIVE",
+        authType: "OAUTH2",
+        credentials: null,
+        settings: {},
+        userIntegrationAuths: [
+          {
+            isActive: true,
+            accessToken: "encrypted-access-token",
+            refreshToken: "encrypted-refresh-token",
+            tokenExpiresAt: new Date(Date.now() + 3600000),
+            updatedAt: new Date(),
+          },
+        ],
+      };
+
+      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      vi.mocked(EncryptionService.decrypt).mockReturnValue(
+        "decrypted-access-token"
+      );
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            { id: "cloud-123", url: "https://test.atlassian.net" },
+          ]),
+      });
+
+      await manager.getAdapter("7", undefined, "user-abc");
+
+      const findUniqueArgs = mockPrisma.integration.findUnique.mock.calls[0][0];
+      expect(findUniqueArgs.include.userIntegrationAuths.where).toMatchObject({
+        isActive: true,
+        userId: "user-abc",
+      });
+
+      vi.unstubAllEnvs();
+    });
+
+    it("should cache OAuth adapters per user", async () => {
+      vi.stubEnv("JIRA_CLIENT_ID", "test-client-id");
+      vi.stubEnv("JIRA_CLIENT_SECRET", "test-client-secret");
+      vi.stubEnv("JIRA_REDIRECT_URI", "https://app.com/callback");
+
+      const mockIntegration = {
+        id: 8,
+        name: "Test OAuth Jira",
+        provider: "JIRA",
+        status: "ACTIVE",
+        authType: "OAUTH2",
+        credentials: null,
+        settings: {},
+        userIntegrationAuths: [
+          {
+            isActive: true,
+            accessToken: "encrypted-access-token",
+            refreshToken: "encrypted-refresh-token",
+            tokenExpiresAt: new Date(Date.now() + 3600000),
+            updatedAt: new Date(),
+          },
+        ],
+      };
+
+      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      vi.mocked(EncryptionService.decrypt).mockReturnValue(
+        "decrypted-access-token"
+      );
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            { id: "cloud-123", url: "https://test.atlassian.net" },
+          ]),
+      });
+
+      const adapterUserA = await manager.getAdapter("8", undefined, "user-a");
+      const adapterUserACached = await manager.getAdapter(
+        "8",
+        undefined,
+        "user-a"
+      );
+      const adapterUserB = await manager.getAdapter("8", undefined, "user-b");
+
+      expect(adapterUserACached).toBe(adapterUserA);
+      expect(adapterUserB).not.toBe(adapterUserA);
+
+      vi.unstubAllEnvs();
+    });
+
     it("should decrypt encrypted credentials", async () => {
       const mockIntegration = {
         id: 5,
@@ -347,6 +615,51 @@ describe("IntegrationManager", () => {
       // Next call should create a new adapter
       const adapter2 = await manager.getAdapter("1");
       expect(adapter2).not.toBe(adapter1);
+    });
+
+    it("should clear per-user OAuth variants for an integration", async () => {
+      vi.stubEnv("JIRA_CLIENT_ID", "test-client-id");
+      vi.stubEnv("JIRA_CLIENT_SECRET", "test-client-secret");
+      vi.stubEnv("JIRA_REDIRECT_URI", "https://app.com/callback");
+
+      const mockIntegration = {
+        id: 9,
+        name: "Test OAuth Jira",
+        provider: "JIRA",
+        status: "ACTIVE",
+        authType: "OAUTH2",
+        credentials: null,
+        settings: {},
+        userIntegrationAuths: [
+          {
+            isActive: true,
+            accessToken: "encrypted-access-token",
+            refreshToken: "encrypted-refresh-token",
+            tokenExpiresAt: new Date(Date.now() + 3600000),
+            updatedAt: new Date(),
+          },
+        ],
+      };
+
+      mockPrisma.integration.findUnique.mockResolvedValue(mockIntegration);
+      vi.mocked(EncryptionService.decrypt).mockReturnValue(
+        "decrypted-access-token"
+      );
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            { id: "cloud-123", url: "https://test.atlassian.net" },
+          ]),
+      });
+
+      const adapter1 = await manager.getAdapter("9", undefined, "user-a");
+      manager.clearAdapter("9");
+      const adapter2 = await manager.getAdapter("9", undefined, "user-a");
+
+      expect(adapter2).not.toBe(adapter1);
+
+      vi.unstubAllEnvs();
     });
   });
 

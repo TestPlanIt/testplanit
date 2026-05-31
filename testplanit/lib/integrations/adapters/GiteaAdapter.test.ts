@@ -83,10 +83,30 @@ describe("GiteaAdapter", () => {
       );
     });
 
-    it("should throw for non-api_key auth type", async () => {
+    it("should authenticate with an OAuth access token (Bearer header)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ id: 1, login: "oauth-user" }),
+      });
+
+      await adapter.authenticate({ type: "oauth", accessToken: "gitea-oauth" });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://gitea.example.com/api/v1/user",
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: "Bearer gitea-oauth",
+          }),
+        })
+      );
+    });
+
+    it("should throw for an unsupported auth type", async () => {
       await expect(
-        adapter.authenticate({ type: "oauth", accessToken: "tok" })
-      ).rejects.toThrow("Personal Access Token");
+        adapter.authenticate({ type: "basic", username: "u", password: "p" })
+      ).rejects.toThrow(
+        "Gitea adapter only supports OAuth and Personal Access Token authentication"
+      );
     });
 
     it("should throw when no baseUrl is available", async () => {
@@ -106,6 +126,72 @@ describe("GiteaAdapter", () => {
       await expect(
         adapter.authenticate({ type: "api_key", apiKey: "bad-token" })
       ).rejects.toThrow("Invalid Gitea Personal Access Token");
+    });
+  });
+
+  describe("OAuth", () => {
+    const oauthAdapter = () =>
+      new GiteaAdapter({
+        provider: "GITEA",
+        owner: "testowner",
+        repo: "testrepo",
+        instanceUrl: "https://gitea.example.com",
+        clientId: "client-123",
+        clientSecret: "secret-456",
+        redirectUri: "https://app/cb",
+      });
+
+    it("advertises OAuth support", () => {
+      expect(oauthAdapter().supportsOAuth).toBe(true);
+    });
+
+    it("builds the authorization URL on the configured instance", () => {
+      const url = new URL(oauthAdapter().getAuthorizationUrl("st"));
+      expect(url.origin + url.pathname).toBe(
+        "https://gitea.example.com/login/oauth/authorize"
+      );
+      expect(url.searchParams.get("client_id")).toBe("client-123");
+      expect(url.searchParams.get("response_type")).toBe("code");
+      expect(url.searchParams.get("state")).toBe("st");
+    });
+
+    it("exchanges an authorization code for tokens", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            access_token: "at",
+            refresh_token: "rt",
+            expires_in: 3600,
+          }),
+      });
+
+      const tokens = await oauthAdapter().exchangeCodeForTokens("code");
+
+      expect(tokens.accessToken).toBe("at");
+      expect(tokens.refreshToken).toBe("rt");
+      const [calledUrl, options] = mockFetch.mock.calls[0];
+      expect(calledUrl).toBe(
+        "https://gitea.example.com/login/oauth/access_token"
+      );
+      expect(JSON.parse(options.body)).toMatchObject({
+        grant_type: "authorization_code",
+        code: "code",
+      });
+    });
+
+    it("refreshes tokens with the refresh_token grant", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ access_token: "at2" }),
+      });
+
+      await oauthAdapter().refreshTokens("old-rt");
+
+      expect(JSON.parse(mockFetch.mock.calls[0][1].body)).toMatchObject({
+        grant_type: "refresh_token",
+        refresh_token: "old-rt",
+      });
     });
   });
 
