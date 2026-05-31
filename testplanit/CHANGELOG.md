@@ -1,3 +1,9 @@
+## [0.33.1](https://github.com/TestPlanIt/testplanit/compare/v0.33.0...v0.33.1) (2026-05-31)
+
+### Enhancements
+
+* **integrations:** OAuth 2.0 for GitHub, GitLab, and Gitea/Forgejo ([#374](https://github.com/TestPlanIt/testplanit/issues/374)) ([c8497d0](https://github.com/TestPlanIt/testplanit/commit/c8497d08f802bbac319e5b873be8d78bf0fa55e7))
+
 ## [0.33.0](https://github.com/TestPlanIt/testplanit/compare/v0.32.7...v0.33.0) (2026-05-30)
 
 ### Features
