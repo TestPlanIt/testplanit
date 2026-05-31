@@ -1,5 +1,5 @@
 "use client";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Configurations } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
@@ -86,7 +86,7 @@ export function EditConfiguration({
       : [];
 
   const form = useForm<z.infer<ReturnType<typeof FormSchema>>>({
-    resolver: zodResolver(FormSchema(tCommon)),
+    resolver: standardSchemaResolver(FormSchema(tCommon)),
     defaultValues: {
       name: configuration.name,
       projects: configuration.projects?.map((p) => p.projectId) ?? [],

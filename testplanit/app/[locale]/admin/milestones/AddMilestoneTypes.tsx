@@ -6,7 +6,7 @@ import {
   useUpdateManyMilestoneTypes,
 } from "~/lib/hooks";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
@@ -62,7 +62,7 @@ export function AddMilestoneType({ open, onClose }: AddMilestoneTypeProps) {
   };
 
   const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+    resolver: standardSchemaResolver(FormSchema),
     defaultValues: {
       name: "",
       isDefault: false,

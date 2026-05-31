@@ -17,7 +17,7 @@ import {
 import { translateServerError } from "~/lib/i18n/translateServerError";
 import { useRouter } from "~/lib/navigation";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
 import { useMemo } from "react";
 import { z } from "zod/v4";
@@ -171,7 +171,7 @@ const Signup: NextPage = () => {
   );
 
   const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+    resolver: standardSchemaResolver(FormSchema),
     defaultValues: {
       name: "",
       email: "",

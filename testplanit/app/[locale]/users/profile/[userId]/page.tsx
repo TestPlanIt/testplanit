@@ -45,7 +45,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { UserMentionedComments } from "@/components/UserMentionedComments";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import {
   DateFormat,
   ItemsPerPage,
@@ -192,7 +192,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
   );
 
   const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+    resolver: standardSchemaResolver(FormSchema),
     defaultValues: defaultFormValues,
   });
 

@@ -43,7 +43,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import {
   AlertTriangle,
   CheckCircle,
@@ -243,7 +243,7 @@ export default function QuickScriptPage() {
   };
 
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema) as any,
+    resolver: standardSchemaResolver(formSchema) as any,
     defaultValues: {
       repositoryId: "",
       branch: "",

@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/form";
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Switch } from "@/components/ui/switch";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -77,7 +77,7 @@ const DuplicateTestRunDialog: React.FC<DuplicateTestRunDialogProps> = ({
   const [initialStatusesSet, setInitialStatusesSet] = useState(false);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(FormSchema),
+    resolver: standardSchemaResolver(FormSchema),
     defaultValues: {
       statusesToInclude: [],
       copyAssignments: false,

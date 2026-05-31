@@ -24,7 +24,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { CircleX, Undo2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -102,7 +102,7 @@ export function AddFolder({
 
   const formSchema = useMemo(() => buildFormSchema(t), [t]);
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: standardSchemaResolver(formSchema),
     defaultValues: {
       name: "",
       docs: emptyEditorContent,

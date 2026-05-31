@@ -151,8 +151,8 @@ vi.mock("./IntegrationTypeSelector", () => ({
   ),
 }));
 
-vi.mock("@hookform/resolvers/zod", () => ({
-  zodResolver: () => async (values: any) => ({ values, errors: {} }),
+vi.mock("@hookform/resolvers/standard-schema", () => ({
+  standardSchemaResolver: () => async (values: any) => ({ values, errors: {} }),
 }));
 
 import { IntegrationModal } from "./IntegrationModal";

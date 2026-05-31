@@ -12,7 +12,7 @@ import {
   useFindManyRoles,
 } from "~/lib/hooks";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod/v4";
 
@@ -272,7 +272,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
 
   // Use the new form-specific validation schema
   const form = useForm<z.infer<typeof AddUserFormValidationSchema>>({
-    resolver: zodResolver(AddUserFormValidationSchema),
+    resolver: standardSchemaResolver(AddUserFormValidationSchema),
     defaultValues: {
       name: "",
       email: "",

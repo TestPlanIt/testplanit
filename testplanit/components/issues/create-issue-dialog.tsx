@@ -34,7 +34,7 @@ import { useCreateIssue } from "@/lib/hooks/issue";
 import { useFindManyProjectIntegration } from "@/lib/hooks/project-integration";
 import { useFindManyIntegrationProject } from "~/lib/hooks";
 import { tiptapToMarkdown } from "~/lib/tiptap/tiptapToMarkdown";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { AlertCircle, Asterisk, ExternalLink, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -144,7 +144,7 @@ export function CreateIssueDialog({
   );
 
   const form = useForm<CreateIssueFormValues>({
-    resolver: zodResolver(createIssueSchema) as any,
+    resolver: standardSchemaResolver(createIssueSchema) as any,
     defaultValues: {
       title: defaultValues?.title || "",
       description: initialMarkdownPreview,

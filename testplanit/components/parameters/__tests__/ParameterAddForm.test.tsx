@@ -145,7 +145,7 @@ describe("ParameterAddForm", () => {
     });
   });
 
-  it("does not submit when name is empty (Zod minLength enforced via zodResolver)", async () => {
+  it("does not submit when name is empty (Zod minLength enforced via standardSchemaResolver)", async () => {
     const fetchMock = vi.fn();
     global.fetch = fetchMock as unknown as typeof fetch;
 

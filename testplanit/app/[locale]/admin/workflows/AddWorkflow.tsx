@@ -12,7 +12,7 @@ import {
 
 import { Projects, WorkflowType } from "@prisma/client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
@@ -153,7 +153,7 @@ export function AddWorkflows({ open, onClose }: AddWorkflowsProps) {
 
   const formSchema = useMemo(() => buildFormSchema(tGlobal), [tGlobal]);
   const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+    resolver: standardSchemaResolver(formSchema),
     defaultValues: {
       scope: undefined,
       name: "",

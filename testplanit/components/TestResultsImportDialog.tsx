@@ -33,7 +33,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Asterisk, Star } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
@@ -201,7 +201,7 @@ export default function TestResultsImportDialog({
   });
 
   const form = useForm({
-    resolver: zodResolver(TestResultsImportSchema),
+    resolver: standardSchemaResolver(TestResultsImportSchema),
     defaultValues: {
       name: "",
       selectedFolderId: NEW_FOLDER_SENTINEL,

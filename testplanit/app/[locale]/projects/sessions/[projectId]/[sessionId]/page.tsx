@@ -11,7 +11,7 @@ import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useSession } from "next-auth/react";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { z } from "zod/v4";
@@ -1122,7 +1122,7 @@ export default function SessionPage() {
 
   // Set up form with proper typing
   const form = useForm<FormValues>({
-    resolver: zodResolver(FormSchema) as Resolver<FormValues>,
+    resolver: standardSchemaResolver(FormSchema) as Resolver<FormValues>,
     defaultValues: {
       name: "",
       templateId: 0,

@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -152,7 +152,7 @@ export function AddMilestone({ open, onClose }: AddMilestoneProps) {
 
   const formSchema = useMemo(() => buildFormSchema(t), [t]);
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: standardSchemaResolver(formSchema),
     defaultValues: {
       name: "",
       parentId: undefined,

@@ -22,7 +22,7 @@ import {
   useCreateIntegration,
   useUpdateIntegration,
 } from "@/lib/hooks/integration";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import {
   Integration,
   IntegrationAuthType,
@@ -100,7 +100,7 @@ export function IntegrationModal({
   const isUpdating = updateIntegrationMutation.status === "pending";
 
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+    resolver: standardSchemaResolver(formSchema),
     defaultValues: {
       name: integration?.name || "",
       provider: integration?.provider || undefined,

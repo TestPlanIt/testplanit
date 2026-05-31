@@ -1,5 +1,5 @@
 "use client";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { ConfigCategories } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -49,7 +49,7 @@ export function EditCategory({ category, open, onClose }: EditCategoryProps) {
   const tCommon = useTranslations("common");
 
   const form = useForm<z.infer<ReturnType<typeof FormSchema>>>({
-    resolver: zodResolver(FormSchema(tCommon)),
+    resolver: standardSchemaResolver(FormSchema(tCommon)),
     defaultValues: {
       name: category.name,
     },

@@ -24,7 +24,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -117,7 +117,7 @@ export function RequestReviewSheet({
   };
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema) as any,
+    resolver: standardSchemaResolver(formSchema) as any,
     defaultValues: {
       assigneeKey: initialValues?.assignee
         ? `${initialValues.assignee.kind}:${initialValues.assignee.id}`

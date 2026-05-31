@@ -3,7 +3,7 @@ import { IntegrationProvider, Issue } from "@prisma/client";
 import { useState } from "react";
 import { useFindUniqueIntegration, useUpdateIssue } from "~/lib/hooks";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
@@ -111,7 +111,7 @@ export function EditIssue({ issue, open, onClose }: EditIssueProps) {
   );
 
   const form = useForm<EditIssueFormData>({
-    resolver: zodResolver(EditIssueSchema),
+    resolver: standardSchemaResolver(EditIssueSchema),
     defaultValues: {
       name: issue.name,
       title: issue.title,

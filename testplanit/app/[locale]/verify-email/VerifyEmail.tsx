@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import { Link, useRouter } from "~/lib/navigation";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { verifyEmail } from "~/lib/verifyEmail";
@@ -47,7 +47,7 @@ const VerifyEmail = () => {
   });
 
   const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+    resolver: standardSchemaResolver(FormSchema),
     defaultValues: {
       token: tokenParam || "",
       email: emailParam || "",

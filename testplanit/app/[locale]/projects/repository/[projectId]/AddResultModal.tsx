@@ -6,7 +6,7 @@ import { HelpPopover } from "@/components/ui/help-popover";
 import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import {
   ApplicationArea,
   Attachments,
@@ -493,7 +493,9 @@ export function AddResultModal({
   }, [templateResultFields]);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema(locale, tCommon, templateFields, steps)),
+    resolver: standardSchemaResolver(
+      formSchema(locale, tCommon, templateFields, steps)
+    ),
     defaultValues: {
       statusId: defaultStatusId || "",
       resultData: emptyEditorContent,

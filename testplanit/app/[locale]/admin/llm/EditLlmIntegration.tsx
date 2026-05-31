@@ -35,7 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Prisma } from "@prisma/client";
 import { AlertCircle, Info, Loader2, RotateCcw } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -184,7 +184,7 @@ export function EditLlmIntegration({
   );
 
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+    resolver: standardSchemaResolver(formSchema),
     defaultValues: {
       name: "",
       provider: "OPENAI",

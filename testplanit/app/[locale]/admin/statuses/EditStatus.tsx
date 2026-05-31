@@ -14,7 +14,7 @@ import {
 import DynamicIcon from "@/components/DynamicIcon";
 import { IconName } from "~/types/globals";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
@@ -158,7 +158,7 @@ export function EditStatus({ status, open, onClose }: EditStatusProps) {
   type EditStatusFormData = z.infer<typeof EditStatusFormSchema>;
 
   const form = useForm<EditStatusFormData>({
-    resolver: zodResolver(EditStatusFormSchema),
+    resolver: standardSchemaResolver(EditStatusFormSchema),
     defaultValues: {
       name: status.name,
       systemName: status.systemName,

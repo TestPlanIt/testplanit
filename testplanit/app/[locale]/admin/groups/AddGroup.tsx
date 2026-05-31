@@ -11,7 +11,7 @@ import {
 } from "~/lib/hooks";
 import { invalidateModelQueries } from "~/utils/optimistic-updates";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
@@ -76,7 +76,7 @@ export function AddGroup({ open, onClose }: AddGroupProps) {
 
   const formSchema = useMemo(() => buildAddGroupFormSchema(tGlobal), [tGlobal]);
   const form = useForm<AddGroupFormData>({
-    resolver: zodResolver(formSchema),
+    resolver: standardSchemaResolver(formSchema),
     defaultValues: {
       name: "",
     },

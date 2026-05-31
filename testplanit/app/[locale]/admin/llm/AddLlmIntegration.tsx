@@ -34,7 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Prisma } from "@prisma/client";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -233,7 +233,7 @@ export function AddLlmIntegration({
   const formSchema = createFormSchema(t, existingNames);
 
   const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+    resolver: standardSchemaResolver(formSchema),
     defaultValues: {
       name: "",
       provider: "GEMINI",

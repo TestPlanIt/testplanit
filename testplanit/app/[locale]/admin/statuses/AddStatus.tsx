@@ -11,7 +11,7 @@ import {
 } from "~/lib/hooks";
 import { IconName } from "~/types/globals";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
@@ -146,7 +146,7 @@ export function AddStatus({ open, onClose }: AddStatusProps) {
   type AddStatusFormData = z.infer<typeof AddStatusFormSchema>;
 
   const form = useForm<AddStatusFormData>({
-    resolver: zodResolver(AddStatusFormSchema),
+    resolver: standardSchemaResolver(AddStatusFormSchema),
     defaultValues: {
       name: "",
       systemName: "",
