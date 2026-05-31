@@ -24,54 +24,86 @@ describe("publishTestRunWakeUp", () => {
     vi.mocked(getCurrentTenantId).mockReturnValue("acme");
   });
 
-  it("publishes the wake-up JSON to the testRun channel", async () => {
-    publishTestRunWakeUp({ event: "test_run.result_added", runId: 42 });
-    await flushImmediate();
-    expect(mockPublish).toHaveBeenCalledTimes(1);
-    const [channel, body] = mockPublish.mock.calls[0]!;
-    expect(channel).toBe("live:tenant:acme:testrun:42");
-    expect(JSON.parse(body as string)).toEqual({
+  it("publishes the wake-up to both the per-run and per-project channels", async () => {
+    publishTestRunWakeUp({
       event: "test_run.result_added",
       runId: 42,
+      projectId: 7,
     });
+    await flushImmediate();
+    expect(mockPublish).toHaveBeenCalledTimes(2);
+    const channels = mockPublish.mock.calls.map((c) => c[0]);
+    expect(channels).toContain("live:tenant:acme:testrun:42");
+    expect(channels).toContain("live:tenant:acme:project:7:testruns");
+    // Both calls send the identical JSON body — the consumer payload
+    // contract is shared regardless of which channel it arrived on.
+    const bodies = mockPublish.mock.calls.map((c) =>
+      JSON.parse(c[1] as string)
+    );
+    for (const body of bodies) {
+      expect(body).toEqual({
+        event: "test_run.result_added",
+        runId: 42,
+        projectId: 7,
+      });
+    }
   });
 
   it("falls back to the default tenant when one is not resolved", async () => {
     vi.mocked(getCurrentTenantId).mockReturnValue(undefined);
-    publishTestRunWakeUp({ event: "test_run.completed", runId: 7 });
+    publishTestRunWakeUp({
+      event: "test_run.completed",
+      runId: 7,
+      projectId: 3,
+    });
     await flushImmediate();
-    expect(mockPublish.mock.calls[0]![0]).toBe("live:tenant:default:testrun:7");
+    const channels = mockPublish.mock.calls.map((c) => c[0]);
+    expect(channels).toContain("live:tenant:default:testrun:7");
+    expect(channels).toContain("live:tenant:default:project:3:testruns");
   });
 
-  it("includes the targetId when provided", async () => {
+  it("includes the targetId in both channel payloads when provided", async () => {
     publishTestRunWakeUp({
       event: "test_run.result_added",
       runId: 42,
+      projectId: 7,
       targetId: 999,
     });
     await flushImmediate();
-    const body = JSON.parse(mockPublish.mock.calls[0]![1] as string);
-    expect(body).toEqual({
-      event: "test_run.result_added",
-      runId: 42,
-      targetId: 999,
-    });
+    for (const call of mockPublish.mock.calls) {
+      expect(JSON.parse(call[1] as string)).toEqual({
+        event: "test_run.result_added",
+        runId: 42,
+        projectId: 7,
+        targetId: 999,
+      });
+    }
   });
 
-  it("defers the publish until after setImmediate", async () => {
-    publishTestRunWakeUp({ event: "test_run.state_changed", runId: 1 });
+  it("defers both publishes until after setImmediate", async () => {
+    publishTestRunWakeUp({
+      event: "test_run.state_changed",
+      runId: 1,
+      projectId: 2,
+    });
     expect(mockPublish).not.toHaveBeenCalled();
     await flushImmediate();
-    expect(mockPublish).toHaveBeenCalledTimes(1);
+    expect(mockPublish).toHaveBeenCalledTimes(2);
   });
 
-  it("swallows publish failures (best-effort wake-up)", async () => {
+  it("swallows publish failures on either channel (best-effort wake-up)", async () => {
+    // Fail the first publish (per-run); the second (per-project) still fires
     mockPublish.mockRejectedValueOnce(new Error("valkey down"));
     const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    publishTestRunWakeUp({ event: "test_run.completed", runId: 1 });
+    publishTestRunWakeUp({
+      event: "test_run.completed",
+      runId: 1,
+      projectId: 5,
+    });
     await flushImmediate();
     await flushImmediate(); // unhandled rejection .catch handler is a microtask
     expect(spy).toHaveBeenCalled();
+    expect(mockPublish).toHaveBeenCalledTimes(2);
     spy.mockRestore();
   });
 });

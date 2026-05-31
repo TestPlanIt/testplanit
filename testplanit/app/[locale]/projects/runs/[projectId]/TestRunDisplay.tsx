@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Prisma } from "@prisma/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useProjectTestRunStream } from "~/hooks/useTestRunLiveStream";
 import { CirclePlus, GripVertical } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -469,6 +470,50 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
       })
       .filter((run) => !run.isCompleted);
   }, [testRuns]);
+
+  // SSE wake-up for every in-progress run on this list page via a single
+  // project-level stream. One EventSource covers every run in the project;
+  // publishers fan each wake-up out to both the per-run and per-project
+  // channels server-side, so the detail page (per-run consumer) and this
+  // page (per-project consumer) each see exactly one connection. The
+  // earlier per-run plural hook saturated browsers' HTTP/1.1 6-connection-
+  // per-origin cap on projects with many in-progress runs and made the
+  // page itself unloadable.
+  //
+  // Each wake-up invalidates four query trees so every visible piece of
+  // the tile reflects the new state:
+  //   - batchTestRunSummaries: per-tile aggregated counts and completion bar
+  //   - zenstack/TestRuns:     run name, workflow state, isCompleted, etc.
+  //                            (read via useFindManyTestRuns at page level)
+  //   - zenstack/TestRunCases: each tile's per-case status (read inside
+  //                            TestRunItem via useFindManyTestRunCases)
+  //   - zenstack/ReviewRequest: the pendingRequest sidebars on each tile
+  // The "zenstack" prefix is required because @zenstackhq/tanstack-query
+  // stamps every generated hook's query key with it (see runtime-v5/react.js
+  // getQueryKey -> [QUERY_KEY_PREFIX, model, operation, args, options]).
+  // Invalidating ["TestRuns"] alone would silently no-op against those
+  // hooks.
+  //
+  // The stream stays dormant when no run on this page is in progress —
+  // nothing live to update — matching the detail page's gating on
+  // !testRunData?.isCompleted.
+  const onLiveWakeUp = useCallback(() => {
+    void queryClient.invalidateQueries({
+      queryKey: ["batchTestRunSummaries", testRunIds],
+    });
+    void queryClient.invalidateQueries({ queryKey: ["zenstack", "TestRuns"] });
+    void queryClient.invalidateQueries({
+      queryKey: ["zenstack", "TestRunCases"],
+    });
+    void queryClient.invalidateQueries({
+      queryKey: ["zenstack", "ReviewRequest"],
+    });
+  }, [queryClient, testRunIds]);
+  useProjectTestRunStream({
+    projectId: !isNaN(numericProjectId) ? numericProjectId : null,
+    enabled: incompleteTestRuns.length > 0,
+    onWakeUp: onLiveWakeUp,
+  });
 
   const milestoneTree = useMemo(
     () => buildMilestoneTree(milestonesProp),

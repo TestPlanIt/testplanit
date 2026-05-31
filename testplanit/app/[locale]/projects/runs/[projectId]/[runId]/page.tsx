@@ -74,7 +74,7 @@ import {
   RepositoryCases,
   Tags,
 } from "@prisma/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { JSONContent } from "@tiptap/react";
 import {
   ArrowLeft,
@@ -502,16 +502,26 @@ export default function TestRunPage() {
     refetch: () => void;
   };
 
-  // SSE wake-up: refetch the run (and therefore its per-case statuses) on
-  // every published event. The pub/sub layer is untrusted plumbing
-  // (Architectural Directive 2); auth is enforced on the refetch path.
-  // Disabled once the run is completed — there's nothing left to update,
-  // and we don't want to hold an EventSource open indefinitely on a
-  // historical run page.
+  // SSE wake-up: refetch the run (which carries the per-case statuses)
+  // AND invalidate the testRunSummary query that TestRunCasesSummary
+  // reads (a separate endpoint, a separate cache key, but the same
+  // underlying mutation that fires the wake-up). Two consumers per
+  // wake-up, one open EventSource at the page level — TestRunCasesSummary
+  // no longer opens its own. Auth lives on the refetch path; the pub/sub
+  // layer is untrusted plumbing (Architectural Directive 2). Stream is
+  // disabled once the run is completed so we don't hold an EventSource
+  // open indefinitely on a historical run page.
+  const queryClient = useQueryClient();
+  const onLiveWakeUp = useCallback(() => {
+    refetchTestRun();
+    void queryClient.invalidateQueries({
+      queryKey: ["testRunSummary", Number(runId)],
+    });
+  }, [refetchTestRun, queryClient, runId]);
   useTestRunLiveStream({
     runId: !isNaN(Number(runId)) ? Number(runId) : null,
     enabled: !testRunData?.isCompleted,
-    onWakeUp: refetchTestRun,
+    onWakeUp: onLiveWakeUp,
   });
 
   // PDF export hook — fetches its own (heavier) data on demand when exporting.

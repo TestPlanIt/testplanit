@@ -1484,7 +1484,10 @@ export function AddResultModal({
     isLoadingProject;
 
   if (isLoadingData) {
-    // Return a dialog with loading state instead of null to prevent parent re-render issues
+    // Return a dialog with loading state instead of null to prevent parent re-render issues.
+    // DialogDescription must contain phrasing content only — a LoadingSpinner renders a
+    // <div>, which produces a <div> inside <p> and triggers a hydration error that in
+    // dev mode cascades into render-recovery thrash.
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl">
@@ -1493,8 +1496,8 @@ export function AddResultModal({
               {tCommon("actions.addResult")}
               {iterationLabel ? ` — ${iterationLabel}` : ""}
             </DialogTitle>
-            <DialogDescription>
-              <LoadingSpinner />
+            <DialogDescription className="sr-only">
+              {tCommon("actions.addResult")}
             </DialogDescription>
           </DialogHeader>
           <div className="flex items-center justify-center py-8">

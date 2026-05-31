@@ -218,6 +218,7 @@ export async function emitTestRunUpdateEvents(
     publishTestRunWakeUp({
       event: "test_run.state_changed",
       runId: newRow.id,
+      projectId: newRow.projectId,
     });
   }
 
@@ -266,6 +267,7 @@ export async function emitTestRunUpdateEvents(
     publishTestRunWakeUp({
       event: "test_run.completed",
       runId: newRow.id,
+      projectId: newRow.projectId,
     });
   }
 }
@@ -398,6 +400,7 @@ export async function emitTestRunResultAdded(
   publishTestRunWakeUp({
     event: "test_run.result_added",
     runId: run.id,
+    projectId: run.projectId,
     targetId: row.testRunCaseId,
   });
 }
