@@ -2,17 +2,17 @@ services:
   dev:
     container_name: testplanit-dev
     build:
-      context: . # Current directory is already testplanit
+      context: .. # repo root: single root pnpm-lock.yaml + pnpm-workspace.yaml
       target: development # Use the 'development' stage from Dockerfile
-      dockerfile: Dockerfile # Dockerfile is in the current directory
+      dockerfile: testplanit/Dockerfile
     env_file:
       - .env.development # Load development environment variables
     environment:
       VALKEY_URL: "valkey://valkey:6379" # Valkey connection URL
     volumes:
-      - .:/app # Mount source code for hot-reloading
-      - /app/node_modules # Prevent host node_modules from overwriting container's
-      - /app/.next # Prevent host .next from overwriting container's
+      - .:/app/testplanit # Mount source code for hot-reloading
+      - /app/testplanit/node_modules # Prevent host node_modules from overwriting container's
+      - /app/testplanit/.next # Prevent host .next from overwriting container's
     ports:
       - "${DOCKER_DEV_APP_PORT:-3000}:3000"
     # Use wait script, then execute next dev directly from node_modules
@@ -42,9 +42,9 @@ services:
   workers-dev:
     container_name: testplanit-workers-dev
     build:
-      context: .
+      context: ..
       target: workers
-      dockerfile: Dockerfile
+      dockerfile: testplanit/Dockerfile
     env_file:
       - .env.development
     environment:
@@ -65,9 +65,9 @@ services:
   prod:
     container_name: testplanit-prod
     build:
-      context: . # Current directory is already testplanit
+      context: .. # repo root: single root pnpm-lock.yaml + pnpm-workspace.yaml
       target: production # Use the 'production' stage from Dockerfile (default)
-      dockerfile: Dockerfile # Dockerfile is in the current directory
+      dockerfile: testplanit/Dockerfile
     env_file:
       - .env.production # Load production environment variables
     environment:
@@ -101,9 +101,9 @@ services:
   workers:
     container_name: testplanit-workers
     build:
-      context: .
+      context: ..
       target: workers
-      dockerfile: Dockerfile
+      dockerfile: testplanit/Dockerfile
     env_file:
       - .env.production
     environment:
@@ -129,12 +129,12 @@ services:
   db-init:
     # Use the same build context and target as the dev service
     build:
-      context: . # Current directory is already testplanit
+      context: .. # repo root: single root pnpm-lock.yaml + pnpm-workspace.yaml
       target: development # Uses the same base image with deps installed
-      dockerfile: Dockerfile # Dockerfile is in the current directory
+      dockerfile: testplanit/Dockerfile
     env_file:
       - .env.development # Needs DB_URL and other env vars for prisma/zenstack
-    working_dir: /app # Set working directory for commands within the container
+    working_dir: /app/testplanit # Set working directory for commands within the container
     # Push schema and seed database (no migrations)
     command:
       [
@@ -153,12 +153,12 @@ services:
   db-init-prod:
     # Use the same build context and target as the dev service for dependencies
     build:
-      context: . # Current directory is already testplanit
+      context: .. # repo root: single root pnpm-lock.yaml + pnpm-workspace.yaml
       target: development # Uses the same base image with deps installed
-      dockerfile: Dockerfile # Dockerfile is in the current directory
+      dockerfile: testplanit/Dockerfile
     env_file:
       - .env.production # Use PRODUCTION env vars
-    working_dir: /app # Set working directory for commands within the container
+    working_dir: /app/testplanit # Set working directory for commands within the container
     # Push schema and seed database (no migrations)
     command:
       [

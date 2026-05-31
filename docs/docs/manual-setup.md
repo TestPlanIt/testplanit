@@ -11,7 +11,7 @@ This guide explains how to set up TestPlanIt for local development manually, wit
 Before you begin, ensure you have the following installed:
 
 - [Node.js](https://nodejs.org/) v24.x LTS
-- [pnpm](https://pnpm.io/) (version 10+ recommended)
+- [pnpm](https://pnpm.io/) v11 — the repository pins the exact version via the `packageManager` field in the root `package.json`, so the simplest setup is to run `corepack enable` (Corepack ships with Node.js) and let it provision the matching pnpm automatically
 - Git
 
 **Required Services:**

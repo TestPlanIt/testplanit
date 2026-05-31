@@ -29,10 +29,13 @@ group "default" {
   targets = ["production", "workers"]
 }
 
-# Shared configuration for all targets
+# Shared configuration for all targets.
+# Context is the repo root (one level up from this bake file) so the build uses
+# the single root pnpm-lock.yaml + pnpm-workspace.yaml — there is no duplicate
+# lockfile under testplanit/. The dockerfile path is relative to the context.
 target "_common" {
-  context = "."
-  dockerfile = "Dockerfile"
+  context = ".."
+  dockerfile = "testplanit/Dockerfile"
   args = {
     VERSION = "${VERSION}"
     GIT_COMMIT = "${GIT_COMMIT}"

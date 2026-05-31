@@ -1,0 +1,47 @@
+# Root build context ignore. The testplanit image builds from the repo root so
+# it can use the single root pnpm-lock.yaml + pnpm-workspace.yaml. Excluding the
+# large generated/working directories keeps the context small enough to
+# transfer. Patterns for ambiguous directory names (build, dist, coverage,
+# test-results, e2e, ...) are ANCHORED to their real top-level locations so a
+# floating "**/" glob can never strip a source route such as
+# app/api/test-results — which Next.js only reaches via a dynamic fetch(), so
+# its absence would not fail the build, only 404 at runtime.
+
+# Dependencies & framework caches — safe to match at any depth (never source).
+**/node_modules
+**/.next
+**/.turbo
+**/.docusaurus
+**/*.tsbuildinfo
+
+# Build output & test artifacts — regenerated in-image; anchored, not floating.
+testplanit/dist
+testplanit/build
+testplanit/coverage
+testplanit/test-results
+testplanit/playwright-report
+testplanit/e2e
+docs/build
+docs/.docusaurus
+forge-app/dist
+cli/dist
+packages/*/dist
+
+# Large local data & prebuilt binaries — never needed in the image.
+testplanit/backups
+**/docker-data/
+cli/releases
+.playwright-mcp
+demo/
+
+# VCS, env, editor, OS cruft.
+.git
+**/.git
+**/.env
+**/.env.*
+!**/.env.example
+**/.DS_Store
+**/npm-debug.log*
+
+# Planning (local-only).
+**/.planning/
