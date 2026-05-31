@@ -37,10 +37,10 @@ const HEARTBEAT_MS = 25_000;
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ testRunId: string }> }
 ) {
-  const { id } = await params;
-  const runId = Number.parseInt(id, 10);
+  const { testRunId } = await params;
+  const runId = Number.parseInt(testRunId, 10);
   if (!Number.isInteger(runId) || runId <= 0) {
     return NextResponse.json({ error: "Invalid test run id" }, { status: 400 });
   }

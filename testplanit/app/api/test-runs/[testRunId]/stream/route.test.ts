@@ -52,14 +52,14 @@ describe("GET /api/test-runs/[id]/stream", () => {
 
   it("400s on a non-numeric run id", async () => {
     const res = await GET(req("/api/test-runs/abc/stream"), {
-      params: Promise.resolve({ id: "abc" }),
+      params: Promise.resolve({ testRunId: "abc" }),
     });
     expect(res.status).toBe(400);
   });
 
   it("400s on a non-positive run id", async () => {
     const res = await GET(req("/api/test-runs/0/stream"), {
-      params: Promise.resolve({ id: "0" }),
+      params: Promise.resolve({ testRunId: "0" }),
     });
     expect(res.status).toBe(400);
   });
@@ -67,7 +67,7 @@ describe("GET /api/test-runs/[id]/stream", () => {
   it("401s when there is no session", async () => {
     vi.mocked(getServerSession).mockResolvedValue(null);
     const res = await GET(req("/api/test-runs/42/stream"), {
-      params: Promise.resolve({ id: "42" }),
+      params: Promise.resolve({ testRunId: "42" }),
     });
     expect(res.status).toBe(401);
   });
@@ -78,7 +78,7 @@ describe("GET /api/test-runs/[id]/stream", () => {
     } as never);
     vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
     const res = await GET(req("/api/test-runs/42/stream"), {
-      params: Promise.resolve({ id: "42" }),
+      params: Promise.resolve({ testRunId: "42" }),
     });
     expect(res.status).toBe(401);
   });
@@ -95,7 +95,7 @@ describe("GET /api/test-runs/[id]/stream", () => {
       testRuns: { findFirst: vi.fn().mockResolvedValue(null) },
     } as never);
     const res = await GET(req("/api/test-runs/42/stream"), {
-      params: Promise.resolve({ id: "42" }),
+      params: Promise.resolve({ testRunId: "42" }),
     });
     expect(res.status).toBe(404);
   });
@@ -111,7 +111,7 @@ describe("GET /api/test-runs/[id]/stream", () => {
     vi.mocked(prisma.testRuns.findFirst).mockResolvedValue({ id: 42 } as never);
     vi.mocked(createSubscriberClient).mockReturnValue(null);
     const res = await GET(req("/api/test-runs/42/stream"), {
-      params: Promise.resolve({ id: "42" }),
+      params: Promise.resolve({ testRunId: "42" }),
     });
     expect(res.status).toBe(503);
     expect(res.headers.get("retry-after")).toBe("30");
@@ -130,7 +130,7 @@ describe("GET /api/test-runs/[id]/stream", () => {
     vi.mocked(createSubscriberClient).mockReturnValue(subscriber as never);
 
     const res = await GET(req("/api/test-runs/42/stream"), {
-      params: Promise.resolve({ id: "42" }),
+      params: Promise.resolve({ testRunId: "42" }),
     });
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toBe("text/event-stream");
@@ -161,7 +161,7 @@ describe("GET /api/test-runs/[id]/stream", () => {
     vi.mocked(createSubscriberClient).mockReturnValue(subscriber as never);
 
     const res = await GET(req("/api/test-runs/42/stream"), {
-      params: Promise.resolve({ id: "42" }),
+      params: Promise.resolve({ testRunId: "42" }),
     });
     const reader = res.body!.getReader();
     await reader.read(); // sync
