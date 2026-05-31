@@ -6,7 +6,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUpDown,
   Calendar,
@@ -23,8 +23,9 @@ import {
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
+import { useTestRunLiveStream } from "~/hooks/useTestRunLiveStream";
 import { useFindFirstStatus } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { aggregateRunCounts } from "~/lib/services/testRunSummary-shared";
@@ -67,8 +68,13 @@ export function TestRunCasesSummary({
 
   // Fetch summary data from API - for multi-config, fetch all and aggregate
   // If pre-fetched data is provided, skip the API call
+  const queryKey = useMemo(
+    () => ["testRunSummary", ...effectiveTestRunIds] as const,
+    [effectiveTestRunIds]
+  );
+  const queryClient = useQueryClient();
   const { data: fetchedSummaryData, isLoading } = useQuery<TestRunSummaryData>({
-    queryKey: ["testRunSummary", ...effectiveTestRunIds],
+    queryKey: [...queryKey],
     queryFn: async () => {
       if (!isMultiConfig) {
         // Single test run - use existing endpoint with case details for color bar
@@ -101,15 +107,25 @@ export function TestRunCasesSummary({
       !preFetchedSummaryData &&
       effectiveTestRunIds.length > 0 &&
       effectiveTestRunIds[0] > 0,
-    staleTime: 30000, // Cache for 30 seconds
-    // Refetch every 30 seconds when workflow is IN_PROGRESS (for automated test runs still adding cases)
-    refetchInterval: (query) => {
-      const data = query.state.data;
-      if (data?.workflowType === "IN_PROGRESS") {
-        return 30000; // 30 seconds
-      }
-      return false; // No automatic refetching
-    },
+    // No more refetchInterval — live updates come from SSE via the wake-up
+    // hook below. The 30s stale window is kept so a manual revisit after
+    // an idle minute still re-fetches.
+    staleTime: 30000,
+  });
+
+  // SSE wake-up: open EventSource on the live channel for this run; on
+  // every event, invalidate the summary query so React Query refetches
+  // the truth from REST. The data fetch is the security boundary; the
+  // wake-up is an untrusted nudge. Skipped when in multi-config mode
+  // (the page renders one summary per run; each one opens its own
+  // EventSource via this component) and when pre-fetched data is in
+  // use (the SSR page already has a fresh snapshot).
+  const onWakeUp = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey });
+  }, [queryClient, queryKey]);
+  useTestRunLiveStream({
+    runId: !preFetchedSummaryData && !isMultiConfig ? testRunId : null,
+    onWakeUp,
   });
 
   // Use pre-fetched data if available, otherwise use fetched data
