@@ -1,3 +1,9 @@
+## [0.33.3](https://github.com/TestPlanIt/testplanit/compare/v0.33.2...v0.33.3) (2026-05-31)
+
+### Enhancements
+
+* **live:** SSE-driven live updates for test runs ([#378](https://github.com/TestPlanIt/testplanit/issues/378)) ([e59838f](https://github.com/TestPlanIt/testplanit/commit/e59838fed5b1e829ecd7fc23c403701029a8e968))
+
 ## [0.33.2](https://github.com/TestPlanIt/testplanit/compare/v0.33.1...v0.33.2) (2026-05-31)
 
 ### Enhancements
