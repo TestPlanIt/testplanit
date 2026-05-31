@@ -22,7 +22,7 @@
 
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import valkeyConnection from "~/lib/valkey";
-import { testRunChannel } from "./channels";
+import { testRunChannel, testRunProjectChannel } from "./channels";
 
 /** Wake-up event names — narrower than the webhook event names because
  *  the client only cares about "something on this run changed" + a hint
@@ -36,6 +36,11 @@ export type TestRunWakeUpEvent =
 interface TestRunWakeUp {
   event: TestRunWakeUpEvent;
   runId: number;
+  /** Project the run belongs to. Required so the publisher can fan the
+   *  same wake-up out to both the per-run channel (detail page consumer)
+   *  and the per-project channel (list page consumer — one EventSource
+   *  for the whole project, avoiding the HTTP/1.1 6-connection cap). */
+  projectId: number;
   /** Sub-resource id when the event targets one (a resultId, caseId,
    *  etc.) — included so clients can invalidate finely. Optional. */
   targetId?: number;
@@ -44,16 +49,28 @@ interface TestRunWakeUp {
 export function publishTestRunWakeUp(payload: TestRunWakeUp): void {
   if (!valkeyConnection) return; // single-pod dev / SKIP_VALKEY_CONNECTION
   const tenantId = getCurrentTenantId() ?? "default";
-  const channel = testRunChannel(tenantId, payload.runId);
+  const runChan = testRunChannel(tenantId, payload.runId);
+  const projChan = testRunProjectChannel(tenantId, payload.projectId);
   const body = JSON.stringify(payload);
   // Defer past the surrounding tx commit boundary so consumers' refetches
   // observe the committed write.
   setImmediate(() => {
-    valkeyConnection?.publish(channel, body).catch((err: unknown) =>
-      console.warn(`[live/publish] testRun wake-up failed`, {
-        channel,
+    const conn = valkeyConnection;
+    if (!conn) return;
+    conn.publish(runChan, body).catch((err: unknown) =>
+      console.warn(`[live/publish] testRun wake-up failed (per-run)`, {
+        channel: runChan,
         event: payload.event,
         runId: payload.runId,
+        error: err instanceof Error ? err.message : String(err),
+      })
+    );
+    conn.publish(projChan, body).catch((err: unknown) =>
+      console.warn(`[live/publish] testRun wake-up failed (per-project)`, {
+        channel: projChan,
+        event: payload.event,
+        runId: payload.runId,
+        projectId: payload.projectId,
         error: err instanceof Error ? err.message : String(err),
       })
     );

@@ -25,3 +25,28 @@ export function testRunChannel(tenantId: string, testRunId: number): string {
   }
   return `live:tenant:${tenantId}:testrun:${testRunId}`;
 }
+
+/**
+ * Project-level wake-up channel. The runs list page subscribes here so
+ * one EventSource covers every in-progress run in the project rather
+ * than opening one connection per run — the HTTP/1.1 6-connection-per-
+ * origin cap was making projects with many active runs unusable.
+ * The publisher fans out each wake-up to both this channel and the
+ * per-run channel, so detail-page consumers continue to work unchanged.
+ */
+export function testRunProjectChannel(
+  tenantId: string,
+  projectId: number
+): string {
+  if (!tenantId) {
+    throw new Error(
+      "live/channels.testRunProjectChannel: tenantId is required"
+    );
+  }
+  if (!Number.isInteger(projectId) || projectId <= 0) {
+    throw new Error(
+      "live/channels.testRunProjectChannel: projectId must be a positive integer"
+    );
+  }
+  return `live:tenant:${tenantId}:project:${projectId}:testruns`;
+}

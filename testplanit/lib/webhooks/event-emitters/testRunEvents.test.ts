@@ -32,6 +32,10 @@ vi.mock("~/lib/webhooks/events", () => ({
   },
 }));
 
+vi.mock("~/lib/live/publish", () => ({
+  publishTestRunWakeUp: vi.fn(),
+}));
+
 vi.mock("~/lib/services/testRunSummary", () => ({
   getTestRunSummary: vi.fn(async () => ({
     testRunType: "REGULAR",
@@ -62,6 +66,7 @@ vi.mock("~/lib/services/testRunSummary", () => ({
 }));
 
 import { webhookEvents } from "~/lib/webhooks/events";
+import { publishTestRunWakeUp } from "~/lib/live/publish";
 import {
   getPerCaseIterationCounts,
   getTestRunSummary,
@@ -72,6 +77,7 @@ const summaryMock = getTestRunSummary as unknown as ReturnType<typeof vi.fn>;
 const countsMock = getPerCaseIterationCounts as unknown as ReturnType<
   typeof vi.fn
 >;
+const wakeUpMock = publishTestRunWakeUp as unknown as ReturnType<typeof vi.fn>;
 
 interface TxStub {
   workflows: { findUnique: ReturnType<typeof vi.fn> };
@@ -548,5 +554,161 @@ describe("emitTestRunDuplicated", () => {
       projectId: 7,
     });
     expect(opts.tx).toBe(tx);
+  });
+});
+
+/**
+ * publishTestRunWakeUp wiring.
+ *
+ * Catches the regression where an emitter fires a webhook but forgets the
+ * companion SSE wake-up, OR where the wake-up is fired but the projectId
+ * is missing/wrong (which silently breaks the list-page consumer because
+ * the per-project channel never gets the publish). The webhook tests above
+ * cover the webhook side; these tests cover the wake-up side.
+ */
+describe("publishTestRunWakeUp wiring", () => {
+  beforeEach(() => {
+    emitMock.mockClear();
+    summaryMock.mockClear();
+    countsMock.mockClear();
+    wakeUpMock.mockClear();
+  });
+
+  it("fires test_run.state_changed wake-up with the run's projectId on a state change", async () => {
+    const tx = makeTx({
+      workflows: {
+        findUnique: vi
+          .fn()
+          .mockResolvedValueOnce({ name: "Open", workflowType: "NOT_STARTED" })
+          .mockResolvedValueOnce({
+            name: "In Progress",
+            workflowType: "IN_PROGRESS",
+          }),
+      },
+    });
+    await emitTestRunUpdateEvents(
+      {
+        id: 18,
+        projectId: 293,
+        name: "Run 18",
+        stateId: 100,
+        isCompleted: false,
+      },
+      {
+        id: 18,
+        projectId: 293,
+        name: "Run 18",
+        stateId: 200,
+        isCompleted: false,
+      },
+      tx as never
+    );
+    expect(wakeUpMock).toHaveBeenCalledTimes(1);
+    expect(wakeUpMock).toHaveBeenCalledWith({
+      event: "test_run.state_changed",
+      runId: 18,
+      projectId: 293,
+    });
+  });
+
+  it("fires BOTH state_changed AND completed wake-ups on a DONE transition, each with the projectId", async () => {
+    const tx = makeTx({
+      workflows: {
+        findUnique: vi
+          .fn()
+          .mockResolvedValueOnce({
+            name: "In Progress",
+            workflowType: "IN_PROGRESS",
+          })
+          .mockResolvedValueOnce({ name: "Done", workflowType: "DONE" }),
+      },
+    });
+    await emitTestRunUpdateEvents(
+      {
+        id: 42,
+        projectId: 7,
+        name: "Run 42",
+        stateId: 100,
+        isCompleted: false,
+      },
+      { id: 42, projectId: 7, name: "Run 42", stateId: 999, isCompleted: true },
+      tx as never
+    );
+    expect(wakeUpMock).toHaveBeenCalledTimes(2);
+    const events = wakeUpMock.mock.calls.map((c) => c[0]);
+    expect(events).toContainEqual({
+      event: "test_run.state_changed",
+      runId: 42,
+      projectId: 7,
+    });
+    expect(events).toContainEqual({
+      event: "test_run.completed",
+      runId: 42,
+      projectId: 7,
+    });
+  });
+
+  it("fires test_run.result_added wake-up with projectId AND the testRunCaseId as targetId", async () => {
+    // emitTestRunResultAdded reads run + case from tx and publishes
+    // {event, runId, projectId, targetId: testRunCaseId}
+    const tx = makeTx({
+      testRuns: {
+        findUnique: vi.fn(async () => ({
+          id: 99,
+          name: "Run 99",
+          projectId: 555,
+        })),
+      },
+      testRunCases: {
+        findUnique: vi.fn(async () => ({
+          id: 50,
+          repositoryCase: { id: 1000, name: "Login flow" },
+        })),
+      },
+      status: {
+        findUnique: vi.fn(async () => ({
+          id: 1,
+          name: "Passed",
+          isCompleted: true,
+          isSuccess: true,
+          isFailure: false,
+          color: { value: "#00FF00" },
+        })),
+      },
+    });
+    await emitTestRunResultAdded(
+      {
+        id: 7891,
+        testRunCaseId: 50,
+        attempt: 1,
+        executedById: "u1",
+        executedAt: new Date(),
+      } as never,
+      tx as never,
+      { projectId: 555 }
+    );
+    expect(wakeUpMock).toHaveBeenCalledTimes(1);
+    expect(wakeUpMock).toHaveBeenCalledWith({
+      event: "test_run.result_added",
+      runId: 99,
+      projectId: 555,
+      targetId: 50,
+    });
+  });
+
+  it("does NOT fire a wake-up when neither stateId nor isCompleted changed", async () => {
+    // No webhook → no wake-up. The list page consumer would never see
+    // this no-op anyway, but we don't want speculative wake-ups either
+    // (they'd cause unnecessary React Query refetch storms).
+    const tx = makeTx();
+    const row = {
+      id: 1,
+      projectId: 7,
+      name: "Run 1",
+      stateId: 100,
+      isCompleted: false,
+    };
+    await emitTestRunUpdateEvents(row, row, tx as never);
+    expect(wakeUpMock).not.toHaveBeenCalled();
   });
 });

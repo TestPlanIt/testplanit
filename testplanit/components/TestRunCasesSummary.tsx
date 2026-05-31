@@ -6,7 +6,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowUpDown,
   Calendar,
@@ -23,9 +23,8 @@ import {
 import { useSession } from "next-auth/react";
 import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { TestRunSummaryData } from "~/app/api/test-runs/[testRunId]/summary/route";
-import { useTestRunLiveStream } from "~/hooks/useTestRunLiveStream";
 import { useFindFirstStatus } from "~/lib/hooks";
 import { Link } from "~/lib/navigation";
 import { aggregateRunCounts } from "~/lib/services/testRunSummary-shared";
@@ -66,15 +65,14 @@ export function TestRunCasesSummary({
     testRunIds && testRunIds.length > 0 ? testRunIds : [testRunId];
   const isMultiConfig = effectiveTestRunIds.length > 1;
 
-  // Fetch summary data from API - for multi-config, fetch all and aggregate
-  // If pre-fetched data is provided, skip the API call
-  const queryKey = useMemo(
-    () => ["testRunSummary", ...effectiveTestRunIds] as const,
-    [effectiveTestRunIds]
-  );
-  const queryClient = useQueryClient();
+  // Fetch summary data from API - for multi-config, fetch all and aggregate.
+  // If pre-fetched data is provided, skip the API call. Live updates are NOT
+  // driven from inside this component — the parent page (run detail or runs
+  // list) owns the SSE stream and invalidates this query's key on wake-up so
+  // there's at most one EventSource per browser tab regardless of how many
+  // summary widgets are rendered.
   const { data: fetchedSummaryData, isLoading } = useQuery<TestRunSummaryData>({
-    queryKey: [...queryKey],
+    queryKey: ["testRunSummary", ...effectiveTestRunIds],
     queryFn: async () => {
       if (!isMultiConfig) {
         // Single test run - use existing endpoint with case details for color bar
@@ -107,25 +105,12 @@ export function TestRunCasesSummary({
       !preFetchedSummaryData &&
       effectiveTestRunIds.length > 0 &&
       effectiveTestRunIds[0] > 0,
-    // No more refetchInterval — live updates come from SSE via the wake-up
-    // hook below. The 30s stale window is kept so a manual revisit after
-    // an idle minute still re-fetches.
+    // No refetchInterval — live updates come from the parent's SSE stream
+    // invalidating the query above. The 30s stale window is kept so a manual
+    // revisit after an idle minute still re-fetches even if no SSE wake-up
+    // arrived (e.g. the tab was backgrounded long enough for the stream to
+    // drop and reconnect).
     staleTime: 30000,
-  });
-
-  // SSE wake-up: open EventSource on the live channel for this run; on
-  // every event, invalidate the summary query so React Query refetches
-  // the truth from REST. The data fetch is the security boundary; the
-  // wake-up is an untrusted nudge. Skipped when in multi-config mode
-  // (the page renders one summary per run; each one opens its own
-  // EventSource via this component) and when pre-fetched data is in
-  // use (the SSR page already has a fresh snapshot).
-  const onWakeUp = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey });
-  }, [queryClient, queryKey]);
-  useTestRunLiveStream({
-    runId: !preFetchedSummaryData && !isMultiConfig ? testRunId : null,
-    onWakeUp,
   });
 
   // Use pre-fetched data if available, otherwise use fetched data
