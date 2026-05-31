@@ -11,6 +11,7 @@ import LoadingSpinnerAlert from "@/components/LoadingSpinnerAlert";
 import { RequestReviewButton } from "@/components/reviews/RequestReviewButton";
 import { ReviewStatusBanner } from "@/components/reviews/ReviewStatusBanner";
 import { TestRunCaseDetails } from "@/components/TestRunCaseDetails";
+import { useTestRunLiveStream } from "~/hooks/useTestRunLiveStream";
 import { useTransitionGateStatus } from "~/hooks/useTransitionGateStatus";
 import { IterationAwareTestRunCaseDetails } from "~/components/iterations/IterationAwareTestRunCaseDetails";
 import TipTapEditor from "@/components/tiptap/TipTapEditor";
@@ -500,6 +501,18 @@ export default function TestRunPage() {
     data: (TestRunWithRelations & { testRunType?: string }) | null;
     refetch: () => void;
   };
+
+  // SSE wake-up: refetch the run (and therefore its per-case statuses) on
+  // every published event. The pub/sub layer is untrusted plumbing
+  // (Architectural Directive 2); auth is enforced on the refetch path.
+  // Disabled once the run is completed — there's nothing left to update,
+  // and we don't want to hold an EventSource open indefinitely on a
+  // historical run page.
+  useTestRunLiveStream({
+    runId: !isNaN(Number(runId)) ? Number(runId) : null,
+    enabled: !testRunData?.isCompleted,
+    onWakeUp: refetchTestRun,
+  });
 
   // PDF export hook — fetches its own (heavier) data on demand when exporting.
   const { isExporting: isExportingPdf, handleExport: handleExportPdf } =
