@@ -1,3 +1,10 @@
+## [0.33.4](https://github.com/TestPlanIt/testplanit/compare/v0.33.3...v0.33.4) (2026-05-31)
+
+### Enhancements
+
+* **deps:** switch react-hook-form resolver from zodResolver to standardSchemaResolver ([#379](https://github.com/TestPlanIt/testplanit/issues/379)) ([93ec765](https://github.com/TestPlanIt/testplanit/commit/93ec7657b998f7b953c0879f1bc0394cf0824dbd))
+* **live:** multiplex test-run SSE wake-ups via a project-level stream ([#380](https://github.com/TestPlanIt/testplanit/issues/380)) ([c57b9a9](https://github.com/TestPlanIt/testplanit/commit/c57b9a9fffd0dd7ac68c900be1de1884d48fcb44))
+
 ## [0.33.3](https://github.com/TestPlanIt/testplanit/compare/v0.33.2...v0.33.3) (2026-05-31)
 
 ### Enhancements
