@@ -1,5 +1,5 @@
 "use client";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useState } from "react";
@@ -115,7 +115,7 @@ export function BulkEditConfigurations({
       : [];
 
   const form = useForm<BulkEditFormData>({
-    resolver: zodResolver(FormSchema),
+    resolver: standardSchemaResolver(FormSchema),
     defaultValues: {
       projects: [],
       // Defaults are unchecked, which makes both project and enabled-state

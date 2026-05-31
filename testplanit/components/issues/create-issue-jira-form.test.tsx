@@ -108,8 +108,8 @@ vi.mock("@/components/ui/select", () => ({
   ),
 }));
 
-vi.mock("@hookform/resolvers/zod", () => ({
-  zodResolver: () => async (values: any) => ({ values, errors: {} }),
+vi.mock("@hookform/resolvers/standard-schema", () => ({
+  standardSchemaResolver: () => async (values: any) => ({ values, errors: {} }),
 }));
 
 // Stub DynamicJiraField — it depends on TipTap and other heavy editors

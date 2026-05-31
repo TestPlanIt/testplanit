@@ -10,7 +10,7 @@ import {
 import { RESTRICTED_FIELDS_AREAS } from "~/lib/utils/restrictedFieldsAreas";
 import { REVIEW_RELEVANT_AREAS } from "~/lib/utils/reviewAreas";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
@@ -99,7 +99,7 @@ export function AddRole({ open, onClose }: AddRoleProps) {
 
   const formSchema = useMemo(() => buildAddRoleFormSchema(t), [t]);
   const form = useForm<AddRoleFormData>({
-    resolver: zodResolver(formSchema),
+    resolver: standardSchemaResolver(formSchema),
     defaultValues: {
       name: "",
       isDefault: false,

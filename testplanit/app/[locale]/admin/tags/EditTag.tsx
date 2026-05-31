@@ -3,7 +3,7 @@ import { Tags } from "@prisma/client";
 import { useState } from "react";
 import { useFindManyTags, useUpdateTags } from "~/lib/hooks";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
@@ -56,7 +56,7 @@ export function EditTag({ tag, open, onClose }: EditTagProps) {
   });
 
   const form = useForm<EditTagFormData>({
-    resolver: zodResolver(EditTagSchema),
+    resolver: standardSchemaResolver(EditTagSchema),
     defaultValues: {
       name: tag.name,
     },

@@ -155,8 +155,8 @@ vi.mock("@/components/ui/async-combobox", () => ({
   ),
 }));
 
-vi.mock("@hookform/resolvers/zod", () => ({
-  zodResolver: () => async (values: any) => ({ values, errors: {} }),
+vi.mock("@hookform/resolvers/standard-schema", () => ({
+  standardSchemaResolver: () => async (values: any) => ({ values, errors: {} }),
 }));
 
 import { CreateIssueDialog } from "./create-issue-dialog";

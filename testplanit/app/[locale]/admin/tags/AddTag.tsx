@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useUpdateTags } from "~/lib/hooks";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
@@ -55,7 +55,7 @@ export function AddTag({ open, onClose }: AddTagProps) {
   const { mutateAsync: updateTag } = useUpdateTags();
 
   const form = useForm<AddTagFormData>({
-    resolver: zodResolver(AddTagSchema),
+    resolver: standardSchemaResolver(AddTagSchema),
     defaultValues: {
       name: "",
     },

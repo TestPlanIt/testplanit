@@ -34,7 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import {
   CaseFields as PrismaCaseField,
   Tags as PrismaTag,
@@ -117,7 +117,7 @@ export function FieldValueInput({
 
   // Initialize form methods specifically for the steps dialog
   const stepsFormMethods = useForm({
-    resolver: zodResolver(stepsSchema),
+    resolver: standardSchemaResolver(stepsSchema),
     defaultValues: {
       [fieldKey]: [], // Initialize with an empty array under the dynamic key
     },

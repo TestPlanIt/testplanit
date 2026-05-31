@@ -49,7 +49,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { format } from "date-fns";
 import { CalendarDays, CirclePlus } from "lucide-react";
 import { Resolver, SubmitHandler, useForm } from "react-hook-form";
@@ -138,7 +138,7 @@ function ProjectAdmin() {
     setValue,
     formState: { errors, isValid },
   } = useForm<FormData>({
-    resolver: zodResolver(validationSchema) as Resolver<FormData>,
+    resolver: standardSchemaResolver(validationSchema) as Resolver<FormData>,
     mode: "onChange",
     defaultValues: {
       completedAt: null,

@@ -1,6 +1,6 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useQueryClient } from "@tanstack/react-query";
 import { Eye, EyeOff } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -156,7 +156,7 @@ export function OverrideValuesDialog({
   }, [orderedSchema, currentValues, snapshotRow]);
 
   const form = useForm<Record<string, unknown>>({
-    resolver: zodResolver(zodSchema as any),
+    resolver: standardSchemaResolver(zodSchema as any),
     defaultValues,
     mode: "onChange",
   });

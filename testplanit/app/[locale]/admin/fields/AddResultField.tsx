@@ -9,7 +9,7 @@ import {
   useFindManyResultFields,
 } from "~/lib/hooks";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { FieldOptions } from "@prisma/client";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
@@ -284,7 +284,7 @@ export function AddResultFieldModal({
   };
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(validationSchema),
+    resolver: standardSchemaResolver(validationSchema),
     defaultValues: {
       displayName: "",
       systemName: "",

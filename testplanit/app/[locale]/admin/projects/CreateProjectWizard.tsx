@@ -1,6 +1,6 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Prisma, ProjectAccessType, WorkflowScope } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -489,7 +489,7 @@ export function CreateProjectWizard({
   ]);
 
   const form = useForm<CreateProjectFormData>({
-    resolver: zodResolver(FormSchema),
+    resolver: standardSchemaResolver(FormSchema),
     defaultValues: defaultValues,
   });
 

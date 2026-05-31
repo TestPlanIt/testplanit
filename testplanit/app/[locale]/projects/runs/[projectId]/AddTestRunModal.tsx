@@ -40,7 +40,7 @@ import { Separator } from "@/components/ui/separator";
 import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { ApplicationArea, Attachments, TestRunType } from "@prisma/client";
 import { DialogDescription } from "@radix-ui/react-dialog";
 import { Combine } from "lucide-react";
@@ -165,7 +165,7 @@ const BasicInfoDialog = React.memo(
       [tGlobal]
     );
     const basicInfoForm = useForm<BasicInfoFormValues>({
-      resolver: zodResolver(basicInfoFormSchema),
+      resolver: standardSchemaResolver(basicInfoFormSchema),
       defaultValues: {
         name: form.getValues("name"),
         configIds: form.getValues("configIds"),
@@ -1010,7 +1010,7 @@ export default function AddTestRunModal({
 
   const baseFormSchema = useMemo(() => buildBaseFormSchema(tGlobal), [tGlobal]);
   const form = useForm<BaseFormValues>({
-    resolver: zodResolver(baseFormSchema),
+    resolver: standardSchemaResolver(baseFormSchema),
     defaultValues: {
       name: duplicationPreset
         ? `${duplicationPreset.originalName} - ${tCommon("actions.duplicate")}`

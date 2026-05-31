@@ -66,7 +66,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import {
   ApplicationArea,
   Attachments,
@@ -563,7 +563,7 @@ export default function TestRunPage() {
 
   // Set up form with proper typing
   const form = useForm<FormValues>({
-    resolver: zodResolver(FormSchema) as Resolver<FormValues>,
+    resolver: standardSchemaResolver(FormSchema) as Resolver<FormValues>,
     defaultValues: {
       name: "",
       configId: null,

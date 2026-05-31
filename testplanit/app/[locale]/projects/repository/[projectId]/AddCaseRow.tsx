@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useQueryClient } from "@tanstack/react-query";
 import { PlusSquare } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -169,7 +169,7 @@ export function AddCaseRow({ folderId }: AddCaseRowProps) {
 
   const formSchema = useMemo(() => buildFormSchema(t), [t]);
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: standardSchemaResolver(formSchema),
     defaultValues: {
       name: "",
       workflowId: defaultWorkflowId,

@@ -11,7 +11,7 @@ import {
   useUpdateGroups,
 } from "~/lib/hooks";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
@@ -99,7 +99,7 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
     [tGlobal]
   );
   const form = useForm<EditGroupFormData>({
-    resolver: zodResolver(formSchema),
+    resolver: standardSchemaResolver(formSchema),
     defaultValues: {
       name: group.name,
     },

@@ -171,8 +171,8 @@ vi.mock("react-hook-form", () => ({
   })),
 }));
 
-vi.mock("@hookform/resolvers/zod", () => ({
-  zodResolver: vi.fn(() => async () => ({ values: {}, errors: {} })),
+vi.mock("@hookform/resolvers/standard-schema", () => ({
+  standardSchemaResolver: vi.fn(() => async () => ({ values: {}, errors: {} })),
 }));
 
 vi.mock("@/components/ui/form", () => ({

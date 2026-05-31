@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { AlertCircle, Asterisk, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
@@ -387,7 +387,10 @@ export function CreateIssueJiraForm({
       ? defaultValues.description
       : "";
   const form = useForm<any>({
-    resolver: fields.length > 0 ? zodResolver(buildSchema(fields)) : undefined,
+    resolver:
+      fields.length > 0
+        ? standardSchemaResolver(buildSchema(fields))
+        : undefined,
     defaultValues: {
       summary: defaultValues?.title || "",
       description: initialDescription,

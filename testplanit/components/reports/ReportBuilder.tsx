@@ -8,7 +8,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import {
   ColumnDef,
   ExpandedState,
@@ -202,7 +202,7 @@ function ReportBuilderContent({
 
   // Form for date range
   const form = useForm<DateRangeFormData>({
-    resolver: zodResolver(dateRangeSchema),
+    resolver: standardSchemaResolver(dateRangeSchema),
     defaultValues: {
       dateRange: undefined,
     },

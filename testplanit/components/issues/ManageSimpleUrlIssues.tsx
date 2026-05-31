@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Asterisk, ExternalLink, Link2, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -67,7 +67,7 @@ export function ManageSimpleUrlIssues({
   type AddIssueFormValues = z.infer<typeof addIssueSchema>;
 
   const form = useForm<AddIssueFormValues>({
-    resolver: zodResolver(addIssueSchema),
+    resolver: standardSchemaResolver(addIssueSchema),
     defaultValues: { issueId: "", issueTitle: "" },
     mode: "onBlur",
   });

@@ -44,7 +44,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { Attachments, SessionResults, User } from "@prisma/client";
 import {
   ChevronRight,
@@ -340,7 +340,7 @@ export function SessionResultsList({
 
   // Initialize the form with dynamic schema
   const form = useForm<FieldFormValues>({
-    resolver: zodResolver(createFormSchema(locale, tCommon, [])),
+    resolver: standardSchemaResolver(createFormSchema(locale, tCommon, [])),
     defaultValues: {
       statusId: "",
       resultData: emptyEditorContent,
@@ -503,7 +503,7 @@ export function SessionResultsList({
       });
 
       // Set the resolver with updated schema that includes the template fields
-      const _updatedResolver = zodResolver(
+      const _updatedResolver = standardSchemaResolver(
         createFormSchema(locale, tCommon, templateResultFields)
       );
 

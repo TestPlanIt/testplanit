@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useRouter } from "~/lib/navigation";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { SsoProviderType } from "@prisma/client";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
@@ -236,7 +236,7 @@ const Signin: NextPage = () => {
   });
 
   const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+    resolver: standardSchemaResolver(FormSchema),
     defaultValues: {
       email: "",
       password: "",
@@ -244,7 +244,7 @@ const Signin: NextPage = () => {
   });
 
   const magicLinkForm = useForm<z.infer<typeof MagicLinkFormSchema>>({
-    resolver: zodResolver(MagicLinkFormSchema),
+    resolver: standardSchemaResolver(MagicLinkFormSchema),
     defaultValues: {
       email: "",
     },

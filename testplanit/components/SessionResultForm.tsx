@@ -25,7 +25,7 @@ import {
 import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { Attachments } from "@prisma/client";
 import { Bug, CircleCheckBig, Clock, Paperclip, Save } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -356,7 +356,9 @@ export function SessionResultForm({
 
   // Initialize form with dynamic schema
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema(locale, tCommon, templateFields)),
+    resolver: standardSchemaResolver(
+      formSchema(locale, tCommon, templateFields)
+    ),
     defaultValues: {
       statusId: "",
       resultData: emptyEditorContent,

@@ -10,7 +10,7 @@ import {
   useUpdateManyFieldOptions,
 } from "~/lib/hooks";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { FieldOptions } from "@prisma/client";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
@@ -302,7 +302,7 @@ export function EditCaseField({
   };
 
   const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(validationSchema),
+    resolver: standardSchemaResolver(validationSchema),
     defaultValues: defaultFormValues,
   });
 

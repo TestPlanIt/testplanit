@@ -16,7 +16,7 @@ import {
   useUpdateTemplates,
 } from "~/lib/hooks";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
@@ -176,7 +176,7 @@ export function EditTemplate({ template, open, onClose }: EditTemplateProps) {
 
   const formSchema = useMemo(() => buildFormSchema(tGlobal), [tGlobal]);
   const form = useForm({
-    resolver: zodResolver(formSchema),
+    resolver: standardSchemaResolver(formSchema),
     defaultValues: defaultFormValues,
   });
 

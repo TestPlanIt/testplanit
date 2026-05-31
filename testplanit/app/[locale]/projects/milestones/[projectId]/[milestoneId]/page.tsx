@@ -28,7 +28,7 @@ import {
   CompletableSession,
   CompleteSessionDialog,
 } from "@/projects/sessions/[projectId]/[sessionId]/CompleteSessionDialog";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { ApplicationArea } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -162,7 +162,7 @@ export default function MilestoneDetailsPage() {
   type MilestoneFormData = z.infer<typeof MilestoneFormSchema>;
 
   const methods = useForm<MilestoneFormData>({
-    resolver: zodResolver(MilestoneFormSchema),
+    resolver: standardSchemaResolver(MilestoneFormSchema),
   });
 
   const { data: milestone, isLoading: isMilestoneLoading } =

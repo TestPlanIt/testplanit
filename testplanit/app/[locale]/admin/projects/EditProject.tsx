@@ -24,7 +24,7 @@ import {
   useUpsertUserProjectPermission,
 } from "~/lib/hooks";
 
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { optionalImageUrlSchema } from "~/lib/schemas/imageUrl";
@@ -265,7 +265,7 @@ export function EditProjectModal({
     [tGlobal]
   );
   const form = useForm<EditProjectFormData>({
-    resolver: zodResolver(formSchema),
+    resolver: standardSchemaResolver(formSchema),
     defaultValues: {
       iconUrl: project.iconUrl ?? null,
       name: project.name ?? "",

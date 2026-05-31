@@ -6,7 +6,7 @@ import { HelpPopover } from "@/components/ui/help-popover";
 import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { Issue } from "@prisma/client";
 import { ApplicationArea, Attachments } from "@prisma/client";
 import { JsonValue } from "@prisma/client/runtime/library";
@@ -556,7 +556,9 @@ export function EditResultModal({
     });
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema(locale, tCommon, templateFields, steps)),
+    resolver: standardSchemaResolver(
+      formSchema(locale, tCommon, templateFields, steps)
+    ),
     defaultValues: {
       statusId: "",
       notes: emptyEditorContent,

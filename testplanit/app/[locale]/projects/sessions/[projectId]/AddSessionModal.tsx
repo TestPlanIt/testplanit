@@ -42,7 +42,7 @@ import { Separator } from "@/components/ui/separator";
 import UploadAttachments, {
   type LinkAttachmentInput,
 } from "@/components/UploadAttachments";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import type { Attachments } from "@prisma/client";
 import { ApplicationArea } from "@prisma/client";
 import { AlertTriangle, Asterisk, Combine, LayoutList } from "lucide-react";
@@ -327,7 +327,7 @@ export function AddSessionModal({
   });
 
   const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+    resolver: standardSchemaResolver(FormSchema),
     defaultValues: {
       name: duplicationPreset
         ? `${duplicationPreset.originalName} - ${t("common.actions.duplicate")}`
