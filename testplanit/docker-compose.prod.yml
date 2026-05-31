@@ -2,8 +2,8 @@ services:
   prod:
     container_name: testplanit-prod
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: testplanit/Dockerfile
       target: production
     env_file:
       - .env.production
@@ -16,8 +16,8 @@ services:
   workers:
     container_name: testplanit-workers
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: testplanit/Dockerfile
       target: workers
     env_file:
       - .env.production
@@ -35,12 +35,12 @@ services:
   db-init-prod:
     container_name: testplanit-db-init
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: testplanit/Dockerfile
       target: development
     env_file:
       - .env.production
-    working_dir: /app
+    working_dir: /app/testplanit
     # Push schema and seed database (no migrations)
     command:
       [

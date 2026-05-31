@@ -77,9 +77,6 @@ jobs:
         mkdir -p public
         cp public/version.json .docker-version.json || echo "Version file not generated"
 
-    - name: Copy lockfile for Docker build
-      run: cp pnpm-lock.yaml testplanit/pnpm-lock.yaml
-
     - name: Build and push AMD64 images
       working-directory: ./testplanit
       run: |
@@ -87,7 +84,7 @@ jobs:
         VERSION_NUM="${VERSION#v}"
         SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
 
-        docker buildx bake -f docker-bake.hcl --push \
+        docker buildx bake -f docker-bake.hcl --allow=fs.read=.. --push \
           --set "*.platform=linux/amd64" \
           --set "production.tags=ghcr.io/${REPO_LC}:${VERSION_NUM}-amd64" \
           --set "production.tags=ghcr.io/${REPO_LC}:${VERSION}-amd64" \
@@ -148,9 +145,6 @@ jobs:
         mkdir -p public
         cp public/version.json .docker-version.json || echo "Version file not generated"
 
-    - name: Copy lockfile for Docker build
-      run: cp pnpm-lock.yaml testplanit/pnpm-lock.yaml
-
     - name: Build and push ARM64 images
       working-directory: ./testplanit
       run: |
@@ -158,7 +152,7 @@ jobs:
         VERSION_NUM="${VERSION#v}"
         SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
 
-        docker buildx bake -f docker-bake.hcl --push \
+        docker buildx bake -f docker-bake.hcl --allow=fs.read=.. --push \
           --set "*.platform=linux/arm64" \
           --set "production.tags=ghcr.io/${REPO_LC}:${VERSION_NUM}-arm64" \
           --set "production.tags=ghcr.io/${REPO_LC}:${VERSION}-arm64" \
@@ -286,14 +280,11 @@ jobs:
         mkdir -p public
         cp public/version.json .docker-version.json || echo "Version file not generated"
 
-    - name: Copy lockfile for Docker build
-      run: cp pnpm-lock.yaml testplanit/pnpm-lock.yaml
-
     - name: Build and push AMD64 images
       working-directory: ./testplanit
       run: |
         SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
-        docker buildx bake -f docker-bake.hcl --push \
+        docker buildx bake -f docker-bake.hcl --allow=fs.read=.. --push \
           --set "*.platform=linux/amd64" \
           --set "production.tags=ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}-amd64" \
           --set "workers.tags=ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}-workers-amd64" \
@@ -349,14 +340,11 @@ jobs:
         mkdir -p public
         cp public/version.json .docker-version.json || echo "Version file not generated"
 
-    - name: Copy lockfile for Docker build
-      run: cp pnpm-lock.yaml testplanit/pnpm-lock.yaml
-
     - name: Build and push ARM64 images
       working-directory: ./testplanit
       run: |
         SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-8)
-        docker buildx bake -f docker-bake.hcl --push \
+        docker buildx bake -f docker-bake.hcl --allow=fs.read=.. --push \
           --set "*.platform=linux/arm64" \
           --set "production.tags=ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}-arm64" \
           --set "workers.tags=ghcr.io/${REPO_LC}:${{ github.event.inputs.tag }}-workers-arm64" \

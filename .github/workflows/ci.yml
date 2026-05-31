@@ -40,17 +40,15 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Verify workspace lockfile mirror
-        # testplanit/pnpm-lock.yaml is a load-bearing byte-for-byte duplicate
-        # of the root pnpm-lock.yaml — the testplanit Dockerfile copies it
-        # from its build context. Fail loudly when they diverge (typically
-        # after a Dependabot bump) so the mirror is fixed before merge.
-        run: diff -q pnpm-lock.yaml testplanit/pnpm-lock.yaml
-
       - name: Install dependencies
+        # --frozen-lockfile is the pre-merge lockfile-integrity gate: it fails
+        # fast if the root pnpm-lock.yaml has drifted from the manifests (e.g. a
+        # Dependabot bump that didn't regenerate it), matching the frozen install
+        # the release Docker build relies on. A non-frozen install would silently
+        # rewrite the lockfile in-runner and pass, deferring the failure to release.
         run: |
           cd testplanit
-          pnpm install --ignore-scripts
+          pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Generate ZenStack and Prisma
         run: |
