@@ -199,6 +199,10 @@ export const GET = withAuditContext(
       const { reportType: _, ...requestParams } = config;
       const requestBody = {
         ...requestParams, // Spread all saved parameters from the config
+        // Always include the share's projectId — the saved config may not
+        // carry it (project-scoped reports historically relied on the URL
+        // query path), but every report route reads it from the body.
+        ...(shareLink.projectId ? { projectId: shareLink.projectId } : {}),
         page: 1,
         pageSize: "All", // Always fetch all results for shared reports
       };
@@ -233,6 +237,11 @@ export const GET = withAuditContext(
       // hand it to MatrixReportPreset without re-fetching (the matrix has no
       // public-share aggregation endpoint).
       const isIterationMatrix = config.reportType === "iteration-matrix";
+      // Automation candidates is a snapshot-style LLM report — the bypassed
+      // POST returns `{snapshot: {...}}`. Pass through verbatim so the
+      // viewer renders the persisted snapshot in readOnly mode.
+      const isAutomationCandidates =
+        config.reportType === "automation-candidates";
 
       // Check if this is a pre-built report (empty dimensions/metrics in config)
       // Pre-built reports save empty arrays because they don't use the standard dimension/metric selector
@@ -249,6 +258,9 @@ export const GET = withAuditContext(
         // Matrix payload lives entirely in the spread below as `matrixAxes`;
         // results/chartData stay empty so the standard table/chart code path
         // is a no-op for the shared matrix surface.
+      } else if (isAutomationCandidates) {
+        // Same shape as matrix — the snapshot lives in the spread below as
+        // `automationCandidatesSnapshot`; rows/chart stay empty.
       } else if (isPreBuiltReport) {
         // Pre-built reports return data in { data: [...] } format
         // Don't generate dimension/metric metadata - let the frontend handle column generation
@@ -317,6 +329,9 @@ export const GET = withAuditContext(
             cellCount: reportData.cellCount,
             statusMap: reportData.statusMap,
           },
+        }),
+        ...(isAutomationCandidates && {
+          automationCandidatesSnapshot: reportData.snapshot,
         }),
       };
 

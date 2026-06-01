@@ -8,6 +8,7 @@ import {
   PlayCircle,
   ScrollText,
   Shuffle,
+  Bot,
   TrendingUp,
   Users,
 } from "lucide-react";
@@ -24,6 +25,18 @@ export interface ReportType {
 
 // Project-level report types - using function to access translations
 export const getProjectReportTypes = (tReports: any): ReportType[] => [
+  {
+    id: "automation-candidates",
+    label: tReports("reportTypes.automationCandidates.label"),
+    description: tReports("reportTypes.automationCandidates.description"),
+    icon: Bot,
+    // Snapshot-style LLM report — rendered by AutomationCandidatesReportPreset
+    // via an early-return in ReportRenderer (mirrors iteration-matrix). The
+    // endpoint here is unused by the standard report-builder POST flow;
+    // generation goes through a streaming POST owned by the preset.
+    endpoint: "/api/reports/automation-candidates",
+    isPreBuilt: true,
+  },
   {
     id: "test-execution",
     label: tReports("reportTypes.testExecution.label"),

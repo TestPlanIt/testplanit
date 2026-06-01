@@ -5178,7 +5178,8 @@
         "auto_tag": "AI-tagsuggesties",
         "duplicate_detection": "Detectie van duplicaten",
         "generate_from_url": "Testcases genereren vanuit URL (vereisten)",
-        "generate_from_url_app": "Testcases genereren vanuit URL (applicatietesten)"
+        "generate_from_url_app": "Testcases genereren vanuit URL (applicatietesten)",
+        "automation_candidates": "Rapport over automatiseringskandidaten"
       }
     },
     "elasticsearch": {
@@ -6499,6 +6500,10 @@
         "iterationMatrix": {
           "label": "Geparameteriseerde testiteratiematrix",
           "description": "Geparameteriseerde gevallen × configuraties × parameterrijen met statusrollup van het slechtst mogelijke resultaat per cel"
+        },
+        "automationCandidates": {
+          "label": "Automatiseringskandidaten",
+          "description": "Gerangschikte lijst van handmatige testgevallen die als volgende geautomatiseerd moeten worden, gebaseerd op de inhoud van het testgeval, aangepaste velden en de context van het gekoppelde probleem."
         }
       },
       "flakyTests": {
@@ -6582,6 +6587,117 @@
           "alwaysFailing": "Altijd mislukken (0%): -30",
           "lowPassRate": "Laag slagingspercentage (<50%): -20",
           "lowExecutions": "Weinig executies (<3): -10"
+        }
+      },
+      "automationCandidates": {
+        "casesToRank": "Te rangschikken gevallen",
+        "casesToRankHelp": "Hoeveel handmatig uitgevoerde testgevallen moeten naar het LLM worden gestuurd voor ranking? Hogere aantallen zorgen voor een bredere dekking, maar het LLM heeft dan ook navenant meer tijd nodig (bereik: 5-100; denkmodellen kunnen in het hoogste bereik enkele minuten nodig hebben).",
+        "selectionStrategy": "Selectiestrategie",
+        "selectionStrategyHelp": "Welke strategie bepaalt welke handmatige testgevallen moeten worden verzonden wanneer het project de limiet per generatie overschrijdt? **Meest uitgevoerd** (standaard) selecteert de testgevallen die het vaakst zijn uitgevoerd tijdens testruns — de beste ROI voor automatisering. **Meest onbetrouwbaar eerst** selecteert testgevallen waarvan de uitkomsten het vaakst wisselen — ideale kandidaten voor een deterministisch automatiseringsorakel. **Langste uitvoeringstijd** selecteert de testgevallen met de hoogste voorspelling voor handmatige uitvoering (afgeleid door testers; terugvallend op de oorspronkelijke schatting) — automatisering bespaart direct de meeste testertijd. **Oudste eerst** selecteert handmatige testgevallen met een lange levensduur (stabiel, volwassen). **Nieuwste eerst** selecteert de meest recent aangemaakte testgevallen. **Willekeurig** is een onbevooroordeelde steekproef. Alleen handmatige testgevallen waarvan de workflowstatus *In uitvoering* of *Voltooid* is, komen in aanmerking.",
+        "strategies": {
+          "most_executed": "Meest uitgevoerd (hoogste ROI)",
+          "flakiest_first": "De meest onbetrouwbare eerst (geslaagd/niet geslaagd, omgedraaid)",
+          "longest_first": "Langste uitvoeringstijd (tijdsbesparing)",
+          "oldest_first": "Oudste eerst (bewezen stabiliteit)",
+          "newest_first": "Nieuwste eerst (meest recent geschreven)",
+          "random": "willekeurige steekproef"
+        },
+        "title": "Automatiseringskandidaten",
+        "titleWithStrategy": "Kandidaten voor automatisering gerangschikt op {strategy}",
+        "heuristicBadge": "Heuristisch",
+        "heuristicBadgeTooltip": "Er is geen LLM-integratie geconfigureerd voor dit project, dus deze rangschikking is rechtstreeks gebaseerd op de selectiestrategie. Configureer een LLM (Beheer → AI-modellen) voor een rijkere redenering die rekening houdt met aangepaste velden, de context van gekoppelde kwesties en de inhoud van de casus.",
+        "sourcedFromNewestN": "Top {ranked} van {total} in aanmerking komende handmatige gevallen via {strategy}",
+        "sourcedFromAll": "Rangschik alle {total} in aanmerking komende handmatige gevallen via {strategy}",
+        "metric": {
+          "executions": "{count} loopt",
+          "forecast": "{value} voorspelling",
+          "forecastUnset": "Geen voorspelling",
+          "flakiness": "Flips {value}%",
+          "flakinessUnset": "Geen flip-gegevens",
+          "createdLabel": "Gemaakt"
+        },
+        "heuristic": {
+          "intro": "Er is geen LLM-integratie geconfigureerd voor dit project, dus de rangschikking wordt rechtstreeks gebaseerd op de selectiestrategie. Configureer een LLM-integratie (Beheer → AI-modellen) om een rijkere redenering mogelijk te maken die naast de metriek ook aangepaste velden, de context van gekoppelde issues en de inhoud van de casus meeweegt.",
+          "rankedSummary": "{ranked} van {totalEligible} in aanmerking komende handmatige gevallen gerangschikt.",
+          "strategyExplanation": {
+            "most_executed": "De gevallen zijn gesorteerd op basis van het aantal handmatige uitvoeringen (hoogste eerst) — de indicator voor de regressiefrequentie waarbij automatisering de meeste testertijd direct terugwint.",
+            "flakiest_first": "De gevallen worden gerangschikt op basis van hun geschatte onbetrouwbaarheid (het aantal keren dat een test slaagt of faalt) — onbetrouwbare handmatige tests zijn uitstekende kandidaten voor een deterministisch automatiseringsorakel.",
+            "longest_first": "De cases worden gesorteerd op basis van de handmatige uitvoeringsprognose (langste eerst; forecastManual wordt, indien aanwezig, gebruikt als alternatief de schatting) — automatisering bespaart de testers de meeste tijd bij deze cases.",
+            "oldest_first": "De cases worden gesorteerd op aanmaakdatum (oudste eerst) — handmatig aangemaakte cases die al lang bestaan, zijn doorgaans volwassen, stabiele processen die zonder aanpassingen geautomatiseerd kunnen worden.",
+            "newest_first": "De cases zijn gesorteerd op aanmaakdatum (nieuwste eerst) — recent aangemaakte cases hebben waarschijnlijk op dit moment de meeste behoefte aan ondersteuning bij de uitvoering.",
+            "random": "De gevallen vormen een onbevooroordeelde, willekeurige steekproef uit de groep die in aanmerking komt."
+          },
+          "rationale": {
+            "mostExecutedWithCount": "Uitgevoerd {count, plural, =1 {1 keer} other {# keer}} handmatig tijdens de testruns van dit project — door dit te automatiseren wordt de testertijd bij elke toekomstige run direct teruggewonnen.",
+            "mostExecutedNone": "Er is nog geen executiegeschiedenis beschikbaar — de heuristiek 'Meest geëxecuteerd' heeft geen gegevens om deze zaak te vergelijken met andere zaken.",
+            "flakiestWithScore": "Onbetrouwbaarheid {percent}% (geslaagd/mislukt resultaat wisselt in {description} van uitvoeringen) — onbetrouwbare handmatige tests verspillen testertijd bij elke uitvoering en profiteren het meest van een deterministisch automatiseringsorakel.",
+            "flakiestNone": "Nog geen uiteenlopende uitkomsten — de 'Flakiest First'-heuristiek kan in dit geval nog geen pass/fail-omkering meten.",
+            "longestWithDuration": "Voorspelling handmatige uitvoering {duration} — het automatiseren van langlopende handmatige tests levert proportioneel meer testertijd op bij elke uitvoering.",
+            "longestNone": "Er is geen prognose of schatting ingesteld — de heuristiek 'Langste uitvoeringstijd' heeft geen gegevens over de uitvoeringsduur voor dit geval.",
+            "oldest": "Auteur {age} — handmatige gevallen die al lang bestaan, vertonen doorgaans volwassen, stabiele gedragingen die zonder aanpassingen geautomatiseerd kunnen worden.",
+            "newest": "Auteur {age} — nieuw geschreven cases hebben momenteel de grootste kans op uitvoeringsdekking.",
+            "random": "Willekeurige steekproef — opgenomen als onbevooroordeelde referentie; de heuristische modus heeft geen inherente voorkeur voor dit geval boven de andere gevallen in de steekproef."
+          },
+          "flakinessFraction": {
+            "wellOverHalf": "ruim meer dan de helft",
+            "roughlyHalf": "ongeveer de helft",
+            "meaningfulShare": "een betekenisvol aandeel",
+            "smallShare": "een klein aandeel"
+          },
+          "duration": {
+            "seconds": "{seconds}s",
+            "minutes": "{minutes}m",
+            "hours": "{hours}h",
+            "hoursAndMinutes": "{hours}h {minutes}m"
+          },
+          "relativeAge": {
+            "today": "Vandaag",
+            "days": "{count, plural, =1 {1 dag geleden} other {# dagen geleden}}",
+            "months": "{count, plural, =1 {1 maand geleden} other {# maanden geleden}}",
+            "years": "{count, plural, =1 {1 jaar geleden} other {# jaar geleden}}",
+            "unknown": "op een onbekend tijdstip"
+          }
+        },
+        "subtitle": "Door AI gegenereerde aanbevelingen voor welke handmatige testgevallen vervolgens geautomatiseerd moeten worden. Momentopnamen worden gedeeld — zodra ze gegenereerd zijn, ziet elke gebruiker dezelfde rangschikking totdat iemand de rangschikking opnieuw genereert.",
+        "invalidProject": "Ongeldig project.",
+        "historyPlaceholder": "Kies een momentopname",
+        "generatedAt": "gegenereerd",
+        "by": "door",
+        "summaryHeading": "Samenvatting",
+        "actions": {
+          "generate": "Rapport genereren",
+          "regenerate": "Regenereren"
+        },
+        "status": {
+          "running": "Rennen",
+          "complete": "Compleet",
+          "failed": "Mislukt"
+        },
+        "emptyState": {
+          "title": "Er zijn nog geen kandidaten voor automatisering gemeld.",
+          "canGenerate": "Klik op 'Rapport uitvoeren' om uw handmatige testgevallen te rangschikken.",
+          "noPermission": "Vraag een projectbeheerder of iemand met rapportagerechten om er een te genereren."
+        },
+        "errors": {
+          "title": "Het rapport kon niet worden gegenereerd.",
+          "generateFailed": "Het rapport kon niet worden gegenereerd.",
+          "deleteFailed": "Het lukte niet om de momentopname te verwijderen.",
+          "snapshotFailed": "Deze momentopname kon niet worden gegenereerd."
+        },
+        "rankedList": {
+          "heading": "Gerangschikte kandidaten",
+          "streaming": "Streaming…",
+          "streamingWithCount": "{count} van {total} gerangschikt…",
+          "empty": "Wachten op de eerste kandidaat…",
+          "caseRef": "Testgeval #{id}",
+          "score": "Score {score}"
+        },
+        "delete": {
+          "button": "Verwijderen",
+          "title": "Deze momentopname verwijderen?",
+          "description": "De momentopname wordt verwijderd uit de geschiedenis. Dit kan niet ongedaan worden gemaakt.",
+          "cancel": "Annuleren",
+          "confirm": "Verwijderen"
         }
       },
       "issueTestCoverage": {

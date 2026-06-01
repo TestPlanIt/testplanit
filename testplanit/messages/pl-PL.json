@@ -5178,7 +5178,8 @@
         "auto_tag": "Sugestie tagów AI",
         "duplicate_detection": "Wykrywanie duplikatów",
         "generate_from_url": "Generuj przypadki testowe z adresu URL (wymagania)",
-        "generate_from_url_app": "Generuj przypadki testowe z adresu URL (testowanie aplikacji)"
+        "generate_from_url_app": "Generuj przypadki testowe z adresu URL (testowanie aplikacji)",
+        "automation_candidates": "Raport kandydatów do automatyzacji"
       }
     },
     "elasticsearch": {
@@ -6499,6 +6500,10 @@
         "iterationMatrix": {
           "label": "Parametryzowana macierz iteracji testów",
           "description": "Przypadki sparametryzowane × konfiguracje × wiersze parametrów z podsumowaniem najgorszego stanu na komórkę"
+        },
+        "automationCandidates": {
+          "label": "Kandydaci na stanowisko automatyzatora",
+          "description": "Lista rankingowa przypadków testowych, które należy zautomatyzować w następnej kolejności, oparta na zawartości przypadku, polach niestandardowych i kontekście powiązanego problemu"
         }
       },
       "flakyTests": {
@@ -6582,6 +6587,117 @@
           "alwaysFailing": "Zawsze niepowodzenie (0%): -30",
           "lowPassRate": "Niski wskaźnik zdawalności (<50%): -20",
           "lowExecutions": "Mało egzekucji (<3): -10"
+        }
+      },
+      "automationCandidates": {
+        "casesToRank": "Sprawy do uszeregowania",
+        "casesToRankHelp": "Ile przypadków testowych manualnych przesłać do LLM w celu oceny? Wyższe liczby zapewniają szerszy zakres, ale LLM zajmuje proporcjonalnie więcej czasu (zakres: 5–100; modele myślowe mogą działać nawet kilka minut w górnym zakresie).",
+        "selectionStrategy": "Strategia selekcji",
+        "selectionStrategyHelp": "Która strategia decyduje, które ręczne przypadki wysłać, gdy projekt ma więcej niż limit na generację? **Najczęściej wykonywane** (domyślnie) wybiera przypadki, które były najczęściej uruchamiane w przebiegach testów — najlepszy zwrot z inwestycji dla automatyzacji. **Najbardziej niepewne najpierw** wybiera przypadki, których wyniki zaliczenia/niezaliczenia najczęściej się zmieniają — głównych kandydatów dla deterministycznej wyroczni automatyzacji. **Najdłuższe do wykonania** wybiera przypadki z najwyższą prognozą ręcznego wykonania (wywodzącą się od testera; powracającą do pierwotnego szacunku) — automatyzacja bezpośrednio odzyskuje najwięcej czasu testera. **Najstarsze najpierw** wybiera długotrwałe ręczne przypadki (stabilne, dojrzałe). **Najnowsze najpierw** wybiera ostatnio utworzone przypadki. **Losowe** to bezstronna próbka. Kwalifikują się tylko ręczne przypadki, których stan przepływu pracy to *W toku* lub *Zakończone*.",
+        "strategies": {
+          "most_executed": "Najczęściej wykonywane (najwyższy zwrot z inwestycji)",
+          "flakiest_first": "Najpierw najsłabsze (zdjęcia zaliczone/niezaliczone)",
+          "longest_first": "Najdłuższy do wykonania (zaoszczędzony czas)",
+          "oldest_first": "Najstarsze na pierwszym miejscu (sprawdzona stabilność)",
+          "newest_first": "Najnowsze na początku (najnowsze)",
+          "random": "Próba losowa"
+        },
+        "title": "Kandydaci na stanowisko automatyzatora",
+        "titleWithStrategy": "Kandydaci do automatyzacji uszeregowani według {strategy}",
+        "heuristicBadge": "Heurystyczny",
+        "heuristicBadgeTooltip": "W tym projekcie nie skonfigurowano integracji LLM, dlatego ranking został utworzony bezpośrednio na podstawie metryki strategii selekcji. Skonfiguruj LLM (Administrator → Modele AI), aby uzyskać bogatsze rozumowanie, uwzględniające pola niestandardowe, kontekst powiązanego zagadnienia i treść przypadku.",
+        "sourcedFromNewestN": "{ranked} z {total} kwalifikujących się przypadków ręcznych za pośrednictwem {strategy}",
+        "sourcedFromAll": "Uszeregowano wszystkie {total} kwalifikujące się przypadki ręczne według {strategy}",
+        "metric": {
+          "executions": "{count} działa",
+          "forecast": "{value} prognoza",
+          "forecastUnset": "Brak prognozy",
+          "flakiness": "Flipy {value}%",
+          "flakinessUnset": "Brak danych o przewróceniu",
+          "createdLabel": "Stworzony"
+        },
+        "heuristic": {
+          "intro": "W tym projekcie nie skonfigurowano integracji LLM, dlatego ranking jest tworzony bezpośrednio na podstawie metryki strategii selekcji. Skonfiguruj integrację LLM (Administrator → Modele AI), aby umożliwić bogatsze rozumowanie, uwzględniające pola niestandardowe, kontekst powiązanego zagadnienia i treść przypadku, a także metrykę.",
+          "rankedSummary": "{ranked} z {totalEligible} kwalifikujących się spraw manualnych zostało uszeregowanych.",
+          "strategyExplanation": {
+            "most_executed": "Przypadki są uporządkowane według liczby ręcznych wykonań (od najwyższych) — jest to wskaźnik częstotliwości regresji, w którym automatyzacja bezpośrednio odzyskuje najwięcej czasu testera.",
+            "flakiest_first": "Przypadki są uporządkowane według przybliżonej niestabilności (stosunek zaliczonych/niezaliczonych testów) — niestabilne testy ręczne są najlepszymi kandydatami do deterministycznej wyroczni automatyzacji.",
+            "longest_first": "Przypadki są sortowane według prognozy wykonania ręcznego (najdłuższe na początku; forecastManual, jeśli występuje, wraca do szacunku) — automatyzacja odzyskuje w tych przypadkach najwięcej czasu testerów.",
+            "oldest_first": "Sprawy są sortowane według daty utworzenia (najstarsze na początku) — długotrwałe sprawy ręczne to z reguły dojrzałe, stabilne zachowania, które można bezpiecznie zautomatyzować bez konieczności przeróbek.",
+            "newest_first": "Sprawy są uporządkowane według daty utworzenia (najnowsze na górze) — sprawy nowo utworzone najprawdopodobniej wymagają obecnie objęcia kontrolą wykonania.",
+            "random": "Przypadki stanowią obiektywną losową próbkę kwalifikującego się zbioru."
+          },
+          "rationale": {
+            "mostExecutedWithCount": "Wykonano {count, plural, =1 {1 raz} other {# razy}} ręcznie w przebiegu testów tego projektu — automatyzacja pozwala na bezpośrednie odzyskanie czasu testera przy każdym przyszłym przebiegu.",
+            "mostExecutedNone": "Brak historii wykonań — heurystyka „Najczęściej wykonywane” nie otrzymała sygnału pozwalającego ocenić ten przypadek w porównaniu z innymi.",
+            "flakiestWithScore": "Niestabilność {percent}% (wyniki zaliczenia/niezaliczenia zmieniają się co {description} wykonań) — niestabilne testy ręczne marnują czas testerów przy każdym uruchomieniu i najwięcej zyskują na deterministycznej wyroczni automatyzacji.",
+            "flakiestNone": "Jak dotąd nie uzyskano zróżnicowanych wyników — heurystyka „najpierw najsłabszy” nie jest jeszcze w stanie zmierzyć współczynnika zaliczony/niezaliczony w tym przypadku.",
+            "longestWithDuration": "Prognoza wykonania ręcznego {duration} — automatyzacja długotrwałych testów ręcznych pozwala proporcjonalnie zaoszczędzić więcej czasu testerów przy każdym uruchomieniu.",
+            "longestNone": "Nie ustawiono prognozy ani szacunku — heurystyka „Najdłuższy do wykonania” nie dysponuje danymi dotyczącymi czasu trwania w tym przypadku.",
+            "oldest": "Autor: {age} — długotrwałe przypadki ręczne to z reguły dojrzałe, stabilne zachowania, które można bezpiecznie zautomatyzować bez konieczności przerabiania.",
+            "newest": "Autor: {age} — nowo utworzone przypadki najprawdopodobniej będą wymagały obecnie objęcia ochroną wykonania.",
+            "random": "Próba losowa — uwzględniona jako obiektywne odniesienie; tryb heurystyczny nie wykazuje żadnej wrodzonej preferencji dla tego przypadku w stosunku do innych w próbie."
+          },
+          "flakinessFraction": {
+            "wellOverHalf": "ponad połowa",
+            "roughlyHalf": "mniej więcej połowa",
+            "meaningfulShare": "znaczący udział",
+            "smallShare": "mały udział"
+          },
+          "duration": {
+            "seconds": "{seconds}s",
+            "minutes": "{minutes}m",
+            "hours": "{hours}godz.",
+            "hoursAndMinutes": "{hours}godz. {minutes}min."
+          },
+          "relativeAge": {
+            "today": "Dzisiaj",
+            "days": "{count, plural, =1 {1 dzień temu} other {# dni temu}}",
+            "months": "{count, plural, =1 {1 miesiąc temu} other {# miesięcy temu}}",
+            "years": "{count, plural, =1 {1 rok temu} other {# lat temu}}",
+            "unknown": "w nieznanym czasie"
+          }
+        },
+        "subtitle": "Rekomendacje AI dotyczące kolejnych manualnych przypadków testowych do zautomatyzowania. Migawki są udostępniane — po wygenerowaniu każdy użytkownik widzi tę samą ocenę, dopóki ktoś jej nie wygeneruje.",
+        "invalidProject": "Nieprawidłowy projekt.",
+        "historyPlaceholder": "Wybierz migawkę",
+        "generatedAt": "Wygenerowano",
+        "by": "przez",
+        "summaryHeading": "Streszczenie",
+        "actions": {
+          "generate": "Wygeneruj raport",
+          "regenerate": "Zregenerować"
+        },
+        "status": {
+          "running": "Działanie",
+          "complete": "Kompletny",
+          "failed": "Przegrany"
+        },
+        "emptyState": {
+          "title": "Brak jeszcze zgłoszeń kandydatów do automatyzacji",
+          "canGenerate": "Kliknij opcję Uruchom raport, aby ocenić ręczny przypadek testowy.",
+          "noPermission": "Poproś administratora projektu lub dowolną osobę z uprawnieniami do raportowania o wygenerowanie takiego dokumentu."
+        },
+        "errors": {
+          "title": "Nie udało się wygenerować raportu",
+          "generateFailed": "Nie udało się wygenerować raportu.",
+          "deleteFailed": "Nie można usunąć migawki.",
+          "snapshotFailed": "Nie udało się wygenerować tej migawki"
+        },
+        "rankedList": {
+          "heading": "Kandydaci z rankingu",
+          "streaming": "Transmisja strumieniowa…",
+          "streamingWithCount": "{count} z {total} w rankingu…",
+          "empty": "Czekam na pierwszego kandydata…",
+          "caseRef": "Przypadek testowy #{id}",
+          "score": "Wynik {score}"
+        },
+        "delete": {
+          "button": "Usuwać",
+          "title": "Usunąć tę migawkę?",
+          "description": "Migawka zostanie usunięta z historii. Tej operacji nie można cofnąć.",
+          "cancel": "Anulować",
+          "confirm": "Usuwać"
         }
       },
       "issueTestCoverage": {

@@ -5178,7 +5178,8 @@
         "auto_tag": "AI Tag Suggestions",
         "duplicate_detection": "Duplicate Detection",
         "generate_from_url": "Generate Test Cases from URL (Requirements)",
-        "generate_from_url_app": "Generate Test Cases from URL (Application Testing)"
+        "generate_from_url_app": "Generate Test Cases from URL (Application Testing)",
+        "automation_candidates": "Automation Candidates Report"
       }
     },
     "elasticsearch": {
@@ -6499,6 +6500,10 @@
         "iterationMatrix": {
           "label": "Parameterized Test Iteration Matrix",
           "description": "Parameterized cases × configurations × parameter rows with worst-of status rollup per cell"
+        },
+        "automationCandidates": {
+          "label": "Automation Candidates",
+          "description": "Ranked list of which manual test cases to automate next, based on case content, custom fields, and linked-issue context"
         }
       },
       "flakyTests": {
@@ -6582,6 +6587,117 @@
           "alwaysFailing": "Always failing (0%): -30",
           "lowPassRate": "Low pass rate (<50%): -20",
           "lowExecutions": "Few executions (<3): -10"
+        }
+      },
+      "automationCandidates": {
+        "casesToRank": "Cases to Rank",
+        "casesToRankHelp": "How many manual test cases to send to the LLM for ranking. Higher numbers give broader coverage but the LLM takes proportionally longer (range: 5–100; thinking models can run several minutes at the top end).",
+        "selectionStrategy": "Selection Strategy",
+        "selectionStrategyHelp": "Which strategy decides which manual cases to send when the project has more than the per-generation cap. **Most Executed** (default) picks the cases that have been run the most across test runs — best ROI for automation. **Flakiest First** picks cases whose pass/fail outcomes flip the most — prime candidates for a deterministic automation oracle. **Longest to Execute** picks the cases with the highest manual-execution forecast (tester-derived; falls back to the original estimate) — automation directly recovers the most tester time. **Oldest First** picks long-lived manual cases (stable, mature). **Newest First** picks the most-recently created cases. **Random** is an unbiased sample. Only manual cases whose workflow state is *In Progress* or *Done* are eligible.",
+        "strategies": {
+          "most_executed": "Most Executed (highest ROI)",
+          "flakiest_first": "Flakiest First (pass/fail flips)",
+          "longest_first": "Longest to Execute (time saved)",
+          "oldest_first": "Oldest First (proven stability)",
+          "newest_first": "Newest First (most recently authored)",
+          "random": "Random Sample"
+        },
+        "title": "Automation Candidates",
+        "titleWithStrategy": "Automation Candidates ranked by {strategy}",
+        "heuristicBadge": "Heuristic",
+        "heuristicBadgeTooltip": "No LLM integration is configured for this project, so this ranking was built from the selection-strategy metric directly. Configure an LLM (Admin → AI Models) for richer reasoning that weighs custom fields, linked-issue context, and case content.",
+        "sourcedFromNewestN": "Top {ranked} of {total} eligible manual cases via {strategy}",
+        "sourcedFromAll": "Ranked all {total} eligible manual cases via {strategy}",
+        "metric": {
+          "executions": "{count} runs",
+          "forecast": "{value} forecast",
+          "forecastUnset": "No forecast",
+          "flakiness": "Flips {value}%",
+          "flakinessUnset": "No flip data",
+          "createdLabel": "Created"
+        },
+        "heuristic": {
+          "intro": "No LLM integration is configured for this project, so the ranking is built from the selection-strategy metric directly. Configure an LLM integration (Admin → AI Models) to enable richer reasoning that weighs custom fields, linked-issue context, and case content alongside the metric.",
+          "rankedSummary": "{ranked} of {totalEligible} eligible manual cases ranked.",
+          "strategyExplanation": {
+            "most_executed": "Cases are ordered by manual-execution count (highest first) — the regression-frequency proxy where automation directly recovers the most tester time.",
+            "flakiest_first": "Cases are ordered by approximate flakiness (pass/fail flips) — flaky manual tests are prime candidates for a deterministic automation oracle.",
+            "longest_first": "Cases are ordered by manual-execution forecast (longest first; forecastManual when present, falls back to estimate) — automation recovers the most tester time on these.",
+            "oldest_first": "Cases are ordered by creation date (oldest first) — long-lived manual cases tend to be mature, stable behaviors that are safe to automate without rework.",
+            "newest_first": "Cases are ordered by creation date (newest first) — newly-authored cases are the most likely to need execution coverage right now.",
+            "random": "Cases are an unbiased random sample of the eligible set."
+          },
+          "rationale": {
+            "mostExecutedWithCount": "Executed {count, plural, =1 {1 time} other {# times}} manually across this project's test runs — automating it directly recovers tester time on every future run.",
+            "mostExecutedNone": "No execution history yet — the Most Executed heuristic has no signal to grade this case against the others.",
+            "flakiestWithScore": "Flakiness {percent}% (pass/fail outcomes flip in {description} of executions) — flaky manual tests waste tester time on every run and benefit most from a deterministic automation oracle.",
+            "flakiestNone": "No varied outcomes yet — the Flakiest First heuristic can't yet measure pass/fail flipping for this case.",
+            "longestWithDuration": "Manual-execution forecast {duration} — automating long-running manual tests recovers proportionally more tester time on every run.",
+            "longestNone": "No forecast or estimate set — the Longest to Execute heuristic has no duration data for this case.",
+            "oldest": "Authored {age} — long-lived manual cases tend to be mature, stable behaviors that are safe to automate without rework.",
+            "newest": "Authored {age} — newly-authored cases are the most likely to need execution coverage right now.",
+            "random": "Random sample — included as an unbiased reference; the heuristic mode has no inherent preference for this case over the others in the sample."
+          },
+          "flakinessFraction": {
+            "wellOverHalf": "well over half",
+            "roughlyHalf": "roughly half",
+            "meaningfulShare": "a meaningful share",
+            "smallShare": "a small share"
+          },
+          "duration": {
+            "seconds": "{seconds}s",
+            "minutes": "{minutes}m",
+            "hours": "{hours}h",
+            "hoursAndMinutes": "{hours}h {minutes}m"
+          },
+          "relativeAge": {
+            "today": "today",
+            "days": "{count, plural, =1 {1 day ago} other {# days ago}}",
+            "months": "{count, plural, =1 {1 month ago} other {# months ago}}",
+            "years": "{count, plural, =1 {1 year ago} other {# years ago}}",
+            "unknown": "at an unknown time"
+          }
+        },
+        "subtitle": "AI-ranked recommendation of which manual test cases to automate next. Snapshots are shared — once generated, every viewer sees the same ranking until someone regenerates.",
+        "invalidProject": "Invalid project.",
+        "historyPlaceholder": "Pick a snapshot",
+        "generatedAt": "Generated",
+        "by": "by",
+        "summaryHeading": "Summary",
+        "actions": {
+          "generate": "Generate Report",
+          "regenerate": "Regenerate"
+        },
+        "status": {
+          "running": "Running",
+          "complete": "Complete",
+          "failed": "Failed"
+        },
+        "emptyState": {
+          "title": "No automation candidates report yet",
+          "canGenerate": "Click Run Report to rank your manual test cases.",
+          "noPermission": "Ask a project admin or anyone with Reporting permissions to generate one."
+        },
+        "errors": {
+          "title": "Could not generate the report",
+          "generateFailed": "Could not generate the report.",
+          "deleteFailed": "Could not delete the snapshot.",
+          "snapshotFailed": "This snapshot failed to generate"
+        },
+        "rankedList": {
+          "heading": "Ranked Candidates",
+          "streaming": "Streaming…",
+          "streamingWithCount": "{count} of {total} ranked…",
+          "empty": "Waiting for the first candidate…",
+          "caseRef": "Test Case #{id}",
+          "score": "Score {score}"
+        },
+        "delete": {
+          "button": "Delete",
+          "title": "Delete this snapshot?",
+          "description": "The snapshot will be deleted from history. This cannot be undone.",
+          "cancel": "Cancel",
+          "confirm": "Delete"
         }
       },
       "issueTestCoverage": {

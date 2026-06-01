@@ -5178,7 +5178,8 @@
         "auto_tag": "Yapay Zeka Etiket Önerileri",
         "duplicate_detection": "Kopya Tespiti",
         "generate_from_url": "URL'den Test Senaryoları Oluştur (Gereksinimler)",
-        "generate_from_url_app": "URL'den Test Senaryoları Oluşturma (Uygulama Testi)"
+        "generate_from_url_app": "URL'den Test Senaryoları Oluşturma (Uygulama Testi)",
+        "automation_candidates": "Otomasyon Adayları Raporu"
       }
     },
     "elasticsearch": {
@@ -6499,6 +6500,10 @@
         "iterationMatrix": {
           "label": "Parametreli Test Yineleme Matrisi",
           "description": "Parametreli durumlar × konfigürasyonlar × hücre başına en kötü durum özetini içeren parametre satırları"
+        },
+        "automationCandidates": {
+          "label": "Otomasyon Adayları",
+          "description": "Test senaryosu içeriğine, özel alanlara ve bağlantılı sorun bağlamına göre, hangi manuel test senaryolarının bir sonraki aşamada otomatikleştirileceğine dair sıralı liste."
         }
       },
       "flakyTests": {
@@ -6582,6 +6587,117 @@
           "alwaysFailing": "Her zaman başarısız (%0): -30",
           "lowPassRate": "Düşük geçme oranı (<%50): -20",
           "lowExecutions": "Az sayıda infaz (<3): -10"
+        }
+      },
+      "automationCandidates": {
+        "casesToRank": "Sıralanacak Vakalar",
+        "casesToRankHelp": "Sıralama için LLM'ye kaç adet manuel test vakası gönderilecek? Daha yüksek sayılar daha geniş bir kapsama alanı sağlar, ancak LLM'nin işlem süresi orantılı olarak daha uzun sürer (aralık: 5-100; düşünme modelleri en üst seviyede birkaç dakika sürebilir).",
+        "selectionStrategy": "Seçim Stratejisi",
+        "selectionStrategyHelp": "Projenin nesil başına belirlenen sınırın üzerinde manuel vakaya sahip olması durumunda hangi manuel vakaların gönderileceğine hangi strateji karar verir? **En Çok Çalıştırılan** (varsayılan), test çalıştırmaları boyunca en çok çalıştırılan vakaları seçer - otomasyon için en iyi yatırım getirisi. **En Değişken**, geçme/kalma sonuçları en çok değişen vakaları seçer - deterministik bir otomasyon kehaneti için en uygun adaylar. **En Uzun Süren**, en yüksek manuel yürütme tahmini olan vakaları seçer (test uzmanı tarafından türetilmiştir; orijinal tahmine geri döner) - otomasyon, test uzmanının zamanından en fazla tasarruf sağlar. **En Eski**, uzun ömürlü manuel vakaları seçer (istikrarlı, olgun). **En Yeni**, en son oluşturulan vakaları seçer. **Rastgele**, tarafsız bir örnektir. Yalnızca iş akışı durumu *Devam Ediyor* veya *Tamamlandı* olan manuel vakalar uygundur.",
+        "strategies": {
+          "most_executed": "En Çok Uygulanan (en yüksek yatırım getirisi)",
+          "flakiest_first": "En Kararsız İlk (geçme/kalma denemeleri)",
+          "longest_first": "En Uzun Süren İşlem (zaman tasarrufu)",
+          "oldest_first": "En eskiden başlayarak (kanıtlanmış istikrar)",
+          "newest_first": "En Yeni Önce (en son yazılanlar)",
+          "random": "Rastgele Örneklem"
+        },
+        "title": "Otomasyon Adayları",
+        "titleWithStrategy": "Otomasyon Adayları {strategy} tarafından sıralandı",
+        "heuristicBadge": "Sezgisel",
+        "heuristicBadgeTooltip": "Bu proje için herhangi bir LLM entegrasyonu yapılandırılmamıştır, bu nedenle bu sıralama doğrudan seçim stratejisi ölçütünden oluşturulmuştur. Özel alanları, bağlantılı sorun bağlamını ve vaka içeriğini dikkate alan daha zengin bir akıl yürütme için bir LLM yapılandırın (Yönetici → Yapay Zeka Modelleri).",
+        "sourcedFromNewestN": "Uygun manuel vakaların en üsttekileri {ranked} , {total} , {strategy} aracılığıyla",
+        "sourcedFromAll": "Uygun olan tüm {total} manuel vakayı {strategy} aracılığıyla sıraladı.",
+        "metric": {
+          "executions": "{count} çalıştırır",
+          "forecast": "{value} tahmin",
+          "forecastUnset": "Tahmin yok",
+          "flakiness": "Çevirmeler {value}%",
+          "flakinessUnset": "Veri çevirme yok.",
+          "createdLabel": "Oluşturuldu"
+        },
+        "heuristic": {
+          "intro": "Bu proje için herhangi bir LLM entegrasyonu yapılandırılmamıştır, bu nedenle sıralama doğrudan seçim stratejisi metriğine göre oluşturulmuştur. Özel alanları, bağlantılı sorun bağlamını ve vaka içeriğini metrikle birlikte değerlendiren daha zengin bir akıl yürütme sağlamak için bir LLM entegrasyonu yapılandırın (Yönetici → Yapay Zeka Modelleri).",
+          "rankedSummary": "{ranked} of {totalEligible} eligible manual cases ranked.",
+          "strategyExplanation": {
+            "most_executed": "Vakalar, manuel yürütme sayısına göre (en yüksekten başlayarak) sıralanmıştır; bu, otomasyonun test uzmanının zamanından en fazla tasarruf sağladığı regresyon sıklığı göstergesidir.",
+            "flakiest_first": "Vakalar yaklaşık olarak tutarsızlık derecesine (başarılı/başarısız değişimlerine) göre sıralanır; tutarsız manuel testler, deterministik bir otomasyon kehaneti için ideal adaylardır.",
+            "longest_first": "Vakalar, manuel yürütme tahminine göre sıralanır (en uzun olan önce; forecastManual mevcutsa, tahmine geri dönülür) — otomasyon, bu vakalarda test uzmanının zamanından en fazla tasarrufu sağlar.",
+            "oldest_first": "Vakalar oluşturulma tarihine göre (en eskiden başlayarak) sıralanır; uzun süredir manuel olarak işlenen vakalar genellikle olgun, istikrarlı ve yeniden işleme gerek kalmadan otomatikleştirilmesi güvenli davranışlardır.",
+            "newest_first": "Vakalar oluşturulma tarihine göre (en yeniden başlayarak) sıralanmıştır; yeni yazılan vakaların şu anda yürütme kapsamına en çok ihtiyaç duyma olasılığı yüksektir.",
+            "random": "Vakalar, uygun vakalar kümesinin tarafsız, rastgele bir örneğidir."
+          },
+          "rationale": {
+            "mostExecutedWithCount": "Bu projedeki test çalıştırmaları boyunca {count, plural, =1 {1 kez} other {# kez}} manuel olarak yürütüldü; bunu doğrudan otomatikleştirmek, gelecekteki her çalıştırmada test uzmanının zamanını geri kazandırır.",
+            "mostExecutedNone": "Henüz bir infaz geçmişi yok — En Çok İnfaz Edilen vaka algoritması, bu vakayı diğerleriyle karşılaştırmak için herhangi bir sinyal vermiyor.",
+            "flakiestWithScore": "Kararsızlık {percent}% (geçme/kalma sonuçları {description} çalıştırmada değişiyor) — kararsız manuel testler, her çalıştırmada test uzmanının zamanını boşa harcar ve deterministik bir otomasyon kehanetinden en çok fayda sağlar.",
+            "flakiestNone": "Henüz farklı sonuçlar elde edilemedi — En Değişken İlk Yöntemi, bu durum için geçme/kalma durumunu henüz ölçemiyor.",
+            "longestWithDuration": "Manuel yürütme tahmini {duration} — uzun süren manuel testlerin otomatikleştirilmesi, her çalıştırmada orantılı olarak daha fazla test uzmanı zamanı kazandırır.",
+            "longestNone": "Tahmin veya öngörü belirlenmedi — En Uzun Süreli Yürütme sezgisel algoritmasının bu durum için süre verisi yok.",
+            "oldest": "{age} tarafından yazılmıştır — uzun süreli manuel vakalar, yeniden çalışma gerektirmeden otomatikleştirilebilecek olgun ve istikrarlı davranışlar sergileme eğilimindedir.",
+            "newest": "Authored {age} — newly-authored cases are the most likely to need execution coverage right now.",
+            "random": "Rastgele örneklem — tarafsız bir referans olarak dahil edilmiştir; sezgisel yöntem, örneklemdeki diğer durumlara kıyasla bu duruma yönelik doğal bir tercihe sahip değildir."
+          },
+          "flakinessFraction": {
+            "wellOverHalf": "yarıdan fazla",
+            "roughlyHalf": "yaklaşık yarısı",
+            "meaningfulShare": "anlamlı bir pay",
+            "smallShare": "küçük bir pay"
+          },
+          "duration": {
+            "seconds": "{seconds}s",
+            "minutes": "{minutes}m",
+            "hours": "{hours}h",
+            "hoursAndMinutes": "{hours}h {minutes}m"
+          },
+          "relativeAge": {
+            "today": "Bugün",
+            "days": "{count, plural, =1 {1 gün önce} other {# gün önce}}",
+            "months": "{count, plural, =1 {1 ay önce} other {# ay önce}}",
+            "years": "{count, plural, =1 {1 yıl önce} other {# yıl önce}}",
+            "unknown": "bilinmeyen bir zamanda"
+          }
+        },
+        "subtitle": "Hangi manuel test senaryolarının bir sonraki aşamada otomatikleştirileceğine dair yapay zeka tarafından sıralanmış öneri. Anlık görüntüler paylaşılır; bir kez oluşturulduktan sonra, birisi yeniden oluşturana kadar her izleyici aynı sıralamayı görür.",
+        "invalidProject": "Geçersiz proje.",
+        "historyPlaceholder": "Bir fotoğraf seçin",
+        "generatedAt": "Oluşturuldu",
+        "by": "ile",
+        "summaryHeading": "Özet",
+        "actions": {
+          "generate": "Rapor Oluştur",
+          "regenerate": "Yeniden oluştur"
+        },
+        "status": {
+          "running": "Koşma",
+          "complete": "Tamamlamak",
+          "failed": "Arızalı"
+        },
+        "emptyState": {
+          "title": "Otomasyon adaylarından henüz kimse rapor vermedi.",
+          "canGenerate": "Manuel test senaryolarınızı sıralamak için Raporu Çalıştır'a tıklayın.",
+          "noPermission": "Bir proje yöneticisinden veya raporlama yetkisine sahip herhangi birinden bir tane oluşturmasını isteyin."
+        },
+        "errors": {
+          "title": "Rapor oluşturulamadı.",
+          "generateFailed": "Rapor oluşturulamadı.",
+          "deleteFailed": "Anlık görüntü silinemedi.",
+          "snapshotFailed": "Bu anlık görüntü oluşturulamadı."
+        },
+        "rankedList": {
+          "heading": "Sıralanmış Adaylar",
+          "streaming": "Akış…",
+          "streamingWithCount": "{count} 'dan {total} 'in sıralaması… oldu.",
+          "empty": "İlk adayın gelmesi bekleniyor…",
+          "caseRef": "Test Durumu #{id}",
+          "score": "Puan {score}"
+        },
+        "delete": {
+          "button": "Silmek",
+          "title": "Bu anlık görüntüyü silmek ister misiniz?",
+          "description": "Anlık görüntü geçmişten silinecektir. Bu işlem geri alınamaz.",
+          "cancel": "İptal etmek",
+          "confirm": "Silmek"
         }
       },
       "issueTestCoverage": {

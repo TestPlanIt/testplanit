@@ -128,6 +128,7 @@ model User {
     lastActiveAt                    DateTime?
     lastSeenVersion                 String?
     llmUsages                       LlmUsage[]
+    generatedLlmReportSnapshots     LlmReportSnapshot[]           @relation("LlmReportSnapshotGeneratedBy")
     testmoImportJobs                TestmoImportJob[]
     createdComments                 Comment[]                     @relation("CommentCreator")
     commentMentions                 CommentMention[]              @relation("CommentMentions")
@@ -428,6 +429,7 @@ model Projects {
     llmUsages                      LlmUsage[]
     llmFeatureConfigs              LlmFeatureConfig[]
     llmResponseCaches              LlmResponseCache[]
+    llmReportSnapshots             LlmReportSnapshot[]
     comments                       Comment[]
     auditLogs                      AuditLog[]
     shareLinks                     ShareLink[]
@@ -3245,6 +3247,7 @@ model LlmIntegration {
     projectLlmIntegrations ProjectLlmIntegration[]
     llmRateLimits          LlmRateLimit[]
     promptConfigPrompts    PromptConfigPrompt[]
+    llmReportSnapshots     LlmReportSnapshot[]
 
     @@unique([name])
     @@index([provider, status])
@@ -4833,6 +4836,88 @@ model LlmRateLimit {
     @@deny('all', !auth())
     @@allow('read', auth().access != null)
     @@allow('create,update,delete', auth().access == 'ADMIN')
+}
+
+/// Materialized, shared snapshot of an LLM-generated report (e.g. Automation
+/// Candidates). Reports here are persisted on generate and rendered as-is for
+/// every viewer until someone explicitly regenerates — the snapshot IS the
+/// report, not a cache. `reportType` is the discriminator so future shared
+/// LLM reports drop into the same table; `output` is validated per type in
+/// consumer code.
+model LlmReportSnapshot {
+    id               Int             @id @default(autoincrement())
+    projectId        Int
+    project          Projects        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    reportType       String        // "automation_candidates" today
+    status           String        // "running" | "complete" | "failed"
+    llmIntegrationId Int?          // null if no LLM was configured at generate time
+    llmIntegration   LlmIntegration? @relation(fields: [llmIntegrationId], references: [id])
+    generatedById    String
+    generatedBy      User            @relation("LlmReportSnapshotGeneratedBy", fields: [generatedById], references: [id])
+    output           Json?         // ranked list + per-case reasoning; shape validated per reportType
+    errorMessage     String?
+    startedAt        DateTime        @default(now()) @db.Timestamptz(6)
+    completedAt      DateTime?       @db.Timestamptz(6)
+    isDeleted        Boolean         @default(false)
+    createdAt        DateTime        @default(now()) @db.Timestamptz(6)
+    updatedAt        DateTime        @updatedAt
+
+    @@index([projectId, reportType, completedAt])
+    @@index([projectId, isDeleted])
+
+    @@deny('all', !auth())
+    @@deny('all', auth().access == 'NONE')
+
+    // Soft-delete: hide rows where isDeleted is true from every non-admin path.
+    @@deny('read', isDeleted)
+
+    // Explicit NO_ACCESS denial
+    @@deny('read', project.userPermissions?[user == auth() && accessType == 'NO_ACCESS'])
+
+    // Read access — inherit from the project (mirrors Milestones et al.)
+    @@allow('read',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE'] ||
+        project.userPermissions?[user == auth() && accessType == 'GLOBAL_ROLE'] ||
+        project.groupPermissions?[
+            group.assignedUsers?[user == auth()] &&
+            ((accessType == 'SPECIFIC_ROLE' && role != null) ||
+             (accessType == 'GLOBAL_ROLE' && auth().role != null))
+        ] ||
+        (project.defaultAccessType == 'GLOBAL_ROLE' && auth().role != null && auth().access != 'NONE') ||
+        (project.assignedUsers?[user == auth()] &&
+         project.defaultAccessType == 'SPECIFIC_ROLE' && project.defaultRole != null)
+    )
+
+    // Create/update gated on Reporting.canAddEdit (server flips status/output on completion)
+    @@allow('create,update',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                (role.name == 'Project Admin' ||
+                                 role.rolePermissions?[area == 'Reporting' && canAddEdit])] ||
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                  ((accessType == 'SPECIFIC_ROLE' &&
+                                    role.rolePermissions?[area == 'Reporting' && canAddEdit]) ||
+                                   (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                    auth().role.rolePermissions?[area == 'Reporting' && canAddEdit]))]
+    )
+
+    // Delete gated on Reporting.canDelete (used as soft-delete via update isDeleted=true)
+    @@allow('delete',
+        project.creator == auth() ||
+        project.userPermissions?[user == auth() && accessType == 'SPECIFIC_ROLE' &&
+                                (role.name == 'Project Admin' ||
+                                 role.rolePermissions?[area == 'Reporting' && canDelete])] ||
+        project.assignedUsers?[user == auth() && auth().access == 'PROJECTADMIN'] ||
+        project.groupPermissions?[group.assignedUsers?[user == auth()] &&
+                                  ((accessType == 'SPECIFIC_ROLE' &&
+                                    role.rolePermissions?[area == 'Reporting' && canDelete]) ||
+                                   (accessType == 'GLOBAL_ROLE' && auth().role != null &&
+                                    auth().role.rolePermissions?[area == 'Reporting' && canDelete]))]
+    )
+
+    @@allow('all', auth().access == 'ADMIN')
 }
 
 // Custom SSO provider configuration

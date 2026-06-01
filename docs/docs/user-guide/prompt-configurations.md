@@ -16,6 +16,7 @@ Each prompt configuration contains prompts for the following AI features:
 - **Smart Test Case Selection** — Controls how AI selects relevant test cases when building test runs
 - **Editor Writing Assistant** — Controls how AI assists with writing and improving content in rich text editors
 - **LLM Connection Test** — A simple prompt used to verify the AI provider connection is working
+- **Automation Candidates** — Controls how AI ranks manual test cases for automation in the [Automation Candidates report](../projects/reports/automation-candidates)
 
 ## Prompt Resolution
 
@@ -114,6 +115,7 @@ User prompts can include `{{variable}}` placeholders that are replaced at runtim
 | Markdown Parsing | `{{markdownContent}}`, `{{fields}}` |
 | Smart Test Case Selection | `{{testCases}}`, `{{context}}` |
 | Editor Writing Assistant | `{{content}}`, `{{instruction}}` |
+| Automation Candidates | `{{PROJECT_NAME}}`, `{{CASE_COUNT}}`, `{{CASES_JSON}}` |
 
 ## Best Practices
 

@@ -5178,7 +5178,8 @@
         "auto_tag": "AI标签建议",
         "duplicate_detection": "重复检测",
         "generate_from_url": "根据 URL 生成测试用例（需求）",
-        "generate_from_url_app": "从 URL 生成测试用例（应用程序测试）"
+        "generate_from_url_app": "从 URL 生成测试用例（应用程序测试）",
+        "automation_candidates": "自动化候选报告"
       }
     },
     "elasticsearch": {
@@ -6499,6 +6500,10 @@
         "iterationMatrix": {
           "label": "参数化测试迭代矩阵",
           "description": "参数化案例 × 配置 × 参数行，每个单元格汇总最差状态"
+        },
+        "automationCandidates": {
+          "label": "自动化候选人",
+          "description": "根据案例内容、自定义字段和关联问题上下文，对接下来需要自动化的手动测试用例进行排名。"
         }
       },
       "flakyTests": {
@@ -6582,6 +6587,117 @@
           "alwaysFailing": "始终失败 (0%)：-30",
           "lowPassRate": "低通过率（<50%）：-20",
           "lowExecutions": "执行次数少（<3）：-10"
+        }
+      },
+      "automationCandidates": {
+        "casesToRank": "待排序案例",
+        "casesToRankHelp": "要向LLM发送多少个手动测试用例进行排序？数量越多，覆盖范围越广，但LLM的运行时间也会相应延长（范围：5-100；思维模型在高阶情况下可能需要运行几分钟）。",
+        "selectionStrategy": "选择策略",
+        "selectionStrategyHelp": "当项目测试用例数量超过每代上限时，哪种策略决定发送哪些手动测试用例？**执行次数最多**（默认）选择测试运行次数最多的用例——自动化投资回报率最高。**不稳定优先**选择通过/失败结果波动最大的用例——确定性自动化预测的理想候选用例。**执行时间最长**选择手动执行时间预测最高的用例（由测试人员预测；回退到原始预估时间）——自动化可以直接节省最多的测试人员时间。**最早优先**选择长期存在的手动测试用例（稳定、成熟）。**最新优先**选择最近创建的用例。**随机**是一个无偏样本。只有工作流状态为“进行中”或“已完成”的手动测试用例才符合条件。",
+        "strategies": {
+          "most_executed": "执行率最高（投资回报率最高）",
+          "flakiest_first": "最不靠谱的（通过/不通过翻转）",
+          "longest_first": "执行时间最长（节省时间）",
+          "oldest_first": "最古老的（已证明稳定性）",
+          "newest_first": "最新发布（最近撰写）",
+          "random": "随机样本"
+        },
+        "title": "自动化候选人",
+        "titleWithStrategy": "自动化候选人排名 {strategy}",
+        "heuristicBadge": "启发式",
+        "heuristicBadgeTooltip": "此项目未配置 LLM 集成，因此该排名直接基于选择策略指标构建。请配置 LLM（管理 → AI 模型）以实现更丰富的推理，该推理会考虑自定义字段、关联问题上下文和案例内容。",
+        "sourcedFromNewestN": "通过 {strategy} 提交的 {ranked} 个符合条件的手动案例中，排名前 {ranked} 的案例共 {total} 个。",
+        "sourcedFromAll": "对所有符合条件的 {total} 个手动案例进行排名，排名依据为 {strategy}",
+        "metric": {
+          "executions": "{count} 运行",
+          "forecast": "{value} 预测",
+          "forecastUnset": "没有预测",
+          "flakiness": "翻转 {value}%",
+          "flakinessUnset": "无翻转数据",
+          "createdLabel": "创建"
+        },
+        "heuristic": {
+          "intro": "此项目未配置 LLM 集成，因此排名直接基于选择策略指标构建。请配置 LLM 集成（管理 → AI 模型），以启用更丰富的推理，将自定义字段、关联问题上下文和案例内容与指标一起纳入考量。",
+          "rankedSummary": "{ranked} of {totalEligible} eligible manual cases ranked.",
+          "strategyExplanation": {
+            "most_executed": "案例按手动执行次数排序（从高到低）——这是回归频率的代理指标，自动化可以直接节省最多的测试人员时间。",
+            "flakiest_first": "案例按大致的不稳定性（通过/失败翻转）排序——不稳定的手动测试是确定性自动化预言机的最佳候选对象。",
+            "longest_first": "案例按手动执行预测排序（最长的优先；如果存在 forecastManual，则回退到估计）——自动化在这些案例上可以节省最多的测试人员时间。",
+            "oldest_first": "案例按创建日期排序（最早的在前）——长期存在的手动案例往往是成熟、稳定的行为，无需返工即可安全地实现自动化。",
+            "newest_first": "案例按创建日期排序（最新案例优先）——新创建的案例最有可能需要立即执行保障。",
+            "random": "病例是从符合条件的集合中随机抽取的无偏样本。"
+          },
+          "rationale": {
+            "mostExecutedWithCount": "已在该项目的所有测试运行中手动执行了 {count, plural, =1 {1 次} other {# 次}} — 直接自动化可在每次后续运行中节省测试人员的时间。",
+            "mostExecutedNone": "目前还没有执行历史记录——“执行次数最多”启发式方法没有信号来将此案例与其他案例进行比较。",
+            "flakiestWithScore": "不稳定性 {percent}%（执行次数中通过/失败结果翻转 {description} 次）——不稳定的手动测试每次运行都会浪费测试人员的时间，并且最能受益于确定性的自动化预言机。",
+            "flakiestNone": "目前还没有不同的结果——对于这种情况，Flakiest First 启发式算法还无法衡量通过/失败的转变。",
+            "longestWithDuration": "手动执行预测 {duration} — 自动化长时间运行的手动测试，每次运行都能按比例回收更多的测试人员时间。",
+            "longestNone": "没有预测或估计值——最长执行时间启发式算法没有此案例的持续时间数据。",
+            "oldest": "作者 {age} — 长期存在的手动案例往往是成熟、稳定的行为，无需返工即可安全地实现自动化。",
+            "newest": "已创建 {age} — 新创建的案例目前最有可能需要执行覆盖。",
+            "random": "随机样本——作为无偏参考；启发式方法对样本中的此案例没有固有的偏好。"
+          },
+          "flakinessFraction": {
+            "wellOverHalf": "超过一半",
+            "roughlyHalf": "大约一半",
+            "meaningfulShare": "有意义的份额",
+            "smallShare": "一小部分"
+          },
+          "duration": {
+            "seconds": "{seconds}s",
+            "minutes": "{minutes}米",
+            "hours": "{hours}h",
+            "hoursAndMinutes": "{hours}h {minutes}m"
+          },
+          "relativeAge": {
+            "today": "今天",
+            "days": "{count, plural, =1 {1天前} other {#天前}}",
+            "months": "{count, plural, =1 {1 个月前} other {# 个月前}}",
+            "years": "{count, plural, =1 {1 年前} other {# 年前}}",
+            "unknown": "在某个未知的时间"
+          }
+        },
+        "subtitle": "AI 会根据测试用例的自动化程度推荐接下来要自动化的手动测试用例。系统会共享快照——一旦生成，所有查看者看到的排名都相同，直到有人重新生成为止。",
+        "invalidProject": "项目无效。",
+        "historyPlaceholder": "选择一张照片",
+        "generatedAt": "生成",
+        "by": "经过",
+        "summaryHeading": "概括",
+        "actions": {
+          "generate": "生成报告",
+          "regenerate": "再生"
+        },
+        "status": {
+          "running": "跑步",
+          "complete": "完全的",
+          "failed": "失败的"
+        },
+        "emptyState": {
+          "title": "目前还没有自动化候选者提交报告",
+          "canGenerate": "点击“运行报告”对手动测试用例进行排名。",
+          "noPermission": "请项目管理员或任何具有报告权限的人员生成一份报告。"
+        },
+        "errors": {
+          "title": "无法生成报告",
+          "generateFailed": "无法生成报告。",
+          "deleteFailed": "无法删除快照。",
+          "snapshotFailed": "此快照生成失败"
+        },
+        "rankedList": {
+          "heading": "排名候选人",
+          "streaming": "流媒体…",
+          "streamingWithCount": "{count} 中的 {total} 排名…",
+          "empty": "等待第一位候选人…",
+          "caseRef": "测试用例 #{id}",
+          "score": "得分 {score}"
+        },
+        "delete": {
+          "button": "删除",
+          "title": "删除此快照？",
+          "description": "该快照将从历史记录中删除，此操作无法撤销。",
+          "cancel": "取消",
+          "confirm": "删除"
         }
       },
       "issueTestCoverage": {

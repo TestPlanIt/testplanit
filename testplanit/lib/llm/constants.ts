@@ -13,6 +13,7 @@ export const LLM_FEATURES = {
   DUPLICATE_DETECTION: "duplicate_detection",
   GENERATE_FROM_URL: "generate_from_url",
   GENERATE_FROM_URL_APP: "generate_from_url_app",
+  AUTOMATION_CANDIDATES: "automation_candidates",
 } as const;
 
 export type LlmFeature = (typeof LLM_FEATURES)[keyof typeof LLM_FEATURES];
@@ -115,6 +116,21 @@ export const PROMPT_FEATURE_VARIABLES: Record<LlmFeature, PromptVariable[]> = {
   [LLM_FEATURES.DUPLICATE_DETECTION]: [],
   [LLM_FEATURES.GENERATE_FROM_URL]: [],
   [LLM_FEATURES.GENERATE_FROM_URL_APP]: [],
+  [LLM_FEATURES.AUTOMATION_CANDIDATES]: [
+    {
+      name: "PROJECT_NAME",
+      description: "Display name of the project the report is being run for",
+    },
+    {
+      name: "CASE_COUNT",
+      description: "Number of manual test cases being ranked",
+    },
+    {
+      name: "CASES_JSON",
+      description:
+        "Newline-delimited JSON: one row per manual case, each carrying id, name, description, steps summary, automation status, custom field values keyed by field name, and drilled-down linked-issue metadata (provider-agnostic — labels/components/priority etc. when present)",
+    },
+  ],
 };
 
 /**
@@ -133,4 +149,5 @@ export const LLM_FEATURE_LABELS: Record<LlmFeature, string> = {
     "Generate Test Cases from URL (Requirements)",
   [LLM_FEATURES.GENERATE_FROM_URL_APP]:
     "Generate Test Cases from URL (Application Testing)",
+  [LLM_FEATURES.AUTOMATION_CANDIDATES]: "Automation Candidates Report",
 };

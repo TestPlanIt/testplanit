@@ -74,7 +74,17 @@ const sidebars: SidebarsConfig = {
             'user-guide/roles', // Corresponds to roles.md
             'user-guide/permissions-guide', // Permissions guide
             'user-guide/tags', // Corresponds to tags.md
-            'user-guide/reporting', // Add reporting.md
+            {
+              type: 'category',
+              label: 'Reporting & Analytics',
+              link: {
+                type: 'doc',
+                id: 'user-guide/reporting',
+              },
+              items: [
+                'user-guide/cross-project-reports', // Cross-project report types + project scoping
+              ],
+            },
             'user-guide/share-links', // Share Links documentation
             // Convert Notifications to a category with children
             {
@@ -200,6 +210,25 @@ const sidebars: SidebarsConfig = {
               ],
             },
             'user-guide/projects/parameterized-test-cases', // Parameterized Test Cases hub
+            // Reporting & Analytics (per-project) category
+            {
+              type: 'category',
+              label: 'Reporting & Analytics',
+              link: {
+                type: 'doc',
+                id: 'user-guide/projects/reports/index',
+              },
+              items: [
+                'user-guide/projects/reports/automation-candidates',
+                'user-guide/projects/reports/automation-trends',
+                'user-guide/projects/reports/execution-log',
+                'user-guide/projects/reports/flaky-tests',
+                'user-guide/projects/reports/issue-test-coverage',
+                'user-guide/projects/reports/iteration-matrix',
+                'user-guide/projects/reports/test-case-health',
+                'user-guide/projects/reports/report-builder',
+              ],
+            },
             'user-guide/projects/tags', // Corresponds to tags.md
             'user-guide/projects/issues', // Add Project Issues page here
             // Add other project-specific pages here later

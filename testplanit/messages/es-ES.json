@@ -5178,7 +5178,8 @@
         "auto_tag": "Sugerencias de etiquetas de IA",
         "duplicate_detection": "Detección de duplicados",
         "generate_from_url": "Generar casos de prueba a partir de una URL (Requisitos)",
-        "generate_from_url_app": "Generar casos de prueba a partir de una URL (Pruebas de aplicaciones)"
+        "generate_from_url_app": "Generar casos de prueba a partir de una URL (Pruebas de aplicaciones)",
+        "automation_candidates": "Informe de candidatos para la automatización"
       }
     },
     "elasticsearch": {
@@ -6499,6 +6500,10 @@
         "iterationMatrix": {
           "label": "Matriz de iteración de prueba parametrizada",
           "description": "Casos parametrizados × configuraciones × filas de parámetros con resumen del peor estado por celda"
+        },
+        "automationCandidates": {
+          "label": "Candidatos a automatización",
+          "description": "Lista clasificada de los casos de prueba manuales que se deben automatizar a continuación, según el contenido del caso, los campos personalizados y el contexto del problema vinculado."
         }
       },
       "flakyTests": {
@@ -6582,6 +6587,117 @@
           "alwaysFailing": "Siempre fallando (0%): -30",
           "lowPassRate": "Tasa de aprobación baja (<50%): -20",
           "lowExecutions": "Pocas ejecuciones (<3): -10"
+        }
+      },
+      "automationCandidates": {
+        "casesToRank": "Casos para clasificar",
+        "casesToRankHelp": "¿Cuántos casos de prueba manuales se deben enviar al LLM para su clasificación? Un número mayor proporciona una cobertura más amplia, pero el LLM tarda proporcionalmente más (rango: 5–100; considerando que los modelos pueden tardar varios minutos en ejecutarse en el extremo superior).",
+        "selectionStrategy": "Estrategia de selección",
+        "selectionStrategyHelp": "Qué estrategia decide qué casos manuales enviar cuando el proyecto tiene más del límite por generación. **Más ejecutados** (predeterminado) elige los casos que se han ejecutado más veces en las ejecuciones de prueba: el mejor ROI para la automatización. **Más inestables primero** elige los casos cuyos resultados de aprobado/fallo cambian más: candidatos ideales para un oráculo de automatización determinista. **Más largos para ejecutar** elige los casos con la previsión de ejecución manual más alta (derivada del probador; vuelve a la estimación original): la automatización recupera directamente la mayor cantidad de tiempo del probador. **Más antiguos primero** elige los casos manuales de larga duración (estables, maduros). **Más nuevos primero** elige los casos creados más recientemente. **Aleatorio** es una muestra imparcial. Solo son elegibles los casos manuales cuyo estado de flujo de trabajo es *En progreso* o *Hecho*.",
+        "strategies": {
+          "most_executed": "Mayor ejecución (mayor retorno de la inversión)",
+          "flakiest_first": "Primero el más inestable (cambios de aprobado/suspenso)",
+          "longest_first": "Tiempo de ejecución más prolongado (tiempo ahorrado)",
+          "oldest_first": "De mayor a menor (estabilidad comprobada)",
+          "newest_first": "Más recientes primero (de los que escribieron más recientemente)",
+          "random": "Muestra aleatoria"
+        },
+        "title": "Candidatos a automatización",
+        "titleWithStrategy": "Candidatos a automatización clasificados por {strategy}",
+        "heuristicBadge": "Heurístico",
+        "heuristicBadgeTooltip": "No se ha configurado ninguna integración LLM para este proyecto, por lo que esta clasificación se generó directamente a partir de la métrica de estrategia de selección. Configure un LLM (Administración → Modelos de IA) para un razonamiento más completo que tenga en cuenta los campos personalizados, el contexto de los problemas vinculados y el contenido del caso.",
+        "sourcedFromNewestN": "Los {ranked} casos manuales elegibles más frecuentes {total} a través de {strategy}",
+        "sourcedFromAll": "Se clasificaron todos los {total} casos manuales elegibles a través de {strategy}",
+        "metric": {
+          "executions": "{count} corre",
+          "forecast": "{value} pronóstico",
+          "forecastUnset": "Sin pronóstico",
+          "flakiness": "Volteos {value}%",
+          "flakinessUnset": "No hay datos de volteo",
+          "createdLabel": "Creado"
+        },
+        "heuristic": {
+          "intro": "No se ha configurado ninguna integración LLM para este proyecto, por lo que la clasificación se basa directamente en la métrica de estrategia de selección. Configure una integración LLM (Administración → Modelos de IA) para habilitar un razonamiento más completo que tenga en cuenta los campos personalizados, el contexto de los problemas vinculados y el contenido del caso, además de la métrica.",
+          "rankedSummary": "{ranked} de {totalEligible} casos manuales elegibles clasificados.",
+          "strategyExplanation": {
+            "most_executed": "Los casos se ordenan por número de ejecuciones manuales (de mayor a menor), que es el indicador de frecuencia de regresión donde la automatización recupera directamente la mayor parte del tiempo del evaluador.",
+            "flakiest_first": "Los casos se ordenan según su grado aproximado de inestabilidad (cambios de aprobado/suspenso): las pruebas manuales inestables son candidatas ideales para un oráculo de automatización determinista.",
+            "longest_first": "Los casos se ordenan según la previsión de ejecución manual (el más largo primero; cuando se utiliza forecastManual, se recurre a la estimación); la automatización recupera la mayor parte del tiempo del probador en estos casos.",
+            "oldest_first": "Los casos se ordenan por fecha de creación (del más antiguo al más antiguo): los casos manuales de larga duración tienden a ser comportamientos maduros y estables que se pueden automatizar sin necesidad de reelaboración.",
+            "newest_first": "Los casos se ordenan por fecha de creación (del más reciente al más antiguo); los casos de reciente creación son los que tienen más probabilidades de necesitar cobertura de ejecución en este momento.",
+            "random": "Los casos constituyen una muestra aleatoria imparcial del conjunto de personas elegibles."
+          },
+          "rationale": {
+            "mostExecutedWithCount": "Ejecutado {count, plural, =1 {1 vez} other {# veces}} manualmente en las ejecuciones de prueba de este proyecto; automatizarlo directamente recupera el tiempo del probador en cada ejecución futura.",
+            "mostExecutedNone": "Aún no hay historial de ejecuciones: la heurística del caso más ejecutado no tiene ninguna señal para clasificar este caso en comparación con los demás.",
+            "flakiestWithScore": "Inestabilidad {percent}% (los resultados de aprobado/reprobado cambian en {description} ejecuciones) — las pruebas manuales inestables hacen perder tiempo al evaluador en cada ejecución y se benefician más de un oráculo de automatización determinista.",
+            "flakiestNone": "Todavía no hay resultados variados: la heurística Flakiest First aún no puede medir el cambio de aprobado/suspenso para este caso.",
+            "longestWithDuration": "Previsión de ejecución manual {duration} : la automatización de pruebas manuales de larga duración recupera proporcionalmente más tiempo del probador en cada ejecución.",
+            "longestNone": "No se ha establecido ninguna previsión ni estimación: la heurística \"Mayor tiempo de ejecución\" no dispone de datos de duración para este caso.",
+            "oldest": "Autor {age} — los casos manuales de larga duración tienden a ser comportamientos maduros y estables que se pueden automatizar de forma segura sin necesidad de reelaboración.",
+            "newest": "Casos de nueva creación {age} — son los que tienen más probabilidades de necesitar cobertura de ejecución ahora mismo.",
+            "random": "Muestra aleatoria: se incluye como referencia imparcial; el método heurístico no tiene ninguna preferencia inherente por este caso sobre los demás de la muestra."
+          },
+          "flakinessFraction": {
+            "wellOverHalf": "más de la mitad",
+            "roughlyHalf": "aproximadamente la mitad",
+            "meaningfulShare": "una participación significativa",
+            "smallShare": "una pequeña parte"
+          },
+          "duration": {
+            "seconds": "{seconds}s",
+            "minutes": "{minutes}m",
+            "hours": "{hours}h",
+            "hoursAndMinutes": "{hours}h {minutes}m"
+          },
+          "relativeAge": {
+            "today": "hoy",
+            "days": "{count, plural, =1 {Hace 1 día} other {Hace # días}}",
+            "months": "{count, plural, =1 {Hace 1 mes} other {Hace # meses}}",
+            "years": "{count, plural, =1 {Hace 1 año} other {Hace # años}}",
+            "unknown": "en un momento desconocido"
+          }
+        },
+        "subtitle": "Recomendación basada en IA sobre qué casos de prueba manuales automatizar a continuación. Las instantáneas se comparten: una vez generadas, todos los usuarios ven la misma clasificación hasta que alguien la regenere.",
+        "invalidProject": "Proyecto no válido.",
+        "historyPlaceholder": "Elige una instantánea",
+        "generatedAt": "Generado",
+        "by": "por",
+        "summaryHeading": "Resumen",
+        "actions": {
+          "generate": "Generar informe",
+          "regenerate": "Regenerado"
+        },
+        "status": {
+          "running": "Correr",
+          "complete": "Completo",
+          "failed": "Fallido"
+        },
+        "emptyState": {
+          "title": "Aún no se han reportado candidatos para la automatización.",
+          "canGenerate": "Haz clic en Ejecutar informe para clasificar tus casos de prueba manuales.",
+          "noPermission": "Pídele a un administrador del proyecto o a cualquier persona con permisos de generación de informes que lo genere."
+        },
+        "errors": {
+          "title": "No se pudo generar el informe.",
+          "generateFailed": "No se pudo generar el informe.",
+          "deleteFailed": "No se pudo eliminar la instantánea.",
+          "snapshotFailed": "Esta instantánea no se pudo generar"
+        },
+        "rankedList": {
+          "heading": "Candidatos clasificados",
+          "streaming": "Transmisión…",
+          "streamingWithCount": "{count} de {total} clasificado…",
+          "empty": "Esperando al primer candidato…",
+          "caseRef": "Caso de prueba #{id}",
+          "score": "Puntuación {score}"
+        },
+        "delete": {
+          "button": "Borrar",
+          "title": "¿Eliminar esta instantánea?",
+          "description": "La instantánea se eliminará del historial. Esta acción es irreversible.",
+          "cancel": "Cancelar",
+          "confirm": "Borrar"
         }
       },
       "issueTestCoverage": {

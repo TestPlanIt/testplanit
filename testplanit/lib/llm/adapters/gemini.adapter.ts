@@ -115,8 +115,15 @@ export class GeminiAdapter extends BaseLlmAdapter {
 
     // Disable thinking/reasoning for structured output (e.g., JSON-only responses)
     // Thinking models (Gemini 2.5+, 3.x) use output tokens for internal reasoning,
-    // which can truncate actual content. thinkingBudget: 0 disables this.
-    if (request.disableThinking) {
+    // which can truncate actual content. thinkingBudget: 0 disables this on
+    // models that allow it; some (Gemini 2.5 Pro) reject 0 and require a
+    // positive budget — callers can pass `thinkingBudget` explicitly to cap
+    // reasoning without disabling it.
+    if (typeof request.thinkingBudget === "number") {
+      generationConfig.thinkingConfig = {
+        thinkingBudget: request.thinkingBudget,
+      };
+    } else if (request.disableThinking) {
       generationConfig.thinkingConfig = { thinkingBudget: 0 };
     }
 
@@ -287,16 +294,34 @@ export class GeminiAdapter extends BaseLlmAdapter {
     const model = request.model || this.getDefaultModel();
     const contents = this.convertMessagesToGeminiFormat(request.messages);
 
+    const generationConfig: NonNullable<
+      GeminiGenerateRequest["generationConfig"]
+    > = {
+      temperature: request.temperature ?? this.config.config.defaultTemperature,
+      maxOutputTokens: request.maxTokens ?? this.config.config.defaultMaxTokens,
+      topP: 0.95,
+      // topK omitted — not supported by Gemini 2.0/2.5 models
+    };
+
+    // Mirror chat()'s thinking-budget gate. Without this, Gemini 2.5/3.x
+    // models burn most of their output budget on internal reasoning and
+    // emit little (or no) actual content — observed end-to-end: a 32k
+    // maxOutputTokens streaming request returned a 3-character body.
+    // Callers needing structured/JSON output should pass `thinkingBudget`
+    // (a small positive integer for models like Gemini 2.5 Pro that
+    // require thinking) or `disableThinking: true` for models that permit
+    // zero budget.
+    if (typeof request.thinkingBudget === "number") {
+      generationConfig.thinkingConfig = {
+        thinkingBudget: request.thinkingBudget,
+      };
+    } else if (request.disableThinking) {
+      generationConfig.thinkingConfig = { thinkingBudget: 0 };
+    }
+
     const geminiRequest: GeminiGenerateRequest = {
       contents,
-      generationConfig: {
-        temperature:
-          request.temperature ?? this.config.config.defaultTemperature,
-        maxOutputTokens:
-          request.maxTokens ?? this.config.config.defaultMaxTokens,
-        topP: 0.95,
-        // topK omitted — not supported by Gemini 2.0/2.5 models
-      },
+      generationConfig,
       safetySettings: [
         {
           category: "HARM_CATEGORY_HARASSMENT",

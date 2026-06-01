@@ -5178,7 +5178,8 @@
         "auto_tag": "AI 태그 제안",
         "duplicate_detection": "중복 감지",
         "generate_from_url": "URL(요구사항)에서 테스트 케이스 생성",
-        "generate_from_url_app": "URL에서 테스트 케이스 생성 (애플리케이션 테스트)"
+        "generate_from_url_app": "URL에서 테스트 케이스 생성 (애플리케이션 테스트)",
+        "automation_candidates": "자동화 후보 보고서"
       }
     },
     "elasticsearch": {
@@ -6499,6 +6500,10 @@
         "iterationMatrix": {
           "label": "매개변수화된 테스트 반복 행렬",
           "description": "매개변수화된 사례 × 구성 × 매개변수 행(셀별 최악의 상태 집계 포함)"
+        },
+        "automationCandidates": {
+          "label": "자동화 후보",
+          "description": "테스트 케이스 내용, 사용자 정의 필드 및 연결된 이슈 컨텍스트를 기반으로 다음에 자동화할 수동 테스트 케이스 순위 목록입니다."
         }
       },
       "flakyTests": {
@@ -6582,6 +6587,117 @@
           "alwaysFailing": "항상 실패함(0%): -30",
           "lowPassRate": "낮은 합격률(<50%): -20",
           "lowExecutions": "실행 횟수 적음(<3): -10"
+        }
+      },
+      "automationCandidates": {
+        "casesToRank": "순위를 매길 사례",
+        "casesToRankHelp": "LLM에 순위 지정을 위해 보낼 수동 테스트 케이스의 개수는 몇 개입니까? 숫자가 높을수록 더 광범위한 테스트 범위를 확보할 수 있지만, LLM 실행 시간은 비례적으로 길어집니다(범위: 5~100개, 사고형 모델은 최대 몇 분까지 실행될 수 있음).",
+        "selectionStrategy": "선택 전략",
+        "selectionStrategyHelp": "프로젝트에서 세대별 제한을 초과하는 수동 테스트 케이스가 있을 때 어떤 케이스를 자동화할지 결정하는 전략은 다음과 같습니다. **가장 많이 실행된 케이스**(기본값)는 테스트 실행 전반에 걸쳐 가장 많이 실행된 케이스를 선택합니다. 이는 자동화에 대한 투자 수익률(ROI)이 가장 높습니다. **가장 불안정한 케이스**는 합격/불합격 결과가 가장 자주 바뀌는 케이스를 선택합니다. 이러한 케이스는 확정적인 자동화 오라클에 가장 적합합니다. **실행 시간이 가장 긴 케이스**는 수동 실행 예측값(테스터가 산출한 값이며, 원래 예측값으로 대체됨)이 가장 높은 케이스를 선택합니다. 이러한 케이스는 자동화를 통해 테스터 시간을 가장 많이 절약할 수 있습니다. **가장 오래된 케이스**는 장기간 유지된(안정적이고 성숙한) 수동 케이스를 선택합니다. **가장 최근에 생성된 케이스**는 가장 최근에 생성된 케이스를 선택합니다. **무작위**는 편향되지 않은 샘플링입니다. 워크플로 상태가 *진행 중* 또는 *완료*인 수동 케이스만 선택 대상입니다.",
+        "strategies": {
+          "most_executed": "가장 많이 실행된 전략 (가장 높은 투자 수익률)",
+          "flakiest_first": "가장 불안정한 것부터 (합격/불합격 여부 반전)",
+          "longest_first": "실행 시간 최장 (절약된 시간)",
+          "oldest_first": "가장 오래된 제품부터 (안정성 검증 완료)",
+          "newest_first": "최신순 (가장 최근에 작성된 글)",
+          "random": "무작위 표본"
+        },
+        "title": "자동화 후보",
+        "titleWithStrategy": "자동화 후보 순위 ( {strategy})",
+        "heuristicBadge": "휴리스틱",
+        "heuristicBadgeTooltip": "이 프로젝트에는 LLM 통합이 구성되어 있지 않으므로, 이 순위는 선택 전략 지표를 직접 기반으로 생성되었습니다. 사용자 정의 필드, 연결된 이슈 컨텍스트 및 사례 내용을 고려한 더욱 정교한 추론을 위해 LLM을 구성하십시오(관리 → AI 모델).",
+        "sourcedFromNewestN": "{ranked} 의 {total} 에 해당하는 적격 수동 사례들을 {strategy}를 통해 처리합니다.",
+        "sourcedFromAll": "{total} 의 모든 적격 수동 사례를 {strategy}을 통해 순위를 매겼습니다.",
+        "metric": {
+          "executions": "{count} 실행",
+          "forecast": "{value} 예측",
+          "forecastUnset": "예보 없음",
+          "flakiness": "뒤집기 {value}%",
+          "flakinessUnset": "플립 데이터 없음",
+          "createdLabel": "생성됨"
+        },
+        "heuristic": {
+          "intro": "이 프로젝트에는 LLM 통합이 구성되어 있지 않으므로 순위는 선택 전략 지표를 직접 기반으로 계산됩니다. 사용자 지정 필드, 연결된 이슈 컨텍스트 및 사례 콘텐츠를 지표와 함께 고려하여 더욱 정교한 추론을 가능하게 하려면 LLM 통합을 구성하십시오(관리 → AI 모델).",
+          "rankedSummary": "{ranked} of {totalEligible} eligible manual cases ranked.",
+          "strategyExplanation": {
+            "most_executed": "테스트 케이스는 수동 실행 횟수(가장 높은 것부터) 순으로 정렬됩니다. 이는 자동화를 통해 테스터 시간을 가장 많이 절약할 수 있는 회귀 빈도 지표입니다.",
+            "flakiest_first": "테스트 케이스는 대략적인 불안정성(합격/불합격 여부 반전)에 따라 정렬됩니다. 불안정한 수동 테스트는 결정론적 자동화 오라클의 주요 대상입니다.",
+            "longest_first": "테스트 케이스는 수동 실행 예상 시간(가장 오래 걸리는 케이스부터)에 따라 정렬됩니다. 예측 수동 기능이 있는 경우 수동 실행이 불가능하며, 그렇지 않은 경우 추정치로 대체됩니다. 자동화를 통해 이러한 케이스에서 테스터 시간을 가장 많이 절약할 수 있습니다.",
+            "oldest_first": "케이스는 생성 날짜순(가장 오래된 것부터)으로 정렬됩니다. 오래 지속된 수동 케이스는 일반적으로 성숙하고 안정적인 동작을 나타내므로 재작업 없이 자동화해도 안전합니다.",
+            "newest_first": "사건들은 생성 날짜순(최신순)으로 정렬됩니다. 새로 작성된 사건일수록 현재 실행 보장이 필요할 가능성이 가장 높습니다.",
+            "random": "사례는 적격 대상 집단에서 편향되지 않은 무작위 표본 추출 방식으로 선정됩니다."
+          },
+          "rationale": {
+            "mostExecutedWithCount": "이 프로젝트의 테스트 실행 전반에 걸쳐 수동으로 실행된 횟수는 {count, plural, =1 {1회,} other {#회,}} 입니다. 이를 자동화하면 향후 모든 실행에서 테스터의 시간을 절약할 수 있습니다.",
+            "mostExecutedNone": "아직 실행 기록이 없습니다. 가장 많이 실행된 사례에 대한 휴리스틱 지표에서 이 사례를 다른 사례와 비교하여 평가할 만한 정보가 없습니다.",
+            "flakiestWithScore": "불안정성 {percent}% (실행 횟수 {description} 회마다 합격/불합격 결과가 바뀜) — 불안정한 수동 테스트는 매번 실행할 때마다 테스터의 시간을 낭비하며, 결정론적 자동화 오라클을 사용할 때 가장 큰 이점을 얻습니다.",
+            "flakiestNone": "아직 다양한 결과가 나오지 않았습니다. Flakiest First 휴리스틱은 이 경우에 대한 합격/불합격 여부의 변화를 아직 측정할 수 없습니다.",
+            "longestWithDuration": "수동 실행 예측 {duration} — 장시간 실행되는 수동 테스트를 자동화하면 실행할 때마다 테스터의 시간을 비례적으로 더 많이 절약할 수 있습니다.",
+            "longestNone": "예측 또는 추정치가 설정되지 않았습니다. 최장 실행 시간 휴리스틱에는 이 사례에 대한 기간 데이터가 없습니다.",
+            "oldest": "작성자 {age} — 오랜 기간 수동으로 처리해 온 사례는 일반적으로 성숙하고 안정적인 동작이므로 재작업 없이 자동화해도 안전합니다.",
+            "newest": "작성됨 {age} — 새로 작성된 사례는 현재 실행 범위 검증이 가장 필요할 가능성이 높습니다.",
+            "random": "무작위 표본 — 편향되지 않은 참조용으로 포함되었습니다. 휴리스틱 모드는 표본 내 다른 사례에 비해 이 사례에 대한 본질적인 선호도를 갖고 있지 않습니다."
+          },
+          "flakinessFraction": {
+            "wellOverHalf": "절반을 훨씬 넘는",
+            "roughlyHalf": "대략 절반",
+            "meaningfulShare": "의미 있는 몫",
+            "smallShare": "작은 몫"
+          },
+          "duration": {
+            "seconds": "{seconds}s",
+            "minutes": "{minutes}m",
+            "hours": "{hours}h",
+            "hoursAndMinutes": "{hours}h {minutes}m"
+          },
+          "relativeAge": {
+            "today": "오늘",
+            "days": "{count, plural, =1 {1일 전} other {#일 전}}",
+            "months": "{count, plural, =1 {1개월 전} other {#개월 전}}",
+            "years": "{count, plural, =1 {1년 전} other {#년 전}}",
+            "unknown": "알 수 없는 시간에"
+          }
+        },
+        "subtitle": "AI가 순위를 매겨 다음에 자동화할 수동 테스트 케이스를 추천합니다. 스냅샷은 공유되며, 한 번 생성되면 누군가가 다시 생성할 때까지 모든 사용자가 동일한 순위를 볼 수 있습니다.",
+        "invalidProject": "유효하지 않은 프로젝트입니다.",
+        "historyPlaceholder": "스냅샷을 선택하세요",
+        "generatedAt": "생성됨",
+        "by": "~에 의해",
+        "summaryHeading": "요약",
+        "actions": {
+          "generate": "보고서 생성",
+          "regenerate": "재생"
+        },
+        "status": {
+          "running": "달리기",
+          "complete": "완벽한",
+          "failed": "실패한"
+        },
+        "emptyState": {
+          "title": "자동화 후보는 아직 보고되지 않았습니다.",
+          "canGenerate": "'보고서 실행'을 클릭하여 수동 테스트 케이스의 순위를 매기세요.",
+          "noPermission": "프로젝트 관리자 또는 보고 권한이 있는 담당자에게 보고서 생성을 요청하세요."
+        },
+        "errors": {
+          "title": "보고서를 생성할 수 없습니다.",
+          "generateFailed": "보고서를 생성할 수 없습니다.",
+          "deleteFailed": "스냅샷을 삭제할 수 없습니다.",
+          "snapshotFailed": "이 스냅샷 생성에 실패했습니다."
+        },
+        "rankedList": {
+          "heading": "순위가 매겨진 후보들",
+          "streaming": "스트리밍…",
+          "streamingWithCount": "{count} 의 {total} 가…를 순위 매겼습니다.",
+          "empty": "첫 번째 후보를 기다리는 중…",
+          "caseRef": "테스트 케이스 #{id}",
+          "score": "점수 {score}"
+        },
+        "delete": {
+          "button": "삭제",
+          "title": "이 스냅샷을 삭제하시겠습니까?",
+          "description": "해당 스냅샷은 기록에서 삭제됩니다. 이 작업은 되돌릴 수 없습니다.",
+          "cancel": "취소",
+          "confirm": "삭제"
         }
       },
       "issueTestCoverage": {
