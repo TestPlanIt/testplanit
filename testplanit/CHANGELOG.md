@@ -1,3 +1,9 @@
+## [0.34.2](https://github.com/TestPlanIt/testplanit/compare/v0.34.1...v0.34.2) (2026-06-01)
+
+### Enhancements
+
+* **quickscript:** Mobilewright templates + default-ON AI toggle + AI prompt syntax-example injection ([#383](https://github.com/TestPlanIt/testplanit/issues/383)) ([ebdf761](https://github.com/TestPlanIt/testplanit/commit/ebdf7619462fe4959c4a85ff792bb65c76921c1e))
+
 ## [0.34.1](https://github.com/TestPlanIt/testplanit/compare/v0.34.0...v0.34.1) (2026-06-01)
 
 ### Bug Fixes
