@@ -405,7 +405,7 @@ export function AutomationCandidatesReportPreset({
         abortRef.current = null;
       }
     },
-    [projectId, refetchHistory, queryClient, t]
+    [projectId, refetchHistory, queryClient, setSelectedSnapshotId, t]
   );
 
   useEffect(() => {
@@ -721,7 +721,7 @@ function SnapshotLabel({ snap }: { snap: SnapshotRow }) {
           surface, which suppresses hover, so the default tooltip never
           shows anyway and is just noise to the a11y tree. */}
       <span className="truncate">{title}</span>
-      <span className="text-muted-foreground">—</span>
+      <span className="text-muted-foreground">{"—"}</span>
       <DateFormatter
         date={snap.startedAt}
         formatString={dateTimeFormat}
