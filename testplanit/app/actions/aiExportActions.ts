@@ -197,6 +197,16 @@ export async function generateAiExportBatch(args: {
   if (footer) {
     userPrompt += `\n\nDEFAULT FOOTER (use as a starting point — extend or modify teardown as needed):\n\`\`\`\n${footer}\n\`\`\``;
   }
+  // FRAMEWORK SYNTAX EXAMPLE — the rendered template body shows the
+  // framework's actual API shape: fixture destructuring, locator factories,
+  // assertion calls, idiomatic helpers. Crucial when the framework is
+  // niche or new enough that the model's training data could plausibly
+  // confuse it with a closer-named neighbor (e.g. `@mobilewright/test`
+  // vs `@playwright/test`). Mirror the rendered structure, not generic
+  // assumptions from the framework name.
+  if (mustacheBodies[0]) {
+    userPrompt += `\n\nFRAMEWORK SYNTAX EXAMPLE — this is what one rendered test from the template looks like. Match this API shape (imports, fixtures, locators, action methods, assertion style) when writing the cases above. Do not substitute APIs from a similarly-named framework you happen to know better:\n\`\`\`\n${mustacheBodies[0]}\n\`\`\``;
+  }
 
   try {
     const request: LlmRequest = {
@@ -370,6 +380,14 @@ export async function generateAiExport(args: {
   }
   if (footer) {
     userPrompt += `\n\nDEFAULT FOOTER (use as a starting point — extend or modify teardown as needed):\n\`\`\`\n${footer}\n\`\`\``;
+  }
+  // FRAMEWORK SYNTAX EXAMPLE — same fix as the batch path. Without this
+  // section the model only sees framework name + a one-line import, and
+  // for niche or newer frameworks (or any framework whose package name
+  // looks like a more-popular neighbor's) it falls back to whatever
+  // similarly-named API it knows best instead.
+  if (mustacheFallback) {
+    userPrompt += `\n\nFRAMEWORK SYNTAX EXAMPLE — this is what one rendered test from the template looks like. Match this API shape (imports, fixtures, locators, action methods, assertion style) when writing the case above. Do not substitute APIs from a similarly-named framework you happen to know better:\n\`\`\`\n${mustacheFallback}\n\`\`\``;
   }
 
   // 10. Call LLM (wrapped in try/catch for GEN-05 fallback)
