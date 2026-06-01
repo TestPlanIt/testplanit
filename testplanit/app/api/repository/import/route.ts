@@ -625,43 +625,91 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                   where: { testCaseId: caseData.id },
                 });
               } else {
-                newCase = await enhancedDb.repositoryCases.create({
-                  data: {
-                    id: caseData.id,
-                    name: caseData.name,
-                    projectId: caseData.projectId,
-                    repositoryId: caseData.repositoryId,
-                    folderId: caseData.folderId,
-                    templateId: caseData.templateId,
-                    stateId: stateId,
-                    source: caseData.source,
-                    creatorId: creatorId,
-                    automated: caseData.automated,
-                    estimate: caseData.estimate,
-                    forecastManual: caseData.forecastManual,
-                    order: caseOrder,
-                    ...(createdAt && { createdAt }),
-                  },
-                });
-              }
-            } else {
-              newCase = await enhancedDb.repositoryCases.create({
-                data: {
+                // Create-or-restore: if a prior soft-deleted case
+                // exists at the same (projectId, name, className, source)
+                // tuple, resurrect it with the imported payload instead
+                // of 23505ing. The resurrected row keeps its existing
+                // id; the caseData.id we tried to preserve is a no-op in
+                // that branch — acceptable because importers treat ids
+                // as a hint, not a hard requirement. We can't use
+                // Prisma's compound-unique upsert because the generated
+                // type rejects null for `className` (typed as `string`,
+                // not `string | null`).
+                const importFields = {
                   name: caseData.name,
-                  projectId: caseData.projectId,
                   repositoryId: caseData.repositoryId,
                   folderId: caseData.folderId,
                   templateId: caseData.templateId,
                   stateId: stateId,
-                  source: caseData.source,
-                  creatorId: creatorId,
                   automated: caseData.automated,
                   estimate: caseData.estimate,
                   forecastManual: caseData.forecastManual,
                   order: caseOrder,
                   ...(createdAt && { createdAt }),
-                },
-              });
+                };
+                const softDeletedExisting =
+                  await enhancedDb.repositoryCases.findFirst({
+                    where: {
+                      projectId: caseData.projectId,
+                      name: caseData.name,
+                      className: null,
+                      source: caseData.source,
+                      isDeleted: true,
+                    },
+                    select: { id: true },
+                  });
+                newCase = softDeletedExisting
+                  ? await enhancedDb.repositoryCases.update({
+                      where: { id: softDeletedExisting.id },
+                      data: { ...importFields, isDeleted: false },
+                    })
+                  : await enhancedDb.repositoryCases.create({
+                      data: {
+                        id: caseData.id,
+                        projectId: caseData.projectId,
+                        source: caseData.source,
+                        creatorId: creatorId,
+                        ...importFields,
+                      },
+                    });
+              }
+            } else {
+              const importFields = {
+                name: caseData.name,
+                repositoryId: caseData.repositoryId,
+                folderId: caseData.folderId,
+                templateId: caseData.templateId,
+                stateId: stateId,
+                automated: caseData.automated,
+                estimate: caseData.estimate,
+                forecastManual: caseData.forecastManual,
+                order: caseOrder,
+                ...(createdAt && { createdAt }),
+              };
+              const softDeletedExisting =
+                await enhancedDb.repositoryCases.findFirst({
+                  where: {
+                    projectId: caseData.projectId,
+                    name: caseData.name,
+                    className: null,
+                    source: caseData.source,
+                    isDeleted: true,
+                  },
+                  select: { id: true },
+                });
+              newCase = softDeletedExisting
+                ? await enhancedDb.repositoryCases.update({
+                    where: { id: softDeletedExisting.id },
+                    data: { ...importFields, isDeleted: false },
+                  })
+                : await enhancedDb.repositoryCases.create({
+                    data: {
+                      projectId: caseData.projectId,
+                      source: caseData.source,
+                      creatorId: creatorId,
+                      ...importFields,
+                    },
+                  });
             }
 
             // Create field values

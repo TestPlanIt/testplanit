@@ -1,4 +1,6 @@
 "use client";
+"use no memo";
+/* eslint-disable react-hooks/incompatible-library -- File is explicitly opted out of React Compiler memoization via the directive above. */
 
 import {
   Accordion,
@@ -43,7 +45,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod/v4";
 import {
-  useCreateLlmIntegration,
+  useUpsertLlmIntegration,
   useFindManyLlmIntegration,
 } from "~/lib/hooks/llm-integration";
 import {
@@ -219,7 +221,12 @@ export function AddLlmIntegration({
     { unsupportedParams: string[]; probedAt: string }
   > | null>(null);
 
-  const { mutateAsync: createLlmIntegration } = useCreateLlmIntegration();
+  // Upsert (not create) so re-adding an LLM integration with the same
+  // name as a soft-deleted one resurrects the row with the new payload
+  // instead of failing on the unique-name constraint. The active-name
+  // collision check is the `existingNames`-based Zod refinement already
+  // wired into `formSchema`.
+  const { mutateAsync: createLlmIntegration } = useUpsertLlmIntegration();
   const { mutateAsync: createLlmProviderConfig } = useCreateLlmProviderConfig();
   const { mutateAsync: updateLlmProviderConfig } = useUpdateLlmProviderConfig();
   const { data: existingDefaultConfigs } = useFindManyLlmProviderConfig({
@@ -520,7 +527,9 @@ export function AddLlmIntegration({
       };
 
       const llmIntegration = await createLlmIntegration({
-        data: integrationData,
+        where: { name: integrationData.name },
+        create: integrationData,
+        update: { ...integrationData, isDeleted: false },
       });
 
       if (llmIntegration) {

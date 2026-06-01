@@ -1,4 +1,6 @@
 "use client";
+"use no memo";
+/* eslint-disable react-hooks/incompatible-library -- File is explicitly opted out of React Compiler memoization via the directive above. */
 
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

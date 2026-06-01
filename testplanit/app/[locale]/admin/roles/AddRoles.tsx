@@ -1,4 +1,6 @@
 "use client";
+"use no memo";
+/* eslint-disable react-hooks/incompatible-library -- File is explicitly opted out of React Compiler memoization via the directive above. */
 import { ApplicationArea } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";

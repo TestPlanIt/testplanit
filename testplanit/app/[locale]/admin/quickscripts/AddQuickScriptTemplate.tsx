@@ -1,4 +1,6 @@
 "use client";
+"use no memo";
+/* eslint-disable react-hooks/incompatible-library -- File is explicitly opted out of React Compiler memoization via the directive above. */
 
 import { CaseExportTemplate } from "@prisma/client";
 import { useMemo, useRef, useState } from "react";

@@ -1,3 +1,6 @@
+"use no memo";
+/* eslint-disable react-hooks/incompatible-library -- File is explicitly opted out of React Compiler memoization via the directive above. */
+
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";

@@ -76,7 +76,16 @@ export async function createParameterInTransaction(
   data: ParameterCreateData,
   session: ParameterMutationSession
 ): Promise<unknown> {
-  const created = await tx.testCaseParameter.create({ data });
+  // Resurrect-on-collision: a prior soft-deleted parameter with the same
+  // (testCaseId, name) would 23505 a plain create. Upsert overwrites all
+  // fields with the new payload and clears isDeleted so the case picks
+  // up the new definition cleanly.
+  const { testCaseId, name, ...rest } = data;
+  const created = await tx.testCaseParameter.upsert({
+    where: { testCaseId_name: { testCaseId, name } },
+    create: data,
+    update: { ...rest, isDeleted: false },
+  });
   await updateHasParameters(caseId, tx);
   await bumpVersionAndSnapshot(tx, caseId, session);
   return created;

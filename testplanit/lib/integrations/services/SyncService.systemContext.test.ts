@@ -18,6 +18,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mockIssueFindFirst = vi.fn();
 const mockIssueUpdate = vi.fn();
 const mockIssueCreate = vi.fn();
+const mockIssueUpsert = vi.fn();
+const mockIssueFindUnique = vi.fn();
 const mockIntegrationFindUnique = vi.fn();
 const mockUserFindUnique = vi.fn();
 const mockProjectsFindUnique = vi.fn();
@@ -26,8 +28,10 @@ vi.mock("@/lib/prismaBase", () => ({
   prisma: {
     issue: {
       findFirst: (...args: any[]) => mockIssueFindFirst(...args),
+      findUnique: (...args: any[]) => mockIssueFindUnique(...args),
       update: (...args: any[]) => mockIssueUpdate(...args),
       create: (...args: any[]) => mockIssueCreate(...args),
+      upsert: (...args: any[]) => mockIssueUpsert(...args),
     },
     user: {
       // `_performIssueRefreshInnerSystem` MUST NOT call this — assertion
@@ -138,6 +142,8 @@ beforeEach(() => {
   mockUserFindUnique.mockReset();
   mockProjectsFindUnique.mockReset();
   mockIssueCreate.mockReset();
+  mockIssueUpsert.mockReset();
+  mockIssueFindUnique.mockReset();
   mockIssueUpdate.mockReset();
   mockSyncIssue.mockReset();
   mockValkeyPublish.mockReset();
@@ -151,6 +157,14 @@ beforeEach(() => {
   });
   mockIssueUpdate.mockResolvedValue({ id: 1 });
   mockIssueCreate.mockResolvedValue({ id: 1 });
+  // Auto-create now goes through upsert(externalId_integrationId) so a
+  // soft-deleted Issue with the same external id gets resurrected
+  // instead of 23505ing. Default to a fresh row id; tests with a
+  // specific assertion override.
+  mockIssueUpsert.mockResolvedValue({ id: 1 });
+  // updateExistingIssue() re-reads the row after update to publish the
+  // webhook payload; the default mirrors the post-update state.
+  mockIssueFindUnique.mockResolvedValue({ id: 1 });
   // Default: project's creator is "user-creator-1" — used by auto-create
   // to populate Issue.createdById. Tests override per-case.
   mockProjectsFindUnique.mockResolvedValue({ createdBy: "user-creator-1" });
@@ -390,18 +404,32 @@ describe("performIssueRefreshSystem — createIfMissing (auto-create)", () => {
     });
 
     expect(result.success).toBe(true);
-    expect(mockIssueCreate).toHaveBeenCalledTimes(1);
-    expect(mockIssueCreate).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        externalId: "JIRA-1",
-        externalKey: undefined, // FRESH_ISSUE_DATA has no .key
-        title: "Test issue",
-        externalStatus: "Open",
-        integrationId: 1,
-        projectId: 7,
-        createdById: "user-creator-1", // Project creator surrogate.
-      }),
-    });
+    // Auto-create now upserts on the (externalId, integrationId) unique
+    // tuple so a soft-deleted Issue with the same external id (e.g. user
+    // deleted, external system re-syncs) resurrects instead of 23505ing.
+    expect(mockIssueUpsert).toHaveBeenCalledTimes(1);
+    expect(mockIssueUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          externalId_integrationId: { externalId: "JIRA-1", integrationId: 1 },
+        },
+        create: expect.objectContaining({
+          externalId: "JIRA-1",
+          externalKey: undefined, // FRESH_ISSUE_DATA has no .key
+          title: "Test issue",
+          externalStatus: "Open",
+          integrationId: 1,
+          projectId: 7,
+          createdById: "user-creator-1", // Project creator surrogate.
+        }),
+        update: expect.objectContaining({
+          isDeleted: false,
+          title: "Test issue",
+          externalStatus: "Open",
+        }),
+      })
+    );
+    expect(mockIssueCreate).not.toHaveBeenCalled();
     expect(mockIssueUpdate).not.toHaveBeenCalled();
   });
 
@@ -422,6 +450,7 @@ describe("performIssueRefreshSystem — createIfMissing (auto-create)", () => {
     expect(result.success).toBe(false);
     expect(result.error).toMatch(/no creator on record/i);
     expect(mockIssueCreate).not.toHaveBeenCalled();
+    expect(mockIssueUpsert).not.toHaveBeenCalled();
   });
 
   it("falls back to update path when an existing Issue row matches, even with createIfMissing set", async () => {
@@ -522,16 +551,29 @@ describe("performIssueRefreshSystem — GitHub repo context", () => {
 
     expect(result.success).toBe(true);
     expect(mockSyncIssue).toHaveBeenCalledWith("octocat/Hello-World#42");
-    expect(mockIssueCreate).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        externalId: "octocat/Hello-World#42",
-        externalKey: "#42",
-        title: "Auto-created from GitHub",
-        integrationId: 1,
-        projectId: 11,
-        createdById: "user-creator-1",
-      }),
-    });
+    expect(mockIssueUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          externalId_integrationId: {
+            externalId: "octocat/Hello-World#42",
+            integrationId: 1,
+          },
+        },
+        create: expect.objectContaining({
+          externalId: "octocat/Hello-World#42",
+          externalKey: "#42",
+          title: "Auto-created from GitHub",
+          integrationId: 1,
+          projectId: 11,
+          createdById: "user-creator-1",
+        }),
+        update: expect.objectContaining({
+          isDeleted: false,
+          externalKey: "#42",
+          title: "Auto-created from GitHub",
+        }),
+      })
+    );
   });
 });
 
@@ -544,7 +586,9 @@ describe("performIssueRefreshSystem — SSE wake-up publish", () => {
       provider: "JIRA",
     });
     mockIssueFindFirst.mockResolvedValue(null);
-    mockIssueCreate.mockResolvedValueOnce({ id: 99 });
+    // Auto-create now goes through upsert; surface the resurrected/new
+    // row's id so the SSE payload assertion gets the right value.
+    mockIssueUpsert.mockResolvedValueOnce({ id: 99 });
 
     await syncService.performIssueRefreshSystem(1, "JIRA-1", {
       createIfMissing: { projectId: 7 },

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { encrypt } from "@/utils/encryption";
+import { IntegrationStatus } from "@prisma/client";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 import { withAuditContext } from "~/lib/auditContextWrappers";
@@ -77,15 +78,16 @@ export const POST = withAuditContext(async (request: NextRequest) => {
       );
     }
 
-    // Check if name already exists
-    const existing = await prisma.integration.findFirst({
-      where: {
-        name,
-        isDeleted: false,
-      },
+    // Reject only if an ACTIVE row already exists with this name. A
+    // soft-deleted row gets resurrected by the upsert below — without
+    // that path, a plain create against a soft-deleted name 23505s and
+    // the admin gets a confusing "this exists but I can't find it"
+    // error. (Same latent bug pattern fix as LlmIntegration, Issue,
+    // RepositoryCases, TestCaseParameter — see PR description.)
+    const existingActive = await prisma.integration.findFirst({
+      where: { name, isDeleted: false },
     });
-
-    if (existing) {
+    if (existingActive) {
       return NextResponse.json(
         { error: "An integration with this name already exists" },
         { status: 400 }
@@ -96,14 +98,16 @@ export const POST = withAuditContext(async (request: NextRequest) => {
     const configString = JSON.stringify(config);
     const encryptedConfig = await encrypt(configString);
 
-    const integration = await prisma.integration.create({
-      data: {
-        name,
-        provider: type,
-        authType,
-        credentials: { encrypted: encryptedConfig },
-        status: "ACTIVE",
-      },
+    const integrationFields = {
+      provider: type,
+      authType,
+      credentials: { encrypted: encryptedConfig },
+      status: IntegrationStatus.ACTIVE,
+    };
+    const integration = await prisma.integration.upsert({
+      where: { name },
+      create: { name, ...integrationFields },
+      update: { ...integrationFields, isDeleted: false },
     });
 
     return NextResponse.json(integration, { status: 201 });

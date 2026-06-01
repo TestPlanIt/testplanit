@@ -1,3 +1,6 @@
+"use no memo";
+/* eslint-disable react-hooks/incompatible-library -- File is explicitly opted out of React Compiler memoization via the directive above. */
+
 import DynamicIcon from "@/components/DynamicIcon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

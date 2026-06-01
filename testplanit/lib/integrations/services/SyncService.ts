@@ -1176,30 +1176,48 @@ export class SyncService {
       );
     }
 
-    const created = await db.issue.create({
-      data: {
-        name: issueData.key || issueData.id,
-        title: issueData.title,
-        description: issueData.description || "",
-        status: issueData.status,
-        priority: issueData.priority || "medium",
+    // Resurrect-on-collision: if a prior soft-deleted Issue exists for
+    // this (externalId, integrationId), `create` would 23505. Upsert with
+    // overwrite + isDeleted: false brings the row back with the freshest
+    // tracker payload — what a re-sync of an externally-restored ticket
+    // should produce.
+    const issueFields = {
+      name: issueData.key || issueData.id,
+      title: issueData.title,
+      description: issueData.description || "",
+      status: issueData.status,
+      priority: issueData.priority || "medium",
+      externalKey: issueData.key,
+      externalUrl: issueData.url,
+      externalStatus: issueData.status,
+      externalData: issueData.customFields || {},
+      // Non-customfield tracker metadata that auto-tag's prompt extractor
+      // reads to surface linked-issue context. Kept distinct from
+      // externalData (which is custom-fields only) so the shape is stable
+      // across providers regardless of their customfield space.
+      data: buildSyncedIssueData(issueData),
+      issueTypeId: issueData.issueType?.id,
+      issueTypeName: issueData.issueType?.name,
+      issueTypeIconUrl: issueData.issueType?.iconUrl,
+      lastSyncedAt: new Date(),
+      projectId,
+    };
+    const created = await db.issue.upsert({
+      where: {
+        externalId_integrationId: {
+          externalId: issueData.id,
+          integrationId,
+        },
+      },
+      create: {
+        ...issueFields,
         externalId: issueData.id,
-        externalKey: issueData.key,
-        externalUrl: issueData.url,
-        externalStatus: issueData.status,
-        externalData: issueData.customFields || {},
-        // Non-customfield tracker metadata that auto-tag's prompt
-        // extractor reads to surface linked-issue context. Kept distinct
-        // from externalData (which is custom-fields only) so the shape is
-        // stable across providers regardless of their customfield space.
-        data: buildSyncedIssueData(issueData),
-        issueTypeId: issueData.issueType?.id,
-        issueTypeName: issueData.issueType?.name,
-        issueTypeIconUrl: issueData.issueType?.iconUrl,
-        lastSyncedAt: new Date(),
         integrationId,
-        projectId,
         createdById: project.createdBy,
+      },
+      update: {
+        ...issueFields,
+        isDeleted: false,
       },
     });
 
