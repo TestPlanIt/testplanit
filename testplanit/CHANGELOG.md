@@ -1,3 +1,9 @@
+## [0.34.0](https://github.com/TestPlanIt/testplanit/compare/v0.33.4...v0.34.0) (2026-06-01)
+
+### Features
+
+* **reports:** add Automation Candidates report ([#381](https://github.com/TestPlanIt/testplanit/issues/381)) ([8123bb4](https://github.com/TestPlanIt/testplanit/commit/8123bb40f6c8873efec2dc6fe492d80fee048b47))
+
 ## [0.33.4](https://github.com/TestPlanIt/testplanit/compare/v0.33.3...v0.33.4) (2026-05-31)
 
 ### Enhancements
