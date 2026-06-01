@@ -607,9 +607,7 @@ async function handleSharedReportBypass(
     body = {};
   }
   const bodyRecord =
-    body && typeof body === "object" && body !== null
-      ? (body as Record<string, unknown>)
-      : {};
+    body && typeof body === "object" ? (body as Record<string, unknown>) : {};
   const projectId = bodyRecord.projectId;
   if (typeof projectId !== "number" || !Number.isInteger(projectId)) {
     return NextResponse.json(
