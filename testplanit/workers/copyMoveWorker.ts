@@ -588,24 +588,48 @@ const processor = async (
         );
 
         const newCaseId = await prisma.$transaction(async (tx: any) => {
-          // a. Create the target RepositoryCases row
-          const newCase = await tx.repositoryCases.create({
-            data: {
+          // a. Create-or-restore the target RepositoryCases row. A prior
+          //    soft-deleted case at the same (projectId, name, className,
+          //    source) tuple (e.g. the user previously deleted a copy
+          //    with the same name) gets resurrected with the fresh
+          //    payload instead of 23505ing. Prisma's compound-unique
+          //    upsert rejects null for nullable members like `className`,
+          //    so the find-then-branch pattern is the typesafe path.
+          const caseFields = {
+            repositoryId: job.data.targetRepositoryId,
+            folderId: caseFolderId,
+            templateId: effectiveTargetTemplateId,
+            stateId: job.data.targetDefaultWorkflowStateId,
+            automated: sourceCase.automated,
+            estimate: sourceCase.estimate,
+            creatorId: sourceCase.creatorId,
+            order: caseOrder,
+            currentVersion: 1,
+          };
+          const softDeletedExisting = await tx.repositoryCases.findFirst({
+            where: {
               projectId: job.data.targetProjectId,
-              repositoryId: job.data.targetRepositoryId,
-              folderId: caseFolderId,
-              templateId: effectiveTargetTemplateId,
-              stateId: job.data.targetDefaultWorkflowStateId,
               name: caseName,
               className: sourceCase.className,
               source: sourceCase.source,
-              automated: sourceCase.automated,
-              estimate: sourceCase.estimate,
-              creatorId: sourceCase.creatorId,
-              order: caseOrder,
-              currentVersion: 1,
+              isDeleted: true,
             },
+            select: { id: true },
           });
+          const newCase = softDeletedExisting
+            ? await tx.repositoryCases.update({
+                where: { id: softDeletedExisting.id },
+                data: { ...caseFields, isDeleted: false },
+              })
+            : await tx.repositoryCases.create({
+                data: {
+                  projectId: job.data.targetProjectId,
+                  name: caseName,
+                  className: sourceCase.className,
+                  source: sourceCase.source,
+                  ...caseFields,
+                },
+              });
 
           // b. Create Steps
           for (const step of sourceCase.steps) {

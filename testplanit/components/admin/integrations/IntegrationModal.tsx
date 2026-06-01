@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable react-hooks/incompatible-library -- This file consumes a library API (TanStack Table / TanStack Virtual / react-hook-form watch) that returns unstable function references by design; React Compiler auto-skips memoization here and the lint rule reports it. */
 
 import { Button } from "@/components/ui/button";
 import {
@@ -19,7 +20,7 @@ import {
 import { HelpPopover } from "@/components/ui/help-popover";
 import { Input } from "@/components/ui/input";
 import {
-  useCreateIntegration,
+  useUpsertIntegration,
   useUpdateIntegration,
 } from "@/lib/hooks/integration";
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
@@ -93,7 +94,12 @@ export function IntegrationModal({
   const [isTesting, setIsTesting] = useState(false);
   const [testPassed, setTestPassed] = useState(false);
 
-  const createIntegrationMutation = useCreateIntegration();
+  // Upsert (not create) so re-adding an integration with the same name
+  // as a soft-deleted one resurrects the row with the new payload
+  // instead of failing on the unique-name constraint. The new-name
+  // collision against an ACTIVE row is still rejected by the API route's
+  // explicit duplicate-name check before the mutation runs.
+  const createIntegrationMutation = useUpsertIntegration();
   const updateIntegrationMutation = useUpdateIntegration();
 
   const isCreating = createIntegrationMutation.status === "pending";
@@ -214,9 +220,16 @@ export function IntegrationModal({
       ...(testPassed && !integration && { status: "ACTIVE" }),
     };
 
+    // Edit path stays an update-by-id. Add path is an upsert keyed by
+    // the unique `name` so a soft-deleted row gets resurrected with the
+    // new payload + isDeleted: false; otherwise a fresh row is created.
     const data = integration
       ? { where: { id: integration.id }, data: submitData }
-      : { data: submitData };
+      : {
+          where: { name: submitData.name },
+          create: submitData,
+          update: { ...submitData, isDeleted: false },
+        };
 
     mutate(data as any, {
       onSuccess: () => {

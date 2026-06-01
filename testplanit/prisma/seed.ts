@@ -1508,10 +1508,20 @@ async function seedMilestoneTypes() {
 async function seedDefaultTemplate() {
   console.log("Seeding default template...");
 
-  // Ensure no other template is marked as default
-  await prisma.templates.updateMany({
-    where: { isDefault: true },
-    data: { isDefault: false },
+  // Respect the admin's explicit default choice. The seed runs on every
+  // application upgrade (see `docker-compose.*.yml`), and previously this
+  // function force-demoted every `isDefault: true` row and then
+  // re-promoted "Default Template", silently overwriting whatever the
+  // admin had picked — with no audit trail, because seed uses the raw
+  // prisma client and bypasses the `$extends` audit middleware.
+  //
+  // New rule: ONLY install "Default Template" as the default when the
+  // tenant has no active default template at all (fresh install or
+  // recovery after the active default was soft-deleted). Otherwise
+  // create / update the row without touching its `isDefault` flag.
+  const existingActiveDefault = await prisma.templates.findFirst({
+    where: { isDefault: true, isDeleted: false },
+    select: { id: true, templateName: true },
   });
 
   // Fetch standard case and result fields
@@ -1544,16 +1554,27 @@ async function seedDefaultTemplate() {
     return;
   }
 
-  // Create the default template
+  // Create the default template. On first install (no existing default),
+  // mark it as the default. On subsequent upgrades the row already
+  // exists, the `update` block runs, and `isDefault`/`isEnabled` are NOT
+  // touched — preserving whatever the admin chose.
   const defaultTemplate = await prisma.templates.upsert({
-    where: { templateName: "Default Template" }, // Using name as a unique identifier for upsert
-    update: { isDefault: true, isEnabled: true }, // Ensure it's default and enabled if it exists
+    where: { templateName: "Default Template" },
+    update: {},
     create: {
       templateName: "Default Template",
-      isDefault: true,
+      isDefault: existingActiveDefault === null,
       isEnabled: true,
     },
   });
+  if (
+    existingActiveDefault &&
+    existingActiveDefault.templateName !== "Default Template"
+  ) {
+    console.log(
+      `Skipped re-promoting "Default Template" — admin's choice "${existingActiveDefault.templateName}" preserved.`
+    );
+  }
 
   // Assign case fields in specific order
   const caseAssignments = [

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // --- Stable mock refs via vi.hoisted() ---
 const {
-  mockUseCreateIntegration,
+  mockUseUpsertIntegration,
   mockUseUpdateIntegration,
   mockCreateMutate,
   mockUpdateMutate,
@@ -12,7 +12,7 @@ const {
   const mockCreateMutate = vi.fn();
   const mockUpdateMutate = vi.fn();
   return {
-    mockUseCreateIntegration: vi.fn(),
+    mockUseUpsertIntegration: vi.fn(),
     mockUseUpdateIntegration: vi.fn(),
     mockCreateMutate,
     mockUpdateMutate,
@@ -22,7 +22,7 @@ const {
 // --- Mocks ---
 
 vi.mock("@/lib/hooks/integration", () => ({
-  useCreateIntegration: mockUseCreateIntegration,
+  useUpsertIntegration: mockUseUpsertIntegration,
   useUpdateIntegration: mockUseUpdateIntegration,
 }));
 
@@ -161,7 +161,7 @@ describe("IntegrationModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    mockUseCreateIntegration.mockReturnValue({
+    mockUseUpsertIntegration.mockReturnValue({
       mutate: mockCreateMutate,
       status: "idle",
     });

@@ -40,6 +40,20 @@ function buildTx(opts: BuildTxOpts = {}) {
   const calls: string[] = [];
   const tx = {
     testCaseParameter: {
+      // Create-path is now an upsert so a soft-deleted parameter with
+      // the same (testCaseId, name) gets resurrected instead of 23505ing.
+      // The mock honors `createReturn` for the "no soft-deleted match"
+      // case to stay compatible with existing assertions on the result
+      // shape.
+      upsert: vi.fn(
+        async (args: {
+          where: Record<string, unknown>;
+          create: Record<string, unknown>;
+        }) => {
+          calls.push("testCaseParameter.upsert");
+          return opts.createReturn ?? { id: 1, ...args.create };
+        }
+      ),
       create: vi.fn(async (args: { data: Record<string, unknown> }) => {
         calls.push("testCaseParameter.create");
         return opts.createReturn ?? { id: 1, ...args.data };
@@ -96,7 +110,7 @@ describe("createParameterInTransaction", () => {
       session
     );
 
-    expect(tx.testCaseParameter.create).toHaveBeenCalledTimes(1);
+    expect(tx.testCaseParameter.upsert).toHaveBeenCalledTimes(1);
     expect(updateHasParameters).toHaveBeenCalledTimes(1);
     expect(updateHasParameters).toHaveBeenCalledWith(42, tx);
 
@@ -120,8 +134,8 @@ describe("createParameterInTransaction", () => {
       })
     );
 
-    // Order: create -> updateHasParameters -> repositoryCases.update -> snapshot
-    const createIdx = calls.indexOf("testCaseParameter.create");
+    // Order: upsert -> updateHasParameters -> repositoryCases.update -> snapshot
+    const createIdx = calls.indexOf("testCaseParameter.upsert");
     const repoIdx = calls.indexOf("repositoryCases.update");
     expect(createIdx).toBeLessThan(repoIdx);
   });

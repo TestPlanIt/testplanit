@@ -44,7 +44,16 @@ vi.mock("../lib/queueNames", () => ({
 // ─── Mock prisma ──────────────────────────────────────────────────────────────
 
 const mockTx = {
-  repositoryCases: { create: vi.fn(), update: vi.fn(), deleteMany: vi.fn() },
+  repositoryCases: {
+    // findFirst: the copy/move flow now probes for a soft-deleted row at
+    // the target's (projectId, name, className, source) tuple before
+    // creating, so it can resurrect instead of 23505ing. Default to null
+    // (no soft-deleted match) so existing tests hit the create path.
+    findFirst: vi.fn().mockResolvedValue(null),
+    create: vi.fn(),
+    update: vi.fn(),
+    deleteMany: vi.fn(),
+  },
   steps: { create: vi.fn() },
   caseFieldValues: { create: vi.fn() },
   attachments: { create: vi.fn() },
@@ -279,7 +288,9 @@ describe("CopyMoveWorker", () => {
     mockPrisma.repositoryFolders.create.mockResolvedValue({ id: 5000 });
     mockPrisma.repositoryFolders.updateMany.mockResolvedValue({ count: 0 });
 
-    // Transaction: create returns new case with id 1001
+    // Transaction: findFirst returns null (no soft-deleted), create
+    // returns new case with id 1001.
+    mockTx.repositoryCases.findFirst.mockResolvedValue(null);
     mockTx.repositoryCases.create.mockResolvedValue({ id: 1001 });
     mockTx.repositoryCases.update.mockResolvedValue({});
 
