@@ -1,3 +1,9 @@
+## [0.34.1](https://github.com/TestPlanIt/testplanit/compare/v0.34.0...v0.34.1) (2026-06-01)
+
+### Bug Fixes
+
+* patch bundle (React Compiler opt-out + soft-delete resurrection + default-template seed) ([#382](https://github.com/TestPlanIt/testplanit/issues/382)) ([711db9a](https://github.com/TestPlanIt/testplanit/commit/711db9af72d3c3a41c470627e23aa6e1d6155677)), closes [react.dev/learn/react-compiler#opting-out-from-the-compiler](https://github.com/react.dev/learn/react-compiler/issues/opting-out-from-the-compiler)
+
 ## [0.34.0](https://github.com/TestPlanIt/testplanit/compare/v0.33.4...v0.34.0) (2026-06-01)
 
 ### Features
