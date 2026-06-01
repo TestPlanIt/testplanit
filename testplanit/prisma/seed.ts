@@ -2901,6 +2901,83 @@ void main() {
 }
 `;
 
+  // --- Mobilewright (TypeScript, @mobilewright/test fixtures) ---
+  // Playwright-style mobile testing framework for iOS + Android.
+  // Fixture-based variant uses the `@mobilewright/test` package, which
+  // exposes `device` and `screen` per test (mirrors Playwright Test's
+  // `page` fixture). Recommended for proper test suites.
+  // Docs: https://github.com/mobile-next/mobilewright
+  const mobilewrightFixtureHeader = `import { test, expect } from "@mobilewright/test";`;
+
+  const mobilewrightFixtureBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+test.use({ bundleId: "com.example.app" });
+
+test.describe("{{{name}}}", () => {
+{{#steps}}
+  // Step {{{order}}}: {{{step}}}
+  // Expected: {{{expectedResult}}}
+  test("Step {{order}} - {{step}}", async ({ device, screen, bundleId }) => {
+    // TODO: Implement test logic
+    // Examples:
+    //   await screen.getByRole("button", { name: "Sign In" }).tap();
+    //   await screen.getByLabel("Email").fill("user@example.com");
+    //   await expect(screen.getByText("Welcome")).toBeVisible();
+  });
+
+{{/steps}}
+});
+`;
+
+  // --- Mobilewright (TypeScript, standalone API) ---
+  // Direct `ios.launch()` / `android.launch()` entry — useful for ad-hoc
+  // automation scripts or when integrating into an existing test runner
+  // that doesn't use the `@mobilewright/test` fixtures. Each step block
+  // gets its own self-contained async IIFE so a single script file can
+  // run end-to-end without a test framework.
+  const mobilewrightStandaloneHeader = `import { ios, expect } from "mobilewright";`;
+
+  const mobilewrightStandaloneBody = `/**
+ * Test Case: {{{name}}}
+ * ID: {{{id}}}
+ * State: {{{state}}}
+ * Tags: {{{tags}}}
+ * Created by: {{{createdBy}}}
+ */
+async function run{{{id}}}() {
+  // Swap \`ios\` for \`android\` (or read platform from mobilewright.config.ts).
+  const device = await ios.launch({ bundleId: "com.example.app" });
+  const { screen } = device;
+
+  try {
+{{#steps}}
+    // Step {{{order}}}: {{{step}}}
+    // Expected: {{{expectedResult}}}
+    {
+      // TODO: Implement step logic
+      // Examples:
+      //   await screen.getByRole("button", { name: "Sign In" }).tap();
+      //   await screen.getByLabel("Email").fill("user@example.com");
+      //   await expect(screen.getByText("Welcome")).toBeVisible();
+    }
+
+{{/steps}}
+  } finally {
+    await device.close();
+  }
+}
+
+run{{{id}}}().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
+`;
+
   // --- Earl Grey (Swift) ---
   const earlGreyHeader = `import XCTest`;
 
@@ -3578,6 +3655,32 @@ class Test{{{id}}}: XCTestCase {
       footerBody: null as string | null,
       fileExtension: ".swift",
       language: "swift",
+      isDefault: false,
+    },
+    {
+      name: "Mobilewright (@mobilewright/test)",
+      description:
+        "Generates Mobilewright test stubs in TypeScript using the @mobilewright/test fixtures (Playwright-style device + screen fixtures). One template drives iOS + Android against UIKit, SwiftUI, Jetpack Compose, Android Views, React Native, Expo, .NET MAUI, NativeScript, and Cordova/Capacitor apps.",
+      category: "Mobile Testing",
+      framework: "Mobilewright",
+      headerBody: mobilewrightFixtureHeader,
+      templateBody: mobilewrightFixtureBody,
+      footerBody: null as string | null,
+      fileExtension: ".test.ts",
+      language: "typescript",
+      isDefault: false,
+    },
+    {
+      name: "Mobilewright (Standalone)",
+      description:
+        "Generates Mobilewright automation scripts in TypeScript using the standalone ios/android launcher API — no test runner required. Same cross-platform reach as the fixture variant (UIKit, SwiftUI, Jetpack Compose, Android Views, React Native, Expo, .NET MAUI, NativeScript, Cordova/Capacitor). Useful for ad-hoc scripts or custom runners.",
+      category: "Mobile Testing",
+      framework: "Mobilewright",
+      headerBody: mobilewrightStandaloneHeader,
+      templateBody: mobilewrightStandaloneBody,
+      footerBody: null as string | null,
+      fileExtension: ".ts",
+      language: "typescript",
       isDefault: false,
     },
   ];
