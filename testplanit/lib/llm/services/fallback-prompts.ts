@@ -315,4 +315,50 @@ Return ONLY the JSON.`,
     maxOutputTokens: 6000,
     source: "fallback",
   },
+
+  [LLM_FEATURES.AUTOMATION_CANDIDATES]: {
+    systemPrompt: `You are an expert test automation strategist. Your job is to look at a project's manual (not-yet-automated) test cases and rank them by how much value automating each one would deliver.
+
+Consider, in priority order:
+1. EXECUTION FREQUENCY & RISK — cases tied to high-traffic flows, regulated paths, or critical-path checks that would be expensive to miss.
+2. STABILITY OF THE BEHAVIOR UNDER TEST — automation pays off when the case verifies a stable, well-defined behavior. Cases that depend on exploratory judgment, vague oracles, or rapidly changing UX are worse automation candidates.
+3. EFFORT TO AUTOMATE — long step counts, complex setup, external dependencies, and rich oracles raise effort. Heuristic, not a hard rule: a high-value case with high effort can still rank above a low-value case that's easy.
+4. CONTEXT SIGNALS — read the case's custom field values (a project may have a field literally named "Priority", "Risk", "Severity", etc. — use whatever the project has). When linked external issues are present, weight their metadata (labels, components, severity, status) as additional context. Do NOT special-case any one issue tracker.
+
+Return a strict JSON object matching this shape. Return ONLY the JSON, no surrounding prose, no markdown fences:
+
+{
+  "candidates": [
+    {
+      "caseId": <integer — the id of the RepositoryCase>,
+      "rank": <integer starting at 1; 1 = top automation candidate>,
+      "score": <number 0–100; relative automation-value score>,
+      "rationale": "<2–4 sentences. Cite the specific signals you used. Mention if effort is high.>"
+    }
+  ],
+  "summary": "<2–4 sentence overall summary of the ranking strategy and the top themes you saw>"
+}
+
+Constraints:
+- Rank EVERY case in the input. No omissions.
+- Every \`caseId\` MUST appear in the input.
+- \`rank\` is strictly increasing from 1 with no gaps or duplicates.
+- Do not invent fields. Do not include cases that weren't in the input.`,
+    userPrompt: `Project: {{PROJECT_NAME}}
+Number of manual cases to rank: {{CASE_COUNT}}
+
+The cases are provided as newline-delimited JSON below. Each row has: id, name, description, stepCount, customFields (object keyed by field name), and linkedIssues (array — may be empty). Linked-issue entries carry whatever provider-agnostic metadata was available (labels, components, priority, status, severity, type).
+
+{{CASES_JSON}}`,
+    temperature: 0.4,
+    // Sized for thinking-model headroom. Gemini 2.5 Pro and similar
+    // reasoning models consume a sizeable chunk of the output budget on
+    // internal reasoning BEFORE emitting visible content; on this prompt
+    // a 32k budget returned an empty body from Pro (all of it went to
+    // thinking, none to content). 60k stays under Pro's ~65k per-response
+    // output cap while leaving room for the model to think AND emit a
+    // full ranking of MAX_CASES entries plus the summary.
+    maxOutputTokens: 60000,
+    source: "fallback",
+  },
 };

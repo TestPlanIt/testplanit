@@ -5178,7 +5178,8 @@
         "auto_tag": "Đề xuất thẻ AI",
         "duplicate_detection": "Phát hiện trùng lặp",
         "generate_from_url": "Tạo các trường hợp kiểm thử từ URL (Yêu cầu)",
-        "generate_from_url_app": "Tạo trường hợp kiểm thử từ URL (Kiểm thử ứng dụng)"
+        "generate_from_url_app": "Tạo trường hợp kiểm thử từ URL (Kiểm thử ứng dụng)",
+        "automation_candidates": "Báo cáo ứng viên tự động hóa"
       }
     },
     "elasticsearch": {
@@ -6499,6 +6500,10 @@
         "iterationMatrix": {
           "label": "Ma trận lặp kiểm thử tham số hóa",
           "description": "Các trường hợp tham số hóa × cấu hình × hàng tham số với tổng hợp trạng thái tồi tệ nhất cho mỗi ô"
+        },
+        "automationCandidates": {
+          "label": "Ứng viên tự động hóa",
+          "description": "Danh sách xếp hạng các trường hợp kiểm thử thủ công cần tự động hóa tiếp theo, dựa trên nội dung trường hợp, trường tùy chỉnh và ngữ cảnh vấn đề liên kết."
         }
       },
       "flakyTests": {
@@ -6582,6 +6587,117 @@
           "alwaysFailing": "Luôn thất bại (0%): -30",
           "lowPassRate": "Tỷ lệ đậu thấp (<50%): -20",
           "lowExecutions": "Ít lần thực thi (<3): -10"
+        }
+      },
+      "automationCandidates": {
+        "casesToRank": "Các trường hợp cần xếp hạng",
+        "casesToRankHelp": "Cần gửi bao nhiêu trường hợp kiểm thử thủ công đến LLM để xếp hạng? Số lượng càng nhiều thì phạm vi bao phủ càng rộng nhưng LLM sẽ mất thời gian xử lý lâu hơn tương ứng (phạm vi: 5–100; mô hình tư duy có thể chạy vài phút ở mức tối đa).",
+        "selectionStrategy": "Chiến lược lựa chọn",
+        "selectionStrategyHelp": "Chiến lược nào quyết định trường hợp thủ công nào sẽ được gửi đi khi dự án vượt quá giới hạn mỗi thế hệ? **Được thực thi nhiều nhất** (mặc định) chọn các trường hợp đã được chạy nhiều nhất trong các lần chạy thử nghiệm — mang lại lợi tức đầu tư (ROI) tốt nhất cho tự động hóa. **Không ổn định nhất trước** chọn các trường hợp có kết quả đạt/không đạt thay đổi nhiều nhất — ứng cử viên hàng đầu cho một oracle tự động hóa mang tính xác định. **Thời gian thực thi lâu nhất** chọn các trường hợp có dự báo thực thi thủ công cao nhất (do người kiểm thử đưa ra; sẽ quay lại ước tính ban đầu) — tự động hóa trực tiếp giúp tiết kiệm thời gian của người kiểm thử nhiều nhất. **Cũ nhất trước** chọn các trường hợp thủ công có thời gian tồn tại lâu (ổn định, trưởng thành). **Mới nhất trước** chọn các trường hợp được tạo gần đây nhất. **Ngẫu nhiên** là một mẫu không thiên vị. Chỉ các trường hợp thủ công có trạng thái quy trình làm việc là *Đang tiến hành* hoặc *Đã hoàn thành* mới đủ điều kiện.",
+        "strategies": {
+          "most_executed": "Được thực hiện nhiều nhất (lợi nhuận đầu tư cao nhất)",
+          "flakiest_first": "Kẻ dễ hỏng nhất trước (đảo ngược kết quả đậu/trượt)",
+          "longest_first": "Thời gian thực thi lâu nhất (thời gian tiết kiệm được)",
+          "oldest_first": "Cũ nhất trước (đã chứng minh được tính ổn định)",
+          "newest_first": "Bài viết mới nhất trước (bài viết được viết gần đây nhất)",
+          "random": "Mẫu ngẫu nhiên"
+        },
+        "title": "Ứng viên tự động hóa",
+        "titleWithStrategy": "Các ứng viên tự động hóa được xếp hạng theo {strategy}",
+        "heuristicBadge": "Tự tìm tòi",
+        "heuristicBadgeTooltip": "Dự án này chưa cấu hình tích hợp LLM, do đó bảng xếp hạng này được xây dựng trực tiếp từ chỉ số chiến lược lựa chọn. Hãy cấu hình LLM (Quản trị → Mô hình AI) để có khả năng suy luận chi tiết hơn, cân nhắc các trường tùy chỉnh, ngữ cảnh vấn đề liên kết và nội dung trường hợp.",
+        "sourcedFromNewestN": "Đầu trang {ranked} trong số {total} trường hợp thủ công đủ điều kiện thông qua {strategy}",
+        "sourcedFromAll": "Đã xếp hạng tất cả {total} trường hợp thủ công đủ điều kiện thông qua {strategy}",
+        "metric": {
+          "executions": "{count} chạy",
+          "forecast": "{value} dự báo",
+          "forecastUnset": "Không có dự báo",
+          "flakiness": "Lật {value}%",
+          "flakinessUnset": "Không có dữ liệu lật",
+          "createdLabel": "Tạo"
+        },
+        "heuristic": {
+          "intro": "Dự án này chưa cấu hình tích hợp LLM, do đó thứ hạng được xây dựng trực tiếp từ chỉ số chiến lược lựa chọn. Hãy cấu hình tích hợp LLM (Quản trị → Mô hình AI) để cho phép suy luận chi tiết hơn, cân nhắc các trường tùy chỉnh, ngữ cảnh vấn đề liên kết và nội dung trường hợp cùng với chỉ số.",
+          "rankedSummary": "{ranked} trong số {totalEligible} trường hợp thủ công đủ điều kiện được xếp hạng.",
+          "strategyExplanation": {
+            "most_executed": "Các trường hợp được sắp xếp theo số lần thực hiện thủ công (cao nhất trước) — đây là chỉ số đại diện cho tần suất hồi quy, trong đó tự động hóa trực tiếp giúp tiết kiệm được nhiều thời gian nhất cho người kiểm thử.",
+            "flakiest_first": "Các trường hợp được sắp xếp theo mức độ không ổn định gần đúng (số lần chuyển đổi thành công/thất bại) — các bài kiểm tra thủ công không ổn định là những ứng cử viên hàng đầu cho một hệ thống tự động hóa mang tính xác định.",
+            "longest_first": "Các trường hợp được sắp xếp theo dự báo thực hiện thủ công (trường hợp dài nhất trước; dự báo thủ công khi có, sẽ sử dụng ước tính nếu cần) — tự động hóa giúp tiết kiệm phần lớn thời gian của người kiểm thử đối với các trường hợp này.",
+            "oldest_first": "Các trường hợp được sắp xếp theo ngày tạo (cũ nhất trước) — các trường hợp thủ công tồn tại lâu năm thường là các hành vi ổn định, hoàn thiện và an toàn để tự động hóa mà không cần chỉnh sửa lại.",
+            "newest_first": "Các trường hợp được sắp xếp theo ngày tạo (mới nhất trước) — các trường hợp mới được tạo ra có nhiều khả năng cần được kiểm tra độ bao phủ thực thi ngay lập tức.",
+            "random": "Các trường hợp được chọn ngẫu nhiên một cách khách quan từ tập hợp các đối tượng đủ điều kiện."
+          },
+          "rationale": {
+            "mostExecutedWithCount": "Đã thực hiện {count, plural, =1 {1 lần} other {# lần}} thủ công trong các lần chạy thử nghiệm của dự án này — việc tự động hóa trực tiếp sẽ giúp tiết kiệm thời gian của người kiểm thử trong mỗi lần chạy sau này.",
+            "mostExecutedNone": "Chưa có lịch sử thực thi nào — thuật toán \"Được thực thi nhiều nhất\" không có tín hiệu nào để đánh giá trường hợp này so với các trường hợp khác.",
+            "flakiestWithScore": "Độ không ổn định {percent}% (kết quả đạt/không đạt đảo ngược trong {description} lần thực thi) — các bài kiểm tra thủ công không ổn định làm lãng phí thời gian của người kiểm thử trong mỗi lần chạy và sẽ được hưởng lợi nhiều nhất từ một hệ thống tự động hóa có tính xác định.",
+            "flakiestNone": "Hiện chưa có kết quả khác nhau nào — thuật toán Flakiest First chưa thể đo lường sự thay đổi kết quả đạt/không đạt trong trường hợp này.",
+            "longestWithDuration": "Dự báo thực thi thủ công {duration} — tự động hóa các bài kiểm tra thủ công kéo dài giúp tiết kiệm thời gian của người kiểm thử nhiều hơn một cách tương ứng trong mỗi lần chạy.",
+            "longestNone": "Không có dự báo hoặc ước tính nào được thiết lập — thuật toán Longest to Execute không có dữ liệu về thời gian thực hiện cho trường hợp này.",
+            "oldest": "Tác giả {age} — các trường hợp thủ công tồn tại lâu dài thường là những hành vi trưởng thành, ổn định và an toàn để tự động hóa mà không cần làm lại.",
+            "newest": "Được tạo bởi {age} — các trường hợp mới được tạo ra có nhiều khả năng cần được kiểm tra độ chính xác thực thi ngay bây giờ.",
+            "random": "Mẫu ngẫu nhiên — được đưa vào như một tham chiếu không thiên vị; phương pháp phỏng đoán không có sự ưu tiên cố hữu nào đối với trường hợp này so với các trường hợp khác trong mẫu."
+          },
+          "flakinessFraction": {
+            "wellOverHalf": "hơn một nửa",
+            "roughlyHalf": "khoảng một nửa",
+            "meaningfulShare": "một phần có ý nghĩa",
+            "smallShare": "một phần nhỏ"
+          },
+          "duration": {
+            "seconds": "{seconds}s",
+            "minutes": "{minutes}m",
+            "hours": "{hours}h",
+            "hoursAndMinutes": "{hours}h {minutes}m"
+          },
+          "relativeAge": {
+            "today": "Hôm nay",
+            "days": "{count, plural, =1 {1 ngày trước} other {# ngày trước}}",
+            "months": "{count, plural, =1 {1 tháng trước} other {# tháng trước}}",
+            "years": "{count, plural, =1 {1 năm trước} other {# năm trước}}",
+            "unknown": "vào một thời điểm không xác định"
+          }
+        },
+        "subtitle": "Hệ thống đề xuất dựa trên xếp hạng của AI về các trường hợp kiểm thử thủ công nào nên được tự động hóa tiếp theo. Ảnh chụp màn hình được chia sẻ — sau khi được tạo, mọi người xem đều thấy cùng một xếp hạng cho đến khi có người tạo lại.",
+        "invalidProject": "Dự án không hợp lệ.",
+        "historyPlaceholder": "Chọn một ảnh chụp nhanh",
+        "generatedAt": "Được tạo ra",
+        "by": "qua",
+        "summaryHeading": "Bản tóm tắt",
+        "actions": {
+          "generate": "Tạo báo cáo",
+          "regenerate": "Tái tạo"
+        },
+        "status": {
+          "running": "Đang chạy",
+          "complete": "Hoàn thành",
+          "failed": "Thất bại"
+        },
+        "emptyState": {
+          "title": "Hiện chưa có ứng viên tự động hóa nào báo cáo.",
+          "canGenerate": "Nhấp vào Chạy báo cáo để xếp hạng các trường hợp kiểm thử thủ công của bạn.",
+          "noPermission": "Hãy yêu cầu quản trị viên dự án hoặc bất kỳ ai có quyền báo cáo tạo báo cáo đó."
+        },
+        "errors": {
+          "title": "Không thể tạo báo cáo.",
+          "generateFailed": "Không thể tạo báo cáo.",
+          "deleteFailed": "Không thể xóa ảnh chụp nhanh.",
+          "snapshotFailed": "Ảnh chụp nhanh này không được tạo ra."
+        },
+        "rankedList": {
+          "heading": "Các ứng viên được xếp hạng",
+          "streaming": "Đang phát trực tuyến…",
+          "streamingWithCount": "{count} trong số {total} được xếp hạng…",
+          "empty": "Đang chờ ứng viên đầu tiên…",
+          "caseRef": "Trường hợp thử nghiệm #{id}",
+          "score": "Điểm {score}"
+        },
+        "delete": {
+          "button": "Xóa bỏ",
+          "title": "Xóa ảnh chụp màn hình này?",
+          "description": "Ảnh chụp màn hình sẽ bị xóa khỏi lịch sử. Thao tác này không thể hoàn tác.",
+          "cancel": "Hủy bỏ",
+          "confirm": "Xóa bỏ"
         }
       },
       "issueTestCoverage": {

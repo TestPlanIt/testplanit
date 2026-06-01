@@ -315,6 +315,24 @@ function ReportBuilderContent({
     DateRange | undefined
   >(undefined);
 
+  // Automation Candidates state. Snapshot-style report has two knobs:
+  //   - how many manual cases to send to the LLM (default 25, max 100)
+  //   - which strategy picks the cases when the project has more than that
+  // The strategy default is most-executed — the regression-frequency proxy
+  // gives the highest automation ROI on average per the standard QA
+  // literature (ISTQB risk-based, Mike Cohn / Cohn's test pyramid, etc.).
+  const [automationCandidatesCount, setAutomationCandidatesCount] =
+    useState(25);
+  const [automationCandidatesStrategy, setAutomationCandidatesStrategy] =
+    useState<
+      | "most_executed"
+      | "flakiest_first"
+      | "longest_first"
+      | "oldest_first"
+      | "random"
+      | "newest_first"
+    >("most_executed");
+
   // Flaky tests state
   const [consecutiveRuns, setConsecutiveRuns] = useState(10);
   const [flipThreshold, setFlipThreshold] = useState(5);
@@ -1617,14 +1635,25 @@ function ReportBuilderContent({
     // Check if we need to run report for current reportType
     const hasRunForCurrentType = lastRunReportType.current === reportType;
 
+    // Snapshot-style LLM reports (automation-candidates) own their own
+    // generate trigger via the Run Report CustomEvent dispatch; auto-running
+    // them on mount would either fire a wasted LLM call or hit a wrong-shape
+    // route handler and stick the button in loading. Skip them here.
+    const isSnapshotStyleReport = matchesReportType(
+      reportType,
+      "automation-candidates"
+    );
+
     // For pre-built reports, auto-run even without dimensions/metrics
-    const shouldAutoRun = currentReport?.isPreBuilt
-      ? !hasRunForCurrentType && !loading && !error
-      : lastUsedDimensions.length > 0 &&
-        lastUsedMetrics.length > 0 &&
-        !hasRunForCurrentType &&
-        !loading &&
-        !error;
+    const shouldAutoRun = isSnapshotStyleReport
+      ? false
+      : currentReport?.isPreBuilt
+        ? !hasRunForCurrentType && !loading && !error
+        : lastUsedDimensions.length > 0 &&
+          lastUsedMetrics.length > 0 &&
+          !hasRunForCurrentType &&
+          !loading &&
+          !error;
 
     if (shouldAutoRun) {
       lastRunReportType.current = reportType;
@@ -1765,6 +1794,22 @@ function ReportBuilderContent({
   }, [mode, reportType, dimensionOptions, dimensions]);
 
   const handleRunReport = () => {
+    // Snapshot-style reports (LLM-generated) own their own data path and
+    // need an explicit "go" trigger to fire a new generation. We piggyback
+    // on Run Report so the user has one mental model: pick a report on the
+    // left, configure it on the left, click Run Report. The preset listens
+    // for this event and starts streaming.
+    if (matchesReportType(reportType, "automation-candidates")) {
+      window.dispatchEvent(
+        new CustomEvent("automation-candidates:run", {
+          detail: {
+            maxCases: automationCandidatesCount,
+            selectionStrategy: automationCandidatesStrategy,
+          },
+        })
+      );
+      return;
+    }
     setCurrentPage(1); // Reset to first page when running new report
     void runReport(dimensions, metrics);
   };
@@ -1902,15 +1947,23 @@ function ReportBuilderContent({
                         </Select>
                       </div>
 
-                      {/* Date Range Selection */}
-                      <div className="grid gap-2">
-                        <DateRangePickerField
-                          control={form.control}
-                          name="dateRange"
-                          label={tReports("dateRange.selectDateRange")}
-                          helpKey="reportBuilder.dateRange"
-                        />
-                      </div>
+                      {/* Date Range Selection. Snapshot-style LLM reports
+                          (automation-candidates) don't accept a date range —
+                          the LLM ranks the current state of every manual
+                          case, so a range would be meaningless. */}
+                      {!matchesReportType(
+                        reportType,
+                        "automation-candidates"
+                      ) && (
+                        <div className="grid gap-2">
+                          <DateRangePickerField
+                            control={form.control}
+                            name="dateRange"
+                            label={tReports("dateRange.selectDateRange")}
+                            helpKey="reportBuilder.dateRange"
+                          />
+                        </div>
+                      )}
 
                       {/* Date Grouping Selection for Automation Trends */}
                       {(reportType === "automation-trends" ||
@@ -2428,6 +2481,110 @@ function ReportBuilderContent({
                           <MatrixFilterPanel projectId={projectId} />
                         )}
 
+                      {/* Automation Candidates: selection strategy + how many cases to rank */}
+                      {matchesReportType(
+                        reportType,
+                        "automation-candidates"
+                      ) && (
+                        <div className="grid gap-4">
+                          <div className="grid gap-2">
+                            <div className="flex items-center gap-2">
+                              <label
+                                htmlFor="automation-candidates-strategy"
+                                className="text-sm font-medium"
+                              >
+                                {tReports(
+                                  "automationCandidates.selectionStrategy"
+                                )}
+                              </label>
+                              <HelpPopover
+                                helpKey={`## ${tReports("automationCandidates.selectionStrategy")}\n${tReports("automationCandidates.selectionStrategyHelp")}`}
+                              />
+                            </div>
+                            <Select
+                              value={automationCandidatesStrategy}
+                              onValueChange={(v) =>
+                                setAutomationCandidatesStrategy(
+                                  v as typeof automationCandidatesStrategy
+                                )
+                              }
+                            >
+                              <SelectTrigger
+                                id="automation-candidates-strategy"
+                                data-testid="automation-candidates-strategy"
+                              >
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="most_executed">
+                                  {tReports(
+                                    "automationCandidates.strategies.most_executed"
+                                  )}
+                                </SelectItem>
+                                <SelectItem value="flakiest_first">
+                                  {tReports(
+                                    "automationCandidates.strategies.flakiest_first"
+                                  )}
+                                </SelectItem>
+                                <SelectItem value="longest_first">
+                                  {tReports(
+                                    "automationCandidates.strategies.longest_first"
+                                  )}
+                                </SelectItem>
+                                <SelectItem value="oldest_first">
+                                  {tReports(
+                                    "automationCandidates.strategies.oldest_first"
+                                  )}
+                                </SelectItem>
+                                <SelectItem value="newest_first">
+                                  {tReports(
+                                    "automationCandidates.strategies.newest_first"
+                                  )}
+                                </SelectItem>
+                                <SelectItem value="random">
+                                  {tReports(
+                                    "automationCandidates.strategies.random"
+                                  )}
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="grid gap-2">
+                            <div className="flex items-center gap-2">
+                              <label
+                                htmlFor="automation-candidates-count"
+                                className="text-sm font-medium"
+                              >
+                                {tReports("automationCandidates.casesToRank")}
+                              </label>
+                              <HelpPopover
+                                helpKey={`## ${tReports("automationCandidates.casesToRank")}\n${tReports("automationCandidates.casesToRankHelp")}`}
+                              />
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <input
+                                id="automation-candidates-count"
+                                data-testid="automation-candidates-count"
+                                type="range"
+                                min={5}
+                                max={100}
+                                step={5}
+                                value={automationCandidatesCount}
+                                onChange={(e) =>
+                                  setAutomationCandidatesCount(
+                                    Number(e.target.value)
+                                  )
+                                }
+                                className="flex-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                              />
+                              <span className="w-10 text-sm font-mono text-center">
+                                {automationCandidatesCount}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Run Report Button */}
                       <Button
                         type="button"
@@ -2796,11 +2953,29 @@ function ReportBuilderContent({
                         projectId,
                         filters: matrixFilters,
                       }
-                    : {
-                        reportType,
-                        // Use the last request body which contains ALL parameters
-                        ...(lastRequestBody || {}),
-                      }
+                    : matchesReportType(reportType, "automation-candidates")
+                      ? {
+                          reportType,
+                          projectId,
+                          // Capture the snapshot the user is currently
+                          // viewing — the preset mirrors selection to
+                          // `?snapshotId=N` so the share resolves to
+                          // that specific snapshot, not whichever one
+                          // happens to be latest later.
+                          ...(searchParams.get("snapshotId")
+                            ? {
+                                snapshotId: Number.parseInt(
+                                  searchParams.get("snapshotId")!,
+                                  10
+                                ),
+                              }
+                            : {}),
+                        }
+                      : {
+                          reportType,
+                          // Use the last request body which contains ALL parameters
+                          ...(lastRequestBody || {}),
+                        }
                 }
                 reportTitle={
                   reportTypes.find((r) => r.id === reportType)?.label

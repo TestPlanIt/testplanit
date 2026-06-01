@@ -419,6 +419,12 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'user',
+                }, generatedLlmReportSnapshots: {
+                    name: "generatedLlmReportSnapshots",
+                    type: "LlmReportSnapshot",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'generatedBy',
                 }, testmoImportJobs: {
                     name: "testmoImportJobs",
                     type: "TestmoImportJob",
@@ -1089,6 +1095,12 @@ const metadata: ModelMeta = {
                 }, llmResponseCaches: {
                     name: "llmResponseCaches",
                     type: "LlmResponseCache",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'project',
+                }, llmReportSnapshots: {
+                    name: "llmReportSnapshots",
+                    type: "LlmReportSnapshot",
                     isDataModel: true,
                     isArray: true,
                     backLink: 'project',
@@ -5958,6 +5970,12 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'llmIntegration',
+                }, llmReportSnapshots: {
+                    name: "llmReportSnapshots",
+                    type: "LlmReportSnapshot",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'llmIntegration',
                 },
             }, uniqueConstraints: {
                 id: {
@@ -8710,6 +8728,95 @@ const metadata: ModelMeta = {
                 },
             },
         },
+        llmReportSnapshot: {
+            name: 'LlmReportSnapshot', fields: {
+                id: {
+                    name: "id",
+                    type: "Int",
+                    isId: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                    isAutoIncrement: true,
+                }, projectId: {
+                    name: "projectId",
+                    type: "Int",
+                    isForeignKey: true,
+                    relationField: 'project',
+                }, project: {
+                    name: "project",
+                    type: "Projects",
+                    isDataModel: true,
+                    backLink: 'llmReportSnapshots',
+                    isRelationOwner: true,
+                    onDeleteAction: 'Cascade',
+                    foreignKeyMapping: { "id": "projectId" },
+                }, reportType: {
+                    name: "reportType",
+                    type: "String",
+                }, status: {
+                    name: "status",
+                    type: "String",
+                }, llmIntegrationId: {
+                    name: "llmIntegrationId",
+                    type: "Int",
+                    isOptional: true,
+                    isForeignKey: true,
+                    relationField: 'llmIntegration',
+                }, llmIntegration: {
+                    name: "llmIntegration",
+                    type: "LlmIntegration",
+                    isDataModel: true,
+                    isOptional: true,
+                    backLink: 'llmReportSnapshots',
+                    isRelationOwner: true,
+                    foreignKeyMapping: { "id": "llmIntegrationId" },
+                }, generatedById: {
+                    name: "generatedById",
+                    type: "String",
+                    isForeignKey: true,
+                    relationField: 'generatedBy',
+                }, generatedBy: {
+                    name: "generatedBy",
+                    type: "User",
+                    isDataModel: true,
+                    backLink: 'generatedLlmReportSnapshots',
+                    isRelationOwner: true,
+                    foreignKeyMapping: { "id": "generatedById" },
+                }, output: {
+                    name: "output",
+                    type: "Json",
+                    isOptional: true,
+                }, errorMessage: {
+                    name: "errorMessage",
+                    type: "String",
+                    isOptional: true,
+                }, startedAt: {
+                    name: "startedAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, completedAt: {
+                    name: "completedAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, isDeleted: {
+                    name: "isDeleted",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, createdAt: {
+                    name: "createdAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, updatedAt: {
+                    name: "updatedAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@updatedAt", "args": [] }],
+                },
+            }, uniqueConstraints: {
+                id: {
+                    name: "id",
+                    fields: ["id"]
+                },
+            },
+        },
         ssoProvider: {
             name: 'SsoProvider', fields: {
                 id: {
@@ -9550,7 +9657,7 @@ const metadata: ModelMeta = {
         user: ['Account', 'PasswordHistory', 'UserPreferences', 'ApiToken', 'GroupAssignment', 'UserIntegrationAuth', 'UserProjectPermission', 'Notification', 'ShareLink', 'CommentMention'],
         groups: ['GroupAssignment', 'GroupProjectPermission'],
         roles: ['RolePermission'],
-        projects: ['ProjectAssignment', 'ProjectStatusAssignment', 'ProjectConfigurationAssignment', 'ProjectWorkflowAssignment', 'Milestones', 'MilestoneTypesAssignment', 'TemplateProjectAssignment', 'CaseExportTemplateProjectAssignment', 'Repositories', 'RepositoryFolders', 'DuplicateScanResult', 'StepSequenceMatch', 'RepositoryCases', 'RepositoryCaseVersions', 'Sessions', 'SessionVersions', 'TestRuns', 'Issue', 'ProjectCodeRepositoryConfig', 'ProjectLlmIntegration', 'UserProjectPermission', 'GroupProjectPermission', 'SharedStepGroup', 'DataSet', 'ShareLink', 'ProjectIntegration', 'WebhookConfig', 'WebhookOutboxEvent', 'LlmFeatureConfig', 'LlmResponseCache', 'Comment'],
+        projects: ['ProjectAssignment', 'ProjectStatusAssignment', 'ProjectConfigurationAssignment', 'ProjectWorkflowAssignment', 'Milestones', 'MilestoneTypesAssignment', 'TemplateProjectAssignment', 'CaseExportTemplateProjectAssignment', 'Repositories', 'RepositoryFolders', 'DuplicateScanResult', 'StepSequenceMatch', 'RepositoryCases', 'RepositoryCaseVersions', 'Sessions', 'SessionVersions', 'TestRuns', 'Issue', 'ProjectCodeRepositoryConfig', 'ProjectLlmIntegration', 'UserProjectPermission', 'GroupProjectPermission', 'SharedStepGroup', 'DataSet', 'ShareLink', 'ProjectIntegration', 'WebhookConfig', 'WebhookOutboxEvent', 'LlmFeatureConfig', 'LlmResponseCache', 'LlmReportSnapshot', 'Comment'],
         milestones: ['Comment'],
         caseFields: ['TemplateCaseAssignment', 'CaseFieldAssignment', 'CaseFieldValues', 'SessionFieldValues'],
         resultFields: ['TemplateResultAssignment', 'ResultFieldAssignment', 'ResultFieldValues'],

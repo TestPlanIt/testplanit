@@ -16,6 +16,7 @@ AI-powered features in TestPlanIt:
 - **[Writing Assistant](../llm-writing-assistant)** — Improve, translate, and enhance content in any rich text field
 - **[Markdown Import](../llm-markdown-import)** — AI-assisted field mapping when importing markdown test cases
 - **[QuickScript](../projects/quickscript)** — AI-assisted automation script generation from manual test cases
+- **[Automation Candidates](../projects/reports/automation-candidates)** — AI-ranked recommendation of which manual test cases to automate next, with a heuristic fallback when no LLM is configured
 
 ## Supported AI Providers
 
@@ -214,7 +215,7 @@ After creating an LLM integration:
 
 ## Per-Feature LLM Overrides
 
-Project admins can override which LLM integration is used for specific AI features, independently of the project-wide default. This is configured per project on the **AI Models** settings page and applies to the following features: Test Case Generation, Markdown Parsing, Smart Test Case Selection, Editor Writing Assistant, LLM Connection Test, QuickScript, and Auto-tagging.
+Project admins can override which LLM integration is used for specific AI features, independently of the project-wide default. This is configured per project on the **AI Models** settings page and applies to the following features: Test Case Generation, Markdown Parsing, Smart Test Case Selection, Editor Writing Assistant, LLM Connection Test, QuickScript, Auto-tagging, and Automation Candidates.
 
 ### How to Configure
 

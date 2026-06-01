@@ -471,6 +471,7 @@ model User {
   lastActiveAt                    DateTime?
   lastSeenVersion                 String?
   llmUsages                       LlmUsage[]
+  generatedLlmReportSnapshots     LlmReportSnapshot[]           @relation("LlmReportSnapshotGeneratedBy")
   testmoImportJobs                TestmoImportJob[]
   createdComments                 Comment[]                     @relation("CommentCreator")
   commentMentions                 CommentMention[]              @relation("CommentMentions")
@@ -616,6 +617,7 @@ model Projects {
   llmUsages                      LlmUsage[]
   llmFeatureConfigs              LlmFeatureConfig[]
   llmResponseCaches              LlmResponseCache[]
+  llmReportSnapshots             LlmReportSnapshot[]
   comments                       Comment[]
   auditLogs                      AuditLog[]
   shareLinks                     ShareLink[]
@@ -1756,6 +1758,7 @@ model LlmIntegration {
   projectLlmIntegrations ProjectLlmIntegration[]
   llmRateLimits          LlmRateLimit[]
   promptConfigPrompts    PromptConfigPrompt[]
+  llmReportSnapshots     LlmReportSnapshot[]
 
   @@unique([name])
   @@index([provider, status])
@@ -2460,6 +2463,34 @@ model LlmRateLimit {
   @@unique([scope, scopeId, feature])
   @@index([scope, isActive])
   @@index([windowStart])
+}
+
+/// Materialized, shared snapshot of an LLM-generated report (e.g. Automation
+/// Candidates). Reports here are persisted on generate and rendered as-is for
+/// every viewer until someone explicitly regenerates — the snapshot IS the
+/// report, not a cache. `reportType` is the discriminator so future shared
+/// LLM reports drop into the same table; `output` is validated per type in
+/// consumer code.
+model LlmReportSnapshot {
+  id               Int             @id() @default(autoincrement())
+  projectId        Int
+  project          Projects        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  reportType       String
+  status           String
+  llmIntegrationId Int?
+  llmIntegration   LlmIntegration? @relation(fields: [llmIntegrationId], references: [id])
+  generatedById    String
+  generatedBy      User            @relation("LlmReportSnapshotGeneratedBy", fields: [generatedById], references: [id])
+  output           Json?
+  errorMessage     String?
+  startedAt        DateTime        @default(now()) @db.Timestamptz(6)
+  completedAt      DateTime?       @db.Timestamptz(6)
+  isDeleted        Boolean         @default(false)
+  createdAt        DateTime        @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime        @updatedAt()
+
+  @@index([projectId, reportType, completedAt])
+  @@index([projectId, isDeleted])
 }
 
 model SsoProvider {

@@ -29,6 +29,17 @@ export interface LlmRequest {
   metadata?: Record<string, any>;
   timeout?: number; // Optional timeout override in milliseconds
   disableThinking?: boolean; // Disable model reasoning/thinking for structured output
+  /**
+   * Per-call thinking budget (Gemini 2.5+/3.x family) in output-token units.
+   * Takes precedence over `disableThinking`. Use when the model REQUIRES
+   * thinking to be on (Gemini 2.5 Pro rejects `thinkingBudget: 0` with
+   * "This model only works in thinking mode") but you want to cap how
+   * many tokens the model spends reasoning so most of the output budget
+   * remains for the actual content. Set to a small positive number
+   * (e.g. 256–1024) for JSON-output features. Ignored by adapters that
+   * don't expose a thinking control.
+   */
+  thinkingBudget?: number;
 }
 
 export interface LlmResponse {

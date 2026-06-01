@@ -5178,7 +5178,8 @@
         "auto_tag": "KI-Tag-Vorschläge",
         "duplicate_detection": "Duplikaterkennung",
         "generate_from_url": "Testfälle aus URL generieren (Anforderungen)",
-        "generate_from_url_app": "Testfälle aus URL generieren (Anwendungstests)"
+        "generate_from_url_app": "Testfälle aus URL generieren (Anwendungstests)",
+        "automation_candidates": "Bericht über Automatisierungskandidaten"
       }
     },
     "elasticsearch": {
@@ -6499,6 +6500,10 @@
         "iterationMatrix": {
           "label": "Parametrisierte Testiterationsmatrix",
           "description": "Parametrisierte Fälle × Konfigurationen × Parameterzeilen mit Worst-of-Status-Rollup pro Zelle"
+        },
+        "automationCandidates": {
+          "label": "Automatisierungskandidaten",
+          "description": "Rangliste der manuellen Testfälle, die als Nächstes automatisiert werden sollen, basierend auf Fallinhalt, benutzerdefinierten Feldern und dem Kontext verknüpfter Vorgänge."
         }
       },
       "flakyTests": {
@@ -6582,6 +6587,117 @@
           "alwaysFailing": "Immer fehlgeschlagen (0%): -30",
           "lowPassRate": "Niedrige Bestehensquote (<50%): -20",
           "lowExecutions": "Wenige Hinrichtungen (<3): -10"
+        }
+      },
+      "automationCandidates": {
+        "casesToRank": "Fälle zum Einstufen",
+        "casesToRankHelp": "Wie viele manuelle Testfälle sollen dem LLM zur Rangfolge übermittelt werden? Höhere Zahlen führen zu einer umfassenderen Abdeckung, die Berechnungszeit des LLM verlängert sich jedoch proportional (Bereich: 5–100; Denkmodelle können im oberen Bereich mehrere Minuten laufen).",
+        "selectionStrategy": "Auswahlstrategie",
+        "selectionStrategyHelp": "Welche Strategie entscheidet, welche manuellen Testfälle gesendet werden, wenn das Projekt die Obergrenze pro Generation überschreitet? **Am häufigsten ausgeführt** (Standard) wählt die Fälle aus, die in den Testläufen am häufigsten ausgeführt wurden – beste Rendite für die Automatisierung. **Unzuverlässigste zuerst** wählt Fälle aus, deren Ergebnis (bestanden/nicht bestanden) am häufigsten wechselt – ideale Kandidaten für ein deterministisches Automatisierungs-Orakel. **Längste Ausführungszeit** wählt die Fälle mit der höchsten prognostizierten manuellen Ausführungszeit (Tester-basiert; greift auf die ursprüngliche Schätzung zurück) – die Automatisierung spart die meiste Testerzeit. **Älteste zuerst** wählt langjährige manuelle Testfälle (stabil, ausgereift). **Neueste zuerst** wählt die zuletzt erstellten Fälle aus. **Zufällig** ist eine unvoreingenommene Stichprobe. Nur manuelle Testfälle mit dem Workflow-Status *In Bearbeitung* oder *Abgeschlossen* sind geeignet.",
+        "strategies": {
+          "most_executed": "Am häufigsten umgesetzt (höchster ROI)",
+          "flakiest_first": "Die Unzuverlässigsten zuerst (bestanden/nicht bestanden-Würfe)",
+          "longest_first": "Längste Ausführungszeit (Zeitersparnis)",
+          "oldest_first": "Älteste zuerst (bewährte Stabilität)",
+          "newest_first": "Neueste zuerst (zuletzt verfasst)",
+          "random": "Zufallsstichprobe"
+        },
+        "title": "Automatisierungskandidaten",
+        "titleWithStrategy": "Automatisierungskandidaten, sortiert nach {strategy}",
+        "heuristicBadge": "Heuristik",
+        "heuristicBadgeTooltip": "Für dieses Projekt ist keine LLM-Integration konfiguriert, daher basiert dieses Ranking direkt auf der Auswahlstrategie-Metrik. Konfigurieren Sie ein LLM (Admin → KI-Modelle), um eine differenziertere Analyse zu ermöglichen, die benutzerdefinierte Felder, den Kontext verknüpfter Vorgänge und den Fallinhalt berücksichtigt.",
+        "sourcedFromNewestN": "Top {ranked} von {total} berechtigten manuellen Fällen über {strategy}",
+        "sourcedFromAll": "Alle {total} für manuelle Fälle in Frage kommenden Fälle wurden über {strategy} nach ihrer Reihenfolge sortiert.",
+        "metric": {
+          "executions": "{count} läuft",
+          "forecast": "{value} Prognose",
+          "forecastUnset": "Keine Prognose",
+          "flakiness": "Flips {value}%",
+          "flakinessUnset": "Keine Flip-Daten",
+          "createdLabel": "Erstellt"
+        },
+        "heuristic": {
+          "intro": "Für dieses Projekt ist keine LLM-Integration konfiguriert, daher basiert das Ranking direkt auf der Metrik der Auswahlstrategie. Konfigurieren Sie eine LLM-Integration (Admin → KI-Modelle), um eine differenziertere Analyse zu ermöglichen, die neben der Metrik auch benutzerdefinierte Felder, den Kontext verknüpfter Vorgänge und den Fallinhalt berücksichtigt.",
+          "rankedSummary": "{ranked} von {totalEligible} berechtigten manuellen Fällen nach Rangfolge.",
+          "strategyExplanation": {
+            "most_executed": "Die Fälle sind nach der Anzahl der manuellen Ausführungen geordnet (höchste zuerst) – dem Indikator für die Regressionshäufigkeit, bei dem die Automatisierung die meiste Testerzeit direkt einspart.",
+            "flakiest_first": "Die Fälle werden nach ihrer ungefähren Unzuverlässigkeit (Übergänge zwischen bestanden und nicht bestanden) geordnet – unzuverlässige manuelle Tests sind ideale Kandidaten für ein deterministisches Automatisierungsorakel.",
+            "longest_first": "Die Fälle werden nach der Prognose für die manuelle Ausführung geordnet (längster Fall zuerst; falls vorhanden, wird die Prognose manuell verwendet, ansonsten wird auf die Schätzung zurückgegriffen) – die Automatisierung spart bei diesen Fällen die meiste Testerzeit.",
+            "oldest_first": "Die Fälle sind nach Erstellungsdatum geordnet (ältester zuerst) – bei langjährig bearbeiteten manuellen Fällen handelt es sich in der Regel um ausgereifte, stabile Verhaltensweisen, die ohne Nachbearbeitung gefahrlos automatisiert werden können.",
+            "newest_first": "Die Fälle sind nach Erstellungsdatum geordnet (neueste zuerst) – neu erstellte Fälle benötigen höchstwahrscheinlich jetzt sofort eine Ausführungsabdeckung.",
+            "random": "Die Fälle stellen eine unvoreingenommene Zufallsstichprobe aus der infrage kommenden Menge dar."
+          },
+          "rationale": {
+            "mostExecutedWithCount": "Ausgeführt {count, plural, =1 {1 Mal} other {# Mal}} manuell über die Testläufe dieses Projekts hinweg — die Automatisierung spart direkt Zeit beim Testen bei jedem zukünftigen Lauf.",
+            "mostExecutedNone": "Bisher liegen keine Hinrichtungshistorien vor – die Heuristik der am häufigsten Hingerichteten liefert kein Signal, um diesen Fall im Vergleich zu den anderen zu bewerten.",
+            "flakiestWithScore": "Unzuverlässigkeit {percent}% (Ergebnis „bestanden/nicht bestanden“ wechselt in {description} der Ausführungen) — unzuverlässige manuelle Tests verschwenden bei jedem Durchlauf die Zeit des Testers und profitieren am meisten von einem deterministischen Automatisierungsorakel.",
+            "flakiestNone": "Bisher keine unterschiedlichen Ergebnisse – die Flakiest-First-Heuristik kann in diesem Fall noch keine Wechsel zwischen bestanden und nicht bestanden messen.",
+            "longestWithDuration": "Prognose für die manuelle Ausführung {duration} — Die Automatisierung von langlaufenden manuellen Tests spart bei jedem Durchlauf proportional mehr Testerzeit.",
+            "longestNone": "Es wurde keine Prognose oder Schätzung festgelegt – die Heuristik „Längste Ausführungszeit“ verfügt in diesem Fall über keine Dauerdaten.",
+            "oldest": "Erstellt von {age} — Langlebige manuelle Fälle neigen dazu, ausgereifte, stabile Verhaltensweisen zu sein, die ohne Nachbearbeitung sicher automatisiert werden können.",
+            "newest": "Erstellt {age} — neu erstellte Fälle benötigen am ehesten jetzt eine Ausführungsabdeckung.",
+            "random": "Zufallsstichprobe – als unverzerrte Referenz einbezogen; der heuristische Modus hat keine inhärente Präferenz für diesen Fall gegenüber den anderen in der Stichprobe."
+          },
+          "flakinessFraction": {
+            "wellOverHalf": "weit über die Hälfte",
+            "roughlyHalf": "ungefähr die Hälfte",
+            "meaningfulShare": "ein bedeutender Anteil",
+            "smallShare": "ein kleiner Anteil"
+          },
+          "duration": {
+            "seconds": "{seconds}s",
+            "minutes": "{minutes}m",
+            "hours": "{hours}h",
+            "hoursAndMinutes": "{hours}h {minutes}m"
+          },
+          "relativeAge": {
+            "today": "Heute",
+            "days": "{count, plural, =1 {Vor 1 Tag} other {# Tage zuvor}}",
+            "months": "{count, plural, =1 {Vor einem Monat} other {Vor # Monaten}}",
+            "years": "{count, plural, =1 {Vor 1 Jahr} other {Vor # Jahren}}",
+            "unknown": "zu einem unbekannten Zeitpunkt"
+          }
+        },
+        "subtitle": "KI-gestützte Empfehlung, welche manuellen Testfälle als Nächstes automatisiert werden sollen. Die Snapshots werden geteilt – nach der Generierung sieht jeder Betrachter dieselbe Rangliste, bis sie neu generiert wird.",
+        "invalidProject": "Ungültiges Projekt.",
+        "historyPlaceholder": "Wählen Sie eine Momentaufnahme",
+        "generatedAt": "Generiert",
+        "by": "von",
+        "summaryHeading": "Zusammenfassung",
+        "actions": {
+          "generate": "Bericht generieren",
+          "regenerate": "Regenerieren"
+        },
+        "status": {
+          "running": "Läuft",
+          "complete": "Vollständig",
+          "failed": "Fehlgeschlagen"
+        },
+        "emptyState": {
+          "title": "Bisher liegen keine Meldungen zu Automatisierungskandidaten vor.",
+          "canGenerate": "Klicken Sie auf „Bericht ausführen“, um Ihre manuellen Testfälle zu bewerten.",
+          "noPermission": "Bitten Sie einen Projektadministrator oder eine andere Person mit Berichtsberechtigungen, eine solche zu generieren."
+        },
+        "errors": {
+          "title": "Der Bericht konnte nicht erstellt werden.",
+          "generateFailed": "Der Bericht konnte nicht erstellt werden.",
+          "deleteFailed": "Der Snapshot konnte nicht gelöscht werden.",
+          "snapshotFailed": "Dieser Snapshot konnte nicht generiert werden."
+        },
+        "rankedList": {
+          "heading": "Rangliste der Kandidaten",
+          "streaming": "Streaming…",
+          "streamingWithCount": "{count} von {total} auf Platz…",
+          "empty": "Warten auf den ersten Kandidaten…",
+          "caseRef": "Testfall #{id}",
+          "score": "Punktzahl {score}"
+        },
+        "delete": {
+          "button": "Löschen",
+          "title": "Diesen Snapshot löschen?",
+          "description": "Der Snapshot wird aus dem Verlauf gelöscht. Dies kann nicht rückgängig gemacht werden.",
+          "cancel": "Stornieren",
+          "confirm": "Löschen"
         }
       },
       "issueTestCoverage": {

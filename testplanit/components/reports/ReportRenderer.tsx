@@ -1,5 +1,6 @@
 "use client";
 
+import { AutomationCandidatesReportPreset } from "@/components/automationCandidates/AutomationCandidatesReportPreset";
 import { ReportChart } from "@/components/dataVisualizations/ReportChart";
 import { DateFormatter } from "@/components/DateFormatter";
 import { MatrixReportPreset } from "@/components/matrix/MatrixReportPreset";
@@ -97,6 +98,13 @@ interface ReportRendererProps {
     statusMap: Record<number, any>;
   };
 
+  // Automation-candidates shared-link payload: the share endpoint reads the
+  // latest persisted snapshot directly from the DB and passes it through so
+  // the preset renders without firing a (streaming, auth-gated) generation.
+  // Snapshot reports are inherently view-only when shared — there's no
+  // "regenerate this for a public viewer" interaction.
+  automationCandidatesSnapshot?: any;
+
   // Pagination
   currentPage: number;
   pageSize: number | "All";
@@ -147,6 +155,7 @@ export function ReportRenderer({
   dateGrouping = "weekly",
   totalFlakyTests,
   matrixAxes,
+  automationCandidatesSnapshot,
   currentPage,
   pageSize,
   totalCount,
@@ -241,6 +250,10 @@ export function ReportRenderer({
   );
   const isExecutionLog = matchesReportType(reportType, "execution-log");
   const isIterationMatrix = matchesReportType(reportType, "iteration-matrix");
+  const isAutomationCandidates = matchesReportType(
+    reportType,
+    "automation-candidates"
+  );
 
   // Calculate pagination
   const startIndex = pageSize === "All" ? 1 : (currentPage - 1) * pageSize + 1;
@@ -364,6 +377,23 @@ export function ReportRenderer({
         prefetchedAxes={matrixAxes}
         readOnly={readOnly}
         headerActions={headerActions}
+      />
+    );
+  }
+
+  // Automation Candidates is a snapshot-style LLM report — fundamentally
+  // different shape from query-driven aggregations (ranked list with per-row
+  // rationale + Generate/History/Delete chrome). Mirrors the matrix preset's
+  // self-contained early-return pattern.
+  if (isAutomationCandidates && projectId) {
+    return (
+      <AutomationCandidatesReportPreset
+        projectId={
+          typeof projectId === "string" ? parseInt(projectId, 10) : projectId
+        }
+        readOnly={readOnly}
+        headerActions={headerActions}
+        prefetchedSnapshot={automationCandidatesSnapshot}
       />
     );
   }

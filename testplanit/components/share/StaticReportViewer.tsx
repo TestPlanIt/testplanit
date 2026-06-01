@@ -279,6 +279,7 @@ export function StaticReportViewer({
           }
           totalFlakyTests={reportData.totalFlakyTests}
           matrixAxes={reportData.matrixAxes}
+          automationCandidatesSnapshot={reportData.automationCandidatesSnapshot}
           currentPage={currentPage}
           pageSize={pageSize}
           totalCount={

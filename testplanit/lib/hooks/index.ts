@@ -110,6 +110,7 @@ export * from './llm-usage';
 export * from './llm-feature-config';
 export * from './llm-response-cache';
 export * from './llm-rate-limit';
+export * from './llm-report-snapshot';
 export * from './sso-provider';
 export * from './allowed-email-domain';
 export * from './registration-settings';
