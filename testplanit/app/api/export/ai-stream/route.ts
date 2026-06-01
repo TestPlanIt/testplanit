@@ -72,6 +72,10 @@ export async function POST(req: NextRequest) {
   let header: string;
   let footer: string;
 
+  // One rendered case body — used both as the deterministic-fallback
+  // payload and as the FRAMEWORK SYNTAX EXAMPLE in the LLM prompt below.
+  // Keeping it hoisted so the prompt assembly later can attach it.
+  let syntaxExampleBody = "";
   if (body.mode === "single") {
     header = template.headerBody
       ? Mustache.render(template.headerBody, body.caseData)
@@ -80,6 +84,7 @@ export async function POST(req: NextRequest) {
       ? Mustache.render(template.footerBody, body.caseData)
       : "";
     const bodyCode = Mustache.render(template.templateBody, body.caseData);
+    syntaxExampleBody = bodyCode;
     mustacheFallback = [header, bodyCode, footer].filter(Boolean).join("\n\n");
   } else {
     header = template.headerBody
@@ -91,6 +96,7 @@ export async function POST(req: NextRequest) {
     const bodies = body.cases.map((c) =>
       Mustache.render(template.templateBody, c)
     );
+    syntaxExampleBody = bodies[0] ?? "";
     mustacheFallback = [header, ...bodies, footer].filter(Boolean).join("\n\n");
   }
 
@@ -254,6 +260,15 @@ export async function POST(req: NextRequest) {
         }
         if (footer) {
           userPrompt += `\n\nDEFAULT FOOTER (use as a starting point — extend or modify teardown as needed):\n\`\`\`\n${footer}\n\`\`\``;
+        }
+        // FRAMEWORK SYNTAX EXAMPLE — the rendered template body shows
+        // the actual API shape (fixture destructuring, locator helpers,
+        // assertion methods). Without it the model only sees framework
+        // name + a one-line import, and for niche or newer frameworks
+        // (or any framework whose package name resembles a more-popular
+        // neighbor's) it silently substitutes the closer neighbor's API.
+        if (syntaxExampleBody) {
+          userPrompt += `\n\nFRAMEWORK SYNTAX EXAMPLE — this is what one rendered test from the template looks like. Match this API shape (imports, fixtures, locators, action methods, assertion style) when writing the cases above. Do not substitute APIs from a similarly-named framework you happen to know better:\n\`\`\`\n${syntaxExampleBody}\n\`\`\``;
         }
 
         const request: LlmRequest = {

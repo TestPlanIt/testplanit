@@ -301,7 +301,12 @@ export function QuickScriptModal({
     });
   }, [filteredTemplates, defaultTemplate]);
 
-  // Check AI availability when modal opens (GEN-02)
+  // Check AI availability when modal opens (GEN-02). When the project
+  // has an LLM configured for QuickScript, default the Generate with AI
+  // toggle to ON — same posture as the dialog reset on close. Leaving
+  // it off when AI is wired up was a hidden affordance (the toggle
+  // section is visible but the user had to flip it themselves before
+  // every export).
   useEffect(() => {
     if (isOpen) {
       setAiCheckLoading(true);
@@ -309,6 +314,9 @@ export function QuickScriptModal({
         .then((result) => {
           setAiAvailable(result.available);
           setHasCodeContext(result.hasCodeContext ?? false);
+          if (result.available) {
+            setAiEnabled(true);
+          }
         })
         .catch(() => {
           setAiAvailable(false);

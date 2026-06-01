@@ -434,6 +434,25 @@ describe("QuickScriptModal", () => {
     });
   });
 
+  it("defaults Generate with AI toggle to ON when AI is available", async () => {
+    // When the project has an LLM configured for QuickScript, the user
+    // shouldn't have to flip the toggle themselves on every open — the
+    // AI block is visible because availability is true, so the toggle
+    // should reflect "yes, ready to generate."
+    mockCheckAiExportAvailable.mockResolvedValue({
+      available: true,
+      hasCodeContext: true,
+    });
+
+    render(<QuickScriptModal {...defaultProps} />);
+
+    await waitFor(() => {
+      // The Switch mock renders as an <input type="checkbox" data-testid="ai-switch">.
+      const sw = screen.getByTestId("ai-switch") as HTMLInputElement;
+      expect(sw.checked).toBe(true);
+    });
+  });
+
   it("does not show AI toggle when AI is not available", async () => {
     // Default mock: available=false
     render(<QuickScriptModal {...defaultProps} />);
