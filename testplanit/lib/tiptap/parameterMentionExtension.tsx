@@ -161,10 +161,34 @@ function installChipHandler() {
   );
 }
 
+export interface CreateParameterMentionExtensionOptions {
+  /**
+   * Attach the `@`-trigger suggestion popup to this editor instance.
+   *
+   * Splitting this off the node-schema registration is the whole point of
+   * the option: any read-only surface (preview, list cell, run-details
+   * without an active iteration) needs the schema NODE registered so a
+   * step document containing a parameterMention can deserialize without
+   * throwing "Unknown node type: parameterMention" — but those surfaces
+   * must NOT pop a parameter-picker on `@`, because they aren't param-
+   * aware editors (comments, descriptions, project docs).
+   *
+   * Pass true only for param-aware editable editors. The node's
+   * renderHTML degrades cleanly to `@label` when the resolved-parameter
+   * list doesn't contain a match, so registering the node with
+   * `withSuggestion: false` is always safe.
+   *
+   * Defaults to true for backward compatibility with any external caller.
+   */
+  withSuggestion?: boolean;
+}
+
 export function createParameterMentionExtension(
   parameters: ParameterChipMeta[],
-  messages: ParameterMentionMessages = DEFAULT_MESSAGES
+  messages: ParameterMentionMessages = DEFAULT_MESSAGES,
+  options: CreateParameterMentionExtensionOptions = {}
 ) {
+  const { withSuggestion = true } = options;
   installChipHandler();
   const declaredNames = new Set(parameters.map((p) => p.name));
   const paramByName = new Map(parameters.map((p) => [p.name, p]));
@@ -288,103 +312,117 @@ export function createParameterMentionExtension(
     HTMLAttributes: {
       class: "parameter-ref-chip",
     },
-    suggestion: {
-      char: "@",
-      items: ({ query }: { query: string }) => {
-        const lowered = query.toLowerCase();
-        return parameters
-          .filter((p) => p.name.toLowerCase().startsWith(lowered))
-          .slice(0, 8);
-      },
-      command: ({
-        editor,
-        range,
-        props,
-      }: {
-        editor: {
-          chain: () => {
-            focus: () => {
-              deleteRange: (range: { from: number; to: number }) => {
-                insertContent: (
-                  content:
-                    | string
-                    | { type: string; attrs: Record<string, unknown> }
-                    | Array<unknown>
-                ) => { run: () => void };
-              };
-            };
-          };
-        };
-        range: { from: number; to: number };
-        props: ParameterChipMeta;
-      }) => {
-        editor
-          .chain()
-          .focus()
-          .deleteRange(range)
-          .insertContent([
-            {
-              type: "parameterMention",
-              attrs: {
-                id: props.name,
-                label: props.name,
-                paramId: props.id,
-                paramType: props.type,
-              },
+    // Suggestion is OPT-IN: only attach the `@`-picker popup when the
+    // caller asked for it. Read-only / non-param-aware editors register
+    // the same node-schema for crash-free deserialization but omit the
+    // suggestion entirely.
+    ...(withSuggestion
+      ? {
+          suggestion: {
+            char: "@",
+            items: ({ query }: { query: string }) => {
+              const lowered = query.toLowerCase();
+              return parameters
+                .filter((p) => p.name.toLowerCase().startsWith(lowered))
+                .slice(0, 8);
             },
-            { type: "text", text: " " },
-          ] as Array<unknown>)
-          .run();
-      },
-      render: () => {
-        let component: ReactRenderer<ParameterMentionSuggestionRef> | undefined;
-        let popup: TippyInstance[] | undefined;
+            command: ({
+              editor,
+              range,
+              props,
+            }: {
+              editor: {
+                chain: () => {
+                  focus: () => {
+                    deleteRange: (range: { from: number; to: number }) => {
+                      insertContent: (
+                        content:
+                          | string
+                          | { type: string; attrs: Record<string, unknown> }
+                          | Array<unknown>
+                      ) => { run: () => void };
+                    };
+                  };
+                };
+              };
+              range: { from: number; to: number };
+              props: ParameterChipMeta;
+            }) => {
+              editor
+                .chain()
+                .focus()
+                .deleteRange(range)
+                .insertContent([
+                  {
+                    type: "parameterMention",
+                    attrs: {
+                      id: props.name,
+                      label: props.name,
+                      paramId: props.id,
+                      paramType: props.type,
+                    },
+                  },
+                  { type: "text", text: " " },
+                ] as Array<unknown>)
+                .run();
+            },
+            render: () => {
+              let component:
+                | ReactRenderer<ParameterMentionSuggestionRef>
+                | undefined;
+              let popup: TippyInstance[] | undefined;
 
-        return {
-          onStart: (props: {
-            editor: unknown;
-            clientRect?: (() => DOMRect | null) | null;
-          }) => {
-            component = new ReactRenderer(ParameterMentionSuggestion, {
-              props: props as unknown as Record<string, unknown>,
-              editor: props.editor as never,
-            });
+              return {
+                onStart: (props: {
+                  editor: unknown;
+                  clientRect?: (() => DOMRect | null) | null;
+                }) => {
+                  component = new ReactRenderer(ParameterMentionSuggestion, {
+                    props: props as unknown as Record<string, unknown>,
+                    editor: props.editor as never,
+                  });
 
-            if (!props.clientRect) return;
+                  if (!props.clientRect) return;
 
-            popup = tippy("body", {
-              getReferenceClientRect: props.clientRect as () => DOMRect,
-              appendTo: () => document.body,
-              content: component.element,
-              showOnCreate: true,
-              interactive: true,
-              trigger: "manual",
-              placement: "bottom-start",
-            });
-          },
+                  popup = tippy("body", {
+                    getReferenceClientRect: props.clientRect as () => DOMRect,
+                    appendTo: () => document.body,
+                    content: component.element,
+                    showOnCreate: true,
+                    interactive: true,
+                    trigger: "manual",
+                    placement: "bottom-start",
+                  });
+                },
 
-          onUpdate(props: { clientRect?: (() => DOMRect | null) | null }) {
-            component?.updateProps(props as unknown as Record<string, unknown>);
-            if (!props.clientRect) return;
-            popup?.[0]?.setProps({
-              getReferenceClientRect: props.clientRect as () => DOMRect,
-            });
-          },
+                onUpdate(props: {
+                  clientRect?: (() => DOMRect | null) | null;
+                }) {
+                  component?.updateProps(
+                    props as unknown as Record<string, unknown>
+                  );
+                  if (!props.clientRect) return;
+                  popup?.[0]?.setProps({
+                    getReferenceClientRect: props.clientRect as () => DOMRect,
+                  });
+                },
 
-          onKeyDown(props: { event: KeyboardEvent }) {
-            if (props.event.key === "Escape") {
-              popup?.[0]?.hide();
-              return true;
-            }
-            return component?.ref?.onKeyDown(props) ?? false;
-          },
+                onKeyDown(props: { event: KeyboardEvent }) {
+                  if (props.event.key === "Escape") {
+                    popup?.[0]?.hide();
+                    return true;
+                  }
+                  return component?.ref?.onKeyDown(props) ?? false;
+                },
 
-          onExit() {
-            popup?.[0]?.destroy();
-            component?.destroy();
-          },
-        };
-      },
-    } as Partial<SuggestionOptions>,
+                onExit() {
+                  popup?.[0]?.destroy();
+                  component?.destroy();
+                },
+              };
+            },
+          } as Partial<SuggestionOptions>,
+        }
+      : {}),
   });
 }
