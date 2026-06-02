@@ -1,3 +1,9 @@
+## [0.34.3](https://github.com/TestPlanIt/testplanit/compare/v0.34.2...v0.34.3) (2026-06-02)
+
+### Bug Fixes
+
+* **tiptap:** always register parameterMention node; gate suggestion popup separately ([#384](https://github.com/TestPlanIt/testplanit/issues/384)) ([529c268](https://github.com/TestPlanIt/testplanit/commit/529c2687c7ac465b25fd60cf2a1a6886aae3cb3f))
+
 ## [0.34.2](https://github.com/TestPlanIt/testplanit/compare/v0.34.1...v0.34.2) (2026-06-01)
 
 ### Enhancements
