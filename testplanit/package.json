@@ -186,7 +186,7 @@
     "@zxcvbn-ts/core": "^3.0.4",
     "@zxcvbn-ts/language-en": "^3.0.2",
     "ai": "^6.0.193",
-    "axios": "1.15.2",
+    "axios": "1.16.1",
     "bcrypt": "^6.0.0",
     "bullmq": "^5.77.6",
     "busboy": "^1.6.0",

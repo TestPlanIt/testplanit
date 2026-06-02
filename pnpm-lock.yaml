@@ -342,7 +342,7 @@ importers:
     devDependencies:
       '@prisma/client':
         specifier: ~6.19.3
-        version: 6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3)
+        version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
       '@types/node':
         specifier: ^25.5.2
         version: 25.6.2
@@ -394,7 +394,7 @@ importers:
         version: 15.0.1(@atlaskit/editor-common@99.19.0(@atlaskit/media-core@34.5.0(react@19.2.6))(@babel/core@7.29.7)(@types/node@25.9.1)(@types/react@19.2.15)(eslint@9.39.4(jiti@2.7.0))(immer@11.1.8)(react-dom@19.2.6(react@19.2.6))(react-intl@5.25.1(react@19.2.6)(typescript@5.9.3))(react-intl@5.25.1(react@19.2.6)(typescript@5.9.3))(react@19.2.6)(scheduler@0.27.0)(typescript@5.9.3)(url-search-params@0.10.2))(react@19.2.6)
       '@auth/prisma-adapter':
         specifier: ^2.11.2
-        version: 2.11.2(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(nodemailer@8.0.10)
+        version: 2.11.2(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(nodemailer@8.0.10)
       '@aws-sdk/client-s3':
         specifier: ^3.1056.0
         version: 3.1056.0
@@ -415,7 +415,7 @@ importers:
         version: 3.2.2(react@19.2.6)
       '@elastic/elasticsearch':
         specifier: ^9.4.2
-        version: 9.4.2(apache-arrow@21.1.0)
+        version: 9.4.2
       '@emotion/cache':
         specifier: ^11.14.0
         version: 11.14.0
@@ -433,7 +433,7 @@ importers:
         version: 0.6.0
       '@next-auth/prisma-adapter':
         specifier: ^1.0.7
-        version: 1.0.7(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(next-auth@4.24.14(next@16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.60.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(nodemailer@8.0.10)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))
+        version: 1.0.7(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(next-auth@4.24.14(next@16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.60.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(nodemailer@8.0.10)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))
       '@node-saml/node-saml':
         specifier: ^5.1.0
         version: 5.1.0
@@ -445,7 +445,7 @@ importers:
         version: 0.6.17
       '@prisma/client':
         specifier: ~6.19.3
-        version: 6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3)
+        version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
       '@radix-ui/react-accordion':
         specifier: ^1.2.12
         version: 1.2.12(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -715,10 +715,10 @@ importers:
         version: 5.0.6
       '@zenstackhq/runtime':
         specifier: ~2.22.2
-        version: 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(zod@4.4.3)
+        version: 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(zod@4.4.3)
       '@zenstackhq/server':
         specifier: ~2.22.2
-        version: 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(zod@4.4.3)
+        version: 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(zod@4.4.3)
       '@zxcvbn-ts/core':
         specifier: ^3.0.4
         version: 3.0.4
@@ -729,8 +729,8 @@ importers:
         specifier: ^6.0.193
         version: 6.0.193(zod@4.4.3)
       axios:
-        specifier: 1.15.2
-        version: 1.15.2
+        specifier: 1.16.1
+        version: 1.16.1
       bcrypt:
         specifier: ^6.0.0
         version: 6.0.0
@@ -1157,10 +1157,10 @@ importers:
         version: 4.1.7(vitest@4.1.7)
       '@zenstackhq/openapi':
         specifier: ~2.22.2
-        version: 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(magicast@0.3.5)(typescript@5.9.3)(zod@4.4.3)
+        version: 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(typescript@5.9.3)(zod@4.4.3)
       '@zenstackhq/tanstack-query':
         specifier: ~2.22.2
-        version: 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(magicast@0.3.5)(typescript@5.9.3)(zod@4.4.3)
+        version: 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(typescript@5.9.3)(zod@4.4.3)
       autoprefixer:
         specifier: ^10.5.0
         version: 10.5.0(postcss@8.5.15)
@@ -1232,7 +1232,7 @@ importers:
         version: 0.7.4(prettier@3.8.3)
       prisma:
         specifier: ~6.19.3
-        version: 6.19.3(magicast@0.3.5)(typescript@5.9.3)
+        version: 6.19.3(typescript@5.9.3)
       resize-observer-polyfill:
         specifier: ^1.5.1
         version: 1.5.1
@@ -1274,7 +1274,7 @@ importers:
         version: 4.1.7(@opentelemetry/api@1.9.1)(@types/node@25.9.1)(@vitest/coverage-v8@4.1.7)(happy-dom@20.9.0)(jsdom@29.1.1(@noble/hashes@2.2.0))(msw@2.14.6(@types/node@25.9.1)(typescript@5.9.3))(vite@7.3.2(@types/node@25.9.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.22.3)(yaml@2.9.0))
       zenstack:
         specifier: ~2.22.2
-        version: 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(@types/node@25.9.1)(magicast@0.3.5)(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3)(zod@4.4.3)
+        version: 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(@types/node@25.9.1)(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)(zod@4.4.3)
 
 packages:
 
@@ -8762,12 +8762,6 @@ packages:
   '@types/chai@5.2.3':
     resolution: {integrity: sha512-Mw558oeA9fFbv65/y4mHtXDs9bPnFMZAL/jxdPFUpOHHIXX91mcgEHbS5Lahr+pwZFR8A7GQleRWeI6cGFC2UA==}
 
-  '@types/command-line-args@5.2.3':
-    resolution: {integrity: sha512-uv0aG6R0Y8WHZLTamZwtfsDLVRnOa+n+n5rEvFWL5Na5gZ8V2Teab/duDPFzIIIhs9qizDpcavCusCLJZu62Kw==}
-
-  '@types/command-line-usage@5.0.4':
-    resolution: {integrity: sha512-BwR5KP3Es/CSht0xqBcUXS3qCAUVXwpRKsV2+arxeb65atasuXG9LykC9Ab10Cw3s2raH92ZqOeILaQbsB2ACg==}
-
   '@types/connect-history-api-fallback@1.5.4':
     resolution: {integrity: sha512-n6Cr2xS1h4uAulPRdlw6Jl6s1oG8KrVilPN2yUITEs+K48EzMJJ3W1xy8K5eWuFvjp3R74AOIGSmp2UfBJ8HFw==}
 
@@ -9009,9 +9003,6 @@ packages:
 
   '@types/node@20.19.41':
     resolution: {integrity: sha512-ECymXOukMnOoVkC2bb1Vc/w/836DXncOg5m8Xj1RH7xSHZJWNYY6Zh7EH477vcnD5egKNNfy2RpNOmuChhFPgQ==}
-
-  '@types/node@24.12.4':
-    resolution: {integrity: sha512-GUUEShf+PBCGW2KaXwcIt3Yk+e3pkKwWKb9GSyM9WQVE+ep2jzmHdGsHzu4wgcZy5fN9FBdVzjpBQsYlpfpgLA==}
 
   '@types/node@25.5.0':
     resolution: {integrity: sha512-jp2P3tQMSxWugkCUKLRPVUpGaL5MVFwF8RDuSRztfwgN1wmqJeMSbKlnEtQqU8UrhTmzEmZdu2I6v2dpp7XIxw==}
@@ -9939,10 +9930,6 @@ packages:
     resolution: {integrity: sha512-KMReFUr0B4t+D+OBkjR3KYqvocp2XaSzO55UcB6mgQMd3KbcE+mWTyvVV7D/zsdEbNnV6acZUutkiHQXvTr1Rw==}
     engines: {node: '>= 8'}
 
-  apache-arrow@21.1.0:
-    resolution: {integrity: sha512-kQrYLxhC+NTVVZ4CCzGF6L/uPVOzJmD1T3XgbiUnP7oTeVFOFgEUu6IKNwCDkpFoBVqDKQivlX4RUFqqnWFlEA==}
-    hasBin: true
-
   apg-lite@1.0.5:
     resolution: {integrity: sha512-SlI+nLMQDzCZfS39ihzjGp3JNBQfJXyMi6cg9tkLOCPVErgFsUIAEdO9IezR7kbP5Xd0ozcPNQBkf9TO5cHgWw==}
 
@@ -9982,10 +9969,6 @@ packages:
   aria-query@5.3.2:
     resolution: {integrity: sha512-COROpnaoap1E2F000S62r6A60uHZnmlvomhfyT2DlTcrY1OrBKn2UhH7qn5wTC9zMvD0AY7csdPSNwKP+7WiQw==}
     engines: {node: '>= 0.4'}
-
-  array-back@6.2.3:
-    resolution: {integrity: sha512-SGDvmg6QTYiTxCBkYVmThcoa67uLl35pyzRHdpCGBOcqFy6BtwnphoFPk7LhJshD+Yk1Kt35WGWeZPTgwR4Fhw==}
-    engines: {node: '>=12.17'}
 
   array-buffer-byte-length@1.0.2:
     resolution: {integrity: sha512-LHE+8BuR7RYGDKvnrmcuSq3tDcKv9OFEXQt/HpbZhY7V6h0zlUXutnAD82GiFx9rdieCMjkvtcsPqBwgUl1Iiw==}
@@ -10111,9 +10094,6 @@ packages:
   axe-core@4.11.2:
     resolution: {integrity: sha512-byD6KPdvo72y/wj2T/4zGEvvlis+PsZsn/yPS3pEO+sFpcrqRpX/TJCxvVaEsNeMrfQbCr7w163YqoD9IYwHXw==}
     engines: {node: '>=4'}
-
-  axios@1.15.2:
-    resolution: {integrity: sha512-wLrXxPtcrPTsNlJmKjkPnNPK2Ihe0hn0wGSaTEiHRPxwjvJwT3hKmXF4dpqxmPO9SoNb2FsYXj/xEo0gHN+D5A==}
 
   axios@1.16.1:
     resolution: {integrity: sha512-caYkukvroVPO8KrzuJEb50Hm07KwfBZPEC3VeFHTsqWHvKTsy54hjJz9BS/cdaypROE2rH6xvm9mHX4fgWkr3A==}
@@ -10506,10 +10486,6 @@ packages:
     resolution: {integrity: sha512-NUPRluOfOiTKBKvWPtSD4PhFvWCqOi0BGStNWs57X9js7XGTprSmFoz5F0tWhR4WPjNeR9jXqdC7/UpSJTnlRg==}
     engines: {node: '>=18'}
 
-  chalk-template@0.4.0:
-    resolution: {integrity: sha512-/ghrgmhfY8RaSdeo43hNXxpoHAtxdbskUHjPpfqUWGttFgycUhYPGx3YZBCnUCvOa7Doivn1IZec3DEGFoMgLg==}
-    engines: {node: '>=12'}
-
   chalk@2.4.2:
     resolution: {integrity: sha512-Mti+f9lpJNcwF4tWV8/OrTTtF1gZi+f8FqlyAdouralcFWFQWF2+NgCHShjkCb+IFBLq9buZwE1xckQU4peSuQ==}
     engines: {node: '>=4'}
@@ -10766,19 +10742,6 @@ packages:
 
   command-exists@1.2.9:
     resolution: {integrity: sha512-LTQ/SGc+s0Xc0Fu5WaKnR0YiygZkm9eKFvyS+fRsU7/ZWFF8ykFM6Pc9aCVf1+xasOOZpO3BAVgVrKvsqKHV7w==}
-
-  command-line-args@6.0.2:
-    resolution: {integrity: sha512-AIjYVxrV9X752LmPDLbVYv8aMCuHPSLZJXEo2qo/xJfv+NYhaZ4sMSF01rM+gHPaMgvPM0l5D/F+Qx+i2WfSmQ==}
-    engines: {node: '>=12.20'}
-    peerDependencies:
-      '@75lb/nature': latest
-    peerDependenciesMeta:
-      '@75lb/nature':
-        optional: true
-
-  command-line-usage@7.0.4:
-    resolution: {integrity: sha512-85UdvzTNx/+s5CkSgBm/0hzP80RFHAa7PsfeADE5ezZF3uHz3/Tqj9gIKGT9PTtpycc3Ua64T0oVulGfKxzfqg==}
-    engines: {node: '>=12.20.0'}
 
   commander@10.0.1:
     resolution: {integrity: sha512-y4Mg2tXshplEbSGzx7amzPwKKOCGuoSRP/CjEdwwk0FOGlUbq6lKuoyDZTNZkmxHdJtp54hdfY/JUrdL7Xfdug==}
@@ -12432,15 +12395,6 @@ packages:
     resolution: {integrity: sha512-9ZonPT4ZAK4a+1pUPVPZJapbi7O5qbbJPdYw/NOQWZZbVLdDTYM3A4R9z/DpAM08IDaFGsvPgiGZ82WEwUDWjg==}
     engines: {node: '>=14.16'}
 
-  find-replace@5.0.2:
-    resolution: {integrity: sha512-Y45BAiE3mz2QsrN2fb5QEtO4qb44NcS7en/0y9PEVsg351HsLeVclP8QPMH79Le9sH3rs5RSwJu99W0WPZO43Q==}
-    engines: {node: '>=14'}
-    peerDependencies:
-      '@75lb/nature': latest
-    peerDependenciesMeta:
-      '@75lb/nature':
-        optional: true
-
   find-root@1.1.0:
     resolution: {integrity: sha512-NKfW6bec6GfKc0SGx1e07QZY9PE99u0Bft/0rzSD5k3sO/vwkVUpDUKVm5Gpp5Ue3YfShPFTX2070tDs5kB9Ng==}
 
@@ -12482,9 +12436,6 @@ packages:
   flat@5.0.2:
     resolution: {integrity: sha512-b6suED+5/3rTpUBdG1gupIl8MPFCAMA0QXwmljLhvCUKcUvdE4gWky9zpuGCcXHOsz4J9wPGNWq6OKpmIzz3hQ==}
     hasBin: true
-
-  flatbuffers@25.9.23:
-    resolution: {integrity: sha512-MI1qs7Lo4Syw0EOzUl0xjs2lsoeqFku44KpngfIduHBYvzm8h2+7K8YMQh1JtVVVrUvhLpNwqVi4DERegUJhPQ==}
 
   flatted@3.4.2:
     resolution: {integrity: sha512-PjDse7RzhcPkIJwy5t7KPWQSZ9cAbzQXcafsetQoD7sOJRQlGikNbx7yZp2OotDnJyrDcbyRq3Ttb18iYOqkxA==}
@@ -13727,10 +13678,6 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
-  json-bignum@0.0.3:
-    resolution: {integrity: sha512-2WHyXj3OfHSgNyuzDbSxI1w2jgw5gkWSWhS7Qg4bWXx1nLk3jnbwfUeS0PSba3IzpTUWdHxBieELUzXRjQB2zg==}
-    engines: {node: '>=0.8'}
-
   json-buffer@3.0.1:
     resolution: {integrity: sha512-4bV5BfR2mqfQTJm+V5tPPdf+ZpuhiIvTuAB5g8kcrXOZpTT/QwwVRWBywX1ozr6lEuPdbHxwaJlm9G6mI2sfSQ==}
 
@@ -14014,9 +13961,6 @@ packages:
   lodash-es@4.18.1:
     resolution: {integrity: sha512-J8xewKD/Gk22OZbhpOVSwcs60zhd95ESDwezOFuA3/099925PdHJ7OFHNTGtajL3AlZkykD32HykiMo+BIBI8A==}
 
-  lodash.camelcase@4.3.0:
-    resolution: {integrity: sha512-TwuEnCnxbc3rAvhf/LbG7tJUDzhqXyFnv3dtzLOPgCG/hODL7WFnsbwktkD7yUV0RrreP/l1PALq/YSg6VvjlA==}
-
   lodash.capitalize@4.2.1:
     resolution: {integrity: sha512-kZzYOKspf8XVX5AvmQF94gQW0lejFVgb80G85bU4ZWzoJ6C03PQg3coYAUpSTpQWelrZELd3XWgHzw4Ck5kaIw==}
 
@@ -14165,9 +14109,6 @@ packages:
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
-
-  magicast@0.3.5:
-    resolution: {integrity: sha512-L0WhttDl+2BOsybvEOLK7fW3UA0OQ0IQ2d6Zl2x/a6vVRs3bAY0ECOSHHeL5jD+SbOpOCUEi0y1DgHEn9Qn1AQ==}
 
   magicast@0.5.2:
     resolution: {integrity: sha512-E3ZJh4J3S9KfwdjZhe2afj6R9lGIN5Pher1pF39UGrXRqq/VDaGVIGN13BjHd2u8B61hArAGOnso7nBOouW3TQ==}
@@ -17861,10 +17802,6 @@ packages:
   tabbable@1.1.3:
     resolution: {integrity: sha512-nOWwx35/JuDI4ONuF0ZTo6lYvI0fY0tZCH1ErzY2EXfu4az50ZyiUX8X073FLiZtmWUVlkRnuXsehjJgCw9tYg==}
 
-  table-layout@4.1.1:
-    resolution: {integrity: sha512-iK5/YhZxq5GO5z8wb0bY1317uDF3Zjpha0QFFLA8/trAoiLbQD0HUbMesEaxyzUgDxi2QlcbM8IvqOlEjgoXBA==}
-    engines: {node: '>=12.17'}
-
   tagged-tag@1.0.0:
     resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
     engines: {node: '>=20'}
@@ -18331,10 +18268,6 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  typical@7.3.0:
-    resolution: {integrity: sha512-ya4mg/30vm+DOWfBg4YK3j2WD6TWtRkCbasOJr40CseYENzCUby/7rIvXA99JGsQHeNxLbnXdyLLxKSv3tauFw==}
-    engines: {node: '>=12.17'}
-
   uc.micro@1.0.6:
     resolution: {integrity: sha512-8Y75pvTYkLJW2hWQHXxoqRgV7qb9B+9vFEtidML+7koHUFapnVJAZ6cKs+Qjz5Aw3aZWHMC6u0wJE3At+nSGwA==}
 
@@ -18362,9 +18295,6 @@ packages:
 
   undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
-
-  undici-types@7.16.0:
-    resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
 
   undici-types@7.18.2:
     resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
@@ -19121,10 +19051,6 @@ packages:
 
   wordwrap@1.0.0:
     resolution: {integrity: sha512-gvVzJFlPycKc5dZN4yPkP8w7Dc37BtP1yczEneOb4uq34pXZcvrtRTmWV8W+Ume+XCxKgbjM+nevkyFPMybd4Q==}
-
-  wordwrapjs@5.1.1:
-    resolution: {integrity: sha512-0yweIbkINJodk27gX9LBGMzyQdBDan3s/dEAiwBOj+Mf0PPyWL6/rikalkv8EeD0E8jm4o5RXEOrFTP3NXbhJg==}
-    engines: {node: '>=12.17'}
 
   wrap-ansi@6.2.0:
     resolution: {integrity: sha512-r6lPcBGxZXlIcymEu7InxDMhdW0KDxpLgoFLcguasxCaJ/SOIZwINatK9KY/tf+ZrlywOKU0UDj3ATXUBfxJXA==}
@@ -25384,10 +25310,10 @@ snapshots:
     optionalDependencies:
       nodemailer: 8.0.10
 
-  '@auth/prisma-adapter@2.11.2(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(nodemailer@8.0.10)':
+  '@auth/prisma-adapter@2.11.2(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(nodemailer@8.0.10)':
     dependencies:
       '@auth/core': 0.41.2(nodemailer@8.0.10)
-      '@prisma/client': 6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3)
+      '@prisma/client': 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
     transitivePeerDependencies:
       - '@simplewebauthn/browser'
       - '@simplewebauthn/server'
@@ -28845,12 +28771,10 @@ snapshots:
     dependencies:
       '@noble/ciphers': 1.3.0
 
-  '@elastic/elasticsearch@9.4.2(apache-arrow@21.1.0)':
+  '@elastic/elasticsearch@9.4.2':
     dependencies:
       '@elastic/transport': 9.3.6
       tslib: 2.8.1
-    optionalDependencies:
-      apache-arrow: 21.1.0
     transitivePeerDependencies:
       - supports-color
 
@@ -30175,9 +30099,9 @@ snapshots:
       '@tybys/wasm-util': 0.10.2
     optional: true
 
-  '@next-auth/prisma-adapter@1.0.7(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(next-auth@4.24.14(next@16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.60.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(nodemailer@8.0.10)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))':
+  '@next-auth/prisma-adapter@1.0.7(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(next-auth@4.24.14(next@16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.60.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(nodemailer@8.0.10)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))':
     dependencies:
-      '@prisma/client': 6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3)
+      '@prisma/client': 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
       next-auth: 4.24.14(next@16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.60.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(nodemailer@8.0.10)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
 
   '@next/env@16.2.6': {}
@@ -30579,23 +30503,23 @@ snapshots:
 
   '@popperjs/core@2.11.8': {}
 
-  '@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3)':
+  '@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)':
     optionalDependencies:
-      prisma: 6.19.3(magicast@0.3.5)(typescript@5.9.3)
+      prisma: 6.19.3(typescript@5.9.3)
       typescript: 5.9.3
 
-  '@prisma/config@6.19.3(magicast@0.3.5)':
+  '@prisma/config@6.19.3':
     dependencies:
-      c12: 3.1.0(magicast@0.3.5)
+      c12: 3.1.0
       deepmerge-ts: 7.1.5
       effect: 3.21.0
       empathic: 2.0.0
     transitivePeerDependencies:
       - magicast
 
-  '@prisma/config@7.8.0(magicast@0.3.5)':
+  '@prisma/config@7.8.0':
     dependencies:
-      c12: 3.3.4(magicast@0.3.5)
+      c12: 3.3.4
       deepmerge-ts: 7.1.5
       effect: 3.20.0
       empathic: 2.0.0
@@ -30680,9 +30604,9 @@ snapshots:
     dependencies:
       '@prisma/debug': 7.8.0
 
-  '@prisma/internals@6.19.3(magicast@0.3.5)(typescript@5.9.3)':
+  '@prisma/internals@6.19.3(typescript@5.9.3)':
     dependencies:
-      '@prisma/config': 6.19.3(magicast@0.3.5)
+      '@prisma/config': 6.19.3
       '@prisma/debug': 6.19.3
       '@prisma/dmmf': 6.19.3
       '@prisma/driver-adapter-utils': 6.19.3
@@ -30701,9 +30625,9 @@ snapshots:
     transitivePeerDependencies:
       - magicast
 
-  '@prisma/internals@7.8.0(magicast@0.3.5)(typescript@5.9.3)':
+  '@prisma/internals@7.8.0(typescript@5.9.3)':
     dependencies:
-      '@prisma/config': 7.8.0(magicast@0.3.5)
+      '@prisma/config': 7.8.0
       '@prisma/debug': 7.8.0
       '@prisma/dmmf': 7.8.0
       '@prisma/driver-adapter-utils': 7.8.0
@@ -33145,12 +33069,6 @@ snapshots:
       '@types/deep-eql': 4.0.2
       assertion-error: 2.0.1
 
-  '@types/command-line-args@5.2.3':
-    optional: true
-
-  '@types/command-line-usage@5.0.4':
-    optional: true
-
   '@types/connect-history-api-fallback@1.5.4':
     dependencies:
       '@types/express-serve-static-core': 4.19.8
@@ -33433,11 +33351,6 @@ snapshots:
   '@types/node@20.19.41':
     dependencies:
       undici-types: 6.21.0
-
-  '@types/node@24.12.4':
-    dependencies:
-      undici-types: 7.16.0
-    optional: true
 
   '@types/node@25.5.0':
     dependencies:
@@ -34321,10 +34234,10 @@ snapshots:
     dependencies:
       langium: 1.3.1
 
-  '@zenstackhq/openapi@2.22.2(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(magicast@0.3.5)(typescript@5.9.3)(zod@4.4.3)':
+  '@zenstackhq/openapi@2.22.2(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(typescript@5.9.3)(zod@4.4.3)':
     dependencies:
-      '@zenstackhq/runtime': 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(zod@4.4.3)
-      '@zenstackhq/sdk': 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(magicast@0.3.5)(typescript@5.9.3)(zod@4.4.3)
+      '@zenstackhq/runtime': 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(zod@4.4.3)
+      '@zenstackhq/sdk': 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(typescript@5.9.3)(zod@4.4.3)
       openapi-types: 12.1.3
       semver: 7.8.1
       ts-pattern: 4.3.0
@@ -34336,9 +34249,9 @@ snapshots:
       - magicast
       - typescript
 
-  '@zenstackhq/runtime@2.22.2(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(zod@4.4.3)':
+  '@zenstackhq/runtime@2.22.2(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(zod@4.4.3)':
     dependencies:
-      '@prisma/client': 6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3)
+      '@prisma/client': 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
       bcryptjs: 2.4.3
       buffer: 6.0.3
       decimal.js-light: 2.5.1
@@ -34354,13 +34267,13 @@ snapshots:
       zod: 4.4.3
       zod-validation-error: 4.0.2(zod@4.4.3)
 
-  '@zenstackhq/sdk@2.22.2(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(magicast@0.3.5)(typescript@5.9.3)(zod@4.4.3)':
+  '@zenstackhq/sdk@2.22.2(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(typescript@5.9.3)(zod@4.4.3)':
     dependencies:
       '@prisma/generator-helper': 6.19.3
-      '@prisma/internals': 6.19.3(magicast@0.3.5)(typescript@5.9.3)
-      '@prisma/internals-v7': '@prisma/internals@7.8.0(magicast@0.3.5)(typescript@5.9.3)'
+      '@prisma/internals': 6.19.3(typescript@5.9.3)
+      '@prisma/internals-v7': '@prisma/internals@7.8.0(typescript@5.9.3)'
       '@zenstackhq/language': 2.22.2
-      '@zenstackhq/runtime': 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(zod@4.4.3)
+      '@zenstackhq/runtime': 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(zod@4.4.3)
       langium: 1.3.1
       semver: 7.8.1
       ts-morph: 26.0.0
@@ -34371,9 +34284,9 @@ snapshots:
       - typescript
       - zod
 
-  '@zenstackhq/server@2.22.2(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(zod@4.4.3)':
+  '@zenstackhq/server@2.22.2(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(zod@4.4.3)':
     dependencies:
-      '@zenstackhq/runtime': 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(zod@4.4.3)
+      '@zenstackhq/runtime': 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(zod@4.4.3)
       decimal.js: 10.6.0
       superjson: 1.13.3
       ts-japi: 1.12.3
@@ -34382,10 +34295,10 @@ snapshots:
     transitivePeerDependencies:
       - '@prisma/client'
 
-  '@zenstackhq/tanstack-query@2.22.2(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(magicast@0.3.5)(typescript@5.9.3)(zod@4.4.3)':
+  '@zenstackhq/tanstack-query@2.22.2(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(typescript@5.9.3)(zod@4.4.3)':
     dependencies:
-      '@zenstackhq/runtime': 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(zod@4.4.3)
-      '@zenstackhq/sdk': 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(magicast@0.3.5)(typescript@5.9.3)(zod@4.4.3)
+      '@zenstackhq/runtime': 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(zod@4.4.3)
+      '@zenstackhq/sdk': 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(typescript@5.9.3)(zod@4.4.3)
       cross-fetch: 4.1.0
       semver: 7.8.1
       ts-morph: 26.0.0
@@ -34595,21 +34508,6 @@ snapshots:
       normalize-path: 3.0.0
       picomatch: 2.3.2
 
-  apache-arrow@21.1.0:
-    dependencies:
-      '@swc/helpers': 0.5.23
-      '@types/command-line-args': 5.2.3
-      '@types/command-line-usage': 5.0.4
-      '@types/node': 24.12.4
-      command-line-args: 6.0.2
-      command-line-usage: 7.0.4
-      flatbuffers: 25.9.23
-      json-bignum: 0.0.3
-      tslib: 2.8.1
-    transitivePeerDependencies:
-      - '@75lb/nature'
-    optional: true
-
   apg-lite@1.0.5: {}
 
   append-field@1.0.0: {}
@@ -34659,9 +34557,6 @@ snapshots:
       dequal: 2.0.3
 
   aria-query@5.3.2: {}
-
-  array-back@6.2.3:
-    optional: true
 
   array-buffer-byte-length@1.0.2:
     dependencies:
@@ -34819,14 +34714,6 @@ snapshots:
       possible-typed-array-names: 1.1.0
 
   axe-core@4.11.2: {}
-
-  axios@1.15.2:
-    dependencies:
-      follow-redirects: 1.16.0(debug@4.3.7)
-      form-data: 4.0.5
-      proxy-from-env: 2.1.0
-    transitivePeerDependencies:
-      - debug
 
   axios@1.16.1:
     dependencies:
@@ -35173,7 +35060,7 @@ snapshots:
 
   bytestreamjs@2.0.1: {}
 
-  c12@3.1.0(magicast@0.3.5):
+  c12@3.1.0:
     dependencies:
       chokidar: 4.0.3
       confbox: 0.2.4
@@ -35187,10 +35074,8 @@ snapshots:
       perfect-debounce: 1.0.0
       pkg-types: 2.3.1
       rc9: 2.1.2
-    optionalDependencies:
-      magicast: 0.3.5
 
-  c12@3.3.4(magicast@0.3.5):
+  c12@3.3.4:
     dependencies:
       chokidar: 5.0.0
       confbox: 0.2.4
@@ -35204,8 +35089,6 @@ snapshots:
       perfect-debounce: 2.1.0
       pkg-types: 2.3.1
       rc9: 3.0.1
-    optionalDependencies:
-      magicast: 0.3.5
 
   cac@6.7.14: {}
 
@@ -35290,11 +35173,6 @@ snapshots:
   ccount@2.0.1: {}
 
   chai@6.2.2: {}
-
-  chalk-template@0.4.0:
-    dependencies:
-      chalk: 4.1.2
-    optional: true
 
   chalk@2.4.2:
     dependencies:
@@ -35560,22 +35438,6 @@ snapshots:
   comma-separated-tokens@2.0.3: {}
 
   command-exists@1.2.9: {}
-
-  command-line-args@6.0.2:
-    dependencies:
-      array-back: 6.2.3
-      find-replace: 5.0.2
-      lodash.camelcase: 4.3.0
-      typical: 7.3.0
-    optional: true
-
-  command-line-usage@7.0.4:
-    dependencies:
-      array-back: 6.2.3
-      chalk-template: 0.4.0
-      table-layout: 4.1.1
-      typical: 7.3.0
-    optional: true
 
   commander@10.0.1: {}
 
@@ -37567,9 +37429,6 @@ snapshots:
       common-path-prefix: 3.0.0
       pkg-dir: 7.0.0
 
-  find-replace@5.0.2:
-    optional: true
-
   find-root@1.1.0: {}
 
   find-up-simple@1.0.1: {}
@@ -37614,9 +37473,6 @@ snapshots:
       keyv: 4.5.4
 
   flat@5.0.2: {}
-
-  flatbuffers@25.9.23:
-    optional: true
 
   flatted@3.4.2: {}
 
@@ -38940,9 +38796,6 @@ snapshots:
 
   jsesc@3.1.0: {}
 
-  json-bignum@0.0.3:
-    optional: true
-
   json-buffer@3.0.1: {}
 
   json-ld-types@4.1.3(typescript@5.9.3):
@@ -39230,9 +39083,6 @@ snapshots:
 
   lodash-es@4.18.1: {}
 
-  lodash.camelcase@4.3.0:
-    optional: true
-
   lodash.capitalize@4.2.1: {}
 
   lodash.debounce@4.0.8: {}
@@ -39359,13 +39209,6 @@ snapshots:
   magic-string@0.30.21:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
-
-  magicast@0.3.5:
-    dependencies:
-      '@babel/parser': 7.29.7
-      '@babel/types': 7.29.7
-      source-map-js: 1.2.1
-    optional: true
 
   magicast@0.5.2:
     dependencies:
@@ -41737,9 +41580,9 @@ snapshots:
       clsx: 2.1.1
       react: 19.2.5
 
-  prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3):
+  prisma@6.19.3(typescript@5.9.3):
     dependencies:
-      '@prisma/config': 6.19.3(magicast@0.3.5)
+      '@prisma/config': 6.19.3
       '@prisma/engines': 6.19.3
     optionalDependencies:
       typescript: 5.9.3
@@ -43977,12 +43820,6 @@ snapshots:
 
   tabbable@1.1.3: {}
 
-  table-layout@4.1.1:
-    dependencies:
-      array-back: 6.2.3
-      wordwrapjs: 5.1.1
-    optional: true
-
   tagged-tag@1.0.0: {}
 
   tailwind-merge@3.6.0: {}
@@ -44477,9 +44314,6 @@ snapshots:
 
   typescript@5.9.3: {}
 
-  typical@7.3.0:
-    optional: true
-
   uc.micro@1.0.6: {}
 
   uc.micro@2.1.0: {}
@@ -44501,9 +44335,6 @@ snapshots:
   underscore@1.13.8: {}
 
   undici-types@6.21.0: {}
-
-  undici-types@7.16.0:
-    optional: true
 
   undici-types@7.18.2: {}
 
@@ -45530,9 +45361,6 @@ snapshots:
 
   wordwrap@1.0.0: {}
 
-  wordwrapjs@5.1.1:
-    optional: true
-
   wrap-ansi@6.2.0:
     dependencies:
       ansi-styles: 4.3.0
@@ -45717,12 +45545,12 @@ snapshots:
 
   zenscroll@4.0.2: {}
 
-  zenstack@2.22.2(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(@types/node@25.9.1)(magicast@0.3.5)(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3)(zod@4.4.3):
+  zenstack@2.22.2(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(@types/node@25.9.1)(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)(zod@4.4.3):
     dependencies:
       '@paralleldrive/cuid2': 2.3.1
       '@types/node': 25.9.1
       '@zenstackhq/language': 2.22.2
-      '@zenstackhq/sdk': 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(magicast@0.3.5)(typescript@5.9.3)(zod@4.4.3)
+      '@zenstackhq/sdk': 2.22.2(@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3))(typescript@5.9.3)(zod@4.4.3)
       async-exit-hook: 2.0.1
       colors: 1.4.0
       commander: 8.3.0
@@ -45732,7 +45560,7 @@ snapshots:
       ora: 5.4.1
       pluralize: 8.0.0
       pretty-repl: 4.0.1
-      prisma: 6.19.3(magicast@0.3.5)(typescript@5.9.3)
+      prisma: 6.19.3(typescript@5.9.3)
       semver: 7.8.1
       strip-color: 0.1.0
       terminal-link: 2.1.1
