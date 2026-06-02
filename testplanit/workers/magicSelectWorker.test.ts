@@ -78,6 +78,11 @@ const mockPrisma: any = {
   },
   projects: {
     findFirst: (...args: any[]) => mockFindFirstProject(...args),
+    // Worker reads `excludeNotStartedFromRuns` to decide whether to add a
+    // `state.workflowType != NOT_STARTED` filter. The unit tests assert
+    // token/retry behavior, not the flag itself; returning the default (off)
+    // preserves the pre-existing query shape these tests rely on.
+    findUnique: vi.fn(async () => ({ excludeNotStartedFromRuns: false })),
   },
   $disconnect: vi.fn(),
 };

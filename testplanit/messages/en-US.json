@@ -1868,6 +1868,14 @@
           "noIntegrationTitle": "No issue integration",
           "noIntegrationDescription": "This project has no active issue integration, so results can't link an issue. Assign an issue integration to enable this setting."
         },
+        "excludeNotStarted": {
+          "label": "Exclude draft cases from test runs",
+          "description": "When enabled, test cases in a Not Started workflow state are hidden from the Add Cases picker and cannot be added to a run. If an existing case is reverted to Not Started (e.g. by Review & Approval rejection), it will be removed from any open run unless it already has a recorded result, in which case it stays in the run but becomes read-only.",
+          "enabledToast": "Draft cases will be excluded from runs",
+          "disabledToast": "Draft cases can now be added to runs",
+          "saveError": "Failed to update draft-case exclusion setting",
+          "skippedToast": "{count, plural, =1 {1 draft case was skipped because it is in Not Started state} other {# draft cases were skipped because they are in Not Started state}}"
+        },
         "editWindow": {
           "label": "Result edit window",
           "description": "How long after a result is recorded it can still be edited in place. After the window closes, corrections require a new attempt. System administrators can always edit.",
@@ -2470,6 +2478,7 @@
       "noSearchResults": "No cases match your search criteria.",
       "bulkEdit": "Bulk Edit",
       "createTestRun": "Create Test Run",
+      "addToRunDraftBlocked": "Draft cases cannot be added to runs while \"Exclude draft cases from test runs\" is on for this project.",
       "copyMoveToProject": "Copy / Move",
       "export": "Export",
       "quickScript": "QuickScript",

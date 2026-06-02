@@ -111,6 +111,7 @@ const REPOSITORY_CASE_LIST_SELECT = {
     select: {
       id: true,
       name: true,
+      workflowType: true,
       icon: {
         select: {
           name: true,
@@ -528,12 +529,19 @@ export default function Cases({
   );
   const totalProjectCases = totalProjectCasesCountData ?? 0;
 
-  // QuickScript feature flag
   const { data: projectSettings } = useFindUniqueProjects(
-    { where: { id: projectId }, select: { quickScriptEnabled: true } },
+    {
+      where: { id: projectId },
+      select: {
+        quickScriptEnabled: true,
+        excludeNotStartedFromRuns: true,
+      },
+    },
     { enabled: isValidProjectId }
   );
   const quickScriptEnabled = projectSettings?.quickScriptEnabled ?? false;
+  const excludeNotStartedFromRuns =
+    projectSettings?.excludeNotStartedFromRuns ?? false;
 
   // Check if project has an active LLM integration (for auto-tag)
   const { data: projectLlmIntegrations } = useFindManyProjectLlmIntegration(
@@ -783,6 +791,12 @@ export default function Cases({
           projectId,
         },
       ];
+
+      if (isSelectionMode && excludeNotStartedFromRuns) {
+        baseConditions.push({
+          state: { workflowType: { not: "NOT_STARTED" } },
+        });
+      }
 
       // --- Apply folder/view/filter logic ---
       // Skip assignedTo and status filters here - they're handled separately for test run cases
@@ -1525,6 +1539,8 @@ export default function Cases({
       folderId,
       filterId,
       descendantFolderIds,
+      isSelectionMode,
+      excludeNotStartedFromRuns,
     ]);
 
   // When `showDescendants` is on with a selected folder, the descendant folder
@@ -3138,7 +3154,8 @@ export default function Cases({
       // Show descendants mode - display folder badge on each case
       showDescendants,
       folderPathMap,
-      renderPendingBadge
+      renderPendingBadge,
+      excludeNotStartedFromRuns
     );
   }, [
     userPreferencesForColumns,
@@ -3170,6 +3187,7 @@ export default function Cases({
     showDescendants,
     folderPathMap,
     renderPendingBadge,
+    excludeNotStartedFromRuns,
   ]);
 
   // Create lightweight column metadata for ColumnSelection component
@@ -3469,20 +3487,67 @@ export default function Cases({
   };
 
   // Add the handler for the new button
-  const handleCreateTestRun = useCallback(() => {
-    if (selectedCaseIdsForBulkEdit.length > 0 && isValidProjectId) {
-      // Store selected case IDs in sessionStorage to avoid URL length limits
-      sessionStorage.setItem(
-        "createTestRun_selectedCases",
-        JSON.stringify(selectedCaseIdsForBulkEdit)
-      );
+  const handleCreateTestRun = useCallback(async () => {
+    if (selectedCaseIdsForBulkEdit.length === 0 || !isValidProjectId) return;
 
-      const queryParams = new URLSearchParams({
-        openAddRun: "true",
-      });
-      router.push(`/projects/runs/${projectId}?${queryParams.toString()}`);
+    let idsToSeed = selectedCaseIdsForBulkEdit;
+
+    if (excludeNotStartedFromRuns) {
+      try {
+        const params = new URLSearchParams({
+          q: JSON.stringify({
+            where: {
+              id: { in: selectedCaseIdsForBulkEdit },
+              state: { workflowType: { not: "NOT_STARTED" } },
+            },
+            select: { id: true },
+          }),
+        });
+        const resp = await fetch(
+          `/api/model/repositoryCases/findMany?${params.toString()}`,
+          { credentials: "include" }
+        );
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const body = await resp.json();
+        const eligibleIds: number[] = (body?.data ?? []).map(
+          (c: { id: number }) => c.id
+        );
+        const skippedCount =
+          selectedCaseIdsForBulkEdit.length - eligibleIds.length;
+        if (skippedCount > 0) {
+          toast.info(
+            t("projects.settings.advanced.excludeNotStarted.skippedToast", {
+              count: skippedCount,
+            })
+          );
+        }
+        if (eligibleIds.length === 0) return;
+        idsToSeed = eligibleIds;
+      } catch (err) {
+        console.error(
+          "[exclude-not-started] failed to filter selected cases:",
+          err
+        );
+      }
     }
-  }, [selectedCaseIdsForBulkEdit, router, projectId, isValidProjectId]);
+
+    sessionStorage.setItem(
+      "createTestRun_selectedCases",
+      JSON.stringify(idsToSeed)
+    );
+
+    const queryParams = new URLSearchParams({
+      openAddRun: "true",
+    });
+    router.push(`/projects/runs/${projectId}?${queryParams.toString()}`);
+  }, [
+    selectedCaseIdsForBulkEdit,
+    router,
+    projectId,
+    isValidProjectId,
+    excludeNotStartedFromRuns,
+    t,
+  ]);
 
   // *** Prepare for useExportData Hook ***
   // Wrapper function to call the server action

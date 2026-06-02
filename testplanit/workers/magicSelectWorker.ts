@@ -577,6 +577,15 @@ export const processor = async (
   // 3. Get tenant-specific Prisma client
   const prisma = getPrismaClientForJob(job.data);
 
+  const projectFlag = await (prisma as any).projects.findUnique({
+    where: { id: projectId },
+    select: { excludeNotStartedFromRuns: true },
+  });
+  const draftFilter: Record<string, unknown> =
+    projectFlag?.excludeNotStartedFromRuns
+      ? { state: { workflowType: { not: "NOT_STARTED" } } }
+      : {};
+
   // 4. Create worker-safe LlmManager (fresh instance per job, not singleton)
   const llmManager = LlmManager.createForWorker(
     prisma as any,
@@ -657,6 +666,7 @@ export const processor = async (
       projectId,
       isArchived: false,
       isDeleted: false,
+      ...draftFilter,
     },
   });
 
@@ -785,10 +795,12 @@ export const processor = async (
     isArchived: boolean;
     isDeleted: boolean;
     id?: { in: number[] };
+    state?: { workflowType: { not: string } };
   } = {
     projectId,
     isArchived: false,
     isDeleted: false,
+    ...(draftFilter as { state?: { workflowType: { not: string } } }),
   };
 
   if (searchResultIds) {

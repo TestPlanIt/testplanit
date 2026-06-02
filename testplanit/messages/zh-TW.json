@@ -1868,6 +1868,14 @@
           "noIntegrationTitle": "整合無問題",
           "noIntegrationDescription": "此項目未啟用問題集成，因此結果無法關聯問題。請指派問題整合以啟用此設定。"
         },
+        "excludeNotStarted": {
+          "label": "從測試運行中排除草稿案例",
+          "description": "啟用此功能後，處於「未開始」工作流程狀態的測試案例將從「新增用例」選擇器中隱藏，並且無法新增至執行階段。如果現有用例被還原為「未開始」（例如，被審核和批准拒絕），則會從所有開啟的運行中移除，除非該用例已有記錄結果；在這種情況下，該用例將保留在運行中，但變為唯讀。",
+          "enabledToast": "草稿案例將不計入運行次數。",
+          "disabledToast": "現在可以將草稿案例新增到運行中。",
+          "saveError": "更新草稿案例排除設定失敗",
+          "skippedToast": "{count, plural, =1 {1 draft case was skipped because it is in Not Started state} other {# draft cases were skipped because they are in Not Started state}}"
+        },
         "editWindow": {
           "label": "結果編輯視窗",
           "description": "結果記錄後，仍可在一段時間內進行編輯。視窗關閉後，修改需要重新嘗試。系統管理員始終可以進行編輯。",
@@ -2470,6 +2478,7 @@
       "noSearchResults": "沒有符合您搜尋條件的案例。",
       "bulkEdit": "批次編輯",
       "createTestRun": "建立測試運行",
+      "addToRunDraftBlocked": "如果此專案的「從測試執行中排除草稿案例」選項已啟用，則無法將草稿案例新增至執行階段。",
       "copyMoveToProject": "複製/移動",
       "export": "出口",
       "quickScript": "QuickScript",

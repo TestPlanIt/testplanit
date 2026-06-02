@@ -1868,6 +1868,14 @@
           "noIntegrationTitle": "Không có vấn đề gì về tích hợp",
           "noIntegrationDescription": "Dự án này hiện không có tích hợp vấn đề nào đang hoạt động, do đó kết quả không thể liên kết với một vấn đề cụ thể. Hãy chỉ định một tích hợp vấn đề để kích hoạt cài đặt này."
         },
+        "excludeNotStarted": {
+          "label": "Loại trừ các trường hợp dự thảo khỏi các lần chạy thử nghiệm.",
+          "description": "Khi được kích hoạt, các trường hợp kiểm thử ở trạng thái quy trình công việc \"Chưa bắt đầu\" sẽ bị ẩn khỏi trình chọn \"Thêm trường hợp\" và không thể được thêm vào một lần chạy. Nếu một trường hợp hiện có được chuyển về trạng thái \"Chưa bắt đầu\" (ví dụ: do bị từ chối trong quá trình xem xét và phê duyệt), nó sẽ bị xóa khỏi bất kỳ lần chạy nào đang mở trừ khi nó đã có kết quả được ghi lại, trong trường hợp đó nó vẫn nằm trong lần chạy nhưng trở thành chế độ chỉ đọc.",
+          "enabledToast": "Các trường hợp dự thảo sẽ bị loại trừ khỏi số lượt chạy.",
+          "disabledToast": "Hiện tại, bạn có thể thêm các trường hợp dự thảo vào các lượt chạy.",
+          "saveError": "Không thể cập nhật cài đặt loại trừ trường hợp dự thảo.",
+          "skippedToast": "{count, plural, =1 {1 bản nháp đã bị bỏ qua vì ở trạng thái Chưa bắt đầu} other {# bản nháp đã bị bỏ qua vì ở trạng thái Chưa bắt đầu}}"
+        },
         "editWindow": {
           "label": "Cửa sổ chỉnh sửa kết quả",
           "description": "Bạn vẫn có thể chỉnh sửa kết quả ngay tại chỗ sau một thời gian nhất định. Sau khi cửa sổ chỉnh sửa đóng lại, việc sửa lỗi yêu cầu phải thực hiện lại. Quản trị viên hệ thống luôn có thể chỉnh sửa.",
@@ -2470,6 +2478,7 @@
       "noSearchResults": "Không có trường hợp nào phù hợp với tiêu chí tìm kiếm của bạn.",
       "bulkEdit": "Chỉnh sửa hàng loạt",
       "createTestRun": "Tạo bản chạy thử nghiệm",
+      "addToRunDraftBlocked": "Không thể thêm các trường hợp nháp vào các lần chạy khi tùy chọn \"Loại trừ các trường hợp nháp khỏi các lần chạy thử nghiệm\" được bật cho dự án này.",
       "copyMoveToProject": "Sao chép / Di chuyển",
       "export": "Xuất khẩu",
       "quickScript": "QuickScript",

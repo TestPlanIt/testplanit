@@ -53,6 +53,7 @@ export default function AdvancedPage() {
         requireResultFlipJustification: true,
         editResultsDurationSeconds: true,
         requireIssueOnFailure: true,
+        excludeNotStartedFromRuns: true,
         projectIntegrations: {
           where: { isActive: true, integration: { status: "ACTIVE" } },
           select: { id: true },
@@ -113,6 +114,7 @@ export default function AdvancedPage() {
   const requireResultFlipJustification =
     project?.requireResultFlipJustification ?? false;
   const requireIssueOnFailure = project?.requireIssueOnFailure ?? false;
+  const excludeNotStartedFromRuns = project?.excludeNotStartedFromRuns ?? false;
   // Requiring a linked issue is only meaningful when the project has an active
   // issue integration to link from; without one the toggle is forced off.
   const hasIssueIntegration = (project?.projectIntegrations?.length ?? 0) > 0;
@@ -162,6 +164,22 @@ export default function AdvancedPage() {
       );
     } catch {
       toast.error(t("issueOnFailure.saveError"));
+    }
+  };
+
+  const handleToggleExcludeNotStarted = async (enabled: boolean) => {
+    try {
+      await updateProject.mutateAsync({
+        where: { id: projectId },
+        data: { excludeNotStartedFromRuns: enabled },
+      });
+      toast.success(
+        enabled
+          ? t("excludeNotStarted.enabledToast")
+          : t("excludeNotStarted.disabledToast")
+      );
+    } catch {
+      toast.error(t("excludeNotStarted.saveError"));
     }
   };
 
@@ -327,6 +345,28 @@ export default function AdvancedPage() {
                     </AlertDescription>
                   </WarningAlert>
                 )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-3">
+                <Label className="flex items-center gap-3">
+                  <Switch
+                    id="exclude-not-started-from-runs-toggle"
+                    data-testid="exclude-not-started-from-runs-toggle"
+                    checked={excludeNotStartedFromRuns}
+                    onCheckedChange={handleToggleExcludeNotStarted}
+                    disabled={projectLoading || updateProject.isPending}
+                  />
+                  <span className="text-base font-medium">
+                    {t("excludeNotStarted.label")}
+                  </span>
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  {t("excludeNotStarted.description")}
+                </p>
               </div>
             </CardContent>
           </Card>

@@ -147,6 +147,10 @@ To decide:
 
 Decisions can include a comment, which appears in the request history and in any associated notifications.
 
+:::tip Keep rejected cases out of test runs
+If a rejected case is sent back to a Not Started workflow state, you can keep it out of new and existing runs automatically by turning on **Exclude Draft Cases from Test Runs** under the project's [Advanced settings](./projects.md#exclude-draft-cases-from-test-runs). With that toggle on, the rejected case disappears from the Add Cases picker and is removed from any open run where it has not yet been executed; executed run-cases are kept (read-only) so the historical result stays visible.
+:::
+
 ![The Approve confirmation dialog with the requester, entity name, target state, and an optional approval note field](/img/screenshots/user-guide/review-approvals/approve-dialog.png)
 
 :::important Roles vs users

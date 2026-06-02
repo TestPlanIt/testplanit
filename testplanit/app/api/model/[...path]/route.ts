@@ -30,6 +30,7 @@ import {
   assertResultEditWindowOpen,
   isEditWindowExpiredError,
 } from "~/lib/services/editWindow";
+import { softDeleteUnexecutedRunCasesForDraftRevert } from "~/lib/services/runCaseEligibility";
 import {
   isAlreadyPendingError,
   isReviewGateError,
@@ -918,6 +919,24 @@ async function innerHandler(
               );
             }
           );
+
+          if (
+            parsedPath.operation === "update" &&
+            typeof requestBody?.data?.stateId === "number" &&
+            typeof data.projectId === "number" &&
+            typeof data.stateId === "number"
+          ) {
+            softDeleteUnexecutedRunCasesForDraftRevert(prisma, {
+              projectId: data.projectId,
+              repositoryCaseId: data.id,
+              newStateId: data.stateId,
+            }).catch((err: any) => {
+              console.error(
+                `[exclude-not-started] soft-delete failed for case ${data.id}:`,
+                err
+              );
+            });
+          }
         }
       } catch (e) {
         console.error(

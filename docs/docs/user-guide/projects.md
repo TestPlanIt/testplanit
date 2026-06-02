@@ -340,3 +340,18 @@ This setting depends on an [issue integration](./integrations.md). A project can
 When a tester selects a failure status from the quick-status menu on a project that requires an issue, TestPlanIt opens the **Add Result** dialog with an inline prompt to link an issue rather than silently rejecting the result. The prompt clears as soon as an issue is linked.
 
 This setting is off by default and applies to results recorded through the application, the API, and connected agents. Automated result imports (for example CLI or CI result uploads) are not affected.
+
+### Exclude Draft Cases from Test Runs
+
+When enabled, test cases whose current workflow state is a **Not Started** type are treated as drafts and kept out of test runs.
+
+This setting is off by default — opt in per project. It is independent of [Review & Approval](./review-approvals.md), so projects that have not turned R&A on can still use it for draft-quality hygiene. A workflow state counts as "Not Started" when its **Type** is set to `NOT_STARTED` on the [Workflows](./workflows.md) admin page.
+
+While the setting is on:
+
+- **Adding cases to a run** — Not Started cases are hidden from the Add Cases picker and cannot be added through the [Add Test Run modal](./projects/add-test-run-modal.md). The same filter is enforced server-side, so direct API calls, Testmo imports, and copy/move into a run also drop draft cases. [Magic Select](./llm-magic-select.md) honors the toggle too — when it runs against a project with this setting on, draft cases are excluded from the LLM's candidate pool before scoring. If a tester's selection included any draft cases, a toast names how many were skipped.
+- **Creating a run from the repository** — when the picker filter would discard every case in your multi-select, **Create Test Run** is short-circuited: no new run is created, and a toast explains how many drafts were skipped. If at least one non-draft case is selected, the new run opens pre-populated with only those cases, and the skip toast still surfaces the dropped count.
+- **Adding a single case from the kebab menu** — the row-level **Add to Test Run** submenu is replaced with a disabled item on draft cases, with a tooltip explaining why. The submenu reappears the moment the case transitions to any non–Not Started workflow state.
+- **Reverting a case to Not Started** — when a case already attached to one or more open runs is moved back into a Not Started state (typically by a [Review & Approval](./review-approvals.md) rejection, but any state change qualifies), TestPlanIt automatically removes the case from any open run where it has **not yet been executed**. Run-cases that already have a recorded result are kept in place so the historical outcome remains visible; the result becomes read-only and cannot be edited further.
+- **Restoring a removed case** — moving a case back out of Not Started (e.g. Draft → Active) **does not** automatically re-add it to the runs it was removed from. The removal is treated as a deliberate cleanup, not a reversible side-effect: silently resurrecting the case could undo a manual remove the tester did on purpose. To put the case back in a run, add it again through the Add Cases picker — the case is now eligible, so it appears there for selection.
+- **Completed runs are untouched** — only open runs are reconciled. Once a run is completed its case set is frozen.

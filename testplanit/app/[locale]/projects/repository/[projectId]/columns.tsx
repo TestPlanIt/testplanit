@@ -1014,6 +1014,7 @@ const ActionsCell = React.memo(function ActionsCell({
   canAddEdit,
   onQuickScript,
   onCopyMove,
+  excludeNotStartedFromRuns,
 }: {
   row: any;
   isRunMode: boolean;
@@ -1025,7 +1026,11 @@ const ActionsCell = React.memo(function ActionsCell({
   canAddEdit?: boolean;
   onQuickScript?: (caseId: number) => void;
   onCopyMove?: (caseId: number) => void;
+  excludeNotStartedFromRuns?: boolean;
 }) {
+  const isDraftCase =
+    !!excludeNotStartedFromRuns &&
+    row.original?.state?.workflowType === "NOT_STARTED";
   const t = useTranslations();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
@@ -1070,7 +1075,17 @@ const ActionsCell = React.memo(function ActionsCell({
           {!isRunMode &&
             !isSelectionMode &&
             canAddEditRun &&
-            !isSoftDeletedInRun && (
+            !isSoftDeletedInRun &&
+            (isDraftCase ? (
+              <DropdownMenuItem
+                disabled
+                data-testid={`add-to-test-run-draft-${row.original.id}`}
+                title={t("repository.cases.addToRunDraftBlocked")}
+              >
+                <PlusSquare className="mr-2 h-4 w-4" />
+                <span>{t("common.actions.addToTestRun")}</span>
+              </DropdownMenuItem>
+            ) : (
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
                   <PlusSquare className="mr-2 h-4 w-4" />
@@ -1083,7 +1098,7 @@ const ActionsCell = React.memo(function ActionsCell({
                   />
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
-            )}
+            ))}
           {!isRunMode && !isSelectionMode && onCopyMove && (
             <DropdownMenuItem
               onClick={() => onCopyMove(row.original.id)}
@@ -1446,7 +1461,8 @@ export const getColumns = (
   onCopyMove?: (caseId: number) => void,
   showDescendants?: boolean,
   folderPathMap?: Map<number, string> | null,
-  renderPendingBadge?: (caseId: number) => React.ReactNode
+  renderPendingBadge?: (caseId: number) => React.ReactNode,
+  excludeNotStartedFromRuns?: boolean
 ): ColumnDef<ExtendedCases>[] => {
   const isStepsFieldPresent = uniqueCaseFieldList.some(
     (field) => field.displayName === "Steps"
@@ -2376,6 +2392,7 @@ export const getColumns = (
             canAddEdit={canAddEdit}
             onQuickScript={onQuickScript}
             onCopyMove={onCopyMove}
+            excludeNotStartedFromRuns={excludeNotStartedFromRuns}
           />
         ),
       });

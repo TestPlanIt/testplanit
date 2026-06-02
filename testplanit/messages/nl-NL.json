@@ -1868,6 +1868,14 @@
           "noIntegrationTitle": "Geen problemen met de integratie",
           "noIntegrationDescription": "Dit project heeft geen actieve issue-integratie, waardoor resultaten geen issue kunnen koppelen. Wijs een issue-integratie toe om deze instelling in te schakelen."
         },
+        "excludeNotStarted": {
+          "label": "Sluit conceptcases uit van testruns.",
+          "description": "Wanneer deze optie is ingeschakeld, worden testcases met de status 'Niet gestart' in de workflow verborgen voor het toevoegen van cases en kunnen ze niet aan een run worden toegevoegd. Als een bestaande case wordt teruggezet naar 'Niet gestart' (bijvoorbeeld door afwijzing tijdens beoordeling en goedkeuring), wordt deze verwijderd uit elke open run, tenzij er al een resultaat is vastgelegd. In dat geval blijft de case in de run, maar wordt deze alleen-lezen.",
+          "enabledToast": "Conceptversies worden uitgesloten van de runs.",
+          "disabledToast": "Conceptcases kunnen nu aan runs worden toegevoegd.",
+          "saveError": "Het bijwerken van de instelling voor het uitsluiten van conceptzaken is mislukt.",
+          "skippedToast": "{count, plural, =1 {1 conceptcase is overgeslagen omdat deze de status 'Niet gestart' heeft} other {# conceptcases zijn overgeslagen omdat ze de status 'Niet gestart' hebben}}"
+        },
         "editWindow": {
           "label": "Resultaatbewerkingsvenster",
           "description": "Een resultaat kan nog steeds direct na het vastleggen worden bewerkt. Na het sluiten van het venster is een nieuwe poging nodig om een correctie door te voeren. Systeembeheerders kunnen de resultaten altijd bewerken.",
@@ -2470,6 +2478,7 @@
       "noSearchResults": "Er zijn geen cases gevonden die aan uw zoekcriteria voldoen.",
       "bulkEdit": "Bulkbewerking",
       "createTestRun": "Testrun maken",
+      "addToRunDraftBlocked": "Conceptcases kunnen niet aan testruns worden toegevoegd als de optie \"Conceptcases uitsluiten van testruns\" voor dit project is ingeschakeld.",
       "copyMoveToProject": "Kopiëren / Verplaatsen",
       "export": "Exporteren",
       "quickScript": "QuickScript",

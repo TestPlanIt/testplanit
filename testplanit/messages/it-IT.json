@@ -1868,6 +1868,14 @@
           "noIntegrationTitle": "Nessun problema di integrazione",
           "noIntegrationDescription": "Questo progetto non ha alcuna integrazione attiva con i problemi, quindi i risultati non possono essere collegati a un problema. Assegna un'integrazione con i problemi per abilitare questa impostazione."
         },
+        "excludeNotStarted": {
+          "label": "Escludi i casi di bozza dalle esecuzioni di prova",
+          "description": "Quando questa opzione è abilitata, i casi di test nello stato \"Non avviato\" del flusso di lavoro sono nascosti dal selettore \"Aggiungi casi\" e non possono essere aggiunti a un'esecuzione. Se un caso esistente viene riportato allo stato \"Non avviato\" (ad esempio, a seguito di un rifiuto da parte del team di revisione e approvazione), verrà rimosso da qualsiasi esecuzione aperta, a meno che non abbia già un risultato registrato; in tal caso, rimane nell'esecuzione ma diventa di sola lettura.",
+          "enabledToast": "I casi di bozza saranno esclusi dalle corse",
+          "disabledToast": "Ora è possibile aggiungere casi di bozza alle esecuzioni",
+          "saveError": "Impossibile aggiornare l'impostazione di esclusione del caso di bozza.",
+          "skippedToast": "{count, plural, =1 {1 caso di bozza è stato saltato perché si trova nello stato Non avviato} other {# casi di bozza sono stati saltati perché si trovano nello stato Non avviato}}"
+        },
         "editWindow": {
           "label": "Finestra di modifica dei risultati",
           "description": "Per quanto tempo dopo la registrazione di un risultato è ancora possibile modificarlo direttamente. Una volta chiusa la finestra, per apportare correzioni è necessario un nuovo tentativo. Gli amministratori di sistema possono sempre effettuare modifiche.",
@@ -2470,6 +2478,7 @@
       "noSearchResults": "Nessun caso corrisponde ai tuoi criteri di ricerca.",
       "bulkEdit": "Modifica in blocco",
       "createTestRun": "Crea esecuzione di prova",
+      "addToRunDraftBlocked": "Non è possibile aggiungere casi in bozza alle esecuzioni se l'opzione \"Escludi casi in bozza dalle esecuzioni di test\" è attiva per questo progetto.",
       "copyMoveToProject": "Copia/Sposta",
       "export": "Esportare",
       "quickScript": "QuickScript",

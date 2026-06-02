@@ -23,3 +23,9 @@ CHANGELOG.md
 .claude/
 docker-data/
 test-results/
+
+# Capacity-test outputs are gitignored at `load-tests/capacity/.gitignore`,
+# but prettier's --ignore-path only reads the top-level .gitignore, so the
+# nested rule is invisible to format:check. Mirror it here so a local run
+# of the capacity suite doesn't break precommit on subsequent PRs.
+load-tests/capacity/results/

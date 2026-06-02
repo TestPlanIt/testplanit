@@ -1868,6 +1868,14 @@
           "noIntegrationTitle": "Brak problemów z integracją",
           "noIntegrationDescription": "Ten projekt nie ma aktywnej integracji problemów, więc wyniki nie mogą łączyć problemów. Aby włączyć to ustawienie, przypisz integrację problemów."
         },
+        "excludeNotStarted": {
+          "label": "Wyklucz projekty przypadków z przebiegów testowych",
+          "description": "Po włączeniu tej opcji przypadki testowe w stanie przepływu pracy „Nierozpoczęte” są ukryte w selektorze „Dodaj przypadki” i nie można ich dodać do przebiegu. Jeśli istniejący przypadek zostanie przywrócony do stanu „Nierozpoczęty” (np. przez odrzucenie w ramach przeglądu i zatwierdzenia), zostanie on usunięty z dowolnego otwartego przebiegu, chyba że ma już zarejestrowany wynik. W takim przypadku pozostaje w przebiegu, ale staje się dostępny tylko do odczytu.",
+          "enabledToast": "Projekty przypadków będą wyłączone z rozpatrywania",
+          "disabledToast": "Projekty spraw można teraz dodawać do przebiegów",
+          "saveError": "Nie udało się zaktualizować ustawienia wykluczenia wersji roboczej sprawy",
+          "skippedToast": "{count, plural, =1 {1 projekt sprawy został pominięty, ponieważ ma stan Nierozpoczęty} other {# projektów sprawy zostało pominiętych, ponieważ mają stan Nierozpoczęty}}"
+        },
         "editWindow": {
           "label": "Okno edycji wyników",
           "description": "Jak długo po zarejestrowaniu wyniku można go nadal edytować. Po zamknięciu okna poprawki wymagają ponownej próby. Administratorzy systemu zawsze mogą edytować.",
@@ -2470,6 +2478,7 @@
       "noSearchResults": "Brak przypadków odpowiadających kryteriom wyszukiwania.",
       "bulkEdit": "Edycja zbiorcza",
       "createTestRun": "Utwórz przebieg testowy",
+      "addToRunDraftBlocked": "Nie można dodawać roboczych wersji przypadków do przebiegów, jeśli dla tego projektu włączona jest opcja „Wyklucz robocze wersje przypadków z przebiegów testowych”.",
       "copyMoveToProject": "Kopiuj / Przenieś",
       "export": "Eksport",
       "quickScript": "QuickScript",
