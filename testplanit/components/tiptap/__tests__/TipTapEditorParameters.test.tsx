@@ -41,6 +41,34 @@ vi.mock("~/app/constants", () => ({
 // Capture the extensions array passed to useEditor.
 const capturedConfigs: Array<{ extensions: unknown[] }> = [];
 
+// Spy on the parameter-mention factory so the suggestion-gating contract
+// can be asserted directly without introspecting Tiptap output. The factory
+// is called by TipTapEditor on every mount; we record the (parameters,
+// messages, options) arguments and return a marker object the
+// extensions-array assertions can detect.
+const factoryCalls: Array<{
+  parameters: unknown;
+  messages: unknown;
+  options: { withSuggestion?: boolean } | undefined;
+}> = [];
+vi.mock("~/lib/tiptap/parameterMentionExtension", async () => {
+  const actual = await vi.importActual<
+    typeof import("~/lib/tiptap/parameterMentionExtension")
+  >("~/lib/tiptap/parameterMentionExtension");
+  return {
+    ...actual,
+    createParameterMentionExtension: (
+      parameters: unknown,
+      messages: unknown,
+      options?: { withSuggestion?: boolean }
+    ) => {
+      factoryCalls.push({ parameters, messages, options });
+      // Return a shape the existing extensions-array assertions can detect.
+      return { name: "parameterMention" };
+    },
+  };
+});
+
 vi.mock("@tiptap/react", () => ({
   useEditor: (config: { extensions: unknown[] }) => {
     capturedConfigs.push(config);
@@ -80,6 +108,7 @@ const PARAMS: ParameterChipMeta[] = [
 
 beforeEach(() => {
   capturedConfigs.length = 0;
+  factoryCalls.length = 0;
 });
 
 afterEach(() => {
@@ -87,7 +116,7 @@ afterEach(() => {
 });
 
 describe("TipTapEditor parameters wiring", () => {
-  it("does NOT mount the parameter mention extension when parameters prop is undefined", async () => {
+  it("ALWAYS mounts the parameter mention extension when parameters prop is undefined (so step content with parameter references can deserialize without 'Unknown node type')", async () => {
     const TipTapEditor = (await import("../TipTapEditor")).default;
     render(
       <TipTapEditor content={{ type: "doc", content: [] }} projectId="1" />
@@ -100,10 +129,15 @@ describe("TipTapEditor parameters wiring", () => {
         ext !== null &&
         (ext as { name?: string }).name === "parameterMention"
     );
-    expect(hasParameterMention).toBe(false);
+    expect(hasParameterMention).toBe(true);
+    // Suggestion popup must NOT be wired when there are no parameters —
+    // otherwise typing `@` in a comment / description / project doc would
+    // pop a parameter-picker.
+    expect(factoryCalls.length).toBeGreaterThan(0);
+    expect(factoryCalls[0].options?.withSuggestion).toBe(false);
   });
 
-  it("does NOT mount the parameter mention extension when parameters is empty []", async () => {
+  it("ALWAYS mounts the parameter mention extension when parameters is empty []", async () => {
     const TipTapEditor = (await import("../TipTapEditor")).default;
     render(
       <TipTapEditor
@@ -120,10 +154,12 @@ describe("TipTapEditor parameters wiring", () => {
         ext !== null &&
         (ext as { name?: string }).name === "parameterMention"
     );
-    expect(hasParameterMention).toBe(false);
+    expect(hasParameterMention).toBe(true);
+    expect(factoryCalls.length).toBeGreaterThan(0);
+    expect(factoryCalls[0].options?.withSuggestion).toBe(false);
   });
 
-  it("DOES mount the parameter mention extension when parameters is non-empty", async () => {
+  it("DOES mount the parameter mention extension AND wires the suggestion popup when parameters is non-empty and editor is editable", async () => {
     const TipTapEditor = (await import("../TipTapEditor")).default;
     render(
       <TipTapEditor
@@ -141,6 +177,22 @@ describe("TipTapEditor parameters wiring", () => {
         (ext as { name?: string }).name === "parameterMention"
     );
     expect(hasParameterMention).toBe(true);
+    expect(factoryCalls.length).toBeGreaterThan(0);
+    expect(factoryCalls[0].options?.withSuggestion).toBe(true);
+  });
+
+  it("mounts the node WITHOUT the suggestion popup when readOnly is true (read-only previews never need the `@`-picker, but must still render parameter chips)", async () => {
+    const TipTapEditor = (await import("../TipTapEditor")).default;
+    render(
+      <TipTapEditor
+        content={{ type: "doc", content: [] }}
+        projectId="1"
+        parameters={PARAMS}
+        readOnly
+      />
+    );
+    expect(factoryCalls.length).toBeGreaterThan(0);
+    expect(factoryCalls[0].options?.withSuggestion).toBe(false);
   });
 
   it("renders the InsertParameterToolbarButton when parameters is non-empty AND not readOnly", async () => {

@@ -317,9 +317,17 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
         TableRow,
         TableCell,
         TableHeader,
-        ...(parameters && parameters.length > 0
-          ? [createParameterMentionExtension(parameters, chipMessages)]
-          : []),
+        // Always register the parameterMention NODE so step content that
+        // contains parameter references can deserialize on every surface
+        // — even read-only previews / list cells / case views without an
+        // active iteration. The `@`-trigger Suggestion popup is opt-in
+        // (param-aware editable editors only); read-only or param-less
+        // mounts get a registered schema node that renders `@label` and
+        // never crashes. See parameterMentionExtension.tsx for the
+        // CreateParameterMentionExtensionOptions contract.
+        createParameterMentionExtension(parameters ?? [], chipMessages, {
+          withSuggestion: !readOnly && (parameters?.length ?? 0) > 0,
+        }),
       ],
       content: validateContent(content),
       onUpdate: ({ editor }) => {
