@@ -1579,18 +1579,16 @@ export default function TestRunPage() {
             void handleSubmit(onSubmit)(e);
           }}
         >
-          {testRunData ? (
-            <div className="px-6 pt-6">
-              <ReviewStatusBanner
-                entityType="RUN"
-                entityId={testRunData.id}
-                projectId={Number(projectId)}
-                entityName={testRunData.name || ""}
-                reachableGatedStates={reachableGatedStates}
-                currentStateId={testRunData.stateId}
-              />
-            </div>
-          ) : null}
+          <div className="px-6 pt-6">
+            <ReviewStatusBanner
+              entityType="RUN"
+              entityId={testRunData.id}
+              projectId={Number(projectId)}
+              entityName={testRunData.name || ""}
+              reachableGatedStates={reachableGatedStates}
+              currentStateId={testRunData.stateId}
+            />
+          </div>
           <CardHeader>
             <div className="flex justify-between items-start">
               {!isEditMode && (
@@ -1691,15 +1689,13 @@ export default function TestRunPage() {
                     {!isEditMode ? (
                       // View Mode Buttons for NON-COMPLETED runs
                       <div className="flex items-center gap-1">
-                        {testRunData ? (
-                          <RequestReviewButton
-                            entityType="RUN"
-                            entityId={testRunData.id}
-                            projectId={Number(projectId)}
-                            currentStateId={testRunData.stateId}
-                            reachableGatedStates={reachableGatedStates}
-                          />
-                        ) : null}
+                        <RequestReviewButton
+                          entityType="RUN"
+                          entityId={testRunData.id}
+                          projectId={Number(projectId)}
+                          currentStateId={testRunData.stateId}
+                          reachableGatedStates={reachableGatedStates}
+                        />
                         {canAddEditRun && !isMultiConfigSelected && (
                           <Button
                             type="button"

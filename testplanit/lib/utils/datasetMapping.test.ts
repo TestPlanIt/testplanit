@@ -39,8 +39,11 @@ describe("applyMapping", () => {
     // __proto__ is not an own property, so applyMapping must not write
     // anything for that mapping entry. Built via Object.create(null) +
     // Object.defineProperty so `__proto__` is a normal own data property,
-    // never the prototype-setter literal CodeQL flags.
+    // never the prototype-setter literal CodeQL flags. The suppression
+    // below acknowledges the analyzer's heuristic — it can't tell that the
+    // `value` data descriptor bypasses the prototype setter entirely.
     const mapping: Record<string, string> = Object.create(null);
+    // lgtm[js/non-object-prototype]
     Object.defineProperty(mapping, "__proto__", {
       value: "p",
       enumerable: true,

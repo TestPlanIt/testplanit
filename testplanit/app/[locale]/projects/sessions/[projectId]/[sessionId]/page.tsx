@@ -1766,18 +1766,16 @@ export default function SessionPage() {
       {isFormLoading && <LoadingSpinnerAlert />}
       <FormProvider {...form}>
         <form onSubmit={handleSubmit(onSubmit)}>
-          {sessionData ? (
-            <div className="px-6 pt-6">
-              <ReviewStatusBanner
-                entityType="SESSION"
-                entityId={sessionData.id}
-                projectId={Number(projectId)}
-                entityName={sessionData.name}
-                reachableGatedStates={reachableGatedStates}
-                currentStateId={sessionData.stateId}
-              />
-            </div>
-          ) : null}
+          <div className="px-6 pt-6">
+            <ReviewStatusBanner
+              entityType="SESSION"
+              entityId={sessionData.id}
+              projectId={Number(projectId)}
+              entityName={sessionData.name}
+              reachableGatedStates={reachableGatedStates}
+              currentStateId={sessionData.stateId}
+            />
+          </div>
           <CardHeader>
             <div className="flex justify-between items-start">
               {!isEditMode && (
@@ -1879,15 +1877,13 @@ export default function SessionPage() {
                     )}
                     {!isEditMode ? (
                       <div className="flex items-center gap-1">
-                        {sessionData ? (
-                          <RequestReviewButton
-                            entityType="SESSION"
-                            entityId={sessionData.id}
-                            projectId={Number(projectId)}
-                            currentStateId={sessionData.stateId}
-                            reachableGatedStates={reachableGatedStates}
-                          />
-                        ) : null}
+                        <RequestReviewButton
+                          entityType="SESSION"
+                          entityId={sessionData.id}
+                          projectId={Number(projectId)}
+                          currentStateId={sessionData.stateId}
+                          reachableGatedStates={reachableGatedStates}
+                        />
                         {showEditButtonPerm && !sessionData?.isCompleted && (
                           <Button
                             type="button"

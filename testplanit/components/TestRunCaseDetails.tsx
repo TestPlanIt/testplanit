@@ -559,7 +559,6 @@ export function TestRunCaseDetails({
     }
     if (
       typeof fieldValue === "object" &&
-      fieldValue !== null &&
       Object.keys(fieldValue).length === 0
     ) {
       return false;
@@ -1234,7 +1233,6 @@ export function TestRunCaseDetails({
                   }
                   if (
                     typeof value === "object" &&
-                    value !== null &&
                     Object.keys(value).length === 0
                   ) {
                     return true;
