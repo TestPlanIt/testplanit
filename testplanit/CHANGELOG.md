@@ -1,3 +1,9 @@
+## [0.34.8](https://github.com/TestPlanIt/testplanit/compare/v0.34.7...v0.34.8) (2026-06-03)
+
+### Enhancements
+
+* **import:** add case-ID matching controls to the web import dialog ([#395](https://github.com/TestPlanIt/testplanit/issues/395)) ([bb3f37b](https://github.com/TestPlanIt/testplanit/commit/bb3f37bdba44870d814155ab59d905a08facf794)), closes [#394](https://github.com/TestPlanIt/testplanit/issues/394)
+
 ## [0.34.7](https://github.com/TestPlanIt/testplanit/compare/v0.34.6...v0.34.7) (2026-06-03)
 
 ### Bug Fixes
