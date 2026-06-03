@@ -30,10 +30,12 @@ Import test cases from CSV files with flexible field mapping.
 There are two ways to start a CSV import:
 
 **Using the Import button:**
+
 1. Navigate to **Repository** in your project
 2. Click the **Import** button in the toolbar
 
 **Using drag and drop:**
+
 1. Drag a `.csv` file from your desktop over the Repository page
 2. A full-page drop overlay will appear indicating you can drop to import
 3. Drop the file — the import wizard opens automatically with your file pre-loaded
@@ -104,7 +106,7 @@ Test steps in a single cell can be formatted in several ways:
 
 **Simple Format:**
 
-```
+```text
 1. Step one
 2. Step two
 3. Step three
@@ -112,7 +114,7 @@ Test steps in a single cell can be formatted in several ways:
 
 **Detailed Format with Expected Results** — separate the step from its expected result with a pipe (`|`):
 
-```
+```text
 1. Navigate to login page | Login page displays
 2. Enter username and password | Fields accept input
 3. Click login button | User is redirected to dashboard
@@ -122,7 +124,7 @@ Test steps in a single cell can be formatted in several ways:
 
 Steps can also contain markdown formatting:
 
-```
+```text
 1. Navigate to the **Login** page | Login page displays with _username_ and _password_ fields
 2. Enter `admin` credentials | Fields accept input
 3. Click **Submit** | User is redirected to [Dashboard](/dashboard)
@@ -297,11 +299,13 @@ TestPlanIt supports importing test results from the following formats:
 There are two ways to start a test results import:
 
 **Using the Import button:**
+
 1. Navigate to **Test Runs** in your project
 2. Click **Import Results** button
 3. The import dialog opens with format options
 
 **Using drag and drop:**
+
 1. Drag one or more test result files (`.xml`, `.trx`, or `.json`) from your desktop over the Test Runs page
 2. A full-page drop overlay will appear indicating you can drop to import
 3. Drop the files — the import dialog opens automatically with your files pre-loaded
