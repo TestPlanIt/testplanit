@@ -7,6 +7,10 @@ import {
   type InlineDatasetRow,
   type InlineParameter,
 } from "@/components/parameters/InlineDatasetEditor";
+import {
+  pickInlinePayload,
+  templateHasStepsField,
+} from "~/lib/services/inlineParamsGate";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -578,13 +582,15 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
   // visible only when the selected template has a Steps field — without
   // steps, parameter `@chip` references have no home. Switching to a
   // template that lacks Steps clears any entered draft so a hidden section
-  // can't ship orphaned params on submit.
-  const templateHasSteps = React.useMemo(() => {
-    const tpl = templates?.find((tt) => tt.id === selectedTemplateId);
-    return !!tpl?.caseFields?.some(
-      (cf: any) => cf.caseField?.displayName === "Steps"
-    );
-  }, [templates, selectedTemplateId]);
+  // can't ship orphaned params on submit. Detection lives in
+  // `lib/services/inlineParamsGate.ts` so it has unit-test coverage.
+  const templateHasSteps = React.useMemo(
+    () =>
+      templateHasStepsField(
+        templates?.find((tt) => tt.id === selectedTemplateId)
+      ),
+    [templates, selectedTemplateId]
+  );
 
   useEffect(() => {
     if (!templateHasSteps) {
@@ -1105,15 +1111,12 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
               steps: stepRowsForCase,
               // PARAM-AddCase: forward inline state when the user has
               // actually authored columns. The Sheet is the only path that
-              // can populate `inlineParameters`, and the `templateHasSteps`
+              // populates `inlineParameters`, and the `templateHasSteps`
               // effect zeroes the array on template switch, so a non-empty
-              // array is a strong signal of authored draft columns.
-              parameters: inlineParameters.length
-                ? inlineParameters.filter((p) => p.name.trim().length > 0)
-                : undefined,
-              datasetRows: inlineParameters.length
-                ? inlineDatasetRows
-                : undefined,
+              // array signals authored draft columns. Trimming +
+              // undefined-when-empty live in `pickInlinePayload` so the
+              // edge cases get unit-test coverage.
+              ...pickInlinePayload(inlineParameters, inlineDatasetRows),
             },
           ],
           fieldMappings: [],
