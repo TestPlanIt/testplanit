@@ -1,6 +1,6 @@
 {
   "name": "@testplanit/wdio-reporter",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "WebdriverIO reporter for TestPlanIt - report test results directly to your TestPlanIt instance",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
