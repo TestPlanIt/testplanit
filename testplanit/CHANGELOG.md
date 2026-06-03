@@ -1,3 +1,9 @@
+## [0.34.6](https://github.com/TestPlanIt/testplanit/compare/v0.34.5...v0.34.6) (2026-06-03)
+
+### Bug Fixes
+
+* **quality:** address 10 CodeQL Code-Scanning findings ([#388](https://github.com/TestPlanIt/testplanit/issues/388)) ([2566b24](https://github.com/TestPlanIt/testplanit/commit/2566b2424b2eb9c11b59a8f19244b310fcf2f750))
+
 ## [0.34.5](https://github.com/TestPlanIt/testplanit/compare/v0.34.4...v0.34.5) (2026-06-03)
 
 ### Enhancements
