@@ -1,3 +1,9 @@
+## [0.34.5](https://github.com/TestPlanIt/testplanit/compare/v0.34.4...v0.34.5) (2026-06-03)
+
+### Enhancements
+
+* **cases:** inline parameters & dataset on Add Case ([#387](https://github.com/TestPlanIt/testplanit/issues/387)) ([08ddb89](https://github.com/TestPlanIt/testplanit/commit/08ddb89a9be1e7c000cae7464b79cb49c90fc05e))
+
 ## [0.34.4](https://github.com/TestPlanIt/testplanit/compare/v0.34.3...v0.34.4) (2026-06-03)
 
 ### Bug Fixes
