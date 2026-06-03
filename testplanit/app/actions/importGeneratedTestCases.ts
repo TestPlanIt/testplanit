@@ -1,6 +1,10 @@
 "use server";
 
-import { RepositoryCaseSource, WorkflowScope } from "@prisma/client";
+import {
+  ParameterType,
+  RepositoryCaseSource,
+  WorkflowScope,
+} from "@prisma/client";
 import { z } from "zod/v4";
 import { prisma } from "~/lib/prisma";
 import { resolveCreateStateRemap } from "~/lib/services/reviewGate";
@@ -47,6 +51,26 @@ const FieldMappingSchema = z.object({
     .optional(),
 });
 
+// AddCase inline parameters/dataset (PARAM-AddCase). Both optional; datasetRows
+// requires parameters (the dataset columns are the parameter names). Validated
+// at the boundary so the modal can author a fully parameterized case in a
+// single round-trip instead of "create case → open Configure Parameters sheet
+// → save params → save dataset".
+const InlineParameterSchema = z.object({
+  name: z.string().min(1).max(64),
+  type: z.enum(ParameterType),
+  required: z.boolean().optional(),
+  sensitive: z.boolean().optional(),
+  description: z.string().optional(),
+  allowedValuesJson: z.any().optional(),
+});
+
+const InlineDatasetRowSchema = z.object({
+  rowIndex: z.number().int().nonnegative(),
+  label: z.string().optional(),
+  values: z.record(z.string(), z.any()),
+});
+
 const TestCaseInputSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -64,6 +88,8 @@ const TestCaseInputSchema = z.object({
   versionFieldValues: z.array(VersionFieldValueSchema).optional(),
   versionTags: z.array(z.string()).optional(),
   versionIssues: z.array(VersionIssueSchema).optional(),
+  parameters: z.array(InlineParameterSchema).optional(),
+  datasetRows: z.array(InlineDatasetRowSchema).optional(),
 });
 
 const ImportInputSchema = z.object({
@@ -652,6 +678,82 @@ export async function importGeneratedTestCases(
                 sharedStepGroupId: step.sharedStepGroupId ?? null,
               }));
               await tx.steps.createMany({ data: stepData });
+            }
+
+            // 7. Inline parameters + dataset (AddCase modal path; PARAM-AddCase)
+            if (testCase.parameters?.length) {
+              const seen = new Set<string>();
+              for (const p of testCase.parameters) {
+                if (seen.has(p.name)) {
+                  throw new Error(
+                    `Duplicate parameter name "${p.name}" on "${testCase.name}"`
+                  );
+                }
+                seen.add(p.name);
+              }
+              await tx.testCaseParameter.createMany({
+                data: testCase.parameters.map((p, order) => ({
+                  testCaseId: newCase.id,
+                  name: p.name,
+                  type: p.type,
+                  required: p.required ?? false,
+                  sensitive: p.sensitive ?? false,
+                  description: p.description ?? null,
+                  allowedValuesJson: p.allowedValuesJson ?? null,
+                  order,
+                })),
+              });
+              await tx.repositoryCases.update({
+                where: { id: newCase.id },
+                data: { hasParameters: true },
+              });
+
+              if (testCase.datasetRows?.length) {
+                const sortedRows = [...testCase.datasetRows].sort(
+                  (a, b) => a.rowIndex - b.rowIndex
+                );
+                const dataset = await tx.dataSet.create({
+                  data: {
+                    projectId: data.projectId,
+                    ownerCaseId: newCase.id,
+                    name: `${testCase.name} dataset`.slice(0, 255),
+                    isShared: false,
+                    createdById: userId,
+                  },
+                  select: { id: true },
+                });
+                await tx.dataSetVersion.create({
+                  data: {
+                    dataSetId: dataset.id,
+                    version: 1,
+                    parametersJson: testCase.parameters.map((p) => ({
+                      name: p.name,
+                      type: p.type,
+                      required: p.required ?? false,
+                      sensitive: p.sensitive ?? false,
+                    })),
+                    rowsJson: sortedRows.map((r) => ({
+                      rowIndex: r.rowIndex,
+                      label: r.label ?? null,
+                      values: r.values,
+                    })),
+                    rowCount: sortedRows.length,
+                    createdById: userId,
+                  },
+                });
+                await tx.dataSetRow.createMany({
+                  data: sortedRows.map((r) => ({
+                    dataSetId: dataset.id,
+                    rowIndex: r.rowIndex,
+                    label: r.label ?? null,
+                    valuesJson: r.values,
+                  })),
+                });
+              }
+            } else if (testCase.datasetRows?.length) {
+              throw new Error(
+                `"${testCase.name}" sent datasetRows without parameters — dataset columns require a parameter schema`
+              );
             }
 
             importedIds.push(newCase.id);

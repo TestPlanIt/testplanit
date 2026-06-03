@@ -1,7 +1,24 @@
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { ManageTags } from "@/components/ManageTags";
+import { ConfigureParametersButton } from "@/components/parameters/ConfigureParametersButton";
+import {
+  InlineDatasetEditor,
+  type InlineDatasetRow,
+  type InlineParameter,
+} from "@/components/parameters/InlineDatasetEditor";
+import {
+  pickInlinePayload,
+  templateHasStepsField,
+} from "~/lib/services/inlineParamsGate";
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   Dialog,
   DialogContent,
@@ -310,6 +327,17 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
   );
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [linkedIssueIds, setLinkedIssueIds] = useState<number[]>([]);
+  // Inline parameters + dataset rows authored in AddCase (PARAM-AddCase).
+  // The collapsible section that houses these only renders when the selected
+  // template has a Steps field — without steps, parameter `@chip` references
+  // have no home, so the section would be empty UX friction.
+  const [inlineParameters, setInlineParameters] = useState<InlineParameter[]>(
+    []
+  );
+  const [inlineDatasetRows, setInlineDatasetRows] = useState<
+    InlineDatasetRow[]
+  >([]);
+  const [inlineParamsSheetOpen, setInlineParamsSheetOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedLinks, setSelectedLinks] = useState<LinkAttachmentInput[]>([]);
 
@@ -549,6 +577,28 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
       setSelectedTemplateId(defaultTemplateId);
     }
   }, [defaultWorkflowId, defaultTemplateId, setValue]);
+
+  // Per `feedback_addcase_params_steps_field_gated`: the inline section is
+  // visible only when the selected template has a Steps field — without
+  // steps, parameter `@chip` references have no home. Switching to a
+  // template that lacks Steps clears any entered draft so a hidden section
+  // can't ship orphaned params on submit. Detection lives in
+  // `lib/services/inlineParamsGate.ts` so it has unit-test coverage.
+  const templateHasSteps = React.useMemo(
+    () =>
+      templateHasStepsField(
+        templates?.find((tt) => tt.id === selectedTemplateId)
+      ),
+    [templates, selectedTemplateId]
+  );
+
+  useEffect(() => {
+    if (!templateHasSteps) {
+      setInlineParameters([]);
+      setInlineDatasetRows([]);
+      setInlineParamsSheetOpen(false);
+    }
+  }, [templateHasSteps]);
 
   useEffect(() => {
     const selectedTemplate = templates?.find(
@@ -1059,6 +1109,14 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
               versionIssues,
               attachments: uploadedAttachments,
               steps: stepRowsForCase,
+              // PARAM-AddCase: forward inline state when the user has
+              // actually authored columns. The Sheet is the only path that
+              // populates `inlineParameters`, and the `templateHasSteps`
+              // effect zeroes the array on template switch, so a non-empty
+              // array signals authored draft columns. Trimming +
+              // undefined-when-empty live in `pickInlinePayload` so the
+              // edge cases get unit-test coverage.
+              ...pickInlinePayload(inlineParameters, inlineDatasetRows),
             },
           ],
           fieldMappings: [],
@@ -1072,21 +1130,34 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
 
         const newCaseId = result.importedIds[0];
 
-        await queryClient.invalidateQueries({
-          queryKey: ["folderStats"],
-          refetchType: "all",
-        });
-
-        await queryClient.invalidateQueries({
-          predicate: (query) =>
-            Array.isArray(query.queryKey) &&
-            query.queryKey[0] === "zenstack" &&
-            query.queryKey[1] === "RepositoryCases",
-          refetchType: "all",
-        });
-
+        // Close the modal before kicking off cache invalidations so the user
+        // perceives Save → close as ~immediate. The invalidations resolve in
+        // the background and the repo view re-renders as soon as they land.
+        // Scoping by projectId + dropping `refetchType: "all"` (refetching
+        // even inactive queries app-wide) takes typical post-save latency
+        // from "freeze 1-2s" to a single render of the visible folder view.
         onClose();
         setIsSubmitting(false);
+
+        const projectIdForCache = numericProjectId;
+        void queryClient.invalidateQueries({
+          predicate: (query) => {
+            if (!Array.isArray(query.queryKey)) return false;
+            const [root, model, , args] = query.queryKey as [
+              string,
+              string,
+              string,
+              { where?: { projectId?: number } } | undefined,
+            ];
+            if (root !== "zenstack" || model !== "RepositoryCases")
+              return false;
+            const projectIdArg = args?.where?.projectId;
+            return (
+              projectIdArg === undefined || projectIdArg === projectIdForCache
+            );
+          },
+        });
+        void queryClient.invalidateQueries({ queryKey: ["folderStats"] });
 
         checkForDuplicates(
           convertedData.name,
@@ -1301,15 +1372,38 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
                     <div className="space-y-4">
                       {templates
                         ?.find((template) => template.id === selectedTemplateId)
-                        ?.caseFields.map((caseField: any) => (
-                          <RenderField
-                            field={caseField}
-                            key={caseField.caseFieldId}
-                            control={control}
-                            canEditRestricted={canEditRestrictedPerm}
-                            projectId={Number(projectId)}
-                          />
-                        ))}
+                        ?.caseFields.map((caseField: any) => {
+                          const isStepsField =
+                            caseField.caseField?.type?.type === "Steps";
+                          return (
+                            <React.Fragment key={caseField.caseFieldId}>
+                              {/* Mirror the case details page: the Configure
+                              Parameters button sits right above the Steps
+                              field renderer. Same component, same placement,
+                              same affordance. In AddCase it opens a Sheet
+                              that hosts the InlineDatasetEditor instead of
+                              the live (caseId-bound) ConfigureParametersSheet
+                              — the case doesn't exist yet at this point. */}
+                              {isStepsField && (
+                                <div className="flex justify-end">
+                                  <ConfigureParametersButton
+                                    parameterCount={inlineParameters.length}
+                                    canEdit
+                                    onOpen={() =>
+                                      setInlineParamsSheetOpen(true)
+                                    }
+                                  />
+                                </div>
+                              )}
+                              <RenderField
+                                field={caseField}
+                                control={control}
+                                canEditRestricted={canEditRestrictedPerm}
+                                projectId={Number(projectId)}
+                              />
+                            </React.Fragment>
+                          );
+                        })}
                     </div>
                   )}
                 </ResizablePanel>
@@ -1418,6 +1512,36 @@ export function AddCase({ folderId, open, onClose }: AddCaseProps) {
                 </ResizablePanel>
               </ResizablePanelGroup>
             </div>
+            {templateHasSteps && (
+              <Sheet
+                open={inlineParamsSheetOpen}
+                onOpenChange={setInlineParamsSheetOpen}
+              >
+                <SheetContent
+                  side="right"
+                  className="sm:max-w-2xl overflow-y-auto"
+                  data-testid="addcase-inline-params-sheet"
+                >
+                  <SheetHeader>
+                    <SheetTitle>{t("parameters.sheetTitle")}</SheetTitle>
+                    <SheetDescription>
+                      {t("parameters.sheetDescription")}
+                    </SheetDescription>
+                  </SheetHeader>
+                  <div className="mt-4">
+                    <InlineDatasetEditor
+                      parameters={inlineParameters}
+                      rows={inlineDatasetRows}
+                      onChange={({ parameters, rows }) => {
+                        setInlineParameters(parameters);
+                        setInlineDatasetRows(rows);
+                      }}
+                      testIdPrefix="addcase-inline-dataset"
+                    />
+                  </div>
+                </SheetContent>
+              </Sheet>
+            )}
             <DialogFooter>
               {errors.root && (
                 <div
