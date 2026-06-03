@@ -25,6 +25,7 @@ allowBuilds:
   'core-js': true
   'core-js-pure': true
   'esbuild': true
+  iframe-resizer: true
   'keytar': true
   'msgpackr-extract': true
   'msw': true
