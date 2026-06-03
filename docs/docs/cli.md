@@ -144,6 +144,8 @@ testplanit import <files...> --project <id|name> --name <name> [options]
 | `-d, --attachments-dir <path>` | Base directory for resolving attachment paths (default: directory of test result file) |
 | `--no-attachments` | Skip uploading attachments from test results |
 | `-a, --run-attachments <files...>` | Files to attach to the test run (e.g., test plans, reports) |
+| `--case-matcher <mode>` | Link results to existing cases by ID: `off`, `name`, `property`, `auto` (default: `off`) |
+| `--case-id-format <preset>` | Case-ID pattern in the test name when matching by name: `brackets`, `c`, `tc` (default: `brackets`) |
 
 :::note
 For project, state, config, milestone, folder, and test run options, the CLI looks up entities by exact name match. If no match is found, an error is returned. For tags, if a tag name doesn't exist, it will be created automatically.
@@ -171,6 +173,42 @@ Use `-d, --attachments-dir` to specify a custom base directory for resolving rel
 
 Use `--no-attachments` to skip uploading test result attachments entirely.
 
+#### Linking results to existing cases by ID
+
+By default the importer matches each result to a case by **name and class name**. If your automation renames a test, the importer no longer recognizes it and creates a duplicate case. To prevent this, assign each automated test the ID of the case it belongs to, and turn on case-ID matching with `--case-matcher`. When a result carries a recognized ID, it links to that case **regardless of the test name**, so renames stop creating duplicates.
+
+There are two ways to carry the ID, controlled by `--case-matcher`:
+
+- **`name`** — the ID is embedded in the test name; the pattern is chosen with `--case-id-format` (see below).
+- **`property`** — the ID is carried in a JUnit `<property>` named `test_id` (or `testplanit_case_id`), following the convention used by TestRail and Xray (see below).
+- **`auto`** — try the `test_id` property first, then fall back to the name pattern.
+
+Name patterns (`--case-id-format`):
+
+| Preset | Matches | Example test name |
+| -------- | --------- | ------------------- |
+| `brackets` (default) | `[123]`, `[C123]`, `[123, 456]` | `[123] user can log in` |
+| `c` | `C123` | `C123 user can log in` |
+| `tc` | `TC-123`, `TC123` | `TC-123 user can log in` |
+
+Property form (`--case-matcher property` or `auto`):
+
+```xml
+<testcase name="user can log in" classname="auth.LoginTests">
+  <properties>
+    <property name="test_id" value="123"/>
+  </properties>
+</testcase>
+```
+
+Notes:
+
+- A single test may reference multiple cases (`[123, 456]` or `value="123,456"`); each referenced case receives the same result.
+- Tests **without** an ID still import normally — they are matched/created by name and class name as before.
+- If a referenced case ID does not exist in the target project, that result is **skipped** (never auto-created under a wrong name) and reported as a warning at the end of the import.
+- The ID is the numeric TestPlanIt case ID; a leading `C` or `#` is tolerated.
+- Property matching requires a reporter that writes per-`<testcase>` properties (e.g. pytest's `record_property`, the Playwright JUnit reporter with `embedAnnotationsAsProperties`, NUnit `[Property]`). Frameworks that only emit suite-level properties (e.g. Maven Surefire) should use the name-based pattern instead.
+
 #### Examples
 
 ```bash
@@ -191,6 +229,15 @@ testplanit import cucumber-report.json -p 1 -n "BDD Tests" -F cucumber
 
 # Import multiple files with glob pattern
 testplanit import "./test-results/*.xml" -p 1 -n "CI Build"
+
+# Link results to existing cases by an ID in the test name (e.g. "[123] login")
+testplanit import results.xml -p 1 -n "Build 123" --case-matcher name
+
+# Use the TestRail-style C-prefix pattern (e.g. "C123 login")
+testplanit import results.xml -p 1 -n "Build 123" --case-matcher name --case-id-format c
+
+# Link by a test_id property in the XML, falling back to the name pattern
+testplanit import results.xml -p 1 -n "Build 123" --case-matcher auto
 
 # Import with IDs
 testplanit import results.xml \

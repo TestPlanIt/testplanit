@@ -693,4 +693,288 @@ describe("Test Results Import API Route", () => {
       expect(routeToIteration).not.toHaveBeenCalled();
     });
   });
+
+  describe("case-ID linking", () => {
+    const setSingleCase = (
+      testName: string,
+      metadata?: Record<string, string>
+    ) => {
+      (parseTestResults as any).mockResolvedValueOnce({
+        result: {
+          total: 1,
+          passed: 1,
+          failed: 0,
+          errors: 0,
+          skipped: 0,
+          duration: 1,
+          suites: [
+            {
+              name: "com.example.TestSuite",
+              total: 1,
+              passed: 1,
+              failed: 0,
+              errors: 0,
+              skipped: 0,
+              duration: 1,
+              cases: [
+                {
+                  name: testName,
+                  status: "passed",
+                  duration: 1,
+                  failure: null,
+                  stack_trace: null,
+                  attachments: [],
+                  ...(metadata ? { metadata } : {}),
+                },
+              ],
+            },
+          ],
+        },
+        errors: [],
+      });
+    };
+
+    it("links to an existing case by an ID in the name without creating a case", async () => {
+      (prisma.repositoryCases.findFirst as any).mockImplementation(
+        async (args: any) =>
+          args?.where?.id === 123
+            ? { id: 123, name: "Curated name", className: null }
+            : null
+      );
+      (prisma.repositoryCases.update as any).mockResolvedValue({
+        id: 123,
+        name: "Curated name",
+        className: null,
+      });
+
+      setSingleCase("[123] login works");
+
+      const formData = new FormData();
+      formData.append("files", createMockFile("results.xml"));
+      formData.append("name", "CI Run");
+      formData.append("projectId", "1");
+      formData.append("caseMatcher", "name");
+
+      const request = createFormDataRequest(formData);
+      const response = await POST(request);
+      const events = await readSseResponse(response);
+
+      expect(prisma.repositoryCases.findFirst).toHaveBeenCalledWith({
+        where: { id: 123, projectId: 1 },
+      });
+      expect(prisma.repositoryCases.create).not.toHaveBeenCalled();
+      expect(prisma.testRunCases.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            testRunId_repositoryCaseId: {
+              testRunId: 42,
+              repositoryCaseId: 123,
+            },
+          },
+        })
+      );
+      expect(events.find((e) => e.complete === true)).toBeDefined();
+    });
+
+    it("prefers the test_id property over the name in auto mode", async () => {
+      (prisma.repositoryCases.findFirst as any).mockImplementation(
+        async (args: any) =>
+          args?.where?.id === 456
+            ? { id: 456, name: "Curated", className: null }
+            : null
+      );
+      (prisma.repositoryCases.update as any).mockResolvedValue({
+        id: 456,
+        name: "Curated",
+        className: null,
+      });
+
+      setSingleCase("[123] login works", { test_id: "456" });
+
+      const formData = new FormData();
+      formData.append("files", createMockFile("results.xml"));
+      formData.append("name", "CI Run");
+      formData.append("projectId", "1");
+      formData.append("caseMatcher", "auto");
+
+      const request = createFormDataRequest(formData);
+      const response = await POST(request);
+      await readSseResponse(response);
+
+      expect(prisma.repositoryCases.findFirst).toHaveBeenCalledWith({
+        where: { id: 456, projectId: 1 },
+      });
+      expect(prisma.repositoryCases.create).not.toHaveBeenCalled();
+    });
+
+    it("warns and skips when the referenced case ID is not in the project", async () => {
+      (prisma.repositoryCases.findFirst as any).mockResolvedValue(null);
+
+      setSingleCase("[999] login works");
+
+      const formData = new FormData();
+      formData.append("files", createMockFile("results.xml"));
+      formData.append("name", "CI Run");
+      formData.append("projectId", "1");
+      formData.append("caseMatcher", "name");
+
+      const request = createFormDataRequest(formData);
+      const response = await POST(request);
+      const events = await readSseResponse(response);
+
+      expect(prisma.repositoryCases.create).not.toHaveBeenCalled();
+      expect(prisma.testRunCases.upsert).not.toHaveBeenCalled();
+      const complete = events.find((e) => e.complete === true);
+      expect(complete?.caseIdWarnings).toEqual([
+        {
+          testName: "[999] login works",
+          className: "com.example.TestClass",
+          requestedCaseId: 999,
+        },
+      ]);
+    });
+
+    it("falls back to name+className matching when matching is off (default)", async () => {
+      (prisma.repositoryCases.findFirst as any).mockResolvedValue(null);
+
+      setSingleCase("[123] login works");
+
+      const formData = new FormData();
+      formData.append("files", createMockFile("results.xml"));
+      formData.append("name", "CI Run");
+      formData.append("projectId", "1");
+      // no caseMatcher → off
+
+      const request = createFormDataRequest(formData);
+      const response = await POST(request);
+      await readSseResponse(response);
+
+      expect(prisma.repositoryCases.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            name: "[123] login works",
+            className: "com.example.TestClass",
+          }),
+        })
+      );
+      expect(prisma.repositoryCases.create).toHaveBeenCalled();
+    });
+
+    it("links one result to every case when multiple IDs are present", async () => {
+      (prisma.repositoryCases.findFirst as any).mockImplementation(
+        async (args: any) => {
+          const id = args?.where?.id;
+          return id === 123 || id === 456
+            ? { id, name: `Case ${id}`, className: null }
+            : null;
+        }
+      );
+      (prisma.repositoryCases.update as any).mockImplementation(
+        async (args: any) => ({
+          id: args.where.id,
+          name: `Case ${args.where.id}`,
+          className: null,
+        })
+      );
+
+      setSingleCase("[123, 456] login works");
+
+      const formData = new FormData();
+      formData.append("files", createMockFile("results.xml"));
+      formData.append("name", "CI Run");
+      formData.append("projectId", "1");
+      formData.append("caseMatcher", "name");
+
+      const request = createFormDataRequest(formData);
+      const response = await POST(request);
+      const events = await readSseResponse(response);
+
+      expect(prisma.repositoryCases.findFirst).toHaveBeenCalledWith({
+        where: { id: 123, projectId: 1 },
+      });
+      expect(prisma.repositoryCases.findFirst).toHaveBeenCalledWith({
+        where: { id: 456, projectId: 1 },
+      });
+      expect(prisma.repositoryCases.create).not.toHaveBeenCalled();
+      const linkedIds = (prisma.testRunCases.upsert as any).mock.calls.map(
+        (c: any[]) => c[0].where.testRunId_repositoryCaseId.repositoryCaseId
+      );
+      expect(linkedIds).toEqual(expect.arrayContaining([123, 456]));
+      // One result row created per matched case.
+      expect((prisma.jUnitTestResult.create as any).mock.calls.length).toBe(2);
+      expect(events.find((e) => e.complete === true)).toBeDefined();
+    });
+
+    it("links the found IDs and warns on the missing ones", async () => {
+      (prisma.repositoryCases.findFirst as any).mockImplementation(
+        async (args: any) =>
+          args?.where?.id === 123
+            ? { id: 123, name: "Found", className: null }
+            : null
+      );
+      (prisma.repositoryCases.update as any).mockResolvedValue({
+        id: 123,
+        name: "Found",
+        className: null,
+      });
+
+      setSingleCase("[123, 999] login works");
+
+      const formData = new FormData();
+      formData.append("files", createMockFile("results.xml"));
+      formData.append("name", "CI Run");
+      formData.append("projectId", "1");
+      formData.append("caseMatcher", "name");
+
+      const request = createFormDataRequest(formData);
+      const response = await POST(request);
+      const events = await readSseResponse(response);
+
+      expect(prisma.repositoryCases.create).not.toHaveBeenCalled();
+      expect(prisma.testRunCases.upsert).toHaveBeenCalledTimes(1);
+      const complete = events.find((e) => e.complete === true);
+      expect(complete?.caseIdWarnings).toEqual([
+        {
+          testName: "[123, 999] login works",
+          className: "com.example.TestClass",
+          requestedCaseId: 999,
+        },
+      ]);
+    });
+
+    it("updates an ID-matched case non-destructively (preserves curated fields)", async () => {
+      (prisma.repositoryCases.findFirst as any).mockImplementation(
+        async (args: any) =>
+          args?.where?.id === 123
+            ? { id: 123, name: "Curated", className: "Curated.Class" }
+            : null
+      );
+      (prisma.repositoryCases.update as any).mockResolvedValue({
+        id: 123,
+        name: "Curated",
+        className: "Curated.Class",
+      });
+
+      setSingleCase("[123] renamed in code");
+
+      const formData = new FormData();
+      formData.append("files", createMockFile("results.xml"));
+      formData.append("name", "CI Run");
+      formData.append("projectId", "1");
+      formData.append("caseMatcher", "name");
+
+      const request = createFormDataRequest(formData);
+      await readSseResponse(await POST(request));
+
+      const updateArg = (prisma.repositoryCases.update as any).mock.calls[0][0];
+      expect(updateArg.where).toEqual({ id: 123 });
+      // Only linkability fields are touched; name/class/template/state/estimate
+      // are left to the user's curation.
+      expect(updateArg.data).toEqual({
+        automated: true,
+        isDeleted: false,
+        isArchived: false,
+      });
+    });
+  });
 });

@@ -758,6 +758,8 @@ parentFolderId: 101
 configId: 102 (optional)
 milestoneId: 103 (optional)
 tagIds: [1, 2, 3] (optional)
+caseMatcher: "off" | "name" | "property" | "auto" (optional, default "off")
+caseIdFormat: "brackets" | "c" | "tc" (optional, default "brackets")
 ```
 
 Response is Server-Sent Events (SSE) with progress updates:
@@ -767,6 +769,8 @@ Response is Server-Sent Events (SSE) with progress updates:
 {"progress": 100, "status": "Import completed successfully!"}
 {"complete": true, "testRunId": 12345}
 ```
+
+By default each result is matched to a case by **name + class name**, so renaming an automated test creates a duplicate case. Set `caseMatcher` to instead link results to an existing case by an ID carried in the test name (`caseIdFormat` preset) or a `test_id` / `testplanit_case_id` JUnit property — see [Linking results to existing cases by ID](./cli.md#linking-results-to-existing-cases-by-id) in the CLI guide for the full behavior. Results whose referenced case ID is not found in the project are skipped and listed in the final SSE event as `caseIdWarnings`.
 
 ### Export
 

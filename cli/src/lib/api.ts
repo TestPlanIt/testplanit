@@ -143,6 +143,14 @@ export async function importTestResults(
     }
   }
 
+  if (options.caseMatcher) {
+    form.append("caseMatcher", options.caseMatcher);
+  }
+
+  if (options.caseIdFormat) {
+    form.append("caseIdFormat", options.caseIdFormat);
+  }
+
   // Add files (read as buffers for compatibility with form.getBuffer())
   for (const filePath of files) {
     const absolutePath = path.resolve(filePath);
@@ -224,6 +232,7 @@ export async function importTestResults(
             result = {
               testRunId: data.testRunId,
               attachmentMappings: data.attachmentMappings,
+              caseIdWarnings: data.caseIdWarnings,
             };
           }
         } catch (e) {
