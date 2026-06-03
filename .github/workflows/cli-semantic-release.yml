@@ -14,6 +14,7 @@ permissions:
   issues: write
   pull-requests: write
   actions: write
+  id-token: write
 
 jobs:
   release:
@@ -47,11 +48,18 @@ jobs:
           cd cli
           pnpm add -D semantic-release @semantic-release/changelog @semantic-release/git @semantic-release/github
 
+      # Trusted publishing (OIDC) requires npm CLI >= 11.5.1. Node 24 ships
+      # npm 11.x, but pin to latest so the OIDC handshake can't silently fall
+      # back to anonymous auth. Mirrors packages-release.yml.
+      - name: Ensure npm supports trusted publishing
+        run: npm install -g npm@latest
+
       - name: Release
         id: release
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # No NPM_TOKEN — @testplanit/cli publishes via OIDC trusted publishing
+          # (id-token: write above + the trusted publisher configured on npm).
           GIT_AUTHOR_NAME: github-actions[bot]
           GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
           GIT_COMMITTER_NAME: github-actions[bot]
