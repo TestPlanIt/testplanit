@@ -1868,6 +1868,14 @@
           "noIntegrationTitle": "Integração sem problemas",
           "noIntegrationDescription": "Este projeto não possui integração de problemas ativa, portanto os resultados não podem ser vinculados a um problema. Atribua uma integração de problemas para habilitar essa configuração."
         },
+        "excludeNotStarted": {
+          "label": "Excluir casos de rascunho das execuções de teste",
+          "description": "Quando ativada, a opção \"Não Iniciado\" permite ocultar os casos de teste no estado \"Não Iniciado\" do fluxo de trabalho, impedindo que sejam adicionados a uma execução. Se um caso existente for revertido para o estado \"Não Iniciado\" (por exemplo, por rejeição na Revisão e Aprovação), ele será removido de qualquer execução aberta, a menos que já possua um resultado registrado. Nesse caso, ele permanecerá na execução, mas se tornará somente leitura.",
+          "enabledToast": "Casos de rascunho serão excluídos das execuções.",
+          "disabledToast": "Agora é possível adicionar casos de rascunho às execuções.",
+          "saveError": "Falha ao atualizar a configuração de exclusão de casos em rascunho",
+          "skippedToast": "{count, plural, =1 {1 caso de rascunho foi ignorado porque está no estado Não Iniciado} other {# casos de rascunho foram ignorados porque estão no estado Não Iniciado}}"
+        },
         "editWindow": {
           "label": "Janela de edição de resultados",
           "description": "Mesmo após o registro de um resultado, ele ainda pode ser editado. Após o fechamento da janela, as correções exigem uma nova tentativa. Os administradores do sistema sempre podem editar.",
@@ -2470,6 +2478,7 @@
       "noSearchResults": "Nenhum caso corresponde aos seus critérios de pesquisa.",
       "bulkEdit": "Edição em massa",
       "createTestRun": "Criar execução de teste",
+      "addToRunDraftBlocked": "Não é possível adicionar casos em rascunho às execuções enquanto a opção \"Excluir casos em rascunho das execuções de teste\" estiver ativada para este projeto.",
       "copyMoveToProject": "Copiar/Mover",
       "export": "Exportar",
       "quickScript": "QuickScript",

@@ -1868,6 +1868,14 @@
           "noIntegrationTitle": "Keine Integrationsprobleme",
           "noIntegrationDescription": "Dieses Projekt verfügt über keine aktive Problemintegration, daher können Ergebnisse kein Problem verknüpfen. Weisen Sie eine Problemintegration zu, um diese Einstellung zu aktivieren."
         },
+        "excludeNotStarted": {
+          "label": "Entwurfsfälle von Testläufen ausschließen",
+          "description": "Wenn diese Option aktiviert ist, werden Testfälle im Workflow-Status „Nicht gestartet“ in der Fallauswahl ausgeblendet und können keinem Lauf hinzugefügt werden. Wird ein bestehender Fall auf „Nicht gestartet“ zurückgesetzt (z. B. durch Ablehnung im Rahmen der Überprüfung und Genehmigung), wird er aus allen offenen Läufen entfernt, es sei denn, es liegt bereits ein Ergebnis vor. In diesem Fall bleibt er im Lauf erhalten, ist aber schreibgeschützt.",
+          "enabledToast": "Entwürfe werden von den Auswertungen ausgeschlossen.",
+          "disabledToast": "Entwürfe können nun zu Spielzügen hinzugefügt werden.",
+          "saveError": "Fehler beim Aktualisieren der Einstellung zum Ausschluss von Entwürfen",
+          "skippedToast": "{count, plural, =1 {1 Entwurf wurde übersprungen, da er sich im Status „Nicht begonnen“ befindet.} other {# Entwürfe wurden übersprungen, da sie sich im Status „Nicht begonnen“ befinden.}}"
+        },
         "editWindow": {
           "label": "Ergebnisbearbeitungsfenster",
           "description": "Wie lange nach der Ergebnisspeicherung kann ein Ergebnis noch direkt bearbeitet werden? Nach Ablauf des Bearbeitungszeitraums ist für Korrekturen ein neuer Versuch erforderlich. Systemadministratoren können jederzeit Änderungen vornehmen.",
@@ -2470,6 +2478,7 @@
       "noSearchResults": "Es wurden keine Fälle gefunden, die Ihren Suchkriterien entsprechen.",
       "bulkEdit": "Massenbearbeitung",
       "createTestRun": "Testlauf erstellen",
+      "addToRunDraftBlocked": "Entwurfsfälle können nicht zu Testläufen hinzugefügt werden, solange die Option „Entwurfsfälle von Testläufen ausschließen“ für dieses Projekt aktiviert ist.",
       "copyMoveToProject": "Kopieren / Verschieben",
       "export": "Export",
       "quickScript": "QuickScript",

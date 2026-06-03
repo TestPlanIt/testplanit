@@ -76,6 +76,7 @@ import {
   useFindManyMilestones,
   useFindManyTags,
   useFindManyWorkflows,
+  useFindUniqueProjects,
 } from "~/lib/hooks";
 import { useRouter } from "~/lib/navigation";
 import { updateTestRunForecast } from "~/services/testRunService";
@@ -931,6 +932,20 @@ export default function AddTestRunModal({
 
   const { mutateAsync: createTestRuns } = useCreateTestRuns();
   const { mutateAsync: createAttachments } = useCreateAttachments();
+
+  // `excludeNotStartedFromRuns` is the per-project toggle that hides NOT_STARTED
+  // workflow-state cases from runs. We read it here so the submit handler can
+  // defensively filter the selected ids before composing the testCases.create
+  // payload — without this, a user picking a stale page state could still get a
+  // draft case added to a run after the admin flipped the toggle on. Cheap one-
+  // row read; the picker-side filter (UI hide) is tracked as a follow-up.
+  const { data: projectFlag } = useFindUniqueProjects(
+    {
+      where: { id: Number(projectId) },
+      select: { excludeNotStartedFromRuns: true },
+    },
+    { enabled: Number.isFinite(Number(projectId)) }
+  );
   const { data: configurations } = useFindManyConfigurations({
     where: {
       isDeleted: false,
@@ -1340,20 +1355,76 @@ export default function AddTestRunModal({
         }
       }
 
-      const testCasesCreateData = data.testCases.map((repoCaseId, index) => {
-        const assignment = assignmentsToCopy.find(
-          (a) => a.repositoryCaseId === repoCaseId
-        );
-        const assignmentData = assignment?.userId
-          ? { assignedTo: { connect: { id: assignment.userId } } }
-          : {};
+      // Per-project "exclude draft cases from runs" rule. When the flag is on,
+      // drop any selected case whose current workflow state is NOT_STARTED
+      // before composing the testCases.create payload. The picker may still
+      // show them (picker-side hide is tracked as a follow-up), so this is the
+      // defensive client-side gate. A toast surfaces the count so the user
+      // isn't surprised by a missing case after the run is created.
+      let eligibleTestCaseIds: number[] = data.testCases;
+      if (projectFlag?.excludeNotStartedFromRuns && data.testCases.length) {
+        try {
+          const probe = await fetch(
+            "/api/model/repositoryCases/findMany?q=" +
+              encodeURIComponent(
+                JSON.stringify({
+                  where: {
+                    id: { in: data.testCases },
+                    projectId: Number(projectId),
+                    isDeleted: false,
+                  },
+                  select: {
+                    id: true,
+                    state: { select: { workflowType: true } },
+                  },
+                })
+              )
+          );
+          const probeJson = await probe.json();
+          const rows: Array<{
+            id: number;
+            state: { workflowType: string } | null;
+          }> = probeJson?.data ?? [];
+          const eligibleSet = new Set(
+            rows
+              .filter((r) => r.state?.workflowType !== "NOT_STARTED")
+              .map((r) => r.id)
+          );
+          const filtered = data.testCases.filter((id) => eligibleSet.has(id));
+          const droppedCount = data.testCases.length - filtered.length;
+          if (droppedCount > 0) {
+            toast.warning(
+              tGlobal(
+                "projects.settings.advanced.excludeNotStarted.skippedToast",
+                { count: droppedCount }
+              )
+            );
+          }
+          eligibleTestCaseIds = filtered;
+        } catch (err) {
+          console.error(
+            "[AddTestRunModal] eligibility probe failed; proceeding with original selection",
+            err
+          );
+        }
+      }
 
-        return {
-          repositoryCase: { connect: { id: repoCaseId } },
-          order: index,
-          ...assignmentData,
-        };
-      });
+      const testCasesCreateData = eligibleTestCaseIds.map(
+        (repoCaseId, index) => {
+          const assignment = assignmentsToCopy.find(
+            (a) => a.repositoryCaseId === repoCaseId
+          );
+          const assignmentData = assignment?.userId
+            ? { assignedTo: { connect: { id: assignment.userId } } }
+            : {};
+
+          return {
+            repositoryCase: { connect: { id: repoCaseId } },
+            order: index,
+            ...assignmentData,
+          };
+        }
+      );
 
       // Determine configs to create runs for
       const configsToCreate =

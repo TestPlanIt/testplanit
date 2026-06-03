@@ -456,6 +456,18 @@ model Projects {
     /// result (a status with isFailure set) requires at least one linked Issue.
     /// Defaults to false so existing projects are unaffected on upgrade.
     requireIssueOnFailure          Boolean                               @default(false)
+    /// Per-project opt-in: when true, RepositoryCases whose current Workflow
+    /// state has workflowType=NOT_STARTED are excluded from every "add to run"
+    /// entry point (picker tree, server actions, importers, Testmo workers).
+    /// When a RepositoryCase's state is transitioned BACK to a NOT_STARTED
+    /// workflow type (e.g. Review & Approval rejection), the post-update hook
+    /// soft-deletes the case's UNEXECUTED entries from any open run; executed
+    /// run-cases are left in place but become read-only (result-governance
+    /// path already locks them via the existing edit-window machinery).
+    /// Independent of the system-wide Review & Approval kill switch — projects
+    /// without R&A can still use this flag for draft-quality hygiene.
+    /// Defaults to false so existing projects are unaffected on upgrade.
+    excludeNotStartedFromRuns      Boolean                               @default(false)
     duplicateScanResults           DuplicateScanResult[]
     stepSequenceMatches            StepSequenceMatch[]
     reviewRequests                 ReviewRequest[]

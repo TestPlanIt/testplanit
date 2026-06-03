@@ -148,6 +148,7 @@ const testProject: ExtendedProjects = {
   requireResultFlipJustification: false,
   editResultsDurationSeconds: null,
   requireIssueOnFailure: false,
+  excludeNotStartedFromRuns: false,
   creator: {
     id: "user-1",
     name: "Test User",

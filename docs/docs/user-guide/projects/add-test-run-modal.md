@@ -57,6 +57,10 @@ This step involves selecting the test cases to be included in the run.
 - **Selection**: Check the box next to any test case you want to include in this run.
 - **Selected Cases Drawer**: Clicking the drawer icon opens a panel showing the list of selected test cases, allowing you to review and remove items if needed.
 
+:::note Draft cases may be hidden
+If the project has [Exclude Draft Cases from Test Runs](../projects.md#exclude-draft-cases-from-test-runs) turned on, test cases whose current workflow state is a Not Started type are hidden from this picker. If any selected cases drift into a Not Started state before Save, they are dropped on submit and a toast names how many were skipped.
+:::
+
 **Actions:**
 
 - **Back**: Returns to Step 1 (Basic Information) without losing entered data.

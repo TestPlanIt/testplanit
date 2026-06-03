@@ -1868,6 +1868,14 @@
           "noIntegrationTitle": "Entegrasyonda sorun yok.",
           "noIntegrationDescription": "Bu projede aktif bir sorun entegrasyonu bulunmadığından, sonuçlar bir sorunla ilişkilendirilemez. Bu ayarı etkinleştirmek için bir sorun entegrasyonu atayın."
         },
+        "excludeNotStarted": {
+          "label": "Taslak vakaları test çalışmalarından hariç tutun.",
+          "description": "Etkinleştirildiğinde, \"Başlatılmadı\" iş akışı durumundaki test senaryoları \"Senaryo Ekle\" seçicisinden gizlenir ve bir çalıştırmaya eklenemez. Mevcut bir senaryo \"Başlatılmadı\" durumuna geri döndürülürse (örneğin, İnceleme ve Onay reddi nedeniyle), zaten kaydedilmiş bir sonucu yoksa açık olan tüm çalıştırmalardan kaldırılır; eğer varsa, çalıştırmada kalır ancak salt okunur hale gelir.",
+          "enabledToast": "Taslak vakalar, işlemlerden hariç tutulacaktır.",
+          "disabledToast": "Taslak vakalar artık çalıştırmalara eklenebilir.",
+          "saveError": "Taslak dava hariç tutma ayarı güncellenemedi.",
+          "skippedToast": "{count, plural, =1 {1 taslak vaka başlatılmadı durumunda olduğu için atlandı} other {# taslak vaka başlatılmadı durumunda olduğu için atlandı}}"
+        },
         "editWindow": {
           "label": "Sonuç düzenleme penceresi",
           "description": "Sonuç kaydedildikten ne kadar süre sonra hala yerinde düzenleme yapılabilir? Pencere kapandıktan sonra düzeltmeler için yeni bir deneme gerekir. Sistem yöneticileri her zaman düzenleme yapabilir.",
@@ -2470,6 +2478,7 @@
       "noSearchResults": "Arama kriterlerinize uyan hiçbir vaka bulunamadı.",
       "bulkEdit": "Toplu Düzenleme",
       "createTestRun": "Test Çalıştırması Oluştur",
+      "addToRunDraftBlocked": "Bu proje için \"Taslak vakaları test çalıştırmalarından hariç tut\" seçeneği açıkken, taslak vakalar çalıştırmalara eklenemez.",
       "copyMoveToProject": "Kopyala / Taşı",
       "export": "İhracat",
       "quickScript": "QuickScript",

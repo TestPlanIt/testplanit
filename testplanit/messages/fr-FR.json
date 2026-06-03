@@ -1868,6 +1868,14 @@
           "noIntegrationTitle": "Intégration sans problème",
           "noIntegrationDescription": "Ce projet ne dispose d'aucune intégration de problèmes active ; les résultats ne peuvent donc pas être liés à un problème. Attribuez une intégration de problèmes pour activer ce paramètre."
         },
+        "excludeNotStarted": {
+          "label": "Exclure les cas provisoires des tests.",
+          "description": "Lorsque cette option est activée, les cas de test dont le workflow est à l'état « Non démarré » sont masqués dans le sélecteur « Ajouter des cas » et ne peuvent pas être ajoutés à une exécution. Si un cas existant repasse à l'état « Non démarré » (par exemple, suite à un rejet lors de la révision et de l'approbation), il sera supprimé de toute exécution en cours, sauf s'il possède déjà un résultat enregistré ; dans ce cas, il restera dans l'exécution, mais en lecture seule.",
+          "enabledToast": "Les cas provisoires seront exclus des essais",
+          "disabledToast": "Il est désormais possible d'ajouter des brouillons de dossiers aux séries.",
+          "saveError": "Échec de la mise à jour du paramètre d'exclusion des brouillons",
+          "skippedToast": "{count, plural, =1 {1 brouillon a été ignoré car il est à l'état « Non démarré »} other {# brouillons ont été ignorés car ils sont à l'état « Non démarré »}}"
+        },
         "editWindow": {
           "label": "Fenêtre d'édition des résultats",
           "description": "Il est possible de modifier un résultat pendant un certain temps après son enregistrement. Une fois la fenêtre fermée, toute correction nécessitera une nouvelle tentative. Les administrateurs système peuvent toujours le modifier.",
@@ -2470,6 +2478,7 @@
       "noSearchResults": "Aucun dossier ne correspond à vos critères de recherche.",
       "bulkEdit": "Modification en masse",
       "createTestRun": "Créer un test d'exécution",
+      "addToRunDraftBlocked": "Il est impossible d'ajouter des cas provisoires aux exécutions tant que l'option « Exclure les cas provisoires des exécutions de test » est activée pour ce projet.",
       "copyMoveToProject": "Copier / Déplacer",
       "export": "Exporter",
       "quickScript": "QuickScript",

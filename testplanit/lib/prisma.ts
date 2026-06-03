@@ -1,5 +1,5 @@
 // app/lib/prisma.ts
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, WorkflowType } from "@prisma/client";
 import { enhance } from "@zenstackhq/runtime";
 import { syncRepositoryCaseToElasticsearch } from "../services/repositoryCaseSync";
 import { syncTestRunToElasticsearch } from "../services/testRunSearch";
@@ -132,6 +132,43 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
               );
               if (result.projectId !== undefined) {
                 await emitCaseUpdated(oldEntity, result, tx);
+              }
+              // Per-project "exclude draft cases from runs" hook: when the
+              // case's state transitions to a Workflows row of type
+              // NOT_STARTED AND the project has the flag on, soft-delete the
+              // case's UNEXECUTED entries in any open run. Executed run-cases
+              // (one with at least one TestRunResults row) are left in place
+              // so the recorded outcome stays visible; the existing edit-
+              // window machinery already locks them. Inside the same
+              // transaction so the soft-deletes commit-or-rollback with the
+              // state change. See `Projects.excludeNotStartedFromRuns` in
+              // schema.zmodel for the contract.
+              if (
+                oldEntity &&
+                result.stateId !== oldEntity.stateId &&
+                result.projectId !== undefined
+              ) {
+                const project = await tx.projects.findUnique({
+                  where: { id: result.projectId },
+                  select: { excludeNotStartedFromRuns: true },
+                });
+                if (project?.excludeNotStartedFromRuns) {
+                  const newState = await tx.workflows.findUnique({
+                    where: { id: result.stateId },
+                    select: { workflowType: true },
+                  });
+                  if (newState?.workflowType === WorkflowType.NOT_STARTED) {
+                    await tx.testRunCases.updateMany({
+                      where: {
+                        repositoryCaseId: result.id,
+                        isDeleted: false,
+                        testRun: { isCompleted: false },
+                        results: { none: {} },
+                      },
+                      data: { isDeleted: true },
+                    });
+                  }
+                }
               }
             }
             return result;

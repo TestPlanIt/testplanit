@@ -1868,6 +1868,14 @@
           "noIntegrationTitle": "Integración sin problemas",
           "noIntegrationDescription": "Este proyecto no tiene ninguna integración de incidencias activa, por lo que los resultados no pueden vincularse a ninguna incidencia. Asigne una integración de incidencias para habilitar esta configuración."
         },
+        "excludeNotStarted": {
+          "label": "Excluir los casos en borrador de las ejecuciones de prueba",
+          "description": "Cuando está habilitada, los casos de prueba en estado de flujo de trabajo \"No iniciado\" se ocultan del selector \"Agregar casos\" y no se pueden agregar a una ejecución. Si un caso existente vuelve al estado \"No iniciado\" (por ejemplo, por rechazo en la revisión y aprobación), se eliminará de cualquier ejecución abierta, a menos que ya tenga un resultado registrado, en cuyo caso permanece en la ejecución pero pasa a ser de solo lectura.",
+          "enabledToast": "Los casos de borradores quedarán excluidos de las carreras.",
+          "disabledToast": "Ahora se pueden agregar casos de borrador a las ejecuciones.",
+          "saveError": "No se pudo actualizar la configuración de exclusión del caso preliminar.",
+          "skippedToast": "{count, plural, =1 {Se omitió 1 caso de borrador porque está en estado No iniciado} other {Se omitieron # casos de borrador porque están en estado No iniciado}}"
+        },
         "editWindow": {
           "label": "Ventana de edición de resultados",
           "description": "¿Cuánto tiempo después de registrar un resultado aún se puede editar directamente? Una vez que se cierra la ventana, las correcciones requieren un nuevo intento. Los administradores del sistema siempre pueden editar.",
@@ -2470,6 +2478,7 @@
       "noSearchResults": "Ningún caso coincide con sus criterios de búsqueda.",
       "bulkEdit": "Edición masiva",
       "createTestRun": "Crear prueba de ejecución",
+      "addToRunDraftBlocked": "No se pueden agregar casos preliminares a las ejecuciones mientras la opción \"Excluir casos preliminares de las ejecuciones de prueba\" esté activada para este proyecto.",
       "copyMoveToProject": "Copiar / Mover",
       "export": "Exportar",
       "quickScript": "Script rápido",
