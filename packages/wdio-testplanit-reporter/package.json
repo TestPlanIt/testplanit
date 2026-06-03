@@ -44,7 +44,7 @@
   },
   "homepage": "https://github.com/testplanit/testplanit/tree/main/packages/wdio-testplanit-reporter#readme",
   "engines": {
-    "node": ">=24"
+    "node": ">=20"
   },
   "peerDependencies": {
     "@wdio/reporter": "^8.0.0 || ^9.0.0",

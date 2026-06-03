@@ -44,7 +44,7 @@
   },
   "homepage": "https://github.com/testplanit/testplanit/tree/main/packages/api#readme",
   "engines": {
-    "node": ">=24"
+    "node": ">=20"
   },
   "devDependencies": {
     "@types/node": "^25.5.2",
