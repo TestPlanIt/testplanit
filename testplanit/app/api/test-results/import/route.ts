@@ -35,6 +35,13 @@ import {
   routeToIteration,
   validateIterationCaps,
 } from "~/lib/services/junitIterationRouter";
+import {
+  parseCaseMatcher,
+  parseCaseIdFormat,
+  resolveCaseIdRefs,
+  type CaseMatcher,
+  type CaseIdFormat,
+} from "~/lib/services/automationCaseId";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import {
   countTotalTestCases,
@@ -195,6 +202,16 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         const templateId = formData.get("templateId")
           ? parseInt(formData.get("templateId") as string)
           : undefined;
+        // Optional case-ID linking: when active, results link to an existing
+        // case by an ID parsed from the test name (preset) or a `test_id`
+        // property, instead of matching on name+className. Defaults to off,
+        // so unconfigured imports behave exactly as before.
+        const caseMatcher: CaseMatcher = parseCaseMatcher(
+          formData.get("caseMatcher") as string | null
+        );
+        const caseIdFormat: CaseIdFormat = parseCaseIdFormat(
+          formData.get("caseIdFormat") as string | null
+        );
 
         sendProgress(5, progressMessages.validating);
 
@@ -580,6 +597,14 @@ export const POST = withAuditContext(async (request: NextRequest) => {
           attachments: Array<{ name: string; path: string }>;
         }> = [];
 
+        // Track case-ID references that could not be linked (unknown id, or
+        // not in this project). Surfaced as advisory warnings; never blocks.
+        const caseIdWarnings: Array<{
+          testName: string;
+          className: string | null;
+          requestedCaseId: number;
+        }> = [];
+
         sendProgress(
           25,
           progressMessages.countingTests(totalTestCases, files.length)
@@ -810,75 +835,131 @@ export const POST = withAuditContext(async (request: NextRequest) => {
               );
               const extendedData = extendedDataMap.get(extendedDataKey);
 
-              // Find or create RepositoryCase
-              // Match by (projectId, name, className) ignoring source so that
-              // re-imports with a different detected format reuse the existing case
-              // instead of creating duplicates.
-              // When updating existing cases, we intentionally do NOT update folderId
-              // to preserve the user's folder organization.
-              let repositoryCase = await prisma.repositoryCases.findFirst({
-                where: {
-                  projectId: projectId,
-                  name: testCase.name,
-                  className: className,
-                  isDeleted: false,
-                },
-              });
+              // Resolve the target case(s) for this result.
+              //
+              // When case-ID matching is active and the test carries one or
+              // more IDs (parsed from the test name preset, or a `test_id`
+              // property), link to those existing cases by id (scoped to this
+              // project) and skip name+className matching entirely. Unknown
+              // ids are recorded as advisory warnings.
+              //
+              // Otherwise match by (projectId, name, className) ignoring
+              // source so re-imports with a different detected format reuse
+              // the existing case instead of creating duplicates, creating it
+              // when absent. Existing-case updates intentionally do NOT change
+              // folderId, preserving the user's folder organization.
+              const testCaseMetadata =
+                (testCase as { metadata?: Record<string, string> }).metadata ??
+                undefined;
+              const caseIdRefs = resolveCaseIdRefs(
+                { name: testCase.name, metadata: testCaseMetadata },
+                { matcher: caseMatcher, format: caseIdFormat }
+              );
 
-              if (repositoryCase) {
-                repositoryCase = await prisma.repositoryCases.update({
-                  where: { id: repositoryCase.id },
-                  data: {
-                    automated: true,
-                    isDeleted: false,
-                    isArchived: false,
-                    stateId: defaultCaseStateId,
-                    templateId: template.id,
-                    repositoryId: repository.id,
-                    creatorId: userId,
-                    order: caseOrder,
-                    estimate: Math.max(1, Math.round(testCaseTime)),
-                    forecastManual: Math.max(1, Math.round(testCaseTime)),
-                  },
-                });
+              const casesToProcess: Awaited<
+                ReturnType<typeof prisma.repositoryCases.create>
+              >[] = [];
+
+              if (caseIdRefs.ids.length > 0) {
+                for (const refId of caseIdRefs.ids) {
+                  const existing = await prisma.repositoryCases.findFirst({
+                    where: { id: refId, projectId: projectId },
+                  });
+                  if (!existing) {
+                    caseIdWarnings.push({
+                      testName: testCase.name,
+                      className: className,
+                      requestedCaseId: refId,
+                    });
+                    continue;
+                  }
+                  // Minimal, non-destructive update: ensure the referenced
+                  // case is linkable without overwriting the user's curated
+                  // fields (name, className, template, state, estimate,
+                  // folder, order).
+                  const linkable = await prisma.repositoryCases.update({
+                    where: { id: existing.id },
+                    data: {
+                      automated: true,
+                      isDeleted: false,
+                      isArchived: false,
+                    },
+                  });
+                  casesToProcess.push(linkable);
+                }
+                // Every referenced id was unknown to this project: skip the
+                // result rather than creating a duplicate. The warnings above
+                // explain why.
+                if (casesToProcess.length === 0) {
+                  continue;
+                }
               } else {
-                const folder = await getFolderForNewCase();
-                repositoryCase = await prisma.repositoryCases.create({
-                  data: {
+                let repositoryCase = await prisma.repositoryCases.findFirst({
+                  where: {
                     projectId: projectId,
-                    repositoryId: repository.id,
-                    folderId: folder.id,
-                    templateId: template.id,
                     name: testCase.name,
                     className: className,
-                    source: caseSource,
-                    stateId: defaultCaseStateId,
-                    automated: true,
-                    creatorId: userId,
-                    order: caseOrder,
-                    estimate: Math.max(1, Math.round(testCaseTime)),
-                    forecastManual: Math.max(1, Math.round(testCaseTime)),
+                    isDeleted: false,
                   },
                 });
+
+                if (repositoryCase) {
+                  repositoryCase = await prisma.repositoryCases.update({
+                    where: { id: repositoryCase.id },
+                    data: {
+                      automated: true,
+                      isDeleted: false,
+                      isArchived: false,
+                      stateId: defaultCaseStateId,
+                      templateId: template.id,
+                      repositoryId: repository.id,
+                      creatorId: userId,
+                      order: caseOrder,
+                      estimate: Math.max(1, Math.round(testCaseTime)),
+                      forecastManual: Math.max(1, Math.round(testCaseTime)),
+                    },
+                  });
+                } else {
+                  const folder = await getFolderForNewCase();
+                  repositoryCase = await prisma.repositoryCases.create({
+                    data: {
+                      projectId: projectId,
+                      repositoryId: repository.id,
+                      folderId: folder.id,
+                      templateId: template.id,
+                      name: testCase.name,
+                      className: className,
+                      source: caseSource,
+                      stateId: defaultCaseStateId,
+                      automated: true,
+                      creatorId: userId,
+                      order: caseOrder,
+                      estimate: Math.max(1, Math.round(testCaseTime)),
+                      forecastManual: Math.max(1, Math.round(testCaseTime)),
+                    },
+                  });
+                }
+                casesToProcess.push(repositoryCase);
               }
 
-              // Upsert TestRunCases
-              await prisma.testRunCases.upsert({
-                where: {
-                  testRunId_repositoryCaseId: {
+              for (const repositoryCase of casesToProcess) {
+                // Upsert TestRunCases
+                await prisma.testRunCases.upsert({
+                  where: {
+                    testRunId_repositoryCaseId: {
+                      testRunId: testRunId,
+                      repositoryCaseId: repositoryCase.id,
+                    },
+                  },
+                  update: {},
+                  create: {
                     testRunId: testRunId,
                     repositoryCaseId: repositoryCase.id,
+                    order: caseOrder,
                   },
-                },
-                update: {},
-                create: {
-                  testRunId: testRunId,
-                  repositoryCaseId: repositoryCase.id,
-                  order: caseOrder,
-                },
-              });
+                });
 
-              try {
+                try {
                 // Map status to result type and find matching project status
                 let resultType: JUnitResultType;
                 let matchingStatus = null;
@@ -963,9 +1044,6 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                 // PARAM-07 invariant: when extractIterationIndex returns null
                 // (no property, or unparseable), the legacy path runs
                 // unchanged — bit-identical to today.
-                const testCaseMetadata =
-                  (testCase as { metadata?: Record<string, string> })
-                    .metadata ?? undefined;
                 const iterationIndex = extractIterationIndex(
                   testCaseMetadata,
                   junitIterationPropertyNames
@@ -1100,11 +1178,18 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                 // Continue with next test case
               }
 
-              caseOrder++;
+                caseOrder++;
+
+                // Stop linking further matched cases for this test once the
+                // cap-exceeded error is set by routeToIteration.
+                if (iterationCapError !== null) {
+                  break;
+                }
+              }
 
               // INT-02 T-06-01-03: break the case loop when the cap-exceeded
-              // error was set by routeToIteration. The outer suite loop also
-              // breaks below; the post-loop block emits the 422 error event.
+              // error was set. The outer suite loop also breaks below; the
+              // post-loop block emits the 422 error event.
               if (iterationCapError !== null) {
                 break;
               }
@@ -1217,12 +1302,13 @@ export const POST = withAuditContext(async (request: NextRequest) => {
 
         sendProgress(100, progressMessages.completed);
 
-        // Include attachment mappings and duplicate warnings in response for CLI
+        // Include attachment mappings and advisory warnings in response for CLI
         const responseData: {
           complete: true;
           testRunId: number;
           attachmentMappings?: typeof attachmentMappings;
           duplicateWarnings?: typeof duplicateWarnings;
+          caseIdWarnings?: typeof caseIdWarnings;
         } = { complete: true, testRunId };
 
         // Only include mappings if there are attachments to upload
@@ -1231,6 +1317,9 @@ export const POST = withAuditContext(async (request: NextRequest) => {
         }
         if (duplicateWarnings.length > 0) {
           responseData.duplicateWarnings = duplicateWarnings;
+        }
+        if (caseIdWarnings.length > 0) {
+          responseData.caseIdWarnings = caseIdWarnings;
         }
 
         controller.enqueue(

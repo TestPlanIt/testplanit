@@ -18,7 +18,16 @@ import {
   formatFileSize,
   resolveTestRunAttachmentFiles,
 } from "../lib/attachments.js";
-import { TEST_RESULT_FORMATS, type TestResultFormat, type SSEProgressEvent, type ImportOptions } from "../types.js";
+import {
+  TEST_RESULT_FORMATS,
+  CASE_MATCHERS,
+  CASE_ID_FORMATS,
+  type TestResultFormat,
+  type SSEProgressEvent,
+  type ImportOptions,
+  type CaseMatcher,
+  type CaseIdFormat,
+} from "../types.js";
 
 const VALID_FORMATS = ["auto", ...Object.keys(TEST_RESULT_FORMATS)] as const;
 
@@ -42,6 +51,16 @@ export function createImportCommand(): Command {
     .option("-d, --attachments-dir <path>", "Base directory for resolving attachment paths (default: directory of test result file)")
     .option("--no-attachments", "Skip uploading attachments")
     .option("-a, --run-attachments <files...>", "Files to attach to the test run (e.g., test plans, reports)")
+    .option(
+      "--case-matcher <mode>",
+      `Link results to existing cases by ID: ${CASE_MATCHERS.join(", ")} (default: off)`,
+      "off"
+    )
+    .option(
+      "--case-id-format <preset>",
+      `Case-ID pattern in the test name when matching by name: ${CASE_ID_FORMATS.join(", ")} (default: brackets, e.g. [123])`,
+      "brackets"
+    )
     .addHelpText("after", `
 Examples:
 
@@ -82,6 +101,15 @@ Examples:
   Import without uploading attachments:
     $ testplanit import ./results.xml -p "My Project" -n "Build" --no-attachments
 
+  Link results to existing cases by an ID in the test name (e.g. "[123] login"):
+    $ testplanit import ./results.xml -p "My Project" -n "Build" --case-matcher name
+
+  Link by a test_id property in the XML, falling back to the name pattern:
+    $ testplanit import ./results.xml -p "My Project" -n "Build" --case-matcher auto
+
+  Use the TestRail-style C-prefix pattern (e.g. "C123 login"):
+    $ testplanit import ./results.xml -p "My Project" -n "Build" --case-matcher name --case-id-format c
+
   Attach files to the test run (test plans, reports, etc.):
     $ testplanit import ./results.xml -p "My Project" -n "Build" -a ./test-plan.pdf ./coverage-report.html
 `)
@@ -105,6 +133,20 @@ Examples:
       if (!VALID_FORMATS.includes(format)) {
         logger.error(`Invalid format: ${options.format}`);
         logger.info(`Valid formats: ${VALID_FORMATS.join(", ")}`);
+        process.exit(1);
+      }
+
+      // Validate case-ID matching options
+      const caseMatcher = options.caseMatcher.toLowerCase() as CaseMatcher;
+      if (!CASE_MATCHERS.includes(caseMatcher)) {
+        logger.error(`Invalid case matcher: ${options.caseMatcher}`);
+        logger.info(`Valid matchers: ${CASE_MATCHERS.join(", ")}`);
+        process.exit(1);
+      }
+      const caseIdFormat = options.caseIdFormat.toLowerCase() as CaseIdFormat;
+      if (!CASE_ID_FORMATS.includes(caseIdFormat)) {
+        logger.error(`Invalid case ID format: ${options.caseIdFormat}`);
+        logger.info(`Valid formats: ${CASE_ID_FORMATS.join(", ")}`);
         process.exit(1);
       }
 
@@ -171,6 +213,12 @@ Examples:
           format: format,
         };
 
+        // Only send case-ID matching config when enabled
+        if (caseMatcher !== "off") {
+          importOptions.caseMatcher = caseMatcher;
+          importOptions.caseIdFormat = caseIdFormat;
+        }
+
         // Resolve state
         if (options.state) {
           logger.updateSpinner("Resolving workflow state...");
@@ -226,6 +274,20 @@ Examples:
         const url = config.getUrl();
         console.log();
         logger.success(`Test run created with ID: ${logger.formatNumber(result.testRunId)}`);
+
+        // Surface any results that referenced an unknown case ID (skipped)
+        if (result.caseIdWarnings && result.caseIdWarnings.length > 0) {
+          console.log();
+          logger.warn(
+            `Skipped ${logger.formatNumber(result.caseIdWarnings.length)} result(s) referencing a case ID not found in this project:`
+          );
+          for (const warning of result.caseIdWarnings.slice(0, 10)) {
+            logger.dim(`    - C${warning.requestedCaseId} (${warning.testName})`);
+          }
+          if (result.caseIdWarnings.length > 10) {
+            logger.dim(`    ... and ${result.caseIdWarnings.length - 10} more`);
+          }
+        }
 
         // Handle attachment uploads if present and not disabled
         if (

@@ -31,6 +31,26 @@ export const TEST_RESULT_FORMATS: Record<Exclude<TestResultFormat, "auto">, { la
 };
 
 /**
+ * Case-ID matching: how (and whether) to link results to existing cases by an
+ * ID parsed from the test name or a `test_id` property, instead of matching on
+ * name + class name.
+ */
+export type CaseMatcher = "off" | "name" | "property" | "auto";
+export type CaseIdFormat = "brackets" | "c" | "tc";
+
+export const CASE_MATCHERS: readonly CaseMatcher[] = [
+  "off",
+  "name",
+  "property",
+  "auto",
+];
+export const CASE_ID_FORMATS: readonly CaseIdFormat[] = [
+  "brackets",
+  "c",
+  "tc",
+];
+
+/**
  * Import options - IDs are resolved before being passed to the API
  */
 export interface ImportOptions {
@@ -43,6 +63,8 @@ export interface ImportOptions {
   parentFolderId?: number;
   tagIds?: number[];
   testRunId?: number;
+  caseMatcher?: CaseMatcher;
+  caseIdFormat?: CaseIdFormat;
 }
 
 /**
@@ -104,10 +126,21 @@ export interface AttachmentMapping {
 }
 
 /**
- * Extended SSE progress event with attachment mappings
+ * A test whose declared case ID could not be linked (unknown id, or not in
+ * the target project). The result for this test was skipped.
+ */
+export interface CaseIdWarning {
+  testName: string;
+  className: string | null;
+  requestedCaseId: number;
+}
+
+/**
+ * Extended SSE progress event with attachment mappings and advisory warnings
  */
 export interface ImportSSEProgressEvent extends SSEProgressEvent {
   attachmentMappings?: AttachmentMapping[];
+  caseIdWarnings?: CaseIdWarning[];
 }
 
 /**
@@ -154,11 +187,12 @@ export interface BulkAttachmentUploadResponse {
 }
 
 /**
- * Import result with optional attachment mappings
+ * Import result with optional attachment mappings and advisory warnings
  */
 export interface ImportResult {
   testRunId: number;
   attachmentMappings?: AttachmentMapping[];
+  caseIdWarnings?: CaseIdWarning[];
 }
 
 /**
