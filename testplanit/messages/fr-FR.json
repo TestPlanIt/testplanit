@@ -134,6 +134,20 @@
           "selectFolder": "Sélectionnez un dossier",
           "createNewFolder": "Créer un nouveau dossier",
           "createNewFolderNamed": "Créer un nouveau dossier : {name}",
+          "caseMatching": {
+            "label": "Lier les résultats aux cas existants",
+            "help": "Associez chaque résultat à un cas grâce à un identifiant figurant dans le nom du test ou dans une propriété test_id, afin que le renommage d'un test ne crée pas de cas en double.",
+            "off": "Désactivé — correspondance par nom et classe",
+            "name": "Par un identifiant dans le nom du test",
+            "property": "Par une propriété test_id",
+            "auto": "Auto — propriété, puis nom du test"
+          },
+          "caseIdFormat": {
+            "label": "Format de l'identifiant de cas dans le nom du test",
+            "brackets": "Parenthèses — [123]",
+            "c": "Préfixe C — C123",
+            "tc": "Préfixe TC — TC-123"
+          },
           "progress": {
             "initializing": "Initialisation de l'importation...",
             "validating": "Validation des données d'entrée...",

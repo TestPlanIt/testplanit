@@ -134,6 +134,20 @@
           "selectFolder": "Wybierz folder",
           "createNewFolder": "Utwórz nowy folder",
           "createNewFolderNamed": "Utwórz nowy folder: {name}",
+          "caseMatching": {
+            "label": "Połącz wyniki z istniejącymi przypadkami",
+            "help": "Dopasuj każdy wynik do przypadku za pomocą identyfikatora w nazwie testu lub właściwości test_id, dzięki czemu zmiana nazwy testu nie spowoduje utworzenia duplikatu przypadku.",
+            "off": "Wyłączone — dopasuj według nazwy i klasy",
+            "name": "Według ID w nazwie testu",
+            "property": "Według właściwości test_id",
+            "auto": "Auto — właściwość, następnie nazwa testu"
+          },
+          "caseIdFormat": {
+            "label": "Format identyfikatora przypadku w nazwie testu",
+            "brackets": "Nawiasy — [123]",
+            "c": "Prefiks C — C123",
+            "tc": "Prefiks TC — TC-123"
+          },
           "progress": {
             "initializing": "Inicjalizacja importu...",
             "validating": "Sprawdzanie poprawności danych wejściowych...",

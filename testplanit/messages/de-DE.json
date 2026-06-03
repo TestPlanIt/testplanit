@@ -134,6 +134,20 @@
           "selectFolder": "Wählen Sie einen Ordner aus",
           "createNewFolder": "Neuen Ordner erstellen",
           "createNewFolderNamed": "Neuen Ordner erstellen: {name}",
+          "caseMatching": {
+            "label": "Ergebnisse mit bestehenden Fällen verknüpfen",
+            "help": "Jedes Ergebnis wird einem Fall anhand einer ID im Testnamen oder einer test_id-Eigenschaft zugeordnet, damit beim Umbenennen eines Tests kein doppelter Fall entsteht.",
+            "off": "Aus – Übereinstimmung nach Name und Klasse",
+            "name": "Anhand einer ID im Testnamen",
+            "property": "Anhand einer test_id-Eigenschaft",
+            "auto": "Auto — Eigenschaft, dann Testname"
+          },
+          "caseIdFormat": {
+            "label": "Fall-ID-Format im Testnamen",
+            "brackets": "Klammern — [123]",
+            "c": "C-Präfix — C123",
+            "tc": "TC-Präfix — TC-123"
+          },
           "progress": {
             "initializing": "Import wird initialisiert...",
             "validating": "Eingabedaten werden validiert...",

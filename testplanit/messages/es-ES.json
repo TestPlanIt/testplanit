@@ -134,6 +134,20 @@
           "selectFolder": "Seleccione una carpeta",
           "createNewFolder": "Crear nueva carpeta",
           "createNewFolderNamed": "Crear nueva carpeta: {name}",
+          "caseMatching": {
+            "label": "Vincular los resultados con los casos existentes",
+            "help": "Asocie cada resultado a un caso mediante un ID en el nombre de la prueba o una propiedad test_id, de modo que cambiar el nombre de una prueba no cree un caso duplicado.",
+            "off": "Fuera de juego: coincidir por nombre y clase.",
+            "name": "Mediante un ID en el nombre de la prueba",
+            "property": "Mediante una propiedad test_id",
+            "auto": "Automático: propiedad, luego nombre de prueba"
+          },
+          "caseIdFormat": {
+            "label": "Formato de ID de caso en el nombre de la prueba",
+            "brackets": "Corchetes — [123]",
+            "c": "Prefijo C — C123",
+            "tc": "Prefijo TC — TC-123"
+          },
           "progress": {
             "initializing": "Inicializando importación...",
             "validating": "Validando datos de entrada...",

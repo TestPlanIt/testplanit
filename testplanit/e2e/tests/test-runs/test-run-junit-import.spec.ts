@@ -134,6 +134,104 @@ test.describe("JUnit XML Import API", () => {
     expect(casesData.data).toHaveLength(3);
   });
 
+  test("links results to an existing case by an ID in the name (no duplicate on rename)", async ({
+    api,
+    request,
+  }) => {
+    const ts = Date.now();
+    const projectId = await api.createProject(`E2E Case ID Link ${ts}`);
+
+    // First import creates the cases by name.
+    const firstResponse = await request.post(`/api/test-results/import`, {
+      multipart: {
+        files: {
+          name: "results.xml",
+          mimeType: "application/xml",
+          buffer: Buffer.from(JUNIT_XML_2_CASES),
+        },
+        format: "junit",
+        projectId: String(projectId),
+        name: `Case ID Link Run A ${ts}`,
+      },
+    });
+    expect(firstResponse.status()).toBe(200);
+    expect(
+      getFinalEvent(parseSseEvents(await firstResponse.text()))!.complete
+    ).toBe(true);
+
+    // Grab the ID of one of the created cases.
+    const caseLookup = await request.get(
+      `/api/model/repositoryCases/findFirst?q=${encodeURIComponent(
+        JSON.stringify({
+          where: { projectId, name: "testBasicSearch" },
+          select: { id: true },
+        })
+      )}`
+    );
+    expect(caseLookup.ok()).toBeTruthy();
+    const caseId = (await caseLookup.json()).data.id as number;
+    expect(typeof caseId).toBe("number");
+
+    // Second import: the test has been renamed but carries the case ID in the
+    // title. With caseMatcher=name it must link to the existing case, not
+    // create a duplicate.
+    const renamedName = `[${caseId}] basic search after a rename`;
+    const linkedXml = `<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="SearchTests" tests="1" failures="0" errors="0" time="1.0">
+    <testcase classname="search.SearchTests" name="${renamedName}" time="1.0"/>
+  </testsuite>
+</testsuites>`;
+
+    const secondResponse = await request.post(`/api/test-results/import`, {
+      multipart: {
+        files: {
+          name: "renamed.xml",
+          mimeType: "application/xml",
+          buffer: Buffer.from(linkedXml),
+        },
+        format: "junit",
+        projectId: String(projectId),
+        name: `Case ID Link Run B ${ts}`,
+        caseMatcher: "name",
+        caseIdFormat: "brackets",
+      },
+    });
+    expect(secondResponse.status()).toBe(200);
+    const finalEvent = getFinalEvent(
+      parseSseEvents(await secondResponse.text())
+    );
+    expect(finalEvent!.error).toBeUndefined();
+    expect(finalEvent!.complete).toBe(true);
+    const runBId = finalEvent!.testRunId as number;
+
+    // Run B links exactly one case — the existing one, by ID.
+    const runBCases = await request.get(
+      `/api/model/testRunCases/findMany?q=${encodeURIComponent(
+        JSON.stringify({
+          where: { testRunId: runBId },
+          select: { repositoryCaseId: true },
+        })
+      )}`
+    );
+    expect(runBCases.ok()).toBeTruthy();
+    const runBCasesData = await runBCases.json();
+    expect(runBCasesData.data).toHaveLength(1);
+    expect(runBCasesData.data[0].repositoryCaseId).toBe(caseId);
+
+    // No duplicate case was created under the renamed title.
+    const dupLookup = await request.get(
+      `/api/model/repositoryCases/findFirst?q=${encodeURIComponent(
+        JSON.stringify({
+          where: { projectId, name: renamedName },
+          select: { id: true },
+        })
+      )}`
+    );
+    expect(dupLookup.ok()).toBeTruthy();
+    expect((await dupLookup.json()).data).toBeNull();
+  });
+
   test("should import JUnit XML with auto-detect format", async ({
     api,
     request,

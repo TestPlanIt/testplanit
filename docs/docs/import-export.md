@@ -323,6 +323,7 @@ There are two ways to start a test results import:
    - Choose a **Template** to apply to imported test cases
    - Select **State** for the test run
    - Optionally set **Configuration**, **Milestone** (only active milestones are shown), and **Tags**
+   - Optionally set **Link results to existing cases** to match results to an existing case by ID instead of by name + class name (see [Linking results to existing cases by ID](./cli.md#linking-results-to-existing-cases-by-id)). Leave it on **Off** (the default) to keep the standard name + class matching.
 
 3. **Upload Files**
    - Select one or more test result files
