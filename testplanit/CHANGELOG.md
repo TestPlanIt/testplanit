@@ -1,3 +1,13 @@
+## [0.34.7](https://github.com/TestPlanIt/testplanit/compare/v0.34.6...v0.34.7) (2026-06-03)
+
+### Bug Fixes
+
+* **packages:** lower minimum Node.js engine to >=20 ([#389](https://github.com/TestPlanIt/testplanit/issues/389)) ([28121cd](https://github.com/TestPlanIt/testplanit/commit/28121cd565165135f38c032c073fe5964efbdab7))
+
+### Enhancements
+
+* **import:** link JUnit/CLI results to existing cases by ID ([#394](https://github.com/TestPlanIt/testplanit/issues/394)) ([2f91d0e](https://github.com/TestPlanIt/testplanit/commit/2f91d0e4e385d65f8d93e0fbef93c1313e2c179e))
+
 ## [0.34.6](https://github.com/TestPlanIt/testplanit/compare/v0.34.5...v0.34.6) (2026-06-03)
 
 ### Bug Fixes
