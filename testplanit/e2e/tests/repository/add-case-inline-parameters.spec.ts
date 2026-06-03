@@ -92,7 +92,7 @@ async function getCaseSnapshot(
         })
       )
   );
-  const params = paramResp.ok() ? (await paramResp.json()).data ?? [] : [];
+  const params = paramResp.ok() ? ((await paramResp.json()).data ?? []) : [];
 
   const datasetResp = await (api as any).request.get(
     `${(api as any).baseURL}/api/model/dataSet/findMany?q=` +
@@ -103,7 +103,9 @@ async function getCaseSnapshot(
         })
       )
   );
-  const datasets = datasetResp.ok() ? (await datasetResp.json()).data ?? [] : [];
+  const datasets = datasetResp.ok()
+    ? ((await datasetResp.json()).data ?? [])
+    : [];
   const datasetIds = datasets.map((d: { id: number }) => d.id);
 
   let datasetVersions: any[] = [];
@@ -118,7 +120,7 @@ async function getCaseSnapshot(
           })
         )
     );
-    datasetVersions = vResp.ok() ? (await vResp.json()).data ?? [] : [];
+    datasetVersions = vResp.ok() ? ((await vResp.json()).data ?? []) : [];
 
     const rResp = await (api as any).request.get(
       `${(api as any).baseURL}/api/model/dataSetRow/findMany?q=` +
@@ -135,7 +137,7 @@ async function getCaseSnapshot(
           })
         )
     );
-    datasetRows = rResp.ok() ? (await rResp.json()).data ?? [] : [];
+    datasetRows = rResp.ok() ? ((await rResp.json()).data ?? []) : [];
   }
 
   return {
@@ -214,9 +216,9 @@ test.describe("Add Case — Inline Parameters & Dataset", () => {
       .getByRole("button", { name: /^configure parameters$/i })
       .first()
       .click();
-    await expect(
-      page.getByTestId("addcase-inline-dataset-root")
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId("addcase-inline-dataset-root")).toBeVisible({
+      timeout: 5000,
+    });
 
     await page.getByTestId("addcase-inline-dataset-add-parameter").click();
     const nameInput = page.getByTestId(
@@ -229,9 +231,7 @@ test.describe("Add Case — Inline Parameters & Dataset", () => {
     await page
       .getByTestId("addcase-inline-dataset-row-label-0")
       .fill("happy path");
-    await page
-      .getByTestId("addcase-inline-dataset-row-0-col-0")
-      .fill("alice");
+    await page.getByTestId("addcase-inline-dataset-row-0-col-0").fill("alice");
 
     // Close the Sheet via Escape — Dialog must stay open and the button
     // label updates to reflect the new column count.
@@ -362,13 +362,18 @@ test.describe("Add Case — Inline Parameters & Dataset", () => {
       timeout: 5000,
     });
     await expect(
-      dialog.getByRole("button", { name: /configure parameters|parameters \(/i })
+      dialog.getByRole("button", {
+        name: /configure parameters|parameters \(/i,
+      })
     ).toHaveCount(0, { timeout: 5000 });
 
     // Switch BACK to Default Template. Button returns and label resets to
     // "Configure parameters" (count = 0) — proves the clear effect ran.
     await templateTrigger.click();
-    await page.getByRole("option", { name: "Default Template" }).first().click();
+    await page
+      .getByRole("option", { name: "Default Template" })
+      .first()
+      .click();
     await expect(templateTrigger).toHaveText("Default Template", {
       timeout: 5000,
     });
