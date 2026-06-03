@@ -1,3 +1,13 @@
+## [0.34.4](https://github.com/TestPlanIt/testplanit/compare/v0.34.3...v0.34.4) (2026-06-03)
+
+### Bug Fixes
+
+* **deps:** bump axios to 1.16.1 to resolve eight Dependabot alerts ([#385](https://github.com/TestPlanIt/testplanit/issues/385)) ([7955693](https://github.com/TestPlanIt/testplanit/commit/79556935208bec17e7ad2e6189f2b8a2e55140a8)), closes [#414](https://github.com/TestPlanIt/testplanit/issues/414) [#411](https://github.com/TestPlanIt/testplanit/issues/411) [#413](https://github.com/TestPlanIt/testplanit/issues/413) [#410](https://github.com/TestPlanIt/testplanit/issues/410) [#412](https://github.com/TestPlanIt/testplanit/issues/412) [#409](https://github.com/TestPlanIt/testplanit/issues/409) [#408](https://github.com/TestPlanIt/testplanit/issues/408) [#406](https://github.com/TestPlanIt/testplanit/issues/406)
+
+### Enhancements
+
+* **reviews:** exclude draft cases from test runs ([#386](https://github.com/TestPlanIt/testplanit/issues/386)) ([9f87807](https://github.com/TestPlanIt/testplanit/commit/9f8780719f235094e9f6112e1f0957f12b73af1a))
+
 ## [0.34.3](https://github.com/TestPlanIt/testplanit/compare/v0.34.2...v0.34.3) (2026-06-02)
 
 ### Bug Fixes
