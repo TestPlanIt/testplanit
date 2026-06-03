@@ -109,8 +109,8 @@ const FieldValueRenderer: React.FC<FieldValueRendererProps> = ({
       return true;
     }
     if (
-      typeof value === "object" &&
       value !== null &&
+      typeof value === "object" &&
       Object.keys(value).length === 0
     ) {
       return true;
