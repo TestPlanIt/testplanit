@@ -134,6 +134,20 @@
           "selectFolder": "Bir klasör seçin",
           "createNewFolder": "Yeni klasör oluştur",
           "createNewFolderNamed": "Yeni klasör oluştur: {name}",
+          "caseMatching": {
+            "label": "Sonuçları mevcut vakalarla ilişkilendirin.",
+            "help": "Her sonucu, test adındaki bir kimlik numarasına veya test_id özelliğine göre bir vakayla eşleştirin; böylece bir testin yeniden adlandırılması, yinelenen bir vaka oluşturmaz.",
+            "off": "Kapalı — isim ve sınıfa göre eşleştirme",
+            "name": "Test adındaki bir kimlik numarasıyla",
+            "property": "test_id özelliği aracılığıyla",
+            "auto": "Otomatik — özellik, ardından test adı"
+          },
+          "caseIdFormat": {
+            "label": "Test adındaki vaka kimliği formatı",
+            "brackets": "Parantezler — [123]",
+            "c": "C ön eki — C123",
+            "tc": "TC ön eki — TC-123"
+          },
           "progress": {
             "initializing": "İçe aktarma işlemi başlatılıyor...",
             "validating": "Giriş verilerinin doğrulanması...",

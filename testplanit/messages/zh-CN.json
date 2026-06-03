@@ -134,6 +134,20 @@
           "selectFolder": "选择一个文件夹",
           "createNewFolder": "创建新文件夹",
           "createNewFolderNamed": "创建新文件夹： {name}",
+          "caseMatching": {
+            "label": "将结果与现有案例关联起来",
+            "help": "将每个结果与测试名称或 test_id 属性中的 ID 进行匹配，这样重命名测试就不会创建重复的案例。",
+            "off": "已关闭 — 按姓名和类别匹配",
+            "name": "通过测试名称中的 ID",
+            "property": "通过 test_id 属性",
+            "auto": "自动 — 属性，然后测试名称"
+          },
+          "caseIdFormat": {
+            "label": "测试名称中的案例 ID 格式",
+            "brackets": "括号 — [123]",
+            "c": "C 前缀 — C123",
+            "tc": "TC前缀 — TC-123"
+          },
           "progress": {
             "initializing": "正在初始化导入...",
             "validating": "正在验证输入数据……",

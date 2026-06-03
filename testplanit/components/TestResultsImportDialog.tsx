@@ -72,6 +72,13 @@ const TEST_RESULT_FORMATS = [
 
 type TestResultFormat = (typeof TEST_RESULT_FORMATS)[number]["value"];
 
+/**
+ * Case-ID matching options. Values mirror the import endpoint's accepted
+ * `caseMatcher` / `caseIdFormat` form fields.
+ */
+type CaseMatcher = "off" | "name" | "property" | "auto";
+type CaseIdFormat = "brackets" | "c" | "tc";
+
 const NEW_FOLDER_SENTINEL = "__new__";
 
 interface TestResultsImportDialogProps {
@@ -99,6 +106,8 @@ export default function TestResultsImportDialog({
     if (!v) onClose();
   };
   const [format, setFormat] = useState<TestResultFormat>(defaultFormat);
+  const [caseMatcher, setCaseMatcher] = useState<CaseMatcher>("off");
+  const [caseIdFormat, setCaseIdFormat] = useState<CaseIdFormat>("brackets");
   const [stateId, setStateId] = useState<string>("");
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [isImporting, setIsImporting] = useState(false);
@@ -243,6 +252,12 @@ export default function TestResultsImportDialog({
       formData.append("stateId", data.stateId.toString());
       formData.append("templateId", data.templateId.toString());
       formData.append("format", format);
+      // Only send case-ID matching config when enabled, so the default
+      // (off) leaves import behavior unchanged.
+      if (caseMatcher !== "off") {
+        formData.append("caseMatcher", caseMatcher);
+        formData.append("caseIdFormat", caseIdFormat);
+      }
       if (data.configurationId)
         formData.append("configId", data.configurationId);
       if (data.milestoneId) formData.append("milestoneId", data.milestoneId);
@@ -422,6 +437,70 @@ export default function TestResultsImportDialog({
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Case matching */}
+              <div className="grid gap-2">
+                <Label htmlFor="caseMatcher">{t("caseMatching.label")}</Label>
+                <Select
+                  value={caseMatcher}
+                  onValueChange={(val) => setCaseMatcher(val as CaseMatcher)}
+                  disabled={isImporting}
+                >
+                  <SelectTrigger id="caseMatcher">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="off">
+                        {t("caseMatching.off")}
+                      </SelectItem>
+                      <SelectItem value="name">
+                        {t("caseMatching.name")}
+                      </SelectItem>
+                      <SelectItem value="property">
+                        {t("caseMatching.property")}
+                      </SelectItem>
+                      <SelectItem value="auto">
+                        {t("caseMatching.auto")}
+                      </SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {t("caseMatching.help")}
+                </p>
+              </div>
+
+              {/* Case ID format (only when matching by the test name) */}
+              {(caseMatcher === "name" || caseMatcher === "auto") && (
+                <div className="grid gap-2">
+                  <Label htmlFor="caseIdFormat">
+                    {t("caseIdFormat.label")}
+                  </Label>
+                  <Select
+                    value={caseIdFormat}
+                    onValueChange={(val) =>
+                      setCaseIdFormat(val as CaseIdFormat)
+                    }
+                    disabled={isImporting}
+                  >
+                    <SelectTrigger id="caseIdFormat">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="brackets">
+                          {t("caseIdFormat.brackets")}
+                        </SelectItem>
+                        <SelectItem value="c">{t("caseIdFormat.c")}</SelectItem>
+                        <SelectItem value="tc">
+                          {t("caseIdFormat.tc")}
+                        </SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               {/* Folder (required) */}
               <div className="grid gap-2">

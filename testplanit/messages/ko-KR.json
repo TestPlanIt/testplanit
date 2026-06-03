@@ -134,6 +134,20 @@
           "selectFolder": "폴더를 선택하세요",
           "createNewFolder": "새 폴더 만들기",
           "createNewFolderNamed": "새 폴더 만들기: {name}",
+          "caseMatching": {
+            "label": "결과를 기존 사례와 연결합니다.",
+            "help": "테스트 이름이나 test_id 속성에 있는 ID를 사용하여 각 결과를 해당 사례와 연결하므로 테스트 이름을 변경해도 중복 사례가 생성되지 않습니다.",
+            "off": "끄기 - 이름 및 학급으로 매칭",
+            "name": "테스트 이름의 ID로",
+            "property": "test_id 속성을 통해",
+            "auto": "자동 — 속성, 그 다음 테스트 이름"
+          },
+          "caseIdFormat": {
+            "label": "테스트 이름에 케이스 ID 형식을 지정하세요.",
+            "brackets": "대괄호 — [123]",
+            "c": "C 접두사 — C123",
+            "tc": "TC 접두사 — TC-123"
+          },
           "progress": {
             "initializing": "가져오기 초기화 중...",
             "validating": "입력 데이터 유효성 검사 중...",

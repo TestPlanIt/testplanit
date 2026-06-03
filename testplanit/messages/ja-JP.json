@@ -134,6 +134,20 @@
           "selectFolder": "フォルダを選択",
           "createNewFolder": "新しいフォルダーを作成する",
           "createNewFolderNamed": "新しいフォルダを作成します: {name}",
+          "caseMatching": {
+            "label": "結果を既存のケースにリンクする",
+            "help": "テスト名に含まれるIDまたはtest_idプロパティに基づいて、各結果をケースと照合します。これにより、テスト名を変更しても重複するケースが作成されません。",
+            "off": "オフ — 名前とクラスで一致",
+            "name": "テスト名に含まれるIDによって",
+            "property": "test_idプロパティによって",
+            "auto": "自動 — プロパティ、次にテスト名"
+          },
+          "caseIdFormat": {
+            "label": "テスト名におけるケースIDの形式",
+            "brackets": "括弧 — [123]",
+            "c": "C接頭辞 — C123",
+            "tc": "TC接頭辞 — TC-123"
+          },
           "progress": {
             "initializing": "インポートを初期化しています...",
             "validating": "入力データを検証しています...",

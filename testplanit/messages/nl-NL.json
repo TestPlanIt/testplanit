@@ -134,6 +134,20 @@
           "selectFolder": "Selecteer een map",
           "createNewFolder": "Maak een nieuwe map aan",
           "createNewFolderNamed": "Nieuwe map aanmaken: {name}",
+          "caseMatching": {
+            "label": "Koppel de resultaten aan bestaande gevallen.",
+            "help": "Koppel elk resultaat aan een testcase op basis van een ID in de testnaam of een `test_id`-eigenschap, zodat het hernoemen van een test geen dubbele testcase creëert.",
+            "off": "Uitgeschakeld — matchen op naam en klasse",
+            "name": "Aan de hand van een ID in de testnaam",
+            "property": "Via een test_id-eigenschap",
+            "auto": "Auto — eigenschap, vervolgens testnaam"
+          },
+          "caseIdFormat": {
+            "label": "Formaat van de casus-ID in de testnaam",
+            "brackets": "Haakjes — [123]",
+            "c": "C-voorvoegsel — C123",
+            "tc": "TC-prefix — TC-123"
+          },
           "progress": {
             "initializing": "Importeren initialiseren...",
             "validating": "Validatie van invoergegevens...",

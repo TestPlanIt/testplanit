@@ -134,6 +134,20 @@
           "selectFolder": "Chọn một thư mục",
           "createNewFolder": "Tạo thư mục mới",
           "createNewFolderNamed": "Tạo thư mục mới: {name}",
+          "caseMatching": {
+            "label": "Liên kết kết quả với các trường hợp hiện có",
+            "help": "Ghép mỗi kết quả với một trường hợp dựa trên ID trong tên bài kiểm tra hoặc thuộc tính test_id, do đó việc đổi tên bài kiểm tra sẽ không tạo ra trường hợp trùng lặp.",
+            "off": "Tắt — tìm kiếm theo tên và lớp",
+            "name": "Bằng ID trong tên bài kiểm tra",
+            "property": "Bằng thuộc tính test_id",
+            "auto": "Tự động — thuộc tính, sau đó là tên kiểm tra"
+          },
+          "caseIdFormat": {
+            "label": "Định dạng ID trường hợp trong tên xét nghiệm",
+            "brackets": "Dấu ngoặc vuông — [123]",
+            "c": "Tiền tố C — C123",
+            "tc": "Tiền tố TC — TC-123"
+          },
           "progress": {
             "initializing": "Đang khởi tạo quá trình nhập khẩu...",
             "validating": "Đang xác thực dữ liệu đầu vào...",

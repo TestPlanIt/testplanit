@@ -134,6 +134,20 @@
           "selectFolder": "Select a folder",
           "createNewFolder": "Create new folder",
           "createNewFolderNamed": "Create new folder: {name}",
+          "caseMatching": {
+            "label": "Link results to existing cases",
+            "help": "Match each result to a case by an ID in the test name or a test_id property, so renaming a test doesn't create a duplicate case.",
+            "off": "Off — match by name & class",
+            "name": "By an ID in the test name",
+            "property": "By a test_id property",
+            "auto": "Auto — property, then test name"
+          },
+          "caseIdFormat": {
+            "label": "Case ID format in test name",
+            "brackets": "Brackets — [123]",
+            "c": "C-prefix — C123",
+            "tc": "TC-prefix — TC-123"
+          },
           "progress": {
             "initializing": "Initializing import...",
             "validating": "Validating input data...",

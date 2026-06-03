@@ -134,6 +134,20 @@
           "selectFolder": "Selecione uma pasta",
           "createNewFolder": "Criar nova pasta",
           "createNewFolderNamed": "Criar nova pasta: {name}",
+          "caseMatching": {
+            "label": "Vincular resultados a casos existentes",
+            "help": "Associe cada resultado a um caso por meio de um ID no nome do teste ou na propriedade test_id, de modo que renomear um teste não crie um caso duplicado.",
+            "off": "Desativado — correspondência por nome e classe",
+            "name": "Por um ID no nome do teste",
+            "property": "Por meio de uma propriedade test_id",
+            "auto": "Automático — propriedade, depois nome de teste"
+          },
+          "caseIdFormat": {
+            "label": "Formato do ID do caso no nome do teste",
+            "brackets": "Colchetes — [123]",
+            "c": "Prefixo C — C123",
+            "tc": "Prefixo TC — TC-123"
+          },
           "progress": {
             "initializing": "Inicializando a importação...",
             "validating": "Validação dos dados de entrada...",
