@@ -46,6 +46,11 @@
   "engines": {
     "node": ">=20"
   },
+  "publishConfig": {
+    "provenance": true,
+    "access": "public",
+    "tag": "latest"
+  },
   "devDependencies": {
     "@types/node": "^25.5.2",
     "@vitest/coverage-v8": "^4.1.3",

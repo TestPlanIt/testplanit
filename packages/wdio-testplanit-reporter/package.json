@@ -46,6 +46,11 @@
   "engines": {
     "node": ">=20"
   },
+  "publishConfig": {
+    "provenance": true,
+    "access": "public",
+    "tag": "latest"
+  },
   "peerDependencies": {
     "@wdio/reporter": "^8.0.0 || ^9.0.0",
     "@wdio/types": "^8.0.0 || ^9.0.0"
