@@ -30,7 +30,10 @@ Datasets are **versioned**: every save creates a new immutable version. A run ca
 
 ## Authoring a Parameterized Case
 
-Open the test case, then click **Configure Parameters** at the top of the case editor. The sheet that opens has two tabs:
+There are two entry points:
+
+- **Inline on Add Case** — when you create a new case from the repository, an optional **Add parameters & dataset** section appears at the bottom of the Add Case form. It is available only when the selected template has a **Steps** field (parameter `@chip` references need a step to live in). The section is a slimmed-down editor — parameter columns, dataset rows, type and required/sensitive flags — designed for the create-time happy path. When you save, the case, its parameters, and its dataset rows all land in one atomic write. The full editor (CSV import, allowed-values authoring for SELECT, per-cell sensitive masking) is still available on the created case.
+- **Full editor on an existing case** — open the test case, then click **Configure Parameters** at the top of the case editor. The sheet that opens has two tabs:
 
 ### Parameters tab
 
