@@ -690,6 +690,8 @@
     },
     "aria": {
       "userMenu": "User menu",
+      "selectProject": "Select project",
+      "togglePanel": "Toggle panel",
       "search": "Search",
       "helpMenu": "Help menu",
       "help": "Help",
@@ -846,6 +848,12 @@
       "noFilesDetected": "No files detected in drop"
     },
     "editor": {
+      "bold": "Bold",
+      "italic": "Italic",
+      "underline": "Underline",
+      "strikethrough": "Strikethrough",
+      "code": "Code",
+      "heading": "Heading",
       "setColor": "Set Color",
       "enterUrl": "Enter URL including https://",
       "uploadFile": "Upload File",

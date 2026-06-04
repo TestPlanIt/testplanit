@@ -1924,7 +1924,10 @@ function ReportBuilderContent({
                           value={reportType}
                           onValueChange={handleReportTypeChange}
                         >
-                          <SelectTrigger data-testid="report-type-select">
+                          <SelectTrigger
+                            data-testid="report-type-select"
+                            aria-label={tReports("reportType")}
+                          >
                             <SelectValue>
                               {currentReport && (
                                 <div className="flex items-center gap-2">
@@ -2637,7 +2640,10 @@ function ReportBuilderContent({
                           value={reportType}
                           onValueChange={handleReportTypeChange}
                         >
-                          <SelectTrigger data-testid="report-type-select">
+                          <SelectTrigger
+                            data-testid="report-type-select"
+                            aria-label={tReports("reportType")}
+                          >
                             <SelectValue>
                               {currentReport && (
                                 <div className="flex items-center gap-2">
