@@ -258,6 +258,8 @@
     "react-window": "^2.2.7",
     "redux": "^5.0.1",
     "robots-parser": "^3.0.1",
+    "scim-patch": "^0.9.1",
+    "scim2-parse-filter": "^0.3.0",
     "simple-icons": "^16.21.0",
     "slate-hyperscript": "^0.100.0",
     "sonner": "^2.0.7",

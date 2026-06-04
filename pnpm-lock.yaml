@@ -944,6 +944,12 @@ importers:
       robots-parser:
         specifier: ^3.0.1
         version: 3.0.1
+      scim-patch:
+        specifier: ^0.9.1
+        version: 0.9.1
+      scim2-parse-filter:
+        specifier: ^0.3.0
+        version: 0.3.0
       simple-icons:
         specifier: ^16.21.0
         version: 16.21.0
@@ -17155,6 +17161,12 @@ packages:
   schema-utils@4.3.3:
     resolution: {integrity: sha512-eflK8wEtyOE6+hsaRVPxvUKYCpRgzLqDTb8krvAsRIwOGlHoSgYLgBXoubGgLd2fT41/OUYdb48v4k4WWHQurA==}
     engines: {node: '>= 10.13.0'}
+
+  scim-patch@0.9.1:
+    resolution: {integrity: sha512-Uzf8Lz8xFlmx3IQazphvLezeRYVd12TSZAr7pm2OMEMLMFE1z3VWdfHmguygPbS/0TuhWvVMySb8fzg8/QwG2A==}
+
+  scim2-parse-filter@0.3.0:
+    resolution: {integrity: sha512-GMMvQlgnvps689B0tz5trN81NCRCyUVNrOR8dkLa1qAgRa8KylEElHsIl3jUZy9+VFFH0yPLwjFt1rSy8JnqcA==}
 
   scroll-into-view-if-needed@2.2.31:
     resolution: {integrity: sha512-dGCXy99wZQivjmjIqihaBQNjryrz5rueJY7eHfTdyWEiR4ttYpsajb14rn9s5d4DY4EcY6+4+U/maARBXJedkA==}
@@ -42947,6 +42959,14 @@ snapshots:
       ajv: 8.18.0
       ajv-formats: 2.1.1(ajv@8.18.0)
       ajv-keywords: 5.1.0(ajv@8.18.0)
+
+  scim-patch@0.9.1:
+    dependencies:
+      '@types/node': 25.9.1
+      fast-deep-equal: 3.1.3
+      scim2-parse-filter: 0.3.0
+
+  scim2-parse-filter@0.3.0: {}
 
   scroll-into-view-if-needed@2.2.31:
     dependencies:
