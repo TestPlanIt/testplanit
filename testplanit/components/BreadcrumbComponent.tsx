@@ -64,12 +64,11 @@ const BreadcrumbComponent: React.FC<BreadcrumbComponentProps> = ({
                   className="p-0 m-0 overflow-hidden w-fit"
                 >
                   <Tooltip>
-                    <TooltipTrigger type="button">
+                    <TooltipTrigger asChild>
                       <Link
                         href={`/projects/repository/${projectId}/?node=${folder.id}`}
                         className="text-primary/50 cursor-pointer inline-flex items-center p-0 m-0 max-w-xs compact-button hover:underline"
                         onClick={() => onClick && onClick(folder.id)}
-                        type="button"
                       >
                         <span className="truncate">{folder.text}</span>
                       </Link>

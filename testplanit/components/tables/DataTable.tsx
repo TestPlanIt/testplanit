@@ -796,6 +796,8 @@ export function DataTable<TData extends DataRow, TValue>({
                         </div>
                         {header.column.getCanResize() && (
                           <div
+                            role="separator"
+                            aria-orientation="vertical"
                             onDoubleClick={() => header.column.resetSize()}
                             onMouseDown={(e) => handleMouseDown(header, e)}
                             onTouchStart={header.getResizeHandler()}
