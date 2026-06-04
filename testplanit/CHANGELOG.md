@@ -1,3 +1,9 @@
+## [0.34.10](https://github.com/TestPlanIt/testplanit/compare/v0.34.9...v0.34.10) (2026-06-04)
+
+### Enhancements
+
+* **sessions:** server-side enforcement of required Result Fields ([#401](https://github.com/TestPlanIt/testplanit/issues/401)) ([e7ab3da](https://github.com/TestPlanIt/testplanit/commit/e7ab3daf5d5d64672f727e115ef3277a42572297))
+
 ## [0.34.9](https://github.com/TestPlanIt/testplanit/compare/v0.34.8...v0.34.9) (2026-06-04)
 
 ### Enhancements
