@@ -857,6 +857,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             className="p-2"
             onClick={() => editor.chain().focus().toggleBulletList().run()}
             data-testid="tiptap-bullet-list"
+            aria-label={t("bulletList")}
           >
             <List className="w-4 h-4" />
           </Button>
@@ -867,6 +868,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             className="p-2"
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
             data-testid="tiptap-ordered-list"
+            aria-label={t("orderedList")}
           >
             <ListOrdered className="w-4 h-4" />
           </Button>
@@ -877,6 +879,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             className="p-2"
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
             data-testid="tiptap-blockquote"
+            aria-label={t("blockquote")}
           >
             <QuoteIcon className="w-4 h-4" />
           </Button>
@@ -888,6 +891,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                 size="sm"
                 className="p-2"
                 data-testid="tiptap-table-trigger"
+                aria-label={t("table.insertTable")}
               >
                 <Table2 className="w-4 h-4" />
               </Button>
