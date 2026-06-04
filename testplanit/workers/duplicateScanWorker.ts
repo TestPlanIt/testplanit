@@ -11,6 +11,7 @@ import { DUPLICATE_SCAN_QUEUE_NAME } from "../lib/queueNames";
 import { getElasticsearchClient } from "../services/elasticsearchService";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
+import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 import { DuplicateAnalysisService } from "../lib/llm/services/duplicate-detection/duplicate-analysis.service";
 import { LlmManager } from "../lib/llm/services/llm-manager.service";
 import { PromptResolver } from "../lib/llm/services/prompt-resolver.service";
@@ -317,7 +318,7 @@ export function startDuplicateScanWorker() {
   worker = new Worker<DuplicateScanJobData, DuplicateScanJobResult>(
     DUPLICATE_SCAN_QUEUE_NAME,
     withTenantContext(processor),
-    { connection: valkeyConnection as any, concurrency: 1 }
+    { connection: valkeyConnection as any, prefix: BULLMQ_PREFIX, concurrency: 1 }
   );
 
   worker.on("completed", (job) =>

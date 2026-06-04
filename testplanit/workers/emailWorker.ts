@@ -19,6 +19,7 @@ import {
 } from "../lib/server-translations";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
+import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 import { isTipTapContent, tiptapToHtml } from "../utils/tiptapToHtml";
 
 interface SendNotificationEmailJobData extends MultiTenantJobData {
@@ -763,6 +764,7 @@ const startWorker = async () => {
   if (valkeyConnection) {
     worker = new Worker(EMAIL_QUEUE_NAME, withTenantContext(processor), {
       connection: valkeyConnection as any,
+      prefix: BULLMQ_PREFIX,
       concurrency: parseInt(process.env.EMAIL_CONCURRENCY || "3", 10),
     });
 

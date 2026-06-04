@@ -16,6 +16,7 @@ import { SYNC_QUEUE_NAME } from "../lib/queueNames";
 import { captureAuditEvent } from "../lib/services/auditLog";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
+import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 
 // Extend SyncJobData with multi-tenant + actor-context support
 interface MultiTenantSyncJobData
@@ -220,6 +221,7 @@ const startWorker = async () => {
   if (valkeyConnection) {
     worker = new Worker(SYNC_QUEUE_NAME, withTenantContext(processor), {
       connection: valkeyConnection as any,
+      prefix: BULLMQ_PREFIX,
       concurrency: parseInt(process.env.SYNC_CONCURRENCY || "2", 10),
       lockDuration: 21600000,
       maxStalledCount: 3,

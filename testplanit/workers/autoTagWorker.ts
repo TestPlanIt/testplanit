@@ -13,6 +13,7 @@ import {
 import { AUTO_TAG_QUEUE_NAME } from "../lib/queueNames";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
+import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 
 // ─── Job data / result types ────────────────────────────────────────────────
 
@@ -332,6 +333,7 @@ const startWorker = async () => {
       withTenantContext(processor),
       {
         connection: valkeyConnection as any,
+        prefix: BULLMQ_PREFIX,
         concurrency: parseInt(process.env.AUTO_TAG_CONCURRENCY || "3", 10), // Process up to 3 jobs in parallel (one per entity type)
       }
     );
