@@ -318,7 +318,11 @@ export function startDuplicateScanWorker() {
   worker = new Worker<DuplicateScanJobData, DuplicateScanJobResult>(
     DUPLICATE_SCAN_QUEUE_NAME,
     withTenantContext(processor),
-    { connection: valkeyConnection as any, prefix: BULLMQ_PREFIX, concurrency: 1 }
+    {
+      connection: valkeyConnection as any,
+      prefix: BULLMQ_PREFIX,
+      concurrency: 1,
+    }
   );
 
   worker.on("completed", (job) =>

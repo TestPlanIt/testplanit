@@ -1106,7 +1106,11 @@ export function startMagicSelectWorker() {
   worker = new Worker<MagicSelectJobData, MagicSelectJobResult>(
     MAGIC_SELECT_QUEUE_NAME,
     withTenantContext(processor),
-    { connection: valkeyConnection as any, prefix: BULLMQ_PREFIX, concurrency: 1 }
+    {
+      connection: valkeyConnection as any,
+      prefix: BULLMQ_PREFIX,
+      concurrency: 1,
+    }
   );
 
   worker.on("completed", (job) =>
