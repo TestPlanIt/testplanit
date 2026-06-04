@@ -7208,6 +7208,10 @@
   },
   "search": {
     "title": "Aramak",
+    "bulk": {
+      "crossProjectHint": "(birden fazla projeyi kapsayan)",
+      "crossProjectDisabled": "Seçim birden fazla projeyi kapsıyor; toplu işlem yapabilmek için seçimi tek bir projeye daraltın."
+    },
     "placeholder": {
       "thisProject": "Bu projede arama yap...",
       "allProjects": "Tüm projelerde arama yap..."

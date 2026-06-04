@@ -7208,6 +7208,10 @@
   },
   "search": {
     "title": "搜索",
+    "bulk": {
+      "crossProjectHint": "（涉及多个项目）",
+      "crossProjectDisabled": "选择范围涵盖多个项目——缩小范围至单个项目以启用批量操作。"
+    },
     "placeholder": {
       "thisProject": "在此项目中搜索……",
       "allProjects": "搜索所有项目……"

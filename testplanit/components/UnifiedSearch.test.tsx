@@ -6,9 +6,43 @@ import { UnifiedSearch } from "./UnifiedSearch";
 
 // Mock next-intl
 vi.mock("next-intl", () => ({
-  useTranslations: () => (key: string) => key,
+  useTranslations: () => (key: string, values?: Record<string, unknown>) =>
+    values?.count !== undefined ? `${key} (${values.count})` : key,
   NextIntlClientProvider: ({ children }: { children: React.ReactNode }) =>
     children,
+}));
+
+// Mock i18n-aware navigation wrapper (next-intl/navigation needs an intl
+// context we don't wire up in unit tests).
+const mockRouterPush = vi.fn();
+vi.mock("~/lib/navigation", () => ({
+  useRouter: () => ({ push: mockRouterPush, replace: vi.fn(), back: vi.fn() }),
+  usePathname: () => "/",
+  Link: ({ children }: { children: React.ReactNode }) => children,
+  redirect: vi.fn(),
+}));
+
+// Mock BulkEditModal so we can assert it's mounted with the right props
+// without pulling the entire repository-cases tree into the test.
+vi.mock("@/projects/repository/[projectId]/BulkEditModal", () => ({
+  BulkEditModal: ({
+    isOpen,
+    selectedCaseIds,
+    projectId,
+    onClose,
+  }: {
+    isOpen: boolean;
+    selectedCaseIds: number[];
+    projectId: number;
+    onClose: () => void;
+  }) =>
+    isOpen ? (
+      <div data-testid="bulk-edit-modal-mock">
+        <span data-testid="bulk-edit-project">{projectId}</span>
+        <span data-testid="bulk-edit-ids">{selectedCaseIds.join(",")}</span>
+        <button onClick={onClose}>{"close"}</button>
+      </div>
+    ) : null,
 }));
 
 // Mock the hooks
@@ -1130,6 +1164,145 @@ describe("UnifiedSearch Component", () => {
             body: expect.stringContaining("login AND authentication"),
           })
         );
+      });
+    });
+  });
+
+  describe("Bulk actions on search results", () => {
+    function caseHit(id: number, projectId: number, name = `Case ${id}`) {
+      return {
+        id,
+        entityType: SearchableEntityType.REPOSITORY_CASE,
+        score: 1.0,
+        source: { id, name, projectId, projectName: `Project ${projectId}` },
+      };
+    }
+    function nonCaseHit(id: number, projectId: number) {
+      return {
+        id,
+        entityType: SearchableEntityType.TEST_RUN,
+        score: 1.0,
+        source: { id, name: `Run ${id}`, projectId },
+      };
+    }
+
+    async function renderWithHits(hits: any[]) {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ total: hits.length, hits, took: 1 }),
+      });
+      render(<UnifiedSearch />);
+      const input = screen.getByPlaceholderText(/search/i);
+      fireEvent.change(input, { target: { value: "anything" } });
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalled();
+      });
+      return input;
+    }
+
+    it("renders a selection checkbox on RepositoryCase rows only", async () => {
+      await renderWithHits([caseHit(1, 100), nonCaseHit(2, 100)]);
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("bulk-select-repository_case-1")
+        ).toBeInTheDocument();
+        expect(
+          screen.queryByTestId("bulk-select-test_run-2")
+        ).not.toBeInTheDocument();
+      });
+    });
+
+    it("shows the bulk toolbar with the selected count after toggling a case", async () => {
+      await renderWithHits([caseHit(1, 100), caseHit(2, 100)]);
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("bulk-select-repository_case-1")
+        ).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByTestId("bulk-select-repository_case-1"));
+      await waitFor(() => {
+        expect(screen.getByTestId("bulk-action-toolbar")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByTestId("bulk-select-repository_case-2"));
+      // Plural-form rendering uses the `#` placeholder for the count value.
+      await waitFor(() => {
+        expect(screen.getByTestId("bulk-action-toolbar").textContent).toContain(
+          "2"
+        );
+      });
+    });
+
+    it("disables both bulk actions when the selection spans multiple projects", async () => {
+      await renderWithHits([caseHit(1, 100), caseHit(2, 200)]);
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("bulk-select-repository_case-1")
+        ).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByTestId("bulk-select-repository_case-1"));
+      fireEvent.click(screen.getByTestId("bulk-select-repository_case-2"));
+      await waitFor(() => {
+        expect(screen.getByTestId("bulk-edit-button")).toBeDisabled();
+        expect(
+          screen.getByTestId("bulk-create-test-run-button")
+        ).toBeDisabled();
+      });
+    });
+
+    it("opens BulkEditModal with the selected case ids + single projectId when selection is same-project", async () => {
+      await renderWithHits([caseHit(1, 100), caseHit(2, 100)]);
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("bulk-select-repository_case-1")
+        ).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByTestId("bulk-select-repository_case-1"));
+      fireEvent.click(screen.getByTestId("bulk-select-repository_case-2"));
+      fireEvent.click(screen.getByTestId("bulk-edit-button"));
+      await waitFor(() => {
+        expect(screen.getByTestId("bulk-edit-modal-mock")).toBeInTheDocument();
+      });
+      expect(screen.getByTestId("bulk-edit-project").textContent).toBe("100");
+      expect(screen.getByTestId("bulk-edit-ids").textContent).toBe("1,2");
+    });
+
+    it("seeds sessionStorage + navigates to /projects/runs/<projectId>?openAddRun=true on Create Test Run", async () => {
+      mockRouterPush.mockReset();
+      const setItem = vi.spyOn(Storage.prototype, "setItem");
+      await renderWithHits([caseHit(7, 42)]);
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("bulk-select-repository_case-7")
+        ).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByTestId("bulk-select-repository_case-7"));
+      fireEvent.click(screen.getByTestId("bulk-create-test-run-button"));
+      await waitFor(() => {
+        expect(setItem).toHaveBeenCalledWith(
+          "createTestRun_selectedCases",
+          "[7]"
+        );
+        expect(mockRouterPush).toHaveBeenCalledWith(
+          "/projects/runs/42?openAddRun=true"
+        );
+      });
+      setItem.mockRestore();
+    });
+
+    it("clears the selection via the Clear button (toolbar disappears)", async () => {
+      await renderWithHits([caseHit(1, 100)]);
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("bulk-select-repository_case-1")
+        ).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByTestId("bulk-select-repository_case-1"));
+      expect(screen.getByTestId("bulk-action-toolbar")).toBeInTheDocument();
+      fireEvent.click(screen.getByTestId("bulk-clear-button"));
+      await waitFor(() => {
+        expect(
+          screen.queryByTestId("bulk-action-toolbar")
+        ).not.toBeInTheDocument();
       });
     });
   });

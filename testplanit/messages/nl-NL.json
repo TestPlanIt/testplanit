@@ -7208,6 +7208,10 @@
   },
   "search": {
     "title": "Zoekopdracht",
+    "bulk": {
+      "crossProjectHint": "(omvattend meerdere projecten)",
+      "crossProjectDisabled": "De selectie omvat meerdere projecten; beperk de selectie tot één project om acties in bulk mogelijk te maken."
+    },
     "placeholder": {
       "thisProject": "Zoeken in dit project...",
       "allProjects": "Zoeken in alle projecten..."

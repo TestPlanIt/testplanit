@@ -24,6 +24,7 @@ import { UserDisplay } from "@/components/search/UserDisplay";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -44,6 +45,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
+import { BulkEditModal } from "@/projects/repository/[projectId]/BulkEditModal";
 import {
   ChevronLeft,
   ChevronRight,
@@ -51,11 +53,14 @@ import {
   ChevronsRight,
   Filter,
   Folder,
+  Pencil,
+  PlayCircle,
   Search,
   Settings2,
   X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "~/lib/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getEntityIcon,
@@ -148,6 +153,14 @@ export function UnifiedSearch({
   const allEntityTypeCountsRef = useRef<
     Record<SearchableEntityType, number> | undefined
   >(searchState?.allEntityTypeCounts);
+
+  // Bulk-action selection: RepositoryCase hits only. Map<caseId → projectId> so
+  // we can both look up by id and detect cross-project selections cheaply.
+  const [selectedCaseRows, setSelectedCaseRows] = useState<Map<number, number>>(
+    new Map()
+  );
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
+  const router = useRouter();
 
   // Debounced search query
   const debouncedQuery = useDebounce(query, 300);
@@ -422,7 +435,55 @@ export function UnifiedSearch({
     setError(null);
     setIsFirstSearch(true);
     setCurrentPage(1);
+    setSelectedCaseRows(new Map());
   };
+
+  // Drop any bulk selection when the query or scope changes — the user is
+  // re-narrowing, so the prior selection is no longer in the visible result set.
+  useEffect(() => {
+    setSelectedCaseRows(new Map());
+  }, [debouncedQuery, filters, currentProjectOnly]);
+
+  // Bulk-action derivatives + handlers (RepositoryCase rows only).
+  const selectedCaseProjectIds = useMemo(
+    () => new Set(selectedCaseRows.values()),
+    [selectedCaseRows]
+  );
+  const isCrossProjectSelection = selectedCaseProjectIds.size > 1;
+  const singleSelectedProjectId =
+    selectedCaseProjectIds.size === 1
+      ? Number([...selectedCaseProjectIds][0])
+      : null;
+  const selectedCaseIdList = useMemo(
+    () => [...selectedCaseRows.keys()],
+    [selectedCaseRows]
+  );
+
+  const toggleCaseSelection = useCallback((hit: SearchHit) => {
+    const id = Number(hit.id);
+    const projectId = Number((hit.source as { projectId?: number })?.projectId);
+    if (!Number.isFinite(id) || !Number.isFinite(projectId)) return;
+    setSelectedCaseRows((prev) => {
+      const next = new Map(prev);
+      if (next.has(id)) next.delete(id);
+      else next.set(id, projectId);
+      return next;
+    });
+  }, []);
+
+  const clearBulkSelection = useCallback(() => {
+    setSelectedCaseRows(new Map());
+  }, []);
+
+  const handleBulkCreateTestRun = useCallback(() => {
+    if (singleSelectedProjectId == null || selectedCaseIdList.length === 0)
+      return;
+    sessionStorage.setItem(
+      "createTestRun_selectedCases",
+      JSON.stringify(selectedCaseIdList)
+    );
+    router.push(`/projects/runs/${singleSelectedProjectId}?openAddRun=true`);
+  }, [router, selectedCaseIdList, singleSelectedProjectId]);
 
   // Handle filter changes from faceted search
   const handleFiltersChange = (newFilters: UnifiedSearchFilters) => {
@@ -636,6 +697,12 @@ export function UnifiedSearch({
                   hit={hit}
                   onClick={() => onResultClick?.(hit)}
                   searchQuery={query}
+                  isSelected={selectedCaseRows.has(Number(hit.id))}
+                  onSelectToggle={
+                    hit.entityType === SearchableEntityType.REPOSITORY_CASE
+                      ? () => toggleCaseSelection(hit)
+                      : undefined
+                  }
                 />
               ))
             )}
@@ -652,6 +719,12 @@ export function UnifiedSearch({
               hit={hit}
               onClick={() => onResultClick?.(hit)}
               searchQuery={query}
+              isSelected={selectedCaseRows.has(Number(hit.id))}
+              onSelectToggle={
+                hit.entityType === SearchableEntityType.REPOSITORY_CASE
+                  ? () => toggleCaseSelection(hit)
+                  : undefined
+              }
             />
           ))}
         </div>
@@ -863,7 +936,12 @@ export function UnifiedSearch({
       </div>
 
       {/* Results */}
-      <div className="relative min-h-[200px]">
+      <div
+        className={cn(
+          "relative min-h-[200px]",
+          selectedCaseRows.size > 0 && "pb-20"
+        )}
+      >
         {loading && (
           <div className="space-y-2">
             <Skeleton className="h-20 w-full" />
@@ -910,6 +988,94 @@ export function UnifiedSearch({
           </div>
         )}
       </div>
+
+      {selectedCaseRows.size > 0 && (
+        <div
+          className="fixed bottom-0 right-0 z-50 w-full border-t bg-background/95 shadow-lg backdrop-blur sm:max-w-3xl supports-[backdrop-filter]:bg-background/80"
+          data-testid="bulk-action-toolbar"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3 p-3">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="font-medium">
+                {t("repository.duplicates.selected", {
+                  count: selectedCaseRows.size,
+                })}
+              </span>
+              {isCrossProjectSelection && (
+                <span className="text-muted-foreground">
+                  {t("search.bulk.crossProjectHint")}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setBulkEditOpen(true)}
+                      disabled={isCrossProjectSelection}
+                      data-testid="bulk-edit-button"
+                    >
+                      <Pencil className="h-4 w-4" />
+                      {t("repository.cases.bulkEdit")}
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {isCrossProjectSelection && (
+                  <TooltipContent>
+                    {t("search.bulk.crossProjectDisabled")}
+                  </TooltipContent>
+                )}
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleBulkCreateTestRun}
+                      disabled={isCrossProjectSelection}
+                      data-testid="bulk-create-test-run-button"
+                    >
+                      <PlayCircle className="h-4 w-4" />
+                      {t("repository.cases.createTestRun")}
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {isCrossProjectSelection && (
+                  <TooltipContent>
+                    {t("search.bulk.crossProjectDisabled")}
+                  </TooltipContent>
+                )}
+              </Tooltip>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearBulkSelection}
+                data-testid="bulk-clear-button"
+              >
+                <X className="h-4 w-4" />
+                {t("common.actions.clear")}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {bulkEditOpen && singleSelectedProjectId != null && (
+        <BulkEditModal
+          isOpen={bulkEditOpen}
+          onClose={() => setBulkEditOpen(false)}
+          onSaveSuccess={() => {
+            setBulkEditOpen(false);
+            clearBulkSelection();
+          }}
+          selectedCaseIds={selectedCaseIdList}
+          projectId={singleSelectedProjectId}
+        />
+      )}
     </div>
   );
 }
@@ -919,10 +1085,19 @@ function SearchResultCard({
   hit,
   onClick,
   searchQuery: _searchQuery,
+  isSelected = false,
+  onSelectToggle,
 }: {
   hit: SearchHit;
   onClick?: () => void;
   searchQuery?: string;
+  isSelected?: boolean;
+  /**
+   * When provided, a selection checkbox is rendered before the row icon.
+   * Currently only wired for `SearchableEntityType.REPOSITORY_CASE` hits by the
+   * caller, so the column is invisible for other entity types.
+   */
+  onSelectToggle?: () => void;
 }) {
   const t = useTranslations();
   const Icon = getEntityIcon(hit.entityType);
@@ -1402,11 +1577,27 @@ function SearchResultCard({
       className={cn(
         "p-4 cursor-pointer hover:shadow-md transition-all hover:border-primary/50",
         hit.source.isDeleted &&
-          "bg-destructive/10 border-destructive/20 hover:border-destructive/50"
+          "bg-destructive/10 border-destructive/20 hover:border-destructive/50",
+        isSelected && "border-primary/50 bg-primary/5"
       )}
       onClick={onClick}
     >
       <div className="flex items-start gap-3">
+        {onSelectToggle && (
+          <div
+            className="mt-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelectToggle();
+            }}
+          >
+            <Checkbox
+              checked={isSelected}
+              aria-label={t("repository.duplicates.selectRow")}
+              data-testid={`bulk-select-${hit.entityType}-${hit.id}`}
+            />
+          </div>
+        )}
         <div className="mt-1">
           <DynamicIcon
             name={

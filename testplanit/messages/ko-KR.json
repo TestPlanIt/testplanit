@@ -7208,6 +7208,10 @@
   },
   "search": {
     "title": "찾다",
+    "bulk": {
+      "crossProjectHint": "(여러 프로젝트에 걸쳐)",
+      "crossProjectDisabled": "여러 프로젝트에 걸쳐 선택 항목이 표시되는 경우, 일괄 작업을 수행하려면 특정 프로젝트로 범위를 좁히세요."
+    },
     "placeholder": {
       "thisProject": "이 프로젝트에서 검색...",
       "allProjects": "모든 프로젝트에서 검색..."

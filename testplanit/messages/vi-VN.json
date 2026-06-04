@@ -7208,6 +7208,10 @@
   },
   "search": {
     "title": "Tìm kiếm",
+    "bulk": {
+      "crossProjectHint": "(bao gồm nhiều dự án)",
+      "crossProjectDisabled": "Việc lựa chọn bao gồm nhiều dự án — thu hẹp xuống một dự án duy nhất để thực hiện các thao tác hàng loạt."
+    },
     "placeholder": {
       "thisProject": "Tìm kiếm trong dự án này...",
       "allProjects": "Tìm kiếm trên tất cả các dự án..."

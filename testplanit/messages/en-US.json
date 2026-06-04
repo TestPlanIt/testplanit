@@ -7208,6 +7208,10 @@
   },
   "search": {
     "title": "Search",
+    "bulk": {
+      "crossProjectHint": "(spanning multiple projects)",
+      "crossProjectDisabled": "Selection spans multiple projects — narrow to a single project to enable bulk actions."
+    },
     "placeholder": {
       "thisProject": "Search in this project...",
       "allProjects": "Search across all projects..."

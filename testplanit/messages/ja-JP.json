@@ -7208,6 +7208,10 @@
   },
   "search": {
     "title": "検索",
+    "bulk": {
+      "crossProjectHint": "（複数のプロジェクトにまたがる）",
+      "crossProjectDisabled": "選択範囲が複数のプロジェクトにまたがっている場合は、一括操作を行うために単一のプロジェクトに絞り込んでください。"
+    },
     "placeholder": {
       "thisProject": "このプロジェクト内を検索...",
       "allProjects": "すべてのプロジェクトを検索..."
