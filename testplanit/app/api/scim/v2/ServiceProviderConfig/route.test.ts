@@ -1,12 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import {
-  DELETE,
-  GET,
-  PATCH,
-  POST,
-  PUT,
-} from "./route";
+import { DELETE, GET, PATCH, POST, PUT } from "./route";
 
 const originalNextAuthUrl = process.env.NEXTAUTH_URL;
 
@@ -37,11 +31,11 @@ describe("GET /api/scim/v2/ServiceProviderConfig", () => {
       meta: { resourceType: string; location: string };
     };
     expect(body.schemas[0]).toBe(
-      "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig",
+      "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"
     );
     expect(body.meta.resourceType).toBe("ServiceProviderConfig");
     expect(body.meta.location).toBe(
-      "http://localhost:3000/scim/v2/ServiceProviderConfig",
+      "http://localhost:3000/scim/v2/ServiceProviderConfig"
     );
   });
 
@@ -54,7 +48,11 @@ describe("GET /api/scim/v2/ServiceProviderConfig", () => {
   it("advertises conservative bulk/filter/sort/etag/changePassword values (D-08)", async () => {
     const res = await GET();
     const body = (await res.json()) as {
-      bulk: { supported: boolean; maxOperations: number; maxPayloadSize: number };
+      bulk: {
+        supported: boolean;
+        maxOperations: number;
+        maxPayloadSize: number;
+      };
       filter: { supported: boolean; maxResults: number };
       changePassword: { supported: boolean };
       sort: { supported: boolean };
@@ -84,10 +82,10 @@ describe("GET /api/scim/v2/ServiceProviderConfig", () => {
     expect(body.authenticationSchemes[0].type).toBe("oauthbearertoken");
     expect(body.authenticationSchemes[0].name).toBe("OAuth Bearer Token");
     expect(body.authenticationSchemes[0].description).toBe(
-      "Authentication via tps_ prefixed bearer tokens minted by an admin",
+      "Authentication via tps_ prefixed bearer tokens minted by an admin"
     );
     expect(body.authenticationSchemes[0].specUri).toBe(
-      "https://www.rfc-editor.org/rfc/rfc6750",
+      "https://www.rfc-editor.org/rfc/rfc6750"
     );
     expect(body.authenticationSchemes[0].primary).toBe(true);
   });
@@ -107,7 +105,7 @@ describe("GET /api/scim/v2/ServiceProviderConfig", () => {
         meta: { location: string };
       };
       expect(body.meta.location).toBe(
-        "http://app.example.com/scim/v2/ServiceProviderConfig",
+        "http://app.example.com/scim/v2/ServiceProviderConfig"
       );
     } finally {
       if (before) {
