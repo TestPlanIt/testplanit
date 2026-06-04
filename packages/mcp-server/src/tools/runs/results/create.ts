@@ -33,18 +33,16 @@ async function submitResult(
     elapsed: number | null;
     attempt: number;
     testRunCaseVersion: number;
+    fieldValues: Array<{ fieldId: number; value: string }> | undefined;
   },
-  env: EnvConfig,
+  env: EnvConfig
 ): Promise<{ result: { id: number } }> {
-  const response = await fetch(
-    `${env.apiUrl}/api/test-runs/submit-result`,
-    {
-      method: "POST",
-      headers: bearerHeaders(env),
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    },
-  );
+  const response = await fetch(`${env.apiUrl}/api/test-runs/submit-result`, {
+    method: "POST",
+    headers: bearerHeaders(env),
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
   const text = await response.text();
   if (!response.ok) {
     let parsedMessage: string | undefined;
@@ -62,7 +60,7 @@ async function submitResult(
     }
     throw new TestPlanItHttpError(
       `HTTP ${response.status} from /api/test-runs/submit-result${parsedMessage ? `: ${parsedMessage}` : ""}`,
-      { statusCode: response.status },
+      { statusCode: response.status }
     );
   }
   return JSON.parse(text) as { result: { id: number } };
@@ -70,13 +68,13 @@ async function submitResult(
 
 export function registerRunResultsCreate(
   server: McpServer,
-  deps: RunResultsCreateDeps,
+  deps: RunResultsCreateDeps
 ): void {
   server.registerTool(
     "testplanit_test_run_results_create",
     {
       description:
-        "Submit a test result for a case in a run. Atomically creates the result record and updates the run case's current status. The attempt number is auto-incremented — no need to track it manually. Returns the full denormalized result (same shape as testplanit_test_run_results_get).",
+        "Submit a test result for a case in a run. Atomically creates the result record and updates the run case's current status. The attempt number is auto-incremented — no need to track it manually. Optional `fieldValues` records custom Result Field entries alongside the result; pass either the field's display name or its system name. The server rejects the submission if the case's template marks any Result Field required and `fieldValues` does not supply each one. Returns the full denormalized result (same shape as testplanit_test_run_results_get).",
       inputSchema: {
         testRunCaseId: z
           .number()
@@ -87,7 +85,7 @@ export function registerRunResultsCreate(
           .string()
           .min(1)
           .describe(
-            "Status name (e.g. 'Passed', 'Failed', 'Blocked'). Must match a status enabled for the project.",
+            "Status name (e.g. 'Passed', 'Failed', 'Blocked'). Must match a status enabled for the project."
           ),
         notes: z
           .string()
@@ -100,15 +98,37 @@ export function registerRunResultsCreate(
           .nullable()
           .optional()
           .describe("Elapsed time in milliseconds, or null."),
+        fieldValues: z
+          .array(
+            z.object({
+              name: z
+                .string()
+                .min(1)
+                .describe(
+                  "Display name (case-insensitive) or system name of a Result Field assigned to the case's template."
+                ),
+              value: z
+                .union([z.string(), z.number(), z.boolean()])
+                .describe(
+                  "Value to record. Strings/numbers/booleans are coerced to strings and stored as-is — pass the option's name for dropdowns."
+                ),
+            })
+          )
+          .optional()
+          .describe(
+            "Custom Result Field values to record alongside the result. Required when the case's template marks any Result Field required."
+          ),
       },
     },
     async (input) => {
       try {
-        // Fetch the test run case to get testRunId and projectId.
+        // Fetch the test run case to get testRunId, projectId, and templateId
+        // (templateId is needed to resolve fieldValues by name).
         const runCase = await zenstack<{
           id: number;
           testRunId: number;
           testRun: { projectId: number };
+          repositoryCase: { templateId: number | null };
         } | null>(
           "testRunCases",
           "findUnique",
@@ -118,9 +138,10 @@ export function registerRunResultsCreate(
               id: true,
               testRunId: true,
               testRun: { select: { projectId: true } },
+              repositoryCase: { select: { templateId: true } },
             } satisfies Prisma.TestRunCasesSelect,
           },
-          deps.env,
+          deps.env
         );
 
         if (!runCase) {
@@ -149,7 +170,7 @@ export function registerRunResultsCreate(
             select: { id: true } satisfies Prisma.StatusSelect,
             take: 1,
           },
-          deps.env,
+          deps.env
         );
 
         if (!statuses || statuses.length === 0) {
@@ -164,6 +185,97 @@ export function registerRunResultsCreate(
           };
         }
 
+        // Resolve fieldValues input — map field names to numeric fieldIds via
+        // the case's template result-field assignments. The server enforces
+        // REQUIRED_FIELDS_MISSING; this step just translates names → IDs so the
+        // agent doesn't need to know the numeric IDs.
+        let serverFieldValues:
+          | Array<{ fieldId: number; value: string }>
+          | undefined;
+
+        if (input.fieldValues && input.fieldValues.length > 0) {
+          if (runCase.repositoryCase.templateId == null) {
+            return {
+              isError: true as const,
+              content: [
+                {
+                  type: "text" as const,
+                  text: "Cannot resolve fieldValues: the case has no template. Remove fieldValues, or assign a template to the case.",
+                },
+              ],
+            };
+          }
+
+          const assignments = await zenstack<
+            Array<{
+              resultField: {
+                id: number;
+                displayName: string;
+                systemName: string;
+              };
+            }>
+          >(
+            "templateResultAssignment",
+            "findMany",
+            {
+              where: {
+                templateId: runCase.repositoryCase.templateId,
+                resultField: { isEnabled: true, isDeleted: false },
+              },
+              select: {
+                resultField: {
+                  select: {
+                    id: true,
+                    displayName: true,
+                    systemName: true,
+                  },
+                },
+              } satisfies Prisma.TemplateResultAssignmentSelect,
+            },
+            deps.env
+          );
+
+          const byDisplay = new Map<string, number>();
+          const bySystem = new Map<string, number>();
+          for (const a of assignments ?? []) {
+            byDisplay.set(
+              a.resultField.displayName.toLowerCase(),
+              a.resultField.id
+            );
+            bySystem.set(a.resultField.systemName, a.resultField.id);
+          }
+
+          const unresolved: string[] = [];
+          const resolved: Array<{ fieldId: number; value: string }> = [];
+          for (const fv of input.fieldValues) {
+            const id =
+              byDisplay.get(fv.name.toLowerCase()) ?? bySystem.get(fv.name);
+            if (id === undefined) {
+              unresolved.push(fv.name);
+              continue;
+            }
+            resolved.push({ fieldId: id, value: String(fv.value) });
+          }
+
+          if (unresolved.length > 0) {
+            const available =
+              (assignments ?? [])
+                .map((a) => a.resultField.displayName)
+                .join(", ") || "(none assigned to this template)";
+            return {
+              isError: true as const,
+              content: [
+                {
+                  type: "text" as const,
+                  text: `Unknown result field name(s): ${unresolved.join(", ")}. Available fields on this template: ${available}.`,
+                },
+              ],
+            };
+          }
+
+          serverFieldValues = resolved;
+        }
+
         // Auto-increment attempt: count existing non-deleted results.
         const existingCount = await zenstack<number>(
           "testRunResults",
@@ -174,7 +286,7 @@ export function registerRunResultsCreate(
               isDeleted: false,
             } satisfies Prisma.TestRunResultsWhereInput,
           },
-          deps.env,
+          deps.env
         );
         const attempt = (existingCount ?? 0) + 1;
 
@@ -187,8 +299,9 @@ export function registerRunResultsCreate(
             elapsed: input.elapsed ?? null,
             attempt,
             testRunCaseVersion: 1,
+            fieldValues: serverFieldValues,
           },
-          deps.env,
+          deps.env
         );
 
         // Re-fetch the created result with the full denormalized shape.
@@ -199,7 +312,7 @@ export function registerRunResultsCreate(
             where: { id: result.id },
             include: RUN_RESULT_DETAIL_INCLUDE,
           },
-          deps.env,
+          deps.env
         );
 
         if (!raw) {
@@ -222,6 +335,6 @@ export function registerRunResultsCreate(
       } catch (err) {
         return mapHttpErrorToToolResult(err);
       }
-    },
+    }
   );
 }
