@@ -110,7 +110,10 @@ setup("seed a11y fixture data", async ({ request, baseURL }) => {
       data: {
         data: {
           name: `A11y dataset ${stamp}`,
-          isShared: true,
+          // Own the dataset by a case: the create policy's Zod validator
+          // dereferences `ownerCase` and rejects a null relation (shared
+          // datasets), so a connected ownerCase in-project satisfies it.
+          ownerCase: { connect: { id: caseId } },
           project: { connect: { id: projectId } },
           createdBy: { connect: { id: userId } },
         },
