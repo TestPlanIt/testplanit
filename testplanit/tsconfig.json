@@ -41,6 +41,7 @@
     "types/**/*.d.ts",
     "**/*.ts",
     "**/*.tsx",
+    "**/.well-known/**/*.ts",
     ".next/types/**/*.ts",
     "vitest.config.ts",
     "vitest.setup.ts",
