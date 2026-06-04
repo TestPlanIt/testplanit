@@ -7208,6 +7208,10 @@
   },
   "search": {
     "title": "Buscar",
+    "bulk": {
+      "crossProjectHint": "(que abarca múltiples proyectos)",
+      "crossProjectDisabled": "La selección abarca varios proyectos; redúzcala a un solo proyecto para habilitar acciones masivas."
+    },
     "placeholder": {
       "thisProject": "Buscar en este proyecto...",
       "allProjects": "Buscar en todos los proyectos..."

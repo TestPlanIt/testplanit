@@ -7208,6 +7208,10 @@
   },
   "search": {
     "title": "Recherche",
+    "bulk": {
+      "crossProjectHint": "(s'étendant sur plusieurs projets)",
+      "crossProjectDisabled": "La sélection porte sur plusieurs projets ; restreignez-la à un seul projet pour permettre des actions groupées."
+    },
     "placeholder": {
       "thisProject": "Rechercher dans ce projet...",
       "allProjects": "Recherche dans tous les projets..."
