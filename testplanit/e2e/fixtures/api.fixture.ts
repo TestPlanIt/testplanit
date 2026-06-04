@@ -3141,6 +3141,7 @@ export class ApiHelper {
     name: string,
     options?: {
       stateId?: number;
+      templateId?: number;
       milestoneId?: number;
       configId?: number;
       configurationGroupId?: string;
@@ -3153,7 +3154,9 @@ export class ApiHelper {
       options?.stateId
         ? Promise.resolve(options.stateId)
         : this.getStateId(projectId),
-      this.getTemplateId(projectId),
+      options?.templateId
+        ? Promise.resolve(options.templateId)
+        : this.getTemplateId(projectId),
     ]);
 
     const data: Record<string, unknown> = {

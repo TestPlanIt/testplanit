@@ -37,7 +37,6 @@ import { z } from "zod/v4";
 import { emptyEditorContent, MAX_DURATION } from "~/app/constants";
 import {
   useCreateAttachments,
-  useCreateResultFieldValues,
   useCreateSessionResults,
   useFindFirstProjects,
   useFindFirstSessions,
@@ -344,7 +343,6 @@ export function SessionResultForm({
 
   const { mutateAsync: createSessionResult } = useCreateSessionResults();
   const { mutateAsync: createAttachments } = useCreateAttachments();
-  const { mutateAsync: createResultFieldValue } = useCreateResultFieldValues();
   const { mutateAsync: updateSession } = useUpdateSessions();
 
   // Update useEffect to remove debug logging
@@ -573,7 +571,27 @@ export function SessionResultForm({
         }
       }
 
-      // Create the session result
+      // Build the nested ResultFieldValues create payload from the template
+      // fields the user filled in. Persisting them atomically with the parent
+      // SessionResult is what makes the server-side required-field guard in
+      // `app/api/model/[...path]/route.ts` enforceable on every caller — the
+      // gate reads `data.resultFieldValues.create[]` straight off this body.
+      const nestedFieldValues = templateFields.flatMap((field) => {
+        const fieldId = field.resultField.id;
+        const fieldValue = values[fieldId.toString()];
+        if (fieldValue === undefined || fieldValue === null) return [];
+        return [
+          {
+            fieldId,
+            value:
+              typeof fieldValue === "object"
+                ? JSON.stringify(fieldValue)
+                : String(fieldValue as string | number | boolean),
+          },
+        ];
+      });
+
+      // Create the session result + its field values atomically.
       const result = await createSessionResult({
         data: {
           sessionId: sessionId,
@@ -584,6 +602,9 @@ export function SessionResultForm({
           issues: {
             connect: selectedIssues.map((id) => ({ id })),
           },
+          ...(nestedFieldValues.length > 0 && {
+            resultFieldValues: { create: nestedFieldValues },
+          }),
         },
       });
 
@@ -600,31 +621,6 @@ export function SessionResultForm({
             },
           });
         }
-      }
-
-      // Now save the template field values directly to the ResultFieldValues table
-      if (result && templateFields.length > 0) {
-        const fieldValuesPromises = templateFields.map((field) => {
-          const fieldId = field.resultField.id.toString();
-          const fieldValue = values[fieldId];
-
-          // Only save if field has a value
-          if (fieldValue !== undefined && fieldValue !== null) {
-            return createResultFieldValue({
-              data: {
-                fieldId: parseInt(fieldId),
-                value:
-                  typeof fieldValue === "object"
-                    ? JSON.stringify(fieldValue)
-                    : String(fieldValue as string | number | boolean),
-                sessionResultsId: result.id,
-              },
-            });
-          }
-          return Promise.resolve();
-        });
-
-        await Promise.all(fieldValuesPromises);
       }
 
       // Upload attachments if there are any (files OR external links)
