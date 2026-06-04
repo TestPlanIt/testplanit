@@ -4,74 +4,82 @@
  * Every SCIM error response MUST be a JSON object with:
  *   - `schemas`: ["urn:ietf:params:scim:api:messages:2.0:Error"]
  *   - `status`: stringified HTTP status code
- *   - `detail`: human-readable English description (NOT i18n'd — server-side
- *     strings stay English per project policy and per RFC 7644 §3.12 which
- *     describes `detail` as a diagnostic field for the calling client)
- *   - `scimType` (optional): one of the codes from RFC 7644 §3.12 Table 9
+ *   - `detail`: human-readable English description (server-side error strings
+ *     stay English — diagnosability beats locale fidelity for this category)
+ *   - `scimType` (optional): one of the codes from RFC 7644 §3.12 Table 9.
+ *     When the caller passes `null` the field is omitted from the body entirely
+ *     (NOT serialized as JSON `null`).
  *
- * RFC 7644 §3.12 Table 9 valid pairings:
- *   | status | scimType                                                         |
- *   |--------|------------------------------------------------------------------|
- *   | 400    | invalidFilter, invalidPath, invalidSyntax, invalidValue,         |
- *   |        | noTarget, tooMany, mutability, sensitive                         |
- *   | 401    | (none — no scimType)                                             |
- *   | 403    | (none)                                                           |
- *   | 404    | (none)                                                           |
- *   | 409    | uniqueness                                                       |
- *   | 412    | (none)                                                           |
- *   | 500    | (none)                                                           |
- *   | 501    | (none)                                                           |
+ * RFC 7644 §3.12 Table 9 valid status / scimType pairings:
+ *   | status | scimType                                                       |
+ *   |--------|----------------------------------------------------------------|
+ *   | 400    | invalidFilter, invalidPath, invalidSyntax, invalidValue,       |
+ *   |        | invalidVers, mutability, noTarget, sensitive, tooMany          |
+ *   | 401    | (none)                                                         |
+ *   | 403    | (none)                                                         |
+ *   | 404    | (none — caller passes `null`)                                  |
+ *   | 409    | uniqueness                                                     |
+ *   | 412    | (none)                                                         |
+ *   | 500    | (none)                                                         |
+ *   | 501    | (none — caller passes `null`)                                  |
  *
- * This module exposes ONE function — `scimError` — that returns a Next.js
- * `Response` with the correct status code, Content-Type, and body shape.
- * Per CONTEXT.md D-12 there is no `ScimError` class. Callers throw nothing;
- * they `return scimError(...)` from route handlers.
+ * Exposes ONE function — `scimError` — that returns a `NextResponse` with
+ * the correct status, Content-Type, and body shape. There is intentionally
+ * no per-status sugar helper (e.g. `notFound()`, `conflict()`); callers
+ * always pass the explicit `(status, scimType, detail)` tuple so every error
+ * path is grep-able by status code.
  */
+
+import { NextResponse } from "next/server";
 
 import {
   SCIM_CONTENT_TYPE,
-  SCIM_ERROR_SCHEMA,
-  type ScimErrorType,
+  SCIM_ERROR_SCHEMA_URN,
 } from "./constants";
 
-export interface ScimErrorBody {
-  schemas: [typeof SCIM_ERROR_SCHEMA];
-  status: string;
-  detail: string;
-  scimType?: ScimErrorType;
-}
+export type ScimErrorType =
+  | "invalidFilter"
+  | "invalidPath"
+  | "invalidSyntax"
+  | "invalidValue"
+  | "invalidVers"
+  | "mutability"
+  | "noTarget"
+  | "sensitive"
+  | "tooMany"
+  | "uniqueness"
+  | null;
 
 /**
- * Build a SCIM error `Response` ready to return from a Next.js route handler.
+ * Build a SCIM error response ready to return from a Next.js route handler.
  *
  * @param status   - HTTP status code (RFC 7644 §3.12 valid set: 400, 401, 403,
  *                   404, 409, 412, 500, 501)
- * @param detail   - English diagnostic message describing the failure
- * @param scimType - Optional scimType code per RFC 7644 §3.12 Table 9.
- *                   Only emitted in the body when supplied; callers are
- *                   responsible for pairing it with a valid status.
+ * @param scimType - scimType code per RFC 7644 §3.12 Table 9, or `null` to
+ *                   omit the field entirely.
+ * @param detail   - English diagnostic message describing the failure.
  *
  * @example
- *   return scimError(404, `User ${id} not found`);
- *   return scimError(400, "Filter could not be parsed", "invalidFilter");
- *   return scimError(409, "userName already exists", "uniqueness");
+ *   return scimError(404, null, `User ${id} not found`);
+ *   return scimError(400, "invalidFilter", "Filter could not be parsed");
+ *   return scimError(409, "uniqueness", "userName already exists");
  */
 export function scimError(
   status: number,
+  scimType: ScimErrorType,
   detail: string,
-  scimType?: ScimErrorType,
-): Response {
-  const body: ScimErrorBody = {
-    schemas: [SCIM_ERROR_SCHEMA],
+): NextResponse {
+  const body: Record<string, unknown> = {
+    schemas: [SCIM_ERROR_SCHEMA_URN],
     status: String(status),
     detail,
   };
 
-  if (scimType !== undefined) {
+  if (scimType !== null) {
     body.scimType = scimType;
   }
 
-  return new Response(JSON.stringify(body), {
+  return NextResponse.json(body, {
     status,
     headers: { "Content-Type": SCIM_CONTENT_TYPE },
   });
