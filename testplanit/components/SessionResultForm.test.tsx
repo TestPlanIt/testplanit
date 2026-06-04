@@ -24,7 +24,6 @@ vi.mock("~/lib/hooks", () => ({
     isLoading: false,
   })),
   useCreateAttachments: vi.fn(() => ({ mutateAsync: vi.fn() })),
-  useCreateResultFieldValues: vi.fn(() => ({ mutateAsync: vi.fn() })),
   useUpdateSessions: vi.fn(() => ({ mutateAsync: vi.fn() })),
 }));
 

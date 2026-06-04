@@ -1505,3 +1505,203 @@ describe("ZenStack chokepoint Review & Approval gate", () => {
     expect(baseHandlerMock).toHaveBeenCalled();
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SessionResults required-result-field guard at the auto-API chokepoint.
+// Closes the bypass that the placeholder in
+// `.planning/backlog/999.17-session-result-required-field-enforcement/`
+// documents: raw-API callers POSTing to /api/model/sessionResults could
+// previously skip a server-required Result Field. The handler-level gate
+// runs `hasMissingRequiredResultField` before the ZenStack pipeline executes,
+// so first-party and raw-API callers go through the same check.
+// ─────────────────────────────────────────────────────────────────────────────
+describe("ZenStack chokepoint SessionResults required-field gate", () => {
+  function makeCreateRequest(body: unknown): NextRequest {
+    const headers = new Headers();
+    headers.set("content-type", "application/json");
+    headers.set("authorization", "Bearer tpi_test_token");
+    const json = JSON.stringify(body);
+    return {
+      method: "POST",
+      headers,
+      url: "http://localhost:3000/api/model/sessionResults/create",
+      clone() {
+        return this;
+      },
+      async text() {
+        return json;
+      },
+    } as unknown as NextRequest;
+  }
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    const { getServerAuthSession } = await import("~/server/auth");
+    (getServerAuthSession as any).mockResolvedValue({
+      user: { id: "user-1", email: "u@e.com", name: "U" },
+    });
+    const { extractBearerToken } = await import("~/lib/api-token-auth");
+    (extractBearerToken as any).mockReturnValue("tpi_test_token");
+    const { authenticateApiTokenForMethod } =
+      await import("~/lib/api-token-auth");
+    (authenticateApiTokenForMethod as any).mockResolvedValue({
+      authenticated: true,
+      userId: "user-1",
+      access: "USER",
+      scopes: [],
+    });
+    const { prisma } = await import("~/lib/prisma");
+    (prisma as any).user.findUnique.mockResolvedValue({
+      id: "user-1",
+      email: "u@e.com",
+      name: "U",
+    });
+    baseHandlerMock.mockClear();
+    baseHandlerMock.mockResolvedValue(
+      new Response(JSON.stringify({ data: { id: 7 } }), { status: 200 })
+    );
+  });
+
+  function mockSessionLookup(templateId: number) {
+    return async () => {
+      const { prisma } = await import("~/lib/prisma");
+      (prisma as any).sessions = {
+        findUnique: vi.fn().mockResolvedValue({ templateId }),
+      };
+    };
+  }
+
+  function mockRequiredFieldAssignments(
+    requiredFieldIds: number[]
+  ): () => Promise<void> {
+    return async () => {
+      const { prisma } = await import("~/lib/prisma");
+      (prisma as any).templateResultAssignment = {
+        findMany: vi
+          .fn()
+          .mockResolvedValue(
+            requiredFieldIds.map((resultFieldId) => ({ resultFieldId }))
+          ),
+      };
+    };
+  }
+
+  it("rejects with REQUIRED_FIELDS_MISSING when the body omits any required field", async () => {
+    await mockSessionLookup(5)();
+    await mockRequiredFieldAssignments([11, 12])();
+
+    const { POST } = await import("./route");
+    const req = makeCreateRequest({
+      data: {
+        sessionId: 100,
+        statusId: 2,
+        // no resultFieldValues.create
+      },
+    });
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["sessionResults", "create"] }),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error.code).toBe("REQUIRED_FIELDS_MISSING");
+    expect(baseHandlerMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects when only some required fields are supplied", async () => {
+    await mockSessionLookup(5)();
+    await mockRequiredFieldAssignments([11, 12])();
+
+    const { POST } = await import("./route");
+    const req = makeCreateRequest({
+      data: {
+        sessionId: 100,
+        statusId: 2,
+        resultFieldValues: { create: [{ fieldId: 11, value: "x" }] },
+      },
+    });
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["sessionResults", "create"] }),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error.code).toBe("REQUIRED_FIELDS_MISSING");
+    expect(baseHandlerMock).not.toHaveBeenCalled();
+  });
+
+  it("passes through to baseHandler when every required field is supplied via nested create", async () => {
+    await mockSessionLookup(5)();
+    await mockRequiredFieldAssignments([11, 12])();
+
+    const { POST } = await import("./route");
+    const req = makeCreateRequest({
+      data: {
+        sessionId: 100,
+        statusId: 2,
+        resultFieldValues: {
+          create: [
+            { fieldId: 11, value: "a" },
+            { fieldId: 12, value: "b" },
+          ],
+        },
+      },
+    });
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["sessionResults", "create"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(baseHandlerMock).toHaveBeenCalled();
+  });
+
+  it("passes through when the template has no required fields", async () => {
+    await mockSessionLookup(5)();
+    await mockRequiredFieldAssignments([])();
+
+    const { POST } = await import("./route");
+    const req = makeCreateRequest({
+      data: { sessionId: 100, statusId: 2 },
+    });
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["sessionResults", "create"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(baseHandlerMock).toHaveBeenCalled();
+  });
+
+  it("passes through when sessionId is missing (ZenStack will reject schema-wise)", async () => {
+    await mockSessionLookup(5)();
+    await mockRequiredFieldAssignments([11])();
+
+    const { POST } = await import("./route");
+    const req = makeCreateRequest({ data: { statusId: 2 } });
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["sessionResults", "create"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(baseHandlerMock).toHaveBeenCalled();
+  });
+
+  it("accepts the `session: { connect: { id } }` body shape (treated same as sessionId)", async () => {
+    await mockSessionLookup(5)();
+    await mockRequiredFieldAssignments([11])();
+
+    const { POST } = await import("./route");
+    const req = makeCreateRequest({
+      data: {
+        session: { connect: { id: 100 } },
+        statusId: 2,
+        resultFieldValues: { create: [{ fieldId: 11, value: "x" }] },
+      },
+    });
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["sessionResults", "create"] }),
+    });
+
+    expect(res.status).toBe(200);
+    expect(baseHandlerMock).toHaveBeenCalled();
+  });
+});

@@ -30,6 +30,7 @@ import {
   assertResultEditWindowOpen,
   isEditWindowExpiredError,
 } from "~/lib/services/editWindow";
+import { hasMissingRequiredResultField } from "~/lib/services/resultGuards";
 import { softDeleteUnexecutedRunCasesForDraftRevert } from "~/lib/services/runCaseEligibility";
 import {
   isAlreadyPendingError,
@@ -79,6 +80,7 @@ function getCurrentApiAuth(): ApiAuthContext {
 const AUTO_INJECT_USER_FIELDS: Record<string, string[]> = {
   testRuns: ["createdBy"],
   testRunResults: ["executedBy"],
+  sessionResults: ["createdBy"],
   repositoryCases: ["creator"],
   repositoryFolders: ["creator"],
   sessions: ["createdBy"],
@@ -744,6 +746,97 @@ async function innerHandler(
             );
           }
           throw err;
+        }
+      }
+    }
+
+    // Required-result-field guard for SessionResults.create. The model handler
+    // is the universal chokepoint — `lib/prisma.ts`'s `$extends` middleware is
+    // bypassed by ZenStack's `enhance()` (see the repositoryCases ES-sync shim
+    // above), so a Prisma-extension hook would silently miss raw POSTs landing
+    // here. Reading the supplied `resultFieldValues.create[]` from the
+    // request body lets the same `hasMissingRequiredResultField` helper that
+    // gates the `/api/test-runs/submit-result` path enforce parity against
+    // session results too. SessionResults must be created with the field
+    // values nested in the same call; the SessionResultForm UI is the canonical
+    // first-party caller and uses that shape.
+    if (
+      isMutation &&
+      parsedPath &&
+      parsedPath.model === "sessionResults" &&
+      parsedPath.operation === "create"
+    ) {
+      const data = (requestBody as { data?: Record<string, unknown> } | null)
+        ?.data;
+      const rawSessionId =
+        (data?.sessionId as number | string | undefined) ??
+        ((data?.session as { connect?: { id?: number | string } } | undefined)
+          ?.connect?.id as number | string | undefined);
+      const sessionId =
+        typeof rawSessionId === "number"
+          ? rawSessionId
+          : typeof rawSessionId === "string" && rawSessionId !== ""
+            ? Number(rawSessionId)
+            : NaN;
+      if (Number.isFinite(sessionId)) {
+        const session = await prisma.sessions.findUnique({
+          where: { id: sessionId },
+          select: { templateId: true },
+        });
+        if (session) {
+          const nestedCreate = (
+            data?.resultFieldValues as
+              | {
+                  create?:
+                    | Array<Record<string, unknown>>
+                    | Record<string, unknown>;
+                }
+              | undefined
+          )?.create;
+          const nestedArray = Array.isArray(nestedCreate)
+            ? nestedCreate
+            : nestedCreate
+              ? [nestedCreate]
+              : [];
+          const suppliedFieldValues = nestedArray
+            .map((fv) => {
+              const rawFieldId =
+                (fv?.fieldId as number | string | undefined) ??
+                ((
+                  fv?.field as
+                    | { connect?: { id?: number | string } }
+                    | undefined
+                )?.connect?.id as number | string | undefined);
+              const fieldId =
+                typeof rawFieldId === "number"
+                  ? rawFieldId
+                  : typeof rawFieldId === "string" && rawFieldId !== ""
+                    ? Number(rawFieldId)
+                    : NaN;
+              return Number.isFinite(fieldId)
+                ? { fieldId, value: fv?.value }
+                : null;
+            })
+            .filter(
+              (entry): entry is { fieldId: number; value: unknown } =>
+                entry !== null
+            );
+          const missing = await hasMissingRequiredResultField(
+            prisma,
+            session.templateId,
+            suppliedFieldValues
+          );
+          if (missing) {
+            return NextResponse.json(
+              {
+                error: {
+                  code: "REQUIRED_FIELDS_MISSING",
+                  message: "A required result field is missing a value",
+                },
+              },
+              { status: 400 }
+            );
+          }
         }
       }
     }
