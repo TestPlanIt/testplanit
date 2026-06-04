@@ -61,18 +61,16 @@ test.describe("Sessions — required result-field enforcement", () => {
     expect(statusResp.ok()).toBe(true);
     const statusId = (await statusResp.json()).data.id;
 
-    // Raw POST with NO resultFieldValues — the guard must reject. Note that
-    // `createdById` is set so the rejection isolates the required-field
-    // scenario (rather than racing the missing-FK validation).
-    const userId = await api.getCurrentUserId();
+    // Raw POST with NO resultFieldValues — the guard must reject. The handler
+    // auto-injects `createdBy` for sessionResults (AUTO_INJECT_USER_FIELDS),
+    // so the failure isolates the required-field scenario.
     const rejected = await request.post(
       `${baseURL}/api/model/sessionResults/create`,
       {
         data: {
           data: {
-            sessionId,
-            statusId,
-            createdById: userId,
+            session: { connect: { id: sessionId } },
+            status: { connect: { id: statusId } },
             resultData: { type: "doc", content: [{ type: "paragraph" }] },
           },
         },
@@ -129,19 +127,15 @@ test.describe("Sessions — required result-field enforcement", () => {
     const statusId = (await statusResp.json()).data.id;
 
     // Atomic create with the required field nested in the same payload —
-    // the same shape SessionResultForm now sends. `createdById` is required
-    // explicitly here because `sessionResults` isn't in the route's
-    // AUTO_INJECT_USER_FIELDS map (route.ts:80) the way sessions / testRuns
-    // are; the UI sets it directly off `session.user.id`.
-    const userId = await api.getCurrentUserId();
+    // the same shape SessionResultForm now sends. `createdBy` is filled in
+    // server-side via AUTO_INJECT_USER_FIELDS off the authenticated user.
     const ok = await request.post(
       `${baseURL}/api/model/sessionResults/create`,
       {
         data: {
           data: {
-            sessionId,
-            statusId,
-            createdById: userId,
+            session: { connect: { id: sessionId } },
+            status: { connect: { id: statusId } },
             resultData: { type: "doc", content: [{ type: "paragraph" }] },
             resultFieldValues: {
               create: [{ fieldId: requiredFieldId, value: "1.2.3" }],
@@ -189,15 +183,13 @@ test.describe("Sessions — required result-field enforcement", () => {
     expect(statusResp.ok()).toBe(true);
     const statusId = (await statusResp.json()).data.id;
 
-    const userId = await api.getCurrentUserId();
     const ok = await request.post(
       `${baseURL}/api/model/sessionResults/create`,
       {
         data: {
           data: {
-            sessionId,
-            statusId,
-            createdById: userId,
+            session: { connect: { id: sessionId } },
+            status: { connect: { id: statusId } },
             resultData: { type: "doc", content: [{ type: "paragraph" }] },
           },
         },

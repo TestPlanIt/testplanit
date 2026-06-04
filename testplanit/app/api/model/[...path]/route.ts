@@ -80,6 +80,7 @@ function getCurrentApiAuth(): ApiAuthContext {
 const AUTO_INJECT_USER_FIELDS: Record<string, string[]> = {
   testRuns: ["createdBy"],
   testRunResults: ["executedBy"],
+  sessionResults: ["createdBy"],
   repositoryCases: ["creator"],
   repositoryFolders: ["creator"],
   sessions: ["createdBy"],
