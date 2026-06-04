@@ -1,3 +1,10 @@
+## [0.34.9](https://github.com/TestPlanIt/testplanit/compare/v0.34.8...v0.34.9) (2026-06-04)
+
+### Enhancements
+
+* **mcp:** accept Result Field values on test_run_results_create ([#398](https://github.com/TestPlanIt/testplanit/issues/398)) ([b19d07b](https://github.com/TestPlanIt/testplanit/commit/b19d07bb3d7245534c8100b58554bdd573dfdbfb))
+* **search:** bulk actions on RepositoryCase search results ([#400](https://github.com/TestPlanIt/testplanit/issues/400)) ([df08b55](https://github.com/TestPlanIt/testplanit/commit/df08b55501dd1ab65d6ef94cfe03a53851bf0994))
+
 ## [0.34.8](https://github.com/TestPlanIt/testplanit/compare/v0.34.7...v0.34.8) (2026-06-03)
 
 ### Enhancements
