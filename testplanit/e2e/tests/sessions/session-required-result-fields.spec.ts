@@ -61,7 +61,10 @@ test.describe("Sessions — required result-field enforcement", () => {
     expect(statusResp.ok()).toBe(true);
     const statusId = (await statusResp.json()).data.id;
 
-    // Raw POST with NO resultFieldValues — the guard must reject.
+    // Raw POST with NO resultFieldValues — the guard must reject. Note that
+    // `createdById` is set so the rejection isolates the required-field
+    // scenario (rather than racing the missing-FK validation).
+    const userId = await api.getCurrentUserId();
     const rejected = await request.post(
       `${baseURL}/api/model/sessionResults/create`,
       {
@@ -69,6 +72,7 @@ test.describe("Sessions — required result-field enforcement", () => {
           data: {
             sessionId,
             statusId,
+            createdById: userId,
             resultData: { type: "doc", content: [{ type: "paragraph" }] },
           },
         },
@@ -125,7 +129,11 @@ test.describe("Sessions — required result-field enforcement", () => {
     const statusId = (await statusResp.json()).data.id;
 
     // Atomic create with the required field nested in the same payload —
-    // the same shape SessionResultForm now sends.
+    // the same shape SessionResultForm now sends. `createdById` is required
+    // explicitly here because `sessionResults` isn't in the route's
+    // AUTO_INJECT_USER_FIELDS map (route.ts:80) the way sessions / testRuns
+    // are; the UI sets it directly off `session.user.id`.
+    const userId = await api.getCurrentUserId();
     const ok = await request.post(
       `${baseURL}/api/model/sessionResults/create`,
       {
@@ -133,6 +141,7 @@ test.describe("Sessions — required result-field enforcement", () => {
           data: {
             sessionId,
             statusId,
+            createdById: userId,
             resultData: { type: "doc", content: [{ type: "paragraph" }] },
             resultFieldValues: {
               create: [{ fieldId: requiredFieldId, value: "1.2.3" }],
@@ -141,7 +150,7 @@ test.describe("Sessions — required result-field enforcement", () => {
         },
       }
     );
-    expect(ok.status()).toBe(200);
+    expect(ok.status()).toBe(201);
     const body = await ok.json();
     expect(body.data?.id).toBeGreaterThan(0);
   });
@@ -180,6 +189,7 @@ test.describe("Sessions — required result-field enforcement", () => {
     expect(statusResp.ok()).toBe(true);
     const statusId = (await statusResp.json()).data.id;
 
+    const userId = await api.getCurrentUserId();
     const ok = await request.post(
       `${baseURL}/api/model/sessionResults/create`,
       {
@@ -187,12 +197,13 @@ test.describe("Sessions — required result-field enforcement", () => {
           data: {
             sessionId,
             statusId,
+            createdById: userId,
             resultData: { type: "doc", content: [{ type: "paragraph" }] },
           },
         },
       }
     );
-    expect(ok.status()).toBe(200);
+    expect(ok.status()).toBe(201);
     const body = await ok.json();
     expect(body.data?.id).toBeGreaterThan(0);
   });
