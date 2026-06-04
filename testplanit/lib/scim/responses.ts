@@ -2,105 +2,91 @@
  * SCIM 2.0 success response builders.
  *
  * Two shapes covered here:
- *   1. Resource responses (`scimResource`) — wraps a single resource with the
- *      RFC 7643 §3.1 `meta` block and serializes with the SCIM media type.
- *   2. ListResponse envelopes (`scimList`) — RFC 7644 §3.4.2 paginated list
- *      shape used by every `/Users`, `/Groups`, and search endpoint.
+ *   1. `scimResponse` — wraps a resource or static body with the SCIM media
+ *      type. Used for single-resource GETs and discovery endpoints.
+ *   2. `scimListResponse` — RFC 7644 §3.4.2 paginated list envelope used by
+ *      every `/Users`, `/Groups`, and `/Schemas`-style listing endpoint.
  *
- * `meta.location` derivation rule (Phase 5 invariant): the base URL MUST come
- * from `process.env.NEXTAUTH_URL`. Never derive it from inbound request
- * headers (Host / X-Forwarded-Host) because identity providers cache the
- * advertised location and a spoofed Host header would let an attacker poison
- * the directory. If `NEXTAUTH_URL` is unset we emit a relative path — the IdP
- * will still be able to dereference it against the host it just called.
+ * Plus the helpers for building `meta.location` URLs:
+ *   - `getScimBaseUrl` reads `process.env.NEXTAUTH_URL` with a localhost
+ *     fallback. Never reads request headers — a spoofed `Host` /
+ *     `X-Forwarded-Host` would let an attacker poison the directory location
+ *     advertised back to the IdP.
+ *   - `scimLocation` composes the base URL with the resourceType and id.
  */
+
+import { NextResponse } from "next/server";
 
 import {
   SCIM_CONTENT_TYPE,
-  SCIM_LIST_RESPONSE_SCHEMA,
+  SCIM_LIST_RESPONSE_SCHEMA_URN,
 } from "./constants";
 
-/** RFC 7643 §3.1 — common resource metadata block. */
-export interface ScimMeta {
-  resourceType: string;
-  created?: string;
-  lastModified?: string;
-  location: string;
-  version?: string;
-}
-
-/** RFC 7644 §3.4.2 — ListResponse envelope. */
-export interface ScimListResponse<T> {
-  schemas: [typeof SCIM_LIST_RESPONSE_SCHEMA];
-  totalResults: number;
-  startIndex: number;
-  itemsPerPage: number;
-  Resources: T[];
+/**
+ * Base URL for SCIM resource locations.
+ *
+ * Reads only `process.env.NEXTAUTH_URL`; falls back to `http://localhost:3000`
+ * when unset (matches the convention used by `lib/webhooks/event-emitters/
+ * reviewEvents.ts:entityUrlFor`). Never derive the base URL from a request
+ * `Host`, `X-Forwarded-Host`, or `Forwarded` header.
+ */
+export function getScimBaseUrl(): string {
+  return process.env.NEXTAUTH_URL ?? "http://localhost:3000";
 }
 
 /**
- * Build the `meta.location` URL for a resource.
- *
- * @param resourceType - e.g. "Users", "Groups", "ServiceProviderConfig"
- * @param id           - resource id; omit for singleton config resources
- *
- * Reads `process.env.NEXTAUTH_URL` exactly once per call. When unset, returns
- * a host-relative path (`/scim/v2/Users/abc`) which remains valid for the
- * caller that just hit the same origin.
+ * Absolute URL for a SCIM resource. Used to populate `meta.location` on
+ * resource responses and the three pointer URLs in the well-known probe.
  */
-export function scimLocation(resourceType: string, id?: string): string {
-  const base = process.env.NEXTAUTH_URL;
-  const path = id
-    ? `/scim/v2/${resourceType}/${id}`
-    : `/scim/v2/${resourceType}`;
-
-  if (!base) return path;
-
-  // Strip any trailing slash on NEXTAUTH_URL so we never emit a double slash.
-  const trimmed = base.endsWith("/") ? base.slice(0, -1) : base;
-  return `${trimmed}${path}`;
+export function scimLocation(
+  resourceType:
+    | "Users"
+    | "Groups"
+    | "Schemas"
+    | "ResourceTypes"
+    | "ServiceProviderConfig",
+  id?: string,
+): string {
+  const base = getScimBaseUrl();
+  return id
+    ? `${base}/scim/v2/${resourceType}/${id}`
+    : `${base}/scim/v2/${resourceType}`;
 }
 
 /**
- * Wrap a resource body in a SCIM `Response` with the correct media type and
- * a status of 200 (default) or 201 for create flows.
+ * RFC 7644 §3.4.2 ListResponse envelope wrapped in a SCIM-typed response.
+ *
+ * The single-page shape: `totalResults` and `itemsPerPage` both equal the
+ * length of the provided resources array (Phase 5 callers always pass the
+ * full result set — pagination ships with Phase 7's Users CRUD); `startIndex`
+ * is fixed at `1` per RFC 7644 §3.4.2.4 (1-based indexing).
  */
-export function scimResource<T extends object>(
-  body: T,
+export function scimListResponse<T>(resources: T[]): NextResponse {
+  return NextResponse.json(
+    {
+      schemas: [SCIM_LIST_RESPONSE_SCHEMA_URN],
+      totalResults: resources.length,
+      itemsPerPage: resources.length,
+      startIndex: 1,
+      Resources: resources,
+    },
+    {
+      status: 200,
+      headers: { "Content-Type": SCIM_CONTENT_TYPE },
+    },
+  );
+}
+
+/**
+ * Single-resource SCIM response with the correct content-type. Defaults to
+ * status 200; pass `{ status: 201 }` for create flows.
+ */
+export function scimResponse(
+  body: unknown,
   init?: { status?: number },
-): Response {
-  return new Response(JSON.stringify(body), {
+): NextResponse {
+  return NextResponse.json(body, {
     status: init?.status ?? 200,
-    headers: { "Content-Type": SCIM_CONTENT_TYPE },
-  });
-}
-
-/**
- * Build a RFC 7644 §3.4.2 ListResponse envelope.
- *
- * @param resources    - the page of resources to return (may be empty)
- * @param totalResults - total matching results across all pages
- * @param startIndex   - 1-based index of the first resource in `resources`
- *                       (RFC 7644 §3.4.2.4 — startIndex is 1-indexed)
- * @param itemsPerPage - number of resources actually returned in this page
- *                       (NOT the requested `count` parameter — see §3.4.2.4)
- */
-export function scimList<T>(
-  resources: T[],
-  totalResults: number,
-  startIndex: number,
-  itemsPerPage: number,
-): Response {
-  const body: ScimListResponse<T> = {
-    schemas: [SCIM_LIST_RESPONSE_SCHEMA],
-    totalResults,
-    startIndex,
-    itemsPerPage,
-    Resources: resources,
-  };
-
-  return new Response(JSON.stringify(body), {
-    status: 200,
     headers: { "Content-Type": SCIM_CONTENT_TYPE },
   });
 }
