@@ -84,7 +84,12 @@ The **View Selector** in the left panel provides powerful ways to slice your tes
 * **By Parameterization**: Filters cases by whether they have parameters declared (Parameterized / Not Parameterized). Each option shows a live count of matching cases. See [Parameterized Test Cases](./parameterized-test-cases.md) for what makes a case parameterized.
 * **By Tag**: Filters cases based on assigned tags (Any Tag, No Tags, or a specific tag).
 * **By Issue**: Filters cases based on linked issues (Any Issue, No Issues, or a specific issue). This view only appears when there are test cases with issues attached.
-* **By Custom Field**: If custom fields (Dropdown, Multi-Select, Link, Steps, Checkbox types) are defined in templates, views will be available to filter by the values of those fields.
+* **By Custom Field**: If custom fields are defined in templates, a view appears per field. Supported field types are Dropdown, Multi-Select, Link, Steps, Checkbox, Integer, Number, Date, Text Long, and Text String.
+
+When you open the repository as part of a **test run** (Run Mode), two additional views appear in place of (and alongside) the base views:
+
+* **By Assigned To**: Filters the run's cases by their assignee (Unassigned, or a specific team member).
+* **By Status**: Filters by the result status within this run (Untested, or any of the configured result statuses such as Passed, Failed, Blocked).
 
 ## Test Case Table Columns
 
