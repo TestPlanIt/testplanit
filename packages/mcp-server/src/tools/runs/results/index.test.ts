@@ -5,7 +5,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerRunResults } from "./index.js";
 
 describe("registerRunResults", () => {
-  it("registers list + get tools for run results", async () => {
+  it("registers list + get + create tools for run results", async () => {
     const server = new McpServer({ name: "test", version: "0.0.0" });
     registerRunResults(server, {
       env: { apiUrl: "https://x", apiToken: "tpi_x" },
@@ -20,5 +20,6 @@ describe("registerRunResults", () => {
     const names = tools.tools.map((t) => t.name);
     expect(names).toContain("testplanit_test_run_results_list");
     expect(names).toContain("testplanit_test_run_results_get");
+    expect(names).toContain("testplanit_test_run_results_create");
   });
 });
