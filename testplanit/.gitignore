@@ -61,6 +61,12 @@ e2e/playwright-report/
 e2e/test-results/
 .env.e2e
 
+# Accessibility scan (e2e/a11y) — never commit results, seeded fixtures, or reports
+e2e/a11y/results/
+e2e/a11y/.a11y-fixtures.json
+e2e/a11y/playwright-report/
+e2e/a11y/test-results/
+
 # DB backups
 backups/
 

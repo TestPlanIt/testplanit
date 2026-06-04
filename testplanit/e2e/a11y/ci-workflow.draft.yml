@@ -1,0 +1,124 @@
+# DRAFT — accessibility scan in CI (report mode).
+#
+# Not active: this lives in e2e/a11y/, not .github/workflows/. To enable, move it
+# to .github/workflows/a11y-scan.yml and adjust secrets/paths. It starts in
+# REPORT mode (never fails the build); flip to enforcement later by setting
+# A11Y_STRICT=on on the scan step.
+#
+# Mirrors the local run: Postgres + Valkey + Elasticsearch services, a
+# production build, then `pnpm a11y:scan`. In CI the base Playwright config sets
+# webServer=undefined, so we start the server ourselves before scanning.
+
+name: Accessibility Scan
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "testplanit/app/**"
+      - "testplanit/components/**"
+      - "testplanit/e2e/a11y/**"
+  schedule:
+    - cron: "0 6 * * 1" # Monday 06:00 UTC weekly baseline
+
+defaults:
+  run:
+    working-directory: testplanit
+
+jobs:
+  a11y:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: tpi_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U user"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+      valkey:
+        image: valkey/valkey:8-alpine
+        ports:
+          - 6377:6379
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+      elasticsearch:
+        image: elasticsearch:9.0.3
+        env:
+          discovery.type: single-node
+          xpack.security.enabled: "false"
+          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+        ports:
+          - 9221:9200
+        options: >-
+          --health-cmd "curl -f http://localhost:9200/_cluster/health || exit 1"
+          --health-interval 15s --health-timeout 10s --health-retries 8
+
+    env:
+      # Point the app at the service containers (mirrors .env.e2e).
+      DATABASE_URL: "postgresql://user:password@localhost:5433/tpi_test?schema=public"
+      VALKEY_URL: "redis://localhost:6377"
+      ELASTICSEARCH_NODE: "http://localhost:9221"
+      NEXTAUTH_URL: "http://localhost:3002"
+      NEXTAUTH_SECRET: "ci-a11y-secret-not-for-production"
+      ENCRYPTION_KEY: "ci-a11y-encryption-key-32-chars--"
+      ADMIN_EMAIL: "admin@example.com"
+      ADMIN_PASSWORD: "admin"
+      E2E_PROD: "on"
+      E2E_PORT: "3002"
+      NODE_OPTIONS: "--max-old-space-size=8192"
+      # Report mode: leave A11Y_STRICT unset. To enforce, set: A11Y_STRICT: "on"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate ZenStack/Prisma client
+        run: pnpm generate
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Production build
+        run: pnpm build
+
+      - name: Start app server
+        run: |
+          pnpm start --port 3002 &
+          pnpm exec wait-on -t 120000 http://localhost:3002
+
+      # globalSetup reseeds the DB, logs in (storageState), and spawns workers;
+      # the scan then seeds fixture data and runs axe across every route.
+      - name: Run accessibility scan (report mode)
+        run: pnpm a11y:scan
+
+      - name: Upload accessibility report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a11y-report
+          path: |
+            testplanit/e2e/a11y/results/report.md
+            testplanit/e2e/a11y/results/report.json
+            testplanit/e2e/a11y/results/*.json
+          retention-days: 30
+
+      - name: Summarize in job log
+        if: always()
+        run: cat e2e/a11y/results/report.md >> "$GITHUB_STEP_SUMMARY" || true
