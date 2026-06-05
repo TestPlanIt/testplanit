@@ -690,6 +690,12 @@
     },
     "aria": {
       "userMenu": "用户菜单",
+      "selectProject": "选择项目",
+      "togglePanel": "切换面板",
+      "folder": "文件夹",
+      "toggleActive": "切换激活状态",
+      "toggleDetails": "切换详情",
+      "requiresReview": "需要审核",
       "search": "搜索",
       "helpMenu": "帮助菜单",
       "help": "帮助",
@@ -846,6 +852,15 @@
       "noFilesDetected": "未检测到 Drop 文件夹中的任何文件。"
     },
     "editor": {
+      "bold": "大胆的",
+      "italic": "斜体",
+      "underline": "强调",
+      "strikethrough": "删除线",
+      "code": "代码",
+      "heading": "标题",
+      "bulletList": "要点列表",
+      "orderedList": "编号列表",
+      "blockquote": "引用",
       "setColor": "设置颜色",
       "enterUrl": "请输入包含 https:// 的网址。",
       "uploadFile": "上传文件",
@@ -2368,7 +2383,8 @@
       "system": "系统",
       "green": "绿色的",
       "purple": "紫色的",
-      "orange": "橙子"
+      "orange": "橙子",
+      "accessible": "无障碍"
     }
   },
   "repository": {
@@ -4418,6 +4434,7 @@
         "thresholdUpdateError": "更新提醒设置失败，请稍后再试。"
       },
       "projectReviewToggleList": {
+        "toggleAria": "切换 {name} 的审核工作流程",
         "columnHeader": "审核工作流程",
         "filterPlaceholder": "筛选项目...",
         "enabledToast": "已启用审核工作流程 {name}",
@@ -4487,6 +4504,7 @@
     "statuses": {
       "description": "管理测试状态",
       "editPolicy": {
+        "modeAria": "结果编辑策略模式",
         "title": "结果编辑政策",
         "description": "控制结果记录后多长时间内仍可进行原地编辑，此限制适用于所有项目。项目可以在其高级设置中收紧此限制，但无法放宽。系统管理员始终可以进行编辑。",
         "modeNone": "无限制（项目决定）",

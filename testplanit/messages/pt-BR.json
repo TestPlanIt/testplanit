@@ -690,6 +690,12 @@
     },
     "aria": {
       "userMenu": "Menu do usuário",
+      "selectProject": "Selecione o projeto",
+      "togglePanel": "Alternar painel",
+      "folder": "Pasta",
+      "toggleActive": "Alternar estado ativo",
+      "toggleDetails": "Mostrar detalhes",
+      "requiresReview": "Requer revisão",
       "search": "Procurar",
       "helpMenu": "Menu de ajuda",
       "help": "Ajuda",
@@ -846,6 +852,15 @@
       "noFilesDetected": "Nenhum arquivo detectado na pasta drop"
     },
     "editor": {
+      "bold": "Audacioso",
+      "italic": "itálico",
+      "underline": "Sublinhado",
+      "strikethrough": "Riscado",
+      "code": "Código",
+      "heading": "Cabeçalho",
+      "bulletList": "Lista com marcadores",
+      "orderedList": "Lista numerada",
+      "blockquote": "Citação em bloco",
       "setColor": "Definir cor",
       "enterUrl": "Insira o URL incluindo https://",
       "uploadFile": "Carregar arquivo",
@@ -2368,7 +2383,8 @@
       "system": "Sistema",
       "green": "Verde",
       "purple": "Roxo",
-      "orange": "Laranja"
+      "orange": "Laranja",
+      "accessible": "Acessível"
     }
   },
   "repository": {
@@ -4418,6 +4434,7 @@
         "thresholdUpdateError": "Falha ao atualizar as configurações de lembrete. Tente novamente em instantes."
       },
       "projectReviewToggleList": {
+        "toggleAria": "Alternar fluxo de trabalho de revisão para {name}",
         "columnHeader": "Fluxo de trabalho de revisão",
         "filterPlaceholder": "Filtrar projetos...",
         "enabledToast": "Fluxo de trabalho de revisão ativado para {name}",
@@ -4487,6 +4504,7 @@
     "statuses": {
       "description": "Gerenciar status de testes",
       "editPolicy": {
+        "modeAria": "Modo de política de edição de resultados",
         "title": "Política de edição de resultados",
         "description": "Controle por quanto tempo, após o registro de um resultado, ele ainda poderá ser editado, em todos os projetos. Os projetos podem restringir esse limite em suas configurações avançadas, mas nunca o flexibilizar. Os administradores do sistema sempre poderão editar.",
         "modeNone": "Sem restrições (os projetos decidem)",

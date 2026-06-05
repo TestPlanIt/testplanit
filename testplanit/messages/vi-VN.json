@@ -690,6 +690,12 @@
     },
     "aria": {
       "userMenu": "Menu người dùng",
+      "selectProject": "Chọn dự án",
+      "togglePanel": "Bảng chuyển đổi",
+      "folder": "Thư mục",
+      "toggleActive": "Bật/tắt trạng thái hoạt động",
+      "toggleDetails": "Ẩn/Hiện chi tiết",
+      "requiresReview": "Cần xem xét lại",
       "search": "Tìm kiếm",
       "helpMenu": "Menu trợ giúp",
       "help": "Giúp đỡ",
@@ -846,6 +852,15 @@
       "noFilesDetected": "Không tìm thấy tệp nào trong thư mục drop"
     },
     "editor": {
+      "bold": "In đậm",
+      "italic": "Chữ nghiêng",
+      "underline": "Gạch chân",
+      "strikethrough": "Gạch ngang",
+      "code": "Mã số",
+      "heading": "Tiêu đề",
+      "bulletList": "Danh sách gạch đầu dòng",
+      "orderedList": "Danh sách được đánh số",
+      "blockquote": "Trích dẫn",
       "setColor": "Đặt màu",
       "enterUrl": "Nhập URL bao gồm https://",
       "uploadFile": "Tải lên tệp",
@@ -2368,7 +2383,8 @@
       "system": "Hệ thống",
       "green": "Màu xanh lá",
       "purple": "Màu tím",
-      "orange": "Quả cam"
+      "orange": "Quả cam",
+      "accessible": "Có thể truy cập"
     }
   },
   "repository": {
@@ -4418,6 +4434,7 @@
         "thresholdUpdateError": "Không thể cập nhật cài đặt nhắc nhở. Vui lòng thử lại sau."
       },
       "projectReviewToggleList": {
+        "toggleAria": "Bật/tắt quy trình xem xét cho {name}",
         "columnHeader": "Quy trình xem xét",
         "filterPlaceholder": "Lọc các dự án...",
         "enabledToast": "Quy trình xem xét đã được bật cho {name}",
@@ -4487,6 +4504,7 @@
     "statuses": {
       "description": "Quản lý trạng thái kiểm thử",
       "editPolicy": {
+        "modeAria": "Chế độ chính sách chỉnh sửa kết quả",
         "title": "Chính sách chỉnh sửa kết quả",
         "description": "Kiểm soát khoảng thời gian sau khi kết quả được ghi lại mà vẫn có thể chỉnh sửa trực tiếp, trên tất cả các dự án. Các dự án có thể điều chỉnh thời gian này trong cài đặt Nâng cao nhưng không thể nới lỏng. Quản trị viên hệ thống luôn có thể chỉnh sửa.",
         "modeNone": "Không có hạn chế (dự án tự quyết định)",

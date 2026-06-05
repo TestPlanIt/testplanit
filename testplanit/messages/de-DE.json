@@ -690,6 +690,12 @@
     },
     "aria": {
       "userMenu": "Benutzermenü",
+      "selectProject": "Projekt auswählen",
+      "togglePanel": "Umschaltfeld",
+      "folder": "Ordner",
+      "toggleActive": "Aktiven Status umschalten",
+      "toggleDetails": "Details ein-/ausblenden",
+      "requiresReview": "Überprüfung erforderlich",
       "search": "Suchen",
       "helpMenu": "Hilfemenü",
       "help": "Helfen",
@@ -846,6 +852,15 @@
       "noFilesDetected": "Im Ordner wurden keine Dateien gefunden."
     },
     "editor": {
+      "bold": "Deutlich",
+      "italic": "Kursiv",
+      "underline": "Unterstreichen",
+      "strikethrough": "Durchgestrichen",
+      "code": "Code",
+      "heading": "Überschrift",
+      "bulletList": "Stichpunktliste",
+      "orderedList": "Nummerierte Liste",
+      "blockquote": "Zitat",
       "setColor": "Farbe einstellen",
       "enterUrl": "Geben Sie die URL einschließlich https:// ein",
       "uploadFile": "Datei hochladen",
@@ -2368,7 +2383,8 @@
       "system": "System",
       "green": "Grün",
       "purple": "Lila",
-      "orange": "Orange"
+      "orange": "Orange",
+      "accessible": "Zugänglich"
     }
   },
   "repository": {
@@ -4418,6 +4434,7 @@
         "thresholdUpdateError": "Die Aktualisierung der Erinnerungseinstellungen ist fehlgeschlagen. Bitte versuchen Sie es in Kürze erneut."
       },
       "projectReviewToggleList": {
+        "toggleAria": "Prüfworkflow für {name} umschalten",
         "columnHeader": "Arbeitsablauf prüfen",
         "filterPlaceholder": "Filterprojekte...",
         "enabledToast": "Prüf-Workflow für {name} aktiviert",
@@ -4487,6 +4504,7 @@
     "statuses": {
       "description": "Teststatus verwalten",
       "editPolicy": {
+        "modeAria": "Richtlinienmodus für die Ergebnisbearbeitung",
         "title": "Richtlinie zur Ergebnisbearbeitung",
         "description": "Legen Sie fest, wie lange nach der Ergebnisspeicherung ein Ergebnis projektübergreifend noch bearbeitet werden kann. Projekte können diese Frist in ihren erweiterten Einstellungen verkürzen, aber nicht verlängern. Systemadministratoren können die Frist jederzeit anpassen.",
         "modeNone": "Keine Einschränkung (Projekte entscheiden)",
