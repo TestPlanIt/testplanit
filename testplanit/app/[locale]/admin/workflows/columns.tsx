@@ -142,6 +142,7 @@ export const useColumns = (
                 >
                   <Switch
                     data-testid={`requires-review-switch-${row.original.id}`}
+                    aria-label={tCommon("aria.requiresReview")}
                     checked={
                       row.original.requiresReview && !row.original.isDefault
                     }

@@ -694,6 +694,8 @@
       "togglePanel": "Toggle panel",
       "folder": "Folder",
       "toggleActive": "Toggle active status",
+      "toggleDetails": "Toggle details",
+      "requiresReview": "Requires review",
       "search": "Search",
       "helpMenu": "Help menu",
       "help": "Help",
