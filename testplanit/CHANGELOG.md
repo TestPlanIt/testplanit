@@ -1,3 +1,9 @@
+## [0.35.0](https://github.com/TestPlanIt/testplanit/compare/v0.34.12...v0.35.0) (2026-06-05)
+
+### Features
+
+* **a11y:** WCAG 2.2 AA scan harness, Accessible theme, and name/role fixes ([#404](https://github.com/TestPlanIt/testplanit/issues/404)) ([ae18e3e](https://github.com/TestPlanIt/testplanit/commit/ae18e3e47700955d121254c26abe73086aaacfd2))
+
 ## [0.34.12](https://github.com/TestPlanIt/testplanit/compare/v0.34.11...v0.34.12) (2026-06-05)
 
 ### Bug Fixes
