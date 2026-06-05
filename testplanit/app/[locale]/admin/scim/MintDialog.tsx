@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod/v4";
 
@@ -132,8 +132,13 @@ export function MintDialog({
     },
   });
 
-  const expiresOption = form.watch("expiresOption");
-  const customDate = form.watch("customDate");
+  // `useWatch` is React-Compiler-friendly (vs `form.watch`, which RHF flags
+  // as an incompatible-library API) and the only consumer is the conditional
+  // render of the Custom-date Popover below.
+  const expiresOption = useWatch({
+    control: form.control,
+    name: "expiresOption",
+  });
 
   // Discard plaintext + reset form whenever the dialog closes. Show-once
   // invariant: re-opening returns to a clean form, not the prior reveal.
@@ -476,11 +481,6 @@ export function MintDialog({
                   )}
                 />
               )}
-
-              {/* Suppress unused-var lint while customDate is read above via form.watch */}
-              <span hidden aria-hidden="true">
-                {customDate ? "" : ""}
-              </span>
 
               <DialogFooter>
                 <Button

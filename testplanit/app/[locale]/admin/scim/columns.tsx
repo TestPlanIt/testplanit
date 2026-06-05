@@ -8,6 +8,8 @@ import { Ban, CheckCircle2, Clock, UserMinus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
+import { TestScimButton } from "./TestScimButton";
+
 export interface ExtendedScimToken extends ScimToken {
   createdBy: Pick<User, "id" | "name" | "email" | "image"> | null;
   revokedBy: Pick<User, "id" | "name" | "email"> | null;
@@ -16,7 +18,6 @@ export interface ExtendedScimToken extends ScimToken {
 export const useColumns = (
   userPreferences: any,
   onRevoke: (token: ExtendedScimToken) => void,
-  renderTestSlot: (token: ExtendedScimToken) => React.ReactNode,
   t: ReturnType<typeof useTranslations<"admin.scim">>,
   tApiTokens: ReturnType<typeof useTranslations<"admin.apiTokens">>,
   tCommon: ReturnType<typeof useTranslations<"common">>
@@ -205,7 +206,7 @@ export const useColumns = (
           }
           return (
             <div className="flex items-center gap-2">
-              {renderTestSlot(token)}
+              <TestScimButton tokenId={token.id} />
               <Button
                 variant="destructive"
                 onClick={() => onRevoke(token)}
@@ -219,6 +220,6 @@ export const useColumns = (
         },
       },
     ],
-    [dateFormat, timezone, onRevoke, renderTestSlot, t, tApiTokens, tCommon]
+    [dateFormat, timezone, onRevoke, t, tApiTokens, tCommon]
   );
 };

@@ -47,12 +47,6 @@ import { revokeScimTokenAction } from "~/app/actions/scimTokenActions";
 
 import { MintDialog } from "./MintDialog";
 
-// Plan 06-08 Task 2 replaces this placeholder with the real TestScimButton.
-function TestScimButtonPlaceholder({ tokenId }: { tokenId: string }) {
-  void tokenId;
-  return null;
-}
-
 export default function ScimTokensPage() {
   return (
     <PaginationProvider>
@@ -247,13 +241,6 @@ function ScimTokensList() {
     }
   }, [tokenToRevoke, t, refetchTokens]);
 
-  const renderTestSlot = useCallback(
-    (token: ExtendedScimToken) => (
-      <TestScimButtonPlaceholder tokenId={token.id} />
-    ),
-    []
-  );
-
   // Extract stable primitives from session to avoid column remounts when session object changes
   const dateFormat = session?.user?.preferences?.dateFormat;
   const timezone = session?.user?.preferences?.timezone;
@@ -265,7 +252,6 @@ function ScimTokensList() {
   const columns = useColumns(
     userPreferences,
     handleRevoke,
-    renderTestSlot,
     t,
     tApiTokens,
     tCommon

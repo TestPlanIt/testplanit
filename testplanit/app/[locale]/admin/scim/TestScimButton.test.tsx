@@ -11,6 +11,38 @@ vi.mock("~/app/actions/scimTokenActions", () => ({
     mockTestScimProbeAction(...args),
 }));
 
+// Per-file next-intl override. The global vitest.setup.tsx mock does not
+// know the admin.scim.probe.* templates, so its fallback path emits the
+// literal key without substituting {status}/{reason}. We override here so
+// the OK/FAIL banner assertions can compare against the real interpolated
+// strings.
+vi.mock("next-intl", () => {
+  const dict: Record<string, string> = {
+    "admin.scim.probe.button": "Test SCIM",
+    "admin.scim.probe.testing": "Testing…",
+    "admin.scim.probe.okBanner":
+      "HTTP {status} — token works against /scim/v2/Users.",
+    "admin.scim.probe.failBanner": "HTTP {status} — {reason}",
+    "admin.scim.probe.networkError":
+      "Couldn't reach the SCIM endpoint. Retry.",
+  };
+  return {
+    useTranslations: (namespace?: string) => {
+      return (key: string, params?: Record<string, unknown>) => {
+        const fullKey = namespace ? `${namespace}.${key}` : key;
+        let message = dict[fullKey] ?? fullKey;
+        if (params) {
+          for (const [pk, pv] of Object.entries(params)) {
+            message = message.replace(`{${pk}}`, String(pv));
+          }
+        }
+        return message;
+      };
+    },
+    useLocale: () => "en",
+  };
+});
+
 beforeEach(() => {
   vi.clearAllMocks();
   mockTestScimProbeAction.mockReset();
@@ -28,7 +60,7 @@ describe("TestScimButton", () => {
     renderButton();
     const button = screen.getByRole("button");
     expect(button).toBeEnabled();
-    expect(button).toHaveTextContent(/admin\.scim\.probe\.button/);
+    expect(button).toHaveTextContent("Test SCIM");
   });
 
   test("pending state: button disabled + label flips to testing while action runs", async () => {
@@ -53,7 +85,7 @@ describe("TestScimButton", () => {
     await waitFor(() => {
       const btn = screen.getByRole("button");
       expect(btn).toBeDisabled();
-      expect(btn).toHaveTextContent(/admin\.scim\.probe\.testing/);
+      expect(btn).toHaveTextContent("Testing…");
     });
 
     // Let it resolve so React state cleans up before test exits.
