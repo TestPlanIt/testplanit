@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 import { AuditAction, AuditLog } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
-import { Cog, Eye } from "lucide-react";
+import { Cog, Eye, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContextConstants";
@@ -175,6 +175,33 @@ export const useColumns = (
               )}
             </div>
           );
+        },
+      },
+      {
+        id: "source",
+        accessorKey: "metadata",
+        header: "",
+        enableSorting: false,
+        size: 100,
+        cell: ({ row }) => {
+          const metadata = row.original.metadata as Record<
+            string,
+            unknown
+          > | null;
+          const source = metadata?.source as string | undefined;
+          if (source === "scim") {
+            return (
+              <Badge
+                variant="outline"
+                className="gap-1 font-mono"
+                data-testid="audit-log-source-scim-badge"
+              >
+                <ShieldCheck className="size-3" aria-hidden="true" />
+                {t("sourceScim")}
+              </Badge>
+            );
+          }
+          return null;
         },
       },
       {

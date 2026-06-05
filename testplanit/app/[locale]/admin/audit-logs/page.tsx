@@ -191,9 +191,12 @@ function AuditLogsContent({ session }: { session: Session }) {
   }, [totalCount, setTotalItems]);
 
   // Fetch audit logs — list view only needs columns the table renders.
-  // Excludes `changes` and `metadata` (both Json columns) which can be very
-  // large for CREATE/UPDATE events on entities with rich payloads (e.g.,
-  // test cases with Tiptap step content). Those are fetched on demand in
+  // Excludes `changes` (Json column) which can be very large for CREATE /
+  // UPDATE events on entities with rich payloads (e.g. test cases with
+  // Tiptap step content). `metadata` is selected (small map carrying
+  // `source` / `scimTokenId` / `ipAddress` / `userAgent`) so the source
+  // column can render the SCIM badge without a per-row roundtrip. The
+  // full `changes` payload is still fetched on demand in
   // AuditLogDetailModal via useFindUniqueAuditLog.
   const { data: auditLogs, isLoading } = useFindManyAuditLog(
     {
@@ -210,6 +213,7 @@ function AuditLogsContent({ session }: { session: Session }) {
         userId: true,
         userEmail: true,
         userName: true,
+        metadata: true,
         projectId: true,
         project: { select: { name: true } },
       },
