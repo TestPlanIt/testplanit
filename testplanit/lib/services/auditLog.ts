@@ -416,8 +416,17 @@ export async function captureAuditEvent(event: AuditEvent): Promise<void> {
   // (session auth) or empty scopes -> undefined. Caller-explicit
   // event.metadata.source wins over derived value to preserve intent
   // for hand-stamped sources like "import".
-  const derivedSource: "mcp" | "api" | undefined =
-    context?.tokenScopes && context.tokenScopes.length > 0
+  // SCIM auth: when the request was authed via a tps_ bearer the audit
+  // context's scimTokenId field is set; the SCIM branch wins over the
+  // scope-derived attribution below because the two auth surfaces are
+  // mutually exclusive at the route layer (a single request cannot carry
+  // both a SCIM bearer and an ApiToken). When the SCIM branch fires, the
+  // token id is also hand-stamped onto metadata.scimTokenId so each audit
+  // row carries the per-token discriminator alongside the source label.
+  const alsScimTokenId = context?.scimTokenId;
+  const derivedSource: "mcp" | "api" | "scim" | undefined = alsScimTokenId
+    ? "scim"
+    : context?.tokenScopes && context.tokenScopes.length > 0
       ? context.tokenScopes.includes("client:mcp")
         ? "mcp"
         : "api"
@@ -435,6 +444,11 @@ export async function captureAuditEvent(event: AuditEvent): Promise<void> {
             : {}),
           ...(derivedSource && existingMetadata?.source === undefined
             ? { source: derivedSource }
+            : {}),
+          ...(derivedSource === "scim" &&
+          alsScimTokenId &&
+          existingMetadata?.scimTokenId === undefined
+            ? { scimTokenId: alsScimTokenId }
             : {}),
         }
       : existingMetadata;
