@@ -95,6 +95,7 @@ export const useColumns = (
         cell: ({ row }) => (
           <div className="text-center">
             <Switch
+              aria-label={tCommon("fields.enabled")}
               checked={row.original.isEnabled}
               onCheckedChange={(checked) =>
                 handleToggle(row.original.id, "isEnabled", checked)
@@ -113,6 +114,7 @@ export const useColumns = (
         cell: ({ row }) => (
           <div className="text-center">
             <Switch
+              aria-label={tCommon("fields.required")}
               checked={row.original.isRequired}
               onCheckedChange={(checked) =>
                 handleToggle(row.original.id, "isRequired", checked)
@@ -131,6 +133,7 @@ export const useColumns = (
         cell: ({ row }) => (
           <div className="text-center">
             <Switch
+              aria-label={tCommon("fields.restricted")}
               checked={row.original.isRestricted}
               onCheckedChange={(checked) =>
                 handleToggle(row.original.id, "isRestricted", checked)

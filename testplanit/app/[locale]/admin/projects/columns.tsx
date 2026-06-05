@@ -260,6 +260,7 @@ export const useColumns = (
         cell: ({ row }) => (
           <div className="text-center">
             <Switch
+              aria-label={tCommon("fields.completed")}
               checked={row.original.isCompleted}
               onCheckedChange={(checked) =>
                 handleToggleCompleted(row.original.id, checked)

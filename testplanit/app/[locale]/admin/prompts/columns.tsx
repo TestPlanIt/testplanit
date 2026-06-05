@@ -158,6 +158,7 @@ export const useColumns = (
         cell: ({ row }) => (
           <div className="text-center">
             <Switch
+              aria-label={tCommon("fields.default")}
               checked={row.original.isDefault}
               disabled={row.original.isDefault}
               onCheckedChange={() =>
