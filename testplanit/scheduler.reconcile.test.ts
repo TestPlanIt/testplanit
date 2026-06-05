@@ -177,4 +177,47 @@ describe("reconcileStaleSchedulers", () => {
       )
     ).resolves.toBeUndefined();
   });
+
+  it("skips undefined/keyless entries from legacy repeat-zset members", async () => {
+    // Pre-BullMQ-5 repeat members (MD5-style, no scheduler hash) make
+    // getJobSchedulers() yield undefined or keyless entries. Prod incident
+    // 2026-06-05: one undefined entry TypeError'd the whole reconciliation
+    // pass. Stale entries AFTER the bad ones must still be processed.
+    const removed: string[] = [];
+    const q = {
+      name: "forecast-updates",
+      getJobSchedulers: vi.fn(async () => [
+        undefined,
+        null,
+        { name: JOB }, // keyless
+        { key: null, name: JOB },
+        { key: `${JOB}-gone`, name: JOB }, // real stale entry after the junk
+      ]),
+      removeJobScheduler: vi.fn(async (id: string) => {
+        removed.push(id);
+      }),
+    };
+    await expect(
+      reconcileStaleSchedulers(
+        [{ queue: q as never, jobNames: [JOB] }],
+        new Set<string>()
+      )
+    ).resolves.toBeUndefined();
+    expect(removed).toEqual([`${JOB}-gone`]);
+  });
+
+  it("tolerates getJobSchedulers resolving to null", async () => {
+    const q = {
+      name: "forecast-updates",
+      getJobSchedulers: vi.fn(async () => null),
+      removeJobScheduler: vi.fn(),
+    };
+    await expect(
+      reconcileStaleSchedulers(
+        [{ queue: q as never, jobNames: [JOB] }],
+        new Set<string>()
+      )
+    ).resolves.toBeUndefined();
+    expect(q.removeJobScheduler).not.toHaveBeenCalled();
+  });
 });
