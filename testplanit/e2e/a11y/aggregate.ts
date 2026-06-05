@@ -136,7 +136,11 @@ function dedupe(
 }
 
 function esc(s: string): string {
-  return s.replace(/\|/g, "\\|").replace(/\n/g, " ").trim();
+  return s
+    .replace(/\\/g, "\\\\")
+    .replace(/\|/g, "\\|")
+    .replace(/\r?\n/g, " ")
+    .trim();
 }
 function codeFence(s: string): string {
   return "`" + s.replace(/`/g, "ʼ").slice(0, 200) + "`";
