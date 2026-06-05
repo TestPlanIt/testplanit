@@ -1913,6 +1913,7 @@ export default function TestCaseDetails() {
                           variant="outline"
                           size="icon"
                           className="mr-2"
+                          aria-label={t("common.aria.backToTestCase")}
                         >
                           <ArrowLeft className="h-4 w-4" />
                         </Button>

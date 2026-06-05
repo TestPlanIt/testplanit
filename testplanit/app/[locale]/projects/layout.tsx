@@ -3,9 +3,11 @@
 import ProjectMenu from "@/components/ProjectMenu";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 export default function ProjectsLayout(props: any) {
+  const t = useTranslations("common.aria");
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Load initial state from localStorage
@@ -39,6 +41,7 @@ export default function ProjectsLayout(props: any) {
           onClick={handleToggleCollapse}
           variant="secondary"
           className="hidden md:flex absolute -right-4 top-12 z-20 p-0 rounded-l-none"
+          aria-label={t("togglePanel")}
         >
           {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
         </Button>
