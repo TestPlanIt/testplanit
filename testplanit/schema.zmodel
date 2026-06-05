@@ -83,8 +83,8 @@ model User {
     accounts                        Account[]
     authMethod                      AuthMethod                    @default(INTERNAL)
     externalId                      String?                 // For SAML/OAuth user mapping
-    scimUserName                    String? @unique
-    scimExternalId                  String? @unique
+    scimUserName                    String?                       @unique
+    scimExternalId                  String?                       @unique
     scimExtensions                  Json?
     scimGivenName                   String?
     scimFamilyName                  String?

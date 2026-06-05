@@ -163,6 +163,26 @@ const metadata: ModelMeta = {
                     name: "externalId",
                     type: "String",
                     isOptional: true,
+                }, scimUserName: {
+                    name: "scimUserName",
+                    type: "String",
+                    isOptional: true,
+                }, scimExternalId: {
+                    name: "scimExternalId",
+                    type: "String",
+                    isOptional: true,
+                }, scimExtensions: {
+                    name: "scimExtensions",
+                    type: "Json",
+                    isOptional: true,
+                }, scimGivenName: {
+                    name: "scimGivenName",
+                    type: "String",
+                    isOptional: true,
+                }, scimFamilyName: {
+                    name: "scimFamilyName",
+                    type: "String",
+                    isOptional: true,
                 }, access: {
                     name: "access",
                     type: "Access",
@@ -539,6 +559,12 @@ const metadata: ModelMeta = {
                 }, email: {
                     name: "email",
                     fields: ["email"]
+                }, scimUserName: {
+                    name: "scimUserName",
+                    fields: ["scimUserName"]
+                }, scimExternalId: {
+                    name: "scimExternalId",
+                    fields: ["scimExternalId"]
                 },
             },
         },
