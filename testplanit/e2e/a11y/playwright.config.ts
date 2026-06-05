@@ -23,7 +23,13 @@ export default defineConfig({
 
   reporter: [
     ["list"],
-    ["html", { outputFolder: path.join(__dirname, "playwright-report"), open: "never" }],
+    [
+      "html",
+      {
+        outputFolder: path.join(__dirname, "playwright-report"),
+        open: "never",
+      },
+    ],
   ],
 
   projects: [

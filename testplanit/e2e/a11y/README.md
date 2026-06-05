@@ -48,12 +48,12 @@ already-running server; `reuseExistingServer` is on).
 
 ## Outputs (all gitignored)
 
-| Path | Contents |
-| --- | --- |
-| `results/<route>.json` | Raw axe result per route + interactive state |
-| `results/report.md` | Deduped report grouped by WCAG success criterion |
-| `results/report.json` | Machine-readable rollup |
-| `.a11y-fixtures.json` | Seeded entity IDs for this run |
+| Path                   | Contents                                         |
+| ---------------------- | ------------------------------------------------ |
+| `results/<route>.json` | Raw axe result per route + interactive state     |
+| `results/report.md`    | Deduped report grouped by WCAG success criterion |
+| `results/report.json`  | Machine-readable rollup                          |
+| `.a11y-fixtures.json`  | Seeded entity IDs for this run                   |
 
 ## Adding / changing routes
 

@@ -23,11 +23,23 @@ export interface SuccessCriterion {
 export const WCAG_TAG_TO_SC: Record<string, SuccessCriterion> = {
   // 1. Perceivable
   wcag111: { num: "1.1.1", name: "Non-text Content", level: "A" },
-  wcag121: { num: "1.2.1", name: "Audio-only and Video-only (Prerecorded)", level: "A" },
+  wcag121: {
+    num: "1.2.1",
+    name: "Audio-only and Video-only (Prerecorded)",
+    level: "A",
+  },
   wcag122: { num: "1.2.2", name: "Captions (Prerecorded)", level: "A" },
-  wcag123: { num: "1.2.3", name: "Audio Description or Media Alternative", level: "A" },
+  wcag123: {
+    num: "1.2.3",
+    name: "Audio Description or Media Alternative",
+    level: "A",
+  },
   wcag124: { num: "1.2.4", name: "Captions (Live)", level: "AA" },
-  wcag125: { num: "1.2.5", name: "Audio Description (Prerecorded)", level: "AA" },
+  wcag125: {
+    num: "1.2.5",
+    name: "Audio Description (Prerecorded)",
+    level: "AA",
+  },
   wcag131: { num: "1.3.1", name: "Info and Relationships", level: "A" },
   wcag132: { num: "1.3.2", name: "Meaningful Sequence", level: "A" },
   wcag133: { num: "1.3.3", name: "Sensory Characteristics", level: "A" },
@@ -58,7 +70,11 @@ export const WCAG_TAG_TO_SC: Record<string, SuccessCriterion> = {
   wcag245: { num: "2.4.5", name: "Multiple Ways", level: "AA" },
   wcag246: { num: "2.4.6", name: "Headings and Labels", level: "AA" },
   wcag247: { num: "2.4.7", name: "Focus Visible", level: "AA" },
-  wcag2411: { num: "2.4.11", name: "Focus Not Obscured (Minimum)", level: "AA" },
+  wcag2411: {
+    num: "2.4.11",
+    name: "Focus Not Obscured (Minimum)",
+    level: "AA",
+  },
   wcag251: { num: "2.5.1", name: "Pointer Gestures", level: "A" },
   wcag252: { num: "2.5.2", name: "Pointer Cancellation", level: "A" },
   wcag253: { num: "2.5.3", name: "Label in Name", level: "A" },
@@ -77,9 +93,17 @@ export const WCAG_TAG_TO_SC: Record<string, SuccessCriterion> = {
   wcag331: { num: "3.3.1", name: "Error Identification", level: "A" },
   wcag332: { num: "3.3.2", name: "Labels or Instructions", level: "A" },
   wcag333: { num: "3.3.3", name: "Error Suggestion", level: "AA" },
-  wcag334: { num: "3.3.4", name: "Error Prevention (Legal, Financial, Data)", level: "AA" },
+  wcag334: {
+    num: "3.3.4",
+    name: "Error Prevention (Legal, Financial, Data)",
+    level: "AA",
+  },
   wcag337: { num: "3.3.7", name: "Redundant Entry", level: "A" },
-  wcag338: { num: "3.3.8", name: "Accessible Authentication (Minimum)", level: "AA" },
+  wcag338: {
+    num: "3.3.8",
+    name: "Accessible Authentication (Minimum)",
+    level: "AA",
+  },
 
   // 4. Robust
   wcag411: { num: "4.1.1", name: "Parsing (obsolete)", level: "A" },
@@ -105,13 +129,17 @@ const NON_SC_TAGS = new Set([
  * Resolve the primary success criterion for an axe violation from its tags.
  * Returns a synthetic "best-practice" or "other" bucket when no SC tag exists.
  */
-export function primaryCriterion(tags: string[]): SuccessCriterion & { key: string } {
+export function primaryCriterion(
+  tags: string[]
+): SuccessCriterion & { key: string } {
   for (const tag of tags) {
     const sc = WCAG_TAG_TO_SC[tag];
     if (sc) return { ...sc, key: sc.num };
   }
   // Unmapped wcag tag (new SC we don't have a name for yet) — derive a number.
-  const unmapped = tags.find((t) => /^wcag\d{3,4}$/.test(t) && !NON_SC_TAGS.has(t));
+  const unmapped = tags.find(
+    (t) => /^wcag\d{3,4}$/.test(t) && !NON_SC_TAGS.has(t)
+  );
   if (unmapped) {
     const digits = unmapped.replace("wcag", "");
     const num =
@@ -121,12 +149,19 @@ export function primaryCriterion(tags: string[]): SuccessCriterion & { key: stri
     return { num, name: "(unmapped criterion)", level: "AA", key: num };
   }
   if (tags.includes("best-practice")) {
-    return { num: "—", name: "Best Practice (non-WCAG)", level: "A", key: "best-practice" };
+    return {
+      num: "—",
+      name: "Best Practice (non-WCAG)",
+      level: "A",
+      key: "best-practice",
+    };
   }
   return { num: "—", name: "Other", level: "A", key: "other" };
 }
 
 /** True when a violation maps to at least one real WCAG success criterion. */
 export function isWcagViolation(tags: string[]): boolean {
-  return tags.some((t) => WCAG_TAG_TO_SC[t] || (/^wcag\d{3,4}$/.test(t) && !NON_SC_TAGS.has(t)));
+  return tags.some(
+    (t) => WCAG_TAG_TO_SC[t] || (/^wcag\d{3,4}$/.test(t) && !NON_SC_TAGS.has(t))
+  );
 }

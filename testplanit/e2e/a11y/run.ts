@@ -32,8 +32,16 @@ if (route) {
   console.log(`[a11y] single-route run: ${route}`);
 }
 
-const scan = spawnSync(bin("playwright"), playwrightArgs, { cwd, env, stdio: "inherit" });
+const scan = spawnSync(bin("playwright"), playwrightArgs, {
+  cwd,
+  env,
+  stdio: "inherit",
+});
 // Always aggregate, even if the scan reported failures (strict mode).
-const agg = spawnSync(bin("tsx"), ["e2e/a11y/aggregate.ts"], { cwd, env, stdio: "inherit" });
+const agg = spawnSync(bin("tsx"), ["e2e/a11y/aggregate.ts"], {
+  cwd,
+  env,
+  stdio: "inherit",
+});
 
 process.exit((scan.status ?? 1) || (agg.status ?? 0));

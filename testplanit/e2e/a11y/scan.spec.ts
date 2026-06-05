@@ -237,11 +237,7 @@ function writeResult(result: RouteResult): void {
 }
 
 for (const route of routes) {
-  test(`a11y: ${route.group} › ${route.name}`, async ({
-    page,
-    browser,
-    baseURL,
-  }) => {
+  test(`a11y: ${route.group} › ${route.name}`, async ({ page, browser }) => {
     test.setTimeout(90_000);
 
     const result: RouteResult = {
