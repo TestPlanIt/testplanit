@@ -164,6 +164,12 @@ const menuOptions: MenuOption[] = [
     path: "api-tokens",
     section: "peopleAndAccess",
   },
+  {
+    icon: ShieldCheck,
+    translationKey: "scim",
+    path: "scim",
+    section: "peopleAndAccess",
+  },
 
   // Tools & Integrations
   {
