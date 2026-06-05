@@ -2380,7 +2380,8 @@
       "system": "System",
       "green": "Green",
       "purple": "Purple",
-      "orange": "Orange"
+      "orange": "Orange",
+      "accessible": "Accessible"
     }
   },
   "repository": {
