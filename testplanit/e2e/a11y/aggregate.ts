@@ -84,16 +84,26 @@ function loadResults(): RouteResult[] {
   return fs
     .readdirSync(RESULTS_DIR)
     .filter((f) => f.endsWith(".json") && f !== "report.json")
-    .map((f) => JSON.parse(fs.readFileSync(path.join(RESULTS_DIR, f), "utf8")) as RouteResult);
+    .map(
+      (f) =>
+        JSON.parse(
+          fs.readFileSync(path.join(RESULTS_DIR, f), "utf8")
+        ) as RouteResult
+    );
 }
 
-function dedupe(results: RouteResult[], kind: "wcag" | "best"): Map<string, Finding> {
+function dedupe(
+  results: RouteResult[],
+  kind: "wcag" | "best"
+): Map<string, Finding> {
   const findings = new Map<string, Finding>();
   for (const r of results) {
     if (r.status !== "scanned") continue;
     for (const state of r.states) {
-      const label = state.state === "initial" ? r.name : `${r.name} (${state.state})`;
-      const vios = kind === "wcag" ? state.wcagViolations : state.bestPracticeViolations;
+      const label =
+        state.state === "initial" ? r.name : `${r.name} (${state.state})`;
+      const vios =
+        kind === "wcag" ? state.wcagViolations : state.bestPracticeViolations;
       for (const v of vios) {
         const sc = primaryCriterion(v.tags);
         let f = findings.get(v.id);
@@ -155,15 +165,24 @@ function build(): { md: string; json: unknown; blockingCount: number } {
   };
   const wcagTally = tally(wcag);
 
-  const blocking = wcag.filter((f) => f.impact === "serious" || f.impact === "critical");
+  const blocking = wcag.filter(
+    (f) => f.impact === "serious" || f.impact === "critical"
+  );
 
   // Sort: impact, then routes affected desc.
   const bySpread = (a: Finding, b: Finding) =>
-    impactRank(a.impact) - impactRank(b.impact) || b.routes.size - a.routes.size;
+    impactRank(a.impact) - impactRank(b.impact) ||
+    b.routes.size - a.routes.size;
   wcag.sort(bySpread);
   best.sort(bySpread);
 
-  const top5 = [...wcag].sort((a, b) => b.routes.size - a.routes.size || impactRank(a.impact) - impactRank(b.impact)).slice(0, 5);
+  const top5 = [...wcag]
+    .sort(
+      (a, b) =>
+        b.routes.size - a.routes.size ||
+        impactRank(a.impact) - impactRank(b.impact)
+    )
+    .slice(0, 5);
 
   // Group WCAG findings by success criterion.
   const byCriterion = new Map<string, Finding[]>();
@@ -182,16 +201,28 @@ function build(): { md: string; json: unknown; blockingCount: number } {
   const L: string[] = [];
   L.push(`# Accessibility Scan Report`);
   L.push("");
-  L.push(`Generated ${now} · axe-core (\`wcag2a\`, \`wcag2aa\`, \`wcag21a\`, \`wcag21aa\`, \`wcag22aa\`, \`best-practice\`)`);
+  L.push(
+    `Generated ${now} · axe-core (\`wcag2a\`, \`wcag2aa\`, \`wcag21a\`, \`wcag21aa\`, \`wcag22aa\`, \`best-practice\`)`
+  );
   L.push("");
-  L.push(`This is the **automated baseline** for a WCAG 2.2 AA audit feeding a VPAT 2.5 (INT) report. Automated scanning catches roughly a third of WCAG issues; manual keyboard/screen-reader testing is still required for full conformance claims.`);
+  L.push(
+    `**Theme scanned:** ${process.env.A11Y_THEME || "default (seeded user preference)"}`
+  );
+  L.push("");
+  L.push(
+    `This is the **automated baseline** for a WCAG 2.2 AA audit feeding a VPAT 2.5 (INT) report. Automated scanning catches roughly a third of WCAG issues; manual keyboard/screen-reader testing is still required for full conformance claims.`
+  );
   L.push("");
 
   // ---- Summary ----
   L.push(`## Summary`);
   L.push("");
-  L.push(`- **Routes scanned:** ${scanned.length}  ·  **skipped:** ${skipped.length}  ·  **errored:** ${errored.length}`);
-  L.push(`- **WCAG A/AA findings (unique rules):** ${wcag.length}  ·  **best-practice findings:** ${best.length}`);
+  L.push(
+    `- **Routes scanned:** ${scanned.length}  ·  **skipped:** ${skipped.length}  ·  **errored:** ${errored.length}`
+  );
+  L.push(
+    `- **WCAG A/AA findings (unique rules):** ${wcag.length}  ·  **best-practice findings:** ${best.length}`
+  );
   L.push(`- **Serious/critical WCAG findings:** ${blocking.length}`);
   L.push("");
   L.push(`| Impact | Unique rules | Route occurrences |`);
@@ -210,7 +241,9 @@ function build(): { md: string; json: unknown; blockingCount: number } {
     L.push(`| Rule | Criterion | Impact | Routes affected |`);
     L.push(`| --- | --- | --- | ---: |`);
     for (const f of top5) {
-      L.push(`| \`${f.id}\` | ${esc(f.criterionLabel)} | ${f.impact} | ${f.routes.size} |`);
+      L.push(
+        `| \`${f.id}\` | ${esc(f.criterionLabel)} | ${f.impact} | ${f.routes.size} |`
+      );
     }
   }
   L.push("");
@@ -224,14 +257,24 @@ function build(): { md: string; json: unknown; blockingCount: number } {
     L.push(`### ${label} — Level ${level}`);
     L.push("");
     for (const f of findings) {
-      L.push(`#### \`${f.id}\` — ${f.impact} · ${f.routes.size} route(s) · ${f.totalNodes} element(s)`);
+      L.push(
+        `#### \`${f.id}\` — ${f.impact} · ${f.routes.size} route(s) · ${f.totalNodes} element(s)`
+      );
       L.push("");
       L.push(`${esc(f.help)}. [Reference](${f.helpUrl})`);
       L.push("");
-      if (f.sampleSelector) L.push(`- **Example selector:** ${codeFence(f.sampleSelector)}`);
-      if (f.sampleHtml) L.push(`- **Example element:** ${codeFence(f.sampleHtml)}`);
-      if (f.sampleFailure) L.push(`- **axe fix guidance:** ${esc(f.sampleFailure)}`);
-      L.push(`- **Affected routes:** ${[...f.routes].sort().map((r) => `\`${r}\``).join(", ")}`);
+      if (f.sampleSelector)
+        L.push(`- **Example selector:** ${codeFence(f.sampleSelector)}`);
+      if (f.sampleHtml)
+        L.push(`- **Example element:** ${codeFence(f.sampleHtml)}`);
+      if (f.sampleFailure)
+        L.push(`- **axe fix guidance:** ${esc(f.sampleFailure)}`);
+      L.push(
+        `- **Affected routes:** ${[...f.routes]
+          .sort()
+          .map((r) => `\`${r}\``)
+          .join(", ")}`
+      );
       L.push("");
     }
   }
@@ -239,7 +282,9 @@ function build(): { md: string; json: unknown; blockingCount: number } {
   // ---- Best practice ----
   L.push(`## Best-practice (non-WCAG) findings`);
   L.push("");
-  L.push(`_Reported for awareness; not counted against WCAG 2.2 AA conformance._`);
+  L.push(
+    `_Reported for awareness; not counted against WCAG 2.2 AA conformance._`
+  );
   L.push("");
   if (best.length === 0) {
     L.push(`_None._`);
@@ -247,7 +292,9 @@ function build(): { md: string; json: unknown; blockingCount: number } {
     L.push(`| Rule | Impact | Routes | Guidance |`);
     L.push(`| --- | --- | ---: | --- |`);
     for (const f of best) {
-      L.push(`| \`${f.id}\` | ${f.impact} | ${f.routes.size} | ${esc(f.help)} |`);
+      L.push(
+        `| \`${f.id}\` | ${f.impact} | ${f.routes.size} | ${esc(f.help)} |`
+      );
     }
   }
   L.push("");
@@ -256,18 +303,26 @@ function build(): { md: string; json: unknown; blockingCount: number } {
   L.push(`## Coverage notes`);
   L.push("");
   if (skipped.length) {
-    L.push(`**Skipped routes (${skipped.length})** — recorded rather than silently dropped:`);
-    for (const r of skipped) L.push(`- \`${r.name}\` — ${esc(r.note || "skipped")}`);
+    L.push(
+      `**Skipped routes (${skipped.length})** — recorded rather than silently dropped:`
+    );
+    for (const r of skipped)
+      L.push(`- \`${r.name}\` — ${esc(r.note || "skipped")}`);
     L.push("");
   }
   if (errored.length) {
     L.push(`**Errored routes (${errored.length}):**`);
-    for (const r of errored) L.push(`- \`${r.name}\` (${esc(r.requestedPath)}) — ${esc(r.note || "error")}`);
+    for (const r of errored)
+      L.push(
+        `- \`${r.name}\` (${esc(r.requestedPath)}) — ${esc(r.note || "error")}`
+      );
     L.push("");
   }
   const redirected = scanned.filter((r) => r.note && /redirect/i.test(r.note));
   if (redirected.length) {
-    L.push(`**Redirected routes (${redirected.length})** — scanned at their landing page:`);
+    L.push(
+      `**Redirected routes (${redirected.length})** — scanned at their landing page:`
+    );
     for (const r of redirected) L.push(`- \`${r.name}\` — ${esc(r.note!)}`);
     L.push("");
   }
@@ -294,9 +349,16 @@ function build(): { md: string; json: unknown; blockingCount: number } {
       impact: wcagTally,
     },
     wcagFindings: wcag.map((f) => ({ ...f, routes: [...f.routes].sort() })),
-    bestPracticeFindings: best.map((f) => ({ ...f, routes: [...f.routes].sort() })),
+    bestPracticeFindings: best.map((f) => ({
+      ...f,
+      routes: [...f.routes].sort(),
+    })),
     skipped: skipped.map((r) => ({ name: r.name, note: r.note })),
-    errored: errored.map((r) => ({ name: r.name, path: r.requestedPath, note: r.note })),
+    errored: errored.map((r) => ({
+      name: r.name,
+      path: r.requestedPath,
+      note: r.note,
+    })),
   };
 
   return { md: L.join("\n") + "\n", json, blockingCount: blocking.length };
@@ -306,11 +368,18 @@ function main(): void {
   const { md, json, blockingCount } = build();
   fs.mkdirSync(RESULTS_DIR, { recursive: true });
   fs.writeFileSync(path.join(RESULTS_DIR, "report.md"), md);
-  fs.writeFileSync(path.join(RESULTS_DIR, "report.json"), JSON.stringify(json, null, 2));
-  console.log(`[a11y] report written to ${path.relative(process.cwd(), path.join(RESULTS_DIR, "report.md"))}`);
+  fs.writeFileSync(
+    path.join(RESULTS_DIR, "report.json"),
+    JSON.stringify(json, null, 2)
+  );
+  console.log(
+    `[a11y] report written to ${path.relative(process.cwd(), path.join(RESULTS_DIR, "report.md"))}`
+  );
   console.log(`[a11y] ${blockingCount} serious/critical WCAG finding(s)`);
   if (STRICT && blockingCount > 0) {
-    console.error(`[a11y] STRICT mode: failing because ${blockingCount} serious/critical WCAG finding(s) exist.`);
+    console.error(
+      `[a11y] STRICT mode: failing because ${blockingCount} serious/critical WCAG finding(s) exist.`
+    );
     process.exit(1);
   }
 }

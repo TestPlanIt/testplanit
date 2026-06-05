@@ -3,7 +3,12 @@ import AxeBuilder from "@axe-core/playwright";
 import fs from "fs";
 import path from "path";
 import { stubBellSSE } from "../fixtures";
-import { routes, type A11yRoute, type A11yFixtures, type InteractiveState } from "./routes";
+import {
+  routes,
+  type A11yRoute,
+  type A11yFixtures,
+  type InteractiveState,
+} from "./routes";
 import { primaryCriterion, isWcagViolation } from "./wcag";
 
 /**
@@ -24,9 +29,19 @@ const FIXTURES_FILE = path.join(__dirname, ".a11y-fixtures.json");
 const LOCALE = "en-US";
 
 // The full WCAG 2.0/2.1/2.2 A + AA stack, plus best-practice (split out below).
-const AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice"];
+const AXE_TAGS = [
+  "wcag2a",
+  "wcag2aa",
+  "wcag21a",
+  "wcag21aa",
+  "wcag22aa",
+  "best-practice",
+];
 
 const STRICT = process.env.A11Y_STRICT === "on" || process.env.CI === "strict";
+// Optionally force a theme class before axe runs (e.g. A11Y_THEME=accessible),
+// so the scan measures a specific theme regardless of the seeded user preference.
+const FORCE_THEME = process.env.A11Y_THEME;
 
 const fixtures: A11yFixtures | null = fs.existsSync(FIXTURES_FILE)
   ? JSON.parse(fs.readFileSync(FIXTURES_FILE, "utf8"))
@@ -104,7 +119,9 @@ type AxeViolation = {
   nodes: AxeNode[];
 };
 
-async function runAxe(page: Page): Promise<{ wcag: Violation[]; best: Violation[] }> {
+async function runAxe(
+  page: Page
+): Promise<{ wcag: Violation[]; best: Violation[] }> {
   const results = await new AxeBuilder({ page }).withTags(AXE_TAGS).analyze();
   const all = results.violations as unknown as AxeViolation[];
   return {
@@ -118,10 +135,24 @@ async function settle(page: Page, route: A11yRoute): Promise<void> {
   // that proves the shell rendered. Neither is allowed to hang the scan.
   await page.waitForLoadState("networkidle", { timeout: 8000 }).catch(() => {});
   if (route.sanity) {
-    await page.waitForSelector(route.sanity, { state: "attached", timeout: 12000 }).catch(() => {});
+    await page
+      .waitForSelector(route.sanity, { state: "attached", timeout: 12000 })
+      .catch(() => {});
   }
   await dismissOnboardingOverlay(page);
+  if (FORCE_THEME) await applyTheme(page, FORCE_THEME);
   if (route.settleMs) await page.waitForTimeout(route.settleMs);
+}
+
+async function applyTheme(page: Page, theme: string): Promise<void> {
+  await page
+    .evaluate((t) => {
+      const all = ["light", "dark", "green", "orange", "purple", "accessible"];
+      document.documentElement.classList.remove(...all);
+      document.documentElement.classList.add(t);
+    }, theme)
+    .catch(() => {});
+  await page.waitForTimeout(150);
 }
 
 async function dismissOnboardingOverlay(page: Page): Promise<void> {
@@ -135,9 +166,12 @@ async function dismissOnboardingOverlay(page: Page): Promise<void> {
 /** Best-effort: open the page's primary dialog. Returns whether one opened. */
 async function openDialog(page: Page): Promise<boolean> {
   const trigger = page
-    .getByRole("button", { name: /add|new|create|invite|connect|upload|import|generate/i })
+    .getByRole("button", {
+      name: /add|new|create|invite|connect|upload|import|generate/i,
+    })
     .first();
-  if (!(await trigger.isVisible({ timeout: 1500 }).catch(() => false))) return false;
+  if (!(await trigger.isVisible({ timeout: 1500 }).catch(() => false)))
+    return false;
   await trigger.click({ timeout: 2000 }).catch(() => {});
   const dialog = page.locator('[role="dialog"]').first();
   return await dialog.isVisible({ timeout: 3000 }).catch(() => false);
@@ -150,21 +184,38 @@ async function openMenu(page: Page): Promise<boolean> {
       'button[aria-haspopup="menu"], [data-testid$="actions-menu"], [data-testid$="-menu-trigger"], button:has(svg.lucide-ellipsis-vertical), button:has(svg.lucide-ellipsis)'
     )
     .first();
-  if (!(await trigger.isVisible({ timeout: 1500 }).catch(() => false))) return false;
+  if (!(await trigger.isVisible({ timeout: 1500 }).catch(() => false)))
+    return false;
   await trigger.click({ timeout: 2000 }).catch(() => {});
   const menu = page.locator('[role="menu"]').first();
   return await menu.isVisible({ timeout: 2500 }).catch(() => false);
 }
 
-async function scanInteraction(page: Page, kind: InteractiveState): Promise<StateResult | null> {
-  const reached = kind === "dialog" ? await openDialog(page) : await openMenu(page);
+async function scanInteraction(
+  page: Page,
+  kind: InteractiveState
+): Promise<StateResult | null> {
+  const reached =
+    kind === "dialog" ? await openDialog(page) : await openMenu(page);
   if (!reached) {
-    return { state: kind, reached: false, url: page.url(), wcagViolations: [], bestPracticeViolations: [] };
+    return {
+      state: kind,
+      reached: false,
+      url: page.url(),
+      wcagViolations: [],
+      bestPracticeViolations: [],
+    };
   }
   const { wcag, best } = await runAxe(page);
   await page.keyboard.press("Escape").catch(() => {});
   await page.waitForTimeout(200);
-  return { state: kind, reached: true, url: page.url(), wcagViolations: wcag, bestPracticeViolations: best };
+  return {
+    state: kind,
+    reached: true,
+    url: page.url(),
+    wcagViolations: wcag,
+    bestPracticeViolations: best,
+  };
 }
 
 function missingFixture(route: A11yRoute): keyof A11yFixtures | null {
@@ -172,17 +223,25 @@ function missingFixture(route: A11yRoute): keyof A11yFixtures | null {
   if (!fixtures) return route.needs[0] ?? null;
   for (const key of route.needs) {
     const val = fixtures[key];
-    if (val === undefined || val === null || val === "" || val === 0) return key;
+    if (val === undefined || val === null || val === "" || val === 0)
+      return key;
   }
   return null;
 }
 
 function writeResult(result: RouteResult): void {
-  fs.writeFileSync(path.join(RESULTS_DIR, `${result.name}.json`), JSON.stringify(result, null, 2));
+  fs.writeFileSync(
+    path.join(RESULTS_DIR, `${result.name}.json`),
+    JSON.stringify(result, null, 2)
+  );
 }
 
 for (const route of routes) {
-  test(`a11y: ${route.group} › ${route.name}`, async ({ page, browser, baseURL }) => {
+  test(`a11y: ${route.group} › ${route.name}`, async ({
+    page,
+    browser,
+    baseURL,
+  }) => {
     test.setTimeout(90_000);
 
     const result: RouteResult = {
@@ -220,14 +279,20 @@ for (const route of routes) {
     await stubBellSSE(scanPage);
 
     try {
-      const resp = await scanPage.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+      const resp = await scanPage.goto(url, {
+        waitUntil: "domcontentloaded",
+        timeout: 30000,
+      });
       await settle(scanPage, route);
       result.finalUrl = scanPage.url();
 
       if (resp && resp.status() >= 400) {
         result.note = `HTTP ${resp.status()} on navigation`;
       }
-      if (route.mayRedirect && !result.finalUrl.includes(relPath.split("?")[0])) {
+      if (
+        route.mayRedirect &&
+        !result.finalUrl.includes(relPath.split("?")[0])
+      ) {
         result.note = `Redirected to ${new URL(result.finalUrl).pathname}`;
       }
 
