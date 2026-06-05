@@ -1,6 +1,26 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { NextRequest } from "next/server";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+
+import { requireScimBearer, ScimAuthError } from "~/lib/scim/auth";
+import { scimError } from "~/lib/scim/errors";
 
 import { DELETE, GET, PATCH, POST, PUT } from "./route";
+
+vi.mock("~/lib/scim/auth", () => ({
+  ScimAuthError: class extends Error {
+    constructor(public response: unknown) {
+      super("SCIM bearer auth failed");
+      this.name = "ScimAuthError";
+    }
+  },
+  requireScimBearer: vi.fn().mockResolvedValue({
+    tokenId: "tk_test",
+    systemUserId: "system-scim-user",
+  }),
+}));
+
+const req = (path = "/scim/v2/ServiceProviderConfig"): NextRequest =>
+  new NextRequest(`http://localhost${path}`);
 
 const originalNextAuthUrl = process.env.NEXTAUTH_URL;
 
@@ -17,15 +37,32 @@ describe("GET /api/scim/v2/ServiceProviderConfig", () => {
     }
   });
 
+  it("returns 401 with SCIM error envelope when no bearer token provided", async () => {
+    vi.mocked(requireScimBearer).mockRejectedValueOnce(
+      new ScimAuthError(scimError(401, null, "Missing Authorization header"))
+    );
+    const res = await GET(req());
+    expect(res.status).toBe(401);
+    expect(res.headers.get("Content-Type")).toBe("application/scim+json");
+    const body = (await res.json()) as {
+      schemas: string[];
+      status: string;
+      detail: string;
+    };
+    expect(body.schemas[0]).toBe("urn:ietf:params:scim:api:messages:2.0:Error");
+    expect(body.status).toBe("401");
+    expect(body.detail).toBe("Missing Authorization header");
+  });
+
   it("returns 200 with the SCIM content type and cache-control: no-store", async () => {
-    const res = await GET();
+    const res = await GET(req());
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("application/scim+json");
     expect(res.headers.get("Cache-Control")).toBe("no-store");
   });
 
   it("envelopes the response with the ServiceProviderConfig schema URN and meta", async () => {
-    const res = await GET();
+    const res = await GET(req());
     const body = (await res.json()) as Record<string, unknown> & {
       schemas: string[];
       meta: { resourceType: string; location: string };
@@ -39,14 +76,14 @@ describe("GET /api/scim/v2/ServiceProviderConfig", () => {
     );
   });
 
-  it("advertises PATCH support (D-07)", async () => {
-    const res = await GET();
+  it("advertises PATCH support", async () => {
+    const res = await GET(req());
     const body = (await res.json()) as { patch: { supported: boolean } };
     expect(body.patch.supported).toBe(true);
   });
 
-  it("advertises conservative bulk/filter/sort/etag/changePassword values (D-08)", async () => {
-    const res = await GET();
+  it("advertises conservative bulk/filter/sort/etag/changePassword values", async () => {
+    const res = await GET(req());
     const body = (await res.json()) as {
       bulk: {
         supported: boolean;
@@ -68,8 +105,8 @@ describe("GET /api/scim/v2/ServiceProviderConfig", () => {
     expect(body.etag.supported).toBe(false);
   });
 
-  it("forward-declares the OAuth Bearer Token authentication scheme (D-05)", async () => {
-    const res = await GET();
+  it("forward-declares the OAuth Bearer Token authentication scheme", async () => {
+    const res = await GET(req());
     const body = (await res.json()) as {
       authenticationSchemes: Array<{
         type: string;
@@ -90,8 +127,8 @@ describe("GET /api/scim/v2/ServiceProviderConfig", () => {
     expect(body.authenticationSchemes[0].primary).toBe(true);
   });
 
-  it("omits documentationUri from the body (D-06)", async () => {
-    const res = await GET();
+  it("omits documentationUri from the body", async () => {
+    const res = await GET(req());
     const body = (await res.json()) as Record<string, unknown>;
     expect("documentationUri" in body).toBe(false);
   });
@@ -100,7 +137,7 @@ describe("GET /api/scim/v2/ServiceProviderConfig", () => {
     const before = process.env.NEXTAUTH_URL;
     process.env.NEXTAUTH_URL = "http://app.example.com";
     try {
-      const res = await GET();
+      const res = await GET(req());
       const body = (await res.json()) as {
         meta: { location: string };
       };

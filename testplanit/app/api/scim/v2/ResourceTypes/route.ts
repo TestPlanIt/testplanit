@@ -76,7 +76,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         "Content-Type": SCIM_CONTENT_TYPE,
         "Cache-Control": "no-store",
       },
-    },
+    }
   );
 }
 

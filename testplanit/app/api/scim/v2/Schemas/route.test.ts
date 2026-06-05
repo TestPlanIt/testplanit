@@ -1,6 +1,26 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { NextRequest } from "next/server";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+
+import { requireScimBearer, ScimAuthError } from "~/lib/scim/auth";
+import { scimError } from "~/lib/scim/errors";
 
 import { DELETE, GET, PATCH, POST, PUT } from "./route";
+
+vi.mock("~/lib/scim/auth", () => ({
+  ScimAuthError: class extends Error {
+    constructor(public response: unknown) {
+      super("SCIM bearer auth failed");
+      this.name = "ScimAuthError";
+    }
+  },
+  requireScimBearer: vi.fn().mockResolvedValue({
+    tokenId: "tk_test",
+    systemUserId: "system-scim-user",
+  }),
+}));
+
+const req = (path = "/scim/v2/Schemas"): NextRequest =>
+  new NextRequest(`http://localhost${path}`);
 
 const originalNextAuthUrl = process.env.NEXTAUTH_URL;
 
@@ -22,15 +42,32 @@ describe("GET /api/scim/v2/Schemas", () => {
     }
   });
 
+  it("returns 401 with SCIM error envelope when no bearer token provided", async () => {
+    vi.mocked(requireScimBearer).mockRejectedValueOnce(
+      new ScimAuthError(scimError(401, null, "Missing Authorization header"))
+    );
+    const res = await GET(req());
+    expect(res.status).toBe(401);
+    expect(res.headers.get("Content-Type")).toBe("application/scim+json");
+    const body = (await res.json()) as {
+      schemas: string[];
+      status: string;
+      detail: string;
+    };
+    expect(body.schemas[0]).toBe("urn:ietf:params:scim:api:messages:2.0:Error");
+    expect(body.status).toBe("401");
+    expect(body.detail).toBe("Missing Authorization header");
+  });
+
   it("returns 200 with the SCIM content type and cache-control: no-store", async () => {
-    const res = await GET();
+    const res = await GET(req());
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("application/scim+json");
     expect(res.headers.get("Cache-Control")).toBe("no-store");
   });
 
   it("wraps the response in a SCIM ListResponse envelope (RFC 7644 §3.4.2)", async () => {
-    const res = await GET();
+    const res = await GET(req());
     const body = (await res.json()) as {
       schemas: string[];
       totalResults: number;
@@ -47,8 +84,8 @@ describe("GET /api/scim/v2/Schemas", () => {
     expect(body.Resources.length).toBe(3);
   });
 
-  it("lists the core User, core Group, and enterprise extension URNs in order (D-04)", async () => {
-    const res = await GET();
+  it("lists the core User, core Group, and enterprise extension URNs in order", async () => {
+    const res = await GET(req());
     const body = (await res.json()) as {
       Resources: Array<{ id: string }>;
     };
@@ -58,7 +95,7 @@ describe("GET /api/scim/v2/Schemas", () => {
   });
 
   it("embeds the core User schema content (name + attributes from user.json)", async () => {
-    const res = await GET();
+    const res = await GET(req());
     const body = (await res.json()) as {
       Resources: Array<{
         id: string;
@@ -74,7 +111,7 @@ describe("GET /api/scim/v2/Schemas", () => {
   });
 
   it("embeds the core Group schema content (name + displayName attribute)", async () => {
-    const res = await GET();
+    const res = await GET(req());
     const body = (await res.json()) as {
       Resources: Array<{
         id: string;
@@ -89,7 +126,7 @@ describe("GET /api/scim/v2/Schemas", () => {
   });
 
   it("embeds the enterprise extension content (EnterpriseUser + employeeNumber)", async () => {
-    const res = await GET();
+    const res = await GET(req());
     const body = (await res.json()) as {
       Resources: Array<{
         id: string;
@@ -104,7 +141,7 @@ describe("GET /api/scim/v2/Schemas", () => {
   });
 
   it("injects meta.resourceType:Schema and absolute meta.location for every resource", async () => {
-    const res = await GET();
+    const res = await GET(req());
     const body = (await res.json()) as {
       Resources: Array<{
         id: string;
@@ -129,7 +166,7 @@ describe("GET /api/scim/v2/Schemas", () => {
     const before = process.env.NEXTAUTH_URL;
     process.env.NEXTAUTH_URL = "http://app.example.com";
     try {
-      const res = await GET();
+      const res = await GET(req());
       const body = (await res.json()) as {
         Resources: Array<{ meta: { location: string } }>;
       };

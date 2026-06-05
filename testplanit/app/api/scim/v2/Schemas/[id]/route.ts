@@ -27,7 +27,7 @@ const URN_TO_SCHEMA: Record<string, unknown> = {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     await requireScimBearer(request);
