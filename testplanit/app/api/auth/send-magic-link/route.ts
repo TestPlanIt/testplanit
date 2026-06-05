@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { getAppBaseUrl } from "~/lib/auth-security";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { auditAuthEvent } from "~/lib/services/auditLog";
@@ -68,13 +69,7 @@ export const POST = withAuditContext(async (req: NextRequest) => {
     });
 
     // Build the magic link URL
-    const protocol = process.env.NEXTAUTH_URL?.startsWith("https")
-      ? "https"
-      : "http";
-    const host =
-      req.headers.get("host") ||
-      process.env.NEXTAUTH_URL?.replace(/^https?:\/\//, "");
-    const baseUrl = `${protocol}://${host}`;
+    const baseUrl = getAppBaseUrl(req);
 
     // Ensure callbackUrl has a trailing slash for proper routing
     let finalCallbackUrl = callbackUrl.startsWith("http")

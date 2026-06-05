@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   checkRateLimit,
-  generateSecureState,
-  getSecureCookieOptions,
+  createSamlRelayState,
+  getAppBaseUrl,
   sanitizeCallbackUrl,
 } from "~/lib/auth-security";
 import { db } from "~/server/db";
@@ -39,9 +39,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch SAML configuration from database
+    // Fetch SAML configuration from database. The UI passes the SsoProvider id,
+    // which is the unique foreign key on SamlConfiguration (not its own id).
     const samlConfig = await db.samlConfiguration.findUnique({
-      where: { id: providerId },
+      where: { providerId },
       include: { provider: true },
     });
 
@@ -60,35 +61,19 @@ export async function GET(request: NextRequest) {
       issuer: samlConfig.issuer,
     });
 
+    // Carry the provider and post-login destination in RelayState. The IdP
+    // echoes this back on its cross-site POST to the ACS, where same-site
+    // cookies are not sent — so a cookie cannot be used to recover them.
+    const relayState = await createSamlRelayState({ providerId, callbackUrl });
+
     // Generate SAML auth request
     const authUrl = await samlClient.getAuthorizeUrlAsync(
-      "",
-      request.headers.get("host") || "",
+      relayState,
+      new URL(getAppBaseUrl(request)).host,
       {}
     );
 
-    // Generate secure state parameter for CSRF protection
-    const state = generateSecureState();
-    const response = NextResponse.redirect(authUrl);
-    const cookieOptions = getSecureCookieOptions();
-
-    // Set cookies with secure options
-    response.cookies.set("saml-state", state, {
-      ...cookieOptions,
-      maxAge: 60 * 15, // 15 minutes
-    });
-
-    response.cookies.set("saml-provider", providerId, {
-      ...cookieOptions,
-      maxAge: 60 * 15, // 15 minutes
-    });
-
-    response.cookies.set("saml-callback-url", callbackUrl, {
-      ...cookieOptions,
-      maxAge: 60 * 15, // 15 minutes
-    });
-
-    return response;
+    return NextResponse.redirect(authUrl);
   } catch (error) {
     console.error("SAML login error:", error);
     return NextResponse.json(

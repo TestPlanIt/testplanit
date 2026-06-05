@@ -2,18 +2,26 @@ import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import {
   checkRateLimit,
+  consumeSamlRelayState,
   createTempSessionToken,
+  getAppBaseUrl,
   getSecurityHeaders,
   sanitizeCallbackUrl,
   validateSAMLTimestamp,
-  verifyState,
 } from "~/lib/auth-security";
 import { NotificationService } from "~/lib/services/notificationService";
 import { isEmailDomainAllowed } from "~/lib/utils/email-domain-validation";
 import { db } from "~/server/db";
 import { createSAMLClient, validateSAMLResponse } from "~/server/saml-provider";
 
-// SAML callback handler
+/**
+ * SAML Assertion Consumer Service (ACS).
+ *
+ * The IdP POSTs the SAMLResponse here. This path matches the ACS URL embedded
+ * in the AuthnRequest (createSAMLClient) and shown in the admin UI. It is a
+ * static route, so it takes precedence over the NextAuth [...nextauth]
+ * catch-all for this exact path.
+ */
 export async function POST(request: NextRequest) {
   try {
     const clientIp =
@@ -46,31 +54,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get provider and state from cookies
-    const providerId = request.cookies.get("saml-provider")?.value;
-    const storedState = request.cookies.get("saml-state")?.value;
-    const callbackUrl = sanitizeCallbackUrl(
-      request.cookies.get("saml-callback-url")?.value
+    // Recover the provider and destination from RelayState (the IdP echoes it
+    // back here; same-site cookies are not sent on this cross-site POST). The
+    // token is single-use and short-lived, which is what guards this endpoint.
+    const relay = await consumeSamlRelayState(
+      typeof relayState === "string" ? relayState : null
     );
 
-    if (!providerId) {
+    if (!relay) {
       return NextResponse.json(
-        { error: "Provider information not found" },
+        { error: "Invalid or expired SAML request" },
         { status: 400 }
       );
     }
 
-    // Verify state if relay state is provided
-    if (relayState && !verifyState(storedState, relayState as string)) {
-      return NextResponse.json(
-        { error: "Invalid state parameter" },
-        { status: 400 }
-      );
-    }
+    const providerId = relay.providerId;
+    const callbackUrl = sanitizeCallbackUrl(relay.callbackUrl);
 
-    // Fetch SAML configuration
+    // Fetch SAML configuration. RelayState carries the SsoProvider id, which is
+    // the unique foreign key on SamlConfiguration (not its own id).
     const samlConfig = await db.samlConfiguration.findUnique({
-      where: { id: providerId },
+      where: { providerId },
       include: { provider: true },
     });
 
@@ -272,18 +276,14 @@ export async function POST(request: NextRequest) {
       email: user.email,
     });
 
-    // Create a session for the user by redirecting to NextAuth callback
+    // Hand off to the completion route, which verifies the token and mints the
+    // NextAuth session cookie before redirecting to the final destination.
     const response = NextResponse.redirect(
       new URL(
-        `/api/auth/callback/saml?token=${tempToken}&callbackUrl=${encodeURIComponent(callbackUrl)}`,
-        request.url
+        `/api/auth/saml/complete?token=${tempToken}&callbackUrl=${encodeURIComponent(callbackUrl)}`,
+        getAppBaseUrl(request)
       )
     );
-
-    // Clean up cookies
-    response.cookies.delete("saml-state");
-    response.cookies.delete("saml-provider");
-    response.cookies.delete("saml-callback-url");
 
     // Set security headers
     const securityHeaders = getSecurityHeaders();

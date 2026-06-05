@@ -13,6 +13,10 @@ import {
   verifyTempSessionToken,
 } from "./auth-security";
 
+// Keep the static import above from opening a real Valkey connection; the relay
+// tests below inject their own client per-case via vi.doMock + resetModules.
+vi.mock("./valkey", () => ({ default: null }));
+
 // Mock environment variables
 const originalEnv = process.env;
 
@@ -329,6 +333,79 @@ describe("validateSAMLTimestamp", () => {
     const pastDate1 = new Date(Date.now() - 120000).toISOString(); // 2 minutes ago
     const pastDate2 = new Date(Date.now() - 60000).toISOString(); // 1 minute ago
     expect(validateSAMLTimestamp(pastDate1, pastDate2)).toBe(false);
+  });
+});
+
+describe("createSamlRelayState / consumeSamlRelayState", () => {
+  const data = { providerId: "ssoprovider_123", callbackUrl: "/dashboard" };
+  const SECRET = "test-secret-key-at-least-32-chars-long";
+
+  it("Valkey-backed: round-trips, stays within 80 bytes, and is single-use", async () => {
+    const store = new Map<string, string>();
+    const fakeRedis = {
+      set: vi.fn(async (k: string, v: string) => {
+        store.set(k, v);
+        return "OK";
+      }),
+      get: vi.fn(async (k: string) => store.get(k) ?? null),
+      del: vi.fn(async (k: string) => (store.delete(k) ? 1 : 0)),
+    };
+
+    vi.resetModules();
+    process.env.NEXTAUTH_SECRET = SECRET;
+    vi.doMock("./valkey", () => ({ default: fakeRedis }));
+    const { createSamlRelayState, consumeSamlRelayState } =
+      await import("./auth-security");
+
+    const relay = await createSamlRelayState(data);
+    expect(typeof relay).toBe("string");
+    // SAML 2.0 binding guidance: RelayState should not exceed 80 bytes.
+    expect(relay.length).toBeLessThanOrEqual(80);
+    expect(fakeRedis.set).toHaveBeenCalledTimes(1);
+
+    const first = await consumeSamlRelayState(relay);
+    expect(first).toEqual(data);
+
+    // Single-use: the second consume finds nothing.
+    const second = await consumeSamlRelayState(relay);
+    expect(second).toBeNull();
+
+    vi.doUnmock("./valkey");
+  });
+
+  it("signed fallback when Valkey is absent", async () => {
+    vi.resetModules();
+    process.env.NEXTAUTH_SECRET = SECRET;
+    vi.doMock("./valkey", () => ({ default: null }));
+    const { createSamlRelayState, consumeSamlRelayState } =
+      await import("./auth-security");
+
+    const relay = await createSamlRelayState(data);
+    expect(relay.split(".")).toHaveLength(3); // a JWT
+
+    const decoded = await consumeSamlRelayState(relay);
+    expect(decoded?.providerId).toBe(data.providerId);
+    expect(decoded?.callbackUrl).toBe(data.callbackUrl);
+
+    vi.doUnmock("./valkey");
+  });
+
+  it("returns null for empty, malformed, or tampered relay state", async () => {
+    vi.resetModules();
+    process.env.NEXTAUTH_SECRET = SECRET;
+    vi.doMock("./valkey", () => ({ default: null }));
+    const { createSamlRelayState, consumeSamlRelayState } =
+      await import("./auth-security");
+
+    expect(await consumeSamlRelayState(null)).toBeNull();
+    expect(await consumeSamlRelayState(undefined)).toBeNull();
+    expect(await consumeSamlRelayState("not-a-jwt")).toBeNull();
+
+    const relay = await createSamlRelayState(data);
+    const tampered = relay.slice(0, -4) + "xxxx";
+    expect(await consumeSamlRelayState(tampered)).toBeNull();
+
+    vi.doUnmock("./valkey");
   });
 });
 

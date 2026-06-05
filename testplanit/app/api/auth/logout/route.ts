@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAppBaseUrl } from "~/lib/auth-security";
 import { withAuditContext } from "~/lib/auditContextWrappers";
 import { auditAuthEvent } from "~/lib/services/auditLog";
 import { getServerAuthSession } from "~/server/auth";
@@ -102,9 +103,10 @@ export const POST = withAuditContext(async (request: NextRequest) => {
                 "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
               issuer: samlProvider.samlConfig.issuer,
             },
-            "https://" +
-              request.headers.get("host") +
+            new URL(
               "/api/auth/saml/logout-callback",
+              getAppBaseUrl(request)
+            ).toString(),
             {}
           );
 
@@ -186,11 +188,11 @@ export const GET = withAuditContext(async (request: NextRequest) => {
     }
 
     // Redirect to signin page after successful logout
-    return NextResponse.redirect(new URL("/signin", request.url));
+    return NextResponse.redirect(new URL("/signin", getAppBaseUrl(request)));
   } catch (error) {
     console.error("SAML logout callback error:", error);
     return NextResponse.redirect(
-      new URL("/signin?error=logout-failed", request.url)
+      new URL("/signin?error=logout-failed", getAppBaseUrl(request))
     );
   }
 });
