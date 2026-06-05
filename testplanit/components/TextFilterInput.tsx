@@ -123,7 +123,10 @@ export function TextFilterInput({
         value={operator}
         onValueChange={(val) => setOperator(val as TextOperator)}
       >
-        <SelectTrigger className="w-full h-8 text-xs">
+        <SelectTrigger
+          className="w-full h-8 text-xs"
+          aria-label={t("common.placeholders.selectOperator")}
+        >
           <SelectValue placeholder={t("common.placeholders.selectOperator")} />
         </SelectTrigger>
         <SelectContent>
