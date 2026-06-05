@@ -87,8 +87,7 @@ export async function reconcileStaleSchedulers(
       // TypeError'd the whole reconciliation pass. Skip them; they are
       // exactly the "foreign — never touch" case.
       const schedulerId = scheduler?.key;
-      if (typeof schedulerId !== "string" || schedulerId.length === 0)
-        continue;
+      if (typeof schedulerId !== "string" || schedulerId.length === 0) continue;
       // Match the longest job name first so e.g. a hypothetical
       // "send-daily-digest-summary" job is not mistaken for
       // "send-daily-digest" with tenant "summary".
