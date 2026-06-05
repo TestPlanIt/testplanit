@@ -23,10 +23,7 @@ import crypto from "crypto";
 import { hashToken } from "~/lib/api-tokens";
 import { prisma } from "~/lib/prisma";
 import { encrypt, decrypt } from "~/utils/encryption";
-import {
-  SCIM_SYSTEM_USER_ID,
-  SCIM_TOKEN_PREFIX,
-} from "~/lib/scim/constants";
+import { SCIM_SYSTEM_USER_ID, SCIM_TOKEN_PREFIX } from "~/lib/scim/constants";
 import type { IdpName, ScimToken } from "@prisma/client";
 
 const SCIM_TOKEN_BYTES = 32;
@@ -60,9 +57,7 @@ export interface MintScimTokenResult {
 export async function mintScimToken(
   input: MintScimTokenInput
 ): Promise<MintScimTokenResult> {
-  const randomPart = crypto
-    .randomBytes(SCIM_TOKEN_BYTES)
-    .toString("base64url");
+  const randomPart = crypto.randomBytes(SCIM_TOKEN_BYTES).toString("base64url");
   const plaintext = `${SCIM_TOKEN_PREFIX}${randomPart}`;
   const hash = hashToken(plaintext);
   const tokenPrefix = plaintext.substring(0, 12);
@@ -107,9 +102,7 @@ export async function revokeScimToken(
 /**
  * Direct findUnique passthrough. Returns null when no row matches.
  */
-export async function getScimTokenById(
-  id: string
-): Promise<ScimToken | null> {
+export async function getScimTokenById(id: string): Promise<ScimToken | null> {
   return prisma.scimToken.findUnique({ where: { id } });
 }
 

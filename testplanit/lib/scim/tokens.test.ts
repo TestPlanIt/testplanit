@@ -21,9 +21,7 @@ vi.mock("~/lib/prisma", () => ({
 
 vi.mock("~/utils/encryption", () => ({
   encrypt: vi.fn(async (s: string) => `enc(${s})`),
-  decrypt: vi.fn(async (s: string) =>
-    s.replace(/^enc\((.*)\)$/, "$1")
-  ),
+  decrypt: vi.fn(async (s: string) => s.replace(/^enc\((.*)\)$/, "$1")),
 }));
 
 import { prisma } from "~/lib/prisma";
@@ -100,7 +98,9 @@ describe("SCIM tokens service", () => {
     });
 
     it("passes through expiresAt when set", async () => {
-      vi.mocked(prisma.scimToken.create).mockResolvedValue({ id: "tk_2" } as any);
+      vi.mocked(prisma.scimToken.create).mockResolvedValue({
+        id: "tk_2",
+      } as any);
       const expiresAt = new Date("2027-01-01T00:00:00Z");
 
       await mintScimToken({
@@ -117,7 +117,9 @@ describe("SCIM tokens service", () => {
     });
 
     it("generates a fresh plaintext on each call", async () => {
-      vi.mocked(prisma.scimToken.create).mockResolvedValue({ id: "tk_x" } as any);
+      vi.mocked(prisma.scimToken.create).mockResolvedValue({
+        id: "tk_x",
+      } as any);
 
       const a = await mintScimToken({
         name: "a",
@@ -233,7 +235,9 @@ describe("SCIM tokens service", () => {
     });
 
     it("round-trips with mintScimToken", async () => {
-      vi.mocked(prisma.scimToken.create).mockResolvedValue({ id: "tk_rt" } as any);
+      vi.mocked(prisma.scimToken.create).mockResolvedValue({
+        id: "tk_rt",
+      } as any);
 
       const { plaintext } = await mintScimToken({
         name: "rt",
