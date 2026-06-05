@@ -458,6 +458,53 @@ describe("createSamlRelayState / consumeSamlRelayState", () => {
   });
 });
 
+describe("registerSamlAssertion (single-use)", () => {
+  const SECRET = "test-secret-key-at-least-32-chars-long";
+
+  it("Valkey-backed: first use returns true, replay returns false", async () => {
+    const store = new Map<string, string>();
+    const fakeRedis = {
+      set: vi.fn(
+        async (
+          k: string,
+          _v: string,
+          _ex: string,
+          _ttl: number,
+          nx?: string
+        ) => {
+          if (nx === "NX" && store.has(k)) return null;
+          store.set(k, "1");
+          return "OK";
+        }
+      ),
+    };
+
+    vi.resetModules();
+    process.env.NEXTAUTH_SECRET = SECRET;
+    vi.doMock("./valkey", () => ({ default: fakeRedis }));
+    const { registerSamlAssertion } = await import("./auth-security");
+
+    expect(await registerSamlAssertion("_assertion-id-1", 300)).toBe(true);
+    expect(await registerSamlAssertion("_assertion-id-1", 300)).toBe(false);
+    // A different assertion is tracked independently.
+    expect(await registerSamlAssertion("_assertion-id-2", 300)).toBe(true);
+
+    vi.doUnmock("./valkey");
+  });
+
+  it("without Valkey: returns true (no cross-pod dedup)", async () => {
+    vi.resetModules();
+    process.env.NEXTAUTH_SECRET = SECRET;
+    vi.doMock("./valkey", () => ({ default: null }));
+    const { registerSamlAssertion } = await import("./auth-security");
+
+    expect(await registerSamlAssertion("_assertion-id-3", 300)).toBe(true);
+    expect(await registerSamlAssertion("_assertion-id-3", 300)).toBe(true);
+
+    vi.doUnmock("./valkey");
+  });
+});
+
 describe("getSecureCookieOptions", () => {
   it("should return httpOnly as true", () => {
     const options = getSecureCookieOptions();
