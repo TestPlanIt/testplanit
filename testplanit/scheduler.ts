@@ -56,7 +56,9 @@ export async function reconcileStaleSchedulers(
         start?: number,
         end?: number,
         asc?: boolean
-      ) => Promise<Array<{ key: string; name: string }>>;
+      ) => Promise<
+        Array<{ key?: string | null; name?: string } | undefined | null>
+      >;
       removeJobScheduler: (id: string) => Promise<unknown>;
       name: string;
     } | null;
@@ -78,8 +80,14 @@ export async function reconcileStaleSchedulers(
       continue;
     }
 
-    for (const scheduler of schedulers) {
-      const schedulerId = scheduler.key;
+    for (const scheduler of schedulers ?? []) {
+      // Legacy (pre-BullMQ-5) repeat zset members have no scheduler hash, so
+      // getJobSchedulers() yields undefined/keyless entries for them — seen
+      // in prod 2026-06-05 (95 MD5-style members), where one such entry
+      // TypeError'd the whole reconciliation pass. Skip them; they are
+      // exactly the "foreign — never touch" case.
+      const schedulerId = scheduler?.key;
+      if (typeof schedulerId !== "string" || schedulerId.length === 0) continue;
       // Match the longest job name first so e.g. a hypothetical
       // "send-daily-digest-summary" job is not mistaken for
       // "send-daily-digest" with tenant "summary".
