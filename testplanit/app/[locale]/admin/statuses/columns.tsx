@@ -244,6 +244,7 @@ export const getColumns = (
               variant="ghost"
               className="px-2 py-1 h-auto text-muted-foreground cursor-not-allowed"
               disabled
+              aria-label={tCommon("actions.edit")}
             >
               <SquarePen className="h-5 w-5" />
             </Button>
@@ -252,6 +253,7 @@ export const getColumns = (
               variant="ghost"
               className="px-2 py-1 h-auto"
               onClick={() => onEditStatus?.(row.original)}
+              aria-label={tCommon("actions.edit")}
             >
               <SquarePen className="h-5 w-5" />
             </Button>
@@ -261,6 +263,7 @@ export const getColumns = (
               variant="destructive"
               className="px-2 py-1 h-auto"
               onClick={() => onDeleteStatus?.(row.original)}
+              aria-label={tCommon("actions.delete")}
             >
               <Trash2 className="h-5 w-5" />
             </Button>
@@ -269,6 +272,7 @@ export const getColumns = (
               variant="ghost"
               className="px-2 py-1 h-auto text-muted-foreground cursor-not-allowed"
               disabled
+              aria-label={tCommon("actions.delete")}
             >
               <Trash2 className="h-5 w-5" />
             </Button>

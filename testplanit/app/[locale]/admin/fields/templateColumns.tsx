@@ -142,6 +142,7 @@ export const useColumns = (
                 variant="ghost"
                 className="px-2 py-1 h-auto text-muted-foreground cursor-not-allowed"
                 disabled
+                aria-label={tCommon("actions.delete")}
               >
                 <Trash2 className="h-5 w-5" />
               </Button>

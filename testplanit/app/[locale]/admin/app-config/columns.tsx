@@ -93,6 +93,7 @@ export function getColumns(
             variant="destructive"
             className="px-2 py-1 h-auto"
             data-testid="delete-config"
+            aria-label={t("actions.delete")}
             onClick={() => onDeleteConfig?.(row.original)}
           >
             <Trash2 className="h-4 w-4" />
