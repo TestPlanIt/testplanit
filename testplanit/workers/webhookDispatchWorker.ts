@@ -9,6 +9,7 @@ import {
 import { WEBHOOK_DISPATCH_QUEUE_NAME } from "../lib/queues";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
+import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 import {
   dispatchWebhook,
   type DispatchJobData,
@@ -159,6 +160,7 @@ const startWorker = async () => {
   if (valkeyConnection) {
     worker = new Worker(WEBHOOK_DISPATCH_QUEUE_NAME, dispatch, {
       connection: valkeyConnection as any,
+      prefix: BULLMQ_PREFIX,
       concurrency: parseInt(
         process.env.WEBHOOK_DISPATCH_CONCURRENCY || "5",
         10

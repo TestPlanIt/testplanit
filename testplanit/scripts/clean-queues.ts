@@ -28,6 +28,7 @@ import {
   TESTMO_IMPORT_QUEUE_NAME,
 } from "../lib/queueNames";
 import valkeyConnection from "../lib/valkey";
+import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 
 const ALL_QUEUES = [
   FORECAST_QUEUE_NAME,
@@ -54,6 +55,7 @@ async function main() {
   for (const name of queueNames) {
     const queue = new Queue(name, {
       connection: valkeyConnection as any,
+      prefix: BULLMQ_PREFIX,
     });
 
     try {
@@ -67,7 +69,7 @@ async function main() {
         (err as Error).message
       );
       try {
-        const keys = await valkeyConnection.keys(`bull:${name}:*`);
+        const keys = await valkeyConnection.keys(`${BULLMQ_PREFIX}:${name}:*`);
         if (keys.length > 0) {
           await valkeyConnection.del(...keys);
           console.log(`Deleted ${keys.length} raw keys for queue "${name}".`);

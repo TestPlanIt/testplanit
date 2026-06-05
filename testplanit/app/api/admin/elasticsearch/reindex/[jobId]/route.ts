@@ -1,6 +1,7 @@
 import { getCurrentTenantId, isMultiTenantMode } from "@/lib/multiTenantPrisma";
 import { prisma } from "@/lib/prisma";
 import { getElasticsearchReindexQueue } from "@/lib/queues";
+import { BULLMQ_PREFIX } from "@/lib/bullPrefix";
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateApiToken } from "~/lib/api-token-auth";
 import { getServerAuthSession } from "~/server/auth";
@@ -100,7 +101,7 @@ export async function GET(
     const progress = job.progress;
 
     // Get job logs from Redis
-    const logsKey = `bull:${elasticsearchReindexQueue.name}:${jobId}:logs`;
+    const logsKey = `${BULLMQ_PREFIX}:${elasticsearchReindexQueue.name}:${jobId}:logs`;
     const connection = await elasticsearchReindexQueue.client;
     const logs = await connection.lrange(logsKey, 0, -1);
 

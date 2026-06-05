@@ -8,6 +8,7 @@ import {
 import { GENERATE_FROM_URL_QUEUE_NAME } from "../lib/queueNames";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
+import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 import { ssrfSafeFetch, SsrfError } from "../lib/utils/ssrf";
 import { extractContent } from "../lib/utils/contentExtractor";
 import {
@@ -315,6 +316,7 @@ export function startGenerateFromUrlWorker() {
     withTenantContext(processor),
     {
       connection: valkeyConnection as any,
+      prefix: BULLMQ_PREFIX,
       concurrency: 1,
       lockDuration: 60_000,
       maxStalledCount: 1,

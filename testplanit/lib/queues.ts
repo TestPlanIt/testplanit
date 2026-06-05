@@ -19,6 +19,7 @@ import {
   WEBHOOK_DISPATCH_QUEUE_NAME,
 } from "./queueNames";
 import valkeyConnection from "./valkey";
+import { BULLMQ_PREFIX } from "./bullPrefix";
 
 // Re-export queue names for backward compatibility
 export {
@@ -94,6 +95,7 @@ export function getForecastQueue(): Queue | null {
 
   _forecastQueue = new Queue(FORECAST_QUEUE_NAME, {
     connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
     defaultJobOptions: { ...STANDARD_RETRY },
   });
 
@@ -120,6 +122,7 @@ export function getNotificationQueue(): Queue | null {
 
   _notificationQueue = new Queue(NOTIFICATION_QUEUE_NAME, {
     connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
     defaultJobOptions: { ...STANDARD_RETRY },
   });
 
@@ -146,6 +149,7 @@ export function getEmailQueue(): Queue | null {
 
   _emailQueue = new Queue(EMAIL_QUEUE_NAME, {
     connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
     defaultJobOptions: {
       attempts: 5,
       backoff: { type: "exponential", delay: 10000 },
@@ -177,6 +181,7 @@ export function getSyncQueue(): Queue | null {
 
   _syncQueue = new Queue(SYNC_QUEUE_NAME, {
     connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
     defaultJobOptions: {
       ...STANDARD_RETRY,
       removeOnComplete: { age: 3600 * 24 * 3, count: 500 },
@@ -207,6 +212,7 @@ export function getTestmoImportQueue(): Queue | null {
 
   _testmoImportQueue = new Queue(TESTMO_IMPORT_QUEUE_NAME, {
     connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
     defaultJobOptions: {
       ...NO_RETRY_LIGHT_RETENTION,
       removeOnComplete: { age: 3600 * 24 * 30, count: 100 },
@@ -237,6 +243,7 @@ export function getElasticsearchReindexQueue(): Queue | null {
 
   _elasticsearchReindexQueue = new Queue(ELASTICSEARCH_REINDEX_QUEUE_NAME, {
     connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
     defaultJobOptions: {
       ...NO_RETRY_LIGHT_RETENTION,
       removeOnComplete: { age: 3600 * 24 * 7, count: 50 },
@@ -275,6 +282,7 @@ export function getAuditLogQueue(): Queue | null {
 
   _auditLogQueue = new Queue(AUDIT_LOG_QUEUE_NAME, {
     connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
     defaultJobOptions: {
       ...STANDARD_RETRY,
       // Long retention for audit logs - keep completed jobs for 1 year
@@ -308,6 +316,7 @@ export function getBudgetAlertQueue(): Queue | null {
 
   _budgetAlertQueue = new Queue(BUDGET_ALERT_QUEUE_NAME, {
     connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
     defaultJobOptions: { ...STANDARD_RETRY },
   });
 
@@ -335,6 +344,7 @@ export function getAutoTagQueue(): Queue | null {
 
   _autoTagQueue = new Queue(AUTO_TAG_QUEUE_NAME, {
     connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
     defaultJobOptions: { ...NO_RETRY_LIGHT_RETENTION },
   });
 
@@ -362,6 +372,7 @@ export function getRepoCacheQueue(): Queue | null {
 
   _repoCacheQueue = new Queue(REPO_CACHE_QUEUE_NAME, {
     connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
     defaultJobOptions: {
       ...STANDARD_RETRY,
       backoff: { type: "exponential", delay: 10000 },
@@ -393,6 +404,7 @@ export function getCopyMoveQueue(): Queue | null {
   }
   _copyMoveQueue = new Queue(COPY_MOVE_QUEUE_NAME, {
     connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
     // LOCKED: no retry — partial retry creates duplicates
     defaultJobOptions: { ...NO_RETRY_MEDIUM_RETENTION },
   });
@@ -418,6 +430,7 @@ export function getDuplicateScanQueue(): Queue | null {
 
   _duplicateScanQueue = new Queue(DUPLICATE_SCAN_QUEUE_NAME, {
     connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
     defaultJobOptions: { ...NO_RETRY_LIGHT_RETENTION },
   });
 
@@ -446,6 +459,7 @@ export function getStepScanQueue(): Queue | null {
   }
   _stepScanQueue = new Queue(STEP_SCAN_QUEUE_NAME, {
     connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
     // LOCKED: no retry — user retries from UI
     defaultJobOptions: { ...NO_RETRY_MEDIUM_RETENTION },
   });
@@ -470,6 +484,7 @@ export function getMagicSelectQueue(): Queue | null {
   }
   _magicSelectQueue = new Queue(MAGIC_SELECT_QUEUE_NAME, {
     connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
     defaultJobOptions: { ...NO_RETRY_LIGHT_RETENTION },
   });
   console.log(`Queue "${MAGIC_SELECT_QUEUE_NAME}" initialized.`);
@@ -493,6 +508,7 @@ export function getGenerateFromUrlQueue(): Queue | null {
   }
   _generateFromUrlQueue = new Queue(GENERATE_FROM_URL_QUEUE_NAME, {
     connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
     defaultJobOptions: {
       ...NO_RETRY_LIGHT_RETENTION,
       removeOnFail: { age: 3600 * 24 * 3 },
@@ -521,6 +537,7 @@ export function getIterationGenerationQueue(): Queue | null {
   }
   _iterationGenerationQueue = new Queue(ITERATION_GENERATION_QUEUE_NAME, {
     connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
     defaultJobOptions: {
       attempts: 1, // LOCKED: no retry — partial retry creates duplicate iterations
       removeOnComplete: { age: 3600 * 24 * 7, count: 500 },
@@ -559,6 +576,7 @@ export function getWebhookDispatchQueue(): Queue | null {
   }
   _webhookDispatchQueue = new Queue(WEBHOOK_DISPATCH_QUEUE_NAME, {
     connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
     defaultJobOptions: {
       attempts: 7, // OUT-01: 1 initial + 6 retries
       backoff: { type: "custom" }, // strategy on Worker (Pitfall 6)

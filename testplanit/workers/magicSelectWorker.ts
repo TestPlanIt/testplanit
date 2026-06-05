@@ -18,6 +18,7 @@ import {
 import { MAGIC_SELECT_QUEUE_NAME } from "../lib/queueNames";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
+import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 import {
   getElasticsearchClient,
   getRepositoryCaseIndexName,
@@ -1105,7 +1106,11 @@ export function startMagicSelectWorker() {
   worker = new Worker<MagicSelectJobData, MagicSelectJobResult>(
     MAGIC_SELECT_QUEUE_NAME,
     withTenantContext(processor),
-    { connection: valkeyConnection as any, concurrency: 1 }
+    {
+      connection: valkeyConnection as any,
+      prefix: BULLMQ_PREFIX,
+      concurrency: 1,
+    }
   );
 
   worker.on("completed", (job) =>
