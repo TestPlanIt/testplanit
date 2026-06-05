@@ -1,3 +1,9 @@
+## [0.34.11](https://github.com/TestPlanIt/testplanit/compare/v0.34.10...v0.34.11) (2026-06-05)
+
+### Enhancements
+
+* **workers:** BullMQ worker groups via configurable key prefix ([#402](https://github.com/TestPlanIt/testplanit/issues/402)) ([6e677c0](https://github.com/TestPlanIt/testplanit/commit/6e677c0c076a9d498f189960755c6c6b0b1be011))
+
 ## [0.34.10](https://github.com/TestPlanIt/testplanit/compare/v0.34.9...v0.34.10) (2026-06-04)
 
 ### Enhancements
