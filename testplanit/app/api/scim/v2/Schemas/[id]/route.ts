@@ -11,6 +11,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
+import { ScimAuthError, requireScimBearer } from "~/lib/scim/auth";
 import { SCIM_CONTENT_TYPE, SCIM_SCHEMAS } from "~/lib/scim/constants";
 import { scimError } from "~/lib/scim/errors";
 import { scimLocation } from "~/lib/scim/responses";
@@ -25,9 +26,16 @@ const URN_TO_SCHEMA: Record<string, unknown> = {
 };
 
 export async function GET(
-  _req: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
+  try {
+    await requireScimBearer(request);
+  } catch (e) {
+    if (e instanceof ScimAuthError) return e.response;
+    throw e;
+  }
+
   const { id } = await params;
 
   const schema = URN_TO_SCHEMA[id];

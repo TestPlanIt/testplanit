@@ -10,8 +10,9 @@
  * Non-GET methods return a 405 SCIM error envelope.
  */
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
+import { ScimAuthError, requireScimBearer } from "~/lib/scim/auth";
 import { SCIM_CONTENT_TYPE, SCIM_SCHEMAS } from "~/lib/scim/constants";
 import { scimError } from "~/lib/scim/errors";
 import { scimLocation } from "~/lib/scim/responses";
@@ -31,7 +32,14 @@ const URN_TO_SCHEMA: Record<(typeof SCHEMA_URNS)[number], unknown> = {
   [SCIM_SCHEMAS.ENTERPRISE_USER]: enterpriseSchema,
 };
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  try {
+    await requireScimBearer(request);
+  } catch (e) {
+    if (e instanceof ScimAuthError) return e.response;
+    throw e;
+  }
+
   const resources = SCHEMA_URNS.map((urn) => {
     const schema = URN_TO_SCHEMA[urn] as Record<string, unknown>;
     return {

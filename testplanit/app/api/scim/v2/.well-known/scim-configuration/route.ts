@@ -9,13 +9,21 @@
  * Non-GET methods return a 405 SCIM error envelope.
  */
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
+import { ScimAuthError, requireScimBearer } from "~/lib/scim/auth";
 import { SCIM_CONTENT_TYPE } from "~/lib/scim/constants";
 import { scimError } from "~/lib/scim/errors";
 import { getScimBaseUrl } from "~/lib/scim/responses";
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  try {
+    await requireScimBearer(request);
+  } catch (e) {
+    if (e instanceof ScimAuthError) return e.response;
+    throw e;
+  }
+
   const base = getScimBaseUrl();
   const body = {
     serviceProviderConfig: `${base}/scim/v2/ServiceProviderConfig`,
