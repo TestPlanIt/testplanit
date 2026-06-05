@@ -156,7 +156,7 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
  * array order. Returns `undefined` for an empty or missing array.
  */
 export function extractPrimaryEmail(
-  emails: ScimEmail[] | undefined,
+  emails: ScimEmail[] | undefined
 ): string | undefined {
   if (!emails || emails.length === 0) return undefined;
   const primary = emails.find((e) => e?.primary === true);
@@ -199,7 +199,7 @@ export function deriveDisplayName(body: ScimUserBody): string {
  *     `constructor`, `prototype`) are filtered before bucketing.
  */
 export function extractNonWritableUrns(
-  body: Record<string, unknown>,
+  body: Record<string, unknown>
 ): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   const coreBucket: Record<string, unknown> = {};
@@ -227,11 +227,7 @@ export function extractNonWritableUrns(
   // dotted keys so PATCH path resolution can find them later.
   const name = body.name;
   if (isPlainObject(name)) {
-    for (const subKey of [
-      "middleName",
-      "honorificPrefix",
-      "honorificSuffix",
-    ]) {
+    for (const subKey of ["middleName", "honorificPrefix", "honorificSuffix"]) {
       if (subKey in name && name[subKey] !== undefined) {
         coreBucket[`name.${subKey}`] = name[subKey];
       }
@@ -281,7 +277,7 @@ export function extractNonWritableUrns(
  */
 export function mergeExtensions(
   current: unknown,
-  incoming: Record<string, unknown>,
+  incoming: Record<string, unknown>
 ): Record<string, unknown> | null {
   const safeIncoming: Record<string, unknown> = {};
   if (incoming && typeof incoming === "object") {
@@ -321,7 +317,7 @@ export function mergeExtensions(
  */
 export function scimToUserCreate(body: ScimUserBody): ScimUserCreatePayload {
   const extensions = extractNonWritableUrns(
-    body as unknown as Record<string, unknown>,
+    body as unknown as Record<string, unknown>
   );
 
   return {
@@ -332,8 +328,7 @@ export function scimToUserCreate(body: ScimUserBody): ScimUserCreatePayload {
     name: deriveDisplayName(body),
     email: extractPrimaryEmail(body.emails),
     isActive: body.active ?? true,
-    scimExtensions:
-      Object.keys(extensions).length > 0 ? extensions : null,
+    scimExtensions: Object.keys(extensions).length > 0 ? extensions : null,
   };
 }
 
@@ -354,7 +349,7 @@ export function userToScim(user: PrismaUserForScim): ScimUserResource {
 
   const extraUrns = extensions
     ? Object.keys(extensions).filter(
-        (k) => k.startsWith("urn:") && k !== SCIM_SCHEMAS.CORE_USER,
+        (k) => k.startsWith("urn:") && k !== SCIM_SCHEMAS.CORE_USER
       )
     : [];
 
@@ -373,9 +368,7 @@ export function userToScim(user: PrismaUserForScim): ScimUserResource {
       familyName: user.scimFamilyName ?? undefined,
       formatted: user.name ?? undefined,
     },
-    emails: user.email
-      ? [{ value: user.email, primary: true }]
-      : [],
+    emails: user.email ? [{ value: user.email, primary: true }] : [],
     active: user.isActive,
     meta: {
       resourceType: "User",
@@ -416,7 +409,7 @@ export function userToScim(user: PrismaUserForScim): ScimUserResource {
  */
 export function computeUserUpdatesFromScim(
   currentScim: ScimUserResource,
-  draftScim: ScimUserResource,
+  draftScim: ScimUserResource
 ): ScimUserUpdatePayload {
   const updates: ScimUserUpdatePayload = {};
 
@@ -448,8 +441,7 @@ export function computeUserUpdatesFromScim(
   const currentFormatted = currentScim.name?.formatted;
   const draftFormatted = draftScim.name?.formatted;
 
-  const givenChanged =
-    draftGiven !== undefined && draftGiven !== currentGiven;
+  const givenChanged = draftGiven !== undefined && draftGiven !== currentGiven;
   const familyChanged =
     draftFamily !== undefined && draftFamily !== currentFamily;
   const formattedChanged =
@@ -510,7 +502,7 @@ export function computeUserUpdatesFromScim(
  * decide whether the `scimExtensions` column needs a rewrite.
  */
 function collectUrnBuckets(
-  resource: ScimUserResource,
+  resource: ScimUserResource
 ): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(resource)) {

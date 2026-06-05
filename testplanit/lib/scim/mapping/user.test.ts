@@ -16,12 +16,21 @@ import {
   type ScimUserResource,
 } from "./user";
 
-const FIXTURE_DIR = join(__dirname, "..", "..", "..", "e2e", "fixtures", "scim");
+const FIXTURE_DIR = join(
+  __dirname,
+  "..",
+  "..",
+  "..",
+  "e2e",
+  "fixtures",
+  "scim"
+);
 
 function loadFixture(name: string): Record<string, unknown> {
-  return JSON.parse(
-    readFileSync(join(FIXTURE_DIR, name), "utf8"),
-  ) as Record<string, unknown>;
+  return JSON.parse(readFileSync(join(FIXTURE_DIR, name), "utf8")) as Record<
+    string,
+    unknown
+  >;
 }
 
 const originalNextAuthUrl = process.env.NEXTAUTH_URL;
@@ -110,7 +119,7 @@ describe("userToScim", () => {
           [SCIM_SCHEMAS.ENTERPRISE_USER]: { employeeNumber: "E123" },
           "urn:custom:foo": { bar: 1 },
         },
-      }),
+      })
     );
 
     expect(result[SCIM_SCHEMAS.ENTERPRISE_USER]).toEqual({
@@ -143,9 +152,7 @@ describe("userToScim", () => {
   });
 
   it("A5: emits scimUserName verbatim as userName (lowercased on write, not at read)", () => {
-    const result = userToScim(
-      makeUser({ scimUserName: "alice@example.com" }),
-    );
+    const result = userToScim(makeUser({ scimUserName: "alice@example.com" }));
     expect(result.userName).toBe("alice@example.com");
   });
 
@@ -156,7 +163,7 @@ describe("userToScim", () => {
           { group: { id: 1, name: "Admins" } },
           { group: { id: 2, name: "Users" } },
         ],
-      }),
+      })
     );
     expect(result.groups).toEqual([
       { value: "1", display: "Admins" },
@@ -238,9 +245,7 @@ describe("scimToUserCreate", () => {
   it("lowercases scimUserName even when the IdP sends mixed case", () => {
     const body = loadFixture("entra-post-user.json") as ScimUserBody;
     const result = scimToUserCreate(body);
-    expect(result.scimUserName).toBe(
-      (body.userName as string).toLowerCase(),
-    );
+    expect(result.scimUserName).toBe((body.userName as string).toLowerCase());
   });
 
   it("ignores `__proto__` keys when partitioning URNs (no prototype pollution)", () => {
@@ -263,7 +268,7 @@ describe("mergeExtensions", () => {
   it("C1: preserves URNs from current that are absent in incoming", () => {
     const result = mergeExtensions(
       { "urn:B": { y: 2 } },
-      { "urn:A": { x: 1 } },
+      { "urn:A": { x: 1 } }
     );
     expect(result).toEqual({ "urn:B": { y: 2 }, "urn:A": { x: 1 } });
   });
@@ -271,7 +276,7 @@ describe("mergeExtensions", () => {
   it("C2: overwrites at the URN top level, not deep-merge", () => {
     const result = mergeExtensions(
       { "urn:A": { x: 2, y: 3 } },
-      { "urn:A": { x: 1 } },
+      { "urn:A": { x: 1 } }
     );
     expect(result).toEqual({ "urn:A": { x: 1 } });
   });
@@ -293,9 +298,7 @@ describe("mergeExtensions", () => {
 });
 
 describe("computeUserUpdatesFromScim", () => {
-  function makeScim(
-    over: Partial<ScimUserResource> = {},
-  ): ScimUserResource {
+  function makeScim(over: Partial<ScimUserResource> = {}): ScimUserResource {
     return {
       schemas: [SCIM_SCHEMAS.CORE_USER],
       id: "u_1",
@@ -326,7 +329,7 @@ describe("computeUserUpdatesFromScim", () => {
   it("D2: returns only isActive:false when active flips true to false", () => {
     const result = computeUserUpdatesFromScim(
       makeScim({ active: true }),
-      makeScim({ active: false }),
+      makeScim({ active: false })
     );
     expect(result).toEqual({ isActive: false });
   });
@@ -348,19 +351,16 @@ describe("computeUserUpdatesFromScim", () => {
         { value: "new@example.com", primary: true },
       ],
     });
-    expect(
-      computeUserUpdatesFromScim(makeScim(), draftPrimary).email,
-    ).toBe("new@example.com");
+    expect(computeUserUpdatesFromScim(makeScim(), draftPrimary).email).toBe(
+      "new@example.com"
+    );
 
     const draftNoPrimary = makeScim({
-      emails: [
-        { value: "first@example.com" },
-        { value: "second@example.com" },
-      ],
+      emails: [{ value: "first@example.com" }, { value: "second@example.com" }],
     });
-    expect(
-      computeUserUpdatesFromScim(makeScim(), draftNoPrimary).email,
-    ).toBe("first@example.com");
+    expect(computeUserUpdatesFromScim(makeScim(), draftNoPrimary).email).toBe(
+      "first@example.com"
+    );
   });
 
   it("D5: never emits roleId, access, authMethod, or password keys", () => {
@@ -397,10 +397,10 @@ describe("pure helpers", () => {
       extractPrimaryEmail([
         { value: "a@x.com" },
         { value: "b@x.com", primary: true },
-      ]),
+      ])
     ).toBe("b@x.com");
     expect(
-      extractPrimaryEmail([{ value: "first@x.com" }, { value: "second@x.com" }]),
+      extractPrimaryEmail([{ value: "first@x.com" }, { value: "second@x.com" }])
     ).toBe("first@x.com");
     expect(extractPrimaryEmail(undefined)).toBeUndefined();
     expect(extractPrimaryEmail([])).toBeUndefined();
@@ -411,17 +411,17 @@ describe("pure helpers", () => {
       deriveDisplayName({
         userName: "u",
         name: { formatted: "F" },
-      } as ScimUserBody),
+      } as ScimUserBody)
     ).toBe("F");
     expect(
       deriveDisplayName({
         userName: "u",
         name: { givenName: "G", familyName: "F" },
-      } as ScimUserBody),
+      } as ScimUserBody)
     ).toBe("G F");
-    expect(
-      deriveDisplayName({ userName: "fallback" } as ScimUserBody),
-    ).toBe("fallback");
+    expect(deriveDisplayName({ userName: "fallback" } as ScimUserBody)).toBe(
+      "fallback"
+    );
   });
 
   it("extractNonWritableUrns: partitions non-writable core attrs under CORE_USER", () => {
