@@ -1,3 +1,9 @@
+## [0.35.1](https://github.com/TestPlanIt/testplanit/compare/v0.35.0...v0.35.1) (2026-06-05)
+
+### Bug Fixes
+
+* **auth:** make SAML SP-initiated login work end-to-end ([#405](https://github.com/TestPlanIt/testplanit/issues/405)) ([e65517c](https://github.com/TestPlanIt/testplanit/commit/e65517c04b71637a1d6b4da82fe860bd79c53df9))
+
 ## [0.35.0](https://github.com/TestPlanIt/testplanit/compare/v0.34.12...v0.35.0) (2026-06-05)
 
 ### Features
