@@ -3,9 +3,13 @@ import { describe, it, expect } from "vitest";
 import {
   SCIM_CONTENT_TYPE,
   SCIM_ERROR_SCHEMA_URN,
+  SCIM_LAST_USED_THROTTLE_MS,
   SCIM_LIST_RESPONSE_SCHEMA_URN,
   SCIM_PATCH_OP_SCHEMA_URN,
   SCIM_SCHEMAS,
+  SCIM_SYSTEM_USER_EMAIL,
+  SCIM_SYSTEM_USER_ID,
+  SCIM_TOKEN_PREFIX,
   type ScimSchema,
 } from "./constants";
 
@@ -88,6 +92,28 @@ describe("SCIM constants", () => {
       // be a tsc error first.
       const values: ScimSchema[] = Object.values(SCIM_SCHEMAS);
       expect(values).toHaveLength(6);
+    });
+  });
+
+  describe("SCIM token auth constants", () => {
+    it("exports SCIM_TOKEN_PREFIX as the wire-stable bearer prefix", () => {
+      expect(SCIM_TOKEN_PREFIX).toBe("tps_");
+      expect(typeof SCIM_TOKEN_PREFIX).toBe("string");
+    });
+
+    it("exports SCIM_SYSTEM_USER_EMAIL as the sentinel synthetic-user email", () => {
+      expect(SCIM_SYSTEM_USER_EMAIL).toBe("scim@__system__");
+      expect(typeof SCIM_SYSTEM_USER_EMAIL).toBe("string");
+    });
+
+    it("exports SCIM_SYSTEM_USER_ID as the deterministic synthetic-user id", () => {
+      expect(SCIM_SYSTEM_USER_ID).toBe("system-scim-user");
+      expect(typeof SCIM_SYSTEM_USER_ID).toBe("string");
+    });
+
+    it("exports SCIM_LAST_USED_THROTTLE_MS as a 60-second window", () => {
+      expect(SCIM_LAST_USED_THROTTLE_MS).toBe(60_000);
+      expect(typeof SCIM_LAST_USED_THROTTLE_MS).toBe("number");
     });
   });
 });
