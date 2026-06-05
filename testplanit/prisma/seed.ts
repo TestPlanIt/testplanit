@@ -1,5 +1,9 @@
 import { ApplicationArea, PrismaClient, WorkflowScope } from "@prisma/client";
 import bcrypt from "bcrypt";
+import {
+  SCIM_SYSTEM_USER_EMAIL,
+  SCIM_SYSTEM_USER_ID,
+} from "../lib/scim/constants";
 import { seedDemoProject } from "./seedDemoProject";
 import { seedFieldIcons } from "./seedFieldIcons";
 import { seedDefaultPromptConfig } from "./seedPromptConfig";
@@ -491,6 +495,27 @@ async function seedCoreData() {
       },
     },
   });
+
+  // --- Synthetic SCIM Provisioner User ---
+  // Every minted ScimToken FKs to this single row via systemUserId. The row
+  // has no credentials and is flagged inactive so it can never be a login
+  // surface; the badge in /admin/users surfaces it honestly to admins.
+  await prisma.user.upsert({
+    where: { id: SCIM_SYSTEM_USER_ID },
+    update: {},
+    create: {
+      id: SCIM_SYSTEM_USER_ID,
+      email: SCIM_SYSTEM_USER_EMAIL,
+      name: "SCIM Provisioner",
+      access: "USER",
+      authMethod: "INTERNAL",
+      isActive: false,
+      isDeleted: false,
+      isApi: false,
+      roleId: userRole.id,
+    },
+  });
+  console.log("Ensured synthetic SCIM Provisioner user exists.");
 
   // --- Authentication Configuration ---
   console.log("Configuring internal authentication (no SSO providers)...");
