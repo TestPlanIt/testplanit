@@ -3410,6 +3410,7 @@
       "queues": "Taakwachtrijen",
       "auditLogs": "Auditlogboeken",
       "apiTokens": "API-tokens",
+      "scim": "SCIM-voorziening",
       "quickscriptTemplates": "QuickScript-sjablonen",
       "testManagement": "Testmanagement",
       "peopleAndAccess": "Mensen & Toegang",
@@ -4315,7 +4316,9 @@
       "forcePasswordChangeSuccess": "Wachtwoordwijziging vereist voor {name}",
       "forcePasswordChangeFailed": "Wachtwoordwijziging is mislukt",
       "revokePasswordSuccess": "Wachtwoord ingetrokken voor {name}",
-      "revokePasswordFailed": "Wachtwoord intrekken mislukt"
+      "revokePasswordFailed": "Wachtwoord intrekken mislukt",
+      "scimProvisionerBadge": "SCIM-leverancier",
+      "scimManagedTooltip": "Beheerd door SCIM. Beheer via de SCIM-beheerpagina."
     },
     "security": {
       "title": "Beveiliging",
@@ -4379,6 +4382,76 @@
       "revokeAllPlaceholder": "TREK ALLES IN",
       "revokeAllSuccess": "Alle API-tokens zijn ingetrokken.",
       "revokeAllError": "Het intrekken van alle tokens is mislukt."
+    },
+    "scim": {
+      "description": "Geef gebruikers van uw identiteitsprovider toegang tot TestPlanIt via SCIM 2.0.",
+      "mintCta": "Nieuwe token creëren",
+      "filterPlaceholder": "Filteren op tokennaam of IdP...",
+      "showRevoked": "Weergeven ingetrokken",
+      "noTokens": "Er zijn nog geen SCIM-tokens aangemaakt.",
+      "emptyTitle": "Nog geen SCIM-tokens beschikbaar",
+      "emptyBody": "Genereer een token waarmee uw identiteitsprovider automatisch gebruikers in TestPlanIt kan aanmaken en bijwerken.",
+      "emptyCta": "Maak je eerste token aan.",
+      "sectionConflicts": "Externe-ID-conflicten",
+      "conflictsPlaceholder": "Geen conflicten. Conflicttracking wordt in een latere versie toegevoegd.",
+      "errorLoad": "Kon de tokens niet laden. Probeer het opnieuw.",
+      "columns": {
+        "idp": "IdP",
+        "lastIp": "Laatste IP-adres",
+        "lastSync": "Laatste synchronisatie"
+      },
+      "status": {
+        "active": "Actief",
+        "expired": "Verlopen",
+        "deactivated": "Gedeactiveerd"
+      },
+      "mint": {
+        "title": "Nieuwe SCIM-token aangemaakt",
+        "description": "Genereer een bearer-token dat uw identiteitsprovider zal gebruiken om gebruikers te synchroniseren met TestPlanIt.",
+        "nameLabel": "Tokennaam",
+        "namePlaceholder": "bijvoorbeeld Okta-productie",
+        "idpLabel": "Identiteitsaanbieder",
+        "idpOkta": "Okta",
+        "idpEntra": "Microsoft Entra (Azure AD)",
+        "idpOneLogin": "OneLogin",
+        "idpOther": "Ander",
+        "expiresLabel": "Verloopt",
+        "expiresNever": "Verloopt nooit",
+        "expires30": "30 dagen",
+        "expires90": "90 dagen",
+        "expires1y": "1 jaar",
+        "expiresCustom": "Aangepaste datum…",
+        "expiresCustomLabel": "Kies een vervaldatum",
+        "submit": "Munttoken",
+        "submitting": "Munten…",
+        "errorsNameRequired": "Een tokennaam is vereist.",
+        "errorToast": "Kon geen token aanmaken. {reason}"
+      },
+      "reveal": {
+        "title": "Token aangemaakt",
+        "warning": "Kopieer dit token nu. TestPlanIt zal het niet opnieuw weergeven.",
+        "tokenLabel": "SCIM-bearertoken",
+        "copy": "Kopiëren",
+        "copied": "Gekopieerd",
+        "baseUrlHint": "Plak dit in het SCIM Bearer-token-veld van uw IdP. De basis-URL is {baseUrl}.",
+        "close": "Dichtbij",
+        "toast": "Token aangemaakt.",
+        "a11yAnnounce": "Token aangemaakt. Nu kopiëren."
+      },
+      "revoke": {
+        "title": "SCIM-token intrekken?",
+        "description": "Het volgende verzoek met \"{name}\" wordt geweigerd met HTTP 401. De tokenregel blijft permanent in de auditgeschiedenis staan.",
+        "confirm": "Herroepen",
+        "successToast": "Token ingetrokken.",
+        "errorToast": "Kon het token niet intrekken. {reason}"
+      },
+      "probe": {
+        "button": "Test SCIM",
+        "testing": "Testen…",
+        "okBanner": "HTTP {status} — token werkt tegen /scim/v2/Users.",
+        "failBanner": "HTTP {status} — {reason}",
+        "networkError": "Het SCIM-eindpunt kon niet worden bereikt. Probeer het opnieuw."
+      }
     },
     "tags": {
       "add": {
@@ -5409,7 +5482,8 @@
         "allTime": "Alle tijden"
       },
       "systemActor": "Systeem",
-      "systemActorTooltip": "Actie uitgevoerd door het systeem, niet door een ingelogde gebruiker."
+      "systemActorTooltip": "Actie uitgevoerd door het systeem, niet door een ingelogde gebruiker.",
+      "sourceScim": "SCIM"
     }
   },
   "components": {

@@ -3410,6 +3410,7 @@
       "queues": "Hàng đợi công việc",
       "auditLogs": "Nhật ký kiểm toán",
       "apiTokens": "Mã thông báo API",
+      "scim": "Cung cấp SCIM",
       "quickscriptTemplates": "Mẫu QuickScript",
       "testManagement": "Quản lý kiểm thử",
       "peopleAndAccess": "Con người & Quyền truy cập",
@@ -4315,7 +4316,9 @@
       "forcePasswordChangeSuccess": "Cần thay đổi mật khẩu cho {name}",
       "forcePasswordChangeFailed": "Không thể buộc thay đổi mật khẩu.",
       "revokePasswordSuccess": "Mật khẩu đã bị thu hồi cho {name}",
-      "revokePasswordFailed": "Không thể thu hồi mật khẩu."
+      "revokePasswordFailed": "Không thể thu hồi mật khẩu.",
+      "scimProvisionerBadge": "Bộ cung cấp SCIM",
+      "scimManagedTooltip": "Được quản lý bởi SCIM. Quản lý từ trang quản trị SCIM."
     },
     "security": {
       "title": "Bảo vệ",
@@ -4379,6 +4382,76 @@
       "revokeAllPlaceholder": "HỦY BỎ TẤT CẢ",
       "revokeAllSuccess": "Tất cả mã thông báo API đã bị thu hồi.",
       "revokeAllError": "Không thể thu hồi tất cả mã thông báo."
+    },
+    "scim": {
+      "description": "Cấp phép người dùng từ nhà cung cấp danh tính của bạn vào TestPlanIt thông qua SCIM 2.0.",
+      "mintCta": "Mã thông báo mới của Mint",
+      "filterPlaceholder": "Lọc theo tên token hoặc IdP...",
+      "showRevoked": "Chương trình đã bị thu hồi",
+      "noTokens": "Chưa có token SCIM nào được tạo.",
+      "emptyTitle": "Chưa có token SCIM nào.",
+      "emptyBody": "Tạo một token để cho phép nhà cung cấp danh tính của bạn tự động tạo và cập nhật người dùng trong TestPlanIt.",
+      "emptyCta": "Tạo token đầu tiên của bạn",
+      "sectionConflicts": "Xung đột ID bên ngoài",
+      "conflictsPlaceholder": "Không có xung đột. Tính năng theo dõi xung đột giữa các tàu sẽ được cập nhật trong bản phát hành sau.",
+      "errorLoad": "Không thể tải mã thông báo. Vui lòng thử lại.",
+      "columns": {
+        "idp": "IdP",
+        "lastIp": "Địa chỉ IP cuối cùng",
+        "lastSync": "Lần đồng bộ cuối cùng"
+      },
+      "status": {
+        "active": "Tích cực",
+        "expired": "Hết hạn",
+        "deactivated": "Đã vô hiệu hóa"
+      },
+      "mint": {
+        "title": "Token SCIM mới được đúc",
+        "description": "Tạo mã thông báo bearer mà nhà cung cấp danh tính (IdP) của bạn sẽ sử dụng để đồng bộ người dùng vào TestPlanIt.",
+        "nameLabel": "Tên mã thông báo",
+        "namePlaceholder": "ví dụ: Sản xuất Okta",
+        "idpLabel": "Nhà cung cấp danh tính",
+        "idpOkta": "Okta",
+        "idpEntra": "Microsoft Entra (Azure AD)",
+        "idpOneLogin": "Đăng nhập một lần",
+        "idpOther": "Khác",
+        "expiresLabel": "Hết hạn",
+        "expiresNever": "Không bao giờ hết hạn",
+        "expires30": "30 ngày",
+        "expires90": "90 ngày",
+        "expires1y": "1 năm",
+        "expiresCustom": "Ngày tùy chỉnh…",
+        "expiresCustomLabel": "Chọn ngày hết hạn",
+        "submit": "Mã thông báo Mint",
+        "submitting": "Đúc tiền…",
+        "errorsNameRequired": "Tên mã thông báo là bắt buộc.",
+        "errorToast": "Không thể tạo token. {reason}"
+      },
+      "reveal": {
+        "title": "Mã thông báo đã được tạo",
+        "warning": "Sao chép mã thông báo này ngay bây giờ. TestPlanIt sẽ không hiển thị lại mã này nữa.",
+        "tokenLabel": "mã thông báo người mang SCIM",
+        "copy": "Sao chép",
+        "copied": "Đã sao chép",
+        "baseUrlHint": "Dán đoạn mã này vào trường SCIM Bearer-token của IdP. URL cơ sở là {baseUrl}.",
+        "close": "Đóng",
+        "toast": "Mã thông báo đã được tạo.",
+        "a11yAnnounce": "Mã thông báo đã được tạo. Sao chép ngay."
+      },
+      "revoke": {
+        "title": "Thu hồi mã thông báo SCIM?",
+        "description": "Yêu cầu tiếp theo mang \"{name}\" sẽ bị từ chối với mã lỗi HTTP 401. Dòng mã thông báo sẽ được lưu giữ trong lịch sử kiểm toán vĩnh viễn.",
+        "confirm": "Thu hồi",
+        "successToast": "Mã thông báo đã bị thu hồi.",
+        "errorToast": "Không thể thu hồi mã thông báo. {reason}"
+      },
+      "probe": {
+        "button": "Kiểm tra SCIM",
+        "testing": "Đang kiểm tra…",
+        "okBanner": "HTTP {status} — mã thông báo hoạt động với /scim/v2/Users.",
+        "failBanner": "HTTP {status} — {reason}",
+        "networkError": "Không thể kết nối đến điểm cuối SCIM. Vui lòng thử lại."
+      }
     },
     "tags": {
       "add": {
@@ -5409,7 +5482,8 @@
         "allTime": "Mọi thời đại"
       },
       "systemActor": "Hệ thống",
-      "systemActorTooltip": "Hành động này được thực hiện bởi hệ thống, không phải bởi người dùng đã đăng nhập."
+      "systemActorTooltip": "Hành động này được thực hiện bởi hệ thống, không phải bởi người dùng đã đăng nhập.",
+      "sourceScim": "SCIM"
     }
   },
   "components": {

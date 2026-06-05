@@ -3410,6 +3410,7 @@
       "queues": "Очереди вакансий",
       "auditLogs": "Журналы аудита",
       "apiTokens": "API-токены",
+      "scim": "SCIM-резервирование",
       "quickscriptTemplates": "Шаблоны QuickScript",
       "testManagement": "Управление тестированием",
       "peopleAndAccess": "Люди и доступ",
@@ -4315,7 +4316,9 @@
       "forcePasswordChangeSuccess": "Для {name} требуется смена пароля.",
       "forcePasswordChangeFailed": "Не удалось принудительно изменить пароль.",
       "revokePasswordSuccess": "Пароль аннулирован для {name}",
-      "revokePasswordFailed": "Не удалось отозвать пароль."
+      "revokePasswordFailed": "Не удалось отозвать пароль.",
+      "scimProvisionerBadge": "SCIM Provisioner",
+      "scimManagedTooltip": "Управление осуществляется через SCIM. Управление производится со страницы администрирования SCIM."
     },
     "security": {
       "title": "Безопасность",
@@ -4379,6 +4382,76 @@
       "revokeAllPlaceholder": "ОТМЕНИТЬ ВСЕ",
       "revokeAllSuccess": "Все API-токены аннулированы.",
       "revokeAllError": "Не удалось аннулировать все токены."
+    },
+    "scim": {
+      "description": "Внедрите учетные записи пользователей из вашего поставщика идентификации в TestPlanIt через SCIM 2.0.",
+      "mintCta": "Выпустить новый токен",
+      "filterPlaceholder": "Фильтрация по имени токена или поставщику идентификации...",
+      "showRevoked": "Показать отменённый",
+      "noTokens": "Токены SCIM пока не созданы.",
+      "emptyTitle": "Токенов SCIM пока нет.",
+      "emptyBody": "Создайте токен, который позволит вашему поставщику идентификационных данных автоматически создавать и обновлять пользователей в TestPlanIt.",
+      "emptyCta": "Создайте свой первый токен",
+      "sectionConflicts": "Конфликты внешних идентификаторов",
+      "conflictsPlaceholder": "Конфликтов нет. Отслеживание конфликтов будет добавлено в более поздней версии.",
+      "errorLoad": "Не удалось загрузить токены. Повторите попытку.",
+      "columns": {
+        "idp": "IdP",
+        "lastIp": "Последний IP-адрес",
+        "lastSync": "Последняя синхронизация"
+      },
+      "status": {
+        "active": "Активный",
+        "expired": "Истекший",
+        "deactivated": "Деактивировано"
+      },
+      "mint": {
+        "title": "Выпустить новый токен SCIM",
+        "description": "Сгенерируйте токен доступа (bearer token), который ваш поставщик идентификации (IdP) будет использовать для синхронизации пользователей с TestPlanIt.",
+        "nameLabel": "Имя токена",
+        "namePlaceholder": "например, производство Okta",
+        "idpLabel": "Поставщик идентификационных данных",
+        "idpOkta": "Окта",
+        "idpEntra": "Microsoft Entra (Azure AD)",
+        "idpOneLogin": "OneLogin",
+        "idpOther": "Другой",
+        "expiresLabel": "Срок действия истекает",
+        "expiresNever": "Срок действия не ограничен.",
+        "expires30": "30 дней",
+        "expires90": "90 дней",
+        "expires1y": "1 год",
+        "expiresCustom": "Пользовательская дата…",
+        "expiresCustomLabel": "Выберите срок действия",
+        "submit": "Монетный жетон",
+        "submitting": "Вручение монет…",
+        "errorsNameRequired": "Имя токена обязательно.",
+        "errorToast": "Не удалось создать токен. {reason}"
+      },
+      "reveal": {
+        "title": "Токен создан",
+        "warning": "Скопируйте этот токен сейчас. TestPlanIt больше его не отобразит.",
+        "tokenLabel": "SCIM токен носителя",
+        "copy": "Копия",
+        "copied": "Скопировано",
+        "baseUrlHint": "Вставьте это в поле SCIM Bearer-token вашего IdP. Базовый URL: {baseUrl}.",
+        "close": "Закрывать",
+        "toast": "Токен создан.",
+        "a11yAnnounce": "Токен создан. Скопируйте сейчас."
+      },
+      "revoke": {
+        "title": "Отозвать токен SCIM?",
+        "description": "Следующий запрос, содержащий \"{name}\", будет отклонен с кодом HTTP 401. Строка с токеном навсегда останется в истории аудита.",
+        "confirm": "Отменить",
+        "successToast": "Токен аннулирован.",
+        "errorToast": "Не удалось отозвать токен. {reason}"
+      },
+      "probe": {
+        "button": "Тест SCIM",
+        "testing": "Тестирование…",
+        "okBanner": "HTTP {status} — токен работает с /scim/v2/Users.",
+        "failBanner": "HTTP {status} — {reason}",
+        "networkError": "Не удалось установить соединение с конечной точкой SCIM. Повторите попытку."
+      }
     },
     "tags": {
       "add": {
@@ -5409,7 +5482,8 @@
         "allTime": "За все время"
       },
       "systemActor": "Система",
-      "systemActorTooltip": "Действие выполняется системой, а не авторизованным пользователем."
+      "systemActorTooltip": "Действие выполняется системой, а не авторизованным пользователем.",
+      "sourceScim": "СКИМ"
     }
   },
   "components": {

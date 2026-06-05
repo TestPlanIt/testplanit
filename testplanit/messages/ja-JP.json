@@ -3410,6 +3410,7 @@
       "queues": "ジョブキュー",
       "auditLogs": "監査ログ",
       "apiTokens": "APIトークン",
+      "scim": "SCIMプロビジョニング",
       "quickscriptTemplates": "QuickScriptテンプレート",
       "testManagement": "テスト管理",
       "peopleAndAccess": "人材とアクセス",
@@ -4315,7 +4316,9 @@
       "forcePasswordChangeSuccess": "{name} のパスワード変更が必要です。",
       "forcePasswordChangeFailed": "パスワード変更の強制に失敗しました",
       "revokePasswordSuccess": "{name} のパスワードが取り消されました",
-      "revokePasswordFailed": "パスワードの取り消しに失敗しました"
+      "revokePasswordFailed": "パスワードの取り消しに失敗しました",
+      "scimProvisionerBadge": "SCIMプロビジョナー",
+      "scimManagedTooltip": "SCIMによって管理されています。SCIMの管理ページから管理してください。"
     },
     "security": {
       "title": "安全",
@@ -4379,6 +4382,76 @@
       "revokeAllPlaceholder": "すべて取り消す",
       "revokeAllSuccess": "すべてのAPIトークンが取り消されました",
       "revokeAllError": "すべてのトークンを取り消すことができませんでした"
+    },
+    "scim": {
+      "description": "SCIM 2.0 を介して、ID プロバイダーから TestPlanIt にユーザーをプロビジョニングします。",
+      "mintCta": "ミント・ニュー・トークン",
+      "filterPlaceholder": "トークン名またはIDプロバイダーでフィルタリング...",
+      "showRevoked": "取り消しを表示",
+      "noTokens": "SCIMトークンはまだ作成されていません。",
+      "emptyTitle": "SCIMトークンはまだありません",
+      "emptyBody": "トークンを発行することで、IDプロバイダーがTestPlanItでユーザーを自動的に作成および更新できるようになります。",
+      "emptyCta": "最初のトークンをミントする",
+      "sectionConflicts": "外部IDの競合",
+      "conflictsPlaceholder": "競合は発生していません。競合追跡艦艇は今後のリリースで実装予定です。",
+      "errorLoad": "トークンを読み込めませんでした。もう一度お試しください。",
+      "columns": {
+        "idp": "IdP",
+        "lastIp": "最終IPアドレス",
+        "lastSync": "最終同期"
+      },
+      "status": {
+        "active": "アクティブ",
+        "expired": "期限切れ",
+        "deactivated": "無効化済み"
+      },
+      "mint": {
+        "title": "ミント状態の新しいSCIMトークン",
+        "description": "ユーザーをTestPlanItに同期するために、IDプロバイダーが使用するベアラートークンを生成します。",
+        "nameLabel": "トークン名",
+        "namePlaceholder": "例：Oktaの製品",
+        "idpLabel": "IDプロバイダー",
+        "idpOkta": "オクタ",
+        "idpEntra": "Microsoft Entra (Azure AD)",
+        "idpOneLogin": "ワンログイン",
+        "idpOther": "他の",
+        "expiresLabel": "有効期限切れ",
+        "expiresNever": "有効期限なし",
+        "expires30": "30日間",
+        "expires90": "90日間",
+        "expires1y": "1年",
+        "expiresCustom": "カスタム日付…",
+        "expiresCustomLabel": "有効期限を選択してください",
+        "submit": "ミントトークン",
+        "submitting": "造幣…",
+        "errorsNameRequired": "トークン名は必須です。",
+        "errorToast": "トークンを発行できませんでした。 {reason}"
+      },
+      "reveal": {
+        "title": "トークンが作成されました",
+        "warning": "このトークンを今すぐコピーしてください。TestPlanItでは二度と表示されません。",
+        "tokenLabel": "SCIMベアラートークン",
+        "copy": "コピー",
+        "copied": "コピーしました",
+        "baseUrlHint": "これをIdPのSCIMベアラートークンフィールドに貼り付けてください。ベースURLは {baseUrl}です。",
+        "close": "近い",
+        "toast": "トークンが作成されました。",
+        "a11yAnnounce": "トークンが作成されました。今すぐコピーしてください。"
+      },
+      "revoke": {
+        "title": "SCIMトークンを取り消しますか？",
+        "description": "「{name}」を含む次のリクエストはHTTP 401エラーで拒否されます。トークン行は監査履歴に永久に残ります。",
+        "confirm": "取り消す",
+        "successToast": "トークンは取り消されました。",
+        "errorToast": "トークンを取り消せませんでした。 {reason}"
+      },
+      "probe": {
+        "button": "SCIMをテストする",
+        "testing": "テスト…",
+        "okBanner": "HTTP {status} — トークンは /scim/v2/Users に対して機能します。",
+        "failBanner": "HTTP {status} — {reason}",
+        "networkError": "SCIMエンドポイントに接続できませんでした。再試行します。"
+      }
     },
     "tags": {
       "add": {
@@ -5409,7 +5482,8 @@
         "allTime": "歴代"
       },
       "systemActor": "システム",
-      "systemActorTooltip": "ログインユーザーではなく、システムによって実行された操作"
+      "systemActorTooltip": "ログインユーザーではなく、システムによって実行された操作",
+      "sourceScim": "SCIM"
     }
   },
   "components": {

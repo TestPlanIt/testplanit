@@ -3410,6 +3410,7 @@
       "queues": "İş Kuyrukları",
       "auditLogs": "Denetim Kayıtları",
       "apiTokens": "API Token'ları",
+      "scim": "SCIM Sağlama",
       "quickscriptTemplates": "QuickScript Şablonları",
       "testManagement": "Test Yönetimi",
       "peopleAndAccess": "İnsanlar ve Erişim",
@@ -4315,7 +4316,9 @@
       "forcePasswordChangeSuccess": "{name} için parola değiştirilmesi gerekiyor.",
       "forcePasswordChangeFailed": "Parola değiştirme işlemi başarısız oldu.",
       "revokePasswordSuccess": "{name} için parola iptal edildi.",
-      "revokePasswordFailed": "Parolayı iptal etme işlemi başarısız oldu."
+      "revokePasswordFailed": "Parolayı iptal etme işlemi başarısız oldu.",
+      "scimProvisionerBadge": "SCIM Sağlayıcısı",
+      "scimManagedTooltip": "SCIM tarafından yönetilir. SCIM yönetim sayfasından yönetin."
     },
     "security": {
       "title": "Güvenlik",
@@ -4379,6 +4382,76 @@
       "revokeAllPlaceholder": "TÜMÜNÜ İPTAL ET",
       "revokeAllSuccess": "Tüm API token'ları iptal edildi.",
       "revokeAllError": "Tüm token'ları iptal etme işlemi başarısız oldu."
+    },
+    "scim": {
+      "description": "Kimlik sağlayıcınızdan gelen kullanıcıları SCIM 2.0 üzerinden TestPlanIt'e ekleyin.",
+      "mintCta": "Yeni jeton bas",
+      "filterPlaceholder": "Token adına veya IdP'ye göre filtrele...",
+      "showRevoked": "İptal Edildi Göster",
+      "noTokens": "Henüz hiçbir SCIM token'ı oluşturulmadı.",
+      "emptyTitle": "Henüz SCIM token'ları yok.",
+      "emptyBody": "Kimlik sağlayıcınızın TestPlanIt'te kullanıcıları otomatik olarak oluşturmasına ve güncellemesine olanak sağlamak için bir token oluşturun.",
+      "emptyCta": "İlk jetonunuzu bastırın",
+      "sectionConflicts": "Harici Kimlik Çakışmaları",
+      "conflictsPlaceholder": "Herhangi bir çakışma yok. Çakışma takibi daha sonraki bir sürümde eklenecektir.",
+      "errorLoad": "Token'lar yüklenemedi. Tekrar deneyin.",
+      "columns": {
+        "idp": "IdP",
+        "lastIp": "Son IP",
+        "lastSync": "Son Senkronizasyon"
+      },
+      "status": {
+        "active": "Aktif",
+        "expired": "Günü geçmiş",
+        "deactivated": "Devre dışı bırakıldı"
+      },
+      "mint": {
+        "title": "Yeni SCIM token'ı basıldı.",
+        "description": "Kimlik sağlayıcınızın (IdP) kullanıcıları TestPlanIt'e senkronize etmek için kullanacağı bir taşıyıcı belirteç (bearer token) oluşturun.",
+        "nameLabel": "Jeton Adı",
+        "namePlaceholder": "Örneğin, Okta üretimi",
+        "idpLabel": "Kimlik Sağlayıcı",
+        "idpOkta": "Okta",
+        "idpEntra": "Microsoft Entra (Azure AD)",
+        "idpOneLogin": "OneLogin",
+        "idpOther": "Diğer",
+        "expiresLabel": "Süresi doluyor",
+        "expiresNever": "Son kullanma tarihi yok",
+        "expires30": "30 gün",
+        "expires90": "90 gün",
+        "expires1y": "1 yıl",
+        "expiresCustom": "Özel tarih…",
+        "expiresCustomLabel": "Son kullanma tarihini seçin",
+        "submit": "Darphane jetonu",
+        "submitting": "Darphane…",
+        "errorsNameRequired": "Token adı zorunludur.",
+        "errorToast": "Jeton basılamadı. {reason}"
+      },
+      "reveal": {
+        "title": "Token oluşturuldu",
+        "warning": "Bu belirteci şimdi kopyalayın. TestPlanIt bunu bir daha göstermeyecek.",
+        "tokenLabel": "SCIM taşıyıcı token",
+        "copy": "Kopyala",
+        "copied": "Kopyalandı",
+        "baseUrlHint": "Bunu IdP'nizin SCIM Bearer-token alanına yapıştırın. Temel URL {baseUrl} şeklindedir.",
+        "close": "Kapalı",
+        "toast": "Token oluşturuldu.",
+        "a11yAnnounce": "Token oluşturuldu. Şimdi kopyalayın."
+      },
+      "revoke": {
+        "title": "SCIM token'ını iptal etmek mi?",
+        "description": "\"{name}\" içeren bir sonraki istek HTTP 401 hatasıyla reddedilecektir. Token satırı denetim geçmişinde sonsuza kadar kalır.",
+        "confirm": "Geri çekmek",
+        "successToast": "Jeton iptal edildi.",
+        "errorToast": "Token iptal edilemedi. {reason}"
+      },
+      "probe": {
+        "button": "SCIM'i test edin",
+        "testing": "Test ediliyor…",
+        "okBanner": "HTTP {status} — belirteç /scim/v2/Users'a karşı çalışır.",
+        "failBanner": "HTTP {status} — {reason}",
+        "networkError": "SCIM uç noktasına ulaşılamadı. Tekrar denenecek."
+      }
     },
     "tags": {
       "add": {
@@ -5409,7 +5482,8 @@
         "allTime": "Tüm zamanlar"
       },
       "systemActor": "Sistem",
-      "systemActorTooltip": "Sistem tarafından gerçekleştirilen işlem, oturum açmış bir kullanıcı tarafından değil."
+      "systemActorTooltip": "Sistem tarafından gerçekleştirilen işlem, oturum açmış bir kullanıcı tarafından değil.",
+      "sourceScim": "SCIM"
     }
   },
   "components": {

@@ -3410,6 +3410,7 @@
       "queues": "Job Queues",
       "auditLogs": "Audit Logs",
       "apiTokens": "API Tokens",
+      "scim": "SCIM Provisioning",
       "quickscriptTemplates": "QuickScript Templates",
       "testManagement": "Test Management",
       "peopleAndAccess": "People & Access",
@@ -4315,7 +4316,9 @@
       "forcePasswordChangeSuccess": "Password change required for {name}",
       "forcePasswordChangeFailed": "Failed to force password change",
       "revokePasswordSuccess": "Password revoked for {name}",
-      "revokePasswordFailed": "Failed to revoke password"
+      "revokePasswordFailed": "Failed to revoke password",
+      "scimProvisionerBadge": "SCIM Provisioner",
+      "scimManagedTooltip": "Managed by SCIM. Manage from the SCIM admin page."
     },
     "security": {
       "title": "Security",
@@ -4379,6 +4382,76 @@
       "revokeAllPlaceholder": "REVOKE ALL",
       "revokeAllSuccess": "All API tokens have been revoked",
       "revokeAllError": "Failed to revoke all tokens"
+    },
+    "scim": {
+      "description": "Provision users from your identity provider into TestPlanIt over SCIM 2.0.",
+      "mintCta": "Mint new token",
+      "filterPlaceholder": "Filter by token name or IdP...",
+      "showRevoked": "Show Revoked",
+      "noTokens": "No SCIM tokens have been created yet.",
+      "emptyTitle": "No SCIM tokens yet",
+      "emptyBody": "Mint a token to let your identity provider create and update users in TestPlanIt automatically.",
+      "emptyCta": "Mint your first token",
+      "sectionConflicts": "External-ID conflicts",
+      "conflictsPlaceholder": "No conflicts. Conflict tracking ships in a later release.",
+      "errorLoad": "Couldn't load tokens. Retry.",
+      "columns": {
+        "idp": "IdP",
+        "lastIp": "Last IP",
+        "lastSync": "Last Sync"
+      },
+      "status": {
+        "active": "Active",
+        "expired": "Expired",
+        "deactivated": "Deactivated"
+      },
+      "mint": {
+        "title": "Mint new SCIM token",
+        "description": "Generate a bearer token your IdP will use to sync users into TestPlanIt.",
+        "nameLabel": "Token Name",
+        "namePlaceholder": "e.g., Okta production",
+        "idpLabel": "Identity Provider",
+        "idpOkta": "Okta",
+        "idpEntra": "Microsoft Entra (Azure AD)",
+        "idpOneLogin": "OneLogin",
+        "idpOther": "Other",
+        "expiresLabel": "Expires",
+        "expiresNever": "Never expires",
+        "expires30": "30 days",
+        "expires90": "90 days",
+        "expires1y": "1 year",
+        "expiresCustom": "Custom date…",
+        "expiresCustomLabel": "Choose expiry date",
+        "submit": "Mint token",
+        "submitting": "Minting…",
+        "errorsNameRequired": "Token name is required.",
+        "errorToast": "Couldn't mint token. {reason}"
+      },
+      "reveal": {
+        "title": "Token created",
+        "warning": "Copy this token now. TestPlanIt won't show it again.",
+        "tokenLabel": "SCIM bearer token",
+        "copy": "Copy",
+        "copied": "Copied",
+        "baseUrlHint": "Paste this into your IdP's SCIM Bearer-token field. The base URL is {baseUrl}.",
+        "close": "Close",
+        "toast": "Token created.",
+        "a11yAnnounce": "Token created. Copy now."
+      },
+      "revoke": {
+        "title": "Revoke SCIM token?",
+        "description": "The next request bearing \"{name}\" will be rejected with HTTP 401. The token row stays in audit history forever.",
+        "confirm": "Revoke",
+        "successToast": "Token revoked.",
+        "errorToast": "Couldn't revoke token. {reason}"
+      },
+      "probe": {
+        "button": "Test SCIM",
+        "testing": "Testing…",
+        "okBanner": "HTTP {status} — token works against /scim/v2/Users.",
+        "failBanner": "HTTP {status} — {reason}",
+        "networkError": "Couldn't reach the SCIM endpoint. Retry."
+      }
     },
     "tags": {
       "add": {
@@ -5409,7 +5482,8 @@
         "allTime": "All time"
       },
       "systemActor": "System",
-      "systemActorTooltip": "Action performed by the system, not a logged-in user"
+      "systemActorTooltip": "Action performed by the system, not a logged-in user",
+      "sourceScim": "SCIM"
     }
   },
   "components": {

@@ -3410,6 +3410,7 @@
       "queues": "Kolejki zadań",
       "auditLogs": "Dzienniki audytu",
       "apiTokens": "Tokeny API",
+      "scim": "Dostarczanie SCIM",
       "quickscriptTemplates": "Szablony QuickScript",
       "testManagement": "Zarządzanie testami",
       "peopleAndAccess": "Ludzie i dostęp",
@@ -4315,7 +4316,9 @@
       "forcePasswordChangeSuccess": "Wymagana zmiana hasła dla {name}",
       "forcePasswordChangeFailed": "Nie udało się wymusić zmiany hasła",
       "revokePasswordSuccess": "Hasło dla {name} zostało unieważnione",
-      "revokePasswordFailed": "Nie udało się cofnąć hasła"
+      "revokePasswordFailed": "Nie udało się cofnąć hasła",
+      "scimProvisionerBadge": "Dostawca SCIM",
+      "scimManagedTooltip": "Zarządzane przez SCIM. Zarządzaj ze strony administratora SCIM."
     },
     "security": {
       "title": "Bezpieczeństwo",
@@ -4379,6 +4382,76 @@
       "revokeAllPlaceholder": "COFNIJ WSZYSTKIE",
       "revokeAllSuccess": "Wszystkie tokeny API zostały unieważnione",
       "revokeAllError": "Nie udało się unieważnić wszystkich tokenów"
+    },
+    "scim": {
+      "description": "Dostarcz użytkowników do TestPlanIt od swojego dostawcy tożsamości przez SCIM 2.0.",
+      "mintCta": "Wybij nowy token",
+      "filterPlaceholder": "Filtruj według nazwy tokena lub dostawcy tożsamości...",
+      "showRevoked": "Pokaż odwołane",
+      "noTokens": "Nie utworzono jeszcze żadnych tokenów SCIM.",
+      "emptyTitle": "Brak tokenów SCIM",
+      "emptyBody": "Utwórz token, aby umożliwić swojemu dostawcy tożsamości automatyczne tworzenie i aktualizowanie użytkowników w TestPlanIt.",
+      "emptyCta": "Wybij swój pierwszy token",
+      "sectionConflicts": "Konflikty identyfikatorów zewnętrznych",
+      "conflictsPlaceholder": "Brak konfliktów. Śledzenie konfliktów będzie dostępne w późniejszej wersji.",
+      "errorLoad": "Nie udało się załadować tokenów. Spróbuj ponownie.",
+      "columns": {
+        "idp": "Dostawca tożsamości",
+        "lastIp": "Ostatni adres IP",
+        "lastSync": "Ostatnia synchronizacja"
+      },
+      "status": {
+        "active": "Aktywny",
+        "expired": "Wygasły",
+        "deactivated": "Dezaktywowany"
+      },
+      "mint": {
+        "title": "Wyprodukuj nowy token SCIM",
+        "description": "Wygeneruj token nośnika, którego Twój dostawca tożsamości będzie używał do synchronizacji użytkowników z TestPlanIt.",
+        "nameLabel": "Nazwa tokena",
+        "namePlaceholder": "np. produkcja Okta",
+        "idpLabel": "Dostawca tożsamości",
+        "idpOkta": "Okta",
+        "idpEntra": "Microsoft Entra (Azure AD)",
+        "idpOneLogin": "OneLogin",
+        "idpOther": "Inny",
+        "expiresLabel": "Wygasa",
+        "expiresNever": "Nigdy nie wygasa",
+        "expires30": "30 dni",
+        "expires90": "90 dni",
+        "expires1y": "1 rok",
+        "expiresCustom": "Data niestandardowa…",
+        "expiresCustomLabel": "Wybierz datę ważności",
+        "submit": "Żeton menniczy",
+        "submitting": "Wybijanie…",
+        "errorsNameRequired": "Nazwa tokena jest wymagana.",
+        "errorToast": "Nie udało się wybić tokena. {reason}"
+      },
+      "reveal": {
+        "title": "Token utworzony",
+        "warning": "Skopiuj ten token teraz. TestPlanIt nie pokaże go ponownie.",
+        "tokenLabel": "Token okaziciela SCIM",
+        "copy": "Kopia",
+        "copied": "Skopiowano",
+        "baseUrlHint": "Wklej to w polu „Token nośnika SCIM” swojego dostawcy tożsamości. Podstawowy adres URL to {baseUrl}.",
+        "close": "Zamknąć",
+        "toast": "Token został utworzony.",
+        "a11yAnnounce": "Token utworzony. Skopiuj teraz."
+      },
+      "revoke": {
+        "title": "Cofnąć token SCIM?",
+        "description": "Następne żądanie zawierające „{name}” zostanie odrzucone z kodem HTTP 401. Wiersz tokena pozostanie w historii audytu na zawsze.",
+        "confirm": "Unieważnić",
+        "successToast": "Token został cofnięty.",
+        "errorToast": "Nie udało się cofnąć tokena. {reason}"
+      },
+      "probe": {
+        "button": "Test SCIM",
+        "testing": "Testowanie…",
+        "okBanner": "HTTP {status} — token działa w oparciu o /scim/v2/Users.",
+        "failBanner": "HTTP {status} — {reason}",
+        "networkError": "Nie udało się nawiązać połączenia z punktem końcowym SCIM. Spróbuj ponownie."
+      }
     },
     "tags": {
       "add": {
@@ -5409,7 +5482,8 @@
         "allTime": "Cały czas"
       },
       "systemActor": "System",
-      "systemActorTooltip": "Akcja wykonywana przez system, a nie przez zalogowanego użytkownika"
+      "systemActorTooltip": "Akcja wykonywana przez system, a nie przez zalogowanego użytkownika",
+      "sourceScim": "SCIM"
     }
   },
   "components": {

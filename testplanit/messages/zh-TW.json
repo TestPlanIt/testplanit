@@ -3410,6 +3410,7 @@
       "queues": "作業佇列",
       "auditLogs": "審計日誌",
       "apiTokens": "API令牌",
+      "scim": "SCIM配置",
       "quickscriptTemplates": "QuickScript模板",
       "testManagement": "測試管理",
       "peopleAndAccess": "人員與通道",
@@ -4315,7 +4316,9 @@
       "forcePasswordChangeSuccess": "{name} 需要更改密碼",
       "forcePasswordChangeFailed": "強制更改密碼失敗",
       "revokePasswordSuccess": "密碼已撤銷 {name}",
-      "revokePasswordFailed": "撤銷密碼失敗"
+      "revokePasswordFailed": "撤銷密碼失敗",
+      "scimProvisionerBadge": "SCIM 配置器",
+      "scimManagedTooltip": "由SCIM管理。請從SCIM管理頁面進行管理。"
     },
     "security": {
       "title": "安全",
@@ -4379,6 +4382,76 @@
       "revokeAllPlaceholder": "撤銷所有",
       "revokeAllSuccess": "所有API令牌均已撤銷。",
       "revokeAllError": "撤銷所有令牌失敗"
+    },
+    "scim": {
+      "description": "透過 SCIM 2.0 將身分提供者的使用者配置到 TestPlanIt 中。",
+      "mintCta": "鑄造新代幣",
+      "filterPlaceholder": "按令牌名稱或身分提供者篩選...",
+      "showRevoked": "顯示撤銷",
+      "noTokens": "尚未建立任何 SCIM 令牌。",
+      "emptyTitle": "暫無 SCIM 令牌",
+      "emptyBody": "鑄造一個令牌，讓你的身分提供者能夠自動在 TestPlanIt 中建立和更新使用者。",
+      "emptyCta": "鑄造你的第一個代幣",
+      "sectionConflicts": "外部ID衝突",
+      "conflictsPlaceholder": "目前沒有衝突。衝突追蹤功能將在後續版本中推出。",
+      "errorLoad": "令牌載入失敗，請重試。",
+      "columns": {
+        "idp": "身分提供者",
+        "lastIp": "最後 IP",
+        "lastSync": "上次同步"
+      },
+      "status": {
+        "active": "積極的",
+        "expired": "已到期",
+        "deactivated": "已停用"
+      },
+      "mint": {
+        "title": "鑄造新的 SCIM 代幣",
+        "description": "產生持有者令牌，您的身分提供者將使用該令牌將使用者同步到 TestPlanIt 中。",
+        "nameLabel": "令牌名稱",
+        "namePlaceholder": "例如，Okta 生產",
+        "idpLabel": "身分提供者",
+        "idpOkta": "奧克塔",
+        "idpEntra": "Microsoft Entra（Azure AD）",
+        "idpOneLogin": "OneLogin",
+        "idpOther": "其他",
+        "expiresLabel": "過期",
+        "expiresNever": "永不過期",
+        "expires30": "30天",
+        "expires90": "90天",
+        "expires1y": "1年",
+        "expiresCustom": "自訂日期…",
+        "expiresCustomLabel": "選擇到期日",
+        "submit": "鑄幣代幣",
+        "submitting": "鑄幣…",
+        "errorsNameRequired": "令牌名稱為必填項。",
+        "errorToast": "無法鑄造代幣。 {reason}"
+      },
+      "reveal": {
+        "title": "令牌已建立",
+        "warning": "立即複製此令牌。 TestPlanIt 將不會再次顯示它。",
+        "tokenLabel": "SCIM 持有者代幣",
+        "copy": "複製",
+        "copied": "已複製",
+        "baseUrlHint": "將此內容貼到您的身分提供者 (IdP) 的 SCIM Bearer-token 欄位中。基本 URL 為 {baseUrl}。",
+        "close": "關閉",
+        "toast": "令牌已建立。",
+        "a11yAnnounce": "令牌已建立。立即複製。"
+      },
+      "revoke": {
+        "title": "撤銷 SCIM 令牌？",
+        "description": "下一個帶有「{name}」的請求將被拒絕，並回傳HTTP 401錯誤。該令牌行將永久保留在稽核歷史記錄中。",
+        "confirm": "撤銷",
+        "successToast": "令牌已撤銷。",
+        "errorToast": "無法撤銷令牌。 {reason}"
+      },
+      "probe": {
+        "button": "測試 SCIM",
+        "testing": "測試…",
+        "okBanner": "HTTP {status} — 令牌對 /scim/v2/Users 有效。",
+        "failBanner": "HTTP {status} — {reason}",
+        "networkError": "無法連接到SCIM端點。請重試。"
+      }
     },
     "tags": {
       "add": {
@@ -5409,7 +5482,8 @@
         "allTime": "所有時間"
       },
       "systemActor": "系統",
-      "systemActorTooltip": "系統執行的操作，而非登入使用者執行的操作。"
+      "systemActorTooltip": "系統執行的操作，而非登入使用者執行的操作。",
+      "sourceScim": "SCIM"
     }
   },
   "components": {

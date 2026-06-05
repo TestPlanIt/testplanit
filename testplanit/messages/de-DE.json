@@ -3410,6 +3410,7 @@
       "queues": "Jobwarteschlangen",
       "auditLogs": "Audit-Protokolle",
       "apiTokens": "API-Tokens",
+      "scim": "SCIM-Bereitstellung",
       "quickscriptTemplates": "QuickScript-Vorlagen",
       "testManagement": "Testmanagement",
       "peopleAndAccess": "Personen & Zugriff",
@@ -4315,7 +4316,9 @@
       "forcePasswordChangeSuccess": "Passwortänderung erforderlich für {name}",
       "forcePasswordChangeFailed": "Passwortänderung konnte nicht erzwungen werden",
       "revokePasswordSuccess": "Passwort für {name} widerrufen",
-      "revokePasswordFailed": "Passwort widerrufen fehlgeschlagen"
+      "revokePasswordFailed": "Passwort widerrufen fehlgeschlagen",
+      "scimProvisionerBadge": "SCIM-Provisioner",
+      "scimManagedTooltip": "Verwaltet von SCIM. Verwaltung über die SCIM-Administrationsseite."
     },
     "security": {
       "title": "Sicherheit",
@@ -4379,6 +4382,76 @@
       "revokeAllPlaceholder": "ALLE WIDERRUF",
       "revokeAllSuccess": "Alle API-Token wurden widerrufen.",
       "revokeAllError": "Fehler beim Widerruf aller Token"
+    },
+    "scim": {
+      "description": "Benutzer Ihres Identitätsanbieters werden über SCIM 2.0 in TestPlanIt bereitgestellt.",
+      "mintCta": "Präge einen neuen Token",
+      "filterPlaceholder": "Nach Token-Namen oder IdP filtern...",
+      "showRevoked": "Show widerrufen",
+      "noTokens": "Es wurden noch keine SCIM-Token erstellt.",
+      "emptyTitle": "Noch keine SCIM-Token",
+      "emptyBody": "Erstellen Sie ein Token, damit Ihr Identitätsanbieter Benutzer in TestPlanIt automatisch anlegen und aktualisieren kann.",
+      "emptyCta": "Präge deinen ersten Token",
+      "sectionConflicts": "Konflikte mit externen Identitäten",
+      "conflictsPlaceholder": "Keine Konflikte. Schiffe zur Konfliktverfolgung werden in einer späteren Version implementiert.",
+      "errorLoad": "Tokens konnten nicht geladen werden. Bitte erneut versuchen.",
+      "columns": {
+        "idp": "IdP",
+        "lastIp": "Letzte IP",
+        "lastSync": "Letzte Synchronisierung"
+      },
+      "status": {
+        "active": "Aktiv",
+        "expired": "Abgelaufen",
+        "deactivated": "Deaktiviert"
+      },
+      "mint": {
+        "title": "Präge einen neuen SCIM-Token",
+        "description": "Generieren Sie ein Bearer-Token, das Ihr Identitätsanbieter (IdP) zur Synchronisierung von Benutzern mit TestPlanIt verwendet.",
+        "nameLabel": "Token-Name",
+        "namePlaceholder": "z.B. Okta-Produktion",
+        "idpLabel": "Identitätsanbieter",
+        "idpOkta": "Okta",
+        "idpEntra": "Microsoft Entra (Azure AD)",
+        "idpOneLogin": "OneLogin",
+        "idpOther": "Andere",
+        "expiresLabel": "Läuft ab",
+        "expiresNever": "Läuft nie ab",
+        "expires30": "30 Tage",
+        "expires90": "90 Tage",
+        "expires1y": "1 Jahr",
+        "expiresCustom": "Benutzerdefiniertes Datum…",
+        "expiresCustomLabel": "Ablaufdatum auswählen",
+        "submit": "Münztoken",
+        "submitting": "Prägung…",
+        "errorsNameRequired": "Ein Token-Name ist erforderlich.",
+        "errorToast": "Token konnte nicht geprägt werden. {reason}"
+      },
+      "reveal": {
+        "title": "Token erstellt",
+        "warning": "Kopieren Sie dieses Token jetzt. TestPlanIt wird es nicht erneut anzeigen.",
+        "tokenLabel": "SCIM-Bearer-Token",
+        "copy": "Kopie",
+        "copied": "Kopiert",
+        "baseUrlHint": "Fügen Sie dies in das SCIM-Bearer-Token-Feld Ihres IdP ein. Die Basis-URL lautet {baseUrl}.",
+        "close": "Schließen",
+        "toast": "Token erstellt.",
+        "a11yAnnounce": "Token erstellt. Jetzt kopieren."
+      },
+      "revoke": {
+        "title": "SCIM-Token widerrufen?",
+        "description": "Die nächste Anfrage mit dem Token \"{name}\" wird mit dem HTTP-Statuscode 401 abgelehnt. Der Token-Eintrag bleibt dauerhaft im Protokoll gespeichert.",
+        "confirm": "Widerrufen",
+        "successToast": "Token widerrufen.",
+        "errorToast": "Token konnte nicht widerrufen werden. {reason}"
+      },
+      "probe": {
+        "button": "Test SCIM",
+        "testing": "Testen…",
+        "okBanner": "HTTP {status} — Token funktioniert gegen /scim/v2/Users.",
+        "failBanner": "HTTP {status} — {reason}",
+        "networkError": "Der SCIM-Endpunkt konnte nicht erreicht werden. Bitte versuchen Sie es erneut."
+      }
     },
     "tags": {
       "add": {
@@ -5409,7 +5482,8 @@
         "allTime": "Alle Zeiten"
       },
       "systemActor": "System",
-      "systemActorTooltip": "Die Aktion wurde vom System und nicht von einem angemeldeten Benutzer ausgeführt."
+      "systemActorTooltip": "Die Aktion wurde vom System und nicht von einem angemeldeten Benutzer ausgeführt.",
+      "sourceScim": "SCIM"
     }
   },
   "components": {

@@ -3410,6 +3410,7 @@
       "queues": "Filas de Tarefas",
       "auditLogs": "Registros de auditoria",
       "apiTokens": "Tokens de API",
+      "scim": "Provisionamento SCIM",
       "quickscriptTemplates": "Modelos QuickScript",
       "testManagement": "Gestão de Testes",
       "peopleAndAccess": "Pessoas e Acesso",
@@ -4315,7 +4316,9 @@
       "forcePasswordChangeSuccess": "É necessário alterar a senha para {name}",
       "forcePasswordChangeFailed": "Falha ao forçar a alteração de senha",
       "revokePasswordSuccess": "Senha revogada para {name}",
-      "revokePasswordFailed": "Falha ao revogar a senha"
+      "revokePasswordFailed": "Falha ao revogar a senha",
+      "scimProvisionerBadge": "Provedor SCIM",
+      "scimManagedTooltip": "Gerenciado pelo SCIM. Gerencie a partir da página de administração do SCIM."
     },
     "security": {
       "title": "Segurança",
@@ -4379,6 +4382,76 @@
       "revokeAllPlaceholder": "REVOGAR TUDO",
       "revokeAllSuccess": "Todos os tokens da API foram revogados.",
       "revokeAllError": "Falha ao revogar todos os tokens."
+    },
+    "scim": {
+      "description": "Provisione usuários do seu provedor de identidade no TestPlanIt por meio do SCIM 2.0.",
+      "mintCta": "Crie um novo token.",
+      "filterPlaceholder": "Filtrar por nome do token ou IdP...",
+      "showRevoked": "Mostrar revogado",
+      "noTokens": "Nenhum token SCIM foi criado ainda.",
+      "emptyTitle": "Ainda não há tokens SCIM.",
+      "emptyBody": "Crie um token para permitir que seu provedor de identidade crie e atualize usuários no TestPlanIt automaticamente.",
+      "emptyCta": "Crie seu primeiro token",
+      "sectionConflicts": "Conflitos de ID externo",
+      "conflictsPlaceholder": "Sem conflitos. Naves de rastreamento de conflitos serão adicionadas em uma versão posterior.",
+      "errorLoad": "Não foi possível carregar os tokens. Tente novamente.",
+      "columns": {
+        "idp": "IdP",
+        "lastIp": "Último IP",
+        "lastSync": "Última sincronização"
+      },
+      "status": {
+        "active": "Ativo",
+        "expired": "Expirado",
+        "deactivated": "Desativado"
+      },
+      "mint": {
+        "title": "Crie um novo token SCIM.",
+        "description": "Gere um token de portador que seu IdP usará para sincronizar os usuários com o TestPlanIt.",
+        "nameLabel": "Nome do token",
+        "namePlaceholder": "Por exemplo, a produção da Okta.",
+        "idpLabel": "Provedor de identidade",
+        "idpOkta": "Okta",
+        "idpEntra": "Microsoft Entra (Azure AD)",
+        "idpOneLogin": "OneLogin",
+        "idpOther": "Outro",
+        "expiresLabel": "Expira",
+        "expiresNever": "Nunca expira",
+        "expires30": "30 dias",
+        "expires90": "90 dias",
+        "expires1y": "1 ano",
+        "expiresCustom": "Data personalizada…",
+        "expiresCustomLabel": "Selecione a data de validade",
+        "submit": "Ficha de cunhagem",
+        "submitting": "Cunhagem…",
+        "errorsNameRequired": "O nome do token é obrigatório.",
+        "errorToast": "Não foi possível cunhar o token. {reason}"
+      },
+      "reveal": {
+        "title": "Token criado",
+        "warning": "Copie este token agora. O TestPlanIt não o exibirá novamente.",
+        "tokenLabel": "Token portador SCIM",
+        "copy": "Cópia",
+        "copied": "Copiado",
+        "baseUrlHint": "Cole isso no campo SCIM Bearer-token do seu IdP. A URL base é {baseUrl}.",
+        "close": "Fechar",
+        "toast": "Token criado.",
+        "a11yAnnounce": "Token criado. Copie agora."
+      },
+      "revoke": {
+        "title": "Revogar token SCIM?",
+        "description": "A próxima solicitação contendo \"{name}\" será rejeitada com HTTP 401. A linha do token permanece no histórico de auditoria permanentemente.",
+        "confirm": "Revogar",
+        "successToast": "Token revogado.",
+        "errorToast": "Não foi possível revogar o token. {reason}"
+      },
+      "probe": {
+        "button": "Teste SCIM",
+        "testing": "Testando…",
+        "okBanner": "HTTP {status} — o token funciona contra /scim/v2/Users.",
+        "failBanner": "HTTP {status} — {reason}",
+        "networkError": "Não foi possível conectar-se ao endpoint SCIM. Tente novamente."
+      }
     },
     "tags": {
       "add": {
@@ -5409,7 +5482,8 @@
         "allTime": "O tempo todo"
       },
       "systemActor": "Sistema",
-      "systemActorTooltip": "Ação realizada pelo sistema, não por um usuário conectado."
+      "systemActorTooltip": "Ação realizada pelo sistema, não por um usuário conectado.",
+      "sourceScim": "SCIM"
     }
   },
   "components": {

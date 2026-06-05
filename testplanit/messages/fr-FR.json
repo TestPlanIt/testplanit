@@ -3410,6 +3410,7 @@
       "queues": "Files d'attente pour les tâches",
       "auditLogs": "Journaux d'audit",
       "apiTokens": "Jetons API",
+      "scim": "Approvisionnement SCIM",
       "quickscriptTemplates": "Modèles QuickScript",
       "testManagement": "Gestion des tests",
       "peopleAndAccess": "Personnes et accès",
@@ -4315,7 +4316,9 @@
       "forcePasswordChangeSuccess": "Changement de mot de passe requis pour {name}",
       "forcePasswordChangeFailed": "Échec de la modification forcée du mot de passe",
       "revokePasswordSuccess": "Mot de passe révoqué pour {name}",
-      "revokePasswordFailed": "Échec de la révocation du mot de passe"
+      "revokePasswordFailed": "Échec de la révocation du mot de passe",
+      "scimProvisionerBadge": "Fournisseur SCIM",
+      "scimManagedTooltip": "Géré par SCIM. Gérer depuis la page d'administration SCIM."
     },
     "security": {
       "title": "Sécurité",
@@ -4379,6 +4382,76 @@
       "revokeAllPlaceholder": "RÉVOQUER TOUT",
       "revokeAllSuccess": "Tous les jetons API ont été révoqués.",
       "revokeAllError": "Impossible de révoquer tous les jetons."
+    },
+    "scim": {
+      "description": "Importez les utilisateurs de votre fournisseur d'identité dans TestPlanIt via SCIM 2.0.",
+      "mintCta": "Émettre un nouveau jeton",
+      "filterPlaceholder": "Filtrer par nom de jeton ou IdP...",
+      "showRevoked": "Afficher révoqué",
+      "noTokens": "Aucun jeton SCIM n'a encore été créé.",
+      "emptyTitle": "Aucun jeton SCIM pour l'instant",
+      "emptyBody": "Créez un jeton pour permettre à votre fournisseur d'identité de créer et de mettre à jour automatiquement les utilisateurs dans TestPlanIt.",
+      "emptyCta": "Émettez votre premier jeton",
+      "sectionConflicts": "Conflits d'identifiants externes",
+      "conflictsPlaceholder": "Aucun conflit. Le suivi des conflits sera intégré dans une version ultérieure.",
+      "errorLoad": "Impossible de charger les jetons. Veuillez réessayer.",
+      "columns": {
+        "idp": "IdP",
+        "lastIp": "Dernière adresse IP",
+        "lastSync": "Dernière synchronisation"
+      },
+      "status": {
+        "active": "Actif",
+        "expired": "Expiré",
+        "deactivated": "Désactivé"
+      },
+      "mint": {
+        "title": "Émettez un nouveau jeton SCIM",
+        "description": "Générez un jeton d'authentification que votre fournisseur d'identité utilisera pour synchroniser les utilisateurs avec TestPlanIt.",
+        "nameLabel": "Nom du jeton",
+        "namePlaceholder": "par exemple, la production d'Okta",
+        "idpLabel": "Fournisseur d'identité",
+        "idpOkta": "Okta",
+        "idpEntra": "Microsoft Entra (Azure AD)",
+        "idpOneLogin": "OneLogin",
+        "idpOther": "Autre",
+        "expiresLabel": "Expire",
+        "expiresNever": "Ne périme jamais",
+        "expires30": "30 jours",
+        "expires90": "90 jours",
+        "expires1y": "1 an",
+        "expiresCustom": "Date personnalisée…",
+        "expiresCustomLabel": "Choisissez la date d'expiration",
+        "submit": "Jeton Mint",
+        "submitting": "Création de…",
+        "errorsNameRequired": "Le nom du jeton est obligatoire.",
+        "errorToast": "Impossible de créer un jeton. {reason}"
+      },
+      "reveal": {
+        "title": "Jeton créé",
+        "warning": "Copiez ce jeton maintenant. TestPlanIt ne l'affichera plus.",
+        "tokenLabel": "jeton porteur SCIM",
+        "copy": "Copie",
+        "copied": "Copié",
+        "baseUrlHint": "Collez ceci dans le champ SCIM Bearer-token de votre fournisseur d'identité. L'URL de base est {baseUrl}.",
+        "close": "Fermer",
+        "toast": "Jeton créé.",
+        "a11yAnnounce": "Jeton créé. Copiez-le maintenant."
+      },
+      "revoke": {
+        "title": "Révoquer le jeton SCIM ?",
+        "description": "La prochaine requête contenant «{name}» sera rejetée avec le code HTTP 401. La ligne de jeton reste indéfiniment dans l'historique d'audit.",
+        "confirm": "Révoquer",
+        "successToast": "Jeton révoqué.",
+        "errorToast": "Impossible de révoquer le jeton. {reason}"
+      },
+      "probe": {
+        "button": "Test SCIM",
+        "testing": "Test…",
+        "okBanner": "HTTP {status} — le jeton fonctionne contre /scim/v2/Users.",
+        "failBanner": "HTTP {status} — {reason}",
+        "networkError": "Impossible de joindre le point de terminaison SCIM. Veuillez réessayer."
+      }
     },
     "tags": {
       "add": {
@@ -5409,7 +5482,8 @@
         "allTime": "Tout le temps"
       },
       "systemActor": "Système",
-      "systemActorTooltip": "Action effectuée par le système, et non par un utilisateur connecté"
+      "systemActorTooltip": "Action effectuée par le système, et non par un utilisateur connecté",
+      "sourceScim": "SCIM"
     }
   },
   "components": {
