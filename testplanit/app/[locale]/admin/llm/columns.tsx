@@ -279,6 +279,7 @@ export const useColumns = (
               onClick={() => onEditIntegration?.(row.original)}
               className="px-2 py-1 h-auto"
               data-testid="llm-edit-button"
+              aria-label={tCommon("actions.edit")}
             >
               <Edit className="h-4 w-4" />
             </Button>
@@ -298,6 +299,7 @@ export const useColumns = (
                   : undefined
               }
               data-testid="llm-delete-button"
+              aria-label={tCommon("actions.delete")}
             >
               <Trash2 className="h-8 w-8 shrink-0" />
             </Button>
