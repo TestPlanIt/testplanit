@@ -248,7 +248,11 @@ export const useColumns = (
           <div className="flex justify-center">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="px-2 py-1 h-auto">
+                <Button
+                  variant="ghost"
+                  className="px-2 py-1 h-auto"
+                  aria-label={tCommon("actions.actionsLabel")}
+                >
                   <MoreHorizontal className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>

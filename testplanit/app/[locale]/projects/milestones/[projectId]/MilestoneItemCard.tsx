@@ -202,6 +202,7 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
                   variant="secondary"
                   size="icon"
                   className="p-0 m-0 h-7 w-7"
+                  aria-label={tCommon("actions.actionsLabel")}
                 >
                   <MoreVertical className="h-4 w-4" />
                 </Button>

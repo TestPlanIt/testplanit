@@ -1181,6 +1181,7 @@ const TreeView: React.FC<{
                   size="icon"
                   className="h-7 w-7 p-0"
                   data-testid={`folder-actions-trigger-${data?.folderId ?? 0}`}
+                  aria-label={t("common.actions.actionsLabel")}
                 >
                   <MoreVertical className="h-5 w-5" />
                 </Button>
