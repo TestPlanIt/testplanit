@@ -132,7 +132,10 @@ export const useColumns = (
             <Switch
               data-testid={`user-active-toggle-${row.original.id}`}
               checked={row.original.isActive}
-              disabled={row.original.id === currentUserId}
+              disabled={
+                row.original.id === currentUserId ||
+                row.original.email === SCIM_SYSTEM_USER_EMAIL
+              }
               onCheckedChange={(checked) =>
                 handleToggle(row.original.id, "isActive", checked)
               }
