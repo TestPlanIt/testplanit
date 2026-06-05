@@ -193,7 +193,7 @@ describe("createTempSessionToken and verifyTempSessionToken", () => {
     const { createTempSessionToken: createToken } =
       await import("./auth-security");
 
-    const token = createToken(testData);
+    const token = await createToken(testData);
     expect(typeof token).toBe("string");
     expect(token.split(".")).toHaveLength(3); // JWT has 3 parts
 
@@ -210,7 +210,7 @@ describe("createTempSessionToken and verifyTempSessionToken", () => {
       verifyTempSessionToken: verifyToken,
     } = await import("./auth-security");
 
-    const token = createToken(testData);
+    const token = await createToken(testData);
     const verified = verifyToken(token);
 
     expect(verified).not.toBeNull();
@@ -236,12 +236,61 @@ describe("createTempSessionToken and verifyTempSessionToken", () => {
       verifyTempSessionToken: verifyToken,
     } = await import("./auth-security");
 
-    const token = createToken(testData);
+    const token = await createToken(testData);
     const tamperedToken = token.slice(0, -5) + "xxxxx";
     const result = verifyToken(tamperedToken);
     expect(result).toBeNull();
 
     process.env.NEXTAUTH_SECRET = originalSecret;
+  });
+});
+
+describe("consumeTempSessionToken (single-use)", () => {
+  const testData = {
+    userId: "user-9",
+    provider: "saml-okta",
+    email: "u@example.com",
+  };
+  const SECRET = "test-secret-key-at-least-32-chars-long";
+
+  it("Valkey-backed: a token consumes once; replay returns null", async () => {
+    const store = new Map<string, string>();
+    const fakeRedis = {
+      set: vi.fn(async (k: string, v: string) => {
+        store.set(k, v);
+        return "OK";
+      }),
+      get: vi.fn(async (k: string) => store.get(k) ?? null),
+      del: vi.fn(async (k: string) => (store.delete(k) ? 1 : 0)),
+    };
+
+    vi.resetModules();
+    process.env.NEXTAUTH_SECRET = SECRET;
+    vi.doMock("./valkey", () => ({ default: fakeRedis }));
+    const { createTempSessionToken, consumeTempSessionToken } =
+      await import("./auth-security");
+
+    const token = await createTempSessionToken(testData);
+    expect(fakeRedis.set).toHaveBeenCalledTimes(1);
+
+    const first = await consumeTempSessionToken(token);
+    expect(first).toEqual(testData);
+
+    const replay = await consumeTempSessionToken(token);
+    expect(replay).toBeNull();
+
+    vi.doUnmock("./valkey");
+  });
+
+  it("returns null for an invalid token", async () => {
+    vi.resetModules();
+    process.env.NEXTAUTH_SECRET = SECRET;
+    vi.doMock("./valkey", () => ({ default: null }));
+    const { consumeTempSessionToken } = await import("./auth-security");
+
+    expect(await consumeTempSessionToken("not-a-jwt")).toBeNull();
+
+    vi.doUnmock("./valkey");
   });
 });
 

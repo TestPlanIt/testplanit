@@ -21,7 +21,10 @@ vi.mock("next/headers", () => ({
 }));
 
 vi.mock("~/server/db", () => ({
-  db: { user: { findUnique: vi.fn() } },
+  db: {
+    user: { findUnique: vi.fn() },
+    registrationSettings: { findFirst: vi.fn() },
+  },
 }));
 
 import { db } from "~/server/db";
@@ -35,6 +38,7 @@ const user = {
   isApi: false,
   passwordChangedAt: null,
   mustChangePassword: false,
+  twoFactorEnabled: false,
 };
 
 function makeReq(token: string, callbackUrl = "/dashboard") {
@@ -58,6 +62,7 @@ describe("GET /api/auth/saml/complete — post-Okta session handoff", () => {
     cookieJar.clear();
     vi.clearAllMocks();
     (db.user.findUnique as any).mockResolvedValue(user);
+    (db.registrationSettings.findFirst as any).mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -97,6 +102,40 @@ describe("GET /api/auth/saml/complete — post-Okta session handoff", () => {
     expect(
       cookieJar.get("__Secure-next-auth.session-token")?.value
     ).toBeTruthy();
+  });
+
+  it("stamps 2FA-required when force2FAAllLogins is on and the user has 2FA", async () => {
+    (db.registrationSettings.findFirst as any).mockResolvedValue({
+      force2FAAllLogins: true,
+    });
+    (db.user.findUnique as any).mockResolvedValue({
+      ...user,
+      twoFactorEnabled: true,
+    });
+
+    await GET(makeReq(tempToken()));
+
+    const decoded = await decode({
+      token: cookieJar.get("next-auth.session-token")!.value,
+      secret: SECRET,
+    });
+    expect(decoded?.twoFactorRequired).toBe(true);
+    expect(decoded?.twoFactorVerified).toBe(false);
+  });
+
+  it("stamps 2FA-setup-required when force2FA is on but the user has no 2FA", async () => {
+    (db.registrationSettings.findFirst as any).mockResolvedValue({
+      force2FAAllLogins: true,
+    });
+    // user.twoFactorEnabled is false by default
+
+    await GET(makeReq(tempToken()));
+
+    const decoded = await decode({
+      token: cookieJar.get("next-auth.session-token")!.value,
+      secret: SECRET,
+    });
+    expect(decoded?.twoFactorSetupRequired).toBe(true);
   });
 
   it("rejects an invalid/expired token with 401", async () => {

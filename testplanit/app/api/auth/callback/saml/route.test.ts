@@ -13,7 +13,7 @@ vi.mock("~/lib/valkey", () => ({ default: null })); // RelayState via signed tok
 
 vi.mock("~/server/db", () => ({
   db: {
-    samlConfiguration: { findUnique: vi.fn() },
+    samlConfiguration: { findUnique: vi.fn(), findMany: vi.fn() },
     user: { findUnique: vi.fn(), update: vi.fn(), create: vi.fn() },
     account: { upsert: vi.fn() },
     roles: { findFirst: vi.fn() },
@@ -59,9 +59,10 @@ function relayFor(providerId: string, callbackUrl = "/dash") {
 describe("POST /api/auth/callback/saml — ACS validator", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    (db.samlConfiguration.findMany as any).mockResolvedValue([]);
   });
 
-  it("returns 400 when RelayState is missing or invalid (Bug 4 regression)", async () => {
+  it("returns 400 when there is no RelayState and no enabled config validates it", async () => {
     const res = await POST(makeReq(null));
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -114,5 +115,47 @@ describe("POST /api/auth/callback/saml — ACS validator", () => {
     (db.samlConfiguration.findUnique as any).mockResolvedValue(null);
     const res = await POST(makeReq(relayFor("nope")));
     expect(res.status).toBe(404);
+  });
+
+  it("supports IdP-initiated login (no RelayState) via the config that validates", async () => {
+    (db.samlConfiguration.findMany as any).mockResolvedValue([
+      {
+        id: "cfg",
+        entryPoint: "e",
+        cert: "c",
+        issuer: "i",
+        attributeMapping: {},
+        autoProvisionUsers: false,
+        provider: { name: "okta", enabled: true },
+      },
+    ]);
+    validateSAMLResponse.mockResolvedValue({
+      email: "carol@example.com",
+      nameID: "carol",
+    });
+    (db.user.findUnique as any).mockResolvedValue({
+      id: "user_8",
+      email: "carol@example.com",
+      name: "Carol",
+      authMethod: "SSO",
+      externalId: "carol",
+    });
+    (db.account.upsert as any).mockResolvedValue({});
+
+    const res = await POST(makeReq(null)); // no RelayState = IdP-initiated
+
+    // Picked the config by validating the assertion (findMany over enabled
+    // providers), not by a RelayState-carried id.
+    expect(db.samlConfiguration.findMany).toHaveBeenCalled();
+    expect(db.samlConfiguration.findUnique).not.toHaveBeenCalled();
+
+    const location = res.headers.get("location")!;
+    expect(
+      location.startsWith(
+        "https://app.example.com/api/auth/saml/complete?token="
+      )
+    ).toBe(true);
+    // Post-login destination defaults to /.
+    expect(location).toContain("callbackUrl=%2F");
   });
 });

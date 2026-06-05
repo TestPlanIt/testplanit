@@ -78,7 +78,9 @@ export function getAppBaseUrl(request?: Request): string {
 
 // JWT token configuration for temporary session data
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || "";
-const JWT_EXPIRY = "5m"; // 5 minutes for temporary tokens
+const JWT_EXPIRY = "2m"; // short-lived: the completion redirect is immediate
+const SAML_COMPLETE_PREFIX = "saml:complete:";
+const SAML_COMPLETE_TTL_SECONDS = 120; // mirrors JWT_EXPIRY
 
 export interface TempSessionData {
   userId: string;
@@ -86,8 +88,25 @@ export interface TempSessionData {
   email: string;
 }
 
-export function createTempSessionToken(data: TempSessionData): string {
-  return jwt.sign(data, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+/**
+ * Mint the short-lived token handed to /api/auth/saml/complete. When Valkey is
+ * available the token's jti is registered so it can be consumed exactly once —
+ * the token rides in a redirect URL (logs, Referer, history), so single-use
+ * closes the replay window that a bare expiry leaves open.
+ */
+export async function createTempSessionToken(
+  data: TempSessionData
+): Promise<string> {
+  const jti = randomBytes(16).toString("hex");
+  if (valkeyConnection) {
+    await valkeyConnection.set(
+      `${SAML_COMPLETE_PREFIX}${jti}`,
+      "1",
+      "EX",
+      SAML_COMPLETE_TTL_SECONDS
+    );
+  }
+  return jwt.sign(data, JWT_SECRET, { expiresIn: JWT_EXPIRY, jwtid: jti });
 }
 
 export function verifyTempSessionToken(token: string): TempSessionData | null {
@@ -96,6 +115,39 @@ export function verifyTempSessionToken(token: string): TempSessionData | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * Verify and consume a completion token. With Valkey the jti is single-use
+ * (deleted on first read, so a replay finds nothing and is rejected); without
+ * it, the short JWT expiry bounds the window. Returns null if the token is
+ * invalid, expired, or already consumed.
+ */
+export async function consumeTempSessionToken(
+  token: string
+): Promise<TempSessionData | null> {
+  let decoded: TempSessionData & { jti?: string };
+  try {
+    decoded = jwt.verify(token, JWT_SECRET) as TempSessionData & {
+      jti?: string;
+    };
+  } catch {
+    return null;
+  }
+
+  if (valkeyConnection) {
+    if (!decoded.jti) return null;
+    const removed = await valkeyConnection.del(
+      `${SAML_COMPLETE_PREFIX}${decoded.jti}`
+    );
+    if (removed === 0) return null; // already consumed or expired
+  }
+
+  return {
+    userId: decoded.userId,
+    provider: decoded.provider,
+    email: decoded.email,
+  };
 }
 
 // SAML relay state — carries the provider id and post-login destination across
