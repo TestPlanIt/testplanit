@@ -39,3 +39,82 @@ describe("WEBHOOK_EVENT_CATALOG", () => {
     }
   });
 });
+
+describe("scim.user.* catalog entries", () => {
+  it("scim.user.created is present with category 'system' and the documented payloadKeys", () => {
+    const def = WEBHOOK_EVENT_CATALOG.find(
+      (e) => e.name === "scim.user.created"
+    );
+    expect(def).toBeDefined();
+    expect(def?.category).toBe("system");
+    expect(def?.payloadKeys).toEqual([
+      "id",
+      "scimExternalId",
+      "userName",
+      "email",
+      "active",
+      "name",
+      "createdAt",
+    ]);
+  });
+
+  it("scim.user.updated is present with category 'system' and the documented payloadKeys", () => {
+    const def = WEBHOOK_EVENT_CATALOG.find(
+      (e) => e.name === "scim.user.updated"
+    );
+    expect(def).toBeDefined();
+    expect(def?.category).toBe("system");
+    expect(def?.payloadKeys).toEqual([
+      "id",
+      "scimExternalId",
+      "userName",
+      "email",
+      "after",
+      "diff",
+    ]);
+  });
+
+  it("scim.user.activated is present with category 'system' and the documented payloadKeys", () => {
+    const def = WEBHOOK_EVENT_CATALOG.find(
+      (e) => e.name === "scim.user.activated"
+    );
+    expect(def).toBeDefined();
+    expect(def?.category).toBe("system");
+    expect(def?.payloadKeys).toEqual(["id", "scimExternalId", "userName"]);
+  });
+
+  it("scim.user.deactivated is present with category 'system' and the documented payloadKeys", () => {
+    const def = WEBHOOK_EVENT_CATALOG.find(
+      (e) => e.name === "scim.user.deactivated"
+    );
+    expect(def).toBeDefined();
+    expect(def?.category).toBe("system");
+    expect(def?.payloadKeys).toEqual(["id", "scimExternalId", "userName"]);
+  });
+
+  it("scim.user.deleted is present with category 'system' and the documented payloadKeys", () => {
+    const def = WEBHOOK_EVENT_CATALOG.find(
+      (e) => e.name === "scim.user.deleted"
+    );
+    expect(def).toBeDefined();
+    expect(def?.category).toBe("system");
+    expect(def?.payloadKeys).toEqual(["id", "scimExternalId"]);
+  });
+
+  it("all five scim.user.* entries have category 'system'", () => {
+    const scimEntries = WEBHOOK_EVENT_CATALOG.filter((e) =>
+      e.name.startsWith("scim.user.")
+    );
+    expect(scimEntries).toHaveLength(5);
+    for (const entry of scimEntries) {
+      expect(entry.category).toBe("system");
+    }
+  });
+
+  it("does NOT advertise a scim.user.linked event (bind signaled via audit metadata, not a 6th event type)", () => {
+    const linkedEntry = WEBHOOK_EVENT_CATALOG.find(
+      (e) => e.name === "scim.user.linked"
+    );
+    expect(linkedEntry).toBeUndefined();
+  });
+});
