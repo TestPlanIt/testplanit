@@ -347,6 +347,22 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
             }
           }
 
+          // Mid-session deactivation guard: the cached projection in
+          // getCachedSessionUser does not include isActive, and its 60s TTL
+          // would let a deactivated user retain access until the cache
+          // expires. Re-read isActive directly from the DB on every
+          // session check across ALL authMethods — credential, SSO,
+          // and identity-source-provisioned users alike. A missing row
+          // does NOT short-circuit (a deleted user is a separate concern
+          // handled by the existing not-found behavior downstream).
+          const freshIsActiveRow = await db.user.findUnique({
+            where: { id: session.user.id },
+            select: { isActive: true },
+          });
+          if (freshIsActiveRow && freshIsActiveRow.isActive === false) {
+            return {} as Session;
+          }
+
           // enrich audit-context ALS frame with resolved
           // identity so every downstream audit emission in this request
           // picks up userId/userEmail/userName without per-route
@@ -696,6 +712,22 @@ export const authOptions: NextAuthOptions = {
             // returning {} effectively invalidates the session client-side.
             return {} as Session;
           }
+        }
+
+        // Mid-session deactivation guard: the cached projection in
+        // getCachedSessionUser does not include isActive, and its 60s TTL
+        // would let a deactivated user retain access until the cache
+        // expires. Re-read isActive directly from the DB on every
+        // session check across ALL authMethods — credential, SSO,
+        // and identity-source-provisioned users alike. A missing row
+        // does NOT short-circuit (a deleted user is a separate concern
+        // handled by the existing not-found behavior downstream).
+        const freshIsActiveRow = await db.user.findUnique({
+          where: { id: session.user.id },
+          select: { isActive: true },
+        });
+        if (freshIsActiveRow && freshIsActiveRow.isActive === false) {
+          return {} as Session;
         }
 
         // enrich audit-context ALS frame with resolved
