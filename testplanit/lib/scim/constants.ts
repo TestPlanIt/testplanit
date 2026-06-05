@@ -37,3 +37,31 @@ export const SCIM_ERROR_SCHEMA_URN =
 /** RFC 7644 §3.5.2 — schema URN for PATCH request bodies. */
 export const SCIM_PATCH_OP_SCHEMA_URN =
   "urn:ietf:params:scim:api:messages:2.0:PatchOp" as const;
+
+/**
+ * Wire-stable prefix for every SCIM bearer token. The proxy / bearer helper
+ * branches on this prefix BEFORE any DB lookup to keep the SCIM auth surface
+ * cleanly separated from `tpi_`-prefixed API tokens.
+ */
+export const SCIM_TOKEN_PREFIX = "tps_" as const;
+
+/**
+ * Sentinel email for the seeded synthetic SCIM-provisioner User row. The
+ * admin Users page renders a "SCIM Provisioner" badge when it sees this
+ * exact value; treat it as a stable contract rather than a magic string.
+ */
+export const SCIM_SYSTEM_USER_EMAIL = "scim@__system__" as const;
+
+/**
+ * Deterministic id of the seeded synthetic SCIM-provisioner User row.
+ * The mint helper FKs against this literal so it never needs a SELECT
+ * roundtrip, and the seed upsert keys on this id to stay idempotent.
+ */
+export const SCIM_SYSTEM_USER_ID = "system-scim-user" as const;
+
+/**
+ * Throttle window (ms) for ScimToken.lastUsedAt / lastUsedIp writes.
+ * The bearer middleware persists only when the in-DB lastUsedAt is older
+ * than this window, capping write amplification under bulk-sync traffic.
+ */
+export const SCIM_LAST_USED_THROTTLE_MS = 60_000 as const;
