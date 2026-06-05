@@ -1,3 +1,9 @@
+## [0.35.3](https://github.com/TestPlanIt/testplanit/compare/v0.35.2...v0.35.3) (2026-06-05)
+
+### Bug Fixes
+
+* **auth:** reject replayed SAML assertions ([#407](https://github.com/TestPlanIt/testplanit/issues/407)) ([ab75960](https://github.com/TestPlanIt/testplanit/commit/ab75960f654755b57e68f1110ed4d719e3c0c404)), closes [#406](https://github.com/TestPlanIt/testplanit/issues/406)
+
 ## [0.35.2](https://github.com/TestPlanIt/testplanit/compare/v0.35.1...v0.35.2) (2026-06-05)
 
 ### Enhancements
