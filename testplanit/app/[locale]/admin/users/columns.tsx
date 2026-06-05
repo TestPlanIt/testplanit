@@ -5,6 +5,7 @@ import { GroupListDisplay } from "@/components/tables/GroupListDisplay";
 import { RoleNameCell } from "@/components/tables/RoleNameCell";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { UserProjectsDisplay } from "@/components/tables/UserProjectsDisplay";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,6 +21,7 @@ import { MoreHorizontal } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { LastActiveDisplay } from "~/components/LastActiveDisplay";
+import { SCIM_SYSTEM_USER_EMAIL } from "~/lib/scim/constants";
 export interface ExtendedUser extends User {
   createdBy: {
     name: string;
@@ -72,11 +74,25 @@ export const useColumns = (
         enableHiding: false,
         meta: { isPinned: "left" },
         size: 500,
-        cell: ({ row }) => (
-          <div className="bg-primary-foreground">
-            <UserNameCell userId={row.original.id} />
-          </div>
-        ),
+        cell: ({ row }) => {
+          const isScimProvisioner =
+            row.original.email === SCIM_SYSTEM_USER_EMAIL;
+          return (
+            <div className="bg-primary-foreground flex items-center gap-1">
+              <UserNameCell userId={row.original.id} />
+              {isScimProvisioner && (
+                <Badge
+                  variant="secondary"
+                  className="ml-1"
+                  title={tAdmin("scimManagedTooltip")}
+                  data-testid="scim-provisioner-badge"
+                >
+                  {tAdmin("scimProvisionerBadge")}
+                </Badge>
+              )}
+            </div>
+          );
+        },
       },
       {
         id: "email",
@@ -244,46 +260,59 @@ export const useColumns = (
         enableHiding: false,
         size: 60,
         meta: { isPinned: "right" },
-        cell: ({ row }) => (
-          <div className="flex justify-center">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="px-2 py-1 h-auto">
-                  <MoreHorizontal className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onEditUser?.(row.original)}>
-                  {tCommon("actions.edit")}
-                </DropdownMenuItem>
-                {row.original.authMethod !== "SSO" &&
-                  row.original.id !== currentUserId && (
-                    <>
-                      <DropdownMenuItem
-                        onClick={() => onForceChangePassword?.(row.original)}
-                      >
-                        {tAdmin("forcePasswordChange")}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => onRevokePassword?.(row.original)}
-                      >
-                        {tAdmin("revokePassword")}
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                <DropdownMenuSeparator />
-                {row.original.id !== currentUserId ? (
+        cell: ({ row }) => {
+          const isScimProvisioner =
+            row.original.email === SCIM_SYSTEM_USER_EMAIL;
+          return (
+            <div className="flex justify-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="px-2 py-1 h-auto">
+                    <MoreHorizontal className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
                   <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onClick={() => onDeleteUser?.(row.original)}
+                    disabled={isScimProvisioner}
+                    title={
+                      isScimProvisioner
+                        ? tAdmin("scimManagedTooltip")
+                        : undefined
+                    }
+                    onClick={() => onEditUser?.(row.original)}
                   >
-                    {tCommon("actions.delete")}
+                    {tCommon("actions.edit")}
                   </DropdownMenuItem>
-                ) : null}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        ),
+                  {row.original.authMethod !== "SSO" &&
+                    row.original.id !== currentUserId &&
+                    !isScimProvisioner && (
+                      <>
+                        <DropdownMenuItem
+                          onClick={() => onForceChangePassword?.(row.original)}
+                        >
+                          {tAdmin("forcePasswordChange")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => onRevokePassword?.(row.original)}
+                        >
+                          {tAdmin("revokePassword")}
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  <DropdownMenuSeparator />
+                  {row.original.id !== currentUserId && !isScimProvisioner ? (
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => onDeleteUser?.(row.original)}
+                    >
+                      {tCommon("actions.delete")}
+                    </DropdownMenuItem>
+                  ) : null}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          );
+        },
       },
     ],
     [
