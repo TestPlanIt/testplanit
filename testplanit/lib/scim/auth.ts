@@ -18,9 +18,9 @@
  *     (`extractBearerToken`, `hashToken`) and never share control flow.
  *
  *   - On failure, the helper throws a `ScimAuthError` carrying a prebuilt
- *     `NextResponse` from the Phase 5 `scimError` helper. Route handlers
- *     catch with a one-line `instanceof` check and return `err.response`
- *     verbatim -- no per-route envelope assembly.
+ *     `NextResponse` from the shared `scimError` envelope helper. Route
+ *     handlers catch with a one-line `instanceof` check and return
+ *     `err.response` verbatim -- no per-route envelope assembly.
  *
  *   - `lastUsedAt` / `lastUsedIp` writes are throttled to a 60-second
  *     window via `SCIM_LAST_USED_THROTTLE_MS`. The update is fire-and-
@@ -54,7 +54,7 @@ import {
 /**
  * Sentinel exception thrown by `requireScimBearer` on any auth failure.
  *
- * Carries a prebuilt SCIM 401 `NextResponse` (already shaped by the Phase 5
+ * Carries a prebuilt SCIM 401 `NextResponse` (already shaped by the shared
  * `scimError` helper with the correct schemas envelope, status string, and
  * `application/scim+json` Content-Type). Route handlers catch with a single
  * `instanceof ScimAuthError` check and return `err.response` directly.
@@ -68,8 +68,8 @@ export class ScimAuthError extends Error {
 
 /**
  * Successful bearer validation result. The route handler stamps these onto
- * the audit-log frame so Phase 7 mutations attribute correctly to the SCIM
- * system user and the originating token.
+ * the audit-log frame so downstream mutations attribute correctly to the
+ * SCIM system user and the originating token.
  */
 export interface ScimAuthContext {
   tokenId: string;
@@ -77,19 +77,13 @@ export interface ScimAuthContext {
 }
 
 /** Hosts that count as a loopback origin for the probe-marker carve-out. */
-const LOOPBACK_HOSTS = new Set([
-  "localhost",
-  "127.0.0.1",
-  "[::1]",
-  "::1",
-]);
+const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]", "::1"]);
 
 /**
- * Returns true when the request looks like the server-side admin probe
- * (Plan 06-05): the `X-SCIM-Probe: 1` header is set AND the request URL
- * resolves to a loopback host. Both halves are required -- the header
- * alone would let an external caller suppress lastUsedAt telemetry by
- * spoofing it.
+ * Returns true when the request looks like the server-side admin probe:
+ * the `X-SCIM-Probe: 1` header is set AND the request URL resolves to a
+ * loopback host. Both halves are required -- the header alone would let
+ * an external caller suppress lastUsedAt telemetry by spoofing it.
  */
 function isProbeMarker(request: NextRequest): boolean {
   if (request.headers.get("x-scim-probe") !== "1") {
@@ -128,18 +122,19 @@ function isProbeMarker(request: NextRequest): boolean {
  * request is a server-side probe.
  */
 export async function requireScimBearer(
-  request: NextRequest,
+  request: NextRequest
 ): Promise<ScimAuthContext> {
   const raw = extractBearerToken(request);
   if (!raw) {
     throw new ScimAuthError(
-      scimError(401, null, "Missing Authorization header"),
+      scimError(401, null, "Missing Authorization header")
     );
   }
 
   // Prefix branch happens BEFORE any database lookup so a `tpi_*` API
   // token (or any non-SCIM-prefixed value) is rejected without touching
-  // the ScimToken table. Pitfall 1: do NOT fall through to a shared lookup.
+  // the ScimToken table. Do NOT fall through to a shared lookup -- the
+  // SCIM and API-token namespaces must stay isolated.
   if (!raw.startsWith(SCIM_TOKEN_PREFIX)) {
     throw new ScimAuthError(scimError(401, null, "Invalid token format"));
   }
@@ -187,10 +182,7 @@ export async function requireScimBearer(
       .updateMany({
         where: {
           id: row.id,
-          OR: [
-            { lastUsedAt: null },
-            { lastUsedAt: { lt: cutoff } },
-          ],
+          OR: [{ lastUsedAt: null }, { lastUsedAt: { lt: cutoff } }],
         },
         data: { lastUsedAt: now, lastUsedIp: clientIp },
       })
