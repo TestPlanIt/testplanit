@@ -168,6 +168,7 @@ export function getColumns({
             size="icon"
             className="px-2 py-1 h-auto"
             onClick={() => onEdit(row.original)}
+            aria-label={tCommon("actions.edit")}
           >
             <Edit className="h-4 w-4" />
           </Button>
@@ -176,6 +177,7 @@ export function getColumns({
             size="icon"
             className="px-2 py-1 h-auto"
             onClick={() => onDelete(row.original)}
+            aria-label={tCommon("actions.delete")}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
