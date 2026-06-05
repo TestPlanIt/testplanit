@@ -1,3 +1,9 @@
+## [0.34.12](https://github.com/TestPlanIt/testplanit/compare/v0.34.11...v0.34.12) (2026-06-05)
+
+### Bug Fixes
+
+* **scheduler:** skip legacy keyless entries in reconciliation ([#403](https://github.com/TestPlanIt/testplanit/issues/403)) ([0aef3aa](https://github.com/TestPlanIt/testplanit/commit/0aef3aa2c77df27ed88769e4f659e702ea60165b))
+
 ## [0.34.11](https://github.com/TestPlanIt/testplanit/compare/v0.34.10...v0.34.11) (2026-06-05)
 
 ### Enhancements
