@@ -329,6 +329,7 @@ export const useColumns = (
               variant="ghost"
               className="px-2 py-1 h-auto"
               onClick={() => onEditConfiguration?.(row.original)}
+              aria-label={t("actions.edit")}
             >
               <SquarePen className="h-5 w-5" />
             </Button>
@@ -336,6 +337,7 @@ export const useColumns = (
               variant="destructive"
               className="px-2 py-1 h-auto"
               onClick={() => onDeleteConfiguration?.(row.original)}
+              aria-label={t("actions.delete")}
             >
               <Trash2 className="h-5 w-5" />
             </Button>

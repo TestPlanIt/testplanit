@@ -299,6 +299,68 @@ svg[class*="plot-"] .gantt-task-label text {
   --ring: 262.1 83.3% 57.8%;
 }
 
+/*
+ * Accessible theme — opt-in, WCAG 2.2 AA presentation tuning.
+ * A high-contrast, light-based palette plus a small override layer that
+ * enforces the presentation success criteria app-wide WITHOUT editing any
+ * component or disturbing the other themes (it only applies under .accessible).
+ */
+.accessible {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 222.2 47.4% 11.2%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 40% 94%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 94%;
+  --muted-foreground: 215 20% 30%; /* ~7:1 on white — passes even at reduced opacity */
+  --accent: 210 40% 92%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 72% 38%;
+  --destructive-foreground: 0 0% 100%;
+  --warning: 38 92% 28%;
+  --warning-foreground: 0 0% 100%;
+  --success: 142 60% 28%;
+  --success-foreground: 0 0% 100%;
+  --border: 215 16% 47%; /* dark enough for 3:1 non-text contrast (1.4.11) */
+  --input: 215 16% 40%;
+  --ring: 217 91% 40%; /* strong, clearly visible focus indicator */
+  --radius: 0.5rem;
+}
+
+/* Override layer — the part that actually enforces conformance. */
+.accessible [class*="text-muted-foreground/"] {
+  /* 1.4.3 Contrast: neutralize the opacity modifiers that drop muted text below 4.5:1 */
+  color: hsl(var(--muted-foreground)) !important;
+}
+.accessible [class*="text-primary/"] {
+  /* 1.4.3 Contrast: same problem on de-emphasized primary text (e.g. breadcrumb links) */
+  color: hsl(var(--primary)) !important;
+}
+.accessible
+  :is(
+    button,
+    [role="button"],
+    [role="switch"],
+    [role="checkbox"],
+    a,
+    summary,
+    input[type="color"]
+  ) {
+  /* 2.5.8 Target Size: 24px minimum hit area */
+  min-height: 1.5rem;
+  min-width: 1.5rem;
+}
+.accessible :focus-visible {
+  /* 2.4.7 Focus Visible: consistent, high-contrast focus ring */
+  outline: 2px solid hsl(var(--ring)) !important;
+  outline-offset: 2px;
+}
+
 /* Style the close button specifically for the TestRunCaseDetails sheet */
 .test-run-details-sheet > button.absolute.right-4.top-4 {
   background-color: hsl(var(--primary-foreground));

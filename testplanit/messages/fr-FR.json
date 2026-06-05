@@ -690,6 +690,12 @@
     },
     "aria": {
       "userMenu": "Menu utilisateur",
+      "selectProject": "Sélectionner un projet",
+      "togglePanel": "Basculer le panneau",
+      "folder": "Dossier",
+      "toggleActive": "Basculer l'état actif",
+      "toggleDetails": "Afficher les détails",
+      "requiresReview": "Nécessite une révision",
       "search": "Recherche",
       "helpMenu": "Menu d'aide",
       "help": "Aide",
@@ -846,6 +852,15 @@
       "noFilesDetected": "Aucun fichier détecté dans le dossier drop"
     },
     "editor": {
+      "bold": "Audacieux",
+      "italic": "Italique",
+      "underline": "Souligner",
+      "strikethrough": "barré",
+      "code": "Code",
+      "heading": "Titre",
+      "bulletList": "Liste à puces",
+      "orderedList": "Liste numérotée",
+      "blockquote": "Citation",
       "setColor": "Définir la couleur",
       "enterUrl": "Saisissez l'URL, y compris https://",
       "uploadFile": "Téléverser un fichier",
@@ -2368,7 +2383,8 @@
       "system": "Système",
       "green": "Vert",
       "purple": "Violet",
-      "orange": "Orange"
+      "orange": "Orange",
+      "accessible": "Accessible"
     }
   },
   "repository": {
@@ -4418,6 +4434,7 @@
         "thresholdUpdateError": "Impossible de mettre à jour les paramètres de rappel. Veuillez réessayer dans quelques instants."
       },
       "projectReviewToggleList": {
+        "toggleAria": "Activer/désactiver le flux de travail de révision pour {name}",
         "columnHeader": "Flux de travail de révision",
         "filterPlaceholder": "Filtrer les projets...",
         "enabledToast": "Flux de travail de révision activé pour {name}",
@@ -4487,6 +4504,7 @@
     "statuses": {
       "description": "Gérer les statuts des tests",
       "editPolicy": {
+        "modeAria": "Mode de politique de modification des résultats",
         "title": "Politique de modification des résultats",
         "description": "Contrôlez la durée pendant laquelle un résultat peut encore être modifié après son enregistrement, pour tous les projets. Les projets peuvent restreindre ce délai dans leurs paramètres avancés, mais ne peuvent jamais l'assouplir. Les administrateurs système peuvent toujours le modifier.",
         "modeNone": "Aucune restriction (les projets décident)",

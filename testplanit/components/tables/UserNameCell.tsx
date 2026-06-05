@@ -65,13 +65,10 @@ export const UserNameCell: React.FC<UserNameCellProps> = ({
         image={user?.image ?? ""}
       />
       <Tooltip>
-        <TooltipTrigger
-          type="button"
-          className="text-left block truncate min-w-0"
-        >
+        <TooltipTrigger asChild>
           <div
             className={cn(
-              "flex items-center truncate",
+              "flex items-center truncate text-left min-w-0",
               isCurrentUser && "font-extrabold",
               className
             )}

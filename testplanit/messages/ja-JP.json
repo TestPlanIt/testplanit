@@ -690,6 +690,12 @@
     },
     "aria": {
       "userMenu": "ユーザーメニュー",
+      "selectProject": "プロジェクトを選択",
+      "togglePanel": "パネルの切り替え",
+      "folder": "フォルダ",
+      "toggleActive": "アクティブ状態を切り替える",
+      "toggleDetails": "詳細を表示/非表示にする",
+      "requiresReview": "審査が必要",
       "search": "検索",
       "helpMenu": "ヘルプメニュー",
       "help": "ヘルプ",
@@ -846,6 +852,15 @@
       "noFilesDetected": "ドロップでファイルが検出されませんでした"
     },
     "editor": {
+      "bold": "大胆な",
+      "italic": "イタリック",
+      "underline": "下線",
+      "strikethrough": "取り消し線",
+      "code": "コード",
+      "heading": "見出し",
+      "bulletList": "箇条書き",
+      "orderedList": "番号付きリスト",
+      "blockquote": "引用文",
       "setColor": "色を設定する",
       "enterUrl": "https://を含むURLを入力してください",
       "uploadFile": "ファイルをアップロード",
@@ -2368,7 +2383,8 @@
       "system": "システム",
       "green": "緑",
       "purple": "紫",
-      "orange": "オレンジ"
+      "orange": "オレンジ",
+      "accessible": "アクセス可能"
     }
   },
   "repository": {
@@ -4418,6 +4434,7 @@
         "thresholdUpdateError": "リマインダー設定の更新に失敗しました。しばらくしてからもう一度お試しください。"
       },
       "projectReviewToggleList": {
+        "toggleAria": "{name} のレビューワークフローを切り替える",
         "columnHeader": "レビューワークフロー",
         "filterPlaceholder": "プロジェクトを絞り込む...",
         "enabledToast": "レビューワークフローが有効になりました {name}",
@@ -4487,6 +4504,7 @@
     "statuses": {
       "description": "テストステータスの管理",
       "editPolicy": {
+        "modeAria": "結果編集ポリシーモード",
         "title": "結果編集ポリシー",
         "description": "結果が記録された後、その場で編集できる期間を、すべてのプロジェクトで制御できます。プロジェクトの詳細設定でこの制限を厳しくすることはできますが、緩めることはできません。システム管理者はいつでも編集できます。",
         "modeNone": "制限なし（プロジェクト次第）",

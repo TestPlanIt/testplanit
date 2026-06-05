@@ -311,6 +311,11 @@ export function SessionResultsSummary({
                   setSortMode((m) => (m === "date" ? "status" : "date"))
                 }
                 className="inline-flex cursor-pointer items-center text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={
+                  sortMode === "date"
+                    ? t("common.labels.sortByStatus")
+                    : t("common.labels.sortByDate")
+                }
                 data-testid="sort-toggle"
               >
                 <ArrowUpDown className="h-3 w-3" />

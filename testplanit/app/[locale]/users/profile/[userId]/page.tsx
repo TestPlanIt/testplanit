@@ -56,6 +56,7 @@ import {
 } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  Accessibility,
   Check,
   Circle,
   Moon,
@@ -376,6 +377,8 @@ const UserProfile: React.FC<UserProfileProps> = ({
         return <Circle className="h-4 w-4 fill-orange-500" />;
       case "Purple":
         return <Circle className="h-4 w-4 fill-purple-500" />;
+      case "Accessible":
+        return <Accessibility className="h-4 w-4 text-blue-700" />;
       default:
         return <Circle className="h-4 w-4" />;
     }
@@ -395,6 +398,8 @@ const UserProfile: React.FC<UserProfileProps> = ({
         return "text-orange-500";
       case "Purple":
         return "text-purple-500";
+      case "Accessible":
+        return "text-blue-700";
       default:
         return "";
     }

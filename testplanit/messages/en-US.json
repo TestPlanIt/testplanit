@@ -690,6 +690,12 @@
     },
     "aria": {
       "userMenu": "User menu",
+      "selectProject": "Select project",
+      "togglePanel": "Toggle panel",
+      "folder": "Folder",
+      "toggleActive": "Toggle active status",
+      "toggleDetails": "Toggle details",
+      "requiresReview": "Requires review",
       "search": "Search",
       "helpMenu": "Help menu",
       "help": "Help",
@@ -846,6 +852,15 @@
       "noFilesDetected": "No files detected in drop"
     },
     "editor": {
+      "bold": "Bold",
+      "italic": "Italic",
+      "underline": "Underline",
+      "strikethrough": "Strikethrough",
+      "code": "Code",
+      "heading": "Heading",
+      "bulletList": "Bullet list",
+      "orderedList": "Numbered list",
+      "blockquote": "Blockquote",
       "setColor": "Set Color",
       "enterUrl": "Enter URL including https://",
       "uploadFile": "Upload File",
@@ -2368,7 +2383,8 @@
       "system": "System",
       "green": "Green",
       "purple": "Purple",
-      "orange": "Orange"
+      "orange": "Orange",
+      "accessible": "Accessible"
     }
   },
   "repository": {
@@ -4418,6 +4434,7 @@
         "thresholdUpdateError": "Failed to update reminder settings. Try again in a moment."
       },
       "projectReviewToggleList": {
+        "toggleAria": "Toggle review workflow for {name}",
         "columnHeader": "Review workflow",
         "filterPlaceholder": "Filter projects...",
         "enabledToast": "Review workflow enabled for {name}",
@@ -4487,6 +4504,7 @@
     "statuses": {
       "description": "Manage test statuses",
       "editPolicy": {
+        "modeAria": "Result editing policy mode",
         "title": "Result editing policy",
         "description": "Control how long after a result is recorded it can still be edited in place, across all projects. Projects can tighten this in their Advanced settings but never loosen it. System administrators can always edit.",
         "modeNone": "No restriction (projects decide)",

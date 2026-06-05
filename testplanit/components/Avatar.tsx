@@ -103,9 +103,9 @@ const Avatar: React.FC<AvatarProps> = ({
 
   return showTooltip ? (
     <Tooltip>
-      <TooltipTrigger type="button" className="cursor-default">
-        {renderContent()}
-      </TooltipTrigger>
+      {/* asChild: the avatar (img alt / initials) is the trigger, so we don't
+          render a nameless <button> that also nests inside link/row cells. */}
+      <TooltipTrigger asChild>{renderContent()}</TooltipTrigger>
       <TooltipContent>
         <div>{prependText ? `${prependText}: ${alt}` : alt}</div>
       </TooltipContent>

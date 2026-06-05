@@ -229,6 +229,7 @@ enum Theme {
     Green
     Orange
     Purple
+    Accessible
 
     @@deny('all', !auth())
     @@allow('update', auth().access == 'ADMIN')

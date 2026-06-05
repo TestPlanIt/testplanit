@@ -123,7 +123,10 @@ export function LinkFilterInput({
         value={operator}
         onValueChange={(val) => setOperator(val as LinkOperator)}
       >
-        <SelectTrigger className="w-full h-8 text-xs">
+        <SelectTrigger
+          className="w-full h-8 text-xs"
+          aria-label={t("common.placeholders.selectOperator")}
+        >
           <SelectValue placeholder={t("common.placeholders.selectOperator")} />
         </SelectTrigger>
         <SelectContent>

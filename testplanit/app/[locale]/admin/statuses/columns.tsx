@@ -117,6 +117,7 @@ export const getColumns = (
       cell: ({ row }) => (
         <div className="text-center">
           <Switch
+            aria-label={tCommon("fields.enabled")}
             checked={row.original.isEnabled}
             onCheckedChange={(checked) =>
               handleToggleEnabled(row.original.id, checked)
@@ -137,6 +138,7 @@ export const getColumns = (
       cell: ({ row }) => (
         <div className="text-center">
           <Switch
+            aria-label={tCommon("fields.success")}
             checked={row.original.isSuccess}
             onCheckedChange={(checked) =>
               handleToggleSuccess(row.original.id, checked)
@@ -157,6 +159,7 @@ export const getColumns = (
       cell: ({ row }) => (
         <div className="text-center">
           <Switch
+            aria-label={tCommon("fields.failure")}
             checked={row.original.isFailure}
             onCheckedChange={(checked) =>
               handleToggleFailure(row.original.id, checked)
@@ -177,6 +180,7 @@ export const getColumns = (
       cell: ({ row }) => (
         <div className="text-center">
           <Switch
+            aria-label={tCommon("fields.completed")}
             checked={row.original.isCompleted}
             onCheckedChange={(checked) =>
               handleToggleCompleted(row.original.id, checked)
@@ -244,6 +248,7 @@ export const getColumns = (
               variant="ghost"
               className="px-2 py-1 h-auto text-muted-foreground cursor-not-allowed"
               disabled
+              aria-label={tCommon("actions.edit")}
             >
               <SquarePen className="h-5 w-5" />
             </Button>
@@ -252,6 +257,7 @@ export const getColumns = (
               variant="ghost"
               className="px-2 py-1 h-auto"
               onClick={() => onEditStatus?.(row.original)}
+              aria-label={tCommon("actions.edit")}
             >
               <SquarePen className="h-5 w-5" />
             </Button>
@@ -261,6 +267,7 @@ export const getColumns = (
               variant="destructive"
               className="px-2 py-1 h-auto"
               onClick={() => onDeleteStatus?.(row.original)}
+              aria-label={tCommon("actions.delete")}
             >
               <Trash2 className="h-5 w-5" />
             </Button>
@@ -269,6 +276,7 @@ export const getColumns = (
               variant="ghost"
               className="px-2 py-1 h-auto text-muted-foreground cursor-not-allowed"
               disabled
+              aria-label={tCommon("actions.delete")}
             >
               <Trash2 className="h-5 w-5" />
             </Button>

@@ -406,7 +406,12 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
             {showMoreMenu && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    aria-label={tCommon("actions.actionsLabel")}
+                  >
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>

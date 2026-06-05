@@ -47,17 +47,21 @@ describe("Avatar Component", () => {
     expect(textElement).toHaveStyle({ fontSize: expectedFontSize });
   });
 
-  it("should render with a tooltip by default", () => {
+  it("should render the avatar as the tooltip trigger without a nameless button", () => {
     render(<Avatar image={defaultImage} alt={defaultAlt} />);
     const img = screen.getByRole("img");
-    expect(img.parentElement?.parentElement?.tagName).toBe("BUTTON");
+    // a11y: the avatar element itself is the tooltip trigger (asChild), so it is
+    // never wrapped in a nameless <button> that would nest inside links/cells.
+    expect(img).toBeInTheDocument();
+    expect(img.closest("button")).toBeNull();
   });
 
-  it("should render without a tooltip if showTooltip is false", () => {
+  it("should render the bare avatar when showTooltip is false", () => {
     render(
       <Avatar image={defaultImage} alt={defaultAlt} showTooltip={false} />
     );
     const img = screen.getByRole("img");
-    expect(img.parentElement?.parentElement?.tagName).not.toBe("BUTTON");
+    expect(img).toBeInTheDocument();
+    expect(img.closest("button")).toBeNull();
   });
 });

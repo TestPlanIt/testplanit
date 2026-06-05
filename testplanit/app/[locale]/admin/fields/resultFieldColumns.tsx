@@ -95,6 +95,7 @@ export const useColumns = (
         cell: ({ row }) => (
           <div className="text-center">
             <Switch
+              aria-label={tCommon("fields.enabled")}
               checked={row.original.isEnabled}
               onCheckedChange={(checked) =>
                 handleToggle(row.original.id, "isEnabled", checked)
@@ -113,6 +114,7 @@ export const useColumns = (
         cell: ({ row }) => (
           <div className="text-center">
             <Switch
+              aria-label={tCommon("fields.required")}
               checked={row.original.isRequired}
               onCheckedChange={(checked) =>
                 handleToggle(row.original.id, "isRequired", checked)
@@ -131,6 +133,7 @@ export const useColumns = (
         cell: ({ row }) => (
           <div className="text-center">
             <Switch
+              aria-label={tCommon("fields.restricted")}
               checked={row.original.isRestricted}
               onCheckedChange={(checked) =>
                 handleToggle(row.original.id, "isRestricted", checked)
@@ -154,6 +157,7 @@ export const useColumns = (
               className="px-2 py-1 h-auto"
               data-testid="edit-result-field-button"
               onClick={() => onEditResultField?.(row.original)}
+              aria-label={tCommon("actions.edit")}
             >
               <SquarePen className="h-5 w-5" />
             </Button>
@@ -162,6 +166,7 @@ export const useColumns = (
               className="px-2 py-1 h-auto"
               data-testid="delete-result-field-button"
               onClick={() => onDeleteResultField?.(row.original)}
+              aria-label={tCommon("actions.delete")}
             >
               <Trash2 className="h-5 w-5" />
             </Button>

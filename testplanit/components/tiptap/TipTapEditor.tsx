@@ -714,6 +714,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             className="p-2"
             onClick={() => editor.chain().focus().toggleBold().run()}
             data-testid="tiptap-bold"
+            aria-label={t("bold")}
           >
             <Bold className="w-4 h-4" />
           </Button>
@@ -724,6 +725,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             className="p-2"
             onClick={() => editor.chain().focus().toggleItalic().run()}
             data-testid="tiptap-italic"
+            aria-label={t("italic")}
           >
             <Italic className="w-4 h-4" />
           </Button>
@@ -734,6 +736,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             className="p-2"
             onClick={() => editor.chain().focus().toggleStrike().run()}
             data-testid="tiptap-strikethrough"
+            aria-label={t("strikethrough")}
           >
             <StrikethroughIcon className="w-4 h-4" />
           </Button>
@@ -744,6 +747,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             className="p-2"
             onClick={() => editor.chain().focus().toggleUnderline().run()}
             data-testid="tiptap-underline"
+            aria-label={t("underline")}
           >
             <UnderlineIcon className="w-4 h-4" />
           </Button>
@@ -754,6 +758,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             className="p-2"
             onClick={() => editor.chain().focus().toggleCode().run()}
             data-testid="tiptap-code"
+            aria-label={t("code")}
           >
             <CodeIcon className="w-4 h-4" />
           </Button>
@@ -767,6 +772,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                 size="sm"
                 className="p-2"
                 data-testid="tiptap-heading-trigger"
+                aria-label={t("heading")}
               >
                 {editor.isActive("heading", { level: 1 }) && <Heading1 />}
                 {editor.isActive("heading", { level: 2 }) && <Heading2 />}
@@ -851,6 +857,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             className="p-2"
             onClick={() => editor.chain().focus().toggleBulletList().run()}
             data-testid="tiptap-bullet-list"
+            aria-label={t("bulletList")}
           >
             <List className="w-4 h-4" />
           </Button>
@@ -861,6 +868,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             className="p-2"
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
             data-testid="tiptap-ordered-list"
+            aria-label={t("orderedList")}
           >
             <ListOrdered className="w-4 h-4" />
           </Button>
@@ -871,6 +879,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
             className="p-2"
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
             data-testid="tiptap-blockquote"
+            aria-label={t("blockquote")}
           >
             <QuoteIcon className="w-4 h-4" />
           </Button>
@@ -882,6 +891,7 @@ const TipTapEditor: React.FC<TipTapEditorProps> = ({
                 size="sm"
                 className="p-2"
                 data-testid="tiptap-table-trigger"
+                aria-label={t("table.insertTable")}
               >
                 <Table2 className="w-4 h-4" />
               </Button>

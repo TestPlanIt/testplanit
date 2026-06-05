@@ -174,6 +174,7 @@ export function ProjectReviewToggleList() {
             <div className="text-center">
               <Switch
                 data-testid={`project-review-workflow-switch-${id}`}
+                aria-label={t("toggleAria", { name })}
                 checked={reviewWorkflowEnabled}
                 onCheckedChange={(checked) => handleToggle(id, name, checked)}
               />

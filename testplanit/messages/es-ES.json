@@ -690,6 +690,12 @@
     },
     "aria": {
       "userMenu": "Menú de usuario",
+      "selectProject": "Seleccionar proyecto",
+      "togglePanel": "Panel de alternancia",
+      "folder": "Carpeta",
+      "toggleActive": "Alternar estado activo",
+      "toggleDetails": "Mostrar detalles",
+      "requiresReview": "Requiere revisión",
       "search": "Buscar",
       "helpMenu": "Menú de ayuda",
       "help": "Ayuda",
@@ -846,6 +852,15 @@
       "noFilesDetected": "No se detectaron archivos en el drop"
     },
     "editor": {
+      "bold": "Atrevido",
+      "italic": "Itálico",
+      "underline": "Subrayar",
+      "strikethrough": "Tachado",
+      "code": "Código",
+      "heading": "Título",
+      "bulletList": "Lista con viñetas",
+      "orderedList": "Lista numerada",
+      "blockquote": "cita en bloque",
       "setColor": "Establecer color",
       "enterUrl": "Introducir URL incluyendo https://",
       "uploadFile": "Subir archivo",
@@ -2368,7 +2383,8 @@
       "system": "Sistema",
       "green": "Verde",
       "purple": "Morado",
-      "orange": "Naranja"
+      "orange": "Naranja",
+      "accessible": "Accesible"
     }
   },
   "repository": {
@@ -4418,6 +4434,7 @@
         "thresholdUpdateError": "No se pudieron actualizar los ajustes de recordatorios. Inténtalo de nuevo en un momento."
       },
       "projectReviewToggleList": {
+        "toggleAria": "Alternar flujo de trabajo de revisión para {name}",
         "columnHeader": "Revisar el flujo de trabajo",
         "filterPlaceholder": "Filtrar proyectos...",
         "enabledToast": "Flujo de trabajo de revisión habilitado para {name}",
@@ -4487,6 +4504,7 @@
     "statuses": {
       "description": "Administrar estados de prueba",
       "editPolicy": {
+        "modeAria": "Modo de política de edición de resultados",
         "title": "Política de edición de resultados",
         "description": "Controla cuánto tiempo después de registrar un resultado se puede editar directamente en todos los proyectos. Los proyectos pueden ajustar este límite en su configuración avanzada, pero nunca modificarlo. Los administradores del sistema siempre pueden editarlo.",
         "modeNone": "Sin restricciones (los proyectos deciden)",

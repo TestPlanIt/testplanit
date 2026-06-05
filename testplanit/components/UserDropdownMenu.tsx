@@ -1,5 +1,6 @@
 import { Locale, Theme } from "@prisma/client";
 import {
+  Accessibility,
   Check,
   Circle,
   Globe,
@@ -173,6 +174,7 @@ export function UserDropdownMenu() {
       green: "rgba(34, 197, 94, 1)", // Green primary color
       orange: "rgba(251, 146, 60, 1)", // Orange primary color
       purple: "rgba(147, 51, 234, 1)", // Purple primary color
+      accessible: "rgba(29, 78, 216, 1)", // Strong blue for the accessible theme
     };
 
     wipeOverlay.style.backgroundColor =
@@ -351,6 +353,11 @@ export function UserDropdownMenu() {
                   "Purple",
                   <Circle className="h-4 w-4 fill-purple-500" />,
                   "text-purple-500"
+                )}
+                {renderThemeOption(
+                  "Accessible",
+                  <Accessibility className="h-4 w-4" />,
+                  "text-blue-700"
                 )}
               </DropdownMenuSubContent>
             </DropdownMenuPortal>

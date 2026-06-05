@@ -12,6 +12,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Folders } from "lucide-react";
+import { useTranslations } from "next-intl";
 import React from "react";
 import { Link } from "~/lib/navigation";
 
@@ -34,6 +35,7 @@ const BreadcrumbComponent: React.FC<BreadcrumbComponentProps> = ({
   onClick,
   isLastClickable = true,
 }) => {
+  const t = useTranslations("common.aria");
   return (
     <Breadcrumb className="mb-2">
       <BreadcrumbList className="flex overflow-hidden flex-wrap">
@@ -64,12 +66,14 @@ const BreadcrumbComponent: React.FC<BreadcrumbComponentProps> = ({
                   className="p-0 m-0 overflow-hidden w-fit"
                 >
                   <Tooltip>
-                    <TooltipTrigger type="button">
+                    <TooltipTrigger asChild>
                       <Link
                         href={`/projects/repository/${projectId}/?node=${folder.id}`}
                         className="text-primary/50 cursor-pointer inline-flex items-center p-0 m-0 max-w-xs compact-button hover:underline"
                         onClick={() => onClick && onClick(folder.id)}
-                        type="button"
+                        aria-label={
+                          folder.text?.trim() ? folder.text : t("folder")
+                        }
                       >
                         <span className="truncate">{folder.text}</span>
                       </Link>

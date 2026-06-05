@@ -63,7 +63,7 @@ When viewing your own profile, you can view and edit these preferences:
 
 #### Display Preferences
 
-- **Theme**: Choose from Light, Dark, System, Green, Orange, or Purple themes (with color indicators)
+- **Theme**: Choose from Light, Dark, System, Green, Orange, Purple, or **Accessible** themes (with color indicators). The Accessible theme is a high-contrast option tuned for [WCAG 2.2](https://www.w3.org/TR/WCAG22/) Level AA — see [Accessibility](./user-menu.md#accessibility)
 - **Locale**: Language preference (English, German, Spanish, French, Italian, Dutch, Polish, Portuguese, Turkish, Vietnamese, Russian, Chinese Simplified, Chinese Traditional, Japanese, Korean)
 - **Items Per Page**: Number of items to show in paginated tables (10, 25, 50, 100)
 
