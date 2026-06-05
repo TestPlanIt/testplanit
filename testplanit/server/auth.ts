@@ -110,7 +110,7 @@ declare module "next-auth" {
       access?: "USER" | "PROJECTADMIN" | "ADMIN" | "NONE" | undefined | null;
       image?: string | null;
       emailVerified?: Date | null;
-      authMethod?: "INTERNAL" | "SSO" | "BOTH" | null;
+      authMethod?: "INTERNAL" | "SSO" | "BOTH" | "SCIM" | null;
       preferences?: UserPreferences;
     } & DefaultSession["user"];
   }
