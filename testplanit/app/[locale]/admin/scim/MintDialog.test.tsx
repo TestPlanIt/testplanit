@@ -149,6 +149,15 @@ describe("MintDialog", () => {
     });
 
     const { user } = renderDialog();
+    // user-event 14 calls `setup()` which monkey-patches navigator.clipboard
+    // with its own stub. Re-install our spy AFTER renderDialog() runs so the
+    // click handler hits our mock.
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: mockClipboardWriteText },
+      configurable: true,
+      writable: true,
+    });
+
     await user.type(
       screen.getByTestId("scim-mint-dialog-name-input"),
       "Entra prod"
@@ -206,7 +215,7 @@ describe("MintDialog", () => {
     });
 
     const onOpenChangeSpy = vi.fn();
-    const { user, rerender } = render(
+    const { rerender } = render(
       <MintDialog
         open={true}
         onOpenChange={onOpenChangeSpy}
@@ -255,9 +264,6 @@ describe("MintDialog", () => {
       "scim-mint-dialog-name-input"
     ) as HTMLInputElement;
     expect(nameInputAfter.value).toBe("");
-
-    // Suppress unused-var lint on `user` for some test reporters.
-    void user;
   });
 
   test("submit failure stays in form state + surfaces toast.error", async () => {

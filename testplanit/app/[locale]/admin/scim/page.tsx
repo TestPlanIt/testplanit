@@ -45,22 +45,9 @@ import { toast } from "sonner";
 
 import { revokeScimTokenAction } from "~/app/actions/scimTokenActions";
 
-// Plan 06-08 will replace these placeholder components with the real
-// MintDialog and TestScimButton. Keeping the slots wired here lets columns.tsx
-// and the page render end-to-end while the dialog/probe UX lands separately.
-function MintDialogPlaceholder({
-  open,
-  onOpenChange,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
-  // Suppress unused-vars without rendering anything — Plan 06-08 owns the body.
-  void open;
-  void onOpenChange;
-  return null;
-}
+import { MintDialog } from "./MintDialog";
 
+// Plan 06-08 Task 2 replaces this placeholder with the real TestScimButton.
 function TestScimButtonPlaceholder({ tokenId }: { tokenId: string }) {
   void tokenId;
   return null;
@@ -454,10 +441,14 @@ function ScimTokensList() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Mint Dialog — Plan 06-08 replaces the placeholder with the real form + reveal UX */}
-      <MintDialogPlaceholder
+      {/* Mint Dialog — plaintext bearer is held only in MintDialog's local
+          useState; refetch the token list on success so the new row appears. */}
+      <MintDialog
         open={mintDialogOpen}
         onOpenChange={setMintDialogOpen}
+        onSuccess={() => {
+          void refetchTokens();
+        }}
       />
     </main>
   );
