@@ -108,6 +108,7 @@ export function ResultEditingPolicyCard() {
             <SelectTrigger
               className="max-w-xs"
               data-testid="edit-policy-mode-select"
+              aria-label={t("modeAria")}
             >
               <SelectValue />
             </SelectTrigger>

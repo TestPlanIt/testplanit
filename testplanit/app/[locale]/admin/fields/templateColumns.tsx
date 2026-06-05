@@ -132,6 +132,7 @@ export const useColumns = (
               variant="ghost"
               className="px-2 py-1 h-auto"
               data-testid="edit-template-button"
+              aria-label={tCommon("actions.edit")}
               onClick={() => onEditTemplate?.(row.original)}
             >
               <SquarePen className="h-5 w-5" />

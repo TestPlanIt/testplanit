@@ -84,6 +84,7 @@ export function getColumns(
             variant="ghost"
             className="px-2 py-1 h-auto"
             data-testid="edit-config-button"
+            aria-label={t("actions.edit")}
             onClick={() => onEditConfig?.(row.original)}
           >
             <Edit className="h-4 w-4" />

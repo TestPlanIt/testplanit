@@ -115,6 +115,7 @@ export const useColumns = (
           <div className="text-center">
             <Switch
               data-testid={`user-active-toggle-${row.original.id}`}
+              aria-label={tCommon("aria.toggleActive")}
               checked={row.original.isActive}
               disabled={row.original.id === currentUserId}
               onCheckedChange={(checked) =>

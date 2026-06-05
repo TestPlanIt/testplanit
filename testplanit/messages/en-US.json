@@ -693,6 +693,7 @@
       "selectProject": "Select project",
       "togglePanel": "Toggle panel",
       "folder": "Folder",
+      "toggleActive": "Toggle active status",
       "search": "Search",
       "helpMenu": "Help menu",
       "help": "Help",
@@ -4431,6 +4432,7 @@
         "thresholdUpdateError": "Failed to update reminder settings. Try again in a moment."
       },
       "projectReviewToggleList": {
+        "toggleAria": "Toggle review workflow for {name}",
         "columnHeader": "Review workflow",
         "filterPlaceholder": "Filter projects...",
         "enabledToast": "Review workflow enabled for {name}",
@@ -4500,6 +4502,7 @@
     "statuses": {
       "description": "Manage test statuses",
       "editPolicy": {
+        "modeAria": "Result editing policy mode",
         "title": "Result editing policy",
         "description": "Control how long after a result is recorded it can still be edited in place, across all projects. Projects can tighten this in their Advanced settings but never loosen it. System administrators can always edit.",
         "modeNone": "No restriction (projects decide)",
