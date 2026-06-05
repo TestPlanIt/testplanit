@@ -1,3 +1,9 @@
+## [0.35.2](https://github.com/TestPlanIt/testplanit/compare/v0.35.1...v0.35.2) (2026-06-05)
+
+### Enhancements
+
+* **auth:** support IdP-initiated SAML and harden the SSO completion flow ([#406](https://github.com/TestPlanIt/testplanit/issues/406)) ([7f3a653](https://github.com/TestPlanIt/testplanit/commit/7f3a653cca24427ad2dbfc58e896f8ecc6386eb7)), closes [#405](https://github.com/TestPlanIt/testplanit/issues/405)
+
 ## [0.35.1](https://github.com/TestPlanIt/testplanit/compare/v0.35.0...v0.35.1) (2026-06-05)
 
 ### Bug Fixes
