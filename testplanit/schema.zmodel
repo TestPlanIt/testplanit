@@ -133,6 +133,9 @@ model User {
     createdComments                 Comment[]                     @relation("CommentCreator")
     commentMentions                 CommentMention[]              @relation("CommentMentions")
     apiTokens                       ApiToken[]
+    scimSystemTokens                ScimToken[]                   @relation("ScimSystemUser")
+    scimTokensCreated               ScimToken[]                   @relation("ScimTokenCreatedBy")
+    scimTokensRevoked               ScimToken[]                   @relation("ScimTokenRevokedBy")
     createdShareLinks               ShareLink[]                   @relation("ShareLinkCreator")
     shareLinkAccessLogs             ShareLinkAccessLog[]          @relation("ShareLinkAccessor")
     reviewsRequested                ReviewRequest[]               @relation("ReviewRequestedBy")
@@ -220,6 +223,50 @@ model ApiToken {
     @@deny('all', !auth())
     @@allow('create', auth().access != null)
     @@allow('read, update, delete', auth().id == userId || auth().access == 'ADMIN')
+}
+
+// IdP source for a SCIM token. Drives per-IdP leniency in downstream PATCH
+// interpretation and labels the IdP in the admin UI.
+enum IdpName {
+    OKTA
+    ENTRA
+    ONELOGIN
+    OTHER
+
+    @@deny('all', !auth())
+    @@allow('read', auth().access != null)
+    @@allow('update', auth().access == 'ADMIN')
+}
+
+// SCIM bearer tokens minted by an admin for IdP provisioning.
+// Sibling to ApiToken, NOT extension. No userId FK -- a synthetic
+// __scim__ User row carries the audit attribution surface.
+model ScimToken {
+    id           String    @id @default(cuid())
+    name         String    @length(1, 100)
+    idpName      IdpName
+    token        String    @unique               // SHA-256/HMAC hash for bearer lookup
+    tokenPrefix  String                          // "tps_" + first 8 chars of plaintext
+    secret       String    @omit                 // Encrypted raw token at rest
+    systemUserId String
+    systemUser   User      @relation("ScimSystemUser", fields: [systemUserId], references: [id])
+    createdById  String
+    createdBy    User      @relation("ScimTokenCreatedBy", fields: [createdById], references: [id])
+    revokedById  String?
+    revokedBy    User?     @relation("ScimTokenRevokedBy", fields: [revokedById], references: [id])
+    expiresAt    DateTime?
+    lastUsedAt   DateTime?
+    lastUsedIp   String?
+    lastSyncAt   DateTime?
+    revokedAt    DateTime?
+    createdAt    DateTime  @default(now()) @db.Timestamptz(6)
+    isActive     Boolean   @default(true)
+
+    @@index([token])
+    @@index([isActive, expiresAt])
+    @@index([createdById])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
 }
 
 enum Theme {
