@@ -15,6 +15,43 @@ import { db } from "~/server/db";
 import { createSAMLClient, validateSAMLResponse } from "~/server/saml-provider";
 
 /**
+ * Resolve an IdP-initiated SAMLResponse (no RelayState — e.g. an Okta dashboard
+ * tile) to the enabled SAML config whose IdP signed it. The stored issuer field
+ * is the SP entity id, not a reliable IdP identifier, so we let cryptographic
+ * validation pick the config: the assertion only validates against the cert of
+ * the IdP that actually issued it. Returns null if none validate it.
+ */
+async function resolveIdpInitiatedConfig(samlResponse: FormDataEntryValue) {
+  const configs = await db.samlConfiguration.findMany({
+    where: { provider: { enabled: true } },
+    include: { provider: true },
+  });
+
+  for (const samlConfig of configs) {
+    try {
+      const samlClient = await createSAMLClient({
+        name: samlConfig.provider.name,
+        entryPoint: samlConfig.entryPoint,
+        cert: samlConfig.cert,
+        issuer: samlConfig.issuer,
+      });
+      const profile = await validateSAMLResponse(samlClient, {
+        SAMLResponse: samlResponse,
+      });
+      return { samlConfig, profile };
+    } catch {
+      // Not this IdP (or the assertion is invalid) — try the next config.
+    }
+  }
+
+  return null;
+}
+
+type ResolvedSaml = NonNullable<
+  Awaited<ReturnType<typeof resolveIdpInitiatedConfig>>
+>;
+
+/**
  * SAML Assertion Consumer Service (ACS).
  *
  * The IdP POSTs the SAMLResponse here. This path matches the ACS URL embedded
@@ -54,48 +91,57 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Recover the provider and destination from RelayState (the IdP echoes it
-    // back here; same-site cookies are not sent on this cross-site POST). The
-    // token is single-use and short-lived, which is what guards this endpoint.
+    // Recover the provider and destination from RelayState. The IdP echoes it
+    // back on this cross-site POST (where same-site cookies are not sent); the
+    // token is single-use and short-lived, which guards SP-initiated logins.
     const relay = await consumeSamlRelayState(
       typeof relayState === "string" ? relayState : null
     );
 
-    if (!relay) {
-      return NextResponse.json(
-        { error: "Invalid or expired SAML request" },
-        { status: 400 }
-      );
+    let samlConfig: ResolvedSaml["samlConfig"];
+    let profile: ResolvedSaml["profile"];
+    let callbackUrl = "/";
+
+    if (relay) {
+      // SP-initiated: RelayState carries the SsoProvider id, which is the unique
+      // foreign key on SamlConfiguration (not its own id).
+      callbackUrl = sanitizeCallbackUrl(relay.callbackUrl);
+      const found = await db.samlConfiguration.findUnique({
+        where: { providerId: relay.providerId },
+        include: { provider: true },
+      });
+
+      if (!found || !found.provider.enabled) {
+        return NextResponse.json(
+          { error: "SAML provider not found or disabled" },
+          { status: 404 }
+        );
+      }
+
+      const samlClient = await createSAMLClient({
+        name: found.provider.name,
+        entryPoint: found.entryPoint,
+        cert: found.cert,
+        issuer: found.issuer,
+      });
+
+      samlConfig = found;
+      profile = await validateSAMLResponse(samlClient, {
+        SAMLResponse: samlResponse,
+      });
+    } else {
+      // IdP-initiated (no RelayState — e.g. an Okta dashboard tile): pick the
+      // enabled config whose cert validates this assertion's signature.
+      const resolved = await resolveIdpInitiatedConfig(samlResponse);
+      if (!resolved) {
+        return NextResponse.json(
+          { error: "Invalid or expired SAML request" },
+          { status: 400 }
+        );
+      }
+      samlConfig = resolved.samlConfig;
+      profile = resolved.profile;
     }
-
-    const providerId = relay.providerId;
-    const callbackUrl = sanitizeCallbackUrl(relay.callbackUrl);
-
-    // Fetch SAML configuration. RelayState carries the SsoProvider id, which is
-    // the unique foreign key on SamlConfiguration (not its own id).
-    const samlConfig = await db.samlConfiguration.findUnique({
-      where: { providerId },
-      include: { provider: true },
-    });
-
-    if (!samlConfig || !samlConfig.provider.enabled) {
-      return NextResponse.json(
-        { error: "SAML provider not found or disabled" },
-        { status: 404 }
-      );
-    }
-
-    // Create SAML client and validate response
-    const samlClient = await createSAMLClient({
-      name: samlConfig.provider.name,
-      entryPoint: samlConfig.entryPoint,
-      cert: samlConfig.cert,
-      issuer: samlConfig.issuer,
-    });
-
-    const profile = await validateSAMLResponse(samlClient, {
-      SAMLResponse: samlResponse,
-    });
 
     // Validate SAML response timestamps if available
     if (profile.notBefore || profile.notOnOrAfter) {
@@ -269,8 +315,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Create a temporary session token for secure user info transfer
-    const tempToken = createTempSessionToken({
+    // Create a one-time session token for secure user info transfer.
+    const tempToken = await createTempSessionToken({
       userId: user.id,
       provider: `saml-${samlConfig.provider.name}`,
       email: user.email,
