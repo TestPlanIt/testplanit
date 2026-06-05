@@ -6,6 +6,7 @@ import {
   createTempSessionToken,
   getAppBaseUrl,
   getSecurityHeaders,
+  registerSamlAssertion,
   sanitizeCallbackUrl,
   validateSAMLTimestamp,
 } from "~/lib/auth-security";
@@ -156,6 +157,41 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+    }
+
+    // Reject replayed assertions: a validated assertion is single-use within its
+    // validity window. This closes the replay vector opened by accepting
+    // IdP-initiated (no-RelayState) POSTs — without it any captured assertion
+    // could be re-POSTed until it expires.
+    const notOnOrAfterMs = profile.notOnOrAfter
+      ? new Date(profile.notOnOrAfter as string).getTime()
+      : 0;
+    const assertionTtlSeconds =
+      notOnOrAfterMs > Date.now()
+        ? (notOnOrAfterMs - Date.now()) / 1000 + 60
+        : 300;
+    // Dedup on the signed assertion ID — the replay-stable anchor (it's inside
+    // the signed element, unlike the surrounding bytes). Fall back to the
+    // validated assertion XML, then the raw response, only if the ID is absent.
+    const getAssertionXml = (
+      profile as unknown as { getAssertionXml?: () => string }
+    ).getAssertionXml;
+    const assertionXml = getAssertionXml ? getAssertionXml() : "";
+    const assertionId =
+      assertionXml.match(
+        /<(?:\w+:)?Assertion\b[^>]*\bID=["']([^"']+)["']/
+      )?.[1] ||
+      assertionXml ||
+      (samlResponse as string);
+    const isFreshAssertion = await registerSamlAssertion(
+      assertionId,
+      assertionTtlSeconds
+    );
+    if (!isFreshAssertion) {
+      return NextResponse.json(
+        { error: "SAML response has already been used" },
+        { status: 400 }
+      );
     }
 
     // Extract user attributes based on mapping

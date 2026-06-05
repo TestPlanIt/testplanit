@@ -34,6 +34,15 @@ vi.mock("~/lib/utils/email-domain-validation", () => ({
   isEmailDomainAllowed: vi.fn(async () => true),
 }));
 
+// Override only the assertion replay guard; everything else stays real.
+const { registerSamlAssertion } = vi.hoisted(() => ({
+  registerSamlAssertion: vi.fn(async () => true),
+}));
+vi.mock("~/lib/auth-security", async (importActual) => {
+  const actual = await importActual<typeof import("~/lib/auth-security")>();
+  return { ...actual, registerSamlAssertion };
+});
+
 import { db } from "~/server/db";
 import { POST } from "./route";
 
@@ -109,6 +118,29 @@ describe("POST /api/auth/callback/saml — ACS validator", () => {
       )
     ).toBe(true);
     expect(location).not.toContain("/api/auth/callback/saml?token=");
+  });
+
+  it("rejects a replayed assertion with 400 (single-use)", async () => {
+    (db.samlConfiguration.findUnique as any).mockResolvedValue({
+      id: "cfg",
+      entryPoint: "e",
+      cert: "c",
+      issuer: "i",
+      attributeMapping: {},
+      autoProvisionUsers: false,
+      provider: { name: "okta", enabled: true },
+    });
+    validateSAMLResponse.mockResolvedValue({
+      email: "bob@example.com",
+      nameID: "bob",
+    });
+    registerSamlAssertion.mockResolvedValueOnce(false); // already seen
+
+    const res = await POST(makeReq(relayFor("ssoprovider_9")));
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/already been used/i);
   });
 
   it("returns 404 when the provider in RelayState is unknown", async () => {

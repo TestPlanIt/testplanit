@@ -222,6 +222,37 @@ export async function consumeSamlRelayState(
   }
 }
 
+const SAML_ASSERTION_PREFIX = "saml:assertion:";
+
+/**
+ * Enforce one-time use of a validated SAML assertion. The IdP-initiated ACS
+ * accepts assertions with no RelayState, so without this an attacker could
+ * replay a captured assertion (SP- or IdP-issued) within its validity window.
+ *
+ * The caller passes the signed assertion's ID — the replay-stable anchor. The
+ * ID lives inside the signed element, so an attacker can't change it without
+ * the IdP's key; the surrounding bytes can be mutated (re-canonicalization,
+ * namespace/attribute reordering, the unsigned Response wrapper) while keeping
+ * a valid signature, which is why a byte hash is not a safe dedup key. The ID
+ * is hashed here only to bound the Valkey key length/charset. Returns true on
+ * first use, false if already seen; needs Valkey for the cross-pod check
+ * (without it the assertion's expiry window is the only bound).
+ */
+export async function registerSamlAssertion(
+  assertionId: string,
+  ttlSeconds: number
+): Promise<boolean> {
+  if (!valkeyConnection) return true;
+  const result = await valkeyConnection.set(
+    `${SAML_ASSERTION_PREFIX}${hashData(assertionId)}`,
+    "1",
+    "EX",
+    Math.max(1, Math.ceil(ttlSeconds)),
+    "NX"
+  );
+  return result !== null;
+}
+
 // Rate limiting configuration
 export interface RateLimitConfig {
   windowMs: number;
