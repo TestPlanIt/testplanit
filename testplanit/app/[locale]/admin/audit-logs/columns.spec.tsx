@@ -63,7 +63,7 @@ const baseLog = {
   project: null,
 } as unknown as ExtendedAuditLog;
 
-describe("admin/audit-logs columns — SCIM source badge (S6 / AUTH-05)", () => {
+describe("admin/audit-logs columns — SCIM source badge", () => {
   const { result } = renderHook(() =>
     useColumns(userPreferences, vi.fn(), tAuditLogs, tCommon, tUserMenu)
   );

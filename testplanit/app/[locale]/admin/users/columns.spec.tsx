@@ -136,7 +136,7 @@ const normalUser = {
   isActive: true,
 } as unknown as ExtendedUser;
 
-describe("admin/users columns — SCIM Provisioner badge (D-03 / S5)", () => {
+describe("admin/users columns — SCIM Provisioner badge", () => {
   const { result } = renderHook(() =>
     useColumns(
       userPreferences,
