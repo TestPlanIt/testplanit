@@ -16,8 +16,7 @@ export const SCIM_CONTENT_TYPE = "application/scim+json" as const;
 export const SCIM_SCHEMAS = {
   CORE_USER: "urn:ietf:params:scim:schemas:core:2.0:User",
   CORE_GROUP: "urn:ietf:params:scim:schemas:core:2.0:Group",
-  ENTERPRISE_USER:
-    "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
+  ENTERPRISE_USER: "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
   SERVICE_PROVIDER_CONFIG:
     "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig",
   RESOURCE_TYPE: "urn:ietf:params:scim:schemas:core:2.0:ResourceType",
@@ -65,3 +64,12 @@ export const SCIM_SYSTEM_USER_ID = "system-scim-user" as const;
  * than this window, capping write amplification under bulk-sync traffic.
  */
 export const SCIM_LAST_USED_THROTTLE_MS = 60_000 as const;
+
+/**
+ * Deterministic id of the sentinel `__system__` Projects row that every
+ * tenant-wide SCIM webhook event FKs against (WebhookOutboxEvent.projectId
+ * is NOT NULL). Projects.id is `Int @id @default(autoincrement())`, which
+ * starts at 1 and increments positively, so a fixed negative literal is
+ * safe from autoincrement collision.
+ */
+export const SYSTEM_PROJECT_ID = -1 as const;

@@ -83,6 +83,11 @@ model User {
     accounts                        Account[]
     authMethod                      AuthMethod                    @default(INTERNAL)
     externalId                      String?                 // For SAML/OAuth user mapping
+    scimUserName                    String? @unique
+    scimExternalId                  String? @unique
+    scimExtensions                  Json?
+    scimGivenName                   String?
+    scimFamilyName                  String?
     access                          Access                        @default(NONE)
     roleId                          Int
     role                            Roles                         @relation(fields: [roleId], references: [id])
@@ -5082,6 +5087,7 @@ enum AuthMethod {
     INTERNAL
     SSO
     BOTH
+    SCIM
 
     @@deny('create,update,delete', !auth())
     @@allow('read', true)

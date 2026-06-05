@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import {
   SCIM_SYSTEM_USER_EMAIL,
   SCIM_SYSTEM_USER_ID,
+  SYSTEM_PROJECT_ID,
 } from "../lib/scim/constants";
 import { seedDemoProject } from "./seedDemoProject";
 import { seedFieldIcons } from "./seedFieldIcons";
@@ -516,6 +517,23 @@ async function seedCoreData() {
     },
   });
   console.log("Ensured synthetic SCIM Provisioner user exists.");
+
+  // --- Sentinel __system__ Projects row ---
+  // Tenant-wide SCIM webhook events (no natural project scope) FK to this row
+  // via WebhookOutboxEvent.projectId. The row is flagged deleted so it never
+  // surfaces in any admin list; createdBy points at the SCIM Provisioner above
+  // so the FK is valid the moment this upsert runs.
+  await prisma.projects.upsert({
+    where: { id: SYSTEM_PROJECT_ID },
+    update: {},
+    create: {
+      id: SYSTEM_PROJECT_ID,
+      name: "__system__",
+      isDeleted: true,
+      createdBy: SCIM_SYSTEM_USER_ID,
+    },
+  });
+  console.log("Ensured sentinel __system__ Projects row exists.");
 
   // --- Authentication Configuration ---
   console.log("Configuring internal authentication (no SSO providers)...");
