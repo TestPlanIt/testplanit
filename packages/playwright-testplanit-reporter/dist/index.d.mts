@@ -1,0 +1,376 @@
+import { Reporter, FullConfig, Suite, TestCase, TestResult, TestError, FullResult } from '@playwright/test/reporter';
+export { RepositoryCase, Status, TestPlanItClient, TestPlanItError, TestRun, TestRunResult } from '@testplanit/api';
+
+/**
+ * Configuration options for the TestPlanIt Playwright reporter.
+ *
+ * Mirrors the behaviour of `@testplanit/wdio-reporter`. Because Playwright runs
+ * the reporter in a single main process (and dispatches events from every
+ * worker to it), there is no need for the worker-coordination machinery the
+ * WebdriverIO reporter relies on — so there is no `oneReport` option and no
+ * separate launcher service.
+ */
+interface TestPlanItReporterOptions {
+    /**
+     * The base URL of your TestPlanIt instance
+     * @example 'https://testplanit.example.com'
+     */
+    domain: string;
+    /**
+     * API token for authentication.
+     * Generate this from TestPlanIt: Settings > API Tokens.
+     * Should start with 'tpi_'.
+     */
+    apiToken: string;
+    /**
+     * The project ID in TestPlanIt where results will be reported
+     */
+    projectId: number;
+    /**
+     * Existing test run to add results to (ID or name).
+     * If a string is provided, the system looks up the test run by exact name match.
+     * If not provided, a new test run is created.
+     */
+    testRunId?: number | string;
+    /**
+     * Name for the new test run.
+     * Supports placeholders:
+     * - {date} - Current date (YYYY-MM-DD)
+     * - {time} - Current time (HH:MM:SS)
+     * - {browser} - Playwright project name of the first reported test (e.g. 'chromium')
+     * - {platform} - Platform/OS name
+     * - {spec} - Spec file name (without .spec.ts extension) of the first reported test
+     * - {suite} - Root describe title of the first reported test
+     * @default '{suite} - {date} {time}'
+     */
+    runName?: string;
+    /**
+     * Test run type to indicate the test framework being used.
+     * Playwright results are stored as JUnit-style results, so this defaults to
+     * 'JUNIT'. Override if you need a specific type.
+     * @default 'JUNIT'
+     */
+    testRunType?: 'REGULAR' | 'JUNIT' | 'TESTNG' | 'XUNIT' | 'NUNIT' | 'MSTEST' | 'MOCHA' | 'CUCUMBER';
+    /**
+     * Configuration to associate with the test run (ID or name).
+     * If a string is provided, the system looks up the configuration by exact name match.
+     */
+    configId?: number | string;
+    /**
+     * Milestone to associate with the test run (ID or name).
+     * If a string is provided, the system looks up the milestone by exact name match.
+     */
+    milestoneId?: number | string;
+    /**
+     * Workflow state for the test run (ID or name).
+     * If a string is provided, the system looks up the state by exact name match.
+     */
+    stateId?: number | string;
+    /**
+     * Parent folder for auto-created test cases (ID or name).
+     * If a string is provided, the system looks up the folder by exact name match.
+     */
+    parentFolderId?: number | string;
+    /**
+     * Template for auto-created test cases (ID or name).
+     * If a string is provided, the system looks up the template by exact name match.
+     */
+    templateId?: number | string;
+    /**
+     * Tags to apply to the test run (IDs or names).
+     * If strings are provided, the system looks up each tag by exact name match.
+     * Tags that don't exist are created automatically.
+     */
+    tagIds?: (number | string)[];
+    /**
+     * Regular expression pattern to extract test case IDs from test titles.
+     * The pattern MUST include a capturing group that captures the numeric case ID.
+     *
+     * @default /\[(\d+)\]/g - Matches IDs in brackets like "[1761]"
+     *
+     * @example
+     * // Default pattern - brackets: "[1761] should load the page"
+     * caseIdPattern: /\[(\d+)\]/g
+     *
+     * @example
+     * // C-prefix pattern: "C12345 should load the page"
+     * caseIdPattern: /C(\d+)/g
+     *
+     * @example
+     * // TC- prefix pattern: "TC-12345 should load the page"
+     * caseIdPattern: /TC-(\d+)/g
+     */
+    caseIdPattern?: RegExp | string;
+    /**
+     * Whether to automatically create test cases in TestPlanIt if they don't exist.
+     * Test cases are matched by className (describe path) + name (test title).
+     * Requires `parentFolderId` and `templateId`.
+     * @default false
+     */
+    autoCreateTestCases?: boolean;
+    /**
+     * Whether to create folder hierarchy based on the describe-block structure.
+     * When enabled, nested `test.describe` blocks create nested folders:
+     * describe('Suite A') > describe('Suite B') > test('...')
+     * creates folders: parentFolderId > Suite A > Suite B, and the test case is
+     * placed in the innermost folder.
+     * Requires `autoCreateTestCases` and `parentFolderId`.
+     * @default false
+     */
+    createFolderHierarchy?: boolean;
+    /**
+     * Whether to upload Playwright attachments (screenshots, videos, traces, and
+     * any custom `testInfo.attach(...)` outputs) to the JUnit result.
+     * @default true
+     */
+    uploadAttachments?: boolean;
+    /**
+     * Restrict which attachments are uploaded. Each entry matches an attachment
+     * when it equals the attachment `name` (e.g. 'screenshot', 'video', 'trace')
+     * or is a prefix of its `contentType` (e.g. 'image/', 'image/png', 'video/').
+     * When omitted, every attachment is uploaded.
+     *
+     * @example
+     * // Screenshots only (mirrors the WebdriverIO reporter)
+     * attachmentTypes: ['image/']
+     *
+     * @example
+     * // Screenshots and videos, but not traces
+     * attachmentTypes: ['image/', 'video/']
+     */
+    attachmentTypes?: string[];
+    /**
+     * Whether to include test error stack traces in results
+     * @default true
+     */
+    includeStackTrace?: boolean;
+    /**
+     * Whether to mark the test run as completed when all tests finish
+     * @default true
+     */
+    completeRunOnFinish?: boolean;
+    /**
+     * Request timeout in milliseconds
+     * @default 30000
+     */
+    timeout?: number;
+    /**
+     * Number of retries for failed API requests
+     * @default 3
+     */
+    maxRetries?: number;
+    /**
+     * Enable verbose logging for debugging
+     * @default false
+     */
+    verbose?: boolean;
+}
+/**
+ * Internal test result tracked by the reporter
+ */
+interface TrackedTestResult {
+    /** Test case ID from TestPlanIt (parsed from title) */
+    caseId?: number;
+    /** Suite/class name (joined describe path) */
+    suiteName: string;
+    /** Suite path as array (for folder hierarchy) */
+    suitePath: string[];
+    /** Test title/name (without case ID prefix) */
+    testName: string;
+    /** Full test title including parent suites */
+    fullTitle: string;
+    /** Original test title (with case ID if present) */
+    originalTitle: string;
+    /** Test status */
+    status: 'passed' | 'failed' | 'skipped';
+    /** Test duration in milliseconds */
+    duration: number;
+    /** Error message if test failed */
+    errorMessage?: string;
+    /** Error stack trace if test failed */
+    stackTrace?: string;
+    /** Timestamp when test started */
+    startedAt: Date;
+    /** Timestamp when test finished */
+    finishedAt: Date;
+    /** Playwright project name (≈ browser) */
+    browser?: string;
+    /** Platform/OS name */
+    platform?: string;
+    /** Retry attempt number (0-based) */
+    retryAttempt: number;
+    /** Unique identifier for this test attempt */
+    uid: string;
+    /** Spec file path */
+    specFile?: string;
+    /** Captured stdout */
+    systemOut?: string;
+    /** Captured stderr */
+    systemErr?: string;
+    /** JUnit test result ID (set after the result is created) */
+    junitResultId?: number;
+}
+/**
+ * Resolved IDs after looking up names
+ */
+interface ResolvedIds {
+    testRunId?: number;
+    configId?: number;
+    milestoneId?: number;
+    stateId?: number;
+    parentFolderId?: number;
+    templateId?: number;
+    tagIds?: number[];
+}
+/**
+ * Statistics tracked during the test run for the final summary
+ */
+interface ReporterStats {
+    /** Number of test cases that matched existing cases in TestPlanIt */
+    testCasesFound: number;
+    /** Number of test cases that were newly created in TestPlanIt */
+    testCasesCreated: number;
+    /** Number of test cases that were moved from deleted folders */
+    testCasesMoved: number;
+    /** Number of folders that were created for hierarchy */
+    foldersCreated: number;
+    /** Number of test results reported (passed) */
+    resultsPassed: number;
+    /** Number of test results reported (failed) */
+    resultsFailed: number;
+    /** Number of test results reported (skipped) */
+    resultsSkipped: number;
+    /** Number of attachments uploaded */
+    attachmentsUploaded: number;
+    /** Number of attachment upload failures */
+    attachmentsFailed: number;
+    /** Number of API errors encountered */
+    apiErrors: number;
+    /** Start time of the test run */
+    startTime: Date;
+}
+/**
+ * Reporter state
+ */
+interface ReporterState {
+    /** Created test run ID */
+    testRunId?: number;
+    /** Created JUnit test suite ID */
+    testSuiteId?: number;
+    /** Resolved numeric IDs from name lookups */
+    resolvedIds: ResolvedIds;
+    /** Map of test UID to tracked result */
+    results: Map<string, TrackedTestResult>;
+    /** Map of repository case keys to in-flight/resolved IDs */
+    caseIdMap: Map<string, Promise<number>>;
+    /** Map of test run case keys to in-flight/resolved IDs */
+    testRunCaseMap: Map<string, Promise<number>>;
+    /** Map of folder paths (joined by >) to in-flight/resolved folder IDs */
+    folderPathMap: Map<string, Promise<number>>;
+    /** Status ID mappings */
+    statusIds: {
+        passed?: number;
+        failed?: number;
+        skipped?: number;
+        blocked?: number;
+    };
+    /** Whether initialization is complete */
+    initialized: boolean;
+    /** Initialization error if any */
+    initError?: Error;
+    /** Statistics for the final summary */
+    stats: ReporterStats;
+}
+
+/**
+ * Playwright reporter for TestPlanIt.
+ *
+ * Reports test results directly to your TestPlanIt instance. Mirrors the
+ * behaviour of `@testplanit/wdio-reporter`.
+ *
+ * @example
+ * ```typescript
+ * // playwright.config.ts
+ * import { defineConfig } from '@playwright/test';
+ *
+ * export default defineConfig({
+ *   reporter: [
+ *     ['@testplanit/playwright-reporter', {
+ *       domain: 'https://testplanit.example.com',
+ *       apiToken: process.env.TESTPLANIT_API_TOKEN,
+ *       projectId: 1,
+ *       runName: 'E2E Tests - {date} {time}',
+ *     }],
+ *   ],
+ * });
+ * ```
+ */
+declare class TestPlanItReporter implements Reporter {
+    private client;
+    private options;
+    private state;
+    /** Memoized initialization (create test run, fetch statuses). */
+    private initPromise;
+    /** Memoized JUnit suite creation. */
+    private suitePromise;
+    /** In-flight result-reporting / upload operations awaited in onEnd. */
+    private pendingOperations;
+    private reportedResultCount;
+    /** Run-name placeholder context, captured from reported tests. */
+    private currentSpec?;
+    private currentProject?;
+    private rootSuiteName?;
+    constructor(options: TestPlanItReporterOptions);
+    /** Tell Playwright this reporter writes to stdout (summary + warnings). */
+    printsToStdio(): boolean;
+    private log;
+    private logError;
+    /**
+     * Track an async operation so onEnd waits for it to complete.
+     */
+    private trackOperation;
+    onBegin(_config: FullConfig, _suite: Suite): void;
+    onTestEnd(test: TestCase, result: TestResult): void;
+    onError(error: TestError): void;
+    onEnd(_result: FullResult): Promise<void>;
+    private reportResult;
+    /**
+     * Resolve (and cache) the repository case ID for an auto-created test case,
+     * creating the folder hierarchy first when enabled.
+     */
+    private resolveAutoCreatedCaseId;
+    /** Resolve (and cache) the folder ID for a describe path. */
+    private getFolderId;
+    /** Add the case to the run once (memoized per case). */
+    private getTestRunCaseId;
+    private uploadAttachments;
+    private attachmentMatches;
+    private buildAttachmentNote;
+    private initialize;
+    private doInitialize;
+    private resolveOptionIds;
+    private fetchStatusMappings;
+    private createTestRun;
+    private ensureJUnitTestSuite;
+    private createJUnitTestSuite;
+    private normalizeStatus;
+    private mapStatusToJUnitType;
+    /**
+     * Extract case IDs from a test title using the configured pattern.
+     * @example "[1761] [1762] should load" -> { caseIds: [1761, 1762], cleanTitle: "should load" }
+     */
+    private parseCaseIds;
+    /** Collect the describe-block titles (outermost first) for a test. */
+    private getSuitePath;
+    /** Resolve the Playwright project name (≈ browser) for a test. */
+    private getProjectName;
+    private joinOutput;
+    private createCaseKey;
+    private formatRunName;
+    private extForContentType;
+    private printSummary;
+    /** Expose the internal state (for testing/debugging). */
+    getState(): ReporterState;
+}
+
+export { type ReporterState, TestPlanItReporter, type TestPlanItReporterOptions, type TrackedTestResult, TestPlanItReporter as default };
