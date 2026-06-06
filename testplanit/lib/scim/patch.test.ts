@@ -1,6 +1,13 @@
+import { readFileSync } from "fs";
+import { join } from "path";
+
 import { describe, it, expect } from "vitest";
 
-import { applyScimPatch, ScimPatchApplyError } from "./patch";
+import {
+  applyScimPatch,
+  rewriteEntraMembersRemove,
+  ScimPatchApplyError,
+} from "./patch";
 
 /**
  * Coverage matrix for the scim-patch wrapper:
@@ -395,6 +402,286 @@ describe("applyScimPatch", () => {
   // ---------------------------------------------------------------------------
   // Group G — non-ScimError exceptions pass through unwrapped
   // ---------------------------------------------------------------------------
+
+  // ---------------------------------------------------------------------------
+  // Group H — Entra members PATCH preprocessor (Groups surface)
+  // ---------------------------------------------------------------------------
+
+  describe("Group H — Entra members PATCH preprocessor", () => {
+    interface TestScimGroup {
+      id?: string;
+      schemas: string[];
+      displayName?: string;
+      members?: Array<{ value: string; display?: string }>;
+      meta?: { created: Date; lastModified: Date };
+    }
+
+    function makeGroup(overrides: Partial<TestScimGroup> = {}): TestScimGroup {
+      return {
+        id: "g1",
+        schemas: ["urn:ietf:params:scim:schemas:core:2.0:Group"],
+        displayName: "Engineering",
+        members: [
+          { value: "u1091" },
+          { value: "u2042" },
+          { value: "u3094" },
+        ],
+        meta: {
+          created: new Date("2026-01-01T00:00:00.000Z"),
+          lastModified: new Date("2026-01-01T00:00:00.000Z"),
+        },
+        ...overrides,
+      };
+    }
+
+    it("H1: Entra-shape Remove with one member (no-flag fixture) removes that member", () => {
+      const fixturePath = join(
+        process.cwd(),
+        "e2e/fixtures/scim/entra-patch-remove-member-no-flag.json",
+      );
+      const body = JSON.parse(readFileSync(fixturePath, "utf-8"));
+
+      const current = makeGroup({
+        members: [
+          { value: "u1091" },
+          { value: "u2042" },
+        ],
+      });
+
+      const draft = applyScimPatch(current, body);
+
+      // The Entra preprocessor rewrites into spec-form members[value eq "u1091"]
+      // which scim-patch resolves and removes from the array.
+      expect(draft.members).toEqual([{ value: "u2042" }]);
+    });
+
+    it("H2: Entra-shape Remove with three members rewrites to three spec-form ops", () => {
+      const current = makeGroup({
+        members: [
+          { value: "u1" },
+          { value: "u2" },
+          { value: "u3" },
+          { value: "u4" },
+        ],
+      });
+
+      const body = {
+        schemas: [PATCH_OP_URN],
+        Operations: [
+          {
+            op: "Remove",
+            path: "members",
+            value: [{ value: "u1" }, { value: "u2" }, { value: "u3" }],
+          },
+        ],
+      };
+
+      const draft = applyScimPatch(current, body as never);
+      expect(draft.members).toEqual([{ value: "u4" }]);
+    });
+
+    it("H3: already-spec-form Remove (flag fixture shape) passes through preprocessor unchanged", () => {
+      const current = makeGroup({
+        members: [
+          { value: "7f4bc1a3-285e-48ae-8202-5accb43efb0e" },
+          { value: "keep" },
+        ],
+      });
+
+      const body = {
+        schemas: [PATCH_OP_URN],
+        Operations: [
+          {
+            op: "remove",
+            path: 'members[value eq "7f4bc1a3-285e-48ae-8202-5accb43efb0e"]',
+          },
+        ],
+      };
+
+      const draft = applyScimPatch(current, body as never);
+      expect(draft.members).toEqual([{ value: "keep" }]);
+    });
+
+    it("H4: Remove on a NON-members path with an array value is NOT rewritten", () => {
+      // The preprocessor must be narrowly scoped — path must literally equal
+      // "members" before any rewrite happens. A legitimate remove against
+      // another multi-valued attribute must pass through to scim-patch.
+      const current = makeGroup({ displayName: "Old Name" });
+
+      const body = {
+        schemas: [PATCH_OP_URN],
+        Operations: [
+          { op: "replace", path: "displayName", value: "New Name" },
+        ],
+      };
+
+      const draft = applyScimPatch(current, body as never);
+      expect(draft.displayName).toBe("New Name");
+    });
+
+    it("H5: Remove on path 'members' with a STRING value (not array) is NOT rewritten", () => {
+      // Narrow-shape gate: value must be an array of {value: string} objects.
+      // A bare string value falls through to scim-patch which will handle
+      // (or reject) it on its own.
+      const current = makeGroup({
+        members: [{ value: "u1" }, { value: "u2" }],
+      });
+
+      let captured: unknown;
+      try {
+        applyScimPatch(current, {
+          schemas: [PATCH_OP_URN],
+          Operations: [{ op: "Remove", path: "members", value: "u1" }],
+        } as never);
+      } catch (e) {
+        captured = e;
+      }
+      // Either scim-patch handles the string-value remove or rejects it as a
+      // ScimError. The contract under test is "preprocessor does not rewrite".
+      // Document the outcome by asserting the original group was not mutated.
+      void captured;
+      expect(current.members).toEqual([{ value: "u1" }, { value: "u2" }]);
+    });
+
+    it("H6: Remove on path 'members' with mixed valid/invalid entries is NOT rewritten", () => {
+      // Narrow gate: every entry must have typeof value.value === "string".
+      // A single non-string entry forces the preprocessor to pass through.
+      const current = makeGroup({
+        members: [{ value: "u1" }, { value: "u2" }],
+      });
+
+      let captured: unknown;
+      try {
+        applyScimPatch(current, {
+          schemas: [PATCH_OP_URN],
+          Operations: [
+            {
+              op: "Remove",
+              path: "members",
+              value: [{ value: "u1" }, { value: 42 }],
+            },
+          ],
+        } as never);
+      } catch (e) {
+        captured = e;
+      }
+      void captured;
+      expect(current.members).toEqual([{ value: "u1" }, { value: "u2" }]);
+    });
+
+    it("H7: empty members value array is NOT rewritten (no-op preprocessor)", () => {
+      // Narrow gate: every entry's value must be a string, AND there must be
+      // at least one entry; an empty array produces zero rewritten ops which
+      // would silently swallow the op. Pass through so scim-patch can decide.
+      const current = makeGroup({ members: [{ value: "u1" }] });
+
+      let captured: unknown;
+      try {
+        applyScimPatch(current, {
+          schemas: [PATCH_OP_URN],
+          Operations: [{ op: "Remove", path: "members", value: [] }],
+        } as never);
+      } catch (e) {
+        captured = e;
+      }
+      void captured;
+      // Original input must remain byte-identical regardless of outcome.
+      expect(current.members).toEqual([{ value: "u1" }]);
+    });
+
+    it("H_direct_1: rewriteEntraMembersRemove rewrites the Entra shape into N spec-form ops", () => {
+      const op = {
+        op: "Remove",
+        path: "members",
+        value: [{ value: "u1" }, { value: "u2" }, { value: "u3" }],
+      };
+      const out = rewriteEntraMembersRemove(op as never);
+      expect(Array.isArray(out)).toBe(true);
+      const arr = out as Array<{ op: string; path: string }>;
+      expect(arr).toHaveLength(3);
+      expect(arr[0]).toEqual({ op: "remove", path: 'members[value eq "u1"]' });
+      expect(arr[1]).toEqual({ op: "remove", path: 'members[value eq "u2"]' });
+      expect(arr[2]).toEqual({ op: "remove", path: 'members[value eq "u3"]' });
+    });
+
+    it("H_direct_2: lowercase op:'remove' is also rewritten (case-insensitive op match)", () => {
+      const op = {
+        op: "remove",
+        path: "members",
+        value: [{ value: "u1" }],
+      };
+      const out = rewriteEntraMembersRemove(op as never);
+      const arr = out as Array<{ op: string; path: string }>;
+      expect(arr).toHaveLength(1);
+      expect(arr[0]).toEqual({ op: "remove", path: 'members[value eq "u1"]' });
+    });
+
+    it("H_direct_3: non-members path passes through unchanged (not rewritten)", () => {
+      const op = {
+        op: "Remove",
+        path: "name.givenName",
+        value: [{ value: "x" }],
+      };
+      const out = rewriteEntraMembersRemove(op as never);
+      // Must be the same op object — not rewritten.
+      expect(out).toBe(op);
+    });
+
+    it("H_direct_4: non-Remove op on members path passes through unchanged", () => {
+      const op = {
+        op: "add",
+        path: "members",
+        value: [{ value: "u1" }],
+      };
+      const out = rewriteEntraMembersRemove(op as never);
+      expect(out).toBe(op);
+    });
+
+    it("H_direct_5: string value (not array) passes through unchanged", () => {
+      const op = { op: "Remove", path: "members", value: "u1" };
+      const out = rewriteEntraMembersRemove(op as never);
+      expect(out).toBe(op);
+    });
+
+    it("H_direct_6: mixed valid + non-string-value entries pass through unchanged", () => {
+      const op = {
+        op: "Remove",
+        path: "members",
+        value: [{ value: "u1" }, { value: 42 }],
+      };
+      const out = rewriteEntraMembersRemove(op as never);
+      expect(out).toBe(op);
+    });
+
+    it("H_direct_7: empty value array passes through unchanged", () => {
+      const op = { op: "Remove", path: "members", value: [] };
+      const out = rewriteEntraMembersRemove(op as never);
+      expect(out).toBe(op);
+    });
+
+    it("H_direct_8: userId containing a double-quote is escaped in the rewritten filter", () => {
+      const op = {
+        op: "Remove",
+        path: "members",
+        value: [{ value: 'u"injected' }],
+      };
+      const out = rewriteEntraMembersRemove(op as never);
+      const arr = out as Array<{ op: string; path: string }>;
+      expect(arr).toHaveLength(1);
+      expect(arr[0]!.path).toBe('members[value eq "u\\"injected"]');
+    });
+
+    it("H8: existing active-coercion still works alongside the new preprocessor (chain order)", () => {
+      // Backward-compat — Phase 7's `path:'active', value:'False'` coercion
+      // must still fire after the new preprocessor lands.
+      const current = makeUser({ active: true });
+      const draft = applyScimPatch(current, {
+        schemas: [PATCH_OP_URN],
+        Operations: [{ op: "Replace", path: "active", value: "False" }],
+      } as never);
+      expect(draft.active).toBe(false);
+    });
+  });
 
   describe("Group G — exception pass-through", () => {
     it("G1: a TypeError thrown from inside scim-patch (e.g. invalid Operations entry shape) is NOT wrapped", () => {

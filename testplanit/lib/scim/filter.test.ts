@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 
-import { scimFilterToPrismaWhere, InvalidFilterError } from "./filter";
+import {
+  InvalidFilterError,
+  scimFilterToPrismaGroupWhere,
+  scimFilterToPrismaWhere,
+} from "./filter";
 
 /**
  * Coverage matrix for the SCIM filter translator:
@@ -380,6 +384,102 @@ describe("scimFilterToPrismaWhere", () => {
         { scimUserName: { equals: "ghi" } },
         { scimUserName: { equals: "jkl" } },
       ]),
+    );
+  });
+});
+
+describe("scimFilterToPrismaGroupWhere", () => {
+  // ---------------------------------------------------------------------------
+  // Group A — happy-path translation
+  // ---------------------------------------------------------------------------
+
+  it("A1: 'displayName eq <X>' translates to scimDisplayName lowercased equals", () => {
+    expect(
+      scimFilterToPrismaGroupWhere('displayName eq "Engineering"'),
+    ).toEqual({
+      scimDisplayName: { equals: "engineering" },
+    });
+  });
+
+  it("A2: 'externalId eq <X>' translates verbatim (opaque IdP identifier)", () => {
+    expect(scimFilterToPrismaGroupWhere('externalId eq "abc-123"')).toEqual({
+      externalId: { equals: "abc-123" },
+    });
+  });
+
+  it("A3: 'displayName eq <X> and externalId pr' translates to AND of equals + not-null", () => {
+    expect(
+      scimFilterToPrismaGroupWhere(
+        'displayName eq "Engineering" and externalId pr',
+      ),
+    ).toEqual({
+      AND: [
+        { scimDisplayName: { equals: "engineering" } },
+        { externalId: { not: null } },
+      ],
+    });
+  });
+
+  it("A4: 'displayName pr' translates to scimDisplayName not null", () => {
+    expect(scimFilterToPrismaGroupWhere("displayName pr")).toEqual({
+      scimDisplayName: { not: null },
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Group B — whitelist gating
+  // ---------------------------------------------------------------------------
+
+  it("B1: 'userName eq <X>' (User attr) is rejected with InvalidFilterError", () => {
+    expect(() => scimFilterToPrismaGroupWhere('userName eq "x"')).toThrow(
+      InvalidFilterError,
+    );
+    try {
+      scimFilterToPrismaGroupWhere('userName eq "x"');
+    } catch (e) {
+      expect((e as InvalidFilterError).message).toContain("not filterable");
+    }
+  });
+
+  it("B2: 'displayName co \"Eng\"' (unsupported operator) is rejected", () => {
+    expect(() => scimFilterToPrismaGroupWhere('displayName co "Eng"')).toThrow(
+      InvalidFilterError,
+    );
+    try {
+      scimFilterToPrismaGroupWhere('displayName co "Eng"');
+    } catch (e) {
+      expect((e as InvalidFilterError).message).toContain("not supported");
+    }
+  });
+
+  it("B3: URN-prefixed attrPath is rejected", () => {
+    const filter =
+      "urn:ietf:params:scim:schemas:enterprise:2.0:User:department eq \"Eng\"";
+    expect(() => scimFilterToPrismaGroupWhere(filter)).toThrow(
+      InvalidFilterError,
+    );
+  });
+
+  // ---------------------------------------------------------------------------
+  // Group C — parser error mapping
+  // ---------------------------------------------------------------------------
+
+  it("C1: 'displayName eq' (missing compValue) maps to parser-error envelope", () => {
+    expect(() => scimFilterToPrismaGroupWhere("displayName eq")).toThrow(
+      InvalidFilterError,
+    );
+    try {
+      scimFilterToPrismaGroupWhere("displayName eq");
+    } catch (e) {
+      expect((e as InvalidFilterError).message).toMatch(
+        /^Filter could not be parsed:/,
+      );
+    }
+  });
+
+  it("C2: '!!! invalid !!!' maps to parser-error envelope", () => {
+    expect(() => scimFilterToPrismaGroupWhere("!!! invalid !!!")).toThrow(
+      InvalidFilterError,
     );
   });
 });
