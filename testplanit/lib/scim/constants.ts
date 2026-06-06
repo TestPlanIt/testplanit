@@ -73,3 +73,31 @@ export const SCIM_LAST_USED_THROTTLE_MS = 60_000 as const;
  * safe from autoincrement collision.
  */
 export const SYSTEM_PROJECT_ID = -1 as const;
+
+/**
+ * Per-token request-per-second cap enforced by the SCIM bearer middleware.
+ * The bucket lives in Valkey via the shared sliding-window rate-limit helper
+ * so concurrent app instances share the same counter. Sized for the common
+ * Okta/Entra bulk-sync shape (sustained ~10 RPS, occasional bursts to ~30);
+ * 50 leaves headroom without inviting accidental DoS from a misconfigured
+ * connector.
+ */
+export const SCIM_RPS_LIMIT = 50 as const;
+
+/**
+ * Coalescing trigger: when a single webhook config's per-resource SCIM event
+ * rate inside the active window crosses this threshold, the emitter folds
+ * subsequent events into one summary event keyed by
+ * (webhookConfigId, payloadDigest) per WebhookEventDedup. Picked to keep
+ * normal incremental sync traffic 1:1 while collapsing first-sync floods.
+ */
+export const SCIM_COALESCING_THRESHOLD = 10 as const;
+
+/**
+ * Rolling window length (ms) used to evaluate the coalescing threshold. Five
+ * minutes covers the typical Okta first-sync shape (initial assignment push
+ * for a 500-user org completes in roughly 3-4 minutes), so a burst that
+ * exceeds the threshold is folded into a single summary event for the entire
+ * sync rather than the first chunk only.
+ */
+export const SCIM_COALESCING_WINDOW_MS = 5 * 60 * 1000 as const;

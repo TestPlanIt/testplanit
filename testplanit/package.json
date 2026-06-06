@@ -72,6 +72,7 @@
     "elasticsearch:reindex": "tsx scripts/reindexAllEntities.ts",
     "elasticsearch:reindex:fresh": "tsx scripts/reindexAllEntities.ts --fresh",
     "elasticsearch:reindex:cases": "tsx scripts/reindexElasticsearch.ts",
+    "scim:check-group-dupes": "tsx scripts/check-group-external-id-dupes.ts",
     "release:info": "echo 'Releases are now managed by release-please. Push to main and a Release PR will be created automatically.'"
   },
   "dependencies": {

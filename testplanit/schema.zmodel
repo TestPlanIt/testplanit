@@ -396,10 +396,13 @@ enum NotificationType {
 model Groups {
     id                 Int                      @id @default(autoincrement())
     name               String                   @unique @length(1)
-    externalId         String?
+    externalId         String?                  @unique
     url                String?                  @url
     note               String?
     isDeleted          Boolean                  @default(false)
+    updatedAt          DateTime?                @updatedAt
+    scimDisplayName    String?
+    scimExtensions     Json?
     assignedUsers      GroupAssignment[]
     projectPermissions GroupProjectPermission[]
 

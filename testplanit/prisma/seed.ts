@@ -535,6 +535,21 @@ async function seedCoreData() {
   });
   console.log("Ensured sentinel __system__ Projects row exists.");
 
+  // --- Partial GIN index on AuditLog.metadata for SCIM-tagged rows ---
+  // The conflict-log read surface queries AuditLog.metadata JSONB for SCIM
+  // discriminator keys (scimLinked, scimResurrected, scimSkippedMemberIds,
+  // etc.). A partial GIN index scoped to metadata->>'source' = 'scim' keeps
+  // the index ~1% the size of a full GIN on the column, which is the only
+  // way to keep AuditLog write throughput healthy. The jsonb_path_ops
+  // operator class is smaller and faster than the default jsonb_ops for the
+  // key-existence and equality lookups the conflict log uses. The DDL is a
+  // literal string (no interpolation) and IF NOT EXISTS makes it safe to
+  // re-run on every seed.
+  await prisma.$executeRawUnsafe(
+    `CREATE INDEX IF NOT EXISTS "AuditLog_scim_metadata_gin" ON "AuditLog" USING GIN ("metadata" jsonb_path_ops) WHERE "metadata"->>'source' = 'scim';`,
+  );
+  console.log("Ensured partial GIN index on AuditLog.metadata for SCIM rows.");
+
   // --- Authentication Configuration ---
   console.log("Configuring internal authentication (no SSO providers)...");
 
