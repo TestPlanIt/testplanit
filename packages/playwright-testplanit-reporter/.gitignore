@@ -2,5 +2,8 @@
 test-results/
 playwright-report/
 
+# Vitest coverage output
+coverage/
+
 # Local smoke config — never commit the real token
 smoke/.env
