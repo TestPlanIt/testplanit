@@ -1,3 +1,9 @@
+## [0.36.0](https://github.com/TestPlanIt/testplanit/compare/v0.35.3...v0.36.0) (2026-06-06)
+
+### Features
+
+* add Playwright reporter (@testplanit/playwright-reporter) ([#408](https://github.com/TestPlanIt/testplanit/issues/408)) ([a5af9c3](https://github.com/TestPlanIt/testplanit/commit/a5af9c3be63dd5e3e2fec6d51f04860cc697a7c0))
+
 ## [0.35.3](https://github.com/TestPlanIt/testplanit/compare/v0.35.2...v0.35.3) (2026-06-05)
 
 ### Bug Fixes
