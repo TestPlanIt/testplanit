@@ -8,6 +8,7 @@ This document describes how to release new versions of the TestPlanIt npm packag
 | ------- | ----------- | --- |
 | `@testplanit/api` | Official API client for TestPlanIt | [![npm](https://img.shields.io/npm/v/@testplanit/api)](https://www.npmjs.com/package/@testplanit/api) |
 | `@testplanit/wdio-reporter` | WebdriverIO reporter for TestPlanIt | [![npm](https://img.shields.io/npm/v/@testplanit/wdio-reporter)](https://www.npmjs.com/package/@testplanit/wdio-reporter) |
+| `@testplanit/playwright-reporter` | Playwright reporter for TestPlanIt | [![npm](https://img.shields.io/npm/v/@testplanit/playwright-reporter)](https://www.npmjs.com/package/@testplanit/playwright-reporter) |
 | `@testplanit/mcp-server` | MCP server for TestPlanIt — exposes test data to AI agents | [![npm](https://img.shields.io/npm/v/@testplanit/mcp-server)](https://www.npmjs.com/package/@testplanit/mcp-server) |
 
 ## Versioning
@@ -23,7 +24,7 @@ We use [Changesets](https://github.com/changesets/changesets) for version manage
 
 ### 1. Make Your Changes
 
-Make your code changes to the packages in `packages/api`, `packages/wdio-testplanit-reporter`, or `packages/mcp-server`.
+Make your code changes to the packages in `packages/api`, `packages/wdio-testplanit-reporter`, `packages/playwright-testplanit-reporter`, or `packages/mcp-server`.
 
 ### 2. Create a Changeset
 
@@ -122,7 +123,7 @@ If the workflow runs but doesn't find any changesets, make sure you created a ch
 If the build fails, check that:
 1. All TypeScript errors are resolved
 2. Dependencies are correctly specified in `package.json`
-3. `@testplanit/api` must build before `@testplanit/wdio-reporter` (it's a dependency); `@testplanit/mcp-server` is independent
+3. `@testplanit/api` must build before `@testplanit/wdio-reporter` and `@testplanit/playwright-reporter` (both depend on it); `@testplanit/mcp-server` is independent
 
 ### npm Publish Errors
 
