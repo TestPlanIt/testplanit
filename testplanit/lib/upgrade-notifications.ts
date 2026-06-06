@@ -317,6 +317,18 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
       <p>See the <a href="https://docs.testplanit.com/docs/user-guide/review-approvals" target="_blank">documentation</a> or the <a href="https://docs.testplanit.com/blog/introducing-review-and-approval" target="_blank">announcement post</a>.</p>
     `,
   },
+  "0.36.0": {
+    title: "New Feature: Playwright Reporter",
+    message: `
+      <p>Send your <strong>Playwright</strong> test results straight to TestPlanIt with the new official <strong>@testplanit/playwright-reporter</strong> — no JUnit export/import step.</p>
+      <ul>
+        <li>Link tests to cases by adding an ID like <strong>[1234]</strong> to the test title, or <strong>auto-create</strong> cases and folders from your <code>describe</code> structure</li>
+        <li>Uploads Playwright attachments — screenshots, videos, and traces — to each result</li>
+        <li>Runs in a single process: every spec, project, and worker lands in one test run, with no extra setup</li>
+      </ul>
+      <p>Add it to your <code>playwright.config.ts</code> reporter list. See the <a href="https://docs.testplanit.com/docs/sdk/playwright-overview" target="_blank">Playwright Reporter documentation</a>.</p>
+    `,
+  },
 };
 
 /**
