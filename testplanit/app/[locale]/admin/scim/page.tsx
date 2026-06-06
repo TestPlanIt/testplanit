@@ -45,6 +45,7 @@ import { toast } from "sonner";
 
 import { revokeScimTokenAction } from "~/app/actions/scimTokenActions";
 
+import { ConflictLogTable } from "./ConflictLogTable";
 import { MintDialog } from "./MintDialog";
 
 export default function ScimTokensPage() {
@@ -394,12 +395,11 @@ function ScimTokensList() {
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>{t("sectionConflicts")}</CardTitle>
+          <CardTitle>{t("conflicts.title")}</CardTitle>
+          <CardDescription>{t("conflicts.description")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            {t("conflictsPlaceholder")}
-          </p>
+          <ConflictLogTable />
         </CardContent>
       </Card>
 
