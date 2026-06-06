@@ -7,7 +7,16 @@ import { useEffect, useState } from "react";
 import type { Components } from "react-markdown";
 import Markdown from "react-markdown";
 import { Link } from "~/lib/navigation";
+import { highlightCode, mapLanguageToPrism } from "~/lib/utils/codeHighlight";
 import { getStorageUrlClient } from "~/utils/storageUrl";
+import "prismjs/themes/prism-tomorrow.css";
+
+/** Flatten react-markdown code children into a raw string for highlighting. */
+function codeToText(children: unknown): string {
+  if (typeof children === "string") return children;
+  if (Array.isArray(children)) return children.map(codeToText).join("");
+  return children == null ? "" : String(children);
+}
 
 interface AttachmentPreviewProps {
   attachment: Attachments;
@@ -205,24 +214,41 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
             {children}
           </a>
         ),
+        // Block fences render like QuickScript: PrismJS highlighting on a dark
+        // background (prism-tomorrow). Inline code stays a small muted chip.
         code: ({ node, className, children, ...props }: any) => {
+          const text = codeToText(children).replace(/\n$/, "");
           const match = /language-(\w+)/.exec(className || "");
-          const isInline = props.inline || false;
-          return !isInline ? (
-            <pre className="block bg-muted p-4 rounded text-sm font-mono overflow-x-auto my-3">
-              <code className={match ? className : ""} {...props}>
+          const isBlock = !!match || text.includes("\n");
+          if (!isBlock) {
+            return (
+              <code
+                className="bg-muted text-foreground px-1 py-0.5 rounded text-sm font-mono"
+                {...props}
+              >
                 {children}
               </code>
+            );
+          }
+          const lang = match ? mapLanguageToPrism(match[1]) : null;
+          return (
+            <pre className="bg-stone-800 rounded-md overflow-auto p-4 text-sm my-3 max-w-full">
+              {lang ? (
+                <code
+                  className={`language-${lang}`}
+                  // Prism HTML-escapes the source, so this cannot inject markup.
+                  dangerouslySetInnerHTML={{
+                    __html: highlightCode(text, lang),
+                  }}
+                />
+              ) : (
+                <code className="text-stone-100">{text}</code>
+              )}
             </pre>
-          ) : (
-            <code
-              className="bg-muted px-1 py-0.5 rounded text-sm font-mono"
-              {...props}
-            >
-              {children}
-            </code>
           );
         },
+        // Unwrap react-markdown's default <pre>; the code component renders its own.
+        pre: ({ children }: any) => <>{children}</>,
         blockquote: ({ node, ...props }) => (
           <blockquote
             className="border-l-4 border-border pl-4 italic my-3"
