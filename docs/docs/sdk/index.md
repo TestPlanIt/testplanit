@@ -13,8 +13,15 @@ TestPlanIt provides official npm packages to integrate with your test automation
 | Package | Description | npm |
 | --------- | ------------- | ----- |
 | [`@testplanit/api`](./api-client.md) | Official JavaScript/TypeScript API client | [![npm](https://img.shields.io/npm/v/@testplanit/api)](https://www.npmjs.com/package/@testplanit/api) |
+| [`@testplanit/cli`](../cli.md) | Command-line interface for importing results and managing test data | [![npm](https://img.shields.io/npm/v/@testplanit/cli)](https://www.npmjs.com/package/@testplanit/cli) |
+| [`@testplanit/forge-app`](./jira-forge-app.md) | TestPlanIt for Jira — Atlassian Forge app that surfaces test cases, runs, and sessions in Jira issue panels | [![npm](https://img.shields.io/npm/v/@testplanit/forge-app)](https://www.npmjs.com/package/@testplanit/forge-app) |
 | [`@testplanit/mcp-server`](./mcp-overview.md) | MCP server for AI agents (Claude Desktop, Cursor) | [![npm](https://img.shields.io/npm/v/@testplanit/mcp-server)](https://www.npmjs.com/package/@testplanit/mcp-server) |
+| [`@testplanit/playwright-reporter`](./playwright-overview.md) | Playwright reporter | [![npm](https://img.shields.io/npm/v/@testplanit/playwright-reporter)](https://www.npmjs.com/package/@testplanit/playwright-reporter) |
 | [`@testplanit/wdio-reporter`](./wdio-overview.md) | WebdriverIO reporter | [![npm](https://img.shields.io/npm/v/@testplanit/wdio-reporter)](https://www.npmjs.com/package/@testplanit/wdio-reporter) |
+
+:::note
+The `@testplanit/forge-app` package is the **TestPlanIt for Jira** Forge app. Instances hosted on a `*.testplanit.com` subdomain install it from the [Atlassian Marketplace](https://marketplace.atlassian.com/); self-hosted instances on a custom domain build and deploy it themselves (the Marketplace version can't reach non-`*.testplanit.com` domains).
+:::
 
 ## Architecture
 
@@ -22,26 +29,26 @@ The TestPlanIt SDK packages are designed with a layered architecture:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Test Frameworks                          │
-│  (WebdriverIO, Playwright, Jest, Mocha, Cypress, etc.)     │
+│                      Test Frameworks                        │
+│    (WebdriverIO, Playwright, Jest, Mocha, Cypress, etc.)    │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                  Framework Reporters                        │
-│   @testplanit/wdio-reporter (and future reporters)         │
+│                    Framework Reporters                      │
+│  @testplanit/wdio-reporter, @testplanit/playwright-reporter │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                 @testplanit/api                             │
-│        Official API Client (core SDK)                       │
+│                      @testplanit/api                        │
+│               Official API Client (core SDK)                │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                 TestPlanIt API                              │
-│           (your TestPlanIt instance)                        │
+│                       TestPlanIt API                        │
+│                 (your TestPlanIt instance)                  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -186,7 +193,6 @@ try {
 
 We're working on additional reporters for popular test frameworks:
 
-- Playwright Reporter
 - Jest Reporter
 - Cypress Plugin
 - pytest Plugin

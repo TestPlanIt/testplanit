@@ -289,6 +289,20 @@ const sidebars: SidebarsConfig = {
             'sdk/wdio-ci-cd', // CI/CD, retries, debugging, complete example
           ],
         },
+        {
+          type: 'category',
+          label: 'Playwright Reporter',
+          link: {
+            type: 'doc',
+            id: 'sdk/playwright-overview',
+          },
+          items: [
+            'sdk/playwright-configuration', // Configuration options reference
+            'sdk/playwright-test-cases', // Linking & auto-creating test cases
+            'sdk/playwright-attachments', // Attachment uploads (screenshots, video, trace)
+            'sdk/playwright-ci-cd', // CI/CD, retries, debugging, complete example
+          ],
+        },
       ],
     },
     // Add other categories or items here if needed in the future
