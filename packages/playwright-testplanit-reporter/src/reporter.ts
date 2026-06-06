@@ -546,6 +546,15 @@ export default class TestPlanItReporter implements Reporter {
     try {
       this.log('Initializing reporter...');
       await this.resolveOptionIds();
+
+      // Fail fast on misconfigured auto-create before creating an (empty) run.
+      if (
+        this.options.autoCreateTestCases &&
+        (!this.state.resolvedIds.parentFolderId || !this.state.resolvedIds.templateId)
+      ) {
+        throw new Error('autoCreateTestCases requires parentFolderId and templateId');
+      }
+
       await this.fetchStatusMappings();
 
       if (!this.state.testRunId) {

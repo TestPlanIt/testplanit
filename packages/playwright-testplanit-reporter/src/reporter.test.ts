@@ -409,12 +409,23 @@ describe('TestPlanItReporter (Playwright)', () => {
       expect(stats.testCasesMoved).toBe(1);
     });
 
-    it('records an API error (not a throw) when auto-create lacks parentFolderId/templateId', async () => {
-      vi.spyOn(console, 'error').mockImplementation(() => {});
+    it('fails fast (no empty run) when auto-create lacks parentFolderId/templateId', async () => {
+      const err = vi.spyOn(console, 'error').mockImplementation(() => {});
       const r = new TestPlanItReporter({ ...defaultOptions, autoCreateTestCases: true }); // no parentFolderId/templateId
       await run(r, makeTest('untagged', buildParent({ project: 'chromium' })), makeResult());
+      // Init fails before any run/suite is created — no empty run is left behind.
+      expect(clientMock.createTestRun).not.toHaveBeenCalled();
+      expect(clientMock.createJUnitTestSuite).not.toHaveBeenCalled();
       expect(clientMock.createJUnitTestResult).not.toHaveBeenCalled();
-      expect(r.getState().stats.apiErrors).toBeGreaterThan(0);
+      expect(err.mock.calls.flat().join(' ')).toContain('FAILED');
+    });
+
+    it('fails fast when only templateId is provided (parentFolderId missing)', async () => {
+      const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const r = new TestPlanItReporter({ ...defaultOptions, autoCreateTestCases: true, templateId: 5 });
+      await run(r, makeTest('untagged', buildParent({ project: 'chromium' })), makeResult());
+      expect(clientMock.createTestRun).not.toHaveBeenCalled();
+      expect(err.mock.calls.flat().join(' ')).toContain('FAILED');
     });
   });
 
