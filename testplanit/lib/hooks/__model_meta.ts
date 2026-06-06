@@ -869,6 +869,19 @@ const metadata: ModelMeta = {
                     name: "isDeleted",
                     type: "Boolean",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, updatedAt: {
+                    name: "updatedAt",
+                    type: "DateTime",
+                    isOptional: true,
+                    attributes: [{ "name": "@updatedAt", "args": [] }],
+                }, scimDisplayName: {
+                    name: "scimDisplayName",
+                    type: "String",
+                    isOptional: true,
+                }, scimExtensions: {
+                    name: "scimExtensions",
+                    type: "Json",
+                    isOptional: true,
                 }, assignedUsers: {
                     name: "assignedUsers",
                     type: "GroupAssignment",
@@ -889,6 +902,9 @@ const metadata: ModelMeta = {
                 }, name: {
                     name: "name",
                     fields: ["name"]
+                }, externalId: {
+                    name: "externalId",
+                    fields: ["externalId"]
                 },
             },
         },

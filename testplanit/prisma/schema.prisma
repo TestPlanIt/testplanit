@@ -586,10 +586,13 @@ model ScimToken {
 model Groups {
   id                 Int                      @id() @default(autoincrement())
   name               String                   @unique()
-  externalId         String?
+  externalId         String?                  @unique()
   url                String?
   note               String?
   isDeleted          Boolean                  @default(false)
+  updatedAt          DateTime?                @updatedAt()
+  scimDisplayName    String?
+  scimExtensions     Json?
   assignedUsers      GroupAssignment[]
   projectPermissions GroupProjectPermission[]
 }
