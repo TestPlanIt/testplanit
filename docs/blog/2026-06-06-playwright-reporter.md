@@ -28,21 +28,23 @@ The new reporter pushes results directly to TestPlanIt as your tests run — and
 
 Results are sent to TestPlanIt as each test completes. You can watch your test run populate live.
 
-### Link Tests to Test Cases
+### Link Tests to Test Cases — Without Renaming Anything
 
-Embed case IDs directly in your test titles to link automated tests to TestPlanIt test cases:
+Established suites shouldn't have to rename every test to `[1234] …`. Use a Playwright annotation to attach the case ID as metadata and keep your titles clean:
 
 ```typescript
 import { test, expect } from '@playwright/test';
 
-test.describe('User Authentication', () => {
-  test('[12345] should login with valid credentials', async ({ page }) => {
-    // Links to TestPlanIt case #12345
-    await page.goto('/login');
-    // ...
-  });
+test('should login with valid credentials', {
+  annotation: { type: 'testplanit', description: '1234' },
+}, async ({ page }) => {
+  // Links to TestPlanIt case #1234 — no case ID in the title
+  await page.goto('/login');
+  // ...
 });
 ```
+
+Prefer tags or titles? Those work too — a `@C1234` tag or a `[1234]` in the title are both matched by the configurable `caseIdPattern`. Mix and match; the reporter de-duplicates.
 
 ### Auto-Create Test Cases
 

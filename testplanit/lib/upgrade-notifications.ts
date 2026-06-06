@@ -322,7 +322,7 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
     message: `
       <p>Send your <strong>Playwright</strong> test results straight to TestPlanIt with the new official <strong>@testplanit/playwright-reporter</strong> — no JUnit export/import step.</p>
       <ul>
-        <li>Link tests to cases by adding an ID like <strong>[1234]</strong> to the test title, or <strong>auto-create</strong> cases and folders from your <code>describe</code> structure</li>
+        <li>Link tests to cases with a Playwright <strong>annotation</strong> (no renaming) — or a tag or <strong>[1234]</strong> title — or <strong>auto-create</strong> cases and folders from your <code>describe</code> structure</li>
         <li>Uploads Playwright attachments — screenshots, videos, and traces — to each result</li>
         <li>Runs in a single process: every spec, project, and worker lands in one test run, with no extra setup</li>
       </ul>

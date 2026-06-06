@@ -6,7 +6,57 @@ title: Linking & Auto-Creating Test Cases
 
 ## Linking Tests to Test Cases
 
-Link your automated tests to existing TestPlanIt test cases by including case IDs in your test titles. By default, the reporter looks for case IDs in square brackets like `[1234]`:
+There are three ways to link an automated test to existing TestPlanIt case IDs. They can be combined, and the resulting IDs are de-duplicated:
+
+1. **Annotations** — `{ annotation: { type: 'testplanit', description: '1234' } }` (recommended)
+2. **Tags** — `{ tag: '@C1234' }`, matched by `caseIdPattern`
+3. **Test title** — `[1234] my test`, matched by `caseIdPattern`
+
+### Using annotations (recommended)
+
+For established suites, embedding IDs in titles means renaming every test. Playwright [annotations](https://playwright.dev/docs/test-annotations) let you attach the case ID as metadata instead — your titles stay clean:
+
+```typescript
+import { test, expect } from '@playwright/test';
+
+test('should login with valid credentials', {
+  annotation: { type: 'testplanit', description: '1234' },
+}, async ({ page }) => {
+  // Links to TestPlanIt case #1234 — no case ID in the title
+});
+
+// Link one test to multiple cases with multiple annotations:
+test('covers two requirements', {
+  annotation: [
+    { type: 'testplanit', description: '1234' },
+    { type: 'testplanit', description: '1235' },
+  ],
+}, async ({ page }) => {});
+```
+
+The annotation `description` holds the case ID(s); any non-digit characters are ignored, so `'1234'`, `'C1234'`, and `'1234, 1235'` all work. Change the annotation `type` the reporter looks for with the [`caseIdAnnotation`](./playwright-configuration.md) option (default `'testplanit'`); set it to an empty string to disable annotation linking.
+
+You can also add the annotation at runtime:
+
+```typescript
+test('logs in', async ({ page }, testInfo) => {
+  testInfo.annotations.push({ type: 'testplanit', description: '1234' });
+});
+```
+
+### Using tags
+
+If your team already tags tests, the reporter applies `caseIdPattern` to each [tag](https://playwright.dev/docs/test-annotations#tag-tests) too. For example, with `caseIdPattern: /C(\d+)/g` a `@C1234` tag links case #1234:
+
+```typescript
+test('should login', { tag: '@C1234' }, async ({ page }) => {
+  // Links to case #1234 via the tag (caseIdPattern: /C(\d+)/g)
+});
+```
+
+### Using the test title
+
+You can also include case IDs directly in test titles. By default, the reporter looks for IDs in square brackets like `[1234]`:
 
 ```typescript
 import { test, expect } from '@playwright/test';

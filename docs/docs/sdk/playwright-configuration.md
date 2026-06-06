@@ -30,7 +30,8 @@ reporter: [
 | `configId` | `number \| string` | - | Configuration for the test run (ID or name) |
 | `milestoneId` | `number \| string` | - | Milestone for the test run (ID or name) |
 | `stateId` | `number \| string` | - | Workflow state for the test run (ID or name) |
-| `caseIdPattern` | `RegExp \| string` | `/\[(\d+)\]/g` | Regex pattern for extracting case IDs from test titles |
+| `caseIdAnnotation` | `string` | `'testplanit'` | Playwright annotation `type` whose `description` holds the case ID(s) — the recommended way to link without renaming tests. Set to `''` to disable. See [Linking Test Cases](./playwright-test-cases.md#using-annotations-recommended) |
+| `caseIdPattern` | `RegExp \| string` | `/\[(\d+)\]/g` | Regex pattern for extracting case IDs from test titles **and tags** (must include a capturing group) |
 | `autoCreateTestCases` | `boolean` | `false` | Auto-create test cases if they don't exist |
 | `createFolderHierarchy` | `boolean` | `false` | Create folder hierarchy based on `test.describe` structure (requires `autoCreateTestCases` and `parentFolderId`) |
 | `parentFolderId` | `number \| string` | - | Folder for auto-created test cases (ID or name) |
