@@ -1,0 +1,68 @@
+{
+  "name": "@testplanit/playwright-reporter",
+  "version": "0.0.0",
+  "description": "Playwright reporter for TestPlanIt - report test results directly to your TestPlanIt instance",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:cov": "vitest --coverage",
+    "prepublishOnly": "pnpm build",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "playwright",
+    "playwright-reporter",
+    "reporter",
+    "testplanit",
+    "test-management",
+    "test-reporting",
+    "automation"
+  ],
+  "author": "TestPlanIt",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TestPlanIt/testplanit.git",
+    "directory": "packages/playwright-testplanit-reporter"
+  },
+  "bugs": {
+    "url": "https://github.com/testplanit/testplanit/issues"
+  },
+  "homepage": "https://github.com/testplanit/testplanit/tree/main/packages/playwright-testplanit-reporter#readme",
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "provenance": true,
+    "access": "public",
+    "tag": "latest"
+  },
+  "peerDependencies": {
+    "@playwright/test": ">=1.44.0"
+  },
+  "dependencies": {
+    "@testplanit/api": "workspace:^"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^25.6.0",
+    "@vitest/coverage-v8": "^4.1.3",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.3"
+  }
+}
