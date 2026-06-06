@@ -50,6 +50,7 @@ import {
   SCIM_LAST_USED_THROTTLE_MS,
   SCIM_TOKEN_PREFIX,
 } from "~/lib/scim/constants";
+import { checkScimTokenRateLimit } from "./rate-limit";
 
 /**
  * Sentinel exception thrown by `requireScimBearer` on any auth failure.
@@ -163,6 +164,20 @@ export async function requireScimBearer(
   }
   if (!row.isActive) {
     throw new ScimAuthError(scimError(401, null, "Token inactive"));
+  }
+
+  // Per-token rate-limit gate fires AFTER token validation succeeds so the
+  // 429 response never accidentally signals token validity for an unknown
+  // bearer. The check returns fail-open on Valkey outages -- a transient
+  // infrastructure failure must not brick the SCIM surface.
+  const rateCheck = await checkScimTokenRateLimit(row.id);
+  if (!rateCheck.allowed) {
+    const response = scimError(429, null, "Rate limit exceeded");
+    response.headers.set("Retry-After", String(rateCheck.retryAfterSeconds));
+    response.headers.set("X-RateLimit-Limit", String(rateCheck.limit));
+    response.headers.set("X-RateLimit-Remaining", "0");
+    response.headers.set("X-RateLimit-Reset", String(rateCheck.resetAt));
+    throw new ScimAuthError(response);
   }
 
   // Throttled lastUsedAt / lastUsedIp telemetry. Fire-and-forget so the
