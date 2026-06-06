@@ -690,6 +690,12 @@
     },
     "aria": {
       "userMenu": "Menu utente",
+      "selectProject": "Seleziona il progetto",
+      "togglePanel": "Pannello di attivazione/disattivazione",
+      "folder": "Cartella",
+      "toggleActive": "Attiva/disattiva lo stato attivo",
+      "toggleDetails": "Mostra i dettagli",
+      "requiresReview": "Richiede revisione",
       "search": "Ricerca",
       "helpMenu": "Menu Aiuto",
       "help": "Aiuto",
@@ -846,6 +852,15 @@
       "noFilesDetected": "Nessun file rilevato nel drop"
     },
     "editor": {
+      "bold": "Grassetto",
+      "italic": "Corsivo",
+      "underline": "Sottolineare",
+      "strikethrough": "Barrato",
+      "code": "Codice",
+      "heading": "Intestazione",
+      "bulletList": "Elenco puntato",
+      "orderedList": "Elenco numerato",
+      "blockquote": "citazione",
       "setColor": "Imposta colore",
       "enterUrl": "Inserisci l'URL incluso https://",
       "uploadFile": "Carica file",
@@ -2368,7 +2383,8 @@
       "system": "Sistema",
       "green": "Verde",
       "purple": "Viola",
-      "orange": "Arancia"
+      "orange": "Arancia",
+      "accessible": "Accessibile"
     }
   },
   "repository": {
@@ -4491,6 +4507,7 @@
         "thresholdUpdateError": "Impossibile aggiornare le impostazioni del promemoria. Riprova tra un attimo."
       },
       "projectReviewToggleList": {
+        "toggleAria": "Attiva/disattiva il flusso di lavoro di revisione per {name}",
         "columnHeader": "Revisione del flusso di lavoro",
         "filterPlaceholder": "Filtra i progetti...",
         "enabledToast": "Revisione del flusso di lavoro abilitata per {name}",
@@ -4560,6 +4577,7 @@
     "statuses": {
       "description": "Gestire gli stati dei test",
       "editPolicy": {
+        "modeAria": "modalità di modifica dei risultati",
         "title": "Politica di modifica dei risultati",
         "description": "Controlla per quanto tempo dopo la registrazione di un risultato è ancora possibile modificarlo, in tutti i progetti. I progetti possono restringere questo limite nelle impostazioni avanzate, ma non possono mai allentarlo. Gli amministratori di sistema possono sempre apportare modifiche.",
         "modeNone": "Nessuna restrizione (decidono i progetti)",

@@ -13,6 +13,10 @@ import {
   verifyTempSessionToken,
 } from "./auth-security";
 
+// Keep the static import above from opening a real Valkey connection; the relay
+// tests below inject their own client per-case via vi.doMock + resetModules.
+vi.mock("./valkey", () => ({ default: null }));
+
 // Mock environment variables
 const originalEnv = process.env;
 
@@ -189,7 +193,7 @@ describe("createTempSessionToken and verifyTempSessionToken", () => {
     const { createTempSessionToken: createToken } =
       await import("./auth-security");
 
-    const token = createToken(testData);
+    const token = await createToken(testData);
     expect(typeof token).toBe("string");
     expect(token.split(".")).toHaveLength(3); // JWT has 3 parts
 
@@ -206,7 +210,7 @@ describe("createTempSessionToken and verifyTempSessionToken", () => {
       verifyTempSessionToken: verifyToken,
     } = await import("./auth-security");
 
-    const token = createToken(testData);
+    const token = await createToken(testData);
     const verified = verifyToken(token);
 
     expect(verified).not.toBeNull();
@@ -232,12 +236,61 @@ describe("createTempSessionToken and verifyTempSessionToken", () => {
       verifyTempSessionToken: verifyToken,
     } = await import("./auth-security");
 
-    const token = createToken(testData);
+    const token = await createToken(testData);
     const tamperedToken = token.slice(0, -5) + "xxxxx";
     const result = verifyToken(tamperedToken);
     expect(result).toBeNull();
 
     process.env.NEXTAUTH_SECRET = originalSecret;
+  });
+});
+
+describe("consumeTempSessionToken (single-use)", () => {
+  const testData = {
+    userId: "user-9",
+    provider: "saml-okta",
+    email: "u@example.com",
+  };
+  const SECRET = "test-secret-key-at-least-32-chars-long";
+
+  it("Valkey-backed: a token consumes once; replay returns null", async () => {
+    const store = new Map<string, string>();
+    const fakeRedis = {
+      set: vi.fn(async (k: string, v: string) => {
+        store.set(k, v);
+        return "OK";
+      }),
+      get: vi.fn(async (k: string) => store.get(k) ?? null),
+      del: vi.fn(async (k: string) => (store.delete(k) ? 1 : 0)),
+    };
+
+    vi.resetModules();
+    process.env.NEXTAUTH_SECRET = SECRET;
+    vi.doMock("./valkey", () => ({ default: fakeRedis }));
+    const { createTempSessionToken, consumeTempSessionToken } =
+      await import("./auth-security");
+
+    const token = await createTempSessionToken(testData);
+    expect(fakeRedis.set).toHaveBeenCalledTimes(1);
+
+    const first = await consumeTempSessionToken(token);
+    expect(first).toEqual(testData);
+
+    const replay = await consumeTempSessionToken(token);
+    expect(replay).toBeNull();
+
+    vi.doUnmock("./valkey");
+  });
+
+  it("returns null for an invalid token", async () => {
+    vi.resetModules();
+    process.env.NEXTAUTH_SECRET = SECRET;
+    vi.doMock("./valkey", () => ({ default: null }));
+    const { consumeTempSessionToken } = await import("./auth-security");
+
+    expect(await consumeTempSessionToken("not-a-jwt")).toBeNull();
+
+    vi.doUnmock("./valkey");
   });
 });
 
@@ -329,6 +382,126 @@ describe("validateSAMLTimestamp", () => {
     const pastDate1 = new Date(Date.now() - 120000).toISOString(); // 2 minutes ago
     const pastDate2 = new Date(Date.now() - 60000).toISOString(); // 1 minute ago
     expect(validateSAMLTimestamp(pastDate1, pastDate2)).toBe(false);
+  });
+});
+
+describe("createSamlRelayState / consumeSamlRelayState", () => {
+  const data = { providerId: "ssoprovider_123", callbackUrl: "/dashboard" };
+  const SECRET = "test-secret-key-at-least-32-chars-long";
+
+  it("Valkey-backed: round-trips, stays within 80 bytes, and is single-use", async () => {
+    const store = new Map<string, string>();
+    const fakeRedis = {
+      set: vi.fn(async (k: string, v: string) => {
+        store.set(k, v);
+        return "OK";
+      }),
+      get: vi.fn(async (k: string) => store.get(k) ?? null),
+      del: vi.fn(async (k: string) => (store.delete(k) ? 1 : 0)),
+    };
+
+    vi.resetModules();
+    process.env.NEXTAUTH_SECRET = SECRET;
+    vi.doMock("./valkey", () => ({ default: fakeRedis }));
+    const { createSamlRelayState, consumeSamlRelayState } =
+      await import("./auth-security");
+
+    const relay = await createSamlRelayState(data);
+    expect(typeof relay).toBe("string");
+    // SAML 2.0 binding guidance: RelayState should not exceed 80 bytes.
+    expect(relay.length).toBeLessThanOrEqual(80);
+    expect(fakeRedis.set).toHaveBeenCalledTimes(1);
+
+    const first = await consumeSamlRelayState(relay);
+    expect(first).toEqual(data);
+
+    // Single-use: the second consume finds nothing.
+    const second = await consumeSamlRelayState(relay);
+    expect(second).toBeNull();
+
+    vi.doUnmock("./valkey");
+  });
+
+  it("signed fallback when Valkey is absent", async () => {
+    vi.resetModules();
+    process.env.NEXTAUTH_SECRET = SECRET;
+    vi.doMock("./valkey", () => ({ default: null }));
+    const { createSamlRelayState, consumeSamlRelayState } =
+      await import("./auth-security");
+
+    const relay = await createSamlRelayState(data);
+    expect(relay.split(".")).toHaveLength(3); // a JWT
+
+    const decoded = await consumeSamlRelayState(relay);
+    expect(decoded?.providerId).toBe(data.providerId);
+    expect(decoded?.callbackUrl).toBe(data.callbackUrl);
+
+    vi.doUnmock("./valkey");
+  });
+
+  it("returns null for empty, malformed, or tampered relay state", async () => {
+    vi.resetModules();
+    process.env.NEXTAUTH_SECRET = SECRET;
+    vi.doMock("./valkey", () => ({ default: null }));
+    const { createSamlRelayState, consumeSamlRelayState } =
+      await import("./auth-security");
+
+    expect(await consumeSamlRelayState(null)).toBeNull();
+    expect(await consumeSamlRelayState(undefined)).toBeNull();
+    expect(await consumeSamlRelayState("not-a-jwt")).toBeNull();
+
+    const relay = await createSamlRelayState(data);
+    const tampered = relay.slice(0, -4) + "xxxx";
+    expect(await consumeSamlRelayState(tampered)).toBeNull();
+
+    vi.doUnmock("./valkey");
+  });
+});
+
+describe("registerSamlAssertion (single-use)", () => {
+  const SECRET = "test-secret-key-at-least-32-chars-long";
+
+  it("Valkey-backed: first use returns true, replay returns false", async () => {
+    const store = new Map<string, string>();
+    const fakeRedis = {
+      set: vi.fn(
+        async (
+          k: string,
+          _v: string,
+          _ex: string,
+          _ttl: number,
+          nx?: string
+        ) => {
+          if (nx === "NX" && store.has(k)) return null;
+          store.set(k, "1");
+          return "OK";
+        }
+      ),
+    };
+
+    vi.resetModules();
+    process.env.NEXTAUTH_SECRET = SECRET;
+    vi.doMock("./valkey", () => ({ default: fakeRedis }));
+    const { registerSamlAssertion } = await import("./auth-security");
+
+    expect(await registerSamlAssertion("_assertion-id-1", 300)).toBe(true);
+    expect(await registerSamlAssertion("_assertion-id-1", 300)).toBe(false);
+    // A different assertion is tracked independently.
+    expect(await registerSamlAssertion("_assertion-id-2", 300)).toBe(true);
+
+    vi.doUnmock("./valkey");
+  });
+
+  it("without Valkey: returns true (no cross-pod dedup)", async () => {
+    vi.resetModules();
+    process.env.NEXTAUTH_SECRET = SECRET;
+    vi.doMock("./valkey", () => ({ default: null }));
+    const { registerSamlAssertion } = await import("./auth-security");
+
+    expect(await registerSamlAssertion("_assertion-id-3", 300)).toBe(true);
+    expect(await registerSamlAssertion("_assertion-id-3", 300)).toBe(true);
+
+    vi.doUnmock("./valkey");
   });
 });
 

@@ -10,6 +10,7 @@ import { AUDIT_LOG_QUEUE_NAME } from "../lib/queues";
 import type { AuditLogJobData } from "../lib/services/auditLog";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
+import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 
 /**
  * Process an audit log job.
@@ -118,6 +119,7 @@ const startWorker = async () => {
   if (valkeyConnection) {
     worker = new Worker(AUDIT_LOG_QUEUE_NAME, withTenantContext(processor), {
       connection: valkeyConnection as any,
+      prefix: BULLMQ_PREFIX,
       concurrency: parseInt(process.env.AUDIT_LOG_CONCURRENCY || "10", 10), // Higher concurrency since audit logs are independent
     });
 

@@ -2,18 +2,64 @@ import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import {
   checkRateLimit,
+  consumeSamlRelayState,
   createTempSessionToken,
+  getAppBaseUrl,
   getSecurityHeaders,
+  registerSamlAssertion,
   sanitizeCallbackUrl,
   validateSAMLTimestamp,
-  verifyState,
 } from "~/lib/auth-security";
 import { NotificationService } from "~/lib/services/notificationService";
 import { isEmailDomainAllowed } from "~/lib/utils/email-domain-validation";
 import { db } from "~/server/db";
 import { createSAMLClient, validateSAMLResponse } from "~/server/saml-provider";
 
-// SAML callback handler
+/**
+ * Resolve an IdP-initiated SAMLResponse (no RelayState — e.g. an Okta dashboard
+ * tile) to the enabled SAML config whose IdP signed it. The stored issuer field
+ * is the SP entity id, not a reliable IdP identifier, so we let cryptographic
+ * validation pick the config: the assertion only validates against the cert of
+ * the IdP that actually issued it. Returns null if none validate it.
+ */
+async function resolveIdpInitiatedConfig(samlResponse: FormDataEntryValue) {
+  const configs = await db.samlConfiguration.findMany({
+    where: { provider: { enabled: true } },
+    include: { provider: true },
+  });
+
+  for (const samlConfig of configs) {
+    try {
+      const samlClient = await createSAMLClient({
+        name: samlConfig.provider.name,
+        entryPoint: samlConfig.entryPoint,
+        cert: samlConfig.cert,
+        issuer: samlConfig.issuer,
+      });
+      const profile = await validateSAMLResponse(samlClient, {
+        SAMLResponse: samlResponse,
+      });
+      return { samlConfig, profile };
+    } catch {
+      // Not this IdP (or the assertion is invalid) — try the next config.
+    }
+  }
+
+  return null;
+}
+
+type ResolvedSaml = NonNullable<
+  Awaited<ReturnType<typeof resolveIdpInitiatedConfig>>
+>;
+
+/**
+ * SAML Assertion Consumer Service (ACS).
+ *
+ * The IdP POSTs the SAMLResponse here. This path matches the ACS URL embedded
+ * in the AuthnRequest (createSAMLClient) and shown in the admin UI. It is a
+ * static route, so it takes precedence over the NextAuth [...nextauth]
+ * catch-all for this exact path.
+ */
 export async function POST(request: NextRequest) {
   try {
     const clientIp =
@@ -46,52 +92,57 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get provider and state from cookies
-    const providerId = request.cookies.get("saml-provider")?.value;
-    const storedState = request.cookies.get("saml-state")?.value;
-    const callbackUrl = sanitizeCallbackUrl(
-      request.cookies.get("saml-callback-url")?.value
+    // Recover the provider and destination from RelayState. The IdP echoes it
+    // back on this cross-site POST (where same-site cookies are not sent); the
+    // token is single-use and short-lived, which guards SP-initiated logins.
+    const relay = await consumeSamlRelayState(
+      typeof relayState === "string" ? relayState : null
     );
 
-    if (!providerId) {
-      return NextResponse.json(
-        { error: "Provider information not found" },
-        { status: 400 }
-      );
+    let samlConfig: ResolvedSaml["samlConfig"];
+    let profile: ResolvedSaml["profile"];
+    let callbackUrl = "/";
+
+    if (relay) {
+      // SP-initiated: RelayState carries the SsoProvider id, which is the unique
+      // foreign key on SamlConfiguration (not its own id).
+      callbackUrl = sanitizeCallbackUrl(relay.callbackUrl);
+      const found = await db.samlConfiguration.findUnique({
+        where: { providerId: relay.providerId },
+        include: { provider: true },
+      });
+
+      if (!found || !found.provider.enabled) {
+        return NextResponse.json(
+          { error: "SAML provider not found or disabled" },
+          { status: 404 }
+        );
+      }
+
+      const samlClient = await createSAMLClient({
+        name: found.provider.name,
+        entryPoint: found.entryPoint,
+        cert: found.cert,
+        issuer: found.issuer,
+      });
+
+      samlConfig = found;
+      profile = await validateSAMLResponse(samlClient, {
+        SAMLResponse: samlResponse,
+      });
+    } else {
+      // IdP-initiated (no RelayState — e.g. an Okta dashboard tile): pick the
+      // enabled config whose cert validates this assertion's signature.
+      const resolved = await resolveIdpInitiatedConfig(samlResponse);
+      if (!resolved) {
+        return NextResponse.json(
+          { error: "Invalid or expired SAML request" },
+          { status: 400 }
+        );
+      }
+      samlConfig = resolved.samlConfig;
+      profile = resolved.profile;
     }
-
-    // Verify state if relay state is provided
-    if (relayState && !verifyState(storedState, relayState as string)) {
-      return NextResponse.json(
-        { error: "Invalid state parameter" },
-        { status: 400 }
-      );
-    }
-
-    // Fetch SAML configuration
-    const samlConfig = await db.samlConfiguration.findUnique({
-      where: { id: providerId },
-      include: { provider: true },
-    });
-
-    if (!samlConfig || !samlConfig.provider.enabled) {
-      return NextResponse.json(
-        { error: "SAML provider not found or disabled" },
-        { status: 404 }
-      );
-    }
-
-    // Create SAML client and validate response
-    const samlClient = await createSAMLClient({
-      name: samlConfig.provider.name,
-      entryPoint: samlConfig.entryPoint,
-      cert: samlConfig.cert,
-      issuer: samlConfig.issuer,
-    });
-
-    const profile = await validateSAMLResponse(samlClient, {
-      SAMLResponse: samlResponse,
-    });
 
     // Validate SAML response timestamps if available
     if (profile.notBefore || profile.notOnOrAfter) {
@@ -106,6 +157,41 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+    }
+
+    // Reject replayed assertions: a validated assertion is single-use within its
+    // validity window. This closes the replay vector opened by accepting
+    // IdP-initiated (no-RelayState) POSTs — without it any captured assertion
+    // could be re-POSTed until it expires.
+    const notOnOrAfterMs = profile.notOnOrAfter
+      ? new Date(profile.notOnOrAfter as string).getTime()
+      : 0;
+    const assertionTtlSeconds =
+      notOnOrAfterMs > Date.now()
+        ? (notOnOrAfterMs - Date.now()) / 1000 + 60
+        : 300;
+    // Dedup on the signed assertion ID — the replay-stable anchor (it's inside
+    // the signed element, unlike the surrounding bytes). Fall back to the
+    // validated assertion XML, then the raw response, only if the ID is absent.
+    const getAssertionXml = (
+      profile as unknown as { getAssertionXml?: () => string }
+    ).getAssertionXml;
+    const assertionXml = getAssertionXml ? getAssertionXml() : "";
+    const assertionId =
+      assertionXml.match(
+        /<(?:\w+:)?Assertion\b[^>]*\bID=["']([^"']+)["']/
+      )?.[1] ||
+      assertionXml ||
+      (samlResponse as string);
+    const isFreshAssertion = await registerSamlAssertion(
+      assertionId,
+      assertionTtlSeconds
+    );
+    if (!isFreshAssertion) {
+      return NextResponse.json(
+        { error: "SAML response has already been used" },
+        { status: 400 }
+      );
     }
 
     // Extract user attributes based on mapping
@@ -265,25 +351,21 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Create a temporary session token for secure user info transfer
-    const tempToken = createTempSessionToken({
+    // Create a one-time session token for secure user info transfer.
+    const tempToken = await createTempSessionToken({
       userId: user.id,
       provider: `saml-${samlConfig.provider.name}`,
       email: user.email,
     });
 
-    // Create a session for the user by redirecting to NextAuth callback
+    // Hand off to the completion route, which verifies the token and mints the
+    // NextAuth session cookie before redirecting to the final destination.
     const response = NextResponse.redirect(
       new URL(
-        `/api/auth/callback/saml?token=${tempToken}&callbackUrl=${encodeURIComponent(callbackUrl)}`,
-        request.url
+        `/api/auth/saml/complete?token=${tempToken}&callbackUrl=${encodeURIComponent(callbackUrl)}`,
+        getAppBaseUrl(request)
       )
     );
-
-    // Clean up cookies
-    response.cookies.delete("saml-state");
-    response.cookies.delete("saml-provider");
-    response.cookies.delete("saml-callback-url");
 
     // Set security headers
     const securityHeaders = getSecurityHeaders();

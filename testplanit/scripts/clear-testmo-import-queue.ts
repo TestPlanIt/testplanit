@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { Queue } from "bullmq";
 import { TESTMO_IMPORT_QUEUE_NAME } from "../lib/queues";
 import valkeyConnection from "../lib/valkey";
+import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 
 async function main() {
   if (!valkeyConnection) {
@@ -11,6 +12,7 @@ async function main() {
 
   const queue = new Queue(TESTMO_IMPORT_QUEUE_NAME, {
     connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
   });
 
   console.log(`Clearing queue "${TESTMO_IMPORT_QUEUE_NAME}"...`);

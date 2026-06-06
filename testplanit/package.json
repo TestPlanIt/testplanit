@@ -1,6 +1,6 @@
 {
   "name": "testplanit",
-  "version": "0.34.10",
+  "version": "0.35.3",
   "private": true,
   "scripts": {
     "audit:coverage": "tsx scripts/audit-coverage.ts",
@@ -29,6 +29,8 @@
     "test:e2e:setup-db": "dotenv -e .env.e2e -- tsx e2e/setup-db.ts",
     "test:e2e:run": "pnpm test:e2e:setup-db && pnpm test:e2e",
     "test:e2e:prod": "pnpm build && dotenv -e .env.e2e -- cross-env E2E_PROD=on playwright test --config e2e/playwright.config.ts",
+    "a11y:scan": "dotenv -e .env.e2e -- tsx e2e/a11y/run.ts",
+    "a11y:report": "dotenv -e .env.e2e -- tsx e2e/a11y/aggregate.ts",
     "worker:notification": "dotenv -- tsx workers/notificationWorker.ts",
     "worker:email": "dotenv -- tsx workers/emailWorker.ts",
     "worker:forecast": "dotenv -- tsx workers/forecastWorker.ts",
@@ -286,6 +288,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
     "@babel/core": "^7.29.7",
     "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^9.39.4",

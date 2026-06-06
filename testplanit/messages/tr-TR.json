@@ -690,6 +690,12 @@
     },
     "aria": {
       "userMenu": "Kullanıcı menüsü",
+      "selectProject": "Proje seçin",
+      "togglePanel": "Paneli açıp kapat",
+      "folder": "Dosya",
+      "toggleActive": "Etkin durumu değiştir",
+      "toggleDetails": "Ayrıntıları göster/gizle",
+      "requiresReview": "İnceleme gerektiriyor",
       "search": "Aramak",
       "helpMenu": "Yardım menüsü",
       "help": "Yardım",
@@ -846,6 +852,15 @@
       "noFilesDetected": "Sürükleme işleminde dosya tespit edilmedi."
     },
     "editor": {
+      "bold": "Gözü pek",
+      "italic": "İtalik",
+      "underline": "Altını çiz",
+      "strikethrough": "Üstü çizili",
+      "code": "Kod",
+      "heading": "Başlık",
+      "bulletList": "Madde işaretli liste",
+      "orderedList": "Numaralı liste",
+      "blockquote": "Blok alıntı",
       "setColor": "Renk Ayarla",
       "enterUrl": "https:// içeren bir URL girin.",
       "uploadFile": "Dosya Yükle",
@@ -2368,7 +2383,8 @@
       "system": "Sistem",
       "green": "Yeşil",
       "purple": "Mor",
-      "orange": "Turuncu"
+      "orange": "Turuncu",
+      "accessible": "Erişilebilir"
     }
   },
   "repository": {
@@ -4491,6 +4507,7 @@
         "thresholdUpdateError": "Hatırlatma ayarları güncellenemedi. Lütfen birazdan tekrar deneyin."
       },
       "projectReviewToggleList": {
+        "toggleAria": "{name} için inceleme iş akışını aç/kapat",
         "columnHeader": "İş akışını gözden geçirin",
         "filterPlaceholder": "Filtreleme projeleri...",
         "enabledToast": "{name} için inceleme iş akışı etkinleştirildi.",
@@ -4560,6 +4577,7 @@
     "statuses": {
       "description": "Test durumlarını yönetin",
       "editPolicy": {
+        "modeAria": "Sonuç düzenleme politikası modu",
         "title": "Sonuç düzenleme politikası",
         "description": "Sonuç kaydedildikten sonra ne kadar süre geçtiğini kontrol edin; sonuç tüm projelerde yerinde düzenlenebilir. Projeler bunu Gelişmiş ayarlarından sıkılaştırabilir ancak asla gevşetemezler. Sistem yöneticileri her zaman düzenleme yapabilir.",
         "modeNone": "Herhangi bir kısıtlama yok (projeler karar verir)",

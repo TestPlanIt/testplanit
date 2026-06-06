@@ -146,13 +146,14 @@ export function useIssueColumns({
           return (
             <Popover>
               <PopoverTrigger asChild>
-                <div
-                  className="line-clamp-2 overflow-hidden text-ellipsis text-sm cursor-pointer hover:bg-accent/50 rounded px-1 -mx-1 py-0.5 transition-colors"
+                <button
+                  type="button"
+                  className="line-clamp-2 overflow-hidden text-ellipsis text-sm text-left cursor-pointer hover:bg-accent/50 rounded px-1 -mx-1 py-0.5 transition-colors"
                   style={{ maxWidth: column.getSize() }}
                   title={plainText}
                 >
                   {plainText}
-                </div>
+                </button>
               </PopoverTrigger>
               <PopoverContent className="w-[500px] max-h-[400px] overflow-auto">
                 <div className="space-y-2">
@@ -214,13 +215,14 @@ export function useIssueColumns({
           return (
             <Popover>
               <PopoverTrigger asChild>
-                <div
-                  className="line-clamp-2 overflow-hidden text-ellipsis text-sm cursor-pointer hover:bg-accent/50 rounded px-1 -mx-1 py-0.5 transition-colors"
+                <button
+                  type="button"
+                  className="line-clamp-2 overflow-hidden text-ellipsis text-sm text-left cursor-pointer hover:bg-accent/50 rounded px-1 -mx-1 py-0.5 transition-colors"
                   style={{ maxWidth: column.getSize() }}
                   title={plainText}
                 >
                   {plainText}
-                </div>
+                </button>
               </PopoverTrigger>
               <PopoverContent className="w-[500px] max-h-[400px] overflow-auto">
                 <div className="space-y-2">

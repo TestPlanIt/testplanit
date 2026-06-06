@@ -11,6 +11,7 @@ import { ITERATION_GENERATION_QUEUE_NAME } from "../lib/queueNames";
 import { materializeIterations } from "../lib/services/iterationFanOut";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
+import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 
 // ─── Job data / result types ────────────────────────────────────────────────
 
@@ -118,6 +119,7 @@ export function startIterationGenerationWorker() {
     withTenantContext(processor),
     {
       connection: valkeyConnection as any,
+      prefix: BULLMQ_PREFIX,
       concurrency: 1,
     }
   );

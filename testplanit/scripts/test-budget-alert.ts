@@ -16,6 +16,7 @@ import { Queue } from "bullmq";
 import { enqueueWithAuditContext } from "../lib/auditContextEnqueue";
 import { BUDGET_ALERT_QUEUE_NAME } from "../lib/queueNames";
 import valkeyConnection from "../lib/valkey";
+import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 
 const BUDGET_ALERT_JOB_CHECK = "check-budget";
 
@@ -34,6 +35,7 @@ async function main() {
 
   const queue = new Queue(BUDGET_ALERT_QUEUE_NAME, {
     connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
   });
 
   const job = await enqueueWithAuditContext(

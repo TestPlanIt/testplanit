@@ -685,6 +685,11 @@ export function TestRunCasesSummary({
                   setSortMode((m) => (m === "date" ? "status" : "date"))
                 }
                 className="inline-flex cursor-pointer items-center text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={
+                  sortMode === "date"
+                    ? tCommon("labels.sortByStatus")
+                    : tCommon("labels.sortByDate")
+                }
                 data-testid="sort-toggle"
               >
                 <ArrowUpDown className="h-3 w-3" />

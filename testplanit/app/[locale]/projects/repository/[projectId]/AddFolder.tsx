@@ -202,6 +202,7 @@ export function AddFolder({
                           className="h-5 w-5 p-0"
                           onClick={() => setEffectiveParentId(null)}
                           data-testid="remove-parent-folder-button"
+                          aria-label={t("repository.removeParentFolder")}
                         >
                           <CircleX className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                         </Button>

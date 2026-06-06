@@ -261,6 +261,7 @@ export function CommentItem({
                     size="sm"
                     className="h-8 w-8 p-0"
                     disabled={isDeleting}
+                    aria-label={t("common.actions.actionsLabel")}
                   >
                     <MoreVertical className="h-4 w-4" />
                   </Button>

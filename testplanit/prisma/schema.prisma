@@ -26,6 +26,7 @@ enum Theme {
   Green
   Orange
   Purple
+  Accessible
 }
 
 enum ItemsPerPage {

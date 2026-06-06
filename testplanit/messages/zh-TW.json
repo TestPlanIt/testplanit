@@ -690,6 +690,12 @@
     },
     "aria": {
       "userMenu": "使用者選單",
+      "selectProject": "選擇項目",
+      "togglePanel": "切換面板",
+      "folder": "資料夾",
+      "toggleActive": "切換啟動狀態",
+      "toggleDetails": "切換詳情",
+      "requiresReview": "需要審核",
       "search": "搜尋",
       "helpMenu": "幫助菜單",
       "help": "幫助",
@@ -846,6 +852,15 @@
       "noFilesDetected": "未偵測到 Drop 資料夾中的任何檔案。"
     },
     "editor": {
+      "bold": "大膽的",
+      "italic": "斜體",
+      "underline": "強調",
+      "strikethrough": "刪除線",
+      "code": "程式碼",
+      "heading": "標題",
+      "bulletList": "重點清單",
+      "orderedList": "編號列表",
+      "blockquote": "引用",
       "setColor": "設定顏色",
       "enterUrl": "請輸入包含 https:// 的網址。",
       "uploadFile": "上傳文件",
@@ -2368,7 +2383,8 @@
       "system": "系統",
       "green": "綠色的",
       "purple": "紫色的",
-      "orange": "橘子"
+      "orange": "橘子",
+      "accessible": "無障礙"
     }
   },
   "repository": {
@@ -4491,6 +4507,7 @@
         "thresholdUpdateError": "更新提醒設定失敗，請稍後再試。"
       },
       "projectReviewToggleList": {
+        "toggleAria": "切換 {name} 的審核工作流程",
         "columnHeader": "審核工作流程",
         "filterPlaceholder": "篩選項目...",
         "enabledToast": "已啟用審核工作流程 {name}",
@@ -4560,6 +4577,7 @@
     "statuses": {
       "description": "管理測試狀態",
       "editPolicy": {
+        "modeAria": "結果編輯策略模式",
         "title": "結果編輯政策",
         "description": "控制結果記錄後多長時間內仍可進行原地編輯，此限制適用於所有項目。項目可以在其高級設定中收緊此限制，但無法放寬。系統管理員始終可以進行編輯。",
         "modeNone": "無限制（專案決定）",

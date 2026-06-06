@@ -690,6 +690,12 @@
     },
     "aria": {
       "userMenu": "사용자 메뉴",
+      "selectProject": "프로젝트를 선택하세요",
+      "togglePanel": "패널 토글",
+      "folder": "접는 사람",
+      "toggleActive": "활성 상태 전환",
+      "toggleDetails": "세부 정보 토글",
+      "requiresReview": "검토가 필요합니다",
       "search": "찾다",
       "helpMenu": "도움말 메뉴",
       "help": "돕다",
@@ -846,6 +852,15 @@
       "noFilesDetected": "드롭에서 파일이 감지되지 않았습니다."
     },
     "editor": {
+      "bold": "용감한",
+      "italic": "이탤릭체",
+      "underline": "밑줄",
+      "strikethrough": "취소선",
+      "code": "암호",
+      "heading": "표제",
+      "bulletList": "글머리 기호 목록",
+      "orderedList": "번호가 매겨진 목록",
+      "blockquote": "인용구",
       "setColor": "색상 설정",
       "enterUrl": "https://를 포함한 URL을 입력하세요.",
       "uploadFile": "파일 업로드",
@@ -2368,7 +2383,8 @@
       "system": "체계",
       "green": "녹색",
       "purple": "보라",
-      "orange": "주황색"
+      "orange": "주황색",
+      "accessible": "얻기 쉬운"
     }
   },
   "repository": {
@@ -4491,6 +4507,7 @@
         "thresholdUpdateError": "알림 설정 업데이트에 실패했습니다. 잠시 후 다시 시도해 주세요."
       },
       "projectReviewToggleList": {
+        "toggleAria": "{name}에 대한 검토 워크플로를 토글합니다.",
         "columnHeader": "워크플로 검토",
         "filterPlaceholder": "프로젝트 필터링...",
         "enabledToast": "{name}에 대한 검토 워크플로가 활성화되었습니다.",
@@ -4560,6 +4577,7 @@
     "statuses": {
       "description": "테스트 상태 관리",
       "editPolicy": {
+        "modeAria": "결과 편집 정책 모드",
         "title": "결과 편집 정책",
         "description": "프로젝트 전체에 걸쳐 결과가 기록된 후 해당 결과를 제자리에서 편집할 수 있는 시간을 제어합니다. 프로젝트는 고급 설정에서 이 시간을 단축할 수 있지만, 단축할 수는 없습니다. 시스템 관리자는 언제든지 이 설정을 편집할 수 있습니다.",
         "modeNone": "제한 없음 (프로젝트에서 결정)",

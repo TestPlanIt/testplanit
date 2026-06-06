@@ -14,6 +14,7 @@ import { captureAuditEvent } from "../lib/services/auditLog";
 import { resolveCreateStateRemap } from "../lib/services/reviewGate";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
+import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 import { createTestCaseVersionInTransaction } from "../lib/services/testCaseVersionService";
 import { syncRepositoryCaseToElasticsearch } from "../services/repositoryCaseSync";
 
@@ -997,6 +998,7 @@ const startWorker = async () => {
       withTenantContext(processor),
       {
         connection: valkeyConnection as any,
+        prefix: BULLMQ_PREFIX,
         concurrency: 1, // LOCKED: prevent ZenStack v3 deadlocks (40P01)
       }
     );

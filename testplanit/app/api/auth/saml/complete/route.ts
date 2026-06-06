@@ -1,7 +1,7 @@
-import jwt from "jsonwebtoken";
 import { encode } from "next-auth/jwt";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { consumeTempSessionToken, getAppBaseUrl } from "~/lib/auth-security";
 import { db } from "~/server/db";
 
 // SAML completion handler - creates NextAuth session
@@ -15,14 +15,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Token is required" }, { status: 400 });
     }
 
-    // Verify the JWT token
-    let tokenData: any;
-    try {
-      tokenData = jwt.verify(
-        token,
-        process.env.NEXTAUTH_SECRET || "development-secret"
-      );
-    } catch {
+    // Verify and consume the one-time token (single-use via Valkey when
+    // present, so the token in the redirect URL can't be replayed).
+    const tokenData = await consumeTempSessionToken(token);
+    if (!tokenData) {
       return NextResponse.json(
         { error: "Invalid or expired token" },
         { status: 401 }
@@ -36,6 +32,11 @@ export async function GET(request: NextRequest) {
         id: true,
         email: true,
         name: true,
+        access: true,
+        isApi: true,
+        passwordChangedAt: true,
+        mustChangePassword: true,
+        twoFactorEnabled: true,
       },
     });
 
@@ -43,13 +44,40 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Create NextAuth JWT session token
+    // Mirror NextAuth's force-2FA-for-SSO gate (the jwt callback in server/auth):
+    // this flow mints the session directly, so without stamping the same flags
+    // here a SAML login would bypass an enforced 2FA policy.
+    const twoFactorClaims: {
+      twoFactorRequired?: boolean;
+      twoFactorVerified?: boolean;
+      twoFactorSetupRequired?: boolean;
+    } = {};
+    const registrationSettings = await db.registrationSettings.findFirst({
+      select: { force2FAAllLogins: true },
+    });
+    if (registrationSettings?.force2FAAllLogins) {
+      if (user.twoFactorEnabled) {
+        twoFactorClaims.twoFactorRequired = true;
+        twoFactorClaims.twoFactorVerified = false;
+      } else {
+        twoFactorClaims.twoFactorSetupRequired = true;
+      }
+    }
+
+    // Create NextAuth JWT session token. Seed the same fields the NextAuth `jwt`
+    // callback sets at sign-in so middleware (which only decodes the token, and
+    // never runs the callback) sees the user's access on the very first request.
     const sessionToken = await encode({
       token: {
         sub: user.id,
         email: user.email,
         name: user.name,
         provider: tokenData.provider,
+        access: user.access,
+        isApi: user.isApi,
+        passwordChangedAt: user.passwordChangedAt?.toISOString() ?? null,
+        mustChangePassword: user.mustChangePassword ?? false,
+        ...twoFactorClaims,
       },
       secret: process.env.NEXTAUTH_SECRET || "development-secret",
     });
@@ -76,7 +104,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Redirect to callback URL
-    return NextResponse.redirect(new URL(callbackUrl, request.url));
+    return NextResponse.redirect(new URL(callbackUrl, getAppBaseUrl(request)));
   } catch (error) {
     console.error("SAML completion error:", error);
     return NextResponse.json(

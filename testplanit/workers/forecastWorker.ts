@@ -15,6 +15,7 @@ import { getReviewReminderThresholdDays } from "../lib/services/reviewReminderCo
 import { withTenantContext } from "../lib/tenantContext";
 import { emitReviewReminderEvent } from "../lib/webhooks/event-emitters/reviewEvents";
 import valkeyConnection from "../lib/valkey";
+import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 import {
   getUniqueCaseGroupIds,
   updateRepositoryCaseForecast,
@@ -737,6 +738,7 @@ async function startWorker() {
       withTenantContext(processor),
       {
         connection: valkeyConnection as any,
+        prefix: BULLMQ_PREFIX,
         concurrency: parseInt(process.env.FORECAST_CONCURRENCY || "5", 10),
         limiter: {
           max: 100,

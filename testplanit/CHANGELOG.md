@@ -1,3 +1,39 @@
+## [0.35.3](https://github.com/TestPlanIt/testplanit/compare/v0.35.2...v0.35.3) (2026-06-05)
+
+### Bug Fixes
+
+* **auth:** reject replayed SAML assertions ([#407](https://github.com/TestPlanIt/testplanit/issues/407)) ([ab75960](https://github.com/TestPlanIt/testplanit/commit/ab75960f654755b57e68f1110ed4d719e3c0c404)), closes [#406](https://github.com/TestPlanIt/testplanit/issues/406)
+
+## [0.35.2](https://github.com/TestPlanIt/testplanit/compare/v0.35.1...v0.35.2) (2026-06-05)
+
+### Enhancements
+
+* **auth:** support IdP-initiated SAML and harden the SSO completion flow ([#406](https://github.com/TestPlanIt/testplanit/issues/406)) ([7f3a653](https://github.com/TestPlanIt/testplanit/commit/7f3a653cca24427ad2dbfc58e896f8ecc6386eb7)), closes [#405](https://github.com/TestPlanIt/testplanit/issues/405)
+
+## [0.35.1](https://github.com/TestPlanIt/testplanit/compare/v0.35.0...v0.35.1) (2026-06-05)
+
+### Bug Fixes
+
+* **auth:** make SAML SP-initiated login work end-to-end ([#405](https://github.com/TestPlanIt/testplanit/issues/405)) ([e65517c](https://github.com/TestPlanIt/testplanit/commit/e65517c04b71637a1d6b4da82fe860bd79c53df9))
+
+## [0.35.0](https://github.com/TestPlanIt/testplanit/compare/v0.34.12...v0.35.0) (2026-06-05)
+
+### Features
+
+* **a11y:** WCAG 2.2 AA scan harness, Accessible theme, and name/role fixes ([#404](https://github.com/TestPlanIt/testplanit/issues/404)) ([ae18e3e](https://github.com/TestPlanIt/testplanit/commit/ae18e3e47700955d121254c26abe73086aaacfd2))
+
+## [0.34.12](https://github.com/TestPlanIt/testplanit/compare/v0.34.11...v0.34.12) (2026-06-05)
+
+### Bug Fixes
+
+* **scheduler:** skip legacy keyless entries in reconciliation ([#403](https://github.com/TestPlanIt/testplanit/issues/403)) ([0aef3aa](https://github.com/TestPlanIt/testplanit/commit/0aef3aa2c77df27ed88769e4f659e702ea60165b))
+
+## [0.34.11](https://github.com/TestPlanIt/testplanit/compare/v0.34.10...v0.34.11) (2026-06-05)
+
+### Enhancements
+
+* **workers:** BullMQ worker groups via configurable key prefix ([#402](https://github.com/TestPlanIt/testplanit/issues/402)) ([6e677c0](https://github.com/TestPlanIt/testplanit/commit/6e677c0c076a9d498f189960755c6c6b0b1be011))
+
 ## [0.34.10](https://github.com/TestPlanIt/testplanit/compare/v0.34.9...v0.34.10) (2026-06-04)
 
 ### Enhancements

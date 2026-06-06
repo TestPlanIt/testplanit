@@ -28,6 +28,95 @@ const CRON_SCHEDULE_DAILY_2AM = "0 2 * * *"; // Plan 02-06 / D-04 — auto-retir
 const CRON_SCHEDULE_HOURLY = "0 * * * *"; // Top of every hour — review-reminder scan
 const JOB_RETIRE_EXPIRED_SECRETS = "retire-expired-secrets";
 
+/**
+ * Remove job schedulers for tenants that are no longer in this worker group's
+ * tenant config. Self-heals two cases:
+ *  - a tenant migrated to another worker group (its schedulers under THIS
+ *    group's BULLMQ_PREFIX must go away or its crons would run twice), and
+ *  - a deprovisioned tenant (schedulers previously persisted forever).
+ *
+ * Safety properties:
+ *  - getJobSchedulers() only sees schedulers under this process's BULLMQ_PREFIX,
+ *    so one group can never delete another group's schedulers.
+ *  - tenantId is parsed by stripping the KNOWN job-name prefix from the
+ *    scheduler key (`${jobName}-${tenantId}`), never by splitting on "-" —
+ *    tenant slugs may themselves contain hyphens.
+ *  - Scheduler keys that exactly equal a job name (the single-tenant, no-suffix
+ *    form) and keys that match no known job name are never touched.
+ *  - Failures are logged and skipped; reconciliation must never block worker
+ *    boot (the upserts above already succeeded — a stale scheduler is benign,
+ *    a crash-looping pod is not).
+ *
+ * Exported for unit tests.
+ */
+export async function reconcileStaleSchedulers(
+  queuesWithJobs: Array<{
+    queue: {
+      getJobSchedulers: (
+        start?: number,
+        end?: number,
+        asc?: boolean
+      ) => Promise<
+        Array<{ key?: string | null; name?: string } | undefined | null>
+      >;
+      removeJobScheduler: (id: string) => Promise<unknown>;
+      name: string;
+    } | null;
+    jobNames: string[];
+  }>,
+  activeTenants: Set<string>
+): Promise<void> {
+  for (const { queue, jobNames } of queuesWithJobs) {
+    if (!queue) continue;
+
+    let schedulers;
+    try {
+      schedulers = await queue.getJobSchedulers(0, -1, true);
+    } catch (err) {
+      console.warn(
+        `[scheduler] Could not list job schedulers on queue "${queue.name}" for reconciliation:`,
+        err
+      );
+      continue;
+    }
+
+    for (const scheduler of schedulers ?? []) {
+      // Legacy (pre-BullMQ-5) repeat zset members have no scheduler hash, so
+      // getJobSchedulers() yields undefined/keyless entries for them — seen
+      // in prod 2026-06-05 (95 MD5-style members), where one such entry
+      // TypeError'd the whole reconciliation pass. Skip them; they are
+      // exactly the "foreign — never touch" case.
+      const schedulerId = scheduler?.key;
+      if (typeof schedulerId !== "string" || schedulerId.length === 0) continue;
+      // Match the longest job name first so e.g. a hypothetical
+      // "send-daily-digest-summary" job is not mistaken for
+      // "send-daily-digest" with tenant "summary".
+      const jobName = [...jobNames]
+        .sort((a, b) => b.length - a.length)
+        .find((n) => schedulerId === n || schedulerId.startsWith(`${n}-`));
+
+      if (!jobName) continue; // foreign/unknown scheduler — never touch
+      if (schedulerId === jobName) continue; // single-tenant form — never touch
+
+      const tenantId = schedulerId.slice(jobName.length + 1);
+      if (!tenantId) continue;
+      if (activeTenants.has(tenantId)) continue;
+
+      try {
+        await queue.removeJobScheduler(schedulerId);
+        console.log(
+          `[scheduler] Reconciled away stale scheduler "${schedulerId}" on queue "${queue.name}" (tenant "${tenantId}" not in this worker group's config).`
+        );
+      } catch (err) {
+        console.warn(
+          `[scheduler] Failed to remove stale scheduler "${schedulerId}" on queue "${queue.name}" (will retry on next boot):`,
+          err
+        );
+      }
+    }
+  }
+}
+
 async function scheduleJobs() {
   console.log("Attempting to schedule jobs...");
 
@@ -194,6 +283,38 @@ async function scheduleJobs() {
       console.warn(
         `[scheduler] webhookDispatchQueue unavailable — auto-retire cron NOT registered`
       );
+    }
+
+    // Reconcile away schedulers for tenants no longer in this worker group's
+    // config (migrated to another group, or deprovisioned). Multi-tenant only:
+    // single-tenant deployments use suffix-less scheduler ids and have no
+    // group concept. Own try/catch — reconciliation failures must not trip
+    // the process.exit(1) below.
+    if (multiTenant) {
+      try {
+        await reconcileStaleSchedulers(
+          [
+            {
+              queue: forecastQueue,
+              jobNames: [
+                JOB_UPDATE_ALL_CASES,
+                JOB_AUTO_COMPLETE_MILESTONES,
+                JOB_MILESTONE_DUE_NOTIFICATIONS,
+                JOB_REVIEW_REMINDERS,
+              ],
+            },
+            { queue: notificationQueue, jobNames: [JOB_SEND_DAILY_DIGEST] },
+            { queue: repoCacheQueue, jobNames: [JOB_REFRESH_EXPIRED_CACHES] },
+            {
+              queue: webhookDispatchQueue,
+              jobNames: [JOB_RETIRE_EXPIRED_SECRETS],
+            },
+          ],
+          new Set(tenantIds.filter((t): t is string => Boolean(t)))
+        );
+      } catch (err) {
+        console.warn("[scheduler] Scheduler reconciliation failed:", err);
+      }
     }
   } catch (error) {
     console.error("Error scheduling jobs:", error);

@@ -9,6 +9,7 @@ import {
   TESTMO_IMPORT_QUEUE_NAME,
 } from "../lib/queues";
 import valkeyConnection from "../lib/valkey";
+import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 
 const QUEUE_NAMES = [
   FORECAST_QUEUE_NAME,
@@ -29,6 +30,7 @@ async function clearQueue(queueName: string) {
   try {
     const queue = new Queue(queueName, {
       connection: valkeyConnection as any,
+      prefix: BULLMQ_PREFIX,
     });
 
     console.log(`Clearing queue "${queueName}"...`);

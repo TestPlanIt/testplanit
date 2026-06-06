@@ -690,6 +690,12 @@
     },
     "aria": {
       "userMenu": "Menu użytkownika",
+      "selectProject": "Wybierz projekt",
+      "togglePanel": "Przełącz panel",
+      "folder": "Falcówka",
+      "toggleActive": "Przełącz aktywny status",
+      "toggleDetails": "Przełącz szczegóły",
+      "requiresReview": "Wymaga przeglądu",
       "search": "Szukaj",
       "helpMenu": "Menu pomocy",
       "help": "Pomoc",
@@ -846,6 +852,15 @@
       "noFilesDetected": "Nie wykryto plików podczas upuszczania"
     },
     "editor": {
+      "bold": "Pogrubiony",
+      "italic": "italski",
+      "underline": "Podkreślać",
+      "strikethrough": "Przekreślenie",
+      "code": "Kod",
+      "heading": "Nagłówek",
+      "bulletList": "Lista punktowana",
+      "orderedList": "Lista numerowana",
+      "blockquote": "Cytat blokowy",
       "setColor": "Ustaw kolor",
       "enterUrl": "Wprowadź adres URL zawierający https://",
       "uploadFile": "Prześlij plik",
@@ -2368,7 +2383,8 @@
       "system": "System",
       "green": "Zielony",
       "purple": "Fioletowy",
-      "orange": "Pomarańczowy"
+      "orange": "Pomarańczowy",
+      "accessible": "Dostępny"
     }
   },
   "repository": {
@@ -4491,6 +4507,7 @@
         "thresholdUpdateError": "Nie udało się zaktualizować ustawień przypomnień. Spróbuj ponownie za chwilę."
       },
       "projectReviewToggleList": {
+        "toggleAria": "Przełącz przepływ pracy recenzji dla {name}",
         "columnHeader": "Przejrzyj przepływ pracy",
         "filterPlaceholder": "Filtruj projekty...",
         "enabledToast": "Przepływ pracy przeglądu włączony dla {name}",
@@ -4560,6 +4577,7 @@
     "statuses": {
       "description": "Zarządzaj statusami testów",
       "editPolicy": {
+        "modeAria": "Tryb polityki edycji wyników",
         "title": "Zasady edycji wyników",
         "description": "Kontroluj, jak długo po zarejestrowaniu wyniku można go nadal edytować na miejscu, we wszystkich projektach. Projekty mogą zaostrzyć to ustawienie w ustawieniach zaawansowanych, ale nigdy go nie poluzować. Administratorzy systemu zawsze mogą je edytować.",
         "modeNone": "Brak ograniczeń (decydują projekty)",

@@ -1420,6 +1420,7 @@ export default function TestResultHistory({
                           className="h-6 w-6"
                           data-testid={`expand-result-${result.displayId}`}
                           onClick={() => toggleExpanded(result.displayId)}
+                          aria-label={tCommon("aria.toggleDetails")}
                         >
                           {isExpanded ? (
                             <ChevronDown className="h-4 w-4" />

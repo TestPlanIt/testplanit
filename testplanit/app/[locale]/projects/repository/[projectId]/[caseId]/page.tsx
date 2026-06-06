@@ -1913,6 +1913,7 @@ export default function TestCaseDetails() {
                           variant="outline"
                           size="icon"
                           className="mr-2"
+                          aria-label={t("common.aria.backToTestCase")}
                         >
                           <ArrowLeft className="h-4 w-4" />
                         </Button>
@@ -2536,6 +2537,7 @@ export default function TestCaseDetails() {
                         variant="secondary"
                         size="sm"
                         data-testid="toggle-left-panel-button"
+                        aria-label={t("common.aria.togglePanel")}
                         className={`p-0 transform ${
                           isCollapsedLeft
                             ? "rounded-l-none rotate-180"
@@ -2566,6 +2568,7 @@ export default function TestCaseDetails() {
                         variant="secondary"
                         size="sm"
                         data-testid="toggle-right-panel-button"
+                        aria-label={t("common.aria.togglePanel")}
                         className={`p-0 transform ${
                           isCollapsedRight
                             ? "rounded-l-none"

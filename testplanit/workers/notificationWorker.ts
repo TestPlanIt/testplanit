@@ -13,6 +13,7 @@ import {
 import { getEmailQueue, NOTIFICATION_QUEUE_NAME } from "../lib/queues";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
+import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 
 // Define job data structures with multi-tenant support
 interface CreateNotificationJobData extends MultiTenantJobData {
@@ -261,6 +262,7 @@ const startWorker = async () => {
   if (valkeyConnection) {
     worker = new Worker(NOTIFICATION_QUEUE_NAME, withTenantContext(processor), {
       connection: valkeyConnection as any,
+      prefix: BULLMQ_PREFIX,
       concurrency: parseInt(process.env.NOTIFICATION_CONCURRENCY || "5", 10),
     });
 

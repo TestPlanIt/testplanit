@@ -56,6 +56,7 @@ export const ProjectDropdownMenu = ({
     <Select onValueChange={handleProjectSelect}>
       <SelectTrigger
         data-testid="project-dropdown-trigger"
+        aria-label={t("common.aria.selectProject")}
         className={`${isCollapsed ? "w-[60px]" : "w-[60px] md:w-[175px]"} -ml-5 md:ml-0 ${currentProject?.isCompleted ? "bg-muted-foreground/20" : ""}`}
       >
         <div

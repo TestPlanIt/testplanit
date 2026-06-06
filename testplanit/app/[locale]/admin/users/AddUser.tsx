@@ -392,7 +392,7 @@ export function AddUser({ open, onClose }: AddUserProps) {
 
       // If the admin skipped the password (allowed when a passwordless login
       // method is available), store an unusable random secret — same pattern as
-      // SAML auto-provisioning in app/api/auth/saml/callback/route.ts. User
+      // SAML auto-provisioning in app/api/auth/callback/saml/route.ts. User
       // signs in via magic link / SSO.
       const passwordForApi =
         data.password.length > 0 ? data.password : crypto.randomUUID();

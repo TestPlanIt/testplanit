@@ -131,6 +131,7 @@ export const useColumns = (
           <div className="text-center">
             <Switch
               data-testid={`user-active-toggle-${row.original.id}`}
+              aria-label={tCommon("aria.toggleActive")}
               checked={row.original.isActive}
               disabled={
                 row.original.id === currentUserId ||
@@ -270,7 +271,11 @@ export const useColumns = (
             <div className="flex justify-center">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="px-2 py-1 h-auto">
+                  <Button
+                    variant="ghost"
+                    className="px-2 py-1 h-auto"
+                    aria-label={tCommon("actions.actionsLabel")}
+                  >
                     <MoreHorizontal className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>

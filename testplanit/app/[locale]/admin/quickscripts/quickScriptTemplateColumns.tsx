@@ -66,6 +66,7 @@ export const useColumns = (
         cell: ({ row }) => (
           <div className="text-center">
             <Switch
+              aria-label={tCommon("fields.enabled")}
               checked={row.original.isEnabled}
               onCheckedChange={(checked) =>
                 handleToggleEnabled(row.original.id, checked)
@@ -85,6 +86,7 @@ export const useColumns = (
         cell: ({ row }) => (
           <div className="text-center">
             <Switch
+              aria-label={tCommon("fields.default")}
               checked={row.original.isDefault}
               disabled={row.original.isDefault}
               onCheckedChange={(checked) =>
@@ -109,6 +111,7 @@ export const useColumns = (
               className="px-2 py-1 h-auto"
               data-testid="edit-export-template-button"
               onClick={() => onEditTemplate?.(row.original)}
+              aria-label={tCommon("actions.edit")}
             >
               <Edit className="h-5 w-5" />
             </Button>
@@ -117,6 +120,7 @@ export const useColumns = (
                 variant="ghost"
                 className="px-2 py-1 h-auto text-muted-foreground cursor-not-allowed"
                 disabled
+                aria-label={tCommon("actions.delete")}
               >
                 <Trash2 className="h-5 w-5" />
               </Button>
@@ -126,6 +130,7 @@ export const useColumns = (
                 className="px-2 py-1 h-auto"
                 data-testid="delete-export-template-button"
                 onClick={() => onDeleteTemplate?.(row.original)}
+                aria-label={tCommon("actions.delete")}
               >
                 <Trash2 className="h-5 w-5" />
               </Button>

@@ -166,6 +166,7 @@ export default function SecurityAdminPage() {
               </div>
               <Slider
                 id="minPasswordLength"
+                aria-label={t("minPasswordLengthLabel")}
                 min={8}
                 max={128}
                 step={1}
@@ -234,6 +235,7 @@ export default function SecurityAdminPage() {
               </div>
               <Slider
                 id="passwordHistoryDepth"
+                aria-label={t("passwordHistoryDepthLabel")}
                 min={0}
                 max={24}
                 step={1}
@@ -256,6 +258,7 @@ export default function SecurityAdminPage() {
               </div>
               <Slider
                 id="passwordExpirationDays"
+                aria-label={t("passwordExpirationDaysLabel")}
                 min={0}
                 max={365}
                 step={1}
@@ -291,6 +294,7 @@ export default function SecurityAdminPage() {
               </div>
               <Slider
                 id="lockoutThreshold"
+                aria-label={t("lockoutThresholdLabel")}
                 min={1}
                 max={20}
                 step={1}
@@ -314,6 +318,7 @@ export default function SecurityAdminPage() {
               </div>
               <Slider
                 id="lockoutDurationMinutes"
+                aria-label={t("lockoutDurationMinutesLabel")}
                 min={1}
                 max={60}
                 step={1}

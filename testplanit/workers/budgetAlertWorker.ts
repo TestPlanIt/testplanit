@@ -10,6 +10,7 @@ import { BUDGET_ALERT_QUEUE_NAME } from "../lib/queues";
 import { BudgetAlertService } from "../lib/services/budgetAlertService";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
+import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 
 export const BUDGET_ALERT_JOB_CHECK = "check-budget";
 
@@ -50,6 +51,7 @@ const startWorker = async () => {
   if (valkeyConnection) {
     worker = new Worker(BUDGET_ALERT_QUEUE_NAME, withTenantContext(processor), {
       connection: valkeyConnection as any,
+      prefix: BULLMQ_PREFIX,
       concurrency: parseInt(process.env.BUDGET_ALERT_CONCURRENCY || "2", 10),
     });
 

@@ -11,6 +11,7 @@ import { StepSequenceScanService } from "../lib/services/stepSequenceScanService
 import { resolveSharedSteps } from "../lib/utils/resolveSharedSteps";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
+import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 
 // ─── Job data / result types ────────────────────────────────────────────────
 
@@ -192,6 +193,7 @@ export function startStepSequenceScanWorker() {
     }),
     {
       connection: valkeyConnection as any,
+      prefix: BULLMQ_PREFIX,
       concurrency: 1, // LOCKED: prevent ZenStack v3 deadlocks (40P01)
     }
   );

@@ -174,6 +174,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Custom statuses** - Create statuses with custom icons and colors
 - **Templates** - Create templates for consistent test case structure
 - **User preferences** - Configure theme, locale, timezone, and date/time formats; preference selections are visible from the profile view as well as the editor
+- **Accessible theme** - Opt-in high-contrast theme tuned for WCAG 2.2 Level AA (stronger contrast, larger interactive targets, visible focus), selectable per user without affecting other themes
 - **Configurations** - Author OS / browser / environment configurations scoped to projects, with an admin UX overhaul covering bulk assign and search
 
 ### Security & Compliance

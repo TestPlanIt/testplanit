@@ -158,6 +158,7 @@ export const useColumns = (
         cell: ({ row }) => (
           <div className="text-center">
             <Switch
+              aria-label={tCommon("fields.default")}
               checked={row.original.isDefault}
               disabled={row.original.isDefault}
               onCheckedChange={() =>
@@ -233,6 +234,7 @@ export const useColumns = (
               size="icon"
               onClick={() => onEditConfig?.(row.original)}
               className="px-2 py-1 h-auto"
+              aria-label={tCommon("actions.edit")}
             >
               <Edit className="h-4 w-4" />
             </Button>
@@ -245,6 +247,7 @@ export const useColumns = (
               title={
                 row.original.isDefault ? t("cannotDeleteDefault") : undefined
               }
+              aria-label={tCommon("actions.delete")}
             >
               <Trash2 className="h-4 w-4" />
             </Button>

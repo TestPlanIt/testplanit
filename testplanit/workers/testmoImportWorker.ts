@@ -37,6 +37,7 @@ import { resolveCreateStateRemap } from "../lib/services/reviewGate";
 import { createTestCaseVersionInTransaction } from "../lib/services/testCaseVersionService.js";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
+import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 import {
   normalizeMappingConfiguration,
   serializeMappingConfiguration,
@@ -7996,6 +7997,7 @@ async function startWorker() {
     withTenantContext(processor),
     {
       connection: valkeyConnection as any,
+      prefix: BULLMQ_PREFIX,
       concurrency: parseInt(process.env.TESTMO_IMPORT_CONCURRENCY || "1", 10),
     }
   );

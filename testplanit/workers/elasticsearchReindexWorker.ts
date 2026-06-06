@@ -22,6 +22,7 @@ import {
 import { ELASTICSEARCH_REINDEX_QUEUE_NAME } from "../lib/queueNames";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
+import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 
 export interface ReindexJobData extends MultiTenantJobData {
   entityType:
@@ -384,6 +385,7 @@ const startWorker = async () => {
       withTenantContext(processor),
       {
         connection: valkeyConnection as any,
+        prefix: BULLMQ_PREFIX,
         concurrency: parseInt(
           process.env.ELASTICSEARCH_REINDEX_CONCURRENCY || "2",
           10

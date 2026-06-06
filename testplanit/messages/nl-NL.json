@@ -690,6 +690,12 @@
     },
     "aria": {
       "userMenu": "Gebruikersmenu",
+      "selectProject": "Selecteer project",
+      "togglePanel": "Schakelpaneel",
+      "folder": "Map",
+      "toggleActive": "Actieve status in-/uitschakelen",
+      "toggleDetails": "Details weergeven/verbergen",
+      "requiresReview": "Vereist beoordeling",
       "search": "Zoekopdracht",
       "helpMenu": "Helpmenu",
       "help": "Hulp",
@@ -846,6 +852,15 @@
       "noFilesDetected": "Geen bestanden gevonden in de drop."
     },
     "editor": {
+      "bold": "Vetgedrukt",
+      "italic": "Cursief",
+      "underline": "Onderstrepen",
+      "strikethrough": "Doorhalen",
+      "code": "Code",
+      "heading": "Koptekst",
+      "bulletList": "Opsomming",
+      "orderedList": "Genummerde lijst",
+      "blockquote": "Blokcitaat",
       "setColor": "Kleur instellen",
       "enterUrl": "Voer de URL in, inclusief https://",
       "uploadFile": "Bestand uploaden",
@@ -2368,7 +2383,8 @@
       "system": "Systeem",
       "green": "Groente",
       "purple": "Paars",
-      "orange": "Oranje"
+      "orange": "Oranje",
+      "accessible": "Toegankelijk"
     }
   },
   "repository": {
@@ -4491,6 +4507,7 @@
         "thresholdUpdateError": "Het bijwerken van de herinneringsinstellingen is mislukt. Probeer het over een moment opnieuw."
       },
       "projectReviewToggleList": {
+        "toggleAria": "Schakel de beoordelingsworkflow voor {name} in/uit",
         "columnHeader": "Werkproces beoordelen",
         "filterPlaceholder": "Filterprojecten...",
         "enabledToast": "Review-workflow ingeschakeld voor {name}",
@@ -4560,6 +4577,7 @@
     "statuses": {
       "description": "Teststatussen beheren",
       "editPolicy": {
+        "modeAria": "Beleidsmodus voor resultaatbewerking",
         "title": "Beleid voor het bewerken van resultaten",
         "description": "Bepaal hoe lang na het vastleggen van een resultaat dit nog ter plekke kan worden bewerkt, voor alle projecten. Projecten kunnen deze instelling in de geavanceerde instellingen aanscherpen, maar nooit versoepelen. Systeembeheerders kunnen de instelling altijd wijzigen.",
         "modeNone": "Geen beperkingen (projecten bepalen dit)",

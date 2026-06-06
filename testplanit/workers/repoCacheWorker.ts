@@ -10,6 +10,7 @@ import { REPO_CACHE_QUEUE_NAME } from "../lib/queueNames";
 import { refreshRepoCache } from "../lib/services/repoCacheRefreshService";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
+import { BULLMQ_PREFIX } from "../lib/bullPrefix";
 
 export const JOB_REFRESH_EXPIRED_CACHES = "refresh-expired-repo-caches";
 
@@ -127,6 +128,7 @@ async function startWorker() {
       withTenantContext(processor),
       {
         connection: valkeyConnection as any,
+        prefix: BULLMQ_PREFIX,
         concurrency: 1, // Serial processing — avoid hammering git APIs
       }
     );

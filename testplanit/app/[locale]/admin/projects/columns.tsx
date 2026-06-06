@@ -260,6 +260,7 @@ export const useColumns = (
         cell: ({ row }) => (
           <div className="text-center">
             <Switch
+              aria-label={tCommon("fields.completed")}
               checked={row.original.isCompleted}
               onCheckedChange={(checked) =>
                 handleToggleCompleted(row.original.id, checked)
@@ -312,6 +313,7 @@ export const useColumns = (
               size="icon"
               onClick={() => handleOpenEditModal(row.original)}
               className="px-2 py-1 h-auto"
+              aria-label={tCommon("actions.edit")}
             >
               <SquarePen className="h-4 w-4" />
             </Button>
@@ -320,6 +322,7 @@ export const useColumns = (
               size="icon"
               className="px-2 py-1 h-auto"
               onClick={() => onDeleteProject?.(row.original)}
+              aria-label={tCommon("actions.delete")}
             >
               <Trash2 className="h-4 w-4" />
             </Button>

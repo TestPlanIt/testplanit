@@ -36,7 +36,7 @@ import {
   Theme,
   TimeFormat,
 } from "@prisma/client";
-import { Circle, Moon, Sun, SunMoon } from "lucide-react";
+import { Accessibility, Circle, Moon, Sun, SunMoon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
@@ -205,6 +205,8 @@ export function InitialPreferencesDialog() {
         return <Circle className="h-4 w-4 fill-orange-500" />;
       case "Purple":
         return <Circle className="h-4 w-4 fill-purple-500" />;
+      case "Accessible":
+        return <Accessibility className="h-4 w-4 text-blue-700" />;
       default:
         return <Circle className="h-4 w-4" />;
     }
@@ -224,6 +226,8 @@ export function InitialPreferencesDialog() {
         return "text-orange-500";
       case "Purple":
         return "text-purple-500";
+      case "Accessible":
+        return "text-blue-700";
       default:
         return "";
     }
@@ -248,7 +252,8 @@ export function InitialPreferencesDialog() {
             "system",
             "green",
             "orange",
-            "purple"
+            "purple",
+            "accessible"
           );
           // Add the new theme class
           html.classList.add(themeLower);
