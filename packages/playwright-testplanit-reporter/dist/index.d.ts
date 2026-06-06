@@ -83,8 +83,27 @@ interface TestPlanItReporterOptions {
      */
     tagIds?: (number | string)[];
     /**
-     * Regular expression pattern to extract test case IDs from test titles.
-     * The pattern MUST include a capturing group that captures the numeric case ID.
+     * Playwright annotation `type` used to link a test to one or more case IDs
+     * without touching the test title — the recommended approach for established
+     * suites. The annotation's `description` holds the case ID(s); any non-digit
+     * characters are ignored, so `'1234'`, `'C1234'`, and `'1234, 1235'` all work.
+     * Add multiple annotations of this type to link multiple cases.
+     *
+     * Set to an empty string to disable annotation-based linking.
+     *
+     * @default 'testplanit'
+     *
+     * @example
+     * ```typescript
+     * test('logs in', { annotation: { type: 'testplanit', description: '1234' } }, async () => {});
+     * ```
+     */
+    caseIdAnnotation?: string;
+    /**
+     * Regular expression pattern to extract test case IDs from test titles
+     * **and Playwright tags**. The pattern MUST include a capturing group that
+     * captures the numeric case ID. Applied to each `test.tags` entry too, so a
+     * tag like `@C1234` links the case when the pattern matches it.
      *
      * @default /\[(\d+)\]/g - Matches IDs in brackets like "[1761]"
      *
@@ -360,6 +379,13 @@ declare class TestPlanItReporter implements Reporter {
      * @example "[1761] [1762] should load" -> { caseIds: [1761, 1762], cleanTitle: "should load" }
      */
     private parseCaseIds;
+    /**
+     * Collect case IDs from annotations of the configured type, on the test and
+     * the current result. The description holds the ID(s); non-digits are ignored.
+     */
+    private getAnnotationCaseIds;
+    /** Collect case IDs from Playwright tags by applying the configured pattern. */
+    private getTagCaseIds;
     /** Collect the describe-block titles (outermost first) for a test. */
     private getSuitePath;
     /** Resolve the Playwright project name (≈ browser) for a test. */

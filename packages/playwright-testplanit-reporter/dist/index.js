@@ -54,6 +54,7 @@ var TestPlanItReporter = class {
   constructor(options) {
     this.options = {
       caseIdPattern: /\[(\d+)\]/g,
+      caseIdAnnotation: "testplanit",
       autoCreateTestCases: false,
       createFolderHierarchy: false,
       uploadAttachments: true,
@@ -137,7 +138,14 @@ ${error.stack}` : "";
   }
   onTestEnd(test, result) {
     const status = this.normalizeStatus(result.status);
-    const { caseIds, cleanTitle } = this.parseCaseIds(test.title);
+    const { caseIds: titleIds, cleanTitle } = this.parseCaseIds(test.title);
+    const caseIds = [
+      .../* @__PURE__ */ new Set([
+        ...this.getAnnotationCaseIds(test, result),
+        ...this.getTagCaseIds(test),
+        ...titleIds
+      ])
+    ];
     const suitePath = this.getSuitePath(test);
     const suiteName = suitePath.join(" > ");
     const fullTitle = suiteName ? `${suiteName} > ${cleanTitle}` : cleanTitle;
@@ -586,6 +594,33 @@ ${error.stack}` : "";
     }
     const cleanTitle = title.replace(regex, "").trim().replace(/\s+/g, " ");
     return { caseIds, cleanTitle };
+  }
+  /**
+   * Collect case IDs from annotations of the configured type, on the test and
+   * the current result. The description holds the ID(s); non-digits are ignored.
+   */
+  getAnnotationCaseIds(test, result) {
+    const type = this.options.caseIdAnnotation;
+    if (!type) return [];
+    const annotations = [...test.annotations ?? [], ...result.annotations ?? []];
+    const ids = [];
+    for (const annotation of annotations) {
+      if (annotation?.type === type && annotation.description) {
+        for (const digits of String(annotation.description).match(/\d+/g) ?? []) {
+          ids.push(parseInt(digits, 10));
+        }
+      }
+    }
+    return ids;
+  }
+  /** Collect case IDs from Playwright tags by applying the configured pattern. */
+  getTagCaseIds(test) {
+    const tags = test.tags ?? [];
+    const ids = [];
+    for (const tag of tags) {
+      ids.push(...this.parseCaseIds(tag).caseIds);
+    }
+    return ids;
   }
   /** Collect the describe-block titles (outermost first) for a test. */
   getSuitePath(test) {

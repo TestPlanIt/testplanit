@@ -96,6 +96,13 @@ function makeResult(partial: Partial<TestResult> = {}): TestResult {
   } as unknown as TestResult;
 }
 
+function withMeta(
+  test: TestCase,
+  meta: { annotations?: { type: string; description?: string }[]; tags?: string[] },
+): TestCase {
+  return { ...(test as any), ...meta } as unknown as TestCase;
+}
+
 const FULL_RESULT = { status: 'passed' } as unknown as FullResult;
 const defaultOptions = { domain: 'https://testplanit.example.com', apiToken: 'tpi_test_token', projectId: 1 };
 const autoOptions = { ...defaultOptions, autoCreateTestCases: true, parentFolderId: 10, templateId: 5 };
@@ -171,6 +178,82 @@ describe('TestPlanItReporter (Playwright)', () => {
       const parsed = (r as any).parseCaseIds('TC-99 works');
       expect(parsed.caseIds).toEqual([99]);
       expect(parsed.cleanTitle).toBe('works');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  describe('case ID linking (annotations & tags)', () => {
+    it('links via a testplanit annotation without touching the title', async () => {
+      const test = withMeta(makeTest('logs in successfully', buildParent({ project: 'chromium' })), {
+        annotations: [{ type: 'testplanit', description: '1234' }],
+      });
+      await run(reporter, test, makeResult());
+      expect(lastArg(clientMock.createJUnitTestResult).repositoryCaseId).toBe(1234);
+    });
+
+    it('ignores non-digits in the annotation description', async () => {
+      const test = withMeta(makeTest('logs in', buildParent({ project: 'chromium' })), {
+        annotations: [{ type: 'testplanit', description: 'C1234' }],
+      });
+      await run(reporter, test, makeResult());
+      expect(lastArg(clientMock.createJUnitTestResult).repositoryCaseId).toBe(1234);
+    });
+
+    it('links to multiple cases from multiple annotations', async () => {
+      const test = withMeta(makeTest('covers two cases', buildParent({ project: 'chromium' })), {
+        annotations: [
+          { type: 'testplanit', description: '1234' },
+          { type: 'testplanit', description: '5678' },
+        ],
+      });
+      await run(reporter, test, makeResult());
+      // Primary case id is the first; case is added to the run for the primary id
+      expect(clientMock.findOrAddTestCaseToRun).toHaveBeenCalledWith({ testRunId: 123, repositoryCaseId: 1234 });
+      expect(lastArg(clientMock.createJUnitTestResult).repositoryCaseId).toBe(1234);
+    });
+
+    it('honors a custom caseIdAnnotation type', async () => {
+      const r = new TestPlanItReporter({ ...defaultOptions, caseIdAnnotation: 'tms' });
+      const test = withMeta(makeTest('logs in', buildParent({ project: 'chromium' })), {
+        annotations: [{ type: 'tms', description: '4321' }],
+      });
+      await run(r, test, makeResult());
+      expect(lastArg(clientMock.createJUnitTestResult).repositoryCaseId).toBe(4321);
+    });
+
+    it('reads annotations added at runtime on the result', async () => {
+      const test = makeTest('logs in', buildParent({ project: 'chromium' }));
+      const result = makeResult({ annotations: [{ type: 'testplanit', description: '999' }] } as any);
+      await run(reporter, test, result);
+      expect(lastArg(clientMock.createJUnitTestResult).repositoryCaseId).toBe(999);
+    });
+
+    it('links via a Playwright tag matched by caseIdPattern', async () => {
+      const r = new TestPlanItReporter({ ...defaultOptions, caseIdPattern: /C(\d+)/g });
+      const test = withMeta(makeTest('logs in', buildParent({ project: 'chromium' })), { tags: ['@smoke', '@C777'] });
+      await run(r, test, makeResult());
+      expect(lastArg(clientMock.createJUnitTestResult).repositoryCaseId).toBe(777);
+    });
+
+    it('dedupes an ID that appears in both an annotation and the title', async () => {
+      const test = withMeta(makeTest('[1234] logs in', buildParent({ project: 'chromium' })), {
+        annotations: [{ type: 'testplanit', description: '1234' }],
+      });
+      await run(reporter, test, makeResult());
+      expect(clientMock.createJUnitTestResult).toHaveBeenCalledTimes(1);
+      expect(clientMock.findOrAddTestCaseToRun).toHaveBeenCalledTimes(1);
+      expect(lastArg(clientMock.createJUnitTestResult).repositoryCaseId).toBe(1234);
+    });
+
+    it('does not link from annotations when caseIdAnnotation is disabled', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const r = new TestPlanItReporter({ ...defaultOptions, caseIdAnnotation: '' });
+      const test = withMeta(makeTest('logs in', buildParent({ project: 'chromium' })), {
+        annotations: [{ type: 'testplanit', description: '1234' }],
+      });
+      await run(r, test, makeResult());
+      expect(clientMock.createJUnitTestResult).not.toHaveBeenCalled();
+      expect(warn).toHaveBeenCalled();
     });
   });
 
