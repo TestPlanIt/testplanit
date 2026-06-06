@@ -324,7 +324,6 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
       <ul>
         <li>Link tests to cases with a Playwright <strong>annotation</strong> (no renaming) — or a tag or <strong>[1234]</strong> title — or <strong>auto-create</strong> cases and folders from your <code>describe</code> structure</li>
         <li>Uploads Playwright attachments — screenshots, videos, and traces — to each result</li>
-        <li>Runs in a single process: every spec, project, and worker lands in one test run, with no extra setup</li>
       </ul>
       <p>Add it to your <code>playwright.config.ts</code> reporter list. See the <a href="https://docs.testplanit.com/docs/sdk/playwright-overview" target="_blank">Playwright Reporter documentation</a>.</p>
     `,
