@@ -41,8 +41,19 @@ vi.mock("~/lib/prisma", () => ({
   },
 }));
 
+vi.mock("./rate-limit", () => ({
+  checkScimTokenRateLimit: vi.fn().mockResolvedValue({
+    allowed: true,
+    limit: 50,
+    remaining: 49,
+    resetAt: Math.floor(Date.now() / 1000) + 1,
+    retryAfterSeconds: 1,
+  }),
+}));
+
 import { prisma } from "~/lib/prisma";
 import { ScimAuthError, requireScimBearer } from "./auth";
+import { checkScimTokenRateLimit } from "./rate-limit";
 
 const SCIM_ERROR_SCHEMA = "urn:ietf:params:scim:api:messages:2.0:Error";
 
@@ -315,6 +326,124 @@ describe("requireScimBearer", () => {
     await new Promise(setImmediate);
     // Carve-out: probe path does not tick lastUsedAt.
     expect(prisma.scimToken.updateMany).not.toHaveBeenCalled();
+  });
+
+  describe("rate-limit gate", () => {
+    beforeEach(() => {
+      vi.mocked(checkScimTokenRateLimit).mockReset();
+      vi.mocked(checkScimTokenRateLimit).mockResolvedValue({
+        allowed: true,
+        limit: 50,
+        remaining: 49,
+        resetAt: Math.floor(Date.now() / 1000) + 1,
+        retryAfterSeconds: 1,
+      });
+    });
+
+    it("F1: throws 429 with SCIM envelope when rate limit is exceeded", async () => {
+      vi.mocked(prisma.scimToken.findUnique).mockResolvedValueOnce({
+        id: "tk_rl1",
+        systemUserId: "system-scim-user",
+        isActive: true,
+        expiresAt: null,
+        revokedAt: null,
+        lastUsedAt: null,
+      } as never);
+      vi.mocked(checkScimTokenRateLimit).mockResolvedValueOnce({
+        allowed: false,
+        limit: 50,
+        remaining: 0,
+        resetAt: 1_750_000_000,
+        retryAfterSeconds: 1,
+      });
+
+      const err = await catchAuthError(req("Bearer tps_rl1_token_value"));
+      expect(err.response.status).toBe(429);
+      expect(err.response.headers.get("Content-Type")).toBe(
+        "application/scim+json"
+      );
+
+      const body = await err.response.json();
+      expect(body.schemas[0]).toBe(SCIM_ERROR_SCHEMA);
+      expect(body.status).toBe("429");
+      expect(body.detail).toBe("Rate limit exceeded");
+    });
+
+    it("F2: 429 response includes Retry-After + X-RateLimit-Limit/Remaining/Reset headers", async () => {
+      vi.mocked(prisma.scimToken.findUnique).mockResolvedValueOnce({
+        id: "tk_rl2",
+        systemUserId: "system-scim-user",
+        isActive: true,
+        expiresAt: null,
+        revokedAt: null,
+        lastUsedAt: null,
+      } as never);
+      vi.mocked(checkScimTokenRateLimit).mockResolvedValueOnce({
+        allowed: false,
+        limit: 50,
+        remaining: 0,
+        resetAt: 1_750_000_000,
+        retryAfterSeconds: 1,
+      });
+
+      const err = await catchAuthError(req("Bearer tps_rl2_token_value"));
+      expect(err.response.headers.get("Retry-After")).toBe("1");
+      expect(err.response.headers.get("X-RateLimit-Limit")).toBe("50");
+      expect(err.response.headers.get("X-RateLimit-Remaining")).toBe("0");
+      expect(err.response.headers.get("X-RateLimit-Reset")).toBe("1750000000");
+    });
+
+    it("F3: rate-limit check fires AFTER the isActive check (inactive token returns 401, not 429)", async () => {
+      vi.mocked(prisma.scimToken.findUnique).mockResolvedValueOnce({
+        id: "tk_rl3",
+        systemUserId: "system-scim-user",
+        isActive: false,
+        expiresAt: null,
+        revokedAt: null,
+        lastUsedAt: null,
+      } as never);
+      // Set the rate-limit mock to "blocked" — but auth should short-circuit
+      // on isActive=false before reaching the rate gate.
+      vi.mocked(checkScimTokenRateLimit).mockResolvedValueOnce({
+        allowed: false,
+        limit: 50,
+        remaining: 0,
+        resetAt: 1_750_000_000,
+        retryAfterSeconds: 1,
+      });
+
+      const err = await catchAuthError(req("Bearer tps_rl3_token_value"));
+      expect(err.response.status).toBe(401);
+      const body = await err.response.json();
+      expect(body.detail).toBe("Token inactive");
+
+      expect(checkScimTokenRateLimit).not.toHaveBeenCalled();
+    });
+
+    it("F4: allowed=true proceeds normally and returns ScimAuthContext", async () => {
+      vi.mocked(prisma.scimToken.findUnique).mockResolvedValueOnce({
+        id: "tk_rl4",
+        systemUserId: "system-scim-user",
+        isActive: true,
+        expiresAt: null,
+        revokedAt: null,
+        lastUsedAt: new Date(Date.now() - 30_000),
+      } as never);
+      vi.mocked(checkScimTokenRateLimit).mockResolvedValueOnce({
+        allowed: true,
+        limit: 50,
+        remaining: 49,
+        resetAt: 1_750_000_000,
+        retryAfterSeconds: 1,
+      });
+
+      const ctx = await requireScimBearer(req("Bearer tps_rl4_token_value"));
+      expect(ctx).toEqual({
+        tokenId: "tk_rl4",
+        systemUserId: "system-scim-user",
+      });
+      expect(checkScimTokenRateLimit).toHaveBeenCalledWith("tk_rl4");
+    });
   });
 
   it("still fires updateMany when X-SCIM-Probe is set but the origin is NOT loopback", async () => {
