@@ -8,8 +8,8 @@ image: /img/blog/playwright-reporter.png
 ---
 
 <figure>
-  <img src="/img/blog/playwright-reporter.png" alt="The TestPlanIt Playwright Reporter — an official reporter that sends Playwright test results straight to TestPlanIt, installed with npm i -D @testplanit/playwright-reporter." />
-  <figcaption>@testplanit/playwright-reporter — report your Playwright results straight to TestPlanIt.</figcaption>
+  <img src="/img/blog/playwright-reporter.png" alt="A playwright.config.ts file with @testplanit/playwright-reporter added to the reporter list, configured with a TestPlanIt domain, an apiToken from an environment variable, a projectId, and a runName." />
+  <figcaption>Add <code>@testplanit/playwright-reporter</code> to your <code>playwright.config.ts</code> — that's the whole setup.</figcaption>
 </figure>
 
 We're excited to announce `@testplanit/playwright-reporter`, an official [Playwright](https://playwright.dev/) reporter that automatically sends your test results to TestPlanIt in real-time.
