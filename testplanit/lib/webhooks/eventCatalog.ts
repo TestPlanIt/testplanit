@@ -280,6 +280,70 @@ export const WEBHOOK_EVENT_CATALOG: WebhookEventDefinition[] = [
     description: "A SCIM-provisioned user was tombstoned (DELETE).",
     payloadKeys: ["id", "scimExternalId"],
   },
+
+  // --- SCIM Groups (IdP-driven lifecycle) ---
+  {
+    name: "scim.group.created",
+    category: "system",
+    description: "A group was provisioned via SCIM.",
+    payloadKeys: [
+      "id",
+      "projectId",
+      "externalId",
+      "displayName",
+      "members",
+      "createdAt",
+    ],
+  },
+  {
+    name: "scim.group.updated",
+    category: "system",
+    description: "A SCIM-provisioned group's attributes changed (PUT/PATCH).",
+    payloadKeys: [
+      "id",
+      "projectId",
+      "externalId",
+      "displayName",
+      "after",
+      "diff",
+    ],
+  },
+  {
+    name: "scim.group.member_added",
+    category: "system",
+    description:
+      "One or more members were added to a SCIM-provisioned group via PATCH.",
+    payloadKeys: ["id", "projectId", "externalId", "displayName", "members"],
+  },
+  {
+    name: "scim.group.member_removed",
+    category: "system",
+    description:
+      "One or more members were removed from a SCIM-provisioned group via PATCH.",
+    payloadKeys: ["id", "projectId", "externalId", "displayName", "members"],
+  },
+  {
+    name: "scim.group.deleted",
+    category: "system",
+    description: "A SCIM-provisioned group was tombstoned (DELETE).",
+    payloadKeys: ["id", "projectId", "externalId"],
+  },
+
+  // --- SCIM coalescing summaries (bulk-sync fold-down) ---
+  {
+    name: "scim.user.created.summary",
+    category: "system",
+    description:
+      "A coalesced summary emitted when scim.user.created exceeded the per-config rate window threshold.",
+    payloadKeys: ["count", "firstAt", "lastAt", "windowStart", "sampleIds"],
+  },
+  {
+    name: "scim.group.member_added.summary",
+    category: "system",
+    description:
+      "A coalesced summary emitted when scim.group.member_added exceeded the per-config rate window threshold.",
+    payloadKeys: ["count", "firstAt", "lastAt", "windowStart", "sampleIds"],
+  },
 ];
 
 /** Convenience accessor used by the catalog endpoint. */

@@ -18,9 +18,11 @@ describe("WEBHOOK_EVENT_CATALOG", () => {
     }
   });
 
-  it("every event name is dot-namespaced (entity.verb[.sub])", () => {
+  it("every event name is dot-namespaced (entity.verb[.sub[.summary]])", () => {
     for (const entry of WEBHOOK_EVENT_CATALOG) {
-      expect(entry.name).toMatch(/^[a-z][a-z_]+\.[a-z][a-z_]+(\.[a-z_]+)?$/);
+      expect(entry.name).toMatch(
+        /^[a-z][a-z_]+\.[a-z][a-z_]+(\.[a-z_]+)?(\.[a-z_]+)?$/
+      );
     }
   });
 
@@ -102,8 +104,9 @@ describe("scim.user.* catalog entries", () => {
   });
 
   it("all five scim.user.* entries have category 'system'", () => {
-    const scimEntries = WEBHOOK_EVENT_CATALOG.filter((e) =>
-      e.name.startsWith("scim.user.")
+    const scimEntries = WEBHOOK_EVENT_CATALOG.filter(
+      (e) =>
+        e.name.startsWith("scim.user.") && !e.name.endsWith(".summary")
     );
     expect(scimEntries).toHaveLength(5);
     for (const entry of scimEntries) {
