@@ -92,7 +92,9 @@ export function applyScimPatch<T>(current: T, body: ScimPatch): T {
     throw e;
   }
 
-  const preprocessed = body.Operations.map(coerceEntraActiveString);
+  const preprocessed = body.Operations
+    .flatMap(rewriteEntraMembersRemove)
+    .map(coerceEntraActiveString);
 
   try {
     return scimPatch(
@@ -106,6 +108,48 @@ export function applyScimPatch<T>(current: T, body: ScimPatch): T {
     }
     throw e;
   }
+}
+
+/**
+ * Narrow Entra members-Remove rewrite: when the inbound op matches the exact
+ * non-spec shape Microsoft Entra emits without the `aadOptscim062020` flag
+ * (`{op:"Remove", path:"members", value:[{value:"<id>"}, ...]}`), fan it out
+ * into one spec-form remove per member-id. Every other op shape — including
+ * unrelated members-path ops, string-value ops, ops with non-string entries,
+ * and an empty value array — passes through unchanged so the existing
+ * scim-patch behavior is preserved verbatim.
+ *
+ * Embedded double-quotes in the member id are escaped before being templated
+ * into the rewritten `members[value eq "<id>"]` filter so a malicious id
+ * cannot break out of the filter expression.
+ */
+export function rewriteEntraMembersRemove(
+  op: ScimPatchOperation,
+): ScimPatchOperation | ScimPatchOperation[] {
+  const opLower = typeof op.op === "string" ? op.op.toLowerCase() : "";
+  if (opLower !== "remove") {
+    return op;
+  }
+  if (op.path !== "members") {
+    return op;
+  }
+  const value = (op as { value?: unknown }).value;
+  if (!Array.isArray(value) || value.length === 0) {
+    return op;
+  }
+  const allValid = value.every(
+    (entry: unknown): entry is { value: string } =>
+      typeof entry === "object" &&
+      entry !== null &&
+      typeof (entry as { value?: unknown }).value === "string",
+  );
+  if (!allValid) {
+    return op;
+  }
+  return (value as Array<{ value: string }>).map((entry) => ({
+    op: "remove",
+    path: `members[value eq "${entry.value.replace(/"/g, '\\"')}"]`,
+  }));
 }
 
 /**

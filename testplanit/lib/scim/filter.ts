@@ -77,6 +77,21 @@ const FILTERABLE_ATTRS: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * Closed set of filterable Group attribute paths. Parallel to
+ * `FILTERABLE_ATTRS` for the Groups SCIM resource; only `displayName` and
+ * `externalId` are filterable (the locked Group whitelist).
+ *
+ * `members.value` is intentionally not included here — the membership-based
+ * filter requires a different Prisma shape (a relation query against
+ * `GroupAssignment` rather than a column predicate) and is unlocked
+ * separately if and when a real IdP needs it.
+ */
+const FILTERABLE_GROUP_ATTRS: ReadonlySet<string> = new Set([
+  "displayName",
+  "externalId",
+]);
+
+/**
  * Parse a SCIM filter string and translate the AST into a
  * `Prisma.UserWhereInput`. Throws {@link InvalidFilterError} for any
  * unsupported operator, non-whitelisted attribute, type mismatch, or
@@ -184,4 +199,84 @@ function requireBoolean(attr: string, value: unknown): boolean {
     throw new InvalidFilterError(`Value for "${attr}" must be boolean`);
   }
   return value;
+}
+
+/**
+ * Parse a SCIM filter string in the Group context and translate the AST into
+ * a `Prisma.GroupsWhereInput`. Throws {@link InvalidFilterError} for any
+ * unsupported operator, non-whitelisted attribute, type mismatch, or upstream
+ * parse error.
+ *
+ * The Group whitelist is `{displayName, externalId}` and the operator set is
+ * the same `{eq, pr, and}` as the User translator. `displayName` translates
+ * to `scimDisplayName` with the compValue lowercased to match the
+ * mapper-side case-folding convention; `externalId` is preserved verbatim
+ * because it is an IdP-opaque identifier.
+ */
+export function scimFilterToPrismaGroupWhere(
+  raw: string,
+): Prisma.GroupsWhereInput {
+  let ast: Filter;
+  try {
+    ast = parse(raw);
+  } catch (e) {
+    const detail = e instanceof Error ? e.message : String(e);
+    throw new InvalidFilterError(`Filter could not be parsed: ${detail}`);
+  }
+  return translateGroup(ast);
+}
+
+function translateGroup(node: Filter): Prisma.GroupsWhereInput {
+  switch (node.op) {
+    case "eq":
+      return translateGroupEq(node as Compare);
+    case "pr":
+      return translateGroupPr(node as Suffix);
+    case "and":
+      return { AND: (node as AndExp).filters.map(translateGroup) };
+    default:
+      throw new InvalidFilterError(
+        `Operator "${node.op}" not supported`,
+      );
+  }
+}
+
+function translateGroupEq(node: Compare): Prisma.GroupsWhereInput {
+  const attr = node.attrPath;
+  assertGroupFilterable(attr);
+
+  switch (attr) {
+    case "displayName":
+      return {
+        scimDisplayName: {
+          equals: requireString(attr, node.compValue).toLowerCase(),
+        },
+      };
+    case "externalId":
+      return { externalId: { equals: requireString(attr, node.compValue) } };
+    /* istanbul ignore next — assertGroupFilterable narrows the set */
+    default:
+      throw new InvalidFilterError(`Attribute "${attr}" not filterable`);
+  }
+}
+
+function translateGroupPr(node: Suffix): Prisma.GroupsWhereInput {
+  const attr = node.attrPath;
+  assertGroupFilterable(attr);
+
+  switch (attr) {
+    case "displayName":
+      return { scimDisplayName: { not: null } };
+    case "externalId":
+      return { externalId: { not: null } };
+    /* istanbul ignore next — assertGroupFilterable narrows the set */
+    default:
+      throw new InvalidFilterError(`Attribute "${attr}" not filterable`);
+  }
+}
+
+function assertGroupFilterable(attr: string): void {
+  if (!FILTERABLE_GROUP_ATTRS.has(attr)) {
+    throw new InvalidFilterError(`Attribute "${attr}" not filterable`);
+  }
 }

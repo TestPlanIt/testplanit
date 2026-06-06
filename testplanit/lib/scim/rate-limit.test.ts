@@ -44,8 +44,7 @@ async function withValkeyMock(
   try {
     await fn();
   } finally {
-    // @ts-expect-error — restore the default export
-    mod.default = original;
+    (mod as { default: unknown }).default = original;
   }
 }
 
