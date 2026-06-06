@@ -200,17 +200,20 @@ describe("OktaClient", () => {
   describe("Token safety", () => {
     it("E1: source does NOT import @okta/okta-sdk-nodejs", async () => {
       const { readFileSync } = await import("node:fs");
-      const { fileURLToPath } = await import("node:url");
-      const path = fileURLToPath(new URL("./okta-client.ts", import.meta.url));
-      const source = readFileSync(path, "utf8");
-      expect(source).not.toMatch(/@okta\/okta-sdk/);
+      const { join } = await import("node:path");
+      const sourcePath = join(process.cwd(), "e2e/scim/okta-client.ts");
+      const source = readFileSync(sourcePath, "utf8");
+      // Reject only actual imports/requires of the SDK — the JSDoc may
+      // mention the package name in prose to explain the hand-roll rationale.
+      expect(source).not.toMatch(/^\s*import[\s\S]*?["']@okta\/okta-sdk/m);
+      expect(source).not.toMatch(/require\(["']@okta\/okta-sdk/);
     });
 
     it("E2: source does NOT console-log the apiToken field", async () => {
       const { readFileSync } = await import("node:fs");
-      const { fileURLToPath } = await import("node:url");
-      const path = fileURLToPath(new URL("./okta-client.ts", import.meta.url));
-      const source = readFileSync(path, "utf8");
+      const { join } = await import("node:path");
+      const sourcePath = join(process.cwd(), "e2e/scim/okta-client.ts");
+      const source = readFileSync(sourcePath, "utf8");
       expect(source).not.toMatch(/console\.[a-z]+\([^)]*apiToken/);
     });
   });
