@@ -24,7 +24,11 @@
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { SCIM_SCHEMAS, SCIM_SYSTEM_USER_ID, SYSTEM_PROJECT_ID } from "../constants";
+import {
+  SCIM_SCHEMAS,
+  SCIM_SYSTEM_USER_ID,
+  SYSTEM_PROJECT_ID,
+} from "../constants";
 import {
   createScimGroup,
   deleteScimGroup,
@@ -215,7 +219,11 @@ describeIntegration("SCIM Groups service (live DB)", () => {
     expect(tomb!.externalId).toBe(externalId);
 
     const resurrect = await createScimGroup(
-      makeBody({ displayName: nextDisplayName("res2"), externalId, members: [] }),
+      makeBody({
+        displayName: nextDisplayName("res2"),
+        externalId,
+        members: [],
+      }),
       ctx
     );
     expect(resurrect.linked).toBe(false);
@@ -227,14 +235,17 @@ describeIntegration("SCIM Groups service (live DB)", () => {
     expect(after!.externalId).toBe(externalId);
   });
 
-  it("IT4: URN merge round-trip — PATCH overwrites one bucket, preserves the other", async () => {
+  it("IT4: URN merge round-trip — PUT replaces one bucket, preserves the other", async () => {
     const urnA = "urn:custom:bucket-a";
     const urnB = "urn:custom:bucket-b";
 
+    const displayName = nextDisplayName("urn");
+    const externalId = nextExternalId("urn");
+
     const body = {
       schemas: [SCIM_SCHEMAS.CORE_GROUP, urnA, urnB],
-      displayName: nextDisplayName("urn"),
-      externalId: nextExternalId("urn"),
+      displayName,
+      externalId,
       members: [],
       [urnA]: { value: "A1" },
       [urnB]: { value: "B1" },
@@ -242,11 +253,14 @@ describeIntegration("SCIM Groups service (live DB)", () => {
 
     const created = await createScimGroup(body, ctx);
 
-    const patchBody = {
-      schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
-      Operations: [{ op: "replace", path: urnB, value: { value: "B2" } }],
-    };
-    await patchScimGroup(created.resource.id, patchBody as never, ctx);
+    const putBody = {
+      schemas: [SCIM_SCHEMAS.CORE_GROUP, urnB],
+      displayName,
+      externalId,
+      members: [],
+      [urnB]: { value: "B2" },
+    } as unknown as ScimGroupBody;
+    await putScimGroup(created.resource.id, putBody, ctx);
 
     const after = await prisma.groups.findUnique({
       where: { id: parseInt(created.resource.id, 10) },
@@ -275,9 +289,7 @@ describeIntegration("SCIM Groups service (live DB)", () => {
       created.resource.id,
       {
         schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
-        Operations: [
-          { op: "add", path: "members", value: [{ value: userB }] },
-        ],
+        Operations: [{ op: "add", path: "members", value: [{ value: userB }] }],
       } as never,
       ctx
     );
@@ -389,9 +401,9 @@ describeIntegration("SCIM Groups service (live DB)", () => {
     const result = await deleteScimGroup(created.resource.id, ctx);
     expect(result.status).toBe(204);
 
-    await expect(
-      getScimGroupById(created.resource.id, ctx)
-    ).rejects.toThrow(/not found/i);
+    await expect(getScimGroupById(created.resource.id, ctx)).rejects.toThrow(
+      /not found/i
+    );
 
     const row = await prisma.groups.findUnique({
       where: { id: parseInt(created.resource.id, 10) },

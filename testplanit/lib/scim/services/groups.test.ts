@@ -43,9 +43,10 @@ vi.mock("~/lib/webhooks/event-emitters/groupEvents", () => ({
 }));
 
 vi.mock("~/lib/scim/filter", async () => {
-  const actual = await vi.importActual<typeof import("~/lib/scim/filter")>(
-    "~/lib/scim/filter"
-  );
+  const actual =
+    await vi.importActual<typeof import("~/lib/scim/filter")>(
+      "~/lib/scim/filter"
+    );
   return {
     ...actual,
     scimFilterToPrismaGroupWhere: vi.fn(actual.scimFilterToPrismaGroupWhere),
@@ -62,7 +63,11 @@ import {
   emitScimGroupUpdated,
 } from "~/lib/webhooks/event-emitters/groupEvents";
 
-import { SCIM_SCHEMAS, SCIM_SYSTEM_USER_ID, SYSTEM_PROJECT_ID } from "../constants";
+import {
+  SCIM_SCHEMAS,
+  SCIM_SYSTEM_USER_ID,
+  SYSTEM_PROJECT_ID,
+} from "../constants";
 import { scimFilterToPrismaGroupWhere } from "../filter";
 import { ScimPatchApplyError } from "../patch";
 import {
@@ -146,7 +151,11 @@ describe("createScimGroup", () => {
       tx.groups.findUnique.mockResolvedValue(null);
       tx.groups.findFirst.mockResolvedValue(null);
       tx.user.findMany.mockResolvedValue([{ id: "u1" }]);
-      const created = makeGroup({ id: 11, name: "Eng", scimDisplayName: "eng" });
+      const created = makeGroup({
+        id: 11,
+        name: "Eng",
+        scimDisplayName: "eng",
+      });
       tx.groups.create.mockResolvedValue(created);
       tx.groupAssignment.createMany.mockResolvedValue({ count: 1 });
 
@@ -170,12 +179,14 @@ describe("createScimGroup", () => {
       expect(cmArgs.data).toEqual([{ userId: "u1", groupId: 11 }]);
 
       expect(emitScimGroupCreated).toHaveBeenCalledTimes(1);
-      const emitCall = (emitScimGroupCreated as ReturnType<typeof vi.fn>).mock.calls[0];
+      const emitCall = (emitScimGroupCreated as ReturnType<typeof vi.fn>).mock
+        .calls[0];
       expect(emitCall[0]).toBe(created);
       expect(emitCall[1]).toEqual([{ value: "u1" }]);
 
       expect(captureAuditEvent).toHaveBeenCalledTimes(1);
-      const audit = (captureAuditEvent as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const audit = (captureAuditEvent as ReturnType<typeof vi.fn>).mock
+        .calls[0][0];
       expect(audit.action).toBe("CREATE");
       expect(audit.entityType).toBe("Groups");
       expect(audit.entityId).toBe("11");
@@ -192,7 +203,12 @@ describe("createScimGroup", () => {
       });
       tx.groups.findUnique.mockResolvedValue(tombstoned);
       tx.user.findMany.mockResolvedValue([]);
-      const resurrected = { ...tombstoned, isDeleted: false, name: "Eng", scimDisplayName: "eng" };
+      const resurrected = {
+        ...tombstoned,
+        isDeleted: false,
+        name: "Eng",
+        scimDisplayName: "eng",
+      };
       tx.groups.update.mockResolvedValue(resurrected);
 
       const result = await createScimGroup(
@@ -206,9 +222,9 @@ describe("createScimGroup", () => {
       };
       expect(args.data.isDeleted).toBe(false);
 
-      const resurrectAudit = (captureAuditEvent as ReturnType<typeof vi.fn>).mock.calls.find(
-        ([e]) => e.metadata?.scimResurrected === true
-      );
+      const resurrectAudit = (
+        captureAuditEvent as ReturnType<typeof vi.fn>
+      ).mock.calls.find(([e]) => e.metadata?.scimResurrected === true);
       expect(resurrectAudit).toBeDefined();
       expect(emitScimGroupCreated).toHaveBeenCalledTimes(1);
       expect(result.linked).toBe(false);
@@ -230,9 +246,9 @@ describe("createScimGroup", () => {
       const result = await createScimGroup(makeBody({ members: [] }), CTX);
 
       expect(tx.groups.update).toHaveBeenCalledTimes(1);
-      const linkAudit = (captureAuditEvent as ReturnType<typeof vi.fn>).mock.calls.find(
-        ([e]) => e.metadata?.scimLinked === true
-      );
+      const linkAudit = (
+        captureAuditEvent as ReturnType<typeof vi.fn>
+      ).mock.calls.find(([e]) => e.metadata?.scimLinked === true);
       expect(linkAudit).toBeDefined();
       expect(linkAudit?.[0].action).toBe("UPDATE");
       expect(result.linked).toBe(true);
@@ -257,14 +273,17 @@ describe("createScimGroup", () => {
       };
       expect(cmArgs.data.map((d) => d.userId)).toEqual(["u1"]);
 
-      const skipAudit = (captureAuditEvent as ReturnType<typeof vi.fn>).mock.calls.find(
-        ([e]) => Array.isArray(e.metadata?.scimSkippedMemberIds)
+      const skipAudit = (
+        captureAuditEvent as ReturnType<typeof vi.fn>
+      ).mock.calls.find(([e]) =>
+        Array.isArray(e.metadata?.scimSkippedMemberIds)
       );
       expect(skipAudit).toBeDefined();
       const skipped = skipAudit?.[0].metadata?.scimSkippedMemberIds as string[];
       expect(skipped.sort()).toEqual(["u2", "u3"]);
 
-      const emitCall = (emitScimGroupCreated as ReturnType<typeof vi.fn>).mock.calls[0];
+      const emitCall = (emitScimGroupCreated as ReturnType<typeof vi.fn>).mock
+        .calls[0];
       expect(emitCall[1]).toEqual([{ value: "u1" }]);
     });
 
@@ -280,11 +299,14 @@ describe("createScimGroup", () => {
       );
 
       expect(tx.groupAssignment.createMany).not.toHaveBeenCalled();
-      const emitCall = (emitScimGroupCreated as ReturnType<typeof vi.fn>).mock.calls[0];
+      const emitCall = (emitScimGroupCreated as ReturnType<typeof vi.fn>).mock
+        .calls[0];
       expect(emitCall[1]).toEqual([]);
 
-      const skipAudit = (captureAuditEvent as ReturnType<typeof vi.fn>).mock.calls.find(
-        ([e]) => Array.isArray(e.metadata?.scimSkippedMemberIds)
+      const skipAudit = (
+        captureAuditEvent as ReturnType<typeof vi.fn>
+      ).mock.calls.find(([e]) =>
+        Array.isArray(e.metadata?.scimSkippedMemberIds)
       );
       expect(skipAudit).toBeDefined();
       const skipped = skipAudit?.[0].metadata?.scimSkippedMemberIds as string[];
@@ -323,7 +345,8 @@ describe("createScimGroup", () => {
       await createScimGroup(makeBody({ members: [] }), CTX);
 
       expect(tx.groupAssignment.createMany).not.toHaveBeenCalled();
-      const emitCall = (emitScimGroupCreated as ReturnType<typeof vi.fn>).mock.calls[0];
+      const emitCall = (emitScimGroupCreated as ReturnType<typeof vi.fn>).mock
+        .calls[0];
       expect(emitCall[1]).toEqual([]);
     });
 
@@ -445,7 +468,7 @@ describe("listScimGroups", () => {
 
   it("C5: InvalidFilterError bubbles up; no findMany", async () => {
     await expect(
-      listScimGroups({ filter: "displayName co \"x\"" }, CTX)
+      listScimGroups({ filter: 'displayName co "x"' }, CTX)
     ).rejects.toThrow(/not supported/);
     expect(tx.groups.findMany).not.toHaveBeenCalled();
   });
@@ -463,7 +486,11 @@ describe("patchScimGroup — non-member updates", () => {
   it("D1: displayName PATCH writes name + scimDisplayName; scimDisplayNameOverwrote:false when pre-PATCH was in sync", async () => {
     const current = makeGroup({ id: 91, name: "Eng", scimDisplayName: "eng" });
     tx.groups.findUnique.mockResolvedValue(current);
-    tx.groups.update.mockResolvedValue({ ...current, name: "NewName", scimDisplayName: "newname" });
+    tx.groups.update.mockResolvedValue({
+      ...current,
+      name: "NewName",
+      scimDisplayName: "newname",
+    });
 
     const body = {
       schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
@@ -480,7 +507,8 @@ describe("patchScimGroup — non-member updates", () => {
     expect(args.data.scimDisplayName).toBe("newname");
 
     expect(emitScimGroupUpdated).toHaveBeenCalledTimes(1);
-    const audit = (captureAuditEvent as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
+    const audit = (captureAuditEvent as ReturnType<typeof vi.fn>).mock
+      .calls[0]?.[0];
     expect(audit?.metadata?.scimDisplayNameOverwrote).toBeFalsy();
   });
 
@@ -500,9 +528,9 @@ describe("patchScimGroup — non-member updates", () => {
 
     await patchScimGroup("92", body as never, CTX);
 
-    const audit = (captureAuditEvent as ReturnType<typeof vi.fn>).mock.calls.find(
-      ([e]) => e.metadata?.scimDisplayNameOverwrote === true
-    );
+    const audit = (
+      captureAuditEvent as ReturnType<typeof vi.fn>
+    ).mock.calls.find(([e]) => e.metadata?.scimDisplayNameOverwrote === true);
     expect(audit).toBeDefined();
   });
 
@@ -551,9 +579,9 @@ describe("patchScimGroup — non-member updates", () => {
     await patchScimGroup("94", body as never, CTX);
 
     expect(emitScimGroupUpdated).not.toHaveBeenCalled();
-    const noop = (captureAuditEvent as ReturnType<typeof vi.fn>).mock.calls.find(
-      ([e]) => e.metadata?.scimNoOp === true
-    );
+    const noop = (
+      captureAuditEvent as ReturnType<typeof vi.fn>
+    ).mock.calls.find(([e]) => e.metadata?.scimNoOp === true);
     expect(noop).toBeDefined();
   });
 
@@ -579,9 +607,7 @@ describe("patchScimGroup — member operations + D-05", () => {
 
     const body = {
       schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
-      Operations: [
-        { op: "add", path: "members", value: [{ value: "u1" }] },
-      ],
+      Operations: [{ op: "add", path: "members", value: [{ value: "u1" }] }],
     };
 
     await patchScimGroup("101", body as never, CTX);
@@ -593,7 +619,8 @@ describe("patchScimGroup — member operations + D-05", () => {
     expect(cmArgs.data).toEqual([{ userId: "u1", groupId: 101 }]);
 
     expect(emitScimGroupMemberAdded).toHaveBeenCalledTimes(1);
-    const emitCall = (emitScimGroupMemberAdded as ReturnType<typeof vi.fn>).mock.calls[0];
+    const emitCall = (emitScimGroupMemberAdded as ReturnType<typeof vi.fn>).mock
+      .calls[0];
     expect(emitCall[1]).toEqual(["u1"]);
   });
 
@@ -621,9 +648,9 @@ describe("patchScimGroup — member operations + D-05", () => {
     };
     expect(cmArgs.data.map((d) => d.userId)).toEqual(["u1"]);
 
-    const skipAudit = (captureAuditEvent as ReturnType<typeof vi.fn>).mock.calls.find(
-      ([e]) => Array.isArray(e.metadata?.scimSkippedMemberIds)
-    );
+    const skipAudit = (
+      captureAuditEvent as ReturnType<typeof vi.fn>
+    ).mock.calls.find(([e]) => Array.isArray(e.metadata?.scimSkippedMemberIds));
     expect(skipAudit).toBeDefined();
     expect(skipAudit?.[0].metadata?.scimSkippedMemberIds).toEqual(["u2"]);
   });
@@ -648,12 +675,13 @@ describe("patchScimGroup — member operations + D-05", () => {
 
     expect(tx.groupAssignment.createMany).not.toHaveBeenCalled();
     expect(emitScimGroupMemberAdded).toHaveBeenCalledTimes(1);
-    const emitCall = (emitScimGroupMemberAdded as ReturnType<typeof vi.fn>).mock.calls[0];
+    const emitCall = (emitScimGroupMemberAdded as ReturnType<typeof vi.fn>).mock
+      .calls[0];
     expect(emitCall[1]).toEqual([]);
 
-    const skipAudit = (captureAuditEvent as ReturnType<typeof vi.fn>).mock.calls.find(
-      ([e]) => Array.isArray(e.metadata?.scimSkippedMemberIds)
-    );
+    const skipAudit = (
+      captureAuditEvent as ReturnType<typeof vi.fn>
+    ).mock.calls.find(([e]) => Array.isArray(e.metadata?.scimSkippedMemberIds));
     expect(skipAudit?.[0].metadata?.scimSkippedMemberIds.sort()).toEqual([
       "missing1",
       "missing2",
@@ -723,9 +751,7 @@ describe("patchScimGroup — member operations + D-05", () => {
 
     const body = {
       schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
-      Operations: [
-        { op: "add", path: "members", value: [{ value: "u1" }] },
-      ],
+      Operations: [{ op: "add", path: "members", value: [{ value: "u1" }] }],
     };
 
     await expect(
@@ -768,16 +794,20 @@ describe("putScimGroup", () => {
     );
 
     expect(emitScimGroupUpdated).not.toHaveBeenCalled();
-    const noop = (captureAuditEvent as ReturnType<typeof vi.fn>).mock.calls.find(
-      ([e]) => e.metadata?.scimNoOp === true
-    );
+    const noop = (
+      captureAuditEvent as ReturnType<typeof vi.fn>
+    ).mock.calls.find(([e]) => e.metadata?.scimNoOp === true);
     expect(noop).toBeDefined();
   });
 
   it("F2: PUT with new displayName + same members → updates name + scimDisplayName; emit updated", async () => {
     const current = makeGroup({ id: 112, name: "Eng", scimDisplayName: "eng" });
     tx.groups.findUnique.mockResolvedValue(current);
-    tx.groups.update.mockResolvedValue({ ...current, name: "NewEng", scimDisplayName: "neweng" });
+    tx.groups.update.mockResolvedValue({
+      ...current,
+      name: "NewEng",
+      scimDisplayName: "neweng",
+    });
 
     await putScimGroup(
       "112",
@@ -833,16 +863,16 @@ describe("putScimGroup", () => {
 
   it("F4: PUT 404 on tombstoned row", async () => {
     tx.groups.findUnique.mockResolvedValue(makeGroup({ isDeleted: true }));
-    await expect(
-      putScimGroup("7", makeBody(), CTX)
-    ).rejects.toBeInstanceOf(ScimNotFoundError);
+    await expect(putScimGroup("7", makeBody(), CTX)).rejects.toBeInstanceOf(
+      ScimNotFoundError
+    );
   });
 
   it("F5: PUT 404 on missing row", async () => {
     tx.groups.findUnique.mockResolvedValue(null);
-    await expect(
-      putScimGroup("99", makeBody(), CTX)
-    ).rejects.toBeInstanceOf(ScimNotFoundError);
+    await expect(putScimGroup("99", makeBody(), CTX)).rejects.toBeInstanceOf(
+      ScimNotFoundError
+    );
   });
 });
 
@@ -861,16 +891,17 @@ describe("deleteScimGroup", () => {
     expect(args.data.isDeleted).toBe(true);
 
     expect(emitScimGroupDeleted).toHaveBeenCalledTimes(1);
-    const audit = (captureAuditEvent as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
+    const audit = (captureAuditEvent as ReturnType<typeof vi.fn>).mock
+      .calls[0]?.[0];
     expect(audit?.action).toBe("DELETE");
     expect(result.status).toBe(204);
   });
 
   it("G2: DELETE on tombstoned row → throws ScimNotFoundError", async () => {
     tx.groups.findUnique.mockResolvedValue(makeGroup({ isDeleted: true }));
-    await expect(
-      deleteScimGroup("7", CTX)
-    ).rejects.toBeInstanceOf(ScimNotFoundError);
+    await expect(deleteScimGroup("7", CTX)).rejects.toBeInstanceOf(
+      ScimNotFoundError
+    );
   });
 
   it("G3: DELETE preserves externalId on the tombstone row", async () => {
@@ -892,10 +923,7 @@ describe("H — anti-pattern guards (raw-prisma + emit-inside-tx + entityType + 
   const fs = require("fs") as typeof import("fs");
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const path = require("path") as typeof import("path");
-  const source = fs.readFileSync(
-    path.join(__dirname, "groups.ts"),
-    "utf-8"
-  );
+  const source = fs.readFileSync(path.join(__dirname, "groups.ts"), "utf-8");
 
   it("H1: source imports raw ~/lib/prisma (NOT getEnhancedDb)", () => {
     expect(source.includes("getEnhancedDb")).toBe(false);
@@ -907,7 +935,8 @@ describe("H — anti-pattern guards (raw-prisma + emit-inside-tx + entityType + 
     tx.groups.findFirst.mockResolvedValue(null);
     tx.groups.create.mockResolvedValue(makeGroup({ id: 200 }));
     await createScimGroup(makeBody({ members: [] }), CTX);
-    const call = (captureAuditEvent as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
+    const call = (captureAuditEvent as ReturnType<typeof vi.fn>).mock
+      .calls[0]?.[0];
     expect(call?.entityType).toBe("Groups");
     expect(call?.entityId).toBe("200");
   });
