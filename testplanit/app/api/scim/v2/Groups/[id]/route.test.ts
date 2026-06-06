@@ -20,7 +20,6 @@ import {
   putScimGroup,
   ScimNotFoundError,
   ScimUniquenessError,
-  ScimValidationError,
 } from "~/lib/scim/services/groups";
 
 import { DELETE, GET, PATCH, POST, PUT } from "./route";
@@ -55,7 +54,7 @@ vi.mock("~/lib/scim/services/groups", () => ({
       this.name = "ScimUniquenessError";
     }
   },
-  ScimValidationError: class extends Error {
+  ScimValidationError: class ScimValidationError extends Error {
     constructor(public response: unknown) {
       super("SCIM validation failed");
       this.name = "ScimValidationError";
