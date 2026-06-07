@@ -66,6 +66,15 @@ export const SCIM_SYSTEM_USER_ID = "system-scim-user" as const;
 export const SCIM_LAST_USED_THROTTLE_MS = 60_000 as const;
 
 /**
+ * Throttle window (ms) for ScimToken.lastSyncAt writes. Each successful
+ * SCIM mutation (POST/PUT/PATCH/DELETE on /Users or /Groups) bumps the
+ * token's lastSyncAt, but only when the in-DB value is older than this
+ * window — caps write amplification under bulk-sync traffic the same way
+ * lastUsedAt does.
+ */
+export const SCIM_LAST_SYNC_THROTTLE_MS = 60_000 as const;
+
+/**
  * Deterministic id of the sentinel `__system__` Projects row that every
  * tenant-wide SCIM webhook event FKs against (WebhookOutboxEvent.projectId
  * is NOT NULL). Projects.id is `Int @id @default(autoincrement())`, which
@@ -100,4 +109,4 @@ export const SCIM_COALESCING_THRESHOLD = 10 as const;
  * exceeds the threshold is folded into a single summary event for the entire
  * sync rather than the first chunk only.
  */
-export const SCIM_COALESCING_WINDOW_MS = 5 * 60 * 1000 as const;
+export const SCIM_COALESCING_WINDOW_MS = (5 * 60 * 1000) as const;

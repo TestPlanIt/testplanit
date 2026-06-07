@@ -42,6 +42,13 @@ vi.mock("~/lib/webhooks/event-emitters/groupEvents", () => ({
   emitScimGroupDeleted: vi.fn(async () => {}),
 }));
 
+// Telemetry: fire-and-forget update of ScimToken.lastSyncAt; unit under
+// test is the group-service mutation itself, not the throttled-write side
+// effect (covered in lib/scim/token-telemetry.test.ts).
+vi.mock("~/lib/scim/token-telemetry", () => ({
+  touchLastSync: vi.fn(),
+}));
+
 vi.mock("~/lib/scim/filter", async () => {
   const actual =
     await vi.importActual<typeof import("~/lib/scim/filter")>(

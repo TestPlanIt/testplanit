@@ -78,7 +78,7 @@ function ScimTokensList() {
     column: string;
     direction: "asc" | "desc";
   }>({
-    column: "createdAt",
+    column: "lastUsedAt",
     direction: "desc",
   });
   const [searchString, setSearchString] = useState("");
@@ -107,7 +107,7 @@ function ScimTokensList() {
   const skip = (currentPage - 1) * effectivePageSize;
   const sortField = sortConfig
     ? columnToFieldMap[sortConfig.column] || sortConfig.column
-    : "createdAt";
+    : "lastUsedAt";
 
   const { mutateAsync: updateScimToken } = useUpdateScimToken();
 
@@ -295,7 +295,6 @@ function ScimTokensList() {
             <div>
               <Button
                 variant="default"
-                size="sm"
                 onClick={() => setMintDialogOpen(true)}
                 data-testid="scim-mint-button"
               >
@@ -369,10 +368,7 @@ function ScimTokensList() {
             </div>
           </div>
 
-          <div
-            className="mt-4 flex justify-between"
-            data-testid="scim-table"
-          >
+          <div className="mt-4 flex justify-between" data-testid="scim-table">
             {tokens && tokens.length > 0 ? (
               <DataTable<ExtendedScimToken, unknown>
                 columns={columns}

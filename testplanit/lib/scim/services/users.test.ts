@@ -38,10 +38,18 @@ vi.mock("~/lib/webhooks/event-emitters/userEvents", () => ({
   emitScimUserDeleted: vi.fn(async () => {}),
 }));
 
+// Telemetry: fire-and-forget update of ScimToken.lastSyncAt; unit under
+// test is the user-service mutation itself, not the throttled-write side
+// effect (covered in lib/scim/token-telemetry.test.ts).
+vi.mock("~/lib/scim/token-telemetry", () => ({
+  touchLastSync: vi.fn(),
+}));
+
 vi.mock("~/lib/scim/filter", async () => {
-  const actual = await vi.importActual<typeof import("~/lib/scim/filter")>(
-    "~/lib/scim/filter"
-  );
+  const actual =
+    await vi.importActual<typeof import("~/lib/scim/filter")>(
+      "~/lib/scim/filter"
+    );
   return {
     ...actual,
     scimFilterToPrismaWhere: vi.fn(actual.scimFilterToPrismaWhere),
@@ -55,7 +63,11 @@ import {
   emitScimUserDeleted,
   emitScimUserUpdated,
 } from "~/lib/webhooks/event-emitters/userEvents";
-import { SCIM_SCHEMAS, SCIM_SYSTEM_USER_ID, SYSTEM_PROJECT_ID } from "../constants";
+import {
+  SCIM_SCHEMAS,
+  SCIM_SYSTEM_USER_ID,
+  SYSTEM_PROJECT_ID,
+} from "../constants";
 import {
   ScimNotFoundError,
   ScimUniquenessError,
@@ -136,13 +148,18 @@ describe("createScimUser", () => {
     it("A1: creates a new User row with authMethod=SCIM and the full writable surface", async () => {
       tx.user.findFirst.mockResolvedValue(null);
       tx.roles.findFirst.mockResolvedValue({ id: 7, isDefault: true });
-      const created = makeUser({ id: "user_new", scimUserName: "alice@example.com" });
+      const created = makeUser({
+        id: "user_new",
+        scimUserName: "alice@example.com",
+      });
       tx.user.create.mockResolvedValue(created);
 
       const result = await createScimUser(makeBody(), CTX);
 
       expect(tx.user.create).toHaveBeenCalledTimes(1);
-      const args = tx.user.create.mock.calls[0][0] as { data: Record<string, unknown> };
+      const args = tx.user.create.mock.calls[0][0] as {
+        data: Record<string, unknown>;
+      };
       expect(args.data.authMethod).toBe("SCIM");
       expect(args.data.isActive).toBe(true);
       expect(args.data.scimUserName).toBe("alice@example.com");
@@ -169,7 +186,8 @@ describe("createScimUser", () => {
       await createScimUser(makeBody(), CTX);
 
       expect(emitScimUserCreated).toHaveBeenCalledTimes(1);
-      const call = (emitScimUserCreated as ReturnType<typeof vi.fn>).mock.calls[0];
+      const call = (emitScimUserCreated as ReturnType<typeof vi.fn>).mock
+        .calls[0];
       expect(call[0]).toBe(created);
       expect(call[2]).toEqual({
         projectId: SYSTEM_PROJECT_ID,
@@ -184,7 +202,8 @@ describe("createScimUser", () => {
       await createScimUser(makeBody(), CTX);
 
       expect(captureAuditEvent).toHaveBeenCalledTimes(1);
-      const call = (captureAuditEvent as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      const call = (captureAuditEvent as ReturnType<typeof vi.fn>).mock
+        .calls[0][0];
       expect(call.action).toBe("CREATE");
       expect(call.entityType).toBe("User");
       expect(call.entityId).toBe("user_new");
@@ -199,12 +218,14 @@ describe("createScimUser", () => {
       await createScimUser(makeBody({ password: "SuperSecret123!" }), CTX);
 
       expect(captureAuditEvent).toHaveBeenCalledTimes(2);
-      const warning = (captureAuditEvent as ReturnType<typeof vi.fn>).mock.calls.find(
-        ([e]) => e.metadata?.scimPasswordDropped === true
-      );
+      const warning = (
+        captureAuditEvent as ReturnType<typeof vi.fn>
+      ).mock.calls.find(([e]) => e.metadata?.scimPasswordDropped === true);
       expect(warning).toBeDefined();
       // password from the body MUST NOT have landed on the create payload
-      const createCall = tx.user.create.mock.calls[0][0] as { data: { password: string } };
+      const createCall = tx.user.create.mock.calls[0][0] as {
+        data: { password: string };
+      };
       expect(createCall.data.password).not.toBe("SuperSecret123!");
     });
 
@@ -247,7 +268,11 @@ describe("createScimUser", () => {
         isActive: true,
       });
       tx.user.findFirst.mockResolvedValue(existing);
-      const linked = { ...existing, scimUserName: "alice@example.com", scimExternalId: "okta_abc" };
+      const linked = {
+        ...existing,
+        scimUserName: "alice@example.com",
+        scimExternalId: "okta_abc",
+      };
       tx.user.update.mockResolvedValue(linked);
 
       const result = await createScimUser(makeBody(), CTX);
@@ -299,9 +324,9 @@ describe("createScimUser", () => {
 
       await createScimUser(makeBody(), CTX);
 
-      const linkAudit = (captureAuditEvent as ReturnType<typeof vi.fn>).mock.calls.find(
-        ([e]) => e.metadata?.scimLinked === true
-      );
+      const linkAudit = (
+        captureAuditEvent as ReturnType<typeof vi.fn>
+      ).mock.calls.find(([e]) => e.metadata?.scimLinked === true);
       expect(linkAudit).toBeDefined();
       expect(linkAudit?.[0].action).toBe("UPDATE");
     });
@@ -336,7 +361,10 @@ describe("createScimUser", () => {
 
   describe("C — uniqueness rejection", () => {
     it("C1: existing row already SCIM-managed (scimExternalId !== null) throws ScimUniquenessError", async () => {
-      const existing = makeUser({ scimExternalId: "okta_other", isDeleted: false });
+      const existing = makeUser({
+        scimExternalId: "okta_other",
+        isDeleted: false,
+      });
       tx.user.findFirst.mockResolvedValue(existing);
 
       await expect(createScimUser(makeBody(), CTX)).rejects.toBeInstanceOf(
@@ -365,19 +393,25 @@ describe("createScimUser", () => {
         isActive: false,
       });
       tx.user.findFirst.mockResolvedValue(tombstoned);
-      tx.user.update.mockResolvedValue({ ...tombstoned, isActive: true, isDeleted: false });
+      tx.user.update.mockResolvedValue({
+        ...tombstoned,
+        isActive: true,
+        isDeleted: false,
+      });
 
       const result = await createScimUser(makeBody(), CTX);
 
       expect(result.linked).toBe(false);
-      const update = tx.user.update.mock.calls[0][0] as { data: Record<string, unknown> };
+      const update = tx.user.update.mock.calls[0][0] as {
+        data: Record<string, unknown>;
+      };
       expect(update.data.isDeleted).toBe(false);
       expect(update.data.isActive).toBe(true);
       expect(emitScimUserCreated).toHaveBeenCalledTimes(1);
 
-      const resurrectAudit = (captureAuditEvent as ReturnType<typeof vi.fn>).mock.calls.find(
-        ([e]) => e.metadata?.scimResurrected === true
-      );
+      const resurrectAudit = (
+        captureAuditEvent as ReturnType<typeof vi.fn>
+      ).mock.calls.find(([e]) => e.metadata?.scimResurrected === true);
       expect(resurrectAudit).toBeDefined();
     });
 
@@ -473,7 +507,10 @@ describe("listScimUsers", () => {
 
     await listScimUsers({ startIndex: 51, count: 50 }, CTX);
 
-    const args = tx.user.findMany.mock.calls[0][0] as { skip: number; take: number };
+    const args = tx.user.findMany.mock.calls[0][0] as {
+      skip: number;
+      take: number;
+    };
     expect(args.skip).toBe(50);
     expect(args.take).toBe(50);
   });
@@ -489,7 +526,10 @@ describe("listScimUsers", () => {
   });
 
   it("F5: returns {resources, totalResults}", async () => {
-    tx.user.findMany.mockResolvedValue([makeUser(), makeUser({ id: "user_2" })]);
+    tx.user.findMany.mockResolvedValue([
+      makeUser(),
+      makeUser({ id: "user_2" }),
+    ]);
     tx.user.count.mockResolvedValue(42);
 
     const result = await listScimUsers({}, CTX);
@@ -500,7 +540,7 @@ describe("listScimUsers", () => {
 
   it("F6: InvalidFilterError bubbles up; no findMany call", async () => {
     await expect(
-      listScimUsers({ filter: "userName co \"x\"" }, CTX)
+      listScimUsers({ filter: 'userName co "x"' }, CTX)
     ).rejects.toThrow(/not supported/);
     expect(tx.user.findMany).not.toHaveBeenCalled();
   });
@@ -578,9 +618,9 @@ describe("putScimUser", () => {
 
     await putScimUser("user_1", makeBody({ password: "SuperSecret123!" }), CTX);
 
-    const pwAudit = (captureAuditEvent as ReturnType<typeof vi.fn>).mock.calls.find(
-      ([e]) => e.metadata?.scimPasswordDropped === true
-    );
+    const pwAudit = (
+      captureAuditEvent as ReturnType<typeof vi.fn>
+    ).mock.calls.find(([e]) => e.metadata?.scimPasswordDropped === true);
     expect(pwAudit).toBeDefined();
 
     if (tx.user.update.mock.calls.length > 0) {
@@ -647,9 +687,9 @@ describe("putScimUser", () => {
     );
 
     expect(emitScimUserUpdated).not.toHaveBeenCalled();
-    const noopAudit = (captureAuditEvent as ReturnType<typeof vi.fn>).mock.calls.find(
-      ([e]) => e.metadata?.scimNoOp === true
-    );
+    const noopAudit = (
+      captureAuditEvent as ReturnType<typeof vi.fn>
+    ).mock.calls.find(([e]) => e.metadata?.scimNoOp === true);
     expect(noopAudit).toBeDefined();
   });
 
@@ -671,9 +711,7 @@ describe("patchScimUser", () => {
 
     const body = {
       schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
-      Operations: [
-        { op: "replace", path: "name.givenName", value: "Alicia" },
-      ],
+      Operations: [{ op: "replace", path: "name.givenName", value: "Alicia" }],
     };
 
     await patchScimUser("user_1", body as never, CTX);
@@ -681,7 +719,8 @@ describe("patchScimUser", () => {
     expect(tx.user.update).toHaveBeenCalledTimes(1);
     expect(emitScimUserUpdated).toHaveBeenCalledTimes(1);
     expect(captureAuditEvent).toHaveBeenCalledTimes(1);
-    const audit = (captureAuditEvent as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const audit = (captureAuditEvent as ReturnType<typeof vi.fn>).mock
+      .calls[0][0];
     expect(audit.action).toBe("UPDATE");
   });
 
@@ -746,7 +785,9 @@ describe("patchScimUser", () => {
     // to touch roleId via a hostile body.
     const body = {
       schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
-      Operations: [{ op: "replace", path: "userName", value: "new@example.com" }],
+      Operations: [
+        { op: "replace", path: "userName", value: "new@example.com" },
+      ],
     };
     await patchScimUser("user_1", body as never, CTX);
 
@@ -781,7 +822,9 @@ describe("patchScimUser", () => {
       };
       if (args.data.scimExtensions) {
         // Whatever the mapper computed, the preserved URN must survive.
-        expect(args.data.scimExtensions["urn:other:preserved"]).toEqual({ x: 1 });
+        expect(args.data.scimExtensions["urn:other:preserved"]).toEqual({
+          x: 1,
+        });
       }
     }
   });
@@ -797,9 +840,9 @@ describe("patchScimUser", () => {
     await patchScimUser("user_1", body as never, CTX);
 
     expect(emitScimUserUpdated).not.toHaveBeenCalled();
-    const noop = (captureAuditEvent as ReturnType<typeof vi.fn>).mock.calls.find(
-      ([e]) => e.metadata?.scimNoOp === true
-    );
+    const noop = (
+      captureAuditEvent as ReturnType<typeof vi.fn>
+    ).mock.calls.find(([e]) => e.metadata?.scimNoOp === true);
     expect(noop).toBeDefined();
   });
 });
@@ -808,7 +851,11 @@ describe("deleteScimUser", () => {
   it("I1: tombstones the row (isActive:false + isDeleted:true) preserving email + scimExternalId", async () => {
     const current = makeUser({ isActive: true, isDeleted: false });
     tx.user.findUnique.mockResolvedValue(current);
-    tx.user.update.mockResolvedValue({ ...current, isActive: false, isDeleted: true });
+    tx.user.update.mockResolvedValue({
+      ...current,
+      isActive: false,
+      isDeleted: true,
+    });
 
     await deleteScimUser("user_1", CTX);
 
@@ -827,7 +874,11 @@ describe("deleteScimUser", () => {
   it("I2: emits scim.user.deleted", async () => {
     const current = makeUser();
     tx.user.findUnique.mockResolvedValue(current);
-    tx.user.update.mockResolvedValue({ ...current, isDeleted: true, isActive: false });
+    tx.user.update.mockResolvedValue({
+      ...current,
+      isDeleted: true,
+      isActive: false,
+    });
 
     await deleteScimUser("user_1", CTX);
     expect(emitScimUserDeleted).toHaveBeenCalledTimes(1);
@@ -835,24 +886,31 @@ describe("deleteScimUser", () => {
 
   it("I3: writes audit row action:DELETE", async () => {
     tx.user.findUnique.mockResolvedValue(makeUser());
-    tx.user.update.mockResolvedValue(makeUser({ isDeleted: true, isActive: false }));
+    tx.user.update.mockResolvedValue(
+      makeUser({ isDeleted: true, isActive: false })
+    );
 
     await deleteScimUser("user_1", CTX);
 
-    const audit = (captureAuditEvent as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
+    const audit = (captureAuditEvent as ReturnType<typeof vi.fn>).mock
+      .calls[0]?.[0];
     expect(audit?.action).toBe("DELETE");
   });
 
   it("I4: returns {status:204}", async () => {
     tx.user.findUnique.mockResolvedValue(makeUser());
-    tx.user.update.mockResolvedValue(makeUser({ isDeleted: true, isActive: false }));
+    tx.user.update.mockResolvedValue(
+      makeUser({ isDeleted: true, isActive: false })
+    );
 
     const result = await deleteScimUser("user_1", CTX);
     expect(result.status).toBe(204);
   });
 
   it("I5: idempotent on already-tombstoned row; returns 204 without emitting a second webhook", async () => {
-    tx.user.findUnique.mockResolvedValue(makeUser({ isDeleted: true, isActive: false }));
+    tx.user.findUnique.mockResolvedValue(
+      makeUser({ isDeleted: true, isActive: false })
+    );
 
     const result = await deleteScimUser("user_1", CTX);
     expect(result.status).toBe(204);
@@ -868,10 +926,7 @@ describe("J — raw-prisma + tx invariants (anti-pattern guards)", () => {
   const fs = require("fs") as typeof import("fs");
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const path = require("path") as typeof import("path");
-  const source = fs.readFileSync(
-    path.join(__dirname, "users.ts"),
-    "utf-8"
-  );
+  const source = fs.readFileSync(path.join(__dirname, "users.ts"), "utf-8");
 
   it("J1: source has zero references to getEnhancedDb", () => {
     expect(source.includes("getEnhancedDb")).toBe(false);

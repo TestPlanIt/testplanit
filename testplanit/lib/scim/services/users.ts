@@ -43,7 +43,11 @@ import {
   emitScimUserUpdated,
 } from "~/lib/webhooks/event-emitters/userEvents";
 
-import { SCIM_SCHEMAS, SCIM_SYSTEM_USER_ID, SYSTEM_PROJECT_ID } from "../constants";
+import {
+  SCIM_SCHEMAS,
+  SCIM_SYSTEM_USER_ID,
+  SYSTEM_PROJECT_ID,
+} from "../constants";
 import { scimError } from "../errors";
 import { scimFilterToPrismaWhere } from "../filter";
 import {
@@ -55,6 +59,7 @@ import {
   userToScim,
 } from "../mapping/user";
 import { applyScimPatch, ScimPatchApplyError } from "../patch";
+import { touchLastSync } from "../token-telemetry";
 
 import type { NextResponse } from "next/server";
 import type { ScimPatch } from "scim-patch";
@@ -203,10 +208,16 @@ function resolveMatchEmail(body: ScimUserBody): string {
 }
 
 function assertWritableOnly(updates: ScimUserUpdatePayload): void {
-  for (const key of Object.keys(updates) as Array<keyof ScimUserUpdatePayload>) {
+  for (const key of Object.keys(updates) as Array<
+    keyof ScimUserUpdatePayload
+  >) {
     if (!WRITABLE_KEYS.has(key)) {
       throw new ScimPatchApplyError(
-        scimError(400, "mutability", "Attribute is not user-modifiable via SCIM")
+        scimError(
+          400,
+          "mutability",
+          "Attribute is not user-modifiable via SCIM"
+        )
       );
     }
   }
@@ -247,7 +258,7 @@ export async function createScimUser(
   body: ScimUserBody,
   ctx: ScimAuthContext
 ): Promise<CreateScimUserResult> {
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const matchEmail = resolveMatchEmail(body);
     const existing = await findUserByEmail(tx, matchEmail);
 
@@ -283,6 +294,8 @@ export async function createScimUser(
     // Branch 3 — Brand-new insert.
     return insertNewScimUser(tx, body, ctx);
   });
+  touchLastSync(ctx.tokenId);
+  return result;
 }
 
 async function resurrectTombstonedUser(
@@ -356,7 +369,12 @@ async function jitBindExistingUser(
     include: SCIM_USER_INCLUDE,
   });
 
-  await emitScimUserUpdated(before, asScimSnapshot(linked), tx, DEFAULT_EMIT_OPTS);
+  await emitScimUserUpdated(
+    before,
+    asScimSnapshot(linked),
+    tx,
+    DEFAULT_EMIT_OPTS
+  );
   await captureAuditEvent({
     action: "UPDATE",
     entityType: "User",
@@ -505,7 +523,7 @@ export async function putScimUser(
   body: ScimUserBody,
   ctx: ScimAuthContext
 ): Promise<PutScimUserResult> {
-  return prisma.$transaction(async (tx) => {
+  const result: PutScimUserResult = await prisma.$transaction(async (tx) => {
     const current = await tx.user.findUnique({
       where: { id },
       include: SCIM_USER_INCLUDE,
@@ -581,7 +599,10 @@ export async function putScimUser(
       body as unknown as Record<string, unknown>
     );
     if (Object.keys(incomingExtensions).length > 0) {
-      const merged = mergeExtensions(current.scimExtensions, incomingExtensions);
+      const merged = mergeExtensions(
+        current.scimExtensions,
+        incomingExtensions
+      );
       if (JSON.stringify(merged) !== JSON.stringify(current.scimExtensions)) {
         const json = toJsonInput(merged);
         if (json !== undefined) {
@@ -634,6 +655,8 @@ export async function putScimUser(
 
     return { resource: userToScim(updated), status: 200 };
   });
+  touchLastSync(ctx.tokenId);
+  return result;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -645,7 +668,7 @@ export async function patchScimUser(
   body: ScimPatch,
   ctx: ScimAuthContext
 ): Promise<PatchScimUserResult> {
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const current = await tx.user.findUnique({
       where: { id },
       include: SCIM_USER_INCLUDE,
@@ -709,6 +732,8 @@ export async function patchScimUser(
 
     return { resource: userToScim(updated) };
   });
+  touchLastSync(ctx.tokenId);
+  return result;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -719,7 +744,7 @@ export async function deleteScimUser(
   id: string,
   ctx: ScimAuthContext
 ): Promise<DeleteScimUserResult> {
-  return prisma.$transaction(async (tx) => {
+  const result: DeleteScimUserResult = await prisma.$transaction(async (tx) => {
     const current = await tx.user.findUnique({
       where: { id },
       include: SCIM_USER_INCLUDE,
@@ -757,6 +782,8 @@ export async function deleteScimUser(
 
     return { status: 204 };
   });
+  touchLastSync(ctx.tokenId);
+  return result;
 }
 
 export { ScimPatchApplyError };

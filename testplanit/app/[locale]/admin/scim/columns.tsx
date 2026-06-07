@@ -1,13 +1,13 @@
 import { DateFormatter } from "@/components/DateFormatter";
 import { UserNameCell } from "@/components/tables/UserNameCell";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ScimToken, User } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
 import { Ban, CheckCircle2, Clock, UserMinus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
+import { RevokeScimTokenButton } from "./RevokeScimTokenButton";
 import { TestScimButton } from "./TestScimButton";
 
 export interface ExtendedScimToken extends ScimToken {
@@ -195,26 +195,23 @@ export const useColumns = (
       {
         id: "actions",
         header: tCommon("actions.actionsLabel"),
-        enableResizing: false,
+        enableResizing: true,
         enableSorting: false,
         enableHiding: false,
-        size: 160,
+        size: 80,
+        meta: { isPinned: "right" },
         cell: ({ row }) => {
           const token = row.original;
           if (token.revokedAt || !token.isActive) {
             return null;
           }
           return (
-            <div className="flex items-center gap-2">
+            <div className="bg-primary-foreground whitespace-nowrap flex justify-center gap-1">
               <TestScimButton tokenId={token.id} />
-              <Button
-                variant="destructive"
-                onClick={() => onRevoke(token)}
-                className="px-2 py-1 h-auto"
-                title={t("revoke.confirm")}
-              >
-                <Ban className="h-4 w-4" />
-              </Button>
+              <RevokeScimTokenButton
+                tokenId={token.id}
+                onRevoke={() => onRevoke(token)}
+              />
             </div>
           );
         },

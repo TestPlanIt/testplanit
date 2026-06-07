@@ -64,6 +64,7 @@ import {
   scimToGroupCreate,
 } from "../mapping/group";
 import { applyScimPatch, ScimPatchApplyError } from "../patch";
+import { touchLastSync } from "../token-telemetry";
 import {
   ScimNotFoundError,
   ScimUniquenessError,
@@ -252,7 +253,7 @@ export async function createScimGroup(
   body: ScimGroupBody,
   ctx: ScimAuthContext
 ): Promise<CreateScimGroupResult> {
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const payload = scimToGroupCreate(body);
     const requestedMemberIds = extractMemberIds(payload.members);
 
@@ -302,6 +303,8 @@ export async function createScimGroup(
     // Branch 3 — Brand-new INSERT.
     return insertNewScimGroup(tx, payload, requestedMemberIds, ctx);
   });
+  touchLastSync(ctx.tokenId);
+  return result;
 }
 
 async function insertNewScimGroup(
@@ -556,7 +559,7 @@ export async function putScimGroup(
     throw new ScimNotFoundError(`Group ${id} not found`);
   }
 
-  return prisma.$transaction(async (tx) => {
+  const result: PutScimGroupResult = await prisma.$transaction(async (tx) => {
     const current = (await tx.groups.findUnique({
       where: { id: parsedId },
       include: SCIM_GROUP_INCLUDE,
@@ -693,6 +696,8 @@ export async function putScimGroup(
       status: 200,
     };
   });
+  touchLastSync(ctx.tokenId);
+  return result;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -709,7 +714,7 @@ export async function patchScimGroup(
     throw new ScimNotFoundError(`Group ${id} not found`);
   }
 
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const current = (await tx.groups.findUnique({
       where: { id: parsedId },
       include: SCIM_GROUP_INCLUDE,
@@ -867,6 +872,8 @@ export async function patchScimGroup(
       resource: await buildResource(tx, updatedRow, finalMemberIds),
     };
   });
+  touchLastSync(ctx.tokenId);
+  return result;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -882,32 +889,36 @@ export async function deleteScimGroup(
     throw new ScimNotFoundError(`Group ${id} not found`);
   }
 
-  return prisma.$transaction(async (tx) => {
-    const current = (await tx.groups.findUnique({
-      where: { id: parsedId },
-      include: SCIM_GROUP_INCLUDE,
-    })) as PrismaGroupWithMembers | null;
-    if (!current || current.isDeleted) {
-      throw new ScimNotFoundError(`Group ${id} not found`);
+  const result: DeleteScimGroupResult = await prisma.$transaction(
+    async (tx) => {
+      const current = (await tx.groups.findUnique({
+        where: { id: parsedId },
+        include: SCIM_GROUP_INCLUDE,
+      })) as PrismaGroupWithMembers | null;
+      if (!current || current.isDeleted) {
+        throw new ScimNotFoundError(`Group ${id} not found`);
+      }
+
+      const tombstoned = (await tx.groups.update({
+        where: { id: current.id },
+        data: { isDeleted: true },
+        include: SCIM_GROUP_INCLUDE,
+      })) as unknown as PrismaGroupWithMembers;
+
+      await emitScimGroupDeleted(snapshot(tombstoned), tx, DEFAULT_EMIT_OPTS);
+
+      await captureAuditEvent({
+        action: "DELETE",
+        entityType: "Groups",
+        entityId: String(tombstoned.id),
+        metadata: { scimTokenId: ctx.tokenId },
+      });
+
+      return { status: 204 };
     }
-
-    const tombstoned = (await tx.groups.update({
-      where: { id: current.id },
-      data: { isDeleted: true },
-      include: SCIM_GROUP_INCLUDE,
-    })) as unknown as PrismaGroupWithMembers;
-
-    await emitScimGroupDeleted(snapshot(tombstoned), tx, DEFAULT_EMIT_OPTS);
-
-    await captureAuditEvent({
-      action: "DELETE",
-      entityType: "Groups",
-      entityId: String(tombstoned.id),
-      metadata: { scimTokenId: ctx.tokenId },
-    });
-
-    return { status: 204 };
-  });
+  );
+  touchLastSync(ctx.tokenId);
+  return result;
 }
 
 /* -------------------------------------------------------------------------- */

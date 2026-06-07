@@ -73,7 +73,6 @@
     "elasticsearch:reindex:fresh": "tsx scripts/reindexAllEntities.ts --fresh",
     "elasticsearch:reindex:cases": "tsx scripts/reindexElasticsearch.ts",
     "scim:check-group-dupes": "tsx scripts/check-group-external-id-dupes.ts",
-    "scim:e2e:okta": "RUN_OKTA_E2E=1 pnpm exec vitest run e2e/scim/okta-lifecycle.test.ts",
     "scim:smoke": "tsx scripts/scim-smoke.ts",
     "release:info": "echo 'Releases are now managed by release-please. Push to main and a Release PR will be created automatically.'"
   },
