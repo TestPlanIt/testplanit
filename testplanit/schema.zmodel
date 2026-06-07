@@ -395,7 +395,7 @@ enum NotificationType {
 
 model Groups {
     id                 Int                      @id @default(autoincrement())
-    name               String                   @unique @length(1)
+    name               String                   @unique @length(1) @deny('update', scimDisplayName != null)
     externalId         String?                  @unique
     url                String?                  @url
     note               String?
@@ -409,6 +409,11 @@ model Groups {
     @@deny('all', !auth())
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
+    // SCIM contract: the IdP owns the lifecycle of SCIM-provisioned groups.
+    // Block enhanced-client delete/rename so admins cannot diverge from the
+    // IdP's source of truth. The SCIM service uses the raw prisma client
+    // and bypasses these policies; see lib/scim/services/groups.ts.
+    @@deny('delete', scimDisplayName != null)
 }
 
 model GroupAssignment {
@@ -421,6 +426,10 @@ model GroupAssignment {
     @@deny('all', !auth())
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
+    // SCIM contract: membership of a SCIM-provisioned group is owned by the
+    // IdP. The enhanced client cannot add or remove members; the SCIM
+    // service uses raw prisma and bypasses these policies.
+    @@deny('create,delete', group.scimDisplayName != null)
 }
 
 model Roles {

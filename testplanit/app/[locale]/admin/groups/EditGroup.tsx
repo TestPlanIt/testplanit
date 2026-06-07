@@ -16,11 +16,12 @@ import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 
 import { UserNameCell } from "@/components/tables/UserNameCell";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 
-import { Trash2, Users } from "lucide-react";
+import { Cloud, Trash2, Users } from "lucide-react";
 
 import {
   Form,
@@ -127,21 +128,27 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
   async function onSubmit(data: EditGroupFormData) {
     setIsSubmitting(true);
     try {
-      await updateGroup({
-        where: { id: group.id },
-        data: {
-          name: data.name,
-        },
-      });
+      if (!isScimManaged) {
+        await updateGroup({
+          where: { id: group.id },
+          data: {
+            name: data.name,
+          },
+        });
+      }
 
       const currentAssignedIds = new Set(assignedUsers.map((u) => u.id));
-      const assignmentsToCreate = assignedUsers
-        .filter((user) => !initialAssignedUserIds.has(user.id))
-        .map((user) => ({ userId: user.id, groupId: group.id }));
+      const assignmentsToCreate = isScimManaged
+        ? []
+        : assignedUsers
+            .filter((user) => !initialAssignedUserIds.has(user.id))
+            .map((user) => ({ userId: user.id, groupId: group.id }));
 
-      const assignmentsToDelete = Array.from(initialAssignedUserIds)
-        .filter((userId) => !currentAssignedIds.has(userId))
-        .map((userId) => ({ userId, groupId: group.id }));
+      const assignmentsToDelete = isScimManaged
+        ? []
+        : Array.from(initialAssignedUserIds)
+            .filter((userId) => !currentAssignedIds.has(userId))
+            .map((userId) => ({ userId, groupId: group.id }));
 
       let assignmentErrors = false;
       if (assignmentsToCreate.length > 0) {
@@ -197,6 +204,7 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
     allUsers?.filter((u) => !assignedUsers.some((a) => a.id === u.id)) ?? [];
 
   const isLoading = usersLoading || assignmentsLoading;
+  const isScimManaged = group.scimDisplayName !== null;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -209,6 +217,15 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
                 {t("description.groupInfo")}
               </DialogDescription>
             </DialogHeader>
+            {isScimManaged && (
+              <Alert data-testid="scim-name-locked-alert">
+                <Cloud className="h-4 w-4" aria-hidden="true" />
+                <AlertTitle>{t("scimNameLockedTitle")}</AlertTitle>
+                <AlertDescription>
+                  {t("scimNameLockedDescription")}
+                </AlertDescription>
+              </Alert>
+            )}
             <FormField
               control={control}
               name="name"
@@ -221,6 +238,8 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
                   <FormControl>
                     <Input
                       placeholder={tCommon("placeholders.name")}
+                      disabled={isScimManaged}
+                      data-testid="edit-group-name-input"
                       {...field}
                     />
                   </FormControl>
@@ -255,26 +274,30 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
                       className="flex items-center justify-between px-2 bg-muted rounded"
                     >
                       <UserNameCell userId={user.id} hideLink={true} />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemoveUser(user.id)}
-                        aria-label={tCommon("actions.delete")}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      {!isScimManaged && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveUser(user.id)}
+                          aria-label={tCommon("actions.delete")}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      )}
                     </div>
                   ))}
               </div>
-              <Combobox
-                users={availableUsersToAdd}
-                showUnassigned={false}
-                onValueChange={handleAddUser}
-                placeholder={tCommon("placeholders.select")}
-                className="w-full"
-                disabled={isLoading}
-              />
+              {!isScimManaged && (
+                <Combobox
+                  users={availableUsersToAdd}
+                  showUnassigned={false}
+                  onValueChange={handleAddUser}
+                  placeholder={tCommon("placeholders.select")}
+                  className="w-full"
+                  disabled={isLoading}
+                />
+              )}
             </div>
 
             <DialogFooter>

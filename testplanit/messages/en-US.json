@@ -4776,7 +4776,11 @@
         "confirmMessage": "Are you sure you want to delete this group?"
       },
       "noUsersSelected": "No users selected yet.",
-      "noUsersAssigned": "No users assigned to this group."
+      "noUsersAssigned": "No users assigned to this group.",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Managed by SCIM. Manage from the SCIM admin page.",
+      "scimNameLockedTitle": "Group is managed by SCIM",
+      "scimNameLockedDescription": "This group's name and members are managed by your identity provider. Make changes there to update them here."
     },
     "milestones": {
       "description": "Manage Milestone Types",

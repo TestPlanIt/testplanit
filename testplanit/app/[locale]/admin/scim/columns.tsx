@@ -108,9 +108,7 @@ export const useColumns = (
                 timezone={timezone}
               />
             ) : (
-              <span className="text-muted-foreground/50">
-                {tCommon("never")}
-              </span>
+              <span className="text-muted-foreground">{tCommon("never")}</span>
             )}
           </div>
         ),
@@ -126,7 +124,7 @@ export const useColumns = (
           const ip = row.original.lastUsedIp;
           if (!ip) {
             return (
-              <span className="text-muted-foreground/50 text-sm">
+              <span className="text-muted-foreground text-sm">
                 {tCommon("never")}
               </span>
             );
@@ -152,9 +150,7 @@ export const useColumns = (
                 timezone={timezone}
               />
             ) : (
-              <span className="text-muted-foreground/50">
-                {tCommon("never")}
-              </span>
+              <span className="text-muted-foreground">{tCommon("never")}</span>
             )}
           </div>
         ),
