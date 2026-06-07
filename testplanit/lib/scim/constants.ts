@@ -109,4 +109,4 @@ export const SCIM_COALESCING_THRESHOLD = 10 as const;
  * exceeds the threshold is folded into a single summary event for the entire
  * sync rather than the first chunk only.
  */
-export const SCIM_COALESCING_WINDOW_MS = (5 * 60 * 1000) as const;
+export const SCIM_COALESCING_WINDOW_MS = 300_000 as const;

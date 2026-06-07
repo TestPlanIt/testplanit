@@ -4334,7 +4334,10 @@
       "revokePasswordSuccess": "密碼已撤銷 {name}",
       "revokePasswordFailed": "撤銷密碼失敗",
       "scimProvisionerBadge": "SCIM 配置器",
-      "scimManagedTooltip": "由SCIM管理。請從SCIM管理頁面進行管理。"
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "由SCIM管理。請從SCIM管理頁面進行管理。",
+      "scimUserLockedTitle": "使用者由 SCIM 管理",
+      "scimUserLockedDescription": "該使用者的姓名、電子郵件地址和活動狀態由您的身分提供者管理。請在身分提供者處進行更改，以在此處更新這些資訊。"
     },
     "security": {
       "title": "安全",
@@ -4776,7 +4779,11 @@
         "confirmMessage": "您確定要刪除此群組嗎？"
       },
       "noUsersSelected": "暫無用戶選擇。",
-      "noUsersAssigned": "此群組暫無使用者。"
+      "noUsersAssigned": "此群組暫無使用者。",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "由SCIM管理。請從SCIM管理頁面進行管理。",
+      "scimNameLockedTitle": "集團由SCIM管理",
+      "scimNameLockedDescription": "此群組的名稱和成員由您的身分提供者管理。請在身分提供者處進行更改，以在此處更新。"
     },
     "milestones": {
       "description": "管理里程碑類型",

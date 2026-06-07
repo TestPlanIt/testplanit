@@ -97,7 +97,7 @@ describe("emitWithCoalescing — below-threshold per-event emit", () => {
       .update(JSON.stringify(basePayload))
       .digest("hex");
     expect(create).toHaveBeenCalledTimes(1);
-    const callArg = create.mock.calls[0][0] as {
+    const callArg = create.mock.calls[0][0] as unknown as {
       data: { webhookConfigId: string; payloadDigest: string };
     };
     expect(callArg.data.payloadDigest).toBe(expectedDigest);
@@ -170,7 +170,7 @@ describe("emitWithCoalescing — at-threshold summary emit", () => {
           `scim.group.member_added.summary:${windowStart.toISOString()}:cfg_42`
         )
         .digest("hex");
-      const callArg = create.mock.calls[0][0] as {
+      const callArg = create.mock.calls[0][0] as unknown as {
         data: { payloadDigest: string };
       };
       expect(callArg.data.payloadDigest).toBe(expectedDigest);
@@ -257,7 +257,7 @@ describe("emitWithCoalescing — multiple configs, mixed thresholds", () => {
       tx as never,
       {}
     );
-    const whereArg = findMany.mock.calls[0][0] as {
+    const whereArg = (findMany.mock.calls[0] as unknown[])[0] as {
       where: {
         isActive: boolean;
         subscribedEvents: { has: string };

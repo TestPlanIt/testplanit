@@ -4334,7 +4334,10 @@
       "revokePasswordSuccess": "Wachtwoord ingetrokken voor {name}",
       "revokePasswordFailed": "Wachtwoord intrekken mislukt",
       "scimProvisionerBadge": "SCIM-leverancier",
-      "scimManagedTooltip": "Beheerd door SCIM. Beheer via de SCIM-beheerpagina."
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Beheerd door SCIM. Beheer via de SCIM-beheerpagina.",
+      "scimUserLockedTitle": "De gebruiker wordt beheerd door SCIM.",
+      "scimUserLockedDescription": "De naam, het e-mailadres en de actieve status van deze gebruiker worden beheerd door uw identiteitsprovider. Wijzigingen daar doorvoeren om ze hier bij te werken."
     },
     "security": {
       "title": "Beveiliging",
@@ -4776,7 +4779,11 @@
         "confirmMessage": "Weet u zeker dat u deze groep wilt verwijderen?"
       },
       "noUsersSelected": "Er zijn nog geen gebruikers geselecteerd.",
-      "noUsersAssigned": "Er zijn geen gebruikers aan deze groep toegewezen."
+      "noUsersAssigned": "Er zijn geen gebruikers aan deze groep toegewezen.",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Beheerd door SCIM. Beheer via de SCIM-beheerpagina.",
+      "scimNameLockedTitle": "De groep wordt beheerd door SCIM.",
+      "scimNameLockedDescription": "De naam en leden van deze groep worden beheerd door uw identiteitsprovider. Breng daar wijzigingen aan om ze hier bij te werken."
     },
     "milestones": {
       "description": "Mijlpaaltypen beheren",

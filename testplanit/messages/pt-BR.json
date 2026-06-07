@@ -4334,7 +4334,10 @@
       "revokePasswordSuccess": "Senha revogada para {name}",
       "revokePasswordFailed": "Falha ao revogar a senha",
       "scimProvisionerBadge": "Provedor SCIM",
-      "scimManagedTooltip": "Gerenciado pelo SCIM. Gerencie a partir da página de administração do SCIM."
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Gerenciado pelo SCIM. Gerencie a partir da página de administração do SCIM.",
+      "scimUserLockedTitle": "O usuário é gerenciado pelo SCIM.",
+      "scimUserLockedDescription": "O nome, o e-mail e o status de atividade deste usuário são gerenciados pelo seu provedor de identidade. Faça as alterações necessárias lá para atualizá-los aqui."
     },
     "security": {
       "title": "Segurança",
@@ -4776,7 +4779,11 @@
         "confirmMessage": "Tem certeza de que deseja excluir este grupo?"
       },
       "noUsersSelected": "Nenhum usuário selecionado ainda.",
-      "noUsersAssigned": "Nenhum usuário foi atribuído a este grupo."
+      "noUsersAssigned": "Nenhum usuário foi atribuído a este grupo.",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Gerenciado pelo SCIM. Gerencie a partir da página de administração do SCIM.",
+      "scimNameLockedTitle": "O grupo é gerenciado pela SCIM.",
+      "scimNameLockedDescription": "O nome e os membros deste grupo são gerenciados pelo seu provedor de identidade. Faça as alterações necessárias lá para atualizá-los aqui."
     },
     "milestones": {
       "description": "Gerenciar tipos de marcos",

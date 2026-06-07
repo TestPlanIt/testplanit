@@ -4334,7 +4334,10 @@
       "revokePasswordSuccess": "Mật khẩu đã bị thu hồi cho {name}",
       "revokePasswordFailed": "Không thể thu hồi mật khẩu.",
       "scimProvisionerBadge": "Bộ cung cấp SCIM",
-      "scimManagedTooltip": "Được quản lý bởi SCIM. Quản lý từ trang quản trị SCIM."
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Được quản lý bởi SCIM. Quản lý từ trang quản trị SCIM.",
+      "scimUserLockedTitle": "Người dùng được quản lý bởi SCIM",
+      "scimUserLockedDescription": "Tên, email và trạng thái hoạt động của người dùng này được quản lý bởi nhà cung cấp danh tính của bạn. Hãy thực hiện các thay đổi ở đó để cập nhật chúng ở đây."
     },
     "security": {
       "title": "Bảo vệ",
@@ -4776,7 +4779,11 @@
         "confirmMessage": "Bạn có chắc chắn muốn xóa nhóm này không?"
       },
       "noUsersSelected": "Chưa có người dùng nào được chọn.",
-      "noUsersAssigned": "Hiện chưa có người dùng nào được chỉ định vào nhóm này."
+      "noUsersAssigned": "Hiện chưa có người dùng nào được chỉ định vào nhóm này.",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Được quản lý bởi SCIM. Quản lý từ trang quản trị SCIM.",
+      "scimNameLockedTitle": "Tập đoàn được quản lý bởi SCIM.",
+      "scimNameLockedDescription": "Tên và thành viên của nhóm này được quản lý bởi nhà cung cấp danh tính của bạn. Hãy thực hiện các thay đổi ở đó để cập nhật thông tin tại đây."
     },
     "milestones": {
       "description": "Quản lý các loại mốc thời gian",

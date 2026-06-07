@@ -4334,7 +4334,10 @@
       "revokePasswordSuccess": "Mot de passe révoqué pour {name}",
       "revokePasswordFailed": "Échec de la révocation du mot de passe",
       "scimProvisionerBadge": "Fournisseur SCIM",
-      "scimManagedTooltip": "Géré par SCIM. Gérer depuis la page d'administration SCIM."
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Géré par SCIM. Gérer depuis la page d'administration SCIM.",
+      "scimUserLockedTitle": "L'utilisateur est géré par SCIM",
+      "scimUserLockedDescription": "Le nom, l'adresse e-mail et le statut actif de cet utilisateur sont gérés par votre fournisseur d'identité. Modifiez ces informations auprès de ce dernier pour les mettre à jour ici."
     },
     "security": {
       "title": "Sécurité",
@@ -4776,7 +4779,11 @@
         "confirmMessage": "Êtes-vous sûr de vouloir supprimer ce groupe ?"
       },
       "noUsersSelected": "Aucun utilisateur sélectionné pour le moment.",
-      "noUsersAssigned": "Aucun utilisateur n'est affecté à ce groupe."
+      "noUsersAssigned": "Aucun utilisateur n'est affecté à ce groupe.",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Géré par SCIM. Gérer depuis la page d'administration SCIM.",
+      "scimNameLockedTitle": "Le groupe est géré par SCIM",
+      "scimNameLockedDescription": "Le nom et les membres de ce groupe sont gérés par votre fournisseur d'identité. Modifiez-les sur ce dernier pour les mettre à jour ici."
     },
     "milestones": {
       "description": "Gérer les types d'étapes clés",

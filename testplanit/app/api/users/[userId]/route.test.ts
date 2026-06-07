@@ -53,6 +53,8 @@ describe("User Update API Endpoint (PATCH /api/users/[userId])", () => {
     image: null,
     access: "USER",
     roleId: 1,
+    scimGivenName: null,
+    scimFamilyName: null,
     userPreferences: {
       userId: "user-123",
       theme: "Light",

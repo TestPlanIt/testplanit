@@ -20,6 +20,7 @@ import { z } from "zod/v4";
 
 import { Avatar } from "@/components/Avatar";
 import UploadAvatar from "@/components/UploadAvatar";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useTheme } from "next-themes";
@@ -35,7 +36,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { CircleSlash2, Trash2 } from "lucide-react";
+import { CircleSlash2, Cloud, Trash2 } from "lucide-react";
 
 import {
   Form,
@@ -77,8 +78,13 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
   const t = useTranslations("admin.users.edit");
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
+  const tAdmin = useTranslations("admin.users");
   const tUserAvatar = useTranslations("users.avatar");
   const tUserEdit = useTranslations("users.profile.edit");
+  // SCIM-managed users have IdP-owned identity fields. Lock those fields in
+  // the UI; the schema enforces the same via @deny rules so non-UI paths
+  // (API tokens, direct REST) can't bypass.
+  const isScimManaged = user.scimGivenName !== null;
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -105,11 +111,18 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
     groups: z.array(z.number()).optional(),
   });
 
-  // Type for the data expected by the updateUser API
-  type UserUpdateApiPayload = Omit<
-    z.infer<typeof EditUserFormValidationSchema>,
-    "projects" | "groups"
-  >;
+  // Type for the data expected by the updateUser API. For SCIM-managed
+  // users, name/email/isActive are omitted from the payload at submit time.
+  type UserUpdateApiPayload = Partial<
+    Pick<
+      z.infer<typeof EditUserFormValidationSchema>,
+      "name" | "email" | "isActive"
+    >
+  > &
+    Omit<
+      z.infer<typeof EditUserFormValidationSchema>,
+      "name" | "email" | "isActive" | "projects" | "groups"
+    >;
 
   // Hooks for API calls
   const { mutateAsync: createManyProjectAssignment } =
@@ -157,11 +170,16 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
     where: { isDeleted: false },
     orderBy: { name: "asc" },
   });
+  // SCIM-managed groups (scimDisplayName != null) cannot accept locally-added
+  // members; the schema rule on GroupAssignment blocks the create. Filter
+  // them out of the picker so admins don't see options that would 403.
   const groupOptions = groups
-    ? groups.map((group) => ({
-        value: group.id,
-        label: group.name,
-      }))
+    ? groups
+        .filter((group) => group.scimDisplayName === null)
+        .map((group) => ({
+          value: group.id,
+          label: group.name,
+        }))
     : [];
   const selectAllGroups = () => {
     const allGroupIds = groupOptions.map((option) => option.value);
@@ -196,15 +214,19 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
   async function onSubmit(data: z.infer<typeof EditUserFormValidationSchema>) {
     setIsSubmitting(true);
     try {
-      // Construct payload matching UserUpdateInput for the API
+      // Construct payload matching UserUpdateInput for the API. For SCIM-
+      // managed users, omit the IdP-owned fields (name/email/isActive); only
+      // the TestPlanIt-local fields (access/roleId/isApi) flow through.
       const apiPayload: UserUpdateApiPayload & { image?: string | null } = {
-        name: data.name,
-        email: data.email,
-        isActive: data.isActive,
         isApi: data.isApi,
         access: data.access,
         roleId: data.roleId,
       };
+      if (!isScimManaged) {
+        apiPayload.name = data.name;
+        apiPayload.email = data.email;
+        apiPayload.isActive = data.isActive;
+      }
 
       // Include avatar changes
       if (removeAvatar) {
@@ -317,6 +339,16 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
               </DialogDescription>
             </DialogHeader>
 
+            {isScimManaged && (
+              <Alert data-testid="scim-user-locked-alert">
+                <Cloud className="h-4 w-4" aria-hidden="true" />
+                <AlertTitle>{tAdmin("scimUserLockedTitle")}</AlertTitle>
+                <AlertDescription>
+                  {tAdmin("scimUserLockedDescription")}
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Avatar management */}
             <div className="space-y-2">
               <label className="text-sm font-medium">
@@ -417,7 +449,11 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
                     <HelpPopover helpKey="user.name" />
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder={tCommon("name")} {...field} />
+                    <Input
+                      placeholder={tCommon("name")}
+                      disabled={isScimManaged}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -437,6 +473,7 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
                       placeholder={tCommon("fields.email")}
                       className="resize-none"
                       maxLength={256}
+                      disabled={isScimManaged}
                       {...field}
                     />
                   </FormControl>
@@ -452,7 +489,7 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
                   <FormControl>
                     <Switch
                       checked={field.value}
-                      disabled={user.id === session?.user.id}
+                      disabled={user.id === session?.user.id || isScimManaged}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>

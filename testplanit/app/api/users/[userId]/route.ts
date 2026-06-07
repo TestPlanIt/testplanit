@@ -82,6 +82,26 @@ export async function PATCH(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // SCIM-managed users have IdP-owned identity fields. Reject attempts to
+    // mutate them via this endpoint; the SCIM service writes via raw prisma
+    // and bypasses this guard. Schema @deny rules cover the enhanced-client
+    // paths; this guard covers this dedicated REST endpoint.
+    const isScimManaged = existingUser.scimGivenName !== null;
+    if (isScimManaged) {
+      const lockedFields = ["name", "email", "isActive"] as const;
+      const attempted = lockedFields.filter(
+        (f) => (validatedData as Record<string, unknown>)[f] !== undefined
+      );
+      if (attempted.length > 0) {
+        return NextResponse.json(
+          {
+            error: `Cannot update SCIM-managed fields: ${attempted.join(", ")}. Manage these fields from your identity provider.`,
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     // Build the update operations
     const userUpdate: any = {};
     if (validatedData.name !== undefined) {

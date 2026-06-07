@@ -73,8 +73,8 @@ model VerificationToken {
 
 model User {
     id                              String                        @id @default(cuid())
-    name                            String                        @length(1)
-    email                           String                        @unique @email
+    name                            String                        @length(1) @deny('update', scimGivenName != null)
+    email                           String                        @unique @email @deny('update', scimGivenName != null)
     emailVerified                   DateTime?
     emailVerifToken                 String?
     emailTokenExpires               DateTime?
@@ -83,15 +83,15 @@ model User {
     accounts                        Account[]
     authMethod                      AuthMethod                    @default(INTERNAL)
     externalId                      String?                 // For SAML/OAuth user mapping
-    scimUserName                    String?                       @unique
-    scimExternalId                  String?                       @unique
+    scimUserName                    String?                       @unique @deny('update', scimGivenName != null)
+    scimExternalId                  String?                       @unique @deny('update', scimGivenName != null)
     scimExtensions                  Json?
-    scimGivenName                   String?
-    scimFamilyName                  String?
+    scimGivenName                   String?                       @deny('update', scimGivenName != null)
+    scimFamilyName                  String?                       @deny('update', scimGivenName != null)
     access                          Access                        @default(NONE)
     roleId                          Int
     role                            Roles                         @relation(fields: [roleId], references: [id])
-    isActive                        Boolean                       @default(true)
+    isActive                        Boolean                       @default(true) @deny('update', scimGivenName != null)
     isDeleted                       Boolean                       @default(false)
     isApi                           Boolean                       @default(false)
     createdAt                       DateTime                      @default(now()) @db.Timestamptz(6)
@@ -166,6 +166,10 @@ model User {
     @@allow('create, delete', (auth().access == 'ADMIN'))
     @@allow('update', (auth().access == 'ADMIN' || auth() == this))
     @@allow('read', auth().access != null)
+    // SCIM contract: IdP owns the lifecycle of SCIM-provisioned users.
+    // Block enhanced-client delete; the SCIM service uses raw prisma and
+    // bypasses these policies (see lib/scim/services/users.ts).
+    @@deny('delete', scimGivenName != null)
 }
 
 // Password history for preventing password reuse

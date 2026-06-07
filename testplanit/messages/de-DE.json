@@ -4334,7 +4334,10 @@
       "revokePasswordSuccess": "Passwort für {name} widerrufen",
       "revokePasswordFailed": "Passwort widerrufen fehlgeschlagen",
       "scimProvisionerBadge": "SCIM-Provisioner",
-      "scimManagedTooltip": "Verwaltet von SCIM. Verwaltung über die SCIM-Administrationsseite."
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Verwaltet von SCIM. Verwaltung über die SCIM-Administrationsseite.",
+      "scimUserLockedTitle": "Der Benutzer wird von SCIM verwaltet.",
+      "scimUserLockedDescription": "Name, E-Mail-Adresse und Aktivitätsstatus dieses Benutzers werden von Ihrem Identitätsanbieter verwaltet. Nehmen Sie dort Änderungen vor, um diese hier zu aktualisieren."
     },
     "security": {
       "title": "Sicherheit",
@@ -4776,7 +4779,11 @@
         "confirmMessage": "Möchtest du diese Gruppe wirklich löschen?"
       },
       "noUsersSelected": "Es wurden noch keine Benutzer ausgewählt.",
-      "noUsersAssigned": "Dieser Gruppe sind keine Benutzer zugewiesen."
+      "noUsersAssigned": "Dieser Gruppe sind keine Benutzer zugewiesen.",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Verwaltet von SCIM. Verwaltung über die SCIM-Administrationsseite.",
+      "scimNameLockedTitle": "Die Gruppe wird von SCIM verwaltet.",
+      "scimNameLockedDescription": "Name und Mitglieder dieser Gruppe werden von Ihrem Identitätsanbieter verwaltet. Nehmen Sie dort Änderungen vor, um diese hier zu aktualisieren."
     },
     "milestones": {
       "description": "Meilensteintypen verwalten",

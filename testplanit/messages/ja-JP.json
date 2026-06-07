@@ -4334,7 +4334,10 @@
       "revokePasswordSuccess": "{name} のパスワードが取り消されました",
       "revokePasswordFailed": "パスワードの取り消しに失敗しました",
       "scimProvisionerBadge": "SCIMプロビジョナー",
-      "scimManagedTooltip": "SCIMによって管理されています。SCIMの管理ページから管理してください。"
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "SCIMによって管理されています。SCIMの管理ページから管理してください。",
+      "scimUserLockedTitle": "ユーザーはSCIMによって管理されています",
+      "scimUserLockedDescription": "このユーザー名、メールアドレス、およびアクティブステータスは、ご利用のIDプロバイダーによって管理されています。こちらで更新するには、そちらで変更してください。"
     },
     "security": {
       "title": "安全",
@@ -4776,7 +4779,11 @@
         "confirmMessage": "このグループを削除してもよろしいですか?"
       },
       "noUsersSelected": "まだユーザーは選択されていません。",
-      "noUsersAssigned": "このグループにはユーザーが割り当てられていません。"
+      "noUsersAssigned": "このグループにはユーザーが割り当てられていません。",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "SCIMによって管理されています。SCIMの管理ページから管理してください。",
+      "scimNameLockedTitle": "このグループはSCIMによって運営されています。",
+      "scimNameLockedDescription": "このグループ名とメンバーは、ご利用のIDプロバイダーによって管理されています。こちらで情報を更新するには、そちらで変更してください。"
     },
     "milestones": {
       "description": "マイルストーンの種類を管理する",

@@ -4334,7 +4334,10 @@
       "revokePasswordSuccess": "Password revocata per {name}",
       "revokePasswordFailed": "Impossibile revocare la password",
       "scimProvisionerBadge": "Fornitore SCIM",
-      "scimManagedTooltip": "Gestito da SCIM. Gestisci dalla pagina di amministrazione di SCIM."
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Gestito da SCIM. Gestisci dalla pagina di amministrazione di SCIM.",
+      "scimUserLockedTitle": "L'utente è gestito da SCIM",
+      "scimUserLockedDescription": "Il nome, l'indirizzo email e lo stato attivo di questo utente sono gestiti dal tuo provider di identità. Apporta le modifiche lì per aggiornarli anche qui."
     },
     "security": {
       "title": "Sicurezza",
@@ -4776,7 +4779,11 @@
         "confirmMessage": "Sei sicuro di voler eliminare questo gruppo?"
       },
       "noUsersSelected": "Nessun utente selezionato ancora.",
-      "noUsersAssigned": "Nessun utente assegnato a questo gruppo."
+      "noUsersAssigned": "Nessun utente assegnato a questo gruppo.",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Gestito da SCIM. Gestisci dalla pagina di amministrazione di SCIM.",
+      "scimNameLockedTitle": "Il gruppo è gestito da SCIM",
+      "scimNameLockedDescription": "Il nome e i membri di questo gruppo sono gestiti dal tuo provider di identità. Apporta le modifiche lì per aggiornarli anche qui."
     },
     "milestones": {
       "description": "Gestisci i tipi di milestone",

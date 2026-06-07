@@ -4334,7 +4334,10 @@
       "revokePasswordSuccess": "Hasło dla {name} zostało unieważnione",
       "revokePasswordFailed": "Nie udało się cofnąć hasła",
       "scimProvisionerBadge": "Dostawca SCIM",
-      "scimManagedTooltip": "Zarządzane przez SCIM. Zarządzaj ze strony administratora SCIM."
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Zarządzane przez SCIM. Zarządzaj ze strony administratora SCIM.",
+      "scimUserLockedTitle": "Użytkownik jest zarządzany przez SCIM",
+      "scimUserLockedDescription": "Nazwa, adres e-mail i status aktywności tego użytkownika są zarządzane przez Twojego dostawcę tożsamości. Wprowadź zmiany, aby je zaktualizować tutaj."
     },
     "security": {
       "title": "Bezpieczeństwo",
@@ -4776,7 +4779,11 @@
         "confirmMessage": "Czy na pewno chcesz usunąć tę grupę?"
       },
       "noUsersSelected": "Nie wybrano jeszcze żadnego użytkownika.",
-      "noUsersAssigned": "Do tej grupy nie przypisano żadnego użytkownika."
+      "noUsersAssigned": "Do tej grupy nie przypisano żadnego użytkownika.",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Zarządzane przez SCIM. Zarządzaj ze strony administratora SCIM.",
+      "scimNameLockedTitle": "Grupą zarządza SCIM",
+      "scimNameLockedDescription": "Nazwą i członkami tej grupy zarządza Twój dostawca tożsamości. Wprowadź zmiany, aby je zaktualizować tutaj."
     },
     "milestones": {
       "description": "Zarządzaj typami kamieni milowych",

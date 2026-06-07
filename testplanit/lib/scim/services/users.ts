@@ -43,11 +43,7 @@ import {
   emitScimUserUpdated,
 } from "~/lib/webhooks/event-emitters/userEvents";
 
-import {
-  SCIM_SCHEMAS,
-  SCIM_SYSTEM_USER_ID,
-  SYSTEM_PROJECT_ID,
-} from "../constants";
+import { SCIM_SYSTEM_USER_ID, SYSTEM_PROJECT_ID } from "../constants";
 import { scimError } from "../errors";
 import { scimFilterToPrismaWhere } from "../filter";
 import {

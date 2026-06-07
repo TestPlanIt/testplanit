@@ -4334,7 +4334,10 @@
       "revokePasswordSuccess": "{name} için parola iptal edildi.",
       "revokePasswordFailed": "Parolayı iptal etme işlemi başarısız oldu.",
       "scimProvisionerBadge": "SCIM Sağlayıcısı",
-      "scimManagedTooltip": "SCIM tarafından yönetilir. SCIM yönetim sayfasından yönetin."
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "SCIM tarafından yönetilir. SCIM yönetim sayfasından yönetin.",
+      "scimUserLockedTitle": "Kullanıcı SCIM tarafından yönetilir.",
+      "scimUserLockedDescription": "Bu kullanıcının adı, e-postası ve aktiflik durumu kimlik sağlayıcınız tarafından yönetilmektedir. Bunları burada güncellemek için orada değişiklik yapın."
     },
     "security": {
       "title": "Güvenlik",
@@ -4776,7 +4779,11 @@
         "confirmMessage": "Bu grubu silmek istediğinizden emin misiniz?"
       },
       "noUsersSelected": "Henüz hiçbir kullanıcı seçilmedi.",
-      "noUsersAssigned": "Bu gruba atanmış kullanıcı yok."
+      "noUsersAssigned": "Bu gruba atanmış kullanıcı yok.",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "SCIM tarafından yönetilir. SCIM yönetim sayfasından yönetin.",
+      "scimNameLockedTitle": "Grup SCIM tarafından yönetilmektedir.",
+      "scimNameLockedDescription": "Bu grubun adı ve üyeleri kimlik sağlayıcınız tarafından yönetilmektedir. Değişiklikleri orada yaparak buradaki bilgileri güncelleyebilirsiniz."
     },
     "milestones": {
       "description": "Dönüm Noktası Türlerini Yönetin",

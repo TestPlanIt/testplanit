@@ -77,6 +77,8 @@ export const useColumns = (
         cell: ({ row }) => {
           const isScimProvisioner =
             row.original.email === SCIM_SYSTEM_USER_EMAIL;
+          const isScimManaged =
+            !isScimProvisioner && row.original.scimGivenName !== null;
           return (
             <div className="bg-primary-foreground flex items-center gap-1">
               <UserNameCell userId={row.original.id} />
@@ -88,6 +90,16 @@ export const useColumns = (
                   data-testid="scim-provisioner-badge"
                 >
                   {tAdmin("scimProvisionerBadge")}
+                </Badge>
+              )}
+              {isScimManaged && (
+                <Badge
+                  variant="secondary"
+                  className="ml-1"
+                  title={tAdmin("scimManagedTooltip")}
+                  data-testid="scim-managed-user-badge"
+                >
+                  {tAdmin("scimManagedBadge")}
                 </Badge>
               )}
             </div>
@@ -127,22 +139,25 @@ export const useColumns = (
         enableSorting: true,
         enableResizing: true,
         size: 75,
-        cell: ({ row }) => (
-          <div className="text-center">
-            <Switch
-              data-testid={`user-active-toggle-${row.original.id}`}
-              aria-label={tCommon("aria.toggleActive")}
-              checked={row.original.isActive}
-              disabled={
-                row.original.id === currentUserId ||
-                row.original.email === SCIM_SYSTEM_USER_EMAIL
-              }
-              onCheckedChange={(checked) =>
-                handleToggle(row.original.id, "isActive", checked)
-              }
-            />
-          </div>
-        ),
+        cell: ({ row }) => {
+          const isScimManaged =
+            row.original.email === SCIM_SYSTEM_USER_EMAIL ||
+            row.original.scimGivenName !== null;
+          return (
+            <div className="text-center">
+              <Switch
+                data-testid={`user-active-toggle-${row.original.id}`}
+                aria-label={tCommon("aria.toggleActive")}
+                checked={row.original.isActive}
+                disabled={row.original.id === currentUserId || isScimManaged}
+                title={isScimManaged ? tAdmin("scimManagedTooltip") : undefined}
+                onCheckedChange={(checked) =>
+                  handleToggle(row.original.id, "isActive", checked)
+                }
+              />
+            </div>
+          );
+        },
       },
       {
         id: "lastActiveAt",
@@ -267,6 +282,8 @@ export const useColumns = (
         cell: ({ row }) => {
           const isScimProvisioner =
             row.original.email === SCIM_SYSTEM_USER_EMAIL;
+          const isScimManaged =
+            isScimProvisioner || row.original.scimGivenName !== null;
           return (
             <div className="flex justify-center">
               <DropdownMenu>
@@ -293,7 +310,7 @@ export const useColumns = (
                   </DropdownMenuItem>
                   {row.original.authMethod !== "SSO" &&
                     row.original.id !== currentUserId &&
-                    !isScimProvisioner && (
+                    !isScimManaged && (
                       <>
                         <DropdownMenuItem
                           onClick={() => onForceChangePassword?.(row.original)}
@@ -308,7 +325,7 @@ export const useColumns = (
                       </>
                     )}
                   <DropdownMenuSeparator />
-                  {row.original.id !== currentUserId && !isScimProvisioner ? (
+                  {row.original.id !== currentUserId && !isScimManaged ? (
                     <DropdownMenuItem
                       className="text-destructive focus:text-destructive"
                       onClick={() => onDeleteUser?.(row.original)}

@@ -24,7 +24,6 @@ import {
   expect,
   it,
   vi,
-  type Mock,
 } from "vitest";
 
 const findUniqueMock = vi.fn();

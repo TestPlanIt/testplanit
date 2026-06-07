@@ -17,11 +17,13 @@
  */
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+import type { ScimPatch } from "scim-patch";
 import { z } from "zod/v4";
 
 import { ScimAuthError, requireScimBearer } from "~/lib/scim/auth";
 import { SCIM_CONTENT_TYPE } from "~/lib/scim/constants";
 import { scimError } from "~/lib/scim/errors";
+import type { ScimUserBody } from "~/lib/scim/mapping/user";
 import { ScimPatchApplyError } from "~/lib/scim/patch";
 import { scimResponse } from "~/lib/scim/responses";
 import {
@@ -149,7 +151,14 @@ export async function PUT(
   }
 
   try {
-    const result = await putScimUser(id, parsed.data, ctx);
+    // zod parse gives string|null|undefined on optional fields; ScimUserBody
+    // is the post-validation type. The body went through scimUserBodySchema so
+    // the cast is safe.
+    const result = await putScimUser(
+      id,
+      parsed.data as unknown as ScimUserBody,
+      ctx
+    );
     return scimResponse(result.resource, { status: 200 });
   } catch (e) {
     if (e instanceof ScimNotFoundError) {
@@ -204,7 +213,11 @@ export async function PATCH(
   }
 
   try {
-    const result = await patchScimUser(id, parsed.data, ctx);
+    const result = await patchScimUser(
+      id,
+      parsed.data as unknown as ScimPatch,
+      ctx
+    );
     return scimResponse(result.resource, { status: 200 });
   } catch (e) {
     if (e instanceof ScimNotFoundError) {

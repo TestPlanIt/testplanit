@@ -4334,7 +4334,10 @@
       "revokePasswordSuccess": "Password revoked for {name}",
       "revokePasswordFailed": "Failed to revoke password",
       "scimProvisionerBadge": "SCIM Provisioner",
-      "scimManagedTooltip": "Managed by SCIM. Manage from the SCIM admin page."
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Managed by SCIM. Manage from the SCIM admin page.",
+      "scimUserLockedTitle": "User is managed by SCIM",
+      "scimUserLockedDescription": "This user's name, email, and active status are managed by your identity provider. Make changes there to update them here."
     },
     "security": {
       "title": "Security",
