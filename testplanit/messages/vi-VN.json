@@ -4336,6 +4336,8 @@
       "scimProvisionerBadge": "Bộ cung cấp SCIM",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Được quản lý bởi SCIM. Quản lý từ trang quản trị SCIM.",
+      "scimColumnHeader": "SCIM",
+      "scimColumnYes": "Đúng",
       "scimUserLockedTitle": "Người dùng được quản lý bởi SCIM",
       "scimUserLockedDescription": "Tên, email và trạng thái hoạt động của người dùng này được quản lý bởi nhà cung cấp danh tính của bạn. Hãy thực hiện các thay đổi ở đó để cập nhật chúng ở đây."
     },

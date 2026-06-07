@@ -4336,6 +4336,8 @@
       "scimProvisionerBadge": "SCIM 配置器",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "由SCIM管理。請從SCIM管理頁面進行管理。",
+      "scimColumnHeader": "SCIM",
+      "scimColumnYes": "是的",
       "scimUserLockedTitle": "使用者由 SCIM 管理",
       "scimUserLockedDescription": "該使用者的姓名、電子郵件地址和活動狀態由您的身分提供者管理。請在身分提供者處進行更改，以在此處更新這些資訊。"
     },

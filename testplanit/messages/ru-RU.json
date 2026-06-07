@@ -4336,6 +4336,8 @@
       "scimProvisionerBadge": "SCIM Provisioner",
       "scimManagedBadge": "СКИМ",
       "scimManagedTooltip": "Управление осуществляется через SCIM. Управление производится со страницы администрирования SCIM.",
+      "scimColumnHeader": "СКИМ",
+      "scimColumnYes": "Да",
       "scimUserLockedTitle": "Пользователь управляется системой SCIM.",
       "scimUserLockedDescription": "Имя, адрес электронной почты и статус активности этого пользователя управляются вашим поставщиком идентификационных данных. Чтобы обновить их здесь, внесите изменения в этом поставщике."
     },

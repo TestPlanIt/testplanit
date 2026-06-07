@@ -4336,6 +4336,8 @@
       "scimProvisionerBadge": "SCIM-Provisioner",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Verwaltet von SCIM. Verwaltung über die SCIM-Administrationsseite.",
+      "scimColumnHeader": "SCIM",
+      "scimColumnYes": "Ja",
       "scimUserLockedTitle": "Der Benutzer wird von SCIM verwaltet.",
       "scimUserLockedDescription": "Name, E-Mail-Adresse und Aktivitätsstatus dieses Benutzers werden von Ihrem Identitätsanbieter verwaltet. Nehmen Sie dort Änderungen vor, um diese hier zu aktualisieren."
     },

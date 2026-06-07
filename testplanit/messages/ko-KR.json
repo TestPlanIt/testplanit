@@ -4336,6 +4336,8 @@
       "scimProvisionerBadge": "SCIM 프로비저너",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "SCIM에서 관리합니다. SCIM 관리자 페이지에서 관리할 수 있습니다.",
+      "scimColumnHeader": "SCIM",
+      "scimColumnYes": "예",
       "scimUserLockedTitle": "사용자는 SCIM에 의해 관리됩니다.",
       "scimUserLockedDescription": "이 사용자의 이름, 이메일 및 활성 상태는 ID 공급자가 관리합니다. 여기에서도 해당 정보를 업데이트하려면 ID 공급자에서 변경하십시오."
     },

@@ -4336,6 +4336,8 @@
       "scimProvisionerBadge": "SCIM Sağlayıcısı",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "SCIM tarafından yönetilir. SCIM yönetim sayfasından yönetin.",
+      "scimColumnHeader": "SCIM",
+      "scimColumnYes": "Evet",
       "scimUserLockedTitle": "Kullanıcı SCIM tarafından yönetilir.",
       "scimUserLockedDescription": "Bu kullanıcının adı, e-postası ve aktiflik durumu kimlik sağlayıcınız tarafından yönetilmektedir. Bunları burada güncellemek için orada değişiklik yapın."
     },

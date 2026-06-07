@@ -240,6 +240,37 @@ export const useColumns = (
         ),
       },
       {
+        id: "scimGivenName",
+        accessorKey: "scimGivenName",
+        header: tAdmin("scimColumnHeader"),
+        enableSorting: true,
+        enableResizing: true,
+        enableHiding: true,
+        size: 90,
+        cell: ({ row }) => {
+          const isScimProvisioner =
+            row.original.email === SCIM_SYSTEM_USER_EMAIL;
+          const isScimManaged =
+            isScimProvisioner || row.original.scimGivenName !== null;
+          if (!isScimManaged) {
+            return (
+              <span className="text-muted-foreground text-center block">—</span>
+            );
+          }
+          return (
+            <div className="text-center">
+              <Badge
+                variant="secondary"
+                title={tAdmin("scimManagedTooltip")}
+                data-testid={`scim-column-badge-${row.original.id}`}
+              >
+                {tAdmin("scimColumnYes")}
+              </Badge>
+            </div>
+          );
+        },
+      },
+      {
         id: "createdAt",
         accessorKey: "createdAt",
         header: tCommon("fields.createdAt"),

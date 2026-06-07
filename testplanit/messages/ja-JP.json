@@ -4336,6 +4336,8 @@
       "scimProvisionerBadge": "SCIMプロビジョナー",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "SCIMによって管理されています。SCIMの管理ページから管理してください。",
+      "scimColumnHeader": "SCIM",
+      "scimColumnYes": "はい",
       "scimUserLockedTitle": "ユーザーはSCIMによって管理されています",
       "scimUserLockedDescription": "このユーザー名、メールアドレス、およびアクティブステータスは、ご利用のIDプロバイダーによって管理されています。こちらで更新するには、そちらで変更してください。"
     },

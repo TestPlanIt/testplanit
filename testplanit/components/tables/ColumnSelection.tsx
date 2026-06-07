@@ -30,6 +30,16 @@ export interface ColumnMetadata {
   enableHiding?: boolean;
 }
 
+/**
+ * Fallback label for columns whose header is a function (returns JSX) so we
+ * can't read a plain string. "lastUsedAt" -> "Last Used At", "name" -> "Name".
+ */
+function humanizeColumnId(id: string): string {
+  if (!id) return "";
+  const spaced = id.replace(/([A-Z])/g, " $1").trim();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
 interface ColumnSelectionProps<TData> {
   columns: CustomColumnDef<TData>[];
   columnMetadata?: ColumnMetadata[];
@@ -213,12 +223,16 @@ export function ColumnSelection<TData>({
         "enableHiding" in item
           ? item.enableHiding
           : (item as CustomColumnDef<TData>).enableHiding;
-      const label =
+      // Function-style headers (header: () => <JSX/>) can't be stringified;
+      // fall back to a humanized column id so the column still appears in
+      // the selector instead of disappearing silently.
+      const rawLabel =
         "label" in item
           ? item.label
           : typeof (item as CustomColumnDef<TData>).header === "string"
             ? ((item as CustomColumnDef<TData>).header as string)
             : "";
+      const label = rawLabel || humanizeColumnId(itemId);
 
       return {
         id: itemId,

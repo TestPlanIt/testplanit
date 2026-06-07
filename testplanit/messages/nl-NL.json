@@ -4336,6 +4336,8 @@
       "scimProvisionerBadge": "SCIM-leverancier",
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Beheerd door SCIM. Beheer via de SCIM-beheerpagina.",
+      "scimColumnHeader": "SCIM",
+      "scimColumnYes": "Ja",
       "scimUserLockedTitle": "De gebruiker wordt beheerd door SCIM.",
       "scimUserLockedDescription": "De naam, het e-mailadres en de actieve status van deze gebruiker worden beheerd door uw identiteitsprovider. Wijzigingen daar doorvoeren om ze hier bij te werken."
     },
