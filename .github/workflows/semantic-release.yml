@@ -8,6 +8,10 @@ on:
       - 'testplanit/**'
       - '!testplanit/CHANGELOG.md'
       - '.github/workflows/semantic-release.yml'
+  # Manual trigger: runs against the current main HEAD, so a release can be cut
+  # when a push-triggered run was skipped (e.g. raced "behind remote" by a
+  # concurrent [skip ci] commit).
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -19,8 +23,8 @@ jobs:
   release:
     name: Release
     runs-on: [self-hosted]
-    # Skip release commits
-    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    # Skip release commits on push; manual dispatch always runs.
+    if: ${{ github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip ci]') }}
     env:
       NODE_OPTIONS: "--max-old-space-size=6144"
     steps:
