@@ -5087,6 +5087,8 @@ model SamlConfiguration {
     cert               String      @db.Text // IdP certificate
     callbackUrl        String      // ACS URL
     logoutUrl          String?     // SLO URL
+    wantAssertionsSigned    Boolean @default(true)  // Require the SAML assertion to be signed
+    wantAuthnResponseSigned Boolean @default(false) // Require the outer SAML response to be signed
     attributeMapping   Json        // Map SAML attributes to user fields
     autoProvisionUsers Boolean     @default(false)
     defaultAccess      Access      @default(USER) // Default system access for auto-provisioned users

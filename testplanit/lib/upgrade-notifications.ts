@@ -141,7 +141,7 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
         <li>Access analytics with view tracking and detailed logs</li>
         <li>Notifications when links are accessed</li>
       </ul>
-      <p>Click the <strong>Share</strong> button in Report Builder to create your first share link. See the <a href="https://docs.testplanit.io/user-guide/share-links" target="_blank">documentation</a> for details.</p>
+      <p>Click the <strong>Share</strong> button in Report Builder to create your first share link. See the <a href="https://docs.testplanit.com/user-guide/share-links" target="_blank">documentation</a> for details.</p>
     `,
   },
   "0.12.0": {
@@ -154,7 +154,7 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
         <li>Supports single-tenant and multi-tenant configurations</li>
         <li>Configure via the Admin UI at <strong>Admin → SSO</strong> or environment variables</li>
       </ul>
-      <p>See the <a href="https://docs.testplanit.io/user-guide/sso" target="_blank">SSO documentation</a> for Microsoft setup instructions.</p>
+      <p>See the <a href="https://docs.testplanit.com/user-guide/sso" target="_blank">SSO documentation</a> for Microsoft setup instructions.</p>
       <h4>Demo Project</h4>
       <ul>
         <li>A pre-populated Demo Project showcasing all major features</li>

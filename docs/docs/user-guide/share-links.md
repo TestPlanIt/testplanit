@@ -145,7 +145,7 @@ Public access with password requirement.
 ### Share Link Format
 
 ```text
-https://app.testplanit.io/share/A8j2KmPqR5vWxYz7BnC3DfG9HkL4MtN6
+https://app.testplanit.com/share/A8j2KmPqR5vWxYz7BnC3DfG9HkL4MtN6
 ```
 
 - 43-character random share key

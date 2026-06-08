@@ -1,3 +1,9 @@
+## [0.36.3](https://github.com/TestPlanIt/testplanit/compare/v0.36.2...v0.36.3) (2026-06-08)
+
+### Bug Fixes
+
+* attachment preview sizing, SAML response handling, and share-link URLs ([#412](https://github.com/TestPlanIt/testplanit/issues/412)) ([f9466e3](https://github.com/TestPlanIt/testplanit/commit/f9466e3a75b28cf8f2403a5ef919bc8b5f56852d))
+
 ## [0.36.2](https://github.com/TestPlanIt/testplanit/compare/v0.36.1...v0.36.2) (2026-06-08)
 
 ### Bug Fixes
