@@ -93,6 +93,13 @@ export default function SSOAdminPage() {
   const [samlCert, setSamlCert] = useState("");
   const [samlCallbackUrl, setSamlCallbackUrl] = useState("");
   const [samlLogoutUrl, setSamlLogoutUrl] = useState("");
+  // Signature-validation toggles; defaults match the schema (assertions must
+  // be signed; outer response signature optional). Admins can re-tighten the
+  // outer response check here OR via the per-provider edit page later.
+  const [samlWantAssertionsSigned, setSamlWantAssertionsSigned] =
+    useState(true);
+  const [samlWantAuthnResponseSigned, setSamlWantAuthnResponseSigned] =
+    useState(false);
   const [isSavingSamlConfig, setIsSavingSamlConfig] = useState(false);
   const [samlConfigured, setSamlConfigured] = useState(false);
 
@@ -321,6 +328,8 @@ export default function SSOAdminPage() {
         attributeMapping: {},
         autoProvisionUsers: false,
         defaultAccess: "USER" as const,
+        wantAssertionsSigned: samlWantAssertionsSigned,
+        wantAuthnResponseSigned: samlWantAuthnResponseSigned,
       };
 
       const existingProvider = ssoProviders?.find(
@@ -1640,6 +1649,47 @@ export default function SSOAdminPage() {
                 placeholder={t("admin.sso.dialogs.saml.logoutUrlPlaceholder")}
               />
             </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="samlWantAssertionsSigned"
+                  checked={samlWantAssertionsSigned}
+                  onCheckedChange={setSamlWantAssertionsSigned}
+                />
+                <Label htmlFor="samlWantAssertionsSigned">
+                  {t(
+                    "admin.sso.samlConfiguration.samlSettings.wantAssertionsSigned"
+                  )}
+                </Label>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {t(
+                  "admin.sso.samlConfiguration.samlSettings.wantAssertionsSignedDescription"
+                )}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="samlWantAuthnResponseSigned"
+                  checked={samlWantAuthnResponseSigned}
+                  onCheckedChange={setSamlWantAuthnResponseSigned}
+                />
+                <Label htmlFor="samlWantAuthnResponseSigned">
+                  {t(
+                    "admin.sso.samlConfiguration.samlSettings.wantAuthnResponseSigned"
+                  )}
+                </Label>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {t(
+                  "admin.sso.samlConfiguration.samlSettings.wantAuthnResponseSignedDescription"
+                )}
+              </p>
+            </div>
+
             <div className="text-sm text-muted-foreground">
               <p>{t("admin.sso.dialogs.saml.instructions.title")}</p>
               <ol className="list-decimal ml-4 space-y-1">
