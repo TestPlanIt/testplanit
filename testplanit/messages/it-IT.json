@@ -3839,7 +3839,11 @@
           "entityId": "ID entità (emittente)",
           "certificate": "Certificato X.509",
           "callbackUrl": "URL di richiamata",
-          "logoutUrl": "URL di disconnessione (facoltativo)"
+          "logoutUrl": "URL di disconnessione (facoltativo)",
+          "wantAssertionsSigned": "Richiedi dichiarazioni firmate",
+          "wantAssertionsSignedDescription": "Rifiuta le risposte la cui asserzione SAML non è firmata. Ciò protegge l'identità autenticata e dovrebbe rimanere attivo.",
+          "wantAuthnResponseSigned": "È richiesta una risposta firmata",
+          "wantAuthnResponseSignedDescription": "È inoltre necessario che la risposta SAML esterna sia firmata. La maggior parte dei provider di identità firma solo l'asserzione, quindi omettete questo passaggio a meno che il vostro IdP non firmi la risposta."
         },
         "userProvisioning": {
           "title": "Provisioning degli utenti",

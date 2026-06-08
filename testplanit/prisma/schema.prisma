@@ -2595,19 +2595,21 @@ model RegistrationSettings {
 }
 
 model SamlConfiguration {
-  id                 String      @id() @default(cuid())
-  providerId         String      @unique()
-  provider           SsoProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  entryPoint         String
-  issuer             String
-  cert               String      @db.Text()
-  callbackUrl        String
-  logoutUrl          String?
-  attributeMapping   Json
-  autoProvisionUsers Boolean     @default(false)
-  defaultAccess      Access      @default(USER)
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt()
+  id                      String      @id() @default(cuid())
+  providerId              String      @unique()
+  provider                SsoProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  entryPoint              String
+  issuer                  String
+  cert                    String      @db.Text()
+  callbackUrl             String
+  logoutUrl               String?
+  wantAssertionsSigned    Boolean     @default(true)
+  wantAuthnResponseSigned Boolean     @default(false)
+  attributeMapping        Json
+  autoProvisionUsers      Boolean     @default(false)
+  defaultAccess           Access      @default(USER)
+  createdAt               DateTime    @default(now())
+  updatedAt               DateTime    @updatedAt()
 }
 
 model TestmoImportJob {

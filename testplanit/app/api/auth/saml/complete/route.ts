@@ -1,5 +1,4 @@
 import { encode } from "next-auth/jwt";
-import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { consumeTempSessionToken, getAppBaseUrl } from "~/lib/auth-security";
 import { db } from "~/server/db";
@@ -82,9 +81,16 @@ export async function GET(request: NextRequest) {
       secret: process.env.NEXTAUTH_SECRET || "development-secret",
     });
 
-    // Set the session cookie
-    const cookieStore = await cookies();
-    cookieStore.set("next-auth.session-token", sessionToken, {
+    // Build the redirect first, then attach the session cookie to the response
+    // object directly. Mutating `cookies()` from `next/headers` does not
+    // reliably propagate to a separately-constructed NextResponse.redirect()
+    // — Set-Cookie ends up missing from the wire and the user lands back on
+    // the sign-in page after Okta.
+    const response = NextResponse.redirect(
+      new URL(callbackUrl, getAppBaseUrl(request))
+    );
+
+    response.cookies.set("next-auth.session-token", sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -94,7 +100,7 @@ export async function GET(request: NextRequest) {
 
     // For production, use secure cookie name
     if (process.env.NODE_ENV === "production") {
-      cookieStore.set("__Secure-next-auth.session-token", sessionToken, {
+      response.cookies.set("__Secure-next-auth.session-token", sessionToken, {
         httpOnly: true,
         secure: true,
         sameSite: "lax",
@@ -103,8 +109,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Redirect to callback URL
-    return NextResponse.redirect(new URL(callbackUrl, getAppBaseUrl(request)));
+    return response;
   } catch (error) {
     console.error("SAML completion error:", error);
     return NextResponse.json(

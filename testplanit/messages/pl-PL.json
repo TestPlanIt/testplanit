@@ -3839,7 +3839,11 @@
           "entityId": "Identyfikator podmiotu (wydawca)",
           "certificate": "Certyfikat X.509",
           "callbackUrl": "Adres URL wywołania zwrotnego",
-          "logoutUrl": "Adres URL wylogowania (opcjonalnie)"
+          "logoutUrl": "Adres URL wylogowania (opcjonalnie)",
+          "wantAssertionsSigned": "Wymagaj podpisanych oświadczeń",
+          "wantAssertionsSignedDescription": "Odrzucaj odpowiedzi, których potwierdzenie SAML nie jest podpisane. Chroni to uwierzytelnioną tożsamość i powinno pozostać włączone.",
+          "wantAuthnResponseSigned": "Wymagaj podpisanej odpowiedzi",
+          "wantAuthnResponseSignedDescription": "Wymagaj również podpisania zewnętrznej odpowiedzi SAML. Większość dostawców tożsamości podpisuje tylko potwierdzenie, więc pomiń tę opcję, chyba że Twój dostawca tożsamości (IdP) podpisuje odpowiedź."
         },
         "userProvisioning": {
           "title": "Zaopatrzenie użytkowników",

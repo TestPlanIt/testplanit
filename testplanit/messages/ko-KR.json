@@ -3839,7 +3839,11 @@
           "entityId": "엔티티 ID(발급자)",
           "certificate": "X.509 인증서",
           "callbackUrl": "콜백 URL",
-          "logoutUrl": "로그아웃 URL (선택 사항)"
+          "logoutUrl": "로그아웃 URL (선택 사항)",
+          "wantAssertionsSigned": "서명된 어설션을 요구합니다.",
+          "wantAssertionsSignedDescription": "SAML 어설션에 서명이 되어 있지 않은 응답은 거부합니다. 이는 인증된 신원을 보호하기 위한 조치이므로 이 기능을 활성화 상태로 유지해야 합니다.",
+          "wantAuthnResponseSigned": "서명된 답변을 요구합니다",
+          "wantAuthnResponseSignedDescription": "또한 외부 SAML 응답에 서명이 필요합니다. 대부분의 ID 공급자는 어설션에만 서명하므로, ID 공급자가 응답에 서명하지 않는 한 이 항목은 생략하십시오."
         },
         "userProvisioning": {
           "title": "사용자 프로비저닝",

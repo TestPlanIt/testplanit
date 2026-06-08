@@ -3839,7 +3839,11 @@
           "entityId": "Entiteits-ID (uitgever)",
           "certificate": "X.509-certificaat",
           "callbackUrl": "Terugbel-URL",
-          "logoutUrl": "Uitlog-URL (optioneel)"
+          "logoutUrl": "Uitlog-URL (optioneel)",
+          "wantAssertionsSigned": "Ondertekende verklaringen vereisen",
+          "wantAssertionsSignedDescription": "Weiger reacties waarvan de SAML-assertie niet is ondertekend. Dit beschermt de geauthenticeerde identiteit en moet ingeschakeld blijven.",
+          "wantAuthnResponseSigned": "Ondertekende reactie vereist",
+          "wantAuthnResponseSignedDescription": "Vereis ook dat het buitenste SAML-antwoord ondertekend is. De meeste identiteitsproviders ondertekenen alleen de bewering, dus laat dit weg tenzij uw identiteitsprovider het antwoord ook ondertekent."
         },
         "userProvisioning": {
           "title": "Gebruikersinrichting",

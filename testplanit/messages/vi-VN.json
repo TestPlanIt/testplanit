@@ -3839,7 +3839,11 @@
           "entityId": "Mã định danh tổ chức (Người phát hành)",
           "certificate": "Chứng chỉ X.509",
           "callbackUrl": "URL gọi lại",
-          "logoutUrl": "URL đăng xuất (Tùy chọn)"
+          "logoutUrl": "URL đăng xuất (Tùy chọn)",
+          "wantAssertionsSigned": "Yêu cầu xác nhận có chữ ký",
+          "wantAssertionsSignedDescription": "Từ chối các phản hồi có xác thực SAML chưa được ký. Điều này bảo vệ danh tính đã được xác thực và nên được giữ ở chế độ này.",
+          "wantAuthnResponseSigned": "Yêu cầu phản hồi có chữ ký",
+          "wantAuthnResponseSignedDescription": "Ngoài ra, cần yêu cầu phản hồi SAML bên ngoài phải được ký. Hầu hết các nhà cung cấp danh tính chỉ ký vào phần xác nhận, vì vậy hãy bỏ qua bước này trừ khi nhà cung cấp danh tính của bạn ký vào phản hồi."
         },
         "userProvisioning": {
           "title": "Cấp phép người dùng",

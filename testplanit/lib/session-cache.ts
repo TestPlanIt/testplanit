@@ -79,11 +79,17 @@ export async function getCachedSessionUser(
 
   if (!user) return null;
 
-  // 3. Ensure preferences exist. This is a one-time-per-user cost at most.
+  // 3. Ensure preferences exist. Upsert (not create-after-check) because
+  // NextAuth fires multiple concurrent session() calls during sign-in; the
+  // check-then-create above raced and threw P2002 on the second concurrent
+  // call, which NextAuth surfaced as JWT_SESSION_ERROR and aborted the
+  // session.
   let preferences = (user as SelectedUser).userPreferences;
   if (!preferences) {
-    preferences = await prisma.userPreferences.create({
-      data: { userId },
+    preferences = await prisma.userPreferences.upsert({
+      where: { userId },
+      create: { userId },
+      update: {},
     });
   }
 

@@ -3839,7 +3839,11 @@
           "entityId": "エンティティID（発行者）",
           "certificate": "X.509証明書",
           "callbackUrl": "コールバックURL",
-          "logoutUrl": "ログアウトURL（オプション）"
+          "logoutUrl": "ログアウトURL（オプション）",
+          "wantAssertionsSigned": "署名付きアサーションを要求する",
+          "wantAssertionsSignedDescription": "SAMLアサーションに署名がない応答は拒否します。これは認証されたIDを保護するため、有効にしておく必要があります。",
+          "wantAuthnResponseSigned": "署名入りの回答が必要です",
+          "wantAuthnResponseSignedDescription": "また、外部のSAMLレスポンスにも署名が必要です。ほとんどのIDプロバイダーはアサーションのみに署名するため、IDプロバイダーがレスポンスに署名しない限り、この設定は省略してください。"
         },
         "userProvisioning": {
           "title": "ユーザープロビジョニング",

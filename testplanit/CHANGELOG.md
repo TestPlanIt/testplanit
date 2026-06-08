@@ -1,3 +1,9 @@
+## [0.36.4](https://github.com/TestPlanIt/testplanit/compare/v0.36.3...v0.36.4) (2026-06-08)
+
+### Bug Fixes
+
+* **saml:** support standard IdP configurations and harden the SSO completion flow ([#413](https://github.com/TestPlanIt/testplanit/issues/413)) ([50e0cd6](https://github.com/TestPlanIt/testplanit/commit/50e0cd68c0b8977d3b27cd24816d14a07a6c2a74))
+
 ## [0.36.3](https://github.com/TestPlanIt/testplanit/compare/v0.36.2...v0.36.3) (2026-06-08)
 
 ### Bug Fixes

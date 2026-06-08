@@ -8,6 +8,10 @@ on:
       - 'testplanit/**'
       - '!testplanit/CHANGELOG.md'
       - '.github/workflows/semantic-release.yml'
+  # Manual trigger: runs against the current main HEAD, so a release can be cut
+  # when a push-triggered run was skipped (e.g. raced "behind remote" by a
+  # concurrent [skip ci] commit).
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -19,8 +23,8 @@ jobs:
   release:
     name: Release
     runs-on: [self-hosted]
-    # Skip release commits
-    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    # Skip release commits on push; manual dispatch always runs.
+    if: ${{ github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip ci]') }}
     env:
       NODE_OPTIONS: "--max-old-space-size=6144"
     steps:
@@ -53,49 +57,22 @@ jobs:
           GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
         run: |
           cd testplanit
-          npx semantic-release 2>&1 | tee release-output.txt
-          # Extract the version if a release was made
-          # Try multiple patterns to handle different semantic-release output formats
-          VERSION=""
-          # Early exit: if semantic-release explicitly says no release, skip version extraction
-          if grep -q "no relevant changes, so no new version is released" release-output.txt; then
-            echo "No release detected (semantic-release found no relevant changes)"
-            echo "released=false" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          # Pattern 1: "Published release X.Y.Z" (semantic-release <v24)
-          if grep -q "Published release" release-output.txt; then
-            VERSION=$(grep "Published release" release-output.txt | sed -E 's/.*([0-9]+\.[0-9]+\.[0-9]+).*/\1/' | head -1)
-          fi
-          # Pattern 2: "Created release X.Y.Z" or "Published GitHub release: X.Y.Z"
-          if [ -z "$VERSION" ] && grep -qE "(Created release|Published GitHub release)" release-output.txt; then
-            VERSION=$(grep -E "(Created release|Published GitHub release)" release-output.txt | sed -E 's/.*([0-9]+\.[0-9]+\.[0-9]+).*/\1/' | head -1)
-          fi
-          # Pattern 3: Look for "next release version is X.Y.Z" from semantic-release
-          if [ -z "$VERSION" ] && grep -qE "next release version is [0-9]+\.[0-9]+\.[0-9]+" release-output.txt; then
-            VERSION=$(grep -oE "next release version is [0-9]+\.[0-9]+\.[0-9]+" release-output.txt | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-          fi
-          # Pattern 4: Check the git tag that was just created
-          if [ -z "$VERSION" ]; then
-            LATEST_TAG=$(git tag -l 'v*.*.*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
-            PREV_TAG=$(git tag -l 'v*.*.*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -2 | tail -1)
-            if [ "$LATEST_TAG" != "$PREV_TAG" ] && [ -n "$LATEST_TAG" ]; then
-              # A new tag was created during this run
-              TAG_COMMIT=$(git rev-list -n 1 "$LATEST_TAG" 2>/dev/null)
-              HEAD_COMMIT=$(git rev-parse HEAD 2>/dev/null)
-              if [ "$TAG_COMMIT" != "$HEAD_COMMIT" ]; then
-                VERSION="${LATEST_TAG#v}"
-                echo "Detected new release tag: $LATEST_TAG"
-              fi
-            fi
-          fi
+          # Detect a genuinely new release by comparing the latest release tag
+          # before and after the run. Keying off a new tag — not parsing
+          # semantic-release's log — means a skipped publish ("no relevant
+          # changes", or "behind the remote one") leaves the tag unchanged and
+          # does NOT trigger a Docker build of an already-released version.
+          PREV_TAG=$(git tag -l 'v*.*.*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
 
-          if [ -n "$VERSION" ] && [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Detected release version: $VERSION"
-            echo "version=v${VERSION}" >> $GITHUB_OUTPUT
+          npx semantic-release
+
+          NEW_TAG=$(git tag -l 'v*.*.*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+          if [ -n "$NEW_TAG" ] && [ "$NEW_TAG" != "$PREV_TAG" ]; then
+            echo "Released new version: $NEW_TAG"
+            echo "version=$NEW_TAG" >> $GITHUB_OUTPUT
             echo "released=true" >> $GITHUB_OUTPUT
           else
-            echo "No release detected (version extraction result: '$VERSION')"
+            echo "No new release (latest tag unchanged: ${PREV_TAG:-none}); skipping Docker build"
             echo "released=false" >> $GITHUB_OUTPUT
           fi
 

@@ -3839,7 +3839,11 @@
           "entityId": "Entitäts-ID (Aussteller)",
           "certificate": "X.509-Zertifikat",
           "callbackUrl": "Callback-URL",
-          "logoutUrl": "Abmelde-URL (optional)"
+          "logoutUrl": "Abmelde-URL (optional)",
+          "wantAssertionsSigned": "Unterzeichnete Zusicherungen erforderlich",
+          "wantAssertionsSignedDescription": "Antworten, deren SAML-Assertion nicht signiert ist, werden zurückgewiesen. Dies schützt die authentifizierte Identität und sollte aktiviert bleiben.",
+          "wantAuthnResponseSigned": "Unterschriebene Antwort erforderlich",
+          "wantAuthnResponseSignedDescription": "Außerdem muss die äußere SAML-Antwort signiert werden. Die meisten Identitätsanbieter signieren nur die Assertion; lassen Sie diesen Schritt daher weg, es sei denn, Ihr Identitätsanbieter signiert die Antwort."
         },
         "userProvisioning": {
           "title": "Benutzerbereitstellung",
