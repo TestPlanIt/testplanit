@@ -35,6 +35,8 @@ async function resolveIdpInitiatedConfig(samlResponse: string) {
         entryPoint: samlConfig.entryPoint,
         cert: samlConfig.cert,
         issuer: samlConfig.issuer,
+        wantAssertionsSigned: samlConfig.wantAssertionsSigned,
+        wantAuthnResponseSigned: samlConfig.wantAuthnResponseSigned,
       });
       const profile = await validateSAMLResponse(samlClient, {
         SAMLResponse: samlResponse,
@@ -124,6 +126,8 @@ export async function POST(request: NextRequest) {
         entryPoint: found.entryPoint,
         cert: found.cert,
         issuer: found.issuer,
+        wantAssertionsSigned: found.wantAssertionsSigned,
+        wantAuthnResponseSigned: found.wantAuthnResponseSigned,
       });
 
       samlConfig = found;
@@ -194,9 +198,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Extract user attributes based on mapping
-    const attributeMapping = samlConfig.attributeMapping as any;
-    const email = profile[attributeMapping.email || "email"] as string;
+    // Extract user attributes based on mapping. attributeMapping can be {} or
+    // null (some IdPs send none), so default it and read keys null-safely.
+    const attributeMapping = (samlConfig.attributeMapping as any) ?? {};
+    const nameId = profile.nameID as string | undefined;
+    const mappedEmail = profile[attributeMapping.email || "email"] as
+      | string
+      | undefined;
+    // Accept the email carried in the NameID (Name ID format EmailAddress) when
+    // there is no email attribute statement — a common IdP setup (e.g. Okta's
+    // default). Only treat the NameID as an email when it actually looks like
+    // one, since NameID is non-email in other configurations.
+    const email =
+      mappedEmail || (nameId && nameId.includes("@") ? nameId : undefined);
     const externalId = (profile[attributeMapping.id || "nameID"] ||
       profile.nameID) as string;
 
@@ -211,20 +225,22 @@ export async function POST(request: NextRequest) {
       | string
       | undefined;
 
-    // Construct full name from available fields
+    // Guard before any use of email (name fallback, user lookup, provisioning).
+    if (!email) {
+      return NextResponse.json(
+        { error: "Email not found in SAML response" },
+        { status: 400 }
+      );
+    }
+
+    // Construct full name from available fields, falling back to the email
+    // local-part only once we know an email is present.
     let name = displayName;
     if (!name && (firstName || lastName)) {
       name = [firstName, lastName].filter(Boolean).join(" ");
     }
     if (!name) {
       name = email.split("@")[0];
-    }
-
-    if (!email) {
-      return NextResponse.json(
-        { error: "Email not found in SAML response" },
-        { status: 400 }
-      );
     }
 
     // Check if user exists
@@ -324,6 +340,14 @@ export async function POST(request: NextRequest) {
         updates.authMethod = "BOTH";
       }
 
+      // Authentication through SAML satisfies email verification — the IdP
+      // already asserted control of the address. Without this, an existing
+      // user whose emailVerified is null gets trapped in the verify-email
+      // gate even though they just proved control via the IdP.
+      if (!user.emailVerified) {
+        updates.emailVerified = new Date();
+      }
+
       if (Object.keys(updates).length > 0) {
         await db.user.update({
           where: { id: user.id },
@@ -360,11 +384,15 @@ export async function POST(request: NextRequest) {
 
     // Hand off to the completion route, which verifies the token and mints the
     // NextAuth session cookie before redirecting to the final destination.
+    // Use 303 See Other so the IdP's POST does not get re-POSTed to /complete
+    // (which only exports GET) — without this the browser would re-POST and
+    // hit 405. NextResponse.redirect() defaults to 307, preserving method.
     const response = NextResponse.redirect(
       new URL(
         `/api/auth/saml/complete?token=${tempToken}&callbackUrl=${encodeURIComponent(callbackUrl)}`,
         getAppBaseUrl(request)
-      )
+      ),
+      303
     );
 
     // Set security headers

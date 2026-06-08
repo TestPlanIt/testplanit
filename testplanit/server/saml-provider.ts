@@ -145,8 +145,12 @@ export async function createSAMLClient(config: SAMLConfig) {
     decryptionPvk: config.decryptionPvk,
     signatureAlgorithm: config.signatureAlgorithm,
     digestAlgorithm: config.digestAlgorithm,
-    wantAssertionsSigned: config.wantAssertionsSigned,
-    wantAuthnResponseSigned: config.wantAuthnResponseSigned,
+    // node-saml defaults both of these to true. We keep the assertion signature
+    // mandatory but relax the outer response signature, since most IdPs (Okta's
+    // default included) sign only the assertion; a response signature is still
+    // validated when present. Either can be overridden per-provider.
+    wantAssertionsSigned: config.wantAssertionsSigned ?? true,
+    wantAuthnResponseSigned: config.wantAuthnResponseSigned ?? false,
     allowCreate: config.allowCreate,
     identifierFormat: config.identifierFormat,
     acceptedClockSkewMs: config.acceptedClockSkewMs,

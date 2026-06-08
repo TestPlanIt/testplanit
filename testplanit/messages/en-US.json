@@ -3838,7 +3838,11 @@
           "entityId": "Entity ID (Issuer)",
           "certificate": "X.509 Certificate",
           "callbackUrl": "Callback URL",
-          "logoutUrl": "Logout URL (Optional)"
+          "logoutUrl": "Logout URL (Optional)",
+          "wantAssertionsSigned": "Require signed assertions",
+          "wantAssertionsSignedDescription": "Reject responses whose SAML assertion is not signed. This protects the authenticated identity and should stay enabled.",
+          "wantAuthnResponseSigned": "Require signed response",
+          "wantAuthnResponseSignedDescription": "Also require the outer SAML response to be signed. Most identity providers sign only the assertion, so leave this off unless your IdP signs the response."
         },
         "userProvisioning": {
           "title": "User Provisioning",

@@ -328,7 +328,7 @@ export function useSuspenseCountSamlConfiguration<TArgs extends Prisma.SamlConfi
 }
 import type { Access } from '@prisma/client';
 
-export function useCheckSamlConfiguration<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: string; providerId?: string; entryPoint?: string; issuer?: string; cert?: string; callbackUrl?: string; logoutUrl?: string; autoProvisionUsers?: boolean; defaultAccess?: Access }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
+export function useCheckSamlConfiguration<TError = DefaultError>(args: { operation: PolicyCrudKind; where?: { id?: string; providerId?: string; entryPoint?: string; issuer?: string; cert?: string; callbackUrl?: string; logoutUrl?: string; wantAssertionsSigned?: boolean; wantAuthnResponseSigned?: boolean; autoProvisionUsers?: boolean; defaultAccess?: Access }; }, options?: (Omit<UseQueryOptions<boolean, TError, boolean>, 'queryKey'> & ExtraQueryOptions)) {
     const { endpoint, fetch } = getHooksContext();
     return useModelQuery<boolean, boolean, TError>('SamlConfiguration', `${endpoint}/samlConfiguration/check`, args, options, fetch);
 }

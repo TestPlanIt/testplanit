@@ -42,6 +42,8 @@ interface SamlFormData {
   cert: string;
   callbackUrl: string;
   logoutUrl: string;
+  wantAssertionsSigned: boolean;
+  wantAuthnResponseSigned: boolean;
   autoProvisionUsers: boolean;
   defaultAccess: Access;
   attributeMapping: {
@@ -79,6 +81,8 @@ export default function SAMLConfigurationPage() {
     cert: "",
     callbackUrl: "",
     logoutUrl: "",
+    wantAssertionsSigned: true,
+    wantAuthnResponseSigned: false,
     autoProvisionUsers: true,
     defaultAccess: Access.USER,
     attributeMapping: {
@@ -100,6 +104,8 @@ export default function SAMLConfigurationPage() {
         cert: samlConfig.cert,
         callbackUrl: samlConfig.callbackUrl,
         logoutUrl: samlConfig.logoutUrl || "",
+        wantAssertionsSigned: samlConfig.wantAssertionsSigned ?? true,
+        wantAuthnResponseSigned: samlConfig.wantAuthnResponseSigned ?? false,
         autoProvisionUsers: samlConfig.autoProvisionUsers,
         defaultAccess: samlConfig.defaultAccess || Access.USER,
         attributeMapping: {
@@ -156,6 +162,8 @@ export default function SAMLConfigurationPage() {
         cert: formData.cert,
         callbackUrl: formData.callbackUrl,
         logoutUrl: formData.logoutUrl || null,
+        wantAssertionsSigned: formData.wantAssertionsSigned,
+        wantAuthnResponseSigned: formData.wantAuthnResponseSigned,
         autoProvisionUsers: formData.autoProvisionUsers,
         defaultAccess: formData.defaultAccess,
         attributeMapping: formData.attributeMapping,
@@ -285,6 +293,53 @@ export default function SAMLConfigurationPage() {
                 }
                 placeholder="https://idp.example.com/logout"
               />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="wantAssertionsSigned"
+                  checked={formData.wantAssertionsSigned}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, wantAssertionsSigned: checked })
+                  }
+                />
+                <Label htmlFor="wantAssertionsSigned">
+                  {t(
+                    "admin.sso.samlConfiguration.samlSettings.wantAssertionsSigned"
+                  )}
+                </Label>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {t(
+                  "admin.sso.samlConfiguration.samlSettings.wantAssertionsSignedDescription"
+                )}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="wantAuthnResponseSigned"
+                  checked={formData.wantAuthnResponseSigned}
+                  onCheckedChange={(checked) =>
+                    setFormData({
+                      ...formData,
+                      wantAuthnResponseSigned: checked,
+                    })
+                  }
+                />
+                <Label htmlFor="wantAuthnResponseSigned">
+                  {t(
+                    "admin.sso.samlConfiguration.samlSettings.wantAuthnResponseSigned"
+                  )}
+                </Label>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {t(
+                  "admin.sso.samlConfiguration.samlSettings.wantAuthnResponseSignedDescription"
+                )}
+              </p>
             </div>
           </CardContent>
         </Card>
