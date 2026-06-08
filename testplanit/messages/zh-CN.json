@@ -458,6 +458,7 @@
         "title": "完成测试运行",
         "description": "您确定要完成此次测试运行吗？",
         "warning": "测试运行完成后将无法修改。",
+        "completing": "完成……",
         "apple": {
           "title": "配置 Apple 登录",
           "description": "设置您的 Apple 登录凭证。您可以从 Apple 开发者门户获取这些凭证。",

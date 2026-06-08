@@ -458,6 +458,7 @@
         "title": "Essai complet",
         "description": "Êtes-vous sûr de vouloir effectuer cet essai ?",
         "warning": "Une fois terminé, l'essai ne pourra plus être modifié.",
+        "completing": "Terminé...",
         "apple": {
           "title": "Configurer la connexion Apple",
           "description": "Configurez vos identifiants de connexion Apple. Vous pouvez les obtenir sur le portail développeur Apple.",

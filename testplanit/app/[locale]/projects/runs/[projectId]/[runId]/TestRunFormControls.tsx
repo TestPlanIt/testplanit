@@ -3,6 +3,7 @@ import {
   AttachmentsDisplay,
 } from "@/components/AttachmentsDisplay";
 import { ConfigurationNameDisplay } from "@/components/ConfigurationNameDisplay";
+import { CreationInfo } from "@/components/CreationInfo";
 import DynamicIcon from "@/components/DynamicIcon";
 import { ConfigurationSelect } from "@/components/forms/ConfigurationSelect";
 import { MilestoneSelect } from "@/components/forms/MilestoneSelect";
@@ -10,7 +11,6 @@ import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { ManageTags } from "@/components/ManageTags";
 import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
 import { TagsDisplay } from "@/components/tables/TagDisplay";
-import { UserNameCell } from "@/components/tables/UserNameCell";
 import {
   FormControl,
   FormField,
@@ -457,10 +457,11 @@ function TestRunFormControls({
       />
       {/* Created By - only shown in view mode */}
       {!isEditMode && (
-        <div className="w-fit space-y-2">
-          <FormLabel>{t("common.fields.createdBy")}</FormLabel>
-          <UserNameCell userId={testRun?.createdBy.id} hideLink={false} />
-        </div>
+        <CreationInfo
+          userId={testRun?.createdBy.id}
+          createdAt={testRun?.createdAt}
+          className="w-fit"
+        />
       )}
     </div>
   );

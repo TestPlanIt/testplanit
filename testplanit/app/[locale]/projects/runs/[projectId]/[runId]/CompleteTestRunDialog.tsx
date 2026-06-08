@@ -24,7 +24,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { format } from "date-fns";
-import { CalendarIcon, CircleCheckBig, TriangleAlert } from "lucide-react";
+import {
+  CalendarIcon,
+  CircleCheckBig,
+  Loader2,
+  TriangleAlert,
+} from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import React, { useEffect, useState } from "react";
@@ -55,15 +60,7 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  const { mutate: updateTestRun } = useUpdateTestRuns({
-    onSuccess: () => {
-      const event = new CustomEvent("testRunCompleted", {
-        detail: testRunId,
-      });
-      window.dispatchEvent(event);
-      onClose();
-    },
-  });
+  const { mutateAsync: updateTestRun } = useUpdateTestRuns();
 
   const { data: workflows } = useFindManyWorkflows({
     where: {
@@ -116,6 +113,11 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
           stateId: selectedStateId,
         },
       });
+      const event = new CustomEvent("testRunCompleted", {
+        detail: testRunId,
+      });
+      window.dispatchEvent(event);
+      onClose();
     } catch (error) {
       console.error("Error completing test run:", error);
     } finally {
@@ -229,7 +231,10 @@ const CompleteTestRunDialog: React.FC<CompleteTestRunDialogProps> = ({
             onClick={handleComplete}
             disabled={isSubmitting || !stateTransitionCheck.allowed}
           >
-            {t("common.dialogs.complete.title")}
+            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            {isSubmitting
+              ? t("common.dialogs.complete.completing")
+              : t("common.dialogs.complete.title")}
           </Button>
         </DialogFooter>
       </DialogContent>

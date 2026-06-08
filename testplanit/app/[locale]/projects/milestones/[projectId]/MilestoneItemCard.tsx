@@ -218,20 +218,12 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
                     </DropdownMenuItem>
                   )}
                   {milestone.isStarted && !milestone.isCompleted && (
-                    <>
-                      <DropdownMenuItem
-                        onSelect={() => onOpenCompleteDialog(milestone)}
-                      >
-                        <CheckCircle className="w-5 h-5 mr-2" />
-                        {tGlobal("common.actions.complete")}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onSelect={() => onStopMilestone(milestone)}
-                      >
-                        <StopCircle className="w-5 h-5 mr-2" />
-                        {t("status.stop")}
-                      </DropdownMenuItem>
-                    </>
+                    <DropdownMenuItem
+                      onSelect={() => onStopMilestone(milestone)}
+                    >
+                      <StopCircle className="w-5 h-5 mr-2" />
+                      {t("status.stop")}
+                    </DropdownMenuItem>
                   )}
                   {milestone.isCompleted && (
                     <DropdownMenuItem
@@ -248,6 +240,14 @@ const MilestoneItemCard: React.FC<MilestoneItemCardProps> = ({
                       {tCommon("actions.edit")}
                     </div>
                   </DropdownMenuItem>
+                  {milestone.isStarted && !milestone.isCompleted && (
+                    <DropdownMenuItem
+                      onSelect={() => onOpenCompleteDialog(milestone)}
+                    >
+                      <CheckCircle className="w-5 h-5 mr-2" />
+                      {tGlobal("common.actions.complete")}
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem
                     onSelect={() => onOpenDeleteModal(milestone)}
                     className="text-destructive hover:text-destructive-foreground"
