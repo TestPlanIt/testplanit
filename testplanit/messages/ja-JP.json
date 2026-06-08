@@ -458,6 +458,7 @@
         "title": "完全なテスト実行",
         "description": "このテスト実行を完了してもよろしいですか?",
         "warning": "完了すると、テスト実行を変更できなくなります。",
+        "completing": "完了中...",
         "apple": {
           "title": "Appleサインインを設定する",
           "description": "Apple サインイン認証情報を設定します。これらは Apple Developer Portal から取得できます。",

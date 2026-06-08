@@ -458,6 +458,7 @@
         "title": "Teste completo",
         "description": "Tem certeza de que deseja concluir este teste?",
         "warning": "Uma vez concluído, o teste não poderá ser modificado.",
+        "completing": "Concluindo...",
         "apple": {
           "title": "Configurar o início de sessão da Apple",
           "description": "Configure suas credenciais de início de sessão da Apple. Você pode obtê-las no Portal do Desenvolvedor da Apple.",

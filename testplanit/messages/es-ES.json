@@ -458,6 +458,7 @@
         "title": "Completar prueba",
         "description": "¿Estás seguro de que quieres completar esta ejecución de prueba?",
         "warning": "Una vez completado, la ejecución de la prueba no podrá ser modificada.",
+        "completing": "Completando...",
         "apple": {
           "title": "Configurar el inicio de sesión de Apple",
           "description": "Configura tus credenciales de inicio de sesión de Apple. Puedes obtenerlas en el Portal para desarrolladores de Apple.",

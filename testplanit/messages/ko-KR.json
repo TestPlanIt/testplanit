@@ -458,6 +458,7 @@
         "title": "전체 테스트 실행",
         "description": "이 테스트를 완료하시겠습니까?",
         "warning": "테스트 실행이 완료되면 수정할 수 없습니다.",
+        "completing": "완료 중...",
         "apple": {
           "title": "Apple 로그인 설정",
           "description": "Apple Sign In 자격 증명을 설정하세요. 이 자격 증명은 Apple 개발자 포털에서 얻을 수 있습니다.",

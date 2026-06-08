@@ -458,6 +458,7 @@
         "title": "完成測試運行",
         "description": "您確定要完成此測試運行嗎？",
         "warning": "測試運行完成後將無法修改。",
+        "completing": "完成…",
         "apple": {
           "title": "配置 Apple 登入",
           "description": "設定您的 Apple 登入憑證。您可以從 Apple 開發者入口網站取得這些憑證。",

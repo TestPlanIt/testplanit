@@ -458,6 +458,7 @@
         "title": "Pełny przebieg testu",
         "description": "Czy na pewno chcesz ukończyć ten test?",
         "warning": "Po zakończeniu testu nie będzie można go modyfikować.",
+        "completing": "Zakończenie...",
         "apple": {
           "title": "Skonfiguruj logowanie Apple",
           "description": "Skonfiguruj swoje dane logowania Apple. Możesz je uzyskać w Portalu dla programistów Apple.",

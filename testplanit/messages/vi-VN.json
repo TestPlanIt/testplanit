@@ -458,6 +458,7 @@
         "title": "Chạy thử nghiệm hoàn tất",
         "description": "Bạn có chắc chắn muốn hoàn thành lần chạy thử này không?",
         "warning": "Sau khi hoàn tất, kết quả chạy thử nghiệm sẽ không thể chỉnh sửa được nữa.",
+        "completing": "Đang hoàn tất...",
         "apple": {
           "title": "Cấu hình đăng nhập Apple",
           "description": "Thiết lập thông tin đăng nhập Apple của bạn. Bạn có thể lấy thông tin này từ Cổng thông tin dành cho nhà phát triển của Apple.",

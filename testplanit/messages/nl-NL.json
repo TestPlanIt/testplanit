@@ -458,6 +458,7 @@
         "title": "Volledige testrun",
         "description": "Weet u zeker dat u deze testrun wilt voltooien?",
         "warning": "Nadat de testrun is voltooid, kan deze niet meer worden gewijzigd.",
+        "completing": "Bezig met voltooien...",
         "apple": {
           "title": "Apple Sign In configureren",
           "description": "Stel uw Apple Sign In-gegevens in. U kunt deze verkrijgen via de Apple Developer Portal.",
