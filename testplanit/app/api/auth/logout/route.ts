@@ -93,6 +93,9 @@ export const POST = withAuditContext(async (request: NextRequest) => {
             entryPoint: samlProvider.samlConfig.entryPoint,
             cert: samlProvider.samlConfig.cert,
             issuer: samlProvider.samlConfig.issuer,
+            wantAssertionsSigned: samlProvider.samlConfig.wantAssertionsSigned,
+            wantAuthnResponseSigned:
+              samlProvider.samlConfig.wantAuthnResponseSigned,
           });
 
           // Generate SAML logout request

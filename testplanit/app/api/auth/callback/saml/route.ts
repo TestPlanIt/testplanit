@@ -35,6 +35,8 @@ async function resolveIdpInitiatedConfig(samlResponse: string) {
         entryPoint: samlConfig.entryPoint,
         cert: samlConfig.cert,
         issuer: samlConfig.issuer,
+        wantAssertionsSigned: samlConfig.wantAssertionsSigned,
+        wantAuthnResponseSigned: samlConfig.wantAuthnResponseSigned,
       });
       const profile = await validateSAMLResponse(samlClient, {
         SAMLResponse: samlResponse,
@@ -124,6 +126,8 @@ export async function POST(request: NextRequest) {
         entryPoint: found.entryPoint,
         cert: found.cert,
         issuer: found.issuer,
+        wantAssertionsSigned: found.wantAssertionsSigned,
+        wantAuthnResponseSigned: found.wantAuthnResponseSigned,
       });
 
       samlConfig = found;

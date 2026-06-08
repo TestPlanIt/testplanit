@@ -59,6 +59,8 @@ export async function GET(request: NextRequest) {
       entryPoint: samlConfig.entryPoint,
       cert: samlConfig.cert,
       issuer: samlConfig.issuer,
+      wantAssertionsSigned: samlConfig.wantAssertionsSigned,
+      wantAuthnResponseSigned: samlConfig.wantAuthnResponseSigned,
     });
 
     // Carry the provider and post-login destination in RelayState. The IdP
