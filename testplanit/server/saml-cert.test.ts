@@ -85,7 +85,7 @@ describe("normalizeSamlCertForClient", () => {
   });
 
   it("returns non-base64 input unchanged", () => {
-    const garbage = "not a cert";
+    const garbage = "this is definitely not a certificate!!!";
     expect(normalizeSamlCertForClient(garbage)).toBe(garbage);
   });
 });
@@ -104,9 +104,11 @@ describe("createSAMLClient cert handling", () => {
     // getKeyInfosAsPem() runs the same node-saml code path
     // (keyInfoToPem) that threw "not in PEM format or in base64 format" on the
     // mangled input. It now resolves to a single canonical PEM.
-    const pems = await (client as unknown as {
-      getKeyInfosAsPem: () => Promise<string[]>;
-    }).getKeyInfosAsPem();
+    const pems = await (
+      client as unknown as {
+        getKeyInfosAsPem: () => Promise<string[]>;
+      }
+    ).getKeyInfosAsPem();
     expect(pems).toHaveLength(1);
     expect(pems[0]).toContain("-----BEGIN CERTIFICATE-----");
     expect(pems[0]).toContain("-----END CERTIFICATE-----");
@@ -119,9 +121,11 @@ describe("createSAMLClient cert handling", () => {
       idpCert: mangled,
     });
     await expect(
-      (raw as unknown as {
-        getKeyInfosAsPem: () => Promise<string[]>;
-      }).getKeyInfosAsPem()
+      (
+        raw as unknown as {
+          getKeyInfosAsPem: () => Promise<string[]>;
+        }
+      ).getKeyInfosAsPem()
     ).rejects.toThrow(/PEM format or in base64 format/);
   });
 });
