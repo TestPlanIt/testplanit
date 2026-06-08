@@ -22,7 +22,7 @@ import { createSAMLClient, validateSAMLResponse } from "~/server/saml-provider";
  * validation pick the config: the assertion only validates against the cert of
  * the IdP that actually issued it. Returns null if none validate it.
  */
-async function resolveIdpInitiatedConfig(samlResponse: FormDataEntryValue) {
+async function resolveIdpInitiatedConfig(samlResponse: string) {
   const configs = await db.samlConfiguration.findMany({
     where: { provider: { enabled: true } },
     include: { provider: true },
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
     const samlResponse = formData.get("SAMLResponse");
     const relayState = formData.get("RelayState");
 
-    if (!samlResponse) {
+    if (!samlResponse || typeof samlResponse !== "string") {
       return NextResponse.json(
         { error: "SAML response is required" },
         { status: 400 }

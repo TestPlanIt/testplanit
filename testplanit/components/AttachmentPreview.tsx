@@ -278,7 +278,8 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
 
       return (
         <div
-          className={`w-fit border-2 border-primary/50 rounded-lg p-4 max-h-[650px] max-w-[${width}px] overflow-auto prose prose-sm dark:prose-invert bg-background`}
+          className="w-fit border-2 border-primary/50 rounded-lg p-4 max-h-[650px] overflow-auto prose prose-sm dark:prose-invert bg-background"
+          style={{ maxWidth: `${width}px` }}
         >
           <Markdown components={markdownComponents}>{textContent}</Markdown>
         </div>
@@ -287,7 +288,8 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
 
     return (
       <pre
-        className={`w-fit border-2 border-primary/50 rounded-lg p-2 max-h-[650px] max-w-[${width}px] overflow-auto`}
+        className="w-fit border-2 border-primary/50 rounded-lg p-2 max-h-[650px] overflow-auto"
+        style={{ maxWidth: `${width}px` }}
       >
         {textContent || attachment.name}
       </pre>
@@ -298,7 +300,8 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
       <video
         src={fileURL}
         controls
-        className={`w-full h-${height} max-h-full rounded-lg`}
+        className="w-full max-h-full rounded-lg"
+        style={{ height: `${height}px` }}
       />
     );
   } else if (fileType.startsWith("audio/")) {
@@ -307,7 +310,8 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({
       <audio
         src={fileURL}
         controls
-        className={`min-h-[50px] w-${width} rounded-lg`}
+        className="min-h-[50px] rounded-lg"
+        style={{ width: `${width}px` }}
       />
     );
   } else {
