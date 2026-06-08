@@ -1743,7 +1743,9 @@ describe("ZenStack chokepoint SamlConfiguration cert normalization", () => {
 
   async function forwardedBody(): Promise<any> {
     expect(baseHandlerMock).toHaveBeenCalled();
-    const forwardedReq = baseHandlerMock.mock.calls[0][0] as Request;
+    const forwardedReq = (
+      baseHandlerMock.mock.calls[0] as unknown[]
+    )[0] as Request;
     return JSON.parse(await forwardedReq.text());
   }
 
