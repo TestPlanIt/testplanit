@@ -44,6 +44,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { hashToken } from "~/lib/api-tokens";
 import { extractBearerToken } from "~/lib/api-token-auth";
+import { updateAuditContext } from "~/lib/auditContext";
 import { prisma } from "~/lib/prisma";
 import { scimError } from "~/lib/scim/errors";
 import {
@@ -205,6 +206,14 @@ export async function requireScimBearer(
         console.error("[scim/auth] Failed to update lastUsedAt:", err);
       });
   }
+
+  // Stamp the authenticating token id onto the ALS audit frame so that
+  // captureAuditEvent() — called by the SCIM service layer mid-transaction
+  // — derives metadata.source === "scim" and hand-stamps metadata.scimTokenId
+  // on every audit row this request produces. Without this, SCIM-driven User
+  // and Groups mutations write AuditLog rows with no source/scimTokenId,
+  // making them invisible to the /admin/scim conflict-log query.
+  updateAuditContext({ scimTokenId: row.id });
 
   return { tokenId: row.id, systemUserId: row.systemUserId };
 }

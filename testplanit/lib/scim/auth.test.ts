@@ -238,6 +238,29 @@ describe("requireScimBearer", () => {
     expect(prisma.scimToken.updateMany).not.toHaveBeenCalled();
   });
 
+  it("stamps scimTokenId onto the ALS audit frame so captureAuditEvent derives metadata.source=scim", async () => {
+    const { runWithAuditContext, getAuditContext } = await import(
+      "~/lib/auditContext"
+    );
+
+    vi.mocked(prisma.scimToken.findUnique).mockResolvedValueOnce({
+      id: "tk_audit_frame",
+      systemUserId: "system-scim-user",
+      isActive: true,
+      expiresAt: null,
+      revokedAt: null,
+      lastUsedAt: new Date(Date.now() - 30_000),
+    } as never);
+
+    let frameDuringAuth: { scimTokenId?: string } | undefined;
+    await runWithAuditContext({ requestId: "req_test" }, async () => {
+      await requireScimBearer(req("Bearer tps_audit_frame_token_value"));
+      frameDuringAuth = getAuditContext();
+    });
+
+    expect(frameDuringAuth?.scimTokenId).toBe("tk_audit_frame");
+  });
+
   it("fires the throttled updateMany when lastUsedAt is older than the throttle window", async () => {
     vi.mocked(prisma.scimToken.findUnique).mockResolvedValueOnce({
       id: "tk_stale",
