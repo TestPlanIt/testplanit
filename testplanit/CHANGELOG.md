@@ -1,3 +1,9 @@
+## [0.36.5](https://github.com/TestPlanIt/testplanit/compare/v0.36.4...v0.36.5) (2026-06-08)
+
+### Enhancements
+
+* **ui:** share Created By/At display and polish completion flows ([#415](https://github.com/TestPlanIt/testplanit/issues/415)) ([4f1d932](https://github.com/TestPlanIt/testplanit/commit/4f1d932df7c4ec238ae5a2e4c70aeab8e250e16e))
+
 ## [0.36.4](https://github.com/TestPlanIt/testplanit/compare/v0.36.3...v0.36.4) (2026-06-08)
 
 ### Bug Fixes
