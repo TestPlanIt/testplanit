@@ -458,6 +458,7 @@
         "title": "Esecuzione del test completo",
         "description": "Sei sicuro di voler completare questa prova?",
         "warning": "Una volta completato, il test non potrà essere modificato.",
+        "completing": "Completamento in corso...",
         "apple": {
           "title": "Configurare l'accesso Apple",
           "description": "Imposta le tue credenziali di accesso Apple. Puoi ottenerle dall'Apple Developer Portal.",

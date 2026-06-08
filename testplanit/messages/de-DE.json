@@ -458,6 +458,7 @@
         "title": "Vollständiger Testlauf",
         "description": "Sind Sie sicher, dass Sie diesen Testlauf durchführen möchten?",
         "warning": "Nach Abschluss des Testlaufs kann dieser nicht mehr verändert werden.",
+        "completing": "Wird abgeschlossen...",
         "apple": {
           "title": "Apple-Anmeldung konfigurieren",
           "description": "Richten Sie Ihre Apple-Anmeldedaten ein. Diese erhalten Sie im Apple Developer Portal.",

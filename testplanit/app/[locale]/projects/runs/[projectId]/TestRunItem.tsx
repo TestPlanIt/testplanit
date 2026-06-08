@@ -431,19 +431,6 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                       </DropdownMenuItem>
                     )}
 
-                    {showCompleteItem && (
-                      <DropdownMenuItem
-                        onSelect={(e) => {
-                          e.preventDefault(); // Prevents menu from closing
-                          setIsCompleteDialogOpen(true);
-                        }}
-                        data-testid={`testrun-complete-trigger-${testRun.id}`}
-                      >
-                        <CheckCircle className="mr-2 h-4 w-4" />
-                        {tCommon("actions.complete")}
-                      </DropdownMenuItem>
-                    )}
-
                     {showDuplicateItem && (
                       <DropdownMenuItem
                         onClick={() =>
@@ -454,6 +441,19 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
                       >
                         <Copy className="mr-2 h-4 w-4" />
                         {tCommon("actions.duplicate")}
+                      </DropdownMenuItem>
+                    )}
+
+                    {showCompleteItem && (
+                      <DropdownMenuItem
+                        onSelect={(e) => {
+                          e.preventDefault(); // Prevents menu from closing
+                          setIsCompleteDialogOpen(true);
+                        }}
+                        data-testid={`testrun-complete-trigger-${testRun.id}`}
+                      >
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        {tCommon("actions.complete")}
                       </DropdownMenuItem>
                     )}
                   </DropdownMenuGroup>

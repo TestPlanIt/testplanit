@@ -40,6 +40,7 @@ import { ConfigurationSelect } from "@/components/forms/ConfigurationSelect";
 import { AsyncCombobox } from "@/components/ui/async-combobox";
 import { AttachmentsCarousel } from "@/components/AttachmentsCarousel";
 import { AttachmentsDisplay } from "@/components/AttachmentsDisplay";
+import { CreationInfo } from "@/components/CreationInfo";
 import { DateFormatter } from "@/components/DateFormatter";
 import DynamicIcon from "@/components/DynamicIcon";
 import { ForecastDisplay } from "@/components/ForecastDisplay";
@@ -778,10 +779,11 @@ function SessionFormControls({
 
       {/* Created By - only shown in view mode */}
       {!isEditMode && (
-        <div className="w-fit space-y-2">
-          <FormLabel>{tCommon("fields.createdBy")}</FormLabel>
-          <UserNameCell userId={testSession?.createdBy.id} hideLink={false} />
-        </div>
+        <CreationInfo
+          userId={testSession?.createdBy.id}
+          createdAt={testSession?.createdAt}
+          className="w-fit"
+        />
       )}
     </div>
   );

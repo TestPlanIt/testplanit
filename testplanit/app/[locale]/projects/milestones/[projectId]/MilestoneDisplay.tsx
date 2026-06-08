@@ -1,4 +1,5 @@
 import { Loading } from "@/components/Loading";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import React, { useEffect, useState } from "react";
@@ -39,6 +40,7 @@ const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
   });
   const { mutateAsync: updateMilestones } = useUpdateMilestones();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [colorMap, setColorMap] = useState<ColorMap | null>(null);
   const [selectedMilestoneForAction, setSelectedMilestoneForAction] =
@@ -180,6 +182,10 @@ const MilestoneDisplay: React.FC<MilestoneDisplayProps> = ({
           milestoneToComplete={selectedMilestoneForAction}
           onCompleteSuccess={() => {
             setSelectedMilestoneForAction(null);
+            void queryClient.invalidateQueries({
+              predicate: (query) =>
+                JSON.stringify(query.queryKey).includes("Milestones"),
+            });
             router.refresh();
           }}
         />

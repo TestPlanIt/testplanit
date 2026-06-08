@@ -3,11 +3,10 @@ import {
   AttachmentChanges,
   AttachmentsDisplay,
 } from "@/components/AttachmentsDisplay";
-import { DateFormatter } from "@/components/DateFormatter";
+import { CreationInfo } from "@/components/CreationInfo";
 import { DurationDisplay } from "@/components/DurationDisplay";
 import { UnifiedIssueManager } from "@/components/issues/UnifiedIssueManager";
 import { ManageTags } from "@/components/ManageTags";
-import { UserDisplay } from "@/components/search/UserDisplay";
 import { IssuesDisplay } from "@/components/tables/IssuesDisplay";
 import { TagsDisplay } from "@/components/tables/TagDisplay";
 import { Badge } from "@/components/ui/badge";
@@ -384,38 +383,10 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
               !isSubmitting &&
               (testcase.creator || testcase.createdAt) && (
                 <li className="mt-3">
-                  <div className="space-y-2 w-full">
-                    {testcase.creator && (
-                      <div className="flex items-center gap-2 min-w-0 w-full">
-                        <UserDisplay
-                          userId={testcase.creator.id}
-                          userName={testcase.creator.name}
-                          userImage={testcase.creator.image}
-                          prefix={t("common.fields.createdBy")}
-                          size="large"
-                        />
-                      </div>
-                    )}
-                    {testcase.createdAt && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0 w-full">
-                        <span className="shrink-0">
-                          {t("common.fields.createdAt")}:
-                        </span>
-                        <span className="truncate">
-                          <DateFormatter
-                            date={testcase.createdAt}
-                            formatString={
-                              (session?.user.preferences?.dateFormat ||
-                                "MM-dd-yyyy") +
-                              " " +
-                              (session?.user.preferences?.timeFormat || "HH:mm")
-                            }
-                            timezone={session?.user.preferences?.timezone}
-                          />
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                  <CreationInfo
+                    userId={testcase.creator?.id}
+                    createdAt={testcase.createdAt}
+                  />
                   <Separator
                     orientation="horizontal"
                     className="mt-4 bg-primary/30"

@@ -458,6 +458,7 @@
         "title": "Test Çalıştırması Tamamlandı",
         "description": "Bu test çalışmasını tamamlamak istediğinizden emin misiniz?",
         "warning": "Test işlemi tamamlandıktan sonra, üzerinde herhangi bir değişiklik yapılamayacaktır.",
+        "completing": "Tamamlanıyor...",
         "apple": {
           "title": "Apple Oturum Açma İşlemini Yapılandır",
           "description": "Apple oturum açma kimlik bilgilerinizi ayarlayın. Bu bilgilere Apple Geliştirici Portalı'ndan ulaşabilirsiniz.",
