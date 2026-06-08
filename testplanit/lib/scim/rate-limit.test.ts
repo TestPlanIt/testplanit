@@ -283,7 +283,8 @@ describe("checkScimTokenRateLimit", () => {
     });
 
     it("E2: result shape is the documented ScimRateLimitResult interface", async () => {
-      const result: ScimRateLimitResult = await checkScimTokenRateLimit("tk_e2");
+      const result: ScimRateLimitResult =
+        await checkScimTokenRateLimit("tk_e2");
       expect(typeof result.allowed).toBe("boolean");
       expect(typeof result.limit).toBe("number");
       expect(typeof result.remaining).toBe("number");

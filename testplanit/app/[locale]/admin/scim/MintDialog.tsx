@@ -2,13 +2,7 @@
 
 import { standardSchemaResolver } from "@hookform/resolvers/standard-schema";
 import { format } from "date-fns";
-import {
-  CalendarIcon,
-  Check,
-  Copy,
-  Loader2,
-  ShieldAlert,
-} from "lucide-react";
+import { CalendarIcon, Check, Copy, Loader2, ShieldAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -89,11 +83,7 @@ function computeExpiresAt(
   }
 }
 
-export function MintDialog({
-  open,
-  onOpenChange,
-  onSuccess,
-}: MintDialogProps) {
+export function MintDialog({ open, onOpenChange, onSuccess }: MintDialogProps) {
   const t = useTranslations("admin.scim.mint");
   const tReveal = useTranslations("admin.scim.reveal");
   const tCommon = useTranslations("common");
@@ -290,7 +280,10 @@ export function MintDialog({
             </Alert>
 
             <div className="space-y-2">
-              <Label className="sr-only" htmlFor="scim-mint-dialog-reveal-token">
+              <Label
+                className="sr-only"
+                htmlFor="scim-mint-dialog-reveal-token"
+              >
                 {tReveal("tokenLabel")}
               </Label>
               <div className="flex items-center gap-2">
@@ -377,9 +370,7 @@ export function MintDialog({
                       value={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger
-                          data-testid="scim-mint-dialog-idp-select"
-                        >
+                        <SelectTrigger data-testid="scim-mint-dialog-idp-select">
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
@@ -404,15 +395,11 @@ export function MintDialog({
                   <FormItem>
                     <FormLabel>{t("expiresLabel")}</FormLabel>
                     <Select
-                      onValueChange={(v) =>
-                        field.onChange(v as ExpiresOption)
-                      }
+                      onValueChange={(v) => field.onChange(v as ExpiresOption)}
                       value={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger
-                          data-testid="scim-mint-dialog-expires-select"
-                        >
+                        <SelectTrigger data-testid="scim-mint-dialog-expires-select">
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
@@ -462,10 +449,7 @@ export function MintDialog({
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
-                        <PopoverContent
-                          className="w-auto p-0"
-                          align="start"
-                        >
+                        <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
                             mode="single"
                             selected={field.value}

@@ -105,8 +105,7 @@ describe("scim.user.* catalog entries", () => {
 
   it("all five scim.user.* entries have category 'system'", () => {
     const scimEntries = WEBHOOK_EVENT_CATALOG.filter(
-      (e) =>
-        e.name.startsWith("scim.user.") && !e.name.endsWith(".summary")
+      (e) => e.name.startsWith("scim.user.") && !e.name.endsWith(".summary")
     );
     expect(scimEntries).toHaveLength(5);
     for (const entry of scimEntries) {
@@ -196,8 +195,7 @@ describe("scim.group.* catalog entries", () => {
 
   it("all five scim.group.* entries have category 'system'", () => {
     const scimGroupEntries = WEBHOOK_EVENT_CATALOG.filter(
-      (e) =>
-        e.name.startsWith("scim.group.") && !e.name.endsWith(".summary")
+      (e) => e.name.startsWith("scim.group.") && !e.name.endsWith(".summary")
     );
     expect(scimGroupEntries).toHaveLength(5);
     for (const entry of scimGroupEntries) {
@@ -214,8 +212,7 @@ describe("scim.group.* catalog entries", () => {
 
   it("preserves existing five scim.user.* entries unchanged", () => {
     const userNames = WEBHOOK_EVENT_CATALOG.filter(
-      (e) =>
-        e.name.startsWith("scim.user.") && !e.name.endsWith(".summary")
+      (e) => e.name.startsWith("scim.user.") && !e.name.endsWith(".summary")
     ).map((e) => e.name);
     expect(userNames).toEqual([
       "scim.user.created",

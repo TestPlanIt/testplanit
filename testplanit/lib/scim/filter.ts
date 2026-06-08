@@ -42,12 +42,7 @@
 import { parse } from "scim2-parse-filter";
 
 import type { Prisma } from "@prisma/client";
-import type {
-  AndExp,
-  Compare,
-  Filter,
-  Suffix,
-} from "scim2-parse-filter";
+import type { AndExp, Compare, Filter, Suffix } from "scim2-parse-filter";
 
 /**
  * Thrown for every RFC-compliant rejection: unsupported operator,
@@ -97,9 +92,7 @@ const FILTERABLE_GROUP_ATTRS: ReadonlySet<string> = new Set([
  * unsupported operator, non-whitelisted attribute, type mismatch, or
  * upstream parse error.
  */
-export function scimFilterToPrismaWhere(
-  raw: string,
-): Prisma.UserWhereInput {
+export function scimFilterToPrismaWhere(raw: string): Prisma.UserWhereInput {
   let ast: Filter;
   try {
     ast = parse(raw);
@@ -119,9 +112,7 @@ function translate(node: Filter): Prisma.UserWhereInput {
     case "and":
       return { AND: (node as AndExp).filters.map(translate) };
     default:
-      throw new InvalidFilterError(
-        `Operator "${node.op}" not supported`,
-      );
+      throw new InvalidFilterError(`Operator "${node.op}" not supported`);
   }
 }
 
@@ -132,10 +123,14 @@ function translateEq(node: Compare): Prisma.UserWhereInput {
   switch (attr) {
     case "userName":
       return {
-        scimUserName: { equals: requireString(attr, node.compValue).toLowerCase() },
+        scimUserName: {
+          equals: requireString(attr, node.compValue).toLowerCase(),
+        },
       };
     case "externalId":
-      return { scimExternalId: { equals: requireString(attr, node.compValue) } };
+      return {
+        scimExternalId: { equals: requireString(attr, node.compValue) },
+      };
     case "active":
       return { isActive: requireBoolean(attr, node.compValue) };
     case "emails.value":
@@ -148,7 +143,9 @@ function translateEq(node: Compare): Prisma.UserWhereInput {
     case "name.givenName":
       return { scimGivenName: { equals: requireString(attr, node.compValue) } };
     case "name.familyName":
-      return { scimFamilyName: { equals: requireString(attr, node.compValue) } };
+      return {
+        scimFamilyName: { equals: requireString(attr, node.compValue) },
+      };
     /* istanbul ignore next — assertFilterable narrows the set */
     default:
       throw new InvalidFilterError(`Attribute "${attr}" not filterable`);
@@ -214,7 +211,7 @@ function requireBoolean(attr: string, value: unknown): boolean {
  * because it is an IdP-opaque identifier.
  */
 export function scimFilterToPrismaGroupWhere(
-  raw: string,
+  raw: string
 ): Prisma.GroupsWhereInput {
   let ast: Filter;
   try {
@@ -235,9 +232,7 @@ function translateGroup(node: Filter): Prisma.GroupsWhereInput {
     case "and":
       return { AND: (node as AndExp).filters.map(translateGroup) };
     default:
-      throw new InvalidFilterError(
-        `Operator "${node.op}" not supported`,
-      );
+      throw new InvalidFilterError(`Operator "${node.op}" not supported`);
   }
 }
 

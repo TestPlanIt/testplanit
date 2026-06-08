@@ -144,9 +144,7 @@ export function ConflictLogTable() {
         const top = cursorStack[cursorStack.length - 1];
         void fetchPage(top);
       } else {
-        toast.error(
-          t("reEmitError", { reason: result.error ?? "Unknown" })
-        );
+        toast.error(t("reEmitError", { reason: result.error ?? "Unknown" }));
       }
     } catch (err) {
       toast.error(
@@ -214,7 +212,10 @@ export function ConflictLogTable() {
                 : new Date(row.timestamp);
             const tsLabel = ts.toLocaleString();
             return (
-              <TableRow key={row.id} data-testid={`scim-conflict-row-${row.id}`}>
+              <TableRow
+                key={row.id}
+                data-testid={`scim-conflict-row-${row.id}`}
+              >
                 <TableCell>{tsLabel}</TableCell>
                 <TableCell data-testid={`scim-conflict-type-${row.id}`}>
                   {t(type)}

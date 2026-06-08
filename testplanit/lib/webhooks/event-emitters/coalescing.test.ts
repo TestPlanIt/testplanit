@@ -35,12 +35,12 @@ function buildFakeTx(opts: {
   }) => Promise<unknown>;
 }) {
   const findMany = vi.fn(async () => opts.configs);
-  const count = vi.fn(async ({ where }: { where: { webhookConfigId: string } }) => {
-    return opts.countByConfigId[where.webhookConfigId] ?? 0;
-  });
-  const create = vi.fn(
-    opts.createImpl ?? (async () => ({ id: "dedup_row" }))
+  const count = vi.fn(
+    async ({ where }: { where: { webhookConfigId: string } }) => {
+      return opts.countByConfigId[where.webhookConfigId] ?? 0;
+    }
   );
+  const create = vi.fn(opts.createImpl ?? (async () => ({ id: "dedup_row" })));
   return {
     tx: {
       webhookConfig: { findMany },
@@ -87,12 +87,7 @@ describe("emitWithCoalescing — below-threshold per-event emit", () => {
       configs: [{ id: "cfg_1" }],
       countByConfigId: { cfg_1: 0 },
     });
-    await emitWithCoalescing(
-      "scim.user.created",
-      basePayload,
-      tx as never,
-      {}
-    );
+    await emitWithCoalescing("scim.user.created", basePayload, tx as never, {});
     const expectedDigest = createHash("sha256")
       .update(JSON.stringify(basePayload))
       .digest("hex");
@@ -162,9 +157,7 @@ describe("emitWithCoalescing — at-threshold summary emit", () => {
         {}
       );
       const WINDOW_MS = 5 * 60 * 1000;
-      const windowStart = new Date(
-        Math.floor(fakeNow / WINDOW_MS) * WINDOW_MS
-      );
+      const windowStart = new Date(Math.floor(fakeNow / WINDOW_MS) * WINDOW_MS);
       const expectedDigest = createHash("sha256")
         .update(
           `scim.group.member_added.summary:${windowStart.toISOString()}:cfg_42`
@@ -239,7 +232,9 @@ describe("emitWithCoalescing — multiple configs, mixed thresholds", () => {
     );
     expect(emitMock).toHaveBeenCalledTimes(3);
     const eventNames = emitMock.mock.calls.map((c) => c[0]);
-    expect(eventNames.filter((n) => n === "scim.group.member_added")).toHaveLength(2);
+    expect(
+      eventNames.filter((n) => n === "scim.group.member_added")
+    ).toHaveLength(2);
     expect(
       eventNames.filter((n) => n === "scim.group.member_added.summary")
     ).toHaveLength(1);

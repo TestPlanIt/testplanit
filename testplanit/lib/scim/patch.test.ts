@@ -56,9 +56,7 @@ function makeUser(overrides: Partial<TestScimUser> = {}): TestScimUser {
   };
 }
 
-async function readBody(
-  err: unknown
-): Promise<{
+async function readBody(err: unknown): Promise<{
   status: number;
   contentType: string | null;
   body: Record<string, unknown>;
@@ -421,11 +419,7 @@ describe("applyScimPatch", () => {
         id: "g1",
         schemas: ["urn:ietf:params:scim:schemas:core:2.0:Group"],
         displayName: "Engineering",
-        members: [
-          { value: "u1091" },
-          { value: "u2042" },
-          { value: "u3094" },
-        ],
+        members: [{ value: "u1091" }, { value: "u2042" }, { value: "u3094" }],
         meta: {
           created: new Date("2026-01-01T00:00:00.000Z"),
           lastModified: new Date("2026-01-01T00:00:00.000Z"),
@@ -437,15 +431,12 @@ describe("applyScimPatch", () => {
     it("H1: Entra-shape Remove with one member (no-flag fixture) removes that member", () => {
       const fixturePath = join(
         process.cwd(),
-        "e2e/fixtures/scim/entra-patch-remove-member-no-flag.json",
+        "e2e/fixtures/scim/entra-patch-remove-member-no-flag.json"
       );
       const body = JSON.parse(readFileSync(fixturePath, "utf-8"));
 
       const current = makeGroup({
-        members: [
-          { value: "u1091" },
-          { value: "u2042" },
-        ],
+        members: [{ value: "u1091" }, { value: "u2042" }],
       });
 
       const draft = applyScimPatch(current, body);
@@ -510,9 +501,7 @@ describe("applyScimPatch", () => {
 
       const body = {
         schemas: [PATCH_OP_URN],
-        Operations: [
-          { op: "replace", path: "displayName", value: "New Name" },
-        ],
+        Operations: [{ op: "replace", path: "displayName", value: "New Name" }],
       };
 
       const draft = applyScimPatch(current, body as never);

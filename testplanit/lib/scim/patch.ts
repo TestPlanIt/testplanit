@@ -92,9 +92,9 @@ export function applyScimPatch<T>(current: T, body: ScimPatch): T {
     throw e;
   }
 
-  const preprocessed = body.Operations
-    .flatMap(rewriteEntraMembersRemove)
-    .map(coerceEntraActiveString);
+  const preprocessed = body.Operations.flatMap(rewriteEntraMembersRemove).map(
+    coerceEntraActiveString
+  );
 
   try {
     return scimPatch(
@@ -124,7 +124,7 @@ export function applyScimPatch<T>(current: T, body: ScimPatch): T {
  * cannot break out of the filter expression.
  */
 export function rewriteEntraMembersRemove(
-  op: ScimPatchOperation,
+  op: ScimPatchOperation
 ): ScimPatchOperation | ScimPatchOperation[] {
   const opLower = typeof op.op === "string" ? op.op.toLowerCase() : "";
   if (opLower !== "remove") {
@@ -141,7 +141,7 @@ export function rewriteEntraMembersRemove(
     (entry: unknown): entry is { value: string } =>
       typeof entry === "object" &&
       entry !== null &&
-      typeof (entry as { value?: unknown }).value === "string",
+      typeof (entry as { value?: unknown }).value === "string"
   );
   if (!allValid) {
     return op;

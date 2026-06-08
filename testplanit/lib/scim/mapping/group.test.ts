@@ -408,10 +408,7 @@ describe("round-trip via fixtures", () => {
 
 describe("purity discipline", () => {
   it("F1: source has no DB, no logger, no console references", () => {
-    const source = readFileSync(
-      join(__dirname, "group.ts"),
-      "utf8"
-    );
+    const source = readFileSync(join(__dirname, "group.ts"), "utf8");
     expect(source).not.toMatch(/~\/lib\/prisma/);
     expect(source).not.toMatch(/~\/lib\/services\/auditLog/);
     expect(source).not.toMatch(/~\/lib\/webhooks\//);

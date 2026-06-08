@@ -50,7 +50,8 @@ import {
 } from "~/lib/scim/constants";
 
 const BASE_URL =
-  process.env.SCIM_SMOKE_BASE_URL?.replace(/\/$/, "") ?? "http://localhost:3000";
+  process.env.SCIM_SMOKE_BASE_URL?.replace(/\/$/, "") ??
+  "http://localhost:3000";
 const ADMIN_USER_ID =
   process.env.SCIM_SMOKE_ADMIN_USER_ID ?? SCIM_SYSTEM_USER_ID;
 

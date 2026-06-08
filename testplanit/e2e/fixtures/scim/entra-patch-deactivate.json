@@ -1,8 +1,10 @@
 {
   "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
-  "Operations": [{
-    "op": "Replace",
-    "path": "active",
-    "value": "False"
-  }]
+  "Operations": [
+    {
+      "op": "Replace",
+      "path": "active",
+      "value": "False"
+    }
+  ]
 }

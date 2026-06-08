@@ -546,7 +546,7 @@ async function seedCoreData() {
   // literal string (no interpolation) and IF NOT EXISTS makes it safe to
   // re-run on every seed.
   await prisma.$executeRawUnsafe(
-    `CREATE INDEX IF NOT EXISTS "AuditLog_scim_metadata_gin" ON "AuditLog" USING GIN ("metadata" jsonb_path_ops) WHERE "metadata"->>'source' = 'scim';`,
+    `CREATE INDEX IF NOT EXISTS "AuditLog_scim_metadata_gin" ON "AuditLog" USING GIN ("metadata" jsonb_path_ops) WHERE "metadata"->>'source' = 'scim';`
   );
   console.log("Ensured partial GIN index on AuditLog.metadata for SCIM rows.");
 

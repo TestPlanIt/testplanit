@@ -17,14 +17,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const findUniqueMock = vi.fn();
 const getCachedSessionUserMock = vi.fn();
@@ -97,19 +90,21 @@ async function invoke(opts?: {
   // findUnique is called twice in the session block when authMethod is
   // INTERNAL/BOTH (passwordChangedAt + isActive) and once otherwise (isActive).
   findUniqueMock.mockReset();
-  findUniqueMock.mockImplementation(async (args: { select?: Record<string, unknown> }) => {
-    if (args?.select && "passwordChangedAt" in args.select) {
-      return opts?.freshUserPasswordChangedAt !== undefined
-        ? { passwordChangedAt: opts.freshUserPasswordChangedAt }
-        : { passwordChangedAt: null };
+  findUniqueMock.mockImplementation(
+    async (args: { select?: Record<string, unknown> }) => {
+      if (args?.select && "passwordChangedAt" in args.select) {
+        return opts?.freshUserPasswordChangedAt !== undefined
+          ? { passwordChangedAt: opts.freshUserPasswordChangedAt }
+          : { passwordChangedAt: null };
+      }
+      if (args?.select && "isActive" in args.select) {
+        return opts?.freshRow === undefined
+          ? { isActive: true }
+          : opts.freshRow;
+      }
+      return null;
     }
-    if (args?.select && "isActive" in args.select) {
-      return opts?.freshRow === undefined
-        ? { isActive: true }
-        : opts.freshRow;
-    }
-    return null;
-  });
+  );
 
   return sessionCallback({
     session: structuredClone(baseSession),

@@ -239,9 +239,8 @@ describe("requireScimBearer", () => {
   });
 
   it("stamps scimTokenId onto the ALS audit frame so captureAuditEvent derives metadata.source=scim", async () => {
-    const { runWithAuditContext, getAuditContext } = await import(
-      "~/lib/auditContext"
-    );
+    const { runWithAuditContext, getAuditContext } =
+      await import("~/lib/auditContext");
 
     vi.mocked(prisma.scimToken.findUnique).mockResolvedValueOnce({
       id: "tk_audit_frame",

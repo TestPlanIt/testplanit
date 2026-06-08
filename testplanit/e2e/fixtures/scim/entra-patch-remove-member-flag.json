@@ -1,11 +1,9 @@
 {
-    "schemas": [
-        "urn:ietf:params:scim:api:messages:2.0:PatchOp"
-    ],
-    "Operations": [
-        {
-            "op": "remove",
-            "path": "members[value eq \"7f4bc1a3-285e-48ae-8202-5accb43efb0e\"]"
-        }
-    ]
+  "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+  "Operations": [
+    {
+      "op": "remove",
+      "path": "members[value eq \"7f4bc1a3-285e-48ae-8202-5accb43efb0e\"]"
+    }
+  ]
 }

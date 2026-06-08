@@ -1,6 +1,6 @@
 {
-    "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Group"],
-    "externalId": "8aa1a0c0-c4c3-4bc0-b4a5-2ef676900159",
-    "displayName": "Test Group",
-    "members": []
+  "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Group"],
+  "externalId": "8aa1a0c0-c4c3-4bc0-b4a5-2ef676900159",
+  "displayName": "Test Group",
+  "members": []
 }

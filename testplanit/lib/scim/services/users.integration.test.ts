@@ -41,7 +41,11 @@
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { SCIM_SCHEMAS, SCIM_SYSTEM_USER_ID, SYSTEM_PROJECT_ID } from "../constants";
+import {
+  SCIM_SCHEMAS,
+  SCIM_SYSTEM_USER_ID,
+  SYSTEM_PROJECT_ID,
+} from "../constants";
 import {
   createScimUser,
   deleteScimUser,

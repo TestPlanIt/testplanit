@@ -20,19 +20,19 @@ describe("SCIM constants", () => {
 
   it("uses the RFC 7644 §3.12 Error message schema URN", () => {
     expect(SCIM_ERROR_SCHEMA_URN).toBe(
-      "urn:ietf:params:scim:api:messages:2.0:Error",
+      "urn:ietf:params:scim:api:messages:2.0:Error"
     );
   });
 
   it("uses the RFC 7644 §3.4.2 ListResponse schema URN", () => {
     expect(SCIM_LIST_RESPONSE_SCHEMA_URN).toBe(
-      "urn:ietf:params:scim:api:messages:2.0:ListResponse",
+      "urn:ietf:params:scim:api:messages:2.0:ListResponse"
     );
   });
 
   it("uses the RFC 7644 §3.5.2 PatchOp schema URN", () => {
     expect(SCIM_PATCH_OP_SCHEMA_URN).toBe(
-      "urn:ietf:params:scim:api:messages:2.0:PatchOp",
+      "urn:ietf:params:scim:api:messages:2.0:PatchOp"
     );
   });
 
@@ -50,37 +50,37 @@ describe("SCIM constants", () => {
 
     it("maps CORE_USER to the RFC 7643 §4.1 User URN", () => {
       expect(SCIM_SCHEMAS.CORE_USER).toBe(
-        "urn:ietf:params:scim:schemas:core:2.0:User",
+        "urn:ietf:params:scim:schemas:core:2.0:User"
       );
     });
 
     it("maps CORE_GROUP to the RFC 7643 §4.2 Group URN", () => {
       expect(SCIM_SCHEMAS.CORE_GROUP).toBe(
-        "urn:ietf:params:scim:schemas:core:2.0:Group",
+        "urn:ietf:params:scim:schemas:core:2.0:Group"
       );
     });
 
     it("maps ENTERPRISE_USER to the RFC 7643 §4.1.2 extension URN", () => {
       expect(SCIM_SCHEMAS.ENTERPRISE_USER).toBe(
-        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
+        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"
       );
     });
 
     it("maps SERVICE_PROVIDER_CONFIG to the RFC 7643 §6 URN", () => {
       expect(SCIM_SCHEMAS.SERVICE_PROVIDER_CONFIG).toBe(
-        "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig",
+        "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"
       );
     });
 
     it("maps RESOURCE_TYPE to the RFC 7643 §6 URN", () => {
       expect(SCIM_SCHEMAS.RESOURCE_TYPE).toBe(
-        "urn:ietf:params:scim:schemas:core:2.0:ResourceType",
+        "urn:ietf:params:scim:schemas:core:2.0:ResourceType"
       );
     });
 
     it("maps SCHEMA to the RFC 7643 §7 URN", () => {
       expect(SCIM_SCHEMAS.SCHEMA).toBe(
-        "urn:ietf:params:scim:schemas:core:2.0:Schema",
+        "urn:ietf:params:scim:schemas:core:2.0:Schema"
       );
     });
   });

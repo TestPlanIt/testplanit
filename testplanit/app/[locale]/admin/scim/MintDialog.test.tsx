@@ -7,8 +7,7 @@ import { MintDialog } from "./MintDialog";
 // Mock the server actions module — every test controls the return value.
 const mockMintScimTokenAction = vi.fn();
 vi.mock("~/app/actions/scimTokenActions", () => ({
-  mintScimTokenAction: (...args: unknown[]) =>
-    mockMintScimTokenAction(...args),
+  mintScimTokenAction: (...args: unknown[]) => mockMintScimTokenAction(...args),
 }));
 
 // Mock sonner — assert on toast.error calls in failure cases without
@@ -224,10 +223,7 @@ describe("MintDialog", () => {
     );
 
     const ue = userEvent.setup();
-    await ue.type(
-      screen.getByTestId("scim-mint-dialog-name-input"),
-      "OneShot"
-    );
+    await ue.type(screen.getByTestId("scim-mint-dialog-name-input"), "OneShot");
     await ue.click(screen.getByTestId("scim-mint-dialog-submit"));
 
     await waitFor(() => {

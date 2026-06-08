@@ -32,10 +32,7 @@
 
 import { NextResponse } from "next/server";
 
-import {
-  SCIM_CONTENT_TYPE,
-  SCIM_ERROR_SCHEMA_URN,
-} from "./constants";
+import { SCIM_CONTENT_TYPE, SCIM_ERROR_SCHEMA_URN } from "./constants";
 
 export type ScimErrorType =
   | "invalidFilter"
@@ -67,7 +64,7 @@ export type ScimErrorType =
 export function scimError(
   status: number,
   scimType: ScimErrorType,
-  detail: string,
+  detail: string
 ): NextResponse {
   const body: Record<string, unknown> = {
     schemas: [SCIM_ERROR_SCHEMA_URN],

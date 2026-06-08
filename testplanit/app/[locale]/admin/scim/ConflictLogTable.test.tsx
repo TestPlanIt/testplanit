@@ -83,9 +83,9 @@ describe("ConflictLogTable", () => {
     render(<ConflictLogTable />);
 
     await waitFor(() => {
-      expect(
-        screen.getByTestId("scim-conflict-type-a1")
-      ).toHaveTextContent(/typeLinked/);
+      expect(screen.getByTestId("scim-conflict-type-a1")).toHaveTextContent(
+        /typeLinked/
+      );
     });
     expect(screen.getByTestId("scim-conflict-type-a2")).toHaveTextContent(
       /typeResurrected/

@@ -17,10 +17,7 @@
 
 import { NextResponse } from "next/server";
 
-import {
-  SCIM_CONTENT_TYPE,
-  SCIM_LIST_RESPONSE_SCHEMA_URN,
-} from "./constants";
+import { SCIM_CONTENT_TYPE, SCIM_LIST_RESPONSE_SCHEMA_URN } from "./constants";
 
 /**
  * Base URL for SCIM resource locations.
@@ -45,7 +42,7 @@ export function scimLocation(
     | "Schemas"
     | "ResourceTypes"
     | "ServiceProviderConfig",
-  id?: string,
+  id?: string
 ): string {
   const base = getScimBaseUrl();
   return id
@@ -73,7 +70,7 @@ export function scimListResponse<T>(resources: T[]): NextResponse {
     {
       status: 200,
       headers: { "Content-Type": SCIM_CONTENT_TYPE },
-    },
+    }
   );
 }
 
@@ -83,7 +80,7 @@ export function scimListResponse<T>(resources: T[]): NextResponse {
  */
 export function scimResponse(
   body: unknown,
-  init?: { status?: number },
+  init?: { status?: number }
 ): NextResponse {
   return NextResponse.json(body, {
     status: init?.status ?? 200,

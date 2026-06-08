@@ -176,7 +176,7 @@ describe("scimConflictLogActions", () => {
     it("L7: $queryRaw failure returns generic error and does NOT leak err.message", async () => {
       mockAdminSession();
       vi.mocked(prisma.$queryRaw).mockRejectedValueOnce(
-        new Error("column \"foo\" does not exist")
+        new Error('column "foo" does not exist')
       );
 
       const result = await listScimConflictsAction({});

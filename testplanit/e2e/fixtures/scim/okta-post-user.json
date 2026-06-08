@@ -5,11 +5,13 @@
     "givenName": "Test",
     "familyName": "User"
   },
-  "emails": [{
-    "primary": true,
-    "value": "test.user@okta.local",
-    "type": "work"
-  }],
+  "emails": [
+    {
+      "primary": true,
+      "value": "test.user@okta.local",
+      "type": "work"
+    }
+  ],
   "displayName": "Test User",
   "locale": "en-US",
   "externalId": "00ujl29u0le5T6Aj10h7",

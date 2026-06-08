@@ -301,7 +301,14 @@
           "multiValued": false,
           "required": false,
           "caseExact": false,
-          "canonicalValues": ["work", "home", "mobile", "fax", "pager", "other"],
+          "canonicalValues": [
+            "work",
+            "home",
+            "mobile",
+            "fax",
+            "pager",
+            "other"
+          ],
           "mutability": "readWrite",
           "returned": "default",
           "uniqueness": "none",
@@ -359,7 +366,16 @@
           "multiValued": false,
           "required": false,
           "caseExact": false,
-          "canonicalValues": ["aim", "gtalk", "icq", "xmpp", "msn", "skype", "qq", "yahoo"],
+          "canonicalValues": [
+            "aim",
+            "gtalk",
+            "icq",
+            "xmpp",
+            "msn",
+            "skype",
+            "qq",
+            "yahoo"
+          ],
           "mutability": "readWrite",
           "returned": "default",
           "uniqueness": "none",

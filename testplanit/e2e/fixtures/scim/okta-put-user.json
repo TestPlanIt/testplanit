@@ -7,12 +7,14 @@
     "middleName": "Excited",
     "familyName": "User"
   },
-  "emails": [{
-    "primary": true,
-    "value": "test.user@okta.local",
-    "type": "work",
-    "display": "test.user@okta.local"
-  }],
+  "emails": [
+    {
+      "primary": true,
+      "value": "test.user@okta.local",
+      "type": "work",
+      "display": "test.user@okta.local"
+    }
+  ],
   "active": true,
   "groups": [],
   "meta": { "resourceType": "User" }
