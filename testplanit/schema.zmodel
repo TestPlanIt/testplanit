@@ -5011,21 +5011,21 @@ enum SsoProviderType {
 }
 
 model SamlConfiguration {
-    id                 String      @id @default(cuid())
-    providerId         String      @unique
-    provider           SsoProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
-    entryPoint         String      // SSO login URL
-    issuer             String      // SP entity ID
-    cert               String      @db.Text // IdP certificate
-    callbackUrl        String      // ACS URL
-    logoutUrl          String?     // SLO URL
-    wantAssertionsSigned    Boolean @default(true)  // Require the SAML assertion to be signed
-    wantAuthnResponseSigned Boolean @default(false) // Require the outer SAML response to be signed
-    attributeMapping   Json        // Map SAML attributes to user fields
-    autoProvisionUsers Boolean     @default(false)
-    defaultAccess      Access      @default(USER) // Default system access for auto-provisioned users
-    createdAt          DateTime    @default(now())
-    updatedAt          DateTime    @updatedAt
+    id                      String      @id @default(cuid())
+    providerId              String      @unique
+    provider                SsoProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+    entryPoint              String      // SSO login URL
+    issuer                  String      // SP entity ID
+    cert                    String      @db.Text // IdP certificate
+    callbackUrl             String      // ACS URL
+    logoutUrl               String?     // SLO URL
+    wantAssertionsSigned    Boolean     @default(true)  // Require the SAML assertion to be signed
+    wantAuthnResponseSigned Boolean     @default(false) // Require the outer SAML response to be signed
+    attributeMapping        Json        // Map SAML attributes to user fields
+    autoProvisionUsers      Boolean     @default(false)
+    defaultAccess           Access      @default(USER) // Default system access for auto-provisioned users
+    createdAt               DateTime    @default(now())
+    updatedAt               DateTime    @updatedAt
 
     // Allow everyone to read SAML configuration (needed for sign-in page)
     @@allow('read', true)

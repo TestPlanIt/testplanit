@@ -9037,6 +9037,14 @@ const metadata: ModelMeta = {
                     name: "logoutUrl",
                     type: "String",
                     isOptional: true,
+                }, wantAssertionsSigned: {
+                    name: "wantAssertionsSigned",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": true }] }],
+                }, wantAuthnResponseSigned: {
+                    name: "wantAuthnResponseSigned",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
                 }, attributeMapping: {
                     name: "attributeMapping",
                     type: "Json",
