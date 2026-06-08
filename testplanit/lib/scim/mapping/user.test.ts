@@ -344,6 +344,34 @@ describe("computeUserUpdatesFromScim", () => {
     expect(result.scimFamilyName).toBeUndefined();
   });
 
+  it("D3b: re-derives User.name when only familyName changes (UAT Step 2)", () => {
+    // Regression for the UAT-observed scenario: PATCH /Users/{id} sets a new
+    // name.familyName but preserves the now-stale name.formatted. The mapper
+    // must ignore the stale formatted and rebuild User.name from the parts.
+    const draft = makeScim({
+      name: {
+        givenName: "Alice",
+        familyName: "Smith",
+        formatted: "Alice Liddell", // STALE - matches currentScim
+      },
+    });
+    const result = computeUserUpdatesFromScim(makeScim(), draft);
+    expect(result.scimFamilyName).toBe("Smith");
+    expect(result.name).toBe("Alice Smith");
+    expect(result.scimGivenName).toBeUndefined();
+  });
+
+  it("D3c: re-derives User.name when familyName changes and formatted is absent", () => {
+    // Scenario where scim-patch produces a draft without a formatted attr at
+    // all (e.g., op:'replace' path:'name' with a partial value).
+    const draft = makeScim({
+      name: { givenName: "Alice", familyName: "Smith" },
+    });
+    const result = computeUserUpdatesFromScim(makeScim(), draft);
+    expect(result.scimFamilyName).toBe("Smith");
+    expect(result.name).toBe("Alice Smith");
+  });
+
   it("D4: re-derives User.email from primary email; falls back to emails[0]", () => {
     const draftPrimary = makeScim({
       emails: [
