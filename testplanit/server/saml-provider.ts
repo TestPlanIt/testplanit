@@ -1,6 +1,7 @@
 import { SAML } from "@node-saml/node-saml";
 import { Profile as SAML2Profile } from "@node-saml/passport-saml";
 import { OAuthConfig, OAuthUserConfig } from "next-auth/providers/oauth";
+import { normalizeSamlCertForClient } from "./saml-cert";
 
 export interface SAMLProfile extends Record<string, any> {
   id: string;
@@ -134,7 +135,11 @@ export function SAMLProvider(options: SAMLConfig): OAuthConfig<SAMLProfile> {
 export async function createSAMLClient(config: SAMLConfig) {
   const samlOptions = {
     entryPoint: config.entryPoint,
-    idpCert: config.cert, // node-saml expects idpCert not cert
+    // node-saml expects `idpCert`, not `cert`. Normalize first so a cert whose
+    // PEM newlines were collapsed to spaces on save (see ./saml-cert) is
+    // re-emitted as canonical PEM instead of being rejected as
+    // "not in PEM format or in base64 format" during response validation.
+    idpCert: normalizeSamlCertForClient(config.cert),
     issuer: config.issuer,
     privateKey: config.privateKey,
     decryptionPvk: config.decryptionPvk,
