@@ -1705,3 +1705,122 @@ describe("ZenStack chokepoint SessionResults required-field gate", () => {
     expect(baseHandlerMock).toHaveBeenCalled();
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SamlConfiguration cert normalization (defense-in-depth normalize-on-save).
+// The admin SSO form writes the IdP cert through the generated RPC hooks, so
+// this route is the universal mutation seam. A cert whose PEM newlines were
+// collapsed to spaces must be re-emitted as canonical PEM before it reaches
+// the ZenStack handler (and the DB), matching the normalize-on-use path in
+// createSAMLClient.
+// ─────────────────────────────────────────────────────────────────────────────
+describe("ZenStack chokepoint SamlConfiguration cert normalization", () => {
+  // 48 raw bytes → exactly 64 base64 chars (one PEM line).
+  const CERT_BODY = Buffer.from("x".repeat(48)).toString("base64");
+  const CANONICAL_PEM = `-----BEGIN CERTIFICATE-----\n${CERT_BODY}\n-----END CERTIFICATE-----\n`;
+  const MANGLED = `-----BEGIN CERTIFICATE----- ${CERT_BODY} -----END CERTIFICATE-----`;
+
+  function makeRequest(
+    method: string,
+    operation: string,
+    body: unknown
+  ): NextRequest {
+    const headers = new Headers();
+    headers.set("content-type", "application/json");
+    const json = JSON.stringify(body);
+    return {
+      method,
+      headers,
+      url: `http://localhost:3000/api/model/samlConfiguration/${operation}`,
+      clone() {
+        return this;
+      },
+      async text() {
+        return json;
+      },
+    } as unknown as NextRequest;
+  }
+
+  async function forwardedBody(): Promise<any> {
+    expect(baseHandlerMock).toHaveBeenCalled();
+    const forwardedReq = (
+      baseHandlerMock.mock.calls[0] as unknown[]
+    )[0] as Request;
+    return JSON.parse(await forwardedReq.text());
+  }
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    const { getServerAuthSession } = await import("~/server/auth");
+    (getServerAuthSession as any).mockResolvedValue({
+      user: { id: "user-1", email: "u@e.com", name: "U", access: "ADMIN" },
+    });
+    const { extractBearerToken } = await import("~/lib/api-token-auth");
+    (extractBearerToken as any).mockReturnValue(null);
+    const { prisma } = await import("~/lib/prisma");
+    (prisma as any).user.findUnique.mockResolvedValue({
+      id: "user-1",
+      email: "u@e.com",
+      name: "U",
+      access: "ADMIN",
+    });
+    // The audited-update path takes a best-effort before/after snapshot of the
+    // row; stub it so the test output stays clean (the value is irrelevant to
+    // the cert-normalization assertions).
+    (prisma as any).samlConfiguration = {
+      findUnique: vi.fn().mockResolvedValue(null),
+    };
+    baseHandlerMock.mockClear();
+    baseHandlerMock.mockResolvedValue(
+      new Response(JSON.stringify({ data: { id: 7 } }), { status: 200 })
+    );
+  });
+
+  it("normalizes the space-mangled cert on create before forwarding", async () => {
+    const { POST } = await import("./route");
+    const req = makeRequest("POST", "create", {
+      data: { providerId: "p1", entryPoint: "https://idp", cert: MANGLED },
+    });
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["samlConfiguration", "create"] }),
+    });
+
+    expect(res.status).toBe(200);
+    const body = await forwardedBody();
+    expect(body.data.cert).toBe(CANONICAL_PEM);
+    // Untouched fields are preserved.
+    expect(body.data.providerId).toBe("p1");
+  });
+
+  it("normalizes the cert in both branches of an upsert", async () => {
+    const { POST } = await import("./route");
+    const req = makeRequest("POST", "upsert", {
+      where: { providerId: "p1" },
+      create: { providerId: "p1", cert: MANGLED },
+      update: { cert: MANGLED },
+    });
+    const res = await POST(req, {
+      params: Promise.resolve({ path: ["samlConfiguration", "upsert"] }),
+    });
+
+    expect(res.status).toBe(200);
+    const body = await forwardedBody();
+    expect(body.create.cert).toBe(CANONICAL_PEM);
+    expect(body.update.cert).toBe(CANONICAL_PEM);
+  });
+
+  it("passes through unchanged when the write carries no cert", async () => {
+    const { PATCH } = await import("./route");
+    const req = makeRequest("PATCH", "update", {
+      where: { id: 7 },
+      data: { entryPoint: "https://idp/new" },
+    });
+    const res = await PATCH(req, {
+      params: Promise.resolve({ path: ["samlConfiguration", "update"] }),
+    });
+
+    expect(res.status).toBe(200);
+    const body = await forwardedBody();
+    expect(body.data).toEqual({ entryPoint: "https://idp/new" });
+  });
+});

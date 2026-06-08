@@ -64,12 +64,14 @@ jobs:
         run: |
           pnpm --filter "@testplanit/api" test -- --run
           pnpm --filter "@testplanit/wdio-reporter" test -- --run
+          pnpm --filter "@testplanit/playwright-reporter" test -- --run
           pnpm --filter "@testplanit/mcp-server" test -- --run
 
       - name: Build packages
         run: |
           pnpm --filter "@testplanit/api" build
           pnpm --filter "@testplanit/wdio-reporter" build
+          pnpm --filter "@testplanit/playwright-reporter" build
           pnpm --filter "@testplanit/mcp-server" build
 
       # Trusted publishing (OIDC) requires npm CLI >= 11.5.1. Node 24 ships

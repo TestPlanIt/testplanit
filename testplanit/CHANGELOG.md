@@ -1,3 +1,21 @@
+## [0.36.2](https://github.com/TestPlanIt/testplanit/compare/v0.36.1...v0.36.2) (2026-06-08)
+
+### Bug Fixes
+
+* **saml:** normalize IdP certificates whose PEM newlines were collapsed to spaces ([#411](https://github.com/TestPlanIt/testplanit/issues/411)) ([f3bf92f](https://github.com/TestPlanIt/testplanit/commit/f3bf92f078282dc3d03b46050db27e723f645668))
+
+## [0.36.1](https://github.com/TestPlanIt/testplanit/compare/v0.36.0...v0.36.1) (2026-06-07)
+
+### Bug Fixes
+
+* **attachments:** syntax-highlight markdown code blocks (QuickScript-style) ([#410](https://github.com/TestPlanIt/testplanit/issues/410)) ([02bef91](https://github.com/TestPlanIt/testplanit/commit/02bef9144721d8f499c7bec2b462dd69fef6c62d))
+
+## [0.36.0](https://github.com/TestPlanIt/testplanit/compare/v0.35.3...v0.36.0) (2026-06-06)
+
+### Features
+
+* add Playwright reporter (@testplanit/playwright-reporter) ([#408](https://github.com/TestPlanIt/testplanit/issues/408)) ([a5af9c3](https://github.com/TestPlanIt/testplanit/commit/a5af9c3be63dd5e3e2fec6d51f04860cc697a7c0))
+
 ## [0.35.3](https://github.com/TestPlanIt/testplanit/compare/v0.35.2...v0.35.3) (2026-06-05)
 
 ### Bug Fixes

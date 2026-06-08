@@ -359,6 +359,31 @@ importers:
         specifier: ^4.1.3
         version: 4.1.5(@opentelemetry/api@1.9.1)(@types/node@25.6.2)(@vitest/coverage-v8@4.1.5)(happy-dom@20.9.0)(jsdom@29.1.1(@noble/hashes@2.2.0))(msw@2.14.6(@types/node@25.6.2)(typescript@5.9.3))(vite@7.3.2(@types/node@25.6.2)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.22.3)(yaml@2.9.0))
 
+  packages/playwright-testplanit-reporter:
+    dependencies:
+      '@testplanit/api':
+        specifier: workspace:^
+        version: link:../api
+    devDependencies:
+      '@playwright/test':
+        specifier: ^1.60.0
+        version: 1.60.0
+      '@types/node':
+        specifier: ^25.6.0
+        version: 25.9.1
+      '@vitest/coverage-v8':
+        specifier: ^4.1.3
+        version: 4.1.7(vitest@4.1.7)
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(@swc/core@1.15.40(@swc/helpers@0.5.23))(jiti@2.7.0)(postcss@8.5.15)(tsx@4.22.3)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.3
+        version: 4.1.7(@opentelemetry/api@1.9.1)(@types/node@25.9.1)(@vitest/coverage-v8@4.1.7)(happy-dom@20.9.0)(jsdom@29.1.1(@noble/hashes@2.2.0))(msw@2.14.6(@types/node@25.9.1)(typescript@5.9.3))(vite@7.3.2(@types/node@25.9.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.22.3)(yaml@2.9.0))
+
   packages/wdio-testplanit-reporter:
     dependencies:
       '@testplanit/api':
@@ -33489,7 +33514,7 @@ snapshots:
 
   '@types/sax@1.2.7':
     dependencies:
-      '@types/node': 17.0.45
+      '@types/node': 25.9.1
 
   '@types/send@0.17.6':
     dependencies:
@@ -35070,7 +35095,7 @@ snapshots:
 
   bun-types@1.3.11:
     dependencies:
-      '@types/node': 25.5.0
+      '@types/node': 25.9.1
 
   bundle-name@4.1.0:
     dependencies:
