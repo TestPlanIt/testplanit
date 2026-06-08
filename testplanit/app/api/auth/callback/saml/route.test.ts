@@ -118,6 +118,12 @@ describe("POST /api/auth/callback/saml — ACS validator", () => {
       )
     ).toBe(true);
     expect(location).not.toContain("/api/auth/callback/saml?token=");
+
+    // Bug 5: status MUST be 303 (See Other), not the NextResponse.redirect()
+    // default of 307. The IdP POSTs the assertion here; 307 preserves the
+    // method, so the browser would re-POST to /complete (which only exports
+    // GET) and get 405. 303 forces the follow-up to be a GET.
+    expect(res.status).toBe(303);
   });
 
   it("rejects a replayed assertion with 400 (single-use)", async () => {
@@ -189,5 +195,205 @@ describe("POST /api/auth/callback/saml — ACS validator", () => {
     ).toBe(true);
     // Post-login destination defaults to /.
     expect(location).toContain("callbackUrl=%2F");
+  });
+
+  it("Bug 6: stamps emailVerified on existing users so they bypass the verify-email gate", async () => {
+    // A pre-existing user whose emailVerified is null was getting trapped in
+    // the verify-email flow even after a successful SAML assertion. The IdP
+    // already proved control of the email, so the gate is redundant.
+    (db.samlConfiguration.findUnique as any).mockResolvedValue({
+      id: "cfg",
+      entryPoint: "e",
+      cert: "c",
+      issuer: "i",
+      attributeMapping: {},
+      autoProvisionUsers: false,
+      provider: { name: "okta", enabled: true },
+    });
+    validateSAMLResponse.mockResolvedValue({
+      email: "dave@example.com",
+      nameID: "dave",
+    });
+    (db.user.findUnique as any).mockResolvedValue({
+      id: "user_unverified",
+      email: "dave@example.com",
+      name: "Dave",
+      authMethod: "SSO",
+      externalId: "dave",
+      emailVerified: null,
+    });
+    (db.user.update as any).mockResolvedValue({});
+    (db.account.upsert as any).mockResolvedValue({});
+
+    await POST(makeReq(relayFor("ssoprovider_x")));
+
+    expect(db.user.update).toHaveBeenCalled();
+    const updateArgs = (db.user.update as any).mock.calls[0][0];
+    expect(updateArgs.data.emailVerified).toBeInstanceOf(Date);
+  });
+
+  it("Bug 6: leaves emailVerified alone for already-verified users", async () => {
+    const verifiedAt = new Date("2024-01-01");
+    (db.samlConfiguration.findUnique as any).mockResolvedValue({
+      id: "cfg",
+      entryPoint: "e",
+      cert: "c",
+      issuer: "i",
+      attributeMapping: {},
+      autoProvisionUsers: false,
+      provider: { name: "okta", enabled: true },
+    });
+    validateSAMLResponse.mockResolvedValue({
+      email: "eve@example.com",
+      nameID: "eve",
+    });
+    (db.user.findUnique as any).mockResolvedValue({
+      id: "user_verified",
+      email: "eve@example.com",
+      name: "Eve",
+      authMethod: "SSO",
+      externalId: "eve",
+      emailVerified: verifiedAt,
+    });
+    (db.account.upsert as any).mockResolvedValue({});
+
+    await POST(makeReq(relayFor("ssoprovider_y")));
+
+    // No update call (or, if there is one for other reasons, emailVerified
+    // must not be in it).
+    const updateCalls = (db.user.update as any).mock.calls;
+    for (const [args] of updateCalls) {
+      expect(args.data.emailVerified).toBeUndefined();
+    }
+  });
+});
+
+describe("POST /api/auth/callback/saml — email resolution & guard ordering", () => {
+  const cfg = (attributeMapping: any, autoProvisionUsers = false) => ({
+    id: "cfg",
+    entryPoint: "e",
+    cert: "c",
+    issuer: "i",
+    attributeMapping,
+    autoProvisionUsers,
+    defaultAccess: "USER",
+    provider: { name: "okta", enabled: true },
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (db.samlConfiguration.findMany as any).mockResolvedValue([]);
+  });
+
+  it("resolves the email from the NameID when there is no email attribute (empty mapping)", async () => {
+    (db.samlConfiguration.findUnique as any).mockResolvedValue(cfg({}));
+    // IdP sends the email in the NameID, no email attribute statement.
+    validateSAMLResponse.mockResolvedValue({ nameID: "dave@example.com" });
+    (db.user.findUnique as any).mockResolvedValue({
+      id: "user_d",
+      email: "dave@example.com",
+      name: "Dave",
+      authMethod: "SSO",
+      externalId: "dave@example.com",
+    });
+    (db.user.update as any).mockResolvedValue({});
+    (db.account.upsert as any).mockResolvedValue({});
+
+    const res = await POST(makeReq(relayFor("ssoprovider_d")));
+
+    expect(db.user.findUnique).toHaveBeenCalledWith({
+      where: { email: "dave@example.com" },
+    });
+    // No 500/TypeError: it proceeds to the session-minting handoff.
+    expect(res.status).not.toBe(500);
+    expect(res.headers.get("location")).toContain(
+      "/api/auth/saml/complete?token="
+    );
+  });
+
+  it("returns a clean 400 (not a 500) when no email is present anywhere", async () => {
+    (db.samlConfiguration.findUnique as any).mockResolvedValue(cfg({}));
+    // No email attribute and a non-email NameID.
+    validateSAMLResponse.mockResolvedValue({ nameID: "not-an-email" });
+
+    const res = await POST(makeReq(relayFor("ssoprovider_x")));
+
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/email not found/i);
+    // The guard runs before any use of email (no lookup, no name .split crash).
+    expect(db.user.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("prefers an explicit email attribute over the NameID", async () => {
+    (db.samlConfiguration.findUnique as any).mockResolvedValue(cfg({}));
+    validateSAMLResponse.mockResolvedValue({
+      email: "erin@example.com",
+      nameID: "other@example.com",
+    });
+    (db.user.findUnique as any).mockResolvedValue({
+      id: "user_e",
+      email: "erin@example.com",
+      name: "Erin",
+      authMethod: "SSO",
+      externalId: "other@example.com",
+    });
+    (db.user.update as any).mockResolvedValue({});
+    (db.account.upsert as any).mockResolvedValue({});
+
+    await POST(makeReq(relayFor("ssoprovider_e")));
+
+    expect(db.user.findUnique).toHaveBeenCalledWith({
+      where: { email: "erin@example.com" },
+    });
+  });
+
+  it("honors a custom attributeMapping.email key", async () => {
+    (db.samlConfiguration.findUnique as any).mockResolvedValue(
+      cfg({ email: "mail" })
+    );
+    validateSAMLResponse.mockResolvedValue({
+      mail: "frank@example.com",
+      nameID: "frank",
+    });
+    (db.user.findUnique as any).mockResolvedValue({
+      id: "user_f",
+      email: "frank@example.com",
+      name: "Frank",
+      authMethod: "SSO",
+      externalId: "frank",
+    });
+    (db.user.update as any).mockResolvedValue({});
+    (db.account.upsert as any).mockResolvedValue({});
+
+    await POST(makeReq(relayFor("ssoprovider_f")));
+
+    expect(db.user.findUnique).toHaveBeenCalledWith({
+      where: { email: "frank@example.com" },
+    });
+  });
+
+  it("derives the name from the email local-part when no name attributes are present", async () => {
+    (db.samlConfiguration.findUnique as any).mockResolvedValue(cfg({}, true));
+    validateSAMLResponse.mockResolvedValue({ nameID: "gina@example.com" });
+    (db.user.findUnique as any).mockResolvedValue(null); // new user → provision
+    (db.roles.findFirst as any).mockResolvedValue({ id: "role_1" });
+    (db.user.create as any).mockResolvedValue({
+      id: "user_g",
+      email: "gina@example.com",
+    });
+    (db.account.upsert as any).mockResolvedValue({});
+
+    const res = await POST(makeReq(relayFor("ssoprovider_g")));
+
+    expect(db.user.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          email: "gina@example.com",
+          name: "gina",
+        }),
+      })
+    );
+    expect(res.status).not.toBe(500);
   });
 });

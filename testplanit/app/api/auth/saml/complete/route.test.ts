@@ -10,16 +10,6 @@ vi.hoisted(() => {
 
 const SECRET = "test-secret-key-at-least-32-chars-long";
 
-// Capture every cookie the route sets so we can decode the session token.
-const cookieJar = new Map<string, { value: string }>();
-vi.mock("next/headers", () => ({
-  cookies: vi.fn(async () => ({
-    set: (name: string, value: string) => cookieJar.set(name, { value }),
-    get: (name: string) => cookieJar.get(name),
-    delete: (name: string) => cookieJar.delete(name),
-  })),
-}));
-
 vi.mock("~/server/db", () => ({
   db: {
     user: { findUnique: vi.fn() },
@@ -59,7 +49,6 @@ function tempToken() {
 
 describe("GET /api/auth/saml/complete — post-Okta session handoff", () => {
   beforeEach(() => {
-    cookieJar.clear();
     vi.clearAllMocks();
     (db.user.findUnique as any).mockResolvedValue(user);
     (db.registrationSettings.findFirst as any).mockResolvedValue(null);
@@ -80,7 +69,7 @@ describe("GET /api/auth/saml/complete — post-Okta session handoff", () => {
 
     // The session cookie it set must be a valid NextAuth v4 JWT — decode it the
     // exact way NextAuth would on the next request.
-    const sessionCookie = cookieJar.get("next-auth.session-token");
+    const sessionCookie = res.cookies.get("next-auth.session-token");
     expect(sessionCookie?.value).toBeTruthy();
 
     const decoded = await decode({
@@ -97,10 +86,10 @@ describe("GET /api/auth/saml/complete — post-Okta session handoff", () => {
   it("sets the __Secure- cookie name in production (matches NextAuth on https)", async () => {
     vi.stubEnv("NODE_ENV", "production");
 
-    await GET(makeReq(tempToken()));
+    const res = await GET(makeReq(tempToken()));
 
     expect(
-      cookieJar.get("__Secure-next-auth.session-token")?.value
+      res.cookies.get("__Secure-next-auth.session-token")?.value
     ).toBeTruthy();
   });
 
@@ -113,10 +102,10 @@ describe("GET /api/auth/saml/complete — post-Okta session handoff", () => {
       twoFactorEnabled: true,
     });
 
-    await GET(makeReq(tempToken()));
+    const res = await GET(makeReq(tempToken()));
 
     const decoded = await decode({
-      token: cookieJar.get("next-auth.session-token")!.value,
+      token: res.cookies.get("next-auth.session-token")!.value,
       secret: SECRET,
     });
     expect(decoded?.twoFactorRequired).toBe(true);
@@ -129,10 +118,10 @@ describe("GET /api/auth/saml/complete — post-Okta session handoff", () => {
     });
     // user.twoFactorEnabled is false by default
 
-    await GET(makeReq(tempToken()));
+    const res = await GET(makeReq(tempToken()));
 
     const decoded = await decode({
-      token: cookieJar.get("next-auth.session-token")!.value,
+      token: res.cookies.get("next-auth.session-token")!.value,
       secret: SECRET,
     });
     expect(decoded?.twoFactorSetupRequired).toBe(true);
