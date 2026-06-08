@@ -173,13 +173,15 @@ export async function createSAMLClient(config: SAMLConfig) {
 // Helper to validate SAML response
 export async function validateSAMLResponse(
   samlClient: SAML,
-  body: any
+  body: Record<string, string>
 ): Promise<SAML2Profile> {
   try {
     const profile = await samlClient.validatePostResponseAsync(body);
     return profile.profile as SAML2Profile;
   } catch (error) {
     console.error("SAML validation error:", error);
-    throw new Error("Invalid SAML response");
+    throw new Error("Invalid SAML response", {
+      cause: error instanceof Error ? error : new Error(String(error)),
+    });
   }
 }
