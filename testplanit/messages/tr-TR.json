@@ -3838,7 +3838,11 @@
           "entityId": "Kuruluş Kimliği (Yayınlayan)",
           "certificate": "X.509 Sertifikası",
           "callbackUrl": "Geri Çağrı URL'si",
-          "logoutUrl": "Çıkış URL'si (İsteğe bağlı)"
+          "logoutUrl": "Çıkış URL'si (İsteğe bağlı)",
+          "wantAssertionsSigned": "İmzalı beyanlar gereklidir.",
+          "wantAssertionsSignedDescription": "SAML onayı imzalanmamış yanıtları reddedin. Bu, kimliği doğrulanmış kişiyi korur ve etkin kalmalıdır.",
+          "wantAuthnResponseSigned": "İmzalı yanıt gereklidir.",
+          "wantAuthnResponseSignedDescription": "Ayrıca dış SAML yanıtının da imzalanması gerekmektedir. Çoğu kimlik sağlayıcı yalnızca onaylama işlemini imzalar, bu nedenle kimlik sağlayıcınız yanıtı imzalamadığı sürece bunu atlayın."
         },
         "userProvisioning": {
           "title": "Kullanıcı Yetkilendirmesi",

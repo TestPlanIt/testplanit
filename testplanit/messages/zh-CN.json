@@ -3838,7 +3838,11 @@
           "entityId": "实体 ID（发行方）",
           "certificate": "X.509证书",
           "callbackUrl": "回调 URL",
-          "logoutUrl": "注销网址（可选）"
+          "logoutUrl": "注销网址（可选）",
+          "wantAssertionsSigned": "需要签名断言",
+          "wantAssertionsSignedDescription": "拒绝未签名的 SAML 断言的响应。这可以保护已认证的身份，因此应保持启用状态。",
+          "wantAuthnResponseSigned": "需要签名回复",
+          "wantAuthnResponseSignedDescription": "此外，还需要对外部 SAML 响应进行签名。大多数身份提供商仅对断言进行签名，因此除非您的身份提供商对响应进行签名，否则请忽略此步骤。"
         },
         "userProvisioning": {
           "title": "用户配置",

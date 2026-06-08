@@ -3838,7 +3838,11 @@
           "entityId": "ID de entidad (emisor)",
           "certificate": "X.509 Certificado",
           "callbackUrl": "Callback URL",
-          "logoutUrl": "URL de cierre de sesión (opcional)"
+          "logoutUrl": "URL de cierre de sesión (opcional)",
+          "wantAssertionsSigned": "Requerir afirmaciones firmadas",
+          "wantAssertionsSignedDescription": "Rechazar las respuestas cuya aserción SAML no esté firmada. Esto protege la identidad autenticada y debe permanecer habilitado.",
+          "wantAuthnResponseSigned": "Se requiere respuesta firmada",
+          "wantAuthnResponseSignedDescription": "También se requiere que la respuesta SAML externa esté firmada. La mayoría de los proveedores de identidad solo firman la aserción, así que omita este paso a menos que su IdP firme la respuesta."
         },
         "userProvisioning": {
           "title": "Aprovisionamiento de usuario",

@@ -3838,7 +3838,11 @@
           "entityId": "ID da entidade (emissor)",
           "certificate": "Certificado X.509",
           "callbackUrl": "URL de retorno de chamada",
-          "logoutUrl": "URL de logout (opcional)"
+          "logoutUrl": "URL de logout (opcional)",
+          "wantAssertionsSigned": "Exigir declarações assinadas",
+          "wantAssertionsSignedDescription": "Rejeitar respostas cuja declaração SAML não esteja assinada. Isso protege a identidade autenticada e deve permanecer ativado.",
+          "wantAuthnResponseSigned": "Exigir resposta assinada",
+          "wantAuthnResponseSignedDescription": "Exija também que a resposta SAML externa seja assinada. A maioria dos provedores de identidade assina apenas a declaração, portanto, deixe isso de fora, a menos que seu provedor de identidade assine a resposta."
         },
         "userProvisioning": {
           "title": "Provisionamento de usuários",

@@ -3838,7 +3838,11 @@
           "entityId": "Identifiant de l'entité (Émetteur)",
           "certificate": "Certificat X.509",
           "callbackUrl": "URL de rappel",
-          "logoutUrl": "URL de déconnexion (facultatif)"
+          "logoutUrl": "URL de déconnexion (facultatif)",
+          "wantAssertionsSigned": "Exiger des déclarations signées",
+          "wantAssertionsSignedDescription": "Rejetez les réponses dont l'assertion SAML n'est pas signée. Cela protège l'identité authentifiée et doit rester activé.",
+          "wantAuthnResponseSigned": "Exiger une réponse signée",
+          "wantAuthnResponseSignedDescription": "Exigez également que la réponse SAML externe soit signée. La plupart des fournisseurs d'identité ne signent que l'assertion ; omettez donc cette étape sauf si votre fournisseur d'identité signe la réponse."
         },
         "userProvisioning": {
           "title": "Provisionnement des utilisateurs",
