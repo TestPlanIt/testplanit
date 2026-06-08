@@ -254,7 +254,9 @@ export const useColumns = (
             isScimProvisioner || row.original.scimGivenName !== null;
           if (!isScimManaged) {
             return (
-              <span className="text-muted-foreground text-center block">—</span>
+              <span className="text-muted-foreground text-center block">
+                {"—"}
+              </span>
             );
           }
           return (
