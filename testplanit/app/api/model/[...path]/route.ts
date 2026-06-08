@@ -58,6 +58,7 @@ import {
   emitTestRunUpdateEvents,
 } from "~/lib/webhooks/event-emitters/testRunEvents";
 import { getServerAuthSession } from "~/server/auth";
+import { normalizeSamlCert } from "~/server/saml-cert";
 import { syncIssueToElasticsearch } from "~/services/issueSearch";
 import { syncMilestoneToElasticsearch } from "~/services/milestoneSearch";
 import { syncProjectToElasticsearch } from "~/services/projectSearch";
@@ -410,6 +411,38 @@ function injectUserFields(
   return newBody;
 }
 
+// The RPC operation shapes that carry a SamlConfiguration write payload:
+//   create / update / updateMany: body.data (object)
+//   createMany:                   body.data (array of objects)
+//   upsert:                       body.create and body.update (objects)
+function collectSamlCertTargets(operation: string, body: any): any[] {
+  if (!body) return [];
+  if (operation === "upsert") {
+    return [body.create, body.update].filter(Boolean);
+  }
+  const data = body.data;
+  if (Array.isArray(data)) return data.filter(Boolean);
+  return data ? [data] : [];
+}
+
+// Normalize the IdP signing certificate on every SamlConfiguration write.
+// Returns a new request body with canonical-PEM cert(s), or null when there's
+// no cert string to touch (so the caller skips rebuilding the request).
+function normalizeSamlConfigCertBody(operation: string, body: any): any | null {
+  const hasCert = collectSamlCertTargets(operation, body).some(
+    (target) => typeof target?.cert === "string" && target.cert.length > 0
+  );
+  if (!hasCert) return null;
+
+  const next = JSON.parse(JSON.stringify(body));
+  for (const target of collectSamlCertTargets(operation, next)) {
+    if (typeof target?.cert === "string" && target.cert.length > 0) {
+      target.cert = normalizeSamlCert(target.cert);
+    }
+  }
+  return next;
+}
+
 // Inner handler. Exports below wrap this with `withAuditContext` per HTTP
 // verb so each export carries its own ALS frame for audit correlation (D-01).
 async function innerHandler(
@@ -497,6 +530,39 @@ async function innerHandler(
         }
       } catch {
         // Ignore body parsing errors
+      }
+    }
+
+    // Normalize the IdP signing certificate on SamlConfiguration writes.
+    // Admins paste certs through the generic SSO config form, where a
+    // copy/paste or JSON round-trip can collapse the PEM newlines to spaces —
+    // leaving a value node-saml later rejects as "not in PEM format or in
+    // base64 format". This chokepoint re-emits canonical PEM before the row is
+    // persisted (defense in depth alongside the normalize-on-use path in
+    // createSAMLClient). The model route is the universal mutation seam for
+    // SamlConfiguration (the admin UI writes via the generated RPC hooks), and
+    // the lib/prisma.ts $extends middleware is bypassed by ZenStack's enhance()
+    // on this path — same reason the ES-sync shims below live here — so the
+    // guard belongs here rather than in a Prisma extension.
+    if (
+      isMutation &&
+      parsedPath &&
+      parsedPath.model === "samlConfiguration" &&
+      ["create", "createMany", "update", "updateMany", "upsert"].includes(
+        parsedPath.operation
+      )
+    ) {
+      const normalizedBody = normalizeSamlConfigCertBody(
+        parsedPath.operation,
+        requestBody
+      );
+      if (normalizedBody) {
+        requestBody = normalizedBody;
+        modifiedReq = new NextRequest(req.url, {
+          method: req.method,
+          headers: req.headers,
+          body: JSON.stringify(normalizedBody),
+        });
       }
     }
 
