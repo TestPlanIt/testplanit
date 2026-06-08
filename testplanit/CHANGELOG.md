@@ -1,3 +1,9 @@
+## [0.36.2](https://github.com/TestPlanIt/testplanit/compare/v0.36.1...v0.36.2) (2026-06-08)
+
+### Bug Fixes
+
+* **saml:** normalize IdP certificates whose PEM newlines were collapsed to spaces ([#411](https://github.com/TestPlanIt/testplanit/issues/411)) ([f3bf92f](https://github.com/TestPlanIt/testplanit/commit/f3bf92f078282dc3d03b46050db27e723f645668))
+
 ## [0.36.1](https://github.com/TestPlanIt/testplanit/compare/v0.36.0...v0.36.1) (2026-06-07)
 
 ### Bug Fixes
