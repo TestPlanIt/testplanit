@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { Access, SsoProviderType } from "@prisma/client";
 import {
   Edit,
@@ -1582,14 +1583,14 @@ export default function SSOAdminPage() {
 
       {/* SAML Configuration Dialog */}
       <Dialog open={isSamlConfigOpen} onOpenChange={setIsSamlConfigOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[900px]">
           <DialogHeader>
             <DialogTitle>{t("admin.sso.samlConfiguration.title")}</DialogTitle>
             <DialogDescription>
               {t("admin.sso.dialogs.saml.description")}
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="entryPoint">
                 {t("admin.sso.dialogs.saml.entryPoint")}
@@ -1610,17 +1611,6 @@ export default function SSOAdminPage() {
                 value={samlIssuer}
                 onChange={(e) => setSamlIssuer(e.target.value)}
                 placeholder={t("admin.sso.dialogs.saml.issuerPlaceholder")}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="cert">
-                {t("admin.sso.samlConfiguration.samlSettings.certificate")}
-              </Label>
-              <Input
-                id="cert"
-                value={samlCert}
-                onChange={(e) => setSamlCert(e.target.value)}
-                placeholder={t("admin.sso.dialogs.saml.certPlaceholder")}
               />
             </div>
             <div className="grid gap-2">
@@ -1649,48 +1639,62 @@ export default function SSOAdminPage() {
                 placeholder={t("admin.sso.dialogs.saml.logoutUrlPlaceholder")}
               />
             </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="samlWantAssertionsSigned"
-                  checked={samlWantAssertionsSigned}
-                  onCheckedChange={setSamlWantAssertionsSigned}
-                />
-                <Label htmlFor="samlWantAssertionsSigned">
+            <div className="grid gap-2">
+              <Label htmlFor="cert">
+                {t("admin.sso.samlConfiguration.samlSettings.certificate")}
+              </Label>
+              <Textarea
+                id="cert"
+                value={samlCert}
+                onChange={(e) => setSamlCert(e.target.value)}
+                placeholder={t("admin.sso.dialogs.saml.certPlaceholder")}
+                rows={10}
+                className="font-mono text-xs"
+              />
+            </div>
+            <div className="grid gap-4 content-start">
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="samlWantAssertionsSigned"
+                    checked={samlWantAssertionsSigned}
+                    onCheckedChange={setSamlWantAssertionsSigned}
+                  />
+                  <Label htmlFor="samlWantAssertionsSigned">
+                    {t(
+                      "admin.sso.samlConfiguration.samlSettings.wantAssertionsSigned"
+                    )}
+                  </Label>
+                </div>
+                <p className="text-sm text-muted-foreground">
                   {t(
-                    "admin.sso.samlConfiguration.samlSettings.wantAssertionsSigned"
+                    "admin.sso.samlConfiguration.samlSettings.wantAssertionsSignedDescription"
                   )}
-                </Label>
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                {t(
-                  "admin.sso.samlConfiguration.samlSettings.wantAssertionsSignedDescription"
-                )}
-              </p>
+
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="samlWantAuthnResponseSigned"
+                    checked={samlWantAuthnResponseSigned}
+                    onCheckedChange={setSamlWantAuthnResponseSigned}
+                  />
+                  <Label htmlFor="samlWantAuthnResponseSigned">
+                    {t(
+                      "admin.sso.samlConfiguration.samlSettings.wantAuthnResponseSigned"
+                    )}
+                  </Label>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {t(
+                    "admin.sso.samlConfiguration.samlSettings.wantAuthnResponseSignedDescription"
+                  )}
+                </p>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="samlWantAuthnResponseSigned"
-                  checked={samlWantAuthnResponseSigned}
-                  onCheckedChange={setSamlWantAuthnResponseSigned}
-                />
-                <Label htmlFor="samlWantAuthnResponseSigned">
-                  {t(
-                    "admin.sso.samlConfiguration.samlSettings.wantAuthnResponseSigned"
-                  )}
-                </Label>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {t(
-                  "admin.sso.samlConfiguration.samlSettings.wantAuthnResponseSignedDescription"
-                )}
-              </p>
-            </div>
-
-            <div className="text-sm text-muted-foreground">
+            <div className="md:col-span-2 text-sm text-muted-foreground">
               <p>{t("admin.sso.dialogs.saml.instructions.title")}</p>
               <ol className="list-decimal ml-4 space-y-1">
                 <li>{t("admin.sso.dialogs.saml.instructions.step1")}</li>
