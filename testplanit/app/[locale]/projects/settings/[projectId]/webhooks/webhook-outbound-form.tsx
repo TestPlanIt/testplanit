@@ -1081,7 +1081,9 @@ export function WebhookOutboundForm({
                     className="space-y-2 rounded-md border p-3"
                   >
                     <div className="flex items-start justify-between">
-                      <h5 className="text-sm font-semibold">{t(label as never)}</h5>
+                      <h5 className="text-sm font-semibold">
+                        {t(label as never)}
+                      </h5>
                       <button
                         type="button"
                         data-testid={`webhook-outbound-config-${config.id}-subs-select-all-${key}`}
