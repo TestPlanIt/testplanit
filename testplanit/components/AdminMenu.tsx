@@ -177,18 +177,18 @@ const menuOptions: MenuOption[] = [
     path: "scim",
     section: "authentication",
   },
-  {
-    icon: Webhook,
-    translationKey: "systemWebhooks",
-    path: "webhooks",
-    section: "authentication",
-  },
 
   // Tools & Integrations
   {
     icon: Plug,
     translationKey: "integrations",
     path: "integrations",
+    section: "toolsAndIntegrations",
+  },
+  {
+    icon: Webhook,
+    translationKey: "systemWebhooks",
+    path: "webhooks",
     section: "toolsAndIntegrations",
   },
   {

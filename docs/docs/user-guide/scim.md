@@ -92,7 +92,7 @@ Filters that reference an unsupported attribute or operator return `400 Bad Requ
 
 ## Webhook events
 
-SCIM mutations emit outbound webhook events the same way as project events, but they aren't tied to any one project — they're system-level. Configure subscriptions from **Admin → Authentication → System Webhooks** (`/admin/webhooks`), which is the system-scoped sibling of the project-level webhook settings page. The form's adapter (Slack, generic HMAC) + event-subscription UI is identical to the project version; the difference is only that the destinations created here listen for system events instead of project events.
+SCIM mutations emit outbound webhook events the same way as project events, but they aren't tied to any one project — they're system-level. Configure subscriptions from **Admin → Tools & Integrations → System Webhooks** (`/admin/webhooks`), which is the system-scoped sibling of the project-level webhook settings page. The form's adapter (Slack, generic HMAC) + event-subscription UI is identical to the project version; the difference is only that the destinations created here listen for system events instead of project events.
 
 | Event name                  | Fires when                                                          |
 | --------------------------- | ------------------------------------------------------------------- |

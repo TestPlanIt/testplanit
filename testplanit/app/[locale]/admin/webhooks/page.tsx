@@ -101,7 +101,10 @@ export default function AdminWebhooksPage() {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="outbound">
-              <WebhookOutboundForm projectId={SYSTEM_PROJECT_ID} />
+              <WebhookOutboundForm
+                projectId={SYSTEM_PROJECT_ID}
+                scope="system"
+              />
             </TabsContent>
             <TabsContent value="deliveries">
               <WebhookDeliveriesTab projectId={SYSTEM_PROJECT_ID} />

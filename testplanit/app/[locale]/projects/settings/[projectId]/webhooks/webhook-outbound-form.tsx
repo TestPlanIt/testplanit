@@ -78,16 +78,24 @@ type OutboundCreateErrors = Partial<Record<"name" | "url", string>>;
 
 interface WebhookOutboundFormProps {
   projectId: number;
+  /**
+   * "project" (default) — render the project event catalog (testRuns,
+   * sessions, issues, cases).
+   * "system" — render the system event catalog (scim.user.*, scim.group.*).
+   * Used when the form mounts under /admin/webhooks with
+   * projectId = SYSTEM_PROJECT_ID.
+   */
+  scope?: "project" | "system";
 }
 
 /**
- * Three sections; the UI groups events under section headers,
+ * Project-scope event catalog. The UI groups events under section headers,
  * with a per-section "Select all" toggle.
  *
  * Reserved verbs: created, updated, deleted, state_changed, completed,
  * duplicated, result_added.
  */
-const EVENT_CATALOG = {
+const PROJECT_EVENT_CATALOG = {
   testRuns: [
     "test_run.created",
     "test_run.state_changed",
@@ -119,6 +127,67 @@ const EVENT_CATALOG = {
     "case.review_completed",
   ],
 } as const;
+
+const PROJECT_SECTION_LIST = [
+  { key: "cases", label: "outboundSubsCases" },
+  { key: "issues", label: "outboundSubsIssues" },
+  { key: "testRuns", label: "outboundSubsTestRuns" },
+  { key: "sessions", label: "outboundSubsSessions" },
+] as const;
+
+/**
+ * System-scope event catalog. Used when the form renders at /admin/webhooks
+ * for system-emitted events that aren't tied to a single project — currently
+ * the ten SCIM lifecycle events plus the two coalescing summary types.
+ */
+const SYSTEM_EVENT_CATALOG = {
+  scimUsers: [
+    "scim.user.created",
+    "scim.user.updated",
+    "scim.user.activated",
+    "scim.user.deactivated",
+    "scim.user.deleted",
+    "scim.user.created.summary",
+  ],
+  scimGroups: [
+    "scim.group.created",
+    "scim.group.updated",
+    "scim.group.member_added",
+    "scim.group.member_removed",
+    "scim.group.deleted",
+    "scim.group.member_added.summary",
+  ],
+} as const;
+
+const SYSTEM_SECTION_LIST = [
+  { key: "scimUsers", label: "outboundSubsScimUsers" },
+  { key: "scimGroups", label: "outboundSubsScimGroups" },
+] as const;
+
+interface CatalogShape {
+  catalog: Record<string, readonly string[]>;
+  sections: ReadonlyArray<{ key: string; label: string }>;
+}
+
+function getCatalogForScope(scope: "project" | "system"): CatalogShape {
+  if (scope === "system") {
+    return {
+      catalog: SYSTEM_EVENT_CATALOG as unknown as Record<
+        string,
+        readonly string[]
+      >,
+      sections: SYSTEM_SECTION_LIST,
+    };
+  }
+  return {
+    catalog: PROJECT_EVENT_CATALOG as unknown as Record<
+      string,
+      readonly string[]
+    >,
+    sections: PROJECT_SECTION_LIST,
+  };
+}
+
 
 const DEFAULT_PRESET: string[] = [];
 
@@ -187,6 +256,25 @@ const EVENT_VERB_I18N_PATH: Record<string, string> = {
   "result.recorded": "projects.settings.webhooks.eventVerbs.resultRecorded",
   review_requested: "projects.settings.webhooks.eventVerbs.reviewRequested",
   review_completed: "projects.settings.webhooks.eventVerbs.reviewCompleted",
+  // SCIM verbs (system scope). The splitter returns "user.created",
+  // "group.member_added", etc. for "scim.user.created" and the like.
+  "user.created": "projects.settings.webhooks.eventVerbs.scimUserCreated",
+  "user.updated": "projects.settings.webhooks.eventVerbs.scimUserUpdated",
+  "user.activated": "projects.settings.webhooks.eventVerbs.scimUserActivated",
+  "user.deactivated":
+    "projects.settings.webhooks.eventVerbs.scimUserDeactivated",
+  "user.deleted": "projects.settings.webhooks.eventVerbs.scimUserDeleted",
+  "user.created.summary":
+    "projects.settings.webhooks.eventVerbs.scimUserCreatedSummary",
+  "group.created": "projects.settings.webhooks.eventVerbs.scimGroupCreated",
+  "group.updated": "projects.settings.webhooks.eventVerbs.scimGroupUpdated",
+  "group.member_added":
+    "projects.settings.webhooks.eventVerbs.scimGroupMemberAdded",
+  "group.member_removed":
+    "projects.settings.webhooks.eventVerbs.scimGroupMemberRemoved",
+  "group.deleted": "projects.settings.webhooks.eventVerbs.scimGroupDeleted",
+  "group.member_added.summary":
+    "projects.settings.webhooks.eventVerbs.scimGroupMemberAddedSummary",
 };
 
 function eventVerbI18nPath(eventName: string): string {
@@ -212,12 +300,18 @@ function eventVerbI18nPath(eventName: string): string {
  * clause; only post-create / post-rotate plaintext secrets reach the
  * browser, and only via the server-action return value.
  */
-export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
+export function WebhookOutboundForm({
+  projectId,
+  scope = "project",
+}: WebhookOutboundFormProps) {
   const t = useTranslations("projects.settings.webhooks");
   const tCommon = useTranslations("common");
   const tActions = useTranslations("common.actions");
   const tGlobal = useTranslations();
   const dateLocale = dateFnsLocaleFor(useLocale());
+
+  const { catalog: scopedCatalog, sections: scopedSections } =
+    getCatalogForScope(scope);
 
   const { data, isLoading, refetch } = useFindManyWebhookConfig({
     where: { projectId, direction: "OUTBOUND" },
@@ -471,8 +565,8 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
     );
   }
 
-  function toggleSection(section: keyof typeof EVENT_CATALOG) {
-    const sectionEvents = EVENT_CATALOG[section];
+  function toggleSection(section: string) {
+    const sectionEvents = scopedCatalog[section] ?? [];
     const allSelected = sectionEvents.every((e) =>
       createSubscriptions.includes(e)
     );
@@ -638,14 +732,7 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {(
-              [
-                { key: "cases", label: "outboundSubsCases" },
-                { key: "issues", label: "outboundSubsIssues" },
-                { key: "testRuns", label: "outboundSubsTestRuns" },
-                { key: "sessions", label: "outboundSubsSessions" },
-              ] as const
-            ).map(({ key, label }) => (
+            {scopedSections.map(({ key, label }) => (
               <div
                 key={key}
                 data-testid={`webhook-outbound-subs-section-${key}`}
@@ -663,7 +750,7 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
                   </button>
                 </div>
                 <div className="space-y-1">
-                  {EVENT_CATALOG[key].map((eventName) => (
+                  {scopedCatalog[key].map((eventName) => (
                     <label
                       key={eventName}
                       className="flex items-center gap-2 text-xs"
@@ -983,15 +1070,8 @@ export function WebhookOutboundForm({ projectId }: WebhookOutboundFormProps) {
               {t("outboundCreateSubscriptionsTitle")}
             </h4>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {(
-                [
-                  { key: "cases", label: "outboundSubsCases" },
-                  { key: "issues", label: "outboundSubsIssues" },
-                  { key: "testRuns", label: "outboundSubsTestRuns" },
-                  { key: "sessions", label: "outboundSubsSessions" },
-                ] as const
-              ).map(({ key, label }) => {
-                const sectionEvents = EVENT_CATALOG[key];
+              {scopedSections.map(({ key, label }) => {
+                const sectionEvents = scopedCatalog[key];
                 const allSelected = sectionEvents.every((e) =>
                   config.subscribedEvents.includes(e)
                 );
