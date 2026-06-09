@@ -42,16 +42,13 @@ export default function AdminWebhooksPage() {
     isAuthenticated,
   } = useRequireAuth();
   const t = useTranslations("admin.systemWebhooks");
-  const tProjectWebhooks = useTranslations(
-    "projects.settings.webhooks"
-  );
+  const tProjectWebhooks = useTranslations("projects.settings.webhooks");
 
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
   const tabFromUrl = searchParams?.get("tab");
-  const activeTab =
-    tabFromUrl === "deliveries" ? "deliveries" : "outbound";
+  const activeTab = tabFromUrl === "deliveries" ? "deliveries" : "outbound";
   const handleTabChange = (value: string) => {
     const params = new URLSearchParams(searchParams?.toString() ?? "");
     params.set("tab", value);

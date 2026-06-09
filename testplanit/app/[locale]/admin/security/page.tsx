@@ -109,9 +109,7 @@ export default function SecurityAdminPage() {
           })
         )
       );
-      toast.success(
-        enabled ? t("forceSsoEnabled") : t("forceSsoDisabled")
-      );
+      toast.success(enabled ? t("forceSsoEnabled") : t("forceSsoDisabled"));
       void refetchSsoProviders();
     } catch {
       setForceSso(!enabled);
@@ -131,9 +129,7 @@ export default function SecurityAdminPage() {
         update: { force2FANonSSO: enabled },
       });
       toast.success(
-        enabled
-          ? t("force2FANonSSOEnabled")
-          : t("force2FANonSSODisabled")
+        enabled ? t("force2FANonSSOEnabled") : t("force2FANonSSODisabled")
       );
       void refetch();
     } catch {
@@ -157,9 +153,7 @@ export default function SecurityAdminPage() {
         update: updates,
       });
       toast.success(
-        enabled
-          ? t("force2FAAllLoginsEnabled")
-          : t("force2FAAllLoginsDisabled")
+        enabled ? t("force2FAAllLoginsEnabled") : t("force2FAAllLoginsDisabled")
       );
       void refetch();
     } catch {

@@ -43,13 +43,10 @@ export function formatScimGroupMemberRemovedBlocks(
 
   return buildScimBody({
     previewText: `SCIM group member removed: ${data.displayName ?? "?"}`,
-    header:
-      members.length > 1 ? "SCIM members removed" : "SCIM member removed",
+    header: members.length > 1 ? "SCIM members removed" : "SCIM member removed",
     identityLine: groupIdentityLine(data),
     color: COLOR_YELLOW,
-    extraBlocks: [
-      { type: "section", text: { type: "mrkdwn", text: removed } },
-    ],
+    extraBlocks: [{ type: "section", text: { type: "mrkdwn", text: removed } }],
     footer: externalIdFooter(data.externalId),
   });
 }

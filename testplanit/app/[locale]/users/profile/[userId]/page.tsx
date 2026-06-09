@@ -826,10 +826,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
                               tDirectory("externalId"),
                               user.scimExternalId
                             );
-                            pushString(
-                              tDirectory("jobTitle"),
-                              scimCore?.title
-                            );
+                            pushString(tDirectory("jobTitle"), scimCore?.title);
                             pushString(
                               tDirectory("userType"),
                               scimCore?.userType

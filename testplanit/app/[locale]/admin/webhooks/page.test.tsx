@@ -45,9 +45,7 @@ vi.mock(
   "~/app/[locale]/projects/settings/[projectId]/webhooks/webhook-outbound-form",
   () => ({
     WebhookOutboundForm: ({ projectId }: { projectId: number }) => (
-      <div data-testid="webhook-outbound-form-stub">
-        outbound:{projectId}
-      </div>
+      <div data-testid="webhook-outbound-form-stub">outbound:{projectId}</div>
     ),
   })
 );
@@ -100,7 +98,11 @@ describe("AdminWebhooksPage (system-level outbound webhooks)", () => {
   it("renders no Inbound tab — system events have no inbound counterpart", () => {
     render(<AdminWebhooksPage />);
     expect(screen.queryByTestId("system-webhooks-tab-inbound")).toBeNull();
-    expect(screen.getByTestId("system-webhooks-tab-outbound")).toBeInTheDocument();
-    expect(screen.getByTestId("system-webhooks-tab-deliveries")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("system-webhooks-tab-outbound")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("system-webhooks-tab-deliveries")
+    ).toBeInTheDocument();
   });
 });

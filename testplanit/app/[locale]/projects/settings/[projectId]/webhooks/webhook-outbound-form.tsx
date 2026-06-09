@@ -188,7 +188,6 @@ function getCatalogForScope(scope: "project" | "system"): CatalogShape {
   };
 }
 
-
 const DEFAULT_PRESET: string[] = [];
 
 /**

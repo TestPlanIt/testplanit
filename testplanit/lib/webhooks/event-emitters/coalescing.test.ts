@@ -349,12 +349,7 @@ describe("emitWithCoalescing — purity + tx invariant", () => {
       $executeRaw: executeRaw,
     };
 
-    await emitWithCoalescing(
-      "scim.user.created",
-      basePayload,
-      tx as never,
-      {}
-    );
+    await emitWithCoalescing("scim.user.created", basePayload, tx as never, {});
 
     // 3 configs → 3 lock acquisitions, each before its config's count call.
     expect(executeRaw).toHaveBeenCalledTimes(3);
@@ -387,9 +382,7 @@ describe("emitWithCoalescing — purity + tx invariant", () => {
       // the first argument and interpolations as the rest. The lock-key
       // string is one of the trailing interpolations.
       const stringifiedArgs = args
-        .map((a) =>
-          Array.isArray(a) ? a.join("|") : JSON.stringify(a)
-        )
+        .map((a) => (Array.isArray(a) ? a.join("|") : JSON.stringify(a)))
         .join(" ");
       seenKeys.push(stringifiedArgs);
       return 1;

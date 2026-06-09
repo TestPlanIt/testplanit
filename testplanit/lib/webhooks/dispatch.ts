@@ -117,10 +117,7 @@ export async function dispatchWebhook(
   // shows up in real-project pickers, but it's the canonical carrier of
   // /admin/webhooks system-level configs (SCIM events, future system
   // events). Excluding it here would silently drop every system webhook.
-  if (
-    config.project.isDeleted &&
-    config.projectId !== SYSTEM_PROJECT_ID
-  ) {
+  if (config.project.isDeleted && config.projectId !== SYSTEM_PROJECT_ID) {
     return { outcome: "skipped_inactive" };
   }
   if (!config.url) {

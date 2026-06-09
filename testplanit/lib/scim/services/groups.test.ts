@@ -569,9 +569,8 @@ describe("patchScimGroup — non-member updates", () => {
     await patchScimGroup("200", body as never, CTX);
 
     expect(emitScimGroupUpdated).toHaveBeenCalledTimes(1);
-    const [before, after] = (
-      emitScimGroupUpdated as ReturnType<typeof vi.fn>
-    ).mock.calls[0] as [Record<string, unknown>, Record<string, unknown>];
+    const [before, after] = (emitScimGroupUpdated as ReturnType<typeof vi.fn>)
+      .mock.calls[0] as [Record<string, unknown>, Record<string, unknown>];
 
     // The narrow projection MUST drop the assignedUsers relation entirely
     // (the emitter doesn't need member rows; member ops go through

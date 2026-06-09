@@ -41,12 +41,9 @@ export function formatScimGroupMemberAddedBlocks(
 
   return buildScimBody({
     previewText: `SCIM group member added: ${data.displayName ?? "?"}`,
-    header:
-      members.length > 1 ? "SCIM members added" : "SCIM member added",
+    header: members.length > 1 ? "SCIM members added" : "SCIM member added",
     identityLine: groupIdentityLine(data),
-    extraBlocks: [
-      { type: "section", text: { type: "mrkdwn", text: added } },
-    ],
+    extraBlocks: [{ type: "section", text: { type: "mrkdwn", text: added } }],
     footer: externalIdFooter(data.externalId),
   });
 }
