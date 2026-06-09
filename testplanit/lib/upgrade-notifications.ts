@@ -10,14 +10,26 @@
  * Example:
  * "0.3.43": {
  *   title: "New Feature: Dark Mode",
- *   message: "You can now switch to dark mode in your user preferences..."
+ *   message: "You can now switch to dark mode in your user preferences...",
+ *   // Only notify project and system administrators about this one:
+ *   access: [Access.PROJECTADMIN, Access.ADMIN],
  * }
  */
+
+import { Access } from "@prisma/client";
 
 export interface UpgradeNotification {
   title: string;
   /** Message content - can include HTML tags for rich text formatting */
   message: string;
+  /**
+   * Which user access levels should receive this notification. Accepts any
+   * combination of the Access enum values.
+   *
+   * Omit the field to notify every access level (the default). Provide an
+   * explicit list to target a subset; an empty array notifies no one.
+   */
+  access?: Access[];
 }
 
 export const upgradeNotifications: Record<string, UpgradeNotification> = {
@@ -328,15 +340,49 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
       <p>Add it to your <code>playwright.config.ts</code> reporter list. See the <a href="https://docs.testplanit.com/docs/sdk/playwright-overview" target="_blank">Playwright Reporter documentation</a>.</p>
     `,
   },
+  "0.37.0": {
+    title: "New Feature: SCIM 2.0 Provisioning",
+    message: `
+      <p>Provision and de-provision users and groups directly from your identity provider with <strong>SCIM 2.0</strong>. Manage the user lifecycle in your IdP — Okta, Microsoft Entra, OneLogin, and other SCIM-capable providers — instead of TestPlanIt's user-management screen.</p>
+      <ul>
+        <li>Full <strong>Users</strong> and <strong>Groups</strong> support — provision, update, and de-provision automatically</li>
+        <li>Mint a bearer token in the admin UI and use <strong>Test SCIM</strong> to verify the connection before you save your IdP configuration</li>
+        <li>De-provisioning <strong>soft-deletes</strong> accounts, so users keep their audit trail</li>
+        <li>SCIM-managed users and groups show a <strong>SCIM</strong> badge — their core identity attributes stay IdP-owned</li>
+      </ul>
+      <p>Get started at <strong>Admin → Authentication → SCIM Provisioning</strong>. See the <a href="https://docs.testplanit.com/docs/user-guide/scim" target="_blank">SCIM Provisioning documentation</a> for IdP setup instructions.</p>
+    `,
+    access: [Access.ADMIN],
+  },
 };
+
+/**
+ * Returns true when a notification should be delivered to a user with the
+ * given access level. Notifications without an `access` restriction target
+ * every access level.
+ */
+export function notificationTargetsAccess(
+  notification: UpgradeNotification,
+  userAccess: Access
+): boolean {
+  if (!notification.access) {
+    return true;
+  }
+  return notification.access.includes(userAccess);
+}
 
 /**
  * Get all notifications for versions between lastSeenVersion and currentVersion
  * Returns notifications in version order (oldest first)
+ *
+ * When `userAccess` is provided, notifications are additionally filtered to
+ * those targeting that access level (see UpgradeNotification.access). Omit it
+ * to skip access filtering entirely.
  */
 export function getUpgradeNotificationsBetweenVersions(
   lastSeenVersion: string | null,
-  currentVersion: string
+  currentVersion: string,
+  userAccess?: Access
 ): { version: string; notification: UpgradeNotification }[] {
   const versions = Object.keys(upgradeNotifications);
 
@@ -347,7 +393,13 @@ export function getUpgradeNotificationsBetweenVersions(
       const isAfterLastSeen =
         !lastSeenVersion || compareVersions(version, lastSeenVersion) > 0;
       const isUpToCurrent = compareVersions(version, currentVersion) <= 0;
-      return isAfterLastSeen && isUpToCurrent;
+      if (!isAfterLastSeen || !isUpToCurrent) {
+        return false;
+      }
+      return (
+        userAccess === undefined ||
+        notificationTargetsAccess(upgradeNotifications[version], userAccess)
+      );
     })
     .sort(compareVersions)
     .map((version) => ({

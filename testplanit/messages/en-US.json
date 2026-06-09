@@ -194,7 +194,8 @@
     "auth": {
       "internal": "Email/Password",
       "sso": "SSO Only",
-      "both": "Email & SSO"
+      "both": "Email & SSO",
+      "scim": "SCIM Provisioned"
     },
     "status": {
       "deleted": "Deleted",
@@ -1432,13 +1433,27 @@
         "outboundSubsTestRunsAndSessions": "Test Runs & Sessions",
         "outboundSubsTestRuns": "Test Runs",
         "outboundSubsSessions": "Sessions",
+        "outboundSubsScimUsers": "SCIM Users",
+        "outboundSubsScimGroups": "SCIM Groups",
         "eventVerbs": {
           "duplicated": "Duplicated",
           "stateChanged": "State changed",
           "resultAdded": "Result added",
           "resultRecorded": "Result Recorded",
           "reviewRequested": "Review requested",
-          "reviewCompleted": "Review completed"
+          "reviewCompleted": "Review completed",
+          "scimUserCreated": "User created",
+          "scimUserUpdated": "User updated",
+          "scimUserActivated": "User activated",
+          "scimUserDeactivated": "User deactivated",
+          "scimUserDeleted": "User deleted",
+          "scimUserCreatedSummary": "User created (bulk-sync summary)",
+          "scimGroupCreated": "Group created",
+          "scimGroupUpdated": "Group updated",
+          "scimGroupMemberAdded": "Members added",
+          "scimGroupMemberRemoved": "Members removed",
+          "scimGroupDeleted": "Group deleted",
+          "scimGroupMemberAddedSummary": "Members added (bulk-sync summary)"
         },
         "iterationResultHelp": "Fires every time an iteration result is recorded — pass, fail, skip, or any other status. Use sparingly on long automation runs (one event per iteration).",
         "events": {
@@ -2259,13 +2274,32 @@
         "deleteAvatarConfirm": "Are you sure you want to delete your {name}?",
         "emailDisabledForSso": "Email cannot be changed for SSO accounts. Please update it through your identity provider.",
         "emailEditableForBoth": "You can sign in with both email/password and SSO. Email changes will only affect password authentication.",
-        "linkSsoProvider": "Link SSO Provider"
+        "linkSsoProvider": "Link SSO Provider",
+        "nameDisabledForScim": "Name is managed by your identity provider via SCIM and cannot be changed here.",
+        "emailDisabledForScim": "Email is managed by your identity provider via SCIM and cannot be changed here."
       },
       "preferences": {
         "title": "Preferences"
       },
       "access": {
         "title": "Access"
+      },
+      "directory": {
+        "title": "Directory Profile",
+        "subtitle": "Read-only fields synced from your identity provider via SCIM.",
+        "externalId": "IdP user ID",
+        "userName": "Directory username",
+        "givenName": "First name",
+        "familyName": "Last name",
+        "jobTitle": "Title",
+        "userType": "User type",
+        "employeeNumber": "Employee number",
+        "department": "Department",
+        "division": "Division",
+        "organization": "Organization",
+        "costCenter": "Cost center",
+        "manager": "Manager",
+        "noEnterpriseFields": "Your identity provider has not sent any enterprise directory attributes for this account."
       },
       "notifications": {
         "title": "Notification Preferences",
@@ -3427,9 +3461,12 @@
       "queues": "Job Queues",
       "auditLogs": "Audit Logs",
       "apiTokens": "API Tokens",
+      "scim": "SCIM Provisioning",
+      "systemWebhooks": "System Webhooks",
       "quickscriptTemplates": "QuickScript Templates",
       "testManagement": "Test Management",
       "peopleAndAccess": "People & Access",
+      "authentication": "Authentication",
       "toolsAndIntegrations": "Tools & Integrations",
       "system": "System"
     },
@@ -3772,15 +3809,11 @@
       }
     },
     "sso": {
-      "description": "Manage authentication and security settings",
+      "description": "Manage authentication and registration settings",
       "sections": {
         "providers": {
           "title": "Sign-in Providers",
           "description": "Configure how users can sign in to your application"
-        },
-        "security": {
-          "title": "Security",
-          "description": "Configure security policies for authentication"
         }
       },
       "globalSettings": {
@@ -3804,20 +3837,6 @@
         "magicLink": {
           "title": "Magic Link Authentication",
           "description": "Enable or disable passwordless email-based authentication"
-        },
-        "forceSso": {
-          "title": "Force SSO Login",
-          "description": "Disable email login and require users to use SSO"
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "Require 2FA for Password Logins",
-            "description": "Users signing in with email/password must set up and use two-factor authentication"
-          },
-          "forceAllLogins": {
-            "title": "Require 2FA for All Logins",
-            "description": "All users must verify with 2FA after signing in, including SSO users"
-          }
         }
       },
       "providers": {
@@ -3875,14 +3894,6 @@
         "enabled": "Provider enabled",
         "disabled": "Provider disabled",
         "updateFailed": "Failed to update provider",
-        "forceSsoEnabled": "Force SSO enabled globally",
-        "forceSsoDisabled": "Force SSO disabled globally",
-        "forceSsoUpdateFailed": "Failed to update force SSO setting",
-        "force2FANonSSOEnabled": "Two-factor authentication required for password logins",
-        "force2FANonSSODisabled": "Two-factor authentication no longer required for password logins",
-        "force2FAAllLoginsEnabled": "Two-factor authentication required for all logins",
-        "force2FAAllLoginsDisabled": "Two-factor authentication no longer required for all logins",
-        "force2FAUpdateFailed": "Failed to update two-factor authentication setting",
         "configUpdated": "SAML configuration updated",
         "configCreated": "SAML configuration created",
         "configSaveFailed": "Failed to save SAML configuration",
@@ -4336,17 +4347,40 @@
       "forcePasswordChangeSuccess": "Password change required for {name}",
       "forcePasswordChangeFailed": "Failed to force password change",
       "revokePasswordSuccess": "Password revoked for {name}",
-      "revokePasswordFailed": "Failed to revoke password"
+      "revokePasswordFailed": "Failed to revoke password",
+      "scimProvisionerBadge": "SCIM Provisioner",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Managed by SCIM. Manage from the SCIM admin page.",
+      "scimColumnHeader": "SCIM",
+      "scimColumnYes": "Yes",
+      "scimUserLockedTitle": "User is managed by SCIM",
+      "scimUserLockedDescription": "This user's name, email, and active status are managed by your identity provider. Make changes there to update them here."
     },
     "security": {
       "title": "Security",
-      "description": "Configure password policy, lockout settings, and enforcement actions",
+      "description": "Configure sign-in enforcement, password policy, lockout settings, and enforcement actions",
       "passwordPolicyTitle": "Password Policy",
       "passwordPolicyDescription": "Set requirements for user passwords",
       "lockoutPolicyTitle": "Lockout Policy",
       "lockoutPolicyDescription": "Configure account lockout after failed login attempts",
       "enforcementTitle": "Enforcement Actions",
       "enforcementDescription": "Force password changes for credential-based users",
+      "signInEnforcementTitle": "Sign-in Enforcement",
+      "signInEnforcementDescription": "Require SSO and enforce two-factor authentication",
+      "forceSsoTitle": "Force SSO Login",
+      "forceSsoDescription": "Disable email login and require users to use SSO",
+      "force2FANonSSOTitle": "Require 2FA for Password Logins",
+      "force2FANonSSODescription": "Users signing in with email/password must set up and use two-factor authentication",
+      "force2FAAllLoginsTitle": "Require 2FA for All Logins",
+      "force2FAAllLoginsDescription": "All users must verify with 2FA after signing in, including SSO users",
+      "forceSsoEnabled": "Force SSO enabled globally",
+      "forceSsoDisabled": "Force SSO disabled globally",
+      "forceSsoUpdateFailed": "Failed to update force SSO setting",
+      "force2FANonSSOEnabled": "Two-factor authentication required for password logins",
+      "force2FANonSSODisabled": "Two-factor authentication no longer required for password logins",
+      "force2FAAllLoginsEnabled": "Two-factor authentication required for all logins",
+      "force2FAAllLoginsDisabled": "Two-factor authentication no longer required for all logins",
+      "force2FAUpdateFailed": "Failed to update two-factor authentication setting",
       "minPasswordLengthLabel": "Minimum Password Length",
       "minPasswordLengthDescription": "Passwords must be at least this many characters (8-128)",
       "requireUppercaseLabel": "Require Uppercase Letters",
@@ -4400,6 +4434,109 @@
       "revokeAllPlaceholder": "REVOKE ALL",
       "revokeAllSuccess": "All API tokens have been revoked",
       "revokeAllError": "Failed to revoke all tokens"
+    },
+    "systemWebhooks": {
+      "title": "System Webhooks",
+      "description": "Outbound webhook destinations for system-level events that aren't tied to a single project — currently the SCIM 2.0 user and group lifecycle events. Configure inbound and project-scoped outbound webhooks from the project settings page instead."
+    },
+    "scim": {
+      "description": "Provision users from your identity provider into TestPlanIt over SCIM 2.0.",
+      "mintCta": "Mint new token",
+      "filterPlaceholder": "Filter by token name or IdP...",
+      "showRevoked": "Show Revoked",
+      "noTokens": "No SCIM tokens have been created yet.",
+      "emptyTitle": "No SCIM tokens yet",
+      "emptyBody": "Mint a token to let your identity provider create and update users in TestPlanIt automatically.",
+      "emptyCta": "Mint your first token",
+      "sectionConflicts": "External-ID conflicts",
+      "conflictsPlaceholder": "No conflicts. Conflict tracking ships in a later release.",
+      "conflicts": {
+        "title": "External-ID conflict log",
+        "description": "SCIM identity events that required system intervention (linking, resurrection, displayName overwrite, skipped members).",
+        "empty": "No conflicts in the last 90 days.",
+        "loading": "Loading conflicts…",
+        "errorLoad": "Couldn't load conflict log. Retry.",
+        "colTimestamp": "When",
+        "colType": "Type",
+        "colEntity": "Entity",
+        "colAction": "System action",
+        "typeLinked": "Linked",
+        "typeResurrected": "Resurrected",
+        "typeSkippedMembers": "Members skipped",
+        "typeDisplayNameOverwrote": "Display name overwritten",
+        "typeReEmitted": "Re-emitted",
+        "typeConflict": "Conflict",
+        "typeUnknown": "Unknown",
+        "viewPayload": "View payload",
+        "reEmit": "Re-emit member event",
+        "reEmitConfirm": "Re-emit the member_added / member_removed webhook for this conflict? The original event payload included member references that didn't exist at sync time. Re-emitting now will include the members that have since been provisioned.",
+        "reEmitConfirmTitle": "Re-emit member event?",
+        "reEmitSuccess": "Webhook re-emitted; audit row written.",
+        "reEmitError": "Couldn't re-emit. {reason}",
+        "next": "Next",
+        "previous": "Previous",
+        "viewDialogTitle": "Conflict payload",
+        "viewDialogDescription": "Audit row metadata for {entityType}#{entityId}.",
+        "close": "Close"
+      },
+      "errorLoad": "Couldn't load tokens. Retry.",
+      "columns": {
+        "idp": "IdP",
+        "lastIp": "Last IP",
+        "lastSync": "Last Sync"
+      },
+      "status": {
+        "active": "Active",
+        "expired": "Expired",
+        "deactivated": "Deactivated"
+      },
+      "mint": {
+        "title": "Mint new SCIM token",
+        "description": "Generate a bearer token your IdP will use to sync users into TestPlanIt.",
+        "nameLabel": "Token Name",
+        "namePlaceholder": "e.g., Okta production",
+        "idpLabel": "Identity Provider",
+        "idpOkta": "Okta",
+        "idpEntra": "Microsoft Entra (Azure AD)",
+        "idpOneLogin": "OneLogin",
+        "idpOther": "Other",
+        "expiresLabel": "Expires",
+        "expiresNever": "Never expires",
+        "expires30": "30 days",
+        "expires90": "90 days",
+        "expires1y": "1 year",
+        "expiresCustom": "Custom date…",
+        "expiresCustomLabel": "Choose expiry date",
+        "submit": "Mint token",
+        "submitting": "Minting…",
+        "errorsNameRequired": "Token name is required.",
+        "errorToast": "Couldn't mint token. {reason}"
+      },
+      "reveal": {
+        "title": "Token created",
+        "warning": "Copy this token now. TestPlanIt won't show it again.",
+        "tokenLabel": "SCIM bearer token",
+        "copy": "Copy",
+        "copied": "Copied",
+        "baseUrlHint": "Paste this into your IdP's SCIM Bearer-token field. The base URL is {baseUrl}.",
+        "close": "Close",
+        "toast": "Token created.",
+        "a11yAnnounce": "Token created. Copy now."
+      },
+      "revoke": {
+        "title": "Revoke SCIM token?",
+        "description": "The next request bearing \"{name}\" will be rejected with HTTP 401. The token row stays in audit history forever.",
+        "confirm": "Revoke",
+        "successToast": "Token revoked.",
+        "errorToast": "Couldn't revoke token. {reason}"
+      },
+      "probe": {
+        "button": "Test SCIM",
+        "testing": "Testing…",
+        "okBanner": "HTTP {status} — token works against /scim/v2/Users.",
+        "failBanner": "HTTP {status} — {reason}",
+        "networkError": "Couldn't reach the SCIM endpoint. Retry."
+      }
     },
     "tags": {
       "add": {
@@ -4679,7 +4816,11 @@
         "confirmMessage": "Are you sure you want to delete this group?"
       },
       "noUsersSelected": "No users selected yet.",
-      "noUsersAssigned": "No users assigned to this group."
+      "noUsersAssigned": "No users assigned to this group.",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Managed by SCIM. Manage from the SCIM admin page.",
+      "scimNameLockedTitle": "Group is managed by SCIM",
+      "scimNameLockedDescription": "This group's name and members are managed by your identity provider. Make changes there to update them here."
     },
     "milestones": {
       "description": "Manage Milestone Types",
@@ -5432,7 +5573,8 @@
         "allTime": "All time"
       },
       "systemActor": "System",
-      "systemActorTooltip": "Action performed by the system, not a logged-in user"
+      "systemActorTooltip": "Action performed by the system, not a logged-in user",
+      "sourceScim": "SCIM"
     }
   },
   "components": {

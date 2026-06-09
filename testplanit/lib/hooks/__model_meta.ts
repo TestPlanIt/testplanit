@@ -163,6 +163,26 @@ const metadata: ModelMeta = {
                     name: "externalId",
                     type: "String",
                     isOptional: true,
+                }, scimUserName: {
+                    name: "scimUserName",
+                    type: "String",
+                    isOptional: true,
+                }, scimExternalId: {
+                    name: "scimExternalId",
+                    type: "String",
+                    isOptional: true,
+                }, scimExtensions: {
+                    name: "scimExtensions",
+                    type: "Json",
+                    isOptional: true,
+                }, scimGivenName: {
+                    name: "scimGivenName",
+                    type: "String",
+                    isOptional: true,
+                }, scimFamilyName: {
+                    name: "scimFamilyName",
+                    type: "String",
+                    isOptional: true,
                 }, access: {
                     name: "access",
                     type: "Access",
@@ -449,6 +469,24 @@ const metadata: ModelMeta = {
                     isDataModel: true,
                     isArray: true,
                     backLink: 'user',
+                }, scimSystemTokens: {
+                    name: "scimSystemTokens",
+                    type: "ScimToken",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'systemUser',
+                }, scimTokensCreated: {
+                    name: "scimTokensCreated",
+                    type: "ScimToken",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'createdBy',
+                }, scimTokensRevoked: {
+                    name: "scimTokensRevoked",
+                    type: "ScimToken",
+                    isDataModel: true,
+                    isArray: true,
+                    backLink: 'revokedBy',
                 }, createdShareLinks: {
                     name: "createdShareLinks",
                     type: "ShareLink",
@@ -521,6 +559,12 @@ const metadata: ModelMeta = {
                 }, email: {
                     name: "email",
                     fields: ["email"]
+                }, scimUserName: {
+                    name: "scimUserName",
+                    fields: ["scimUserName"]
+                }, scimExternalId: {
+                    name: "scimExternalId",
+                    fields: ["scimExternalId"]
                 },
             },
         },
@@ -699,6 +743,105 @@ const metadata: ModelMeta = {
                 },
             },
         },
+        scimToken: {
+            name: 'ScimToken', fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    isId: true,
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, name: {
+                    name: "name",
+                    type: "String",
+                }, idpName: {
+                    name: "idpName",
+                    type: "IdpName",
+                }, token: {
+                    name: "token",
+                    type: "String",
+                }, tokenPrefix: {
+                    name: "tokenPrefix",
+                    type: "String",
+                }, secret: {
+                    name: "secret",
+                    type: "String",
+                }, systemUserId: {
+                    name: "systemUserId",
+                    type: "String",
+                    isForeignKey: true,
+                    relationField: 'systemUser',
+                }, systemUser: {
+                    name: "systemUser",
+                    type: "User",
+                    isDataModel: true,
+                    backLink: 'scimSystemTokens',
+                    isRelationOwner: true,
+                    foreignKeyMapping: { "id": "systemUserId" },
+                }, createdById: {
+                    name: "createdById",
+                    type: "String",
+                    isForeignKey: true,
+                    relationField: 'createdBy',
+                }, createdBy: {
+                    name: "createdBy",
+                    type: "User",
+                    isDataModel: true,
+                    backLink: 'scimTokensCreated',
+                    isRelationOwner: true,
+                    foreignKeyMapping: { "id": "createdById" },
+                }, revokedById: {
+                    name: "revokedById",
+                    type: "String",
+                    isOptional: true,
+                    isForeignKey: true,
+                    relationField: 'revokedBy',
+                }, revokedBy: {
+                    name: "revokedBy",
+                    type: "User",
+                    isDataModel: true,
+                    isOptional: true,
+                    backLink: 'scimTokensRevoked',
+                    isRelationOwner: true,
+                    foreignKeyMapping: { "id": "revokedById" },
+                }, expiresAt: {
+                    name: "expiresAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, lastUsedAt: {
+                    name: "lastUsedAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, lastUsedIp: {
+                    name: "lastUsedIp",
+                    type: "String",
+                    isOptional: true,
+                }, lastSyncAt: {
+                    name: "lastSyncAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, revokedAt: {
+                    name: "revokedAt",
+                    type: "DateTime",
+                    isOptional: true,
+                }, createdAt: {
+                    name: "createdAt",
+                    type: "DateTime",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, isActive: {
+                    name: "isActive",
+                    type: "Boolean",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value", "value": true }] }],
+                },
+            }, uniqueConstraints: {
+                id: {
+                    name: "id",
+                    fields: ["id"]
+                }, token: {
+                    name: "token",
+                    fields: ["token"]
+                },
+            },
+        },
         groups: {
             name: 'Groups', fields: {
                 id: {
@@ -726,6 +869,19 @@ const metadata: ModelMeta = {
                     name: "isDeleted",
                     type: "Boolean",
                     attributes: [{ "name": "@default", "args": [{ "name": "value", "value": false }] }],
+                }, updatedAt: {
+                    name: "updatedAt",
+                    type: "DateTime",
+                    isOptional: true,
+                    attributes: [{ "name": "@updatedAt", "args": [] }],
+                }, scimDisplayName: {
+                    name: "scimDisplayName",
+                    type: "String",
+                    isOptional: true,
+                }, scimExtensions: {
+                    name: "scimExtensions",
+                    type: "Json",
+                    isOptional: true,
                 }, assignedUsers: {
                     name: "assignedUsers",
                     type: "GroupAssignment",
@@ -746,6 +902,9 @@ const metadata: ModelMeta = {
                 }, name: {
                     name: "name",
                     fields: ["name"]
+                }, externalId: {
+                    name: "externalId",
+                    fields: ["externalId"]
                 },
             },
         },

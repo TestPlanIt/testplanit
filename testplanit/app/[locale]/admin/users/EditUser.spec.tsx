@@ -107,6 +107,8 @@ const testUser = {
   name: "Test User",
   email: "test@example.com",
   isActive: true,
+  scimGivenName: null,
+  scimFamilyName: null,
   access: "USER" as const,
   roleId: 1,
   isApi: false,

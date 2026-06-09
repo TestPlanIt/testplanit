@@ -238,6 +238,112 @@ export const WEBHOOK_EVENT_CATALOG: WebhookEventDefinition[] = [
       "Synthetic test event emitted by the admin UI to verify a webhook subscription works.",
     payloadKeys: ["subscriptionId", "projectId", "actorUserId"],
   },
+
+  // --- SCIM Users (IdP-driven lifecycle) ---
+  {
+    name: "scim.user.created",
+    category: "system",
+    description: "A user was provisioned via SCIM (new row or JIT-first bind).",
+    payloadKeys: [
+      "id",
+      "scimExternalId",
+      "userName",
+      "email",
+      "active",
+      "name",
+      "createdAt",
+    ],
+  },
+  {
+    name: "scim.user.updated",
+    category: "system",
+    description: "A SCIM-provisioned user's attributes changed (PUT/PATCH).",
+    payloadKeys: ["id", "scimExternalId", "userName", "email", "after", "diff"],
+  },
+  {
+    name: "scim.user.activated",
+    category: "system",
+    description:
+      "A SCIM-provisioned user was reactivated (active flipped to true).",
+    payloadKeys: ["id", "scimExternalId", "userName"],
+  },
+  {
+    name: "scim.user.deactivated",
+    category: "system",
+    description:
+      "A SCIM-provisioned user was deactivated (active flipped to false).",
+    payloadKeys: ["id", "scimExternalId", "userName"],
+  },
+  {
+    name: "scim.user.deleted",
+    category: "system",
+    description: "A SCIM-provisioned user was tombstoned (DELETE).",
+    payloadKeys: ["id", "scimExternalId", "name", "email", "userName"],
+  },
+
+  // --- SCIM Groups (IdP-driven lifecycle) ---
+  {
+    name: "scim.group.created",
+    category: "system",
+    description: "A group was provisioned via SCIM.",
+    payloadKeys: [
+      "id",
+      "projectId",
+      "externalId",
+      "displayName",
+      "members",
+      "createdAt",
+    ],
+  },
+  {
+    name: "scim.group.updated",
+    category: "system",
+    description: "A SCIM-provisioned group's attributes changed (PUT/PATCH).",
+    payloadKeys: [
+      "id",
+      "projectId",
+      "externalId",
+      "displayName",
+      "after",
+      "diff",
+    ],
+  },
+  {
+    name: "scim.group.member_added",
+    category: "system",
+    description:
+      "One or more members were added to a SCIM-provisioned group via PATCH.",
+    payloadKeys: ["id", "projectId", "externalId", "displayName", "members"],
+  },
+  {
+    name: "scim.group.member_removed",
+    category: "system",
+    description:
+      "One or more members were removed from a SCIM-provisioned group via PATCH.",
+    payloadKeys: ["id", "projectId", "externalId", "displayName", "members"],
+  },
+  {
+    name: "scim.group.deleted",
+    category: "system",
+    description: "A SCIM-provisioned group was tombstoned (DELETE).",
+    payloadKeys: ["id", "projectId", "externalId", "displayName"],
+  },
+
+  // --- SCIM coalescing summaries (bulk-sync fold-down) ---
+  {
+    name: "scim.user.created.summary",
+    category: "system",
+    description:
+      "A coalesced summary emitted when scim.user.created exceeded the per-config rate window threshold.",
+    payloadKeys: ["count", "firstAt", "lastAt", "windowStart", "sampleIds"],
+  },
+  {
+    name: "scim.group.member_added.summary",
+    category: "system",
+    description:
+      "A coalesced summary emitted when scim.group.member_added exceeded the per-config rate window threshold.",
+    payloadKeys: ["count", "firstAt", "lastAt", "windowStart", "sampleIds"],
+  },
 ];
 
 /** Convenience accessor used by the catalog endpoint. */

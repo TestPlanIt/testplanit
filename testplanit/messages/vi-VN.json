@@ -194,7 +194,8 @@
     "auth": {
       "internal": "Email/Mật khẩu",
       "sso": "Chỉ SSO",
-      "both": "Email & SSO"
+      "both": "Email & SSO",
+      "scim": "SCIM đã được cấp phép"
     },
     "status": {
       "deleted": "Đã xóa",
@@ -1432,13 +1433,27 @@
         "outboundSubsTestRunsAndSessions": "Chạy thử & Phiên thử nghiệm",
         "outboundSubsTestRuns": "Chạy thử nghiệm",
         "outboundSubsSessions": "Phiên họp",
+        "outboundSubsScimUsers": "Người dùng SCIM",
+        "outboundSubsScimGroups": "Nhóm SCIM",
         "eventVerbs": {
           "duplicated": "Đã sao chép",
           "stateChanged": "Trạng thái đã thay đổi",
           "resultAdded": "Kết quả đã được thêm",
           "resultRecorded": "Kết quả đã được ghi nhận",
           "reviewRequested": "Yêu cầu xem xét",
-          "reviewCompleted": "Đánh giá đã hoàn tất"
+          "reviewCompleted": "Đánh giá đã hoàn tất",
+          "scimUserCreated": "Người dùng đã tạo",
+          "scimUserUpdated": "Người dùng đã cập nhật",
+          "scimUserActivated": "Người dùng đã kích hoạt",
+          "scimUserDeactivated": "Người dùng đã bị vô hiệu hóa",
+          "scimUserDeleted": "Người dùng đã bị xóa",
+          "scimUserCreatedSummary": "Người dùng đã tạo (tóm tắt đồng bộ hóa hàng loạt)",
+          "scimGroupCreated": "Nhóm đã được tạo",
+          "scimGroupUpdated": "Nhóm đã cập nhật",
+          "scimGroupMemberAdded": "Các thành viên đã thêm",
+          "scimGroupMemberRemoved": "Thành viên bị loại bỏ",
+          "scimGroupDeleted": "Nhóm đã bị xóa",
+          "scimGroupMemberAddedSummary": "Thành viên đã được thêm (tóm tắt đồng bộ hàng loạt)"
         },
         "iterationResultHelp": "Sự kiện này được kích hoạt mỗi khi kết quả của một vòng lặp được ghi lại — đạt, không đạt, bỏ qua hoặc bất kỳ trạng thái nào khác. Nên sử dụng tiết kiệm trong các lần chạy tự động hóa dài (một sự kiện cho mỗi vòng lặp).",
         "events": {
@@ -2259,13 +2274,32 @@
         "deleteAvatarConfirm": "Bạn có chắc chắn muốn xóa {name} của mình không?",
         "emailDisabledForSso": "Bạn không thể thay đổi email cho các tài khoản SSO. Vui lòng cập nhật email thông qua nhà cung cấp dịch vụ xác thực của bạn.",
         "emailEditableForBoth": "Bạn có thể đăng nhập bằng cả email/mật khẩu và SSO. Việc thay đổi email chỉ ảnh hưởng đến xác thực bằng mật khẩu.",
-        "linkSsoProvider": "Nhà cung cấp SSO liên kết"
+        "linkSsoProvider": "Nhà cung cấp SSO liên kết",
+        "nameDisabledForScim": "Tên của bạn được quản lý bởi nhà cung cấp danh tính thông qua SCIM và không thể thay đổi ở đây.",
+        "emailDisabledForScim": "Địa chỉ email được quản lý bởi nhà cung cấp danh tính của bạn thông qua SCIM và không thể thay đổi ở đây."
       },
       "preferences": {
         "title": "Tùy chọn"
       },
       "access": {
         "title": "Truy cập"
+      },
+      "directory": {
+        "title": "Hồ sơ thư mục",
+        "subtitle": "Các trường chỉ đọc được đồng bộ từ nhà cung cấp danh tính của bạn thông qua SCIM.",
+        "externalId": "ID người dùng IdP",
+        "userName": "Tên người dùng thư mục",
+        "givenName": "Tên",
+        "familyName": "Họ",
+        "jobTitle": "Tiêu đề",
+        "userType": "Loại người dùng",
+        "employeeNumber": "Mã số nhân viên",
+        "department": "Phòng",
+        "division": "Phân công",
+        "organization": "Tổ chức",
+        "costCenter": "Trung tâm chi phí",
+        "manager": "Giám đốc",
+        "noEnterpriseFields": "Nhà cung cấp định danh của bạn chưa gửi bất kỳ thuộc tính thư mục doanh nghiệp nào cho tài khoản này."
       },
       "notifications": {
         "title": "Tùy chọn thông báo",
@@ -3427,9 +3461,12 @@
       "queues": "Hàng đợi công việc",
       "auditLogs": "Nhật ký kiểm toán",
       "apiTokens": "Mã thông báo API",
+      "scim": "Cung cấp SCIM",
+      "systemWebhooks": "Webhooks hệ thống",
       "quickscriptTemplates": "Mẫu QuickScript",
       "testManagement": "Quản lý kiểm thử",
       "peopleAndAccess": "Con người & Quyền truy cập",
+      "authentication": "Xác thực",
       "toolsAndIntegrations": "Công cụ & Tích hợp",
       "system": "Hệ thống"
     },
@@ -3772,15 +3809,11 @@
       }
     },
     "sso": {
-      "description": "Quản lý cài đặt xác thực và bảo mật",
+      "description": "Quản lý cài đặt xác thực và đăng ký",
       "sections": {
         "providers": {
           "title": "Nhà cung cấp đăng nhập",
           "description": "Cấu hình cách người dùng có thể đăng nhập vào ứng dụng của bạn."
-        },
-        "security": {
-          "title": "Bảo vệ",
-          "description": "Cấu hình các chính sách bảo mật cho việc xác thực"
         }
       },
       "globalSettings": {
@@ -3804,20 +3837,6 @@
         "magicLink": {
           "title": "Xác thực liên kết ma thuật",
           "description": "Bật hoặc tắt xác thực qua email không cần mật khẩu"
-        },
-        "forceSso": {
-          "title": "Buộc đăng nhập SSO",
-          "description": "Vô hiệu hóa đăng nhập bằng email và yêu cầu người dùng sử dụng SSO."
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "Yêu cầu xác thực hai yếu tố (2FA) khi đăng nhập bằng mật khẩu.",
-            "description": "Người dùng đăng nhập bằng email/mật khẩu phải thiết lập và sử dụng xác thực hai yếu tố."
-          },
-          "forceAllLogins": {
-            "title": "Yêu cầu xác thực hai yếu tố (2FA) cho tất cả các lần đăng nhập.",
-            "description": "Tất cả người dùng phải xác thực bằng xác thực hai yếu tố (2FA) sau khi đăng nhập, bao gồm cả người dùng SSO."
-          }
         }
       },
       "providers": {
@@ -3875,14 +3894,6 @@
         "enabled": "Nhà cung cấp đã kích hoạt",
         "disabled": "Nhà cung cấp đã bị vô hiệu hóa",
         "updateFailed": "Không thể cập nhật nhà cung cấp",
-        "forceSsoEnabled": "Buộc bật SSO trên toàn cầu",
-        "forceSsoDisabled": "Buộc sử dụng SSO đã bị vô hiệu hóa trên toàn cầu.",
-        "forceSsoUpdateFailed": "Không thể cập nhật cài đặt SSO bắt buộc.",
-        "force2FANonSSOEnabled": "Cần xác thực hai yếu tố để đăng nhập bằng mật khẩu.",
-        "force2FANonSSODisabled": "Không còn yêu cầu xác thực hai yếu tố đối với việc đăng nhập bằng mật khẩu.",
-        "force2FAAllLoginsEnabled": "Yêu cầu xác thực hai yếu tố cho tất cả các lần đăng nhập.",
-        "force2FAAllLoginsDisabled": "Xác thực hai yếu tố không còn bắt buộc đối với tất cả các lần đăng nhập.",
-        "force2FAUpdateFailed": "Không thể cập nhật cài đặt xác thực hai yếu tố.",
         "configUpdated": "Cấu hình SAML đã được cập nhật",
         "configCreated": "Cấu hình SAML đã được tạo",
         "configSaveFailed": "Không thể lưu cấu hình SAML.",
@@ -4336,17 +4347,40 @@
       "forcePasswordChangeSuccess": "Cần thay đổi mật khẩu cho {name}",
       "forcePasswordChangeFailed": "Không thể buộc thay đổi mật khẩu.",
       "revokePasswordSuccess": "Mật khẩu đã bị thu hồi cho {name}",
-      "revokePasswordFailed": "Không thể thu hồi mật khẩu."
+      "revokePasswordFailed": "Không thể thu hồi mật khẩu.",
+      "scimProvisionerBadge": "Bộ cung cấp SCIM",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Được quản lý bởi SCIM. Quản lý từ trang quản trị SCIM.",
+      "scimColumnHeader": "SCIM",
+      "scimColumnYes": "Đúng",
+      "scimUserLockedTitle": "Người dùng được quản lý bởi SCIM",
+      "scimUserLockedDescription": "Tên, email và trạng thái hoạt động của người dùng này được quản lý bởi nhà cung cấp danh tính của bạn. Hãy thực hiện các thay đổi ở đó để cập nhật chúng ở đây."
     },
     "security": {
       "title": "Bảo vệ",
-      "description": "Cấu hình chính sách mật khẩu, cài đặt khóa tài khoản và các hành động thực thi.",
+      "description": "Cấu hình việc bắt buộc đăng nhập, chính sách mật khẩu, cài đặt khóa tài khoản và các hành động thực thi.",
       "passwordPolicyTitle": "Chính sách mật khẩu",
       "passwordPolicyDescription": "Đặt ra các yêu cầu đối với mật khẩu người dùng.",
       "lockoutPolicyTitle": "Chính sách khóa cửa",
       "lockoutPolicyDescription": "Cấu hình khóa tài khoản sau các lần đăng nhập không thành công.",
       "enforcementTitle": "Các biện pháp thực thi",
       "enforcementDescription": "Buộc thay đổi mật khẩu đối với người dùng sử dụng thông tin đăng nhập.",
+      "signInEnforcementTitle": "Thực thi đăng nhập",
+      "signInEnforcementDescription": "Yêu cầu đăng nhập một lần (SSO) và bắt buộc xác thực hai yếu tố.",
+      "forceSsoTitle": "Buộc đăng nhập SSO",
+      "forceSsoDescription": "Vô hiệu hóa đăng nhập bằng email và yêu cầu người dùng sử dụng SSO.",
+      "force2FANonSSOTitle": "Yêu cầu xác thực hai yếu tố (2FA) khi đăng nhập bằng mật khẩu.",
+      "force2FANonSSODescription": "Người dùng đăng nhập bằng email/mật khẩu phải thiết lập và sử dụng xác thực hai yếu tố.",
+      "force2FAAllLoginsTitle": "Yêu cầu xác thực hai yếu tố (2FA) cho tất cả các lần đăng nhập.",
+      "force2FAAllLoginsDescription": "Tất cả người dùng phải xác thực bằng xác thực hai yếu tố (2FA) sau khi đăng nhập, bao gồm cả người dùng SSO.",
+      "forceSsoEnabled": "Buộc bật SSO trên toàn cầu",
+      "forceSsoDisabled": "Buộc sử dụng SSO đã bị vô hiệu hóa trên toàn cầu.",
+      "forceSsoUpdateFailed": "Không thể cập nhật cài đặt SSO bắt buộc.",
+      "force2FANonSSOEnabled": "Cần xác thực hai yếu tố để đăng nhập bằng mật khẩu.",
+      "force2FANonSSODisabled": "Không còn yêu cầu xác thực hai yếu tố đối với việc đăng nhập bằng mật khẩu.",
+      "force2FAAllLoginsEnabled": "Yêu cầu xác thực hai yếu tố cho tất cả các lần đăng nhập.",
+      "force2FAAllLoginsDisabled": "Xác thực hai yếu tố không còn bắt buộc đối với tất cả các lần đăng nhập.",
+      "force2FAUpdateFailed": "Không thể cập nhật cài đặt xác thực hai yếu tố.",
       "minPasswordLengthLabel": "Độ dài mật khẩu tối thiểu",
       "minPasswordLengthDescription": "Mật khẩu phải có ít nhất số ký tự này (8-128)",
       "requireUppercaseLabel": "Yêu cầu viết hoa",
@@ -4400,6 +4434,109 @@
       "revokeAllPlaceholder": "HỦY BỎ TẤT CẢ",
       "revokeAllSuccess": "Tất cả mã thông báo API đã bị thu hồi.",
       "revokeAllError": "Không thể thu hồi tất cả mã thông báo."
+    },
+    "systemWebhooks": {
+      "title": "Webhooks hệ thống",
+      "description": "Các đích đến webhook gửi đi dành cho các sự kiện cấp hệ thống không gắn liền với một dự án cụ thể — hiện tại là các sự kiện vòng đời người dùng và nhóm SCIM 2.0. Thay vào đó, hãy cấu hình webhook đến và webhook gửi đi có phạm vi dự án từ trang cài đặt dự án."
+    },
+    "scim": {
+      "description": "Cấp phép người dùng từ nhà cung cấp danh tính của bạn vào TestPlanIt thông qua SCIM 2.0.",
+      "mintCta": "Mã thông báo mới của Mint",
+      "filterPlaceholder": "Lọc theo tên token hoặc IdP...",
+      "showRevoked": "Chương trình đã bị thu hồi",
+      "noTokens": "Chưa có token SCIM nào được tạo.",
+      "emptyTitle": "Chưa có token SCIM nào.",
+      "emptyBody": "Tạo một token để cho phép nhà cung cấp danh tính của bạn tự động tạo và cập nhật người dùng trong TestPlanIt.",
+      "emptyCta": "Tạo token đầu tiên của bạn",
+      "sectionConflicts": "Xung đột ID bên ngoài",
+      "conflictsPlaceholder": "Không có xung đột. Tính năng theo dõi xung đột giữa các tàu sẽ được cập nhật trong bản phát hành sau.",
+      "conflicts": {
+        "title": "nhật ký xung đột ID bên ngoài",
+        "description": "Các sự kiện nhận dạng SCIM yêu cầu sự can thiệp của hệ thống (liên kết, khôi phục, ghi đè displayName, bỏ qua thành viên).",
+        "empty": "Không có xung đột nào trong 90 ngày qua.",
+        "loading": "Đang tải xung đột…",
+        "errorLoad": "Không thể tải nhật ký xung đột. Vui lòng thử lại.",
+        "colTimestamp": "Khi",
+        "colType": "Kiểu",
+        "colEntity": "Thực thể",
+        "colAction": "Hành động của hệ thống",
+        "typeLinked": "Liên kết",
+        "typeResurrected": "Phục sinh",
+        "typeSkippedMembers": "Thành viên đã bỏ qua",
+        "typeDisplayNameOverwrote": "Tên hiển thị bị ghi đè",
+        "typeReEmitted": "Phát lại",
+        "typeConflict": "Xung đột",
+        "typeUnknown": "Không rõ",
+        "viewPayload": "Xem tải trọng",
+        "reEmit": "Sự kiện tái phát hành dành cho thành viên",
+        "reEmitConfirm": "Có nên phát lại webhook member_added / member_removed cho xung đột này không? Payload sự kiện ban đầu bao gồm các tham chiếu thành viên không tồn tại tại thời điểm đồng bộ. Việc phát lại bây giờ sẽ bao gồm các thành viên đã được cấp phép sau đó.",
+        "reEmitConfirmTitle": "Sự kiện dành cho thành viên phát lại?",
+        "reEmitSuccess": "Webhook được phát lại; dòng kiểm toán đã được ghi.",
+        "reEmitError": "Không thể phát lại. {reason}",
+        "next": "Kế tiếp",
+        "previous": "Trước",
+        "viewDialogTitle": "Tải trọng xung đột",
+        "viewDialogDescription": "Siêu dữ liệu hàng kiểm tra cho {entityType}#{entityId}.",
+        "close": "Đóng"
+      },
+      "errorLoad": "Không thể tải mã thông báo. Vui lòng thử lại.",
+      "columns": {
+        "idp": "IdP",
+        "lastIp": "Địa chỉ IP cuối cùng",
+        "lastSync": "Lần đồng bộ cuối cùng"
+      },
+      "status": {
+        "active": "Tích cực",
+        "expired": "Hết hạn",
+        "deactivated": "Đã vô hiệu hóa"
+      },
+      "mint": {
+        "title": "Token SCIM mới được đúc",
+        "description": "Tạo mã thông báo bearer mà nhà cung cấp danh tính (IdP) của bạn sẽ sử dụng để đồng bộ người dùng vào TestPlanIt.",
+        "nameLabel": "Tên mã thông báo",
+        "namePlaceholder": "ví dụ: Sản xuất Okta",
+        "idpLabel": "Nhà cung cấp danh tính",
+        "idpOkta": "Okta",
+        "idpEntra": "Microsoft Entra (Azure AD)",
+        "idpOneLogin": "Đăng nhập một lần",
+        "idpOther": "Khác",
+        "expiresLabel": "Hết hạn",
+        "expiresNever": "Không bao giờ hết hạn",
+        "expires30": "30 ngày",
+        "expires90": "90 ngày",
+        "expires1y": "1 năm",
+        "expiresCustom": "Ngày tùy chỉnh…",
+        "expiresCustomLabel": "Chọn ngày hết hạn",
+        "submit": "Mã thông báo Mint",
+        "submitting": "Đúc tiền…",
+        "errorsNameRequired": "Tên mã thông báo là bắt buộc.",
+        "errorToast": "Không thể tạo token. {reason}"
+      },
+      "reveal": {
+        "title": "Mã thông báo đã được tạo",
+        "warning": "Sao chép mã thông báo này ngay bây giờ. TestPlanIt sẽ không hiển thị lại mã này nữa.",
+        "tokenLabel": "mã thông báo người mang SCIM",
+        "copy": "Sao chép",
+        "copied": "Đã sao chép",
+        "baseUrlHint": "Dán đoạn mã này vào trường SCIM Bearer-token của IdP. URL cơ sở là {baseUrl}.",
+        "close": "Đóng",
+        "toast": "Mã thông báo đã được tạo.",
+        "a11yAnnounce": "Mã thông báo đã được tạo. Sao chép ngay."
+      },
+      "revoke": {
+        "title": "Thu hồi mã thông báo SCIM?",
+        "description": "Yêu cầu tiếp theo mang \"{name}\" sẽ bị từ chối với mã lỗi HTTP 401. Dòng mã thông báo sẽ được lưu giữ trong lịch sử kiểm toán vĩnh viễn.",
+        "confirm": "Thu hồi",
+        "successToast": "Mã thông báo đã bị thu hồi.",
+        "errorToast": "Không thể thu hồi mã thông báo. {reason}"
+      },
+      "probe": {
+        "button": "Kiểm tra SCIM",
+        "testing": "Đang kiểm tra…",
+        "okBanner": "HTTP {status} — mã thông báo hoạt động với /scim/v2/Users.",
+        "failBanner": "HTTP {status} — {reason}",
+        "networkError": "Không thể kết nối đến điểm cuối SCIM. Vui lòng thử lại."
+      }
     },
     "tags": {
       "add": {
@@ -4679,7 +4816,11 @@
         "confirmMessage": "Bạn có chắc chắn muốn xóa nhóm này không?"
       },
       "noUsersSelected": "Chưa có người dùng nào được chọn.",
-      "noUsersAssigned": "Hiện chưa có người dùng nào được chỉ định vào nhóm này."
+      "noUsersAssigned": "Hiện chưa có người dùng nào được chỉ định vào nhóm này.",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Được quản lý bởi SCIM. Quản lý từ trang quản trị SCIM.",
+      "scimNameLockedTitle": "Tập đoàn được quản lý bởi SCIM.",
+      "scimNameLockedDescription": "Tên và thành viên của nhóm này được quản lý bởi nhà cung cấp danh tính của bạn. Hãy thực hiện các thay đổi ở đó để cập nhật thông tin tại đây."
     },
     "milestones": {
       "description": "Quản lý các loại mốc thời gian",
@@ -5432,7 +5573,8 @@
         "allTime": "Mọi thời đại"
       },
       "systemActor": "Hệ thống",
-      "systemActorTooltip": "Hành động này được thực hiện bởi hệ thống, không phải bởi người dùng đã đăng nhập."
+      "systemActorTooltip": "Hành động này được thực hiện bởi hệ thống, không phải bởi người dùng đã đăng nhập.",
+      "sourceScim": "SCIM"
     }
   },
   "components": {

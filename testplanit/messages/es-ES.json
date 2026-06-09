@@ -194,7 +194,8 @@
     "auth": {
       "internal": "Correo/Contraseña",
       "sso": "Sólo SSO",
-      "both": "Email y SSO"
+      "both": "Email y SSO",
+      "scim": "SCIM aprovisionado"
     },
     "status": {
       "deleted": "Eliminado",
@@ -1432,13 +1433,27 @@
         "outboundSubsTestRunsAndSessions": "Pruebas y sesiones",
         "outboundSubsTestRuns": "Pruebas de funcionamiento",
         "outboundSubsSessions": "Sesiones",
+        "outboundSubsScimUsers": "Usuarios de SCIM",
+        "outboundSubsScimGroups": "Grupos SCIM",
         "eventVerbs": {
           "duplicated": "Duplicado",
           "stateChanged": "El estado cambió",
           "resultAdded": "Resultado añadido",
           "resultRecorded": "Resultado registrado",
           "reviewRequested": "Se solicita revisión",
-          "reviewCompleted": "Revisión completada"
+          "reviewCompleted": "Revisión completada",
+          "scimUserCreated": "Creado por el usuario",
+          "scimUserUpdated": "El usuario actualizó",
+          "scimUserActivated": "Usuario activado",
+          "scimUserDeactivated": "Usuario desactivado",
+          "scimUserDeleted": "Usuario eliminado",
+          "scimUserCreatedSummary": "Creado por el usuario (resumen de sincronización masiva)",
+          "scimGroupCreated": "Grupo creado",
+          "scimGroupUpdated": "Grupo actualizado",
+          "scimGroupMemberAdded": "Miembros añadidos",
+          "scimGroupMemberRemoved": "Miembros eliminados",
+          "scimGroupDeleted": "Grupo eliminado",
+          "scimGroupMemberAddedSummary": "Miembros añadidos (resumen de sincronización masiva)"
         },
         "iterationResultHelp": "Se activa cada vez que se registra el resultado de una iteración: aprobado, reprobado, omitido o cualquier otro estado. Úselo con moderación en ejecuciones de automatización largas (un evento por iteración).",
         "events": {
@@ -2259,13 +2274,32 @@
         "deleteAvatarConfirm": "¿Estás seguro de que quieres eliminar tu {name}?",
         "emailDisabledForSso": "El correo electrónico no se puede cambiar para las cuentas SSO. Por favor, actualízalo a través de tu proveedor de identidad.",
         "emailEditableForBoth": "Puede iniciar sesión con correo electrónico/contraseña y SSO. Los cambios de correo electrónico sólo afectarán la autenticación de contraseña.",
-        "linkSsoProvider": "Enlazar proveedor SSO"
+        "linkSsoProvider": "Enlazar proveedor SSO",
+        "nameDisabledForScim": "Su nombre es gestionado por su proveedor de identidad a través de SCIM y no se puede cambiar aquí.",
+        "emailDisabledForScim": "El correo electrónico lo gestiona su proveedor de identidad a través de SCIM y no se puede modificar aquí."
       },
       "preferences": {
         "title": "Preferencias"
       },
       "access": {
         "title": "Acceso"
+      },
+      "directory": {
+        "title": "Perfil de directorio",
+        "subtitle": "Campos de solo lectura sincronizados desde su proveedor de identidad a través de SCIM.",
+        "externalId": "ID de usuario del IdP",
+        "userName": "Nombre de usuario del directorio",
+        "givenName": "Nombre de pila",
+        "familyName": "Apellido",
+        "jobTitle": "Título",
+        "userType": "Tipo de usuario",
+        "employeeNumber": "Número de empleado",
+        "department": "Departamento",
+        "division": "División",
+        "organization": "Organización",
+        "costCenter": "centro de costos",
+        "manager": "Gerente",
+        "noEnterpriseFields": "Su proveedor de identidad no ha enviado ningún atributo de directorio empresarial para esta cuenta."
       },
       "notifications": {
         "title": "Preferencias de notificación",
@@ -3427,9 +3461,12 @@
       "queues": "Colas de trabajos",
       "auditLogs": "Registros de auditoría",
       "apiTokens": "Tokens API",
+      "scim": "Aprovisionamiento SCIM",
+      "systemWebhooks": "Webhooks del sistema",
       "quickscriptTemplates": "Plantillas de QuickScript",
       "testManagement": "Gestión de pruebas",
       "peopleAndAccess": "Personas y acceso",
+      "authentication": "Autenticación",
       "toolsAndIntegrations": "Herramientas e integraciones",
       "system": "Sistema"
     },
@@ -3772,15 +3809,11 @@
       }
     },
     "sso": {
-      "description": "Administrar la configuración de autenticación y seguridad",
+      "description": "Administrar la configuración de autenticación y registro",
       "sections": {
         "providers": {
           "title": "Proveedores de inicio de sesión",
           "description": "Configurar cómo los usuarios pueden iniciar sesión en su aplicación"
-        },
-        "security": {
-          "title": "Seguridad",
-          "description": "Configurar políticas de seguridad para la autenticación"
         }
       },
       "globalSettings": {
@@ -3804,20 +3837,6 @@
         "magicLink": {
           "title": "Autenticación mediante enlace mágico",
           "description": "Habilitar o deshabilitar la autenticación sin contraseña basada en correo electrónico"
-        },
-        "forceSso": {
-          "title": "Forzar inicio de sesión SSO",
-          "description": "Desactivar el inicio de sesión de correo electrónico y requiere que los usuarios usen SSO"
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "Requerir 2FA para inicios de sesión con contraseña",
-            "description": "Los usuarios que inicien sesión con correo electrónico/contraseña deben configurar y utilizar la autenticación de dos factores"
-          },
-          "forceAllLogins": {
-            "title": "Requerir 2FA para todos los inicios de sesión",
-            "description": "Todos los usuarios deben verificar con 2FA después de iniciar sesión, incluidos los usuarios SSO"
-          }
         }
       },
       "providers": {
@@ -3875,14 +3894,6 @@
         "enabled": "Proveedor habilitado",
         "disabled": "Proveedor desactivado",
         "updateFailed": "Error al actualizar el proveedor",
-        "forceSsoEnabled": "Forzar SSO activado globalmente",
-        "forceSsoDisabled": "Forzar SSO desactivado globalmente",
-        "forceSsoUpdateFailed": "Error al actualizar la configuración forzada SSO",
-        "force2FANonSSOEnabled": "Se requiere autenticación de dos factores para iniciar sesión con contraseña",
-        "force2FANonSSODisabled": "Ya no se requiere la autenticación de dos factores para iniciar sesión con contraseña",
-        "force2FAAllLoginsEnabled": "Se requiere autenticación de dos factores para todos los inicios de sesión",
-        "force2FAAllLoginsDisabled": "La autenticación de dos factores ya no es necesaria para todos los inicios de sesión",
-        "force2FAUpdateFailed": "No se pudo actualizar la configuración de autenticación de dos factores",
         "configUpdated": "Configuración SAML actualizada",
         "configCreated": "Configuración SAML creada",
         "configSaveFailed": "Error al guardar la configuración SAML",
@@ -4336,17 +4347,40 @@
       "forcePasswordChangeSuccess": "Se requiere cambiar la contraseña para {name}",
       "forcePasswordChangeFailed": "No se pudo forzar el cambio de contraseña.",
       "revokePasswordSuccess": "Contraseña revocada para {name}",
-      "revokePasswordFailed": "No se pudo revocar la contraseña."
+      "revokePasswordFailed": "No se pudo revocar la contraseña.",
+      "scimProvisionerBadge": "Proveedor SCIM",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Gestionado por SCIM. Gestione desde la página de administración de SCIM.",
+      "scimColumnHeader": "SCIM",
+      "scimColumnYes": "Sí",
+      "scimUserLockedTitle": "El usuario es gestionado por SCIM.",
+      "scimUserLockedDescription": "El nombre, el correo electrónico y el estado de actividad de este usuario son gestionados por tu proveedor de identidad. Realiza los cambios necesarios allí para actualizarlos aquí."
     },
     "security": {
       "title": "Seguridad",
-      "description": "Configure la política de contraseñas, la configuración de bloqueo y las acciones de cumplimiento.",
+      "description": "Configure la aplicación de las políticas de inicio de sesión, la política de contraseñas, la configuración de bloqueo y las acciones de aplicación.",
       "passwordPolicyTitle": "Política de contraseñas",
       "passwordPolicyDescription": "Establecer requisitos para las contraseñas de los usuarios",
       "lockoutPolicyTitle": "Política de bloqueo",
       "lockoutPolicyDescription": "Configurar el bloqueo de la cuenta después de intentos de inicio de sesión fallidos",
       "enforcementTitle": "Medidas de cumplimiento",
       "enforcementDescription": "Forzar cambios de contraseña para usuarios con credenciales",
+      "signInEnforcementTitle": "Aplicación del sistema de registro",
+      "signInEnforcementDescription": "Requerir inicio de sesión único (SSO) y aplicar autenticación de dos factores.",
+      "forceSsoTitle": "Forzar inicio de sesión SSO",
+      "forceSsoDescription": "Deshabilitar el inicio de sesión por correo electrónico y exigir a los usuarios que utilicen SSO (inicio de sesión único).",
+      "force2FANonSSOTitle": "Se requiere autenticación de dos factores (2FA) para iniciar sesión con contraseña.",
+      "force2FANonSSODescription": "Los usuarios que inicien sesión con correo electrónico/contraseña deben configurar y utilizar la autenticación de dos factores.",
+      "force2FAAllLoginsTitle": "Se requiere autenticación de dos factores para todos los inicios de sesión.",
+      "force2FAAllLoginsDescription": "Todos los usuarios deben verificarse con 2FA después de iniciar sesión, incluidos los usuarios de SSO.",
+      "forceSsoEnabled": "Inicio de sesión único (SSO) forzado habilitado a nivel mundial",
+      "forceSsoDisabled": "El inicio de sesión único forzado está desactivado a nivel mundial.",
+      "forceSsoUpdateFailed": "No se pudo actualizar la configuración de inicio de sesión único forzado.",
+      "force2FANonSSOEnabled": "Se requiere autenticación de dos factores para iniciar sesión con contraseña.",
+      "force2FANonSSODisabled": "Ya no se requiere la autenticación de dos factores para iniciar sesión con contraseña.",
+      "force2FAAllLoginsEnabled": "Se requiere autenticación de dos factores para todos los inicios de sesión.",
+      "force2FAAllLoginsDisabled": "La autenticación de dos factores ya no es necesaria para todos los inicios de sesión.",
+      "force2FAUpdateFailed": "No se pudo actualizar la configuración de autenticación de dos factores.",
       "minPasswordLengthLabel": "Longitud mínima de la contraseña",
       "minPasswordLengthDescription": "Las contraseñas deben tener al menos esta cantidad de caracteres (8-128).",
       "requireUppercaseLabel": "Requerir letras mayúsculas",
@@ -4400,6 +4434,109 @@
       "revokeAllPlaceholder": "REVOCAR TODO",
       "revokeAllSuccess": "Se han revocado todos los tokens API",
       "revokeAllError": "No se pudieron revocar todos los tokens"
+    },
+    "systemWebhooks": {
+      "title": "Webhooks del sistema",
+      "description": "Destinos de webhook salientes para eventos a nivel de sistema que no están vinculados a un solo proyecto; actualmente, los eventos del ciclo de vida de usuarios y grupos de SCIM 2.0. Configure los webhooks entrantes y salientes con ámbito de proyecto desde la página de configuración del proyecto."
+    },
+    "scim": {
+      "description": "Aprovisione usuarios de su proveedor de identidad en TestPlanIt a través de SCIM 2.0.",
+      "mintCta": "Acuñar nuevo token",
+      "filterPlaceholder": "Filtrar por nombre de token o IdP...",
+      "showRevoked": "El espectáculo fue revocado.",
+      "noTokens": "Aún no se han creado tokens SCIM.",
+      "emptyTitle": "Aún no hay tokens SCIM",
+      "emptyBody": "Crea un token para que tu proveedor de identidad pueda crear y actualizar usuarios en TestPlanIt automáticamente.",
+      "emptyCta": "Acuña tu primer token",
+      "sectionConflicts": "Conflictos de ID externos",
+      "conflictsPlaceholder": "Sin conflictos. El seguimiento de conflictos se implementará en una versión posterior.",
+      "conflicts": {
+        "title": "Registro de conflictos de ID externo",
+        "description": "Eventos de identidad SCIM que requirieron intervención del sistema (vinculación, resurrección, sobrescritura de displayName, miembros omitidos).",
+        "empty": "No se han registrado conflictos en los últimos 90 días.",
+        "loading": "Conflictos de carga…",
+        "errorLoad": "No se pudo cargar el registro de conflictos. Reintentando.",
+        "colTimestamp": "Cuando",
+        "colType": "Tipo",
+        "colEntity": "Entidad",
+        "colAction": "Acción del sistema",
+        "typeLinked": "Vinculado",
+        "typeResurrected": "Resucitado",
+        "typeSkippedMembers": "Los miembros se saltaron",
+        "typeDisplayNameOverwrote": "Se ha sobrescrito el nombre para mostrar",
+        "typeReEmitted": "Reemitido",
+        "typeConflict": "Conflicto",
+        "typeUnknown": "Desconocido",
+        "viewPayload": "Ver carga útil",
+        "reEmit": "Reemitir evento para miembros",
+        "reEmitConfirm": "¿Es necesario volver a enviar el webhook member_added / member_removed para este conflicto? La carga útil del evento original incluía referencias a miembros que no existían en el momento de la sincronización. Al volver a enviarlo ahora, se incluirán los miembros que se hayan aprovisionado posteriormente.",
+        "reEmitConfirmTitle": "¿Reenviar evento para miembros?",
+        "reEmitSuccess": "Webhook reemitido; fila de auditoría escrita.",
+        "reEmitError": "No se pudo reemitir. {reason}",
+        "next": "Próximo",
+        "previous": "Anterior",
+        "viewDialogTitle": "Carga útil de conflicto",
+        "viewDialogDescription": "Auditar metadatos de fila para {entityType}#{entityId}.",
+        "close": "Cerca"
+      },
+      "errorLoad": "No se pudieron cargar los tokens. Reintentar.",
+      "columns": {
+        "idp": "IdP",
+        "lastIp": "Última IP",
+        "lastSync": "Última sincronización"
+      },
+      "status": {
+        "active": "Activo",
+        "expired": "Venció",
+        "deactivated": "Desactivado"
+      },
+      "mint": {
+        "title": "Crea un nuevo token SCIM",
+        "description": "Genera un token de portador que tu proveedor de identidad utilizará para sincronizar a los usuarios con TestPlanIt.",
+        "nameLabel": "Nombre del token",
+        "namePlaceholder": "Por ejemplo, la producción de Okta",
+        "idpLabel": "Proveedor de identidad",
+        "idpOkta": "Octubre",
+        "idpEntra": "Microsoft Entra (Azure AD)",
+        "idpOneLogin": "Inicio de sesión único",
+        "idpOther": "Otro",
+        "expiresLabel": "Caduca",
+        "expiresNever": "Nunca caduca",
+        "expires30": "30 días",
+        "expires90": "90 días",
+        "expires1y": "1 año",
+        "expiresCustom": "Fecha personalizada…",
+        "expiresCustomLabel": "Seleccione la fecha de caducidad.",
+        "submit": "Ficha de acuñación",
+        "submitting": "Acuñación…",
+        "errorsNameRequired": "Se requiere el nombre del token.",
+        "errorToast": "No se pudo acuñar el token. {reason}"
+      },
+      "reveal": {
+        "title": "Token creado",
+        "warning": "Copia este token ahora. TestPlanIt no lo volverá a mostrar.",
+        "tokenLabel": "token de portador SCIM",
+        "copy": "Copiar",
+        "copied": "Copiado",
+        "baseUrlHint": "Pegue esto en el campo SCIM Bearer-token de su IdP. La URL base es {baseUrl}.",
+        "close": "Cerca",
+        "toast": "Token creado.",
+        "a11yAnnounce": "Token creado. Cópielo ahora."
+      },
+      "revoke": {
+        "title": "¿Revocar token SCIM?",
+        "description": "La siguiente solicitud que contenga \"{name}\" será rechazada con HTTP 401. La fila del token permanece en el historial de auditoría para siempre.",
+        "confirm": "Revocar",
+        "successToast": "Token revocado.",
+        "errorToast": "No se pudo revocar el token. {reason}"
+      },
+      "probe": {
+        "button": "Prueba SCIM",
+        "testing": "Probando…",
+        "okBanner": "HTTP {status} — el token funciona contra /scim/v2/Users.",
+        "failBanner": "HTTP {status} — {reason}",
+        "networkError": "No se pudo acceder al punto final SCIM. Reintentando."
+      }
     },
     "tags": {
       "add": {
@@ -4679,7 +4816,11 @@
         "confirmMessage": "¿Está seguro que desea eliminar este grupo?"
       },
       "noUsersSelected": "No hay usuarios seleccionados todavía",
-      "noUsersAssigned": "No hay usuarios asignados a este grupo."
+      "noUsersAssigned": "No hay usuarios asignados a este grupo.",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Gestionado por SCIM. Gestione desde la página de administración de SCIM.",
+      "scimNameLockedTitle": "El grupo está gestionado por SCIM.",
+      "scimNameLockedDescription": "El nombre y los miembros de este grupo son gestionados por tu proveedor de identidad. Realiza los cambios necesarios allí para actualizarlos aquí."
     },
     "milestones": {
       "description": "Gestionar tipos de hito",
@@ -5432,7 +5573,8 @@
         "allTime": "Todos los tiempos"
       },
       "systemActor": "Sistema",
-      "systemActorTooltip": "Acción realizada por el sistema, no por un usuario que haya iniciado sesión."
+      "systemActorTooltip": "Acción realizada por el sistema, no por un usuario que haya iniciado sesión.",
+      "sourceScim": "SCIM"
     }
   },
   "components": {

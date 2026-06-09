@@ -1,5 +1,10 @@
 import { ApplicationArea, PrismaClient, WorkflowScope } from "@prisma/client";
 import bcrypt from "bcrypt";
+import {
+  SCIM_SYSTEM_USER_EMAIL,
+  SCIM_SYSTEM_USER_ID,
+  SYSTEM_PROJECT_ID,
+} from "../lib/scim/constants";
 import { seedDemoProject } from "./seedDemoProject";
 import { seedFieldIcons } from "./seedFieldIcons";
 import { seedDefaultPromptConfig } from "./seedPromptConfig";
@@ -491,6 +496,59 @@ async function seedCoreData() {
       },
     },
   });
+
+  // --- Synthetic SCIM Provisioner User ---
+  // Every minted ScimToken FKs to this single row via systemUserId. The row
+  // has no credentials and is flagged inactive so it can never be a login
+  // surface; the badge in /admin/users surfaces it honestly to admins.
+  await prisma.user.upsert({
+    where: { id: SCIM_SYSTEM_USER_ID },
+    update: {},
+    create: {
+      id: SCIM_SYSTEM_USER_ID,
+      email: SCIM_SYSTEM_USER_EMAIL,
+      name: "SCIM Provisioner",
+      access: "USER",
+      authMethod: "INTERNAL",
+      isActive: false,
+      isDeleted: false,
+      isApi: false,
+      roleId: userRole.id,
+    },
+  });
+  console.log("Ensured synthetic SCIM Provisioner user exists.");
+
+  // --- Sentinel __system__ Projects row ---
+  // Tenant-wide SCIM webhook events (no natural project scope) FK to this row
+  // via WebhookOutboxEvent.projectId. The row is flagged deleted so it never
+  // surfaces in any admin list; createdBy points at the SCIM Provisioner above
+  // so the FK is valid the moment this upsert runs.
+  await prisma.projects.upsert({
+    where: { id: SYSTEM_PROJECT_ID },
+    update: {},
+    create: {
+      id: SYSTEM_PROJECT_ID,
+      name: "__system__",
+      isDeleted: true,
+      createdBy: SCIM_SYSTEM_USER_ID,
+    },
+  });
+  console.log("Ensured sentinel __system__ Projects row exists.");
+
+  // --- Partial GIN index on AuditLog.metadata for SCIM-tagged rows ---
+  // The conflict-log read surface queries AuditLog.metadata JSONB for SCIM
+  // discriminator keys (scimLinked, scimResurrected, scimSkippedMemberIds,
+  // etc.). A partial GIN index scoped to metadata->>'source' = 'scim' keeps
+  // the index ~1% the size of a full GIN on the column, which is the only
+  // way to keep AuditLog write throughput healthy. The jsonb_path_ops
+  // operator class is smaller and faster than the default jsonb_ops for the
+  // key-existence and equality lookups the conflict log uses. The DDL is a
+  // literal string (no interpolation) and IF NOT EXISTS makes it safe to
+  // re-run on every seed.
+  await prisma.$executeRawUnsafe(
+    `CREATE INDEX IF NOT EXISTS "AuditLog_scim_metadata_gin" ON "AuditLog" USING GIN ("metadata" jsonb_path_ops) WHERE "metadata"->>'source' = 'scim';`
+  );
+  console.log("Ensured partial GIN index on AuditLog.metadata for SCIM rows.");
 
   // --- Authentication Configuration ---
   console.log("Configuring internal authentication (no SSO providers)...");

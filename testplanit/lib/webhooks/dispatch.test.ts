@@ -158,6 +158,31 @@ describe("dispatchWebhook", () => {
     expect(prismaMock.webhookDelivery.create).not.toHaveBeenCalled();
   });
 
+  it("2b. system-project (SYSTEM_PROJECT_ID = -1) bypasses the isDeleted tenancy gate (system webhooks must dispatch)", async () => {
+    // The sentinel __system__ project is seeded with isDeleted=true so it
+    // never appears in real-project pickers, but it's the canonical carrier
+    // of /admin/webhooks system-level configs (SCIM events). The gate above
+    // (2a) would silently drop every system webhook without this carve-out.
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValue(new Response("", { status: 200 }));
+    globalThis.fetch = fetchSpy as any;
+    const prismaMock = buildPrismaMock({
+      outboxEvent: { ...baseOutboxEvent, projectId: -1 },
+      config: baseConfig({
+        projectId: -1,
+        subscribedEvents: ["test_run.completed"],
+        project: { id: -1, name: "__system__", isDeleted: true },
+      }),
+    });
+
+    const outcome = await dispatchWebhook(baseJobData, prismaMock);
+
+    expect(outcome.outcome).toBe("success");
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(prismaMock.webhookDelivery.create).toHaveBeenCalledTimes(1);
+  });
+
   it("3. returns skipped_unsubscribed when subscribedEvents excludes eventName (, no delivery row)", async () => {
     const fetchSpy = vi.fn();
     globalThis.fetch = fetchSpy as any;

@@ -194,7 +194,8 @@
     "auth": {
       "internal": "电子邮件/密码",
       "sso": "仅限单点登录",
-      "both": "电子邮件和单点登录"
+      "both": "电子邮件和单点登录",
+      "scim": "SCIM 已配置"
     },
     "status": {
       "deleted": "已删除",
@@ -1432,13 +1433,27 @@
         "outboundSubsTestRunsAndSessions": "测试运行和会话",
         "outboundSubsTestRuns": "测试运行",
         "outboundSubsSessions": "会议",
+        "outboundSubsScimUsers": "SCIM 用户",
+        "outboundSubsScimGroups": "SCIM小组",
         "eventVerbs": {
           "duplicated": "重复",
           "stateChanged": "状态已改变",
           "resultAdded": "结果已添加",
           "resultRecorded": "结果已记录",
           "reviewRequested": "请求审查",
-          "reviewCompleted": "审核完成"
+          "reviewCompleted": "审核完成",
+          "scimUserCreated": "用户创建",
+          "scimUserUpdated": "用户更新",
+          "scimUserActivated": "用户激活",
+          "scimUserDeactivated": "用户已停用",
+          "scimUserDeleted": "用户已删除",
+          "scimUserCreatedSummary": "用户创建（批量同步摘要）",
+          "scimGroupCreated": "创建群组",
+          "scimGroupUpdated": "群组更新",
+          "scimGroupMemberAdded": "新增成员",
+          "scimGroupMemberRemoved": "成员已移除",
+          "scimGroupDeleted": "群组已删除",
+          "scimGroupMemberAddedSummary": "新增成员（批量同步摘要）"
         },
         "iterationResultHelp": "每次记录迭代结果时触发——无论是通过、失败、跳过还是其他任何状态。在长时间的自动化运行中应谨慎使用（每次迭代触发一次事件）。",
         "events": {
@@ -2259,13 +2274,32 @@
         "deleteAvatarConfirm": "您确定要删除您的 {name}吗？",
         "emailDisabledForSso": "单点登录 (SSO) 帐户的电子邮件地址无法更改。请通过您的身份提供商更新电子邮件地址。",
         "emailEditableForBoth": "您可以使用邮箱/密码或单点登录 (SSO) 登录。更改邮箱地址只会影响密码验证。",
-        "linkSsoProvider": "链接 SSO 提供商"
+        "linkSsoProvider": "链接 SSO 提供商",
+        "nameDisabledForScim": "姓名由您的身份提供商通过 SCIM 管理，无法在此处更改。",
+        "emailDisabledForScim": "电子邮件由您的身份提供商通过 SCIM 进行管理，无法在此处更改。"
       },
       "preferences": {
         "title": "偏好"
       },
       "access": {
         "title": "使用权"
+      },
+      "directory": {
+        "title": "目录配置文件",
+        "subtitle": "通过 SCIM 从您的身份提供商同步的只读字段。",
+        "externalId": "身份提供商用户 ID",
+        "userName": "目录用户名",
+        "givenName": "名",
+        "familyName": "姓",
+        "jobTitle": "标题",
+        "userType": "用户类型",
+        "employeeNumber": "员工编号",
+        "department": "部门",
+        "division": "分配",
+        "organization": "组织",
+        "costCenter": "成本中心",
+        "manager": "经理",
+        "noEnterpriseFields": "您的身份提供商尚未为此帐户发送任何企业目录属性。"
       },
       "notifications": {
         "title": "通知偏好设置",
@@ -3427,9 +3461,12 @@
       "queues": "作业队列",
       "auditLogs": "审计日志",
       "apiTokens": "API令牌",
+      "scim": "SCIM配置",
+      "systemWebhooks": "系统 Webhooks",
       "quickscriptTemplates": "QuickScript模板",
       "testManagement": "测试管理",
       "peopleAndAccess": "人员与通道",
+      "authentication": "验证",
       "toolsAndIntegrations": "工具与集成",
       "system": "系统"
     },
@@ -3772,15 +3809,11 @@
       }
     },
     "sso": {
-      "description": "管理身份验证和安全设置",
+      "description": "管理身份验证和注册设置",
       "sections": {
         "providers": {
           "title": "登录提供商",
           "description": "配置用户如何登录您的应用程序"
-        },
-        "security": {
-          "title": "安全",
-          "description": "配置身份验证的安全策略"
         }
       },
       "globalSettings": {
@@ -3804,20 +3837,6 @@
         "magicLink": {
           "title": "魔法链接认证",
           "description": "启用或禁用基于电子邮件的无密码身份验证"
-        },
-        "forceSso": {
-          "title": "强制 SSO 登录",
-          "description": "禁用电子邮件登录，要求用户使用单点登录 (SSO)。"
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "密码登录需要启用双因素身份验证",
-            "description": "使用邮箱/密码登录的用户必须设置并使用双因素身份验证"
-          },
-          "forceAllLogins": {
-            "title": "所有登录均需启用双因素身份验证",
-            "description": "所有用户（包括单点登录用户）登录后都必须进行双因素身份验证。"
-          }
         }
       },
       "providers": {
@@ -3875,14 +3894,6 @@
         "enabled": "提供商已启用",
         "disabled": "提供商已禁用",
         "updateFailed": "更新提供商失败",
-        "forceSsoEnabled": "全球强制启用 SSO",
-        "forceSsoDisabled": "强制全局禁用 SSO",
-        "forceSsoUpdateFailed": "更新强制 SSO 设置失败",
-        "force2FANonSSOEnabled": "密码登录需要双因素身份验证",
-        "force2FANonSSODisabled": "密码登录不再需要双因素认证",
-        "force2FAAllLoginsEnabled": "所有登录都需要双因素身份验证",
-        "force2FAAllLoginsDisabled": "不再需要所有登录都进行双因素身份验证",
-        "force2FAUpdateFailed": "双因素身份验证设置更新失败",
         "configUpdated": "SAML 配置已更新",
         "configCreated": "SAML 配置已创建",
         "configSaveFailed": "保存 SAML 配置失败",
@@ -4336,17 +4347,40 @@
       "forcePasswordChangeSuccess": "{name} 需要更改密码",
       "forcePasswordChangeFailed": "强制更改密码失败",
       "revokePasswordSuccess": "密码已撤销 {name}",
-      "revokePasswordFailed": "撤销密码失败"
+      "revokePasswordFailed": "撤销密码失败",
+      "scimProvisionerBadge": "SCIM 配置器",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "由SCIM管理。请从SCIM管理页面进行管理。",
+      "scimColumnHeader": "SCIM",
+      "scimColumnYes": "是的",
+      "scimUserLockedTitle": "用户由 SCIM 管理",
+      "scimUserLockedDescription": "该用户的姓名、电子邮件地址和活动状态由您的身份提供商管理。请在身份提供商处进行更改，以在此处更新这些信息。"
     },
     "security": {
       "title": "安全",
-      "description": "配置密码策略、锁定设置和强制执行措施",
+      "description": "配置登录强制执行、密码策略、锁定设置和强制执行措施",
       "passwordPolicyTitle": "密码策略",
       "passwordPolicyDescription": "设置用户密码要求",
       "lockoutPolicyTitle": "锁定政策",
       "lockoutPolicyDescription": "配置登录失败后账户锁定",
       "enforcementTitle": "执法行动",
       "enforcementDescription": "强制基于凭证的用户更改密码",
+      "signInEnforcementTitle": "签到执法",
+      "signInEnforcementDescription": "要求单点登录并强制执行双因素身份验证",
+      "forceSsoTitle": "强制 SSO 登录",
+      "forceSsoDescription": "禁用电子邮件登录，要求用户使用单点登录 (SSO)。",
+      "force2FANonSSOTitle": "密码登录需要启用双因素身份验证",
+      "force2FANonSSODescription": "使用邮箱/密码登录的用户必须设置并使用双因素身份验证",
+      "force2FAAllLoginsTitle": "所有登录均需启用双因素身份验证",
+      "force2FAAllLoginsDescription": "所有用户（包括单点登录用户）登录后都必须进行双因素身份验证。",
+      "forceSsoEnabled": "全球强制启用 SSO",
+      "forceSsoDisabled": "强制全局禁用 SSO",
+      "forceSsoUpdateFailed": "更新强制 SSO 设置失败",
+      "force2FANonSSOEnabled": "密码登录需要双因素身份验证",
+      "force2FANonSSODisabled": "密码登录不再需要双因素认证",
+      "force2FAAllLoginsEnabled": "所有登录都需要双因素身份验证",
+      "force2FAAllLoginsDisabled": "不再需要所有登录都进行双因素身份验证",
+      "force2FAUpdateFailed": "双因素身份验证设置更新失败",
       "minPasswordLengthLabel": "密码最小长度",
       "minPasswordLengthDescription": "密码长度必须至少为以下字符数（8-128）",
       "requireUppercaseLabel": "必须使用大写字母",
@@ -4400,6 +4434,109 @@
       "revokeAllPlaceholder": "撤销所有",
       "revokeAllSuccess": "所有API令牌均已被撤销。",
       "revokeAllError": "撤销所有令牌失败"
+    },
+    "systemWebhooks": {
+      "title": "系统 Webhooks",
+      "description": "用于处理不与单个项目关联的系统级事件的出站 Webhook 目标——目前是 SCIM 2.0 用户和组生命周期事件。请改用项目设置页面配置入站和项目范围的出站 Webhook。"
+    },
+    "scim": {
+      "description": "通过 SCIM 2.0 将身份提供商的用户配置到 TestPlanIt 中。",
+      "mintCta": "铸造新代币",
+      "filterPlaceholder": "按令牌名称或身份提供商筛选...",
+      "showRevoked": "显示撤销",
+      "noTokens": "尚未创建任何 SCIM 令牌。",
+      "emptyTitle": "暂无 SCIM 令牌",
+      "emptyBody": "铸造一个令牌，让你的身份提供商能够自动在 TestPlanIt 中创建和更新用户。",
+      "emptyCta": "铸造你的第一个代币",
+      "sectionConflicts": "外部ID冲突",
+      "conflictsPlaceholder": "目前没有冲突。冲突跟踪功能将在后续版本中推出。",
+      "conflicts": {
+        "title": "外部 ID 冲突日志",
+        "description": "SCIM 身份事件需要系统干预（链接、恢复、显示名称覆盖、跳过成员）。",
+        "empty": "过去90天内无冲突。",
+        "loading": "加载冲突…",
+        "errorLoad": "冲突日志加载失败，请重试。",
+        "colTimestamp": "什么时候",
+        "colType": "类型",
+        "colEntity": "实体",
+        "colAction": "系统操作",
+        "typeLinked": "链接",
+        "typeResurrected": "复活",
+        "typeSkippedMembers": "成员缺席",
+        "typeDisplayNameOverwrote": "显示名称已覆盖",
+        "typeReEmitted": "再发射",
+        "typeConflict": "冲突",
+        "typeUnknown": "未知",
+        "viewPayload": "查看有效载荷",
+        "reEmit": "重新发送成员活动",
+        "reEmitConfirm": "是否需要针对此冲突重新发送 member_added / member_removed webhook？原始事件负载中包含同步时不存在的成员引用。现在重新发送将包含此后已创建的成员。",
+        "reEmitConfirmTitle": "重新发送会员活动？",
+        "reEmitSuccess": "Webhook 已重新发送；审计行已写入。",
+        "reEmitError": "无法重新发送。 {reason}",
+        "next": "下一个",
+        "previous": "以前的",
+        "viewDialogTitle": "冲突载荷",
+        "viewDialogDescription": "审核 {entityType}#{entityId} 的行元数据。",
+        "close": "关闭"
+      },
+      "errorLoad": "令牌加载失败，请重试。",
+      "columns": {
+        "idp": "身份提供商",
+        "lastIp": "最后 IP",
+        "lastSync": "上次同步"
+      },
+      "status": {
+        "active": "积极的",
+        "expired": "已到期",
+        "deactivated": "已停用"
+      },
+      "mint": {
+        "title": "铸造新的 SCIM 代币",
+        "description": "生成一个持有者令牌，您的身份提供商将使用该令牌将用户同步到 TestPlanIt 中。",
+        "nameLabel": "令牌名称",
+        "namePlaceholder": "例如，Okta 生产",
+        "idpLabel": "身份提供商",
+        "idpOkta": "奥克塔",
+        "idpEntra": "Microsoft Entra（Azure AD）",
+        "idpOneLogin": "OneLogin",
+        "idpOther": "其他",
+        "expiresLabel": "过期",
+        "expiresNever": "永不过期",
+        "expires30": "30天",
+        "expires90": "90天",
+        "expires1y": "1年",
+        "expiresCustom": "自定义日期…",
+        "expiresCustomLabel": "选择到期日期",
+        "submit": "铸币代币",
+        "submitting": "铸币…",
+        "errorsNameRequired": "令牌名称为必填项。",
+        "errorToast": "无法铸造代币。 {reason}"
+      },
+      "reveal": {
+        "title": "令牌已创建",
+        "warning": "立即复制此令牌。TestPlanIt 将不会再次显示它。",
+        "tokenLabel": "SCIM 持有者代币",
+        "copy": "复制",
+        "copied": "已复制",
+        "baseUrlHint": "将此内容粘贴到您的身份提供商 (IdP) 的 SCIM Bearer-token 字段中。基本 URL 为 {baseUrl}。",
+        "close": "关闭",
+        "toast": "令牌已创建。",
+        "a11yAnnounce": "令牌已创建。立即复制。"
+      },
+      "revoke": {
+        "title": "撤销 SCIM 令牌？",
+        "description": "下一个带有“{name}”的请求将被拒绝，并返回HTTP 401错误。该令牌行将永久保留在审计历史记录中。",
+        "confirm": "撤销",
+        "successToast": "令牌已撤销。",
+        "errorToast": "无法撤销令牌。 {reason}"
+      },
+      "probe": {
+        "button": "测试 SCIM",
+        "testing": "测试…",
+        "okBanner": "HTTP {status} — 令牌对 /scim/v2/Users 有效。",
+        "failBanner": "HTTP {status} — {reason}",
+        "networkError": "无法连接到SCIM端点。请重试。"
+      }
     },
     "tags": {
       "add": {
@@ -4679,7 +4816,11 @@
         "confirmMessage": "您确定要删除此群组吗？"
       },
       "noUsersSelected": "暂无用户选择。",
-      "noUsersAssigned": "此组暂无用户。"
+      "noUsersAssigned": "此组暂无用户。",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "由SCIM管理。请从SCIM管理页面进行管理。",
+      "scimNameLockedTitle": "该集团由SCIM管理",
+      "scimNameLockedDescription": "此群组的名称和成员由您的身份提供商管理。请在身份提供商处进行更改，以在此处更新。"
     },
     "milestones": {
       "description": "管理里程碑类型",
@@ -5432,7 +5573,8 @@
         "allTime": "所有时间"
       },
       "systemActor": "系统",
-      "systemActorTooltip": "系统执行的操作，而非登录用户执行的操作。"
+      "systemActorTooltip": "系统执行的操作，而非登录用户执行的操作。",
+      "sourceScim": "SCIM"
     }
   },
   "components": {

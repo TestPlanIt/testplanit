@@ -21,6 +21,7 @@ import {
   ImportIcon,
   KeyRound,
   LayoutList,
+  Lock,
   MessageSquareCode,
   Milestone,
   Plug,
@@ -36,6 +37,7 @@ import {
   Trash2,
   User,
   Users,
+  Webhook,
   Workflow,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -46,6 +48,7 @@ import { cn } from "~/utils";
 type MenuSection =
   | "testManagement"
   | "peopleAndAccess"
+  | "authentication"
   | "toolsAndIntegrations"
   | "system";
 
@@ -59,6 +62,7 @@ type MenuOption = {
 const sectionIcons: Record<MenuSection, React.ElementType> = {
   testManagement: Boxes,
   peopleAndAccess: Users,
+  authentication: Lock,
   toolsAndIntegrations: Plug,
   system: Settings,
 };
@@ -66,6 +70,7 @@ const sectionIcons: Record<MenuSection, React.ElementType> = {
 const sectionOrder: MenuSection[] = [
   "testManagement",
   "peopleAndAccess",
+  "authentication",
   "toolsAndIntegrations",
   "system",
 ];
@@ -146,23 +151,31 @@ const menuOptions: MenuOption[] = [
     path: "roles",
     section: "peopleAndAccess",
   },
+
+  // Authentication
   {
     icon: ShieldUser,
     translationKey: "sso",
     path: "sso",
-    section: "peopleAndAccess",
+    section: "authentication",
   },
   {
     icon: Shield,
     translationKey: "security",
     path: "security",
-    section: "peopleAndAccess",
+    section: "authentication",
   },
   {
     icon: KeyRound,
     translationKey: "apiTokens",
     path: "api-tokens",
-    section: "peopleAndAccess",
+    section: "authentication",
+  },
+  {
+    icon: ShieldCheck,
+    translationKey: "scim",
+    path: "scim",
+    section: "authentication",
   },
 
   // Tools & Integrations
@@ -170,6 +183,12 @@ const menuOptions: MenuOption[] = [
     icon: Plug,
     translationKey: "integrations",
     path: "integrations",
+    section: "toolsAndIntegrations",
+  },
+  {
+    icon: Webhook,
+    translationKey: "systemWebhooks",
+    path: "webhooks",
     section: "toolsAndIntegrations",
   },
   {

@@ -194,7 +194,8 @@
     "auth": {
       "internal": "Adresse électronique/Mot de passe",
       "sso": "Authentification unique uniquement",
-      "both": "Courriel et authentification unique"
+      "both": "Courriel et authentification unique",
+      "scim": "SCIM approvisionné"
     },
     "status": {
       "deleted": "Supprimé",
@@ -1432,13 +1433,27 @@
         "outboundSubsTestRunsAndSessions": "Essais et sessions",
         "outboundSubsTestRuns": "Essais",
         "outboundSubsSessions": "Séances",
+        "outboundSubsScimUsers": "Utilisateurs SCIM",
+        "outboundSubsScimGroups": "Groupes SCIM",
         "eventVerbs": {
           "duplicated": "Dupliqué",
           "stateChanged": "État modifié",
           "resultAdded": "Résultat ajouté",
           "resultRecorded": "Résultat enregistré",
           "reviewRequested": "Demande d'avis",
-          "reviewCompleted": "Révision terminée"
+          "reviewCompleted": "Révision terminée",
+          "scimUserCreated": "Créé par l'utilisateur",
+          "scimUserUpdated": "Mise à jour par l'utilisateur",
+          "scimUserActivated": "Activé par l'utilisateur",
+          "scimUserDeactivated": "Utilisateur désactivé",
+          "scimUserDeleted": "Utilisateur supprimé",
+          "scimUserCreatedSummary": "Utilisateur créé (résumé de la synchronisation en masse)",
+          "scimGroupCreated": "Groupe créé",
+          "scimGroupUpdated": "Groupe mis à jour",
+          "scimGroupMemberAdded": "Des membres ont ajouté",
+          "scimGroupMemberRemoved": "Membres supprimés",
+          "scimGroupDeleted": "Groupe supprimé",
+          "scimGroupMemberAddedSummary": "Membres ajoutés (résumé de la synchronisation groupée)"
         },
         "iterationResultHelp": "Se déclenche à chaque enregistrement du résultat d'une itération (succès, échec, ignoré ou tout autre statut). À utiliser avec parcimonie lors d'exécutions d'automatisation longues (un événement par itération).",
         "events": {
@@ -2259,13 +2274,32 @@
         "deleteAvatarConfirm": "Êtes-vous sûr de vouloir supprimer votre {name}?",
         "emailDisabledForSso": "L'adresse e-mail ne peut pas être modifiée pour les comptes SSO. Veuillez la mettre à jour auprès de votre fournisseur d'identité.",
         "emailEditableForBoth": "Vous pouvez vous connecter à la fois par adresse e-mail/mot de passe et par authentification unique (SSO). Les modifications apportées à votre adresse e-mail n'affecteront que l'authentification par mot de passe.",
-        "linkSsoProvider": "Fournisseur d'authentification unique (SSO) Link"
+        "linkSsoProvider": "Fournisseur d'authentification unique (SSO) Link",
+        "nameDisabledForScim": "Votre nom est géré par votre fournisseur d'identité via SCIM et ne peut pas être modifié ici.",
+        "emailDisabledForScim": "Votre adresse e-mail est gérée par votre fournisseur d'identité via SCIM et ne peut pas être modifiée ici."
       },
       "preferences": {
         "title": "Préférences"
       },
       "access": {
         "title": "Accéder"
+      },
+      "directory": {
+        "title": "Profil de l'annuaire",
+        "subtitle": "Champs en lecture seule synchronisés depuis votre fournisseur d'identité via SCIM.",
+        "externalId": "ID utilisateur du fournisseur d'identité",
+        "userName": "Nom d'utilisateur de l'annuaire",
+        "givenName": "Prénom",
+        "familyName": "Nom de famille",
+        "jobTitle": "Titre",
+        "userType": "Type d'utilisateur",
+        "employeeNumber": "numéro d'employé",
+        "department": "Département",
+        "division": "Division",
+        "organization": "Organisation",
+        "costCenter": "centre de coûts",
+        "manager": "Directeur",
+        "noEnterpriseFields": "Votre fournisseur d'identité n'a envoyé aucun attribut d'annuaire d'entreprise pour ce compte."
       },
       "notifications": {
         "title": "Préférences de notification",
@@ -3427,9 +3461,12 @@
       "queues": "Files d'attente pour les tâches",
       "auditLogs": "Journaux d'audit",
       "apiTokens": "Jetons API",
+      "scim": "Approvisionnement SCIM",
+      "systemWebhooks": "Webhooks système",
       "quickscriptTemplates": "Modèles QuickScript",
       "testManagement": "Gestion des tests",
       "peopleAndAccess": "Personnes et accès",
+      "authentication": "Authentification",
       "toolsAndIntegrations": "Outils et intégrations",
       "system": "Système"
     },
@@ -3772,15 +3809,11 @@
       }
     },
     "sso": {
-      "description": "Gérer les paramètres d'authentification et de sécurité",
+      "description": "Gérer les paramètres d'authentification et d'inscription",
       "sections": {
         "providers": {
           "title": "Fournisseurs d'authentification",
           "description": "Configurez la manière dont les utilisateurs peuvent se connecter à votre application."
-        },
-        "security": {
-          "title": "Sécurité",
-          "description": "Configurer les politiques de sécurité pour l'authentification"
         }
       },
       "globalSettings": {
@@ -3804,20 +3837,6 @@
         "magicLink": {
           "title": "Authentification Magic Link",
           "description": "Activer ou désactiver l'authentification par e-mail sans mot de passe"
-        },
-        "forceSso": {
-          "title": "Connexion SSO forcée",
-          "description": "Désactivez la connexion par e-mail et exigez l'utilisation de l'authentification unique (SSO)."
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "Exiger l'authentification à deux facteurs pour les connexions par mot de passe",
-            "description": "Les utilisateurs se connectant avec un e-mail et un mot de passe doivent configurer et utiliser l'authentification à deux facteurs."
-          },
-          "forceAllLogins": {
-            "title": "Exiger l'authentification à deux facteurs pour toutes les connexions",
-            "description": "Tous les utilisateurs doivent s'authentifier à l'aide de l'authentification à deux facteurs (2FA) après s'être connectés, y compris les utilisateurs SSO."
-          }
         }
       },
       "providers": {
@@ -3875,14 +3894,6 @@
         "enabled": "fournisseur activé",
         "disabled": "Fournisseur désactivé",
         "updateFailed": "Échec de la mise à jour du fournisseur",
-        "forceSsoEnabled": "Forcer l'authentification unique (SSO) activée globalement",
-        "forceSsoDisabled": "L'authentification unique forcée est désactivée globalement.",
-        "forceSsoUpdateFailed": "Échec de la mise à jour du paramètre SSO forcé",
-        "force2FANonSSOEnabled": "L'authentification à deux facteurs est requise pour les connexions par mot de passe.",
-        "force2FANonSSODisabled": "L'authentification à deux facteurs n'est plus requise pour les connexions par mot de passe.",
-        "force2FAAllLoginsEnabled": "L'authentification à deux facteurs est requise pour toutes les connexions.",
-        "force2FAAllLoginsDisabled": "L'authentification à deux facteurs n'est plus requise pour toutes les connexions.",
-        "force2FAUpdateFailed": "Échec de la mise à jour des paramètres d'authentification à deux facteurs",
         "configUpdated": "Configuration SAML mise à jour",
         "configCreated": "Configuration SAML créée",
         "configSaveFailed": "Échec de l'enregistrement de la configuration SAML",
@@ -4336,17 +4347,40 @@
       "forcePasswordChangeSuccess": "Changement de mot de passe requis pour {name}",
       "forcePasswordChangeFailed": "Échec de la modification forcée du mot de passe",
       "revokePasswordSuccess": "Mot de passe révoqué pour {name}",
-      "revokePasswordFailed": "Échec de la révocation du mot de passe"
+      "revokePasswordFailed": "Échec de la révocation du mot de passe",
+      "scimProvisionerBadge": "Fournisseur SCIM",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Géré par SCIM. Gérer depuis la page d'administration SCIM.",
+      "scimColumnHeader": "SCIM",
+      "scimColumnYes": "Oui",
+      "scimUserLockedTitle": "L'utilisateur est géré par SCIM",
+      "scimUserLockedDescription": "Le nom, l'adresse e-mail et le statut actif de cet utilisateur sont gérés par votre fournisseur d'identité. Modifiez ces informations auprès de ce dernier pour les mettre à jour ici."
     },
     "security": {
       "title": "Sécurité",
-      "description": "Configurer la politique de mots de passe, les paramètres de verrouillage et les actions d'application",
+      "description": "Configurer l'application des règles de connexion, la politique de mots de passe, les paramètres de verrouillage et les actions d'application",
       "passwordPolicyTitle": "Politique relative aux mots de passe",
       "passwordPolicyDescription": "Définir les exigences relatives aux mots de passe des utilisateurs",
       "lockoutPolicyTitle": "Politique de verrouillage",
       "lockoutPolicyDescription": "Configurer le verrouillage du compte après des tentatives de connexion infructueuses",
       "enforcementTitle": "Mesures d'application",
       "enforcementDescription": "Imposer le changement de mot de passe pour les utilisateurs authentifiés.",
+      "signInEnforcementTitle": "Contrôle de la connexion",
+      "signInEnforcementDescription": "Exiger l'authentification unique (SSO) et imposer l'authentification à deux facteurs",
+      "forceSsoTitle": "Connexion SSO forcée",
+      "forceSsoDescription": "Désactivez la connexion par e-mail et exigez l'utilisation de l'authentification unique (SSO).",
+      "force2FANonSSOTitle": "Exiger l'authentification à deux facteurs pour les connexions par mot de passe",
+      "force2FANonSSODescription": "Les utilisateurs se connectant avec un e-mail et un mot de passe doivent configurer et utiliser l'authentification à deux facteurs.",
+      "force2FAAllLoginsTitle": "Exiger l'authentification à deux facteurs pour toutes les connexions",
+      "force2FAAllLoginsDescription": "Tous les utilisateurs doivent s'authentifier à l'aide de l'authentification à deux facteurs (2FA) après s'être connectés, y compris les utilisateurs SSO.",
+      "forceSsoEnabled": "Forcer l'authentification unique (SSO) activée globalement",
+      "forceSsoDisabled": "L'authentification unique forcée est désactivée globalement.",
+      "forceSsoUpdateFailed": "Échec de la mise à jour du paramètre SSO forcé",
+      "force2FANonSSOEnabled": "L'authentification à deux facteurs est requise pour les connexions par mot de passe.",
+      "force2FANonSSODisabled": "L'authentification à deux facteurs n'est plus requise pour les connexions par mot de passe.",
+      "force2FAAllLoginsEnabled": "L'authentification à deux facteurs est requise pour toutes les connexions.",
+      "force2FAAllLoginsDisabled": "L'authentification à deux facteurs n'est plus requise pour toutes les connexions.",
+      "force2FAUpdateFailed": "Échec de la mise à jour des paramètres d'authentification à deux facteurs",
       "minPasswordLengthLabel": "Longueur minimale du mot de passe",
       "minPasswordLengthDescription": "Les mots de passe doivent comporter au moins ce nombre de caractères (8-128).",
       "requireUppercaseLabel": "Lettres majuscules requises",
@@ -4400,6 +4434,109 @@
       "revokeAllPlaceholder": "RÉVOQUER TOUT",
       "revokeAllSuccess": "Tous les jetons API ont été révoqués.",
       "revokeAllError": "Impossible de révoquer tous les jetons."
+    },
+    "systemWebhooks": {
+      "title": "Webhooks système",
+      "description": "Destinations des webhooks sortants pour les événements système non liés à un projet spécifique (actuellement les événements de cycle de vie des utilisateurs et des groupes SCIM 2.0). Configurez plutôt les webhooks entrants et sortants liés au projet depuis la page des paramètres du projet."
+    },
+    "scim": {
+      "description": "Importez les utilisateurs de votre fournisseur d'identité dans TestPlanIt via SCIM 2.0.",
+      "mintCta": "Émettre un nouveau jeton",
+      "filterPlaceholder": "Filtrer par nom de jeton ou IdP...",
+      "showRevoked": "Afficher révoqué",
+      "noTokens": "Aucun jeton SCIM n'a encore été créé.",
+      "emptyTitle": "Aucun jeton SCIM pour l'instant",
+      "emptyBody": "Créez un jeton pour permettre à votre fournisseur d'identité de créer et de mettre à jour automatiquement les utilisateurs dans TestPlanIt.",
+      "emptyCta": "Émettez votre premier jeton",
+      "sectionConflicts": "Conflits d'identifiants externes",
+      "conflictsPlaceholder": "Aucun conflit. Le suivi des conflits sera intégré dans une version ultérieure.",
+      "conflicts": {
+        "title": "Journal des conflits d'ID externes",
+        "description": "Événements d'identité SCIM nécessitant une intervention du système (liaison, résurrection, remplacement du nom d'affichage, membres ignorés).",
+        "empty": "Aucun conflit au cours des 90 derniers jours.",
+        "loading": "Conflits de chargement…",
+        "errorLoad": "Impossible de charger le journal des conflits. Veuillez réessayer.",
+        "colTimestamp": "Quand",
+        "colType": "Taper",
+        "colEntity": "Entité",
+        "colAction": "Action du système",
+        "typeLinked": "Lié",
+        "typeResurrected": "Ressuscité",
+        "typeSkippedMembers": "Les membres ont sauté",
+        "typeDisplayNameOverwrote": "Nom d'affichage remplacé",
+        "typeReEmitted": "Réémis",
+        "typeConflict": "Conflit",
+        "typeUnknown": "Inconnu",
+        "viewPayload": "Afficher la charge utile",
+        "reEmit": "Événement de réémission pour les membres",
+        "reEmitConfirm": "Faut-il renvoyer le webhook member_added/member_removed pour ce conflit ? La charge utile de l'événement initial contenait des références à des membres qui n'existaient pas au moment de la synchronisation. Le renvoi inclura les membres ajoutés depuis.",
+        "reEmitConfirmTitle": "Réémettre un événement pour les membres ?",
+        "reEmitSuccess": "Webhook réémis ; ligne d'audit écrite.",
+        "reEmitError": "Impossible de réémettre. {reason}",
+        "next": "Suivant",
+        "previous": "Précédent",
+        "viewDialogTitle": "Charge utile de conflit",
+        "viewDialogDescription": "Métadonnées de ligne d'audit pour {entityType}#{entityId}.",
+        "close": "Fermer"
+      },
+      "errorLoad": "Impossible de charger les jetons. Veuillez réessayer.",
+      "columns": {
+        "idp": "IdP",
+        "lastIp": "Dernière adresse IP",
+        "lastSync": "Dernière synchronisation"
+      },
+      "status": {
+        "active": "Actif",
+        "expired": "Expiré",
+        "deactivated": "Désactivé"
+      },
+      "mint": {
+        "title": "Émettez un nouveau jeton SCIM",
+        "description": "Générez un jeton d'authentification que votre fournisseur d'identité utilisera pour synchroniser les utilisateurs avec TestPlanIt.",
+        "nameLabel": "Nom du jeton",
+        "namePlaceholder": "par exemple, la production d'Okta",
+        "idpLabel": "Fournisseur d'identité",
+        "idpOkta": "Okta",
+        "idpEntra": "Microsoft Entra (Azure AD)",
+        "idpOneLogin": "OneLogin",
+        "idpOther": "Autre",
+        "expiresLabel": "Expire",
+        "expiresNever": "Ne périme jamais",
+        "expires30": "30 jours",
+        "expires90": "90 jours",
+        "expires1y": "1 an",
+        "expiresCustom": "Date personnalisée…",
+        "expiresCustomLabel": "Choisissez la date d'expiration",
+        "submit": "Jeton Mint",
+        "submitting": "Création de…",
+        "errorsNameRequired": "Le nom du jeton est obligatoire.",
+        "errorToast": "Impossible de créer un jeton. {reason}"
+      },
+      "reveal": {
+        "title": "Jeton créé",
+        "warning": "Copiez ce jeton maintenant. TestPlanIt ne l'affichera plus.",
+        "tokenLabel": "jeton porteur SCIM",
+        "copy": "Copie",
+        "copied": "Copié",
+        "baseUrlHint": "Collez ceci dans le champ SCIM Bearer-token de votre fournisseur d'identité. L'URL de base est {baseUrl}.",
+        "close": "Fermer",
+        "toast": "Jeton créé.",
+        "a11yAnnounce": "Jeton créé. Copiez-le maintenant."
+      },
+      "revoke": {
+        "title": "Révoquer le jeton SCIM ?",
+        "description": "La prochaine requête contenant «{name}» sera rejetée avec le code HTTP 401. La ligne de jeton reste indéfiniment dans l'historique d'audit.",
+        "confirm": "Révoquer",
+        "successToast": "Jeton révoqué.",
+        "errorToast": "Impossible de révoquer le jeton. {reason}"
+      },
+      "probe": {
+        "button": "Test SCIM",
+        "testing": "Test…",
+        "okBanner": "HTTP {status} — le jeton fonctionne contre /scim/v2/Users.",
+        "failBanner": "HTTP {status} — {reason}",
+        "networkError": "Impossible de joindre le point de terminaison SCIM. Veuillez réessayer."
+      }
     },
     "tags": {
       "add": {
@@ -4679,7 +4816,11 @@
         "confirmMessage": "Êtes-vous sûr de vouloir supprimer ce groupe ?"
       },
       "noUsersSelected": "Aucun utilisateur sélectionné pour le moment.",
-      "noUsersAssigned": "Aucun utilisateur n'est affecté à ce groupe."
+      "noUsersAssigned": "Aucun utilisateur n'est affecté à ce groupe.",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Géré par SCIM. Gérer depuis la page d'administration SCIM.",
+      "scimNameLockedTitle": "Le groupe est géré par SCIM",
+      "scimNameLockedDescription": "Le nom et les membres de ce groupe sont gérés par votre fournisseur d'identité. Modifiez-les sur ce dernier pour les mettre à jour ici."
     },
     "milestones": {
       "description": "Gérer les types d'étapes clés",
@@ -5432,7 +5573,8 @@
         "allTime": "Tout le temps"
       },
       "systemActor": "Système",
-      "systemActorTooltip": "Action effectuée par le système, et non par un utilisateur connecté"
+      "systemActorTooltip": "Action effectuée par le système, et non par un utilisateur connecté",
+      "sourceScim": "SCIM"
     }
   },
   "components": {

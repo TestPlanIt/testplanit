@@ -69,6 +69,9 @@ const testGroup: ExtendedGroups = {
   id: 1,
   name: "Test Group",
   externalId: null,
+  scimDisplayName: null,
+  scimExtensions: null,
+  updatedAt: new Date("2026-01-01T00:00:00Z"),
   url: null,
   note: null,
   isDeleted: false,
@@ -80,6 +83,9 @@ const emptyGroup: ExtendedGroups = {
   id: 2,
   name: "Empty Group",
   externalId: null,
+  scimDisplayName: null,
+  scimExtensions: null,
+  updatedAt: new Date("2026-01-01T00:00:00Z"),
   url: null,
   note: null,
   isDeleted: false,
@@ -88,7 +94,9 @@ const emptyGroup: ExtendedGroups = {
 };
 
 describe("Groups columns", () => {
-  const { result } = renderHook(() => useColumns(mockTranslations));
+  const { result } = renderHook(() =>
+    useColumns(mockTranslations, mockTranslations as any)
+  );
   const columns = result.current;
 
   describe("column definitions", () => {

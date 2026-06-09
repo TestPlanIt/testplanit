@@ -681,6 +681,45 @@ describe("AuditLog Service", () => {
 
       restoreContext();
     });
+
+    it("derives source: 'scim' when context.scimTokenId is set", async () => {
+      setContext({ scimTokenId: "tok_abc123" });
+      mocks.mockQueue.add.mockResolvedValue({ id: "j-scim" });
+
+      await captureAuditEvent({
+        action: "CREATE",
+        entityType: "User",
+        entityId: "u1",
+      });
+
+      const jobData = mocks.mockQueue.add.mock.calls[0][1];
+      expect(jobData.event.metadata).toMatchObject({ source: "scim" });
+
+      restoreContext();
+    });
+
+    it("prefers scim over scope-derived attribution when both are set", async () => {
+      // Defense-in-depth: a request shouldn't carry BOTH a SCIM bearer and an
+      // ApiToken in practice (the two auth surfaces are mutually exclusive at
+      // the route layer), but if a future refactor reorders the ternary, this
+      // test guards against silent regression of Phase 7 audit attribution.
+      setContext({
+        scimTokenId: "tok_priority",
+        tokenScopes: ["client:mcp"],
+      });
+      mocks.mockQueue.add.mockResolvedValue({ id: "j-scim-priority" });
+
+      await captureAuditEvent({
+        action: "UPDATE",
+        entityType: "User",
+        entityId: "u2",
+      });
+
+      const jobData = mocks.mockQueue.add.mock.calls[0][1];
+      expect(jobData.event.metadata).toMatchObject({ source: "scim" });
+
+      restoreContext();
+    });
   });
 
   describe("captureAuditEvent tenantId handling", () => {

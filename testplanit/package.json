@@ -72,6 +72,8 @@
     "elasticsearch:reindex": "tsx scripts/reindexAllEntities.ts",
     "elasticsearch:reindex:fresh": "tsx scripts/reindexAllEntities.ts --fresh",
     "elasticsearch:reindex:cases": "tsx scripts/reindexElasticsearch.ts",
+    "scim:check-group-dupes": "tsx scripts/check-group-external-id-dupes.ts",
+    "scim:smoke": "tsx scripts/scim-smoke.ts",
     "release:info": "echo 'Releases are now managed by release-please. Push to main and a Release PR will be created automatically.'"
   },
   "dependencies": {
@@ -260,6 +262,8 @@
     "react-window": "^2.2.7",
     "redux": "^5.0.1",
     "robots-parser": "^3.0.1",
+    "scim-patch": "^0.9.1",
+    "scim2-parse-filter": "^0.3.0",
     "simple-icons": "^16.21.0",
     "slate-hyperscript": "^0.100.0",
     "sonner": "^2.0.7",

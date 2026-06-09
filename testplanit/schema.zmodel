@@ -73,8 +73,8 @@ model VerificationToken {
 
 model User {
     id                              String                        @id @default(cuid())
-    name                            String                        @length(1)
-    email                           String                        @unique @email
+    name                            String                        @length(1) @deny('update', scimGivenName != null)
+    email                           String                        @unique @email @deny('update', scimGivenName != null)
     emailVerified                   DateTime?
     emailVerifToken                 String?
     emailTokenExpires               DateTime?
@@ -83,10 +83,15 @@ model User {
     accounts                        Account[]
     authMethod                      AuthMethod                    @default(INTERNAL)
     externalId                      String?                 // For SAML/OAuth user mapping
+    scimUserName                    String?                       @unique @deny('update', scimGivenName != null)
+    scimExternalId                  String?                       @unique @deny('update', scimGivenName != null)
+    scimExtensions                  Json?
+    scimGivenName                   String?                       @deny('update', scimGivenName != null)
+    scimFamilyName                  String?                       @deny('update', scimGivenName != null)
     access                          Access                        @default(NONE)
     roleId                          Int
     role                            Roles                         @relation(fields: [roleId], references: [id])
-    isActive                        Boolean                       @default(true)
+    isActive                        Boolean                       @default(true) @deny('update', scimGivenName != null)
     isDeleted                       Boolean                       @default(false)
     isApi                           Boolean                       @default(false)
     createdAt                       DateTime                      @default(now()) @db.Timestamptz(6)
@@ -133,6 +138,9 @@ model User {
     createdComments                 Comment[]                     @relation("CommentCreator")
     commentMentions                 CommentMention[]              @relation("CommentMentions")
     apiTokens                       ApiToken[]
+    scimSystemTokens                ScimToken[]                   @relation("ScimSystemUser")
+    scimTokensCreated               ScimToken[]                   @relation("ScimTokenCreatedBy")
+    scimTokensRevoked               ScimToken[]                   @relation("ScimTokenRevokedBy")
     createdShareLinks               ShareLink[]                   @relation("ShareLinkCreator")
     shareLinkAccessLogs             ShareLinkAccessLog[]          @relation("ShareLinkAccessor")
     reviewsRequested                ReviewRequest[]               @relation("ReviewRequestedBy")
@@ -158,6 +166,10 @@ model User {
     @@allow('create, delete', (auth().access == 'ADMIN'))
     @@allow('update', (auth().access == 'ADMIN' || auth() == this))
     @@allow('read', auth().access != null)
+    // SCIM contract: IdP owns the lifecycle of SCIM-provisioned users.
+    // Block enhanced-client delete; the SCIM service uses raw prisma and
+    // bypasses these policies (see lib/scim/services/users.ts).
+    @@deny('delete', scimGivenName != null)
 }
 
 // Password history for preventing password reuse
@@ -220,6 +232,50 @@ model ApiToken {
     @@deny('all', !auth())
     @@allow('create', auth().access != null)
     @@allow('read, update, delete', auth().id == userId || auth().access == 'ADMIN')
+}
+
+// IdP source for a SCIM token. Drives per-IdP leniency in downstream PATCH
+// interpretation and labels the IdP in the admin UI.
+enum IdpName {
+    OKTA
+    ENTRA
+    ONELOGIN
+    OTHER
+
+    @@deny('all', !auth())
+    @@allow('read', auth().access != null)
+    @@allow('update', auth().access == 'ADMIN')
+}
+
+// SCIM bearer tokens minted by an admin for IdP provisioning.
+// Sibling to ApiToken, NOT extension. No userId FK -- a synthetic
+// __scim__ User row carries the audit attribution surface.
+model ScimToken {
+    id           String    @id @default(cuid())
+    name         String    @length(1, 100)
+    idpName      IdpName
+    token        String    @unique               // SHA-256/HMAC hash for bearer lookup
+    tokenPrefix  String                          // "tps_" + first 8 chars of plaintext
+    secret       String    @omit                 // Encrypted raw token at rest
+    systemUserId String
+    systemUser   User      @relation("ScimSystemUser", fields: [systemUserId], references: [id])
+    createdById  String
+    createdBy    User      @relation("ScimTokenCreatedBy", fields: [createdById], references: [id])
+    revokedById  String?
+    revokedBy    User?     @relation("ScimTokenRevokedBy", fields: [revokedById], references: [id])
+    expiresAt    DateTime?
+    lastUsedAt   DateTime?
+    lastUsedIp   String?
+    lastSyncAt   DateTime?
+    revokedAt    DateTime?
+    createdAt    DateTime  @default(now()) @db.Timestamptz(6)
+    isActive     Boolean   @default(true)
+
+    @@index([token])
+    @@index([isActive, expiresAt])
+    @@index([createdById])
+    @@deny('all', !auth())
+    @@allow('all', auth().access == 'ADMIN')
 }
 
 enum Theme {
@@ -343,17 +399,25 @@ enum NotificationType {
 
 model Groups {
     id                 Int                      @id @default(autoincrement())
-    name               String                   @unique @length(1)
-    externalId         String?
+    name               String                   @unique @length(1) @deny('update', scimDisplayName != null)
+    externalId         String?                  @unique
     url                String?                  @url
     note               String?
     isDeleted          Boolean                  @default(false)
+    updatedAt          DateTime?                @updatedAt
+    scimDisplayName    String?
+    scimExtensions     Json?
     assignedUsers      GroupAssignment[]
     projectPermissions GroupProjectPermission[]
 
     @@deny('all', !auth())
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
+    // SCIM contract: the IdP owns the lifecycle of SCIM-provisioned groups.
+    // Block enhanced-client delete/rename so admins cannot diverge from the
+    // IdP's source of truth. The SCIM service uses the raw prisma client
+    // and bypasses these policies; see lib/scim/services/groups.ts.
+    @@deny('delete', scimDisplayName != null)
 }
 
 model GroupAssignment {
@@ -366,6 +430,10 @@ model GroupAssignment {
     @@deny('all', !auth())
     @@allow('all', auth().access == 'ADMIN')
     @@allow('read', auth().access != null)
+    // SCIM contract: membership of a SCIM-provisioned group is owned by the
+    // IdP. The enhanced client cannot add or remove members; the SCIM
+    // service uses raw prisma and bypasses these policies.
+    @@deny('create,delete', group.scimDisplayName != null)
 }
 
 model Roles {
@@ -5038,6 +5106,7 @@ enum AuthMethod {
     INTERNAL
     SSO
     BOTH
+    SCIM
 
     @@deny('create,update,delete', !auth())
     @@allow('read', true)

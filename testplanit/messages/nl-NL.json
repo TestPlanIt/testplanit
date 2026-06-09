@@ -194,7 +194,8 @@
     "auth": {
       "internal": "E-mailadres/wachtwoord",
       "sso": "Alleen SSO",
-      "both": "E-mail en SSO"
+      "both": "E-mail en SSO",
+      "scim": "SCIM-voorziening"
     },
     "status": {
       "deleted": "Verwijderd",
@@ -1432,13 +1433,27 @@
         "outboundSubsTestRunsAndSessions": "Testruns en -sessies",
         "outboundSubsTestRuns": "Testruns",
         "outboundSubsSessions": "Sessies",
+        "outboundSubsScimUsers": "SCIM-gebruikers",
+        "outboundSubsScimGroups": "SCIM-groepen",
         "eventVerbs": {
           "duplicated": "Gedupliceerd",
           "stateChanged": "Staat gewijzigd",
           "resultAdded": "Resultaat toegevoegd",
           "resultRecorded": "Resultaat vastgelegd",
           "reviewRequested": "Beoordeling aangevraagd",
-          "reviewCompleted": "Beoordeling voltooid"
+          "reviewCompleted": "Beoordeling voltooid",
+          "scimUserCreated": "Gebruiker heeft dit gemaakt",
+          "scimUserUpdated": "Gebruiker bijgewerkt",
+          "scimUserActivated": "Gebruiker geactiveerd",
+          "scimUserDeactivated": "Gebruiker gedeactiveerd",
+          "scimUserDeleted": "Gebruiker verwijderd",
+          "scimUserCreatedSummary": "Door gebruiker aangemaakt (samenvatting bulksynchronisatie)",
+          "scimGroupCreated": "Groep aangemaakt",
+          "scimGroupUpdated": "Groep bijgewerkt",
+          "scimGroupMemberAdded": "Leden toegevoegd",
+          "scimGroupMemberRemoved": "Leden verwijderd",
+          "scimGroupDeleted": "Groep verwijderd",
+          "scimGroupMemberAddedSummary": "Toegevoegde leden (samenvatting bulksynchronisatie)"
         },
         "iterationResultHelp": "Wordt geactiveerd telkens wanneer een iteratieresultaat wordt vastgelegd — geslaagd, mislukt, overgeslagen of een andere status. Gebruik dit spaarzaam bij lange automatiseringsruns (één gebeurtenis per iteratie).",
         "events": {
@@ -2259,13 +2274,32 @@
         "deleteAvatarConfirm": "Weet je zeker dat je je {name} wilt verwijderen?",
         "emailDisabledForSso": "E-mailadres kan niet worden gewijzigd voor SSO-accounts. Werk het bij via uw identiteitsprovider.",
         "emailEditableForBoth": "U kunt inloggen met zowel e-mailadres/wachtwoord als SSO. Wijzigingen in e-mailadressen hebben alleen invloed op wachtwoordverificatie.",
-        "linkSsoProvider": "SSO-provider koppelen"
+        "linkSsoProvider": "SSO-provider koppelen",
+        "nameDisabledForScim": "Uw naam wordt beheerd door uw identiteitsaanbieder via SCIM en kan hier niet worden gewijzigd.",
+        "emailDisabledForScim": "Uw e-mailadres wordt beheerd door uw identiteitsprovider via SCIM en kan hier niet worden gewijzigd."
       },
       "preferences": {
         "title": "Voorkeuren"
       },
       "access": {
         "title": "Toegang"
+      },
+      "directory": {
+        "title": "Directoryprofiel",
+        "subtitle": "Alleen-lezen velden die via SCIM vanuit uw identiteitsprovider worden gesynchroniseerd.",
+        "externalId": "IdP-gebruikers-ID",
+        "userName": "Map gebruikersnaam",
+        "givenName": "Voornaam",
+        "familyName": "Achternaam",
+        "jobTitle": "Titel",
+        "userType": "Gebruikerstype",
+        "employeeNumber": "Werknemersnummer",
+        "department": "Afdeling",
+        "division": "Divisie",
+        "organization": "Organisatie",
+        "costCenter": "Kostenplaats",
+        "manager": "Manager",
+        "noEnterpriseFields": "Uw identiteitsaanbieder heeft voor dit account geen bedrijfsdirectory-attributen verzonden."
       },
       "notifications": {
         "title": "Meldingsvoorkeuren",
@@ -3427,9 +3461,12 @@
       "queues": "Taakwachtrijen",
       "auditLogs": "Auditlogboeken",
       "apiTokens": "API-tokens",
+      "scim": "SCIM-voorziening",
+      "systemWebhooks": "Systeemwebhooks",
       "quickscriptTemplates": "QuickScript-sjablonen",
       "testManagement": "Testmanagement",
       "peopleAndAccess": "Mensen & Toegang",
+      "authentication": "Authenticatie",
       "toolsAndIntegrations": "Tools en integraties",
       "system": "Systeem"
     },
@@ -3772,15 +3809,11 @@
       }
     },
     "sso": {
-      "description": "Beheer authenticatie- en beveiligingsinstellingen",
+      "description": "Beheer authenticatie- en registratie-instellingen",
       "sections": {
         "providers": {
           "title": "Aanmeldingsaanbieders",
           "description": "Configureer hoe gebruikers zich kunnen aanmelden bij uw applicatie."
-        },
-        "security": {
-          "title": "Beveiliging",
-          "description": "Configureer beveiligingsbeleid voor authenticatie."
         }
       },
       "globalSettings": {
@@ -3804,20 +3837,6 @@
         "magicLink": {
           "title": "Magic Link-authenticatie",
           "description": "E-mailgebaseerde authenticatie zonder wachtwoord inschakelen of uitschakelen"
-        },
-        "forceSso": {
-          "title": "Forceer SSO-aanmelding",
-          "description": "Schakel e-mailaanmelding uit en eis dat gebruikers SSO gebruiken"
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "Vereis tweefactorauthenticatie (2FA) voor wachtwoordaanmeldingen.",
-            "description": "Gebruikers die inloggen met e-mail/wachtwoord moeten tweefactorauthenticatie instellen en gebruiken."
-          },
-          "forceAllLogins": {
-            "title": "Vereis tweefactorauthenticatie voor alle aanmeldingen.",
-            "description": "Alle gebruikers moeten zich na het inloggen verifiëren met tweefactorauthenticatie (2FA), inclusief gebruikers met single sign-on (SSO)."
-          }
         }
       },
       "providers": {
@@ -3875,14 +3894,6 @@
         "enabled": "Provider ingeschakeld",
         "disabled": "Provider uitgeschakeld",
         "updateFailed": "Het is niet gelukt om de provider bij te werken",
-        "forceSsoEnabled": "Force SSO wereldwijd ingeschakeld",
-        "forceSsoDisabled": "Forceer SSO wereldwijd uitgeschakeld",
-        "forceSsoUpdateFailed": "Het is niet gelukt om de force SSO-instelling bij te werken",
-        "force2FANonSSOEnabled": "Tweefactorauthenticatie is vereist voor wachtwoordaanmeldingen.",
-        "force2FANonSSODisabled": "Tweefactorauthenticatie is niet langer vereist voor wachtwoordaanmeldingen.",
-        "force2FAAllLoginsEnabled": "Tweefactorauthenticatie is vereist voor alle aanmeldingen.",
-        "force2FAAllLoginsDisabled": "Tweefactorauthenticatie is niet langer vereist voor alle aanmeldingen.",
-        "force2FAUpdateFailed": "Het bijwerken van de tweefactorauthenticatie-instellingen is mislukt.",
         "configUpdated": "SAML-configuratie bijgewerkt",
         "configCreated": "SAML-configuratie gemaakt",
         "configSaveFailed": "Het is niet gelukt om de SAML-configuratie op te slaan",
@@ -4336,17 +4347,40 @@
       "forcePasswordChangeSuccess": "Wachtwoordwijziging vereist voor {name}",
       "forcePasswordChangeFailed": "Wachtwoordwijziging is mislukt",
       "revokePasswordSuccess": "Wachtwoord ingetrokken voor {name}",
-      "revokePasswordFailed": "Wachtwoord intrekken mislukt"
+      "revokePasswordFailed": "Wachtwoord intrekken mislukt",
+      "scimProvisionerBadge": "SCIM-leverancier",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Beheerd door SCIM. Beheer via de SCIM-beheerpagina.",
+      "scimColumnHeader": "SCIM",
+      "scimColumnYes": "Ja",
+      "scimUserLockedTitle": "De gebruiker wordt beheerd door SCIM.",
+      "scimUserLockedDescription": "De naam, het e-mailadres en de actieve status van deze gebruiker worden beheerd door uw identiteitsprovider. Wijzigingen daar doorvoeren om ze hier bij te werken."
     },
     "security": {
       "title": "Beveiliging",
-      "description": "Configureer het wachtwoordbeleid, de vergrendelingsinstellingen en de handhavingsacties.",
+      "description": "Configureer de handhaving van aanmeldingen, het wachtwoordbeleid, de vergrendelingsinstellingen en de handhavingsacties.",
       "passwordPolicyTitle": "Wachtwoordbeleid",
       "passwordPolicyDescription": "Stel vereisten in voor gebruikerswachtwoorden.",
       "lockoutPolicyTitle": "Uitsluitingsbeleid",
       "lockoutPolicyDescription": "Configureer accountvergrendeling na mislukte inlogpogingen.",
       "enforcementTitle": "Handhavingsmaatregelen",
       "enforcementDescription": "Wachtwoordwijzigingen afdwingen voor gebruikers met inloggegevens",
+      "signInEnforcementTitle": "Handhaving van de aanmeldplicht",
+      "signInEnforcementDescription": "Vereis SSO en dwing tweefactorauthenticatie af.",
+      "forceSsoTitle": "SSO-aanmelding afdwingen",
+      "forceSsoDescription": "Schakel inloggen via e-mail uit en vereis dat gebruikers SSO gebruiken.",
+      "force2FANonSSOTitle": "Vereis tweefactorauthenticatie (2FA) voor wachtwoordaanmeldingen.",
+      "force2FANonSSODescription": "Gebruikers die inloggen met e-mail/wachtwoord moeten tweefactorauthenticatie instellen en gebruiken.",
+      "force2FAAllLoginsTitle": "Vereis tweefactorauthenticatie voor alle aanmeldingen.",
+      "force2FAAllLoginsDescription": "Alle gebruikers moeten zich na het inloggen verifiëren met tweefactorauthenticatie (2FA), inclusief gebruikers met single sign-on (SSO).",
+      "forceSsoEnabled": "SSO wereldwijd geforceerd inschakelen",
+      "forceSsoDisabled": "SSO wereldwijd geforceerd uitschakelen",
+      "forceSsoUpdateFailed": "Het is niet gelukt om de instelling voor geforceerde SSO bij te werken.",
+      "force2FANonSSOEnabled": "Tweefactorauthenticatie is vereist voor wachtwoordaanmeldingen.",
+      "force2FANonSSODisabled": "Tweefactorauthenticatie is niet langer vereist voor wachtwoordaanmeldingen.",
+      "force2FAAllLoginsEnabled": "Tweefactorauthenticatie is vereist voor alle aanmeldingen.",
+      "force2FAAllLoginsDisabled": "Tweefactorauthenticatie is niet langer vereist voor alle aanmeldingen.",
+      "force2FAUpdateFailed": "Het bijwerken van de tweefactorauthenticatie-instellingen is mislukt.",
       "minPasswordLengthLabel": "Minimale wachtwoordlengte",
       "minPasswordLengthDescription": "Wachtwoorden moeten minimaal dit aantal tekens bevatten (8-128).",
       "requireUppercaseLabel": "Vereist hoofdletters",
@@ -4400,6 +4434,109 @@
       "revokeAllPlaceholder": "TREK ALLES IN",
       "revokeAllSuccess": "Alle API-tokens zijn ingetrokken.",
       "revokeAllError": "Het intrekken van alle tokens is mislukt."
+    },
+    "systemWebhooks": {
+      "title": "Systeemwebhooks",
+      "description": "Uitgaande webhookbestemmingen voor systeemgebeurtenissen die niet aan een specifiek project zijn gekoppeld — momenteel de SCIM 2.0-gebruikers- en groepslevenscyclusgebeurtenissen. Configureer in plaats daarvan inkomende en projectgebonden uitgaande webhooks via de projectinstellingenpagina."
+    },
+    "scim": {
+      "description": "Geef gebruikers van uw identiteitsprovider toegang tot TestPlanIt via SCIM 2.0.",
+      "mintCta": "Nieuwe token creëren",
+      "filterPlaceholder": "Filteren op tokennaam of IdP...",
+      "showRevoked": "Weergeven ingetrokken",
+      "noTokens": "Er zijn nog geen SCIM-tokens aangemaakt.",
+      "emptyTitle": "Nog geen SCIM-tokens beschikbaar",
+      "emptyBody": "Genereer een token waarmee uw identiteitsprovider automatisch gebruikers in TestPlanIt kan aanmaken en bijwerken.",
+      "emptyCta": "Maak je eerste token aan.",
+      "sectionConflicts": "Externe-ID-conflicten",
+      "conflictsPlaceholder": "Geen conflicten. Conflicttracking wordt in een latere versie toegevoegd.",
+      "conflicts": {
+        "title": "Logboek voor conflicten met externe ID's",
+        "description": "SCIM-identiteitsgebeurtenissen die systeeminterventie vereisten (koppelen, herstellen, displayName overschrijven, overgeslagen leden).",
+        "empty": "Geen conflicten in de afgelopen 90 dagen.",
+        "loading": "Conflicten laden…",
+        "errorLoad": "Het conflictlogboek kon niet worden geladen. Probeer het opnieuw.",
+        "colTimestamp": "Wanneer",
+        "colType": "Type",
+        "colEntity": "Entiteit",
+        "colAction": "Systeemactie",
+        "typeLinked": "Gekoppeld",
+        "typeResurrected": "Opgewekt",
+        "typeSkippedMembers": "Leden hebben overgeslagen",
+        "typeDisplayNameOverwrote": "Weergavenaam overschreven",
+        "typeReEmitted": "Opnieuw uitgestoten",
+        "typeConflict": "Conflict",
+        "typeUnknown": "Onbekend",
+        "viewPayload": "Payload bekijken",
+        "reEmit": "Heruitgifte ledenevenement",
+        "reEmitConfirm": "Moet de webhook member_added / member_removed opnieuw worden verzonden voor dit conflict? De oorspronkelijke eventpayload bevatte verwijzingen naar leden die niet bestonden op het moment van synchronisatie. Door de payload nu opnieuw te verzenden, worden de leden die sindsdien zijn toegevoegd, wel meegenomen.",
+        "reEmitConfirmTitle": "Opnieuw een evenement voor leden organiseren?",
+        "reEmitSuccess": "Webhook opnieuw verzonden; auditregel geschreven.",
+        "reEmitError": "Kon niet opnieuw verzenden. {reason}",
+        "next": "Volgende",
+        "previous": "Vorig",
+        "viewDialogTitle": "Conflict-payload",
+        "viewDialogDescription": "Controleer de rijmetadata voor {entityType}#{entityId}.",
+        "close": "Dichtbij"
+      },
+      "errorLoad": "Kon de tokens niet laden. Probeer het opnieuw.",
+      "columns": {
+        "idp": "IdP",
+        "lastIp": "Laatste IP-adres",
+        "lastSync": "Laatste synchronisatie"
+      },
+      "status": {
+        "active": "Actief",
+        "expired": "Verlopen",
+        "deactivated": "Gedeactiveerd"
+      },
+      "mint": {
+        "title": "Nieuwe SCIM-token aangemaakt",
+        "description": "Genereer een bearer-token dat uw identiteitsprovider zal gebruiken om gebruikers te synchroniseren met TestPlanIt.",
+        "nameLabel": "Tokennaam",
+        "namePlaceholder": "bijvoorbeeld Okta-productie",
+        "idpLabel": "Identiteitsaanbieder",
+        "idpOkta": "Okta",
+        "idpEntra": "Microsoft Entra (Azure AD)",
+        "idpOneLogin": "OneLogin",
+        "idpOther": "Ander",
+        "expiresLabel": "Verloopt",
+        "expiresNever": "Verloopt nooit",
+        "expires30": "30 dagen",
+        "expires90": "90 dagen",
+        "expires1y": "1 jaar",
+        "expiresCustom": "Aangepaste datum…",
+        "expiresCustomLabel": "Kies een vervaldatum",
+        "submit": "Munttoken",
+        "submitting": "Munten…",
+        "errorsNameRequired": "Een tokennaam is vereist.",
+        "errorToast": "Kon geen token aanmaken. {reason}"
+      },
+      "reveal": {
+        "title": "Token aangemaakt",
+        "warning": "Kopieer dit token nu. TestPlanIt zal het niet opnieuw weergeven.",
+        "tokenLabel": "SCIM-bearertoken",
+        "copy": "Kopiëren",
+        "copied": "Gekopieerd",
+        "baseUrlHint": "Plak dit in het SCIM Bearer-token-veld van uw IdP. De basis-URL is {baseUrl}.",
+        "close": "Dichtbij",
+        "toast": "Token aangemaakt.",
+        "a11yAnnounce": "Token aangemaakt. Nu kopiëren."
+      },
+      "revoke": {
+        "title": "SCIM-token intrekken?",
+        "description": "Het volgende verzoek met \"{name}\" wordt geweigerd met HTTP 401. De tokenregel blijft permanent in de auditgeschiedenis staan.",
+        "confirm": "Herroepen",
+        "successToast": "Token ingetrokken.",
+        "errorToast": "Kon het token niet intrekken. {reason}"
+      },
+      "probe": {
+        "button": "Test SCIM",
+        "testing": "Testen…",
+        "okBanner": "HTTP {status} — token werkt tegen /scim/v2/Users.",
+        "failBanner": "HTTP {status} — {reason}",
+        "networkError": "Het SCIM-eindpunt kon niet worden bereikt. Probeer het opnieuw."
+      }
     },
     "tags": {
       "add": {
@@ -4679,7 +4816,11 @@
         "confirmMessage": "Weet u zeker dat u deze groep wilt verwijderen?"
       },
       "noUsersSelected": "Er zijn nog geen gebruikers geselecteerd.",
-      "noUsersAssigned": "Er zijn geen gebruikers aan deze groep toegewezen."
+      "noUsersAssigned": "Er zijn geen gebruikers aan deze groep toegewezen.",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Beheerd door SCIM. Beheer via de SCIM-beheerpagina.",
+      "scimNameLockedTitle": "De groep wordt beheerd door SCIM.",
+      "scimNameLockedDescription": "De naam en leden van deze groep worden beheerd door uw identiteitsprovider. Breng daar wijzigingen aan om ze hier bij te werken."
     },
     "milestones": {
       "description": "Mijlpaaltypen beheren",
@@ -5432,7 +5573,8 @@
         "allTime": "Alle tijden"
       },
       "systemActor": "Systeem",
-      "systemActorTooltip": "Actie uitgevoerd door het systeem, niet door een ingelogde gebruiker."
+      "systemActorTooltip": "Actie uitgevoerd door het systeem, niet door een ingelogde gebruiker.",
+      "sourceScim": "SCIM"
     }
   },
   "components": {

@@ -73,6 +73,7 @@ import { use, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { useFindFirstUser, useFindUniqueAppConfig } from "~/lib/hooks";
+import { SCIM_SCHEMAS } from "~/lib/scim/constants";
 import { languageNames } from "~/i18n/navigation";
 import { useRouter } from "~/lib/navigation";
 import { ApiTokenSettings } from "./ApiTokenSettings";
@@ -112,6 +113,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const tEdit = useTranslations("users.profile.edit");
+  const tDirectory = useTranslations("users.profile.directory");
   const tNotifications = useTranslations("users.profile.notifications");
   const tNotificationModes = useTranslations("admin.notifications.defaultMode");
   const tUserMenu = useTranslations("userMenu");
@@ -142,6 +144,36 @@ const UserProfile: React.FC<UserProfileProps> = ({
       },
     },
   });
+
+  // SCIM-provisioned users have their name + email + active state managed by
+  // the IdP. ZenStack denies writes to those columns when scimGivenName is
+  // set; the UI mirrors that by disabling the inputs and surfacing a
+  // "managed by your IdP" hint instead of letting the user submit something
+  // the server will reject.
+  const isScimManaged = user?.scimGivenName != null;
+
+  // scimExtensions is partitioned by URN bucket; the IdP-side identity
+  // info we want to render lives under the SCIM core (non-writable
+  // attrs like title / userType) and enterprise extension URNs.
+  const scimExtensions = (user?.scimExtensions ?? null) as Record<
+    string,
+    unknown
+  > | null;
+  const scimCore = (scimExtensions?.[SCIM_SCHEMAS.CORE_USER] ?? null) as Record<
+    string,
+    unknown
+  > | null;
+  const scimEnterprise = (scimExtensions?.[SCIM_SCHEMAS.ENTERPRISE_USER] ??
+    null) as Record<string, unknown> | null;
+  const scimManager = (scimEnterprise?.manager ?? null) as Record<
+    string,
+    unknown
+  > | null;
+  const scimManagerDisplay =
+    (typeof scimManager?.displayName === "string"
+      ? scimManager.displayName
+      : null) ??
+    (typeof scimManager?.value === "string" ? scimManager.value : null);
 
   // Form schema for editing
   const FormSchema = z.object({
@@ -252,14 +284,22 @@ const UserProfile: React.FC<UserProfileProps> = ({
         },
       };
 
-      // Only update name if it has changed
-      if (data.name !== user?.name) {
+      // Only update name if it has changed AND the user is not SCIM-managed
+      // (the SCIM IdP owns name on those rows; the server-side policy
+      // denies the write, so omitting it here keeps the rest of the
+      // submission from failing on the rejected column).
+      if (!isScimManaged && data.name !== user?.name) {
         updateData.name = data.name;
       }
 
-      // Only update email if not an SSO-only user AND if it has changed
-      // Users with INTERNAL or BOTH can update their email
-      if (user?.authMethod !== "SSO" && data.email !== user?.email) {
+      // Only update email if not SCIM-managed, not SSO-only, AND it has
+      // changed. INTERNAL and BOTH users can update their email; SCIM and
+      // SSO are owned by the IdP.
+      if (
+        !isScimManaged &&
+        user?.authMethod !== "SSO" &&
+        data.email !== user?.email
+      ) {
         updateData.email = data.email;
       }
 
@@ -522,9 +562,17 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                   <Input
                                     {...field}
                                     data-testid="profile-name-input"
-                                    className="text-2xl font-bold"
+                                    disabled={isScimManaged}
+                                    className={`text-2xl font-bold ${
+                                      isScimManaged ? "opacity-60" : ""
+                                    }`}
                                   />
                                 </FormControl>
+                                {isScimManaged && (
+                                  <p className="text-sm text-muted-foreground">
+                                    {tEdit("nameDisabledForScim")}
+                                  </p>
+                                )}
                                 <FormMessage />
                               </FormItem>
                             )}
@@ -543,24 +591,31 @@ const UserProfile: React.FC<UserProfileProps> = ({
                                     {...field}
                                     type="email"
                                     data-testid="profile-email-input"
-                                    disabled={user?.authMethod === "SSO"}
+                                    disabled={
+                                      isScimManaged ||
+                                      user?.authMethod === "SSO"
+                                    }
                                     className={
+                                      isScimManaged ||
                                       user?.authMethod === "SSO"
                                         ? "opacity-60"
                                         : ""
                                     }
                                   />
                                 </FormControl>
-                                {user?.authMethod === "SSO" && (
+                                {isScimManaged ? (
+                                  <p className="text-sm text-muted-foreground">
+                                    {tEdit("emailDisabledForScim")}
+                                  </p>
+                                ) : user?.authMethod === "SSO" ? (
                                   <p className="text-sm text-muted-foreground">
                                     {tEdit("emailDisabledForSso")}
                                   </p>
-                                )}
-                                {user?.authMethod === "BOTH" && (
+                                ) : user?.authMethod === "BOTH" ? (
                                   <p className="text-sm text-muted-foreground">
                                     {tEdit("emailEditableForBoth")}
                                   </p>
-                                )}
+                                ) : null}
                                 <FormMessage />
                               </FormItem>
                             )}
@@ -690,6 +745,8 @@ const UserProfile: React.FC<UserProfileProps> = ({
                               {user.authMethod === "SSO" && tCommon("auth.sso")}
                               {user.authMethod === "BOTH" &&
                                 tCommon("auth.both")}
+                              {user.authMethod === "SCIM" &&
+                                tCommon("auth.scim")}
                             </Badge>
                           </div>
 
@@ -724,6 +781,109 @@ const UserProfile: React.FC<UserProfileProps> = ({
                       </div>
                     </AccordionContent>
                   </AccordionItem>
+
+                  {/* Directory Profile — read-only SCIM identity attrs */}
+                  {isScimManaged && (
+                    <AccordionItem value="directory">
+                      <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                        {tDirectory("title")}
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="px-4 space-y-3">
+                          <p className="text-sm text-muted-foreground">
+                            {tDirectory("subtitle")}
+                          </p>
+
+                          {(() => {
+                            // Render rows only when the IdP actually sent
+                            // a value — empty buckets stay quiet rather
+                            // than show "—" everywhere.
+                            const rows: Array<{
+                              label: string;
+                              value: string;
+                            }> = [];
+                            const pushString = (
+                              label: string,
+                              v: unknown
+                            ): void => {
+                              if (typeof v === "string" && v.length > 0) {
+                                rows.push({ label, value: v });
+                              }
+                            };
+                            pushString(
+                              tDirectory("givenName"),
+                              user.scimGivenName
+                            );
+                            pushString(
+                              tDirectory("familyName"),
+                              user.scimFamilyName
+                            );
+                            pushString(
+                              tDirectory("userName"),
+                              user.scimUserName
+                            );
+                            pushString(
+                              tDirectory("externalId"),
+                              user.scimExternalId
+                            );
+                            pushString(tDirectory("jobTitle"), scimCore?.title);
+                            pushString(
+                              tDirectory("userType"),
+                              scimCore?.userType
+                            );
+                            pushString(
+                              tDirectory("employeeNumber"),
+                              scimEnterprise?.employeeNumber
+                            );
+                            pushString(
+                              tDirectory("department"),
+                              scimEnterprise?.department
+                            );
+                            pushString(
+                              tDirectory("division"),
+                              scimEnterprise?.division
+                            );
+                            pushString(
+                              tDirectory("organization"),
+                              scimEnterprise?.organization
+                            );
+                            pushString(
+                              tDirectory("costCenter"),
+                              scimEnterprise?.costCenter
+                            );
+                            if (scimManagerDisplay) {
+                              rows.push({
+                                label: tDirectory("manager"),
+                                value: scimManagerDisplay,
+                              });
+                            }
+
+                            if (rows.length === 0) {
+                              return (
+                                <p className="text-sm text-muted-foreground italic">
+                                  {tDirectory("noEnterpriseFields")}
+                                </p>
+                              );
+                            }
+
+                            return rows.map((row, idx) => (
+                              <React.Fragment key={row.label}>
+                                {idx > 0 && (
+                                  <Separator className="opacity-50" />
+                                )}
+                                <div className="flex items-start justify-between gap-4">
+                                  <span className="text-sm">{row.label}</span>
+                                  <span className="text-sm text-right break-all">
+                                    {row.value}
+                                  </span>
+                                </div>
+                              </React.Fragment>
+                            ));
+                          })()}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
 
                   {/* Access — Projects + Groups */}
                   <AccordionItem value="access">

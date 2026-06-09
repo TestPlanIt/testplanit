@@ -194,7 +194,8 @@
     "auth": {
       "internal": "メールアドレス/パスワード",
       "sso": "SSOのみ",
-      "both": "メールとSSO"
+      "both": "メールとSSO",
+      "scim": "SCIMプロビジョニング済み"
     },
     "status": {
       "deleted": "削除済み",
@@ -1432,13 +1433,27 @@
         "outboundSubsTestRunsAndSessions": "テスト実行とセッション",
         "outboundSubsTestRuns": "テスト実行",
         "outboundSubsSessions": "セッション",
+        "outboundSubsScimUsers": "SCIMユーザー",
+        "outboundSubsScimGroups": "SCIMグループ",
         "eventVerbs": {
           "duplicated": "複製",
           "stateChanged": "状態が変更されました",
           "resultAdded": "結果を追加しました",
           "resultRecorded": "結果が記録されました",
           "reviewRequested": "レビュー依頼",
-          "reviewCompleted": "レビューが完了しました"
+          "reviewCompleted": "レビューが完了しました",
+          "scimUserCreated": "ユーザー作成",
+          "scimUserUpdated": "ユーザー更新",
+          "scimUserActivated": "ユーザーによる有効化",
+          "scimUserDeactivated": "ユーザー無効化",
+          "scimUserDeleted": "ユーザーを削除しました",
+          "scimUserCreatedSummary": "ユーザー作成（一括同期サマリー）",
+          "scimGroupCreated": "グループが作成されました",
+          "scimGroupUpdated": "グループが更新されました",
+          "scimGroupMemberAdded": "メンバーが追加されました",
+          "scimGroupMemberRemoved": "メンバーが削除されました",
+          "scimGroupDeleted": "グループが削除されました",
+          "scimGroupMemberAddedSummary": "メンバーが追加されました（一括同期の概要）"
         },
         "iterationResultHelp": "反復処理の結果（合格、不合格、スキップ、その他のステータス）が記録されるたびに発生します。長時間の自動化実行では、使用頻度を少なくしてください（反復処理ごとに1つのイベント）。",
         "events": {
@@ -2259,13 +2274,32 @@
         "deleteAvatarConfirm": "{name} を削除してもよろしいですか？",
         "emailDisabledForSso": "SSOアカウントのメールアドレスは変更できません。IDプロバイダーを通じて更新してください。",
         "emailEditableForBoth": "メールアドレス/パスワードとSSOの両方でサインインできます。メールアドレスの変更はパスワード認証にのみ影響します。",
-        "linkSsoProvider": "SSOプロバイダーへのリンク"
+        "linkSsoProvider": "SSOプロバイダーへのリンク",
+        "nameDisabledForScim": "名前はSCIMを介してIDプロバイダーによって管理されており、ここで変更することはできません。",
+        "emailDisabledForScim": "メールアドレスは、お客様のIDプロバイダーがSCIMを介して管理しており、こちらで変更することはできません。"
       },
       "preferences": {
         "title": "設定"
       },
       "access": {
         "title": "アクセス"
+      },
+      "directory": {
+        "title": "ディレクトリプロファイル",
+        "subtitle": "SCIM経由でIDプロバイダーから同期される読み取り専用フィールド。",
+        "externalId": "IdPユーザーID",
+        "userName": "ディレクトリユーザー名",
+        "givenName": "ファーストネーム",
+        "familyName": "苗字",
+        "jobTitle": "タイトル",
+        "userType": "ユーザータイプ",
+        "employeeNumber": "従業員番号",
+        "department": "部門",
+        "division": "分割",
+        "organization": "組織",
+        "costCenter": "コストセンター",
+        "manager": "マネージャー",
+        "noEnterpriseFields": "お客様のIDプロバイダーは、このアカウントに関するエンタープライズディレクトリ属性を送信していません。"
       },
       "notifications": {
         "title": "通知設定",
@@ -3427,9 +3461,12 @@
       "queues": "ジョブキュー",
       "auditLogs": "監査ログ",
       "apiTokens": "APIトークン",
+      "scim": "SCIMプロビジョニング",
+      "systemWebhooks": "システムWebhook",
       "quickscriptTemplates": "QuickScriptテンプレート",
       "testManagement": "テスト管理",
       "peopleAndAccess": "人材とアクセス",
+      "authentication": "認証",
       "toolsAndIntegrations": "ツールと連携機能",
       "system": "システム"
     },
@@ -3772,15 +3809,11 @@
       }
     },
     "sso": {
-      "description": "認証とセキュリティ設定を管理する",
+      "description": "認証と登録の設定を管理する",
       "sections": {
         "providers": {
           "title": "サインインプロバイダー",
           "description": "ユーザーがアプリケーションにサインインする方法を設定します。"
-        },
-        "security": {
-          "title": "安全",
-          "description": "認証のためのセキュリティポリシーを設定する"
         }
       },
       "globalSettings": {
@@ -3804,20 +3837,6 @@
         "magicLink": {
           "title": "マジックリンク認証",
           "description": "パスワードなしのメールベースの認証を有効または無効にする"
-        },
-        "forceSso": {
-          "title": "SSOログインを強制する",
-          "description": "メールログインを無効にし、ユーザーにSSOの使用を要求する"
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "パスワードログインに2FAを要求する",
-            "description": "メールアドレス/パスワードでサインインするユーザーは、2要素認証を設定して使用する必要があります。"
-          },
-          "forceAllLogins": {
-            "title": "すべてのログインに2FAを要求する",
-            "description": "SSOユーザーを含むすべてのユーザーは、サインイン後に2FAで認証する必要があります。"
-          }
         }
       },
       "providers": {
@@ -3875,14 +3894,6 @@
         "enabled": "プロバイダーが有効",
         "disabled": "プロバイダーが無効です",
         "updateFailed": "プロバイダーの更新に失敗しました",
-        "forceSsoEnabled": "SSO をグローバルに強制的に有効化",
-        "forceSsoDisabled": "SSO をグローバルに強制的に無効にする",
-        "forceSsoUpdateFailed": "強制SSO設定の更新に失敗しました",
-        "force2FANonSSOEnabled": "パスワードログインには2要素認証が必要",
-        "force2FANonSSODisabled": "パスワードログインに2要素認証は不要になりました",
-        "force2FAAllLoginsEnabled": "すべてのログインに2要素認証が必要",
-        "force2FAAllLoginsDisabled": "すべてのログインに2要素認証は不要になりました",
-        "force2FAUpdateFailed": "2要素認証設定の更新に失敗しました",
         "configUpdated": "SAML設定が更新されました",
         "configCreated": "SAML設定が作成されました",
         "configSaveFailed": "SAML設定を保存できませんでした",
@@ -4336,17 +4347,40 @@
       "forcePasswordChangeSuccess": "{name} のパスワード変更が必要です。",
       "forcePasswordChangeFailed": "パスワード変更の強制に失敗しました",
       "revokePasswordSuccess": "{name} のパスワードが取り消されました",
-      "revokePasswordFailed": "パスワードの取り消しに失敗しました"
+      "revokePasswordFailed": "パスワードの取り消しに失敗しました",
+      "scimProvisionerBadge": "SCIMプロビジョナー",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "SCIMによって管理されています。SCIMの管理ページから管理してください。",
+      "scimColumnHeader": "SCIM",
+      "scimColumnYes": "はい",
+      "scimUserLockedTitle": "ユーザーはSCIMによって管理されています",
+      "scimUserLockedDescription": "このユーザー名、メールアドレス、およびアクティブステータスは、ご利用のIDプロバイダーによって管理されています。こちらで更新するには、そちらで変更してください。"
     },
     "security": {
       "title": "安全",
-      "description": "パスワードポリシー、ロックアウト設定、および強制措置を設定します。",
+      "description": "サインインの強制、パスワードポリシー、ロックアウト設定、および強制アクションを設定します。",
       "passwordPolicyTitle": "パスワードポリシー",
       "passwordPolicyDescription": "ユーザーパスワードの要件を設定する",
       "lockoutPolicyTitle": "ロックアウトポリシー",
       "lockoutPolicyDescription": "ログイン失敗後のアカウントロックアウトを設定する",
       "enforcementTitle": "執行措置",
       "enforcementDescription": "認証情報ベースのユーザーのパスワード変更を強制する",
+      "signInEnforcementTitle": "サインインの強制",
+      "signInEnforcementDescription": "SSOを必須とし、二要素認証を強制する",
+      "forceSsoTitle": "SSOログインを強制する",
+      "forceSsoDescription": "メールログインを無効にし、ユーザーにシングルサインオン（SSO）の使用を必須とする",
+      "force2FANonSSOTitle": "パスワードログインに2段階認証を必須にする",
+      "force2FANonSSODescription": "メールアドレスとパスワードでログインするユーザーは、二段階認証を設定して使用する必要があります。",
+      "force2FAAllLoginsTitle": "すべてのログインに2段階認証を必須にする",
+      "force2FAAllLoginsDescription": "SSOユーザーを含むすべてのユーザーは、サインイン後に2FA認証を行う必要があります。",
+      "forceSsoEnabled": "グローバルにSSOを強制的に有効化する",
+      "forceSsoDisabled": "SSOをグローバルに強制無効化",
+      "forceSsoUpdateFailed": "強制SSO設定の更新に失敗しました",
+      "force2FANonSSOEnabled": "パスワードログインには二段階認証が必要です",
+      "force2FANonSSODisabled": "パスワードログインに二段階認証は不要になりました",
+      "force2FAAllLoginsEnabled": "すべてのログインに二段階認証が必要です",
+      "force2FAAllLoginsDisabled": "すべてのログインにおいて二段階認証は不要になりました。",
+      "force2FAUpdateFailed": "二段階認証設定の更新に失敗しました",
       "minPasswordLengthLabel": "パスワードの最小文字数",
       "minPasswordLengthDescription": "パスワードは少なくともこの文字数（8～128文字）以上である必要があります。",
       "requireUppercaseLabel": "大文字のみ入力可",
@@ -4400,6 +4434,109 @@
       "revokeAllPlaceholder": "すべて取り消す",
       "revokeAllSuccess": "すべてのAPIトークンが取り消されました",
       "revokeAllError": "すべてのトークンを取り消すことができませんでした"
+    },
+    "systemWebhooks": {
+      "title": "システムWebhook",
+      "description": "単一のプロジェクトに紐づかないシステムレベルのイベント（現在はSCIM 2.0のユーザーおよびグループのライフサイクルイベント）の送信Webhook宛先。受信Webhookおよびプロジェクトスコープの送信Webhookは、プロジェクト設定ページから設定してください。"
+    },
+    "scim": {
+      "description": "SCIM 2.0 を介して、ID プロバイダーから TestPlanIt にユーザーをプロビジョニングします。",
+      "mintCta": "ミント・ニュー・トークン",
+      "filterPlaceholder": "トークン名またはIDプロバイダーでフィルタリング...",
+      "showRevoked": "取り消しを表示",
+      "noTokens": "SCIMトークンはまだ作成されていません。",
+      "emptyTitle": "SCIMトークンはまだありません",
+      "emptyBody": "トークンを発行することで、IDプロバイダーがTestPlanItでユーザーを自動的に作成および更新できるようになります。",
+      "emptyCta": "最初のトークンをミントする",
+      "sectionConflicts": "外部IDの競合",
+      "conflictsPlaceholder": "競合は発生していません。競合追跡艦艇は今後のリリースで実装予定です。",
+      "conflicts": {
+        "title": "外部ID競合ログ",
+        "description": "システム介入が必要となったSCIM IDイベント（リンク、復元、displayNameの上書き、スキップされたメンバー）。",
+        "empty": "過去90日間に紛争は発生していません。",
+        "loading": "読み込みの競合…",
+        "errorLoad": "競合ログを読み込めませんでした。再試行してください。",
+        "colTimestamp": "いつ",
+        "colType": "タイプ",
+        "colEntity": "実在物",
+        "colAction": "システムアクション",
+        "typeLinked": "リンク済み",
+        "typeResurrected": "復活した",
+        "typeSkippedMembers": "メンバーがスキップしました",
+        "typeDisplayNameOverwrote": "表示名が上書きされました",
+        "typeReEmitted": "再発行",
+        "typeConflict": "対立",
+        "typeUnknown": "未知",
+        "viewPayload": "ペイロードを表示",
+        "reEmit": "会員イベントの再送信",
+        "reEmitConfirm": "この競合について、member_added / member_removed Webhook を再送信しますか？元のイベントペイロードには、同期時に存在しなかったメンバー参照が含まれていました。再送信すると、その後プロビジョニングされたメンバーが含まれます。",
+        "reEmitConfirmTitle": "メンバーイベントを再送信しますか？",
+        "reEmitSuccess": "Webhookが再送信され、監査ログが書き込まれました。",
+        "reEmitError": "再送信できませんでした。 {reason}",
+        "next": "次",
+        "previous": "前の",
+        "viewDialogTitle": "競合ペイロード",
+        "viewDialogDescription": "{entityType}#{entityId} の監査行メタデータ。",
+        "close": "近い"
+      },
+      "errorLoad": "トークンを読み込めませんでした。もう一度お試しください。",
+      "columns": {
+        "idp": "IdP",
+        "lastIp": "最終IPアドレス",
+        "lastSync": "最終同期"
+      },
+      "status": {
+        "active": "アクティブ",
+        "expired": "期限切れ",
+        "deactivated": "無効化済み"
+      },
+      "mint": {
+        "title": "ミント状態の新しいSCIMトークン",
+        "description": "ユーザーをTestPlanItに同期するために、IDプロバイダーが使用するベアラートークンを生成します。",
+        "nameLabel": "トークン名",
+        "namePlaceholder": "例：Oktaの製品",
+        "idpLabel": "IDプロバイダー",
+        "idpOkta": "オクタ",
+        "idpEntra": "Microsoft Entra (Azure AD)",
+        "idpOneLogin": "ワンログイン",
+        "idpOther": "他の",
+        "expiresLabel": "有効期限切れ",
+        "expiresNever": "有効期限なし",
+        "expires30": "30日間",
+        "expires90": "90日間",
+        "expires1y": "1年",
+        "expiresCustom": "カスタム日付…",
+        "expiresCustomLabel": "有効期限を選択してください",
+        "submit": "ミントトークン",
+        "submitting": "造幣…",
+        "errorsNameRequired": "トークン名は必須です。",
+        "errorToast": "トークンを発行できませんでした。 {reason}"
+      },
+      "reveal": {
+        "title": "トークンが作成されました",
+        "warning": "このトークンを今すぐコピーしてください。TestPlanItでは二度と表示されません。",
+        "tokenLabel": "SCIMベアラートークン",
+        "copy": "コピー",
+        "copied": "コピーしました",
+        "baseUrlHint": "これをIdPのSCIMベアラートークンフィールドに貼り付けてください。ベースURLは {baseUrl}です。",
+        "close": "近い",
+        "toast": "トークンが作成されました。",
+        "a11yAnnounce": "トークンが作成されました。今すぐコピーしてください。"
+      },
+      "revoke": {
+        "title": "SCIMトークンを取り消しますか？",
+        "description": "「{name}」を含む次のリクエストはHTTP 401エラーで拒否されます。トークン行は監査履歴に永久に残ります。",
+        "confirm": "取り消す",
+        "successToast": "トークンは取り消されました。",
+        "errorToast": "トークンを取り消せませんでした。 {reason}"
+      },
+      "probe": {
+        "button": "SCIMをテストする",
+        "testing": "テスト…",
+        "okBanner": "HTTP {status} — トークンは /scim/v2/Users に対して機能します。",
+        "failBanner": "HTTP {status} — {reason}",
+        "networkError": "SCIMエンドポイントに接続できませんでした。再試行します。"
+      }
     },
     "tags": {
       "add": {
@@ -4679,7 +4816,11 @@
         "confirmMessage": "このグループを削除してもよろしいですか?"
       },
       "noUsersSelected": "まだユーザーは選択されていません。",
-      "noUsersAssigned": "このグループにはユーザーが割り当てられていません。"
+      "noUsersAssigned": "このグループにはユーザーが割り当てられていません。",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "SCIMによって管理されています。SCIMの管理ページから管理してください。",
+      "scimNameLockedTitle": "このグループはSCIMによって運営されています。",
+      "scimNameLockedDescription": "このグループ名とメンバーは、ご利用のIDプロバイダーによって管理されています。こちらで情報を更新するには、そちらで変更してください。"
     },
     "milestones": {
       "description": "マイルストーンの種類を管理する",
@@ -5432,7 +5573,8 @@
         "allTime": "歴代"
       },
       "systemActor": "システム",
-      "systemActorTooltip": "ログインユーザーではなく、システムによって実行された操作"
+      "systemActorTooltip": "ログインユーザーではなく、システムによって実行された操作",
+      "sourceScim": "SCIM"
     }
   },
   "components": {

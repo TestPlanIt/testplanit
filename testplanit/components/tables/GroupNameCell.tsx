@@ -1,7 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { UsersRound } from "lucide-react";
+import { UserRoundCog, UsersRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useFindUniqueGroups } from "~/lib/hooks";
 
@@ -11,6 +11,7 @@ interface GroupNameCellProps {
 
 export function GroupNameCell({ groupId }: GroupNameCellProps) {
   const t = useTranslations("common.labels");
+  const tGroups = useTranslations("admin.groups");
   const groupIdNum = parseInt(groupId, 10);
 
   const {
@@ -20,7 +21,7 @@ export function GroupNameCell({ groupId }: GroupNameCellProps) {
   } = useFindUniqueGroups(
     {
       where: { id: !isNaN(groupIdNum) ? groupIdNum : undefined },
-      select: { name: true },
+      select: { name: true, scimDisplayName: true },
     },
     {
       // Only fetch if groupId is a valid number
@@ -41,9 +42,21 @@ export function GroupNameCell({ groupId }: GroupNameCellProps) {
     );
   }
 
+  const isScimManaged = group.scimDisplayName !== null;
+
   return (
     <span className="flex items-center">
-      <UsersRound className="mr-1 h-4 w-4" />
+      {isScimManaged ? (
+        <UserRoundCog
+          className="mr-1 h-4 w-4"
+          aria-label={tGroups("scimManagedTooltip")}
+          data-testid="scim-managed-group-icon"
+        >
+          <title>{tGroups("scimManagedTooltip")}</title>
+        </UserRoundCog>
+      ) : (
+        <UsersRound className="mr-1 h-4 w-4" />
+      )}
       {group.name}
     </span>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { Prisma } from "@prisma/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
@@ -160,11 +161,24 @@ function UserList() {
     }
   }, [revokingUser, tAdmin]);
 
+  // Sort by `scimGivenName` always puts nulls last so the SCIM-managed users
+  // (the non-null rows) appear at the top regardless of asc/desc direction —
+  // matches the "SCIM" column UX of "click to find SCIM users."
+  const orderBy: Prisma.UserOrderByWithRelationInput =
+    sortConfig?.column === "scimGivenName"
+      ? {
+          scimGivenName: {
+            sort: sortConfig.direction,
+            nulls: "last",
+          },
+        }
+      : sortConfig
+        ? { [sortConfig.column]: sortConfig.direction }
+        : { name: "asc" };
+
   const { data: totalFilteredUsers } = useFindManyUser(
     {
-      orderBy: sortConfig
-        ? { [sortConfig.column]: sortConfig.direction }
-        : { name: "asc" },
+      orderBy,
       include: {
         role: true,
         groups: true,
@@ -201,9 +215,7 @@ function UserList() {
 
   const { data: users, isLoading } = useFindManyUser(
     {
-      orderBy: sortConfig
-        ? { [sortConfig.column]: sortConfig.direction }
-        : { name: "asc" },
+      orderBy,
       include: {
         role: true,
         groups: true,

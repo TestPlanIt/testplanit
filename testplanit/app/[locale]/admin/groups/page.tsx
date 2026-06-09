@@ -190,6 +190,7 @@ function GroupList() {
 
   const columns: CustomColumnDef<ExtendedGroups>[] = useColumns(
     tCommon,
+    t,
     setEditingGroup,
     setDeletingGroup
   );

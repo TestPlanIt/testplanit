@@ -39,7 +39,7 @@ The following collapsible sections are displayed when viewing your own profile o
 Displays core account details:
 
 - **System Access**: The user's access level (ADMIN, USER, READ_ONLY, etc.)
-- **Authentication Method**: Internal, SSO, or both
+- **Authentication Method**: Internal (email/password), SSO Only, Email & SSO, or **SCIM Provisioned** (the row is owned by an upstream identity provider)
 - **Default Role**: The default role assigned to the user
 - **API User**: Indicates if this is an API account (shown as a disabled switch)
 - **Two-Factor Authentication (2FA)**: Toggle, QR code setup, backup code management, and regeneration controls
@@ -49,6 +49,19 @@ If your organization has enforced 2FA, you will not be able to disable it. A not
 :::
 
 For detailed 2FA setup instructions, see [Two-Factor Authentication](./two-factor-authentication.md).
+
+### Directory Profile
+
+Shown only for users provisioned through [SCIM 2.0](./scim.md). These fields are read-only — they are synced from your identity provider and any edits must be made there.
+
+The section surfaces whatever your IdP sent on the last `POST` / `PUT` / `PATCH`:
+
+- **First name** and **Last name** (`name.givenName` / `name.familyName`)
+- **Directory username** (`userName`) and **IdP user ID** (`externalId`) — useful for matching this account against your IdP's view of the same person
+- **Title** and **User type** from the SCIM core attributes
+- From the [SCIM Enterprise User extension](https://datatracker.ietf.org/doc/html/rfc7643#section-4.3): **Employee number**, **Department**, **Division**, **Organization**, **Cost center**, and **Manager** (display name)
+
+Rows render only when the IdP actually sent a value; an empty bucket renders the message "Your identity provider has not sent any enterprise directory attributes for this account." instead of a wall of em-dashes.
 
 ### Access
 
@@ -121,6 +134,10 @@ When you click the **Edit Profile** button:
 3. Cancel and Submit buttons replace the Edit Profile button
 4. Changes are saved when you click Submit
 5. The page refreshes to show updated information
+
+:::note SCIM-provisioned users
+If your account was provisioned through [SCIM 2.0](./scim.md), the **name** and **email** inputs stay disabled in edit mode with a "managed by your identity provider via SCIM" hint, and the save call omits those fields server-side. Preferences, avatar, password (when the account also has Internal auth), API tokens, and 2FA are still yours to change locally. Update your name or email in the IdP — the next sync will pull it into TestPlanIt.
+:::
 
 ## Permissions
 

@@ -40,6 +40,14 @@ export interface AuditContext {
    */
   tokenScopes?: string[];
   /**
+   * scimTokenId — id of the authenticating SCIM bearer token (tps_*), if any.
+   * Set by the SCIM bearer middleware after a valid tps_ token validates.
+   * Consumed by captureAuditEvent to derive metadata.source === "scim" and
+   * to hand-stamp metadata.scimTokenId on audit rows for per-token discrimination.
+   * Undefined for session/cookie-authed and ApiToken-authed requests.
+   */
+  scimTokenId?: string;
+  /**
    * Suppression hatch for backfill scripts and migrations that mutate domain
    * entities without producing outbound webhook events. webhookEvents.emit()
    * short-circuits when this flag is true. Audit emission is unaffected.

@@ -58,71 +58,124 @@ const sidebars: SidebarsConfig = {
             type: 'doc',
             id: 'user-guide/administration',
           },
-          // List the pages within the Administration sub-category
+          // List the pages within the Administration sub-category,
+          // grouped to mirror the in-app Admin menu sections
           items: [
-            'user-guide/app-config', // Corresponds to app-config.md
-            'user-guide/projects', // Corresponds to projects.md
-            'user-guide/templates-fields', // Corresponds to templates-fields.md
-            'user-guide/quickscript-templates', // QuickScript templates for test case export
-            'user-guide/workflows', // Corresponds to workflows.md
-            'user-guide/review-approvals', // Review & Approval gates on workflow transitions
-            'user-guide/statuses', // Corresponds to statuses.md
-            'user-guide/milestone-types', // Corresponds to milestone-types.md
-            'user-guide/configurations', // Corresponds to configurations.md
-            'user-guide/users', // Corresponds to users.md
-            'user-guide/groups', // Corresponds to groups.md
-            'user-guide/roles', // Corresponds to roles.md
-            'user-guide/permissions-guide', // Permissions guide
-            'user-guide/tags', // Corresponds to tags.md
+            // Test Management
             {
               type: 'category',
-              label: 'Reporting & Analytics',
-              link: {
-                type: 'doc',
-                id: 'user-guide/reporting',
-              },
+              label: 'Test Management',
               items: [
-                'user-guide/cross-project-reports', // Cross-project report types + project scoping
+                'user-guide/projects', // Corresponds to projects.md
+                'user-guide/templates-fields', // Corresponds to templates-fields.md
+                // Workflows category with Review & Approval as a child
+                {
+                  type: 'category',
+                  label: 'Workflows',
+                  link: {
+                    type: 'doc',
+                    id: 'user-guide/workflows',
+                  },
+                  items: [
+                    'user-guide/review-approvals', // Review & Approval gates on workflow transitions
+                  ],
+                },
+                'user-guide/statuses', // Corresponds to statuses.md
+                'user-guide/milestone-types', // Corresponds to milestone-types.md
+                'user-guide/configurations', // Corresponds to configurations.md
+                'user-guide/tags', // Corresponds to tags.md
+                'user-guide/admin-issues', // Global cross-project issues administration
+                {
+                  type: 'category',
+                  label: 'Reporting & Analytics',
+                  link: {
+                    type: 'doc',
+                    id: 'user-guide/reporting',
+                  },
+                  items: [
+                    'user-guide/cross-project-reports', // Cross-project report types + project scoping
+                  ],
+                },
               ],
             },
-            'user-guide/share-links', // Share Links documentation
-            // Convert Notifications to a category with children
+            // People & Access
             {
               type: 'category',
-              label: 'Notifications',
-              link: {
-                type: 'doc',
-                id: 'user-guide/notifications',
-              },
+              label: 'People & Access',
               items: [
-                'user-guide/email-templates', // Email templates configuration
-                'user-guide/system-announcements', // System-wide announcements
-                'upgrade-notifications', // Version upgrade notifications
+                'user-guide/users', // Corresponds to users.md
+                'user-guide/groups', // Corresponds to groups.md
+                'user-guide/roles', // Corresponds to roles.md
+                'user-guide/permissions-guide', // Permissions guide
               ],
             },
-            'user-guide/integrations', // Issue integrations administration page
-            'user-guide/webhooks', // Inbound and outbound webhooks
+            // Authentication
             {
               type: 'category',
-              label: 'AI Models',
-              link: {
-                type: 'doc',
-                id: 'user-guide/llm-integrations',
-              },
+              label: 'Authentication',
               items: [
-                'user-guide/llm-test-generation', // AI test case generation
-                'user-guide/llm-magic-select', // AI-powered test case selection
-                'user-guide/llm-quickscript', // AI-powered QuickScript generation
-                'user-guide/llm-writing-assistant', // In-editor AI writing assistant
-                'user-guide/llm-markdown-import', // AI-assisted markdown import
-                'user-guide/llm-auto-tag', // AI-powered auto tagging
+                'user-guide/sso', // Single Sign-On providers and SAML configuration
+                'user-guide/security-settings', // Sign-in enforcement, password policy, lockout, enforcement
+                'api-tokens', // API tokens
+                'user-guide/scim', // SCIM 2.0 provisioning from external IdP
               ],
             },
-            'user-guide/prompt-configurations', // AI prompt configuration management
-            'user-guide/sso', // Authentication configuration and management
-            'user-guide/security-settings', // Password policy, lockout, and enforcement
-            'user-guide/audit-logs', // Audit logs for compliance and security
-            'user-guide/audit-log-reliability', // Audit log retry/backoff policy and ops reference
+            // Tools & Integrations
+            {
+              type: 'category',
+              label: 'Tools & Integrations',
+              items: [
+                'user-guide/integrations', // Issue integrations administration page
+                'user-guide/share-links', // Share Links documentation
+                // Convert Notifications to a category with children
+                {
+                  type: 'category',
+                  label: 'Notifications',
+                  link: {
+                    type: 'doc',
+                    id: 'user-guide/notifications',
+                  },
+                  items: [
+                    'user-guide/email-templates', // Email templates configuration
+                    'user-guide/system-announcements', // System-wide announcements
+                    'upgrade-notifications', // Version upgrade notifications
+                  ],
+                },
+                {
+                  type: 'category',
+                  label: 'AI Models',
+                  link: {
+                    type: 'doc',
+                    id: 'user-guide/llm-integrations',
+                  },
+                  items: [
+                    'user-guide/llm-test-generation', // AI test case generation
+                    'user-guide/llm-magic-select', // AI-powered test case selection
+                    'user-guide/llm-quickscript', // AI-powered QuickScript generation
+                    'user-guide/llm-writing-assistant', // In-editor AI writing assistant
+                    'user-guide/llm-markdown-import', // AI-assisted markdown import
+                    'user-guide/llm-auto-tag', // AI-powered auto tagging
+                  ],
+                },
+                'user-guide/prompt-configurations', // AI prompt configuration management
+                'user-guide/quickscript-templates', // QuickScript templates for test case export
+                'user-guide/code-repositories', // Git repository connections for AI export context
+              ],
+            },
+            // System
+            {
+              type: 'category',
+              label: 'System',
+              items: [
+                'user-guide/app-config', // Corresponds to app-config.md
+                'user-guide/data-imports', // Data Imports (Testmo JSON wizard)
+                'user-guide/search-engine', // Elasticsearch status, replicas, reindex
+                'user-guide/queues', // Background job queue management
+                'user-guide/audit-logs', // Audit logs for compliance and security
+                'user-guide/audit-log-reliability', // Audit log retry/backoff policy and ops reference
+                'user-guide/trash', // Restore or purge soft-deleted records
+              ],
+            },
             // Add other admin pages here as they are created
           ],
         },
@@ -133,105 +186,145 @@ const sidebars: SidebarsConfig = {
         'user-guide/users-list', // Corresponds to users-list.md
         'user-guide/user-profile', // Corresponds to user-profile.md
         'user-guide/user-menu', // Corresponds to user-menu.md
+        'user-guide/notifications-inbox', // User-facing notification center + preferences
+        'user-guide/reviews-inbox', // Reviewer inbox for Review & Approval
         // Add the new Projects category here
         {
           type: 'category',
           label: 'Projects', // New category for project-specific features
           // No explicit link, making the label non-clickable and not highlighted when children are active
+          // Grouped to mirror the in-app Project menu sections
           items: [
-            'user-guide/project-overview', // Use the ID Docusaurus recognizes
-            'user-guide/projects/documentation', // Correct ID including subdirectory
-            // Convert Milestones to a category
+            // Project
             {
               type: 'category',
-              label: 'Milestones',
-              // Link the category label to the main milestones list page
-              link: {
-                type: 'doc',
-                id: 'user-guide/projects/milestones',
-              },
-              // Only list child pages here
+              label: 'Project',
               items: [
-                'user-guide/projects/milestone-details', // Milestone details page
+                'user-guide/project-overview', // Use the ID Docusaurus recognizes
+                'user-guide/projects/documentation', // Correct ID including subdirectory
+                // Convert Milestones to a category
+                {
+                  type: 'category',
+                  label: 'Milestones',
+                  // Link the category label to the main milestones list page
+                  link: {
+                    type: 'doc',
+                    id: 'user-guide/projects/milestones',
+                  },
+                  // Only list child pages here
+                  items: [
+                    'user-guide/projects/milestone-details', // Milestone details page
+                  ],
+                },
               ],
             },
-            // Add Repository category
+            // Management
             {
               type: 'category',
-              label: 'Repository',
-              link: {
-                type: 'doc',
-                id: 'user-guide/projects/repository', // Link to the main repository page
-              },
+              label: 'Management',
               items: [
-                'user-guide/projects/repository-add-case', // Corresponds to repository-add-case.md
-                'user-guide/projects/repository-case-details', // Add Test Case Details page
-                'user-guide/projects/repository-case-versions', // Add Test Case Versions page
-                'user-guide/shared-steps', // Add shared-steps.md
-                'user-guide/projects/step-duplicate-detection', // Step sequence duplicate detection
-                'user-guide/import-shared-steps', // Add import-shared-steps.md
-                'import-export', // Add import-export.md
-                'copy-move-test-cases', // Copy/Move test cases between projects
-                'user-guide/projects/duplicate-detection', // Duplicate test case detection
-                'user-guide/projects/quickscript', // QuickScript from repository
+                // Add Repository category
+                {
+                  type: 'category',
+                  label: 'Repository',
+                  link: {
+                    type: 'doc',
+                    id: 'user-guide/projects/repository', // Link to the main repository page
+                  },
+                  items: [
+                    'user-guide/projects/repository-add-case', // Corresponds to repository-add-case.md
+                    'user-guide/projects/repository-case-details', // Add Test Case Details page
+                    'user-guide/projects/repository-case-versions', // Add Test Case Versions page
+                    'user-guide/projects/parameterized-test-cases', // Parameterized Test Cases feature hub
+                    'user-guide/projects/step-duplicate-detection', // Step sequence duplicate detection
+                    'import-export', // Add import-export.md
+                    'copy-move-test-cases', // Copy/Move test cases between projects
+                    'user-guide/projects/duplicate-detection', // Duplicate test case detection
+                    'user-guide/projects/quickscript', // QuickScript from repository
+                  ],
+                },
+                // Shared Steps (separate Management item in the app menu)
+                {
+                  type: 'category',
+                  label: 'Shared Steps',
+                  link: {
+                    type: 'doc',
+                    id: 'user-guide/shared-steps', // Add shared-steps.md
+                  },
+                  items: [
+                    'user-guide/import-shared-steps', // Add import-shared-steps.md
+                  ],
+                },
+                // Add the new Test Runs category
+                {
+                  type: 'category',
+                  label: 'Test Runs & Results',
+                  link: {
+                    type: 'doc',
+                    id: 'user-guide/projects/runs', // Link to the main test runs page
+                  },
+                  items: [
+                    // Add child pages like Add Test Run, Run Details later
+                    'user-guide/projects/add-test-run-modal', // Corresponds to add-test-run-modal.md
+                    'user-guide/projects/test-run-item', // Corresponds to test-run-item.md
+                    'user-guide/projects/run-details', // Corresponds to run-details.md
+                    'user-guide/projects/test-case-execution', // Corresponds to test-case-execution.md
+                  ],
+                },
+                // Add the new Sessions category
+                {
+                  type: 'category',
+                  label: 'Sessions',
+                  link: {
+                    type: 'doc',
+                    id: 'user-guide/projects/sessions', // Link to the main sessions page
+                  },
+                  items: [
+                    // Add child pages later
+                    'user-guide/projects/sessions-add', // Corresponds to sessions-add.md
+                    'user-guide/projects/sessions-item', // Corresponds to sessions-item.md
+                    'user-guide/projects/sessions-details', // Corresponds to sessions-details.md
+                    'user-guide/projects/sessions-versions', // Corresponds to sessions-versions.md
+                    'user-guide/projects/sessions-execution', // Corresponds to sessions-execution.md
+                  ],
+                },
+                'user-guide/projects/tags', // Corresponds to tags.md
+                'user-guide/projects/issues', // Add Project Issues page here
+                // Reporting & Analytics (per-project) category
+                {
+                  type: 'category',
+                  label: 'Reporting & Analytics',
+                  link: {
+                    type: 'doc',
+                    id: 'user-guide/projects/reports/index',
+                  },
+                  items: [
+                    'user-guide/projects/reports/automation-candidates',
+                    'user-guide/projects/reports/automation-trends',
+                    'user-guide/projects/reports/execution-log',
+                    'user-guide/projects/reports/flaky-tests',
+                    'user-guide/projects/reports/issue-test-coverage',
+                    'user-guide/projects/reports/iteration-matrix',
+                    'user-guide/projects/reports/test-case-health',
+                    'user-guide/projects/reports/report-builder',
+                  ],
+                },
               ],
             },
-            // Add the new Test Runs category
+            // Settings
             {
               type: 'category',
-              label: 'Test Runs & Results',
-              link: {
-                type: 'doc',
-                id: 'user-guide/projects/runs', // Link to the main test runs page
-              },
+              label: 'Settings',
               items: [
-                // Add child pages like Add Test Run, Run Details later
-                'user-guide/projects/add-test-run-modal', // Corresponds to add-test-run-modal.md
-                'user-guide/projects/test-run-item', // Corresponds to test-run-item.md
-                'user-guide/projects/run-details', // Corresponds to run-details.md
-                'user-guide/projects/test-case-execution', // Corresponds to test-case-execution.md
+                'user-guide/projects/settings/integrations', // Project issue integration selection
+                'user-guide/webhooks', // Inbound and outbound webhooks (configured per project)
+                'user-guide/projects/settings/ai-models', // Project AI model default + per-feature overrides
+                'user-guide/projects/settings/quickscript', // Project QuickScript context + export templates
+                'user-guide/projects/settings/parameters', // Test Case Parameters settings (CI mapping + shared datasets)
+                'user-guide/projects/settings/advanced', // Per-project feature toggles
+                'user-guide/projects/settings/shares', // Project-scoped share link management
               ],
             },
-            // Add the new Sessions category
-            {
-              type: 'category',
-              label: 'Sessions',
-              link: {
-                type: 'doc',
-                id: 'user-guide/projects/sessions', // Link to the main sessions page
-              },
-              items: [
-                // Add child pages later
-                'user-guide/projects/sessions-add', // Corresponds to sessions-add.md
-                'user-guide/projects/sessions-item', // Corresponds to sessions-item.md
-                'user-guide/projects/sessions-details', // Corresponds to sessions-details.md
-                'user-guide/projects/sessions-versions', // Corresponds to sessions-versions.md
-                'user-guide/projects/sessions-execution', // Corresponds to sessions-execution.md
-              ],
-            },
-            'user-guide/projects/parameterized-test-cases', // Parameterized Test Cases hub
-            // Reporting & Analytics (per-project) category
-            {
-              type: 'category',
-              label: 'Reporting & Analytics',
-              link: {
-                type: 'doc',
-                id: 'user-guide/projects/reports/index',
-              },
-              items: [
-                'user-guide/projects/reports/automation-candidates',
-                'user-guide/projects/reports/automation-trends',
-                'user-guide/projects/reports/execution-log',
-                'user-guide/projects/reports/flaky-tests',
-                'user-guide/projects/reports/issue-test-coverage',
-                'user-guide/projects/reports/iteration-matrix',
-                'user-guide/projects/reports/test-case-health',
-                'user-guide/projects/reports/report-builder',
-              ],
-            },
-            'user-guide/projects/tags', // Corresponds to tags.md
-            'user-guide/projects/issues', // Add Project Issues page here
-            // Add other project-specific pages here later
           ],
         },
         'user-guide/advanced-search', // Advanced search documentation
@@ -247,7 +340,6 @@ const sidebars: SidebarsConfig = {
     'best-practices', // Best practices guide
     'faq', // Frequently asked questions
     'cli', // CLI tool documentation
-    'api-tokens', // API tokens documentation
     'e2e-testing', // E2E testing guide for contributors
     // SDK & Integrations category
     {

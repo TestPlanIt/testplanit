@@ -194,7 +194,8 @@
     "auth": {
       "internal": "E-posta/Şifre",
       "sso": "Yalnızca SSO",
-      "both": "E-posta ve SSO"
+      "both": "E-posta ve SSO",
+      "scim": "SCIM Sağlandı"
     },
     "status": {
       "deleted": "Silindi",
@@ -1432,13 +1433,27 @@
         "outboundSubsTestRunsAndSessions": "Test Çalıştırmaları ve Oturumları",
         "outboundSubsTestRuns": "Test Çalışmaları",
         "outboundSubsSessions": "Oturumlar",
+        "outboundSubsScimUsers": "SCIM Kullanıcıları",
+        "outboundSubsScimGroups": "SCIM Grupları",
         "eventVerbs": {
           "duplicated": "Kopyalanmış",
           "stateChanged": "Eyalet değişti",
           "resultAdded": "Sonuç eklendi",
           "resultRecorded": "Sonuç Kaydedildi",
           "reviewRequested": "İnceleme talep edildi.",
-          "reviewCompleted": "İnceleme tamamlandı"
+          "reviewCompleted": "İnceleme tamamlandı",
+          "scimUserCreated": "Kullanıcı tarafından oluşturuldu",
+          "scimUserUpdated": "Kullanıcı güncelledi",
+          "scimUserActivated": "Kullanıcı tarafından etkinleştirildi.",
+          "scimUserDeactivated": "Kullanıcı devre dışı bıraktı",
+          "scimUserDeleted": "Kullanıcı sildi",
+          "scimUserCreatedSummary": "Kullanıcı tarafından oluşturuldu (toplu senkronizasyon özeti)",
+          "scimGroupCreated": "Grup oluşturuldu",
+          "scimGroupUpdated": "Grup güncellendi",
+          "scimGroupMemberAdded": "Üyeler eklendi",
+          "scimGroupMemberRemoved": "Üyeler kaldırıldı",
+          "scimGroupDeleted": "Grup silindi",
+          "scimGroupMemberAddedSummary": "Üyeler eklendi (toplu senkronizasyon özeti)"
         },
         "iterationResultHelp": "Her yineleme sonucu kaydedildiğinde (başarılı, başarısız, atlanmış veya başka herhangi bir durum) tetiklenir. Uzun otomasyon çalıştırmalarında dikkatli kullanın (her yineleme için bir olay).",
         "events": {
@@ -2259,13 +2274,32 @@
         "deleteAvatarConfirm": "{name} dosyasını silmek istediğinizden emin misiniz?",
         "emailDisabledForSso": "SSO hesapları için e-posta adresi değiştirilemez. Lütfen kimlik sağlayıcınız aracılığıyla güncelleyin.",
         "emailEditableForBoth": "Hem e-posta/şifre hem de SSO ile giriş yapabilirsiniz. E-posta değişiklikleri yalnızca şifre doğrulamasını etkileyecektir.",
-        "linkSsoProvider": "SSO Sağlayıcısını Bağla"
+        "linkSsoProvider": "SSO Sağlayıcısını Bağla",
+        "nameDisabledForScim": "Adınız, kimlik sağlayıcınız tarafından SCIM aracılığıyla yönetilir ve burada değiştirilemez.",
+        "emailDisabledForScim": "E-posta adresiniz, kimlik sağlayıcınız tarafından SCIM aracılığıyla yönetilir ve burada değiştirilemez."
       },
       "preferences": {
         "title": "Tercihler"
       },
       "access": {
         "title": "Erişim"
+      },
+      "directory": {
+        "title": "Dizin Profili",
+        "subtitle": "Kimlik sağlayıcınızdan SCIM aracılığıyla senkronize edilen salt okunur alanlar.",
+        "externalId": "IdP kullanıcı kimliği",
+        "userName": "Dizin kullanıcı adı",
+        "givenName": "İlk adı",
+        "familyName": "Soy isim",
+        "jobTitle": "Başlık",
+        "userType": "Kullanıcı türü",
+        "employeeNumber": "Çalışan numarası",
+        "department": "Departman",
+        "division": "Bölüm",
+        "organization": "Organizasyon",
+        "costCenter": "Maliyet merkezi",
+        "manager": "Müdür",
+        "noEnterpriseFields": "Kimlik sağlayıcınız bu hesap için herhangi bir kurumsal dizin özniteliği göndermedi."
       },
       "notifications": {
         "title": "Bildirim Tercihleri",
@@ -3427,9 +3461,12 @@
       "queues": "İş Kuyrukları",
       "auditLogs": "Denetim Kayıtları",
       "apiTokens": "API Token'ları",
+      "scim": "SCIM Sağlama",
+      "systemWebhooks": "Sistem Web Kancaları",
       "quickscriptTemplates": "QuickScript Şablonları",
       "testManagement": "Test Yönetimi",
       "peopleAndAccess": "İnsanlar ve Erişim",
+      "authentication": "Kimlik doğrulama",
       "toolsAndIntegrations": "Araçlar ve Entegrasyonlar",
       "system": "Sistem"
     },
@@ -3772,15 +3809,11 @@
       }
     },
     "sso": {
-      "description": "Kimlik doğrulama ve güvenlik ayarlarını yönetin",
+      "description": "Kimlik doğrulama ve kayıt ayarlarını yönetin",
       "sections": {
         "providers": {
           "title": "Giriş Sağlayıcıları",
           "description": "Kullanıcıların uygulamanıza nasıl giriş yapabileceğini yapılandırın."
-        },
-        "security": {
-          "title": "Güvenlik",
-          "description": "Kimlik doğrulama için güvenlik politikalarını yapılandırın."
         }
       },
       "globalSettings": {
@@ -3804,20 +3837,6 @@
         "magicLink": {
           "title": "Sihirli Bağlantı Kimlik Doğrulaması",
           "description": "Parolasız e-posta tabanlı kimlik doğrulamasını etkinleştirin veya devre dışı bırakın."
-        },
-        "forceSso": {
-          "title": "Zorunlu SSO Girişi",
-          "description": "E-posta ile giriş yapmayı devre dışı bırakın ve kullanıcıların SSO kullanmasını zorunlu kılın."
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "Parola ile giriş yaparken 2FA (iki faktörlü kimlik doğrulama) zorunlu hale getirilmelidir.",
-            "description": "E-posta/şifre ile giriş yapan kullanıcıların iki faktörlü kimlik doğrulamasını kurmaları ve kullanmaları gerekmektedir."
-          },
-          "forceAllLogins": {
-            "title": "Tüm girişler için 2FA zorunlu.",
-            "description": "SSO kullanıcıları da dahil olmak üzere tüm kullanıcıların oturum açtıktan sonra 2FA ile doğrulama yapması gerekmektedir."
-          }
         }
       },
       "providers": {
@@ -3875,14 +3894,6 @@
         "enabled": "Sağlayıcı etkinleştirildi",
         "disabled": "Sağlayıcı devre dışı bırakıldı",
         "updateFailed": "Sağlayıcı güncellenemedi.",
-        "forceSsoEnabled": "SSO'yu küresel olarak zorunlu kıl",
-        "forceSsoDisabled": "SSO'yu global olarak devre dışı bırakma zorunluluğu",
-        "forceSsoUpdateFailed": "Zorunlu SSO ayarını güncelleme başarısız oldu.",
-        "force2FANonSSOEnabled": "Parola girişleri için iki faktörlü kimlik doğrulama gereklidir.",
-        "force2FANonSSODisabled": "Parola ile giriş yaparken artık iki faktörlü kimlik doğrulama gerekmiyor.",
-        "force2FAAllLoginsEnabled": "Tüm girişler için iki faktörlü kimlik doğrulama gereklidir.",
-        "force2FAAllLoginsDisabled": "Artık tüm girişler için iki faktörlü kimlik doğrulama zorunlu değil.",
-        "force2FAUpdateFailed": "İki faktörlü kimlik doğrulama ayarı güncellenemedi.",
         "configUpdated": "SAML yapılandırması güncellendi",
         "configCreated": "SAML yapılandırması oluşturuldu",
         "configSaveFailed": "SAML yapılandırması kaydedilemedi.",
@@ -4336,17 +4347,40 @@
       "forcePasswordChangeSuccess": "{name} için parola değiştirilmesi gerekiyor.",
       "forcePasswordChangeFailed": "Parola değiştirme işlemi başarısız oldu.",
       "revokePasswordSuccess": "{name} için parola iptal edildi.",
-      "revokePasswordFailed": "Parolayı iptal etme işlemi başarısız oldu."
+      "revokePasswordFailed": "Parolayı iptal etme işlemi başarısız oldu.",
+      "scimProvisionerBadge": "SCIM Sağlayıcısı",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "SCIM tarafından yönetilir. SCIM yönetim sayfasından yönetin.",
+      "scimColumnHeader": "SCIM",
+      "scimColumnYes": "Evet",
+      "scimUserLockedTitle": "Kullanıcı SCIM tarafından yönetilir.",
+      "scimUserLockedDescription": "Bu kullanıcının adı, e-postası ve aktiflik durumu kimlik sağlayıcınız tarafından yönetilmektedir. Bunları burada güncellemek için orada değişiklik yapın."
     },
     "security": {
       "title": "Güvenlik",
-      "description": "Parola politikasını, kilitlenme ayarlarını ve uygulama eylemlerini yapılandırın.",
+      "description": "Oturum açma zorunluluğunu, parola politikasını, kilitlenme ayarlarını ve uygulama eylemlerini yapılandırın.",
       "passwordPolicyTitle": "Parola Politikası",
       "passwordPolicyDescription": "Kullanıcı şifreleri için gereksinimleri belirleyin.",
       "lockoutPolicyTitle": "Kilitleme Politikası",
       "lockoutPolicyDescription": "Başarısız giriş denemelerinden sonra hesap kilitleme özelliğini yapılandırın.",
       "enforcementTitle": "Yaptırım İşlemleri",
       "enforcementDescription": "Kimlik doğrulama tabanlı kullanıcılar için parola değişikliklerini zorunlu kılma",
+      "signInEnforcementTitle": "Giriş Yapma Zorunluluğu",
+      "signInEnforcementDescription": "Tekli oturum açmayı zorunlu kılın ve iki faktörlü kimlik doğrulamayı uygulayın.",
+      "forceSsoTitle": "Zorunlu SSO Girişi",
+      "forceSsoDescription": "E-posta ile giriş yapmayı devre dışı bırakın ve kullanıcıların SSO kullanmasını zorunlu kılın.",
+      "force2FANonSSOTitle": "Parola ile giriş yaparken 2FA (iki faktörlü kimlik doğrulama) zorunlu hale getirilmelidir.",
+      "force2FANonSSODescription": "E-posta/şifre ile giriş yapan kullanıcıların iki faktörlü kimlik doğrulamasını kurmaları ve kullanmaları gerekmektedir.",
+      "force2FAAllLoginsTitle": "Tüm girişler için 2FA zorunlu.",
+      "force2FAAllLoginsDescription": "SSO kullanıcıları da dahil olmak üzere tüm kullanıcıların oturum açtıktan sonra 2FA ile doğrulama yapması gerekmektedir.",
+      "forceSsoEnabled": "SSO'yu küresel olarak zorunlu kıl",
+      "forceSsoDisabled": "SSO'yu global olarak devre dışı bırakma zorunluluğu",
+      "forceSsoUpdateFailed": "Zorunlu SSO ayarını güncelleme başarısız oldu.",
+      "force2FANonSSOEnabled": "Parola girişleri için iki faktörlü kimlik doğrulama gereklidir.",
+      "force2FANonSSODisabled": "Parola ile giriş yaparken artık iki faktörlü kimlik doğrulama gerekmiyor.",
+      "force2FAAllLoginsEnabled": "Tüm girişler için iki faktörlü kimlik doğrulama gereklidir.",
+      "force2FAAllLoginsDisabled": "Artık tüm girişler için iki faktörlü kimlik doğrulama zorunlu değil.",
+      "force2FAUpdateFailed": "İki faktörlü kimlik doğrulama ayarı güncellenemedi.",
       "minPasswordLengthLabel": "Minimum Parola Uzunluğu",
       "minPasswordLengthDescription": "Şifreler en az bu kadar karakter uzunluğunda olmalıdır (8-128).",
       "requireUppercaseLabel": "Büyük Harf Gereklidir",
@@ -4400,6 +4434,109 @@
       "revokeAllPlaceholder": "TÜMÜNÜ İPTAL ET",
       "revokeAllSuccess": "Tüm API token'ları iptal edildi.",
       "revokeAllError": "Tüm token'ları iptal etme işlemi başarısız oldu."
+    },
+    "systemWebhooks": {
+      "title": "Sistem Web Kancaları",
+      "description": "Tek bir projeye bağlı olmayan sistem düzeyindeki olaylar için giden webhook hedefleri — şu anda SCIM 2.0 kullanıcı ve grup yaşam döngüsü olayları. Bunun yerine, proje ayarları sayfasından gelen ve proje kapsamlı giden webhook'ları yapılandırın."
+    },
+    "scim": {
+      "description": "Kimlik sağlayıcınızdan gelen kullanıcıları SCIM 2.0 üzerinden TestPlanIt'e ekleyin.",
+      "mintCta": "Yeni jeton bas",
+      "filterPlaceholder": "Token adına veya IdP'ye göre filtrele...",
+      "showRevoked": "İptal Edildi Göster",
+      "noTokens": "Henüz hiçbir SCIM token'ı oluşturulmadı.",
+      "emptyTitle": "Henüz SCIM token'ları yok.",
+      "emptyBody": "Kimlik sağlayıcınızın TestPlanIt'te kullanıcıları otomatik olarak oluşturmasına ve güncellemesine olanak sağlamak için bir token oluşturun.",
+      "emptyCta": "İlk jetonunuzu bastırın",
+      "sectionConflicts": "Harici Kimlik Çakışmaları",
+      "conflictsPlaceholder": "Herhangi bir çakışma yok. Çakışma takibi daha sonraki bir sürümde eklenecektir.",
+      "conflicts": {
+        "title": "Harici Kimlik çakışma günlüğü",
+        "description": "Sistem müdahalesi gerektiren SCIM kimlik olayları (bağlantı kurma, yeniden canlandırma, displayName üzerine yazma, atlanan üyeler).",
+        "empty": "Son 90 günde herhangi bir anlaşmazlık yaşanmadı.",
+        "loading": "Çakışmalar yükleniyor…",
+        "errorLoad": "Çakışma günlüğü yüklenemedi. Tekrar deneyin.",
+        "colTimestamp": "Ne zaman",
+        "colType": "Tip",
+        "colEntity": "Varlık",
+        "colAction": "Sistem eylemi",
+        "typeLinked": "Bağlantılı",
+        "typeResurrected": "Diriltildi",
+        "typeSkippedMembers": "Üyeler atladı",
+        "typeDisplayNameOverwrote": "Görüntülenen ad üzerine yazıldı.",
+        "typeReEmitted": "Yeniden yayınlandı",
+        "typeConflict": "Anlaşmazlık",
+        "typeUnknown": "Bilinmiyor",
+        "viewPayload": "Yükü görüntüle",
+        "reEmit": "Yeniden gönder üye etkinliği",
+        "reEmitConfirm": "Bu çakışma için member_added / member_removed webhook'unu yeniden mi gönderelim? Orijinal olay yükü, senkronizasyon sırasında mevcut olmayan üye referansları içeriyordu. Şimdi yeniden göndermek, o zamandan beri sağlanan üyeleri de içerecektir.",
+        "reEmitConfirmTitle": "Üye etkinliğinin tekrar yayınlanması mı?",
+        "reEmitSuccess": "Webhook yeniden gönderildi; denetim satırı yazıldı.",
+        "reEmitError": "Yeniden gönderilemedi. {reason}",
+        "next": "Sonraki",
+        "previous": "Öncesi",
+        "viewDialogTitle": "Çatışma yükü",
+        "viewDialogDescription": "{entityType}#{entityId} için denetim satırı meta verileri.",
+        "close": "Kapalı"
+      },
+      "errorLoad": "Token'lar yüklenemedi. Tekrar deneyin.",
+      "columns": {
+        "idp": "IdP",
+        "lastIp": "Son IP",
+        "lastSync": "Son Senkronizasyon"
+      },
+      "status": {
+        "active": "Aktif",
+        "expired": "Günü geçmiş",
+        "deactivated": "Devre dışı bırakıldı"
+      },
+      "mint": {
+        "title": "Yeni SCIM token'ı basıldı.",
+        "description": "Kimlik sağlayıcınızın (IdP) kullanıcıları TestPlanIt'e senkronize etmek için kullanacağı bir taşıyıcı belirteç (bearer token) oluşturun.",
+        "nameLabel": "Jeton Adı",
+        "namePlaceholder": "Örneğin, Okta üretimi",
+        "idpLabel": "Kimlik Sağlayıcı",
+        "idpOkta": "Okta",
+        "idpEntra": "Microsoft Entra (Azure AD)",
+        "idpOneLogin": "OneLogin",
+        "idpOther": "Diğer",
+        "expiresLabel": "Süresi doluyor",
+        "expiresNever": "Son kullanma tarihi yok",
+        "expires30": "30 gün",
+        "expires90": "90 gün",
+        "expires1y": "1 yıl",
+        "expiresCustom": "Özel tarih…",
+        "expiresCustomLabel": "Son kullanma tarihini seçin",
+        "submit": "Darphane jetonu",
+        "submitting": "Darphane…",
+        "errorsNameRequired": "Token adı zorunludur.",
+        "errorToast": "Jeton basılamadı. {reason}"
+      },
+      "reveal": {
+        "title": "Token oluşturuldu",
+        "warning": "Bu belirteci şimdi kopyalayın. TestPlanIt bunu bir daha göstermeyecek.",
+        "tokenLabel": "SCIM taşıyıcı token",
+        "copy": "Kopyala",
+        "copied": "Kopyalandı",
+        "baseUrlHint": "Bunu IdP'nizin SCIM Bearer-token alanına yapıştırın. Temel URL {baseUrl} şeklindedir.",
+        "close": "Kapalı",
+        "toast": "Token oluşturuldu.",
+        "a11yAnnounce": "Token oluşturuldu. Şimdi kopyalayın."
+      },
+      "revoke": {
+        "title": "SCIM token'ını iptal etmek mi?",
+        "description": "\"{name}\" içeren bir sonraki istek HTTP 401 hatasıyla reddedilecektir. Token satırı denetim geçmişinde sonsuza kadar kalır.",
+        "confirm": "Geri çekmek",
+        "successToast": "Jeton iptal edildi.",
+        "errorToast": "Token iptal edilemedi. {reason}"
+      },
+      "probe": {
+        "button": "SCIM'i test edin",
+        "testing": "Test ediliyor…",
+        "okBanner": "HTTP {status} — belirteç /scim/v2/Users'a karşı çalışır.",
+        "failBanner": "HTTP {status} — {reason}",
+        "networkError": "SCIM uç noktasına ulaşılamadı. Tekrar denenecek."
+      }
     },
     "tags": {
       "add": {
@@ -4679,7 +4816,11 @@
         "confirmMessage": "Bu grubu silmek istediğinizden emin misiniz?"
       },
       "noUsersSelected": "Henüz hiçbir kullanıcı seçilmedi.",
-      "noUsersAssigned": "Bu gruba atanmış kullanıcı yok."
+      "noUsersAssigned": "Bu gruba atanmış kullanıcı yok.",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "SCIM tarafından yönetilir. SCIM yönetim sayfasından yönetin.",
+      "scimNameLockedTitle": "Grup SCIM tarafından yönetilmektedir.",
+      "scimNameLockedDescription": "Bu grubun adı ve üyeleri kimlik sağlayıcınız tarafından yönetilmektedir. Değişiklikleri orada yaparak buradaki bilgileri güncelleyebilirsiniz."
     },
     "milestones": {
       "description": "Dönüm Noktası Türlerini Yönetin",
@@ -5432,7 +5573,8 @@
         "allTime": "Tüm zamanlar"
       },
       "systemActor": "Sistem",
-      "systemActorTooltip": "Sistem tarafından gerçekleştirilen işlem, oturum açmış bir kullanıcı tarafından değil."
+      "systemActorTooltip": "Sistem tarafından gerçekleştirilen işlem, oturum açmış bir kullanıcı tarafından değil.",
+      "sourceScim": "SCIM"
     }
   },
   "components": {

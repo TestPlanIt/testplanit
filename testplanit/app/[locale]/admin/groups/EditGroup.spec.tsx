@@ -110,6 +110,7 @@ vi.mock("~/lib/hooks", () => ({
 const testGroup = {
   id: 1,
   name: "Test Group",
+  scimDisplayName: null,
   isDeleted: false,
   assignedUsers: [{ userId: "u1" }],
   createdAt: new Date(),

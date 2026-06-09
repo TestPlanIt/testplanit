@@ -11,6 +11,7 @@ export * from './user';
 export * from './password-history';
 export * from './user-preferences';
 export * from './api-token';
+export * from './scim-token';
 export * from './groups';
 export * from './group-assignment';
 export * from './roles';

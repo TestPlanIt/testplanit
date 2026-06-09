@@ -38,10 +38,10 @@ export const checkUpgradeNotifications = withActionAuditContext(
     try {
       const currentVersion = packageJson.version;
 
-      // Get user's last seen version
+      // Get user's last seen version and access level
       const user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { lastSeenVersion: true },
+        select: { lastSeenVersion: true, access: true },
       });
 
       if (!user) {
@@ -75,10 +75,12 @@ export const checkUpgradeNotifications = withActionAuditContext(
         };
       }
 
-      // Get notifications for versions between lastSeen and current
+      // Get notifications for versions between lastSeen and current, scoped to
+      // the user's access level
       const pendingNotifications = getUpgradeNotificationsBetweenVersions(
         lastSeenVersion,
-        currentVersion
+        currentVersion,
+        user.access
       );
 
       // Update user's last seen version first (to prevent duplicate notifications on refresh)

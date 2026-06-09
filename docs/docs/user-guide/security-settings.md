@@ -6,9 +6,39 @@ description: Configure password policy, account lockout, and enforcement actions
 
 # Security Settings
 
-The Security page provides centralized control over password policy, account lockout rules, and enforcement actions. Only administrators (`ADMIN` access level) can access this page.
+The Security page provides centralized control over sign-in enforcement, password policy, account lockout rules, and enforcement actions. Only administrators (`ADMIN` access level) can access this page.
 
-To access Security Settings, navigate to **Admin → Security** from the left-hand navigation menu.
+To access Security Settings, navigate to **Admin → Authentication → Security** from the left-hand navigation menu.
+
+## Sign-in Enforcement
+
+The Sign-in Enforcement section combines three toggles that govern how users sign in. All three save immediately when flipped; there is no separate Save step.
+
+### Force SSO Login
+
+When enabled, this setting:
+
+- **Removes the traditional email/password login form** from the sign-in page
+- **Completely disables the signup page** (returns 404)
+- Requires all users to authenticate through configured SSO providers
+- Prevents creation of local accounts
+
+:::warning
+Before enabling Force SSO, ensure:
+
+1. At least one SSO provider is properly configured at [Admin → Authentication → Authentication](./sso.md)
+2. All existing users can authenticate through the SSO provider
+3. Admin accounts have SSO access to prevent lockout
+
+:::
+
+### Require 2FA for Password Logins
+
+When enabled, users signing in with email/password must set up and use two-factor authentication. SSO logins (Google, Apple, Microsoft, SAML, Magic Link) are not affected by this toggle on its own.
+
+### Require 2FA for All Logins
+
+When enabled, all users must verify with 2FA after signing in, including SSO users. SSO users must set up and verify 2FA after identity provider authentication. Enabling this toggle implicitly enables **Require 2FA for Password Logins** as well.
 
 ## Password Policy
 

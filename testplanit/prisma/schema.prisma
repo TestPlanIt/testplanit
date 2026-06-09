@@ -12,6 +12,13 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum IdpName {
+  OKTA
+  ENTRA
+  ONELOGIN
+  OTHER
+}
+
 enum Theme {
   Light
   Dark
@@ -308,6 +315,7 @@ enum AuthMethod {
   INTERNAL
   SSO
   BOTH
+  SCIM
 }
 
 enum TestmoImportStatus {
@@ -427,6 +435,11 @@ model User {
   accounts                        Account[]
   authMethod                      AuthMethod                    @default(INTERNAL)
   externalId                      String?
+  scimUserName                    String?                       @unique()
+  scimExternalId                  String?                       @unique()
+  scimExtensions                  Json?
+  scimGivenName                   String?
+  scimFamilyName                  String?
   access                          Access                        @default(NONE)
   roleId                          Int
   role                            Roles                         @relation(fields: [roleId], references: [id])
@@ -477,6 +490,9 @@ model User {
   createdComments                 Comment[]                     @relation("CommentCreator")
   commentMentions                 CommentMention[]              @relation("CommentMentions")
   apiTokens                       ApiToken[]
+  scimSystemTokens                ScimToken[]                   @relation("ScimSystemUser")
+  scimTokensCreated               ScimToken[]                   @relation("ScimTokenCreatedBy")
+  scimTokensRevoked               ScimToken[]                   @relation("ScimTokenRevokedBy")
   createdShareLinks               ShareLink[]                   @relation("ShareLinkCreator")
   shareLinkAccessLogs             ShareLinkAccessLog[]          @relation("ShareLinkAccessor")
   reviewsRequested                ReviewRequest[]               @relation("ReviewRequestedBy")
@@ -541,13 +557,42 @@ model ApiToken {
   @@index([isActive, expiresAt])
 }
 
+model ScimToken {
+  id           String    @id() @default(cuid())
+  name         String
+  idpName      IdpName
+  token        String    @unique()
+  tokenPrefix  String
+  secret       String
+  systemUserId String
+  systemUser   User      @relation("ScimSystemUser", fields: [systemUserId], references: [id])
+  createdById  String
+  createdBy    User      @relation("ScimTokenCreatedBy", fields: [createdById], references: [id])
+  revokedById  String?
+  revokedBy    User?     @relation("ScimTokenRevokedBy", fields: [revokedById], references: [id])
+  expiresAt    DateTime?
+  lastUsedAt   DateTime?
+  lastUsedIp   String?
+  lastSyncAt   DateTime?
+  revokedAt    DateTime?
+  createdAt    DateTime  @default(now()) @db.Timestamptz(6)
+  isActive     Boolean   @default(true)
+
+  @@index([token])
+  @@index([isActive, expiresAt])
+  @@index([createdById])
+}
+
 model Groups {
   id                 Int                      @id() @default(autoincrement())
   name               String                   @unique()
-  externalId         String?
+  externalId         String?                  @unique()
   url                String?
   note               String?
   isDeleted          Boolean                  @default(false)
+  updatedAt          DateTime?                @updatedAt()
+  scimDisplayName    String?
+  scimExtensions     Json?
   assignedUsers      GroupAssignment[]
   projectPermissions GroupProjectPermission[]
 }

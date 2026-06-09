@@ -194,7 +194,8 @@
     "auth": {
       "internal": "E-mail/Hasło",
       "sso": "Tylko SSO",
-      "both": "E-mail i logowanie jednokrotne"
+      "both": "E-mail i logowanie jednokrotne",
+      "scim": "SCIM dostarczony"
     },
     "status": {
       "deleted": "Usunięto",
@@ -1432,13 +1433,27 @@
         "outboundSubsTestRunsAndSessions": "Testy i sesje",
         "outboundSubsTestRuns": "Testy biegowe",
         "outboundSubsSessions": "Sesje",
+        "outboundSubsScimUsers": "Użytkownicy SCIM",
+        "outboundSubsScimGroups": "Grupy SCIM",
         "eventVerbs": {
           "duplicated": "Duplikat",
           "stateChanged": "Stan zmieniony",
           "resultAdded": "Wynik dodany",
           "resultRecorded": "Wynik zapisany",
           "reviewRequested": "Poproszono o recenzję",
-          "reviewCompleted": "Recenzja ukończona"
+          "reviewCompleted": "Recenzja ukończona",
+          "scimUserCreated": "Użytkownik utworzony",
+          "scimUserUpdated": "Użytkownik zaktualizowany",
+          "scimUserActivated": "Użytkownik aktywowany",
+          "scimUserDeactivated": "Użytkownik dezaktywowany",
+          "scimUserDeleted": "Użytkownik usunięty",
+          "scimUserCreatedSummary": "Utworzono użytkownika (podsumowanie synchronizacji zbiorczej)",
+          "scimGroupCreated": "Grupa utworzona",
+          "scimGroupUpdated": "Grupa zaktualizowana",
+          "scimGroupMemberAdded": "Dodano członków",
+          "scimGroupMemberRemoved": "Usunięto członków",
+          "scimGroupDeleted": "Grupa usunięta",
+          "scimGroupMemberAddedSummary": "Dodano członków (podsumowanie synchronizacji zbiorczej)"
         },
         "iterationResultHelp": "Uruchamia się za każdym razem, gdy rejestrowany jest wynik iteracji — zaliczony, niezaliczony, pominięty lub o dowolnym innym statusie. Używaj oszczędnie w przypadku długich przebiegów automatyzacji (jedno zdarzenie na iterację).",
         "events": {
@@ -2259,13 +2274,32 @@
         "deleteAvatarConfirm": "Czy na pewno chcesz usunąć {name}?",
         "emailDisabledForSso": "Adresu e-mail nie można zmienić dla kont SSO. Zaktualizuj go za pośrednictwem swojego dostawcy tożsamości.",
         "emailEditableForBoth": "Możesz zalogować się zarówno za pomocą adresu e-mail i hasła, jak i za pomocą logowania jednokrotnego (SSO). Zmiany adresu e-mail wpłyną tylko na uwierzytelnianie hasłem.",
-        "linkSsoProvider": "Dostawca SSO Link"
+        "linkSsoProvider": "Dostawca SSO Link",
+        "nameDisabledForScim": "Nazwą zarządza Twój dostawca tożsamości za pośrednictwem SCIM i nie można jej tutaj zmienić.",
+        "emailDisabledForScim": "Adres e-mail jest zarządzany przez dostawcę tożsamości za pośrednictwem SCIM i nie można go tutaj zmienić."
       },
       "preferences": {
         "title": "Preferencje"
       },
       "access": {
         "title": "Dostęp"
+      },
+      "directory": {
+        "title": "Profil katalogu",
+        "subtitle": "Pola tylko do odczytu synchronizowane od dostawcy tożsamości za pośrednictwem SCIM.",
+        "externalId": "Identyfikator użytkownika dostawcy tożsamości",
+        "userName": "Nazwa użytkownika katalogu",
+        "givenName": "Imię",
+        "familyName": "Nazwisko",
+        "jobTitle": "Tytuł",
+        "userType": "Typ użytkownika",
+        "employeeNumber": "Numer pracownika",
+        "department": "Dział",
+        "division": "Dział",
+        "organization": "Organizacja",
+        "costCenter": "Centrum kosztów",
+        "manager": "Menedżer",
+        "noEnterpriseFields": "Twój dostawca tożsamości nie przesłał żadnych atrybutów katalogu przedsiębiorstwa dla tego konta."
       },
       "notifications": {
         "title": "Preferencje powiadomień",
@@ -3427,9 +3461,12 @@
       "queues": "Kolejki zadań",
       "auditLogs": "Dzienniki audytu",
       "apiTokens": "Tokeny API",
+      "scim": "Dostarczanie SCIM",
+      "systemWebhooks": "Systemowe webhooki",
       "quickscriptTemplates": "Szablony QuickScript",
       "testManagement": "Zarządzanie testami",
       "peopleAndAccess": "Ludzie i dostęp",
+      "authentication": "Uwierzytelnianie",
       "toolsAndIntegrations": "Narzędzia i integracje",
       "system": "System"
     },
@@ -3772,15 +3809,11 @@
       }
     },
     "sso": {
-      "description": "Zarządzaj ustawieniami uwierzytelniania i zabezpieczeń",
+      "description": "Zarządzaj ustawieniami uwierzytelniania i rejestracji",
       "sections": {
         "providers": {
           "title": "Dostawcy logowania",
           "description": "Skonfiguruj sposób, w jaki użytkownicy mogą logować się do Twojej aplikacji"
-        },
-        "security": {
-          "title": "Bezpieczeństwo",
-          "description": "Konfigurowanie zasad bezpieczeństwa dla uwierzytelniania"
         }
       },
       "globalSettings": {
@@ -3804,20 +3837,6 @@
         "magicLink": {
           "title": "Uwierzytelnianie Magic Link",
           "description": "Włączanie lub wyłączanie uwierzytelniania bez hasła na podstawie wiadomości e-mail"
-        },
-        "forceSso": {
-          "title": "Wymuś logowanie jednokrotne",
-          "description": "Wyłącz logowanie za pomocą poczty e-mail i wymagaj od użytkowników korzystania z logowania jednokrotnego (SSO)"
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "Wymagaj uwierzytelniania dwuskładnikowego (2FA) do logowania za pomocą hasła",
-            "description": "Użytkownicy logujący się za pomocą adresu e-mail i hasła muszą skonfigurować i używać uwierzytelniania dwuskładnikowego"
-          },
-          "forceAllLogins": {
-            "title": "Wymagaj uwierzytelniania dwuskładnikowego (2FA) dla wszystkich logowań",
-            "description": "Wszyscy użytkownicy muszą dokonać weryfikacji za pomocą uwierzytelniania dwuskładnikowego po zalogowaniu, w tym użytkownicy korzystający z logowania jednokrotnego"
-          }
         }
       },
       "providers": {
@@ -3875,14 +3894,6 @@
         "enabled": "Dostawca włączony",
         "disabled": "Dostawca wyłączony",
         "updateFailed": "Nie udało się zaktualizować dostawcy",
-        "forceSsoEnabled": "Wymuś logowanie jednokrotne włączone globalnie",
-        "forceSsoDisabled": "Wymuś wyłączenie logowania jednokrotnego globalnie",
-        "forceSsoUpdateFailed": "Nie udało się zaktualizować ustawienia wymuszonego logowania jednokrotnego",
-        "force2FANonSSOEnabled": "Do logowania za pomocą hasła wymagane jest uwierzytelnianie dwuskładnikowe",
-        "force2FANonSSODisabled": "Dwuskładnikowe uwierzytelnianie nie jest już wymagane do logowania się za pomocą hasła",
-        "force2FAAllLoginsEnabled": "Wymagane jest uwierzytelnianie dwuskładnikowe dla wszystkich logowań",
-        "force2FAAllLoginsDisabled": "Dwuskładnikowe uwierzytelnianie nie jest już wymagane przy wszystkich logowaniach",
-        "force2FAUpdateFailed": "Nie udało się zaktualizować ustawień uwierzytelniania dwuskładnikowego",
         "configUpdated": "Zaktualizowano konfigurację SAML",
         "configCreated": "Utworzono konfigurację SAML",
         "configSaveFailed": "Nie udało się zapisać konfiguracji SAML",
@@ -4336,17 +4347,40 @@
       "forcePasswordChangeSuccess": "Wymagana zmiana hasła dla {name}",
       "forcePasswordChangeFailed": "Nie udało się wymusić zmiany hasła",
       "revokePasswordSuccess": "Hasło dla {name} zostało unieważnione",
-      "revokePasswordFailed": "Nie udało się cofnąć hasła"
+      "revokePasswordFailed": "Nie udało się cofnąć hasła",
+      "scimProvisionerBadge": "Dostawca SCIM",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Zarządzane przez SCIM. Zarządzaj ze strony administratora SCIM.",
+      "scimColumnHeader": "SCIM",
+      "scimColumnYes": "Tak",
+      "scimUserLockedTitle": "Użytkownik jest zarządzany przez SCIM",
+      "scimUserLockedDescription": "Nazwa, adres e-mail i status aktywności tego użytkownika są zarządzane przez Twojego dostawcę tożsamości. Wprowadź zmiany, aby je zaktualizować tutaj."
     },
     "security": {
       "title": "Bezpieczeństwo",
-      "description": "Konfiguruj zasady dotyczące haseł, ustawienia blokady i działania egzekucyjne",
+      "description": "Konfiguruj wymuszanie logowania, zasady dotyczące haseł, ustawienia blokady i działania wymuszające",
       "passwordPolicyTitle": "Polityka haseł",
       "passwordPolicyDescription": "Ustaw wymagania dotyczące haseł użytkowników",
       "lockoutPolicyTitle": "Polityka blokady",
       "lockoutPolicyDescription": "Skonfiguruj blokadę konta po nieudanych próbach logowania",
       "enforcementTitle": "Działania egzekucyjne",
       "enforcementDescription": "Wymuś zmianę hasła dla użytkowników opartych na poświadczeniach",
+      "signInEnforcementTitle": "Wymuszanie logowania",
+      "signInEnforcementDescription": "Wymagaj logowania jednokrotnego i wymuszaj uwierzytelnianie dwuskładnikowe",
+      "forceSsoTitle": "Wymuś logowanie jednokrotne",
+      "forceSsoDescription": "Wyłącz logowanie za pomocą poczty e-mail i wymagaj od użytkowników korzystania z logowania jednokrotnego (SSO)",
+      "force2FANonSSOTitle": "Wymagaj uwierzytelniania dwuskładnikowego (2FA) do logowania za pomocą hasła",
+      "force2FANonSSODescription": "Użytkownicy logujący się za pomocą adresu e-mail i hasła muszą skonfigurować i używać uwierzytelniania dwuskładnikowego",
+      "force2FAAllLoginsTitle": "Wymagaj uwierzytelniania dwuskładnikowego (2FA) dla wszystkich logowań",
+      "force2FAAllLoginsDescription": "Wszyscy użytkownicy muszą dokonać weryfikacji za pomocą uwierzytelniania dwuskładnikowego po zalogowaniu, w tym użytkownicy korzystający z logowania jednokrotnego",
+      "forceSsoEnabled": "Wymuś logowanie jednokrotne włączone globalnie",
+      "forceSsoDisabled": "Wymuś wyłączenie logowania jednokrotnego globalnie",
+      "forceSsoUpdateFailed": "Nie udało się zaktualizować ustawienia wymuszonego logowania jednokrotnego",
+      "force2FANonSSOEnabled": "Do logowania za pomocą hasła wymagane jest uwierzytelnianie dwuskładnikowe",
+      "force2FANonSSODisabled": "Dwuskładnikowe uwierzytelnianie nie jest już wymagane do logowania się za pomocą hasła",
+      "force2FAAllLoginsEnabled": "Wymagane jest uwierzytelnianie dwuskładnikowe dla wszystkich logowań",
+      "force2FAAllLoginsDisabled": "Dwuskładnikowe uwierzytelnianie nie jest już wymagane przy wszystkich logowaniach",
+      "force2FAUpdateFailed": "Nie udało się zaktualizować ustawień uwierzytelniania dwuskładnikowego",
       "minPasswordLengthLabel": "Minimalna długość hasła",
       "minPasswordLengthDescription": "Hasła muszą mieć co najmniej taką liczbę znaków (8–128)",
       "requireUppercaseLabel": "Wymagaj wielkich liter",
@@ -4400,6 +4434,109 @@
       "revokeAllPlaceholder": "COFNIJ WSZYSTKIE",
       "revokeAllSuccess": "Wszystkie tokeny API zostały unieważnione",
       "revokeAllError": "Nie udało się unieważnić wszystkich tokenów"
+    },
+    "systemWebhooks": {
+      "title": "Systemowe webhooki",
+      "description": "Miejsca docelowe webhooków wychodzących dla zdarzeń na poziomie systemu, które nie są powiązane z pojedynczym projektem — obecnie są to zdarzenia cyklu życia użytkowników i grup SCIM 2.0. Zamiast tego skonfiguruj webhooki przychodzące i wychodzące o zasięgu projektu na stronie ustawień projektu."
+    },
+    "scim": {
+      "description": "Dostarcz użytkowników do TestPlanIt od swojego dostawcy tożsamości przez SCIM 2.0.",
+      "mintCta": "Wybij nowy token",
+      "filterPlaceholder": "Filtruj według nazwy tokena lub dostawcy tożsamości...",
+      "showRevoked": "Pokaż odwołane",
+      "noTokens": "Nie utworzono jeszcze żadnych tokenów SCIM.",
+      "emptyTitle": "Brak tokenów SCIM",
+      "emptyBody": "Utwórz token, aby umożliwić swojemu dostawcy tożsamości automatyczne tworzenie i aktualizowanie użytkowników w TestPlanIt.",
+      "emptyCta": "Wybij swój pierwszy token",
+      "sectionConflicts": "Konflikty identyfikatorów zewnętrznych",
+      "conflictsPlaceholder": "Brak konfliktów. Śledzenie konfliktów będzie dostępne w późniejszej wersji.",
+      "conflicts": {
+        "title": "Dziennik konfliktów identyfikatorów zewnętrznych",
+        "description": "Wydarzenia tożsamościowe SCIM wymagające interwencji systemu (łączenie, wskrzeszanie, nadpisywanie nazwy wyświetlanej, pomijanie członków).",
+        "empty": "Brak konfliktów w ciągu ostatnich 90 dni.",
+        "loading": "Ładowanie konfliktów…",
+        "errorLoad": "Nie udało się załadować dziennika konfliktów. Spróbuj ponownie.",
+        "colTimestamp": "Gdy",
+        "colType": "Typ",
+        "colEntity": "Podmiot",
+        "colAction": "Działanie systemu",
+        "typeLinked": "Połączony",
+        "typeResurrected": "Wskrzeszony",
+        "typeSkippedMembers": "Członkowie pominęli",
+        "typeDisplayNameOverwrote": "Nazwa wyświetlana została nadpisana",
+        "typeReEmitted": "Ponownie wyemitowane",
+        "typeConflict": "Konflikt",
+        "typeUnknown": "Nieznany",
+        "viewPayload": "Wyświetl ładunek",
+        "reEmit": "Wydarzenie członkowskie z ponowną emisją",
+        "reEmitConfirm": "Czy ponownie wyemitować webhook member_added / member_removed w związku z tym konfliktem? Oryginalny ładunek zdarzenia zawierał odwołania do członków, które nie istniały w momencie synchronizacji. Ponowna emisja teraz obejmie członków, którzy zostali już dostarczeni.",
+        "reEmitConfirmTitle": "Ponownie wyemitować wydarzenie członkowskie?",
+        "reEmitSuccess": "Ponownie wyemitowano webhook; zapisano wiersz audytu.",
+        "reEmitError": "Nie udało się ponownie wyemitować. {reason}",
+        "next": "Następny",
+        "previous": "Poprzedni",
+        "viewDialogTitle": "Ładunek konfliktowy",
+        "viewDialogDescription": "Metadane wiersza audytu dla {entityType}#{entityId}.",
+        "close": "Zamknąć"
+      },
+      "errorLoad": "Nie udało się załadować tokenów. Spróbuj ponownie.",
+      "columns": {
+        "idp": "Dostawca tożsamości",
+        "lastIp": "Ostatni adres IP",
+        "lastSync": "Ostatnia synchronizacja"
+      },
+      "status": {
+        "active": "Aktywny",
+        "expired": "Wygasły",
+        "deactivated": "Dezaktywowany"
+      },
+      "mint": {
+        "title": "Wyprodukuj nowy token SCIM",
+        "description": "Wygeneruj token nośnika, którego Twój dostawca tożsamości będzie używał do synchronizacji użytkowników z TestPlanIt.",
+        "nameLabel": "Nazwa tokena",
+        "namePlaceholder": "np. produkcja Okta",
+        "idpLabel": "Dostawca tożsamości",
+        "idpOkta": "Okta",
+        "idpEntra": "Microsoft Entra (Azure AD)",
+        "idpOneLogin": "OneLogin",
+        "idpOther": "Inny",
+        "expiresLabel": "Wygasa",
+        "expiresNever": "Nigdy nie wygasa",
+        "expires30": "30 dni",
+        "expires90": "90 dni",
+        "expires1y": "1 rok",
+        "expiresCustom": "Data niestandardowa…",
+        "expiresCustomLabel": "Wybierz datę ważności",
+        "submit": "Żeton menniczy",
+        "submitting": "Wybijanie…",
+        "errorsNameRequired": "Nazwa tokena jest wymagana.",
+        "errorToast": "Nie udało się wybić tokena. {reason}"
+      },
+      "reveal": {
+        "title": "Token utworzony",
+        "warning": "Skopiuj ten token teraz. TestPlanIt nie pokaże go ponownie.",
+        "tokenLabel": "Token okaziciela SCIM",
+        "copy": "Kopia",
+        "copied": "Skopiowano",
+        "baseUrlHint": "Wklej to w polu „Token nośnika SCIM” swojego dostawcy tożsamości. Podstawowy adres URL to {baseUrl}.",
+        "close": "Zamknąć",
+        "toast": "Token został utworzony.",
+        "a11yAnnounce": "Token utworzony. Skopiuj teraz."
+      },
+      "revoke": {
+        "title": "Cofnąć token SCIM?",
+        "description": "Następne żądanie zawierające „{name}” zostanie odrzucone z kodem HTTP 401. Wiersz tokena pozostanie w historii audytu na zawsze.",
+        "confirm": "Unieważnić",
+        "successToast": "Token został cofnięty.",
+        "errorToast": "Nie udało się cofnąć tokena. {reason}"
+      },
+      "probe": {
+        "button": "Test SCIM",
+        "testing": "Testowanie…",
+        "okBanner": "HTTP {status} — token działa w oparciu o /scim/v2/Users.",
+        "failBanner": "HTTP {status} — {reason}",
+        "networkError": "Nie udało się nawiązać połączenia z punktem końcowym SCIM. Spróbuj ponownie."
+      }
     },
     "tags": {
       "add": {
@@ -4679,7 +4816,11 @@
         "confirmMessage": "Czy na pewno chcesz usunąć tę grupę?"
       },
       "noUsersSelected": "Nie wybrano jeszcze żadnego użytkownika.",
-      "noUsersAssigned": "Do tej grupy nie przypisano żadnego użytkownika."
+      "noUsersAssigned": "Do tej grupy nie przypisano żadnego użytkownika.",
+      "scimManagedBadge": "SCIM",
+      "scimManagedTooltip": "Zarządzane przez SCIM. Zarządzaj ze strony administratora SCIM.",
+      "scimNameLockedTitle": "Grupą zarządza SCIM",
+      "scimNameLockedDescription": "Nazwą i członkami tej grupy zarządza Twój dostawca tożsamości. Wprowadź zmiany, aby je zaktualizować tutaj."
     },
     "milestones": {
       "description": "Zarządzaj typami kamieni milowych",
@@ -5432,7 +5573,8 @@
         "allTime": "Cały czas"
       },
       "systemActor": "System",
-      "systemActorTooltip": "Akcja wykonywana przez system, a nie przez zalogowanego użytkownika"
+      "systemActorTooltip": "Akcja wykonywana przez system, a nie przez zalogowanego użytkownika",
+      "sourceScim": "SCIM"
     }
   },
   "components": {

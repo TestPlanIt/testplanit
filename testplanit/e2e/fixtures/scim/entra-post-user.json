@@ -1,0 +1,23 @@
+{
+  "schemas": [
+    "urn:ietf:params:scim:schemas:core:2.0:User",
+    "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"
+  ],
+  "externalId": "0a21f0f2-8d2a-4f8e-bf98-7363c4aed4ef",
+  "userName": "Test_User_00aa00aa-bb11-cc22-dd33-44ee44ee44ee",
+  "active": true,
+  "emails": [
+    {
+      "primary": true,
+      "type": "work",
+      "value": "Test_User_11bb11bb-cc22-dd33-ee44-55ff55ff55ff@testuser.com"
+    }
+  ],
+  "meta": { "resourceType": "User" },
+  "name": {
+    "formatted": "givenName familyName",
+    "familyName": "familyName",
+    "givenName": "givenName"
+  },
+  "roles": []
+}

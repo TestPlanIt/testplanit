@@ -80,6 +80,58 @@ export function createCustomPrismaAdapter(prisma: PrismaClient): Adapter {
       return user;
     },
     async createUser(user: Omit<AdapterUser, "id">) {
+      // Case-insensitive email match to detect a pre-existing row
+      // (admin-created, SCIM-provisioned, or a prior auth flow).
+      // Closes the SCIM-vs-SSO provisioning race in both directions:
+      // when the SCIM service has already inserted a row for this email,
+      // NextAuth's SSO sign-in path links that row instead of throwing
+      // a unique-constraint violation.
+      const incomingExternalId =
+        (user as unknown as { externalId?: string | null }).externalId ?? null;
+
+      const existing = await prisma.user.findFirst({
+        where: { email: { equals: user.email!, mode: "insensitive" } },
+      });
+
+      if (existing) {
+        // Conflict branch — the existing row already carries a different
+        // external identity. Refuse to silently re-bind; surface as an
+        // error so the operator can resolve via the admin conflict log.
+        if (
+          existing.externalId &&
+          incomingExternalId &&
+          existing.externalId !== incomingExternalId
+        ) {
+          throw new Error(
+            `Cannot link SSO session: external identity conflict for ${user.email}`
+          );
+        }
+
+        // Conservative authMethod transition — only flip to SSO when the
+        // existing value is unset or SCIM-only. INTERNAL and BOTH rows keep
+        // their authMethod so an admin-pre-created credential user is not
+        // silently stripped of password access by a colliding SSO sign-in.
+        const shouldFlipAuthMethod =
+          !existing.authMethod || existing.authMethod === "SCIM";
+
+        const linked = await prisma.user.update({
+          where: { id: existing.id },
+          data: {
+            externalId: incomingExternalId ?? undefined,
+            authMethod: shouldFlipAuthMethod ? "SSO" : undefined,
+            name: user.name ?? existing.name,
+          },
+        });
+
+        return {
+          id: linked.id,
+          email: linked.email,
+          name: linked.name,
+          image: linked.image,
+          emailVerified: linked.emailVerified,
+        };
+      }
+
       // Generate a random password for OAuth users (they won't use it)
       const randomPassword = await hash(
         Math.random().toString(36).slice(-8) +
