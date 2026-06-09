@@ -209,8 +209,27 @@ async function emitMemberSkippedAudit(
   });
 }
 
+/**
+ * Project the live Prisma row down to the narrow `ScimGroupSnapshot` shape
+ * the outbound webhook emitter expects. The raw row pulls the
+ * `assignedUsers` relation with the full `User` rows included (password
+ * hash, email, lockedUntil, etc.) so passing it directly would leak PII +
+ * credentials into outbound webhook payloads. The emitter's
+ * `ScimGroupSnapshot` type narrows this at compile time, but the call sites
+ * use a wider Prisma type that includes everything Prisma loaded — TypeScript
+ * accepts the assignment because the wider type is structurally assignable.
+ * Explicit projection here closes the gap.
+ */
 function snapshot(row: PrismaGroupWithMembers) {
-  return row;
+  return {
+    id: row.id,
+    name: row.name,
+    externalId: row.externalId ?? null,
+    scimDisplayName: row.scimDisplayName ?? null,
+    scimExtensions: row.scimExtensions,
+    updatedAt: row.updatedAt ?? null,
+    isDeleted: row.isDeleted,
+  };
 }
 
 /**

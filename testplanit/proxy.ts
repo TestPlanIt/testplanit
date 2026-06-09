@@ -407,7 +407,11 @@ export const config = {
   matcher: [
     // Match all API routes (for external API access control)
     "/api/:path*",
-    // Match all internationalized pathnames (excluding static files)
-    "/((?!_next|.*\\..*|_vercel|favicon.ico).*)",
+    // Match all internationalized pathnames (excluding static files and the
+    // SCIM 2.0 surface — `/scim/v2/*` is gated by its own bearer middleware
+    // at the route layer, not by the NextAuth session check this proxy
+    // enforces; otherwise the locale strip below treats "scim" as a locale
+    // and the request gets redirected to /signin).
+    "/((?!_next|.*\\..*|_vercel|favicon.ico|scim).*)",
   ],
 };

@@ -188,7 +188,16 @@ describe("createScimGroup", () => {
       expect(emitScimGroupCreated).toHaveBeenCalledTimes(1);
       const emitCall = (emitScimGroupCreated as ReturnType<typeof vi.fn>).mock
         .calls[0];
-      expect(emitCall[0]).toBe(created);
+      // snapshot() projects to the narrow ScimGroupSnapshot shape (drops
+      // assignedUsers + any other relations to keep the emit payload safe),
+      // so identity won't match `created` — assert the narrow projection.
+      expect(emitCall[0]).toMatchObject({
+        id: created.id,
+        name: created.name,
+        externalId: created.externalId,
+        scimDisplayName: created.scimDisplayName,
+      });
+      expect(emitCall[0]).not.toHaveProperty("assignedUsers");
       expect(emitCall[1]).toEqual([{ value: "u1" }]);
 
       expect(captureAuditEvent).toHaveBeenCalledTimes(1);
@@ -517,6 +526,72 @@ describe("patchScimGroup — non-member updates", () => {
     const audit = (captureAuditEvent as ReturnType<typeof vi.fn>).mock
       .calls[0]?.[0];
     expect(audit?.metadata?.scimDisplayNameOverwrote).toBeFalsy();
+  });
+
+  it("D1-PII: emitScimGroupUpdated `after` MUST be the narrow ScimGroupSnapshot — no assignedUsers / no full User rows / no password leaked outbound", async () => {
+    // UAT 2026-06-09: a webhook destination received `scim.group.updated`
+    // payloads whose `after` field carried the raw Prisma row including
+    // assignedUsers[].user with the full User columns — password hash,
+    // emailVerified, lockedUntil, all PII. The snapshot() helper in
+    // services/groups.ts was a passthrough. Fix projects explicitly to
+    // ScimGroupSnapshot; this guards the regression.
+    const current = makeGroup({
+      id: 200,
+      name: "OrigName",
+      scimDisplayName: "origname",
+      assignedUsers: [
+        // Add a User-shaped object with sensitive fields. The Prisma type
+        // narrows to {id, name}, but the runtime helper used to forward
+        // whatever Prisma loaded — proven by the UAT to include password.
+        {
+          user: {
+            id: "u1",
+            name: "Alice",
+            password: "$2b$10$leaked-hash",
+            email: "alice@example.com",
+            lockedUntil: null,
+          } as unknown as { id: string; name: string },
+        },
+      ],
+    });
+    tx.groups.findUnique.mockResolvedValue(current);
+    tx.groups.update.mockResolvedValue({
+      ...current,
+      name: "NewName",
+      scimDisplayName: "newname",
+    });
+
+    const body = {
+      schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+      Operations: [{ op: "replace", path: "displayName", value: "NewName" }],
+    };
+
+    await patchScimGroup("200", body as never, CTX);
+
+    expect(emitScimGroupUpdated).toHaveBeenCalledTimes(1);
+    const [before, after] = (
+      emitScimGroupUpdated as ReturnType<typeof vi.fn>
+    ).mock.calls[0] as [Record<string, unknown>, Record<string, unknown>];
+
+    // The narrow projection MUST drop the assignedUsers relation entirely
+    // (the emitter doesn't need member rows; member ops go through
+    // emitScimGroupMemberAdded / Removed which carry just {value} refs).
+    expect(after).not.toHaveProperty("assignedUsers");
+    expect(before).not.toHaveProperty("assignedUsers");
+
+    // Belt-and-suspenders: serialize the entire emitted args and confirm
+    // none of the sensitive strings the UAT observed are present anywhere.
+    const serialized = JSON.stringify([before, after]);
+    expect(serialized).not.toContain("leaked-hash");
+    expect(serialized).not.toContain("alice@example.com");
+    expect(serialized).not.toContain("lockedUntil");
+
+    // The narrow snapshot fields MUST still be there — diff is meaningful.
+    expect(after).toMatchObject({
+      id: 200,
+      name: "NewName",
+      scimDisplayName: "newname",
+    });
   });
 
   it("D2: displayName PATCH on admin-renamed row (name !== scimDisplayName) → scimDisplayNameOverwrote:true", async () => {

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import type { Prisma, PrismaClient } from "@prisma/client";
 
 import { SYSTEM_ACTOR_ID } from "~/lib/auditContext";
+import { SYSTEM_PROJECT_ID } from "~/lib/scim/constants";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import { decrypt } from "~/utils/encryption";
 
@@ -110,7 +111,18 @@ export async function dispatchWebhook(
   // tenant that no longer exists from the admin's point of view. Mirrors
   // the `isActive` gate above with the same `skipped_inactive` outcome —
   // a soft-deleted project is functionally inactive.
-  if (config.project.isDeleted) return { outcome: "skipped_inactive" };
+  //
+  // Carve-out for the system sentinel project (SYSTEM_PROJECT_ID = -1):
+  // the sentinel is intentionally seeded with isDeleted=true so it never
+  // shows up in real-project pickers, but it's the canonical carrier of
+  // /admin/webhooks system-level configs (SCIM events, future system
+  // events). Excluding it here would silently drop every system webhook.
+  if (
+    config.project.isDeleted &&
+    config.projectId !== SYSTEM_PROJECT_ID
+  ) {
+    return { outcome: "skipped_inactive" };
+  }
   if (!config.url) {
     // Defense: OUTBOUND configs must have a URL; INBOUND configs reach this
     // dispatcher only if the fan-out filter is bypassed somehow. Treat as
