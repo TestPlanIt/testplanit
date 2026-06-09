@@ -1,6 +1,8 @@
+import { Access } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 import {
   getUpgradeNotificationsBetweenVersions,
+  notificationTargetsAccess,
   upgradeNotifications,
 } from "./upgrade-notifications";
 
@@ -152,6 +154,80 @@ describe("upgrade-notifications", () => {
         expect(versions).toContain("0.5.0");
         expect(versions.length).toBe(1);
       });
+    });
+  });
+
+  describe("notificationTargetsAccess", () => {
+    it("targets every access level when access is omitted", () => {
+      const notification = { title: "t", message: "m" };
+      for (const access of Object.values(Access)) {
+        expect(notificationTargetsAccess(notification, access)).toBe(true);
+      }
+    });
+
+    it("targets only the listed access levels", () => {
+      const notification = {
+        title: "t",
+        message: "m",
+        access: [Access.PROJECTADMIN, Access.ADMIN],
+      };
+      expect(notificationTargetsAccess(notification, Access.ADMIN)).toBe(true);
+      expect(notificationTargetsAccess(notification, Access.PROJECTADMIN)).toBe(
+        true
+      );
+      expect(notificationTargetsAccess(notification, Access.USER)).toBe(false);
+      expect(notificationTargetsAccess(notification, Access.NONE)).toBe(false);
+    });
+
+    it("targets no access level when access is an empty array", () => {
+      const notification = { title: "t", message: "m", access: [] };
+      for (const access of Object.values(Access)) {
+        expect(notificationTargetsAccess(notification, access)).toBe(false);
+      }
+    });
+  });
+
+  describe("getUpgradeNotificationsBetweenVersions access filtering", () => {
+    it("delivers each access-restricted notification only to the levels it targets", () => {
+      const restricted = Object.entries(upgradeNotifications).filter(
+        ([, notification]) => notification.access
+      );
+      // The shipped config restricts at least one notification (e.g. SCIM is
+      // ADMIN-only); this also guards against the feature being dropped.
+      expect(restricted.length).toBeGreaterThan(0);
+
+      for (const [version, notification] of restricted) {
+        for (const access of Object.values(Access)) {
+          const versions = getUpgradeNotificationsBetweenVersions(
+            null,
+            "99.99.99",
+            access
+          ).map((n) => n.version);
+          if (notification.access!.includes(access)) {
+            expect(versions).toContain(version);
+          } else {
+            expect(versions).not.toContain(version);
+          }
+        }
+      }
+    });
+
+    it("never returns a notification that does not target the requested access level", () => {
+      for (const access of Object.values(Access)) {
+        const filtered = getUpgradeNotificationsBetweenVersions(
+          null,
+          "99.99.99",
+          access
+        );
+        for (const { notification } of filtered) {
+          expect(notificationTargetsAccess(notification, access)).toBe(true);
+        }
+      }
+    });
+
+    it("returns all notifications when access is omitted (backward compatible)", () => {
+      const result = getUpgradeNotificationsBetweenVersions(null, "99.99.99");
+      expect(result.length).toBe(Object.keys(upgradeNotifications).length);
     });
   });
 
