@@ -2273,7 +2273,9 @@
         "deleteAvatarConfirm": "Czy na pewno chcesz usunąć {name}?",
         "emailDisabledForSso": "Adresu e-mail nie można zmienić dla kont SSO. Zaktualizuj go za pośrednictwem swojego dostawcy tożsamości.",
         "emailEditableForBoth": "Możesz zalogować się zarówno za pomocą adresu e-mail i hasła, jak i za pomocą logowania jednokrotnego (SSO). Zmiany adresu e-mail wpłyną tylko na uwierzytelnianie hasłem.",
-        "linkSsoProvider": "Dostawca SSO Link"
+        "linkSsoProvider": "Dostawca SSO Link",
+        "nameDisabledForScim": "Nazwą zarządza Twój dostawca tożsamości za pośrednictwem SCIM i nie można jej tutaj zmienić.",
+        "emailDisabledForScim": "Adres e-mail jest zarządzany przez dostawcę tożsamości za pośrednictwem SCIM i nie można go tutaj zmienić."
       },
       "preferences": {
         "title": "Preferencje"

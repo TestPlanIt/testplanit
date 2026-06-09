@@ -2273,7 +2273,9 @@
         "deleteAvatarConfirm": "Möchten Sie Ihren Eintrag {name} wirklich löschen?",
         "emailDisabledForSso": "Die E-Mail-Adresse kann für SSO-Konten nicht geändert werden. Bitte aktualisieren Sie diese über Ihren Identitätsanbieter.",
         "emailEditableForBoth": "Sie können sich sowohl mit E-Mail/Passwort als auch mit SSO anmelden. Änderungen der E-Mail-Adresse wirken sich nur auf die Passwortauthentifizierung aus.",
-        "linkSsoProvider": "Link SSO Provider"
+        "linkSsoProvider": "Link SSO Provider",
+        "nameDisabledForScim": "Der Name wird von Ihrem Identitätsanbieter über SCIM verwaltet und kann hier nicht geändert werden.",
+        "emailDisabledForScim": "Die E-Mail-Verwaltung erfolgt durch Ihren Identitätsanbieter über SCIM und kann hier nicht geändert werden."
       },
       "preferences": {
         "title": "Präferenzen"

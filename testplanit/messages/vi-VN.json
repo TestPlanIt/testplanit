@@ -2273,7 +2273,9 @@
         "deleteAvatarConfirm": "Bạn có chắc chắn muốn xóa {name} của mình không?",
         "emailDisabledForSso": "Bạn không thể thay đổi email cho các tài khoản SSO. Vui lòng cập nhật email thông qua nhà cung cấp dịch vụ xác thực của bạn.",
         "emailEditableForBoth": "Bạn có thể đăng nhập bằng cả email/mật khẩu và SSO. Việc thay đổi email chỉ ảnh hưởng đến xác thực bằng mật khẩu.",
-        "linkSsoProvider": "Nhà cung cấp SSO liên kết"
+        "linkSsoProvider": "Nhà cung cấp SSO liên kết",
+        "nameDisabledForScim": "Tên của bạn được quản lý bởi nhà cung cấp danh tính thông qua SCIM và không thể thay đổi ở đây.",
+        "emailDisabledForScim": "Địa chỉ email được quản lý bởi nhà cung cấp danh tính của bạn thông qua SCIM và không thể thay đổi ở đây."
       },
       "preferences": {
         "title": "Tùy chọn"

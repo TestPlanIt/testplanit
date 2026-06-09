@@ -2273,7 +2273,9 @@
         "deleteAvatarConfirm": "您确定要删除您的 {name}吗？",
         "emailDisabledForSso": "单点登录 (SSO) 帐户的电子邮件地址无法更改。请通过您的身份提供商更新电子邮件地址。",
         "emailEditableForBoth": "您可以使用邮箱/密码或单点登录 (SSO) 登录。更改邮箱地址只会影响密码验证。",
-        "linkSsoProvider": "链接 SSO 提供商"
+        "linkSsoProvider": "链接 SSO 提供商",
+        "nameDisabledForScim": "姓名由您的身份提供商通过 SCIM 管理，无法在此处更改。",
+        "emailDisabledForScim": "电子邮件由您的身份提供商通过 SCIM 进行管理，无法在此处更改。"
       },
       "preferences": {
         "title": "偏好"

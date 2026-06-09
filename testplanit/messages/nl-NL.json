@@ -2273,7 +2273,9 @@
         "deleteAvatarConfirm": "Weet je zeker dat je je {name} wilt verwijderen?",
         "emailDisabledForSso": "E-mailadres kan niet worden gewijzigd voor SSO-accounts. Werk het bij via uw identiteitsprovider.",
         "emailEditableForBoth": "U kunt inloggen met zowel e-mailadres/wachtwoord als SSO. Wijzigingen in e-mailadressen hebben alleen invloed op wachtwoordverificatie.",
-        "linkSsoProvider": "SSO-provider koppelen"
+        "linkSsoProvider": "SSO-provider koppelen",
+        "nameDisabledForScim": "Uw naam wordt beheerd door uw identiteitsaanbieder via SCIM en kan hier niet worden gewijzigd.",
+        "emailDisabledForScim": "Uw e-mailadres wordt beheerd door uw identiteitsprovider via SCIM en kan hier niet worden gewijzigd."
       },
       "preferences": {
         "title": "Voorkeuren"

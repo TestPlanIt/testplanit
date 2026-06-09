@@ -2273,7 +2273,9 @@
         "deleteAvatarConfirm": "{name} を削除してもよろしいですか？",
         "emailDisabledForSso": "SSOアカウントのメールアドレスは変更できません。IDプロバイダーを通じて更新してください。",
         "emailEditableForBoth": "メールアドレス/パスワードとSSOの両方でサインインできます。メールアドレスの変更はパスワード認証にのみ影響します。",
-        "linkSsoProvider": "SSOプロバイダーへのリンク"
+        "linkSsoProvider": "SSOプロバイダーへのリンク",
+        "nameDisabledForScim": "名前はSCIMを介してIDプロバイダーによって管理されており、ここで変更することはできません。",
+        "emailDisabledForScim": "メールアドレスは、お客様のIDプロバイダーがSCIMを介して管理しており、こちらで変更することはできません。"
       },
       "preferences": {
         "title": "設定"

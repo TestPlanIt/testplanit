@@ -2273,7 +2273,9 @@
         "deleteAvatarConfirm": "Sei sicuro di voler eliminare il tuo {name}?",
         "emailDisabledForSso": "L'indirizzo email non può essere modificato per gli account SSO. Aggiornalo tramite il tuo provider di identità.",
         "emailEditableForBoth": "Puoi accedere sia con email/password che con SSO. Le modifiche all'indirizzo email influiranno solo sull'autenticazione tramite password.",
-        "linkSsoProvider": "Fornitore di collegamento SSO"
+        "linkSsoProvider": "Fornitore di collegamento SSO",
+        "nameDisabledForScim": "Il nome viene gestito dal tuo provider di identità tramite SCIM e non può essere modificato qui.",
+        "emailDisabledForScim": "L'indirizzo email viene gestito dal tuo provider di identità tramite SCIM e non può essere modificato qui."
       },
       "preferences": {
         "title": "Preferenze"

@@ -2273,7 +2273,9 @@
         "deleteAvatarConfirm": "{name}를 정말로 삭제하시겠습니까?",
         "emailDisabledForSso": "SSO 계정의 경우 이메일 주소를 변경할 수 없습니다. ID 제공업체를 통해 이메일 주소를 업데이트하십시오.",
         "emailEditableForBoth": "이메일/비밀번호 로그인과 SSO(싱글 사인온) 로그인 모두 가능합니다. 이메일 주소 변경은 비밀번호 인증에만 영향을 미칩니다.",
-        "linkSsoProvider": "SSO 제공업체 링크"
+        "linkSsoProvider": "SSO 제공업체 링크",
+        "nameDisabledForScim": "이름은 SCIM을 통해 ID 제공업체에서 관리하며 여기에서 변경할 수 없습니다.",
+        "emailDisabledForScim": "이메일 주소는 SCIM을 통해 ID 제공업체에서 관리하며 여기에서 변경할 수 없습니다."
       },
       "preferences": {
         "title": "환경설정"

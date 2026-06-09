@@ -2273,7 +2273,9 @@
         "deleteAvatarConfirm": "{name} dosyasını silmek istediğinizden emin misiniz?",
         "emailDisabledForSso": "SSO hesapları için e-posta adresi değiştirilemez. Lütfen kimlik sağlayıcınız aracılığıyla güncelleyin.",
         "emailEditableForBoth": "Hem e-posta/şifre hem de SSO ile giriş yapabilirsiniz. E-posta değişiklikleri yalnızca şifre doğrulamasını etkileyecektir.",
-        "linkSsoProvider": "SSO Sağlayıcısını Bağla"
+        "linkSsoProvider": "SSO Sağlayıcısını Bağla",
+        "nameDisabledForScim": "Adınız, kimlik sağlayıcınız tarafından SCIM aracılığıyla yönetilir ve burada değiştirilemez.",
+        "emailDisabledForScim": "E-posta adresiniz, kimlik sağlayıcınız tarafından SCIM aracılığıyla yönetilir ve burada değiştirilemez."
       },
       "preferences": {
         "title": "Tercihler"
