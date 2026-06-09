@@ -1432,13 +1432,27 @@
         "outboundSubsTestRunsAndSessions": "Testy i sesje",
         "outboundSubsTestRuns": "Testy biegowe",
         "outboundSubsSessions": "Sesje",
+        "outboundSubsScimUsers": "Użytkownicy SCIM",
+        "outboundSubsScimGroups": "Grupy SCIM",
         "eventVerbs": {
           "duplicated": "Duplikat",
           "stateChanged": "Stan zmieniony",
           "resultAdded": "Wynik dodany",
           "resultRecorded": "Wynik zapisany",
           "reviewRequested": "Poproszono o recenzję",
-          "reviewCompleted": "Recenzja ukończona"
+          "reviewCompleted": "Recenzja ukończona",
+          "scimUserCreated": "Użytkownik utworzony",
+          "scimUserUpdated": "Użytkownik zaktualizowany",
+          "scimUserActivated": "Użytkownik aktywowany",
+          "scimUserDeactivated": "Użytkownik dezaktywowany",
+          "scimUserDeleted": "Użytkownik usunięty",
+          "scimUserCreatedSummary": "Utworzono użytkownika (podsumowanie synchronizacji zbiorczej)",
+          "scimGroupCreated": "Grupa utworzona",
+          "scimGroupUpdated": "Grupa zaktualizowana",
+          "scimGroupMemberAdded": "Dodano członków",
+          "scimGroupMemberRemoved": "Usunięto członków",
+          "scimGroupDeleted": "Grupa usunięta",
+          "scimGroupMemberAddedSummary": "Dodano członków (podsumowanie synchronizacji zbiorczej)"
         },
         "iterationResultHelp": "Uruchamia się za każdym razem, gdy rejestrowany jest wynik iteracji — zaliczony, niezaliczony, pominięty lub o dowolnym innym statusie. Używaj oszczędnie w przypadku długich przebiegów automatyzacji (jedno zdarzenie na iterację).",
         "events": {
@@ -3428,6 +3442,7 @@
       "auditLogs": "Dzienniki audytu",
       "apiTokens": "Tokeny API",
       "scim": "Dostarczanie SCIM",
+      "systemWebhooks": "Systemowe webhooki",
       "quickscriptTemplates": "Szablony QuickScript",
       "testManagement": "Zarządzanie testami",
       "peopleAndAccess": "Ludzie i dostęp",
@@ -4399,6 +4414,10 @@
       "revokeAllPlaceholder": "COFNIJ WSZYSTKIE",
       "revokeAllSuccess": "Wszystkie tokeny API zostały unieważnione",
       "revokeAllError": "Nie udało się unieważnić wszystkich tokenów"
+    },
+    "systemWebhooks": {
+      "title": "Systemowe webhooki",
+      "description": "Miejsca docelowe webhooków wychodzących dla zdarzeń na poziomie systemu, które nie są powiązane z pojedynczym projektem — obecnie są to zdarzenia cyklu życia użytkowników i grup SCIM 2.0. Zamiast tego skonfiguruj webhooki przychodzące i wychodzące o zasięgu projektu na stronie ustawień projektu."
     },
     "scim": {
       "description": "Dostarcz użytkowników do TestPlanIt od swojego dostawcy tożsamości przez SCIM 2.0.",

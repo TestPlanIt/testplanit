@@ -1432,13 +1432,27 @@
         "outboundSubsTestRunsAndSessions": "Essais et sessions",
         "outboundSubsTestRuns": "Essais",
         "outboundSubsSessions": "Séances",
+        "outboundSubsScimUsers": "Utilisateurs SCIM",
+        "outboundSubsScimGroups": "Groupes SCIM",
         "eventVerbs": {
           "duplicated": "Dupliqué",
           "stateChanged": "État modifié",
           "resultAdded": "Résultat ajouté",
           "resultRecorded": "Résultat enregistré",
           "reviewRequested": "Demande d'avis",
-          "reviewCompleted": "Révision terminée"
+          "reviewCompleted": "Révision terminée",
+          "scimUserCreated": "Créé par l'utilisateur",
+          "scimUserUpdated": "Mise à jour par l'utilisateur",
+          "scimUserActivated": "Activé par l'utilisateur",
+          "scimUserDeactivated": "Utilisateur désactivé",
+          "scimUserDeleted": "Utilisateur supprimé",
+          "scimUserCreatedSummary": "Utilisateur créé (résumé de la synchronisation en masse)",
+          "scimGroupCreated": "Groupe créé",
+          "scimGroupUpdated": "Groupe mis à jour",
+          "scimGroupMemberAdded": "Des membres ont ajouté",
+          "scimGroupMemberRemoved": "Membres supprimés",
+          "scimGroupDeleted": "Groupe supprimé",
+          "scimGroupMemberAddedSummary": "Membres ajoutés (résumé de la synchronisation groupée)"
         },
         "iterationResultHelp": "Se déclenche à chaque enregistrement du résultat d'une itération (succès, échec, ignoré ou tout autre statut). À utiliser avec parcimonie lors d'exécutions d'automatisation longues (un événement par itération).",
         "events": {
@@ -3428,6 +3442,7 @@
       "auditLogs": "Journaux d'audit",
       "apiTokens": "Jetons API",
       "scim": "Approvisionnement SCIM",
+      "systemWebhooks": "Webhooks système",
       "quickscriptTemplates": "Modèles QuickScript",
       "testManagement": "Gestion des tests",
       "peopleAndAccess": "Personnes et accès",
@@ -4399,6 +4414,10 @@
       "revokeAllPlaceholder": "RÉVOQUER TOUT",
       "revokeAllSuccess": "Tous les jetons API ont été révoqués.",
       "revokeAllError": "Impossible de révoquer tous les jetons."
+    },
+    "systemWebhooks": {
+      "title": "Webhooks système",
+      "description": "Destinations des webhooks sortants pour les événements système non liés à un projet spécifique (actuellement les événements de cycle de vie des utilisateurs et des groupes SCIM 2.0). Configurez plutôt les webhooks entrants et sortants liés au projet depuis la page des paramètres du projet."
     },
     "scim": {
       "description": "Importez les utilisateurs de votre fournisseur d'identité dans TestPlanIt via SCIM 2.0.",

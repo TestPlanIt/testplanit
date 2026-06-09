@@ -1432,13 +1432,27 @@
         "outboundSubsTestRunsAndSessions": "Testläufe und Sitzungen",
         "outboundSubsTestRuns": "Testläufe",
         "outboundSubsSessions": "Sitzungen",
+        "outboundSubsScimUsers": "SCIM-Benutzer",
+        "outboundSubsScimGroups": "SCIM-Gruppen",
         "eventVerbs": {
           "duplicated": "Dupliziert",
           "stateChanged": "Status geändert",
           "resultAdded": "Ergebnis hinzugefügt",
           "resultRecorded": "Ergebnis aufgezeichnet",
           "reviewRequested": "Überprüfung angefordert",
-          "reviewCompleted": "Überprüfung abgeschlossen"
+          "reviewCompleted": "Überprüfung abgeschlossen",
+          "scimUserCreated": "Benutzer erstellt",
+          "scimUserUpdated": "Benutzer aktualisiert",
+          "scimUserActivated": "Benutzer aktiviert",
+          "scimUserDeactivated": "Benutzer deaktiviert",
+          "scimUserDeleted": "Benutzer gelöscht",
+          "scimUserCreatedSummary": "Benutzer erstellt (Zusammenfassung der Massensynchronisierung)",
+          "scimGroupCreated": "Gruppe erstellt",
+          "scimGroupUpdated": "Gruppe aktualisiert",
+          "scimGroupMemberAdded": "Mitglieder hinzugefügt",
+          "scimGroupMemberRemoved": "Mitglieder entfernt",
+          "scimGroupDeleted": "Gruppe gelöscht",
+          "scimGroupMemberAddedSummary": "Hinzugefügte Mitglieder (Zusammenfassung der Massensynchronisierung)"
         },
         "iterationResultHelp": "Wird jedes Mal ausgelöst, wenn ein Iterationsergebnis aufgezeichnet wird – ob erfolgreich, fehlgeschlagen, übersprungen oder ein anderer Status. Bei langen Automatisierungsläufen sparsam verwenden (ein Ereignis pro Iteration).",
         "events": {
@@ -3428,6 +3442,7 @@
       "auditLogs": "Audit-Protokolle",
       "apiTokens": "API-Tokens",
       "scim": "SCIM-Bereitstellung",
+      "systemWebhooks": "System-Webhooks",
       "quickscriptTemplates": "QuickScript-Vorlagen",
       "testManagement": "Testmanagement",
       "peopleAndAccess": "Personen & Zugriff",
@@ -4399,6 +4414,10 @@
       "revokeAllPlaceholder": "ALLE WIDERRUF",
       "revokeAllSuccess": "Alle API-Token wurden widerrufen.",
       "revokeAllError": "Fehler beim Widerruf aller Token"
+    },
+    "systemWebhooks": {
+      "title": "System-Webhooks",
+      "description": "Ausgehende Webhook-Ziele für Systemereignisse, die keinem einzelnen Projekt zugeordnet sind – aktuell die Lebenszyklusereignisse von SCIM 2.0-Benutzern und -Gruppen. Konfigurieren Sie eingehende und projektbezogene ausgehende Webhooks stattdessen auf der Projekteinstellungsseite."
     },
     "scim": {
       "description": "Benutzer Ihres Identitätsanbieters werden über SCIM 2.0 in TestPlanIt bereitgestellt.",

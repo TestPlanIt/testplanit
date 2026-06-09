@@ -1432,13 +1432,27 @@
         "outboundSubsTestRunsAndSessions": "Prove e sessioni",
         "outboundSubsTestRuns": "Prove di funzionamento",
         "outboundSubsSessions": "Sessioni",
+        "outboundSubsScimUsers": "Utenti SCIM",
+        "outboundSubsScimGroups": "Gruppi SCIM",
         "eventVerbs": {
           "duplicated": "Duplicato",
           "stateChanged": "Lo stato è cambiato",
           "resultAdded": "Risultato aggiunto",
           "resultRecorded": "Risultato registrato",
           "reviewRequested": "Revisione richiesta",
-          "reviewCompleted": "Revisione completata"
+          "reviewCompleted": "Revisione completata",
+          "scimUserCreated": "Creato dall'utente",
+          "scimUserUpdated": "Aggiornato dall'utente",
+          "scimUserActivated": "Attivato dall'utente",
+          "scimUserDeactivated": "Utente disattivato",
+          "scimUserDeleted": "Utente cancellato",
+          "scimUserCreatedSummary": "Creato dall'utente (riepilogo sincronizzazione in blocco)",
+          "scimGroupCreated": "Gruppo creato",
+          "scimGroupUpdated": "Gruppo aggiornato",
+          "scimGroupMemberAdded": "Membri aggiunti",
+          "scimGroupMemberRemoved": "Membri rimossi",
+          "scimGroupDeleted": "Gruppo cancellato",
+          "scimGroupMemberAddedSummary": "Membri aggiunti (riepilogo sincronizzazione in blocco)"
         },
         "iterationResultHelp": "Si attiva ogni volta che viene registrato un risultato di iterazione: superato, fallito, saltato o qualsiasi altro stato. Utilizzare con parsimonia in cicli di automazione lunghi (un evento per iterazione).",
         "events": {
@@ -3428,6 +3442,7 @@
       "auditLogs": "Registri di controllo",
       "apiTokens": "Token API",
       "scim": "Provisioning SCIM",
+      "systemWebhooks": "Webhook di sistema",
       "quickscriptTemplates": "Modelli QuickScript",
       "testManagement": "Gestione dei test",
       "peopleAndAccess": "Persone e accesso",
@@ -4399,6 +4414,10 @@
       "revokeAllPlaceholder": "REVOCA TUTTO",
       "revokeAllSuccess": "Tutti i token API sono stati revocati.",
       "revokeAllError": "Impossibile revocare tutti i token"
+    },
+    "systemWebhooks": {
+      "title": "Webhook di sistema",
+      "description": "Destinazioni webhook in uscita per eventi a livello di sistema non legati a un singolo progetto, attualmente gli eventi del ciclo di vita di utenti e gruppi SCIM 2.0. Configura i webhook in entrata e in uscita a livello di progetto dalla pagina delle impostazioni del progetto."
     },
     "scim": {
       "description": "Effettua il provisioning degli utenti dal tuo provider di identità in TestPlanIt tramite SCIM 2.0.",

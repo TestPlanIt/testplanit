@@ -1432,13 +1432,27 @@
         "outboundSubsTestRunsAndSessions": "Testruns en -sessies",
         "outboundSubsTestRuns": "Testruns",
         "outboundSubsSessions": "Sessies",
+        "outboundSubsScimUsers": "SCIM-gebruikers",
+        "outboundSubsScimGroups": "SCIM-groepen",
         "eventVerbs": {
           "duplicated": "Gedupliceerd",
           "stateChanged": "Staat gewijzigd",
           "resultAdded": "Resultaat toegevoegd",
           "resultRecorded": "Resultaat vastgelegd",
           "reviewRequested": "Beoordeling aangevraagd",
-          "reviewCompleted": "Beoordeling voltooid"
+          "reviewCompleted": "Beoordeling voltooid",
+          "scimUserCreated": "Gebruiker heeft dit gemaakt",
+          "scimUserUpdated": "Gebruiker bijgewerkt",
+          "scimUserActivated": "Gebruiker geactiveerd",
+          "scimUserDeactivated": "Gebruiker gedeactiveerd",
+          "scimUserDeleted": "Gebruiker verwijderd",
+          "scimUserCreatedSummary": "Door gebruiker aangemaakt (samenvatting bulksynchronisatie)",
+          "scimGroupCreated": "Groep aangemaakt",
+          "scimGroupUpdated": "Groep bijgewerkt",
+          "scimGroupMemberAdded": "Leden toegevoegd",
+          "scimGroupMemberRemoved": "Leden verwijderd",
+          "scimGroupDeleted": "Groep verwijderd",
+          "scimGroupMemberAddedSummary": "Toegevoegde leden (samenvatting bulksynchronisatie)"
         },
         "iterationResultHelp": "Wordt geactiveerd telkens wanneer een iteratieresultaat wordt vastgelegd — geslaagd, mislukt, overgeslagen of een andere status. Gebruik dit spaarzaam bij lange automatiseringsruns (één gebeurtenis per iteratie).",
         "events": {
@@ -3428,6 +3442,7 @@
       "auditLogs": "Auditlogboeken",
       "apiTokens": "API-tokens",
       "scim": "SCIM-voorziening",
+      "systemWebhooks": "Systeemwebhooks",
       "quickscriptTemplates": "QuickScript-sjablonen",
       "testManagement": "Testmanagement",
       "peopleAndAccess": "Mensen & Toegang",
@@ -4399,6 +4414,10 @@
       "revokeAllPlaceholder": "TREK ALLES IN",
       "revokeAllSuccess": "Alle API-tokens zijn ingetrokken.",
       "revokeAllError": "Het intrekken van alle tokens is mislukt."
+    },
+    "systemWebhooks": {
+      "title": "Systeemwebhooks",
+      "description": "Uitgaande webhookbestemmingen voor systeemgebeurtenissen die niet aan een specifiek project zijn gekoppeld — momenteel de SCIM 2.0-gebruikers- en groepslevenscyclusgebeurtenissen. Configureer in plaats daarvan inkomende en projectgebonden uitgaande webhooks via de projectinstellingenpagina."
     },
     "scim": {
       "description": "Geef gebruikers van uw identiteitsprovider toegang tot TestPlanIt via SCIM 2.0.",

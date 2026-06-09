@@ -1432,13 +1432,27 @@
         "outboundSubsTestRunsAndSessions": "テスト実行とセッション",
         "outboundSubsTestRuns": "テスト実行",
         "outboundSubsSessions": "セッション",
+        "outboundSubsScimUsers": "SCIMユーザー",
+        "outboundSubsScimGroups": "SCIMグループ",
         "eventVerbs": {
           "duplicated": "複製",
           "stateChanged": "状態が変更されました",
           "resultAdded": "結果を追加しました",
           "resultRecorded": "結果が記録されました",
           "reviewRequested": "レビュー依頼",
-          "reviewCompleted": "レビューが完了しました"
+          "reviewCompleted": "レビューが完了しました",
+          "scimUserCreated": "ユーザー作成",
+          "scimUserUpdated": "ユーザー更新",
+          "scimUserActivated": "ユーザーによる有効化",
+          "scimUserDeactivated": "ユーザー無効化",
+          "scimUserDeleted": "ユーザーを削除しました",
+          "scimUserCreatedSummary": "ユーザー作成（一括同期サマリー）",
+          "scimGroupCreated": "グループが作成されました",
+          "scimGroupUpdated": "グループが更新されました",
+          "scimGroupMemberAdded": "メンバーが追加されました",
+          "scimGroupMemberRemoved": "メンバーが削除されました",
+          "scimGroupDeleted": "グループが削除されました",
+          "scimGroupMemberAddedSummary": "メンバーが追加されました（一括同期の概要）"
         },
         "iterationResultHelp": "反復処理の結果（合格、不合格、スキップ、その他のステータス）が記録されるたびに発生します。長時間の自動化実行では、使用頻度を少なくしてください（反復処理ごとに1つのイベント）。",
         "events": {
@@ -3428,6 +3442,7 @@
       "auditLogs": "監査ログ",
       "apiTokens": "APIトークン",
       "scim": "SCIMプロビジョニング",
+      "systemWebhooks": "システムWebhook",
       "quickscriptTemplates": "QuickScriptテンプレート",
       "testManagement": "テスト管理",
       "peopleAndAccess": "人材とアクセス",
@@ -4399,6 +4414,10 @@
       "revokeAllPlaceholder": "すべて取り消す",
       "revokeAllSuccess": "すべてのAPIトークンが取り消されました",
       "revokeAllError": "すべてのトークンを取り消すことができませんでした"
+    },
+    "systemWebhooks": {
+      "title": "システムWebhook",
+      "description": "単一のプロジェクトに紐づかないシステムレベルのイベント（現在はSCIM 2.0のユーザーおよびグループのライフサイクルイベント）の送信Webhook宛先。受信Webhookおよびプロジェクトスコープの送信Webhookは、プロジェクト設定ページから設定してください。"
     },
     "scim": {
       "description": "SCIM 2.0 を介して、ID プロバイダーから TestPlanIt にユーザーをプロビジョニングします。",

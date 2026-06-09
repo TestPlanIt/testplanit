@@ -1432,13 +1432,27 @@
         "outboundSubsTestRunsAndSessions": "Test Çalıştırmaları ve Oturumları",
         "outboundSubsTestRuns": "Test Çalışmaları",
         "outboundSubsSessions": "Oturumlar",
+        "outboundSubsScimUsers": "SCIM Kullanıcıları",
+        "outboundSubsScimGroups": "SCIM Grupları",
         "eventVerbs": {
           "duplicated": "Kopyalanmış",
           "stateChanged": "Eyalet değişti",
           "resultAdded": "Sonuç eklendi",
           "resultRecorded": "Sonuç Kaydedildi",
           "reviewRequested": "İnceleme talep edildi.",
-          "reviewCompleted": "İnceleme tamamlandı"
+          "reviewCompleted": "İnceleme tamamlandı",
+          "scimUserCreated": "Kullanıcı tarafından oluşturuldu",
+          "scimUserUpdated": "Kullanıcı güncelledi",
+          "scimUserActivated": "Kullanıcı tarafından etkinleştirildi.",
+          "scimUserDeactivated": "Kullanıcı devre dışı bıraktı",
+          "scimUserDeleted": "Kullanıcı sildi",
+          "scimUserCreatedSummary": "Kullanıcı tarafından oluşturuldu (toplu senkronizasyon özeti)",
+          "scimGroupCreated": "Grup oluşturuldu",
+          "scimGroupUpdated": "Grup güncellendi",
+          "scimGroupMemberAdded": "Üyeler eklendi",
+          "scimGroupMemberRemoved": "Üyeler kaldırıldı",
+          "scimGroupDeleted": "Grup silindi",
+          "scimGroupMemberAddedSummary": "Üyeler eklendi (toplu senkronizasyon özeti)"
         },
         "iterationResultHelp": "Her yineleme sonucu kaydedildiğinde (başarılı, başarısız, atlanmış veya başka herhangi bir durum) tetiklenir. Uzun otomasyon çalıştırmalarında dikkatli kullanın (her yineleme için bir olay).",
         "events": {
@@ -3428,6 +3442,7 @@
       "auditLogs": "Denetim Kayıtları",
       "apiTokens": "API Token'ları",
       "scim": "SCIM Sağlama",
+      "systemWebhooks": "Sistem Web Kancaları",
       "quickscriptTemplates": "QuickScript Şablonları",
       "testManagement": "Test Yönetimi",
       "peopleAndAccess": "İnsanlar ve Erişim",
@@ -4399,6 +4414,10 @@
       "revokeAllPlaceholder": "TÜMÜNÜ İPTAL ET",
       "revokeAllSuccess": "Tüm API token'ları iptal edildi.",
       "revokeAllError": "Tüm token'ları iptal etme işlemi başarısız oldu."
+    },
+    "systemWebhooks": {
+      "title": "Sistem Web Kancaları",
+      "description": "Tek bir projeye bağlı olmayan sistem düzeyindeki olaylar için giden webhook hedefleri — şu anda SCIM 2.0 kullanıcı ve grup yaşam döngüsü olayları. Bunun yerine, proje ayarları sayfasından gelen ve proje kapsamlı giden webhook'ları yapılandırın."
     },
     "scim": {
       "description": "Kimlik sağlayıcınızdan gelen kullanıcıları SCIM 2.0 üzerinden TestPlanIt'e ekleyin.",

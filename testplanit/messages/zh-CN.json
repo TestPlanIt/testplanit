@@ -1432,13 +1432,27 @@
         "outboundSubsTestRunsAndSessions": "测试运行和会话",
         "outboundSubsTestRuns": "测试运行",
         "outboundSubsSessions": "会议",
+        "outboundSubsScimUsers": "SCIM 用户",
+        "outboundSubsScimGroups": "SCIM小组",
         "eventVerbs": {
           "duplicated": "重复",
           "stateChanged": "状态已改变",
           "resultAdded": "结果已添加",
           "resultRecorded": "结果已记录",
           "reviewRequested": "请求审查",
-          "reviewCompleted": "审核完成"
+          "reviewCompleted": "审核完成",
+          "scimUserCreated": "用户创建",
+          "scimUserUpdated": "用户更新",
+          "scimUserActivated": "用户激活",
+          "scimUserDeactivated": "用户已停用",
+          "scimUserDeleted": "用户已删除",
+          "scimUserCreatedSummary": "用户创建（批量同步摘要）",
+          "scimGroupCreated": "创建群组",
+          "scimGroupUpdated": "群组更新",
+          "scimGroupMemberAdded": "新增成员",
+          "scimGroupMemberRemoved": "成员已移除",
+          "scimGroupDeleted": "群组已删除",
+          "scimGroupMemberAddedSummary": "新增成员（批量同步摘要）"
         },
         "iterationResultHelp": "每次记录迭代结果时触发——无论是通过、失败、跳过还是其他任何状态。在长时间的自动化运行中应谨慎使用（每次迭代触发一次事件）。",
         "events": {
@@ -3428,6 +3442,7 @@
       "auditLogs": "审计日志",
       "apiTokens": "API令牌",
       "scim": "SCIM配置",
+      "systemWebhooks": "系统 Webhooks",
       "quickscriptTemplates": "QuickScript模板",
       "testManagement": "测试管理",
       "peopleAndAccess": "人员与通道",
@@ -4399,6 +4414,10 @@
       "revokeAllPlaceholder": "撤销所有",
       "revokeAllSuccess": "所有API令牌均已被撤销。",
       "revokeAllError": "撤销所有令牌失败"
+    },
+    "systemWebhooks": {
+      "title": "系统 Webhooks",
+      "description": "用于处理不与单个项目关联的系统级事件的出站 Webhook 目标——目前是 SCIM 2.0 用户和组生命周期事件。请改用项目设置页面配置入站和项目范围的出站 Webhook。"
     },
     "scim": {
       "description": "通过 SCIM 2.0 将身份提供商的用户配置到 TestPlanIt 中。",

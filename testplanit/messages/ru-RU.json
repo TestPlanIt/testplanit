@@ -1432,13 +1432,27 @@
         "outboundSubsTestRunsAndSessions": "Тестовые запуски и сессии",
         "outboundSubsTestRuns": "Тестовые запуски",
         "outboundSubsSessions": "Сессии",
+        "outboundSubsScimUsers": "Пользователи SCIM",
+        "outboundSubsScimGroups": "Группы SCIM",
         "eventVerbs": {
           "duplicated": "Дублированный",
           "stateChanged": "Состояние изменилось",
           "resultAdded": "Результат добавлен",
           "resultRecorded": "Результат зафиксирован.",
           "reviewRequested": "Запрос на рецензирование",
-          "reviewCompleted": "Проверка завершена."
+          "reviewCompleted": "Проверка завершена.",
+          "scimUserCreated": "Создано пользователем",
+          "scimUserUpdated": "Пользователь обновил",
+          "scimUserActivated": "Активировано пользователем",
+          "scimUserDeactivated": "Пользователь деактивирован",
+          "scimUserDeleted": "Пользователь удалил",
+          "scimUserCreatedSummary": "Создано пользователем (сводка массовой синхронизации)",
+          "scimGroupCreated": "Группа создана",
+          "scimGroupUpdated": "Группа обновлена",
+          "scimGroupMemberAdded": "Добавлены участники",
+          "scimGroupMemberRemoved": "Участники удалены",
+          "scimGroupDeleted": "Группа удалена",
+          "scimGroupMemberAddedSummary": "Добавлены участники (сводка массовой синхронизации)"
         },
         "iterationResultHelp": "Событие срабатывает каждый раз, когда регистрируется результат итерации — успешно, неуспешно, пропущено или любой другой статус. Используйте его с осторожностью при длительных запусках автоматизации (одно событие за итерацию).",
         "events": {
@@ -3428,6 +3442,7 @@
       "auditLogs": "Журналы аудита",
       "apiTokens": "API-токены",
       "scim": "SCIM-резервирование",
+      "systemWebhooks": "Системные веб-перехватчики",
       "quickscriptTemplates": "Шаблоны QuickScript",
       "testManagement": "Управление тестированием",
       "peopleAndAccess": "Люди и доступ",
@@ -4399,6 +4414,10 @@
       "revokeAllPlaceholder": "ОТМЕНИТЬ ВСЕ",
       "revokeAllSuccess": "Все API-токены аннулированы.",
       "revokeAllError": "Не удалось аннулировать все токены."
+    },
+    "systemWebhooks": {
+      "title": "Системные веб-перехватчики",
+      "description": "Назначения исходящих веб-перехватчиков для событий системного уровня, не привязанных к одному проекту — в настоящее время это события жизненного цикла пользователей и групп SCIM 2.0. Вместо этого настройте входящие и исходящие веб-перехватчики в рамках проекта на странице настроек проекта."
     },
     "scim": {
       "description": "Внедрите учетные записи пользователей из вашего поставщика идентификации в TestPlanIt через SCIM 2.0.",

@@ -1432,13 +1432,27 @@
         "outboundSubsTestRunsAndSessions": "테스트 실행 및 세션",
         "outboundSubsTestRuns": "테스트 실행",
         "outboundSubsSessions": "세션",
+        "outboundSubsScimUsers": "SCIM 사용자",
+        "outboundSubsScimGroups": "SCIM 그룹",
         "eventVerbs": {
           "duplicated": "복제됨",
           "stateChanged": "상태가 변경되었습니다",
           "resultAdded": "결과가 추가되었습니다",
           "resultRecorded": "결과가 기록되었습니다",
           "reviewRequested": "리뷰 요청됨",
-          "reviewCompleted": "검토 완료"
+          "reviewCompleted": "검토 완료",
+          "scimUserCreated": "사용자가 생성함",
+          "scimUserUpdated": "사용자가 업데이트했습니다.",
+          "scimUserActivated": "사용자 활성화됨",
+          "scimUserDeactivated": "사용자 비활성화됨",
+          "scimUserDeleted": "사용자가 삭제함",
+          "scimUserCreatedSummary": "사용자가 생성함(일괄 동기화 요약)",
+          "scimGroupCreated": "그룹 생성됨",
+          "scimGroupUpdated": "그룹 업데이트됨",
+          "scimGroupMemberAdded": "멤버 추가됨",
+          "scimGroupMemberRemoved": "멤버가 삭제되었습니다",
+          "scimGroupDeleted": "그룹이 삭제되었습니다",
+          "scimGroupMemberAddedSummary": "멤버 추가됨 (일괄 동기화 요약)"
         },
         "iterationResultHelp": "반복 결과가 기록될 때마다(통과, 실패, 건너뛰기 또는 기타 상태) 발생합니다. 장시간 자동화 실행 시에는 신중하게 사용하십시오(반복당 하나의 이벤트).",
         "events": {
@@ -3428,6 +3442,7 @@
       "auditLogs": "감사 로그",
       "apiTokens": "API 토큰",
       "scim": "SCIM 프로비저닝",
+      "systemWebhooks": "시스템 웹훅",
       "quickscriptTemplates": "QuickScript 템플릿",
       "testManagement": "테스트 관리",
       "peopleAndAccess": "사람 및 접근성",
@@ -4399,6 +4414,10 @@
       "revokeAllPlaceholder": "모두 취소",
       "revokeAllSuccess": "모든 API 토큰이 취소되었습니다.",
       "revokeAllError": "모든 토큰을 취소하는 데 실패했습니다."
+    },
+    "systemWebhooks": {
+      "title": "시스템 웹훅",
+      "description": "단일 프로젝트에 연결되지 않은 시스템 수준 이벤트(현재 SCIM 2.0 사용자 및 그룹 수명 주기 이벤트)에 대한 아웃바운드 웹훅 대상입니다. 인바운드 웹훅과 프로젝트 범위 아웃바운드 웹훅은 프로젝트 설정 페이지에서 구성하십시오."
     },
     "scim": {
       "description": "SCIM 2.0을 통해 ID 공급자로부터 TestPlanIt에 사용자를 프로비저닝하세요.",
