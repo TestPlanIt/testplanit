@@ -1,3 +1,9 @@
+## [0.37.0](https://github.com/TestPlanIt/testplanit/compare/v0.36.5...v0.37.0) (2026-06-09)
+
+### Features
+
+* **scim:** SCIM 2.0 provisioning (Users + Groups + webhooks) ([#416](https://github.com/TestPlanIt/testplanit/issues/416)) ([edfcef3](https://github.com/TestPlanIt/testplanit/commit/edfcef355db1e8c82ffdf6d120993f0b540238b7))
+
 ## [0.36.5](https://github.com/TestPlanIt/testplanit/compare/v0.36.4...v0.36.5) (2026-06-08)
 
 ### Enhancements
