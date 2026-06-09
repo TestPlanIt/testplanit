@@ -40,6 +40,7 @@ import {
 import {
   emitCaseCreated,
   emitCaseDeleted,
+  emitCaseFieldValueChanged,
   emitCaseUpdated,
 } from "~/lib/webhooks/event-emitters/caseEvents";
 import {
@@ -97,6 +98,7 @@ const WEBHOOK_EMIT_MODELS = new Set([
   "sessions",
   "issue",
   "repositoryCases",
+  "caseFieldValues",
   "testRunResults",
   "sessionResults",
 ]);
@@ -1439,6 +1441,30 @@ async function innerHandler(
                   webhookPreSnapshot
                 ) {
                   await emitCaseDeleted(webhookPreSnapshot, tx);
+                }
+                break;
+              }
+              case "caseFieldValues": {
+                // Custom field value edits (dropdown / multi-select / text)
+                // are the only path that surfaces a field change on a case;
+                // resolve happens inside the emitter. Create has no
+                // pre-snapshot (new value); delete clears it.
+                if (
+                  ["create", "update", "upsert"].includes(
+                    parsedPath.operation
+                  ) &&
+                  postRow
+                ) {
+                  await emitCaseFieldValueChanged(
+                    webhookPreSnapshot,
+                    postRow,
+                    tx
+                  );
+                } else if (
+                  parsedPath.operation === "delete" &&
+                  webhookPreSnapshot
+                ) {
+                  await emitCaseFieldValueChanged(webhookPreSnapshot, null, tx);
                 }
                 break;
               }

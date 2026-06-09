@@ -2,6 +2,11 @@ import type { Prisma } from "@prisma/client";
 
 import { computeObjectDiff } from "~/lib/webhooks/diff";
 import { webhookEvents } from "~/lib/webhooks/events";
+import {
+  formatFieldValue,
+  resolveCaseScalarChanges,
+  type OptionFieldMeta,
+} from "~/lib/webhooks/event-emitters/caseChangeResolve";
 
 /**
  * Emit per-mutation outbound webhook events for the RepositoryCases (test
@@ -109,6 +114,14 @@ export async function emitCaseUpdated(
   );
   if (diff.changedFields.length === 0) return;
 
+  // Resolve every changed column to a display-ready row: foreign keys
+  // (stateId, folderId, ...) become names, bookkeeping columns
+  // (currentVersion, order, ...) are dropped. When nothing user-meaningful
+  // changed (e.g. a bare currentVersion bump from a field-value save), the
+  // resolved set is empty and we skip the emit so destinations aren't spammed.
+  const changes = await resolveCaseScalarChanges(tx, diff);
+  if (changes.length === 0) return;
+
   await webhookEvents.emit(
     "case.updated",
     {
@@ -117,9 +130,89 @@ export async function emitCaseUpdated(
       name: newRow.name,
       after: newRow,
       diff,
+      changes,
     },
     {
       projectId: opts.projectId ?? newRow.projectId,
+      tx,
+      actorUserId: opts.actorUserId,
+    }
+  );
+}
+
+/** Bare CaseFieldValues row as captured by the webhook pre/post snapshots. */
+export interface CaseFieldValueRow {
+  id: number;
+  testCaseId: number;
+  fieldId: number;
+  value: unknown;
+}
+
+/**
+ * Emit `case.updated` for a custom field value change. Custom field values
+ * live in a separate table (CaseFieldValues) and are saved through their own
+ * mutations, so they never appear in the scalar case diff — this is the only
+ * path that surfaces a dropdown / multi-select / text field edit on a case.
+ *
+ * Option-backed values (Dropdown / Multi-Select / Checkbox) are resolved from
+ * stored option ids to their labels before emit. A no-op (same display value)
+ * is skipped so a re-save that rewrites the same value doesn't fire.
+ */
+export async function emitCaseFieldValueChanged(
+  oldRow: CaseFieldValueRow | null,
+  newRow: CaseFieldValueRow | null,
+  tx: Prisma.TransactionClient,
+  opts: EmitOptions = {}
+): Promise<void> {
+  const row = newRow ?? oldRow;
+  if (!row || row.testCaseId == null || row.fieldId == null) return;
+
+  const oldValue = oldRow ? oldRow.value : null;
+  const newValue = newRow ? newRow.value : null;
+  if (JSON.stringify(oldValue ?? null) === JSON.stringify(newValue ?? null)) {
+    return;
+  }
+
+  const [caseRow, field] = await Promise.all([
+    tx.repositoryCases.findUnique({
+      where: { id: row.testCaseId },
+      select: { id: true, name: true, projectId: true, isDeleted: true },
+    }),
+    tx.caseFields.findUnique({
+      where: { id: row.fieldId },
+      select: {
+        displayName: true,
+        type: { select: { type: true } },
+        fieldOptions: {
+          where: { fieldOption: { isDeleted: false } },
+          select: { fieldOption: { select: { id: true, name: true } } },
+        },
+      },
+    }),
+  ]);
+  if (!caseRow || caseRow.isDeleted || !field) return;
+
+  const meta = field as unknown as OptionFieldMeta;
+  const from = formatFieldValue(oldValue, meta);
+  const to = formatFieldValue(newValue, meta);
+  if (from === to) return;
+
+  await webhookEvents.emit(
+    "case.updated",
+    {
+      id: caseRow.id,
+      projectId: caseRow.projectId,
+      name: caseRow.name,
+      fieldChange: {
+        fieldId: row.fieldId,
+        fieldName: field.displayName,
+        before: oldValue,
+        after: newValue,
+      },
+      changes: [{ label: field.displayName, from, to }],
+    },
+    {
+      projectId: opts.projectId ?? caseRow.projectId,
       tx,
       actorUserId: opts.actorUserId,
     }
