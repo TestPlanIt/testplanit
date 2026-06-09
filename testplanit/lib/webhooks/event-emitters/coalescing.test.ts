@@ -44,15 +44,24 @@ function buildFakeTx(opts: {
   // $executeRaw is called for the per-config pg_advisory_xact_lock that
   // serializes the threshold check; the SQL itself is a no-op in tests.
   const executeRaw = vi.fn(async () => 1);
+  // aggregate(_min.processedAt) is called on the threshold-crossing path
+  // so the summary's firstAt reports the actual first event in the
+  // burst instead of the rolling-window outer bound. The tests don't
+  // pin a specific timestamp (only `toBeDefined`); returning a stable
+  // Date keeps the call shape valid.
+  const aggregate = vi.fn(async () => ({
+    _min: { processedAt: new Date("2026-06-09T00:00:00Z") },
+  }));
   return {
     tx: {
       webhookConfig: { findMany },
-      webhookEventDedup: { count, create },
+      webhookEventDedup: { count, create, aggregate },
       $executeRaw: executeRaw,
     },
     findMany,
     count,
     create,
+    aggregate,
     executeRaw,
   };
 }
