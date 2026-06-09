@@ -8,6 +8,8 @@ description: Configure and manage SSO authentication for your TestPlanIt instanc
 
 TestPlanIt supports multiple Single Sign-On (SSO) authentication methods to provide secure and convenient access for your users. This guide covers the configuration and management of SSO providers and their effects on the authentication flow.
 
+SSO provider configuration lives at **Admin → Authentication → Authentication** (`/admin/sso`). Sign-in enforcement (Force SSO, Force 2FA) lives at **Admin → Authentication → Security** (`/admin/security`) — see [Security Settings](./security-settings.md). SCIM 2.0 provisioning lives at **Admin → Authentication → SCIM Provisioning** (`/admin/scim`) — see [SCIM Provisioning](./scim.md).
+
 ## Supported SSO Providers
 
 TestPlanIt currently supports the following SSO providers:
@@ -53,25 +55,11 @@ TestPlanIt currently supports the following SSO providers:
 
 SSO configuration is available to administrators at `/admin/sso`.
 
-### Global Settings
+### Sign-in enforcement
 
-#### Force SSO
+The Force SSO toggle (and the two Force 2FA toggles) have moved from the SSO page to the **Sign-in Enforcement** section on the Security page (`/admin/security`). See [Security Settings → Sign-in Enforcement](./security-settings.md#sign-in-enforcement) for the full details on Force SSO behavior.
 
-When enabled, this setting:
-
-- **Removes the traditional email/password login form** from the signin page
-- **Completely disables the signup page** (returns 404)
-- Requires all users to authenticate through configured SSO providers
-- Prevents creation of local accounts
-
-:::warning
-Before enabling Force SSO, ensure:
-
-1. At least one SSO provider is properly configured
-2. All existing users can authenticate through the SSO provider
-3. Admin accounts have SSO access to prevent lockout
-
-:::
+### Provider toggles
 
 #### SAML Provider
 
@@ -371,9 +359,22 @@ When SAML is enabled, administrators can configure SAML settings by clicking the
 
 #### Identity Provider Settings
 
-- **Entry Point**: The SSO login URL provided by your identity provider
-- **Issuer**: The Service Provider entity ID (your TestPlanIt instance)
-- **Certificate**: The X.509 certificate from your identity provider
+- **SSO Entry Point URL**: The SSO login URL provided by your identity provider. Okta calls it the **SSO URL**; Entra calls it the **Login URL**.
+- **Issuer / Entity ID**: The Service Provider entity id you register with the IdP. Use your TestPlanIt base URL (e.g., `https://testplanit.example.com`).
+- **ACS (Callback) URL**: `https://<your-instance>/api/auth/callback/saml`. Paste this into the IdP as the Assertion Consumer Service URL.
+- **SLO Logout URL**: Optional. Only set this if your IdP supports SAML Single Logout.
+- **X.509 Certificate**: The IdP's signing certificate as PEM. TestPlanIt normalizes the certificate on save, so pasting a certificate whose newlines were collapsed to spaces (common when copying from some IdP admin consoles) still works.
+
+#### Signature Validation
+
+The SAML specification allows the IdP to sign the assertion, the outer response, or both. TestPlanIt's defaults match what most IdPs send out of the box:
+
+| Toggle                       | Default | What it means                                                                                                          |
+| ---------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Require signed assertions** | **On**  | The SAML assertion (the inner element carrying the authenticated identity) must be signed. Turning this off is unsafe. |
+| **Require signed response**   | **Off** | The outer SAML response must also be signed. Optional — TestPlanIt still validates the signature when present.         |
+
+If your IdP signs only the assertion (Okta's default), leave **Require signed response** off. If your IdP signs the full response and you want to require it, turn it on. Both toggles appear on the initial Configure SAML dialog and the per-provider edit page (`/admin/sso/saml/[providerId]`) so you can re-tighten without a code change.
 
 #### User Provisioning
 
@@ -385,11 +386,13 @@ When SAML is enabled, administrators can configure SAML settings by clicking the
   - MANAGER
   - ADMIN
 
+Authentication via the IdP satisfies email verification — auto-provisioned users and existing users alike skip the email-verification gate when they sign in via SAML, because the IdP has already proved control of the email address.
+
 #### Attribute Mapping
 
 Configure how SAML attributes map to TestPlanIt user fields:
 
-- **Email Attribute**: SAML attribute containing the user's email
+- **Email Attribute**: SAML attribute containing the user's email. Defaults to `email`. When the IdP sends no email attribute, TestPlanIt also accepts the email carried in the NameID (Name ID format `EmailAddress`) — this is Okta's default and works out of the box.
 - **Name Attribute**: SAML attribute containing the user's display name
 - **Groups Attribute**: SAML attribute containing user groups (optional)
 
@@ -402,6 +405,28 @@ Configure how SAML attributes map to TestPlanIt user fields:
 5. TestPlanIt validates the assertion
 6. User account is created/updated based on configuration
 7. User is logged into TestPlanIt
+
+### SAML Troubleshooting
+
+#### "Invalid signature" rejecting Okta SAML responses
+
+By default `node-saml` v5 requires both the assertion and the outer response to be signed; Okta's default signs only the assertion. TestPlanIt ships with **Require signed response** off so this combination works out of the box. If you're upgrading from a pre-v0.36.4 instance and SAML sign-in starts failing with "Invalid signature", check that **Require signed response** is off on the per-provider edit page.
+
+#### "Email not found in SAML response"
+
+The IdP didn't include an email attribute and the NameID isn't an email address. TestPlanIt looks for the email in (1) the mapped `email` attribute, then (2) the NameID — but only when the NameID looks like an email address. Either set the IdP's Name ID format to `EmailAddress`, or add an `email` attribute statement to the SAML mapping.
+
+#### Trapped in the verify-email gate after SAML sign-in
+
+Pre-existing users whose `emailVerified` was never set used to get stuck at the verify-email page after SAML sign-in. TestPlanIt now stamps `emailVerified` on existing users on a successful SAML assertion — the IdP has already proved control of the address. The fix is in v0.36.4 and later.
+
+#### Sign-in works locally but not behind a reverse proxy
+
+If you front TestPlanIt with a reverse proxy (Cloudflare Tunnel, nginx, Caddy, etc.) and SAML completes at the IdP but redirects you back to the sign-in page, the session cookie may not be reaching the browser. Make sure your proxy is not stripping `Set-Cookie` headers and that the standalone server is running with `NODE_ENV=production` so cookies are issued with the `Secure` flag against the HTTPS edge. This class of issue was fixed in v0.36.4 — earlier versions used a cookie-set pattern that did not reliably propagate through reverse proxies.
+
+#### PEM newlines lost when pasting the IdP certificate
+
+Some IdP admin consoles flatten newlines to spaces when you copy the X.509 certificate, producing a PEM blob that fails to parse. TestPlanIt normalizes the certificate on save, so the flattened form works without manual re-line-breaking.
 
 ## User Experience
 
@@ -606,19 +631,20 @@ SSO implementation supports various compliance requirements:
 
 ## Two-Factor Authentication (2FA) Integration
 
-TestPlanIt supports TOTP-based two-factor authentication that can work alongside SSO. Administrators can enforce 2FA policies from the Registration Settings section.
+TestPlanIt supports TOTP-based two-factor authentication that can work alongside SSO. Administrators enforce 2FA policies from the **Sign-in Enforcement** section on the Security page (`/admin/security`) — see [Security Settings → Sign-in Enforcement](./security-settings.md#sign-in-enforcement).
 
 ### 2FA Enforcement Options
 
-#### Force 2FA for Non-SSO Logins
+#### Require 2FA for Password Logins
 - Requires 2FA for users signing in with email/password
 - SSO logins (Google, Apple, Microsoft, SAML, Magic Link) are not affected
 - Useful when SSO providers handle their own MFA
 
-#### Force 2FA for All Logins
+#### Require 2FA for All Logins
 - Requires 2FA for all users, including SSO users
 - SSO users must set up and verify 2FA after identity provider authentication
 - Provides consistent security across all authentication methods
+- When this toggle is on, **Require 2FA for Password Logins** is implicitly on too
 
 ### SSO and Personal 2FA
 
@@ -639,6 +665,6 @@ For detailed 2FA configuration, see [Two-Factor Authentication](./two-factor-aut
 Planned SSO improvements include:
 
 - OpenID Connect (OIDC) support
-- Just-in-Time (JIT) provisioning enhancements
-- SCIM support for user lifecycle management
 - Additional SAML features (encrypted assertions, metadata import)
+
+User lifecycle management via SCIM 2.0 shipped in v0.24.0 — see [SCIM Provisioning](./scim.md).

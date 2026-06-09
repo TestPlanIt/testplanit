@@ -164,7 +164,8 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 
 - **Role-based access** - Define custom roles with granular permissions, including a per-area "Can Approve" right for Review & Approval reviewers
 - **Groups** - Organize users into groups for easier permission management
-- **SSO support** - Integrate with your identity provider via SAML, Google OAuth, Apple Sign In, or Microsoft (Azure AD)
+- **SSO support** - Integrate with your identity provider via [SAML, Google OAuth, Apple Sign In, or Microsoft (Azure AD)](./user-guide/sso.md). SAML providers expose per-provider `Require signed assertions` and `Require signed response` toggles so a standard IdP that signs only the assertion (Okta's default) works out of the box, and a stricter IdP can require both signatures.
+- **SCIM 2.0 provisioning** - Provision, update, and de-provision users and groups from your IdP via [SCIM 2.0](./user-guide/scim.md). Includes a per-token rate limit, a 5-minute coalescing window to avoid first-sync webhook floods, and an admin conflict log surfacing JIT binds, resurrections, and skipped-member operations.
 - **Magic Link sign-in** - Optional passwordless email link as an alternative to password authentication
 - **Self-registration toggle** - Admin-controlled switch for letting users create their own accounts (or restricting account creation to admins)
 
@@ -183,10 +184,11 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Account lockout** - Protect against brute-force attacks with configurable threshold and duration
 - **Password enforcement** - Force password changes (individual or bulk) and revoke passwords
 - **Password strength indicator** - Real-time zxcvbn-powered feedback on signup and password change forms
-- **Audit logs** - Track all changes for compliance and security review; covers admin configuration mutations, system-actor attribution, and a tamper-evident archive surface for long-term retention
+- **Sign-in enforcement** - [Force SSO](./user-guide/security-settings.md#sign-in-enforcement) (disable email/password sign-in), require 2FA for password logins, or require 2FA for all sign-ins including SSO. All three toggles live alongside the password policy on the Security admin page
+- **Audit logs** - Track all changes for compliance and security review; covers admin configuration mutations, system-actor attribution, SCIM mutations (filterable by `source = scim` with the originating token id), and a tamper-evident archive surface for long-term retention
 - **Two-factor authentication** - Add an extra layer of security for user accounts
 - **Data encryption** - Secure data at rest and in transit
-- **API tokens** - Personal and service-account API tokens with scoped access and revocation
+- **API tokens** - [Personal and service-account API tokens](./api-tokens.md) with scoped access and revocation
 
 ## Collaboration
 

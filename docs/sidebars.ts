@@ -58,71 +58,109 @@ const sidebars: SidebarsConfig = {
             type: 'doc',
             id: 'user-guide/administration',
           },
-          // List the pages within the Administration sub-category
+          // List the pages within the Administration sub-category,
+          // grouped to mirror the in-app Admin menu sections
           items: [
-            'user-guide/app-config', // Corresponds to app-config.md
-            'user-guide/projects', // Corresponds to projects.md
-            'user-guide/templates-fields', // Corresponds to templates-fields.md
-            'user-guide/quickscript-templates', // QuickScript templates for test case export
-            'user-guide/workflows', // Corresponds to workflows.md
-            'user-guide/review-approvals', // Review & Approval gates on workflow transitions
-            'user-guide/statuses', // Corresponds to statuses.md
-            'user-guide/milestone-types', // Corresponds to milestone-types.md
-            'user-guide/configurations', // Corresponds to configurations.md
-            'user-guide/users', // Corresponds to users.md
-            'user-guide/groups', // Corresponds to groups.md
-            'user-guide/roles', // Corresponds to roles.md
-            'user-guide/permissions-guide', // Permissions guide
-            'user-guide/tags', // Corresponds to tags.md
+            // Test Management
             {
               type: 'category',
-              label: 'Reporting & Analytics',
-              link: {
-                type: 'doc',
-                id: 'user-guide/reporting',
-              },
+              label: 'Test Management',
               items: [
-                'user-guide/cross-project-reports', // Cross-project report types + project scoping
+                'user-guide/projects', // Corresponds to projects.md
+                'user-guide/templates-fields', // Corresponds to templates-fields.md
+                'user-guide/workflows', // Corresponds to workflows.md
+                'user-guide/review-approvals', // Review & Approval gates on workflow transitions
+                'user-guide/statuses', // Corresponds to statuses.md
+                'user-guide/milestone-types', // Corresponds to milestone-types.md
+                'user-guide/configurations', // Corresponds to configurations.md
+                'user-guide/tags', // Corresponds to tags.md
+                {
+                  type: 'category',
+                  label: 'Reporting & Analytics',
+                  link: {
+                    type: 'doc',
+                    id: 'user-guide/reporting',
+                  },
+                  items: [
+                    'user-guide/cross-project-reports', // Cross-project report types + project scoping
+                  ],
+                },
               ],
             },
-            'user-guide/share-links', // Share Links documentation
-            // Convert Notifications to a category with children
+            // People & Access
             {
               type: 'category',
-              label: 'Notifications',
-              link: {
-                type: 'doc',
-                id: 'user-guide/notifications',
-              },
+              label: 'People & Access',
               items: [
-                'user-guide/email-templates', // Email templates configuration
-                'user-guide/system-announcements', // System-wide announcements
-                'upgrade-notifications', // Version upgrade notifications
+                'user-guide/users', // Corresponds to users.md
+                'user-guide/groups', // Corresponds to groups.md
+                'user-guide/roles', // Corresponds to roles.md
+                'user-guide/permissions-guide', // Permissions guide
               ],
             },
-            'user-guide/integrations', // Issue integrations administration page
-            'user-guide/webhooks', // Inbound and outbound webhooks
+            // Authentication
             {
               type: 'category',
-              label: 'AI Models',
-              link: {
-                type: 'doc',
-                id: 'user-guide/llm-integrations',
-              },
+              label: 'Authentication',
               items: [
-                'user-guide/llm-test-generation', // AI test case generation
-                'user-guide/llm-magic-select', // AI-powered test case selection
-                'user-guide/llm-quickscript', // AI-powered QuickScript generation
-                'user-guide/llm-writing-assistant', // In-editor AI writing assistant
-                'user-guide/llm-markdown-import', // AI-assisted markdown import
-                'user-guide/llm-auto-tag', // AI-powered auto tagging
+                'user-guide/sso', // Single Sign-On providers and SAML configuration
+                'user-guide/security-settings', // Sign-in enforcement, password policy, lockout, enforcement
+                'api-tokens', // API tokens
+                'user-guide/scim', // SCIM 2.0 provisioning from external IdP
               ],
             },
-            'user-guide/prompt-configurations', // AI prompt configuration management
-            'user-guide/sso', // Authentication configuration and management
-            'user-guide/security-settings', // Password policy, lockout, and enforcement
-            'user-guide/audit-logs', // Audit logs for compliance and security
-            'user-guide/audit-log-reliability', // Audit log retry/backoff policy and ops reference
+            // Tools & Integrations
+            {
+              type: 'category',
+              label: 'Tools & Integrations',
+              items: [
+                'user-guide/integrations', // Issue integrations administration page
+                'user-guide/webhooks', // Inbound and outbound webhooks
+                'user-guide/share-links', // Share Links documentation
+                // Convert Notifications to a category with children
+                {
+                  type: 'category',
+                  label: 'Notifications',
+                  link: {
+                    type: 'doc',
+                    id: 'user-guide/notifications',
+                  },
+                  items: [
+                    'user-guide/email-templates', // Email templates configuration
+                    'user-guide/system-announcements', // System-wide announcements
+                    'upgrade-notifications', // Version upgrade notifications
+                  ],
+                },
+                {
+                  type: 'category',
+                  label: 'AI Models',
+                  link: {
+                    type: 'doc',
+                    id: 'user-guide/llm-integrations',
+                  },
+                  items: [
+                    'user-guide/llm-test-generation', // AI test case generation
+                    'user-guide/llm-magic-select', // AI-powered test case selection
+                    'user-guide/llm-quickscript', // AI-powered QuickScript generation
+                    'user-guide/llm-writing-assistant', // In-editor AI writing assistant
+                    'user-guide/llm-markdown-import', // AI-assisted markdown import
+                    'user-guide/llm-auto-tag', // AI-powered auto tagging
+                  ],
+                },
+                'user-guide/prompt-configurations', // AI prompt configuration management
+                'user-guide/quickscript-templates', // QuickScript templates for test case export
+              ],
+            },
+            // System
+            {
+              type: 'category',
+              label: 'System',
+              items: [
+                'user-guide/app-config', // Corresponds to app-config.md
+                'user-guide/audit-logs', // Audit logs for compliance and security
+                'user-guide/audit-log-reliability', // Audit log retry/backoff policy and ops reference
+              ],
+            },
             // Add other admin pages here as they are created
           ],
         },
@@ -247,7 +285,6 @@ const sidebars: SidebarsConfig = {
     'best-practices', // Best practices guide
     'faq', // Frequently asked questions
     'cli', // CLI tool documentation
-    'api-tokens', // API tokens documentation
     'e2e-testing', // E2E testing guide for contributors
     // SDK & Integrations category
     {
