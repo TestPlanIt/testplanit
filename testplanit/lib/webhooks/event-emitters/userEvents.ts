@@ -151,6 +151,9 @@ export async function emitScimUserDeleted(
       id: row.id,
       scimExternalId: row.scimExternalId,
       projectId: resolved.projectId,
+      name: row.name,
+      email: row.email,
+      userName: row.scimUserName,
     },
     resolved
   );

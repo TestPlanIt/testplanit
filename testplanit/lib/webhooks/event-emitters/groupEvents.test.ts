@@ -275,7 +275,7 @@ describe("emitScimGroupDeleted", () => {
     diffMock.mockReset();
   });
 
-  it("emits scim.group.deleted with the minimal id + externalId + projectId payload", async () => {
+  it("emits scim.group.deleted with id + externalId + projectId + displayName", async () => {
     await emitScimGroupDeleted(baseSnapshot, fakeTx);
     expect(emitMock).toHaveBeenCalledTimes(1);
     const [eventName, payload, opts] = emitMock.mock.calls[0];
@@ -284,6 +284,7 @@ describe("emitScimGroupDeleted", () => {
       id: 42,
       projectId: -1,
       externalId: "okta_grp_eng",
+      displayName: "Engineering",
     });
     expect(opts).toMatchObject({
       tx: fakeTx,

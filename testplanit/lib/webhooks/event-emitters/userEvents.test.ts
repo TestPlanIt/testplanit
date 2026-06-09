@@ -205,7 +205,7 @@ describe("emitScimUserDeleted", () => {
     diffMock.mockReset();
   });
 
-  it("emits scim.user.deleted with minimal payload and system defaults", async () => {
+  it("emits scim.user.deleted with identifying payload and system defaults", async () => {
     await emitScimUserDeleted(baseSnapshot, fakeTx);
     expect(emitMock).toHaveBeenCalledTimes(1);
     const [eventName, payload, opts] = emitMock.mock.calls[0];
@@ -214,6 +214,9 @@ describe("emitScimUserDeleted", () => {
       id: "user_1",
       scimExternalId: "okta_123",
       projectId: -1,
+      name: "Alice Smith",
+      email: "alice@example.com",
+      userName: "alice@example.com",
     });
     expect(opts).toMatchObject({
       tx: fakeTx,

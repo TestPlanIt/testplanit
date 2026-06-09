@@ -23,8 +23,10 @@ import { webhookEvents } from "~/lib/webhooks/events";
  *     called, including with an empty members array — an empty applied set
  *     is a meaningful forensic signal (the IdP told us to add/remove
  *     nothing, and downstream consumers want to see that signal).
- *   - scim.group.deleted carries id, projectId and externalId only; the row
- *     is tombstoned and the receiver should not expect attribute detail.
+ *   - scim.group.deleted carries id, projectId, externalId, and displayName.
+ *     The row is tombstoned, but the name is preserved on the wire so
+ *     destinations can render a human-readable "group removed" message
+ *     without a refetch (the row no longer satisfies most read paths).
  *
  * Defaults: SYSTEM_PROJECT_ID + SCIM_SYSTEM_USER_ID. Both can be overridden
  * via opts when the caller has a tighter project scope or a real actor id
@@ -180,6 +182,7 @@ export async function emitScimGroupDeleted(
       id: row.id,
       projectId: resolved.projectId,
       externalId: row.externalId,
+      displayName: row.name,
     },
     resolved
   );

@@ -100,7 +100,13 @@ describe("scim.user.* catalog entries", () => {
     );
     expect(def).toBeDefined();
     expect(def?.category).toBe("system");
-    expect(def?.payloadKeys).toEqual(["id", "scimExternalId"]);
+    expect(def?.payloadKeys).toEqual([
+      "id",
+      "scimExternalId",
+      "name",
+      "email",
+      "userName",
+    ]);
   });
 
   it("all five scim.user.* entries have category 'system'", () => {
@@ -190,7 +196,12 @@ describe("scim.group.* catalog entries", () => {
     );
     expect(def).toBeDefined();
     expect(def?.category).toBe("system");
-    expect(def?.payloadKeys).toEqual(["id", "projectId", "externalId"]);
+    expect(def?.payloadKeys).toEqual([
+      "id",
+      "projectId",
+      "externalId",
+      "displayName",
+    ]);
   });
 
   it("all five scim.group.* entries have category 'system'", () => {

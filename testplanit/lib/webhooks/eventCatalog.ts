@@ -278,7 +278,7 @@ export const WEBHOOK_EVENT_CATALOG: WebhookEventDefinition[] = [
     name: "scim.user.deleted",
     category: "system",
     description: "A SCIM-provisioned user was tombstoned (DELETE).",
-    payloadKeys: ["id", "scimExternalId"],
+    payloadKeys: ["id", "scimExternalId", "name", "email", "userName"],
   },
 
   // --- SCIM Groups (IdP-driven lifecycle) ---
@@ -326,7 +326,7 @@ export const WEBHOOK_EVENT_CATALOG: WebhookEventDefinition[] = [
     name: "scim.group.deleted",
     category: "system",
     description: "A SCIM-provisioned group was tombstoned (DELETE).",
-    payloadKeys: ["id", "projectId", "externalId"],
+    payloadKeys: ["id", "projectId", "externalId", "displayName"],
   },
 
   // --- SCIM coalescing summaries (bulk-sync fold-down) ---
