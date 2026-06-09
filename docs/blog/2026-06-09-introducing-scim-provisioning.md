@@ -57,6 +57,6 @@ If you're at a 5-person company, you probably don't need SCIM yet. We're still g
 1. Update to TestPlanIt v0.24.0.
 2. Open **Admin → Authentication → SCIM Provisioning** and mint a token.
 3. Drop the token into your IdP's SCIM connector — Okta, Entra, and OneLogin all work out of the box, and any other spec-compliant client will too.
-4. (Optional) Wire SCIM events into your existing [Webhooks](/blog/introducing-webhooks) destinations to mirror provisioning activity into Slack, your custom dashboard, or anywhere else you want it.
+4. (Optional) Subscribe a Slack channel or a custom HMAC endpoint to the SCIM lifecycle events at **Admin → Authentication → System Webhooks** so provisioning activity mirrors into your existing ops channels. Same machinery as the [project-level webhooks](/blog/introducing-webhooks), just scoped to system events.
 
 Full setup walkthroughs for the three IdPs we tested most heavily live at [SCIM Provisioning](/docs/user-guide/scim) in the docs.

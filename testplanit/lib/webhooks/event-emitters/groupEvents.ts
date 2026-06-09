@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 
 import { SCIM_SYSTEM_USER_ID, SYSTEM_PROJECT_ID } from "~/lib/scim/constants";
 import { computeObjectDiff } from "~/lib/webhooks/diff";
+import { emitWithCoalescing } from "~/lib/webhooks/event-emitters/coalescing";
 import { webhookEvents } from "~/lib/webhooks/events";
 
 /**
@@ -130,7 +131,10 @@ export async function emitScimGroupMemberAdded(
   opts: EmitOptions = {}
 ): Promise<void> {
   const resolved = defaultEmitOpts(tx, opts);
-  await webhookEvents.emit(
+  // Bulk-membership floods (Okta first-sync push of 500 group members)
+  // coalesce into a single scim.group.member_added.summary event per
+  // subscribed config per 5-min window once the threshold is crossed.
+  await emitWithCoalescing(
     "scim.group.member_added",
     {
       id: row.id,
@@ -139,7 +143,8 @@ export async function emitScimGroupMemberAdded(
       displayName: row.name,
       members: toMemberRefs(addedMemberIds),
     },
-    resolved
+    tx,
+    { projectId: resolved.projectId, actorUserId: resolved.actorUserId }
   );
 }
 

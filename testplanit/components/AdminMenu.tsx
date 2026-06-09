@@ -37,6 +37,7 @@ import {
   Trash2,
   User,
   Users,
+  Webhook,
   Workflow,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -174,6 +175,12 @@ const menuOptions: MenuOption[] = [
     icon: ShieldCheck,
     translationKey: "scim",
     path: "scim",
+    section: "authentication",
+  },
+  {
+    icon: Webhook,
+    translationKey: "systemWebhooks",
+    path: "webhooks",
     section: "authentication",
   },
 

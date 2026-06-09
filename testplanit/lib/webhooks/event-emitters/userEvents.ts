@@ -2,6 +2,7 @@ import type { Prisma, User } from "@prisma/client";
 
 import { SCIM_SYSTEM_USER_ID, SYSTEM_PROJECT_ID } from "~/lib/scim/constants";
 import { computeObjectDiff } from "~/lib/webhooks/diff";
+import { emitWithCoalescing } from "~/lib/webhooks/event-emitters/coalescing";
 import { webhookEvents } from "~/lib/webhooks/events";
 
 /**
@@ -87,7 +88,10 @@ export async function emitScimUserCreated(
   opts: EmitOptions = {}
 ): Promise<void> {
   const resolved = defaultEmitOpts(tx, opts);
-  await webhookEvents.emit(
+  // First-sync floods (Okta bulk-assign of N users) coalesce into a single
+  // scim.user.created.summary event per subscribed config per 5-min window
+  // once the threshold is crossed; routine syncs stay 1:1.
+  await emitWithCoalescing(
     "scim.user.created",
     {
       id: row.id,
@@ -99,7 +103,8 @@ export async function emitScimUserCreated(
       name: row.name,
       createdAt: row.createdAt,
     },
-    resolved
+    tx,
+    { projectId: resolved.projectId, actorUserId: resolved.actorUserId }
   );
 }
 

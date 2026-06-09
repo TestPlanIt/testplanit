@@ -3428,6 +3428,7 @@
       "auditLogs": "Audit Logs",
       "apiTokens": "API Tokens",
       "scim": "SCIM Provisioning",
+      "systemWebhooks": "System Webhooks",
       "quickscriptTemplates": "QuickScript Templates",
       "testManagement": "Test Management",
       "peopleAndAccess": "People & Access",
@@ -4399,6 +4400,10 @@
       "revokeAllPlaceholder": "REVOKE ALL",
       "revokeAllSuccess": "All API tokens have been revoked",
       "revokeAllError": "Failed to revoke all tokens"
+    },
+    "systemWebhooks": {
+      "title": "System Webhooks",
+      "description": "Outbound webhook destinations for system-level events that aren't tied to a single project — currently the SCIM 2.0 user and group lifecycle events. Configure inbound and project-scoped outbound webhooks from the project settings page instead."
     },
     "scim": {
       "description": "Provision users from your identity provider into TestPlanIt over SCIM 2.0.",

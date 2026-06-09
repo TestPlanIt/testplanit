@@ -40,7 +40,23 @@ import {
 const emitMock = webhookEvents.emit as unknown as ReturnType<typeof vi.fn>;
 const diffMock = computeObjectDiff as unknown as ReturnType<typeof vi.fn>;
 
-const fakeTx = { __brand: "fake-tx" } as never;
+// Coalescing-aware tx mock. scim.group.member_added routes through
+// emitWithCoalescing which calls tx.webhookConfig.findMany + count + create
+// on webhookEventDedup. Under threshold the helper falls through to
+// webhookEvents.emit with the original per-event payload, preserving the
+// existing emit assertions.
+function buildFakeTx() {
+  return {
+    webhookConfig: {
+      findMany: vi.fn(async () => [{ id: "cfg_subscriber" }]),
+    },
+    webhookEventDedup: {
+      count: vi.fn(async () => 0),
+      create: vi.fn(async () => ({ id: "dedup_1" })),
+    },
+  } as never;
+}
+const fakeTx = buildFakeTx();
 
 const baseSnapshot = {
   id: 42,

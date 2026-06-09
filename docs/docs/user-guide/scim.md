@@ -92,7 +92,7 @@ Filters that reference an unsupported attribute or operator return `400 Bad Requ
 
 ## Webhook events
 
-The TestPlanIt outbound webhook system lets admins subscribe destinations (Slack, generic HMAC) to ten SCIM event types. Subscriptions are stored on each webhook's `subscribedEvents` array, so the existing grouped-checkbox UI already absorbs the SCIM event names — no UI change is needed to opt in.
+SCIM mutations emit outbound webhook events the same way as project events, but they aren't tied to any one project — they're system-level. Configure subscriptions from **Admin → Authentication → System Webhooks** (`/admin/webhooks`), which is the system-scoped sibling of the project-level webhook settings page. The form's adapter (Slack, generic HMAC) + event-subscription UI is identical to the project version; the difference is only that the destinations created here listen for system events instead of project events.
 
 | Event name                  | Fires when                                                          |
 | --------------------------- | ------------------------------------------------------------------- |
