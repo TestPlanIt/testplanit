@@ -47,6 +47,17 @@ Once a user is provisioned via SCIM, TestPlanIt treats their core identity attri
 
 If you need to update a SCIM-managed user or group, make the change in the IdP. The next sync (or PATCH) will pull the change into TestPlanIt.
 
+### Surfacing IdP attributes on the user profile
+
+The [User Profile page](./user-profile.md#directory-profile) renders a **Directory Profile** section for SCIM-provisioned users that surfaces what the IdP sent on the last sync, in addition to the locked name + email at the top of the page:
+
+- **First name** / **Last name** — `name.givenName` / `name.familyName`
+- **Directory username** (`userName`) and **IdP user ID** (`externalId`)
+- **Title** and **User type** from the SCIM core schema
+- **Employee number**, **Department**, **Division**, **Organization**, **Cost center**, and **Manager** display name from the [Enterprise User extension](https://datatracker.ietf.org/doc/html/rfc7643#section-4.3) (URN `urn:ietf:params:scim:schemas:extension:enterprise:2.0:User`)
+
+These fields are display-only — to change them, update the user in your IdP and let the next push (or scheduled re-sync) reconcile. Rows for unset attributes are hidden, so the section is only as full as your IdP's attribute mapping. If your IdP isn't sending the enterprise extension at all, the section renders an explanatory placeholder instead of an empty grid.
+
 ## Endpoint reference
 
 | Method   | Path                             | Description                                                           |
@@ -229,6 +240,7 @@ Every SCIM mutation writes an audit row with `derivedSource = "scim"`. From `/ad
 
 ## See also
 
+- [User Profile](./user-profile.md#directory-profile) — read-only Directory Profile section that surfaces the IdP attributes (title, department, manager, etc.) per user
 - [Authentication (SSO)](./sso.md) — SAML, OAuth, Apple, Magic Link provider configuration
 - [Security Settings](./security-settings.md) — password policy, lockout, sign-in enforcement
 - [Audit Logs](./audit-logs.md) — system-wide audit log with `source = scim` filter
