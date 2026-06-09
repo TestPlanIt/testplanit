@@ -47,6 +47,20 @@ interface SummarablePayload {
   members?: Array<{ value: string }>;
 }
 
+/**
+ * Deterministic bigint key derived from the webhook config id, suitable as
+ * a `pg_advisory_xact_lock` argument so two concurrent transactions that
+ * touch the same config serialize their count-then-write sequence.
+ *
+ * Hashing strategy: take the first 8 bytes of sha256(configId) and read as
+ * a signed BigInt (Postgres bigint is signed 64-bit). Collision probability
+ * is negligible at any realistic config-count.
+ */
+function lockKeyFromConfigId(configId: string): bigint {
+  const hash = createHash("sha256").update(configId).digest();
+  return hash.readBigInt64BE(0);
+}
+
 function extractSampleIds(payload: unknown): string[] {
   const p = payload as SummarablePayload;
   if (Array.isArray(p.members) && p.members.length > 0) {
@@ -89,6 +103,17 @@ export async function emitWithCoalescing(
   });
 
   for (const config of configs) {
+    // Acquire a per-config advisory lock so the count → threshold check →
+    // dedup row write below serializes across concurrent transactions that
+    // target the same config. Without this, every parallel emitter sees a
+    // pre-threshold count (READ COMMITTED snapshot) and bypasses
+    // coalescing — exactly the flood scenario this helper is meant to
+    // absorb. The lock is transaction-scoped and auto-released on
+    // commit/rollback. Two emitters for DIFFERENT configs still proceed
+    // in parallel because the lock key is config-specific.
+    const lockKey = lockKeyFromConfigId(config.id);
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(${lockKey.toString()}::bigint)`;
+
     const windowCount = await tx.webhookEventDedup.count({
       where: {
         webhookConfigId: config.id,

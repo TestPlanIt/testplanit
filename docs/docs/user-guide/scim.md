@@ -109,14 +109,31 @@ SCIM mutations emit outbound webhook events the same way as project events, but 
 
 ### Coalescing on bulk sync
 
-To avoid flooding webhook destinations during an IdP's first-sync push, TestPlanIt coalesces high-volume events inside a rolling five-minute window. Once a single webhook destination exceeds the threshold for `scim.user.created` or `scim.group.member_added` inside the window, subsequent events fold into one of two summary events:
+When an IdP runs its first-sync push and creates hundreds or thousands of TestPlanIt users in quick succession, every one of those events would normally fire its own outbound webhook delivery. That's the right behavior for routine activity, but it's a flood your Slack channel or downstream system doesn't actually want. TestPlanIt absorbs the flood by folding the tail of each burst into a single **summary event** per webhook destination.
+
+The rule, per (subscribed config, 5-minute rolling window):
+
+1. The first **10** events of either `scim.user.created` or `scim.group.member_added` deliver normally — one outbound POST each — so receivers see the start of the burst at full fidelity.
+2. The **11th** event in the same window stops delivering individually and instead emits a single corresponding `.summary` event for that window.
+3. Every subsequent event in the same window — whether the 12th or the 12,000th — is folded silently into that same already-emitted summary. Receivers see exactly **one** summary message, not one per excess event.
+4. Windows are tracked per webhook destination, so two destinations subscribed to the same event type each get their own threshold and their own summary.
+5. When the 5-minute window rolls over, the counter resets and the next burst gets a fresh full-fidelity prefix.
 
 | Summary event                     | Replaces                                                        |
 | --------------------------------- | --------------------------------------------------------------- |
 | `scim.user.created.summary`       | The remainder of `scim.user.created` events in the window       |
 | `scim.group.member_added.summary` | The remainder of `scim.group.member_added` events in the window |
 
-Summary payloads carry `count`, `firstAt`, `lastAt`, `windowStart`, and a sample of resource ids. Routine incremental syncs (a handful of provisioning calls per minute) stay 1:1 with no coalescing.
+The summary payload carries the window's roll-up so a receiver can size the burst without having received every individual event:
+
+- `count` — total events folded under this summary (always ≥ 11)
+- `firstAt` / `lastAt` — bounds of the window's activity
+- `windowStart` — the bucketed 5-minute window timestamp (deterministic)
+- `sampleIds` — a small sample of resource ids to aid debugging
+
+Concurrency safety: the threshold check is serialized per destination with a Postgres advisory lock, so a real-world first-sync push of N parallel SCIM POSTs still folds correctly — every receiver sees the same 10-events-then-summary pattern regardless of how many of those POSTs raced.
+
+Routine incremental syncs — a handful of provisioning calls per minute — never cross the threshold and stay 1:1 with no coalescing. Other SCIM event types (`scim.user.updated`, `scim.user.deactivated`, `scim.group.deleted`, etc.) are never coalesced because they don't show up in first-sync floods; only the two flood-prone event types have a summary counterpart.
 
 ### Payload shapes
 

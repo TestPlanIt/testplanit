@@ -41,14 +41,19 @@ function buildFakeTx(opts: {
     }
   );
   const create = vi.fn(opts.createImpl ?? (async () => ({ id: "dedup_row" })));
+  // $executeRaw is called for the per-config pg_advisory_xact_lock that
+  // serializes the threshold check; the SQL itself is a no-op in tests.
+  const executeRaw = vi.fn(async () => 1);
   return {
     tx: {
       webhookConfig: { findMany },
       webhookEventDedup: { count, create },
+      $executeRaw: executeRaw,
     },
     findMany,
     count,
     create,
+    executeRaw,
   };
 }
 
@@ -312,5 +317,108 @@ describe("emitWithCoalescing — purity + tx invariant", () => {
     } finally {
       vi.restoreAllMocks();
     }
+  });
+
+  it("acquires a per-config pg_advisory_xact_lock BEFORE the threshold count (parallel-flood serialization invariant)", async () => {
+    // UAT 2026-06-09: 12 parallel POST /Users requests all read the count
+    // under READ COMMITTED, each saw < threshold, all 12 emitted per-event
+    // and no .summary fired. Per-config advisory lock serializes the
+    // count-then-write across concurrent transactions targeting the same
+    // config, so the (k+1)th caller is guaranteed to see the count k wrote.
+    const callOrder: string[] = [];
+    const executeRaw = vi.fn(async (..._args: unknown[]) => {
+      callOrder.push("lock");
+      return 1;
+    });
+    const count = vi.fn(async () => {
+      callOrder.push("count");
+      return 0;
+    });
+    const create = vi.fn(async () => {
+      callOrder.push("create");
+      return { id: "dedup_row" };
+    });
+    const findMany = vi.fn(async () => [
+      { id: "cfg_a" },
+      { id: "cfg_b" },
+      { id: "cfg_c" },
+    ]);
+    const tx = {
+      webhookConfig: { findMany },
+      webhookEventDedup: { count, create },
+      $executeRaw: executeRaw,
+    };
+
+    await emitWithCoalescing(
+      "scim.user.created",
+      basePayload,
+      tx as never,
+      {}
+    );
+
+    // 3 configs → 3 lock acquisitions, each before its config's count call.
+    expect(executeRaw).toHaveBeenCalledTimes(3);
+    expect(count).toHaveBeenCalledTimes(3);
+
+    // Order MUST be: lock, count, create (per-event branch), repeat per
+    // config. If the lock fired AFTER count for any iteration, parallel
+    // tx could still race the threshold check.
+    expect(callOrder).toEqual([
+      "lock",
+      "count",
+      "create",
+      "lock",
+      "count",
+      "create",
+      "lock",
+      "count",
+      "create",
+    ]);
+  });
+
+  it("derives a stable bigint lock key from the config id (deterministic across calls)", async () => {
+    // Same configId across two calls MUST yield the same lock-key SQL
+    // template parameter so concurrent emitters actually contend on the
+    // same Postgres lock. (Different configIds get different keys —
+    // emitters for unrelated configs proceed in parallel.)
+    const seenKeys: string[] = [];
+    const executeRaw = vi.fn(async (...args: unknown[]) => {
+      // Prisma tagged-template $executeRaw receives the strings array as
+      // the first argument and interpolations as the rest. The lock-key
+      // string is one of the trailing interpolations.
+      const stringifiedArgs = args
+        .map((a) =>
+          Array.isArray(a) ? a.join("|") : JSON.stringify(a)
+        )
+        .join(" ");
+      seenKeys.push(stringifiedArgs);
+      return 1;
+    });
+
+    const buildTx = () => ({
+      webhookConfig: {
+        findMany: vi.fn(async () => [{ id: "cfg_stable" }]),
+      },
+      webhookEventDedup: {
+        count: vi.fn(async () => 0),
+        create: vi.fn(async () => ({ id: "dedup_row" })),
+      },
+      $executeRaw: executeRaw,
+    });
+
+    await emitWithCoalescing(
+      "scim.user.created",
+      basePayload,
+      buildTx() as never,
+      {}
+    );
+    await emitWithCoalescing(
+      "scim.user.created",
+      basePayload,
+      buildTx() as never,
+      {}
+    );
+
+    expect(seenKeys[0]).toBe(seenKeys[1]);
   });
 });

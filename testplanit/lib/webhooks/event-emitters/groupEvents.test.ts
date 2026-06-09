@@ -54,6 +54,9 @@ function buildFakeTx() {
       count: vi.fn(async () => 0),
       create: vi.fn(async () => ({ id: "dedup_1" })),
     },
+    // pg_advisory_xact_lock is no-op in unit tests; the lock itself is a
+    // concurrency-correctness invariant covered by coalescing.test.ts.
+    $executeRaw: vi.fn(async () => 1),
   } as never;
 }
 const fakeTx = buildFakeTx();
