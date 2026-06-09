@@ -194,7 +194,8 @@
     "auth": {
       "internal": "E-mail/Hasło",
       "sso": "Tylko SSO",
-      "both": "E-mail i logowanie jednokrotne"
+      "both": "E-mail i logowanie jednokrotne",
+      "scim": "SCIM dostarczony"
     },
     "status": {
       "deleted": "Usunięto",
@@ -2282,6 +2283,23 @@
       },
       "access": {
         "title": "Dostęp"
+      },
+      "directory": {
+        "title": "Profil katalogu",
+        "subtitle": "Pola tylko do odczytu synchronizowane od dostawcy tożsamości za pośrednictwem SCIM.",
+        "externalId": "Identyfikator użytkownika dostawcy tożsamości",
+        "userName": "Nazwa użytkownika katalogu",
+        "givenName": "Imię",
+        "familyName": "Nazwisko",
+        "jobTitle": "Tytuł",
+        "userType": "Typ użytkownika",
+        "employeeNumber": "Numer pracownika",
+        "department": "Dział",
+        "division": "Dział",
+        "organization": "Organizacja",
+        "costCenter": "Centrum kosztów",
+        "manager": "Menedżer",
+        "noEnterpriseFields": "Twój dostawca tożsamości nie przesłał żadnych atrybutów katalogu przedsiębiorstwa dla tego konta."
       },
       "notifications": {
         "title": "Preferencje powiadomień",

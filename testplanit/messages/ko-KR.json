@@ -194,7 +194,8 @@
     "auth": {
       "internal": "이메일/비밀번호",
       "sso": "SSO 전용",
-      "both": "이메일 및 SSO"
+      "both": "이메일 및 SSO",
+      "scim": "SCIM 프로비저닝됨"
     },
     "status": {
       "deleted": "삭제됨",
@@ -2282,6 +2283,23 @@
       },
       "access": {
         "title": "입장"
+      },
+      "directory": {
+        "title": "디렉터리 프로필",
+        "subtitle": "읽기 전용 필드는 SCIM을 통해 ID 공급자로부터 동기화됩니다.",
+        "externalId": "IdP 사용자 ID",
+        "userName": "디렉터리 사용자 이름",
+        "givenName": "이름",
+        "familyName": "성",
+        "jobTitle": "제목",
+        "userType": "사용자 유형",
+        "employeeNumber": "직원 번호",
+        "department": "부서",
+        "division": "분할",
+        "organization": "조직",
+        "costCenter": "비용 센터",
+        "manager": "관리자",
+        "noEnterpriseFields": "ID 공급자가 이 계정에 대한 엔터프라이즈 디렉터리 속성을 전송하지 않았습니다."
       },
       "notifications": {
         "title": "알림 설정",

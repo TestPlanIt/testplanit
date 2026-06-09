@@ -194,7 +194,8 @@
     "auth": {
       "internal": "电子邮件/密码",
       "sso": "仅限单点登录",
-      "both": "电子邮件和单点登录"
+      "both": "电子邮件和单点登录",
+      "scim": "SCIM 已配置"
     },
     "status": {
       "deleted": "已删除",
@@ -2282,6 +2283,23 @@
       },
       "access": {
         "title": "使用权"
+      },
+      "directory": {
+        "title": "目录配置文件",
+        "subtitle": "通过 SCIM 从您的身份提供商同步的只读字段。",
+        "externalId": "身份提供商用户 ID",
+        "userName": "目录用户名",
+        "givenName": "名",
+        "familyName": "姓",
+        "jobTitle": "标题",
+        "userType": "用户类型",
+        "employeeNumber": "员工编号",
+        "department": "部门",
+        "division": "分配",
+        "organization": "组织",
+        "costCenter": "成本中心",
+        "manager": "经理",
+        "noEnterpriseFields": "您的身份提供商尚未为此帐户发送任何企业目录属性。"
       },
       "notifications": {
         "title": "通知偏好设置",

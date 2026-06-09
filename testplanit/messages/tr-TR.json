@@ -194,7 +194,8 @@
     "auth": {
       "internal": "E-posta/Şifre",
       "sso": "Yalnızca SSO",
-      "both": "E-posta ve SSO"
+      "both": "E-posta ve SSO",
+      "scim": "SCIM Sağlandı"
     },
     "status": {
       "deleted": "Silindi",
@@ -2282,6 +2283,23 @@
       },
       "access": {
         "title": "Erişim"
+      },
+      "directory": {
+        "title": "Dizin Profili",
+        "subtitle": "Kimlik sağlayıcınızdan SCIM aracılığıyla senkronize edilen salt okunur alanlar.",
+        "externalId": "IdP kullanıcı kimliği",
+        "userName": "Dizin kullanıcı adı",
+        "givenName": "İlk adı",
+        "familyName": "Soy isim",
+        "jobTitle": "Başlık",
+        "userType": "Kullanıcı türü",
+        "employeeNumber": "Çalışan numarası",
+        "department": "Departman",
+        "division": "Bölüm",
+        "organization": "Organizasyon",
+        "costCenter": "Maliyet merkezi",
+        "manager": "Müdür",
+        "noEnterpriseFields": "Kimlik sağlayıcınız bu hesap için herhangi bir kurumsal dizin özniteliği göndermedi."
       },
       "notifications": {
         "title": "Bildirim Tercihleri",

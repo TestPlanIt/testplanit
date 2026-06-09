@@ -194,7 +194,8 @@
     "auth": {
       "internal": "Email/Mật khẩu",
       "sso": "Chỉ SSO",
-      "both": "Email & SSO"
+      "both": "Email & SSO",
+      "scim": "SCIM đã được cấp phép"
     },
     "status": {
       "deleted": "Đã xóa",
@@ -2282,6 +2283,23 @@
       },
       "access": {
         "title": "Truy cập"
+      },
+      "directory": {
+        "title": "Hồ sơ thư mục",
+        "subtitle": "Các trường chỉ đọc được đồng bộ từ nhà cung cấp danh tính của bạn thông qua SCIM.",
+        "externalId": "ID người dùng IdP",
+        "userName": "Tên người dùng thư mục",
+        "givenName": "Tên",
+        "familyName": "Họ",
+        "jobTitle": "Tiêu đề",
+        "userType": "Loại người dùng",
+        "employeeNumber": "Mã số nhân viên",
+        "department": "Phòng",
+        "division": "Phân công",
+        "organization": "Tổ chức",
+        "costCenter": "Trung tâm chi phí",
+        "manager": "Giám đốc",
+        "noEnterpriseFields": "Nhà cung cấp định danh của bạn chưa gửi bất kỳ thuộc tính thư mục doanh nghiệp nào cho tài khoản này."
       },
       "notifications": {
         "title": "Tùy chọn thông báo",

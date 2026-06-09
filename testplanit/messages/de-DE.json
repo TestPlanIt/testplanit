@@ -194,7 +194,8 @@
     "auth": {
       "internal": "E-Mail/Passwort",
       "sso": "Nur SSO",
-      "both": "E-Mail & SSO"
+      "both": "E-Mail & SSO",
+      "scim": "SCIM bereitgestellt"
     },
     "status": {
       "deleted": "Gelöscht",
@@ -2282,6 +2283,23 @@
       },
       "access": {
         "title": "Zugang"
+      },
+      "directory": {
+        "title": "Verzeichnisprofil",
+        "subtitle": "Schreibgeschützte Felder, die über SCIM von Ihrem Identitätsanbieter synchronisiert werden.",
+        "externalId": "IdP-Benutzer-ID",
+        "userName": "Verzeichnisbenutzername",
+        "givenName": "Vorname",
+        "familyName": "Nachname",
+        "jobTitle": "Titel",
+        "userType": "Benutzertyp",
+        "employeeNumber": "Mitarbeiternummer",
+        "department": "Abteilung",
+        "division": "Division",
+        "organization": "Organisation",
+        "costCenter": "Kostenstelle",
+        "manager": "Manager",
+        "noEnterpriseFields": "Ihr Identitätsanbieter hat für dieses Konto keine Unternehmensverzeichnisattribute übermittelt."
       },
       "notifications": {
         "title": "Benachrichtigungseinstellungen",

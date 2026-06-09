@@ -194,7 +194,8 @@
     "auth": {
       "internal": "Email/Password",
       "sso": "SSO Only",
-      "both": "Email & SSO"
+      "both": "Email & SSO",
+      "scim": "SCIM Provisioned"
     },
     "status": {
       "deleted": "Deleted",
@@ -2282,6 +2283,23 @@
       },
       "access": {
         "title": "Access"
+      },
+      "directory": {
+        "title": "Directory Profile",
+        "subtitle": "Read-only fields synced from your identity provider via SCIM.",
+        "externalId": "IdP user ID",
+        "userName": "Directory username",
+        "givenName": "First name",
+        "familyName": "Last name",
+        "jobTitle": "Title",
+        "userType": "User type",
+        "employeeNumber": "Employee number",
+        "department": "Department",
+        "division": "Division",
+        "organization": "Organization",
+        "costCenter": "Cost center",
+        "manager": "Manager",
+        "noEnterpriseFields": "Your identity provider has not sent any enterprise directory attributes for this account."
       },
       "notifications": {
         "title": "Notification Preferences",

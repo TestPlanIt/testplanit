@@ -194,7 +194,8 @@
     "auth": {
       "internal": "メールアドレス/パスワード",
       "sso": "SSOのみ",
-      "both": "メールとSSO"
+      "both": "メールとSSO",
+      "scim": "SCIMプロビジョニング済み"
     },
     "status": {
       "deleted": "削除済み",
@@ -2282,6 +2283,23 @@
       },
       "access": {
         "title": "アクセス"
+      },
+      "directory": {
+        "title": "ディレクトリプロファイル",
+        "subtitle": "SCIM経由でIDプロバイダーから同期される読み取り専用フィールド。",
+        "externalId": "IdPユーザーID",
+        "userName": "ディレクトリユーザー名",
+        "givenName": "ファーストネーム",
+        "familyName": "苗字",
+        "jobTitle": "タイトル",
+        "userType": "ユーザータイプ",
+        "employeeNumber": "従業員番号",
+        "department": "部門",
+        "division": "分割",
+        "organization": "組織",
+        "costCenter": "コストセンター",
+        "manager": "マネージャー",
+        "noEnterpriseFields": "お客様のIDプロバイダーは、このアカウントに関するエンタープライズディレクトリ属性を送信していません。"
       },
       "notifications": {
         "title": "通知設定",

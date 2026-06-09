@@ -194,7 +194,8 @@
     "auth": {
       "internal": "E-mailadres/wachtwoord",
       "sso": "Alleen SSO",
-      "both": "E-mail en SSO"
+      "both": "E-mail en SSO",
+      "scim": "SCIM-voorziening"
     },
     "status": {
       "deleted": "Verwijderd",
@@ -2282,6 +2283,23 @@
       },
       "access": {
         "title": "Toegang"
+      },
+      "directory": {
+        "title": "Directoryprofiel",
+        "subtitle": "Alleen-lezen velden die via SCIM vanuit uw identiteitsprovider worden gesynchroniseerd.",
+        "externalId": "IdP-gebruikers-ID",
+        "userName": "Map gebruikersnaam",
+        "givenName": "Voornaam",
+        "familyName": "Achternaam",
+        "jobTitle": "Titel",
+        "userType": "Gebruikerstype",
+        "employeeNumber": "Werknemersnummer",
+        "department": "Afdeling",
+        "division": "Divisie",
+        "organization": "Organisatie",
+        "costCenter": "Kostenplaats",
+        "manager": "Manager",
+        "noEnterpriseFields": "Uw identiteitsaanbieder heeft voor dit account geen bedrijfsdirectory-attributen verzonden."
       },
       "notifications": {
         "title": "Meldingsvoorkeuren",

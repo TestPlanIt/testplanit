@@ -194,7 +194,8 @@
     "auth": {
       "internal": "Correo/Contraseña",
       "sso": "Sólo SSO",
-      "both": "Email y SSO"
+      "both": "Email y SSO",
+      "scim": "SCIM aprovisionado"
     },
     "status": {
       "deleted": "Eliminado",
@@ -2282,6 +2283,23 @@
       },
       "access": {
         "title": "Acceso"
+      },
+      "directory": {
+        "title": "Perfil de directorio",
+        "subtitle": "Campos de solo lectura sincronizados desde su proveedor de identidad a través de SCIM.",
+        "externalId": "ID de usuario del IdP",
+        "userName": "Nombre de usuario del directorio",
+        "givenName": "Nombre de pila",
+        "familyName": "Apellido",
+        "jobTitle": "Título",
+        "userType": "Tipo de usuario",
+        "employeeNumber": "Número de empleado",
+        "department": "Departamento",
+        "division": "División",
+        "organization": "Organización",
+        "costCenter": "centro de costos",
+        "manager": "Gerente",
+        "noEnterpriseFields": "Su proveedor de identidad no ha enviado ningún atributo de directorio empresarial para esta cuenta."
       },
       "notifications": {
         "title": "Preferencias de notificación",

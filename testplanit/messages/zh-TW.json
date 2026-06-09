@@ -194,7 +194,8 @@
     "auth": {
       "internal": "電子郵件/密碼",
       "sso": "限單一登入",
-      "both": "電子郵件和單一登入"
+      "both": "電子郵件和單一登入",
+      "scim": "SCIM 已配置"
     },
     "status": {
       "deleted": "已刪除",
@@ -2282,6 +2283,23 @@
       },
       "access": {
         "title": "使用權"
+      },
+      "directory": {
+        "title": "目錄設定檔",
+        "subtitle": "透過 SCIM 從您的身分提供者同步的唯讀欄位。",
+        "externalId": "身分提供者使用者 ID",
+        "userName": "目錄使用者名稱",
+        "givenName": "名",
+        "familyName": "姓",
+        "jobTitle": "標題",
+        "userType": "使用者類型",
+        "employeeNumber": "員工編號",
+        "department": "部門",
+        "division": "分配",
+        "organization": "組織",
+        "costCenter": "成本中心",
+        "manager": "主管",
+        "noEnterpriseFields": "您的身分提供者尚未為此帳戶發送任何企業目錄屬性。"
       },
       "notifications": {
         "title": "通知偏好設定",

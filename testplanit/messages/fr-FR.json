@@ -194,7 +194,8 @@
     "auth": {
       "internal": "Adresse électronique/Mot de passe",
       "sso": "Authentification unique uniquement",
-      "both": "Courriel et authentification unique"
+      "both": "Courriel et authentification unique",
+      "scim": "SCIM approvisionné"
     },
     "status": {
       "deleted": "Supprimé",
@@ -2282,6 +2283,23 @@
       },
       "access": {
         "title": "Accéder"
+      },
+      "directory": {
+        "title": "Profil de l'annuaire",
+        "subtitle": "Champs en lecture seule synchronisés depuis votre fournisseur d'identité via SCIM.",
+        "externalId": "ID utilisateur du fournisseur d'identité",
+        "userName": "Nom d'utilisateur de l'annuaire",
+        "givenName": "Prénom",
+        "familyName": "Nom de famille",
+        "jobTitle": "Titre",
+        "userType": "Type d'utilisateur",
+        "employeeNumber": "numéro d'employé",
+        "department": "Département",
+        "division": "Division",
+        "organization": "Organisation",
+        "costCenter": "centre de coûts",
+        "manager": "Directeur",
+        "noEnterpriseFields": "Votre fournisseur d'identité n'a envoyé aucun attribut d'annuaire d'entreprise pour ce compte."
       },
       "notifications": {
         "title": "Préférences de notification",

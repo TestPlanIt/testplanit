@@ -73,6 +73,7 @@ import { use, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { useFindFirstUser, useFindUniqueAppConfig } from "~/lib/hooks";
+import { SCIM_SCHEMAS } from "~/lib/scim/constants";
 import { languageNames } from "~/i18n/navigation";
 import { useRouter } from "~/lib/navigation";
 import { ApiTokenSettings } from "./ApiTokenSettings";
@@ -112,6 +113,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
   const tGlobal = useTranslations();
   const tCommon = useTranslations("common");
   const tEdit = useTranslations("users.profile.edit");
+  const tDirectory = useTranslations("users.profile.directory");
   const tNotifications = useTranslations("users.profile.notifications");
   const tNotificationModes = useTranslations("admin.notifications.defaultMode");
   const tUserMenu = useTranslations("userMenu");
@@ -149,6 +151,29 @@ const UserProfile: React.FC<UserProfileProps> = ({
   // "managed by your IdP" hint instead of letting the user submit something
   // the server will reject.
   const isScimManaged = user?.scimGivenName != null;
+
+  // scimExtensions is partitioned by URN bucket; the IdP-side identity
+  // info we want to render lives under the SCIM core (non-writable
+  // attrs like title / userType) and enterprise extension URNs.
+  const scimExtensions = (user?.scimExtensions ?? null) as Record<
+    string,
+    unknown
+  > | null;
+  const scimCore = (scimExtensions?.[SCIM_SCHEMAS.CORE_USER] ?? null) as Record<
+    string,
+    unknown
+  > | null;
+  const scimEnterprise = (scimExtensions?.[SCIM_SCHEMAS.ENTERPRISE_USER] ??
+    null) as Record<string, unknown> | null;
+  const scimManager = (scimEnterprise?.manager ?? null) as Record<
+    string,
+    unknown
+  > | null;
+  const scimManagerDisplay =
+    (typeof scimManager?.displayName === "string"
+      ? scimManager.displayName
+      : null) ??
+    (typeof scimManager?.value === "string" ? scimManager.value : null);
 
   // Form schema for editing
   const FormSchema = z.object({
@@ -720,6 +745,8 @@ const UserProfile: React.FC<UserProfileProps> = ({
                               {user.authMethod === "SSO" && tCommon("auth.sso")}
                               {user.authMethod === "BOTH" &&
                                 tCommon("auth.both")}
+                              {user.authMethod === "SCIM" &&
+                                tCommon("auth.scim")}
                             </Badge>
                           </div>
 
@@ -754,6 +781,112 @@ const UserProfile: React.FC<UserProfileProps> = ({
                       </div>
                     </AccordionContent>
                   </AccordionItem>
+
+                  {/* Directory Profile — read-only SCIM identity attrs */}
+                  {isScimManaged && (
+                    <AccordionItem value="directory">
+                      <AccordionTrigger className="text-sm font-medium text-muted-foreground uppercase tracking-wide hover:no-underline">
+                        {tDirectory("title")}
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="px-4 space-y-3">
+                          <p className="text-sm text-muted-foreground">
+                            {tDirectory("subtitle")}
+                          </p>
+
+                          {(() => {
+                            // Render rows only when the IdP actually sent
+                            // a value — empty buckets stay quiet rather
+                            // than show "—" everywhere.
+                            const rows: Array<{
+                              label: string;
+                              value: string;
+                            }> = [];
+                            const pushString = (
+                              label: string,
+                              v: unknown
+                            ): void => {
+                              if (typeof v === "string" && v.length > 0) {
+                                rows.push({ label, value: v });
+                              }
+                            };
+                            pushString(
+                              tDirectory("givenName"),
+                              user.scimGivenName
+                            );
+                            pushString(
+                              tDirectory("familyName"),
+                              user.scimFamilyName
+                            );
+                            pushString(
+                              tDirectory("userName"),
+                              user.scimUserName
+                            );
+                            pushString(
+                              tDirectory("externalId"),
+                              user.scimExternalId
+                            );
+                            pushString(
+                              tDirectory("jobTitle"),
+                              scimCore?.title
+                            );
+                            pushString(
+                              tDirectory("userType"),
+                              scimCore?.userType
+                            );
+                            pushString(
+                              tDirectory("employeeNumber"),
+                              scimEnterprise?.employeeNumber
+                            );
+                            pushString(
+                              tDirectory("department"),
+                              scimEnterprise?.department
+                            );
+                            pushString(
+                              tDirectory("division"),
+                              scimEnterprise?.division
+                            );
+                            pushString(
+                              tDirectory("organization"),
+                              scimEnterprise?.organization
+                            );
+                            pushString(
+                              tDirectory("costCenter"),
+                              scimEnterprise?.costCenter
+                            );
+                            if (scimManagerDisplay) {
+                              rows.push({
+                                label: tDirectory("manager"),
+                                value: scimManagerDisplay,
+                              });
+                            }
+
+                            if (rows.length === 0) {
+                              return (
+                                <p className="text-sm text-muted-foreground italic">
+                                  {tDirectory("noEnterpriseFields")}
+                                </p>
+                              );
+                            }
+
+                            return rows.map((row, idx) => (
+                              <React.Fragment key={row.label}>
+                                {idx > 0 && (
+                                  <Separator className="opacity-50" />
+                                )}
+                                <div className="flex items-start justify-between gap-4">
+                                  <span className="text-sm">{row.label}</span>
+                                  <span className="text-sm text-right break-all">
+                                    {row.value}
+                                  </span>
+                                </div>
+                              </React.Fragment>
+                            ));
+                          })()}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
 
                   {/* Access — Projects + Groups */}
                   <AccordionItem value="access">
