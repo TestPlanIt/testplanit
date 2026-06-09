@@ -3431,6 +3431,7 @@
       "quickscriptTemplates": "QuickScript Şablonları",
       "testManagement": "Test Yönetimi",
       "peopleAndAccess": "İnsanlar ve Erişim",
+      "authentication": "Kimlik doğrulama",
       "toolsAndIntegrations": "Araçlar ve Entegrasyonlar",
       "system": "Sistem"
     },
@@ -3773,15 +3774,11 @@
       }
     },
     "sso": {
-      "description": "Kimlik doğrulama ve güvenlik ayarlarını yönetin",
+      "description": "Kimlik doğrulama ve kayıt ayarlarını yönetin",
       "sections": {
         "providers": {
           "title": "Giriş Sağlayıcıları",
           "description": "Kullanıcıların uygulamanıza nasıl giriş yapabileceğini yapılandırın."
-        },
-        "security": {
-          "title": "Güvenlik",
-          "description": "Kimlik doğrulama için güvenlik politikalarını yapılandırın."
         }
       },
       "globalSettings": {
@@ -3805,20 +3802,6 @@
         "magicLink": {
           "title": "Sihirli Bağlantı Kimlik Doğrulaması",
           "description": "Parolasız e-posta tabanlı kimlik doğrulamasını etkinleştirin veya devre dışı bırakın."
-        },
-        "forceSso": {
-          "title": "Zorunlu SSO Girişi",
-          "description": "E-posta ile giriş yapmayı devre dışı bırakın ve kullanıcıların SSO kullanmasını zorunlu kılın."
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "Parola ile giriş yaparken 2FA (iki faktörlü kimlik doğrulama) zorunlu hale getirilmelidir.",
-            "description": "E-posta/şifre ile giriş yapan kullanıcıların iki faktörlü kimlik doğrulamasını kurmaları ve kullanmaları gerekmektedir."
-          },
-          "forceAllLogins": {
-            "title": "Tüm girişler için 2FA zorunlu.",
-            "description": "SSO kullanıcıları da dahil olmak üzere tüm kullanıcıların oturum açtıktan sonra 2FA ile doğrulama yapması gerekmektedir."
-          }
         }
       },
       "providers": {
@@ -3876,14 +3859,6 @@
         "enabled": "Sağlayıcı etkinleştirildi",
         "disabled": "Sağlayıcı devre dışı bırakıldı",
         "updateFailed": "Sağlayıcı güncellenemedi.",
-        "forceSsoEnabled": "SSO'yu küresel olarak zorunlu kıl",
-        "forceSsoDisabled": "SSO'yu global olarak devre dışı bırakma zorunluluğu",
-        "forceSsoUpdateFailed": "Zorunlu SSO ayarını güncelleme başarısız oldu.",
-        "force2FANonSSOEnabled": "Parola girişleri için iki faktörlü kimlik doğrulama gereklidir.",
-        "force2FANonSSODisabled": "Parola ile giriş yaparken artık iki faktörlü kimlik doğrulama gerekmiyor.",
-        "force2FAAllLoginsEnabled": "Tüm girişler için iki faktörlü kimlik doğrulama gereklidir.",
-        "force2FAAllLoginsDisabled": "Artık tüm girişler için iki faktörlü kimlik doğrulama zorunlu değil.",
-        "force2FAUpdateFailed": "İki faktörlü kimlik doğrulama ayarı güncellenemedi.",
         "configUpdated": "SAML yapılandırması güncellendi",
         "configCreated": "SAML yapılandırması oluşturuldu",
         "configSaveFailed": "SAML yapılandırması kaydedilemedi.",
@@ -4348,13 +4323,29 @@
     },
     "security": {
       "title": "Güvenlik",
-      "description": "Parola politikasını, kilitlenme ayarlarını ve uygulama eylemlerini yapılandırın.",
+      "description": "Oturum açma zorunluluğunu, parola politikasını, kilitlenme ayarlarını ve uygulama eylemlerini yapılandırın.",
       "passwordPolicyTitle": "Parola Politikası",
       "passwordPolicyDescription": "Kullanıcı şifreleri için gereksinimleri belirleyin.",
       "lockoutPolicyTitle": "Kilitleme Politikası",
       "lockoutPolicyDescription": "Başarısız giriş denemelerinden sonra hesap kilitleme özelliğini yapılandırın.",
       "enforcementTitle": "Yaptırım İşlemleri",
       "enforcementDescription": "Kimlik doğrulama tabanlı kullanıcılar için parola değişikliklerini zorunlu kılma",
+      "signInEnforcementTitle": "Giriş Yapma Zorunluluğu",
+      "signInEnforcementDescription": "Tekli oturum açmayı zorunlu kılın ve iki faktörlü kimlik doğrulamayı uygulayın.",
+      "forceSsoTitle": "Zorunlu SSO Girişi",
+      "forceSsoDescription": "E-posta ile giriş yapmayı devre dışı bırakın ve kullanıcıların SSO kullanmasını zorunlu kılın.",
+      "force2FANonSSOTitle": "Parola ile giriş yaparken 2FA (iki faktörlü kimlik doğrulama) zorunlu hale getirilmelidir.",
+      "force2FANonSSODescription": "E-posta/şifre ile giriş yapan kullanıcıların iki faktörlü kimlik doğrulamasını kurmaları ve kullanmaları gerekmektedir.",
+      "force2FAAllLoginsTitle": "Tüm girişler için 2FA zorunlu.",
+      "force2FAAllLoginsDescription": "SSO kullanıcıları da dahil olmak üzere tüm kullanıcıların oturum açtıktan sonra 2FA ile doğrulama yapması gerekmektedir.",
+      "forceSsoEnabled": "SSO'yu küresel olarak zorunlu kıl",
+      "forceSsoDisabled": "SSO'yu global olarak devre dışı bırakma zorunluluğu",
+      "forceSsoUpdateFailed": "Zorunlu SSO ayarını güncelleme başarısız oldu.",
+      "force2FANonSSOEnabled": "Parola girişleri için iki faktörlü kimlik doğrulama gereklidir.",
+      "force2FANonSSODisabled": "Parola ile giriş yaparken artık iki faktörlü kimlik doğrulama gerekmiyor.",
+      "force2FAAllLoginsEnabled": "Tüm girişler için iki faktörlü kimlik doğrulama gereklidir.",
+      "force2FAAllLoginsDisabled": "Artık tüm girişler için iki faktörlü kimlik doğrulama zorunlu değil.",
+      "force2FAUpdateFailed": "İki faktörlü kimlik doğrulama ayarı güncellenemedi.",
       "minPasswordLengthLabel": "Minimum Parola Uzunluğu",
       "minPasswordLengthDescription": "Şifreler en az bu kadar karakter uzunluğunda olmalıdır (8-128).",
       "requireUppercaseLabel": "Büyük Harf Gereklidir",

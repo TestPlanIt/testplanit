@@ -3431,6 +3431,7 @@
       "quickscriptTemplates": "Modelos QuickScript",
       "testManagement": "Gestão de Testes",
       "peopleAndAccess": "Pessoas e Acesso",
+      "authentication": "Autenticação",
       "toolsAndIntegrations": "Ferramentas e integrações",
       "system": "Sistema"
     },
@@ -3773,15 +3774,11 @@
       }
     },
     "sso": {
-      "description": "Gerenciar configurações de autenticação e segurança",
+      "description": "Gerenciar configurações de autenticação e registro",
       "sections": {
         "providers": {
           "title": "Fornecedores de login",
           "description": "Configure como os usuários podem fazer login no seu aplicativo."
-        },
-        "security": {
-          "title": "Segurança",
-          "description": "Configure as políticas de segurança para autenticação."
         }
       },
       "globalSettings": {
@@ -3805,20 +3802,6 @@
         "magicLink": {
           "title": "Autenticação Magic Link",
           "description": "Ativar ou desativar a autenticação sem senha baseada em e-mail."
-        },
-        "forceSso": {
-          "title": "Forçar login SSO",
-          "description": "Desative o login por e-mail e exija que os usuários usem o SSO (Single Sign-On)."
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "Exigir autenticação de dois fatores (2FA) para logins com senha.",
-            "description": "Usuários que acessarem o sistema com e-mail/senha deverão configurar e utilizar a autenticação de dois fatores."
-          },
-          "forceAllLogins": {
-            "title": "Exigir autenticação de dois fatores para todos os logins.",
-            "description": "Todos os usuários devem realizar a autenticação de dois fatores (2FA) após o login, incluindo usuários com SSO (Single Sign-On)."
-          }
         }
       },
       "providers": {
@@ -3876,14 +3859,6 @@
         "enabled": "Provedor habilitado",
         "disabled": "Provedor desativado",
         "updateFailed": "Falha ao atualizar o provedor",
-        "forceSsoEnabled": "Forçar SSO ativado globalmente",
-        "forceSsoDisabled": "Forçar SSO desativado globalmente",
-        "forceSsoUpdateFailed": "Falha ao atualizar a configuração de SSO forçado.",
-        "force2FANonSSOEnabled": "Autenticação de dois fatores obrigatória para logins com senha.",
-        "force2FANonSSODisabled": "A autenticação de dois fatores não é mais necessária para logins com senha.",
-        "force2FAAllLoginsEnabled": "Autenticação de dois fatores obrigatória para todos os logins.",
-        "force2FAAllLoginsDisabled": "A autenticação de dois fatores não é mais obrigatória para todos os logins.",
-        "force2FAUpdateFailed": "Falha ao atualizar a configuração de autenticação de dois fatores",
         "configUpdated": "Configuração SAML atualizada",
         "configCreated": "Configuração SAML criada",
         "configSaveFailed": "Falha ao salvar a configuração SAML",
@@ -4348,13 +4323,29 @@
     },
     "security": {
       "title": "Segurança",
-      "description": "Configure a política de senhas, as configurações de bloqueio e as ações de aplicação.",
+      "description": "Configure a aplicação de regras de login, a política de senhas, as configurações de bloqueio e as ações de aplicação.",
       "passwordPolicyTitle": "Política de senhas",
       "passwordPolicyDescription": "Defina requisitos para senhas de usuário.",
       "lockoutPolicyTitle": "Política de bloqueio",
       "lockoutPolicyDescription": "Configure o bloqueio de conta após tentativas de login falhas.",
       "enforcementTitle": "Ações de fiscalização",
       "enforcementDescription": "Forçar a alteração de senha para usuários com credenciais.",
+      "signInEnforcementTitle": "Aplicação do processo de login",
+      "signInEnforcementDescription": "Exigir SSO e impor autenticação de dois fatores",
+      "forceSsoTitle": "Forçar login SSO",
+      "forceSsoDescription": "Desative o login por e-mail e exija que os usuários usem o SSO (Single Sign-On).",
+      "force2FANonSSOTitle": "Exigir autenticação de dois fatores (2FA) para logins com senha.",
+      "force2FANonSSODescription": "Usuários que acessarem o sistema com e-mail/senha deverão configurar e utilizar a autenticação de dois fatores.",
+      "force2FAAllLoginsTitle": "Exigir autenticação de dois fatores para todos os logins.",
+      "force2FAAllLoginsDescription": "Todos os usuários devem realizar a autenticação de dois fatores (2FA) após o login, incluindo usuários com SSO (Single Sign-On).",
+      "forceSsoEnabled": "Forçar SSO ativado globalmente",
+      "forceSsoDisabled": "Forçar SSO desativado globalmente",
+      "forceSsoUpdateFailed": "Falha ao atualizar a configuração de SSO forçado.",
+      "force2FANonSSOEnabled": "Autenticação de dois fatores obrigatória para logins com senha.",
+      "force2FANonSSODisabled": "A autenticação de dois fatores não é mais necessária para logins com senha.",
+      "force2FAAllLoginsEnabled": "Autenticação de dois fatores obrigatória para todos os logins.",
+      "force2FAAllLoginsDisabled": "A autenticação de dois fatores não é mais obrigatória para todos os logins.",
+      "force2FAUpdateFailed": "Falha ao atualizar a configuração de autenticação de dois fatores",
       "minPasswordLengthLabel": "Comprimento mínimo da senha",
       "minPasswordLengthDescription": "As senhas devem ter pelo menos este número de caracteres (8-128).",
       "requireUppercaseLabel": "Exigir letras maiúsculas",

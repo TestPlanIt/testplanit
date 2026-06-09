@@ -3431,6 +3431,7 @@
       "quickscriptTemplates": "Modèles QuickScript",
       "testManagement": "Gestion des tests",
       "peopleAndAccess": "Personnes et accès",
+      "authentication": "Authentification",
       "toolsAndIntegrations": "Outils et intégrations",
       "system": "Système"
     },
@@ -3773,15 +3774,11 @@
       }
     },
     "sso": {
-      "description": "Gérer les paramètres d'authentification et de sécurité",
+      "description": "Gérer les paramètres d'authentification et d'inscription",
       "sections": {
         "providers": {
           "title": "Fournisseurs d'authentification",
           "description": "Configurez la manière dont les utilisateurs peuvent se connecter à votre application."
-        },
-        "security": {
-          "title": "Sécurité",
-          "description": "Configurer les politiques de sécurité pour l'authentification"
         }
       },
       "globalSettings": {
@@ -3805,20 +3802,6 @@
         "magicLink": {
           "title": "Authentification Magic Link",
           "description": "Activer ou désactiver l'authentification par e-mail sans mot de passe"
-        },
-        "forceSso": {
-          "title": "Connexion SSO forcée",
-          "description": "Désactivez la connexion par e-mail et exigez l'utilisation de l'authentification unique (SSO)."
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "Exiger l'authentification à deux facteurs pour les connexions par mot de passe",
-            "description": "Les utilisateurs se connectant avec un e-mail et un mot de passe doivent configurer et utiliser l'authentification à deux facteurs."
-          },
-          "forceAllLogins": {
-            "title": "Exiger l'authentification à deux facteurs pour toutes les connexions",
-            "description": "Tous les utilisateurs doivent s'authentifier à l'aide de l'authentification à deux facteurs (2FA) après s'être connectés, y compris les utilisateurs SSO."
-          }
         }
       },
       "providers": {
@@ -3876,14 +3859,6 @@
         "enabled": "fournisseur activé",
         "disabled": "Fournisseur désactivé",
         "updateFailed": "Échec de la mise à jour du fournisseur",
-        "forceSsoEnabled": "Forcer l'authentification unique (SSO) activée globalement",
-        "forceSsoDisabled": "L'authentification unique forcée est désactivée globalement.",
-        "forceSsoUpdateFailed": "Échec de la mise à jour du paramètre SSO forcé",
-        "force2FANonSSOEnabled": "L'authentification à deux facteurs est requise pour les connexions par mot de passe.",
-        "force2FANonSSODisabled": "L'authentification à deux facteurs n'est plus requise pour les connexions par mot de passe.",
-        "force2FAAllLoginsEnabled": "L'authentification à deux facteurs est requise pour toutes les connexions.",
-        "force2FAAllLoginsDisabled": "L'authentification à deux facteurs n'est plus requise pour toutes les connexions.",
-        "force2FAUpdateFailed": "Échec de la mise à jour des paramètres d'authentification à deux facteurs",
         "configUpdated": "Configuration SAML mise à jour",
         "configCreated": "Configuration SAML créée",
         "configSaveFailed": "Échec de l'enregistrement de la configuration SAML",
@@ -4348,13 +4323,29 @@
     },
     "security": {
       "title": "Sécurité",
-      "description": "Configurer la politique de mots de passe, les paramètres de verrouillage et les actions d'application",
+      "description": "Configurer l'application des règles de connexion, la politique de mots de passe, les paramètres de verrouillage et les actions d'application",
       "passwordPolicyTitle": "Politique relative aux mots de passe",
       "passwordPolicyDescription": "Définir les exigences relatives aux mots de passe des utilisateurs",
       "lockoutPolicyTitle": "Politique de verrouillage",
       "lockoutPolicyDescription": "Configurer le verrouillage du compte après des tentatives de connexion infructueuses",
       "enforcementTitle": "Mesures d'application",
       "enforcementDescription": "Imposer le changement de mot de passe pour les utilisateurs authentifiés.",
+      "signInEnforcementTitle": "Contrôle de la connexion",
+      "signInEnforcementDescription": "Exiger l'authentification unique (SSO) et imposer l'authentification à deux facteurs",
+      "forceSsoTitle": "Connexion SSO forcée",
+      "forceSsoDescription": "Désactivez la connexion par e-mail et exigez l'utilisation de l'authentification unique (SSO).",
+      "force2FANonSSOTitle": "Exiger l'authentification à deux facteurs pour les connexions par mot de passe",
+      "force2FANonSSODescription": "Les utilisateurs se connectant avec un e-mail et un mot de passe doivent configurer et utiliser l'authentification à deux facteurs.",
+      "force2FAAllLoginsTitle": "Exiger l'authentification à deux facteurs pour toutes les connexions",
+      "force2FAAllLoginsDescription": "Tous les utilisateurs doivent s'authentifier à l'aide de l'authentification à deux facteurs (2FA) après s'être connectés, y compris les utilisateurs SSO.",
+      "forceSsoEnabled": "Forcer l'authentification unique (SSO) activée globalement",
+      "forceSsoDisabled": "L'authentification unique forcée est désactivée globalement.",
+      "forceSsoUpdateFailed": "Échec de la mise à jour du paramètre SSO forcé",
+      "force2FANonSSOEnabled": "L'authentification à deux facteurs est requise pour les connexions par mot de passe.",
+      "force2FANonSSODisabled": "L'authentification à deux facteurs n'est plus requise pour les connexions par mot de passe.",
+      "force2FAAllLoginsEnabled": "L'authentification à deux facteurs est requise pour toutes les connexions.",
+      "force2FAAllLoginsDisabled": "L'authentification à deux facteurs n'est plus requise pour toutes les connexions.",
+      "force2FAUpdateFailed": "Échec de la mise à jour des paramètres d'authentification à deux facteurs",
       "minPasswordLengthLabel": "Longueur minimale du mot de passe",
       "minPasswordLengthDescription": "Les mots de passe doivent comporter au moins ce nombre de caractères (8-128).",
       "requireUppercaseLabel": "Lettres majuscules requises",

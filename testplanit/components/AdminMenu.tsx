@@ -21,6 +21,7 @@ import {
   ImportIcon,
   KeyRound,
   LayoutList,
+  Lock,
   MessageSquareCode,
   Milestone,
   Plug,
@@ -46,6 +47,7 @@ import { cn } from "~/utils";
 type MenuSection =
   | "testManagement"
   | "peopleAndAccess"
+  | "authentication"
   | "toolsAndIntegrations"
   | "system";
 
@@ -59,6 +61,7 @@ type MenuOption = {
 const sectionIcons: Record<MenuSection, React.ElementType> = {
   testManagement: Boxes,
   peopleAndAccess: Users,
+  authentication: Lock,
   toolsAndIntegrations: Plug,
   system: Settings,
 };
@@ -66,6 +69,7 @@ const sectionIcons: Record<MenuSection, React.ElementType> = {
 const sectionOrder: MenuSection[] = [
   "testManagement",
   "peopleAndAccess",
+  "authentication",
   "toolsAndIntegrations",
   "system",
 ];
@@ -146,29 +150,31 @@ const menuOptions: MenuOption[] = [
     path: "roles",
     section: "peopleAndAccess",
   },
+
+  // Authentication
   {
     icon: ShieldUser,
     translationKey: "sso",
     path: "sso",
-    section: "peopleAndAccess",
+    section: "authentication",
   },
   {
     icon: Shield,
     translationKey: "security",
     path: "security",
-    section: "peopleAndAccess",
+    section: "authentication",
   },
   {
     icon: KeyRound,
     translationKey: "apiTokens",
     path: "api-tokens",
-    section: "peopleAndAccess",
+    section: "authentication",
   },
   {
     icon: ShieldCheck,
     translationKey: "scim",
     path: "scim",
-    section: "peopleAndAccess",
+    section: "authentication",
   },
 
   // Tools & Integrations

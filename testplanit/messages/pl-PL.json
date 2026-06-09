@@ -3431,6 +3431,7 @@
       "quickscriptTemplates": "Szablony QuickScript",
       "testManagement": "Zarządzanie testami",
       "peopleAndAccess": "Ludzie i dostęp",
+      "authentication": "Uwierzytelnianie",
       "toolsAndIntegrations": "Narzędzia i integracje",
       "system": "System"
     },
@@ -3773,15 +3774,11 @@
       }
     },
     "sso": {
-      "description": "Zarządzaj ustawieniami uwierzytelniania i zabezpieczeń",
+      "description": "Zarządzaj ustawieniami uwierzytelniania i rejestracji",
       "sections": {
         "providers": {
           "title": "Dostawcy logowania",
           "description": "Skonfiguruj sposób, w jaki użytkownicy mogą logować się do Twojej aplikacji"
-        },
-        "security": {
-          "title": "Bezpieczeństwo",
-          "description": "Konfigurowanie zasad bezpieczeństwa dla uwierzytelniania"
         }
       },
       "globalSettings": {
@@ -3805,20 +3802,6 @@
         "magicLink": {
           "title": "Uwierzytelnianie Magic Link",
           "description": "Włączanie lub wyłączanie uwierzytelniania bez hasła na podstawie wiadomości e-mail"
-        },
-        "forceSso": {
-          "title": "Wymuś logowanie jednokrotne",
-          "description": "Wyłącz logowanie za pomocą poczty e-mail i wymagaj od użytkowników korzystania z logowania jednokrotnego (SSO)"
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "Wymagaj uwierzytelniania dwuskładnikowego (2FA) do logowania za pomocą hasła",
-            "description": "Użytkownicy logujący się za pomocą adresu e-mail i hasła muszą skonfigurować i używać uwierzytelniania dwuskładnikowego"
-          },
-          "forceAllLogins": {
-            "title": "Wymagaj uwierzytelniania dwuskładnikowego (2FA) dla wszystkich logowań",
-            "description": "Wszyscy użytkownicy muszą dokonać weryfikacji za pomocą uwierzytelniania dwuskładnikowego po zalogowaniu, w tym użytkownicy korzystający z logowania jednokrotnego"
-          }
         }
       },
       "providers": {
@@ -3876,14 +3859,6 @@
         "enabled": "Dostawca włączony",
         "disabled": "Dostawca wyłączony",
         "updateFailed": "Nie udało się zaktualizować dostawcy",
-        "forceSsoEnabled": "Wymuś logowanie jednokrotne włączone globalnie",
-        "forceSsoDisabled": "Wymuś wyłączenie logowania jednokrotnego globalnie",
-        "forceSsoUpdateFailed": "Nie udało się zaktualizować ustawienia wymuszonego logowania jednokrotnego",
-        "force2FANonSSOEnabled": "Do logowania za pomocą hasła wymagane jest uwierzytelnianie dwuskładnikowe",
-        "force2FANonSSODisabled": "Dwuskładnikowe uwierzytelnianie nie jest już wymagane do logowania się za pomocą hasła",
-        "force2FAAllLoginsEnabled": "Wymagane jest uwierzytelnianie dwuskładnikowe dla wszystkich logowań",
-        "force2FAAllLoginsDisabled": "Dwuskładnikowe uwierzytelnianie nie jest już wymagane przy wszystkich logowaniach",
-        "force2FAUpdateFailed": "Nie udało się zaktualizować ustawień uwierzytelniania dwuskładnikowego",
         "configUpdated": "Zaktualizowano konfigurację SAML",
         "configCreated": "Utworzono konfigurację SAML",
         "configSaveFailed": "Nie udało się zapisać konfiguracji SAML",
@@ -4348,13 +4323,29 @@
     },
     "security": {
       "title": "Bezpieczeństwo",
-      "description": "Konfiguruj zasady dotyczące haseł, ustawienia blokady i działania egzekucyjne",
+      "description": "Konfiguruj wymuszanie logowania, zasady dotyczące haseł, ustawienia blokady i działania wymuszające",
       "passwordPolicyTitle": "Polityka haseł",
       "passwordPolicyDescription": "Ustaw wymagania dotyczące haseł użytkowników",
       "lockoutPolicyTitle": "Polityka blokady",
       "lockoutPolicyDescription": "Skonfiguruj blokadę konta po nieudanych próbach logowania",
       "enforcementTitle": "Działania egzekucyjne",
       "enforcementDescription": "Wymuś zmianę hasła dla użytkowników opartych na poświadczeniach",
+      "signInEnforcementTitle": "Wymuszanie logowania",
+      "signInEnforcementDescription": "Wymagaj logowania jednokrotnego i wymuszaj uwierzytelnianie dwuskładnikowe",
+      "forceSsoTitle": "Wymuś logowanie jednokrotne",
+      "forceSsoDescription": "Wyłącz logowanie za pomocą poczty e-mail i wymagaj od użytkowników korzystania z logowania jednokrotnego (SSO)",
+      "force2FANonSSOTitle": "Wymagaj uwierzytelniania dwuskładnikowego (2FA) do logowania za pomocą hasła",
+      "force2FANonSSODescription": "Użytkownicy logujący się za pomocą adresu e-mail i hasła muszą skonfigurować i używać uwierzytelniania dwuskładnikowego",
+      "force2FAAllLoginsTitle": "Wymagaj uwierzytelniania dwuskładnikowego (2FA) dla wszystkich logowań",
+      "force2FAAllLoginsDescription": "Wszyscy użytkownicy muszą dokonać weryfikacji za pomocą uwierzytelniania dwuskładnikowego po zalogowaniu, w tym użytkownicy korzystający z logowania jednokrotnego",
+      "forceSsoEnabled": "Wymuś logowanie jednokrotne włączone globalnie",
+      "forceSsoDisabled": "Wymuś wyłączenie logowania jednokrotnego globalnie",
+      "forceSsoUpdateFailed": "Nie udało się zaktualizować ustawienia wymuszonego logowania jednokrotnego",
+      "force2FANonSSOEnabled": "Do logowania za pomocą hasła wymagane jest uwierzytelnianie dwuskładnikowe",
+      "force2FANonSSODisabled": "Dwuskładnikowe uwierzytelnianie nie jest już wymagane do logowania się za pomocą hasła",
+      "force2FAAllLoginsEnabled": "Wymagane jest uwierzytelnianie dwuskładnikowe dla wszystkich logowań",
+      "force2FAAllLoginsDisabled": "Dwuskładnikowe uwierzytelnianie nie jest już wymagane przy wszystkich logowaniach",
+      "force2FAUpdateFailed": "Nie udało się zaktualizować ustawień uwierzytelniania dwuskładnikowego",
       "minPasswordLengthLabel": "Minimalna długość hasła",
       "minPasswordLengthDescription": "Hasła muszą mieć co najmniej taką liczbę znaków (8–128)",
       "requireUppercaseLabel": "Wymagaj wielkich liter",
@@ -4439,7 +4430,7 @@
         "typeUnknown": "Nieznany",
         "viewPayload": "Wyświetl ładunek",
         "reEmit": "Wydarzenie członkowskie z ponowną emisją",
-        "reEmitConfirm": "Czy ponownie wyemitować webhook member_added / member_removed w związku z tym konfliktem? Oryginalny ładunek zdarzenia zawierał odwołania do członków, które nie istniały w momencie synchronizacji. Ponowna emisja teraz obejmie członków, którzy zostali już zaaprowizowani.",
+        "reEmitConfirm": "Czy ponownie wyemitować webhook member_added / member_removed w związku z tym konfliktem? Oryginalny ładunek zdarzenia zawierał odwołania do członków, które nie istniały w momencie synchronizacji. Ponowna emisja teraz obejmie członków, którzy zostali już dostarczeni.",
         "reEmitConfirmTitle": "Ponownie wyemitować wydarzenie członkowskie?",
         "reEmitSuccess": "Ponownie wyemitowano webhook; zapisano wiersz audytu.",
         "reEmitError": "Nie udało się ponownie wyemitować. {reason}",

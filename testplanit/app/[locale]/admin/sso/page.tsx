@@ -36,7 +36,6 @@ import {
   Mail,
   Plus,
   Settings,
-  Shield,
   ShieldUser,
   X,
 } from "lucide-react";
@@ -245,7 +244,6 @@ export default function SSOAdminPage() {
       for (const p of ssoProviders) {
         serverState[p.type] = p.enabled;
       }
-      serverState.forceSso = ssoProviders.some((p) => p.forceSso) || false;
       setToggleState((prev) => ({ ...prev, ...serverState }));
     }
   }, [ssoProviders]);
@@ -254,8 +252,6 @@ export default function SSOAdminPage() {
     if (registrationSettings) {
       setToggleState((prev) => ({
         ...prev,
-        force2FANonSSO: registrationSettings.force2FANonSSO || false,
-        force2FAAllLogins: registrationSettings.force2FAAllLogins || false,
         allowOpenRegistration:
           registrationSettings.allowOpenRegistration ?? true,
       }));
@@ -691,30 +687,6 @@ export default function SSOAdminPage() {
     }
   };
 
-  const handleToggleForceSso = async (enabled: boolean) => {
-    setToggleState((prev) => ({ ...prev, forceSso: enabled }));
-    try {
-      const updates =
-        ssoProviders?.map((provider) =>
-          updateProvider({
-            where: { id: provider.id },
-            data: { forceSso: enabled },
-          })
-        ) || [];
-
-      await Promise.all(updates);
-      toast.success(
-        enabled
-          ? t("admin.sso.messages.forceSsoEnabled")
-          : t("admin.sso.messages.forceSsoDisabled")
-      );
-      void refetch();
-    } catch {
-      setToggleState((prev) => ({ ...prev, forceSso: !enabled }));
-      toast.error(t("admin.sso.messages.forceSsoUpdateFailed"));
-    }
-  };
-
   const handleToggleAllowOpenRegistration = async (enabled: boolean) => {
     setToggleState((prev) => ({ ...prev, allowOpenRegistration: enabled }));
     try {
@@ -737,65 +709,6 @@ export default function SSOAdminPage() {
     } catch {
       setToggleState((prev) => ({ ...prev, allowOpenRegistration: !enabled }));
       toast.error(t("admin.sso.messages.openRegistrationUpdateFailed"));
-    }
-  };
-
-  const handleToggleForce2FANonSSO = async (enabled: boolean) => {
-    setToggleState((prev) => ({ ...prev, force2FANonSSO: enabled }));
-    try {
-      await upsertSettings({
-        where: {
-          id: registrationSettings?.id ?? "default-registration-settings",
-        },
-        create: {
-          id: "default-registration-settings",
-          force2FANonSSO: enabled,
-        },
-        update: { force2FANonSSO: enabled },
-      });
-      toast.success(
-        enabled
-          ? t("admin.sso.messages.force2FANonSSOEnabled")
-          : t("admin.sso.messages.force2FANonSSODisabled")
-      );
-      void refetchSettings();
-    } catch {
-      setToggleState((prev) => ({ ...prev, force2FANonSSO: !enabled }));
-      toast.error(t("admin.sso.messages.force2FAUpdateFailed"));
-    }
-  };
-
-  const handleToggleForce2FAAllLogins = async (enabled: boolean) => {
-    setToggleState((prev) => ({
-      ...prev,
-      force2FAAllLogins: enabled,
-      ...(enabled ? { force2FANonSSO: true } : {}),
-    }));
-    try {
-      const updates: { force2FAAllLogins: boolean; force2FANonSSO?: boolean } =
-        {
-          force2FAAllLogins: enabled,
-        };
-      if (enabled) {
-        updates.force2FANonSSO = true;
-      }
-
-      await upsertSettings({
-        where: {
-          id: registrationSettings?.id ?? "default-registration-settings",
-        },
-        create: { id: "default-registration-settings", ...updates },
-        update: updates,
-      });
-      toast.success(
-        enabled
-          ? t("admin.sso.messages.force2FAAllLoginsEnabled")
-          : t("admin.sso.messages.force2FAAllLoginsDisabled")
-      );
-      void refetchSettings();
-    } catch {
-      setToggleState((prev) => ({ ...prev, force2FAAllLogins: !enabled }));
-      toast.error(t("admin.sso.messages.force2FAUpdateFailed"));
     }
   };
 
@@ -1236,68 +1149,6 @@ export default function SSOAdminPage() {
             <Switch
               checked={toggleState[SsoProviderType.MAGIC_LINK] || false}
               onCheckedChange={handleToggleMagicLink}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Security Settings Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Shield className="inline mr-2 h-6 w-6" />
-            <span>{t("admin.sso.sections.security.title")}</span>
-          </CardTitle>
-          <CardDescription>
-            {t("admin.sso.sections.security.description")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-base font-medium">
-                {t("admin.sso.globalSettings.forceSso.title")}
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                {t("admin.sso.globalSettings.forceSso.description")}
-              </p>
-            </div>
-            <Switch
-              checked={toggleState.forceSso || false}
-              onCheckedChange={handleToggleForceSso}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-base font-medium">
-                {t("admin.sso.globalSettings.twoFactor.forceNonSSO.title")}
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                {t(
-                  "admin.sso.globalSettings.twoFactor.forceNonSSO.description"
-                )}
-              </p>
-            </div>
-            <Switch
-              checked={toggleState.force2FANonSSO || false}
-              onCheckedChange={handleToggleForce2FANonSSO}
-              disabled={toggleState.force2FAAllLogins || false}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-base font-medium">
-                {t("admin.sso.globalSettings.twoFactor.forceAllLogins.title")}
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                {t(
-                  "admin.sso.globalSettings.twoFactor.forceAllLogins.description"
-                )}
-              </p>
-            </div>
-            <Switch
-              checked={toggleState.force2FAAllLogins || false}
-              onCheckedChange={handleToggleForce2FAAllLogins}
             />
           </div>
         </CardContent>

@@ -3431,6 +3431,7 @@
       "quickscriptTemplates": "QuickScript-Vorlagen",
       "testManagement": "Testmanagement",
       "peopleAndAccess": "Personen & Zugriff",
+      "authentication": "Authentifizierung",
       "toolsAndIntegrations": "Tools & Integrationen",
       "system": "System"
     },
@@ -3773,15 +3774,11 @@
       }
     },
     "sso": {
-      "description": "Authentifizierungs- und Sicherheitseinstellungen verwalten",
+      "description": "Authentifizierungs- und Registrierungseinstellungen verwalten",
       "sections": {
         "providers": {
           "title": "Anmeldeanbieter",
           "description": "Konfigurieren Sie, wie sich Benutzer bei Ihrer Anwendung anmelden können."
-        },
-        "security": {
-          "title": "Sicherheit",
-          "description": "Konfigurieren Sie Sicherheitsrichtlinien für die Authentifizierung"
         }
       },
       "globalSettings": {
@@ -3805,20 +3802,6 @@
         "magicLink": {
           "title": "Magic Link-Authentifizierung",
           "description": "Passwortlose E-Mail-basierte Authentifizierung aktivieren oder deaktivieren"
-        },
-        "forceSso": {
-          "title": "SSO-Anmeldung erzwingen",
-          "description": "Deaktivieren Sie die E-Mail-Anmeldung und verpflichten Sie die Benutzer zur Verwendung von SSO."
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "Zwei-Faktor-Authentifizierung für Passwortanmeldungen erzwingen",
-            "description": "Benutzer, die sich mit E-Mail/Passwort anmelden, müssen die Zwei-Faktor-Authentifizierung einrichten und verwenden."
-          },
-          "forceAllLogins": {
-            "title": "Zwei-Faktor-Authentifizierung für alle Anmeldungen erforderlich",
-            "description": "Alle Benutzer müssen sich nach der Anmeldung per Zwei-Faktor-Authentifizierung (2FA) verifizieren, dies gilt auch für SSO-Benutzer."
-          }
         }
       },
       "providers": {
@@ -3876,14 +3859,6 @@
         "enabled": "Anbieter aktiviert",
         "disabled": "Anbieter deaktiviert",
         "updateFailed": "Aktualisierung des Anbieters fehlgeschlagen",
-        "forceSsoEnabled": "SSO global erzwingen",
-        "forceSsoDisabled": "SSO erzwingen ist global deaktiviert",
-        "forceSsoUpdateFailed": "Fehler beim Aktualisieren der Einstellung „SSO erzwingen“",
-        "force2FANonSSOEnabled": "Zwei-Faktor-Authentifizierung für Passwortanmeldungen erforderlich",
-        "force2FANonSSODisabled": "Zwei-Faktor-Authentifizierung für Passwortanmeldungen nicht mehr erforderlich.",
-        "force2FAAllLoginsEnabled": "Für alle Anmeldungen ist eine Zwei-Faktor-Authentifizierung erforderlich.",
-        "force2FAAllLoginsDisabled": "Die Zwei-Faktor-Authentifizierung ist nicht mehr für alle Anmeldungen erforderlich.",
-        "force2FAUpdateFailed": "Die Aktualisierung der Zwei-Faktor-Authentifizierungseinstellung ist fehlgeschlagen.",
         "configUpdated": "SAML-Konfiguration aktualisiert",
         "configCreated": "SAML-Konfiguration erstellt",
         "configSaveFailed": "SAML-Konfiguration konnte nicht gespeichert werden",
@@ -4348,13 +4323,29 @@
     },
     "security": {
       "title": "Sicherheit",
-      "description": "Konfigurieren Sie die Passwortrichtlinie, die Sperreinstellungen und die Durchsetzungsmaßnahmen.",
+      "description": "Anmeldeerzwingung, Passwortrichtlinie, Sperreinstellungen und Durchsetzungsmaßnahmen konfigurieren",
       "passwordPolicyTitle": "Passwortrichtlinie",
       "passwordPolicyDescription": "Anforderungen für Benutzerpasswörter festlegen",
       "lockoutPolicyTitle": "Aussperrungsrichtlinie",
       "lockoutPolicyDescription": "Kontosperrung nach fehlgeschlagenen Anmeldeversuchen konfigurieren",
       "enforcementTitle": "Durchsetzungsmaßnahmen",
       "enforcementDescription": "Passwortänderungen für Benutzer mit Anmeldeinformationen erzwingen",
+      "signInEnforcementTitle": "Durchsetzung der Anmeldepflicht",
+      "signInEnforcementDescription": "Single Sign-On (SSO) vorschreiben und Zwei-Faktor-Authentifizierung erzwingen",
+      "forceSsoTitle": "SSO-Anmeldung erzwingen",
+      "forceSsoDescription": "Deaktivieren Sie die E-Mail-Anmeldung und verpflichten Sie die Benutzer zur Verwendung von SSO.",
+      "force2FANonSSOTitle": "Zwei-Faktor-Authentifizierung für Passwortanmeldungen erzwingen",
+      "force2FANonSSODescription": "Benutzer, die sich mit E-Mail/Passwort anmelden, müssen die Zwei-Faktor-Authentifizierung einrichten und verwenden.",
+      "force2FAAllLoginsTitle": "Zwei-Faktor-Authentifizierung für alle Anmeldungen erforderlich",
+      "force2FAAllLoginsDescription": "Alle Benutzer müssen sich nach der Anmeldung per Zwei-Faktor-Authentifizierung (2FA) verifizieren, dies gilt auch für SSO-Benutzer.",
+      "forceSsoEnabled": "SSO global erzwingen",
+      "forceSsoDisabled": "SSO erzwingen ist global deaktiviert",
+      "forceSsoUpdateFailed": "Fehler beim Aktualisieren der Einstellung „SSO erzwingen“",
+      "force2FANonSSOEnabled": "Zwei-Faktor-Authentifizierung für Passwortanmeldungen erforderlich",
+      "force2FANonSSODisabled": "Zwei-Faktor-Authentifizierung für Passwortanmeldungen nicht mehr erforderlich.",
+      "force2FAAllLoginsEnabled": "Für alle Anmeldungen ist eine Zwei-Faktor-Authentifizierung erforderlich.",
+      "force2FAAllLoginsDisabled": "Die Zwei-Faktor-Authentifizierung ist nicht mehr für alle Anmeldungen erforderlich.",
+      "force2FAUpdateFailed": "Die Aktualisierung der Zwei-Faktor-Authentifizierungseinstellung ist fehlgeschlagen.",
       "minPasswordLengthLabel": "Mindestpasswortlänge",
       "minPasswordLengthDescription": "Passwörter müssen mindestens so viele Zeichen haben (8-128).",
       "requireUppercaseLabel": "Großbuchstaben erforderlich",

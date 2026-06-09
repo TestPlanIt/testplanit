@@ -3431,6 +3431,7 @@
       "quickscriptTemplates": "QuickScript 템플릿",
       "testManagement": "테스트 관리",
       "peopleAndAccess": "사람 및 접근성",
+      "authentication": "입증",
       "toolsAndIntegrations": "도구 및 통합",
       "system": "체계"
     },
@@ -3773,15 +3774,11 @@
       }
     },
     "sso": {
-      "description": "인증 및 보안 설정을 관리합니다.",
+      "description": "인증 및 회원가입 설정을 관리합니다.",
       "sections": {
         "providers": {
           "title": "로그인 제공업체",
           "description": "사용자가 애플리케이션에 로그인하는 방법을 구성하세요."
-        },
-        "security": {
-          "title": "보안",
-          "description": "인증을 위한 보안 정책을 구성합니다."
         }
       },
       "globalSettings": {
@@ -3805,20 +3802,6 @@
         "magicLink": {
           "title": "매직 링크 인증",
           "description": "비밀번호 없이 이메일 기반 인증을 활성화 또는 비활성화합니다."
-        },
-        "forceSso": {
-          "title": "SSO 강제 로그인",
-          "description": "이메일 로그인을 비활성화하고 사용자에게 SSO 사용을 요구합니다."
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "비밀번호 로그인에 2단계 인증(2FA)을 요구하세요",
-            "description": "이메일/비밀번호로 로그인하는 사용자는 2단계 인증을 설정하고 사용해야 합니다."
-          },
-          "forceAllLogins": {
-            "title": "모든 로그인에 2단계 인증(2FA)을 요구하세요",
-            "description": "모든 사용자(SSO 사용자 포함)는 로그인 후 2단계 인증(2FA)을 통해 본인 인증을 해야 합니다."
-          }
         }
       },
       "providers": {
@@ -3876,14 +3859,6 @@
         "enabled": "공급자 활성화됨",
         "disabled": "제공자가 비활성화됨",
         "updateFailed": "공급자 업데이트에 실패했습니다",
-        "forceSsoEnabled": "SSO를 전 세계적으로 강제 활성화",
-        "forceSsoDisabled": "SSO를 전 세계적으로 강제 비활성화합니다.",
-        "forceSsoUpdateFailed": "강제 SSO 설정 업데이트에 실패했습니다.",
-        "force2FANonSSOEnabled": "비밀번호 로그인에는 2단계 인증이 필요합니다.",
-        "force2FANonSSODisabled": "비밀번호 로그인 시 2단계 인증이 더 이상 필요하지 않습니다.",
-        "force2FAAllLoginsEnabled": "모든 로그인에는 2단계 인증이 필요합니다.",
-        "force2FAAllLoginsDisabled": "모든 로그인에 2단계 인증이 더 이상 필요하지 않습니다.",
-        "force2FAUpdateFailed": "2단계 인증 설정 업데이트에 실패했습니다.",
         "configUpdated": "SAML 구성이 업데이트되었습니다.",
         "configCreated": "SAML 구성이 생성되었습니다.",
         "configSaveFailed": "SAML 구성 저장에 실패했습니다.",
@@ -4348,13 +4323,29 @@
     },
     "security": {
       "title": "보안",
-      "description": "암호 정책, 잠금 설정 및 시행 조치를 구성합니다.",
+      "description": "로그인 강제 적용, 암호 정책, 잠금 설정 및 강제 조치를 구성합니다.",
       "passwordPolicyTitle": "비밀번호 정책",
       "passwordPolicyDescription": "사용자 암호에 대한 요구 사항을 설정하세요",
       "lockoutPolicyTitle": "잠금 정책",
       "lockoutPolicyDescription": "로그인 시도 실패 후 계정 잠금 설정을 구성합니다.",
       "enforcementTitle": "집행 조치",
       "enforcementDescription": "자격 증명 기반 사용자의 암호 변경을 강제합니다.",
+      "signInEnforcementTitle": "로그인 강제 적용",
+      "signInEnforcementDescription": "SSO를 필수로 요구하고 2단계 인증을 시행하십시오.",
+      "forceSsoTitle": "SSO 강제 로그인",
+      "forceSsoDescription": "이메일 로그인을 비활성화하고 사용자에게 SSO 사용을 요구합니다.",
+      "force2FANonSSOTitle": "비밀번호 로그인에 2단계 인증(2FA)을 요구하세요",
+      "force2FANonSSODescription": "이메일/비밀번호로 로그인하는 사용자는 2단계 인증을 설정하고 사용해야 합니다.",
+      "force2FAAllLoginsTitle": "모든 로그인에 2단계 인증(2FA)을 요구하세요",
+      "force2FAAllLoginsDescription": "모든 사용자(SSO 사용자 포함)는 로그인 후 2단계 인증(2FA)을 통해 본인 인증을 해야 합니다.",
+      "forceSsoEnabled": "SSO를 전 세계적으로 강제 활성화",
+      "forceSsoDisabled": "SSO를 전 세계적으로 강제 비활성화합니다.",
+      "forceSsoUpdateFailed": "강제 SSO 설정 업데이트에 실패했습니다.",
+      "force2FANonSSOEnabled": "비밀번호 로그인에는 2단계 인증이 필요합니다.",
+      "force2FANonSSODisabled": "비밀번호 로그인 시 2단계 인증이 더 이상 필요하지 않습니다.",
+      "force2FAAllLoginsEnabled": "모든 로그인에는 2단계 인증이 필요합니다.",
+      "force2FAAllLoginsDisabled": "모든 로그인에 2단계 인증이 더 이상 필요하지 않습니다.",
+      "force2FAUpdateFailed": "2단계 인증 설정 업데이트에 실패했습니다.",
       "minPasswordLengthLabel": "최소 비밀번호 길이",
       "minPasswordLengthDescription": "비밀번호는 최소 8~128자 이상이어야 합니다.",
       "requireUppercaseLabel": "대문자 필수",

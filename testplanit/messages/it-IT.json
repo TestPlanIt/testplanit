@@ -3431,6 +3431,7 @@
       "quickscriptTemplates": "Modelli QuickScript",
       "testManagement": "Gestione dei test",
       "peopleAndAccess": "Persone e accesso",
+      "authentication": "Autenticazione",
       "toolsAndIntegrations": "Strumenti e integrazioni",
       "system": "Sistema"
     },
@@ -3773,15 +3774,11 @@
       }
     },
     "sso": {
-      "description": "Gestisci le impostazioni di autenticazione e sicurezza",
+      "description": "Gestisci le impostazioni di autenticazione e registrazione",
       "sections": {
         "providers": {
           "title": "Fornitori di accesso",
           "description": "Configura le modalità di accesso degli utenti alla tua applicazione."
-        },
-        "security": {
-          "title": "Sicurezza",
-          "description": "Configurare le politiche di sicurezza per l'autenticazione"
         }
       },
       "globalSettings": {
@@ -3805,20 +3802,6 @@
         "magicLink": {
           "title": "Autenticazione Magic Link",
           "description": "Attiva o disattiva l'autenticazione senza password basata sull'email"
-        },
-        "forceSso": {
-          "title": "Forza l'accesso SSO",
-          "description": "Disabilita l'accesso tramite e-mail e richiedi agli utenti di utilizzare SSO"
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "Richiedi l'autenticazione a due fattori per l'accesso tramite password",
-            "description": "Gli utenti che accedono con email/password devono configurare e utilizzare l'autenticazione a due fattori."
-          },
-          "forceAllLogins": {
-            "title": "Richiedi l'autenticazione a due fattori per tutti gli accessi.",
-            "description": "Tutti gli utenti devono verificare l'identità tramite 2FA dopo aver effettuato l'accesso, inclusi gli utenti SSO."
-          }
         }
       },
       "providers": {
@@ -3876,14 +3859,6 @@
         "enabled": "Provider abilitato",
         "disabled": "Provider disabilitato",
         "updateFailed": "Impossibile aggiornare il provider",
-        "forceSsoEnabled": "Forza l'abilitazione dell'SSO a livello globale",
-        "forceSsoDisabled": "Forza la disattivazione globale dell'SSO",
-        "forceSsoUpdateFailed": "Impossibile aggiornare l'impostazione SSO forzata",
-        "force2FANonSSOEnabled": "Autenticazione a due fattori richiesta per l'accesso tramite password",
-        "force2FANonSSODisabled": "L'autenticazione a due fattori non è più richiesta per l'accesso tramite password.",
-        "force2FAAllLoginsEnabled": "Autenticazione a due fattori richiesta per tutti gli accessi.",
-        "force2FAAllLoginsDisabled": "L'autenticazione a due fattori non è più richiesta per tutti gli accessi.",
-        "force2FAUpdateFailed": "Impossibile aggiornare l'impostazione dell'autenticazione a due fattori",
         "configUpdated": "Configurazione SAML aggiornata",
         "configCreated": "Configurazione SAML creata",
         "configSaveFailed": "Impossibile salvare la configurazione SAML",
@@ -4348,13 +4323,29 @@
     },
     "security": {
       "title": "Sicurezza",
-      "description": "Configura i criteri per le password, le impostazioni di blocco e le azioni di applicazione.",
+      "description": "Configura le impostazioni di controllo dell'accesso, i criteri per le password, le impostazioni di blocco e le azioni di applicazione.",
       "passwordPolicyTitle": "Politica sulle password",
       "passwordPolicyDescription": "Definisci i requisiti per le password degli utenti",
       "lockoutPolicyTitle": "Politica di blocco",
       "lockoutPolicyDescription": "Configura il blocco dell'account dopo tentativi di accesso non riusciti.",
       "enforcementTitle": "Provvedimenti esecutivi",
       "enforcementDescription": "Forza la modifica della password per gli utenti basati su credenziali",
+      "signInEnforcementTitle": "Controllo dell'accesso",
+      "signInEnforcementDescription": "Richiedere l'SSO e imporre l'autenticazione a due fattori.",
+      "forceSsoTitle": "Forza l'accesso SSO",
+      "forceSsoDescription": "Disabilitare l'accesso tramite email e richiedere agli utenti di utilizzare l'SSO.",
+      "force2FANonSSOTitle": "Richiedi l'autenticazione a due fattori per l'accesso tramite password",
+      "force2FANonSSODescription": "Gli utenti che accedono con email/password devono configurare e utilizzare l'autenticazione a due fattori.",
+      "force2FAAllLoginsTitle": "Richiedi l'autenticazione a due fattori per tutti gli accessi.",
+      "force2FAAllLoginsDescription": "Tutti gli utenti devono verificare l'identità tramite 2FA dopo aver effettuato l'accesso, inclusi gli utenti SSO.",
+      "forceSsoEnabled": "Forza l'attivazione dell'SSO a livello globale",
+      "forceSsoDisabled": "Disabilita forzatamente l'SSO a livello globale.",
+      "forceSsoUpdateFailed": "Impossibile aggiornare l'impostazione SSO forzato.",
+      "force2FANonSSOEnabled": "Autenticazione a due fattori richiesta per l'accesso tramite password",
+      "force2FANonSSODisabled": "L'autenticazione a due fattori non è più richiesta per l'accesso tramite password.",
+      "force2FAAllLoginsEnabled": "Autenticazione a due fattori richiesta per tutti gli accessi.",
+      "force2FAAllLoginsDisabled": "L'autenticazione a due fattori non è più richiesta per tutti gli accessi.",
+      "force2FAUpdateFailed": "Impossibile aggiornare l'impostazione dell'autenticazione a due fattori",
       "minPasswordLengthLabel": "Lunghezza minima della password",
       "minPasswordLengthDescription": "Le password devono avere un numero di caratteri compreso tra 8 e 128.",
       "requireUppercaseLabel": "Sono richieste lettere maiuscole.",

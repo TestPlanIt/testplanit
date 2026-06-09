@@ -3431,6 +3431,7 @@
       "quickscriptTemplates": "QuickScript模板",
       "testManagement": "測試管理",
       "peopleAndAccess": "人員與通道",
+      "authentication": "驗證",
       "toolsAndIntegrations": "工具與集成",
       "system": "系統"
     },
@@ -3773,15 +3774,11 @@
       }
     },
     "sso": {
-      "description": "管理身份驗證和安全性設定",
+      "description": "管理身份驗證和註冊設置",
       "sections": {
         "providers": {
           "title": "登入提供者",
           "description": "配置使用者如何登入您的應用程式"
-        },
-        "security": {
-          "title": "安全",
-          "description": "配置身份驗證的安全性策略"
         }
       },
       "globalSettings": {
@@ -3805,20 +3802,6 @@
         "magicLink": {
           "title": "魔法連結認證",
           "description": "啟用或停用基於電子郵件的無密碼身份驗證"
-        },
-        "forceSso": {
-          "title": "強制 SSO 登入",
-          "description": "停用電子郵件登錄，要求使用者使用單一登入 (SSO)。"
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "密碼登入需要啟用雙重認證",
-            "description": "使用郵箱/密碼登入的使用者必須設定並使用雙重認證"
-          },
-          "forceAllLogins": {
-            "title": "所有登入均需啟用雙重認證",
-            "description": "所有使用者（包括單一登入使用者）登入後都必須進行雙重認證。"
-          }
         }
       },
       "providers": {
@@ -3876,14 +3859,6 @@
         "enabled": "提供者已啟用",
         "disabled": "提供者已禁用",
         "updateFailed": "更新提供者失敗",
-        "forceSsoEnabled": "全球強制啟用 SSO",
-        "forceSsoDisabled": "強制全域禁用 SSO",
-        "forceSsoUpdateFailed": "更新強制 SSO 設定失敗",
-        "force2FANonSSOEnabled": "密碼登入需要雙重認證",
-        "force2FANonSSODisabled": "密碼登入不再需要雙重認證",
-        "force2FAAllLoginsEnabled": "所有登入都需要雙重認證",
-        "force2FAAllLoginsDisabled": "不再需要所有登入進行雙重認證",
-        "force2FAUpdateFailed": "雙重認證設定更新失敗",
         "configUpdated": "SAML 設定已更新",
         "configCreated": "SAML 設定已建立",
         "configSaveFailed": "儲存 SAML 設定失敗",
@@ -4348,13 +4323,29 @@
     },
     "security": {
       "title": "安全",
-      "description": "配置密碼策略、鎖定設定和強制執行措施",
+      "description": "設定登入強制執行、密碼策略、鎖定設定和強制執行措施",
       "passwordPolicyTitle": "密碼原則",
       "passwordPolicyDescription": "設定用戶密碼要求",
       "lockoutPolicyTitle": "鎖定政策",
       "lockoutPolicyDescription": "配置登入失敗後帳戶鎖定",
       "enforcementTitle": "執法行動",
       "enforcementDescription": "強制基於憑證的使用者更改密碼",
+      "signInEnforcementTitle": "簽到執法",
+      "signInEnforcementDescription": "要求單一登入並強制執行雙重認證",
+      "forceSsoTitle": "強制 SSO 登入",
+      "forceSsoDescription": "停用電子郵件登錄，要求使用者使用單一登入 (SSO)。",
+      "force2FANonSSOTitle": "密碼登入需要啟用雙重認證",
+      "force2FANonSSODescription": "使用郵箱/密碼登入的使用者必須設定並使用雙重認證",
+      "force2FAAllLoginsTitle": "所有登入均需啟用雙重認證",
+      "force2FAAllLoginsDescription": "所有使用者（包括單一登入使用者）登入後都必須進行雙重認證。",
+      "forceSsoEnabled": "全球強制啟用 SSO",
+      "forceSsoDisabled": "強制全域禁用 SSO",
+      "forceSsoUpdateFailed": "更新強制 SSO 設定失敗",
+      "force2FANonSSOEnabled": "密碼登入需要雙重認證",
+      "force2FANonSSODisabled": "密碼登入不再需要雙重認證",
+      "force2FAAllLoginsEnabled": "所有登入都需要雙重認證",
+      "force2FAAllLoginsDisabled": "不再需要所有登入進行雙重認證",
+      "force2FAUpdateFailed": "雙重認證設定更新失敗",
       "minPasswordLengthLabel": "密碼最小長度",
       "minPasswordLengthDescription": "密碼長度必須至少為以下字元數（8-128）",
       "requireUppercaseLabel": "必須使用大寫字母",
@@ -4422,7 +4413,7 @@
       "conflictsPlaceholder": "目前沒有衝突。衝突追蹤功能將在後續版本中推出。",
       "conflicts": {
         "title": "外部 ID 衝突日誌",
-        "description": "SCIM 身分事件需要係統介入（連結、恢復、顯示名稱覆蓋、跳過成員）。",
+        "description": "需要係統介入的 SCIM 身分事件（連結、復活、顯示名稱覆蓋、跳過成員）。",
         "empty": "過去90天內無衝突。",
         "loading": "加載衝突…",
         "errorLoad": "衝突日誌載入失敗，請重試。",

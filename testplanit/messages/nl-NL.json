@@ -3431,6 +3431,7 @@
       "quickscriptTemplates": "QuickScript-sjablonen",
       "testManagement": "Testmanagement",
       "peopleAndAccess": "Mensen & Toegang",
+      "authentication": "Authenticatie",
       "toolsAndIntegrations": "Tools en integraties",
       "system": "Systeem"
     },
@@ -3773,15 +3774,11 @@
       }
     },
     "sso": {
-      "description": "Beheer authenticatie- en beveiligingsinstellingen",
+      "description": "Beheer authenticatie- en registratie-instellingen",
       "sections": {
         "providers": {
           "title": "Aanmeldingsaanbieders",
           "description": "Configureer hoe gebruikers zich kunnen aanmelden bij uw applicatie."
-        },
-        "security": {
-          "title": "Beveiliging",
-          "description": "Configureer beveiligingsbeleid voor authenticatie."
         }
       },
       "globalSettings": {
@@ -3805,20 +3802,6 @@
         "magicLink": {
           "title": "Magic Link-authenticatie",
           "description": "E-mailgebaseerde authenticatie zonder wachtwoord inschakelen of uitschakelen"
-        },
-        "forceSso": {
-          "title": "Forceer SSO-aanmelding",
-          "description": "Schakel e-mailaanmelding uit en eis dat gebruikers SSO gebruiken"
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "Vereis tweefactorauthenticatie (2FA) voor wachtwoordaanmeldingen.",
-            "description": "Gebruikers die inloggen met e-mail/wachtwoord moeten tweefactorauthenticatie instellen en gebruiken."
-          },
-          "forceAllLogins": {
-            "title": "Vereis tweefactorauthenticatie voor alle aanmeldingen.",
-            "description": "Alle gebruikers moeten zich na het inloggen verifiëren met tweefactorauthenticatie (2FA), inclusief gebruikers met single sign-on (SSO)."
-          }
         }
       },
       "providers": {
@@ -3876,14 +3859,6 @@
         "enabled": "Provider ingeschakeld",
         "disabled": "Provider uitgeschakeld",
         "updateFailed": "Het is niet gelukt om de provider bij te werken",
-        "forceSsoEnabled": "Force SSO wereldwijd ingeschakeld",
-        "forceSsoDisabled": "Forceer SSO wereldwijd uitgeschakeld",
-        "forceSsoUpdateFailed": "Het is niet gelukt om de force SSO-instelling bij te werken",
-        "force2FANonSSOEnabled": "Tweefactorauthenticatie is vereist voor wachtwoordaanmeldingen.",
-        "force2FANonSSODisabled": "Tweefactorauthenticatie is niet langer vereist voor wachtwoordaanmeldingen.",
-        "force2FAAllLoginsEnabled": "Tweefactorauthenticatie is vereist voor alle aanmeldingen.",
-        "force2FAAllLoginsDisabled": "Tweefactorauthenticatie is niet langer vereist voor alle aanmeldingen.",
-        "force2FAUpdateFailed": "Het bijwerken van de tweefactorauthenticatie-instellingen is mislukt.",
         "configUpdated": "SAML-configuratie bijgewerkt",
         "configCreated": "SAML-configuratie gemaakt",
         "configSaveFailed": "Het is niet gelukt om de SAML-configuratie op te slaan",
@@ -4348,13 +4323,29 @@
     },
     "security": {
       "title": "Beveiliging",
-      "description": "Configureer het wachtwoordbeleid, de vergrendelingsinstellingen en de handhavingsacties.",
+      "description": "Configureer de handhaving van aanmeldingen, het wachtwoordbeleid, de vergrendelingsinstellingen en de handhavingsacties.",
       "passwordPolicyTitle": "Wachtwoordbeleid",
       "passwordPolicyDescription": "Stel vereisten in voor gebruikerswachtwoorden.",
       "lockoutPolicyTitle": "Uitsluitingsbeleid",
       "lockoutPolicyDescription": "Configureer accountvergrendeling na mislukte inlogpogingen.",
       "enforcementTitle": "Handhavingsmaatregelen",
       "enforcementDescription": "Wachtwoordwijzigingen afdwingen voor gebruikers met inloggegevens",
+      "signInEnforcementTitle": "Handhaving van de aanmeldplicht",
+      "signInEnforcementDescription": "Vereis SSO en dwing tweefactorauthenticatie af.",
+      "forceSsoTitle": "SSO-aanmelding afdwingen",
+      "forceSsoDescription": "Schakel inloggen via e-mail uit en vereis dat gebruikers SSO gebruiken.",
+      "force2FANonSSOTitle": "Vereis tweefactorauthenticatie (2FA) voor wachtwoordaanmeldingen.",
+      "force2FANonSSODescription": "Gebruikers die inloggen met e-mail/wachtwoord moeten tweefactorauthenticatie instellen en gebruiken.",
+      "force2FAAllLoginsTitle": "Vereis tweefactorauthenticatie voor alle aanmeldingen.",
+      "force2FAAllLoginsDescription": "Alle gebruikers moeten zich na het inloggen verifiëren met tweefactorauthenticatie (2FA), inclusief gebruikers met single sign-on (SSO).",
+      "forceSsoEnabled": "SSO wereldwijd geforceerd inschakelen",
+      "forceSsoDisabled": "SSO wereldwijd geforceerd uitschakelen",
+      "forceSsoUpdateFailed": "Het is niet gelukt om de instelling voor geforceerde SSO bij te werken.",
+      "force2FANonSSOEnabled": "Tweefactorauthenticatie is vereist voor wachtwoordaanmeldingen.",
+      "force2FANonSSODisabled": "Tweefactorauthenticatie is niet langer vereist voor wachtwoordaanmeldingen.",
+      "force2FAAllLoginsEnabled": "Tweefactorauthenticatie is vereist voor alle aanmeldingen.",
+      "force2FAAllLoginsDisabled": "Tweefactorauthenticatie is niet langer vereist voor alle aanmeldingen.",
+      "force2FAUpdateFailed": "Het bijwerken van de tweefactorauthenticatie-instellingen is mislukt.",
       "minPasswordLengthLabel": "Minimale wachtwoordlengte",
       "minPasswordLengthDescription": "Wachtwoorden moeten minimaal dit aantal tekens bevatten (8-128).",
       "requireUppercaseLabel": "Vereist hoofdletters",

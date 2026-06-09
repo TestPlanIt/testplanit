@@ -3431,6 +3431,7 @@
       "quickscriptTemplates": "QuickScriptテンプレート",
       "testManagement": "テスト管理",
       "peopleAndAccess": "人材とアクセス",
+      "authentication": "認証",
       "toolsAndIntegrations": "ツールと連携機能",
       "system": "システム"
     },
@@ -3773,15 +3774,11 @@
       }
     },
     "sso": {
-      "description": "認証とセキュリティ設定を管理する",
+      "description": "認証と登録の設定を管理する",
       "sections": {
         "providers": {
           "title": "サインインプロバイダー",
           "description": "ユーザーがアプリケーションにサインインする方法を設定します。"
-        },
-        "security": {
-          "title": "安全",
-          "description": "認証のためのセキュリティポリシーを設定する"
         }
       },
       "globalSettings": {
@@ -3805,20 +3802,6 @@
         "magicLink": {
           "title": "マジックリンク認証",
           "description": "パスワードなしのメールベースの認証を有効または無効にする"
-        },
-        "forceSso": {
-          "title": "SSOログインを強制する",
-          "description": "メールログインを無効にし、ユーザーにSSOの使用を要求する"
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "パスワードログインに2FAを要求する",
-            "description": "メールアドレス/パスワードでサインインするユーザーは、2要素認証を設定して使用する必要があります。"
-          },
-          "forceAllLogins": {
-            "title": "すべてのログインに2FAを要求する",
-            "description": "SSOユーザーを含むすべてのユーザーは、サインイン後に2FAで認証する必要があります。"
-          }
         }
       },
       "providers": {
@@ -3876,14 +3859,6 @@
         "enabled": "プロバイダーが有効",
         "disabled": "プロバイダーが無効です",
         "updateFailed": "プロバイダーの更新に失敗しました",
-        "forceSsoEnabled": "SSO をグローバルに強制的に有効化",
-        "forceSsoDisabled": "SSO をグローバルに強制的に無効にする",
-        "forceSsoUpdateFailed": "強制SSO設定の更新に失敗しました",
-        "force2FANonSSOEnabled": "パスワードログインには2要素認証が必要",
-        "force2FANonSSODisabled": "パスワードログインに2要素認証は不要になりました",
-        "force2FAAllLoginsEnabled": "すべてのログインに2要素認証が必要",
-        "force2FAAllLoginsDisabled": "すべてのログインに2要素認証は不要になりました",
-        "force2FAUpdateFailed": "2要素認証設定の更新に失敗しました",
         "configUpdated": "SAML設定が更新されました",
         "configCreated": "SAML設定が作成されました",
         "configSaveFailed": "SAML設定を保存できませんでした",
@@ -4348,13 +4323,29 @@
     },
     "security": {
       "title": "安全",
-      "description": "パスワードポリシー、ロックアウト設定、および強制措置を設定します。",
+      "description": "サインインの強制、パスワードポリシー、ロックアウト設定、および強制アクションを設定します。",
       "passwordPolicyTitle": "パスワードポリシー",
       "passwordPolicyDescription": "ユーザーパスワードの要件を設定する",
       "lockoutPolicyTitle": "ロックアウトポリシー",
       "lockoutPolicyDescription": "ログイン失敗後のアカウントロックアウトを設定する",
       "enforcementTitle": "執行措置",
       "enforcementDescription": "認証情報ベースのユーザーのパスワード変更を強制する",
+      "signInEnforcementTitle": "サインインの強制",
+      "signInEnforcementDescription": "SSOを必須とし、二要素認証を強制する",
+      "forceSsoTitle": "SSOログインを強制する",
+      "forceSsoDescription": "メールログインを無効にし、ユーザーにシングルサインオン（SSO）の使用を必須とする",
+      "force2FANonSSOTitle": "パスワードログインに2段階認証を必須にする",
+      "force2FANonSSODescription": "メールアドレスとパスワードでログインするユーザーは、二段階認証を設定して使用する必要があります。",
+      "force2FAAllLoginsTitle": "すべてのログインに2段階認証を必須にする",
+      "force2FAAllLoginsDescription": "SSOユーザーを含むすべてのユーザーは、サインイン後に2FA認証を行う必要があります。",
+      "forceSsoEnabled": "グローバルにSSOを強制的に有効化する",
+      "forceSsoDisabled": "SSOをグローバルに強制無効化",
+      "forceSsoUpdateFailed": "強制SSO設定の更新に失敗しました",
+      "force2FANonSSOEnabled": "パスワードログインには二段階認証が必要です",
+      "force2FANonSSODisabled": "パスワードログインに二段階認証は不要になりました",
+      "force2FAAllLoginsEnabled": "すべてのログインに二段階認証が必要です",
+      "force2FAAllLoginsDisabled": "すべてのログインにおいて二段階認証は不要になりました。",
+      "force2FAUpdateFailed": "二段階認証設定の更新に失敗しました",
       "minPasswordLengthLabel": "パスワードの最小文字数",
       "minPasswordLengthDescription": "パスワードは少なくともこの文字数（8～128文字）以上である必要があります。",
       "requireUppercaseLabel": "大文字のみ入力可",

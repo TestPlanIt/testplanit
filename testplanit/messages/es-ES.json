@@ -3431,6 +3431,7 @@
       "quickscriptTemplates": "Plantillas de QuickScript",
       "testManagement": "Gestión de pruebas",
       "peopleAndAccess": "Personas y acceso",
+      "authentication": "Autenticación",
       "toolsAndIntegrations": "Herramientas e integraciones",
       "system": "Sistema"
     },
@@ -3773,15 +3774,11 @@
       }
     },
     "sso": {
-      "description": "Administrar la configuración de autenticación y seguridad",
+      "description": "Administrar la configuración de autenticación y registro",
       "sections": {
         "providers": {
           "title": "Proveedores de inicio de sesión",
           "description": "Configurar cómo los usuarios pueden iniciar sesión en su aplicación"
-        },
-        "security": {
-          "title": "Seguridad",
-          "description": "Configurar políticas de seguridad para la autenticación"
         }
       },
       "globalSettings": {
@@ -3805,20 +3802,6 @@
         "magicLink": {
           "title": "Autenticación mediante enlace mágico",
           "description": "Habilitar o deshabilitar la autenticación sin contraseña basada en correo electrónico"
-        },
-        "forceSso": {
-          "title": "Forzar inicio de sesión SSO",
-          "description": "Desactivar el inicio de sesión de correo electrónico y requiere que los usuarios usen SSO"
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "Requerir 2FA para inicios de sesión con contraseña",
-            "description": "Los usuarios que inicien sesión con correo electrónico/contraseña deben configurar y utilizar la autenticación de dos factores"
-          },
-          "forceAllLogins": {
-            "title": "Requerir 2FA para todos los inicios de sesión",
-            "description": "Todos los usuarios deben verificar con 2FA después de iniciar sesión, incluidos los usuarios SSO"
-          }
         }
       },
       "providers": {
@@ -3876,14 +3859,6 @@
         "enabled": "Proveedor habilitado",
         "disabled": "Proveedor desactivado",
         "updateFailed": "Error al actualizar el proveedor",
-        "forceSsoEnabled": "Forzar SSO activado globalmente",
-        "forceSsoDisabled": "Forzar SSO desactivado globalmente",
-        "forceSsoUpdateFailed": "Error al actualizar la configuración forzada SSO",
-        "force2FANonSSOEnabled": "Se requiere autenticación de dos factores para iniciar sesión con contraseña",
-        "force2FANonSSODisabled": "Ya no se requiere la autenticación de dos factores para iniciar sesión con contraseña",
-        "force2FAAllLoginsEnabled": "Se requiere autenticación de dos factores para todos los inicios de sesión",
-        "force2FAAllLoginsDisabled": "La autenticación de dos factores ya no es necesaria para todos los inicios de sesión",
-        "force2FAUpdateFailed": "No se pudo actualizar la configuración de autenticación de dos factores",
         "configUpdated": "Configuración SAML actualizada",
         "configCreated": "Configuración SAML creada",
         "configSaveFailed": "Error al guardar la configuración SAML",
@@ -4348,13 +4323,29 @@
     },
     "security": {
       "title": "Seguridad",
-      "description": "Configure la política de contraseñas, la configuración de bloqueo y las acciones de cumplimiento.",
+      "description": "Configure la aplicación de las políticas de inicio de sesión, la política de contraseñas, la configuración de bloqueo y las acciones de aplicación.",
       "passwordPolicyTitle": "Política de contraseñas",
       "passwordPolicyDescription": "Establecer requisitos para las contraseñas de los usuarios",
       "lockoutPolicyTitle": "Política de bloqueo",
       "lockoutPolicyDescription": "Configurar el bloqueo de la cuenta después de intentos de inicio de sesión fallidos",
       "enforcementTitle": "Medidas de cumplimiento",
       "enforcementDescription": "Forzar cambios de contraseña para usuarios con credenciales",
+      "signInEnforcementTitle": "Aplicación del sistema de registro",
+      "signInEnforcementDescription": "Requerir inicio de sesión único (SSO) y aplicar autenticación de dos factores.",
+      "forceSsoTitle": "Forzar inicio de sesión SSO",
+      "forceSsoDescription": "Deshabilitar el inicio de sesión por correo electrónico y exigir a los usuarios que utilicen SSO (inicio de sesión único).",
+      "force2FANonSSOTitle": "Se requiere autenticación de dos factores (2FA) para iniciar sesión con contraseña.",
+      "force2FANonSSODescription": "Los usuarios que inicien sesión con correo electrónico/contraseña deben configurar y utilizar la autenticación de dos factores.",
+      "force2FAAllLoginsTitle": "Se requiere autenticación de dos factores para todos los inicios de sesión.",
+      "force2FAAllLoginsDescription": "Todos los usuarios deben verificarse con 2FA después de iniciar sesión, incluidos los usuarios de SSO.",
+      "forceSsoEnabled": "Inicio de sesión único (SSO) forzado habilitado a nivel mundial",
+      "forceSsoDisabled": "El inicio de sesión único forzado está desactivado a nivel mundial.",
+      "forceSsoUpdateFailed": "No se pudo actualizar la configuración de inicio de sesión único forzado.",
+      "force2FANonSSOEnabled": "Se requiere autenticación de dos factores para iniciar sesión con contraseña.",
+      "force2FANonSSODisabled": "Ya no se requiere la autenticación de dos factores para iniciar sesión con contraseña.",
+      "force2FAAllLoginsEnabled": "Se requiere autenticación de dos factores para todos los inicios de sesión.",
+      "force2FAAllLoginsDisabled": "La autenticación de dos factores ya no es necesaria para todos los inicios de sesión.",
+      "force2FAUpdateFailed": "No se pudo actualizar la configuración de autenticación de dos factores.",
       "minPasswordLengthLabel": "Longitud mínima de la contraseña",
       "minPasswordLengthDescription": "Las contraseñas deben tener al menos esta cantidad de caracteres (8-128).",
       "requireUppercaseLabel": "Requerir letras mayúsculas",
@@ -4439,7 +4430,7 @@
         "typeUnknown": "Desconocido",
         "viewPayload": "Ver carga útil",
         "reEmit": "Reemitir evento para miembros",
-        "reEmitConfirm": "¿Debemos volver a enviar el webhook member_added / member_removed para este conflicto? La carga útil del evento original incluía referencias a miembros que no existían en el momento de la sincronización. Al volver a enviarlo ahora, se incluirán los miembros que se hayan aprovisionado posteriormente.",
+        "reEmitConfirm": "¿Es necesario volver a enviar el webhook member_added / member_removed para este conflicto? La carga útil del evento original incluía referencias a miembros que no existían en el momento de la sincronización. Al volver a enviarlo ahora, se incluirán los miembros que se hayan aprovisionado posteriormente.",
         "reEmitConfirmTitle": "¿Reenviar evento para miembros?",
         "reEmitSuccess": "Webhook reemitido; fila de auditoría escrita.",
         "reEmitError": "No se pudo reemitir. {reason}",

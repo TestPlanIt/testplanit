@@ -3431,6 +3431,7 @@
       "quickscriptTemplates": "Mẫu QuickScript",
       "testManagement": "Quản lý kiểm thử",
       "peopleAndAccess": "Con người & Quyền truy cập",
+      "authentication": "Xác thực",
       "toolsAndIntegrations": "Công cụ & Tích hợp",
       "system": "Hệ thống"
     },
@@ -3773,15 +3774,11 @@
       }
     },
     "sso": {
-      "description": "Quản lý cài đặt xác thực và bảo mật",
+      "description": "Quản lý cài đặt xác thực và đăng ký",
       "sections": {
         "providers": {
           "title": "Nhà cung cấp đăng nhập",
           "description": "Cấu hình cách người dùng có thể đăng nhập vào ứng dụng của bạn."
-        },
-        "security": {
-          "title": "Bảo vệ",
-          "description": "Cấu hình các chính sách bảo mật cho việc xác thực"
         }
       },
       "globalSettings": {
@@ -3805,20 +3802,6 @@
         "magicLink": {
           "title": "Xác thực liên kết ma thuật",
           "description": "Bật hoặc tắt xác thực qua email không cần mật khẩu"
-        },
-        "forceSso": {
-          "title": "Buộc đăng nhập SSO",
-          "description": "Vô hiệu hóa đăng nhập bằng email và yêu cầu người dùng sử dụng SSO."
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "Yêu cầu xác thực hai yếu tố (2FA) khi đăng nhập bằng mật khẩu.",
-            "description": "Người dùng đăng nhập bằng email/mật khẩu phải thiết lập và sử dụng xác thực hai yếu tố."
-          },
-          "forceAllLogins": {
-            "title": "Yêu cầu xác thực hai yếu tố (2FA) cho tất cả các lần đăng nhập.",
-            "description": "Tất cả người dùng phải xác thực bằng xác thực hai yếu tố (2FA) sau khi đăng nhập, bao gồm cả người dùng SSO."
-          }
         }
       },
       "providers": {
@@ -3876,14 +3859,6 @@
         "enabled": "Nhà cung cấp đã kích hoạt",
         "disabled": "Nhà cung cấp đã bị vô hiệu hóa",
         "updateFailed": "Không thể cập nhật nhà cung cấp",
-        "forceSsoEnabled": "Buộc bật SSO trên toàn cầu",
-        "forceSsoDisabled": "Buộc sử dụng SSO đã bị vô hiệu hóa trên toàn cầu.",
-        "forceSsoUpdateFailed": "Không thể cập nhật cài đặt SSO bắt buộc.",
-        "force2FANonSSOEnabled": "Cần xác thực hai yếu tố để đăng nhập bằng mật khẩu.",
-        "force2FANonSSODisabled": "Không còn yêu cầu xác thực hai yếu tố đối với việc đăng nhập bằng mật khẩu.",
-        "force2FAAllLoginsEnabled": "Yêu cầu xác thực hai yếu tố cho tất cả các lần đăng nhập.",
-        "force2FAAllLoginsDisabled": "Xác thực hai yếu tố không còn bắt buộc đối với tất cả các lần đăng nhập.",
-        "force2FAUpdateFailed": "Không thể cập nhật cài đặt xác thực hai yếu tố.",
         "configUpdated": "Cấu hình SAML đã được cập nhật",
         "configCreated": "Cấu hình SAML đã được tạo",
         "configSaveFailed": "Không thể lưu cấu hình SAML.",
@@ -4348,13 +4323,29 @@
     },
     "security": {
       "title": "Bảo vệ",
-      "description": "Cấu hình chính sách mật khẩu, cài đặt khóa tài khoản và các hành động thực thi.",
+      "description": "Cấu hình việc bắt buộc đăng nhập, chính sách mật khẩu, cài đặt khóa tài khoản và các hành động thực thi.",
       "passwordPolicyTitle": "Chính sách mật khẩu",
       "passwordPolicyDescription": "Đặt ra các yêu cầu đối với mật khẩu người dùng.",
       "lockoutPolicyTitle": "Chính sách khóa cửa",
       "lockoutPolicyDescription": "Cấu hình khóa tài khoản sau các lần đăng nhập không thành công.",
       "enforcementTitle": "Các biện pháp thực thi",
       "enforcementDescription": "Buộc thay đổi mật khẩu đối với người dùng sử dụng thông tin đăng nhập.",
+      "signInEnforcementTitle": "Thực thi đăng nhập",
+      "signInEnforcementDescription": "Yêu cầu đăng nhập một lần (SSO) và bắt buộc xác thực hai yếu tố.",
+      "forceSsoTitle": "Buộc đăng nhập SSO",
+      "forceSsoDescription": "Vô hiệu hóa đăng nhập bằng email và yêu cầu người dùng sử dụng SSO.",
+      "force2FANonSSOTitle": "Yêu cầu xác thực hai yếu tố (2FA) khi đăng nhập bằng mật khẩu.",
+      "force2FANonSSODescription": "Người dùng đăng nhập bằng email/mật khẩu phải thiết lập và sử dụng xác thực hai yếu tố.",
+      "force2FAAllLoginsTitle": "Yêu cầu xác thực hai yếu tố (2FA) cho tất cả các lần đăng nhập.",
+      "force2FAAllLoginsDescription": "Tất cả người dùng phải xác thực bằng xác thực hai yếu tố (2FA) sau khi đăng nhập, bao gồm cả người dùng SSO.",
+      "forceSsoEnabled": "Buộc bật SSO trên toàn cầu",
+      "forceSsoDisabled": "Buộc sử dụng SSO đã bị vô hiệu hóa trên toàn cầu.",
+      "forceSsoUpdateFailed": "Không thể cập nhật cài đặt SSO bắt buộc.",
+      "force2FANonSSOEnabled": "Cần xác thực hai yếu tố để đăng nhập bằng mật khẩu.",
+      "force2FANonSSODisabled": "Không còn yêu cầu xác thực hai yếu tố đối với việc đăng nhập bằng mật khẩu.",
+      "force2FAAllLoginsEnabled": "Yêu cầu xác thực hai yếu tố cho tất cả các lần đăng nhập.",
+      "force2FAAllLoginsDisabled": "Xác thực hai yếu tố không còn bắt buộc đối với tất cả các lần đăng nhập.",
+      "force2FAUpdateFailed": "Không thể cập nhật cài đặt xác thực hai yếu tố.",
       "minPasswordLengthLabel": "Độ dài mật khẩu tối thiểu",
       "minPasswordLengthDescription": "Mật khẩu phải có ít nhất số ký tự này (8-128)",
       "requireUppercaseLabel": "Yêu cầu viết hoa",

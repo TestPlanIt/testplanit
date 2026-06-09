@@ -3431,6 +3431,7 @@
       "quickscriptTemplates": "QuickScript模板",
       "testManagement": "测试管理",
       "peopleAndAccess": "人员与通道",
+      "authentication": "验证",
       "toolsAndIntegrations": "工具与集成",
       "system": "系统"
     },
@@ -3773,15 +3774,11 @@
       }
     },
     "sso": {
-      "description": "管理身份验证和安全设置",
+      "description": "管理身份验证和注册设置",
       "sections": {
         "providers": {
           "title": "登录提供商",
           "description": "配置用户如何登录您的应用程序"
-        },
-        "security": {
-          "title": "安全",
-          "description": "配置身份验证的安全策略"
         }
       },
       "globalSettings": {
@@ -3805,20 +3802,6 @@
         "magicLink": {
           "title": "魔法链接认证",
           "description": "启用或禁用基于电子邮件的无密码身份验证"
-        },
-        "forceSso": {
-          "title": "强制 SSO 登录",
-          "description": "禁用电子邮件登录，要求用户使用单点登录 (SSO)。"
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "密码登录需要启用双因素身份验证",
-            "description": "使用邮箱/密码登录的用户必须设置并使用双因素身份验证"
-          },
-          "forceAllLogins": {
-            "title": "所有登录均需启用双因素身份验证",
-            "description": "所有用户（包括单点登录用户）登录后都必须进行双因素身份验证。"
-          }
         }
       },
       "providers": {
@@ -3876,14 +3859,6 @@
         "enabled": "提供商已启用",
         "disabled": "提供商已禁用",
         "updateFailed": "更新提供商失败",
-        "forceSsoEnabled": "全球强制启用 SSO",
-        "forceSsoDisabled": "强制全局禁用 SSO",
-        "forceSsoUpdateFailed": "更新强制 SSO 设置失败",
-        "force2FANonSSOEnabled": "密码登录需要双因素身份验证",
-        "force2FANonSSODisabled": "密码登录不再需要双因素认证",
-        "force2FAAllLoginsEnabled": "所有登录都需要双因素身份验证",
-        "force2FAAllLoginsDisabled": "不再需要所有登录都进行双因素身份验证",
-        "force2FAUpdateFailed": "双因素身份验证设置更新失败",
         "configUpdated": "SAML 配置已更新",
         "configCreated": "SAML 配置已创建",
         "configSaveFailed": "保存 SAML 配置失败",
@@ -4348,13 +4323,29 @@
     },
     "security": {
       "title": "安全",
-      "description": "配置密码策略、锁定设置和强制执行措施",
+      "description": "配置登录强制执行、密码策略、锁定设置和强制执行措施",
       "passwordPolicyTitle": "密码策略",
       "passwordPolicyDescription": "设置用户密码要求",
       "lockoutPolicyTitle": "锁定政策",
       "lockoutPolicyDescription": "配置登录失败后账户锁定",
       "enforcementTitle": "执法行动",
       "enforcementDescription": "强制基于凭证的用户更改密码",
+      "signInEnforcementTitle": "签到执法",
+      "signInEnforcementDescription": "要求单点登录并强制执行双因素身份验证",
+      "forceSsoTitle": "强制 SSO 登录",
+      "forceSsoDescription": "禁用电子邮件登录，要求用户使用单点登录 (SSO)。",
+      "force2FANonSSOTitle": "密码登录需要启用双因素身份验证",
+      "force2FANonSSODescription": "使用邮箱/密码登录的用户必须设置并使用双因素身份验证",
+      "force2FAAllLoginsTitle": "所有登录均需启用双因素身份验证",
+      "force2FAAllLoginsDescription": "所有用户（包括单点登录用户）登录后都必须进行双因素身份验证。",
+      "forceSsoEnabled": "全球强制启用 SSO",
+      "forceSsoDisabled": "强制全局禁用 SSO",
+      "forceSsoUpdateFailed": "更新强制 SSO 设置失败",
+      "force2FANonSSOEnabled": "密码登录需要双因素身份验证",
+      "force2FANonSSODisabled": "密码登录不再需要双因素认证",
+      "force2FAAllLoginsEnabled": "所有登录都需要双因素身份验证",
+      "force2FAAllLoginsDisabled": "不再需要所有登录都进行双因素身份验证",
+      "force2FAUpdateFailed": "双因素身份验证设置更新失败",
       "minPasswordLengthLabel": "密码最小长度",
       "minPasswordLengthDescription": "密码长度必须至少为以下字符数（8-128）",
       "requireUppercaseLabel": "必须使用大写字母",

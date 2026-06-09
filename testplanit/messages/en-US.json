@@ -3431,6 +3431,7 @@
       "quickscriptTemplates": "QuickScript Templates",
       "testManagement": "Test Management",
       "peopleAndAccess": "People & Access",
+      "authentication": "Authentication",
       "toolsAndIntegrations": "Tools & Integrations",
       "system": "System"
     },
@@ -3773,15 +3774,11 @@
       }
     },
     "sso": {
-      "description": "Manage authentication and security settings",
+      "description": "Manage authentication and registration settings",
       "sections": {
         "providers": {
           "title": "Sign-in Providers",
           "description": "Configure how users can sign in to your application"
-        },
-        "security": {
-          "title": "Security",
-          "description": "Configure security policies for authentication"
         }
       },
       "globalSettings": {
@@ -3805,20 +3802,6 @@
         "magicLink": {
           "title": "Magic Link Authentication",
           "description": "Enable or disable passwordless email-based authentication"
-        },
-        "forceSso": {
-          "title": "Force SSO Login",
-          "description": "Disable email login and require users to use SSO"
-        },
-        "twoFactor": {
-          "forceNonSSO": {
-            "title": "Require 2FA for Password Logins",
-            "description": "Users signing in with email/password must set up and use two-factor authentication"
-          },
-          "forceAllLogins": {
-            "title": "Require 2FA for All Logins",
-            "description": "All users must verify with 2FA after signing in, including SSO users"
-          }
         }
       },
       "providers": {
@@ -3876,14 +3859,6 @@
         "enabled": "Provider enabled",
         "disabled": "Provider disabled",
         "updateFailed": "Failed to update provider",
-        "forceSsoEnabled": "Force SSO enabled globally",
-        "forceSsoDisabled": "Force SSO disabled globally",
-        "forceSsoUpdateFailed": "Failed to update force SSO setting",
-        "force2FANonSSOEnabled": "Two-factor authentication required for password logins",
-        "force2FANonSSODisabled": "Two-factor authentication no longer required for password logins",
-        "force2FAAllLoginsEnabled": "Two-factor authentication required for all logins",
-        "force2FAAllLoginsDisabled": "Two-factor authentication no longer required for all logins",
-        "force2FAUpdateFailed": "Failed to update two-factor authentication setting",
         "configUpdated": "SAML configuration updated",
         "configCreated": "SAML configuration created",
         "configSaveFailed": "Failed to save SAML configuration",
@@ -4348,13 +4323,29 @@
     },
     "security": {
       "title": "Security",
-      "description": "Configure password policy, lockout settings, and enforcement actions",
+      "description": "Configure sign-in enforcement, password policy, lockout settings, and enforcement actions",
       "passwordPolicyTitle": "Password Policy",
       "passwordPolicyDescription": "Set requirements for user passwords",
       "lockoutPolicyTitle": "Lockout Policy",
       "lockoutPolicyDescription": "Configure account lockout after failed login attempts",
       "enforcementTitle": "Enforcement Actions",
       "enforcementDescription": "Force password changes for credential-based users",
+      "signInEnforcementTitle": "Sign-in Enforcement",
+      "signInEnforcementDescription": "Require SSO and enforce two-factor authentication",
+      "forceSsoTitle": "Force SSO Login",
+      "forceSsoDescription": "Disable email login and require users to use SSO",
+      "force2FANonSSOTitle": "Require 2FA for Password Logins",
+      "force2FANonSSODescription": "Users signing in with email/password must set up and use two-factor authentication",
+      "force2FAAllLoginsTitle": "Require 2FA for All Logins",
+      "force2FAAllLoginsDescription": "All users must verify with 2FA after signing in, including SSO users",
+      "forceSsoEnabled": "Force SSO enabled globally",
+      "forceSsoDisabled": "Force SSO disabled globally",
+      "forceSsoUpdateFailed": "Failed to update force SSO setting",
+      "force2FANonSSOEnabled": "Two-factor authentication required for password logins",
+      "force2FANonSSODisabled": "Two-factor authentication no longer required for password logins",
+      "force2FAAllLoginsEnabled": "Two-factor authentication required for all logins",
+      "force2FAAllLoginsDisabled": "Two-factor authentication no longer required for all logins",
+      "force2FAUpdateFailed": "Failed to update two-factor authentication setting",
       "minPasswordLengthLabel": "Minimum Password Length",
       "minPasswordLengthDescription": "Passwords must be at least this many characters (8-128)",
       "requireUppercaseLabel": "Require Uppercase Letters",
