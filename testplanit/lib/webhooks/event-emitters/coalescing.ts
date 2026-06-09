@@ -143,11 +143,25 @@ export async function emitWithCoalescing(
         throw err;
       }
 
+      // Compute the actual first-event time from the per-event dedup rows
+      // already in the window. windowAgo is the *outer bound* of the window,
+      // not when the burst started — using it as firstAt makes a sub-second
+      // flood report as "over 5 minutes". The 10 per-event rows we wrote
+      // before crossing the threshold give us the real start.
+      const firstAggregate = await tx.webhookEventDedup.aggregate({
+        where: {
+          webhookConfigId: config.id,
+          processedAt: { gt: windowAgo },
+        },
+        _min: { processedAt: true },
+      });
+      const firstAt = firstAggregate._min.processedAt ?? new Date();
+
       await webhookEvents.emit(
         `${eventName}.summary`,
         {
           count: windowCount + 1,
-          firstAt: windowAgo,
+          firstAt,
           lastAt: new Date(),
           windowStart,
           sampleIds: extractSampleIds(payload),
