@@ -119,9 +119,13 @@ export function applyScimPatch<T>(current: T, body: ScimPatch): T {
  * and an empty value array — passes through unchanged so the existing
  * scim-patch behavior is preserved verbatim.
  *
- * Embedded double-quotes in the member id are escaped before being templated
- * into the rewritten `members[value eq "<id>"]` filter so a malicious id
- * cannot break out of the filter expression.
+ * Embedded backslashes and double-quotes in the member id are escaped before
+ * being templated into the rewritten `members[value eq "<id>"]` filter so a
+ * malicious id cannot break out of the filter expression. Backslashes must
+ * be escaped FIRST — escaping the quote first and the backslash after would
+ * double-escape the inserted backslash before the now-escaped quote, leaving
+ * an even count of trailing backslashes that the SCIM filter parser would
+ * consume as `\\` pairs and then close the string on the unescaped `"`.
  */
 export function rewriteEntraMembersRemove(
   op: ScimPatchOperation
@@ -146,10 +150,13 @@ export function rewriteEntraMembersRemove(
   if (!allValid) {
     return op;
   }
-  return (value as Array<{ value: string }>).map((entry) => ({
-    op: "remove",
-    path: `members[value eq "${entry.value.replace(/"/g, '\\"')}"]`,
-  }));
+  return (value as Array<{ value: string }>).map((entry) => {
+    const escaped = entry.value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    return {
+      op: "remove",
+      path: `members[value eq "${escaped}"]`,
+    };
+  });
 }
 
 /**

@@ -660,6 +660,32 @@ describe("applyScimPatch", () => {
       expect(arr[0]!.path).toBe('members[value eq "u\\"injected"]');
     });
 
+    it("H_direct_8b: backslashes in the userId are escaped BEFORE quotes so the filter parser cannot close the string early", () => {
+      // Two scenarios the prior `replace(/"/g, '\\"')`-only escape mishandled:
+      //   1. A trailing backslash: `foo\` would template to
+      //      `members[value eq "foo\"]`, which the filter parser reads as an
+      //      escaped `"` and runs off the end of the string (parse error or
+      //      worse).
+      //   2. A backslash immediately before a quote: `foo\"bar` would
+      //      template to `members[value eq "foo\\"bar"]`, which the parser
+      //      reads as `foo` + escaped-backslash + closing-`"`, then garbage.
+      // Both cases require backslashes to be escaped first so they cannot
+      // collude with the quote escape.
+      const trailing = rewriteEntraMembersRemove({
+        op: "Remove",
+        path: "members",
+        value: [{ value: "foo\\" }],
+      } as never) as Array<{ path: string }>;
+      expect(trailing[0]!.path).toBe('members[value eq "foo\\\\"]');
+
+      const colluding = rewriteEntraMembersRemove({
+        op: "Remove",
+        path: "members",
+        value: [{ value: 'foo\\"bar' }],
+      } as never) as Array<{ path: string }>;
+      expect(colluding[0]!.path).toBe('members[value eq "foo\\\\\\"bar"]');
+    });
+
     it("H8: existing active-coercion still works alongside the new preprocessor (chain order)", () => {
       // Backward-compat — Phase 7's `path:'active', value:'False'` coercion
       // must still fire after the new preprocessor lands.
