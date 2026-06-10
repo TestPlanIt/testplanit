@@ -12,7 +12,7 @@ interface SessionStateChangedData {
   sessionName: string;
   projectId: number;
   from?: { stateName?: string | null };
-  to?: { stateName?: string | null };
+  to?: { stateName?: string | null; stateColor?: string | null };
 }
 
 export function formatSessionStateChangedBlocks(
@@ -24,6 +24,8 @@ export function formatSessionStateChangedBlocks(
 
   return buildBody({
     text: `Session state changed: ${data.sessionName}`,
+    // Color bar = the workflow color of the state being transitioned TO.
+    color: data.to?.stateColor ?? undefined,
     blocks: [
       {
         type: "header",

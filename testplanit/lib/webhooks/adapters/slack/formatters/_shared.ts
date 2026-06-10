@@ -30,11 +30,28 @@ export const url = {
     `${baseUrl()}/projects/sessions/${projectId}/${sessionId}`,
   case: (projectId: number, caseId: number): string =>
     `${baseUrl()}/projects/repository/${projectId}/${caseId}`,
+  issue: (projectId: number, issueId: number): string =>
+    `${baseUrl()}/projects/issues/${projectId}?issueId=${issueId}`,
 };
 
 /** Slack mrkdwn link `<url|text>`, or plain bold text when url is omitted. */
 export function boldLink(text: string, href?: string): string {
   return href ? `*<${href}|${text}>*` : `*${text}*`;
+}
+
+/**
+ * "Tracked in <key>" line linking to the external issue tracker (Jira /
+ * GitHub) when the issue carries one. Used by issue.created and issue.updated
+ * so both keep the tracker reachable while the title links into TestPlanIt.
+ */
+export function trackerLine(
+  externalKey?: string | null,
+  externalUrl?: string | null
+): string | null {
+  if (!externalKey) return null;
+  return externalUrl
+    ? `Tracked in <${externalUrl}|${externalKey}>`
+    : `Tracked in *${externalKey}*`;
 }
 
 /** "Title (linked) \n in Project" — the standard 2-line entity header. */

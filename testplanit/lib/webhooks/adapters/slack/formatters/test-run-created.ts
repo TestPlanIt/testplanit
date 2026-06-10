@@ -11,6 +11,7 @@ interface TestRunCreatedData {
   runTitle: string;
   projectId: number;
   stateName?: string | null;
+  stateColor?: string | null;
 }
 
 export function formatTestRunCreatedBlocks(
@@ -40,5 +41,10 @@ export function formatTestRunCreatedBlocks(
       text: { type: "mrkdwn", text: `*State:* ${data.stateName}` },
     });
   }
-  return buildBody({ text: `Test run created: ${data.runTitle}`, blocks });
+  return buildBody({
+    text: `Test run created: ${data.runTitle}`,
+    // Color bar = the run's workflow state color, mirroring case/session.created.
+    color: data.stateColor ?? undefined,
+    blocks,
+  });
 }

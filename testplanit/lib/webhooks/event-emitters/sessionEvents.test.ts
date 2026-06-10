@@ -84,6 +84,7 @@ describe("emitSessionCreated", () => {
         findUnique: vi.fn(async () => ({
           name: "Open",
           workflowType: "NOT_STARTED",
+          color: { value: "#FFAA00" },
         })),
       },
     });
@@ -106,6 +107,7 @@ describe("emitSessionCreated", () => {
       projectId: 7,
       stateId: 100,
       stateName: "Open",
+      stateColor: "#FFAA00",
       isCompleted: false,
     });
     expect(opts.tx).toBe(tx);
@@ -197,8 +199,13 @@ describe("emitSessionUpdateEvents — lifecycle policy", () => {
           .mockResolvedValueOnce({
             name: "In Progress",
             workflowType: "IN_PROGRESS",
+            color: { value: "#3b82f6" },
           })
-          .mockResolvedValueOnce({ name: "Done", workflowType: "DONE" }),
+          .mockResolvedValueOnce({
+            name: "Done",
+            workflowType: "DONE",
+            color: { value: "#22c55e" },
+          }),
       },
       sessionResults: {
         count: vi.fn(),
@@ -250,6 +257,10 @@ describe("emitSessionUpdateEvents — lifecycle policy", () => {
     );
     expect(emitMock).toHaveBeenCalledTimes(2);
     expect(emitMock.mock.calls[0][0]).toBe("session.state_changed");
+    expect(emitMock.mock.calls[0][1]).toMatchObject({
+      from: { stateName: "In Progress", stateColor: "#3b82f6" },
+      to: { stateName: "Done", stateColor: "#22c55e" },
+    });
     expect(emitMock.mock.calls[1][0]).toBe("session.completed");
     expect(emitMock.mock.calls[1][1]).toMatchObject({
       sessionId: 1,
@@ -286,6 +297,9 @@ describe("emitSessionResultAdded", () => {
           id: 5,
           name: "Passed",
           isCompleted: true,
+          isSuccess: true,
+          isFailure: false,
+          color: { value: "#22c55e" },
         })),
       },
     });
@@ -302,7 +316,10 @@ describe("emitSessionResultAdded", () => {
       resultId: 88,
       statusId: 5,
       statusName: "Passed",
+      statusColor: "#22c55e",
       isCompleted: true,
+      isSuccess: true,
+      isFailure: false,
       executedById: "user-1",
       executedAt: createdAt.toISOString(),
     });

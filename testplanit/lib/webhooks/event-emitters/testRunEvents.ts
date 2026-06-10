@@ -116,13 +116,19 @@ export async function emitTestRunCreated(
   opts: EmitOptions = {}
 ): Promise<void> {
   let stateName: string | null = null;
+  let stateColor: string | null = null;
   let stateIsCompleted = false;
   if (row.stateId != null) {
     const state = await tx.workflows.findUnique({
       where: { id: row.stateId },
-      select: { name: true, workflowType: true },
+      select: {
+        name: true,
+        workflowType: true,
+        color: { select: { value: true } },
+      },
     });
     stateName = state?.name ?? null;
+    stateColor = state?.color?.value ?? null;
     stateIsCompleted = state?.workflowType === "DONE";
   }
   await webhookEvents.emit(
@@ -133,6 +139,7 @@ export async function emitTestRunCreated(
       projectId: row.projectId,
       stateId: row.stateId,
       stateName,
+      stateColor,
       isCompleted: stateIsCompleted,
     },
     {

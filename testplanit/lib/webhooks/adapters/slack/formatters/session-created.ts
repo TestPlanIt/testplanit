@@ -11,6 +11,7 @@ interface SessionCreatedData {
   sessionName: string;
   projectId: number;
   stateName?: string | null;
+  stateColor?: string | null;
 }
 
 export function formatSessionCreatedBlocks(
@@ -40,5 +41,10 @@ export function formatSessionCreatedBlocks(
       text: { type: "mrkdwn", text: `*State:* ${data.stateName}` },
     });
   }
-  return buildBody({ text: `Session created: ${data.sessionName}`, blocks });
+  return buildBody({
+    text: `Session created: ${data.sessionName}`,
+    // Color bar = the session's workflow state color, mirroring case.created.
+    color: data.stateColor ?? undefined,
+    blocks,
+  });
 }

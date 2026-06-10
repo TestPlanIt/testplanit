@@ -137,6 +137,7 @@ describe("emitTestRunCreated", () => {
         findUnique: vi.fn(async () => ({
           name: "Open",
           workflowType: "NOT_STARTED",
+          color: { value: "#3b82f6" },
         })),
       },
     });
@@ -153,6 +154,7 @@ describe("emitTestRunCreated", () => {
       projectId: 7,
       stateId: 100,
       stateName: "Open",
+      stateColor: "#3b82f6",
       isCompleted: false,
     });
     expect(opts.tx).toBe(tx);

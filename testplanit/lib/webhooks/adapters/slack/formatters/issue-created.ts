@@ -1,5 +1,5 @@
 import type { FormattedHttpRequest, OutboundEnvelope } from "../../types";
-import { buildBody, projectNameOf } from "./_shared";
+import { buildBody, projectNameOf, trackerLine, url } from "./_shared";
 
 interface IssueCreatedData {
   id: number;
@@ -27,16 +27,15 @@ export function formatIssueCreatedBlocks(
   envelope: OutboundEnvelope
 ): FormattedHttpRequest {
   const data = envelope.data as unknown as IssueCreatedData;
-  const titleLink = data.externalUrl
-    ? `*<${data.externalUrl}|${data.title}>*`
-    : `*${data.title}*`;
+  // Title links into the issue in TestPlanIt (consistent with issue.updated).
+  const titleLink = `*<${url.issue(envelope.projectId, data.id)}|${data.title}>*`;
+  const tracker = trackerLine(data.externalKey, data.externalUrl);
 
-  // Inline meta-line: severity · status · externalKey, with separators
-  // only between present values.
+  // Inline meta-line: severity · status, with separators only between
+  // present values. The external tracker key moves to its own line.
   const metaParts: string[] = [];
   if (data.severity) metaParts.push(`*Severity:* ${data.severity}`);
   if (data.status) metaParts.push(`*Status:* ${data.status}`);
-  if (data.externalKey) metaParts.push(`*${data.externalKey}*`);
   const metaLine = metaParts.length > 0 ? metaParts.join(" · ") : null;
 
   const blocks: Array<Record<string, unknown>> = [
@@ -52,6 +51,10 @@ export function formatIssueCreatedBlocks(
       },
     },
   ];
+
+  if (tracker) {
+    blocks.push({ type: "section", text: { type: "mrkdwn", text: tracker } });
+  }
 
   if (metaLine) {
     blocks.push({

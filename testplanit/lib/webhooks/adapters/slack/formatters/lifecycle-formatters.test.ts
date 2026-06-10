@@ -29,32 +29,38 @@ function env(data: Record<string, unknown>): OutboundEnvelope {
 }
 
 describe("test_run.created", () => {
-  it("links the run and shows the resolved state", () => {
+  it("links the run, shows the resolved state, and uses the state color bar", () => {
     const { body } = formatTestRunCreatedBlocks(
       env({
         runId: 9,
         runTitle: "Smoke",
         projectId: 1,
         stateName: "In Progress",
+        stateColor: "#3b82f6",
       })
     );
-    expect(JSON.parse(body).text).toBe("Test run created: Smoke");
+    const payload = JSON.parse(body);
+    expect(payload.text).toBe("Test run created: Smoke");
+    expect(payload.attachments[0].color).toBe("#3b82f6");
     expect(body).toContain("/projects/runs/1/9");
     expect(body).toContain("*State:* In Progress");
   });
 });
 
 describe("session.created", () => {
-  it("links the session and shows the resolved state", () => {
+  it("links the session, shows the resolved state, and uses the state color bar", () => {
     const { body } = formatSessionCreatedBlocks(
       env({
         sessionId: 7,
         sessionName: "Explore",
         projectId: 1,
         stateName: "New",
+        stateColor: "#FFAA00",
       })
     );
-    expect(JSON.parse(body).text).toBe("Session created: Explore");
+    const payload = JSON.parse(body);
+    expect(payload.text).toBe("Session created: Explore");
+    expect(payload.attachments[0].color).toBe("#FFAA00");
     expect(body).toContain("/projects/sessions/1/7");
     expect(body).toContain("*State:* New");
   });
@@ -77,28 +83,50 @@ describe("session.duplicated", () => {
 });
 
 describe("session.state_changed", () => {
-  it("renders from → to using resolved state names", () => {
+  it("renders from → to and uses the destination state color bar", () => {
     const { body } = formatSessionStateChangedBlocks(
       env({
         sessionId: 7,
         sessionName: "Explore",
         projectId: 1,
         from: { stateName: "In Progress" },
-        to: { stateName: "Done" },
+        to: { stateName: "Done", stateColor: "#22c55e" },
       })
     );
+    const payload = JSON.parse(body);
+    expect(payload.attachments[0].color).toBe("#22c55e");
     expect(body).toContain("*In Progress*  →  *Done*");
   });
 });
 
 describe("session.result_added", () => {
-  it("shows the resolved status and links via the envelope projectId", () => {
+  it("uses the status color bar, a status emoji, and links via envelope projectId", () => {
     const { body } = formatSessionResultAddedBlocks(
-      env({ sessionId: 7, sessionName: "Explore", statusName: "Failed" })
+      env({
+        sessionId: 7,
+        sessionName: "Explore",
+        statusName: "Failed",
+        statusColor: "#ef4444",
+        isFailure: true,
+      })
     );
-    expect(JSON.parse(body).text).toBe("Session result added: Failed");
+    const payload = JSON.parse(body);
+    expect(payload.text).toBe("Session result added: Failed");
+    expect(payload.attachments[0].color).toBe("#ef4444");
     expect(body).toContain("/projects/sessions/1/7");
-    expect(body).toContain("*Status:* Failed");
+    expect(body).toContain(":x: *Failed*");
+  });
+
+  it("falls back to green/red/yellow from flags when no status color", () => {
+    const { body } = formatSessionResultAddedBlocks(
+      env({
+        sessionId: 7,
+        sessionName: "Explore",
+        statusName: "Passed",
+        isSuccess: true,
+      })
+    );
+    expect(JSON.parse(body).attachments[0].color).toBe("#22c55e");
   });
 });
 
