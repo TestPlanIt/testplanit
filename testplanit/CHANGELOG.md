@@ -1,3 +1,9 @@
+## [0.37.4](https://github.com/TestPlanIt/testplanit/compare/v0.37.3...v0.37.4) (2026-06-10)
+
+### Enhancements
+
+* **webhooks:** rich Slack formatting for all webhook events ([#421](https://github.com/TestPlanIt/testplanit/issues/421)) ([b060bae](https://github.com/TestPlanIt/testplanit/commit/b060bae413601091ca7f10541071c4625b1127e3))
+
 ## [0.37.3](https://github.com/TestPlanIt/testplanit/compare/v0.37.2...v0.37.3) (2026-06-10)
 
 ### Enhancements
