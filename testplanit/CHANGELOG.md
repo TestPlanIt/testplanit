@@ -1,3 +1,9 @@
+## [0.37.3](https://github.com/TestPlanIt/testplanit/compare/v0.37.2...v0.37.3) (2026-06-10)
+
+### Enhancements
+
+* **quickscript:** resilient repo scans with rate-limit backoff ([#420](https://github.com/TestPlanIt/testplanit/issues/420)) ([20f1335](https://github.com/TestPlanIt/testplanit/commit/20f1335d71928a554628c5cd154570d09bddb84e))
+
 ## [0.37.2](https://github.com/TestPlanIt/testplanit/compare/v0.37.1...v0.37.2) (2026-06-10)
 
 ### Bug Fixes
