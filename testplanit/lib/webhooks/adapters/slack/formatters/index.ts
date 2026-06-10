@@ -1,11 +1,18 @@
 import type { FormattedHttpRequest, OutboundEnvelope } from "../../types";
 import { formatTestRunCompletedBlocks } from "./test-run-completed";
+import { formatTestRunCreatedBlocks } from "./test-run-created";
 import { formatTestRunStateChangedBlocks } from "./test-run-state-changed";
 import { formatTestRunResultAddedBlocks } from "./test-run-result-added";
 import { formatTestRunDuplicatedBlocks } from "./test-run-duplicated";
 import { formatSessionCompletedBlocks } from "./session-completed";
+import { formatSessionCreatedBlocks } from "./session-created";
+import { formatSessionDuplicatedBlocks } from "./session-duplicated";
+import { formatSessionStateChangedBlocks } from "./session-state-changed";
+import { formatSessionResultAddedBlocks } from "./session-result-added";
+import { formatIterationResultRecordedBlocks } from "./iteration-result-recorded";
 import { formatIssueCreatedBlocks } from "./issue-created";
 import { formatIssueUpdatedBlocks } from "./issue-updated";
+import { formatIssueDeletedBlocks } from "./issue-deleted";
 import { formatCaseCreatedBlocks } from "./case-created";
 import { formatCaseUpdatedBlocks } from "./case-updated";
 import { formatCaseDeletedBlocks } from "./case-deleted";
@@ -26,12 +33,19 @@ export type SlackFormatter = (
  */
 export const SLACK_FORMATTERS: Record<string, SlackFormatter> = {
   "test_run.completed": formatTestRunCompletedBlocks,
+  "test_run.created": formatTestRunCreatedBlocks,
   "test_run.state_changed": formatTestRunStateChangedBlocks,
   "test_run.result_added": formatTestRunResultAddedBlocks,
   "test_run.duplicated": formatTestRunDuplicatedBlocks,
   "session.completed": formatSessionCompletedBlocks,
+  "session.created": formatSessionCreatedBlocks,
+  "session.duplicated": formatSessionDuplicatedBlocks,
+  "session.state_changed": formatSessionStateChangedBlocks,
+  "session.result_added": formatSessionResultAddedBlocks,
+  "iteration.result.recorded": formatIterationResultRecordedBlocks,
   "issue.created": formatIssueCreatedBlocks,
   "issue.updated": formatIssueUpdatedBlocks,
+  "issue.deleted": formatIssueDeletedBlocks,
   "case.created": formatCaseCreatedBlocks,
   "case.updated": formatCaseUpdatedBlocks,
   "case.deleted": formatCaseDeletedBlocks,
