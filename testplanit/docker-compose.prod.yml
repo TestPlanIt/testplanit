@@ -41,7 +41,9 @@ services:
     env_file:
       - .env.production
     working_dir: /app/testplanit
-    # Push schema and seed database (no migrations)
+    # Push schema and seed database (no migrations).
+    # If Postgres is fronted by a transaction-mode pooler (pgbouncer), point this
+    # service at the direct DB — `prisma db push` needs a real (non-pooled) session.
     command:
       [
         "sh",
