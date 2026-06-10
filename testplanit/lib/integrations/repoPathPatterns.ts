@@ -12,10 +12,16 @@ export interface PathPattern {
  * JSON directory listing, whereas `/src/<branch>/.` resolves to a file body).
  */
 export function normalizeBasePath(basePath: string): string {
-  const trimmed = (basePath ?? "").trim().replace(/\/+$/, "");
+  // Strip trailing slashes with a linear scan rather than a `/\/+$/` regex:
+  // the end-anchored `+` backtracks O(n^2) on a long run of slashes, and
+  // basePath is user-supplied (ReDoS — flagged by CodeQL).
+  const start = (basePath ?? "").trim();
+  let end = start.length;
+  while (end > 0 && start.charCodeAt(end - 1) === 47 /* "/" */) end--;
+  const trimmed = start.slice(0, end);
   if (trimmed === "" || trimmed === ".") return "";
   // Strip a leading "./" so "./src" behaves the same as "src".
-  return trimmed.replace(/^\.\//, "");
+  return trimmed.startsWith("./") ? trimmed.slice(2) : trimmed;
 }
 
 /**
