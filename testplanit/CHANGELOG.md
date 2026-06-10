@@ -1,3 +1,9 @@
+## [0.37.2](https://github.com/TestPlanIt/testplanit/compare/v0.37.1...v0.37.2) (2026-06-10)
+
+### Bug Fixes
+
+* combobox option-link hover styling and shell-quote security bump ([#419](https://github.com/TestPlanIt/testplanit/issues/419)) ([12c65e7](https://github.com/TestPlanIt/testplanit/commit/12c65e7cd5eb4bf4a2c096b273c041c6e39be333))
+
 ## [0.37.1](https://github.com/TestPlanIt/testplanit/compare/v0.37.0...v0.37.1) (2026-06-10)
 
 ### Enhancements
