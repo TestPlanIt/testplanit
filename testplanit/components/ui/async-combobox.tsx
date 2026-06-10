@@ -312,7 +312,7 @@ export function AsyncCombobox<T>({
                         setOpen(false);
                       }}
                     >
-                      <div className="flex items-center w-full">
+                      <div className="flex items-center w-full [&_a]:no-underline [&_a]:text-inherit [&_a:hover]:text-inherit">
                         {renderOption(option)}
                         {value &&
                           getOptionValue(option) === getOptionValue(value) && (

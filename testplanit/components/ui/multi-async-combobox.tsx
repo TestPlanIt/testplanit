@@ -306,7 +306,7 @@ export function MultiAsyncCombobox<T>({
                           value={String(getOptionValue(option))}
                           onSelect={() => toggleOption(option)}
                         >
-                          <div className="flex items-center w-full">
+                          <div className="flex items-center w-full [&_a]:no-underline [&_a]:text-inherit [&_a:hover]:text-inherit">
                             {renderOption(option)}
                             {!hideSelected && isSelected(option) ? (
                               <Check className="ml-auto h-4 w-4" />
