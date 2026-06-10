@@ -15,6 +15,7 @@ export interface ExtendedLlmIntegration extends LlmIntegration {
   llmProviderConfig?: LlmProviderConfig | null;
   isConnected?: boolean;
   projectLlmIntegrations?: { projectId: number }[];
+  llmFeatureConfigs?: { projectId: number }[];
 }
 
 export const useColumns = (
@@ -98,11 +99,25 @@ export const useColumns = (
         enableResizing: true,
         size: 75,
         cell: ({ row }) => {
-          const projects = row.original.projectLlmIntegrations || [];
+          // A project connects to this LLM either by setting it as the project
+          // default (projectLlmIntegrations) or by overriding a feature to use
+          // it (llmFeatureConfigs). Merge and dedupe so a project counts once.
+          const projectIds = new Set<number>();
+          for (const { projectId } of row.original.projectLlmIntegrations ||
+            []) {
+            projectIds.add(projectId);
+          }
+          for (const { projectId } of row.original.llmFeatureConfigs || []) {
+            projectIds.add(projectId);
+          }
 
-          if (projects.length === 0) {
+          if (projectIds.size === 0) {
             return null;
           }
+
+          const projects = Array.from(projectIds, (projectId) => ({
+            projectId,
+          }));
 
           return <ProjectListDisplay projects={projects} usePopover={true} />;
         },
