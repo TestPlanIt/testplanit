@@ -1831,7 +1831,8 @@
           "resolvingBranch": "… dalının çözümlenmesi",
           "scanningFiles": "{scope}… içindeki dosyalar taranıyor.",
           "scanningFilesCount": "{scope}… içindeki dosyalar taranıyor ({count, number} bulundu)",
-          "filtering": "{count, number} dosyalarına filtreler uygulanıyor…"
+          "filtering": "{count, number} dosyalarına filtreler uygulanıyor…",
+          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
         },
         "cache": {
           "title": "Önbellek Ayarları",

@@ -195,3 +195,76 @@ describe("GitRepoAdapter redirect protection", () => {
     );
   });
 });
+
+describe("GitRepoAdapter rate-limit retry", () => {
+  let adapter: GitHubRepoAdapter;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    adapter = new GitHubRepoAdapter(
+      { personalAccessToken: "test-token" },
+      { owner: "testorg", repo: "testrepo" }
+    );
+    // Keep the test fast — no baseline throttle, tiny backoff.
+    (adapter as any).rateLimitDelay = 0;
+    (adapter as any).lastRequestTime = 0;
+    (adapter as any).retryDelay = 1;
+    (adapter as any).maxRateLimitWaitMs = 5_000;
+  });
+
+  it("waits and retries when the reset window is within the cap", async () => {
+    const onWait = vi.fn();
+    adapter.onRateLimitWait = onWait;
+
+    // 429 with an immediate reset, then success on retry.
+    mockFetch.mockResolvedValueOnce(
+      makeResponse({ message: "rate limited" }, 429, { "Retry-After": "0" })
+    );
+    mockFetch.mockResolvedValueOnce(makeResponse({ default_branch: "main" }));
+
+    const branch = await adapter.getDefaultBranch();
+
+    expect(branch).toBe("main");
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(onWait).toHaveBeenCalled();
+  });
+
+  it("fails fast (no retry storm) when the reset window exceeds the cap", async () => {
+    const onWait = vi.fn();
+    adapter.onRateLimitWait = onWait;
+
+    // Reset is 10 minutes out — far beyond the 5s cap.
+    mockFetch.mockResolvedValue(
+      makeResponse({ message: "rate limited" }, 429, { "Retry-After": "600" })
+    );
+
+    await expect(adapter.getDefaultBranch()).rejects.toThrow(
+      "Rate limit exceeded"
+    );
+    // No retries burned — the actionable error surfaces immediately.
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(onWait).not.toHaveBeenCalled();
+  });
+
+  it("still retries transient 5xx errors with backoff", async () => {
+    const onWait = vi.fn();
+    adapter.onRateLimitWait = onWait;
+
+    mockFetch.mockResolvedValueOnce(makeResponse({ message: "boom" }, 500));
+    mockFetch.mockResolvedValueOnce(makeResponse({ default_branch: "main" }));
+
+    const branch = await adapter.getDefaultBranch();
+
+    expect(branch).toBe("main");
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    // 5xx is not a rate limit, so the rate-limit hook never fires.
+    expect(onWait).not.toHaveBeenCalled();
+  });
+
+  it("does not retry non-rate-limit 4xx errors", async () => {
+    mockFetch.mockResolvedValue(makeResponse({ message: "not found" }, 404));
+
+    await expect(adapter.getDefaultBranch()).rejects.toThrow("HTTP 404");
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+});

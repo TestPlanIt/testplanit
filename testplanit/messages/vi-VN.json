@@ -1831,7 +1831,8 @@
           "resolvingBranch": "Đang giải quyết nhánh…",
           "scanningFiles": "Đang quét các tập tin trong {scope}…",
           "scanningFilesCount": "Đang quét các tập tin trong {scope}… ({count, number} đã tìm thấy)",
-          "filtering": "Áp dụng bộ lọc cho các tệp {count, number}…"
+          "filtering": "Áp dụng bộ lọc cho các tệp {count, number}…",
+          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
         },
         "cache": {
           "title": "Cài đặt bộ nhớ đệm",

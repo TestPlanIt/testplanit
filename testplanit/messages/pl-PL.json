@@ -1831,7 +1831,8 @@
           "resolvingBranch": "Rozwiązywanie gałęzi…",
           "scanningFiles": "Skanowanie plików w {scope}…",
           "scanningFilesCount": "Skanowanie plików w {scope}… (znaleziono{count, number})",
-          "filtering": "Stosowanie filtrów do plików {count, number}…"
+          "filtering": "Stosowanie filtrów do plików {count, number}…",
+          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
         },
         "cache": {
           "title": "Ustawienia pamięci podręcznej",

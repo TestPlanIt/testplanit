@@ -1831,7 +1831,8 @@
           "resolvingBranch": "ブランチ… を解決しています",
           "scanningFiles": "{scope}… のファイルをスキャンしています。",
           "scanningFilesCount": "{scope}… 内のファイルをスキャンしています ({count, number} が見つかりました)",
-          "filtering": "{count, number} ファイル… にフィルタを適用しています。"
+          "filtering": "{count, number} ファイル… にフィルタを適用しています。",
+          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
         },
         "cache": {
           "title": "キャッシュ設定",

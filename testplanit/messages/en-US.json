@@ -1831,7 +1831,8 @@
           "resolvingBranch": "Resolving branch…",
           "scanningFiles": "Scanning files in {scope}…",
           "scanningFilesCount": "Scanning files in {scope}… ({count, number} found)",
-          "filtering": "Applying filters to {count, number} files…"
+          "filtering": "Applying filters to {count, number} files…",
+          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
         },
         "cache": {
           "title": "Cache Settings",

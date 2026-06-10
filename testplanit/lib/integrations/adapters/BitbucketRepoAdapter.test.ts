@@ -4,6 +4,15 @@ import { BitbucketRepoAdapter } from "./BitbucketRepoAdapter";
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
+// Mock DNS resolution to avoid real lookups in tests
+vi.mock("~/utils/ssrf", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("~/utils/ssrf")>();
+  return {
+    ...actual,
+    assertSsrfSafeResolved: vi.fn().mockResolvedValue(undefined),
+  };
+});
+
 function makeResponse(data: any, status = 200) {
   return {
     ok: status >= 200 && status < 300,
@@ -167,6 +176,95 @@ describe("BitbucketRepoAdapter", () => {
 
       const result = await adapter.listAllFiles("main");
       expect(result.files).toHaveLength(2);
+    });
+  });
+
+  describe("listFilesInPaths root handling", () => {
+    it("lists the repo root as /src/<branch>/ (no '.' segment) for an empty base path", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({
+          values: [{ path: "CLAUDE.md", type: "commit_file", size: 100 }],
+          next: null,
+        })
+      );
+
+      const result = await adapter.listFilesInPaths("main", [""]);
+
+      expect(result.files.map((f) => f.path)).toEqual(["CLAUDE.md"]);
+      const calledUrl = mockFetch.mock.calls[0][0] as string;
+      expect(calledUrl).toContain("/src/main/?");
+      expect(calledUrl).not.toContain("/src/main/.");
+    });
+
+    it("normalizes a literal '.' base path to the repo root URL", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({
+          values: [{ path: "CLAUDE.md", type: "commit_file", size: 100 }],
+          next: null,
+        })
+      );
+
+      await adapter.listFilesInPaths("main", ["."]);
+
+      const calledUrl = mockFetch.mock.calls[0][0] as string;
+      expect(calledUrl).toContain("/src/main/?");
+      expect(calledUrl).not.toContain("/src/main/.");
+    });
+
+    it("lists mixed root + scoped base paths correctly", async () => {
+      // First seed "" (root)
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({
+          values: [
+            { path: "CLAUDE.md", type: "commit_file", size: 100 },
+            { path: "src/index.ts", type: "commit_file", size: 50 },
+          ],
+          next: null,
+        })
+      );
+      // Second seed "src"
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({
+          values: [
+            { path: "src/index.ts", type: "commit_file", size: 50 }, // dup
+            { path: "src/util.ts", type: "commit_file", size: 60 },
+          ],
+          next: null,
+        })
+      );
+
+      const result = await adapter.listFilesInPaths("main", ["", "src"]);
+
+      expect(result.files.map((f) => f.path)).toEqual([
+        "CLAUDE.md",
+        "src/index.ts",
+        "src/util.ts",
+      ]);
+      const rootUrl = mockFetch.mock.calls[0][0] as string;
+      const srcUrl = mockFetch.mock.calls[1][0] as string;
+      expect(rootUrl).toContain("/src/main/?");
+      expect(srcUrl).toContain("/src/main/src?");
+    });
+  });
+
+  describe("non-JSON listing response", () => {
+    it("throws a friendly error (not a raw SyntaxError) when a path resolves to a file body", async () => {
+      // Bitbucket resolves a bad path to a FILE and returns its raw markdown body.
+      (adapter as any).maxRetries = 0;
+      mockFetch.mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        headers: new Headers({ "content-type": "text/markdown" }),
+        json: () =>
+          Promise.reject(new SyntaxError("Unexpected token '#' in JSON")),
+        text: () => Promise.resolve("# CLAUDE.md\n\nProject docs go here."),
+      });
+
+      const promise = adapter.listFilesInPaths("main", ["docs"]);
+
+      await expect(promise).rejects.toThrow(/non-JSON content/i);
+      await expect(promise).rejects.not.toThrow(SyntaxError);
     });
   });
 

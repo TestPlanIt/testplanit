@@ -61,7 +61,12 @@ export class BitbucketRepoAdapter extends GitRepoAdapter {
     const queue: string[] = [...seeds];
 
     while (queue.length > 0 && files.length < MAX_FILES) {
-      const path = queue.shift()!;
+      const rawPath = queue.shift()!;
+      // Treat ".", "./" and "" all as repository root. Bitbucket resolves a
+      // literal "." path segment to a FILE and returns its raw body instead of
+      // a JSON directory listing, which would blow up JSON parsing downstream.
+      const path =
+        rawPath === "." || rawPath === "./" || rawPath === "/" ? "" : rawPath;
       let url: string | null =
         `https://api.bitbucket.org/2.0/repositories/${this.workspace}/${this.repoSlug}/src/${encodeURIComponent(branch)}/${path}?pagelen=100&max_depth=${MAX_DEPTH}`;
 

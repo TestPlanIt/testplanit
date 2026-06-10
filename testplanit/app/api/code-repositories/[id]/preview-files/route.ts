@@ -1,53 +1,15 @@
 import { prisma } from "@/lib/prisma";
-import micromatch from "micromatch";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
+import { createGitRepoAdapter } from "~/lib/integrations/adapters/GitRepoAdapter";
 import {
-  createGitRepoAdapter,
-  RepoFileEntry,
-} from "~/lib/integrations/adapters/GitRepoAdapter";
+  applyPathPatterns,
+  extractBasePaths,
+  type PathPattern,
+} from "~/lib/integrations/repoPathPatterns";
 import { authOptions } from "~/server/auth";
 
 const MAX_CONTEXT_BYTES = 500_000;
-
-interface PathPattern {
-  path: string;
-  pattern: string;
-}
-
-function applyPathPatterns(
-  allFiles: RepoFileEntry[],
-  pathPatterns: PathPattern[]
-): RepoFileEntry[] {
-  if (!pathPatterns.length) return allFiles;
-
-  const matched = new Set<string>();
-  for (const { path: basePath, pattern } of pathPatterns) {
-    // Combine basePath + pattern into a single glob
-    const trimmedBase = basePath.replace(/\/$/, "");
-    const globPattern = trimmedBase ? `${trimmedBase}/${pattern}` : pattern;
-    const matchedPaths = micromatch(
-      allFiles.map((f) => f.path),
-      globPattern
-    );
-    matchedPaths.forEach((p: string) => matched.add(p));
-  }
-
-  return allFiles
-    .filter((f) => matched.has(f.path))
-    .sort((a, b) => a.path.localeCompare(b.path));
-}
-
-/** Extract unique base directory paths from PathPattern[] for scoped listing. */
-function extractBasePaths(pathPatterns: PathPattern[]): string[] {
-  if (!pathPatterns.length) return [];
-  const paths = new Set<string>();
-  for (const { path: basePath } of pathPatterns) {
-    const trimmed = basePath.replace(/\/$/, "");
-    if (trimmed) paths.add(trimmed);
-  }
-  return paths.size > 0 ? [...paths] : [];
-}
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -111,6 +73,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
           repo.settings as Record<string, string> | null
         );
 
+        // Surface rate-limit waits as progress so the user sees we're backing
+        // off and retrying rather than staring at a frozen spinner.
+        adapter.onRateLimitWait = (waitSeconds) => {
+          send({ type: "progress", step: "rate-limited", waitSeconds });
+        };
+
         // Step 1: Resolve branch
         send({ type: "progress", step: "branch" });
         const resolvedBranch = branch || (await adapter.getDefaultBranch());
@@ -118,7 +86,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         // Step 2: Fetch files — use path-scoped listing when paths are available
         const basePaths = extractBasePaths(pathPatterns);
         const scopeLabel =
-          basePaths.length > 0 ? basePaths.join(", ") : "repository root";
+          basePaths.length > 0
+            ? basePaths.map((p) => p || "repository root").join(", ")
+            : "repository root";
         send({ type: "progress", step: "listing", scope: scopeLabel });
 
         const { files: allFiles, truncated } = await adapter.listFilesInPaths(
@@ -140,7 +110,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
           step: "filtering",
           totalFiles: allFiles.length,
         });
-        const filteredFiles = applyPathPatterns(allFiles, pathPatterns);
+        const filteredFiles = applyPathPatterns(allFiles, pathPatterns).sort(
+          (a, b) => a.path.localeCompare(b.path)
+        );
 
         const totalSize = filteredFiles.reduce(
           (sum, f) => sum + (f.size ?? 0),

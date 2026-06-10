@@ -1831,7 +1831,8 @@
           "resolvingBranch": "Разрешение ветви…",
           "scanningFiles": "Сканирование файлов в {scope}…",
           "scanningFilesCount": "Сканирование файлов в {scope}… ({count, number} найдено)",
-          "filtering": "Применение фильтров к {count, number} файлам…"
+          "filtering": "Применение фильтров к {count, number} файлам…",
+          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
         },
         "cache": {
           "title": "Настройки кэша",

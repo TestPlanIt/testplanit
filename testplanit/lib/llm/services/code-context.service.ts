@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import micromatch from "micromatch";
 import {
   createGitRepoAdapter,
   type GitRepoAdapter,
@@ -8,7 +7,14 @@ import {
   repoFileCache,
   type RepoFileEntry,
 } from "~/lib/integrations/cache/RepoFileCache";
+import {
+  applyPathPatterns,
+  type PathPattern,
+} from "~/lib/integrations/repoPathPatterns";
 import { bfsRank, buildImportGraph, isBarrelFile } from "./import-analyzer";
+
+// Re-exported for backwards compatibility with existing importers/tests.
+export { applyPathPatterns };
 
 // Same heuristic as LlmManager.chatStream (line 261): ~4 chars per token
 const CHARS_PER_TOKEN = 4;
@@ -85,31 +91,6 @@ export interface AssembledContext {
   filesUsed: string[]; // Paths of files included
   tokenEstimate: number; // Estimated tokens used
   truncated: boolean; // true if some files were skipped due to budget
-}
-
-interface PathPattern {
-  path: string;
-  pattern: string;
-}
-
-export function applyPathPatterns(
-  allFiles: RepoFileEntry[],
-  pathPatterns: PathPattern[]
-): RepoFileEntry[] {
-  if (!pathPatterns.length) return allFiles;
-
-  const matched = new Set<string>();
-  for (const { path: basePath, pattern } of pathPatterns) {
-    const trimmedBase = basePath.replace(/\/$/, "");
-    const globPattern = trimmedBase ? `${trimmedBase}/${pattern}` : pattern;
-    const matchedPaths = micromatch(
-      allFiles.map((f) => f.path),
-      globPattern
-    );
-    matchedPaths.forEach((p: string) => matched.add(p));
-  }
-
-  return allFiles.filter((f) => matched.has(f.path));
 }
 
 /**
