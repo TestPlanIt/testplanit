@@ -1,3 +1,9 @@
+## [0.37.1](https://github.com/TestPlanIt/testplanit/compare/v0.37.0...v0.37.1) (2026-06-10)
+
+### Enhancements
+
+* **llm:** show feature-override projects in AI Models connections ([#418](https://github.com/TestPlanIt/testplanit/issues/418)) ([2029f75](https://github.com/TestPlanIt/testplanit/commit/2029f759dc5010ea31116a42b1a959733e51737f))
+
 ## [0.37.0](https://github.com/TestPlanIt/testplanit/compare/v0.36.5...v0.37.0) (2026-06-09)
 
 ### Features
