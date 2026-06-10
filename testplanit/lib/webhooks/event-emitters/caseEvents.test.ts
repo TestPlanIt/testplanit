@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   emitCaseCreated,
   emitCaseDeleted,
+  emitCaseFieldValueChanged,
   emitCaseUpdated,
 } from "./caseEvents";
 
@@ -120,6 +121,90 @@ describe("emitCaseUpdated", () => {
   it("returns silently when oldRow is null", async () => {
     const tx = makeTx();
     await emitCaseUpdated(null, baseCase, tx as never);
+    expect(emitMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("emitCaseUpdated — resolved changes", () => {
+  beforeEach(() => emitMock.mockClear());
+
+  const fkTx = {
+    repositoryCases: { findUnique: vi.fn(async () => null) },
+    workflows: {
+      findUnique: vi.fn(async ({ where: { id } }: any) => ({
+        name: id === 14 ? "Active" : "Draft",
+        color: { value: "#FFAA00" },
+      })),
+    },
+  };
+
+  it("resolves stateId to a State row with the workflow color", async () => {
+    await emitCaseUpdated(
+      { ...baseCase, stateId: 14 },
+      { ...baseCase, stateId: 11 },
+      fkTx as never
+    );
+    expect(emitMock).toHaveBeenCalledTimes(1);
+    const [, payload] = emitMock.mock.calls[0];
+    expect((payload as { changes: unknown }).changes).toEqual([
+      { label: "State", from: "Active", to: "Draft", color: "#FFAA00" },
+    ]);
+  });
+
+  it("does NOT emit when only bookkeeping columns changed", async () => {
+    await emitCaseUpdated(
+      { ...baseCase, currentVersion: 1 } as never,
+      { ...baseCase, currentVersion: 2 } as never,
+      fkTx as never
+    );
+    expect(emitMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("emitCaseFieldValueChanged", () => {
+  beforeEach(() => emitMock.mockClear());
+
+  const fieldTx = {
+    repositoryCases: {
+      findUnique: vi.fn(async () => ({
+        id: 11,
+        name: "Case 11",
+        projectId: 7,
+        isDeleted: false,
+      })),
+    },
+    caseFields: {
+      findUnique: vi.fn(async () => ({
+        displayName: "Priority",
+        type: { type: "Dropdown" },
+        fieldOptions: [
+          { fieldOption: { id: 1, name: "Low" } },
+          { fieldOption: { id: 2, name: "High" } },
+        ],
+      })),
+    },
+  };
+
+  it("emits case.updated with the resolved option label change", async () => {
+    await emitCaseFieldValueChanged(
+      { id: 5, testCaseId: 11, fieldId: 9, value: 1 },
+      { id: 5, testCaseId: 11, fieldId: 9, value: 2 },
+      fieldTx as never
+    );
+    expect(emitMock).toHaveBeenCalledTimes(1);
+    const [eventName, payload] = emitMock.mock.calls[0];
+    expect(eventName).toBe("case.updated");
+    expect((payload as { changes: unknown }).changes).toEqual([
+      { label: "Priority", from: "Low", to: "High" },
+    ]);
+  });
+
+  it("does NOT emit when the field value is unchanged", async () => {
+    await emitCaseFieldValueChanged(
+      { id: 5, testCaseId: 11, fieldId: 9, value: 2 },
+      { id: 5, testCaseId: 11, fieldId: 9, value: 2 },
+      fieldTx as never
+    );
     expect(emitMock).not.toHaveBeenCalled();
   });
 });

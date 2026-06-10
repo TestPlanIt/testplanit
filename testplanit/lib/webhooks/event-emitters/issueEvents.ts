@@ -129,6 +129,8 @@ export async function emitIssueUpdated(
       title: newRow.title,
       status: newRow.status,
       priority: newRow.priority ?? null,
+      externalKey: newRow.externalKey ?? null,
+      externalUrl: newRow.externalUrl ?? null,
       projectId: newRow.projectId,
       integrationId: newRow.integrationId ?? null,
       after: newRow,

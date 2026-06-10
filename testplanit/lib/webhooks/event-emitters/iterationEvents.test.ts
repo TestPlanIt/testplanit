@@ -32,7 +32,12 @@ import { webhookEvents } from "~/lib/webhooks/events";
 const emitMock = webhookEvents.emit as unknown as ReturnType<typeof vi.fn>;
 
 function makeTx() {
-  return {} as any; // emitter never reaches into tx — it only forwards.
+  // The emitter resolves statusName (Status) and runTitle (TestRuns) before
+  // forwarding; the readers return fixed names regardless of id.
+  return {
+    status: { findUnique: vi.fn(async () => ({ name: "Passed" })) },
+    testRuns: { findUnique: vi.fn(async () => ({ name: "Run 7" })) },
+  } as any;
 }
 
 describe("emitIterationResultRecorded — Wave 2 INT-04 contract", () => {
@@ -72,6 +77,8 @@ describe("emitIterationResultRecorded — Wave 2 INT-04 contract", () => {
         username: "alice",
         password: "[REDACTED]",
       },
+      statusName: "Passed",
+      runTitle: "Run 7",
     });
     expect(opts.tx).toBe(tx);
     expect(opts.projectId).toBe(42);

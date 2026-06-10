@@ -30,13 +30,19 @@ export async function emitSessionCreated(
   opts: EmitOptions = {}
 ): Promise<void> {
   let stateName: string | null = null;
+  let stateColor: string | null = null;
   let stateIsCompleted = false;
   if (row.stateId != null) {
     const state = await tx.workflows.findUnique({
       where: { id: row.stateId },
-      select: { name: true, workflowType: true },
+      select: {
+        name: true,
+        workflowType: true,
+        color: { select: { value: true } },
+      },
     });
     stateName = state?.name ?? null;
+    stateColor = state?.color?.value ?? null;
     stateIsCompleted = state?.workflowType === "DONE";
   }
   await webhookEvents.emit(
@@ -47,6 +53,7 @@ export async function emitSessionCreated(
       projectId: row.projectId,
       stateId: row.stateId,
       stateName,
+      stateColor,
       isCompleted: stateIsCompleted,
     },
     {
@@ -75,17 +82,22 @@ export async function emitSessionUpdateEvents(
   if (!stateChanged && !completedTransition) return;
 
   if (stateChanged) {
+    const stateSelect = {
+      name: true,
+      workflowType: true,
+      color: { select: { value: true } },
+    } as const;
     const [fromState, toState] = await Promise.all([
       oldRow.stateId != null
         ? tx.workflows.findUnique({
             where: { id: oldRow.stateId },
-            select: { name: true, workflowType: true },
+            select: stateSelect,
           })
         : Promise.resolve(null),
       newRow.stateId != null
         ? tx.workflows.findUnique({
             where: { id: newRow.stateId },
-            select: { name: true, workflowType: true },
+            select: stateSelect,
           })
         : Promise.resolve(null),
     ]);
@@ -99,11 +111,13 @@ export async function emitSessionUpdateEvents(
         from: {
           stateId: oldRow.stateId,
           stateName: fromState?.name ?? null,
+          stateColor: fromState?.color?.value ?? null,
           isCompleted: oldRow.isCompleted === true,
         },
         to: {
           stateId: newRow.stateId,
           stateName: toState?.name ?? null,
+          stateColor: toState?.color?.value ?? null,
           isCompleted: newRow.isCompleted === true,
         },
         isCompletedTransition: completedTransition,
@@ -213,7 +227,14 @@ export async function emitSessionResultAdded(
     row.statusId != null
       ? tx.status.findUnique({
           where: { id: row.statusId },
-          select: { id: true, name: true, isCompleted: true },
+          select: {
+            id: true,
+            name: true,
+            isCompleted: true,
+            isSuccess: true,
+            isFailure: true,
+            color: { select: { value: true } },
+          },
         })
       : Promise.resolve(null),
   ]);
@@ -226,7 +247,10 @@ export async function emitSessionResultAdded(
       resultId: row.id,
       statusId: status?.id ?? null,
       statusName: status?.name ?? null,
+      statusColor: status?.color?.value ?? null,
       isCompleted: status?.isCompleted ?? false,
+      isSuccess: status?.isSuccess ?? false,
+      isFailure: status?.isFailure ?? false,
       executedById: row.createdById ?? null,
       executedAt: row.createdAt?.toISOString() ?? null,
     },

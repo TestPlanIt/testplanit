@@ -125,9 +125,31 @@ export async function emitIterationResultRecorded(
     ...payload,
     redactedValues: capValueBytes(payload.redactedValues),
   };
-  await webhookEvents.emit("iteration.result.recorded", safePayload, {
-    projectId: opts.projectId ?? payload.projectId,
-    tx,
-    actorUserId: opts.actorUserId,
-  });
+  // Resolve display names so the Slack formatter renders "Status — Run title"
+  // instead of raw ids (read-only lookups; redaction boundary untouched).
+  const [status, run] = await Promise.all([
+    payload.statusId != null
+      ? tx.status.findUnique({
+          where: { id: payload.statusId },
+          select: { name: true },
+        })
+      : Promise.resolve(null),
+    tx.testRuns.findUnique({
+      where: { id: payload.testRunId },
+      select: { name: true },
+    }),
+  ]);
+  await webhookEvents.emit(
+    "iteration.result.recorded",
+    {
+      ...safePayload,
+      statusName: status?.name ?? null,
+      runTitle: run?.name ?? null,
+    },
+    {
+      projectId: opts.projectId ?? payload.projectId,
+      tx,
+      actorUserId: opts.actorUserId,
+    }
+  );
 }

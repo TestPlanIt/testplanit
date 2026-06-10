@@ -1,9 +1,10 @@
 import type { FormattedHttpRequest, OutboundEnvelope } from "../../types";
-import { buildBody, projectNameOf } from "./_shared";
+import { buildBody, projectNameOf, trackerLine, url } from "./_shared";
 
 interface IssueUpdatedData {
   id: number;
   title: string;
+  externalKey?: string | null;
   externalUrl?: string | null;
   diff?: {
     changedFields: string[];
@@ -37,9 +38,8 @@ export function formatIssueUpdatedBlocks(
   const changed = data.diff?.changedFields ?? [];
   const before = data.diff?.before ?? {};
   const after = data.diff?.after ?? {};
-  const titleLink = data.externalUrl
-    ? `*<${data.externalUrl}|${data.title}>*`
-    : `*${data.title}*`;
+  // Link back to the issue in TestPlanIt (the issues page deep-links by id).
+  const titleLink = `*<${url.issue(envelope.projectId, data.id)}|${data.title}>*`;
 
   const blocks: Array<Record<string, unknown>> = [
     {
@@ -54,6 +54,11 @@ export function formatIssueUpdatedBlocks(
       },
     },
   ];
+
+  const tracker = trackerLine(data.externalKey, data.externalUrl);
+  if (tracker) {
+    blocks.push({ type: "section", text: { type: "mrkdwn", text: tracker } });
+  }
 
   if (changed.length > 0) {
     const rows = changed.slice(0, SLACK_MAX_DIFF_ROWS).map((field) => {
