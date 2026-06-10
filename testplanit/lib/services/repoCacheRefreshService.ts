@@ -6,7 +6,7 @@ import {
 } from "~/lib/integrations/cache/RepoFileCache";
 import {
   applyPathPatterns,
-  extractBasePaths,
+  extractBasePathScopes,
   type PathPattern,
 } from "~/lib/integrations/repoPathPatterns";
 
@@ -165,11 +165,19 @@ export async function refreshRepoCache(
   try {
     const pathPatterns =
       (config.pathPatterns as unknown as PathPattern[]) ?? [];
-    const basePaths = extractBasePaths(pathPatterns);
+    // Bound each base's scan depth to its glob so a non-recursive root pattern
+    // (e.g. "." + "*.md") doesn't crawl the whole repo.
+    const scopes = extractBasePathScopes(pathPatterns);
+    const basePaths = scopes.map((s) => s.path);
+    const maxDepthByPath = Object.fromEntries(
+      scopes.map((s) => [s.path, s.maxDepth])
+    );
 
     const { files: allFiles, truncated } = await adapter.listFilesInPaths(
       branch,
-      basePaths
+      basePaths,
+      undefined,
+      maxDepthByPath
     );
 
     // Apply glob pattern filtering
@@ -245,75 +253,4 @@ export async function refreshRepoCache(
       error: errorMessage,
     };
   }
-}
-
-/**
- * Refresh only file contents for a config that already has a cached file list.
- * Used by the "contents-only" step in the API route.
- */
-export async function refreshRepoCacheContentsOnly(
-  configId: number,
-  prismaClient: PrismaClient
-): Promise<{
-  success: boolean;
-  contentCached: number;
-  contentTotal: number;
-  contentRateLimited: boolean;
-  error?: string;
-}> {
-  const config = await (
-    prismaClient as any
-  ).projectCodeRepositoryConfig.findUnique({
-    where: { id: configId },
-    include: {
-      repository: {
-        select: { credentials: true, settings: true, provider: true },
-      },
-    },
-  });
-
-  if (!config) {
-    throw new Error(`ProjectCodeRepositoryConfig ${configId} not found`);
-  }
-
-  const cachedFiles = await repoFileCache.getFiles(config.id);
-  if (!cachedFiles || cachedFiles.length === 0) {
-    return {
-      success: false,
-      contentCached: 0,
-      contentTotal: 0,
-      contentRateLimited: false,
-      error: "No cached file list — run list step first",
-    };
-  }
-
-  const credentials = config.repository.credentials as Record<string, string>;
-  const adapter = createGitRepoAdapter(
-    config.repository.provider,
-    credentials,
-    config.repository.settings as Record<string, string> | null
-  );
-  const branch = config.branch || (await adapter.getDefaultBranch());
-
-  const { contentMap, contentRateLimited } = await fetchContentsBatched(
-    cachedFiles,
-    adapter,
-    branch,
-    10
-  );
-
-  if (contentMap.size > 0) {
-    await repoFileCache.setFileContents(
-      config.id,
-      contentMap,
-      config.cacheTtlDays
-    );
-  }
-
-  return {
-    success: true,
-    contentCached: contentMap.size,
-    contentTotal: cachedFiles.length,
-    contentRateLimited,
-  };
 }

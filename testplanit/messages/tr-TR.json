@@ -1858,6 +1858,8 @@
         "networkError": "Önbellek yenileme sırasında ağ hatası",
         "refreshSuccess": "Önbellek yenilendi: {fileCount} dosya ({contentCached} içerik önbelleğe alındı)",
         "refreshRateLimited": "Önbellek yenilendi: {fileCount} dosya listelendi, {contentCached}/{fileCount} içerik önbelleğe alındı (oran sınırlı — tamamlamak için tekrar yenileyin)",
+        "refreshComplete": "Cache refreshed: {fileCount} files",
+        "refreshInProgress": "Cache refresh is still running in the background. It'll update here when it finishes.",
         "validation": {
           "pathRequired": "Yol gereklidir.",
           "patternRequired": "Desen gereklidir.",

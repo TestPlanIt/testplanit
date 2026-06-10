@@ -1858,6 +1858,8 @@
         "networkError": "캐시 새로 고침 중 네트워크 오류 발생",
         "refreshSuccess": "캐시 새로 고침됨: {fileCount} 개 파일 ({contentCached} 개 콘텐츠 캐시됨)",
         "refreshRateLimited": "캐시 새로 고침됨: {fileCount} 개의 파일이 나열되었고, {contentCached}/{fileCount} 개의 콘텐츠가 캐시되었습니다(호출 속도 제한됨 - 완료하려면 다시 새로 고침하세요).",
+        "refreshComplete": "Cache refreshed: {fileCount} files",
+        "refreshInProgress": "Cache refresh is still running in the background. It'll update here when it finishes.",
         "validation": {
           "pathRequired": "경로가 필요합니다",
           "patternRequired": "패턴이 필요합니다",

@@ -1858,6 +1858,8 @@
         "networkError": "Network error during cache refresh",
         "refreshSuccess": "Cache refreshed: {fileCount} files ({contentCached} contents cached)",
         "refreshRateLimited": "Cache refreshed: {fileCount} files listed, {contentCached}/{fileCount} contents cached (rate limited — refresh again to complete)",
+        "refreshComplete": "Cache refreshed: {fileCount} files",
+        "refreshInProgress": "Cache refresh is still running in the background. It'll update here when it finishes.",
         "validation": {
           "pathRequired": "Path is required",
           "patternRequired": "Pattern is required",

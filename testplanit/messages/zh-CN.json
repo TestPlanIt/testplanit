@@ -1858,6 +1858,8 @@
         "networkError": "缓存刷新期间出现网络错误",
         "refreshSuccess": "缓存已刷新： {fileCount} 个文件（已缓存{contentCached} 个内容）",
         "refreshRateLimited": "缓存已刷新：列出了 {fileCount} 个文件，缓存了 {contentCached}/{fileCount} 个内容（速率受限——请再次刷新以完成）",
+        "refreshComplete": "Cache refreshed: {fileCount} files",
+        "refreshInProgress": "Cache refresh is still running in the background. It'll update here when it finishes.",
         "validation": {
           "pathRequired": "路径是必需的",
           "patternRequired": "需要图案",

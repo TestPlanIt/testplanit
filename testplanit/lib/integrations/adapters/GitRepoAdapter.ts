@@ -70,7 +70,8 @@ export abstract class GitRepoAdapter {
   async listFilesInPaths(
     branch: string,
     _basePaths: string[],
-    _onProgress?: (filesFound: number) => void
+    _onProgress?: (filesFound: number) => void,
+    _maxDepthByPath?: Record<string, number>
   ): Promise<ListFilesResult> {
     // Default: ignore basePaths and list everything.
     // Subclasses (e.g. Bitbucket) override for path-scoped listing.

@@ -1858,6 +1858,8 @@
         "networkError": "Netwerkfout tijdens het vernieuwen van de cache.",
         "refreshSuccess": "Cache vernieuwd: {fileCount} bestanden ({contentCached} inhoud in cache opgeslagen)",
         "refreshRateLimited": "Cache vernieuwd: {fileCount} bestanden weergegeven, {contentCached}/{fileCount} inhoud in cache opgeslagen (snelheid beperkt — vernieuw opnieuw om te voltooien)",
+        "refreshComplete": "Cache refreshed: {fileCount} files",
+        "refreshInProgress": "Cache refresh is still running in the background. It'll update here when it finishes.",
         "validation": {
           "pathRequired": "Pad is vereist",
           "patternRequired": "Een patroon is vereist.",

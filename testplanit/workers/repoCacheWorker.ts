@@ -6,7 +6,10 @@ import {
   isMultiTenantMode,
   validateMultiTenantJobData,
 } from "../lib/multiTenantPrisma";
-import { REPO_CACHE_QUEUE_NAME } from "../lib/queueNames";
+import {
+  JOB_REFRESH_SINGLE_REPO_CACHE,
+  REPO_CACHE_QUEUE_NAME,
+} from "../lib/queueNames";
 import { refreshRepoCache } from "../lib/services/repoCacheRefreshService";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
@@ -97,6 +100,37 @@ const processor = async (job: Job) => {
         console.log(
           `Job ${job.id} completed: ${successCount} refreshed, ${skippedCount} still valid, ${failCount} failed (of ${configs.length} total)`
         );
+        break;
+      }
+
+      case JOB_REFRESH_SINGLE_REPO_CACHE: {
+        // On-demand refresh for one config (manual "Refresh" button). Runs the
+        // full list+content fetch here so the request that enqueued it returned
+        // immediately and can't time out while we wait out provider rate limits.
+        const configId = Number(job.data.configId);
+        if (!Number.isFinite(configId)) {
+          throw new Error(
+            `${JOB_REFRESH_SINGLE_REPO_CACHE} job requires a numeric configId`
+          );
+        }
+
+        console.log(`Job ${job.id}: Manual refresh for config ${configId}`);
+
+        // refreshRepoCache persists cacheStatus (pending → success/error),
+        // cacheFileCount, cacheError, etc., which the UI polls for completion.
+        const result = await refreshRepoCache(configId, prisma);
+
+        if (result.success) {
+          successCount++;
+          console.log(
+            `Job ${job.id}: Refreshed config ${configId} — ${result.fileCount} files, ${result.contentCached} contents cached${result.contentRateLimited ? " (rate limited — partial)" : ""}`
+          );
+        } else {
+          failCount++;
+          console.warn(
+            `Job ${job.id}: Manual refresh failed for config ${configId}: ${result.error}`
+          );
+        }
         break;
       }
 

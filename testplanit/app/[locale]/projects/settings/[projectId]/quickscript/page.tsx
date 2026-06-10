@@ -295,6 +295,7 @@ export default function QuickScriptPage() {
           body: JSON.stringify({
             branch: values.branch || undefined,
             pathPatterns: values.pathPatterns,
+            cacheEnabled: values.cacheEnabled,
           }),
         }
       );
@@ -384,55 +385,63 @@ export default function QuickScriptPage() {
   const handleRefreshCache = async () => {
     if (!existingConfig) return;
     setIsRefreshing(true);
+    setRefreshError(null);
+    setRefreshStep(t("cache.statusPending"));
 
-    const post = (step: string) =>
-      fetch(
+    try {
+      // Enqueue a background refresh. The list+content fetch runs in the
+      // repo-cache worker so a rate-limited provider can't time out the
+      // request; we poll the config's cacheStatus for completion.
+      const res = await fetch(
         `/api/code-repositories/${existingConfig.repositoryId}/refresh-cache`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ projectConfigId: existingConfig.id, step }),
+          body: JSON.stringify({ projectConfigId: existingConfig.id }),
         }
-      ).then((r) => r.json());
+      );
+      const data = await res.json().catch(() => ({}));
 
-    setRefreshError(null);
-
-    try {
-      // Step 1: fetch file list (fast — single git tree API call)
-      setRefreshStep(t("cache.listingFiles"));
-      const listData = await post("list-only");
-      if (!listData.success) {
-        setRefreshError(listData.error ?? t("listError"));
+      if (!res.ok || data.error) {
+        setRefreshError(data.error ?? t("networkError"));
         void refetchConfig();
         return;
       }
 
-      // Step 2: fetch and cache file contents (slow — one call per file)
-      setRefreshStep(t("cache.cachingFiles", { count: listData.fileCount }));
-      const contentData = await post("contents-only");
+      // Poll until the worker finishes (cacheStatus leaves "pending").
+      const POLL_MS = 2500;
+      const MAX_POLLS = 144; // ~6 minutes
+      for (let polls = 0; polls < MAX_POLLS; polls++) {
+        await new Promise((r) => setTimeout(r, POLL_MS));
+        const { data: fresh } = await refetchConfig();
+        const status = (fresh as { cacheStatus?: string } | null)?.cacheStatus;
+        const fileCount = (fresh as { cacheFileCount?: number } | null)
+          ?.cacheFileCount;
 
-      if (!contentData.success) {
-        setRefreshError(contentData.error ?? t("contentsError"));
-        void refetchConfig();
+        if (status == null || status === "pending") {
+          setRefreshStep(
+            fileCount != null
+              ? t("cache.cachingFiles", { count: String(fileCount) })
+              : t("cache.listingFiles")
+          );
+          continue;
+        }
+
+        if (status === "error") {
+          setRefreshError(
+            (fresh as { cacheError?: string } | null)?.cacheError ??
+              t("contentsError")
+          );
+        } else {
+          toast.success(
+            t("refreshComplete", { fileCount: String(fileCount ?? 0) })
+          );
+        }
         return;
       }
 
-      if (contentData.contentRateLimited) {
-        toast.warning(
-          t("refreshRateLimited", {
-            fileCount: listData.fileCount,
-            contentCached: contentData.contentCached,
-          })
-        );
-      } else {
-        toast.success(
-          t("refreshSuccess", {
-            fileCount: listData.fileCount,
-            contentCached: contentData.contentCached,
-          })
-        );
-      }
-      void refetchConfig();
+      // Still running after the poll window — it continues in the background.
+      toast.info(t("refreshInProgress"));
     } catch (err) {
       setRefreshError(err instanceof Error ? err.message : t("networkError"));
     } finally {

@@ -1858,6 +1858,8 @@
         "networkError": "快取刷新期間出現網路錯誤",
         "refreshSuccess": "快取已刷新： {fileCount} 個檔案（已快取{contentCached} 個內容）",
         "refreshRateLimited": "快取已刷新：列出了 {fileCount} 個文件，快取了 {contentCached}/{fileCount} 個內容（速率受限——請再次刷新以完成）",
+        "refreshComplete": "Cache refreshed: {fileCount} files",
+        "refreshInProgress": "Cache refresh is still running in the background. It'll update here when it finishes.",
         "validation": {
           "pathRequired": "路徑是必需的",
           "patternRequired": "需要圖案",

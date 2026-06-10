@@ -247,6 +247,96 @@ describe("BitbucketRepoAdapter", () => {
     });
   });
 
+  describe("depth-bounded listing", () => {
+    it("scans the root seed shallow (max_depth=1) and does not descend subdirs for a bounded glob", async () => {
+      // Root listing at depth 1 returns top-level files plus subdirectories.
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({
+          values: [
+            { path: "README.md", type: "commit_file", size: 100 },
+            { path: "src", type: "commit_directory" },
+            { path: "docs", type: "commit_directory" },
+          ],
+          next: null,
+        })
+      );
+
+      const result = await adapter.listFilesInPaths("main", [""], undefined, {
+        "": 1,
+      });
+
+      // Only the top-level file — subdirectories were NOT followed.
+      expect(result.files.map((f) => f.path)).toEqual(["README.md"]);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      const url = mockFetch.mock.calls[0][0] as string;
+      expect(url).toContain("max_depth=1");
+    });
+
+    it("still recurses subdirectories for a deep glob (default depth)", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({
+          values: [
+            { path: "src/index.ts", type: "commit_file", size: 10 },
+            { path: "src/deep", type: "commit_directory" },
+          ],
+          next: null,
+        })
+      );
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({
+          values: [
+            { path: "src/deep/nested.ts", type: "commit_file", size: 20 },
+          ],
+          next: null,
+        })
+      );
+
+      const result = await adapter.listFilesInPaths(
+        "main",
+        ["src"],
+        undefined,
+        {
+          src: 10,
+        }
+      );
+
+      expect(result.files.map((f) => f.path)).toEqual([
+        "src/index.ts",
+        "src/deep/nested.ts",
+      ]);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("rate-limited partial listing", () => {
+    it("returns the files collected so far (truncated) instead of throwing", async () => {
+      (adapter as any).maxRetries = 0;
+      // First page succeeds...
+      mockFetch.mockResolvedValueOnce(
+        makeResponse({
+          values: [{ path: "a.ts", type: "commit_file", size: 10 }],
+          next: "https://api.bitbucket.org/page2",
+        })
+      );
+      // ...second page is rate limited.
+      mockFetch.mockResolvedValue(makeResponse({}, 429));
+
+      const result = await adapter.listFilesInPaths("main", [""]);
+
+      expect(result.truncated).toBe(true);
+      expect(result.files.map((f) => f.path)).toEqual(["a.ts"]);
+    });
+
+    it("rethrows when rate limited before any files are collected", async () => {
+      (adapter as any).maxRetries = 0;
+      mockFetch.mockResolvedValue(makeResponse({}, 429));
+
+      await expect(adapter.listFilesInPaths("main", [""])).rejects.toThrow(
+        /rate limit/i
+      );
+    });
+  });
+
   describe("non-JSON listing response", () => {
     it("throws a friendly error (not a raw SyntaxError) when a path resolves to a file body", async () => {
       // Bitbucket resolves a bad path to a FILE and returns its raw markdown body.

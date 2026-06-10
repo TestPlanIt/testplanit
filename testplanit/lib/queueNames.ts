@@ -9,6 +9,10 @@ export const AUDIT_LOG_QUEUE_NAME = "audit-logs";
 export const BUDGET_ALERT_QUEUE_NAME = "budget-alerts";
 export const AUTO_TAG_QUEUE_NAME = "auto-tag";
 export const REPO_CACHE_QUEUE_NAME = "repo-cache";
+// Job name for an on-demand, single-config cache refresh (manual "Refresh"
+// button). Runs the full list+content fetch off-request in the worker so a
+// rate-limited provider can't time out the HTTP request.
+export const JOB_REFRESH_SINGLE_REPO_CACHE = "refresh-single-repo-cache";
 export const COPY_MOVE_QUEUE_NAME = "copy-move";
 export const DUPLICATE_SCAN_QUEUE_NAME = "duplicate-scan";
 export const STEP_SCAN_QUEUE_NAME = "step-scan";
