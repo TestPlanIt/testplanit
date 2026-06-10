@@ -247,7 +247,7 @@ export const ProjectListDisplay: React.FC<ProjectListProps> = ({
       renderOption={(option) => (
         <Link
           href={`/projects/overview/${option.id}`}
-          className="flex items-center gap-1"
+          className="flex items-center gap-1 no-underline text-inherit hover:text-accent-foreground"
         >
           <div className="max-w-5 max-h-5">
             <ProjectIcon iconUrl={option.iconUrl} height={20} width={20} />
