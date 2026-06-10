@@ -8,6 +8,7 @@ import { formatIssueCreatedBlocks } from "./issue-created";
 import { formatIssueUpdatedBlocks } from "./issue-updated";
 import { formatCaseCreatedBlocks } from "./case-created";
 import { formatCaseUpdatedBlocks } from "./case-updated";
+import { formatCaseDeletedBlocks } from "./case-deleted";
 import { formatReviewRequestedBlocks } from "./review-requested";
 import { formatReviewCompletedBlocks } from "./review-completed";
 import { formatReviewReminderBlocks } from "./review-reminder";
@@ -33,6 +34,7 @@ export const SLACK_FORMATTERS: Record<string, SlackFormatter> = {
   "issue.updated": formatIssueUpdatedBlocks,
   "case.created": formatCaseCreatedBlocks,
   "case.updated": formatCaseUpdatedBlocks,
+  "case.deleted": formatCaseDeletedBlocks,
   "case.review_requested": formatReviewRequestedBlocks,
   "case.review_completed": formatReviewCompletedBlocks,
   "test_run.review_requested": formatReviewRequestedBlocks,
