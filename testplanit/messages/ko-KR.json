@@ -1831,7 +1831,8 @@
           "resolvingBranch": "분기…를 해결 중",
           "scanningFiles": "{scope}…에서 파일을 스캔합니다.",
           "scanningFilesCount": "{scope}… 에서 파일을 스캔하는 중입니다 ({count, number} 발견됨)",
-          "filtering": "{count, number} 파일…에 필터를 적용합니다."
+          "filtering": "{count, number} 파일…에 필터를 적용합니다.",
+          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
         },
         "cache": {
           "title": "캐시 설정",

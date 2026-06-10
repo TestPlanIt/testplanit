@@ -1831,7 +1831,8 @@
           "resolvingBranch": "正在解析分支…",
           "scanningFiles": "正在掃描 {scope}… 中的文件",
           "scanningFilesCount": "正在掃描 {scope}… 中的檔案（已找到{count, number}）",
-          "filtering": "對 {count, number} 個檔案套用篩選器…"
+          "filtering": "對 {count, number} 個檔案套用篩選器…",
+          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
         },
         "cache": {
           "title": "快取設定",

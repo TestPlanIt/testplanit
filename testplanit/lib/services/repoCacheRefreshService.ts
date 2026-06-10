@@ -1,46 +1,14 @@
 import type { PrismaClient } from "@prisma/client";
-import micromatch from "micromatch";
 import { createGitRepoAdapter } from "~/lib/integrations/adapters/GitRepoAdapter";
 import {
   repoFileCache,
   type RepoFileEntry,
 } from "~/lib/integrations/cache/RepoFileCache";
-
-interface PathPattern {
-  path: string;
-  pattern: string;
-}
-
-function applyPathPatterns(
-  allFiles: RepoFileEntry[],
-  pathPatterns: PathPattern[]
-): RepoFileEntry[] {
-  if (!pathPatterns.length) return allFiles;
-
-  const matched = new Set<string>();
-  for (const { path: basePath, pattern } of pathPatterns) {
-    const trimmedBase = basePath.replace(/\/$/, "");
-    const globPattern = trimmedBase ? `${trimmedBase}/${pattern}` : pattern;
-    const matchedPaths = micromatch(
-      allFiles.map((f) => f.path),
-      globPattern
-    );
-    matchedPaths.forEach((p: string) => matched.add(p));
-  }
-
-  return allFiles.filter((f) => matched.has(f.path));
-}
-
-/** Extract unique base directory paths from PathPattern[] for scoped listing. */
-function extractBasePaths(pathPatterns: PathPattern[]): string[] {
-  if (!pathPatterns.length) return [];
-  const paths = new Set<string>();
-  for (const { path: basePath } of pathPatterns) {
-    const trimmed = basePath.replace(/\/$/, "");
-    if (trimmed) paths.add(trimmed);
-  }
-  return paths.size > 0 ? [...paths] : [];
-}
+import {
+  applyPathPatterns,
+  extractBasePaths,
+  type PathPattern,
+} from "~/lib/integrations/repoPathPatterns";
 
 function isRateLimitError(err: unknown): boolean {
   if (!(err instanceof Error)) return false;

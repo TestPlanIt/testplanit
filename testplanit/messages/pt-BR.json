@@ -1831,7 +1831,8 @@
           "resolvingBranch": "Resolvendo ramificação…",
           "scanningFiles": "Analisando arquivos em {scope}…",
           "scanningFilesCount": "Analisando arquivos em {scope}… ({count, number} encontrado)",
-          "filtering": "Aplicando filtros a {count, number} arquivos…"
+          "filtering": "Aplicando filtros a {count, number} arquivos…",
+          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
         },
         "cache": {
           "title": "Configurações de cache",

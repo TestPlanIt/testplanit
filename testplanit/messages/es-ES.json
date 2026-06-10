@@ -1831,7 +1831,8 @@
           "resolvingBranch": "Resolviendo la rama…",
           "scanningFiles": "Escaneando archivos en {scope}…",
           "scanningFilesCount": "Escaneando archivos en {scope}… ({count, number} encontrados)",
-          "filtering": "Aplicando filtros a los archivos {count, number}…"
+          "filtering": "Aplicando filtros a los archivos {count, number}…",
+          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
         },
         "cache": {
           "title": "Configuración de caché",

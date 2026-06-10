@@ -30,10 +30,22 @@ export abstract class GitRepoAdapter {
   protected maxRetries: number = 3;
   protected retryDelay: number = 1000;
   protected requestTimeout: number = 30000; // 30 seconds
+  // Longest a single request will block waiting out a rate-limit window before
+  // giving up. Brief/secondary limits (short reset) are absorbed transparently;
+  // primary limits (reset minutes away) fail fast with an actionable message
+  // rather than hanging an interactive request for minutes.
+  protected maxRateLimitWaitMs: number = 15_000;
 
   // Populated from response headers to drive adaptive throttling
   private rateLimitRemaining: number | null = null;
   private rateLimitResetAt: number | null = null; // Unix seconds
+
+  /**
+   * Optional hook fired just before sleeping to wait out a rate limit. Lets a
+   * caller (e.g. the preview SSE stream) surface "retrying in Ns" progress to
+   * the user instead of leaving them on a silent spinner.
+   */
+  onRateLimitWait?: (waitSeconds: number, attempt: number) => void;
 
   /**
    * Seconds until the rate-limit window resets (from server headers).
@@ -168,7 +180,25 @@ export abstract class GitRepoAdapter {
           );
         }
 
-        return (await response.json()) as T;
+        // Read as text and parse ourselves so a non-JSON body (e.g. a path that
+        // resolves to a file instead of a directory listing) surfaces a clear,
+        // actionable error rather than a raw JSON.parse SyntaxError.
+        const rawBody = await response.text();
+        try {
+          return JSON.parse(rawBody) as T;
+        } catch {
+          const contentType = response.headers.get("content-type") ?? "";
+          const preview = rawBody.trim().slice(0, 80);
+          throw new Error(
+            `Expected a JSON response but received non-JSON content` +
+              (contentType ? ` (content-type: ${contentType})` : "") +
+              `. This usually means the requested path points to a file ` +
+              `rather than a directory listing.` +
+              (preview
+                ? ` Response began with: ${JSON.stringify(preview)}`
+                : "")
+          );
+        }
       } finally {
         clearTimeout(timeoutId);
       }
@@ -332,11 +362,17 @@ export abstract class GitRepoAdapter {
     let delay = this.rateLimitDelay;
     if (this.rateLimitRemaining !== null) {
       if (this.rateLimitRemaining < 10) {
-        // Nearly exhausted — wait until the window resets
+        // Nearly exhausted — wait until the window resets, but never block
+        // longer than maxRateLimitWaitMs. If the reset is further out than
+        // that, let the request proceed and surface a fast rate-limit error
+        // (handled by executeWithRetry) instead of hanging for minutes.
         const waitMs = this.rateLimitResetAt
           ? this.rateLimitResetAt * 1000 - now
           : 30_000;
-        delay = Math.max(delay, waitMs > 0 ? waitMs : 0);
+        delay = Math.max(
+          delay,
+          Math.min(waitMs > 0 ? waitMs : 0, this.maxRateLimitWaitMs)
+        );
       } else if (this.rateLimitRemaining < 50) {
         delay = Math.max(delay, 8_000);
       } else if (this.rateLimitRemaining < 100) {
@@ -373,9 +409,24 @@ export abstract class GitRepoAdapter {
       ) {
         throw err;
       }
-      // Rate limits: applyRateLimit() in the next makeRequest call will
-      // handle the long pause; just wait a short backoff here.
-      const backoff = this.retryDelay * Math.pow(2, attempt);
+
+      let backoff: number;
+      if (isRateLimit) {
+        // Honor the server's reset window (parsed from Retry-After /
+        // X-RateLimit-Reset). The plain exponential backoff is far too short
+        // for a real rate limit — retrying after a few seconds just hits the
+        // wall again. If the window is further out than we're willing to block
+        // this request, don't burn retries: let the actionable "try again in N
+        // minutes" error propagate now.
+        const resetMs = this.retryAfterSeconds * 1000;
+        if (resetMs > this.maxRateLimitWaitMs) throw err;
+        backoff = Math.max(resetMs, this.retryDelay * Math.pow(2, attempt));
+        this.onRateLimitWait?.(Math.ceil(backoff / 1000), attempt);
+      } else {
+        backoff = this.retryDelay * Math.pow(2, attempt);
+      }
+      // Small additive jitter so batched retries don't fire in lockstep
+      backoff += Math.floor(Math.random() * 250);
       await new Promise((r) => setTimeout(r, backoff));
       return this.executeWithRetry(fn, retriesLeft - 1, attempt + 1);
     }

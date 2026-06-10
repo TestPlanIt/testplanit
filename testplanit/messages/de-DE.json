@@ -1831,7 +1831,8 @@
           "resolvingBranch": "Auflösen des Zweigs…",
           "scanningFiles": "Dateien werden gescannt in {scope}…",
           "scanningFilesCount": "Dateien in {scope}… werden durchsucht ({count, number} gefunden)",
-          "filtering": "Anwenden von Filtern auf {count, number} Dateien…"
+          "filtering": "Anwenden von Filtern auf {count, number} Dateien…",
+          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
         },
         "cache": {
           "title": "Cache-Einstellungen",

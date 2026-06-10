@@ -136,6 +136,7 @@ export default function QuickScriptPage() {
     filesFound?: number;
     scope?: string;
     totalFiles?: number;
+    waitSeconds?: number;
   } | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshStep, setRefreshStep] = useState<string>("");
@@ -342,6 +343,7 @@ export default function QuickScriptPage() {
                 filesFound: event.filesFound,
                 scope: event.scope,
                 totalFiles: event.totalFiles,
+                waitSeconds: event.waitSeconds,
               });
             } else if (event.type === "complete") {
               setPreview(event);
@@ -800,6 +802,10 @@ export default function QuickScriptPage() {
                           {previewProgress.step === "filtering" &&
                             t("preview.filtering", {
                               count: previewProgress.totalFiles ?? 0,
+                            })}
+                          {previewProgress.step === "rate-limited" &&
+                            t("preview.rateLimited", {
+                              seconds: previewProgress.waitSeconds ?? 0,
                             })}
                         </span>
                       )}

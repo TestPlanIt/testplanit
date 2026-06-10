@@ -1831,7 +1831,8 @@
           "resolvingBranch": "正在解析分支…",
           "scanningFiles": "正在扫描 {scope}… 中的文件",
           "scanningFilesCount": "正在扫描 {scope}… 中的文件（已找到{count, number}）",
-          "filtering": "对 {count, number} 个文件应用过滤器…"
+          "filtering": "对 {count, number} 个文件应用过滤器…",
+          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
         },
         "cache": {
           "title": "缓存设置",

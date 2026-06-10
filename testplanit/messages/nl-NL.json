@@ -1831,7 +1831,8 @@
           "resolvingBranch": "Oplossende tak…",
           "scanningFiles": "Bestanden scannen in {scope}…",
           "scanningFilesCount": "Bestanden scannen in {scope}… ({count, number} gevonden)",
-          "filtering": "Filters toepassen op {count, number} bestanden…"
+          "filtering": "Filters toepassen op {count, number} bestanden…",
+          "rateLimited": "Rate limited by the provider — retrying in {seconds, number}s…"
         },
         "cache": {
           "title": "Cache-instellingen",
