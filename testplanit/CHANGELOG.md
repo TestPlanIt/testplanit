@@ -1,3 +1,9 @@
+## [0.37.5](https://github.com/TestPlanIt/testplanit/compare/v0.37.4...v0.37.5) (2026-06-10)
+
+### Bug Fixes
+
+* **quickscript:** depth-bound repo scans and run cache refresh in a worker ([#423](https://github.com/TestPlanIt/testplanit/issues/423)) ([4a299c1](https://github.com/TestPlanIt/testplanit/commit/4a299c1da2971549e57e100d675d19ccc054ae55))
+
 ## [0.37.4](https://github.com/TestPlanIt/testplanit/compare/v0.37.3...v0.37.4) (2026-06-10)
 
 ### Enhancements
