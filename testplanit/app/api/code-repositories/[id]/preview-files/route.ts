@@ -1,10 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
-import { createGitRepoAdapter } from "~/lib/integrations/adapters/GitRepoAdapter";
+import {
+  createGitRepoAdapter,
+  type RepoFileEntry,
+} from "~/lib/integrations/adapters/GitRepoAdapter";
+import { repoFileCache } from "~/lib/integrations/cache/RepoFileCache";
 import {
   applyPathPatterns,
-  extractBasePaths,
+  extractBasePathScopes,
   type PathPattern,
 } from "~/lib/integrations/repoPathPatterns";
 import { authOptions } from "~/server/auth";
@@ -36,7 +40,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   const {
     branch,
     pathPatterns = [],
-  }: { branch?: string; pathPatterns?: PathPattern[] } = body;
+    cacheEnabled = true,
+  }: {
+    branch?: string;
+    pathPatterns?: PathPattern[];
+    cacheEnabled?: boolean;
+  } = body;
 
   const repo = await prisma.codeRepository.findUnique({
     where: { id: parseInt(id) },
@@ -83,26 +92,76 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
         send({ type: "progress", step: "branch" });
         const resolvedBranch = branch || (await adapter.getDefaultBranch());
 
-        // Step 2: Fetch files — use path-scoped listing when paths are available
-        const basePaths = extractBasePaths(pathPatterns);
+        // Step 2: Fetch files — use path-scoped listing when paths are
+        // available, bounding each base's scan depth to what its glob needs so
+        // a non-recursive root pattern (e.g. "." + "*.md") doesn't crawl the
+        // whole repo.
+        const scopes = extractBasePathScopes(pathPatterns);
+        const basePaths = scopes.map((s) => s.path);
+        const maxDepthByPath = Object.fromEntries(
+          scopes.map((s) => [s.path, s.maxDepth])
+        );
+        // Depth-aware cache key: tuning a glob from "*.md" to "**/*.md" changes
+        // the scan depth, so the cached listing must not be reused across them.
+        const scopeKeys = scopes.map((s) => `${s.path}@${s.maxDepth}`);
         const scopeLabel =
           basePaths.length > 0
             ? basePaths.map((p) => p || "repository root").join(", ")
             : "repository root";
         send({ type: "progress", step: "listing", scope: scopeLabel });
 
-        const { files: allFiles, truncated } = await adapter.listFilesInPaths(
-          resolvedBranch,
-          basePaths,
-          (filesFound) => {
-            send({
-              type: "progress",
-              step: "listing",
-              filesFound,
-              scope: scopeLabel,
-            });
+        // The listing (paths + sizes) is independent of the glob patterns, so a
+        // short-lived cache lets re-previews while tuning patterns reuse one
+        // provider call instead of re-listing (and risking rate limits) each
+        // time. Skipped in privacy mode (caching disabled).
+        const repoId = parseInt(id);
+        let allFiles: RepoFileEntry[];
+        let truncated: boolean | undefined;
+
+        const cachedList = cacheEnabled
+          ? await repoFileCache.getPreviewList(
+              repoId,
+              resolvedBranch,
+              scopeKeys
+            )
+          : null;
+
+        if (cachedList) {
+          allFiles = cachedList.files;
+          truncated = cachedList.truncated;
+          send({
+            type: "progress",
+            step: "listing",
+            filesFound: allFiles.length,
+            scope: scopeLabel,
+            cached: true,
+          });
+        } else {
+          const listed = await adapter.listFilesInPaths(
+            resolvedBranch,
+            basePaths,
+            (filesFound) => {
+              send({
+                type: "progress",
+                step: "listing",
+                filesFound,
+                scope: scopeLabel,
+              });
+            },
+            maxDepthByPath
+          );
+          allFiles = listed.files;
+          truncated = listed.truncated;
+
+          if (cacheEnabled) {
+            await repoFileCache.setPreviewList(
+              repoId,
+              resolvedBranch,
+              scopeKeys,
+              { files: allFiles, truncated: truncated ?? false }
+            );
           }
-        );
+        }
 
         // Step 3: Apply glob pattern filtering
         send({

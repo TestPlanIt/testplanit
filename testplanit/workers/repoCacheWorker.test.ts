@@ -1,5 +1,6 @@
 import { Job } from "bullmq";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { JOB_REFRESH_SINGLE_REPO_CACHE } from "../lib/queueNames";
 import { JOB_REFRESH_EXPIRED_CACHES } from "./repoCacheWorker";
 
 // Create mock prisma instance
@@ -40,6 +41,7 @@ vi.mock("../lib/services/repoCacheRefreshService", () => ({
 // Mock queue names
 vi.mock("../lib/queueNames", () => ({
   REPO_CACHE_QUEUE_NAME: "test-repo-cache-queue",
+  JOB_REFRESH_SINGLE_REPO_CACHE: "refresh-single-repo-cache",
 }));
 
 const mockConfigs = [
@@ -301,6 +303,67 @@ describe("RepoCacheWorker", () => {
 
       // INSTANCE_TENANT_ID should be restored even after error
       expect(process.env.INSTANCE_TENANT_ID).toBe("original-tenant");
+    });
+  });
+
+  describe(`${JOB_REFRESH_SINGLE_REPO_CACHE} job`, () => {
+    it("refreshes the single config from job.data.configId", async () => {
+      mockRefreshRepoCache.mockResolvedValue({
+        success: true,
+        fileCount: 12,
+        contentCached: 12,
+        contentRateLimited: false,
+      });
+
+      const { processor } = await import("./repoCacheWorker");
+
+      const mockJob = {
+        id: "job-single-1",
+        name: JOB_REFRESH_SINGLE_REPO_CACHE,
+        data: { configId: 101, tenantId: "tenant-a" },
+      } as Job;
+
+      const result = await processor(mockJob);
+
+      expect(mockRefreshRepoCache).toHaveBeenCalledWith(101, mockPrisma);
+      expect(result).toMatchObject({ successCount: 1, failCount: 0 });
+      // It must NOT scan all configs like the expired-cache job does.
+      expect(
+        mockPrisma.projectCodeRepositoryConfig.findMany
+      ).not.toHaveBeenCalled();
+    });
+
+    it("counts a failed refresh without throwing", async () => {
+      mockRefreshRepoCache.mockResolvedValue({
+        success: false,
+        error: "Rate limit exceeded. Try again in 5 minutes.",
+      });
+
+      const { processor } = await import("./repoCacheWorker");
+
+      const mockJob = {
+        id: "job-single-2",
+        name: JOB_REFRESH_SINGLE_REPO_CACHE,
+        data: { configId: 102 },
+      } as Job;
+
+      const result = await processor(mockJob);
+
+      expect(mockRefreshRepoCache).toHaveBeenCalledWith(102, mockPrisma);
+      expect(result).toMatchObject({ successCount: 0, failCount: 1 });
+    });
+
+    it("throws when configId is missing/non-numeric", async () => {
+      const { processor } = await import("./repoCacheWorker");
+
+      const mockJob = {
+        id: "job-single-3",
+        name: JOB_REFRESH_SINGLE_REPO_CACHE,
+        data: {},
+      } as Job;
+
+      await expect(processor(mockJob)).rejects.toThrow(/configId/);
+      expect(mockRefreshRepoCache).not.toHaveBeenCalled();
     });
   });
 

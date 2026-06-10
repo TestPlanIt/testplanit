@@ -1,10 +1,9 @@
+import { getCurrentTenantId } from "@/lib/multiTenantPrisma";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
-import {
-  refreshRepoCache,
-  refreshRepoCacheContentsOnly,
-} from "~/lib/services/repoCacheRefreshService";
+import { JOB_REFRESH_SINGLE_REPO_CACHE } from "~/lib/queueNames";
+import { getRepoCacheQueue } from "~/lib/queues";
 import { authOptions } from "~/server/auth";
 
 interface RouteParams {
@@ -12,11 +11,11 @@ interface RouteParams {
 }
 
 export async function POST(req: NextRequest, { params }: RouteParams) {
-  // This endpoint refreshes the code-repository metadata cache (file
-  // listings, branch state) — cache hygiene with no business-object
-  // state mutation. Admin/project-admin surface. Matches the lastActiveAt
-  // session-keep-alive precedent at lib/prisma.ts:693-701: cache-refresh
-  // operations do not produce audit-relevant events.
+  // This endpoint kicks off a code-repository cache refresh (file listings +
+  // contents). Admin/project-admin surface, cache hygiene with no business
+  // object mutation. The actual fetch runs in the repo-cache worker so a
+  // rate-limited provider can't time out (or HTML-error) the HTTP request —
+  // the UI polls the config's cacheStatus for completion.
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -36,7 +35,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     await params; // consume params to avoid Next.js warning
 
     const body = await req.json();
-    const { projectConfigId, step = "all" } = body;
+    const { projectConfigId } = body;
 
     if (!projectConfigId) {
       return NextResponse.json(
@@ -47,39 +46,62 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     const configId = parseInt(projectConfigId);
 
-    if (step === "contents-only") {
-      const result = await refreshRepoCacheContentsOnly(
-        configId,
-        prisma as any
-      );
-      if (!result.success) {
-        return NextResponse.json(
-          { success: false, error: result.error },
-          { status: 400 }
-        );
+    const config = await (prisma as any).projectCodeRepositoryConfig.findUnique(
+      {
+        where: { id: configId },
+        select: { id: true, cacheEnabled: true },
       }
-      return NextResponse.json(result);
-    }
+    );
 
-    // step === "list-only" is no longer a separate code path — we always do a
-    // full refresh via the shared service.  The "list-only" step was only used
-    // by the UI as an intermediate preview, and the shared service always
-    // fetches both list + contents in one pass (matching step=all behavior).
-    const result = await refreshRepoCache(configId, prisma as any);
-
-    if (!result.success) {
+    if (!config) {
       return NextResponse.json(
-        { success: false, error: result.error },
-        {
-          status:
-            result.error === "File caching is disabled for this project"
-              ? 400
-              : 500,
-        }
+        { error: "Configuration not found" },
+        { status: 404 }
       );
     }
 
-    return NextResponse.json(result);
+    if (!config.cacheEnabled) {
+      return NextResponse.json(
+        { error: "File caching is disabled for this project" },
+        { status: 400 }
+      );
+    }
+
+    const queue = getRepoCacheQueue();
+    if (!queue) {
+      return NextResponse.json(
+        {
+          error:
+            "Background job queue is not available. Ensure the repo-cache worker is running.",
+        },
+        { status: 503 }
+      );
+    }
+
+    const tenantId = getCurrentTenantId();
+
+    // Reuse an in-flight refresh for the same config+tenant rather than piling
+    // up duplicate jobs if the user clicks Refresh repeatedly.
+    const existingJobs = await queue.getJobs(["active", "waiting", "delayed"]);
+    const existing = existingJobs.find(
+      (j) =>
+        j.name === JOB_REFRESH_SINGLE_REPO_CACHE &&
+        Number(j.data?.configId) === configId &&
+        j.data?.tenantId === tenantId
+    );
+
+    // Mark pending immediately so the UI reflects "in progress" before the
+    // worker picks the job up.
+    await (prisma as any).projectCodeRepositoryConfig.update({
+      where: { id: configId },
+      data: { cacheStatus: "pending", cacheError: null },
+    });
+
+    const job =
+      existing ??
+      (await queue.add(JOB_REFRESH_SINGLE_REPO_CACHE, { configId, tenantId }));
+
+    return NextResponse.json({ queued: true, jobId: job.id });
   } catch (err: unknown) {
     console.error("[POST refresh-cache]:", err);
     const message =

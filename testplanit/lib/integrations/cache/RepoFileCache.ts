@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { Redis } from "ioredis";
 import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import valkeyConnection from "../../valkey";
@@ -8,6 +9,17 @@ export interface RepoFileEntry {
   path: string;
   size: number; // bytes
   type: "file";
+}
+
+// Short-lived cache for the QuickScript "Preview" listing. The raw file list
+// for a repo+branch+base-paths rarely changes while a user tunes glob patterns,
+// so caching it briefly turns N previews into a single provider listing call —
+// the main lever against hitting provider rate limits during pattern tuning.
+const PREVIEW_LIST_TTL_SECONDS = 300; // 5 minutes
+
+export interface PreviewListCacheEntry {
+  files: RepoFileEntry[];
+  truncated: boolean;
 }
 
 export type RepoCacheStatus = "success" | "error" | "pending";
@@ -225,6 +237,76 @@ export class RepoFileCache {
     } catch (err) {
       console.error(
         `[RepoFileCache] Failed to set file contents for config ${projectConfigId}:`,
+        err
+      );
+    }
+  }
+
+  /**
+   * Key for a preview listing, scoped by tenant + repo + branch + base paths.
+   * Base paths are order-normalized so {"src","tests"} and {"tests","src"} hit
+   * the same entry; the (branch, paths) tuple is hashed to keep keys bounded.
+   */
+  private getPreviewListKey(
+    repoId: number,
+    branch: string,
+    scopeKeys: string[]
+  ): string {
+    const tenantId = getCurrentTenantId();
+    const prefix = tenantId ? `${tenantId}:` : "";
+    const sortedPaths = [...scopeKeys].sort().join("\n");
+    const hash = createHash("sha1")
+      .update(`${branch}\n${sortedPaths}`)
+      .digest("hex")
+      .slice(0, 16);
+    return `repo-preview-list:${prefix}repo:${repoId}:${hash}`;
+  }
+
+  /**
+   * Retrieve a cached preview listing. Returns null on miss/Valkey unavailable.
+   */
+  async getPreviewList(
+    repoId: number,
+    branch: string,
+    scopeKeys: string[]
+  ): Promise<PreviewListCacheEntry | null> {
+    if (!this.valkey) return null;
+
+    const key = this.getPreviewListKey(repoId, branch, scopeKeys);
+    try {
+      const cached = await this.valkey.get(key);
+      if (!cached) return null;
+      return JSON.parse(cached) as PreviewListCacheEntry;
+    } catch (err) {
+      console.error(
+        `[RepoFileCache] Failed to parse preview list for repo ${repoId}:`,
+        err
+      );
+      await this.valkey.del(key).catch(() => {}); // Remove corrupted entry
+      return null;
+    }
+  }
+
+  /**
+   * Store a preview listing with a short TTL. Failures are logged but not
+   * re-thrown — this is a best-effort optimization; callers fall back to a
+   * live listing on miss.
+   */
+  async setPreviewList(
+    repoId: number,
+    branch: string,
+    scopeKeys: string[],
+    entry: PreviewListCacheEntry,
+    ttlSeconds: number = PREVIEW_LIST_TTL_SECONDS
+  ): Promise<void> {
+    if (!this.valkey) return;
+
+    const key = this.getPreviewListKey(repoId, branch, scopeKeys);
+    try {
+      await this.valkey.setex(key, ttlSeconds, JSON.stringify(entry));
+    } catch (err) {
+      console.error(
+        `[RepoFileCache] Failed to cache preview list for repo ${repoId}:`,
         err
       );
     }

@@ -1858,6 +1858,8 @@
         "networkError": "Erro de rede durante a atualização do cache",
         "refreshSuccess": "Cache atualizado: {fileCount} arquivos ({contentCached} conteúdo em cache)",
         "refreshRateLimited": "Cache atualizado: {fileCount} arquivos listados, {contentCached}/{fileCount} conteúdo em cache (taxa limitada — atualize novamente para concluir)",
+        "refreshComplete": "Cache refreshed: {fileCount} files",
+        "refreshInProgress": "Cache refresh is still running in the background. It'll update here when it finishes.",
         "validation": {
           "pathRequired": "O caminho é obrigatório",
           "patternRequired": "É necessário um padrão.",

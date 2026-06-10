@@ -1858,6 +1858,8 @@
         "networkError": "Błąd sieciowy podczas odświeżania pamięci podręcznej",
         "refreshSuccess": "Odświeżono pamięć podręczną: {fileCount} plików (zawartość w pamięci podręcznej:{contentCached})",
         "refreshRateLimited": "Odświeżono pamięć podręczną: {fileCount} plików na liście, {contentCached}/{fileCount} zawartości w pamięci podręcznej (ograniczona szybkość — w celu dokończenia należy odświeżyć ponownie)",
+        "refreshComplete": "Cache refreshed: {fileCount} files",
+        "refreshInProgress": "Cache refresh is still running in the background. It'll update here when it finishes.",
         "validation": {
           "pathRequired": "Ścieżka jest wymagana",
           "patternRequired": "Wzór jest wymagany",
