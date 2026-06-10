@@ -147,6 +147,15 @@ function LlmIntegrationList() {
           },
           select: { projectId: true },
         },
+        llmFeatureConfigs: {
+          where: {
+            enabled: true,
+            project: {
+              isDeleted: false,
+            },
+          },
+          select: { projectId: true },
+        },
       },
       where: {
         AND: [
@@ -189,6 +198,10 @@ function LlmIntegrationList() {
         llmProviderConfig: true,
         projectLlmIntegrations: {
           where: { isActive: true, project: { isDeleted: false } },
+          select: { projectId: true },
+        },
+        llmFeatureConfigs: {
+          where: { enabled: true, project: { isDeleted: false } },
           select: { projectId: true },
         },
       },
