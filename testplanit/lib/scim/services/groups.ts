@@ -963,11 +963,26 @@ export async function deleteScimGroup(
         throw new ScimNotFoundError(`Group ${id} not found`);
       }
 
+      const priorMemberIds = (current.assignedUsers ?? []).map(
+        (a) => a.user.id
+      );
+      const fallbackDefault = await readScimFallbackDefault(tx);
+
       const tombstoned = (await tx.groups.update({
         where: { id: current.id },
         data: { isDeleted: true },
         include: SCIM_GROUP_INCLUDE,
       })) as unknown as PrismaGroupWithMembers;
+
+      if (priorMemberIds.length > 0) {
+        await tx.groupAssignment.deleteMany({
+          where: { groupId: current.id },
+        });
+        updateAuditContext({ scimGroupId: String(current.id) });
+        for (const userId of priorMemberIds) {
+          await recomputeUserAccess(tx, userId, fallbackDefault);
+        }
+      }
 
       await emitScimGroupDeleted(snapshot(tombstoned), tx, DEFAULT_EMIT_OPTS);
 
