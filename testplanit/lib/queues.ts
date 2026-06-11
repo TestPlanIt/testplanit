@@ -17,6 +17,7 @@ import {
   SYNC_QUEUE_NAME,
   TESTMO_IMPORT_QUEUE_NAME,
   WEBHOOK_DISPATCH_QUEUE_NAME,
+  SCIM_ACCESS_RECOMPUTE_QUEUE_NAME,
 } from "./queueNames";
 import valkeyConnection from "./valkey";
 import { BULLMQ_PREFIX } from "./bullPrefix";
@@ -40,6 +41,7 @@ export {
   GENERATE_FROM_URL_QUEUE_NAME,
   ITERATION_GENERATION_QUEUE_NAME,
   WEBHOOK_DISPATCH_QUEUE_NAME,
+  SCIM_ACCESS_RECOMPUTE_QUEUE_NAME,
 };
 
 const STANDARD_RETRY: JobsOptions = {
@@ -79,6 +81,7 @@ let _magicSelectQueue: Queue | null = null;
 let _generateFromUrlQueue: Queue | null = null;
 let _iterationGenerationQueue: Queue | null = null;
 let _webhookDispatchQueue: Queue | null = null;
+let _scimAccessRecomputeQueue: Queue | null = null;
 
 /**
  * Get the forecast queue instance (lazy initialization)
@@ -589,6 +592,31 @@ export function getWebhookDispatchQueue(): Queue | null {
     console.error(`Queue ${WEBHOOK_DISPATCH_QUEUE_NAME} error:`, error);
   });
   return _webhookDispatchQueue;
+}
+
+/**
+ * Get the scim-access-recompute queue instance (lazy initialization).
+ * Used to fan-out access recomputation after an admin changes a group mapping
+ * or the fallback-default setting. Standard retry (3 attempts, exponential backoff).
+ */
+export function getScimAccessRecomputeQueue(): Queue | null {
+  if (_scimAccessRecomputeQueue) return _scimAccessRecomputeQueue;
+  if (!valkeyConnection) {
+    console.warn(
+      `Valkey connection not available, Queue "${SCIM_ACCESS_RECOMPUTE_QUEUE_NAME}" not initialized.`
+    );
+    return null;
+  }
+  _scimAccessRecomputeQueue = new Queue(SCIM_ACCESS_RECOMPUTE_QUEUE_NAME, {
+    connection: valkeyConnection as any,
+    prefix: BULLMQ_PREFIX,
+    defaultJobOptions: { ...STANDARD_RETRY },
+  });
+  console.log(`Queue "${SCIM_ACCESS_RECOMPUTE_QUEUE_NAME}" initialized.`);
+  _scimAccessRecomputeQueue.on("error", (error) => {
+    console.error(`Queue ${SCIM_ACCESS_RECOMPUTE_QUEUE_NAME} error:`, error);
+  });
+  return _scimAccessRecomputeQueue;
 }
 
 /**
