@@ -1,3 +1,9 @@
+## [0.37.6](https://github.com/TestPlanIt/testplanit/compare/v0.37.5...v0.37.6) (2026-06-11)
+
+### Enhancements
+
+* **search:** virtual scrolling + infinite list for unified search ([#424](https://github.com/TestPlanIt/testplanit/issues/424)) ([5454379](https://github.com/TestPlanIt/testplanit/commit/5454379c11c6f11506b2fc8451ab192e34b2133f))
+
 ## [0.37.5](https://github.com/TestPlanIt/testplanit/compare/v0.37.4...v0.37.5) (2026-06-10)
 
 ### Bug Fixes
