@@ -306,6 +306,8 @@ async function resurrectTombstonedUser(
     extractNonWritableUrns(body as unknown as Record<string, unknown>)
   );
 
+  const fallbackDefault = await readScimFallbackDefault(tx);
+
   const resurrected = await tx.user.update({
     where: { id: existing.id },
     data: {
@@ -318,6 +320,8 @@ async function resurrectTombstonedUser(
       name: deriveDisplayName(body),
       email: extractPrimaryEmail(body.emails) ?? existing.email,
       scimExtensions: toJsonInput(extensions),
+      access: fallbackDefault,
+      accessSource: "GROUP_MAPPING",
     },
     include: SCIM_USER_INCLUDE,
   });
