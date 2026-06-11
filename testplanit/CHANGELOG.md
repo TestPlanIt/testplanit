@@ -1,3 +1,9 @@
+## [0.37.9](https://github.com/TestPlanIt/testplanit/compare/v0.37.8...v0.37.9) (2026-06-11)
+
+### Enhancements
+
+* **reports:** CSV export of report results ([#426](https://github.com/TestPlanIt/testplanit/issues/426)) ([3e168ff](https://github.com/TestPlanIt/testplanit/commit/3e168ffa96ca69ae1938268ea584c67be30eab3b))
+
 ## [0.37.8](https://github.com/TestPlanIt/testplanit/compare/v0.37.7...v0.37.8) (2026-06-11)
 
 ### Enhancements
