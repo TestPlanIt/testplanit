@@ -47,10 +47,6 @@ import {
 import { WorkflowStateDisplay } from "@/components/WorkflowStateDisplay";
 import { BulkEditModal } from "@/projects/repository/[projectId]/BulkEditModal";
 import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
   Filter,
   Folder,
   Pencil,
@@ -67,6 +63,7 @@ import {
   getEntityLabel,
   useSearchContext,
 } from "~/hooks/useSearchContext";
+import { useVirtualizedInfiniteList } from "~/hooks/useVirtualizedInfiniteList";
 import { useSearchState } from "~/lib/contexts/SearchStateContext";
 import { IconName } from "~/types/globals";
 import {
@@ -140,9 +137,22 @@ export function UnifiedSearch({
   const [results, setResults] = useState<UnifiedSearchResult | null>(
     searchState?.results || null
   );
+  // Accumulated hits across every loaded page for the current tab/query. The
+  // virtualized list renders from this rather than a single page, so the user
+  // scrolls one continuous list with no page seam.
+  const [loadedHits, setLoadedHits] = useState<SearchHit[]>(
+    searchState?.results?.hits ?? []
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A failed "load more" stops the auto-fetch from looping on the still-visible
+  // sentinel; cleared on every reset (query/scope/tab change).
+  const [loadMoreError, setLoadMoreError] = useState(false);
+  // Guards against an inconsistent `total` (more reported than returnable, e.g.
+  // count drift) wedging the sentinel into fetching empty pages forever.
+  const [reachedEnd, setReachedEnd] = useState(false);
   const [isFirstSearch, setIsFirstSearch] = useState(!searchState?.results);
+  // Highest page loaded for the current tab/query (the infinite-scroll cursor).
   const [currentPage, setCurrentPage] = useState(searchState?.currentPage || 1);
   const [pageSize] = useState(compactMode ? 10 : 50);
   const [showFilters, setShowFilters] = useState(false);
@@ -191,17 +201,24 @@ export function UnifiedSearch({
     return t("search.placeholder.allProjects");
   }, [placeholder, currentProjectOnly, searchContext.projectId, t]);
 
-  // Search function
+  // Search function. `append` distinguishes the next-page fetch (results are
+  // appended to the accumulated list) from a fresh search (results replace it).
   const performSearch = useCallback(
-    async (page: number = 1, forSpecificTab?: SearchableEntityType | "all") => {
+    async (
+      page: number = 1,
+      forSpecificTab?: SearchableEntityType | "all",
+      { append = false }: { append?: boolean } = {}
+    ) => {
       // Don't search if query is empty
       if (!debouncedQuery.trim()) {
         setResults(null);
+        setLoadedHits([]);
         return;
       }
 
       setLoading(true);
-      setError(null);
+      if (append) setLoadMoreError(false);
+      else setError(null);
 
       try {
         // Build filters based on selected scope and entities
@@ -263,13 +280,37 @@ export function UnifiedSearch({
           data.entityTypeCounts = allEntityTypeCountsRef.current;
         }
 
-        setResults(data);
+        if (append) {
+          // An empty page means we've reached the end regardless of what the
+          // reported total claims — stop the sentinel from refetching it.
+          if (data.hits.length === 0) setReachedEnd(true);
+          // Keep the first-page metadata (total, counts, facets) and grow the
+          // rendered list. De-dupe by entity+id in case a page boundary
+          // overlaps so the virtualizer never gets duplicate keys.
+          setLoadedHits((prev) => {
+            const seen = new Set(prev.map((h) => `${h.entityType}-${h.id}`));
+            const next = data.hits.filter(
+              (h) => !seen.has(`${h.entityType}-${h.id}`)
+            );
+            return next.length ? [...prev, ...next] : prev;
+          });
+        } else {
+          setResults(data);
+          setLoadedHits(data.hits);
+          setReachedEnd(false);
+        }
         setCurrentPage(page);
         setIsFirstSearch(false);
         onResultsChange?.(data);
       } catch (err) {
         console.error("Search error:", err);
-        setError(t("search.errors.searchFailed"));
+        if (append) {
+          // Don't wipe the already-rendered list on a next-page failure; surface
+          // an inline retry and pause the auto-fetch loop instead.
+          setLoadMoreError(true);
+        } else {
+          setError(t("search.errors.searchFailed"));
+        }
       } finally {
         setLoading(false);
       }
@@ -288,22 +329,28 @@ export function UnifiedSearch({
   // Track if parameters have changed (not tab/page)
   const [searchTrigger, setSearchTrigger] = useState(0);
 
-  // Trigger search when query or filters change
+  // Reset to the first page + "all" tab whenever the query/filters/scope
+  // change, then trigger a fresh search.
   useEffect(() => {
-    setCurrentPage(1); // Reset pagination
-    setSelectedTab("all"); // Reset to all tab
-    setSearchTrigger((prev) => prev + 1); // Trigger search
+    setCurrentPage(1);
+    setSelectedTab("all");
+    setLoadMoreError(false);
+    setReachedEnd(false);
+    setSearchTrigger((prev) => prev + 1);
   }, [debouncedQuery, filters, selectedEntities, currentProjectOnly]);
 
-  // Perform search when triggered or when tab/page changes
+  // Run the fresh (page 1) search when triggered. Subsequent pages are
+  // appended by the infinite-scroll sentinel; tab switches load their own
+  // page 1 (see the Tabs onValueChange handler).
   useEffect(() => {
     if (debouncedQuery.trim() && searchTrigger > 0) {
-      void performSearch(currentPage, selectedTab);
+      void performSearch(1, "all", { append: false });
     } else if (!debouncedQuery.trim()) {
       setResults(null);
+      setLoadedHits([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTrigger, currentPage, selectedTab]);
+  }, [searchTrigger]);
 
   // Save search state whenever it changes
   useEffect(() => {
@@ -432,7 +479,10 @@ export function UnifiedSearch({
   const clearSearch = () => {
     setQuery("");
     setResults(null);
+    setLoadedHits([]);
     setError(null);
+    setLoadMoreError(false);
+    setReachedEnd(false);
     setIsFirstSearch(true);
     setCurrentPage(1);
     setSelectedCaseRows(new Map());
@@ -563,38 +613,122 @@ export function UnifiedSearch({
     return count;
   };
 
-  // Pagination calculations based on selected tab
-  const { totalForTab, totalPagesForTab, showingFromForTab, showingToForTab } =
-    useMemo(() => {
-      if (!results)
-        return {
-          totalForTab: 0,
-          totalPagesForTab: 0,
-          showingFromForTab: 0,
-          showingToForTab: 0,
-        };
+  // Total available for the active tab — drives the "showing X of Y" summary
+  // and whether the infinite-scroll sentinel may fetch another page.
+  const totalForTab = useMemo(() => {
+    if (!results) return 0;
+    return selectedTab === "all"
+      ? results.total
+      : results.entityTypeCounts?.[selectedTab as SearchableEntityType] || 0;
+  }, [results, selectedTab]);
 
-      // Calculate totals based on selected tab
-      const total =
-        selectedTab === "all"
-          ? results.total
-          : results.entityTypeCounts?.[selectedTab as SearchableEntityType] ||
-            0;
+  const hasMore =
+    loadedHits.length < totalForTab && !loadMoreError && !reachedEnd;
 
-      const totalPages = Math.ceil(total / pageSize);
-      const showingFrom = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
-      const showingTo =
-        total === 0 ? 0 : Math.min(currentPage * pageSize, total);
+  // Fetch the next page and append it. The cursor is the highest page loaded
+  // for the current tab/query. Guard on `hasMore` so a stray trigger can't
+  // fetch past the end of the result set.
+  const handleLoadMore = useCallback(() => {
+    if (!hasMore) return;
+    void performSearch(currentPage + 1, selectedTab, { append: true });
+  }, [hasMore, performSearch, currentPage, selectedTab]);
 
-      return {
-        totalForTab: total,
-        totalPagesForTab: totalPages,
-        showingFromForTab: showingFrom,
-        showingToForTab: showingTo,
-      };
-    }, [results, selectedTab, currentPage, pageSize]);
+  // Full skeleton only on the first fetch; later fetches keep the list visible
+  // and show an inline indicator at the bottom.
+  const isInitialLoading = loading && loadedHits.length === 0;
+  const isLoadingMore = loading && loadedHits.length > 0;
 
-  // Default result renderer with proper tab support
+  const {
+    scrollRef,
+    sentinelRef,
+    virtualItems,
+    totalSize,
+    measureElement,
+    maxHeight,
+  } = useVirtualizedInfiniteList({
+    count: loadedHits.length,
+    estimateSize: 140,
+    overscan: 6,
+    hasMore,
+    isLoading: loading,
+    onLoadMore: handleLoadMore,
+    // Leave room for the fixed bulk-action toolbar so the last rows stay clear.
+    bottomMargin: selectedCaseRows.size > 0 ? 96 : 16,
+    resetKey: `${searchTrigger}:${selectedTab}`,
+  });
+
+  // Virtualized, infinite-scrolling list of the accumulated hits for the
+  // active tab. One continuous scroll container — no page seam — so a bulk
+  // selection can span the entire result set.
+  const renderVirtualizedHits = () => (
+    <div
+      ref={scrollRef}
+      className="relative overflow-auto"
+      style={{ height: maxHeight ?? undefined }}
+      data-testid="search-results-scroll"
+    >
+      <div className="relative w-full" style={{ height: totalSize }}>
+        {virtualItems.map((vItem) => {
+          const hit = loadedHits[vItem.index];
+          if (!hit) return null;
+          return (
+            <div
+              key={vItem.key}
+              data-index={vItem.index}
+              ref={measureElement}
+              className="absolute left-0 top-0 w-full pb-2"
+              style={{ transform: `translateY(${vItem.start}px)` }}
+            >
+              <SearchResultCard
+                hit={hit}
+                onClick={() => onResultClick?.(hit)}
+                searchQuery={query}
+                isSelected={selectedCaseRows.has(Number(hit.id))}
+                onSelectToggle={
+                  hit.entityType === SearchableEntityType.REPOSITORY_CASE
+                    ? () => toggleCaseSelection(hit)
+                    : undefined
+                }
+              />
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Sentinel — when it nears the viewport the hook fetches the next page. */}
+      <div
+        ref={sentinelRef}
+        aria-hidden
+        className="h-px w-full"
+        data-testid="search-results-sentinel"
+      />
+
+      {isLoadingMore && (
+        <div
+          className="space-y-2 py-3"
+          aria-label={t("common.loading")}
+          data-testid="search-results-loading-more"
+        >
+          <Skeleton className="h-20 w-full" />
+        </div>
+      )}
+
+      {loadMoreError && (
+        <div className="py-4 text-center">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleLoadMore}
+            data-testid="search-results-load-more-retry"
+          >
+            {t("search.errors.tryAgain")}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+
+  // Default result renderer with tab support over the virtualized list.
   const defaultResultRenderer = (results: UnifiedSearchResult) => {
     if (!results.hits.length && results.total === 0) {
       return (
@@ -620,23 +754,20 @@ export function UnifiedSearch({
       Object.keys(results.entityTypeCounts).length > 0;
     const hasMultipleTypes = selectedEntities.length > 1;
 
-    if (hasMultipleTypes && hasEntityTypeCounts) {
-      // Filter results for the selected tab
-      const filteredHits =
-        selectedTab === "all"
-          ? results.hits
-          : results.hits.filter((hit) => hit.entityType === selectedTab);
-
-      return (
-        <div>
+    return (
+      <div>
+        {hasMultipleTypes && hasEntityTypeCounts && (
           <Tabs
             value={selectedTab}
             onValueChange={(value) => {
               const newTab = value as SearchableEntityType | "all";
               setSelectedTab(newTab);
-              setCurrentPage(1); // Reset to first page when changing tabs
-              // Perform search for the specific tab
-              void performSearch(1, newTab);
+              setCurrentPage(1);
+              setLoadMoreError(false);
+              setReachedEnd(false);
+              // Each tab loads its own page 1; the accumulated list resets as
+              // the new results arrive.
+              void performSearch(1, newTab, { append: false });
             }}
             className="w-full"
           >
@@ -683,119 +814,19 @@ export function UnifiedSearch({
               })}
             </TabsList>
           </Tabs>
+        )}
 
-          {/* Results for selected tab */}
-          <div className="mt-4 space-y-2">
-            {filteredHits.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <p>{t("common.labels.noResults")}</p>
-              </div>
-            ) : (
-              filteredHits.map((hit) => (
-                <SearchResultCard
-                  key={`${hit.entityType}-${hit.id}`}
-                  hit={hit}
-                  onClick={() => onResultClick?.(hit)}
-                  searchQuery={query}
-                  isSelected={selectedCaseRows.has(Number(hit.id))}
-                  onSelectToggle={
-                    hit.entityType === SearchableEntityType.REPOSITORY_CASE
-                      ? () => toggleCaseSelection(hit)
-                      : undefined
-                  }
-                />
-              ))
-            )}
+        {totalForTab > 0 && (
+          <div className="mt-4 text-sm text-muted-foreground">
+            {t("common.pagination.showing")} {loadedHits.length}{" "}
+            {t("common.of")} {totalForTab} {t("common.results")}
           </div>
-        </div>
-      );
-    } else {
-      // Single entity type or no counts - show results directly
-      return (
-        <div className="space-y-2">
-          {results.hits.map((hit) => (
-            <SearchResultCard
-              key={`${hit.entityType}-${hit.id}`}
-              hit={hit}
-              onClick={() => onResultClick?.(hit)}
-              searchQuery={query}
-              isSelected={selectedCaseRows.has(Number(hit.id))}
-              onSelectToggle={
-                hit.entityType === SearchableEntityType.REPOSITORY_CASE
-                  ? () => toggleCaseSelection(hit)
-                  : undefined
-              }
-            />
-          ))}
-        </div>
-      );
-    }
+        )}
+
+        <div className="mt-2">{renderVirtualizedHits()}</div>
+      </div>
+    );
   };
-
-  const paginationControls = (
-    <div className="my-4 flex items-center justify-between">
-      <div className="text-sm text-muted-foreground">
-        {t("common.pagination.showing")} {showingFromForTab}-{showingToForTab}{" "}
-        {t("common.of")} {totalForTab} {t("common.results")}
-      </div>
-
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => performSearch(1, selectedTab)}
-          disabled={currentPage === 1}
-        >
-          <ChevronsLeft className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => performSearch(currentPage - 1, selectedTab)}
-          disabled={currentPage === 1}
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-
-        <div className="flex items-center gap-1">
-          <span className="text-sm">{t("search.results.page")}</span>
-          <Input
-            type="number"
-            min={1}
-            max={totalPagesForTab}
-            value={currentPage}
-            onChange={(e) => {
-              const page = parseInt(e.target.value) || 1;
-              if (page >= 1 && page <= totalPagesForTab) {
-                void performSearch(page, selectedTab);
-              }
-            }}
-            className="w-16 h-9 text-center"
-          />
-          <span className="text-sm">
-            {t("common.of")} {totalPagesForTab}
-          </span>
-        </div>
-
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => performSearch(currentPage + 1, selectedTab)}
-          disabled={currentPage === totalPagesForTab}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => performSearch(totalPagesForTab, selectedTab)}
-          disabled={currentPage === totalPagesForTab}
-        >
-          <ChevronsRight className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-  );
 
   return (
     <div className={cn("space-y-4", compactMode && "space-y-2")}>
@@ -942,7 +973,7 @@ export function UnifiedSearch({
           selectedCaseRows.size > 0 && "pb-20"
         )}
       >
-        {loading && (
+        {isInitialLoading && (
           <div className="space-y-2">
             <Skeleton className="h-20 w-full" />
             <Skeleton className="h-20 w-full" />
@@ -956,22 +987,18 @@ export function UnifiedSearch({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => performSearch(currentPage, selectedTab)}
+              onClick={() => performSearch(1, selectedTab, { append: false })}
             >
               {t("search.errors.tryAgain")}
             </Button>
           </div>
         )}
 
-        {!loading && !error && results && (
+        {!isInitialLoading && !error && results && (
           <>
-            {totalPagesForTab > 1 && paginationControls}
-
             {renderResults
               ? renderResults(results)
               : defaultResultRenderer(results)}
-
-            {totalPagesForTab > 1 && paginationControls}
           </>
         )}
 

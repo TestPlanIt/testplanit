@@ -1,8 +1,51 @@
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "~/test/test-utils";
+import { act, fireEvent, render, screen, waitFor } from "~/test/test-utils";
 import { SearchableEntityType } from "~/types/search";
 import { UnifiedSearch } from "./UnifiedSearch";
+
+// The real hook owns TanStack Virtual + an IntersectionObserver, neither of
+// which produces layout (or fires) under jsdom. Replace it with a pass-through
+// that renders every loaded hit and exposes the latest `onLoadMore` so a test
+// can simulate the sentinel firing. The hook has its own focused unit test
+// (hooks/useVirtualizedInfiniteList.test.tsx) for the observer wiring.
+const virtualListMock = vi.hoisted(() => ({
+  lastOnLoadMore: null as null | (() => void),
+  lastOptions: null as Record<string, unknown> | null,
+}));
+
+vi.mock("~/hooks/useVirtualizedInfiniteList", () => ({
+  useVirtualizedInfiniteList: (opts: {
+    count: number;
+    onLoadMore: () => void;
+  }) => {
+    virtualListMock.lastOnLoadMore = opts.onLoadMore;
+    virtualListMock.lastOptions = opts as unknown as Record<string, unknown>;
+    return {
+      scrollRef: { current: null },
+      sentinelRef: { current: null },
+      virtualizer: {},
+      virtualItems: Array.from({ length: opts.count }, (_, i) => ({
+        key: i,
+        index: i,
+        start: i * 120,
+        size: 120,
+        end: (i + 1) * 120,
+        lane: 0,
+      })),
+      totalSize: opts.count * 120,
+      measureElement: () => {},
+      maxHeight: 600,
+    };
+  },
+}));
+
+// Simulate the infinite-scroll sentinel coming into view.
+function triggerLoadMore() {
+  act(() => {
+    virtualListMock.lastOnLoadMore?.();
+  });
+}
 
 // Mock next-intl
 vi.mock("next-intl", () => ({
@@ -229,6 +272,8 @@ describe("UnifiedSearch Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (global.fetch as any).mockReset();
+    virtualListMock.lastOnLoadMore = null;
+    virtualListMock.lastOptions = null;
   });
 
   it("should render search input with placeholder", () => {
@@ -498,83 +543,151 @@ describe("UnifiedSearch Component", () => {
     expect(searchInput).toBeInTheDocument();
   });
 
-  it("should handle pagination", async () => {
-    (global.fetch as any).mockResolvedValueOnce({
+  it("appends the next page when the infinite-scroll sentinel fires", async () => {
+    const page = (offset: number) => ({
       ok: true,
       json: async () => ({
         total: 100,
         hits: Array(50)
           .fill(null)
           .map((_, i) => ({
-            id: i + 1,
+            id: offset + i + 1,
             entityType: SearchableEntityType.REPOSITORY_CASE,
             score: 1.0,
             source: {
-              id: i + 1,
-              name: `Test Case ${i + 1}`,
+              id: offset + i + 1,
+              name: `Test Case ${offset + i + 1}`,
               projectName: "Test Project",
               projectId: 1,
             },
           })),
-        took: 100,
+        took: 1,
+      }),
+    });
+
+    (global.fetch as any).mockResolvedValueOnce(page(0));
+
+    render(<UnifiedSearch />);
+    fireEvent.change(screen.getByPlaceholderText(/search/i), {
+      target: { value: "test" },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Test Case 1")).toBeInTheDocument();
+      expect(screen.getByText("Test Case 50")).toBeInTheDocument();
+    });
+    // Page 2 hasn't loaded yet.
+    expect(screen.queryByText("Test Case 51")).not.toBeInTheDocument();
+
+    // Simulate the sentinel reaching the viewport.
+    (global.fetch as any).mockResolvedValueOnce(page(50));
+    triggerLoadMore();
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(screen.getByText("Test Case 51")).toBeInTheDocument();
+    });
+
+    // Both pages are now accumulated in one continuous list (no page seam).
+    expect(screen.getByText("Test Case 1")).toBeInTheDocument();
+    expect(screen.getByText("Test Case 100")).toBeInTheDocument();
+
+    // The next-page request carried the incremented page cursor.
+    const secondBody = JSON.parse((global.fetch as any).mock.calls[1][1].body);
+    expect(secondBody.pagination.page).toBe(2);
+  });
+
+  it("does not fetch more once every result is loaded", async () => {
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        total: 2,
+        hits: [
+          {
+            id: 1,
+            entityType: SearchableEntityType.REPOSITORY_CASE,
+            score: 1.0,
+            source: { id: 1, name: "Only One", projectName: "P", projectId: 1 },
+          },
+          {
+            id: 2,
+            entityType: SearchableEntityType.REPOSITORY_CASE,
+            score: 1.0,
+            source: { id: 2, name: "Only Two", projectName: "P", projectId: 1 },
+          },
+        ],
+        took: 1,
       }),
     });
 
     render(<UnifiedSearch />);
-
-    const searchInput = screen.getByPlaceholderText(/search/i);
-    fireEvent.change(searchInput, { target: { value: "test" } });
-
-    await waitFor(() => {
-      // First check if we have results
-      expect(screen.getByText("Test Case 1")).toBeInTheDocument();
-
-      // Check pagination text (rendered at top and bottom)
-      const paginationTexts = screen.getAllByText((content, element) => {
-        return (
-          element?.textContent ===
-          "common.pagination.showing 1-50 common.of 100 common.results"
-        );
-      });
-      expect(paginationTexts.length).toBeGreaterThanOrEqual(1);
+    fireEvent.change(screen.getByPlaceholderText(/search/i), {
+      target: { value: "test" },
     });
 
-    // Mock the second page response
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(screen.getByText("Only One")).toBeInTheDocument();
+    });
+
+    // All results are already loaded — the sentinel firing must be a no-op.
+    triggerLoadMore();
+    await Promise.resolve();
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("resets the accumulated list when the query changes", async () => {
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
       json: async () => ({
-        total: 100,
-        hits: Array(50)
-          .fill(null)
-          .map((_, i) => ({
-            id: i + 51,
+        total: 1,
+        hits: [
+          {
+            id: 1,
             entityType: SearchableEntityType.REPOSITORY_CASE,
             score: 1.0,
             source: {
-              id: i + 51,
-              name: `Test Case ${i + 51}`,
-              projectName: "Test Project",
+              id: 1,
+              name: "Alpha One",
+              projectName: "P",
               projectId: 1,
             },
-          })),
-        took: 100,
+          },
+        ],
+        took: 1,
       }),
     });
 
-    // Find and click the next page button
-    const buttons = screen.getAllByRole("button");
-    const nextButton = buttons.find((btn) => {
-      const svg = btn.querySelector("svg");
-      return svg && svg.classList.contains("lucide-chevron-right");
+    render(<UnifiedSearch />);
+    const searchInput = screen.getByPlaceholderText(/search/i);
+    fireEvent.change(searchInput, { target: { value: "alpha" } });
+
+    await waitFor(() => {
+      expect(screen.getByText("Alpha One")).toBeInTheDocument();
     });
 
-    if (nextButton) {
-      fireEvent.click(nextButton);
+    // A new query replaces (does not append to) the prior results.
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        total: 1,
+        hits: [
+          {
+            id: 2,
+            entityType: SearchableEntityType.REPOSITORY_CASE,
+            score: 1.0,
+            source: { id: 2, name: "Beta One", projectName: "P", projectId: 1 },
+          },
+        ],
+        took: 1,
+      }),
+    });
+    fireEvent.change(searchInput, { target: { value: "beta" } });
 
-      await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalledTimes(2);
-      });
-    }
+    await waitFor(() => {
+      expect(screen.getByText("Beta One")).toBeInTheDocument();
+      expect(screen.queryByText("Alpha One")).not.toBeInTheDocument();
+    });
   });
 
   it("should display deleted items with destructive styling", async () => {
@@ -1304,6 +1417,62 @@ describe("UnifiedSearch Component", () => {
           screen.queryByTestId("bulk-action-toolbar")
         ).not.toBeInTheDocument();
       });
+    });
+
+    it("retains a selection made on an earlier page after more pages load", async () => {
+      // Page 1: cases 1 & 2 of a 4-result set, all in project 100.
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          total: 4,
+          hits: [caseHit(1, 100), caseHit(2, 100)],
+          took: 1,
+        }),
+      });
+      render(<UnifiedSearch />);
+      fireEvent.change(screen.getByPlaceholderText(/search/i), {
+        target: { value: "anything" },
+      });
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("bulk-select-repository_case-1")
+        ).toBeInTheDocument();
+      });
+
+      // Select a case on page 1.
+      fireEvent.click(screen.getByTestId("bulk-select-repository_case-1"));
+      expect(screen.getByTestId("bulk-action-toolbar")).toBeInTheDocument();
+
+      // Scroll past the seam — page 2 appends cases 3 & 4.
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          total: 4,
+          hits: [caseHit(3, 100), caseHit(4, 100)],
+          took: 1,
+        }),
+      });
+      triggerLoadMore();
+      await waitFor(() => {
+        expect(
+          screen.getByTestId("bulk-select-repository_case-4")
+        ).toBeInTheDocument();
+      });
+
+      // The page-1 selection survived the append, and we can add a page-2 case.
+      fireEvent.click(screen.getByTestId("bulk-select-repository_case-4"));
+      await waitFor(() => {
+        expect(screen.getByTestId("bulk-action-toolbar").textContent).toContain(
+          "2"
+        );
+      });
+
+      // Both ids reach the bulk editor — selection genuinely spans the pages.
+      fireEvent.click(screen.getByTestId("bulk-edit-button"));
+      await waitFor(() => {
+        expect(screen.getByTestId("bulk-edit-modal-mock")).toBeInTheDocument();
+      });
+      expect(screen.getByTestId("bulk-edit-ids").textContent).toBe("1,4");
     });
   });
 });

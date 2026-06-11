@@ -122,7 +122,7 @@ When searching multiple entity types, results are organized into tabs:
 ### Navigation
 
 - Click on any result to navigate directly to that item
-- Use pagination controls at the bottom for large result sets
+- Results load continuously as you scroll — there are no pages to click through. More results are fetched automatically as you near the bottom of the list, and a "Showing X of Y" count above the list tracks how many of the total matches have loaded so far
 - Results are sorted by relevance by default
 
 ## Search Tips
