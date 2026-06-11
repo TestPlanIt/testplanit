@@ -189,7 +189,9 @@ describe("createScimUser", () => {
     it("A1b: uses the configured fallback default when AppConfig row is present", async () => {
       tx.appConfig.findUnique.mockResolvedValue({ value: "USER" });
       tx.user.findFirst.mockResolvedValue(null);
-      tx.user.create.mockResolvedValue(makeUser({ id: "user_new", access: "USER" }));
+      tx.user.create.mockResolvedValue(
+        makeUser({ id: "user_new", access: "USER" })
+      );
 
       await createScimUser(makeBody(), CTX);
 
@@ -1031,7 +1033,9 @@ describe("K — fallback-default access on SCIM user create", () => {
     tx.user.findFirst.mockResolvedValue(null);
     // Simulate admin having configured fallback default = USER
     tx.appConfig.findUnique.mockResolvedValue({ value: "USER" });
-    tx.user.create.mockResolvedValue(makeUser({ id: "user_k2", access: "USER" }));
+    tx.user.create.mockResolvedValue(
+      makeUser({ id: "user_k2", access: "USER" })
+    );
 
     await createScimUser(makeBody(), CTX);
 
@@ -1066,7 +1070,9 @@ describe("K — fallback-default access on SCIM user create", () => {
     // Belt-and-suspenders: if fallback = ADMIN, the create payload must carry ADMIN
     tx.user.findFirst.mockResolvedValue(null);
     tx.appConfig.findUnique.mockResolvedValue({ value: "ADMIN" });
-    tx.user.create.mockResolvedValue(makeUser({ id: "user_k4", access: "ADMIN" }));
+    tx.user.create.mockResolvedValue(
+      makeUser({ id: "user_k4", access: "ADMIN" })
+    );
 
     await createScimUser(makeBody(), CTX);
 

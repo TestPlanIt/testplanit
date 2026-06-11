@@ -27,8 +27,9 @@ vi.mock("~/lib/scim/auth", () => ({
   }),
 }));
 
-const req = (path = "/api/scim/v2/.well-known/scim-configuration"): NextRequest =>
-  new NextRequest(`http://localhost${path}`);
+const req = (
+  path = "/api/scim/v2/.well-known/scim-configuration"
+): NextRequest => new NextRequest(`http://localhost${path}`);
 
 const originalNextAuthUrl = process.env.NEXTAUTH_URL;
 

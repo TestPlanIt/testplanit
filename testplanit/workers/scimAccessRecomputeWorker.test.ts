@@ -77,14 +77,22 @@ interface TxLike {
 const tx = (prisma as unknown as { __tx: TxLike }).__tx;
 // Top-level prisma.groupAssignment.findMany is called outside the transaction
 // for the groupId batch path.
-const prismaGroupAssignment = (prisma as unknown as { groupAssignment: { findMany: ReturnType<typeof vi.fn> } }).groupAssignment;
+const prismaGroupAssignment = (
+  prisma as unknown as {
+    groupAssignment: { findMany: ReturnType<typeof vi.fn> };
+  }
+).groupAssignment;
 
 afterEach(() => {
   vi.clearAllMocks();
 });
 
 function makeJob(
-  overrides: Partial<{ groupId: number; adminUserId: string; tenantId?: string }> = {}
+  overrides: Partial<{
+    groupId: number;
+    adminUserId: string;
+    tenantId?: string;
+  }> = {}
 ) {
   return {
     id: "job-1",
@@ -114,11 +122,21 @@ describe("scimAccessRecomputeWorker processor", () => {
     await processor(makeJob({ groupId: 10 }));
 
     expect(prismaGroupAssignment.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: expect.objectContaining({ groupId: 10 }) })
+      expect.objectContaining({
+        where: expect.objectContaining({ groupId: 10 }),
+      })
     );
     expect(recomputeUserAccess).toHaveBeenCalledTimes(2);
-    expect(recomputeUserAccess).toHaveBeenCalledWith(expect.anything(), "user-a", "NONE");
-    expect(recomputeUserAccess).toHaveBeenCalledWith(expect.anything(), "user-b", "NONE");
+    expect(recomputeUserAccess).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-a",
+      "NONE"
+    );
+    expect(recomputeUserAccess).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-b",
+      "NONE"
+    );
   });
 
   it("W3: job WITHOUT groupId — selects all accessSource=GROUP_MAPPING users and recomputes each", async () => {
@@ -136,9 +154,21 @@ describe("scimAccessRecomputeWorker processor", () => {
       })
     );
     expect(recomputeUserAccess).toHaveBeenCalledTimes(3);
-    expect(recomputeUserAccess).toHaveBeenCalledWith(expect.anything(), "user-x", "NONE");
-    expect(recomputeUserAccess).toHaveBeenCalledWith(expect.anything(), "user-y", "NONE");
-    expect(recomputeUserAccess).toHaveBeenCalledWith(expect.anything(), "user-z", "NONE");
+    expect(recomputeUserAccess).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-x",
+      "NONE"
+    );
+    expect(recomputeUserAccess).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-y",
+      "NONE"
+    );
+    expect(recomputeUserAccess).toHaveBeenCalledWith(
+      expect.anything(),
+      "user-z",
+      "NONE"
+    );
   });
 
   it("W4: audit frame carries adminUserId, scimGroupId, and scimTokenId when groupId is present", async () => {
@@ -147,10 +177,8 @@ describe("scimAccessRecomputeWorker processor", () => {
     await processor(makeJob({ groupId: 99, adminUserId: "admin-42" }));
 
     expect(runWithAuditContext).toHaveBeenCalledTimes(1);
-    const ctxArg = (runWithAuditContext as ReturnType<typeof vi.fn>).mock.calls[0][0] as Record<
-      string,
-      unknown
-    >;
+    const ctxArg = (runWithAuditContext as ReturnType<typeof vi.fn>).mock
+      .calls[0][0] as Record<string, unknown>;
     expect(ctxArg.userId).toBe("admin-42");
     expect(ctxArg.scimGroupId).toBe("99");
     expect(ctxArg.scimTokenId).toBe("worker:scim-access-recompute");

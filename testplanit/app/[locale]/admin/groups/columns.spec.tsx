@@ -75,6 +75,7 @@ const testGroup: ExtendedGroups = {
   url: null,
   note: null,
   isDeleted: false,
+  mappedAccess: null,
   assignedUsers: [{ userId: "u1" }, { userId: "u2" }],
   projectPermissions: [{ projectId: 10 }, { projectId: 20 }, { projectId: 30 }],
 };
@@ -89,6 +90,7 @@ const emptyGroup: ExtendedGroups = {
   url: null,
   note: null,
   isDeleted: false,
+  mappedAccess: null,
   assignedUsers: [],
   projectPermissions: [],
 };

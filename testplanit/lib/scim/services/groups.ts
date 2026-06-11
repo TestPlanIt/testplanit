@@ -55,10 +55,7 @@ import {
   emitScimGroupMemberRemoved,
   emitScimGroupUpdated,
 } from "~/lib/webhooks/event-emitters/groupEvents";
-import {
-  readScimFallbackDefault,
-  recomputeUserAccess,
-} from "./recompute";
+import { readScimFallbackDefault, recomputeUserAccess } from "./recompute";
 
 import { SCIM_SYSTEM_USER_ID, SYSTEM_PROJECT_ID } from "../constants";
 import { scimFilterToPrismaGroupWhere } from "../filter";

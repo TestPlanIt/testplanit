@@ -1034,8 +1034,16 @@ describe("deleteScimGroup", () => {
     // Both ex-members had USER access via GROUP_MAPPING; after deletion they
     // have no mapped groups → recompute writes NONE.
     tx.user.findUnique
-      .mockResolvedValueOnce({ id: "u10", access: "USER", accessSource: "GROUP_MAPPING" })
-      .mockResolvedValueOnce({ id: "u11", access: "USER", accessSource: "GROUP_MAPPING" });
+      .mockResolvedValueOnce({
+        id: "u10",
+        access: "USER",
+        accessSource: "GROUP_MAPPING",
+      })
+      .mockResolvedValueOnce({
+        id: "u11",
+        access: "USER",
+        accessSource: "GROUP_MAPPING",
+      });
     tx.groupAssignment.findMany
       .mockResolvedValueOnce([]) // u10 has no remaining mapped groups
       .mockResolvedValueOnce([]); // u11 has no remaining mapped groups
@@ -1050,13 +1058,22 @@ describe("deleteScimGroup", () => {
 
     // recomputeUserAccess must have written NONE for both ex-members
     expect(tx.user.update).toHaveBeenCalledTimes(2);
-    const updateIds = (tx.user.update.mock.calls as Array<[{ where: { id: string } }]>)
+    const updateIds = (
+      tx.user.update.mock.calls as Array<[{ where: { id: string } }]>
+    )
       .map(([args]) => args.where.id)
       .sort();
     expect(updateIds).toEqual(["u10", "u11"]);
 
     // Each recompute write must carry GROUP_MAPPING as the source
-    for (const [args] of tx.user.update.mock.calls as Array<[{ where: { id: string }; data: { access: string; accessSource: string } }]>) {
+    for (const [args] of tx.user.update.mock.calls as Array<
+      [
+        {
+          where: { id: string };
+          data: { access: string; accessSource: string };
+        },
+      ]
+    >) {
       expect(args.data.accessSource).toBe("GROUP_MAPPING");
     }
   });
@@ -1148,7 +1165,10 @@ describe("J — inline recompute wiring assertions", () => {
     expect(tx.user.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: "u1" },
-        data: expect.objectContaining({ access: "USER", accessSource: "GROUP_MAPPING" }),
+        data: expect.objectContaining({
+          access: "USER",
+          accessSource: "GROUP_MAPPING",
+        }),
       })
     );
     // scimGroupId must have been stamped on the audit frame
@@ -1175,9 +1195,7 @@ describe("J — inline recompute wiring assertions", () => {
 
     const body = {
       schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
-      Operations: [
-        { op: "remove", path: 'members[value eq "u1"]' },
-      ],
+      Operations: [{ op: "remove", path: 'members[value eq "u1"]' }],
     };
 
     await patchScimGroup("201", body as never, CTX);
@@ -1185,7 +1203,10 @@ describe("J — inline recompute wiring assertions", () => {
     expect(tx.user.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: "u1" },
-        data: expect.objectContaining({ access: "NONE", accessSource: "GROUP_MAPPING" }),
+        data: expect.objectContaining({
+          access: "NONE",
+          accessSource: "GROUP_MAPPING",
+        }),
       })
     );
     expect(updateAuditContext).toHaveBeenCalledWith(
@@ -1239,8 +1260,16 @@ describe("J — inline recompute wiring assertions", () => {
     // recompute for u3 (added): no groups yet → fallback NONE, already NONE → no-op
     // recompute for u1 (removed): no groups → fallback NONE, was USER → write NONE
     tx.user.findUnique
-      .mockResolvedValueOnce({ id: "u3", access: "NONE", accessSource: "GROUP_MAPPING" })
-      .mockResolvedValueOnce({ id: "u1", access: "USER", accessSource: "GROUP_MAPPING" });
+      .mockResolvedValueOnce({
+        id: "u3",
+        access: "NONE",
+        accessSource: "GROUP_MAPPING",
+      })
+      .mockResolvedValueOnce({
+        id: "u1",
+        access: "USER",
+        accessSource: "GROUP_MAPPING",
+      });
     tx.groupAssignment.findMany
       .mockResolvedValueOnce([]) // u3 has no mapped groups
       .mockResolvedValueOnce([]); // u1 has no mapped groups after removal

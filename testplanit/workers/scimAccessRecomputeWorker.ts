@@ -1,8 +1,6 @@
 import { Job, Worker } from "bullmq";
 
-import {
-  runWithAuditContext,
-} from "../lib/auditContext";
+import { runWithAuditContext } from "../lib/auditContext";
 import {
   disconnectAllTenantClients,
   isMultiTenantMode,
@@ -45,7 +43,9 @@ export const processor = async (
 
   console.log(
     `Processing scim-access-recompute job ${job.id}` +
-      (groupId != null ? ` for group ${groupId}` : " (fallback-default sweep)") +
+      (groupId != null
+        ? ` for group ${groupId}`
+        : " (fallback-default sweep)") +
       ` triggered by admin ${adminUserId}`
   );
 
@@ -117,10 +117,7 @@ export function startScimAccessRecomputeWorker() {
     console.log(`SCIM access recompute job ${job.id} completed`)
   );
   worker.on("failed", (job, err) =>
-    console.error(
-      `SCIM access recompute job ${job?.id} failed:`,
-      err.message
-    )
+    console.error(`SCIM access recompute job ${job?.id} failed:`, err.message)
   );
   worker.on("error", (err) => {
     console.error("SCIM access recompute worker error:", err);

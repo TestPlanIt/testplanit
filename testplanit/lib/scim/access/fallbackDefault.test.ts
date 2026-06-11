@@ -1,15 +1,16 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   SCIM_DEFAULT_MAPPED_ACCESS_KEY,
   readScimFallbackDefault,
 } from "./fallbackDefault";
 
-const makeClient = (findUniqueResult: unknown) => ({
-  appConfig: {
-    findUnique: vi.fn().mockResolvedValue(findUniqueResult),
-  },
-});
+const makeClient = (findUniqueResult: unknown) =>
+  ({
+    appConfig: {
+      findUnique: vi.fn().mockResolvedValue(findUniqueResult),
+    },
+  }) as unknown as Parameters<typeof readScimFallbackDefault>[0];
 
 describe("SCIM_DEFAULT_MAPPED_ACCESS_KEY", () => {
   it("is the expected dot-namespaced key", () => {

@@ -83,7 +83,11 @@ describe("recomputeUserAccess", () => {
       makeGroupAssignment("USER"),
       makeGroupAssignment("ADMIN"),
     ]);
-    tx.user.update.mockResolvedValue({ ...user, access: "ADMIN", accessSource: "GROUP_MAPPING" });
+    tx.user.update.mockResolvedValue({
+      ...user,
+      access: "ADMIN",
+      accessSource: "GROUP_MAPPING",
+    });
 
     await recomputeUserAccess(tx as never, user.id, "NONE");
 
@@ -100,7 +104,11 @@ describe("recomputeUserAccess", () => {
     const user = makeUser({ access: "ADMIN", accessSource: "GROUP_MAPPING" });
     tx.user.findUnique.mockResolvedValue(user);
     tx.groupAssignment.findMany.mockResolvedValue([]);
-    tx.user.update.mockResolvedValue({ ...user, access: "NONE", accessSource: "GROUP_MAPPING" });
+    tx.user.update.mockResolvedValue({
+      ...user,
+      access: "NONE",
+      accessSource: "GROUP_MAPPING",
+    });
 
     await recomputeUserAccess(tx as never, user.id, "NONE");
 
@@ -143,7 +151,11 @@ describe("recomputeUserAccess", () => {
     tx.groupAssignment.findMany.mockResolvedValue([
       makeGroupAssignment("USER"),
     ]);
-    tx.user.update.mockResolvedValue({ ...user, access: "USER", accessSource: "GROUP_MAPPING" });
+    tx.user.update.mockResolvedValue({
+      ...user,
+      access: "USER",
+      accessSource: "GROUP_MAPPING",
+    });
 
     // Clear mocks so we can distinguish recomputeUserAccess's own calls
     // from any caller-side stamping.
@@ -153,7 +165,11 @@ describe("recomputeUserAccess", () => {
     tx.groupAssignment.findMany.mockResolvedValue([
       makeGroupAssignment("USER"),
     ]);
-    tx.user.update.mockResolvedValue({ ...user, access: "USER", accessSource: "GROUP_MAPPING" });
+    tx.user.update.mockResolvedValue({
+      ...user,
+      access: "USER",
+      accessSource: "GROUP_MAPPING",
+    });
 
     await recomputeUserAccess(tx as never, user.id, "NONE");
 
@@ -175,7 +191,11 @@ describe("recomputeUserAccess", () => {
       makeGroupAssignment("USER"),
       makeGroupAssignment("ADMIN"),
     ]);
-    tx.user.update.mockResolvedValue({ ...user, access: "ADMIN", accessSource: "GROUP_MAPPING" });
+    tx.user.update.mockResolvedValue({
+      ...user,
+      access: "ADMIN",
+      accessSource: "GROUP_MAPPING",
+    });
 
     await recomputeUserAccess(tx as never, user.id, "NONE");
 
