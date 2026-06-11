@@ -89,6 +89,7 @@ model User {
     scimGivenName                   String?                       @deny('update', scimGivenName != null)
     scimFamilyName                  String?                       @deny('update', scimGivenName != null)
     access                          Access                        @default(NONE)
+    accessSource                    AccessSource                  @default(MANUAL)
     roleId                          Int
     role                            Roles                         @relation(fields: [roleId], references: [id])
     isActive                        Boolean                       @default(true) @deny('update', scimGivenName != null)
@@ -161,6 +162,7 @@ model User {
 
     @@index([isActive, isDeleted])
     @@index([access])
+    @@index([accessSource])
     @@deny('delete, update, read', !auth())
     @@allow('create', true)
     @@allow('create, delete', (auth().access == 'ADMIN'))
@@ -362,6 +364,15 @@ enum Access {
     @@allow('read', auth().access != null)
 }
 
+enum AccessSource {
+    MANUAL
+    GROUP_MAPPING
+
+    @@deny('all', !auth())
+    @@allow('update', auth().access == 'ADMIN')
+    @@allow('read', auth().access != null)
+}
+
 enum NotificationMode {
     NONE
     IN_APP
@@ -407,6 +418,7 @@ model Groups {
     updatedAt          DateTime?                @updatedAt
     scimDisplayName    String?
     scimExtensions     Json?
+    mappedAccess       Access?
     assignedUsers      GroupAssignment[]
     projectPermissions GroupProjectPermission[]
 

@@ -187,6 +187,10 @@ const metadata: ModelMeta = {
                     name: "access",
                     type: "Access",
                     attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
+                }, accessSource: {
+                    name: "accessSource",
+                    type: "AccessSource",
+                    attributes: [{ "name": "@default", "args": [{ "name": "value" }] }],
                 }, roleId: {
                     name: "roleId",
                     type: "Int",
@@ -881,6 +885,10 @@ const metadata: ModelMeta = {
                 }, scimExtensions: {
                     name: "scimExtensions",
                     type: "Json",
+                    isOptional: true,
+                }, mappedAccess: {
+                    name: "mappedAccess",
+                    type: "Access",
                     isOptional: true,
                 }, assignedUsers: {
                     name: "assignedUsers",
