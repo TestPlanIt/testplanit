@@ -8,6 +8,7 @@ import { ExpandedState, VisibilityState } from "@tanstack/react-table";
 import { AlertCircle, BarChart3, ExternalLink, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useReportCsvExport } from "~/hooks/useReportCsvExport";
 import { Link } from "~/lib/navigation";
 
 interface StaticReportViewerProps {
@@ -96,6 +97,20 @@ export function StaticReportViewer({
         prev?.column === columnId && prev.direction === "asc" ? "desc" : "asc",
     }));
   }, []);
+
+  // CSV export — the shared payload holds the full result set in memory.
+  const { isExporting: isExportingCsv, exportCsv } = useReportCsvExport();
+  const handleExportCsv = useCallback(() => {
+    void exportCsv({
+      reportType: config?.reportType ?? "report",
+      isCrossProject: config?.mode === "cross-project",
+      getRows: () => reportData?.results ?? [],
+      dimensions: reportData?.dimensions ?? [],
+      metrics: reportData?.metrics ?? [],
+      projects: reportData?.projects ?? [],
+      projectId: shareData?.projectId,
+    });
+  }, [exportCsv, config, reportData, shareData]);
 
   const fetchReportData = useCallback(async () => {
     if (shareData.entityType !== "REPORT") {
@@ -267,6 +282,8 @@ export function StaticReportViewer({
           }
           hasMore={false}
           isLoading={false}
+          onExportCsv={handleExportCsv}
+          isExportingCsv={isExportingCsv}
           sortConfig={sortConfig}
           onSortChange={handleSortChange}
           columnVisibility={columnVisibility}

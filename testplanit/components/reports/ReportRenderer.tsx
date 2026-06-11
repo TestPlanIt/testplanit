@@ -5,6 +5,7 @@ import { ReportChart } from "@/components/dataVisualizations/ReportChart";
 import { DateFormatter } from "@/components/DateFormatter";
 import { MatrixReportPreset } from "@/components/matrix/MatrixReportPreset";
 import { VirtualizedReportTable } from "@/components/reports/VirtualizedReportTable";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -23,6 +24,7 @@ import {
   OnChangeFn,
   VisibilityState,
 } from "@tanstack/react-table";
+import { Download } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
@@ -114,6 +116,10 @@ interface ReportRendererProps {
   loadMoreError?: boolean;
   onRetryLoadMore?: () => void;
 
+  // CSV export (rendered in the results header when provided)
+  onExportCsv?: () => void;
+  isExportingCsv?: boolean;
+
   // Sorting
   sortConfig?: { column: string; direction: "asc" | "desc" } | null;
   onSortChange: (columnId: string) => void;
@@ -165,6 +171,8 @@ export function ReportRenderer({
   onLoadMore,
   loadMoreError = false,
   onRetryLoadMore,
+  onExportCsv,
+  isExportingCsv = false,
   sortConfig,
   onSortChange,
   columnVisibility,
@@ -483,14 +491,31 @@ export function ReportRenderer({
       >
         <Card className="h-full rounded-none border-0 overflow-hidden">
           <CardHeader className="pt-2 pb-2">
-            <div className="flex flex-row items-end justify-between">
+            <div className="flex flex-row items-end justify-between gap-4">
               <CardTitle>{tCommon("results")}</CardTitle>
-              {totalCount > 0 && (
-                <div className="text-sm text-muted-foreground">
-                  {tCommon("pagination.showing")} {loadedCount} {tCommon("of")}{" "}
-                  {totalCount} {tCommon("results")}
-                </div>
-              )}
+              <div className="flex items-center gap-3">
+                {totalCount > 0 && (
+                  <div
+                    className="text-sm text-muted-foreground"
+                    data-testid="report-results-summary"
+                  >
+                    {tCommon("pagination.showing")} {loadedCount}{" "}
+                    {tCommon("of")} {totalCount} {tCommon("results")}
+                  </div>
+                )}
+                {onExportCsv && totalCount > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onExportCsv}
+                    disabled={isExportingCsv}
+                    data-testid="report-export-csv-button"
+                  >
+                    <Download className="h-4 w-4" />
+                    {tReports("exportCsv")}
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent className="h-[calc(100%-4rem)] p-6 pt-0">

@@ -72,6 +72,7 @@ import { useExecutionLogColumns } from "~/hooks/useExecutionLogColumns";
 import { useFlakyTestsColumns } from "~/hooks/useFlakyTestsColumns";
 import { useIssueTestCoverageSummaryColumns } from "~/hooks/useIssueTestCoverageColumns";
 import { useReportColumns } from "~/hooks/useReportColumns";
+import { useReportCsvExport } from "~/hooks/useReportCsvExport";
 import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
 import {
   getCrossProjectReportTypes,
@@ -1646,6 +1647,70 @@ function ReportBuilderContent({
     lastUsedMetrics,
   ]);
 
+  // CSV export. Full-set reports serialize the in-memory `allResults`;
+  // execution-log (truly server-paged) fetches every page first so the export
+  // is complete.
+  const { isExporting: isExportingCsv, exportCsv } = useReportCsvExport();
+  const handleExportCsv = useCallback(() => {
+    const getRows = async (): Promise<any[]> => {
+      if (!isExecutionLog) return allResults ?? results ?? [];
+      const all: any[] = [];
+      const seen = new Set<number | string>();
+      let page = 1;
+      // Loop the report endpoint until every row is fetched (no truncation).
+      while (currentReport?.endpoint) {
+        const response = await fetch(currentReport.endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...(lastRequestBody || {}),
+            page,
+            pageSize: EXECUTION_LOG_PAGE_SIZE,
+          }),
+        });
+        if (!response.ok) throw new Error("Failed to fetch report for export");
+        const data = await response.json();
+        const batch: any[] = data.data || data.results || [];
+        for (const r of batch) {
+          if (!seen.has(r.id)) {
+            seen.add(r.id);
+            all.push(r);
+          }
+        }
+        const total = data.total ?? all.length;
+        if (batch.length < EXECUTION_LOG_PAGE_SIZE || all.length >= total)
+          break;
+        page += 1;
+      }
+      return all;
+    };
+
+    void exportCsv({
+      reportType,
+      isCrossProject: mode === "cross-project",
+      getRows,
+      dimensions: lastUsedDimensions,
+      metrics: lastUsedMetrics,
+      projects: automationTrendsProjects,
+      consecutiveRuns: lastUsedConsecutiveRuns,
+      projectId: mode === "project" ? projectId : undefined,
+    });
+  }, [
+    exportCsv,
+    isExecutionLog,
+    allResults,
+    results,
+    currentReport,
+    lastRequestBody,
+    reportType,
+    mode,
+    lastUsedDimensions,
+    lastUsedMetrics,
+    automationTrendsProjects,
+    lastUsedConsecutiveRuns,
+    projectId,
+  ]);
+
   // Auto-run report if we have stored selections
   useEffect(() => {
     // Check if we need to run report for current reportType
@@ -2918,6 +2983,8 @@ function ReportBuilderContent({
             hasMore={hasMore}
             isLoading={loadingMore}
             onLoadMore={handleLoadMore}
+            onExportCsv={handleExportCsv}
+            isExportingCsv={isExportingCsv}
             sortConfig={sortConfig}
             onSortChange={(columnId: string) => {
               setSortConfig((prev) => ({

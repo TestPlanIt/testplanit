@@ -262,11 +262,9 @@ describe("ReportRenderer", () => {
         reportType="repository-stats"
       />
     );
-    expect(
-      screen.getByText(
-        (_content, el) => el?.textContent === "showing 2 of 50 results"
-      )
-    ).toBeInTheDocument();
+    expect(screen.getByTestId("report-results-summary").textContent).toBe(
+      "showing 2 of 50 results"
+    );
   });
 
   it("forwards the infinite-scroll wiring to the virtualized table", () => {
