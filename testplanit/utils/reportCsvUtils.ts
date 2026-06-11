@@ -289,10 +289,13 @@ function buildCustom(p: BuildReportCsvParams): CsvRow[] {
         value = `${num.toFixed(1)}%`;
       } else if (isTimeMetric(metric)) {
         // Custom-report elapsed metrics (avg/total) are in milliseconds, matching
-        // the on-screen leaf cell (`isSeconds: false`).
+        // the on-screen leaf cell (`isSeconds: false`). Empty value → blank cell
+        // (the screen's "-" placeholder would get a leading apostrophe from
+        // papaparse's formula-injection escaping, and blank is the right CSV
+        // representation of "no data" anyway).
         value =
           num === 0
-            ? "-"
+            ? ""
             : toHumanReadable(num, {
                 isSeconds: false,
                 locale,

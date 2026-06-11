@@ -210,6 +210,21 @@ describe("buildReportCsvRows", () => {
     expect(row["Avg. Elapsed Time"]).toBe("1 minute");
   });
 
+  it("custom report: zero-duration metric is a blank cell, not a hyphen", () => {
+    const [row] = buildReportCsvRows({
+      ...base,
+      reportType: "test-execution",
+      rows: [{ "Avg. Elapsed Time": 0, "Total Elapsed Time": 0 }],
+      metrics: [
+        { value: "avgElapsedTime", label: "Avg. Elapsed Time" },
+        { value: "totalElapsedTime", label: "Total Elapsed Time" },
+      ],
+    });
+    // A "-" here would get a leading apostrophe from papaparse escapeFormulae.
+    expect(row["Avg. Elapsed Time"]).toBe("");
+    expect(row["Total Elapsed Time"]).toBe("");
+  });
+
   it("custom report: null dimension object yields empty string", () => {
     const [row] = buildReportCsvRows({
       ...base,
