@@ -1,6 +1,6 @@
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, render } from "~/test/test-utils";
+import { act, render, screen } from "~/test/test-utils";
 import {
   useVirtualizedInfiniteList,
   type UseVirtualizedInfiniteListOptions,
@@ -173,6 +173,37 @@ describe("useVirtualizedInfiniteList", () => {
     rerender(<LateHarness show={true} onLoadMore={onLoadMore} />);
     expect(observers.length).toBe(1);
 
+    fireAll(true);
+    expect(onLoadMore).toHaveBeenCalledTimes(1);
+  });
+
+  it("wires the observer in CSS-bound mode (boundToViewport=false) without a viewport height", () => {
+    // The container is sized by its own layout (here a fixed height), so the
+    // hook must not depend on the viewport-bottom maxHeight to wire the
+    // sentinel — used by the reports panel.
+    function CssBoundHarness({ onLoadMore }: { onLoadMore: () => void }) {
+      const { scrollRef, sentinelRef, maxHeight } = useVirtualizedInfiniteList({
+        count: 5,
+        hasMore: true,
+        isLoading: false,
+        onLoadMore,
+        estimateSize: 40,
+        boundToViewport: false,
+      });
+      return (
+        <div ref={scrollRef} data-testid="scroll" style={{ height: "100%" }}>
+          <span data-testid="max-height">{String(maxHeight)}</span>
+          <div ref={sentinelRef} data-testid="sentinel" />
+        </div>
+      );
+    }
+
+    const onLoadMore = vi.fn();
+    render(<CssBoundHarness onLoadMore={onLoadMore} />);
+    // No viewport-derived height is computed in this mode.
+    expect(screen.getByTestId("max-height").textContent).toBe("null");
+    // ...but the sentinel is still observed and can trigger a load.
+    expect(observers.length).toBe(1);
     fireAll(true);
     expect(onLoadMore).toHaveBeenCalledTimes(1);
   });

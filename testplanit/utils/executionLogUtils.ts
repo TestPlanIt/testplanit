@@ -99,7 +99,14 @@ export async function handleExecutionLogPOST(
       testCaseName: { testRunCase: { repositoryCase: { name: dir } } },
       project: { testRun: { project: { name: dir } } },
     };
-    const orderBy: any = orderByMap[sortColumn] ?? { executedAt: dir };
+    // A stable secondary key (id) makes skip/take pagination deterministic.
+    // Without it, ties on the primary key (e.g. many executions sharing an
+    // executedAt) let rows shift between pages, so the infinite-scroll loader
+    // sees overlaps/gaps and never reaches the true total.
+    const orderBy: any = [
+      orderByMap[sortColumn] ?? { executedAt: dir },
+      { id: dir },
+    ];
 
     const [rawResults, total, rawStatusBreakdown] = await Promise.all([
       prisma.testRunResults.findMany({

@@ -56,21 +56,26 @@ vi.mock("~/hooks/useExecutionLogColumns", () => ({
   useExecutionLogColumns: () => mockExecutionLogColumns,
 }));
 
-// Mock DataTable to render data rows for inspection
-vi.mock("~/components/tables/DataTable", () => ({
-  DataTable: ({ data, columns }: { data: any[]; columns: any[] }) => (
-    <div data-testid="data-table">
-      {data.map((row, i) => (
-        <div key={i} data-testid="data-table-row">
-          {columns.map((col: any) => (
-            <span key={col.id || col.accessorKey}>
-              {row[col.accessorKey] ?? ""}
-            </span>
-          ))}
-        </div>
-      ))}
-    </div>
-  ),
+// Mock VirtualizedReportTable to render data rows for inspection and capture
+// the props ReportRenderer forwards (incl. the infinite-scroll wiring).
+const tableMock = vi.hoisted(() => ({ lastProps: null as any }));
+vi.mock("~/components/reports/VirtualizedReportTable", () => ({
+  VirtualizedReportTable: (props: any) => {
+    tableMock.lastProps = props;
+    return (
+      <div data-testid="data-table">
+        {props.data.map((row: any, i: number) => (
+          <div key={i} data-testid="data-table-row">
+            {props.columns.map((col: any) => (
+              <span key={col.id || col.accessorKey}>
+                {row[col.accessorKey] ?? ""}
+              </span>
+            ))}
+          </div>
+        ))}
+      </div>
+    );
+  },
 }));
 
 // Mock ReportChart to avoid D3 complexity
@@ -78,16 +83,6 @@ vi.mock("@/components/dataVisualizations/ReportChart", () => ({
   ReportChart: ({ results }: { results: any[] }) => (
     <div data-testid="report-chart">chart-data-length:{results.length}</div>
   ),
-}));
-
-// Mock PaginationComponent
-vi.mock("~/components/tables/Pagination", () => ({
-  PaginationComponent: () => <div data-testid="pagination" />,
-}));
-
-// Mock PaginationControls
-vi.mock("~/components/tables/PaginationControls", () => ({
-  PaginationInfo: () => <div data-testid="pagination-info" />,
 }));
 
 // Mock DateFormatter
@@ -106,21 +101,16 @@ vi.mock("@/components/ui/resizable", () => ({
   ResizableHandle: () => <div data-testid="resizable-handle" />,
 }));
 
-// Mock PaginationContext
-vi.mock("~/lib/contexts/PaginationContext", () => ({
-  defaultPageSizeOptions: [10, 25, 50, 100, "All"],
-}));
-
 import { ReportRenderer } from "./ReportRenderer";
 
 const defaultProps = {
   results: [],
   reportType: "repository-stats",
-  currentPage: 1,
-  pageSize: 10 as number | "All",
+  loadedCount: 0,
   totalCount: 0,
-  onPageChange: vi.fn(),
-  onPageSizeChange: vi.fn(),
+  hasMore: false,
+  isLoading: false,
+  onLoadMore: vi.fn(),
   onSortChange: vi.fn(),
   columnVisibility: {},
   onColumnVisibilityChange: vi.fn(),
@@ -243,5 +233,60 @@ describe("ReportRenderer", () => {
       />
     );
     expect(screen.getByText("Summary text")).toBeInTheDocument();
+  });
+
+  it("renders every row it is given (no pagination slicing)", () => {
+    const many = Array.from({ length: 120 }, (_, i) => ({
+      name: `Test ${i + 1}`,
+      value: String(i),
+    }));
+    render(
+      <ReportRenderer
+        {...defaultProps}
+        results={many}
+        loadedCount={120}
+        totalCount={120}
+        reportType="repository-stats"
+      />
+    );
+    expect(screen.getAllByTestId("data-table-row")).toHaveLength(120);
+  });
+
+  it("shows a 'Showing X of Y' summary instead of pagination controls", () => {
+    render(
+      <ReportRenderer
+        {...defaultProps}
+        results={sampleResults}
+        loadedCount={2}
+        totalCount={50}
+        reportType="repository-stats"
+      />
+    );
+    expect(
+      screen.getByText(
+        (_content, el) => el?.textContent === "showing 2 of 50 results"
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("forwards the infinite-scroll wiring to the virtualized table", () => {
+    const onLoadMore = vi.fn();
+    render(
+      <ReportRenderer
+        {...defaultProps}
+        results={sampleResults}
+        loadedCount={2}
+        totalCount={100}
+        hasMore={true}
+        isLoading={true}
+        onLoadMore={onLoadMore}
+        reportType="cross-project-execution-log"
+      />
+    );
+    expect(tableMock.lastProps.hasMore).toBe(true);
+    expect(tableMock.lastProps.isLoading).toBe(true);
+    expect(tableMock.lastProps.onLoadMore).toBe(onLoadMore);
+    // Execution-log wires sub-rows (steps) for expansion.
+    expect(typeof tableMock.lastProps.getSubRows).toBe("function");
   });
 });
