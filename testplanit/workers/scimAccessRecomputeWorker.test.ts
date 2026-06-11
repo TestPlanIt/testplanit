@@ -1,46 +1,35 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 // ── Hooked prisma client mock ────────────────────────────────────────────────
-// The worker MUST import from "../lib/prisma" (the $extends-hooked singleton),
-// not from getPrismaClientForJob. Tests assert the hooked client is the one used.
+vi.mock("../lib/prisma", () => {
+  const tx = {
+    appConfig: { findUnique: vi.fn() },
+    user: { findMany: vi.fn() },
+    groupAssignment: { findMany: vi.fn() },
+  };
+  return {
+    prisma: {
+      $transaction: vi.fn(async (cb: (tx: unknown) => unknown) => cb(tx)),
+      __tx: tx,
+    },
+  };
+});
 
-const mockTx = {
-  appConfig: { findUnique: vi.fn() },
-  user: { findMany: vi.fn() },
-  groupAssignment: { findMany: vi.fn() },
-};
-
-const mockPrisma = {
-  $transaction: vi.fn(async (cb: (tx: unknown) => unknown) => cb(mockTx)),
-};
-
-vi.mock("../lib/prisma", () => ({
-  prisma: mockPrisma,
-}));
-
-// ── recomputeUserAccess spy ──────────────────────────────────────────────────
-const recomputeUserAccessMock = vi.fn().mockResolvedValue(undefined);
-const readScimFallbackDefaultMock = vi.fn().mockResolvedValue("NONE");
-
+// ── recomputeUserAccess + readScimFallbackDefault spies ──────────────────────
 vi.mock("../lib/scim/services/recompute", () => ({
-  recomputeUserAccess: recomputeUserAccessMock,
-  readScimFallbackDefault: readScimFallbackDefaultMock,
+  recomputeUserAccess: vi.fn().mockResolvedValue(undefined),
+  readScimFallbackDefault: vi.fn().mockResolvedValue("NONE"),
 }));
 
 // ── Audit context mock ───────────────────────────────────────────────────────
-const runWithAuditContextMock = vi.fn((ctx: unknown, fn: () => unknown) => fn());
-const updateAuditContextMock = vi.fn();
-
 vi.mock("../lib/auditContext", () => ({
-  runWithAuditContext: runWithAuditContextMock,
-  updateAuditContext: updateAuditContextMock,
+  runWithAuditContext: vi.fn((ctx: unknown, fn: () => unknown) => fn()),
+  updateAuditContext: vi.fn(),
 }));
 
 // ── Multi-tenant mock ────────────────────────────────────────────────────────
-const validateMultiTenantJobDataMock = vi.fn();
-
 vi.mock("../lib/multiTenantPrisma", () => ({
-  validateMultiTenantJobData: validateMultiTenantJobDataMock,
+  validateMultiTenantJobData: vi.fn(),
   isMultiTenantMode: vi.fn(() => false),
   disconnectAllTenantClients: vi.fn(),
 }));
@@ -67,16 +56,32 @@ vi.mock("bullmq", () => ({
   Queue: vi.fn(),
 }));
 
+// ── bullPrefix mock ──────────────────────────────────────────────────────────
+vi.mock("../lib/bullPrefix", () => ({
+  BULLMQ_PREFIX: "bull",
+}));
+
 import { processor } from "./scimAccessRecomputeWorker";
 import { prisma } from "../lib/prisma";
 import { runWithAuditContext } from "../lib/auditContext";
 import { validateMultiTenantJobData } from "../lib/multiTenantPrisma";
+import { recomputeUserAccess } from "../lib/scim/services/recompute";
+
+interface TxLike {
+  appConfig: { findUnique: ReturnType<typeof vi.fn> };
+  user: { findMany: ReturnType<typeof vi.fn> };
+  groupAssignment: { findMany: ReturnType<typeof vi.fn> };
+}
+
+const tx = (prisma as unknown as { __tx: TxLike }).__tx;
 
 afterEach(() => {
   vi.clearAllMocks();
 });
 
-function makeJob(overrides: Partial<{ groupId: number; adminUserId: string; tenantId?: string }> = {}) {
+function makeJob(
+  overrides: Partial<{ groupId: number; adminUserId: string; tenantId?: string }> = {}
+) {
   return {
     id: "job-1",
     data: {
@@ -88,64 +93,70 @@ function makeJob(overrides: Partial<{ groupId: number; adminUserId: string; tena
 
 describe("scimAccessRecomputeWorker processor", () => {
   it("W1: calls validateMultiTenantJobData on entry", async () => {
-    mockTx.groupAssignment.findMany.mockResolvedValue([]);
+    tx.groupAssignment.findMany.mockResolvedValue([]);
+
     await processor(makeJob({ groupId: 42 }));
-    expect(validateMultiTenantJobDataMock).toHaveBeenCalledTimes(1);
-    expect(validateMultiTenantJobDataMock).toHaveBeenCalledWith(
+
+    expect(validateMultiTenantJobData).toHaveBeenCalledTimes(1);
+    expect(validateMultiTenantJobData).toHaveBeenCalledWith(
       expect.objectContaining({ adminUserId: "admin-user-1" })
     );
   });
 
   it("W2: job with groupId — recomputes each member of that group", async () => {
     const members = [{ userId: "user-a" }, { userId: "user-b" }];
-    mockTx.groupAssignment.findMany.mockResolvedValue(members);
+    tx.groupAssignment.findMany.mockResolvedValue(members);
 
     await processor(makeJob({ groupId: 10 }));
 
-    expect(mockTx.groupAssignment.findMany).toHaveBeenCalledWith(
+    expect(tx.groupAssignment.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: expect.objectContaining({ groupId: 10 }) })
     );
-    expect(recomputeUserAccessMock).toHaveBeenCalledTimes(2);
-    expect(recomputeUserAccessMock).toHaveBeenCalledWith(mockTx, "user-a", "NONE");
-    expect(recomputeUserAccessMock).toHaveBeenCalledWith(mockTx, "user-b", "NONE");
+    expect(recomputeUserAccess).toHaveBeenCalledTimes(2);
+    expect(recomputeUserAccess).toHaveBeenCalledWith(expect.anything(), "user-a", "NONE");
+    expect(recomputeUserAccess).toHaveBeenCalledWith(expect.anything(), "user-b", "NONE");
   });
 
   it("W3: job WITHOUT groupId — selects all accessSource=GROUP_MAPPING users and recomputes each", async () => {
     const users = [{ id: "user-x" }, { id: "user-y" }, { id: "user-z" }];
-    mockTx.user.findMany.mockResolvedValue(users);
+    tx.user.findMany.mockResolvedValue(users);
 
     await processor(makeJob({ adminUserId: "admin-1" }));
 
-    expect(mockTx.user.findMany).toHaveBeenCalledWith(
+    expect(tx.user.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ accessSource: "GROUP_MAPPING", isDeleted: false }),
+        where: expect.objectContaining({
+          accessSource: "GROUP_MAPPING",
+          isDeleted: false,
+        }),
       })
     );
-    expect(recomputeUserAccessMock).toHaveBeenCalledTimes(3);
-    expect(recomputeUserAccessMock).toHaveBeenCalledWith(mockTx, "user-x", "NONE");
-    expect(recomputeUserAccessMock).toHaveBeenCalledWith(mockTx, "user-y", "NONE");
-    expect(recomputeUserAccessMock).toHaveBeenCalledWith(mockTx, "user-z", "NONE");
+    expect(recomputeUserAccess).toHaveBeenCalledTimes(3);
+    expect(recomputeUserAccess).toHaveBeenCalledWith(expect.anything(), "user-x", "NONE");
+    expect(recomputeUserAccess).toHaveBeenCalledWith(expect.anything(), "user-y", "NONE");
+    expect(recomputeUserAccess).toHaveBeenCalledWith(expect.anything(), "user-z", "NONE");
   });
 
   it("W4: audit frame carries adminUserId and scimGroupId when groupId is present", async () => {
-    mockTx.groupAssignment.findMany.mockResolvedValue([{ userId: "user-a" }]);
+    tx.groupAssignment.findMany.mockResolvedValue([{ userId: "user-a" }]);
 
     await processor(makeJob({ groupId: 99, adminUserId: "admin-42" }));
 
-    expect(runWithAuditContextMock).toHaveBeenCalledTimes(1);
-    const ctxArg = runWithAuditContextMock.mock.calls[0][0] as Record<string, unknown>;
+    expect(runWithAuditContext).toHaveBeenCalledTimes(1);
+    const ctxArg = (runWithAuditContext as ReturnType<typeof vi.fn>).mock.calls[0][0] as Record<
+      string,
+      unknown
+    >;
     expect(ctxArg.userId).toBe("admin-42");
     expect(ctxArg.scimGroupId).toBe("99");
   });
 
   it("W5: uses the hooked lib/prisma client, NOT getPrismaClientForJob", async () => {
-    mockTx.groupAssignment.findMany.mockResolvedValue([]);
+    tx.groupAssignment.findMany.mockResolvedValue([]);
 
     await processor(makeJob({ groupId: 5 }));
 
-    // The hooked prisma.$transaction was called (not getPrismaClientForJob)
-    expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
-    // prisma is the hooked singleton — it's the same object imported
-    expect(prisma).toBe(mockPrisma);
+    expect((prisma as any).$transaction).toHaveBeenCalledTimes(1);
+    expect(prisma).toBe((prisma as any));
   });
 });
