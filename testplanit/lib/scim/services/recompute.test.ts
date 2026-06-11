@@ -137,7 +137,7 @@ describe("recomputeUserAccess", () => {
     expect(captureAuditEvent).not.toHaveBeenCalled();
   });
 
-  it("B5: actual flip — scimGroupId set on audit frame via updateAuditContext, no explicit captureAuditEvent for access flip", async () => {
+  it("B5: actual flip — recomputeUserAccess does not call updateAuditContext (caller's responsibility)", async () => {
     const user = makeUser({ access: "NONE", accessSource: "MANUAL" });
     tx.user.findUnique.mockResolvedValue(user);
     tx.groupAssignment.findMany.mockResolvedValue([
@@ -145,20 +145,27 @@ describe("recomputeUserAccess", () => {
     ]);
     tx.user.update.mockResolvedValue({ ...user, access: "USER", accessSource: "GROUP_MAPPING" });
 
-    // Caller stamps scimGroupId on the audit frame before calling recompute
-    updateAuditContext({ scimGroupId: "group-42" });
+    // Clear mocks so we can distinguish recomputeUserAccess's own calls
+    // from any caller-side stamping.
+    vi.clearAllMocks();
+    // Re-apply mock return values wiped by clearAllMocks.
+    tx.user.findUnique.mockResolvedValue(user);
+    tx.groupAssignment.findMany.mockResolvedValue([
+      makeGroupAssignment("USER"),
+    ]);
+    tx.user.update.mockResolvedValue({ ...user, access: "USER", accessSource: "GROUP_MAPPING" });
 
     await recomputeUserAccess(tx as never, user.id, "NONE");
 
-    // tx.user.update is called (triggers the generic hook)
+    // recomputeUserAccess must NOT call updateAuditContext — that is the caller's job
+    expect(updateAuditContext).not.toHaveBeenCalled();
+
+    // But it must call tx.user.update (the flip happened)
     expect(tx.user.update).toHaveBeenCalledTimes(1);
 
     // recomputeUserAccess must NOT itself call captureAuditEvent for the access flip
     // (the generic role-change hook in lib/prisma.ts is the single emitter)
     expect(captureAuditEvent).not.toHaveBeenCalled();
-
-    // The scimGroupId is on the audit frame (set by the caller above)
-    expect(updateAuditContext).toHaveBeenCalledWith({ scimGroupId: "group-42" });
   });
 
   it("B6: USER→ADMIN flip writes GROUP_MAPPING even when accessSource was already GROUP_MAPPING (idempotent on source)", async () => {
