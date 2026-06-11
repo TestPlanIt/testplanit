@@ -1074,6 +1074,155 @@ describe("I — error class re-exports", () => {
   });
 });
 
+describe("J — inline recompute wiring assertions", () => {
+  it("J1: patchScimGroup member-add recomputes access for added user (mapped group)", async () => {
+    const current = makeGroup({
+      id: 200,
+      assignedUsers: [],
+      // mappedAccess is on the group, not on PrismaGroupRow — recompute reads it via groupAssignment
+    });
+    tx.groups.findUnique.mockResolvedValue(current);
+    tx.user.findMany.mockResolvedValue([{ id: "u1" }]);
+    tx.groupAssignment.createMany.mockResolvedValue({ count: 1 });
+    // recomputeUserAccess internals: user is GROUP_MAPPING, has a mapped group tying to USER
+    tx.user.findUnique.mockResolvedValue({
+      id: "u1",
+      access: "NONE",
+      accessSource: "GROUP_MAPPING",
+    });
+    tx.groupAssignment.findMany.mockResolvedValue([
+      { group: { mappedAccess: "USER" } },
+    ]);
+    tx.user.update.mockResolvedValue({ id: "u1", access: "USER" });
+
+    const body = {
+      schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+      Operations: [{ op: "add", path: "members", value: [{ value: "u1" }] }],
+    };
+
+    await patchScimGroup("200", body as never, CTX);
+
+    // recomputeUserAccess must have written the new access
+    expect(tx.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "u1" },
+        data: expect.objectContaining({ access: "USER", accessSource: "GROUP_MAPPING" }),
+      })
+    );
+    // scimGroupId must have been stamped on the audit frame
+    expect(updateAuditContext).toHaveBeenCalledWith(
+      expect.objectContaining({ scimGroupId: "200" })
+    );
+  });
+
+  it("J2: patchScimGroup member-remove recomputes removed user (falls back to fallback default)", async () => {
+    const current = makeGroup({
+      id: 201,
+      assignedUsers: [{ user: { id: "u1", name: "Alice" } }],
+    });
+    tx.groups.findUnique.mockResolvedValue(current);
+    tx.groupAssignment.deleteMany.mockResolvedValue({ count: 1 });
+    // After removal, user has no mapped groups → recompute returns fallback default (NONE)
+    tx.user.findUnique.mockResolvedValue({
+      id: "u1",
+      access: "USER",
+      accessSource: "GROUP_MAPPING",
+    });
+    tx.groupAssignment.findMany.mockResolvedValue([]);
+    tx.user.update.mockResolvedValue({ id: "u1", access: "NONE" });
+
+    const body = {
+      schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+      Operations: [
+        { op: "remove", path: 'members[value eq "u1"]' },
+      ],
+    };
+
+    await patchScimGroup("201", body as never, CTX);
+
+    expect(tx.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "u1" },
+        data: expect.objectContaining({ access: "NONE", accessSource: "GROUP_MAPPING" }),
+      })
+    );
+    expect(updateAuditContext).toHaveBeenCalledWith(
+      expect.objectContaining({ scimGroupId: "201" })
+    );
+  });
+
+  it("J3: no-op — recompute returns same access → NO user.update, NO role-change audit row", async () => {
+    const current = makeGroup({
+      id: 202,
+      assignedUsers: [],
+    });
+    tx.groups.findUnique.mockResolvedValue(current);
+    tx.user.findMany.mockResolvedValue([{ id: "u1" }]);
+    tx.groupAssignment.createMany.mockResolvedValue({ count: 1 });
+    // recomputeUserAccess: computed == current → no-op (early return, no user.update)
+    tx.user.findUnique.mockResolvedValue({
+      id: "u1",
+      access: "USER",
+      accessSource: "GROUP_MAPPING",
+    });
+    tx.groupAssignment.findMany.mockResolvedValue([
+      { group: { mappedAccess: "USER" } },
+    ]);
+
+    const body = {
+      schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+      Operations: [{ op: "add", path: "members", value: [{ value: "u1" }] }],
+    };
+
+    await patchScimGroup("202", body as never, CTX);
+
+    // No-op: user already has USER access from mapped group → no write
+    expect(tx.user.update).not.toHaveBeenCalled();
+  });
+
+  it("J4: putScimGroup add and remove both trigger recompute", async () => {
+    const current = makeGroup({
+      id: 203,
+      assignedUsers: [
+        { user: { id: "u1", name: "Alice" } },
+        { user: { id: "u2", name: "Bob" } },
+      ],
+    });
+    tx.groups.findUnique.mockResolvedValue(current);
+    // PUT replaces members with [u2, u3] → add u3, remove u1
+    tx.user.findMany.mockResolvedValue([{ id: "u2" }, { id: "u3" }]);
+    tx.groupAssignment.createMany.mockResolvedValue({ count: 1 });
+    tx.groupAssignment.deleteMany.mockResolvedValue({ count: 1 });
+
+    // recompute for u3 (added): no groups yet → fallback NONE, already NONE → no-op
+    // recompute for u1 (removed): no groups → fallback NONE, was USER → write NONE
+    tx.user.findUnique
+      .mockResolvedValueOnce({ id: "u3", access: "NONE", accessSource: "GROUP_MAPPING" })
+      .mockResolvedValueOnce({ id: "u1", access: "USER", accessSource: "GROUP_MAPPING" });
+    tx.groupAssignment.findMany
+      .mockResolvedValueOnce([]) // u3 has no mapped groups
+      .mockResolvedValueOnce([]); // u1 has no mapped groups after removal
+    tx.user.update.mockResolvedValue({ id: "u1", access: "NONE" });
+
+    await putScimGroup(
+      "203",
+      makeBody({ members: [{ value: "u2" }, { value: "u3" }] }),
+      CTX
+    );
+
+    expect(updateAuditContext).toHaveBeenCalledWith(
+      expect.objectContaining({ scimGroupId: "203" })
+    );
+    // u1 (removed, was USER) should be written to NONE
+    expect(tx.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "u1" },
+        data: expect.objectContaining({ access: "NONE" }),
+      })
+    );
+  });
+});
+
 // Reference SYSTEM_PROJECT_ID to keep the import non-dead in case the
 // build pipeline tree-shakes unused identifiers from test fixtures.
 void SYSTEM_PROJECT_ID;
