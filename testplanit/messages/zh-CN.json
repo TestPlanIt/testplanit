@@ -6569,6 +6569,7 @@
       "addDimension": "添加维度……",
       "addMetric": "添加指标……",
       "runReport": "运行报告",
+      "exportCsv": "Export CSV",
       "noResultsFound": "未找到结果。",
       "selectAtLeastOneDimensionAndMetric": "至少选择一个维度和一个指标。",
       "noDataMatchingCriteria": "未找到与所选维度和指标匹配的数据。",

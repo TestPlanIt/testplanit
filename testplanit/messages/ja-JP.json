@@ -6569,6 +6569,7 @@
       "addDimension": "次元を追加...",
       "addMetric": "メトリックを追加...",
       "runReport": "レポートを実行",
+      "exportCsv": "CSVをエクスポート",
       "noResultsFound": "結果が見つかりませんでした。",
       "selectAtLeastOneDimensionAndMetric": "少なくとも 1 つのディメンションと 1 つの指標を選択してください。",
       "noDataMatchingCriteria": "選択したディメンションと指標に一致するデータが見つかりません。",

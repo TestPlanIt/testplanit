@@ -6569,6 +6569,7 @@
       "addDimension": "Adicionar dimensão...",
       "addMetric": "Adicionar métrica...",
       "runReport": "Executar relatório",
+      "exportCsv": "Export CSV",
       "noResultsFound": "Nenhum resultado encontrado.",
       "selectAtLeastOneDimensionAndMetric": "Selecione pelo menos uma dimensão e uma métrica.",
       "noDataMatchingCriteria": "Não foram encontrados dados que correspondam às dimensões e métricas selecionadas.",

@@ -6569,6 +6569,7 @@
       "addDimension": "Thêm chiều sâu...",
       "addMetric": "Thêm số liệu...",
       "runReport": "Chạy báo cáo",
+      "exportCsv": "Export CSV",
       "noResultsFound": "Không tìm thấy kết quả nào.",
       "selectAtLeastOneDimensionAndMetric": "Hãy chọn ít nhất một chiều và một chỉ số.",
       "noDataMatchingCriteria": "Không tìm thấy dữ liệu nào phù hợp với các chiều và chỉ số đã chọn.",

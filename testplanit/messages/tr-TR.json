@@ -6569,6 +6569,7 @@
       "addDimension": "Boyut ekle...",
       "addMetric": "Ölçüt ekle...",
       "runReport": "Çalıştırma Raporu",
+      "exportCsv": "CSV olarak dışa aktar",
       "noResultsFound": "Hiçbir sonuç bulunamadı.",
       "selectAtLeastOneDimensionAndMetric": "En az bir boyut ve bir ölçüt seçin.",
       "noDataMatchingCriteria": "Seçilen boyutlar ve ölçütlerle eşleşen veri bulunamadı.",

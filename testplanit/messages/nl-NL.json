@@ -6569,6 +6569,7 @@
       "addDimension": "Voeg dimensie toe...",
       "addMetric": "Metrisch toevoegen...",
       "runReport": "Rapport uitvoeren",
+      "exportCsv": "Export CSV",
       "noResultsFound": "Geen resultaten gevonden.",
       "selectAtLeastOneDimensionAndMetric": "Selecteer minimaal één dimensie en één metriek.",
       "noDataMatchingCriteria": "Er zijn geen gegevens gevonden die overeenkomen met de geselecteerde dimensies en statistieken.",
