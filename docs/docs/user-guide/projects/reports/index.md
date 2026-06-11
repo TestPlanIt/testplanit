@@ -27,6 +27,16 @@ Pre-built reports have fixed configurations and don't require dimension or metri
 
 The [Report Builder](./report-builder.md) lets you compose a report by picking a data source (Test Execution, Repository Stats, User Engagement, Project Health, Session Analysis, Issue Tracking), then choosing dimensions, metrics, and a chart type. The builder also supports interactive **drill-down** — click any metric cell to open a drawer showing the underlying records.
 
+## Exporting Results
+
+Tabular reports — every pre-built report except the [Iteration Matrix](./iteration-matrix.md) and [Automation Candidates](./automation-candidates.md) (which have their own dedicated views), plus any custom report — show an **Export CSV** button above the results table.
+
+- It exports the columns you see, with their displayed values (status and priority names, pass-rate percentages, durations, dates), for the **entire** result set — not just the rows currently scrolled into view.
+- The [Execution Log](./execution-log.md), which loads incrementally as you scroll, fetches all of its pages first so the file is complete.
+- Export is also available on read-only [Share Links](../../share-links.md) and works the same in [cross-project reports](../../cross-project-reports.md) (where it adds a Project column).
+
+This is separate from the drill-down **Export to CSV** in the [Report Builder](./report-builder.md#drill-down), which exports the underlying records behind a single metric cell rather than the report's summary rows.
+
 ## Sharing
 
 Any report — pre-built or custom — can be shared with team members, clients, and stakeholders using a Share Link. See [Share Links](../../share-links.md) for the three share modes (Public, Password-Protected, Authenticated), password rate limiting, view notifications, and access analytics.
