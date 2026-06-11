@@ -48,6 +48,15 @@ export interface AuditContext {
    */
   scimTokenId?: string;
   /**
+   * scimGroupId — id of the SCIM/admin group whose mapping or membership
+   * triggered an access recompute; stamped onto access-change audit rows so
+   * each flip names the triggering group.
+   * Set by the recompute caller before invoking recomputeUserAccess so the
+   * generic role-change hook picks it up from the ALS frame automatically.
+   * Undefined outside of SCIM group-mapping recompute flows.
+   */
+  scimGroupId?: string;
+  /**
    * Suppression hatch for backfill scripts and migrations that mutate domain
    * entities without producing outbound webhook events. webhookEvents.emit()
    * short-circuits when this flag is true. Audit emission is unaffected.
