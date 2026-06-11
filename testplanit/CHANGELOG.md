@@ -1,3 +1,9 @@
+## [0.37.7](https://github.com/TestPlanIt/testplanit/compare/v0.37.6...v0.37.7) (2026-06-11)
+
+### Enhancements
+
+* **db:** route startup schema sync to a direct connection for pgbouncer ([#422](https://github.com/TestPlanIt/testplanit/issues/422)) ([a672e8f](https://github.com/TestPlanIt/testplanit/commit/a672e8f43424236db2841e76569b64c51355b269))
+
 ## [0.37.6](https://github.com/TestPlanIt/testplanit/compare/v0.37.5...v0.37.6) (2026-06-11)
 
 ### Enhancements
