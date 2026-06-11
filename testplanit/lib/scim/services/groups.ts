@@ -45,6 +45,7 @@
  */
 
 import { Prisma } from "@prisma/client";
+import { updateAuditContext } from "~/lib/auditContext";
 import { prisma } from "~/lib/prisma";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import {
@@ -54,6 +55,10 @@ import {
   emitScimGroupMemberRemoved,
   emitScimGroupUpdated,
 } from "~/lib/webhooks/event-emitters/groupEvents";
+import {
+  readScimFallbackDefault,
+  recomputeUserAccess,
+} from "./recompute";
 
 import { SCIM_SYSTEM_USER_ID, SYSTEM_PROJECT_ID } from "../constants";
 import { scimFilterToPrismaGroupWhere } from "../filter";
@@ -333,6 +338,7 @@ async function insertNewScimGroup(
   ctx: ScimAuthContext
 ): Promise<CreateScimGroupResult> {
   const { applied, skipped } = await partitionMembers(tx, requestedMemberIds);
+  const fallbackDefault = await readScimFallbackDefault(tx);
 
   const created = (await tx.groups.create({
     data: {
@@ -353,6 +359,10 @@ async function insertNewScimGroup(
       data: applied.map((userId) => ({ userId, groupId: created.id })),
       skipDuplicates: true,
     });
+    updateAuditContext({ scimGroupId: String(created.id) });
+    for (const userId of applied) {
+      await recomputeUserAccess(tx, userId, fallbackDefault);
+    }
   }
 
   await emitScimGroupCreated(
@@ -386,6 +396,7 @@ async function resurrectTombstonedGroup(
   ctx: ScimAuthContext
 ): Promise<CreateScimGroupResult> {
   const { applied, skipped } = await partitionMembers(tx, requestedMemberIds);
+  const fallbackDefault = await readScimFallbackDefault(tx);
 
   const mergedExtensions = mergeUrnBuckets(
     existing.scimExtensions,
@@ -405,12 +416,22 @@ async function resurrectTombstonedGroup(
 
   // Resurrection clears prior member assignments and re-establishes the
   // requested set: the IdP-provided body is the new source of truth.
+  const previousMemberIds = (existing.assignedUsers ?? []).map(
+    (a) => a.user.id
+  );
   await tx.groupAssignment.deleteMany({ where: { groupId: existing.id } });
+  updateAuditContext({ scimGroupId: String(existing.id) });
+  for (const userId of previousMemberIds) {
+    await recomputeUserAccess(tx, userId, fallbackDefault);
+  }
   if (applied.length > 0) {
     await tx.groupAssignment.createMany({
       data: applied.map((userId) => ({ userId, groupId: existing.id })),
       skipDuplicates: true,
     });
+    for (const userId of applied) {
+      await recomputeUserAccess(tx, userId, fallbackDefault);
+    }
   }
 
   await emitScimGroupCreated(
@@ -448,6 +469,7 @@ async function jitBindExistingGroup(
   ctx: ScimAuthContext
 ): Promise<CreateScimGroupResult> {
   const { applied, skipped } = await partitionMembers(tx, requestedMemberIds);
+  const fallbackDefault = await readScimFallbackDefault(tx);
 
   const mergedExtensions = mergeUrnBuckets(
     existing.scimExtensions,
@@ -471,16 +493,23 @@ async function jitBindExistingGroup(
   const toAdd = applied.filter((id) => !currentMemberIds.includes(id));
   const toRemove = currentMemberIds.filter((id) => !applied.includes(id));
 
+  updateAuditContext({ scimGroupId: String(existing.id) });
   if (toAdd.length > 0) {
     await tx.groupAssignment.createMany({
       data: toAdd.map((userId) => ({ userId, groupId: existing.id })),
       skipDuplicates: true,
     });
+    for (const userId of toAdd) {
+      await recomputeUserAccess(tx, userId, fallbackDefault);
+    }
   }
   if (toRemove.length > 0) {
     await tx.groupAssignment.deleteMany({
       where: { groupId: existing.id, userId: { in: toRemove } },
     });
+    for (const userId of toRemove) {
+      await recomputeUserAccess(tx, userId, fallbackDefault);
+    }
   }
 
   await emitScimGroupUpdated(before, snapshot(linked), tx, DEFAULT_EMIT_OPTS);
@@ -635,6 +664,7 @@ export async function putScimGroup(
     }
 
     const before = snapshot(current);
+    const fallbackDefault = await readScimFallbackDefault(tx);
 
     let updatedRow: PrismaGroupWithMembers = current;
     if (hasColumnUpdates) {
@@ -656,16 +686,23 @@ export async function putScimGroup(
       })) as unknown as PrismaGroupWithMembers;
     }
 
+    updateAuditContext({ scimGroupId: String(current.id) });
     if (added.length > 0) {
       await tx.groupAssignment.createMany({
         data: added.map((userId) => ({ userId, groupId: current.id })),
         skipDuplicates: true,
       });
+      for (const userId of added) {
+        await recomputeUserAccess(tx, userId, fallbackDefault);
+      }
     }
     if (removed.length > 0) {
       await tx.groupAssignment.deleteMany({
         where: { groupId: current.id, userId: { in: removed } },
       });
+      for (const userId of removed) {
+        await recomputeUserAccess(tx, userId, fallbackDefault);
+      }
     }
 
     if (hasColumnUpdates) {
@@ -811,6 +848,7 @@ export async function patchScimGroup(
     }
 
     const before = snapshot(current);
+    const fallbackDefault = await readScimFallbackDefault(tx);
 
     let updatedRow: PrismaGroupWithMembers = current;
     if (hasColumnUpdates) {
@@ -832,16 +870,23 @@ export async function patchScimGroup(
       })) as unknown as PrismaGroupWithMembers;
     }
 
+    updateAuditContext({ scimGroupId: String(current.id) });
     if (added.length > 0) {
       await tx.groupAssignment.createMany({
         data: added.map((userId) => ({ userId, groupId: current.id })),
         skipDuplicates: true,
       });
+      for (const userId of added) {
+        await recomputeUserAccess(tx, userId, fallbackDefault);
+      }
     }
     if (removed.length > 0) {
       await tx.groupAssignment.deleteMany({
         where: { groupId: current.id, userId: { in: removed } },
       });
+      for (const userId of removed) {
+        await recomputeUserAccess(tx, userId, fallbackDefault);
+      }
     }
 
     if (hasColumnUpdates) {

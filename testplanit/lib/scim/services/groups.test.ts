@@ -12,11 +12,16 @@ vi.mock("~/lib/prisma", () => {
     },
     user: {
       findMany: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
     },
     groupAssignment: {
       createMany: vi.fn(),
       deleteMany: vi.fn(),
       findMany: vi.fn(),
+    },
+    appConfig: {
+      findUnique: vi.fn(),
     },
   };
   return {
@@ -26,12 +31,17 @@ vi.mock("~/lib/prisma", () => {
       groups: tx.groups,
       user: tx.user,
       groupAssignment: tx.groupAssignment,
+      appConfig: tx.appConfig,
     },
   };
 });
 
 vi.mock("~/lib/services/auditLog", () => ({
   captureAuditEvent: vi.fn(async () => {}),
+}));
+
+vi.mock("~/lib/auditContext", () => ({
+  updateAuditContext: vi.fn(),
 }));
 
 vi.mock("~/lib/webhooks/event-emitters/groupEvents", () => ({
@@ -60,6 +70,7 @@ vi.mock("~/lib/scim/filter", async () => {
   };
 });
 
+import { updateAuditContext } from "~/lib/auditContext";
 import { prisma } from "~/lib/prisma";
 import { captureAuditEvent } from "~/lib/services/auditLog";
 import {
@@ -100,12 +111,17 @@ interface TxLike {
     update: ReturnType<typeof vi.fn>;
     count: ReturnType<typeof vi.fn>;
   };
-  user: { findMany: ReturnType<typeof vi.fn> };
+  user: {
+    findMany: ReturnType<typeof vi.fn>;
+    findUnique: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+  };
   groupAssignment: {
     createMany: ReturnType<typeof vi.fn>;
     deleteMany: ReturnType<typeof vi.fn>;
     findMany: ReturnType<typeof vi.fn>;
   };
+  appConfig: { findUnique: ReturnType<typeof vi.fn> };
 }
 
 const tx = (prisma as unknown as { __tx: TxLike }).__tx;
@@ -150,6 +166,11 @@ function makeBody(overrides: Partial<ScimGroupBody> = {}): ScimGroupBody {
 
 afterEach(() => {
   vi.clearAllMocks();
+  // Default stubs for recompute path (readScimFallbackDefault + recomputeUserAccess).
+  // Tests that need different behaviour override these before calling the SUT.
+  tx.appConfig.findUnique.mockResolvedValue(null);
+  tx.user.findUnique.mockResolvedValue(null);
+  tx.groupAssignment.findMany.mockResolvedValue([]);
 });
 
 describe("createScimGroup", () => {
