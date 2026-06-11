@@ -79,7 +79,7 @@ describeIntegration("recomputeUserAccess (live DB)", () => {
   });
 
   afterAll(async () => {
-    // Clean up group assignments first, then users, then groups.
+    // Clean up group assignments first, then soft-delete users and groups.
     const users = await prisma.user.findMany({
       where: { email: { startsWith: PREFIX } },
       select: { id: true },
@@ -87,10 +87,14 @@ describeIntegration("recomputeUserAccess (live DB)", () => {
     const userIds = users.map((u) => u.id);
 
     if (userIds.length > 0) {
+      // Join rows may be hard-deleted; entity rows must be soft-deleted.
       await prisma.groupAssignment.deleteMany({
         where: { userId: { in: userIds } },
       });
-      await prisma.user.deleteMany({ where: { id: { in: userIds } } });
+      await prisma.user.updateMany({
+        where: { id: { in: userIds } },
+        data: { isDeleted: true },
+      });
     }
 
     const groups = await prisma.groups.findMany({
@@ -98,8 +102,9 @@ describeIntegration("recomputeUserAccess (live DB)", () => {
       select: { id: true },
     });
     if (groups.length > 0) {
-      await prisma.groups.deleteMany({
+      await prisma.groups.updateMany({
         where: { id: { in: groups.map((g) => g.id) } },
+        data: { isDeleted: true },
       });
     }
 
