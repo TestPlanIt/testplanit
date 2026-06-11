@@ -77,10 +77,6 @@ import {
   getCrossProjectReportTypes,
   getProjectReportTypes,
 } from "~/lib/config/reportTypes";
-import {
-  PaginationProvider,
-  usePagination,
-} from "~/lib/contexts/PaginationContext";
 import { usePathname, useRouter } from "~/lib/navigation";
 import { reportRequestSchema } from "~/lib/schemas/reportRequestSchema";
 import type {
@@ -163,7 +159,11 @@ const dateRangeSchema = z.object({
 
 type DateRangeFormData = z.infer<typeof dateRangeSchema>;
 
-// Inner component that uses pagination context
+// Rows fetched per execution-log scroll page. Kept within the server's
+// per-request clamp (1–200) so `loaded < total` math stays accurate.
+const EXECUTION_LOG_PAGE_SIZE = 100;
+
+// Inner component
 function ReportBuilderContent({
   mode,
   projectId,
@@ -190,15 +190,12 @@ function ReportBuilderContent({
       : getProjectReportTypes(tReports);
   }, [mode, tReports]);
 
-  // Use pagination context
-  const {
-    currentPage,
-    setCurrentPage,
-    pageSize,
-    setPageSize,
-    totalItems: totalCount,
-    setTotalItems: setTotalCount,
-  } = usePagination();
+  // Results count for the "Showing X of Y" summary. The table is virtualized
+  // and infinite-scrolling now, so there is no page/pageSize state — full-set
+  // reports render their whole array and execution-log fetches more on scroll.
+  const [totalCount, setTotalCount] = useState(0);
+  // A load-more fetch is in flight (execution-log only).
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Form for date range
   const form = useForm<DateRangeFormData>({
@@ -925,9 +922,6 @@ function ReportBuilderContent({
     const newParams = new URLSearchParams();
     newParams.set("reportType", safeReportType);
     newParams.set("tab", newTab);
-    // Reset pagination when changing reports
-    newParams.set("page", "1");
-    newParams.set("pageSize", String(pageSize !== "All" ? pageSize : 10));
     router.replace(`${pathname}?${newParams.toString()}`);
   };
 
@@ -1199,7 +1193,8 @@ function ReportBuilderContent({
     async (
       selectedDimensions: any[],
       selectedMetrics: any[],
-      updateUrl: boolean = false
+      updateUrl: boolean = false,
+      { append = false, page = 1 }: { append?: boolean; page?: number } = {}
     ) => {
       try {
         // Don't attempt to run report if metrics are empty (except for pre-built reports)
@@ -1221,12 +1216,16 @@ function ReportBuilderContent({
           return;
         }
 
+        // Only execution-log is truly server-paginated (real DB skip/take); it
+        // fetches a window per scroll. Every other report returns its full set,
+        // so we ask for everything in one request and virtualize it client-side.
+        const isExecLog = matchesReportType(reportType, "execution-log");
         const dateRange = form.getValues("dateRange");
         const body: any = {
           dimensions: selectedDimensions.map((d) => d.value),
           metrics: selectedMetrics.map((m) => m.value),
-          page: currentPage,
-          pageSize: pageSize,
+          page: isExecLog ? page : 1,
+          pageSize: isExecLog ? EXECUTION_LOG_PAGE_SIZE : "All",
         };
 
         if (mode === "project" && projectId) {
@@ -1395,14 +1394,21 @@ function ReportBuilderContent({
 
         // Handle client-side pagination for pre-built reports
         if (currentReport?.isPreBuilt) {
-          // Execution log uses server-side pagination
-          if (matchesReportType(reportType, "execution-log")) {
+          // Execution log uses true server-side pagination — accumulate pages
+          // as the user scrolls instead of replacing the visible page.
+          if (isExecLog) {
             const tableData = data.data || data.results || [];
-            setResults(tableData);
+            setResults((prev) => {
+              if (!append || !prev) return tableData;
+              // De-dupe by row id in case a page boundary overlaps.
+              const seen = new Set(prev.map((r: any) => r.id));
+              const fresh = tableData.filter((r: any) => !seen.has(r.id));
+              return fresh.length ? [...prev, ...fresh] : prev;
+            });
             setTotalCount(data.total ?? tableData.length);
-            if (updateUrl) {
-              // Store status breakdown in allResults for the chart;
-              // don't replace it on pagination so the chart stays stable.
+            // Only on a fresh run (never on append): store the status breakdown
+            // for the chart so scrolling doesn't disturb it.
+            if (updateUrl && !append) {
               setAllResults(data.statusBreakdown || []);
               setLastUsedDimensions(selectedDimensions);
             }
@@ -1480,21 +1486,14 @@ function ReportBuilderContent({
             });
           }
 
-          // Slice data for current page
-          if (pageSize === "All") {
-            // Show all data when pageSize is "All"
-            setResults(sortedData);
-          } else {
-            const startIndex = (currentPage - 1) * (pageSize as number);
-            const endIndex = startIndex + (pageSize as number);
-            setResults(sortedData.slice(startIndex, endIndex));
-          }
+          // Render the full sorted set; the table virtualizes it (no paging).
+          setResults(sortedData);
         } else {
-          // Standard server-side pagination for other reports
-          const tableData = data.data || data.results;
-          const chartData = data.allResults || data.data || data.results;
+          // Custom reports return the entire result set in `allResults` on the
+          // first POST — render that full set and virtualize it (no paging).
+          const fullData = data.allResults || data.data || data.results || [];
 
-          setResults(tableData); // Support both formats
+          setResults(fullData);
 
           // Store projects for automation trends report
           if (
@@ -1504,19 +1503,12 @@ function ReportBuilderContent({
             setAutomationTrendsProjects(data.projects);
           }
 
-          // Update allResults and chartDataRef with the full dataset
-          // For pagination/sorting changes, we still need the full dataset for the chart
-          const newAllResults = chartData;
-
-          // Only update chart data when running a new report (not pagination)
-          // Chart should always show the full dataset, not update on pagination
+          // Chart shows the full dataset; only refresh it on a new run.
           if (updateUrl) {
-            setAllResults(newAllResults);
+            setAllResults(fullData);
           }
 
-          setTotalCount(
-            data.total || data.totalCount || (data.data || data.results).length
-          );
+          setTotalCount(data.total || data.totalCount || fullData.length);
         }
 
         // Only update these when running a new report (not just sorting/paginating)
@@ -1590,8 +1582,6 @@ function ReportBuilderContent({
     },
     [
       form,
-      currentPage,
-      pageSize,
       mode,
       projectId,
       sortConfig,
@@ -1629,6 +1619,32 @@ function ReportBuilderContent({
     },
     [fetchReportData]
   );
+
+  // Infinite scroll only applies to execution-log (the one truly server-paged
+  // report). Every other report has its full set loaded, so hasMore stays false.
+  const isExecutionLog = matchesReportType(reportType, "execution-log");
+  const loadedCount = results?.length ?? 0;
+  const hasMore = isExecutionLog && loadedCount < totalCount;
+
+  const handleLoadMore = useCallback(() => {
+    if (!isExecutionLog || loadingMore) return;
+    const loaded = results?.length ?? 0;
+    if (loaded >= totalCount) return;
+    const nextPage = Math.floor(loaded / EXECUTION_LOG_PAGE_SIZE) + 1;
+    setLoadingMore(true);
+    void fetchReportData(lastUsedDimensions, lastUsedMetrics, false, {
+      append: true,
+      page: nextPage,
+    }).finally(() => setLoadingMore(false));
+  }, [
+    isExecutionLog,
+    loadingMore,
+    results,
+    totalCount,
+    fetchReportData,
+    lastUsedDimensions,
+    lastUsedMetrics,
+  ]);
 
   // Auto-run report if we have stored selections
   useEffect(() => {
@@ -1670,77 +1686,57 @@ function ReportBuilderContent({
     currentReport,
   ]);
 
-  // Re-fetch data when pagination changes (without full loading state)
+  // Pre-built (non-execution-log) reports hold their full set client-side and
+  // re-sort it in place — no server round-trip, no paging.
   useEffect(() => {
-    // Execution log uses server-side pagination — refetch like a custom report
-    if (
-      matchesReportType(reportType, "execution-log") &&
-      currentReport?.isPreBuilt &&
-      results
-    ) {
-      void fetchReportData(lastUsedDimensions, lastUsedMetrics, false);
-      return;
-    }
+    if (!currentReport?.isPreBuilt) return;
+    if (matchesReportType(reportType, "execution-log")) return;
+    if (!allResults || allResults.length === 0) return;
 
-    // For pre-built reports, handle client-side pagination
-    if (currentReport?.isPreBuilt && allResults && allResults.length > 0) {
-      // Apply client-side sorting first
-      let sortedResults = [...allResults];
-      if (sortConfig) {
-        sortedResults.sort((a, b) => {
-          let aVal = a[sortConfig.column];
-          let bVal = b[sortConfig.column];
+    let sortedResults = [...allResults];
+    if (sortConfig) {
+      sortedResults.sort((a, b) => {
+        let aVal = a[sortConfig.column];
+        let bVal = b[sortConfig.column];
 
-          // Handle project column - extract name from object
-          if (sortConfig.column === "project") {
-            aVal = aVal?.name || "";
-            bVal = bVal?.name || "";
-          }
+        // Handle project column - extract name from object
+        if (sortConfig.column === "project") {
+          aVal = aVal?.name || "";
+          bVal = bVal?.name || "";
+        }
 
-          if (aVal === bVal) return 0;
-          if (aVal === null || aVal === undefined) return 1;
-          if (bVal === null || bVal === undefined) return -1;
+        if (aVal === bVal) return 0;
+        if (aVal === null || aVal === undefined) return 1;
+        if (bVal === null || bVal === undefined) return -1;
 
-          // For strings, use localeCompare for proper alphabetical sorting
-          if (typeof aVal === "string" && typeof bVal === "string") {
-            const comparison = aVal.localeCompare(bVal);
-            return sortConfig.direction === "asc" ? comparison : -comparison;
-          }
-
-          // For numbers or other types, use standard comparison
-          const comparison = aVal < bVal ? -1 : 1;
+        // For strings, use localeCompare for proper alphabetical sorting
+        if (typeof aVal === "string" && typeof bVal === "string") {
+          const comparison = aVal.localeCompare(bVal);
           return sortConfig.direction === "asc" ? comparison : -comparison;
-        });
-      }
+        }
 
-      // Then apply pagination
-      if (pageSize === "All") {
-        setResults(sortedResults);
-      } else {
-        const startIdx = (currentPage - 1) * pageSize;
-        const endIdx = startIdx + pageSize;
-        setResults(sortedResults.slice(startIdx, endIdx));
-      }
-    } else if (
-      lastUsedDimensions.length > 0 &&
-      lastUsedMetrics.length > 0 &&
-      results &&
-      !currentReport?.isPreBuilt
-    ) {
-      // Standard server-side pagination for other reports
-      void fetchReportData(lastUsedDimensions, lastUsedMetrics, false);
+        // For numbers or other types, use standard comparison
+        const comparison = aVal < bVal ? -1 : 1;
+        return sortConfig.direction === "asc" ? comparison : -comparison;
+      });
     }
+    setResults(sortedResults);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, pageSize, sortConfig, reportType, allResults]);
+  }, [sortConfig, reportType, allResults]);
 
-  // Re-fetch data when sort changes for non-prebuilt reports (without full loading state)
+  // Server-sorted reports (custom + execution-log) refetch the full sorted set
+  // when sort changes. Execution-log restarts its accumulation from page 1
+  // (append:false replaces the rows) since the whole list reorders.
   useEffect(() => {
     if (
       (!currentReport?.isPreBuilt ||
         matchesReportType(reportType, "execution-log")) &&
       results
     ) {
-      void fetchReportData(lastUsedDimensions, lastUsedMetrics, false);
+      void fetchReportData(lastUsedDimensions, lastUsedMetrics, false, {
+        append: false,
+        page: 1,
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortConfig]);
@@ -1810,18 +1806,15 @@ function ReportBuilderContent({
       );
       return;
     }
-    setCurrentPage(1); // Reset to first page when running new report
     void runReport(dimensions, metrics);
   };
 
   const handleDimensionsChange = (newDimensions: any[]) => {
     setDimensions(newDimensions);
-    setCurrentPage(1); // Reset to first page when dimensions change
   };
 
   const handleMetricsChange = (newMetrics: any[]) => {
     setMetrics(newMetrics);
-    setCurrentPage(1); // Reset to first page when metrics change
   };
 
   // Note: Sorting is now done server-side, so we use results directly
@@ -2920,11 +2913,11 @@ function ReportBuilderContent({
                 ? allResults.length
                 : undefined
             }
-            currentPage={currentPage}
-            pageSize={pageSize}
+            loadedCount={loadedCount}
             totalCount={totalCount}
-            onPageChange={setCurrentPage}
-            onPageSizeChange={setPageSize}
+            hasMore={hasMore}
+            isLoading={loadingMore}
+            onLoadMore={handleLoadMore}
             sortConfig={sortConfig}
             onSortChange={(columnId: string) => {
               setSortConfig((prev) => ({
@@ -3009,11 +3002,6 @@ function ReportBuilderContent({
   );
 }
 
-// Wrapper component with PaginationProvider
 export function ReportBuilder(props: ReportBuilderProps) {
-  return (
-    <PaginationProvider defaultPageSize={50}>
-      <ReportBuilderContent {...props} />
-    </PaginationProvider>
-  );
+  return <ReportBuilderContent {...props} />;
 }

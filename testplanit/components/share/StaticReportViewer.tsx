@@ -30,8 +30,6 @@ export function StaticReportViewer({
     column: string;
     direction: "asc" | "desc";
   } | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState<number | "All">(10);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [grouping, setGrouping] = useState<string[]>([]);
   const [expanded, setExpanded] = useState<ExpandedState>({});
@@ -63,19 +61,16 @@ export function StaticReportViewer({
           ? config.metrics.join(",")
           : config.metrics
       );
-    if (config.page) params.set("page", config.page.toString());
-    if (config.pageSize) params.set("pageSize", config.pageSize.toString());
-
     return `/projects/reports/${shareData.projectId}?${params.toString()}`;
   }, [shareData.projectId, config]);
 
-  // Client-side pagination and sorting
-  const paginatedResults = useMemo(() => {
+  // Client-side sorting only — the whole shared result set is in memory and the
+  // table virtualizes it (no paging).
+  const sortedResults = useMemo(() => {
     if (!reportData?.results) return [];
 
-    let processed = [...reportData.results];
+    const processed = [...reportData.results];
 
-    // Apply sorting if configured
     if (sortConfig) {
       processed.sort((a, b) => {
         const aValue = a[sortConfig.column];
@@ -90,15 +85,8 @@ export function StaticReportViewer({
       });
     }
 
-    // Apply pagination
-    if (pageSize === "All") {
-      return processed;
-    }
-
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    return processed.slice(startIndex, endIndex);
-  }, [reportData?.results, sortConfig, currentPage, pageSize]);
+    return processed;
+  }, [reportData?.results, sortConfig]);
 
   // Handle sort changes
   const handleSortChange = useCallback((columnId: string) => {
@@ -107,13 +95,6 @@ export function StaticReportViewer({
       direction:
         prev?.column === columnId && prev.direction === "asc" ? "desc" : "asc",
     }));
-    setCurrentPage(1);
-  }, []);
-
-  // Handle page size changes
-  const handlePageSizeChange = useCallback((newPageSize: number | "All") => {
-    setPageSize(newPageSize);
-    setCurrentPage(1);
   }, []);
 
   const fetchReportData = useCallback(async () => {
@@ -260,7 +241,7 @@ export function StaticReportViewer({
       {/* Report content */}
       <div className="container mx-auto px-4 py-6">
         <ReportRenderer
-          results={paginatedResults}
+          results={sortedResults}
           chartData={reportData.chartData || reportData.results}
           reportType={config.reportType}
           dimensions={reportData.dimensions || []}
@@ -280,13 +261,12 @@ export function StaticReportViewer({
           totalFlakyTests={reportData.totalFlakyTests}
           matrixAxes={reportData.matrixAxes}
           automationCandidatesSnapshot={reportData.automationCandidatesSnapshot}
-          currentPage={currentPage}
-          pageSize={pageSize}
+          loadedCount={sortedResults.length}
           totalCount={
             reportData.pagination?.totalCount || reportData.results?.length || 0
           }
-          onPageChange={setCurrentPage}
-          onPageSizeChange={handlePageSizeChange}
+          hasMore={false}
+          isLoading={false}
           sortConfig={sortConfig}
           onSortChange={handleSortChange}
           columnVisibility={columnVisibility}

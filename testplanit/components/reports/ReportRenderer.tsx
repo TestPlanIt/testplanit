@@ -4,7 +4,7 @@ import { AutomationCandidatesReportPreset } from "@/components/automationCandida
 import { ReportChart } from "@/components/dataVisualizations/ReportChart";
 import { DateFormatter } from "@/components/DateFormatter";
 import { MatrixReportPreset } from "@/components/matrix/MatrixReportPreset";
-import { DataTable } from "@/components/tables/DataTable";
+import { VirtualizedReportTable } from "@/components/reports/VirtualizedReportTable";
 import {
   Card,
   CardContent,
@@ -25,15 +25,12 @@ import {
 } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
-import { PaginationComponent } from "~/components/tables/Pagination";
-import { PaginationInfo } from "~/components/tables/PaginationControls";
 import { useAutomationTrendsColumns } from "~/hooks/useAutomationTrendsColumns";
 import { useExecutionLogColumns } from "~/hooks/useExecutionLogColumns";
 import { useFlakyTestsColumns } from "~/hooks/useFlakyTestsColumns";
 import { useIssueTestCoverageSummaryColumns } from "~/hooks/useIssueTestCoverageColumns";
 import { useReportColumns } from "~/hooks/useReportColumns";
 import { useTestCaseHealthColumns } from "~/hooks/useTestCaseHealthColumns";
-import { usePageSizeOptions } from "~/hooks/usePageSizeOptions";
 
 // Helper functions for report type matching
 // These helpers allow us to write code that works with both project-level and cross-project variants
@@ -105,12 +102,17 @@ interface ReportRendererProps {
   // "regenerate this for a public viewer" interaction.
   automationCandidatesSnapshot?: any;
 
-  // Pagination
-  currentPage: number;
-  pageSize: number | "All";
+  // Results count + infinite scroll. `loadedCount` is how many rows are
+  // currently in `results` (the "X" in "Showing X of Y"); `totalCount` is the
+  // full match count. For full-set reports loadedCount === totalCount and
+  // hasMore is false; execution-log fetches more on scroll.
+  loadedCount: number;
   totalCount: number;
-  onPageChange: (page: number) => void;
-  onPageSizeChange: (size: number | "All") => void;
+  hasMore?: boolean;
+  isLoading?: boolean;
+  onLoadMore?: () => void;
+  loadMoreError?: boolean;
+  onRetryLoadMore?: () => void;
 
   // Sorting
   sortConfig?: { column: string; direction: "asc" | "desc" } | null;
@@ -156,11 +158,13 @@ export function ReportRenderer({
   totalFlakyTests,
   matrixAxes,
   automationCandidatesSnapshot,
-  currentPage,
-  pageSize,
+  loadedCount,
   totalCount,
-  onPageChange,
-  onPageSizeChange,
+  hasMore = false,
+  isLoading = false,
+  onLoadMore,
+  loadMoreError = false,
+  onRetryLoadMore,
   sortConfig,
   onSortChange,
   columnVisibility,
@@ -254,14 +258,6 @@ export function ReportRenderer({
     reportType,
     "automation-candidates"
   );
-
-  // Calculate pagination
-  const startIndex = pageSize === "All" ? 1 : (currentPage - 1) * pageSize + 1;
-  const endIndex =
-    pageSize === "All"
-      ? totalCount
-      : Math.min(currentPage * pageSize, totalCount);
-  const pageSizeOptions = usePageSizeOptions(totalCount);
 
   // Maximum number of data points to render in charts
   const MAX_CHART_DATA_POINTS = 50;
@@ -490,35 +486,15 @@ export function ReportRenderer({
             <div className="flex flex-row items-end justify-between">
               <CardTitle>{tCommon("results")}</CardTitle>
               {totalCount > 0 && (
-                <div className="flex flex-col items-end">
-                  <div className="justify-end">
-                    <PaginationInfo
-                      startIndex={startIndex}
-                      endIndex={endIndex}
-                      totalRows={totalCount}
-                      searchString=""
-                      pageSize={pageSize}
-                      pageSizeOptions={pageSizeOptions}
-                      handlePageSizeChange={onPageSizeChange}
-                    />
-                  </div>
-                  {pageSize !== "All" && totalCount > (pageSize as number) && (
-                    <div className="justify-end -mx-4">
-                      <PaginationComponent
-                        currentPage={currentPage}
-                        totalPages={Math.ceil(
-                          totalCount / (pageSize as number)
-                        )}
-                        onPageChange={onPageChange}
-                      />
-                    </div>
-                  )}
+                <div className="text-sm text-muted-foreground">
+                  {tCommon("pagination.showing")} {loadedCount} {tCommon("of")}{" "}
+                  {totalCount} {tCommon("results")}
                 </div>
               )}
             </div>
           </CardHeader>
-          <CardContent className="h-[calc(100%-4rem)] overflow-y-auto p-6 pt-0">
-            <DataTable
+          <CardContent className="h-[calc(100%-4rem)] p-6 pt-0">
+            <VirtualizedReportTable
               columns={columns as ColumnDef<any>[]}
               data={results}
               columnVisibility={columnVisibility}
@@ -539,6 +515,11 @@ export function ReportRenderer({
                   ? tCommon("fields.steps").toLowerCase()
                   : undefined
               }
+              hasMore={hasMore}
+              isLoading={isLoading}
+              onLoadMore={onLoadMore}
+              loadMoreError={loadMoreError}
+              onRetryLoadMore={onRetryLoadMore}
             />
           </CardContent>
         </Card>

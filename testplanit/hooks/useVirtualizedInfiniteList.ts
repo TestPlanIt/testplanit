@@ -51,6 +51,15 @@ export interface UseVirtualizedInfiniteListOptions {
   loadMoreMargin?: number;
   /** Space (px) to leave below the list when filling the viewport. */
   bottomMargin?: number;
+  /**
+   * When true (default), the scroll container is sized to fill from its top
+   * edge to the viewport bottom. Set false when the container is bounded by
+   * its own layout instead (e.g. a fixed-height panel) — the consumer sizes it
+   * via CSS (`h-full`) and the returned `maxHeight` stays null. In that mode
+   * the load-more sentinel wires as soon as the scroll element mounts, and
+   * container resizes are picked up by the virtualizer's own ResizeObserver.
+   */
+  boundToViewport?: boolean;
   /** When this value changes, the list scrolls to the top and re-measures. */
   resetKey?: unknown;
 }
@@ -69,6 +78,7 @@ export function useVirtualizedInfiniteList({
   onLoadMore,
   loadMoreMargin = 300,
   bottomMargin = 16,
+  boundToViewport = true,
   resetKey,
 }: UseVirtualizedInfiniteListOptions) {
   // A callback ref (rather than a plain useRef) so the effects re-run when the
@@ -86,7 +96,7 @@ export function useVirtualizedInfiniteList({
   const [maxHeight, setMaxHeight] = useState<number | null>(null);
 
   useIsomorphicLayoutEffect(() => {
-    if (!scrollEl) return;
+    if (!boundToViewport || !scrollEl) return;
     const compute = () => {
       const top = scrollEl.getBoundingClientRect().top;
       setMaxHeight(Math.max(200, window.innerHeight - top - bottomMargin));
@@ -94,7 +104,7 @@ export function useVirtualizedInfiniteList({
     compute();
     window.addEventListener("resize", compute);
     return () => window.removeEventListener("resize", compute);
-  }, [scrollEl, bottomMargin]);
+  }, [boundToViewport, scrollEl, bottomMargin]);
 
   const virtualizer = useVirtualizer<HTMLDivElement, HTMLDivElement>({
     count,
@@ -124,9 +134,11 @@ export function useVirtualizedInfiniteList({
 
   // Only wire the sentinel once the container is mounted and bounded, so an
   // unbounded first paint can't fire a burst of page loads before the height
-  // settles. Re-runs when the scroll element mounts (`scrollEl`).
+  // settles. In viewport-bound mode that means waiting for `maxHeight`; in
+  // CSS-bound mode the container is already sized, so wire as soon as the
+  // scroll element mounts. Re-runs when the scroll element mounts (`scrollEl`).
   useEffect(() => {
-    if (maxHeight == null) return;
+    if (boundToViewport && maxHeight == null) return;
     const root = scrollElRef.current;
     const sentinel = sentinelRef.current;
     if (!root || !sentinel || typeof IntersectionObserver === "undefined") {
@@ -142,7 +154,7 @@ export function useVirtualizedInfiniteList({
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [scrollEl, maxHeight, loadMoreMargin, maybeLoadMore]);
+  }, [scrollEl, maxHeight, boundToViewport, loadMoreMargin, maybeLoadMore]);
 
   // After a page settles (or hasMore flips), pull again if the sentinel is
   // still visible — fills the viewport without waiting for a scroll event.
