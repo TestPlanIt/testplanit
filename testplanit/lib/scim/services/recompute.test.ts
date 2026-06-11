@@ -25,18 +25,10 @@ vi.mock("~/lib/services/auditLog", () => ({
   captureAuditEvent: vi.fn(async () => {}),
 }));
 
-vi.mock("~/lib/auditContext", () => {
-  let store: Record<string, unknown> = {};
-  return {
-    getAuditContext: vi.fn(() => store),
-    updateAuditContext: vi.fn((updates: Record<string, unknown>) => {
-      Object.assign(store, updates);
-    }),
-    _resetStore: () => {
-      store = {};
-    },
-  };
-});
+vi.mock("~/lib/auditContext", () => ({
+  getAuditContext: vi.fn(() => ({})),
+  updateAuditContext: vi.fn(),
+}));
 
 import { prisma } from "~/lib/prisma";
 import { captureAuditEvent } from "~/lib/services/auditLog";
@@ -59,12 +51,6 @@ const tx = (prisma as unknown as { __tx: TxLike }).__tx;
 
 afterEach(() => {
   vi.clearAllMocks();
-  // Reset audit context store between tests
-  const auditCtx = vi.mocked(
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    require("~/lib/auditContext")
-  ) as { _resetStore: () => void };
-  auditCtx._resetStore();
 });
 
 function makeUser(
