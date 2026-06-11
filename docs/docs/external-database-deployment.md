@@ -261,6 +261,11 @@ docker compose -f docker-compose.prod.yml run --rm \
   prod sh -c "pnpm prisma db push --accept-data-loss && pnpm tsx prisma/seed.ts"
 ```
 
+If your database sits behind a transaction-mode pooler (e.g. pgbouncer), point this
+command at a connection that bypasses the pooler — `prisma db push` and the index
+setup require a real (non-pooled) session. See [Configure connection pooling](#best-practices)
+below for the matching `DIRECT_DATABASE_URL` setup the running container uses.
+
 Or use your existing database if it's already initialized.
 
 ### Step 4: Monitor Deployment
@@ -371,6 +376,26 @@ To run multiple TestPlanIt instances against different databases:
    ```text
    DATABASE_URL="postgresql://user:pass@host:5432/db?schema=public&connection_limit=10&pool_timeout=20"
    ```
+
+   **Transaction-mode poolers (pgbouncer, RDS Proxy, Supabase pooler):** when a
+   transaction-mode pooler fronts Postgres, two extra steps are required:
+
+   - Append `&pgbouncer=true` to `DATABASE_URL` so Prisma disables named prepared
+     statements (which transaction pooling cannot keep alive across requests).
+     Optionally add `&connection_limit=<n>` to cap each process's client-side pool.
+
+     ```text
+     DATABASE_URL="postgresql://user:pass@pgbouncer:6432/db?schema=public&pgbouncer=true&connection_limit=5"
+     ```
+
+   - Set `DIRECT_DATABASE_URL` to a connection that **bypasses the pooler** (straight
+     to Postgres). Startup schema sync (`prisma db push`) and extension/index setup
+     (`CREATE INDEX CONCURRENTLY`) use it, since those need a real session. Leave it
+     unset when no pooler is used — it falls back to `DATABASE_URL`.
+
+     ```text
+     DIRECT_DATABASE_URL="postgresql://user:pass@postgres:5432/db?schema=public"
+     ```
 
 ## Troubleshooting Commands
 
