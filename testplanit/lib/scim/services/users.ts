@@ -46,6 +46,7 @@ import {
 import { SCIM_SYSTEM_USER_ID, SYSTEM_PROJECT_ID } from "../constants";
 import { scimError } from "../errors";
 import { scimFilterToPrismaWhere } from "../filter";
+import { readScimFallbackDefault } from "./recompute";
 import {
   computeUserUpdatesFromScim,
   deriveDisplayName,
@@ -402,6 +403,8 @@ async function insertNewScimUser(
     throw new Error("No default role configured");
   }
 
+  const fallbackDefault = await readScimFallbackDefault(tx);
+
   const extensions = extractNonWritableUrns(
     body as unknown as Record<string, unknown>
   );
@@ -424,7 +427,8 @@ async function insertNewScimUser(
           ? (extensions as Prisma.InputJsonValue)
           : undefined,
       authMethod: "SCIM",
-      access: "NONE",
+      access: fallbackDefault,
+      accessSource: "GROUP_MAPPING",
       roleId: defaultRole.id,
       isActive: body.active ?? true,
       isDeleted: false,

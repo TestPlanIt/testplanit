@@ -16,6 +16,9 @@ vi.mock("~/lib/prisma", () => {
     account: {
       deleteMany: vi.fn(),
     },
+    appConfig: {
+      findUnique: vi.fn(),
+    },
   };
   return {
     prisma: {
@@ -24,6 +27,7 @@ vi.mock("~/lib/prisma", () => {
       user: tx.user,
       roles: tx.roles,
       account: tx.account,
+      appConfig: tx.appConfig,
     },
   };
 });
@@ -95,6 +99,7 @@ interface TxLike {
   };
   roles: { findFirst: ReturnType<typeof vi.fn> };
   account: { deleteMany: ReturnType<typeof vi.fn> };
+  appConfig: { findUnique: ReturnType<typeof vi.fn> };
 }
 
 // Expose the internal tx mock object on prisma during vi.mock setup so tests
@@ -141,6 +146,7 @@ function makeBody(overrides: Partial<ScimUserBody> = {}): ScimUserBody {
 afterEach(() => {
   vi.clearAllMocks();
   tx.roles.findFirst.mockResolvedValue({ id: 1, isDefault: true });
+  tx.appConfig.findUnique.mockResolvedValue(null);
 });
 
 describe("createScimUser", () => {
