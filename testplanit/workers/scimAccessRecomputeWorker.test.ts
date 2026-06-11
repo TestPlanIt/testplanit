@@ -137,7 +137,7 @@ describe("scimAccessRecomputeWorker processor", () => {
     expect(recomputeUserAccess).toHaveBeenCalledWith(expect.anything(), "user-z", "NONE");
   });
 
-  it("W4: audit frame carries adminUserId and scimGroupId when groupId is present", async () => {
+  it("W4: audit frame carries adminUserId, scimGroupId, and scimTokenId when groupId is present", async () => {
     tx.groupAssignment.findMany.mockResolvedValue([{ userId: "user-a" }]);
 
     await processor(makeJob({ groupId: 99, adminUserId: "admin-42" }));
@@ -149,6 +149,7 @@ describe("scimAccessRecomputeWorker processor", () => {
     >;
     expect(ctxArg.userId).toBe("admin-42");
     expect(ctxArg.scimGroupId).toBe("99");
+    expect(ctxArg.scimTokenId).toBe("worker:scim-access-recompute");
   });
 
   it("W5: uses the hooked lib/prisma client, NOT getPrismaClientForJob", async () => {

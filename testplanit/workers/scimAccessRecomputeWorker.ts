@@ -55,6 +55,7 @@ export const processor = async (
     {
       userId: adminUserId,
       scimGroupId: groupId != null ? String(groupId) : undefined,
+      scimTokenId: "worker:scim-access-recompute",
     },
     async () => {
       await prisma.$transaction(async (tx) => {
