@@ -29,7 +29,7 @@ The Report Builder lets you compose a custom report by picking a data source, th
 7. Pick a **Chart Type** — bar, line, pie, or table.
 8. Click **Run Report**.
 
-Results are paginated and the columns are sortable.
+Results render as a single, continuously-scrolling list (no page controls) and the columns are sortable. Use **Export CSV** above the table to download the full result set — see [Exporting Results](./index.md#exporting-results).
 
 ## Drill-Down
 

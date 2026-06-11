@@ -34,6 +34,10 @@ The [Report Builder](./projects/reports/report-builder.md) is available in cross
 
 Drill-down works the same way as in per-project mode (it just shows records from any of the selected projects).
 
+## Exporting Results
+
+The **Export CSV** button above the results table downloads the full result set, with a **Project** column added so rows stay attributable across the portfolio. See [Exporting Results](./projects/reports/index.md#exporting-results) for details.
+
 ## Not Available Cross-Project
 
 Two pre-built reports are project-only and do not appear in **Administration → Reports**:
