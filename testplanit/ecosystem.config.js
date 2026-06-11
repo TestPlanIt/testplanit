@@ -253,6 +253,21 @@ module.exports = {
       },
     },
     {
+      name: "scim-access-recompute-worker",
+      script: isDev ? "tsx" : "node",
+      args: isDev
+        ? "workers/scimAccessRecomputeWorker.ts"
+        : "dist/workers/scimAccessRecomputeWorker.js",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: "512M",
+      node_args: "--max-old-space-size=384",
+      env: {
+        NODE_ENV: "production",
+      },
+    },
+    {
       name: "webhook-dispatch-worker",
       script: isDev ? "tsx" : "node",
       args: isDev

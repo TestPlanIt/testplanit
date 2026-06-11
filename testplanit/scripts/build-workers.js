@@ -34,6 +34,7 @@ const entryPoints = [
   "workers/stepSequenceScanWorker.ts",
   "workers/generateFromUrlWorker.ts",
   "workers/iterationGenerationWorker.ts",
+  "workers/scimAccessRecomputeWorker.ts",
   "workers/webhookDispatchWorker.ts",
   "workers/webhookOutboxWorker.ts",
   "workers/webhookRetentionWorker.ts",
