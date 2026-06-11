@@ -14,6 +14,11 @@
  *      set Group.mappedAccess, attach user, run recompute, read back
  *      User.access.
  *
+ * Note: a raw PrismaClient (no app-level $extends hooks) is used here to
+ * test column/enum plumbing in isolation. Audit-row correctness (the
+ * "exactly one audit row per flip" guarantee) is covered by the mocked
+ * unit tests in recompute.test.ts, which stub captureAuditEvent directly.
+ *
  * Run via:
  *   RUN_DB_INTEGRATION=1 pnpm exec vitest run lib/scim/services/recompute.integration.test.ts
  *
