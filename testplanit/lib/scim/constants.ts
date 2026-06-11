@@ -9,6 +9,15 @@
 export const SCIM_CONTENT_TYPE = "application/scim+json" as const;
 
 /**
+ * Canonical mount path for the SCIM 2.0 surface. The handlers live under
+ * `app/api/scim/v2/*`, so every API route in this app is served beneath `/api`;
+ * IdP-facing URLs (meta.location, the well-known discovery pointers, the
+ * connection probe) and the admin connector hint all build on this prefix so
+ * they resolve to the real endpoints rather than a bare `/scim/v2` that 404s.
+ */
+export const SCIM_BASE_PATH = "/api/scim/v2" as const;
+
+/**
  * RFC 7643 §4 + §3.3 — core resource and enterprise-extension schema URNs.
  * Keys map to the symbolic names callers use (CORE_USER, etc.); values are the
  * exact URN strings IdPs send and receive on the wire.

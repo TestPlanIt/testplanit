@@ -102,7 +102,7 @@ describe("probeScimToken", () => {
     });
   });
 
-  it("sends Authorization Bearer <plaintext> and X-SCIM-Probe: 1 to /scim/v2/ServiceProviderConfig with cache: no-store", async () => {
+  it("sends Authorization Bearer <plaintext> and X-SCIM-Probe: 1 to /api/scim/v2/ServiceProviderConfig with cache: no-store", async () => {
     vi.mocked(getScimTokenById).mockResolvedValue(activeRow());
     vi.mocked(decryptScimSecret).mockResolvedValue(PLAINTEXT);
     const fetchMock = vi
@@ -117,7 +117,7 @@ describe("probeScimToken", () => {
       RequestInit,
     ];
     expect(calledUrl).toBe(
-      "http://localhost:3000/scim/v2/ServiceProviderConfig"
+      "http://localhost:3000/api/scim/v2/ServiceProviderConfig"
     );
     expect(calledInit.cache).toBe("no-store");
     const headers = calledInit.headers as Record<string, string>;

@@ -33,7 +33,7 @@ SCIM authenticates with a bearer token minted from the TestPlanIt admin UI.
 2. Click **Mint new token**. Pick a descriptive name and the IdP this token is for (Okta / Entra / OneLogin / Other).
 3. TestPlanIt shows the raw token **once**. Tokens start with the prefix `tps_` (for example, `tps_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`). Copy it immediately — it is never displayed again.
 4. Paste the token into the **Secret Token** / **Bearer Token** field of your IdP's SCIM connector configuration.
-5. Click **Test SCIM** in the admin UI. It performs a server-side probe against `/scim/v2/ServiceProviderConfig` using the encrypted-at-rest copy of the token and reports back the HTTP status — proving the token is wired up before you save the IdP configuration.
+5. Click **Test SCIM** in the admin UI. It performs a server-side probe against `/api/scim/v2/ServiceProviderConfig` using the encrypted-at-rest copy of the token and reports back the HTTP status — proving the token is wired up before you save the IdP configuration.
 
 You can revoke a token at any time from the same page. Revocation is immediate: the next request on that token receives `401 Unauthorized`.
 
@@ -60,30 +60,30 @@ These fields are display-only — to change them, update the user in your IdP an
 
 ## Endpoint reference
 
-| Method   | Path                             | Description                                                           |
-| -------- | -------------------------------- | --------------------------------------------------------------------- |
-| `GET`    | `/scim/v2/ServiceProviderConfig` | Static capability document (no bearer required)                       |
-| `GET`    | `/scim/v2/Schemas`               | Lists supported schema URIs                                           |
-| `GET`    | `/scim/v2/Schemas/{id}`          | Returns one schema with attribute metadata                            |
-| `GET`    | `/scim/v2/ResourceTypes`         | Lists `User` and `Group` resource types                               |
-| `POST`   | `/scim/v2/Users`                 | Provision a user; `201 Created` on new, `200 OK` on existing-row bind |
-| `GET`    | `/scim/v2/Users`                 | List + filter users                                                   |
-| `GET`    | `/scim/v2/Users/{id}`            | Read one user                                                         |
-| `PUT`    | `/scim/v2/Users/{id}`            | Full replace                                                          |
-| `PATCH`  | `/scim/v2/Users/{id}`            | Partial update                                                        |
-| `DELETE` | `/scim/v2/Users/{id}`            | Soft-delete (tombstone)                                               |
-| `POST`   | `/scim/v2/Groups`                | Provision a group                                                     |
-| `GET`    | `/scim/v2/Groups`                | List + filter groups                                                  |
-| `GET`    | `/scim/v2/Groups/{id}`           | Read one group                                                        |
-| `PUT`    | `/scim/v2/Groups/{id}`           | Full replace                                                          |
-| `PATCH`  | `/scim/v2/Groups/{id}`           | Partial update (including member operations)                          |
-| `DELETE` | `/scim/v2/Groups/{id}`           | Soft-delete (tombstone)                                               |
+| Method   | Path                                 | Description                                                           |
+| -------- | ------------------------------------ | --------------------------------------------------------------------- |
+| `GET`    | `/api/scim/v2/ServiceProviderConfig` | Static capability document (no bearer required)                       |
+| `GET`    | `/api/scim/v2/Schemas`               | Lists supported schema URIs                                           |
+| `GET`    | `/api/scim/v2/Schemas/{id}`          | Returns one schema with attribute metadata                            |
+| `GET`    | `/api/scim/v2/ResourceTypes`         | Lists `User` and `Group` resource types                               |
+| `POST`   | `/api/scim/v2/Users`                 | Provision a user; `201 Created` on new, `200 OK` on existing-row bind |
+| `GET`    | `/api/scim/v2/Users`                 | List + filter users                                                   |
+| `GET`    | `/api/scim/v2/Users/{id}`            | Read one user                                                         |
+| `PUT`    | `/api/scim/v2/Users/{id}`            | Full replace                                                          |
+| `PATCH`  | `/api/scim/v2/Users/{id}`            | Partial update                                                        |
+| `DELETE` | `/api/scim/v2/Users/{id}`            | Soft-delete (tombstone)                                               |
+| `POST`   | `/api/scim/v2/Groups`                | Provision a group                                                     |
+| `GET`    | `/api/scim/v2/Groups`                | List + filter groups                                                  |
+| `GET`    | `/api/scim/v2/Groups/{id}`           | Read one group                                                        |
+| `PUT`    | `/api/scim/v2/Groups/{id}`           | Full replace                                                          |
+| `PATCH`  | `/api/scim/v2/Groups/{id}`           | Partial update (including member operations)                          |
+| `DELETE` | `/api/scim/v2/Groups/{id}`           | Soft-delete (tombstone)                                               |
 
 Mutation success codes follow RFC 7644: `201 Created` for new resources, `200 OK` for updates and existing-row binds, `204 No Content` for `DELETE`.
 
 ## Filter support
 
-`GET /scim/v2/Users?filter=…` and `GET /scim/v2/Groups?filter=…` accept a narrow SCIM filter grammar:
+`GET /api/scim/v2/Users?filter=…` and `GET /api/scim/v2/Groups?filter=…` accept a narrow SCIM filter grammar:
 
 - **Operators:** `eq`, `and`, `pr`
 - **Users — supported attributes:** `userName`, `externalId`, `emails.value`, `active`, `name.givenName`, `name.familyName`
@@ -165,7 +165,7 @@ A subscribing destination only receives the events listed in its `subscribedEven
 
 1. In the Okta Admin Console, navigate to **Applications → Browse App Catalog** and create a new SAML 2.0 + SCIM 2.0 application (or use Okta's "SCIM 2.0 Test App (Header Auth)" template for verification).
 2. Under **Provisioning → Integration**, set:
-   - **SCIM Connector base URL:** `https://your-instance.example.com/scim/v2`
+   - **SCIM Connector base URL:** `https://your-instance.example.com/api/scim/v2`
    - **Unique identifier field for users:** `userName`
    - **Supported provisioning actions:** Push New Users, Push Profile Updates, Push Groups, Import New Users and Profile Updates
    - **Authentication Mode:** HTTP Header
@@ -185,7 +185,7 @@ A subscribing destination only receives the events listed in its `subscribedEven
 1. In the Microsoft Entra admin center, go to **Enterprise applications → New application → Create your own application** and pick **Integrate any other application you don't find in the gallery (Non-gallery)**.
 2. Open the new application's **Provisioning** blade and set **Provisioning Mode** to **Automatic**.
 3. Set:
-   - **Tenant URL:** `https://your-instance.example.com/scim/v2`
+   - **Tenant URL:** `https://your-instance.example.com/api/scim/v2`
    - **Secret Token:** the `tps_*` value from `/admin/scim`
 4. Click **Test Connection**. Entra calls `/Users?filter=…` and `/Groups?filter=…` against your tenant URL with the bearer.
 5. Under **Settings → Provisioning Status**, switch the toggle to **On** once the test passes.
@@ -201,7 +201,7 @@ A subscribing destination only receives the events listed in its `subscribedEven
 
 1. In the OneLogin admin console, go to **Applications → Add App** and search for **SCIM Provisioner with SAML (SCIM v2 Core)**. Add it to your account.
 2. On the **Configuration** tab:
-   - **SCIM Base URL:** `https://your-instance.example.com/scim/v2`
+   - **SCIM Base URL:** `https://your-instance.example.com/api/scim/v2`
    - **SCIM JSON Template:** leave the default
    - **SCIM Bearer Token:** the `tps_*` value from `/admin/scim`
 3. Click **Enable** next to **API Connection** and confirm the green status indicator.
@@ -227,7 +227,7 @@ The conflict log surfaces only the last ~90 days (the same retention window as t
 ### "Test SCIM" probe failure modes
 
 - **401 Unauthorized** — token is revoked, expired, or not a `tps_*` value. Re-mint or check the IdP configuration.
-- **403 Forbidden** — your tenant policy or a network layer is blocking bearer requests to `/scim/v2/*`. Confirm there's no proxy stripping the `Authorization` header.
+- **403 Forbidden** — your tenant policy or a network layer is blocking bearer requests to `/api/scim/v2/*`. Confirm there's no proxy stripping the `Authorization` header.
 - **5xx** — usually a database or worker outage. The TestPlanIt error response carries an RFC 7644 envelope with the failing operation.
 
 ### Rate limiting (429)

@@ -4536,7 +4536,7 @@
       "probe": {
         "button": "Test SCIM",
         "testing": "Testing…",
-        "okBanner": "HTTP {status} — token works against /scim/v2/Users.",
+        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "Couldn't reach the SCIM endpoint. Retry."
       }

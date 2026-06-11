@@ -84,7 +84,7 @@ describe("GET /api/scim/v2/Schemas/[id]", () => {
     expect(body.attributes.some((a) => a.name === "userName")).toBe(true);
     expect(body.meta.resourceType).toBe("Schema");
     expect(body.meta.location).toBe(
-      `http://localhost:3000/scim/v2/Schemas/${CORE_USER_URN}`
+      `http://localhost:3000/api/scim/v2/Schemas/${CORE_USER_URN}`
     );
   });
 
@@ -103,7 +103,7 @@ describe("GET /api/scim/v2/Schemas/[id]", () => {
     expect(body.attributes.some((a) => a.name === "displayName")).toBe(true);
     expect(body.meta.resourceType).toBe("Schema");
     expect(body.meta.location).toBe(
-      `http://localhost:3000/scim/v2/Schemas/${CORE_GROUP_URN}`
+      `http://localhost:3000/api/scim/v2/Schemas/${CORE_GROUP_URN}`
     );
   });
 
@@ -122,7 +122,7 @@ describe("GET /api/scim/v2/Schemas/[id]", () => {
     expect(body.attributes.some((a) => a.name === "employeeNumber")).toBe(true);
     expect(body.meta.resourceType).toBe("Schema");
     expect(body.meta.location).toBe(
-      `http://localhost:3000/scim/v2/Schemas/${ENTERPRISE_USER_URN}`
+      `http://localhost:3000/api/scim/v2/Schemas/${ENTERPRISE_USER_URN}`
     );
   });
 
@@ -154,7 +154,7 @@ describe("GET /api/scim/v2/Schemas/[id]", () => {
         meta: { location: string };
       };
       expect(body.meta.location).toBe(
-        `http://app.example.com/scim/v2/Schemas/${CORE_USER_URN}`
+        `http://app.example.com/api/scim/v2/Schemas/${CORE_USER_URN}`
       );
     } finally {
       if (before) {

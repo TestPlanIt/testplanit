@@ -79,7 +79,7 @@ const SAMPLE_RESOURCE = {
   members: [],
   meta: {
     resourceType: "Group" as const,
-    location: "http://localhost:3000/scim/v2/Groups/11",
+    location: "http://localhost:3000/api/scim/v2/Groups/11",
     version: "v1",
     lastModified: "2026-06-05T00:00:00.000Z",
   },
@@ -91,7 +91,7 @@ function makeReq(opts: {
   body?: unknown;
   bodyText?: string;
 }): [NextRequest, { params: Promise<{ id: string }> }] {
-  const url = opts.url ?? "http://localhost/scim/v2/Groups/11";
+  const url = opts.url ?? "http://localhost/api/scim/v2/Groups/11";
   const headers: Record<string, string> = {};
   let body: BodyInit | undefined;
   if (opts.body !== undefined) {

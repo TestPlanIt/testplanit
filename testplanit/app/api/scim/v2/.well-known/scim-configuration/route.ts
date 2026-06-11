@@ -1,5 +1,5 @@
 /**
- * GET /scim/v2/.well-known/scim-configuration — endpoint pointer probe.
+ * GET /api/scim/v2/.well-known/scim-configuration — endpoint pointer probe.
  *
  * Returns the three absolute URLs an IdP needs to bootstrap discovery
  * (ServiceProviderConfig, Schemas, ResourceTypes). The URLs are derived from
@@ -12,7 +12,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { ScimAuthError, requireScimBearer } from "~/lib/scim/auth";
-import { SCIM_CONTENT_TYPE } from "~/lib/scim/constants";
+import { SCIM_BASE_PATH, SCIM_CONTENT_TYPE } from "~/lib/scim/constants";
 import { scimError } from "~/lib/scim/errors";
 import { getScimBaseUrl } from "~/lib/scim/responses";
 
@@ -26,9 +26,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const base = getScimBaseUrl();
   const body = {
-    serviceProviderConfig: `${base}/scim/v2/ServiceProviderConfig`,
-    schemas: `${base}/scim/v2/Schemas`,
-    resourceTypes: `${base}/scim/v2/ResourceTypes`,
+    serviceProviderConfig: `${base}${SCIM_BASE_PATH}/ServiceProviderConfig`,
+    schemas: `${base}${SCIM_BASE_PATH}/Schemas`,
+    resourceTypes: `${base}${SCIM_BASE_PATH}/ResourceTypes`,
   };
 
   return NextResponse.json(body, {

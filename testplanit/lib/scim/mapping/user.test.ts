@@ -101,7 +101,7 @@ describe("userToScim", () => {
     expect(result.active).toBe(true);
     expect(result.meta).toEqual({
       resourceType: "User",
-      location: "https://app.example.com/scim/v2/Users/u_1",
+      location: "https://app.example.com/api/scim/v2/Users/u_1",
       version: fixedUpdatedAt.toISOString(),
       lastModified: fixedUpdatedAt.toISOString(),
     });
@@ -313,7 +313,7 @@ describe("computeUserUpdatesFromScim", () => {
       active: true,
       meta: {
         resourceType: "User",
-        location: "https://app.example.com/scim/v2/Users/u_1",
+        location: "https://app.example.com/api/scim/v2/Users/u_1",
         version: fixedUpdatedAt.toISOString(),
         lastModified: fixedUpdatedAt.toISOString(),
       },

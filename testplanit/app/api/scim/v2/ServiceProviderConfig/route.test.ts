@@ -19,7 +19,7 @@ vi.mock("~/lib/scim/auth", () => ({
   }),
 }));
 
-const req = (path = "/scim/v2/ServiceProviderConfig"): NextRequest =>
+const req = (path = "/api/scim/v2/ServiceProviderConfig"): NextRequest =>
   new NextRequest(`http://localhost${path}`);
 
 const originalNextAuthUrl = process.env.NEXTAUTH_URL;
@@ -72,7 +72,7 @@ describe("GET /api/scim/v2/ServiceProviderConfig", () => {
     );
     expect(body.meta.resourceType).toBe("ServiceProviderConfig");
     expect(body.meta.location).toBe(
-      "http://localhost:3000/scim/v2/ServiceProviderConfig"
+      "http://localhost:3000/api/scim/v2/ServiceProviderConfig"
     );
   });
 
@@ -142,7 +142,7 @@ describe("GET /api/scim/v2/ServiceProviderConfig", () => {
         meta: { location: string };
       };
       expect(body.meta.location).toBe(
-        "http://app.example.com/scim/v2/ServiceProviderConfig"
+        "http://app.example.com/api/scim/v2/ServiceProviderConfig"
       );
     } finally {
       if (before) {

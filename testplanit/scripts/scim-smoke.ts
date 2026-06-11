@@ -6,17 +6,17 @@
  * mintScimToken helper the admin UI uses), then runs the full SCIM 2.0
  * endpoint surface against a local server (default http://localhost:3000):
  *
- *   1.  GET    /scim/v2/ServiceProviderConfig
- *   2.  POST   /scim/v2/Users           (create test User)
- *   3.  GET    /scim/v2/Users           (list)
- *   4.  GET    /scim/v2/Users/{id}      (read)
- *   5.  PATCH  /scim/v2/Users/{id}      (active=false)
- *   6.  POST   /scim/v2/Groups          (create test Group with one member)
- *   7.  GET    /scim/v2/Groups          (list)
- *   8.  GET    /scim/v2/Groups/{id}     (read; assert members include test User)
- *   9.  PATCH  /scim/v2/Groups/{id}     (add-member op — re-adds test User)
- *   10. DELETE /scim/v2/Groups/{id}     (tombstone)
- *   11. DELETE /scim/v2/Users/{id}      (tombstone)
+ *   1.  GET    /api/scim/v2/ServiceProviderConfig
+ *   2.  POST   /api/scim/v2/Users           (create test User)
+ *   3.  GET    /api/scim/v2/Users           (list)
+ *   4.  GET    /api/scim/v2/Users/{id}      (read)
+ *   5.  PATCH  /api/scim/v2/Users/{id}      (active=false)
+ *   6.  POST   /api/scim/v2/Groups          (create test Group with one member)
+ *   7.  GET    /api/scim/v2/Groups          (list)
+ *   8.  GET    /api/scim/v2/Groups/{id}     (read; assert members include test User)
+ *   9.  PATCH  /api/scim/v2/Groups/{id}     (add-member op — re-adds test User)
+ *   10. DELETE /api/scim/v2/Groups/{id}     (tombstone)
+ *   11. DELETE /api/scim/v2/Users/{id}      (tombstone)
  *   12. revokeScimToken                 (token cleanup — always runs)
  *
  * Each step prints `PASS (Xms)` or `FAIL (Xms) (<reason>)`. Exit 0 when
@@ -171,8 +171,8 @@ async function main(): Promise<void> {
   let testGroupId: string | null = null;
 
   try {
-    await runStep("GET /scim/v2/ServiceProviderConfig", async () => {
-      const res = await request("GET", "/scim/v2/ServiceProviderConfig");
+    await runStep("GET /api/scim/v2/ServiceProviderConfig", async () => {
+      const res = await request("GET", "/api/scim/v2/ServiceProviderConfig");
       expectStatus(res.status, 200, "ServiceProviderConfig");
       const body = asObject(res.body, "ServiceProviderConfig body");
       const schemas = asArray(body.schemas, "ServiceProviderConfig.schemas");
@@ -181,9 +181,9 @@ async function main(): Promise<void> {
       }
     });
 
-    await runStep("POST /scim/v2/Users", async () => {
+    await runStep("POST /api/scim/v2/Users", async () => {
       const userName = `smoke-user-${ts}@smoke.test`;
-      const res = await request("POST", "/scim/v2/Users", {
+      const res = await request("POST", "/api/scim/v2/Users", {
         schemas: [SCIM_SCHEMAS.CORE_USER],
         userName,
         emails: [{ value: userName, primary: true }],
@@ -195,8 +195,8 @@ async function main(): Promise<void> {
       testUserId = asString(body.id, "POST /Users.id");
     });
 
-    await runStep("GET /scim/v2/Users", async () => {
-      const res = await request("GET", "/scim/v2/Users");
+    await runStep("GET /api/scim/v2/Users", async () => {
+      const res = await request("GET", "/api/scim/v2/Users");
       expectStatus(res.status, 200, "GET /Users");
       const body = asObject(res.body, "GET /Users body");
       if (typeof body.totalResults !== "number" || body.totalResults < 1) {
@@ -206,27 +206,27 @@ async function main(): Promise<void> {
       }
     });
 
-    await runStep("GET /scim/v2/Users/{id}", async () => {
+    await runStep("GET /api/scim/v2/Users/{id}", async () => {
       if (!testUserId) throw new Error("no test user id captured");
-      const res = await request("GET", `/scim/v2/Users/${testUserId}`);
+      const res = await request("GET", `/api/scim/v2/Users/${testUserId}`);
       expectStatus(res.status, 200, "GET /Users/{id}");
       const body = asObject(res.body, "GET /Users/{id} body");
       const meta = asObject(body.meta, "GET /Users/{id}.meta");
       asString(meta.location, "GET /Users/{id}.meta.location");
     });
 
-    await runStep("PATCH /scim/v2/Users/{id} active=false", async () => {
+    await runStep("PATCH /api/scim/v2/Users/{id} active=false", async () => {
       if (!testUserId) throw new Error("no test user id captured");
-      const res = await request("PATCH", `/scim/v2/Users/${testUserId}`, {
+      const res = await request("PATCH", `/api/scim/v2/Users/${testUserId}`, {
         schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
         Operations: [{ op: "replace", path: "active", value: false }],
       });
       expectStatus(res.status, 200, "PATCH /Users/{id}");
     });
 
-    await runStep("POST /scim/v2/Groups", async () => {
+    await runStep("POST /api/scim/v2/Groups", async () => {
       if (!testUserId) throw new Error("no test user id captured");
-      const res = await request("POST", "/scim/v2/Groups", {
+      const res = await request("POST", "/api/scim/v2/Groups", {
         schemas: [SCIM_SCHEMAS.CORE_GROUP],
         displayName: `smoke-group-${ts}`,
         members: [{ value: testUserId }],
@@ -236,16 +236,16 @@ async function main(): Promise<void> {
       testGroupId = asString(body.id, "POST /Groups.id");
     });
 
-    await runStep("GET /scim/v2/Groups", async () => {
-      const res = await request("GET", "/scim/v2/Groups");
+    await runStep("GET /api/scim/v2/Groups", async () => {
+      const res = await request("GET", "/api/scim/v2/Groups");
       expectStatus(res.status, 200, "GET /Groups");
       asObject(res.body, "GET /Groups body");
     });
 
-    await runStep("GET /scim/v2/Groups/{id}", async () => {
+    await runStep("GET /api/scim/v2/Groups/{id}", async () => {
       if (!testGroupId) throw new Error("no test group id captured");
       if (!testUserId) throw new Error("no test user id captured");
-      const res = await request("GET", `/scim/v2/Groups/${testGroupId}`);
+      const res = await request("GET", `/api/scim/v2/Groups/${testGroupId}`);
       expectStatus(res.status, 200, "GET /Groups/{id}");
       const body = asObject(res.body, "GET /Groups/{id} body");
       const members = asArray(body.members, "GET /Groups/{id}.members");
@@ -259,10 +259,10 @@ async function main(): Promise<void> {
       }
     });
 
-    await runStep("PATCH /scim/v2/Groups/{id} add-member", async () => {
+    await runStep("PATCH /api/scim/v2/Groups/{id} add-member", async () => {
       if (!testGroupId) throw new Error("no test group id captured");
       if (!testUserId) throw new Error("no test user id captured");
-      const res = await request("PATCH", `/scim/v2/Groups/${testGroupId}`, {
+      const res = await request("PATCH", `/api/scim/v2/Groups/${testGroupId}`, {
         schemas: ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
         Operations: [
           {
@@ -275,15 +275,15 @@ async function main(): Promise<void> {
       expectStatus(res.status, 200, "PATCH /Groups/{id}");
     });
 
-    await runStep("DELETE /scim/v2/Groups/{id}", async () => {
+    await runStep("DELETE /api/scim/v2/Groups/{id}", async () => {
       if (!testGroupId) throw new Error("no test group id captured");
-      const res = await request("DELETE", `/scim/v2/Groups/${testGroupId}`);
+      const res = await request("DELETE", `/api/scim/v2/Groups/${testGroupId}`);
       expectStatus(res.status, 204, "DELETE /Groups/{id}");
     });
 
-    await runStep("DELETE /scim/v2/Users/{id}", async () => {
+    await runStep("DELETE /api/scim/v2/Users/{id}", async () => {
       if (!testUserId) throw new Error("no test user id captured");
-      const res = await request("DELETE", `/scim/v2/Users/${testUserId}`);
+      const res = await request("DELETE", `/api/scim/v2/Users/${testUserId}`);
       expectStatus(res.status, 204, "DELETE /Users/{id}");
     });
   } finally {

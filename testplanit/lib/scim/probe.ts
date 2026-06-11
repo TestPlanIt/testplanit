@@ -3,7 +3,7 @@
  *
  * Decrypts the stored bearer secret for a single SCIM token and exercises
  * the real bearer-auth control flow against the lightest discovery endpoint
- * (`/scim/v2/ServiceProviderConfig`). The result -- `{ ok, status, reason? }`
+ * (`/api/scim/v2/ServiceProviderConfig`). The result -- `{ ok, status, reason? }`
  * -- is what the admin UI surfaces as an OK/FAIL banner. No response body
  * preview, no timing, no plaintext returned to the caller.
  *
@@ -28,6 +28,7 @@
  * responsibility, not this module's.
  */
 
+import { SCIM_BASE_PATH } from "~/lib/scim/constants";
 import { getScimBaseUrl } from "~/lib/scim/responses";
 import { decryptScimSecret, getScimTokenById } from "~/lib/scim/tokens";
 
@@ -47,7 +48,7 @@ export interface ScimProbeResult {
 /**
  * Probe a SCIM bearer token by re-deriving the plaintext from the encrypted
  * secret column and issuing one authenticated GET against the local
- * `/scim/v2/ServiceProviderConfig` route. Returns a structured result
+ * `/api/scim/v2/ServiceProviderConfig` route. Returns a structured result
  * regardless of outcome; never throws.
  */
 export async function probeScimToken(
@@ -62,7 +63,7 @@ export async function probeScimToken(
   }
 
   const plaintext = await decryptScimSecret(row.secret);
-  const url = `${getScimBaseUrl()}/scim/v2/ServiceProviderConfig`;
+  const url = `${getScimBaseUrl()}${SCIM_BASE_PATH}/ServiceProviderConfig`;
 
   try {
     const res = await fetch(url, {

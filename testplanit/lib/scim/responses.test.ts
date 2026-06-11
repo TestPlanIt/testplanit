@@ -42,7 +42,7 @@ describe("scimLocation", () => {
     process.env.NEXTAUTH_URL = "https://app.example.com";
     try {
       expect(scimLocation("Users", "abc-123")).toBe(
-        "https://app.example.com/scim/v2/Users/abc-123"
+        "https://app.example.com/api/scim/v2/Users/abc-123"
       );
     } finally {
       delete process.env.NEXTAUTH_URL;
@@ -53,7 +53,7 @@ describe("scimLocation", () => {
     process.env.NEXTAUTH_URL = "https://app.example.com";
     try {
       expect(scimLocation("Schemas")).toBe(
-        "https://app.example.com/scim/v2/Schemas"
+        "https://app.example.com/api/scim/v2/Schemas"
       );
     } finally {
       delete process.env.NEXTAUTH_URL;
@@ -63,7 +63,7 @@ describe("scimLocation", () => {
   it("falls back to http://localhost:3000 base when NEXTAUTH_URL is unset", () => {
     expect(process.env.NEXTAUTH_URL).toBeUndefined();
     expect(scimLocation("Users", "abc-123")).toBe(
-      "http://localhost:3000/scim/v2/Users/abc-123"
+      "http://localhost:3000/api/scim/v2/Users/abc-123"
     );
   });
 
@@ -71,7 +71,7 @@ describe("scimLocation", () => {
     process.env.NEXTAUTH_URL = "https://app.example.com";
     try {
       expect(scimLocation("ServiceProviderConfig")).toBe(
-        "https://app.example.com/scim/v2/ServiceProviderConfig"
+        "https://app.example.com/api/scim/v2/ServiceProviderConfig"
       );
     } finally {
       delete process.env.NEXTAUTH_URL;

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { z } from "zod/v4";
 
 import { mintScimTokenAction } from "~/app/actions/scimTokenActions";
+import { SCIM_BASE_PATH } from "~/lib/scim/constants";
 import { cn } from "~/utils";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -232,14 +233,15 @@ export function MintDialog({ open, onOpenChange, onSuccess }: MintDialogProps) {
   // or to a third-party sink.
   const inRevealState = mintedToken !== null;
 
-  // Base URL for the IdP-config hint. NEXTAUTH_URL is server-only — derive
-  // from window.location.origin on mount. Falls back to empty string until
-  // the effect runs (SSR safety; this component is client-only so the gap
-  // is one frame).
+  // Base URL for the IdP-config hint — the full SCIM endpoint the IdP connects
+  // to, i.e. origin + the canonical SCIM mount path. NEXTAUTH_URL is
+  // server-only, so derive the origin from window.location on mount. Falls back
+  // to empty string until the effect runs (SSR safety; this component is
+  // client-only so the gap is one frame).
   const [baseUrl, setBaseUrl] = useState("");
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setBaseUrl(window.location.origin);
+      setBaseUrl(`${window.location.origin}${SCIM_BASE_PATH}`);
     }
   }, []);
 
