@@ -642,5 +642,6 @@ export function getAllQueues() {
     "generate-from-url": getGenerateFromUrlQueue(),
     iterationGenerationQueue: getIterationGenerationQueue(),
     webhookDispatchQueue: getWebhookDispatchQueue(),
+    scimAccessRecomputeQueue: getScimAccessRecomputeQueue(),
   };
 }
