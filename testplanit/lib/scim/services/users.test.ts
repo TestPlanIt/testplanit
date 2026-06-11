@@ -175,13 +175,29 @@ describe("createScimUser", () => {
       expect(args.data.email).toBe("alice@example.com");
       expect(args.data.name).toBe("Alice Example");
       expect(args.data.roleId).toBe(7);
+      // With null AppConfig row, fallbackDefault resolves to NONE.
       expect(args.data.access).toBe("NONE");
+      expect(args.data.accessSource).toBe("GROUP_MAPPING");
       // password is a NOT NULL-equivalent fallback bcrypt hash to support
       // legacy schema expectations; never the IdP-supplied password.
       expect(typeof args.data.password).toBe("string");
       expect((args.data.password as string).length).toBeGreaterThan(20);
 
       expect(result.linked).toBe(false);
+    });
+
+    it("A1b: uses the configured fallback default when AppConfig row is present", async () => {
+      tx.appConfig.findUnique.mockResolvedValue({ value: "USER" });
+      tx.user.findFirst.mockResolvedValue(null);
+      tx.user.create.mockResolvedValue(makeUser({ id: "user_new", access: "USER" }));
+
+      await createScimUser(makeBody(), CTX);
+
+      const args = tx.user.create.mock.calls[0][0] as {
+        data: Record<string, unknown>;
+      };
+      expect(args.data.access).toBe("USER");
+      expect(args.data.accessSource).toBe("GROUP_MAPPING");
     });
 
     it("A2: emits scim.user.created with SYSTEM_PROJECT_ID + SCIM_SYSTEM_USER_ID defaults", async () => {
