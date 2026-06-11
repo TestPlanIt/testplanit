@@ -1018,6 +1018,48 @@ describe("deleteScimGroup", () => {
     };
     expect("externalId" in args.data).toBe(false);
   });
+
+  it("G4: DELETE on a mapped group with members clears groupAssignment rows and recomputes access for each ex-member in-transaction", async () => {
+    const current = makeGroup({
+      id: 124,
+      assignedUsers: [
+        { user: { id: "u10", name: "Alice" } },
+        { user: { id: "u11", name: "Bob" } },
+      ],
+    });
+    tx.groups.findUnique.mockResolvedValue(current);
+    tx.groups.update.mockResolvedValue({ ...current, isDeleted: true });
+
+    // recomputeUserAccess calls: findUnique then groupAssignment.findMany per user.
+    // Both ex-members had USER access via GROUP_MAPPING; after deletion they
+    // have no mapped groups → recompute writes NONE.
+    tx.user.findUnique
+      .mockResolvedValueOnce({ id: "u10", access: "USER", accessSource: "GROUP_MAPPING" })
+      .mockResolvedValueOnce({ id: "u11", access: "USER", accessSource: "GROUP_MAPPING" });
+    tx.groupAssignment.findMany
+      .mockResolvedValueOnce([]) // u10 has no remaining mapped groups
+      .mockResolvedValueOnce([]); // u11 has no remaining mapped groups
+    tx.user.update.mockResolvedValue({ id: "u10", access: "NONE" });
+
+    await deleteScimGroup("124", CTX);
+
+    // groupAssignment.deleteMany must have been called for the group
+    expect(tx.groupAssignment.deleteMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { groupId: 124 } })
+    );
+
+    // recomputeUserAccess must have written NONE for both ex-members
+    expect(tx.user.update).toHaveBeenCalledTimes(2);
+    const updateIds = (tx.user.update.mock.calls as Array<[{ where: { id: string } }]>)
+      .map(([args]) => args.where.id)
+      .sort();
+    expect(updateIds).toEqual(["u10", "u11"]);
+
+    // Each recompute write must carry GROUP_MAPPING as the source
+    for (const [args] of tx.user.update.mock.calls as Array<[{ where: { id: string }; data: { access: string; accessSource: string } }]>) {
+      expect(args.data.accessSource).toBe("GROUP_MAPPING");
+    }
+  });
 });
 
 describe("H — anti-pattern guards (raw-prisma + emit-inside-tx + entityType + ScimValidationError type)", () => {

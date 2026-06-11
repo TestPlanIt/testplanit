@@ -448,6 +448,40 @@ describe("createScimUser", () => {
         ScimUniquenessError
       );
     });
+
+    it("D3: resurrected user receives access=fallbackDefault and accessSource=GROUP_MAPPING, preventing stale MANUAL access from persisting", async () => {
+      // Tombstoned user previously had MANUAL access (e.g., admin-set before
+      // SCIM governance was enabled). Resurrection must overwrite with the
+      // governance-controlled fallback so the user re-enters the access
+      // recompute pipeline on next group assignment.
+      const tombstoned = makeUser({
+        id: "user_dead",
+        scimExternalId: "okta_abc",
+        isDeleted: true,
+        isActive: false,
+        access: "ADMIN",
+        accessSource: "MANUAL",
+      });
+      tx.user.findFirst.mockResolvedValue(tombstoned);
+      // Stub fallbackDefault = NONE (null AppConfig row, already set in afterEach)
+      tx.user.update.mockResolvedValue({
+        ...tombstoned,
+        isActive: true,
+        isDeleted: false,
+        access: "NONE",
+        accessSource: "GROUP_MAPPING",
+      });
+
+      await createScimUser(makeBody(), CTX);
+
+      expect(tx.user.update).toHaveBeenCalledTimes(1);
+      const args = tx.user.update.mock.calls[0][0] as {
+        where: { id: string };
+        data: Record<string, unknown>;
+      };
+      expect(args.data.access).toBe("NONE");
+      expect(args.data.accessSource).toBe("GROUP_MAPPING");
+    });
   });
 });
 
