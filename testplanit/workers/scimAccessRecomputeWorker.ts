@@ -51,6 +51,8 @@ export const processor = async (
 
   validateMultiTenantJobData(job.data);
 
+  const BATCH_SIZE = 100;
+
   await runWithAuditContext(
     {
       userId: adminUserId,
@@ -58,19 +60,24 @@ export const processor = async (
       scimTokenId: "worker:scim-access-recompute",
     },
     async () => {
-      await prisma.$transaction(async (tx) => {
-        const fallbackDefault = await readScimFallbackDefault(tx);
+      if (groupId != null) {
+        const members = await prisma.groupAssignment.findMany({
+          where: { groupId },
+          select: { userId: true },
+        });
 
-        if (groupId != null) {
-          const members = await tx.groupAssignment.findMany({
-            where: { groupId },
-            select: { userId: true },
+        for (let i = 0; i < members.length; i += BATCH_SIZE) {
+          const batch = members.slice(i, i + BATCH_SIZE);
+          await prisma.$transaction(async (tx) => {
+            const fallbackDefault = await readScimFallbackDefault(tx);
+            for (const { userId } of batch) {
+              await recomputeUserAccess(tx, userId, fallbackDefault);
+            }
           });
-
-          for (const { userId } of members) {
-            await recomputeUserAccess(tx, userId, fallbackDefault);
-          }
-        } else {
+        }
+      } else {
+        await prisma.$transaction(async (tx) => {
+          const fallbackDefault = await readScimFallbackDefault(tx);
           const users = await tx.user.findMany({
             where: { accessSource: "GROUP_MAPPING", isDeleted: false },
             select: { id: true },
@@ -79,8 +86,8 @@ export const processor = async (
           for (const { id } of users) {
             await recomputeUserAccess(tx, id, fallbackDefault);
           }
-        }
-      });
+        });
+      }
     }
   );
 };

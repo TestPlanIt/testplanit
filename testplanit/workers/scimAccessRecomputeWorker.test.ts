@@ -10,6 +10,7 @@ vi.mock("../lib/prisma", () => {
   return {
     prisma: {
       $transaction: vi.fn(async (cb: (tx: unknown) => unknown) => cb(tx)),
+      groupAssignment: { findMany: vi.fn() },
       __tx: tx,
     },
   };
@@ -74,6 +75,9 @@ interface TxLike {
 }
 
 const tx = (prisma as unknown as { __tx: TxLike }).__tx;
+// Top-level prisma.groupAssignment.findMany is called outside the transaction
+// for the groupId batch path.
+const prismaGroupAssignment = (prisma as unknown as { groupAssignment: { findMany: ReturnType<typeof vi.fn> } }).groupAssignment;
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -93,7 +97,7 @@ function makeJob(
 
 describe("scimAccessRecomputeWorker processor", () => {
   it("W1: calls validateMultiTenantJobData on entry", async () => {
-    tx.groupAssignment.findMany.mockResolvedValue([]);
+    prismaGroupAssignment.findMany.mockResolvedValue([]);
 
     await processor(makeJob({ groupId: 42 }));
 
@@ -105,11 +109,11 @@ describe("scimAccessRecomputeWorker processor", () => {
 
   it("W2: job with groupId — recomputes each member of that group", async () => {
     const members = [{ userId: "user-a" }, { userId: "user-b" }];
-    tx.groupAssignment.findMany.mockResolvedValue(members);
+    prismaGroupAssignment.findMany.mockResolvedValue(members);
 
     await processor(makeJob({ groupId: 10 }));
 
-    expect(tx.groupAssignment.findMany).toHaveBeenCalledWith(
+    expect(prismaGroupAssignment.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: expect.objectContaining({ groupId: 10 }) })
     );
     expect(recomputeUserAccess).toHaveBeenCalledTimes(2);
@@ -138,7 +142,7 @@ describe("scimAccessRecomputeWorker processor", () => {
   });
 
   it("W4: audit frame carries adminUserId, scimGroupId, and scimTokenId when groupId is present", async () => {
-    tx.groupAssignment.findMany.mockResolvedValue([{ userId: "user-a" }]);
+    prismaGroupAssignment.findMany.mockResolvedValue([{ userId: "user-a" }]);
 
     await processor(makeJob({ groupId: 99, adminUserId: "admin-42" }));
 
@@ -153,11 +157,12 @@ describe("scimAccessRecomputeWorker processor", () => {
   });
 
   it("W5: uses the hooked lib/prisma client, NOT getPrismaClientForJob", async () => {
-    tx.groupAssignment.findMany.mockResolvedValue([]);
+    prismaGroupAssignment.findMany.mockResolvedValue([{ userId: "user-b" }]);
 
     await processor(makeJob({ groupId: 5 }));
 
+    // The mocked prisma.$transaction was called — this proves the processor
+    // used the module we mocked (../lib/prisma), not an unmocked raw client.
     expect((prisma as any).$transaction).toHaveBeenCalledTimes(1);
-    expect(prisma).toBe((prisma as any));
   });
 });
