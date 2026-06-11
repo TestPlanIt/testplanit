@@ -255,7 +255,12 @@ export function MatrixGrid({
                 }
               >
                 {isCaseRow ? (
-                  <div className="min-w-0 flex-1 overflow-hidden [&_*]:min-w-0 [&_span]:block [&_span]:overflow-hidden [&_span]:truncate [&_span]:whitespace-nowrap">
+                  // `[&_*]:min-w-0` lets the name truncate inside the nested
+                  // flex layout. We deliberately do NOT blanket-force spans to
+                  // `block` — that broke CaseDisplay's inline-flex type icon
+                  // onto its own line. The name already truncates via the
+                  // CaseDisplay `maxLines={1}` below.
+                  <div className="min-w-0 flex-1 overflow-hidden [&_*]:min-w-0">
                     <CaseDisplay
                       id={sr.caseId}
                       name={sr.caseName}

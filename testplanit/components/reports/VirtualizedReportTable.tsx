@@ -258,7 +258,10 @@ export function VirtualizedReportTable({
       >
         {/* Header — stays put vertically (lives above the scroll body) and
             scrolls horizontally with the body via the outer container. */}
-        <div className="flex shrink-0 border-b bg-accent" role="row">
+        <div
+          className="flex shrink-0 border-b bg-muted text-foreground"
+          role="row"
+        >
           {headers
             .filter((header) => header.column.getIsVisible())
             .map((header) => {
@@ -343,7 +346,11 @@ export function VirtualizedReportTable({
                 const isSubRow = row.depth > 0;
                 return (
                   <div
-                    key={row.id}
+                    // Key by the virtual item (index), not the data id, so React
+                    // reuses DOM nodes by position to match TanStack Virtual's
+                    // index-based dynamic measurement — otherwise some rows stick
+                    // at estimateSize and the row heights come out uneven.
+                    key={vItem.key}
                     data-index={vItem.index}
                     ref={measureElement}
                     role="row"
@@ -352,7 +359,7 @@ export function VirtualizedReportTable({
                     className={cn(
                       "absolute left-0 top-0 flex border-b",
                       isGrouped
-                        ? "bg-accent font-semibold"
+                        ? "bg-muted font-semibold text-foreground"
                         : isSubRow
                           ? "bg-muted/5 hover:bg-muted/20"
                           : "hover:bg-muted/50"
