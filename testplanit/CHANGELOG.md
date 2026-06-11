@@ -1,3 +1,9 @@
+## [0.37.8](https://github.com/TestPlanIt/testplanit/compare/v0.37.7...v0.37.8) (2026-06-11)
+
+### Enhancements
+
+* **reports:** virtual scrolling + infinite list for report tables ([#425](https://github.com/TestPlanIt/testplanit/issues/425)) ([1c74431](https://github.com/TestPlanIt/testplanit/commit/1c74431928e3e4bae073f8b417b7fcc7d0999d0d))
+
 ## [0.37.7](https://github.com/TestPlanIt/testplanit/compare/v0.37.6...v0.37.7) (2026-06-11)
 
 ### Enhancements
