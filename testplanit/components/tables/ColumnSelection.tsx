@@ -208,6 +208,16 @@ export function ColumnSelection<TData>({
   const [columnVisibility, setColumnVisibility] =
     useState<Record<string, boolean>>(getInitialVisibility);
 
+  // Snapshot the mount-time initial visibility once, as a stable baseline for
+  // URL change-detection. Recomputing getInitialVisibility() in the URL effect
+  // would re-read localStorage *after* the persist effect writes it, so every
+  // change would look like "no change" and the shareable ?columns= URL would
+  // stop updating once a storageKey is set.
+  const initialVisibilityRef = useRef<Record<string, boolean> | null>(null);
+  if (initialVisibilityRef.current === null) {
+    initialVisibilityRef.current = columnVisibility;
+  }
+
   // Remember the user's choices for this view. Skip the first render so we only
   // persist deliberate changes (not the computed defaults or a shared-link URL
   // state), then write on every subsequent change. Merging happens in the
@@ -224,9 +234,13 @@ export function ColumnSelection<TData>({
 
   useEffect(() => {
     onVisibilityChange(columnVisibility);
-    // Skip URL update if no columns have changed from initial state
+    // Skip URL update if no columns have changed from the mount-time initial
+    // state. Compare against the stable snapshot (not getInitialVisibility(),
+    // which would re-read storage written by the persist effect and mask the
+    // change), so the ?columns= URL stays in sync with the selection.
+    const initialVisibility = initialVisibilityRef.current ?? {};
     const hasChanges = Object.entries(columnVisibility).some(
-      ([key, value]) => value !== getInitialVisibility()[key]
+      ([key, value]) => value !== initialVisibility[key]
     );
     if (!hasChanges) return;
 
@@ -269,7 +283,6 @@ export function ColumnSelection<TData>({
     router,
     columnVisibilityQuery,
     metadataSource,
-    getInitialVisibility,
     pathname,
   ]);
 

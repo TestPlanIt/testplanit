@@ -360,11 +360,10 @@ describe("restore vs. URL", () => {
     expect(url).toContain("columns=");
   });
 
-  it("KNOWN INTERACTION: with column memory ON, a change is saved to storage but the ?columns= URL is NOT updated", async () => {
-    // The persist effect runs before the URL effect and writes the new state
-    // to storage; the URL effect then recomputes getInitialVisibility(), which
-    // overlays that fresh storage and so equals the new state — making the
-    // change look like "no change from initial", which suppresses the URL push.
+  it("with column memory ON, a change updates both storage and the ?columns= URL", async () => {
+    // The persist effect writes the change to storage; change-detection in the
+    // URL effect compares against a stable mount-time snapshot (not re-read
+    // storage), so the shareable ?columns= URL stays in sync with the change.
     const user = userEvent.setup();
     const onVisibilityChange = vi.fn();
 
@@ -383,8 +382,11 @@ describe("restore vs. URL", () => {
     await waitFor(() =>
       expect(readStoredColumnVisibility("mem-view")?.colB).toBe(false)
     );
-    // ...but the shareable URL is never updated.
-    expect(navMocks.push).not.toHaveBeenCalled();
+    // ...and the shareable URL is kept in sync.
+    await waitFor(() => expect(navMocks.push).toHaveBeenCalled());
+    expect(navMocks.push.mock.calls.at(-1)?.[0] as string).toContain(
+      "columns="
+    );
   });
 });
 
