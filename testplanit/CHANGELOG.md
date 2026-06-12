@@ -1,3 +1,9 @@
+## [0.37.12](https://github.com/TestPlanIt/testplanit/compare/v0.37.11...v0.37.12) (2026-06-12)
+
+### Enhancements
+
+* **tables:** remember column selection per view ([#431](https://github.com/TestPlanIt/testplanit/issues/431)) ([bc8be42](https://github.com/TestPlanIt/testplanit/commit/bc8be4288863d5b38b4e283cc2f2c6d57f8539d6))
+
 ## [0.37.11](https://github.com/TestPlanIt/testplanit/compare/v0.37.10...v0.37.11) (2026-06-12)
 
 ### Enhancements
