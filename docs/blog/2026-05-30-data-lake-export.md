@@ -3,7 +3,7 @@ slug: data-lake-export
 title: 'Stream test data straight into your data lake'
 description: "TestPlanIt's new NDJSON bulk-export endpoints turn test execution into a first-class analytics source for Snowflake, BigQuery, Databricks, and any pipeline that speaks chunked JSON."
 authors: [testplanit]
-tags: [api, data-lake, analytics, integrations]
+tags: [api, data-lake, analytics, integration]
 ---
 
 If your data team treats test execution like any other event stream — coverage trends in Snowflake, defect heatmaps in BigQuery, regression dashboards in Databricks — you've probably written a custom ETL job to scrape pages of paginated JSON out of your test management tool.
