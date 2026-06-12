@@ -211,7 +211,7 @@ A subscribing destination only receives the events listed in its `subscribedEven
 
 ## Role mapping
 
-TestPlanIt can automatically assign a user's global access tier — **None**, **User**, **Project Admin**, or **Admin** — based on the groups they belong to. This frees you from managing access per-user by hand: promote a user to a group in your IdP and they gain the right tier on the next sync.
+TestPlanIt can automatically assign a user's global access tier — **User**, **Project Admin**, or **Admin** — based on the groups they belong to. This frees you from managing access per-user by hand: promote a user to a group in your IdP and they gain the right tier on the next sync. A user who belongs to no mapped group falls back to a configurable default tier, which can be **None** (no access).
 
 Role mapping works with groups from any source. SCIM-provisioned groups (pushed from Okta, Entra, or OneLogin) and manually-created groups in TestPlanIt can both carry a **Mapped Access** tier.
 
