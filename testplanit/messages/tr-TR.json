@@ -4536,7 +4536,7 @@
       "probe": {
         "button": "SCIM'i test edin",
         "testing": "Test ediliyor…",
-        "okBanner": "HTTP {status} — belirteç /scim/v2/Users'a karşı çalışır.",
+        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "SCIM uç noktasına ulaşılamadı. Tekrar denenecek."
       }
@@ -4823,7 +4823,15 @@
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "SCIM tarafından yönetilir. SCIM yönetim sayfasından yönetin.",
       "scimNameLockedTitle": "Grup SCIM tarafından yönetilmektedir.",
-      "scimNameLockedDescription": "Bu grubun adı ve üyeleri kimlik sağlayıcınız tarafından yönetilmektedir. Değişiklikleri orada yaparak buradaki bilgileri güncelleyebilirsiniz."
+      "scimNameLockedDescription": "Bu grubun adı ve üyeleri kimlik sağlayıcınız tarafından yönetilmektedir. Değişiklikleri orada yaparak buradaki bilgileri güncelleyebilirsiniz.",
+      "mappedAccessColumnHeader": "Mapped Access",
+      "mappedAccessLabel": "Mapped Access Tier",
+      "mappedAccessNone": "Hiçbiri",
+      "mappedAccessSelect": "Select access tier...",
+      "downgradeConfirmTitle": "Confirm Access Change",
+      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
+      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "downgradeConfirmUserRow": "{name}: {from} → {to}"
     },
     "milestones": {
       "description": "Dönüm Noktası Türlerini Yönetin",

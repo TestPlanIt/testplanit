@@ -4536,7 +4536,7 @@
       "probe": {
         "button": "测试 SCIM",
         "testing": "测试…",
-        "okBanner": "HTTP {status} — 令牌对 /scim/v2/Users 有效。",
+        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "无法连接到SCIM端点。请重试。"
       }
@@ -4823,7 +4823,15 @@
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "由SCIM管理。请从SCIM管理页面进行管理。",
       "scimNameLockedTitle": "该集团由SCIM管理",
-      "scimNameLockedDescription": "此群组的名称和成员由您的身份提供商管理。请在身份提供商处进行更改，以在此处更新。"
+      "scimNameLockedDescription": "此群组的名称和成员由您的身份提供商管理。请在身份提供商处进行更改，以在此处更新。",
+      "mappedAccessColumnHeader": "Mapped Access",
+      "mappedAccessLabel": "Mapped Access Tier",
+      "mappedAccessNone": "None",
+      "mappedAccessSelect": "Select access tier...",
+      "downgradeConfirmTitle": "Confirm Access Change",
+      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
+      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "downgradeConfirmUserRow": "{name}: {from} → {to}"
     },
     "milestones": {
       "description": "管理里程碑类型",

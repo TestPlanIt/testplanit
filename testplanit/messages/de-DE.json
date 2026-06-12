@@ -4536,7 +4536,7 @@
       "probe": {
         "button": "Test SCIM",
         "testing": "Testen…",
-        "okBanner": "HTTP {status} — Token funktioniert gegen /scim/v2/Users.",
+        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "Der SCIM-Endpunkt konnte nicht erreicht werden. Bitte versuchen Sie es erneut."
       }
@@ -4823,7 +4823,15 @@
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Verwaltet von SCIM. Verwaltung über die SCIM-Administrationsseite.",
       "scimNameLockedTitle": "Die Gruppe wird von SCIM verwaltet.",
-      "scimNameLockedDescription": "Name und Mitglieder dieser Gruppe werden von Ihrem Identitätsanbieter verwaltet. Nehmen Sie dort Änderungen vor, um diese hier zu aktualisieren."
+      "scimNameLockedDescription": "Name und Mitglieder dieser Gruppe werden von Ihrem Identitätsanbieter verwaltet. Nehmen Sie dort Änderungen vor, um diese hier zu aktualisieren.",
+      "mappedAccessColumnHeader": "Mapped Access",
+      "mappedAccessLabel": "Mapped Access Tier",
+      "mappedAccessNone": "None",
+      "mappedAccessSelect": "Select access tier...",
+      "downgradeConfirmTitle": "Confirm Access Change",
+      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
+      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "downgradeConfirmUserRow": "{name}: {from} → {to}"
     },
     "milestones": {
       "description": "Meilensteintypen verwalten",

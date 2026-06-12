@@ -4536,7 +4536,7 @@
       "probe": {
         "button": "Test SCIM",
         "testing": "Testen…",
-        "okBanner": "HTTP {status} — token werkt tegen /scim/v2/Users.",
+        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "Het SCIM-eindpunt kon niet worden bereikt. Probeer het opnieuw."
       }
@@ -4823,7 +4823,15 @@
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Beheerd door SCIM. Beheer via de SCIM-beheerpagina.",
       "scimNameLockedTitle": "De groep wordt beheerd door SCIM.",
-      "scimNameLockedDescription": "De naam en leden van deze groep worden beheerd door uw identiteitsprovider. Breng daar wijzigingen aan om ze hier bij te werken."
+      "scimNameLockedDescription": "De naam en leden van deze groep worden beheerd door uw identiteitsprovider. Breng daar wijzigingen aan om ze hier bij te werken.",
+      "mappedAccessColumnHeader": "Mapped Access",
+      "mappedAccessLabel": "Mapped Access Tier",
+      "mappedAccessNone": "None",
+      "mappedAccessSelect": "Select access tier...",
+      "downgradeConfirmTitle": "Confirm Access Change",
+      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
+      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "downgradeConfirmUserRow": "{name}: {from} → {to}"
     },
     "milestones": {
       "description": "Mijlpaaltypen beheren",

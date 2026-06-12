@@ -4536,7 +4536,7 @@
       "probe": {
         "button": "Test SCIM",
         "testing": "Test…",
-        "okBanner": "HTTP {status} — le jeton fonctionne contre /scim/v2/Users.",
+        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "Impossible de joindre le point de terminaison SCIM. Veuillez réessayer."
       }
@@ -4823,7 +4823,15 @@
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Géré par SCIM. Gérer depuis la page d'administration SCIM.",
       "scimNameLockedTitle": "Le groupe est géré par SCIM",
-      "scimNameLockedDescription": "Le nom et les membres de ce groupe sont gérés par votre fournisseur d'identité. Modifiez-les sur ce dernier pour les mettre à jour ici."
+      "scimNameLockedDescription": "Le nom et les membres de ce groupe sont gérés par votre fournisseur d'identité. Modifiez-les sur ce dernier pour les mettre à jour ici.",
+      "mappedAccessColumnHeader": "Mapped Access",
+      "mappedAccessLabel": "Mapped Access Tier",
+      "mappedAccessNone": "None",
+      "mappedAccessSelect": "Select access tier...",
+      "downgradeConfirmTitle": "Confirm Access Change",
+      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
+      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "downgradeConfirmUserRow": "{name}: {from} → {to}"
     },
     "milestones": {
       "description": "Gérer les types d'étapes clés",

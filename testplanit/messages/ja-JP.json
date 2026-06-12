@@ -4536,7 +4536,7 @@
       "probe": {
         "button": "SCIMをテストする",
         "testing": "テスト…",
-        "okBanner": "HTTP {status} — トークンは /scim/v2/Users に対して機能します。",
+        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "SCIMエンドポイントに接続できませんでした。再試行します。"
       }
@@ -4823,7 +4823,15 @@
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "SCIMによって管理されています。SCIMの管理ページから管理してください。",
       "scimNameLockedTitle": "このグループはSCIMによって運営されています。",
-      "scimNameLockedDescription": "このグループ名とメンバーは、ご利用のIDプロバイダーによって管理されています。こちらで情報を更新するには、そちらで変更してください。"
+      "scimNameLockedDescription": "このグループ名とメンバーは、ご利用のIDプロバイダーによって管理されています。こちらで情報を更新するには、そちらで変更してください。",
+      "mappedAccessColumnHeader": "Mapped Access",
+      "mappedAccessLabel": "Mapped Access Tier",
+      "mappedAccessNone": "None",
+      "mappedAccessSelect": "Select access tier...",
+      "downgradeConfirmTitle": "Confirm Access Change",
+      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
+      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "downgradeConfirmUserRow": "{name}: {from} → {to}"
     },
     "milestones": {
       "description": "マイルストーンの種類を管理する",

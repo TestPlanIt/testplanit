@@ -4536,7 +4536,7 @@
       "probe": {
         "button": "Тест SCIM",
         "testing": "Тестирование…",
-        "okBanner": "HTTP {status} — токен работает с /scim/v2/Users.",
+        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "Не удалось установить соединение с конечной точкой SCIM. Повторите попытку."
       }
@@ -4823,7 +4823,15 @@
       "scimManagedBadge": "СКИМ",
       "scimManagedTooltip": "Управление осуществляется через SCIM. Управление производится со страницы администрирования SCIM.",
       "scimNameLockedTitle": "Группа управляется компанией SCIM.",
-      "scimNameLockedDescription": "Название и участники этой группы управляются вашим поставщиком идентификационных данных. Чтобы обновить данные здесь, внесите изменения там."
+      "scimNameLockedDescription": "Название и участники этой группы управляются вашим поставщиком идентификационных данных. Чтобы обновить данные здесь, внесите изменения там.",
+      "mappedAccessColumnHeader": "Mapped Access",
+      "mappedAccessLabel": "Mapped Access Tier",
+      "mappedAccessNone": "Никто",
+      "mappedAccessSelect": "Select access tier...",
+      "downgradeConfirmTitle": "Confirm Access Change",
+      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
+      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "downgradeConfirmUserRow": "{name}: {from} → {to}"
     },
     "milestones": {
       "description": "Управление типами этапов",

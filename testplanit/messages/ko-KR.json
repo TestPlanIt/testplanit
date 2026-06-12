@@ -4536,7 +4536,7 @@
       "probe": {
         "button": "SCIM 테스트",
         "testing": "테스트…",
-        "okBanner": "HTTP {status} — 토큰은 /scim/v2/Users에 대해 작동합니다.",
+        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "SCIM 엔드포인트에 연결할 수 없습니다. 다시 시도하십시오."
       }
@@ -4823,7 +4823,15 @@
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "SCIM에서 관리합니다. SCIM 관리자 페이지에서 관리할 수 있습니다.",
       "scimNameLockedTitle": "이 그룹은 SCIM에서 관리합니다.",
-      "scimNameLockedDescription": "이 그룹의 이름과 구성원은 ID 공급자가 관리합니다. 여기에서도 변경 사항을 적용하려면 ID 공급자에서 수정하세요."
+      "scimNameLockedDescription": "이 그룹의 이름과 구성원은 ID 공급자가 관리합니다. 여기에서도 변경 사항을 적용하려면 ID 공급자에서 수정하세요.",
+      "mappedAccessColumnHeader": "Mapped Access",
+      "mappedAccessLabel": "Mapped Access Tier",
+      "mappedAccessNone": "None",
+      "mappedAccessSelect": "Select access tier...",
+      "downgradeConfirmTitle": "Confirm Access Change",
+      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
+      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "downgradeConfirmUserRow": "{name}: {from} → {to}"
     },
     "milestones": {
       "description": "마일스톤 유형 관리",

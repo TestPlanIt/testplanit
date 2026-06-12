@@ -4536,7 +4536,7 @@
       "probe": {
         "button": "Kiểm tra SCIM",
         "testing": "Đang kiểm tra…",
-        "okBanner": "HTTP {status} — mã thông báo hoạt động với /scim/v2/Users.",
+        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "Không thể kết nối đến điểm cuối SCIM. Vui lòng thử lại."
       }
@@ -4823,7 +4823,15 @@
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Được quản lý bởi SCIM. Quản lý từ trang quản trị SCIM.",
       "scimNameLockedTitle": "Tập đoàn được quản lý bởi SCIM.",
-      "scimNameLockedDescription": "Tên và thành viên của nhóm này được quản lý bởi nhà cung cấp danh tính của bạn. Hãy thực hiện các thay đổi ở đó để cập nhật thông tin tại đây."
+      "scimNameLockedDescription": "Tên và thành viên của nhóm này được quản lý bởi nhà cung cấp danh tính của bạn. Hãy thực hiện các thay đổi ở đó để cập nhật thông tin tại đây.",
+      "mappedAccessColumnHeader": "Mapped Access",
+      "mappedAccessLabel": "Mapped Access Tier",
+      "mappedAccessNone": "None",
+      "mappedAccessSelect": "Select access tier...",
+      "downgradeConfirmTitle": "Confirm Access Change",
+      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
+      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "downgradeConfirmUserRow": "{name}: {from} → {to}"
     },
     "milestones": {
       "description": "Quản lý các loại mốc thời gian",

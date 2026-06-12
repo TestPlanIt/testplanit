@@ -4536,7 +4536,7 @@
       "probe": {
         "button": "Test SCIM",
         "testing": "Testowanie…",
-        "okBanner": "HTTP {status} — token działa w oparciu o /scim/v2/Users.",
+        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "Nie udało się nawiązać połączenia z punktem końcowym SCIM. Spróbuj ponownie."
       }
@@ -4823,7 +4823,15 @@
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Zarządzane przez SCIM. Zarządzaj ze strony administratora SCIM.",
       "scimNameLockedTitle": "Grupą zarządza SCIM",
-      "scimNameLockedDescription": "Nazwą i członkami tej grupy zarządza Twój dostawca tożsamości. Wprowadź zmiany, aby je zaktualizować tutaj."
+      "scimNameLockedDescription": "Nazwą i członkami tej grupy zarządza Twój dostawca tożsamości. Wprowadź zmiany, aby je zaktualizować tutaj.",
+      "mappedAccessColumnHeader": "Mapped Access",
+      "mappedAccessLabel": "Mapped Access Tier",
+      "mappedAccessNone": "None",
+      "mappedAccessSelect": "Select access tier...",
+      "downgradeConfirmTitle": "Confirm Access Change",
+      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
+      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "downgradeConfirmUserRow": "{name}: {from} → {to}"
     },
     "milestones": {
       "description": "Zarządzaj typami kamieni milowych",

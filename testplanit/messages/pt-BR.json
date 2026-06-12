@@ -4536,7 +4536,7 @@
       "probe": {
         "button": "Teste SCIM",
         "testing": "Testando…",
-        "okBanner": "HTTP {status} — o token funciona contra /scim/v2/Users.",
+        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "Não foi possível conectar-se ao endpoint SCIM. Tente novamente."
       }
@@ -4823,7 +4823,15 @@
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Gerenciado pelo SCIM. Gerencie a partir da página de administração do SCIM.",
       "scimNameLockedTitle": "O grupo é gerenciado pela SCIM.",
-      "scimNameLockedDescription": "O nome e os membros deste grupo são gerenciados pelo seu provedor de identidade. Faça as alterações necessárias lá para atualizá-los aqui."
+      "scimNameLockedDescription": "O nome e os membros deste grupo são gerenciados pelo seu provedor de identidade. Faça as alterações necessárias lá para atualizá-los aqui.",
+      "mappedAccessColumnHeader": "Mapped Access",
+      "mappedAccessLabel": "Mapped Access Tier",
+      "mappedAccessNone": "None",
+      "mappedAccessSelect": "Select access tier...",
+      "downgradeConfirmTitle": "Confirm Access Change",
+      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
+      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "downgradeConfirmUserRow": "{name}: {from} → {to}"
     },
     "milestones": {
       "description": "Gerenciar tipos de marcos",
