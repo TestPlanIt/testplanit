@@ -95,6 +95,12 @@ const emptyGroup: ExtendedGroups = {
   projectPermissions: [],
 };
 
+const mappedGroup: ExtendedGroups = {
+  ...testGroup,
+  id: 3,
+  mappedAccess: "USER" as any,
+};
+
 describe("Groups columns", () => {
   const { result } = renderHook(() =>
     useColumns(mockTranslations, mockTranslations as any)
@@ -102,11 +108,12 @@ describe("Groups columns", () => {
   const columns = result.current;
 
   describe("column definitions", () => {
-    test("returns four columns in order: name, users, projects, actions", () => {
+    test("returns five columns in order: name, users, projects, mappedAccess, actions", () => {
       expect(columns.map((c) => c.id)).toEqual([
         "name",
         "users",
         "projects",
+        "mappedAccess",
         "actions",
       ]);
     });
@@ -170,6 +177,20 @@ describe("Groups columns", () => {
       const usersCol = columns.find((c) => c.id === "users")!;
       const accessorFn = (usersCol as any).accessorFn;
       expect(accessorFn(testGroup)).toBe(testGroup.assignedUsers);
+    });
+  });
+
+  describe("mappedAccess column cell", () => {
+    test("renders Badge when mappedAccess is set", () => {
+      renderCell(columns, "mappedAccess", mappedGroup);
+      expect(screen.getByTestId("mapped-access-badge")).toBeInTheDocument();
+      expect(screen.getByTestId("mapped-access-badge")).toHaveTextContent("USER");
+    });
+
+    test("renders muted 'none' text when mappedAccess is null", () => {
+      renderCell(columns, "mappedAccess", testGroup);
+      expect(screen.queryByTestId("mapped-access-badge")).not.toBeInTheDocument();
+      expect(screen.getByText("mappedAccessNone")).toBeInTheDocument();
     });
   });
 });
