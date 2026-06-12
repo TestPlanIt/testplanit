@@ -177,6 +177,13 @@ In the audit log viewer these rows display **System** in the User column. In CSV
 To find only user-initiated events, filter the audit log viewer by a specific user — system-initiated rows will be excluded automatically.
 :::
 
+### Group role mapping changes
+
+Changes driven by [group role mapping](./scim.md#role-mapping) are fully audited:
+
+- Setting a group's **Mapped Access Tier** or changing the **fallback default** is recorded as an `UPDATE` on the group (or app configuration), attributed to the admin who made the change, with the field-level before/after.
+- Each resulting per-user access-tier change is recorded as a separate `UPDATE` on the user. These recompute events are attributed to the SCIM access-recompute worker and carry `source: scim` (with the originating group and token IDs) in their metadata, so they can be told apart from manual access changes.
+
 ## Exporting Audit Logs
 
 Administrators can export audit logs to CSV for compliance reporting or external analysis:

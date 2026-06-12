@@ -39,7 +39,7 @@ The main view displays a table of all registered users (excluding those marked a
    - **Password**: Set an initial password. Labeled **(Optional)** when a passwordless login method is available (an enabled Magic Link SSO provider or a configured email server) — in that case you can leave it blank and the user signs in via magic link or SSO. When supplied, the password must satisfy the Security Settings policy (minimum length, character classes); the live strength indicator and checklist show which rules are met.
    - **Confirm Password**: Re-enter the password (must match). Only required when a password is entered.
    - **Is Active**: Toggle switch, defaults to active.
-   - **Access**: Select the system access level (ADMIN, PROJECTADMIN, USER, NONE). Defaults to USER.
+   - **Access**: Select the system access level (ADMIN, PROJECTADMIN, USER, NONE). Defaults to USER. If the user belongs to a group with a [Mapped Access Tier](./groups.md#mapped-access-tier), their access is instead governed by group role mapping (highest tier wins, with a configurable fallback default).
    - **Role**: Select the user's Role from the dropdown. Defaults to the system's default role.
    - **Groups**: Use the multi-select dropdown to assign the user to relevant Groups. Use "Select All" for convenience.
    - **Projects**: Use the multi-select dropdown to assign the user to relevant Projects. Use "Select All" for convenience.
@@ -54,7 +54,7 @@ The main view displays a table of all registered users (excluding those marked a
    - Name
    - Email
    - Is Active (Cannot disable your own account)
-   - Access Level (Cannot change your own access level)
+   - Access Level (Cannot change your own access level). If this user's access is governed by group role mapping, the dialog shows a **Group Mapped** badge and a **Managed by Group Mapping** warning; saving a manual change switches them to manual control.
    - Role (Cannot change your own role)
    - Group assignments
    - Project assignments

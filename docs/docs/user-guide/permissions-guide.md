@@ -126,10 +126,9 @@ Every user has a system-wide access level that determines their baseline permiss
 
 **Setting Access Levels**:
 
-- Only ADMIN users can set system access levels
-- Navigate to **Administration** > **Users**
-- Edit user and select access level
-- Changes take effect immediately
+- An ADMIN can set a user's access level manually: navigate to **Administration** > **Users**, edit the user, and select an access level. Changes take effect immediately.
+- Access levels can also be assigned **automatically by group role mapping** — a group carries a mapped tier (User, Project Admin, or Admin) that its members inherit, highest-wins, with a configurable fallback default. See [Role mapping](./scim.md#role-mapping) and [Groups → Mapped access tier](./groups.md#mapped-access-tier).
+- Editing the access level of a user who is governed by group mapping switches them to manual control.
 
 ## Project Access Control
 
@@ -365,7 +364,7 @@ Groups provide an efficient way to manage permissions for teams.
 - **Groups with SPECIFIC_ROLE** - All group members share the same assigned role for that project
 
 :::note
-Group permissions are assigned **per project** in **Project Settings > Members**, not globally in the Admin > Groups page. The Admin > Groups page only manages group membership (which users belong to which group).
+The project permissions described here are assigned **per project** in **Project Settings > Members**. The **Admin > Groups** page manages group membership and, separately, an optional **Mapped Access Tier** that drives members' global access level (see [Role mapping](./scim.md#role-mapping)) — it does not assign per-project roles.
 :::
 
 ### Use Cases
@@ -696,6 +695,7 @@ To ensure predictable results, avoid assigning a user to multiple groups with di
 
 - Create groups
 - Add/remove members
+- Set a **Mapped Access Tier** to drive members' global access level (see [Role mapping](./scim.md#role-mapping))
 - View group projects
 - Delete groups
 - Audit group access

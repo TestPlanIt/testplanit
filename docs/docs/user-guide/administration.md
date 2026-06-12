@@ -30,6 +30,14 @@ If you do not see an option to access Admin settings, you may not have the neces
 
 For detailed SSO configuration, see the [SSO Documentation](./sso.md).
 
+**SCIM Provisioning** (`/admin/scim`)
+
+- Provision users and groups from your identity provider via SCIM 2.0
+- Configure **group role mapping** — assign a Mapped Access Tier (User, Project Admin, or Admin) to groups so members automatically gain that global access level
+- Set the fallback default access tier for users who belong to no mapped group
+
+For detailed SCIM and role-mapping information, see the [SCIM Provisioning Documentation](./scim.md).
+
 ### Search & Indexing
 
 **Elasticsearch Administration** (`/admin/elasticsearch`)
@@ -56,6 +64,7 @@ For detailed search configuration, see the [Search Configuration Documentation](
 - Create and manage user groups
 - Assign users to groups for easier permission management
 - Configure group-based project access
+- Set a **Mapped Access Tier** to drive members' global access level ([role mapping](./scim.md#role-mapping))
 
 ### System Configuration
 
