@@ -1,3 +1,9 @@
+## [0.37.11](https://github.com/TestPlanIt/testplanit/compare/v0.37.10...v0.37.11) (2026-06-12)
+
+### Enhancements
+
+* **scim:** SCIM group→access mapping + canonical /api/scim/v2 URLs ([#427](https://github.com/TestPlanIt/testplanit/issues/427)) ([0fcd1e6](https://github.com/TestPlanIt/testplanit/commit/0fcd1e63529c25833ad4d91d02584038db1c304a))
+
 ## [0.37.10](https://github.com/TestPlanIt/testplanit/compare/v0.37.9...v0.37.10) (2026-06-12)
 
 ### Bug Fixes
