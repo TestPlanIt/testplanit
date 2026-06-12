@@ -5083,6 +5083,10 @@
         "azureDevops": {
           "name": "Azure DevOps",
           "description": "Connect to Azure DevOps for work item tracking"
+        },
+        "redmine": {
+          "name": "Redmine",
+          "description": "Connect to a self-hosted Redmine instance for issue tracking"
         }
       },
       "filterPlaceholder": "Filter integrations...",
@@ -5173,7 +5177,13 @@
         "platformPlaceholder": "Select platform...",
         "platformGitea": "Gitea",
         "platformForgejo": "Forgejo",
-        "platformGogs": "Gogs"
+        "platformGogs": "Gogs",
+        "redmineApiKey": "Redmine API Key",
+        "redmineApiKeyPlaceholder": "Enter your Redmine API key",
+        "redmineApiKeyHelp": "Found under My account → API access key (enable the REST API in Administration → Settings → API)",
+        "redmineUrl": "Redmine URL",
+        "redmineUrlPlaceholder": "https://redmine.example.com",
+        "redmineUrlHelp": "The base URL of your Redmine instance"
       },
       "authType": {
         "api_key": "API Key",
@@ -6096,7 +6106,9 @@
       "repo": "## Repository Name\nThe name of the repository to link issues from.\n\n- Exact repository name (not the full URL)\n- Example: my-project\n- Must be accessible with the provided credentials",
       "instanceUrl": "## Instance URL\nThe base URL of your self-hosted instance.\n\n- Format: https://git.example.com\n- Do not include trailing slashes or paths\n- Must be accessible from this server",
       "projectPath": "## Project Path\nThe full path to your GitLab project.\n\n- Format: namespace/project or group/subgroup/project\n- Example: my-org/my-project\n- Found in the project URL: gitlab.com/namespace/project",
-      "platform": "## Platform\nThe self-hosted Git platform you are connecting to.\n\n- **Gitea**: gitea.io-based instances\n- **Forgejo**: forgejo.org-based instances (Gitea fork)\n- **Gogs**: gogs.io-based instances\n\nThis controls which icon is shown and may affect API compatibility."
+      "platform": "## Platform\nThe self-hosted Git platform you are connecting to.\n\n- **Gitea**: gitea.io-based instances\n- **Forgejo**: forgejo.org-based instances (Gitea fork)\n- **Gogs**: gogs.io-based instances\n\nThis controls which icon is shown and may affect API compatibility.",
+      "redmineApiKey": "## Redmine API Key\nYour personal REST API access key.\n\n- Enable the REST API under Administration → Settings → API\n- Copy your key from My account → API access key\n- Scoped to your user’s permissions; use a service account for shared integrations",
+      "redmineUrl": "## Redmine URL\nThe base URL of your Redmine instance.\n\n- Format: https://redmine.example.com\n- Do not include /issues or other paths\n- Must be accessible from this server"
     },
     "config": {
       "name": "## Configuration Name\nA clear, descriptive name for this configuration.\n\n- Helps describe the variant cominations that make up the Configuration (e.g. \"Chrome, Windows 10\",  \"Safari/macOS 15.5\", \"Edge/Windows 11\", etc.).",

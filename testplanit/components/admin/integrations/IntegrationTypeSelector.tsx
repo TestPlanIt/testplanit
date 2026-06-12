@@ -9,7 +9,7 @@ import {
 import { IntegrationProvider } from "@prisma/client";
 import { Check, Link } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { siGithub, siGitlab, siJira } from "simple-icons";
+import { siGithub, siGitlab, siJira, siRedmine } from "simple-icons";
 import { GiteaFamilyIcon } from "@/components/shared/gitea-family-icon";
 import { cn } from "~/utils";
 
@@ -68,6 +68,15 @@ const integrationTypes = [
       </svg>
     ),
     color: "text-blue-700",
+  },
+  {
+    type: IntegrationProvider.REDMINE,
+    icon: () => (
+      <svg viewBox="0 0 24 24" className="h-8 w-8" fill="currentColor">
+        <path d={siRedmine.path} />
+      </svg>
+    ),
+    color: "text-[#B32024]",
   },
 ];
 

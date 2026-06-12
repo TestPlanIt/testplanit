@@ -3161,6 +3161,7 @@ enum IntegrationProvider {
     SIMPLE_URL
     GITLAB
     GITEA
+    REDMINE
 
     @@deny('all', !auth())
     @@allow('update', auth().access == 'ADMIN')
@@ -3175,6 +3176,7 @@ enum AdapterType {
     GENERIC_HMAC
     GITLAB
     GITEA
+    REDMINE
 
     @@deny('all', !auth())
     @@allow('update', auth().access == 'ADMIN')

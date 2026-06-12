@@ -7,7 +7,7 @@ import { GiteaPlatformIcon } from "@/components/shared/gitea-family-icon";
 import { Link, Plug } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
-import { siGithub, siGitlab, siJira } from "simple-icons";
+import { siGithub, siGitlab, siJira, siRedmine } from "simple-icons";
 import { DeleteIntegrationButton } from "./DeleteIntegrationButton";
 import { EditIntegrationButton } from "./EditIntegrationButton";
 import { SyncIntegrationButton } from "./SyncIntegrationButton";
@@ -34,6 +34,11 @@ const providerIcons: Record<string, React.ReactNode> = {
   GITLAB: (
     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
       <path d={siGitlab.path} />
+    </svg>
+  ),
+  REDMINE: (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
+      <path d={siRedmine.path} />
     </svg>
   ),
   SIMPLE_URL: <Link className="h-4 w-4" />,

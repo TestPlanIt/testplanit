@@ -77,6 +77,7 @@ const providerAuthTypes: Record<IntegrationProvider, IntegrationAuthType[]> = {
     IntegrationAuthType.PERSONAL_ACCESS_TOKEN,
     IntegrationAuthType.OAUTH2,
   ],
+  [IntegrationProvider.REDMINE]: [IntegrationAuthType.API_KEY],
 };
 
 export function IntegrationModal({

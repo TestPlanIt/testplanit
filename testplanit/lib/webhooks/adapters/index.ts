@@ -5,6 +5,7 @@ import { giteaAdapter } from "./gitea";
 import { gitlabAdapter } from "./gitlab";
 import { githubAdapter } from "./github";
 import { jiraAdapter } from "./jira";
+import { redmineAdapter } from "./redmine";
 import { slackAdapter } from "./slack";
 import type { OutboundWebhookAdapter, WebhookAdapter } from "./types";
 
@@ -29,6 +30,7 @@ export const ADAPTER_REGISTRY: Record<AdapterType, WebhookAdapter | null> = {
   AZURE_DEVOPS: azureDevopsAdapter,
   GITLAB: gitlabAdapter,
   GITEA: giteaAdapter,
+  REDMINE: redmineAdapter,
   SLACK: null,
   GENERIC_HMAC: null,
 };
@@ -68,6 +70,7 @@ export const OUTBOUND_ADAPTER_REGISTRY: Record<
   AZURE_DEVOPS: null,
   GITLAB: null,
   GITEA: null,
+  REDMINE: null,
   SLACK: slackAdapter,
   GENERIC_HMAC: genericHmacAdapter,
 };
@@ -87,7 +90,8 @@ export function getOutboundAdapter(
       adapterType === "GITHUB" ||
       adapterType === "AZURE_DEVOPS" ||
       adapterType === "GITLAB" ||
-      adapterType === "GITEA"
+      adapterType === "GITEA" ||
+      adapterType === "REDMINE"
     ) {
       throw new Error(
         `Adapter ${adapterType} is INBOUND-only — call getAdapter() instead`

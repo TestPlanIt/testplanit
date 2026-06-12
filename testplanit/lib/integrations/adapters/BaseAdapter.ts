@@ -243,6 +243,9 @@ export abstract class BaseAdapter implements IssueAdapter {
           } else if (this.config.provider === "GITEA") {
             // Gitea: Authorization: token <pat>
             headers["Authorization"] = `token ${this.authData.apiKey}`;
+          } else if (this.config.provider === "REDMINE") {
+            // Redmine authenticates the REST API with the user's API key
+            headers["X-Redmine-API-Key"] = this.authData.apiKey;
           } else {
             // Default to X-API-Key header
             headers["X-API-Key"] = this.authData.apiKey;
@@ -278,6 +281,13 @@ export abstract class BaseAdapter implements IssueAdapter {
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      // Some APIs answer successful mutations with an empty body (e.g. Redmine
+      // returns 204 No Content on issue update). Calling response.json() on an
+      // empty body throws, so short-circuit those to undefined.
+      if (response.status === 204) {
+        return undefined as T;
       }
 
       return response.json();
