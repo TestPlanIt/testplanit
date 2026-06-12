@@ -25,6 +25,7 @@ import { Filter } from "@/components/tables/Filter";
 
 import { PaginationComponent } from "@/components/tables/Pagination";
 import { PaginationInfo } from "@/components/tables/PaginationControls";
+import { UserNameCell } from "@/components/tables/UserNameCell";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -174,12 +175,17 @@ function FallbackDefaultCard() {
           </AlertDialogHeader>
           <ul className="text-sm space-y-1 max-h-48 overflow-y-auto px-6">
             {downgradedUsers.map((u) => (
-              <li key={u.userId}>
-                {tGroups("downgradeConfirmUserRow", {
-                  name: u.name,
-                  from: u.currentAccess,
-                  to: u.newAccess,
-                })}
+              <li
+                key={u.userId}
+                className="flex items-center justify-between gap-3"
+              >
+                <UserNameCell userId={u.userId} hideLink={true} />
+                <span className="text-muted-foreground whitespace-nowrap">
+                  {tGroups("downgradeConfirmAccessChange", {
+                    from: u.currentAccess,
+                    to: u.newAccess,
+                  })}
+                </span>
               </li>
             ))}
           </ul>

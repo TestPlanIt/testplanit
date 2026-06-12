@@ -436,12 +436,17 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
           </AlertDialogHeader>
           <ul className="text-sm space-y-1 max-h-48 overflow-y-auto">
             {downgradedUsers.map((u) => (
-              <li key={u.userId}>
-                {t("downgradeConfirmUserRow", {
-                  name: u.name,
-                  from: u.currentAccess,
-                  to: u.newAccess,
-                })}
+              <li
+                key={u.userId}
+                className="flex items-center justify-between gap-3"
+              >
+                <UserNameCell userId={u.userId} hideLink={true} />
+                <span className="text-muted-foreground whitespace-nowrap">
+                  {t("downgradeConfirmAccessChange", {
+                    from: u.currentAccess,
+                    to: u.newAccess,
+                  })}
+                </span>
               </li>
             ))}
           </ul>

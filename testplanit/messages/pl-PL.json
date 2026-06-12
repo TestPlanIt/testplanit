@@ -4838,7 +4838,8 @@
       "downgradeConfirmTitle": "Confirm Access Change",
       "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
       "downgradeConfirmApplyAnyway": "Apply anyway",
-      "downgradeConfirmUserRow": "{name}: {from} → {to}"
+      "downgradeConfirmUserRow": "{name}: {from} → {to}",
+      "downgradeConfirmAccessChange": "{from} → {to}"
     },
     "milestones": {
       "description": "Zarządzaj typami kamieni milowych",

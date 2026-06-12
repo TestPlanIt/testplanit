@@ -188,6 +188,12 @@ vi.mock("@/components/tables/DataTable", () => ({
   DataTable: () => null,
 }));
 
+vi.mock("@/components/tables/UserNameCell", () => ({
+  UserNameCell: ({ userId }: { userId: string }) => (
+    <span data-testid={`user-name-cell-${userId}`}>{userId}</span>
+  ),
+}));
+
 vi.mock("@/components/tables/Filter", () => ({
   Filter: () => null,
 }));
