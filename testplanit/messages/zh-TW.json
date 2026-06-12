@@ -4357,7 +4357,10 @@
       "scimColumnHeader": "SCIM",
       "scimColumnYes": "是的",
       "scimUserLockedTitle": "使用者由 SCIM 管理",
-      "scimUserLockedDescription": "該使用者的姓名、電子郵件地址和活動狀態由您的身分提供者管理。請在身分提供者處進行更改，以在此處更新這些資訊。"
+      "scimUserLockedDescription": "該使用者的姓名、電子郵件地址和活動狀態由您的身分提供者管理。請在身分提供者處進行更改，以在此處更新這些資訊。",
+      "groupMappingOverrideTitle": "Managed by Group Mapping",
+      "groupMappingOverrideDescription": "This user's access tier is governed by a SCIM group mapping and may be reverted on the next sync.",
+      "groupMappingBadge": "Group Mapped"
     },
     "security": {
       "title": "安全",
@@ -4539,7 +4542,11 @@
         "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "無法連接到SCIM端點。請重試。"
-      }
+      },
+      "fallbackDefaultTitle": "Default Mapped Access",
+      "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
+      "fallbackDefaultLabel": "Default access tier",
+      "fallbackDefaultSaved": "Fallback default saved"
     },
     "tags": {
       "add": {

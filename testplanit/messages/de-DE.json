@@ -4357,7 +4357,10 @@
       "scimColumnHeader": "SCIM",
       "scimColumnYes": "Ja",
       "scimUserLockedTitle": "Der Benutzer wird von SCIM verwaltet.",
-      "scimUserLockedDescription": "Name, E-Mail-Adresse und Aktivitätsstatus dieses Benutzers werden von Ihrem Identitätsanbieter verwaltet. Nehmen Sie dort Änderungen vor, um diese hier zu aktualisieren."
+      "scimUserLockedDescription": "Name, E-Mail-Adresse und Aktivitätsstatus dieses Benutzers werden von Ihrem Identitätsanbieter verwaltet. Nehmen Sie dort Änderungen vor, um diese hier zu aktualisieren.",
+      "groupMappingOverrideTitle": "Managed by Group Mapping",
+      "groupMappingOverrideDescription": "This user's access tier is governed by a SCIM group mapping and may be reverted on the next sync.",
+      "groupMappingBadge": "Group Mapped"
     },
     "security": {
       "title": "Sicherheit",
@@ -4539,7 +4542,11 @@
         "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "Der SCIM-Endpunkt konnte nicht erreicht werden. Bitte versuchen Sie es erneut."
-      }
+      },
+      "fallbackDefaultTitle": "Default Mapped Access",
+      "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
+      "fallbackDefaultLabel": "Default access tier",
+      "fallbackDefaultSaved": "Fallback default saved"
     },
     "tags": {
       "add": {

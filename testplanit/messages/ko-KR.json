@@ -4357,7 +4357,10 @@
       "scimColumnHeader": "SCIM",
       "scimColumnYes": "예",
       "scimUserLockedTitle": "사용자는 SCIM에 의해 관리됩니다.",
-      "scimUserLockedDescription": "이 사용자의 이름, 이메일 및 활성 상태는 ID 공급자가 관리합니다. 여기에서도 해당 정보를 업데이트하려면 ID 공급자에서 변경하십시오."
+      "scimUserLockedDescription": "이 사용자의 이름, 이메일 및 활성 상태는 ID 공급자가 관리합니다. 여기에서도 해당 정보를 업데이트하려면 ID 공급자에서 변경하십시오.",
+      "groupMappingOverrideTitle": "Managed by Group Mapping",
+      "groupMappingOverrideDescription": "This user's access tier is governed by a SCIM group mapping and may be reverted on the next sync.",
+      "groupMappingBadge": "Group Mapped"
     },
     "security": {
       "title": "보안",
@@ -4539,7 +4542,11 @@
         "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "SCIM 엔드포인트에 연결할 수 없습니다. 다시 시도하십시오."
-      }
+      },
+      "fallbackDefaultTitle": "Default Mapped Access",
+      "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
+      "fallbackDefaultLabel": "Default access tier",
+      "fallbackDefaultSaved": "Fallback default saved"
     },
     "tags": {
       "add": {

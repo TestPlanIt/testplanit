@@ -13,7 +13,12 @@ import { useRouter } from "~/lib/navigation";
 import { useDebounce } from "@/components/Debounce";
 import { ColumnSelection } from "@/components/tables/ColumnSelection";
 import { DataTable } from "@/components/tables/DataTable";
-import { useFindManyScimToken, useUpdateScimToken } from "~/lib/hooks";
+import {
+  useFindManyScimToken,
+  useFindUniqueAppConfig,
+  useUpdateScimToken,
+  useUpsertAppConfig,
+} from "~/lib/hooks";
 import { ExtendedScimToken, useColumns } from "./columns";
 
 import { Filter } from "@/components/tables/Filter";
@@ -39,11 +44,25 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { revokeScimTokenAction } from "~/app/actions/scimTokenActions";
+import {
+  type DowngradedUser,
+  enqueueFallbackDefaultRecompute,
+  previewFallbackDefaultChange,
+} from "~/app/actions/scimMappingActions";
+import { SCIM_DEFAULT_MAPPED_ACCESS_KEY } from "~/lib/scim/access/fallbackDefault";
+import type { Access } from "@prisma/client";
 
 import { ConflictLogTable } from "./ConflictLogTable";
 import { MintDialog } from "./MintDialog";
@@ -53,6 +72,133 @@ export default function ScimTokensPage() {
     <PaginationProvider>
       <ScimTokensList />
     </PaginationProvider>
+  );
+}
+
+function FallbackDefaultCard() {
+  const t = useTranslations("admin.scim");
+  const tCommon = useTranslations("common");
+  const tGroups = useTranslations("admin.groups");
+  const { data: config } = useFindUniqueAppConfig({
+    where: { key: SCIM_DEFAULT_MAPPED_ACCESS_KEY },
+  });
+  const upsert = useUpsertAppConfig();
+  const [selectedAccess, setSelectedAccess] = useState<string>("NONE");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingAccess, setPendingAccess] = useState<string | null>(null);
+  const [downgradedUsers, setDowngradedUsers] = useState<DowngradedUser[]>([]);
+
+  useEffect(() => {
+    const value = config?.value;
+    if (typeof value === "string") setSelectedAccess(value);
+    else setSelectedAccess("NONE");
+  }, [config?.value]);
+
+  const applyFallbackDefault = async (access: string) => {
+    await upsert.mutateAsync({
+      where: { key: SCIM_DEFAULT_MAPPED_ACCESS_KEY },
+      create: { key: SCIM_DEFAULT_MAPPED_ACCESS_KEY, value: access },
+      update: { value: access },
+    });
+    await enqueueFallbackDefaultRecompute();
+    toast.success(t("fallbackDefaultSaved"));
+  };
+
+  const handleSave = async () => {
+    const preview = await previewFallbackDefaultChange(
+      selectedAccess === "NONE" ? null : (selectedAccess as Access)
+    );
+    if (!preview.success) {
+      toast.error(preview.error);
+      return;
+    }
+    if (preview.downgraded.length > 0) {
+      setDowngradedUsers(preview.downgraded);
+      setPendingAccess(selectedAccess);
+      setConfirmOpen(true);
+      return;
+    }
+    await applyFallbackDefault(selectedAccess);
+  };
+
+  return (
+    <Card className="mt-6" data-testid="scim-fallback-default-card">
+      <CardHeader>
+        <CardTitle>{t("fallbackDefaultTitle")}</CardTitle>
+        <CardDescription>{t("fallbackDefaultDescription")}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3 max-w-md">
+          <Select
+            value={selectedAccess}
+            onValueChange={setSelectedAccess}
+            disabled={upsert.isPending}
+          >
+            <SelectTrigger
+              data-testid="fallback-default-select"
+              aria-label={t("fallbackDefaultLabel")}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="NONE">{tCommon("access.none")}</SelectItem>
+              <SelectItem value="USER">{tCommon("access.user")}</SelectItem>
+              <SelectItem value="PROJECTADMIN">
+                {tCommon("access.projectAdmin")}
+              </SelectItem>
+              <SelectItem value="ADMIN">{tCommon("access.admin")}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleSave}
+            disabled={upsert.isPending}
+            data-testid="fallback-default-save"
+          >
+            {tCommon("actions.save")}
+          </Button>
+        </div>
+      </CardContent>
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {tGroups("downgradeConfirmTitle")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {tGroups("downgradeConfirmDescription", {
+                count: downgradedUsers.length,
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <ul className="text-sm space-y-1 max-h-48 overflow-y-auto px-6">
+            {downgradedUsers.map((u) => (
+              <li key={u.userId}>
+                {tGroups("downgradeConfirmUserRow", {
+                  name: u.name,
+                  from: u.currentAccess,
+                  to: u.newAccess,
+                })}
+              </li>
+            ))}
+          </ul>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                setConfirmOpen(false);
+                if (pendingAccess !== null) {
+                  await applyFallbackDefault(pendingAccess);
+                }
+              }}
+            >
+              {tGroups("downgradeConfirmApplyAnyway")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </Card>
   );
 }
 
@@ -398,6 +544,8 @@ function ScimTokensList() {
           <ConflictLogTable />
         </CardContent>
       </Card>
+
+      <FallbackDefaultCard />
 
       {/* Revoke Single Token Dialog */}
       <AlertDialog open={revokeDialogOpen} onOpenChange={setRevokeDialogOpen}>

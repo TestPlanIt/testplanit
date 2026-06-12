@@ -4357,7 +4357,10 @@
       "scimColumnHeader": "SCIM",
       "scimColumnYes": "はい",
       "scimUserLockedTitle": "ユーザーはSCIMによって管理されています",
-      "scimUserLockedDescription": "このユーザー名、メールアドレス、およびアクティブステータスは、ご利用のIDプロバイダーによって管理されています。こちらで更新するには、そちらで変更してください。"
+      "scimUserLockedDescription": "このユーザー名、メールアドレス、およびアクティブステータスは、ご利用のIDプロバイダーによって管理されています。こちらで更新するには、そちらで変更してください。",
+      "groupMappingOverrideTitle": "Managed by Group Mapping",
+      "groupMappingOverrideDescription": "This user's access tier is governed by a SCIM group mapping and may be reverted on the next sync.",
+      "groupMappingBadge": "Group Mapped"
     },
     "security": {
       "title": "安全",
@@ -4539,7 +4542,11 @@
         "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "SCIMエンドポイントに接続できませんでした。再試行します。"
-      }
+      },
+      "fallbackDefaultTitle": "Default Mapped Access",
+      "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
+      "fallbackDefaultLabel": "Default access tier",
+      "fallbackDefaultSaved": "Fallback default saved"
     },
     "tags": {
       "add": {

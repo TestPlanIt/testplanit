@@ -4357,7 +4357,10 @@
       "scimColumnHeader": "SCIM",
       "scimColumnYes": "Oui",
       "scimUserLockedTitle": "L'utilisateur est géré par SCIM",
-      "scimUserLockedDescription": "Le nom, l'adresse e-mail et le statut actif de cet utilisateur sont gérés par votre fournisseur d'identité. Modifiez ces informations auprès de ce dernier pour les mettre à jour ici."
+      "scimUserLockedDescription": "Le nom, l'adresse e-mail et le statut actif de cet utilisateur sont gérés par votre fournisseur d'identité. Modifiez ces informations auprès de ce dernier pour les mettre à jour ici.",
+      "groupMappingOverrideTitle": "Managed by Group Mapping",
+      "groupMappingOverrideDescription": "This user's access tier is governed by a SCIM group mapping and may be reverted on the next sync.",
+      "groupMappingBadge": "Group Mapped"
     },
     "security": {
       "title": "Sécurité",
@@ -4539,7 +4542,11 @@
         "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "Impossible de joindre le point de terminaison SCIM. Veuillez réessayer."
-      }
+      },
+      "fallbackDefaultTitle": "Default Mapped Access",
+      "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
+      "fallbackDefaultLabel": "Default access tier",
+      "fallbackDefaultSaved": "Fallback default saved"
     },
     "tags": {
       "add": {

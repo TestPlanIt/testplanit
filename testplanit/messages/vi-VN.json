@@ -4357,7 +4357,10 @@
       "scimColumnHeader": "SCIM",
       "scimColumnYes": "Đúng",
       "scimUserLockedTitle": "Người dùng được quản lý bởi SCIM",
-      "scimUserLockedDescription": "Tên, email và trạng thái hoạt động của người dùng này được quản lý bởi nhà cung cấp danh tính của bạn. Hãy thực hiện các thay đổi ở đó để cập nhật chúng ở đây."
+      "scimUserLockedDescription": "Tên, email và trạng thái hoạt động của người dùng này được quản lý bởi nhà cung cấp danh tính của bạn. Hãy thực hiện các thay đổi ở đó để cập nhật chúng ở đây.",
+      "groupMappingOverrideTitle": "Managed by Group Mapping",
+      "groupMappingOverrideDescription": "This user's access tier is governed by a SCIM group mapping and may be reverted on the next sync.",
+      "groupMappingBadge": "Group Mapped"
     },
     "security": {
       "title": "Bảo vệ",
@@ -4539,7 +4542,11 @@
         "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "Không thể kết nối đến điểm cuối SCIM. Vui lòng thử lại."
-      }
+      },
+      "fallbackDefaultTitle": "Default Mapped Access",
+      "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
+      "fallbackDefaultLabel": "Default access tier",
+      "fallbackDefaultSaved": "Fallback default saved"
     },
     "tags": {
       "add": {
