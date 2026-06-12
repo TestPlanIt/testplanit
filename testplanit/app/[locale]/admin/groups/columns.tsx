@@ -89,6 +89,30 @@ export const useColumns = (
         ),
       },
       {
+        id: "mappedAccess",
+        accessorKey: "mappedAccess",
+        accessorFn: (row) => row.mappedAccess,
+        header: tGroups("mappedAccessColumnHeader"),
+        enableSorting: false,
+        enableResizing: true,
+        size: 140,
+        cell: ({ row }) => {
+          const access = row.original.mappedAccess;
+          if (!access) {
+            return (
+              <span className="text-muted-foreground text-sm">
+                {tGroups("mappedAccessNone")}
+              </span>
+            );
+          }
+          return (
+            <Badge variant="secondary" data-testid="mapped-access-badge">
+              {access}
+            </Badge>
+          );
+        },
+      },
+      {
         id: "actions",
         header: t("actions.actionsLabel"),
         enableResizing: true,

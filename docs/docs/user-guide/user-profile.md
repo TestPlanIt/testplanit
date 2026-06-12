@@ -38,7 +38,7 @@ The following collapsible sections are displayed when viewing your own profile o
 
 Displays core account details:
 
-- **System Access**: The user's access level (ADMIN, USER, READ_ONLY, etc.)
+- **System Access**: The user's access level (ADMIN, PROJECTADMIN, USER, or NONE), set either manually by an admin or automatically via [group role mapping](./scim.md#role-mapping)
 - **Authentication Method**: Internal (email/password), SSO Only, Email & SSO, or **SCIM Provisioned** (the row is owned by an upstream identity provider)
 - **Default Role**: The default role assigned to the user
 - **API User**: Indicates if this is an API account (shown as a disabled switch)

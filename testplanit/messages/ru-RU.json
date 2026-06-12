@@ -4357,7 +4357,10 @@
       "scimColumnHeader": "СКИМ",
       "scimColumnYes": "Да",
       "scimUserLockedTitle": "Пользователь управляется системой SCIM.",
-      "scimUserLockedDescription": "Имя, адрес электронной почты и статус активности этого пользователя управляются вашим поставщиком идентификационных данных. Чтобы обновить их здесь, внесите изменения в этом поставщике."
+      "scimUserLockedDescription": "Имя, адрес электронной почты и статус активности этого пользователя управляются вашим поставщиком идентификационных данных. Чтобы обновить их здесь, внесите изменения в этом поставщике.",
+      "groupMappingOverrideTitle": "Managed by Group Mapping",
+      "groupMappingOverrideDescription": "This user's access tier is governed by a SCIM group mapping and may be reverted on the next sync.",
+      "groupMappingBadge": "Group Mapped"
     },
     "security": {
       "title": "Безопасность",
@@ -4536,10 +4539,14 @@
       "probe": {
         "button": "Тест SCIM",
         "testing": "Тестирование…",
-        "okBanner": "HTTP {status} — токен работает с /scim/v2/Users.",
+        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "Не удалось установить соединение с конечной точкой SCIM. Повторите попытку."
-      }
+      },
+      "fallbackDefaultTitle": "Default Mapped Access",
+      "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
+      "fallbackDefaultLabel": "Default access tier",
+      "fallbackDefaultSaved": "Fallback default saved"
     },
     "tags": {
       "add": {
@@ -4823,7 +4830,16 @@
       "scimManagedBadge": "СКИМ",
       "scimManagedTooltip": "Управление осуществляется через SCIM. Управление производится со страницы администрирования SCIM.",
       "scimNameLockedTitle": "Группа управляется компанией SCIM.",
-      "scimNameLockedDescription": "Название и участники этой группы управляются вашим поставщиком идентификационных данных. Чтобы обновить данные здесь, внесите изменения там."
+      "scimNameLockedDescription": "Название и участники этой группы управляются вашим поставщиком идентификационных данных. Чтобы обновить данные здесь, внесите изменения там.",
+      "mappedAccessColumnHeader": "Mapped Access",
+      "mappedAccessLabel": "Mapped Access Tier",
+      "mappedAccessNone": "No mapping",
+      "mappedAccessSelect": "Select access tier...",
+      "downgradeConfirmTitle": "Confirm Access Change",
+      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
+      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "downgradeConfirmUserRow": "{name}: {from} → {to}",
+      "downgradeConfirmAccessChange": "{from} → {to}"
     },
     "milestones": {
       "description": "Управление типами этапов",
@@ -6033,7 +6049,8 @@
     },
     "group": {
       "name": "## Название группы\nЧеткое, краткое, описательное название или ключевое слово (или слова), используемое во всех проектах.\n\n- Помогает членам команды быстро находить связанные тестовые случаи, тестовые запуски и сессии.",
-      "users": "## Пользователи\nУказывает пользователей, назначенных в эту группу."
+      "users": "## Пользователи\nУказывает пользователей, назначенных в эту группу.",
+      "mappedAccess": "## Mapped Access Tier\nMembers of this group are granted at least this access tier on the next sync.\n\n- The highest tier across all of a user's groups wins\n- \"No mapping\" means this group does not affect access — members fall back to the default set on the SCIM page\n- A manual access change on a user takes over from the mapping (and is flagged on that user's edit screen)"
     },
     "template": {
       "name": "## Название шаблона\nУникальное и описательное имя для этого шаблона (например, «Стандартный тестовый случай», «Результаты тестирования API»).",

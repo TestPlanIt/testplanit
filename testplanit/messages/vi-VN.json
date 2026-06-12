@@ -4357,7 +4357,10 @@
       "scimColumnHeader": "SCIM",
       "scimColumnYes": "Đúng",
       "scimUserLockedTitle": "Người dùng được quản lý bởi SCIM",
-      "scimUserLockedDescription": "Tên, email và trạng thái hoạt động của người dùng này được quản lý bởi nhà cung cấp danh tính của bạn. Hãy thực hiện các thay đổi ở đó để cập nhật chúng ở đây."
+      "scimUserLockedDescription": "Tên, email và trạng thái hoạt động của người dùng này được quản lý bởi nhà cung cấp danh tính của bạn. Hãy thực hiện các thay đổi ở đó để cập nhật chúng ở đây.",
+      "groupMappingOverrideTitle": "Managed by Group Mapping",
+      "groupMappingOverrideDescription": "This user's access tier is governed by a SCIM group mapping and may be reverted on the next sync.",
+      "groupMappingBadge": "Group Mapped"
     },
     "security": {
       "title": "Bảo vệ",
@@ -4536,10 +4539,14 @@
       "probe": {
         "button": "Kiểm tra SCIM",
         "testing": "Đang kiểm tra…",
-        "okBanner": "HTTP {status} — mã thông báo hoạt động với /scim/v2/Users.",
+        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "Không thể kết nối đến điểm cuối SCIM. Vui lòng thử lại."
-      }
+      },
+      "fallbackDefaultTitle": "Default Mapped Access",
+      "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
+      "fallbackDefaultLabel": "Default access tier",
+      "fallbackDefaultSaved": "Fallback default saved"
     },
     "tags": {
       "add": {
@@ -4823,7 +4830,16 @@
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Được quản lý bởi SCIM. Quản lý từ trang quản trị SCIM.",
       "scimNameLockedTitle": "Tập đoàn được quản lý bởi SCIM.",
-      "scimNameLockedDescription": "Tên và thành viên của nhóm này được quản lý bởi nhà cung cấp danh tính của bạn. Hãy thực hiện các thay đổi ở đó để cập nhật thông tin tại đây."
+      "scimNameLockedDescription": "Tên và thành viên của nhóm này được quản lý bởi nhà cung cấp danh tính của bạn. Hãy thực hiện các thay đổi ở đó để cập nhật thông tin tại đây.",
+      "mappedAccessColumnHeader": "Mapped Access",
+      "mappedAccessLabel": "Mapped Access Tier",
+      "mappedAccessNone": "No mapping",
+      "mappedAccessSelect": "Select access tier...",
+      "downgradeConfirmTitle": "Confirm Access Change",
+      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
+      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "downgradeConfirmUserRow": "{name}: {from} → {to}",
+      "downgradeConfirmAccessChange": "{from} → {to}"
     },
     "milestones": {
       "description": "Quản lý các loại mốc thời gian",
@@ -6033,7 +6049,8 @@
     },
     "group": {
       "name": "## Tên Nhóm\nMột tên hoặc từ khóa rõ ràng, ngắn gọn, mô tả được sử dụng trong tất cả các dự án.\n\n- Giúp các thành viên nhóm nhanh chóng tìm thấy các trường hợp kiểm thử, các lần chạy thử nghiệm và các phiên liên quan.",
-      "users": "## Người dùng\nCho biết những người dùng được chỉ định vào nhóm này."
+      "users": "## Người dùng\nCho biết những người dùng được chỉ định vào nhóm này.",
+      "mappedAccess": "## Mapped Access Tier\nMembers of this group are granted at least this access tier on the next sync.\n\n- The highest tier across all of a user's groups wins\n- \"No mapping\" means this group does not affect access — members fall back to the default set on the SCIM page\n- A manual access change on a user takes over from the mapping (and is flagged on that user's edit screen)"
     },
     "template": {
       "name": "## Tên mẫu\nMột tên duy nhất và mô tả cho mẫu này (ví dụ: 'Trường hợp kiểm thử tiêu chuẩn', 'Kết quả kiểm thử API').",

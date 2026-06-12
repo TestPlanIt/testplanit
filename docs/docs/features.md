@@ -166,6 +166,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **Groups** - Organize users into groups for easier permission management
 - **SSO support** - Integrate with your identity provider via [SAML, Google OAuth, Apple Sign In, or Microsoft (Azure AD)](./user-guide/sso.md). SAML providers expose per-provider `Require signed assertions` and `Require signed response` toggles so a standard IdP that signs only the assertion (Okta's default) works out of the box, and a stricter IdP can require both signatures.
 - **SCIM 2.0 provisioning** - Provision, update, and de-provision users and groups from your IdP via [SCIM 2.0](./user-guide/scim.md). Includes a per-token rate limit, a 5-minute coalescing window to avoid first-sync webhook floods, and an admin conflict log surfacing JIT binds, resurrections, and skipped-member operations.
+- **Group role mapping** - Drive each user's global access tier (None, User, Project Admin, or Admin) from their [group membership](./user-guide/scim.md#role-mapping), with highest-wins precedence across groups, a configurable fallback default for users outside every mapped group, a downgrade-confirmation guard before any access is lowered, and a manual-override path that hands a user back to admin control.
 - **Magic Link sign-in** - Optional passwordless email link as an alternative to password authentication
 - **Self-registration toggle** - Admin-controlled switch for letting users create their own accounts (or restricting account creation to admins)
 

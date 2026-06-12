@@ -60,7 +60,7 @@ const SAMPLE_RESOURCE = {
   members: [],
   meta: {
     resourceType: "Group" as const,
-    location: "http://localhost:3000/scim/v2/Groups/11",
+    location: "http://localhost:3000/api/scim/v2/Groups/11",
     version: "v1",
     lastModified: "2026-06-05T00:00:00.000Z",
   },
@@ -75,7 +75,7 @@ function makeRequest(
   } = {}
 ): NextRequest {
   const method = opts.method ?? "POST";
-  const url = opts.url ?? "http://localhost/scim/v2/Groups";
+  const url = opts.url ?? "http://localhost/api/scim/v2/Groups";
   const headers: Record<string, string> = {};
   let body: BodyInit | undefined;
   if (opts.body !== undefined) {
@@ -270,7 +270,7 @@ describe("GET /api/scim/v2/Groups", () => {
       totalResults: 7,
     });
     const res = await GET(
-      makeRequest({ method: "GET", url: "http://localhost/scim/v2/Groups" })
+      makeRequest({ method: "GET", url: "http://localhost/api/scim/v2/Groups" })
     );
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("application/scim+json");
@@ -298,7 +298,7 @@ describe("GET /api/scim/v2/Groups", () => {
     const res = await GET(
       makeRequest({
         method: "GET",
-        url: 'http://localhost/scim/v2/Groups?filter=displayName eq "Eng"&startIndex=21&count=20',
+        url: 'http://localhost/api/scim/v2/Groups?filter=displayName eq "Eng"&startIndex=21&count=20',
       })
     );
     expect(res.status).toBe(200);
@@ -313,7 +313,7 @@ describe("GET /api/scim/v2/Groups", () => {
     const res = await GET(
       makeRequest({
         method: "GET",
-        url: `http://localhost/scim/v2/Groups?filter=${encodeURIComponent(longFilter)}`,
+        url: `http://localhost/api/scim/v2/Groups?filter=${encodeURIComponent(longFilter)}`,
       })
     );
     expect(res.status).toBe(400);
@@ -330,7 +330,7 @@ describe("GET /api/scim/v2/Groups", () => {
     const res = await GET(
       makeRequest({
         method: "GET",
-        url: 'http://localhost/scim/v2/Groups?filter=title eq "x"',
+        url: 'http://localhost/api/scim/v2/Groups?filter=title eq "x"',
       })
     );
     expect(res.status).toBe(400);
@@ -343,7 +343,7 @@ describe("GET /api/scim/v2/Groups", () => {
       new ScimAuthError(scimError(401, null, "Missing Authorization header"))
     );
     const res = await GET(
-      makeRequest({ method: "GET", url: "http://localhost/scim/v2/Groups" })
+      makeRequest({ method: "GET", url: "http://localhost/api/scim/v2/Groups" })
     );
     expect(res.status).toBe(401);
     expect(listScimGroups).not.toHaveBeenCalled();
@@ -353,7 +353,7 @@ describe("GET /api/scim/v2/Groups", () => {
     vi.mocked(listScimGroups).mockRejectedValueOnce(new Error("boom"));
     const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const res = await GET(
-      makeRequest({ method: "GET", url: "http://localhost/scim/v2/Groups" })
+      makeRequest({ method: "GET", url: "http://localhost/api/scim/v2/Groups" })
     );
     expect(res.status).toBe(500);
     const body = (await res.json()) as { detail: string };
@@ -367,7 +367,7 @@ describe("GET /api/scim/v2/Groups", () => {
       totalResults: 0,
     });
     await GET(
-      makeRequest({ method: "GET", url: "http://localhost/scim/v2/Groups" })
+      makeRequest({ method: "GET", url: "http://localhost/api/scim/v2/Groups" })
     );
     expect(listScimGroups).toHaveBeenCalledWith(
       expect.objectContaining({

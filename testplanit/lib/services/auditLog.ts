@@ -424,6 +424,7 @@ export async function captureAuditEvent(event: AuditEvent): Promise<void> {
   // token id is also hand-stamped onto metadata.scimTokenId so each audit
   // row carries the per-token discriminator alongside the source label.
   const alsScimTokenId = context?.scimTokenId;
+  const alsScimGroupId = context?.scimGroupId;
   const derivedSource: "mcp" | "api" | "scim" | undefined = alsScimTokenId
     ? "scim"
     : context?.tokenScopes && context.tokenScopes.length > 0
@@ -432,7 +433,7 @@ export async function captureAuditEvent(event: AuditEvent): Promise<void> {
         : "api"
       : undefined;
   const mergedMetadata: Record<string, unknown> | undefined =
-    alsSystemReason || derivedSource
+    alsSystemReason || derivedSource || alsScimGroupId
       ? {
           ...(existingMetadata ?? {}),
           ...(alsSystemReason
@@ -449,6 +450,9 @@ export async function captureAuditEvent(event: AuditEvent): Promise<void> {
           alsScimTokenId &&
           existingMetadata?.scimTokenId === undefined
             ? { scimTokenId: alsScimTokenId }
+            : {}),
+          ...(alsScimGroupId && existingMetadata?.scimGroupId === undefined
+            ? { scimGroupId: alsScimGroupId }
             : {}),
         }
       : existingMetadata;

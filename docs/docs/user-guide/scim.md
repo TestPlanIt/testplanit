@@ -33,7 +33,7 @@ SCIM authenticates with a bearer token minted from the TestPlanIt admin UI.
 2. Click **Mint new token**. Pick a descriptive name and the IdP this token is for (Okta / Entra / OneLogin / Other).
 3. TestPlanIt shows the raw token **once**. Tokens start with the prefix `tps_` (for example, `tps_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`). Copy it immediately — it is never displayed again.
 4. Paste the token into the **Secret Token** / **Bearer Token** field of your IdP's SCIM connector configuration.
-5. Click **Test SCIM** in the admin UI. It performs a server-side probe against `/scim/v2/ServiceProviderConfig` using the encrypted-at-rest copy of the token and reports back the HTTP status — proving the token is wired up before you save the IdP configuration.
+5. Click **Test SCIM** in the admin UI. It performs a server-side probe against `/api/scim/v2/ServiceProviderConfig` using the encrypted-at-rest copy of the token and reports back the HTTP status — proving the token is wired up before you save the IdP configuration.
 
 You can revoke a token at any time from the same page. Revocation is immediate: the next request on that token receives `401 Unauthorized`.
 
@@ -60,30 +60,30 @@ These fields are display-only — to change them, update the user in your IdP an
 
 ## Endpoint reference
 
-| Method   | Path                             | Description                                                           |
-| -------- | -------------------------------- | --------------------------------------------------------------------- |
-| `GET`    | `/scim/v2/ServiceProviderConfig` | Static capability document (no bearer required)                       |
-| `GET`    | `/scim/v2/Schemas`               | Lists supported schema URIs                                           |
-| `GET`    | `/scim/v2/Schemas/{id}`          | Returns one schema with attribute metadata                            |
-| `GET`    | `/scim/v2/ResourceTypes`         | Lists `User` and `Group` resource types                               |
-| `POST`   | `/scim/v2/Users`                 | Provision a user; `201 Created` on new, `200 OK` on existing-row bind |
-| `GET`    | `/scim/v2/Users`                 | List + filter users                                                   |
-| `GET`    | `/scim/v2/Users/{id}`            | Read one user                                                         |
-| `PUT`    | `/scim/v2/Users/{id}`            | Full replace                                                          |
-| `PATCH`  | `/scim/v2/Users/{id}`            | Partial update                                                        |
-| `DELETE` | `/scim/v2/Users/{id}`            | Soft-delete (tombstone)                                               |
-| `POST`   | `/scim/v2/Groups`                | Provision a group                                                     |
-| `GET`    | `/scim/v2/Groups`                | List + filter groups                                                  |
-| `GET`    | `/scim/v2/Groups/{id}`           | Read one group                                                        |
-| `PUT`    | `/scim/v2/Groups/{id}`           | Full replace                                                          |
-| `PATCH`  | `/scim/v2/Groups/{id}`           | Partial update (including member operations)                          |
-| `DELETE` | `/scim/v2/Groups/{id}`           | Soft-delete (tombstone)                                               |
+| Method   | Path                                 | Description                                                           |
+| -------- | ------------------------------------ | --------------------------------------------------------------------- |
+| `GET`    | `/api/scim/v2/ServiceProviderConfig` | Static capability document (no bearer required)                       |
+| `GET`    | `/api/scim/v2/Schemas`               | Lists supported schema URIs                                           |
+| `GET`    | `/api/scim/v2/Schemas/{id}`          | Returns one schema with attribute metadata                            |
+| `GET`    | `/api/scim/v2/ResourceTypes`         | Lists `User` and `Group` resource types                               |
+| `POST`   | `/api/scim/v2/Users`                 | Provision a user; `201 Created` on new, `200 OK` on existing-row bind |
+| `GET`    | `/api/scim/v2/Users`                 | List + filter users                                                   |
+| `GET`    | `/api/scim/v2/Users/{id}`            | Read one user                                                         |
+| `PUT`    | `/api/scim/v2/Users/{id}`            | Full replace                                                          |
+| `PATCH`  | `/api/scim/v2/Users/{id}`            | Partial update                                                        |
+| `DELETE` | `/api/scim/v2/Users/{id}`            | Soft-delete (tombstone)                                               |
+| `POST`   | `/api/scim/v2/Groups`                | Provision a group                                                     |
+| `GET`    | `/api/scim/v2/Groups`                | List + filter groups                                                  |
+| `GET`    | `/api/scim/v2/Groups/{id}`           | Read one group                                                        |
+| `PUT`    | `/api/scim/v2/Groups/{id}`           | Full replace                                                          |
+| `PATCH`  | `/api/scim/v2/Groups/{id}`           | Partial update (including member operations)                          |
+| `DELETE` | `/api/scim/v2/Groups/{id}`           | Soft-delete (tombstone)                                               |
 
 Mutation success codes follow RFC 7644: `201 Created` for new resources, `200 OK` for updates and existing-row binds, `204 No Content` for `DELETE`.
 
 ## Filter support
 
-`GET /scim/v2/Users?filter=…` and `GET /scim/v2/Groups?filter=…` accept a narrow SCIM filter grammar:
+`GET /api/scim/v2/Users?filter=…` and `GET /api/scim/v2/Groups?filter=…` accept a narrow SCIM filter grammar:
 
 - **Operators:** `eq`, `and`, `pr`
 - **Users — supported attributes:** `userName`, `externalId`, `emails.value`, `active`, `name.givenName`, `name.familyName`
@@ -165,7 +165,7 @@ A subscribing destination only receives the events listed in its `subscribedEven
 
 1. In the Okta Admin Console, navigate to **Applications → Browse App Catalog** and create a new SAML 2.0 + SCIM 2.0 application (or use Okta's "SCIM 2.0 Test App (Header Auth)" template for verification).
 2. Under **Provisioning → Integration**, set:
-   - **SCIM Connector base URL:** `https://your-instance.example.com/scim/v2`
+   - **SCIM Connector base URL:** `https://your-instance.example.com/api/scim/v2`
    - **Unique identifier field for users:** `userName`
    - **Supported provisioning actions:** Push New Users, Push Profile Updates, Push Groups, Import New Users and Profile Updates
    - **Authentication Mode:** HTTP Header
@@ -185,7 +185,7 @@ A subscribing destination only receives the events listed in its `subscribedEven
 1. In the Microsoft Entra admin center, go to **Enterprise applications → New application → Create your own application** and pick **Integrate any other application you don't find in the gallery (Non-gallery)**.
 2. Open the new application's **Provisioning** blade and set **Provisioning Mode** to **Automatic**.
 3. Set:
-   - **Tenant URL:** `https://your-instance.example.com/scim/v2`
+   - **Tenant URL:** `https://your-instance.example.com/api/scim/v2`
    - **Secret Token:** the `tps_*` value from `/admin/scim`
 4. Click **Test Connection**. Entra calls `/Users?filter=…` and `/Groups?filter=…` against your tenant URL with the bearer.
 5. Under **Settings → Provisioning Status**, switch the toggle to **On** once the test passes.
@@ -201,13 +201,92 @@ A subscribing destination only receives the events listed in its `subscribedEven
 
 1. In the OneLogin admin console, go to **Applications → Add App** and search for **SCIM Provisioner with SAML (SCIM v2 Core)**. Add it to your account.
 2. On the **Configuration** tab:
-   - **SCIM Base URL:** `https://your-instance.example.com/scim/v2`
+   - **SCIM Base URL:** `https://your-instance.example.com/api/scim/v2`
    - **SCIM JSON Template:** leave the default
    - **SCIM Bearer Token:** the `tps_*` value from `/admin/scim`
 3. Click **Enable** next to **API Connection** and confirm the green status indicator.
 4. On the **Provisioning** tab, enable **Create user**, **Delete user**, and **Update user**. Optionally enable **Require admin approval** for delete operations if your tenant policy requires it.
 5. On the **Parameters** tab, map OneLogin user attributes to the SCIM schema. The defaults already match the SCIM core attributes; ensure **Email** maps to `userName` (the SCIM unique-identifier field).
 6. Assign users via **Users → Applications**. OneLogin pushes them into TestPlanIt on assignment.
+
+## Role mapping
+
+TestPlanIt can automatically assign a user's global access tier — **User**, **Project Admin**, or **Admin** — based on the groups they belong to. This frees you from managing access per-user by hand: promote a user to a group in your IdP and they gain the right tier on the next sync. A user who belongs to no mapped group falls back to a configurable default tier, which can be **None** (no access).
+
+Role mapping works with groups from any source. SCIM-provisioned groups (pushed from Okta, Entra, or OneLogin) and manually-created groups in TestPlanIt can both carry a **Mapped Access** tier.
+
+### How access is resolved
+
+Each group can optionally carry a **Mapped Access** tier. When a user belongs to multiple mapped groups, their effective access is the **highest** tier across all those groups (highest-wins). For example, if Alice is a member of "Engineering" (mapped to **User**) and "Security Reviewers" (mapped to **Admin**), Alice's effective access is **Admin**.
+
+A user whose access is driven by group mapping is called a **governed** user. If a governed user is not currently a member of any mapped group, they fall back to the **fallback default** — a global setting you configure on `/admin/scim`. The fallback default is **None** out of the box, meaning governed users outside every mapped group have no access to TestPlanIt until they're added to a mapped group.
+
+**Ungoverned users** (those who have never been added to a mapped group and were not provisioned via SCIM) are never auto-changed by mapping — their access stays as set by an admin.
+
+### Configure a mapping
+
+#### Set a group's Mapped Access
+
+1. Navigate to **Admin → Users & Groups → Groups** (`/admin/groups`).
+2. Find the group you want to map (SCIM-provisioned groups show a **SCIM** badge; manually-created groups can be mapped too).
+3. Open the group's edit dialog and set **Mapped Access Tier** to the tier you want members to receive: **No mapping** (clear the mapping), **User**, **Project Admin**, or **Admin**. The **?** help icon next to the field explains each option.
+4. Click **Save**.
+
+Selecting **No mapping** removes the mapping from that group — it no longer drives any user's access. A group cannot be mapped to the **None** access tier; to grant no access, leave the group unmapped and let the fallback default apply.
+
+#### Set the fallback default
+
+1. Navigate to **Admin → Authentication → SCIM Provisioning** (`/admin/scim`).
+2. Under the **Role Mapping** section, change the **Fallback Default** selector. Options are **None** (the system default), **User**, **Project Admin**, and **Admin**. Here **None** is the no-access tier itself — distinct from a group's **No mapping**, which means the group carries no tier at all.
+3. Click **Save**. The new default takes effect for every governed user with no mapped-group membership on the next recompute.
+
+### Downgrade confirmation
+
+TestPlanIt will never silently lower a user's access. Before applying a mapping change or fallback-default change that would reduce one or more existing users' current tier, a confirmation dialog lists the affected users and their current → new tier. You must click **Apply anyway** to proceed.
+
+Changes that only upgrade access — or that have no net effect on any existing user — are applied immediately without the confirmation step.
+
+### Manual override
+
+If you open a governed user in **Admin → Users & Groups → Users** (`/admin/users`), the edit dialog shows a **Group Mapped** badge next to the **Access** field and a warning banner titled **Managed by Group Mapping**:
+
+> This user's access tier is governed by a SCIM group mapping and may be reverted on the next sync.
+
+You can still change and save their access. Doing so switches the user to **manual** management — the mapping engine will no longer auto-update them. If the user is later added to a new mapped group, governance resumes automatically.
+
+### Audit trail
+
+Every mapping configuration change — setting a group's Mapped Access tier or changing the fallback default — is recorded in the audit log with the acting admin. Each resulting per-user access change is also logged individually.
+
+To review mapping changes, go to **Admin → Activity → Audit Logs** (`/admin/audit-logs`) and filter by source **scim** or search for the group or user name.
+
+### Okta: map a group to an access tier
+
+This example uses the SCIM connector you already set up in [Okta setup](#okta-setup).
+
+1. **Push the group from Okta.** In the Okta Admin Console, open your TestPlanIt application. On the **Push Groups** tab, add the group you want to map (for example, "Platform Admins"). Okta creates the group in TestPlanIt via `POST /api/scim/v2/Groups` and pushes its members on the first sync.
+
+2. **Assign access in TestPlanIt.** Go to **Admin → Users & Groups → Groups** (`/admin/groups`). The "Platform Admins" group appears with a **SCIM** badge. Open its edit dialog, set **Mapped Access Tier** to **Admin**, and click **Save**.
+
+3. **Verify.** Navigate to **Admin → Users & Groups → Users** (`/admin/users`). Any user who is a member of the Okta "Platform Admins" group — and whose effective tier (highest-wins across all their mapped groups) is now Admin — appears with **Admin** in the Access column.
+
+4. **Add a member.** Assign a new user to the "Platform Admins" group in Okta. On the next Okta push, TestPlanIt receives a `PATCH /api/scim/v2/Groups/{id}` member-add operation, recomputes the user's effective access, and sets it to **Admin**.
+
+5. **Remove a member.** Unassign the user from the group in Okta. TestPlanIt receives the member-remove PATCH, recomputes, and downgrades the user to their next-highest mapped tier — or to the fallback default if they are no longer a member of any mapped group.
+
+### Entra: map a group to an access tier
+
+This example uses the provisioning connector you already set up in [Microsoft Entra (Azure AD) setup](#microsoft-entra-azure-ad-setup).
+
+1. **Assign the group in Entra.** In the Microsoft Entra admin center, open your TestPlanIt enterprise application and go to **Provisioning → Edit attribute mappings**. Under **Mappings**, ensure **Synchronize Azure Active Directory Groups to customappsso** is enabled. Then go to **Users and groups → Add user/group** and assign the group you want to map — for example, "Release Managers". On the next provisioning cycle, Entra pushes the group and its members to TestPlanIt via `POST /api/scim/v2/Groups`.
+
+2. **Assign access in TestPlanIt.** Go to **Admin → Users & Groups → Groups** (`/admin/groups`). The "Release Managers" group appears with a **SCIM** badge. Open its edit dialog, set **Mapped Access Tier** to **Project Admin**, and click **Save**.
+
+3. **Verify.** Navigate to **Admin → Users & Groups → Users** (`/admin/users`). Members of "Release Managers" now show **Project Admin** (or a higher tier if another mapped group raises it).
+
+4. **Add a member.** Add a user to the "Release Managers" group in Entra. The provisioning service sends a `PATCH /api/scim/v2/Groups/{id}` member-add; TestPlanIt recomputes and assigns **Project Admin** (or higher).
+
+5. **Remove a member.** Remove the user from the group in Entra. If you have the `aadOptscim062020` flag enabled (recommended in the [Entra setup steps](#microsoft-entra-azure-ad-setup)), Entra sends the RFC 7644-conformant member-remove PATCH. TestPlanIt recomputes and sets the user's access to their remaining mapped tier or to the fallback default.
 
 ## Troubleshooting
 
@@ -227,7 +306,7 @@ The conflict log surfaces only the last ~90 days (the same retention window as t
 ### "Test SCIM" probe failure modes
 
 - **401 Unauthorized** — token is revoked, expired, or not a `tps_*` value. Re-mint or check the IdP configuration.
-- **403 Forbidden** — your tenant policy or a network layer is blocking bearer requests to `/scim/v2/*`. Confirm there's no proxy stripping the `Authorization` header.
+- **403 Forbidden** — your tenant policy or a network layer is blocking bearer requests to `/api/scim/v2/*`. Confirm there's no proxy stripping the `Authorization` header.
 - **5xx** — usually a database or worker outage. The TestPlanIt error response carries an RFC 7644 envelope with the failing operation.
 
 ### Rate limiting (429)

@@ -19,7 +19,7 @@ vi.mock("~/lib/scim/auth", () => ({
   }),
 }));
 
-const req = (path = "/scim/v2/Schemas"): NextRequest =>
+const req = (path = "/api/scim/v2/Schemas"): NextRequest =>
   new NextRequest(`http://localhost${path}`);
 
 const originalNextAuthUrl = process.env.NEXTAUTH_URL;
@@ -150,15 +150,15 @@ describe("GET /api/scim/v2/Schemas", () => {
     };
     expect(body.Resources[0].meta.resourceType).toBe("Schema");
     expect(body.Resources[0].meta.location).toBe(
-      `http://localhost:3000/scim/v2/Schemas/${CORE_USER_URN}`
+      `http://localhost:3000/api/scim/v2/Schemas/${CORE_USER_URN}`
     );
     expect(body.Resources[1].meta.resourceType).toBe("Schema");
     expect(body.Resources[1].meta.location).toBe(
-      `http://localhost:3000/scim/v2/Schemas/${CORE_GROUP_URN}`
+      `http://localhost:3000/api/scim/v2/Schemas/${CORE_GROUP_URN}`
     );
     expect(body.Resources[2].meta.resourceType).toBe("Schema");
     expect(body.Resources[2].meta.location).toBe(
-      `http://localhost:3000/scim/v2/Schemas/${ENTERPRISE_USER_URN}`
+      `http://localhost:3000/api/scim/v2/Schemas/${ENTERPRISE_USER_URN}`
     );
   });
 
@@ -171,7 +171,7 @@ describe("GET /api/scim/v2/Schemas", () => {
         Resources: Array<{ meta: { location: string } }>;
       };
       expect(body.Resources[0].meta.location).toBe(
-        `http://app.example.com/scim/v2/Schemas/${CORE_USER_URN}`
+        `http://app.example.com/api/scim/v2/Schemas/${CORE_USER_URN}`
       );
     } finally {
       if (before) {

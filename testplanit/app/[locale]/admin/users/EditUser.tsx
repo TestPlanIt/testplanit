@@ -36,7 +36,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { CircleSlash2, Cloud, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { CircleSlash2, Cloud, ShieldAlert, Trash2 } from "lucide-react";
 
 import {
   Form,
@@ -349,6 +350,16 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
               </Alert>
             )}
 
+            {user.accessSource === "GROUP_MAPPING" && (
+              <Alert data-testid="group-mapping-governed-alert">
+                <ShieldAlert className="h-4 w-4" aria-hidden="true" />
+                <AlertTitle>{tAdmin("groupMappingOverrideTitle")}</AlertTitle>
+                <AlertDescription>
+                  {tAdmin("groupMappingOverrideDescription")}
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Avatar management */}
             <div className="space-y-2">
               <label className="text-sm font-medium">
@@ -509,6 +520,15 @@ export function EditUser({ user, open, onClose }: EditUserProps) {
                   <FormLabel className="flex whitespace-nowrap items-center">
                     {tCommon("fields.access")}
                     <HelpPopover helpKey="user.access" />
+                    {user.accessSource === "GROUP_MAPPING" && (
+                      <Badge
+                        variant="secondary"
+                        className="ml-2"
+                        data-testid="group-mapping-badge"
+                      >
+                        {tAdmin("groupMappingBadge")}
+                      </Badge>
+                    )}
                     <FormControl>
                       <Controller
                         control={control}

@@ -79,6 +79,11 @@ enum Access {
   ADMIN
 }
 
+enum AccessSource {
+  MANUAL
+  GROUP_MAPPING
+}
+
 enum NotificationMode {
   NONE
   IN_APP
@@ -441,6 +446,7 @@ model User {
   scimGivenName                   String?
   scimFamilyName                  String?
   access                          Access                        @default(NONE)
+  accessSource                    AccessSource                  @default(MANUAL)
   roleId                          Int
   role                            Roles                         @relation(fields: [roleId], references: [id])
   isActive                        Boolean                       @default(true)
@@ -509,6 +515,7 @@ model User {
 
   @@index([isActive, isDeleted])
   @@index([access])
+  @@index([accessSource])
 }
 
 model PasswordHistory {
@@ -593,6 +600,7 @@ model Groups {
   updatedAt          DateTime?                @updatedAt()
   scimDisplayName    String?
   scimExtensions     Json?
+  mappedAccess       Access?
   assignedUsers      GroupAssignment[]
   projectPermissions GroupProjectPermission[]
 }

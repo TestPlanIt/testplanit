@@ -16,6 +16,9 @@ vi.mock("~/lib/prisma", () => {
     account: {
       deleteMany: vi.fn(),
     },
+    appConfig: {
+      findUnique: vi.fn(),
+    },
   };
   return {
     prisma: {
@@ -24,6 +27,7 @@ vi.mock("~/lib/prisma", () => {
       user: tx.user,
       roles: tx.roles,
       account: tx.account,
+      appConfig: tx.appConfig,
     },
   };
 });
@@ -95,6 +99,7 @@ interface TxLike {
   };
   roles: { findFirst: ReturnType<typeof vi.fn> };
   account: { deleteMany: ReturnType<typeof vi.fn> };
+  appConfig: { findUnique: ReturnType<typeof vi.fn> };
 }
 
 // Expose the internal tx mock object on prisma during vi.mock setup so tests
@@ -141,6 +146,7 @@ function makeBody(overrides: Partial<ScimUserBody> = {}): ScimUserBody {
 afterEach(() => {
   vi.clearAllMocks();
   tx.roles.findFirst.mockResolvedValue({ id: 1, isDefault: true });
+  tx.appConfig.findUnique.mockResolvedValue(null);
 });
 
 describe("createScimUser", () => {
@@ -169,13 +175,31 @@ describe("createScimUser", () => {
       expect(args.data.email).toBe("alice@example.com");
       expect(args.data.name).toBe("Alice Example");
       expect(args.data.roleId).toBe(7);
+      // With null AppConfig row, fallbackDefault resolves to NONE.
       expect(args.data.access).toBe("NONE");
+      expect(args.data.accessSource).toBe("GROUP_MAPPING");
       // password is a NOT NULL-equivalent fallback bcrypt hash to support
       // legacy schema expectations; never the IdP-supplied password.
       expect(typeof args.data.password).toBe("string");
       expect((args.data.password as string).length).toBeGreaterThan(20);
 
       expect(result.linked).toBe(false);
+    });
+
+    it("A1b: uses the configured fallback default when AppConfig row is present", async () => {
+      tx.appConfig.findUnique.mockResolvedValue({ value: "USER" });
+      tx.user.findFirst.mockResolvedValue(null);
+      tx.user.create.mockResolvedValue(
+        makeUser({ id: "user_new", access: "USER" })
+      );
+
+      await createScimUser(makeBody(), CTX);
+
+      const args = tx.user.create.mock.calls[0][0] as {
+        data: Record<string, unknown>;
+      };
+      expect(args.data.access).toBe("USER");
+      expect(args.data.accessSource).toBe("GROUP_MAPPING");
     });
 
     it("A2: emits scim.user.created with SYSTEM_PROJECT_ID + SCIM_SYSTEM_USER_ID defaults", async () => {
@@ -425,6 +449,40 @@ describe("createScimUser", () => {
       await expect(createScimUser(makeBody(), CTX)).rejects.toBeInstanceOf(
         ScimUniquenessError
       );
+    });
+
+    it("D3: resurrected user receives access=fallbackDefault and accessSource=GROUP_MAPPING, preventing stale MANUAL access from persisting", async () => {
+      // Tombstoned user previously had MANUAL access (e.g., admin-set before
+      // SCIM governance was enabled). Resurrection must overwrite with the
+      // governance-controlled fallback so the user re-enters the access
+      // recompute pipeline on next group assignment.
+      const tombstoned = makeUser({
+        id: "user_dead",
+        scimExternalId: "okta_abc",
+        isDeleted: true,
+        isActive: false,
+        access: "ADMIN",
+        accessSource: "MANUAL",
+      });
+      tx.user.findFirst.mockResolvedValue(tombstoned);
+      // Stub fallbackDefault = NONE (null AppConfig row, already set in afterEach)
+      tx.user.update.mockResolvedValue({
+        ...tombstoned,
+        isActive: true,
+        isDeleted: false,
+        access: "NONE",
+        accessSource: "GROUP_MAPPING",
+      });
+
+      await createScimUser(makeBody(), CTX);
+
+      expect(tx.user.update).toHaveBeenCalledTimes(1);
+      const args = tx.user.update.mock.calls[0][0] as {
+        where: { id: string };
+        data: Record<string, unknown>;
+      };
+      expect(args.data.access).toBe("NONE");
+      expect(args.data.accessSource).toBe("GROUP_MAPPING");
     });
   });
 });
@@ -955,5 +1013,73 @@ describe("J — raw-prisma + tx invariants (anti-pattern guards)", () => {
     expect(noComments.match(decisionPattern)).toBeNull();
     expect(phasePattern.test(noComments)).toBe(false);
     expect(noComments.match(planPattern)).toBeNull();
+  });
+});
+
+describe("K — fallback-default access on SCIM user create", () => {
+  it("K1: insertNewScimUser sets accessSource=GROUP_MAPPING on the create payload", async () => {
+    tx.user.findFirst.mockResolvedValue(null);
+    tx.user.create.mockResolvedValue(makeUser({ id: "user_k1" }));
+
+    await createScimUser(makeBody(), CTX);
+
+    const args = tx.user.create.mock.calls[0][0] as {
+      data: Record<string, unknown>;
+    };
+    expect(args.data.accessSource).toBe("GROUP_MAPPING");
+  });
+
+  it("K2: insertNewScimUser sets access from appConfig fallback default (non-NONE)", async () => {
+    tx.user.findFirst.mockResolvedValue(null);
+    // Simulate admin having configured fallback default = USER
+    tx.appConfig.findUnique.mockResolvedValue({ value: "USER" });
+    tx.user.create.mockResolvedValue(
+      makeUser({ id: "user_k2", access: "USER" })
+    );
+
+    await createScimUser(makeBody(), CTX);
+
+    const args = tx.user.create.mock.calls[0][0] as {
+      data: Record<string, unknown>;
+    };
+    expect(args.data.access).toBe("USER");
+    expect(args.data.accessSource).toBe("GROUP_MAPPING");
+  });
+
+  it("K3: insertNewScimUser does NOT parse the inbound groups attribute (read-only per RFC 7643)", async () => {
+    tx.user.findFirst.mockResolvedValue(null);
+    tx.user.create.mockResolvedValue(makeUser({ id: "user_k3" }));
+
+    await createScimUser(
+      makeBody({
+        // Provide a forged groups attribute; it must be ignored
+        groups: [{ value: "g1", display: "Admins" }],
+      } as unknown as Partial<import("../mapping/user").ScimUserBody>),
+      CTX
+    );
+
+    const args = tx.user.create.mock.calls[0][0] as {
+      data: Record<string, unknown>;
+    };
+    // access comes from fallback default (NONE here), NOT from groups
+    expect(args.data.access).toBe("NONE");
+    expect(args.data.accessSource).toBe("GROUP_MAPPING");
+  });
+
+  it("K4: insertNewScimUser no longer hardcodes access:'NONE' when fallback is non-NONE", async () => {
+    // Belt-and-suspenders: if fallback = ADMIN, the create payload must carry ADMIN
+    tx.user.findFirst.mockResolvedValue(null);
+    tx.appConfig.findUnique.mockResolvedValue({ value: "ADMIN" });
+    tx.user.create.mockResolvedValue(
+      makeUser({ id: "user_k4", access: "ADMIN" })
+    );
+
+    await createScimUser(makeBody(), CTX);
+
+    const args = tx.user.create.mock.calls[0][0] as {
+      data: Record<string, unknown>;
+    };
+    expect(args.data.access).toBe("ADMIN");
+    expect(args.data.access).not.toBe("NONE");
   });
 });

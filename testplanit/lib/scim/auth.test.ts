@@ -80,7 +80,7 @@ afterEach(() => {
 function req(
   authHeader?: string,
   extraHeaders: Record<string, string> = {},
-  url = "http://example.com/scim/v2/Users"
+  url = "http://example.com/api/scim/v2/Users"
 ): NextRequest {
   const headers = new Headers();
   if (authHeader) {
@@ -338,7 +338,7 @@ describe("requireScimBearer", () => {
       req(
         "Bearer tps_probe_token_value",
         { "x-scim-probe": "1" },
-        "http://localhost/scim/v2/ServiceProviderConfig"
+        "http://localhost/api/scim/v2/ServiceProviderConfig"
       )
     );
     expect(ctx).toEqual({
@@ -485,7 +485,7 @@ describe("requireScimBearer", () => {
       req(
         "Bearer tps_spoof_token_value",
         { "x-scim-probe": "1" },
-        "https://scim.example.com/scim/v2/ServiceProviderConfig"
+        "https://scim.example.com/api/scim/v2/ServiceProviderConfig"
       )
     );
     expect(ctx).toEqual({

@@ -60,7 +60,7 @@ const SAMPLE_RESOURCE = {
   active: true,
   meta: {
     resourceType: "User" as const,
-    location: "http://localhost:3000/scim/v2/Users/u_1",
+    location: "http://localhost:3000/api/scim/v2/Users/u_1",
     version: "v1",
     lastModified: "2026-06-05T00:00:00.000Z",
   },
@@ -75,7 +75,7 @@ function makeRequest(
   } = {}
 ): NextRequest {
   const method = opts.method ?? "POST";
-  const url = opts.url ?? "http://localhost/scim/v2/Users";
+  const url = opts.url ?? "http://localhost/api/scim/v2/Users";
   const headers: Record<string, string> = {};
   let body: BodyInit | undefined;
   if (opts.body !== undefined) {
@@ -245,7 +245,7 @@ describe("GET /api/scim/v2/Users", () => {
       totalResults: 42,
     });
     const res = await GET(
-      makeRequest({ method: "GET", url: "http://localhost/scim/v2/Users" })
+      makeRequest({ method: "GET", url: "http://localhost/api/scim/v2/Users" })
     );
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("application/scim+json");
@@ -273,7 +273,7 @@ describe("GET /api/scim/v2/Users", () => {
     const res = await GET(
       makeRequest({
         method: "GET",
-        url: 'http://localhost/scim/v2/Users?filter=userName eq "j"&startIndex=51&count=50',
+        url: 'http://localhost/api/scim/v2/Users?filter=userName eq "j"&startIndex=51&count=50',
       })
     );
     expect(res.status).toBe(200);
@@ -290,7 +290,7 @@ describe("GET /api/scim/v2/Users", () => {
       new ScimAuthError(scimError(401, null, "Missing Authorization header"))
     );
     const res = await GET(
-      makeRequest({ method: "GET", url: "http://localhost/scim/v2/Users" })
+      makeRequest({ method: "GET", url: "http://localhost/api/scim/v2/Users" })
     );
     expect(res.status).toBe(401);
     expect(listScimUsers).not.toHaveBeenCalled();
@@ -301,7 +301,7 @@ describe("GET /api/scim/v2/Users", () => {
     const res = await GET(
       makeRequest({
         method: "GET",
-        url: `http://localhost/scim/v2/Users?filter=${encodeURIComponent(longFilter)}`,
+        url: `http://localhost/api/scim/v2/Users?filter=${encodeURIComponent(longFilter)}`,
       })
     );
     expect(res.status).toBe(400);
@@ -319,7 +319,7 @@ describe("GET /api/scim/v2/Users", () => {
     const res = await GET(
       makeRequest({
         method: "GET",
-        url: 'http://localhost/scim/v2/Users?filter=title eq "x"',
+        url: 'http://localhost/api/scim/v2/Users?filter=title eq "x"',
       })
     );
     expect(res.status).toBe(400);
@@ -332,7 +332,7 @@ describe("GET /api/scim/v2/Users", () => {
     vi.mocked(listScimUsers).mockRejectedValueOnce(new Error("boom"));
     const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const res = await GET(
-      makeRequest({ method: "GET", url: "http://localhost/scim/v2/Users" })
+      makeRequest({ method: "GET", url: "http://localhost/api/scim/v2/Users" })
     );
     expect(res.status).toBe(500);
     const body = (await res.json()) as { detail: string };
@@ -346,7 +346,7 @@ describe("GET /api/scim/v2/Users", () => {
       totalResults: 0,
     });
     await GET(
-      makeRequest({ method: "GET", url: "http://localhost/scim/v2/Users" })
+      makeRequest({ method: "GET", url: "http://localhost/api/scim/v2/Users" })
     );
     expect(listScimUsers).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -4357,7 +4357,10 @@
       "scimColumnHeader": "SCIM",
       "scimColumnYes": "Evet",
       "scimUserLockedTitle": "Kullanıcı SCIM tarafından yönetilir.",
-      "scimUserLockedDescription": "Bu kullanıcının adı, e-postası ve aktiflik durumu kimlik sağlayıcınız tarafından yönetilmektedir. Bunları burada güncellemek için orada değişiklik yapın."
+      "scimUserLockedDescription": "Bu kullanıcının adı, e-postası ve aktiflik durumu kimlik sağlayıcınız tarafından yönetilmektedir. Bunları burada güncellemek için orada değişiklik yapın.",
+      "groupMappingOverrideTitle": "Managed by Group Mapping",
+      "groupMappingOverrideDescription": "This user's access tier is governed by a SCIM group mapping and may be reverted on the next sync.",
+      "groupMappingBadge": "Group Mapped"
     },
     "security": {
       "title": "Güvenlik",
@@ -4536,10 +4539,14 @@
       "probe": {
         "button": "SCIM'i test edin",
         "testing": "Test ediliyor…",
-        "okBanner": "HTTP {status} — belirteç /scim/v2/Users'a karşı çalışır.",
+        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "SCIM uç noktasına ulaşılamadı. Tekrar denenecek."
-      }
+      },
+      "fallbackDefaultTitle": "Default Mapped Access",
+      "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
+      "fallbackDefaultLabel": "Default access tier",
+      "fallbackDefaultSaved": "Fallback default saved"
     },
     "tags": {
       "add": {
@@ -4823,7 +4830,16 @@
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "SCIM tarafından yönetilir. SCIM yönetim sayfasından yönetin.",
       "scimNameLockedTitle": "Grup SCIM tarafından yönetilmektedir.",
-      "scimNameLockedDescription": "Bu grubun adı ve üyeleri kimlik sağlayıcınız tarafından yönetilmektedir. Değişiklikleri orada yaparak buradaki bilgileri güncelleyebilirsiniz."
+      "scimNameLockedDescription": "Bu grubun adı ve üyeleri kimlik sağlayıcınız tarafından yönetilmektedir. Değişiklikleri orada yaparak buradaki bilgileri güncelleyebilirsiniz.",
+      "mappedAccessColumnHeader": "Mapped Access",
+      "mappedAccessLabel": "Mapped Access Tier",
+      "mappedAccessNone": "No mapping",
+      "mappedAccessSelect": "Select access tier...",
+      "downgradeConfirmTitle": "Confirm Access Change",
+      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
+      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "downgradeConfirmUserRow": "{name}: {from} → {to}",
+      "downgradeConfirmAccessChange": "{from} → {to}"
     },
     "milestones": {
       "description": "Dönüm Noktası Türlerini Yönetin",
@@ -6033,7 +6049,8 @@
     },
     "group": {
       "name": "## Grup Adı\nTüm projelerde kullanılan açık, özlü ve açıklayıcı bir ad veya anahtar kelime(ler).\n\n- Ekip üyelerinin ilgili test senaryolarını, test çalıştırmalarını ve oturumlarını hızlı bir şekilde bulmasına yardımcı olur.",
-      "users": "## Kullanıcılar\nBu gruba atanmış kullanıcıları gösterir."
+      "users": "## Kullanıcılar\nBu gruba atanmış kullanıcıları gösterir.",
+      "mappedAccess": "## Mapped Access Tier\nMembers of this group are granted at least this access tier on the next sync.\n\n- The highest tier across all of a user's groups wins\n- \"No mapping\" means this group does not affect access — members fall back to the default set on the SCIM page\n- A manual access change on a user takes over from the mapping (and is flagged on that user's edit screen)"
     },
     "template": {
       "name": "## Şablon Adı\nBu şablon için benzersiz ve açıklayıcı bir ad (örneğin, 'Standart Test Durumu', 'API Test Sonuçları').",

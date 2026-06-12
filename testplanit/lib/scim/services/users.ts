@@ -46,6 +46,7 @@ import {
 import { SCIM_SYSTEM_USER_ID, SYSTEM_PROJECT_ID } from "../constants";
 import { scimError } from "../errors";
 import { scimFilterToPrismaWhere } from "../filter";
+import { readScimFallbackDefault } from "./recompute";
 import {
   computeUserUpdatesFromScim,
   deriveDisplayName,
@@ -305,6 +306,8 @@ async function resurrectTombstonedUser(
     extractNonWritableUrns(body as unknown as Record<string, unknown>)
   );
 
+  const fallbackDefault = await readScimFallbackDefault(tx);
+
   const resurrected = await tx.user.update({
     where: { id: existing.id },
     data: {
@@ -317,6 +320,8 @@ async function resurrectTombstonedUser(
       name: deriveDisplayName(body),
       email: extractPrimaryEmail(body.emails) ?? existing.email,
       scimExtensions: toJsonInput(extensions),
+      access: fallbackDefault,
+      accessSource: "GROUP_MAPPING",
     },
     include: SCIM_USER_INCLUDE,
   });
@@ -402,6 +407,8 @@ async function insertNewScimUser(
     throw new Error("No default role configured");
   }
 
+  const fallbackDefault = await readScimFallbackDefault(tx);
+
   const extensions = extractNonWritableUrns(
     body as unknown as Record<string, unknown>
   );
@@ -424,7 +431,8 @@ async function insertNewScimUser(
           ? (extensions as Prisma.InputJsonValue)
           : undefined,
       authMethod: "SCIM",
-      access: "NONE",
+      access: fallbackDefault,
+      accessSource: "GROUP_MAPPING",
       roleId: defaultRole.id,
       isActive: body.active ?? true,
       isDeleted: false,

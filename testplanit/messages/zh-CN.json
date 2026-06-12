@@ -4357,7 +4357,10 @@
       "scimColumnHeader": "SCIM",
       "scimColumnYes": "是的",
       "scimUserLockedTitle": "用户由 SCIM 管理",
-      "scimUserLockedDescription": "该用户的姓名、电子邮件地址和活动状态由您的身份提供商管理。请在身份提供商处进行更改，以在此处更新这些信息。"
+      "scimUserLockedDescription": "该用户的姓名、电子邮件地址和活动状态由您的身份提供商管理。请在身份提供商处进行更改，以在此处更新这些信息。",
+      "groupMappingOverrideTitle": "Managed by Group Mapping",
+      "groupMappingOverrideDescription": "This user's access tier is governed by a SCIM group mapping and may be reverted on the next sync.",
+      "groupMappingBadge": "Group Mapped"
     },
     "security": {
       "title": "安全",
@@ -4536,10 +4539,14 @@
       "probe": {
         "button": "测试 SCIM",
         "testing": "测试…",
-        "okBanner": "HTTP {status} — 令牌对 /scim/v2/Users 有效。",
+        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "无法连接到SCIM端点。请重试。"
-      }
+      },
+      "fallbackDefaultTitle": "Default Mapped Access",
+      "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
+      "fallbackDefaultLabel": "Default access tier",
+      "fallbackDefaultSaved": "Fallback default saved"
     },
     "tags": {
       "add": {
@@ -4823,7 +4830,16 @@
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "由SCIM管理。请从SCIM管理页面进行管理。",
       "scimNameLockedTitle": "该集团由SCIM管理",
-      "scimNameLockedDescription": "此群组的名称和成员由您的身份提供商管理。请在身份提供商处进行更改，以在此处更新。"
+      "scimNameLockedDescription": "此群组的名称和成员由您的身份提供商管理。请在身份提供商处进行更改，以在此处更新。",
+      "mappedAccessColumnHeader": "Mapped Access",
+      "mappedAccessLabel": "Mapped Access Tier",
+      "mappedAccessNone": "No mapping",
+      "mappedAccessSelect": "Select access tier...",
+      "downgradeConfirmTitle": "Confirm Access Change",
+      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
+      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "downgradeConfirmUserRow": "{name}: {from} → {to}",
+      "downgradeConfirmAccessChange": "{from} → {to}"
     },
     "milestones": {
       "description": "管理里程碑类型",
@@ -6033,7 +6049,8 @@
     },
     "group": {
       "name": "## 组名称\n一个清晰、简洁、描述性的名称或关键词，用于所有项目。\n\n- 帮助团队成员快速找到相关的测试用例、测试运行和会话。",
-      "users": "## 用户\n表示分配给此组的用户。"
+      "users": "## 用户\n表示分配给此组的用户。",
+      "mappedAccess": "## Mapped Access Tier\nMembers of this group are granted at least this access tier on the next sync.\n\n- The highest tier across all of a user's groups wins\n- \"No mapping\" means this group does not affect access — members fall back to the default set on the SCIM page\n- A manual access change on a user takes over from the mapping (and is flagged on that user's edit screen)"
     },
     "template": {
       "name": "## 模板名称\n此模板的唯一描述性名称（例如，“标准测试用例”、“API 测试结果”）。",

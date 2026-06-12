@@ -19,7 +19,7 @@ vi.mock("~/lib/scim/auth", () => ({
   }),
 }));
 
-const req = (path = "/scim/v2/ResourceTypes"): NextRequest =>
+const req = (path = "/api/scim/v2/ResourceTypes"): NextRequest =>
   new NextRequest(`http://localhost${path}`);
 
 const originalNextAuthUrl = process.env.NEXTAUTH_URL;
@@ -156,11 +156,11 @@ describe("GET /api/scim/v2/ResourceTypes", () => {
     };
     expect(body.Resources[0].meta.resourceType).toBe("ResourceType");
     expect(body.Resources[0].meta.location).toBe(
-      "http://localhost:3000/scim/v2/ResourceTypes/User"
+      "http://localhost:3000/api/scim/v2/ResourceTypes/User"
     );
     expect(body.Resources[1].meta.resourceType).toBe("ResourceType");
     expect(body.Resources[1].meta.location).toBe(
-      "http://localhost:3000/scim/v2/ResourceTypes/Group"
+      "http://localhost:3000/api/scim/v2/ResourceTypes/Group"
     );
   });
 
@@ -173,10 +173,10 @@ describe("GET /api/scim/v2/ResourceTypes", () => {
         Resources: Array<{ meta: { location: string } }>;
       };
       expect(body.Resources[0].meta.location).toBe(
-        "http://app.example.com/scim/v2/ResourceTypes/User"
+        "http://app.example.com/api/scim/v2/ResourceTypes/User"
       );
       expect(body.Resources[1].meta.location).toBe(
-        "http://app.example.com/scim/v2/ResourceTypes/Group"
+        "http://app.example.com/api/scim/v2/ResourceTypes/Group"
       );
     } finally {
       if (before) {

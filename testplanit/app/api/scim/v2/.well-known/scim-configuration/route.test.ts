@@ -27,8 +27,9 @@ vi.mock("~/lib/scim/auth", () => ({
   }),
 }));
 
-const req = (path = "/scim/v2/.well-known/scim-configuration"): NextRequest =>
-  new NextRequest(`http://localhost${path}`);
+const req = (
+  path = "/api/scim/v2/.well-known/scim-configuration"
+): NextRequest => new NextRequest(`http://localhost${path}`);
 
 const originalNextAuthUrl = process.env.NEXTAUTH_URL;
 
@@ -91,11 +92,11 @@ describe("GET /api/scim/v2/.well-known/scim-configuration", () => {
       resourceTypes: string;
     };
     expect(body.serviceProviderConfig).toBe(
-      "http://app.example.com/scim/v2/ServiceProviderConfig"
+      "http://app.example.com/api/scim/v2/ServiceProviderConfig"
     );
-    expect(body.schemas).toBe("http://app.example.com/scim/v2/Schemas");
+    expect(body.schemas).toBe("http://app.example.com/api/scim/v2/Schemas");
     expect(body.resourceTypes).toBe(
-      "http://app.example.com/scim/v2/ResourceTypes"
+      "http://app.example.com/api/scim/v2/ResourceTypes"
     );
   });
 
@@ -108,11 +109,11 @@ describe("GET /api/scim/v2/.well-known/scim-configuration", () => {
       resourceTypes: string;
     };
     expect(body.serviceProviderConfig).toBe(
-      "http://localhost:3000/scim/v2/ServiceProviderConfig"
+      "http://localhost:3000/api/scim/v2/ServiceProviderConfig"
     );
-    expect(body.schemas).toBe("http://localhost:3000/scim/v2/Schemas");
+    expect(body.schemas).toBe("http://localhost:3000/api/scim/v2/Schemas");
     expect(body.resourceTypes).toBe(
-      "http://localhost:3000/scim/v2/ResourceTypes"
+      "http://localhost:3000/api/scim/v2/ResourceTypes"
     );
   });
 });

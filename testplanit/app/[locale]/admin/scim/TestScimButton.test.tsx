@@ -30,7 +30,7 @@ vi.mock("next-intl", () => {
     "admin.scim.probe.button": "Test SCIM",
     "admin.scim.probe.testing": "Testing…",
     "admin.scim.probe.okBanner":
-      "HTTP {status} — token works against /scim/v2/Users.",
+      "HTTP {status} — token works against /api/scim/v2/Users.",
     "admin.scim.probe.failBanner": "HTTP {status} — {reason}",
     "admin.scim.probe.networkError": "Couldn't reach the SCIM endpoint. Retry.",
   };

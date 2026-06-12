@@ -4357,7 +4357,10 @@
       "scimColumnHeader": "SCIM",
       "scimColumnYes": "Oui",
       "scimUserLockedTitle": "L'utilisateur est géré par SCIM",
-      "scimUserLockedDescription": "Le nom, l'adresse e-mail et le statut actif de cet utilisateur sont gérés par votre fournisseur d'identité. Modifiez ces informations auprès de ce dernier pour les mettre à jour ici."
+      "scimUserLockedDescription": "Le nom, l'adresse e-mail et le statut actif de cet utilisateur sont gérés par votre fournisseur d'identité. Modifiez ces informations auprès de ce dernier pour les mettre à jour ici.",
+      "groupMappingOverrideTitle": "Managed by Group Mapping",
+      "groupMappingOverrideDescription": "This user's access tier is governed by a SCIM group mapping and may be reverted on the next sync.",
+      "groupMappingBadge": "Group Mapped"
     },
     "security": {
       "title": "Sécurité",
@@ -4536,10 +4539,14 @@
       "probe": {
         "button": "Test SCIM",
         "testing": "Test…",
-        "okBanner": "HTTP {status} — le jeton fonctionne contre /scim/v2/Users.",
+        "okBanner": "HTTP {status} — token works against /api/scim/v2/Users.",
         "failBanner": "HTTP {status} — {reason}",
         "networkError": "Impossible de joindre le point de terminaison SCIM. Veuillez réessayer."
-      }
+      },
+      "fallbackDefaultTitle": "Default Mapped Access",
+      "fallbackDefaultDescription": "Access tier assigned to users not covered by any group mapping.",
+      "fallbackDefaultLabel": "Default access tier",
+      "fallbackDefaultSaved": "Fallback default saved"
     },
     "tags": {
       "add": {
@@ -4823,7 +4830,16 @@
       "scimManagedBadge": "SCIM",
       "scimManagedTooltip": "Géré par SCIM. Gérer depuis la page d'administration SCIM.",
       "scimNameLockedTitle": "Le groupe est géré par SCIM",
-      "scimNameLockedDescription": "Le nom et les membres de ce groupe sont gérés par votre fournisseur d'identité. Modifiez-les sur ce dernier pour les mettre à jour ici."
+      "scimNameLockedDescription": "Le nom et les membres de ce groupe sont gérés par votre fournisseur d'identité. Modifiez-les sur ce dernier pour les mettre à jour ici.",
+      "mappedAccessColumnHeader": "Mapped Access",
+      "mappedAccessLabel": "Mapped Access Tier",
+      "mappedAccessNone": "No mapping",
+      "mappedAccessSelect": "Select access tier...",
+      "downgradeConfirmTitle": "Confirm Access Change",
+      "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
+      "downgradeConfirmApplyAnyway": "Apply anyway",
+      "downgradeConfirmUserRow": "{name}: {from} → {to}",
+      "downgradeConfirmAccessChange": "{from} → {to}"
     },
     "milestones": {
       "description": "Gérer les types d'étapes clés",
@@ -6033,7 +6049,8 @@
     },
     "group": {
       "name": "## Nom du groupe\nUn nom ou des mots-clés clairs, concis et descriptifs utilisés dans tous les projets.\n\n- Permet aux membres de l'équipe de trouver rapidement les cas de test, les exécutions de test et les sessions associés.",
-      "users": "## Utilisateurs\nIndique les utilisateurs affectés à ce groupe."
+      "users": "## Utilisateurs\nIndique les utilisateurs affectés à ce groupe.",
+      "mappedAccess": "## Mapped Access Tier\nMembers of this group are granted at least this access tier on the next sync.\n\n- The highest tier across all of a user's groups wins\n- \"No mapping\" means this group does not affect access — members fall back to the default set on the SCIM page\n- A manual access change on a user takes over from the mapping (and is flagged on that user's edit screen)"
     },
     "template": {
       "name": "## Nom du modèle\nUn nom unique et descriptif pour ce modèle (par exemple, 'Cas de test standard', 'Résultats des tests d'API').",

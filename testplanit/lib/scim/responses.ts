@@ -17,7 +17,11 @@
 
 import { NextResponse } from "next/server";
 
-import { SCIM_CONTENT_TYPE, SCIM_LIST_RESPONSE_SCHEMA_URN } from "./constants";
+import {
+  SCIM_BASE_PATH,
+  SCIM_CONTENT_TYPE,
+  SCIM_LIST_RESPONSE_SCHEMA_URN,
+} from "./constants";
 
 /**
  * Base URL for SCIM resource locations.
@@ -46,8 +50,8 @@ export function scimLocation(
 ): string {
   const base = getScimBaseUrl();
   return id
-    ? `${base}/scim/v2/${resourceType}/${id}`
-    : `${base}/scim/v2/${resourceType}`;
+    ? `${base}${SCIM_BASE_PATH}/${resourceType}/${id}`
+    : `${base}${SCIM_BASE_PATH}/${resourceType}`;
 }
 
 /**

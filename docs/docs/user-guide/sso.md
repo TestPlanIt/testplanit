@@ -8,7 +8,7 @@ description: Configure and manage SSO authentication for your TestPlanIt instanc
 
 TestPlanIt supports multiple Single Sign-On (SSO) authentication methods to provide secure and convenient access for your users. This guide covers the configuration and management of SSO providers and their effects on the authentication flow.
 
-SSO provider configuration lives at **Admin → Authentication → Authentication** (`/admin/sso`). Sign-in enforcement (Force SSO, Force 2FA) lives at **Admin → Authentication → Security** (`/admin/security`) — see [Security Settings](./security-settings.md). SCIM 2.0 provisioning lives at **Admin → Authentication → SCIM Provisioning** (`/admin/scim`) — see [SCIM Provisioning](./scim.md).
+SSO provider configuration lives at **Admin → Authentication → Authentication** (`/admin/sso`). Sign-in enforcement (Force SSO, Force 2FA) lives at **Admin → Authentication → Security** (`/admin/security`) — see [Security Settings](./security-settings.md). SCIM 2.0 provisioning and group role mapping live at **Admin → Authentication → SCIM Provisioning** (`/admin/scim`) — see [SCIM Provisioning](./scim.md).
 
 ## Supported SSO Providers
 
@@ -379,12 +379,11 @@ If your IdP signs only the assertion (Okta's default), leave **Require signed re
 #### User Provisioning
 
 - **Auto Provision Users**: Automatically create user accounts on first SSO login
-- **Default Access Level**: The default role assigned to auto-provisioned users
-  - USER (default)
-  - TESTER
-  - MEMBER
-  - MANAGER
-  - ADMIN
+- **Default Access Level**: The default system access tier assigned to auto-provisioned users
+  - None
+  - User (default)
+  - Project Admin
+  - Admin
 
 Authentication via the IdP satisfies email verification — auto-provisioned users and existing users alike skip the email-verification gate when they sign in via SAML, because the IdP has already proved control of the email address.
 
@@ -463,7 +462,7 @@ For users with existing TestPlanIt accounts:
 
 - Email address is used to match SSO identity with existing account
 - User profile may be updated with SSO provider information
-- Access level remains unchanged (unless updated by SAML attributes)
+- Access level remains unchanged (unless updated by SAML attributes, or governed by [group role mapping](./scim.md#role-mapping) for users in mapped groups)
 
 ## Security Considerations
 

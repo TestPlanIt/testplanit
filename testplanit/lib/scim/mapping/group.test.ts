@@ -92,7 +92,7 @@ describe("groupToScim", () => {
     const result = groupToScim(makeGroup({ id: 42 }));
     expect(result.meta).toEqual({
       resourceType: "Group",
-      location: "https://app.example.com/scim/v2/Groups/42",
+      location: "https://app.example.com/api/scim/v2/Groups/42",
       version: fixedUpdatedAt.toISOString(),
       lastModified: fixedUpdatedAt.toISOString(),
     });
