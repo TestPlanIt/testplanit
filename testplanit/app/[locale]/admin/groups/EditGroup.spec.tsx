@@ -1,7 +1,7 @@
 import React from "react";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -366,6 +366,10 @@ describe("EditGroup", () => {
     await waitFor(() => {
       expect(screen.getByRole("alertdialog")).toBeInTheDocument();
     });
+
+    // The affected user is rendered via the user-display component, not plain text
+    const dialog = screen.getByRole("alertdialog");
+    expect(within(dialog).getByTestId("user-name-cell-u1")).toBeInTheDocument();
   });
 
   test("does NOT show AlertDialog when dry-run returns no downgraded users", async () => {
