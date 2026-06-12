@@ -16,8 +16,10 @@ The Groups page displays a table listing all configured groups (excluding those 
 - **Filtering**: Use the filter input to search for groups by name.
 - **Pagination**: Navigate through pages of groups if the list is long.
 - **Columns**: The table includes columns for:
-  - **Name**: The name of the Group.
+  - **Name**: The name of the Group. Groups provisioned from your identity provider show a **SCIM** badge.
   - **Users**: A count/list of users assigned to this Group.
+  - **Projects**: The projects this Group is associated with.
+  - **Mapped Access**: The access tier automatically granted to members of this Group, or **No mapping** if none is set (see [Mapped access tier](#mapped-access-tier)).
   - **Actions**: Buttons to **Edit** or **Delete** the Group.
 
 ## Adding a New Group
@@ -31,8 +33,14 @@ The Groups page displays a table listing all configured groups (excluding those 
 
 1. Locate the Group you wish to modify in the table.
 2. Click the **Edit** icon in the **Actions** column.
-3. A modal dialog will appear. Modify the **Name**.
-4. Click **Save** (or Submit).
+3. In the dialog you can modify the **Name**, set the **Mapped Access Tier** (see [Mapped access tier](#mapped-access-tier)), and add or remove assigned users.
+4. Click **Save**.
+
+## Mapped access tier
+
+A group can optionally carry a **Mapped Access Tier** — **User**, **Project Admin**, or **Admin** — that is automatically granted to every member. When a user belongs to several mapped groups, the highest tier wins. Leave a group at **No mapping** to opt it out; members of no mapped group then fall back to a configurable default tier (which may be **None**, meaning no access).
+
+This works for both identity-provider-provisioned groups and groups you create by hand. For the full picture — the fallback default, the downgrade-confirmation guard, and how manual per-user overrides interact with mapping — see [Role mapping](./scim.md#role-mapping).
 
 ## Deleting a Group
 
