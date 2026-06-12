@@ -379,12 +379,11 @@ If your IdP signs only the assertion (Okta's default), leave **Require signed re
 #### User Provisioning
 
 - **Auto Provision Users**: Automatically create user accounts on first SSO login
-- **Default Access Level**: The default role assigned to auto-provisioned users
-  - USER (default)
-  - TESTER
-  - MEMBER
-  - MANAGER
-  - ADMIN
+- **Default Access Level**: The default system access tier assigned to auto-provisioned users
+  - None
+  - User (default)
+  - Project Admin
+  - Admin
 
 Authentication via the IdP satisfies email verification — auto-provisioned users and existing users alike skip the email-verification gate when they sign in via SAML, because the IdP has already proved control of the email address.
 
