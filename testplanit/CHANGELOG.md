@@ -1,3 +1,9 @@
+## [0.37.10](https://github.com/TestPlanIt/testplanit/compare/v0.37.9...v0.37.10) (2026-06-12)
+
+### Bug Fixes
+
+* **issues:** persist external ID for in-app Simple URL issues ([#428](https://github.com/TestPlanIt/testplanit/issues/428)) ([9e23943](https://github.com/TestPlanIt/testplanit/commit/9e239432d817417f7e5ff3bbdefca1dc7de918c7))
+
 ## [0.37.9](https://github.com/TestPlanIt/testplanit/compare/v0.37.8...v0.37.9) (2026-06-11)
 
 ### Enhancements
