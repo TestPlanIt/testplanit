@@ -1642,7 +1642,14 @@
         "toastBulkReplaySuccess": "Bulk replay started · batch {batchId}",
         "toastBulkReplayFailed": "Bulk replay failed: {error}",
         "toastReEnableSuccess": "Webhook re-enabled",
-        "toastReEnableFailed": "Failed to re-enable: {error}"
+        "toastReEnableFailed": "Failed to re-enable: {error}",
+        "inboundChooserRedmine": "Redmine",
+        "inboundRedmineTitle": "Redmine inbound webhook",
+        "inboundRedmineScopeHint": "The redmine_webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
+        "setupStepsRedmineStep1": "Install the redmine_webhook plugin on your Redmine server (Redmine has no built-in webhooks).",
+        "setupStepsRedmineStep2": "In your Redmine project, open Settings → Modules and enable Webhooks.",
+        "setupStepsRedmineStep3": "Open Settings → Webhooks, paste the URL above, and save.",
+        "setupStepsRedmineStep4": "Create or update an issue in Redmine; the linked issue’s status will sync here."
       },
       "aiModels": {
         "description": "Configure AI models for intelligent test case generation and analysis",

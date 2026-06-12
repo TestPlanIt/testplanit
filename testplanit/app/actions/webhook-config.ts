@@ -180,6 +180,13 @@ export async function createOrRotateInboundWebhook(input: {
   ) {
     plaintextToEncrypt = generateSecret();
     returnSecretToAdmin = true;
+  } else if (adapterType === "REDMINE") {
+    // The redmine_webhook plugin cannot sign payloads or send a secret; the
+    // unguessable URL token is the credential. Mint and store an (unused)
+    // secret to satisfy the schema, and reveal only the URL — there is
+    // nothing for the admin to copy into Redmine.
+    plaintextToEncrypt = generateSecret();
+    returnSecretToAdmin = false;
   } else if (adapterType === "AZURE_DEVOPS") {
     if (
       !secretInput ||

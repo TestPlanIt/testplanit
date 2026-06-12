@@ -84,6 +84,7 @@ function adapterLabelKey(
   | "inboundChooserAdo"
   | "inboundChooserGitlab"
   | "inboundChooserGitea"
+  | "inboundChooserRedmine"
   | "adapterLabelSlack"
   | "adapterLabelGenericHmac"
   | null {
@@ -98,6 +99,8 @@ function adapterLabelKey(
       return "inboundChooserGitlab";
     case "GITEA":
       return "inboundChooserGitea";
+    case "REDMINE":
+      return "inboundChooserRedmine";
     case "SLACK":
       return "adapterLabelSlack";
     case "GENERIC_HMAC":

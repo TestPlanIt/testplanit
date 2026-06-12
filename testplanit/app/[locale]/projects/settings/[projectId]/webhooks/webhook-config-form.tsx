@@ -74,7 +74,8 @@ type InboundAdapterType =
   | "GITHUB"
   | "AZURE_DEVOPS"
   | "GITLAB"
-  | "GITEA";
+  | "GITEA"
+  | "REDMINE";
 
 // Inbound webhooks today are 1:1 with the project's active issue integration:
 // the only inbound consumer is `applyInboundIssueUpdate`, and a project has
@@ -89,6 +90,7 @@ function inboundAdapterForProvider(
   if (provider === "AZURE_DEVOPS") return "AZURE_DEVOPS";
   if (provider === "GITLAB") return "GITLAB";
   if (provider === "GITEA") return "GITEA";
+  if (provider === "REDMINE") return "REDMINE";
   return null;
 }
 
@@ -136,7 +138,8 @@ const ADAPTER_OPTIONS: ReadonlyArray<{
     | "inboundChooserGithub"
     | "inboundChooserAdo"
     | "inboundChooserGitlab"
-    | "inboundChooserGitea";
+    | "inboundChooserGitea"
+    | "inboundChooserRedmine";
   testid: string;
 }> = [
   {
@@ -164,15 +167,21 @@ const ADAPTER_OPTIONS: ReadonlyArray<{
     labelKey: "inboundChooserGitea",
     testid: "webhook-inbound-chooser-gitea",
   },
+  {
+    value: "REDMINE",
+    labelKey: "inboundChooserRedmine",
+    testid: "webhook-inbound-chooser-redmine",
+  },
 ];
 
 function adapterSlug(
   adapterType: InboundAdapterType
-): "jira" | "github" | "ado" | "gitlab" | "gitea" {
+): "jira" | "github" | "ado" | "gitlab" | "gitea" | "redmine" {
   if (adapterType === "JIRA") return "jira";
   if (adapterType === "GITHUB") return "github";
   if (adapterType === "GITLAB") return "gitlab";
   if (adapterType === "GITEA") return "gitea";
+  if (adapterType === "REDMINE") return "redmine";
   return "ado";
 }
 
@@ -183,11 +192,13 @@ function adapterTitleKey(
   | "inboundGithubTitle"
   | "inboundAdoTitle"
   | "inboundGitlabTitle"
-  | "inboundGiteaTitle" {
+  | "inboundGiteaTitle"
+  | "inboundRedmineTitle" {
   if (adapterType === "JIRA") return "inboundJiraTitle";
   if (adapterType === "GITHUB") return "inboundGithubTitle";
   if (adapterType === "GITLAB") return "inboundGitlabTitle";
   if (adapterType === "GITEA") return "inboundGiteaTitle";
+  if (adapterType === "REDMINE") return "inboundRedmineTitle";
   return "inboundAdoTitle";
 }
 
@@ -689,6 +700,12 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
         "setupStepsGiteaStep4",
         "setupStepsGiteaStep5",
       ],
+      REDMINE: [
+        "setupStepsRedmineStep1",
+        "setupStepsRedmineStep2",
+        "setupStepsRedmineStep3",
+        "setupStepsRedmineStep4",
+      ],
     };
     return (
       <div
@@ -952,6 +969,11 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
                   </code>
                 ),
               })}
+            </p>
+          )}
+          {config.adapterType === "REDMINE" && (
+            <p className="text-xs text-muted-foreground">
+              {t("inboundRedmineScopeHint")}
             </p>
           )}
 
