@@ -156,6 +156,14 @@ class MockResizeObserver {
 }
 global.ResizeObserver = MockResizeObserver as any;
 
+// jsdom doesn't implement elementFromPoint, which TipTap's placeholder
+// viewport tracking calls via prosemirror's posAtCoords on editor mount.
+// Guarded like the matchMedia mock above so node-env tests (no `Document`)
+// can still load this shared setup file.
+if (typeof Document !== "undefined" && !Document.prototype.elementFromPoint) {
+  Document.prototype.elementFromPoint = () => null;
+}
+
 // --- Mock next-intl ---
 // Mock the specific hooks and provider needed by the components under test
 

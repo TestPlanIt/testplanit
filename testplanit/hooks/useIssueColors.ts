@@ -3,7 +3,7 @@
  * Colors are pulled dynamically from the database Color table
  */
 
-import { useMemo } from "react";
+import { useMemo, type CSSProperties } from "react";
 import { useFindManyColor } from "~/lib/hooks";
 
 interface ColorFamily {
@@ -16,7 +16,7 @@ interface ColorFamily {
   }>;
 }
 
-export interface IssueBadgeStyle {
+export interface IssueBadgeStyle extends CSSProperties {
   backgroundColor: string;
   color: string;
   borderColor: string;
