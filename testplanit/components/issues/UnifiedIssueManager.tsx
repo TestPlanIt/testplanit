@@ -122,7 +122,7 @@ export function UnifiedIssueManager({
     // Use external integration system for other providers
     return (
       <ManageExternalIssues
-        testCaseId={entityId || 0}
+        testCaseId={entityId}
         projectId={projectId}
         projectIntegrationId={projectIntegrationId}
         integrationId={integrationId}
@@ -241,7 +241,7 @@ export function SimpleUnifiedIssueManager({
     // Use external integration system for other providers
     return (
       <ManageExternalIssues
-        testCaseId={entityId || 0}
+        testCaseId={entityId}
         projectId={projectId}
         projectIntegrationId={projectIntegrationId}
         integrationId={integrationId}
