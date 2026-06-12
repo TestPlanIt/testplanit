@@ -229,15 +229,15 @@ A user whose access is driven by group mapping is called a **governed** user. If
 
 1. Navigate to **Admin → Users & Groups → Groups** (`/admin/groups`).
 2. Find the group you want to map (SCIM-provisioned groups show a **SCIM** badge; manually-created groups can be mapped too).
-3. Open the group's edit dialog and set **Mapped Access** to the tier you want members to receive: **None** (clear the mapping), **User**, **Project Admin**, or **Admin**.
+3. Open the group's edit dialog and set **Mapped Access Tier** to the tier you want members to receive: **No mapping** (clear the mapping), **User**, **Project Admin**, or **Admin**. The **?** help icon next to the field explains each option.
 4. Click **Save**.
 
-Setting **None** removes the mapping from that group — it no longer drives any user's access.
+Selecting **No mapping** removes the mapping from that group — it no longer drives any user's access. A group cannot be mapped to the **None** access tier; to grant no access, leave the group unmapped and let the fallback default apply.
 
 #### Set the fallback default
 
 1. Navigate to **Admin → Authentication → SCIM Provisioning** (`/admin/scim`).
-2. Under the **Role Mapping** section, change the **Fallback Default** selector. Options are **None** (the system default), **User**, **Project Admin**, and **Admin**.
+2. Under the **Role Mapping** section, change the **Fallback Default** selector. Options are **None** (the system default), **User**, **Project Admin**, and **Admin**. Here **None** is the no-access tier itself — distinct from a group's **No mapping**, which means the group carries no tier at all.
 3. Click **Save**. The new default takes effect for every governed user with no mapped-group membership on the next recompute.
 
 ### Downgrade confirmation
@@ -248,11 +248,11 @@ Changes that only upgrade access — or that have no net effect on any existing 
 
 ### Manual override
 
-If you edit a governed user's access directly in **Admin → Users & Groups → Users** (`/admin/users`), a warning banner appears:
+If you open a governed user in **Admin → Users & Groups → Users** (`/admin/users`), the edit dialog shows a **Group Mapped** badge next to the **Access** field and a warning banner titled **Managed by Group Mapping**:
 
-> This user's access is driven by SCIM group mapping and may be reverted to the mapping-computed value on the next sync.
+> This user's access tier is governed by a SCIM group mapping and may be reverted on the next sync.
 
-You can still save the change. Doing so switches the user to **manual** management — the mapping engine will no longer auto-update them. If the user is later added to a new mapped group, governance resumes automatically.
+You can still change and save their access. Doing so switches the user to **manual** management — the mapping engine will no longer auto-update them. If the user is later added to a new mapped group, governance resumes automatically.
 
 ### Audit trail
 
@@ -266,7 +266,7 @@ This example uses the SCIM connector you already set up in [Okta setup](#okta-se
 
 1. **Push the group from Okta.** In the Okta Admin Console, open your TestPlanIt application. On the **Push Groups** tab, add the group you want to map (for example, "Platform Admins"). Okta creates the group in TestPlanIt via `POST /api/scim/v2/Groups` and pushes its members on the first sync.
 
-2. **Assign access in TestPlanIt.** Go to **Admin → Users & Groups → Groups** (`/admin/groups`). The "Platform Admins" group appears with a **SCIM** badge. Open its edit dialog, set **Mapped Access** to **Admin**, and click **Save**.
+2. **Assign access in TestPlanIt.** Go to **Admin → Users & Groups → Groups** (`/admin/groups`). The "Platform Admins" group appears with a **SCIM** badge. Open its edit dialog, set **Mapped Access Tier** to **Admin**, and click **Save**.
 
 3. **Verify.** Navigate to **Admin → Users & Groups → Users** (`/admin/users`). Any user who is a member of the Okta "Platform Admins" group — and whose effective tier (highest-wins across all their mapped groups) is now Admin — appears with **Admin** in the Access column.
 
@@ -280,7 +280,7 @@ This example uses the provisioning connector you already set up in [Microsoft En
 
 1. **Assign the group in Entra.** In the Microsoft Entra admin center, open your TestPlanIt enterprise application and go to **Provisioning → Edit attribute mappings**. Under **Mappings**, ensure **Synchronize Azure Active Directory Groups to customappsso** is enabled. Then go to **Users and groups → Add user/group** and assign the group you want to map — for example, "Release Managers". On the next provisioning cycle, Entra pushes the group and its members to TestPlanIt via `POST /api/scim/v2/Groups`.
 
-2. **Assign access in TestPlanIt.** Go to **Admin → Users & Groups → Groups** (`/admin/groups`). The "Release Managers" group appears with a **SCIM** badge. Open its edit dialog, set **Mapped Access** to **Project Admin**, and click **Save**.
+2. **Assign access in TestPlanIt.** Go to **Admin → Users & Groups → Groups** (`/admin/groups`). The "Release Managers" group appears with a **SCIM** badge. Open its edit dialog, set **Mapped Access Tier** to **Project Admin**, and click **Save**.
 
 3. **Verify.** Navigate to **Admin → Users & Groups → Users** (`/admin/users`). Members of "Release Managers" now show **Project Admin** (or a higher tier if another mapped group raises it).
 
