@@ -318,6 +318,7 @@ function CodeRepositoryList() {
                   <div className="m-2">
                     <ColumnSelection
                       key="code-repo-column-selection"
+                      storageKey="admin-code-repositories"
                       columns={columns}
                       onVisibilityChange={setColumnVisibility}
                     />

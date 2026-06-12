@@ -409,6 +409,7 @@ function IssueList() {
           <div className="mt-4 flex justify-between">
             <ColumnSelection
               key="issue-column-selection"
+              storageKey="admin-issues"
               columns={columns}
               onVisibilityChange={setColumnVisibility}
             />

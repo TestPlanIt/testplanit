@@ -546,6 +546,7 @@ function JunitTableSection({
                         />
                         <div className="mt-4">
                           <ColumnSelection<any>
+                            storageKey={`junit-results:${projectId}:${runId}`}
                             columns={junitColumns as any}
                             onVisibilityChange={setJunitColumnVisibility}
                           />

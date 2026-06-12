@@ -406,6 +406,7 @@ function LlmIntegrationList() {
                   <div className="m-2">
                     <ColumnSelection
                       key="llm-column-selection"
+                      storageKey="admin-llm"
                       columns={columns}
                       onVisibilityChange={setColumnVisibility}
                     />

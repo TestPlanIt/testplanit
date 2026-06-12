@@ -19,7 +19,7 @@ Only system administrators can open this page. To view or manage issues for a si
 
 ## Viewing issues
 
-Issues are listed in a sortable, filterable table. Use the **Filter issues...** box to search by name, title, or description (matching is case-insensitive). The **Columns** control lets you show or hide optional columns.
+Issues are listed in a sortable, filterable table. Use the **Filter issues...** box to search by name, title, or description (matching is case-insensitive). The **Columns** control lets you show or hide optional columns; your choice is remembered in this browser for this table.
 
 | Column | Description |
 | --- | --- |

@@ -201,6 +201,7 @@ function Status() {
             <div className="flex flex-col w-full sm:w-1/3 min-w-[150px]">
               <ColumnSelection
                 key="status-column-selection"
+                storageKey="admin-statuses"
                 columns={columns}
                 onVisibilityChange={setColumnVisibility}
               />

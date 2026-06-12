@@ -279,6 +279,7 @@ function PromptConfigList() {
                   <div className="m-2">
                     <ColumnSelection
                       key="prompts-column-selection"
+                      storageKey="admin-prompts"
                       columns={columns}
                       onVisibilityChange={setColumnVisibility}
                     />

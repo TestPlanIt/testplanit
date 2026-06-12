@@ -349,6 +349,7 @@ function UserList() {
                   <div className="m-2">
                     <ColumnSelection
                       key="project-column-selection"
+                      storageKey="admin-users"
                       columns={columns}
                       onVisibilityChange={setColumnVisibility}
                     />

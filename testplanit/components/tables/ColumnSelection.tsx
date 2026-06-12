@@ -10,8 +10,61 @@ import { ColumnDef } from "@tanstack/react-table";
 import { CircleMinus, CirclePlus, Columns3 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "~/lib/navigation";
+
+const COLUMN_VISIBILITY_STORAGE_PREFIX = "testplanit:columnVisibility:";
+
+/**
+ * Read the remembered column visibility map for a view. Returns null when
+ * nothing is stored, when running on the server, or when the stored value is
+ * unusable. Callers only apply keys for columns that exist in the current
+ * view, so stale keys for columns that no longer exist are ignored.
+ */
+export function readStoredColumnVisibility(
+  storageKey?: string
+): Record<string, boolean> | null {
+  if (!storageKey || typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(
+      `${COLUMN_VISIBILITY_STORAGE_PREFIX}${storageKey}`
+    );
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return null;
+    }
+    const result: Record<string, boolean> = {};
+    for (const [key, value] of Object.entries(parsed)) {
+      if (typeof value === "boolean") result[key] = value;
+    }
+    return result;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Persist column visibility for a view, merging with any previously-saved map
+ * so choices for columns not currently present (e.g. fields from a different
+ * template) are preserved across views that share a storage key.
+ */
+export function writeStoredColumnVisibility(
+  storageKey: string,
+  visibility: Record<string, boolean>
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    const existing = readStoredColumnVisibility(storageKey) ?? {};
+    const merged = { ...existing, ...visibility };
+    window.localStorage.setItem(
+      `${COLUMN_VISIBILITY_STORAGE_PREFIX}${storageKey}`,
+      JSON.stringify(merged)
+    );
+  } catch {
+    // ignore storage errors (quota exceeded, private browsing, etc.)
+  }
+}
 
 export interface CustomColumnMeta {
   isVisible?: boolean;
@@ -44,12 +97,20 @@ interface ColumnSelectionProps<TData> {
   columns: CustomColumnDef<TData>[];
   columnMetadata?: ColumnMetadata[];
   onVisibilityChange: (visibility: Record<string, boolean>) => void;
+  /**
+   * Stable identifier for this table view. When provided, the user's column
+   * choices are remembered in localStorage and restored on return. Must be
+   * unique per view and stable across renders (e.g. include the projectId so
+   * each project's repository remembers its own columns).
+   */
+  storageKey?: string;
 }
 
 export function ColumnSelection<TData>({
   columns,
   columnMetadata,
   onVisibilityChange,
+  storageKey,
 }: ColumnSelectionProps<TData>) {
   const router = useRouter();
   const pathname = usePathname();
@@ -92,6 +153,31 @@ export function ColumnSelection<TData>({
       }
     });
 
+    // Overlay remembered choices from localStorage. Lower precedence than the
+    // URL param below (an explicit shared link wins). Only keys for columns
+    // present in this view are applied, so a stored column that no longer
+    // exists in the view is ignored.
+    const storedVisibility = readStoredColumnVisibility(storageKey);
+    if (storedVisibility) {
+      metadataSource.forEach((item, index) => {
+        const columnId = (
+          "id" in item ? item.id : (item as CustomColumnDef<TData>).id
+        ) as string;
+        const enableHiding =
+          "enableHiding" in item
+            ? item.enableHiding
+            : (item as CustomColumnDef<TData>).enableHiding;
+
+        if (!columnId) return;
+        // Never let storage hide always-visible or first/last columns
+        if (enableHiding === false) return;
+        if (index === 0 || index === metadataSource.length - 1) return;
+        if (typeof storedVisibility[columnId] === "boolean") {
+          initialVisibility[columnId] = storedVisibility[columnId];
+        }
+      });
+    }
+
     if (columnVisibilityQuery) {
       const visibleColumns = columnVisibilityQuery.split(",");
       metadataSource.forEach((item, index) => {
@@ -117,16 +203,44 @@ export function ColumnSelection<TData>({
     }
 
     return initialVisibility;
-  }, [metadataSource, columnVisibilityQuery]);
+  }, [metadataSource, columnVisibilityQuery, storageKey]);
 
   const [columnVisibility, setColumnVisibility] =
     useState<Record<string, boolean>>(getInitialVisibility);
 
+  // Snapshot the mount-time initial visibility once, as a stable baseline for
+  // URL change-detection. Recomputing getInitialVisibility() in the URL effect
+  // would re-read localStorage *after* the persist effect writes it, so every
+  // change would look like "no change" and the shareable ?columns= URL would
+  // stop updating once a storageKey is set.
+  const initialVisibilityRef = useRef<Record<string, boolean> | null>(null);
+  if (initialVisibilityRef.current === null) {
+    initialVisibilityRef.current = columnVisibility;
+  }
+
+  // Remember the user's choices for this view. Skip the first render so we only
+  // persist deliberate changes (not the computed defaults or a shared-link URL
+  // state), then write on every subsequent change. Merging happens in the
+  // writer so choices for columns from other views/templates are preserved.
+  const hasPersistedRef = useRef(false);
+  useEffect(() => {
+    if (!storageKey) return;
+    if (!hasPersistedRef.current) {
+      hasPersistedRef.current = true;
+      return;
+    }
+    writeStoredColumnVisibility(storageKey, columnVisibility);
+  }, [storageKey, columnVisibility]);
+
   useEffect(() => {
     onVisibilityChange(columnVisibility);
-    // Skip URL update if no columns have changed from initial state
+    // Skip URL update if no columns have changed from the mount-time initial
+    // state. Compare against the stable snapshot (not getInitialVisibility(),
+    // which would re-read storage written by the persist effect and mask the
+    // change), so the ?columns= URL stays in sync with the selection.
+    const initialVisibility = initialVisibilityRef.current ?? {};
     const hasChanges = Object.entries(columnVisibility).some(
-      ([key, value]) => value !== getInitialVisibility()[key]
+      ([key, value]) => value !== initialVisibility[key]
     );
     if (!hasChanges) return;
 
@@ -169,7 +283,6 @@ export function ColumnSelection<TData>({
     router,
     columnVisibilityQuery,
     metadataSource,
-    getInitialVisibility,
     pathname,
   ]);
 

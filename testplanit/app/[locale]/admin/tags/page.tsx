@@ -354,6 +354,7 @@ function TagList() {
           <div className="mt-4 flex justify-between">
             <ColumnSelection
               key="tag-column-selection"
+              storageKey="admin-tags"
               columns={columns}
               onVisibilityChange={setColumnVisibility}
             />

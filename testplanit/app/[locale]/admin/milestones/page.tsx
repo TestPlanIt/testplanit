@@ -345,6 +345,7 @@ function MilestoneTypes() {
           <div className="mt-4 flex justify-between">
             <ColumnSelection
               key="milestone-column-selection"
+              storageKey="admin-milestones"
               columns={columns}
               onVisibilityChange={setColumnVisibility}
             />

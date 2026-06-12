@@ -751,6 +751,7 @@ function WebhookDeliveriesTabContent({ projectId }: WebhookDeliveriesTabProps) {
           <div className="m-2">
             <ColumnSelection
               key="webhook-deliveries-column-selection"
+              storageKey={`webhook-deliveries:${projectId}`}
               columns={
                 columns as ColumnDef<DeliveryRow & { name: string }, unknown>[]
               }

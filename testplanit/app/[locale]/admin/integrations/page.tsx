@@ -344,6 +344,7 @@ function IntegrationList() {
                   <div className="m-2">
                     <ColumnSelection
                       key="integration-column-selection"
+                      storageKey="admin-integrations"
                       columns={columns}
                       onVisibilityChange={setColumnVisibility}
                     />

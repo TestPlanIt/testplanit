@@ -379,6 +379,7 @@ function ApiTokensList() {
                   <div className="m-2">
                     <ColumnSelection
                       key="api-tokens-column-selection"
+                      storageKey="admin-api-tokens"
                       columns={columns}
                       onVisibilityChange={setColumnVisibility}
                     />
