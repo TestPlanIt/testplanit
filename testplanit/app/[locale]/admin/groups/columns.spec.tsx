@@ -184,12 +184,16 @@ describe("Groups columns", () => {
     test("renders Badge when mappedAccess is set", () => {
       renderCell(columns, "mappedAccess", mappedGroup);
       expect(screen.getByTestId("mapped-access-badge")).toBeInTheDocument();
-      expect(screen.getByTestId("mapped-access-badge")).toHaveTextContent("USER");
+      expect(screen.getByTestId("mapped-access-badge")).toHaveTextContent(
+        "USER"
+      );
     });
 
     test("renders muted 'none' text when mappedAccess is null", () => {
       renderCell(columns, "mappedAccess", testGroup);
-      expect(screen.queryByTestId("mapped-access-badge")).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("mapped-access-badge")
+      ).not.toBeInTheDocument();
       expect(screen.getByText("mappedAccessNone")).toBeInTheDocument();
     });
   });

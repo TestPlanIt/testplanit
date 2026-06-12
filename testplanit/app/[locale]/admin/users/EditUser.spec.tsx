@@ -257,17 +257,24 @@ describe("EditUser", () => {
   });
 
   test("renders group-mapping-governed-alert and group-mapping-badge when accessSource is GROUP_MAPPING", () => {
-    const groupMappedUser = { ...testUser, accessSource: "GROUP_MAPPING" as const };
+    const groupMappedUser = {
+      ...testUser,
+      accessSource: "GROUP_MAPPING" as const,
+    };
     renderOpen({ user: groupMappedUser });
 
-    expect(screen.getByTestId("group-mapping-governed-alert")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("group-mapping-governed-alert")
+    ).toBeInTheDocument();
     expect(screen.getByTestId("group-mapping-badge")).toBeInTheDocument();
   });
 
   test("does NOT render group-mapping-governed-alert or group-mapping-badge when accessSource is MANUAL", () => {
     renderOpen({ user: testUser });
 
-    expect(screen.queryByTestId("group-mapping-governed-alert")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("group-mapping-governed-alert")
+    ).not.toBeInTheDocument();
     expect(screen.queryByTestId("group-mapping-badge")).not.toBeInTheDocument();
   });
 });

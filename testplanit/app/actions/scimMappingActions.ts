@@ -27,7 +27,8 @@ export async function previewGroupMappingChange(
   groupId: number,
   newMappedAccess: Access | null
 ): Promise<
-  { success: true; downgraded: DowngradedUser[] } | { success: false; error: string }
+  | { success: true; downgraded: DowngradedUser[] }
+  | { success: false; error: string }
 > {
   const session = await getServerAuthSession();
   if (!session?.user?.id || session.user.access !== "ADMIN") {
@@ -67,8 +68,14 @@ export async function previewGroupMappingChange(
       )
       .filter(Boolean) as Access[];
 
-    const currentEffective = resolveEffectiveAccess(currentTiers, fallbackDefault);
-    const newEffective = resolveEffectiveAccess(simulatedTiers, fallbackDefault);
+    const currentEffective = resolveEffectiveAccess(
+      currentTiers,
+      fallbackDefault
+    );
+    const newEffective = resolveEffectiveAccess(
+      simulatedTiers,
+      fallbackDefault
+    );
 
     if (ACCESS_RANK[newEffective] < ACCESS_RANK[currentEffective]) {
       const user = await prisma.user.findUnique({
@@ -90,7 +97,8 @@ export async function previewGroupMappingChange(
 export async function previewFallbackDefaultChange(
   newDefault: Access | null
 ): Promise<
-  { success: true; downgraded: DowngradedUser[] } | { success: false; error: string }
+  | { success: true; downgraded: DowngradedUser[] }
+  | { success: false; error: string }
 > {
   const session = await getServerAuthSession();
   if (!session?.user?.id || session.user.access !== "ADMIN") {
@@ -217,7 +225,10 @@ export async function enqueueFallbackDefaultRecompute(): Promise<{
     }
     return { success: true };
   } catch (err) {
-    console.error("[scimMappingActions] enqueueFallbackDefaultRecompute failed", err);
+    console.error(
+      "[scimMappingActions] enqueueFallbackDefaultRecompute failed",
+      err
+    );
     return { success: false, error: "Failed to enqueue recompute" };
   }
 }

@@ -222,7 +222,10 @@ describe("scimMappingActions", () => {
 
       const result = await saveMappingChange(1, "USER");
 
-      expect(result).toEqual({ success: false, error: "Failed to save mapping" });
+      expect(result).toEqual({
+        success: false,
+        error: "Failed to save mapping",
+      });
       expect(getScimAccessRecomputeQueue).not.toHaveBeenCalled();
     });
   });

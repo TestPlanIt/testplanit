@@ -221,7 +221,11 @@ vi.mock("~/lib/hooks", async (importOriginal) => {
   const original = (await importOriginal()) as Record<string, unknown>;
   return {
     ...original,
-    useFindManyScimToken: () => ({ data: [], isLoading: false, refetch: vi.fn() }),
+    useFindManyScimToken: () => ({
+      data: [],
+      isLoading: false,
+      refetch: vi.fn(),
+    }),
     useUpdateScimToken: () => ({ mutateAsync: vi.fn() }),
     useFindUniqueAppConfig: () => ({ data: stableConfig }),
     useUpsertAppConfig: () => ({
