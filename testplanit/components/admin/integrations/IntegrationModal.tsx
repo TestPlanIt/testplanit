@@ -262,7 +262,7 @@ export function IntegrationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl min-h-[34rem] content-start">
         <DialogHeader>
           <DialogTitle>
             {integration

@@ -29,6 +29,10 @@ vi.mock("@prisma/client", () => ({
   IntegrationProvider: {
     JIRA: "JIRA",
     GITHUB: "GITHUB",
+    AZURE_DEVOPS: "AZURE_DEVOPS",
+    GITLAB: "GITLAB",
+    GITEA: "GITEA",
+    REDMINE: "REDMINE",
   },
 }));
 
@@ -766,7 +770,16 @@ describe("JiraLinkService", () => {
         where: {
           externalId: "jira-id-123",
           integration: {
-            provider: { in: ["JIRA", "GITHUB"] },
+            provider: {
+              in: [
+                "JIRA",
+                "GITHUB",
+                "AZURE_DEVOPS",
+                "GITLAB",
+                "GITEA",
+                "REDMINE",
+              ],
+            },
           },
         },
         data: {

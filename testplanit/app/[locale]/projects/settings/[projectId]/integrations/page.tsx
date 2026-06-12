@@ -89,6 +89,7 @@ export default function ProjectIntegrationsPage() {
             "AZURE_DEVOPS",
             "GITLAB",
             "GITEA",
+            "REDMINE",
             "SIMPLE_URL",
           ],
         },
@@ -108,6 +109,7 @@ export default function ProjectIntegrationsPage() {
         "AZURE_DEVOPS",
         "GITLAB",
         "GITEA",
+        "REDMINE",
         "SIMPLE_URL",
       ].includes(pi.integration.provider)
   );
