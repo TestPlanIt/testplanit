@@ -91,6 +91,17 @@ const SYNTHETIC_GITEA_PAYLOAD = JSON.stringify({
   repository: { full_name: "__synthetic__/__synthetic__" },
 });
 
+// Redmine: the redmine_webhook plugin sends no signature, so the synthetic
+// self-test posts unsigned (the URL token is the credential). issue.id === 0
+// is the non-forgeable synthetic sentinel — real Redmine issue ids are >= 1.
+const SYNTHETIC_REDMINE_PAYLOAD = JSON.stringify({
+  payload: {
+    action: "updated",
+    issue: { id: 0, status: { name: "New" } },
+    url: "__synthetic__",
+  },
+});
+
 function generateToken(): string {
   // 32 random bytes → 64 hex chars with "whk_" prefix.
   return `whk_${randomBytes(32).toString("hex")}`;
@@ -513,6 +524,8 @@ export interface SendTestWebhookResult {
  *     + `x-gitea-event: issues` headers.
  *   - AZURE_DEVOPS: Basic Auth from JSON-decoded {username, password};
  *     `authorization: Basic <base64>` header; SYNTHETIC_ADO_PAYLOAD body.
+ *   - REDMINE: unsigned (the redmine_webhook plugin cannot sign); the URL token
+ *     is the credential. SYNTHETIC_REDMINE_PAYLOAD body.
  *
  * Determinism invariant: each adapter's synthetic payload is a module-level
  * `const` (declared once, JSON.stringify'd once). Two consecutive calls
@@ -683,6 +696,14 @@ export async function sendTestWebhook(
         authorization: auth,
       },
       body: SYNTHETIC_ADO_PAYLOAD,
+    };
+  } else if (config.adapterType === "REDMINE") {
+    // redmine_webhook sends no signature; the URL token is the credential, so
+    // the synthetic request is posted unsigned.
+    requestInit = {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: SYNTHETIC_REDMINE_PAYLOAD,
     };
   } else {
     // SLACK / GENERIC_HMAC are OUTBOUND-only adapters; reaching this code
