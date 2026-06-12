@@ -53,14 +53,17 @@ export async function previewGroupMappingChange(
   const downgraded: DowngradedUser[] = [];
 
   for (const { userId } of members) {
-    const allAssignments = await prisma.groupAssignment.findMany({
-      where: { userId },
-      select: { group: { select: { id: true, mappedAccess: true } } },
-    });
-
-    const currentTiers = allAssignments
-      .map((a) => a.group.mappedAccess)
-      .filter(Boolean) as Access[];
+    const [user, allAssignments] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true, access: true, accessSource: true },
+      }),
+      prisma.groupAssignment.findMany({
+        where: { userId },
+        select: { group: { select: { id: true, mappedAccess: true } } },
+      }),
+    ]);
+    if (!user) continue;
 
     const simulatedTiers = allAssignments
       .map((a) =>
@@ -68,25 +71,18 @@ export async function previewGroupMappingChange(
       )
       .filter(Boolean) as Access[];
 
-    const currentEffective = resolveEffectiveAccess(
-      currentTiers,
-      fallbackDefault
-    );
-    const newEffective = resolveEffectiveAccess(
-      simulatedTiers,
-      fallbackDefault
-    );
+    const governedAfter =
+      simulatedTiers.length > 0 || user.accessSource === "GROUP_MAPPING";
+    const newAccess = governedAfter
+      ? resolveEffectiveAccess(simulatedTiers, fallbackDefault)
+      : user.access;
 
-    if (ACCESS_RANK[newEffective] < ACCESS_RANK[currentEffective]) {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { name: true },
-      });
+    if (ACCESS_RANK[newAccess] < ACCESS_RANK[user.access]) {
       downgraded.push({
         userId,
-        name: user?.name ?? userId,
-        currentAccess: currentEffective,
-        newAccess: newEffective,
+        name: user.name ?? userId,
+        currentAccess: user.access,
+        newAccess,
       });
     }
   }

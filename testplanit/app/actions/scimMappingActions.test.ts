@@ -84,7 +84,7 @@ describe("scimMappingActions", () => {
       expect(prisma.groupAssignment.findMany).not.toHaveBeenCalled();
     });
 
-    it("returns empty downgraded list when no members would drop", async () => {
+    it("returns empty downgraded list when no member's actual access would drop", async () => {
       mockAdminSession();
       vi.mocked(readScimFallbackDefault).mockResolvedValue("NONE");
       vi.mocked(prisma.groupAssignment.findMany)
@@ -92,16 +92,19 @@ describe("scimMappingActions", () => {
         .mockResolvedValueOnce([
           { group: { id: 1, mappedAccess: "USER" } },
         ] as any);
-      vi.mocked(resolveEffectiveAccess)
-        .mockReturnValueOnce("USER")
-        .mockReturnValueOnce("ADMIN");
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        name: "U1",
+        access: "USER",
+        accessSource: "GROUP_MAPPING",
+      } as any);
+      vi.mocked(resolveEffectiveAccess).mockReturnValue("ADMIN");
 
       const result = await previewGroupMappingChange(1, "ADMIN");
 
       expect(result).toEqual({ success: true, downgraded: [] });
     });
 
-    it("correctly identifies a user whose effective access would drop", async () => {
+    it("flags a governed user whose access would drop below its current value", async () => {
       mockAdminSession();
       vi.mocked(readScimFallbackDefault).mockResolvedValue("NONE");
       vi.mocked(prisma.groupAssignment.findMany)
@@ -109,12 +112,12 @@ describe("scimMappingActions", () => {
         .mockResolvedValueOnce([
           { group: { id: 1, mappedAccess: "ADMIN" } },
         ] as any);
-      vi.mocked(resolveEffectiveAccess)
-        .mockReturnValueOnce("ADMIN")
-        .mockReturnValueOnce("USER");
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         name: "Alice",
+        access: "ADMIN",
+        accessSource: "GROUP_MAPPING",
       } as any);
+      vi.mocked(resolveEffectiveAccess).mockReturnValue("USER");
 
       const result = await previewGroupMappingChange(1, "USER");
 
@@ -131,7 +134,7 @@ describe("scimMappingActions", () => {
       });
     });
 
-    it("does NOT flag users in a higher-access group (highest-wins check)", async () => {
+    it("does NOT flag a user held at the same tier by a higher-access group (highest-wins)", async () => {
       mockAdminSession();
       vi.mocked(readScimFallbackDefault).mockResolvedValue("NONE");
       vi.mocked(prisma.groupAssignment.findMany)
@@ -140,14 +143,66 @@ describe("scimMappingActions", () => {
           { group: { id: 1, mappedAccess: "USER" } },
           { group: { id: 2, mappedAccess: "ADMIN" } },
         ] as any);
-      vi.mocked(resolveEffectiveAccess)
-        .mockReturnValueOnce("ADMIN")
-        .mockReturnValueOnce("ADMIN");
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        name: "U1",
+        access: "ADMIN",
+        accessSource: "GROUP_MAPPING",
+      } as any);
+      vi.mocked(resolveEffectiveAccess).mockReturnValue("ADMIN");
 
       const result = await previewGroupMappingChange(1, null);
 
       expect(result).toEqual({ success: true, downgraded: [] });
-      expect(prisma.user.findUnique).not.toHaveBeenCalled();
+    });
+
+    it("flags an existing MANUAL admin when their group is first mapped to a lower tier", async () => {
+      mockAdminSession();
+      vi.mocked(readScimFallbackDefault).mockResolvedValue("NONE");
+      vi.mocked(prisma.groupAssignment.findMany)
+        .mockResolvedValueOnce([{ userId: "founder" }] as any)
+        .mockResolvedValueOnce([
+          { group: { id: 1, mappedAccess: null } },
+        ] as any);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        name: "Founder Admin",
+        access: "ADMIN",
+        accessSource: "MANUAL",
+      } as any);
+      vi.mocked(resolveEffectiveAccess).mockReturnValue("USER");
+
+      const result = await previewGroupMappingChange(1, "USER");
+
+      expect(result).toEqual({
+        success: true,
+        downgraded: [
+          {
+            userId: "founder",
+            name: "Founder Admin",
+            currentAccess: "ADMIN",
+            newAccess: "USER",
+          },
+        ],
+      });
+    });
+
+    it("does NOT flag a MANUAL user left ungoverned by the change (no mapped groups after)", async () => {
+      mockAdminSession();
+      vi.mocked(readScimFallbackDefault).mockResolvedValue("NONE");
+      vi.mocked(prisma.groupAssignment.findMany)
+        .mockResolvedValueOnce([{ userId: "manual" }] as any)
+        .mockResolvedValueOnce([
+          { group: { id: 1, mappedAccess: null } },
+        ] as any);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        name: "Manual User",
+        access: "ADMIN",
+        accessSource: "MANUAL",
+      } as any);
+
+      const result = await previewGroupMappingChange(1, null);
+
+      expect(result).toEqual({ success: true, downgraded: [] });
+      expect(resolveEffectiveAccess).not.toHaveBeenCalled();
     });
   });
 
