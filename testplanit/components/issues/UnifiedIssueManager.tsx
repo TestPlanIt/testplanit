@@ -69,22 +69,6 @@ export function UnifiedIssueManager({
   // Check for new integration system first
   const activeIntegration = project?.projectIntegrations?.[0];
 
-  // If entity doesn't exist yet (entityId is 0 or undefined), use deferred linking
-  if (activeIntegration?.integration && (!entityId || entityId === 0)) {
-    return (
-      <DeferredIssueManager
-        projectId={projectId}
-        selectedIssues={[]} // Not used anymore
-        linkedIssueIds={linkedIssueIds}
-        onIssuesChange={(issueIds) => {
-          setLinkedIssueIds(issueIds);
-        }}
-        maxBadgeWidth={maxBadgeWidth}
-        iterationContext={iterationContext}
-      />
-    );
-  }
-
   if (activeIntegration?.integration) {
     const integrationId =
       typeof activeIntegration.integration.id === "string"
@@ -95,7 +79,9 @@ export function UnifiedIssueManager({
         ? parseInt(activeIntegration.id)
         : activeIntegration.id;
 
-    // Handle SIMPLE_URL provider
+    // Handle SIMPLE_URL before the deferred branch — these issues carry a
+    // manually entered externalId that the deferred create flow can't set,
+    // and ManageSimpleUrlIssues already works for unsaved entities.
     if (
       activeIntegration.integration.provider === IntegrationProvider.SIMPLE_URL
     ) {
@@ -113,6 +99,22 @@ export function UnifiedIssueManager({
           config={{
             baseUrl: integrationSettings.baseUrl as string | undefined,
           }}
+        />
+      );
+    }
+
+    // If entity doesn't exist yet (entityId is 0 or undefined), use deferred linking
+    if (!entityId || entityId === 0) {
+      return (
+        <DeferredIssueManager
+          projectId={projectId}
+          selectedIssues={[]} // Not used anymore
+          linkedIssueIds={linkedIssueIds}
+          onIssuesChange={(issueIds) => {
+            setLinkedIssueIds(issueIds);
+          }}
+          maxBadgeWidth={maxBadgeWidth}
+          iterationContext={iterationContext}
         />
       );
     }
@@ -186,20 +188,6 @@ export function SimpleUnifiedIssueManager({
     (pi) => pi.isActive
   );
 
-  // If entity doesn't exist yet (entityId is 0 or undefined), use deferred linking
-  if (activeIntegration && (!entityId || entityId === 0)) {
-    return (
-      <DeferredIssueManager
-        projectId={projectId}
-        selectedIssues={[]} // Not used anymore
-        linkedIssueIds={linkedIssueIds}
-        onIssuesChange={(issueIds) => {
-          setLinkedIssueIds(issueIds);
-        }}
-      />
-    );
-  }
-
   if (activeIntegration) {
     const integrationId =
       typeof activeIntegration.integration.id === "string"
@@ -210,7 +198,9 @@ export function SimpleUnifiedIssueManager({
         ? parseInt(activeIntegration.id)
         : activeIntegration.id;
 
-    // Handle SIMPLE_URL provider
+    // Handle SIMPLE_URL before the deferred branch — these issues carry a
+    // manually entered externalId that the deferred create flow can't set,
+    // and ManageSimpleUrlIssues already works for unsaved entities.
     if (
       activeIntegration.integration.provider === IntegrationProvider.SIMPLE_URL
     ) {
@@ -229,6 +219,20 @@ export function SimpleUnifiedIssueManager({
           entityType={entityType}
           config={{
             baseUrl: integrationSettings.baseUrl as string | undefined,
+          }}
+        />
+      );
+    }
+
+    // If entity doesn't exist yet (entityId is 0 or undefined), use deferred linking
+    if (!entityId || entityId === 0) {
+      return (
+        <DeferredIssueManager
+          projectId={projectId}
+          selectedIssues={[]} // Not used anymore
+          linkedIssueIds={linkedIssueIds}
+          onIssuesChange={(issueIds) => {
+            setLinkedIssueIds(issueIds);
           }}
         />
       );

@@ -75,7 +75,10 @@ vi.mock("@/components/ui/button", () => ({
     ),
 }));
 
-import { UnifiedIssueManager } from "./UnifiedIssueManager";
+import {
+  SimpleUnifiedIssueManager,
+  UnifiedIssueManager,
+} from "./UnifiedIssueManager";
 
 const defaultProps = {
   projectId: 1,
@@ -192,6 +195,58 @@ describe("UnifiedIssueManager", () => {
     expect(screen.getByTestId("deferred-issue-manager")).toBeTruthy();
   });
 
+  it("renders ManageSimpleUrlIssues (not DeferredIssueManager) for SIMPLE_URL when entityId is 0", () => {
+    mockUseFindFirstProjects.mockReturnValue({
+      data: {
+        projectIntegrations: [
+          {
+            id: 10,
+            isActive: true,
+            config: {},
+            integration: {
+              id: 5,
+              name: "Simple Links",
+              provider: "SIMPLE_URL",
+              settings: { baseUrl: "https://tracker/issues/{issueId}" },
+            },
+          },
+        ],
+      },
+      isLoading: false,
+    });
+
+    render(<UnifiedIssueManager {...defaultProps} entityId={0} />);
+
+    expect(screen.getByTestId("manage-simple-url-issues")).toBeTruthy();
+    expect(screen.queryByTestId("deferred-issue-manager")).toBeNull();
+  });
+
+  it("renders ManageSimpleUrlIssues (not DeferredIssueManager) for SIMPLE_URL when entityId is undefined", () => {
+    mockUseFindFirstProjects.mockReturnValue({
+      data: {
+        projectIntegrations: [
+          {
+            id: 10,
+            isActive: true,
+            config: {},
+            integration: {
+              id: 5,
+              name: "Simple Links",
+              provider: "SIMPLE_URL",
+              settings: { baseUrl: "https://tracker/issues/{issueId}" },
+            },
+          },
+        ],
+      },
+      isLoading: false,
+    });
+
+    render(<UnifiedIssueManager {...defaultProps} entityId={undefined} />);
+
+    expect(screen.getByTestId("manage-simple-url-issues")).toBeTruthy();
+    expect(screen.queryByTestId("deferred-issue-manager")).toBeNull();
+  });
+
   it("renders alert with configure integration link when project has no active integrations", () => {
     mockUseFindFirstProjects.mockReturnValue({
       data: {
@@ -218,5 +273,108 @@ describe("UnifiedIssueManager", () => {
     render(<UnifiedIssueManager {...defaultProps} />);
 
     expect(screen.getByRole("alert")).toBeTruthy();
+  });
+});
+
+describe("SimpleUnifiedIssueManager", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const simpleUrlProjectData = {
+    projectIntegrations: [
+      {
+        id: 10,
+        isActive: true,
+        integration: {
+          id: 5,
+          name: "Simple Links",
+          provider: "SIMPLE_URL",
+          settings: { baseUrl: "https://tracker/issues/{issueId}" },
+        },
+      },
+    ],
+  };
+
+  const jiraProjectData = {
+    projectIntegrations: [
+      {
+        id: 20,
+        isActive: true,
+        integration: { id: 7, name: "My Jira", provider: "JIRA" },
+      },
+    ],
+  };
+
+  const baseProps = {
+    projectId: 1,
+    linkedIssueIds: [],
+    setLinkedIssueIds: vi.fn(),
+    entityType: "testCase" as const,
+  };
+
+  it("renders ManageSimpleUrlIssues for SIMPLE_URL when entityId > 0", () => {
+    render(
+      <SimpleUnifiedIssueManager
+        {...baseProps}
+        projectData={simpleUrlProjectData as any}
+        entityId={42}
+      />
+    );
+
+    expect(screen.getByTestId("manage-simple-url-issues")).toBeTruthy();
+    expect(screen.queryByTestId("deferred-issue-manager")).toBeNull();
+  });
+
+  it("renders ManageSimpleUrlIssues (not DeferredIssueManager) for SIMPLE_URL when entityId is 0", () => {
+    render(
+      <SimpleUnifiedIssueManager
+        {...baseProps}
+        projectData={simpleUrlProjectData as any}
+        entityId={0}
+      />
+    );
+
+    expect(screen.getByTestId("manage-simple-url-issues")).toBeTruthy();
+    expect(screen.queryByTestId("deferred-issue-manager")).toBeNull();
+  });
+
+  it("renders ManageSimpleUrlIssues (not DeferredIssueManager) for SIMPLE_URL when entityId is undefined", () => {
+    render(
+      <SimpleUnifiedIssueManager
+        {...baseProps}
+        projectData={simpleUrlProjectData as any}
+        entityId={undefined}
+      />
+    );
+
+    expect(screen.getByTestId("manage-simple-url-issues")).toBeTruthy();
+    expect(screen.queryByTestId("deferred-issue-manager")).toBeNull();
+  });
+
+  it("still defers external providers (JIRA) when entityId is 0", () => {
+    render(
+      <SimpleUnifiedIssueManager
+        {...baseProps}
+        projectData={jiraProjectData as any}
+        entityId={0}
+      />
+    );
+
+    expect(screen.getByTestId("deferred-issue-manager")).toBeTruthy();
+    expect(screen.queryByTestId("manage-simple-url-issues")).toBeNull();
+  });
+
+  it("renders ManageExternalIssues for JIRA when entityId > 0", () => {
+    render(
+      <SimpleUnifiedIssueManager
+        {...baseProps}
+        projectData={jiraProjectData as any}
+        entityId={42}
+      />
+    );
+
+    expect(screen.getByTestId("manage-external-issues")).toBeTruthy();
+    expect(screen.queryByTestId("deferred-issue-manager")).toBeNull();
   });
 });

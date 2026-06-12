@@ -59,6 +59,9 @@ const createIssueSchema = z.object({
   description: z.string().optional(),
   priority: z.string().optional().default("medium"),
   issueType: z.string().optional(),
+  // Only used for Simple URL integrations, where the issue ID becomes the
+  // externalId substituted into the Base URL template.
+  externalId: z.string().optional(),
   customFields: z.record(z.string(), z.any()).optional(),
 });
 
@@ -150,6 +153,7 @@ export function CreateIssueDialog({
       description: initialMarkdownPreview,
       priority: defaultValues?.priority || "medium",
       issueType: defaultValues?.issueType || undefined,
+      externalId: defaultValues?.externalId || "",
       customFields: {},
     },
   });
@@ -404,10 +408,20 @@ export function CreateIssueDialog({
           throw new Error("Authentication required");
         }
 
-        // Use ZenStack hook for Simple URL integrations to create internal issues
+        // Simple URL link-outs require the issue ID as externalId
+        const externalId = values.externalId?.trim();
+        if (!externalId) {
+          form.setError("externalId", {
+            message: t("common.errors.fieldRequired"),
+          });
+          setIsCreating(false);
+          return;
+        }
+
         const createData: any = {
-          name: values.title, // Both name and title are required
+          name: externalId,
           title: values.title,
+          externalId,
           description: values.description || "",
           status: "open",
           priority: values.priority || "medium",
@@ -851,6 +865,30 @@ export function CreateIssueDialog({
                   />
                 </div>
               )}
+
+            {isSimpleUrlIntegration && (
+              <FormField
+                control={form.control as any}
+                name="externalId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="inline-flex items-center gap-0.5">
+                      {t("common.fields.id")}
+                      <sup>
+                        <Asterisk className="w-3 h-3 text-destructive" />
+                      </sup>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder={t("common.placeholders.issueIdExample")}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={form.control as any}
