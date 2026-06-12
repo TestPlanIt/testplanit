@@ -11,6 +11,8 @@ This page, accessible from within a specific project's navigation menu (under "I
 
 Unlike the global Issues List, this view is filtered to show only the issues relevant to the currently selected project. It helps in understanding which known issues might impact testing activities or are associated with test failures specifically within this project context.
 
+This page is **read-only** — it lists issues that already exist. You do not add or link issues from here. Issues appear in this list once they are linked to a Test Case, Test Run, Result, or Session, or when an inbound webhook imports them. To add or link an issue (including with a Simple URL integration), open the relevant test artifact and use the **Link Issue** / **Add** controls in its Issues panel. See [Issue Integrations](../integrations.md) for the full add/link flow.
+
 ## Features
 
 ### Project Context Header

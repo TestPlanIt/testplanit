@@ -298,6 +298,96 @@ describe("CreateIssueDialog", () => {
     expect(selects.length).toBeGreaterThan(0);
   });
 
+  describe("SIMPLE_URL", () => {
+    const simpleUrlIntegration = {
+      data: [
+        {
+          id: 10,
+          integrationId: 5,
+          isActive: true,
+          integration: { id: 5, name: "Redmine", provider: "SIMPLE_URL" },
+        },
+      ],
+    };
+
+    it("renders the Issue ID field for SIMPLE_URL integrations", () => {
+      mockUseFindManyProjectIntegration.mockReturnValue(simpleUrlIntegration);
+
+      render(<CreateIssueDialog {...defaultProps} />);
+
+      // common.fields.id → mock returns last segment "id"
+      expect(screen.getAllByText("id").length).toBeGreaterThan(0);
+    });
+
+    it("does not render the Issue ID field for non-SIMPLE_URL integrations", () => {
+      mockUseFindManyProjectIntegration.mockReturnValue({
+        data: [
+          {
+            id: 10,
+            integrationId: 5,
+            isActive: true,
+            integration: { id: 5, name: "My Jira", provider: "JIRA" },
+          },
+        ],
+      });
+
+      render(<CreateIssueDialog {...defaultProps} />);
+
+      expect(screen.queryByText("id")).toBeNull();
+    });
+
+    it("creates the issue with the entered ID as externalId", async () => {
+      mockUseFindManyProjectIntegration.mockReturnValue(simpleUrlIntegration);
+      mockMutateAsync.mockResolvedValue({
+        id: 99,
+        name: "ISSUE-77",
+        externalId: "ISSUE-77",
+      });
+
+      render(
+        <CreateIssueDialog
+          {...defaultProps}
+          defaultValues={{ externalId: "ISSUE-77", title: "Login broken" }}
+        />
+      );
+
+      const form = document.querySelector("form");
+      if (form) {
+        fireEvent.submit(form);
+      }
+
+      await waitFor(() => {
+        expect(mockMutateAsync).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({
+              externalId: "ISSUE-77",
+              name: "ISSUE-77",
+              title: "Login broken",
+            }),
+          })
+        );
+      });
+    });
+
+    it("does not create the issue when the Issue ID is empty", async () => {
+      mockUseFindManyProjectIntegration.mockReturnValue(simpleUrlIntegration);
+
+      render(
+        <CreateIssueDialog
+          {...defaultProps}
+          defaultValues={{ title: "No ID provided" }}
+        />
+      );
+
+      const form = document.querySelector("form");
+      if (form) {
+        fireEvent.submit(form);
+      }
+
+      await waitFor(() => expect(mockMutateAsync).not.toHaveBeenCalled());
+    });
+  });
+
   describe("INT-05: TipTap doc prefill", () => {
     const tiptapDoc = {
       type: "doc" as const,
