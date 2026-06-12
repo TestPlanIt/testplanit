@@ -4833,7 +4833,7 @@
       "scimNameLockedDescription": "De naam en leden van deze groep worden beheerd door uw identiteitsprovider. Breng daar wijzigingen aan om ze hier bij te werken.",
       "mappedAccessColumnHeader": "Mapped Access",
       "mappedAccessLabel": "Mapped Access Tier",
-      "mappedAccessNone": "None",
+      "mappedAccessNone": "No mapping",
       "mappedAccessSelect": "Select access tier...",
       "downgradeConfirmTitle": "Confirm Access Change",
       "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
@@ -6048,7 +6048,8 @@
     },
     "group": {
       "name": "## Groepsnaam\nEen duidelijke, beknopte, beschrijvende naam of trefwoord(en) die in alle projecten wordt gebruikt.\n\n- Helpt teamleden snel gerelateerde testcases, testruns en sessies te vinden.",
-      "users": "## Gebruikers\nGeeft de gebruikers aan die aan deze groep zijn toegewezen."
+      "users": "## Gebruikers\nGeeft de gebruikers aan die aan deze groep zijn toegewezen.",
+      "mappedAccess": "## Mapped Access Tier\nMembers of this group are granted at least this access tier on the next sync.\n\n- The highest tier across all of a user's groups wins\n- \"No mapping\" means this group does not affect access — members fall back to the default set on the SCIM page\n- A manual access change on a user takes over from the mapping (and is flagged on that user's edit screen)"
     },
     "template": {
       "name": "## Sjabloonnaam\nEen unieke en beschrijvende naam voor deze sjabloon (bijv. 'Standaardtestgeval', 'API-testresultaten').",

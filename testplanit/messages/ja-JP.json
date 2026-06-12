@@ -4833,7 +4833,7 @@
       "scimNameLockedDescription": "このグループ名とメンバーは、ご利用のIDプロバイダーによって管理されています。こちらで情報を更新するには、そちらで変更してください。",
       "mappedAccessColumnHeader": "Mapped Access",
       "mappedAccessLabel": "Mapped Access Tier",
-      "mappedAccessNone": "None",
+      "mappedAccessNone": "No mapping",
       "mappedAccessSelect": "Select access tier...",
       "downgradeConfirmTitle": "Confirm Access Change",
       "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
@@ -6048,7 +6048,8 @@
     },
     "group": {
       "name": "## グループ名\nすべてのプロジェクトで使用される、明確で簡潔な説明的な名前またはキーワード。\n\n- チームメンバーが関連するテストケース、テスト実行、およびセッションをすばやく見つけるのに役立ちます。",
-      "users": "## ユーザー\nこのグループに割り当てられているユーザーを示します。"
+      "users": "## ユーザー\nこのグループに割り当てられているユーザーを示します。",
+      "mappedAccess": "## Mapped Access Tier\nMembers of this group are granted at least this access tier on the next sync.\n\n- The highest tier across all of a user's groups wins\n- \"No mapping\" means this group does not affect access — members fall back to the default set on the SCIM page\n- A manual access change on a user takes over from the mapping (and is flagged on that user's edit screen)"
     },
     "template": {
       "name": "## テンプレート名\nこのテンプレートの一意の説明的な名前 (例: '標準テスト ケース'、'API テスト結果')。",

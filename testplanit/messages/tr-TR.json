@@ -4833,7 +4833,7 @@
       "scimNameLockedDescription": "Bu grubun adı ve üyeleri kimlik sağlayıcınız tarafından yönetilmektedir. Değişiklikleri orada yaparak buradaki bilgileri güncelleyebilirsiniz.",
       "mappedAccessColumnHeader": "Mapped Access",
       "mappedAccessLabel": "Mapped Access Tier",
-      "mappedAccessNone": "Hiçbiri",
+      "mappedAccessNone": "No mapping",
       "mappedAccessSelect": "Select access tier...",
       "downgradeConfirmTitle": "Confirm Access Change",
       "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
@@ -6048,7 +6048,8 @@
     },
     "group": {
       "name": "## Grup Adı\nTüm projelerde kullanılan açık, özlü ve açıklayıcı bir ad veya anahtar kelime(ler).\n\n- Ekip üyelerinin ilgili test senaryolarını, test çalıştırmalarını ve oturumlarını hızlı bir şekilde bulmasına yardımcı olur.",
-      "users": "## Kullanıcılar\nBu gruba atanmış kullanıcıları gösterir."
+      "users": "## Kullanıcılar\nBu gruba atanmış kullanıcıları gösterir.",
+      "mappedAccess": "## Mapped Access Tier\nMembers of this group are granted at least this access tier on the next sync.\n\n- The highest tier across all of a user's groups wins\n- \"No mapping\" means this group does not affect access — members fall back to the default set on the SCIM page\n- A manual access change on a user takes over from the mapping (and is flagged on that user's edit screen)"
     },
     "template": {
       "name": "## Şablon Adı\nBu şablon için benzersiz ve açıklayıcı bir ad (örneğin, 'Standart Test Durumu', 'API Test Sonuçları').",

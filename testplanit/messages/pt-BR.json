@@ -4833,7 +4833,7 @@
       "scimNameLockedDescription": "O nome e os membros deste grupo são gerenciados pelo seu provedor de identidade. Faça as alterações necessárias lá para atualizá-los aqui.",
       "mappedAccessColumnHeader": "Mapped Access",
       "mappedAccessLabel": "Mapped Access Tier",
-      "mappedAccessNone": "None",
+      "mappedAccessNone": "No mapping",
       "mappedAccessSelect": "Select access tier...",
       "downgradeConfirmTitle": "Confirm Access Change",
       "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
@@ -6048,7 +6048,8 @@
     },
     "group": {
       "name": "## Nome do Grupo\nUm nome ou palavra(s)-chave clara(s), concisa(s) e descritiva(s) que seja(m) usada(s) em todos os projetos.\n\n- Ajuda os membros da equipe a encontrar rapidamente casos de teste, execuções de teste e sessões relacionadas.",
-      "users": "## Usuários\nIndica os usuários que estão atribuídos a este grupo."
+      "users": "## Usuários\nIndica os usuários que estão atribuídos a este grupo.",
+      "mappedAccess": "## Mapped Access Tier\nMembers of this group are granted at least this access tier on the next sync.\n\n- The highest tier across all of a user's groups wins\n- \"No mapping\" means this group does not affect access — members fall back to the default set on the SCIM page\n- A manual access change on a user takes over from the mapping (and is flagged on that user's edit screen)"
     },
     "template": {
       "name": "## Nome do modelo\nUm nome único e descritivo para este modelo (por exemplo, 'Caso de teste padrão', 'Resultados do teste de API').",

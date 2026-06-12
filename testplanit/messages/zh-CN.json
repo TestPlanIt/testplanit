@@ -4833,7 +4833,7 @@
       "scimNameLockedDescription": "此群组的名称和成员由您的身份提供商管理。请在身份提供商处进行更改，以在此处更新。",
       "mappedAccessColumnHeader": "Mapped Access",
       "mappedAccessLabel": "Mapped Access Tier",
-      "mappedAccessNone": "None",
+      "mappedAccessNone": "No mapping",
       "mappedAccessSelect": "Select access tier...",
       "downgradeConfirmTitle": "Confirm Access Change",
       "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
@@ -6048,7 +6048,8 @@
     },
     "group": {
       "name": "## 组名称\n一个清晰、简洁、描述性的名称或关键词，用于所有项目。\n\n- 帮助团队成员快速找到相关的测试用例、测试运行和会话。",
-      "users": "## 用户\n表示分配给此组的用户。"
+      "users": "## 用户\n表示分配给此组的用户。",
+      "mappedAccess": "## Mapped Access Tier\nMembers of this group are granted at least this access tier on the next sync.\n\n- The highest tier across all of a user's groups wins\n- \"No mapping\" means this group does not affect access — members fall back to the default set on the SCIM page\n- A manual access change on a user takes over from the mapping (and is flagged on that user's edit screen)"
     },
     "template": {
       "name": "## 模板名称\n此模板的唯一描述性名称（例如，“标准测试用例”、“API 测试结果”）。",

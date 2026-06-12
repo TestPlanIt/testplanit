@@ -309,7 +309,10 @@ export function EditGroup({ group, open, onClose }: EditGroupProps) {
                 name="mappedAccess"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("mappedAccessLabel")}</FormLabel>
+                    <FormLabel className="flex items-center">
+                      {t("mappedAccessLabel")}
+                      <HelpPopover helpKey="group.mappedAccess" />
+                    </FormLabel>
                     <FormControl>
                       <Select
                         onValueChange={(val) =>

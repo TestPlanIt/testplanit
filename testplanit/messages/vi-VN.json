@@ -4833,7 +4833,7 @@
       "scimNameLockedDescription": "Tên và thành viên của nhóm này được quản lý bởi nhà cung cấp danh tính của bạn. Hãy thực hiện các thay đổi ở đó để cập nhật thông tin tại đây.",
       "mappedAccessColumnHeader": "Mapped Access",
       "mappedAccessLabel": "Mapped Access Tier",
-      "mappedAccessNone": "None",
+      "mappedAccessNone": "No mapping",
       "mappedAccessSelect": "Select access tier...",
       "downgradeConfirmTitle": "Confirm Access Change",
       "downgradeConfirmDescription": "{count, plural, one {# user} other {# users}} would have their access lowered. Continue?",
@@ -6048,7 +6048,8 @@
     },
     "group": {
       "name": "## Tên Nhóm\nMột tên hoặc từ khóa rõ ràng, ngắn gọn, mô tả được sử dụng trong tất cả các dự án.\n\n- Giúp các thành viên nhóm nhanh chóng tìm thấy các trường hợp kiểm thử, các lần chạy thử nghiệm và các phiên liên quan.",
-      "users": "## Người dùng\nCho biết những người dùng được chỉ định vào nhóm này."
+      "users": "## Người dùng\nCho biết những người dùng được chỉ định vào nhóm này.",
+      "mappedAccess": "## Mapped Access Tier\nMembers of this group are granted at least this access tier on the next sync.\n\n- The highest tier across all of a user's groups wins\n- \"No mapping\" means this group does not affect access — members fall back to the default set on the SCIM page\n- A manual access change on a user takes over from the mapping (and is flagged on that user's edit screen)"
     },
     "template": {
       "name": "## Tên mẫu\nMột tên duy nhất và mô tả cho mẫu này (ví dụ: 'Trường hợp kiểm thử tiêu chuẩn', 'Kết quả kiểm thử API').",
