@@ -470,6 +470,7 @@ function ScimTokensList() {
                   <div className="m-2">
                     <ColumnSelection
                       key="scim-tokens-column-selection"
+                      storageKey="admin-scim-tokens"
                       columns={columns}
                       onVisibilityChange={setColumnVisibility}
                     />

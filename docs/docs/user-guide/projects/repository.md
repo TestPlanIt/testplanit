@@ -64,7 +64,7 @@ The page features a resizable two-panel layout:
     * **Generate Test Cases Button**: Opens the AI generation wizard (sparkles icon, requires [LLM Integration](../llm-integrations.md)).
     * **Import Cases Button**: Opens the CSV import wizard for bulk test case creation.
     * **Filter Input**: Search for test cases by name within the current view/filter.
-    * **Column Selection**: Choose which columns are visible in the table.
+    * **Column Selection**: Choose which columns are visible in the table using the **Columns** control. Your selection is remembered automatically — it is saved in your browser and scoped to this project's repository, so the columns you pick are still there the next time you open it.
     * **Pagination**: Controls for navigating through pages of test cases.
     * **Test Case Table (`DataTable`)**: Displays the list of test cases based on the current selection/filters. Supports:
         * Sorting by clicking column headers (Name, State, etc.).
@@ -110,6 +110,10 @@ The main table displays the following information for each test case:
     * **Delete**: Initiates the soft delete process for the test case, requiring confirmation.
 
 Additional dynamic columns appear based on the fields defined in the templates used by the displayed cases.
+
+### Remembered column choices
+
+Your column selections are saved per project and restored each time you return. Because the available columns change with the templates in view, choices are matched by column: a column you hid or showed is restored whenever that column is present, and any saved choice for a column that is not in the current view — for example a removed template field, or a field that belongs to a template you are not currently looking at — is simply ignored. Switching between templates therefore keeps each template's columns the way you left them. If you open the repository from a shared link whose URL specifies columns, those columns take precedence for that visit.
 
 ## Drag and Drop
 

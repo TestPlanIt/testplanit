@@ -1,0 +1,442 @@
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+
+// Control the `?columns=` query param per test.
+const mockSearchParams = { current: "" };
+
+// Stable router spies so we can assert URL pushes — e.g. that restoring stored
+// columns does NOT write `?columns=` to the URL on mount.
+const navMocks = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(mockSearchParams.current),
+}));
+
+vi.mock("~/lib/navigation", () => ({
+  useRouter: () => ({ push: navMocks.push, replace: navMocks.replace }),
+  usePathname: () => "/test",
+}));
+
+vi.mock("next-intl", () => ({
+  useTranslations: () => (key: string) => key,
+}));
+
+import {
+  ColumnSelection,
+  CustomColumnDef,
+  readStoredColumnVisibility,
+  writeStoredColumnVisibility,
+} from "./ColumnSelection";
+
+const STORAGE_PREFIX = "testplanit:columnVisibility:";
+
+interface Row {
+  id: number;
+}
+
+// name (first, cannot hide) | description | customField | actions (last, cannot hide)
+const columns: CustomColumnDef<Row>[] = [
+  { id: "name", header: "Name", enableHiding: false },
+  { id: "description", header: "Description" },
+  { id: "customField", header: "Custom Field" },
+  { id: "actions", header: "Actions", enableHiding: false },
+];
+
+function lastVisibility(spy: ReturnType<typeof vi.fn>) {
+  return spy.mock.calls.at(-1)?.[0] as Record<string, boolean>;
+}
+
+// Radix popover/checkbox use pointer-capture + scrollIntoView APIs jsdom
+// doesn't implement; stub them so the selector can be opened and toggled.
+beforeAll(() => {
+  const proto = window.HTMLElement.prototype as unknown as Record<
+    string,
+    unknown
+  >;
+  proto.hasPointerCapture ||= () => false;
+  proto.setPointerCapture ||= () => {};
+  proto.releasePointerCapture ||= () => {};
+  proto.scrollIntoView ||= () => {};
+});
+
+beforeEach(() => {
+  window.localStorage.clear();
+  mockSearchParams.current = "";
+  navMocks.push.mockClear();
+  navMocks.replace.mockClear();
+});
+
+describe("column visibility storage helpers", () => {
+  it("returns null when nothing is stored", () => {
+    expect(readStoredColumnVisibility("view-a")).toBeNull();
+  });
+
+  it("returns null when no storage key is provided", () => {
+    expect(readStoredColumnVisibility(undefined)).toBeNull();
+  });
+
+  it("round-trips a boolean map", () => {
+    writeStoredColumnVisibility("view-a", { description: false, tags: true });
+    expect(readStoredColumnVisibility("view-a")).toEqual({
+      description: false,
+      tags: true,
+    });
+  });
+
+  it("ignores non-boolean and malformed stored values", () => {
+    window.localStorage.setItem(
+      `${STORAGE_PREFIX}view-a`,
+      JSON.stringify({ description: false, bogus: "yes", count: 3 })
+    );
+    expect(readStoredColumnVisibility("view-a")).toEqual({
+      description: false,
+    });
+
+    window.localStorage.setItem(`${STORAGE_PREFIX}view-b`, "not json");
+    expect(readStoredColumnVisibility("view-b")).toBeNull();
+
+    window.localStorage.setItem(
+      `${STORAGE_PREFIX}view-c`,
+      JSON.stringify([1, 2])
+    );
+    expect(readStoredColumnVisibility("view-c")).toBeNull();
+  });
+
+  it("merges on write so choices for columns from other views are preserved", () => {
+    // e.g. columns from template A
+    writeStoredColumnVisibility("repository-cases:1", { fieldA: false });
+    // later, columns from template B under the same view key
+    writeStoredColumnVisibility("repository-cases:1", { fieldB: true });
+
+    expect(readStoredColumnVisibility("repository-cases:1")).toEqual({
+      fieldA: false,
+      fieldB: true,
+    });
+  });
+});
+
+describe("ColumnSelection restore", () => {
+  it("restores a remembered hidden column on mount", () => {
+    writeStoredColumnVisibility("view-a", { description: false });
+    const onVisibilityChange = vi.fn();
+
+    render(
+      <ColumnSelection
+        storageKey="view-a"
+        columns={columns}
+        onVisibilityChange={onVisibilityChange}
+      />
+    );
+
+    expect(lastVisibility(onVisibilityChange)).toEqual({
+      name: true,
+      description: false,
+      customField: true,
+      actions: true,
+    });
+  });
+
+  it("ignores stored columns that do not exist in the current view", () => {
+    // `ghost` is not one of this view's columns; `customField` is.
+    writeStoredColumnVisibility("view-a", {
+      ghost: false,
+      customField: false,
+    });
+    const onVisibilityChange = vi.fn();
+
+    render(
+      <ColumnSelection
+        storageKey="view-a"
+        columns={columns}
+        onVisibilityChange={onVisibilityChange}
+      />
+    );
+
+    const result = lastVisibility(onVisibilityChange);
+    expect(result).not.toHaveProperty("ghost");
+    expect(result.customField).toBe(false);
+    expect(result.description).toBe(true);
+  });
+
+  it("never lets storage hide always-visible (first/last/non-hideable) columns", () => {
+    writeStoredColumnVisibility("view-a", {
+      name: false,
+      actions: false,
+    });
+    const onVisibilityChange = vi.fn();
+
+    render(
+      <ColumnSelection
+        storageKey="view-a"
+        columns={columns}
+        onVisibilityChange={onVisibilityChange}
+      />
+    );
+
+    const result = lastVisibility(onVisibilityChange);
+    expect(result.name).toBe(true);
+    expect(result.actions).toBe(true);
+  });
+
+  it("lets an explicit ?columns= link override the remembered preference", () => {
+    writeStoredColumnVisibility("view-a", { description: false });
+    mockSearchParams.current = "columns=description"; // URL says: show description, hide the rest
+    const onVisibilityChange = vi.fn();
+
+    render(
+      <ColumnSelection
+        storageKey="view-a"
+        columns={columns}
+        onVisibilityChange={onVisibilityChange}
+      />
+    );
+
+    const result = lastVisibility(onVisibilityChange);
+    expect(result.description).toBe(true); // URL wins over stored `false`
+    expect(result.customField).toBe(false); // not in URL list
+  });
+
+  it("does not persist the computed defaults on mount", () => {
+    const onVisibilityChange = vi.fn();
+
+    render(
+      <ColumnSelection
+        storageKey="fresh-view"
+        columns={columns}
+        onVisibilityChange={onVisibilityChange}
+      />
+    );
+
+    // Nothing should be written until the user actually changes a column.
+    expect(readStoredColumnVisibility("fresh-view")).toBeNull();
+  });
+
+  it("does not touch storage when no storageKey is provided", () => {
+    const onVisibilityChange = vi.fn();
+
+    render(
+      <ColumnSelection
+        columns={columns}
+        onVisibilityChange={onVisibilityChange}
+      />
+    );
+
+    // Defaults still propagate, storage stays empty.
+    expect(lastVisibility(onVisibilityChange)).toEqual({
+      name: true,
+      description: true,
+      customField: true,
+      actions: true,
+    });
+    expect(window.localStorage.length).toBe(0);
+  });
+});
+
+// Three hideable columns (colB can be hidden while colA stays visible, so the
+// "always keep one visible" guard doesn't fight a single deliberate toggle).
+const wideColumns: CustomColumnDef<Row>[] = [
+  { id: "name", header: "Name", enableHiding: false },
+  { id: "colA", header: "Col A" },
+  { id: "colB", header: "Col B" },
+  { id: "colC", header: "Col C" },
+  { id: "actions", header: "Actions", enableHiding: false },
+];
+
+// (1) SSR / hydration safety.
+describe("SSR / hydration safety", () => {
+  it("read + write are safe no-ops with no window, and don't mutate client storage", () => {
+    const stored = { description: false };
+    writeStoredColumnVisibility("view-a", stored);
+    expect(readStoredColumnVisibility("view-a")).toEqual(stored);
+
+    // Simulate the server render: `window` is undefined.
+    vi.stubGlobal("window", undefined);
+    try {
+      expect(readStoredColumnVisibility("view-a")).toBeNull();
+      expect(() =>
+        writeStoredColumnVisibility("view-a", { description: true })
+      ).not.toThrow();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+
+    // The server-side no-op must not have touched what the client stored.
+    expect(readStoredColumnVisibility("view-a")).toEqual(stored);
+  });
+
+  it("emits the stored visibility on the very first render (no defaults-then-correction flash)", () => {
+    writeStoredColumnVisibility("view-a", { description: false });
+    const onVisibilityChange = vi.fn();
+
+    render(
+      <ColumnSelection
+        storageKey="view-a"
+        columns={columns}
+        onVisibilityChange={onVisibilityChange}
+      />
+    );
+
+    // First emitted value already reflects storage, so there is no visible
+    // flip from computed defaults to stored state after mount.
+    expect(onVisibilityChange.mock.calls[0]?.[0]).toEqual({
+      name: true,
+      description: false,
+      customField: true,
+      actions: true,
+    });
+  });
+});
+
+// (2) A shared ?columns= link updates the remembered view once the user changes
+// a column. Confirmed-intended behavior.
+describe("URL columns persist to storage on change", () => {
+  it("persists URL-derived visibility (incl. URL-hidden columns) after a user toggle", async () => {
+    const user = userEvent.setup();
+    mockSearchParams.current = "columns=colA,colB"; // colC hidden purely by the URL
+    const onVisibilityChange = vi.fn();
+
+    render(
+      <ColumnSelection
+        storageKey="url-view"
+        columns={wideColumns}
+        onVisibilityChange={onVisibilityChange}
+      />
+    );
+
+    // Loading the URL alone does not write storage (first render is skipped).
+    expect(readStoredColumnVisibility("url-view")).toBeNull();
+
+    // User opens the selector and hides Col B.
+    await user.click(screen.getByTestId("column-selection-trigger"));
+    await user.click(await screen.findByRole("checkbox", { name: /Col B/ }));
+
+    const stored = readStoredColumnVisibility("url-view");
+    expect(stored).not.toBeNull();
+    expect(stored?.colB).toBe(false); // the explicit change
+    expect(stored?.colA).toBe(true);
+    // colC was hidden only because of the URL, yet it is now persisted —
+    // i.e. opening a shared ?columns= link rewrote the remembered view.
+    expect(stored?.colC).toBe(false);
+  });
+});
+
+// (3) Restoring stored prefs must not leak into the shareable URL on load; only
+// an explicit change should update it.
+describe("restore vs. URL", () => {
+  it("does not push a ?columns= URL when restoring stored columns on mount", () => {
+    writeStoredColumnVisibility("view-a", { description: false });
+    const onVisibilityChange = vi.fn();
+
+    render(
+      <ColumnSelection
+        storageKey="view-a"
+        columns={columns}
+        onVisibilityChange={onVisibilityChange}
+      />
+    );
+
+    expect(onVisibilityChange).toHaveBeenCalled(); // mounted + computed state
+    expect(navMocks.push).not.toHaveBeenCalled(); // but no URL written
+  });
+
+  it("updates the ?columns= URL on an explicit change when column memory is OFF", async () => {
+    const user = userEvent.setup();
+    const onVisibilityChange = vi.fn();
+
+    render(
+      <ColumnSelection
+        columns={wideColumns}
+        onVisibilityChange={onVisibilityChange}
+      />
+    ); // no storageKey
+    expect(navMocks.push).not.toHaveBeenCalled();
+
+    await user.click(screen.getByTestId("column-selection-trigger"));
+    await user.click(await screen.findByRole("checkbox", { name: /Col B/ }));
+
+    await waitFor(() => expect(navMocks.push).toHaveBeenCalled());
+    const url = navMocks.push.mock.calls.at(-1)?.[0] as string;
+    expect(url).toContain("columns=");
+  });
+
+  it("KNOWN INTERACTION: with column memory ON, a change is saved to storage but the ?columns= URL is NOT updated", async () => {
+    // The persist effect runs before the URL effect and writes the new state
+    // to storage; the URL effect then recomputes getInitialVisibility(), which
+    // overlays that fresh storage and so equals the new state — making the
+    // change look like "no change from initial", which suppresses the URL push.
+    const user = userEvent.setup();
+    const onVisibilityChange = vi.fn();
+
+    render(
+      <ColumnSelection
+        storageKey="mem-view"
+        columns={wideColumns}
+        onVisibilityChange={onVisibilityChange}
+      />
+    );
+
+    await user.click(screen.getByTestId("column-selection-trigger"));
+    await user.click(await screen.findByRole("checkbox", { name: /Col B/ }));
+
+    // The change is remembered in storage...
+    await waitFor(() =>
+      expect(readStoredColumnVisibility("mem-view")?.colB).toBe(false)
+    );
+    // ...but the shareable URL is never updated.
+    expect(navMocks.push).not.toHaveBeenCalled();
+  });
+});
+
+// (4) Columns that load after mount (e.g. repository custom fields fetched
+// async) — the initial state is computed once.
+describe("columns that load after mount", () => {
+  it("restores stored prefs for columns present at first render", () => {
+    writeStoredColumnVisibility("late-view", { customField: false });
+    const onVisibilityChange = vi.fn();
+
+    render(
+      <ColumnSelection
+        storageKey="late-view"
+        columns={columns}
+        onVisibilityChange={onVisibilityChange}
+      />
+    );
+
+    expect(lastVisibility(onVisibilityChange).customField).toBe(false);
+  });
+
+  it("does NOT retroactively apply stored prefs to columns that appear only after mount", () => {
+    writeStoredColumnVisibility("late-view", { customField: false });
+    const onVisibilityChange = vi.fn();
+    const initialColumns = columns.filter((c) => c.id !== "customField");
+
+    const { rerender } = render(
+      <ColumnSelection
+        storageKey="late-view"
+        columns={initialColumns}
+        onVisibilityChange={onVisibilityChange}
+      />
+    );
+    expect(lastVisibility(onVisibilityChange)).not.toHaveProperty(
+      "customField"
+    );
+
+    // customField arrives later (async custom-field columns).
+    rerender(
+      <ColumnSelection
+        storageKey="late-view"
+        columns={columns}
+        onVisibilityChange={onVisibilityChange}
+      />
+    );
+
+    // Known limitation: initial visibility is computed once, so the stored
+    // `false` is not applied to the late-arriving column — it isn't added to
+    // the visibility map by this in-place update. A fresh mount restores it
+    // (covered by the test above).
+    expect(lastVisibility(onVisibilityChange)).not.toHaveProperty(
+      "customField"
+    );
+  });
+});

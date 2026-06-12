@@ -20,7 +20,7 @@ The Tags page displays a table listing all defined tags (excluding those marked 
 - **Filtering**: Use the filter input above the table to search for tags by name.
 - **Pagination**: If there are many tags, use the pagination controls at the top-right to navigate through pages and adjust the number of tags shown per page.
 - **Sorting**: Click on the "Name" column header to sort the tags alphabetically in ascending or descending order.
-- **Column Selection**: Use the "View" dropdown to show or hide specific columns.
+- **Column Selection**: Use the **Columns** control to show or hide specific columns. Your choice is remembered in this browser for this table, so it persists across visits.
 - **Columns**: The table includes columns for:
   - **Name**: The unique name of the Tag.
   - **Test Cases**: Displays the number of Test Cases associated with this Tag. Clicking the number may show a list or link to the relevant cases (depending on component implementation).

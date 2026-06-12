@@ -567,6 +567,7 @@ function AuditLogsContent({ session }: { session: Session }) {
               <div>
                 <ColumnSelection
                   key="audit-logs-column-selection"
+                  storageKey="admin-audit-logs"
                   columns={columns}
                   onVisibilityChange={setColumnVisibility}
                 />

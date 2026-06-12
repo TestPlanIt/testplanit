@@ -3636,6 +3636,7 @@ export default function Cases({
             <div className="mt-4">
               <ColumnSelection
                 key="repository-cases-column-selection"
+                storageKey={`repository-cases:${projectId}`}
                 columns={columns}
                 columnMetadata={columnMetadata}
                 onVisibilityChange={(newVisibility) => {

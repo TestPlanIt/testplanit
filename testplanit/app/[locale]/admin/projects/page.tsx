@@ -482,6 +482,7 @@ function ProjectAdmin() {
                 <div className="m-2">
                   <ColumnSelection
                     key="project-column-selection"
+                    storageKey="admin-projects"
                     columns={columns}
                     onVisibilityChange={setColumnVisibility}
                   />

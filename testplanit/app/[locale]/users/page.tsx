@@ -203,6 +203,7 @@ function Users() {
                 <div className="mt-4">
                   <ColumnSelection
                     key="user-column-selection"
+                    storageKey="users-directory"
                     columns={columns}
                     onVisibilityChange={setColumnVisibility}
                   />
