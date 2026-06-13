@@ -179,6 +179,7 @@ enum IntegrationProvider {
   SIMPLE_URL
   GITLAB
   GITEA
+  REDMINE
 }
 
 enum AdapterType {
@@ -189,6 +190,7 @@ enum AdapterType {
   GENERIC_HMAC
   GITLAB
   GITEA
+  REDMINE
 }
 
 enum WebhookDirection {

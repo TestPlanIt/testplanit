@@ -771,7 +771,15 @@ export function CreateIssueDialog({
 
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(onSubmit as any)}
+            onSubmit={(e) => {
+              // This dialog is portaled but remains a React descendant of the
+              // page's edit form (e.g. repository case details). React events
+              // bubble through the portal up the React tree, so without this the
+              // inner submit also triggers the outer form's onSubmit. Stop it
+              // here so "Create" only creates the issue.
+              e.stopPropagation();
+              void form.handleSubmit(onSubmit as any)(e);
+            }}
             className="space-y-4"
           >
             {/* Removed integration status display - was causing rendering issues */}

@@ -1,16 +1,18 @@
 "use client";
 
 import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { IntegrationProvider } from "@prisma/client";
-import { Check, Link } from "lucide-react";
+import { Link } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { siGithub, siGitlab, siJira } from "simple-icons";
-import { GiteaFamilyIcon } from "@/components/shared/gitea-family-icon";
+import type { ReactNode } from "react";
+import { siGithub, siGitlab, siJira, siRedmine } from "simple-icons";
+import { GiteaPlatformIcon } from "@/components/shared/gitea-family-icon";
 import { cn } from "~/utils";
 
 interface IntegrationTypeSelectorProps {
@@ -18,107 +20,99 @@ interface IntegrationTypeSelectorProps {
   onSelectType: (type: IntegrationProvider) => void;
 }
 
-const JiraIcon = () => (
-  <svg viewBox="0 0 24 24" className="h-8 w-8" fill="currentColor">
-    <path d={siJira.path} />
-  </svg>
-);
+function BrandIcon({ path, className }: { path: string; className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={cn("h-4 w-4 shrink-0", className)}
+      fill="currentColor"
+    >
+      <path d={path} />
+    </svg>
+  );
+}
 
-const integrationTypes = [
+// Compact (h-4) icons for the dropdown rows — one per provider.
+const integrationTypes: { type: IntegrationProvider; icon: ReactNode }[] = [
   {
     type: IntegrationProvider.SIMPLE_URL,
-    icon: Link,
-    color: "text-purple-600",
+    icon: <Link className="h-4 w-4 shrink-0 text-purple-600" />,
   },
   {
     type: IntegrationProvider.JIRA,
-    icon: JiraIcon,
-    color: "text-blue-600",
+    icon: <BrandIcon path={siJira.path} className="text-blue-600" />,
   },
   {
     type: IntegrationProvider.GITHUB,
-    icon: () => (
-      <div className="h-8 w-8 rounded bg-gray-900 dark:bg-gray-700 flex items-center justify-center">
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="white">
-          <path d={siGithub.path} />
-        </svg>
-      </div>
-    ),
-    color: "",
+    icon: <BrandIcon path={siGithub.path} />,
   },
   {
     type: IntegrationProvider.GITLAB,
-    icon: () => (
-      <svg viewBox="0 0 24 24" className="h-8 w-8" fill="currentColor">
-        <path d={siGitlab.path} />
-      </svg>
-    ),
-    color: "text-[#FC6D26]",
+    icon: <BrandIcon path={siGitlab.path} className="text-[#FC6D26]" />,
   },
   {
     type: IntegrationProvider.GITEA,
-    icon: () => <GiteaFamilyIcon className="h-8 w-24" />,
-    color: "w-24",
+    icon: <GiteaPlatformIcon className="h-4 w-4 shrink-0" />,
   },
   {
     type: IntegrationProvider.AZURE_DEVOPS,
-    icon: () => (
-      <svg viewBox="0 0 18 18" className="h-8 w-8" fill="currentColor">
+    icon: (
+      <svg
+        viewBox="0 0 18 18"
+        className="h-4 w-4 shrink-0 text-blue-700"
+        fill="currentColor"
+      >
         <path d="M17,4v9.74l-4,3.28-6.2-2.26V17L3.29,12.41l10.23.8V4.44Zm-3.41.49L7.85,1V3.29L2.58,4.84,1,6.87v4.61l2.26,1V6.57Z" />
       </svg>
     ),
-    color: "text-blue-700",
+  },
+  {
+    type: IntegrationProvider.REDMINE,
+    icon: <BrandIcon path={siRedmine.path} className="text-[#B32024]" />,
   },
 ];
+
+function typeKeyFor(type: IntegrationProvider): string {
+  return type === IntegrationProvider.AZURE_DEVOPS
+    ? "azureDevops"
+    : type.toLowerCase();
+}
 
 export function IntegrationTypeSelector({
   selectedType,
   onSelectType,
 }: IntegrationTypeSelectorProps) {
   const t = useTranslations("admin.integrations.add");
+  const selected = integrationTypes.find((i) => i.type === selectedType);
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h3 className="text-lg font-medium">{t("selectType")}</h3>
-        <p className="text-sm text-muted-foreground">{t("typeDescription")}</p>
-      </div>
+    <div className="space-y-2">
+      <h3 className="text-lg font-medium">{t("selectType")}</h3>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {integrationTypes.map(({ type, icon: Icon, color }) => {
-          const isSelected = selectedType === type;
-          const typeKey =
-            type === IntegrationProvider.AZURE_DEVOPS
-              ? "azureDevops"
-              : type.toLowerCase();
+      <Select
+        value={selectedType ?? undefined}
+        onValueChange={(value) => onSelectType(value as IntegrationProvider)}
+      >
+        <SelectTrigger className="w-full" data-testid="integration-type-select">
+          <SelectValue placeholder={t("typeDescription")} />
+        </SelectTrigger>
+        <SelectContent>
+          {integrationTypes.map(({ type, icon }) => (
+            <SelectItem key={type} value={type}>
+              <span className="flex items-center gap-2">
+                {icon}
+                <span>{t(`${typeKeyFor(type)}.name` as any)}</span>
+              </span>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-          return (
-            <Card
-              key={type}
-              className={cn(
-                "cursor-pointer transition-colors hover:border-primary",
-                isSelected && "border-primary"
-              )}
-              onClick={() => onSelectType(type)}
-            >
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className={cn("h-8 w-8", color)}>
-                    <Icon />
-                  </div>
-                  {isSelected && <Check className="h-5 w-5 text-primary" />}
-                </div>
-                <CardTitle className="text-base">
-                  {t(`${typeKey}.name` as any)}
-                </CardTitle>
-                <CardDescription>
-                  {t(`${typeKey}.description` as any)}
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          );
-        })}
-      </div>
+      {selected && (
+        <p className="text-sm text-muted-foreground">
+          {t(`${typeKeyFor(selected.type)}.description` as any)}
+        </p>
+      )}
     </div>
   );
 }

@@ -1,10 +1,16 @@
 import { prisma } from "@/lib/prisma";
 import { IntegrationProvider } from "@prisma/client";
 
-// Supported issue tracking providers
+// Supported issue tracking providers (every provider routed through
+// ManageExternalIssues — i.e. all issue trackers except SIMPLE_URL, which has
+// its own ManageSimpleUrlIssues path).
 const ISSUE_TRACKING_PROVIDERS = [
   IntegrationProvider.JIRA,
   IntegrationProvider.GITHUB,
+  IntegrationProvider.AZURE_DEVOPS,
+  IntegrationProvider.GITLAB,
+  IntegrationProvider.GITEA,
+  IntegrationProvider.REDMINE,
 ];
 
 export class JiraLinkService {

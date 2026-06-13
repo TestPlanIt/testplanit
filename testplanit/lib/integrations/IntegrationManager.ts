@@ -8,6 +8,7 @@ import { GitHubAdapter } from "./adapters/GitHubAdapter";
 import { GitLabAdapter } from "./adapters/GitLabAdapter";
 import { IssueAdapter } from "./adapters/IssueAdapter";
 import { JiraAdapter } from "./adapters/JiraAdapter";
+import { RedmineAdapter } from "./adapters/RedmineAdapter";
 import { SimpleUrlAdapter } from "./adapters/SimpleUrlAdapter";
 
 /**
@@ -46,6 +47,7 @@ export class IntegrationManager {
     this.registerAdapter("SIMPLE_URL", SimpleUrlAdapter);
     this.registerAdapter("GITLAB", GitLabAdapter);
     this.registerAdapter("GITEA", GiteaAdapter);
+    this.registerAdapter("REDMINE", RedmineAdapter);
   }
 
   /**

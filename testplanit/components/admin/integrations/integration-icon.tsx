@@ -1,6 +1,6 @@
 import { IntegrationProvider } from "@prisma/client";
 import { Bug } from "lucide-react";
-import { siGithub, siGitlab, siJira } from "simple-icons";
+import { siGithub, siGitlab, siJira, siRedmine } from "simple-icons";
 import { GiteaPlatformIcon } from "@/components/shared/gitea-family-icon";
 import { cn } from "~/utils";
 
@@ -56,6 +56,14 @@ export function IntegrationIcon({
       return (
         <div className={cn(baseClass, "bg-white dark:bg-gray-800 p-0.5")}>
           <GiteaPlatformIcon platform={platform} className="h-full w-full" />
+        </div>
+      );
+    case "REDMINE":
+      return (
+        <div className={cn(baseClass, "bg-[#B32024] text-white")}>
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
+            <path d={siRedmine.path} />
+          </svg>
         </div>
       );
     default:

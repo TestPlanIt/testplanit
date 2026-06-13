@@ -256,6 +256,27 @@ const providerFields: Record<IntegrationProvider, FieldConfig[]> = {
       required: true,
     },
   ],
+  [IntegrationProvider.REDMINE]: [
+    {
+      // Redmine REST API key. Stored under `apiToken` so IntegrationManager
+      // plumbs it into the adapter's API-key auth path.
+      name: "apiToken",
+      label: "config.redmineApiKey",
+      placeholder: "config.redmineApiKeyPlaceholder",
+      help: "config.redmineApiKeyHelp",
+      type: "password",
+      isCredential: true,
+      required: true,
+    },
+    {
+      name: "baseUrl",
+      label: "config.redmineUrl",
+      placeholder: "config.redmineUrlPlaceholder",
+      help: "config.redmineUrlHelp",
+      isCredential: false,
+      required: true,
+    },
+  ],
 };
 
 function generateApiKey(): string {

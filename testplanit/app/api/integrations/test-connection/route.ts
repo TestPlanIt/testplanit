@@ -506,6 +506,59 @@ async function testGiteaConnection(
   };
 }
 
+async function testRedmineConnection(
+  credentials: Record<string, string>,
+  settings: Record<string, string>
+): Promise<TestConnectionResult> {
+  const apiKey = credentials.apiToken || credentials.personalAccessToken;
+  const { baseUrl } = settings;
+
+  if (!apiKey || !baseUrl) {
+    return {
+      success: false,
+      error: "Missing required Redmine configuration (API key, URL)",
+    };
+  }
+
+  const root = baseUrl.replace(/\/$/, "");
+  const headers = {
+    "X-Redmine-API-Key": apiKey,
+    Accept: "application/json",
+  };
+
+  // Auth probe — /users/current.json returns the authenticated user.
+  const connection = await probe(`${root}/users/current.json`, { headers });
+  if (!connection.ok) {
+    return {
+      success: false,
+      error: summarizeProbeFailures("Redmine", { connection }),
+      capabilities: { connection },
+    };
+  }
+
+  // Search probe — listing issues proves issue read scope.
+  const searchIssues = await probe(`${root}/issues.json?limit=1&status_id=*`, {
+    headers,
+  });
+
+  // Read probe — listing projects proves project read scope (needed to pick a
+  // project when creating or linking issues).
+  const readIssue = await probe(`${root}/projects.json?limit=1`, { headers });
+
+  const success = connection.ok && searchIssues.ok && readIssue.ok;
+  return {
+    success,
+    error: success
+      ? undefined
+      : summarizeProbeFailures("Redmine", {
+          connection,
+          searchIssues,
+          readIssue,
+        }),
+    capabilities: { connection, searchIssues, readIssue },
+  };
+}
+
 async function testSimpleUrlConnection(
   credentials: Record<string, string>,
   settings: Record<string, string>
@@ -669,6 +722,9 @@ export const POST = withAuditContext(async (req: NextRequest) => {
           authType === "OAUTH2"
             ? checkOAuthClientConfig(testCredentials)
             : await testGiteaConnection(testCredentials, testSettings);
+        break;
+      case IntegrationProvider.REDMINE:
+        result = await testRedmineConnection(testCredentials, testSettings);
         break;
       case IntegrationProvider.SIMPLE_URL:
         result = await testSimpleUrlConnection(testCredentials, testSettings);

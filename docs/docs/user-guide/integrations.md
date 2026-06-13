@@ -5,7 +5,7 @@ title: 'Issue Tracking and External Integrations'
 
 # Issue Tracking and External Integrations
 
-TestPlanIt provides comprehensive issue tracking capabilities, allowing you to track bugs, tasks, and other issues directly within the platform or integrate with external issue tracking systems like Jira, GitHub Issues, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, and more.
+TestPlanIt provides comprehensive issue tracking capabilities, allowing you to track bugs, tasks, and other issues directly within the platform or integrate with external issue tracking systems like Jira, GitHub Issues, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, Redmine, and more.
 
 ## Internal Issue Management
 
@@ -129,7 +129,21 @@ Connect to Azure DevOps Boards for work item tracking.
 - Inbound webhook support for real-time status sync
 - Works with both Azure DevOps Services (cloud) and Azure DevOps Server (on-premises)
 
-### 6. **Simple URL Integration**
+### 6. **Redmine Integration**
+
+Connect to a self-hosted Redmine instance for issue tracking.
+
+**Features:**
+
+- Create Redmine issues directly from TestPlanIt, choosing the tracker and priority
+- Search issues by text (subject) or by exact reference (e.g., `#42`)
+- Maps Redmine **trackers** to issue types; statuses and priorities are discovered from your instance
+- Custom field and linked-issue (relations) support
+- API key authentication (Redmine has no OAuth)
+- Inbound webhook support for status sync via the `redmine_webhook` plugin
+- Configurable instance URL — works with any self-hosted Redmine deployment
+
+### 7. **Simple URL Integration**
 
 A flexible integration for any issue tracking system that uses URL-based linking.
 
@@ -152,7 +166,7 @@ A flexible integration for any issue tracking system that uses URL-based linking
 
 1. Navigate to **Administration** → **Integrations**
 2. Click **Add Integration**
-3. Select your integration type (Jira, GitHub, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, or Simple URL)
+3. Select your integration type (Jira, GitHub, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, Redmine, or Simple URL)
 4. Fill in the integration details:
 
 ```yaml
@@ -333,6 +347,25 @@ Organization URL: https://dev.azure.com/your-organization
 - Priority values (1–4) map directly to Azure DevOps priority field values
 - Work items are always created as the account that owns the personal access token, regardless of which TestPlanIt user created them — Azure DevOps populates `System.CreatedBy` from the authenticating identity and does not allow setting it on another user's behalf
 
+#### Redmine
+
+1. Enable the REST API in Redmine: **Administration → Settings → API → Enable REST web service**
+2. Copy your API key from **My account → API access key**
+3. Configure in TestPlanIt:
+
+```text
+Redmine API Key: Your API access key
+Redmine URL: https://your-redmine-instance.com
+```
+
+**Notes:**
+
+- The Redmine URL is required — TestPlanIt uses it for all API calls.
+- The API key inherits the permissions of the user it belongs to. Use a dedicated **service account** for shared integrations so issue creation and reads are not tied to one person's account.
+- Redmine **trackers** (Bug, Feature, Support, …) are used as the issue type; statuses and priorities are read from your instance. Custom fields are supported.
+- Redmine has no OAuth — issues are always created as the account that owns the API key.
+- The linked Redmine project must have **trackers enabled** and the **Issue tracking** module active, or issue creation will fail with a "Tracker cannot be blank" error.
+
 #### Simple URL
 
 ```text
@@ -491,7 +524,7 @@ When enabled, TestPlanIt can:
 
 ### Real-time updates via inbound webhooks
 
-For Jira, GitHub, GitLab, Gitea/Forgejo/Gogs, and Azure DevOps integrations, TestPlanIt can also subscribe to events emitted by the external tracker so issue changes appear in TestPlanIt without waiting for a manual refresh. When an inbound webhook is configured for a project:
+For Jira, GitHub, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, and Redmine integrations, TestPlanIt can also subscribe to events emitted by the external tracker so issue changes appear in TestPlanIt without waiting for a manual refresh. When an inbound webhook is configured for a project:
 
 - Status, assignee, and other supported fields on linked issues update within seconds of the change in the external tracker.
 - New issues filed directly in the external tracker are imported into TestPlanIt's Issues list automatically the first time they are referenced by a webhook event.
@@ -510,6 +543,7 @@ field support varies by provider:
   are fetched per-project and per-issue-type from the create metadata API
 - **Azure DevOps**: Work item types are discovered per-project; fields are fixed per type
 - **GitHub / GitLab / Gitea**: Fixed field set (title, description, labels); no custom fields
+- **Redmine**: Trackers are discovered as issue types; statuses, priorities, and custom fields are read from the instance
 
 ### Custom Field Support
 
@@ -541,7 +575,7 @@ TestPlanIt preserves rich text formatting when creating external issues:
 TestPlanIt automatically converts between:
 
 - TipTap Editor JSON → Atlassian Document Format (Jira)
-- TipTap Editor JSON → Markdown (GitHub, GitLab, Gitea/Forgejo/Gogs)
+- TipTap Editor JSON → Markdown (GitHub, GitLab, Gitea/Forgejo/Gogs, Redmine)
 - TipTap Editor JSON → HTML (Azure DevOps)
 - User references → Account IDs
 - Dates → ISO 8601 format
@@ -621,6 +655,7 @@ Respect external API limits:
 - GitLab: 600 requests/minute (GitLab.com); self-managed instances vary
 - Gitea / Forgejo / Gogs: Configured per-instance (no default limit)
 - Azure DevOps: No published hard limit
+- Redmine: Configured per-instance (no default limit)
 
 ## Security Considerations
 
@@ -658,6 +693,10 @@ curl -H "Authorization: token YOUR_PAT" \
 # Test Azure DevOps connection
 curl -u ":YOUR_PAT" \
   "https://dev.azure.com/your-org/_apis/projects?api-version=7.0"
+
+# Test Redmine connection
+curl -H "X-Redmine-API-Key: YOUR_API_KEY" \
+  https://your-redmine-instance.com/users/current.json
 ```
 
 ### Common Issues
@@ -769,6 +808,11 @@ curl -u ":YOUR_PAT" \
 
 - `Work Items (Read & Write)` — Create and update work items
 - `Project and Team (Read)` — List projects and teams
+
+**Redmine:**
+
+- REST API enabled on the instance (**Administration → Settings → API**)
+- An API key belonging to a user with permission to view and add issues in the linked project(s)
 
 ## API Reference
 

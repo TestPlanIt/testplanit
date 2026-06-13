@@ -2213,6 +2213,8 @@ export function GenerateTestCasesWizard({
         return "GitLab";
       case "GITEA":
         return "Gitea / Forgejo / Gogs";
+      case "REDMINE":
+        return "Redmine";
       case "SIMPLE_URL":
         return externalSystem;
       default:

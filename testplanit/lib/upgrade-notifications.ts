@@ -354,6 +354,19 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
     `,
     access: [Access.ADMIN],
   },
+  "0.37.13": {
+    title: "New Feature: Redmine Integration",
+    message: `
+      <p>Connect TestPlanIt to a self-hosted <strong>Redmine</strong> instance to link, create, and sync issues — alongside the existing Jira, GitHub, GitLab, Gitea, and Azure DevOps integrations.</p>
+      <ul>
+        <li>Create and link Redmine issues from test cases, runs, results, and sessions</li>
+        <li>Search by text or by issue reference (e.g. <strong>#42</strong>); Redmine trackers map to issue types, with statuses and priorities read from your instance</li>
+        <li>Inbound status sync via the <code>redmine_webhook</code> plugin</li>
+      </ul>
+      <p>Configure it at <strong>Admin → Integrations</strong> with your Redmine URL and API key (enable the REST API in Redmine first). See the <a href="https://docs.testplanit.com/docs/user-guide/integrations" target="_blank">documentation</a>.</p>
+    `,
+    access: [Access.ADMIN],
+  },
 };
 
 /**

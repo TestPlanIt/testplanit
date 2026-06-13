@@ -281,6 +281,29 @@ describe("CreateIssueDialog", () => {
     );
   });
 
+  it("does not submit an enclosing form when the create form is submitted (nested-form guard)", () => {
+    // Repro of the case-details edit bug: the dialog is portaled but stays a
+    // React descendant of the page's edit <form>, so the inner submit must not
+    // bubble to the outer form's onSubmit. See the stopPropagation in the
+    // dialog's <form onSubmit>.
+    const outerSubmit = vi.fn((e: React.FormEvent) => e.preventDefault());
+    mockUseFindManyProjectIntegration.mockReturnValue({ data: [] });
+
+    render(
+      <form onSubmit={outerSubmit} data-testid="outer-form">
+        <CreateIssueDialog {...defaultProps} />
+      </form>
+    );
+
+    // The create dialog renders its own <form> nested inside the outer one.
+    const forms = document.querySelectorAll("form");
+    expect(forms.length).toBe(2);
+    const innerForm = forms[forms.length - 1];
+    fireEvent.submit(innerForm);
+
+    expect(outerSubmit).not.toHaveBeenCalled();
+  });
+
   it("renders priority select field for Jira integrations", () => {
     mockUseFindManyProjectIntegration.mockReturnValue({
       data: [

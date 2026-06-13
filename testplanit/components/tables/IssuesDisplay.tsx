@@ -475,9 +475,11 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
             ? "Gitea"
             : integrationProvider === "AZURE_DEVOPS"
               ? "Azure DevOps"
-              : integrationProvider === "SIMPLE_URL"
-                ? "External"
-                : integrationProvider;
+              : integrationProvider === "REDMINE"
+                ? "Redmine"
+                : integrationProvider === "SIMPLE_URL"
+                  ? "External"
+                  : integrationProvider;
 
     return (
       <div
