@@ -1,3 +1,13 @@
+## [0.37.14](https://github.com/TestPlanIt/testplanit/compare/v0.37.13...v0.37.14) (2026-06-13)
+
+### Bug Fixes
+
+* **ci:** re-trigger Semantic Release after Crowdin sync so raced releases still publish ([#433](https://github.com/TestPlanIt/testplanit/issues/433)) ([c010479](https://github.com/TestPlanIt/testplanit/commit/c01047975ec58703c92844a2792aae163fa712b1))
+
+### Enhancements
+
+* **search:** add named saved searches to unified search ([#434](https://github.com/TestPlanIt/testplanit/issues/434)) ([f7f381c](https://github.com/TestPlanIt/testplanit/commit/f7f381cce9cbfdbb68d16dcf95c6fc7cb158af45))
+
 ## [0.37.12](https://github.com/TestPlanIt/testplanit/compare/v0.37.11...v0.37.12) (2026-06-12)
 
 ### Enhancements
