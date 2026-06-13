@@ -49,6 +49,7 @@ jobs:
         run: crowdin download
 
       - name: Commit updated locale files
+        id: commit
         working-directory: testplanit
         run: |
           git config user.name "github-actions[bot]"
@@ -56,8 +57,21 @@ jobs:
           git add messages/*.json
           if git diff --cached --quiet; then
             echo "Locale files already up to date, nothing to commit"
+            echo "committed=false" >> "$GITHUB_OUTPUT"
           else
             git commit -m "chore(i18n): sync locale files [skip ci]"
             git pull --rebase origin main
             git push
+            echo "committed=true" >> "$GITHUB_OUTPUT"
           fi
+
+      # The locale commit carries [skip ci], and it advances main after the
+      # merge that triggered Semantic Release — which then aborts as "behind the
+      # remote". Re-dispatch the release against the now-current main so it ships
+      # with the freshly synced translations. Must use the PAT: the default
+      # GITHUB_TOKEN is barred from triggering workflow_dispatch.
+      - name: Trigger release with synced translations
+        if: steps.commit.outputs.committed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+        run: gh workflow run semantic-release.yml --ref main --repo "${{ github.repository }}"
