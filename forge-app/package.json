@@ -1,6 +1,6 @@
 {
   "name": "@testplanit/forge-app",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "TestPlanIt Plugin for Jira",
   "main": "src/index.js",
   "scripts": {
