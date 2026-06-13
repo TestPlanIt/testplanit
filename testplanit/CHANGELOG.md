@@ -1,3 +1,9 @@
+## [0.37.15](https://github.com/TestPlanIt/testplanit/compare/v0.37.14...v0.37.15) (2026-06-13)
+
+### Bug Fixes
+
+* **workers:** raise scim-access-recompute-worker memory ceiling ([#435](https://github.com/TestPlanIt/testplanit/issues/435)) ([81206de](https://github.com/TestPlanIt/testplanit/commit/81206de6ac798dfde0679eca9cc4c43b5834f0e9))
+
 ## [0.37.14](https://github.com/TestPlanIt/testplanit/compare/v0.37.13...v0.37.14) (2026-06-13)
 
 ### Bug Fixes
