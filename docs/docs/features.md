@@ -105,6 +105,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 - **GitLab integration** - Link to GitLab.com or self-hosted GitLab issues
 - **Gitea / Forgejo / Gogs integration** - Connect to self-hosted Gitea-family issue trackers
 - **Azure DevOps integration** - Sync with Azure Boards work items
+- **Redmine integration** - Connect to a self-hosted Redmine instance for issue tracking
 - **OAuth 2.0 authentication** - Use OAuth for GitHub, GitLab, and Gitea/Forgejo connections (no personal access token required)
 - **Two-way sync** - Optional outbound notifications and inbound webhook updates between TestPlanIt and the issue tracker
 - **Linked-issue context for AI** - Auto-tag and test case generation pull labels, components, and metadata from linked issues
@@ -224,7 +225,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 
 ### Inbound Webhooks
 
-- **Issue-tracker sync** - Configure inbound webhooks from Jira / GitHub / GitLab / Gitea so issue updates flow back into TestPlanIt
+- **Issue-tracker sync** - Configure inbound webhooks from Jira / GitHub / GitLab / Gitea / Azure DevOps / Redmine so issue updates flow back into TestPlanIt
 - **Adapter-aware** - The inbound config is keyed to the issue integration so swapping providers cleanly resets the webhook
 
 ### Agent Integrations
