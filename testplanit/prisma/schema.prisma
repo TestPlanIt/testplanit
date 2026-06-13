@@ -308,6 +308,7 @@ enum ShareLinkEntityType {
   TEST_RUN
   SESSION
   DASHBOARD
+  SEARCH
 }
 
 enum SsoProviderType {

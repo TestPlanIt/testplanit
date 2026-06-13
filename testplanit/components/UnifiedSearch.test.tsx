@@ -135,6 +135,37 @@ vi.mock("~/lib/contexts/SearchStateContext", () => ({
   })),
 }));
 
+// The saved-search controls pull in ZenStack hooks / next-auth / sonner that
+// aren't wired in this suite. Stub them: the menu exposes a button that fires
+// `onLoad` with a fixed criteria so we can assert the restore wiring; the
+// dialog just reflects its `open` prop.
+vi.mock("@/components/search/SavedSearchesMenu", () => ({
+  SavedSearchesMenu: ({
+    onLoad,
+  }: {
+    onLoad: (criteria: {
+      query: string;
+      selectedEntities: SearchableEntityType[];
+      currentProjectOnly: boolean;
+      filters: Record<string, unknown>;
+    }) => void;
+  }) => (
+    <button
+      data-testid="mock-load-saved-search"
+      onClick={() =>
+        onLoad({
+          query: "restored query",
+          selectedEntities: [SearchableEntityType.TEST_RUN],
+          currentProjectOnly: false,
+          filters: { testRun: { isCompleted: true } },
+        })
+      }
+    >
+      {"load saved"}
+    </button>
+  ),
+}));
+
 vi.mock("@/components/Debounce", () => ({
   useDebounce: vi.fn((value: string) => value),
 }));
@@ -281,6 +312,31 @@ describe("UnifiedSearch Component", () => {
 
     const searchInput = screen.getByPlaceholderText(/search/i);
     expect(searchInput).toBeInTheDocument();
+  });
+
+  it("restores a saved search into live state and re-runs the search as the viewer", async () => {
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      json: async () => ({ total: 0, hits: [], took: 1 }),
+    });
+
+    render(<UnifiedSearch />);
+
+    fireEvent.click(screen.getByTestId("mock-load-saved-search"));
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("restored query")).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalled();
+    });
+
+    const lastCall = (global.fetch as any).mock.calls.at(-1);
+    const body = JSON.parse(lastCall[1].body as string);
+    expect(body.filters.query).toBe("restored query");
+    expect(body.filters.testRun).toEqual({ isCompleted: true });
+    expect(body.filters.entityTypes).toEqual([SearchableEntityType.TEST_RUN]);
   });
 
   it("should show entity selector when multiple entities are available", () => {

@@ -162,13 +162,17 @@ export function useVirtualizedInfiniteList({
     maybeLoadMore();
   }, [count, hasMore, isLoading, maybeLoadMore]);
 
-  // Reset scroll position and drop cached measurements when the query/scope
-  // changes so the new result set starts from the top.
+  // Scroll back to the top when the query/scope changes so the new result set
+  // starts from the top. Measurements are intentionally NOT cleared here:
+  // calling virtualizer.measure() drops the cached row heights, and when a
+  // reload reuses the same row DOM nodes (identical results) their size never
+  // changes, so the ResizeObserver never re-fires to re-measure — leaving every
+  // row positioned at the estimate and overlapping. measureElement re-measures
+  // genuinely new rows on mount, so the cache self-heals without measure().
   useEffect(() => {
     const el = scrollElRef.current;
     if (el) el.scrollTop = 0;
     virtualizer.scrollToOffset(0);
-    virtualizer.measure();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetKey]);
 

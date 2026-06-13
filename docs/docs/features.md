@@ -236,6 +236,7 @@ TestPlanIt is a comprehensive test management platform designed to help teams pl
 
 - **Advanced search** - Powerful search across all entities with complex filters
 - **Global search** - Quick access search from anywhere (Cmd+K / Ctrl+K)
+- **Saved searches** - Name and save a search (query, scope, and filters) to reopen it in one click
 - **Elasticsearch integration** - Full-text search for large datasets
 - **Custom field filtering** - Filter by any custom field values
 

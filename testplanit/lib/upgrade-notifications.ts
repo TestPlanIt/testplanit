@@ -367,6 +367,18 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
     `,
     access: [Access.ADMIN],
   },
+  "0.37.14": {
+    title: "New Feature: Saved Searches",
+    message: `
+      <p>Save any search you run from global search and reopen it in one click.</p>
+      <ul>
+        <li>Build a search then open the <strong>bookmark menu</strong> in the search toolbar and choose <strong>Save search</strong></li>
+        <li>Reopen a saved search any time to re-run it against the latest data</li>
+        <li>Edit or delete your saved searches from the same menu</li>
+      </ul>
+      <p>Open global search with <strong>Cmd/Ctrl + K</strong>. See the <a href="https://docs.testplanit.com/docs/user-guide/advanced-search#saved-searches" target="_blank">documentation</a>.</p>
+    `,
+  },
 };
 
 /**

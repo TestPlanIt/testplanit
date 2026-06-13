@@ -7,6 +7,7 @@ import { ProjectIcon } from "@/components/ProjectIcon";
 import { CustomFieldDisplay } from "@/components/search/CustomFieldDisplay";
 import { FacetedSearchFilters } from "@/components/search/FacetedSearchFilters";
 import { ProjectNameDisplay } from "@/components/search/ProjectNameDisplay";
+import { SavedSearchesMenu } from "@/components/search/SavedSearchesMenu";
 import { SearchHelpContent } from "@/components/search/SearchHelpContent";
 import {
   BadgeList,
@@ -65,6 +66,7 @@ import {
 } from "~/hooks/useSearchContext";
 import { useVirtualizedInfiniteList } from "~/hooks/useVirtualizedInfiniteList";
 import { useSearchState } from "~/lib/contexts/SearchStateContext";
+import { type SavedSearchCriteria } from "~/lib/schemas/savedSearch";
 import { IconName } from "~/types/globals";
 import {
   SearchableEntityType,
@@ -83,6 +85,7 @@ interface UnifiedSearchProps {
   // UI options
   showEntitySelector?: boolean;
   showProjectToggle?: boolean;
+  showSavedSearches?: boolean;
   compactMode?: boolean;
   placeholder?: string;
 
@@ -101,6 +104,7 @@ export function UnifiedSearch({
   forceProjectId,
   showEntitySelector = true,
   showProjectToggle = true,
+  showSavedSearches = true,
   compactMode = false,
   placeholder,
   onResultsChange,
@@ -171,6 +175,19 @@ export function UnifiedSearch({
   );
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const router = useRouter();
+
+  // Restore a saved search into the live state. The existing reset effect
+  // (keyed on query/filters/selectedEntities/currentProjectOnly) re-runs the
+  // search under the current session.
+  const handleApplySavedSearch = useCallback(
+    (criteria: SavedSearchCriteria) => {
+      setSelectedEntities(criteria.selectedEntities);
+      setCurrentProjectOnly(criteria.currentProjectOnly);
+      setFilters(criteria.filters);
+      setQuery(criteria.query);
+    },
+    []
+  );
 
   // Debounced search query
   const debouncedQuery = useDebounce(query, 300);
@@ -937,6 +954,20 @@ export function UnifiedSearch({
               />
             </SheetContent>
           </Sheet>
+
+          {/* Saved searches */}
+          {showSavedSearches && !forceEntityType && (
+            <SavedSearchesMenu
+              criteria={{
+                query,
+                filters,
+                selectedEntities,
+                currentProjectOnly,
+              }}
+              canSave={Boolean(query.trim())}
+              onLoad={handleApplySavedSearch}
+            />
+          )}
         </div>
 
         {/* Active filters summary */}
