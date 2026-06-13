@@ -1,3 +1,9 @@
+## [0.38.0](https://github.com/TestPlanIt/testplanit/compare/v0.37.15...v0.38.0) (2026-06-13)
+
+### Features
+
+* **jira:** generate test cases from the Jira issue panel ([#436](https://github.com/TestPlanIt/testplanit/issues/436)) ([fabdaca](https://github.com/TestPlanIt/testplanit/commit/fabdacaf74d1cd9b4fe706fb720d038d097aac39))
+
 ## [0.37.15](https://github.com/TestPlanIt/testplanit/compare/v0.37.14...v0.37.15) (2026-06-13)
 
 ### Bug Fixes
