@@ -4309,6 +4309,7 @@ enum ShareLinkEntityType {
     TEST_RUN
     SESSION
     DASHBOARD
+    SEARCH
 
     @@deny('all', !auth())
     @@allow('read', true)

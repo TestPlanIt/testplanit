@@ -125,6 +125,35 @@ When searching multiple entity types, results are organized into tabs:
 - Results load continuously as you scroll — there are no pages to click through. More results are fetched automatically as you near the bottom of the list, and a "Showing X of Y" count above the list tracks how many of the total matches have loaded so far
 - Results are sorted by relevance by default
 
+## Saved Searches
+
+Built a search you'll want to come back to? Save it and reopen it in one click. A saved search captures the whole query — your search text, the selected entity types, the project scope, and every active filter.
+
+Saved searches live in the **bookmark menu** in the search toolbar, next to the filter icon.
+
+### Saving a search
+
+1. Build your search — enter a query and apply any filters.
+2. Open the bookmark menu and choose **Save search**. (This option stays disabled until you've entered a search query.)
+3. Give it a name — the current query is filled in for you — and, optionally, a description.
+4. Click **Save**.
+
+### Loading a saved search
+
+Open the bookmark menu and click any saved search (each is marked with a magnifying-glass icon) to apply its criteria and run it immediately. Your search text, entity selection, project scope, and filters are all restored.
+
+### Managing saved searches
+
+Each saved search in the menu has two actions:
+
+- **Edit** (pencil icon) — Update the name and description.
+- **Delete** (trash icon) — Remove the saved search after a confirmation prompt.
+
+### Good to know
+
+- **Saved searches are private to you.** Only you can see and open the searches you save.
+- **A saved search stores your criteria, not a snapshot of results.** Each time you open one, it runs fresh against the latest data you have access to, so results stay current.
+
 ## Search Tips
 
 ### Text Search
@@ -291,7 +320,7 @@ description:athentication~
 1. **Start broad, then narrow** - Begin with a simple search, then apply filters to refine
 2. **Use entity-specific searches** - When looking for a specific type, select only that entity type
 3. **Combine filters** - Use multiple filters together for precise results
-4. **Save common searches** - If you frequently use the same search criteria, bookmark the URL
+4. **Save common searches** - If you frequently use the same search criteria, save it from the bookmark menu (see [Saved Searches](#saved-searches)) to reopen it in one click
 
 ### Keyboard Shortcuts
 
