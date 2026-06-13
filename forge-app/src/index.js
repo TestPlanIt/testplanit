@@ -1,5 +1,5 @@
 import Resolver from '@forge/resolver';
-import api from '@forge/api';
+import api, { route } from '@forge/api';
 import { kvs } from '@forge/kvs';
 
 const resolver = new Resolver();
@@ -16,6 +16,42 @@ async function getInstanceUrl() {
 async function getApiKey() {
   const key = await kvs.get(API_KEY_KEY);
   return key || null;
+}
+
+// Read the current Jira user's identity so the backend can attribute
+// generated cases to the matching TestPlanIt user. Email is the primary
+// match key; accountId is a fallback. Both are best-effort — a hidden email
+// just means the backend falls back to accountId (or reports an unlinked user).
+async function getCurrentJiraUser() {
+  try {
+    const response = await api
+      .asUser()
+      .requestJira(route`/rest/api/3/myself`);
+    if (!response.ok) {
+      return { email: null, accountId: null, displayName: null };
+    }
+    const data = await response.json();
+    return {
+      email: data.emailAddress || null,
+      accountId: data.accountId || null,
+      displayName: data.displayName || null,
+    };
+  } catch (error) {
+    return { email: null, accountId: null, displayName: null };
+  }
+}
+
+// Headers for authenticated calls to the TestPlanIt backend: the integration
+// API key plus the forwarded Jira user identity.
+function buildAuthHeaders(apiKey, user) {
+  const headers = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+  };
+  if (apiKey) headers['X-Forge-Api-Key'] = apiKey;
+  if (user?.email) headers['X-Forge-User-Email'] = user.email;
+  if (user?.accountId) headers['X-Forge-User-Account-Id'] = user.accountId;
+  return headers;
 }
 
 resolver.define('getTestInfo', async ({ context, payload }) => {
@@ -193,6 +229,135 @@ resolver.define('clearSettings', async () => {
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
+  }
+});
+
+// --- Generate Test Cases (AI) ---------------------------------------------
+
+// Fetch the projects/templates/readiness the panel needs to drive the
+// generation flow. Pass an optional projectId to re-resolve templates +
+// readiness when the user switches project.
+resolver.define('getGenerationContext', async ({ context, payload }) => {
+  const issueKey = context.extension?.issue?.key;
+  const issueId = context.extension?.issue?.id;
+
+  try {
+    const instanceUrl = await getInstanceUrl();
+    if (!instanceUrl) {
+      return {
+        error: 'TestPlanIt instance URL not configured.',
+        notConfigured: true,
+      };
+    }
+
+    const apiKey = await getApiKey();
+    const user = await getCurrentJiraUser();
+    const cleanUrl = instanceUrl.replace(/\/+$/, '');
+
+    const qs = new URLSearchParams();
+    if (issueKey) qs.set('issueKey', issueKey);
+    if (issueId) qs.set('issueId', issueId);
+    if (payload?.projectId) qs.set('projectId', String(payload.projectId));
+
+    const response = await api.fetch(
+      `${cleanUrl}/api/integrations/jira/generate-context?${qs.toString()}`,
+      { method: 'GET', headers: buildAuthHeaders(apiKey, user) }
+    );
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return { error: data.error || `Failed to load context (${response.status})` };
+    }
+    return data;
+  } catch (error) {
+    return { error: error.message };
+  }
+});
+
+// Persist the confirmed cases and link them to the issue.
+resolver.define('importTestCases', async ({ context, payload }) => {
+  const issueKey = context.extension?.issue?.key;
+  const issueId = context.extension?.issue?.id;
+
+  try {
+    const instanceUrl = await getInstanceUrl();
+    if (!instanceUrl) {
+      return { error: 'TestPlanIt instance URL not configured.', notConfigured: true };
+    }
+
+    const apiKey = await getApiKey();
+    const user = await getCurrentJiraUser();
+    const cleanUrl = instanceUrl.replace(/\/+$/, '');
+
+    const response = await api.fetch(
+      `${cleanUrl}/api/integrations/jira/import-test-cases`,
+      {
+        method: 'POST',
+        headers: buildAuthHeaders(apiKey, user),
+        body: JSON.stringify({
+          projectId: payload?.projectId,
+          templateId: payload?.templateId,
+          issueKey,
+          issueId,
+          issueTitle: payload?.issueTitle,
+          issueUrl: payload?.issueUrl,
+          autoGenerateTags: payload?.autoGenerateTags,
+          testCases: payload?.testCases,
+          folderId: payload?.folderId,
+          newFolderName: payload?.newFolderName,
+        }),
+      }
+    );
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return { error: data.error || data.message || `Import failed (${response.status})` };
+    }
+    return data;
+  } catch (error) {
+    return { error: error.message };
+  }
+});
+
+// Mint a short-lived token so the panel can stream generation directly from
+// the browser (Forge resolvers can't run the >25s LLM call). Returns the token
+// + instance URL the frontend fetches against.
+resolver.define('getGenerateToken', async ({ context, payload }) => {
+  const issueKey = context.extension?.issue?.key;
+  const issueId = context.extension?.issue?.id;
+
+  try {
+    const instanceUrl = await getInstanceUrl();
+    if (!instanceUrl) {
+      return { error: 'TestPlanIt instance URL not configured.', notConfigured: true };
+    }
+
+    const apiKey = await getApiKey();
+    const user = await getCurrentJiraUser();
+    const cleanUrl = instanceUrl.replace(/\/+$/, '');
+
+    const response = await api.fetch(
+      `${cleanUrl}/api/integrations/jira/generate-token`,
+      {
+        method: 'POST',
+        headers: buildAuthHeaders(apiKey, user),
+        body: JSON.stringify({
+          projectId: payload?.projectId,
+          issueKey,
+          issueId,
+        }),
+      }
+    );
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return {
+        error: data.error || `Failed to start generation (${response.status})`,
+      };
+    }
+    return { token: data.token, instanceUrl: cleanUrl };
+  } catch (error) {
+    return { error: error.message };
   }
 });
 

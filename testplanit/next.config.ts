@@ -92,8 +92,31 @@ const buildDynamicRemotePatterns = () => {
   return dynamicPatterns;
 };
 
+// In dev, Next.js blocks requests to /_next/* dev resources (HMR + client
+// chunks) from any host other than localhost unless it's listed here. When the
+// dev server is reached through a tunnel/proxy (e.g. a *.testplanit.com dev
+// domain), derive the allowed host from the configured app URLs so client
+// assets load and React hydrates. Ignored in production builds.
+const buildAllowedDevOrigins = (): string[] => {
+  const urls = [
+    process.env.NEXTAUTH_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.APP_URL,
+  ];
+  const hosts = new Set<string>();
+  for (const url of urls) {
+    if (!url) continue;
+    const parsed = parseUrlForPattern(url);
+    if (parsed?.hostname && parsed.hostname !== "localhost") {
+      hosts.add(parsed.hostname);
+    }
+  }
+  return Array.from(hosts);
+};
+
 const nextConfig: NextConfig = {
   output: "standalone",
+  allowedDevOrigins: buildAllowedDevOrigins(),
   turbopack: {
     resolveAlias: {
       // Fix Turbopack resolution for zod subpath exports (used by @hookform/resolvers)

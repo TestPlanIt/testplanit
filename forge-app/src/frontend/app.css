@@ -6,6 +6,9 @@
   --color-testplanit-red: #ef4444;
   --color-testplanit-gray: #6b7280;
   --color-testplanit-border: #e5e7eb;
+  /* TestPlanIt brand purple (matches the web app's Header) + a darker hover. */
+  --color-brand: rgb(133, 89, 233);
+  --color-brand-hover: rgb(113, 76, 198);
 }
 
 /* CSS Custom Properties for Light/Dark Theme */

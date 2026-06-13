@@ -126,6 +126,40 @@ Choose your test generation source:
 - You can remove any entry using the X button (with confirmation)
 - Generated results are cached for 7 days
 
+## Generating from the Jira Issue Panel
+
+If your team uses the **TestPlanIt for Jira** app, you can generate test cases for an issue without leaving Jira. The app's issue panel includes a **Generate Test Cases** button that runs the same AI generation described above and saves the results back to TestPlanIt, linked to the Jira issue.
+
+### Panel prerequisites
+
+- The **TestPlanIt for Jira** app is installed and configured with your instance URL and a Forge API key — see [Issue Tracking and External Integrations](./integrations.md).
+- Your Jira account's email matches an **active TestPlanIt user** who has access to the target project. Generation and the saved cases are attributed to that user.
+- The target project has an active LLM integration.
+
+The **Generate Test Cases** button only appears when all of the above are met. If your Jira account isn't linked to a TestPlanIt user, or you don't have access to any connected project, the button is hidden.
+
+### Generating
+
+1. Open a Jira issue and expand the **TestPlanIt** panel.
+2. Click **Generate Test Cases** — available in the panel footer, and on the empty state when no tests are linked to the issue yet.
+3. Configure the generation:
+   - **Project** — defaults to the TestPlanIt project mapped to the issue's Jira project; switch to another connected project you have access to if needed.
+   - **Template** — the project's default template is preselected.
+   - **Destination folder** — choose one of:
+     - **Create a new folder** named after the Jira ticket (e.g. `PROJ-123`). This is the default when the issue has no linked test cases yet.
+     - **Use an existing folder** — pick any folder in the project's hierarchy. When the issue already has linked cases, this is the default, preselected to the folder those cases live in.
+   - **How many cases**, **additional guidance**, and **auto-generate tags** — the same options as the wizard (auto-generate tags is on by default).
+4. Click **Generate**. Cases stream into the panel as they are produced.
+5. Select the cases you want and click **Save**. They are created in the chosen folder and linked to the Jira issue, so they appear in the panel's **Test Cases** section.
+
+### Context and parity
+
+Generation from the panel assembles the same LLM context as the in-app wizard's streaming generation: the issue's title, description, and comments; **linked Jira issues** (one hop) with their own titles, bodies, and comments; and existing test cases in the destination folder (when you generate into an existing folder). The same token-budgeting and trimming rules apply.
+
+:::note
+Parameter and starter-dataset generation is not offered from the Jira panel.
+:::
+
 ## Generation Process
 
 When you click "Generate":
