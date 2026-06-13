@@ -1365,6 +1365,9 @@
           },
           "azure_devops": {
             "description": "작업 항목 추적을 위해 Azure DevOps에 연결하세요."
+          },
+          "redmine": {
+            "description": "Connect to a self-hosted Redmine instance for issue tracking."
           }
         }
       },
@@ -1642,7 +1645,14 @@
         "toastBulkReplaySuccess": "대량 재생 시작됨 · 배치 {batchId}",
         "toastBulkReplayFailed": "대량 재생 실패: {error}",
         "toastReEnableSuccess": "웹훅이 다시 활성화되었습니다",
-        "toastReEnableFailed": "재활성화에 실패했습니다: {error}"
+        "toastReEnableFailed": "재활성화에 실패했습니다: {error}",
+        "inboundChooserRedmine": "Redmine",
+        "inboundRedmineTitle": "Redmine inbound webhook",
+        "inboundRedmineScopeHint": "The redmine_webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
+        "setupStepsRedmineStep1": "Install the redmine_webhook plugin on your Redmine server (Redmine has no built-in webhooks).",
+        "setupStepsRedmineStep2": "In your Redmine project, open Settings → Modules and enable Webhooks.",
+        "setupStepsRedmineStep3": "Open Settings → Webhooks, paste the URL above, and save.",
+        "setupStepsRedmineStep4": "Create or update an issue in Redmine; the linked issue’s status will sync here."
       },
       "aiModels": {
         "description": "지능형 테스트 케이스 생성 및 분석을 위한 AI 모델 구성",
@@ -5083,6 +5093,10 @@
         "azureDevops": {
           "name": "Azure DevOps",
           "description": "Azure DevOps에 연결하여 작업 항목을 추적하세요."
+        },
+        "redmine": {
+          "name": "Redmine",
+          "description": "Connect to a self-hosted Redmine instance for issue tracking"
         }
       },
       "filterPlaceholder": "필터 통합...",
@@ -5173,7 +5187,13 @@
         "platformPlaceholder": "플랫폼을 선택하세요...",
         "platformGitea": "기테아",
         "platformForgejo": "포르제호",
-        "platformGogs": "고그스"
+        "platformGogs": "고그스",
+        "redmineApiKey": "Redmine API Key",
+        "redmineApiKeyPlaceholder": "Enter your Redmine API key",
+        "redmineApiKeyHelp": "Found under My account → API access key (enable the REST API in Administration → Settings → API)",
+        "redmineUrl": "Redmine URL",
+        "redmineUrlPlaceholder": "https://redmine.example.com",
+        "redmineUrlHelp": "The base URL of your Redmine instance"
       },
       "authType": {
         "api_key": "API 키",
@@ -6096,7 +6116,10 @@
       "repo": "## 저장소 이름\n이슈를 연결할 저장소의 이름입니다.\n\n- 정확한 저장소 이름 (전체 URL이 아님)\n- 예: my-project\n- 제공된 자격 증명으로 접근 가능해야 합니다.",
       "instanceUrl": "## 인스턴스 URL\n자체 호스팅 인스턴스의 기본 URL입니다.\n\n- 형식: https://git.example.com\n- 끝에 슬래시나 경로를 포함하지 마세요.\n- 이 서버에서 접근 가능해야 합니다.",
       "projectPath": "## 프로젝트 경로\nGitLab 프로젝트의 전체 경로입니다.\n\n- 형식: 네임스페이스/프로젝트 또는 그룹/하위그룹/프로젝트\n- 예시: my-org/my-project\n- 프로젝트 URL에서 찾을 수 있습니다: gitlab.com/namespace/project",
-      "platform": "## 플랫폼\n연결할 자체 호스팅 Git 플랫폼입니다.\n\n- **Gitea**: gitea.io 기반 인스턴스\n- **Forgejo**: forgejo.org 기반 인스턴스(Gitea 포크)\n- **Gogs**: gogs.io 기반 인스턴스\n\n이 설정은 표시되는 아이콘을 제어하며 API 호환성에 영향을 줄 수 있습니다."
+      "platform": "## 플랫폼\n연결할 자체 호스팅 Git 플랫폼입니다.\n\n- **Gitea**: gitea.io 기반 인스턴스\n- **Forgejo**: forgejo.org 기반 인스턴스(Gitea 포크)\n- **Gogs**: gogs.io 기반 인스턴스\n\n이 설정은 표시되는 아이콘을 제어하며 API 호환성에 영향을 줄 수 있습니다.",
+      "redmineApiKey": "## Redmine API Key\nYour personal REST API access key.\n\n- Enable the REST API under Administration → Settings → API\n- Copy your key from My account → API access key\n- Scoped to your user’s permissions; use a service account for shared integrations",
+      "redmineUrl": "## Redmine URL\nThe base URL of your Redmine instance.\n\n- Format: https://redmine.example.com\n- Do not include /issues or other paths\n- Must be accessible from this server",
+      "githubBaseUrl": "## API Base URL\nFull GitHub API root for GitHub Enterprise Server.\n\n- Typically ends in /api/v3\n- Leave blank to use api.github.com\n- Must be accessible from this server"
     },
     "config": {
       "name": "## 구성 이름\n이 구성에 대한 명확하고 설명적인 이름입니다.\n\n- 구성을 구성하는 변형 조합을 설명하는 데 도움이 됩니다(예: \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\" 등).",

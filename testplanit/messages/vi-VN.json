@@ -1365,6 +1365,9 @@
           },
           "azure_devops": {
             "description": "Kết nối với Azure DevOps để theo dõi các hạng mục công việc."
+          },
+          "redmine": {
+            "description": "Connect to a self-hosted Redmine instance for issue tracking."
           }
         }
       },
@@ -1642,7 +1645,14 @@
         "toastBulkReplaySuccess": "Phát lại hàng loạt đã bắt đầu · hàng loạt {batchId}",
         "toastBulkReplayFailed": "Phát lại hàng loạt thất bại: {error}",
         "toastReEnableSuccess": "Webhook đã được kích hoạt lại.",
-        "toastReEnableFailed": "Không thể kích hoạt lại: {error}"
+        "toastReEnableFailed": "Không thể kích hoạt lại: {error}",
+        "inboundChooserRedmine": "Redmine",
+        "inboundRedmineTitle": "Redmine inbound webhook",
+        "inboundRedmineScopeHint": "The redmine_webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
+        "setupStepsRedmineStep1": "Install the redmine_webhook plugin on your Redmine server (Redmine has no built-in webhooks).",
+        "setupStepsRedmineStep2": "In your Redmine project, open Settings → Modules and enable Webhooks.",
+        "setupStepsRedmineStep3": "Open Settings → Webhooks, paste the URL above, and save.",
+        "setupStepsRedmineStep4": "Create or update an issue in Redmine; the linked issue’s status will sync here."
       },
       "aiModels": {
         "description": "Cấu hình các mô hình AI để tạo và phân tích trường hợp kiểm thử thông minh.",
@@ -5083,6 +5093,10 @@
         "azureDevops": {
           "name": "Azure DevOps",
           "description": "Kết nối với Azure DevOps để theo dõi các hạng mục công việc."
+        },
+        "redmine": {
+          "name": "Redmine",
+          "description": "Connect to a self-hosted Redmine instance for issue tracking"
         }
       },
       "filterPlaceholder": "Tích hợp bộ lọc...",
@@ -5173,7 +5187,13 @@
         "platformPlaceholder": "Chọn nền tảng...",
         "platformGitea": "Gitea",
         "platformForgejo": "Forgejo",
-        "platformGogs": "Gogs"
+        "platformGogs": "Gogs",
+        "redmineApiKey": "Redmine API Key",
+        "redmineApiKeyPlaceholder": "Enter your Redmine API key",
+        "redmineApiKeyHelp": "Found under My account → API access key (enable the REST API in Administration → Settings → API)",
+        "redmineUrl": "Redmine URL",
+        "redmineUrlPlaceholder": "https://redmine.example.com",
+        "redmineUrlHelp": "The base URL of your Redmine instance"
       },
       "authType": {
         "api_key": "Khóa API",
@@ -6096,7 +6116,10 @@
       "repo": "## Tên kho lưu trữ\nTên của kho lưu trữ để liên kết các vấn đề.\n\n- Tên kho lưu trữ chính xác (không phải URL đầy đủ)\n- Ví dụ: my-project\n- Phải có thể truy cập được bằng thông tin đăng nhập được cung cấp",
       "instanceUrl": "## URL phiên bản\nURL cơ sở của phiên bản tự lưu trữ của bạn.\n\n- Định dạng: https://git.example.com\n- Không bao gồm dấu gạch chéo hoặc đường dẫn ở cuối\n- Phải có thể truy cập được từ máy chủ này",
       "projectPath": "## Đường dẫn dự án\nĐường dẫn đầy đủ đến dự án GitLab của bạn.\n\n- Định dạng: namespace/project hoặc group/subgroup/project\n- Ví dụ: my-org/my-project\n- Tìm thấy trong URL dự án: gitlab.com/namespace/project",
-      "platform": "## Nền tảng\nNền tảng Git tự lưu trữ mà bạn đang kết nối.\n\n- **Gitea**: các phiên bản dựa trên gitea.io\n- **Forgejo**: các phiên bản dựa trên forgejo.org (phiên bản phân nhánh của Gitea)\n- **Gogs**: các phiên bản dựa trên gogs.io\n\nĐiều này kiểm soát biểu tượng nào được hiển thị và có thể ảnh hưởng đến khả năng tương thích API."
+      "platform": "## Nền tảng\nNền tảng Git tự lưu trữ mà bạn đang kết nối.\n\n- **Gitea**: các phiên bản dựa trên gitea.io\n- **Forgejo**: các phiên bản dựa trên forgejo.org (phiên bản phân nhánh của Gitea)\n- **Gogs**: các phiên bản dựa trên gogs.io\n\nĐiều này kiểm soát biểu tượng nào được hiển thị và có thể ảnh hưởng đến khả năng tương thích API.",
+      "redmineApiKey": "## Redmine API Key\nYour personal REST API access key.\n\n- Enable the REST API under Administration → Settings → API\n- Copy your key from My account → API access key\n- Scoped to your user’s permissions; use a service account for shared integrations",
+      "redmineUrl": "## Redmine URL\nThe base URL of your Redmine instance.\n\n- Format: https://redmine.example.com\n- Do not include /issues or other paths\n- Must be accessible from this server",
+      "githubBaseUrl": "## API Base URL\nFull GitHub API root for GitHub Enterprise Server.\n\n- Typically ends in /api/v3\n- Leave blank to use api.github.com\n- Must be accessible from this server"
     },
     "config": {
       "name": "## Tên Cấu Hình\nMột tên rõ ràng, mô tả cho cấu hình này.\n\n- Giúp mô tả các tổ hợp biến thể tạo nên Cấu Hình (ví dụ: \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", v.v.).",

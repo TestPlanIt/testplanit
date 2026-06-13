@@ -1365,6 +1365,9 @@
           },
           "azure_devops": {
             "description": "連接到 Azure DevOps 以追蹤工作項目。"
+          },
+          "redmine": {
+            "description": "Connect to a self-hosted Redmine instance for issue tracking."
           }
         }
       },
@@ -1642,7 +1645,14 @@
         "toastBulkReplaySuccess": "大量重播開始 · 批次 {batchId}",
         "toastBulkReplayFailed": "批量重播失敗： {error}",
         "toastReEnableSuccess": "Webhook 已重新啟用",
-        "toastReEnableFailed": "重新啟用失敗： {error}"
+        "toastReEnableFailed": "重新啟用失敗： {error}",
+        "inboundChooserRedmine": "Redmine",
+        "inboundRedmineTitle": "Redmine inbound webhook",
+        "inboundRedmineScopeHint": "The redmine_webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
+        "setupStepsRedmineStep1": "Install the redmine_webhook plugin on your Redmine server (Redmine has no built-in webhooks).",
+        "setupStepsRedmineStep2": "In your Redmine project, open Settings → Modules and enable Webhooks.",
+        "setupStepsRedmineStep3": "Open Settings → Webhooks, paste the URL above, and save.",
+        "setupStepsRedmineStep4": "Create or update an issue in Redmine; the linked issue’s status will sync here."
       },
       "aiModels": {
         "description": "配置人工智慧模型以實現智慧測試用例生成和分析",
@@ -5083,6 +5093,10 @@
         "azureDevops": {
           "name": "Azure DevOps",
           "description": "連接到 Azure DevOps 以追蹤工作項"
+        },
+        "redmine": {
+          "name": "Redmine",
+          "description": "Connect to a self-hosted Redmine instance for issue tracking"
         }
       },
       "filterPlaceholder": "過濾器整合…",
@@ -5173,7 +5187,13 @@
         "platformPlaceholder": "選擇平台...",
         "platformGitea": "吉特亞",
         "platformForgejo": "福爾熱",
-        "platformGogs": "戈格斯"
+        "platformGogs": "戈格斯",
+        "redmineApiKey": "Redmine API Key",
+        "redmineApiKeyPlaceholder": "Enter your Redmine API key",
+        "redmineApiKeyHelp": "Found under My account → API access key (enable the REST API in Administration → Settings → API)",
+        "redmineUrl": "Redmine URL",
+        "redmineUrlPlaceholder": "https://redmine.example.com",
+        "redmineUrlHelp": "The base URL of your Redmine instance"
       },
       "authType": {
         "api_key": "API金鑰",
@@ -6096,7 +6116,10 @@
       "repo": "## 倉庫名稱\n要連結問題的倉庫名稱。\n\n- 確切的倉庫名稱（非完整 URL）\n- 例如：my-project\n- 必須可以使用提供的憑證存取。",
       "instanceUrl": "## 實例 URL\n自託管執行個體的基本 URL。\n\n- 格式：https://git.example.com\n- 請勿包含尾部斜線或路徑\n- 請勿從此伺服器存取",
       "projectPath": "## 專案路徑\nGitLab 專案的完整路徑。\n\n- 格式：命名空間/專案 或 群組/子群組/專案\n- 例如：my-org/my-project\n- 在專案中可找到專案可在專案.",
-      "platform": "## Platform\nThe self-hosted Git platform you are connecting to.\n\n- **Gitea**: gitea.io-based instances\n- **Forgejo**: forgejo.org-based instances (Gitea fork)\n- **Gogs**: gogs.io-based instances\n\nThis controls which icon is shown and may affect API compatibility."
+      "platform": "## Platform\nThe self-hosted Git platform you are connecting to.\n\n- **Gitea**: gitea.io-based instances\n- **Forgejo**: forgejo.org-based instances (Gitea fork)\n- **Gogs**: gogs.io-based instances\n\nThis controls which icon is shown and may affect API compatibility.",
+      "redmineApiKey": "## Redmine API Key\nYour personal REST API access key.\n\n- Enable the REST API under Administration → Settings → API\n- Copy your key from My account → API access key\n- Scoped to your user’s permissions; use a service account for shared integrations",
+      "redmineUrl": "## Redmine URL\nThe base URL of your Redmine instance.\n\n- Format: https://redmine.example.com\n- Do not include /issues or other paths\n- Must be accessible from this server",
+      "githubBaseUrl": "## API Base URL\nFull GitHub API root for GitHub Enterprise Server.\n\n- Typically ends in /api/v3\n- Leave blank to use api.github.com\n- Must be accessible from this server"
     },
     "config": {
       "name": "## 設定名稱\n此組態的清晰、描述性名稱。\n\n- 有助於描述構成配置的變體組合（例如「Chrome，Windows 10」、「Safari/macOS 15.5」、「Edge/Windows 11」等）。",

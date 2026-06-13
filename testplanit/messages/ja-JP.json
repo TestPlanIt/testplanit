@@ -1365,6 +1365,9 @@
           },
           "azure_devops": {
             "description": "作業項目の追跡には、Azure DevOpsに接続してください。"
+          },
+          "redmine": {
+            "description": "Connect to a self-hosted Redmine instance for issue tracking."
           }
         }
       },
@@ -1642,7 +1645,14 @@
         "toastBulkReplaySuccess": "一括再生開始 · バッチ {batchId}",
         "toastBulkReplayFailed": "一括再生に失敗しました: {error}",
         "toastReEnableSuccess": "Webhookが再び有効化されました",
-        "toastReEnableFailed": "再有効化に失敗しました: {error}"
+        "toastReEnableFailed": "再有効化に失敗しました: {error}",
+        "inboundChooserRedmine": "Redmine",
+        "inboundRedmineTitle": "Redmine inbound webhook",
+        "inboundRedmineScopeHint": "The redmine_webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
+        "setupStepsRedmineStep1": "Install the redmine_webhook plugin on your Redmine server (Redmine has no built-in webhooks).",
+        "setupStepsRedmineStep2": "In your Redmine project, open Settings → Modules and enable Webhooks.",
+        "setupStepsRedmineStep3": "Open Settings → Webhooks, paste the URL above, and save.",
+        "setupStepsRedmineStep4": "Create or update an issue in Redmine; the linked issue’s status will sync here."
       },
       "aiModels": {
         "description": "インテリジェントなテストケース生成と分析のための AI モデルを構成する",
@@ -5083,6 +5093,10 @@
         "azureDevops": {
           "name": "Azure DevOps",
           "description": "作業項目の追跡のために Azure DevOps に接続する"
+        },
+        "redmine": {
+          "name": "Redmine",
+          "description": "Connect to a self-hosted Redmine instance for issue tracking"
         }
       },
       "filterPlaceholder": "フィルター統合...",
@@ -5173,7 +5187,13 @@
         "platformPlaceholder": "プラットフォームを選択してください...",
         "platformGitea": "ギテア",
         "platformForgejo": "フォルジェホ",
-        "platformGogs": "ゴグス"
+        "platformGogs": "ゴグス",
+        "redmineApiKey": "Redmine API Key",
+        "redmineApiKeyPlaceholder": "Enter your Redmine API key",
+        "redmineApiKeyHelp": "Found under My account → API access key (enable the REST API in Administration → Settings → API)",
+        "redmineUrl": "Redmine URL",
+        "redmineUrlPlaceholder": "https://redmine.example.com",
+        "redmineUrlHelp": "The base URL of your Redmine instance"
       },
       "authType": {
         "api_key": "APIキー",
@@ -6096,7 +6116,10 @@
       "repo": "## リポジトリ名\n課題をリンクするリポジトリの名前。\n\n- 正確なリポジトリ名（完全な URL ではない）\n- 例: my-project\n- 指定された認証情報でアクセスできる必要があります",
       "instanceUrl": "## インスタンス URL\nセルフホスト型インスタンスのベース URL。\n\n- 形式: https://git.example.com\n- 末尾のスラッシュやパスを含めないでください。\n- このサーバーからアクセス可能である必要があります。",
       "projectPath": "## プロジェクトパス\nGitLabプロジェクトへのフルパス。\n\n- 形式: namespace/project または group/subgroup/project\n- 例: my-org/my-project\n- プロジェクトURL: gitlab.com/namespace/project で確認できます。",
-      "platform": "## プラットフォーム\n接続先の自己ホスト型 Git プラットフォーム。\n\n- **Gitea**: gitea.io ベースのインスタンス\n- **Forgejo**: forgejo.org ベースのインスタンス (Gitea フォーク)\n- **Gogs**: gogs.io ベースのインスタンス\n\nこれにより、表示されるアイコンが制御され、API の互換性に影響する場合があります。"
+      "platform": "## プラットフォーム\n接続先の自己ホスト型 Git プラットフォーム。\n\n- **Gitea**: gitea.io ベースのインスタンス\n- **Forgejo**: forgejo.org ベースのインスタンス (Gitea フォーク)\n- **Gogs**: gogs.io ベースのインスタンス\n\nこれにより、表示されるアイコンが制御され、API の互換性に影響する場合があります。",
+      "redmineApiKey": "## Redmine API Key\nYour personal REST API access key.\n\n- Enable the REST API under Administration → Settings → API\n- Copy your key from My account → API access key\n- Scoped to your user’s permissions; use a service account for shared integrations",
+      "redmineUrl": "## Redmine URL\nThe base URL of your Redmine instance.\n\n- Format: https://redmine.example.com\n- Do not include /issues or other paths\n- Must be accessible from this server",
+      "githubBaseUrl": "## API Base URL\nFull GitHub API root for GitHub Enterprise Server.\n\n- Typically ends in /api/v3\n- Leave blank to use api.github.com\n- Must be accessible from this server"
     },
     "config": {
       "name": "## 構成名\nこの構成の明確で分かりやすい名前。\n\n- 構成を構成するバリアントの組み合わせを説明するのに役立ちます (例: \"Chrome、Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", など)。",

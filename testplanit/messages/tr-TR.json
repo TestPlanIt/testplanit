@@ -1365,6 +1365,9 @@
           },
           "azure_devops": {
             "description": "İş öğesi takibi için Azure DevOps'a bağlanın."
+          },
+          "redmine": {
+            "description": "Connect to a self-hosted Redmine instance for issue tracking."
           }
         }
       },
@@ -1642,7 +1645,14 @@
         "toastBulkReplaySuccess": "Toplu tekrar oynatma başlatıldı · toplu işlem {batchId}",
         "toastBulkReplayFailed": "Toplu tekrar oynatma başarısız oldu: {error}",
         "toastReEnableSuccess": "Webhook yeniden etkinleştirildi",
-        "toastReEnableFailed": "Yeniden etkinleştirme başarısız oldu: {error}"
+        "toastReEnableFailed": "Yeniden etkinleştirme başarısız oldu: {error}",
+        "inboundChooserRedmine": "Redmine",
+        "inboundRedmineTitle": "Redmine inbound webhook",
+        "inboundRedmineScopeHint": "The redmine_webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
+        "setupStepsRedmineStep1": "Install the redmine_webhook plugin on your Redmine server (Redmine has no built-in webhooks).",
+        "setupStepsRedmineStep2": "In your Redmine project, open Settings → Modules and enable Webhooks.",
+        "setupStepsRedmineStep3": "Open Settings → Webhooks, paste the URL above, and save.",
+        "setupStepsRedmineStep4": "Create or update an issue in Redmine; the linked issue’s status will sync here."
       },
       "aiModels": {
         "description": "Akıllı test senaryosu oluşturma ve analizi için yapay zeka modellerini yapılandırın.",
@@ -5083,6 +5093,10 @@
         "azureDevops": {
           "name": "Azure DevOps",
           "description": "İş öğesi takibi için Azure DevOps'a bağlanın."
+        },
+        "redmine": {
+          "name": "Redmine",
+          "description": "Connect to a self-hosted Redmine instance for issue tracking"
         }
       },
       "filterPlaceholder": "Filtre entegrasyonları...",
@@ -5173,7 +5187,13 @@
         "platformPlaceholder": "Platform seçin...",
         "platformGitea": "Gitea",
         "platformForgejo": "Forgejo",
-        "platformGogs": "Gogs"
+        "platformGogs": "Gogs",
+        "redmineApiKey": "Redmine API Key",
+        "redmineApiKeyPlaceholder": "Enter your Redmine API key",
+        "redmineApiKeyHelp": "Found under My account → API access key (enable the REST API in Administration → Settings → API)",
+        "redmineUrl": "Redmine URL",
+        "redmineUrlPlaceholder": "https://redmine.example.com",
+        "redmineUrlHelp": "The base URL of your Redmine instance"
       },
       "authType": {
         "api_key": "API Anahtarı",
@@ -6096,7 +6116,10 @@
       "repo": "## Depo Adı\nSorunların bağlanacağı deponun adı.\n\n- Tam depo adı (tam URL değil)\n- Örnek: my-project\n- Sağlanan kimlik bilgileriyle erişilebilir olmalıdır",
       "instanceUrl": "## Örnek URL'si\nKendi sunucunuzda barındırdığınız örneğin temel URL'si.\n\n- Biçim: https://git.example.com\n- Sondaki eğik çizgileri veya yolları eklemeyin\n- Bu sunucudan erişilebilir olmalıdır",
       "projectPath": "## Proje Yolu\nGitLab projenizin tam yolu.\n\n- Biçim: ad alanı/proje veya grup/alt grup/proje\n- Örnek: my-org/my-project\n- Proje URL'sinde bulunur: gitlab.com/ad alanı/proje",
-      "platform": "## Platform\nBağlandığınız kendi sunucunuzda barındırdığınız Git platformu.\n\n- **Gitea**: gitea.io tabanlı örnekler\n- **Forgejo**: forgejo.org tabanlı örnekler (Gitea çatalı)\n- **Gogs**: gogs.io tabanlı örnekler\n\nBu, hangi simgenin gösterileceğini kontrol eder ve API uyumluluğunu etkileyebilir."
+      "platform": "## Platform\nBağlandığınız kendi sunucunuzda barındırdığınız Git platformu.\n\n- **Gitea**: gitea.io tabanlı örnekler\n- **Forgejo**: forgejo.org tabanlı örnekler (Gitea çatalı)\n- **Gogs**: gogs.io tabanlı örnekler\n\nBu, hangi simgenin gösterileceğini kontrol eder ve API uyumluluğunu etkileyebilir.",
+      "redmineApiKey": "## Redmine API Key\nYour personal REST API access key.\n\n- Enable the REST API under Administration → Settings → API\n- Copy your key from My account → API access key\n- Scoped to your user’s permissions; use a service account for shared integrations",
+      "redmineUrl": "## Redmine URL\nThe base URL of your Redmine instance.\n\n- Format: https://redmine.example.com\n- Do not include /issues or other paths\n- Must be accessible from this server",
+      "githubBaseUrl": "## API Base URL\nFull GitHub API root for GitHub Enterprise Server.\n\n- Typically ends in /api/v3\n- Leave blank to use api.github.com\n- Must be accessible from this server"
     },
     "config": {
       "name": "## Yapılandırma Adı\nBu yapılandırma için açık ve açıklayıcı bir ad.\n\n- Yapılandırmayı oluşturan varyant kombinasyonlarını açıklamaya yardımcı olur (örneğin \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", vb.).",

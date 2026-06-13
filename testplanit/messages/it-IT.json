@@ -1365,6 +1365,9 @@
           },
           "azure_devops": {
             "description": "Connettiti ad Azure DevOps per il monitoraggio degli elementi di lavoro."
+          },
+          "redmine": {
+            "description": "Connect to a self-hosted Redmine instance for issue tracking."
           }
         }
       },
@@ -1642,7 +1645,14 @@
         "toastBulkReplaySuccess": "Riproduzione in blocco avviata · batch {batchId}",
         "toastBulkReplayFailed": "Riproduzione in blocco non riuscita: {error}",
         "toastReEnableSuccess": "Webhook riattivato",
-        "toastReEnableFailed": "Impossibile riattivare: {error}"
+        "toastReEnableFailed": "Impossibile riattivare: {error}",
+        "inboundChooserRedmine": "Redmine",
+        "inboundRedmineTitle": "Redmine inbound webhook",
+        "inboundRedmineScopeHint": "The redmine_webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
+        "setupStepsRedmineStep1": "Install the redmine_webhook plugin on your Redmine server (Redmine has no built-in webhooks).",
+        "setupStepsRedmineStep2": "In your Redmine project, open Settings → Modules and enable Webhooks.",
+        "setupStepsRedmineStep3": "Open Settings → Webhooks, paste the URL above, and save.",
+        "setupStepsRedmineStep4": "Create or update an issue in Redmine; the linked issue’s status will sync here."
       },
       "aiModels": {
         "description": "Configurare modelli di intelligenza artificiale per la generazione e l'analisi di casi di test intelligenti",
@@ -5083,6 +5093,10 @@
         "azureDevops": {
           "name": "Azure DevOps",
           "description": "Connettiti ad Azure DevOps per il monitoraggio degli elementi di lavoro"
+        },
+        "redmine": {
+          "name": "Redmine",
+          "description": "Connect to a self-hosted Redmine instance for issue tracking"
         }
       },
       "filterPlaceholder": "Integrazioni di filtri...",
@@ -5173,7 +5187,13 @@
         "platformPlaceholder": "Seleziona la piattaforma...",
         "platformGitea": "Gitea",
         "platformForgejo": "Forgejo",
-        "platformGogs": "Gogs"
+        "platformGogs": "Gogs",
+        "redmineApiKey": "Redmine API Key",
+        "redmineApiKeyPlaceholder": "Enter your Redmine API key",
+        "redmineApiKeyHelp": "Found under My account → API access key (enable the REST API in Administration → Settings → API)",
+        "redmineUrl": "Redmine URL",
+        "redmineUrlPlaceholder": "https://redmine.example.com",
+        "redmineUrlHelp": "The base URL of your Redmine instance"
       },
       "authType": {
         "api_key": "Chiave API",
@@ -6096,7 +6116,10 @@
       "repo": "## Nome del repository\nIl nome del repository da cui collegare i problemi.\n\n- Nome esatto del repository (non l'URL completo)\n- Esempio: my-project\n- Deve essere accessibile con le credenziali fornite",
       "instanceUrl": "## URL dell'istanza\nL'URL di base della tua istanza self-hosted.\n\n- Formato: https://git.example.com\n- Non includere barre finali o percorsi\n- Deve essere accessibile da questo server",
       "projectPath": "## Percorso del progetto\nIl percorso completo del tuo progetto GitLab.\n\n- Formato: namespace/project o group/subgroup/project\n- Esempio: my-org/my-project\n- Si trova nell'URL del progetto: gitlab.com/namespace/project",
-      "platform": "## Piattaforma\nLa piattaforma Git self-hosted a cui ti stai connettendo.\n\n- **Gitea**: istanze basate su gitea.io\n- **Forgejo**: istanze basate su forgejo.org (fork di Gitea)\n- **Gogs**: istanze basate su gogs.io\n\nQuesto controlla quale icona viene mostrata e potrebbe influire sulla compatibilità API."
+      "platform": "## Piattaforma\nLa piattaforma Git self-hosted a cui ti stai connettendo.\n\n- **Gitea**: istanze basate su gitea.io\n- **Forgejo**: istanze basate su forgejo.org (fork di Gitea)\n- **Gogs**: istanze basate su gogs.io\n\nQuesto controlla quale icona viene mostrata e potrebbe influire sulla compatibilità API.",
+      "redmineApiKey": "## Redmine API Key\nYour personal REST API access key.\n\n- Enable the REST API under Administration → Settings → API\n- Copy your key from My account → API access key\n- Scoped to your user’s permissions; use a service account for shared integrations",
+      "redmineUrl": "## Redmine URL\nThe base URL of your Redmine instance.\n\n- Format: https://redmine.example.com\n- Do not include /issues or other paths\n- Must be accessible from this server",
+      "githubBaseUrl": "## API Base URL\nFull GitHub API root for GitHub Enterprise Server.\n\n- Typically ends in /api/v3\n- Leave blank to use api.github.com\n- Must be accessible from this server"
     },
     "config": {
       "name": "## Nome della configurazione\nUn nome chiaro e descrittivo per questa configurazione.\n\n- Aiuta a descrivere le combinazioni di varianti che compongono la configurazione (ad esempio \"Chrome, Windows 10\", \"Safari/macOS 15.5\", \"Edge/Windows 11\", ecc.).",
