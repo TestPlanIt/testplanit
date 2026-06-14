@@ -1,3 +1,9 @@
+## [0.38.2](https://github.com/TestPlanIt/testplanit/compare/v0.38.1...v0.38.2) (2026-06-14)
+
+### Enhancements
+
+* **integrations:** add MantisBT issue tracker integration ([#438](https://github.com/TestPlanIt/testplanit/issues/438)) ([3f36178](https://github.com/TestPlanIt/testplanit/commit/3f36178af7ce5260044dd13d64169ed35434d02f))
+
 ## [0.38.1](https://github.com/TestPlanIt/testplanit/compare/v0.38.0...v0.38.1) (2026-06-14)
 
 ### Bug Fixes
