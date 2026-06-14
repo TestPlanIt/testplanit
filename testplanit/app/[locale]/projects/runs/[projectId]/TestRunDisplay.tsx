@@ -635,6 +635,10 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
               onDuplicate={onDuplicateTestRun}
               summaryData={batchSummaries?.summaries[testRun.id]}
               pendingRequest={pendingByTestRunId.get(testRun.id)}
+              // Completed runs render as a flat list (not grouped by
+              // milestone), so the milestone is shown here — unlike the
+              // active tab's grouped view, where it would be redundant.
+              showMilestone={true}
             />
           ))}
         </div>
@@ -831,6 +835,7 @@ const TestRunDisplay: React.FC<TestRunDisplayProps> = ({
                         onDuplicate={onDuplicateTestRunParam}
                         summaryData={summariesData?.summaries[testRun.id]}
                         pendingRequest={pendingByTestRunId.get(testRun.id)}
+                        showMilestone={false}
                       />
                     </DraggableTestRunWrapper>
                   </div>

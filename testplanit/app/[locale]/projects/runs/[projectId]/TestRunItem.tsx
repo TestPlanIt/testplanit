@@ -97,12 +97,7 @@ export interface TestRunItemProps {
   onDuplicate?: (run: { id: number; name: string }) => void;
   onComplete?: (testRun: any) => void;
   isAdmin?: boolean;
-  summaryData?: TestRunSummaryData; // Pre-fetched summary data for batch mode
-  /**
-   * Pre-fetched PENDING ReviewRequest for this row's entity (bulk-loaded by
-   * the parent TestRunDisplay; see RESEARCH §"Pitfall 6"). `undefined` means
-   * no pending review for this row.
-   */
+  summaryData?: TestRunSummaryData;
   pendingRequest?: PendingReviewSummary;
 }
 
@@ -232,9 +227,12 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
     }));
   }, [testRun.createdBy, testRunCases, tCommon]);
 
-  // Using consistent grid layout for all items
+  // Using consistent grid layout for all items. Every track is minmax(0,fr)
+  // so columns shrink to fit the row instead of overflowing into each other,
+  // and resolve to the same width on every row for clean column alignment.
+  // Content inside each cell truncates rather than widening its track.
   const gridLayout =
-    "grid-cols-[minmax(0,1.5fr)_minmax(auto,0.75fr)_minmax(auto,0.5fr)_minmax(auto,1fr)_minmax(auto,1.5fr)_minmax(0,0.75fr)]";
+    "grid-cols-[minmax(0,1.5fr)_minmax(0,0.75fr)_minmax(0,0.7fr)_minmax(0,1.1fr)_minmax(0,1.5fr)_minmax(0,0.75fr)]";
 
   return (
     <>
@@ -352,12 +350,15 @@ const TestRunItem: React.FC<TestRunItemProps> = ({
         </div>
 
         {/* Middle Column 1 - Status */}
-        <div className="flex min-w-12 whitespace-nowrap justify-start">
+        {/* `[&>span]:!shrink [&>span]:!min-w-0` overrides WorkflowStateDisplay's
+            outer `shrink-0` span so it shrinks within the cell and its inner
+            `truncate` on the name engages (ellipsis instead of a hard clip). */}
+        <div className="flex min-w-0 justify-start overflow-hidden [&>span]:!shrink [&>span]:!min-w-0">
           <WorkflowStateDisplay {...workflowState} />
         </div>
 
         {/* Middle Column 2 - Forecast */}
-        <div className="min-w-48 truncate">
+        <div className="flex flex-col min-w-0 overflow-hidden">
           <ForecastDisplay seconds={testRun.forecastManual} type="manual" />
           <ForecastDisplay
             seconds={testRun.forecastAutomated}
