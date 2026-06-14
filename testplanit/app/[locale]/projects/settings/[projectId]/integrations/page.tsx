@@ -90,6 +90,7 @@ export default function ProjectIntegrationsPage() {
             "GITLAB",
             "GITEA",
             "REDMINE",
+            "MANTISBT",
             "SIMPLE_URL",
           ],
         },
@@ -110,6 +111,7 @@ export default function ProjectIntegrationsPage() {
         "GITLAB",
         "GITEA",
         "REDMINE",
+        "MANTISBT",
         "SIMPLE_URL",
       ].includes(pi.integration.provider)
   );

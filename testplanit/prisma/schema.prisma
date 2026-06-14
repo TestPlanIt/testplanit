@@ -180,6 +180,7 @@ enum IntegrationProvider {
   GITLAB
   GITEA
   REDMINE
+  MANTISBT
 }
 
 enum AdapterType {
@@ -191,6 +192,7 @@ enum AdapterType {
   GITLAB
   GITEA
   REDMINE
+  MANTISBT
 }
 
 enum WebhookDirection {

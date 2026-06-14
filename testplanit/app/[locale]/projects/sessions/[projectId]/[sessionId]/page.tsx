@@ -269,7 +269,6 @@ interface SessionFormControlsProps {
         } | null;
       }[]
     | undefined;
-  projectIntegration?: any;
   canAddEditTags: boolean;
   onAttachmentPendingChanges?: (changes: AttachmentChanges) => void;
   transitionCheck?: {
@@ -295,7 +294,6 @@ function SessionFormControls({
   handleLinksChange,
   handleSelect,
   issues,
-  projectIntegration,
   canAddEditTags,
   onAttachmentPendingChanges,
   transitionCheck,
@@ -692,10 +690,12 @@ function SessionFormControls({
                       status={issue.externalStatus}
                       projectIds={[Number(projectId)]}
                       data={issue.data}
-                      integrationProvider={
-                        projectIntegration?.integration?.provider
+                      integrationProvider={issue.integration?.provider}
+                      integrationId={
+                        issue.integration?.id ??
+                        issue.integrationId ??
+                        undefined
                       }
-                      integrationId={projectIntegration?.integration?.id}
                       issueTypeName={issue.issueTypeName}
                       issueTypeIconUrl={issue.issueTypeIconUrl}
                     />
@@ -840,29 +840,28 @@ export default function SessionPage() {
   const tCommon = useTranslations("common");
   const locale = useLocale();
   const [refreshResults, setRefreshResults] = useState(0);
-  const { data: projectData, isLoading: isLoadingProjectData } =
-    useFindFirstProjects({
-      where: { id: numericProjectId ?? undefined },
-      select: {
-        projectIntegrations: {
-          where: {
-            isActive: true,
-            integration: {
-              status: "ACTIVE",
-            },
+  const { isLoading: isLoadingProjectData } = useFindFirstProjects({
+    where: { id: numericProjectId ?? undefined },
+    select: {
+      projectIntegrations: {
+        where: {
+          isActive: true,
+          integration: {
+            status: "ACTIVE",
           },
-          include: {
-            integration: {
-              select: {
-                id: true,
-                name: true,
-                provider: true,
-              },
+        },
+        include: {
+          integration: {
+            select: {
+              id: true,
+              name: true,
+              provider: true,
             },
           },
         },
       },
-    });
+    },
+  });
   const [statusColor, setStatusColor] = useState<string>("#B3B3B3");
 
   // --- Fetch Permissions ---
@@ -2301,7 +2300,6 @@ export default function SessionPage() {
                     handleLinksChange={setSelectedLinks}
                     handleSelect={handleSelect}
                     issues={sessionData.issues}
-                    projectIntegration={projectData?.projectIntegrations?.[0]}
                     canAddEditTags={showAddEditTagsPerm}
                     onAttachmentPendingChanges={setPendingAttachmentChanges}
                     transitionCheck={transitionCheck}

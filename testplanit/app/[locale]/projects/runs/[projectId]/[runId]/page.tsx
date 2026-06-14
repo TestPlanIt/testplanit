@@ -106,7 +106,6 @@ import { useProjectPermissions } from "~/hooks/useProjectPermissions";
 import { PaginationProvider } from "~/lib/contexts/PaginationContext";
 import {
   useCreateAttachments,
-  useFindFirstProjects,
   useFindFirstRepositoryCases,
   useFindFirstStatusScope,
   useFindManyJUnitTestSuite,
@@ -369,37 +368,6 @@ export default function TestRunPage() {
   const selectedTestCaseId = searchParams.get("selectedCase")
     ? parseInt(searchParams.get("selectedCase")!)
     : null;
-
-  // Fetch project data to get issueConfigId and integrations
-  const { data: projectData } = useFindFirstProjects(
-    {
-      where: {
-        id: Number(projectId),
-      },
-      select: {
-        projectIntegrations: {
-          where: {
-            isActive: true,
-            integration: {
-              status: "ACTIVE",
-            },
-          },
-          include: {
-            integration: {
-              select: {
-                id: true,
-                name: true,
-                provider: true,
-              },
-            },
-          },
-        },
-      },
-    },
-    {
-      enabled: !isNaN(Number(projectId)),
-    }
-  );
 
   const { data: statusScope } = useFindFirstStatusScope({
     where: {
@@ -2130,7 +2098,6 @@ export default function TestRunPage() {
                     handleFileSelect={handleFileSelect}
                     handleLinksChange={setSelectedLinks}
                     handleSelect={handleSelect}
-                    projectIntegration={projectData?.projectIntegrations?.[0]}
                     selectedIssues={selectedIssues}
                     setSelectedIssues={setSelectedIssues}
                     canAddEdit={canAddEditRun}

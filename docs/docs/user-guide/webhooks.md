@@ -8,7 +8,7 @@ description: Configure inbound and outbound webhooks for real-time integration w
 
 Webhooks let TestPlanIt exchange events with external systems in near-real time. They are configured per project from **Project Settings** → **Webhooks** and come in two flavors:
 
-- **Inbound webhooks** receive events from your issue tracker (Jira, GitHub, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, or Redmine) so issues linked in TestPlanIt stay in sync without manual refreshes.
+- **Inbound webhooks** receive events from your issue tracker (Jira, GitHub, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, Redmine, or MantisBT) so issues linked in TestPlanIt stay in sync without manual refreshes.
 - **Outbound webhooks** push TestPlanIt events (test runs, sessions, cases, issues) to a destination URL — typically a Slack channel, an automation tool, or a custom service that consumes a generic HMAC-signed payload.
 
 ## Overview
@@ -34,7 +34,7 @@ When no integration is configured, the empty state reads "An Issue Integration i
 2. Click **Add Webhook** in the Inbound section.
 3. For Jira, GitHub, GitLab, and Gitea/Forgejo/Gogs, the webhook is created immediately — TestPlanIt mints a random HMAC secret on the server.
 4. For Azure DevOps, a credentials form appears. Type the username and password (typically a Personal Access Token used as the password) that the ADO Service Hook will send via Basic authentication.
-5. For Redmine, the webhook is created immediately with **no secret** — the `redmine_webhook` plugin cannot sign requests, so the unguessable webhook URL itself is the credential. Treat the URL as a secret and rotate it (delete + recreate) if it leaks.
+5. For Redmine and MantisBT, the webhook is created immediately with **no secret** — their webhook plugins cannot sign requests, so the unguessable webhook URL itself is the credential. Treat the URL as a secret and rotate it (delete + recreate) if it leaks.
 6. After creation, the webhook URL (and, for the HMAC providers, the secret) is revealed once. Copy it before dismissing the panel — it is not shown again.
 
 ### Configuring the external tracker
@@ -47,6 +47,7 @@ The reveal panel includes per-provider setup steps. The general flow is:
 - **Gitea / Forgejo / Gogs** — In your repository's **Settings → Webhooks**, add a webhook, paste the URL, paste the secret, set the content type to `application/json`, and enable **Issue** events.
 - **Azure DevOps** — Create a Service Hook of type **Web Hooks** for the **Work item updated** (and optionally **Work item created**) events. Paste the URL, then paste the username and password you typed into TestPlanIt as the Basic-Auth credentials.
 - **Redmine** — Redmine has no built-in webhooks, so install the [`redmine_webhook`](https://github.com/suer/redmine_webhook) plugin and enable the **Webhooks** module on the project. Then under **Project → Settings → WebHook**, paste the URL. Requests are unsigned, so the URL is the credential — no secret is configured on either side.
+- **MantisBT** — MantisBT has no built-in webhooks, so install and enable a MantisBT webhook plugin on the server. Configure it to fire on issue-created and issue-updated events and paste the URL as the target. Requests are unsigned, so the URL is the credential — no secret is configured on either side.
 
 ### One webhook per project
 
@@ -151,7 +152,7 @@ Inbound Jira and GitHub webhooks and outbound generic-HMAC webhooks all expose a
 - **Inbound (Jira / GitHub)** — Rotation is a hard cutover: a new token and a new HMAC secret are minted, the URL changes (because it embeds the token), and the previous values stop accepting traffic. Update the external tracker's webhook configuration with the new URL and secret immediately after rotating.
 - **Outbound (generic HMAC)** — Rotation opens a brief two-secret window. The newly minted secret becomes active immediately, and the previous secret enters a retiring state. Both are accepted by signing logic during the window so receivers have time to re-key. The retiring secret has an auto-retire deadline shown on the card; you can shorten it by clicking **Retire now**, or extend it once if your receiver needs more time.
 
-Inbound Azure DevOps webhooks do not have a separate secret to rotate (the credentials are typed by the admin and stored encrypted). To change ADO credentials, delete the webhook and recreate it. Inbound **Redmine** webhooks likewise have no secret — the unguessable URL token is the credential. To rotate it, delete the webhook and recreate it, then update the URL in Redmine.
+Inbound Azure DevOps webhooks do not have a separate secret to rotate (the credentials are typed by the admin and stored encrypted). To change ADO credentials, delete the webhook and recreate it. Inbound **Redmine** and **MantisBT** webhooks likewise have no secret — the unguessable URL token is the credential. To rotate it, delete the webhook and recreate it, then update the URL in the tracker.
 
 Plaintext secrets are never read back from the database. They are returned only in the response to the create or rotate action and held in memory until you dismiss the reveal panel.
 
@@ -177,7 +178,7 @@ The SSE stream is project-scoped (`/api/issues/stream?projectId=<id>`) and share
 
 ## Reference
 
-- **Inbound URL pattern** — `https://<your-testplanit-host>/api/webhooks/<token>`. The token is the only identifier the receiver needs; the URL itself authenticates the request alongside the provider's signature (HMAC for Jira / GitHub / Gitea, secret token for GitLab) or Basic-Auth credentials (ADO). For **Redmine**, the URL token is the sole credential — the `redmine_webhook` plugin sends no signature.
+- **Inbound URL pattern** — `https://<your-testplanit-host>/api/webhooks/<token>`. The token is the only identifier the receiver needs; the URL itself authenticates the request alongside the provider's signature (HMAC for Jira / GitHub / Gitea, secret token for GitLab) or Basic-Auth credentials (ADO). For **Redmine** and **MantisBT**, the URL token is the sole credential — their webhook plugins send no signature.
 - **Outbound payload signing** — Generic HMAC endpoints receive the JSON envelope and an HMAC-SHA256 signature header derived from the body and the active secret.
 - **Bulk replay cap** — 100 deliveries per batch.
 - **Auto-disable threshold** — 10 consecutive failures.

@@ -246,6 +246,10 @@ export abstract class BaseAdapter implements IssueAdapter {
           } else if (this.config.provider === "REDMINE") {
             // Redmine authenticates the REST API with the user's API key
             headers["X-Redmine-API-Key"] = this.authData.apiKey;
+          } else if (this.config.provider === "MANTISBT") {
+            // MantisBT sends the raw API token in the Authorization header
+            // (no "Bearer"/"token" prefix).
+            headers["Authorization"] = this.authData.apiKey;
           } else {
             // Default to X-API-Key header
             headers["X-API-Key"] = this.authData.apiKey;

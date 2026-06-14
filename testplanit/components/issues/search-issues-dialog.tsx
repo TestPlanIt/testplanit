@@ -877,7 +877,14 @@ export function SearchIssuesDialog({
                                   variant="ghost"
                                   size="icon"
                                   className="h-8 w-8 shrink-0 text-muted-foreground hover:opacity-50 cursor-pointer"
-                                  title={t("common.ui.issues.openInJira")}
+                                  title={t(
+                                    "common.ui.issues.openInExternalSystem",
+                                    {
+                                      provider:
+                                        activeIntegration?.integration.name ??
+                                        "",
+                                    }
+                                  )}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     window.open(

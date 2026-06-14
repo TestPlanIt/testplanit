@@ -102,6 +102,14 @@ const SYNTHETIC_REDMINE_PAYLOAD = JSON.stringify({
   },
 });
 
+// MantisBT: a Mantis webhook plugin sends no signature, so the synthetic
+// self-test posts unsigned (the URL token is the credential). issue.id === 0
+// is the non-forgeable synthetic sentinel — real Mantis issue ids are >= 1.
+const SYNTHETIC_MANTISBT_PAYLOAD = JSON.stringify({
+  event: "issue_updated",
+  issue: { id: 0, status: { name: "new" } },
+});
+
 function generateToken(): string {
   // 32 random bytes → 64 hex chars with "whk_" prefix.
   return `whk_${randomBytes(32).toString("hex")}`;
@@ -196,6 +204,13 @@ export async function createOrRotateInboundWebhook(input: {
     // unguessable URL token is the credential. Mint and store an (unused)
     // secret to satisfy the schema, and reveal only the URL — there is
     // nothing for the admin to copy into Redmine.
+    plaintextToEncrypt = generateSecret();
+    returnSecretToAdmin = false;
+  } else if (adapterType === "MANTISBT") {
+    // A MantisBT webhook plugin cannot sign payloads or send a secret; the
+    // unguessable URL token is the credential. Mint and store an (unused)
+    // secret to satisfy the schema, and reveal only the URL — there is
+    // nothing for the admin to copy into MantisBT.
     plaintextToEncrypt = generateSecret();
     returnSecretToAdmin = false;
   } else if (adapterType === "AZURE_DEVOPS") {
@@ -526,6 +541,8 @@ export interface SendTestWebhookResult {
  *     `authorization: Basic <base64>` header; SYNTHETIC_ADO_PAYLOAD body.
  *   - REDMINE: unsigned (the redmine_webhook plugin cannot sign); the URL token
  *     is the credential. SYNTHETIC_REDMINE_PAYLOAD body.
+ *   - MANTISBT: unsigned (a Mantis webhook plugin cannot sign); the URL token
+ *     is the credential. SYNTHETIC_MANTISBT_PAYLOAD body.
  *
  * Determinism invariant: each adapter's synthetic payload is a module-level
  * `const` (declared once, JSON.stringify'd once). Two consecutive calls
@@ -704,6 +721,14 @@ export async function sendTestWebhook(
       method: "POST",
       headers: { "content-type": "application/json" },
       body: SYNTHETIC_REDMINE_PAYLOAD,
+    };
+  } else if (config.adapterType === "MANTISBT") {
+    // A Mantis webhook plugin sends no signature; the URL token is the
+    // credential, so the synthetic request is posted unsigned.
+    requestInit = {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: SYNTHETIC_MANTISBT_PAYLOAD,
     };
   } else {
     // SLACK / GENERIC_HMAC are OUTBOUND-only adapters; reaching this code

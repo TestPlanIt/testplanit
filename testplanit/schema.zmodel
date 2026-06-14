@@ -3162,6 +3162,7 @@ enum IntegrationProvider {
     GITLAB
     GITEA
     REDMINE
+    MANTISBT
 
     @@deny('all', !auth())
     @@allow('update', auth().access == 'ADMIN')
@@ -3177,6 +3178,7 @@ enum AdapterType {
     GITLAB
     GITEA
     REDMINE
+    MANTISBT
 
     @@deny('all', !auth())
     @@allow('update', auth().access == 'ADMIN')

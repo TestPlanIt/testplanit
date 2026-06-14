@@ -277,6 +277,27 @@ const providerFields: Record<IntegrationProvider, FieldConfig[]> = {
       required: true,
     },
   ],
+  [IntegrationProvider.MANTISBT]: [
+    {
+      // MantisBT REST API token. Stored under `apiToken` so IntegrationManager
+      // plumbs it into the adapter's API-key auth path.
+      name: "apiToken",
+      label: "config.mantisBTApiKey",
+      placeholder: "config.mantisBTApiKeyPlaceholder",
+      help: "config.mantisBTApiKeyHelp",
+      type: "password",
+      isCredential: true,
+      required: true,
+    },
+    {
+      name: "baseUrl",
+      label: "config.mantisBTUrl",
+      placeholder: "config.mantisBTUrlPlaceholder",
+      help: "config.mantisBTUrlHelp",
+      isCredential: false,
+      required: true,
+    },
+  ],
 };
 
 function generateApiKey(): string {

@@ -338,10 +338,7 @@ const TestCaseFormControls: React.FC<TestCaseFormControlsProps> = ({
                         projectIds={[testcase.projectId]}
                         size="large"
                         data={issue.data}
-                        integrationProvider={
-                          issue.integration?.provider ||
-                          (issue.externalUrl ? "JIRA" : undefined)
-                        }
+                        integrationProvider={issue.integration?.provider}
                         integrationId={
                           issue.integrationId || issue.integration?.id
                         }

@@ -864,7 +864,17 @@ export default function TestResultHistory({
                           },
                         },
                       },
-                      issues: true,
+                      issues: {
+                        include: {
+                          integration: {
+                            select: {
+                              id: true,
+                              provider: true,
+                              name: true,
+                            },
+                          },
+                        },
+                      },
                     },
                     orderBy: [
                       { step: { order: "asc" } },
@@ -872,7 +882,17 @@ export default function TestResultHistory({
                     ],
                     where: { isDeleted: false },
                   },
-                  issues: true,
+                  issues: {
+                    include: {
+                      integration: {
+                        select: {
+                          id: true,
+                          provider: true,
+                          name: true,
+                        },
+                      },
+                    },
+                  },
                 },
               },
             },

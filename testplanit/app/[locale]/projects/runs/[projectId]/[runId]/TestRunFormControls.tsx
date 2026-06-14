@@ -162,7 +162,6 @@ interface TestRunFormControlsProps {
   handleFileSelect: (files: File[]) => void;
   handleLinksChange?: (links: LinkAttachmentInput[]) => void;
   handleSelect: (attachments: Attachments[], index: number) => void;
-  projectIntegration?: any;
   selectedIssues: number[];
   setSelectedIssues: (ids: number[]) => void;
   canAddEdit: boolean;
@@ -186,7 +185,6 @@ function TestRunFormControls({
   handleFileSelect,
   handleLinksChange,
   handleSelect,
-  projectIntegration,
   selectedIssues,
   setSelectedIssues,
   canAddEdit,
@@ -379,10 +377,10 @@ function TestRunFormControls({
                   projectIds={[Number(projectId)]}
                   size="small"
                   data={issue.data}
-                  integrationProvider={
-                    projectIntegration?.integration?.provider
+                  integrationProvider={issue.integration?.provider}
+                  integrationId={
+                    issue.integration?.id ?? issue.integrationId ?? undefined
                   }
-                  integrationId={projectIntegration?.integration?.id}
                   issueTypeName={issue.issueTypeName}
                   issueTypeIconUrl={issue.issueTypeIconUrl}
                 />

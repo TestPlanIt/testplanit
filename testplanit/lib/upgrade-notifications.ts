@@ -379,6 +379,19 @@ export const upgradeNotifications: Record<string, UpgradeNotification> = {
       <p>Open global search with <strong>Cmd/Ctrl + K</strong>. See the <a href="https://docs.testplanit.com/docs/user-guide/advanced-search#saved-searches" target="_blank">documentation</a>.</p>
     `,
   },
+  "0.38.1": {
+    title: "New Feature: MantisBT Integration",
+    message: `
+      <p>Connect TestPlanIt to a self-hosted <strong>MantisBT</strong> instance to link, create, and sync issues — alongside the existing Jira, GitHub, GitLab, Gitea, Azure DevOps, and Redmine integrations.</p>
+      <ul>
+        <li>Create and link MantisBT issues from test cases, runs, results, and sessions</li>
+        <li>Search by text or by issue reference (e.g. <strong>#42</strong>); MantisBT categories map to issue types, with statuses and priorities read from your instance</li>
+        <li>Inbound status sync via a MantisBT webhook plugin</li>
+      </ul>
+      <p>Configure it at <strong>Admin → Integrations</strong> with your MantisBT URL and API token (create one under your MantisBT account settings → API Tokens). See the <a href="https://docs.testplanit.com/docs/user-guide/integrations" target="_blank">documentation</a>.</p>
+    `,
+    access: [Access.ADMIN],
+  },
 };
 
 /**

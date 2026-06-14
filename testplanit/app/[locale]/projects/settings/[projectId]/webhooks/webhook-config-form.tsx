@@ -75,7 +75,8 @@ type InboundAdapterType =
   | "AZURE_DEVOPS"
   | "GITLAB"
   | "GITEA"
-  | "REDMINE";
+  | "REDMINE"
+  | "MANTISBT";
 
 // Inbound webhooks today are 1:1 with the project's active issue integration:
 // the only inbound consumer is `applyInboundIssueUpdate`, and a project has
@@ -91,6 +92,7 @@ function inboundAdapterForProvider(
   if (provider === "GITLAB") return "GITLAB";
   if (provider === "GITEA") return "GITEA";
   if (provider === "REDMINE") return "REDMINE";
+  if (provider === "MANTISBT") return "MANTISBT";
   return null;
 }
 
@@ -139,7 +141,8 @@ const ADAPTER_OPTIONS: ReadonlyArray<{
     | "inboundChooserAdo"
     | "inboundChooserGitlab"
     | "inboundChooserGitea"
-    | "inboundChooserRedmine";
+    | "inboundChooserRedmine"
+    | "inboundChooserMantisbt";
   testid: string;
 }> = [
   {
@@ -172,16 +175,22 @@ const ADAPTER_OPTIONS: ReadonlyArray<{
     labelKey: "inboundChooserRedmine",
     testid: "webhook-inbound-chooser-redmine",
   },
+  {
+    value: "MANTISBT",
+    labelKey: "inboundChooserMantisbt",
+    testid: "webhook-inbound-chooser-mantisbt",
+  },
 ];
 
 function adapterSlug(
   adapterType: InboundAdapterType
-): "jira" | "github" | "ado" | "gitlab" | "gitea" | "redmine" {
+): "jira" | "github" | "ado" | "gitlab" | "gitea" | "redmine" | "mantisbt" {
   if (adapterType === "JIRA") return "jira";
   if (adapterType === "GITHUB") return "github";
   if (adapterType === "GITLAB") return "gitlab";
   if (adapterType === "GITEA") return "gitea";
   if (adapterType === "REDMINE") return "redmine";
+  if (adapterType === "MANTISBT") return "mantisbt";
   return "ado";
 }
 
@@ -193,12 +202,14 @@ function adapterTitleKey(
   | "inboundAdoTitle"
   | "inboundGitlabTitle"
   | "inboundGiteaTitle"
-  | "inboundRedmineTitle" {
+  | "inboundRedmineTitle"
+  | "inboundMantisbtTitle" {
   if (adapterType === "JIRA") return "inboundJiraTitle";
   if (adapterType === "GITHUB") return "inboundGithubTitle";
   if (adapterType === "GITLAB") return "inboundGitlabTitle";
   if (adapterType === "GITEA") return "inboundGiteaTitle";
   if (adapterType === "REDMINE") return "inboundRedmineTitle";
+  if (adapterType === "MANTISBT") return "inboundMantisbtTitle";
   return "inboundAdoTitle";
 }
 
@@ -706,6 +717,12 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
         "setupStepsRedmineStep3",
         "setupStepsRedmineStep4",
       ],
+      MANTISBT: [
+        "setupStepsMantisbtStep1",
+        "setupStepsMantisbtStep2",
+        "setupStepsMantisbtStep3",
+        "setupStepsMantisbtStep4",
+      ],
     };
     return (
       <div
@@ -974,6 +991,11 @@ export function WebhookConfigForm({ projectId }: WebhookConfigFormProps) {
           {config.adapterType === "REDMINE" && (
             <p className="text-xs text-muted-foreground">
               {t("inboundRedmineScopeHint")}
+            </p>
+          )}
+          {config.adapterType === "MANTISBT" && (
+            <p className="text-xs text-muted-foreground">
+              {t("inboundMantisbtScopeHint")}
             </p>
           )}
 

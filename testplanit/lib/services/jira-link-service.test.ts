@@ -33,6 +33,7 @@ vi.mock("@prisma/client", () => ({
     GITLAB: "GITLAB",
     GITEA: "GITEA",
     REDMINE: "REDMINE",
+    MANTISBT: "MANTISBT",
   },
 }));
 
@@ -778,6 +779,7 @@ describe("JiraLinkService", () => {
                 "GITLAB",
                 "GITEA",
                 "REDMINE",
+                "MANTISBT",
               ],
             },
           },
