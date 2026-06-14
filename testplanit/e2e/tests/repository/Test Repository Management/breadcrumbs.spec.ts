@@ -77,14 +77,12 @@ test.describe("Breadcrumbs", () => {
     await expect(breadcrumbs).toContainText(childName);
 
     // Click on parent in breadcrumb to navigate back
-    // The breadcrumb uses buttons inside links, so find the button with the parent name
+    // BreadcrumbComponent renders clickable items as <Link> (anchor) elements.
     const parentBreadcrumb = breadcrumbs
-      .getByRole("button", { name: parentName })
+      .getByRole("link", { name: parentName })
       .first();
     await expect(parentBreadcrumb).toBeVisible({ timeout: 5000 });
-    await expect(parentBreadcrumb).toBeEnabled({ timeout: 5000 });
-    // Use force click to handle potential DOM re-renders
-    await parentBreadcrumb.click({ force: true });
+    await parentBreadcrumb.click();
     await page.waitForLoadState("networkidle");
 
     // Verify we navigated to parent folder - URL should contain a node parameter

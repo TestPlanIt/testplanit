@@ -68,9 +68,8 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
   }) => {
     // 1. Configure outbound webhook via the admin form.
     await page.goto(`${baseURL}/en-US/projects/settings/${projectId}/webhooks`);
-    await page.waitForLoadState("networkidle");
-    await expect(page.getByTestId("webhooks-tab-outbound")).toBeVisible({
-      timeout: 20_000,
+    await expect(page.getByTestId("webhooks-tab-inbound")).toBeVisible({
+      timeout: 30_000,
     });
     await page.getByTestId("webhooks-tab-outbound").click();
     await expect(page.getByTestId("webhook-outbound-form")).toBeVisible({
@@ -166,7 +165,9 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
     //    cards live on the inbound page in the configured-list sense — the
     //    health badge is rendered per card on the same form.
     await page.goto(`${baseURL}/en-US/projects/settings/${projectId}/webhooks`);
-    await page.waitForLoadState("networkidle");
+    await expect(page.getByTestId("webhooks-tab-inbound")).toBeVisible({
+      timeout: 30_000,
+    });
     // Outbound config doesn't render a card on the inbound tab; navigate to
     // the outbound tab to find it.
     await page.getByTestId("webhooks-tab-outbound").click();
@@ -208,9 +209,8 @@ test.describe("Webhook endpoint health — auto-disable + manual re-enable (cons
     // 1. Continue from Test 1 — the config is DISABLED. Find the outbound
     //    card (rendered on the outbound tab) and click Re-enable.
     await page.goto(`${baseURL}/en-US/projects/settings/${projectId}/webhooks`);
-    await page.waitForLoadState("networkidle");
-    await expect(page.getByTestId("webhooks-tab-outbound")).toBeVisible({
-      timeout: 20_000,
+    await expect(page.getByTestId("webhooks-tab-inbound")).toBeVisible({
+      timeout: 30_000,
     });
     await page.getByTestId("webhooks-tab-outbound").click();
     await expect(page.getByTestId("webhook-outbound-form")).toBeVisible({

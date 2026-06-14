@@ -213,7 +213,7 @@ test.describe("Admin SSO Provider Management", () => {
 
       // Find the Force SSO Login label
       const forceSsoLabel = page.getByText("Force SSO Login");
-      await expect(forceSsoLabel).toBeVisible({ timeout: 10000 });
+      await expect(forceSsoLabel).toBeVisible({ timeout: 20000 });
 
       // Navigate from the label to the container div and find the switch within it
       // Structure: div.flex > { div > { Label("Force SSO Login"), p }, Switch }

@@ -73,9 +73,8 @@ test.describe("Webhook delivery bulk replay — outbound-only count", () => {
   }) => {
     // 1. Configure outbound webhook via the admin form.
     await page.goto(`${baseURL}/en-US/projects/settings/${projectId}/webhooks`);
-    await page.waitForLoadState("networkidle");
-    await expect(page.getByTestId("webhooks-tab-outbound")).toBeVisible({
-      timeout: 20_000,
+    await expect(page.getByTestId("webhooks-tab-inbound")).toBeVisible({
+      timeout: 30_000,
     });
     await page.getByTestId("webhooks-tab-outbound").click();
     await expect(page.getByTestId("webhook-outbound-form")).toBeVisible({

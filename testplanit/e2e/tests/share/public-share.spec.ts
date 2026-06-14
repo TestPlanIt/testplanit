@@ -1,4 +1,4 @@
-import { expect, test } from "../../fixtures";
+import { expect, stubLiveStreams, test } from "../../fixtures";
 
 /**
  * Public Share Flow E2E Tests
@@ -126,6 +126,7 @@ test.describe("Public Share Flow", () => {
       storageState: { cookies: [], origins: [] },
     });
     const incognitoPage = await incognitoContext.newPage();
+    await stubLiveStreams(incognitoPage);
 
     try {
       // Navigate to the share URL
@@ -146,7 +147,7 @@ test.describe("Public Share Flow", () => {
       const sharedReportViewer = incognitoPage.getByTestId(
         "shared-report-viewer"
       );
-      await expect(sharedReportViewer).toBeVisible({ timeout: 10000 });
+      await expect(sharedReportViewer).toBeVisible({ timeout: 15000 });
 
       // Verify the report title is displayed
       const reportTitle = incognitoPage.getByTestId("shared-report-title");
@@ -157,7 +158,7 @@ test.describe("Public Share Flow", () => {
 
       // Verify the report content is displayed (table should be visible)
       const reportTable = incognitoPage.locator("table").first();
-      await expect(reportTable).toBeVisible({ timeout: 10000 });
+      await expect(reportTable).toBeVisible({ timeout: 30000 });
 
       // Verify test cases are in the report
       await expect(

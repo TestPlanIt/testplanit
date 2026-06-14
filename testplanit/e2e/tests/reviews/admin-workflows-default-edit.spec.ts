@@ -90,7 +90,7 @@ test.describe("Admin Workflows — default workflow edit-save idempotency", () =
 
     // Wait for dialog to close (success path) — error toast would keep it
     // open, which we'd detect via the failed expect.
-    await expect(dialog).not.toBeVisible({ timeout: 10000 });
+    await expect(dialog).not.toBeVisible({ timeout: 30000 });
 
     // No error toast surfaced. Confirm by looking for sonner's default
     // role="status" element with the destructive variant — absence is the

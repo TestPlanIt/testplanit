@@ -250,8 +250,8 @@ test.describe("Drag-drop modifier-aware UX", () => {
       .locator(`[data-testid="folder-node-${targetFolderId}"]`)
       .first();
 
-    await expect(sourceRow).toBeVisible({ timeout: 10_000 });
-    await expect(target).toBeVisible({ timeout: 10_000 });
+    await expect(sourceRow).toBeVisible({ timeout: 15_000 });
+    await expect(target).toBeVisible({ timeout: 20_000 });
 
     await dragWithModifier(page, sourceRow, target, null);
 

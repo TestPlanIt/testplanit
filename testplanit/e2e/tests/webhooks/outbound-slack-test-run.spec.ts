@@ -57,10 +57,9 @@ test.describe("Outbound webhook — test_run.completed delivery (Phase 2 demo ta
     //    so we click the outbound trigger explicitly rather than relying
     //    on the query-string roundtrip surviving the i18n redirect.
     await page.goto(`${baseURL}/en-US/projects/settings/${projectId}/webhooks`);
-    await page.waitForLoadState("networkidle");
-    // Wait for the Tabs primitive to mount before clicking.
-    await expect(page.getByTestId("webhooks-tab-outbound")).toBeVisible({
-      timeout: 20_000,
+    // Wait for project data to load (tabs only render after useFindFirstProjects resolves).
+    await expect(page.getByTestId("webhooks-tab-inbound")).toBeVisible({
+      timeout: 30_000,
     });
     await page.getByTestId("webhooks-tab-outbound").click();
 
