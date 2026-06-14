@@ -67,6 +67,8 @@ export function DeferredIssueManager({
         return "Azure DevOps";
       case "linear":
         return "Linear";
+      case "mantisbt":
+        return "MantisBT";
       case "simple_url":
         return ""; // Empty string to avoid "Link Issue Issue"
       default:

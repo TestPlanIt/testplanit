@@ -1,4 +1,4 @@
-import { expect, test } from "../../fixtures";
+import { expect, stubLiveStreams, test } from "../../fixtures";
 
 /**
  * Password-Protected Share Flow E2E Tests
@@ -120,6 +120,7 @@ test.describe("Password-Protected Share Flow", () => {
       storageState: { cookies: [], origins: [] },
     });
     const incognitoPage = await incognitoContext.newPage();
+    await stubLiveStreams(incognitoPage);
 
     try {
       await incognitoPage.goto(shareUrl);
@@ -157,7 +158,7 @@ test.describe("Password-Protected Share Flow", () => {
 
       // Verify test cases are shown
       const reportTable = incognitoPage.locator("table").first();
-      await expect(reportTable).toBeVisible({ timeout: 10000 });
+      await expect(reportTable).toBeVisible({ timeout: 30000 });
     } finally {
       await incognitoPage.close();
       await incognitoContext.close();

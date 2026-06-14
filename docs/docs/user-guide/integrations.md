@@ -5,7 +5,7 @@ title: 'Issue Tracking and External Integrations'
 
 # Issue Tracking and External Integrations
 
-TestPlanIt provides comprehensive issue tracking capabilities, allowing you to track bugs, tasks, and other issues directly within the platform or integrate with external issue tracking systems like Jira, GitHub Issues, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, Redmine, and more.
+TestPlanIt provides comprehensive issue tracking capabilities, allowing you to track bugs, tasks, and other issues directly within the platform or integrate with external issue tracking systems like Jira, GitHub Issues, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, Redmine, MantisBT, and more.
 
 ## Internal Issue Management
 
@@ -143,7 +143,21 @@ Connect to a self-hosted Redmine instance for issue tracking.
 - Inbound webhook support for status sync via the `redmine_webhook` plugin
 - Configurable instance URL — works with any self-hosted Redmine deployment
 
-### 7. **Simple URL Integration**
+### 7. **MantisBT Integration**
+
+Connect to a self-hosted MantisBT instance for issue tracking.
+
+**Features:**
+
+- Create MantisBT issues directly from TestPlanIt, choosing the category and priority
+- Search issues by text (summary) or by exact reference (e.g., `#42`)
+- Maps MantisBT **categories** to issue types; statuses and priorities are discovered from your instance
+- Linked-issue (relationships) support
+- API token authentication (MantisBT has no OAuth)
+- Inbound webhook support for status sync via a MantisBT webhook plugin
+- Configurable instance URL — works with any self-hosted MantisBT deployment
+
+### 8. **Simple URL Integration**
 
 A flexible integration for any issue tracking system that uses URL-based linking.
 
@@ -166,7 +180,7 @@ A flexible integration for any issue tracking system that uses URL-based linking
 
 1. Navigate to **Administration** → **Integrations**
 2. Click **Add Integration**
-3. Select your integration type (Jira, GitHub, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, Redmine, or Simple URL)
+3. Select your integration type (Jira, GitHub, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, Redmine, MantisBT, or Simple URL)
 4. Fill in the integration details:
 
 ```yaml
@@ -366,6 +380,25 @@ Redmine URL: https://your-redmine-instance.com
 - Redmine has no OAuth — issues are always created as the account that owns the API key.
 - The linked Redmine project must have **trackers enabled** and the **Issue tracking** module active, or issue creation will fail with a "Tracker cannot be blank" error.
 
+#### MantisBT
+
+1. Create an API token in MantisBT under **My Account → API Tokens**
+2. Copy the generated token (it is shown only once)
+3. Configure in TestPlanIt:
+
+```text
+MantisBT API Token: Your API token
+MantisBT URL: https://your-mantisbt-instance.com
+```
+
+**Notes:**
+
+- The MantisBT URL is required — TestPlanIt appends `/api/rest` to it for all API calls.
+- The API token inherits the permissions of the user it belongs to. Use a dedicated **service account** for shared integrations so issue creation and reads are not tied to one person's account.
+- MantisBT **categories** are used as the issue type; statuses and priorities are read from your instance.
+- MantisBT has no OAuth — issues are always created as the account that owns the API token.
+- The linked MantisBT project must have at least one **category** defined, since MantisBT requires a category on every new issue.
+
 #### Simple URL
 
 ```text
@@ -524,7 +557,7 @@ When enabled, TestPlanIt can:
 
 ### Real-time updates via inbound webhooks
 
-For Jira, GitHub, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, and Redmine integrations, TestPlanIt can also subscribe to events emitted by the external tracker so issue changes appear in TestPlanIt without waiting for a manual refresh. When an inbound webhook is configured for a project:
+For Jira, GitHub, GitLab, Gitea/Forgejo/Gogs, Azure DevOps, Redmine, and MantisBT integrations, TestPlanIt can also subscribe to events emitted by the external tracker so issue changes appear in TestPlanIt without waiting for a manual refresh. When an inbound webhook is configured for a project:
 
 - Status, assignee, and other supported fields on linked issues update within seconds of the change in the external tracker.
 - New issues filed directly in the external tracker are imported into TestPlanIt's Issues list automatically the first time they are referenced by a webhook event.
@@ -544,6 +577,7 @@ field support varies by provider:
 - **Azure DevOps**: Work item types are discovered per-project; fields are fixed per type
 - **GitHub / GitLab / Gitea**: Fixed field set (title, description, labels); no custom fields
 - **Redmine**: Trackers are discovered as issue types; statuses, priorities, and custom fields are read from the instance
+- **MantisBT**: Categories are discovered as issue types; statuses and priorities are read from the instance
 
 ### Custom Field Support
 
@@ -575,7 +609,7 @@ TestPlanIt preserves rich text formatting when creating external issues:
 TestPlanIt automatically converts between:
 
 - TipTap Editor JSON → Atlassian Document Format (Jira)
-- TipTap Editor JSON → Markdown (GitHub, GitLab, Gitea/Forgejo/Gogs, Redmine)
+- TipTap Editor JSON → Markdown (GitHub, GitLab, Gitea/Forgejo/Gogs, Redmine, MantisBT)
 - TipTap Editor JSON → HTML (Azure DevOps)
 - User references → Account IDs
 - Dates → ISO 8601 format
@@ -656,6 +690,7 @@ Respect external API limits:
 - Gitea / Forgejo / Gogs: Configured per-instance (no default limit)
 - Azure DevOps: No published hard limit
 - Redmine: Configured per-instance (no default limit)
+- MantisBT: Configured per-instance (no default limit)
 
 ## Security Considerations
 
@@ -697,6 +732,10 @@ curl -u ":YOUR_PAT" \
 # Test Redmine connection
 curl -H "X-Redmine-API-Key: YOUR_API_KEY" \
   https://your-redmine-instance.com/users/current.json
+
+# Test MantisBT connection
+curl -H "Authorization: YOUR_API_TOKEN" \
+  https://your-mantisbt-instance.com/api/rest/users/me
 ```
 
 ### Common Issues
@@ -813,6 +852,10 @@ curl -H "X-Redmine-API-Key: YOUR_API_KEY" \
 
 - REST API enabled on the instance (**Administration → Settings → API**)
 - An API key belonging to a user with permission to view and add issues in the linked project(s)
+
+**MantisBT:**
+
+- An API token belonging to a user with permission to view and report issues in the linked project(s)
 
 ## API Reference
 

@@ -2215,6 +2215,8 @@ export function GenerateTestCasesWizard({
         return "Gitea / Forgejo / Gogs";
       case "REDMINE":
         return "Redmine";
+      case "MANTISBT":
+        return "MantisBT";
       case "SIMPLE_URL":
         return externalSystem;
       default:

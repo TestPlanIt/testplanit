@@ -328,10 +328,14 @@ export function TestRunCaseDetails({
       },
     },
     issues: {
-      select: {
-        id: true,
-        name: true,
-        externalId: true,
+      include: {
+        integration: {
+          select: {
+            id: true,
+            provider: true,
+            name: true,
+          },
+        },
       },
     },
     testRuns: {

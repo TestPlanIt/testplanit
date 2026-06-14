@@ -6,7 +6,7 @@ description: Manage every external issue linked into TestPlanIt from one cross-p
 
 # Issues
 
-The **Administration → Issues** page is a global, cross-project table of every issue that has been linked into TestPlanIt from an external tracker — Jira, GitHub, GitLab, Azure DevOps, Gitea, Redmine, or a Simple URL link. Use it to review, re-sync, edit, or delete issue records that appear across your test cases, runs, and sessions.
+The **Administration → Issues** page is a global, cross-project table of every issue that has been linked into TestPlanIt from an external tracker — Jira, GitHub, GitLab, Azure DevOps, Gitea, Redmine, MantisBT, or a Simple URL link. Use it to review, re-sync, edit, or delete issue records that appear across your test cases, runs, and sessions.
 
 :::note
 Only system administrators can open this page. To view or manage issues for a single project, use the project's own **Issues** page instead.
@@ -61,7 +61,7 @@ Opens the **Edit Issue** dialog with these fields:
 - **Title**
 - **Description**
 
-Saving recalculates the external URL from the integration's base URL and the provider's link format (for example Jira `/browse/KEY`, GitHub `/issues/NUMBER`, Azure DevOps `/_workitems/edit/ID`, Redmine `/issues/ID`).
+Saving recalculates the external URL from the integration's base URL and the provider's link format (for example Jira `/browse/KEY`, GitHub `/issues/NUMBER`, Azure DevOps `/_workitems/edit/ID`, Redmine `/issues/ID`, MantisBT `/view.php?id=ID`).
 
 ### Delete
 

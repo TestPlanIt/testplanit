@@ -559,6 +559,61 @@ async function testRedmineConnection(
   };
 }
 
+async function testMantisBTConnection(
+  credentials: Record<string, string>,
+  settings: Record<string, string>
+): Promise<TestConnectionResult> {
+  const apiKey = credentials.apiToken || credentials.personalAccessToken;
+  const { baseUrl } = settings;
+
+  if (!apiKey || !baseUrl) {
+    return {
+      success: false,
+      error: "Missing required MantisBT configuration (API token, URL)",
+    };
+  }
+
+  // MantisBT's REST API lives under <baseUrl>/api/rest and the raw API token
+  // is sent verbatim in the Authorization header (no "Bearer"/"token" prefix).
+  const apiBase = `${baseUrl.replace(/\/$/, "")}/api/rest`;
+  const headers = {
+    Authorization: apiKey,
+    Accept: "application/json",
+  };
+
+  // Auth probe — /users/me returns the authenticated user.
+  const connection = await probe(`${apiBase}/users/me`, { headers });
+  if (!connection.ok) {
+    return {
+      success: false,
+      error: summarizeProbeFailures("MantisBT", { connection }),
+      capabilities: { connection },
+    };
+  }
+
+  // Search probe — listing issues proves issue read scope.
+  const searchIssues = await probe(`${apiBase}/issues?page_size=1`, {
+    headers,
+  });
+
+  // Read probe — listing projects proves project read scope (needed to pick a
+  // project when creating or linking issues).
+  const readIssue = await probe(`${apiBase}/projects`, { headers });
+
+  const success = connection.ok && searchIssues.ok && readIssue.ok;
+  return {
+    success,
+    error: success
+      ? undefined
+      : summarizeProbeFailures("MantisBT", {
+          connection,
+          searchIssues,
+          readIssue,
+        }),
+    capabilities: { connection, searchIssues, readIssue },
+  };
+}
+
 async function testSimpleUrlConnection(
   credentials: Record<string, string>,
   settings: Record<string, string>
@@ -725,6 +780,9 @@ export const POST = withAuditContext(async (req: NextRequest) => {
         break;
       case IntegrationProvider.REDMINE:
         result = await testRedmineConnection(testCredentials, testSettings);
+        break;
+      case IntegrationProvider.MANTISBT:
+        result = await testMantisBTConnection(testCredentials, testSettings);
         break;
       case IntegrationProvider.SIMPLE_URL:
         result = await testSimpleUrlConnection(testCredentials, testSettings);

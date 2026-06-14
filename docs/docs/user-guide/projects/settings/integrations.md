@@ -25,7 +25,7 @@ Only system administrators and project administrators can open this page.
 | | The **linked external projects** and which one is the **default** |
 | | The **default issue type** (Jira) for each linked project |
 
-Only integrations a system administrator has created and activated appear here. Supported providers are Jira, GitHub, GitLab, Gitea, Azure DevOps, Redmine, and Simple URL. If none exist, the page shows a **No issue integration assigned** empty state and an admin must configure one first.
+Only integrations a system administrator has created and activated appear here. Supported providers are Jira, GitHub, GitLab, Gitea, Azure DevOps, Redmine, MantisBT, and Simple URL. If none exist, the page shows a **No issue integration assigned** empty state and an admin must configure one first.
 
 ## Assigning an integration
 

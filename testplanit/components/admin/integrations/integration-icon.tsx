@@ -2,6 +2,7 @@ import { IntegrationProvider } from "@prisma/client";
 import { Bug } from "lucide-react";
 import { siGithub, siGitlab, siJira, siRedmine } from "simple-icons";
 import { GiteaPlatformIcon } from "@/components/shared/gitea-family-icon";
+import { MantisBTIcon } from "@/components/shared/mantisbt-icon";
 import { cn } from "~/utils";
 
 interface IntegrationIconProps {
@@ -64,6 +65,12 @@ export function IntegrationIcon({
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
             <path d={siRedmine.path} />
           </svg>
+        </div>
+      );
+    case "MANTISBT":
+      return (
+        <div className={cn(baseClass, "bg-[#59A635] text-white")}>
+          <MantisBTIcon className="h-5 w-5" />
         </div>
       );
     default:

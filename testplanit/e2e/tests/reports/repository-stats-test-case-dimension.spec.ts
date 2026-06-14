@@ -146,7 +146,16 @@ test.describe("Repository Statistics - Test Case Dimension", () => {
     await expect(runButton).toBeVisible({ timeout: 5000 });
     await expect(runButton).toBeEnabled({ timeout: 5000 });
     await runButton.click();
-    await page.waitForLoadState("networkidle");
+    // Wait for Elasticsearch to index and the report API to respond. networkidle
+    // can resolve before the ES query completes, so wait for either results or
+    // the no-results state instead.
+    await expect(
+      page
+        .locator(
+          "table, [data-testid='no-results'], text=/No results|No data|0 results/i"
+        )
+        .first()
+    ).toBeVisible({ timeout: 30_000 });
   }
 
   test("Test Case dimension is available in Repository Statistics report @smoke", async ({

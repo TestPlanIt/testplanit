@@ -1,11 +1,19 @@
-import { expect, test as base, type Page } from "@playwright/test";
+import { expect, test as base, type Page, type Route } from "@playwright/test";
 import { ApiHelper } from "./api.fixture";
 
 /**
- * Stub the bell's SSE stream with HTTP 204 so EventSource stops reconnecting
- * and `waitForLoadState("networkidle")` can fire. The NotificationBell mounts
- * on every authenticated page and would otherwise keep one network request
- * open indefinitely.
+ * Stub every always-on SSE stream with HTTP 204 so each EventSource stops
+ * reconnecting and `waitForLoadState("networkidle")` can fire. The app opens
+ * several long-lived streams that otherwise keep a network request open
+ * indefinitely and prevent the network from ever going idle:
+ *
+ *   - NotificationBell  → /api/notifications/stream (every authenticated page)
+ *   - useTestRunLiveStream → /api/test-runs/{id}/stream and
+ *                            /api/projects/{id}/test-runs/stream (run views)
+ *   - issueUpdateStreamManager → /api/issues/stream (any page showing issues)
+ *
+ * One-shot streams (LLM generation, imports, exports) are NOT stubbed — they
+ * complete and close on their own, so they don't block networkidle.
  *
  * The shared `page` fixture below auto-applies this. Tests that create their
  * own contexts via `browser.newContext()` must call this helper on each
@@ -15,11 +23,20 @@ import { ApiHelper } from "./api.fixture";
  * Tests that want real SSE behavior on the page (e.g. dedicated SSE coverage
  * tests) should not call this and can `unroute` if needed.
  */
-export async function stubBellSSE(page: Page): Promise<void> {
-  await page.route("**/api/notifications/stream", (route) =>
-    route.fulfill({ status: 204, body: "" })
-  );
+export async function stubLiveStreams(page: Page): Promise<void> {
+  const fulfill204 = (route: Route) => route.fulfill({ status: 204, body: "" });
+  await page.route(/\/api\/notifications\/stream/, fulfill204);
+  await page.route(/\/api\/test-runs\/[^/]+\/stream/, fulfill204);
+  await page.route(/\/api\/projects\/[^/]+\/test-runs\/stream/, fulfill204);
+  await page.route(/\/api\/issues\/stream/, fulfill204);
 }
+
+/**
+ * Back-compat alias. Prefer `stubLiveStreams`; this name is kept so existing
+ * manually-created-context call sites keep working (and now also benefit from
+ * the broader stubbing).
+ */
+export const stubBellSSE = stubLiveStreams;
 
 /**
  * Extended test fixtures for TestPlanIt E2E tests
@@ -37,10 +54,10 @@ export interface TestFixtures {
  * Extended test with custom fixtures
  */
 export const test = base.extend<TestFixtures>({
-  // Auto-apply the SSE stub to the fixture's `page`. See stubBellSSE above
-  // for rationale. Manually-created contexts must call stubBellSSE themselves.
+  // Auto-apply the SSE stubs to the fixture's `page`. See stubLiveStreams
+  // above for rationale. Manually-created contexts must call it themselves.
   page: async ({ page }, use) => {
-    await stubBellSSE(page);
+    await stubLiveStreams(page);
     // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(page);
   },

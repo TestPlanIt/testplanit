@@ -11,6 +11,7 @@ const ISSUE_TRACKING_PROVIDERS = [
   IntegrationProvider.GITLAB,
   IntegrationProvider.GITEA,
   IntegrationProvider.REDMINE,
+  IntegrationProvider.MANTISBT,
 ];
 
 export class JiraLinkService {

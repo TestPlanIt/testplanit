@@ -13,6 +13,7 @@ import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { siGithub, siGitlab, siJira, siRedmine } from "simple-icons";
 import { GiteaPlatformIcon } from "@/components/shared/gitea-family-icon";
+import { MantisBTIcon } from "@/components/shared/mantisbt-icon";
 import { cn } from "~/utils";
 
 interface IntegrationTypeSelectorProps {
@@ -69,6 +70,10 @@ const integrationTypes: { type: IntegrationProvider; icon: ReactNode }[] = [
   {
     type: IntegrationProvider.REDMINE,
     icon: <BrandIcon path={siRedmine.path} className="text-[#B32024]" />,
+  },
+  {
+    type: IntegrationProvider.MANTISBT,
+    icon: <MantisBTIcon className="h-4 w-4 shrink-0 text-[#59A635]" />,
   },
 ];
 

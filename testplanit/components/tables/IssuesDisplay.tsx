@@ -477,9 +477,11 @@ export const IssuesDisplay: React.FC<IssueDisplayProps> = ({
               ? "Azure DevOps"
               : integrationProvider === "REDMINE"
                 ? "Redmine"
-                : integrationProvider === "SIMPLE_URL"
-                  ? "External"
-                  : integrationProvider;
+                : integrationProvider === "MANTISBT"
+                  ? "MantisBT"
+                  : integrationProvider === "SIMPLE_URL"
+                    ? "External"
+                    : integrationProvider;
 
     return (
       <div

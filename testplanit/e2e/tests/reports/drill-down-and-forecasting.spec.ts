@@ -49,7 +49,13 @@ test.describe("Report Builder - Drill-Down", () => {
     await expect(runButton).toBeVisible({ timeout: 5000 });
     await expect(runButton).toBeEnabled({ timeout: 10000 });
     await runButton.click();
-    await page.waitForLoadState("networkidle");
+    await expect(
+      page
+        .locator(
+          "table, [data-testid='no-results'], text=/No results|No data|0 results/i"
+        )
+        .first()
+    ).toBeVisible({ timeout: 30_000 });
   }
 
   test("Drill-down: clicking clickable metric cell opens drawer @smoke", async ({

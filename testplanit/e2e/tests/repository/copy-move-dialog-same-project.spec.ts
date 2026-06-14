@@ -174,7 +174,7 @@ test.describe("Copy/Move dialog same-project", () => {
     const siblingOption = page.getByTestId(
       `copy-move-folder-option-${siblingFolderId}`
     );
-    await expect(siblingOption).toBeVisible({ timeout: 15_000 });
+    await expect(siblingOption).toBeVisible({ timeout: 30_000 });
     await siblingOption.click();
 
     await page.getByTestId("copy-move-next-button").click();

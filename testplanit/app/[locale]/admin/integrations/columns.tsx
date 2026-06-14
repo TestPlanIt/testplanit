@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Integration } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
 import { GiteaPlatformIcon } from "@/components/shared/gitea-family-icon";
+import { MantisBTIcon } from "@/components/shared/mantisbt-icon";
 import { Link, Plug } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
@@ -41,6 +42,7 @@ const providerIcons: Record<string, React.ReactNode> = {
       <path d={siRedmine.path} />
     </svg>
   ),
+  MANTISBT: <MantisBTIcon className="h-4 w-4 text-[#59A635]" />,
   SIMPLE_URL: <Link className="h-4 w-4" />,
 };
 

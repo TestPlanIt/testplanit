@@ -74,7 +74,8 @@ describe("IntegrationManager", () => {
       expect(types).toContain("GITLAB");
       expect(types).toContain("GITEA");
       expect(types).toContain("REDMINE");
-      expect(types).toHaveLength(7);
+      expect(types).toContain("MANTISBT");
+      expect(types).toHaveLength(8);
     });
   });
 

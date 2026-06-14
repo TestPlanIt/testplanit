@@ -1368,6 +1368,9 @@
           },
           "redmine": {
             "description": "Connect to a self-hosted Redmine instance for issue tracking."
+          },
+          "mantisbt": {
+            "description": "Connect to a self-hosted MantisBT instance for issue tracking."
           }
         }
       },
@@ -1652,7 +1655,14 @@
         "setupStepsRedmineStep1": "Install the redmine_webhook plugin on your Redmine server (Redmine has no built-in webhooks).",
         "setupStepsRedmineStep2": "In your Redmine project, open Settings → Modules and enable Webhooks.",
         "setupStepsRedmineStep3": "Open Settings → Webhooks, paste the URL above, and save.",
-        "setupStepsRedmineStep4": "Create or update an issue in Redmine; the linked issue’s status will sync here."
+        "setupStepsRedmineStep4": "Create or update an issue in Redmine; the linked issue’s status will sync here.",
+        "inboundChooserMantisbt": "MantisBT",
+        "inboundMantisbtTitle": "MantisBT inbound webhook",
+        "inboundMantisbtScopeHint": "A MantisBT webhook plugin does not sign requests, so this webhook URL is the credential — treat it as a secret and rotate it if exposed.",
+        "setupStepsMantisbtStep1": "Install and enable a MantisBT webhook plugin on your MantisBT server (MantisBT has no built-in webhooks).",
+        "setupStepsMantisbtStep2": "In the plugin configuration, choose the issue created and issue updated events.",
+        "setupStepsMantisbtStep3": "Paste the URL above as the webhook target and save.",
+        "setupStepsMantisbtStep4": "Create or update an issue in MantisBT; the linked issue’s status will sync here."
       },
       "aiModels": {
         "description": "配置人工智慧模型以實現智慧測試用例生成和分析",
@@ -5097,6 +5107,10 @@
         "redmine": {
           "name": "Redmine",
           "description": "Connect to a self-hosted Redmine instance for issue tracking"
+        },
+        "mantisbt": {
+          "name": "MantisBT",
+          "description": "Connect to a self-hosted MantisBT instance for issue tracking"
         }
       },
       "filterPlaceholder": "過濾器整合…",
@@ -5193,7 +5207,13 @@
         "redmineApiKeyHelp": "Found under My account → API access key (enable the REST API in Administration → Settings → API)",
         "redmineUrl": "Redmine URL",
         "redmineUrlPlaceholder": "https://redmine.example.com",
-        "redmineUrlHelp": "The base URL of your Redmine instance"
+        "redmineUrlHelp": "The base URL of your Redmine instance",
+        "mantisBTApiKey": "MantisBT API Token",
+        "mantisBTApiKeyPlaceholder": "Enter your MantisBT API token",
+        "mantisBTApiKeyHelp": "Create one under your MantisBT account settings → API Tokens",
+        "mantisBTUrl": "MantisBT URL",
+        "mantisBTUrlPlaceholder": "https://mantisbt.example.com",
+        "mantisBTUrlHelp": "The base URL of your MantisBT instance"
       },
       "authType": {
         "api_key": "API金鑰",
@@ -6119,6 +6139,8 @@
       "platform": "## Platform\nThe self-hosted Git platform you are connecting to.\n\n- **Gitea**: gitea.io-based instances\n- **Forgejo**: forgejo.org-based instances (Gitea fork)\n- **Gogs**: gogs.io-based instances\n\nThis controls which icon is shown and may affect API compatibility.",
       "redmineApiKey": "## Redmine API Key\nYour personal REST API access key.\n\n- Enable the REST API under Administration → Settings → API\n- Copy your key from My account → API access key\n- Scoped to your user’s permissions; use a service account for shared integrations",
       "redmineUrl": "## Redmine URL\nThe base URL of your Redmine instance.\n\n- Format: https://redmine.example.com\n- Do not include /issues or other paths\n- Must be accessible from this server",
+      "mantisBTApiKey": "## MantisBT API Token\nYour personal REST API token.\n\n- Create one under your MantisBT account settings → API Tokens\n- Scoped to your user’s permissions; use a service account for shared integrations",
+      "mantisBTUrl": "## MantisBT URL\nThe base URL of your MantisBT instance.\n\n- Format: https://mantisbt.example.com\n- Do not include /api/rest or other paths\n- Must be accessible from this server",
       "githubBaseUrl": "## API Base URL\nFull GitHub API root for GitHub Enterprise Server.\n\n- Typically ends in /api/v3\n- Leave blank to use api.github.com\n- Must be accessible from this server"
     },
     "config": {
