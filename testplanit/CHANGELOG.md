@@ -1,3 +1,9 @@
+## [0.38.1](https://github.com/TestPlanIt/testplanit/compare/v0.38.0...v0.38.1) (2026-06-14)
+
+### Bug Fixes
+
+* **runs:** stop test run list rows from overflowing and overlapping ([#437](https://github.com/TestPlanIt/testplanit/issues/437)) ([4e705be](https://github.com/TestPlanIt/testplanit/commit/4e705be2c8383ec01f0462642c4930b6630abb8e))
+
 ## [0.38.0](https://github.com/TestPlanIt/testplanit/compare/v0.37.15...v0.38.0) (2026-06-13)
 
 ### Features
