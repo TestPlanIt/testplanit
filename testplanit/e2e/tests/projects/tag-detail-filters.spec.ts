@@ -26,7 +26,9 @@ test.describe("Tag Detail Page Filters", () => {
     folderId = folders[0].id;
 
     // Create a tag
-    tagId = await api.createTag(`filter-test-${Date.now()}`);
+    tagId = await api.createTag(
+      `filter-test-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    );
 
     // Create manual and automated test cases
     manualCaseId = await api.createTestCase(
@@ -211,7 +213,9 @@ test.describe("Tag Detail Page Filters", () => {
     api,
   }) => {
     // Create a tag with only completed sessions
-    const emptyTagId = await api.createTag(`empty-filter-${Date.now()}`);
+    const emptyTagId = await api.createTag(
+      `empty-filter-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    );
     const completedSessionId = await api.createSession(
       projectId,
       `Only Completed ${Date.now()}`,
