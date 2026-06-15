@@ -52,7 +52,7 @@ test.describe("Report Builder - Drill-Down", () => {
     await expect(
       page
         .locator(
-          "table, [data-testid='no-results'], text=/No results|No data|0 results/i"
+          "table, [data-testid='no-results'], :text-matches('No results|No data|0 results', 'i')"
         )
         .first()
     ).toBeVisible({ timeout: 30_000 });

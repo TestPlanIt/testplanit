@@ -170,7 +170,7 @@ describe("MagicSelectButton", () => {
     expect(screen.getByTestId("magic-select-dialog")).toBeInTheDocument();
   });
 
-  it("calls onSuggestionsAccepted with merged (deduplicated) case IDs when dialog accepts", () => {
+  it("calls onSuggestionsAccepted with merged (deduplicated) case IDs when dialog accepts", async () => {
     const onSuggestionsAccepted = vi.fn();
     const selectedTestCases = [1, 2, 3];
 
@@ -207,15 +207,17 @@ describe("MagicSelectButton", () => {
       />
     );
 
-    // Open dialog
-    const openButton = screen.getByRole("button", {
-      name: /runs\.magicSelect\.title/i,
-    });
-    user.click(openButton);
+    // Not called before the dialog accepts
+    expect(onSuggestionsAccepted).not.toHaveBeenCalled();
 
-    // Accept will be called after dialog opens - this is a synchronous mock
-    // so we just verify the callback mechanism
-    expect(onSuggestionsAccepted).not.toHaveBeenCalled(); // Not called yet
+    // Open the dialog, then accept the suggestions
+    await user.click(
+      screen.getByRole("button", { name: /runs\.magicSelect\.title/i })
+    );
+    await user.click(screen.getByRole("button", { name: "Accept" }));
+
+    // selectedTestCases [1,2,3] merged with suggested [2,3,4,5], deduplicated
+    expect(onSuggestionsAccepted).toHaveBeenCalledWith([1, 2, 3, 4, 5]);
   });
 
   it("button is disabled when testRunMetadata.name is empty", () => {
