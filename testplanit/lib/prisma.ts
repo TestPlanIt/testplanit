@@ -12,6 +12,7 @@ import {
   auditCreate,
   auditUpdate,
   auditDelete,
+  auditEntity,
   auditRoleChange,
   auditPermissionGrant,
   auditPermissionRevoke,
@@ -21,6 +22,7 @@ import {
   auditBulkUpdate,
   auditBulkDelete,
   captureAuditEvent,
+  resolveTestRunResultAuditScope,
   AUDITED_CONFIG_MODELS,
 } from "./services/auditLog";
 import { buildConfigAuditHooks } from "./services/configAuditHooks";
@@ -1037,17 +1039,30 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
       // =============================================================================
       // Phase 3: Core Data - Test Execution & Content
       // =============================================================================
-      // Plan 02-05 Rule-1 fix: this hook block was previously keyed
-      // `testRunResult:` (singular) which never matched the Prisma client
-      // field `prisma.testRunResults` (plural). Audit calls were dead.
-      // Renaming to the correct plural key activates the audit calls AND
-      // the new webhook emit for TestRunResults.
+      // A test run result is audited under the plural model name
+      // `TestRunResults` (matching every other entityType) regardless of which
+      // path mutated it. It carries no projectId or name column of its own, so
+      // both are resolved from its parents (run -> projectId, case ->
+      // repository case name) via resolveTestRunResultAuditScope. auditEntity
+      // diffs the scalar row while taking the resolved name/projectId
+      // explicitly, so the nested relations never leak into the change set.
       testRunResults: {
         async create({ args, query }: any) {
           return await baseClient.$transaction(async (tx) => {
             const result = await query(args);
             if (result?.id) {
-              await auditCreate("TestRunResult", result);
+              const scope = await resolveTestRunResultAuditScope(
+                baseClient,
+                result
+              );
+              await auditEntity({
+                action: "CREATE",
+                entityType: "TestRunResults",
+                entityId: String(result.id),
+                entityName: scope.entityName,
+                newRow: result,
+                projectId: scope.projectId,
+              });
               if (result.testRunId !== undefined) {
                 await emitTestRunResultAdded(result, tx);
               }
@@ -1061,7 +1076,19 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
             : null;
           const result = await query(args);
           if (result?.id) {
-            await auditUpdate("TestRunResult", oldEntity, result);
+            const scope = await resolveTestRunResultAuditScope(
+              baseClient,
+              result
+            );
+            await auditEntity({
+              action: "UPDATE",
+              entityType: "TestRunResults",
+              entityId: String(result.id),
+              entityName: scope.entityName,
+              oldRow: oldEntity,
+              newRow: result,
+              projectId: scope.projectId,
+            });
           }
           return result;
         },
@@ -1069,9 +1096,20 @@ function createPrismaClient(errorFormat: "pretty" | "colorless") {
           const oldEntity = args.where
             ? await baseClient.testRunResults.findUnique({ where: args.where })
             : null;
+          // Resolve scope while the row (and its FKs) still exists.
+          const scope = oldEntity
+            ? await resolveTestRunResultAuditScope(baseClient, oldEntity)
+            : null;
           const result = await query(args);
           if (oldEntity) {
-            await auditDelete("TestRunResult", oldEntity);
+            await auditEntity({
+              action: "DELETE",
+              entityType: "TestRunResults",
+              entityId: String(oldEntity.id),
+              entityName: scope?.entityName,
+              oldRow: oldEntity,
+              projectId: scope?.projectId,
+            });
           }
           return result;
         },

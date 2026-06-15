@@ -20,6 +20,7 @@ import {
   calculateDiff,
   captureAuditEvent,
   ENTITY_NAME_FIELDS,
+  resolveTestRunResultAuditScope,
   type AuditEvent,
 } from "~/lib/services/auditLog";
 import {
@@ -1526,8 +1527,26 @@ async function innerHandler(
           if (data) {
             const entityId =
               data.id || data.key || `${parsedPath.operation}-${Date.now()}`;
-            const entityName = extractEntityName(parsedPath.model, data);
-            const projectId = data.projectId;
+            let entityName = extractEntityName(parsedPath.model, data);
+            let projectId = data.projectId;
+
+            // A test run result has no projectId or name column of its own:
+            // it is project-scoped through its run and named after its test
+            // case (two relations away). Resolve both from the row's foreign
+            // keys so an RPC-driven result mutation (e.g. a soft-delete that
+            // arrives as an isDeleted update) is scoped and named identically
+            // to one recorded through the submit-result route. The update/
+            // delete pre-snapshot carries the FKs; a create returns them on
+            // the row itself.
+            if (parsedPath.model === "testRunResults") {
+              const fkSource = auditPreSnapshot ?? data;
+              const scope = await resolveTestRunResultAuditScope(prisma, {
+                testRunId: fkSource?.testRunId,
+                testRunCaseId: fkSource?.testRunCaseId,
+              });
+              entityName = scope.entityName;
+              projectId = scope.projectId;
+            }
 
             // Map model names to proper entity types for display
             const entityTypeMap: Record<string, string> = {
@@ -1545,7 +1564,7 @@ async function innerHandler(
               allowedEmailDomain: "AllowedEmailDomain",
               appConfig: "AppConfig",
               userIntegrationAuth: "UserIntegrationAuth",
-              testRunResults: "TestRunResult",
+              testRunResults: "TestRunResults",
               comment: "Comment",
               attachment: "Attachment",
               apiToken: "ApiToken",

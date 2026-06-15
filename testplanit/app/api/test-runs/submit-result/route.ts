@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 import { authenticateRequest } from "~/lib/api-token-auth";
+import { updateAuditContext } from "~/lib/auditContext";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
 import { isTiptapEmpty } from "~/lib/tiptap/isTiptapEmpty";
 import { captureAuditEvent } from "~/lib/services/auditLog";
@@ -130,7 +132,7 @@ function parseParameterSchema(
   return out;
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withAuditContext(async (req: NextRequest) => {
   try {
     const session = await getServerSession(authOptions);
     const auth = await authenticateRequest(req, session);
@@ -141,6 +143,12 @@ export async function POST(req: NextRequest) {
       );
     }
     const authenticatedUserId = auth.user.userId;
+    // Stamp the actor onto the audit-context frame so every row this request
+    // emits (the result write and its field-value/status updates via the
+    // $extends hooks) carries userId. The cookie path is also enriched with
+    // name/email by the NextAuth session callback; this covers API-token /
+    // MCP callers, where that callback never runs.
+    updateAuditContext({ userId: authenticatedUserId });
 
     const body = await req.json();
     const parsed = submitResultSchema.safeParse(body);
@@ -841,4 +849,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

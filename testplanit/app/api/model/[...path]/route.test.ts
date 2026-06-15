@@ -241,7 +241,7 @@ const entityTypeMap: Record<string, string> = {
   allowedEmailDomain: "AllowedEmailDomain",
   appConfig: "AppConfig",
   userIntegrationAuth: "UserIntegrationAuth",
-  testRunResult: "TestRunResult",
+  testRunResults: "TestRunResults",
   comment: "Comment",
   attachment: "Attachment",
   apiToken: "ApiToken",

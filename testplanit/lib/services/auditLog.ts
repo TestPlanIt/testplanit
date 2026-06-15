@@ -407,6 +407,67 @@ export function extractEntityName(
 }
 
 /**
+ * Minimal Prisma client surface needed to resolve a result's audit scope.
+ * Declared structurally so both the raw base client and the access-enhanced
+ * RPC client can be passed without importing either (which would create an
+ * import cycle with lib/prisma).
+ */
+type ResultScopeClient = {
+  testRuns: {
+    findUnique(args: {
+      where: { id: number };
+      select: { projectId: true };
+    }): Promise<{ projectId: number | null } | null>;
+  };
+  testRunCases: {
+    findUnique(args: {
+      where: { id: number };
+      select: { repositoryCase: { select: { name: true } } };
+    }): Promise<{ repositoryCase: { name: string | null } | null } | null>;
+  };
+};
+
+/**
+ * Resolve the project scope and display name for a TestRunResults audit row.
+ *
+ * A result row carries neither a `projectId` nor a name of its own. It is
+ * project-scoped through its parent run (`testRunId` -> TestRuns.projectId)
+ * and is named after the test case it records a result for, which lives two
+ * relations away (`testRunCaseId` -> TestRunCases.repositoryCase.name). Both
+ * parents are already committed by the time a result is created, so resolving
+ * from the foreign keys works even when called from inside the result-create
+ * transaction, where the new result row is not yet visible on a separate
+ * connection. The display name reuses the same ENTITY_NAME_FIELDS path that
+ * names a TestRunCases row, so a result and its test case read identically.
+ */
+export async function resolveTestRunResultAuditScope(
+  client: ResultScopeClient,
+  row: { testRunId?: number | null; testRunCaseId?: number | null }
+): Promise<{ projectId?: number; entityName?: string }> {
+  const [testRun, testRunCase] = await Promise.all([
+    row.testRunId != null
+      ? client.testRuns.findUnique({
+          where: { id: row.testRunId },
+          select: { projectId: true },
+        })
+      : Promise.resolve(null),
+    row.testRunCaseId != null
+      ? client.testRunCases.findUnique({
+          where: { id: row.testRunCaseId },
+          select: { repositoryCase: { select: { name: true } } },
+        })
+      : Promise.resolve(null),
+  ]);
+  return {
+    projectId: testRun?.projectId ?? undefined,
+    entityName: extractEntityName(
+      "TestRunCases",
+      testRunCase as Record<string, unknown> | null
+    ),
+  };
+}
+
+/**
  * Queue an audit event for async processing.
  * This is the main entry point for capturing audit events.
  * Returns immediately without blocking the mutation.

@@ -4,8 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod/v4";
 
 import { authenticateRequest } from "~/lib/api-token-auth";
+import { updateAuditContext } from "~/lib/auditContext";
+import { withAuditContext } from "~/lib/auditContextWrappers";
 import { prisma } from "~/lib/prisma";
-import { calculateDiff, captureAuditEvent } from "~/lib/services/auditLog";
 import {
   assertResultEditWindowOpen,
   isEditWindowExpiredError,
@@ -57,17 +58,7 @@ const editResultSchema = z.object({
 // Scalar fields captured before and after the update so the audit event
 // records an accurate field-level diff (calculateDiff skips timestamps/ids it
 // doesn't care about and masks sensitive values).
-const auditableSelect = {
-  statusId: true,
-  notes: true,
-  evidence: true,
-  elapsed: true,
-  editedById: true,
-  editedAt: true,
-  testRunCaseVersion: true,
-} as const;
-
-export async function POST(req: NextRequest) {
+export const POST = withAuditContext(async (req: NextRequest) => {
   try {
     const session = await getServerSession(authOptions);
     const auth = await authenticateRequest(req, session);
@@ -78,6 +69,11 @@ export async function POST(req: NextRequest) {
       );
     }
     const authenticatedUserId = auth.user.userId;
+    // Stamp the actor onto the audit-context frame so the result update's
+    // $extends audit row carries userId. The cookie path is also enriched
+    // with name/email by the NextAuth session callback; this covers
+    // API-token / MCP callers, where that callback never runs.
+    updateAuditContext({ userId: authenticatedUserId });
 
     const body = await req.json();
     const parsed = editResultSchema.safeParse(body);
@@ -359,13 +355,8 @@ export async function POST(req: NextRequest) {
       existing.resultFieldValues.map((fv) => [fv.fieldId, fv.id])
     );
 
-    const updated = await prisma.$transaction(async (tx) => {
-      const before = await tx.testRunResults.findUnique({
-        where: { id: input.resultId },
-        select: auditableSelect,
-      });
-
-      const result = await tx.testRunResults.update({
+    const result = await prisma.$transaction(async (tx) => {
+      const updated = await tx.testRunResults.update({
         where: { id: input.resultId },
         data: {
           statusId: input.statusId,
@@ -404,29 +395,15 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      const after = await tx.testRunResults.findUnique({
-        where: { id: input.resultId },
-        select: auditableSelect,
-      });
-
-      return { result, before, after };
+      return updated;
     });
 
-    // Post-commit, best-effort audit with the before/after diff.
-    const changes = calculateDiff(updated.before, updated.after);
-    captureAuditEvent({
-      action: "UPDATE",
-      entityType: "TestRunResults",
-      entityId: String(input.resultId),
-      projectId: existing.testRunCase.testRun.projectId,
-      userId: user.id,
-      changes,
-      metadata: { testRunCaseId: existing.testRunCaseId },
-    }).catch(() => {
-      // Audit is best-effort — never block the API response on it.
-    });
+    // The result UPDATE is audited by the shared TestRunResults $extends hook
+    // (lib/prisma.ts), which scopes and names the row from its parents. The
+    // hook fires on the tx.testRunResults.update above, so no explicit capture
+    // is made here — that previously double-logged every edit.
 
-    return NextResponse.json({ result: updated.result });
+    return NextResponse.json({ result });
   } catch (error) {
     if (
       typeof Prisma?.PrismaClientKnownRequestError === "function" &&
@@ -444,4 +421,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

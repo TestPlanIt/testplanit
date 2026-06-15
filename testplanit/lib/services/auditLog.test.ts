@@ -19,6 +19,7 @@ import {
   calculateDiff,
   captureAuditEvent,
   extractEntityName,
+  resolveTestRunResultAuditScope,
   type AuditEvent,
 } from "./auditLog";
 
@@ -289,6 +290,74 @@ describe("AuditLog Service", () => {
       expect(extractEntityName("UserProjectPermission", entity)).toBe(
         "user-1:10"
       );
+    });
+  });
+
+  describe("resolveTestRunResultAuditScope", () => {
+    function makeClient(overrides?: {
+      projectId?: number | null;
+      caseName?: string | null;
+    }) {
+      const testRunsFindUnique = vi.fn().mockResolvedValue(
+        overrides?.projectId === undefined
+          ? { projectId: 42 }
+          : { projectId: overrides.projectId }
+      );
+      const testRunCasesFindUnique = vi.fn().mockResolvedValue(
+        overrides?.caseName === undefined
+          ? { repositoryCase: { name: "Login smoke test" } }
+          : { repositoryCase: { name: overrides.caseName } }
+      );
+      return {
+        client: {
+          testRuns: { findUnique: testRunsFindUnique },
+          testRunCases: { findUnique: testRunCasesFindUnique },
+        },
+        testRunsFindUnique,
+        testRunCasesFindUnique,
+      };
+    }
+
+    it("resolves projectId from the run and entityName from the test case", async () => {
+      const { client } = makeClient();
+      const scope = await resolveTestRunResultAuditScope(client, {
+        testRunId: 7,
+        testRunCaseId: 99,
+      });
+      expect(scope).toEqual({
+        projectId: 42,
+        entityName: "Login smoke test",
+      });
+    });
+
+    it("looks the case name up through repositoryCase (deep relation)", async () => {
+      const { client, testRunCasesFindUnique } = makeClient();
+      await resolveTestRunResultAuditScope(client, {
+        testRunId: 7,
+        testRunCaseId: 99,
+      });
+      expect(testRunCasesFindUnique).toHaveBeenCalledWith({
+        where: { id: 99 },
+        select: { repositoryCase: { select: { name: true } } },
+      });
+    });
+
+    it("skips the lookups and yields undefined when foreign keys are absent", async () => {
+      const { client, testRunsFindUnique, testRunCasesFindUnique } =
+        makeClient();
+      const scope = await resolveTestRunResultAuditScope(client, {});
+      expect(scope).toEqual({ projectId: undefined, entityName: undefined });
+      expect(testRunsFindUnique).not.toHaveBeenCalled();
+      expect(testRunCasesFindUnique).not.toHaveBeenCalled();
+    });
+
+    it("tolerates a missing run or unnamed case", async () => {
+      const { client } = makeClient({ projectId: null, caseName: null });
+      const scope = await resolveTestRunResultAuditScope(client, {
+        testRunId: 7,
+        testRunCaseId: 99,
+      });
+      expect(scope).toEqual({ projectId: undefined, entityName: undefined });
     });
   });
 
