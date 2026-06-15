@@ -7,6 +7,7 @@ import type {
 } from "~/lib/integrations/adapters/IssueAdapter";
 import { parameterCreateSchema } from "~/lib/schemas/parameterSchema";
 import {
+  buildOutlineSystemPrompt,
   buildOutlineUserPrompt,
   buildSystemPrompt,
   fetchLinkedIssuesContext,
@@ -473,6 +474,81 @@ describe("buildSystemPrompt — INT-06 includeParameters extension", () => {
         lookupDataSetId: 2,
       })
     ).toThrow();
+  });
+});
+
+describe("buildSystemPrompt — name field language consistency", () => {
+  it("fallback (inline) prompt instructs that the name match the fieldValues language", () => {
+    const prompt = buildSystemPrompt(
+      sampleTemplate,
+      { folderContext: 0 },
+      "few",
+      false,
+      undefined,
+      false
+    );
+
+    expect(prompt).toContain("LANGUAGE CONSISTENCY");
+    expect(prompt).toMatch(/name[\s\S]*same language[\s\S]*fieldValues/i);
+  });
+
+  it("custom/DB template (baseTemplate) path injects the language instruction when missing", () => {
+    const customTemplate =
+      "Responde SIEMPRE en español.\n\n{{EXAMPLE_STRUCTURE}}\n\nREQUIRED:\n{{REQUIRED_FIELDS_LIST}}\n\nReturn ONLY the JSON.";
+
+    const prompt = buildSystemPrompt(
+      sampleTemplate,
+      { folderContext: 0 },
+      "few",
+      false,
+      customTemplate,
+      false
+    );
+
+    // The admin's custom instruction is preserved...
+    expect(prompt).toContain("Responde SIEMPRE en español.");
+    // ...and the name-language guardrail reaches custom prompts too.
+    expect(prompt).toContain("LANGUAGE CONSISTENCY");
+    expect(prompt).toMatch(/name[\s\S]*same language[\s\S]*fieldValues/i);
+  });
+
+  it("does not duplicate the instruction when the base template already carries it", () => {
+    const seededTemplate =
+      "{{EXAMPLE_STRUCTURE}}\n\nREQUIREMENTS:\n- LANGUAGE CONSISTENCY: Write the name in the same language as fieldValues.\n\nReturn ONLY the JSON.";
+
+    const prompt = buildSystemPrompt(
+      sampleTemplate,
+      { folderContext: 0 },
+      "few",
+      false,
+      seededTemplate,
+      false
+    );
+
+    const occurrences = prompt.split("LANGUAGE CONSISTENCY").length - 1;
+    expect(occurrences).toBe(1);
+  });
+});
+
+describe("buildOutlineSystemPrompt — title language follows project prompt", () => {
+  it("without style guidance, leaves the outline prompt language-neutral", () => {
+    const prompt = buildOutlineSystemPrompt("few");
+    expect(prompt).toContain('"outlines"');
+    expect(prompt).not.toContain("PROJECT GENERATION INSTRUCTIONS");
+  });
+
+  it("forwards the resolved prompt so titles follow its language directive", () => {
+    const prompt = buildOutlineSystemPrompt(
+      "few",
+      "You are a generator. Responde SIEMPRE en español."
+    );
+
+    // The project's prompt (carrying the language directive) is forwarded...
+    expect(prompt).toContain("Responde SIEMPRE en español.");
+    expect(prompt).toContain("PROJECT GENERATION INSTRUCTIONS");
+    // ...and the outline still owns the authoritative output format.
+    expect(prompt).toContain('"outlines"');
+    expect(prompt).toMatch(/language[\s\S]*project instructions/i);
   });
 });
 
