@@ -93,6 +93,7 @@ ADDITIONAL FIELDS (include ALL of these in fieldValues):
 REQUIREMENTS:
 - Generate {{QUANTITY_GUIDANCE}} that are SPECIFIC to the provided issue
 - Each test case name should reference the actual feature/functionality being tested
+- LANGUAGE CONSISTENCY: Write the top-level \`name\` of every test case in the SAME language you use for the values inside \`fieldValues\`. The \`name\` is human-readable content — never leave it in English (or reuse the English wording from this prompt) when the field values are generated in another language.
 {{STEPS_INSTRUCTION}}
 {{PRIORITY_INSTRUCTION}}
 - CRITICAL: ALL REQUIRED FIELDS must be included in fieldValues with meaningful content

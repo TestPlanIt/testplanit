@@ -743,6 +743,12 @@ export function buildSystemPrompt(
     ? buildParameterInstructionBlock(STARTER_DATASET_ROW_CAP)
     : "";
 
+  // Keep each test case's top-level `name` in the same language as its
+  // fieldValues. Injected for every prompt source (the marker check below
+  // avoids duplicating it when a customized prompt already carries the line).
+  const languageConsistencyInstruction =
+    "- LANGUAGE CONSISTENCY: Write the top-level `name` of every test case in the SAME language you use for the values inside `fieldValues`. The `name` is human-readable content — never leave it in English (or reuse the English wording from this prompt) when the field values are generated in another language.";
+
   if (baseTemplate) {
     const rendered = baseTemplate
       .replace("{{EXAMPLE_STRUCTURE}}", exampleStructure)
@@ -752,9 +758,12 @@ export function buildSystemPrompt(
       .replace("{{STEPS_INSTRUCTION}}", stepsInstruction)
       .replace("{{PRIORITY_INSTRUCTION}}", priorityInstruction)
       .replace("{{TAG_INSTRUCTIONS}}", tagInstructions);
-    return parameterInstructions
-      ? `${rendered}\n\n${parameterInstructions}`
-      : rendered;
+    const languageTail = rendered.includes("LANGUAGE CONSISTENCY")
+      ? ""
+      : languageConsistencyInstruction;
+    return [rendered, parameterInstructions, languageTail]
+      .filter(Boolean)
+      .join("\n\n");
   }
 
   return `You are an expert test case generator. Analyze the provided issue and create specific, targeted test cases that validate the exact requirements and functionality described in that issue.
@@ -779,6 +788,7 @@ REQUIREMENTS:
 - Each test case object must contain ONLY: id, name, fieldValues${autoGenerateTags ? ", tags" : ""}. Do NOT include priority, automated, steps, or any other top-level keys.
 - ALL data belongs inside fieldValues using the exact field names shown above
 - Each test case name should reference the actual feature/functionality being tested${stepsInstruction}${priorityInstruction}
+${languageConsistencyInstruction}
 - CRITICAL: ALL REQUIRED FIELDS must be included in fieldValues with meaningful content
 - IMPORTANT: Include ALL optional fields in fieldValues
 - For text/textarea fields (Description, Preconditions, Post Conditions, etc.):
@@ -981,9 +991,27 @@ export interface TestCaseOutline {
   summary: string;
 }
 
-export function buildOutlineSystemPrompt(quantity?: string): string {
+export function buildOutlineSystemPrompt(
+  quantity?: string,
+  styleGuidance?: string
+): string {
   const quantityGuidance = quantity ? getQuantityGuidance(quantity) : "3-5";
-  return `You are a test case planning assistant. Given a software issue, generate a concise list of test case titles and one-sentence summaries.
+  // The outline title becomes the test case `name`. Forward the project's
+  // resolved generation prompt so any language/tone/terminology preferences
+  // (e.g. "respond in Spanish") also shape the titles — the structure-specific
+  // parts are explicitly out of scope here.
+  const guidanceBlock = styleGuidance?.trim()
+    ? `PROJECT GENERATION INSTRUCTIONS — apply ONLY their language, tone, and domain terminology when writing the titles and summaries. Ignore anything below about JSON shape, output format, or field values; the required output format is defined further down.
+---
+${styleGuidance.trim()}
+---
+
+`
+    : "";
+  const languageRequirement = styleGuidance?.trim()
+    ? "\n- Write the titles and summaries in the language and terminology called for by the project instructions above"
+    : "";
+  return `${guidanceBlock}You are a test case planning assistant. Given a software issue, generate a concise list of test case titles and one-sentence summaries.
 
 CRITICAL: Respond with ONLY valid JSON. No explanations, no text before or after.
 
@@ -999,7 +1027,7 @@ REQUIREMENTS:
 - Each title must be specific to the issue — no generic names
 - Each summary must be a single sentence explaining what the test validates
 - Titles and summaries must be distinct — no duplicates or overlapping coverage
-- Do NOT include field values, steps, or any other detail — only title and summary
+- Do NOT include field values, steps, or any other detail — only title and summary${languageRequirement}
 
 Return ONLY the JSON.`;
 }

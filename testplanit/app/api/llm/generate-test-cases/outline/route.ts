@@ -114,7 +114,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const systemPrompt = buildOutlineSystemPrompt(quantity);
+    // Forward the project's resolved generation prompt so language/tone
+    // preferences also apply to the titles (which become the test case names).
+    const styleGuidance =
+      resolvedPrompt.source !== "fallback"
+        ? resolvedPrompt.systemPrompt
+        : undefined;
+    const systemPrompt = buildOutlineSystemPrompt(quantity, styleGuidance);
 
     let maxTokens = resolvedPrompt.maxOutputTokens ?? 2048;
     const providerConfig = await (prisma as any).llmProviderConfig.findFirst({
