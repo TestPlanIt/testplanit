@@ -9,6 +9,10 @@ import {
 import { AUDIT_LOG_QUEUE_NAME } from "../lib/queues";
 import { SYSTEM_ACTOR_ID } from "../lib/auditContextConstants";
 import type { AuditLogJobData } from "../lib/services/auditLog";
+import {
+  PROJECT_SCOPED_ENTITY_TYPES,
+  resolveAuditEntityScope,
+} from "../lib/services/auditLog";
 import { withTenantContext } from "../lib/tenantContext";
 import valkeyConnection from "../lib/valkey";
 import { BULLMQ_PREFIX } from "../lib/bullPrefix";
@@ -82,21 +86,56 @@ const processor = async (job: Job<AuditLogJobData>) => {
       }
     }
 
+    // Backfill a missing display name and/or project scope from the committed
+    // row. Emitters that mutate through the ZenStack RPC route only see a
+    // partial `{ id }` result (it injects `select: { id: true }`), so the
+    // inline name/projectId resolution lands as null; rows project-scoped only
+    // through a parent relation (TestRunCases, results) likewise arrive without
+    // a scalar projectId. This worker runs after the mutation has committed, so
+    // a fresh read on a separate connection always sees the row — the one place
+    // every emitter can be reconciled. Best-effort: a lookup miss leaves the gap
+    // as-is rather than blocking the audit write.
+    let resolvedEntityName: string | null = event.entityName || null;
+    let resolvedProjectId: number | null = event.projectId ?? null;
+    const needName = !resolvedEntityName;
+    const needProjectId =
+      resolvedProjectId == null &&
+      PROJECT_SCOPED_ENTITY_TYPES.has(event.entityType);
+    if (needName || needProjectId) {
+      try {
+        const scope = await resolveAuditEntityScope(
+          prisma as never,
+          event.entityType,
+          event.entityId,
+          { needName, needProjectId }
+        );
+        if (needName && scope.entityName) resolvedEntityName = scope.entityName;
+        if (needProjectId && scope.projectId != null) {
+          resolvedProjectId = scope.projectId;
+        }
+      } catch (scopeError) {
+        console.warn(
+          `[AuditLogWorker] Could not backfill scope for ${event.entityType}:${event.entityId}:`,
+          scopeError
+        );
+      }
+    }
+
     // Validate projectId exists before creating audit log to prevent foreign key constraint errors
     // The project might have been deleted between when the event was queued and now
     let validatedProjectId: number | null = null;
-    if (event.projectId) {
+    if (resolvedProjectId != null) {
       const projectExists = await prisma.projects.findUnique({
-        where: { id: event.projectId },
+        where: { id: resolvedProjectId },
         select: { id: true },
       });
       if (projectExists) {
-        validatedProjectId = event.projectId;
+        validatedProjectId = resolvedProjectId;
       } else {
         // Project no longer exists - store the original projectId in metadata for reference
-        metadata.originalProjectId = event.projectId;
+        metadata.originalProjectId = resolvedProjectId;
         console.warn(
-          `[AuditLogWorker] Project ${event.projectId} no longer exists, creating audit log without project association`
+          `[AuditLogWorker] Project ${resolvedProjectId} no longer exists, creating audit log without project association`
         );
       }
     }
@@ -112,7 +151,7 @@ const processor = async (job: Job<AuditLogJobData>) => {
         action: event.action,
         entityType: event.entityType,
         entityId: event.entityId,
-        entityName: event.entityName || null,
+        entityName: resolvedEntityName,
         changes: event.changes as Prisma.InputJsonValue | undefined,
         metadata:
           Object.keys(metadata).length > 0

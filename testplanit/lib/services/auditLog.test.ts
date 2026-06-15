@@ -19,6 +19,7 @@ import {
   calculateDiff,
   captureAuditEvent,
   extractEntityName,
+  resolveAuditEntityScope,
   resolveTestRunResultAuditScope,
   type AuditEvent,
 } from "./auditLog";
@@ -239,6 +240,38 @@ describe("AuditLog Service", () => {
       expect(diff).toBeDefined();
       expect(diff!.config).toBeDefined();
     });
+
+    it("diffs a changed BigInt column without throwing (renders as string)", () => {
+      // JSON.stringify throws on BigInt; the diff must survive and record the
+      // change for columns like OllamaModelRegistry.modelSize / Attachments.size.
+      const diff = calculateDiff(
+        { id: 1, modelSize: 100n },
+        { id: 1, modelSize: 200n }
+      );
+
+      expect(diff).toBeDefined();
+      expect(diff!.modelSize).toEqual({ old: "100", new: "200" });
+    });
+
+    it("treats an unchanged BigInt column as no change", () => {
+      const diff = calculateDiff(
+        { id: 1, modelSize: 100n },
+        { id: 1, modelSize: 100n }
+      );
+      expect(diff).toBeUndefined();
+    });
+
+    it("renders a BigInt on CREATE/DELETE as a JSON-safe string", () => {
+      const created = calculateDiff(null, { id: 1, size: 4096n });
+      expect(created!.size).toEqual({ old: null, new: "4096" });
+
+      const deleted = calculateDiff({ id: 1, size: 4096n }, null);
+      expect(deleted!.size).toEqual({ old: "4096", new: null });
+
+      // The whole diff must be JSON-serializable for BullMQ / the Json column.
+      expect(() => JSON.stringify(created)).not.toThrow();
+      expect(() => JSON.stringify(deleted)).not.toThrow();
+    });
   });
 
   describe("extractEntityName", () => {
@@ -289,6 +322,17 @@ describe("AuditLog Service", () => {
       const entity = { userId: "user-1", projectId: 10 };
       expect(extractEntityName("UserProjectPermission", entity)).toBe(
         "user-1:10"
+      );
+    });
+
+    it("names ProjectCodeRepositoryConfig from its repository relation", () => {
+      const entity = {
+        id: 3,
+        projectId: 364,
+        repository: { name: "frontend-app" },
+      };
+      expect(extractEntityName("ProjectCodeRepositoryConfig", entity)).toBe(
+        "frontend-app"
       );
     });
   });
@@ -358,6 +402,151 @@ describe("AuditLog Service", () => {
         testRunCaseId: 99,
       });
       expect(scope).toEqual({ projectId: undefined, entityName: undefined });
+    });
+  });
+
+  describe("resolveAuditEntityScope", () => {
+    /** Build a client whose single delegate returns `row` from findUnique. */
+    function clientFor(accessor: string, row: unknown) {
+      const findUnique = vi.fn().mockResolvedValue(row);
+      return { client: { [accessor]: { findUnique } }, findUnique };
+    }
+
+    it("backfills a scalar name and scalar projectId from one re-read", async () => {
+      const { client, findUnique } = clientFor("sessions", {
+        id: 5,
+        name: "Exploratory pass",
+        projectId: 12,
+      });
+      const scope = await resolveAuditEntityScope(client, "Sessions", "5", {
+        needName: true,
+        needProjectId: true,
+      });
+      expect(scope).toEqual({
+        entityName: "Exploratory pass",
+        projectId: 12,
+      });
+      // Scalars need no include; numeric id is coerced to a number.
+      expect(findUnique).toHaveBeenCalledWith({ where: { id: 5 } });
+    });
+
+    it("resolves a relation-derived name and parent-derived projectId", async () => {
+      const { client, findUnique } = clientFor("testRunCases", {
+        id: 88,
+        repositoryCase: { name: "Checkout flow" },
+        testRun: { projectId: 3 },
+      });
+      const scope = await resolveAuditEntityScope(client, "TestRunCases", "88", {
+        needName: true,
+        needProjectId: true,
+      });
+      expect(scope).toEqual({ entityName: "Checkout flow", projectId: 3 });
+      expect(findUnique).toHaveBeenCalledWith({
+        where: { id: 88 },
+        include: {
+          repositoryCase: { select: { name: true } },
+          testRun: { select: { projectId: true } },
+        },
+      });
+    });
+
+    it("names ProjectCodeRepositoryConfig from its repository relation, scoped by its scalar projectId", async () => {
+      const { client, findUnique } = clientFor("projectCodeRepositoryConfig", {
+        id: 3,
+        repository: { name: "frontend-app" },
+        projectId: 364,
+      });
+      const scope = await resolveAuditEntityScope(
+        client,
+        "ProjectCodeRepositoryConfig",
+        "3",
+        { needName: true, needProjectId: true }
+      );
+      expect(scope).toEqual({ entityName: "frontend-app", projectId: 364 });
+      // The relation-derived name needs an include; the scalar projectId does not.
+      expect(findUnique).toHaveBeenCalledWith({
+        where: { id: 3 },
+        include: { repository: { select: { name: true } } },
+      });
+    });
+
+    it("passes a cuid primary key through as a string", async () => {
+      const { client, findUnique } = clientFor("issue", {
+        id: "cmqffq5ij0005",
+        title: "Crash on save",
+        projectId: 9,
+      });
+      await resolveAuditEntityScope(client, "Issue", "cmqffq5ij0005", {
+        needName: true,
+        needProjectId: false,
+      });
+      expect(findUnique).toHaveBeenCalledWith({
+        where: { id: "cmqffq5ij0005" },
+      });
+    });
+
+    it("skips synthetic bulk ids without querying", async () => {
+      const { client, findUnique } = clientFor("repositoryCases", {});
+      const scope = await resolveAuditEntityScope(
+        client,
+        "RepositoryCases",
+        "createMany-1700000000",
+        { needName: true, needProjectId: true }
+      );
+      expect(scope).toEqual({});
+      expect(findUnique).not.toHaveBeenCalled();
+    });
+
+    it("skips composite-key ids without querying", async () => {
+      const { client, findUnique } = clientFor("projectStatusAssignment", {});
+      const scope = await resolveAuditEntityScope(
+        client,
+        "ProjectStatusAssignment",
+        "5:390",
+        { needName: true, needProjectId: true }
+      );
+      expect(scope).toEqual({});
+      expect(findUnique).not.toHaveBeenCalled();
+    });
+
+    it("does not attempt a projectId re-read for a global entity type", async () => {
+      const { client, findUnique } = clientFor("roles", { id: 1, name: "QA" });
+      // Roles has a name field but is not project-scoped: with only a
+      // projectId gap, there is nothing a re-read could resolve.
+      const scope = await resolveAuditEntityScope(client, "Roles", "1", {
+        needName: false,
+        needProjectId: true,
+      });
+      expect(scope).toEqual({});
+      expect(findUnique).not.toHaveBeenCalled();
+    });
+
+    it("returns the empty gap-set when the row no longer exists", async () => {
+      const { client } = clientFor("sessions", null);
+      const scope = await resolveAuditEntityScope(client, "Sessions", "5", {
+        needName: true,
+        needProjectId: true,
+      });
+      expect(scope).toEqual({});
+    });
+
+    it("swallows query errors and returns the empty gap-set", async () => {
+      const findUnique = vi.fn().mockRejectedValue(new Error("db down"));
+      const scope = await resolveAuditEntityScope(
+        { sessions: { findUnique } },
+        "Sessions",
+        "5",
+        { needName: true, needProjectId: true }
+      );
+      expect(scope).toEqual({});
+    });
+
+    it("no-ops for an unknown model with no delegate", async () => {
+      const scope = await resolveAuditEntityScope({}, "Sessions", "5", {
+        needName: true,
+        needProjectId: true,
+      });
+      expect(scope).toEqual({});
     });
   });
 
@@ -599,6 +788,55 @@ describe("AuditLog Service", () => {
         userAgent: "Mozilla/5.0",
         requestId: "req-default",
       };
+    });
+  });
+
+  // The attachments audit hooks rely on auditCreate/auditDelete forwarding an
+  // explicit metadata bag so an attachment event can carry its parent FK
+  // (testCaseId/sessionId/etc.) — the only project-traceability an attachment
+  // has, since it lacks a scalar projectId and has no single relation chain to
+  // a project for the worker backfill to follow.
+  describe("auditCreate / auditDelete metadata forwarding", () => {
+    it("auditCreate forwards a metadata bag onto the queued event", async () => {
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-md-create" });
+
+      await auditCreate(
+        "Attachments",
+        { id: 109433, name: "spec.pdf" },
+        undefined,
+        { parent: { testCaseId: 108100 } }
+      );
+
+      expect(mocks.mockQueue.add).toHaveBeenCalledTimes(1);
+      const jobData = mocks.mockQueue.add.mock.calls[0][1];
+      expect(jobData.event.metadata).toMatchObject({
+        parent: { testCaseId: 108100 },
+      });
+    });
+
+    it("auditDelete forwards a metadata bag onto the queued event", async () => {
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-md-delete" });
+
+      await auditDelete(
+        "Attachments",
+        { id: 109433, name: "spec.pdf", sessionId: 384 },
+        undefined,
+        { parent: { sessionId: 384 } }
+      );
+
+      expect(mocks.mockQueue.add).toHaveBeenCalledTimes(1);
+      const jobData = mocks.mockQueue.add.mock.calls[0][1];
+      expect(jobData.event.metadata).toMatchObject({ parent: { sessionId: 384 } });
+    });
+
+    it("auditCreate leaves metadata unset when none is supplied (back-compat)", async () => {
+      mocks.mockQueue.add.mockResolvedValue({ id: "job-md-none" });
+
+      await auditCreate("Attachments", { id: 109434, name: "orphan.pdf" });
+
+      expect(mocks.mockQueue.add).toHaveBeenCalledTimes(1);
+      const jobData = mocks.mockQueue.add.mock.calls[0][1];
+      expect(jobData.event.metadata ?? undefined).toBeUndefined();
     });
   });
 

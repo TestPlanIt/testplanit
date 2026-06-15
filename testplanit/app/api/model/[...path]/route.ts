@@ -17,10 +17,12 @@ import { getCurrentTenantId } from "~/lib/multiTenantPrisma";
 import { prisma } from "~/lib/prisma";
 import {
   AUDITED_CONFIG_MODELS,
+  AUDITED_RPC_ENTITY_ACCESSORS,
   calculateDiff,
   captureAuditEvent,
   ENTITY_NAME_FIELDS,
   resolveTestRunResultAuditScope,
+  RPC_ENTITY_TYPE_MAP,
   type AuditEvent,
 } from "~/lib/services/auditLog";
 import {
@@ -174,37 +176,19 @@ function extractEntityIdFromBody(
   return null;
 }
 
-// Entity types we want to audit
+// Entity types we want to audit. Two sources, both keyed by real Prisma client
+// field (camelCase model name):
+//   - AUDITED_RPC_ENTITY_ACCESSORS: project/app + access entities (incl. the
+//     ReviewRequest cancel path, promoted to REVIEW_CANCELLED below).
+//   - AUDITED_CONFIG_MODELS: admin-config catalog + access models, audited
+//     canonically here on the RPC path (the dominant admin mutation path).
+// For both, the lib/prisma.ts `$extends` hooks cover non-RPC paths (workers,
+// custom routes, direct prisma) and are suppressed on this path via
+// suppressEntityAudit to avoid a double, partial (`select:{id:true}`-shaped)
+// generic row. Both lists live in auditLog.ts and are guarded against the
+// datamodel so a singular/plural accessor typo can't silently disable audit.
 const AUDITED_ENTITIES = new Set([
-  "repositoryCases",
-  "testRuns",
-  "sessions",
-  "sharedStepGroups",
-  "issues",
-  "milestones",
-  "projects",
-  "user",
-  "userProjectPermission",
-  "groupProjectPermission",
-  "ssoProvider",
-  "allowedEmailDomain",
-  "appConfig",
-  "userIntegrationAuth",
-  "testRunResults",
-  "comment",
-  "attachment",
-  "apiToken",
-  // ReviewRequest cancel path flips status to CANCELLED via the auto-API
-  // (the only review-state mutation not routed through the dedicated server
-  // actions). We audit the cancel here via REVIEW_CANCELLED; the request /
-  // decide paths emit REVIEW_REQUESTED / REVIEW_APPROVED / etc. from their
-  // own action handlers.
-  "reviewRequest",
-  // Admin-config catalog + access models. Audited canonically here on the RPC
-  // path (the dominant admin mutation path); the lib/prisma.ts `$extends` hooks
-  // cover non-RPC paths (workers, custom routes, direct prisma) and are
-  // suppressed on this path via suppressEntityAudit to avoid a double, partial
-  // (`select:{id:true}`-shaped) generic row. Driven from AUDITED_CONFIG_MODELS.
+  ...AUDITED_RPC_ENTITY_ACCESSORS,
   ...AUDITED_CONFIG_MODELS.map((c) => c.accessor),
 ]);
 
@@ -254,13 +238,13 @@ function extractEntityName(
   const nameFields: Record<string, string | string[]> = {
     repositoryCases: "name",
     testRuns: "name",
-    sessions: "title",
+    sessions: "name",
     projects: "name",
     milestones: "name",
-    sharedStepGroups: "name",
-    issues: "title",
+    sharedStepGroup: "name",
+    issue: "title",
     user: "email",
-    ssoProvider: "type",
+    ssoProvider: "name",
     allowedEmailDomain: "domain",
     appConfig: "key",
     apiToken: "name",
@@ -544,6 +528,26 @@ async function innerHandler(
         }
       } catch {
         // Ignore body parsing errors
+      }
+    }
+
+    // ZenStack RPC carries the mutation `where` differently per verb: `update`
+    // sends `{ where, data }` in the body, but `delete` sends its `where` in the
+    // `?q=` query param with no body at all. Resolve a single `where` from
+    // whichever transport carried it so audit before-snapshots (and the update
+    // after-read) work for hard-deletes too — not just the soft-delete UPDATE.
+    let resolvedWhere: any = requestBody?.where ?? null;
+    if (!resolvedWhere && isMutation && parsedPath) {
+      try {
+        const q = new URL(req.url).searchParams.get("q");
+        if (q) {
+          const parsedQ = JSON.parse(q);
+          if (parsedQ?.where) {
+            resolvedWhere = parsedQ.where;
+          }
+        }
+      } catch {
+        // Ignore missing URL / malformed q param
       }
     }
 
@@ -972,14 +976,14 @@ async function innerHandler(
       parsedPath &&
       AUDITED_ENTITIES.has(parsedPath.model) &&
       ["update", "delete"].includes(parsedPath.operation) &&
-      requestBody?.where
+      resolvedWhere
     ) {
       if (webhookPreSnapshot && webhookMutation?.model === parsedPath.model) {
         auditPreSnapshot = webhookPreSnapshot;
       } else {
         try {
           auditPreSnapshot = await (prisma as any)[parsedPath.model].findUnique(
-            { where: requestBody.where }
+            { where: resolvedWhere }
           );
         } catch (e) {
           console.error("[AuditLog] Failed to capture pre-snapshot:", e);
@@ -1548,31 +1552,41 @@ async function innerHandler(
               projectId = scope.projectId;
             }
 
-            // Map model names to proper entity types for display
+            // Map model names (camelCase accessors) to audit entity types
+            // (PascalCase model names) for display. Both maps live in
+            // auditLog.ts and are guarded against the datamodel.
             const entityTypeMap: Record<string, string> = {
-              repositoryCases: "RepositoryCases",
-              testRuns: "TestRuns",
-              sessions: "Sessions",
-              sharedStepGroups: "SharedStepGroup",
-              issues: "Issue",
-              milestones: "Milestones",
-              projects: "Projects",
-              user: "User",
-              userProjectPermission: "UserProjectPermission",
-              groupProjectPermission: "GroupProjectPermission",
-              ssoProvider: "SsoProvider",
-              allowedEmailDomain: "AllowedEmailDomain",
-              appConfig: "AppConfig",
-              userIntegrationAuth: "UserIntegrationAuth",
-              testRunResults: "TestRunResults",
-              comment: "Comment",
-              attachment: "Attachment",
-              apiToken: "ApiToken",
-              reviewRequest: "ReviewRequest",
+              ...RPC_ENTITY_TYPE_MAP,
               ...CONFIG_ENTITY_TYPE_BY_ACCESSOR,
             };
 
-            // Special handling for API token operations - use specific audit actions
+            const mappedEntityType =
+              entityTypeMap[parsedPath.model] || parsedPath.model;
+
+            // Bulk operations return only a `{ count }` aggregate — there is no
+            // row to name or scope, and the synthetic `${op}-${ts}` entityId
+            // can't be re-read by the audit worker. Name the entry after the
+            // affected count and lift projectId from the request payload
+            // (createMany: the first row; updateMany/deleteMany: the where
+            // filter) so a bulk admin action reads like its per-row counterpart.
+            if (auditAction.startsWith("BULK_") && typeof data.count === "number") {
+              entityName = `${data.count} ${mappedEntityType}`;
+              if (typeof projectId !== "number") {
+                const payloadProjectId = Array.isArray(requestBody?.data)
+                  ? requestBody?.data?.[0]?.projectId
+                  : requestBody?.data?.projectId ?? requestBody?.where?.projectId;
+                if (typeof payloadProjectId === "number") {
+                  projectId = payloadProjectId;
+                }
+              }
+            }
+
+            // Specialized semantic actions for security/config models. On this
+            // (RPC) path the shim is the canonical emitter — the matching
+            // lib/prisma.ts `$extends` hooks gate on suppressEntityAudit so they
+            // don't double-emit here. appConfig/ssoProvider collapse to a single
+            // config-changed action (the before/after diff distinguishes the
+            // create/update/delete), mirroring those hooks' prior behavior.
             let finalAuditAction = auditAction;
             if (parsedPath.model === "apiToken") {
               if (parsedPath.operation === "create") {
@@ -1586,6 +1600,10 @@ async function innerHandler(
                   finalAuditAction = "API_KEY_REVOKED";
                 }
               }
+            } else if (parsedPath.model === "appConfig") {
+              finalAuditAction = "SYSTEM_CONFIG_CHANGED";
+            } else if (parsedPath.model === "ssoProvider") {
+              finalAuditAction = "SSO_CONFIG_CHANGED";
             }
 
             // ReviewRequest cancel — the only review status mutation routed
@@ -1606,16 +1624,21 @@ async function innerHandler(
             }
 
             // Before/after capture (best-effort; never breaks the response).
-            // For an update, re-read the row (the RPC response is often a
-            // partial `{ id }`) and diff it against the pre-snapshot. For a
-            // delete, diff the removed row against null. `calculateDiff` masks
-            // sensitive fields and skips timestamp churn.
+            // For a create, snapshot the new row's values (old → null) so the
+            // entry records what was set. For an update, re-read the row (the
+            // RPC response is often a partial `{ id }`) and diff it against the
+            // pre-snapshot. For a delete, diff the removed row against null.
+            // `calculateDiff` masks sensitive fields and skips timestamp churn.
+            // The create snapshot uses the JSON-decoded response `data` (BigInt
+            // columns already arrive as strings there) so it stays serializable.
             let auditChanges: AuditEvent["changes"];
             try {
-              if (parsedPath.operation === "update" && auditPreSnapshot) {
-                const afterRow = requestBody?.where
+              if (parsedPath.operation === "create") {
+                auditChanges = calculateDiff(null, data);
+              } else if (parsedPath.operation === "update" && auditPreSnapshot) {
+                const afterRow = resolvedWhere
                   ? await (prisma as any)[parsedPath.model].findUnique({
-                      where: requestBody.where,
+                      where: resolvedWhere,
                     })
                   : null;
                 auditChanges = calculateDiff(auditPreSnapshot, afterRow);
@@ -1631,7 +1654,7 @@ async function innerHandler(
 
             const event: AuditEvent = {
               action: finalAuditAction,
-              entityType: entityTypeMap[parsedPath.model] || parsedPath.model,
+              entityType: mappedEntityType,
               entityId: String(entityId),
               entityName,
               ...(auditChanges ? { changes: auditChanges } : {}),
@@ -1651,9 +1674,21 @@ async function innerHandler(
               },
             };
 
-            // Awaiting ensures the event is enqueued before the response ships,
-            // which Next.js would otherwise drop via floating-promise handling.
-            await captureAuditEvent(event);
+            // A single-row UPDATE whose diff is empty changed nothing the audit
+            // log cares about (a no-op write, or one that only touched
+            // createdAt/updatedAt). auditUpdate()/auditEntity() drop those; the
+            // shim must match so every UPDATE row that survives carries real
+            // before/after values. CREATE/DELETE always diff non-empty, and bulk
+            // ops carry a count instead of a diff, so only `update` is gated.
+            const isEmptyUpdate =
+              parsedPath.operation === "update" &&
+              (!event.changes || Object.keys(event.changes).length === 0);
+
+            if (!isEmptyUpdate) {
+              // Awaiting ensures the event is enqueued before the response ships,
+              // which Next.js would otherwise drop via floating-promise handling.
+              await captureAuditEvent(event);
+            }
           }
         } catch (e) {
           // Don't let audit logging errors affect the response

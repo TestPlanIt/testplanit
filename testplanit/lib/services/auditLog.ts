@@ -47,20 +47,21 @@ export const ENTITY_NAME_FIELDS: Record<string, string | string[]> = {
   User: "email",
   RepositoryCases: "name",
   TestRuns: "name",
-  Sessions: "title",
+  Sessions: "name",
   Projects: "name",
   Milestones: "name",
   SharedStepGroup: "name",
   Issue: "title",
   Comment: "id",
-  SsoProvider: "type",
+  Attachments: "name",
+  SsoProvider: "name",
   AllowedEmailDomain: "domain",
   AppConfig: "key",
   ApiToken: "name",
   UserProjectPermission: ["userId", "projectId"],
   GroupProjectPermission: ["groupId", "projectId"],
   Account: ["provider", "providerAccountId"],
-  UserIntegrationAuth: ["userId", "integrationType"],
+  UserIntegrationAuth: ["userId", "integrationId"],
   // Admin-config catalog models (see AUDITED_CONFIG_MODELS below).
   Workflows: "name",
   Status: "name",
@@ -94,12 +95,58 @@ export const ENTITY_NAME_FIELDS: Record<string, string | string[]> = {
   ProjectConfigurationAssignment: ["configurationId", "projectId"],
   MilestoneTypesAssignment: ["milestoneTypeId", "projectId"],
   ProjectLlmIntegration: "llmIntegration.name",
-  ProjectCodeRepositoryConfig: ["repositoryId", "projectId"],
+  ProjectCodeRepositoryConfig: "repository.name",
   // Issue-integration link + test-run case link: named from their related
   // entity (see buildEntityAuditHooks / ENTITY_AUDIT_MODELS in entityAuditHooks).
   ProjectIntegration: "integration.name",
   TestRunCases: "repositoryCase.name",
 };
+
+/**
+ * Entity types that are project-scoped through a parent relation rather than a
+ * scalar `projectId` column. Maps the audit entityType to the dotted relation
+ * path that reaches the project-bearing ancestor. Consumed by
+ * `resolveAuditEntityScope` to backfill `projectId` from a committed re-read.
+ */
+export const PROJECT_SCOPE_PARENTS: Record<string, string> = {
+  TestRunCases: "testRun",
+  TestRunResults: "testRun",
+  TestRunCaseIteration: "testRunCase.testRun",
+};
+
+/**
+ * Entity types that belong to a project, either via a scalar `projectId` column
+ * or via a parent relation (see PROJECT_SCOPE_PARENTS). The audit worker only
+ * attempts to backfill a missing `projectId` for these types, so global/catalog
+ * entities (User, Roles, SsoProvider, …) never incur a wasted re-read and never
+ * acquire a spurious project association.
+ */
+export const PROJECT_SCOPED_ENTITY_TYPES: ReadonlySet<string> = new Set([
+  // Scalar projectId column
+  "RepositoryCases",
+  "TestRuns",
+  "Sessions",
+  "Milestones",
+  "SharedStepGroup",
+  "Issue",
+  "Comment",
+  "ReviewRequest",
+  "ProjectIntegration",
+  "ProjectAssignment",
+  "ProjectStatusAssignment",
+  "ProjectWorkflowAssignment",
+  "ProjectConfigurationAssignment",
+  "MilestoneTypesAssignment",
+  "ProjectLlmIntegration",
+  "ProjectCodeRepositoryConfig",
+  "LlmFeatureConfig",
+  "UserProjectPermission",
+  "GroupProjectPermission",
+  // Project-scoped through a parent relation (see PROJECT_SCOPE_PARENTS)
+  "TestRunCases",
+  "TestRunResults",
+  "TestRunCaseIteration",
+]);
 
 /**
  * Describes an admin-managed configuration/catalog model whose CRUD should be
@@ -221,6 +268,66 @@ export const AUDITED_CONFIG_MODELS: AuditedConfigModel[] = [
 ];
 
 /**
+ * Non-config entity accessors the ZenStack RPC route (`app/api/model`) audits
+ * canonically on the dominant admin/app mutation path. Each accessor MUST be a
+ * real Prisma client field (camelCase model name) — a singular/plural typo here
+ * is silent dead code (the historical `issues`/`sharedStepGroups`/`attachment`
+ * bug), so the route's audit shim never fires and the lib/prisma.ts `$extends`
+ * hook becomes the sole path. Cross-checked against the live datamodel in
+ * `auditLog.rpc-wiring.test.ts`. Config/catalog accessors are appended at the
+ * route from AUDITED_CONFIG_MODELS; attachments are audited solely by the
+ * dedicated lib/prisma.ts `attachments` hook (immutable, bespoke), so they are
+ * intentionally absent here.
+ */
+export const AUDITED_RPC_ENTITY_ACCESSORS: readonly string[] = [
+  "repositoryCases",
+  "testRuns",
+  "sessions",
+  "sharedStepGroup",
+  "issue",
+  "milestones",
+  "projects",
+  "user",
+  "userProjectPermission",
+  "groupProjectPermission",
+  "ssoProvider",
+  "allowedEmailDomain",
+  "appConfig",
+  "userIntegrationAuth",
+  "testRunResults",
+  "comment",
+  "apiToken",
+  "reviewRequest",
+];
+
+/**
+ * Maps each AUDITED_RPC_ENTITY_ACCESSORS accessor (camelCase model field) to its
+ * audit entityType (PascalCase model name, an ENTITY_NAME_FIELDS key). Used by
+ * the RPC route to label audit rows. Kept in lockstep with the accessor list and
+ * guarded against the datamodel in `auditLog.rpc-wiring.test.ts`.
+ */
+export const RPC_ENTITY_TYPE_MAP: Record<string, string> = {
+  repositoryCases: "RepositoryCases",
+  testRuns: "TestRuns",
+  sessions: "Sessions",
+  sharedStepGroup: "SharedStepGroup",
+  issue: "Issue",
+  milestones: "Milestones",
+  projects: "Projects",
+  user: "User",
+  userProjectPermission: "UserProjectPermission",
+  groupProjectPermission: "GroupProjectPermission",
+  ssoProvider: "SsoProvider",
+  allowedEmailDomain: "AllowedEmailDomain",
+  appConfig: "AppConfig",
+  userIntegrationAuth: "UserIntegrationAuth",
+  testRunResults: "TestRunResults",
+  comment: "Comment",
+  apiToken: "ApiToken",
+  reviewRequest: "ReviewRequest",
+};
+
+/**
  * Fields that should be masked in audit logs for security.
  */
 const SENSITIVE_FIELDS = new Set([
@@ -280,11 +387,24 @@ export function redactSensitiveInString(
 }
 
 /**
+ * JSON.stringify replacer that renders BigInt as its decimal string. Used for
+ * value comparison in calculateDiff so a BigInt column never aborts the diff.
+ */
+function bigIntJsonReplacer(_key: string, value: unknown): unknown {
+  return typeof value === "bigint" ? value.toString() : value;
+}
+
+/**
  * Mask sensitive field values for audit logging.
  */
 function maskSensitiveValue(fieldName: string, value: unknown): unknown {
   if (!SENSITIVE_FIELDS.has(fieldName)) {
-    return value;
+    // Diffs are persisted as JSON (BullMQ payload + Prisma Json column), and
+    // JSON.stringify throws on BigInt. Coerce BigInt scalars (e.g. a file
+    // `size`, `modelSize`, `cacheTotalSize`) to strings — matching how the RPC
+    // layer serializes them — so a real change to such a column is recorded
+    // instead of throwing and being swallowed into a diff-less row.
+    return typeof value === "bigint" ? value.toString() : value;
   }
 
   if (value === null || value === undefined) {
@@ -355,9 +475,12 @@ export function calculateDiff(
     const oldValue = oldEntity[key];
     const newValue = newEntity[key];
 
-    // Compare values (handle objects/arrays with JSON comparison)
-    const oldJson = JSON.stringify(oldValue);
-    const newJson = JSON.stringify(newValue);
+    // Compare values (handle objects/arrays with JSON comparison). The replacer
+    // coerces BigInt so JSON.stringify never throws on columns like `size` /
+    // `modelSize` / `cacheTotalSize` (which would otherwise abort the whole diff
+    // and leave a no-change-looking row).
+    const oldJson = JSON.stringify(oldValue, bigIntJsonReplacer);
+    const newJson = JSON.stringify(newValue, bigIntJsonReplacer);
 
     if (oldJson !== newJson) {
       changes[key] = {
@@ -465,6 +588,143 @@ export async function resolveTestRunResultAuditScope(
       testRunCase as Record<string, unknown> | null
     ),
   };
+}
+
+/** Derive the Prisma delegate accessor (camelCase) from a PascalCase entityType. */
+function accessorForEntityType(entityType: string): string {
+  return entityType.charAt(0).toLowerCase() + entityType.slice(1);
+}
+
+/**
+ * Build a nested `select` include that reaches a leaf scalar through a relation
+ * path. `["testRun"]` + `"projectId"` -> `{ testRun: { select: { projectId: true } } }`;
+ * `["testRunCase", "testRun"]` -> `{ testRunCase: { select: { testRun: { select: { projectId: true } } } } }`.
+ */
+function nestedSelectInclude(
+  path: string[],
+  leaf: string
+): Record<string, unknown> {
+  const [head, ...rest] = path;
+  if (rest.length === 0) {
+    return { [head]: { select: { [leaf]: true } } };
+  }
+  return { [head]: { select: nestedSelectInclude(rest, leaf) } };
+}
+
+/** Read a leaf scalar through a relation path, returning undefined on any gap. */
+function nestedValue(obj: unknown, path: string[], leaf: string): unknown {
+  let cur: unknown = obj;
+  for (const segment of path) {
+    if (cur == null || typeof cur !== "object") return undefined;
+    cur = (cur as Record<string, unknown>)[segment];
+  }
+  if (cur == null || typeof cur !== "object") return undefined;
+  return (cur as Record<string, unknown>)[leaf];
+}
+
+/** Structural Prisma surface: any delegate exposing a permissive findUnique. */
+type AuditScopeClient = Record<
+  string,
+  | {
+      findUnique?: (args: {
+        where: Record<string, unknown>;
+        include?: Record<string, unknown>;
+      }) => Promise<Record<string, unknown> | null>;
+    }
+  | undefined
+>;
+
+/**
+ * Re-read a committed entity by id to recover a display name and/or project
+ * scope the emitter could not capture at enqueue time. The dominant cause is a
+ * ZenStack RPC mutation whose result is a partial `{ id }` (it injects
+ * `select: { id: true }`), so the inline name/projectId resolution sees nulls;
+ * a secondary cause is rows project-scoped only through a parent relation.
+ *
+ * This is a post-commit, best-effort backfill run from the audit worker: the
+ * mutation's transaction has already committed, so a fresh read on a separate
+ * connection always sees the row (unlike the pre-commit `$extends` hooks). Any
+ * failure — synthetic/composite id, hard-deleted row, unknown model, query
+ * error — returns the empty gap-set so the audit write is never blocked. Only
+ * the gaps named in `opts` are resolved; nothing already captured is touched.
+ */
+export async function resolveAuditEntityScope(
+  client: AuditScopeClient,
+  entityType: string,
+  entityId: string,
+  opts: { needName: boolean; needProjectId: boolean }
+): Promise<{ entityName?: string; projectId?: number }> {
+  const { needName, needProjectId } = opts;
+  if (!needName && !needProjectId) return {};
+
+  const nameConfig = ENTITY_NAME_FIELDS[entityType];
+  const parentPath = PROJECT_SCOPE_PARENTS[entityType];
+  const projectScoped = PROJECT_SCOPED_ENTITY_TYPES.has(entityType);
+
+  // Decide whether a re-read can possibly help before paying for the query.
+  const canResolveName = needName && nameConfig != null;
+  const canResolveProjectId = needProjectId && projectScoped;
+  if (!canResolveName && !canResolveProjectId) return {};
+
+  // Synthetic ids (bulk ops), composite-key strings ("5:390"), and empty ids
+  // cannot be re-read by a single-column primary key.
+  if (
+    !entityId ||
+    entityId.includes(":") ||
+    /^(bulk|createMany|deleteMany|create|update|delete)-/.test(entityId)
+  ) {
+    return {};
+  }
+
+  const delegate = client[accessorForEntityType(entityType)];
+  if (!delegate?.findUnique) return {};
+
+  // Compose the include: relation-derived name (dot-notation config) and/or a
+  // parent-derived projectId. Scalar fields (own `name`, own `projectId`) are
+  // returned by findUnique without an explicit include.
+  const include: Record<string, unknown> = {};
+  if (canResolveName && typeof nameConfig === "string" && nameConfig.includes(".")) {
+    const [rel, field] = nameConfig.split(".", 2);
+    include[rel] = { select: { [field]: true } };
+  }
+  if (canResolveProjectId && parentPath) {
+    Object.assign(
+      include,
+      nestedSelectInclude(parentPath.split("."), "projectId")
+    );
+  }
+
+  // Numeric PKs must be passed as numbers; cuid/string PKs pass through.
+  const idValue: string | number = /^\d+$/.test(entityId)
+    ? Number(entityId)
+    : entityId;
+
+  let row: Record<string, unknown> | null;
+  try {
+    row = await delegate.findUnique(
+      Object.keys(include).length > 0
+        ? { where: { id: idValue }, include }
+        : { where: { id: idValue } }
+    );
+  } catch {
+    return {};
+  }
+  if (!row) return {};
+
+  const resolved: { entityName?: string; projectId?: number } = {};
+  if (canResolveName) {
+    const name = extractEntityName(entityType, row);
+    if (name) resolved.entityName = name;
+  }
+  if (canResolveProjectId) {
+    if (typeof row.projectId === "number") {
+      resolved.projectId = row.projectId;
+    } else if (parentPath) {
+      const pid = nestedValue(row, parentPath.split("."), "projectId");
+      if (typeof pid === "number") resolved.projectId = pid;
+    }
+  }
+  return resolved;
 }
 
 /**
@@ -585,11 +845,14 @@ export async function captureAuditEvent(event: AuditEvent): Promise<void> {
 /**
  * Whether the current request has opted out of generic entity-audit emission
  * (set by the ZenStack RPC route, which audits canonically via its own shim).
- * Only the generic CREATE/UPDATE/DELETE + BULK_* helpers honor this; the
- * specialized semantic helpers (role change, SSO/system config, permission
- * grant/revoke) intentionally do not.
+ * The generic CREATE/UPDATE/DELETE + BULK_* helpers honor this. The specialized
+ * semantic helpers (role change, SSO/system config, permission grant/revoke)
+ * stay ungated so admin routes that call them directly always emit; the
+ * lib/prisma.ts `$extends` hooks that ALSO wrap those helpers for apiToken /
+ * appConfig / ssoProvider consult this at their call site, because on the RPC
+ * path the route's shim already emits the canonical semantic row for them.
  */
-function isEntityAuditSuppressed(): boolean {
+export function isEntityAuditSuppressed(): boolean {
   return getAuditContext()?.suppressEntityAudit === true;
 }
 
@@ -599,7 +862,8 @@ function isEntityAuditSuppressed(): boolean {
 export async function auditCreate(
   entityType: string,
   entity: Record<string, unknown>,
-  projectId?: number
+  projectId?: number,
+  metadata?: Record<string, unknown>
 ): Promise<void> {
   if (isEntityAuditSuppressed()) return;
   const entityId = String(
@@ -615,6 +879,7 @@ export async function auditCreate(
     entityName: extractEntityName(entityType, entity),
     changes: calculateDiff(null, entity),
     projectId,
+    metadata,
   });
 }
 
@@ -661,7 +926,8 @@ export async function auditUpdate(
 export async function auditDelete(
   entityType: string,
   entity: Record<string, unknown>,
-  projectId?: number
+  projectId?: number,
+  metadata?: Record<string, unknown>
 ): Promise<void> {
   if (isEntityAuditSuppressed()) return;
   const entityId = String(
@@ -677,6 +943,7 @@ export async function auditDelete(
     entityName: extractEntityName(entityType, entity),
     changes: calculateDiff(entity, null),
     projectId,
+    metadata,
   });
 }
 
